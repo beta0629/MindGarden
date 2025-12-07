@@ -33,5 +33,8 @@ public class ConsultantRegistrationDto {
     private String specialization;
     private String qualifications;
     private String notes;
-    private String branchCode;
+    /**
+     * @Deprecated - 표준화 2025-12-07: 브랜치 개념 제거됨
+     */
+    @Deprecated    private String branchCode;
 }

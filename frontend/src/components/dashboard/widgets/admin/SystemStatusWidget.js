@@ -37,22 +37,22 @@ const SystemStatusWidget = ({ widget, user }) => {
       refreshInterval: 60000, // 1분마다 새로고침
       endpoints: [
         {
-          url: '/api/health/server',
+          url: '/api/v1/health/server',
           key: 'server',
           fallback: { status: 'unknown', uptime: 0, version: 'unknown' }
         },
         {
-          url: '/api/health/database',
+          url: '/api/v1/health/database',
           key: 'database', 
           fallback: { status: 'unknown', connectionCount: 0, queryTime: 0 }
         },
         {
-          url: '/api/health/external-services',
+          url: '/api/v1/health/external-services',
           key: 'services',
           fallback: []
         },
         {
-          url: '/api/health/system-metrics',
+          url: '/api/v1/health/system-metrics',
           key: 'metrics',
           fallback: { cpu: 0, memory: 0, disk: 0 }
         }

@@ -36,15 +36,15 @@ const AdminSystemOverviewWidget = ({ widget, user }) => {
       refreshInterval: 300000, // 5분마다 새로고침
       endpoints: [
         {
-          url: '/api/admin/statistics/consultants',
+          url: '/api/v1/admin/statistics/consultants',
           key: 'consultants'
         },
         {
-          url: '/api/admin/statistics/clients', 
+          url: '/api/v1/admin/statistics/clients', 
           key: 'clients'
         },
         {
-          url: '/api/admin/statistics/mappings',
+          url: '/api/v1/admin/statistics/mappings',
           key: 'mappings'
         }
       ],

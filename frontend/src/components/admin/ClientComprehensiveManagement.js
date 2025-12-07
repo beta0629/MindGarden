@@ -146,7 +146,7 @@ const ClientComprehensiveManagement = () => {
 
     const loadConsultants = useCallback(async () => {
         try {
-            const response = await apiGet('/api/admin/consultants');
+            const response = await apiGet('/api/v1/admin/consultants');
             console.log('📊 상담사 목록 응답:', response);
             
             if (response && response.success) {
@@ -164,7 +164,7 @@ const ClientComprehensiveManagement = () => {
 
     const loadMappings = useCallback(async () => {
         try {
-            const response = await apiGet('/api/admin/mappings');
+            const response = await apiGet('/api/v1/admin/mappings');
             console.log('📊 매칭 정보 응답:', response);
             
             if (response && response.success) {
@@ -182,7 +182,7 @@ const ClientComprehensiveManagement = () => {
     const loadConsultations = useCallback(async () => {
         try {
             console.log('🔄 상담 이력 로드 시작...');
-            const response = await apiGet('/api/admin/consultations');
+            const response = await apiGet('/api/v1/admin/consultations');
             console.log('📊 상담 이력 응답:', response);
             
             if (Array.isArray(response)) {
@@ -418,7 +418,7 @@ const ClientComprehensiveManagement = () => {
                             const handleSave = async () => {
                                 try {
                                     if (modalType === 'create') {
-                                        await apiPost('/api/admin/clients', data);
+                                        await apiPost('/api/v1/admin/clients', data);
                                         showSuccess('내담자가 성공적으로 등록되었습니다.');
                                     } else if (modalType === 'edit') {
                                         await apiPut(`/api/admin/clients/${editingClient.id}`, data);

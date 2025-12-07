@@ -24,7 +24,10 @@ public class ClassScheduleResponse {
     
     private String scheduleId;
     private String tenantId;
-    private Long branchId;
+    /**
+     * @Deprecated - 표준화 2025-12-07: 브랜치 개념 제거됨
+     */
+    @Deprecated    private Long branchId;
     private String classId;
     private Integer dayOfWeek;
     private String dayOfWeekName;

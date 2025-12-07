@@ -95,10 +95,10 @@ const ErpDashboard = ({ user: propUser }) => {
       setLoading(true);
       
       const [itemsResponse, pendingResponse, ordersResponse, budgetsResponse] = await Promise.all([
-        fetch('/api/erp/items', { credentials: 'include' }),
-        fetch('/api/erp/purchase-requests/pending-admin', { credentials: 'include' }),
-        fetch('/api/erp/purchase-orders', { credentials: 'include' }),
-        fetch('/api/erp/budgets', { credentials: 'include' })
+        fetch('/api/v1/erp/items', { credentials: 'include' }),
+        fetch('/api/v1/erp/purchase-requests/pending-admin', { credentials: 'include' }),
+        fetch('/api/v1/erp/purchase-orders', { credentials: 'include' }),
+        fetch('/api/v1/erp/budgets', { credentials: 'include' })
       ]);
 
       const [itemsData, pendingData, ordersData, budgetsData] = await Promise.all([

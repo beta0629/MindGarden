@@ -43,13 +43,13 @@ const RecentActivitiesWidget = ({ widget, user }) => {
       case 'CLIENT':
         return {
           ...baseConfig,
-          url: '/api/schedules',
+          url: '/api/v1/schedules',
           transform: (data) => transformClientActivities(data)
         };
       case 'CONSULTANT':
         return {
           ...baseConfig,
-          url: '/api/schedules',
+          url: '/api/v1/schedules',
           transform: (data) => transformConsultantActivities(data)
         };
       case 'ADMIN':

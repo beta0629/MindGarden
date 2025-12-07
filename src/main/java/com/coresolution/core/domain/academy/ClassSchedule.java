@@ -70,7 +70,10 @@ public class ClassSchedule extends BaseEntity {
      * 지점 ID
      */
     @NotNull(message = "지점 ID는 필수입니다")
-    @Column(name = "branch_id", nullable = false)
+    /**
+     * @Deprecated - 표준화 2025-12-07: 브랜치 개념 제거됨
+     */
+    @Deprecated    @Column(name = "branch_id", nullable = false)
     private Long branchId;
     
     /**

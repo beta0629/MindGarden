@@ -77,7 +77,7 @@ const ScheduleModalNew = ({
         const loadConsultationTypeCodes = async () => {
             try {
                 setLoadingCodes(true);
-                const response = await apiGet('/api/common-codes/CONSULTATION_TYPE');
+                const response = await apiGet('/api/v1/common-codes/CONSULTATION_TYPE');
                 if (response && response.length > 0) {
                     const options = response.map(code => {
                         let durationMinutes = 50; // 기본값
@@ -122,7 +122,7 @@ const ScheduleModalNew = ({
         const loadDurationCodes = async () => {
             try {
                 setLoadingCodes(true);
-                const response = await apiGet('/api/common-codes/DURATION');
+                const response = await apiGet('/api/v1/common-codes/DURATION');
                 if (response && response.length > 0) {
                     const options = response.map(code => {
                         let durationMinutes = 60; // 기본값
@@ -313,7 +313,7 @@ const ScheduleModalNew = ({
 
             console.log('📝 스케줄 생성 데이터:', scheduleData);
 
-            const response = await csrfTokenManager.post('/api/schedules/consultant', scheduleData);
+            const response = await csrfTokenManager.post('/api/v1/schedules/consultant', scheduleData);
 
             if (response.ok) {
                 const result = await response.json();

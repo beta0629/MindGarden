@@ -75,8 +75,8 @@ const HQBranchManagement = () => {
         setLoading(true);
         try {
             const [branchesRes, managersRes] = await Promise.all([
-                apiGet('/api/hq/branches'),
-                apiGet('/api/hq/managers')
+                apiGet('/api/v1/hq/branches'),
+                apiGet('/api/v1/hq/managers')
             ]);
             
             console.log('🔍 API 응답 확인:', branchesRes);

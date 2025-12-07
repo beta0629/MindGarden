@@ -24,8 +24,14 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class BranchStatisticsDto {
     
-    private Long branchId;
-    private String branchCode;
+    /**
+     * @Deprecated - 표준화 2025-12-07: 브랜치 개념 제거됨
+     */
+    @Deprecated    private Long branchId;
+    /**
+     * @Deprecated - 표준화 2025-12-07: 브랜치 개념 제거됨
+     */
+    @Deprecated    private String branchCode;
     private String branchName;
     
     // 사용자 통계

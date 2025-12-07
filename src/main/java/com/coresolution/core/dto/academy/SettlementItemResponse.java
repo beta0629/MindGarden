@@ -31,7 +31,10 @@ public class SettlementItemResponse {
     private String settlementItemId;
     private String settlementId;
     private String tenantId;
-    private Long branchId;
+    /**
+     * @Deprecated - 표준화 2025-12-07: 브랜치 개념 제거됨
+     */
+    @Deprecated    private Long branchId;
     private ItemType itemType;
     private String itemId;
     private String itemName;

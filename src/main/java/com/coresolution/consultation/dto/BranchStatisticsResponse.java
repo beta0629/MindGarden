@@ -20,8 +20,14 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class BranchStatisticsResponse {
     
-    private Long branchId;
-    private String branchCode;
+    /**
+     * @Deprecated - 표준화 2025-12-07: 브랜치 개념 제거됨
+     */
+    @Deprecated    private Long branchId;
+    /**
+     * @Deprecated - 표준화 2025-12-07: 브랜치 개념 제거됨
+     */
+    @Deprecated    private String branchCode;
     private String branchName;
     
     // 사용자 통계
@@ -79,8 +85,8 @@ public class BranchStatisticsResponse {
         }
         
         return BranchStatisticsResponse.builder()
-            .branchId(dto.getBranchId())
-            .branchCode(dto.getBranchCode())
+            .branchId(null) // 표준화 2025-12-07: 브랜치 개념 제거됨
+            .branchCode(null) // 표준화 2025-12-07: 브랜치 개념 제거됨
             .branchName(dto.getBranchName())
             .totalUsers(dto.getTotalUsers())
             .consultants(dto.getConsultants())

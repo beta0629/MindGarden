@@ -63,10 +63,10 @@ const SessionManagement = () => {
             setLoading(true);
             
             const [clientsRes, consultantsRes, mappingsRes, requestsRes] = await Promise.all([
-                apiGet('/api/admin/clients/with-mapping-info'),
-                apiGet('/api/admin/consultants'),
-                apiGet('/api/admin/mappings'),
-                apiGet('/api/admin/session-extensions/requests')
+                apiGet('/api/v1/admin/clients/with-mapping-info'),
+                apiGet('/api/v1/admin/consultants'),
+                apiGet('/api/v1/admin/mappings'),
+                apiGet('/api/v1/admin/session-extensions/requests')
             ]);
             
             const clientsData = clientsRes?.data || clientsRes || [];

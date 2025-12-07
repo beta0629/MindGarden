@@ -38,7 +38,7 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
   const loadCommonCodes = async () => {
     try {
       setLoadingCodes(true);
-      const response = await axios.get('/api/erp/common-codes/financial', {
+      const response = await axios.get('/api/v1/erp/common-codes/financial', {
         withCredentials: true
       });
       
@@ -69,7 +69,7 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
     setError(null);
 
     try {
-      const response = await axios.post('/api/erp/finance/transactions', formData);
+      const response = await axios.post('/api/v1/erp/finance/transactions', formData);
       
       if (response.data.success) {
         notificationManager.show('거래가 성공적으로 등록되었습니다.', 'info');

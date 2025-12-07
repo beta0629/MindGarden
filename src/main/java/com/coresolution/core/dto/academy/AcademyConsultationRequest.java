@@ -59,10 +59,14 @@ public class AcademyConsultationRequest {
     /** 상담 메모 */
     private String notes;
     
-    /** 지점 코드 */
+    /** 지점 코드  * @Deprecated - 표준화 2025-12-07: 브랜치 개념 제거됨
+ */
     private String branchCode;
     
-    /** 브랜치 ID */
+    /**
+     * @Deprecated - 표준화 2025-12-07: 브랜치 개념 제거됨
+     */
+    @Deprecated    /** 브랜치 ID */
     private Long branchId;
 }
 

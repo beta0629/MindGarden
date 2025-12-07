@@ -51,7 +51,7 @@ const ScheduleModal = ({
     const loadConsultationTypeCodes = useCallback(async () => {
         try {
             setLoadingCodes(true);
-            const response = await fetch('/api/common-codes/CONSULTATION_TYPE');
+            const response = await fetch('/api/v1/common-codes/CONSULTATION_TYPE');
             if (response.ok) {
                 const data = await response.json();
                 if (data && data.length > 0) {
@@ -197,7 +197,7 @@ const ScheduleModal = ({
 
             console.log('📝 스케줄 생성 데이터:', scheduleData);
 
-            const response = await csrfTokenManager.post('/api/schedules/consultant', scheduleData);
+            const response = await csrfTokenManager.post('/api/v1/schedules/consultant', scheduleData);
 
             if (response.ok) {
                 const result = await response.json();

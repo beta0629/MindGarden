@@ -59,7 +59,7 @@ const ScheduleList = ({
   const loadFilterOptions = useCallback(async () => {
     try {
       setLoadingCodes(true);
-      const response = await apiGet('/api/common-codes/SCHEDULE_FILTER');
+      const response = await apiGet('/api/v1/common-codes/SCHEDULE_FILTER');
       if (response && response.length > 0) {
         setFilterOptions(response.map(code => ({
           value: code.codeValue,
@@ -88,7 +88,7 @@ const ScheduleList = ({
   const loadSortOptions = useCallback(async () => {
     try {
       setLoadingCodes(true);
-      const response = await apiGet('/api/common-codes/SCHEDULE_SORT');
+      const response = await apiGet('/api/v1/common-codes/SCHEDULE_SORT');
       if (response && response.length > 0) {
         setSortOptions(response.map(code => ({
           value: code.codeValue,
@@ -116,7 +116,7 @@ const ScheduleList = ({
   const loadConsultants = useCallback(async () => {
     try {
       setLoadingConsultants(true);
-      const response = await apiGet('/api/admin/consultants');
+      const response = await apiGet('/api/v1/admin/consultants');
       
       if (response && response.success) {
         setConsultants(response.data || []);
@@ -144,7 +144,7 @@ const ScheduleList = ({
       
       if (userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN' || userRole === 'BRANCH_BRANCH_SUPER_ADMIN' || 
           userRole === 'BRANCH_MANAGER' || userRole === 'HQ_ADMIN' || userRole === 'SUPER_HQ_ADMIN') {
-        url = '/api/admin/schedules';
+        url = '/api/v1/admin/schedules';
         params = {};
         
         if (selectedConsultantId) {

@@ -38,7 +38,10 @@ public class FinancialTransactionResponse {
     private String relatedEntityType;
     private String department;
     private String projectCode;
-    private String branchCode;
+    /**
+     * @Deprecated - 표준화 2025-12-07: 브랜치 개념 제거됨
+     */
+    @Deprecated    private String branchCode;
     private Boolean taxIncluded;
     private BigDecimal taxAmount;
     private BigDecimal amountBeforeTax;

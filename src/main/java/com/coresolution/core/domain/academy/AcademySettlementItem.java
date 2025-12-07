@@ -81,7 +81,9 @@ public class AcademySettlementItem extends BaseEntity {
     
     /**
      * 지점 ID
-     */
+      * @Deprecated - 표준화 2025-12-07: 브랜치 개념 제거됨
+  * @Deprecated - 표준화 2025-12-07: 브랜치 개념 제거됨
+ */
     @Column(name = "branch_id")
     private Long branchId;
     

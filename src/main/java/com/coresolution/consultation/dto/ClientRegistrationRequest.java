@@ -55,7 +55,10 @@ public class ClientRegistrationRequest {
     
     private String registeredBy;
     
-    private String branchCode;
+    /**
+     * @Deprecated - 표준화 2025-12-07: 브랜치 개념 제거됨
+     */
+    @Deprecated    private String branchCode;
     
     /**
      * ClientRegistrationDto로부터 변환 (하위 호환성)
@@ -90,7 +93,7 @@ public class ClientRegistrationRequest {
             .emergencyPhone(dto.getEmergencyPhone())
             .notes(dto.getNotes())
             .registeredBy(dto.getRegisteredBy())
-            .branchCode(dto.getBranchCode())
+            .branchCode(null) // 표준화 2025-12-07: 브랜치 개념 제거됨
             .build();
     }
 }

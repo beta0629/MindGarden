@@ -36,5 +36,8 @@ public class ClientRegistrationDto {
     private String emergencyPhone;
     private String notes;
     private String registeredBy;
-    private String branchCode;
+    /**
+     * @Deprecated - 표준화 2025-12-07: 브랜치 개념 제거됨
+     */
+    @Deprecated    private String branchCode;
 }

@@ -75,8 +75,10 @@ public class PaymentCreateRequest {
     private Long recipientId;
     
     /**
-     * 지점 ID
+     * @Deprecated - 표준화 2025-12-07: 브랜치 개념 제거됨, tenantId만 사용
+     * 레거시 데이터 호환을 위해 필드 유지 (NULL 허용)
      */
+    @Deprecated
     private Long branchId;
     
     /**
@@ -149,7 +151,7 @@ public class PaymentCreateRequest {
             .provider(this.provider)
             .payerId(this.payerId)
             .recipientId(this.recipientId)
-            .branchId(this.branchId)
+            .branchId(null) // 표준화 2025-12-07: 브랜치 개념 제거됨
             .orderName(this.orderName)
             .customerEmail(this.customerEmail)
             .customerName(this.customerName)

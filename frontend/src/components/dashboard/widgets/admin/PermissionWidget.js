@@ -39,7 +39,7 @@ const PermissionWidget = ({ widget, user }) => {
   const getDataSourceConfig = () => {
     return {
       type: 'api',
-      url: '/api/admin/permissions/current-user',
+      url: '/api/v1/admin/permissions/current-user',
       cache: true,
       refreshInterval: 600000, // 10분마다 새로고침
       params: {

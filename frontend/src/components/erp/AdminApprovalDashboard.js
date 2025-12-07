@@ -29,7 +29,7 @@ const AdminApprovalDashboard = () => {
   const loadPendingRequests = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/erp/purchase-requests/pending-admin');
+      const response = await fetch('/api/v1/erp/purchase-requests/pending-admin');
       const data = await response.json();
       
       if (data.success) {

@@ -34,7 +34,7 @@ const ScheduleRegistrationWidget = ({ widget, user }) => {
       type: 'multi-api',
       endpoints: {
         schedules: {
-          url: '/api/schedules',
+          url: '/api/v1/schedules',
           method: 'GET',
           params: { 
             limit: widget.config?.maxItems || 10,
@@ -43,7 +43,7 @@ const ScheduleRegistrationWidget = ({ widget, user }) => {
           }
         },
         todayStats: {
-          url: '/api/schedules/today-stats',
+          url: '/api/v1/schedules/today-stats',
           method: 'GET',
           params: {
             ...(RoleUtils.isConsultant(user) && !RoleUtils.isAdmin(user) && { consultantId: user.id })

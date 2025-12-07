@@ -42,7 +42,7 @@ const SalaryManagement = () => {
         try {
             console.log('🔍 상담사 목록 로드 시작');
             setLoading(true);
-            const response = await apiGet('/api/admin/salary/consultants');
+            const response = await apiGet('/api/v1/admin/salary/consultants');
             console.log('📊 상담사 목록 응답:', response);
             
             // response가 null인 경우 (401 인증 오류 등) 처리
@@ -76,7 +76,7 @@ const SalaryManagement = () => {
         try {
             console.log('🔍 급여 프로필 로드 시작');
             setLoading(true);
-            const response = await apiGet('/api/admin/salary/profiles');
+            const response = await apiGet('/api/v1/admin/salary/profiles');
             console.log('📊 급여 프로필 응답:', response);
             
             // response가 null인 경우 (401 인증 오류 등) 처리
@@ -277,8 +277,8 @@ const SalaryManagement = () => {
             };
 
             const endpoint = salaryType === 'FREELANCE' 
-                ? '/api/admin/salary/calculate/freelance'
-                : '/api/admin/salary/calculate/regular';
+                ? '/api/v1/admin/salary/calculate/freelance'
+                : '/api/v1/admin/salary/calculate/regular';
 
             const response = await apiPost(endpoint, requestData);
             if (response && response.success) {

@@ -29,7 +29,7 @@ const ConsultantClientWidget = ({ widget, user }) => {
 
   const getDataSourceConfig = () => ({
     type: 'api',
-    url: '/api/consultant-clients',
+    url: '/api/v1/consultant-clients',
     method: 'GET',
     params: { 
       limit: widget.config?.maxItems || 5,

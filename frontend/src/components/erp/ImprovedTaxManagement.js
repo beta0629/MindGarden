@@ -85,7 +85,7 @@ const ImprovedTaxManagement = () => {
 
   const loadTaxCalculations = async () => {
     try {
-      const response = await apiGet('/api/admin/tax/calculations');
+      const response = await apiGet('/api/v1/admin/tax/calculations');
       if (response.success) {
         setTaxData(response.data || []);
       } else {
@@ -123,7 +123,7 @@ const ImprovedTaxManagement = () => {
   const handleCreateTaxItem = async () => {
     try {
       setLoading(true);
-      const response = await apiPost('/api/admin/tax/calculations', newTaxItem);
+      const response = await apiPost('/api/v1/admin/tax/calculations', newTaxItem);
       if (response.success) {
         setShowCreateModal(false);
         setNewTaxItem({

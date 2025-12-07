@@ -39,7 +39,7 @@ const PersonalizedMessagesWidget = ({ widget, user }) => {
     type: 'api',
     cache: true,
     refreshInterval: 120000, // 2분마다 새로고침
-    url: '/api/schedules',
+    url: '/api/v1/schedules',
     params: {
       userId: user.id,
       userRole: 'CLIENT',

@@ -55,7 +55,10 @@ public class FinancialTransactionRequest {
     private String projectCode;
     
     @Size(max = 20, message = "지점 코드는 20자 이하여야 합니다.")
-    private String branchCode;
+    /**
+     * @Deprecated - 표준화 2025-12-07: 브랜치 개념 제거됨
+     */
+    @Deprecated    private String branchCode;
     
     private Boolean taxIncluded;
     

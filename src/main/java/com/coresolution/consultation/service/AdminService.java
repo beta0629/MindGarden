@@ -132,6 +132,10 @@ public interface AdminService {
     /**
      * 환불 통계 조회 (지점별 필터링)
      */
+    /**
+     * @Deprecated - 표준화 2025-12-07: branchCode 파라미터는 레거시 호환용
+     */
+    @Deprecated
     Map<String, Object> getRefundStatistics(String period, String branchCode);
     
     /**
@@ -142,6 +146,10 @@ public interface AdminService {
     /**
      * 환불 이력 조회 (지점별 필터링)
      */
+    /**
+     * @Deprecated - 표준화 2025-12-07: branchCode 파라미터는 레거시 호환용
+     */
+    @Deprecated
     Map<String, Object> getRefundHistory(int page, int size, String period, String status, String branchCode);
     
     /**
@@ -159,11 +167,19 @@ public interface AdminService {
     /**
      * 지점별 상담사 휴가 통계 조회
      */
+    /**
+     * @Deprecated - 표준화 2025-12-07: branchCode 파라미터는 레거시 호환용
+     */
+    @Deprecated
     Map<String, Object> getConsultantVacationStatsByBranch(String period, String branchCode);
     
     /**
      * 지점별 상담 완료 건수 통계 조회
      */
+    /**
+     * @Deprecated - 표준화 2025-12-07: branchCode 파라미터는 레거시 호환용
+     */
+    @Deprecated
     List<Map<String, Object>> getConsultationCompletionStatisticsByBranch(String period, String branchCode);
 
     // ==================== 입금 승인 시스템 ====================
@@ -244,6 +260,10 @@ public interface AdminService {
      * 상담사별 매칭 목록 조회
      */
     List<ConsultantClientMapping> getMappingsByConsultantId(Long consultantId);
+    /**
+     * @Deprecated - 표준화 2025-12-07: branchCode 파라미터는 레거시 호환용
+     */
+    @Deprecated
     List<ConsultantClientMapping> getMappingsByConsultantId(Long consultantId, String branchCode);
     
     /**
@@ -296,6 +316,10 @@ public interface AdminService {
     /**
      * 스케줄 상태별 통계 조회 (지점별 필터링)
      */
+    /**
+     * @Deprecated - 표준화 2025-12-07: branchCode 파라미터는 레거시 호환용
+     */
+    @Deprecated
     Map<String, Object> getScheduleStatisticsByBranch(String branchCode);
     
     /**
@@ -306,6 +330,10 @@ public interface AdminService {
     /**
      * 사용자 목록 조회
      */
+    /**
+     * @Deprecated - 표준화 2025-12-07: branchCode 파라미터는 레거시 호환용
+     */
+    @Deprecated
     List<User> getUsers(boolean includeInactive, String role, String branchCode);
     
     /**

@@ -44,7 +44,7 @@ const ItemManagement = () => {
   const loadCategoryCodes = async () => {
     try {
       setLoadingCodes(true);
-      const response = await apiGet('/api/common-codes/ITEM_CATEGORY');
+      const response = await apiGet('/api/v1/common-codes/ITEM_CATEGORY');
       if (response && response.length > 0) {
         const options = response.map(code => ({
           value: code.codeValue,
@@ -79,7 +79,7 @@ const ItemManagement = () => {
   const loadItems = async () => {
     try {
       setLoading(true);
-      const response = await apiGet('/api/erp/items');
+      const response = await apiGet('/api/v1/erp/items');
       
       if (response?.success) {
         setItems(response.data || []);
@@ -122,7 +122,7 @@ const ItemManagement = () => {
       setLoading(true);
       setError('');
       
-      const response = await apiPost('/api/erp/items', {
+      const response = await apiPost('/api/v1/erp/items', {
         name: formData.name,
         description: formData.description,
         category: formData.category,

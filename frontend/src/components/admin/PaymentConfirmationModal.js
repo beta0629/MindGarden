@@ -39,8 +39,8 @@ const PaymentConfirmationModal = ({
   const [loadingCodes, setLoadingCodes] = useState(false);
 
   const API_ENDPOINTS = {
-    CONFIRM_PAYMENT: '/api/admin/payments/confirm',
-    CANCEL_PAYMENT: '/api/admin/payments/cancel'
+    CONFIRM_PAYMENT: '/api/v1/admin/payments/confirm',
+    CANCEL_PAYMENT: '/api/v1/admin/payments/cancel'
   };
   
   const PAYMENT_STATUS = {
@@ -99,7 +99,7 @@ const PaymentConfirmationModal = ({
     const loadPaymentMethodCodes = async () => {
       try {
         setLoadingCodes(true);
-        const response = await apiGet('/api/common-codes/PAYMENT_METHOD');
+        const response = await apiGet('/api/v1/common-codes/PAYMENT_METHOD');
         if (response && response.length > 0) {
           const options = response.map(code => ({
             value: code.codeValue,

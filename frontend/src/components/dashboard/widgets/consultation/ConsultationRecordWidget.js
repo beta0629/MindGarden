@@ -29,7 +29,7 @@ const ConsultationRecordWidget = ({ widget, user }) => {
 
   const getDataSourceConfig = () => ({
     type: 'api',
-    url: '/api/consultation-records',
+    url: '/api/v1/consultation-records',
     method: 'GET',
     params: { 
       limit: widget.config?.maxItems || 5,

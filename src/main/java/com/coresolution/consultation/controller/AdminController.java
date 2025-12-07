@@ -1383,12 +1383,14 @@ public class AdminController extends BaseApiController {
         
         User currentUser = SessionUtils.getCurrentUser(session);
         if (currentUser != null) {
-            log.info("🔧 현재 사용자 지점 정보: branchCode={}", currentUser.getBranchCode());
+            // 표준화 2025-12-07: 브랜치 개념 제거됨, 로그 제거
+            // log.info("🔧 현재 사용자 지점 정보: branchCode={}", currentUser.getBranchCode());
             
             if (currentUser.getBranchCode() != null && !currentUser.getBranchCode().trim().isEmpty() &&
                 (request.getBranchCode() == null || request.getBranchCode().trim().isEmpty())) {
                 request.setBranchCode(currentUser.getBranchCode());
-                log.info("🔧 세션에서 지점코드 자동 설정: branchCode={}", request.getBranchCode());
+                // 표준화 2025-12-07: 브랜치 개념 제거됨, 로그 제거
+                // log.info("🔧 세션에서 지점코드 자동 설정: branchCode={}", request.getBranchCode());
             }
         }
         
@@ -1423,12 +1425,14 @@ public class AdminController extends BaseApiController {
         
         User currentUser = SessionUtils.getCurrentUser(session);
         if (currentUser != null) {
-            log.info("🔧 현재 사용자 지점 정보: branchCode={}", currentUser.getBranchCode());
+            // 표준화 2025-12-07: 브랜치 개념 제거됨, 로그 제거
+            // log.info("🔧 현재 사용자 지점 정보: branchCode={}", currentUser.getBranchCode());
             
             if (currentUser.getBranchCode() != null && !currentUser.getBranchCode().trim().isEmpty() &&
                 (request.getBranchCode() == null || request.getBranchCode().trim().isEmpty())) {
                 request.setBranchCode(currentUser.getBranchCode());
-                log.info("🔧 세션에서 지점코드 자동 설정: branchCode={}", request.getBranchCode());
+                // 표준화 2025-12-07: 브랜치 개념 제거됨, 로그 제거
+                // log.info("🔧 세션에서 지점코드 자동 설정: branchCode={}", request.getBranchCode());
             }
         }
         
@@ -2005,7 +2009,7 @@ public class AdminController extends BaseApiController {
             @RequestParam(value = "role", required = false) String role,
             @RequestParam(value = "branchCode", required = false) String branchCode,
             HttpSession session) {
-        log.info("🔍 사용자 목록 조회: includeInactive={}, role={}, branchCode={}", includeInactive, role, branchCode);
+        log.info("🔍 사용자 목록 조회: includeInactive={}, role={}", includeInactive, role);
         
         User currentUser = SessionUtils.getCurrentUser(session);
         if (currentUser == null) {

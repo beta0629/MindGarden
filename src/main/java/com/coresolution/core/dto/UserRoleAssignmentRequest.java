@@ -32,7 +32,8 @@ public class UserRoleAssignmentRequest {
     
     /**
      * 브랜치 ID (선택, NULL = 전체 브랜치)
-     */
+      * @Deprecated - 표준화 2025-12-07: 브랜치 개념 제거됨
+ */
     private Long branchId;
     
     /**

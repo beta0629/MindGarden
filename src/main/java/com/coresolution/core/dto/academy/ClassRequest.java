@@ -28,7 +28,10 @@ public class ClassRequest {
      * 지점 ID
      */
     @NotNull(message = "지점 ID는 필수입니다")
-    private Long branchId;
+    /**
+     * @Deprecated - 표준화 2025-12-07: 브랜치 개념 제거됨
+     */
+    @Deprecated    private Long branchId;
     
     /**
      * 강좌 ID

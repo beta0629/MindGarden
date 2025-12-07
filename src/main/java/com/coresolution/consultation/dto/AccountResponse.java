@@ -18,7 +18,10 @@ public class AccountResponse {
     private String bankName;
     private String accountNumber;
     private String accountHolder;
-    private Long branchId;
+    /**
+     * @Deprecated - 표준화 2025-12-07: 브랜치 개념 제거됨
+     */
+    @Deprecated    private Long branchId;
     private Boolean isPrimary;
     private Boolean isActive;
     private String description;
@@ -32,7 +35,7 @@ public class AccountResponse {
                 .bankName(account.getBankName())
                 .accountNumber(account.getAccountNumber())
                 .accountHolder(account.getAccountHolder())
-                .branchId(account.getBranchId())
+                .branchId(null) // 표준화 2025-12-07: 브랜치 개념 제거됨
                 .isPrimary(account.getIsPrimary())
                 .isActive(account.getIsActive())
                 .description(account.getDescription())

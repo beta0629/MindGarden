@@ -107,7 +107,10 @@ public class AuthResponse {
         private String roleName;
         private String roleNameKo;
         private String templateCode;
-        private Long branchId;
+        /**
+         * @Deprecated - 표준화 2025-12-07: 브랜치 개념 제거됨
+         */
+        @Deprecated        private Long branchId;
         private String branchName;
     }
     

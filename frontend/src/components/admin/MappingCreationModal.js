@@ -321,7 +321,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => { const 
 
     const loadClients = async() => {
         try {
-            const response = await apiGet('/api/admin/clients/with-mapping-info');
+            const response = await apiGet('/api/v1/admin/clients/with-mapping-info');
             if (response.success) {
                 setClients(response.data || []);
             } else {
@@ -337,7 +337,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => { const 
 
     const loadMappings = async() => {
         try {
-            const response = await apiGet('/api/admin/mappings');
+            const response = await apiGet('/api/v1/admin/mappings');
             if (response.success) {
                 setMappings(response.data || []);
             }

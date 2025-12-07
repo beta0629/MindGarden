@@ -30,7 +30,7 @@ const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
   const loadCurrentConfigs = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/admin/salary/configs');
+      const response = await fetch('/api/v1/admin/salary/configs');
       if (response.ok) {
         const data = await response.json();
         if (data.success) {
@@ -46,7 +46,7 @@ const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
 
   const loadConfigOptions = async () => {
     try {
-      const response = await fetch('/api/admin/salary/config-options');
+      const response = await fetch('/api/v1/admin/salary/config-options');
       if (response.ok) {
         const data = await response.json();
         if (data.success) {
@@ -96,7 +96,7 @@ const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
 
       // 모든 설정 저장
       const savePromises = configUpdates.map(config => 
-        fetch('/api/admin/salary/config', {
+        fetch('/api/v1/admin/salary/config', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

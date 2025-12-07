@@ -76,7 +76,9 @@ public class Course extends BaseEntity {
     
     /**
      * 지점 ID (NULL이면 전체 지점 공통)
-     */
+      * @Deprecated - 표준화 2025-12-07: 브랜치 개념 제거됨
+  * @Deprecated - 표준화 2025-12-07: 브랜치 개념 제거됨
+ */
     @Column(name = "branch_id")
     private Long branchId;
     

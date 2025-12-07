@@ -103,6 +103,10 @@ public class Branch extends BaseEntity {
     @NotBlank(message = "지점 코드는 필수입니다")
     @Size(min = 3, max = 10, message = "지점 코드는 3-10자 사이여야 합니다")
     @Pattern(regexp = "^[A-Z0-9]+$", message = "지점 코드는 영대문자와 숫자만 사용 가능합니다")
+    /**
+     * @Deprecated - 표준화 2025-12-07: 브랜치 개념 제거됨
+     */
+    @Deprecated
     @Column(name = "branch_code", nullable = false, unique = true, length = 10)
     private String branchCode;
     

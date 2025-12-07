@@ -77,7 +77,7 @@ const UserManagement = ({ onUpdate }) => {
         try {
             const [usersRes, rolesRes] = await Promise.all([
                 fetch(`/api/admin/users?includeInactive=${includeInactive}`),
-                fetch('/api/admin/users/roles')
+                fetch('/api/v1/admin/users/roles')
             ]);
 
             if (usersRes.ok) {

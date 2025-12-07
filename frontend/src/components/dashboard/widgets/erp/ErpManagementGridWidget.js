@@ -43,7 +43,7 @@ const ErpManagementGridWidget = ({ widget, user }) => {
   const getDataSourceConfig = () => {
     return {
       type: 'api',
-      url: '/api/admin/permissions/user-permissions',
+      url: '/api/v1/admin/permissions/user-permissions',
       cache: true,
       refreshInterval: 600000, // 10분마다 새로고침
       params: {

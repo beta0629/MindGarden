@@ -34,7 +34,7 @@ const PendingDepositWidget = ({ widget, user }) => {
       type: 'multi-api',
       endpoints: {
         deposits: {
-          url: '/api/deposits/pending',
+          url: '/api/v1/deposits/pending',
           method: 'GET',
           params: { 
             limit: widget.config?.maxItems || 10,
@@ -43,7 +43,7 @@ const PendingDepositWidget = ({ widget, user }) => {
           }
         },
         stats: {
-          url: '/api/deposits/pending-stats',
+          url: '/api/v1/deposits/pending-stats',
           method: 'GET',
           params: {
             ...(RoleUtils.isConsultant(user) && !RoleUtils.isAdmin(user) && { consultantId: user.id })

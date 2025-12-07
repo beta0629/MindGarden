@@ -27,8 +27,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.servlet.http.HttpSession;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -43,14 +43,26 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @RestController
 @RequestMapping("/api/v1/admin/wellness") // 표준화 2025-12-05: 레거시 경로 제거
-@RequiredArgsConstructor
 public class WellnessAdminController extends BaseApiController {
     
     private final WellnessTemplateService wellnessTemplateService;
-    private final WellnessNotificationScheduler wellnessNotificationScheduler;
+    @Autowired(required = false)
+    private WellnessNotificationScheduler wellnessNotificationScheduler;
     private final OpenAIUsageLogRepository usageLogRepository;
     private final SystemConfigService systemConfigService;
     private final ExchangeRateService exchangeRateService;
+    
+    // 생성자 주입 (스케줄러는 필드 주입으로 선택적 처리)
+    public WellnessAdminController(
+            WellnessTemplateService wellnessTemplateService,
+            OpenAIUsageLogRepository usageLogRepository,
+            SystemConfigService systemConfigService,
+            ExchangeRateService exchangeRateService) {
+        this.wellnessTemplateService = wellnessTemplateService;
+        this.usageLogRepository = usageLogRepository;
+        this.systemConfigService = systemConfigService;
+        this.exchangeRateService = exchangeRateService;
+    }
     
     /**
      * 권한 체크: BRANCH_ADMIN 이상
@@ -80,6 +92,12 @@ public class WellnessAdminController extends BaseApiController {
         }
         
         log.info("💚 웰니스 알림 테스트 발송 시작 - 요청자: {}", currentUser.getName());
+        
+        // 스케줄러가 비활성화된 경우 (로컬 개발 환경)
+        if (wellnessNotificationScheduler == null) {
+            log.warn("⚠️ 웰니스 알림 스케줄러가 비활성화되어 있습니다. 스케줄러 없이 테스트할 수 없습니다.");
+            throw new RuntimeException("웰니스 알림 스케줄러가 비활성화되어 있습니다. application-local.yml에서 scheduler.wellness-notification.enabled=true로 설정하세요.");
+        }
         
         // 스케줄러 메서드 직접 호출
         wellnessNotificationScheduler.sendDailyWellnessTip();

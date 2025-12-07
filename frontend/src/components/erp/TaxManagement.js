@@ -57,7 +57,7 @@ const TaxManagement = () => {
                 taxRate
             };
 
-            const response = await apiPost('/api/admin/salary/tax/calculate', requestData);
+            const response = await apiPost('/api/v1/admin/salary/tax/calculate', requestData);
             if (response && response.success) {
                 showNotification('추가 세금이 계산되었습니다.', 'success');
                 loadTaxStatistics(selectedPeriod);

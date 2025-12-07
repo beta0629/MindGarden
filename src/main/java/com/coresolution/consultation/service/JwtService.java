@@ -88,9 +88,8 @@ public class JwtService {
             claims.put("permissions", permissions);
         }
         
-        log.debug("JWT 토큰 생성: userId={}, tenantId={}, branchId={}, permissions={}", 
+        log.debug("JWT 토큰 생성: userId={}, tenantId={}, permissions={}", 
             user.getId(), user.getTenantId(), 
-            user.getBranch() != null ? user.getBranch().getId() : null, 
             permissions != null ? permissions.size() : 0);
         
         return buildToken(claims, user.getEmail(), jwtExpiration);
@@ -300,7 +299,9 @@ public class JwtService {
     
     /**
      * Phase 3: 토큰에서 branchId 추출
+     * @Deprecated - 표준화 2025-12-07: 브랜치 개념 제거됨, branchId는 더 이상 사용하지 않음
      */
+    @Deprecated
     public Long extractBranchId(String token) {
         try {
             Claims claims = extractAllClaims(token);
@@ -313,16 +314,18 @@ public class JwtService {
             } else if (branchId instanceof Integer) {
                 return ((Integer) branchId).longValue();
             } else if (branchId instanceof String) {
+                // 표준화 2025-12-07: 브랜치 개념 제거됨, branchId 무시
                 try {
                     return Long.parseLong((String) branchId);
                 } catch (NumberFormatException e) {
-                    log.warn("JWT 토큰에서 branchId 파싱 실패: {}", branchId);
+                    // 표준화 2025-12-07: 브랜치 개념 제거됨, 로그 제거
                     return null;
                 }
             }
             return null;
         } catch (Exception e) {
-            log.warn("JWT 토큰에서 branchId 추출 실패: {}", e.getMessage());
+            // 표준화 2025-12-07: 브랜치 개념 제거됨, 로그 제거
+            // log.warn("JWT 토큰에서 branchId 추출 실패: {}", e.getMessage());
             return null;
         }
     }

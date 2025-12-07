@@ -65,10 +65,10 @@ const StatisticsDashboard = ({ userRole = 'ADMIN', userId }) => {
         try {
             // 실제 API 호출
             const [overallStats, trendStats, chartStats, activityStats] = await Promise.all([
-                apiGet('/api/admin/statistics/overall'),
-                apiGet('/api/admin/statistics/trends'),
-                apiGet('/api/admin/statistics/chart-data'),
-                apiGet('/api/admin/statistics/recent-activity')
+                apiGet('/api/v1/admin/statistics/overall'),
+                apiGet('/api/v1/admin/statistics/trends'),
+                apiGet('/api/v1/admin/statistics/chart-data'),
+                apiGet('/api/v1/admin/statistics/recent-activity')
             ]);
 
             const apiData = {

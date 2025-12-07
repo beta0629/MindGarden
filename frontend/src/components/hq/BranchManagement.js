@@ -74,7 +74,7 @@ const BranchManagement = () => {
     const loadBranches = useCallback(async () => {
         setLoading(true);
         try {
-            const response = await apiGet('/api/hq/branch-management/branches');
+            const response = await apiGet('/api/v1/hq/branch-management/branches');
             setBranches(response.data || []);
             if (response.data && response.data.length > 0 && !selectedBranch) {
                 setSelectedBranch(response.data[0]);
@@ -155,7 +155,7 @@ const BranchManagement = () => {
                 reason: transferForm.reason
             };
             
-            const response = await apiPost('/api/hq/branch-management/users/bulk-transfer', requestData);
+            const response = await apiPost('/api/v1/hq/branch-management/users/bulk-transfer', requestData);
             
             if (response.success) {
                 showNotification(response.message, 'success');

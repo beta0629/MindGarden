@@ -37,27 +37,27 @@ const StatisticsGridWidget = ({ widget, user }) => {
       refreshInterval: 300000, // 5분마다 새로고침
       endpoints: [
         {
-          url: '/api/admin/consultants/with-stats',
+          url: '/api/v1/admin/consultants/with-stats',
           key: 'consultants',
           fallback: []
         },
         {
-          url: '/api/admin/clients/with-stats', 
+          url: '/api/v1/admin/clients/with-stats', 
           key: 'clients',
           fallback: []
         },
         {
-          url: '/api/admin/mappings/stats',
+          url: '/api/v1/admin/mappings/stats',
           key: 'mappings',
           fallback: {}
         },
         {
-          url: '/api/admin/schedules/today',
+          url: '/api/v1/admin/schedules/today',
           key: 'schedules',
           fallback: []
         },
         {
-          url: '/api/admin/finance/summary',
+          url: '/api/v1/admin/finance/summary',
           key: 'finance',
           fallback: { totalRevenue: 0, pendingPayments: 0 }
         }

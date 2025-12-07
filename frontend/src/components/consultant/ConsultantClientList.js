@@ -176,7 +176,7 @@ const ConsultantClientList = () => {
     try {
       setLoadingCodes(true);
       console.log('🔄 사용자 상태 코드 로드 시작...');
-      const response = await apiGet('/api/common-codes/STATUS');
+      const response = await apiGet('/api/v1/common-codes/STATUS');
       console.log('📡 API 응답:', response);
       
       if (response && response.length > 0) {

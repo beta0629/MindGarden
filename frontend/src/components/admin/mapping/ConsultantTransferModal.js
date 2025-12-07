@@ -144,7 +144,7 @@ const ConsultantTransferModal = ({
         packagePrice: formData.packagePrice ? parseInt(formData.packagePrice) : null
       };
       
-      const response = await fetch('/api/admin/mappings/transfer', {
+      const response = await fetch('/api/v1/admin/mappings/transfer', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

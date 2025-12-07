@@ -78,7 +78,10 @@ public class SocialLoginResponse {
         private String role;
         private String profileImageUrl;
         private com.coresolution.consultation.entity.Branch branch;
-        private String branchCode;
+        /**
+         * @Deprecated - 표준화 2025-12-07: 브랜치 개념 제거됨
+         */
+        @Deprecated        private String branchCode;
     }
     
     /**

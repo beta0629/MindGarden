@@ -29,7 +29,7 @@ public class ConsultationRecordAlertController {
     @Autowired
     private PlSqlConsultationRecordAlertService consultationRecordAlertService;
     
-    @Autowired
+    @Autowired(required = false)
     private ConsultationRecordAlertScheduler consultationRecordAlertScheduler;
     
     /**
@@ -218,6 +218,28 @@ public class ConsultationRecordAlertController {
             @RequestParam(defaultValue = "1") int daysBack) {
         
         log.info("🔧 수동 상담일지 미작성 확인 API 호출: {}일 전까지", daysBack);
+        
+        // 스케줄러가 비활성화된 경우 (로컬 개발 환경)
+        if (consultationRecordAlertScheduler == null) {
+            log.warn("⚠️ 상담일지 알림 스케줄러가 비활성화되어 있습니다. Service를 직접 사용합니다.");
+            
+            try {
+                Map<String, Object> result = consultationRecordAlertService.autoCreateMissingConsultationRecordAlerts(daysBack);
+                return ResponseEntity.ok(result);
+                
+            } catch (Exception e) {
+                log.error("❌ 수동 상담일지 미작성 확인 API 오류: {}", e.getMessage(), e);
+                
+                Map<String, Object> errorResponse = Map.of(
+                    "success", false,
+                    "message", "수동 상담일지 미작성 확인 중 오류가 발생했습니다: " + e.getMessage(),
+                    "processedDays", 0,
+                    "totalAlertsCreated", 0
+                );
+                
+                return ResponseEntity.internalServerError().body(errorResponse);
+            }
+        }
         
         try {
             Map<String, Object> result = consultationRecordAlertScheduler.manualCheckMissingRecords(daysBack);

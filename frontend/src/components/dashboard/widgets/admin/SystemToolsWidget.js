@@ -44,7 +44,7 @@ const SystemToolsWidget = ({ widget, user }) => {
       label: '캐시 초기화',
       icon: 'bi-trash',
       variant: 'danger',
-      action: { type: 'api', url: '/api/admin/cache/clear', method: 'POST' },
+      action: { type: 'api', url: '/api/v1/admin/cache/clear', method: 'POST' },
       description: '시스템 캐시를 초기화합니다'
     },
     {
@@ -52,7 +52,7 @@ const SystemToolsWidget = ({ widget, user }) => {
       label: '백업 생성',
       icon: 'bi-download',
       variant: 'success',
-      action: { type: 'api', url: '/api/admin/backup/create', method: 'POST' },
+      action: { type: 'api', url: '/api/v1/admin/backup/create', method: 'POST' },
       description: '데이터베이스 백업을 생성합니다'
     }
   ];

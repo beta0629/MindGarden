@@ -57,7 +57,8 @@ public class UserRoleAssignmentResponse {
     
     /**
      * 브랜치 ID
-     */
+      * @Deprecated - 표준화 2025-12-07: 브랜치 개념 제거됨
+ */
     private Long branchId;
     
     /**

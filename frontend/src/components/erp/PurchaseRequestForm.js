@@ -27,7 +27,7 @@ const PurchaseRequestForm = () => {
   const loadItems = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/erp/items');
+      const response = await fetch('/api/v1/erp/items');
       const data = await response.json();
       
       if (data.success) {
@@ -115,7 +115,7 @@ const PurchaseRequestForm = () => {
       // 각 요청을 순차적으로 처리
       const results = [];
       for (const request of requests) {
-        const response = await fetch('/api/erp/purchase-requests', {
+        const response = await fetch('/api/v1/erp/purchase-requests', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded',

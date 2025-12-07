@@ -35,7 +35,7 @@ const SystemMetricsWidget = ({ widget, user }) => {
       type: 'single-api',
       cache: false,
       refreshInterval: 5000, // 5초마다 새로고침
-      url: '/api/monitoring/system-metrics/current'
+      url: '/api/v1/monitoring/system-metrics/current'
     };
   };
 

@@ -33,7 +33,7 @@ const ErpStatsGridWidget = ({ widget, user }) => {
   const getDataSourceConfig = () => {
     return {
       type: 'api',
-      url: '/api/erp/dashboard/statistics',
+      url: '/api/v1/erp/dashboard/statistics',
       cache: true,
       refreshInterval: 300000, // 5분마다 새로고침
       params: {

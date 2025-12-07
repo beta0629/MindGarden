@@ -45,7 +45,8 @@ public class AcademyConsultationCompleteRequest {
         /** 반 ID */
         private String classId;
         
-        /** 브랜치 ID */
+        /** 브랜치 ID  * @Deprecated - 표준화 2025-12-07: 브랜치 개념 제거됨
+ */
         private Long branchId;
         
         /** 수강 시작일 */

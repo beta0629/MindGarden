@@ -50,7 +50,7 @@ const HealingCardWidget = ({ widget, user }) => {
       setLoading(true);
       setError(null);
       
-      const url = dataSource.url || '/api/healing/content';
+      const url = dataSource.url || '/api/v1/healing/content';
       const params = {
         ...dataSource.params,
         userRole: userRole
@@ -77,7 +77,7 @@ const HealingCardWidget = ({ widget, user }) => {
       setLoading(true);
       setError(null);
       
-      const url = dataSource.url || '/api/healing/refresh';
+      const url = dataSource.url || '/api/v1/healing/refresh';
       const params = {
         ...dataSource.params,
         userRole: userRole

@@ -75,6 +75,11 @@ spring:
     out-of-order: false  # Flyway 설정 바인딩 오류 방지
     # 로컬 개발 환경에서는 checksum mismatch를 허용하여 개발 편의성 향상
     # 운영 환경에서는 반드시 validate-on-migrate: true로 설정
+  
+  # Spring 스케줄링 비활성화 (로컬 개발 환경)
+  task:
+    scheduling:
+      enabled: false  # 로컬에서는 모든 스케줄러 비활성화 (무한루프 방지)
 
 # 스케줄러 비활성화 (로컬 개발 환경 - 무한루프 방지)
 scheduler:
@@ -88,12 +93,6 @@ scheduler:
     enabled: false  # 로컬에서는 급여 배치 스케줄러 비활성화
   consultation-record-alert:
     enabled: false  # 로컬에서는 상담일지 알림 스케줄러 비활성화
-
-# Spring 스케줄링 비활성화 (로컬 개발 환경)
-spring:
-  task:
-    scheduling:
-      enabled: false  # 로컬에서는 모든 스케줄러 비활성화 (무한루프 방지)
 
 # ERD 자동 생성 설정 (로컬 개발 환경)
 erd:
@@ -292,3 +291,10 @@ management:
   health:
     redis:
       enabled: false  # Redis Health Check 비활성화
+
+# 로깅 설정 (로컬 개발용 - 한글 인코딩)
+logging:
+  charset:
+    console: UTF-8
+  file:
+    charset: UTF-8

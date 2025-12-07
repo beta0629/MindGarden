@@ -120,7 +120,7 @@ const SessionExtensionModal = ({
 
             console.log('🚀 회기 추가 요청:', requestData);
 
-            const response = await csrfTokenManager.post('/api/admin/session-extensions/requests', requestData);
+            const response = await csrfTokenManager.post('/api/v1/admin/session-extensions/requests', requestData);
             const result = await response.json();
 
             if (result.success !== false) {

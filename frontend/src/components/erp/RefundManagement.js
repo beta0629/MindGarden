@@ -39,7 +39,7 @@ const RefundManagement = () => {
             const [statsRes, historyRes, syncRes] = await Promise.all([
                 fetch(`/api/admin/refund-statistics?period=${selectedPeriod}`),
                 fetch(`/api/admin/refund-history?page=${currentPage}&size=10&period=${selectedPeriod}&status=${selectedStatus}`),
-                fetch('/api/admin/erp-sync-status')
+                fetch('/api/v1/admin/erp-sync-status')
             ]);
 
             if (statsRes.ok) {

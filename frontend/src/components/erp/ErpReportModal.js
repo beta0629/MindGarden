@@ -42,7 +42,7 @@ const ErpReportModal = ({ isOpen, onClose }) => {
      */
     const loadBranches = async () => {
         try {
-            const response = await apiGet('/api/branches');
+            const response = await apiGet('/api/v1/branches');
             if (response && response.success !== false) {
                 setBranches(response.data || []);
             }

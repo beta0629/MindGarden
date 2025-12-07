@@ -74,7 +74,7 @@ const SystemConfigManagement = () => {
             setLoading(true);
             
             // OpenAI 설정 조회
-            const openaiResponse = await apiGet('/api/admin/system-config/openai');
+            const openaiResponse = await apiGet('/api/v1/admin/system-config/openai');
             if (openaiResponse.success) {
                 setConfigs(prev => ({
                     ...prev,
@@ -86,9 +86,9 @@ const SystemConfigManagement = () => {
             
             // 웰니스 설정 조회
             const wellnessConfigs = await Promise.all([
-                apiGet('/api/admin/system-config/WELLNESS_AUTO_SEND_ENABLED'),
-                apiGet('/api/admin/system-config/WELLNESS_SEND_TIME'),
-                apiGet('/api/admin/system-config/WELLNESS_TARGET_ROLES')
+                apiGet('/api/v1/admin/system-config/WELLNESS_AUTO_SEND_ENABLED'),
+                apiGet('/api/v1/admin/system-config/WELLNESS_SEND_TIME'),
+                apiGet('/api/v1/admin/system-config/WELLNESS_TARGET_ROLES')
             ]);
             
             setConfigs(prev => ({
@@ -113,17 +113,17 @@ const SystemConfigManagement = () => {
             
             // OpenAI 설정 저장
             await Promise.all([
-                apiPost('/api/admin/system-config/OPENAI_API_KEY', {
+                apiPost('/api/v1/admin/system-config/OPENAI_API_KEY', {
                     configValue: configs.openaiApiKey,
                     description: 'OpenAI API 키',
                     category: 'AI'
                 }),
-                apiPost('/api/admin/system-config/OPENAI_API_URL', {
+                apiPost('/api/v1/admin/system-config/OPENAI_API_URL', {
                     configValue: configs.openaiApiUrl,
                     description: 'OpenAI API URL',
                     category: 'AI'
                 }),
-                apiPost('/api/admin/system-config/OPENAI_MODEL', {
+                apiPost('/api/v1/admin/system-config/OPENAI_MODEL', {
                     configValue: configs.openaiModel,
                     description: 'OpenAI 모델명',
                     category: 'AI'
@@ -132,17 +132,17 @@ const SystemConfigManagement = () => {
             
             // 웰니스 설정 저장
             await Promise.all([
-                apiPost('/api/admin/system-config/WELLNESS_AUTO_SEND_ENABLED', {
+                apiPost('/api/v1/admin/system-config/WELLNESS_AUTO_SEND_ENABLED', {
                     configValue: configs.wellnessAutoSendEnabled.toString(),
                     description: '웰니스 자동 발송 활성화',
                     category: 'WELLNESS'
                 }),
-                apiPost('/api/admin/system-config/WELLNESS_SEND_TIME', {
+                apiPost('/api/v1/admin/system-config/WELLNESS_SEND_TIME', {
                     configValue: configs.wellnessSendTime,
                     description: '웰니스 발송 시간',
                     category: 'WELLNESS'
                 }),
-                apiPost('/api/admin/system-config/WELLNESS_TARGET_ROLES', {
+                apiPost('/api/v1/admin/system-config/WELLNESS_TARGET_ROLES', {
                     configValue: configs.wellnessTargetRoles,
                     description: '웰니스 발송 대상 역할',
                     category: 'WELLNESS'
@@ -165,7 +165,7 @@ const SystemConfigManagement = () => {
             setTesting(true);
             setTestResult(null);
             
-            const response = await apiPost('/api/admin/wellness/test', {
+            const response = await apiPost('/api/v1/admin/wellness/test', {
                 dayOfWeek: 1,
                 season: 'SPRING',
                 category: 'MENTAL'

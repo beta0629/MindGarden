@@ -330,7 +330,7 @@ const BranchForm = ({
                 showNotification('지점 정보가 수정되었습니다.', 'success');
             } else {
                 // 등록
-                response = await apiPost('/api/hq/branches', submitData);
+                response = await apiPost('/api/v1/hq/branches', submitData);
                 showNotification('새 지점이 등록되었습니다.', 'success');
             }
 

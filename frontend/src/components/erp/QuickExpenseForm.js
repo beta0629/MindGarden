@@ -23,7 +23,7 @@ const QuickExpenseForm = ({ onClose, onSuccess }) => {
   const loadExpenseCodes = async () => {
     try {
       setLoadingCodes(true);
-      const response = await axios.get('/api/erp/common-codes/financial', {
+      const response = await axios.get('/api/v1/erp/common-codes/financial', {
         withCredentials: true
       });
       
@@ -108,7 +108,7 @@ const QuickExpenseForm = ({ onClose, onSuccess }) => {
     setError(null);
 
     try {
-      const response = await axios.post('/api/erp/finance/quick-expense', null, {
+      const response = await axios.post('/api/v1/erp/finance/quick-expense', null, {
         params: {
           category: categoryCode,
           subcategory: subcategoryCode,

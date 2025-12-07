@@ -20,7 +20,7 @@ const ConsultantRecords = () => {
   const loadStatusCodes = useCallback(async () => {
     try {
       setLoadingCodes(true);
-      const response = await apiGet('/api/common-codes/STATUS');
+      const response = await apiGet('/api/v1/common-codes/STATUS');
       if (response && response.length > 0) {
         const consultationStatuses = response.filter(code => 
           // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용

@@ -29,7 +29,7 @@ const ConsultationStatsWidget = ({ widget, user }) => {
 
   const getDataSourceConfig = () => ({
     type: 'api',
-    url: '/api/consultations/stats',
+    url: '/api/v1/consultations/stats',
     method: 'GET',
     params: { 
       period: widget.config?.period || 'month',

@@ -98,7 +98,7 @@ const ConsultantProfileModal = ({
     // 옵션 유형 조회
     const loadOptionTypes = async () => {
         try {
-            const response = await apiGet('/api/admin/salary/option-types');
+            const response = await apiGet('/api/v1/admin/salary/option-types');
             console.log('옵션 유형 조회 응답:', response);
             // API가 직접 배열을 반환하므로 response 자체가 배열인지 확인
             if (Array.isArray(response)) {
@@ -118,7 +118,7 @@ const ConsultantProfileModal = ({
     // 등급 조회
     const loadGrades = async () => {
         try {
-            const response = await apiGet('/api/admin/salary/grades');
+            const response = await apiGet('/api/v1/admin/salary/grades');
             console.log('등급 조회 응답:', response);
             // API가 직접 배열을 반환하므로 response 자체가 배열인지 확인
             if (Array.isArray(response)) {
@@ -153,7 +153,7 @@ const ConsultantProfileModal = ({
     // 급여 유형 조회
     const loadSalaryTypes = async () => {
         try {
-            const response = await apiGet('/api/admin/salary/codes');
+            const response = await apiGet('/api/v1/admin/salary/codes');
             console.log('급여 유형 조회 응답:', response);
             if (response && response.data && response.data.salaryTypes) {
                 setSalaryTypes(response.data.salaryTypes);
@@ -216,7 +216,7 @@ const ConsultantProfileModal = ({
                 businessName: salaryFormData.businessName
             };
 
-            const response = await apiPost('/api/admin/salary/profiles', profileData);
+            const response = await apiPost('/api/v1/admin/salary/profiles', profileData);
             
             if (response.success) {
                 notificationManager.show('급여 프로필이 성공적으로 저장되었습니다.', 'info');

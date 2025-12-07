@@ -54,7 +54,7 @@ const ClientRegistrationWidget = ({ widget, user }) => {
   const getDataSourceConfig = () => {
     return {
       type: 'form-submit',
-      url: '/api/admin/clients',
+      url: '/api/v1/admin/clients',
       method: 'POST',
       validateOnSubmit: true,
       successMessage: '내담자가 성공적으로 등록되었습니다.',

@@ -122,7 +122,7 @@ const ClientSelectionStep = ({
         try {
             console.log('👤 전체 매핑에서 상담사별 필터링 시작');
             
-            const response = await fetch('/api/admin/mappings/active', {
+            const response = await fetch('/api/v1/admin/mappings/active', {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',

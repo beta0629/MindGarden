@@ -72,7 +72,7 @@ const BudgetManagement = () => {
         return;
       }
 
-      const response = await apiGet('/api/erp/budgets');
+      const response = await apiGet('/api/v1/erp/budgets');
       if (response.success) {
         setBudgets(response.data || []);
       } else {
@@ -152,7 +152,7 @@ const BudgetManagement = () => {
   const handleCreateBudget = async () => {
     try {
       setLoading(true);
-      const response = await apiPost('/api/erp/budgets', newBudget);
+      const response = await apiPost('/api/v1/erp/budgets', newBudget);
       if (response.success) {
         setShowCreateModal(false);
         setNewBudget({

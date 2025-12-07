@@ -36,7 +36,7 @@ const ConsultationSummaryWidget = ({ widget, user }) => {
       type: 'multi-api',
       endpoints: {
         summary: {
-          url: '/api/consultations/summary',
+          url: '/api/v1/consultations/summary',
           method: 'GET',
           params: { 
             period,
@@ -45,7 +45,7 @@ const ConsultationSummaryWidget = ({ widget, user }) => {
           }
         },
         trends: {
-          url: '/api/consultations/trends',
+          url: '/api/v1/consultations/trends',
           method: 'GET',
           params: {
             period,

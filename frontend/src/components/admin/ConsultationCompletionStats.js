@@ -103,7 +103,7 @@ const ConsultationCompletionStats = () => {
             
             const url = period 
                 ? `/api/admin/statistics/consultation-completion?period=${period}`
-                : '/api/admin/statistics/consultation-completion';
+                : '/api/v1/admin/statistics/consultation-completion';
             
             const response = await apiGet(url);
             console.log('📊 상담 완료 통계 API 응답:', response);

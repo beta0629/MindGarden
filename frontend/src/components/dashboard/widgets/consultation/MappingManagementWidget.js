@@ -32,7 +32,7 @@ const MappingManagementWidget = ({ widget, user }) => {
       type: 'multi-api',
       endpoints: {
         mappings: {
-          url: '/api/admin/mappings',
+          url: '/api/v1/admin/mappings',
           method: 'GET',
           params: { 
             limit: widget.config?.maxItems || 10,
@@ -40,7 +40,7 @@ const MappingManagementWidget = ({ widget, user }) => {
           }
         },
         stats: {
-          url: '/api/admin/mappings/stats',
+          url: '/api/v1/admin/mappings/stats',
           method: 'GET'
         }
       },

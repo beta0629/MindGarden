@@ -65,7 +65,7 @@ const AccountIntegrationModal = ({
 
         setIsLoading(true);
         try {
-            const response = await apiPost('/api/account-integration/send-verification-code', null, {
+            const response = await apiPost('/api/v1/account-integration/send-verification-code', null, {
                 email: formData.existingEmail
             });
 
@@ -93,7 +93,7 @@ const AccountIntegrationModal = ({
 
         setIsLoading(true);
         try {
-            const response = await apiPost('/api/account-integration/verify-code', null, {
+            const response = await apiPost('/api/v1/account-integration/verify-code', null, {
                 email: formData.existingEmail,
                 code: formData.verificationCode
             });
@@ -132,7 +132,7 @@ const AccountIntegrationModal = ({
                 finalNickname: formData.finalNickname
             };
 
-            const response = await apiPost('/api/account-integration/integrate', requestData);
+            const response = await apiPost('/api/v1/account-integration/integrate', requestData);
 
             if (response.success) {
                 notificationManager.showToast('계정 통합이 완료되었습니다!', 'success');

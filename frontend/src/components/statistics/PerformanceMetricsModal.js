@@ -55,7 +55,7 @@ const PerformanceMetricsModal = ({ isOpen, onClose }) => {
      */
     const loadBranches = async () => {
         try {
-            const response = await apiGet('/api/branches');
+            const response = await apiGet('/api/v1/branches');
             if (response && response.success !== false) {
                 setBranches(response.data || []);
             }
@@ -102,7 +102,7 @@ const PerformanceMetricsModal = ({ isOpen, onClose }) => {
         try {
             setRecalculating(true);
             
-            const response = await apiPost('/api/statistics/recalculate', {
+            const response = await apiPost('/api/v1/statistics/recalculate', {
                 startDate: dateRange.startDate,
                 endDate: dateRange.endDate,
                 // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거

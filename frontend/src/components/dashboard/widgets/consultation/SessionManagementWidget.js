@@ -30,7 +30,7 @@ const SessionManagementWidget = ({ widget, user }) => {
   const getDataSourceConfig = () => {
     const baseEndpoints = {
       sessions: {
-        url: '/api/sessions',
+        url: '/api/v1/sessions',
         method: 'GET',
         params: { 
           limit: widget.config?.maxItems || 10,
@@ -39,7 +39,7 @@ const SessionManagementWidget = ({ widget, user }) => {
         }
       },
       stats: {
-        url: '/api/sessions/stats',
+        url: '/api/v1/sessions/stats',
         method: 'GET',
         params: {
           ...(RoleUtils.isConsultant(user) && !RoleUtils.isAdmin(user) && { consultantId: user.id })
@@ -49,7 +49,7 @@ const SessionManagementWidget = ({ widget, user }) => {
 
     if (widget.config?.showExtensionRequests !== false) {
       baseEndpoints.extensionRequests = {
-        url: '/api/sessions/extension-requests',
+        url: '/api/v1/sessions/extension-requests',
         method: 'GET',
         params: {
           status: 'pending',

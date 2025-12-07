@@ -25,7 +25,10 @@ public class AttendanceResponse {
     
     private String attendanceId;
     private String tenantId;
-    private Long branchId;
+    /**
+     * @Deprecated - 표준화 2025-12-07: 브랜치 개념 제거됨
+     */
+    @Deprecated    private Long branchId;
     private String enrollmentId;
     private String scheduleId;
     private LocalDate attendanceDate;

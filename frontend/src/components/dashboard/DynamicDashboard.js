@@ -309,7 +309,7 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
             color: 'success',
             dataSource: {
               type: 'api',
-              url: '/api/admin/branding'
+              url: '/api/v1/admin/branding'
             }
           }
         },
@@ -604,7 +604,7 @@ const WidgetBasedDashboard = ({ dashboardConfig, dashboard, user, businessType: 
           console.debug(`current-user에서 업종 정보 조회 성공: ${user.tenantId} → ${currentUserInfo.businessType}`);
         } else {
           // 폴백: 브랜딩 정보에서 테넌트 정보 추출
-          const brandingInfo = await apiGet('/api/admin/branding');
+          const brandingInfo = await apiGet('/api/v1/admin/branding');
           if (brandingInfo?.tenantInfo?.businessType) {
             setBusinessType(brandingInfo.tenantInfo.businessType);
             console.debug(`브랜딩 정보에서 업종 정보 조회: ${brandingInfo.tenantInfo.businessType}`);

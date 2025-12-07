@@ -65,8 +65,10 @@ public class RegisterRequest {
     private String role;
     
     /**
-     * 지점 코드 (지점별 사용자 등록 시)
+     * @Deprecated - 표준화 2025-12-07: 브랜치 개념 제거됨, tenantId만 사용
+     * 레거시 데이터 호환을 위해 필드 유지 (NULL 허용)
      */
+    @Deprecated
     private String branchCode;
 
     /**

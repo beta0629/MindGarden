@@ -27,7 +27,10 @@ public class BranchLoginRequest {
      */
     @Pattern(regexp = "^[A-Z0-9]*$", message = "지점 코드는 영대문자와 숫자만 사용 가능합니다")
     @Size(max = 10, message = "지점 코드는 10자 이하여야 합니다")
-    private String branchCode;
+    /**
+     * @Deprecated - 표준화 2025-12-07: 브랜치 개념 제거됨
+     */
+    @Deprecated    private String branchCode;
     
     /**
      * 이메일

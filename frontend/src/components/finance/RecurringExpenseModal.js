@@ -63,7 +63,7 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
         try {
             setLoading(true);
             console.log('🔄 반복 지출 목록 API 호출 시작');
-            const response = await apiGet('/api/admin/recurring-expenses');
+            const response = await apiGet('/api/v1/admin/recurring-expenses');
             console.log('📋 반복 지출 목록 API 응답:', response);
             if (response && response.success !== false) {
                 setExpenses(response.data || []);
@@ -81,7 +81,7 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
      */
     const loadStatistics = async () => {
         try {
-            const response = await apiGet('/api/admin/statistics/recurring-expenses');
+            const response = await apiGet('/api/v1/admin/statistics/recurring-expenses');
             if (response && response.success !== false) {
                 setStatistics(response.data);
             }
@@ -95,7 +95,7 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
      */
     const loadCategories = async () => {
         try {
-            const response = await apiGet('/api/common-codes/FINANCIAL_CATEGORY');
+            const response = await apiGet('/api/v1/common-codes/FINANCIAL_CATEGORY');
             if (response && Array.isArray(response)) {
                 setCategories(response);
             } else if (response && response.success !== false) {
@@ -178,7 +178,7 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
             if (editingExpense) {
                 response = await apiPut(`/api/admin/recurring-expenses/${editingExpense.id}`, expenseData);
             } else {
-                response = await apiPost('/api/admin/recurring-expenses', expenseData);
+                response = await apiPost('/api/v1/admin/recurring-expenses', expenseData);
             }
             
             if (response && response.success !== false) {

@@ -104,7 +104,7 @@ const BranchUserTransfer = ({
                 reason: transferForm.reason || '지점 이동'
             };
 
-            const response = await apiPost('/api/hq/branches/users/transfer', requestData);
+            const response = await apiPost('/api/v1/hq/branches/users/transfer', requestData);
             
             if (response.success) {
                 showNotification(`성공적으로 ${selectedUsers.length}명의 사용자를 이동했습니다.`, 'success');

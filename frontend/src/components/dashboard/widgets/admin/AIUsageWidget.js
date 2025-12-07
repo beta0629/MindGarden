@@ -34,7 +34,7 @@ const AIUsageWidget = ({ widget, user }) => {
       type: 'single-api',
       cache: false,
       refreshInterval: 60000, // 1분마다 새로고침
-      url: '/api/monitoring/ai-usage/detailed'
+      url: '/api/v1/monitoring/ai-usage/detailed'
     };
   };
 

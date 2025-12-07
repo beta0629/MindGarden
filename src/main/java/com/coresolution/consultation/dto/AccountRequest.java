@@ -24,7 +24,10 @@ public class AccountRequest {
     @Size(max = 100, message = "예금주명은 100자를 초과할 수 없습니다")
     private String accountHolder;
     
-    private Long branchId;
+    /**
+     * @Deprecated - 표준화 2025-12-07: 브랜치 개념 제거됨
+     */
+    @Deprecated    private Long branchId;
     
     private Boolean isPrimary = false;
     

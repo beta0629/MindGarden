@@ -71,7 +71,7 @@ const ConsultantManagement = ({ onUpdate, showToast }) => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const response = await fetch('/api/admin/consultants', {
+            const response = await fetch('/api/v1/admin/consultants', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(form)

@@ -28,7 +28,7 @@ const PaymentSessionsWidget = ({ widget, user }) => {
     type: 'api',
     cache: true,
     refreshInterval: 300000, // 5분마다 새로고침 (결제 정보는 자주 변경되지 않음)
-    url: '/api/admin/mappings/client',
+    url: '/api/v1/admin/mappings/client',
     params: {
       clientId: user.id
     },

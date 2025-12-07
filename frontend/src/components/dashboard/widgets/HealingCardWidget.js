@@ -39,7 +39,7 @@ const HealingCardWidget = ({ widget, user }) => {
       type: 'api',
       cache: false, // 힐링 컨텐츠는 항상 최신 상태 유지
       refreshInterval: 300000, // 5분마다 자동 새로고침
-      url: '/api/healing/content',
+      url: '/api/v1/healing/content',
       params: params
     };
   };

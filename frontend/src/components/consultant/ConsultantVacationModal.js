@@ -51,7 +51,7 @@ const ConsultantVacationModal = ({
     useEffect(() => {
         const loadVacationTypeCodes = async () => {
             try {
-                const response = await apiGet('/api/common-codes/VACATION_TYPE');
+                const response = await apiGet('/api/v1/common-codes/VACATION_TYPE');
                 if (response && response.length > 0) {
                     const allowedTypes = [
                         'MORNING_HALF_DAY',
@@ -112,7 +112,7 @@ const ConsultantVacationModal = ({
 
             console.log('🏖️ 휴가 등록 요청:', requestData);
 
-            const response = await csrfTokenManager.post('/api/consultant/vacation', requestData);
+            const response = await csrfTokenManager.post('/api/v1/consultant/vacation', requestData);
 
             if (response.ok) {
                 const result = await response.json();

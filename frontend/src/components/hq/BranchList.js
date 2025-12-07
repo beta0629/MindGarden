@@ -44,7 +44,7 @@ const BranchList = ({
     const loadBranches = useCallback(async () => {
         setLoading(true);
         try {
-            const response = await apiGet('/api/hq/branches');
+            const response = await apiGet('/api/v1/hq/branches');
             setBranches(response.data || []);
         } catch (error) {
             console.error('지점 목록 로드 실패:', error);

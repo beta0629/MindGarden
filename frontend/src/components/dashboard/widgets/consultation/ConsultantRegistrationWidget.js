@@ -52,7 +52,7 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
   const getDataSourceConfig = () => {
     return {
       type: 'form-submit',
-      url: '/api/admin/consultants',
+      url: '/api/v1/admin/consultants',
       method: 'POST',
       validateOnSubmit: true,
       successMessage: '상담사가 성공적으로 등록되었습니다.',

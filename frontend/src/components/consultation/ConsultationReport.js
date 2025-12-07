@@ -49,7 +49,7 @@ const ConsultationReport = () => {
   const loadPeriodCodes = useCallback(async () => {
     try {
       setLoadingCodes(true);
-      const response = await apiGet('/api/common-codes/REPORT_PERIOD');
+      const response = await apiGet('/api/v1/common-codes/REPORT_PERIOD');
       if (response && response.length > 0) {
         const uniqueCodes = response.reduce((acc, code) => {
           if (!acc.find(item => item.codeValue === code.codeValue)) {
@@ -77,7 +77,7 @@ const ConsultationReport = () => {
   const loadYearCodes = useCallback(async () => {
     try {
       setLoadingYearCodes(true);
-      const response = await apiGet('/api/common-codes/YEAR_RANGE');
+      const response = await apiGet('/api/v1/common-codes/YEAR_RANGE');
       if (response && response.length > 0) {
         const uniqueCodes = response.reduce((acc, code) => {
           if (!acc.find(item => item.codeValue === code.codeValue)) {
@@ -104,7 +104,7 @@ const ConsultationReport = () => {
   const loadMonthCodes = useCallback(async () => {
     try {
       setLoadingMonthCodes(true);
-      const response = await apiGet('/api/common-codes/MONTH_RANGE');
+      const response = await apiGet('/api/v1/common-codes/MONTH_RANGE');
       if (response && response.length > 0) {
         const uniqueCodes = response.reduce((acc, code) => {
           if (!acc.find(item => item.codeValue === code.codeValue)) {

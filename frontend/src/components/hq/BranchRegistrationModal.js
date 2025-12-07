@@ -147,7 +147,7 @@ const handleSubmit = async (e) => {
 
     setLoading(true);
     try {
-        const response = await apiPost('/api/hq/branches', {
+        const response = await apiPost('/api/v1/hq/branches', {
             branchName: formData.branchName,
             // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
             branchCode: formData.branchCode,

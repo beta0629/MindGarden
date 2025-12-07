@@ -219,7 +219,7 @@ const ClientSelector = ({
      */
     const getClientMappingInfo = async (client) => {
         const API_ENDPOINTS = {
-            CHECK_MAPPING: '/api/schedules/client/mapping/check'
+            CHECK_MAPPING: '/api/v1/schedules/client/mapping/check'
         };
         const MESSAGES = {
             NO_MAPPING: '매핑이 설정되지 않은 내담자입니다.',

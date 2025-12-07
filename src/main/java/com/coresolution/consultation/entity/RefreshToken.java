@@ -54,7 +54,11 @@ public class RefreshToken extends BaseEntity {
      * @Deprecated - 🚨 레거시 호환: 브랜치 ID 기반 필터링 사용 금지
      * 레거시 데이터 호환을 위해 필드 유지 (NULL 허용)
      * 새로운 코드에서는 사용하지 마세요. 테넌트 ID만 사용하세요.
-     */
+      * @Deprecated - 표준화 2025-12-07: 브랜치 개념 제거됨
+  * @Deprecated - 표준화 2025-12-07: 브랜치 개념 제거됨
+  * @Deprecated - 표준화 2025-12-07: 브랜치 개념 제거됨
+  * @Deprecated - 표준화 2025-12-07: 브랜치 개념 제거됨
+ */
     @Column(name = "branch_id")
     private Long branchId;
     

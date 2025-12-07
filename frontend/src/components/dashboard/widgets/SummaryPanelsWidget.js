@@ -50,7 +50,7 @@ const SummaryPanelsWidget = ({ widget, user }) => {
     if (RoleUtils.isConsultant(user)) {
       return {
         ...baseConfig,
-        url: '/api/schedules',
+        url: '/api/v1/schedules',
         params: { ...baseConfig.params, userRole: 'CONSULTANT' }
       };
     } else if (RoleUtils.isAdmin(user) || RoleUtils.hasRole(user, USER_ROLES.HQ_MASTER)) {

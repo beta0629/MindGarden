@@ -146,7 +146,7 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
      */
     const loadSpecialties = async () => {
         try {
-            const response = await apiGet('/api/common-codes/SPECIALTY');
+            const response = await apiGet('/api/v1/common-codes/SPECIALTY');
             if (response && Array.isArray(response)) {
                 setSpecialties(response);
             } else if (response && response.success !== false) {
@@ -260,7 +260,7 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
         try {
             setLoading(true);
             
-            const response = await apiPost('/api/common-codes', {
+            const response = await apiPost('/api/v1/common-codes', {
                 codeGroup: 'CONSULTANT_SPECIALTY',
                 codeValue: newSpecialty.trim().toUpperCase().replace(/\s+/g, '_'),
                 codeLabel: newSpecialty.trim(),

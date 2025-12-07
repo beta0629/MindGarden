@@ -1,7 +1,36 @@
 {
-    "recommendations": [
-        "redhat.java",
-        "vscjava.vscode-java-pack"
-    ]
+  "recommendations": [
+    // 필수 Java 확장
+    "vscjava.vscode-java-pack",
+    "redhat.java",
+    "vscjava.vscode-java-debug",
+    "vscjava.vscode-java-test",
+    "vscjava.vscode-maven",
+    "vscjava.vscode-java-dependency",
+    
+    // Spring Boot 지원
+    "vmware.vscode-spring-boot",
+    "vmware.vscode-spring-boot-dashboard",
+    "vmware.vscode-spring-initializr",
+    
+    // 코드 품질
+    "sonarsource.sonarlint-vscode",
+    "checkstyle.checkstyle",
+    
+    // 데이터베이스
+    "mtxr.sqltools",
+    "mtxr.sqltools-driver-mysql",
+    
+    // 유틸리티
+    "editorconfig.editorconfig",
+    "github.vscode-pull-request-github",
+    "eamodio.gitlens",
+    
+    // 기타 도구
+    "redhat.vscode-yaml",
+    "ms-azuretools.vscode-docker"
+  ],
+  "unwantedRecommendations": [
+    "vscjava.vscode-gradle"
+  ]
 }
-

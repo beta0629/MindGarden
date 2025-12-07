@@ -32,7 +32,7 @@ const PendingDepositsWidget = ({ widget, user }) => {
   const getDataSourceConfig = () => {
     return {
       type: 'api',
-      url: '/api/admin/pending-deposits',
+      url: '/api/v1/admin/pending-deposits',
       cache: true,
       refreshInterval: 180000, // 3분마다 새로고침
       params: {

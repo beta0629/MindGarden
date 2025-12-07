@@ -133,6 +133,10 @@ public class Schedule extends BaseEntity {
      * 새로운 코드에서는 사용하지 마세요. 테넌트 ID만 사용하세요.
      */
     @Size(max = 20, message = "지점코드는 20자 이하여야 합니다.")
+    /**
+     * @Deprecated - 표준화 2025-12-07: 브랜치 개념 제거됨
+     */
+    @Deprecated
     @Column(name = "branch_code", length = 20)
     private String branchCode;
 

@@ -538,7 +538,7 @@ const AdminDashboard = ({ user: propUser }) => {
 
     const viewLogs = async () => {
         try {
-            const response = await fetch('/api/admin/logs/recent');
+            const response = await fetch('/api/v1/admin/logs/recent');
             if (response.ok) {
                 const logs = await response.json();
                 const logWindow = window.open('', '_blank');
@@ -563,7 +563,7 @@ const AdminDashboard = ({ user: propUser }) => {
 
     const clearCache = async () => {
         try {
-            const response = await csrfTokenManager.post('/api/admin/cache/clear');
+            const response = await csrfTokenManager.post('/api/v1/admin/cache/clear');
 
             if (response.ok) {
                 showToast('캐시가 성공적으로 초기화되었습니다.', 'success');
@@ -579,7 +579,7 @@ const AdminDashboard = ({ user: propUser }) => {
 
     const createBackup = async () => {
         try {
-            const response = await csrfTokenManager.post('/api/admin/backup/create');
+            const response = await csrfTokenManager.post('/api/v1/admin/backup/create');
 
             if (response.ok) {
                 const backupData = await response.json();

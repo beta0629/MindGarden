@@ -25,7 +25,10 @@ public class BillingScheduleResponse {
     
     private String billingScheduleId;
     private String tenantId;
-    private Long branchId;
+    /**
+     * @Deprecated - 표준화 2025-12-07: 브랜치 개념 제거됨
+     */
+    @Deprecated    private Long branchId;
     private String name;
     private String description;
     private AcademyBillingSchedule.BillingCycle billingCycle;

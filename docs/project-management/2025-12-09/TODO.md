@@ -20,6 +20,16 @@
 - [x] 표준화 검증 보고서 업데이트
 - [x] 문서를 오늘 날짜 폴더로 이동
 
+### 통합 회계 대시보드 테넌트 필터링 개선
+- [x] 통합 회계 대시보드 테넌트 정보 조회 로직 강화
+  - [x] `SessionUtils.getTenantId()` 실패 시 User 엔티티에서 직접 조회
+  - [x] 테넌트 정보 없을 때 명확한 오류 메시지 반환
+  - [x] 세션에 테넌트 ID 캐싱으로 성능 개선
+- [x] 수입/지출 데이터 테넌트 ID 필터링 적용
+  - [x] `ErpServiceImpl.getBranchFinanceDashboard()`에서 `getTransactionsByBranch()` 사용
+  - [x] 테넌트별 데이터만 조회하도록 수정
+- [x] Git 커밋 및 푸시 완료
+
 ---
 
 ## 🎯 우선순위 높음

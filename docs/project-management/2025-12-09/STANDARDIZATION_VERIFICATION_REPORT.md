@@ -47,6 +47,35 @@
 
 ## 🎯 2025-12-09 완료 작업
 
+### 통합 회계 대시보드 테넌트 필터링 개선 ✅ 완료
+
+**작업 내용:**
+1. **ErpController 테넌트 ID 조회 로직 강화**
+   - `SessionUtils.getTenantId()` 실패 시 User 엔티티에서 직접 조회
+   - 테넌트 정보 없을 때 명확한 오류 메시지 반환
+   - 세션에 테넌트 ID 캐싱으로 성능 개선
+
+2. **수입/지출 데이터 테넌트 ID 필터링 적용**
+   - `ErpServiceImpl.getBranchFinanceDashboard()`에서 `getTransactions()` 대신 `getTransactionsByBranch()` 사용
+   - 테넌트별 데이터만 조회하도록 수정
+   - 모든 테넌트 데이터가 섞여 표시되던 문제 해결
+
+**수정 파일:**
+- `src/main/java/com/coresolution/consultation/controller/ErpController.java`
+- `src/main/java/com/coresolution/consultation/service/impl/ErpServiceImpl.java`
+
+**표준화 원칙 준수:**
+- ✅ 테넌트 ID 기반 데이터 조회 (표준화 원칙)
+- ✅ 하드코딩 제거 (동적 조회)
+- ✅ 에러 처리 개선 (명확한 메시지)
+
+**커밋 정보:**
+- 커밋 해시: `3c62f381`
+- 브랜치: `develop`
+- 커밋 메시지: `feat: 통합 회계 대시보드 테넌트 필터링 및 수입/지출 데이터 필터링 개선`
+
+---
+
 ### AdminController tenantId 표준화 ✅ 완료
 **표준**: 모든 tenantId 조회는 `SessionUtils.getTenantId()` 사용 필수, 직접 `currentUser.getTenantId()` 사용 금지
 

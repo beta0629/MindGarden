@@ -4,7 +4,10 @@
 /* ===== 1. 통합 디자인 토큰 (CI/BI 대응) ===== */
 @import './unified-design-tokens.css';
 
-/* ===== 1-1. 기존 핵심 변수 시스템 (호환성 유지) ===== */
+/* ===== 1-1. 표준 디자인 시스템 (버튼, 모달, 카드, 레이아웃) ===== */
+@import './mindgarden-design-system.css';
+
+/* ===== 1-2. 기존 핵심 변수 시스템 (호환성 유지) ===== */
 @import './00-core/_variables.css';
 @import './00-core/_component-variables.css';
 

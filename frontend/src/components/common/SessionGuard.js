@@ -36,6 +36,7 @@ const SessionGuard = ({ children }) => {
         '/auth/oauth2/callback',
         '/design-system',
         '/design-system-v2',
+        '/filter-search',
         '/test/notifications',
         '/test/payment',
         '/test/integration',

@@ -12,7 +12,10 @@ const PUBLIC_PATHS = [
   '/register',
   '/tablet/register',
   '/forgot-password',
-  '/reset-password'
+  '/reset-password',
+  '/filter-search',
+  '/design-system',
+  '/design-system-v2'
 ];
 
 const PUBLIC_PREFIXES = [

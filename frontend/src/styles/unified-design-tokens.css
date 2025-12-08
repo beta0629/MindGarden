@@ -403,6 +403,34 @@
   --tenant-primary-dark: var(--cs-primary-600);
   --tenant-primary-hover: var(--cs-primary-600);
 
+  /* ===== FILTER/SEARCH COMPONENT COLORS (CI 연동) ===== */
+  /* CI 색상 변경 시 이 변수들만 수정하면 필터/검색 컴포넌트 전체 색상이 변경됩니다 */
+  --filter-search-primary: var(--tenant-primary, var(--cs-primary-500));
+  --filter-search-primary-light: var(--cs-primary-100);
+  --filter-search-primary-medium: var(--cs-primary-200);
+  --filter-search-primary-dark: var(--cs-primary-700);
+  --filter-search-primary-hover: var(--tenant-primary-hover, var(--cs-primary-600));
+  --filter-search-primary-active: var(--cs-primary-700);
+  
+  --filter-search-secondary: var(--tenant-secondary, var(--cs-secondary-500));
+  --filter-search-secondary-light: var(--cs-secondary-50);
+  --filter-search-secondary-medium: var(--cs-secondary-200);
+  --filter-search-secondary-dark: var(--cs-secondary-700);
+  
+  --filter-search-border: var(--cs-secondary-200);
+  --filter-search-border-hover: var(--filter-search-primary);
+  --filter-search-background: var(--color-white);
+  --filter-search-background-hover: var(--cs-secondary-50);
+  
+  --filter-search-text: var(--cs-secondary-900);
+  --filter-search-text-secondary: var(--cs-secondary-500);
+  --filter-search-text-placeholder: var(--cs-secondary-400);
+  
+  --filter-search-badge: var(--cs-error-500);
+  --filter-search-chip-bg: var(--filter-search-primary-light);
+  --filter-search-chip-border: var(--filter-search-primary-medium);
+  --filter-search-chip-text: var(--filter-search-primary-dark);
+
   /* ===== PRIMARY ===== */
   --bg-primary: var(--mg-white);
   --button-primary-bg: var(--mint-green);

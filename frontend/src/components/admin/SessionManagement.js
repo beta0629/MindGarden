@@ -109,7 +109,8 @@ const SessionManagement = () => {
     const loadMappingStatusCodes = useCallback(async () => {
         try {
             setLoadingCodes(true);
-            const response = await apiGet('/api/v1/common-codes/MAPPING_STATUS');
+            // 표준화 2025-12-08: 올바른 API 경로 사용 (/groups/{codeGroup})
+            const response = await apiGet('/api/v1/common-codes/groups/MAPPING_STATUS');
             if (response && response.length > 0) {
                 const options = response.map(code => ({
                     value: code.codeValue,

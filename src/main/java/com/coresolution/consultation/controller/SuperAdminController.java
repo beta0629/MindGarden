@@ -73,21 +73,21 @@ public class SuperAdminController extends BaseApiController {
             throw new RuntimeException("이미 존재하는 이메일입니다.");
         }
         
-        // 사용자명 중복 확인 (테넌트별)
+        // 사용자 ID 중복 확인 (테넌트별)
         String tenantId = TenantContextHolder.getTenantId();
         if (tenantId == null) {
             // 세션에서 tenantId 가져오기 시도
             tenantId = SessionUtils.getTenantId(session);
         }
         if (tenantId != null && !tenantId.isEmpty()) {
-            if (userRepository.existsByTenantIdAndUsername(tenantId, request.getUsername())) {
-                throw new RuntimeException("이미 존재하는 사용자명입니다.");
+            if (userRepository.existsByTenantIdAndUserId(tenantId, request.getUserId())) {
+                throw new RuntimeException("이미 존재하는 사용자 ID입니다.");
             }
         } else {
             // 레거시 호환: tenantId가 없을 경우 전체 검사 (deprecated 메서드 사용)
-            log.warn("⚠️ tenantId가 없어 전체 사용자명 중복 검사 수행: username={}", request.getUsername());
-            if (userRepository.existsByUsername(request.getUsername())) {
-                throw new RuntimeException("이미 존재하는 사용자명입니다.");
+            log.warn("⚠️ tenantId가 없어 전체 사용자 ID 중복 검사 수행: userId={}", request.getUserId());
+            if (userRepository.existsByUserId(request.getUserId())) {
+                throw new RuntimeException("이미 존재하는 사용자 ID입니다.");
             }
         }
         
@@ -99,7 +99,7 @@ public class SuperAdminController extends BaseApiController {
         Map<String, Object> data = new HashMap<>();
         data.put("id", superAdmin.getId());
         data.put("email", superAdmin.getEmail());
-        data.put("username", superAdmin.getUsername());
+        data.put("userId", superAdmin.getUserId());
         data.put("role", superAdmin.getRole());
         data.put("createdAt", superAdmin.getCreatedAt());
         

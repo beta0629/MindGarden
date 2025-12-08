@@ -250,13 +250,42 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
     const loadConsultants = useCallback(async () => {
         try {
             setLoadingConsultants(true);
-            const response = await apiGet('/api/v1/admin/consultants/with-vacation?date=' + new Date().toISOString().split('T')[0]);
+            const dateStr = new Date().toISOString().split('T')[0];
+            console.log('👥 상담사 목록 로드 시작: date=', dateStr);
             
-            if (response && response.success) {
-                setConsultants(response.data || []);
+            const response = await apiGet(`/api/v1/admin/consultants/with-vacation?date=${dateStr}`);
+            
+            console.log('👥 상담사 목록 API 응답:', response);
+            console.log('👥 응답 타입:', typeof response, Array.isArray(response));
+            
+            // apiGet은 이미 ApiResponse의 data를 추출하므로, response는 { consultants: [...], count: N } 형태
+            let consultantsList = [];
+            
+            if (response) {
+                if (response.consultants && Array.isArray(response.consultants)) {
+                    consultantsList = response.consultants;
+                    console.log('👥 response.consultants에서 추출:', consultantsList.length, '개');
+                } else if (Array.isArray(response)) {
+                    consultantsList = response;
+                    console.log('👥 response (배열)에서 추출:', consultantsList.length, '개');
+                } else if (response.data && Array.isArray(response.data)) {
+                    consultantsList = response.data;
+                    console.log('👥 response.data (배열)에서 추출:', consultantsList.length, '개');
+                } else if (response.success && response.data) {
+                    if (response.data.consultants && Array.isArray(response.data.consultants)) {
+                        consultantsList = response.data.consultants;
+                        console.log('👥 response.success.data.consultants에서 추출:', consultantsList.length, '개');
+                    } else if (Array.isArray(response.data)) {
+                        consultantsList = response.data;
+                        console.log('👥 response.success.data (배열)에서 추출:', consultantsList.length, '개');
+                    }
+                }
             }
+            
+            console.log('👥 최종 상담사 목록:', consultantsList);
+            setConsultants(consultantsList);
         } catch (error) {
-            console.error('상담사 목록 로드 실패:', error);
+            console.error('❌ 상담사 목록 로드 실패:', error);
             setConsultants([]);
         } finally {
             setLoadingConsultants(false);
@@ -303,19 +332,55 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
             const response = await apiGet(`${url}${separator}_t=${timestamp}`);
 
             console.log('📅 API 응답:', response);
+            console.log('📅 API 응답 타입:', typeof response, Array.isArray(response));
+            console.log('📅 API 응답 키:', response ? Object.keys(response) : 'null');
 
             let scheduleEvents = [];
+            
+            // apiGet은 이미 ApiResponse의 data를 추출하므로, response는 data 부분만 받음
+            // 응답 구조: { schedules: [...], count: N, ... } 또는 배열
             
             // 응답이 배열인 경우 (상담사 API 응답)
             if (Array.isArray(response)) {
                 console.log('📅 배열 형태 응답 받음:', response);
                 scheduleEvents = response.map(schedule => {
                     console.log('📅 스케줄 데이터 처리:', schedule);
+                    
+                    // 날짜/시간 형식 검증 및 변환
+                    let startDateStr = '';
+                    let endDateStr = '';
+                    
+                    if (schedule.date) {
+                        // LocalDate는 "YYYY-MM-DD" 형식
+                        const dateStr = schedule.date.includes('T') 
+                            ? schedule.date.split('T')[0] 
+                            : schedule.date;
+                        
+                        // LocalTime은 "HH:mm:ss" 또는 "HH:mm" 형식
+                        const startTimeStr = schedule.startTime 
+                            ? (schedule.startTime.includes('T') 
+                                ? schedule.startTime.split('T')[1] 
+                                : schedule.startTime).split('.')[0] // 밀리초 제거
+                            : '00:00:00';
+                        
+                        const endTimeStr = schedule.endTime 
+                            ? (schedule.endTime.includes('T') 
+                                ? schedule.endTime.split('T')[1] 
+                                : schedule.endTime).split('.')[0] // 밀리초 제거
+                            : '00:00:00';
+                        
+                        startDateStr = `${dateStr}T${startTimeStr}`;
+                        endDateStr = `${dateStr}T${endTimeStr}`;
+                    } else {
+                        console.error('❌ 스케줄에 날짜가 없습니다:', schedule);
+                        return null;
+                    }
+                    
                     return {
                         id: schedule.id,
                         title: schedule.title || '상담',
-                        start: `${schedule.date}T${schedule.startTime}`,
-                        end: `${schedule.date}T${schedule.endTime}`,
+                        start: startDateStr,
+                        end: endDateStr,
                         backgroundColor: getConsultantColor(schedule.consultantId),
                         borderColor: getConsultantColor(schedule.consultantId),
                         className: `schedule-event status-${schedule.status?.toLowerCase()}`,
@@ -332,23 +397,96 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
                             description: schedule.description
                         }
                     };
-                });
+                }).filter(event => event !== null); // null 제거
+                
                 console.log('📅 변환된 이벤트:', scheduleEvents);
+                console.log('📅 이벤트 개수:', scheduleEvents.length);
             }
-            // 응답이 객체이고 success가 있는 경우
-            else if (response && response.success) {
-                console.log('📅 성공 응답 데이터:', response);
+            // 응답이 객체인 경우 (apiGet이 이미 data를 추출했으므로, response는 data 부분)
+            else if (response && typeof response === 'object' && !Array.isArray(response)) {
+                console.log('📅 객체 형태 응답 받음:', response);
                 
-                const schedules = response.data || response;
+                // apiGet이 이미 ApiResponse의 data를 추출했으므로, response는 { schedules: [...], count: N } 형태
+                let schedules = [];
                 
-                if (Array.isArray(schedules)) {
+                // response.schedules가 있는 경우 (관리자 API 응답)
+                if (response.schedules && Array.isArray(response.schedules)) {
+                    schedules = response.schedules;
+                    console.log('📅 response.schedules에서 추출:', schedules.length, '개');
+                } 
+                // response.data.schedules가 있는 경우 (이중 래핑된 경우)
+                else if (response.data && response.data.schedules && Array.isArray(response.data.schedules)) {
+                    schedules = response.data.schedules;
+                    console.log('📅 response.data.schedules에서 추출:', schedules.length, '개');
+                }
+                // response.data가 배열인 경우
+                else if (response.data && Array.isArray(response.data)) {
+                    schedules = response.data;
+                    console.log('📅 response.data (배열)에서 추출:', schedules.length, '개');
+                }
+                // response.success가 있고 response.data가 있는 경우 (원본 ApiResponse 구조)
+                else if (response.success && response.data) {
+                    if (response.data.schedules && Array.isArray(response.data.schedules)) {
+                        schedules = response.data.schedules;
+                        console.log('📅 response.success.data.schedules에서 추출:', schedules.length, '개');
+                    } else if (Array.isArray(response.data)) {
+                        schedules = response.data;
+                        console.log('📅 response.success.data (배열)에서 추출:', schedules.length, '개');
+                    }
+                } else {
+                    console.warn('⚠️ 응답 형식을 파악할 수 없습니다:', response);
+                }
+                
+                console.log('📅 최종 추출된 스케줄 데이터:', schedules);
+                console.log('📅 스케줄 개수:', schedules.length);
+                
+                if (Array.isArray(schedules) && schedules.length > 0) {
                     scheduleEvents = schedules.map(schedule => {
                         console.log('📅 스케줄 데이터 처리:', schedule);
+                        
+                        // 날짜/시간 형식 검증 및 변환
+                        let startDateStr = '';
+                        let endDateStr = '';
+                        
+                        if (schedule.date) {
+                            // LocalDate는 "YYYY-MM-DD" 형식
+                            const dateStr = schedule.date.includes('T') 
+                                ? schedule.date.split('T')[0] 
+                                : schedule.date;
+                            
+                            // LocalTime은 "HH:mm:ss" 또는 "HH:mm" 형식
+                            const startTimeStr = schedule.startTime 
+                                ? (schedule.startTime.includes('T') 
+                                    ? schedule.startTime.split('T')[1] 
+                                    : schedule.startTime).split('.')[0] // 밀리초 제거
+                                : '00:00:00';
+                            
+                            const endTimeStr = schedule.endTime 
+                                ? (schedule.endTime.includes('T') 
+                                    ? schedule.endTime.split('T')[1] 
+                                    : schedule.endTime).split('.')[0] // 밀리초 제거
+                                : '00:00:00';
+                            
+                            startDateStr = `${dateStr}T${startTimeStr}`;
+                            endDateStr = `${dateStr}T${endTimeStr}`;
+                            
+                            console.log('📅 날짜 변환:', { 
+                                originalDate: schedule.date, 
+                                originalStartTime: schedule.startTime,
+                                originalEndTime: schedule.endTime,
+                                startDateStr, 
+                                endDateStr 
+                            });
+                        } else {
+                            console.error('❌ 스케줄에 날짜가 없습니다:', schedule);
+                            return null;
+                        }
+                        
                         return {
                             id: schedule.id,
                             title: schedule.title || '상담',
-                            start: `${schedule.date}T${schedule.startTime}`,
-                            end: `${schedule.date}T${schedule.endTime}`,
+                            start: startDateStr,
+                            end: endDateStr,
                             backgroundColor: getConsultantColor(schedule.consultantId),
                             borderColor: getConsultantColor(schedule.consultantId),
                             className: `schedule-event status-${schedule.status?.toLowerCase()}`,
@@ -365,51 +503,20 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
                                 description: schedule.description
                             }
                         };
-                    });
+                    }).filter(event => event !== null); // null 제거
+                    
                     console.log('📅 변환된 이벤트:', scheduleEvents);
+                    console.log('📅 이벤트 개수:', scheduleEvents.length);
                 } else {
-                    console.warn('📅 스케줄 데이터가 배열이 아닙니다:', schedules);
+                    console.warn('📅 스케줄 데이터가 배열이 아니거나 비어있습니다:', schedules);
                 }
             } else {
                 console.warn('📅 API 응답 실패 또는 빈 응답:', response);
             }
 
+            // 표준화 2025-12-08: 휴가 이벤트는 상담사 목록에 이미 포함되어 있으므로 별도 로드 불필요
+            // 성능 개선: 불필요한 API 호출 제거
             const vacationEvents = [];
-            if (userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN') {
-                try {
-                    const today = new Date();
-                    const startDate = new Date(today.getFullYear(), today.getMonth() - 1, 1).toISOString().split('T')[0];
-                    const endDate = new Date(today.getFullYear(), today.getMonth() + 2, 0).toISOString().split('T')[0];
-                    
-                    const vacationResponse = await fetch(`/api/v1/consultants/availability/vacations`, {
-                        method: 'GET',
-                        headers: { 'Content-Type': 'application/json' },
-                        credentials: 'include'
-                    });
-                    
-                    if (vacationResponse.ok) {
-                        const vacationResult = await vacationResponse.json();
-                        console.log('🏖️ 어드민 휴가 API 응답:', vacationResult);
-                        if (vacationResult.success && vacationResult.data) {
-                            Object.entries(vacationResult.data).forEach(([consultantId, consultantVacations]) => {
-                                console.log('🏖️ 상담사 휴가 데이터:', consultantId, consultantVacations);
-                                Object.entries(consultantVacations).forEach(([date, vacationData]) => {
-                                    if (!vacationData.consultantName) {
-                                        vacationData.consultantName = `상담사 ${consultantId}`;
-                                    }
-                                    const vacationEvent = convertVacationToEvent(vacationData, consultantId, date);
-                                    if (vacationEvent) {
-                                        vacationEvents.push(vacationEvent);
-                                        console.log('🏖️ 휴가 이벤트 추가:', vacationEvent);
-                                    }
-                                });
-                            });
-                        }
-                    }
-                } catch (error) {
-                    console.error('휴가 데이터 로드 실패:', error);
-                }
-            }
 
             const allEvents = [...scheduleEvents, ...vacationEvents];
             setEvents(allEvents);
@@ -424,12 +531,28 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
     useEffect(() => {
         console.log('🔍 UnifiedScheduleComponent useEffect 실행:', { userId, userRole, selectedConsultantId });
         
-        loadSchedules();
-        loadScheduleStatusCodes();
+        // 표준화 2025-12-08: 성능 개선 - 병렬 로딩 적용
+        const loadData = async () => {
+            const promises = [];
+            
+            // 스케줄 로드 (필수)
+            if (userId) {
+                promises.push(loadSchedules());
+            }
+            
+            // 공통코드 로드 (필수)
+            promises.push(loadScheduleStatusCodes());
+            
+            // 상담사 목록 로드 (관리자만, 선택적)
+            if (userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN') {
+                promises.push(loadConsultants());
+            }
+            
+            // 모든 데이터를 병렬로 로드
+            await Promise.all(promises);
+        };
         
-        if (userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN') {
-            loadConsultants();
-        }
+        loadData();
     }, [userId, userRole, selectedConsultantId]);
 
     // ========== 이벤트 핸들러 ==========

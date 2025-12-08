@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { DollarSign, XCircle, CheckCircle } from 'lucide-react';
 import notificationManager from '../../../utils/notification';
-import csrfTokenManager from '../../../utils/csrfTokenManager';
+import { apiPost } from '../../../utils/ajax';
+import MGButton from '../../../components/common/MGButton';
 
 /**
  * 매칭 입금 확인 모달 컴포넌트
@@ -56,7 +57,10 @@ const MappingDepositModal = ({
     }, [isOpen, mapping]);
 
     const handleSubmit = async (e) => {
-        e.preventDefault();
+        if (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
         
         if (!depositReference.trim()) {
             notificationManager.error('입금 참조번호를 입력해주세요.');
@@ -66,22 +70,23 @@ const MappingDepositModal = ({
         setIsLoading(true);
         
         try {
-            const response = await csrfTokenManager.post(`/api/admin/mappings/${mapping.id}/confirm-deposit`, {
+            // 표준화 2025-12-08: API 경로 표준화 및 apiPost 사용
+            const response = await apiPost(`/api/v1/admin/mappings/${mapping.id}/confirm-deposit`, {
                 depositReference: depositReference.trim()
             });
 
-            const result = await response.json();
-
-            if (result.success) {
-                notificationManager.success('입금이 성공적으로 확인되었습니다.');
+            // apiPost는 ApiResponse의 data만 반환하므로, response가 존재하면 성공
+            if (response) {
+                notificationManager.success('✅ 입금이 성공적으로 확인되었습니다.');
                 onDepositConfirmed?.(mapping.id);
                 handleClose();
             } else {
-                notificationManager.error(result.message || '입금 확인에 실패했습니다.');
+                notificationManager.error('입금 확인에 실패했습니다.');
             }
         } catch (error) {
             console.error('입금 확인 오류:', error);
-            notificationManager.error('입금 확인 중 오류가 발생했습니다.');
+            const errorMessage = error.message || '입금 확인 중 오류가 발생했습니다.';
+            notificationManager.error(errorMessage);
         } finally {
             setIsLoading(false);
         }
@@ -120,13 +125,13 @@ const MappingDepositModal = ({
                         <div className="mg-v2-info-row">
                             <span className="mg-v2-info-label">상담사:</span>
                             <span className="mg-v2-info-value">
-                                {mapping.consultantName || mapping.consultant?.name || mapping.consultant?.username || 'N/A'}
+                                {mapping.consultantName || mapping.consultant?.name || mapping.consultant?.userId || 'N/A'}
                             </span>
                         </div>
                         <div className="mg-v2-info-row">
                             <span className="mg-v2-info-label">내담자:</span>
                             <span className="mg-v2-info-value">
-                                {mapping.clientName || mapping.client?.name || mapping.client?.username || 'N/A'}
+                                {mapping.clientName || mapping.client?.name || mapping.client?.userId || 'N/A'}
                             </span>
                         </div>
                         <div className="mg-v2-info-row">
@@ -141,7 +146,7 @@ const MappingDepositModal = ({
                         </div>
                     </div>
 
-                    <form onSubmit={handleSubmit}>
+                    <div>
                         <div className="mg-v2-form-group">
                             <label className="mg-v2-label">
                                 입금 참조번호 *
@@ -160,33 +165,33 @@ const MappingDepositModal = ({
                         </div>
 
                         <div className="mg-v2-modal-footer">
-                            <button
-                                type="button"
-                                onClick={handleClose}
-                                className="mg-v2-button mg-v2-button-secondary"
+                            <MGButton
+                                variant="secondary"
+                                onClick={(e) => {
+                                    if (e) {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                    }
+                                    handleClose();
+                                }}
                                 disabled={isLoading}
+                                preventDoubleClick={true}
                             >
                                 취소
-                            </button>
-                            <button
-                                type="submit"
+                            </MGButton>
+                            <MGButton
+                                variant="success"
+                                onClick={handleSubmit}
                                 disabled={isLoading}
-                                className="mg-v2-button mg-v2-button-success"
+                                loading={isLoading}
+                                preventDoubleClick={true}
+                                clickDelay={1000}
                             >
-                                {isLoading ? (
-                                    <>
-                                        <span className="mg-v2-spinner"></span>
-                                        처리 중...
-                                    </>
-                                ) : (
-                                    <>
-                                        <CheckCircle size={18} />
-                                        입금 확인
-                                    </>
-                                )}
-                            </button>
+                                <CheckCircle size={18} />
+                                입금 확인
+                            </MGButton>
                         </div>
-                    </form>
+                    </div>
                 </div>
             </div>
         </div>,

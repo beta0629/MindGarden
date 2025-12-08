@@ -13,7 +13,7 @@ const ConsultantManagement = ({ onUpdate, showToast }) => {
     const [loading, setLoading] = useState(false);
 
     const [form, setForm] = useState({
-        username: '', email: '', password: '', name: '', phone: '', specialization: ''
+        userId: '', email: '', password: '', name: '', phone: '', specialization: ''
     });
 
     const loadConsultants = useCallback(async () => {
@@ -80,7 +80,7 @@ const ConsultantManagement = ({ onUpdate, showToast }) => {
             if (response.ok) {
                 showToast('상담사가 성공적으로 등록되었습니다.');
                 setShowModal(false);
-                setForm({ username: '', email: '', password: '', name: '', phone: '', specialization: '' });
+                setForm({ userId: '', email: '', password: '', name: '', phone: '', specialization: '' });
                 loadConsultants();
                 onUpdate();
             } else {
@@ -191,11 +191,11 @@ const ConsultantManagement = ({ onUpdate, showToast }) => {
                 <Modal.Body>
                     <Form onSubmit={handleSubmit}>
                         <Form.Group className="mb-3">
-                            <Form.Label>사용자명</Form.Label>
+                            <Form.Label>사용자 ID</Form.Label>
                             <Form.Control
                                 type="text"
-                                value={form.username}
-                                onChange={(e) => setForm({...form, username: e.target.value})}
+                                value={form.userId}
+                                onChange={(e) => setForm({...form, userId: e.target.value})}
                                 required
                             />
                         </Form.Group>

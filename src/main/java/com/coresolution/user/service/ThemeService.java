@@ -18,35 +18,35 @@ public interface ThemeService {
     /**
      * 사용자 테마 설정 조회
      * 
-     * @param username 사용자명
+     * @param userId 사용자 ID
      * @return 테마 설정 정보
      */
-    ThemeResponse getUserTheme(String username);
+    ThemeResponse getUserTheme(String userId);
     
     /**
      * 사용자 테마 설정 업데이트
      * 
-     * @param username 사용자명
+     * @param userId 사용자 ID
      * @param request 테마 업데이트 요청
      * @return 업데이트된 테마 설정
      */
-    ThemeResponse updateUserTheme(String username, ThemeUpdateRequest request);
+    ThemeResponse updateUserTheme(String userId, ThemeUpdateRequest request);
     
     /**
      * 사용자 테마 설정 초기화
      * 
-     * @param username 사용자명
+     * @param userId 사용자 ID
      * @return 초기화된 테마 설정
      */
-    ThemeResponse resetUserTheme(String username);
+    ThemeResponse resetUserTheme(String userId);
     
     /**
      * 사용자 역할별 기본 테마 조회
      * 
-     * @param username 사용자명
+     * @param userId 사용자 ID
      * @return 역할별 기본 테마
      */
-    ThemeResponse getDefaultThemeByRole(String username);
+    ThemeResponse getDefaultThemeByRole(String userId);
     
     /**
      * 사용 가능한 테마 목록 조회
@@ -58,17 +58,17 @@ public interface ThemeService {
     /**
      * 테마 미리보기 (임시 적용)
      * 
-     * @param username 사용자명
+     * @param userId 사용자 ID
      * @param request 테마 미리보기 요청
      * @return 미리보기 테마 설정
      */
-    ThemeResponse previewTheme(String username, ThemeUpdateRequest request);
+    ThemeResponse previewTheme(String userId, ThemeUpdateRequest request);
     
     /**
      * 테마 미리보기 취소
      * 
-     * @param username 사용자명
+     * @param userId 사용자 ID
      * @return 원본 테마 설정
      */
-    ThemeResponse cancelThemePreview(String username);
+    ThemeResponse cancelThemePreview(String userId);
 }

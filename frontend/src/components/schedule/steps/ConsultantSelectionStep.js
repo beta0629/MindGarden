@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-// import ConsultantCard from '../../ui/Card/ConsultantCard';
+import ConsultantCard from '../../ui/Card/ConsultantCard';
 import SpecialtyDisplay from '../../ui/SpecialtyDisplay';
 import ConsultantFilter from '../components/ConsultantFilter';
 import UnifiedLoading from '../../../components/common/UnifiedLoading'; // 임시 비활성화
@@ -73,10 +73,22 @@ const ConsultantSelectionStepNew = ({
             if (response.ok) {
                 const responseData = await response.json();
                 console.log('👨‍⚕️ API 응답 데이터:', responseData);
-                console.log('👨‍⚕️ API URL:', `/api/admin/consultants/with-vacation?date=${dateStr}`);
+                console.log('👨‍⚕️ API URL:', `/api/v1/admin/consultants/with-vacation?date=${dateStr}`);
                 
                 // API 응답 구조에 따라 데이터 추출
-                const data = responseData.data || responseData;
+                // ApiResponse 래퍼: { success: true, data: { consultants: [...], count: N } }
+                let data = null;
+                if (responseData.data && responseData.data.consultants) {
+                    data = responseData.data.consultants;
+                } else if (responseData.consultants) {
+                    data = responseData.consultants;
+                } else if (Array.isArray(responseData.data)) {
+                    data = responseData.data;
+                } else if (Array.isArray(responseData)) {
+                    data = responseData;
+                } else {
+                    data = [];
+                }
                 console.log('👨‍⚕️ 추출된 데이터:', data);
                 console.log('👨‍⚕️ 김선희2 데이터 확인:', data.find(c => c.name === '김선희2'));
                 

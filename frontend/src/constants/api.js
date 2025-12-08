@@ -271,7 +271,22 @@ export const SEARCH_API = {
   SEARCH_USERS: '/api/v1/search/users'
 };
 
+// ERP 및 재무 관련 API (표준 경로: /api/v1/erp)
+export const ERP_API = {
+  // 통합 재무 대시보드
+  FINANCE_DASHBOARD: '/api/v1/erp/finance/dashboard',
+  FINANCE_BALANCE_SHEET: '/api/v1/erp/finance/balance-sheet',
+  FINANCE_INCOME_STATEMENT: '/api/v1/erp/finance/income-statement',
+  FINANCE_DAILY_REPORT: '/api/v1/erp/finance/daily-report',
+  FINANCE_MONTHLY_REPORT: '/api/v1/erp/finance/monthly-report',
+  FINANCE_YEARLY_REPORT: '/api/v1/erp/finance/yearly-report',
+  
+  // 본사 지점 관리
+  HQ_BRANCHES: '/api/v1/hq/branches'
+};
+
 // 지점 관리 관련 API (표준화 2025-12-05: /api/v1/ 경로 적용)
+// ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
 export const BRANCH_API = {
   BRANCHES: '/api/v1/branches',
   BRANCH_DETAIL: '/api/v1/branches',
@@ -325,6 +340,7 @@ export const API_ENDPOINTS = {
   FILE: FILE_API,
   NOTIFICATION: NOTIFICATION_API,
   SEARCH: SEARCH_API,
+  ERP: ERP_API,
   // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
   BRANCH: BRANCH_API,
   ONBOARDING: ONBOARDING_API,

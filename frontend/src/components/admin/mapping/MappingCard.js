@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { User, Calendar, Package, CreditCard, Clock, CheckCircle, Database } from 'lucide-react';
+import { User, Calendar, Package, CreditCard, Clock, CheckCircle, Database, Eye, Edit, XCircle, DollarSign } from 'lucide-react';
 import MappingPaymentModal from './MappingPaymentModal';
 import MappingDepositModal from './MappingDepositModal';
+import MGButton from '../../common/MGButton';
 
 /**
  * 매칭 카드 컴포넌트 - 글래스모피즘 디자인
@@ -72,12 +73,15 @@ const MappingCard = ({
                 </div>
                 
                 {onView && (
-                    <button 
-                        className="mg-v2-button mg-v2-button-sm mg-v2-button-primary"
+                    <MGButton
+                        variant="primary"
+                        size="sm"
                         onClick={() => onView(mapping)}
+                        preventDoubleClick={true}
                     >
+                        <Eye size={16} />
                         상세보기
-                    </button>
+                    </MGButton>
                 )}
             </div>
 
@@ -161,48 +165,65 @@ const MappingCard = ({
             <div className="mg-v2-card-footer">
                 <div className="mg-v2-mapping-card-footer-left">
                     {mapping.status === 'PENDING_PAYMENT' && (
-                        <button 
-                            className="mg-v2-button mg-v2-button-sm mg-v2-button-success"
+                        <MGButton
+                            variant="success"
+                            size="sm"
                             onClick={() => setShowPaymentModal(true)}
+                            preventDoubleClick={true}
                         >
+                            <CreditCard size={16} />
                             결제 확인
-                        </button>
+                        </MGButton>
                     )}
                     
                     {mapping.status === 'PAYMENT_CONFIRMED' && (
-                        <button 
-                            className="mg-v2-button mg-v2-button-sm mg-v2-button-primary"
+                        <MGButton
+                            variant="primary"
+                            size="sm"
                             onClick={() => setShowDepositModal(true)}
+                            preventDoubleClick={true}
                         >
+                            <DollarSign size={16} />
                             입금 확인
-                        </button>
+                        </MGButton>
                     )}
                     
                     {mapping.status === 'DEPOSIT_PENDING' && onApprove && (
-                        <button 
-                            className="mg-v2-button mg-v2-button-sm mg-v2-button-success"
+                        <MGButton
+                            variant="success"
+                            size="sm"
                             onClick={() => onApprove(mapping)}
+                            preventDoubleClick={true}
+                            clickDelay={1000}
                         >
+                            <CheckCircle size={18} />
                             최종 승인
-                        </button>
+                        </MGButton>
                     )}
                     
                     {onEdit && (
-                        <button 
-                            className="mg-v2-button mg-v2-button-sm mg-v2-button-outline"
+                        <MGButton
+                            variant="outline"
+                            size="sm"
                             onClick={() => onEdit(mapping)}
+                            preventDoubleClick={true}
                         >
+                            <Edit size={16} />
                             수정
-                        </button>
+                        </MGButton>
                     )}
                     
                     {onRefund && (
-                        <button 
-                            className="mg-v2-button mg-v2-button-sm mg-v2-button-danger"
+                        <MGButton
+                            variant="danger"
+                            size="sm"
                             onClick={() => onRefund(mapping)}
+                            preventDoubleClick={true}
+                            clickDelay={1000}
                         >
+                            <XCircle size={16} />
                             환불
-                        </button>
+                        </MGButton>
                     )}
                 </div>
             </div>

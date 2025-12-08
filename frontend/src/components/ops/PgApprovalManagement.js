@@ -242,7 +242,7 @@ const PgApprovalManagement = () => {
       }
       
       const request = {
-        approvedBy: user?.username || user?.name || user?.id || 'system',
+        approvedBy: user?.userId || user?.name || user?.id || 'system',
         testConnection: approvalForm.testConnection,
         approvalNote: approvalForm.notes || null
       };
@@ -280,7 +280,7 @@ const PgApprovalManagement = () => {
     try {
       setLoading(true);
       const request = {
-        rejectedBy: user?.username || user?.name || user?.id || 'system',
+        rejectedBy: user?.userId || user?.name || user?.id || 'system',
         rejectionReason: rejectForm.rejectionReason.trim()
       };
       

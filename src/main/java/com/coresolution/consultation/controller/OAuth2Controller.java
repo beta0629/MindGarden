@@ -956,7 +956,8 @@ public class OAuth2Controller extends BaseApiController {
                     // Phase 3: 확장된 JWT 토큰 생성 (tenantId, branchId, permissions 포함)
                     java.util.List<String> permissions = dynamicPermissionService.getUserPermissionsAsStringList(user);
                     String jwtToken = jwtService.generateToken(user, permissions);
-                    String refreshToken = jwtService.generateRefreshToken(user.getEmail());
+                    // 표준화 2025-12-08: username = userId이므로 refreshToken도 userId 사용, User 객체로 생성하여 tenantId, email 포함
+                    String refreshToken = jwtService.generateRefreshToken(user);
                     
                     // 프로필 이미지 결정
                     String finalProfileImageUrl = user.getProfileImageUrl() != null && !user.getProfileImageUrl().trim().isEmpty()

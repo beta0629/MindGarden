@@ -143,7 +143,7 @@ public class BranchStatisticsServiceImpl implements BranchStatisticsService {
         
         
         // 지점의 상담사들 조회 (기존 구현 방식 사용)
-        List<User> consultants = userRepository.findByBranchAndRoleAndIsDeletedFalseOrderByUsername(
+        List<User> consultants = userRepository.findByBranchAndRoleAndIsDeletedFalseOrderByUserId(
                 tenantId, branch, com.coresolution.consultation.constant.UserRole.CONSULTANT);
         
         Map<String, Object> statistics = new HashMap<>();
@@ -163,7 +163,7 @@ public class BranchStatisticsServiceImpl implements BranchStatisticsService {
             
             Map<String, Object> performance = new HashMap<>();
             performance.put("consultantId", consultant.getId());
-            performance.put("consultantName", consultant.getUsername());
+            performance.put("consultantName", consultant.getUserId());
             performance.put("totalConsultations", consultantRecords.size());
             performance.put("averageConsultationsPerDay", 
                 consultantRecords.size() / Math.max(1, startDate.until(endDate).getDays()));
@@ -312,7 +312,7 @@ public class BranchStatisticsServiceImpl implements BranchStatisticsService {
         
         Map<String, Object> performance = new HashMap<>();
         performance.put("consultantId", consultantId);
-        performance.put("consultantName", consultant.getUsername());
+        performance.put("consultantName", consultant.getUserId());
         performance.put("branchId", branchId);
         performance.put("period", startDate + " ~ " + endDate);
         performance.put("totalConsultations", records.size());
@@ -327,7 +327,7 @@ public class BranchStatisticsServiceImpl implements BranchStatisticsService {
             ));
         performance.put("dailyStatistics", dailyStats);
         
-        log.info("상담사 상세 성과 완료: 상담사={}, 총 상담 건수={}", consultant.getUsername(), records.size());
+        log.info("상담사 상세 성과 완료: 상담사={}, 총 상담 건수={}", consultant.getUserId(), records.size());
         
         return performance;
     }

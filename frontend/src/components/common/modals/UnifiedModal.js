@@ -95,13 +95,16 @@ const UnifiedModal = ({
   // z-index 스타일 적용
   const overlayStyle = zIndex ? { zIndex } : {};
 
+  // 표준화 2025-12-08: DOM에 전달되면 안 되는 props 필터링
+  const { isOpen: _isOpen, backdropClick: _backdropClick, loading: _loading, ...domProps } = props;
+
   return (
     <div 
       className={overlayClasses}
       onClick={handleBackdropClick}
       style={overlayStyle}
       data-backdrop-click={backdropClick}
-      {...props}
+      {...domProps}
     >
       <div className={modalClasses}>
         {/* 헤더 */}
@@ -140,14 +143,16 @@ const UnifiedModal = ({
           </div>
         )}
         
-        {/* 로딩 오버레이 */}
+        {/* 로딩 오버레이 - 표준화 2025-12-08: 공통 로딩 컴포넌트 사용 */}
         {loading && (
           <div className="mg-modal__loading-overlay">
-            <div className="mg-modal__loading-spinner">
-              <div className="mg-loading-spinner-icon mg-loading-spinner-small"></div>
-              <div className="mg-modal__loading-text">
-                처리 중...
+            <div className="mg-loading-container mg-loading-container--centered">
+              <div className="mg-loading mg-loading--medium mg-loading--spinner">
+                <div className="mg-loading-spinner">
+                  <div className="mg-loading-spinner-icon"></div>
+                </div>
               </div>
+              <div className="mg-loading-text">처리 중...</div>
             </div>
           </div>
         )}

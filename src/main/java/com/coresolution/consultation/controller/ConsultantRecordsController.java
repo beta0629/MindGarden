@@ -346,7 +346,7 @@ public class ConsultantRecordsController {
         try {
             Optional<User> client = userService.findById(clientId);
             if (client.isPresent()) {
-                return client.get().getUsername() != null ? client.get().getUsername() : "내담자 ID: " + clientId;
+                return client.get().getUserId() != null ? client.get().getUserId() : "내담자 ID: " + clientId;
             }
         } catch (Exception e) {
             log.warn("내담자 이름 조회 실패: clientId={}, error={}", clientId, e.getMessage());

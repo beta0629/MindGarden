@@ -67,7 +67,7 @@ public class JwtService {
         // 기본 사용자 정보
         claims.put("userId", user.getId());
         claims.put("email", user.getEmail());
-        claims.put("username", user.getUsername());
+        claims.put("userId", user.getUserId());
         claims.put("role", user.getRole() != null ? user.getRole().name() : null);
         
         // Phase 3: 테넌트 정보 추가
@@ -92,7 +92,8 @@ public class JwtService {
             user.getId(), user.getTenantId(), 
             permissions != null ? permissions.size() : 0);
         
-        return buildToken(claims, user.getEmail(), jwtExpiration);
+        // 표준화 2025-12-08: username = userId이므로 subject에 userId 사용
+        return buildToken(claims, user.getUserId(), jwtExpiration);
     }
     
     /**
@@ -107,25 +108,63 @@ public class JwtService {
     
     /**
      * 리프레시 토큰 생성
+     * 표준화 2025-12-08: username = userId이므로 userId 사용
+     * 
+     * @deprecated User 객체를 받는 메서드 사용 권장 (tenantId, email 포함)
      */
-    public String generateRefreshToken(String userEmail) {
-        return buildToken(new HashMap<>(), userEmail, refreshExpiration);
+    @Deprecated
+    public String generateRefreshToken(String userId) {
+        return buildToken(new HashMap<>(), userId, refreshExpiration);
     }
     
     /**
      * 리프레시 토큰 생성 (tokenId 포함)
      * Phase 3: tokenId를 클레임에 포함하여 토큰 로테이션 시 기존 토큰 무효화 가능
+     * 표준화 2025-12-08: username = userId이므로 userId 사용
      * 
-     * @param userEmail 사용자 이메일
+     * @deprecated User 객체를 받는 메서드 사용 권장 (tenantId, email 포함)
+     * 
+     * @param userId 사용자 ID
      * @param tokenId Refresh Token ID (UUID)
      * @return JWT Refresh Token
      */
-    public String generateRefreshToken(String userEmail, String tokenId) {
+    @Deprecated
+    public String generateRefreshToken(String userId, String tokenId) {
         Map<String, Object> claims = new HashMap<>();
         if (tokenId != null && !tokenId.trim().isEmpty()) {
             claims.put("tokenId", tokenId);
         }
-        return buildToken(claims, userEmail, refreshExpiration);
+        return buildToken(claims, userId, refreshExpiration);
+    }
+    
+    /**
+     * 리프레시 토큰 생성 (User 객체 기반, tenantId, email 포함)
+     * 표준화 2025-12-08: username = userId이므로 userId 사용
+     */
+    public String generateRefreshToken(User user) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("email", user.getEmail());
+        if (user.getTenantId() != null) {
+            claims.put("tenantId", user.getTenantId());
+        }
+        return buildToken(claims, user.getUserId(), refreshExpiration);
+    }
+    
+    /**
+     * 리프레시 토큰 생성 (User 객체 기반, tokenId 포함)
+     * Phase 3: tokenId를 클레임에 포함하여 토큰 로테이션 시 기존 토큰 무효화 가능
+     * 표준화 2025-12-08: username = userId이므로 userId 사용
+     */
+    public String generateRefreshToken(User user, String tokenId) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("email", user.getEmail());
+        if (user.getTenantId() != null) {
+            claims.put("tenantId", user.getTenantId());
+        }
+        if (tokenId != null && !tokenId.trim().isEmpty()) {
+            claims.put("tokenId", tokenId);
+        }
+        return buildToken(claims, user.getUserId(), refreshExpiration);
     }
     
     /**
@@ -209,8 +248,15 @@ public class JwtService {
      * JWT 토큰이 유효한지 확인
      */
     public boolean isTokenValid(String token, UserDetails userDetails) {
-        final String username = extractUsername(token);
-        return (username.equals(userDetails.getUsername())) && !isTokenExpired(token);
+        final String userId = extractUsername(token);
+        // CustomUserDetails인 경우 getUserId()를 사용, 아니면 getUsername() 사용
+        String userIdentifier;
+        if (userDetails instanceof CustomUserDetails) {
+            userIdentifier = ((CustomUserDetails) userDetails).getUserId();
+        } else {
+            userIdentifier = userDetails.getUsername();
+        }
+        return (userId.equals(userIdentifier)) && !isTokenExpired(token);
     }
     
     /**
@@ -293,6 +339,19 @@ public class JwtService {
             return claims.get("tenantId", String.class);
         } catch (Exception e) {
             log.warn("JWT 토큰에서 tenantId 추출 실패: {}", e.getMessage());
+            return null;
+        }
+    }
+    
+    /**
+     * 토큰에서 이메일 추출
+     */
+    public String extractEmail(String token) {
+        try {
+            Claims claims = extractAllClaims(token);
+            return claims.get("email", String.class);
+        } catch (Exception e) {
+            log.debug("JWT 토큰에서 email 추출 실패 (정상일 수 있음 - 구버전 토큰): {}", e.getMessage());
             return null;
         }
     }

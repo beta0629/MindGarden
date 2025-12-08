@@ -24,10 +24,20 @@ export const getTenantId = async (forceRefresh = false) => {
                     await window.sessionManager.checkSession(true);
                     const refreshedUser = window.sessionManager.getUser();
                     if (refreshedUser && refreshedUser.tenantId) {
-                        // 기본값/더미 값 체크
-                        if (refreshedUser.tenantId.includes('unknown') || refreshedUser.tenantId.includes('default')) {
+                        const tenantId = refreshedUser.tenantId.trim();
+                        // 기본값 체크: "tenant-unknown-"으로 시작하는 것은 실제 tenantId일 수 있음
+                        if (tenantId === 'unknown' || tenantId === 'default' || 
+                            tenantId.startsWith('unknown-') || tenantId.startsWith('default-') ||
+                            tenantId === 'tenant-unknown' || tenantId === 'tenant-default') {
                             console.warn('⚠️ 기본값 tenantId 감지:', refreshedUser.tenantId);
                         } else {
+                            // "tenant-unknown-consultation-*" 같은 실제 tenantId는 허용
+                            console.log('✅ getTenantId: tenantId 발견 (refreshedUser):', refreshedUser.tenantId);
+                            return refreshedUser.tenantId;
+                        }
+                        // "tenant-unknown-consultation-*" 같은 실제 tenantId는 허용 (위 조건을 통과한 경우에도 체크)
+                        if (tenantId.startsWith('tenant-unknown-') || tenantId.startsWith('tenant-default-')) {
+                            console.log('✅ getTenantId: tenantId 발견 (tenant-unknown-*):', refreshedUser.tenantId);
                             return refreshedUser.tenantId;
                         }
                     }
@@ -35,19 +45,39 @@ export const getTenantId = async (forceRefresh = false) => {
                     console.warn('⚠️ 세션 갱신 실패:', refreshError);
                 }
             } else if (user && user.tenantId) {
-                // 기본값/더미 값 체크
-                if (user.tenantId.includes('unknown') || user.tenantId.includes('default')) {
+                const tenantId = user.tenantId.trim();
+                // "tenant-unknown-consultation-*" 같은 실제 tenantId는 허용 (우선 체크)
+                if (tenantId.startsWith('tenant-unknown-') || tenantId.startsWith('tenant-default-')) {
+                    console.log('✅ getTenantId: tenantId 발견 (tenant-unknown-*):', user.tenantId);
+                    return user.tenantId;
+                }
+                // 기본값 체크: "tenant-unknown-"으로 시작하는 것은 실제 tenantId일 수 있음
+                if (tenantId === 'unknown' || tenantId === 'default' || 
+                    tenantId.startsWith('unknown-') || tenantId.startsWith('default-') ||
+                    tenantId === 'tenant-unknown' || tenantId === 'tenant-default') {
                     console.warn('⚠️ 기본값 tenantId 감지, 세션 갱신 시도:', user.tenantId);
                     // 세션 갱신 시도 (비동기)
                     window.sessionManager.checkSession(true).catch(() => {});
                 } else {
+                    // "tenant-unknown-consultation-*" 같은 실제 tenantId는 허용
+                    console.log('✅ getTenantId: tenantId 발견 (user):', user.tenantId);
                     return user.tenantId;
                 }
             }
             
             const sessionInfo = window.sessionManager.getSessionInfo();
             if (sessionInfo && sessionInfo.tenantId) {
-                if (!sessionInfo.tenantId.includes('unknown') && !sessionInfo.tenantId.includes('default')) {
+                const tenantId = sessionInfo.tenantId.trim();
+                // "tenant-unknown-consultation-*" 같은 실제 tenantId는 허용 (우선 체크)
+                if (tenantId.startsWith('tenant-unknown-') || tenantId.startsWith('tenant-default-')) {
+                    console.log('✅ getTenantId: tenantId 발견 (sessionInfo, tenant-unknown-*):', sessionInfo.tenantId);
+                    return sessionInfo.tenantId;
+                }
+                // 기본값 체크: "tenant-unknown-"으로 시작하는 것은 실제 tenantId일 수 있음
+                if (tenantId !== 'unknown' && tenantId !== 'default' && 
+                    !tenantId.startsWith('unknown-') && !tenantId.startsWith('default-') &&
+                    tenantId !== 'tenant-unknown' && tenantId !== 'tenant-default') {
+                    console.log('✅ getTenantId: tenantId 발견 (sessionInfo):', sessionInfo.tenantId);
                     return sessionInfo.tenantId;
                 }
             }
@@ -58,11 +88,21 @@ export const getTenantId = async (forceRefresh = false) => {
         if (storedUser) {
             const user = JSON.parse(storedUser);
             if (user && user.tenantId) {
-                // 기본값/더미 값 체크
-                if (user.tenantId.includes('unknown') || user.tenantId.includes('default')) {
+                const tenantId = user.tenantId.trim();
+                // "tenant-unknown-consultation-*" 같은 실제 tenantId는 허용 (우선 체크)
+                if (tenantId.startsWith('tenant-unknown-') || tenantId.startsWith('tenant-default-')) {
+                    console.log('✅ getTenantId: tenantId 발견 (localStorage, tenant-unknown-*):', user.tenantId);
+                    return user.tenantId;
+                }
+                // 기본값 체크: "tenant-unknown-"으로 시작하는 것은 실제 tenantId일 수 있음
+                if (tenantId === 'unknown' || tenantId === 'default' || 
+                    tenantId.startsWith('unknown-') || tenantId.startsWith('default-') ||
+                    tenantId === 'tenant-unknown' || tenantId === 'tenant-default') {
                     console.warn('⚠️ localStorage의 기본값 tenantId 감지:', user.tenantId);
                     return null; // 기본값은 사용하지 않음
                 }
+                // "tenant-unknown-consultation-*" 같은 실제 tenantId는 허용
+                console.log('✅ getTenantId: tenantId 발견 (localStorage):', user.tenantId);
                 return user.tenantId;
             }
         }
@@ -95,13 +135,33 @@ export const getDefaultApiHeaders = (additionalHeaders = {}) => {
         // 1. sessionManager에서 우선 확인
         if (typeof window !== 'undefined' && window.sessionManager) {
             const user = window.sessionManager.getUser();
-            if (user && user.tenantId && !user.tenantId.includes('unknown') && !user.tenantId.includes('default')) {
-                tenantId = user.tenantId;
-            } else {
-                // sessionInfo에서 확인
+            if (user && user.tenantId) {
+                const userTenantId = user.tenantId.trim();
+                // 기본값 체크: "tenant-unknown-"으로 시작하는 것은 실제 tenantId일 수 있음
+                if (userTenantId !== 'unknown' && userTenantId !== 'default' && 
+                    !userTenantId.startsWith('unknown-') && !userTenantId.startsWith('default-') &&
+                    userTenantId !== 'tenant-unknown' && userTenantId !== 'tenant-default') {
+                    tenantId = user.tenantId;
+                } else if (userTenantId.startsWith('tenant-unknown-') || userTenantId.startsWith('tenant-default-')) {
+                    // "tenant-unknown-consultation-*" 같은 실제 tenantId는 허용
+                    tenantId = user.tenantId;
+                }
+            }
+            
+            // sessionInfo에서 확인
+            if (!tenantId) {
                 const sessionInfo = window.sessionManager.getSessionInfo();
-                if (sessionInfo && sessionInfo.tenantId && !sessionInfo.tenantId.includes('unknown') && !sessionInfo.tenantId.includes('default')) {
-                    tenantId = sessionInfo.tenantId;
+                if (sessionInfo && sessionInfo.tenantId) {
+                    const sessionTenantId = sessionInfo.tenantId.trim();
+                    // 기본값 체크
+                    if (sessionTenantId !== 'unknown' && sessionTenantId !== 'default' && 
+                        !sessionTenantId.startsWith('unknown-') && !sessionTenantId.startsWith('default-') &&
+                        sessionTenantId !== 'tenant-unknown' && sessionTenantId !== 'tenant-default') {
+                        tenantId = sessionInfo.tenantId;
+                    } else if (sessionTenantId.startsWith('tenant-unknown-') || sessionTenantId.startsWith('tenant-default-')) {
+                        // "tenant-unknown-consultation-*" 같은 실제 tenantId는 허용
+                        tenantId = sessionInfo.tenantId;
+                    }
                 }
             }
         }
@@ -112,9 +172,19 @@ export const getDefaultApiHeaders = (additionalHeaders = {}) => {
             if (storedUser) {
                 try {
                     const parsedUser = JSON.parse(storedUser);
-                    if (parsedUser && parsedUser.tenantId && !parsedUser.tenantId.includes('unknown') && !parsedUser.tenantId.includes('default')) {
-                        tenantId = parsedUser.tenantId;
-                        console.log('✅ localStorage에서 tenantId 발견:', tenantId);
+                    if (parsedUser && parsedUser.tenantId) {
+                        const storedTenantId = parsedUser.tenantId.trim();
+                        // 기본값 체크
+                        if (storedTenantId !== 'unknown' && storedTenantId !== 'default' && 
+                            !storedTenantId.startsWith('unknown-') && !storedTenantId.startsWith('default-') &&
+                            storedTenantId !== 'tenant-unknown' && storedTenantId !== 'tenant-default') {
+                            tenantId = parsedUser.tenantId;
+                            console.log('✅ localStorage에서 tenantId 발견:', tenantId);
+                        } else if (storedTenantId.startsWith('tenant-unknown-') || storedTenantId.startsWith('tenant-default-')) {
+                            // "tenant-unknown-consultation-*" 같은 실제 tenantId는 허용
+                            tenantId = parsedUser.tenantId;
+                            console.log('✅ localStorage에서 tenantId 발견 (tenant-unknown-*):', tenantId);
+                        }
                     }
                 } catch (parseError) {
                     console.warn('⚠️ localStorage userInfo 파싱 오류:', parseError);

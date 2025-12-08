@@ -122,7 +122,7 @@ public class MenuPermissionServiceImpl implements MenuPermissionService {
                 .canUpdate(request.getCanUpdate())
                 .canDelete(request.getCanDelete())
                 .isActive(true)
-                .assignedBy("SYSTEM") // TODO: 실제 사용자명으로 변경
+                .assignedBy("SYSTEM") // TODO: 실제 사용자 ID으로 변경
                 .build();
 
             roleMenuPermissionRepository.save(permission);

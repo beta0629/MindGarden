@@ -84,7 +84,7 @@ public class SocialSignupRequest {
     private String providerUserId;
     
     /**
-     * 소셜 계정 사용자명
+     * 소셜 계정 사용자 ID
      */
     private String providerUsername;
     

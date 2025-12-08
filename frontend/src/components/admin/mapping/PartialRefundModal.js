@@ -88,7 +88,8 @@ const PartialRefundModal = ({ mapping, isOpen, onClose, onSuccess }) => {
     try {
       setLoading(true);
 
-      const response = await apiPost(`/api/admin/mappings/${mapping.id}/partial-refund`, {
+      // 표준화 2025-12-08: /api/v1/admin 경로로 통일
+      const response = await apiPost(`/api/v1/admin/mappings/${mapping.id}/partial-refund`, {
         refundSessions: refundSessions,
         reason: reason.trim()
       });

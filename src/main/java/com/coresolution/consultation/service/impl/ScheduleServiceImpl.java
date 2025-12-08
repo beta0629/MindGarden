@@ -332,9 +332,28 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         schedule.setConsultationType(consultationType); // 상담 유형 설정
         schedule.setBranchCode(null); // 표준화 2025-12-06: branchCode는 더 이상 사용하지 않음
         
+        // 표준화 2025-12-08: tenantId와 isDeleted 명시적 설정 (캘린더 조회 시 필터링을 위해 필수)
+        schedule.setTenantId(tenantId);
+        schedule.setIsDeleted(false);
+        
+        log.info("📅 스케줄 엔티티 생성: tenantId={}, isDeleted={}, consultantId={}, clientId={}, date={}", 
+                tenantId, schedule.getIsDeleted(), consultantId, clientId, date);
+        
         Schedule savedSchedule = scheduleRepository.save(schedule);
         
-        useSessionForMapping(consultantId, clientId);
+        log.info("✅ 스케줄 저장 완료: id={}, tenantId={}, isDeleted={}", 
+                savedSchedule.getId(), savedSchedule.getTenantId(), savedSchedule.getIsDeleted());
+        
+        // 표준화 2025-12-08: useSessionForMapping 실패해도 스케줄 저장은 유지
+        try {
+            useSessionForMapping(consultantId, clientId);
+            log.info("✅ 회기 사용 처리 완료: consultantId={}, clientId={}", consultantId, clientId);
+        } catch (Exception e) {
+            log.error("❌ 회기 사용 처리 실패 (스케줄은 저장됨): consultantId={}, clientId={}, error={}", 
+                    consultantId, clientId, e.getMessage(), e);
+            // 스케줄 저장은 이미 완료되었으므로 예외를 다시 던지지 않음
+            // 필요시 별도 알림이나 로깅만 수행
+        }
         
         log.info("✅ 상담사 스케줄 생성 완료 (상담유형 포함): ID {}, 상담유형: {}", savedSchedule.getId(), consultationType);
         return savedSchedule;
@@ -1594,7 +1613,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 log.error("❌ tenantId가 설정되지 않았습니다");
                 return new ArrayList<>();
             }
-            List<User> consultants = userRepository.findByBranchAndRoleAndIsDeletedFalseOrderByUsername(
+            List<User> consultants = userRepository.findByBranchAndRoleAndIsDeletedFalseOrderByUserId(
                 tenantId, branch, com.coresolution.consultation.constant.UserRole.CONSULTANT);
             if (consultants.isEmpty()) {
                 log.warn("지점에 상담사가 없습니다: branchId={}", branchId);
@@ -1704,7 +1723,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 log.error("❌ tenantId가 설정되지 않았습니다");
                 return new HashMap<>();
             }
-            List<User> consultants = userRepository.findByBranchAndRoleAndIsDeletedFalseOrderByUsername(
+            List<User> consultants = userRepository.findByBranchAndRoleAndIsDeletedFalseOrderByUserId(
                 tenantId, branch, com.coresolution.consultation.constant.UserRole.CONSULTANT);
             
             Map<String, Object> status = new HashMap<>();
@@ -1718,7 +1737,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 
                 Map<String, Object> consultantInfo = new HashMap<>();
                 consultantInfo.put("consultantId", consultant.getId());
-                consultantInfo.put("consultantName", consultant.getUsername());
+                consultantInfo.put("consultantName", consultant.getUserId());
                 consultantInfo.put("scheduleCount", daySchedules.size());
                 consultantInfo.put("schedules", daySchedules);
                 

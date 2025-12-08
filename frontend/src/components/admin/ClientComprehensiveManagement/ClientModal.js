@@ -1,6 +1,7 @@
-import MGButton from '../../../components/common/MGButton'; // 임시 비활성화
-import UnifiedModal from '../../../components/common/modals/UnifiedModal'; // 임시 비활성화
-import { FaTimes } from 'react-icons/fa';
+import React from 'react';
+import ReactDOM from 'react-dom';
+import { XCircle, User, CheckCircle, AlertTriangle } from 'lucide-react';
+import MGButton from '../../common/MGButton';
 
 /**
  * 내담자 모달 컴포넌트
@@ -64,10 +65,8 @@ const ClientModal = ({
 
     const renderFormContent = () => {
         const safeFormData = {
-            username: formData.username || '',
             name: formData.name || '',
             email: formData.email || '',
-            password: formData.password || '',
             phone: formData.phone || '',
             // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
             status: formData.status || 'ACTIVE',
@@ -77,29 +76,24 @@ const ClientModal = ({
 
         return (
             <form onSubmit={handleSubmit} className="mg-v2-form">
-                <div className="mg-v2-form-group">
-                    <label htmlFor="username" className="mg-v2-form-label">아이디 *</label>
-                    <input
-                        type="text"
-                        id="username"
-                        name="username"
-                        value={safeFormData.username}
-                        onChange={handleInputChange}
-                        required
-                        placeholder="로그인 아이디"
-                        className="mg-v2-form-input"
-                    />
-                </div>
+                {type === 'create' && (
+                    <div className="mg-v2-info-box" style={{ marginBottom: '1rem', padding: '0.75rem', backgroundColor: 'var(--color-background-light)', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border-light)' }}>
+                        <p className="mg-v2-info-text" style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', margin: 0 }}>
+                            💡 이름과 이메일 주소를 입력하시면 됩니다. 아이디와 비밀번호는 자동으로 생성됩니다.
+                        </p>
+                    </div>
+                )}
                 
                 <div className="mg-v2-form-group">
-                    <label htmlFor="name" className="mg-v2-form-label">이름 *</label>
+                    <label htmlFor="name" className="mg-v2-form-label">이름 {type === 'create' && '*'}</label>
                     <input
                         type="text"
                         id="name"
                         name="name"
                         value={safeFormData.name}
                         onChange={handleInputChange}
-                        required
+                        required={type === 'create'}
+                        placeholder="내담자 이름"
                         className="mg-v2-form-input"
                     />
                 </div>
@@ -113,33 +107,24 @@ const ClientModal = ({
                         value={safeFormData.email}
                         onChange={handleInputChange}
                         required
+                        placeholder="example@email.com"
                         className="mg-v2-form-input"
+                        disabled={type === 'edit'} // 수정 시에는 이메일 변경 불가
                     />
+                    {type === 'edit' && (
+                        <small className="mg-v2-form-help">이메일은 변경할 수 없습니다.</small>
+                    )}
                 </div>
                 
                 <div className="mg-v2-form-group">
-                    <label htmlFor="password" className="mg-v2-form-label">비밀번호 *</label>
-                    <input
-                        type="password"
-                        id="password"
-                        name="password"
-                        value={safeFormData.password}
-                        onChange={handleInputChange}
-                        required={type === 'create'}
-                        placeholder={type === 'edit' ? '변경 시에만 입력' : '로그인 비밀번호'}
-                        className="mg-v2-form-input"
-                    />
-                </div>
-                
-                <div className="mg-v2-form-group">
-                    <label htmlFor="phone" className="mg-v2-form-label">전화번호 *</label>
+                    <label htmlFor="phone" className="mg-v2-form-label">전화번호</label>
                     <input
                         type="tel"
                         id="phone"
                         name="phone"
                         value={safeFormData.phone}
                         onChange={handleInputChange}
-                        required
+                        placeholder="010-1234-5678"
                         className="mg-v2-form-input"
                     />
                 </div>
@@ -204,30 +189,64 @@ const ClientModal = ({
         );
     };
 
-    return (
-        <div className="mg-modal"
-            isOpen={true}
-            onClose={onClose}
-            title={getTitle()}
-            size="medium"
-        >
-            {type === 'delete' ? renderDeleteContent() : renderFormContent()}
-            
-            <div className="mg-modal__actions">
-                <button className="mg-button"
-                    variant="outline"
-                    onClick={onClose}
-                >
-                    취소
-                </button>
-                <button className="mg-button"
-                    variant={type === 'delete' ? 'danger' : 'primary'}
-                    onClick={type === 'delete' ? () => onSave(formData) : handleSubmit}
-                >
-                    {getSubmitText()}
-                </button>
+    if (!type) return null;
+
+    const portalTarget = document.body || document.createElement('div');
+
+    return ReactDOM.createPortal(
+        <div className="mg-v2-modal-overlay" onClick={onClose}>
+            <div className="mg-v2-modal" onClick={(e) => e.stopPropagation()}>
+                <div className="mg-v2-modal-header">
+                    <h3 className="mg-v2-modal-title">
+                        <User size={24} />
+                        {getTitle()}
+                    </h3>
+                    <button
+                        onClick={onClose}
+                        className="mg-v2-modal-close"
+                        aria-label="닫기"
+                    >
+                        <XCircle size={24} />
+                    </button>
+                </div>
+
+                <div className="mg-v2-modal-body">
+                    {type === 'delete' ? renderDeleteContent() : renderFormContent()}
+                </div>
+
+                <div className="mg-v2-modal-footer">
+                    <MGButton
+                        variant="secondary"
+                        onClick={onClose}
+                        preventDoubleClick={true}
+                    >
+                        취소
+                    </MGButton>
+                    <MGButton
+                        variant={type === 'delete' ? 'danger' : 'primary'}
+                        onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            if (type === 'delete') {
+                                onSave(formData);
+                            } else {
+                                handleSubmit(e);
+                            }
+                        }}
+                        preventDoubleClick={true}
+                        clickDelay={1000}
+                    >
+                        {type === 'delete' ? (
+                            <AlertTriangle size={18} />
+                        ) : (
+                            <CheckCircle size={18} />
+                        )}
+                        {getSubmitText()}
+                    </MGButton>
+                </div>
             </div>
-        </div>
+        </div>,
+        portalTarget
     );
 };
 

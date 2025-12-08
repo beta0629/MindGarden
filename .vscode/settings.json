@@ -142,7 +142,6 @@
   
   // 터미널 설정
   "terminal.integrated.defaultProfile.windows": "Git Bash",
-  "terminal.integrated.cwd": "${workspaceFolder}/MindGarden",
   
   // Git 설정
   "git.autofetch": true,

@@ -114,15 +114,28 @@ const ConsultantClientList = () => {
       console.log('👤 상담사 ID로 연계된 내담자 목록 로드:', user.id);
       console.log('👤 사용자 정보 전체:', user);
 
-      const response = await apiGet(`/api/admin/mappings/consultant/${user.id}/clients`);
+      const response = await apiGet(`/api/v1/admin/mappings/consultant/${user.id}/clients`);
       
       console.log('📡 API 응답 전체:', response);
       
-      if (response.success) {
-        console.log('✅ 내담자 목록 로드 성공:', response.data);
-        console.log('📊 내담자 수:', response.count);
-        
-        const clientData = response.data || [];
+      // apiGet은 ApiResponse 래퍼를 처리하여 data만 반환: { mappings: [...], count: N }
+      let clientData = [];
+      if (response) {
+        if (response.mappings && Array.isArray(response.mappings)) {
+          clientData = response.mappings;
+        } else if (Array.isArray(response)) {
+          clientData = response;
+        } else {
+          console.warn('⚠️ 예상하지 못한 응답 구조:', response);
+        }
+      } else {
+        console.warn('⚠️ API 응답이 null입니다. 권한 문제이거나 데이터가 없을 수 있습니다.');
+      }
+      
+      console.log('✅ 내담자 목록 로드 성공:', clientData);
+      console.log('📊 내담자 수:', clientData.length);
+      
+      if (clientData && clientData.length > 0) {
         const sortedData = clientData.sort((a, b) => {
           const dateA = new Date(a.assignedAt || a.client.createdAt || 0);
           const dateB = new Date(b.assignedAt || b.client.createdAt || 0);
@@ -160,9 +173,10 @@ const ConsultantClientList = () => {
         }).filter(client => client !== null);
         
         setClients(clientList);
+        console.log('✅ 내담자 목록 설정 완료:', clientList.length, '명');
       } else {
-        console.error('❌ 내담자 목록 로드 실패:', response.message);
-        setError(response.message || '내담자 목록을 불러오는데 실패했습니다.');
+        console.warn('⚠️ 내담자 데이터 없음');
+        setClients([]);
       }
     } catch (err) {
       console.error('❌ 내담자 목록 로드 중 오류:', err);

@@ -127,7 +127,8 @@ public abstract class AbstractOAuth2Service implements OAuth2Service {
             // 사용자 권한 조회
             List<String> permissions = dynamicPermissionService.getUserPermissionsAsStringList(user);
             String jwtToken = jwtService.generateToken(user, permissions);
-            String refreshToken = jwtService.generateRefreshToken(user.getEmail());
+            // 표준화 2025-12-08: username = userId이므로 refreshToken도 userId 사용, User 객체로 생성하여 tenantId, email 포함
+            String refreshToken = jwtService.generateRefreshToken(user);
             
             // 6. 프로필 사진 우선순위 적용 (1. 사용자 프로필 2. SNS 이미지 3. 기본 아이콘)
             String finalProfileImageUrl = determineProfileImageUrl(user, socialUserInfo);

@@ -72,7 +72,7 @@ public class BranchAccountCreator {
     private void createBranchAdminAccount(String branchCode, String branchName) {
         String timestamp = String.valueOf(System.currentTimeMillis()).substring(8); // 마지막 5자리
         String email = branchCode.toLowerCase() + "_admin_" + timestamp + "@mindgarden.co.kr";
-        String username = branchCode.toLowerCase() + "_admin_" + timestamp;
+        String userId = branchCode.toLowerCase() + "_admin_" + timestamp;
         String name = branchName + " 관리자";
         
         // 기존 계정 확인 (표준화 2025-12-06: deprecated 메서드 대체)
@@ -84,7 +84,7 @@ public class BranchAccountCreator {
         
         User admin = new User();
         admin.setEmail(email);
-        admin.setUsername(username);
+        admin.setUserId(userId);
         admin.setPassword(passwordEncoder.encode("admin123"));
         admin.setName(name);
         admin.setRole(UserRole.ADMIN); // 표준화 2025-12-05: BRANCH_SUPER_ADMIN → ADMIN으로 통합
@@ -107,7 +107,7 @@ public class BranchAccountCreator {
     private void createTestConsultantAccount(String branchCode, String branchName) {
         String timestamp = String.valueOf(System.currentTimeMillis()).substring(8); // 마지막 5자리
         String email = "consultant_" + branchCode.toLowerCase() + "_" + timestamp + "@mindgarden.co.kr";
-        String username = "consultant_" + branchCode.toLowerCase() + "_" + timestamp;
+        String userId = "consultant_" + branchCode.toLowerCase() + "_" + timestamp;
         String name = branchName + " 테스트상담사";
         
         // 기존 계정 확인 (표준화 2025-12-06: deprecated 메서드 대체)
@@ -120,7 +120,7 @@ public class BranchAccountCreator {
         // 사용자 계정 생성
         User user = new User();
         user.setEmail(email);
-        user.setUsername(username);
+        user.setUserId(userId);
         user.setPassword(passwordEncoder.encode("consultant123"));
         user.setName(name);
         user.setRole(UserRole.CONSULTANT);
@@ -139,7 +139,7 @@ public class BranchAccountCreator {
         Consultant consultant = new Consultant();
         consultant.setId(savedUser.getId());
         consultant.setEmail(email);
-        consultant.setUsername(username);
+        consultant.setUserId(userId);
         consultant.setPassword(passwordEncoder.encode("consultant123"));
         consultant.setName(name);
         consultant.setRole(UserRole.CONSULTANT);
@@ -172,7 +172,7 @@ public class BranchAccountCreator {
     private void createTestClientAccount(String branchCode, String branchName) {
         String timestamp = String.valueOf(System.currentTimeMillis()).substring(8); // 마지막 5자리
         String email = "client_" + branchCode.toLowerCase() + "_" + timestamp + "@mindgarden.co.kr";
-        String username = "client_" + branchCode.toLowerCase() + "_" + timestamp;
+        String userId = "client_" + branchCode.toLowerCase() + "_" + timestamp;
         String name = branchName + " 테스트내담자";
         
         // 기존 계정 확인 (표준화 2025-12-06: deprecated 메서드 대체)
@@ -185,7 +185,7 @@ public class BranchAccountCreator {
         // 사용자 계정 생성
         User user = new User();
         user.setEmail(email);
-        user.setUsername(username);
+        user.setUserId(userId);
         user.setPassword(passwordEncoder.encode("client123"));
         user.setName(name);
         user.setRole(UserRole.CLIENT);

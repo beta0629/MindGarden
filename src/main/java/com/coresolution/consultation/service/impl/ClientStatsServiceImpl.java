@@ -171,28 +171,46 @@ public class ClientStatsServiceImpl implements ClientStatsService {
     
      /**
      * User를 Client로 변환 (개인정보 복호화 포함)
+     * 표준화 2025-12-08: name 필드 복호화 추가
      */
     private Client convertToClient(com.coresolution.consultation.entity.User user) {
         Client client = new Client();
         client.setId(user.getId());
-        client.setName(user.getName());
         
-        if (user.getEmail() != null) {
+        // 표준화 2025-12-08: 이름 복호화
+        if (user.getName() != null && !user.getName().trim().isEmpty()) {
             try {
-                client.setEmail(encryptionUtil.decrypt(user.getEmail()));
+                client.setName(encryptionUtil.safeDecrypt(user.getName()));
             } catch (Exception e) {
-                log.warn("이메일 복호화 실패: userId={}", user.getId());
-                client.setEmail(user.getEmail());
+                log.warn("🔓 내담자 이름 복호화 실패: userId={}, error={}", user.getId(), e.getMessage());
+                client.setName(user.getName());
             }
+        } else {
+            client.setName(user.getName());
         }
         
-        if (user.getPhone() != null) {
+        // 표준화 2025-12-08: 이메일 복호화 (safeDecrypt 사용)
+        if (user.getEmail() != null && !user.getEmail().trim().isEmpty()) {
             try {
-                client.setPhone(encryptionUtil.decrypt(user.getPhone()));
+                client.setEmail(encryptionUtil.safeDecrypt(user.getEmail()));
             } catch (Exception e) {
-                log.warn("전화번호 복호화 실패: userId={}", user.getId());
+                log.warn("🔓 내담자 이메일 복호화 실패: userId={}, error={}", user.getId(), e.getMessage());
+                client.setEmail(user.getEmail());
+            }
+        } else {
+            client.setEmail(user.getEmail());
+        }
+        
+        // 표준화 2025-12-08: 전화번호 복호화 (safeDecrypt 사용)
+        if (user.getPhone() != null && !user.getPhone().trim().isEmpty()) {
+            try {
+                client.setPhone(encryptionUtil.safeDecrypt(user.getPhone()));
+            } catch (Exception e) {
+                log.warn("🔓 내담자 전화번호 복호화 실패: userId={}, error={}", user.getId(), e.getMessage());
                 client.setPhone(user.getPhone());
             }
+        } else {
+            client.setPhone(user.getPhone());
         }
         
         client.setBirthDate(user.getBirthDate());

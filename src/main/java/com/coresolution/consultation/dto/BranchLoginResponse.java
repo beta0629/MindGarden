@@ -33,7 +33,7 @@ public class BranchLoginResponse {
     @AllArgsConstructor
     public static class UserInfo {
         private Long id;
-        private String username;
+        private String userId;
         private String email;
         private String name;
         private UserRole role;

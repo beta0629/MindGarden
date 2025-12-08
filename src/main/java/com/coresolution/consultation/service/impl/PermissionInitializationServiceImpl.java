@@ -255,6 +255,7 @@ public class PermissionInitializationServiceImpl implements PermissionInitializa
     
     /**
      * 최소 필수 ADMIN 권한 (공통코드 실패 시 폴백)
+     * 표준화 2025-12-08: ERP_ACCESS 권한 추가 (관리자는 ERP 접근 가능해야 함)
      */
     private List<String> getMinimalAdminPermissions() {
         return List.of(
@@ -263,7 +264,8 @@ public class PermissionInitializationServiceImpl implements PermissionInitializa
             "CLIENT_MANAGE",
             "CONSULTANT_MANAGE",
             "MAPPING_VIEW",
-            "STATISTICS_VIEW"
+            "STATISTICS_VIEW",
+            "ERP_ACCESS" // 표준화 2025-12-08: 관리자 ERP 접근 권한
         );
     }
     

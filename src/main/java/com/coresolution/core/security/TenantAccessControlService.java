@@ -93,8 +93,8 @@ public class TenantAccessControlService {
     public void validateOpsAccess() {
         if (!hasOpsRole()) {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-            String username = authentication != null ? authentication.getName() : "anonymous";
-            log.warn("운영 포털 접근 거부: username={}", username);
+            String userId = authentication != null ? authentication.getName() : "anonymous";
+            log.warn("운영 포털 접근 거부: userId={}", userId);
             throw new AccessDeniedException("운영 포털 접근 권한이 없습니다 (ADMIN 또는 OPS 역할 필요)");
         }
         

@@ -61,7 +61,7 @@ public class BranchPermissionServiceImpl implements BranchPermissionService {
         // 사용자의 지점코드 확인
         String userBranchCode = user.getBranchCode();
         if (userBranchCode == null || userBranchCode.trim().isEmpty()) {
-            log.warn("사용자 지점코드 없음: {}", user.getUsername());
+            log.warn("사용자 지점코드 없음: {}", user.getUserId());
             return false;
         }
         
@@ -70,7 +70,7 @@ public class BranchPermissionServiceImpl implements BranchPermissionService {
         boolean canAccess = true; // 임시로 true 반환
         
         log.debug("지점 데이터 접근 권한 확인: 사용자={}, 사용자지점코드={}, 대상지점={}, 접근가능={}", 
-                user.getUsername(), userBranchCode, targetBranchId, canAccess);
+                user.getUserId(), userBranchCode, targetBranchId, canAccess);
         
         return canAccess;
     }

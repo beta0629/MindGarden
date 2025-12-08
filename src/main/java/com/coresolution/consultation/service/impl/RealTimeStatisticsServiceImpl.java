@@ -19,6 +19,7 @@ import com.coresolution.core.context.TenantContextHolder;
 import java.math.BigDecimal;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Propagation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -32,7 +33,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-@Transactional
+// 클래스 레벨 @Transactional 제거 - 메서드별로 필요한 트랜잭션 설정 적용
 public class RealTimeStatisticsServiceImpl implements RealTimeStatisticsService {
     
     private final DailyStatisticsRepository dailyStatisticsRepository;
@@ -43,6 +44,7 @@ public class RealTimeStatisticsServiceImpl implements RealTimeStatisticsService 
     private final CommonCodeService commonCodeService;
     
     @Override
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void updateStatisticsOnScheduleCompletion(Schedule schedule) {
         log.info("📊 스케줄 완료시 실시간 통계 업데이트 시작: scheduleId={}, consultantId={}", 
                  schedule.getId(), schedule.getConsultantId());
@@ -88,6 +90,7 @@ public class RealTimeStatisticsServiceImpl implements RealTimeStatisticsService 
     }
     
     @Override
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void updateConsultantPerformance(Long consultantId, LocalDate date) {
         log.debug("📈 상담사별 성과 실시간 업데이트: consultantId={}, date={}", consultantId, date);
         
@@ -120,6 +123,7 @@ public class RealTimeStatisticsServiceImpl implements RealTimeStatisticsService 
     }
     
     @Override
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void updateDailyStatistics(String branchCode, LocalDate date) {
         // 브랜치 개념 제거: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음 (표준화 2025-12-05)
         String tenantId = TenantContextHolder.getRequiredTenantId();
@@ -150,6 +154,7 @@ public class RealTimeStatisticsServiceImpl implements RealTimeStatisticsService 
     }
     
     @Override
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void updateStatisticsOnMappingChange(Long consultantId, Long clientId, String branchCode) {
         // 브랜치 개념 제거: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음 (표준화 2025-12-05)
         log.info("🔗 매핑 변경시 통계 업데이트: consultantId={}, clientId={}", 
@@ -170,6 +175,7 @@ public class RealTimeStatisticsServiceImpl implements RealTimeStatisticsService 
     }
     
     @Override
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void updateFinancialStatisticsOnPayment(String branchCode, Long amount, LocalDate date) {
         // 브랜치 개념 제거: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음 (표준화 2025-12-05)
         log.info("💰 결제 완료시 재무 통계 업데이트: amount={}, date={}", 
@@ -185,6 +191,7 @@ public class RealTimeStatisticsServiceImpl implements RealTimeStatisticsService 
     }
     
     @Override
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void updateStatisticsOnRefund(Long consultantId, String branchCode, Long refundAmount, LocalDate date) {
         // 브랜치 개념 제거: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음 (표준화 2025-12-05)
         log.info("💸 환불 발생시 통계 업데이트: consultantId={}, refundAmount={}, date={}", 

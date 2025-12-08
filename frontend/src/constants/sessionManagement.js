@@ -5,12 +5,13 @@
  */
 
 export const API_ENDPOINTS = {
-  MAPPINGS: '/api/admin/mappings',
-  CLIENTS: '/api/admin/clients/with-mapping-info',
-  CONFIRM_PAYMENT: '/api/admin/mappings/{id}/confirm-payment',
-  EXTEND_SESSIONS: '/api/admin/mappings/{id}/extend-sessions',
-  ERP_FINANCIAL: '/api/erp/financial/update-receivable',
-  PACKAGE_CODES: '/api/common-codes/PACKAGE'
+  // 표준화 2025-12-08: /api/v1/admin 경로로 통일
+  MAPPINGS: '/api/v1/admin/mappings',
+  CLIENTS: '/api/v1/admin/clients/with-mapping-info',
+  CONFIRM_PAYMENT: '/api/v1/admin/mappings/{id}/confirm-payment',
+  EXTEND_SESSIONS: '/api/v1/admin/mappings/{id}/extend-sessions',
+  ERP_FINANCIAL: '/api/v1/erp/financial/update-receivable',
+  PACKAGE_CODES: '/api/v1/common-codes/groups/PACKAGE'
 };
 
 export const PAYMENT_STATUS = {

@@ -71,8 +71,8 @@ const SessionUserProfile = ({ onProfileClick, showRole = true }) => {
     if (sessionUser?.nickname && !sessionUser.nickname.includes('==')) {
       return sessionUser.nickname;
     }
-    if (sessionUser?.username) {
-      return sessionUser.username;
+    if (sessionUser?.userId) {
+      return sessionUser.userId;
     }
     return '사용자';
   };

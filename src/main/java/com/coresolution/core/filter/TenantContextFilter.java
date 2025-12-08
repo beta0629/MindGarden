@@ -1,6 +1,7 @@
 package com.coresolution.core.filter;
 
 import com.coresolution.core.context.TenantContextHolder;
+import com.coresolution.consultation.constant.SessionConstants;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.utils.SessionUtils;
 import jakarta.servlet.Filter;
@@ -91,15 +92,25 @@ public class TenantContextFilter implements Filter {
                 String clientIP = getClientIP(httpRequest);
                 String userAgent = httpRequest.getHeader("User-Agent");
                 
-                // 세션 정보 로깅
+                // 세션 정보 로깅 (상세)
                 if (session != null) {
                     User user = SessionUtils.getCurrentUser(session);
                     if (user != null) {
                         log.error("🚨 보안 위험: Tenant ID가 없습니다! Request URI: {}, Method: {}, IP: {}, User-Agent: {}, User ID: {}, User Role: {}, User TenantId: {}", 
                             requestURI, method, clientIP, userAgent, user.getId(), user.getRole(), user.getTenantId());
+                        log.error("🚨 세션 속성 확인: sessionId={}, TENANT_ID={}, USER_OBJECT={}", 
+                            session.getId(),
+                            session.getAttribute(SessionConstants.TENANT_ID),
+                            session.getAttribute(SessionConstants.USER_OBJECT) != null ? "있음" : "없음");
                     } else {
                         log.error("🚨 보안 위험: Tenant ID가 없습니다! Request URI: {}, Method: {}, IP: {}, User-Agent: {}, 세션에 사용자 정보 없음", 
                             requestURI, method, clientIP, userAgent);
+                        log.error("🚨 세션 속성 목록: sessionId={}", session.getId());
+                        java.util.Enumeration<String> attrNames = session.getAttributeNames();
+                        while (attrNames.hasMoreElements()) {
+                            String attrName = attrNames.nextElement();
+                            log.error("🚨 세션 속성: {} = {}", attrName, session.getAttribute(attrName));
+                        }
                     }
                 } else {
                     log.error("🚨 보안 위험: Tenant ID가 없습니다! Request URI: {}, Method: {}, IP: {}, User-Agent: {}, 세션 없음", 
@@ -193,18 +204,33 @@ public class TenantContextFilter implements Filter {
                     log.info("✅ Tenant ID extracted from user entity: {}", user.getTenantId());
                     return user.getTenantId();
                 } else {
-                    log.warn("⚠️ User 엔티티에 tenantId가 없습니다: userId={}, role={}", 
-                        user.getId(), user.getRole());
+                    log.warn("⚠️ User 엔티티에 tenantId가 없습니다: userId={}, role={}, email={}", 
+                        user.getId(), user.getRole(), user.getEmail());
+                    
+                    // ⚠️ 중요: User 엔티티에 tenantId가 없을 때는 데이터베이스에서 조회 시도
+                    // (레거시 데이터 또는 마이그레이션 이슈일 수 있음)
+                    // 하지만 보안상 필수이므로 일단 경고만 하고 계속 진행
+                    // 실제 tenantId는 헤더나 다른 소스에서 올 수 있음
                 }
             } else {
                 log.debug("세션에 User 정보가 없습니다.");
             }
             
-            // 1-2. 세션에 저장된 tenant_id 사용
+            // 1-2. 세션에 저장된 tenant_id 사용 (SessionConstants.TENANT_ID도 확인)
             Object sessionTenantId = session.getAttribute(SESSION_TENANT_ID);
             if (sessionTenantId != null) {
-                log.info("✅ Tenant ID extracted from session: {}", sessionTenantId);
+                log.info("✅ Tenant ID extracted from session (tenantId): {}", sessionTenantId);
                 return sessionTenantId.toString();
+            }
+            
+            // SessionConstants.TENANT_ID도 확인 (다른 방식으로 저장된 경우)
+            Object sessionConstantsTenantId = session.getAttribute(SessionConstants.TENANT_ID);
+            if (sessionConstantsTenantId != null) {
+                String tenantIdStr = sessionConstantsTenantId.toString();
+                log.info("✅ Tenant ID extracted from session (SessionConstants.TENANT_ID): {}", tenantIdStr);
+                // 세션에 SESSION_TENANT_ID로도 저장 (다음 요청에서 빠르게 조회)
+                session.setAttribute(SESSION_TENANT_ID, tenantIdStr);
+                return tenantIdStr;
             }
         } else {
             log.debug("세션이 없습니다.");
@@ -215,16 +241,19 @@ public class TenantContextFilter implements Filter {
         log.info("🔍 Tenant ID 추출 시도: 헤더={}, 모든 헤더={}", tenantId, getHeadersAsString(request));
         if (tenantId != null && !tenantId.isEmpty()) {
             // ⚠️ 기본값/더미 값 체크 (헤더에서 받은 경우에만)
-            if (tenantId.contains("unknown") || tenantId.contains("default")) {
+            // "tenant-unknown" 또는 "tenant-default"만 기본값으로 간주
+            // "tenant-unknown-consultation-*" 같은 실제 tenantId는 허용
+            if (tenantId.equals("tenant-unknown") || tenantId.equals("tenant-default")) {
                 log.warn("⚠️ 기본값/더미 tenantId 감지 (헤더): {}, 세션의 User 정보를 우선 사용", tenantId);
                 // 기본값이면 세션의 User 정보를 다시 확인
                 if (session != null) {
                     User user = SessionUtils.getCurrentUser(session);
                     if (user != null && user.getTenantId() != null && !user.getTenantId().isEmpty()) {
                         // 기본값이 아닌 실제 tenantId가 있으면 사용
-                        if (!user.getTenantId().contains("unknown") && !user.getTenantId().contains("default")) {
-                            log.info("✅ 세션의 User에서 실제 tenantId 발견: {}", user.getTenantId());
-                            return user.getTenantId();
+                        String userTenantId = user.getTenantId();
+                        if (!userTenantId.equals("tenant-unknown") && !userTenantId.equals("tenant-default")) {
+                            log.info("✅ 세션의 User에서 실제 tenantId 발견: {}", userTenantId);
+                            return userTenantId;
                         }
                     }
                 }

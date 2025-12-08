@@ -34,7 +34,7 @@ const MyPage = () => {
   const [showPasswordResetModal, setShowPasswordResetModal] = useState(false);
   const [showPasswordChangeModal, setShowPasswordChangeModal] = useState(false);
   const [formData, setFormData] = useState({
-    username: '',
+    userId: '',
     nickname: '',
     email: '',
     phone: '',
@@ -82,7 +82,7 @@ const MyPage = () => {
       if (response) {
         setUser(response);
         setFormData({
-          username: response.username || response.name || '',
+          userId: response.userId || response.name || '',
           nickname: response.nickname || '',
           email: response.email || '',
           phone: response.phone || response.phoneNumber || '',
@@ -104,7 +104,7 @@ const MyPage = () => {
       if (currentUser) {
         console.log('🔄 세션에서 사용자 데이터 로드:', currentUser);
         console.log('📝 로드된 필드 확인:');
-        console.log('  - username:', currentUser.username);
+        console.log('  - userId:', currentUser.userId);
         console.log('  - nickname:', currentUser.nickname);
         console.log('  - email:', currentUser.email);
         console.log('  - phone:', currentUser.phone);
@@ -115,7 +115,7 @@ const MyPage = () => {
         console.log('🔍 모든 필드:', Object.keys(currentUser));
         
         const formDataToSet = {
-          username: currentUser.username || currentUser.name || '',
+          userId: currentUser.userId || currentUser.name || '',
           nickname: currentUser.nickname || '',
           email: currentUser.email || '',
           phone: currentUser.phone || currentUser.phoneNumber || '',
@@ -302,7 +302,7 @@ const MyPage = () => {
     const response = await mypageApi.updateProfileInfo(currentUser.role, currentUser.id, requestData);
     console.log('✅ 백엔드 응답:', response);
     console.log('📝 백엔드 응답 필드 확인:');
-    console.log('  - username:', response.username);
+    console.log('  - userId:', response.userId);
     console.log('  - nickname:', response.nickname);
     console.log('  - phone:', response.phone);
     console.log('  - gender:', response.gender);
@@ -311,7 +311,7 @@ const MyPage = () => {
               // 사용자 정보 업데이트 (크롭된 이미지는 프론트엔드 데이터 우선 사용)
           setUser(prev => ({
             ...prev,
-            username: response.username || dataToUpdate.username,
+            userId: response.userId || dataToUpdate.userId,
             nickname: response.nickname || dataToUpdate.nickname,
             phone: response.phone || dataToUpdate.phone,
             gender: response.gender || dataToUpdate.gender,
@@ -331,7 +331,7 @@ const MyPage = () => {
     if (sessionManager.user) {
       sessionManager.user = {
         ...sessionManager.user,
-        username: dataToUpdate.username,
+        userId: dataToUpdate.userId,
         nickname: dataToUpdate.nickname,
         phone: dataToUpdate.phone,
         gender: dataToUpdate.gender,
@@ -615,7 +615,7 @@ const MyPage = () => {
                         </div>
                         <div className="social-account-details">
                           <h3>{account.provider === 'KAKAO' ? '카카오' : account.provider === 'NAVER' ? '네이버' : account.provider} 계정</h3>
-                          <p>{account.providerUsername || '사용자명 없음'}</p>
+                          <p>{account.providerUsername || '사용자 ID 없음'}</p>
                           {account.providerProfileImage && (
                             <div className="social-profile-image">
                               <img 

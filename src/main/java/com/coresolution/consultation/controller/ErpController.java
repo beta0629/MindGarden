@@ -27,6 +27,7 @@ import com.coresolution.consultation.service.RecurringExpenseService;
 import com.coresolution.consultation.util.AdminRoleUtils;
 import com.coresolution.consultation.util.TaxCalculationUtil;
 import com.coresolution.consultation.utils.SessionUtils;
+import com.coresolution.consultation.constant.SessionConstants;
 import com.coresolution.core.controller.BaseApiController;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.dto.ApiResponse;
@@ -1423,8 +1424,23 @@ public class ErpController extends BaseApiController {
             
             // 표준화 원칙: 테넌트 ID 기반 데이터 조회
             String tenantId = SessionUtils.getTenantId(session);
-            if (tenantId == null) {
-                throw new RuntimeException("테넌트 정보를 찾을 수 없습니다.");
+            
+            // 테넌트 ID가 없으면 User 엔티티에서 직접 조회
+            if (tenantId == null || tenantId.isEmpty()) {
+                log.warn("⚠️ 세션에서 테넌트 ID를 찾을 수 없음, User 엔티티에서 조회 시도: 사용자={}", currentUser.getEmail());
+                tenantId = currentUser.getTenantId();
+                
+                if (tenantId == null || tenantId.isEmpty()) {
+                    log.error("❌ 테넌트 정보를 찾을 수 없습니다: 사용자={}, userId={}", currentUser.getEmail(), currentUser.getId());
+                    return ResponseEntity.status(500).body(Map.of(
+                        "success", false,
+                        "message", "테넌트 정보를 찾을 수 없습니다. 관리자에게 문의하세요."
+                    ));
+                }
+                
+                // 세션에 테넌트 ID 저장 (다음 요청에서 빠르게 조회)
+                session.setAttribute(SessionConstants.TENANT_ID, tenantId);
+                log.info("✅ User 엔티티에서 테넌트 ID 조회 완료: tenantId={}", tenantId);
             }
             
             log.info("재무 대시보드 데이터 조회 요청: 사용자={}, 테넌트={}", 

@@ -1,6 +1,83 @@
 /* 매칭 생성 모달 내부 스타일 (UnifiedModal과 호환) */
 /* MindGarden Design System v2.0 */
 
+/* 표준화 2025-12-08: 누락된 CSS 변수 매핑 추가 */
+:root {
+    /* 색상 변수 */
+    --color-text-inverse: var(--mg-white, #ffffff);
+    --color-primary: var(--mg-primary-500, #3b82f6);
+    --color-primary-light: var(--mg-primary-100, rgba(59, 130, 246, 0.1));
+    --color-text-primary: var(--mg-black, #000000);
+    --color-text-secondary: var(--mg-gray-600, #6b7280);
+    --color-border-light: var(--mg-gray-200, #e5e7eb);
+    --medium-gray: var(--mg-gray-500, #6b7280);
+    --dark-gray: var(--mg-gray-900, #111827);
+    --mint-green: var(--mg-mint-green, #10b981);
+    --soft-mint: var(--mg-soft-mint, #6ee7b7);
+    --cocoa: var(--mg-cocoa, #8b6914);
+    
+    /* Border Radius 변수 */
+    --radius-lg: var(--border-radius-lg, 0.75rem);
+    --radius-md: var(--border-radius-md, 0.5rem);
+    
+    /* Transition 변수 */
+    --transition-fast: var(--animation-duration-fast, 0.15s ease);
+}
+
+/* 패키지 데이터 없음 안내 - 표준화 2025-12-08: 디자인 시스템 변수 사용 */
+.package-data-missing {
+    padding: var(--spacing-xl, 2rem);
+    text-align: center;
+    background: var(--mg-gray-50, var(--cs-secondary-50));
+    border-radius: var(--border-radius-md, var(--radius-md));
+    border: var(--border-width-normal, 2px) dashed var(--mg-warning-400, var(--cs-warning-400));
+    margin-top: var(--spacing-md, 1rem);
+}
+
+.missing-data-icon {
+    font-size: var(--font-size-xxxl, 3rem);
+    margin-bottom: var(--spacing-md, 1rem);
+    color: var(--mg-warning-500, var(--cs-warning-500));
+}
+
+.package-data-missing h4 {
+    font-size: var(--font-size-lg, 1.125rem);
+    font-weight: var(--font-weight-semibold, 600);
+    color: var(--mg-gray-900, var(--cs-secondary-900));
+    margin-bottom: var(--spacing-sm, 0.75rem);
+    margin-top: 0;
+}
+
+.package-data-missing p {
+    font-size: var(--font-size-base, 1rem);
+    color: var(--mg-gray-600, var(--cs-secondary-600));
+    margin-bottom: var(--spacing-lg, 1.5rem);
+    margin-top: 0;
+}
+
+.btn-go-to-common-codes {
+    padding: var(--spacing-md, 1rem) var(--spacing-xl, 2rem);
+    background: var(--mg-primary-500, var(--cs-primary-500));
+    color: var(--mg-white, #ffffff);
+    border: none;
+    border-radius: var(--border-radius-md, var(--radius-md));
+    font-size: var(--font-size-base, 1rem);
+    font-weight: var(--font-weight-semibold, 600);
+    cursor: pointer;
+    transition: all var(--transition-fast, 0.15s ease);
+}
+
+.btn-go-to-common-codes:hover {
+    background: var(--mg-primary-600, var(--cs-primary-600));
+    transform: translateY(calc(var(--spacing-xs, 0.5rem) * -1));
+    box-shadow: 0 var(--spacing-xs, 0.5rem) var(--spacing-md, 1rem) var(--mg-shadow-color, rgba(59, 130, 246, 0.3));
+}
+
+.btn-go-to-common-codes:active {
+    transform: translateY(0);
+    box-shadow: 0 var(--spacing-xs, 0.25rem) var(--spacing-sm, 0.5rem) var(--mg-shadow-color, rgba(59, 130, 246, 0.2));
+}
+
 /* 단계 표시기 */
 .step-indicator {
     display: flex;

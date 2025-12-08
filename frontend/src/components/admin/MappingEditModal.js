@@ -179,7 +179,8 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
             });
 
             // PUT 요청으로 매칭 수정 (백엔드의 @PutMapping("/mappings/{ id }") 엔드포인트 사용)
-            const response = await fetch(`/api/admin/mappings/${ mapping.id }`, {
+            // 표준화 2025-12-08: /api/v1/admin 경로로 통일
+            const response = await fetch(`/api/v1/admin/mappings/${ mapping.id }`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json'},

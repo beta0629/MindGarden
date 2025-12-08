@@ -144,7 +144,7 @@ public class TenantOpsController extends BaseApiController {
                 adminMap.put("userId", user.getId());
                 adminMap.put("email", user.getEmail());
                 adminMap.put("name", user.getName());
-                adminMap.put("username", user.getUsername());
+                adminMap.put("userId", user.getUserId());
                 adminMap.put("phone", user.getPhone());
                 adminMap.put("isActive", user.getIsActive() != null ? user.getIsActive() : true);
                 

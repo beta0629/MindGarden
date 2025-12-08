@@ -67,6 +67,8 @@ public class ScheduleController extends BaseApiController {
     private final CommonCodeService commonCodeService;
     private final ConsultantAvailabilityService consultantAvailabilityService;
     private final DynamicPermissionService dynamicPermissionService;
+    private final com.coresolution.consultation.repository.UserRepository userRepository;
+    private final com.coresolution.consultation.service.UserPersonalDataCacheService userPersonalDataCacheService;
 
     /**
      /**
@@ -223,7 +225,7 @@ public class ScheduleController extends BaseApiController {
         
         Map<String, Object> debugInfo = new HashMap<>();
         debugInfo.put("userId", currentUser.getId());
-        debugInfo.put("username", currentUser.getUsername());
+        debugInfo.put("userId", currentUser.getUserId());
         debugInfo.put("email", currentUser.getEmail());
         debugInfo.put("role", currentUser.getRole());
         debugInfo.put("roleName", currentUser.getRole().name());
@@ -889,10 +891,10 @@ public class ScheduleController extends BaseApiController {
                 consultantId, status, startDate, endDate);
         
         User currentUser = SessionUtils.getCurrentUser(session);
-        log.info("🔍 현재 사용자 확인: userId={}, role={}, username={}", 
+        log.info("🔍 현재 사용자 확인: userId={}, role={}, userId={}", 
                 currentUser != null ? currentUser.getId() : "null",
                 currentUser != null ? currentUser.getRole() : "null",
-                currentUser != null ? currentUser.getUsername() : "null");
+                currentUser != null ? currentUser.getUserId() : "null");
         
         if (currentUser == null) {
             log.error("❌ 세션에서 사용자 정보를 찾을 수 없습니다.");
@@ -1122,12 +1124,51 @@ public class ScheduleController extends BaseApiController {
 
     /**
      * Schedule 엔티티를 ScheduleResponse로 변환하는 헬퍼 메서드
+     * 표준화 2025-12-08: UserPersonalDataCacheService를 사용하여 복호화된 이름 사용
      */
     private ScheduleResponse convertToScheduleResponse(Schedule schedule) {
+        String consultantName = "알 수 없음";
+        String clientName = "알 수 없음";
+        
+        try {
+            if (schedule.getConsultantId() != null) {
+                User consultant = userRepository.findById(schedule.getConsultantId()).orElse(null);
+                if (consultant != null) {
+                    // 표준화 2025-12-08: 개인정보 캐시 서비스를 사용하여 복호화된 데이터 사용
+                    Map<String, String> decryptedData = userPersonalDataCacheService.getDecryptedUserData(consultant);
+                    if (decryptedData != null && decryptedData.get("name") != null) {
+                        consultantName = decryptedData.get("name");
+                    } else {
+                        log.warn("⚠️ 상담사 개인정보 캐시 없음: consultantId={}", consultant.getId());
+                        consultantName = "알 수 없음";
+                    }
+                }
+            }
+            
+            if (schedule.getClientId() != null) {
+                User client = userRepository.findById(schedule.getClientId()).orElse(null);
+                if (client != null) {
+                    // 표준화 2025-12-08: 개인정보 캐시 서비스를 사용하여 복호화된 데이터 사용
+                    Map<String, String> decryptedData = userPersonalDataCacheService.getDecryptedUserData(client);
+                    if (decryptedData != null && decryptedData.get("name") != null) {
+                        clientName = decryptedData.get("name");
+                    } else {
+                        log.warn("⚠️ 내담자 개인정보 캐시 없음: clientId={}", client.getId());
+                        clientName = "알 수 없음";
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.warn("⚠️ 사용자 정보 조회 실패: consultantId={}, clientId={}, error={}", 
+                    schedule.getConsultantId(), schedule.getClientId(), e.getMessage());
+        }
+        
         return ScheduleResponse.builder()
             .id(schedule.getId())
             .consultantId(schedule.getConsultantId())
+            .consultantName(consultantName)
             .clientId(schedule.getClientId())
+            .clientName(clientName)
             .date(schedule.getDate())
             .startTime(schedule.getStartTime())
             .endTime(schedule.getEndTime())

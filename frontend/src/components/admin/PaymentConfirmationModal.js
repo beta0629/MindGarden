@@ -3,6 +3,8 @@ import ReactDOM from 'react-dom';
 import { CreditCard, X, CheckCircle, XCircle } from 'lucide-react';
 import { apiGet } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
+import MGButton from '../common/MGButton';
+import './PaymentConfirmationModal.css';
 
 /**
  * 결제 확인 모달 컴포넌트
@@ -27,6 +29,11 @@ const PaymentConfirmationModal = ({
   mappings = [], 
   onPaymentConfirmed 
 }) => {
+  // notificationManager가 제대로 import되었는지 확인
+  if (typeof notificationManager === 'undefined') {
+    console.error('notificationManager가 정의되지 않았습니다. import를 확인해주세요.');
+  }
+  
   const [loading, setLoading] = useState(false);
   const [selectedMappings, setSelectedMappings] = useState([]);
   const [paymentData, setPaymentData] = useState({
@@ -99,7 +106,8 @@ const PaymentConfirmationModal = ({
     const loadPaymentMethodCodes = async () => {
       try {
         setLoadingCodes(true);
-        const response = await apiGet('/api/v1/common-codes/PAYMENT_METHOD');
+        // 표준화 2025-12-08: 올바른 API 경로 사용 (/groups/{codeGroup})
+        const response = await apiGet('/api/v1/common-codes/groups/PAYMENT_METHOD');
         if (response && response.length > 0) {
           const options = response.map(code => ({
             value: code.codeValue,
@@ -186,7 +194,12 @@ const PaymentConfirmationModal = ({
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleConfirmPayment = async () => {
+  const handleConfirmPayment = async (e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
     if (!validateForm()) {
       notificationManager.error(MESSAGES.REQUIRED_FIELDS);
       return;
@@ -225,7 +238,12 @@ const PaymentConfirmationModal = ({
     }
   };
 
-  const handleCancelPayment = async () => {
+  const handleCancelPayment = async (e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
     if (selectedMappings.length === 0) {
       notificationManager.error('취소할 매핑을 선택해주세요.');
       return;
@@ -377,47 +395,42 @@ const PaymentConfirmationModal = ({
 
         {/* 푸터 */}
         <div className="mg-v2-modal-footer">
-          <button
-            className="mg-v2-button mg-v2-button-secondary"
-            onClick={onClose}
+          <MGButton
+            variant="secondary"
+            onClick={(e) => {
+              if (e) {
+                e.preventDefault();
+                e.stopPropagation();
+              }
+              onClose();
+            }}
             disabled={loading}
+            preventDoubleClick={true}
           >
             취소
-          </button>
-          <button
-            className="mg-v2-button mg-v2-button-danger"
+          </MGButton>
+          <MGButton
+            variant="danger"
             onClick={handleCancelPayment}
             disabled={loading || selectedMappings.length === 0}
+            loading={loading}
+            preventDoubleClick={true}
+            clickDelay={1000}
           >
-            {loading ? (
-              <>
-                <span className="mg-v2-spinner"></span>
-                처리 중...
-              </>
-            ) : (
-              <>
-                <XCircle size={18} />
-                결제 취소
-              </>
-            )}
-          </button>
-          <button
-            className="mg-v2-button mg-v2-button-success"
+            <XCircle size={18} />
+            결제 취소
+          </MGButton>
+          <MGButton
+            variant="success"
             onClick={handleConfirmPayment}
             disabled={loading || selectedMappings.length === 0}
+            loading={loading}
+            preventDoubleClick={true}
+            clickDelay={1000}
           >
-            {loading ? (
-              <>
-                <span className="mg-v2-spinner"></span>
-                처리 중...
-              </>
-            ) : (
-              <>
-                <CheckCircle size={18} />
-                결제 확인
-              </>
-            )}
-          </button>
+            <CheckCircle size={18} />
+            결제 확인
+          </MGButton>
         </div>
       </div>
     </div>,

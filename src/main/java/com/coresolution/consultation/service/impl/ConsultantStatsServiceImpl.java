@@ -13,6 +13,7 @@ import com.coresolution.consultation.repository.ConsultantRepository;
 import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.consultation.service.ConsultantRatingService;
 import com.coresolution.consultation.service.ConsultantStatsService;
+import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -40,6 +41,7 @@ public class ConsultantStatsServiceImpl implements ConsultantStatsService {
     private final ConsultantClientMappingRepository mappingRepository;
     private final ScheduleRepository scheduleRepository;
     private final ConsultantRatingService consultantRatingService;
+    private final PersonalDataEncryptionUtil encryptionUtil;
 
     @Override
     @Cacheable(value = "consultantsWithStats", key = "'consultant:' + #consultantId")
@@ -65,8 +67,11 @@ public class ConsultantStatsServiceImpl implements ConsultantStatsService {
         
         Map<String, Object> stats = calculateConsultantStats(consultantId);
         
+        // 표준화 2025-12-08: 개인정보 복호화
+        Map<String, Object> consultantMap = convertConsultantToMap(consultant);
+        
         Map<String, Object> result = new HashMap<>();
-        result.put("consultant", consultant);
+        result.put("consultant", consultantMap);
         result.put("currentClients", currentClients);
         result.put("maxClients", consultant.getMaxClients() != null ? consultant.getMaxClients() : 0);
         result.put("totalClients", consultant.getTotalClients() != null ? consultant.getTotalClients() : 0);
@@ -119,22 +124,8 @@ public class ConsultantStatsServiceImpl implements ConsultantStatsService {
                     
                     Map<String, Object> result = new HashMap<>();
                     
-                    Map<String, Object> consultantMap = new HashMap<>();
-                    consultantMap.put("id", consultant.getId());
-                    consultantMap.put("name", consultant.getName());
-                    consultantMap.put("role", consultant.getRole() != null ? consultant.getRole().name() : null);
-                    consultantMap.put("isActive", consultant.getIsActive());
-                    consultantMap.put("isDeleted", consultant.getIsDeleted());
-                    
-                    consultantMap.put("specialty", consultant.getSpecialty());
-                    consultantMap.put("specialtyDetails", consultant.getSpecialtyDetails());
-                    
-                    String specialization = consultant.getSpecialization();
-                    consultantMap.put("specialization", specialization);
-                    consultantMap.put("specializationDetails", getSpecializationDetailsFromDB(specialization));
-                    
-                    consultantMap.put("createdAt", consultant.getCreatedAt());
-                    consultantMap.put("updatedAt", consultant.getUpdatedAt());
+                    // 표준화 2025-12-08: 개인정보 복호화
+                    Map<String, Object> consultantMap = convertConsultantToMap(consultant);
                     
                     result.put("consultant", consultantMap);
                     result.put("currentClients", currentClients);
@@ -267,6 +258,67 @@ public class ConsultantStatsServiceImpl implements ConsultantStatsService {
         specialtyMap.put("SELF_DEVELOPMENT", "자기개발");
         
         return specialtyMap.getOrDefault(code.toUpperCase(), code);
+    }
+    
+    /**
+     * 상담사 엔티티를 Map으로 변환 (개인정보 복호화 포함)
+     */
+    private Map<String, Object> convertConsultantToMap(Consultant consultant) {
+        Map<String, Object> consultantMap = new HashMap<>();
+        consultantMap.put("id", consultant.getId());
+        
+        // 표준화 2025-12-08: 개인정보 필드 복호화
+        // 이름 복호화
+        String name = consultant.getName();
+        if (name != null && !name.trim().isEmpty()) {
+            try {
+                name = encryptionUtil.safeDecrypt(name);
+            } catch (Exception e) {
+                log.warn("🔓 상담사 이름 복호화 실패: consultantId={}, error={}", consultant.getId(), e.getMessage());
+                // 복호화 실패 시 원본 데이터 유지
+            }
+        }
+        consultantMap.put("name", name);
+        
+        // 이메일 복호화
+        String email = consultant.getEmail();
+        if (email != null && !email.trim().isEmpty()) {
+            try {
+                email = encryptionUtil.safeDecrypt(email);
+            } catch (Exception e) {
+                log.warn("🔓 상담사 이메일 복호화 실패: consultantId={}, error={}", consultant.getId(), e.getMessage());
+                // 복호화 실패 시 원본 데이터 유지
+            }
+        }
+        consultantMap.put("email", email);
+        
+        // 전화번호 복호화
+        String phone = consultant.getPhone();
+        if (phone != null && !phone.trim().isEmpty()) {
+            try {
+                phone = encryptionUtil.safeDecrypt(phone);
+            } catch (Exception e) {
+                log.warn("🔓 상담사 전화번호 복호화 실패: consultantId={}, error={}", consultant.getId(), e.getMessage());
+                // 복호화 실패 시 원본 데이터 유지
+            }
+        }
+        consultantMap.put("phone", phone);
+        
+        consultantMap.put("role", consultant.getRole() != null ? consultant.getRole().name() : null);
+        consultantMap.put("isActive", consultant.getIsActive());
+        consultantMap.put("isDeleted", consultant.getIsDeleted());
+        
+        consultantMap.put("specialty", consultant.getSpecialty());
+        consultantMap.put("specialtyDetails", consultant.getSpecialtyDetails());
+        
+        String specialization = consultant.getSpecialization();
+        consultantMap.put("specialization", specialization);
+        consultantMap.put("specializationDetails", getSpecializationDetailsFromDB(specialization));
+        
+        consultantMap.put("createdAt", consultant.getCreatedAt());
+        consultantMap.put("updatedAt", consultant.getUpdatedAt());
+        
+        return consultantMap;
     }
     
     /**

@@ -20,19 +20,20 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class ClientRegistrationRequest {
     
-    @NotBlank(message = "사용자명은 필수입니다.")
-    private String username;
+    // 표준화 2025-12-08: userId는 이메일 기반으로 자동 생성됨 (프론트엔드에서 전송하지 않음)
+    private String userId;
     
     @NotBlank(message = "이메일은 필수입니다.")
     @Email(message = "올바른 이메일 형식이 아닙니다.")
     private String email;
     
-    @NotBlank(message = "비밀번호는 필수입니다.")
+    // 표준화 2025-12-08: password는 자동 생성됨 (프론트엔드에서 전송하지 않음)
     private String password;
     
-    @NotBlank(message = "이름은 필수입니다.")
+    // 표준화 2025-12-08: name은 이메일 기반으로 자동 생성됨 (프론트엔드에서 전송하지 않음)
     private String name;
     
+    // 표준화 2025-12-08: phone은 선택사항 (프론트엔드에서 전송하지 않음)
     private String phone;
     
     private Integer age;
@@ -78,7 +79,7 @@ public class ClientRegistrationRequest {
         }
         
         return ClientRegistrationRequest.builder()
-            .username(dto.getUsername())
+            .userId(dto.getUserId())
             .email(dto.getEmail())
             .password(dto.getPassword())
             .name(dto.getName())

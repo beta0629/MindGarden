@@ -51,8 +51,8 @@ const WelcomeWidget = ({ widget, user }) => {
     if (user?.nickname && !user.nickname.includes('==')) {
       return user.nickname;
     }
-    if (user?.username) {
-      return user.username;
+    if (user?.userId) {
+      return user.userId;
     }
     return config.defaultName || '사용자';
   };

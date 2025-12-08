@@ -45,9 +45,9 @@ const ClientFilters = ({
                         className="mg-v2-select mg-v2-filter-select mg-v2-w-full"
                     >
                         <option value="all">전체 상태</option>
-                        {userStatusOptions.map(option => (
+                        {userStatusOptions.map((option) => (
                             <option key={option.codeValue} value={option.codeValue}>
-                                {option.codeLabel}
+                                {option.codeLabel || option.code}
                             </option>
                         ))}
                     </select>

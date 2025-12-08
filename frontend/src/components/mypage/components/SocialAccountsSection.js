@@ -25,7 +25,7 @@ const SocialAccountsSection = ({
                 </div>
                 <div className="social-account-details">
                   <h3>{account.provider === 'KAKAO' ? '카카오' : account.provider === 'NAVER' ? '네이버' : account.provider} 계정</h3>
-                  <p>{account.providerUsername || '사용자명 없음'}</p>
+                  <p>{account.providerUsername || '사용자 ID 없음'}</p>
                   {account.providerProfileImage && (
                     <div className="social-profile-image">
                       <img 

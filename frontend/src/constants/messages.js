@@ -153,7 +153,7 @@ export const VALIDATION_MESSAGES = {
   
   EMAIL_EXISTS: '이미 사용 중인 이메일입니다.',
   PHONE_EXISTS: '이미 사용 중인 휴대폰 번호입니다.',
-  USERNAME_EXISTS: '이미 사용 중인 사용자명입니다.',
+  USERNAME_EXISTS: '이미 사용 중인 사용자 ID입니다.',
   
   PASSWORDS_NOT_MATCH: '비밀번호가 일치하지 않습니다.',
   INVALID_DATE: '올바른 날짜 형식이 아닙니다.',

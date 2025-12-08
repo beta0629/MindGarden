@@ -22,45 +22,51 @@ import org.springframework.stereotype.Repository;
 public interface UserRepository extends BaseRepository<User, Long> {
     
     /**
-     * 테넌트별 사용자명으로 사용자 조회 (테넌트 필터링)
+     * 테넌트별 사용자 ID로 사용자 조회 (테넌트 필터링)
+     * 표준화 2025-12-08: username -> userId
      */
-    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.username = :username AND u.isDeleted = false")
-    Optional<User> findByTenantIdAndUsername(@Param("tenantId") String tenantId, @Param("username") String username);
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.userId = :userId AND u.isDeleted = false")
+    Optional<User> findByTenantIdAndUserId(@Param("tenantId") String tenantId, @Param("userId") String userId);
     
     /**
      * @Deprecated - 🚨 극도로 위험: 모든 테넌트 사용자 정보 노출!
+     * 표준화 2025-12-08: username -> userId
      */
     @Deprecated
-    @Query("SELECT u FROM User u WHERE u.username = ?1 AND u.isDeleted = false")
-    Optional<User> findByUsername(String username);
+    @Query("SELECT u FROM User u WHERE u.userId = ?1 AND u.isDeleted = false")
+    Optional<User> findByUserId(String userId);
     
     /**
-     * 테넌트별 사용자명과 활성 상태로 사용자 조회 (테넌트 필터링)
+     * 테넌트별 사용자 ID와 활성 상태로 사용자 조회 (테넌트 필터링)
+     * 표준화 2025-12-08: username -> userId
      */
-    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.username = :username AND u.isActive = :isActive AND u.isDeleted = false")
-    Optional<User> findByTenantIdAndUsernameAndIsActive(@Param("tenantId") String tenantId, @Param("username") String username, @Param("isActive") Boolean isActive);
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.userId = :userId AND u.isActive = :isActive AND u.isDeleted = false")
+    Optional<User> findByTenantIdAndUserIdAndIsActive(@Param("tenantId") String tenantId, @Param("userId") String userId, @Param("isActive") Boolean isActive);
     
     /**
      * @Deprecated - 🚨 극도로 위험: 모든 테넌트 사용자 정보 노출!
+     * 표준화 2025-12-08: username -> userId
      */
     @Deprecated
-    @Query("SELECT u FROM User u WHERE u.username = ?1 AND u.isActive = ?2 AND u.isDeleted = false")
-    Optional<User> findByUsernameAndIsActive(String username, Boolean isActive);
+    @Query("SELECT u FROM User u WHERE u.userId = ?1 AND u.isActive = ?2 AND u.isDeleted = false")
+    Optional<User> findByUserIdAndIsActive(String userId, Boolean isActive);
     
     /**
-     * 테넌트별 사용자명으로 사용자 존재 여부 확인 (테넌트 필터링)
+     * 테넌트별 사용자 ID로 사용자 존재 여부 확인 (테넌트 필터링)
+     * 표준화 2025-12-08: username -> userId
      */
-    @Query("SELECT CASE WHEN COUNT(u) > 0 THEN true ELSE false END FROM User u WHERE u.tenantId = :tenantId AND u.username = :username AND u.isDeleted = false")
-    boolean existsByTenantIdAndUsername(@Param("tenantId") String tenantId, @Param("username") String username);
+    @Query("SELECT CASE WHEN COUNT(u) > 0 THEN true ELSE false END FROM User u WHERE u.tenantId = :tenantId AND u.userId = :userId AND u.isDeleted = false")
+    boolean existsByTenantIdAndUserId(@Param("tenantId") String tenantId, @Param("userId") String userId);
     
     boolean existsByTenantIdAndEmail(@Param("tenantId") String tenantId, @Param("email") String email);
     
     /**
-     * @Deprecated - 🚨 극도로 위험: 모든 테넌트 사용자명 중복 검사!
+     * @Deprecated - 🚨 극도로 위험: 모든 테넌트 사용자 ID 중복 검사!
+     * 표준화 2025-12-08: username -> userId
      */
     @Deprecated
-    @Query("SELECT CASE WHEN COUNT(u) > 0 THEN true ELSE false END FROM User u WHERE u.username = ?1 AND u.isDeleted = false")
-    boolean existsByUsername(String username);
+    @Query("SELECT CASE WHEN COUNT(u) > 0 THEN true ELSE false END FROM User u WHERE u.userId = ?1 AND u.isDeleted = false")
+    boolean existsByUserId(String userId);
     
     /**
      * 테넌트별 만료된 사용자 데이터 조회 (테넌트 필터링)
@@ -235,7 +241,7 @@ public interface UserRepository extends BaseRepository<User, Long> {
     /**
      * 마이페이지 정보 조회 (tenantId 필터링)
      */
-    @Query("SELECT u.id, u.username, u.email, u.name, u.nickname, u.phone, u.gender, " +
+    @Query("SELECT u.id, u.userId, u.email, u.name, u.nickname, u.phone, u.gender, " +
            "u.profileImageUrl, u.role, u.grade, u.experiencePoints, u.totalConsultations, " +
            "u.lastLoginAt, u.isActive, u.isEmailVerified, u.createdAt, u.updatedAt, " +
            "usa.provider, usa.providerProfileImage, usa.providerUsername " +
@@ -248,7 +254,7 @@ public interface UserRepository extends BaseRepository<User, Long> {
      * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
      */
     @Deprecated
-    @Query("SELECT u.id, u.username, u.email, u.name, u.nickname, u.phone, u.gender, " +
+    @Query("SELECT u.id, u.userId, u.email, u.name, u.nickname, u.phone, u.gender, " +
            "u.profileImageUrl, u.role, u.grade, u.experiencePoints, u.totalConsultations, " +
            "u.lastLoginAt, u.isActive, u.isEmailVerified, u.createdAt, u.updatedAt, " +
            "usa.provider, usa.providerProfileImage, usa.providerUsername " +
@@ -864,28 +870,31 @@ public interface UserRepository extends BaseRepository<User, Long> {
     /**
      * 지점과 역할로 사용자 조회 (tenantId 필터링)
      */
-    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.branch = :branch AND u.role = :role AND u.isDeleted = false ORDER BY u.username")
-    List<User> findByBranchAndRoleAndIsDeletedFalseOrderByUsername(@Param("tenantId") String tenantId, @Param("branch") com.coresolution.consultation.entity.Branch branch, @Param("role") UserRole role);
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.branch = :branch AND u.role = :role AND u.isDeleted = false ORDER BY u.userId")
+    List<User> findByBranchAndRoleAndIsDeletedFalseOrderByUserId(@Param("tenantId") String tenantId, @Param("branch") com.coresolution.consultation.entity.Branch branch, @Param("role") UserRole role);
     
     /**
      * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
+     * 표준화 2025-12-08: username -> userId
      */
     @Deprecated
-    @Query("SELECT u FROM User u WHERE u.branch = ?1 AND u.role = ?2 AND u.isDeleted = false ORDER BY u.username")
-    List<User> findByBranchAndRoleAndIsDeletedFalseOrderByUsernameDeprecated(com.coresolution.consultation.entity.Branch branch, UserRole role);
+    @Query("SELECT u FROM User u WHERE u.branch = ?1 AND u.role = ?2 AND u.isDeleted = false ORDER BY u.userId")
+    List<User> findByBranchAndRoleAndIsDeletedFalseOrderByUserIdDeprecated(com.coresolution.consultation.entity.Branch branch, UserRole role);
     
     /**
      * 지점으로 사용자 조회 (tenantId 필터링)
+     * 표준화 2025-12-08: username -> userId
      */
-    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.branch = :branch AND u.isDeleted = false ORDER BY u.username")
-    List<User> findByBranchAndIsDeletedFalseOrderByUsername(@Param("tenantId") String tenantId, @Param("branch") com.coresolution.consultation.entity.Branch branch);
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.branch = :branch AND u.isDeleted = false ORDER BY u.userId")
+    List<User> findByBranchAndIsDeletedFalseOrderByUserId(@Param("tenantId") String tenantId, @Param("branch") com.coresolution.consultation.entity.Branch branch);
     
     /**
      * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
+     * 표준화 2025-12-08: username -> userId
      */
     @Deprecated
-    @Query("SELECT u FROM User u WHERE u.branch = ?1 AND u.isDeleted = false ORDER BY u.username")
-    List<User> findByBranchAndIsDeletedFalseOrderByUsernameDeprecated(com.coresolution.consultation.entity.Branch branch);
+    @Query("SELECT u FROM User u WHERE u.branch = ?1 AND u.isDeleted = false ORDER BY u.userId")
+    List<User> findByBranchAndIsDeletedFalseOrderByUserIdDeprecated(com.coresolution.consultation.entity.Branch branch);
     
     /**
      * 테넌트별 사용자 수 조회 (브랜치 개념 제거)
@@ -919,7 +928,7 @@ public interface UserRepository extends BaseRepository<User, Long> {
      * @param tenantId 테넌트 UUID
      * @return 사용자 목록
      */
-    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.isDeleted = false ORDER BY u.username")
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.isDeleted = false ORDER BY u.userId")
     List<User> findAllUsersByTenantId(@Param("tenantId") String tenantId);
     
     /**
@@ -929,14 +938,14 @@ public interface UserRepository extends BaseRepository<User, Long> {
      *             대신 {@link #findAllUsersByTenantId(String)}를 사용하세요.
      */
     @Deprecated
-    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.branch IS NULL AND u.isDeleted = false ORDER BY u.username")
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.branch IS NULL AND u.isDeleted = false ORDER BY u.userId")
     List<User> findUsersWithoutBranch(@Param("tenantId") String tenantId);
     
     /**
      * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
      */
     @Deprecated
-    @Query("SELECT u FROM User u WHERE u.branch IS NULL AND u.isDeleted = false ORDER BY u.username")
+    @Query("SELECT u FROM User u WHERE u.branch IS NULL AND u.isDeleted = false ORDER BY u.userId")
     List<User> findUsersWithoutBranchDeprecated();
     
     /**
@@ -968,7 +977,7 @@ public interface UserRepository extends BaseRepository<User, Long> {
     /**
      * 지점 코드별 사용자 조회 (tenantId 필터링)
      */
-    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.branchCode = :branchCode AND u.isDeleted = false ORDER BY u.username")
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.branchCode = :branchCode AND u.isDeleted = false ORDER BY u.userId")
     /**
      * @Deprecated - 표준화 2025-12-07: 브랜치 개념 제거됨, tenantId만 사용
      * 레거시 호환을 위해 유지되지만 새로운 코드에서는 사용하지 마세요.
@@ -981,7 +990,7 @@ public interface UserRepository extends BaseRepository<User, Long> {
      * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
      */
     @Deprecated
-    @Query("SELECT u FROM User u WHERE u.branchCode = ?1 AND u.isDeleted = false ORDER BY u.username")
+    @Query("SELECT u FROM User u WHERE u.branchCode = ?1 AND u.isDeleted = false ORDER BY u.userId")
     List<User> findByBranchCodeDeprecated(String branchCode);
     
     /**
@@ -1003,8 +1012,8 @@ public interface UserRepository extends BaseRepository<User, Long> {
          // log.warn("Deprecated 파라미터: branchCode는 더 이상 사용하지 않음");
      }     */
     @Deprecated
-    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.branchCode = :branchCode AND u.role = :role AND u.isDeleted = false ORDER BY u.username")
-    List<User> findByBranchCodeAndRoleAndIsDeletedFalseOrderByUsername(@Param("tenantId") String tenantId, @Param("branchCode") String branchCode, @Param("role") UserRole role);
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.branchCode = :branchCode AND u.role = :role AND u.isDeleted = false ORDER BY u.userId")
+    List<User> findByBranchCodeAndRoleAndIsDeletedFalseOrderByUserId(@Param("tenantId") String tenantId, @Param("branchCode") String branchCode, @Param("role") UserRole role);
     
     /**
      * 테넌트 ID와 역할로 사용자 조회 (브랜치 개념 제거)
@@ -1013,53 +1022,53 @@ public interface UserRepository extends BaseRepository<User, Long> {
      * @param role 사용자 역할
      * @return 사용자 목록
      */
-    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.role = :role AND u.isDeleted = false ORDER BY u.username")
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.role = :role AND u.isDeleted = false ORDER BY u.userId")
     List<User> findByTenantIdAndRole(@Param("tenantId") String tenantId, @Param("role") UserRole role);
     
     /**
      * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
      */
     @Deprecated
-    @Query("SELECT u FROM User u WHERE u.branchCode = ?1 AND u.role = ?2 AND u.isDeleted = false ORDER BY u.username")
-    List<User> findByBranchCodeAndRoleAndIsDeletedFalseOrderByUsernameDeprecated(String branchCode, UserRole role);
+    @Query("SELECT u FROM User u WHERE u.branchCode = ?1 AND u.role = ?2 AND u.isDeleted = false ORDER BY u.userId")
+    List<User> findByBranchCodeAndRoleAndIsDeletedFalseOrderByUserIdDeprecated(String branchCode, UserRole role);
     
     /**
      * 여러 역할로 사용자 조회 (tenantId 필터링)
      */
-    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.role IN :roles AND u.isDeleted = false ORDER BY u.username")
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.role IN :roles AND u.isDeleted = false ORDER BY u.userId")
     List<User> findByRoleIn(@Param("tenantId") String tenantId, @Param("roles") List<String> roles);
     
     /**
      * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
      */
     @Deprecated
-    @Query("SELECT u FROM User u WHERE u.role IN :roles AND u.isDeleted = false ORDER BY u.username")
+    @Query("SELECT u FROM User u WHERE u.role IN :roles AND u.isDeleted = false ORDER BY u.userId")
     List<User> findByRoleInDeprecated(@Param("roles") List<String> roles);
     
     /**
      * 역할별 사용자 조회 (tenantId 필터링)
      */
-    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.role = :role AND u.isDeleted = false ORDER BY u.username")
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.role = :role AND u.isDeleted = false ORDER BY u.userId")
     List<User> findByRoleAndIsDeletedFalse(@Param("tenantId") String tenantId, @Param("role") String role);
     
     /**
      * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
      */
     @Deprecated
-    @Query("SELECT u FROM User u WHERE u.role = ?1 AND u.isDeleted = false ORDER BY u.username")
+    @Query("SELECT u FROM User u WHERE u.role = ?1 AND u.isDeleted = false ORDER BY u.userId")
     List<User> findByRoleAndIsDeletedFalseDeprecated(String role);
     
     /**
      * 여러 역할로 사용자 조회 (tenantId 필터링)
      */
-    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.role IN :roles AND u.isDeleted = false ORDER BY u.username")
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.role IN :roles AND u.isDeleted = false ORDER BY u.userId")
     List<User> findByRoleInAndIsDeletedFalse(@Param("tenantId") String tenantId, @Param("roles") List<String> roles);
     
     /**
      * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
      */
     @Deprecated
-    @Query("SELECT u FROM User u WHERE u.role IN :roles AND u.isDeleted = false ORDER BY u.username")
+    @Query("SELECT u FROM User u WHERE u.role IN :roles AND u.isDeleted = false ORDER BY u.userId")
     List<User> findByRoleInAndIsDeletedFalseDeprecated(@Param("roles") List<String> roles);
     
     // === 통계용 메서드 ===

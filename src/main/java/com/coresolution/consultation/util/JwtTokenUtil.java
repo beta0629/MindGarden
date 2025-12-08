@@ -30,11 +30,11 @@ public class JwtTokenUtil {
     private Long expiration;
 
     /**
-     * 사용자명으로부터 JWT 토큰 생성
+     * 사용자 ID으로부터 JWT 토큰 생성
      */
-    public String generateToken(String username) {
+    public String generateToken(String userId) {
         Map<String, Object> claims = new HashMap<>();
-        return createToken(claims, username);
+        return createToken(claims, userId);
     }
 
     /**
@@ -54,7 +54,7 @@ public class JwtTokenUtil {
     }
 
     /**
-     * 토큰에서 사용자명 추출
+     * 토큰에서 사용자 ID 추출
      */
     public String getUsernameFromToken(String token) {
         return getClaimFromToken(token, Claims::getSubject);
@@ -95,8 +95,8 @@ public class JwtTokenUtil {
      */
     public Boolean validateToken(String token) {
         try {
-            final String username = getUsernameFromToken(token);
-            return (username != null && !isTokenExpired(token));
+            final String userId = getUsernameFromToken(token);
+            return (userId != null && !isTokenExpired(token));
         } catch (Exception e) {
             log.warn("JWT 토큰 검증 실패: {}", e.getMessage());
             return false;
@@ -105,8 +105,10 @@ public class JwtTokenUtil {
 
     /**
      * UserDetails로부터 토큰 생성
+     * username이 userId를 반환하므로 getUsername() 사용
      */
     public String generateToken(UserDetails userDetails) {
+        // username이 userId를 반환하므로 getUsername() 사용
         return generateToken(userDetails.getUsername());
     }
 }

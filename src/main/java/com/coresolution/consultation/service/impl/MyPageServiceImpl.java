@@ -128,7 +128,7 @@ public class MyPageServiceImpl implements MyPageService {
         
         return MyPageResponse.builder()
                 .id(user.getId())
-                .username(user.getUsername())
+                .userId(user.getUserId())
                 .email(user.getEmail())
                 .name(user.getName())
                 .nickname(decryptedNickname)
@@ -354,8 +354,8 @@ public class MyPageServiceImpl implements MyPageService {
     }
 
     @Override
-    public String deleteAccount(String username) {
-        log.info("🔧 계정 삭제: {}", username);
+    public String deleteAccount(String userId) {
+        log.info("🔧 계정 삭제: {}", userId);
         
         String tenantId = TenantContextHolder.getTenantId();
         if (tenantId == null) {
@@ -363,8 +363,8 @@ public class MyPageServiceImpl implements MyPageService {
             throw new IllegalStateException("tenantId가 설정되지 않았습니다");
         }
         
-        User user = userRepository.findByTenantIdAndUsername(tenantId, username)
-                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + username));
+        User user = userRepository.findByTenantIdAndUserId(tenantId, userId)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + userId));
         
         user.setIsActive(false);
         userRepository.save(user);

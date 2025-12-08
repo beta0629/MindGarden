@@ -17,7 +17,8 @@ const ConsultantClientWidget = ({ widget, user }) => {
     type: 'api',
     cache: true,
     refreshInterval: 300000, // 5분마다 새로고침 (내담자 정보 변경)
-    url: `/api/admin/mappings/consultant/${user.id}/clients`,
+    // 표준화 2025-12-08: /api/v1/admin 경로로 통일
+    url: `/api/v1/admin/mappings/consultant/${user.id}/clients`,
     params: {
       includePackages: true,
       includeSessions: true,

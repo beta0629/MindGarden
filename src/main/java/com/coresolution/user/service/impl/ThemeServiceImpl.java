@@ -47,12 +47,12 @@ public class ThemeServiceImpl implements ThemeService {
 
     @Override
     @Transactional(readOnly = true)
-    public ThemeResponse getUserTheme(String username) {
-        log.debug("사용자 테마 설정 조회: username={}", username);
+    public ThemeResponse getUserTheme(String userId) {
+        log.debug("사용자 테마 설정 조회: userId={}", userId);
         
-        User user = userRepository.findByUsername(username)
+        User user = userRepository.findByUserId(userId)
             .orElseThrow(() -> new EntityNotFoundException(
-                ThemeConstants.formatError(ThemeConstants.ERROR_USER_NOT_FOUND, username)));
+                ThemeConstants.formatError(ThemeConstants.ERROR_USER_NOT_FOUND, userId)));
 
         String themePreference = user.getThemePreference();
         String customThemeColors = user.getCustomThemeColors();
@@ -70,12 +70,12 @@ public class ThemeServiceImpl implements ThemeService {
     }
 
     @Override
-    public ThemeResponse updateUserTheme(String username, ThemeUpdateRequest request) {
-        log.info("사용자 테마 설정 업데이트: username={}, theme={}", username, request.getThemePreference());
+    public ThemeResponse updateUserTheme(String userId, ThemeUpdateRequest request) {
+        log.info("사용자 테마 설정 업데이트: userId={}, theme={}", userId, request.getThemePreference());
         
-        User user = userRepository.findByUsername(username)
+        User user = userRepository.findByUserId(userId)
             .orElseThrow(() -> new EntityNotFoundException(
-                ThemeConstants.formatError(ThemeConstants.ERROR_USER_NOT_FOUND, username)));
+                ThemeConstants.formatError(ThemeConstants.ERROR_USER_NOT_FOUND, userId)));
 
         // 테마 유효성 검사
         validateTheme(request.getThemePreference());
@@ -88,7 +88,7 @@ public class ThemeServiceImpl implements ThemeService {
                 String customColorsJson = objectMapper.writeValueAsString(request.getCustomThemeColors());
                 user.setCustomThemeColors(customColorsJson);
             } catch (JsonProcessingException e) {
-                log.error("커스텀 테마 색상 JSON 변환 실패: username={}", username, e);
+                log.error("커스텀 테마 색상 JSON 변환 실패: userId={}", userId, e);
                 throw new RuntimeException(ThemeConstants.ERROR_CUSTOM_COLORS_SAVE_FAILED, e);
             }
         } else {
@@ -105,12 +105,12 @@ public class ThemeServiceImpl implements ThemeService {
     }
 
     @Override
-    public ThemeResponse resetUserTheme(String username) {
-        log.info("사용자 테마 설정 초기화: username={}", username);
+    public ThemeResponse resetUserTheme(String userId) {
+        log.info("사용자 테마 설정 초기화: userId={}", userId);
         
-        User user = userRepository.findByUsername(username)
+        User user = userRepository.findByUserId(userId)
             .orElseThrow(() -> new EntityNotFoundException(
-                ThemeConstants.formatError(ThemeConstants.ERROR_USER_NOT_FOUND, username)));
+                ThemeConstants.formatError(ThemeConstants.ERROR_USER_NOT_FOUND, userId)));
 
         // 역할별 기본 테마로 초기화
         String defaultTheme = getDefaultThemeByRoleName(user.getRole().toString());
@@ -128,12 +128,12 @@ public class ThemeServiceImpl implements ThemeService {
 
     @Override
     @Transactional(readOnly = true)
-    public ThemeResponse getDefaultThemeByRole(String username) {
-        log.debug("역할별 기본 테마 조회: username={}", username);
+    public ThemeResponse getDefaultThemeByRole(String userId) {
+        log.debug("역할별 기본 테마 조회: userId={}", userId);
         
-        User user = userRepository.findByUsername(username)
+        User user = userRepository.findByUserId(userId)
             .orElseThrow(() -> new EntityNotFoundException(
-                ThemeConstants.formatError(ThemeConstants.ERROR_USER_NOT_FOUND, username)));
+                ThemeConstants.formatError(ThemeConstants.ERROR_USER_NOT_FOUND, userId)));
 
         String defaultTheme = getDefaultThemeByRoleName(user.getRole().toString());
 
@@ -177,15 +177,15 @@ public class ThemeServiceImpl implements ThemeService {
 
     @Override
     @Transactional(readOnly = true)
-    public ThemeResponse previewTheme(String username, ThemeUpdateRequest request) {
-        log.debug("테마 미리보기: username={}, theme={}", username, request.getThemePreference());
+    public ThemeResponse previewTheme(String userId, ThemeUpdateRequest request) {
+        log.debug("테마 미리보기: userId={}, theme={}", userId, request.getThemePreference());
         
         // 테마 유효성 검사
         validateTheme(request.getThemePreference());
 
-        User user = userRepository.findByUsername(username)
+        User user = userRepository.findByUserId(userId)
             .orElseThrow(() -> new EntityNotFoundException(
-                ThemeConstants.formatError(ThemeConstants.ERROR_USER_NOT_FOUND, username)));
+                ThemeConstants.formatError(ThemeConstants.ERROR_USER_NOT_FOUND, userId)));
 
         return ThemeResponse.builder()
             .themePreference(request.getThemePreference())
@@ -196,9 +196,9 @@ public class ThemeServiceImpl implements ThemeService {
 
     @Override
     @Transactional(readOnly = true)
-    public ThemeResponse cancelThemePreview(String username) {
-        log.debug("테마 미리보기 취소: username={}", username);
-        return getUserTheme(username);
+    public ThemeResponse cancelThemePreview(String userId) {
+        log.debug("테마 미리보기 취소: userId={}", userId);
+        return getUserTheme(userId);
     }
 
     // ==================== Private 헬퍼 메서드들 ====================

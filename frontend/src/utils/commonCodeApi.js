@@ -91,15 +91,34 @@ export const getCommonCodes = async (codeGroup = null, forceTenant = null) => {
         
         const response = await apiGet(url);
         
-        if (response.success && response.data) {
+        console.log('📋 getCommonCodes 응답 구조:', { 
+            codeGroup,
+            useTenantApi,
+            response, 
+            isArray: Array.isArray(response),
+            hasCodes: response?.codes,
+            codesLength: response?.codes?.length
+        });
+        
+        // apiGet이 이미 ApiResponse의 data를 추출하므로,
+        // response는 CommonCodeListResponse 형태: { codes: [...], totalCount: ... } 또는 배열
+        if (response && typeof response === 'object') {
+            // codes 배열 직접 접근
+            if (Array.isArray(response.codes)) {
+                return response.codes;
+            }
+            // 하위 호환성: response가 이미 배열인 경우
+            if (Array.isArray(response)) {
+                return response;
+            }
+        }
+        
+        // 하위 호환성: 기존 API 형식 지원 (success, data 구조)
+        if (response && response.success && response.data) {
             return response.data.codes || [];
         }
         
-        // 하위 호환성: 기존 API 형식 지원
-        if (Array.isArray(response)) {
-            return response;
-        }
-        
+        console.warn('⚠️ getCommonCodes: 예상치 못한 응답 구조:', response);
         return [];
     } catch (error) {
         console.error('공통코드 목록 조회 실패:', error);
@@ -119,18 +138,35 @@ export const getTenantCodes = async (codeGroup = null) => {
         const url = codeGroup ? `${API_BASE}/tenant?codeGroup=${codeGroup}` : `${API_BASE}/tenant`;
         const response = await apiGet(url);
         
-        if (response.success && response.data) {
+        console.log('📋 getTenantCodes 응답 구조:', { 
+            response, 
+            isArray: Array.isArray(response),
+            hasCodes: response?.codes,
+            codesLength: response?.codes?.length
+        });
+        
+        // apiGet이 이미 ApiResponse의 data를 추출하므로,
+        // response는 CommonCodeListResponse 형태: { codes: [...], totalCount: ... }
+        if (response && typeof response === 'object') {
+            // codes 배열 직접 접근
+            if (Array.isArray(response.codes)) {
+                return response.codes;
+            }
+            // 하위 호환성: response가 이미 배열인 경우
+            if (Array.isArray(response)) {
+                return response;
+            }
+        }
+        
+        // 하위 호환성: 기존 API 형식 지원 (success, data 구조)
+        if (response && response.success && response.data) {
             return response.data.codes || [];
         }
         
-        // 하위 호환성: 기존 API 형식 지원
-        if (Array.isArray(response)) {
-            return response;
-        }
-        
+        console.warn('⚠️ getTenantCodes: 예상치 못한 응답 구조:', response);
         return [];
     } catch (error) {
-        console.error('테넌트 코드 조회 실패:', error);
+        console.error('❌ 테넌트 코드 조회 실패:', error);
         return [];
     }
 };

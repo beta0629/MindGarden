@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import MappingCreationModal from '../../admin/MappingCreationModal';
 import UnifiedLoading from '../../../components/common/UnifiedLoading'; // 임시 비활성화
 import SpecialtyDisplay from '../../ui/SpecialtyDisplay';
+import ClientSelector from '../ClientSelector';
 import { API_BASE_URL } from '../../../constants/api';
 import './ClientSelectionStep.css';
 
@@ -49,7 +50,8 @@ const ClientSelectionStep = ({
         try {
             console.log('👤 내담자 목록 로드 시작 - 상담사:', selectedConsultant.name);
             
-            const response = await fetch(`${API_BASE_URL}/api/admin/mappings/consultant/${selectedConsultant.originalId || selectedConsultant.id}/clients`, {
+            // 표준화 2025-12-08: /api/v1/admin 경로로 통일
+            const response = await fetch(`${API_BASE_URL}/api/v1/admin/mappings/consultant/${selectedConsultant.originalId || selectedConsultant.id}/clients`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -61,10 +63,22 @@ const ClientSelectionStep = ({
                 const responseData = await response.json();
                 console.log('👤 API 응답 데이터:', responseData);
                 
-                const mappingsData = responseData.data || [];
+                // ApiResponse 래퍼 처리: { success: true, data: { mappings: [...], count: N } }
+                let mappingsData = [];
+                if (responseData && responseData.data) {
+                    if (responseData.data.mappings && Array.isArray(responseData.data.mappings)) {
+                        mappingsData = responseData.data.mappings;
+                    } else if (Array.isArray(responseData.data)) {
+                        mappingsData = responseData.data;
+                    }
+                } else if (Array.isArray(responseData)) {
+                    mappingsData = responseData;
+                }
                 
-                if (!Array.isArray(mappingsData)) {
-                    console.error('매핑 데이터가 배열이 아닙니다:', mappingsData);
+                console.log('👤 추출된 매핑 데이터:', mappingsData);
+                
+                if (!Array.isArray(mappingsData) || mappingsData.length === 0) {
+                    console.warn('⚠️ 매핑 데이터가 없거나 배열이 아닙니다:', mappingsData);
                     setClients([]);
                     return;
                 }

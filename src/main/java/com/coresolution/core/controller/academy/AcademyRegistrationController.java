@@ -130,7 +130,7 @@ public class AcademyRegistrationController extends BaseApiController {
         
             // 사용자 생성
             User user = new User();
-            user.setUsername(generateUniqueUsername(email));
+            user.setUserId(generateUniqueUserId(email));
             user.setEmail(email);
             user.setPassword(passwordEncoder.encode(request.getPassword()));
             user.setName(encryptionUtil.safeEncrypt(request.getName().trim()));
@@ -189,19 +189,19 @@ public class AcademyRegistrationController extends BaseApiController {
     }
     
     /**
-     * 고유한 사용자명 생성
+     * 고유한 사용자 ID 생성
      */
-    private String generateUniqueUsername(String email) {
+    private String generateUniqueUserId(String email) {
         String baseUsername = email.split("@")[0];
-        String username = baseUsername;
+        String userId = baseUsername;
         int suffix = 1;
         
-        while (userRepository.existsByUsername(username)) {
-            username = baseUsername + suffix;
+        while (userRepository.existsByUserId(userId)) {
+            userId = baseUsername + suffix;
             suffix++;
         }
         
-        return username;
+        return userId;
     }
     
     /**
@@ -247,7 +247,7 @@ public class AcademyRegistrationController extends BaseApiController {
         
             // 사용자 생성
             User user = new User();
-            user.setUsername(generateUniqueUsername(email, currentTenantId));
+            user.setUserId(generateUniqueUserId(email, currentTenantId));
             user.setEmail(email);
             user.setPassword(passwordEncoder.encode(request.getPassword()));
             user.setName(encryptionUtil.safeEncrypt(request.getName().trim()));
@@ -317,19 +317,19 @@ public class AcademyRegistrationController extends BaseApiController {
     }
     
     /**
-     * 테넌트별 고유 사용자명 생성
+     * 테넌트별 고유 사용자 ID 생성
      */
-    private String generateUniqueUsername(String email, String tenantId) {
+    private String generateUniqueUserId(String email, String tenantId) {
         String baseUsername = email.split("@")[0];
-        String username = baseUsername;
+        String userId = baseUsername;
         int suffix = 1;
         
-        while (userRepository.existsByUsername(username)) {
-            username = baseUsername + "_" + suffix;
+        while (userRepository.existsByUserId(userId)) {
+            userId = baseUsername + "_" + suffix;
             suffix++;
         }
         
-        return username;
+        return userId;
     }
 }
 

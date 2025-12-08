@@ -4,7 +4,6 @@ import { apiGet } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 import csrfTokenManager from '../../utils/csrfTokenManager';
 import '../../styles/main.css';
-import ClientSelector from '../ui/ClientSelector';
 
 /**
  * 내담자 선택 컴포넌트
@@ -66,7 +65,8 @@ const ClientSelector = ({
             const consultantId = selectedConsultant.originalId || selectedConsultant.id;
             console.log('📊 모든 내담자 매핑 정보 일괄 로드 시작:', { consultantId, clientCount: clientsList.length });
             
-            const response = await fetch(`/api/admin/mappings/consultant/${consultantId}/clients`, {
+            // 표준화 2025-12-08: /api/v1/admin 경로로 통일
+            const response = await fetch(`/api/v1/admin/mappings/consultant/${consultantId}/clients`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -76,7 +76,21 @@ const ClientSelector = ({
 
             if (response.ok) {
                 const responseData = await response.json();
-                const mappingsData = responseData.data || [];
+                console.log('📊 API 응답 데이터:', responseData);
+                
+                // ApiResponse 래퍼 처리: { success: true, data: { mappings: [...], count: N } }
+                let mappingsData = [];
+                if (responseData && responseData.data) {
+                    if (responseData.data.mappings && Array.isArray(responseData.data.mappings)) {
+                        mappingsData = responseData.data.mappings;
+                    } else if (Array.isArray(responseData.data)) {
+                        mappingsData = responseData.data;
+                    }
+                } else if (Array.isArray(responseData)) {
+                    mappingsData = responseData;
+                }
+                
+                console.log('📊 추출된 매핑 데이터:', mappingsData);
                 
                 const mappingsByClientId = {};
                 mappingsData.forEach(mapping => {

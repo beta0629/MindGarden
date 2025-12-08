@@ -819,13 +819,14 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
         try {
             log.info("🏢 재무 대시보드 데이터 조회: tenantId={}", tenantId);
             
-            List<com.coresolution.consultation.dto.FinancialTransactionResponse> allTransactions = 
-                financialTransactionService.getTransactions(org.springframework.data.domain.PageRequest.of(0, 10000))
+            // 표준화: 테넌트 ID 기반 필터링 필수
+            // getTransactionsByBranch는 내부적으로 TenantContextHolder의 tenantId를 사용하여 필터링함
+            List<com.coresolution.consultation.dto.FinancialTransactionResponse> branchTransactions = 
+                financialTransactionService.getTransactionsByBranch(null, null, null, null, null, 
+                    org.springframework.data.domain.PageRequest.of(0, 10000))
                     .getContent();
             
-            List<com.coresolution.consultation.dto.FinancialTransactionResponse> branchTransactions = allTransactions;
-            
-            log.info("📊 거래 데이터 조회 완료: 전체={}건", allTransactions.size());
+            log.info("📊 거래 데이터 조회 완료: 테넌트={}, 건수={}건", tenantId, branchTransactions.size());
             
             BigDecimal totalIncome = branchTransactions.stream()
                 .filter(t -> "INCOME".equals(t.getTransactionType()))

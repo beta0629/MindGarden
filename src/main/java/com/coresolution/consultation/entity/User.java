@@ -43,7 +43,7 @@ import lombok.NoArgsConstructor;
     },
     uniqueConstraints = {
         @UniqueConstraint(name = "UK_users_email_tenant", columnNames = {"email", "tenant_id"}),
-        @UniqueConstraint(name = "UK_users_username", columnNames = {"username"})
+        @UniqueConstraint(name = "UK_users_user_id", columnNames = {"user_id"}) // 표준화 2025-12-08: DB 컬럼명도 user_id로 변경
     }
 )
 @Data
@@ -53,10 +53,10 @@ import lombok.NoArgsConstructor;
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class User extends BaseEntity {
     
-    @NotBlank(message = "사용자명은 필수입니다.")
-    @Size(min = 2, max = 50, message = "사용자명은 2자 이상 50자 이하여야 합니다.")
-    @Column(name = "username", nullable = false, unique = true, length = 50)
-    private String username;
+    @NotBlank(message = "사용자 ID는 필수입니다.")
+    @Size(min = 2, max = 50, message = "사용자 ID는 2자 이상 50자 이하여야 합니다.")
+    @Column(name = "user_id", nullable = false, unique = true, length = 50) // 표준화 2025-12-08: DB 컬럼명도 user_id로 변경
+    private String userId; // 표준화 2025-12-08: username -> userId 필드명 변경
     
     @NotBlank(message = "이메일은 필수입니다.")
     // @Email 제거: 암호화된 이메일은 이메일 형식이 아니므로 검증 제거 (암호화 전 검증은 DTO에서 수행)
@@ -337,12 +337,24 @@ public class User extends BaseEntity {
     }
     
     // Getter & Setter
-    public String getUsername() {
-        return username;
+    // 표준화 2025-12-08: username -> userId 메서드명 변경
+    public String getUserId() {
+        return userId;
     }
     
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
+    
+    // 하위 호환성: 레거시 코드를 위한 메서드 (deprecated)
+    @Deprecated
+    public String getUsername() {
+        return userId;
+    }
+    
+    @Deprecated
     public void setUsername(String username) {
-        this.username = username;
+        this.userId = username;
     }
     
     public String getEmail() {

@@ -32,7 +32,8 @@ const ClientSessionManagement = () => {
       }
 
       const userId = userResponse.id;
-      const mappingsResponse = await apiGet(`/api/admin/mappings/client?clientId=${userId}`);
+      // 표준화 2025-12-08: /api/v1/admin 경로로 통일
+      const mappingsResponse = await apiGet(`/api/v1/admin/mappings/client?clientId=${userId}`);
       const mappings = mappingsResponse.data || [];
 
       const schedulesResponse = await apiGet(`/api/schedules?userId=${userId}&userRole=CLIENT`);

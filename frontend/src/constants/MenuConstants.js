@@ -31,7 +31,8 @@ export const MENU_CATEGORIES = {
 export const MENU_PERMISSION_LEVELS = {
   PUBLIC: 'public',           // 모든 사용자
   AUTHENTICATED: 'authenticated', // 인증된 사용자
-  ROLE_BASED: 'role_based',   // 역할 기반
+  ROLE_BASED: 'role_based',   // 역할 기반 (하드코딩, 권장하지 않음)
+  PERMISSION_BASED: 'permission_based', // 권한 기반 (동적 권한 시스템, 권장)
   ADMIN_ONLY: 'admin_only'    // 관리자만
 };
 
@@ -167,11 +168,12 @@ const DEFAULT_MENU_CONFIG = {
     order: 24
   },
   
-  // ERP 메뉴 (기능 활성화 시)
+  // ERP 메뉴 (기능 활성화 시) - 표준화 2025-12-08: 하드코딩 제거, 권한 기반으로 변경
   'erp-dashboard': {
     category: MENU_CATEGORIES.ERP,
-    permission: MENU_PERMISSION_LEVELS.ROLE_BASED,
-    allowedRoles: ['ADMIN', 'DIRECTOR'],
+    permission: MENU_PERMISSION_LEVELS.PERMISSION_BASED,
+    requiredPermission: 'ERP_ACCESS', // 동적 권한 시스템 사용
+    menuGroup: 'ERP_MENU', // 권한 그룹 참조
     label: 'ERP 대시보드',
     path: '/erp',
     icon: 'business',
@@ -180,8 +182,9 @@ const DEFAULT_MENU_CONFIG = {
   },
   'purchase-management': {
     category: MENU_CATEGORIES.ERP,
-    permission: MENU_PERMISSION_LEVELS.ROLE_BASED,
-    allowedRoles: ['ADMIN', 'DIRECTOR'],
+    permission: MENU_PERMISSION_LEVELS.PERMISSION_BASED,
+    requiredPermission: 'ERP_ACCESS', // 동적 권한 시스템 사용
+    menuGroup: 'ERP_MENU', // 권한 그룹 참조
     label: '구매 관리',
     path: '/erp/purchase',
     icon: 'shopping_cart',
@@ -301,42 +304,46 @@ export const getMenuConfig = async (menuItem) => {
 /**
  * 기본 설정에서 업종별 허용 메뉴 조회 (임시)
 /**
+ * 표준화 2025-12-08: 권한 기반 체크 지원
+/**
  * @param {string} businessType - 업종 타입
 /**
  * @param {string} userRole - 사용자 역할
 /**
  * @param {Object} features - 활성화된 기능 목록
 /**
+ * @param {Array} userPermissions - 사용자 권한 목록 (권한 기반 메뉴 체크용, 선택사항)
+/**
  * @returns {string[]} 허용된 메뉴 ID 배열
  */
-const getAllowedMenusFromConfig = (businessType, userRole, features) => {
+const getAllowedMenusFromConfig = (businessType, userRole, features, userPermissions = []) => {
   const allowedMenus = [];
   
   Object.entries(DEFAULT_MENU_CONFIG).forEach(([menuId, config]) => {
     // 카테고리별 필터링
     if (config.category === MENU_CATEGORIES.COMMON) {
       // 공통 메뉴는 모든 업종에서 허용
-      if (checkMenuPermission(config, userRole)) {
+      if (checkMenuPermission(config, userRole, userPermissions)) {
         allowedMenus.push(menuId);
       }
     } else if (config.category === MENU_CATEGORIES.CONSULTATION) {
       // 상담소 특화 메뉴
-      if (businessType === 'CONSULTATION' && checkMenuPermission(config, userRole)) {
+      if (businessType === 'CONSULTATION' && checkMenuPermission(config, userRole, userPermissions)) {
         allowedMenus.push(menuId);
       }
     } else if (config.category === MENU_CATEGORIES.ACADEMY) {
       // 학원 특화 메뉴
-      if (businessType === 'ACADEMY' && checkMenuPermission(config, userRole)) {
+      if (businessType === 'ACADEMY' && checkMenuPermission(config, userRole, userPermissions)) {
         allowedMenus.push(menuId);
       }
     } else if (config.category === MENU_CATEGORIES.ERP) {
-      // ERP 메뉴 (기능 활성화 확인)
-      if (features.erpEnabled && checkMenuPermission(config, userRole)) {
+      // ERP 메뉴 (기능 활성화 확인) - 표준화 2025-12-08: 권한 기반 체크
+      if (features.erpEnabled && checkMenuPermission(config, userRole, userPermissions)) {
         allowedMenus.push(menuId);
       }
     } else if (config.category === MENU_CATEGORIES.ADMIN) {
       // 관리자 메뉴
-      if (checkMenuPermission(config, userRole)) {
+      if (checkMenuPermission(config, userRole, userPermissions)) {
         allowedMenus.push(menuId);
       }
     }
@@ -350,22 +357,43 @@ const getAllowedMenusFromConfig = (businessType, userRole, features) => {
 };
 
 /**
- * 메뉴 권한 확인
+ * 메뉴 권한 확인 (표준화 2025-12-08: 권한 기반 체크 지원)
 /**
  * @param {Object} menuConfig - 메뉴 설정
 /**
  * @param {string} userRole - 사용자 역할
 /**
+ * @param {Array} userPermissions - 사용자 권한 목록 (권한 기반 체크용, 선택사항)
+/**
  * @returns {boolean} 권한 여부
  */
-const checkMenuPermission = (menuConfig, userRole) => {
+const checkMenuPermission = (menuConfig, userRole, userPermissions = []) => {
   switch (menuConfig.permission) {
     case MENU_PERMISSION_LEVELS.PUBLIC:
       return true;
     case MENU_PERMISSION_LEVELS.AUTHENTICATED:
       return !!userRole;
     case MENU_PERMISSION_LEVELS.ROLE_BASED:
+      // 하드코딩된 역할 체크 (권장하지 않음, 레거시 지원용)
       return menuConfig.allowedRoles?.includes(userRole) || false;
+    case MENU_PERMISSION_LEVELS.PERMISSION_BASED:
+      // 표준화 2025-12-08: 동적 권한 시스템 사용 (권장)
+      if (!userPermissions || userPermissions.length === 0) {
+        console.warn('⚠️ 권한 기반 메뉴 체크를 위해 userPermissions가 필요합니다:', menuConfig.label);
+        return false;
+      }
+      // requiredPermission 또는 menuGroup으로 권한 체크
+      if (menuConfig.requiredPermission) {
+        return userPermissions.includes(menuConfig.requiredPermission);
+      }
+      if (menuConfig.menuGroup) {
+        // menuGroup은 menuPermissionValidator의 hasMenuAccess로 체크해야 하지만,
+        // 여기서는 간단히 ERP_ACCESS 권한으로 체크
+        // 실제 구현에서는 menuPermissionValidator.hasMenuAccess를 사용해야 함
+        const erpPermissions = ['ERP_ACCESS', 'FINANCIAL_VIEW', 'INTEGRATED_FINANCE_VIEW'];
+        return erpPermissions.some(perm => userPermissions.includes(perm));
+      }
+      return false;
     case MENU_PERMISSION_LEVELS.ADMIN_ONLY:
       return isAdminRole(userRole);
     default:

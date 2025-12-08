@@ -40,8 +40,9 @@ public class ConsultationMenuServiceImpl implements com.coresolution.consultatio
             // 공통 메뉴 조회
             List<Map<String, Object>> commonMenus = getCommonMenus();
             
-            // 역할별 메뉴 조회
+            // 역할별 메뉴 조회 (menuGroup 정보는 getMenusByRole에서 자동 추가됨)
             List<Map<String, Object>> roleMenus = getMenusByRole(userRole);
+            // 공통 메뉴는 menuGroup 없음 (모든 사용자 접근 가능)
             
             // 전체 메뉴 목록 합치기
             List<Map<String, Object>> allMenus = new ArrayList<>();
@@ -100,11 +101,15 @@ public class ConsultationMenuServiceImpl implements com.coresolution.consultatio
             
             List<Map<String, Object>> allMenus = new ArrayList<>();
             
-            // 각 메뉴 그룹에서 메뉴 조회
+            // 각 메뉴 그룹에서 메뉴 조회 (표준화 2025-12-08: menuGroup 정보 포함)
             for (String menuGroup : menuGroups) {
                 List<CommonCode> roleCodes = commonCodeService.getActiveCommonCodesByGroup(menuGroup);
                 List<Map<String, Object>> groupMenus = roleCodes.stream()
-                        .map(this::convertToMenuMap)
+                        .map(code -> {
+                            Map<String, Object> menu = convertToMenuMap(code);
+                            menu.put("menuGroup", menuGroup); // 권한 기반 필터링용
+                            return menu;
+                        })
                         .collect(Collectors.toList());
                 allMenus.addAll(groupMenus);
             }

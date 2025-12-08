@@ -51,5 +51,5 @@ public interface MyPageService {
     /**
      * 계정 탈퇴
      */
-    String deleteAccount(String username);
+    String deleteAccount(String userId);
 }

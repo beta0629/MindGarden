@@ -57,8 +57,8 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
                 const consultantsData = consultantsList.map(item => {
                     const consultantEntity = item.consultant || {};
                     
-                    // username 필드도 추가 (name이 없을 경우 대체)
-                    const consultantName = consultantEntity.name || consultantEntity.username || '이름 없음';
+                    // userId 필드도 추가 (name이 없을 경우 대체)
+                    const consultantName = consultantEntity.name || consultantEntity.userId || '이름 없음';
                     const consultantEmail = consultantEntity.email || '';
                     
                     // 전문분야 데이터 확인 (공통코드에서 동적으로 가져오기)
@@ -99,7 +99,7 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
                     return {
                         id: consultantEntity.id,
                         name: consultantName,
-                        username: consultantEntity.username || consultantName,
+                        userId: consultantEntity.userId || consultantName,
                         email: consultantEmail,
                         phone: consultantEntity.phone || '',
                         role: consultantEntity.role || 'CONSULTANT',
@@ -378,7 +378,7 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
                                         onClick={() => handleConsultantSelect(consultant)}
                                     >
                                         <div className="mg-v2-list-item-content">
-                                            <div className="mg-v2-list-item-title">{consultant.name || consultant.username}</div>
+                                            <div className="mg-v2-list-item-title">{consultant.name || consultant.userId}</div>
                                             <div className="mg-v2-list-item-subtitle">
                                                 {consultant.specialtyDisplay || getSpecialtyKoreanName(consultant.specialty || consultant.specialization)}
                                             </div>
@@ -410,7 +410,7 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
                                         <label className="mg-v2-form-label">선택된 상담사</label>
                                         <div className="mg-v2-info-box">
                                             <div className="mg-v2-info-text">
-                                                {selectedConsultant.name || selectedConsultant.username}
+                                                {selectedConsultant.name || selectedConsultant.userId}
                                             </div>
                                         </div>
                                     </div>

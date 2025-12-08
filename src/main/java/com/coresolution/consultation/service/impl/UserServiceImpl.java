@@ -214,7 +214,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public Optional<User> findActiveById(Long id) {
         String tenantId = TenantContextHolder.getTenantId();
-        Optional<User> userOpt = userRepository.findByTenantIdAndUsername(tenantId, String.valueOf(id));
+        Optional<User> userOpt = userRepository.findByTenantIdAndUserId(tenantId, String.valueOf(id));
         if (userOpt.isPresent()) {
             return Optional.of(decryptUserPersonalData(userOpt.get()));
         }

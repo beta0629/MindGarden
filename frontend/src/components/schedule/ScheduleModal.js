@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-// import StepIndicator from './components/StepIndicator';
+import StepIndicator from './components/StepIndicator';
 import ConsultantSelectionStep from './steps/ConsultantSelectionStep';
 import ClientSelectionStep from './steps/ClientSelectionStep';
 import TimeSlotGrid from './TimeSlotGrid';
@@ -77,7 +77,7 @@ const ScheduleModalNew = ({
         const loadConsultationTypeCodes = async () => {
             try {
                 setLoadingCodes(true);
-                const response = await apiGet('/api/v1/common-codes/CONSULTATION_TYPE');
+                const response = await apiGet('/api/v1/common-codes/groups/CONSULTATION_TYPE');
                 if (response && response.length > 0) {
                     const options = response.map(code => {
                         let durationMinutes = 50; // 기본값
@@ -122,7 +122,7 @@ const ScheduleModalNew = ({
         const loadDurationCodes = async () => {
             try {
                 setLoadingCodes(true);
-                const response = await apiGet('/api/v1/common-codes/DURATION');
+                const response = await apiGet('/api/v1/common-codes/groups/DURATION');
                 if (response && response.length > 0) {
                     const options = response.map(code => {
                         let durationMinutes = 60; // 기본값

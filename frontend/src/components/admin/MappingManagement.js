@@ -5,6 +5,8 @@ import { Link2, Plus } from 'lucide-react';
 import SimpleLayout from '../layout/SimpleLayout';
 import { apiGet, apiPost, apiPut } from '../../utils/ajax';
 import { API_BASE_URL } from '../../constants/api';
+import notificationManager from '../../utils/notification';
+import { useSession } from '../../contexts/SessionContext';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import { 
     MAPPING_API_ENDPOINTS, 
@@ -43,6 +45,7 @@ import './MappingManagement.css';
  */
 const MappingManagement = () => {
     const navigate = useNavigate();
+    const { user } = useSession();
     const [mappings, setMappings] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showCreateModal, setShowCreateModal] = useState(false);
@@ -72,62 +75,35 @@ const MappingManagement = () => {
 
     const loadMappings = async() => {
         if (isLoadingMappings) {
-            console.log('⏸️ loadMappings 이미 실행 중, 스킵');
             return;
         }
         
         setIsLoadingMappings(true);
-        console.log('🔄 loadMappings 함수 호출됨');
         setLoading(true);
         try {
-            console.log('🌐 API 호출 시작:', MAPPING_API_ENDPOINTS.LIST);
+            // 표준화 2025-12-08: 올바른 API 경로 사용 (/api/v1/admin/mappings)
+            const response = await apiGet('/api/v1/admin/mappings');
             
-            const response = await fetch(`${API_BASE_URL}/api/admin/mappings`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json'},
-                credentials: 'include'
-            });
-            
-            console.log('📡 Fetch 응답 상태:', response.status);
-            
-            if (!response.ok) { throw new Error(`HTTP error! status: ${response.status }`);
-            }
-            
-            console.log('🔄 JSON 파싱 시작...');
-            const data = await response.json();
-            console.log('📥 API 응답 데이터:', data);
-            
-            if (data.success) {
-                console.log('✅ 매칭 데이터 로드 성공:', data.data);
-                setMappings(data.data || []);
+            if (response && response.mappings) {
+                setMappings(response.mappings);
+            } else if (response && Array.isArray(response)) {
+                setMappings(response);
             } else {
-                console.log('⚠️ API 실패, 테스트 데이터 사용');
-                const testData = getTestMappings();
-                setMappings(testData);
+                setMappings([]);
             }
         } catch (error) {
             console.error('❌ 매칭 목록 로드 실패:', error);
-            const testData = getTestMappings();
-            setMappings(testData);
+            setMappings([]);
+            notificationManager.error('매칭 목록을 불러오는데 실패했습니다.');
         } finally {
-            console.log('🏁 loadMappings 완료, setLoading(false) 호출');
             setLoading(false);
             setIsLoadingMappings(false);
-            console.log('✅ setLoading(false) 호출 완료');
         }
     };
 
     useEffect(() => {
         loadMappings();
         loadMappingStatusInfo();
-        
-        const timeout = setTimeout(() => {
-            console.log('⏰ 3초 타임아웃 - 강제로 로딩 상태 해제');
-            setLoading(false);
-        }, 3000);
-        
-        return() => clearTimeout(timeout);
     }, []);
 
     useEffect(() => { window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -183,7 +159,8 @@ const MappingManagement = () => {
 
     const loadMappingStatusInfo = async() => {
         try {
-            const response = await apiGet('/api/v1/common-codes/MAPPING_STATUS');
+            // 표준화 2025-12-08: 올바른 API 경로 사용 (/groups/{codeGroup})
+            const response = await apiGet('/api/v1/common-codes/groups/MAPPING_STATUS');
             if (response && response.length > 0) {
                 const statusInfoMap = {};
                 
@@ -248,116 +225,15 @@ const MappingManagement = () => {
         }
     };
 
-    const getTestMappings = () => {
-        return [
-            {
-                id: 1,
-                consultant: { id: 1, name: '김상담', email: 'consultant1@mindgarden.com' },
-                client: { id: 1, name: '이내담', email: 'client1@mindgarden.com' },
-                clientId: 1,
-                consultantId: 1,
-                consultantName: '김상담',
-                clientName: '이내담',
-                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-                status: 'ACTIVE',
-                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-                paymentStatus: 'APPROVED',
-                totalSessions: DEFAULT_MAPPING_CONFIG.TOTAL_SESSIONS,
-                remainingSessions: 7,
-                usedSessions: 3,
-                packageName: DEFAULT_MAPPING_CONFIG.PACKAGE_NAME,
-                packagePrice: DEFAULT_MAPPING_CONFIG.PACKAGE_PRICE,
-                startDate: '2024-12-01T00:00:00',
-                notes: '정기 상담 진행 중'
-            },
-            {
-                id: 2,
-                consultant: { id: 2, name: '박상담', email: 'consultant2@mindgarden.com' },
-                client: { id: 2, name: '최내담', email: 'client2@mindgarden.com' },
-                clientId: 2,
-                consultantId: 2,
-                consultantName: '박상담',
-                clientName: '최내담',
-                status: 'PENDING_PAYMENT',
-                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-                paymentStatus: 'PENDING',
-                totalSessions: 5,
-                remainingSessions: 5,
-                usedSessions: 0,
-                packageName: '단기 상담 패키지',
-                packagePrice: 250000,
-                startDate: '2024-12-15T00:00:00',
-                notes: '신규 매칭, 결제 대기 중'
-            },
-            {
-                id: 3,
-                consultant: { id: 1, name: '김상담', email: 'consultant1@mindgarden.com' },
-                client: { id: 3, name: '정내담', email: 'client3@mindgarden.com' },
-                clientId: 3,
-                consultantId: 1,
-                consultantName: '김상담',
-                clientName: '정내담',
-                status: 'SESSIONS_EXHAUSTED',
-                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-                paymentStatus: 'APPROVED',
-                totalSessions: 8,
-                remainingSessions: 0,
-                usedSessions: 8,
-                packageName: '중기 상담 패키지',
-                packagePrice: 400000,
-                startDate: '2024-11-01T00:00:00',
-                notes: '상담 완료, 회기 소진'
-            },
-            {
-                id: 4,
-                consultant: { id: 4, name: '테스트상담사', email: 'test-consultant@mindgarden.com' },
-                client: { id: 4, name: '테스트내담자001', email: 'test-client001@mindgarden.com' },
-                clientId: 4,
-                consultantId: 4,
-                consultantName: '테스트상담사',
-                clientName: '테스트내담자001',
-                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-                status: 'ACTIVE',
-                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-                paymentStatus: 'APPROVED',
-                totalSessions: 10,
-                remainingSessions: 8,
-                usedSessions: 2,
-                packageName: '테스트 패키지',
-                packagePrice: 500000,
-                startDate: '2024-12-01T00:00:00',
-                notes: '테스트용 매칭'
-            },
-            {
-                id: 5,
-                consultant: { id: 5, name: '박상담사', email: 'park-consultant@mindgarden.com' },
-                client: { id: 5, name: '테스트내담자002', email: 'test-client002@mindgarden.com' },
-                clientId: 5,
-                consultantId: 5,
-                consultantName: '박상담사',
-                clientName: '테스트내담자002',
-                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-                status: 'ACTIVE',
-                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-                paymentStatus: 'APPROVED',
-                totalSessions: 15,
-                remainingSessions: 12,
-                usedSessions: 3,
-                packageName: '표준 패키지',
-                packagePrice: 750000,
-                startDate: '2024-12-05T00:00:00',
-                notes: '정기 상담 진행 중'
-            }
-        ];
-    };
 
     const handleApproveMapping = async (mappingId) => {
         try {
-            const response = await apiPost(`/api/admin/mappings/${mappingId}/approve`, {
-                adminName: '관리자'
+            const response = await apiPost(`/api/v1/admin/mappings/${mappingId}/approve`, {
+                adminName: user?.name || user?.userId || '관리자'
             });
             
-            if (response.success) {
+            // apiPost는 ApiResponse의 data만 반환하므로, response가 존재하면 성공
+            if (response) {
                 notificationManager.success('매칭이 승인되었습니다.');
                 loadMappings();
             } else {
@@ -365,7 +241,7 @@ const MappingManagement = () => {
             }
         } catch (error) {
             console.error('매칭 승인 실패:', error);
-            notificationManager.error('매칭 승인에 실패했습니다.');
+            notificationManager.error(error.message || '매칭 승인에 실패했습니다.');
         }
     };
 
@@ -379,11 +255,12 @@ const MappingManagement = () => {
 
     const handleRejectMapping = async (mappingId) => {
         try {
-            const response = await apiPost(`/api/admin/mappings/${mappingId}/reject`, {
+            const response = await apiPost(`/api/v1/admin/mappings/${mappingId}/reject`, {
                 reason: '관리자 거부'
             });
             
-            if (response.success) {
+            // apiPost는 ApiResponse의 data만 반환하므로, response가 존재하면 성공
+            if (response) {
                 notificationManager.success('매칭이 거부되었습니다.');
                 loadMappings();
             } else {
@@ -391,7 +268,7 @@ const MappingManagement = () => {
             }
         } catch (error) {
             console.error('매칭 거부 실패:', error);
-            notificationManager.error('매칭 거부에 실패했습니다.');
+            notificationManager.error(error.message || '매칭 거부에 실패했습니다.');
         }
     };
 
@@ -477,7 +354,8 @@ const MappingManagement = () => {
         try {
             setLoading(true);
 
-            const response = await apiPost(`/api/admin/mappings/${refundMapping.id}/terminate`, {
+            // 표준화 2025-12-08: /api/v1/admin 경로로 통일
+            const response = await apiPost(`/api/v1/admin/mappings/${refundMapping.id}/terminate`, {
                 reason: refundReason.trim()
             });
 
@@ -528,7 +406,8 @@ const MappingManagement = () => {
         try {
             setLoading(true);
             
-            const response = await fetch(`/api/admin/mappings/${mapping.id}`, {
+            // 표준화 2025-12-08: /api/v1/admin 경로로 통일
+            const response = await fetch(`/api/v1/admin/mappings/${mapping.id}`, {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json'},

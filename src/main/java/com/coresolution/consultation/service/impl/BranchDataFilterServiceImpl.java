@@ -48,7 +48,7 @@ public class BranchDataFilterServiceImpl implements BranchDataFilterService {
         // 사용자의 지점코드 확인 (기존 구현 방식 참고)
         String userBranchCode = user.getBranchCode();
         if (userBranchCode == null || userBranchCode.trim().isEmpty()) {
-            log.warn("사용자 지점코드 없음: {}", user.getUsername());
+            log.warn("사용자 지점코드 없음: {}", user.getUserId());
             return List.of();
         }
         
@@ -78,7 +78,7 @@ public class BranchDataFilterServiceImpl implements BranchDataFilterService {
         // 사용자의 지점코드 확인 (기존 구현 방식 참고)
         String userBranchCode = user.getBranchCode();
         if (userBranchCode == null || userBranchCode.trim().isEmpty()) {
-            log.warn("사용자 지점코드 없음: {}", user.getUsername());
+            log.warn("사용자 지점코드 없음: {}", user.getUserId());
             return List.of();
         }
         
@@ -108,7 +108,7 @@ public class BranchDataFilterServiceImpl implements BranchDataFilterService {
         // 사용자의 지점 정보 조회
         Branch userBranch = getUserBranch(user);
         if (userBranch == null) {
-            log.warn("사용자 지점 정보 없음: {}", user.getUsername());
+            log.warn("사용자 지점 정보 없음: {}", user.getUserId());
             return List.of();
         }
         
@@ -148,7 +148,7 @@ public class BranchDataFilterServiceImpl implements BranchDataFilterService {
         // 사용자의 지점 정보 조회
         Branch userBranch = getUserBranch(user);
         if (userBranch == null) {
-            log.warn("사용자 지점 정보 없음: {}", user.getUsername());
+            log.warn("사용자 지점 정보 없음: {}", user.getUserId());
             return List.of();
         }
         
@@ -194,7 +194,7 @@ public class BranchDataFilterServiceImpl implements BranchDataFilterService {
         boolean canAccess = userBranch.getId().equals(targetBranchId);
         
         log.debug("지점 데이터 접근 권한 확인: 사용자={}, 사용자지점={}, 대상지점={}, 접근가능={}", 
-                user.getUsername(), userBranch.getId(), targetBranchId, canAccess);
+                user.getUserId(), userBranch.getId(), targetBranchId, canAccess);
         
         return canAccess;
     }

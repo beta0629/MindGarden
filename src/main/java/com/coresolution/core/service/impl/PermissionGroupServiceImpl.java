@@ -84,7 +84,7 @@ public class PermissionGroupServiceImpl implements PermissionGroupService {
             RolePermissionGroup permission = existing.get();
             permission.setAccessLevel(accessLevel);
             permission.setIsActive(true);
-            permission.setGrantedBy("SYSTEM"); // TODO: 실제 사용자명으로 변경
+            permission.setGrantedBy("SYSTEM"); // TODO: 실제 사용자 ID으로 변경
             
             rolePermissionGroupRepository.save(permission);
         } else {
@@ -95,7 +95,7 @@ public class PermissionGroupServiceImpl implements PermissionGroupService {
                 .permissionGroupCode(groupCode)
                 .accessLevel(accessLevel)
                 .isActive(true)
-                .grantedBy("SYSTEM") // TODO: 실제 사용자명으로 변경
+                .grantedBy("SYSTEM") // TODO: 실제 사용자 ID으로 변경
                 .build();
 
             rolePermissionGroupRepository.save(permission);

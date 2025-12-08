@@ -60,7 +60,7 @@ public class SuperAdminServiceImpl implements SuperAdminService {
             // 수퍼어드민 사용자 생성
             User superAdmin = User.builder()
                 .email(request.getEmail())
-                .username(request.getUsername())
+                .userId(request.getUserId())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .name(encryptedName)
                 .nickname(encryptedNickname)
@@ -115,7 +115,7 @@ public class SuperAdminServiceImpl implements SuperAdminService {
                     Map<String, Object> userInfo = new HashMap<>();
                     userInfo.put("id", user.getId());
                     userInfo.put("email", user.getEmail());
-                    userInfo.put("username", user.getUsername());
+                    userInfo.put("userId", user.getUserId());
                     userInfo.put("role", user.getRole());
                     userInfo.put("isActive", user.getIsActive());
                     userInfo.put("createdAt", user.getCreatedAt());

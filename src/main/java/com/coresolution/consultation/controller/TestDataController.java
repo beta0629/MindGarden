@@ -82,7 +82,7 @@ public class TestDataController {
         
         try {
             User adminUser = User.builder()
-                    .username("admin@mindgarden.com")
+                    .userId("admin@mindgarden.com")
                     .email("admin@mindgarden.com")
                     .password(passwordEncoder.encode("admin123"))
                     .name("시스템 관리자")
@@ -97,7 +97,7 @@ public class TestDataController {
             log.info("✅ 어드민 생성 완료: {}", savedAdmin.getEmail());
 
             ConsultantRegistrationRequest consultantDto = ConsultantRegistrationRequest.builder()
-                    .username("consultant1@mindgarden.com")
+                    .userId("consultant1@mindgarden.com")
                     .password("password123")
                     .name("김상담")
                     .email("consultant1@mindgarden.com")
@@ -116,7 +116,7 @@ public class TestDataController {
             log.info("✅ 상담사 생성 완료: {}", consultant.getEmail());
 
             ClientRegistrationRequest clientDto = ClientRegistrationRequest.builder()
-                    .username("client1@example.com")
+                    .userId("client1@example.com")
                     .password("client123")
                     .name("이내담")
                     .age(28)
@@ -178,7 +178,7 @@ public class TestDataController {
                 .body(Map.of("error", "이 API는 로컬 개발 환경에서만 사용할 수 있습니다."));
         }
         
-        log.info("🧪 추가 상담사 등록: {}", request.getUsername());
+        log.info("🧪 추가 상담사 등록: {}", request.getUserId());
         
         try {
             User consultant = adminService.registerConsultant(request);
@@ -334,7 +334,7 @@ public class TestDataController {
             }
 
             ClientRegistrationRequest clientDto = ClientRegistrationRequest.builder()
-                    .username("client@test.com")
+                    .userId("client@test.com")
                     .password("password123")
                     .name("정내담")
                     .age(30)
@@ -482,14 +482,14 @@ public class TestDataController {
         try {
             log.info("🧪 테스트용 상담사 생성 시작");
             
-            String username = (String) request.get("username");
+            String userId = (String) request.get("userId");
             String email = (String) request.get("email");
             String password = (String) request.get("password");
             String name = (String) request.get("name");
             String phone = (String) request.get("phone");
             
             ConsultantRegistrationRequest consultantRequest = ConsultantRegistrationRequest.builder()
-                    .username(username)
+                    .userId(userId)
                     .email(email)
                     .password(password)
                     .name(name)

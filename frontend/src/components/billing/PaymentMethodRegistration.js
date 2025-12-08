@@ -112,7 +112,7 @@ const PaymentMethodRegistration = ({
       await requestBillingAuth(
         {
           customerKey,
-          customerName: user?.name || user?.username || '',
+          customerName: user?.name || user?.userId || '',
           customerEmail: user?.email || '',
           successUrl,
           failUrl,

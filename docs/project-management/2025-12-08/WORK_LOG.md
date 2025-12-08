@@ -98,6 +98,63 @@
 
 ---
 
+## ✅ 12월 8일 완료된 작업
+
+### 1. 매칭 생성 모달 디자인 수정
+- **문제**: 매칭 생성 모달에서 디자인이 깨지는 현상
+- **원인**: CSS 변수화 과정에서 누락된 변수 매핑
+- **해결**:
+  - `MappingCreationModal.css`: 누락된 CSS 변수 매핑 추가
+    - `--color-text-inverse`, `--color-primary`, `--color-primary-light`
+    - `--color-text-primary`, `--color-text-secondary`, `--color-border-light`
+    - `--medium-gray`, `--dark-gray`, `--mint-green`, `--soft-mint`, `--cocoa`
+    - `--radius-lg`, `--radius-md`, `--transition-fast`
+  - `UnifiedModal.js`: React prop 경고 해결 (DOM에 전달되면 안 되는 props 필터링)
+
+### 2. 매칭 생성 모달 내담자 조회 테넌트 필터링 수정
+- **문제**: 매칭 생성 모달에서 모든 테넌트의 내담자가 표시됨
+- **원인**: `loadClients` 함수에서 응답 형식 처리 오류
+- **해결**:
+  - `MappingCreationModal.js`: `apiGet`이 이미 `data`만 추출하므로 `response.clients`로 접근하도록 수정
+  - 테스트 데이터 제거, 오류 발생 시 빈 배열 반환
+
+### 3. 사용자 개인정보 복호화 캐싱 시스템 구현 (성능 최적화)
+- **목적**: 반복적인 복호화 작업으로 인한 성능 부하 감소
+- **구현 내용**:
+  1. **캐시 서비스 생성**:
+     - `UserPersonalDataCacheService.java`: 인터페이스 정의
+     - `UserPersonalDataCacheServiceImpl.java`: Spring Cache를 활용한 구현체
+     - 캐시 키: `user:decrypted:{tenantId}:{userId}`
+  
+  2. **로그인 시 캐시 저장**:
+     - `AuthController`: 로그인 성공 시 자동으로 복호화하여 캐시에 저장
+  
+  3. **등록 시 캐시 저장**:
+     - `AdminServiceImpl.registerConsultant()`: 상담사 등록 시 캐시 저장
+     - `AdminServiceImpl.registerClient()`: 내담자 등록 시 캐시 저장
+  
+  4. **업데이트 시 캐시 무효화**:
+     - `AdminServiceImpl.updateConsultant()`: 상담사 정보 업데이트 시 캐시 무효화
+     - `AdminServiceImpl.updateClient()`: 내담자 정보 업데이트 시 캐시 무효화
+  
+  5. **문서화**:
+     - `docs/architecture/USER_PERSONAL_DATA_CACHE.md`: 캐싱 시스템 문서화
+
+- **장점**:
+  - 성능 향상: 복호화 작업을 한 번만 수행하여 API 응답 시간 단축
+  - 서버 부하 감소: CPU 집약적인 암호화 연산 감소
+  - 모든 테넌트 적용 가능 (상담소, 학원 등)
+
+- **보안 고려사항**:
+  - 서버 메모리에 평문 저장 (상대적으로 안전)
+  - 테넌트별 데이터 격리
+  - 사용자 정보 업데이트 시 자동 무효화
+
+- **다음 단계**:
+  - 기존 서비스들이 캐시를 사용하도록 수정 (`AdminServiceImpl.decryptUserPersonalData()` 등)
+
+---
+
 **작성자**: AI Assistant  
 **최종 업데이트**: 2025-12-08  
 **이관 출처**: 2025-12-07 WORK_LOG.md

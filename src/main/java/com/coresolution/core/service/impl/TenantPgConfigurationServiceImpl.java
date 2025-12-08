@@ -751,9 +751,9 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
             org.springframework.security.core.context.SecurityContext context = 
                     org.springframework.security.core.context.SecurityContextHolder.getContext();
             if (context != null && context.getAuthentication() != null) {
-                String username = context.getAuthentication().getName();
-                if (username != null && !username.equals("anonymousUser")) {
-                    return username;
+                String userId = context.getAuthentication().getName();
+                if (userId != null && !userId.equals("anonymousUser")) {
+                    return userId;
                 }
             }
         } catch (Exception e) {

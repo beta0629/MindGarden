@@ -8,11 +8,11 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.Permission;
-import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.RolePermission;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.PermissionRepository;
 import com.coresolution.consultation.repository.LegacyRolePermissionRepository;
+import com.coresolution.consultation.repository.CommonCodeRepository;
 import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.cache.annotation.CacheEvict;
@@ -35,6 +35,7 @@ public class DynamicPermissionServiceImpl implements DynamicPermissionService {
     private final PermissionRepository permissionRepository;
     private final LegacyRolePermissionRepository rolePermissionRepository;
     private final org.springframework.core.env.Environment environment;
+    private final CommonCodeRepository commonCodeRepository;
     
     @Override
     public boolean hasPermission(User user, String permissionCode) {
@@ -55,6 +56,36 @@ public class DynamicPermissionServiceImpl implements DynamicPermissionService {
             // 직접 쿼리로 확인
             var directCheck = rolePermissionRepository.findByRoleNameAndPermissionCodeAndIsActiveTrue(roleName, permissionCode);
             boolean hasPermission = directCheck.isPresent();
+            
+            // 표준화 2025-12-08: 관리자 역할에 대해 기본 ERP 권한 체크 (데이터베이스에 없을 경우)
+            if (!hasPermission) {
+                try {
+                    UserRole userRole = UserRole.fromString(roleName);
+                    if (userRole != null && userRole.isAdmin()) {
+                        // 관리자 역할에 대한 기본 ERP 권한 목록
+                        List<String> defaultAdminPermissions = List.of(
+                            "ERP_ACCESS",
+                            "ERP_DASHBOARD_VIEW",
+                            "INTEGRATED_FINANCE_VIEW",
+                            "PURCHASE_REQUEST_VIEW",
+                            "PURCHASE_REQUEST_MANAGE",
+                            "APPROVAL_MANAGE",
+                            "ITEM_MANAGE",
+                            "BUDGET_MANAGE",
+                            "SALARY_MANAGE",
+                            "TAX_MANAGE",
+                            "REFUND_MANAGE"
+                        );
+                        
+                        if (defaultAdminPermissions.contains(permissionCode)) {
+                            log.info("✅ 관리자 역할 기본 권한 허용: 역할={}, 권한={}", roleName, permissionCode);
+                            return true;
+                        }
+                    }
+                } catch (Exception e) {
+                    log.debug("역할 파싱 실패 (무시): 역할={}, 오류={}", roleName, e.getMessage());
+                }
+            }
             
             log.info("✅ 권한 체크 결과: 역할={}, 권한={}, 결과={}", roleName, permissionCode, hasPermission);
             
@@ -477,21 +508,118 @@ public class DynamicPermissionServiceImpl implements DynamicPermissionService {
     @Override
     public List<String> getUserPermissionsAsStringList(User user) {
         try {
-            log.debug("사용자 권한 목록 조회 (String 리스트): 사용자={}", user.getUsername());
+            log.debug("사용자 권한 목록 조회 (String 리스트): 사용자={}", user.getUserId());
             
-            List<Map<String, Object>> permissionMaps = getUserPermissions(user);
+            // 기본 권한 조회 (예외 발생 시 빈 리스트 반환)
+            List<Map<String, Object>> permissionMaps;
+            try {
+                permissionMaps = getUserPermissions(user);
+            } catch (Exception e) {
+                log.warn("⚠️ 기본 권한 조회 실패 (빈 리스트로 시작): 사용자={}, 오류={}", user.getUserId(), e.getMessage());
+                permissionMaps = new ArrayList<>();
+            }
             
             List<String> permissions = permissionMaps.stream()
                 .map(map -> (String) map.get("permission_code"))
                 .filter(permissionCode -> permissionCode != null)
                 .collect(Collectors.toList());
             
-            log.debug("사용자 권한 목록 조회 완료 (String 리스트): 사용자={}, 권한 수={}", user.getUsername(), permissions.size());
+            // 표준화 2025-12-08: 관리자 역할에 대해 공통코드에서 동적으로 추가 권한 조회
+            // 예외 발생 시에도 기본 권한은 반환하도록 try-catch로 분리
+            if (user.getRole() != null && user.getRole().isAdmin()) {
+                try {
+                    List<String> dynamicPermissions = getDynamicPermissionsFromCommonCode(user.getRole().name());
+                    for (String perm : dynamicPermissions) {
+                        if (!permissions.contains(perm)) {
+                            permissions.add(perm);
+                            log.debug("✅ 동적 권한 추가: 역할={}, 권한={}", user.getRole().name(), perm);
+                        }
+                    }
+                } catch (org.springframework.orm.jpa.JpaSystemException e) {
+                    // 데이터베이스 날짜 필드 오류 (Zero date value prohibited) 등 JPA 시스템 예외
+                    log.warn("⚠️ 동적 권한 조회 중 JPA 시스템 예외 발생 (기본 권한만 반환): 역할={}, 오류={}", user.getRole().name(), e.getMessage());
+                } catch (Exception e) {
+                    // 동적 권한 조회 실패해도 기본 권한은 반환
+                    log.warn("⚠️ 동적 권한 조회 실패 (기본 권한만 반환): 역할={}, 오류={}", user.getRole().name(), e.getMessage());
+                }
+            }
+            
+            log.debug("사용자 권한 목록 조회 완료 (String 리스트): 사용자={}, 권한 수={}", user.getUserId(), permissions.size());
             return permissions;
             
         } catch (Exception e) {
-            log.error("사용자 권한 목록 조회 실패 (String 리스트): 사용자={}", user.getUsername(), e);
+            log.error("사용자 권한 목록 조회 실패 (String 리스트): 사용자={}, 오류={}", user.getUserId(), e.getMessage(), e);
             return new ArrayList<>();
+        }
+    }
+    
+    /**
+     * 공통코드에서 역할별 동적 권한 조회
+     * 표준화 2025-12-08: 하드코딩 제거, 공통코드에서 동적 조회 (테넌트 컨텍스트 사용)
+     */
+    private List<String> getDynamicPermissionsFromCommonCode(String roleName) {
+        try {
+            String codeGroup = roleName + "_PERMISSIONS"; // 예: ADMIN_PERMISSIONS
+            String tenantId = TenantContextHolder.getTenantId();
+            
+            // 표준화 2025-12-08: 테넌트 컨텍스트 기반 공통코드 조회 (deprecated 메서드 제거)
+            List<com.coresolution.consultation.entity.CommonCode> commonCodes;
+            if (tenantId != null && !tenantId.isEmpty()) {
+                // 테넌트별 코드 조회 시도, 없으면 코어솔루션 코드 조회 (폴백)
+                commonCodes = commonCodeRepository.findCodesByGroupWithFallback(tenantId, codeGroup);
+            } else {
+                // 테넌트 컨텍스트가 없으면 코어솔루션 코드만 조회
+                commonCodes = commonCodeRepository.findCoreCodesByGroup(codeGroup);
+            }
+            
+            if (commonCodes.isEmpty()) {
+                log.debug("⚠️ 공통코드에서 권한 조회 실패: 그룹={}, tenantId={}", codeGroup, tenantId);
+                return new ArrayList<>();
+            }
+            
+            List<String> permissions = commonCodes.stream()
+                .filter(code -> isAutoGrantPermission(code.getExtraData()))
+                .map(com.coresolution.consultation.entity.CommonCode::getCodeValue)
+                .collect(Collectors.toList());
+            
+            log.debug("✅ 공통코드에서 동적 권한 조회 완료: 역할={}, tenantId={}, 권한 수={}", roleName, tenantId, permissions.size());
+            return permissions;
+            
+        } catch (org.springframework.orm.jpa.JpaSystemException e) {
+            // 데이터베이스 날짜 필드 오류 (Zero date value prohibited) 등 JPA 시스템 예외
+            log.warn("⚠️ 공통코드 조회 중 JPA 시스템 예외 발생 (기본 권한만 반환): 역할={}, 오류={}", roleName, e.getMessage());
+            return new ArrayList<>();
+        } catch (Exception e) {
+            log.error("❌ 공통코드에서 동적 권한 조회 실패: 역할={}, 오류={}", roleName, e.getMessage(), e);
+            return new ArrayList<>();
+        }
+    }
+    
+    /**
+     * auto_grant 여부 확인 (공통코드 extraData에서)
+     */
+    private boolean isAutoGrantPermission(String extraData) {
+        if (extraData == null || extraData.trim().isEmpty()) {
+            return true; // 기본값: 자동 부여
+        }
+        
+        try {
+            com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            @SuppressWarnings("unchecked")
+            java.util.Map<String, Object> data = objectMapper.readValue(extraData, java.util.Map.class);
+            Object autoGrant = data.get("auto_grant");
+            
+            if (autoGrant instanceof Boolean) {
+                return (Boolean) autoGrant;
+            } else if (autoGrant instanceof String) {
+                return Boolean.parseBoolean((String) autoGrant);
+            }
+            
+            return true; // 기본값
+            
+        } catch (Exception e) {
+            log.warn("extra_data 파싱 실패, 자동 부여로 처리: {}", extraData);
+            return true;
         }
     }
     

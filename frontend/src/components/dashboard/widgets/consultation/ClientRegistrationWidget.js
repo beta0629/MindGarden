@@ -33,7 +33,7 @@ const ClientRegistrationWidget = ({ widget, user }) => {
   
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
-    username: '',
+    userId: '',
     email: '',
     password: '',
     name: '',
@@ -123,7 +123,7 @@ const ClientRegistrationWidget = ({ widget, user }) => {
         break;
       default:
         // 필수 필드 검사
-        if (['username', 'name', 'email', 'password', 'phone'].includes(name) && !value.trim()) {
+        if (['userId', 'name', 'email', 'password', 'phone'].includes(name) && !value.trim()) {
           newErrors[name] = '이 필드는 필수입니다.';
         } else {
           delete newErrors[name];
@@ -166,7 +166,7 @@ const ClientRegistrationWidget = ({ widget, user }) => {
     e.preventDefault();
     
     // 필수 필드 검사
-    const requiredFields = ['username', 'name', 'email', 'password', 'phone'];
+    const requiredFields = ['userId', 'name', 'email', 'password', 'phone'];
     const missingFields = requiredFields.filter(field => !formData[field]?.trim());
     
     if (missingFields.length > 0) {
@@ -182,7 +182,7 @@ const ClientRegistrationWidget = ({ widget, user }) => {
     
     // 제출 데이터 준비
     const requestData = {
-      username: formData.username?.trim(),
+      userId: formData.userId?.trim(),
       email: formData.email?.trim(),
       password: formData.password,
       name: formData.name?.trim(),
@@ -213,7 +213,7 @@ const ClientRegistrationWidget = ({ widget, user }) => {
   // 폼 초기화
   const handleReset = () => {
     setFormData({
-      username: '',
+      userId: '',
       email: '',
       password: '',
       name: '',
@@ -307,23 +307,23 @@ const ClientRegistrationWidget = ({ widget, user }) => {
                 <h4 className="section-title">기본 정보</h4>
                 <div className="form-grid">
                   <div className="form-group">
-                    <label htmlFor="username" className="form-label">
+                    <label htmlFor="userId" className="form-label">
                       아이디 <span className="required">*</span>
                     </label>
                     <input
                       type="text"
-                      id="username"
-                      name="username"
-                      value={formData.username}
+                      id="userId"
+                      name="userId"
+                      value={formData.userId}
                       onChange={handleInputChange}
                       required
-                      className={`form-control ${getFieldError('username') ? 'error' : ''}`}
+                      className={`form-control ${getFieldError('userId') ? 'error' : ''}`}
                       placeholder="로그인 아이디"
                     />
-                    {getFieldError('username') && (
+                    {getFieldError('userId') && (
                       <div className="field-error">
                         <AlertCircle className="error-icon" />
-                        {getFieldError('username')}
+                        {getFieldError('userId')}
                       </div>
                     )}
                   </div>

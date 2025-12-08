@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { CreditCard, CheckCircle, XCircle, DollarSign } from 'lucide-react';
 import { apiPost } from '../../../utils/ajax';
-// import notificationManager from '../../../utils/notification';
-import MGButton from '../../../components/common/MGButton'; // 임시 비활성화
+import notificationManager from '../../../utils/notification';
+import MGButton from '../../../components/common/MGButton';
 /**
  * 매칭 입금확인 모달 컴포넌트
 /**
@@ -80,13 +80,14 @@ const MappingPaymentModal = ({
 
         setLoading(true);
         try {
-            const response = await apiPost(`/api/admin/mappings/${mapping.id}/confirm-payment`, {
+            const response = await apiPost(`/api/v1/admin/mappings/${mapping.id}/confirm-payment`, {
                 paymentMethod: paymentData.paymentMethod,
                 paymentReference: paymentData.paymentMethod === 'CASH' ? null : paymentData.paymentReference,
                 paymentAmount: paymentData.paymentAmount
             });
 
-            if (response.success) {
+            // apiPost는 ApiResponse의 data만 반환하므로, response가 존재하면 성공
+            if (response) {
                 notificationManager.success('✅ 결제 확인 완료! ERP 시스템에 미수금 거래가 자동 등록되었습니다.');
                 onPaymentConfirmed?.(mapping.id);
                 onClose();
@@ -95,7 +96,8 @@ const MappingPaymentModal = ({
             }
         } catch (error) {
             console.error('결제 확인 실패:', error);
-            notificationManager.error('결제 확인에 실패했습니다.');
+            const errorMessage = error.message || '결제 확인에 실패했습니다.';
+            notificationManager.error(errorMessage);
         } finally {
             setLoading(false);
         }
@@ -207,20 +209,31 @@ const MappingPaymentModal = ({
 
                 {/* 푸터 */}
                 <div className="mg-v2-modal-footer">
-                    <button className="mg-button"
+                    <MGButton
                         variant="secondary"
-                        onClick={onClose}
+                        onClick={(e) => {
+                            if (e) {
+                                e.preventDefault();
+                                e.stopPropagation();
+                            }
+                            onClose();
+                        }}
                         disabled={loading}
+                        preventDoubleClick={true}
                     >
                         취소
-                    </button>
-                    <button className="mg-button"
-                        variant="primary"
+                    </MGButton>
+                    <MGButton
+                        variant="success"
                         onClick={handleConfirmPayment}
                         disabled={loading}
+                        loading={loading}
+                        preventDoubleClick={true}
+                        clickDelay={1000}
                     >
-                        {loading ? '처리 중...' : '확인'}
-                    </button>
+                        <CheckCircle size={18} />
+                        확인
+                    </MGButton>
                 </div>
             </div>
         </div>,

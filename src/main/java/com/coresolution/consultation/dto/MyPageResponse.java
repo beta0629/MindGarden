@@ -20,7 +20,7 @@ import lombok.NoArgsConstructor;
 public class MyPageResponse {
 
     private Long id;
-    private String username;
+    private String userId;
     private String email;
     private String name;
     private String nickname;

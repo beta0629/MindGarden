@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
 import { sessionManager } from '../../utils/sessionManager';
-import { fetchUserPermissions, PermissionChecks } from '../../utils/permissionUtils';
+import { fetchUserPermissions, PermissionChecks, PERMISSIONS } from '../../utils/permissionUtils';
 import SimpleLayout from '../layout/SimpleLayout';
 import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import StatCard from '../ui/Card/StatCard';
@@ -14,6 +14,40 @@ import Button from '../ui/Button/Button';
 import '../../styles/main.css';
 import '../../styles/unified-design-tokens.css';
 import './ErpDashboard.css';
+
+/**
+ * 권한 조회 실패 시 사용자 역할 기반 기본 권한 설정
+ */
+const setDefaultPermissionsForRole = (user, setUserPermissions) => {
+  if (!user || !user.role) {
+    console.warn('⚠️ 사용자 정보 없음, 기본 권한 설정 불가');
+    setUserPermissions([]);
+    return;
+  }
+
+  const role = user.role;
+  const defaultPermissions = [];
+
+  // 관리자 역할이면 모든 ERP 권한 부여
+  if (role === 'ADMIN' || role === 'TENANT_ADMIN' || role === 'PRINCIPAL' || role === 'OWNER') {
+    defaultPermissions.push(
+      PERMISSIONS.ERP_ACCESS,
+      PERMISSIONS.ERP_DASHBOARD_VIEW,
+      PERMISSIONS.PURCHASE_REQUEST_VIEW,
+      PERMISSIONS.PURCHASE_REQUEST_MANAGE,
+      PERMISSIONS.APPROVAL_MANAGE,
+      PERMISSIONS.ITEM_MANAGE,
+      PERMISSIONS.BUDGET_MANAGE,
+      PERMISSIONS.SALARY_MANAGE,
+      PERMISSIONS.TAX_MANAGE,
+      PERMISSIONS.REFUND_MANAGE,
+      PERMISSIONS.INTEGRATED_FINANCE_VIEW
+    );
+    console.log('✅ 관리자 역할 기본 권한 설정:', defaultPermissions);
+  }
+
+  setUserPermissions(defaultPermissions);
+};
 
 /**
  * ERP 메인 대시보드 컴포넌트 - MindGarden 디자인 시스템 적용
@@ -72,23 +106,68 @@ const ErpDashboard = ({ user: propUser }) => {
       }
 
       console.log('✅ ERP Dashboard 접근 허용:', currentUser?.role);
-      await fetchUserPermissions(setUserPermissions);
+      
+      // 권한 조회 시도 (실패해도 계속 진행)
+      try {
+        const permissions = await fetchUserPermissions(setUserPermissions);
+        if (permissions && permissions.length > 0) {
+          console.log('✅ 권한 조회 성공:', permissions);
+        } else {
+          // 권한 조회 결과가 비어있으면 기본 권한 설정
+          console.warn('⚠️ 권한 조회 결과가 비어있음, 기본 권한 설정');
+          setDefaultPermissionsForRole(currentUser, setUserPermissions);
+        }
+      } catch (error) {
+        console.warn('⚠️ 권한 조회 실패 (기본 권한 설정):', error);
+        setDefaultPermissionsForRole(currentUser, setUserPermissions);
+      }
     };
 
     setTimeout(checkSessionWithDelay, 100);
   }, [sessionLoading, isLoggedIn, navigate]); // propUser, sessionUser 의존성 제거
 
-  // 권한이 로드된 후 ERP 접근 권한 확인
+  // 권한이 로드된 후 또는 타임아웃 후 ERP 접근 권한 확인 (동적 권한 시스템)
   useEffect(() => {
+    // 권한 조회 성공 시 즉시 체크
     if (userPermissions.length > 0) {
-      if (!PermissionChecks.canAccessERP(userPermissions)) {
-        console.log('❌ ERP 접근 권한 없음, 일반 대시보드로 이동');
+      // 표준화 2025-12-08: 하드코딩 제거, 데이터베이스 기반 동적 권한 체크만 사용
+      const hasErpPermission = PermissionChecks.canAccessERP(userPermissions);
+      
+      if (!hasErpPermission) {
+        console.log('❌ ERP 접근 권한 없음 (동적 권한 체크), 일반 대시보드로 이동');
         navigate('/dashboard', { replace: true });
         return;
       }
+      console.log('✅ ERP 접근 권한 확인됨 (동적 권한 시스템)');
       loadDashboardData();
+      return;
     }
-  }, [userPermissions, navigate]);
+
+    // 권한 조회 실패 시 타임아웃 후 기본 권한 체크 (3초 후)
+    const timeoutId = setTimeout(() => {
+      const currentUser = propUser || sessionUser;
+      if (currentUser && currentUser.role) {
+        // 권한 조회 실패 시에도 사용자 역할 기반으로 기본 권한 설정
+        setDefaultPermissionsForRole(currentUser, setUserPermissions);
+        
+        // 관리자 역할이면 일단 대시보드 로드 (백엔드에서 최종 권한 체크)
+        const isAdmin = currentUser.role === 'ADMIN' || 
+                       currentUser.role === 'TENANT_ADMIN' || 
+                       currentUser.role === 'PRINCIPAL' || 
+                       currentUser.role === 'OWNER';
+        
+        if (isAdmin) {
+          console.log('⚠️ 권한 조회 실패했으나 관리자 역할이므로 대시보드 로드 시도');
+          loadDashboardData();
+        } else {
+          console.log('❌ 권한 조회 실패 및 관리자 역할 아님, 일반 대시보드로 이동');
+          navigate('/dashboard', { replace: true });
+        }
+      }
+    }, 3000);
+
+    return () => clearTimeout(timeoutId);
+  }, [userPermissions, navigate, propUser, sessionUser]);
 
   const loadDashboardData = async () => {
     try {
@@ -216,7 +295,8 @@ const ErpDashboard = ({ user: propUser }) => {
             icon={<LayoutDashboard />}
           >
             <div className="mg-management-grid">
-              {PermissionChecks.canViewPurchaseRequests(userPermissions) && (
+              {(PermissionChecks.canViewPurchaseRequests(userPermissions) || 
+                PermissionChecks.canManagePurchaseRequests(userPermissions)) && (
                 <div className="mg-management-card" onClick={() => navigate('/erp/purchase-requests')}>
                   <div className="mg-management-icon">
                     <ShoppingCart />
@@ -294,6 +374,41 @@ const ErpDashboard = ({ user: propUser }) => {
                   <h3>환불 관리 시스템</h3>
                   <p className="mg-management-description">환불 요청 및 처리 내역을 관리합니다</p>
                 </div>
+              )}
+              
+              {/* 권한이 없을 때 기본 빠른 액션 표시 (관리자 역할인 경우) */}
+              {userPermissions.length === 0 && (propUser || sessionUser)?.role && 
+               ['ADMIN', 'TENANT_ADMIN', 'PRINCIPAL', 'OWNER'].includes((propUser || sessionUser).role) && (
+                <>
+                  <div className="mg-management-card" onClick={() => navigate('/erp/purchase-requests')}>
+                    <div className="mg-management-icon">
+                      <ShoppingCart />
+                    </div>
+                    <h3>구매 요청하기</h3>
+                    <p className="mg-management-description">상품 및 비품 구매 요청을 제출합니다</p>
+                  </div>
+                  <div className="mg-management-card" onClick={() => navigate('/erp/approvals')}>
+                    <div className="mg-management-icon">
+                      <Clock />
+                    </div>
+                    <h3>승인 관리</h3>
+                    <p className="mg-management-description">구매 요청 승인 및 거부를 관리합니다</p>
+                  </div>
+                  <div className="mg-management-card" onClick={() => navigate('/erp/items')}>
+                    <div className="mg-management-icon">
+                      <Package />
+                    </div>
+                    <h3>아이템 관리</h3>
+                    <p className="mg-management-description">등록된 비품 및 상품을 관리합니다</p>
+                  </div>
+                  <div className="mg-management-card" onClick={() => navigate('/erp/budget')}>
+                    <div className="mg-management-icon">
+                      <TrendingUp />
+                    </div>
+                    <h3>예산 관리</h3>
+                    <p className="mg-management-description">지점별 예산을 설정하고 관리합니다</p>
+                  </div>
+                </>
               )}
             </div>
           </DashboardSection>

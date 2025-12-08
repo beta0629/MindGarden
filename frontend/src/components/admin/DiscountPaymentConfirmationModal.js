@@ -179,7 +179,8 @@ const DiscountPaymentConfirmationModal = ({
       setLoading(true);
       
       for (const mapping of selectedMappings) {
-        const response = await apiPost(`/api/admin/mappings/${mapping.id}/confirm-payment`, {
+        // 표준화 2025-12-08: /api/v1/admin 경로로 통일
+        const response = await apiPost(`/api/v1/admin/mappings/${mapping.id}/confirm-payment`, {
           paymentMethod: paymentData.method,
           paymentReference: `REF-${Date.now()}`,
           paymentAmount: paymentData.amount,

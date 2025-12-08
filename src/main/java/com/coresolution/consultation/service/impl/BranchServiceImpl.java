@@ -312,13 +312,13 @@ public class BranchServiceImpl extends BaseTenantEntityServiceImpl<Branch, Long>
         
         List<Branch> existingManagedBranches = branchRepository.findByManagerAndIsDeletedFalse(manager);
         if (!existingManagedBranches.isEmpty()) {
-            log.warn("이미 다른 지점을 관리하는 지점장입니다: {}", manager.getUsername());
+            log.warn("이미 다른 지점을 관리하는 지점장입니다: {}", manager.getUserId());
         }
         
         branch.setManager(manager);
         save(branch);
         
-        log.info("지점장 지정 완료: 지점={}, 지점장={}", branch.getBranchName(), manager.getUsername());
+        log.info("지점장 지정 완료: 지점={}, 지점장={}", branch.getBranchName(), manager.getUserId());
     }
     
     @Override
@@ -390,7 +390,7 @@ public class BranchServiceImpl extends BaseTenantEntityServiceImpl<Branch, Long>
         userRepository.save(consultant);
         
         log.info("상담사 지점 할당 완료: 지점={}, 상담사={}", 
-                branch.getBranchName(), consultant.getUsername());
+                branch.getBranchName(), consultant.getUserId());
     }
     
     @Override
@@ -409,7 +409,7 @@ public class BranchServiceImpl extends BaseTenantEntityServiceImpl<Branch, Long>
         userRepository.save(client);
         
         log.info("내담자 지점 할당 완료: 지점={}, 내담자={}", 
-                branch.getBranchName(), client.getUsername());
+                branch.getBranchName(), client.getUserId());
     }
     
     @Override
@@ -424,7 +424,7 @@ public class BranchServiceImpl extends BaseTenantEntityServiceImpl<Branch, Long>
         userRepository.save(user);
         
         log.info("사용자 지점 제거 완료: 사용자={}, 이전 지점={}", 
-                user.getUsername(), branchName);
+                user.getUserId(), branchName);
     }
     
     @Override
@@ -451,7 +451,7 @@ public class BranchServiceImpl extends BaseTenantEntityServiceImpl<Branch, Long>
         userRepository.save(user);
         
         log.info("사용자 지점 이동 완료: 사용자={}, {} -> {}", 
-                user.getUsername(), fromBranch.getBranchName(), toBranch.getBranchName());
+                user.getUserId(), fromBranch.getBranchName(), toBranch.getBranchName());
     }
     
     @Override
@@ -463,7 +463,7 @@ public class BranchServiceImpl extends BaseTenantEntityServiceImpl<Branch, Long>
             return new ArrayList<>();
         }
         Branch branch = findActiveByIdOrThrow(branchId);
-        return userRepository.findByBranchAndRoleAndIsDeletedFalseOrderByUsername(
+        return userRepository.findByBranchAndRoleAndIsDeletedFalseOrderByUserId(
                 tenantId, branch, UserRole.CONSULTANT);
     }
     
@@ -476,7 +476,7 @@ public class BranchServiceImpl extends BaseTenantEntityServiceImpl<Branch, Long>
             return new ArrayList<>();
         }
         Branch branch = findActiveByIdOrThrow(branchId);
-        return userRepository.findByBranchAndRoleAndIsDeletedFalseOrderByUsername(
+        return userRepository.findByBranchAndRoleAndIsDeletedFalseOrderByUserId(
                 tenantId, branch, UserRole.CLIENT);
     }
     
@@ -811,7 +811,7 @@ public class BranchServiceImpl extends BaseTenantEntityServiceImpl<Branch, Long>
                 .operatingEndTime(branch.getOperatingEndTime())
                 .closedDays(branch.getClosedDays())
                 .managerId(branch.getManager() != null ? branch.getManager().getId() : null)
-                .managerName(branch.getManager() != null ? branch.getManager().getUsername() : null)
+                .managerName(branch.getManager() != null ? branch.getManager().getUserId() : null)
                 .parentBranchId(branch.getParentBranch() != null ? branch.getParentBranch().getId() : null)
                 .parentBranchName(branch.getParentBranch() != null ? branch.getParentBranch().getBranchName() : null)
                 .maxConsultants(branch.getMaxConsultants())

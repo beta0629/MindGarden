@@ -116,7 +116,7 @@ const Button = ({
 Button.propTypes = {
   children: PropTypes.node,
   className: PropTypes.string,
-  variant: PropTypes.oneOf(['primary', 'secondary', 'outline']),
+  variant: PropTypes.oneOf(['primary', 'secondary', 'outline', 'danger', 'success', 'warning', 'info', 'ghost']),
   size: PropTypes.oneOf(['small', 'medium', 'large']),
   disabled: PropTypes.bool,
   loading: PropTypes.bool,

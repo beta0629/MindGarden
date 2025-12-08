@@ -87,6 +87,48 @@ import StandardizedApi from './standardizedApi';
 
 export const getAllConsultantsWithStats = async () => {
     try {
+        // 세션 갱신을 통해 최신 tenantId 확보 (API 호출 전 필수)
+        // 대시보드는 fetch() 직접 사용으로 세션 쿠키가 자동 포함되지만,
+        // StandardizedApi 사용 시 명시적으로 세션 확인 필요
+        if (typeof window !== 'undefined' && window.sessionManager) {
+            let user = window.sessionManager.getUser();
+            let tenantId = user?.tenantId || window.sessionManager.getSessionInfo()?.tenantId;
+            
+            // tenantId가 없거나 기본값이면 강제 세션 갱신
+            const tenantIdTrimmed = tenantId ? tenantId.trim() : '';
+            const isInvalidDefault = !tenantId || 
+                tenantIdTrimmed === 'unknown' || tenantIdTrimmed === 'default' ||
+                tenantIdTrimmed.startsWith('unknown-') || tenantIdTrimmed.startsWith('default-') ||
+                tenantIdTrimmed === 'tenant-unknown' || tenantIdTrimmed === 'tenant-default';
+            
+            if (isInvalidDefault) {
+                console.warn('⚠️ getAllConsultantsWithStats: tenantId 없음 - 세션 강제 갱신');
+                await window.sessionManager.checkSession(true);
+                
+                // 갱신 후 다시 확인
+                user = window.sessionManager.getUser();
+                tenantId = user?.tenantId || window.sessionManager.getSessionInfo()?.tenantId;
+                
+                // 여전히 없거나 기본값이면 에러 반환 (빈 배열 대신)
+                const retryTenantIdTrimmed = tenantId ? tenantId.trim() : '';
+                const isRetryInvalidDefault = !tenantId || 
+                    retryTenantIdTrimmed === 'unknown' || retryTenantIdTrimmed === 'default' ||
+                    retryTenantIdTrimmed.startsWith('unknown-') || retryTenantIdTrimmed.startsWith('default-') ||
+                    retryTenantIdTrimmed === 'tenant-unknown' || retryTenantIdTrimmed === 'tenant-default';
+                
+                if (isRetryInvalidDefault) {
+                    console.error('❌ getAllConsultantsWithStats: tenantId를 가져올 수 없습니다.', {
+                        userId: user?.id,
+                        email: user?.email,
+                        role: user?.role
+                    });
+                    throw new Error('tenantId를 가져올 수 없습니다. 세션을 확인해주세요.');
+                }
+            }
+            
+            console.log('✅ getAllConsultantsWithStats: tenantId 확인 완료, API 호출:', tenantId);
+        }
+        
         // 표준화된 API 호출 사용
         const response = await StandardizedApi.get('/api/v1/admin/consultants/with-stats');
         
@@ -96,6 +138,24 @@ export const getAllConsultantsWithStats = async () => {
         return Array.isArray(consultantsList) ? consultantsList : [];
     } catch (error) {
         console.error('❌ 전체 상담사 통계 조회 중 오류:', error);
+        
+        // 400 오류이고 tenantId 문제일 가능성이 있으면 세션 갱신 후 재시도
+        if (error.message && (error.message.includes('400') || error.message.includes('Bad Request'))) {
+            console.warn('⚠️ 400 오류 감지 - 세션 갱신 후 재시도');
+            try {
+                if (typeof window !== 'undefined' && window.sessionManager) {
+                    await window.sessionManager.checkSession(true);
+                    // 재시도
+                    const retryResponse = await StandardizedApi.get('/api/v1/admin/consultants/with-stats');
+                    const retryList = retryResponse?.consultants || retryResponse?.data?.consultants || retryResponse?.data || [];
+                    console.log('✅ 재시도 성공, count:', retryList.length);
+                    return Array.isArray(retryList) ? retryList : [];
+                }
+            } catch (retryError) {
+                console.error('❌ 재시도도 실패:', retryError);
+            }
+        }
+        
         return [];
     }
 };
@@ -184,7 +244,8 @@ export const transformConsultantData = (consultantRaw) => {
  */
 export const getClientWithStats = async (clientId) => {
     try {
-        const response = await apiGet(`/api/admin/clients/with-stats/${clientId}`);
+        // 표준화 2025-12-08: API 경로 수정 (/api/v1/admin)
+        const response = await apiGet(`/api/v1/admin/clients/with-stats/${clientId}`);
         if (response.success) {
             return response.data;
         }
@@ -205,13 +266,15 @@ export const getClientWithStats = async (clientId) => {
  */
 export const getAllClientsWithStats = async () => {
     try {
-        const response = await apiGet('/api/admin/clients/with-stats');
-        if (response && response.success) {
-            // 응답 구조: { success: true, data: { clients: [...], count: N } }
-            const clientsList = response.data?.clients || response.data || [];
+        // 표준화 2025-12-08: API 경로 수정 (/api/v1/admin)
+        const response = await apiGet('/api/v1/admin/clients/with-stats');
+        
+        // apiGet이 ApiResponse의 data만 추출하므로, response는 { clients: [...], count: N } 형태
+        if (response && (response.clients || Array.isArray(response))) {
+            const clientsList = response.clients || response;
             return Array.isArray(clientsList) ? clientsList : [];
         }
-        console.error('전체 내담자 통계 조회 실패:', response?.message || '알 수 없는 오류');
+        console.error('전체 내담자 통계 조회 실패: 응답이 올바르지 않음', response);
         return [];
     } catch (error) {
         console.error('전체 내담자 통계 조회 중 오류:', error);

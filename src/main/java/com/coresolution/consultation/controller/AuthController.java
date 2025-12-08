@@ -24,6 +24,7 @@ import com.coresolution.consultation.service.AuthService;
 import com.coresolution.consultation.service.BranchService;
 import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.consultation.service.DynamicPermissionService;
+import com.coresolution.consultation.service.UserPersonalDataCacheService;
 import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.service.UserSessionService;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
@@ -72,6 +73,7 @@ public class AuthController extends BaseApiController {
     private final UserService userService;
     private final UserRoleQueryService userRoleQueryService;
     private final TenantRoleRepository tenantRoleRepository;
+    private final UserPersonalDataCacheService userPersonalDataCacheService;
     
     // 메모리 저장을 위한 ConcurrentHashMap (Redis 없을 때 사용)
     private final Map<String, String> verificationCodes = new ConcurrentHashMap<>();
@@ -99,17 +101,17 @@ public class AuthController extends BaseApiController {
             currentUser = sessionUser;
         } else if (authentication != null && authentication.isAuthenticated()) {
             // JWT 인증된 사용자 처리
-            String username = authentication.getName();
-            log.info("🔍 JWT 인증 사용자 확인: username={}", username);
+            String userId = authentication.getName();
+            log.info("🔍 JWT 인증 사용자 확인: userId={}", userId);
             
             // 데이터베이스에서 사용자 조회 (멀티 테넌트 사용자 고려)
-            List<User> users = userRepository.findAllByEmail(username);
+            List<User> users = userRepository.findAllByEmail(userId);
             currentUser = users.isEmpty() ? null : users.get(0);
             
             if (currentUser == null) {
                 // 데이터베이스에 없는 경우 (Ops Portal 전용 계정 등)
                 // JWT 토큰 정보로 임시 사용자 정보 생성
-                log.info("🔍 데이터베이스에 사용자 없음 - JWT 토큰 정보 사용: username={}", username);
+                log.info("🔍 데이터베이스에 사용자 없음 - JWT 토큰 정보 사용: userId={}", userId);
                 // JWT 인증만으로는 사용자 정보를 반환할 수 없으므로 null 처리
                 // 필요시 JWT 토큰에서 actorRole 등을 추출하여 반환할 수 있음
             }
@@ -267,7 +269,7 @@ public class AuthController extends BaseApiController {
         }
         
         User user = new User();
-        user.setUsername(generateUniqueUsername(email, tenantId));
+        user.setUserId(generateUniqueUserId(email, tenantId));
         user.setEmail(email);
         if (tenantId != null) {
             user.setTenantId(tenantId);
@@ -511,10 +513,26 @@ public class AuthController extends BaseApiController {
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<Map<String, Object>>> login(@RequestBody AuthRequest request, HttpSession session, 
                                   jakarta.servlet.http.HttpServletRequest httpRequest) {
-        log.info("🔐 로그인 시도: email={}, password={}, request={}", 
-            request.getEmail(), 
-            request.getPassword() != null ? "***" : "null",
-            request);
+        // 요청 데이터 검증
+        if (request == null) {
+            log.error("❌ 로그인 요청 실패: request가 null입니다.");
+            throw new IllegalArgumentException("로그인 요청 데이터가 없습니다.");
+        }
+        
+        String email = request.getEmail();
+        String password = request.getPassword();
+        
+        if (email == null || email.trim().isEmpty()) {
+            log.error("❌ 로그인 요청 실패: email이 없습니다.");
+            throw new IllegalArgumentException("이메일을 입력해주세요.");
+        }
+        
+        if (password == null || password.trim().isEmpty()) {
+            log.error("❌ 로그인 요청 실패: password가 없습니다.");
+            throw new IllegalArgumentException("비밀번호를 입력해주세요.");
+        }
+        
+        log.info("🔐 로그인 시도: email={}, password={}", email, password != null ? "***" : "null");
         
         // 클라이언트 정보 추출
         String clientIp = getClientIpAddress(httpRequest);
@@ -522,11 +540,11 @@ public class AuthController extends BaseApiController {
         String sessionId = session.getId();
         
         // 중복로그인 방지 기능이 포함된 세션 기반 인증
-        log.info("🔐 authenticateWithSession 호출 시작: email={}, sessionId={}", request.getEmail(), sessionId);
+        log.info("🔐 authenticateWithSession 호출 시작: email={}, sessionId={}", email, sessionId);
         
         AuthResponse authResponse = authService.authenticateWithSession(
-            request.getEmail(), 
-            request.getPassword(), 
+            email, 
+            password, 
             sessionId, 
             clientIp, 
             userAgent
@@ -535,13 +553,23 @@ public class AuthController extends BaseApiController {
         
         if (authResponse.isSuccess()) {
             // 데이터베이스에서 완전한 User 객체를 가져와서 세션에 저장 (멀티 테넌트 사용자 고려)
-            List<User> users = userRepository.findAllByEmail(request.getEmail());
+            List<User> users = userRepository.findAllByEmail(email);
             if (users.isEmpty()) {
                 throw new RuntimeException("사용자를 찾을 수 없습니다.");
             }
             User sessionUser = users.get(0);
             
             SessionUtils.setCurrentUser(session, sessionUser);
+            
+            // 표준화 2025-12-08: 로그인 시 사용자 개인정보 복호화하여 캐시에 저장 (성능 최적화)
+            try {
+                userPersonalDataCacheService.decryptAndCacheUserPersonalData(sessionUser);
+                log.debug("✅ 사용자 개인정보 복호화 캐시 저장 완료: userId={}, tenantId={}", 
+                         sessionUser.getId(), sessionUser.getTenantId());
+            } catch (Exception e) {
+                log.warn("⚠️ 사용자 개인정보 캐시 저장 실패 (로그인은 계속 진행): userId={}", 
+                        sessionUser.getId(), e);
+            }
             
             // 데이터베이스 세션 ID를 HTTP 세션에 저장 (중복 로그인 체크용)
             session.setAttribute(SessionConstants.SESSION_ID, sessionId);
@@ -620,7 +648,7 @@ public class AuthController extends BaseApiController {
                 log.warn("⚠️ 권한 캐시 클리어 실패 (무시): {}", e.getMessage());
             }
             
-            log.info("✅ 로그인 성공: {}", request.getEmail());
+            log.info("✅ 로그인 성공: {}", email);
             
             // 응답 데이터 구성
             Map<String, Object> response = new HashMap<>();
@@ -631,7 +659,7 @@ public class AuthController extends BaseApiController {
             return success(response);
         } else if (authResponse.isRequiresConfirmation()) {
             // 중복 로그인 확인 요청
-            log.info("🔔 중복 로그인 확인 요청: {}", request.getEmail());
+            log.info("🔔 중복 로그인 확인 요청: {}", email);
             Map<String, Object> data = new HashMap<>();
             data.put("message", authResponse.getMessage());
             data.put("requiresConfirmation", true);
@@ -644,8 +672,24 @@ public class AuthController extends BaseApiController {
                 .build();
             return ResponseEntity.badRequest().body(response);
         } else {
-            log.warn("❌ 로그인 실패: {}", authResponse.getMessage());
-            throw new IllegalArgumentException(authResponse.getMessage());
+            log.warn("❌ 로그인 실패: message={}, requiresConfirmation={}", 
+                authResponse.getMessage(), authResponse.isRequiresConfirmation());
+            
+            // 중복 로그인 확인 요청은 별도 처리하지 않고, 그 외의 경우만 예외 발생
+            if (!authResponse.isRequiresConfirmation()) {
+                throw new IllegalArgumentException(authResponse.getMessage() != null ? 
+                    authResponse.getMessage() : "로그인에 실패했습니다.");
+            }
+            
+            // 중복 로그인 확인 요청은 데이터 반환 (위에서 이미 처리됨)
+            return ResponseEntity.ok(ApiResponse.<Map<String, Object>>builder()
+                .success(false)
+                .message(authResponse.getMessage())
+                .data(Map.of(
+                    "requiresConfirmation", true,
+                    "responseType", "duplicate_login_confirmation"
+                ))
+                .build());
         }
     }
     
@@ -1138,7 +1182,7 @@ public class AuthController extends BaseApiController {
             // 응답 데이터 구성
             BranchLoginResponse.UserInfo userInfo = BranchLoginResponse.UserInfo.builder()
                 .id(user.getId())
-                .username(user.getUsername())
+                .userId(user.getUserId())
                 .email(user.getEmail())
                 .name(user.getName())
                 .role(user.getRole())
@@ -1160,7 +1204,7 @@ public class AuthController extends BaseApiController {
                         .branchStatus(user.getBranch().getBranchStatus().name())
                         .fullAddress(user.getBranch().getFullAddress())
                         .phoneNumber(user.getBranch().getPhoneNumber())
-                        .managerName(user.getBranch().getManager() != null ? user.getBranch().getManager().getUsername() : null)
+                        .managerName(user.getBranch().getManager() != null ? user.getBranch().getManager().getUserId() : null)
                         .consultantCount((Integer) branchStats.get("consultantCount"))
                         .clientCount((Integer) branchStats.get("clientCount"))
                         .maxConsultants(user.getBranch().getMaxConsultants())
@@ -1252,7 +1296,7 @@ public class AuthController extends BaseApiController {
         branchInfo.put("branchStatus", branch.getBranchStatus().name());
         branchInfo.put("fullAddress", branch.getFullAddress());
         branchInfo.put("phoneNumber", branch.getPhoneNumber());
-        branchInfo.put("managerName", branch.getManager() != null ? branch.getManager().getUsername() : null);
+        branchInfo.put("managerName", branch.getManager() != null ? branch.getManager().getUserId() : null);
         branchInfo.put("consultantCount", branchStats.get("consultantCount"));
         branchInfo.put("clientCount", branchStats.get("clientCount"));
         branchInfo.put("maxConsultants", branch.getMaxConsultants());
@@ -1326,7 +1370,7 @@ public class AuthController extends BaseApiController {
             // 응답 데이터 구성
             Map<String, Object> userInfo = new HashMap<>();
             userInfo.put("id", user.getId());
-            userInfo.put("username", user.getUsername());
+            userInfo.put("userId", user.getUserId());
             userInfo.put("email", user.getEmail());
             userInfo.put("name", user.getName());
             userInfo.put("role", user.getRole());
@@ -1435,7 +1479,7 @@ public class AuthController extends BaseApiController {
             // 응답 데이터 구성
             Map<String, Object> userInfo = new HashMap<>();
             userInfo.put("id", user.getId());
-            userInfo.put("username", user.getUsername());
+            userInfo.put("userId", user.getUserId());
             userInfo.put("email", user.getEmail());
             userInfo.put("name", user.getName());
             userInfo.put("role", user.getRole());
@@ -1543,7 +1587,7 @@ public class AuthController extends BaseApiController {
         return userRoleName;
     }
 
-    private String generateUniqueUsername(String email, String tenantId) {
+    private String generateUniqueUserId(String email, String tenantId) {
         String localPart = email.split("@")[0];
         String base = localPart.replaceAll("[^a-zA-Z0-9]", "");
         if (!StringUtils.hasText(base)) {
@@ -1555,13 +1599,13 @@ public class AuthController extends BaseApiController {
         
         // tenantId가 있으면 테넌트별 중복 검사, 없으면 경고 후 기본값 사용
         if (tenantId != null && !tenantId.trim().isEmpty()) {
-            while (userRepository.existsByTenantIdAndUsername(tenantId, candidate)) {
+            while (userRepository.existsByTenantIdAndUserId(tenantId, candidate)) {
                 candidate = String.format("%s%d", base.toLowerCase(), suffix++);
             }
         } else {
             // 표준화 2025-12-06: tenantId가 없을 경우 경고 로그 및 기본값 사용
             // deprecated 메서드 사용 대신 경고 후 기본값 반환
-            log.warn("⚠️ tenantId가 없어 사용자명 중복 검사를 건너뜁니다. email={}, candidate={}", email, candidate);
+            log.warn("⚠️ tenantId가 없어 사용자 ID 중복 검사를 건너뜁니다. email={}, candidate={}", email, candidate);
             // tenantId가 없으면 중복 검사 없이 기본값 반환 (보안상 위험하지만 레거시 호환)
         }
         return candidate;

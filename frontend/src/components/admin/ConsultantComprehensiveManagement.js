@@ -23,13 +23,11 @@ const ConsultantComprehensiveManagement = () => {
     const [showModal, setShowModal] = useState(false);
     const [modalType, setModalType] = useState('view');
     const [formData, setFormData] = useState({
-        name: '',
-        email: '',
+        email: '', // 표준화 2025-12-08: 이메일만 입력받음 (userId, password, name 자동 생성)
         phone: '',
         // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         status: 'ACTIVE',
-        specialty: [],
-        password: ''
+        specialty: []
     });
     const [specialtyCodes, setSpecialtyCodes] = useState([]);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -38,6 +36,52 @@ const ConsultantComprehensiveManagement = () => {
         try {
             console.log('🔄 상담사 목록 로딩 시작...');
             
+            // 세션 갱신을 통해 최신 tenantId 확보 (loadMappings, loadSchedules와 동일한 패턴)
+            if (typeof window !== 'undefined' && window.sessionManager) {
+                await window.sessionManager.checkSession(true);
+                
+                // tenantId가 실제로 있는지 확인 (대시보드와 달리 명시적으로 확인 필요)
+                const user = window.sessionManager.getUser();
+                const tenantId = user?.tenantId || window.sessionManager.getSessionInfo()?.tenantId;
+                
+                const tenantIdTrimmed = tenantId ? tenantId.trim() : '';
+                const isInvalidDefault = !tenantId || 
+                    tenantIdTrimmed === 'unknown' || tenantIdTrimmed === 'default' ||
+                    tenantIdTrimmed.startsWith('unknown-') || tenantIdTrimmed.startsWith('default-') ||
+                    tenantIdTrimmed === 'tenant-unknown' || tenantIdTrimmed === 'tenant-default';
+                
+                if (isInvalidDefault) {
+                    console.warn('⚠️ 상담사 목록 로딩: tenantId 없음, 재시도 대기...', {
+                        userId: user?.id,
+                        email: user?.email,
+                        role: user?.role
+                    });
+                    
+                    // 조금 더 기다린 후 재시도
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    await window.sessionManager.checkSession(true);
+                    
+                    // 재확인
+                    const retryUser = window.sessionManager.getUser();
+                    const retryTenantId = retryUser?.tenantId || window.sessionManager.getSessionInfo()?.tenantId;
+                    
+                    const retryTenantIdTrimmed = retryTenantId ? retryTenantId.trim() : '';
+                    const isRetryInvalidDefault = !retryTenantId || 
+                        retryTenantIdTrimmed === 'unknown' || retryTenantIdTrimmed === 'default' ||
+                        retryTenantIdTrimmed.startsWith('unknown-') || retryTenantIdTrimmed.startsWith('default-') ||
+                        retryTenantIdTrimmed === 'tenant-unknown' || retryTenantIdTrimmed === 'tenant-default';
+                    
+                    if (isRetryInvalidDefault) {
+                        console.error('❌ 상담사 목록 로딩: tenantId를 가져올 수 없음');
+                        setConsultants([]);
+                        return;
+                    }
+                    
+                    console.log('✅ tenantId 확인 완료:', retryTenantId);
+                } else {
+                    console.log('✅ tenantId 확인 완료:', tenantId);
+                }
+            }
             
             const consultantsList = await getAllConsultantsWithStats();
             console.log('📊 통합 API 응답:', consultantsList);
@@ -131,6 +175,20 @@ const ConsultantComprehensiveManagement = () => {
     const loadSpecialtyCodes = useCallback(async() => {
         try {
             console.log('🔍 전문분야 코드 로딩 시작 (테넌트 코드 전용)...');
+            
+            // tenantId 확인
+            if (typeof window !== 'undefined' && window.sessionManager) {
+                const user = window.sessionManager.getUser();
+                const tenantId = user?.tenantId || window.sessionManager.getSessionInfo()?.tenantId;
+                console.log('🔍 현재 tenantId:', tenantId);
+                
+                if (!tenantId || tenantId === 'unknown' || tenantId === 'default') {
+                    console.warn('⚠️ tenantId가 없거나 유효하지 않습니다. 전문분야 코드를 로드할 수 없습니다.');
+                    setSpecialtyCodes([]);
+                    return;
+                }
+            }
+            
             const { getTenantCodes } = await import('../../utils/commonCodeApi');
             const codes = await getTenantCodes('SPECIALTY');
             console.log('📋 전문분야 코드 응답 (테넌트별):', codes);
@@ -144,6 +202,7 @@ const ConsultantComprehensiveManagement = () => {
             }
         } catch (error) {
             console.error('❌ 전문분야 코드 로딩 오류:', error);
+            console.error('❌ 오류 상세:', error.message, error.stack);
             setSpecialtyCodes([]);
         }
     }, []);
@@ -203,7 +262,35 @@ const ConsultantComprehensiveManagement = () => {
     }, [loadConsultants, loadMappings, loadSchedules, loadSpecialtyCodes]);
 
     useEffect(() => {
-        loadAllData();
+        // SessionGuard가 먼저 세션을 체크할 시간을 주기 위해 약간의 지연
+        const initializeData = async () => {
+            // 세션이 준비될 때까지 약간 대기 (SessionGuard가 실행될 시간 확보)
+            await new Promise(resolve => setTimeout(resolve, 200));
+            
+            // 세션 확인
+            if (typeof window !== 'undefined' && window.sessionManager) {
+                const user = window.sessionManager.getUser();
+                const tenantId = user?.tenantId || window.sessionManager.getSessionInfo()?.tenantId;
+                
+                const tenantIdTrimmed = tenantId ? tenantId.trim() : '';
+                const isInvalidDefault = !tenantId || 
+                    tenantIdTrimmed === 'unknown' || tenantIdTrimmed === 'default' ||
+                    tenantIdTrimmed.startsWith('unknown-') || tenantIdTrimmed.startsWith('default-') ||
+                    tenantIdTrimmed === 'tenant-unknown' || tenantIdTrimmed === 'tenant-default';
+                
+                if (isInvalidDefault) {
+                    console.warn('⚠️ 상담사 관리 페이지: tenantId 없음, 세션 갱신 대기...');
+                    // 세션 갱신 후 재시도
+                    await window.sessionManager.checkSession(true);
+                    // 조금 더 대기
+                    await new Promise(resolve => setTimeout(resolve, 300));
+                }
+            }
+            
+            loadAllData();
+        };
+        
+        initializeData();
     }, [loadAllData]);
 
     useEffect(() => {
@@ -278,6 +365,10 @@ const ConsultantComprehensiveManagement = () => {
 
     const handleOpenModal = useCallback((type, consultant = null) => {
         setModalType(type);
+        
+        // 모달이 열릴 때 전문분야 코드 로드 (최신 데이터 보장)
+        loadSpecialtyCodes();
+        
         if (consultant) {
             setSelectedConsultant(consultant);
             if (type === 'edit') {
@@ -289,41 +380,35 @@ const ConsultantComprehensiveManagement = () => {
                 }
                 
                 setFormData({
-                    name: consultant.name || '',
                     email: consultant.email || '',
                     phone: consultant.phone || '',
                     // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                     status: consultant.status || 'ACTIVE',
-                    specialty: specialties,
-                    password: ''
+                    specialty: specialties
                 });
             }
         } else if (type === 'create') {
             setFormData({
-                name: '',
-                email: '',
+                email: '', // 표준화 2025-12-08: 이메일만 입력받음
                 phone: '',
                 // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                 status: 'ACTIVE',
-                specialty: [],
-                password: ''
+                specialty: []
             });
         }
         setShowModal(true);
-    }, []);
+    }, [loadSpecialtyCodes]);
 
     const handleCloseModal = useCallback(() => {
         setShowModal(false);
         setModalType('view');
         setSelectedConsultant(null);
         setFormData({
-            name: '',
-            email: '',
+            email: '', // 표준화 2025-12-08: 이메일만 입력받음
             phone: '',
             // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
             status: 'ACTIVE',
-            specialty: [],
-            password: ''
+            specialty: []
         });
     }, []);
 
@@ -437,11 +522,23 @@ const ConsultantComprehensiveManagement = () => {
             let tenantId = null;
             if (typeof window !== 'undefined' && window.sessionManager) {
                 const user = window.sessionManager.getUser();
-                if (!user || !user.tenantId || user.tenantId.includes('unknown') || user.tenantId.includes('default')) {
+                const userTenantId = user?.tenantId ? user.tenantId.trim() : '';
+                const isUserInvalidDefault = !user || !user.tenantId || 
+                    userTenantId === 'unknown' || userTenantId === 'default' ||
+                    userTenantId.startsWith('unknown-') || userTenantId.startsWith('default-') ||
+                    userTenantId === 'tenant-unknown' || userTenantId === 'tenant-default';
+                
+                if (isUserInvalidDefault) {
                     console.warn('⚠️ tenantId가 없거나 유효하지 않음, 세션 갱신 시도...');
                     await window.sessionManager.checkSession(true);
                     const refreshedUser = window.sessionManager.getUser();
-                    if (!refreshedUser || !refreshedUser.tenantId || refreshedUser.tenantId.includes('unknown') || refreshedUser.tenantId.includes('default')) {
+                    const refreshedTenantId = refreshedUser?.tenantId ? refreshedUser.tenantId.trim() : '';
+                    const isRefreshedInvalidDefault = !refreshedUser || !refreshedUser.tenantId || 
+                        refreshedTenantId === 'unknown' || refreshedTenantId === 'default' ||
+                        refreshedTenantId.startsWith('unknown-') || refreshedTenantId.startsWith('default-') ||
+                        refreshedTenantId === 'tenant-unknown' || refreshedTenantId === 'tenant-default';
+                    
+                    if (isRefreshedInvalidDefault) {
                         window.dispatchEvent(new CustomEvent('showNotification', {
                             detail: { message: '테넌트 정보를 찾을 수 없습니다. 페이지를 새로고침해주세요.', type: 'error' }
                         }));
@@ -459,14 +556,54 @@ const ConsultantComprehensiveManagement = () => {
                 options.headers = { 'X-Tenant-Id': tenantId };
             }
             
-            const response = await apiPost('/api/v1/admin/consultants', data, options);
-            if (response && (response.success !== false)) {
+            // 표준화 2025-12-08: userId 자동 생성
+            // userId가 없으면 name을 기반으로 자동 생성, 없으면 email 사용
+            let userId = data.userId && data.userId.trim();
+            if (!userId || userId.length < 2) {
+                // name이 있으면 name을 userId로 사용 (공백 제거, 소문자 변환)
+                if (data.name && data.name.trim()) {
+                    userId = data.name.trim().toLowerCase().replace(/\s+/g, '');
+                } else if (data.email && data.email.trim()) {
+                    // name도 없으면 email 사용
+                    userId = data.email.trim().split('@')[0]; // @ 앞부분만 사용
+                } else {
+                    console.error('❌ userId 생성 실패: name과 email이 모두 없습니다.');
+                    window.dispatchEvent(new CustomEvent('showNotification', {
+                        detail: { message: '이름 또는 이메일은 필수입니다.', type: 'error' }
+                    }));
+                    return { success: false };
+                }
+            }
+            
+            const requestData = {
+                ...data,
+                userId: userId
+            };
+            
+            // specialization 필드 처리: specialty 배열을 문자열로 변환
+            if (Array.isArray(data.specialty) && data.specialty.length > 0) {
+                requestData.specialization = data.specialty.join(',');
+            } else if (data.specialization) {
+                // 이미 문자열인 경우 그대로 사용
+                requestData.specialization = data.specialization;
+            }
+            
+            console.log('📤 상담사 등록 요청 데이터:', { ...requestData, password: '***' });
+            
+            const response = await apiPost('/api/v1/admin/consultants', requestData, options);
+            console.log('📥 상담사 등록 응답:', response);
+            
+            // apiPost가 ApiResponse의 data만 추출하므로, response는 User 객체 또는 null
+            // User 객체가 있으면 성공 (id 필드 확인)
+            if (response && (response.id || response.userId || response.email)) {
+                console.log('✅ 상담사 등록 성공:', response);
                 await loadConsultants();
                 window.dispatchEvent(new CustomEvent('showNotification', {
                     detail: { message: '상담사가 성공적으로 등록되었습니다.', type: 'success' }
                 }));
                 return { success: true };
             } else {
+                console.error('❌ 상담사 등록 실패: 응답이 올바르지 않음', response);
                 window.dispatchEvent(new CustomEvent('showNotification', {
                     detail: { message: (response && response.message) || '상담사 등록에 실패했습니다.', type: 'error' }
                 }));
@@ -947,29 +1084,40 @@ const ConsultantComprehensiveManagement = () => {
                             ) : (
                             <div className="mg-v2-modal-body">
                                 <form className="mg-v2-form">
-                                    <div className="mg-v2-form-group">
-                                        <label className="mg-v2-form-label">이름 *</label>
-                                        <input
-                                            type="text"
-                                            name="name"
-                                            value={ formData.name }
-                                            onChange={ handleFormChange }
-                                            placeholder="상담사 이름을 입력하세요"
-                                            className="mg-v2-form-input"
-                                            required
-                                        />
-                                    </div>
+                                    {modalType === 'create' && (
+                                        <div className="mg-v2-info-box" style={{ marginBottom: '1rem', padding: '0.75rem', backgroundColor: 'var(--color-background-light)', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border-light)' }}>
+                                            <p className="mg-v2-info-text" style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', margin: 0 }}>
+                                                💡 이메일 주소만 입력하시면 됩니다. 아이디와 비밀번호는 자동으로 생성됩니다.
+                                            </p>
+                                        </div>
+                                    )}
                                     
                                     <div className="mg-v2-form-group">
                                         <label className="mg-v2-form-label">이메일 *</label>
                                         <input
                                             type="email"
                                             name="email"
-                                            value={ formData.email }
+                                            value={ formData.email || '' }
                                             onChange={ handleFormChange }
-                                            placeholder="이메일을 입력하세요"
+                                            placeholder="example@email.com"
                                             className="mg-v2-form-input"
                                             required
+                                            disabled={ modalType === 'edit' } // 수정 시에는 이메일 변경 불가
+                                        />
+                                        {modalType === 'edit' && (
+                                            <small className="mg-v2-form-help">이메일은 변경할 수 없습니다.</small>
+                                        )}
+                                    </div>
+                                    
+                                    <div className="mg-v2-form-group">
+                                        <label className="mg-v2-form-label">전화번호</label>
+                                        <input
+                                            type="tel"
+                                            name="phone"
+                                            value={ formData.phone || '' }
+                                            onChange={ handleFormChange }
+                                            placeholder="전화번호를 입력하세요 (선택사항)"
+                                            className="mg-v2-form-input"
                                         />
                                     </div>
                                     
@@ -989,21 +1137,6 @@ const ConsultantComprehensiveManagement = () => {
                                             💡 Ctrl(Windows) 또는 Cmd(Mac)를 누르고 클릭하여 여러 개 선택할 수 있습니다.
                                         </small>
                                     </div>
-                                    
-                                    <div className="mg-v2-form-group">
-                                        <label className="mg-v2-form-label">
-                                            { modalType === 'create' ? '비밀번호 *' : '새 비밀번호' }
-                                        </label>
-                                        <input
-                                            type="password"
-                                            name="password"
-                                            value={ formData.password }
-                                            onChange={ handleFormChange }
-                                            placeholder={ modalType === 'create' ? '비밀번호를 입력하세요' : '새 비밀번호를 입력하세요 (선택사항)' }
-                                            className="mg-v2-form-input"
-                                            required={ modalType === 'create' }
-                                        />
-                        </div>
                         
                                     <div className="mg-v2-form-actions">
                                         <button type="button" className="mg-v2-button mg-v2-button-secondary" onClick={ handleCloseModal }>

@@ -23,6 +23,7 @@ import PurchaseManagement from './components/erp/PurchaseManagement';
 import FinancialManagement from './components/erp/FinancialManagement';
 import BudgetManagement from './components/erp/BudgetManagement';
 import ImprovedTaxManagement from './components/erp/ImprovedTaxManagement';
+import IntegratedFinanceDashboard from './components/erp/IntegratedFinanceDashboard';
 import ConsultantMessageScreen from './components/consultant/ConsultantMessageScreen';
 import ClientMessageScreen from './components/client/ClientMessageScreen';
 import SchedulePage from './components/schedule/SchedulePage';
@@ -97,6 +98,7 @@ import TenantCommonCodeManager from './components/admin/TenantCommonCodeManager'
 import MenuPermissionManagement from './components/admin/MenuPermissionManagement';
 import PermissionGroupManagement from './components/admin/PermissionGroupManagement';
 import ProtectedRoute from './components/common/ProtectedRoute';
+import SessionGuard from './components/common/SessionGuard';
 import { SessionProvider, useSession } from './contexts/SessionContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { NotificationProvider } from './contexts/NotificationContext';
@@ -327,6 +329,7 @@ function AppContent() {
   return (
     <Router>
       <QueryParamHandler onLoginSuccess={handleLoginSuccess}>
+        <SessionGuard>
         <div className="App">
           <UnifiedNotification type="toast" position="top-right" />
           <Routes>
@@ -586,6 +589,7 @@ function AppContent() {
             {/* Admin ERP 라우트 (메뉴 연동용) */}
             <Route path="/admin/erp/dashboard" element={<ErpDashboard />} />
             <Route path="/admin/erp/purchase" element={<PurchaseRequestForm />} />
+            <Route path="/admin/erp/financial" element={<IntegratedFinanceDashboard />} />
             <Route path="/admin/erp/budget" element={
               <ComingSoon 
                 title="예산 관리"
@@ -643,6 +647,7 @@ function AppContent() {
           {/* 중복 로그인 모달 */}
           <DuplicateLoginModal />
         </div>
+        </SessionGuard>
       </QueryParamHandler>
     </Router>
   );

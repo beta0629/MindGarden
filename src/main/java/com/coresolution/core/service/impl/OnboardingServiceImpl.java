@@ -1006,45 +1006,96 @@ public class OnboardingServiceImpl implements OnboardingService {
      * @param createdBy 생성자 ID
      */
     private void insertDefaultTenantCommonCodes(String tenantId, String createdBy) {
-        
-        try {
-            List<CommonCode> existingCodes = commonCodeRepository.findByTenantId(tenantId);
-            if (existingCodes != null && !existingCodes.isEmpty()) {
-                log.info("기본 공통코드가 이미 존재함: tenantId={}, count={}", tenantId, existingCodes.size());
-                return;
-            }
-        } catch (Exception e) {
-            log.warn("기본 공통코드 확인 중 오류 발생 (계속 진행): {}", e.getMessage());
-        }
+        // 표준화 2025-12-08: 기존 코드가 있어도 누락된 코드는 추가하도록 변경
+        // insertCommonCodeIfNotExists가 중복 체크를 하므로 항상 실행
+        log.info("🔄 기본 테넌트 공통코드 추가 시작: tenantId={}", tenantId);
         
         int insertedCount = 0;
         String createdByValue = createdBy != null ? createdBy : "SYSTEM_ONBOARDING";
         
         try {
+            // 표준화 2025-12-08: extraData에 sessions 필드 추가 (20회기)
             insertCommonCodeIfNotExists(tenantId, "CONSULTATION_PACKAGE", "INDIVIDUAL", 
                 "개인상담", "개인상담", "1:1 개인 심리상담", 
-                "{\"price\": 80000, \"duration\": 50, \"unit\": \"회\"}", 1, createdByValue);
+                "{\"price\": 80000, \"sessions\": 20, \"duration\": 50, \"unit\": \"회\"}", 1, createdByValue);
             insertedCount++;
         } catch (Exception e) {
             log.warn("⚠️ 상담 패키지 코드 삽입 실패 (건너뜀): {}", e.getMessage());
         }
         
         try {
+            // 표준화 2025-12-08: extraData에 sessions 필드 추가 (20회기)
             insertCommonCodeIfNotExists(tenantId, "CONSULTATION_PACKAGE", "FAMILY", 
                 "가족상담", "가족상담", "가족 단위 상담", 
-                "{\"price\": 120000, \"duration\": 60, \"unit\": \"회\"}", 2, createdByValue);
+                "{\"price\": 120000, \"sessions\": 20, \"duration\": 60, \"unit\": \"회\"}", 2, createdByValue);
             insertedCount++;
         } catch (Exception e) {
             log.warn("⚠️ 상담 패키지 코드 삽입 실패 (건너뜀): {}", e.getMessage());
         }
         
         try {
+            // 표준화 2025-12-08: extraData에 sessions 필드 추가 (20회기)
             insertCommonCodeIfNotExists(tenantId, "CONSULTATION_PACKAGE", "GROUP", 
                 "집단상담", "집단상담", "그룹 심리상담", 
-                "{\"price\": 50000, \"duration\": 90, \"unit\": \"회\"}", 3, createdByValue);
+                "{\"price\": 50000, \"sessions\": 20, \"duration\": 90, \"unit\": \"회\"}", 3, createdByValue);
             insertedCount++;
         } catch (Exception e) {
             log.warn("⚠️ 상담 패키지 코드 삽입 실패 (건너뜀): {}", e.getMessage());
+        }
+        
+        // 표준화 2025-12-08: 단회기 패키지 기본 데이터 추가 (1회기)
+        try {
+            insertCommonCodeIfNotExists(tenantId, "CONSULTATION_PACKAGE", "SINGLE_75000", 
+                "단회기 75,000원", "단회기 75,000원", "1회기 상담 패키지", 
+                "{\"price\": 75000, \"duration\": 50, \"unit\": \"회\", \"sessions\": 1}", 4, createdByValue);
+            insertedCount++;
+        } catch (Exception e) {
+            log.warn("⚠️ 단회기 패키지 코드 삽입 실패 (건너뜀): {}", e.getMessage());
+        }
+        
+        try {
+            insertCommonCodeIfNotExists(tenantId, "CONSULTATION_PACKAGE", "SINGLE_80000", 
+                "단회기 80,000원", "단회기 80,000원", "1회기 상담 패키지", 
+                "{\"price\": 80000, \"duration\": 50, \"unit\": \"회\", \"sessions\": 1}", 5, createdByValue);
+            insertedCount++;
+        } catch (Exception e) {
+            log.warn("⚠️ 단회기 패키지 코드 삽입 실패 (건너뜀): {}", e.getMessage());
+        }
+        
+        try {
+            insertCommonCodeIfNotExists(tenantId, "CONSULTATION_PACKAGE", "SINGLE_85000", 
+                "단회기 85,000원", "단회기 85,000원", "1회기 상담 패키지", 
+                "{\"price\": 85000, \"duration\": 50, \"unit\": \"회\", \"sessions\": 1}", 6, createdByValue);
+            insertedCount++;
+        } catch (Exception e) {
+            log.warn("⚠️ 단회기 패키지 코드 삽입 실패 (건너뜀): {}", e.getMessage());
+        }
+        
+        try {
+            insertCommonCodeIfNotExists(tenantId, "CONSULTATION_PACKAGE", "SINGLE_90000", 
+                "단회기 90,000원", "단회기 90,000원", "1회기 상담 패키지", 
+                "{\"price\": 90000, \"duration\": 50, \"unit\": \"회\", \"sessions\": 1}", 7, createdByValue);
+            insertedCount++;
+        } catch (Exception e) {
+            log.warn("⚠️ 단회기 패키지 코드 삽입 실패 (건너뜀): {}", e.getMessage());
+        }
+        
+        try {
+            insertCommonCodeIfNotExists(tenantId, "CONSULTATION_PACKAGE", "SINGLE_95000", 
+                "단회기 95,000원", "단회기 95,000원", "1회기 상담 패키지", 
+                "{\"price\": 95000, \"duration\": 50, \"unit\": \"회\", \"sessions\": 1}", 8, createdByValue);
+            insertedCount++;
+        } catch (Exception e) {
+            log.warn("⚠️ 단회기 패키지 코드 삽입 실패 (건너뜀): {}", e.getMessage());
+        }
+        
+        try {
+            insertCommonCodeIfNotExists(tenantId, "CONSULTATION_PACKAGE", "SINGLE_100000", 
+                "단회기 100,000원", "단회기 100,000원", "1회기 상담 패키지", 
+                "{\"price\": 100000, \"duration\": 50, \"unit\": \"회\", \"sessions\": 1}", 9, createdByValue);
+            insertedCount++;
+        } catch (Exception e) {
+            log.warn("⚠️ 단회기 패키지 코드 삽입 실패 (건너뜀): {}", e.getMessage());
         }
         
         try {
@@ -1071,28 +1122,31 @@ public class OnboardingServiceImpl implements OnboardingService {
             log.warn("⚠️ 결제 방법 코드 삽입 실패 (건너뜀): {}", e.getMessage());
         }
         
-        try {
-            insertCommonCodeIfNotExists(tenantId, "SPECIALTY", "DEPRESSION", 
-                "우울증", "우울증", "우울증 상담", null, 1, createdByValue);
-            insertedCount++;
-        } catch (Exception e) {
-            log.warn("⚠️ 전문 분야 코드 삽입 실패 (건너뜀): {}", e.getMessage());
-        }
+        // 표준화 2025-12-08: 테넌트 초기화 시 기본 전문분야 코드 생성
+        // 더 다양한 전문분야 코드를 초기 데이터로 제공
+        String[][] specialtyCodes = {
+            {"DEPRESSION", "우울증", "우울증 상담", "1"},
+            {"ANXIETY", "불안장애", "불안장애 상담", "2"},
+            {"TRAUMA", "트라우마", "트라우마 상담", "3"},
+            {"RELATIONSHIP", "인간관계", "인간관계 상담", "4"},
+            {"FAMILY", "가족상담", "가족 상담", "5"},
+            {"COUPLE", "부부상담", "부부 상담", "6"},
+            {"CHILD", "아동상담", "아동 상담", "7"},
+            {"ADOLESCENT", "청소년상담", "청소년 상담", "8"},
+            {"ADULT", "성인상담", "성인 상담", "9"},
+            {"STRESS", "스트레스", "스트레스 관리 상담", "10"},
+            {"CAREER", "진로상담", "진로 상담", "11"}
+        };
         
-        try {
-            insertCommonCodeIfNotExists(tenantId, "SPECIALTY", "ANXIETY", 
-                "불안장애", "불안장애", "불안장애 상담", null, 2, createdByValue);
-            insertedCount++;
-        } catch (Exception e) {
-            log.warn("⚠️ 전문 분야 코드 삽입 실패 (건너뜀): {}", e.getMessage());
-        }
-        
-        try {
-            insertCommonCodeIfNotExists(tenantId, "SPECIALTY", "FAMILY", 
-                "가족상담", "가족상담", "가족 상담", null, 3, createdByValue);
-            insertedCount++;
-        } catch (Exception e) {
-            log.warn("⚠️ 전문 분야 코드 삽입 실패 (건너뜀): {}", e.getMessage());
+        for (String[] specialty : specialtyCodes) {
+            try {
+                insertCommonCodeIfNotExists(tenantId, "SPECIALTY", specialty[0], 
+                    specialty[1], specialty[1], specialty[2], null, 
+                    Integer.parseInt(specialty[3]), createdByValue);
+                insertedCount++;
+            } catch (Exception e) {
+                log.warn("⚠️ 전문 분야 코드 삽입 실패 (건너뜀): {} - {}", specialty[0], e.getMessage());
+            }
         }
         
         try {
@@ -1119,6 +1173,40 @@ public class OnboardingServiceImpl implements OnboardingService {
             log.warn("⚠️ 상담 유형 코드 삽입 실패 (건너뜀): {}", e.getMessage());
         }
         
+        log.info("✅ 기본 테넌트 공통코드 추가 완료: tenantId={}, insertedCount={}", tenantId, insertedCount);
+    }
+    
+    /**
+     * 테넌트 기본 공통코드 추가 (공개 메서드)
+     * 기존 테넌트에도 기본 코드를 추가할 수 있도록 제공
+     * 
+     * @param tenantId 테넌트 ID
+     * @param createdBy 생성자 ID
+     * @return 추가된 코드 개수
+     */
+    public int addDefaultTenantCommonCodes(String tenantId, String createdBy) {
+        log.info("🔄 테넌트 기본 공통코드 추가 요청: tenantId={}", tenantId);
+        int beforeCount = 0;
+        try {
+            List<CommonCode> existingCodes = commonCodeRepository.findByTenantId(tenantId);
+            beforeCount = existingCodes != null ? existingCodes.size() : 0;
+        } catch (Exception e) {
+            log.warn("기존 코드 개수 확인 실패 (계속 진행): {}", e.getMessage());
+        }
+        
+        insertDefaultTenantCommonCodes(tenantId, createdBy);
+        
+        int afterCount = 0;
+        try {
+            List<CommonCode> updatedCodes = commonCodeRepository.findByTenantId(tenantId);
+            afterCount = updatedCodes != null ? updatedCodes.size() : 0;
+        } catch (Exception e) {
+            log.warn("추가 후 코드 개수 확인 실패: {}", e.getMessage());
+        }
+        
+        int addedCount = afterCount - beforeCount;
+        log.info("✅ 테넌트 기본 공통코드 추가 완료: tenantId={}, 추가된 코드={}개", tenantId, addedCount);
+        return addedCount;
     }
     
     /**

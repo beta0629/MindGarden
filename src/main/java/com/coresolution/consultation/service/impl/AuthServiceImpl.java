@@ -89,11 +89,14 @@ public class AuthServiceImpl implements AuthService {
     
     @Override
     public AuthResponse authenticate(String email, String password) {
+        log.info("🔐 JWT 토큰 기반 로그인 시도: email={}", email);
         try {
             // Spring Security 인증
+            log.debug("🔐 Spring Security 인증 시작: email={}", email);
             Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(email, password)
             );
+            log.debug("🔐 Spring Security 인증 완료: authenticated={}", authentication.isAuthenticated());
             
             if (authentication.isAuthenticated()) {
                 // 사용자 정보 조회
@@ -106,7 +109,8 @@ public class AuthServiceImpl implements AuthService {
                 
                 // Phase 3: 확장된 JWT 토큰 생성 (tenantId, branchId, permissions 포함)
                 String token = jwtService.generateToken(user, permissions);
-                String refreshToken = jwtService.generateRefreshToken(user.getEmail());
+                // 표준화 2025-12-08: username = userId이므로 refreshToken도 userId 사용, User 객체로 생성하여 tenantId, email 포함
+                String refreshToken = jwtService.generateRefreshToken(user);
                 
                 // Phase 3: Refresh Token 저장 (HttpServletRequest는 null로 전달, 추후 Controller에서 전달)
                 try {
@@ -166,18 +170,38 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public AuthResponse refreshToken(String refreshToken) {
         try {
-            // 리프레시 토큰에서 사용자 이메일 추출
-            String email = jwtService.extractUsername(refreshToken);
+            // 리프레시 토큰에서 사용자 ID 추출 (표준화 2025-12-08: username = userId)
+            String userId = jwtService.extractUsername(refreshToken);
+            
+            // 리프레시 토큰에서 tenantId 추출 (있으면 사용, 없으면 전체 조회)
+            String tenantId = jwtService.extractTenantId(refreshToken);
+            
+            // 사용자 정보 조회 (tenantId가 있으면 테넌트별 조회, 없으면 전체 조회)
+            User user;
+            if (tenantId != null && !tenantId.trim().isEmpty()) {
+                user = userRepository.findByTenantIdAndUserId(tenantId, userId)
+                    .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다: tenantId=" + tenantId + ", userId=" + userId));
+            } else {
+                // tenantId가 없는 경우 (레거시 토큰) - 이메일로 조회 후 userId 확인
+                // userId로 직접 조회 불가능하므로, 이메일을 추출하거나 다른 방법 사용
+                // 임시: refreshToken 클레임에서 email 추출 시도
+                String email = jwtService.extractEmail(refreshToken);
+                if (email != null && !email.trim().isEmpty()) {
+                    List<User> users = userRepository.findAllByEmail(email);
+                    user = users.stream()
+                        .filter(u -> u.getUserId().equals(userId))
+                        .findFirst()
+                        .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다: userId=" + userId));
+                } else {
+                    throw new UsernameNotFoundException("사용자를 찾을 수 없습니다: userId=" + userId + " (tenantId 없음)");
+                }
+            }
             
             // 리프레시 토큰 유효성 검사
-            UserDetails userDetails = userDetailsService.loadUserByUsername(email);
+            UserDetails userDetails = userDetailsService.loadUserByUsername(user.getEmail());
             if (!jwtService.isTokenValid(refreshToken, userDetails)) {
                 return AuthResponse.failure("유효하지 않은 리프레시 토큰입니다.");
             }
-            
-            // 사용자 정보 조회
-            User user = userService.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다: " + email));
             
             // Phase 3: 사용자 권한 조회
             List<String> permissions = dynamicPermissionService.getUserPermissionsAsStringList(user);
@@ -208,8 +232,8 @@ public class AuthServiceImpl implements AuthService {
                 // 1. tokenId 생성 (UUID)
                 String newTokenId = java.util.UUID.randomUUID().toString();
                 
-                // 2. tokenId를 포함한 refreshToken JWT 생성
-                newRefreshToken = jwtService.generateRefreshToken(email, newTokenId);
+                // 2. tokenId를 포함한 refreshToken JWT 생성 (표준화 2025-12-08: User 객체 사용하여 tenantId, email 포함)
+                newRefreshToken = jwtService.generateRefreshToken(user, newTokenId);
                 
                 // 3. refreshToken 해시 생성 및 DB 저장
                 refreshTokenService.createRefreshToken(user, newRefreshToken, null);
@@ -217,8 +241,8 @@ public class AuthServiceImpl implements AuthService {
                 log.info("✅ 새 Refresh Token 생성 완료: tokenId={}", newTokenId);
             } catch (Exception e) {
                 log.warn("⚠️ Refresh Token 저장 실패 (기본 토큰 생성): {}", e.getMessage());
-                // 새 토큰 생성 실패 시에도 기본 refreshToken 생성 (tokenId 없음)
-                newRefreshToken = jwtService.generateRefreshToken(email);
+                // 새 토큰 생성 실패 시에도 기본 refreshToken 생성 (tokenId 없음, 표준화 2025-12-08: User 객체 사용)
+                newRefreshToken = jwtService.generateRefreshToken(user);
             }
             
             // UserResponse 변환 (표준화된 DTO)
@@ -343,14 +367,29 @@ public class AuthServiceImpl implements AuthService {
             } else {
                 return AuthResponse.failure("인증에 실패했습니다.");
             }
+        } catch (org.springframework.security.authentication.BadCredentialsException e) {
+            log.warn("❌ 인증 실패 (자격 증명 오류): email={}", email);
+            return AuthResponse.failure("아이디 또는 비밀번호가 올바르지 않습니다.");
+        } catch (org.springframework.security.core.userdetails.UsernameNotFoundException e) {
+            log.warn("❌ 사용자를 찾을 수 없음: email={}, error={}", email, e.getMessage());
+            return AuthResponse.failure("아이디 또는 비밀번호가 올바르지 않습니다.");
+        } catch (IllegalArgumentException e) {
+            log.error("❌ 잘못된 인수: email={}, error={}", email, e.getMessage());
+            // IllegalArgumentException은 그대로 전달하여 GlobalExceptionHandler에서 400으로 처리되도록 함
+            throw e;
+        } catch (RuntimeException e) {
+            log.error("❌ 런타임 오류: email={}, error={}", email, e.getMessage(), e);
+            // RuntimeException도 그대로 전달
+            throw e;
         } catch (Exception e) {
-            log.error("❌ 세션 기반 로그인 실패: email={}, error={}", email, e.getMessage(), e);
+            log.error("❌ 세션 기반 로그인 실패: email={}, error={}, class={}", email, e.getMessage(), e.getClass().getName(), e);
             
             // 자격 증명 실패인 경우 사용자 친화적인 메시지 반환
             if (e.getMessage() != null && e.getMessage().contains("자격 증명에 실패하였습니다")) {
                 return AuthResponse.failure("아이디 또는 비밀번호가 올바르지 않습니다.");
             }
-            return AuthResponse.failure("로그인 실패: " + e.getMessage());
+            // 기타 예외는 RuntimeException으로 래핑하여 전달
+            throw new RuntimeException("로그인 처리 중 오류가 발생했습니다: " + e.getMessage(), e);
         }
     }
     
@@ -459,9 +498,11 @@ public class AuthServiceImpl implements AuthService {
      * Trinity 직원은 Ops Portal(ops.e-trinity.co.kr)을 사용해야 함
      * 
      * @param user 사용자 엔티티
-     * @throws RuntimeException Trinity 회사 직원(ADMIN/OPS 역할)인 경우
+     * @throws IllegalArgumentException Trinity 회사 직원(ADMIN/OPS 역할)인 경우
      */
     private void validateCoreSolutionTenantAccess(User user) {
+        log.debug("🔍 입점사 접근 검증 시작: email={}, role={}", user.getEmail(), user.getRole());
+        
         // 사용자의 권한 확인
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         
@@ -469,19 +510,30 @@ public class AuthServiceImpl implements AuthService {
             Collection<? extends GrantedAuthority> authorities = 
                 authentication.getAuthorities();
             
+            log.debug("🔍 인증 정보 확인: principal={}, authorities={}", 
+                authentication.getPrincipal(), authorities);
+            
             // ADMIN 또는 OPS 역할이 있으면 Trinity 회사 직원으로 간주
             boolean hasAdminOrOpsRole = authorities.stream()
                 .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN") || 
                                auth.getAuthority().equals("ROLE_OPS"));
             
             if (hasAdminOrOpsRole) {
-                log.warn("메인 웹앱 로그인 거부: Trinity 회사 직원은 입점사 전용 시스템에 접근할 수 없습니다. email={}, role={}", 
+                log.warn("❌ 메인 웹앱 로그인 거부: Trinity 회사 직원은 입점사 전용 시스템에 접근할 수 없습니다. email={}, role={}", 
                     user.getEmail(), user.getRole());
-                throw new RuntimeException("Trinity 회사 직원은 입점사 전용 시스템에 접근할 수 없습니다. Ops Portal(ops.e-trinity.co.kr)을 사용해주세요.");
+                throw new IllegalArgumentException("Trinity 회사 직원은 입점사 전용 시스템에 접근할 수 없습니다. Ops Portal(ops.e-trinity.co.kr)을 사용해주세요.");
+            }
+        } else {
+            // 인증 정보가 없는 경우, User 엔티티의 role로 확인
+            log.debug("🔍 SecurityContext에 인증 정보 없음, User 엔티티의 role로 확인: role={}", user.getRole());
+            if (user.getRole() != null && (user.getRole().name().equals("ADMIN") || user.getRole().name().equals("OPS"))) {
+                log.warn("❌ 메인 웹앱 로그인 거부: Trinity 회사 직원은 입점사 전용 시스템에 접근할 수 없습니다. email={}, role={}", 
+                    user.getEmail(), user.getRole());
+                throw new IllegalArgumentException("Trinity 회사 직원은 입점사 전용 시스템에 접근할 수 없습니다. Ops Portal(ops.e-trinity.co.kr)을 사용해주세요.");
             }
         }
         
-        log.debug("입점사 접근 허용: email={}, tenantId={}", user.getEmail(), user.getTenantId());
+        log.debug("✅ 입점사 접근 허용: email={}, tenantId={}", user.getEmail(), user.getTenantId());
     }
     
     /**

@@ -20,7 +20,8 @@ const ConsultantClientSection = ({ userId }) => {
       setIsLoading(true);
       setError(null);
 
-      const response = await apiGet(`/api/admin/mappings/consultant/${userId}/clients`);
+      // 표준화 2025-12-08: /api/v1/admin 경로로 통일
+      const response = await apiGet(`/api/v1/admin/mappings/consultant/${userId}/clients`);
       const mappings = response.data || [];
       
       const clientMap = new Map();

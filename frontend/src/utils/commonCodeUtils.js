@@ -150,33 +150,72 @@ export const getPackageOptions = async () => {
         
         return codes.map(code => {
             console.log(`🔧 처리 중인 코드: ${code.codeValue}`);
-            let sessions = 1; // 기본값
-            let price = 50000; // 기본값
+            // 표준화 2025-12-08: 테넌트별 공통코드에서 가격과 세션 수 동적 조회 (하드코딩 완전 제거)
+            let sessions = 20; // 기본값 (extraData에 없을 경우만 사용)
+            let price = 0;
             
-            // 코드 값에 따라 세션 수와 가격 설정
-            if (code.codeValue === 'BASIC') {
-                sessions = 20;
-                price = 200000;
-            } else if (code.codeValue === 'STANDARD') {
-                sessions = 20;
-                price = 400000;
-            } else if (code.codeValue === 'PREMIUM') {
-                sessions = 20;
-                price = 600000;
-            } else if (code.codeValue === 'VIP') {
-                sessions = 20;
-                price = 1000000;
-            } else if (code.codeValue.startsWith('SINGLE_')) {
-                sessions = 1;
-                // SINGLE_30000 -> 30000
+            // SINGLE_ 패키지 처리 (codeValue에서 가격 추출)
+            if (code.codeValue.startsWith('SINGLE_')) {
+                sessions = 1; // 단회기는 항상 1회기
                 const priceStr = code.codeValue.replace('SINGLE_', '');
                 price = parseInt(priceStr, 10);
-                // NaN 체크
                 if (isNaN(price)) {
                     console.warn(`단회기 가격 파싱 실패: ${code.codeValue} -> ${priceStr}`);
-                    price = 30000; // 기본값
+                    price = 0; // 가격 정보 없음
                 }
-                console.log(`단회기 옵션 처리: ${code.codeValue} -> ${sessions}회기, ${price}원`);
+                
+                // SINGLE_ 패키지도 extraData가 있으면 우선 사용
+                if (code.extraData) {
+                    try {
+                        const extraData = JSON.parse(code.extraData);
+                        if (extraData.price !== undefined && extraData.price !== null) {
+                            const extraPrice = parseFloat(extraData.price);
+                            if (!isNaN(extraPrice) && extraPrice > 0) {
+                                price = extraPrice;
+                            }
+                        }
+                    } catch (e) {
+                        console.warn(`SINGLE_ 패키지 extraData 파싱 실패: ${code.codeValue}`, e);
+                    }
+                }
+            } else {
+                // 일반 패키지: extraData에서 가격과 세션 수 추출 (우선순위 1)
+                if (code.extraData) {
+                    try {
+                        const extraData = JSON.parse(code.extraData);
+                        
+                        // 가격 추출 (필수)
+                        if (extraData.price !== undefined && extraData.price !== null) {
+                            price = parseFloat(extraData.price);
+                            if (isNaN(price) || price <= 0) {
+                                console.warn(`가격 파싱 실패 또는 유효하지 않음: codeValue=${code.codeValue}, price=${extraData.price}`);
+                                price = 0;
+                            }
+                        }
+                        
+                        // 세션 수 추출
+                        if (extraData.sessions !== undefined && extraData.sessions !== null) {
+                            sessions = parseInt(extraData.sessions, 10);
+                            if (isNaN(sessions) || sessions <= 0) {
+                                console.warn(`세션 수 파싱 실패 또는 유효하지 않음: codeValue=${code.codeValue}, sessions=${extraData.sessions}`);
+                                sessions = 20; // 기본값
+                            }
+                        }
+                        
+                        console.log(`✅ 패키지 데이터 파싱: codeValue=${code.codeValue}, price=${price}, sessions=${sessions}, extraData=`, extraData);
+                    } catch (e) {
+                        console.warn(`extraData 파싱 실패: codeValue=${code.codeValue}, extraData=${code.extraData}`, e);
+                    }
+                }
+                
+                // extraData에서 가격을 찾지 못한 경우 codeDescription 시도 (하위 호환성)
+                if (price === 0 && code.codeDescription) {
+                    const parsedPrice = parseFloat(code.codeDescription);
+                    if (!isNaN(parsedPrice) && parsedPrice > 0) {
+                        price = parsedPrice;
+                        console.log(`⚠️ codeDescription에서 가격 추출: codeValue=${code.codeValue}, price=${price}`);
+                    }
+                }
             }
             
             // 패키지별 라벨 생성

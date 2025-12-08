@@ -211,7 +211,7 @@ const SimpleHeader = () => {
                 </div>
                 <div className={HEADER_CSS_CLASSES.USER_DETAILS}>
                   <div className={HEADER_CSS_CLASSES.USER_NAME}>
-                    {user.name || user.nickname || user.username || HEADER_TEXTS.DEFAULT_USER}
+                    {user.name || user.nickname || user.userId || HEADER_TEXTS.DEFAULT_USER}
                   </div>
                   <div className={HEADER_CSS_CLASSES.USER_ROLE}>{roleDisplayName || user.role}</div>
                   <div className={HEADER_CSS_CLASSES.USER_ROLE_EN}>{roleDisplayNameEn || user.role}</div>

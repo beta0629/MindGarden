@@ -26,7 +26,7 @@ export const getCurrentUserEmail = () => {
       return DEFAULT_USER_EMAIL;
     }
     const user = JSON.parse(userStr);
-    return user.email || user.username || DEFAULT_USER_EMAIL;
+    return user.email || user.userId || DEFAULT_USER_EMAIL;
   } catch (e) {
     console.warn('사용자 정보 파싱 실패:', e);
     return DEFAULT_USER_EMAIL;

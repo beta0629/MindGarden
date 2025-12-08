@@ -574,7 +574,7 @@ const CommonDashboard = ({ user: propUser }) => {
         }
         
         if (dashboardUser && dashboardUser.role) {
-          console.log('👤 현재 사용자 role:', dashboardUser.role, '이름:', dashboardUser.name || dashboardUser.nickname || dashboardUser.username);
+          console.log('👤 현재 사용자 role:', dashboardUser.role, '이름:', dashboardUser.name || dashboardUser.nickname || dashboardUser.userId);
         }
         
         if (isMounted) {
@@ -679,7 +679,8 @@ const CommonDashboard = ({ user: propUser }) => {
     try {
       console.log('📊 내담자 상태 데이터 로드 시작 - 사용자 ID:', userId);
       
-      const mappingResponse = await apiGet(`/api/admin/mappings/client`, { clientId: userId });
+      // 표준화 2025-12-08: /api/v1/admin 경로로 통일
+      const mappingResponse = await apiGet(`/api/v1/admin/mappings/client`, { clientId: userId });
       
       let mappingStatus = 'NONE';
       let paymentStatus = 'NONE';

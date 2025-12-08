@@ -35,7 +35,7 @@ public class OpsAuthController extends BaseApiController {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     
-    @Value("${ops.admin.username:superadmin@mindgarden.com}")
+    @Value("${ops.admin.userId:superadmin@mindgarden.com}")
     private String opsAdminUsername;
     
     @Value("${ops.admin.password:admin123}")
@@ -49,7 +49,7 @@ public class OpsAuthController extends BaseApiController {
      */
     @Data
     public static class LoginRequest {
-        private String username;
+        private String userId;
         private String password;
     }
     
@@ -57,7 +57,7 @@ public class OpsAuthController extends BaseApiController {
      * Ops Portal 로그인
      * POST /api/v1/ops/auth/login
      * 
-     * @param request 로그인 요청 (username, password)
+     * @param request 로그인 요청 (userId, password)
      * @return JWT 토큰 및 사용자 정보
      * @since 2025-11-23
      */
@@ -68,50 +68,50 @@ public class OpsAuthController extends BaseApiController {
             throw new IllegalArgumentException("요청 데이터가 없습니다.");
         }
         
-        String username = request.getUsername();
+        String userId = request.getUserId();
         String password = request.getPassword();
         
         // 입력값 trim 처리
-        if (username != null) {
-            username = username.trim();
+        if (userId != null) {
+            userId = userId.trim();
         }
         if (password != null) {
             password = password.trim();
         }
         
-        log.debug("Ops Portal 로그인 요청: username={}, password={}", username, password != null ? "***" : null);
+        log.debug("Ops Portal 로그인 요청: userId={}, password={}", userId, password != null ? "***" : null);
         
-        if (username == null || username.isEmpty() || password == null || password.isEmpty()) {
+        if (userId == null || userId.isEmpty() || password == null || password.isEmpty()) {
             throw new IllegalArgumentException("아이디와 비밀번호를 모두 입력해주세요.");
         }
         
-        log.info("Ops Portal 로그인 시도: username={}", username);
+        log.info("Ops Portal 로그인 시도: userId={}", userId);
         
         // 관리자 계정 확인 (환경 변수 또는 기본값)
-        boolean isAdminAccount = username.equals(opsAdminUsername);
+        boolean isAdminAccount = userId.equals(opsAdminUsername);
         boolean passwordMatches = password.equals(opsAdminPassword);
         
         if (!isAdminAccount || !passwordMatches) {
-            log.warn("Ops Portal 로그인 실패: username={}", username);
+            log.warn("Ops Portal 로그인 실패: userId={}", userId);
             throw new org.springframework.security.authentication.BadCredentialsException("아이디 또는 비밀번호가 올바르지 않습니다.");
         }
         
         // JWT 토큰 생성
         Map<String, Object> claims = new HashMap<>();
-        claims.put("actorId", username);
+        claims.put("actorId", userId);
         claims.put("actorRole", opsAdminRole);
         
-        String token = jwtService.generateToken(claims, username);
+        String token = jwtService.generateToken(claims, userId);
         
         // 만료 시간 계산 (1시간)
         Instant expiresAt = Instant.now().plusSeconds(3600);
         
-        log.info("Ops Portal 로그인 성공: username={}, role={}", username, opsAdminRole);
+        log.info("Ops Portal 로그인 성공: userId={}, role={}", userId, opsAdminRole);
         
         // Ops Portal이 기대하는 형식으로 응답
         Map<String, Object> response = new HashMap<>();
         response.put("token", token);
-        response.put("actorId", username);
+        response.put("actorId", userId);
         response.put("actorRole", opsAdminRole);
         response.put("expiresAt", expiresAt.toString());
         

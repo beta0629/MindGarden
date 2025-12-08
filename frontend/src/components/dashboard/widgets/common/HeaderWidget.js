@@ -184,7 +184,7 @@ const HeaderWidget = ({ widget, user }) => {
                     </div>
                     <div className="widget-header-user-details">
                       <div className="widget-header-user-name">
-                        {currentUser.name || currentUser.nickname || currentUser.username || '사용자'}
+                        {currentUser.name || currentUser.nickname || currentUser.userId || '사용자'}
                       </div>
                       <div className="widget-header-user-role">{roleDisplayName || currentUser.role}</div>
                     </div>

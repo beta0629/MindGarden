@@ -183,6 +183,7 @@ public class DynamicAdminPermissionService {
     
     /**
      * 현재 로그인한 ADMIN 사용자의 권한 즉시 초기화
+     * 표준화 2025-12-08: 공통코드 기반 동적 권한 처리만 사용 (하드코딩 제거)
      */
     @Transactional  
     public void ensureAdminPermissionsForCurrentUser(String tenantId) {
@@ -191,9 +192,9 @@ public class DynamicAdminPermissionService {
         // 1. 공통코드 기반 권한 초기화
         initializeAdminPermissionsFromCommonCode();
         
-        // 2. 권한 업데이트
+        // 2. 권한 업데이트 (공통코드에서 동적 조회)
         updateRolePermissionsFromCommonCode(UserRole.ADMIN.name());
         
-        log.info("✅ ADMIN 사용자 권한 보장 완료");
+        log.info("✅ ADMIN 사용자 권한 보장 완료 (공통코드 기반 동적 처리)");
     }
 }

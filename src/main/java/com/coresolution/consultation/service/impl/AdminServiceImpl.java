@@ -38,6 +38,7 @@ import com.coresolution.consultation.service.AdminService;
 import com.coresolution.consultation.service.AmountManagementService;
 import com.coresolution.consultation.service.BranchService;
 import com.coresolution.consultation.service.CommonCodeService;
+import com.coresolution.consultation.service.UserPersonalDataCacheService;
 import com.coresolution.consultation.service.ConsultantAvailabilityService;
 import com.coresolution.consultation.service.ConsultantRatingService;
 import com.coresolution.consultation.service.ConsultationMessageService;
@@ -58,7 +59,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -93,17 +93,18 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     private final TenantRoleRepository tenantRoleRepository;
     private final UserRoleQueryService userRoleQueryService;
     private final StatusCodeHelper statusCodeHelper;
+    private final UserPersonalDataCacheService userPersonalDataCacheService;
+    private final org.springframework.transaction.PlatformTransactionManager transactionManager;
+    private final com.coresolution.consultation.service.UserIdGenerator userIdGenerator;
 
     @Override
     public User registerConsultant(ConsultantRegistrationRequest request) {
-        String encryptedName = encryptionUtil.safeEncrypt(request.getName());
-        String encryptedPhone = null;
-        if (request.getPhone() != null && !request.getPhone().trim().isEmpty()) {
-            encryptedPhone = encryptionUtil.safeEncrypt(request.getPhone());
-            log.info("🔐 관리자 상담사 등록 시 전화번호 암호화 완료: {}", maskPhone(request.getPhone()));
+        // 표준화 2025-12-08: 이메일만 입력받고 userId, password, name 자동 생성
+        String email = request.getEmail();
+        if (email == null || email.trim().isEmpty()) {
+            throw new IllegalArgumentException("이메일은 필수입니다.");
         }
-        String encryptedEmail = encryptionUtil.safeEncrypt(request.getEmail());
-        log.info("🔐 관리자 상담사 등록 시 이름, 이메일 암호화 완료");
+        email = email.trim().toLowerCase();
         
         String tenantId = getTenantIdOrNull();
         if (tenantId == null) {
@@ -111,13 +112,47 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             throw new IllegalStateException("테넌트 정보가 없습니다. 관리자에게 문의하세요.");
         }
         
-        Optional<User> existingConsultant = userRepository.findByTenantIdAndUsernameAndIsActive(tenantId, request.getUsername(), false);
+        // 1. 테넌트별 고유한 userId 자동 생성 (표준화 2025-12-08)
+        String userId = userIdGenerator.generateUniqueUserId(email, tenantId);
+        log.info("✅ 테넌트별 상담사 사용자 ID 자동 생성 완료: email={}, tenantId={}, userId={}", 
+                email, tenantId, userId);
+        
+        // 2. 임시 비밀번호 자동 생성 (표준화 2025-12-08)
+        String tempPassword = generateTempPassword();
+        log.info("✅ 상담사 임시 비밀번호 자동 생성 완료: email={}", email);
+        
+        // 3. 이름 자동 생성 (이메일 로컬 파트 또는 기본값 사용) (표준화 2025-12-08)
+        String name = request.getName();
+        if (name == null || name.trim().isEmpty()) {
+            // 이메일 로컬 파트에서 이름 생성
+            String localPart = email.split("@")[0];
+            name = localPart.replaceAll("[^a-zA-Z0-9가-힣]", "");
+            if (name.isEmpty()) {
+                name = "상담사";
+            }
+        }
+        name = name.trim();
+        
+        // 기존 비활성화된 상담사 확인 (재활성화)
+        Optional<User> existingConsultant = userRepository.findByTenantIdAndUserIdAndIsActive(tenantId, userId, false);
         
         if (existingConsultant.isPresent()) {
+            // 기존 상담사 재활성화
             User consultant = existingConsultant.get();
+            
+            // 개인정보 암호화
+            String encryptedName = encryptionUtil.safeEncrypt(name);
+            String encryptedEmail = encryptionUtil.safeEncrypt(email);
+            String encryptedPhone = null;
+            if (request.getPhone() != null && !request.getPhone().trim().isEmpty()) {
+                encryptedPhone = encryptionUtil.safeEncrypt(request.getPhone());
+                log.info("🔐 관리자 상담사 등록 시 전화번호 암호화 완료: {}", maskPhone(request.getPhone()));
+            }
+            log.info("🔐 관리자 상담사 등록 시 이름, 이메일 암호화 완료");
+            
             consultant.setEmail(encryptedEmail);
-            consultant.setPassword(passwordEncoder.encode(request.getPassword()));
-            consultant.setName(encryptedName);
+            consultant.setPassword(passwordEncoder.encode(tempPassword)); // 자동 생성된 비밀번호 사용
+            consultant.setName(encryptedName); // 자동 생성된 이름 사용
             consultant.setPhone(encryptedPhone);
             consultant.setIsActive(true); // 활성화
             consultant.setSpecialization(request.getSpecialization());
@@ -131,13 +166,37 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             
             createUserRoleAssignment(savedConsultant, tenantId, UserRole.CONSULTANT);
             
+            // 표준화 2025-12-08: 상담사 등록 시 캐시에 복호화 데이터 저장 (성능 최적화)
+            try {
+                userPersonalDataCacheService.decryptAndCacheUserPersonalData(savedConsultant);
+                log.debug("✅ 상담사 개인정보 복호화 캐시 저장 완료: userId={}, tenantId={}", 
+                         savedConsultant.getId(), savedConsultant.getTenantId());
+            } catch (Exception e) {
+                log.warn("⚠️ 상담사 개인정보 캐시 저장 실패 (등록은 계속 진행): userId={}", 
+                        savedConsultant.getId(), e);
+            }
+            
+            log.info("✅ 기존 상담사 재활성화 완료: id={}, userId={}, tenantId={}", 
+                    savedConsultant.getId(), savedConsultant.getUserId(), savedConsultant.getTenantId());
+            
             return savedConsultant;
         } else {
+            // 새로운 상담사 생성
+            // 개인정보 암호화
+            String encryptedName = encryptionUtil.safeEncrypt(name);
+            String encryptedEmail = encryptionUtil.safeEncrypt(email);
+            String encryptedPhone = null;
+            if (request.getPhone() != null && !request.getPhone().trim().isEmpty()) {
+                encryptedPhone = encryptionUtil.safeEncrypt(request.getPhone());
+                log.info("🔐 관리자 상담사 등록 시 전화번호 암호화 완료: {}", maskPhone(request.getPhone()));
+            }
+            log.info("🔐 관리자 상담사 등록 시 이름, 이메일 암호화 완료");
+            
             Consultant consultant = new Consultant();
-            consultant.setUsername(request.getUsername());
+            consultant.setUserId(userId); // 자동 생성된 userId 사용
             consultant.setEmail(encryptedEmail);
-            consultant.setPassword(passwordEncoder.encode(request.getPassword()));
-            consultant.setName(encryptedName);
+            consultant.setPassword(passwordEncoder.encode(tempPassword)); // 자동 생성된 비밀번호 사용
+            consultant.setName(encryptedName); // 자동 생성된 이름 사용
             consultant.setPhone(encryptedPhone);
             consultant.setRole(UserRole.CONSULTANT);
             consultant.setIsActive(true);
@@ -146,9 +205,25 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             consultant.setSpecialty(request.getSpecialization());
             consultant.setCertification(request.getQualifications());
             
+            log.info("🔧 상담사 엔티티 생성 완료: userId={}, tenantId={}, specialization={}", 
+                    consultant.getUserId(), consultant.getTenantId(), consultant.getSpecialty());
+            
             User savedConsultant = userRepository.save(consultant);
             
+            log.info("✅ 상담사 등록 성공: id={}, userId={}, tenantId={}", 
+                    savedConsultant.getId(), savedConsultant.getUserId(), savedConsultant.getTenantId());
+            
             createUserRoleAssignment(savedConsultant, tenantId, UserRole.CONSULTANT);
+            
+            // 표준화 2025-12-08: 상담사 등록 시 캐시에 복호화 데이터 저장 (성능 최적화)
+            try {
+                userPersonalDataCacheService.decryptAndCacheUserPersonalData(savedConsultant);
+                log.debug("✅ 상담사 개인정보 복호화 캐시 저장 완료: userId={}, tenantId={}", 
+                         savedConsultant.getId(), savedConsultant.getTenantId());
+            } catch (Exception e) {
+                log.warn("⚠️ 상담사 개인정보 캐시 저장 실패 (등록은 계속 진행): userId={}", 
+                        savedConsultant.getId(), e);
+            }
             
             return savedConsultant;
         }
@@ -156,14 +231,12 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
 
     @Override
     public Client registerClient(ClientRegistrationRequest request) {
-        String encryptedName = encryptionUtil.safeEncrypt(request.getName());
-        String encryptedPhone = null;
-        if (request.getPhone() != null && !request.getPhone().trim().isEmpty()) {
-            encryptedPhone = encryptionUtil.safeEncrypt(request.getPhone());
-            log.info("🔐 관리자 내담자 등록 시 전화번호 암호화 완료: {}", maskPhone(request.getPhone()));
+        // 표준화 2025-12-08: 이메일만 입력받고 userId, password, name 자동 생성
+        String email = request.getEmail();
+        if (email == null || email.trim().isEmpty()) {
+            throw new IllegalArgumentException("이메일은 필수입니다.");
         }
-        String encryptedEmail = encryptionUtil.safeEncrypt(request.getEmail());
-        log.info("🔐 관리자 내담자 등록 시 이름, 이메일 암호화 완료");
+        email = email.trim().toLowerCase();
         
         String tenantId = getTenantIdOrNull();
         if (tenantId == null) {
@@ -171,11 +244,43 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             throw new IllegalStateException("테넌트 정보가 없습니다. 관리자에게 문의하세요.");
         }
         
+        // 1. 테넌트별 고유한 userId 자동 생성 (표준화 2025-12-08)
+        String userId = userIdGenerator.generateUniqueUserId(email, tenantId);
+        log.info("✅ 테넌트별 사용자 ID 자동 생성 완료: email={}, tenantId={}, userId={}", 
+                email, tenantId, userId);
+        
+        // 2. 임시 비밀번호 자동 생성 (표준화 2025-12-08)
+        String tempPassword = generateTempPassword();
+        log.info("✅ 임시 비밀번호 자동 생성 완료: email={}", email);
+        
+        // 3. 이름 자동 생성 (이메일 로컬 파트 또는 기본값 사용) (표준화 2025-12-08)
+        String name = request.getName();
+        if (name == null || name.trim().isEmpty()) {
+            // 이메일 로컬 파트에서 이름 생성
+            String localPart = email.split("@")[0];
+            name = localPart.replaceAll("[^a-zA-Z0-9가-힣]", "");
+            if (name.isEmpty()) {
+                name = "내담자";
+            }
+        }
+        name = name.trim();
+        
+        // 개인정보 암호화
+        String encryptedName = encryptionUtil.safeEncrypt(name);
+        String encryptedEmail = encryptionUtil.safeEncrypt(email);
+        String encryptedPhone = null;
+        if (request.getPhone() != null && !request.getPhone().trim().isEmpty()) {
+            encryptedPhone = encryptionUtil.safeEncrypt(request.getPhone());
+            log.info("🔐 관리자 내담자 등록 시 전화번호 암호화 완료: {}", maskPhone(request.getPhone()));
+        }
+        log.info("🔐 관리자 내담자 등록 시 이름, 이메일 암호화 완료");
+        
+        // User 엔티티 생성
         User clientUser = User.builder()
-                .username(request.getUsername())
+                .userId(userId) // 자동 생성된 userId 사용
                 .email(encryptedEmail)
-                .password(passwordEncoder.encode(request.getPassword()))
-                .name(encryptedName)
+                .password(passwordEncoder.encode(tempPassword)) // 자동 생성된 비밀번호 사용
+                .name(encryptedName) // 자동 생성된 이름 사용
                 .phone(encryptedPhone)
                 .role(UserRole.CLIENT)
                 .isActive(true)
@@ -185,9 +290,25 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         
         clientUser.setTenantId(tenantId);
         
+        log.info("🔧 내담자 등록 - User 엔티티 정보: userId={}, email={}, tenantId={}, isActive={}, role={}", 
+                clientUser.getUserId(), email, tenantId, clientUser.getIsActive(), clientUser.getRole());
+        
         User savedUser = userRepository.save(clientUser);
         
+        log.info("✅ 내담자 등록 완료 - 저장된 User 정보: id={}, userId={}, tenantId={}, isActive={}, role={}", 
+                savedUser.getId(), savedUser.getUserId(), savedUser.getTenantId(), savedUser.getIsActive(), savedUser.getRole());
+        
         createUserRoleAssignment(savedUser, tenantId, UserRole.CLIENT);
+        
+        // 표준화 2025-12-08: 내담자 등록 시 캐시에 복호화 데이터 저장 (성능 최적화)
+        try {
+            userPersonalDataCacheService.decryptAndCacheUserPersonalData(savedUser);
+            log.debug("✅ 내담자 개인정보 복호화 캐시 저장 완료: userId={}, tenantId={}", 
+                     savedUser.getId(), savedUser.getTenantId());
+        } catch (Exception e) {
+            log.warn("⚠️ 내담자 개인정보 캐시 저장 실패 (등록은 계속 진행): userId={}", 
+                    savedUser.getId(), e);
+        }
         
         Client client = new Client();
         client.setId(savedUser.getId());
@@ -196,10 +317,13 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         client.setPhone(savedUser.getPhone());
         client.setBirthDate(savedUser.getBirthDate());
         client.setGender(savedUser.getGender());
-        client.setIsDeleted(!savedUser.getIsActive());
+        client.setIsDeleted(false); // 등록 시에는 삭제되지 않음
         client.setCreatedAt(savedUser.getCreatedAt());
         client.setUpdatedAt(savedUser.getUpdatedAt());
         client.setBranchCode(null); // 표준화 2025-12-06: 브랜치 코드 사용 금지
+        
+        log.info("✅ Client 엔티티 생성 완료: id={}, userId={}, isDeleted={}, isActive={}, tenantId={}", 
+                client.getId(), savedUser.getUserId(), client.getIsDeleted(), savedUser.getIsActive(), tenantId);
         
         return client;
     }
@@ -343,23 +467,43 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     
      /**
      * 상담료 수입 거래 자동 생성 (중앙화된 금액 관리 사용)
+     * TransactionTemplate을 사용하여 독립적인 트랜잭션에서 실행되며, 실패해도 부모 트랜잭션에 영향을 주지 않음
      */
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void createConsultationIncomeTransactionAsync(ConsultantClientMapping mapping) {
+        // TransactionTemplate을 사용하여 REQUIRES_NEW 트랜잭션을 수동으로 관리
+        // 이렇게 하면 예외가 발생해도 부모 트랜잭션에 영향을 주지 않음
+        org.springframework.transaction.support.TransactionTemplate newTransactionTemplate = 
+            new org.springframework.transaction.support.TransactionTemplate(transactionManager);
+        newTransactionTemplate.setPropagationBehavior(
+            org.springframework.transaction.TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+        
         try {
-            createConsultationIncomeTransaction(mapping);
+            newTransactionTemplate.executeWithoutResult(status -> {
+                try {
+                    createConsultationIncomeTransaction(mapping);
+                } catch (Exception e) {
+                    log.error("💰 [비동기] 상담료 수입 거래 생성 실패: MappingID={}, Error: {}", mapping.getId(), e.getMessage(), e);
+                    // 예외를 다시 던지지 않아 부모 트랜잭션에 영향을 주지 않음
+                }
+            });
         } catch (Exception e) {
-            log.error("💰 [비동기] 상담료 수입 거래 생성 실패: MappingID={}, Error: {}", mapping.getId(), e.getMessage());
+            // TransactionTemplate에서 발생한 예외도 잡아서 부모 트랜잭션에 영향을 주지 않음
+            log.error("💰 [비동기] 상담료 수입 거래 트랜잭션 실행 실패: MappingID={}, Error: {}", mapping.getId(), e.getMessage(), e);
         }
     }
 
     private void createConsultationIncomeTransaction(ConsultantClientMapping mapping) {
         log.info("💰 [중앙화] 상담료 수입 거래 생성 시작: MappingID={}", mapping.getId());
         
-        if (amountManagementService.isDuplicateTransaction(mapping.getId(), 
-                com.coresolution.consultation.entity.FinancialTransaction.TransactionType.INCOME)) {
-            log.warn("🚫 중복 거래 방지: MappingID={}에 대한 수입 거래가 이미 존재합니다.", mapping.getId());
-            return;
+        try {
+            if (amountManagementService.isDuplicateTransaction(mapping.getId(), 
+                    com.coresolution.consultation.entity.FinancialTransaction.TransactionType.INCOME)) {
+                log.warn("🚫 중복 거래 방지: MappingID={}에 대한 수입 거래가 이미 존재합니다. 정상 종료합니다.", mapping.getId());
+                return; // 중복 거래는 정상적인 상황이므로 예외 없이 종료
+            }
+        } catch (Exception e) {
+            log.error("❌ 중복 거래 확인 중 오류 발생: MappingID={}, Error: {}", mapping.getId(), e.getMessage(), e);
+            return; // 예외 발생 시에도 정상 종료하여 부모 트랜잭션에 영향을 주지 않음
         }
         
         Long accurateAmount = amountManagementService.getAccurateTransactionAmount(mapping);
@@ -379,6 +523,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         
         FinancialTransactionRequest request = FinancialTransactionRequest.builder()
                 .transactionType("INCOME")
+                .category("상담료") // 필수 필드: 상담료 수입 거래
+                .subcategory("CONSULTATION_FEE") // 상세 분류
                 .amount(java.math.BigDecimal.valueOf(accurateAmount))
                 .description(String.format("상담료 입금 확인 - %s (%s) [정확한금액: %,d원]", 
                     mapping.getPackageName() != null ? mapping.getPackageName() : "상담 패키지",
@@ -435,6 +581,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         
         FinancialTransactionRequest request = FinancialTransactionRequest.builder()
                 .transactionType("INCOME")
+                .category("상담료") // 필수 필드: 상담료 수입 거래
                 .subcategory("ADDITIONAL_CONSULTATION") // 추가 회기 세부카테고리
                 .amount(java.math.BigDecimal.valueOf(transactionAmount))
                 .description(String.format("추가 회기 상담료 입금 확인 - %s (%d회 추가, %s) [추가금액: %,d원]", 
@@ -678,6 +825,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     
      /**
      * 입금 확인 처리 (현금 수입)
+     * 참고: createConsultationIncomeTransactionAsync는 Controller에서 트랜잭션 커밋 후 별도로 호출해야 함
      */
     @Override
     public ConsultantClientMapping confirmDeposit(Long mappingId, String depositReference) {
@@ -688,34 +836,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         
         ConsultantClientMapping savedMapping = mappingRepository.save(mapping);
         
-        try {
-            // 표준화 2025-12-06: 브랜치 코드 사용 금지 - null 전달
-            realTimeStatisticsService.updateStatisticsOnMappingChange(
-                savedMapping.getConsultant().getId(), 
-                savedMapping.getClient().getId(), 
-                null // 브랜치 코드 사용 금지
-            );
-            
-            if (savedMapping.getPaymentAmount() != null) {
-                // 표준화 2025-12-06: 브랜치 코드 사용 금지 - null 전달
-                realTimeStatisticsService.updateFinancialStatisticsOnPayment(
-                    null, // 브랜치 코드 사용 금지
-                    savedMapping.getPaymentAmount(), 
-                    LocalDate.now()
-                );
-            }
-            
-            log.info("✅ 입금 확인시 실시간 통계 업데이트 완료: mappingId={}", mappingId);
-        } catch (Exception e) {
-            log.error("❌ 입금 확인시 실시간 통계 업데이트 실패: {}", e.getMessage(), e);
-        }
-        
-        try {
-            createConsultationIncomeTransactionAsync(savedMapping);
-            log.info("💚 매칭 입금 확인으로 인한 상담료 수입 거래 자동 생성: MappingID={}", mappingId);
-        } catch (Exception e) {
-            log.error("상담료 수입 거래 자동 생성 실패: {}", e.getMessage(), e);
-        }
+        // 통계 업데이트는 Controller에서 트랜잭션 커밋 후 별도로 호출
+        // 이렇게 하면 통계 업데이트 실패가 입금 확인 트랜잭션에 영향을 주지 않음
         
         return savedMapping;
     }
@@ -732,18 +854,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         
         ConsultantClientMapping savedMapping = mappingRepository.save(mapping);
         
-        try {
-            // 표준화 2025-12-06: 브랜치 코드 사용 금지 - null 전달
-            realTimeStatisticsService.updateStatisticsOnMappingChange(
-                savedMapping.getConsultant().getId(), 
-                savedMapping.getClient().getId(), 
-                null // 브랜치 코드 사용 금지
-            );
-            
-            log.info("✅ 관리자 승인시 실시간 통계 업데이트 완료: mappingId={}", mappingId);
-        } catch (Exception e) {
-            log.error("❌ 관리자 승인시 실시간 통계 업데이트 실패: {}", e.getMessage(), e);
-        }
+        // 통계 업데이트는 Controller에서 트랜잭션 커밋 후 별도로 호출
+        // 이렇게 하면 통계 업데이트 실패가 승인 트랜잭션에 영향을 주지 않음
         
         return savedMapping;
     }
@@ -1080,7 +1192,12 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         log.info("휴무 정보를 포함한 상담사 목록 조회: date={}", date);
         
         // 표준화 2025-12-05: tenantId 필터링 필수
-        String tenantId = getTenantId();
+        String tenantId = getTenantIdOrNull();
+        if (tenantId == null || tenantId.isEmpty()) {
+            log.error("❌ tenantId가 설정되지 않았습니다. 상담사 목록을 조회할 수 없습니다.");
+            throw new IllegalStateException("Tenant ID is required but not set in current context");
+        }
+        log.info("✅ tenantId 확인: {}", tenantId);
         List<Consultant> consultants = consultantRepository.findActiveConsultantsByTenantId(tenantId);
         
         Map<String, Object> allVacations = consultantAvailabilityService.getAllConsultantsVacations(date);
@@ -1089,19 +1206,30 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             .map(consultant -> {
                 Map<String, Object> consultantData = new HashMap<>();
                 consultantData.put("id", consultant.getId());
-                consultantData.put("name", consultant.getName());
-                consultantData.put("email", consultant.getEmail());
                 
-                String decryptedPhone = null;
-                if (consultant.getPhone() != null && !consultant.getPhone().trim().isEmpty()) {
-                    try {
-                        decryptedPhone = encryptionUtil.decrypt(consultant.getPhone());
-                    } catch (Exception e) {
-                        log.error("❌ 상담사 전화번호 복호화 실패: {}", e.getMessage());
-                        decryptedPhone = "복호화 실패";
+                // 표준화 2025-12-08: 개인정보 캐시 서비스를 사용하여 복호화된 데이터 사용
+                Map<String, String> decryptedData = userPersonalDataCacheService.getDecryptedUserData(consultant);
+                if (decryptedData != null) {
+                    consultantData.put("name", decryptedData.get("name"));
+                    consultantData.put("email", decryptedData.get("email"));
+                    consultantData.put("phone", decryptedData.get("phone"));
+                } else {
+                    // 캐시에 없으면 직접 복호화 (fallback)
+                    log.warn("⚠️ 상담사 개인정보 캐시 없음, 직접 복호화: consultantId={}", consultant.getId());
+                    consultantData.put("name", encryptionUtil.safeDecrypt(consultant.getName()));
+                    consultantData.put("email", encryptionUtil.safeDecrypt(consultant.getEmail()));
+                    
+                    String decryptedPhone = null;
+                    if (consultant.getPhone() != null && !consultant.getPhone().trim().isEmpty()) {
+                        try {
+                            decryptedPhone = encryptionUtil.decrypt(consultant.getPhone());
+                        } catch (Exception e) {
+                            log.error("❌ 상담사 전화번호 복호화 실패: {}", e.getMessage());
+                            decryptedPhone = "복호화 실패";
+                        }
                     }
+                    consultantData.put("phone", decryptedPhone);
                 }
-                consultantData.put("phone", decryptedPhone);
                 
                 consultantData.put("role", consultant.getRole());
                 consultantData.put("isActive", consultant.getIsActive());
@@ -1411,15 +1539,19 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             List<Map<String, Object>> result = new ArrayList<>();
             
             for (User user : clientUsers) {
-                User decryptedUser = decryptUserPersonalData(user);
+                // 표준화 2025-12-08: 개인정보 복호화 (캐시 활용)
+                Map<String, String> decryptedData = userPersonalDataCacheService.getDecryptedUserData(user);
+                String clientName = decryptedData != null ? decryptedData.get("name") : user.getName();
+                String clientEmail = decryptedData != null ? decryptedData.get("email") : user.getEmail();
+                String clientPhone = decryptedData != null ? decryptedData.get("phone") : user.getPhone();
                 
                 Map<String, Object> clientData = new HashMap<>();
                 
-                clientData.put("id", decryptedUser.getId());
-                clientData.put("name", decryptedUser.getName());
-                clientData.put("email", decryptedUser.getEmail() != null ? decryptedUser.getEmail() : "");
+                clientData.put("id", user.getId());
+                clientData.put("name", clientName != null ? clientName : "");
+                clientData.put("email", clientEmail != null ? clientEmail : "");
                 
-                String phone = decryptedUser.getPhone();
+                String phone = clientPhone;
                 if (phone == null || phone.trim().isEmpty()) {
                     phone = "-"; // SNS 가입자는 전화번호가 없을 수 있음
                 } else {
@@ -1427,25 +1559,32 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 }
                 clientData.put("phone", phone);
                 
-                clientData.put("birthDate", decryptedUser.getBirthDate());
-                clientData.put("gender", decryptedUser.getGender());
-                clientData.put("grade", decryptedUser.getGrade() != null ? decryptedUser.getGrade() : "");
-                clientData.put("isActive", decryptedUser.getIsActive());
-                clientData.put("isDeleted", decryptedUser.getIsDeleted());
-                clientData.put("createdAt", decryptedUser.getCreatedAt());
-                clientData.put("updatedAt", decryptedUser.getUpdatedAt());
+                clientData.put("birthDate", user.getBirthDate());
+                clientData.put("gender", decryptedData != null ? decryptedData.get("gender") : user.getGender());
+                clientData.put("grade", user.getGrade() != null ? user.getGrade() : "");
+                clientData.put("isActive", user.getIsActive());
+                clientData.put("isDeleted", user.getIsDeleted());
+                clientData.put("createdAt", user.getCreatedAt());
+                clientData.put("updatedAt", user.getUpdatedAt());
                 clientData.put("branchCode", null); // 표준화 2025-12-06: 브랜치 코드 사용 금지
                 
                 log.info("👤 통합 내담자 데이터 - ID: {}, 이름: '{}', 전화번호: '{}'", 
-                    decryptedUser.getId(), decryptedUser.getName(), phone);
+                    user.getId(), clientName, phone);
                 
                 List<Map<String, Object>> mappings = allMappings.stream()
-                    .filter(mapping -> mapping.getClient() != null && mapping.getClient().getId().equals(decryptedUser.getId()))
+                    .filter(mapping -> mapping.getClient() != null && mapping.getClient().getId().equals(user.getId()))
                     .map(mapping -> {
                         Map<String, Object> mappingData = new HashMap<>();
                         mappingData.put("mappingId", mapping.getId());
                         mappingData.put("consultantId", mapping.getConsultant() != null ? mapping.getConsultant().getId() : null);
-                        mappingData.put("consultantName", mapping.getConsultant() != null ? mapping.getConsultant().getName() : "");
+                        // 표준화 2025-12-08: 상담사 이름 복호화 (캐시 활용)
+                        if (mapping.getConsultant() != null) {
+                            Map<String, String> decryptedConsultant = userPersonalDataCacheService.getDecryptedUserData(mapping.getConsultant());
+                            String consultantName = decryptedConsultant != null ? decryptedConsultant.get("name") : mapping.getConsultant().getName();
+                            mappingData.put("consultantName", consultantName != null ? consultantName : "");
+                        } else {
+                            mappingData.put("consultantName", "");
+                        }
                         mappingData.put("packageName", mapping.getPackageName());
                         mappingData.put("totalSessions", mapping.getTotalSessions());
                         mappingData.put("remainingSessions", mapping.getRemainingSessions());
@@ -1528,7 +1667,17 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             consultant.setVersion(consultant.getVersion() + 1);
         }
         
-        return userRepository.save(consultant);
+        User savedConsultant = userRepository.save(consultant);
+        
+        // 표준화 2025-12-08: 사용자 정보 업데이트 시 캐시 무효화
+        if (savedConsultant.getTenantId() != null) {
+            userPersonalDataCacheService.evictUserPersonalDataCache(
+                savedConsultant.getTenantId(), 
+                savedConsultant.getId()
+            );
+        }
+        
+        return savedConsultant;
     }
 
     @Override
@@ -1556,6 +1705,14 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         }
         
         User savedUser = userRepository.save(clientUser);
+        
+        // 표준화 2025-12-08: 사용자 정보 업데이트 시 캐시 무효화
+        if (savedUser.getTenantId() != null) {
+            userPersonalDataCacheService.evictUserPersonalDataCache(
+                savedUser.getTenantId(), 
+                savedUser.getId()
+            );
+        }
         
         Client client = new Client();
         client.setId(savedUser.getId());
@@ -3513,8 +3670,20 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     }
 
     @Override
+    @Transactional(readOnly = true)
     public ConsultantClientMapping getMappingById(Long mappingId) {
-        return mappingRepository.findById(mappingId).orElse(null);
+        // Lazy 프록시 초기화를 위해 트랜잭션에서 조회
+        ConsultantClientMapping mapping = mappingRepository.findById(mappingId).orElse(null);
+        if (mapping != null) {
+            // Lazy 프록시 초기화를 위해 관계 엔티티 접근
+            if (mapping.getConsultant() != null) {
+                mapping.getConsultant().getId(); // 프록시 초기화
+            }
+            if (mapping.getClient() != null) {
+                mapping.getClient().getId(); // 프록시 초기화
+            }
+        }
+        return mapping;
     }
 
 
@@ -3733,7 +3902,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             List<User> consultants;
             try {
                 Branch branch = branchService.getBranchByCode(branchCode);
-                consultants = userRepository.findByBranchAndRoleAndIsDeletedFalseOrderByUsername(tenantId, branch, UserRole.CONSULTANT);
+                consultants = userRepository.findByBranchAndRoleAndIsDeletedFalseOrderByUserId(tenantId, branch, UserRole.CONSULTANT);
                 consultants = consultants.stream()
                     .filter(u -> Boolean.TRUE.equals(u.getIsActive()))
                     .collect(Collectors.toList());
@@ -4517,7 +4686,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             } else {
                 try {
                     Branch branch = branchService.getBranchByCode(branchCode);
-                    activeConsultants = userRepository.findByBranchAndRoleAndIsDeletedFalseOrderByUsername(tenantId, branch, UserRole.CONSULTANT);
+                    activeConsultants = userRepository.findByBranchAndRoleAndIsDeletedFalseOrderByUserId(tenantId, branch, UserRole.CONSULTANT);
                     activeConsultants = activeConsultants.stream()
                         .filter(u -> Boolean.TRUE.equals(u.getIsActive()))
                         .collect(Collectors.toList());
@@ -4535,7 +4704,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             for (User consultant : activeConsultants) {
                 Map<String, Object> consultantData = new HashMap<>();
                 consultantData.put("consultantId", consultant.getId());
-                consultantData.put("consultantName", consultant.getUsername());
+                consultantData.put("consultantName", consultant.getUserId());
                 consultantData.put("consultantEmail", consultant.getEmail());
                 consultantData.put("branchCode", null); // 표준화 2025-12-07: 브랜치 개념 제거됨
                 
@@ -5040,5 +5209,18 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         }
         
         return mappings;
+    }
+    
+    // ==================== 표준화 2025-12-08: 유틸리티 메서드 ====================
+    
+    /**
+     * 임시 비밀번호 생성
+     * 표준화 2025-12-08: 내담자 등록 시 자동 생성된 임시 비밀번호
+     * 형식: CLIENT_{timestamp}_{random}
+     * 
+     * @return 생성된 임시 비밀번호
+     */
+    private String generateTempPassword() {
+        return "CLIENT_" + System.currentTimeMillis() + "_" + (int)(Math.random() * 10000);
     }
 }

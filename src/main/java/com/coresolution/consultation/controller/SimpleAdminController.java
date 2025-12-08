@@ -32,9 +32,9 @@ public class SimpleAdminController extends BaseApiController {
 
     @PostMapping("/consultants")
     public ResponseEntity<ApiResponse<User>> registerConsultant(@RequestBody ConsultantRegistrationRequest request) {
-        log.info("🔧 상담사 등록 시도: {}", request.getUsername());
+        log.info("🔧 상담사 등록 시도: {}", request.getUserId());
         User consultant = adminService.registerConsultant(request);
-        log.info("✅ 상담사 등록 성공: {}", consultant.getUsername());
+        log.info("✅ 상담사 등록 성공: {}", consultant.getUserId());
         return created("상담사가 등록되었습니다.", consultant);
     }
 

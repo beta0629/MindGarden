@@ -258,7 +258,22 @@ export const apiPost = async (endpoint, data = {}, options = {}) => {
         return null; // 리다이렉트됨
       }
       
-      handleError(new Error('POST 요청 실패'), response.status);
+      // 표준화 2025-12-08: 에러 응답에서 메시지 추출
+      let errorMessage = 'POST 요청 실패';
+      if (jsonData && typeof jsonData === 'object') {
+        if (jsonData.message) {
+          errorMessage = jsonData.message;
+        } else if (jsonData.error) {
+          errorMessage = jsonData.error;
+        } else if (jsonData.data && jsonData.data.message) {
+          errorMessage = jsonData.data.message;
+        }
+      }
+      
+      const error = new Error(errorMessage);
+      error.status = response.status;
+      error.response = { data: jsonData };
+      throw error;
     }
 
     // ApiResponse 래퍼 처리: { success: true, data: T } 형태면 data 추출

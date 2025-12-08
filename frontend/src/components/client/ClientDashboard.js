@@ -163,7 +163,8 @@ const ClientDashboard = () => {
         userRole: 'CLIENT'
       });
 
-      const mappingResponse = await apiGet(`/api/admin/mappings/client?clientId=${currentUser.id}`);
+      // 표준화 2025-12-08: /api/v1/admin 경로로 통일
+      const mappingResponse = await apiGet(`/api/v1/admin/mappings/client?clientId=${currentUser.id}`);
 
       let totalSessions = 0;
       let usedSessions = 0;

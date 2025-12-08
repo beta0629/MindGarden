@@ -269,9 +269,9 @@ export const validateRequired = (value) => {
 };
 
 /**
- * 사용자명 유효성 검증 (영문, 숫자, 언더스코어)
+ * 사용자 ID 유효성 검증 (영문, 숫자, 언더스코어)
 /**
- * @param {string} username - 검증할 사용자명
+ * @param {string} userId - 검증할 사용자 ID
 /**
  * @param {Object} options - 검증 옵션
 /**
@@ -279,16 +279,16 @@ export const validateRequired = (value) => {
 /**
  * @param {number} options.maxLength - 최대 길이 (기본: 20)
 /**
- * @returns {boolean} 유효한 사용자명이면 true, 그렇지 않으면 false
+ * @returns {boolean} 유효한 사용자 ID이면 true, 그렇지 않으면 false
  */
-export const validateUsername = (username, options = {}) => {
+export const validateUsername = (userId, options = {}) => {
   const { minLength = 3, maxLength = 20 } = options;
   
-  if (!username || typeof username !== 'string') {
+  if (!userId || typeof userId !== 'string') {
     return false;
   }
   
-  const trimmedUsername = username.trim();
+  const trimmedUsername = userId.trim();
   
   // 길이 검증
   if (trimmedUsername.length < minLength || trimmedUsername.length > maxLength) {
@@ -367,9 +367,9 @@ export const validateForm = (formData, rules) => {
         }
         break;
         
-      case 'username':
+      case 'userId':
         if (!validateUsername(value, { minLength: rule.minLength, maxLength: rule.maxLength })) {
-          fieldErrors.push('올바른 사용자명을 입력해주세요.');
+          fieldErrors.push('올바른 사용자 ID을 입력해주세요.');
           isValid = false;
         }
         break;

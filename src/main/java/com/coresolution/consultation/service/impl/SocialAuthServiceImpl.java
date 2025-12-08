@@ -132,8 +132,8 @@ public class SocialAuthServiceImpl implements SocialAuthService {
             // User 엔티티 먼저 생성 (기본 사용자 정보)
             log.info("User 엔티티 생성 시작");
             
-            // username 생성 (이메일 기반)
-            String username = generateUsernameFromEmail(request.getEmail());
+            // userId 생성 (이메일 기반)
+            String userId = generateUserIdFromEmail(request.getEmail());
             
             // 지점 정보 검증 (레거시 시스템, 테넌트 시스템에서는 불필요)
             Branch branch = null;
@@ -156,7 +156,7 @@ public class SocialAuthServiceImpl implements SocialAuthService {
             */
             
             User user = User.builder()
-                    .username(username)
+                    .userId(userId)
                     .password(passwordEncoder.encode(request.getPassword())) // 사용자 입력 비밀번호 암호화
                     .name(request.getName())
                     .email(request.getEmail())
@@ -203,7 +203,7 @@ public class SocialAuthServiceImpl implements SocialAuthService {
                     .user(user)
                     .provider(request.getProvider()) // 제공자명은 암호화하지 않음
                     .providerUserId(request.getProviderUserId()) // 소셜 사용자 ID는 암호화하지 않음 (조회용)
-                    .providerUsername(encryptionUtil.encrypt(request.getProviderUsername())) // 소셜 사용자명 암호화
+                    .providerUsername(encryptionUtil.encrypt(request.getProviderUsername())) // 소셜 사용자 ID 암호화
                     .providerProfileImage(request.getProviderProfileImage()) // 프로필 이미지 URL은 암호화하지 않음
                     .isActive(true)
                     .build();
@@ -256,58 +256,58 @@ public class SocialAuthServiceImpl implements SocialAuthService {
     }
     
     /**
-     * SNS 이름 기반으로 username 생성
+     * SNS 이름 기반으로 userId 생성
      */
-    private String generateUsernameFromName(String name, String email) {
+    private String generateUserIdFromName(String name, String email) {
         if (name != null && !name.trim().isEmpty()) {
             // SNS에서 받은 이름 사용
-            String username = name.trim();
+            String userId = name.trim();
             
             // 특수문자 제거 및 영문/숫자/언더스코어만 허용
-            username = username.replaceAll("[^a-zA-Z0-9_가-힣]", "");
+            userId = userId.replaceAll("[^a-zA-Z0-9_가-힣]", "");
             
             // 길이가 3자 미만이면 보완
-            if (username.length() < 3) {
-                username = "user_" + username;
+            if (userId.length() < 3) {
+                userId = "user_" + userId;
             }
             
             // 최대 50자로 제한
-            if (username.length() > 50) {
-                username = username.substring(0, 50);
+            if (userId.length() > 50) {
+                userId = userId.substring(0, 50);
             }
             
-            return username;
+            return userId;
         } else {
             // 이름이 없으면 이메일 기반으로 생성
-            return generateUsernameFromEmail(email);
+            return generateUserIdFromEmail(email);
         }
     }
     
     /**
-     * 이메일 기반으로 username 생성 (fallback)
+     * 이메일 기반으로 userId 생성 (fallback)
      */
-    private String generateUsernameFromEmail(String email) {
+    private String generateUserIdFromEmail(String email) {
         if (email == null || email.isEmpty()) {
             return "user_" + System.currentTimeMillis();
         }
         
         // 이메일에서 @ 앞부분 추출
-        String username = email.split("@")[0];
+        String userId = email.split("@")[0];
         
         // 특수문자 제거 및 길이 제한
-        username = username.replaceAll("[^a-zA-Z0-9_]", "");
+        userId = userId.replaceAll("[^a-zA-Z0-9_]", "");
         
         // 길이가 3자 미만이면 보완
-        if (username.length() < 3) {
-            username = "user_" + username;
+        if (userId.length() < 3) {
+            userId = "user_" + userId;
         }
         
         // 최대 50자로 제한
-        if (username.length() > 50) {
-            username = username.substring(0, 50);
+        if (userId.length() > 50) {
+            userId = userId.substring(0, 50);
         }
         
-        return username;
+        return userId;
     }
     
     /**

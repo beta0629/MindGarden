@@ -34,8 +34,8 @@ const WelcomeSection = ({ user, currentTime, consultationData }) => {
     if (user?.nickname && !user.nickname.includes('==')) {
       return user.nickname;
     }
-    if (user?.username) {
-      return user.username;
+    if (user?.userId) {
+      return user.userId;
     }
     return '사용자';
   };

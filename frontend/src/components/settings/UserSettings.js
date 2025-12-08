@@ -204,8 +204,8 @@ const UserSettings = ({user, onSettingsUpdate}) => {const {currentTheme, availab
                   <div className="mg-v2-v2-v2-flex mg-v2-v2-v2-items-center mg-v2-v2-v2-gap-md">
                     <Icon name="USER" size="MD" color="PRIMARY" />
                     <div>
-                      <h4 className="mg-v2-v2-v2-h4 mg-v2-v2-v2-text-primary">사용자명</h4>
-                      <p className="mg-v2-v2-v2-text-sm mg-v2-v2-v2-text-muted">{user?.username}</p>
+                      <h4 className="mg-v2-v2-v2-h4 mg-v2-v2-v2-text-primary">사용자 ID</h4>
+                      <p className="mg-v2-v2-v2-text-sm mg-v2-v2-v2-text-muted">{user?.userId}</p>
                     </div>
                   </div>
                 </div>

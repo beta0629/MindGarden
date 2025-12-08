@@ -33,7 +33,8 @@ export const loadMenuStructure = async () => {
     
     try {
         console.log('🔄 서버에서 메뉴 구조 로드 중...');
-        const response = await apiGet('/api/menu/structure');
+        // 표준화 2025-12-08: API 경로 표준화 (/api/v1/menu/structure)
+        const response = await apiGet('/api/v1/menu/structure');
         
         // apiGet은 이미 ApiResponse의 data를 추출하여 반환하므로
         // response는 직접 메뉴 구조 데이터입니다
@@ -151,12 +152,13 @@ export const transformMenuStructure = (menuStructure) => {
     const subMenus = {};
     
     menuStructure.menus.forEach(menu => {
-        // 메인 메뉴 추가
+        // 메인 메뉴 추가 (표준화 2025-12-08: menuGroup 정보 포함)
         const mainMenu = {
             id: menu.id,
             label: menu.label,
             path: menu.path,
             icon: menu.icon,
+            menuGroup: menu.menuGroup || menu.menu_group || null, // 권한 기반 필터링용
             hasSubMenu: menu.hasSubMenu || (menu.subMenus && menu.subMenus.length > 0)
         };
         

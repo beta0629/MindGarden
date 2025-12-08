@@ -72,7 +72,8 @@ const ConsultantMessages = () => {
     try {
       console.log('👥 연계된 내담자 목록 로드:', user.id);
       
-      const response = await apiGet(`/api/admin/mappings/consultant/${user.id}/clients`);
+      // 표준화 2025-12-08: /api/v1/admin 경로로 통일
+      const response = await apiGet(`/api/v1/admin/mappings/consultant/${user.id}/clients`);
       
       if (response.success) {
         console.log('✅ 내담자 목록 로드 성공:', response.data);

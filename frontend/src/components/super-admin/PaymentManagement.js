@@ -98,7 +98,8 @@ const PaymentManagement = () => {
   const loadPaymentGatewayCodes = useCallback(async () => {
     try {
       setLoadingGatewayCodes(true);
-      const response = await apiGet('/api/v1/common-codes/PAYMENT_METHOD');
+      // 표준화 2025-12-08: 올바른 API 경로 사용 (/groups/{codeGroup})
+      const response = await apiGet('/api/v1/common-codes/groups/PAYMENT_METHOD');
       if (response && response.length > 0) {
         setPaymentGatewayOptions(response.map(code => ({
           value: code.codeValue,
@@ -129,7 +130,8 @@ const PaymentManagement = () => {
   const loadPaymentMethodCodes = useCallback(async () => {
     try {
       setLoadingMethodCodes(true);
-      const response = await apiGet('/api/v1/common-codes/PAYMENT_METHOD');
+      // 표준화 2025-12-08: 올바른 API 경로 사용 (/groups/{codeGroup})
+      const response = await apiGet('/api/v1/common-codes/groups/PAYMENT_METHOD');
       if (response && response.length > 0) {
         setPaymentMethodOptions(response.map(code => ({
           value: code.codeValue,

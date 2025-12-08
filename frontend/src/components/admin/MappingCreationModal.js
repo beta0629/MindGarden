@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import ReactDOM from 'react-dom';
+import { useNavigate } from 'react-router-dom';
 import { apiGet, apiPost } from '../../utils/ajax';
 import { getAllConsultantsWithStats } from '../../utils/consultantHelper';
 import notificationManager from '../../utils/notification';
 import { useSession } from '../../hooks/useSession';
 import { getPackageOptions } from '../../utils/commonCodeUtils';
 import { API_BASE_URL } from '../../constants/api';
-import UnifiedModal from '../../components/common/modals/UnifiedModal'; // 임시 비활성화
+import UnifiedModal from '../../components/common/modals/UnifiedModal';
 import { getMappingStatusKoreanNameSync } from '../../utils/codeHelper';
 import { 
     MAPPING_CREATION_STEPS, 
@@ -36,7 +38,9 @@ import './MappingCreationModal.css';
 /**
  * @since 2024-12-19
  */
-const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => { const { user } = useSession();
+const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
+    const { user } = useSession();
+    const navigate = useNavigate();
     const [step, setStep] = useState(MAPPING_CREATION_STEPS.CONSULTANT_SELECTION);
     const [selectedConsultant, setSelectedConsultant] = useState(null);
     const [selectedClient, setSelectedClient] = useState(null);
@@ -147,39 +151,72 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => { const 
             const response = await getTenantCodes('CONSULTATION_PACKAGE');
             if (response && response.length > 0) {
                 const options = response.map(code => {
-                    let sessions = 20; // 기본값
+                    // 표준화 2025-12-08: 테넌트별 공통코드에서 가격과 세션 수 동적 조회 (하드코딩 완전 제거)
+                    let sessions = 20; // 기본값 (extraData에 없을 경우만 사용)
                     let price = 0;
                     
-                    if (code.codeValue === 'BASIC') {
-                        sessions = 20;
-                        price = 200000;
-                    } else if (code.codeValue === 'STANDARD') {
-                        sessions = 20;
-                        price = 400000;
-                    } else if (code.codeValue === 'PREMIUM') {
-                        sessions = 20;
-                        price = 600000;
-                    } else if (code.codeValue === 'VIP') {
-                        sessions = 20;
-                        price = 1000000;
-                    } else if (code.codeValue.startsWith('SINGLE_')) {
-                        sessions = 1; // 단회기는 1회기
+                    // SINGLE_ 패키지 처리 (codeValue에서 가격 추출)
+                    if (code.codeValue.startsWith('SINGLE_')) {
+                        sessions = 1; // 단회기는 항상 1회기
                         const priceStr = code.codeValue.replace('SINGLE_', '');
                         price = parseInt(priceStr, 10);
                         if (isNaN(price)) {
                             console.warn(`단회기 가격 파싱 실패: ${code.codeValue} -> ${ priceStr }`);
-                            price = 30000; // 기본값
+                            price = 0; // 가격 정보 없음
                         }
-                    } else {
+                        
+                        // SINGLE_ 패키지도 extraData가 있으면 우선 사용
                         if (code.extraData) {
                             try {
                                 const extraData = JSON.parse(code.extraData);
-                                sessions = extraData.sessions || 20;
+                                if (extraData.price !== undefined && extraData.price !== null) {
+                                    const extraPrice = parseFloat(extraData.price);
+                                    if (!isNaN(extraPrice) && extraPrice > 0) {
+                                        price = extraPrice;
+                                    }
+                                }
                             } catch (e) {
-                                console.warn('extraData 파싱 실패:', e);
+                                console.warn(`SINGLE_ 패키지 extraData 파싱 실패: ${code.codeValue}`, e);
                             }
                         }
-                        price = code.codeDescription ? parseFloat(code.codeDescription) : 0;
+                    } else {
+                        // 일반 패키지: extraData에서 가격과 세션 수 추출 (우선순위 1)
+                        if (code.extraData) {
+                            try {
+                                const extraData = JSON.parse(code.extraData);
+                                
+                                // 가격 추출 (필수)
+                                if (extraData.price !== undefined && extraData.price !== null) {
+                                    price = parseFloat(extraData.price);
+                                    if (isNaN(price) || price <= 0) {
+                                        console.warn(`가격 파싱 실패 또는 유효하지 않음: codeValue=${code.codeValue}, price=${extraData.price}`);
+                                        price = 0;
+                                    }
+                                }
+                                
+                                // 세션 수 추출
+                                if (extraData.sessions !== undefined && extraData.sessions !== null) {
+                                    sessions = parseInt(extraData.sessions, 10);
+                                    if (isNaN(sessions) || sessions <= 0) {
+                                        console.warn(`세션 수 파싱 실패 또는 유효하지 않음: codeValue=${code.codeValue}, sessions=${extraData.sessions}`);
+                                        sessions = 20; // 기본값
+                                    }
+                                }
+                                
+                                console.log(`✅ 패키지 데이터 파싱: codeValue=${code.codeValue}, price=${price}, sessions=${sessions}, extraData=`, extraData);
+                            } catch (e) {
+                                console.warn(`extraData 파싱 실패: codeValue=${code.codeValue}, extraData=${code.extraData}`, e);
+                            }
+                        }
+                        
+                        // extraData에서 가격을 찾지 못한 경우 codeDescription 시도 (하위 호환성)
+                        if (price === 0 && code.codeDescription) {
+                            const parsedPrice = parseFloat(code.codeDescription);
+                            if (!isNaN(parsedPrice) && parsedPrice > 0) {
+                                price = parsedPrice;
+                                console.log(`⚠️ codeDescription에서 가격 추출: codeValue=${code.codeValue}, price=${price}`);
+                            }
+                        }
                     }
                     
                     let label;
@@ -193,8 +230,15 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => { const 
                         label = 'VIP 패키지';
                     } else if (code.codeValue.startsWith('SINGLE_')) {
                         label = code.codeValue;
+                    } else if (code.codeValue === 'INDIVIDUAL') {
+                        label = '개인상담';
+                    } else if (code.codeValue === 'FAMILY') {
+                        label = '가족상담';
+                    } else if (code.codeValue === 'GROUP') {
+                        label = '집단상담';
                     } else {
-                        label = code.codeLabel;
+                        // 표준화 2025-12-08: koreanName 우선 사용
+                        label = code.koreanName || code.codeLabel || code.codeValue;
                     }
                     
                     return {
@@ -207,10 +251,32 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => { const 
                         description: code.codeDescription
                     };
                 });
+                
+                // 유효한 패키지가 있는지 확인 (가격이 0보다 큰 패키지가 하나라도 있는지)
+                const validPackages = options.filter(opt => opt.price > 0);
+                if (validPackages.length === 0) {
+                    // 모든 패키지의 가격이 0이거나 없음
+                    console.warn('⚠️ 유효한 패키지 데이터가 없습니다. 모든 패키지의 가격이 0이거나 설정되지 않았습니다.');
+                    notificationManager.warning(
+                        '패키지 가격 정보가 등록되지 않았습니다. 공통코드 관리에서 패키지 가격을 등록해주세요.',
+                        5000
+                    );
+                }
+                
                 setPackageOptions(options);
+            } else {
+                // 패키지 코드가 아예 없음
+                console.warn('⚠️ 패키지 코드가 등록되지 않았습니다.');
+                notificationManager.warning(
+                    '상담 패키지가 등록되지 않았습니다. 공통코드 관리에서 패키지를 등록해주세요.',
+                    5000
+                );
+                setPackageOptions([]);
             }
         } catch (error) {
             console.error('패키지 코드 로드 실패:', error);
+            notificationManager.error('패키지 정보를 불러오는 중 오류가 발생했습니다.');
+            setPackageOptions([]);
         } finally {
             setLoadingPackageCodes(false);
         }
@@ -321,17 +387,24 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => { const 
 
     const loadClients = async() => {
         try {
+            // 표준화 2025-12-08: apiGet은 이미 ApiResponse의 data만 추출하므로
+            // response는 { clients: [...], count: N } 형태
             const response = await apiGet('/api/v1/admin/clients/with-mapping-info');
-            if (response.success) {
-                setClients(response.data || []);
+            
+            if (response && response.clients) {
+                console.log('✅ 내담자 목록 로드 성공:', response.clients.length, '명');
+                setClients(response.clients || []);
+            } else if (Array.isArray(response)) {
+                // 배열로 직접 반환된 경우 (하위 호환성)
+                console.log('✅ 내담자 목록 로드 성공 (배열):', response.length, '명');
+                setClients(response);
             } else {
-                console.log('통합 내담자 API 실패, 테스트 데이터 사용');
-                setClients(getTestClients());
+                console.error('❌ 내담자 목록 응답 형식 오류:', response);
+                setClients([]);
             }
         } catch (error) {
-            console.error('내담자 목록 로드 실패:', error);
-            console.log('내담자 로드 오류, 테스트 데이터 사용');
-            setClients(getTestClients());
+            console.error('❌ 내담자 목록 로드 실패:', error);
+            setClients([]);
         }
     };
 
@@ -423,72 +496,56 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => { const 
             console.log('매칭 생성 데이터:', mappingData);
 
             try {
-                const isProduction = process.env.NODE_ENV === 'production' || 
-                                   window.location.hostname !== 'localhost';
+                // 표준화 2025-12-08: API 경로 표준화 및 apiPost 사용
+                const result = await apiPost('/api/v1/admin/mappings', mappingData);
                 
-                let response;
-                if (isProduction) {
-                    response = await csrfTokenManager.post(`${API_BASE_URL}/api/admin/mappings`, mappingData);
-                } else {
-                    response = await fetch(`${API_BASE_URL}/api/admin/mappings`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'},
-                        credentials: 'include',
-                        body: JSON.stringify(mappingData)
-                    });
+                console.log('✅ 매칭 생성 성공:', result);
+                
+                if (paymentInfo.packageName) {
+                    const packageData = {
+                        packageName: paymentInfo.packageName,
+                        totalSessions: paymentInfo.totalSessions,
+                        packagePrice: paymentInfo.packagePrice
+                    };
+                    localStorage.setItem('lastUsedPackage', JSON.stringify(packageData));
+                    console.log('💾 마지막 사용 패키지 저장:', packageData);
                 }
-
-                if (response.ok) {
-                    const result = await response.json();
-                    console.log('✅ 매칭 생성 성공:', result);
-                    
-                    if (paymentInfo.packageName) {
-                        const packageData = {
-                            packageName: paymentInfo.packageName,
-                            totalSessions: paymentInfo.totalSessions,
-                            packagePrice: paymentInfo.packagePrice
-                        };
-                        localStorage.setItem('lastUsedPackage', JSON.stringify(packageData));
-                        console.log('💾 마지막 사용 패키지 저장:', packageData);
-                    }
-                    
-                    if (paymentInfo.paymentMethod) {
-                        localStorage.setItem('lastUsedPaymentMethod', paymentInfo.paymentMethod);
-                        console.log('💾 마지막 사용 지불방법 저장:', paymentInfo.paymentMethod);
-                    }
-                    
-                    const consultantName = selectedConsultant?.name || '상담사';
-                    const clientName = selectedClient?.name || '내담자';
-                    const packageName = paymentInfo.packageName || '패키지';
-                    
-                    notificationManager.success(
-                        `🎉 매칭이 완료되었습니다!\n📋 상담사: ${consultantName}\n` +
-                        `👤 내담자: ${ clientName }\n📦 패키지: ${ packageName }\n` +
-                        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-                        `✅ 상태: ${ getMappingStatusKoreanNameSync(result.data?.status || 'ACTIVE') }`
-                    );
-                    
-                    setStep(4);
-                    if (onMappingCreated) onMappingCreated();
-                } else {
-                    let errorMessage = '매칭 생성에 실패했습니다.';
-                    try {
-                        const error = await response.json();
-                        errorMessage = error.message || errorMessage;
-                        console.error('❌ 매칭 생성 실패:', error);
-                    } catch (parseError) {
-                        console.error('❌ 에러 응답 파싱 실패:', parseError);
-                        errorMessage = `서버 오류 (${response.status}): ${ response.statusText }`;
-                    }
-                    notificationManager.error(errorMessage);
+                
+                if (paymentInfo.paymentMethod) {
+                    localStorage.setItem('lastUsedPaymentMethod', paymentInfo.paymentMethod);
+                    console.log('💾 마지막 사용 지불방법 저장:', paymentInfo.paymentMethod);
                 }
-            } catch (apiError) {
-                console.error('API 호출 실패:', apiError);
-                console.log('API 실패, 시뮬레이션으로 성공 처리');
-                notificationManager.success('매칭이 성공적으로 생성되었습니다! (시뮬레이션)');
+                
+                const consultantName = selectedConsultant?.name || '상담사';
+                const clientName = selectedClient?.name || '내담자';
+                const packageName = paymentInfo.packageName || '패키지';
+                
+                notificationManager.success(
+                    `🎉 매칭이 완료되었습니다!\n📋 상담사: ${consultantName}\n` +
+                    `👤 내담자: ${ clientName }\n📦 패키지: ${ packageName }\n` +
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
+                    `✅ 상태: ${ getMappingStatusKoreanNameSync(result?.status || 'ACTIVE') }`
+                );
+                
                 setStep(4);
                 if (onMappingCreated) onMappingCreated();
+            } catch (apiError) {
+                console.error('❌ API 호출 실패:', apiError);
+                // 표준화 2025-12-08: 공통 알림 시스템 사용
+                let errorMessage = '매칭 생성 중 오류가 발생했습니다.';
+                
+                // 에러 메시지 추출 (우선순위: message > response.data.message > response.data.error > 기본 메시지)
+                if (apiError?.message && apiError.message !== 'POST 요청 실패') {
+                    errorMessage = apiError.message;
+                } else if (apiError?.response?.data?.message) {
+                    errorMessage = apiError.response.data.message;
+                } else if (apiError?.response?.data?.error) {
+                    errorMessage = apiError.response.data.error;
+                } else if (apiError?.response?.data && typeof apiError.response.data === 'string') {
+                    errorMessage = apiError.response.data;
+                }
+                
+                notificationManager.error(errorMessage);
             }
         } catch (error) {
             console.error('매칭 생성 오류:', error);
@@ -568,8 +625,10 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => { const 
         </>
     );
 
-    return(
-        <div className="mg-modal"
+    if (!isOpen) return null;
+
+    return ReactDOM.createPortal(
+        <UnifiedModal
             isOpen={ isOpen }
             onClose={ handleClose }
             title="🔗 상담사-내담자 매칭 생성"
@@ -807,41 +866,64 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => { const 
                                 
                                 <div className="form-group">
                                     <label>패키지 선택</label>
-                                    <select
-                                        value={ paymentInfo.packageName }
-                                        onChange={(e) => {
-                                            const selectedPackage = packageOptions.find(pkg => pkg.label === e.target.value);
-                                            if (selectedPackage) {
-                                                setPaymentInfo({
-                                                    ...paymentInfo,
-                                                    packageName: selectedPackage.label,
-                                                    totalSessions: selectedPackage.sessions,
-                                                    packagePrice: selectedPackage.price
-                                                });
-                                                
-                                                notificationManager.success(
-                                                    `패키지가 선택되었습니다! 세션 수: ${ selectedPackage.sessions }회기, 가격: ${ selectedPackage.price.toLocaleString() }원`
-                                                );
-                                            } else { setPaymentInfo({...paymentInfo, packageName: e.target.value });
-                                            }
-                                        }}
-                                        className={ paymentInfo.packageName ? 'package-selected' : '' }
-                                    >
-                                        <option value="">패키지를 선택하세요</option>
-                                        {packageOptions.map(pkg => {
-                                            const displayPrice = isNaN(pkg.price) ? '가격 오류' : pkg.price.toLocaleString();
-                                            return(
-                                                <option key={pkg.value} value={ pkg.label }>
-                                                    { pkg.label } ({ pkg.sessions }회기, { displayPrice }원)
-                                                </option>
-                                            );
-                                        })}
-                                    </select>
-                                    {paymentInfo.packageName && (
-                                        <div className="package-info">
-                                            <i className="bi bi-check-circle-fill text-success"></i>
-                                            <span>패키지 선택 완료 - 세션 수와 가격이 자동으로 설정되었습니다</span>
+                                    {packageOptions.length === 0 || packageOptions.every(pkg => pkg.price <= 0) ? (
+                                        <div className="package-data-missing">
+                                            <div className="missing-data-icon">⚠️</div>
+                                            <h4>패키지 데이터가 등록되지 않았습니다</h4>
+                                            <p>매칭 생성을 위해 상담 패키지 정보를 등록해주세요.</p>
+                                            <button
+                                                type="button"
+                                                className="btn-go-to-common-codes"
+                                                onClick={() => {
+                                                    onClose();
+                                                    navigate('/admin/common-codes');
+                                                }}
+                                            >
+                                                공통코드 관리로 이동
+                                            </button>
                                         </div>
+                                    ) : (
+                                        <>
+                                            <select
+                                                value={ paymentInfo.packageName }
+                                                onChange={(e) => {
+                                                    const selectedPackage = packageOptions.find(pkg => pkg.label === e.target.value);
+                                                    if (selectedPackage) {
+                                                        setPaymentInfo({
+                                                            ...paymentInfo,
+                                                            packageName: selectedPackage.label,
+                                                            totalSessions: selectedPackage.sessions,
+                                                            packagePrice: selectedPackage.price
+                                                        });
+                                                        
+                                                        notificationManager.success(
+                                                            `패키지가 선택되었습니다! 세션 수: ${ selectedPackage.sessions }회기, 가격: ${ selectedPackage.price.toLocaleString() }원`
+                                                        );
+                                                    } else { setPaymentInfo({...paymentInfo, packageName: e.target.value });
+                                                    }
+                                                }}
+                                                className={ paymentInfo.packageName ? 'package-selected' : '' }
+                                                required
+                                            >
+                                                <option value="">패키지를 선택하세요</option>
+                                                {packageOptions
+                                                    .filter(pkg => pkg.price && pkg.price > 0) // 가격이 0보다 큰 패키지만 표시
+                                                    .map(pkg => {
+                                                        const displayPrice = isNaN(pkg.price) ? '가격 오류' : pkg.price.toLocaleString();
+                                                        return(
+                                                            <option key={pkg.value} value={ pkg.label }>
+                                                                { pkg.label } ({ pkg.sessions }회기, { displayPrice }원)
+                                                            </option>
+                                                        );
+                                                    })}
+                                            </select>
+                                            {paymentInfo.packageName && (
+                                                <div className="package-info">
+                                                    <i className="bi bi-check-circle-fill text-success"></i>
+                                                    <span>패키지 선택 완료 - 세션 수와 가격이 자동으로 설정되었습니다</span>
+                                                </div>
+                                            )}
+                                        </>
                                     )}
                                 </div>
 
@@ -960,7 +1042,8 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => { const 
                             </div>
                         </div>
                     )}
-        </div>
+        </UnifiedModal>,
+        document.body
     );
 };
 

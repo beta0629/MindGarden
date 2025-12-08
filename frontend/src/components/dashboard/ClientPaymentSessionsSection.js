@@ -45,7 +45,8 @@ const ClientPaymentSessionsSection = ({ userId }) => {
         return;
       }
 
-      const mappingResponse = await apiGet(`/api/admin/mappings/client?clientId=${userId}`);
+      // 표준화 2025-12-08: /api/v1/admin 경로로 통일
+      const mappingResponse = await apiGet(`/api/v1/admin/mappings/client?clientId=${userId}`);
       
       if (mappingResponse.success && mappingResponse.data) {
         const mappings = mappingResponse.data;

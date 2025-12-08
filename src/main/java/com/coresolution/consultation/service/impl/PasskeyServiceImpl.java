@@ -277,9 +277,10 @@ public class PasskeyServiceImpl implements PasskeyService {
             
             User user = passkey.getUser();
             
-            // JWT 토큰 생성
-            String accessToken = jwtService.generateToken(user.getEmail());
-            String refreshToken = jwtService.generateRefreshToken(user.getEmail());
+            // JWT 토큰 생성 (User 객체 사용)
+            String accessToken = jwtService.generateToken(user);
+            // 표준화 2025-12-08: username = userId이므로 refreshToken도 userId 사용, User 객체로 생성하여 tenantId, email 포함
+            String refreshToken = jwtService.generateRefreshToken(user);
             
             log.info("Passkey 인증 성공: userId={}, passkeyId={}", user.getId(), passkey.getId());
             

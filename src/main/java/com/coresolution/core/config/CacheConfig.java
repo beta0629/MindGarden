@@ -26,17 +26,12 @@ public class CacheConfig {
      */
     @Bean
     public CacheManager cacheManager() {
+        // 캐시 이름을 사전 등록하지 않고 동적 생성 허용
+        // setCacheNames()를 사용하지 않으면 필요한 캐시를 자동으로 생성
         ConcurrentMapCacheManager cacheManager = new ConcurrentMapCacheManager();
         
-        // 캐시 이름 사전 등록
-        cacheManager.setCacheNames(java.util.Arrays.asList(
-            "tenantCodes",      // 테넌트별 공통코드 캐시
-            "coreCodes",        // 코어 공통코드 캐시
-            "codeMetadata"      // 코드 그룹 메타데이터 캐시
-        ));
-        
-        // 동적 캐시 생성 허용
-        cacheManager.setAllowNullValues(false);
+        // null 값 허용 (빈 결과도 캐시 가능)
+        cacheManager.setAllowNullValues(true);
         
         return cacheManager;
     }

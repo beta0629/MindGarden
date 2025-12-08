@@ -21,7 +21,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ConsultantRegistrationDto {
-    private String username;
+    private String userId;
     private String email;
     private String password;
     private String name;

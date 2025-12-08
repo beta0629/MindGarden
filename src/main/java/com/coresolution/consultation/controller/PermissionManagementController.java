@@ -59,8 +59,16 @@ public class PermissionManagementController extends BaseApiController {
         }
         
         log.info("🔍 사용자 역할: {}", currentUser.getRole());
-        List<String> permissions = dynamicPermissionService.getUserPermissionsAsStringList(currentUser);
-        log.info("🔍 사용자 권한 목록: {}", permissions);
+        
+        // 권한 조회 시 예외 발생해도 빈 리스트 반환 (500 오류 방지)
+        List<String> permissions;
+        try {
+            permissions = dynamicPermissionService.getUserPermissionsAsStringList(currentUser);
+            log.info("🔍 사용자 권한 목록: {}", permissions);
+        } catch (Exception e) {
+            log.error("❌ 권한 조회 실패 (빈 리스트 반환): 사용자={}, 오류={}", currentUser.getUserId(), e.getMessage(), e);
+            permissions = new java.util.ArrayList<>();
+        }
         
         Map<String, Object> data = new HashMap<>();
         data.put("userRole", currentUser.getRole());

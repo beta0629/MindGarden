@@ -64,7 +64,8 @@ export const getCodeGroupKoreanName = async (groupName) => {
             }
         }
         
-        const response = await apiGet(`/api/common-codes/${groupName}`);
+        // 표준화 2025-12-08: 올바른 API 경로 사용
+        const response = await apiGet(`/api/v1/common-codes/groups/${groupName}`);
         if (response && response.length > 0) {
             return response[0].koreanName || groupName;
         }
@@ -87,7 +88,8 @@ export const getCodeGroupIcon = async (groupName) => {
             }
         }
         
-        const response = await apiGet(`/api/common-codes/${groupName}`);
+        // 표준화 2025-12-08: 올바른 API 경로 사용
+        const response = await apiGet(`/api/v1/common-codes/groups/${groupName}`);
         if (response && response.length > 0) {
             return response[0].icon || '📋';
         }
@@ -110,7 +112,8 @@ export const getCodeGroupColor = async (groupName) => {
             }
         }
         
-        const response = await apiGet(`/api/common-codes/${groupName}`);
+        // 표준화 2025-12-08: 올바른 API 경로 사용
+        const response = await apiGet(`/api/v1/common-codes/groups/${groupName}`);
         if (response && response.length > 0) {
             return response[0].colorCode || 'var(--mg-secondary-500)';
         }
@@ -148,7 +151,8 @@ export const getStatusIcon = async (codeValue, groupName = 'STATUS') => {
     }
     
     try {
-        const response = await apiGet(`/api/common-codes/${groupName}`);
+        // 표준화 2025-12-08: 올바른 API 경로 사용
+        const response = await apiGet(`/api/v1/common-codes/groups/${groupName}`);
         if (response && response.length > 0) {
             let code = response.find(c => c.codeValue === codeValue);
             
@@ -230,7 +234,8 @@ export const getStatusStyle = async (codeValue, groupName = 'STATUS') => {
     }
     
     try {
-        const response = await apiGet(`/api/common-codes/${groupName}`);
+        // 표준화 2025-12-08: 올바른 API 경로 사용
+        const response = await apiGet(`/api/v1/common-codes/groups/${groupName}`);
         if (response && Array.isArray(response)) {
             const code = response.find(c => c.codeValue === codeValue);
             if (code) {
@@ -255,7 +260,8 @@ export const getStatusStyle = async (codeValue, groupName = 'STATUS') => {
  */
 export const getStatusColor = async (codeValue, groupName) => {
     try {
-        const response = await apiGet(`/api/common-codes/${groupName}`);
+        // 표준화 2025-12-08: 올바른 API 경로 사용
+        const response = await apiGet(`/api/v1/common-codes/groups/${groupName}`);
         if (response && response.length > 0) {
             let code = response.find(c => c.codeValue === codeValue);
             
@@ -333,7 +339,8 @@ export const getStatusColor = async (codeValue, groupName) => {
  */
 export const getCodeGroupDisplayOptions = async (groupName) => {
     try {
-        const response = await apiGet(`/api/common-codes/${groupName}`);
+        // 표준화 2025-12-08: 올바른 API 경로 사용
+        const response = await apiGet(`/api/v1/common-codes/groups/${groupName}`);
         if (response.success && response.data) {
             return response.data;
         }
@@ -383,7 +390,8 @@ export const getCodeGroupIconSync = (groupName) => {
  */
 export const getUserStatusKoreanName = async (status) => {
     try {
-        const response = await apiGet(`/api/common-codes/STATUS`);
+        // 표준화 2025-12-08: 올바른 API 경로 사용
+        const response = await apiGet(`/api/v1/common-codes/groups/STATUS`);
         if (response.success && response.data && response.data.codes) {
             const code = response.data.codes.find(c => c.codeValue === status);
             if (code && code.codeLabel) {
@@ -564,7 +572,8 @@ export const getUserGradeIconSync = (grade) => {
  */
 export const getMappingStatusKoreanName = async (status) => {
     try {
-        const response = await apiGet(`/api/common-codes/MAPPING_STATUS`);
+        // 표준화 2025-12-08: 올바른 API 경로 사용
+        const response = await apiGet(`/api/v1/common-codes/groups/MAPPING_STATUS`);
         if (response && response.length > 0) {
             let code = response.find(c => c.codeValue === status);
             
@@ -684,7 +693,8 @@ export const getSpecialtyKoreanNames = (codes) => {
  */
 export const getSpecialtyFromCommonCode = async (codeValue) => {
     try {
-        const response = await apiGet(`/api/common-codes/SPECIALTY`);
+        // 표준화 2025-12-08: 올바른 API 경로 사용
+        const response = await apiGet(`/api/v1/common-codes/groups/SPECIALTY`);
         if (response && response.length > 0) {
             const code = response.find(c => c.codeValue === codeValue);
             if (code) {

@@ -198,6 +198,12 @@ public interface AdminService {
      * 입금 확인 처리 (현금 수입)
      */
     ConsultantClientMapping confirmDeposit(Long mappingId, String depositReference);
+    
+    /**
+     * 상담료 수입 거래 자동 생성 (독립적인 트랜잭션에서 실행)
+     * 트랜잭션 커밋 후 별도로 호출하여 부모 트랜잭션에 영향을 주지 않음
+     */
+    void createConsultationIncomeTransactionAsync(ConsultantClientMapping mapping);
 
     /**
      * 관리자 승인

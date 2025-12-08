@@ -177,19 +177,19 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
             return;
         }
         
-        // 사용자명 생성 (이메일의 로컬 파트)
-        String username = contactEmail.substring(0, contactEmail.indexOf('@'));
+        // 사용자 ID 생성 (이메일의 로컬 파트)
+        String userId = contactEmail.substring(0, contactEmail.indexOf('@'));
         String email = contactEmail.toLowerCase().trim();
         
         // 관리자 계정 생성
         jdbcTemplate.update(
             "INSERT INTO users (" +
-            "    tenant_id, username, email, password, name, role, " +
+            "    tenant_id, userId, email, password, name, role, " +
             "    phone, is_active, is_email_verified, is_social_account, " +
             "    created_at, updated_at, created_by, updated_by, is_deleted, version" +
             ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW(), ?, ?, FALSE, 0)",
             tenantId,
-            username,
+            userId,
             email,
             adminPasswordHash,
             tenantName + " 관리자",

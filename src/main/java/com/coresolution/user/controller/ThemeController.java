@@ -45,10 +45,10 @@ public class ThemeController extends BaseApiController {
      */
     @GetMapping("/theme")
     public ResponseEntity<ApiResponse<ThemeResponse>> getUserTheme(Authentication authentication) {
-        log.debug("사용자 테마 설정 조회 요청: username={}", authentication.getName());
+        log.debug("사용자 테마 설정 조회 요청: userId={}", authentication.getName());
         
-        String username = authentication.getName();
-        ThemeResponse theme = themeService.getUserTheme(username);
+        String userId = authentication.getName();
+        ThemeResponse theme = themeService.getUserTheme(userId);
         
         return success(theme);
     }
@@ -60,11 +60,11 @@ public class ThemeController extends BaseApiController {
     public ResponseEntity<ApiResponse<ThemeResponse>> updateUserTheme(
             @Valid @RequestBody ThemeUpdateRequest request,
             Authentication authentication) {
-        log.debug("사용자 테마 설정 업데이트 요청: username={}, theme={}", 
+        log.debug("사용자 테마 설정 업데이트 요청: userId={}, theme={}", 
             authentication.getName(), request.getThemePreference());
         
-        String username = authentication.getName();
-        ThemeResponse updatedTheme = themeService.updateUserTheme(username, request);
+        String userId = authentication.getName();
+        ThemeResponse updatedTheme = themeService.updateUserTheme(userId, request);
         
         return updated(updatedTheme);
     }
@@ -74,10 +74,10 @@ public class ThemeController extends BaseApiController {
      */
     @DeleteMapping("/theme")
     public ResponseEntity<ApiResponse<ThemeResponse>> resetUserTheme(Authentication authentication) {
-        log.debug("사용자 테마 설정 초기화 요청: username={}", authentication.getName());
+        log.debug("사용자 테마 설정 초기화 요청: userId={}", authentication.getName());
         
-        String username = authentication.getName();
-        ThemeResponse resetTheme = themeService.resetUserTheme(username);
+        String userId = authentication.getName();
+        ThemeResponse resetTheme = themeService.resetUserTheme(userId);
         
         return success("테마가 초기화되었습니다.", resetTheme);
     }
@@ -87,10 +87,10 @@ public class ThemeController extends BaseApiController {
      */
     @GetMapping("/theme/default")
     public ResponseEntity<ApiResponse<ThemeResponse>> getDefaultThemeByRole(Authentication authentication) {
-        log.debug("사용자 역할별 기본 테마 조회 요청: username={}", authentication.getName());
+        log.debug("사용자 역할별 기본 테마 조회 요청: userId={}", authentication.getName());
         
-        String username = authentication.getName();
-        ThemeResponse defaultTheme = themeService.getDefaultThemeByRole(username);
+        String userId = authentication.getName();
+        ThemeResponse defaultTheme = themeService.getDefaultThemeByRole(userId);
         
         return success(defaultTheme);
     }
@@ -114,11 +114,11 @@ public class ThemeController extends BaseApiController {
     public ResponseEntity<ApiResponse<ThemeResponse>> previewTheme(
             @Valid @RequestBody ThemeUpdateRequest request,
             Authentication authentication) {
-        log.debug("테마 미리보기 요청: username={}, theme={}", 
+        log.debug("테마 미리보기 요청: userId={}, theme={}", 
             authentication.getName(), request.getThemePreference());
         
-        String username = authentication.getName();
-        ThemeResponse previewTheme = themeService.previewTheme(username, request);
+        String userId = authentication.getName();
+        ThemeResponse previewTheme = themeService.previewTheme(userId, request);
         
         return success(previewTheme);
     }
@@ -128,10 +128,10 @@ public class ThemeController extends BaseApiController {
      */
     @DeleteMapping("/theme/preview")
     public ResponseEntity<ApiResponse<ThemeResponse>> cancelThemePreview(Authentication authentication) {
-        log.debug("테마 미리보기 취소 요청: username={}", authentication.getName());
+        log.debug("테마 미리보기 취소 요청: userId={}", authentication.getName());
         
-        String username = authentication.getName();
-        ThemeResponse originalTheme = themeService.cancelThemePreview(username);
+        String userId = authentication.getName();
+        ThemeResponse originalTheme = themeService.cancelThemePreview(userId);
         
         return success("테마 미리보기가 취소되었습니다.", originalTheme);
     }

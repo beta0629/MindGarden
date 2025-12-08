@@ -43,7 +43,7 @@ public class ClientProfileController extends BaseApiController {
                 return ResponseEntity.status(401).build();
             }
             
-            log.info("🔍 클라이언트 프로필 조회: userId={}, username={}", currentUser.getId(), currentUser.getUsername());
+            log.info("🔍 클라이언트 프로필 조회: userId={}, userId={}", currentUser.getId(), currentUser.getUserId());
             MyPageResponse response = myPageService.getMyPageInfo(currentUser.getId());
             return ResponseEntity.ok(response);
         } catch (Exception e) {
@@ -63,7 +63,7 @@ public class ClientProfileController extends BaseApiController {
                 return ResponseEntity.status(401).build();
             }
             
-            log.info("🔧 클라이언트 프로필 수정: userId={}, username={}", currentUser.getId(), currentUser.getUsername());
+            log.info("🔧 클라이언트 프로필 수정: userId={}, userId={}", currentUser.getId(), currentUser.getUserId());
             MyPageResponse response = myPageService.updateMyPageInfo(currentUser.getId(), request);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
@@ -83,7 +83,7 @@ public class ClientProfileController extends BaseApiController {
                 return ResponseEntity.status(401).build();
             }
             
-            log.info("🔧 클라이언트 비밀번호 변경: userId={}, username={}", currentUser.getId(), currentUser.getUsername());
+            log.info("🔧 클라이언트 비밀번호 변경: userId={}, userId={}", currentUser.getId(), currentUser.getUserId());
             myPageService.changePassword(currentUser.getId(), newPassword);
             return ResponseEntity.ok("비밀번호가 성공적으로 변경되었습니다.");
         } catch (Exception e) {
@@ -101,7 +101,7 @@ public class ClientProfileController extends BaseApiController {
                 return ResponseEntity.status(401).build();
             }
             
-            log.info("🖼️ 클라이언트 프로필 이미지 조회: userId={}, username={}", currentUser.getId(), currentUser.getUsername());
+            log.info("🖼️ 클라이언트 프로필 이미지 조회: userId={}, userId={}", currentUser.getId(), currentUser.getUserId());
             ProfileImageInfo profileImageInfo = userService.getProfileImageInfo(currentUser.getId());
             return ResponseEntity.ok(profileImageInfo);
         } catch (Exception e) {
@@ -120,7 +120,7 @@ public class ClientProfileController extends BaseApiController {
             throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
         }
         
-        log.info("🔍 소셜 계정 조회: userId={}, username={}", currentUser.getId(), currentUser.getUsername());
+        log.info("🔍 소셜 계정 조회: userId={}, userId={}", currentUser.getId(), currentUser.getUserId());
         
         // 사용자의 소셜 계정 목록 조회
         var socialAccounts = userSocialAccountRepository.findByUserIdAndIsDeletedFalse(currentUser.getId());

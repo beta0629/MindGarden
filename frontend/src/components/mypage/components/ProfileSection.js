@@ -195,8 +195,8 @@ const ProfileSection = ({
           <label>이름</label>
           <input
             type="text"
-            name="username"
-            value={formData.username}
+            name="userId"
+            value={formData.userId}
             onChange={handleInputChange}
             disabled={!isEditing}
           />

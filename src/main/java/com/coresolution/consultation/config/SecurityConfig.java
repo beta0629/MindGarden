@@ -117,11 +117,18 @@ public class SecurityConfig {
                         "/api/v1/ops/plans/code/**",          // plan_code로 요금제 조회 (공개)
                         "/api/v1/ops/plans/*"                 // plan_id로 요금제 조회 (공개, 단 DELETE 제외)
                     ).permitAll()
-                    .requestMatchers("/api/v1/auth/**").permitAll() // 인증 API는 허용
-                    .requestMatchers("/api/common-codes/**").permitAll() // 공통코드는 허용
-                    .requestMatchers("/api/v1/common-codes/**").permitAll() // 공통코드 v1 API는 허용
-                    .requestMatchers("/api/admin/css-themes/**").permitAll() // CSS 테마는 허용
-                    .requestMatchers("/api/v1/admin/css-themes/**").permitAll() // CSS 테마 v1 API는 허용
+                    // 인증 API는 허용
+                    .requestMatchers("/api/v1/auth/**").permitAll()
+                    // 공통코드 API는 허용 (온보딩에서 사용)
+                    .requestMatchers("/api/common-codes/**").permitAll()
+                    .requestMatchers("/api/v1/common-codes/**").permitAll()
+                    // 업종 카테고리 API는 허용 (온보딩에서 사용)
+                    // 표준화 원칙: 온보딩 프로세스는 로그인 전 접근이 필요하므로 공개 API로 설정
+                    .requestMatchers("/api/v1/business-categories/**").permitAll()
+                    .requestMatchers("/api/business-categories/**").permitAll() // 레거시 경로 지원 (하위 호환성)
+                    // CSS 테마 API는 허용
+                    .requestMatchers("/api/admin/css-themes/**").permitAll()
+                    .requestMatchers("/api/v1/admin/css-themes/**").permitAll()
                     .requestMatchers("/register", "/tablet/register", "/auth/register").permitAll() // 회원가입 페이지는 공개
                     .requestMatchers("/api/system-notifications/**").authenticated() // 시스템 알림 API는 인증 필요
                     .requestMatchers("/api/consultation-messages/**").authenticated() // 상담 메시지 API는 인증 필요
@@ -171,9 +178,13 @@ public class SecurityConfig {
                     .requestMatchers("/api/v1/ops/auth/**").permitAll()
                     // 인증 API는 허용
                     .requestMatchers("/api/v1/auth/**").permitAll()
-                    // 공통코드는 허용
+                    // 공통코드 API는 허용 (온보딩에서 사용)
                     .requestMatchers("/api/v1/common-codes/**").permitAll()
-                    // CSS 테마는 허용
+                    // 업종 카테고리 API는 허용 (온보딩에서 사용)
+                    // 표준화 원칙: 온보딩 프로세스는 로그인 전 접근이 필요하므로 공개 API로 설정
+                    .requestMatchers("/api/v1/business-categories/**").permitAll()
+                    .requestMatchers("/api/business-categories/**").permitAll() // 레거시 경로 지원 (하위 호환성)
+                    // CSS 테마 API는 허용
                     .requestMatchers("/api/v1/admin/css-themes/**").permitAll()
                     // 나머지 Ops Portal API는 인증 필요
                     .requestMatchers("/api/v1/ops/**").authenticated()

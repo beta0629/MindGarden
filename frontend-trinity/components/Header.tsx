@@ -45,6 +45,9 @@ export default function Header() {
           <Link href="/#pricing" className={COMPONENT_CSS.HEADER.LINK} onClick={closeMenu}>
             가격 정보
           </Link>
+          <Link href="/onboarding/status" className={COMPONENT_CSS.HEADER.LINK} onClick={closeMenu}>
+            신청 상태 조회
+          </Link>
           <Link href="/onboarding" className={COMPONENT_CSS.HEADER.BUTTON} onClick={closeMenu}>
             시작하기
           </Link>

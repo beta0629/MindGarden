@@ -21,6 +21,8 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.*;
 import com.coresolution.core.util.OpsPermissionUtils;
+import com.coresolution.consultation.utils.SessionUtils;
+import com.coresolution.consultation.entity.User;
 
 import java.util.HashMap;
 import java.util.List;
@@ -78,9 +80,16 @@ public class OnboardingController extends BaseApiController {
             return;
         }
         
-        String userEmail = (String) session.getAttribute("userEmail");
+        // 표준화: SessionUtils 사용 (직접 세션 접근 금지)
+        User currentUser = SessionUtils.getCurrentUser(session);
+        if (currentUser == null) {
+            log.debug("세션에 사용자 정보가 없음 - 새로운 테넌트 등록 가능");
+            return;
+        }
+        
+        String userEmail = currentUser.getEmail();
         if (userEmail == null || userEmail.trim().isEmpty()) {
-            log.debug("세션에 사용자 이메일이 없음 - 새로운 테넌트 등록 가능");
+            log.debug("사용자 이메일이 없음 - 새로운 테넌트 등록 가능");
             return;
         }
         
@@ -180,25 +189,40 @@ public class OnboardingController extends BaseApiController {
             }
             
             String finalChecklistJson = payload.checklistJson();
-            if (payload.adminPassword() != null && !payload.adminPassword().trim().isEmpty()) {
-                try {
-                    ObjectMapper objectMapper = new ObjectMapper();
-                    if (finalChecklistJson != null && !finalChecklistJson.trim().isEmpty()) {
-                        Map<String, Object> checklist = objectMapper.readValue(
-                            finalChecklistJson, 
-                            new TypeReference<Map<String, Object>>() {}
-                        );
-                        checklist.put("adminPassword", payload.adminPassword());
-                        finalChecklistJson = objectMapper.writeValueAsString(checklist);
-                    } else {
-                        Map<String, Object> checklist = new HashMap<>();
-                        checklist.put("adminPassword", payload.adminPassword());
-                        finalChecklistJson = objectMapper.writeValueAsString(checklist);
-                    }
-                    log.info("adminPassword를 checklistJson에 병합 완료");
-                } catch (Exception e) {
-                    log.error("checklistJson에 adminPassword 병합 실패: {}", e.getMessage(), e);
+            try {
+                ObjectMapper objectMapper = new ObjectMapper();
+                Map<String, Object> checklist = new HashMap<>();
+                
+                // 기존 checklistJson 파싱
+                if (finalChecklistJson != null && !finalChecklistJson.trim().isEmpty()) {
+                    checklist = objectMapper.readValue(
+                        finalChecklistJson, 
+                        new TypeReference<Map<String, Object>>() {}
+                    );
                 }
+                
+                // adminPassword 추가
+                if (payload.adminPassword() != null && !payload.adminPassword().trim().isEmpty()) {
+                    checklist.put("adminPassword", payload.adminPassword());
+                }
+                
+                // regionCode 추가
+                if (payload.regionCode() != null && !payload.regionCode().trim().isEmpty()) {
+                    checklist.put("regionCode", payload.regionCode());
+                }
+                
+                // brandName 추가 (브랜딩 적용)
+                if (payload.brandName() != null && !payload.brandName().trim().isEmpty()) {
+                    checklist.put("brandName", payload.brandName());
+                }
+                
+                finalChecklistJson = objectMapper.writeValueAsString(checklist);
+                log.info("checklistJson 병합 완료: hasAdminPassword={}, hasRegionCode={}, hasBrandName={}", 
+                    checklist.containsKey("adminPassword"), 
+                    checklist.containsKey("regionCode"),
+                    checklist.containsKey("brandName"));
+            } catch (Exception e) {
+                log.error("checklistJson 병합 실패: {}", e.getMessage(), e);
             }
             
             OnboardingRequest request = onboardingService.create(

@@ -31,37 +31,116 @@ async function apiRequest<T>(
     'Content-Type': 'application/json',
   };
 
-  const response = await fetch(url, {
-    ...options,
-    headers: {
-      ...defaultHeaders,
-      ...options.headers,
-    },
-    credentials: 'include', // 세션 쿠키 포함
-  });
-
-  const jsonData = await response.json();
+  let response: Response;
+  let jsonData: any;
+  
+  try {
+    response = await fetch(url, {
+      ...options,
+      headers: {
+        ...defaultHeaders,
+        ...options.headers,
+      },
+      credentials: 'include', // 세션 쿠키 포함
+    });
+    
+    jsonData = await response.json();
+  } catch (fetchError) {
+    // 네트워크 오류 (연결 실패 등)
+    const isOnboardingEndpoint = endpoint.includes('/auth/current-user') || 
+                                  endpoint.includes('/common-codes') ||
+                                  endpoint.includes('/business-categories') ||
+                                  endpoint.includes('/pricing-plans');
+    if (isOnboardingEndpoint) {
+      // 온보딩 관련 API는 조용히 처리 (에러 로그 출력 안 함)
+      if (process.env.NODE_ENV === 'development') {
+        console.error('[DEBUG] Onboarding API connection failed:', endpoint, fetchError);
+      }
+      throw new Error('Connection failed');
+    }
+    throw fetchError;
+  }
+  
+  // 온보딩 관련 API의 인증 오류는 정상적인 상황 (로그인 불필요)
+  const isOnboardingEndpoint = endpoint.includes('/auth/current-user') || 
+                                endpoint.includes('/common-codes') ||
+                                endpoint.includes('/business-categories') ||
+                                endpoint.includes('/pricing-plans');
   
   if (!response.ok) {
+    // 개발 환경에서 에러 응답 로그
+    if (process.env.NODE_ENV === 'development' && endpoint.includes('/business-categories')) {
+      console.error('[DEBUG] API Error Response:', {
+        endpoint,
+        status: response.status,
+        statusText: response.statusText,
+        jsonData,
+      });
+    }
+    
+    if (isOnboardingEndpoint && (response.status === 400 || response.status === 401 || response.status === 403)) {
+      // 온보딩 페이지는 로그인 없이도 접근 가능하므로 인증 오류는 정상적인 상황
+      // 배열을 반환하는 API의 경우 빈 배열 반환 (무한 루프 방지)
+      if (endpoint.includes('/business-categories') || endpoint.includes('/pricing-plans')) {
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('[DEBUG] Returning empty array for business-categories/pricing-plans endpoint (status:', response.status, '):', endpoint);
+        }
+        // 400 에러도 조용히 빈 배열 반환 (무한 루프 방지)
+        return [] as T;
+      }
+      // /auth/current-user는 로그인되지 않은 경우 빈 객체 반환
+      if (endpoint.includes('/auth/current-user')) {
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('[DEBUG] User not logged in, returning empty user object for:', endpoint);
+        }
+        return { success: false, data: {} } as T;
+      }
+      // 그 외에는 실패한 응답 객체 반환
+      return { success: false } as T;
+    }
+    
     // ApiResponse 래퍼 처리
     const errorData = (jsonData as ApiResponse<any>)?.error || jsonData;
     const errorMessage = errorData.message || errorData.error || errorData.details || `API 요청 실패: ${response.status} ${response.statusText}`;
-    console.error('API Error:', {
-      status: response.status,
-      statusText: response.statusText,
-      endpoint,
-      errorData,
-      fullError: JSON.stringify(jsonData, null, 2), // 전체 에러 응답 출력
-    });
+    
+    if (!isOnboardingEndpoint) {
+      console.error('API Error:', {
+        status: response.status,
+        statusText: response.statusText,
+        endpoint,
+        errorData,
+        fullError: JSON.stringify(jsonData, null, 2),
+      });
+    }
     throw new Error(errorMessage);
   }
 
   // ApiResponse 래퍼 처리: { success: true, data: T } 형태면 data 추출
   if (jsonData && typeof jsonData === 'object' && 'success' in jsonData && 'data' in jsonData) {
-    return (jsonData as ApiResponse<T>).data as T;
+    const apiResponse = jsonData as ApiResponse<T>;
+    // 개발 환경에서 디버깅 로그
+    if (process.env.NODE_ENV === 'development' && endpoint.includes('/business-categories')) {
+      console.log('[DEBUG] API Response:', {
+        endpoint,
+        success: apiResponse.success,
+        hasData: !!apiResponse.data,
+        dataType: typeof apiResponse.data,
+        isArray: Array.isArray(apiResponse.data),
+        data: apiResponse.data,
+      });
+    }
+    return apiResponse.data as T;
   }
   
   // ApiResponse 래퍼가 없으면 그대로 반환
+  if (process.env.NODE_ENV === 'development' && endpoint.includes('/business-categories')) {
+    console.log('[DEBUG] No ApiResponse wrapper, returning jsonData as-is:', {
+      endpoint,
+      jsonData,
+      jsonDataType: typeof jsonData,
+      isArray: Array.isArray(jsonData),
+    });
+  }
   return jsonData as T;
 }
 
@@ -116,11 +195,13 @@ export interface OnboardingCreateRequest {
   riskLevel: 'LOW' | 'MEDIUM' | 'HIGH';
   checklistJson?: string;
   businessType: string;
+  regionCode?: string; // 지역 코드 (테넌트 ID 생성 시 사용, 선택적)
+  brandName?: string; // 브랜드명 (상호, 브랜딩 적용 시 사용, 선택적)
   adminPassword?: string; // 관리자 계정 비밀번호 (승인 시 계정 생성에 사용)
 }
 
 export interface OnboardingRequest {
-  id: number;
+  id: string; // UUID 문자열 (BINARY(16)을 HEX로 변환한 값)
   tenantId?: string;
   tenantName: string;
   requestedBy: string;
@@ -145,26 +226,49 @@ export async function checkEmailDuplicate(email: string): Promise<{
   message: string;
   status: string | null;
 }> {
-  const response = await apiGet<ApiResponse<{ 
-    email: string; 
-    isDuplicate: boolean; 
-    available: boolean;
-    message: string;
-    status: string | null;
-  }>>(
-    `/api/v1/onboarding/email-check?email=${encodeURIComponent(email)}`
-  );
-  if (response && response.success && response.data) {
-    return response.data as { 
+  try {
+    // apiGet은 이미 ApiResponse 래퍼를 처리하므로 직접 data를 반환
+    const data = await apiGet<{ 
       email: string; 
       isDuplicate: boolean; 
       available: boolean;
       message: string;
       status: string | null;
-    };
+    }>(
+      `/api/v1/onboarding/email-check?email=${encodeURIComponent(email)}`
+    );
+    
+    // data가 이미 객체인지 확인
+    if (data && typeof data === 'object' && 'email' in data) {
+      return data as { 
+        email: string; 
+        isDuplicate: boolean; 
+        available: boolean;
+        message: string;
+        status: string | null;
+      };
+    }
+    
+    // ApiResponse 래퍼가 있는 경우
+    if (data && typeof data === 'object' && 'success' in data && 'data' in data) {
+      const wrapped = data as ApiResponse<{ 
+        email: string; 
+        isDuplicate: boolean; 
+        available: boolean;
+        message: string;
+        status: string | null;
+      }>;
+      if (wrapped.success && wrapped.data) {
+        return wrapped.data;
+      }
+    }
+    
+    console.warn('이메일 중복 확인 응답 형식 오류:', data);
+    throw new Error('이메일 중복 확인에 실패했습니다.');
+  } catch (error) {
+    console.error('이메일 중복 확인 API 호출 실패:', error);
+    throw error instanceof Error ? error : new Error('이메일 중복 확인에 실패했습니다.');
   }
-  console.warn('이메일 중복 확인 응답 형식 오류:', response);
-  throw new Error('이메일 중복 확인에 실패했습니다.');
 }
 
 /**
@@ -191,25 +295,112 @@ export async function getOnboardingRequest(
 export async function getPublicOnboardingRequests(
   email: string
 ): Promise<OnboardingRequest[]> {
-  const response = await apiGet<ApiResponse<OnboardingRequest[]>>(`/api/v1/onboarding/requests/public?email=${encodeURIComponent(email)}`);
-  if (!response.success || !response.data) {
-    throw new Error(response.message || '온보딩 요청 조회에 실패했습니다.');
+  try {
+    // apiGet은 이미 ApiResponse의 data를 추출하므로,
+    // response는 OnboardingRequest[] 배열을 직접 받음
+    const response = await apiGet<OnboardingRequest[]>(`/api/v1/onboarding/requests/public?email=${encodeURIComponent(email)}`);
+    
+    // response가 배열인 경우
+    if (Array.isArray(response)) {
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[DEBUG] Onboarding requests loaded:', response.length, response);
+      }
+      return response;
+    }
+    
+    // null 또는 undefined인 경우 빈 배열 반환
+    if (!response) {
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('[DEBUG] Onboarding requests response is null or undefined');
+      }
+      return [];
+    }
+    
+    // 하위 호환성: ApiResponse 래퍼가 있는 경우
+    if (typeof response === 'object' && 'success' in response && 'data' in response) {
+      const apiResponse = response as ApiResponse<OnboardingRequest[]>;
+      if (apiResponse.success && apiResponse.data && Array.isArray(apiResponse.data)) {
+        return apiResponse.data;
+      }
+    }
+    
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('[DEBUG] Unexpected response format for onboarding requests:', response);
+    }
+    return [];
+  } catch (error) {
+    // 개발 환경에서만 에러 로그 출력
+    if (process.env.NODE_ENV === 'development') {
+      console.error('[DEBUG] Failed to load onboarding requests:', error);
+    }
+    // 에러 발생 시 빈 배열 반환 (무한 로딩 방지)
+    return [];
   }
-  return response.data;
 }
 
 /**
  * 공개 온보딩 요청 상세 조회 (ID + 이메일로 본인 확인)
+ * 
+ * @param id 온보딩 요청 ID (UUID 문자열 - HEX 형식 또는 하이픈 포함 형식)
+ * @param email 요청자 이메일
  */
 export async function getPublicOnboardingRequest(
-  id: number,
+  id: string,
   email: string
 ): Promise<OnboardingRequest> {
-  const response = await apiGet<ApiResponse<OnboardingRequest>>(`/api/v1/onboarding/requests/public/${id}?email=${encodeURIComponent(email)}`);
-  if (!response.success || !response.data) {
-    throw new Error(response.message || '온보딩 요청 조회에 실패했습니다.');
+  try {
+    // UUID 형식 변환: HEX 형식 (32자)을 하이픈 포함 형식으로 변환
+    // 예: CB1057B0AF8A47A69CE80671405213F4 -> cb1057b0-af8a-47a6-9ce8-0671405213f4
+    let uuidString = id.trim();
+    if (uuidString.length === 32 && !uuidString.includes('-')) {
+      // HEX 형식을 UUID 형식으로 변환
+      uuidString = [
+        uuidString.substring(0, 8),
+        uuidString.substring(8, 12),
+        uuidString.substring(12, 16),
+        uuidString.substring(16, 20),
+        uuidString.substring(20, 32)
+      ].join('-').toLowerCase();
+    }
+    
+    // apiGet은 이미 ApiResponse의 data를 추출하므로,
+    // response는 OnboardingRequest 객체를 직접 받음
+    const response = await apiGet<OnboardingRequest>(`/api/v1/onboarding/requests/public/${encodeURIComponent(uuidString)}?email=${encodeURIComponent(email)}`);
+    
+    // response가 객체인 경우
+    if (response && typeof response === 'object' && 'id' in response) {
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[DEBUG] Onboarding request loaded:', response);
+      }
+      return response;
+    }
+    
+    // null 또는 undefined인 경우
+    if (!response) {
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('[DEBUG] Onboarding request response is null or undefined');
+      }
+      throw new Error('온보딩 요청을 찾을 수 없습니다.');
+    }
+    
+    // 하위 호환성: ApiResponse 래퍼가 있는 경우
+    if (typeof response === 'object' && 'success' in response && 'data' in response) {
+      const apiResponse = response as ApiResponse<OnboardingRequest>;
+      if (apiResponse.success && apiResponse.data) {
+        return apiResponse.data;
+      }
+      throw new Error(apiResponse.message || '온보딩 요청 조회에 실패했습니다.');
+    }
+    
+    throw new Error('온보딩 요청 조회에 실패했습니다.');
+  } catch (error) {
+    // 개발 환경에서만 에러 로그 출력
+    if (process.env.NODE_ENV === 'development') {
+      console.error('[DEBUG] Failed to load onboarding request:', error);
+    }
+    // 에러를 다시 throw하여 호출자가 처리할 수 있도록 함
+    throw error;
   }
-  return response.data;
 }
 
 // ============================================
@@ -291,17 +482,48 @@ export interface BusinessCategoryItem {
  */
 export async function getRootBusinessCategories(): Promise<BusinessCategory[]> {
   try {
-    const response = await apiGet<ApiResponse<BusinessCategory[]>>(
-      '/api/business-categories/root'
+    // apiGet은 이미 ApiResponse의 data를 추출하므로,
+    // response는 BusinessCategory[] 배열을 직접 받음
+    // 표준화: /api/v1/ 경로 사용
+    const response = await apiGet<BusinessCategory[]>(
+      '/api/v1/business-categories/root'
     );
-    if (response && response.success && response.data) {
-      return response.data;
+    
+    // response가 배열인 경우
+    if (Array.isArray(response)) {
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[DEBUG] Business categories loaded:', response.length, response);
+      }
+      return response;
     }
-    console.warn('업종 카테고리 응답 형식 오류:', response);
+    
+    // null 또는 undefined인 경우 빈 배열 반환
+    if (!response) {
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('[DEBUG] Business categories response is null or undefined');
+      }
+      return [];
+    }
+    
+    // 하위 호환성: ApiResponse 래퍼가 있는 경우
+    if (typeof response === 'object' && 'success' in response && 'data' in response) {
+      const apiResponse = response as ApiResponse<BusinessCategory[]>;
+      if (apiResponse.success && apiResponse.data && Array.isArray(apiResponse.data)) {
+        return apiResponse.data;
+      }
+    }
+    
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('[DEBUG] Unexpected response format for business categories:', response);
+    }
     return [];
   } catch (error) {
-    console.error('업종 카테고리 조회 실패:', error);
-    throw error;
+    // 개발 환경에서만 에러 로그 출력
+    if (process.env.NODE_ENV === 'development') {
+      console.error('[DEBUG] Failed to load business categories:', error);
+    }
+    // 에러 발생 시 빈 배열 반환 (무한 로딩 방지)
+    return [];
   }
 }
 
@@ -312,18 +534,43 @@ export async function getBusinessCategoryItems(
   categoryId?: string
 ): Promise<BusinessCategoryItem[]> {
   try {
+    // 표준화: /api/v1/ 경로 사용
     const endpoint = categoryId
-      ? `/api/business-categories/items?categoryId=${encodeURIComponent(categoryId)}`
-      : '/api/business-categories/items';
-    const response = await apiGet<ApiResponse<BusinessCategoryItem[]>>(endpoint);
-    if (response && response.success && response.data) {
-      return response.data;
+      ? `/api/v1/business-categories/items?categoryId=${encodeURIComponent(categoryId)}`
+      : '/api/v1/business-categories/items';
+    
+    // apiGet은 이미 ApiResponse의 data를 추출하므로,
+    // response는 BusinessCategoryItem[] 배열을 직접 받음
+    const response = await apiGet<BusinessCategoryItem[]>(endpoint);
+    
+    // response가 배열인 경우
+    if (Array.isArray(response)) {
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[DEBUG] Business category items loaded:', response.length, response);
+      }
+      return response;
     }
-    console.warn('업종 카테고리 아이템 응답 형식 오류:', response);
+    
+    // 하위 호환성: ApiResponse 래퍼가 있는 경우
+    if (response && typeof response === 'object' && 'success' in response && 'data' in response) {
+      const apiResponse = response as ApiResponse<BusinessCategoryItem[]>;
+      if (apiResponse.success && apiResponse.data) {
+        return apiResponse.data;
+      }
+    }
+    
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('[DEBUG] Unexpected response format for business category items:', response);
+    }
     return [];
   } catch (error) {
-    console.error('업종 카테고리 아이템 조회 실패:', error);
-    throw error;
+    // 개발 환경에서만 에러 로그 출력
+    if (process.env.NODE_ENV === 'development') {
+      console.error('[DEBUG] Failed to load business category items:', error);
+    }
+    // 에러 발생 시 빈 배열 반환 (무한 로딩 방지)
+    // 세부 항목이 없는 경우도 정상적인 상황이므로 에러를 throw하지 않음
+    return [];
   }
 }
 
@@ -334,8 +581,9 @@ export async function getCategoryItemByBusinessType(
   businessType: string
 ): Promise<BusinessCategoryItem | null> {
   try {
+    // 표준화: /api/v1/ 경로 사용
     const response = await apiGet<{ success: boolean; data: BusinessCategoryItem }>(
-      `/api/business-categories/items/by-business-type/${businessType}`
+      `/api/v1/business-categories/items/by-business-type/${businessType}`
     );
     return response.data || null;
   } catch (error) {

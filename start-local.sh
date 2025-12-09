@@ -370,7 +370,7 @@ if [ -d "frontend-ops" ]; then
     cd ..
     
     echo $OPS_FRONTEND_PID > logs/ops-frontend.pid
-    echo -e "${GREEN}   ✅ OPS 프론트엔드 시작됨 (PID: $OPS_FRONTEND_PID, 포트: 3001)${NC}"
+    echo -e "${GREEN}   ✅ OPS 프론트엔드 시작됨 (PID: $OPS_FRONTEND_PID, 포트: 4300)${NC}"
 else
     echo -e "${YELLOW}⚠️  frontend-ops 디렉토리를 찾을 수 없습니다. OPS 프론트엔드를 건너뜁니다.${NC}"
 fi
@@ -388,7 +388,7 @@ if [ -f "logs/ops-backend.pid" ]; then
     echo -e "${GREEN}   OPS 백엔드:      http://localhost:8081${NC}"
 fi
 if [ -f "logs/ops-frontend.pid" ]; then
-    echo -e "${GREEN}   OPS 프론트엔드:   http://localhost:3001${NC}"
+    echo -e "${GREEN}   OPS 프론트엔드:   http://localhost:4300${NC}"
 fi
 echo ""
 echo -e "${CYAN}📋 로그 확인:${NC}"

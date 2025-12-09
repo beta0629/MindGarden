@@ -39,6 +39,11 @@ export default function Footer() {
                   서비스 신청
                 </Link>
               </li>
+              <li>
+                <Link href="/onboarding/status" className={COMPONENT_CSS.FOOTER.LINK}>
+                  신청 상태 조회
+                </Link>
+              </li>
             </ul>
           </div>
           <div>

@@ -3,17 +3,37 @@
  */
 
 .trinity-onboarding {
-  min-height: 100vh;
+  min-height: var(--full-height);
   background-color: var(--bg-secondary);
 }
 
 .trinity-onboarding__form {
-  max-width: 42rem;
+  max-width: var(--form-max-width);
+  width: var(--full-width);
   margin: var(--spacing-xxl) auto;
   background-color: var(--bg-primary);
   border-radius: var(--border-radius-lg);
   box-shadow: var(--shadow-lg);
   padding: var(--spacing-xl);
+  box-sizing: border-box;
+}
+
+/* 모바일 반응형: 폼 레이아웃 */
+@media (max-width: 768px) {
+  .trinity-onboarding__form {
+    max-width: var(--full-width);
+    margin: var(--zero-size);
+    padding: var(--spacing-lg);
+    border-radius: var(--zero-size);
+    box-shadow: none;
+    min-height: var(--full-height);
+  }
+}
+
+@media (max-width: 480px) {
+  .trinity-onboarding__form {
+    padding: var(--spacing-md);
+  }
 }
 
 .trinity-onboarding__title {
@@ -22,6 +42,21 @@
   text-align: center;
   margin-bottom: var(--spacing-xl);
   color: var(--text-primary);
+}
+
+/* 모바일 반응형: 제목 크기 */
+@media (max-width: 768px) {
+  .trinity-onboarding__title {
+    font-size: var(--font-size-xxl);
+    margin-bottom: var(--spacing-lg);
+  }
+}
+
+@media (max-width: 480px) {
+  .trinity-onboarding__title {
+    font-size: var(--font-size-xl);
+    margin-bottom: var(--spacing-md);
+  }
 }
 
 .trinity-onboarding__progress {
@@ -38,15 +73,15 @@
 }
 
 .trinity-onboarding__progress-number {
-  width: 2.5rem;
-  height: 2.5rem;
+  width: var(--progress-number-size);
+  height: var(--progress-number-size);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: var(--font-weight-semibold);
-  background-color: #e5e7eb;
-  color: #6b7280;
+  background-color: var(--bg-secondary);
+  color: var(--text-secondary);
 }
 
 .trinity-onboarding__progress-item--active .trinity-onboarding__progress-number {
@@ -56,9 +91,9 @@
 
 .trinity-onboarding__progress-line {
   flex: 1;
-  height: 2px;
-  background-color: #e5e7eb;
-  margin: 0 var(--spacing-sm);
+  height: var(--progress-line-height);
+  background-color: var(--bg-secondary);
+  margin: var(--zero-size) var(--spacing-sm);
 }
 
 .trinity-onboarding__progress-item--active .trinity-onboarding__progress-line {
@@ -66,7 +101,7 @@
 }
 
 .trinity-onboarding__progress-item--active ~ .trinity-onboarding__progress-item .trinity-onboarding__progress-line {
-  background-color: #e5e7eb;
+  background-color: var(--bg-secondary);
 }
 
 .trinity-onboarding__progress-labels {
@@ -92,6 +127,21 @@
   font-weight: var(--font-weight-bold);
   margin-bottom: var(--spacing-lg);
   color: var(--text-primary);
+}
+
+/* 모바일 반응형: 단계 제목 */
+@media (max-width: 768px) {
+  .trinity-onboarding__step-title {
+    font-size: var(--font-size-lg);
+    margin-bottom: var(--spacing-md);
+  }
+}
+
+@media (max-width: 480px) {
+  .trinity-onboarding__step-title {
+    font-size: var(--font-size-md);
+    margin-bottom: var(--spacing-sm);
+  }
 }
 
 .trinity-onboarding__step-description {
@@ -129,54 +179,137 @@
   color: var(--text-primary);
 }
 
-.trinity-onboarding__input {
-  width: 100%;
-  padding: var(--spacing-md);
-  border: 1px solid #d1d5db;
-  border-radius: var(--border-radius-md);
-  font-size: var(--font-size-md);
-  transition: border-color var(--transition-fast);
-}
-
-.trinity-onboarding__input:focus {
-  outline: none;
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
-}
+/* 입력 필드 스타일은 input-animation.css로 이동 */
 
 .trinity-onboarding__button {
-  width: 100%;
+  width: var(--full-width);
   background-color: var(--color-primary);
   color: var(--text-inverse);
   padding: var(--spacing-md);
   border-radius: var(--border-radius-lg);
   font-weight: var(--font-weight-semibold);
-  transition: background-color var(--transition-fast);
+  font-size: var(--font-size-md);
+  transition: all var(--transition-normal) var(--animation-ease-out);
   border: none;
   cursor: pointer;
+  touch-action: manipulation;
+  min-height: var(--button-min-height);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.trinity-onboarding__button::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: var(--zero-size);
+  height: var(--zero-size);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  transform: translate(-50%, -50%);
+  transition: width var(--animation-duration-slower), height var(--animation-duration-slower);
+}
+
+.trinity-onboarding__button:active::before {
+  width: 300px;
+  height: 300px;
 }
 
 .trinity-onboarding__button:hover:not(:disabled) {
   background-color: var(--color-primary-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px var(--shadow-color-primary-light);
+}
+
+.trinity-onboarding__button:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px var(--shadow-color-primary-light);
 }
 
 .trinity-onboarding__button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+  transform: none;
+}
+
+/* 모바일 최적화: 버튼 */
+@media (max-width: 768px) {
+  .trinity-onboarding__button {
+    min-height: var(--button-min-height-mobile);
+    font-size: var(--font-size-md);
+    padding: var(--spacing-md) var(--spacing-lg);
+  }
+
+  .trinity-onboarding__button:hover:not(:disabled) {
+    transform: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .trinity-onboarding__button {
+    min-height: var(--button-height-large);
+    font-size: var(--font-size-lg);
+  }
 }
 
 .trinity-onboarding__button--secondary {
-  background-color: #e5e7eb;
-  color: #374151;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  border: 2px solid var(--border-color-default);
+  width: var(--full-width);
+  min-height: var(--button-min-height);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  text-align: center;
+  writing-mode: horizontal-tb;
+  text-orientation: mixed;
 }
 
-.trinity-onboarding__button--secondary:hover {
-  background-color: #d1d5db;
+.trinity-onboarding__button--secondary:hover:not(:disabled) {
+  background-color: var(--bg-secondary);
+  border-color: var(--border-color-hover);
+  opacity: 1;
+  transform: translateY(-1px);
+}
+
+.trinity-onboarding__button--secondary:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+/* 모바일에서 이전 버튼 */
+@media (max-width: 768px) {
+  .trinity-onboarding__button--secondary {
+    order: 2; /* 다음 버튼 아래로 */
+  }
+  
+  .trinity-onboarding__button--secondary:hover:not(:disabled) {
+    transform: none;
+  }
 }
 
 .trinity-onboarding__buttons {
   display: flex;
   gap: var(--spacing-md);
+  align-items: stretch;
+  width: var(--full-width);
+}
+
+.trinity-onboarding__buttons > button {
+  flex: 1;
+  min-height: var(--button-min-height);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  text-align: center;
+  writing-mode: horizontal-tb;
+  text-orientation: mixed;
 }
 
 .trinity-onboarding__buttons--spaced {
@@ -190,9 +323,42 @@
   margin-bottom: var(--spacing-lg);
 }
 
+/* 요금제 그리드 중앙 정렬 */
+.trinity-onboarding__grid--centered {
+  justify-items: center;
+  max-width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* 요금제가 3개일 때 3열 레이아웃 */
+@media (min-width: 1024px) {
+  .trinity-onboarding__grid--centered {
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--spacing-lg);
+    max-width: 90rem;
+  }
+}
+
+/* 태블릿: 2열 유지 */
+@media (min-width: 640px) and (max-width: 1023px) {
+  .trinity-onboarding__grid--centered {
+    grid-template-columns: repeat(2, 1fr);
+    max-width: 60rem;
+  }
+}
+
+/* 모바일: 1열 */
+@media (max-width: 639px) {
+  .trinity-onboarding__grid--centered {
+    grid-template-columns: 1fr;
+    max-width: 100%;
+  }
+}
+
 .trinity-onboarding__grid-button {
   padding: var(--spacing-md);
-  border: 2px solid #e5e7eb;
+  border: 2px solid var(--bg-secondary);
   border-radius: var(--border-radius-lg);
   background-color: var(--bg-primary);
   cursor: pointer;
@@ -200,30 +366,30 @@
 }
 
 .trinity-onboarding__grid-button:hover {
-  border-color: #d1d5db;
+  border-color: var(--border-color-default);
 }
 
 .trinity-onboarding__grid-button--active {
   border-color: var(--color-primary);
-  background-color: #eff6ff;
+  background-color: rgba(0, 122, 255, 0.05);
 }
 
 .trinity-onboarding__success {
-  background-color: #d1fae5;
-  border: 1px solid #6ee7b7;
+  background-color: rgba(52, 199, 89, 0.1);
+  border: 1px solid var(--color-success);
   border-radius: var(--border-radius-md);
   padding: var(--spacing-lg);
   margin-bottom: var(--spacing-lg);
 }
 
 .trinity-onboarding__success-text {
-  color: #065f46;
+  color: var(--color-success);
   margin-bottom: var(--spacing-sm);
 }
 
 .trinity-onboarding__success-detail {
   font-size: var(--font-size-sm);
-  color: #047857;
+  color: var(--color-success);
 }
 
 /* 에러 메시지 */

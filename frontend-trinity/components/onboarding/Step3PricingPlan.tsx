@@ -51,7 +51,7 @@ export default function Step3PricingPlan({
         </div>
       ) : (
         <div className={COMPONENT_CSS.PRICING.CONTAINER}>
-          <div className={COMPONENT_CSS.ONBOARDING.GRID}>
+          <div className={`${COMPONENT_CSS.ONBOARDING.GRID} trinity-onboarding__grid--centered`}>
             {pricingPlans.map((plan) => (
               <button
                 key={plan.planId || plan.id || plan.planCode}

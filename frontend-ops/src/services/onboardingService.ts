@@ -19,7 +19,7 @@ export async function fetchPendingOnboarding(): Promise<OnboardingRequest[]> {
 /**
  * 온보딩 요청 목록 조회 (상태별 필터링 가능)
  * 백엔드: GET /api/v1/ops/onboarding/requests?status={status}&page=0&size=50
- * 메인 백엔드(8080): ApiResponse<Page<OnboardingRequest>> 래퍼 사용 (페이징)
+ * Ops 백엔드(8081): ApiResponse<Page<OnboardingRequest>> 래퍼 사용 (페이징)
  */
 export async function fetchAllOnboarding(status?: string): Promise<OnboardingRequest[]> {
   try {
@@ -37,7 +37,7 @@ export async function fetchAllOnboarding(status?: string): Promise<OnboardingReq
       path, 
       status, 
       statusUpper: status?.toUpperCase(),
-      fullUrl: `http://localhost:8080/api/v1${path}`
+      fullUrl: `http://localhost:8081/api/v1${path}`
     });
     
     const response = await clientApiFetch<{
@@ -67,7 +67,7 @@ export async function fetchAllOnboarding(status?: string): Promise<OnboardingReq
       responsePreview: JSON.stringify(response).substring(0, 500)
     });
     
-    // ApiResponse 래퍼가 있는 경우 (메인 백엔드 - 8080)
+    // ApiResponse 래퍼가 있는 경우 (Ops 백엔드 - 8081)
     if (response && typeof response === 'object' && 'success' in response) {
       const apiResponse = response as { 
         success: boolean; 
@@ -117,7 +117,7 @@ export async function fetchAllOnboarding(status?: string): Promise<OnboardingReq
 /**
  * 온보딩 요청 상세 조회
  * 백엔드: GET /api/v1/ops/onboarding/requests/{id}
- * 메인 백엔드(8080): ApiResponse<OnboardingRequest> 래퍼 사용
+ * Ops 백엔드(8081): ApiResponse<OnboardingRequest> 래퍼 사용
  */
 export async function fetchOnboardingDetail(
   id: string
@@ -141,7 +141,7 @@ export async function fetchOnboardingDetail(
       responsePreview: JSON.stringify(response).substring(0, 300)
     });
     
-    // ApiResponse 래퍼가 있는 경우 (메인 백엔드 - 8080)
+    // ApiResponse 래퍼가 있는 경우 (Ops 백엔드 - 8081)
     if (response && typeof response === 'object' && 'success' in response) {
       const apiResponse = response as { success: boolean; data?: OnboardingRequest; message?: string };
       if (apiResponse.success && apiResponse.data) {

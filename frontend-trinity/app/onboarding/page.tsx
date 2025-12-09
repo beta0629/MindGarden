@@ -4,7 +4,7 @@
 /* eslint-disable no-magic-numbers */
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Header from "../../components/Header";
 import { COMPONENT_CSS } from "../../constants/css-variables";
@@ -12,14 +12,18 @@ import { TRINITY_CONSTANTS } from "../../constants/trinity";
 import { useOnboarding } from "../../hooks/useOnboarding";
 import { apiGet, getPublicOnboardingRequests, type OnboardingRequest } from "../../utils/api";
 import ProgressSteps from "../../components/onboarding/ProgressSteps";
+import AnimatedProgressBar from "../../components/onboarding/AnimatedProgressBar";
+import StepTransition from "../../components/onboarding/StepTransition";
 import ErrorMessage from "../../components/onboarding/ErrorMessage";
 import Step1BasicInfo from "../../components/onboarding/Step1BasicInfo";
+import Step1BasicInfoProgressive from "../../components/onboarding/Step1BasicInfoProgressive";
 import Step2BusinessType from "../../components/onboarding/Step2BusinessType";
 import Step3PricingPlan from "../../components/onboarding/Step3PricingPlan";
 import Step4Payment from "../../components/onboarding/Step4Payment";
 import Step5Completion from "../../components/onboarding/Step5Completion";
 import Step6DashboardSetup from "../../components/onboarding/Step6DashboardSetup";
 import OnboardingLogin from "../../components/onboarding/OnboardingLogin";
+import OnboardingWelcome from "../../components/onboarding/OnboardingWelcome";
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -27,12 +31,16 @@ export default function OnboardingPage() {
   const [accessError, setAccessError] = useState<string | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(true);
   const [existingRequests, setExistingRequests] = useState<OnboardingRequest[]>([]);
   const [showExistingRequests, setShowExistingRequests] = useState(false);
   const [loadingExistingRequests, setLoadingExistingRequests] = useState(false);
+  const prevStepRef = useRef<number>(1);
+  const [transitionDirection, setTransitionDirection] = useState<"forward" | "backward">("forward");
+  
   const {
     step,
-    setStep,
+    setStep: setStepInternal,
     loading,
     error,
     setError,
@@ -73,12 +81,25 @@ export default function OnboardingPage() {
     loadPricingPlans,
     loadBusinessCategories,
     loadBusinessCategoryItems,
+    loadRegionCodes,
+    regionCodes,
     handleSubmit,
     checkEmailDuplicate,
     sendEmailVerificationCode,
     verifyEmailCode,
     createPaymentMethod,
   } = useOnboarding();
+
+  // 단계 변경 시 방향 감지 및 애니메이션 방향 설정
+  const setStep = (newStep: number) => {
+    if (newStep > prevStepRef.current) {
+      setTransitionDirection("forward");
+    } else if (newStep < prevStepRef.current) {
+      setTransitionDirection("backward");
+    }
+    prevStepRef.current = newStep;
+    setStepInternal(newStep);
+  };
 
   // 요금제 정보 로드 (step 3 진입 시)
   useEffect(() => {
@@ -88,68 +109,124 @@ export default function OnboardingPage() {
   }, [step, pricingPlans.length, loadPricingPlans]);
 
   // 업종 카테고리 로드 (step 2 진입 시)
+  // 무한 루프 방지: 한 번만 실행되도록 ref 사용
+  const categoriesLoadedRef = useRef(false);
   useEffect(() => {
-    if (step === 2 && businessCategories.length === 0) {
-      loadBusinessCategories();
+    // step 2가 아니면 초기화하고 리턴
+    if (step !== 2) {
+      categoriesLoadedRef.current = false;
+      return;
     }
-  }, [step, businessCategories.length, loadBusinessCategories]);
+    
+    // 이미 로드 시도했으면 실행하지 않음 (무한 루프 방지)
+    if (categoriesLoadedRef.current) {
+      return;
+    }
+    
+    // 한 번만 실행
+    categoriesLoadedRef.current = true;
+    loadBusinessCategories();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step, loadBusinessCategories]); // loadBusinessCategories는 useCallback으로 안정화됨
 
   // 선택된 카테고리의 아이템 로드
+  // 무한 루프 방지: 한 번만 실행되도록 ref 사용
+  const categoryItemsLoadedRef = useRef<string | null>(null);
   useEffect(() => {
-    if (selectedCategoryId) {
-      loadBusinessCategoryItems(selectedCategoryId);
+    // selectedCategoryId가 없으면 초기화하고 리턴
+    if (!selectedCategoryId) {
+      categoryItemsLoadedRef.current = null;
+      return;
     }
-  }, [selectedCategoryId, loadBusinessCategoryItems]);
+    
+    // 이미 로드 시도했으면 실행하지 않음 (무한 루프 방지)
+    if (categoryItemsLoadedRef.current === selectedCategoryId) {
+      return;
+    }
+    
+    // 한 번만 실행
+    categoryItemsLoadedRef.current = selectedCategoryId;
+    loadBusinessCategoryItems(selectedCategoryId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCategoryId]); // loadBusinessCategoryItems는 useCallback으로 안정화됨
 
-  // 온보딩 접근 권한 확인 (로그인 상태 확인)
+  // 온보딩 접근 권한 확인 (로그인 상태 확인 - 선택사항)
   useEffect(() => {
+    // 환영 화면에서는 API 호출하지 않음
+    if (showWelcome) {
+      setAccessChecking(false);
+      setIsLoggedIn(false);
+      setShowLogin(false);
+      return;
+    }
+
     const checkOnboardingAccess = async () => {
       try {
-        // 현재 사용자 정보 조회 시도
+        // 현재 사용자 정보 조회 시도 (로그인된 경우에만 편의 기능 제공)
+        // 표준화: /api/v1/ 경로 사용
         try {
-          const response = await apiGet<{ success: boolean; data?: { tenantId?: string | null; email?: string } }>('/api/auth/current-user');
+          const response = await apiGet<{ success: boolean; data?: { tenantId?: string | null; email?: string } } | { tenantId?: string | null; email?: string }>('/api/v1/auth/current-user');
           
-          if (response.success && response.data) {
-            const user = response.data;
+          // apiGet이 이미 ApiResponse의 data를 추출하므로, response는 직접 user 객체일 수 있음
+          let user: { tenantId?: string | null; email?: string } | null = null;
+          
+          if (response && typeof response === 'object') {
+            // ApiResponse 래퍼가 있는 경우
+            if ('success' in response && 'data' in response && response.success && response.data) {
+              user = response.data;
+            } 
+            // 직접 user 객체인 경우
+            else if ('email' in response || 'tenantId' in response) {
+              user = response as { tenantId?: string | null; email?: string };
+            }
+          }
+          
+          if (user) {
             setIsLoggedIn(true);
             setShowLogin(false);
             
             // 이미 로그인된 사용자는 이메일 정보를 자동으로 채움
+            // React 경고 방지: 상태 업데이트를 다음 렌더링 사이클로 지연
             if (user.email) {
               const userEmail = user.email; // 타입 가드
-              setFormData(prev => ({
-                ...prev,
-                contactEmail: userEmail,
-                // 필요한 경우 다른 필드도 채울 수 있음
-              }));
-              // 이메일 인증 완료 처리 (이미 로그인된 사용자이므로)
-              setEmailVerified(true);
-              
-              // 진행 중인 온보딩 요청 조회
-              loadExistingOnboardingRequests(userEmail);
+              // setTimeout으로 상태 업데이트를 다음 이벤트 루프로 지연
+              setTimeout(() => {
+                setFormData(prev => ({
+                  ...prev,
+                  contactEmail: userEmail,
+                  // 필요한 경우 다른 필드도 채울 수 있음
+                }));
+                // 이메일 인증 완료 처리 (이미 로그인된 사용자이므로)
+                setEmailVerified(true);
+                
+                // 진행 중인 온보딩 요청 조회
+                loadExistingOnboardingRequests(userEmail);
+              }, 0);
             }
           } else {
-            // 로그인되지 않은 경우 로그인 옵션 표시
+            // 로그인되지 않은 경우 - 온보딩 바로 시작 가능
             setIsLoggedIn(false);
-            setShowLogin(true);
+            setShowLogin(false); // 로그인 화면 표시하지 않음
           }
         } catch (err) {
-          // 인증되지 않은 사용자이거나 API 오류인 경우
+          // 네트워크 오류 등 예상치 못한 오류만 catch
+          // 400/401/403 오류는 api.ts에서 조용히 처리되어 여기까지 오지 않음
+          // Connection failed는 네트워크 오류 (백엔드 미연결) - 조용히 처리
           setIsLoggedIn(false);
-          setShowLogin(true);
+          setShowLogin(false); // 로그인 화면 표시하지 않음
         }
         
         setAccessChecking(false);
       } catch (err) {
-        console.error('온보딩 접근 권한 확인 실패:', err);
+        // 예상치 못한 오류도 무시하고 온보딩 진행 (에러 로그 출력 안 함)
         setAccessChecking(false);
-        // 오류 발생 시 로그인 화면 표시
-        setShowLogin(true);
+        setIsLoggedIn(false);
+        setShowLogin(false); // 로그인 화면 표시하지 않음
       }
     };
 
     checkOnboardingAccess();
-  }, [router, setFormData, setEmailVerified]);
+  }, [router, setFormData, setEmailVerified, showWelcome]);
 
   // 로그인 성공 핸들러
   const handleLoginSuccess = (user: any) => {
@@ -171,6 +248,11 @@ export default function OnboardingPage() {
     setShowLogin(false);
   };
 
+  // 환영 화면 시작 버튼 핸들러
+  const handleWelcomeStart = () => {
+    setShowWelcome(false);
+  };
+
   // 접근 권한 확인 중이면 로딩 표시
   if (accessChecking) {
     return (
@@ -179,6 +261,20 @@ export default function OnboardingPage() {
         <main className="container">
           <div className="trinity-onboarding__loading-container">
             접근 권한 확인 중...
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // 환영 화면 표시
+  if (showWelcome) {
+    return (
+      <div className={COMPONENT_CSS.ONBOARDING.CONTAINER}>
+        <Header />
+        <main className="container">
+          <div className={COMPONENT_CSS.ONBOARDING.FORM}>
+            <OnboardingWelcome onStart={handleWelcomeStart} />
           </div>
         </main>
       </div>
@@ -273,13 +369,15 @@ export default function OnboardingPage() {
 
           <ErrorMessage message={error} />
 
-          <ProgressSteps currentStep={step} />
+          <AnimatedProgressBar currentStep={step} totalSteps={TRINITY_CONSTANTS.ONBOARDING_STEPS.length} />
 
           <form onSubmit={handleSubmit}>
-            {step === 1 && (
-              <Step1BasicInfo
+            <StepTransition step={1} currentStep={step} direction={transitionDirection}>
+              {step === 1 && (
+                <Step1BasicInfoProgressive
                 formData={formData}
                 setFormData={setFormData}
+                onStepComplete={() => setStep(2)}
                 emailFormatError={emailFormatError}
                 emailDuplicateChecked={emailDuplicateChecked}
                 emailDuplicateChecking={emailDuplicateChecking}
@@ -302,11 +400,15 @@ export default function OnboardingPage() {
                 checkEmailDuplicate={checkEmailDuplicate}
                 setError={setError}
                 setEmailFormatError={setEmailFormatError}
+                regionCodes={regionCodes}
+                loadRegionCodes={loadRegionCodes}
               />
-            )}
+              )}
+            </StepTransition>
 
-            {step === 2 && (
-              <Step2BusinessType
+            <StepTransition step={2} currentStep={step} direction={transitionDirection}>
+              {step === 2 && (
+                <Step2BusinessType
                 formData={formData}
                 setFormData={setFormData}
                 businessCategories={businessCategories}
@@ -314,12 +416,15 @@ export default function OnboardingPage() {
                 selectedCategoryId={selectedCategoryId}
                 setSelectedCategoryId={setSelectedCategoryId}
                 loading={loading}
+                loadBusinessCategories={loadBusinessCategories}
               />
-            )}
+              )}
+            </StepTransition>
 
-            {step === 3 && (
-              <>
-                <Step3PricingPlan
+            <StepTransition step={3} currentStep={step} direction={transitionDirection}>
+              {step === 3 && (
+                <>
+                  <Step3PricingPlan
                   formData={formData}
                   setFormData={setFormData}
                   pricingPlans={pricingPlans}
@@ -336,11 +441,13 @@ export default function OnboardingPage() {
                     온보딩 승인 후 서비스 이용 시점에 결제 수단을 등록하실 수 있습니다.
                   </p>
                 </div>
-              </>
-            )}
+                </>
+              )}
+            </StepTransition>
 
             {/* Step 4는 일단 숨김 (추후 활성화 가능) */}
-            {false && step === 4 && (
+            <StepTransition step={4} currentStep={step} direction={transitionDirection}>
+              {false && step === 4 && (
               <Step4Payment
                 formData={formData}
                 setFormData={setFormData}
@@ -354,22 +461,34 @@ export default function OnboardingPage() {
                 createPaymentMethod={createPaymentMethod}
                 setError={setError}
               />
-                )}
+              )}
+            </StepTransition>
 
-            {step === 5 && (
-              <Step5Completion formData={formData} />
-            )}
+            <StepTransition step={5} currentStep={step} direction={transitionDirection}>
+              {step === 5 && (
+                <Step5Completion formData={formData} />
+              )}
+            </StepTransition>
 
-            {/* Navigation Buttons */}
-            {(step < 5 || step === 6) && (
-                <div className="trinity-onboarding__buttons">
+            <StepTransition step={6} currentStep={step} direction={transitionDirection}>
+              {step === 6 && (
+                <Step6DashboardSetup
+                  formData={formData}
+                  setFormData={setFormData}
+                />
+              )}
+            </StepTransition>
+
+            {/* Navigation Buttons - Step 1은 순차적 진행 컴포넌트 내부 버튼 사용 */}
+            {step !== 1 && (step < 5 || step === 6) && (
+                <div className="trinity-progressive-fields__navigation">
                 {step > 1 && (
                   <button
                     type="button"
                     onClick={() => setStep(step - 1)}
-                    className={COMPONENT_CSS.ONBOARDING.BUTTON_SECONDARY}
+                    className="trinity-progressive-fields__nav-button trinity-progressive-fields__nav-button--previous"
                   >
-                    {TRINITY_CONSTANTS.MESSAGES.PREVIOUS}
+                    ← {TRINITY_CONSTANTS.MESSAGES.PREVIOUS}
                   </button>
                 )}
                 <button
@@ -385,10 +504,9 @@ export default function OnboardingPage() {
                       // handleSubmit이 자동으로 호출됨
                     }
                   }}
-                  className={COMPONENT_CSS.ONBOARDING.BUTTON}
+                  className="trinity-progressive-fields__nav-button trinity-progressive-fields__nav-button--next"
                   disabled={
                     loading || 
-                    (step === 1 && (!formData.tenantName || !formData.adminPassword || !formData.adminPasswordConfirm || formData.adminPassword !== formData.adminPasswordConfirm || formData.adminPassword.length < 8)) ||
                     (step === 2 && !formData.businessType) || 
                     (step === 3 && !formData.planId) ||
                     (step === 6 && false) // Step6DashboardSetup 내부에서 검증
@@ -397,12 +515,12 @@ export default function OnboardingPage() {
                   {loading 
                     ? TRINITY_CONSTANTS.MESSAGES.PROCESSING 
                     : step === 3
-                      ? TRINITY_CONSTANTS.MESSAGES.NEXT
+                      ? `${TRINITY_CONSTANTS.MESSAGES.NEXT} →`
                       : step === 6
-                        ? TRINITY_CONSTANTS.MESSAGES.SUBMIT
+                        ? `${TRINITY_CONSTANTS.MESSAGES.SUBMIT} →`
                         : step < 4 
-                          ? TRINITY_CONSTANTS.MESSAGES.NEXT 
-                          : TRINITY_CONSTANTS.MESSAGES.SUBMIT}
+                          ? `${TRINITY_CONSTANTS.MESSAGES.NEXT} →`
+                          : `${TRINITY_CONSTANTS.MESSAGES.SUBMIT} →`}
                 </button>
               </div>
             )}

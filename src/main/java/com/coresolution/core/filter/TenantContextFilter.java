@@ -146,10 +146,20 @@ public class TenantContextFilter implements Filter {
     }
     
     /**
-     * 공개 API 여부 확인 (SecurityConfig의 permitAll 경로와 일치)
+     * 공개 API 여부 확인
+     * 
+     * <p>SecurityConfig의 permitAll 경로와 일치해야 합니다.</p>
+     * <p>온보딩 프로세스에서 사용하는 API는 로그인 전 접근이 필요하므로 공개 API로 설정합니다.</p>
+     * 
+     * <p>표준화 원칙 준수:</p>
+     * <ul>
+     *   <li>API 설계 표준: /api/v1/ 접두사 사용</li>
+     *   <li>보안 표준: SecurityConfig와 일치하는 공개 API 목록</li>
+     * </ul>
      * 
      * @param requestURI 요청 URI (쿼리 파라미터 포함)
-     * @return 공개 API이면 true
+     * @return 공개 API이면 true, 그렇지 않으면 false
+     * @see com.coresolution.consultation.config.SecurityConfig
      */
     private boolean isPublicApi(String requestURI) {
         // 쿼리 파라미터 제거 (예: /api/v1/common-codes?codeGroup=NOTIFICATION_TYPE -> /api/v1/common-codes)
@@ -158,17 +168,20 @@ public class TenantContextFilter implements Filter {
             path = path.substring(0, path.indexOf("?"));
         }
         
-        // 공개 API 경로 목록 (SecurityConfig의 permitAll 경로와 일치)
+        // 공개 API 경로 목록 (SecurityConfig의 permitAll 경로와 일치해야 함)
+        // 표준화 원칙: 온보딩 관련 API는 공개 API로 설정
         String[] publicPaths = {
-            "/api/v1/onboarding",
-            "/api/v1/ops/plans/active",
-            "/api/v1/ops/plans/code",
-            "/api/v1/ops/auth",
-            "/api/v1/auth",
-            "/api/v1/common-codes",
-            "/api/v1/admin/css-themes",
-            "/actuator/health",
-            "/actuator/info"
+            "/api/v1/onboarding",              // 온보딩 API (테넌트 등록)
+            "/api/v1/ops/plans/active",        // 활성화된 요금제 목록 (온보딩에서 사용)
+            "/api/v1/ops/plans/code",          // plan_code로 요금제 조회 (온보딩에서 사용)
+            "/api/v1/ops/auth",                 // Ops Portal 인증 API
+            "/api/v1/auth",                     // 인증 API
+            "/api/v1/common-codes",             // 공통코드 API
+            "/api/v1/business-categories",      // 업종 카테고리 API (온보딩에서 사용)
+            "/api/business-categories",        // 레거시 업종 카테고리 API (하위 호환성)
+            "/api/v1/admin/css-themes",         // CSS 테마 API
+            "/actuator/health",                 // 헬스체크
+            "/actuator/info"                    // 정보 조회
         };
         
         for (String publicPath : publicPaths) {

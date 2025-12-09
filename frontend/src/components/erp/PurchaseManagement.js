@@ -98,11 +98,9 @@ const PurchaseManagement = () => {
 
   if (sessionLoading) {
     return (
-      <SimpleLayout 
-        title="구매 관리"
-        loading={true}
-        loadingText="세션 정보를 불러오는 중..."
-      />
+      <SimpleLayout title="구매 관리">
+        <UnifiedLoading type="page" text="세션 정보를 불러오는 중..." />
+      </SimpleLayout>
     );
   }
 

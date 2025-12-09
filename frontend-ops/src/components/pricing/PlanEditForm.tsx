@@ -127,8 +127,8 @@ export function PlanEditForm({ plan, onClose }: Props) {
 
   return (
     <form className="form-card" onSubmit={handleSubmit}>
-      <div className="form-footer" style={{ justifyContent: "space-between" }}>
-        <h2 style={{ margin: 0 }}>요금제 수정</h2>
+      <div className="ops-form-footer">
+        <h2 className="ops-form-footer__title">요금제 수정</h2>
         <button
           type="button"
           className="ghost-button"
@@ -219,7 +219,7 @@ export function PlanEditForm({ plan, onClose }: Props) {
       </div>
 
       <div className="form-footer">
-        <div style={{ display: "flex", gap: "0.75rem" }}>
+        <div className="ops-form-footer__actions">
           <MGButton
             type="button"
             variant="danger"
@@ -231,8 +231,6 @@ export function PlanEditForm({ plan, onClose }: Props) {
           >
             비활성화
           </MGButton>
-        </div>
-        <div style={{ display: "flex", gap: "0.75rem" }}>
           <MGButton
             type="submit"
             variant="primary"

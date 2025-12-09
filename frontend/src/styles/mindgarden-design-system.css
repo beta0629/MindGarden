@@ -326,6 +326,10 @@
 .mg-card__header {
   padding: var(--spacing-md, 1rem);
   border-bottom: 1px solid var(--cs-secondary-200, #e5e7eb);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--spacing-sm, 0.5rem);
 }
 
 .mg-card__body {
@@ -335,6 +339,86 @@
 .mg-card__footer {
   padding: var(--spacing-md, 1rem);
   border-top: 1px solid var(--cs-secondary-200, #e5e7eb);
+}
+
+/* 카드 헤더 내부 구조 */
+.mg-v2-card-header-content {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-sm, 0.5rem);
+  flex: 1;
+  min-width: 0; /* 텍스트 오버플로우 방지 */
+}
+
+.mg-v2-card-header-text {
+  flex: 1;
+  min-width: 0; /* 텍스트 오버플로우 방지 */
+}
+
+/* 상세 정보 필드 (모달용) */
+.mg-v2-detail-field {
+  margin-bottom: var(--spacing-md, 1rem);
+  padding-bottom: var(--spacing-sm, 0.5rem);
+  border-bottom: 1px solid var(--cs-secondary-200, #e5e7eb);
+}
+
+.mg-v2-detail-field:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.mg-v2-detail-label {
+  display: block;
+  font-size: var(--font-size-sm, 0.875rem);
+  font-weight: var(--font-weight-semibold, 600);
+  color: var(--cs-secondary-700, #374151);
+  margin-bottom: var(--spacing-xs, 0.25rem);
+}
+
+.mg-v2-detail-value {
+  font-size: var(--font-size-base, 1rem);
+  color: var(--cs-secondary-900, #111827);
+  padding: var(--spacing-xs, 0.25rem) 0;
+}
+
+/* 모바일 반응형 */
+@media (max-width: 767px) {
+  .mg-card__header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .mg-card__header .mg-v2-badge {
+    align-self: flex-start;
+  }
+  
+  .mg-card__body {
+    padding: var(--spacing-sm, 0.5rem) var(--spacing-md, 1rem);
+  }
+  
+  .mg-card__footer {
+    padding: var(--spacing-sm, 0.5rem) var(--spacing-md, 1rem);
+  }
+  
+  .mg-v2-info-list {
+    gap: var(--spacing-xs, 0.25rem);
+  }
+  
+  .mg-v2-info-item {
+    padding: var(--spacing-xs, 0.25rem) 0;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-xs, 0.25rem);
+  }
+  
+  .mg-v2-info-label {
+    font-size: var(--font-size-xs, 0.75rem);
+  }
+  
+  .mg-v2-info-value {
+    font-size: var(--font-size-sm, 0.875rem);
+  }
 }
 
 /* 클릭 가능한 카드 */

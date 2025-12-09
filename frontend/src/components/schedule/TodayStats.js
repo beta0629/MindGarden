@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { apiGet } from '../../utils/ajax';
+import UnifiedLoading from '../common/UnifiedLoading';
 import './TodayStats.css';
 
 /**
@@ -82,7 +83,7 @@ const TodayStats = () => {
     if (loading) {
         return (
             <div className="stats-grid">
-                <div className="mg-loading">로딩중...</div>
+                <UnifiedLoading type="inline" text="통계를 불러오는 중..." />
             </div>
         );
     }

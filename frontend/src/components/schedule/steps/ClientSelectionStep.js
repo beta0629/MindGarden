@@ -216,7 +216,7 @@ const ClientSelectionStep = ({
     if (loading) {
         return (
             <div className="client-selection-step">
-                <div className="mg-loading">로딩중...</div>
+                <UnifiedLoading type="inline" text="내담자 목록을 불러오는 중..." />
             </div>
         );
     }

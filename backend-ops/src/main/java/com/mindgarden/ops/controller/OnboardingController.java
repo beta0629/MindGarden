@@ -6,6 +6,7 @@ import com.mindgarden.ops.domain.onboarding.OnboardingRequest;
 import com.mindgarden.ops.domain.onboarding.OnboardingStatus;
 import com.mindgarden.ops.service.onboarding.OnboardingService;
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/v1/ops/onboarding")
 public class OnboardingController {
@@ -57,7 +59,16 @@ public class OnboardingController {
         @PathVariable UUID id,
         @RequestBody @Valid OnboardingDecisionRequest payload
     ) {
-        OnboardingRequest updated = onboardingService.decide(id, payload.status(), payload.actorId(), payload.note());
-        return ResponseEntity.ok(updated);
+        log.info("[OnboardingController] 결정 저장 요청 - requestId={}, status={}, actorId={}, note={}", 
+            id, payload.status(), payload.actorId(), payload.note() != null ? "있음" : "없음");
+        
+        try {
+            OnboardingRequest updated = onboardingService.decide(id, payload.status(), payload.actorId(), payload.note());
+            log.info("[OnboardingController] 결정 저장 완료 - requestId={}, 최종 상태={}", id, updated.getStatus());
+            return ResponseEntity.ok(updated);
+        } catch (Exception e) {
+            log.error("[OnboardingController] 결정 저장 실패 - requestId={}, 오류={}", id, e.getMessage(), e);
+            throw e;
+        }
     }
 }

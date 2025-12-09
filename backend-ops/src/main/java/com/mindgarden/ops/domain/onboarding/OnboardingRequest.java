@@ -17,6 +17,12 @@ public class OnboardingRequest extends BaseEntity {
     @Column(nullable = false, length = 120)
     private String tenantName;
 
+    @Column(length = 255)
+    private String brandName; // 브랜드명 (선택적, 헤더/메뉴에 표시)
+
+    @Column(length = 50)
+    private String region; // 지역 정보 (선택적, 예: "서울특별시", "경기도")
+
     @Column(nullable = false, length = 64)
     private String requestedBy;
 
@@ -54,6 +60,22 @@ public class OnboardingRequest extends BaseEntity {
 
     public void setTenantName(String tenantName) {
         this.tenantName = tenantName;
+    }
+
+    public String getBrandName() {
+        return brandName;
+    }
+
+    public void setBrandName(String brandName) {
+        this.brandName = brandName;
+    }
+
+    public String getRegion() {
+        return region;
+    }
+
+    public void setRegion(String region) {
+        this.region = region;
     }
 
     public String getRequestedBy() {

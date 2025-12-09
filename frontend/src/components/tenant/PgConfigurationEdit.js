@@ -4,7 +4,7 @@ import { useSession } from '../../contexts/SessionContext';
 import { getPgConfigurationDetail, updatePgConfiguration } from '../../utils/pgApi';
 import { showNotification } from '../../utils/notification';
 import SimpleLayout from '../layout/SimpleLayout';
-import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import UnifiedLoading from '../../components/common/UnifiedLoading';
 import PgConfigurationForm from './PgConfigurationForm';
 
 /**
@@ -67,7 +67,7 @@ const PgConfigurationEdit = () => {
   if (sessionLoading || loading) {
     return (
       <SimpleLayout>
-        <div className="mg-loading">로딩중...</div>
+        <UnifiedLoading type="page" text="PG 설정을 불러오는 중..." />
       </SimpleLayout>
     );
   }

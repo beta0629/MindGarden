@@ -1,0 +1,65 @@
+/**
+ * API 엔드포인트 상수
+ * 하드코딩 금지 원칙에 따라 모든 API 경로를 여기에 정의
+ * 
+ * @author CoreSolution
+ * @version 1.0.0
+ */
+
+/**
+ * Ops Portal API 경로 상수
+ */
+export const OPS_API_PATHS = {
+  // 인증
+  AUTH: {
+    LOGIN: "/ops/auth/login",
+    LOGOUT: "/ops/auth/logout"
+  },
+  
+  // 온보딩
+  ONBOARDING: {
+    PENDING: "/ops/onboarding/requests/pending",
+    ALL: "/ops/onboarding/requests",
+    DETAIL: (id: string) => `/ops/onboarding/requests/${id}`,
+    DECISION: (id: string) => `/ops/onboarding/requests/${id}/decision`,
+    RETRY: (id: string) => `/ops/onboarding/requests/${id}/retry`
+  },
+  
+  // 요금제
+  PRICING: {
+    PLANS: "/ops/plans",
+    PLAN_DETAIL: (id: string) => `/ops/plans/${id}`,
+    PLAN_DEACTIVATE: (id: string) => `/ops/plans/${id}`,
+    ADDONS: "/ops/plans/addons",
+    ADDON_DETAIL: (id: string) => `/ops/plans/addons/${id}`,
+    ADDON_DEACTIVATE: (id: string) => `/ops/plans/addons/${id}`,
+    ATTACH_ADDON: (planId: string) => `/ops/plans/${planId}/addons`
+  },
+  
+  // Feature Flag
+  FEATURE_FLAGS: {
+    ALL: "/ops/feature-flags",
+    CREATE: "/ops/feature-flags",
+    TOGGLE: (id: string) => `/ops/feature-flags/${id}/toggle`
+  },
+  
+  // 대시보드
+  DASHBOARD: {
+    METRICS: "/ops/dashboard/metrics"
+  },
+  
+  // 테넌트
+  TENANTS: {
+    ALL: "/ops/tenants",
+    ADMINS: (tenantId: string) => `/ops/tenants/${tenantId}/admins`
+  }
+} as const;
+
+/**
+ * API Base URL 상수
+ */
+export const API_BASE_URL = {
+  LOCAL: "http://localhost:8081/api/v1",
+  PRODUCTION: "" // 상대 경로 사용 (Nginx 프록시)
+} as const;
+

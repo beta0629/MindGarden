@@ -1,5 +1,5 @@
 server:
-  port: 8081
+  port: ${SERVER_PORT:8081}  # 기본값: 8081 (로컬), 개발/운영은 프로파일에서 오버라이드
   servlet:
     context-path: /
 
@@ -7,7 +7,7 @@ spring:
   application:
     name: mindgarden-ops-backend
   profiles:
-    active: dev  # 개발 DB(MySQL) 사용
+    active: local  # 로컬 개발 환경 기본값 (포트 8081)
     group:
       staging: staging
       prod: prod

@@ -1,6 +1,7 @@
 package com.mindgarden.ops.service.pricing;
 
 import com.mindgarden.ops.controller.dto.PlanAddonAttachRequest;
+import com.mindgarden.ops.exception.EntityNotFoundException;
 import com.mindgarden.ops.controller.dto.PricingAddonCreateRequest;
 import com.mindgarden.ops.controller.dto.PricingPlanCreateRequest;
 import com.mindgarden.ops.controller.dto.PricingAddonUpdateRequest;
@@ -101,9 +102,9 @@ public class PricingPlanService {
     @Transactional
     public void attachAddon(UUID planId, PlanAddonAttachRequest request, String actorId, String actorRole) {
         PricingPlan plan = planRepository.findById(planId)
-            .orElseThrow(() -> new IllegalArgumentException("요금제를 찾을 수 없습니다."));
+            .orElseThrow(() -> new EntityNotFoundException("요금제", planId));
         PricingAddon addon = addonRepository.findByAddonCode(request.addonCode())
-            .orElseThrow(() -> new IllegalArgumentException("애드온을 찾을 수 없습니다."));
+            .orElseThrow(() -> new EntityNotFoundException("애드온", request.addonCode()));
 
         planAddonRepository.findByPlanIdAndAddonId(plan.getId(), addon.getId())
             .ifPresent(mapping -> {
@@ -135,7 +136,7 @@ public class PricingPlanService {
     @Transactional
     public PricingPlan updatePlan(UUID planId, PricingPlanUpdateRequest request, String actorId, String actorRole) {
         PricingPlan plan = planRepository.findById(planId)
-            .orElseThrow(() -> new IllegalArgumentException("요금제를 찾을 수 없습니다."));
+            .orElseThrow(() -> new EntityNotFoundException("요금제", planId));
 
         plan.setDisplayName(request.displayName());
         plan.setDisplayNameKo(request.displayNameKo());
@@ -168,7 +169,7 @@ public class PricingPlanService {
     @Transactional
     public void deactivatePlan(UUID planId, String actorId, String actorRole) {
         PricingPlan plan = planRepository.findById(planId)
-            .orElseThrow(() -> new IllegalArgumentException("요금제를 찾을 수 없습니다."));
+            .orElseThrow(() -> new EntityNotFoundException("요금제", planId));
 
         if (!plan.isActive()) {
             return;
@@ -191,7 +192,7 @@ public class PricingPlanService {
     @Transactional
     public PricingAddon updateAddon(UUID addonId, PricingAddonUpdateRequest request, String actorId, String actorRole) {
         PricingAddon addon = addonRepository.findById(addonId)
-            .orElseThrow(() -> new IllegalArgumentException("애드온을 찾을 수 없습니다."));
+            .orElseThrow(() -> new EntityNotFoundException("애드온", addonId));
 
         addon.setDisplayName(request.displayName());
         addon.setDisplayNameKo(request.displayNameKo());
@@ -225,7 +226,7 @@ public class PricingPlanService {
     @Transactional
     public void deactivateAddon(UUID addonId, String actorId, String actorRole) {
         PricingAddon addon = addonRepository.findById(addonId)
-            .orElseThrow(() -> new IllegalArgumentException("애드온을 찾을 수 없습니다."));
+            .orElseThrow(() -> new EntityNotFoundException("애드온", addonId));
 
         if (!addon.isActive()) {
             return;

@@ -1,4 +1,5 @@
 import { clientApiFetch } from "@/services/clientApi";
+import { OPS_API_PATHS } from "@/constants/api";
 import {
   PlanAddonAttachPayload,
   PricingAddon,
@@ -54,7 +55,7 @@ type UpdateAddonPayload = Pick<
 export async function createPricingPlan(
   payload: CreatePlanPayload
 ): Promise<PricingPlan> {
-  return clientApiFetch<PricingPlan>("/ops/plans", {
+  return clientApiFetch<PricingPlan>(OPS_API_PATHS.PRICING.PLANS, {
     method: "POST",
     body: JSON.stringify(payload)
   });
@@ -64,14 +65,14 @@ export async function updatePricingPlan(
   planId: string,
   payload: UpdatePlanPayload
 ): Promise<PricingPlan> {
-  return clientApiFetch<PricingPlan>(`/ops/plans/${planId}`, {
+  return clientApiFetch<PricingPlan>(OPS_API_PATHS.PRICING.PLAN_DETAIL(planId), {
     method: "PATCH",
     body: JSON.stringify(payload)
   });
 }
 
 export async function deactivatePricingPlan(planId: string): Promise<void> {
-  await clientApiFetch(`/ops/plans/${planId}`, {
+  await clientApiFetch(OPS_API_PATHS.PRICING.PLAN_DEACTIVATE(planId), {
     method: "DELETE"
   });
 }
@@ -79,7 +80,7 @@ export async function deactivatePricingPlan(planId: string): Promise<void> {
 export async function createPricingAddon(
   payload: CreateAddonPayload
 ): Promise<PricingAddon> {
-  return clientApiFetch<PricingAddon>("/ops/plans/addons", {
+  return clientApiFetch<PricingAddon>(OPS_API_PATHS.PRICING.ADDONS, {
     method: "POST",
     body: JSON.stringify(payload)
   });
@@ -89,14 +90,14 @@ export async function updatePricingAddon(
   addonId: string,
   payload: UpdateAddonPayload
 ): Promise<PricingAddon> {
-  return clientApiFetch<PricingAddon>(`/ops/plans/addons/${addonId}`, {
+  return clientApiFetch<PricingAddon>(OPS_API_PATHS.PRICING.ADDON_DETAIL(addonId), {
     method: "PATCH",
     body: JSON.stringify(payload)
   });
 }
 
 export async function deactivatePricingAddon(addonId: string): Promise<void> {
-  await clientApiFetch(`/ops/plans/addons/${addonId}`, {
+  await clientApiFetch(OPS_API_PATHS.PRICING.ADDON_DEACTIVATE(addonId), {
     method: "DELETE"
   });
 }
@@ -105,7 +106,7 @@ export async function attachAddonToPlan(
   planId: string,
   payload: PlanAddonAttachPayload
 ): Promise<void> {
-  await clientApiFetch(`/ops/plans/${planId}/addons`, {
+  await clientApiFetch(OPS_API_PATHS.PRICING.ATTACH_ADDON(planId), {
     method: "POST",
     body: JSON.stringify(payload)
   });

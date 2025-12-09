@@ -4,7 +4,7 @@ import { useSession } from '../../contexts/SessionContext';
 import { apiGet } from '../../utils/ajax';
 import { Bell, MessageSquare, AlertCircle, Info, AlertTriangle } from 'lucide-react';
 import SimpleLayout from '../layout/SimpleLayout';
-import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import UnifiedLoading from '../../components/common/UnifiedLoading';
 import '../../styles/unified-design-tokens.css';
 
 /**
@@ -250,7 +250,7 @@ const UnifiedNotifications = () => {
         </div>
 
         {/* 로딩 */}
-        {loading && <div className="mg-loading">로딩중...</div>}
+        {loading && <UnifiedLoading type="inline" text="알림을 불러오는 중..." />}
 
         {/* 시스템 공지 목록 */}
         {!loading && activeTab === 'system' && (

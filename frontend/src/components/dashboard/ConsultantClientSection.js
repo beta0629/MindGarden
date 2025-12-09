@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiGet } from '../../utils/ajax';
 import { Users, Calendar, TrendingUp } from 'lucide-react';
+import UnifiedLoading from '../common/UnifiedLoading';
 import '../../styles/unified-design-tokens.css';
 
 /**
@@ -141,7 +142,7 @@ const ConsultantClientSection = ({ userId }) => {
     return (
       <div className="mg-v2-card">
         <div className="mg-v2-card-body">
-          <div className="mg-loading">로딩중...</div>
+          <UnifiedLoading type="inline" text="내담자 목록을 불러오는 중..." />
         </div>
       </div>
     );

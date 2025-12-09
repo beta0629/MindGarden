@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import UnifiedLoading from '../common/UnifiedLoading';
 import { useSession } from '../../contexts/SessionContext';
 import { useNotification } from '../../contexts/NotificationContext';
 import { apiGet } from '../../utils/ajax';
@@ -133,10 +133,7 @@ const SystemNotifications = () => {
 
         {/* 로딩 */}
         {loading && (
-          <div className="mg-loading-container">
-            <div className="mg-spinner"></div>
-            <p>공지를 불러오는 중...</p>
-          </div>
+          <UnifiedLoading type="inline" text="공지를 불러오는 중..." />
         )}
 
         {/* 공지 목록 */}

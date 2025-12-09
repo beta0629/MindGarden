@@ -11,4 +11,9 @@
 @import './components/pricing.css';
 @import './components/footer.css';
 @import './components/onboarding.css';
+@import './components/step-transition.css';
+@import './components/animated-progress-bar.css';
+@import './components/input-animation.css';
+@import './components/progressive-input-field.css';
+@import './components/onboarding-welcome.css';
 

@@ -390,10 +390,7 @@ const DiscountPaymentConfirmationModal = ({
             disabled={loading || selectedMappings.length === 0}
           >
             {loading ? (
-              <>
-                <span className="mg-v2-spinner"></span>
-                처리 중...
-              </>
+              <UnifiedLoading type="inline" text="처리 중..." />
             ) : (
               <>
                 <CheckCircle size={18} />

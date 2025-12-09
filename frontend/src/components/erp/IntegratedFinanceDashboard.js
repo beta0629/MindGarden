@@ -352,7 +352,11 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
 
 
   if (loading) {
-    return <UnifiedLoading text="데이터를 불러오는 중..." size="medium" type="inline" />;
+    return (
+      <SimpleLayout>
+        <UnifiedLoading type="page" text="데이터를 불러오는 중..." />
+      </SimpleLayout>
+    );
   }
 
   if (error) {

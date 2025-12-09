@@ -52,10 +52,27 @@ export default function MGButton({
 
   const handleClick = useCallback(
     async (e: React.MouseEvent<HTMLButtonElement>) => {
+      // type="submit"인 경우 form의 onSubmit이 처리하도록 함
+      // onClick이 없으면 form submit을 방해하지 않고 그대로 진행
+      if (type === "submit" && !onClick) {
+        // form의 onSubmit이 처리하도록 그대로 진행 (아무것도 하지 않음)
+        return;
+      }
+
       // 이미 처리 중이거나 비활성화된 경우 무시
       if (isProcessing || disabled || loading) {
         e.preventDefault();
+        e.stopPropagation();
         return;
+      }
+
+      // Link 안에 있는 버튼인 경우 (부모가 Link인 경우) preventDefault 하지 않음
+      const isInsideLink = (e.currentTarget.parentElement?.tagName === "A") || 
+                          (e.currentTarget.closest("a") !== null);
+
+      // type="submit"이 아니고 Link 안에 있지 않은 경우에만 preventDefault
+      if (type !== "submit" && !isInsideLink) {
+        e.preventDefault();
       }
 
       // 중복 클릭 방지 활성화
@@ -79,7 +96,7 @@ export default function MGButton({
         }
       }
     },
-    [isProcessing, disabled, loading, preventDoubleClick, clickDelay, onClick]
+    [isProcessing, disabled, loading, preventDoubleClick, clickDelay, onClick, type]
   );
 
   // 버튼 클래스 구성

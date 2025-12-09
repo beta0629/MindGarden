@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import { useSession } from '../../contexts/SessionContext';
 import { showNotification } from '../../utils/notification';
-import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import UnifiedLoading from '../../components/common/UnifiedLoading';
 import './PgConfigurationForm.css';
 
 /**
@@ -490,10 +490,7 @@ const PgConfigurationForm = ({
           aria-label={mode === 'create' ? 'PG 설정 등록' : 'PG 설정 수정'}
         >
           {loading ? (
-            <>
-              <div className="mg-loading">로딩중...</div>
-              <span aria-live="polite" className="sr-only">저장 중...</span>
-            </>
+            <UnifiedLoading type="inline" text="저장 중..." />
           ) : (
             <>
               <Save size={18} aria-hidden="true" />

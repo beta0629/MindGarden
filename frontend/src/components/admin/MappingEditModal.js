@@ -354,7 +354,7 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
                         onClick={ handleSubmit }
                         disabled={ loading }
                     >
-                        { loading ? <div className="mg-loading">로딩중...</div> : (
+                        { loading ? <UnifiedLoading type="inline" text="수정 중..." /> : (
                             <>
                                 <Edit3 size={20} className="mg-v2-icon-inline" />
                                 수정 완료

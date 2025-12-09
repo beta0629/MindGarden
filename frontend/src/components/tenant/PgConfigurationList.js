@@ -19,7 +19,7 @@ import {
 import { useSession } from '../../contexts/SessionContext';
 import { getPgConfigurations, deletePgConfiguration, testPgConnection } from '../../utils/pgApi';
 import { showNotification } from '../../utils/notification';
-import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import UnifiedLoading from '../../components/common/UnifiedLoading';
 import MGButton from '../../components/common/MGButton'; // 임시 비활성화
 import './PgConfigurationList.css';
 
@@ -186,7 +186,7 @@ const PgConfigurationList = () => {
   if (sessionLoading || loading && configurations.length === 0) {
     return (
       <SimpleLayout>
-        <div className="mg-loading">로딩중...</div>
+        <UnifiedLoading type="page" text="PG 설정 목록을 불러오는 중..." />
       </SimpleLayout>
     );
   }

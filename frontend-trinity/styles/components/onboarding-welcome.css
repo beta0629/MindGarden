@@ -1,0 +1,223 @@
+/**
+ * 온보딩 환영 화면 스타일
+ * iOS/Android 설정 화면 스타일
+ * 
+ * @author Trinity Team
+ * @version 1.0.0
+ * @since 2025-12-09
+ */
+
+.trinity-onboarding-welcome {
+  width: 100%;
+  min-height: 60vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-xxl) var(--spacing-lg);
+  animation: fadeIn 0.6s var(--animation-ease-out);
+}
+
+.trinity-onboarding-welcome__content {
+  max-width: 500px;
+  width: 100%;
+  text-align: center;
+}
+
+.trinity-onboarding-welcome__icon {
+  margin-bottom: var(--spacing-xl);
+  animation: scaleIn 0.8s var(--animation-ease-out);
+}
+
+.trinity-onboarding-welcome__icon-circle {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 4rem;
+  margin: 0 auto;
+  box-shadow: 0 8px 24px var(--shadow-color-primary-light);
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.trinity-onboarding-welcome__title {
+  font-size: var(--font-size-huge);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-md);
+  animation: slideInUp 0.6s var(--animation-ease-out) 0.2s both;
+}
+
+.trinity-onboarding-welcome__subtitle {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-lg);
+  animation: slideInUp 0.6s var(--animation-ease-out) 0.3s both;
+}
+
+.trinity-onboarding-welcome__description {
+  font-size: var(--font-size-lg);
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: var(--spacing-xxl);
+  animation: slideInUp 0.6s var(--animation-ease-out) 0.4s both;
+}
+
+.trinity-onboarding-welcome__features {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-xxl);
+  animation: slideInUp 0.6s var(--animation-ease-out) 0.5s both;
+}
+
+.trinity-onboarding-welcome__feature {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  font-size: var(--font-size-md);
+  color: var(--text-primary);
+}
+
+.trinity-onboarding-welcome__feature-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: var(--color-success);
+  color: var(--text-inverse);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  flex-shrink: 0;
+}
+
+.trinity-onboarding-welcome__start-button {
+  width: 100%;
+  min-height: 56px;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  animation: slideInUp 0.6s var(--animation-ease-out) 0.6s both;
+  position: relative;
+  overflow: hidden;
+}
+
+.trinity-onboarding-welcome__start-button::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.trinity-onboarding-welcome__start-button:active::before {
+  width: 300px;
+  height: 300px;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 모바일 최적화 */
+@media (max-width: 768px) {
+  .trinity-onboarding-welcome {
+    min-height: 70vh;
+    padding: var(--spacing-xl) var(--spacing-md);
+  }
+
+  .trinity-onboarding-welcome__icon-circle {
+    width: 100px;
+    height: 100px;
+    font-size: 3rem;
+  }
+
+  .trinity-onboarding-welcome__title {
+    font-size: var(--font-size-xxxl);
+  }
+
+  .trinity-onboarding-welcome__subtitle {
+    font-size: var(--font-size-lg);
+  }
+
+  .trinity-onboarding-welcome__description {
+    font-size: var(--font-size-md);
+  }
+}
+
+@media (max-width: 480px) {
+  .trinity-onboarding-welcome__icon-circle {
+    width: 80px;
+    height: 80px;
+    font-size: 2.5rem;
+  }
+
+  .trinity-onboarding-welcome__title {
+    font-size: var(--font-size-xxl);
+  }
+
+  .trinity-onboarding-welcome__start-button {
+    min-height: 52px;
+  }
+}
+
+/* 접근성 */
+@media (prefers-reduced-motion: reduce) {
+  .trinity-onboarding-welcome,
+  .trinity-onboarding-welcome__icon,
+  .trinity-onboarding-welcome__icon-circle,
+  .trinity-onboarding-welcome__title,
+  .trinity-onboarding-welcome__subtitle,
+  .trinity-onboarding-welcome__description,
+  .trinity-onboarding-welcome__features,
+  .trinity-onboarding-welcome__start-button {
+    animation: none;
+  }
+}
+

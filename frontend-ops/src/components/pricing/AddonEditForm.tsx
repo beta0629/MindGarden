@@ -133,8 +133,8 @@ export function AddonEditForm({ addon, onClose }: Props) {
 
   return (
     <form className="form-card" onSubmit={handleSubmit}>
-      <div className="form-footer" style={{ justifyContent: "space-between" }}>
-        <h2 style={{ margin: 0 }}>애드온 수정</h2>
+      <div className="ops-form-footer">
+        <h2 className="ops-form-footer__title">애드온 수정</h2>
         <button
           type="button"
           className="ghost-button"

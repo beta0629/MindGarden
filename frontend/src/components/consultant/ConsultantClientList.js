@@ -4,7 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { apiGet, apiPost } from '../../utils/ajax';
 import SimpleLayout from '../layout/SimpleLayout';
 import ClientDetailModal from './ClientDetailModal';
-import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import UnifiedLoading from '../../components/common/UnifiedLoading';
 import notificationManager from '../../utils/notification';
 
 const ConsultantClientList = () => {
@@ -312,7 +312,7 @@ const ConsultantClientList = () => {
   if (sessionLoading) {
     return (
       <SimpleLayout title="내담자 목록">
-        <div className="mg-loading">로딩중...</div>
+        <UnifiedLoading type="page" text="내담자 목록을 불러오는 중..." />
       </SimpleLayout>
     );
   }
@@ -386,10 +386,7 @@ const ConsultantClientList = () => {
 
       {/* 로딩 상태 */}
       {loading && (
-        <div className="loading-container">
-          <div className="mg-loading">로딩중...</div>
-          <p>잠시만 기다려주세요...</p>
-        </div>
+        <UnifiedLoading type="inline" text="내담자 목록을 불러오는 중..." />
       )}
 
       {/* 오류 상태 */}

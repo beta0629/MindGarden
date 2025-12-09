@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import MGButton from "@/components/ui/MGButton";
+import { login, type LoginRequest } from "@/services/authApi";
 
 interface LoginFormProps {
   redirectTo: string;
@@ -30,91 +31,43 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
           return;
         }
         
-        // 정적 빌드(개발/운영 서버)에서는 백엔드 API 직접 호출
-        // 로컬 개발에서는 Next.js API 라우트 사용
-        const isStaticBuild = typeof window !== "undefined" && !window.location.hostname.includes("localhost");
-        const apiPath = isStaticBuild 
-          ? "/api/v1/ops/auth/login"  // 백엔드 API (Nginx 프록시)
-          : "/api/auth/login/";       // Next.js API 라우트
+        // 표준화된 로그인 API 호출
+        const loginRequest: LoginRequest = {
+          username: trimmedUsername,
+          password: trimmedPassword
+        };
         
-        console.log("[LoginForm] 로그인 API:", { apiPath, isStaticBuild });
+        const responseData = await login(loginRequest);
         
-        const response = await fetch(apiPath, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({ username: trimmedUsername, password: trimmedPassword }),
-          credentials: "include" // 쿠키 포함
-        });
-
-        let body: any;
-        try {
-          body = await response.json();
-        } catch (e) {
-          setFeedback("서버 응답을 읽을 수 없습니다.");
-          return;
-        }
-
-        if (!response.ok) {
-          // 에러 메시지 처리
-          let errorMessage = body?.message || "로그인에 실패했습니다. 입력 정보를 다시 확인하세요.";
-          setFeedback(errorMessage);
-          return;
-        }
-
-        // 로그인 성공
+        // 로그인 성공 - 쿠키 설정
         const redirectPath = redirectTo || "/dashboard";
         
-        console.log("[LoginForm] 로그인 성공");
-        console.log("[LoginForm] 응답 body:", body);
+        console.log("[LoginForm] 로그인 성공:", {
+          actorId: responseData.actorId,
+          actorRole: responseData.actorRole
+        });
         
-        // 응답에서 토큰 추출하여 클라이언트 쪽에서 쿠키 설정
-        // (정적 빌드에서는 백엔드의 Set-Cookie가 Nginx를 통과하지 못할 수 있음)
-        const data = body?.data;
-        if (data && data.token) {
-          const token = data.token;
-          const actorId = data.actorId || trimmedUsername;
-          const actorRole = data.actorRole || "HQ_ADMIN";
-          
-          // 쿠키 설정
-          const isHttps = window.location.protocol === "https:";
-          const maxAge = 3600; // 1시간
-          const cookieOptions = `path=/; max-age=${maxAge}; samesite=lax${isHttps ? "; secure" : ""}`;
-          
-          document.cookie = `ops_token=${token}; ${cookieOptions}`;
-          document.cookie = `ops_actor_id=${encodeURIComponent(actorId)}; ${cookieOptions}`;
-          document.cookie = `ops_actor_role=${actorRole}; ${cookieOptions}`;
-          
-          console.log("[LoginForm] 클라이언트 쪽 쿠키 설정 완료:", {
-            token: token.substring(0, 30) + "...",
-            actorId,
-            actorRole,
-            isHttps,
-            cookieOptions
-          });
-        } else {
-          console.error("[LoginForm] 응답에 토큰이 없습니다:", body);
-          setFeedback("로그인 응답에 토큰이 없습니다.");
-          return;
-        }
+        // 쿠키 설정
+        const isHttps = window.location.protocol === "https:";
+        const maxAge = 3600; // 1시간
+        const cookieOptions = `path=/; max-age=${maxAge}; samesite=lax${isHttps ? "; secure" : ""}`;
         
-        console.log("[LoginForm] 리다이렉트:", redirectPath);
+        document.cookie = `ops_token=${responseData.token}; ${cookieOptions}`;
+        document.cookie = `ops_actor_id=${encodeURIComponent(responseData.actorId)}; ${cookieOptions}`;
+        document.cookie = `ops_actor_role=${responseData.actorRole}; ${cookieOptions}`;
+        
+        console.log("[LoginForm] 클라이언트 쪽 쿠키 설정 완료");
         
         // 짧은 지연 후 리다이렉트 (쿠키 적용 대기)
         setTimeout(() => {
-          console.log("[LoginForm] 쿠키 확인:", {
-            hasCookie: document.cookie.includes("ops_token"),
-            cookiePreview: document.cookie.substring(0, 100)
-          });
           window.location.href = redirectPath;
         }, 300); // 300ms 지연
       } catch (error) {
-        setFeedback(
-          error instanceof Error
-            ? error.message
-            : "로그인 처리 중 오류가 발생했습니다."
-        );
+        const errorMessage = error instanceof Error
+          ? error.message
+          : "로그인 처리 중 오류가 발생했습니다.";
+        setFeedback(errorMessage);
+        console.error("[LoginForm] 로그인 실패:", error);
       }
     });
   };

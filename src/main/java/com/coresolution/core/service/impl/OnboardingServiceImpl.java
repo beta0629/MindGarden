@@ -432,6 +432,14 @@ public class OnboardingServiceImpl implements OnboardingService {
                 try {
                     log.info("🔄 테넌트 초기화 작업 시작: tenantId={}", tenantId);
                     initializeTenantAfterOnboarding(tenantId, request.getBusinessType(), actorId);
+                    
+                    // 브랜드명 설정 (branding_json에 저장)
+                    try {
+                        setTenantBranding(tenantId, request);
+                    } catch (Exception e) {
+                        log.warn("브랜드명 설정 실패 (온보딩 프로세스는 계속 진행): tenantId={}, error={}", 
+                            tenantId, e.getMessage());
+                    }
                 } catch (Exception e) {
                     log.error("온보딩 후 테넌트 초기화 실패 (온보딩 프로세스는 계속 진행): tenantId={}, error={}", 
                         tenantId, e.getMessage(), e);
@@ -567,16 +575,16 @@ public class OnboardingServiceImpl implements OnboardingService {
             String statusName;
             // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
             if (status == OnboardingStatus.PENDING) {
-                statusMessage = "승인 대기 중입니다.";
+                statusMessage = "이 이메일로 이미 온보딩 신청이 진행 중입니다. 현재 상태: 승인 대기 중입니다. 관리자 승인을 기다려주세요.";
                 statusName = "PENDING";
             } else if (status == OnboardingStatus.IN_REVIEW) {
-                statusMessage = "검토 중입니다.";
+                statusMessage = "이 이메일로 이미 온보딩 신청이 진행 중입니다. 현재 상태: 검토 중입니다. 검토가 완료되면 연락드리겠습니다.";
                 statusName = "IN_REVIEW";
             } else if (status == OnboardingStatus.ON_HOLD) {
-                statusMessage = "보류 중입니다.";
+                statusMessage = "이 이메일로 이미 온보딩 신청이 진행 중입니다. 현재 상태: 보류 중입니다. 추가 정보가 필요할 수 있습니다.";
                 statusName = "ON_HOLD";
             } else {
-                statusMessage = "처리 중입니다.";
+                statusMessage = "이 이메일로 이미 온보딩 신청이 진행 중입니다. 현재 상태: " + status.name() + ". 진행 상황을 확인해주세요.";
                 statusName = status.name();
             }
             
@@ -773,13 +781,20 @@ public class OnboardingServiceImpl implements OnboardingService {
                 new TypeReference<Map<String, Object>>() {}
             );
             
-            String address = (String) checklist.get("address");
-            String postalCode = (String) checklist.get("postalCode");
-            String region = (String) checklist.get("region"); // 직접 지역 코드가 있는 경우
+            // regionCode를 직접 사용 (우선순위 1)
+            String regionCode = (String) checklist.get("regionCode");
+            if (regionCode != null && !regionCode.trim().isEmpty()) {
+                return regionCode.trim();
+            }
             
+            // region 필드도 지원 (하위 호환성)
+            String region = (String) checklist.get("region");
             if (region != null && !region.trim().isEmpty()) {
                 return region.trim();
             }
+            
+            String address = (String) checklist.get("address");
+            String postalCode = (String) checklist.get("postalCode");
             
             if (address != null && !address.trim().isEmpty()) {
                 return extractRegionFromAddress(address);
@@ -994,9 +1009,88 @@ public class OnboardingServiceImpl implements OnboardingService {
             log.warn("⚠️ 테넌트 역할 코드 삽입 실패 (건너뜀): {}", e.getMessage());
         }
         
-        log.info("ℹ️ 권한 그룹 할당은 프로시저에서 처리됨: tenantId={}", tenantId);
+            log.info("ℹ️ 권한 그룹 할당은 프로시저에서 처리됨: tenantId={}", tenantId);
         
         log.info("✅ 온보딩 후 테넌트 초기화 완료: tenantId={}", tenantId);
+    }
+    
+    /**
+     * 테넌트 브랜딩 정보 설정 (브랜드명 저장)
+     * 
+     * @param tenantId 테넌트 ID
+     * @param request 온보딩 요청
+     */
+    private void setTenantBranding(String tenantId, OnboardingRequest request) {
+        if (tenantId == null || tenantId.trim().isEmpty()) {
+            log.warn("⚠️ 테넌트 ID가 없어 브랜딩 정보 설정을 건너뜁니다.");
+            return;
+        }
+        
+        try {
+            Tenant tenant = tenantRepository.findByTenantIdAndIsDeletedFalse(tenantId)
+                .orElse(null);
+            
+            if (tenant == null) {
+                log.warn("⚠️ 테넌트를 찾을 수 없어 브랜딩 정보 설정을 건너뜁니다: tenantId={}", tenantId);
+                return;
+            }
+            
+            // checklistJson에서 brandName 추출
+            String brandName = null;
+            if (request.getChecklistJson() != null && !request.getChecklistJson().isEmpty()) {
+                try {
+                    Map<String, Object> checklist = objectMapper.readValue(
+                        request.getChecklistJson(), 
+                        new TypeReference<Map<String, Object>>() {}
+                    );
+                    brandName = (String) checklist.get("brandName");
+                } catch (JsonProcessingException e) {
+                    log.warn("checklistJson 파싱 실패 (브랜드명 추출 실패): tenantId={}, error={}", 
+                        tenantId, e.getMessage());
+                }
+            }
+            
+            // brandName이 없으면 tenantName 사용
+            if (brandName == null || brandName.trim().isEmpty()) {
+                brandName = request.getTenantName();
+            }
+            
+            // 기존 branding_json 파싱 또는 기본값 생성
+            com.coresolution.core.dto.BrandingInfo brandingInfo;
+            if (tenant.getBrandingJson() != null && !tenant.getBrandingJson().trim().isEmpty()) {
+                try {
+                    brandingInfo = objectMapper.readValue(
+                        tenant.getBrandingJson(), 
+                        com.coresolution.core.dto.BrandingInfo.class
+                    );
+                    // 기존 정보 유지하면서 companyName만 업데이트
+                    brandingInfo.setCompanyName(brandName);
+                } catch (JsonProcessingException e) {
+                    log.warn("기존 branding_json 파싱 실패, 기본값으로 재생성: tenantId={}, error={}", 
+                        tenantId, e.getMessage());
+                    brandingInfo = com.coresolution.core.dto.BrandingInfo.createDefault(brandName);
+                }
+            } else {
+                // branding_json이 없으면 기본값 생성
+                brandingInfo = com.coresolution.core.dto.BrandingInfo.createDefault(brandName);
+            }
+            
+            // JSON으로 변환하여 저장
+            try {
+                String brandingJson = objectMapper.writeValueAsString(brandingInfo);
+                tenant.setBrandingJson(brandingJson);
+                tenantRepository.save(tenant);
+                
+                log.info("✅ 테넌트 브랜딩 정보 설정 완료: tenantId={}, brandName={}", tenantId, brandName);
+            } catch (JsonProcessingException e) {
+                log.error("❌ 브랜딩 정보 JSON 변환 실패: tenantId={}, error={}", tenantId, e.getMessage(), e);
+                throw new RuntimeException("브랜딩 정보 저장 중 오류가 발생했습니다", e);
+            }
+            
+        } catch (Exception e) {
+            log.error("❌ 테넌트 브랜딩 정보 설정 실패: tenantId={}, error={}", tenantId, e.getMessage(), e);
+            throw e;
+        }
     }
     
     /**

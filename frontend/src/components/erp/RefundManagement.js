@@ -87,11 +87,10 @@ const RefundManagement = () => {
     };
 
     return (
-        <SimpleLayout 
-            loading={loading}
-            loadingText="환불 데이터를 불러오는 중..."
-            loadingVariant="default"
-        >
+        <SimpleLayout>
+            {loading ? (
+                <UnifiedLoading type="page" text="환불 데이터를 불러오는 중..." />
+            ) : (
             <div className="erp-system erp-refund-container">
                 <ErpHeader 
                     title="환불 관리 시스템"
@@ -148,6 +147,7 @@ const RefundManagement = () => {
                     erpSyncStatus={erpSyncStatus}
                 />
             </div>
+            )}
         </SimpleLayout>
     );
 };

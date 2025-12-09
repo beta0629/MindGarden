@@ -37,6 +37,8 @@ echo -e "${YELLOW}   백엔드 프로세스 종료...${NC}"
 pkill -f "spring-boot:run" 2>/dev/null || true
 pkill -f "consultation-management-system" 2>/dev/null || true
 pkill -f "ConsultationManagementApplication" 2>/dev/null || true
+pkill -f "OpsPortalApplication" 2>/dev/null || true
+pkill -f "gradlew.*bootRun" 2>/dev/null || true
 
 # 프론트엔드 프로세스 종료
 echo -e "${YELLOW}   프론트엔드 프로세스 종료...${NC}"
@@ -47,8 +49,9 @@ pkill -f "next dev" 2>/dev/null || true
 pkill -f "next.*dev" 2>/dev/null || true
 
 # 포트 종료 (백엔드)
-echo -e "${YELLOW}   백엔드 포트 종료 (8080)...${NC}"
+echo -e "${YELLOW}   백엔드 포트 종료 (8080, 8081)...${NC}"
 lsof -ti:8080 | xargs kill -9 2>/dev/null || true
+lsof -ti:8081 | xargs kill -9 2>/dev/null || true
 
 # 포트 종료 (프론트엔드)
 echo -e "${YELLOW}   프론트엔드 포트 종료 (3000, 3001, 4300)...${NC}"
@@ -65,6 +68,12 @@ echo -e "${YELLOW}   포트 정리 확인...${NC}"
 if lsof -ti:8080 > /dev/null 2>&1; then
     echo -e "${RED}   ⚠️  포트 8080이 아직 사용 중입니다. 강제 종료 시도...${NC}"
     lsof -ti:8080 | xargs kill -9 2>/dev/null || true
+    sleep 1
+fi
+
+if lsof -ti:8081 > /dev/null 2>&1; then
+    echo -e "${RED}   ⚠️  포트 8081이 아직 사용 중입니다. 강제 종료 시도...${NC}"
+    lsof -ti:8081 | xargs kill -9 2>/dev/null || true
     sleep 1
 fi
 
@@ -195,9 +204,53 @@ echo -e "${GREEN}✅ 4-2단계 완료: Trinity 프론트엔드 실행${NC}"
 echo
 
 # ===============================================
-# 4-3단계: Ops Portal 프론트엔드 시작
+# 4-3단계: Ops Portal 백엔드 시작
 # ===============================================
-echo -e "${YELLOW}🔧 4-3단계: Ops Portal 프론트엔드 시작${NC}"
+echo -e "${YELLOW}🔧 4-3단계: Ops Portal 백엔드 시작${NC}"
+
+if [ -d "backend-ops" ]; then
+    cd backend-ops
+    
+    # Gradle Wrapper 확인
+    if [ ! -f "./gradlew" ]; then
+        echo -e "${YELLOW}   ⚠️  gradlew를 찾을 수 없습니다. Ops 백엔드를 건너뜁니다.${NC}"
+        OPS_BACKEND_STARTED=false
+    else
+        chmod +x gradlew
+        
+        # .env.local 파일 확인
+        if [ ! -f ".env.local" ]; then
+            if [ -f "env.local.example" ]; then
+                echo -e "${YELLOW}   .env.local 파일 생성 중...${NC}"
+                cp env.local.example .env.local
+                echo -e "${GREEN}   ✅ .env.local 파일 생성됨${NC}"
+            fi
+        fi
+        
+        echo -e "${YELLOW}   Ops Portal 백엔드 시작 (포트 8081)...${NC}"
+        # 로컬 개발 환경: local 프로파일 사용 (포트 8081, CoreSolution 8080과 분리)
+        SERVER_PORT=8081 ./gradlew bootRun --args="--spring.profiles.active=local" > ../logs/ops-backend.log 2>&1 &
+        OPS_BACKEND_PID=$!
+        
+        echo -e "${GREEN}   ✅ Ops Portal 백엔드 시작됨 (PID: $OPS_BACKEND_PID, 포트: 8081)${NC}"
+        echo "OPS_BACKEND_PID=$OPS_BACKEND_PID" >> ../.mindgarden_pids
+        OPS_BACKEND_STARTED=true
+    fi
+    
+    cd ..
+else
+    echo -e "${YELLOW}   ⚠️  backend-ops 디렉토리를 찾을 수 없습니다. Ops 백엔드를 건너뜁니다.${NC}"
+    OPS_BACKEND_STARTED=false
+    OPS_BACKEND_PID=""
+fi
+
+echo -e "${GREEN}✅ 4-3단계 완료: Ops Portal 백엔드 실행${NC}"
+echo
+
+# ===============================================
+# 4-4단계: Ops Portal 프론트엔드 시작
+# ===============================================
+echo -e "${YELLOW}🔧 4-4단계: Ops Portal 프론트엔드 시작${NC}"
 
 cd frontend-ops
 
@@ -295,8 +348,25 @@ if [ -n "$TRINITY_PID" ]; then
     done
 fi
 
+if [ -n "$OPS_BACKEND_PID" ]; then
+    echo -e "${YELLOW}   Ops Portal 백엔드 헬스체크 (최대 60초 대기)...${NC}"
+    for i in {1..30}; do
+        if curl -f http://localhost:8081/actuator/health > /dev/null 2>&1; then
+            echo -e "${GREEN}   ✅ Ops Portal 백엔드 정상 작동!${NC}"
+            OPS_BACKEND_OK=true
+            break
+        fi
+        if [ $i -eq 30 ]; then
+            echo -e "${YELLOW}   ⚠️  Ops Portal 백엔드 헬스체크 타임아웃 (계속 진행)${NC}"
+            OPS_BACKEND_OK=false
+        fi
+        echo -n "."
+        sleep 2
+    done
+fi
+
 if [ -n "$OPS_PID" ]; then
-    echo -e "${YELLOW}   Ops Portal 서버 헬스체크 (최대 60초 대기)...${NC}"
+    echo -e "${YELLOW}   Ops Portal 프론트엔드 서버 헬스체크 (최대 60초 대기)...${NC}"
     for i in {1..30}; do
         if curl -f http://localhost:4300 > /dev/null 2>&1; then
             echo -e "${GREEN}   ✅ Ops Portal 서버 정상 작동!${NC}"
@@ -346,6 +416,15 @@ if [ -n "$TRINITY_PID" ]; then
     fi
 fi
 
+if [ -n "$OPS_BACKEND_PID" ]; then
+    if [ "$OPS_BACKEND_OK" = true ]; then
+        echo -e "${GREEN}   ✅ Ops Portal 백엔드 API: http://localhost:8081${NC}"
+        echo -e "${BLUE}   📊 Ops Actuator: http://localhost:8081/actuator/health${NC}"
+    else
+        echo -e "${YELLOW}   ⚠️  Ops Portal 백엔드 API: http://localhost:8081 (시작 중...)${NC}"
+    fi
+fi
+
 if [ -n "$OPS_PID" ]; then
     if [ "$OPS_OK" = true ]; then
         echo -e "${GREEN}   ✅ Ops Portal (관리): http://localhost:4300${NC}"
@@ -361,8 +440,11 @@ echo -e "${BLUE}   - 프론트엔드: logs/frontend.log${NC}"
 if [ -n "$TRINITY_PID" ]; then
     echo -e "${BLUE}   - Trinity: logs/trinity.log${NC}"
 fi
+if [ -n "$OPS_BACKEND_PID" ]; then
+    echo -e "${BLUE}   - Ops Portal 백엔드: logs/ops-backend.log${NC}"
+fi
 if [ -n "$OPS_PID" ]; then
-    echo -e "${BLUE}   - Ops Portal: logs/ops.log${NC}"
+    echo -e "${BLUE}   - Ops Portal 프론트엔드: logs/ops.log${NC}"
 fi
 
 echo
@@ -372,8 +454,11 @@ echo -e "${YELLOW}   - 프론트엔드: lsof -ti:3000 | xargs kill${NC}"
 if [ -n "$TRINITY_PID" ]; then
     echo -e "${YELLOW}   - Trinity: lsof -ti:3001 | xargs kill${NC}"
 fi
+if [ -n "$OPS_BACKEND_PID" ]; then
+    echo -e "${YELLOW}   - Ops Portal 백엔드: lsof -ti:8081 | xargs kill${NC}"
+fi
 if [ -n "$OPS_PID" ]; then
-    echo -e "${YELLOW}   - Ops Portal: lsof -ti:4300 | xargs kill${NC}"
+    echo -e "${YELLOW}   - Ops Portal 프론트엔드: lsof -ti:4300 | xargs kill${NC}"
 fi
 echo -e "${YELLOW}   - 또는 Ctrl+C${NC}"
 
@@ -382,6 +467,9 @@ echo "BACKEND_PID=$BACKEND_PID" > .mindgarden_pids
 echo "FRONTEND_PID=$FRONTEND_PID" >> .mindgarden_pids
 if [ -n "$TRINITY_PID" ]; then
     echo "TRINITY_PID=$TRINITY_PID" >> .mindgarden_pids
+fi
+if [ -n "$OPS_BACKEND_PID" ]; then
+    echo "OPS_BACKEND_PID=$OPS_BACKEND_PID" >> .mindgarden_pids
 fi
 if [ -n "$OPS_PID" ]; then
     echo "OPS_PID=$OPS_PID" >> .mindgarden_pids

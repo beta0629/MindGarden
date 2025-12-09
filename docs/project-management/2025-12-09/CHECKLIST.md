@@ -1,14 +1,14 @@
 # 체크리스트
 
-**작성일**: 2025-12-09  
-**상태**: 진행 중  
-**이관일**: 2025-12-08
+**작성일**: 2025-12-08  
+**상태**: 대기 중  
+**이관일**: 2025-12-07
 
 ---
 
-## ✅ 2025-12-09 완료된 항목
+## ✅ 2025-12-08 완료된 항목
 
-### AdminController tenantId 표준화
+### AdminController tenantId 표준화 (1차)
 - [x] `getAllConsultantsWithStats()`: `SessionUtils.getTenantId()` 사용으로 전환
 - [x] `getAllClientsWithStats()`: `SessionUtils.getTenantId()` 사용으로 전환
 - [x] `getConsultantsWithSpecialty()`: `SessionUtils.getTenantId()` 사용으로 전환
@@ -18,14 +18,20 @@
 - [x] `getAllClients()`: `SessionUtils.getTenantId()` 사용으로 전환
 - [x] `getTransactions()` (라인 574): `SessionUtils.getTenantId()` 우선 사용
 - [x] `getTransactions()` (라인 2267): `SessionUtils.getTenantId()` 사용으로 전환
-- [x] 표준화 검증 보고서 업데이트
-- [x] 문서를 오늘 날짜 폴더로 이동
+
+### 관리자 대시보드 tenantId 기반 조회 표준화 (2차)
+- [x] `getAllMappings()`: TenantContextHolder 설정 추가, tenantId 검증 추가
+- [x] `getConsultantRatingStatistics()`: branchCode 제거, tenantId 기반으로 전환
+- [x] `getAllConsultantsWithVacationInfo()`: TenantContextHolder 설정 추가
+- [x] `getConsultantVacationStats()`: TenantContextHolder 설정 추가
+- [x] `getAllClientsWithMappingInfo()`: TenantContextHolder 설정 추가
+- [x] `getConsultationCompletionStatistics()`: branchCode 제거, tenantId 기반으로 전환
 
 ### 문서 관리
-- [x] 오늘 날짜 폴더 생성 (2025-12-09)
 - [x] 표준화 검증 보고서 이동 및 업데이트
-- [x] TODO 리스트 생성 및 업데이트
-- [x] 체크리스트 생성 및 업데이트
+- [x] 관리자 대시보드 tenantId 확인 보고서 작성
+- [x] TODO 리스트 업데이트
+- [x] 체크리스트 업데이트
 
 ---
 
@@ -41,19 +47,19 @@
 - [ ] 버튼 표준화 계속 진행
 - [ ] 페이징 표준화 계속 진행
 
----
-
-## ⏳ 대기 중인 항목
-
-### 화면 테스트
+### 화면 테스트 (12월 7일 이관)
 - [ ] 프론트엔드 UI 테스트
 - [ ] 사용자 플로우 테스트
 - [ ] 통합 테스트
 
+---
+
+## ⏳ 대기 중인 항목 (12월 7일 이관)
+
 ### 개선 사항
 - [ ] OnboardingService.java lombok 의존성 오류 확인 및 수정
-- [ ] 사용하지 않는 import 정리
-- [ ] Deprecated 메서드 완전 제거
+- [ ] 사용하지 않는 import 정리 (추가 확인)
+- [ ] Deprecated 메서드 완전 제거 (추가 확인)
 - [ ] CSS 변수 적용 완료 확인
 
 ### 문서화
@@ -64,32 +70,39 @@
 
 ---
 
-## 🧪 테스트 항목
+## ⏳ 대기 중인 항목
 
-### 표준화 검증 테스트
-- [ ] tenantId 표준화 후 기능 테스트
-  - [ ] 상담사 관리 페이지 접근 테스트
-  - [ ] 내담자 관리 페이지 접근 테스트
-  - [ ] 상담사/내담자 등록 기능 테스트
-  - [ ] tenantId 누락 시 에러 메시지 확인
-- [ ] 통합 테스트
-  - [ ] 전체 프로세스 통합 테스트
-  - [ ] 크로스 브라우저 테스트
-  - [ ] 반응형 디자인 테스트
+### 개선 사항 (12월 7일 이관)
 
 ---
 
 ## 📊 진행률
 
 ### 표준화 작업
-- **완료**: 10개 항목 (2025-12-09)
+- **완료**: 17개 항목 (2025-12-08 작업 포함)
+  - tenantId 표준화 1차: 9개 메서드
+  - 관리자 대시보드 tenantId 표준화 2차: 6개 메서드
+  - 문서 관리: 2개 항목
 - **진행 중**: 3개 항목
 - **대기 중**: 12개 항목
-- **전체 진행률**: 약 45%
+- **전체 진행률**: 약 55%
+
+### 관리자 대시보드 tenantId 표준화
+- **완료**: 6개 API 엔드포인트
+  - `/api/v1/admin/mappings` ✅
+  - `/api/v1/admin/consultant-rating-stats` ✅
+  - `/api/v1/admin/consultants/with-vacation` ✅
+  - `/api/v1/admin/vacation-statistics` ✅
+  - `/api/v1/admin/clients/with-mapping-info` ✅
+  - `/api/v1/admin/statistics/consultation-completion` ✅
+- **표준 준수율**: 100%
 
 ### 표준화 준수율
 - **전체 준수율**: 약 87% (이전 85% → 향상)
 - **공통 처리 표준화**: 85% (향상)
+
+### 12월 7일 완료된 항목
+- [x] 로컬 개발 환경 실행 오류 수정 (6개 항목)
 
 ---
 
@@ -103,6 +116,7 @@
 ---
 
 **작성자**: AI Assistant  
-**최종 수정일**: 2025-12-09  
-**이관 출처**: 2025-12-08 CHECKLIST.md
+**최종 수정일**: 2025-12-08  
+**이관 출처**: 2025-12-07 CHECKLIST.md  
+**2025-12-08 업데이트**: AdminController tenantId 표준화 완료 반영
 

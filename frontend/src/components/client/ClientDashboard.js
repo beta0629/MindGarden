@@ -17,7 +17,7 @@ import {
   Sun
 } from 'lucide-react';
 import SimpleLayout from '../layout/SimpleLayout';
-import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import UnifiedLoading from '../../components/common/UnifiedLoading';
 import ClientPersonalizedMessages from '../dashboard/ClientPersonalizedMessages';
 import ClientPaymentSessionsSection from '../dashboard/ClientPaymentSessionsSection';
 import RatableConsultationsSection from './RatableConsultationsSection';
@@ -248,9 +248,7 @@ const ClientDashboard = () => {
   if (isLoading || sessionLoading || !currentIsLoggedIn || !currentUser?.id) {
     return (
       <SimpleLayout>
-        <div className="mg-v2-dashboard-layout">
-          <div className="mg-loading">로딩중...</div>
-        </div>
+        <UnifiedLoading type="page" text="대시보드를 불러오는 중..." />
       </SimpleLayout>
     );
   }

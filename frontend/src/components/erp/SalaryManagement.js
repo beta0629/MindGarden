@@ -340,7 +340,10 @@ const SalaryManagement = () => {
     };
 
     return (
-        <SimpleLayout title="급여 관리" loading={loading && consultants.length === 0} loadingText="데이터를 불러오는 중...">
+        <SimpleLayout title="급여 관리">
+            {loading && consultants.length === 0 ? (
+                <UnifiedLoading type="page" text="데이터를 불러오는 중..." />
+            ) : (
             <div className="mg-dashboard-layout">
                 {/* Dashboard Header */}
                 <div className="mg-dashboard-header">
@@ -818,52 +821,53 @@ const SalaryManagement = () => {
                     <UnifiedLoading type="inline" text="로딩 중..." />
                 </div>
             )}
-
-            {/* 상담사 프로필 모달 */}
-            <ConsultantProfileModal
-                isOpen={isModalOpen}
-                onClose={closeModal}
-                consultant={selectedConsultant}
-            />
-
-            {/* 급여 프로필 생성 폼 모달 */}
-            <SalaryProfileFormModal
-                isOpen={isProfileFormOpen}
-                onClose={closeProfileForm}
-                consultant={selectedConsultant}
-                onSave={handleProfileSaved}
-            />
-
-            {/* 세금 내역 모달 */}
-            <TaxDetailsModal
-                isOpen={isTaxDetailsOpen}
-                onClose={() => setIsTaxDetailsOpen(false)}
-                calculationId={selectedCalculation?.id}
-                consultantName={selectedConsultant?.name}
-                period={selectedCalculation?.calculationPeriod}
-            />
-
-            {/* 급여 출력 모달 */}
-            <SalaryExportModal
-                isOpen={isExportModalOpen}
-                onClose={() => setIsExportModalOpen(false)}
-                salaryData={selectedCalculation}
-                consultantName={selectedConsultant?.name}
-                period={selectedCalculation?.calculationPeriod}
-            />
-
-            {/* 급여 기산일 설정 모달 */}
-            <SalaryConfigModal
-                isOpen={isConfigModalOpen}
-                onClose={() => setIsConfigModalOpen(false)}
-                onSave={() => {
-                    showNotification('급여 기산일 설정이 저장되었습니다.', 'success');
-                    // 설정 저장 후 필요한 경우 데이터 새로고침
-                }}
-            />
                     </div>
                 </div>
             </div>
+        )}
+
+        {/* 상담사 프로필 모달 */}
+        <ConsultantProfileModal
+            isOpen={isModalOpen}
+            onClose={closeModal}
+            consultant={selectedConsultant}
+        />
+
+        {/* 급여 프로필 생성 폼 모달 */}
+        <SalaryProfileFormModal
+            isOpen={isProfileFormOpen}
+            onClose={closeProfileForm}
+            consultant={selectedConsultant}
+            onSave={handleProfileSaved}
+        />
+
+        {/* 세금 내역 모달 */}
+        <TaxDetailsModal
+            isOpen={isTaxDetailsOpen}
+            onClose={() => setIsTaxDetailsOpen(false)}
+            calculationId={selectedCalculation?.id}
+            consultantName={selectedConsultant?.name}
+            period={selectedCalculation?.calculationPeriod}
+        />
+
+        {/* 급여 출력 모달 */}
+        <SalaryExportModal
+            isOpen={isExportModalOpen}
+            onClose={() => setIsExportModalOpen(false)}
+            salaryData={selectedCalculation}
+            consultantName={selectedConsultant?.name}
+            period={selectedCalculation?.calculationPeriod}
+        />
+
+        {/* 급여 기산일 설정 모달 */}
+        <SalaryConfigModal
+            isOpen={isConfigModalOpen}
+            onClose={() => setIsConfigModalOpen(false)}
+            onSave={() => {
+                showNotification('급여 기산일 설정이 저장되었습니다.', 'success');
+                // 설정 저장 후 필요한 경우 데이터 새로고침
+            }}
+        />
         </SimpleLayout>
     );
 };

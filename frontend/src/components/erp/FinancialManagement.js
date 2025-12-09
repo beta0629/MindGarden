@@ -294,11 +294,9 @@ const FinancialManagement = () => {
 
   if (sessionLoading) {
     return (
-      <SimpleLayout 
-        title="재무 관리"
-        loading={true}
-        loadingText="세션 정보를 불러오는 중..."
-      />
+      <SimpleLayout title="재무 관리">
+        <UnifiedLoading type="page" text="세션 정보를 불러오는 중..." />
+      </SimpleLayout>
     );
   }
 

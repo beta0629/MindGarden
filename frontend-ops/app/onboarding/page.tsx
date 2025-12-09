@@ -6,7 +6,7 @@ import { fetchAllOnboarding } from "@/services/onboardingService";
 import { OnboardingStatus } from "@/types/shared";
 import { OnboardingRequest } from "@/types/onboarding";
 import OnboardingPageHeader from "@/components/onboarding/OnboardingPageHeader";
-import OnboardingTable from "@/components/onboarding/OnboardingTable";
+import OnboardingCardList from "@/components/onboarding/OnboardingCardList";
 
 function OnboardingPageContent() {
   const searchParams = useSearchParams();
@@ -69,7 +69,7 @@ function OnboardingPageContent() {
         statusFilter={statusFilter} 
         requestCount={allRequests.length} 
       />
-      <OnboardingTable 
+      <OnboardingCardList 
         requests={allRequests} 
         statusFilter={statusFilter} 
       />

@@ -1,6 +1,9 @@
 package com.mindgarden.ops.config;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import javax.crypto.spec.SecretKeySpec;
 import com.nimbusds.jose.jwk.source.ImmutableSecret;
 import com.nimbusds.jose.proc.SecurityContext;
@@ -23,16 +26,21 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import java.util.Arrays;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
     private final String jwtSecret;
+    private final String corsAllowedOrigins;
 
-    public SecurityConfig(@Value("${security.jwt.secret}") String jwtSecret) {
+    public SecurityConfig(
+            @Value("${security.jwt.secret}") String jwtSecret,
+            @Value("${ops.cors.allowed-origins:http://localhost:4300}") String corsAllowedOrigins) {
         this.jwtSecret = jwtSecret;
+        this.corsAllowedOrigins = corsAllowedOrigins;
     }
 
     @Bean
@@ -74,7 +82,26 @@ public class SecurityConfig {
     @Bean
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:3001", "https://ops.dev.e-trinity.co.kr"));
+        
+        // 환경 변수에서 CORS 허용 도메인 읽기 (쉼표로 구분)
+        List<String> allowedOrigins = new ArrayList<>();
+        if (corsAllowedOrigins != null && !corsAllowedOrigins.trim().isEmpty()) {
+            String[] origins = corsAllowedOrigins.split(",");
+            for (String origin : origins) {
+                String trimmed = origin.trim();
+                if (!trimmed.isEmpty()) {
+                    allowedOrigins.add(trimmed);
+                }
+            }
+        }
+        
+        // 기본값: 로컬 개발 환경
+        if (allowedOrigins.isEmpty()) {
+            allowedOrigins.add("http://localhost:4300");
+        }
+        
+        log.info("🌐 CORS 허용 Origins: {}", allowedOrigins);
+        configuration.setAllowedOrigins(allowedOrigins);
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowCredentials(true);

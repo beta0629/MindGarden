@@ -265,7 +265,8 @@ public class SecurityConfig {
                 "https://dev.m-garden.co.kr",
                 "http://dev.m-garden.co.kr",
                 "http://localhost:3000", 
-                "http://localhost:3001"
+                "http://localhost:3001",
+                "http://localhost:4300"  // Ops Portal 프론트엔드
             ));
         } else {
             // 로컬: localhost 명시적으로 허용 (와일드카드와 credentials 충돌 방지)
@@ -273,8 +274,10 @@ public class SecurityConfig {
             List<String> allowedOrigins = Arrays.asList(
                 "http://localhost:3000",
                 "http://localhost:3001",
+                "http://localhost:4300",  // Ops Portal 프론트엔드
                 "http://127.0.0.1:3000",
-                "http://127.0.0.1:3001"
+                "http://127.0.0.1:3001",
+                "http://127.0.0.1:4300"   // Ops Portal 프론트엔드
             );
             configuration.setAllowedOrigins(allowedOrigins);
             log.info("🌐 CORS 허용 Origins: {}", allowedOrigins);

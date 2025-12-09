@@ -54,10 +54,16 @@ spring:
     out-of-order: false
 
 # 서버 설정
+# 개발 서버: Nginx가 ops.dev.e-trinity.co.kr를 localhost:8080으로 프록시하므로 8080 사용
 server:
-  port: 8081
+  port: ${SERVER_PORT:8080}  # 개발 서버: 8080 (Nginx 프록시와 일치)
   servlet:
     context-path: /
+
+# CORS 설정 (개발 서버 도메인)
+ops:
+  cors:
+    allowed-origins: ${OPS_CORS_ALLOWED_ORIGINS:http://localhost:4300,https://ops.dev.e-trinity.co.kr}
 
 # JWT 설정 (dev.env 참조)
 security:

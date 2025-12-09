@@ -1,0 +1,90 @@
+/**
+ * 온보딩 카드 리스트 스타일
+ * CSS 변수 사용
+ */
+
+.cardGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: var(--ops-spacing-lg, 1.5rem);
+  padding: var(--ops-spacing-md, 1rem) 0;
+}
+
+.onboardingCard {
+  min-height: 200px;
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--ops-spacing-md, 1rem);
+  padding-bottom: var(--ops-spacing-md, 1rem);
+  border-bottom: 1px solid var(--ops-color-border, rgba(148, 163, 184, 0.15));
+}
+
+.cardTitle {
+  margin: 0;
+  font-size: var(--ops-font-size-lg, 1.125rem);
+  font-weight: var(--ops-font-weight-semibold, 600);
+  color: var(--ops-color-text-primary, #f8fafc);
+}
+
+.cardSubtitle {
+  margin: var(--ops-spacing-xs, 0.25rem) 0 0 0;
+  font-size: var(--ops-font-size-sm, 0.875rem);
+  color: var(--ops-color-text-secondary, #cbd5f5);
+}
+
+.cardContent {
+  flex: 1;
+  margin-bottom: var(--ops-spacing-md, 1rem);
+}
+
+.cardMeta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ops-spacing-sm, 0.5rem);
+}
+
+.metaItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--ops-spacing-xs, 0.25rem) 0;
+}
+
+.metaLabel {
+  font-size: var(--ops-font-size-sm, 0.875rem);
+  color: var(--ops-color-text-secondary, #cbd5f5);
+  font-weight: var(--ops-font-weight-medium, 500);
+}
+
+.metaValue {
+  font-size: var(--ops-font-size-sm, 0.875rem);
+  color: var(--ops-color-text-primary, #f8fafc);
+}
+
+.cardActions {
+  display: flex;
+  gap: var(--ops-spacing-sm, 0.5rem);
+  justify-content: flex-end;
+  padding-top: var(--ops-spacing-md, 1rem);
+  border-top: 1px solid var(--ops-color-border, rgba(148, 163, 184, 0.15));
+}
+
+.emptyMessage {
+  text-align: center;
+  padding: var(--ops-spacing-xl, 2rem);
+  color: var(--ops-color-text-secondary, #94a3b8);
+  font-size: var(--ops-font-size-base, 1rem);
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+  .cardGrid {
+    grid-template-columns: 1fr;
+    gap: var(--ops-spacing-md, 1rem);
+  }
+}
+

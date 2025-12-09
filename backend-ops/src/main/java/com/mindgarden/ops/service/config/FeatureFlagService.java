@@ -1,6 +1,7 @@
 package com.mindgarden.ops.service.config;
 
 import com.mindgarden.ops.domain.config.FeatureFlag;
+import com.mindgarden.ops.exception.EntityNotFoundException;
 import com.mindgarden.ops.domain.config.FeatureFlagState;
 import com.mindgarden.ops.repository.config.FeatureFlagRepository;
 import com.mindgarden.ops.service.audit.AuditService;
@@ -58,7 +59,7 @@ public class FeatureFlagService {
     @Transactional
     public FeatureFlag toggle(UUID flagId, FeatureFlagState newState, String actorId, String actorRole) {
         FeatureFlag flag = featureFlagRepository.findById(flagId)
-            .orElseThrow(() -> new IllegalArgumentException("Feature Flag를 찾을 수 없습니다."));
+            .orElseThrow(() -> new EntityNotFoundException("Feature Flag", flagId));
 
         flag.setState(newState);
         FeatureFlag saved = featureFlagRepository.save(flag);

@@ -1010,15 +1010,13 @@ const AdminDashboard = ({ user: propUser }) => {
                         <p className="mg-management-description">상담사 정보를 관리합니다</p>
                     </div>
                     
-                    {PermissionChecks.canManageClients(userPermissions) && (
-                        <div className="mg-management-card" onClick={() => navigate(ADMIN_ROUTES.CLIENT_COMPREHENSIVE)}>
-                            <div className="mg-management-icon">
-                                <FaUsers />
-                            </div>
-                            <h3>내담자 관리</h3>
-                            <p className="mg-management-description">내담자 정보를 관리합니다</p>
+                    <div className="mg-management-card" onClick={() => navigate(ADMIN_ROUTES.CLIENT_COMPREHENSIVE)}>
+                        <div className="mg-management-icon">
+                            <FaUsers />
                         </div>
-                    )}
+                        <h3>내담자 관리</h3>
+                        <p className="mg-management-description">내담자 정보를 관리합니다</p>
+                    </div>
                     
                     {PermissionChecks.canManageUsers(userPermissions) && (
                         <div className="mg-management-card" onClick={() => navigate(ADMIN_ROUTES.USER_MANAGEMENT)}>
@@ -1367,6 +1365,23 @@ const AdminDashboard = ({ user: propUser }) => {
                     </div>
             </DashboardSection>
             )}
+
+            {/* 내담자 관리 */}
+            <DashboardSection
+                title="내담자 관리"
+                subtitle="내담자 정보 및 관리 기능"
+                icon={<User />}
+            >
+                <div className="mg-management-grid">
+                    <div className="mg-management-card" onClick={() => navigate(ADMIN_ROUTES.CLIENT_COMPREHENSIVE)}>
+                        <div className="mg-management-icon">
+                            <FaUsers />
+                        </div>
+                        <h3>내담자 종합 관리</h3>
+                        <p className="mg-management-description">내담자 정보를 종합적으로 관리합니다</p>
+                    </div>
+                </div>
+            </DashboardSection>
 
             {/* 재무 관리 */}
             {PermissionChecks.canAccessFinance(userPermissions) && (

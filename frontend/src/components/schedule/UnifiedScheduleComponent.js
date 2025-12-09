@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import UnifiedLoading from '../../components/common/UnifiedLoading';
 import ScheduleModal from './ScheduleModal';
 import ScheduleDetailModal from './ScheduleDetailModal';
 import ConsultationLogModal from '../consultant/ConsultationLogModal';
@@ -782,7 +782,7 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
             />
 
             {loading && (
-                <div className="mg-loading">로딩중...</div>
+                <UnifiedLoading type="inline" text="스케줄을 불러오는 중..." />
             )}
 
             <ScheduleCalendarView

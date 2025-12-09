@@ -25,6 +25,7 @@ export const COMMON_CODE_GROUPS = {
   RISK_LEVEL: 'RISK_LEVEL',
   ONBOARDING_STATUS: 'ONBOARDING_STATUS',
   BUSINESS_TYPE: 'BUSINESS_TYPE',
+  REGION: 'REGION',
 } as const;
 
 /**
@@ -32,15 +33,41 @@ export const COMMON_CODE_GROUPS = {
  */
 export async function getCommonCodesByGroup(codeGroup: string): Promise<CommonCode[]> {
   try {
-    const response = await apiGet<{ success: boolean; data: { codes: CommonCode[] } }>(
+    // apiGet은 이미 ApiResponse의 data를 추출하므로, 
+    // response는 CommonCodeListResponse 형태: { codes: [...], totalCount: ... }
+    const response = await apiGet<{ codes: CommonCode[]; totalCount: number }>(
       `/api/v1/common-codes?codeGroup=${encodeURIComponent(codeGroup)}`
     );
-    if (response.success && (response as any).data) {
-      return (response as any).data.codes || [];
+    
+    // response가 CommonCodeListResponse 형태인 경우
+    if (response && typeof response === 'object' && 'codes' in response) {
+      const codes = response.codes || [];
+      // 개발 환경에서만 디버깅 로그 출력
+      if (process.env.NODE_ENV === 'development' && codeGroup === 'REGION') {
+        console.log('[DEBUG] Region codes loaded:', codes.length, codes);
+      }
+      return codes;
+    }
+    
+    // 하위 호환성: response가 이미 배열인 경우
+    if (Array.isArray(response)) {
+      if (process.env.NODE_ENV === 'development' && codeGroup === 'REGION') {
+        console.log('[DEBUG] Region codes (array format):', response.length, response);
+      }
+      return response;
+    }
+    
+    if (process.env.NODE_ENV === 'development' && codeGroup === 'REGION') {
+      console.warn('[DEBUG] Unexpected response format for REGION codes:', response);
     }
     return [];
   } catch (error) {
-    console.error(`공통 코드 조회 실패 (${codeGroup}):`, error);
+    // 개발 환경에서만 에러 로그 출력
+    if (process.env.NODE_ENV === 'development' && codeGroup === 'REGION') {
+      console.error('[DEBUG] Failed to load region codes:', error);
+    }
+    // 연결 실패나 서버 오류는 조용히 처리 (기본값 사용)
+    // 프로덕션 환경에서는 에러 로그 출력하지 않음 (콘솔 오염 방지)
     return [];
   }
 }
@@ -71,7 +98,7 @@ export async function getDefaultRiskLevel(): Promise<string> {
     // LOW가 없으면 첫 번째 코드 사용
     return codes[0].codeValue;
   } catch (error) {
-    console.error('기본 위험도 조회 실패:', error);
+    // 에러 시 기본값 반환 (조용히 처리)
     return 'LOW'; // 기본값 (에러 시)
   }
 }
@@ -81,5 +108,12 @@ export async function getDefaultRiskLevel(): Promise<string> {
  */
 export async function getOnboardingStatusCodes(): Promise<CommonCode[]> {
   return getCommonCodesByGroup(COMMON_CODE_GROUPS.ONBOARDING_STATUS);
+}
+
+/**
+ * 지역 코드 목록 조회
+ */
+export async function getRegionCodes(): Promise<CommonCode[]> {
+  return getCommonCodesByGroup(COMMON_CODE_GROUPS.REGION);
 }
 

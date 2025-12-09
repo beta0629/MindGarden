@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import ScheduleDetailModal from './ScheduleDetailModal';
 import VacationManagementModal from '../admin/VacationManagementModal';
 import TimeSelectionModal from './TimeSelectionModal';
-import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import UnifiedLoading from '../../components/common/UnifiedLoading';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet } from '../../utils/ajax';
 import { getStatusColor, getStatusIcon } from '../../utils/codeHelper';
@@ -524,7 +524,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
 
     return (
         <div className="mg-v2-schedule-calendar mg-mobile-container">
-            {loading && <div className="mg-loading">로딩중...</div>}
+            {loading && <UnifiedLoading type="inline" text="스케줄을 불러오는 중..." />}
             
             {/* 헤더 */}
             <ScheduleCalendarHeader

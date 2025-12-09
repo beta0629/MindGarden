@@ -17,7 +17,7 @@ import { apiGet } from '../../utils/ajax';
 import { getDashboardPath } from '../../utils/session';
 import { useSession } from '../../contexts/SessionContext';
 import SimpleLayout from '../layout/SimpleLayout';
-import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import UnifiedLoading from '../../components/common/UnifiedLoading';
 import notificationManager from '../../utils/notification';
 import '../../styles/unified-design-tokens.css';
 import './ClientPaymentHistory.css';
@@ -142,9 +142,7 @@ const ClientPaymentHistory = () => {
   if (isLoading) {
     return (
       <SimpleLayout>
-        <div className="client-payment-history">
-          <div className="mg-loading">로딩중...</div>
-        </div>
+        <UnifiedLoading type="page" text="결제 이력을 불러오는 중..." />
       </SimpleLayout>
     );
   }

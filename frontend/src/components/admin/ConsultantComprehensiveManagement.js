@@ -9,6 +9,8 @@ import { getCurrentUser } from '../../utils/session';
 import { getAllConsultantsWithStats } from '../../utils/consultantHelper';
 import SpecialtyDisplay from '../ui/SpecialtyDisplay';
 import { MGConfirmModal } from '../common/MGModal';
+import UnifiedFilterSearch from '../ui/FilterSearch/UnifiedFilterSearch';
+import { getCommonCodes } from '../../utils/commonCodeApi';
 
 const ConsultantComprehensiveManagement = () => {
     const [consultants, setConsultants] = useState([]);
@@ -20,6 +22,8 @@ const ConsultantComprehensiveManagement = () => {
     const [mainTab, setMainTab] = useState('comprehensive');
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState('all');
+    const [activeFilters, setActiveFilters] = useState({});
+    const [userStatusOptions, setUserStatusOptions] = useState([]);
     const [showModal, setShowModal] = useState(false);
     const [modalType, setModalType] = useState('view');
     const [formData, setFormData] = useState({
@@ -315,8 +319,28 @@ const ConsultantComprehensiveManagement = () => {
         return () => window.removeEventListener('resize', checkMobile);
     }, []);
 
-    const getFilteredConsultants = useMemo(() => { console.log('🔍 상담사 필터링 시작:', { searchTerm, filterStatus, consultants: consultants.length });
-        
+    // 공통코드 로드 (상태 옵션)
+    useEffect(() => {
+        const loadStatusCodes = async () => {
+            try {
+                const statusCodes = await getCommonCodes('USER_STATUS');
+                const uniqueStatusCodes = (statusCodes || []).filter((option, index, self) => 
+                    index === self.findIndex(o => o.codeValue === option.codeValue)
+                );
+                setUserStatusOptions(uniqueStatusCodes);
+            } catch (error) {
+                console.error('상태 공통코드 로드 실패:', error);
+                setUserStatusOptions([
+                    { codeValue: 'ACTIVE', codeLabel: '활성' },
+                    { codeValue: 'INACTIVE', codeLabel: '비활성' },
+                    { codeValue: 'SUSPENDED', codeLabel: '일시정지' }
+                ]);
+            }
+        };
+        loadStatusCodes();
+    }, []);
+    
+    const getFilteredConsultants = useMemo(() => {
         let filtered = consultants;
 
         if (searchTerm.trim()) {
@@ -324,18 +348,41 @@ const ConsultantComprehensiveManagement = () => {
             filtered = filtered.filter(consultant => 
                 (consultant.name || '').toLowerCase().includes(term) ||
                 (consultant.email || '').toLowerCase().includes(term) ||
-                (consultant.phone || '').includes(term)
+                (consultant.phone || '').includes(term) ||
+                (searchTerm.startsWith('#') && consultant.status === searchTerm.substring(1).toUpperCase())
             );
         }
 
-        if (filterStatus && filterStatus !== 'ALL' && filterStatus !== 'all') {
-            filtered = filtered.filter(consultant => consultant.status === filterStatus);
+        if (activeFilters.status && activeFilters.status !== 'ALL' && activeFilters.status !== 'all') {
+            filtered = filtered.filter(consultant => consultant.status === activeFilters.status);
         }
 
-
-        console.log('✅ 필터링 결과:', filtered.length, '명');
         return filtered;
-    }, [consultants, searchTerm, filterStatus]);
+    }, [consultants, searchTerm, activeFilters]);
+    
+    // UnifiedFilterSearch 핸들러
+    const handleSearch = useCallback((term) => {
+        setSearchTerm(term);
+    }, []);
+    
+    const handleFilterChange = useCallback((filters) => {
+        setActiveFilters(filters);
+        setFilterStatus(filters.status || 'all');
+    }, []);
+    
+    // 빠른 필터 옵션 생성
+    const quickFilterOptions = useMemo(() => {
+        const options = [
+            { value: 'all', label: '전체' }
+        ];
+        if (userStatusOptions && userStatusOptions.length > 0) {
+            options.push(...userStatusOptions.map(opt => ({
+                value: opt.codeValue,
+                label: opt.codeLabel || opt.codeName
+            })));
+        }
+        return options;
+    }, [userStatusOptions]);
 
     const getOverallStats = useCallback(() => {
         const totalConsultants = consultants.length;
@@ -768,27 +815,15 @@ const ConsultantComprehensiveManagement = () => {
                                 </div>
                             </div>
                             
-                            <div className="mg-v2-search-filter-section">
-                                    <input
-                                        type="text"
-                                        placeholder="상담사 검색..."
-                                        value={ searchTerm }
-                                        onChange={ (e) => setSearchTerm(e.target.value) }
-                                    className="mg-v2-form-input"
+                            <div className="mg-v2-section" style={{ marginBottom: 'var(--spacing-md)' }}>
+                                <UnifiedFilterSearch
+                                    onSearch={handleSearch}
+                                    onFilterChange={handleFilterChange}
+                                    searchPlaceholder="이름, 이메일, 전화번호 또는 #태그로 검색..."
+                                    compact={true}
+                                    showQuickFilters={true}
+                                    quickFilterOptions={quickFilterOptions}
                                 />
-                                <select
-                                    value={ filterStatus }
-                                    onChange={ (e) => setFilterStatus(e.target.value) }
-                                    className="mg-v2-form-select"
-                                >
-                                    <option value="all">전체</option>
-                                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-                                    <option value="ACTIVE">활성</option>
-                                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-                                    <option value="INACTIVE">비활성</option>
-                                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-                                    <option value="SUSPENDED">일시정지</option>
-                                </select>
                             </div>
 
                             <div className={isMobile ? "mg-v2-consultant-cards-grid--mobile" : "mg-v2-consultant-cards-grid mg-consultant-cards-grid--detailed"}>

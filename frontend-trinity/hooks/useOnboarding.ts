@@ -426,6 +426,8 @@ export const useOnboarding = () => {
           adminPassword: formData.adminPassword,
           paymentMethodId: formData.paymentMethodId,
           subscriptionId: formData.subscriptionId,
+          regionCode: formData.regionCode || undefined, // 지역 코드 추가
+          brandName: formData.brandName || undefined, // 브랜드명 추가
           dashboardTemplates: formData.dashboardTemplates || {}, // 대시보드 템플릿 설정
           dashboardWidgets: formData.dashboardWidgets || {}, // 대시보드 위젯 설정 (템플릿 수정 시)
         }),

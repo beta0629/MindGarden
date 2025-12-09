@@ -9,6 +9,7 @@ import {
   Calendar,
   Package
 } from 'lucide-react';
+import UnifiedLoading from '../common/UnifiedLoading';
 import '../../styles/unified-design-tokens.css';
 import './ClientPaymentSessionsSection.css';
 
@@ -160,7 +161,7 @@ const ClientPaymentSessionsSection = ({ userId }) => {
   if (isLoading) {
     return (
       <div className="payment-sessions-section">
-        <div className="mg-loading">로딩중...</div>
+        <UnifiedLoading type="inline" text="결제 내역을 불러오는 중..." />
       </div>
     );
   }

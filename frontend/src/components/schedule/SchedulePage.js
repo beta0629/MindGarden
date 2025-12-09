@@ -4,7 +4,7 @@ import SimpleLayout from '../layout/SimpleLayout';
 import UnifiedScheduleComponent from './UnifiedScheduleComponent';
 import ConsultantStatus from './ConsultantStatus';
 import TodayStats from './TodayStats';
-import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import UnifiedLoading from '../../components/common/UnifiedLoading';
 import { useSession } from '../../contexts/SessionContext';
 import notificationManager from '../../utils/notification';
 import './SchedulePage.css';
@@ -72,9 +72,7 @@ const SchedulePage = ({ user: propUser }) => {
     if (loading || sessionLoading) {
         return (
             <SimpleLayout>
-                <div className="schedule-page">
-                    <div className="mg-loading">로딩중...</div>
-                </div>
+                <UnifiedLoading type="page" text="스케줄을 불러오는 중..." />
             </SimpleLayout>
         );
     }

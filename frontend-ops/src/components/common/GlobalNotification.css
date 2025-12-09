@@ -1,5 +1,6 @@
 /**
  * 전역 알림 컴포넌트 스타일
+ * CSS 변수 사용 (현재 색상값 유지)
  */
 
 .global-notification-container {
@@ -19,8 +20,8 @@
   gap: 12px;
   padding: 16px;
   border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  background: white;
+  box-shadow: var(--ops-shadow-lg, 0 4px 12px rgba(0, 0, 0, 0.15));
+  background: var(--ops-color-bg-white, white);
   animation: slideIn 0.3s ease-out;
   min-width: 300px;
 }
@@ -52,7 +53,7 @@
   flex: 1;
   font-size: 14px;
   line-height: 1.5;
-  color: #333;
+  color: var(--ops-color-text-primary, #333);
 }
 
 .global-notification__close {
@@ -66,50 +67,50 @@
   border: none;
   cursor: pointer;
   font-size: 20px;
-  color: #666;
+  color: var(--ops-color-text-secondary, #666);
   padding: 0;
   line-height: 1;
 }
 
 .global-notification__close:hover {
-  color: #333;
+  color: var(--ops-color-text-primary, #333);
 }
 
 /* 타입별 스타일 */
 .global-notification--success {
-  border-left: 4px solid #10b981;
+  border-left: 4px solid var(--ops-color-success, #10b981);
 }
 
 .global-notification--success .global-notification__icon {
-  background: #10b981;
-  color: white;
+  background: var(--ops-color-success, #10b981);
+  color: var(--ops-color-white, white);
 }
 
 .global-notification--error {
-  border-left: 4px solid #ef4444;
+  border-left: 4px solid var(--ops-color-danger, #ef4444);
 }
 
 .global-notification--error .global-notification__icon {
-  background: #ef4444;
-  color: white;
+  background: var(--ops-color-danger, #ef4444);
+  color: var(--ops-color-white, white);
 }
 
 .global-notification--warning {
-  border-left: 4px solid #f59e0b;
+  border-left: 4px solid var(--ops-color-warning, #f59e0b);
 }
 
 .global-notification--warning .global-notification__icon {
-  background: #f59e0b;
-  color: white;
+  background: var(--ops-color-warning, #f59e0b);
+  color: var(--ops-color-white, white);
 }
 
 .global-notification--info {
-  border-left: 4px solid #3b82f6;
+  border-left: 4px solid var(--ops-color-info, #3b82f6);
 }
 
 .global-notification--info .global-notification__icon {
-  background: #3b82f6;
-  color: white;
+  background: var(--ops-color-info, #3b82f6);
+  color: var(--ops-color-white, white);
 }
 
 /* 모바일 반응형 */

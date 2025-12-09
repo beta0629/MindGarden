@@ -27,6 +27,10 @@ public record OnboardingCreateRequest(
     
     String businessType,  // 업종 타입 (동적 카테고리 시스템)
     
+    String regionCode,  // 지역 코드 (테넌트 ID 생성 시 사용, 선택적)
+    
+    String brandName,  // 브랜드명 (상호, 브랜딩 적용 시 사용, 선택적)
+    
     String adminPassword  // 관리자 계정 비밀번호 (승인 시 계정 생성에 사용, 암호화 저장)
 ) {}
 

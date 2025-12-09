@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { clientApiFetch } from "@/services/clientApi";
+import { OPS_API_PATHS } from "@/constants/api";
 
 interface Tenant {
   tenantId: string;
@@ -46,7 +47,7 @@ export default function TenantsPage() {
     try {
       setLoading(true);
       setError(null);
-      const data = await clientApiFetch<Tenant[]>("/ops/tenants");
+      const data = await clientApiFetch<Tenant[]>(OPS_API_PATHS.TENANTS.ALL);
       setTenants(data);
     } catch (err) {
       console.error("테넌트 목록 로드 실패:", err);
@@ -65,7 +66,7 @@ export default function TenantsPage() {
 
     try {
       setLoadingAdmins(tenantId);
-      const data = await clientApiFetch<TenantAdmin[]>(`/ops/tenants/${tenantId}/admins`);
+      const data = await clientApiFetch<TenantAdmin[]>(OPS_API_PATHS.TENANTS.ADMINS(tenantId));
       setAdmins((prev) => {
         const newMap = new Map(prev);
         newMap.set(tenantId, data);
@@ -129,7 +130,6 @@ export default function TenantsPage() {
                 <div
                   className="tenant-card__header"
                   onClick={() => loadTenantAdmins(tenant.tenantId)}
-                  style={{ cursor: "pointer" }}
                 >
                   <div>
                     <h3>{tenant.name}</h3>

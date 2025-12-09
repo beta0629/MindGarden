@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import UnifiedLoading from '../common/UnifiedLoading';
 import { API_BASE_URL } from '../../constants/api';
 import notificationManager from '../../utils/notification';
 import '../../styles/main.css';
@@ -665,9 +665,7 @@ const TimeSlotGrid = ({
     if (loading) {
         return (
             <div className="time-slot-grid-container">
-                <div className="time-slot-grid-loading">
-                    <div className="mg-loading">로딩중...</div>
-                </div>
+                <UnifiedLoading type="inline" text="시간 슬롯을 불러오는 중..." />
             </div>
         );
     }

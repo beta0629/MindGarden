@@ -25,7 +25,7 @@ import {
   decryptPgKeys
 } from '../../utils/pgApi';
 import { showNotification } from '../../utils/notification';
-import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import UnifiedLoading from '../../components/common/UnifiedLoading';
 import MGButton from '../../components/common/MGButton'; // 임시 비활성화
 import './PgConfigurationDetail.css';
 
@@ -189,7 +189,7 @@ const PgConfigurationDetail = () => {
   if (sessionLoading || loading) {
     return (
       <SimpleLayout>
-        <div className="mg-loading">로딩중...</div>
+        <UnifiedLoading type="page" text="PG 설정 상세를 불러오는 중..." />
       </SimpleLayout>
     );
   }

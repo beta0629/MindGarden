@@ -13,7 +13,7 @@ import { withFormSubmit } from '../../utils/formSubmitWrapper';
 // import mypageApi from '../../utils/mypageApi';
 import notificationManager from '../../utils/notification';
 import SimpleLayout from '../layout/SimpleLayout';
-import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import UnifiedLoading from '../../components/common/UnifiedLoading';
 import ProfileSection from './components/ProfileSection';
 import SettingsSection from './components/SettingsSection';
 import SecuritySection from './components/SecuritySection';
@@ -439,9 +439,7 @@ const MyPage = () => {
   if (!displayUser) {
     return (
       <SimpleLayout>
-        <div className="mypage-container">
-          <div className="mg-loading">로딩중...</div>
-        </div>
+        <UnifiedLoading type="page" text="사용자 정보를 불러오는 중..." />
       </SimpleLayout>
     );
   }

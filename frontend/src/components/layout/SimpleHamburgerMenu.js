@@ -4,7 +4,9 @@ import { useNavigate } from 'react-router-dom';
 import { sessionManager } from '../../utils/sessionManager';
 // import UnifiedModal from '../../components/common/modals/UnifiedModal'; // 임시 비활성화
 import { loadMenuStructure, transformMenuStructure, debugMenuStructure } from '../../utils/menuHelper';
-import { hasMenuAccess, validateMenuPath, logPermissionCheck } from '../../utils/menuPermissionValidator';
+import { validateMenuPath, logPermissionCheck } from '../../utils/menuPermissionValidator';
+import { fetchUserPermissions } from '../../utils/permissionUtils';
+import CompactConfirmModal from '../common/CompactConfirmModal';
 import './SimpleHamburgerMenu.css';
 
 /**
@@ -30,33 +32,68 @@ const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // 메뉴 구조 로드
+  // 메뉴 구조 로드 (성능 최적화: 권한 체크 병렬 처리)
   useEffect(() => {
     const loadMenus = async () => {
       try {
         setIsLoading(true);
         setError(null);
         
-        console.log('🍔 동적 햄버거 메뉴 로딩 시작 (v3.0) - 파일 정리 후 배포');
-        const structure = await loadMenuStructure();
+        console.log('🍔 동적 햄버거 메뉴 로딩 시작 (성능 최적화 버전)');
+        
+        // 병렬로 메뉴 구조와 사용자 권한 동시 로드
+        const [structure, userPermissions] = await Promise.all([
+          loadMenuStructure(),
+          fetchUserPermissions()
+        ]);
         
         setMenuStructure(structure);
         console.log('✅ 동적 햄버거 메뉴 로딩 완료');
         
-        // 권한에 따라 메뉴 필터링
+        // 권한에 따라 메뉴 필터링 (권한 체크를 메모리에서 수행)
         const transformedStructure = transformMenuStructure(structure);
-        const filteredMainMenus = [];
-        for (const menu of transformedStructure.mainMenus) {
-          if (menu.menuGroup) {
-            const hasAccess = await hasMenuAccess(menu.menuGroup);
-            if (hasAccess) {
-              filteredMainMenus.push(menu);
-            }
-          } else {
+        
+        // 권한 매핑 테이블
+        const menuGroupPermissionMap = {
+          'COMMON_MENU': ['ADMIN_DASHBOARD_VIEW'],
+          'ADMIN_MENU': ['ADMIN_DASHBOARD_VIEW', 'USER_MANAGE', 'CONSULTANT_MANAGE', 'CLIENT_MANAGE'],
+          'HQ_ADMIN_MENU': ['ADMIN_DASHBOARD_VIEW', 'ALL_BRANCHES_VIEW', 'USER_MANAGE', 'BRANCH_DETAILS_VIEW'],
+          'ERP_MENU': ['ERP_ACCESS', 'FINANCIAL_VIEW', 'INTEGRATED_FINANCE_VIEW'],
+          'CLIENT_MENU': ['CONSULTATION_RECORD_VIEW'],
+          'CONSULTANT_MENU': ['CONSULTATION_RECORD_VIEW', 'SCHEDULE_MANAGE']
+        };
+        
+        // HQ_MASTER는 모든 메뉴 접근 가능
+        const isHqMaster = user?.role === 'HQ_MASTER';
+        
+        // 모든 메뉴 그룹의 권한을 한 번에 체크 (병렬 처리)
+        const menuAccessChecks = transformedStructure.mainMenus.map(menu => {
+          if (!menu.menuGroup) {
             // 메뉴 그룹이 없는 경우 기본적으로 표시
-            filteredMainMenus.push(menu);
+            return { menu, hasAccess: true };
           }
-        }
+          
+          if (isHqMaster) {
+            return { menu, hasAccess: true };
+          }
+          
+          const requiredPermissions = menuGroupPermissionMap[menu.menuGroup];
+          if (!requiredPermissions) {
+            console.warn(`⚠️ 알 수 없는 메뉴 그룹: ${menu.menuGroup}`);
+            return { menu, hasAccess: false };
+          }
+          
+          // 필요한 권한 중 하나라도 있으면 접근 가능
+          const hasAccess = requiredPermissions.some(permission => 
+            userPermissions && userPermissions.includes(permission)
+          );
+          
+          return { menu, hasAccess };
+        });
+        
+        const filteredMainMenus = menuAccessChecks
+          .filter(({ hasAccess }) => hasAccess)
+          .map(({ menu }) => menu);
         
         setFilteredMenus({ 
           mainMenus: filteredMainMenus, 
@@ -288,44 +325,16 @@ const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
       </div>
 
       {/* 로그아웃 확인 모달 */}
-      {showLogoutModal && (
-        <div className="mg-modal">
-          <div className="mg-modal-overlay" onClick={() => setShowLogoutModal(false)}>
-            <div className="mg-modal-content" onClick={(e) => e.stopPropagation()}>
-              <div className="mg-modal-header">
-                <h3>로그아웃</h3>
-                <button 
-                  className="mg-modal-close"
-                  onClick={() => setShowLogoutModal(false)}
-                >
-                  <i className="bi bi-x"></i>
-                </button>
-              </div>
-              <div className="mg-modal-body">
-                <p style={{ textAlign: 'center', margin: 0 }}>
-                  로그아웃하면 현재 세션이 종료됩니다.
-                </p>
-              </div>
-              <div className="mg-modal-footer">
-                <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-                  <button 
-                    onClick={() => setShowLogoutModal(false)}
-                    className="mg-v2-button mg-v2-button-secondary"
-                  >
-                    취소
-                  </button>
-                  <button 
-                    onClick={confirmLogout}
-                    className="mg-v2-button mg-v2-button-danger"
-                  >
-                    로그아웃
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <CompactConfirmModal
+        isOpen={showLogoutModal}
+        onClose={() => setShowLogoutModal(false)}
+        onConfirm={confirmLogout}
+        title="로그아웃"
+        message="로그아웃하면 현재 세션이 종료됩니다."
+        confirmText="로그아웃"
+        cancelText="취소"
+        type="danger"
+      />
     </div>
   );
 };

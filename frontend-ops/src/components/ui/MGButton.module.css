@@ -1,4 +1,6 @@
-/* MindGarden 공통 버튼 컴포넌트 스타일 */
+/* MindGarden 공통 버튼 컴포넌트 스타일
+ * CSS 변수 사용 (현재 색상값 유지)
+ */
 
 .mgButton {
   /* 기본 스타일 */
@@ -21,7 +23,7 @@
 }
 
 .mgButton:focus-visible {
-  outline: 2px solid #3b82f6;
+  outline: 2px solid var(--ops-color-primary, #3b82f6);
   outline-offset: 2px;
 }
 
@@ -56,84 +58,84 @@
 
 /* 버튼 스타일 변형 */
 .mgButtonPrimary {
-  background: #3b82f6;
-  color: #ffffff;
+  background: var(--ops-color-primary, #3b82f6);
+  color: var(--ops-color-white, #ffffff);
 }
 
 .mgButtonPrimary:hover:not(.mgButtonDisabled) {
-  background: #2563eb;
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+  background: var(--ops-color-primary-hover, #2563eb);
+  box-shadow: 0 2px 8px var(--ops-color-primary-shadow, rgba(59, 130, 246, 0.2));
 }
 
 .mgButtonPrimary:active:not(.mgButtonDisabled) {
-  background: #1d4ed8;
-  box-shadow: 0 1px 4px rgba(59, 130, 246, 0.2);
+  background: var(--ops-color-primary-active, #1d4ed8);
+  box-shadow: 0 1px 4px var(--ops-color-primary-shadow, rgba(59, 130, 246, 0.2));
 }
 
 .mgButtonSecondary {
-  background: #6b7280;
-  color: #ffffff;
+  background: var(--ops-color-secondary, #6b7280);
+  color: var(--ops-color-white, #ffffff);
 }
 
 .mgButtonSecondary:hover:not(.mgButtonDisabled) {
-  background: #4b5563;
-  box-shadow: 0 2px 8px rgba(107, 114, 128, 0.2);
+  background: var(--ops-color-secondary-hover, #4b5563);
+  box-shadow: 0 2px 8px var(--ops-color-secondary-shadow, rgba(107, 114, 128, 0.2));
 }
 
 .mgButtonSuccess {
-  background: #10b981;
-  color: #ffffff;
+  background: var(--ops-color-success, #10b981);
+  color: var(--ops-color-white, #ffffff);
 }
 
 .mgButtonSuccess:hover:not(.mgButtonDisabled) {
-  background: #059669;
-  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
+  background: var(--ops-color-success-hover, #059669);
+  box-shadow: 0 2px 8px var(--ops-color-success-shadow, rgba(16, 185, 129, 0.2));
 }
 
 .mgButtonDanger {
-  background: #ef4444;
-  color: #ffffff;
+  background: var(--ops-color-danger, #ef4444);
+  color: var(--ops-color-white, #ffffff);
 }
 
 .mgButtonDanger:hover:not(.mgButtonDisabled) {
-  background: #dc2626;
+  background: var(--ops-color-danger-hover, #dc2626);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+  box-shadow: 0 4px 12px var(--ops-color-danger-shadow, rgba(239, 68, 68, 0.3));
 }
 
 .mgButtonWarning {
-  background: #f59e0b;
-  color: #ffffff;
+  background: var(--ops-color-warning, #f59e0b);
+  color: var(--ops-color-white, #ffffff);
 }
 
 .mgButtonWarning:hover:not(.mgButtonDisabled) {
-  background: #d97706;
+  background: var(--ops-color-warning-hover, #d97706);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+  box-shadow: 0 4px 12px var(--ops-color-warning-shadow, rgba(245, 158, 11, 0.3));
 }
 
 .mgButtonInfo {
-  background: #3b82f6;
-  color: #ffffff;
+  background: var(--ops-color-info, #3b82f6);
+  color: var(--ops-color-white, #ffffff);
 }
 
 .mgButtonInfo:hover:not(.mgButtonDisabled) {
-  background: #2563eb;
+  background: var(--ops-color-info-hover, #2563eb);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 4px 12px var(--ops-color-info-shadow, rgba(59, 130, 246, 0.3));
 }
 
 .mgButtonOutline {
   background: transparent;
-  color: #3b82f6;
-  border: 2px solid #3b82f6;
+  color: var(--ops-color-primary, #3b82f6);
+  border: 2px solid var(--ops-color-primary, #3b82f6);
 }
 
 .mgButtonOutline:hover:not(.mgButtonDisabled) {
-  background: #3b82f6;
-  color: #ffffff;
+  background: var(--ops-color-primary, #3b82f6);
+  color: var(--ops-color-white, #ffffff);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 4px 12px var(--ops-color-primary-shadow-hover, rgba(59, 130, 246, 0.3));
 }
 
 /* 버튼 내용 */
@@ -170,7 +172,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.7);
+  background: var(--ops-color-bg-overlay, rgba(255, 255, 255, 0.7));
   border-radius: inherit;
   backdrop-filter: blur(2px);
 }

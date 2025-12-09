@@ -108,14 +108,7 @@ const ClientSessionManagement = () => {
   if (isLoading) {
     return (
       <SimpleLayout title="회기 관리">
-        <div className="client-session-management">
-          <div className="loading-container">
-            <div className="spinner-border text-primary" role="status">
-              <span className="visually-hidden">로딩 중...</span>
-            </div>
-            <p>회기 데이터를 불러오는 중...</p>
-          </div>
-        </div>
+        <UnifiedLoading type="page" text="회기 데이터를 불러오는 중..." />
       </SimpleLayout>
     );
   }

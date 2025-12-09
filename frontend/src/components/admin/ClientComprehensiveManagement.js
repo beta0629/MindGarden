@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import { FaUser } from 'react-icons/fa';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
@@ -19,7 +19,9 @@ import ClientConsultationTab from './ClientComprehensiveManagement/ClientConsult
 import ClientMappingTab from './ClientComprehensiveManagement/ClientMappingTab';
 import ClientStatisticsTab from './ClientComprehensiveManagement/ClientStatisticsTab';
 import ClientModal from './ClientComprehensiveManagement/ClientModal';
-import ClientFilters from './ClientComprehensiveManagement/ClientFilters';
+import UnifiedFilterSearch from '../ui/FilterSearch/UnifiedFilterSearch';
+import MGButton from '../common/MGButton';
+import { Plus } from 'lucide-react';
 
 /**
  * 내담자 종합관리 메인 컴포넌트
@@ -55,6 +57,7 @@ const ClientComprehensiveManagement = () => {
     const [filterStatus, setFilterStatus] = useState('all');
     const [userStatusOptions, setUserStatusOptions] = useState([]);
     const [loadingCodes, setLoadingCodes] = useState(false);
+    const [activeFilters, setActiveFilters] = useState({});
     
     const [showModal, setShowModal] = useState(false);
     const [modalType, setModalType] = useState(''); // 'create', 'edit', 'delete'
@@ -284,16 +287,44 @@ const ClientComprehensiveManagement = () => {
         setEditingClient(null);
     }, []);
 
-    const filteredClients = clients.filter(client => {
-        const matchesSearch = !searchTerm || 
-            client.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            client.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            client.phone?.includes(searchTerm);
-        
-        const matchesStatus = filterStatus === 'all' || client.status === filterStatus;
-        
-        return matchesSearch && matchesStatus;
-    });
+    // 필터링된 내담자 목록
+    const filteredClients = useMemo(() => {
+        return clients.filter(client => {
+            const matchesSearch = !searchTerm || 
+                client.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                client.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                client.phone?.includes(searchTerm) ||
+                (searchTerm.startsWith('#') && client.status === searchTerm.substring(1).toUpperCase());
+            
+            const matchesStatus = !activeFilters.status || activeFilters.status === 'all' || client.status === activeFilters.status;
+            
+            return matchesSearch && matchesStatus;
+        });
+    }, [clients, searchTerm, activeFilters]);
+    
+    // UnifiedFilterSearch 핸들러
+    const handleSearch = useCallback((term) => {
+        setSearchTerm(term);
+    }, []);
+    
+    const handleFilterChange = useCallback((filters) => {
+        setActiveFilters(filters);
+        setFilterStatus(filters.status || 'all');
+    }, []);
+    
+    // 빠른 필터 옵션 생성
+    const quickFilterOptions = useMemo(() => {
+        const options = [
+            { value: 'all', label: '전체' }
+        ];
+        if (userStatusOptions && userStatusOptions.length > 0) {
+            options.push(...userStatusOptions.map(opt => ({
+                value: opt.codeValue,
+                label: opt.codeLabel || opt.codeName
+            })));
+        }
+        return options;
+    }, [userStatusOptions]);
 
     if (loading) {
         return (
@@ -355,14 +386,27 @@ const ClientComprehensiveManagement = () => {
 
                 {/* 필터 섹션 */}
                 <div className="mg-v2-section">
-                    <ClientFilters
-                        searchTerm={searchTerm}
-                        setSearchTerm={setSearchTerm}
-                        filterStatus={filterStatus}
-                        setFilterStatus={setFilterStatus}
-                        userStatusOptions={userStatusOptions}
-                        onCreateClient={handleCreateClient}
-                    />
+                    <div style={{ display: 'flex', gap: 'var(--spacing-md)', alignItems: 'flex-start', marginBottom: 'var(--spacing-md)' }}>
+                        <div style={{ flex: 1 }}>
+                            <UnifiedFilterSearch
+                                onSearch={handleSearch}
+                                onFilterChange={handleFilterChange}
+                                searchPlaceholder="이름, 이메일, 전화번호 또는 #태그로 검색..."
+                                compact={true}
+                                showQuickFilters={true}
+                                quickFilterOptions={quickFilterOptions}
+                            />
+                        </div>
+                        <MGButton
+                            variant="primary"
+                            size="medium"
+                            onClick={handleCreateClient}
+                            preventDoubleClick={true}
+                        >
+                            <Plus size={16} />
+                            새 내담자 등록
+                        </MGButton>
+                    </div>
                 </div>
 
                 {/* 메인 콘텐츠 */}

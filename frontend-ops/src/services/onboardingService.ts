@@ -1,4 +1,5 @@
 import { clientApiFetch } from "@/services/clientApi";
+import { OPS_API_PATHS } from "@/constants/api";
 import { OnboardingRequest } from "@/types/onboarding";
 
 /**
@@ -8,7 +9,7 @@ import { OnboardingRequest } from "@/types/onboarding";
  */
 export async function fetchPendingOnboarding(): Promise<OnboardingRequest[]> {
   try {
-    const response = await clientApiFetch<OnboardingRequest[]>("/ops/onboarding/requests/pending");
+    const response = await clientApiFetch<OnboardingRequest[]>(OPS_API_PATHS.ONBOARDING.PENDING);
     return Array.isArray(response) ? response : [];
   } catch (error) {
     console.error("[fetchPendingOnboarding] 온보딩 요청 조회 실패:", error);
@@ -18,86 +19,45 @@ export async function fetchPendingOnboarding(): Promise<OnboardingRequest[]> {
 
 /**
  * 온보딩 요청 목록 조회 (상태별 필터링 가능)
- * 백엔드: GET /api/v1/ops/onboarding/requests?status={status}&page=0&size=50
- * Ops 백엔드(8081): ApiResponse<Page<OnboardingRequest>> 래퍼 사용 (페이징)
+ * 백엔드: GET /api/v1/ops/onboarding/requests?status={status}
+ * Ops 백엔드(8081): 직접 List<OnboardingRequest> 반환 (페이징 없음)
  */
 export async function fetchAllOnboarding(status?: string): Promise<OnboardingRequest[]> {
   try {
-    // 메인 백엔드는 페이징을 사용하므로 size를 크게 설정하여 모든 데이터 조회
+    // Ops 백엔드는 페이징을 사용하지 않으므로 status 파라미터만 전달
     const params = new URLSearchParams();
     if (status) {
       // 상태 값이 대문자로 전달되도록 보장 (APPROVED, ON_HOLD 등)
       params.append('status', status.toUpperCase());
     }
-    params.append('page', '0');
-    params.append('size', '50');
-    const path = `/ops/onboarding/requests?${params.toString()}`;
+    const path = params.toString() 
+      ? `${OPS_API_PATHS.ONBOARDING.ALL}?${params.toString()}`
+      : OPS_API_PATHS.ONBOARDING.ALL;
     
     console.log("[fetchAllOnboarding] API 호출:", { 
       path, 
       status, 
-      statusUpper: status?.toUpperCase(),
-      fullUrl: `http://localhost:8081/api/v1${path}`
+      statusUpper: status?.toUpperCase()
     });
     
-    const response = await clientApiFetch<{
-      success: boolean;
-      data?: {
-        content?: OnboardingRequest[];
-        totalElements?: number;
-        totalPages?: number;
-        number?: number;
-        size?: number;
-        [key: string]: any;
-      };
-      message?: string;
-    }>(path);
+    // Ops 백엔드는 직접 List<OnboardingRequest>를 반환 (페이징 없음)
+    const response = await clientApiFetch<OnboardingRequest[]>(path);
     
-    console.log("[fetchAllOnboarding] API 응답 상세:", {
-      hasSuccess: response && typeof response === 'object' && 'success' in response,
-      success: response && typeof response === 'object' && 'success' in response ? (response as any).success : null,
-      hasData: response && typeof response === 'object' && 'data' in response,
-      hasContent: response && typeof response === 'object' && 'data' in response && response.data && 'content' in response.data,
-      contentLength: response && typeof response === 'object' && 'data' in response && response.data && 'content' in response.data 
-        ? (response.data.content as any[])?.length : 0,
-      totalElements: response && typeof response === 'object' && 'data' in response && response.data && 'totalElements' in response.data
-        ? (response.data as any).totalElements : null,
+    console.log("[fetchAllOnboarding] API 응답:", {
       type: typeof response,
-      responseKeys: response && typeof response === 'object' ? Object.keys(response) : [],
-      responsePreview: JSON.stringify(response).substring(0, 500)
+      isArray: Array.isArray(response),
+      length: Array.isArray(response) ? response.length : 0,
+      responsePreview: Array.isArray(response) ? JSON.stringify(response).substring(0, 200) : String(response)
     });
     
-    // ApiResponse 래퍼가 있는 경우 (Ops 백엔드 - 8081)
-    if (response && typeof response === 'object' && 'success' in response) {
-      const apiResponse = response as { 
-        success: boolean; 
-        data?: { 
-          content?: OnboardingRequest[];
-          totalElements?: number;
-          [key: string]: any;
-        }; 
-        message?: string;
-      };
-      
-      if (apiResponse.success && apiResponse.data) {
-        // Page 객체에서 content 배열 추출
-        if (apiResponse.data.content && Array.isArray(apiResponse.data.content)) {
-          console.log(`[fetchAllOnboarding] ${apiResponse.data.content.length}개 항목 반환 (status: ${status || '전체'}, totalElements: ${apiResponse.data.totalElements || 'N/A'})`);
-          return apiResponse.data.content;
-        }
-        // content가 없으면 빈 배열 반환
-        console.warn("[fetchAllOnboarding] content 배열이 없음:", apiResponse.data);
-        return [];
-      }
-      
-      if (!apiResponse.success) {
-        console.error("[fetchAllOnboarding] API 응답 실패:", apiResponse.message);
-      }
-      
-      return [];
+    // 응답이 배열인지 확인
+    if (Array.isArray(response)) {
+      console.log(`[fetchAllOnboarding] ${response.length}개 항목 반환 (status: ${status || '전체'})`);
+      return response;
     }
     
-    console.warn("[fetchAllOnboarding] 예상치 못한 응답 구조:", response);
+    // 배열이 아니면 빈 배열 반환
+    console.warn("[fetchAllOnboarding] 응답이 배열이 아님:", response);
     return [];
   } catch (error) {
     console.error("[fetchAllOnboarding] 온보딩 요청 조회 실패:", {
@@ -123,7 +83,7 @@ export async function fetchOnboardingDetail(
   id: string
 ): Promise<OnboardingRequest> {
   try {
-    const path = `/ops/onboarding/requests/${id}`;
+    const path = OPS_API_PATHS.ONBOARDING.DETAIL(id);
     
     console.log("[fetchOnboardingDetail] API 호출:", { path, id });
     
@@ -185,4 +145,3 @@ export async function fetchOnboardingDetail(
     throw error;
   }
 }
-

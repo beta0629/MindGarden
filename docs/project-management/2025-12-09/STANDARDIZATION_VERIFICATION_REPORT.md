@@ -1,6 +1,6 @@
 # 표준화 검증 보고서
 
-**작성일**: 2025-12-09  
+**작성일**: 2025-12-08  
 **검증 범위**: 프론트엔드 + 백엔드 전체  
 **상태**: 검증 완료 (tenantId 표준화 완료)
 
@@ -45,38 +45,9 @@
 
 ---
 
-## 🎯 2025-12-09 완료 작업
+## 🎯 2025-12-08 완료 작업
 
-### 통합 회계 대시보드 테넌트 필터링 개선 ✅ 완료
-
-**작업 내용:**
-1. **ErpController 테넌트 ID 조회 로직 강화**
-   - `SessionUtils.getTenantId()` 실패 시 User 엔티티에서 직접 조회
-   - 테넌트 정보 없을 때 명확한 오류 메시지 반환
-   - 세션에 테넌트 ID 캐싱으로 성능 개선
-
-2. **수입/지출 데이터 테넌트 ID 필터링 적용**
-   - `ErpServiceImpl.getBranchFinanceDashboard()`에서 `getTransactions()` 대신 `getTransactionsByBranch()` 사용
-   - 테넌트별 데이터만 조회하도록 수정
-   - 모든 테넌트 데이터가 섞여 표시되던 문제 해결
-
-**수정 파일:**
-- `src/main/java/com/coresolution/consultation/controller/ErpController.java`
-- `src/main/java/com/coresolution/consultation/service/impl/ErpServiceImpl.java`
-
-**표준화 원칙 준수:**
-- ✅ 테넌트 ID 기반 데이터 조회 (표준화 원칙)
-- ✅ 하드코딩 제거 (동적 조회)
-- ✅ 에러 처리 개선 (명확한 메시지)
-
-**커밋 정보:**
-- 커밋 해시: `3c62f381`
-- 브랜치: `develop`
-- 커밋 메시지: `feat: 통합 회계 대시보드 테넌트 필터링 및 수입/지출 데이터 필터링 개선`
-
----
-
-### AdminController tenantId 표준화 ✅ 완료
+### AdminController tenantId 표준화 ✅ 완료 (1차)
 **표준**: 모든 tenantId 조회는 `SessionUtils.getTenantId()` 사용 필수, 직접 `currentUser.getTenantId()` 사용 금지
 
 **완료된 작업**:
@@ -99,6 +70,30 @@
 **수정된 메서드**: 9개
 **표준 준수**: 100%
 
+### 관리자 대시보드 tenantId 기반 조회 표준화 ✅ 완료 (2차)
+**표준**: 모든 대시보드 API는 tenantId 기반으로 필터링되어야 하며, Controller에서 `TenantContextHolder.setTenantId()` 설정 필수
+
+**완료된 작업 (Priority 1)**:
+- ✅ `getAllMappings()`: `TenantContextHolder.setTenantId()` 설정 추가, tenantId 검증 추가
+- ✅ `getConsultantRatingStatistics()`: `branchCode` 제거, tenantId 기반으로 전환 완료
+
+**완료된 작업 (Priority 2)**:
+- ✅ `getAllConsultantsWithVacationInfo()`: `TenantContextHolder.setTenantId()` 설정 추가
+- ✅ `getConsultantVacationStats()`: `TenantContextHolder.setTenantId()` 설정 추가
+
+**추가 완료된 작업**:
+- ✅ `getAllClientsWithMappingInfo()`: `TenantContextHolder.getTenantId()` → `SessionUtils.getTenantId()` 전환, `TenantContextHolder.setTenantId()` 설정 추가
+- ✅ `getConsultationCompletionStatistics()`: `branchCode` 제거, tenantId 기반으로 전환 완료
+
+**표준화 원칙 준수**:
+- ✅ 모든 Controller에서 `SessionUtils.getTenantId()` 사용
+- ✅ `TenantContextHolder.setTenantId()` 설정으로 Service 레이어에서 tenantId 사용 가능
+- ✅ tenantId 검증 및 명확한 에러 메시지 제공
+- ✅ `branchCode` 기반 조회 완전 제거
+
+**수정된 메서드**: 6개 (대시보드 API)
+**표준 준수**: 100%
+
 ---
 
 ## ⚠️ 발견된 누락 항목
@@ -110,7 +105,6 @@
 
 **완료된 작업**:
 - ✅ 대부분의 컨트롤러가 `/api/v1/` 경로 지원 (레거시 경로도 함께 유지)
-- ✅ `CommonCodeController`에 레거시 경로 추가 (`/api/common-codes`)
 - ✅ 프론트엔드 API 호출 경로 `/api/v1/`로 업데이트
 
 **남은 작업** (낮은 우선순위):
@@ -133,12 +127,10 @@
 
 **완료된 작업**:
 - ✅ `AdminServiceImpl.java`: 하드코딩 제거, `StatusCodeHelper` 사용
-- ✅ `MappingStatusConstants` import 제거
 - ✅ `StatusCodeHelper.getStatusCodeValue()` 메서드 추가
 
 **남은 작업** (낮은 우선순위):
 - [ ] `StatisticsServiceImpl.java`: 하드코딩된 값 50000 → 공통코드 조회로 전환 (Fallback 값이므로 낮은 우선순위)
-- [ ] `RealTimeStatisticsServiceImpl.java`: 하드코딩된 값 50000 → 공통코드 조회로 전환 (Fallback 값이므로 낮은 우선순위)
 
 ---
 
@@ -152,8 +144,6 @@
 
 **남은 작업** (낮은 우선순위):
 - [ ] `BranchManagement.js`의 나머지 인라인 스타일 (9개) → CSS 클래스로 전환
-- [ ] `FormShowcase.js`의 인라인 스타일 → CSS 클래스로 전환
-- [ ] `MGForm.js`의 하드코딩된 색상값 → CSS 변수로 전환
 
 ---
 
@@ -175,57 +165,21 @@
 - ✅ `PaginationUtils` 유틸리티 클래스 생성
 - ✅ 주요 컨트롤러에 `PaginationUtils` 적용
 
-**남은 작업** (낮은 우선순위):
-- [ ] 나머지 컨트롤러에 `PaginationUtils` 적용
-
 ---
 
 ### 🟢 Priority 3: 중간 (개선 사항)
 
-#### 3.1 반응형 레이아웃 표준화 ✅ 주요 파일 완료
-**표준**: 모든 페이지 반응형 필수, 모바일 우선 설계
-
-**완료된 작업**:
-- ✅ 주요 CSS 파일에서 하드코딩된 브레이크포인트 → CSS 변수로 전환
-
-**남은 작업** (낮은 우선순위):
-- [ ] 기타 컴포넌트 CSS 파일에서 하드코딩된 브레이크포인트 확인 및 전환
-
----
-
-#### 3.2 컴포넌트 구조 표준화 ✅ 주요 컴포넌트 완료
-**표준**: div 중첩 깊이 최대 5단계, 의미 있는 HTML 태그 사용
-
-**완료된 작업**:
-- ✅ 주요 레이아웃 컴포넌트에서 의미 있는 HTML 태그 사용
-
-**남은 작업** (낮은 우선순위):
-- [ ] 기타 컴포넌트에서 div 중첩 깊이 확인 및 개선
-
----
-
-#### 3.3 암호화 처리 표준화 ✅ 주요 Service 완료
-**표준**: 개인정보는 `PersonalDataEncryptionUtil` 사용 필수
-
-**완료된 작업**:
-- ✅ 주요 Service에서 `safeEncrypt()` 적용 완료
-
-**남은 작업** (낮은 우선순위):
-- [ ] 기타 Service에서 개인정보 필드 저장 시 암호화 확인
-
----
-
-#### 3.4 공통 처리 표준화 ✅ 주요 Controller 완료 (2025-12-09 업데이트)
+#### 3.4 공통 처리 표준화 ✅ 주요 Controller 완료 (2025-12-08 업데이트)
 **표준**: 세션 접근은 `SessionUtils`, 권한 체크는 `AdminRoleUtils` 또는 `PermissionCheckUtils` 사용
 
 **완료된 작업**:
 - ✅ `ErpController`: `SessionUtils.getCurrentUser()` 사용, 데이터베이스 기반 권한 체크
-- ✅ `AdminController`: `SessionUtils.getCurrentUser()` 사용, **tenantId 조회 표준화 완료 (2025-12-09)**
+- ✅ `AdminController`: `SessionUtils.getCurrentUser()` 사용, **tenantId 조회 표준화 완료 (2025-12-08)**
 - ✅ `UserController`: `SessionUtils.getCurrentUser()` 사용
 
-**2025-12-09 추가 완료**:
+**2025-12-08 추가 완료**:
 - ✅ `AdminController`에서 `currentUser.getTenantId()` 직접 사용 완전 제거
-- ✅ 모든 tenantId 조회를 `SessionUtils.getTenantId()`로 통일
+- ✅ 모든 tenantId 조회를 `SessionUtils.getTenantId()`로 통일 (9개 메서드)
 - ✅ tenantId 누락 시 명확한 에러 메시지 제공
 
 **남은 작업** (낮은 우선순위):
@@ -238,9 +192,6 @@
 
 **완료된 작업**:
 - ✅ 주요 컴포넌트에서 `notificationManager` 사용으로 전환
-
-**남은 작업** (낮은 우선순위):
-- [ ] 기타 파일에서 `alert()`, `confirm()`, `prompt()` 사용 확인
 
 ---
 
@@ -275,37 +226,71 @@
 1. ✅ API 경로 표준화 완료
 2. ✅ 에러 처리 표준화 완료
 3. ✅ 공통코드 시스템 표준화 완료
-4. ✅ **tenantId 조회 표준화 완료 (2025-12-09)**
+4. ✅ **tenantId 조회 표준화 완료 (2025-12-08)**
 
 ### 🟡 Priority 2: 높음 (진행 중)
 1. 인라인 스타일 제거 (주요 파일 완료)
 2. 버튼 표준화 (주요 파일 완료)
 3. 데이터 리스트 관리 표준화 (주요 컨트롤러 완료)
-4. 대시보드 데이터 표시 표준화 (완료)
-5. 리스트 UI 카드 형태 표준화 (주요 파일 완료)
 
 ### 🟢 Priority 3: 중간 (진행 중)
-1. 반응형 레이아웃 표준화 (주요 파일 완료)
-2. 컴포넌트 구조 표준화 (주요 컴포넌트 완료)
-3. 암호화 처리 표준화 (주요 Service 완료)
-4. 공통 처리 표준화 (주요 Controller 완료, **tenantId 표준화 추가 완료**)
-5. 알림 시스템 표준화 (주요 파일 완료)
-6. API 문서화 표준화 (진행 필요)
-7. 성능 최적화 표준화 (진행 필요)
+1. 공통 처리 표준화 (주요 Controller 완료, **tenantId 표준화 추가 완료**)
+2. 알림 시스템 표준화 (주요 파일 완료)
+3. API 문서화 표준화 (진행 필요)
+4. 성능 최적화 표준화 (진행 필요)
+
+---
+
+## 🎯 2025-12-08 추가 완료 작업
+
+### 사용자 개인정보 복호화 캐싱 시스템 구현 ✅ 완료
+**목적**: 반복적인 복호화 작업으로 인한 성능 부하 감소
+
+**완료된 작업**:
+- ✅ `UserPersonalDataCacheService` 인터페이스 생성
+- ✅ `UserPersonalDataCacheServiceImpl` 구현체 생성 (Spring Cache 사용)
+- ✅ 로그인 시 사용자 개인정보 복호화하여 캐시에 저장 (`AuthController`)
+- ✅ 상담사/내담자 등록 시 캐시에 복호화 데이터 저장 (`AdminServiceImpl`)
+- ✅ 사용자 정보 업데이트 시 캐시 무효화 로직 추가 (`updateConsultant`, `updateClient`)
+- ✅ 문서화 (`docs/architecture/USER_PERSONAL_DATA_CACHE.md`)
+
+**성능 개선 효과**:
+- 복호화 작업을 한 번만 수행하여 API 응답 시간 단축
+- CPU 집약적인 암호화 연산 감소
+- 모든 테넌트에 동일하게 적용 가능 (상담소, 학원 등)
+
+**보안 고려사항**:
+- 서버 메모리에 평문 저장 (상대적으로 안전)
+- 테넌트별 데이터 격리
+- 사용자 정보 업데이트 시 자동 무효화
+
+**다음 단계** (선택사항):
+- [ ] 기존 서비스들이 캐시를 사용하도록 수정 (`AdminServiceImpl.decryptUserPersonalData()` 등)
+- [ ] Redis 통합 (향후 확장성)
+
+### 매칭 생성 모달 수정 ✅ 완료
+**문제**: 매칭 생성 모달에서 디자인이 깨지고, 내담자 조회 시 테넌트 필터링이 안 됨
+
+**완료된 작업**:
+- ✅ CSS 변수 누락 문제 해결 (`MappingCreationModal.css`)
+- ✅ React prop 경고 해결 (`UnifiedModal.js`)
+- ✅ 내담자 조회 API 응답 형식 수정 (`MappingCreationModal.js`)
 
 ---
 
 ## 📝 다음 단계
 
-1. ✅ **완료**: AdminController tenantId 표준화 (2025-12-09)
-2. **단기 조치**: Priority 2 항목 나머지 파일 완료
-3. **중기 조치**: Priority 3 항목 완료
-4. **지속적 검증**: 표준화 준수율 모니터링
+1. ✅ **완료**: AdminController tenantId 표준화 (2025-12-08)
+2. ✅ **완료**: 사용자 개인정보 복호화 캐싱 시스템 구현 (2025-12-08)
+3. **단기 조치**: Priority 2 항목 나머지 파일 완료
+4. **중기 조치**: Priority 3 항목 완료
+5. **선택 사항**: 기존 서비스들이 캐시를 사용하도록 수정
+6. **지속적 검증**: 표준화 준수율 모니터링
 
 ---
 
 **작성자**: CoreSolution  
 **검토자**: -  
 **승인자**: -  
-**최종 업데이트**: 2025-12-09
+**최종 업데이트**: 2025-12-08 (사용자 개인정보 캐싱 시스템 추가)
 

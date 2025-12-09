@@ -95,7 +95,8 @@ const TaxManagement = () => {
     ];
 
     return (
-        <SimpleLayout title="세금 관리" loading={loading} loadingText="세금 데이터를 불러오는 중...">
+        <SimpleLayout title="세금 관리">
+            {loading && <UnifiedLoading type="page" text="세금 데이터를 불러오는 중..." />}
             <div className="mg-dashboard-layout">
                 {/* Dashboard Header */}
                 <div className="mg-dashboard-header">

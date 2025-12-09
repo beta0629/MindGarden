@@ -15,7 +15,8 @@ import {
 } from '../../constants/mapping';
 import MappingCreationModal from './MappingCreationModal';
 import MappingCard from './mapping/MappingCard';
-import MappingFilters from './mapping/MappingFilters';
+import UnifiedFilterSearch from '../ui/FilterSearch/UnifiedFilterSearch';
+import { getCommonCodes } from '../../utils/commonCodeApi';
 import MappingStats from './mapping/MappingStats';
 import ConsultantTransferModal from './mapping/ConsultantTransferModal';
 import ConsultantTransferHistory from './mapping/ConsultantTransferHistory';
@@ -52,6 +53,8 @@ const MappingManagement = () => {
     const [selectedMapping, setSelectedMapping] = useState(null);
     const [filterStatus, setFilterStatus] = useState('ALL');
     const [searchTerm, setSearchTerm] = useState('');
+    const [activeFilters, setActiveFilters] = useState({});
+    const [mappingStatusOptions, setMappingStatusOptions] = useState([]);
     const [showTransferModal, setShowTransferModal] = useState(false);
     const [showTransferHistory, setShowTransferHistory] = useState(false);
     const [selectedClientId, setSelectedClientId] = useState(null);
@@ -483,11 +486,12 @@ const MappingManagement = () => {
 
     const filteredMappings = mappings
         .filter(mapping => {
-            const matchesStatus = filterStatus === 'ALL' || mapping.status === filterStatus;
-            const matchesSearch = searchTerm === '' || 
+            const matchesStatus = !activeFilters.status || activeFilters.status === 'ALL' || mapping.status === activeFilters.status;
+            const matchesSearch = !searchTerm || 
                 (mapping.consultantName && mapping.consultantName.toLowerCase().includes(searchTerm.toLowerCase())) ||
                 (mapping.clientName && mapping.clientName.toLowerCase().includes(searchTerm.toLowerCase())) ||
-                (mapping.packageName && mapping.packageName.toLowerCase().includes(searchTerm.toLowerCase()));
+                (mapping.packageName && mapping.packageName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                (searchTerm.startsWith('#') && mapping.status === searchTerm.substring(1).toUpperCase());
             
             return matchesStatus && matchesSearch;
         })
@@ -527,13 +531,19 @@ const MappingManagement = () => {
                     </button>
                 </div>
 
-                <MappingFilters
-                    filterStatus={ filterStatus }
-                    searchTerm={ searchTerm }
-                    onStatusChange={ handleStatusChange }
-                    onSearchChange={ handleSearchChange }
-                    onReset={ handleResetFilters }
-                />
+                <div className="mg-v2-section" style={{ marginBottom: 'var(--spacing-md)' }}>
+                    <UnifiedFilterSearch
+                        onSearch={(term) => setSearchTerm(term)}
+                        onFilterChange={(filters) => {
+                            setActiveFilters(filters);
+                            setFilterStatus(filters.status || 'ALL');
+                        }}
+                        searchPlaceholder="상담사, 내담자, 패키지명 또는 #태그로 검색..."
+                        compact={true}
+                        showQuickFilters={true}
+                        quickFilterOptions={mappingStatusOptions}
+                    />
+                </div>
 
                 <MappingStats 
                     mappings={ mappings } 

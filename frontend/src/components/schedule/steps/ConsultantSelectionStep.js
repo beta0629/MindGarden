@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import ConsultantCard from '../../ui/Card/ConsultantCard';
 import SpecialtyDisplay from '../../ui/SpecialtyDisplay';
 import ConsultantFilter from '../components/ConsultantFilter';
-import UnifiedLoading from '../../../components/common/UnifiedLoading'; // 임시 비활성화
+import UnifiedLoading from '../../../components/common/UnifiedLoading';
 import notificationManager from '../../../utils/notification';
 import './ConsultantSelectionStep.css';
 
@@ -322,7 +322,7 @@ const ConsultantSelectionStepNew = ({
     if (loading && consultants.length === 0) {
         return (
             <div className="consultant-selection-step">
-                <div className="mg-loading">로딩중...</div>
+                <UnifiedLoading type="inline" text="상담사 목록을 불러오는 중..." />
             </div>
         );
     }

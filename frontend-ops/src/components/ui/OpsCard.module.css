@@ -1,0 +1,92 @@
+/**
+ * Ops Portal 카드 컴포넌트 스타일
+ * CSS 변수 사용 (현재 색상값 유지)
+ */
+
+.opsCard {
+  background: var(--ops-color-bg-card, #ffffff);
+  border: 1px solid var(--ops-color-border, rgba(148, 163, 184, 0.25));
+  border-radius: var(--ops-radius-lg, 0.5rem);
+  padding: var(--ops-spacing-lg, 1.5rem);
+  backdrop-filter: blur(12px);
+  box-shadow: var(--ops-shadow-md, 0 2px 8px rgba(0, 0, 0, 0.08));
+  transition: transform var(--ops-transition-fast, 0.15s ease), 
+              box-shadow var(--ops-transition-base, 0.2s ease-in-out),
+              background var(--ops-transition-base, 0.2s ease-in-out),
+              border-color var(--ops-transition-base, 0.2s ease-in-out);
+}
+
+.opsCard:hover {
+  transform: translateY(-2px);
+  background: var(--ops-color-bg-card-hover, #f8fafc);
+  border-color: var(--ops-color-border-hover, rgba(59, 130, 246, 0.4));
+  box-shadow: var(--ops-shadow-lg, 0 4px 12px rgba(0, 0, 0, 0.12));
+}
+
+.opsCard[role="button"] {
+  cursor: pointer;
+}
+
+.opsCard[role="button"]:focus-visible {
+  outline: 2px solid var(--ops-color-primary, #3b82f6);
+  outline-offset: 2px;
+}
+
+/* 카드 헤더 */
+.opsCard__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--ops-spacing-md, 1rem);
+  padding-bottom: var(--ops-spacing-md, 1rem);
+  border-bottom: 1px solid var(--ops-color-border, rgba(148, 163, 184, 0.2));
+}
+
+.opsCard__title {
+  margin: 0;
+  font-size: var(--ops-font-size-lg, 1.125rem);
+  font-weight: var(--ops-font-weight-semibold, 600);
+  color: var(--ops-color-text-primary, #1e293b);
+}
+
+.opsCard__subtitle {
+  margin: var(--ops-spacing-xs, 0.25rem) 0 0 0;
+  font-size: var(--ops-font-size-sm, 0.875rem);
+  color: var(--ops-color-text-secondary, #475569);
+}
+
+/* 카드 본문 */
+.opsCard__content {
+  flex: 1;
+  margin-bottom: var(--ops-spacing-md, 1rem);
+}
+
+.opsCard__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ops-spacing-sm, 0.5rem);
+  margin-top: var(--ops-spacing-sm, 0.5rem);
+  font-size: var(--ops-font-size-sm, 0.875rem);
+  color: var(--ops-color-text-secondary, #475569);
+}
+
+/* 카드 액션 (버튼 가로 배치) */
+.opsCard__actions {
+  display: flex;
+  gap: var(--ops-spacing-sm, 0.5rem);
+  justify-content: flex-end;
+  padding-top: var(--ops-spacing-md, 1rem);
+  border-top: 1px solid var(--ops-color-border, rgba(148, 163, 184, 0.2));
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+  .opsCard {
+    padding: var(--ops-spacing-md, 1rem);
+  }
+  
+  .opsCard__actions {
+    flex-wrap: wrap;
+  }
+}
+

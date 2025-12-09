@@ -21,7 +21,7 @@ import { Building2, CreditCard, Calendar, DollarSign, CheckCircle, XCircle, Aler
 import { getPaymentMethods, getSubscriptions } from '../../utils/billingService';
 import PaymentMethodRegistration from '../billing/PaymentMethodRegistration';
 import notificationManager from '../../utils/notification';
-import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import UnifiedLoading from '../../components/common/UnifiedLoading';
 import SimpleLayout from '../layout/SimpleLayout';
 import MGButton from '../../components/common/MGButton'; // 임시 비활성화
 import './TenantProfile.css';
@@ -198,7 +198,7 @@ const TenantProfile = () => {
   if (sessionLoading || !isLoggedIn || !user) {
     return (
       <SimpleLayout>
-        <div className="mg-loading">로딩중...</div>
+        <UnifiedLoading type="page" text="테넌트 정보를 불러오는 중..." />
       </SimpleLayout>
     );
   }
@@ -217,7 +217,7 @@ const TenantProfile = () => {
   if (loading) {
     return (
       <SimpleLayout>
-        <div className="mg-loading">로딩중...</div>
+        <UnifiedLoading type="page" text="테넌트 프로필을 불러오는 중..." />
       </SimpleLayout>
     );
   }

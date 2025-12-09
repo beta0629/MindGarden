@@ -123,8 +123,6 @@ import CacheMonitoringDashboard from './components/admin/CacheMonitoringDashboar
 import UnifiedHeader from './components/common/UnifiedHeader';
 import SecurityMonitoringDashboard from './components/admin/SecurityMonitoringDashboard';
 import ApiPerformanceMonitoring from './components/admin/ApiPerformanceMonitoring';
-import OnboardingRequest from './components/onboarding/OnboardingRequest';
-import OnboardingStatus from './components/onboarding/OnboardingStatus';
 
 // URL 쿼리 파라미터 처리 컴포넌트
 function QueryParamHandler({ children, onLoginSuccess }) {
@@ -442,8 +440,6 @@ function AppContent() {
             <Route path="/tenant/settings" element={<TenantProfile />} />
             
             {/* 온보딩 관련 라우트 */}
-            <Route path="/onboarding/request" element={<OnboardingRequest />} />
-            <Route path="/onboarding/status" element={<OnboardingStatus />} />
             
             {/* 상담 내역 및 리포트 라우트 (모든 사용자) */}
             <Route path="/consultation-history" element={<ConsultationHistory />} />

@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import "../styles/globals.css";
+import "../styles/ops-design-tokens.css";
+import "../styles/ops-card-list.css";
 import { LogoutButton } from "@/components/auth/LogoutButton";
 import { GlobalNotification } from "@/components/common/GlobalNotification";
 
@@ -51,6 +53,7 @@ export default function RootLayout({
         <title>Trinity Ops Portal</title>
         <meta name="description" content="Trinity internal operations console" />
         <meta name="robots" content="noindex, nofollow" />
+        <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚙️</text></svg>" />
       </head>
       <body>
         <div className="layout">

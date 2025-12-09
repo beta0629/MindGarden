@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import UnifiedNotification from '../common/UnifiedNotification';
 import UnifiedLoading from '../common/UnifiedLoading';
 import SimpleLayout from '../layout/SimpleLayout';
+import MGButton from '../common/MGButton';
 import {
   createOnboardingRequest,
   getRootBusinessCategories,
@@ -179,21 +180,21 @@ const OnboardingRequest = () => {
   return (
     <SimpleLayout title="서비스 신청">
       <div className="onboarding-request">
-        <div className="onboarding-request__container">
-        <p className="onboarding-request__description">
+        <div className="mg-container mg-container--lg">
+        <p className="mg-v2-text mg-v2-text--secondary mg-v2-mb-lg">
           CoreSolution 서비스 이용을 위한 온보딩 요청을 제출해주세요.
         </p>
 
         {error && (
-          <div className="onboarding-request__error">
+          <div className="mg-v2-alert mg-v2-alert--error mg-v2-mb-md">
             {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="onboarding-request__form">
-          <div className="onboarding-request__field">
-            <label htmlFor={FORM_FIELDS.TENANT_NAME} className="onboarding-request__label">
-              회사명 <span className="onboarding-request__required">*</span>
+        <form onSubmit={handleSubmit} className="mg-v2-form">
+          <div className="mg-v2-form-group">
+            <label htmlFor={FORM_FIELDS.TENANT_NAME} className="mg-v2-form-label">
+              회사명 <span className="mg-v2-form-required">*</span>
             </label>
             <input
               type="text"
@@ -201,14 +202,14 @@ const OnboardingRequest = () => {
               name={FORM_FIELDS.TENANT_NAME}
               value={formData.tenantName}
               onChange={handleChange}
-              className="onboarding-request__input"
+              className="mg-v2-form-input"
               placeholder={PLACEHOLDERS.TENANT_NAME}
               required
             />
           </div>
 
-          <div className="onboarding-request__field">
-            <label htmlFor="category" className="onboarding-request__label">
+          <div className="mg-v2-form-group">
+            <label htmlFor="category" className="mg-v2-form-label">
               업종 카테고리
             </label>
             {loadingCategories && businessCategories.length === 0 ? (
@@ -218,24 +219,22 @@ const OnboardingRequest = () => {
                 variant="pulse"
               />
             ) : businessCategories.length === 0 ? (
-              <div className="onboarding-request__error">업종 카테고리를 불러올 수 없습니다.</div>
+              <div className="mg-v2-alert mg-v2-alert--error">업종 카테고리를 불러올 수 없습니다.</div>
             ) : (
-              <div className="onboarding-request__category-grid">
+              <div className="mg-v2-grid mg-v2-grid--cols-auto">
                 {businessCategories.map((category) => {
                   const categoryId = category.categoryId || String(category.id);
                   return (
-                    <button
+                    <MGButton
                       key={categoryId}
                       type="button"
+                      variant={selectedCategoryId === categoryId ? 'primary' : 'outline'}
+                      size="medium"
                       onClick={() => handleCategorySelect(categoryId)}
-                      className={`onboarding-request__category-button ${
-                        selectedCategoryId === categoryId
-                          ? 'onboarding-request__category-button--active'
-                          : ''
-                      }`}
+                      className="mg-v2-category-button"
                     >
                       {getCategoryName(category)}
-                    </button>
+                    </MGButton>
                   );
                 })}
               </div>
@@ -243,9 +242,9 @@ const OnboardingRequest = () => {
           </div>
 
           {selectedCategoryId && (
-            <div className="onboarding-request__field">
-              <label htmlFor={FORM_FIELDS.BUSINESS_TYPE} className="onboarding-request__label">
-                세부 업종 <span className="onboarding-request__required">*</span>
+            <div className="mg-v2-form-group">
+              <label htmlFor={FORM_FIELDS.BUSINESS_TYPE} className="mg-v2-form-label">
+                세부 업종 <span className="mg-v2-form-required">*</span>
               </label>
               {loadingCategories && businessCategoryItems.length === 0 ? (
                 <UnifiedLoading 
@@ -254,24 +253,22 @@ const OnboardingRequest = () => {
                   variant="pulse"
                 />
               ) : businessCategoryItems.length === 0 ? (
-                <div className="onboarding-request__help">선택한 카테고리에 해당하는 업종이 없습니다.</div>
+                <div className="mg-v2-text mg-v2-text--secondary mg-v2-text--sm">선택한 카테고리에 해당하는 업종이 없습니다.</div>
               ) : (
-                <div className="onboarding-request__category-grid">
+                <div className="mg-v2-grid mg-v2-grid--cols-auto">
                   {businessCategoryItems.map((item) => {
                     const itemCode = item.itemCode || item.businessType;
                     return (
-                      <button
+                      <MGButton
                         key={item.itemId || String(item.id)}
                         type="button"
+                        variant={formData.businessType === itemCode ? 'primary' : 'outline'}
+                        size="medium"
                         onClick={() => handleBusinessTypeSelect(itemCode)}
-                        className={`onboarding-request__category-button ${
-                          formData.businessType === itemCode
-                            ? 'onboarding-request__category-button--active'
-                            : ''
-                        }`}
+                        className="mg-v2-category-button"
                       >
                         {getItemName(item)}
-                      </button>
+                      </MGButton>
                     );
                   })}
                 </div>
@@ -279,8 +276,8 @@ const OnboardingRequest = () => {
             </div>
           )}
 
-          <div className="onboarding-request__field">
-            <label htmlFor={FORM_FIELDS.CONTACT_PHONE} className="onboarding-request__label">
+          <div className="mg-v2-form-group">
+            <label htmlFor={FORM_FIELDS.CONTACT_PHONE} className="mg-v2-form-label">
               연락처
             </label>
             <input
@@ -289,16 +286,16 @@ const OnboardingRequest = () => {
               name={FORM_FIELDS.CONTACT_PHONE}
               value={formData.contactPhone}
               onChange={handleChange}
-              className="onboarding-request__input"
+              className="mg-v2-form-input"
               placeholder={PLACEHOLDERS.CONTACT_PHONE}
             />
-            <small className="onboarding-request__help">
+            <small className="mg-v2-text mg-v2-text--secondary mg-v2-text--sm">
               {HELP_TEXTS.CONTACT_PHONE}
             </small>
           </div>
 
-          <div className="onboarding-request__field">
-            <label htmlFor={FORM_FIELDS.RISK_LEVEL} className="onboarding-request__label">
+          <div className="mg-v2-form-group">
+            <label htmlFor={FORM_FIELDS.RISK_LEVEL} className="mg-v2-form-label">
               위험도
             </label>
             {loadingRiskLevels ? (
@@ -313,7 +310,7 @@ const OnboardingRequest = () => {
                 name={FORM_FIELDS.RISK_LEVEL}
                 value={formData.riskLevel}
                 onChange={handleChange}
-                className="onboarding-request__input"
+                className="mg-v2-form-select"
                 disabled
               >
                 <option value={DEFAULT_RISK_LEVEL}>위험도 코드를 불러올 수 없습니다</option>
@@ -324,7 +321,7 @@ const OnboardingRequest = () => {
                 name={FORM_FIELDS.RISK_LEVEL}
                 value={formData.riskLevel}
                 onChange={handleChange}
-                className="onboarding-request__input"
+                className="mg-v2-form-select"
               >
                 {riskLevelOptions.map(option => (
                   <option key={option.value} value={option.value}>
@@ -333,27 +330,32 @@ const OnboardingRequest = () => {
                 ))}
               </select>
             )}
-            <small className="onboarding-request__help">
+            <small className="mg-v2-text mg-v2-text--secondary mg-v2-text--sm">
               {HELP_TEXTS.RISK_LEVEL}
             </small>
           </div>
 
-          <div className="onboarding-request__actions">
-            <button
+          <div className="mg-v2-form-actions">
+            <MGButton
               type="button"
+              variant="outline"
+              size="medium"
               onClick={() => navigate(-1)}
-              className="onboarding-request__button onboarding-request__button--secondary"
               disabled={loading}
             >
               {MESSAGES.CANCEL}
-            </button>
-            <button
+            </MGButton>
+            <MGButton
               type="submit"
-              className="onboarding-request__button onboarding-request__button--primary"
-              disabled={loading || !formData.tenantName || !formData.businessType}
+              variant="primary"
+              size="medium"
+              loading={loading}
+              loadingText={MESSAGES.SUBMITTING}
+              disabled={!formData.tenantName || !formData.businessType}
+              preventDoubleClick={true}
             >
-              {loading ? MESSAGES.SUBMITTING : MESSAGES.SUBMIT}
-            </button>
+              {MESSAGES.SUBMIT}
+            </MGButton>
           </div>
         </form>
         </div>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import UnifiedLoading from '../../components/common/UnifiedLoading';
 import { useSession } from '../../hooks/useSession';
 import { sessionManager } from '../../utils/sessionManager';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
@@ -219,9 +219,7 @@ const ConsultantAvailability = () => {
   if (sessionLoading) {
     return (
       <SimpleLayout>
-        <div className="loading-container">
-          <div className="mg-loading">로딩중...</div>
-        </div>
+        <UnifiedLoading type="page" text="가용성을 불러오는 중..." />
       </SimpleLayout>
     );
   }
@@ -324,7 +322,7 @@ const ConsultantAvailability = () => {
 
       {/* 로딩 상태 */}
       {loading && (
-        <div className="mg-loading">로딩중...</div>
+        <UnifiedLoading type="inline" text="가용성 데이터를 불러오는 중..." />
       )}
 
       {/* 오류 상태 */}

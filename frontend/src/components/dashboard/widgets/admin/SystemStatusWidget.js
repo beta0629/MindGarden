@@ -24,12 +24,6 @@ import './SystemStatusWidget.css';
 const SystemStatusWidget = ({ widget, user }) => {
   const navigate = useNavigate();
 
-
-  if (!RoleUtils.isAdmin(user) && !RoleUtils.hasRole(user, 'HQ_MASTER')) {
-    return null;
-  }
-
-
   // 시스템 상태 모니터링 데이터 소스 설정
   const getDataSourceConfig = () => {
     return {

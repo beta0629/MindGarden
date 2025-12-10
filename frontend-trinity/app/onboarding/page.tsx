@@ -253,12 +253,25 @@ export default function OnboardingPage() {
   // 기존 온보딩 요청 이어서 진행
   const handleContinueExistingRequest = (request: OnboardingRequest) => {
     // 기존 요청 데이터로 폼 채우기
+    let parsedPlanId: string | undefined;
+    
+    // checklistJson에서 planId 파싱 시도
+    if (request.checklistJson) {
+      try {
+        const checklist = JSON.parse(request.checklistJson);
+        parsedPlanId = checklist.planId || checklist.selectedPlanId;
+      } catch (err) {
+        // JSON 파싱 실패 시 무시
+        console.warn('checklistJson 파싱 실패:', err);
+      }
+    }
+    
     setFormData(prev => ({
       ...prev,
       tenantName: request.tenantName || prev.tenantName,
       businessType: request.businessType || prev.businessType,
       contactEmail: request.requestedBy || prev.contactEmail,
-      planId: request.planId || prev.planId,
+      planId: parsedPlanId || prev.planId,
     }));
     setShowExistingRequests(false);
     setStep(1); // 첫 단계로 이동

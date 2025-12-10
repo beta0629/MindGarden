@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import ScheduleDetailModal from './ScheduleDetailModal';
+import ScheduleModal from './ScheduleModal';
 import VacationManagementModal from '../admin/VacationManagementModal';
 import TimeSelectionModal from './TimeSelectionModal';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
@@ -124,7 +125,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                 branchCode: currentUser?.branchCode
             });
             
-            let apiEndpoint = '/api/v1/admin/consultants/with-vacation?date=' + new Date().toISOString().split('T')[0];
+            const apiEndpoint = '/api/v1/admin/consultants/with-vacation?date=' + new Date().toISOString().split('T')[0];
             
             console.log('🔍 조건 확인:', {
                 currentUserRole,

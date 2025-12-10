@@ -22,3 +22,13 @@ export interface OnboardingDecisionPayload {
   note?: string;
 }
 
+export interface OnboardingDecisionResponse {
+  request: OnboardingRequest;
+  adminAccount?: {
+    email: string;
+    password: string;
+    tenantId: string;
+    tenantName: string;
+  } | null;
+}
+

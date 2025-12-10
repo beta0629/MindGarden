@@ -2,6 +2,7 @@ package com.mindgarden.ops.controller;
 
 import com.mindgarden.ops.controller.dto.OnboardingCreateRequest;
 import com.mindgarden.ops.controller.dto.OnboardingDecisionRequest;
+import com.mindgarden.ops.controller.dto.OnboardingDecisionResponse;
 import com.mindgarden.ops.domain.onboarding.OnboardingRequest;
 import com.mindgarden.ops.domain.onboarding.OnboardingStatus;
 import com.mindgarden.ops.service.onboarding.OnboardingService;
@@ -55,7 +56,7 @@ public class OnboardingController {
     }
 
     @PostMapping("/requests/{id}/decision")
-    public ResponseEntity<OnboardingRequest> decide(
+    public ResponseEntity<OnboardingDecisionResponse> decide(
         @PathVariable UUID id,
         @RequestBody @Valid OnboardingDecisionRequest payload
     ) {
@@ -63,9 +64,12 @@ public class OnboardingController {
             id, payload.status(), payload.actorId(), payload.note() != null ? "있음" : "없음");
         
         try {
-            OnboardingRequest updated = onboardingService.decide(id, payload.status(), payload.actorId(), payload.note());
-            log.info("[OnboardingController] 결정 저장 완료 - requestId={}, 최종 상태={}", id, updated.getStatus());
-            return ResponseEntity.ok(updated);
+            OnboardingDecisionResponse response = onboardingService.decideWithAdminInfo(
+                id, payload.status(), payload.actorId(), payload.note());
+            log.info("[OnboardingController] 결정 저장 완료 - requestId={}, 최종 상태={}, adminAccount={}", 
+                id, response.request().getStatus(), 
+                response.adminAccount() != null ? response.adminAccount().email() : "없음");
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
             log.error("[OnboardingController] 결정 저장 실패 - requestId={}, 오류={}", id, e.getMessage(), e);
             throw e;

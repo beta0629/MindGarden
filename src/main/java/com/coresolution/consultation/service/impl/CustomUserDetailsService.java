@@ -29,13 +29,16 @@ public class CustomUserDetailsService implements UserDetailsService {
     
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        log.debug("🔍 CustomUserDetailsService.loadUserByUsername 호출: email={}", email);
+        log.info("🔍 CustomUserDetailsService.loadUserByUsername 호출: email={}", email);
         
         try {
+            log.info("🔍 사용자 조회 시작: email={}", email);
             User user = userService.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다: " + email));
             
-            log.debug("✅ 사용자 조회 성공: userId={}, email={}, isActive={}", user.getUserId(), user.getEmail(), user.getIsActive());
+            log.info("✅ 사용자 조회 성공: userId={}, email={}, tenantId={}, role={}, isActive={}, passwordHash={}", 
+                user.getUserId(), user.getEmail(), user.getTenantId(), user.getRole(), 
+                user.getIsActive(), user.getPassword() != null ? user.getPassword().substring(0, 20) + "..." : "null");
             
             // 사용자가 비활성화된 경우 예외 발생
             if (!user.getIsActive()) {

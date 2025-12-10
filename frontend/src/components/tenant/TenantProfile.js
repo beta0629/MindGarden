@@ -20,6 +20,7 @@ import { useSession } from '../../contexts/SessionContext';
 import { Building2, CreditCard, Calendar, DollarSign, CheckCircle, XCircle, AlertCircle, Plus, Trash2, Edit2 } from 'lucide-react';
 import { getPaymentMethods, getSubscriptions } from '../../utils/billingService';
 import PaymentMethodRegistration from '../billing/PaymentMethodRegistration';
+import SubscriptionManagement from '../billing/SubscriptionManagement';
 import notificationManager from '../../utils/notification';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import SimpleLayout from '../layout/SimpleLayout';

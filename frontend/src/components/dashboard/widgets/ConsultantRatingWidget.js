@@ -6,11 +6,6 @@ import BaseWidget from './BaseWidget';
 import './ConsultantRatingWidget.css';
 
 const ConsultantRatingWidget = ({ widget, user }) => {
-  // 상담사 전용 위젯 (다른 역할은 표시하지 않음)
-  if (!RoleUtils.isConsultant(user)) {
-    return null;
-  }
-
   // 데이터 소스 설정 (상담사 전용)
   const getDataSourceConfig = () => ({
     type: 'api',
@@ -41,10 +36,15 @@ const ConsultantRatingWidget = ({ widget, user }) => {
     isEmpty,
     refresh
   } = useWidget(widgetWithDataSource, user, {
-    immediate: true,
+    immediate: RoleUtils.isConsultant(user),
     cache: true,
     retryCount: 3
   });
+
+  // 상담사 전용 위젯 (다른 역할은 표시하지 않음)
+  if (!RoleUtils.isConsultant(user)) {
+    return null;
+  }
 
   // 하트 점수 렌더링
   const renderHeartScore = (score) => {

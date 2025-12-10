@@ -60,6 +60,12 @@ public class OnboardingRequest {
     @Column(name = "tenant_name", nullable = false, length = 120)
     private String tenantName;
     
+    @Column(name = "brand_name", length = 255)
+    private String brandName; // 브랜드명 (선택적, 헤더/메뉴에 표시)
+    
+    @Column(name = "region", length = 50)
+    private String region; // 지역 정보 (선택적, 예: "서울특별시", "경기도")
+    
     @Column(name = "requested_by", nullable = false, length = 64)
     private String requestedBy;
     

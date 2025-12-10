@@ -14,20 +14,21 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Server, Database, Wifi, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
 import { useWidget } from '../../../../hooks/useWidget';
+import { Server, Database, Wifi, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
 import BaseWidget from '../BaseWidget';
 import { RoleUtils } from '../../../../constants/roles';
 import { formatDate } from '../../../../utils/formatUtils';
 import './SystemStatusWidget.css';
 
 const SystemStatusWidget = ({ widget, user }) => {
-  // 관리자만 표시
+  const navigate = useNavigate();
+
+
   if (!RoleUtils.isAdmin(user) && !RoleUtils.hasRole(user, 'HQ_MASTER')) {
     return null;
   }
 
-  const navigate = useNavigate();
 
   // 시스템 상태 모니터링 데이터 소스 설정
   const getDataSourceConfig = () => {
@@ -116,10 +117,15 @@ const SystemStatusWidget = ({ widget, user }) => {
     isEmpty,
     refresh
   } = useWidget(widgetWithDataSource, user, {
-    immediate: true,
+    immediate: RoleUtils.isAdmin(user) || RoleUtils.hasRole(user, 'HQ_MASTER'),
     cache: false, // 실시간 데이터
     retryCount: 2
   });
+
+  // 관리자만 표시
+  if (!RoleUtils.isAdmin(user) && !RoleUtils.hasRole(user, 'HQ_MASTER')) {
+    return null;
+  }
   // 기본 데이터 구조
   const defaultData = {
     server: { status: 'unknown', uptime: 0, version: 'unknown' },
@@ -370,3 +376,7 @@ const SystemStatusWidget = ({ widget, user }) => {
 
 export default SystemStatusWidget;
 
+
+  const {
+  const navigate = useNavigate();
+  } = useWidget(widgetWithDataSource, user, {

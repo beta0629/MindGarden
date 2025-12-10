@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaArrowLeft, FaSync, FaDownload, FaShieldAlt, FaExclamationTriangle } from 'react-icons/fa';
-// import SimpleLayout from '../layout/SimpleLayout';
+import SimpleLayout from '../layout/SimpleLayout';
 import SecurityMonitoringWidget from './widgets/SecurityMonitoringWidget';
 import PerformanceWidget from './widgets/PerformanceWidget';
-import MGButton from '../../components/common/MGButton'; // 임시 비활성화
+import MGButton from '../../components/common/MGButton';
 import { SecurityDataManager } from '../../utils/securityUtils';
 import { WIDGET_CONSTANTS } from '../../constants/widgetConstants';
 import notificationManager from '../../utils/notification';

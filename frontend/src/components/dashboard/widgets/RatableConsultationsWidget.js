@@ -15,11 +15,6 @@ import './RatableConsultationsWidget.css';
 import ConsultantRatingModal from '../../client/ConsultantRatingModal';
 
 const RatableConsultationsWidget = ({ widget, user }) => {
-  // 내담자 전용 위젯 (다른 역할은 표시하지 않음)
-  if (!RoleUtils.isClient(user)) {
-    return null;
-  }
-
   const { user: sessionUser } = useSession();
   const [selectedSchedule, setSelectedSchedule] = useState(null);
   const [showRatingModal, setShowRatingModal] = useState(false);
@@ -53,10 +48,15 @@ const RatableConsultationsWidget = ({ widget, user }) => {
     isEmpty,
     refresh
   } = useWidget(widgetWithDataSource, user, {
-    immediate: true,
+    immediate: RoleUtils.isClient(user),
     cache: true,
     retryCount: 3
   });
+
+  // 내담자 전용 위젯 (다른 역할은 표시하지 않음)
+  if (!RoleUtils.isClient(user)) {
+    return null;
+  }
 
   // 평가하기 버튼 핸들러
   const handleRateConsultant = (schedule) => {

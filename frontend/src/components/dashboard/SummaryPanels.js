@@ -1,8 +1,9 @@
 // import React from 'react';
-import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import UnifiedLoading from '../../components/common/UnifiedLoading';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import { SUMMARY_PANELS_CSS } from '../../constants/css';
 import { DASHBOARD_ICONS, DASHBOARD_LABELS, DASHBOARD_MESSAGES } from '../../constants/dashboard';
+import { WIDGET_CONSTANTS } from '../../constants/widgetConstants';
 import { RoleUtils } from '../../constants/roles';
 import { getStatusLabel } from '../../utils/colorUtils';
 import './SummaryPanels.css';

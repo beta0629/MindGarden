@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import SimpleLayout from '../layout/SimpleLayout';
+import UnifiedLoading from '../../components/common/UnifiedLoading';
 import '../../styles/unified-design-tokens.css';
 import { USER_ROLES } from '../../constants/roles';
 

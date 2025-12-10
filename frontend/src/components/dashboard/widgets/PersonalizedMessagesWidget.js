@@ -31,9 +31,11 @@ import './PersonalizedMessagesWidget.css';
 import '../ClientPersonalizedMessages.css';
 
 const PersonalizedMessagesWidget = ({ widget, user }) => {
-  if (!RoleUtils.isClient(user)) {
-    return null;
-  }
+  const navigate = useNavigate();
+  const [clientStatus, setClientStatus] = useState(null);
+  const [isConsultantModalOpen, setIsConsultantModalOpen] = useState(false);
+  const [isConsultationGuideModalOpen, setIsConsultationGuideModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const getDataSourceConfig = () => ({
     type: 'api',
@@ -63,17 +65,10 @@ const PersonalizedMessagesWidget = ({ widget, user }) => {
     isEmpty,
     refresh
   } = useWidget(widgetWithDataSource, user, {
-    immediate: true,
+    immediate: RoleUtils.isClient(user),
     cache: true,
     retryCount: 3
   });
-
-  const [clientStatus, setClientStatus] = useState(null);
-  const [isConsultantModalOpen, setIsConsultantModalOpen] = useState(false);
-  const [isConsultationGuideModalOpen, setIsConsultationGuideModalOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-
-  const navigate = useNavigate();
 
   useEffect(() => {
     const loadClientStatus = async () => {

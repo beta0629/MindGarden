@@ -21,10 +21,6 @@ import { RoleUtils, USER_ROLES } from '../../../../constants/roles';
 import './MappingManagementWidget.css';
 
 const MappingManagementWidget = ({ widget, user }) => {
-  if (!RoleUtils.isAdmin(user) && !RoleUtils.isConsultant(user) && !RoleUtils.hasRole(user, USER_ROLES.HQ_MASTER)) {
-    return null;
-  }
-
   const navigate = useNavigate();
 
   const getDataSourceConfig = () => {
@@ -83,9 +79,13 @@ const MappingManagementWidget = ({ widget, user }) => {
     hasData,
     refresh
   } = useWidget(widgetWithDataSource, user, {
-    immediate: true,
+    immediate: RoleUtils.isAdmin(user) || RoleUtils.isConsultant(user) || RoleUtils.hasRole(user, USER_ROLES.HQ_MASTER),
     cache: true
   });
+
+  if (!RoleUtils.isAdmin(user) && !RoleUtils.isConsultant(user) && !RoleUtils.hasRole(user, USER_ROLES.HQ_MASTER)) {
+    return null;
+  }
 
   const getStatusClass = (status) => {
     const statusMap = {
@@ -112,6 +112,7 @@ const MappingManagementWidget = ({ widget, user }) => {
         return <Clock className="status-icon" />;
       case 'TERMINATED':
       // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
+      // eslint-disable-next-line no-fallthrough
       case 'CANCELLED':
         return <XCircle className="status-icon" />;
       // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용

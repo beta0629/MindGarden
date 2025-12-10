@@ -288,21 +288,33 @@ public class AuthServiceImpl implements AuthService {
             }
             
             // Spring Security 인증
-            Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(email, password)
-            );
+            log.info("🔐 Spring Security 인증 시도 시작: email={}", email);
+            Authentication authentication = null;
+            try {
+                authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(email, password)
+                );
+                log.info("🔐 Spring Security 인증 완료: authenticated={}", authentication != null && authentication.isAuthenticated());
+            } catch (Exception e) {
+                log.error("❌ Spring Security 인증 실패: email={}, error={}, class={}", email, e.getMessage(), e.getClass().getName(), e);
+                throw e;
+            }
             
-            if (authentication.isAuthenticated()) {
+            if (authentication != null && authentication.isAuthenticated()) {
                 log.info("🔐 Spring Security 인증 성공: email={}", email);
                 
                 // 사용자 정보 조회
+                log.info("👤 사용자 정보 조회 시작: email={}", email);
                 User user = userService.findByEmail(email)
                     .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다: " + email));
                 
-                log.info("👤 사용자 정보 조회 완료: userId={}, email={}", user.getId(), email);
+                log.info("👤 사용자 정보 조회 완료: userId={}, email={}, tenantId={}, role={}", 
+                    user.getId(), user.getEmail(), user.getTenantId(), user.getRole());
                 
                 // 입점사(코어솔루션 테넌트)만 접근 가능 - Trinity 회사 직원(ADMIN/OPS 역할) 제외
+                log.info("🔍 테넌트 접근 검증 시작: email={}, tenantId={}", email, user.getTenantId());
                 validateCoreSolutionTenantAccess(user);
+                log.info("✅ 테넌트 접근 검증 완료: email={}", email);
                 
                 // 중복 로그인 체크 (설정에 따라 활성화/비활성화)
                 if (duplicateLoginCheckEnabled) {
@@ -494,43 +506,51 @@ public class AuthServiceImpl implements AuthService {
     
     /**
      * 입점사(코어솔루션 테넌트)만 접근 가능하도록 검증
-     * Trinity 회사 직원(ADMIN/OPS 역할)은 메인 웹앱에 로그인할 수 없음
+     * Trinity 회사 직원(ADMIN/OPS 역할 + tenant_id가 NULL)은 메인 웹앱에 로그인할 수 없음
      * Trinity 직원은 Ops Portal(ops.e-trinity.co.kr)을 사용해야 함
      * 
      * @param user 사용자 엔티티
-     * @throws IllegalArgumentException Trinity 회사 직원(ADMIN/OPS 역할)인 경우
+     * @throws IllegalArgumentException Trinity 회사 직원(ADMIN/OPS 역할 + tenant_id가 NULL)인 경우
      */
     private void validateCoreSolutionTenantAccess(User user) {
-        log.debug("🔍 입점사 접근 검증 시작: email={}, role={}", user.getEmail(), user.getRole());
+        log.debug("🔍 입점사 접근 검증 시작: email={}, role={}, tenantId={}", 
+            user.getEmail(), user.getRole(), user.getTenantId());
         
-        // 사용자의 권한 확인
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        
-        if (authentication != null && authentication.isAuthenticated()) {
-            Collection<? extends GrantedAuthority> authorities = 
-                authentication.getAuthorities();
+        // tenant_id가 NULL이거나 비어있는 경우 Trinity 직원으로 간주
+        // tenant_id가 있는 경우는 테넌트 관리자로 간주하여 허용
+        if (user.getTenantId() == null || user.getTenantId().trim().isEmpty()) {
+            // 사용자의 권한 확인
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             
-            log.debug("🔍 인증 정보 확인: principal={}, authorities={}", 
-                authentication.getPrincipal(), authorities);
-            
-            // ADMIN 또는 OPS 역할이 있으면 Trinity 회사 직원으로 간주
-            boolean hasAdminOrOpsRole = authorities.stream()
-                .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN") || 
-                               auth.getAuthority().equals("ROLE_OPS"));
-            
-            if (hasAdminOrOpsRole) {
-                log.warn("❌ 메인 웹앱 로그인 거부: Trinity 회사 직원은 입점사 전용 시스템에 접근할 수 없습니다. email={}, role={}", 
-                    user.getEmail(), user.getRole());
-                throw new IllegalArgumentException("Trinity 회사 직원은 입점사 전용 시스템에 접근할 수 없습니다. Ops Portal(ops.e-trinity.co.kr)을 사용해주세요.");
+            if (authentication != null && authentication.isAuthenticated()) {
+                Collection<? extends GrantedAuthority> authorities = 
+                    authentication.getAuthorities();
+                
+                log.debug("🔍 인증 정보 확인: principal={}, authorities={}", 
+                    authentication.getPrincipal(), authorities);
+                
+                // ADMIN 또는 OPS 역할이 있으면 Trinity 회사 직원으로 간주
+                boolean hasAdminOrOpsRole = authorities.stream()
+                    .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN") || 
+                                   auth.getAuthority().equals("ROLE_OPS"));
+                
+                if (hasAdminOrOpsRole) {
+                    log.warn("❌ 메인 웹앱 로그인 거부: Trinity 회사 직원은 입점사 전용 시스템에 접근할 수 없습니다. email={}, role={}", 
+                        user.getEmail(), user.getRole());
+                    throw new IllegalArgumentException("Trinity 회사 직원은 입점사 전용 시스템에 접근할 수 없습니다. Ops Portal(ops.e-trinity.co.kr)을 사용해주세요.");
+                }
+            } else {
+                // 인증 정보가 없는 경우, User 엔티티의 role로 확인
+                log.debug("🔍 SecurityContext에 인증 정보 없음, User 엔티티의 role로 확인: role={}", user.getRole());
+                if (user.getRole() != null && (user.getRole().name().equals("ADMIN") || user.getRole().name().equals("OPS"))) {
+                    log.warn("❌ 메인 웹앱 로그인 거부: Trinity 회사 직원은 입점사 전용 시스템에 접근할 수 없습니다. email={}, role={}", 
+                        user.getEmail(), user.getRole());
+                    throw new IllegalArgumentException("Trinity 회사 직원은 입점사 전용 시스템에 접근할 수 없습니다. Ops Portal(ops.e-trinity.co.kr)을 사용해주세요.");
+                }
             }
         } else {
-            // 인증 정보가 없는 경우, User 엔티티의 role로 확인
-            log.debug("🔍 SecurityContext에 인증 정보 없음, User 엔티티의 role로 확인: role={}", user.getRole());
-            if (user.getRole() != null && (user.getRole().name().equals("ADMIN") || user.getRole().name().equals("OPS"))) {
-                log.warn("❌ 메인 웹앱 로그인 거부: Trinity 회사 직원은 입점사 전용 시스템에 접근할 수 없습니다. email={}, role={}", 
-                    user.getEmail(), user.getRole());
-                throw new IllegalArgumentException("Trinity 회사 직원은 입점사 전용 시스템에 접근할 수 없습니다. Ops Portal(ops.e-trinity.co.kr)을 사용해주세요.");
-            }
+            // tenant_id가 있는 경우 테넌트 관리자로 간주하여 허용
+            log.debug("✅ 테넌트 관리자 접근 허용: email={}, tenantId={}", user.getEmail(), user.getTenantId());
         }
         
         log.debug("✅ 입점사 접근 허용: email={}, tenantId={}", user.getEmail(), user.getTenantId());

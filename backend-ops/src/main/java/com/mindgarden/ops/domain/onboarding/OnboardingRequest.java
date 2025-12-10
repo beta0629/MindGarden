@@ -23,6 +23,9 @@ public class OnboardingRequest extends BaseEntity {
     @Column(length = 50)
     private String region; // 지역 정보 (선택적, 예: "서울특별시", "경기도")
 
+    @Column(length = 50)
+    private String businessType; // 업종 타입 (예: CONSULTATION, ACADEMY)
+
     @Column(nullable = false, length = 64)
     private String requestedBy;
 
@@ -76,6 +79,14 @@ public class OnboardingRequest extends BaseEntity {
 
     public void setRegion(String region) {
         this.region = region;
+    }
+
+    public String getBusinessType() {
+        return businessType;
+    }
+
+    public void setBusinessType(String businessType) {
+        this.businessType = businessType;
     }
 
     public String getRequestedBy() {

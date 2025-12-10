@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import { apiGet, apiPost } from '../../utils/ajax';
 import { useSession } from '../../contexts/SessionContext';
-// import notificationManager from '../../utils/notification';
+import notificationManager from '../../utils/notification';
 import ConfirmModal from '../common/ConfirmModal';
 import SimpleLayout from '../layout/SimpleLayout';
 import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화

@@ -100,9 +100,50 @@ public class OnboardingServiceImpl implements OnboardingService {
         RiskLevel defaultRiskLevel = getDefaultRiskLevel();
         RiskLevel finalRiskLevel = riskLevel != null ? riskLevel : defaultRiskLevel;
         
+        // checklistJson에서 regionCode와 brandName 추출하여 필드에 저장
+        String region = null;
+        String brandName = null;
+        
+        if (checklistJson != null && !checklistJson.isEmpty()) {
+            try {
+                Map<String, Object> checklist = objectMapper.readValue(
+                    checklistJson, 
+                    new TypeReference<Map<String, Object>>() {}
+                );
+                
+                // regionCode 추출
+                String regionCode = (String) checklist.get("regionCode");
+                if (regionCode != null && !regionCode.trim().isEmpty()) {
+                    region = regionCode.trim();
+                    log.info("✅ checklistJson에서 regionCode 추출 성공: {}", region);
+                }
+                
+                // brandName 추출
+                brandName = (String) checklist.get("brandName");
+                if (brandName != null && !brandName.trim().isEmpty()) {
+                    log.info("✅ checklistJson에서 brandName 추출 성공: {}", brandName);
+                } else {
+                    // brandName이 없으면 tenantName 사용
+                    brandName = tenantName;
+                    log.info("brandName이 없어 tenantName 사용: {}", brandName);
+                }
+            } catch (JsonProcessingException e) {
+                log.warn("checklistJson 파싱 실패 (region/brandName 추출 실패): {}", e.getMessage());
+                // 파싱 실패 시 tenantName을 brandName으로 사용
+                brandName = tenantName;
+            }
+        } else {
+            // checklistJson이 없으면 tenantName을 brandName으로 사용
+            brandName = tenantName;
+        }
+        
+        log.info("온보딩 요청 생성 - region: {}, brandName: {}", region, brandName);
+        
         OnboardingRequest entity = OnboardingRequest.builder()
             .tenantId(tenantId)
             .tenantName(tenantName)
+            .brandName(brandName) // 브랜드명 저장 (checklistJson에서 추출한 값 또는 tenantName)
+            .region(region) // 지역 정보 저장 (checklistJson에서 추출한 값)
             .requestedBy(requestedBy)
             .riskLevel(finalRiskLevel)
             .checklistJson(checklistJson)

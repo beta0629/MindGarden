@@ -21,11 +21,6 @@ import { RoleUtils } from '../../../../constants/roles';
 import { WIDGET_CONSTANTS } from '../../../../constants/widgetConstants';
 
 const AIUsageWidget = ({ widget, user }) => {
-  // 관리자만 표시
-  if (!RoleUtils.isAdmin(user) && !RoleUtils.hasRole(user, 'HQ_MASTER')) {
-    return null;
-  }
-
   const navigate = useNavigate();
 
   // AI 사용량 데이터 소스 설정
@@ -38,10 +33,23 @@ const AIUsageWidget = ({ widget, user }) => {
     };
   };
 
-  const { data, loading, error, refreshData } = useWidget(
-    widget,
-    getDataSourceConfig()
-  );
+  const widgetWithDataSource = {
+    ...widget,
+    config: {
+      ...widget.config,
+      dataSource: getDataSourceConfig()
+    }
+  };
+
+  const { data, loading, error, refreshData } = useWidget(widgetWithDataSource, user, {
+    immediate: RoleUtils.isAdmin(user) || RoleUtils.hasRole(user, 'HQ_MASTER'),
+    cache: false
+  });
+
+  // 관리자만 표시
+  if (!RoleUtils.isAdmin(user) && !RoleUtils.hasRole(user, 'HQ_MASTER')) {
+    return null;
+  }
 
   // 위젯 액션 핸들러
   const handleAction = (action) => {
@@ -302,4 +310,3 @@ const AIUsageWidget = ({ widget, user }) => {
 };
 
 export default AIUsageWidget;
-

@@ -3,6 +3,7 @@ import { Calendar, Link2, Plus, Users, CheckCircle, TrendingUp, Clock, Zap } fro
 import { apiGet, apiPost, apiPut } from '../../utils/ajax';
 import SimpleLayout from '../layout/SimpleLayout';
 import UnifiedLoading from '../common/UnifiedLoading';
+import notificationManager from '../../utils/notification';
 import StatCard from '../ui/Card/StatCard';
 import DashboardSection from '../layout/DashboardSection';
 import StatisticsDashboard from './StatisticsDashboard';

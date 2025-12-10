@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-// // import UnifiedHeader from "../common/UnifiedHeader"; // 임시 비활성화
-// 임시 비활성화
+import UnifiedHeader from "../common/UnifiedHeader";
 import '../../styles/main.css';
 
 const UnifiedHeaderTest = () => {

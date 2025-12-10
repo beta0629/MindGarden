@@ -24,13 +24,6 @@ import { WIDGET_CONSTANTS } from '../../../../constants/widgetConstants';
 import { formatDate } from '../../../../utils/formatUtils';
 
 const AIMonitoringWidget = ({ widget, user }) => {
-  // 관리자만 표시
-  if (!RoleUtils.isAdmin(user) && !RoleUtils.hasRole(user, 'HQ_MASTER')) {
-    return null;
-  }
-
-  const navigate = useNavigate();
-
   // 테넌트 ID 추출
   const tenantId = user?.tenantId || null;
 
@@ -63,10 +56,23 @@ const AIMonitoringWidget = ({ widget, user }) => {
     };
   };
 
-  const { data, loading, error, refreshData } = useWidget(
-    widget,
-    getDataSourceConfig()
-  );
+  const widgetWithDataSource = {
+    ...widget,
+    config: {
+      ...widget.config,
+      dataSource: getDataSourceConfig()
+    }
+  };
+
+  const { data, loading, error, refreshData } = useWidget(widgetWithDataSource, user, {
+    immediate: RoleUtils.isAdmin(user) || RoleUtils.hasRole(user, 'HQ_MASTER'),
+    cache: false
+  });
+
+  // 관리자만 표시
+  if (!RoleUtils.isAdmin(user) && !RoleUtils.hasRole(user, 'HQ_MASTER')) {
+    return null;
+  }
 
   // 위젯 액션 핸들러
   const handleAction = (action) => {
@@ -383,5 +389,3 @@ const AIMonitoringWidget = ({ widget, user }) => {
     </BaseWidget>
   );
 };
-
-export default AIMonitoringWidget;

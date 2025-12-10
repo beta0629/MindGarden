@@ -14,20 +14,21 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, User, Link2, Calendar, CheckCircle, DollarSign, TrendingUp, AlertTriangle } from 'lucide-react';
 import { useWidget } from '../../../../hooks/useWidget';
+import { Users, User, Link2, Calendar, CheckCircle, DollarSign, TrendingUp, AlertTriangle } from 'lucide-react';
 import BaseWidget from '../BaseWidget';
 import { RoleUtils } from '../../../../constants/roles';
 import { formatCurrency } from '../../../../utils/formatUtils';
 import './StatisticsGridWidget.css';
 
 const StatisticsGridWidget = ({ widget, user }) => {
-  // 관리자만 표시
+  const navigate = useNavigate();
+
+
   if (!RoleUtils.isAdmin(user) && !RoleUtils.hasRole(user, 'HQ_MASTER')) {
     return null;
   }
 
-  const navigate = useNavigate();
 
   // 다중 API 엔드포인트를 위한 데이터 소스 설정
   const getDataSourceConfig = () => {
@@ -97,10 +98,15 @@ const StatisticsGridWidget = ({ widget, user }) => {
     isEmpty,
     refresh
   } = useWidget(widgetWithDataSource, user, {
-    immediate: true,
+    immediate: RoleUtils.isAdmin(user) || RoleUtils.hasRole(user, 'HQ_MASTER'),
     cache: true,
     retryCount: 3
   });
+
+  // 관리자만 표시
+  if (!RoleUtils.isAdmin(user) && !RoleUtils.hasRole(user, 'HQ_MASTER')) {
+    return null;
+  }
   
   // 기본 통계 데이터 구조
   const defaultStats = {
@@ -260,3 +266,7 @@ export default StatisticsGridWidget;
 
 
 
+
+  const {
+  const navigate = useNavigate();
+  } = useWidget(widgetWithDataSource, user, {

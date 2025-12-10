@@ -35,6 +35,8 @@ security:
     secret: ${SECURITY_JWT_SECRET:local-dev-secret-change-me-please-use-a-stronger-one}
     issuer: ${SECURITY_JWT_ISSUER:mindgarden-ops}
     expires-in-seconds: ${SECURITY_JWT_EXPIRES:3600}
+  password:
+    strength: ${SECURITY_PASSWORD_STRENGTH:12}  # BCrypt 강도 12 (표준화: CoreSolution과 동일)
   ops:
     username: ${OPS_ADMIN_USERNAME:ops_core}
     password: ${OPS_ADMIN_PASSWORD:godgod826!}

@@ -665,8 +665,79 @@ public class TestDataController {
     }
     
     /**
+     * 비밀번호 해시 검증 테스트
+     * POST /api/test/verify-password
+     * 주의: 개발 환경 전용
+     */
+    @PostMapping("/verify-password")
+    public ResponseEntity<Map<String, Object>> verifyPassword(
+            @RequestParam String email, 
+            @RequestParam String password) {
+        if (!isDev && !"local".equals(activeProfile)) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "success", false,
+                "message", "개발 환경에서만 사용 가능합니다."
+            ));
+        }
+
+        try {
+            log.info("🔑 비밀번호 검증 테스트: email={}", email);
+
+            // Tenant ID 체크 우회 (개발 환경 전용)
+            com.coresolution.core.context.TenantContext.setBypassTenantFilter(true);
+            
+            try {
+                // 사용자 조회
+                List<User> users = userRepository.findAllByEmail(email);
+                if (users.isEmpty()) {
+                    return ResponseEntity.badRequest().body(Map.of(
+                        "success", false,
+                        "message", "사용자를 찾을 수 없습니다: " + email
+                    ));
+                }
+
+                User user = users.get(0);
+                String storedHash = user.getPassword();
+                
+                if (storedHash == null || storedHash.isEmpty()) {
+                    return ResponseEntity.badRequest().body(Map.of(
+                        "success", false,
+                        "message", "저장된 비밀번호 해시가 없습니다."
+                    ));
+                }
+                
+                // PasswordEncoder로 검증
+                boolean matches = passwordEncoder.matches(password, storedHash);
+                
+                log.info("🔑 비밀번호 검증 결과: email={}, matches={}, hashPrefix={}", 
+                    email, matches, storedHash.substring(0, Math.min(20, storedHash.length())));
+                
+                return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "email", user.getEmail(),
+                    "matches", matches,
+                    "hashPrefix", storedHash.substring(0, Math.min(20, storedHash.length())),
+                    "hashLength", storedHash.length(),
+                    "passwordLength", password.length()
+                ));
+            } finally {
+                // Tenant ID 체크 복원
+                com.coresolution.core.context.TenantContext.setBypassTenantFilter(false);
+            }
+
+        } catch (Exception e) {
+            log.error("❌ 비밀번호 검증 테스트 실패: {}", e.getMessage(), e);
+            return ResponseEntity.badRequest().body(Map.of(
+                "success", false,
+                "message", "비밀번호 검증 테스트 실패: " + e.getMessage()
+            ));
+        }
+    }
+    
+    /**
      * 테스트 사용자 비밀번호 재설정
      * POST /api/test/reset-password
+     * 주의: Tenant ID 체크를 우회하여 사용 (개발 환경 전용)
      */
     @PostMapping("/reset-password")
     public ResponseEntity<Map<String, Object>> resetTestUserPassword(@RequestParam String email, @RequestParam String newPassword) {
@@ -680,31 +751,47 @@ public class TestDataController {
         try {
             log.info("🔑 테스트 사용자 비밀번호 재설정: {}", email);
 
-            // 멀티 테넌트 사용자 고려하여 조회
-            List<User> users = userRepository.findAllByEmail(email);
-            if (users.isEmpty()) {
-                return ResponseEntity.badRequest().body(Map.of(
-                    "success", false,
-                    "message", "사용자를 찾을 수 없습니다: " + email
+            // Tenant ID 체크 우회 (개발 환경 전용)
+            com.coresolution.core.context.TenantContext.setBypassTenantFilter(true);
+            
+            try {
+                // 멀티 테넌트 사용자 고려하여 조회
+                List<User> users = userRepository.findAllByEmail(email);
+                if (users.isEmpty()) {
+                    return ResponseEntity.badRequest().body(Map.of(
+                        "success", false,
+                        "message", "사용자를 찾을 수 없습니다: " + email
+                    ));
+                }
+
+                User user = users.get(0);
+                
+                String oldHash = user.getPassword() != null ? user.getPassword().substring(0, 20) + "..." : "null";
+                log.info("🔑 기존 비밀번호 해시: {}", oldHash);
+                
+                String newHash = passwordEncoder.encode(newPassword);
+                log.info("🔑 새로운 비밀번호 해시: {}", newHash.substring(0, 20) + "...");
+                
+                user.setPassword(newHash);
+                user.setUpdatedAt(LocalDateTime.now());
+                user.setVersion(user.getVersion() + 1);
+                
+                User updatedUser = userRepository.save(user);
+                
+                log.info("✅ 테스트 사용자 비밀번호 재설정 완료: {}", email);
+
+                return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "비밀번호가 성공적으로 재설정되었습니다.",
+                    "email", updatedUser.getEmail(),
+                    "name", updatedUser.getName(),
+                    "userId", updatedUser.getUserId(),
+                    "tenantId", updatedUser.getTenantId()
                 ));
+            } finally {
+                // Tenant ID 체크 복원
+                com.coresolution.core.context.TenantContext.setBypassTenantFilter(false);
             }
-
-            User user = users.get(0);
-            
-            user.setPassword(passwordEncoder.encode(newPassword));
-            user.setUpdatedAt(LocalDateTime.now());
-            user.setVersion(user.getVersion() + 1);
-            
-            User updatedUser = userRepository.save(user);
-            
-            log.info("✅ 테스트 사용자 비밀번호 재설정 완료: {}", email);
-
-            return ResponseEntity.ok(Map.of(
-                "success", true,
-                "message", "비밀번호가 성공적으로 재설정되었습니다.",
-                "email", updatedUser.getEmail(),
-                "name", updatedUser.getName()
-            ));
 
         } catch (Exception e) {
             log.error("❌ 테스트 사용자 비밀번호 재설정 실패: {}", e.getMessage(), e);

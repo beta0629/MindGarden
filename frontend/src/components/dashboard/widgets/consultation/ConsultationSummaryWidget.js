@@ -21,11 +21,6 @@ import { RoleUtils, USER_ROLES } from '../../../../constants/roles';
 import './ConsultationSummaryWidget.css';
 
 const ConsultationSummaryWidget = ({ widget, user }) => {
-  // 권한 확인: 관리자와 상담사만 접근 가능
-  if (!RoleUtils.isAdmin(user) && !RoleUtils.isConsultant(user) && !RoleUtils.hasRole(user, USER_ROLES.HQ_MASTER)) {
-    return null;
-  }
-
   const navigate = useNavigate();
 
   // 데이터 소스 설정
@@ -101,9 +96,14 @@ const ConsultationSummaryWidget = ({ widget, user }) => {
     hasData,
     refresh
   } = useWidget(widgetWithDataSource, user, {
-    immediate: true,
+    immediate: RoleUtils.isAdmin(user) || RoleUtils.isConsultant(user) || RoleUtils.hasRole(user, USER_ROLES.HQ_MASTER),
     cache: true
   });
+
+  // 권한 확인: 관리자와 상담사만 접근 가능
+  if (!RoleUtils.isAdmin(user) && !RoleUtils.isConsultant(user) && !RoleUtils.hasRole(user, USER_ROLES.HQ_MASTER)) {
+    return null;
+  }
 
   // 성장률 색상
   const getTrendColor = (value) => {

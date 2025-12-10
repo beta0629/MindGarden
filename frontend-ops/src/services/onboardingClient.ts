@@ -2,15 +2,16 @@ import { clientApiFetch } from "@/services/clientApi";
 import { OPS_API_PATHS } from "@/constants/api";
 import {
   OnboardingDecisionPayload,
+  OnboardingDecisionResponse,
   OnboardingRequest
 } from "@/types/onboarding";
 
 export async function decideOnboarding(
   id: string,
   payload: OnboardingDecisionPayload
-): Promise<OnboardingRequest> {
+): Promise<OnboardingDecisionResponse> {
   console.log("[onboardingClient] decideOnboarding 호출:", { id, payload });
-  const result = await clientApiFetch<OnboardingRequest>(OPS_API_PATHS.ONBOARDING.DECISION(id), {
+  const result = await clientApiFetch<OnboardingDecisionResponse>(OPS_API_PATHS.ONBOARDING.DECISION(id), {
     method: "POST",
     body: JSON.stringify(payload)
   });

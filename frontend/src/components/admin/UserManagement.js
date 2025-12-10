@@ -3,8 +3,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { FaUsers, FaEdit, FaUser, FaUserTie, FaCrown, FaBuilding, FaSearch, FaFilter, FaSync, FaTimes } from 'react-icons/fa';
 import { apiGet } from '../../utils/ajax';
 import { USER_ROLES } from '../../constants/roles';
-// import notificationManager from '../../utils/notification';
-import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import notificationManager from '../../utils/notification';
+import UnifiedLoading from '../../components/common/UnifiedLoading';
 import SimpleLayout from '../layout/SimpleLayout';
 import csrfTokenManager from '../../utils/csrfTokenManager';
 import './UserManagement.css';

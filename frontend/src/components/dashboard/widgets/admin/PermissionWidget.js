@@ -23,11 +23,6 @@ import { RoleUtils } from '../../../../constants/roles';
 import './PermissionWidget.css';
 
 const PermissionWidget = ({ widget, user }) => {
-  // 관리자만 표시
-  if (!RoleUtils.isAdmin(user) && !RoleUtils.hasRole(user, 'HQ_MASTER')) {
-    return null;
-  }
-
   const navigate = useNavigate();
   const [expandedCategories, setExpandedCategories] = useState({
     '관리 권한': true, // 기본 확장
@@ -90,10 +85,15 @@ const PermissionWidget = ({ widget, user }) => {
     isEmpty,
     refresh
   } = useWidget(widgetWithDataSource, user, {
-    immediate: true,
+    immediate: RoleUtils.isAdmin(user) || RoleUtils.hasRole(user, 'HQ_MASTER'),
     cache: true,
     retryCount: 3
   });
+
+  // 관리자만 표시
+  if (!RoleUtils.isAdmin(user) && !RoleUtils.hasRole(user, 'HQ_MASTER')) {
+    return null;
+  }
   // 기본 데이터 구조
   const defaultData = {
     permissions: [],

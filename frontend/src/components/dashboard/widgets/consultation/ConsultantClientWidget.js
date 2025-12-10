@@ -21,10 +21,6 @@ import { RoleUtils, USER_ROLES } from '../../../../constants/roles';
 import './ConsultantClientWidget.css';
 
 const ConsultantClientWidget = ({ widget, user }) => {
-  if (!RoleUtils.isAdmin(user) && !RoleUtils.isConsultant(user) && !RoleUtils.hasRole(user, USER_ROLES.HQ_MASTER)) {
-    return null;
-  }
-
   const navigate = useNavigate();
 
   const getDataSourceConfig = () => ({
@@ -53,9 +49,13 @@ const ConsultantClientWidget = ({ widget, user }) => {
   };
 
   const { data, loading, error, hasData, refresh } = useWidget(widgetWithDataSource, user, {
-    immediate: true,
+    immediate: RoleUtils.isAdmin(user) || RoleUtils.isConsultant(user) || RoleUtils.hasRole(user, USER_ROLES.HQ_MASTER),
     cache: true
   });
+
+  if (!RoleUtils.isAdmin(user) && !RoleUtils.isConsultant(user) && !RoleUtils.hasRole(user, USER_ROLES.HQ_MASTER)) {
+    return null;
+  }
 
   const getStatusClass = (status) => {
     const statusMap = {

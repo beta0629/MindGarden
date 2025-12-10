@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { sessionManager } from '../../utils/sessionManager';
 import { withFormSubmit } from '../../utils/formSubmitWrapper';
-// import mypageApi from '../../utils/mypageApi';
+import mypageApi from '../../utils/mypageApi';
 import notificationManager from '../../utils/notification';
 import SimpleLayout from '../layout/SimpleLayout';
 import UnifiedLoading from '../../components/common/UnifiedLoading';

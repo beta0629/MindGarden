@@ -45,6 +45,7 @@ export function FeatureFlagCardList({ featureFlags }: FeatureFlagCardListProps) 
   function formatDate(value: string) {
     const date = new Date(value);
     return date.toLocaleString("ko-KR", {
+      timeZone: "Asia/Seoul",
       year: "numeric",
       month: "2-digit",
       day: "2-digit",

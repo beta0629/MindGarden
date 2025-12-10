@@ -9,10 +9,6 @@ import './ConsultantClientWidget.css';
 const ConsultantClientWidget = ({ widget, user }) => {
   const navigate = useNavigate();
 
-  if (!RoleUtils.isConsultant(user)) {
-    return null;
-  }
-
   const getDataSourceConfig = () => ({
     type: 'api',
     cache: true,
@@ -42,10 +38,14 @@ const ConsultantClientWidget = ({ widget, user }) => {
     isEmpty,
     refresh
   } = useWidget(widgetWithDataSource, user, {
-    immediate: true,
+    immediate: RoleUtils.isConsultant(user),
     cache: true,
     retryCount: 3
   });
+
+  if (!RoleUtils.isConsultant(user)) {
+    return null;
+  }
 
   const transformMappingData = (mappings) => {
     if (!mappings || !Array.isArray(mappings)) {

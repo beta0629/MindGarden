@@ -1,0 +1,86 @@
+/**
+ * 관리자 계정 정보 표시 컴포넌트 스타일
+ * CSS 변수 사용 (표준화 원칙 준수)
+ */
+
+.adminAccountCard {
+  margin-top: var(--ops-spacing-lg, 1.5rem);
+  background-color: var(--ops-color-info-bg, #f0f9ff);
+  border: 2px solid var(--ops-color-info-border, #0ea5e9);
+  border-radius: var(--ops-radius-lg, 0.5rem);
+}
+
+.adminAccountCard__title {
+  color: var(--ops-color-info-text, #0369a1);
+  margin-bottom: var(--ops-spacing-md, 1rem);
+}
+
+.adminAccountCard__content {
+  padding: var(--ops-spacing-md, 1rem);
+  background-color: var(--ops-color-bg-white, #ffffff);
+  border-radius: var(--ops-radius-md, 0.375rem);
+  border: 1px solid var(--ops-color-info-border-light, #bae6fd);
+}
+
+.adminAccountCard__field {
+  margin-bottom: var(--ops-spacing-md, 1rem);
+}
+
+.adminAccountCard__row {
+  display: flex;
+  align-items: center;
+  gap: var(--ops-spacing-sm, 0.5rem);
+  margin-bottom: var(--ops-spacing-sm, 0.5rem);
+}
+
+.adminAccountCard__label {
+  min-width: 100px;
+  font-weight: var(--ops-font-weight-semibold, 600);
+}
+
+.adminAccountCard__value {
+  flex: 1;
+  padding: var(--ops-spacing-xs, 0.25rem) var(--ops-spacing-sm, 0.5rem);
+  background-color: var(--ops-color-bg-dark, #f1f5f9);
+  border-radius: var(--ops-radius-sm, 0.25rem);
+  font-family: monospace;
+}
+
+.adminAccountCard__valueText {
+  flex: 1;
+  font-family: inherit;
+}
+
+.adminAccountCard__button {
+  padding: var(--ops-spacing-xs, 0.25rem) var(--ops-spacing-md, 0.75rem);
+  font-size: var(--ops-font-size-sm, 0.875rem);
+  border: 1px solid var(--ops-color-border, #cbd5e1);
+  border-radius: var(--ops-radius-sm, 0.25rem);
+  cursor: pointer;
+  background-color: var(--ops-color-bg-white, #ffffff);
+  color: var(--ops-color-text-primary, #1e293b);
+  transition: background-color var(--ops-transition-fast, 0.15s ease),
+              border-color var(--ops-transition-fast, 0.15s ease);
+}
+
+.adminAccountCard__button:hover {
+  background-color: var(--ops-color-bg-hover, rgba(59, 130, 246, 0.08));
+  border-color: var(--ops-color-primary, #3b82f6);
+}
+
+.adminAccountCard__footer {
+  margin-top: var(--ops-spacing-md, 1rem);
+  padding-top: var(--ops-spacing-md, 1rem);
+  border-top: 1px solid var(--ops-color-info-border-light, #bae6fd);
+}
+
+.adminAccountCard__footerText {
+  margin-bottom: var(--ops-spacing-md, 0.75rem);
+  color: var(--ops-color-info-text, #0369a1);
+  font-size: var(--ops-font-size-sm, 0.875rem);
+}
+
+.adminAccountCard__loginButton {
+  width: 100%;
+}
+

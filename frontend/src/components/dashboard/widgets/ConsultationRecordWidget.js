@@ -19,11 +19,6 @@ import './ConsultationRecordWidget.css';
 const ConsultationRecordWidget = ({ widget, user }) => {
   const navigate = useNavigate();
 
-  // 상담사 전용 위젯 (다른 역할은 표시하지 않음)
-  if (!RoleUtils.isConsultant(user)) {
-    return null;
-  }
-
   // 데이터 소스 설정 (상담사 전용)
   const getDataSourceConfig = () => ({
     type: 'api',
@@ -54,10 +49,15 @@ const ConsultationRecordWidget = ({ widget, user }) => {
     isEmpty,
     refresh
   } = useWidget(widgetWithDataSource, user, {
-    immediate: true,
+    immediate: RoleUtils.isConsultant(user),
     cache: true,
     retryCount: 3
   });
+
+  // 상담사 전용 위젯 (다른 역할은 표시하지 않음)
+  if (!RoleUtils.isConsultant(user)) {
+    return null;
+  }
 
   // 상담일지 통계 계산
   const calculateRecordStats = (records) => {

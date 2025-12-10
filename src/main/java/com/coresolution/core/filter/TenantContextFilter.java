@@ -180,6 +180,7 @@ public class TenantContextFilter implements Filter {
             "/api/v1/business-categories",      // 업종 카테고리 API (온보딩에서 사용)
             "/api/business-categories",        // 레거시 업종 카테고리 API (하위 호환성)
             "/api/v1/admin/css-themes",         // CSS 테마 API
+            "/api/v1/test",                     // 테스트 API (개발 환경 전용, 비밀번호 재설정 등)
             "/actuator/health",                 // 헬스체크
             "/actuator/info"                    // 정보 조회
         };

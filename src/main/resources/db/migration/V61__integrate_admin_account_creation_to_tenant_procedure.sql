@@ -32,12 +32,14 @@ BEGIN
     DECLARE v_consultation_enabled BOOLEAN DEFAULT FALSE;
     DECLARE v_academy_enabled BOOLEAN DEFAULT FALSE;
     DECLARE v_user_id BIGINT;
+    DECLARE v_user_id_string VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
     DECLARE v_username VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
     DECLARE v_existing_user_count INT;
-    DECLARE v_admin_role_id BIGINT;
+    DECLARE v_admin_role_id VARCHAR(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
     DECLARE v_admin_success BOOLEAN DEFAULT FALSE;
     DECLARE v_admin_message TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT '';
     DECLARE v_result_message TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT '';
+    DECLARE v_user_id_suffix INT DEFAULT 1;
     
     -- 에러 핸들러: 코드 복사나 사용자 생성 실패는 치명적이지 않으므로 CONTINUE 사용
     -- 단, 테넌트 생성 자체가 실패한 경우에만 ROLLBACK
@@ -328,6 +330,74 @@ BEGIN
                 UUID(), p_tenant_id, '사무원', '사무원', 'Staff',
                 '사무원 역할', '사무원 역할', 'Staff role',
                 TRUE, 4, NOW(), NOW(),
+                p_approved_by, p_approved_by, FALSE, 0, 'ko'
+            );
+        END IF;
+        
+        -- 학원(ACADEMY) 업종: 원장, 교사, 학생, 학부모, 사무원 (5개)
+        IF p_business_type = 'ACADEMY' THEN
+            -- 원장 (DIRECTOR)
+            INSERT INTO tenant_roles (
+                tenant_role_id, tenant_id, name, name_ko, name_en,
+                description, description_ko, description_en,
+                is_active, display_order, created_at, updated_at,
+                created_by, updated_by, is_deleted, version, lang_code
+            ) VALUES (
+                UUID(), p_tenant_id, '원장', '원장', 'Director',
+                '학원 원장 역할', '학원 원장 역할', 'Director role for academy',
+                TRUE, 1, NOW(), NOW(),
+                p_approved_by, p_approved_by, FALSE, 0, 'ko'
+            );
+            
+            -- 교사 (TEACHER)
+            INSERT INTO tenant_roles (
+                tenant_role_id, tenant_id, name, name_ko, name_en,
+                description, description_ko, description_en,
+                is_active, display_order, created_at, updated_at,
+                created_by, updated_by, is_deleted, version, lang_code
+            ) VALUES (
+                UUID(), p_tenant_id, '교사', '교사', 'Teacher',
+                '교사 역할', '교사 역할', 'Teacher role',
+                TRUE, 2, NOW(), NOW(),
+                p_approved_by, p_approved_by, FALSE, 0, 'ko'
+            );
+            
+            -- 학생 (STUDENT)
+            INSERT INTO tenant_roles (
+                tenant_role_id, tenant_id, name, name_ko, name_en,
+                description, description_ko, description_en,
+                is_active, display_order, created_at, updated_at,
+                created_by, updated_by, is_deleted, version, lang_code
+            ) VALUES (
+                UUID(), p_tenant_id, '학생', '학생', 'Student',
+                '학생 역할', '학생 역할', 'Student role',
+                TRUE, 3, NOW(), NOW(),
+                p_approved_by, p_approved_by, FALSE, 0, 'ko'
+            );
+            
+            -- 학부모 (PARENT)
+            INSERT INTO tenant_roles (
+                tenant_role_id, tenant_id, name, name_ko, name_en,
+                description, description_ko, description_en,
+                is_active, display_order, created_at, updated_at,
+                created_by, updated_by, is_deleted, version, lang_code
+            ) VALUES (
+                UUID(), p_tenant_id, '학부모', '학부모', 'Parent',
+                '학부모 역할', '학부모 역할', 'Parent role',
+                TRUE, 4, NOW(), NOW(),
+                p_approved_by, p_approved_by, FALSE, 0, 'ko'
+            );
+            
+            -- 사무원 (STAFF)
+            INSERT INTO tenant_roles (
+                tenant_role_id, tenant_id, name, name_ko, name_en,
+                description, description_ko, description_en,
+                is_active, display_order, created_at, updated_at,
+                created_by, updated_by, is_deleted, version, lang_code
+            ) VALUES (
+                UUID(), p_tenant_id, '사무원', '사무원', 'Staff',
+                '사무원 역할', '사무원 역할', 'Staff role',
+                TRUE, 5, NOW(), NOW(),
                 p_approved_by, p_approved_by, FALSE, 0, 'ko'
             );
         END IF;

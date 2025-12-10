@@ -13,28 +13,20 @@
  */
 
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 import { 
   Calendar, Clock, BarChart3, Users, Settings, 
   Link, Star, TrendingUp, CheckCircle 
 } from 'lucide-react';
-import { useWidget } from '../../../hooks/useWidget';
 import BaseWidget from './BaseWidget';
 import { RoleUtils, USER_ROLES } from '../../../constants/roles';
 import { getStatusLabel } from '../../../utils/colorUtils';
 import { SUMMARY_PANELS_CSS } from '../../../constants/css';
 import { DASHBOARD_ICONS, DASHBOARD_LABELS, DASHBOARD_MESSAGES } from '../../../constants/dashboard';
+import { useWidget } from '../../../hooks/useWidget';
 import './SummaryPanelsWidget.css';
 import '../SummaryPanels.css';
 
 const SummaryPanelsWidget = ({ widget, user }) => {
-  // 상담사, 관리자, HQ_MASTER만 표시
-  if (!RoleUtils.isConsultant(user) && !RoleUtils.isAdmin(user) && !RoleUtils.hasRole(user, USER_ROLES.HQ_MASTER)) {
-    return null;
-  }
-
-  const navigate = useNavigate();
-
   // 역할별 API 엔드포인트 결정
   const getDataSourceConfig = () => {
     const baseConfig = {
@@ -82,10 +74,15 @@ const SummaryPanelsWidget = ({ widget, user }) => {
     isEmpty,
     refresh
   } = useWidget(widgetWithDataSource, user, {
-    immediate: true,
+    immediate: RoleUtils.isConsultant(user) || RoleUtils.isAdmin(user) || RoleUtils.hasRole(user, USER_ROLES.HQ_MASTER),
     cache: true,
     retryCount: 3
   });
+
+  // 상담사, 관리자, HQ_MASTER만 표시
+  if (!RoleUtils.isConsultant(user) && !RoleUtils.isAdmin(user) && !RoleUtils.hasRole(user, USER_ROLES.HQ_MASTER)) {
+    return null;
+  }
 
   // 전문 분야 영어를 한글로 변환
   const convertSpecialtyToKorean = (specialty) => {

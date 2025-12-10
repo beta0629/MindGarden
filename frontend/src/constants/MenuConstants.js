@@ -75,6 +75,14 @@ const DEFAULT_MENU_CONFIG = {
   },
   
   // 상담소 특화 메뉴
+  login: {
+    category: MENU_CATEGORIES.CONSULTATION,
+    permission: MENU_PERMISSION_LEVELS.PUBLIC,
+    label: '로그인',
+    path: '/login',
+    icon: 'login',
+    order: 9
+  },
   sessions: {
     category: MENU_CATEGORIES.CONSULTATION,
     permission: MENU_PERMISSION_LEVELS.ROLE_BASED,

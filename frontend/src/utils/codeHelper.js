@@ -707,6 +707,8 @@ export const getSpecialtyFromCommonCode = async (codeValue) => {
             }
         }
     } catch (error) {
+        // 에러 발생 시 기본값 반환
+        console.warn('코드 조회 실패:', error);
     }
     
     return {

@@ -502,6 +502,8 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
 
 // 개요 탭 컴포넌트
 const OverviewTab = ({ data }) => {
+  const navigate = useNavigate();
+  
   if (!data) return <div>데이터가 없습니다.</div>;
 
   // 실제 재무 데이터 추출

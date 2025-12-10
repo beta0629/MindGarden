@@ -13,22 +13,16 @@
  */
 
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Shield, UserCheck, Lock, AlertTriangle, Eye } from 'lucide-react';
 import { useWidget } from '../../../../hooks/useWidget';
+import { Shield, UserCheck, Lock, AlertTriangle, Eye } from 'lucide-react';
 import BaseWidget from '../BaseWidget';
 import { RoleUtils } from '../../../../constants/roles';
 import { WIDGET_CONSTANTS } from '../../../../constants/widgetConstants';
 import { formatDate } from '../../../../utils/formatUtils';
 
 const SecurityAuditWidget = ({ widget, user }) => {
-  // 관리자만 표시
-  if (!RoleUtils.isAdmin(user) && !RoleUtils.hasRole(user, 'HQ_MASTER')) {
-    return null;
-  }
-
   const navigate = useNavigate();
-
+  
   // 테넌트 ID 추출
   const tenantId = user?.tenantId || null;
 
@@ -55,10 +49,23 @@ const SecurityAuditWidget = ({ widget, user }) => {
     };
   };
 
-  const { data, loading, error, refreshData } = useWidget(
-    widget,
-    getDataSourceConfig()
-  );
+  const widgetWithDataSource = {
+    ...widget,
+    config: {
+      ...widget.config,
+      dataSource: getDataSourceConfig()
+    }
+  };
+
+  const { data, loading, error, refreshData } = useWidget(widgetWithDataSource, user, {
+    immediate: RoleUtils.isAdmin(user) || RoleUtils.hasRole(user, 'HQ_MASTER'),
+    cache: false
+  });
+
+  // 관리자만 표시
+  if (!RoleUtils.isAdmin(user) && !RoleUtils.hasRole(user, 'HQ_MASTER')) {
+    return null;
+  }
 
   // 위젯 액션 핸들러
   const handleAction = (action) => {
@@ -328,4 +335,3 @@ const SecurityAuditWidget = ({ widget, user }) => {
 };
 
 export default SecurityAuditWidget;
-

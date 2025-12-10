@@ -21,11 +21,6 @@ import './PendingDepositsWidget.css';
  * @since 2025-11-29
  */
 const PendingDepositsWidget = ({ widget, user }) => {
-  // 관리자만 표시
-  if (!RoleUtils.isAdmin(user) && !RoleUtils.hasRole(user, 'HQ_MASTER')) {
-    return null;
-  }
-
   const navigate = useNavigate();
 
   // 입금 확인 대기 목록 데이터 소스 설정
@@ -83,10 +78,15 @@ const PendingDepositsWidget = ({ widget, user }) => {
     isEmpty,
     refresh
   } = useWidget(widgetWithDataSource, user, {
-    immediate: true,
+    immediate: RoleUtils.isAdmin(user) || RoleUtils.hasRole(user, 'HQ_MASTER'),
     cache: true,
     retryCount: 3
   });
+
+  // 관리자만 표시
+  if (!RoleUtils.isAdmin(user) && !RoleUtils.hasRole(user, 'HQ_MASTER')) {
+    return null;
+  }
 
   // 기본 데이터 구조
   const defaultData = {

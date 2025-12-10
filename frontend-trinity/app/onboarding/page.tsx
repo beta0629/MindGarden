@@ -204,9 +204,10 @@ export default function OnboardingPage() {
               }, 0);
             }
           } else {
-            // 로그인되지 않은 경우 - 온보딩 바로 시작 가능
+            // 로그인되지 않은 경우 - 로그인 옵션 제공
             setIsLoggedIn(false);
-            setShowLogin(false); // 로그인 화면 표시하지 않음
+            // 환영 화면에서 로그인 옵션을 제공하도록 설정
+            // setShowLogin(false); // 로그인 화면 표시하지 않음 (주석 처리)
           }
         } catch (err) {
           // 네트워크 오류 등 예상치 못한 오류만 catch
@@ -304,7 +305,7 @@ export default function OnboardingPage() {
                     {request.tenantName || '테넌트 이름 없음'}
                   </div>
                   <div className="trinity-onboarding__request-meta">
-                    신청일: {new Date(request.createdAt).toLocaleDateString('ko-KR')}
+                    신청일: {new Date(request.createdAt).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}
                   </div>
                   <div className="trinity-onboarding__request-status">
                     상태: 대기 중

@@ -23,11 +23,6 @@ const ClientMessageWidget = ({ widget, user }) => {
   const [selectedMessage, setSelectedMessage] = useState(null);
   const [unreadCount, setUnreadCount] = useState(0);
 
-  // 내담자 전용 위젯 (다른 역할은 표시하지 않음)
-  if (!RoleUtils.isClient(user)) {
-    return null;
-  }
-
   // 데이터 소스 설정 (내담자 전용)
   const getDataSourceConfig = () => ({
     type: 'api',
@@ -59,7 +54,7 @@ const ClientMessageWidget = ({ widget, user }) => {
     isEmpty: messagesEmpty,
     refresh
   } = useWidget(widgetWithDataSource, user, {
-    immediate: true,
+    immediate: RoleUtils.isClient(user),
     cache: true,
     retryCount: 3
   });
@@ -178,10 +173,15 @@ const ClientMessageWidget = ({ widget, user }) => {
 
   // 상담사 메시지 로드 완료 시 시스템 공지와 통합
   useEffect(() => {
-    if (consultantMessages !== undefined) {
+    if (consultantMessages !== undefined && RoleUtils.isClient(user)) {
       loadAllMessages();
     }
-  }, [consultantMessages]);
+  }, [consultantMessages, user]);
+
+  // 내담자 전용 위젯 (다른 역할은 표시하지 않음)
+  if (!RoleUtils.isClient(user)) {
+    return null;
+  }
 
   // 메시지 상세 보기
   const handleMessageClick = async (message) => {

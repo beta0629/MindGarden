@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from 'react';
-// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { useNavigate } from 'react-router-dom';
 import { sessionManager } from '../../utils/sessionManager';
-// import UnifiedModal from '../../components/common/modals/UnifiedModal'; // 임시 비활성화
 import { loadMenuStructure, transformMenuStructure, debugMenuStructure } from '../../utils/menuHelper';
-import { validateMenuPath, logPermissionCheck } from '../../utils/menuPermissionValidator';
+import { hasMenuAccess, validateMenuPath, logPermissionCheck } from '../../utils/menuPermissionValidator';
 import { fetchUserPermissions } from '../../utils/permissionUtils';
 import CompactConfirmModal from '../common/CompactConfirmModal';
 import './SimpleHamburgerMenu.css';

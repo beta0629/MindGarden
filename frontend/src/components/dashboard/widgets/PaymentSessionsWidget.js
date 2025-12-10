@@ -13,17 +13,12 @@ import {
   CreditCard, TrendingUp, CheckCircle, Clock, 
   DollarSign, Calendar, Package, RefreshCw 
 } from 'lucide-react';
-import { useWidget } from '../../../hooks/useWidget';
 import BaseWidget from './BaseWidget';
 import { RoleUtils } from '../../../constants/roles';
 import './PaymentSessionsWidget.css';
 import '../ClientPaymentSessionsSection.css';
 
 const PaymentSessionsWidget = ({ widget, user }) => {
-  if (!RoleUtils.isClient(user)) {
-    return null;
-  }
-
   const getDataSourceConfig = () => ({
     type: 'api',
     cache: true,
@@ -51,10 +46,14 @@ const PaymentSessionsWidget = ({ widget, user }) => {
     isEmpty,
     refresh
   } = useWidget(widgetWithDataSource, user, {
-    immediate: true,
+    immediate: RoleUtils.isClient(user),
     cache: true,
     retryCount: 3
   });
+
+  if (!RoleUtils.isClient(user)) {
+    return null;
+  }
 
   const transformPaymentData = (mappingsData) => {
     if (!mappingsData || !Array.isArray(mappingsData)) {

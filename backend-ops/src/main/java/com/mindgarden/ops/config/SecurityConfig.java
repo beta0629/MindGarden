@@ -74,9 +74,16 @@ public class SecurityConfig {
         return new NimbusJwtEncoder(new ImmutableSecret<SecurityContext>(secret));
     }
 
+    /**
+     * 비밀번호 인코더 (표준화: CoreSolution과 동일한 BCrypt 강도 12 사용)
+     * 표준화 문서: SECURITY_AUTHENTICATION_STANDARD.md
+     * BCrypt Strength: 12 (2^12 = 4096 rounds)
+     */
     @Bean
-    PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+    PasswordEncoder passwordEncoder(
+            @Value("${security.password.strength:12}") int bcryptStrength) {
+        log.info("🔐 PasswordEncoder 생성: BCrypt 강도={}", bcryptStrength);
+        return new BCryptPasswordEncoder(bcryptStrength);
     }
 
     @Bean

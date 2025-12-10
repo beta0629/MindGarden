@@ -25,6 +25,7 @@
 import React, { useState, useEffect } from 'react';
 import SimpleLayout from '../layout/SimpleLayout';
 import UnifiedLoading from '../common/UnifiedLoading';
+import notificationManager from '../../utils/notification';
 import {
     getRoleMenuPermissions,
     grantMenuPermission,

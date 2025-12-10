@@ -21,11 +21,6 @@ import { RoleUtils, USER_ROLES } from '../../../../constants/roles';
 import './PendingDepositWidget.css';
 
 const PendingDepositWidget = ({ widget, user }) => {
-  // 권한 확인: 관리자와 상담사만 접근 가능
-  if (!RoleUtils.isAdmin(user) && !RoleUtils.isConsultant(user) && !RoleUtils.hasRole(user, USER_ROLES.HQ_MASTER)) {
-    return null;
-  }
-
   const navigate = useNavigate();
 
   // 데이터 소스 설정
@@ -92,9 +87,18 @@ const PendingDepositWidget = ({ widget, user }) => {
     hasData,
     refresh
   } = useWidget(widgetWithDataSource, user, {
-    immediate: true,
+    immediate: RoleUtils.isAdmin(user) || RoleUtils.isConsultant(user) || RoleUtils.hasRole(user, USER_ROLES.HQ_MASTER),
     cache: true
   });
+
+  // 권한 확인: 관리자와 상담사만 접근 가능
+  if (!RoleUtils.isAdmin(user) && !RoleUtils.isConsultant(user) && !RoleUtils.hasRole(user, USER_ROLES.HQ_MASTER)) {
+    return null;
+  }
+
+  if (!RoleUtils.isAdmin(user) && !RoleUtils.isConsultant(user) && !RoleUtils.hasRole(user, USER_ROLES.HQ_MASTER)) {
+    return null;
+  }
 
   // 우선순위별 스타일
   const getPriorityClass = (priority) => {

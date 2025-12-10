@@ -28,15 +28,10 @@ import {
 } from 'lucide-react';
 import { useWidget } from '../../../../hooks/useWidget';
 import BaseWidget from '../BaseWidget';
-import { RoleUtils } from '../../../../constants/roles';
+import { RoleUtils, USER_ROLES } from '../../../../constants/roles';
 import './ErpManagementGridWidget.css';
 
 const ErpManagementGridWidget = ({ widget, user }) => {
-  // ERP 접근 권한 체크 (상담사 이상)
-  if (!RoleUtils.isConsultant(user) && !RoleUtils.isAdmin(user) && !RoleUtils.hasRole(user, 'HQ_MASTER')) {
-    return null;
-  }
-
   const navigate = useNavigate();
 
   // 사용자 권한 데이터 소스 설정
@@ -86,10 +81,16 @@ const ErpManagementGridWidget = ({ widget, user }) => {
     isEmpty,
     refresh
   } = useWidget(widgetWithDataSource, user, {
-    immediate: true,
+    immediate: RoleUtils.isAdmin(user) || RoleUtils.isConsultant(user) || RoleUtils.hasRole(user, USER_ROLES.HQ_MASTER),
     cache: true,
     retryCount: 3
   });
+
+  // ERP 접근 권한 체크 (상담사 이상)
+  if (!RoleUtils.isConsultant(user) && !RoleUtils.isAdmin(user) && !RoleUtils.hasRole(user, USER_ROLES.HQ_MASTER)) {
+    return null;
+  }
+
   // 기본 데이터 구조
   const defaultData = {
     permissions: [],

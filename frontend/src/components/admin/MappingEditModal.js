@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { Edit3, XCircle, Package2, DollarSign, Calendar, AlertCircle } from 'lucide-react';
-// // import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
-import MGButton from '../../components/common/MGButton'; // 임시 비활성화
+import UnifiedLoading from '../../components/common/UnifiedLoading';
+import MGButton from '../../components/common/MGButton';
 import { apiPost } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 import { getCommonCodes } from '../../utils/commonCodeUtils';

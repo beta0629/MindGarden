@@ -23,11 +23,6 @@ import { validateEmail, validatePhone } from '../../../../utils/validationUtils'
 import './ConsultantRegistrationWidget.css';
 
 const ConsultantRegistrationWidget = ({ widget, user }) => {
-  // 관리자/상담사만 사용 가능
-  if (!RoleUtils.isAdmin(user) && !RoleUtils.isConsultant(user) && !RoleUtils.hasRole(user, 'HQ_MASTER')) {
-    return null;
-  }
-
   const navigate = useNavigate();
   const { showNotification } = useNotification();
   
@@ -84,6 +79,11 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
     immediate: false,
     cache: false
   });
+
+  // 관리자/상담사만 사용 가능
+  if (!RoleUtils.isAdmin(user) && !RoleUtils.isConsultant(user) && !RoleUtils.hasRole(user, 'HQ_MASTER')) {
+    return null;
+  }
 
   const showCompactForm = widget.config?.showCompactForm !== false;
   const autoCloseAfterSubmit = widget.config?.autoCloseAfterSubmit !== false;

@@ -12,22 +12,14 @@
  * @since 2025-11-29
  */
 
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { UserPlus, Save, RotateCcw, X, CheckCircle, AlertCircle } from 'lucide-react';
-import { useWidget } from '../../../../hooks/useWidget';
+import { useNavigate } from 'react-router-dom';
 import BaseWidget from '../BaseWidget';
 import { RoleUtils } from '../../../../constants/roles';
-import { useNotification } from '../../../../contexts/NotificationContext';
 import { validateEmail, validatePhone } from '../../../../utils/validationUtils';
 import './ClientRegistrationWidget.css';
 
 const ClientRegistrationWidget = ({ widget, user }) => {
-  // 관리자/상담사만 사용 가능
-  if (!RoleUtils.isAdmin(user) && !RoleUtils.isConsultant(user) && !RoleUtils.hasRole(user, 'HQ_MASTER')) {
-    return null;
-  }
-
   const navigate = useNavigate();
   const { showNotification } = useNotification();
   
@@ -75,7 +67,6 @@ const ClientRegistrationWidget = ({ widget, user }) => {
   };
 
   // 표준화된 위젯 훅 사용 (폼 제출용)
-  const {
     data: submitResponse,
     loading: submitting,
     error: submitError,
@@ -87,12 +78,16 @@ const ClientRegistrationWidget = ({ widget, user }) => {
     cache: false
   });
 
+  // 관리자/상담사만 사용 가능
+  if (!RoleUtils.isAdmin(user) && !RoleUtils.isConsultant(user) && !RoleUtils.hasRole(user, 'HQ_MASTER')) {
+    return null;
+  }
+
   const showCompactForm = widget.config?.showCompactForm !== false;
   const autoCloseAfterSubmit = widget.config?.autoCloseAfterSubmit !== false;
 
   // 입력 및 유효성 처리
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
     
     // 실시간 유효성 검사
     const newErrors = { ...validationErrors };
@@ -601,3 +596,11 @@ const ClientRegistrationWidget = ({ widget, user }) => {
 };
 
 export default ClientRegistrationWidget;
+  const {
+    const { name, value } = e.target;
+  const navigate = useNavigate();
+  const { showNotification } = useNotification();
+  const [showForm, setShowForm] = useState(false);
+  const [formData, setFormData] = useState({
+  const [validationErrors, setValidationErrors] = useState({});
+  } = useWidget(widgetWithDataSource, user, {

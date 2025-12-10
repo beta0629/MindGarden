@@ -21,11 +21,6 @@ import './HealingCardWidget.css';
 import '../../../components/common/HealingCard.css';
 
 const HealingCardWidget = ({ widget, user }) => {
-  // 내담자와 상담사만 표시 (다른 역할은 숨김)
-  if (!RoleUtils.isClient(user) && !RoleUtils.isConsultant(user)) {
-    return null;
-  }
-
   // 역할별 데이터 소스 설정
   const getDataSourceConfig = () => {
     const targetRole = RoleUtils.isConsultant(user) ? 'CONSULTANT' : 'CLIENT';
@@ -62,10 +57,15 @@ const HealingCardWidget = ({ widget, user }) => {
     isEmpty,
     refresh
   } = useWidget(widgetWithDataSource, user, {
-    immediate: true,
+    immediate: RoleUtils.isClient(user) || RoleUtils.isConsultant(user),
     cache: false, // 힐링 메시지는 캐시하지 않음
     retryCount: 3
   });
+
+  // 내담자와 상담사만 표시 (다른 역할은 숨김)
+  if (!RoleUtils.isClient(user) && !RoleUtils.isConsultant(user)) {
+    return null;
+  }
 
   // 새로고침 핸들러 (API 변경)
   const handleRefresh = async () => {

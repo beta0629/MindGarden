@@ -14,20 +14,16 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Cpu, HardDrive, Activity, TrendingUp } from 'lucide-react';
 import { useWidget } from '../../../../hooks/useWidget';
+import { Cpu, HardDrive, Activity, TrendingUp } from 'lucide-react';
 import BaseWidget from '../BaseWidget';
 import { RoleUtils } from '../../../../constants/roles';
 import { WIDGET_CONSTANTS } from '../../../../constants/widgetConstants';
 import { formatDate } from '../../../../utils/formatUtils';
 
 const SystemMetricsWidget = ({ widget, user }) => {
-  // 관리자만 표시
-  if (!RoleUtils.isAdmin(user) && !RoleUtils.hasRole(user, 'HQ_MASTER')) {
-    return null;
-  }
-
   const navigate = useNavigate();
+
 
   // 시스템 메트릭 데이터 소스 설정
   const getDataSourceConfig = () => {
@@ -39,10 +35,23 @@ const SystemMetricsWidget = ({ widget, user }) => {
     };
   };
 
-  const { data, loading, error, refreshData } = useWidget(
-    widget,
-    getDataSourceConfig()
-  );
+  const widgetWithDataSource = {
+    ...widget,
+    config: {
+      ...widget.config,
+      dataSource: getDataSourceConfig()
+    }
+  };
+
+  const { data, loading, error, refreshData } = useWidget(widgetWithDataSource, user, {
+    immediate: RoleUtils.isAdmin(user) || RoleUtils.hasRole(user, 'HQ_MASTER'),
+    cache: true
+  });
+
+  // 관리자만 표시
+  if (!RoleUtils.isAdmin(user) && !RoleUtils.hasRole(user, 'HQ_MASTER')) {
+    return null;
+  }
 
   // 위젯 액션 핸들러
   const handleAction = (action) => {
@@ -323,3 +332,6 @@ const SystemMetricsWidget = ({ widget, user }) => {
 
 export default SystemMetricsWidget;
 
+
+  const navigate = useNavigate();
+  const { data, loading, error, refreshData } = useWidget(

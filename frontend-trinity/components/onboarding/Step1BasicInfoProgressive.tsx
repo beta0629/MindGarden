@@ -9,6 +9,7 @@ import { TRINITY_CONSTANTS } from "../../constants/trinity";
 import ProgressiveInputField from "./ProgressiveInputField";
 import EmailInputProgressive from "./EmailInputProgressive";
 import type { OnboardingFormData } from "../../hooks/useOnboarding";
+import type { CommonCode } from "../../utils/commonCodeUtils";
 
 interface Step1BasicInfoProgressiveProps {
   formData: OnboardingFormData;
@@ -121,10 +122,25 @@ export default function Step1BasicInfoProgressive({
       validation: (value: string) => true, // 선택사항이므로 항상 유효
       placeholder: '지역을 선택하세요 (선택사항)',
       isSelect: true, // 드롭다운 필드
-      options: regionCodes.map(code => ({
-        value: code.codeValue,
-        label: code.koreanName || code.codeLabel || code.codeValue,
-      })),
+      options: (() => {
+        // 중복 제거: codeValue 기준으로 중복 제거
+        const uniqueCodes = new Map<string, typeof regionCodes[0]>();
+        regionCodes.forEach(code => {
+          if (!uniqueCodes.has(code.codeValue)) {
+            uniqueCodes.set(code.codeValue, code);
+          }
+        });
+        return Array.from(uniqueCodes.values())
+          .sort((a, b) => {
+            const sortA = (a as any).sortOrder || 0;
+            const sortB = (b as any).sortOrder || 0;
+            return sortA - sortB;
+          })
+          .map(code => ({
+            value: code.codeValue,
+            label: code.koreanName || code.codeLabel || code.codeValue,
+          }));
+      })(),
     },
     {
       id: 'contactEmail',

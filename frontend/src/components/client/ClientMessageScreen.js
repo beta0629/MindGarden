@@ -72,8 +72,6 @@ const ClientMessageScreen = () => {
           } else if (response.data.messages && Array.isArray(response.data.messages)) {
             // data.messages가 배열인 경우 (표준)
             messageData = response.data.messages;
-          } else if (Array.isArray(response.data)) {
-            messageData = response.data;
           }
         }
         setMessages(messageData);

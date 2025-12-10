@@ -64,11 +64,16 @@ export default function ChecklistDisplay({ checklistJson }: ChecklistDisplayProp
     billingKey: '빌링 키',
     customerKey: '고객 키',
     pricingPlanId: '요금제 ID',
+    planId: '요금제 ID',
     businessType: '업종 타입',
     businessCategory: '업종 카테고리',
     region: '지역',
+    regionCode: '지역 코드',
+    brandName: '브랜드명',
     address: '주소',
     contactPhone: '연락처',
+    dashboardTemplates: '대시보드 템플릿',
+    dashboardWidgets: '대시보드 위젯',
   };
 
   // 필드 표시 순서
@@ -76,9 +81,14 @@ export default function ChecklistDisplay({ checklistJson }: ChecklistDisplayProp
     'businessType',
     'businessCategory',
     'region',
+    'regionCode',
+    'brandName',
     'address',
     'contactPhone',
+    'planId',
     'pricingPlanId',
+    'dashboardTemplates',
+    'dashboardWidgets',
     'paymentType',
     'customerKey',
     'billingKey',
@@ -86,9 +96,20 @@ export default function ChecklistDisplay({ checklistJson }: ChecklistDisplayProp
     'adminPassword',
   ];
 
+  // 빈 값인지 확인하는 함수 (undefined, null, 빈 문자열, 빈 객체)
+  const isEmptyValue = (value: any): boolean => {
+    if (value === undefined || value === null) return true;
+    if (typeof value === 'string' && value.trim() === '') return true;
+    if (typeof value === 'object') {
+      if (Array.isArray(value)) return value.length === 0;
+      return Object.keys(value).length === 0; // 빈 객체
+    }
+    return false;
+  };
+
   // 표시할 필드 필터링 및 정렬
   const displayFields = displayOrder
-    .filter(key => checklistData![key] !== undefined && checklistData![key] !== null)
+    .filter(key => !isEmptyValue(checklistData![key]))
     .map(key => ({
       key,
       label: fieldLabels[key] || key,
@@ -98,7 +119,10 @@ export default function ChecklistDisplay({ checklistJson }: ChecklistDisplayProp
 
   // 나머지 필드들 추가
   const otherFields = Object.keys(checklistData)
-    .filter(key => !displayOrder.includes(key))
+    .filter(key => {
+      if (displayOrder.includes(key)) return false;
+      return !isEmptyValue(checklistData![key]);
+    })
     .map(key => ({
       key,
       label: fieldLabels[key] || key,
@@ -121,7 +145,15 @@ export default function ChecklistDisplay({ checklistJson }: ChecklistDisplayProp
                       : maskSensitiveValue(String(field.value), 'token')}
                   </span>
                 ) : (
-                  <span>{String(field.value)}</span>
+                  <span>
+                    {typeof field.value === 'object' && field.value !== null ? (
+                      <pre className="checklist-display__json">
+                        {JSON.stringify(field.value, null, 2)}
+                      </pre>
+                    ) : (
+                      String(field.value)
+                    )}
+                  </span>
                 )}
               </dd>
             </div>
@@ -139,7 +171,15 @@ export default function ChecklistDisplay({ checklistJson }: ChecklistDisplayProp
               <div key={field.key} className="checklist-display__item">
                 <dt className="checklist-display__label">{field.label}</dt>
                 <dd className="checklist-display__value">
-                  <span>{String(field.value)}</span>
+                  <span>
+                    {typeof field.value === 'object' && field.value !== null ? (
+                      <pre className="checklist-display__json">
+                        {JSON.stringify(field.value, null, 2)}
+                      </pre>
+                    ) : (
+                      String(field.value)
+                    )}
+                  </span>
                 </dd>
               </div>
             ))}

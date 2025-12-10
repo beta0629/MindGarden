@@ -70,6 +70,7 @@ export default function OnboardingStatusPage() {
         day: "2-digit",
         hour: "2-digit",
         minute: "2-digit",
+        timeZone: "Asia/Seoul", // 한국 표준시 명시
       });
     } catch {
       return dateString;

@@ -229,6 +229,41 @@ export default function OnboardingPage() {
     checkOnboardingAccess();
   }, [router, setFormData, setEmailVerified, showWelcome]);
 
+  // 진행 중인 온보딩 요청 조회
+  const loadExistingOnboardingRequests = async (email: string) => {
+    try {
+      setLoadingExistingRequests(true);
+      const requests = await getPublicOnboardingRequests(email);
+      if (requests && requests.length > 0) {
+        setExistingRequests(requests);
+        setShowExistingRequests(true);
+      } else {
+        setExistingRequests([]);
+        setShowExistingRequests(false);
+      }
+    } catch (err) {
+      console.error('온보딩 요청 조회 실패:', err);
+      setExistingRequests([]);
+      setShowExistingRequests(false);
+    } finally {
+      setLoadingExistingRequests(false);
+    }
+  };
+
+  // 기존 온보딩 요청 이어서 진행
+  const handleContinueExistingRequest = (request: OnboardingRequest) => {
+    // 기존 요청 데이터로 폼 채우기
+    setFormData(prev => ({
+      ...prev,
+      tenantName: request.tenantName || prev.tenantName,
+      businessType: request.businessType || prev.businessType,
+      contactEmail: request.requestedBy || prev.contactEmail,
+      planId: request.planId || prev.planId,
+    }));
+    setShowExistingRequests(false);
+    setStep(1); // 첫 단계로 이동
+  };
+
   // 로그인 성공 핸들러
   const handleLoginSuccess = (user: any) => {
     setIsLoggedIn(true);
@@ -241,6 +276,8 @@ export default function OnboardingPage() {
         contactEmail: userEmail
       }));
       setEmailVerified(true);
+      // 진행 중인 온보딩 요청 조회
+      loadExistingOnboardingRequests(userEmail);
     }
   };
 

@@ -36,7 +36,7 @@ const ActivityListWidget = ({ widget, user }) => {
         ...config.dataSource,
         transform: (response) => {
           const originalTransform = config.dataSource?.transform;
-          let data = originalTransform ? originalTransform(response) : response;
+          const data = originalTransform ? originalTransform(response) : response;
           
           // 배열인 경우 최대 개수로 제한
           if (Array.isArray(data)) {

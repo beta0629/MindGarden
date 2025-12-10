@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import BaseWidget from './BaseWidget';
 import { RoleUtils } from '../../../constants/roles';
+import { useWidget } from '../../../hooks/useWidget';
 import './PaymentSessionsWidget.css';
 import '../ClientPaymentSessionsSection.css';
 

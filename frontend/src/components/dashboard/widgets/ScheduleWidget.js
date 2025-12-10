@@ -14,17 +14,18 @@
 
 import React from 'react';
 import { Calendar, ArrowRight, Clock, Plus } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import BaseWidget from './BaseWidget';
 import { RoleUtils } from '../../../constants/roles';
 import './ScheduleWidget.css';
 
 const ScheduleWidget = ({ widget, user }) => {
-  // 상담사 전용 (다른 역할은 숨김)
+  const navigate = useNavigate();
 
+  // 상담사 전용 (다른 역할은 숨김)
   if (!RoleUtils.isConsultant(user)) {
     return null;
   }
-
 
   // 스케줄 페이지로 이동
   const handleScheduleClick = () => {

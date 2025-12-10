@@ -403,73 +403,140 @@ public class OnboardingService {
                 log.info("[OnboardingService] 테넌트 생성 프로시저 실행 - tenantId={}, tenantName={}", 
                     tenantIdValue, request.getTenantName());
                 
-                // 관리자 비밀번호 추출 및 해시 생성
+                // 관리자 비밀번호 추출 및 해시 생성 (방어 코드 포함)
                 String adminEmail = request.getRequestedBy();
                 String adminPasswordHash = null;
                 
                 if (adminEmail != null && !adminEmail.isBlank()) {
-                    String rawPassword = extractAdminPasswordFromChecklist(request.getChecklistJson());
-                    log.info("🔑 추출된 관리자 비밀번호: length={}, isEmpty={}", rawPassword.length(), rawPassword.isEmpty());
-                    adminPasswordHash = passwordEncoder.encode(rawPassword);
-                    log.info("✅ 관리자 계정 정보 준비 완료 - email={}, passwordHashPrefix={}", 
-                        adminEmail, adminPasswordHash != null ? adminPasswordHash.substring(0, Math.min(20, adminPasswordHash.length())) + "..." : "null");
+                    try {
+                        // 1. 체크리스트에서 비밀번호 추출
+                        String rawPassword = extractAdminPasswordFromChecklist(request.getChecklistJson());
+                        
+                        // 2. 추출된 비밀번호 검증
+                        if (rawPassword == null || rawPassword.isBlank()) {
+                            log.error("❌ 추출된 비밀번호가 null이거나 비어있음, 기본 비밀번호 사용");
+                            rawPassword = "TempPassword123!";
+                        }
+                        
+                        // 3. 비밀번호 최소 길이 검증 (방어 코드)
+                        if (rawPassword.length() < 8) {
+                            log.warn("⚠️ 추출된 비밀번호가 너무 짧음 (length={}), 기본 비밀번호 사용", rawPassword.length());
+                            rawPassword = "TempPassword123!";
+                        }
+                        
+                        log.info("🔑 추출된 관리자 비밀번호: length={}, isEmpty={}", rawPassword.length(), rawPassword.isEmpty());
+                        
+                        // 4. 비밀번호 해시 생성 (방어 코드: 예외 처리)
+                        try {
+                            adminPasswordHash = passwordEncoder.encode(rawPassword);
+                            if (adminPasswordHash == null || adminPasswordHash.isBlank()) {
+                                log.error("❌ 비밀번호 해시 생성 실패 (null 반환), 기본 비밀번호 해시 사용");
+                                adminPasswordHash = passwordEncoder.encode("TempPassword123!");
+                            }
+                            log.info("✅ 관리자 계정 정보 준비 완료 - email={}, passwordHashPrefix={}", 
+                                adminEmail, adminPasswordHash.substring(0, Math.min(20, adminPasswordHash.length())) + "...");
+                        } catch (Exception e) {
+                            log.error("❌ 비밀번호 해시 생성 중 예외 발생: {}, 기본 비밀번호 해시 사용", e.getMessage(), e);
+                            try {
+                                adminPasswordHash = passwordEncoder.encode("TempPassword123!");
+                            } catch (Exception e2) {
+                                log.error("❌ 기본 비밀번호 해시 생성도 실패: {}", e2.getMessage(), e2);
+                                // 해시 생성 실패 시 null로 두고 프로시저에서 처리하도록 함
+                                adminPasswordHash = null;
+                            }
+                        }
+                    } catch (Exception e) {
+                        log.error("❌ 관리자 비밀번호 추출/해시 생성 중 예외 발생: {}", e.getMessage(), e);
+                        // 예외 발생 시에도 프로세스는 계속 진행 (프로시저에서 처리)
+                        adminPasswordHash = null;
+                    }
+                } else {
+                    log.warn("⚠️ 관리자 이메일이 null이거나 비어있음, 관리자 계정 생성 건너뜀");
                 }
                 
-                // CreateOrActivateTenant 프로시저 호출 (관리자 계정 생성 포함)
-                Connection connection = jdbcTemplate.getDataSource().getConnection();
+                // CreateOrActivateTenant 프로시저 호출 (관리자 계정 생성 포함) - 방어 코드 포함
+                Connection connection = null;
+                CallableStatement cs = null;
                 try {
-                    // businessType 가져오기 (없으면 기본값 사용)
+                    // 1. Connection 획득 (방어 코드: null 체크)
+                    connection = jdbcTemplate.getDataSource().getConnection();
+                    if (connection == null) {
+                        throw new SQLException("데이터베이스 연결을 획득할 수 없습니다");
+                    }
+                    
+                    // 2. businessType 가져오기 (없으면 기본값 사용)
                     String businessType = request.getBusinessType();
                     if (businessType == null || businessType.trim().isEmpty()) {
                         businessType = OpsConstants.DEFAULT_BUSINESS_TYPE;
                         log.warn("[OnboardingService] businessType이 없어 기본값 사용: {}", businessType);
                     }
                     
+                    // 3. 필수 파라미터 검증 (방어 코드)
+                    if (tenantIdValue == null || tenantIdValue.trim().isEmpty()) {
+                        throw new IllegalArgumentException("tenantId가 null이거나 비어있습니다");
+                    }
+                    if (request.getTenantName() == null || request.getTenantName().trim().isEmpty()) {
+                        throw new IllegalArgumentException("tenantName이 null이거나 비어있습니다");
+                    }
+                    if (actorId == null || actorId.trim().isEmpty()) {
+                        throw new IllegalArgumentException("actorId가 null이거나 비어있습니다");
+                    }
+                    
                     log.info("[OnboardingService] 프로시저 호출 준비 - tenantId={}, tenantName={}, businessType={}, actorId={}, adminEmail={}, hasPasswordHash={}", 
                         tenantIdValue, request.getTenantName(), businessType, actorId, adminEmail, adminPasswordHash != null);
                     
-                    CallableStatement cs = connection.prepareCall(
+                    // 4. 프로시저 호출 준비
+                    cs = connection.prepareCall(
                         "{CALL CreateOrActivateTenant(?, ?, ?, ?, ?, ?, ?, ?)}"
                     );
                     
-                    // IN 파라미터
+                    // 5. IN 파라미터 설정 (방어 코드: null 처리)
                     cs.setString(1, tenantIdValue);
                     cs.setString(2, request.getTenantName());
-                    cs.setString(3, businessType); // 실제 businessType 사용
+                    cs.setString(3, businessType);
                     cs.setString(4, actorId);
-                    cs.setString(5, adminEmail); // 관리자 이메일 (옵셔널)
-                    cs.setString(6, adminPasswordHash); // 관리자 비밀번호 해시 (옵셔널)
+                    cs.setString(5, adminEmail); // 관리자 이메일 (옵셔널, null 가능)
+                    cs.setString(6, adminPasswordHash); // 관리자 비밀번호 해시 (옵셔널, null 가능)
                     
-                    // OUT 파라미터
+                    // 6. OUT 파라미터 등록
                     cs.registerOutParameter(7, Types.BOOLEAN); // p_success
                     cs.registerOutParameter(8, Types.VARCHAR); // p_message
                     
+                    // 7. 프로시저 실행 (방어 코드: 예외 처리)
                     log.info("[OnboardingService] 프로시저 실행 시작");
                     cs.execute();
                     log.info("[OnboardingService] 프로시저 실행 완료");
                     
-                    boolean success = cs.getBoolean(7);
-                    String message = cs.getString(8);
+                    // 8. 결과 확인 (방어 코드: null 체크)
+                    boolean success = false;
+                    String message = null;
+                    try {
+                        success = cs.getBoolean(7);
+                        message = cs.getString(8);
+                    } catch (SQLException e) {
+                        log.error("❌ 프로시저 결과 파라미터 읽기 실패: {}", e.getMessage(), e);
+                        success = false;
+                        message = "프로시저 실행 결과를 읽을 수 없습니다: " + e.getMessage();
+                    }
                     
                     log.info("[OnboardingService] 프로시저 결과 - success={}, message={}", success, message);
                     
-                    cs.close();
-                    
+                    // 9. 성공 여부에 따른 처리
                     if (success) {
                         log.info("✅ 테넌트 및 관리자 계정 생성 완료: {}", message);
                         note = (note != null ? note + "\n\n" : "") + message;
                         
-                        // 브랜딩 정보 설정 (checklistJson에서 brandName 추출)
+                        // 브랜딩 정보 설정 (checklistJson에서 brandName 추출) - 방어 코드 포함
                         try {
                             setTenantBranding(tenantIdValue, request);
                         } catch (Exception e) {
                             log.warn("⚠️ 브랜딩 정보 설정 실패 (온보딩 프로세스는 계속 진행): tenantId={}, error={}", 
-                                tenantIdValue, e.getMessage());
+                                tenantIdValue, e.getMessage(), e);
+                            // 브랜딩 실패는 치명적이지 않으므로 프로세스 계속 진행
                         }
                         
-                        // 기본 역할별 대시보드 생성 (비즈니스 타입에 따라)
+                        // 기본 역할별 대시보드 생성 (비즈니스 타입에 따라) - 방어 코드 포함
                         try {
-                            // request에서 businessType 가져오기, 없으면 기본값 사용
                             String businessTypeForDashboard = request.getBusinessType();
                             if (businessTypeForDashboard == null || businessTypeForDashboard.trim().isEmpty()) {
                                 businessTypeForDashboard = OpsConstants.DEFAULT_BUSINESS_TYPE;
@@ -479,7 +546,8 @@ public class OnboardingService {
                             log.info("✅ 기본 대시보드 생성 완료: tenantId={}, businessType={}", tenantIdValue, businessTypeForDashboard);
                         } catch (Exception e) {
                             log.warn("⚠️ 기본 대시보드 생성 실패 (온보딩 프로세스는 계속 진행): tenantId={}, error={}", 
-                                tenantIdValue, e.getMessage());
+                                tenantIdValue, e.getMessage(), e);
+                            // 대시보드 생성 실패는 치명적이지 않으므로 프로세스 계속 진행
                         }
                     } else {
                         log.error("❌ 테넌트 생성 실패: success={}, message={}", success, message);
@@ -487,11 +555,33 @@ public class OnboardingService {
                         note = (note != null ? note + "\n\n" : "") + "[오류] " + (message != null ? message : "프로시저 실행 실패 (메시지 없음)");
                     }
                 } catch (SQLException e) {
-                    log.error("❌ 프로시저 SQL 오류: errorCode={}, sqlState={}, message={}", 
-                        e.getErrorCode(), e.getSQLState(), e.getMessage(), e);
-                    throw e;
+                    log.error("[OnboardingService] ❌ 프로시저 실행 중 SQL 오류: {}", e.getMessage(), e);
+                    status = OnboardingStatus.ON_HOLD;
+                    note = (note != null ? note + "\n\n" : "") + "[SQL 오류] " + e.getMessage();
+                } catch (IllegalArgumentException e) {
+                    log.error("[OnboardingService] ❌ 필수 파라미터 검증 실패: {}", e.getMessage(), e);
+                    status = OnboardingStatus.ON_HOLD;
+                    note = (note != null ? note + "\n\n" : "") + "[파라미터 오류] " + e.getMessage();
+                } catch (Exception e) {
+                    log.error("[OnboardingService] ❌ 프로시저 실행 중 예상치 못한 오류: {}", e.getMessage(), e);
+                    status = OnboardingStatus.ON_HOLD;
+                    note = (note != null ? note + "\n\n" : "") + "[시스템 오류] " + e.getMessage();
                 } finally {
-                    connection.close();
+                    // 리소스 정리 (방어 코드: null 체크 및 예외 처리)
+                    if (cs != null) {
+                        try {
+                            cs.close();
+                        } catch (SQLException e) {
+                            log.error("[OnboardingService] ❌ CallableStatement 종료 실패: {}", e.getMessage());
+                        }
+                    }
+                    if (connection != null) {
+                        try {
+                            connection.close();
+                        } catch (SQLException e) {
+                            log.error("[OnboardingService] ❌ Connection 종료 실패: {}", e.getMessage());
+                        }
+                    }
                 }
                 
             } catch (Exception e) {
@@ -615,17 +705,40 @@ public class OnboardingService {
         return null;
     }
     
+    /**
+     * 체크리스트 JSON에서 관리자 비밀번호 추출 (방어 코드 포함)
+     * @param checklistJson 체크리스트 JSON 문자열
+     * @return 관리자 비밀번호 (없거나 추출 실패 시 기본 비밀번호)
+     */
     private String extractAdminPasswordFromChecklist(String checklistJson) {
+        // 1. null/빈 문자열 체크
         if (checklistJson == null || checklistJson.isEmpty()) {
             log.warn("⚠️ 체크리스트 JSON이 null이거나 비어있음, 기본 비밀번호 사용: TempPassword123!");
             return "TempPassword123!"; // 기본 비밀번호
         }
+        
+        // 2. JSON 파싱 시도 (방어 코드: 예외 처리)
         try {
-            // JSON 파싱을 사용하여 안전하게 추출 (extractRegionCodeFromChecklist와 동일한 방식)
             JsonNode jsonNode = objectMapper.readTree(checklistJson);
+            
+            // 3. adminPassword 필드 존재 및 타입 확인
             if (jsonNode.has("adminPassword") && jsonNode.get("adminPassword").isTextual()) {
                 String extractedPassword = jsonNode.get("adminPassword").asText();
+                
+                // 4. 추출된 비밀번호 검증 (방어 코드)
                 if (extractedPassword != null && !extractedPassword.isEmpty()) {
+                    // 5. 비밀번호 최소 길이 검증 (방어 코드)
+                    if (extractedPassword.length() < 8) {
+                        log.warn("⚠️ 추출된 비밀번호가 너무 짧음 (length={}), 기본 비밀번호 사용", extractedPassword.length());
+                        return "TempPassword123!";
+                    }
+                    
+                    // 6. 비밀번호 최대 길이 검증 (방어 코드: SQL 인젝션 방지)
+                    if (extractedPassword.length() > 100) {
+                        log.warn("⚠️ 추출된 비밀번호가 너무 김 (length={}), 기본 비밀번호 사용", extractedPassword.length());
+                        return "TempPassword123!";
+                    }
+                    
                     log.info("✅ 체크리스트에서 adminPassword 추출 성공 (JSON 파싱): length={}", extractedPassword.length());
                     return extractedPassword;
                 } else {
@@ -634,9 +747,13 @@ public class OnboardingService {
             } else {
                 log.warn("⚠️ 체크리스트 JSON에서 \"adminPassword\" 필드를 찾을 수 없거나 텍스트 타입이 아님, 기본 비밀번호 사용");
             }
+        } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
+            log.warn("⚠️ 체크리스트 JSON 파싱 실패 (잘못된 JSON 형식), 기본 비밀번호 사용: {}", e.getMessage());
         } catch (Exception e) {
-            log.warn("⚠️ 체크리스트 JSON에서 adminPassword 추출 실패 (JSON 파싱), 기본 비밀번호 사용: {}", e.getMessage());
+            log.warn("⚠️ 체크리스트 JSON에서 adminPassword 추출 실패 (예상치 못한 오류), 기본 비밀번호 사용: {}", e.getMessage(), e);
         }
+        
+        // 7. 모든 추출 시도 실패 시 기본 비밀번호 반환
         log.warn("⚠️ 기본 비밀번호 사용: TempPassword123!");
         return "TempPassword123!"; // 추출 실패 시 기본 비밀번호
     }

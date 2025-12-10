@@ -331,7 +331,3 @@ const SystemMetricsWidget = ({ widget, user }) => {
 };
 
 export default SystemMetricsWidget;
-
-
-  const navigate = useNavigate();
-  const { data, loading, error, refreshData } = useWidget(

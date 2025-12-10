@@ -389,3 +389,5 @@ const AIMonitoringWidget = ({ widget, user }) => {
     </BaseWidget>
   );
 };
+
+export default AIMonitoringWidget;

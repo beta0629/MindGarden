@@ -134,6 +134,7 @@ public class OnboardingService {
         entity.setTenantName(request.tenantName());
         entity.setBrandName(brandName); // 브랜드명 저장 (checklistJson에서 추출한 값 또는 tenantName)
         entity.setRegion(region); // 지역 정보 저장 (checklistJson에서 추출한 값 또는 요청값)
+        entity.setBusinessType(request.businessType()); // 업종 타입 저장
         entity.setRequestedBy(request.requestedBy());
         entity.setRiskLevel(request.riskLevel());
         entity.setChecklistJson(request.checklistJson());
@@ -162,6 +163,12 @@ public class OnboardingService {
     private String generateTenantId(String region, String businessType) {
         // 지역 코드 정규화
         String regionCode = normalizeRegionCode(region);
+        
+        // normalizeRegionCode가 null을 반환할 수 있으므로 "unknown"으로 처리
+        if (regionCode == null || regionCode.isBlank()) {
+            regionCode = "unknown";
+            log.warn("[OnboardingService] generateTenantId: regionCode가 null이어서 'unknown' 사용 - region={}", region);
+        }
         
         // 업종 코드 정규화 (없으면 기본값 사용)
         String businessTypeCode;
@@ -292,6 +299,29 @@ public class OnboardingService {
         return "unknown";
     }
 
+    /**
+     * 온보딩 결정 (관리자 계정 정보 포함 응답)
+     */
+    @Transactional
+    public com.mindgarden.ops.controller.dto.OnboardingDecisionResponse decideWithAdminInfo(
+            UUID requestId, OnboardingStatus status, String actorId, String note) {
+        OnboardingRequest saved = decide(requestId, status, actorId, note);
+        
+        // 승인 완료 시 생성된 관리자 계정 정보 반환
+        com.mindgarden.ops.controller.dto.OnboardingDecisionResponse.AdminAccountInfo adminInfo = null;
+        if (status == OnboardingStatus.APPROVED && saved.getRequestedBy() != null) {
+            String rawPassword = extractAdminPasswordFromChecklist(saved.getChecklistJson());
+            adminInfo = new com.mindgarden.ops.controller.dto.OnboardingDecisionResponse.AdminAccountInfo(
+                saved.getRequestedBy(),
+                rawPassword,  // 원본 비밀번호 (온보딩 체크리스트에서 추출)
+                saved.getTenantId(),
+                saved.getTenantName()
+            );
+        }
+        
+        return new com.mindgarden.ops.controller.dto.OnboardingDecisionResponse(saved, adminInfo);
+    }
+    
     @Transactional
     public OnboardingRequest decide(UUID requestId, OnboardingStatus status, String actorId, String note) {
         log.info("[OnboardingService] decide 메서드 시작 - requestId={}, status={}, actorId={}", requestId, status, actorId);
@@ -334,7 +364,13 @@ public class OnboardingService {
                     }
                     
                     // 업종 코드 정규화 (대문자 -> 소문자, 언더스코어 -> 하이픈)
-                    String businessTypeCode = OpsConstants.DEFAULT_BUSINESS_TYPE.toLowerCase().replace("_", "-");
+                    // request에서 businessType 가져오기, 없으면 기본값 사용
+                    String businessType = request.getBusinessType();
+                    if (businessType == null || businessType.trim().isEmpty()) {
+                        businessType = OpsConstants.DEFAULT_BUSINESS_TYPE;
+                        log.warn("[OnboardingService] businessType이 없어 기본값 사용: {}", businessType);
+                    }
+                    String businessTypeCode = businessType.toLowerCase().replace("_", "-");
                     
                     // 같은 지역+업종의 기존 테넌트 수 조회하여 순번 결정
                     String countQuery = "SELECT COUNT(*) FROM tenants WHERE tenant_id LIKE ? AND (is_deleted IS NULL OR is_deleted = FALSE)";
@@ -373,15 +409,24 @@ public class OnboardingService {
                 
                 if (adminEmail != null && !adminEmail.isBlank()) {
                     String rawPassword = extractAdminPasswordFromChecklist(request.getChecklistJson());
+                    log.info("🔑 추출된 관리자 비밀번호: length={}, isEmpty={}", rawPassword.length(), rawPassword.isEmpty());
                     adminPasswordHash = passwordEncoder.encode(rawPassword);
-                    log.info("관리자 계정 정보 준비 완료 - email={}", adminEmail);
+                    log.info("✅ 관리자 계정 정보 준비 완료 - email={}, passwordHashPrefix={}", 
+                        adminEmail, adminPasswordHash != null ? adminPasswordHash.substring(0, Math.min(20, adminPasswordHash.length())) + "..." : "null");
                 }
                 
                 // CreateOrActivateTenant 프로시저 호출 (관리자 계정 생성 포함)
                 Connection connection = jdbcTemplate.getDataSource().getConnection();
                 try {
+                    // businessType 가져오기 (없으면 기본값 사용)
+                    String businessType = request.getBusinessType();
+                    if (businessType == null || businessType.trim().isEmpty()) {
+                        businessType = OpsConstants.DEFAULT_BUSINESS_TYPE;
+                        log.warn("[OnboardingService] businessType이 없어 기본값 사용: {}", businessType);
+                    }
+                    
                     log.info("[OnboardingService] 프로시저 호출 준비 - tenantId={}, tenantName={}, businessType={}, actorId={}, adminEmail={}, hasPasswordHash={}", 
-                        tenantIdValue, request.getTenantName(), OpsConstants.DEFAULT_BUSINESS_TYPE, actorId, adminEmail, adminPasswordHash != null);
+                        tenantIdValue, request.getTenantName(), businessType, actorId, adminEmail, adminPasswordHash != null);
                     
                     CallableStatement cs = connection.prepareCall(
                         "{CALL CreateOrActivateTenant(?, ?, ?, ?, ?, ?, ?, ?)}"
@@ -390,7 +435,7 @@ public class OnboardingService {
                     // IN 파라미터
                     cs.setString(1, tenantIdValue);
                     cs.setString(2, request.getTenantName());
-                    cs.setString(3, OpsConstants.DEFAULT_BUSINESS_TYPE); // 기본 업종 (상수 사용)
+                    cs.setString(3, businessType); // 실제 businessType 사용
                     cs.setString(4, actorId);
                     cs.setString(5, adminEmail); // 관리자 이메일 (옵셔널)
                     cs.setString(6, adminPasswordHash); // 관리자 비밀번호 해시 (옵셔널)
@@ -419,6 +464,21 @@ public class OnboardingService {
                             setTenantBranding(tenantIdValue, request);
                         } catch (Exception e) {
                             log.warn("⚠️ 브랜딩 정보 설정 실패 (온보딩 프로세스는 계속 진행): tenantId={}, error={}", 
+                                tenantIdValue, e.getMessage());
+                        }
+                        
+                        // 기본 역할별 대시보드 생성 (비즈니스 타입에 따라)
+                        try {
+                            // request에서 businessType 가져오기, 없으면 기본값 사용
+                            String businessTypeForDashboard = request.getBusinessType();
+                            if (businessTypeForDashboard == null || businessTypeForDashboard.trim().isEmpty()) {
+                                businessTypeForDashboard = OpsConstants.DEFAULT_BUSINESS_TYPE;
+                                log.warn("[OnboardingService] 대시보드 생성 시 businessType이 없어 기본값 사용: {}", businessTypeForDashboard);
+                            }
+                            createDefaultDashboards(tenantIdValue, businessTypeForDashboard, actorId);
+                            log.info("✅ 기본 대시보드 생성 완료: tenantId={}, businessType={}", tenantIdValue, businessTypeForDashboard);
+                        } catch (Exception e) {
+                            log.warn("⚠️ 기본 대시보드 생성 실패 (온보딩 프로세스는 계속 진행): tenantId={}, error={}", 
                                 tenantIdValue, e.getMessage());
                         }
                     } else {
@@ -557,21 +617,214 @@ public class OnboardingService {
     
     private String extractAdminPasswordFromChecklist(String checklistJson) {
         if (checklistJson == null || checklistJson.isEmpty()) {
+            log.warn("⚠️ 체크리스트 JSON이 null이거나 비어있음, 기본 비밀번호 사용: TempPassword123!");
             return "TempPassword123!"; // 기본 비밀번호
         }
         try {
-            // "adminPassword": "password_value" 형태를 가정
-            int startIndex = checklistJson.indexOf("\"adminPassword\": \"");
-            if (startIndex != -1) {
-                startIndex += "\"adminPassword\": \"".length();
-                int endIndex = checklistJson.indexOf("\"", startIndex);
-                if (endIndex != -1) {
-                    return checklistJson.substring(startIndex, endIndex);
+            // JSON 파싱을 사용하여 안전하게 추출 (extractRegionCodeFromChecklist와 동일한 방식)
+            JsonNode jsonNode = objectMapper.readTree(checklistJson);
+            if (jsonNode.has("adminPassword") && jsonNode.get("adminPassword").isTextual()) {
+                String extractedPassword = jsonNode.get("adminPassword").asText();
+                if (extractedPassword != null && !extractedPassword.isEmpty()) {
+                    log.info("✅ 체크리스트에서 adminPassword 추출 성공 (JSON 파싱): length={}", extractedPassword.length());
+                    return extractedPassword;
+                } else {
+                    log.warn("⚠️ 체크리스트 JSON에서 adminPassword 값이 비어있음, 기본 비밀번호 사용");
                 }
+            } else {
+                log.warn("⚠️ 체크리스트 JSON에서 \"adminPassword\" 필드를 찾을 수 없거나 텍스트 타입이 아님, 기본 비밀번호 사용");
             }
         } catch (Exception e) {
-            log.warn("체크리스트 JSON에서 adminPassword 추출 실패, 기본 비밀번호 사용: {}", e.getMessage());
+            log.warn("⚠️ 체크리스트 JSON에서 adminPassword 추출 실패 (JSON 파싱), 기본 비밀번호 사용: {}", e.getMessage());
         }
+        log.warn("⚠️ 기본 비밀번호 사용: TempPassword123!");
         return "TempPassword123!"; // 추출 실패 시 기본 비밀번호
+    }
+    
+    /**
+     * 기본 역할별 대시보드 생성 (비즈니스 타입에 따라 role_templates 조회)
+     * @param tenantId 테넌트 ID
+     * @param businessType 업종 타입 (예: CONSULTATION, ACADEMY)
+     * @param createdBy 생성자
+     */
+    private void createDefaultDashboards(String tenantId, String businessType, String createdBy) {
+        if (tenantId == null || tenantId.trim().isEmpty()) {
+            log.warn("[OnboardingService] ⚠️ 테넌트 ID가 없어 대시보드 생성을 건너뜁니다.");
+            return;
+        }
+        
+        if (businessType == null || businessType.trim().isEmpty()) {
+            log.warn("[OnboardingService] ⚠️ 비즈니스 타입이 없어 대시보드 생성을 건너뜁니다: tenantId={}", tenantId);
+            return;
+        }
+        
+        try {
+            log.info("[OnboardingService] 기본 대시보드 생성 시작: tenantId={}, businessType={}", tenantId, businessType);
+            
+            // 1. 비즈니스 타입에 맞는 역할 템플릿 조회 (role_templates 테이블)
+            String templatesQuery = """
+                SELECT 
+                    rt.role_template_id,
+                    rt.template_code,
+                    rt.name_ko,
+                    rt.name_en,
+                    rt.display_order
+                FROM role_templates rt
+                WHERE rt.business_type = ?
+                  AND (rt.is_deleted IS NULL OR rt.is_deleted = FALSE)
+                  AND (rt.is_active IS NULL OR rt.is_active = TRUE)
+                ORDER BY rt.display_order ASC
+                """;
+            
+            List<Map<String, Object>> templates = jdbcTemplate.queryForList(templatesQuery, businessType);
+            
+            if (templates.isEmpty()) {
+                log.warn("[OnboardingService] ⚠️ 비즈니스 타입에 맞는 역할 템플릿이 없어 대시보드 생성을 건너뜁니다: tenantId={}, businessType={}", 
+                    tenantId, businessType);
+                return;
+            }
+            
+            log.info("[OnboardingService] 역할 템플릿 조회 완료: tenantId={}, businessType={}, templateCount={}", 
+                tenantId, businessType, templates.size());
+            
+            // 2. 각 역할 템플릿에 대해 테넌트 역할(tenant_roles) 찾기 및 대시보드 생성
+            for (int i = 0; i < templates.size(); i++) {
+                Map<String, Object> template = templates.get(i);
+                String roleTemplateId = (String) template.get("role_template_id");
+                String templateCode = (String) template.get("template_code");
+                String roleNameKo = (String) template.get("name_ko");
+                String roleNameEn = (String) template.get("name_en");
+                String roleName = roleNameKo != null && !roleNameKo.isEmpty() ? roleNameKo : 
+                                 (roleNameEn != null && !roleNameEn.isEmpty() ? roleNameEn : templateCode);
+                
+                // 테넌트 역할 찾기 (role_template_id로 매핑)
+                String tenantRoleQuery = """
+                    SELECT 
+                        tenant_role_id,
+                        name,
+                        name_ko,
+                        name_en
+                    FROM tenant_roles
+                    WHERE tenant_id = ?
+                      AND role_template_id = ?
+                      AND (is_deleted IS NULL OR is_deleted = FALSE)
+                      AND (is_active IS NULL OR is_active = TRUE)
+                    LIMIT 1
+                    """;
+                
+                List<Map<String, Object>> tenantRoles = jdbcTemplate.queryForList(tenantRoleQuery, tenantId, roleTemplateId);
+                
+                if (tenantRoles.isEmpty()) {
+                    log.warn("[OnboardingService] ⚠️ 테넌트 역할을 찾을 수 없음: tenantId={}, roleTemplateId={}, templateCode={}", 
+                        tenantId, roleTemplateId, templateCode);
+                    continue;
+                }
+                
+                Map<String, Object> tenantRole = tenantRoles.get(0);
+                String tenantRoleId = (String) tenantRole.get("tenant_role_id");
+                String finalRoleName = (String) tenantRole.get("name_ko");
+                if (finalRoleName == null || finalRoleName.isEmpty()) {
+                    finalRoleName = (String) tenantRole.get("name");
+                }
+                if (finalRoleName == null || finalRoleName.isEmpty()) {
+                    finalRoleName = (String) tenantRole.get("name_en");
+                }
+                if (finalRoleName == null || finalRoleName.isEmpty()) {
+                    finalRoleName = roleName;
+                }
+                
+                String dashboardName = finalRoleName + " 대시보드";
+                
+                // 이미 대시보드가 존재하는지 확인
+                String existsQuery = """
+                    SELECT COUNT(*) > 0
+                    FROM tenant_dashboards
+                    WHERE tenant_id = ?
+                      AND tenant_role_id = ?
+                      AND (is_deleted IS NULL OR is_deleted = FALSE)
+                    """;
+                
+                Boolean exists = jdbcTemplate.queryForObject(existsQuery, Boolean.class, tenantId, tenantRoleId);
+                
+                if (Boolean.TRUE.equals(exists)) {
+                    log.info("[OnboardingService] 대시보드가 이미 존재함: tenantId={}, tenantRoleId={}, dashboardName={}", 
+                        tenantId, tenantRoleId, dashboardName);
+                    continue;
+                }
+                
+                // 대시보드 생성
+                String dashboardId = UUID.randomUUID().toString();
+                String defaultConfig = "{\"widgets\": []}"; // 기본 위젯 설정 (빈 배열)
+                
+                String insertQuery = """
+                    INSERT INTO tenant_dashboards (
+                        dashboard_id,
+                        tenant_id,
+                        tenant_role_id,
+                        dashboard_name,
+                        dashboard_name_ko,
+                        dashboard_name_en,
+                        description,
+                        dashboard_type,
+                        is_default,
+                        is_active,
+                        display_order,
+                        dashboard_config,
+                        created_at,
+                        updated_at,
+                        is_deleted,
+                        version
+                    ) VALUES (
+                        ?,
+                        ?,
+                        ?,
+                        ?,
+                        ?,
+                        ?,
+                        ?,
+                        ?,
+                        ?,
+                        ?,
+                        ?,
+                        ?,
+                        NOW(),
+                        NOW(),
+                        FALSE,
+                        0
+                    )
+                    """;
+                
+                String dashboardNameEn = (tenantRole.get("name_en") != null && !((String) tenantRole.get("name_en")).isEmpty()) 
+                    ? (String) tenantRole.get("name_en") 
+                    : (roleNameEn != null && !roleNameEn.isEmpty() ? roleNameEn : templateCode);
+                
+                jdbcTemplate.update(
+                    insertQuery,
+                    dashboardId,
+                    tenantId,
+                    tenantRoleId,
+                    dashboardName,
+                    dashboardName,
+                    dashboardNameEn + " Dashboard",
+                    finalRoleName + " 역할의 기본 대시보드",
+                    templateCode, // dashboard_type에 template_code 사용
+                    true, // is_default
+                    true, // is_active
+                    i + 1, // display_order
+                    defaultConfig
+                );
+                
+                log.info("[OnboardingService] ✅ 대시보드 생성 완료: dashboardId={}, tenantId={}, roleName={}, templateCode={}, businessType={}", 
+                    dashboardId, tenantId, finalRoleName, templateCode, businessType);
+            }
+            
+            log.info("[OnboardingService] ✅ 기본 대시보드 생성 완료: tenantId={}, businessType={}, count={}", 
+                tenantId, businessType, templates.size());
+            
+        } catch (Exception e) {
+            log.error("[OnboardingService] ❌ 기본 대시보드 생성 중 오류: tenantId={}, businessType={}, error={}", 
+                tenantId, businessType, e.getMessage(), e);
+            throw e;
+        }
     }
 }

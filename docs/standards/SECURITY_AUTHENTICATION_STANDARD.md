@@ -261,10 +261,16 @@ public class PasswordEncoderConfig {
     /**
      * BCrypt 암호화 사용 (표준)
      * Strength: 12 (2^12 = 4096 rounds)
+     * 
+     * ⚠️ 중요: 모든 서비스(backend-ops, CoreSolution)에서 동일한 강도 사용 필수
+     * - application.yml에 security.password.strength: 12 설정
+     * - PasswordEncoder 빈에서 명시적으로 강도 지정
+     * - 강도 불일치 시 로그인 실패 발생 가능
      */
     @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder(12);
+    public PasswordEncoder passwordEncoder(
+            @Value("${security.password.strength:12}") int bcryptStrength) {
+        return new BCryptPasswordEncoder(bcryptStrength);
     }
 }
 

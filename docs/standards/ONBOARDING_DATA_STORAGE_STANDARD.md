@@ -65,6 +65,14 @@
 - **정규화**: 한글 지역명 → 영문 코드 변환 (예: "인천" → "incheon")
 - **기본값**: 없으면 "unknown" 사용
 
+#### 관리자 비밀번호 (`adminPassword`)
+- **용도**: 온보딩 승인 시 관리자 계정 생성에 사용
+- **저장 위치**: `checklistJson`에만 저장 (보안상 별도 필드 저장 금지)
+- **추출 방법**: `checklistJson`에서 `adminPassword` 필드를 JSON 파싱으로 추출
+- **암호화**: 추출 후 BCrypt(강도 12)로 해시하여 `users.password`에 저장
+- **표준화**: `backend-ops`와 `CoreSolution` 모두 BCrypt 강도 12 사용 필수
+- **주의사항**: 문자열 파싱 대신 `objectMapper.readTree()` 사용 필수
+
 ---
 
 ## 🔄 데이터 흐름
@@ -102,8 +110,11 @@ OnboardingService.decide()
     ↓
 1. region 필드에서 지역 코드 사용
 2. brand_name 필드에서 브랜드명 사용
-3. 테넌트 ID 생성: tenant-{region}-{businessType}-{순번}
-4. tenants.branding_json에 브랜드명 저장
+3. checklistJson에서 adminPassword 추출 (JSON 파싱)
+4. adminPassword를 BCrypt(강도 12)로 해시
+5. 테넌트 ID 생성: tenant-{region}-{businessType}-{순번}
+6. tenants.branding_json에 브랜드명 저장
+7. 관리자 계정 생성 (users 테이블)
     ↓
 테넌트 생성 완료
 ```
@@ -154,7 +165,38 @@ public OnboardingRequest create(OnboardingCreateRequest request) {
 }
 ```
 
-### 2. 온보딩 승인 시 브랜딩 정보 설정
+### 2. 온보딩 승인 시 관리자 비밀번호 추출
+
+```java
+/**
+ * 체크리스트 JSON에서 관리자 비밀번호 추출
+ * ⚠️ 중요: JSON 파싱을 사용하여 안전하게 추출 (문자열 파싱 금지)
+ */
+private String extractAdminPasswordFromChecklist(String checklistJson) {
+    if (checklistJson == null || checklistJson.isEmpty()) {
+        log.warn("⚠️ 체크리스트 JSON이 null이거나 비어있음, 기본 비밀번호 사용");
+        return "TempPassword123!"; // 기본 비밀번호
+    }
+    try {
+        // JSON 파싱을 사용하여 안전하게 추출
+        JsonNode jsonNode = objectMapper.readTree(checklistJson);
+        if (jsonNode.has("adminPassword") && jsonNode.get("adminPassword").isTextual()) {
+            String extractedPassword = jsonNode.get("adminPassword").asText();
+            if (extractedPassword != null && !extractedPassword.isEmpty()) {
+                log.info("✅ 체크리스트에서 adminPassword 추출 성공 (JSON 파싱): length={}", 
+                    extractedPassword.length());
+                return extractedPassword;
+            }
+        }
+        log.warn("⚠️ 체크리스트 JSON에서 adminPassword 필드를 찾을 수 없거나 비어있음");
+    } catch (Exception e) {
+        log.warn("⚠️ 체크리스트 JSON에서 adminPassword 추출 실패: {}", e.getMessage());
+    }
+    return "TempPassword123!"; // 추출 실패 시 기본 비밀번호
+}
+```
+
+### 3. 온보딩 승인 시 브랜딩 정보 설정
 
 ```java
 private void setTenantBranding(String tenantId, OnboardingRequest request) {
@@ -235,6 +277,9 @@ WHERE brand_name IS NULL OR brand_name = '';
 ### 온보딩 승인 시
 - [ ] `region` 필드에서 지역 코드 사용 (테넌트 ID 생성)
 - [ ] `brand_name` 필드에서 브랜드명 사용
+- [ ] `checklistJson`에서 `adminPassword` 추출 (JSON 파싱 필수)
+- [ ] `adminPassword`를 BCrypt(강도 12)로 해시
+- [ ] 관리자 계정 생성 시 해시된 비밀번호 저장
 - [ ] `tenants.branding_json`에 브랜드명 저장
 - [ ] 헤더/메뉴/메인 페이지에 표시 확인
 
@@ -271,6 +316,18 @@ String brandName = extractBrandNameFromChecklist(request.checklistJson());
 if (brandName == null) {
     brandName = request.tenantName();
 }
+```
+
+### ❌ 문자열 파싱 금지 (adminPassword 추출)
+
+```java
+// ❌ 금지: 문자열 파싱은 JSON 구조 변경 시 실패 가능
+int startIndex = checklistJson.indexOf("\"adminPassword\": \"");
+String password = checklistJson.substring(startIndex, endIndex);
+
+// ✅ 필수: JSON 파싱 사용
+JsonNode jsonNode = objectMapper.readTree(checklistJson);
+String password = jsonNode.get("adminPassword").asText();
 ```
 
 ---

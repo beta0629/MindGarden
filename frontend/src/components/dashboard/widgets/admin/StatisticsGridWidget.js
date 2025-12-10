@@ -264,9 +264,3 @@ const StatisticsGridWidget = ({ widget, user }) => {
 
 export default StatisticsGridWidget;
 
-
-
-
-  const {
-  const navigate = useNavigate();
-  } = useWidget(widgetWithDataSource, user, {

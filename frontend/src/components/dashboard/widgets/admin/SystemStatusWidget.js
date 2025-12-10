@@ -375,8 +375,3 @@ const SystemStatusWidget = ({ widget, user }) => {
 };
 
 export default SystemStatusWidget;
-
-
-  const {
-  const navigate = useNavigate();
-  } = useWidget(widgetWithDataSource, user, {

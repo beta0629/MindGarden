@@ -324,7 +324,3 @@ const SchedulerStatusWidget = ({ widget, user }) => {
 };
 
 export default SchedulerStatusWidget;
-
-
-  const navigate = useNavigate();
-  const { data, loading, error, refreshData } = useWidget(

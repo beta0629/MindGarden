@@ -67,6 +67,7 @@ const ClientRegistrationWidget = ({ widget, user }) => {
   };
 
   // 표준화된 위젯 훅 사용 (폼 제출용)
+  const {
     data: submitResponse,
     loading: submitting,
     error: submitError,
@@ -596,11 +597,3 @@ const ClientRegistrationWidget = ({ widget, user }) => {
 };
 
 export default ClientRegistrationWidget;
-  const {
-    const { name, value } = e.target;
-  const navigate = useNavigate();
-  const { showNotification } = useNotification();
-  const [showForm, setShowForm] = useState(false);
-  const [formData, setFormData] = useState({
-  const [validationErrors, setValidationErrors] = useState({});
-  } = useWidget(widgetWithDataSource, user, {

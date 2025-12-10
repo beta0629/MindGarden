@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Bell } from 'lucide-react';
 import { RoleUtils } from '../../../constants/roles';
 import { useWidget } from '../../../hooks/useWidget';
@@ -7,13 +8,8 @@ import BaseWidget from './BaseWidget';
 import './SystemNotificationWidget.css';
 
 const SystemNotificationWidget = ({ widget, user }) => {
-  // 상담사 전용 위젯 (다른 역할은 표시하지 않음)
-  if (!RoleUtils.isConsultant(user)) {
-    return null;
-  }
-
-  
-  // NotificationContext 사용 (기존 로직 유지)
+  const navigate = useNavigate();
+  const {
     notifications, 
     systemNotifications, 
     loading, 
@@ -21,6 +17,7 @@ const SystemNotificationWidget = ({ widget, user }) => {
     unreadSystemCount, 
     markMessageAsRead,
     markSystemNotificationAsRead 
+  } = useNotification();
 
   // 메시지 + 시스템 공지를 합친 읽지 않은 총 개수
   const totalUnreadCount = (unreadCount || 0) + (unreadSystemCount || 0);

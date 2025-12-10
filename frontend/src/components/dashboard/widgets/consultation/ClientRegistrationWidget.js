@@ -92,6 +92,7 @@ const ClientRegistrationWidget = ({ widget, user }) => {
 
   // 입력 및 유효성 처리
   const handleInputChange = (e) => {
+    const { name, value } = e.target;
     
     // 실시간 유효성 검사
     const newErrors = { ...validationErrors };

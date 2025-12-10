@@ -12,10 +12,13 @@
  * @since 2025-11-29
  */
 
-import { UserPlus, Save, RotateCcw, X, CheckCircle, AlertCircle } from 'lucide-react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { UserPlus, Save, RotateCcw, X, CheckCircle, AlertCircle } from 'lucide-react';
+import { useWidget } from '../../../../hooks/useWidget';
 import BaseWidget from '../BaseWidget';
 import { RoleUtils } from '../../../../constants/roles';
+import { useNotification } from '../../../../contexts/NotificationContext';
 import { validateEmail, validatePhone } from '../../../../utils/validationUtils';
 import './ClientRegistrationWidget.css';
 

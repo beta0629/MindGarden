@@ -24,12 +24,6 @@ import './StatisticsGridWidget.css';
 const StatisticsGridWidget = ({ widget, user }) => {
   const navigate = useNavigate();
 
-
-  if (!RoleUtils.isAdmin(user) && !RoleUtils.hasRole(user, 'HQ_MASTER')) {
-    return null;
-  }
-
-
   // 다중 API 엔드포인트를 위한 데이터 소스 설정
   const getDataSourceConfig = () => {
     return {

@@ -201,15 +201,20 @@ jobs:
           
           # 포트 충돌 해결: 8080 포트를 사용하는 프로세스 강제 종료
           echo "🧹 포트 8080 충돌 해결 중..."
-          if sudo lsof -ti:8080 > /dev/null 2>&1; then
-            echo "⚠️ 포트 8080을 사용하는 프로세스 발견, 강제 종료 중..."
-            sudo lsof -ti:8080 | xargs sudo kill -TERM 2>/dev/null || true
+          PORT_PIDS=$(sudo lsof -ti:8080 2>/dev/null || true)
+          if [ ! -z "$PORT_PIDS" ]; then
+            echo "⚠️ 포트 8080을 사용하는 프로세스 발견 (PIDs: $PORT_PIDS), 강제 종료 중..."
+            for PID in $PORT_PIDS; do
+              sudo kill -TERM "$PID" 2>/dev/null || true
+            done
             sleep 2
             # 강제 종료 (TERM으로 종료되지 않은 경우)
             REMAINING=$(sudo lsof -ti:8080 2>/dev/null || true)
             if [ ! -z "$REMAINING" ]; then
               echo "⚠️ 프로세스가 종료되지 않아 강제 종료 시도..."
-              sudo lsof -ti:8080 | xargs sudo kill -KILL 2>/dev/null || true
+              for PID in $REMAINING; do
+                sudo kill -KILL "$PID" 2>/dev/null || true
+              done
               sleep 1
             fi
             echo "✅ 포트 8080 정리 완료"
@@ -219,9 +224,20 @@ jobs:
           
           # Java 프로세스 강제 종료 (혹시 모를 경우 대비)
           echo "🧹 Java 프로세스 정리 중..."
-          sudo pkill -f "app.jar" 2>/dev/null || true
-          sudo pkill -f "consultation-management-system" 2>/dev/null || true
-          sudo pkill -f "spring.profiles.active=dev" 2>/dev/null || true
+          # 프로세스 존재 여부 확인 후 종료
+          if pgrep -f "app.jar" > /dev/null 2>&1; then
+            echo "   app.jar 프로세스 종료 중..."
+            sudo pkill -f "app.jar" 2>/dev/null || true
+          fi
+          if pgrep -f "consultation-management-system" > /dev/null 2>&1; then
+            echo "   consultation-management-system 프로세스 종료 중..."
+            sudo pkill -f "consultation-management-system" 2>/dev/null || true
+          fi
+          if pgrep -f "spring.profiles.active=dev" > /dev/null 2>&1; then
+            echo "   spring.profiles.active=dev 프로세스 종료 중..."
+            sudo pkill -f "spring.profiles.active=dev" 2>/dev/null || true
+          fi
+          echo "✅ Java 프로세스 정리 완료"
           sleep 2
           
           # 서비스 중지 (완전히 종료될 때까지 대기)
@@ -244,7 +260,8 @@ jobs:
           
           # 포트 최종 확인
           echo "🔍 포트 8080 최종 확인..."
-          if sudo lsof -ti:8080 > /dev/null 2>&1; then
+          FINAL_CHECK=$(sudo lsof -ti:8080 2>/dev/null || true)
+          if [ ! -z "$FINAL_CHECK" ]; then
             echo "⚠️ 포트 8080이 여전히 사용 중입니다. 강제 종료 시도..."
             sudo fuser -k 8080/tcp 2>/dev/null || true
             sleep 2

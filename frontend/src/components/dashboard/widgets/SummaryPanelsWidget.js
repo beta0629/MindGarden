@@ -13,6 +13,7 @@
  */
 
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   Calendar, Clock, BarChart3, Users, Settings, 
   Link, Star, TrendingUp, CheckCircle 
@@ -27,6 +28,8 @@ import './SummaryPanelsWidget.css';
 import '../SummaryPanels.css';
 
 const SummaryPanelsWidget = ({ widget, user }) => {
+  const navigate = useNavigate();
+  
   // 역할별 API 엔드포인트 결정
   const getDataSourceConfig = () => {
     const baseConfig = {

@@ -1,12 +1,8 @@
 /**
  * 결제 및 구독 관련 상수 정의
-/**
  * 
-/**
  * @author CoreSolution
-/**
  * @version 1.0.0
-/**
  * @since 2025-11-20
  */
 
@@ -175,6 +171,10 @@ export const BILLING_MESSAGES = {
     MONTHLY_LABEL: '월',
     DEFAULT_PLAN_NAME: '구독',
     STATUS_UNKNOWN: 'UNKNOWN',
+    CARD_EXPIRY_LABEL: '만료',
+    CARD_DEFAULT_LABEL: '카드',
+    DEFAULT_BADGE_LABEL: '기본',
+    LOADING_TEXT: '구독 정보를 불러오는 중...',
   },
 
   SUCCESS: {

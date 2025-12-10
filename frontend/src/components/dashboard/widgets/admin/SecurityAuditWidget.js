@@ -13,6 +13,7 @@
  */
 
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useWidget } from '../../../../hooks/useWidget';
 import { Shield, UserCheck, Lock, AlertTriangle, Eye } from 'lucide-react';
 import BaseWidget from '../BaseWidget';

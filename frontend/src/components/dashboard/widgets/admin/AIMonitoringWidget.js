@@ -24,6 +24,8 @@ import { WIDGET_CONSTANTS } from '../../../../constants/widgetConstants';
 import { formatDate } from '../../../../utils/formatUtils';
 
 const AIMonitoringWidget = ({ widget, user }) => {
+  const navigate = useNavigate();
+  
   // 테넌트 ID 추출
   const tenantId = user?.tenantId || null;
 

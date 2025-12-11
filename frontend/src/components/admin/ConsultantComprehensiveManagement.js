@@ -183,10 +183,12 @@ const ConsultantComprehensiveManagement = () => {
             
             // tenantId는 필수이므로 세션에서 확보
             let tenantId = null;
-            if (typeof window !== 'undefined' && window.sessionManager) {
+            
+            // sessionManager를 직접 import해서 사용 (window.sessionManager 대신)
+            try {
                 // 먼저 현재 사용자 정보 확인
-                let user = window.sessionManager.getUser();
-                tenantId = user?.tenantId || window.sessionManager.getSessionInfo()?.tenantId;
+                let user = sessionManager.getUser();
+                tenantId = user?.tenantId || sessionManager.getSessionInfo()?.tenantId;
                 console.log('🔍 초기 tenantId 확인:', tenantId);
                 
                 // tenantId가 없거나 유효하지 않으면 세션 강제 갱신
@@ -197,11 +199,11 @@ const ConsultantComprehensiveManagement = () => {
                     console.log('🔄 세션 강제 갱신 시작...');
                     
                     // 세션 강제 갱신
-                    await window.sessionManager.checkSession(true);
+                    await sessionManager.checkSession(true);
                     
                     // 갱신 후 다시 확인
-                    user = window.sessionManager.getUser();
-                    tenantId = user?.tenantId || window.sessionManager.getSessionInfo()?.tenantId;
+                    user = sessionManager.getUser();
+                    tenantId = user?.tenantId || sessionManager.getSessionInfo()?.tenantId;
                     console.log('🔍 세션 갱신 후 tenantId:', tenantId);
                     
                     // 여전히 없으면 localStorage에서 확인
@@ -227,10 +229,25 @@ const ConsultantComprehensiveManagement = () => {
                 }
                 
                 console.log('✅ 최종 tenantId:', tenantId);
-            } else {
-                console.error('❌ sessionManager를 사용할 수 없습니다.');
-                setSpecialtyCodes([]);
-                return;
+            } catch (error) {
+                console.error('❌ sessionManager 사용 중 오류:', error);
+                // localStorage에서 직접 확인 시도
+                try {
+                    const storedUser = localStorage.getItem('userInfo');
+                    if (storedUser) {
+                        const parsedUser = JSON.parse(storedUser);
+                        tenantId = parsedUser?.tenantId;
+                        console.log('🔍 localStorage에서 tenantId 확인 (fallback):', tenantId);
+                    }
+                } catch (e) {
+                    console.error('❌ localStorage 파싱 오류:', e);
+                }
+                
+                if (!tenantId || tenantId === 'unknown' || tenantId === 'default') {
+                    console.error('❌ tenantId를 찾을 수 없습니다. 로그인 세션을 확인해주세요.');
+                    setSpecialtyCodes([]);
+                    return;
+                }
             }
             
             // 먼저 테넌트 코드 시도

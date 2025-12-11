@@ -53,6 +53,21 @@ jobs:
         script: |
           echo "🌐 Nginx 설정 업데이트 시작..."
           
+          # SSL 인증서 확인 및 발급
+          echo "🔐 SSL 인증서 확인 중..."
+          if [ ! -f /etc/letsencrypt/live/dev.e-trinity.co.kr/fullchain.pem ]; then
+            echo "⚠️ dev.e-trinity.co.kr 인증서가 없습니다. 발급 시도 중..."
+            sudo certbot --nginx -d dev.e-trinity.co.kr --non-interactive --agree-tos --email admin@e-trinity.co.kr || echo "⚠️ 인증서 발급 실패 (수동 발급 필요)"
+          fi
+          if [ ! -f /etc/letsencrypt/live/apply.dev.e-trinity.co.kr/fullchain.pem ]; then
+            echo "⚠️ apply.dev.e-trinity.co.kr 인증서가 없습니다. 발급 시도 중..."
+            sudo certbot --nginx -d apply.dev.e-trinity.co.kr --non-interactive --agree-tos --email admin@e-trinity.co.kr || echo "⚠️ 인증서 발급 실패 (수동 발급 필요)"
+          fi
+          if [ ! -f /etc/letsencrypt/live/ops.dev.e-trinity.co.kr/fullchain.pem ]; then
+            echo "⚠️ ops.dev.e-trinity.co.kr 인증서가 없습니다. 발급 시도 중..."
+            sudo certbot --nginx -d ops.dev.e-trinity.co.kr --non-interactive --agree-tos --email admin@e-trinity.co.kr || echo "⚠️ 인증서 발급 실패 (수동 발급 필요)"
+          fi
+          
           # Nginx 설정 업데이트 (통합 설정 파일 우선)
           if [ -f /tmp/core-solution-dev.conf ]; then
             echo "🌐 Nginx 통합 설정 업데이트 중..."

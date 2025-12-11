@@ -7,7 +7,6 @@ import com.coresolution.core.domain.onboarding.OnboardingStatus;
 import com.coresolution.core.dto.ApiResponse;
 import com.coresolution.core.service.OnboardingService;
 import com.coresolution.consultation.exception.EntityNotFoundException;
-import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.UserRepository;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;

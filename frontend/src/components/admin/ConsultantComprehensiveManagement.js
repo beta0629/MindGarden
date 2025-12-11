@@ -1193,10 +1193,23 @@ const ConsultantComprehensiveManagement = () => {
                                     {modalType === 'create' && (
                                         <div className="mg-v2-info-box" style={{ marginBottom: '1rem', padding: '0.75rem', backgroundColor: 'var(--color-background-light)', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border-light)' }}>
                                             <p className="mg-v2-info-text" style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', margin: 0 }}>
-                                                💡 이메일 주소만 입력하시면 됩니다. 아이디와 비밀번호는 자동으로 생성됩니다.
+                                                💡 이메일 주소는 필수입니다. 이름을 입력하지 않으면 이메일에서 자동으로 생성됩니다. 아이디와 비밀번호는 자동으로 생성됩니다.
                                             </p>
                                         </div>
                                     )}
+                                    
+                                    <div className="mg-v2-form-group">
+                                        <label className="mg-v2-form-label">이름</label>
+                                        <input
+                                            type="text"
+                                            name="name"
+                                            value={ formData.name || '' }
+                                            onChange={ handleFormChange }
+                                            placeholder="이름을 입력하세요 (선택사항)"
+                                            className="mg-v2-form-input"
+                                        />
+                                        <small className="mg-v2-form-help">이름을 입력하지 않으면 이메일에서 자동으로 생성됩니다.</small>
+                                    </div>
                                     
                                     <div className="mg-v2-form-group">
                                         <label className="mg-v2-form-label">이메일 *</label>

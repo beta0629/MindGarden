@@ -1235,7 +1235,7 @@ const AdminDashboard = ({ user: propUser }) => {
                         </div>
                     </div>
                 </DashboardSection>
-            )}
+            </PermissionGroupGuard>
 
             {/* 지점 관리 */}
             {PermissionChecks.canViewHQDashboard(userPermissions) && (

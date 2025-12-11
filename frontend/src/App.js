@@ -384,11 +384,11 @@ function AppContent() {
               </SimpleLayout>
             } />
             
-            {/* 관리자 전용 메뉴 시스템 (ADMIN만 접근) */}
+            {/* 관리자 전용 메뉴 시스템 (관리자 역할 접근) */}
             <Route
               path="/admin"
               element={
-                <ProtectedRoute requiredRole={USER_ROLES.ADMIN}>
+                <ProtectedRoute requiredRoles={[USER_ROLES.ADMIN, USER_ROLES.HQ_MASTER, USER_ROLES.BRANCH_SUPER_ADMIN, USER_ROLES.HQ_ADMIN, USER_ROLES.SUPER_HQ_ADMIN]}>
                   <AdminLayout />
                 </ProtectedRoute>
               }

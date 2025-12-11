@@ -62,18 +62,15 @@ const AdminLayout = () => {
             if (response.success) {
                 setAdminMenus(response.data || []);
             } else {
-                console.error('관리자 메뉴 조회 실패:', response.message);
-                // 권한 없으면 대시보드로 리다이렉트
-                if (response.message && response.message.includes('관리자만')) {
-                    navigate('/dashboard');
-                }
+                console.warn('⚠️ 관리자 메뉴 조회 실패 (메뉴 없이 계속 진행):', response.message);
+                // 메뉴가 없어도 페이지는 표시 (빈 메뉴로 진행)
+                setAdminMenus([]);
             }
         } catch (error) {
-            console.error('관리자 메뉴 조회 오류:', error);
-            // 403 에러면 대시보드로 리다이렉트
-            if (error.response?.status === 403) {
-                navigate('/dashboard');
-            }
+            console.warn('⚠️ 관리자 메뉴 조회 오류 (메뉴 없이 계속 진행):', error);
+            // 메뉴 조회 실패해도 페이지는 표시 (빈 메뉴로 진행)
+            // ProtectedRoute에서 이미 권한 체크를 했으므로 여기서는 리다이렉트하지 않음
+            setAdminMenus([]);
         } finally {
             setLoading(false);
         }

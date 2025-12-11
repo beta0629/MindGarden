@@ -78,8 +78,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 if (isValid) {
                     String userId = jwtService.extractUsername(token);
 
-                    if (userId != null
-                            && SecurityContextHolder.getContext().getAuthentication() == null) {
+                    // Ops Portal API인 경우 JWT 토큰을 항상 우선 적용 (기존 인증 정보 덮어쓰기)
+                    // 일반 사용자 API인 경우 기존 인증 정보가 있으면 스킵
+                    boolean shouldSetAuth = isOpsApi || SecurityContextHolder.getContext().getAuthentication() == null;
+
+                    if (userId != null && shouldSetAuth) {
                         // 표준화 2025-12-08: extractUsername이 userId를 반환하므로 userId로 사용자 조회
                         // JWT 토큰에서 tenantId 추출하여 사용자 조회
                         User user = null;

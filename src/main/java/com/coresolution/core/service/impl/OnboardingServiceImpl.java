@@ -1511,5 +1511,57 @@ public class OnboardingServiceImpl implements OnboardingService {
         }
     }
     
+    /**
+     * 관리자 역할에 기본 권한 그룹 할당
+     * 표준화 2025-12-08: 모든 관리자에게 DASHBOARD_ERP 권한 그룹 자동 할당
+     * 
+     * @param tenantId 테넌트 ID
+     * @param actorId 실행자 ID
+     */
+    private void assignDefaultPermissionGroupsToAdmin(String tenantId, String actorId) {
+        log.info("🔄 관리자 권한 그룹 할당 시작: tenantId={}", tenantId);
+        
+        try {
+            // 관리자 역할 찾기 (nameEn이 "Director", "Admin" 또는 nameKo가 "관리자")
+            List<String> adminRoleNames = List.of("Director", "Admin", "관리자");
+            Optional<com.coresolution.core.domain.TenantRole> adminRole = Optional.empty();
+            
+            for (String roleName : adminRoleNames) {
+                if (roleName.equals("관리자")) {
+                    adminRole = tenantRoleRepository.findByTenantIdAndNameKo(tenantId, roleName);
+                } else {
+                    adminRole = tenantRoleRepository.findByTenantIdAndNameEnAndIsDeletedFalse(tenantId, roleName);
+                }
+                
+                if (adminRole.isPresent()) {
+                    break;
+                }
+            }
+            
+            if (adminRole.isEmpty()) {
+                log.warn("⚠️ 관리자 역할을 찾을 수 없습니다: tenantId={}", tenantId);
+                return;
+            }
+            
+            String tenantRoleId = adminRole.get().getTenantRoleId();
+            log.info("✅ 관리자 역할 찾음: tenantId={}, tenantRoleId={}, roleName={}", 
+                    tenantId, tenantRoleId, adminRole.get().getNameKo());
+            
+            // DASHBOARD_ERP 권한 그룹 할당
+            try {
+                permissionGroupService.grantPermissionGroup(tenantId, tenantRoleId, "DASHBOARD_ERP", "FULL");
+                log.info("✅ 관리자에게 DASHBOARD_ERP 권한 그룹 할당 완료: tenantId={}, tenantRoleId={}", 
+                        tenantId, tenantRoleId);
+            } catch (Exception e) {
+                log.warn("⚠️ DASHBOARD_ERP 권한 그룹 할당 실패 (건너뜀): tenantId={}, error={}", 
+                        tenantId, e.getMessage());
+            }
+            
+        } catch (Exception e) {
+            log.error("❌ 관리자 권한 그룹 할당 실패: tenantId={}, error={}", tenantId, e.getMessage(), e);
+            // 실패해도 계속 진행 (온보딩 프로세스 중단 방지)
+        }
+    }
+    
 }
 

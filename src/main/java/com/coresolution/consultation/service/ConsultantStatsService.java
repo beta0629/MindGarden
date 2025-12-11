@@ -52,4 +52,9 @@ public interface ConsultantStatsService {
      * @return 통계 정보 맵
      */
     Map<String, Object> calculateConsultantStats(Long consultantId);
+    
+    /**
+     * 전체 캐시 무효화
+     */
+    void evictAllConsultantStatsCache();
 }

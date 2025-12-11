@@ -63,6 +63,8 @@ public class OnboardingServiceImpl implements OnboardingService {
     private final CommonCodeRepository commonCodeRepository;
     private final OnboardingPreValidationService preValidationService;
     private final OnboardingErrorHandlingService errorHandlingService;
+    private final com.coresolution.core.service.PermissionGroupService permissionGroupService;
+    private final com.coresolution.core.repository.TenantRoleRepository tenantRoleRepository;
     @jakarta.persistence.PersistenceContext
     private jakarta.persistence.EntityManager entityManager;
     
@@ -1050,7 +1052,11 @@ public class OnboardingServiceImpl implements OnboardingService {
             log.warn("⚠️ 테넌트 역할 코드 삽입 실패 (건너뜀): {}", e.getMessage());
         }
         
-            log.info("ℹ️ 권한 그룹 할당은 프로시저에서 처리됨: tenantId={}", tenantId);
+        try {
+            assignDefaultPermissionGroupsToAdmin(tenantId, actorId);
+        } catch (Exception e) {
+            log.warn("⚠️ 관리자 권한 그룹 할당 실패 (건너뜀): {}", e.getMessage());
+        }
         
         log.info("✅ 온보딩 후 테넌트 초기화 완료: tenantId={}", tenantId);
     }

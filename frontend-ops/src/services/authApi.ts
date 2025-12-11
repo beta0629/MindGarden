@@ -99,9 +99,7 @@ export async function logout(): Promise<void> {
   // 환경 변수에서 API Base URL 가져오기 (필수)
   const apiBaseUrl = process.env.NEXT_PUBLIC_OPS_API_BASE_URL;
   
-  if (!apiBaseUrl) {
-    console.warn("[authApi.logout] NEXT_PUBLIC_OPS_API_BASE_URL 환경 변수가 설정되지 않았습니다. 로그아웃 API 호출을 건너뜁니다.");
-  } else {
+  if (apiBaseUrl) {
     const apiPath = `${apiBaseUrl}${OPS_API_PATHS.AUTH.LOGOUT}`;
     
     try {
@@ -122,28 +120,11 @@ export async function logout(): Promise<void> {
       console.warn("[authApi.logout] 로그아웃 API 호출 중 오류:", error);
       // 로그아웃 API 실패해도 클라이언트 쪽 쿠키 삭제는 수행
     }
+  } else {
+    console.warn("[authApi.logout] NEXT_PUBLIC_OPS_API_BASE_URL 환경 변수가 설정되지 않았습니다. 로그아웃 API 호출을 건너뜁니다.");
   }
   
-  try {
-    const response = await fetch(apiPath, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json"
-      },
-      credentials: "include" // 쿠키 포함
-    });
-    
-    // 로그아웃 API가 없어도 클라이언트 쪽 쿠키 삭제는 수행
-    if (!response.ok && response.status !== 404) {
-      console.warn("[authApi.logout] 로그아웃 API 호출 실패:", response.status);
-    }
-  } catch (error) {
-    console.warn("[authApi.logout] 로그아웃 API 호출 중 오류:", error);
-    // 로그아웃 API 실패해도 클라이언트 쪽 쿠키 삭제는 수행
-  }
-  
-  // 클라이언트 쪽 쿠키 삭제
+  // 클라이언트 쪽 쿠키 삭제 (API 호출 성공 여부와 관계없이 수행)
   if (typeof document !== "undefined") {
     document.cookie = "ops_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
     document.cookie = "ops_actor_id=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";

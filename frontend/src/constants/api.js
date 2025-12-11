@@ -14,8 +14,10 @@
 
 import ENV from './environment';
 
-// 기본 API 경로 (백엔드 서버 직접 연결)
-export const API_BASE_URL = ENV.API_BASE_URL;
+// 기본 API 경로 (런타임에 동적 생성)
+// getter를 사용하여 런타임에 window.location을 확인
+export const getApiBaseUrl = () => ENV.API_BASE_URL;
+export const API_BASE_URL = ENV.API_BASE_URL; // 하위 호환성을 위해 유지 (getter로 동작)
 
 // 인증 관련 API (표준 경로: /api/v1/auth)
 export const AUTH_API = {

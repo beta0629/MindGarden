@@ -61,9 +61,12 @@ const getFrontendUrl = () => {
 };
 
 // 환경 변수 기본값 설정
+// API_BASE_URL은 런타임에 결정되므로 getter 함수로 제공
 const ENV = {
-  // API 기본 URL (동적 생성)
-  API_BASE_URL: getBaseUrl(),
+  // API 기본 URL (런타임에 동적 생성)
+  get API_BASE_URL() {
+    return getBaseUrl();
+  },
   FRONTEND_URL: getFrontendUrl(),
   
   // OAuth2 설정 (동적 생성)

@@ -86,13 +86,18 @@ public class OpsAuthController extends BaseApiController {
         }
         
         log.info("Ops Portal 로그인 시도: userId={}", userId);
+        log.debug("Ops Portal 관리자 계정 설정: opsAdminUsername={}, opsAdminPassword={}, opsAdminRole={}", 
+            opsAdminUsername, opsAdminPassword != null ? "***" : null, opsAdminRole);
         
         // 관리자 계정 확인 (환경 변수 또는 기본값)
         boolean isAdminAccount = userId.equals(opsAdminUsername);
         boolean passwordMatches = password.equals(opsAdminPassword);
         
+        log.debug("Ops Portal 로그인 검증: isAdminAccount={}, passwordMatches={}", isAdminAccount, passwordMatches);
+        
         if (!isAdminAccount || !passwordMatches) {
-            log.warn("Ops Portal 로그인 실패: userId={}", userId);
+            log.warn("Ops Portal 로그인 실패: userId={}, expectedUsername={}, isAdminAccount={}, passwordMatches={}", 
+                userId, opsAdminUsername, isAdminAccount, passwordMatches);
             throw new org.springframework.security.authentication.BadCredentialsException("아이디 또는 비밀번호가 올바르지 않습니다.");
         }
         

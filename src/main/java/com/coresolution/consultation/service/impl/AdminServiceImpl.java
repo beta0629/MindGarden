@@ -181,6 +181,14 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             log.info("✅ 기존 상담사 재활성화 완료: id={}, userId={}, tenantId={}", 
                     savedConsultant.getId(), savedConsultant.getUserId(), savedConsultant.getTenantId());
             
+            // 상담사 목록 캐시 무효화 (재활성화 후 목록에 즉시 반영되도록)
+            try {
+                consultantStatsService.evictAllConsultantStatsCache();
+                log.debug("✅ 상담사 목록 캐시 무효화 완료: tenantId={}", tenantId);
+            } catch (Exception e) {
+                log.warn("⚠️ 상담사 목록 캐시 무효화 실패 (등록은 계속 진행): tenantId={}", tenantId, e);
+            }
+            
             return savedConsultant;
         } else {
             // 새로운 상담사 생성

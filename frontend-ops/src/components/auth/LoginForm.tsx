@@ -51,11 +51,26 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
         });
         
         // 쿠키 설정 완료 후 리다이렉트 (정적 export 환경에서는 클라이언트 사이드 쿠키 설정됨)
-        // 짧은 지연으로 쿠키 적용 대기
+        // 쿠키가 브라우저에 적용될 시간을 충분히 확보
         setTimeout(() => {
+          // 쿠키 확인
+          const cookies = document.cookie;
+          const hasToken = cookies.includes("ops_token=");
+          console.log("[LoginForm] 리다이렉트 전 쿠키 확인:", {
+            hasToken,
+            cookies: cookies.substring(0, 100) + "...",
+            redirectPath
+          });
+          
+          if (!hasToken) {
+            console.error("[LoginForm] 쿠키 설정 실패, 리다이렉트 취소");
+            setFeedback("쿠키 설정에 실패했습니다. 브라우저 설정을 확인해주세요.");
+            return;
+          }
+          
           console.log("[LoginForm] 대시보드로 리다이렉트:", redirectPath);
           window.location.href = redirectPath;
-        }, 100);
+        }, 300); // 100ms -> 300ms로 증가 (쿠키 적용 대기 시간 확보)
       } catch (error) {
         const errorMessage = error instanceof Error
           ? error.message

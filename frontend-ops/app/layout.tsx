@@ -67,16 +67,26 @@ export default function RootLayout({
     setActorId(cookieMap.get("ops_actor_id") ?? null);
     setActorRole(cookieMap.get("ops_actor_role") ?? null);
 
+    console.log("[RootLayout] 인증 체크:", {
+      pathname,
+      hasToken: !!token,
+      tokenLength: token?.length || 0,
+      allCookies: Array.from(cookieMap.keys()),
+      cookieString: document.cookie
+    });
+
     // 모든 환경에서 클라이언트 사이드 인증 체크 (로컬과 개발 서버 통일)
     // 로컬에서도 정적 export 모드와 동일하게 동작하도록 통일
     if (!token || token.trim() === "") {
       // 토큰이 없으면 로그인 페이지로 리다이렉트
-      const loginUrl =
-        pathname && pathname !== "/"
+      // 단, 이미 로그인 페이지에 있으면 리다이렉트하지 않음 (무한 루프 방지)
+      if (pathname && !pathname.startsWith("/auth/login")) {
+        const loginUrl = pathname !== "/"
           ? `/auth/login?redirect=${encodeURIComponent(pathname)}`
           : "/auth/login";
-      console.log("[RootLayout] 토큰 없음, 로그인 페이지로 리다이렉트:", loginUrl);
-      router.push(loginUrl);
+        console.log("[RootLayout] 토큰 없음, 로그인 페이지로 리다이렉트:", loginUrl);
+        router.push(loginUrl);
+      }
     }
     
     setAuthChecked(true);

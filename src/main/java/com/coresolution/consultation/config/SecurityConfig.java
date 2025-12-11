@@ -121,6 +121,8 @@ public class SecurityConfig {
                     ).permitAll()
                     // 인증 API는 허용
                     .requestMatchers("/api/v1/auth/**").permitAll()
+                    // 계정 통합 API는 허용 (온보딩 이메일 인증 등)
+                    .requestMatchers("/api/v1/accounts/integration/**").permitAll()
                     // 공통코드 API는 허용 (온보딩에서 사용)
                     .requestMatchers("/api/common-codes/**").permitAll()
                     .requestMatchers("/api/v1/common-codes/**").permitAll()
@@ -182,6 +184,8 @@ public class SecurityConfig {
                     .requestMatchers("/api/v1/ops/auth/**").permitAll()
                     // 인증 API는 허용
                     .requestMatchers("/api/v1/auth/**").permitAll()
+                    // 계정 통합 API는 허용 (온보딩 이메일 인증 등)
+                    .requestMatchers("/api/v1/accounts/integration/**").permitAll()
                     // 공통코드 API는 허용 (온보딩에서 사용)
                     .requestMatchers("/api/v1/common-codes/**").permitAll()
                     // 업종 카테고리 API는 허용 (온보딩에서 사용)

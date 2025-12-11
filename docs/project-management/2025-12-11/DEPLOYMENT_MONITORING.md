@@ -80,13 +80,21 @@
 - **비고**: GitHub Actions 자동 배포 진행 중
 
 #### 09:30 (환경 변수 설정 및 재시작)
-- **상태**: ❌ 실패 (재시작 반복)
+- **상태**: ⚠️ 부분 성공 (다른 스키마 오류 발생)
 - **비고**: 
-  - 개발서버에 `HIBERNATE_SCHEMA_VALIDATION=false` 환경 변수 설정 완료
-  - 서비스 재시작 반복 중 (환경 변수 적용 확인 필요)
-  - systemd 서비스 파일에서 환경 변수 로드 방식 확인 필요
+  - 개발서버에 `HIBERNATE_SCHEMA_VALIDATION=false` 환경 변수 설정 완료 (`/etc/mindgarden/dev.env`)
+  - `ops_feature_flag` 오류 해결 ✅
+  - 새로운 오류 발생: `performance_alerts` 테이블에 `updated_at` 컬럼 없음
+  - 스키마 검증이 여전히 활성화되어 있음 (환경 변수 적용 안 됨)
 - **커밋**: `3586f5ac` (스키마 검증 설정 추가)
-- **다음 조치**: systemd 서비스 파일 수정 또는 start.sh 스크립트 수정 필요 
+- **다음 조치**: HibernatePropertiesCustomizer에서 환경 변수 확인하도록 수정
+
+#### 09:35 (스키마 검증 완전 비활성화)
+- **상태**: 🔄 진행 중
+- **비고**: 
+  - `HibernatePropertiesCustomizer`에서 환경 변수 확인하도록 수정
+  - `jakarta.persistence.schema-generation.database.action=none` 설정 추가
+  - 재배포 대기 중 
 
 ---
 

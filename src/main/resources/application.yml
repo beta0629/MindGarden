@@ -31,15 +31,10 @@ spring:
         dialect: org.hibernate.dialect.MySQL8Dialect
         format_sql: true
         use_sql_comments: true
-        # 스키마 검증 설정 (프로파일별로 오버라이드 가능)
-        # 개발 환경에서는 ops_feature_flag 테이블 타입 불일치 문제로 인해 비활성화
-        # 운영 환경에서는 반드시 활성화 필요
+        # 스키마 검증 설정
+        # Flyway가 스키마를 관리하므로 Hibernate는 검증만 수행
         hbm2ddl:
           auto: none
-        # Hibernate 6.x에서는 schema_validation 대신 hbm2ddl.auto를 사용
-        # 스키마 검증을 완전히 비활성화하려면 validate를 false로 설정
-        # 개발 환경에서는 환경 변수로 제어 가능
-        # schema_validation: ${HIBERNATE_SCHEMA_VALIDATION:true}  # 기본값: true (운영), 개발에서는 false로 오버라이드
         # 로그 레벨 분리 설정
         logging:
           level:

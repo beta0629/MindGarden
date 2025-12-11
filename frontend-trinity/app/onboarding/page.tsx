@@ -302,6 +302,10 @@ export default function OnboardingPage() {
   // 환영 화면 시작 버튼 핸들러
   const handleWelcomeStart = () => {
     setShowWelcome(false);
+    setShowLogin(false);
+    setShowExistingRequests(false);
+    setAccessChecking(false);
+    // 온보딩 폼으로 바로 이동
   };
 
   // 접근 권한 확인 중이면 로딩 표시

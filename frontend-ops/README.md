@@ -47,10 +47,16 @@ NEXT_PUBLIC_OPS_API_USE_MOCK=true # (선택, Mock 데이터 사용 시)
 - 보안 헤더는 `next.config.mjs`에서 전역 적용
 
 ## 스크립트
-- `pnpm dev`: 개발 서버 시작 (`http://localhost:4300`)
-- `pnpm build`: 프로덕션 빌드
+- `pnpm dev`: 개발 서버 시작 (`http://localhost:4300`) - Next.js 개발 모드
+- `pnpm build`: 프로덕션 빌드 (일반 모드)
+- `pnpm build:static`: 정적 export 빌드 (개발 서버와 동일한 모드)
+- `pnpm preview`: 정적 export 빌드 후 로컬에서 미리보기 (개발 서버와 동일한 환경 테스트)
 - `pnpm start`: 프로덕션 서버 실행
 - `pnpm lint`: ESLint 검사
+
+**로컬 개발 권장 방식:**
+- 일반 개발: `pnpm dev` (빠른 개발 사이클)
+- 배포 전 테스트: `pnpm preview` (개발 서버와 동일한 정적 export 모드로 테스트)
 
 ## 배포 전략
 - `output: standalone` 설정 적용 (Docker 이미지 경량화)

@@ -67,7 +67,8 @@ export default function RootLayout({
     setActorId(cookieMap.get("ops_actor_id") ?? null);
     setActorRole(cookieMap.get("ops_actor_role") ?? null);
 
-    // 정적 export 환경에서는 middleware가 작동하지 않으므로 클라이언트 사이드에서 체크
+    // 모든 환경에서 클라이언트 사이드 인증 체크 (로컬과 개발 서버 통일)
+    // 로컬에서도 정적 export 모드와 동일하게 동작하도록 통일
     if (!token || token.trim() === "") {
       // 토큰이 없으면 로그인 페이지로 리다이렉트
       const loginUrl =

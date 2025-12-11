@@ -227,19 +227,43 @@ jobs:
           
           # Java 프로세스 강제 종료 (혹시 모를 경우 대비)
           echo "🧹 Java 프로세스 정리 중..."
+          set +e  # 오류 발생해도 계속 진행
           # 프로세스 존재 여부 확인 후 종료
           if pgrep -f "app.jar" > /dev/null 2>&1; then
             echo "   app.jar 프로세스 종료 중..."
-            sudo pkill -f "app.jar" 2>/dev/null || true
+            APP_PIDS=$(pgrep -f "app.jar" 2>/dev/null || true)
+            if [ ! -z "$APP_PIDS" ]; then
+              for PID in $APP_PIDS; do
+                sudo kill -TERM "$PID" 2>/dev/null || true
+              done
+              sleep 2
+              # 강제 종료
+              REMAINING=$(pgrep -f "app.jar" 2>/dev/null || true)
+              if [ ! -z "$REMAINING" ]; then
+                for PID in $REMAINING; do
+                  sudo kill -KILL "$PID" 2>/dev/null || true
+                done
+              fi
+            fi
           fi
           if pgrep -f "consultation-management-system" > /dev/null 2>&1; then
             echo "   consultation-management-system 프로세스 종료 중..."
-            sudo pkill -f "consultation-management-system" 2>/dev/null || true
+            SYS_PIDS=$(pgrep -f "consultation-management-system" 2>/dev/null || true)
+            if [ ! -z "$SYS_PIDS" ]; then
+              for PID in $SYS_PIDS; do
+                sudo kill -TERM "$PID" 2>/dev/null || true
+              done
+              sleep 2
+              # 강제 종료
+              REMAINING=$(pgrep -f "consultation-management-system" 2>/dev/null || true)
+              if [ ! -z "$REMAINING" ]; then
+                for PID in $REMAINING; do
+                  sudo kill -KILL "$PID" 2>/dev/null || true
+                done
+              fi
+            fi
           fi
-          if pgrep -f "spring.profiles.active=dev" > /dev/null 2>&1; then
-            echo "   spring.profiles.active=dev 프로세스 종료 중..."
-            sudo pkill -f "spring.profiles.active=dev" 2>/dev/null || true
-          fi
+          set -e  # 오류 처리 재활성화
           echo "✅ Java 프로세스 정리 완료"
           sleep 2
           

@@ -39,7 +39,7 @@ export async function login(request: LoginRequest): Promise<LoginResponse> {
     password: request.password
   };
   
-  console.log("[authApi.login] 로그인 API 호출:", { apiPath, apiBaseUrl, envApiBaseUrl });
+  console.log("[authApi.login] 로그인 API 호출:", { apiPath, apiBaseUrl });
   
   const response = await fetch(apiPath, {
     method: "POST",

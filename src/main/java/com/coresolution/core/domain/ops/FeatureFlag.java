@@ -40,7 +40,7 @@ public class FeatureFlag {
      * ops_feature_flag 테이블은 binary(16) UUID를 사용
      */
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id", columnDefinition = "BINARY(16)", nullable = false, updatable = false)
     private UUID id;
     

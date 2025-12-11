@@ -24,30 +24,30 @@ public class OpsPermissionUtils {
     
     /**
      * 개발 모드 여부 확인 (로컬 개발 환경에서는 권한 체크 완화)
-     * 로컬 개발 환경에서는 항상 true 반환 (테스트 편의성)
+     * 로컬 개발 환경(local 프로파일)에서만 true 반환
+     * dev 프로파일은 운영과 동일하게 권한 체크 수행
      */
     private static boolean isDevMode() {
         try {
             // 1. 시스템 프로퍼티 확인 (Maven 실행 시 -Dspring.profiles.active=local)
             String activeProfile = System.getProperty("spring.profiles.active");
             if (activeProfile != null && activeProfile.contains("local")) {
-                log.debug("로컬 프로파일 감지 (시스템 프로퍼티): {}", activeProfile);
+                log.debug("로컬 프로파일 감지 (시스템 프로퍼티): {} - 권한 체크 완화", activeProfile);
                 return true;
             }
             // 2. 환경 변수 확인
             activeProfile = System.getenv("SPRING_PROFILES_ACTIVE");
             if (activeProfile != null && activeProfile.contains("local")) {
-                log.debug("로컬 프로파일 감지 (환경 변수): {}", activeProfile);
+                log.debug("로컬 프로파일 감지 (환경 변수): {} - 권한 체크 완화", activeProfile);
                 return true;
             }
-            // 3. 로컬 개발 환경에서는 기본적으로 권한 체크 완화 (테스트 편의성)
-            // 운영 환경에서는 반드시 프로파일을 명시적으로 설정해야 함
-            log.debug("로컬 개발 모드로 간주 - 권한 체크 완화");
-            return true; // 로컬 개발 환경에서는 기본적으로 권한 체크 완화
+            // 3. dev 프로파일은 운영과 동일하게 권한 체크 수행
+            log.debug("dev 프로파일 또는 운영 환경 - 권한 체크 정상 수행");
+            return false; // dev 프로파일과 운영 환경에서는 권한 체크 정상 수행
         } catch (Exception e) {
-            log.warn("isDevMode() 확인 중 오류 발생: {} - 권한 체크 완화", e.getMessage());
-            // 오류 발생 시 안전하게 true 반환 (로컬 개발 환경에서는 권한 체크 완화)
-            return true;
+            log.warn("isDevMode() 확인 중 오류 발생: {} - 권한 체크 정상 수행", e.getMessage());
+            // 오류 발생 시 안전하게 false 반환 (권한 체크 정상 수행)
+            return false;
         }
     }
     

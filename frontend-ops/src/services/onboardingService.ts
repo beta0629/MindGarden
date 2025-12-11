@@ -40,24 +40,32 @@ export async function fetchAllOnboarding(status?: string): Promise<OnboardingReq
       statusUpper: status?.toUpperCase()
     });
     
-    // Ops 백엔드는 직접 List<OnboardingRequest>를 반환 (페이징 없음)
-    const response = await clientApiFetch<OnboardingRequest[]>(path);
+    // CoreSolution 백엔드는 Page<OnboardingRequest>를 반환 (페이징 포함)
+    // 응답 형식: { content: OnboardingRequest[], pageable: {...}, totalElements: number, ... }
+    const response = await clientApiFetch<any>(path);
     
     console.log("[fetchAllOnboarding] API 응답:", {
       type: typeof response,
       isArray: Array.isArray(response),
-      length: Array.isArray(response) ? response.length : 0,
-      responsePreview: Array.isArray(response) ? JSON.stringify(response).substring(0, 200) : String(response)
+      hasContent: response && typeof response === 'object' && 'content' in response,
+      contentLength: response?.content?.length || 0,
+      responsePreview: JSON.stringify(response).substring(0, 200)
     });
     
-    // 응답이 배열인지 확인
+    // 응답이 배열인 경우 (레거시 형식)
     if (Array.isArray(response)) {
       console.log(`[fetchAllOnboarding] ${response.length}개 항목 반환 (status: ${status || '전체'})`);
       return response;
     }
     
+    // Page 객체인 경우 content 배열 추출
+    if (response && typeof response === 'object' && 'content' in response && Array.isArray(response.content)) {
+      console.log(`[fetchAllOnboarding] ${response.content.length}개 항목 반환 (전체: ${response.totalElements || 0}개, status: ${status || '전체'})`);
+      return response.content as OnboardingRequest[];
+    }
+    
     // 배열이 아니면 빈 배열 반환
-    console.warn("[fetchAllOnboarding] 응답이 배열이 아님:", response);
+    console.warn("[fetchAllOnboarding] 응답이 배열이 아니고 content 속성도 없음:", response);
     return [];
   } catch (error) {
     console.error("[fetchAllOnboarding] 온보딩 요청 조회 실패:", {

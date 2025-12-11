@@ -52,5 +52,10 @@ public interface ClientStatsService {
      * @return 통계 정보 맵
      */
     Map<String, Object> calculateClientStats(Long clientId);
+
+    /**
+     * 전체 내담자 통계 캐시 무효화
+     */
+    void evictAllClientStatsCache();
 }
 

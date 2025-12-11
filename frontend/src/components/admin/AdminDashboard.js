@@ -1018,6 +1018,15 @@ const AdminDashboard = ({ user: propUser }) => {
                         <p className="mg-management-description">내담자 정보를 관리합니다</p>
                     </div>
                     
+                    {/* 매칭 시스템 - 관리자 대시보드에서 항상 표시 */}
+                    <div className="mg-management-card" onClick={() => navigate(ADMIN_ROUTES.MAPPING_MANAGEMENT)}>
+                        <div className="mg-management-icon">
+                            <FaLink />
+                        </div>
+                        <h3>매칭 시스템</h3>
+                        <p className="mg-management-description">상담사와 내담자 매칭을 관리합니다</p>
+                    </div>
+                    
                     {PermissionChecks.canManageUsers(userPermissions) && (
                         <div className="mg-management-card" onClick={() => navigate(ADMIN_ROUTES.USER_MANAGEMENT)}>
                             <div className="mg-management-icon">
@@ -1025,17 +1034,6 @@ const AdminDashboard = ({ user: propUser }) => {
                             </div>
                             <h3>사용자 관리</h3>
                             <p className="mg-management-description">사용자 역할 변경 및 권한 관리</p>
-                        </div>
-                    )}
-                    
-                    {/* 매칭 시스템 - 관리자 역할이면 항상 표시 */}
-                    {(RoleUtils.isAdmin(user) || RoleUtils.hasRole(user, USER_ROLES.HQ_MASTER) || RoleUtils.hasRole(user, USER_ROLES.BRANCH_SUPER_ADMIN)) && (
-                        <div className="mg-management-card" onClick={() => navigate(ADMIN_ROUTES.MAPPING_MANAGEMENT)}>
-                            <div className="mg-management-icon">
-                                <FaLink />
-                            </div>
-                            <h3>매칭 시스템</h3>
-                            <p className="mg-management-description">상담사와 내담자 매칭을 관리합니다</p>
                         </div>
                     )}
                     

@@ -37,6 +37,8 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
           password: trimmedPassword
         };
         
+        console.log("[LoginForm] 로그인 요청 시작:", { username: loginRequest.username });
+        
         const responseData = await login(loginRequest);
         
         // 로그인 성공
@@ -44,20 +46,26 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
         
         console.log("[LoginForm] 로그인 성공:", {
           actorId: responseData.actorId,
-          actorRole: responseData.actorRole
+          actorRole: responseData.actorRole,
+          hasToken: !!responseData.token
         });
         
         // 쿠키 설정 완료 후 리다이렉트 (정적 export 환경에서는 클라이언트 사이드 쿠키 설정됨)
         // 짧은 지연으로 쿠키 적용 대기
         setTimeout(() => {
+          console.log("[LoginForm] 대시보드로 리다이렉트:", redirectPath);
           window.location.href = redirectPath;
         }, 100);
       } catch (error) {
         const errorMessage = error instanceof Error
           ? error.message
           : "로그인 처리 중 오류가 발생했습니다.";
+        console.error("[LoginForm] 로그인 실패:", {
+          error,
+          errorMessage,
+          stack: error instanceof Error ? error.stack : undefined
+        });
         setFeedback(errorMessage);
-        console.error("[LoginForm] 로그인 실패:", error);
       }
     });
   };

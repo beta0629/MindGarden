@@ -27,8 +27,16 @@ export async function login(request: LoginRequest): Promise<LoginResponse> {
   // 로컬, 개발, 운영 모두 환경 변수로 설정
   const apiBaseUrl = process.env.NEXT_PUBLIC_OPS_API_BASE_URL;
   
+  console.log("[authApi.login] 환경 변수 확인:", {
+    hasApiBaseUrl: !!apiBaseUrl,
+    apiBaseUrl: apiBaseUrl || "undefined",
+    allEnvKeys: Object.keys(process.env).filter(k => k.startsWith("NEXT_PUBLIC_"))
+  });
+  
   if (!apiBaseUrl) {
-    throw new Error("NEXT_PUBLIC_OPS_API_BASE_URL 환경 변수가 설정되지 않았습니다.");
+    const errorMessage = "NEXT_PUBLIC_OPS_API_BASE_URL 환경 변수가 설정되지 않았습니다. 빌드 시 환경 변수를 설정해주세요.";
+    console.error("[authApi.login] 환경 변수 오류:", errorMessage);
+    throw new Error(errorMessage);
   }
   
   const apiPath = `${apiBaseUrl}/ops/auth/login`;
@@ -39,7 +47,7 @@ export async function login(request: LoginRequest): Promise<LoginResponse> {
     password: request.password
   };
   
-  console.log("[authApi.login] 로그인 API 호출:", { apiPath, apiBaseUrl });
+  console.log("[authApi.login] 로그인 API 호출:", { apiPath, apiBaseUrl, requestBody: { userId: requestBody.userId, password: "***" } });
   
   const response = await fetch(apiPath, {
     method: "POST",

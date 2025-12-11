@@ -191,12 +191,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String path = request.getRequestURI();
 
         // 정적 리소스와 공개 API만 필터링하지 않음
+        // 주의: /api/v1/ops/onboarding/는 JWT 인증이 필요하므로 필터를 거쳐야 함
         return path.startsWith("/static/") || path.startsWith("/css/") || path.startsWith("/js/")
                 || path.startsWith("/images/") || path.startsWith("/fonts/")
                 || path.equals("/favicon.ico") || path.equals("/robots.txt")
                 || path.equals("/manifest.json") || path.startsWith("/api/auth/") || // 모든 인증 관련 API
                                                                                      // 제외
-                path.startsWith("/api/v1/onboarding/") || // 온보딩 API 제외 (새로운 테넌트 등록)
+                path.startsWith("/api/v1/onboarding/") || // 온보딩 API 제외 (새로운 테넌트 등록, Ops Portal 경로 제외)
                 path.startsWith("/oauth2/") || path.startsWith("/api/password-reset/")
                 || path.startsWith("/api/health/") || path.equals("/error")
                 || path.startsWith("/actuator/");

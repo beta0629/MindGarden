@@ -19,6 +19,7 @@ import com.coresolution.consultation.entity.CommonCode;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.ConsultationRecord;
 import com.coresolution.consultation.entity.User;
+import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.repository.UserSocialAccountRepository;
 import com.coresolution.consultation.service.AdminService;
 import com.coresolution.consultation.service.BranchService;
@@ -89,6 +90,7 @@ public class AdminController extends BaseApiController {
     private final StatusCodeHelper statusCodeHelper;
     private final OnboardingService onboardingService;
     private final RealTimeStatisticsService realTimeStatisticsService;
+    private final UserRepository userRepository;
 
     /**
      * /** 상담사 통계 정보 조회 (캐시 사용) /** GET /api/admin/consultants/with-stats/{id}
@@ -1652,6 +1654,43 @@ public class AdminController extends BaseApiController {
         return created("내담자가 성공적으로 등록되었습니다", client);
     }
 
+    /**
+     * 이메일 중복 확인 (내담자/상담사 등록용)
+     * GET /api/v1/admin/duplicate-check/email?email={email}
+     */
+    @GetMapping("/duplicate-check/email")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> checkEmailDuplicate(
+            @RequestParam String email,
+            HttpSession session) {
+        log.info("🔍 이메일 중복 확인 요청: email={}", email);
+        
+        String tenantId = com.coresolution.core.context.TenantContextHolder.getTenantId();
+        if (tenantId == null) {
+            User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser != null) {
+                tenantId = currentUser.getTenantId();
+            }
+        }
+        
+        if (tenantId == null) {
+            log.warn("⚠️ 테넌트 ID를 찾을 수 없습니다.");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error("테넌트 정보를 찾을 수 없습니다."));
+        }
+        
+        // 테넌트별 이메일 중복 확인
+        boolean isDuplicate = userRepository.existsByTenantIdAndEmail(tenantId, email);
+        
+        Map<String, Object> result = new HashMap<>();
+        result.put("email", email);
+        result.put("isDuplicate", isDuplicate);
+        result.put("available", !isDuplicate);
+        result.put("message", isDuplicate ? "이미 사용 중인 이메일입니다." : "사용 가능한 이메일입니다.");
+        
+        log.info("✅ 이메일 중복 확인 완료: email={}, isDuplicate={}, tenantId={}", email, isDuplicate, tenantId);
+        
+        return success(result);
+    }
 
     /**
      * 매칭 생성

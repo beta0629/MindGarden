@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import ReactDOM from 'react-dom';
-import { XCircle, User, CheckCircle, AlertTriangle } from 'lucide-react';
+import { XCircle, User, CheckCircle, AlertTriangle, Search } from 'lucide-react';
 import MGButton from '../../common/MGButton';
+import { apiGet } from '../../../utils/ajax';
 
 /**
  * 내담자 모달 컴포넌트
@@ -15,12 +16,74 @@ const ClientModal = ({
     onSave,
     userStatusOptions
 }) => {
+    const [emailCheckStatus, setEmailCheckStatus] = useState(null); // 'checking', 'duplicate', 'available', null
+    const [isCheckingEmail, setIsCheckingEmail] = useState(false);
+    
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({
             ...prev,
             [name]: value
         }));
+        
+        // 이메일 입력 시 중복 확인 상태 초기화
+        if (name === 'email') {
+            setEmailCheckStatus(null);
+        }
+    };
+    
+    const handleEmailDuplicateCheck = async () => {
+        const email = formData.email?.trim();
+        if (!email) {
+            window.dispatchEvent(new CustomEvent('showNotification', {
+                detail: { message: '이메일을 입력해주세요.', type: 'warning' }
+            }));
+            return;
+        }
+        
+        // 이메일 형식 검증
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            window.dispatchEvent(new CustomEvent('showNotification', {
+                detail: { message: '올바른 이메일 형식을 입력해주세요.', type: 'warning' }
+            }));
+            return;
+        }
+        
+        setIsCheckingEmail(true);
+        setEmailCheckStatus('checking');
+        
+        try {
+            const response = await apiGet(`/api/v1/admin/duplicate-check/email?email=${encodeURIComponent(email)}`);
+            console.log('📧 이메일 중복 확인 응답:', response);
+            
+            if (response && typeof response.isDuplicate === 'boolean') {
+                if (response.isDuplicate) {
+                    setEmailCheckStatus('duplicate');
+                    window.dispatchEvent(new CustomEvent('showNotification', {
+                        detail: { message: '이미 사용 중인 이메일입니다.', type: 'error' }
+                    }));
+                } else {
+                    setEmailCheckStatus('available');
+                    window.dispatchEvent(new CustomEvent('showNotification', {
+                        detail: { message: '사용 가능한 이메일입니다.', type: 'success' }
+                    }));
+                }
+            } else {
+                setEmailCheckStatus(null);
+                window.dispatchEvent(new CustomEvent('showNotification', {
+                    detail: { message: '이메일 중복 확인 중 오류가 발생했습니다.', type: 'error' }
+                }));
+            }
+        } catch (error) {
+            console.error('❌ 이메일 중복 확인 오류:', error);
+            setEmailCheckStatus(null);
+            window.dispatchEvent(new CustomEvent('showNotification', {
+                detail: { message: '이메일 중복 확인 중 오류가 발생했습니다.', type: 'error' }
+            }));
+        } finally {
+            setIsCheckingEmail(false);
+        }
     };
 
     const handleSubmit = (e) => {
@@ -100,19 +163,48 @@ const ClientModal = ({
                 
                 <div className="mg-v2-form-group">
                     <label htmlFor="email" className="mg-v2-form-label">이메일 *</label>
-                    <input
-                        type="email"
-                        id="email"
-                        name="email"
-                        value={safeFormData.email}
-                        onChange={handleInputChange}
-                        required
-                        placeholder="example@email.com"
-                        className="mg-v2-form-input"
-                        disabled={type === 'edit'} // 수정 시에는 이메일 변경 불가
-                    />
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
+                        <input
+                            type="email"
+                            id="email"
+                            name="email"
+                            value={safeFormData.email}
+                            onChange={handleInputChange}
+                            required
+                            placeholder="example@email.com"
+                            className="mg-v2-form-input"
+                            style={{ flex: 1 }}
+                            disabled={type === 'edit'} // 수정 시에는 이메일 변경 불가
+                        />
+                        {type === 'create' && (
+                            <button
+                                type="button"
+                                onClick={handleEmailDuplicateCheck}
+                                disabled={isCheckingEmail || !safeFormData.email?.trim()}
+                                className="mg-v2-button mg-v2-button-secondary"
+                                style={{ 
+                                    whiteSpace: 'nowrap',
+                                    minWidth: '100px',
+                                    opacity: (isCheckingEmail || !safeFormData.email?.trim()) ? 0.6 : 1,
+                                    cursor: (isCheckingEmail || !safeFormData.email?.trim()) ? 'not-allowed' : 'pointer'
+                                }}
+                            >
+                                {isCheckingEmail ? '확인 중...' : '중복확인'}
+                            </button>
+                        )}
+                    </div>
                     {type === 'edit' && (
                         <small className="mg-v2-form-help">이메일은 변경할 수 없습니다.</small>
+                    )}
+                    {type === 'create' && emailCheckStatus === 'duplicate' && (
+                        <small className="mg-v2-form-help" style={{ color: 'var(--color-error)' }}>
+                            ⚠️ 이미 사용 중인 이메일입니다.
+                        </small>
+                    )}
+                    {type === 'create' && emailCheckStatus === 'available' && (
+                        <small className="mg-v2-form-help" style={{ color: 'var(--color-success)' }}>
+                            ✅ 사용 가능한 이메일입니다.
+                        </small>
                     )}
                 </div>
                 

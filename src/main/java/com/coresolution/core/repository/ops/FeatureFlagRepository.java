@@ -2,13 +2,14 @@ package com.coresolution.core.repository.ops;
 
 import com.coresolution.core.domain.ops.FeatureFlag;
 import com.coresolution.core.domain.ops.FeatureFlagState;
-import com.coresolution.consultation.repository.BaseRepository;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Feature Flag Repository
@@ -18,7 +19,7 @@ import java.util.Optional;
  * @since 2025-01-XX
  */
 @Repository
-public interface FeatureFlagRepository extends BaseRepository<FeatureFlag, Long> {
+public interface FeatureFlagRepository extends JpaRepository<FeatureFlag, UUID> {
     
     /**
      * flag_key로 Feature Flag 조회

@@ -16,6 +16,7 @@ import com.coresolution.core.util.OpsPermissionUtils;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Ops 포털 Feature Flag 관리 API 컨트롤러
@@ -107,7 +108,7 @@ public class FeatureFlagOpsController extends BaseApiController {
      */
     @PostMapping("/{flagId}/toggle")
     public ResponseEntity<ApiResponse<FeatureFlag>> toggle(
-            @PathVariable Long flagId,
+            @PathVariable UUID flagId,
             @RequestBody @Valid FeatureFlagToggleRequest request) {
         OpsPermissionUtils.requireAdminOrOps();
         log.info("Feature Flag 상태 변경 요청: flagId={}, state={}", flagId, request.state());

@@ -1,15 +1,18 @@
 package com.coresolution.core.domain.ops;
 
-import com.coresolution.consultation.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import lombok.experimental.SuperBuilder;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.util.UUID;
 
 /**
  * Feature Flag 엔티티
@@ -24,12 +27,63 @@ import java.time.Instant;
     @Index(name = "idx_feature_flag_key", columnList = "flag_key"),
     @Index(name = "idx_feature_flag_state", columnList = "state")
 })
+@EntityListeners(AuditingEntityListener.class)
 @Data
-@SuperBuilder
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(callSuper = true)
-public class FeatureFlag extends BaseEntity {
+@EqualsAndHashCode(of = "id")
+public class FeatureFlag {
+    
+    /**
+     * UUID 타입의 ID
+     * ops_feature_flag 테이블은 binary(16) UUID를 사용
+     */
+    @Id
+    @GeneratedValue
+    @Column(name = "id", columnDefinition = "BINARY(16)", nullable = false, updatable = false)
+    private UUID id;
+    
+    /**
+     * 감사 필드: 생성 시간
+     */
+    @CreatedDate
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+    
+    /**
+     * 감사 필드: 수정 시간
+     */
+    @LastModifiedDate
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
+    
+    /**
+     * 소프트 삭제: 삭제 시간
+     */
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+    
+    /**
+     * 소프트 삭제: 삭제 여부
+     */
+    @Column(name = "is_deleted", nullable = false)
+    @Builder.Default
+    private Boolean isDeleted = false;
+    
+    /**
+     * 버전 관리 (낙관적 잠금)
+     */
+    @Version
+    @Column(name = "version", nullable = false)
+    @Builder.Default
+    private Long version = 0L;
+    
+    /**
+     * 테넌트 ID (Multi-tenant 지원)
+     */
+    @Column(name = "tenant_id", length = 36)
+    private String tenantId;
     
     @Column(name = "flag_key", nullable = false, unique = true, length = 64)
     private String flagKey;

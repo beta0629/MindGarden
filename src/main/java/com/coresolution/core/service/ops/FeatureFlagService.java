@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Feature Flag 관리 서비스 (Ops 포털용)
@@ -100,12 +101,12 @@ public class FeatureFlagService {
     /**
      * Feature Flag 상태 변경 (토글)
      * 
-     * @param flagId Feature Flag ID
+     * @param flagId Feature Flag ID (UUID)
      * @param newState 새로운 상태
      * @return 업데이트된 Feature Flag
      */
     @Transactional
-    public FeatureFlag toggle(Long flagId, FeatureFlagState newState) {
+    public FeatureFlag toggle(UUID flagId, FeatureFlagState newState) {
         log.info("Feature Flag 상태 변경: flagId={}, newState={}", flagId, newState);
         
         FeatureFlag featureFlag = featureFlagRepository.findById(flagId)

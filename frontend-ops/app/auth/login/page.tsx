@@ -32,23 +32,20 @@ function LoginPageContent() {
   useEffect(() => {
     setMounted(true);
     
-    // 로그인 페이지 진입 시 기존 쿠키 삭제 (유효하지 않은 토큰으로 인한 무한 루프 방지)
+    // 로그인 페이지 진입 시 처리
     const redirectTo = searchParams?.get("redirect");
     
-    // redirect 파라미터가 있으면 인증 실패로 리다이렉트된 것이므로 쿠키 삭제
-    if (redirectTo && typeof document !== "undefined") {
-      console.log("[LoginPage] 인증 실패로 리다이렉트됨, 기존 쿠키 삭제");
-      document.cookie = "ops_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-      document.cookie = "ops_actor_id=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-      document.cookie = "ops_actor_role=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-    } else {
-      // redirect 파라미터가 없으면 직접 접근이므로 토큰 확인
-      const cookieMap = parseCookie(typeof document !== "undefined" ? document.cookie ?? "" : "");
-      const token = cookieMap.get("ops_token") ?? null;
-      const defaultRedirect = "/dashboard";
-
-      // 토큰이 있으면 대시보드로 리다이렉트
-      if (token) {
+    if (typeof document !== "undefined") {
+      const cookieMap = parseCookie(document.cookie ?? "");
+      const token = cookieMap.get("ops_token");
+      
+      // redirect 파라미터가 있고 토큰이 없으면 인증 실패로 리다이렉트된 것
+      // (clientApi.ts에서 이미 쿠키를 삭제했으므로 여기서는 확인만)
+      if (redirectTo && !token) {
+        console.log("[LoginPage] 인증 실패로 리다이렉트됨 (쿠키는 이미 삭제됨)");
+      } else if (!redirectTo && token) {
+        // redirect 파라미터가 없고 토큰이 있으면 직접 접근이므로 대시보드로 리다이렉트
+        const defaultRedirect = "/dashboard";
         console.log("[LoginPage] 유효한 토큰 있음, 대시보드로 리다이렉트");
         router.push(defaultRedirect);
       }

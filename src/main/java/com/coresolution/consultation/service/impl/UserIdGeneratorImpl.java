@@ -60,13 +60,14 @@ public class UserIdGeneratorImpl implements UserIdGenerator {
         String candidate = base.toLowerCase();
         int suffix = 1;
         
-        // 테넌트별 중복 체크 및 순번 증가
-        while (userRepository.existsByTenantIdAndUserId(tenantId, candidate)) {
+        // 전역 중복 체크 및 순번 증가 (user_id는 전역적으로 unique해야 함)
+        // UK_r43af9ap4edm43mmtq01oddj6 제약 조건: user_id는 전역적으로 unique
+        while (userRepository.existsByUserId(candidate)) {
             candidate = String.format("%s%d", base.toLowerCase(), suffix++);
-            log.debug("사용자 ID 중복 감지, 순번 증가: tenantId={}, candidate={}", tenantId, candidate);
+            log.debug("사용자 ID 중복 감지 (전역), 순번 증가: candidate={}", candidate);
         }
         
-        log.info("✅ 테넌트별 사용자 ID 생성 완료: email={}, tenantId={}, userId={}", 
+        log.info("✅ 전역 사용자 ID 생성 완료: email={}, tenantId={}, userId={}", 
                 normalizedEmail, tenantId, candidate);
         
         return candidate;

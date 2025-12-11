@@ -24,31 +24,20 @@ export interface LoginResponse {
 
 export async function login(request: LoginRequest): Promise<LoginResponse> {
   // 환경 변수에서 API Base URL 가져오기
+  // 로컬과 개발 서버 모두 동일한 방식으로 작동하도록 통일
   const envApiBaseUrl = process.env.NEXT_PUBLIC_OPS_API_BASE_URL ?? "";
   
-  // 로컬 개발 환경에서는 Next.js API 라우트 사용 (서버 사이드 쿠키 설정)
-  // 정적 export 환경(개발/운영 서버)에서는 백엔드 API 직접 호출 (클라이언트 사이드 쿠키 설정)
-  const isLocalhost = typeof window !== "undefined" && window.location.hostname === "localhost";
+  // 환경 변수가 없으면 기본값 사용 (로컬 개발 환경)
+  const apiBaseUrl = envApiBaseUrl || API_BASE_URL.LOCAL;
+  const apiPath = `${apiBaseUrl}/ops/auth/login`;
   
-  let apiPath: string;
-  let requestBody: any;
+  // 백엔드 API는 userId를 기대하므로 변환
+  const requestBody = {
+    userId: request.username,
+    password: request.password
+  };
   
-  if (isLocalhost) {
-    // 로컬: Next.js API 라우트 사용
-    apiPath = "/api/auth/login";
-    requestBody = request; // Next.js API 라우트가 username을 userId로 변환함
-  } else {
-    // 정적 export 환경: 백엔드 API 직접 호출
-    const apiBaseUrl = envApiBaseUrl || "";
-    apiPath = `${apiBaseUrl}/ops/auth/login`;
-    // 백엔드 API는 userId를 기대하므로 변환
-    requestBody = {
-      userId: request.username,
-      password: request.password
-    };
-  }
-  
-  console.log("[authApi.login] 로그인 API 호출:", { apiPath, isLocalhost, envApiBaseUrl });
+  console.log("[authApi.login] 로그인 API 호출:", { apiPath, apiBaseUrl, envApiBaseUrl });
   
   const response = await fetch(apiPath, {
     method: "POST",
@@ -84,8 +73,8 @@ export async function login(request: LoginRequest): Promise<LoginResponse> {
     throw new Error("로그인 응답에 토큰이 없습니다.");
   }
   
-  // 정적 export 환경에서는 클라이언트 사이드에서 쿠키 설정 필요
-  if (!isLocalhost && typeof document !== "undefined") {
+  // 모든 환경에서 클라이언트 사이드에서 쿠키 설정 (일관성 유지)
+  if (typeof document !== "undefined") {
     const isHttps = window.location.protocol === "https:";
     const maxAge = 3600; // 1시간
     const cookieOptions = `path=/; max-age=${maxAge}; samesite=lax${isHttps ? "; secure" : ""}`;

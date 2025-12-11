@@ -31,6 +31,12 @@ spring:
         dialect: org.hibernate.dialect.MySQL8Dialect
         format_sql: true
         use_sql_comments: true
+        # 스키마 검증 설정 (프로파일별로 오버라이드 가능)
+        # 개발 환경에서는 ops_feature_flag 테이블 타입 불일치 문제로 인해 비활성화
+        # 운영 환경에서는 반드시 활성화 필요
+        hbm2ddl:
+          auto: none
+        schema_validation: ${HIBERNATE_SCHEMA_VALIDATION:true}  # 기본값: true (운영), 개발에서는 false로 오버라이드
         # 로그 레벨 분리 설정
         logging:
           level:

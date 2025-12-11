@@ -146,15 +146,15 @@ export const getTenantCodes = async (codeGroup = null) => {
         });
         
         // apiGet이 이미 ApiResponse의 data를 추출하므로,
-        // response는 CommonCodeListResponse 형태: { codes: [...], totalCount: ... }
+        // response는 CommonCodeListResponse 형태: { codes: [...], totalCount: ... } 또는 배열
         if (response && typeof response === 'object') {
             // codes 배열 직접 접근
             if (Array.isArray(response.codes)) {
-                return response.codes;
+                return response.codes; // 빈 배열도 반환 (폴백 로직에서 처리)
             }
             // 하위 호환성: response가 이미 배열인 경우
             if (Array.isArray(response)) {
-                return response;
+                return response; // 빈 배열도 반환 (폴백 로직에서 처리)
             }
         }
         

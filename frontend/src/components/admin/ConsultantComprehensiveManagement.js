@@ -197,13 +197,18 @@ const ConsultantComprehensiveManagement = () => {
             // 먼저 테넌트 코드 시도
             const { getTenantCodes, getCommonCodes } = await import('../../utils/commonCodeApi');
             let codes = await getTenantCodes('SPECIALTY');
-            console.log('📋 전문분야 코드 응답 (테넌트별):', codes);
+            console.log('📋 전문분야 코드 응답 (테넌트별):', codes, 'length:', codes?.length);
             
-            // 테넌트 코드가 없으면 코어 코드로 폴백
+            // 테넌트 코드가 없거나 빈 배열이면 코어 코드로 폴백
             if (!Array.isArray(codes) || codes.length === 0) {
                 console.log('🔄 테넌트 코드가 없음, 코어 코드로 폴백 시도...');
-                codes = await getCommonCodes('SPECIALTY', false); // 코어 코드 조회
-                console.log('📋 전문분야 코드 응답 (코어):', codes);
+                try {
+                    codes = await getCommonCodes('SPECIALTY', false); // 코어 코드 조회
+                    console.log('📋 전문분야 코드 응답 (코어):', codes, 'length:', codes?.length);
+                } catch (fallbackError) {
+                    console.error('❌ 코어 코드 폴백 실패:', fallbackError);
+                    codes = [];
+                }
             }
             
             if (Array.isArray(codes) && codes.length > 0) {

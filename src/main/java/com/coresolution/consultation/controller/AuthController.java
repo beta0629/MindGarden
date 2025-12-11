@@ -559,6 +559,24 @@ public class AuthController extends BaseApiController {
             }
             User sessionUser = users.get(0);
             
+            // tenantId 확인 및 로깅
+            log.info("🔍 로그인 사용자 정보: userId={}, email={}, tenantId={}, role={}", 
+                    sessionUser.getId(), email, sessionUser.getTenantId(), sessionUser.getRole());
+            
+            if (sessionUser.getTenantId() == null || sessionUser.getTenantId().isEmpty()) {
+                log.error("❌ 로그인 사용자의 tenantId가 없습니다! userId={}, email={}", 
+                        sessionUser.getId(), email);
+                // 데이터베이스에서 다시 조회 시도
+                Optional<User> dbUser = userRepository.findById(sessionUser.getId());
+                if (dbUser.isPresent() && dbUser.get().getTenantId() != null) {
+                    log.warn("⚠️ 데이터베이스에서 tenantId 복구: userId={}, tenantId={}", 
+                            sessionUser.getId(), dbUser.get().getTenantId());
+                    sessionUser.setTenantId(dbUser.get().getTenantId());
+                } else {
+                    log.error("❌ 데이터베이스에서도 tenantId를 찾을 수 없습니다! userId={}", sessionUser.getId());
+                }
+            }
+            
             SessionUtils.setCurrentUser(session, sessionUser);
             
             // 표준화 2025-12-08: 로그인 시 사용자 개인정보 복호화하여 캐시에 저장 (성능 최적화)

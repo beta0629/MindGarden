@@ -1203,16 +1203,18 @@ const ConsultantComprehensiveManagement = () => {
                                     )}
                                     
                                     <div className="mg-v2-form-group">
-                                        <label className="mg-v2-form-label">이름</label>
+                                        <label className="mg-v2-form-label">이름 {modalType === 'create' && '(선택사항)'}</label>
                                         <input
                                             type="text"
                                             name="name"
                                             value={ formData.name || '' }
                                             onChange={ handleFormChange }
-                                            placeholder="이름을 입력하세요 (선택사항)"
+                                            placeholder={modalType === 'create' ? "이름을 입력하세요 (선택사항)" : "이름을 입력하세요"}
                                             className="mg-v2-form-input"
                                         />
-                                        <small className="mg-v2-form-help">이름을 입력하지 않으면 이메일에서 자동으로 생성됩니다.</small>
+                                        {modalType === 'create' && (
+                                            <small className="mg-v2-form-help">이름을 입력하지 않으면 이메일에서 자동으로 생성됩니다.</small>
+                                        )}
                                     </div>
                                     
                                     <div className="mg-v2-form-group">

@@ -36,13 +36,19 @@ export async function login(request: LoginRequest): Promise<LoginResponse> {
   
   console.log("[authApi.login] 로그인 API 호출:", { apiPath, apiBaseUrl, isLocalhost, envApiBaseUrl });
   
+  // 백엔드 API는 userId를 기대하므로 변환
+  const backendRequest = {
+    userId: request.username,
+    password: request.password
+  };
+  
   const response = await fetch(apiPath, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Accept: "application/json"
     },
-    body: JSON.stringify(request),
+    body: JSON.stringify(backendRequest),
     credentials: "include" // 쿠키 포함
   });
 

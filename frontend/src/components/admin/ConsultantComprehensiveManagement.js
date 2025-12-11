@@ -180,26 +180,41 @@ const ConsultantComprehensiveManagement = () => {
         try {
             console.log('🔍 전문분야 코드 로딩 시작 (테넌트 코드 전용)...');
             
-            // tenantId 확인
+            // 세션 갱신을 통해 최신 tenantId 확보
             if (typeof window !== 'undefined' && window.sessionManager) {
+                await window.sessionManager.checkSession(true);
                 const user = window.sessionManager.getUser();
                 const tenantId = user?.tenantId || window.sessionManager.getSessionInfo()?.tenantId;
                 console.log('🔍 현재 tenantId:', tenantId);
                 
                 if (!tenantId || tenantId === 'unknown' || tenantId === 'default') {
                     console.warn('⚠️ tenantId가 없거나 유효하지 않습니다. 전문분야 코드를 로드할 수 없습니다.');
-                    setSpecialtyCodes([]);
-                    return;
+                    // tenantId가 없어도 코어 코드로 폴백 시도
+                    console.log('🔄 코어 코드로 폴백 시도...');
                 }
             }
             
-            const { getTenantCodes } = await import('../../utils/commonCodeApi');
-            const codes = await getTenantCodes('SPECIALTY');
+            // 먼저 테넌트 코드 시도
+            const { getTenantCodes, getCommonCodes } = await import('../../utils/commonCodeApi');
+            let codes = await getTenantCodes('SPECIALTY');
             console.log('📋 전문분야 코드 응답 (테넌트별):', codes);
             
+            // 테넌트 코드가 없으면 코어 코드로 폴백
+            if (!Array.isArray(codes) || codes.length === 0) {
+                console.log('🔄 테넌트 코드가 없음, 코어 코드로 폴백 시도...');
+                codes = await getCommonCodes('SPECIALTY', false); // 코어 코드 조회
+                console.log('📋 전문분야 코드 응답 (코어):', codes);
+            }
+            
             if (Array.isArray(codes) && codes.length > 0) {
-                setSpecialtyCodes(codes);
-                console.log('✅ 전문분야 코드 로딩 완료:', codes.length, '개');
+                // codeValue, codeLabel, codeName 필드 확인 및 변환
+                const formattedCodes = codes.map(code => ({
+                    codeValue: code.codeValue || code.value || code.id,
+                    codeLabel: code.codeLabel || code.label || code.name,
+                    codeName: code.codeName || code.name || code.codeLabel || code.label
+                }));
+                setSpecialtyCodes(formattedCodes);
+                console.log('✅ 전문분야 코드 로딩 완료:', formattedCodes.length, '개');
             } else {
                 console.warn('⚠️ 전문분야 코드가 없거나 배열이 아님:', codes);
                 setSpecialtyCodes([]);

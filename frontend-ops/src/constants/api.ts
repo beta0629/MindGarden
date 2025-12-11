@@ -8,12 +8,13 @@
 
 /**
  * Ops Portal API 경로 상수
+ * 백엔드 API는 /api/v1/ops/auth/login 형식이므로 /api/v1 접두사는 API_BASE_URL에 포함됨
  */
 export const OPS_API_PATHS = {
   // 인증
   AUTH: {
-    LOGIN: "/ops/auth/login",
-    LOGOUT: "/ops/auth/logout"
+    LOGIN: "/ops/auth/login",  // API_BASE_URL과 결합하면 /api/v1/ops/auth/login
+    LOGOUT: "/ops/auth/logout"  // API_BASE_URL과 결합하면 /api/v1/ops/auth/logout
   },
   
   // 온보딩

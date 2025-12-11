@@ -23,15 +23,18 @@ export interface LoginResponse {
 }
 
 export async function login(request: LoginRequest): Promise<LoginResponse> {
+  // 환경 변수에서 API Base URL 가져오기
+  const envApiBaseUrl = process.env.NEXT_PUBLIC_OPS_API_BASE_URL ?? "";
+  
   // 로컬 개발 환경에서는 백엔드 API 직접 호출
-  // 운영 환경에서는 상대 경로 사용 (Nginx 프록시)
+  // 운영 환경에서는 환경 변수 또는 상대 경로 사용 (Nginx 프록시)
   const isLocalhost = typeof window !== "undefined" && window.location.hostname === "localhost";
   const apiBaseUrl = isLocalhost 
     ? API_BASE_URL.LOCAL  // 로컬 백엔드 직접 호출
-    : API_BASE_URL.PRODUCTION;  // 운영 환경: 상대 경로 사용
+    : (envApiBaseUrl || API_BASE_URL.PRODUCTION);  // 환경 변수가 있으면 사용, 없으면 상대 경로
   const apiPath = `${apiBaseUrl}${OPS_API_PATHS.AUTH.LOGIN}`;
   
-  console.log("[authApi.login] 로그인 API 호출:", { apiPath, apiBaseUrl, isLocalhost });
+  console.log("[authApi.login] 로그인 API 호출:", { apiPath, apiBaseUrl, isLocalhost, envApiBaseUrl });
   
   const response = await fetch(apiPath, {
     method: "POST",
@@ -76,12 +79,15 @@ export async function login(request: LoginRequest): Promise<LoginResponse> {
  * (현재는 클라이언트 쪽 쿠키 삭제만 수행)
  */
 export async function logout(): Promise<void> {
+  // 환경 변수에서 API Base URL 가져오기
+  const envApiBaseUrl = process.env.NEXT_PUBLIC_OPS_API_BASE_URL ?? "";
+  
   // 로컬 개발 환경에서는 백엔드 API 직접 호출
-  // 운영 환경에서는 상대 경로 사용 (Nginx 프록시)
+  // 운영 환경에서는 환경 변수 또는 상대 경로 사용 (Nginx 프록시)
   const isLocalhost = typeof window !== "undefined" && window.location.hostname === "localhost";
   const apiBaseUrl = isLocalhost 
     ? API_BASE_URL.LOCAL  // 로컬 백엔드 직접 호출
-    : API_BASE_URL.PRODUCTION;  // 운영 환경: 상대 경로 사용
+    : (envApiBaseUrl || API_BASE_URL.PRODUCTION);  // 환경 변수가 있으면 사용, 없으면 상대 경로
   const apiPath = `${apiBaseUrl}${OPS_API_PATHS.AUTH.LOGOUT}`;
   
   try {

@@ -71,7 +71,7 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
           console.log("[LoginForm] 대시보드로 리다이렉트:", redirectPath);
           // window.location.href를 사용하여 전체 페이지 리로드 (쿠키 적용 보장)
           window.location.href = redirectPath;
-        }, 200); // 쿠키 적용 대기 시간
+        }, 300); // 쿠키 적용 대기 시간 (200ms -> 300ms로 증가)
       } catch (error) {
         const errorMessage = error instanceof Error
           ? error.message

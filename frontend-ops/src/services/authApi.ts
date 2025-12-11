@@ -86,7 +86,7 @@ export async function login(request: LoginRequest): Promise<LoginResponse> {
   // 모든 환경에서 클라이언트 사이드에서 쿠키 설정 (일관성 유지)
   if (typeof document !== "undefined") {
     const isHttps = window.location.protocol === "https:";
-    const maxAge = 3600; // 1시간
+    const maxAge = 86400; // 24시간 (JWT 토큰 만료 시간과 일치)
     
     // 쿠키 옵션 구성 (HTTPS 환경에서는 secure 필수)
     // domain 옵션은 제거 (같은 도메인에서만 쿠키 사용)

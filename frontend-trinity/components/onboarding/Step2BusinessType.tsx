@@ -101,7 +101,7 @@ export default function Step2BusinessType({
                   {TRINITY_CONSTANTS.MESSAGES.LOADING}
                 </div>
               ) : businessCategoryItems.length === 0 ? (
-                <div className={COMPONENT_CSS.ONBOARDING.MESSAGE_INFO}>
+                <div className={COMPONENT_CSS.ONBOARDING.MESSAGE}>
                   <p>선택한 카테고리에 세부 업종이 없습니다.</p>
                   <p className={COMPONENT_CSS.ONBOARDING.TEXT_SECONDARY}>
                     카테고리만 선택하여 진행할 수 있습니다.

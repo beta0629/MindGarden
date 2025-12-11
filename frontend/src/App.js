@@ -600,6 +600,43 @@ function AppContent() {
               />
             } />
             
+            {/* 지점 관리 라우트 (준비중 - 브랜치 코드 제거 정책에 따라 ComingSoon으로 처리) */}
+            <Route path="/admin/branches" element={
+              <SimpleLayout>
+                <BranchManagement />
+              </SimpleLayout>
+            } />
+            <Route path="/admin/branch-create" element={
+              <ComingSoon 
+                title="지점 등록"
+                description="지점 등록 기능은 현재 개발 중입니다. 곧 출시될 예정입니다."
+              />
+            } />
+            <Route path="/admin/branch-hierarchy" element={
+              <ComingSoon 
+                title="지점 계층 관리"
+                description="지점 계층 관리 기능은 현재 개발 중입니다. 곧 출시될 예정입니다."
+              />
+            } />
+            <Route path="/admin/branch-managers" element={
+              <ComingSoon 
+                title="지점장 관리"
+                description="지점장 관리 기능은 현재 개발 중입니다. 곧 출시될 예정입니다."
+              />
+            } />
+            <Route path="/admin/branch-status" element={
+              <ComingSoon 
+                title="지점 상태 관리"
+                description="지점 상태 관리 기능은 현재 개발 중입니다. 곧 출시될 예정입니다."
+              />
+            } />
+            <Route path="/admin/branch-consultants" element={
+              <ComingSoon 
+                title="지점 상담사 관리"
+                description="지점 상담사 관리 기능은 현재 개발 중입니다. 곧 출시될 예정입니다."
+              />
+            } />
+            
             {/* OAuth2 콜백 처리 라우트 */}
             <Route path="/oauth2/callback" element={<OAuth2Callback />} />
             

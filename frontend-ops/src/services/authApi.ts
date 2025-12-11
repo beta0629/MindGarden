@@ -87,16 +87,14 @@ export async function login(request: LoginRequest): Promise<LoginResponse> {
   if (typeof document !== "undefined") {
     const isHttps = window.location.protocol === "https:";
     const maxAge = 3600; // 1시간
-    const domain = window.location.hostname;
     
     // 쿠키 옵션 구성 (HTTPS 환경에서는 secure 필수)
+    // domain 옵션은 제거 (같은 도메인에서만 쿠키 사용)
     const cookieOptions = [
       `path=/`,
       `max-age=${maxAge}`,
       `samesite=lax`,
-      ...(isHttps ? ["secure"] : []),
-      // 도메인이 localhost가 아니면 domain 설정 (쿠키 공유를 위해)
-      ...(domain !== "localhost" && !domain.startsWith("127.") ? [`domain=${domain.split('.').slice(-2).join('.')}`] : [])
+      ...(isHttps ? ["secure"] : [])
     ].join("; ");
     
     // 쿠키 설정

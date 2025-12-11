@@ -38,38 +38,7 @@ import '../../styles/themes/admin-theme.css';
 import './AdminDashboard.new.css';
 import './system/SystemStatus.css';
 import './system/SystemTools.css';
-
-const ADMIN_ROUTES = {
-    SCHEDULES: '/admin/schedules',
-    SESSIONS: '/admin/sessions',
-    USERS: '/admin/users',
-    USER_MANAGEMENT: '/admin/user-management',
-    CONSULTANTS: '/admin/consultants',
-    CONSULTANT_COMPREHENSIVE: '/admin/consultant-comprehensive',
-    CLIENTS: '/admin/clients',
-    CLIENT_COMPREHENSIVE: '/admin/client-comprehensive',
-    MAPPINGS: '/admin/mappings',
-    MAPPING_MANAGEMENT: '/admin/mapping-management',
-    BRANCHES: '/admin/branches',
-    BRANCH_CREATE: '/admin/branch-create',
-    BRANCH_HIERARCHY: '/admin/branch-hierarchy',
-    BRANCH_MANAGERS: '/admin/branch-managers',
-    BRANCH_STATUS: '/admin/branch-status',
-    BRANCH_CONSULTANTS: '/admin/branch-consultants',
-    COMMON_CODES: '/admin/common-codes',
-    SYSTEM_NOTIFICATIONS: '/admin/system-notifications',
-    SYSTEM_CONFIG: '/admin/system-config',
-    MESSAGES: '/admin/messages',
-    STATISTICS: '/admin/statistics',
-    COMPLIANCE: '/admin/compliance',
-    COMPLIANCE_DASHBOARD: '/admin/compliance/dashboard',
-    COMPLIANCE_DESTRUCTION: '/admin/compliance/destruction',
-    ERP_FINANCIAL: '/admin/erp/financial',
-    DASHBOARDS: '/admin/dashboards',
-    CACHE_MONITORING: '/admin/cache-monitoring',
-    SECURITY_MONITORING: '/admin/security-monitoring',
-    API_PERFORMANCE: '/admin/api-performance'
-};
+import { ADMIN_ROUTES } from '../../constants/adminRoutes';
 
 const AdminDashboard = ({ user: propUser }) => {
     const navigate = useNavigate();

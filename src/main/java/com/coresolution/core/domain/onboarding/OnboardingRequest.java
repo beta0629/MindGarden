@@ -57,6 +57,9 @@ public class OnboardingRequest {
     @Column(name = "tenant_id", nullable = true, length = 64)
     private String tenantId; // 온보딩 중이면 null (승인 후 자동 생성)
     
+    @Column(name = "subdomain", length = 100)
+    private String subdomain; // 서브도메인 (와일드카드 도메인용, 선택적)
+    
     @Column(name = "tenant_name", nullable = false, length = 120)
     private String tenantName;
     

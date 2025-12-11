@@ -141,8 +141,27 @@ public class OnboardingServiceImpl implements OnboardingService {
         
         log.info("온보딩 요청 생성 - region: {}, brandName: {}", region, brandName);
         
+        // subdomain 추출 (checklistJson에서)
+        String subdomain = null;
+        if (checklistJson != null && !checklistJson.trim().isEmpty()) {
+            try {
+                Map<String, Object> checklist = objectMapper.readValue(
+                    checklistJson, 
+                    new TypeReference<Map<String, Object>>() {}
+                );
+                subdomain = (String) checklist.get("subdomain");
+                if (subdomain != null && !subdomain.trim().isEmpty()) {
+                    subdomain = subdomain.trim().toLowerCase(); // 소문자로 정규화
+                    log.info("✅ checklistJson에서 subdomain 추출 성공: {}", subdomain);
+                }
+            } catch (JsonProcessingException e) {
+                log.debug("checklistJson에서 subdomain 추출 실패: {}", e.getMessage());
+            }
+        }
+        
         OnboardingRequest entity = OnboardingRequest.builder()
             .tenantId(tenantId)
+            .subdomain(subdomain) // 서브도메인 저장
             .tenantName(tenantName)
             .brandName(brandName) // 브랜드명 저장 (checklistJson에서 추출한 값 또는 tenantName)
             .region(region) // 지역 정보 저장 (checklistJson에서 추출한 값)
@@ -475,6 +494,21 @@ public class OnboardingServiceImpl implements OnboardingService {
                 try {
                     log.info("🔄 테넌트 초기화 작업 시작: tenantId={}", tenantId);
                     initializeTenantAfterOnboarding(tenantId, request.getBusinessType(), actorId);
+                    
+                    // 서브도메인 설정
+                    try {
+                        String subdomain = request.getSubdomain();
+                        if (subdomain != null && !subdomain.trim().isEmpty()) {
+                            Tenant tenant = tenantRepository.findByTenantId(tenantId)
+                                .orElseThrow(() -> new IllegalArgumentException("테넌트를 찾을 수 없습니다: " + tenantId));
+                            tenant.setSubdomain(subdomain.trim().toLowerCase());
+                            tenantRepository.save(tenant);
+                            log.info("✅ 테넌트 서브도메인 설정 완료: tenantId={}, subdomain={}", tenantId, subdomain);
+                        }
+                    } catch (Exception e) {
+                        log.warn("서브도메인 설정 실패 (온보딩 프로세스는 계속 진행): tenantId={}, error={}", 
+                            tenantId, e.getMessage());
+                    }
                     
                     // 브랜드명 설정 (branding_json에 저장)
                     try {

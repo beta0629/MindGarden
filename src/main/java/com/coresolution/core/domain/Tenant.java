@@ -74,6 +74,15 @@ public class Tenant extends BaseEntity {
     @Column(name = "tenant_id", nullable = false, unique = true, length = 100, updatable = false)
     private String tenantId;
     
+    /**
+     * 서브도메인 (와일드카드 도메인용)
+     * 예: mycompany.dev.core-solution.co.kr의 "mycompany" 부분
+     * 선택적 필드 (온보딩 시 입력받음)
+     */
+    @Size(max = 100, message = "서브도메인은 100자 이하여야 합니다")
+    @Column(name = "subdomain", length = 100, unique = true)
+    private String subdomain;
+    
      /**
      * 테넌트명
      */

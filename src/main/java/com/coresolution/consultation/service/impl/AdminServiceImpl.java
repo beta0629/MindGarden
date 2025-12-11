@@ -328,6 +328,14 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                     savedUser.getId(), e);
         }
         
+        // 내담자 목록 캐시 무효화 (등록 후 목록에 즉시 반영되도록)
+        try {
+            clientStatsService.evictAllClientStatsCache();
+            log.debug("✅ 내담자 목록 캐시 무효화 완료: tenantId={}", tenantId);
+        } catch (Exception e) {
+            log.warn("⚠️ 내담자 목록 캐시 무효화 실패 (등록은 계속 진행): tenantId={}", tenantId, e);
+        }
+        
         Client client = new Client();
         client.setId(savedUser.getId());
         client.setName(savedUser.getName());

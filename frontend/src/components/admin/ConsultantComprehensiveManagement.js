@@ -203,7 +203,20 @@ const ConsultantComprehensiveManagement = () => {
             if (!Array.isArray(codes) || codes.length === 0) {
                 console.log('🔄 테넌트 코드가 없음, 코어 코드로 폴백 시도...');
                 try {
-                    codes = await getCommonCodes('SPECIALTY', false); // 코어 코드 조회
+                    // 코어 코드 API 직접 호출
+                    const coreCodes = await apiGet('/api/v1/common-codes/core/groups/SPECIALTY');
+                    console.log('📋 코어 코드 API 응답:', coreCodes);
+                    
+                    if (Array.isArray(coreCodes)) {
+                        codes = coreCodes;
+                    } else if (coreCodes && Array.isArray(coreCodes.codes)) {
+                        codes = coreCodes.codes;
+                    } else if (coreCodes && coreCodes.success && Array.isArray(coreCodes.data)) {
+                        codes = coreCodes.data;
+                    } else {
+                        console.warn('⚠️ 코어 코드 응답 형식이 예상과 다름:', coreCodes);
+                        codes = [];
+                    }
                     console.log('📋 전문분야 코드 응답 (코어):', codes, 'length:', codes?.length);
                 } catch (fallbackError) {
                     console.error('❌ 코어 코드 폴백 실패:', fallbackError);

@@ -23,24 +23,11 @@ export interface LoginResponse {
 }
 
 export async function login(request: LoginRequest): Promise<LoginResponse> {
-  // 환경 변수에서 API Base URL 가져오기
-  const envApiBaseUrl = process.env.NEXT_PUBLIC_OPS_API_BASE_URL ?? "";
+  // Next.js API 라우트를 통해 로그인 (서버 사이드 쿠키 설정을 위해)
+  // /api/auth/login이 백엔드 API를 호출하고 쿠키를 설정함
+  const apiPath = "/api/auth/login";
   
-  // 로컬 개발 환경에서는 백엔드 API 직접 호출
-  // 운영 환경에서는 환경 변수 또는 상대 경로 사용 (Nginx 프록시)
-  const isLocalhost = typeof window !== "undefined" && window.location.hostname === "localhost";
-  const apiBaseUrl = isLocalhost 
-    ? API_BASE_URL.LOCAL  // 로컬 백엔드 직접 호출
-    : (envApiBaseUrl || API_BASE_URL.PRODUCTION);  // 환경 변수가 있으면 사용, 없으면 상대 경로
-  const apiPath = `${apiBaseUrl}${OPS_API_PATHS.AUTH.LOGIN}`;
-  
-  console.log("[authApi.login] 로그인 API 호출:", { apiPath, apiBaseUrl, isLocalhost, envApiBaseUrl });
-  
-  // 백엔드 API는 userId를 기대하므로 변환
-  const backendRequest = {
-    userId: request.username,
-    password: request.password
-  };
+  console.log("[authApi.login] 로그인 API 호출 (Next.js API 라우트):", { apiPath });
   
   const response = await fetch(apiPath, {
     method: "POST",
@@ -48,7 +35,7 @@ export async function login(request: LoginRequest): Promise<LoginResponse> {
       "Content-Type": "application/json",
       Accept: "application/json"
     },
-    body: JSON.stringify(backendRequest),
+    body: JSON.stringify(request), // Next.js API 라우트가 username을 userId로 변환함
     credentials: "include" // 쿠키 포함
   });
 
@@ -69,14 +56,15 @@ export async function login(request: LoginRequest): Promise<LoginResponse> {
 
   const body = await response.json();
   
-  // 백엔드 응답 형식: LoginResponse (token, actorId, actorRole, expiresAt)
-  // body가 직접 LoginResponse이거나 body.data에 있을 수 있음
+  // Next.js API 라우트 응답 형식: { success: true, data: LoginResponse }
+  // 또는 직접 LoginResponse 형태일 수 있음
   const responseData = body?.data || body;
   
   if (!responseData || !responseData.token) {
     throw new Error("로그인 응답에 토큰이 없습니다.");
   }
   
+  // 쿠키는 서버 사이드에서 이미 설정되었으므로, 응답 데이터만 반환
   return responseData as LoginResponse;
 }
 

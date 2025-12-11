@@ -129,9 +129,19 @@ export async function POST(request: Request) {
     }
 
     const maxAge = 60 * 60; // 1 hour
-    const response = NextResponse.json({ success: true });
+    // 클라이언트가 응답 데이터를 받을 수 있도록 JSON 응답 생성
+    const response = NextResponse.json({
+      success: true,
+      data: {
+        token: responseData.token,
+        actorId: responseData.actorId || username,
+        actorRole: responseData.actorRole || "HQ_ADMIN",
+        expiresAt: responseData.expiresAt
+      }
+    });
     const cookieSettings = getCookieSettings(request);
 
+    // 서버 사이드 쿠키 설정 (브라우저가 자동으로 저장)
     response.cookies.set("ops_token", responseData.token, {
       ...cookieSettings,
       maxAge

@@ -526,6 +526,7 @@ export default function OnboardingPage() {
                 <Step6DashboardSetup
                   formData={formData}
                   setFormData={setFormData}
+                  businessType={formData.businessType || ""}
                 />
               )}
             </StepTransition>

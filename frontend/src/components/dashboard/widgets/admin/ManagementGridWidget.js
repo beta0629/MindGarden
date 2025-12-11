@@ -45,7 +45,7 @@ const ManagementGridWidget = ({ widget, user }) => {
       title: '상담사 관리',
       description: '상담사 정보 및 전문분야를 관리합니다',
       icon: <User size={24} />,
-      url: '/admin/consultants',
+      url: '/admin/consultant-comprehensive',
       color: 'green'
     },
     {
@@ -53,7 +53,7 @@ const ManagementGridWidget = ({ widget, user }) => {
       title: '내담자 관리',
       description: '내담자 정보 및 상담 이력을 관리합니다',
       icon: <Users size={24} />,
-      url: '/admin/clients',
+      url: '/admin/client-comprehensive',
       color: 'purple'
     },
     {
@@ -61,7 +61,7 @@ const ManagementGridWidget = ({ widget, user }) => {
       title: '매칭 관리',
       description: '상담사-내담자 매칭을 관리합니다',
       icon: <Link2 size={24} />,
-      url: '/admin/mappings',
+      url: '/admin/mapping-management',
       color: 'orange'
     },
     {

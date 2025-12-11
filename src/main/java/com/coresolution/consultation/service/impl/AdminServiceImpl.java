@@ -41,6 +41,7 @@ import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.consultation.service.UserPersonalDataCacheService;
 import com.coresolution.consultation.service.ConsultantAvailabilityService;
 import com.coresolution.consultation.service.ConsultantRatingService;
+import com.coresolution.consultation.service.ConsultantStatsService;
 import com.coresolution.consultation.service.ConsultationMessageService;
 import com.coresolution.consultation.service.FinancialTransactionService;
 import com.coresolution.consultation.service.NotificationService;
@@ -94,6 +95,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     private final UserRoleQueryService userRoleQueryService;
     private final StatusCodeHelper statusCodeHelper;
     private final UserPersonalDataCacheService userPersonalDataCacheService;
+    private final ConsultantStatsService consultantStatsService;
     private final org.springframework.transaction.PlatformTransactionManager transactionManager;
     private final com.coresolution.consultation.service.UserIdGenerator userIdGenerator;
 
@@ -223,6 +225,14 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             } catch (Exception e) {
                 log.warn("⚠️ 상담사 개인정보 캐시 저장 실패 (등록은 계속 진행): userId={}", 
                         savedConsultant.getId(), e);
+            }
+            
+            // 상담사 목록 캐시 무효화 (등록 후 목록에 즉시 반영되도록)
+            try {
+                consultantStatsService.evictAllConsultantStatsCache();
+                log.debug("✅ 상담사 목록 캐시 무효화 완료: tenantId={}", tenantId);
+            } catch (Exception e) {
+                log.warn("⚠️ 상담사 목록 캐시 무효화 실패 (등록은 계속 진행): tenantId={}", tenantId, e);
             }
             
             return savedConsultant;

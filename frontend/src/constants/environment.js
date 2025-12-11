@@ -26,6 +26,16 @@ const getBaseUrl = () => {
     return envUrl;
   }
   
+  // 브라우저에서 실행 중인 경우 (클라이언트 사이드)
+  if (typeof window !== 'undefined') {
+    // localhost가 아닌 경우 (실제 서버에서 실행 중) 상대 경로 사용
+    // Nginx가 /api 경로를 백엔드로 프록시하므로 빈 문자열 반환
+    if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+      console.log('🔧 서버 환경: Nginx 프록시 사용 (상대 경로)', window.location.hostname);
+      return '';
+    }
+  }
+  
   // 운영 환경에서는 Nginx 프록시를 사용하므로 상대 경로 사용
   // Nginx가 /api 경로를 백엔드로 프록시하므로 빈 문자열 반환
   if (process.env.NODE_ENV === 'production') {
@@ -33,8 +43,8 @@ const getBaseUrl = () => {
     return '';
   }
   
-  // 개발 환경에서는 백엔드 직접 연결 (프록시 문제 방지)
-  console.log('🔧 개발 환경: 백엔드 직접 연결 (8080 포트)');
+  // 로컬 개발 환경에서만 백엔드 직접 연결 (프록시 문제 방지)
+  console.log('🔧 로컬 개발 환경: 백엔드 직접 연결 (8080 포트)');
   return 'http://localhost:8080';
 };
 

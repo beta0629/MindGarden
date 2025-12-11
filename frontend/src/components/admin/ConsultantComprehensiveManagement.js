@@ -11,6 +11,7 @@ import SpecialtyDisplay from '../ui/SpecialtyDisplay';
 import { MGConfirmModal } from '../common/MGModal';
 import UnifiedFilterSearch from '../ui/FilterSearch/UnifiedFilterSearch';
 import { getCommonCodes } from '../../utils/commonCodeApi';
+import { sessionManager } from '../../utils/sessionManager';
 
 const ConsultantComprehensiveManagement = () => {
     const [consultants, setConsultants] = useState([]);

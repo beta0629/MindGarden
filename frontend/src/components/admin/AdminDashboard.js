@@ -1151,8 +1151,8 @@ const AdminDashboard = ({ user: propUser }) => {
                 </DashboardSection>
             )}
 
-            {/* ERP 관리 */}
-            <PermissionGroupGuard groupCode="DASHBOARD_ERP">
+            {/* ERP 관리 - 모든 관리자에게 표시 */}
+            {RoleUtils.isAdmin(propUser || sessionUser) && (
                 <DashboardSection
                     title="ERP 관리"
                     subtitle="기업 자원 계획 시스템 관리"
@@ -1235,7 +1235,7 @@ const AdminDashboard = ({ user: propUser }) => {
                         </div>
                     </div>
                 </DashboardSection>
-            </PermissionGroupGuard>
+            )}
 
             {/* 지점 관리 */}
             {PermissionChecks.canViewHQDashboard(userPermissions) && (

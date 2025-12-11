@@ -170,8 +170,10 @@ public class TenantContextFilter implements Filter {
         
         // 공개 API 경로 목록 (SecurityConfig의 permitAll 경로와 일치해야 함)
         // 표준화 원칙: 온보딩 관련 API는 공개 API로 설정
+        // Ops Portal API는 테넌트별 시스템이 아니므로 tenantId 검증 불필요
         String[] publicPaths = {
             "/api/v1/onboarding",              // 온보딩 API (테넌트 등록)
+            "/api/v1/ops",                      // Ops Portal API 전체 (테넌트별 시스템 아님)
             "/api/v1/ops/plans/active",        // 활성화된 요금제 목록 (온보딩에서 사용)
             "/api/v1/ops/plans/code",          // plan_code로 요금제 조회 (온보딩에서 사용)
             "/api/v1/ops/auth",                 // Ops Portal 인증 API

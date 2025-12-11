@@ -1,7 +1,7 @@
 /* 매칭 생성 모달 내부 스타일 (UnifiedModal과 호환) */
 /* MindGarden Design System v2.0 */
 
-/* 표준화 2025-12-08: 누락된 CSS 변수 매핑 추가 */
+/* 표준화 2025-12-08: CSS 변수 매핑 - 디자인 시스템 변수 사용 */
 :root {
     /* 색상 변수 */
     --color-text-inverse: var(--mg-white, #ffffff);
@@ -10,18 +10,58 @@
     --color-text-primary: var(--mg-black, #000000);
     --color-text-secondary: var(--mg-gray-600, #6b7280);
     --color-border-light: var(--mg-gray-200, #e5e7eb);
+    --color-bg-primary: var(--mg-white, #ffffff);
     --medium-gray: var(--mg-gray-500, #6b7280);
     --dark-gray: var(--mg-gray-900, #111827);
-    --mint-green: var(--mg-mint-green, #10b981);
-    --soft-mint: var(--mg-soft-mint, #6ee7b7);
-    --cocoa: var(--mg-cocoa, #8b6914);
+    --mint-green: var(--mg-success-500, #10b981);
+    --soft-mint: var(--mg-success-300, #6ee7b7);
+    --cocoa: var(--mg-gray-700, #374151);
+    
+    /* 글래스모피즘 색상 변수 */
+    --glass-bg-light: rgba(255, 255, 255, 0.2);
+    --glass-bg-medium: rgba(255, 255, 255, 0.3);
+    --glass-bg-strong: rgba(255, 255, 255, 0.6);
+    --glass-border: rgba(255, 255, 255, 0.3);
+    --glass-border-light: rgba(255, 255, 255, 0.2);
+    --glass-shadow-mint: rgba(182, 229, 216, 0.3);
+    --glass-shadow-mint-light: rgba(182, 229, 216, 0.2);
+    --glass-shadow-cocoa: rgba(139, 69, 19, 0.1);
+    --glass-shadow-cocoa-light: rgba(139, 69, 19, 0.2);
+    
+    /* 크기 변수 */
+    --step-max-width: 7.5rem; /* 120px */
+    --step-number-size: 2rem; /* 32px */
+    --step-number-size-md: 1.75rem; /* 28px */
+    --step-number-size-sm: 1.5rem; /* 24px */
+    --search-input-min-height: 3.75rem; /* 60px */
+    --search-icon-offset: 2.5rem; /* 40px */
+    --search-icon-offset-sm: 2.25rem; /* 36px */
+    --card-avatar-size: 3rem; /* 48px */
+    --card-avatar-size-md: 2.5rem; /* 40px */
+    --card-avatar-size-sm: 2.25rem; /* 36px */
+    --card-min-width: 17.5rem; /* 280px */
+    --no-results-icon-size: 3rem; /* 48px */
+    --no-results-icon-size-md: 2.25rem; /* 36px */
+    --textarea-min-height: 6.25rem; /* 100px */
+    --textarea-min-height-md: 5rem; /* 80px */
+    --step-max-width-md: 3.75rem; /* 60px */
+    --step-max-width-sm: 3.125rem; /* 50px */
+    --step-min-width-md: 3.125rem; /* 50px */
+    --step-min-width-sm: 2.8125rem; /* 45px */
     
     /* Border Radius 변수 */
     --radius-lg: var(--border-radius-lg, 0.75rem);
     --radius-md: var(--border-radius-md, 0.5rem);
+    --radius-full: var(--border-radius-full, 9999px);
     
     /* Transition 변수 */
-    --transition-fast: var(--animation-duration-fast, 0.15s ease);
+    --transition-fast: var(--transition-fast, 0.15s ease);
+    --transition-normal: var(--transition-normal, 0.3s ease);
+    
+    /* Shadow 변수 */
+    --shadow-sm: var(--cs-shadow-sm, 0 1px 2px 0 rgba(0, 0, 0, 0.05));
+    --shadow-md: var(--cs-shadow-md, 0 4px 6px -1px rgba(0, 0, 0, 0.1));
+    --shadow-light: var(--mg-shadow-light, rgba(0, 0, 0, 0.1));
 }
 
 /* 패키지 데이터 없음 안내 - 표준화 2025-12-08: 디자인 시스템 변수 사용 */
@@ -97,23 +137,23 @@
     position: relative;
     z-index: 2;
     flex: 1;
-    max-width: 120px;
+    max-width: var(--step-max-width);
 }
 
 .step-number {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.6);
+    width: var(--step-number-size);
+    height: var(--step-number-size);
+    border-radius: var(--radius-full);
+    background: var(--glass-bg-strong);
     color: var(--medium-gray);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-weight: 600;
+    font-weight: var(--font-weight-semibold);
     font-size: var(--font-size-sm);
     margin-bottom: var(--spacing-xs);
-    border: 2px solid rgba(139, 69, 19, 0.2);
-    transition: all 0.3s ease;
+    border: var(--border-width-normal) solid var(--glass-shadow-cocoa-light);
+    transition: all var(--transition-normal);
     backdrop-filter: blur(10px);
 }
 
@@ -164,10 +204,10 @@
     align-items: center;
     background: var(--color-bg-primary);
     border-radius: var(--border-radius-lg);
-    border: 1px solid var(--color-border-light);
+    border: var(--border-width-thin) solid var(--color-border-light);
     transition: var(--transition-fast);
     box-shadow: var(--shadow-sm);
-    min-height: 60px;
+    min-height: var(--search-input-min-height);
     padding: 0 var(--spacing-md);
 }
 
@@ -244,7 +284,7 @@
 
 .search-input {
     width: 100%;
-    padding: var(--spacing-md) var(--spacing-md) var(--spacing-md) 40px;
+    padding: var(--spacing-md) var(--spacing-md) var(--spacing-md) var(--search-icon-offset);
     border: none;
     background: transparent;
     font-size: var(--font-size-base);
@@ -271,7 +311,7 @@
 }
 
 .clear-search-btn:hover {
-    background: rgba(139, 69, 19, 0.1);
+    background: var(--glass-shadow-cocoa);
     color: var(--dark-gray);
 }
 
@@ -294,7 +334,7 @@
 /* 선택 그리드 */
 .selection-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(var(--card-min-width), 1fr));
     gap: var(--spacing-sm);
     margin-top: var(--spacing-md);
 }
@@ -329,9 +369,9 @@
 
 /* 카드 아바타 */
 .card-avatar {
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
+    width: var(--card-avatar-size);
+    height: var(--card-avatar-size);
+    border-radius: var(--radius-full);
     background: var(--color-primary);
     display: flex;
     align-items: center;
@@ -388,7 +428,7 @@
 }
 
 .no-results-icon {
-    font-size: 48px;
+    font-size: var(--no-results-icon-size);
     margin-bottom: var(--spacing-md);
     opacity: 0.5;
 }
@@ -430,17 +470,17 @@ select,
 textarea {
     width: 100%;
     padding: var(--spacing-md);
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    border: var(--border-width-thin) solid var(--glass-border);
     border-radius: var(--radius-md);
     font-size: var(--font-size-base);
     color: var(--dark-gray) !important;
-    background: rgba(255, 255, 255, 0.2) !important;
+    background: var(--glass-bg-light) !important;
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
-    transition: all 0.2s ease;
+    transition: all var(--transition-fast);
     box-shadow: 
-        0 4px 16px var(--mg-shadow-light),
-        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        0 4px 16px var(--shadow-light),
+        inset 0 1px 0 var(--glass-border-light);
 }
 
 /* placeholder 텍스트 색상 */
@@ -461,16 +501,16 @@ select:focus,
 textarea:focus {
     outline: none;
     border-color: var(--mint-green);
-    background: rgba(255, 255, 255, 0.3) !important;
+    background: var(--glass-bg-medium) !important;
     box-shadow: 
-        0 8px 24px rgba(182, 229, 216, 0.3),
-        inset 0 1px 0 rgba(255, 255, 255, 0.3),
-        0 0 0 3px rgba(182, 229, 216, 0.2);
+        0 8px 24px var(--glass-shadow-mint),
+        inset 0 1px 0 var(--glass-bg-medium),
+        0 0 0 3px var(--glass-shadow-mint-light);
 }
 
 .mg-form__group textarea {
     resize: vertical;
-    min-height: 100px;
+    min-height: var(--textarea-min-height);
 }
 
 /* 완료 메시지 */
@@ -494,16 +534,16 @@ textarea:focus {
 
 /* 매칭 요약 */
 .mapping-summary {
-    background: rgba(255, 255, 255, 0.2);
+    background: var(--glass-bg-light);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    border: var(--border-width-thin) solid var(--glass-border);
     border-radius: var(--radius-lg);
     padding: var(--spacing-lg);
     margin-bottom: var(--spacing-lg);
     box-shadow: 
-        0 4px 16px var(--mg-shadow-light),
-        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        0 4px 16px var(--shadow-light),
+        inset 0 1px 0 var(--glass-border-light);
 }
 
 .summary-item {
@@ -511,7 +551,7 @@ textarea:focus {
     justify-content: space-between;
     align-items: center;
     padding: var(--spacing-sm) 0;
-    border-bottom: 1px solid rgba(139, 69, 19, 0.1);
+    border-bottom: var(--border-width-thin) solid var(--glass-shadow-cocoa);
 }
 
 .summary-item:last-child {
@@ -524,15 +564,15 @@ textarea:focus {
 }
 
 .next-steps {
-    background: rgba(182, 229, 216, 0.2);
+    background: var(--glass-shadow-mint-light);
     color: var(--cocoa);
     padding: var(--spacing-md);
     border-radius: var(--radius-md);
     font-size: var(--font-size-sm);
-    font-weight: 500;
+    font-weight: var(--font-weight-medium);
     text-align: center;
     margin-top: var(--spacing-lg);
-    border: 1px solid var(--mint-green);
+    border: var(--border-width-thin) solid var(--mint-green);
 }
 
 /* 반응형 디자인 - 모바일 */
@@ -544,19 +584,19 @@ textarea:focus {
     }
     
     .step {
-        max-width: 60px;
-        min-width: 50px;
+        max-width: var(--step-max-width-md);
+        min-width: var(--step-min-width-md);
     }
     
     .step-number {
-        width: 28px;
-        height: 28px;
+        width: var(--step-number-size-md);
+        height: var(--step-number-size-md);
         font-size: var(--font-size-xs);
     }
     
     .step-label {
-        font-size: 9px;
-        line-height: 1.2;
+        font-size: var(--font-size-xs);
+        line-height: var(--line-height-tight);
         text-align: center;
         word-break: keep-all;
     }
@@ -574,7 +614,7 @@ textarea:focus {
     }
     
     .search-input {
-        padding: var(--spacing-sm) var(--spacing-sm) var(--spacing-sm) 36px;
+        padding: var(--spacing-sm) var(--spacing-sm) var(--spacing-sm) var(--search-icon-offset-sm);
         font-size: var(--font-size-sm);
     }
     
@@ -612,8 +652,8 @@ textarea:focus {
     }
     
     .card-avatar {
-        width: 40px;
-        height: 40px;
+        width: var(--card-avatar-size-md);
+        height: var(--card-avatar-size-md);
         font-size: var(--font-size-base);
     }
     
@@ -628,8 +668,8 @@ textarea:focus {
     }
     
     .role-badge {
-        padding: 2px var(--spacing-xs);
-        font-size: 9px;
+        padding: var(--spacing-xs) var(--spacing-xs);
+        font-size: var(--font-size-xs);
     }
     
     /* 검색 결과 없음 모바일 최적화 */
@@ -638,7 +678,7 @@ textarea:focus {
     }
     
     .no-results-icon {
-        font-size: 36px;
+        font-size: var(--no-results-icon-size-md);
         margin-bottom: var(--spacing-sm);
     }
     
@@ -669,7 +709,7 @@ textarea:focus {
     }
     
     .mg-form__group textarea {
-        min-height: 80px;
+        min-height: var(--textarea-min-height-md);
     }
     
     /* 완료 메시지 모바일 최적화 */
@@ -714,18 +754,18 @@ textarea:focus {
 /* 모바일 초소형 화면 (320px 이하) */
 @media (max-width: 480px) {
     .step {
-        max-width: 50px;
-        min-width: 45px;
+        max-width: var(--step-max-width-sm);
+        min-width: var(--step-min-width-sm);
     }
     
     .step-number {
-        width: 24px;
-        height: 24px;
-        font-size: 10px;
+        width: var(--step-number-size-sm);
+        height: var(--step-number-size-sm);
+        font-size: var(--font-size-xs);
     }
     
     .step-label {
-        font-size: 8px;
+        font-size: var(--font-size-xs);
     }
     
     .selection-card {
@@ -736,8 +776,8 @@ textarea:focus {
     }
     
     .card-avatar {
-        width: 36px;
-        height: 36px;
+        width: var(--card-avatar-size-sm);
+        height: var(--card-avatar-size-sm);
         font-size: var(--font-size-sm);
         margin: 0 auto;
     }

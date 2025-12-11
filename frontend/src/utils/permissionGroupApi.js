@@ -20,15 +20,18 @@
 
 import axios from 'axios';
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8080';
-const PERMISSION_GROUP_API = `${API_BASE_URL}/api/v1/permissions/groups`;
+import { getApiBaseUrl } from '../constants/api';
+
+// 런타임에 API_BASE_URL 가져오기 (window.location 확인)
+const getPermissionGroupApi = () => `${getApiBaseUrl()}/api/v1/permissions/groups`;
+const getPermissionGroupApi() = getPermissionGroupApi(); // 하위 호환성을 위해 유지
 
 /**
  * 내 권한 그룹 조회
  */
 export const getMyPermissionGroups = async () => {
     try {
-        const response = await axios.get(`${PERMISSION_GROUP_API}/my`, {
+        const response = await axios.get(`${getPermissionGroupApi()}/my`, {
             withCredentials: true,
             // 400 에러를 예외로 처리하지 않도록 설정
             validateStatus: (status) => status < 500 // 500 이상만 에러로 처리
@@ -63,7 +66,7 @@ export const getMyPermissionGroups = async () => {
  */
 export const checkPermissionGroup = async (groupCode) => {
     try {
-        const response = await axios.get(`${PERMISSION_GROUP_API}/check/${groupCode}`, {
+        const response = await axios.get(`${getPermissionGroupApi()}/check/${groupCode}`, {
             withCredentials: true
         });
         return response.data;
@@ -78,7 +81,7 @@ export const checkPermissionGroup = async (groupCode) => {
  */
 export const getPermissionGroupLevel = async (groupCode) => {
     try {
-        const response = await axios.get(`${PERMISSION_GROUP_API}/level/${groupCode}`, {
+        const response = await axios.get(`${getPermissionGroupApi()}/level/${groupCode}`, {
             withCredentials: true
         });
         return response.data;
@@ -93,7 +96,7 @@ export const getPermissionGroupLevel = async (groupCode) => {
  */
 export const getAllPermissionGroups = async () => {
     try {
-        const response = await axios.get(`${PERMISSION_GROUP_API}/all`, {
+        const response = await axios.get(`${getPermissionGroupApi()}/all`, {
             withCredentials: true
         });
         return response.data;
@@ -108,7 +111,7 @@ export const getAllPermissionGroups = async () => {
  */
 export const grantPermissionGroup = async (request) => {
     try {
-        const response = await axios.post(`${PERMISSION_GROUP_API}/grant`, request, {
+        const response = await axios.post(`${getPermissionGroupApi()}/grant`, request, {
             withCredentials: true
         });
         return response.data;
@@ -123,7 +126,7 @@ export const grantPermissionGroup = async (request) => {
  */
 export const revokePermissionGroup = async (roleId, groupCode) => {
     try {
-        const response = await axios.delete(`${PERMISSION_GROUP_API}/revoke`, {
+        const response = await axios.delete(`${getPermissionGroupApi()}/revoke`, {
             params: { roleId, groupCode },
             withCredentials: true
         });
@@ -140,7 +143,7 @@ export const revokePermissionGroup = async (roleId, groupCode) => {
 export const batchGrantPermissionGroups = async (roleId, request) => {
     try {
         const response = await axios.post(
-            `${PERMISSION_GROUP_API}/batch?roleId=${roleId}`,
+            `${getPermissionGroupApi()}/batch?roleId=${roleId}`,
             request,
             { withCredentials: true }
         );

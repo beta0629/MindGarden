@@ -1,5 +1,5 @@
 import { 
-  API_BASE_URL, 
+  getApiBaseUrl,
   AUTH_API, 
   USER_API, 
   CONSULTATION_API,
@@ -61,7 +61,7 @@ const checkSessionAndRedirect = async (response) => {
     
     try {
       // 세션 체크 API 호출
-      const sessionResponse = await fetch(`${API_BASE_URL}/api/v1/auth/current-user`, {
+      const sessionResponse = await fetch(`${getApiBaseUrl()}/api/v1/auth/current-user`, {
         credentials: 'include',
         method: 'GET'
       });
@@ -115,9 +115,11 @@ export const apiGet = async (endpoint, params = {}, options = {}) => {
     
     // 쿼리 파라미터 생성
     const queryString = new URLSearchParams(params).toString();
+    // 런타임에 API_BASE_URL 가져오기 (window.location 확인)
+    const apiBaseUrl = getApiBaseUrl();
     const url = isFullUrl 
       ? (queryString ? `${endpoint}?${queryString}` : endpoint)
-      : (queryString ? `${API_BASE_URL}${endpoint}?${queryString}` : `${API_BASE_URL}${endpoint}`);
+      : (queryString ? `${apiBaseUrl}${endpoint}?${queryString}` : `${apiBaseUrl}${endpoint}`);
     
     const headers = { ...getDefaultHeaders(), ...options.headers };
     console.log('📤 API GET 요청:', { url, headers: { ...headers, 'Authorization': headers['Authorization'] ? 'Bearer ***' : undefined, 'X-Tenant-Id': headers['X-Tenant-Id'] } });
@@ -211,7 +213,7 @@ export const apiGet = async (endpoint, params = {}, options = {}) => {
       }
       
       try {
-        const sessionResponse = await fetch(`${API_BASE_URL}/api/v1/auth/current-user`, {
+        const sessionResponse = await fetch(`${getApiBaseUrl()}/api/v1/auth/current-user`, {
           credentials: 'include',
           method: 'GET'
         });
@@ -489,7 +491,7 @@ export const consultationAPI = {
 // 테스트 로그인 함수 (개발 환경에서만 사용)
 export const testLogin = async () => {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/v1/auth/test-login`, {
+    const response = await fetch(`${getApiBaseUrl()}/api/v1/auth/test-login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

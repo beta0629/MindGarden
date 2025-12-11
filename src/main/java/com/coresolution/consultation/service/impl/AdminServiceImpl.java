@@ -42,6 +42,7 @@ import com.coresolution.consultation.service.UserPersonalDataCacheService;
 import com.coresolution.consultation.service.ConsultantAvailabilityService;
 import com.coresolution.consultation.service.ConsultantRatingService;
 import com.coresolution.consultation.service.ConsultantStatsService;
+import com.coresolution.consultation.service.ClientStatsService;
 import com.coresolution.consultation.service.ConsultationMessageService;
 import com.coresolution.consultation.service.FinancialTransactionService;
 import com.coresolution.consultation.service.NotificationService;
@@ -96,6 +97,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     private final StatusCodeHelper statusCodeHelper;
     private final UserPersonalDataCacheService userPersonalDataCacheService;
     private final ConsultantStatsService consultantStatsService;
+    private final ClientStatsService clientStatsService;
     private final org.springframework.transaction.PlatformTransactionManager transactionManager;
     private final com.coresolution.consultation.service.UserIdGenerator userIdGenerator;
 

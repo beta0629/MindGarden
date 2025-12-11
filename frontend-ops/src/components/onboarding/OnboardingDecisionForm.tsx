@@ -172,7 +172,14 @@ export function OnboardingDecisionForm({ requestId, initialStatus }: Props) {
     
     // CoreSolution 로그인 페이지로 이동 (이메일과 비밀번호를 쿼리 파라미터로 전달하지 않음 - 보안상 위험)
     // 대신 계정 정보를 표시하고 사용자가 직접 입력하도록 함
-    const loginUrl = process.env.NEXT_PUBLIC_CORE_SOLUTION_URL || "http://localhost:3000";
+    const loginUrl = process.env.NEXT_PUBLIC_CORE_SOLUTION_URL;
+    
+    if (!loginUrl) {
+      console.error("[OnboardingDecisionForm] NEXT_PUBLIC_CORE_SOLUTION_URL 환경 변수가 설정되지 않았습니다.");
+      alert("CoreSolution URL이 설정되지 않았습니다. 관리자에게 문의하세요.");
+      return;
+    }
+    
     window.open(`${loginUrl}/login`, "_blank");
   };
 

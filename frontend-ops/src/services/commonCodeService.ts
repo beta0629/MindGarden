@@ -29,12 +29,17 @@ export interface CommonCodeListResponse {
  */
 export async function getCommonCodesByGroup(codeGroup: string): Promise<CommonCode[]> {
   try {
-    // CoreSolution의 공통코드 API 호출 (포트 8080)
-    // 환경 변수에서 가져오거나 기본값 사용
+    // CoreSolution의 공통코드 API 호출
+    // 환경 변수에서 가져오기 (필수)
     const coreApiBaseUrl = 
       (typeof window !== "undefined" && (window as any).__CORE_API_BASE_URL__) ||
-      process.env.NEXT_PUBLIC_CORE_API_BASE_URL || 
-      "http://localhost:8080/api/v1";
+      process.env.NEXT_PUBLIC_CORE_API_BASE_URL;
+    
+    if (!coreApiBaseUrl) {
+      console.error("[commonCodeService] NEXT_PUBLIC_CORE_API_BASE_URL 환경 변수가 설정되지 않았습니다.");
+      return [];
+    }
+    
     const url = `${coreApiBaseUrl}/common-codes?codeGroup=${encodeURIComponent(codeGroup)}`;
     
     const response = await fetch(url, {

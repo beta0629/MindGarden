@@ -58,9 +58,11 @@ export const OPS_API_PATHS = {
 
 /**
  * API Base URL 상수
+ * @deprecated 환경 변수 NEXT_PUBLIC_OPS_API_BASE_URL 사용 권장
+ * 하드코딩 금지 원칙에 따라 환경 변수만 사용
  */
 export const API_BASE_URL = {
-  LOCAL: "http://localhost:8081/api/v1",
-  PRODUCTION: "" // 상대 경로 사용 (Nginx 프록시)
+  LOCAL: "http://localhost:8081/api/v1", // @deprecated - 환경 변수 사용
+  PRODUCTION: "" // @deprecated - 환경 변수 사용
 } as const;
 

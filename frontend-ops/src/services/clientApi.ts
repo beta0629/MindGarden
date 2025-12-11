@@ -160,15 +160,9 @@ function resolveClientRuntimeConfig(): ClientRuntimeConfig {
     process.env.NEXT_PUBLIC_OPS_ACTOR_ROLE ??
     "HQ_ADMIN";
 
-  // 환경 변수나 쿠키에서 API Base URL 가져오기
-  // 로컬 개발 환경에서는 백엔드에 직접 요청 (rewrites는 Authorization 헤더를 전달하지 않음)
-  // 개발/운영 환경에서는 상대 경로 사용 (Nginx 프록시)
-  const apiBaseUrl =
-    ENV_API_BASE_URL || 
-    cookieMap.get("ops_api_base_url") || 
-    (typeof window !== "undefined" && window.location.hostname === "localhost" 
-      ? "http://localhost:8081/api/v1" 
-      : "");
+  // 환경 변수에서 API Base URL 가져오기 (필수)
+  // 로컬, 개발, 운영 모두 환경 변수로 설정
+  const apiBaseUrl = ENV_API_BASE_URL || cookieMap.get("ops_api_base_url") || "";
 
   return {
     apiBaseUrl, // 빈 문자열이면 상대 경로 사용

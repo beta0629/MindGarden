@@ -4,7 +4,7 @@
  * 표준화된 API 호출 패턴 사용
  */
 
-import { OPS_API_PATHS, API_BASE_URL } from "@/constants/api";
+import { OPS_API_PATHS } from "@/constants/api";
 
 /**
  * 로그인 API 호출
@@ -23,12 +23,14 @@ export interface LoginResponse {
 }
 
 export async function login(request: LoginRequest): Promise<LoginResponse> {
-  // 환경 변수에서 API Base URL 가져오기
-  // 로컬과 개발 서버 모두 동일한 방식으로 작동하도록 통일
-  const envApiBaseUrl = process.env.NEXT_PUBLIC_OPS_API_BASE_URL ?? "";
+  // 환경 변수에서 API Base URL 가져오기 (필수)
+  // 로컬, 개발, 운영 모두 환경 변수로 설정
+  const apiBaseUrl = process.env.NEXT_PUBLIC_OPS_API_BASE_URL;
   
-  // 환경 변수가 없으면 기본값 사용 (로컬 개발 환경)
-  const apiBaseUrl = envApiBaseUrl || API_BASE_URL.LOCAL;
+  if (!apiBaseUrl) {
+    throw new Error("NEXT_PUBLIC_OPS_API_BASE_URL 환경 변수가 설정되지 않았습니다.");
+  }
+  
   const apiPath = `${apiBaseUrl}/ops/auth/login`;
   
   // 백엔드 API는 userId를 기대하므로 변환
@@ -94,16 +96,33 @@ export async function login(request: LoginRequest): Promise<LoginResponse> {
  * (현재는 클라이언트 쪽 쿠키 삭제만 수행)
  */
 export async function logout(): Promise<void> {
-  // 환경 변수에서 API Base URL 가져오기
-  const envApiBaseUrl = process.env.NEXT_PUBLIC_OPS_API_BASE_URL ?? "";
+  // 환경 변수에서 API Base URL 가져오기 (필수)
+  const apiBaseUrl = process.env.NEXT_PUBLIC_OPS_API_BASE_URL;
   
-  // 로컬 개발 환경에서는 백엔드 API 직접 호출
-  // 운영 환경에서는 환경 변수 또는 상대 경로 사용 (Nginx 프록시)
-  const isLocalhost = typeof window !== "undefined" && window.location.hostname === "localhost";
-  const apiBaseUrl = isLocalhost 
-    ? API_BASE_URL.LOCAL  // 로컬 백엔드 직접 호출
-    : (envApiBaseUrl || API_BASE_URL.PRODUCTION);  // 환경 변수가 있으면 사용, 없으면 상대 경로
-  const apiPath = `${apiBaseUrl}${OPS_API_PATHS.AUTH.LOGOUT}`;
+  if (!apiBaseUrl) {
+    console.warn("[authApi.logout] NEXT_PUBLIC_OPS_API_BASE_URL 환경 변수가 설정되지 않았습니다. 로그아웃 API 호출을 건너뜁니다.");
+  } else {
+    const apiPath = `${apiBaseUrl}${OPS_API_PATHS.AUTH.LOGOUT}`;
+    
+    try {
+      const response = await fetch(apiPath, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json"
+        },
+        credentials: "include" // 쿠키 포함
+      });
+      
+      // 로그아웃 API가 없어도 클라이언트 쪽 쿠키 삭제는 수행
+      if (!response.ok && response.status !== 404) {
+        console.warn("[authApi.logout] 로그아웃 API 호출 실패:", response.status);
+      }
+    } catch (error) {
+      console.warn("[authApi.logout] 로그아웃 API 호출 중 오류:", error);
+      // 로그아웃 API 실패해도 클라이언트 쪽 쿠키 삭제는 수행
+    }
+  }
   
   try {
     const response = await fetch(apiPath, {

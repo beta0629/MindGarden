@@ -49,7 +49,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  */
 @Slf4j
 @RestController
-@RequestMapping("/api/v1/onboarding")
+@RequestMapping({"/api/v1/onboarding", "/api/v1/ops/onboarding"})
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
 public class OnboardingController extends BaseApiController {

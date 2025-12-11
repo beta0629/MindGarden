@@ -111,6 +111,8 @@ public class SecurityConfig {
                     .requestMatchers("/api/auth/**").permitAll()
                     // 공개 엔드포인트: 온보딩 API (새로운 테넌트 등록)
                     .requestMatchers("/api/v1/onboarding/**").permitAll()
+                    // 공개 엔드포인트: Ops Portal 온보딩 API (OnboardingController가 두 경로 모두 매핑)
+                    .requestMatchers("/api/v1/ops/onboarding/**").permitAll()
                     // 공개 엔드포인트: Trinity 온보딩에서 사용하는 요금제 조회 API
                     .requestMatchers(
                         "/api/v1/ops/plans/active",           // 활성화된 요금제 목록 (공개)
@@ -168,6 +170,8 @@ public class SecurityConfig {
                     .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
                     // 공개 엔드포인트: 온보딩 API (새로운 테넌트 등록)
                     .requestMatchers("/api/v1/onboarding/**").permitAll()
+                    // 공개 엔드포인트: Ops Portal 온보딩 API (OnboardingController가 두 경로 모두 매핑)
+                    .requestMatchers("/api/v1/ops/onboarding/**").permitAll()
                     // 공개 엔드포인트: Trinity 온보딩에서 사용하는 요금제 조회 API
                     .requestMatchers(
                         "/api/v1/ops/plans/active",           // 활성화된 요금제 목록 (공개)

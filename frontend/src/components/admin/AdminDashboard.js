@@ -1028,12 +1028,13 @@ const AdminDashboard = ({ user: propUser }) => {
                         </div>
                     )}
                     
-                    {PermissionChecks.canViewMappings(userPermissions) && (
+                    {/* 매칭 시스템 - 관리자 역할이면 항상 표시 */}
+                    {(RoleUtils.isAdmin(user) || RoleUtils.hasRole(user, USER_ROLES.HQ_MASTER) || RoleUtils.hasRole(user, USER_ROLES.BRANCH_SUPER_ADMIN)) && (
                         <div className="mg-management-card" onClick={() => navigate(ADMIN_ROUTES.MAPPING_MANAGEMENT)}>
                             <div className="mg-management-icon">
                                 <FaLink />
                             </div>
-                            <h3>매칭 관리</h3>
+                            <h3>매칭 시스템</h3>
                             <p className="mg-management-description">상담사와 내담자 매칭을 관리합니다</p>
                         </div>
                     )}
@@ -1042,6 +1043,8 @@ const AdminDashboard = ({ user: propUser }) => {
                         <div className="mg-management-icon">
                             <FaCog />
                         </div>
+                        <h3>공통코드</h3>
+                        <p className="mg-management-description">시스템 공통코드를 관리합니다</p>
                     </div>
                     
                     <div className="mg-management-card" onClick={() => navigate(ADMIN_ROUTES.SYSTEM_NOTIFICATIONS)}>

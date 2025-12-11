@@ -1,11 +1,14 @@
 -- ============================================
--- CopyDefaultTenantCodes 프로시저
+-- V64: CopyDefaultTenantCodes 프로시저 업데이트 - 단회기 패키지 추가
 -- ============================================
--- 목적: 새 테넌트 생성 시 기본 테넌트 코드 자동 복사
--- 작성일: 2025-11-26
+-- 목적: 테넌트 생성 시 기본 단회기 패키지 자동 등록
+--      단회기 패키지: 75,000원, 80,000원, 85,000원, 90,000원, 95,000원, 100,000원 (각 1회기)
+-- 작성일: 2025-12-11
 -- ============================================
 
-DROP PROCEDURE IF EXISTS CopyDefaultTenantCodes;
+DELIMITER //
+
+DROP PROCEDURE IF EXISTS CopyDefaultTenantCodes //
 
 CREATE PROCEDURE CopyDefaultTenantCodes(
     IN p_tenant_id VARCHAR(64),
@@ -103,7 +106,7 @@ BEGIN
          JSON_OBJECT('price', 50000, 'sessions', 20, 'duration', 90, 'unit', '회'), 
          3, TRUE, p_tenant_id, NOW(), NOW(), 'SYSTEM_AUTO_COPY', 'SYSTEM_AUTO_COPY', FALSE, 0),
         
-        -- 기본 단회기 패키지 생성 (표준화 2025-12-08: 테넌트 생성 시 기본 단회기 패키지 자동 등록)
+        -- 기본 단회기 패키지 생성 (표준화 2025-12-11: 테넌트 생성 시 기본 단회기 패키지 자동 등록)
         ('CONSULTATION_PACKAGE', 'SINGLE_75000', '단회기 75,000원', '단회기 75,000원', '1회기 상담 패키지', 
          JSON_OBJECT('price', 75000, 'duration', 50, 'unit', '회', 'sessions', 1), 
          4, TRUE, p_tenant_id, NOW(), NOW(), 'SYSTEM_AUTO_COPY', 'SYSTEM_AUTO_COPY', FALSE, 0),
@@ -245,4 +248,7 @@ BEGIN
     
     SET p_success = TRUE;
     COMMIT;
-END;
+END //
+
+DELIMITER ;
+

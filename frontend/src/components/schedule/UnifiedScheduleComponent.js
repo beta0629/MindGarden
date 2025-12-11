@@ -9,7 +9,7 @@ import DateActionModal from './DateActionModal';
 import ScheduleHeader from '../ui/Schedule/ScheduleHeader';
 import ScheduleLegend from '../ui/Schedule/ScheduleLegend';
 import ScheduleCalendarView from '../ui/Schedule/ScheduleCalendarView';
-import { apiGet, apiPut, getApiBaseUrl } from '../../utils/ajax';
+import { apiGet, apiPut } from '../../utils/ajax';
 import { getStatusColor, getStatusIcon } from '../../utils/codeHelper';
 import { getCommonCodes } from '../../utils/commonCodeApi';
 import notificationManager from '../../utils/notification';

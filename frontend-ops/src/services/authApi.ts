@@ -109,7 +109,6 @@ export async function login(request: LoginRequest): Promise<LoginResponse> {
     console.log("[authApi.login] 클라이언트 사이드 쿠키 설정:", {
       hasToken,
       isHttps,
-      domain,
       cookieOptions,
       cookiesPreview: cookies.substring(0, 100) + "..."
     });

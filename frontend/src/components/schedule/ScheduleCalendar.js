@@ -438,19 +438,14 @@ const ScheduleCalendar = ({ userRole, userId }) => {
             const newStart = event.start;
             const newEnd = event.end;
             
-            const response = await apiPut(`/api/v1/schedules/${event.id}`, {
+            await apiPut(`/api/v1/schedules/${event.id}`, {
                 date: newStart.toISOString().split('T')[0],
                 startTime: newStart.toTimeString().split(' ')[0].substring(0, 5),
                 endTime: newEnd.toTimeString().split(' ')[0].substring(0, 5)
             });
             
-            if (response && (response.success !== false)) {
-                notificationManager.success('일정이 업데이트되었습니다.');
-                loadSchedules(); // 스케줄 다시 로드
-            } else {
-                info.revert();
-                notificationManager.error('일정 업데이트에 실패했습니다.');
-            }
+            notificationManager.success('일정이 업데이트되었습니다.');
+            loadSchedules(); // 스케줄 다시 로드
         } catch (error) {
             console.error('일정 업데이트 실패:', error);
             info.revert();

@@ -33,7 +33,7 @@ jobs:
         
     - name: 🏗️ Ops 프론트엔드 빌드
       env:
-        NEXT_PUBLIC_OPS_API_BASE_URL: ""
+        NEXT_PUBLIC_OPS_API_BASE_URL: "https://ops.dev.e-trinity.co.kr/api/v1"
         NEXT_PUBLIC_OPS_API_USE_MOCK: "false"
         NODE_ENV: production
         BUILD_STANDALONE: "true"

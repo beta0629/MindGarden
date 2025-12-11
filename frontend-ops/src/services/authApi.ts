@@ -87,13 +87,39 @@ export async function login(request: LoginRequest): Promise<LoginResponse> {
   if (typeof document !== "undefined") {
     const isHttps = window.location.protocol === "https:";
     const maxAge = 3600; // 1시간
-    const cookieOptions = `path=/; max-age=${maxAge}; samesite=lax${isHttps ? "; secure" : ""}`;
+    const domain = window.location.hostname;
     
+    // 쿠키 옵션 구성 (HTTPS 환경에서는 secure 필수)
+    const cookieOptions = [
+      `path=/`,
+      `max-age=${maxAge}`,
+      `samesite=lax`,
+      ...(isHttps ? ["secure"] : []),
+      // 도메인이 localhost가 아니면 domain 설정 (쿠키 공유를 위해)
+      ...(domain !== "localhost" && !domain.startsWith("127.") ? [`domain=${domain.split('.').slice(-2).join('.')}`] : [])
+    ].join("; ");
+    
+    // 쿠키 설정
     document.cookie = `ops_token=${responseData.token}; ${cookieOptions}`;
     document.cookie = `ops_actor_id=${encodeURIComponent(responseData.actorId || "")}; ${cookieOptions}`;
     document.cookie = `ops_actor_role=${responseData.actorRole || "HQ_ADMIN"}; ${cookieOptions}`;
     
-    console.log("[authApi.login] 클라이언트 사이드 쿠키 설정 완료");
+    // 쿠키 설정 확인
+    const cookies = document.cookie;
+    const hasToken = cookies.includes("ops_token=");
+    
+    console.log("[authApi.login] 클라이언트 사이드 쿠키 설정:", {
+      hasToken,
+      isHttps,
+      domain,
+      cookieOptions,
+      cookiesPreview: cookies.substring(0, 100) + "..."
+    });
+    
+    if (!hasToken) {
+      console.error("[authApi.login] 쿠키 설정 실패 - 쿠키가 브라우저에 저장되지 않았습니다.");
+      throw new Error("쿠키 설정에 실패했습니다. 브라우저 설정을 확인해주세요.");
+    }
   }
   
   return responseData as LoginResponse;

@@ -50,15 +50,15 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
           hasToken: !!responseData.token
         });
         
-        // 쿠키 설정 완료 후 리다이렉트 (정적 export 환경에서는 클라이언트 사이드 쿠키 설정됨)
-        // 쿠키가 브라우저에 적용될 시간을 충분히 확보
+        // 쿠키 설정은 authApi.login에서 이미 완료됨
+        // 쿠키가 브라우저에 적용될 시간을 확보한 후 리다이렉트
         setTimeout(() => {
-          // 쿠키 확인
+          // 쿠키 확인 (authApi.login에서 이미 확인했지만, 리다이렉트 전 재확인)
           const cookies = document.cookie;
           const hasToken = cookies.includes("ops_token=");
-          console.log("[LoginForm] 리다이렉트 전 쿠키 확인:", {
+          console.log("[LoginForm] 리다이렉트 전 최종 쿠키 확인:", {
             hasToken,
-            cookies: cookies.substring(0, 100) + "...",
+            cookies: cookies.substring(0, 200) + "...",
             redirectPath
           });
           
@@ -69,8 +69,9 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
           }
           
           console.log("[LoginForm] 대시보드로 리다이렉트:", redirectPath);
+          // window.location.href를 사용하여 전체 페이지 리로드 (쿠키 적용 보장)
           window.location.href = redirectPath;
-        }, 300); // 100ms -> 300ms로 증가 (쿠키 적용 대기 시간 확보)
+        }, 200); // 쿠키 적용 대기 시간
       } catch (error) {
         const errorMessage = error instanceof Error
           ? error.message

@@ -1308,6 +1308,23 @@ public class OnboardingServiceImpl implements OnboardingService {
             log.warn("⚠️ 상담 유형 코드 삽입 실패 (건너뜀): {}", e.getMessage());
         }
         
+        // 표준화 2025-12-08: 담당 업무 코드 추가
+        try {
+            insertCommonCodeIfNotExists(tenantId, "RESPONSIBILITY", "COUNSELING", 
+                "상담", "상담", "상담 업무", null, 1, createdByValue);
+            insertedCount++;
+        } catch (Exception e) {
+            log.warn("⚠️ 담당 업무 코드 삽입 실패 (건너뜀): {}", e.getMessage());
+        }
+        
+        try {
+            insertCommonCodeIfNotExists(tenantId, "RESPONSIBILITY", "ADMINISTRATION", 
+                "행정", "행정", "행정 업무", null, 2, createdByValue);
+            insertedCount++;
+        } catch (Exception e) {
+            log.warn("⚠️ 담당 업무 코드 삽입 실패 (건너뜀): {}", e.getMessage());
+        }
+        
         log.info("✅ 기본 테넌트 공통코드 추가 완료: tenantId={}, insertedCount={}", tenantId, insertedCount);
     }
     

@@ -181,40 +181,33 @@ export default function OnboardingPage() {
             }
           }
           
-          // apiGet이 반환하는 응답 처리
-          // api.ts에서 401/403 오류 시 { success: false, data: {} } 반환
-          if (response && typeof response === 'object') {
-            // success: false인 경우는 로그인되지 않은 상태
-            if ('success' in response && response.success === false) {
-              setIsLoggedIn(false);
-              setShowLogin(false);
-            } else if ('email' in response || 'tenantId' in response || (response as any).data) {
-              // 로그인된 사용자
-              const userData = (response as any).data || response;
-              setIsLoggedIn(true);
-              setShowLogin(false);
-              
-              // 이미 로그인된 사용자는 이메일 정보를 자동으로 채움
-              if (userData.email) {
-                const userEmail = userData.email;
-                setTimeout(() => {
-                  setFormData(prev => ({
-                    ...prev,
-                    contactEmail: userEmail,
-                  }));
-                  setEmailVerified(true);
-                  loadExistingOnboardingRequests(userEmail);
-                }, 0);
-              }
-            } else {
-              // 응답이 있지만 사용자 정보가 없는 경우
-              setIsLoggedIn(false);
-              setShowLogin(false);
+          if (user) {
+            setIsLoggedIn(true);
+            setShowLogin(false);
+            
+            // 이미 로그인된 사용자는 이메일 정보를 자동으로 채움
+            // React 경고 방지: 상태 업데이트를 다음 렌더링 사이클로 지연
+            if (user.email) {
+              const userEmail = user.email; // 타입 가드
+              // setTimeout으로 상태 업데이트를 다음 이벤트 루프로 지연
+              setTimeout(() => {
+                setFormData(prev => ({
+                  ...prev,
+                  contactEmail: userEmail,
+                  // 필요한 경우 다른 필드도 채울 수 있음
+                }));
+                // 이메일 인증 완료 처리 (이미 로그인된 사용자이므로)
+                setEmailVerified(true);
+                
+                // 진행 중인 온보딩 요청 조회
+                loadExistingOnboardingRequests(userEmail);
+              }, 0);
             }
           } else {
-            // 응답이 없는 경우 (로그인되지 않은 상태)
+            // 로그인되지 않은 경우 - 로그인 옵션 제공
             setIsLoggedIn(false);
-            setShowLogin(false);
+            // 환영 화면에서 로그인 옵션을 제공하도록 설정
+            // setShowLogin(false); // 로그인 화면 표시하지 않음 (주석 처리)
           }
         } catch (err) {
           // 네트워크 오류 등 예상치 못한 오류만 catch

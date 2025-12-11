@@ -113,9 +113,9 @@ export default function Step2BusinessType({
                     <button
                       key={item.itemId}
                       type="button"
-                      onClick={() => handleBusinessTypeSelect(item.businessType)}
+                      onClick={() => handleBusinessTypeSelect(item.itemCode)}
                       className={`trinity-onboarding__grid-button ${
-                        formData.businessType === item.businessType
+                        formData.businessType === item.itemCode
                           ? "trinity-onboarding__grid-button--active"
                           : ""
                       }`}
@@ -140,7 +140,7 @@ export default function Step2BusinessType({
                   {
                     // 세부 업종이 있으면 세부 업종 이름, 없으면 카테고리 이름 표시
                     businessCategoryItems.find(
-                      (item) => item.businessType === formData.businessType
+                      (item) => item.itemCode === formData.businessType
                     )?.nameKo ||
                     businessCategories.find(
                       (category) => category.categoryCode === formData.businessType

@@ -27,7 +27,8 @@ const ConsultantComprehensiveManagement = () => {
     const [showModal, setShowModal] = useState(false);
     const [modalType, setModalType] = useState('view');
     const [formData, setFormData] = useState({
-        email: '', // 표준화 2025-12-08: 이메일만 입력받음 (userId, password, name 자동 생성)
+        name: '', // 이름 (선택사항, 없으면 이메일 로컬 파트에서 자동 생성)
+        email: '', // 표준화 2025-12-08: 이메일만 입력받음 (userId, password 자동 생성)
         phone: '',
         // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         status: 'ACTIVE',
@@ -498,6 +499,7 @@ const ConsultantComprehensiveManagement = () => {
                 }
                 
                 setFormData({
+                    name: consultant.name || '',
                     email: consultant.email || '',
                     phone: consultant.phone || '',
                     // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
@@ -507,6 +509,7 @@ const ConsultantComprehensiveManagement = () => {
             }
         } else if (type === 'create') {
             setFormData({
+                name: '', // 이름 (선택사항)
                 email: '', // 표준화 2025-12-08: 이메일만 입력받음
                 phone: '',
                 // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
@@ -522,6 +525,7 @@ const ConsultantComprehensiveManagement = () => {
         setModalType('view');
         setSelectedConsultant(null);
         setFormData({
+            name: '', // 이름 (선택사항)
             email: '', // 표준화 2025-12-08: 이메일만 입력받음
             phone: '',
             // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용

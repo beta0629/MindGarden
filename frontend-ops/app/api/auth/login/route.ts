@@ -43,12 +43,13 @@ export async function POST(request: Request) {
     const backendUrl = `${DEFAULT_API_BASE_URL}/ops/auth/login`;
     console.log(`[Ops Auth] 로그인 시도: username=${username}, backend=${backendUrl}`);
 
+    // 백엔드 API는 userId를 기대하므로 변환
     const backendResponse = await fetch(backendUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({ username, password })
+      body: JSON.stringify({ userId: username, password })
     });
 
     console.log(`[Ops Auth] 백엔드 응답: status=${backendResponse.status}, ok=${backendResponse.ok}, url=${backendUrl}`);

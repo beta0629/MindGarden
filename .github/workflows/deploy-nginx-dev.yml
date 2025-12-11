@@ -55,14 +55,27 @@ jobs:
           
           # SSL 인증서 확인 및 발급
           echo "🔐 SSL 인증서 확인 중..."
-          if [ ! -f /etc/letsencrypt/live/dev.e-trinity.co.kr/fullchain.pem ]; then
-            echo "⚠️ dev.e-trinity.co.kr 인증서가 없습니다. 발급 시도 중..."
-            # Nginx 설정 먼저 적용 후 인증서 발급
+          
+          # Nginx 설정 먼저 적용 (인증서 발급 전 필요)
+          if [ -f /tmp/core-solution-dev.conf ]; then
             sudo cp /tmp/core-solution-dev.conf /etc/nginx/sites-available/core-solution-dev
             sudo ln -sf /etc/nginx/sites-available/core-solution-dev /etc/nginx/sites-enabled/core-solution-dev
             sudo nginx -t && sudo systemctl reload nginx
-            # 인증서 발급 (HTTP-01 challenge 사용)
+          fi
+          
+          # dev.e-trinity.co.kr 인증서 확인 및 발급
+          if [ ! -f /etc/letsencrypt/live/dev.e-trinity.co.kr/fullchain.pem ]; then
+            echo "⚠️ dev.e-trinity.co.kr 인증서가 없습니다. 발급 시도 중..."
             sudo certbot --nginx -d dev.e-trinity.co.kr --non-interactive --agree-tos --email admin@e-trinity.co.kr --redirect || echo "⚠️ 인증서 발급 실패 (수동 발급 필요)"
+          else
+            # 인증서가 있지만 잘못된 인증서일 수 있으므로 확인 후 재발급
+            echo "🔍 dev.e-trinity.co.kr 인증서 확인 중..."
+            CERT_CN=$(openssl x509 -noout -subject -in /etc/letsencrypt/live/dev.e-trinity.co.kr/fullchain.pem 2>/dev/null | grep -o 'CN=[^,]*' | cut -d= -f2)
+            if [ "$CERT_CN" != "dev.e-trinity.co.kr" ]; then
+              echo "⚠️ 잘못된 인증서 감지 (CN=$CERT_CN). 재발급 시도 중..."
+              sudo certbot delete --cert-name dev.e-trinity.co.kr --non-interactive 2>/dev/null || true
+              sudo certbot --nginx -d dev.e-trinity.co.kr --non-interactive --agree-tos --email admin@e-trinity.co.kr --redirect || echo "⚠️ 인증서 재발급 실패 (수동 발급 필요)"
+            fi
           fi
           if [ ! -f /etc/letsencrypt/live/apply.dev.e-trinity.co.kr/fullchain.pem ]; then
             echo "⚠️ apply.dev.e-trinity.co.kr 인증서가 없습니다. 발급 시도 중..."

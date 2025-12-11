@@ -23,11 +23,32 @@ export interface LoginResponse {
 }
 
 export async function login(request: LoginRequest): Promise<LoginResponse> {
-  // Next.js API 라우트를 통해 로그인 (서버 사이드 쿠키 설정을 위해)
-  // /api/auth/login이 백엔드 API를 호출하고 쿠키를 설정함
-  const apiPath = "/api/auth/login";
+  // 환경 변수에서 API Base URL 가져오기
+  const envApiBaseUrl = process.env.NEXT_PUBLIC_OPS_API_BASE_URL ?? "";
   
-  console.log("[authApi.login] 로그인 API 호출 (Next.js API 라우트):", { apiPath });
+  // 로컬 개발 환경에서는 Next.js API 라우트 사용 (서버 사이드 쿠키 설정)
+  // 정적 export 환경(개발/운영 서버)에서는 백엔드 API 직접 호출 (클라이언트 사이드 쿠키 설정)
+  const isLocalhost = typeof window !== "undefined" && window.location.hostname === "localhost";
+  
+  let apiPath: string;
+  let requestBody: any;
+  
+  if (isLocalhost) {
+    // 로컬: Next.js API 라우트 사용
+    apiPath = "/api/auth/login";
+    requestBody = request; // Next.js API 라우트가 username을 userId로 변환함
+  } else {
+    // 정적 export 환경: 백엔드 API 직접 호출
+    const apiBaseUrl = envApiBaseUrl || "";
+    apiPath = `${apiBaseUrl}/ops/auth/login`;
+    // 백엔드 API는 userId를 기대하므로 변환
+    requestBody = {
+      userId: request.username,
+      password: request.password
+    };
+  }
+  
+  console.log("[authApi.login] 로그인 API 호출:", { apiPath, isLocalhost, envApiBaseUrl });
   
   const response = await fetch(apiPath, {
     method: "POST",
@@ -35,7 +56,7 @@ export async function login(request: LoginRequest): Promise<LoginResponse> {
       "Content-Type": "application/json",
       Accept: "application/json"
     },
-    body: JSON.stringify(request), // Next.js API 라우트가 username을 userId로 변환함
+    body: JSON.stringify(requestBody),
     credentials: "include" // 쿠키 포함
   });
 
@@ -56,15 +77,26 @@ export async function login(request: LoginRequest): Promise<LoginResponse> {
 
   const body = await response.json();
   
-  // Next.js API 라우트 응답 형식: { success: true, data: LoginResponse }
-  // 또는 직접 LoginResponse 형태일 수 있음
+  // 응답 형식: { success: true, data: LoginResponse } 또는 직접 LoginResponse
   const responseData = body?.data || body;
   
   if (!responseData || !responseData.token) {
     throw new Error("로그인 응답에 토큰이 없습니다.");
   }
   
-  // 쿠키는 서버 사이드에서 이미 설정되었으므로, 응답 데이터만 반환
+  // 정적 export 환경에서는 클라이언트 사이드에서 쿠키 설정 필요
+  if (!isLocalhost && typeof document !== "undefined") {
+    const isHttps = window.location.protocol === "https:";
+    const maxAge = 3600; // 1시간
+    const cookieOptions = `path=/; max-age=${maxAge}; samesite=lax${isHttps ? "; secure" : ""}`;
+    
+    document.cookie = `ops_token=${responseData.token}; ${cookieOptions}`;
+    document.cookie = `ops_actor_id=${encodeURIComponent(responseData.actorId || "")}; ${cookieOptions}`;
+    document.cookie = `ops_actor_role=${responseData.actorRole || "HQ_ADMIN"}; ${cookieOptions}`;
+    
+    console.log("[authApi.login] 클라이언트 사이드 쿠키 설정 완료");
+  }
+  
   return responseData as LoginResponse;
 }
 

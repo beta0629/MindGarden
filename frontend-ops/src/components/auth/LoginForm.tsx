@@ -39,7 +39,7 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
         
         const responseData = await login(loginRequest);
         
-        // 로그인 성공 - Next.js API 라우트에서 서버 사이드 쿠키가 이미 설정됨
+        // 로그인 성공
         const redirectPath = redirectTo || "/dashboard";
         
         console.log("[LoginForm] 로그인 성공:", {
@@ -47,9 +47,11 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
           actorRole: responseData.actorRole
         });
         
-        // 서버 사이드 쿠키가 설정되었으므로 바로 리다이렉트
-        // 브라우저가 자동으로 쿠키를 포함하여 다음 요청 전송
-        window.location.href = redirectPath;
+        // 쿠키 설정 완료 후 리다이렉트 (정적 export 환경에서는 클라이언트 사이드 쿠키 설정됨)
+        // 짧은 지연으로 쿠키 적용 대기
+        setTimeout(() => {
+          window.location.href = redirectPath;
+        }, 100);
       } catch (error) {
         const errorMessage = error instanceof Error
           ? error.message

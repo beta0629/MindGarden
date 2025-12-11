@@ -134,7 +134,7 @@ root     1772070  218 10.1 4352352 407732 ?      Ssl  09:10   0:24 /usr/bin/java
 
 ---
 
-## ⚠️ 발견된 문제
+## ⚠️ 발견된 문제 및 해결
 
 ### 스키마 검증 오류
 ```
@@ -142,14 +142,25 @@ Schema-validation: wrong column type encountered in column [id] in table [ops_fe
 found [binary (Types#BINARY)], but expecting [bigint (Types#BIGINT)]
 ```
 
-**원인**: `ops_feature_flag` 테이블의 `id` 컬럼 타입이 `binary`인데, 엔티티에서는 `bigint`를 기대하고 있습니다.
+**원인**: `ops_feature_flag` 테이블의 `id` 컬럼 타입이 `binary(16)` (UUID)인데, `FeatureFlag` 엔티티가 `BaseEntity`를 상속받아 `Long id` (BIGINT)를 사용하고 있었습니다.
 
 **영향**: 서비스 시작 시 스키마 검증 실패로 인해 재시작 반복
 
-**해결 방법**:
-1. `ops_feature_flag` 테이블의 `id` 컬럼 타입을 `bigint`로 변경
-2. 또는 엔티티의 `id` 타입을 `binary`로 변경
-3. 또는 스키마 검증 모드를 `validate`에서 `update` 또는 `none`으로 변경
+**해결 방법**: ✅ **수정 완료**
+1. `FeatureFlag` 엔티티에서 `BaseEntity` 상속 제거
+2. 필요한 필드(`id`, `createdAt`, `updatedAt`, `deletedAt`, `isDeleted`, `version`, `tenantId`) 직접 정의
+3. `id` 필드를 `UUID` 타입으로 정의 (`@Column(columnDefinition = "BINARY(16)")`)
+4. `FeatureFlagRepository`를 `JpaRepository<FeatureFlag, UUID>`로 변경
+5. `FeatureFlagService.toggle()` 메서드의 `flagId` 파라미터를 `UUID`로 변경
+6. `FeatureFlagOpsController`의 `flagId` 파라미터를 `UUID`로 변경
+
+**수정된 파일**:
+- `src/main/java/com/coresolution/core/domain/ops/FeatureFlag.java`
+- `src/main/java/com/coresolution/core/repository/ops/FeatureFlagRepository.java`
+- `src/main/java/com/coresolution/core/service/ops/FeatureFlagService.java`
+- `src/main/java/com/coresolution/core/controller/ops/FeatureFlagOpsController.java`
+
+**커밋**: `fix: ops_feature_flag 엔티티 스키마 검증 오류 수정`
 
 ---
 

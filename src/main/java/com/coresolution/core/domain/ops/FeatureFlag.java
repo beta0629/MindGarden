@@ -38,10 +38,13 @@ public class FeatureFlag {
     /**
      * UUID 타입의 ID
      * ops_feature_flag 테이블은 binary(16) UUID를 사용
+     * 
+     * 주의: MySQL에서 BINARY(16)은 UUID를 저장하는 데 사용되며,
+     * Hibernate는 이를 자동으로 처리합니다.
      */
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "id", columnDefinition = "BINARY(16)", nullable = false, updatable = false)
+    @Column(name = "id", columnDefinition = "BINARY(16)", nullable = false, updatable = false, length = 16)
     private UUID id;
     
     /**

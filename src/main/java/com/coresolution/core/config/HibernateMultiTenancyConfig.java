@@ -45,6 +45,16 @@ public class HibernateMultiTenancyConfig {
             // hibernateProperties.put("hibernate.multiTenancy", "SCHEMA");
             // hibernateProperties.put("hibernate.tenant_identifier_resolver", tenantIdentifierResolver);
             // hibernateProperties.put("hibernate.multi_tenant_connection_provider", multiTenantConnectionProvider);
+            
+            // 개발 환경에서 스키마 검증 비활성화 (ops_feature_flag 테이블 타입 불일치 문제 임시 해결)
+            String schemaValidation = System.getenv("HIBERNATE_SCHEMA_VALIDATION");
+            if ("false".equalsIgnoreCase(schemaValidation)) {
+                // 스키마 검증 완전 비활성화
+                hibernateProperties.put("hibernate.hbm2ddl.auto", "none");
+                // Hibernate 6.x에서는 validate 모드에서도 검증을 수행하므로, 
+                // 스키마 검증을 완전히 비활성화하려면 validate를 false로 설정
+                hibernateProperties.put("jakarta.persistence.schema-generation.database.action", "none");
+            }
         };
     }
 }

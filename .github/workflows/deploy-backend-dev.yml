@@ -159,8 +159,11 @@ jobs:
           sudo bash -c 'echo "export JWT_SECRET" >> /opt/mindgarden/start.sh'
           sudo bash -c 'echo "export PERSONAL_DATA_ENCRYPTION_KEY" >> /opt/mindgarden/start.sh'
           sudo bash -c 'echo "export PERSONAL_DATA_ENCRYPTION_IV" >> /opt/mindgarden/start.sh'
+          sudo bash -c 'echo "export OPS_ADMIN_USERNAME" >> /opt/mindgarden/start.sh'
+          sudo bash -c 'echo "export OPS_ADMIN_PASSWORD" >> /opt/mindgarden/start.sh'
+          sudo bash -c 'echo "export OPS_ADMIN_ROLE" >> /opt/mindgarden/start.sh'
           sudo bash -c 'echo "cd /var/www/mindgarden-dev" >> /opt/mindgarden/start.sh'
-          sudo bash -c 'echo "exec /usr/bin/java -jar app.jar --spring.profiles.active=dev" >> /opt/mindgarden/start.sh'
+          sudo bash -c 'echo "exec /usr/bin/java -jar app.jar --spring.profiles.active=dev -Dops.admin.userId=\"\$OPS_ADMIN_USERNAME\" -Dops.admin.password=\"\$OPS_ADMIN_PASSWORD\" -Dops.admin.role=\"\$OPS_ADMIN_ROLE\"" >> /opt/mindgarden/start.sh'
           sudo chmod +x /opt/mindgarden/start.sh
           echo "✅ 시작 스크립트 생성 완료"
           

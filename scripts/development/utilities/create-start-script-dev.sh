@@ -35,8 +35,11 @@ export DB_PORT
 export JWT_SECRET
 export PERSONAL_DATA_ENCRYPTION_KEY
 export PERSONAL_DATA_ENCRYPTION_IV
+export OPS_ADMIN_USERNAME
+export OPS_ADMIN_PASSWORD
+export OPS_ADMIN_ROLE
 cd /var/www/mindgarden-dev
-exec /usr/bin/java -jar app.jar --spring.profiles.active=dev
+exec /usr/bin/java -jar app.jar --spring.profiles.active=dev -Dops.admin.userId="$OPS_ADMIN_USERNAME" -Dops.admin.password="$OPS_ADMIN_PASSWORD" -Dops.admin.role="$OPS_ADMIN_ROLE"
 EOF
 
 sudo chmod +x $START_SCRIPT

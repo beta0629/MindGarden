@@ -24,7 +24,6 @@ import { getApiBaseUrl } from '../constants/api';
 
 // 런타임에 API_BASE_URL 가져오기 (window.location 확인)
 const getPermissionGroupApi = () => `${getApiBaseUrl()}/api/v1/permissions/groups`;
-const getPermissionGroupApi() = getPermissionGroupApi(); // 하위 호환성을 위해 유지
 
 /**
  * 내 권한 그룹 조회

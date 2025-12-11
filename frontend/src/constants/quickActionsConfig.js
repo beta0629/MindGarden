@@ -114,10 +114,10 @@ const CLIENT_ACTIONS = [
 const ADMIN_ACTIONS = [
   {
     id: 'mapping-management',
-    label: '매칭 관리',
+    label: '매칭 시스템',
     icon: <Link2 size={24} />,
     url: '/admin/mapping-management',
-    roles: ['ADMIN', 'HQ_MASTER'],
+    roles: ['ADMIN', 'HQ_MASTER', 'BRANCH_SUPER_ADMIN'],
     tooltip: '상담사-내담자 매칭 관리'
   },
   {

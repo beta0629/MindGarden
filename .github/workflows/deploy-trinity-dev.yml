@@ -34,8 +34,6 @@ jobs:
     - name: 🏗️ Trinity 프론트엔드 빌드
       run: |
         cd frontend-trinity
-        # 빌드 캐시 제거하여 최신 소스로 빌드
-        rm -rf .next out
         ESLINT_NO_DEV_ERRORS=true npm run build
         
     - name: 🔍 Trinity 프론트엔드 빌드 결과 확인

@@ -422,6 +422,7 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
         String path = request.getRequestURI();
         
         // 정적 리소스와 공개 API만 필터링하지 않음
+        // Ops Portal API는 JWT 토큰으로만 인증하므로 세션 기반 인증 필터 제외
         return path.startsWith("/static/") ||
                path.startsWith("/css/") ||
                path.startsWith("/js/") ||
@@ -432,6 +433,7 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
                path.equals("/manifest.json") ||
                path.startsWith("/api/auth/") ||  // 모든 인증 관련 API 제외
                path.startsWith("/api/v1/onboarding/") ||  // 온보딩 API 제외 (새로운 테넌트 등록)
+               path.startsWith("/api/v1/ops/") ||  // Ops Portal API 제외 (JWT 토큰으로만 인증)
                path.startsWith("/oauth2/") ||
                path.startsWith("/api/password-reset/") ||
                path.startsWith("/api/health/") ||

@@ -9,7 +9,7 @@ import DateActionModal from './DateActionModal';
 import ScheduleHeader from '../ui/Schedule/ScheduleHeader';
 import ScheduleLegend from '../ui/Schedule/ScheduleLegend';
 import ScheduleCalendarView from '../ui/Schedule/ScheduleCalendarView';
-import { apiGet } from '../../utils/ajax';
+import { apiGet, apiPut, getApiBaseUrl } from '../../utils/ajax';
 import { getStatusColor, getStatusIcon } from '../../utils/codeHelper';
 import { getCommonCodes } from '../../utils/commonCodeApi';
 import notificationManager from '../../utils/notification';
@@ -682,25 +682,15 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
         const newEnd = event.end;
 
         try {
-            const response = await fetch(`/api/schedules/${event.id}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    date: newStart.toISOString().split('T')[0],
-                    startTime: newStart.toTimeString().split(' ')[0].slice(0, 5),
-                    endTime: newEnd.toTimeString().split(' ')[0].slice(0, 5)
-                })
+            await apiPut(`/api/v1/schedules/${event.id}`, {
+                date: newStart.toISOString().split('T')[0],
+                startTime: newStart.toTimeString().split(' ')[0].slice(0, 5),
+                endTime: newEnd.toTimeString().split(' ')[0].slice(0, 5)
             });
 
-            if (!response.ok) {
-                info.revert();
-                notificationManager.error('스케줄 이동에 실패했습니다.');
-            } else {
-                console.log('✅ 스케줄 이동 완료');
-                notificationManager.success('스케줄 이동이 완료되었습니다.');
-            }
+            console.log('✅ 스케줄 이동 완료');
+            notificationManager.success('스케줄 이동이 완료되었습니다.');
+            await loadSchedules(); // 스케줄 다시 로드
         } catch (error) {
             console.error('스케줄 이동 오류:', error);
             info.revert();

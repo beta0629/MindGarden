@@ -5,7 +5,7 @@ import VacationManagementModal from '../admin/VacationManagementModal';
 import TimeSelectionModal from './TimeSelectionModal';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import { useSession } from '../../contexts/SessionContext';
-import { apiGet } from '../../utils/ajax';
+import { apiGet, apiPut } from '../../utils/ajax';
 import { getStatusColor, getStatusIcon } from '../../utils/codeHelper';
 import notificationManager from '../../utils/notification';
 
@@ -438,18 +438,13 @@ const ScheduleCalendar = ({ userRole, userId }) => {
             const newStart = event.start;
             const newEnd = event.end;
             
-            const response = await fetch(`/api/schedules/${event.id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
-                body: JSON.stringify({
-                    date: newStart.toISOString().split('T')[0],
-                    startTime: newStart.toTimeString().split(' ')[0].substring(0, 5),
-                    endTime: newEnd.toTimeString().split(' ')[0].substring(0, 5)
-                })
+            const response = await apiPut(`/api/v1/schedules/${event.id}`, {
+                date: newStart.toISOString().split('T')[0],
+                startTime: newStart.toTimeString().split(' ')[0].substring(0, 5),
+                endTime: newEnd.toTimeString().split(' ')[0].substring(0, 5)
             });
             
-            if (response.ok) {
+            if (response && (response.success !== false)) {
                 notificationManager.success('일정이 업데이트되었습니다.');
                 loadSchedules(); // 스케줄 다시 로드
             } else {

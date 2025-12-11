@@ -678,23 +678,21 @@ const ConsultantComprehensiveManagement = () => {
                 options.headers = { 'X-Tenant-Id': tenantId };
             }
             
+            // 이름 필수 검증
+            if (!data.name || !data.name.trim()) {
+                console.error('❌ 이름은 필수입니다.');
+                window.dispatchEvent(new CustomEvent('showNotification', {
+                    detail: { message: '이름은 필수입니다.', type: 'error' }
+                }));
+                return { success: false };
+            }
+            
             // 표준화 2025-12-08: userId 자동 생성
-            // userId가 없으면 name을 기반으로 자동 생성, 없으면 email 사용
+            // userId가 없으면 name을 기반으로 자동 생성
             let userId = data.userId && data.userId.trim();
             if (!userId || userId.length < 2) {
-                // name이 있으면 name을 userId로 사용 (공백 제거, 소문자 변환)
-                if (data.name && data.name.trim()) {
-                    userId = data.name.trim().toLowerCase().replace(/\s+/g, '');
-                } else if (data.email && data.email.trim()) {
-                    // name도 없으면 email 사용
-                    userId = data.email.trim().split('@')[0]; // @ 앞부분만 사용
-                } else {
-                    console.error('❌ userId 생성 실패: name과 email이 모두 없습니다.');
-                    window.dispatchEvent(new CustomEvent('showNotification', {
-                        detail: { message: '이름 또는 이메일은 필수입니다.', type: 'error' }
-                    }));
-                    return { success: false };
-                }
+                // name을 userId로 사용 (공백 제거, 소문자 변환)
+                userId = data.name.trim().toLowerCase().replace(/\s+/g, '');
             }
             
             const requestData = {
@@ -1203,18 +1201,16 @@ const ConsultantComprehensiveManagement = () => {
                                     )}
                                     
                                     <div className="mg-v2-form-group">
-                                        <label className="mg-v2-form-label">이름 {modalType === 'create' && '(선택사항)'}</label>
+                                        <label className="mg-v2-form-label">이름 *</label>
                                         <input
                                             type="text"
                                             name="name"
                                             value={ formData.name || '' }
                                             onChange={ handleFormChange }
-                                            placeholder={modalType === 'create' ? "이름을 입력하세요 (선택사항)" : "이름을 입력하세요"}
+                                            placeholder="이름을 입력하세요"
                                             className="mg-v2-form-input"
+                                            required
                                         />
-                                        {modalType === 'create' && (
-                                            <small className="mg-v2-form-help">이름을 입력하지 않으면 이메일에서 자동으로 생성됩니다.</small>
-                                        )}
                                     </div>
                                     
                                     <div className="mg-v2-form-group">

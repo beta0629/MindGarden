@@ -15,21 +15,44 @@
  */
 
 import axios from 'axios';
+import { getApiBaseUrl } from '../constants/api';
+import { getDefaultApiHeaders } from './apiHeaders';
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8080';
-const TENANT_COMMON_CODE_API = `${API_BASE_URL}/api/v1/tenant/common-codes`;
+/**
+ * 테넌트 공통코드 API 기본 URL (런타임에 동적 생성)
+ */
+const getTenantCommonCodeApiBase = () => {
+    const baseUrl = getApiBaseUrl();
+    return `${baseUrl}/api/v1/tenant/common-codes`;
+};
 
 /**
  * 테넌트 공통코드 그룹 목록 조회
  */
 export const getTenantCodeGroups = async () => {
     try {
-        const response = await axios.get(`${TENANT_COMMON_CODE_API}/groups`, {
-            withCredentials: true
+        const apiBase = getTenantCommonCodeApiBase();
+        const url = `${apiBase}/groups`;
+        console.log('📋 테넌트 공통코드 그룹 조회 API 호출:', url);
+        
+        const headers = getDefaultApiHeaders();
+        console.log('📋 API 헤더:', { ...headers, 'Authorization': headers['Authorization'] ? 'Bearer ***' : undefined, 'X-Tenant-Id': headers['X-Tenant-Id'] });
+        
+        const response = await axios.get(url, {
+            withCredentials: true,
+            headers
         });
+        
+        console.log('✅ 테넌트 공통코드 그룹 조회 성공:', response.data);
         return response.data;
     } catch (error) {
-        console.error('테넌트 공통코드 그룹 조회 실패:', error);
+        console.error('❌ 테넌트 공통코드 그룹 조회 실패:', error);
+        console.error('❌ 오류 상세:', {
+            message: error.message,
+            response: error.response?.data,
+            status: error.response?.status,
+            url: error.config?.url
+        });
         throw error;
     }
 };
@@ -39,12 +62,28 @@ export const getTenantCodeGroups = async () => {
  */
 export const getTenantCodesByGroup = async (codeGroup) => {
     try {
-        const response = await axios.get(`${TENANT_COMMON_CODE_API}/groups/${codeGroup}`, {
-            withCredentials: true
+        const apiBase = getTenantCommonCodeApiBase();
+        const url = `${apiBase}/groups/${codeGroup}`;
+        console.log('📋 테넌트 공통코드 조회 API 호출:', url, 'codeGroup:', codeGroup);
+        
+        const headers = getDefaultApiHeaders();
+        console.log('📋 API 헤더:', { ...headers, 'Authorization': headers['Authorization'] ? 'Bearer ***' : undefined, 'X-Tenant-Id': headers['X-Tenant-Id'] });
+        
+        const response = await axios.get(url, {
+            withCredentials: true,
+            headers
         });
+        
+        console.log('✅ 테넌트 공통코드 조회 성공:', response.data);
         return response.data;
     } catch (error) {
-        console.error(`테넌트 공통코드 조회 실패 (${codeGroup}):`, error);
+        console.error(`❌ 테넌트 공통코드 조회 실패 (${codeGroup}):`, error);
+        console.error('❌ 오류 상세:', {
+            message: error.message,
+            response: error.response?.data,
+            status: error.response?.status,
+            url: error.config?.url
+        });
         throw error;
     }
 };
@@ -54,8 +93,11 @@ export const getTenantCodesByGroup = async (codeGroup) => {
  */
 export const createTenantCode = async (codeData) => {
     try {
-        const response = await axios.post(TENANT_COMMON_CODE_API, codeData, {
-            withCredentials: true
+        const apiBase = getTenantCommonCodeApiBase();
+        const headers = getDefaultApiHeaders();
+        const response = await axios.post(apiBase, codeData, {
+            withCredentials: true,
+            headers
         });
         return response.data;
     } catch (error) {
@@ -69,8 +111,11 @@ export const createTenantCode = async (codeData) => {
  */
 export const updateTenantCode = async (codeId, codeData) => {
     try {
-        const response = await axios.put(`${TENANT_COMMON_CODE_API}/${codeId}`, codeData, {
-            withCredentials: true
+        const apiBase = getTenantCommonCodeApiBase();
+        const headers = getDefaultApiHeaders();
+        const response = await axios.put(`${apiBase}/${codeId}`, codeData, {
+            withCredentials: true,
+            headers
         });
         return response.data;
     } catch (error) {
@@ -84,8 +129,11 @@ export const updateTenantCode = async (codeId, codeData) => {
  */
 export const deleteTenantCode = async (codeId) => {
     try {
-        const response = await axios.delete(`${TENANT_COMMON_CODE_API}/${codeId}`, {
-            withCredentials: true
+        const apiBase = getTenantCommonCodeApiBase();
+        const headers = getDefaultApiHeaders();
+        const response = await axios.delete(`${apiBase}/${codeId}`, {
+            withCredentials: true,
+            headers
         });
         return response.data;
     } catch (error) {
@@ -99,10 +147,15 @@ export const deleteTenantCode = async (codeId) => {
  */
 export const toggleTenantCodeActive = async (codeId, isActive) => {
     try {
+        const apiBase = getTenantCommonCodeApiBase();
+        const headers = getDefaultApiHeaders();
         const response = await axios.patch(
-            `${TENANT_COMMON_CODE_API}/${codeId}/active`,
+            `${apiBase}/${codeId}/active`,
             { isActive },
-            { withCredentials: true }
+            { 
+                withCredentials: true,
+                headers
+            }
         );
         return response.data;
     } catch (error) {
@@ -116,10 +169,15 @@ export const toggleTenantCodeActive = async (codeId, isActive) => {
  */
 export const updateTenantCodeOrder = async (codeId, sortOrder) => {
     try {
+        const apiBase = getTenantCommonCodeApiBase();
+        const headers = getDefaultApiHeaders();
         const response = await axios.patch(
-            `${TENANT_COMMON_CODE_API}/${codeId}/order`,
+            `${apiBase}/${codeId}/order`,
             { sortOrder },
-            { withCredentials: true }
+            { 
+                withCredentials: true,
+                headers
+            }
         );
         return response.data;
     } catch (error) {
@@ -133,10 +191,15 @@ export const updateTenantCodeOrder = async (codeId, sortOrder) => {
  */
 export const createConsultationPackage = async (packageData) => {
     try {
+        const apiBase = getTenantCommonCodeApiBase();
+        const headers = getDefaultApiHeaders();
         const response = await axios.post(
-            `${TENANT_COMMON_CODE_API}/consultation-packages`,
+            `${apiBase}/consultation-packages`,
             packageData,
-            { withCredentials: true }
+            { 
+                withCredentials: true,
+                headers
+            }
         );
         return response.data;
     } catch (error) {
@@ -150,10 +213,15 @@ export const createConsultationPackage = async (packageData) => {
  */
 export const createAssessmentType = async (assessmentData) => {
     try {
+        const apiBase = getTenantCommonCodeApiBase();
+        const headers = getDefaultApiHeaders();
         const response = await axios.post(
-            `${TENANT_COMMON_CODE_API}/assessment-types`,
+            `${apiBase}/assessment-types`,
             assessmentData,
-            { withCredentials: true }
+            { 
+                withCredentials: true,
+                headers
+            }
         );
         return response.data;
     } catch (error) {

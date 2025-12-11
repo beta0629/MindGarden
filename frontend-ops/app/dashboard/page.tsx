@@ -4,29 +4,39 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { fetchDashboardMetrics } from "@/services/dashboardService";
 import { DashboardMetrics } from "@/types/dashboard";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function DashboardPage() {
+  const { isAuthenticated } = useAuth();
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const loadMetrics = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const data = await fetchDashboardMetrics();
-        setMetrics(data);
-      } catch (err) {
-        console.error("대시보드 메트릭 로드 실패:", err);
-        setError(err instanceof Error ? err.message : "데이터를 불러오는데 실패했습니다.");
-      } finally {
-        setLoading(false);
-      }
-    };
+    // 인증되지 않았으면 API 호출하지 않음
+    if (isAuthenticated === false) {
+      return;
+    }
 
-    loadMetrics();
-  }, []);
+    // 인증 확인 대기 중이거나 인증된 경우에만 API 호출
+    if (isAuthenticated === true) {
+      const loadMetrics = async () => {
+        try {
+          setLoading(true);
+          setError(null);
+          const data = await fetchDashboardMetrics();
+          setMetrics(data);
+        } catch (err) {
+          console.error("대시보드 메트릭 로드 실패:", err);
+          setError(err instanceof Error ? err.message : "데이터를 불러오는데 실패했습니다.");
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      loadMetrics();
+    }
+  }, [isAuthenticated]);
 
   if (loading) {
     return (

@@ -476,42 +476,39 @@ const ScheduleDetailModal = ({
 
                     <div className="mg-v2-modal-footer">
                     {isVacationEvent() ? (
-                        <div className="schedule-detail-vacation-notice">
-                            <p className="schedule-detail-vacation-title">
+                        <div className="mg-v2-info-box mg-v2-text-center">
+                            <p className="mg-v2-text-base mg-v2-text-primary">
                                 🏖️ 이 이벤트는 상담사의 휴가입니다.
                             </p>
-                            <p className="schedule-detail-vacation-description">
+                            <p className="mg-v2-text-sm mg-v2-text-secondary mg-v2-mt-xs">
                                 해당 시간대에는 상담이 불가능합니다.
                             </p>
                         </div>
                     ) : !isClient ? (
-                        <>
-                            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
+                        <div className="mg-v2-modal-actions">
+                            {/* ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용 */}
                             {isStatus(scheduleData.status, 'BOOKED') && (
                                 <>
                                     <button 
-                                        className="mg-btn mg-btn--info mg-btn--icon-left"
+                                        className="mg-v2-btn mg-v2-btn-secondary"
                                         onClick={handleEditSchedule}
                                         disabled={loading}
                                     >
-                                        <span className="mg-btn__icon">✏️</span>
-                                        <span className="mg-btn__text">예약 변경</span>
+                                        ✏️ 예약 변경
                                     </button>
                                     <button 
-                                        className="mg-btn mg-btn--primary mg-btn--icon-left"
+                                        className="mg-v2-btn mg-v2-btn-primary"
                                         onClick={() => setShowConfirmModal(true)}
                                         disabled={loading}
                                     >
-                                        <span className="mg-btn__icon">✅</span>
-                                        <span className="mg-btn__text">예약 확정</span>
+                                        ✅ 예약 확정
                                     </button>
                                     <button 
-                                        className="mg-btn mg-btn--danger mg-btn--icon-left"
+                                        className="mg-v2-btn mg-v2-btn-danger"
                                         onClick={() => setShowCancelConfirm(true)}
                                         disabled={loading}
                                     >
-                                        <span className="mg-btn__icon">❌</span>
-                                        <span className="mg-btn__text">예약 취소</span>
+                                        ❌ 예약 취소
                                     </button>
                                 </>
                             )}

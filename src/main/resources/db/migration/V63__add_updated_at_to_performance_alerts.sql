@@ -11,7 +11,8 @@ ADD COLUMN updated_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDAT
 AFTER created_at;
 
 -- 기존 레코드의 updated_at을 created_at과 동일하게 설정
+-- MySQL 8.0에서는 '0000-00-00' 날짜를 허용하지 않으므로 NULL 체크만 수행
 UPDATE performance_alerts
 SET updated_at = created_at
-WHERE updated_at IS NULL OR updated_at = '0000-00-00 00:00:00.000000';
+WHERE updated_at IS NULL;
 

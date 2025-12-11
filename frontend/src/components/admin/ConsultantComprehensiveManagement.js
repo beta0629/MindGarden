@@ -43,12 +43,12 @@ const ConsultantComprehensiveManagement = () => {
             console.log('🔄 상담사 목록 로딩 시작...');
             
             // 세션 갱신을 통해 최신 tenantId 확보 (loadMappings, loadSchedules와 동일한 패턴)
-            if (typeof window !== 'undefined' && window.sessionManager) {
-                await window.sessionManager.checkSession(true);
+            try {
+                await sessionManager.checkSession(true);
                 
                 // tenantId가 실제로 있는지 확인 (대시보드와 달리 명시적으로 확인 필요)
-                const user = window.sessionManager.getUser();
-                const tenantId = user?.tenantId || window.sessionManager.getSessionInfo()?.tenantId;
+                const user = sessionManager.getUser();
+                const tenantId = user?.tenantId || sessionManager.getSessionInfo()?.tenantId;
                 
                 const tenantIdTrimmed = tenantId ? tenantId.trim() : '';
                 const isInvalidDefault = !tenantId || 
@@ -65,11 +65,11 @@ const ConsultantComprehensiveManagement = () => {
                     
                     // 조금 더 기다린 후 재시도
                     await new Promise(resolve => setTimeout(resolve, 500));
-                    await window.sessionManager.checkSession(true);
+                    await sessionManager.checkSession(true);
                     
                     // 재확인
-                    const retryUser = window.sessionManager.getUser();
-                    const retryTenantId = retryUser?.tenantId || window.sessionManager.getSessionInfo()?.tenantId;
+                    const retryUser = sessionManager.getUser();
+                    const retryTenantId = retryUser?.tenantId || sessionManager.getSessionInfo()?.tenantId;
                     
                     const retryTenantIdTrimmed = retryTenantId ? retryTenantId.trim() : '';
                     const isRetryInvalidDefault = !retryTenantId || 
@@ -87,6 +87,8 @@ const ConsultantComprehensiveManagement = () => {
                 } else {
                     console.log('✅ tenantId 확인 완료:', tenantId);
                 }
+            } catch (error) {
+                console.error('❌ sessionManager 사용 중 오류:', error);
             }
             
             const consultantsList = await getAllConsultantsWithStats();
@@ -139,8 +141,10 @@ const ConsultantComprehensiveManagement = () => {
     const loadMappings = useCallback(async() => {
         try {
             // 세션 갱신을 통해 최신 tenantId 확보
-            if (typeof window !== 'undefined' && window.sessionManager) {
-                await window.sessionManager.checkSession(true);
+            try {
+                await sessionManager.checkSession(true);
+            } catch (error) {
+                console.error('❌ sessionManager 사용 중 오류:', error);
             }
             
             const response = await apiGet('/api/v1/admin/mappings');
@@ -160,8 +164,10 @@ const ConsultantComprehensiveManagement = () => {
     const loadSchedules = useCallback(async() => {
         try {
             // 세션 갱신을 통해 최신 tenantId 확보
-            if (typeof window !== 'undefined' && window.sessionManager) {
-                await window.sessionManager.checkSession(true);
+            try {
+                await sessionManager.checkSession(true);
+            } catch (error) {
+                console.error('❌ sessionManager 사용 중 오류:', error);
             }
             
             const response = await apiGet('/api/v1/admin/schedules');
@@ -307,29 +313,27 @@ const ConsultantComprehensiveManagement = () => {
             console.log('🚀 전체 데이터 로딩 시작...');
             
             // 세션 강제 갱신하여 tenantId 확보 (API 호출 전에 완료되어야 함)
-            if (typeof window !== 'undefined' && window.sessionManager) {
-                try {
-                    console.log('🔄 세션 강제 갱신 시작...');
-                    await window.sessionManager.checkSession(true);
-                    const user = window.sessionManager.getUser();
-                    if (!user || !user.tenantId) {
-                        console.warn('⚠️ 세션 갱신 후에도 tenantId를 찾을 수 없음');
-                        // localStorage에서 백업 시도
-                        const storedUser = localStorage.getItem('userInfo');
-                        if (storedUser) {
-                            const parsedUser = JSON.parse(storedUser);
-                            if (parsedUser && parsedUser.tenantId) {
-                                console.log('✅ localStorage에서 tenantId 발견:', parsedUser.tenantId);
-                                // sessionManager에 설정
-                                window.sessionManager.setUser(parsedUser);
-                            }
+            try {
+                console.log('🔄 세션 강제 갱신 시작...');
+                await sessionManager.checkSession(true);
+                const user = sessionManager.getUser();
+                if (!user || !user.tenantId) {
+                    console.warn('⚠️ 세션 갱신 후에도 tenantId를 찾을 수 없음');
+                    // localStorage에서 백업 시도
+                    const storedUser = localStorage.getItem('userInfo');
+                    if (storedUser) {
+                        const parsedUser = JSON.parse(storedUser);
+                        if (parsedUser && parsedUser.tenantId) {
+                            console.log('✅ localStorage에서 tenantId 발견:', parsedUser.tenantId);
+                            // sessionManager에 설정
+                            sessionManager.setUser(parsedUser);
                         }
-                    } else {
-                        console.log('✅ 세션 갱신 완료, tenantId:', user.tenantId);
                     }
-                } catch (sessionError) {
-                    console.warn('⚠️ 세션 갱신 실패:', sessionError);
+                } else {
+                    console.log('✅ 세션 갱신 완료, tenantId:', user.tenantId);
                 }
+            } catch (sessionError) {
+                console.warn('⚠️ 세션 갱신 실패:', sessionError);
             }
             
             // 세션 갱신 완료 후 데이터 로드
@@ -362,9 +366,9 @@ const ConsultantComprehensiveManagement = () => {
             await new Promise(resolve => setTimeout(resolve, 200));
             
             // 세션 확인
-            if (typeof window !== 'undefined' && window.sessionManager) {
-                const user = window.sessionManager.getUser();
-                const tenantId = user?.tenantId || window.sessionManager.getSessionInfo()?.tenantId;
+            try {
+                const user = sessionManager.getUser();
+                const tenantId = user?.tenantId || sessionManager.getSessionInfo()?.tenantId;
                 
                 const tenantIdTrimmed = tenantId ? tenantId.trim() : '';
                 const isInvalidDefault = !tenantId || 
@@ -375,10 +379,12 @@ const ConsultantComprehensiveManagement = () => {
                 if (isInvalidDefault) {
                     console.warn('⚠️ 상담사 관리 페이지: tenantId 없음, 세션 갱신 대기...');
                     // 세션 갱신 후 재시도
-                    await window.sessionManager.checkSession(true);
+                    await sessionManager.checkSession(true);
                     // 조금 더 대기
                     await new Promise(resolve => setTimeout(resolve, 300));
                 }
+            } catch (error) {
+                console.error('❌ sessionManager 사용 중 오류:', error);
             }
             
             loadAllData();
@@ -660,8 +666,8 @@ const ConsultantComprehensiveManagement = () => {
         try {
             // tenantId 확인 및 세션 갱신
             let tenantId = null;
-            if (typeof window !== 'undefined' && window.sessionManager) {
-                const user = window.sessionManager.getUser();
+            try {
+                const user = sessionManager.getUser();
                 const userTenantId = user?.tenantId ? user.tenantId.trim() : '';
                 const isUserInvalidDefault = !user || !user.tenantId || 
                     userTenantId === 'unknown' || userTenantId === 'default' ||
@@ -670,8 +676,8 @@ const ConsultantComprehensiveManagement = () => {
                 
                 if (isUserInvalidDefault) {
                     console.warn('⚠️ tenantId가 없거나 유효하지 않음, 세션 갱신 시도...');
-                    await window.sessionManager.checkSession(true);
-                    const refreshedUser = window.sessionManager.getUser();
+                    await sessionManager.checkSession(true);
+                    const refreshedUser = sessionManager.getUser();
                     const refreshedTenantId = refreshedUser?.tenantId ? refreshedUser.tenantId.trim() : '';
                     const isRefreshedInvalidDefault = !refreshedUser || !refreshedUser.tenantId || 
                         refreshedTenantId === 'unknown' || refreshedTenantId === 'default' ||
@@ -688,6 +694,12 @@ const ConsultantComprehensiveManagement = () => {
                 } else {
                     tenantId = user.tenantId;
                 }
+            } catch (error) {
+                console.error('❌ sessionManager 사용 중 오류:', error);
+                window.dispatchEvent(new CustomEvent('showNotification', {
+                    detail: { message: '세션 정보를 가져올 수 없습니다. 페이지를 새로고침해주세요.', type: 'error' }
+                }));
+                return { success: false };
             }
             
             // tenantId를 헤더에 명시적으로 포함

@@ -46,7 +46,7 @@ import lombok.extern.slf4j.Slf4j;
 @RestController
 @RequestMapping("/api/v1/common-codes") // 표준화 2025-12-05: 레거시 경로 제거
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
+// @CrossOrigin 제거: SecurityConfig에서 이미 CORS 설정을 관리하므로 중복 설정 방지
 @Tag(name = "공통코드 관리", description = "공통코드 CRUD API - 표준화된 RESTful API")
 public class CommonCodeController extends BaseApiController {
 

@@ -88,6 +88,26 @@ const ScheduleDetailModal = ({
     if (!isOpen || !scheduleData) {
         return null;
     }
+    
+    // 로딩 오버레이
+    if (loading) {
+        return (
+            <>
+                <div className="mg-v2-modal-overlay" onClick={onClose}>
+                    <div className="mg-v2-modal mg-v2-modal-large" onClick={(e) => e.stopPropagation()}>
+                        <div className="mg-v2-modal-body">
+                            <div className="mg-v2-loading-container">
+                                <div className="mg-v2-spinner"></div>
+                                <p className="mg-v2-text-secondary">처리 중...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {showCancelConfirm && renderCancelConfirm()}
+                {showConfirmModal && renderConfirmModal()}
+            </>
+        );
+    }
 
 /**
      * 상담 유형을 한글로 변환
@@ -366,21 +386,29 @@ const ScheduleDetailModal = ({
         </div>
     );
 
+    if (!isOpen) return null;
+
     return (
         <>
             {/* 메인 스케줄 상세 모달 */}
-            <div className="mg-modal"
-                isOpen={isOpen}
-                onClose={onClose}
-                title="📋 스케줄 상세 정보"
-                size="large"
-                loading={loading}
-            >
-                <div className="schedule-info">
-                    <div className="info-row">
-                        <span className="label">이벤트:</span>
-                        <span className="value">{scheduleData.title}</span>
+            <div className="mg-v2-modal-overlay" onClick={onClose}>
+                <div className="mg-v2-modal mg-v2-modal-large" onClick={(e) => e.stopPropagation()}>
+                    <div className="mg-v2-modal-header">
+                        <h3 className="mg-v2-modal-title">📋 스케줄 상세 정보</h3>
+                        <button
+                            onClick={onClose}
+                            className="mg-v2-modal-close"
+                            aria-label="닫기"
+                        >
+                            ×
+                        </button>
                     </div>
+                    <div className="mg-v2-modal-body">
+                        <div className="mg-v2-form-group">
+                            <div className="mg-v2-info-row">
+                                <span className="mg-v2-label">이벤트:</span>
+                                <span className="mg-v2-value">{scheduleData.title}</span>
+                            </div>
                     
                     {!isVacationEvent() && (() => {
                         let parsedConsultantName = scheduleData.consultantName;
@@ -399,13 +427,13 @@ const ScheduleDetailModal = ({
                         
                         return (
                             <>
-                                <div className="info-row">
-                                    <span className="label">상담사:</span>
-                                    <span className="value">{parsedConsultantName || '상담사 정보 없음'}</span>
+                                <div className="mg-v2-info-row">
+                                    <span className="mg-v2-label">상담사:</span>
+                                    <span className="mg-v2-value">{parsedConsultantName || '상담사 정보 없음'}</span>
                                 </div>
-                                <div className="info-row">
-                                    <span className="label">내담자:</span>
-                                    <span className="value">{parsedClientName || '내담자 정보 없음'}</span>
+                                <div className="mg-v2-info-row">
+                                    <span className="mg-v2-label">내담자:</span>
+                                    <span className="mg-v2-value">{parsedClientName || '내담자 정보 없음'}</span>
                                 </div>
                             </>
                         );
@@ -413,39 +441,40 @@ const ScheduleDetailModal = ({
                     
                     {isVacationEvent() ? (
                         <>
-                            <div className="info-row">
-                                <span className="label">휴가 사유:</span>
-                                <span className="value">{scheduleData.description || scheduleData.reason || '사유 없음'}</span>
+                            <div className="mg-v2-info-row">
+                                <span className="mg-v2-label">휴가 사유:</span>
+                                <span className="mg-v2-value">{scheduleData.description || scheduleData.reason || '사유 없음'}</span>
                             </div>
-                            <div className="info-row">
-                                <span className="label">휴가 유형:</span>
-                                <span className="value">{getVacationTypeDisplay(scheduleData.vacationType)}</span>
+                            <div className="mg-v2-info-row">
+                                <span className="mg-v2-label">휴가 유형:</span>
+                                <span className="mg-v2-value">{getVacationTypeDisplay(scheduleData.vacationType)}</span>
                             </div>
                         </>
                     ) : (
                         <>
-                            <div className="info-row">
-                                <span className="label">상담 유형:</span>
-                                <span className="value">{convertConsultationTypeToKorean(scheduleData.consultationType)}</span>
+                            <div className="mg-v2-info-row">
+                                <span className="mg-v2-label">상담 유형:</span>
+                                <span className="mg-v2-value">{convertConsultationTypeToKorean(scheduleData.consultationType)}</span>
                             </div>
                         </>
                     )}
                     
-                    <div className="info-row">
-                        <span className="label">시간:</span>
-                        <span className="value">
+                    <div className="mg-v2-info-row">
+                        <span className="mg-v2-label">시간:</span>
+                        <span className="mg-v2-value">
                             {scheduleData.startTime} - {scheduleData.endTime}
                         </span>
                     </div>
-                    <div className="info-row">
-                        <span className="label">상태:</span>
-                        <span className={`value mg-v2-badge mg-v2-badge-${getStatusColorClass(scheduleData.status)}`}>
+                    <div className="mg-v2-info-row">
+                        <span className="mg-v2-label">상태:</span>
+                        <span className={`mg-v2-value mg-v2-badge mg-v2-badge-${getStatusColorClass(scheduleData.status)}`}>
                             {convertStatusToKorean(scheduleData.status)}
                         </span>
                     </div>
-                </div>
+                        </div>
+                    </div>
 
-                <div className="mg-modal__actions mg-modal__actions--horizontal">
+                    <div className="mg-v2-modal-footer">
                     {isVacationEvent() ? (
                         <div className="schedule-detail-vacation-notice">
                             <p className="schedule-detail-vacation-title">
@@ -487,84 +516,73 @@ const ScheduleDetailModal = ({
                                 </>
                             )}
                             
-                            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
+                            {/* ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용 */}
                             {isStatus(scheduleData.status, 'CONFIRMED') && (() => {
                                 const completedStatus = scheduleStatusOptions.find(opt => 
-                                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                                     opt.value === 'COMPLETED' || opt.label?.includes('완료')
-                                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-                                )?.value || 'COMPLETED'; // fallback
+                                )?.value || 'COMPLETED';
                                 
                                 return (
                                     <>
                                         <button 
-                                            className="mg-btn mg-btn--success mg-btn--icon-left"
+                                            className="mg-v2-btn mg-v2-btn-success"
                                             onClick={() => handleStatusChange(completedStatus)}
                                             disabled={loading}
                                         >
-                                            <span className="mg-btn__icon">✅</span>
-                                            <span className="mg-btn__text">완료 처리</span>
+                                            ✅ 완료 처리
                                         </button>
-                                    <button 
-                                        className="mg-btn mg-btn--info mg-btn--icon-left"
-                                        onClick={handleWriteConsultationLog}
-                                        disabled={loading}
-                                    >
-                                        <span className="mg-btn__icon">📝</span>
-                                        <span className="mg-btn__text">상담일지 작성</span>
-                                    </button>
-                                    <button 
-                                        className="mg-btn mg-btn--danger mg-btn--icon-left"
-                                        onClick={() => setShowCancelConfirm(true)}
-                                        disabled={loading}
-                                    >
-                                        <span className="mg-btn__icon">❌</span>
-                                        <span className="mg-btn__text">예약 취소</span>
-                                    </button>
-                                </>
+                                        <button 
+                                            className="mg-v2-btn mg-v2-btn-secondary"
+                                            onClick={handleWriteConsultationLog}
+                                            disabled={loading}
+                                        >
+                                            📝 상담일지 작성
+                                        </button>
+                                        <button 
+                                            className="mg-v2-btn mg-v2-btn-danger"
+                                            onClick={() => setShowCancelConfirm(true)}
+                                            disabled={loading}
+                                        >
+                                            ❌ 예약 취소
+                                        </button>
+                                    </>
                                 );
                             })()}
                             
-                            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
+                            {/* ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용 */}
                             {isStatus(scheduleData.status, 'COMPLETED') && (() => {
                                 const bookedStatus = scheduleStatusOptions.find(opt => 
-                                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                                     opt.value === 'BOOKED' || opt.label?.includes('예약')
-                                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-                                )?.value || 'BOOKED'; // fallback
+                                )?.value || 'BOOKED';
                                 
                                 return (
                                     <button 
-                                        className="mg-btn mg-btn--warning mg-btn--icon-left"
+                                        className="mg-v2-btn mg-v2-btn-warning"
                                         onClick={() => handleStatusChange(bookedStatus)}
                                         disabled={loading}
                                     >
-                                        <span className="mg-btn__icon">🔄</span>
-                                        <span className="mg-btn__text">다시 예약</span>
+                                        🔄 다시 예약
                                     </button>
                                 );
                             })()}
                             
-                            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
+                            {/* ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용 */}
                             {isStatus(scheduleData.status, 'CANCELLED') && (() => {
                                 const bookedStatus = scheduleStatusOptions.find(opt => 
-                                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                                     opt.value === 'BOOKED' || opt.label?.includes('예약')
-                                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-                                )?.value || 'BOOKED'; // fallback
+                                )?.value || 'BOOKED';
                                 
                                 return (
                                     <button 
-                                        className="mg-btn mg-btn--warning mg-btn--icon-left"
+                                        className="mg-v2-btn mg-v2-btn-warning"
                                         onClick={() => handleStatusChange(bookedStatus)}
                                         disabled={loading}
                                     >
-                                        <span className="mg-btn__icon">🔄</span>
-                                        <span className="mg-btn__text">다시 예약</span>
+                                        🔄 다시 예약
                                     </button>
                                 );
                             })()}
-                        </>
+                        </div>
                     ) : (
                         <div className="mg-v2-info-box mg-v2-text-center mg-v2-text-secondary">
                             <p className="mg-v2-text-base">
@@ -575,6 +593,7 @@ const ScheduleDetailModal = ({
                             </p>
                         </div>
                     )}
+                    </div>
                 </div>
             </div>
 

@@ -23,6 +23,7 @@ proc_label: BEGIN
     DECLARE v_display_order INT;
     DECLARE v_role_count INT DEFAULT 0;
     DECLARE done INT DEFAULT FALSE;
+    DECLARE v_business_type_norm VARCHAR(50);
     
     DECLARE template_cursor CURSOR FOR
         SELECT 
@@ -50,7 +51,8 @@ proc_label: BEGIN
         SET p_message = CONCAT('역할 템플릿 적용 중 오류 발생: ', IFNULL(v_error_message, '알 수 없는 오류'));
     END;
     
-    -- 초기값 설정
+    -- connection collation 설정 및 초기값 설정
+    SET collation_connection = 'utf8mb4_unicode_ci';
     SET p_success = FALSE;
     SET p_message = '프로세스 시작';
     

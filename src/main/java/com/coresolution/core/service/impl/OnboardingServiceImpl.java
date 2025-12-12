@@ -236,8 +236,8 @@ public class OnboardingServiceImpl implements OnboardingService {
                 // 기존 서브도메인과 다를 때만 중복 확인
                 String currentSubdomain = request.getSubdomain();
                 if (currentSubdomain == null || !currentSubdomain.equals(normalizedSubdomain)) {
-                    // 서브도메인 중복 확인
-                    OnboardingService.SubdomainCheckResult checkResult = checkSubdomainDuplicate(normalizedSubdomain);
+                    // 서브도메인 중복 확인 (현재 요청 제외)
+                    OnboardingService.SubdomainCheckResult checkResult = checkSubdomainDuplicate(normalizedSubdomain, request.getId());
                     if (!checkResult.isValid() || !checkResult.available() || checkResult.isDuplicate()) {
                         throw new IllegalArgumentException(
                             String.format("서브도메인을 사용할 수 없습니다: %s", checkResult.message())
@@ -1740,7 +1740,13 @@ public class OnboardingServiceImpl implements OnboardingService {
     @Override
     @Transactional(readOnly = true)
     public OnboardingService.SubdomainCheckResult checkSubdomainDuplicate(String subdomain) {
-        log.info("서브도메인 중복 확인: subdomain={}", subdomain);
+        return checkSubdomainDuplicate(subdomain, null);
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public OnboardingService.SubdomainCheckResult checkSubdomainDuplicate(String subdomain, java.util.UUID excludeRequestId) {
+        log.info("서브도메인 중복 확인: subdomain={}, excludeRequestId={}", subdomain, excludeRequestId);
         
         // 1. 유효성 검증
         if (subdomain == null || subdomain.trim().isEmpty()) {
@@ -1786,7 +1792,7 @@ public class OnboardingServiceImpl implements OnboardingService {
         }
         
         // 4. 테넌트 테이블에서 중복 확인
-        boolean existsInTenants = tenantRepository.existsBySubdomain(normalizedSubdomain);
+        boolean existsInTenants = tenantRepository.existsBySubdomainIgnoreCase(normalizedSubdomain);
         if (existsInTenants) {
             log.warn("서브도메인 중복 (테넌트): subdomain={}", normalizedSubdomain);
             return new OnboardingService.SubdomainCheckResult(
@@ -1795,15 +1801,21 @@ public class OnboardingServiceImpl implements OnboardingService {
         }
         
         // 5. 온보딩 요청 테이블에서 중복 확인 (PENDING, IN_REVIEW, ON_HOLD 상태만)
-        boolean existsInOnboarding = repository.existsBySubdomainAndPendingStatus(normalizedSubdomain);
+        // excludeRequestId가 있으면 해당 요청 제외
+        boolean existsInOnboarding;
+        if (excludeRequestId != null) {
+            existsInOnboarding = repository.existsBySubdomainAndPendingStatusExcludingId(normalizedSubdomain, excludeRequestId);
+        } else {
+            existsInOnboarding = repository.existsBySubdomainAndPendingStatus(normalizedSubdomain);
+        }
         if (existsInOnboarding) {
-            log.warn("서브도메인 중복 (온보딩 요청): subdomain={}", normalizedSubdomain);
+            log.warn("서브도메인 중복 (온보딩 요청): subdomain={}, excludeRequestId={}", normalizedSubdomain, excludeRequestId);
             return new OnboardingService.SubdomainCheckResult(
                 true, false, "이미 신청 중인 서브도메인입니다. 다른 서브도메인을 선택해주세요.", true
             );
         }
         
-        log.info("서브도메인 사용 가능: subdomain={}", normalizedSubdomain);
+        log.info("서브도메인 사용 가능: subdomain={}, excludeRequestId={}", normalizedSubdomain, excludeRequestId);
         return new OnboardingService.SubdomainCheckResult(
             false, true, "사용 가능한 서브도메인입니다.", true
         );

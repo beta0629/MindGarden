@@ -99,5 +99,24 @@ public interface OnboardingRequestRepository extends JpaRepository<OnboardingReq
         "AND o.status IN ('PENDING', 'IN_REVIEW', 'ON_HOLD') " +
         "AND o.isDeleted = false")
     boolean existsBySubdomainAndPendingStatus(@org.springframework.data.repository.query.Param("subdomain") String subdomain);
+    
+    /**
+     * 서브도메인으로 온보딩 요청 존재 여부 확인 (중복 체크용, 특정 요청 제외)
+     * PENDING, IN_REVIEW, ON_HOLD 상태인 요청만 확인
+     * 수정 시 자신의 서브도메인을 유지하려고 할 때 사용
+     * 
+     * @param subdomain 서브도메인
+     * @param excludeId 제외할 요청 ID
+     * @return 존재 여부
+     */
+    @org.springframework.data.jpa.repository.Query("SELECT CASE WHEN COUNT(o) > 0 THEN true ELSE false END " +
+        "FROM OnboardingRequest o " +
+        "WHERE LOWER(o.subdomain) = LOWER(:subdomain) " +
+        "AND o.status IN ('PENDING', 'IN_REVIEW', 'ON_HOLD') " +
+        "AND o.isDeleted = false " +
+        "AND o.id != :excludeId")
+    boolean existsBySubdomainAndPendingStatusExcludingId(
+        @org.springframework.data.repository.query.Param("subdomain") String subdomain,
+        @org.springframework.data.repository.query.Param("excludeId") UUID excludeId);
 }
 

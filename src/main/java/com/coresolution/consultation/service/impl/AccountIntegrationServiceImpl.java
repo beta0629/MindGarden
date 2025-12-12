@@ -191,11 +191,15 @@ public class AccountIntegrationServiceImpl implements AccountIntegrationService 
             emailVerificationCodes.put(email, new EmailVerificationCode(code, expiryTime));
             
             // 이메일 인증 코드 이메일 발송
-            sendEmailVerificationCodeEmail(email, code);
-            
-            log.info("이메일 인증 코드 생성 및 발송: email={}, code={}, expiryTime={}", email, code, expiryTime);
-            
-            return true;
+            try {
+                sendEmailVerificationCodeEmail(email, code);
+                log.info("✅ 이메일 인증 코드 생성 및 발송 성공: email={}, code={}, expiryTime={}", email, code, expiryTime);
+                return true;
+            } catch (Exception emailException) {
+                log.error("❌ 이메일 인증 코드 이메일 발송 실패: email={}, error={}", email, emailException.getMessage(), emailException);
+                // 이메일 발송 실패해도 코드는 생성되었으므로 false 반환하여 API 실패 응답
+                return false;
+            }
             
         } catch (Exception e) {
             log.error("이메일 인증 코드 발송 실패: email={}", email, e);
@@ -368,9 +372,10 @@ public class AccountIntegrationServiceImpl implements AccountIntegrationService 
             );
             
             if (response.isSuccess()) {
-                log.info("이메일 인증 코드 이메일 발송 성공: email={}, emailId={}", email, response.getEmailId());
+                log.info("✅ 이메일 인증 코드 이메일 발송 성공: email={}, emailId={}", email, response.getEmailId());
             } else {
-                log.error("이메일 인증 코드 이메일 발송 실패: email={}, error={}", email, response.getErrorMessage());
+                log.error("❌ 이메일 인증 코드 이메일 발송 실패: email={}, error={}", email, response.getErrorMessage());
+                throw new RuntimeException("이메일 발송 실패: " + (response.getErrorMessage() != null ? response.getErrorMessage() : "알 수 없는 오류"));
             }
             
         } catch (Exception e) {

@@ -143,6 +143,15 @@ public interface OnboardingService {
     SubdomainCheckResult checkSubdomainDuplicate(String subdomain);
     
     /**
+     * 서브도메인 중복 확인 (온보딩 요청 및 테넌트 확인, 특정 요청 제외)
+     * 수정 시 자신의 서브도메인을 유지하려고 할 때 사용
+     * @param subdomain 확인할 서브도메인
+     * @param excludeRequestId 제외할 온보딩 요청 ID
+     * @return 서브도메인 중복 확인 결과 (중복 여부, 사용 가능 여부, 메시지 포함)
+     */
+    SubdomainCheckResult checkSubdomainDuplicate(String subdomain, java.util.UUID excludeRequestId);
+    
+    /**
      * 서브도메인 중복 확인 결과 DTO
      */
     record SubdomainCheckResult(

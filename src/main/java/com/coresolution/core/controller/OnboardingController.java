@@ -26,6 +26,7 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -242,6 +243,38 @@ public class OnboardingController extends BaseApiController {
         } catch (Exception e) {
             log.error("온보딩 요청 생성 실패: error={}, message={}, cause={}", e.getClass().getSimpleName(),
                     e.getMessage(), e.getCause() != null ? e.getCause().getMessage() : "none", e);
+            throw e;
+        }
+    }
+
+    /**
+     * 온보딩 요청 수정 /** PUT /api/v1/onboarding/requests/{id} /** PENDING, IN_REVIEW, ON_HOLD 상태에서만 수정
+     * 가능 /** 서브도메인 수정 시 중복 확인 수행
+     */
+    @PutMapping("/requests/{id}")
+    public ResponseEntity<ApiResponse<OnboardingRequest>> update(@PathVariable java.util.UUID id,
+            @RequestBody @Valid OnboardingUpdateRequest payload, HttpSession session) {
+        validateOnboardingAccess(session);
+        log.info(
+                "온보딩 요청 수정: id={}, tenantName={}, subdomain={}, brandName={}, regionCode={}, businessType={}",
+                id, payload.tenantName(), payload.subdomain(), payload.brandName(),
+                payload.regionCode(), payload.businessType());
+
+        try {
+            OnboardingRequest updated =
+                    onboardingService.update(id, payload.tenantName(), payload.subdomain(),
+                            payload.brandName(), payload.regionCode(), payload.businessType());
+
+            log.info("✅ 온보딩 요청 수정 완료: id={}", id);
+            return updated("온보딩 요청이 수정되었습니다.", updated);
+        } catch (IllegalStateException e) {
+            log.error("온보딩 요청 수정 실패 (상태 오류): {}", e.getMessage());
+            throw e;
+        } catch (IllegalArgumentException e) {
+            log.error("온보딩 요청 수정 실패 (검증 오류): {}", e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            log.error("온보딩 요청 수정 실패: {}", e.getMessage(), e);
             throw e;
         }
     }

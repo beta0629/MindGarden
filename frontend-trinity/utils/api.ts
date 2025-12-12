@@ -231,20 +231,52 @@ export async function checkSubdomainDuplicate(subdomain: string): Promise<{
   message: string;
   previewDomain?: string | null;
 }> {
-  const response = await apiGet<ApiResponse<{
-    subdomain: string;
-    isDuplicate: boolean;
-    available: boolean;
-    isValid: boolean;
-    message: string;
-    previewDomain?: string | null;
-  }>>(
-    `/api/v1/onboarding/subdomain-check?subdomain=${encodeURIComponent(subdomain)}`
-  );
-  if (!response.success) {
-    throw new Error(response.message || '서브도메인 중복 확인에 실패했습니다.');
+  try {
+    // apiGet은 이미 ApiResponse 래퍼를 처리하므로 직접 data를 반환
+    const data = await apiGet<{ 
+      subdomain: string;
+      isDuplicate: boolean;
+      available: boolean;
+      isValid: boolean;
+      message: string;
+      previewDomain?: string | null;
+    }>(
+      `/api/v1/onboarding/subdomain-check?subdomain=${encodeURIComponent(subdomain)}`
+    );
+    
+    // data가 이미 객체인지 확인
+    if (data && typeof data === 'object' && 'subdomain' in data) {
+      return data as { 
+        subdomain: string;
+        isDuplicate: boolean;
+        available: boolean;
+        isValid: boolean;
+        message: string;
+        previewDomain?: string | null;
+      };
+    }
+    
+    // ApiResponse 래퍼가 있는 경우
+    if (data && typeof data === 'object' && 'success' in data && 'data' in data) {
+      const wrapped = data as ApiResponse<{ 
+        subdomain: string;
+        isDuplicate: boolean;
+        available: boolean;
+        isValid: boolean;
+        message: string;
+        previewDomain?: string | null;
+      }>;
+      if (wrapped.success && wrapped.data) {
+        return wrapped.data;
+      }
+    }
+    
+    console.warn('서브도메인 중복 확인 응답 형식 오류:', data);
+    throw new Error('서브도메인 중복 확인에 실패했습니다.');
+  } catch (error) {
+    console.error('서브도메인 중복 확인 API 호출 실패:', error);
+    throw error instanceof Error ? error : new Error('서브도메인 중복 확인에 실패했습니다.');
   }
-  return response.data;
 }
 
 export async function checkEmailDuplicate(email: string): Promise<{

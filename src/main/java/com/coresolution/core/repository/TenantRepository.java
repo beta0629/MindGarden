@@ -149,5 +149,23 @@ public interface TenantRepository extends JpaRepository<Tenant, Long> {
      */
     @Query("SELECT COUNT(t) FROM Tenant t WHERE t.tenantId LIKE :prefix% AND t.isDeleted = false")
     long countByTenantIdStartingWithAndIsDeletedFalse(@Param("prefix") String prefix);
+    
+    /**
+     * 서브도메인으로 테넌트 존재 여부 확인 (중복 체크용)
+     * 
+     * @param subdomain 서브도메인
+     * @return 존재 여부
+     */
+    @Query("SELECT CASE WHEN COUNT(t) > 0 THEN true ELSE false END FROM Tenant t WHERE LOWER(t.subdomain) = LOWER(:subdomain) AND t.isDeleted = false")
+    boolean existsBySubdomain(@Param("subdomain") String subdomain);
+    
+    /**
+     * 서브도메인으로 테넌트 조회
+     * 
+     * @param subdomain 서브도메인
+     * @return 테넌트 Optional
+     */
+    @Query("SELECT t FROM Tenant t WHERE LOWER(t.subdomain) = LOWER(:subdomain) AND t.isDeleted = false")
+    Optional<Tenant> findBySubdomainIgnoreCase(@Param("subdomain") String subdomain);
 }
 

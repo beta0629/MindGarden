@@ -85,5 +85,19 @@ public interface OnboardingRequestRepository extends JpaRepository<OnboardingReq
         "AND o.isDeleted = false " +
         "ORDER BY o.createdAt DESC")
     List<OnboardingRequest> findPendingByRequestedByIgnoreCase(@org.springframework.data.repository.query.Param("requestedBy") String requestedBy);
+    
+    /**
+     * 서브도메인으로 온보딩 요청 존재 여부 확인 (중복 체크용)
+     * PENDING, IN_REVIEW, ON_HOLD 상태인 요청만 확인
+     * 
+     * @param subdomain 서브도메인
+     * @return 존재 여부
+     */
+    @org.springframework.data.jpa.repository.Query("SELECT CASE WHEN COUNT(o) > 0 THEN true ELSE false END " +
+        "FROM OnboardingRequest o " +
+        "WHERE LOWER(o.subdomain) = LOWER(:subdomain) " +
+        "AND o.status IN ('PENDING', 'IN_REVIEW', 'ON_HOLD') " +
+        "AND o.isDeleted = false")
+    boolean existsBySubdomainAndPendingStatus(@org.springframework.data.repository.query.Param("subdomain") String subdomain);
 }
 

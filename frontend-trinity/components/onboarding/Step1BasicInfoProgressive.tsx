@@ -41,6 +41,14 @@ interface Step1BasicInfoProgressiveProps {
     message: string;
     status: string | null;
   }>;
+  subdomainDuplicateChecked: boolean;
+  subdomainDuplicateChecking: boolean;
+  subdomainDuplicateError: string | null;
+  subdomainPreview: string | null;
+  setSubdomainDuplicateChecked: (checked: boolean) => void;
+  setSubdomainDuplicateError: (error: string | null) => void;
+  setSubdomainPreview: (preview: string | null) => void;
+  checkSubdomainDuplicate: (subdomain: string) => Promise<void>;
   setError: (error: string | null) => void;
   setEmailFormatError: (error: string | null) => void;
   regionCodes: Array<{ codeValue: string; koreanName: string; codeLabel?: string }>;
@@ -71,6 +79,14 @@ export default function Step1BasicInfoProgressive({
   verifyEmailCode,
   validateEmailFormat,
   checkEmailDuplicate,
+  subdomainDuplicateChecked,
+  subdomainDuplicateChecking,
+  subdomainDuplicateError,
+  subdomainPreview,
+  setSubdomainDuplicateChecked,
+  setSubdomainDuplicateError,
+  setSubdomainPreview,
+  checkSubdomainDuplicate,
   setError,
   setEmailFormatError,
   regionCodes,
@@ -141,6 +157,19 @@ export default function Step1BasicInfoProgressive({
             label: code.koreanName || code.codeLabel || code.codeValue,
           }));
       })(),
+    },
+    {
+      id: 'subdomain',
+      label: '서브도메인 (선택사항)',
+      required: false,
+      validation: (value: string) => {
+        if (!value || value.trim().length === 0) {
+          return true; // 선택사항이므로 빈 값도 유효
+        }
+        return subdomainDuplicateChecked && !subdomainDuplicateError;
+      },
+      placeholder: 'mycompany (영문, 숫자, 하이픈만 사용)',
+      hint: '와일드카드 도메인 테스트용 서브도메인입니다. 입력하지 않으면 자동으로 생성됩니다. (예: mycompany → mycompany.dev.core-solution.co.kr)',
     },
     {
       id: 'contactEmail',
@@ -412,6 +441,82 @@ export default function Step1BasicInfoProgressive({
                   </option>
                 )}
               </select>
+            ) : field.id === 'subdomain' ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <input
+                    type="text"
+                    value={getFieldValue(field.id)}
+                    onChange={(e) => {
+                      const value = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '');
+                      handleFieldChange(field.id, value);
+                      setSubdomainDuplicateChecked(false);
+                      setSubdomainDuplicateError(null);
+                      setSubdomainPreview(null);
+                    }}
+                    onBlur={(e) => {
+                      const value = e.target.value.trim();
+                      if (value) {
+                        checkSubdomainDuplicate(value);
+                      } else {
+                        setSubdomainDuplicateChecked(false);
+                        setSubdomainDuplicateError(null);
+                        setSubdomainPreview(null);
+                      }
+                      // 선택 필드이므로 값이 없거나 검증 통과하면 완료
+                      if (!value || (field.validation && field.validation(value))) {
+                        handleFieldComplete(field.id, value);
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        const value = e.currentTarget.value.trim();
+                        if (value) {
+                          checkSubdomainDuplicate(value);
+                        }
+                        if (!value || (field.validation && field.validation(value))) {
+                          handleFieldComplete(field.id, value);
+                        }
+                      }
+                    }}
+                    placeholder={field.placeholder}
+                    className={COMPONENT_CSS.ONBOARDING.INPUT}
+                    style={{ flex: 1 }}
+                    maxLength={63}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const value = getFieldValue(field.id).trim();
+                      if (value) {
+                        checkSubdomainDuplicate(value);
+                      }
+                    }}
+                    disabled={subdomainDuplicateChecking || !getFieldValue(field.id).trim()}
+                    style={{
+                      padding: '8px 16px',
+                      backgroundColor: subdomainDuplicateChecking ? '#ccc' : '#007bff',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: subdomainDuplicateChecking ? 'not-allowed' : 'pointer',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {subdomainDuplicateChecking ? '확인 중...' : '중복 확인'}
+                  </button>
+                </div>
+                {subdomainDuplicateError && (
+                  <div style={{ color: '#dc3545', fontSize: '14px' }}>
+                    {subdomainDuplicateError}
+                  </div>
+                )}
+                {subdomainPreview && !subdomainDuplicateError && (
+                  <div style={{ color: '#28a745', fontSize: '14px' }}>
+                    사용 가능: {subdomainPreview}
+                  </div>
+                )}
+              </div>
             ) : field.id === 'contactEmail' ? (
               <EmailInputProgressive
                 value={getFieldValue(field.id)}

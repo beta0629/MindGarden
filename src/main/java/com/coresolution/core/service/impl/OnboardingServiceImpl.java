@@ -1597,5 +1597,77 @@ public class OnboardingServiceImpl implements OnboardingService {
         }
     }
     
+    @Override
+    @Transactional(readOnly = true)
+    public OnboardingService.SubdomainCheckResult checkSubdomainDuplicate(String subdomain) {
+        log.info("서브도메인 중복 확인: subdomain={}", subdomain);
+        
+        // 1. 유효성 검증
+        if (subdomain == null || subdomain.trim().isEmpty()) {
+            log.warn("서브도메인이 비어있음: subdomain={}", subdomain);
+            return new OnboardingService.SubdomainCheckResult(
+                false, false, "서브도메인을 입력해주세요.", false
+            );
+        }
+        
+        String normalizedSubdomain = subdomain.trim().toLowerCase();
+        
+        // 2. DNS 제약 조건 검증 (최대 63자, 영문/숫자/하이픈만 허용)
+        if (normalizedSubdomain.length() > 63) {
+            log.warn("서브도메인 길이 초과: subdomain={}, length={}", normalizedSubdomain, normalizedSubdomain.length());
+            return new OnboardingService.SubdomainCheckResult(
+                false, false, "서브도메인은 최대 63자까지 입력 가능합니다.", false
+            );
+        }
+        
+        if (!normalizedSubdomain.matches("^[a-z0-9-]+$")) {
+            log.warn("서브도메인 형식 오류: subdomain={}", normalizedSubdomain);
+            return new OnboardingService.SubdomainCheckResult(
+                false, false, "서브도메인은 영문, 숫자, 하이픈(-)만 사용 가능합니다.", false
+            );
+        }
+        
+        if (normalizedSubdomain.startsWith("-") || normalizedSubdomain.endsWith("-")) {
+            log.warn("서브도메인은 하이픈으로 시작하거나 끝날 수 없음: subdomain={}", normalizedSubdomain);
+            return new OnboardingService.SubdomainCheckResult(
+                false, false, "서브도메인은 하이픈(-)으로 시작하거나 끝날 수 없습니다.", false
+            );
+        }
+        
+        // 3. 기본 서브도메인 제외 (dev, app, api, staging, www 등)
+        String[] reservedSubdomains = {"dev", "app", "api", "staging", "www", "admin", "ops", "apply"};
+        for (String reserved : reservedSubdomains) {
+            if (normalizedSubdomain.equals(reserved)) {
+                log.warn("예약된 서브도메인 사용 시도: subdomain={}", normalizedSubdomain);
+                return new OnboardingService.SubdomainCheckResult(
+                    false, false, "이 서브도메인은 시스템에서 사용 중입니다. 다른 서브도메인을 선택해주세요.", false
+                );
+            }
+        }
+        
+        // 4. 테넌트 테이블에서 중복 확인
+        boolean existsInTenants = tenantRepository.existsBySubdomain(normalizedSubdomain);
+        if (existsInTenants) {
+            log.warn("서브도메인 중복 (테넌트): subdomain={}", normalizedSubdomain);
+            return new OnboardingService.SubdomainCheckResult(
+                true, false, "이미 사용 중인 서브도메인입니다. 다른 서브도메인을 선택해주세요.", true
+            );
+        }
+        
+        // 5. 온보딩 요청 테이블에서 중복 확인 (PENDING, IN_REVIEW, ON_HOLD 상태만)
+        boolean existsInOnboarding = repository.existsBySubdomainAndPendingStatus(normalizedSubdomain);
+        if (existsInOnboarding) {
+            log.warn("서브도메인 중복 (온보딩 요청): subdomain={}", normalizedSubdomain);
+            return new OnboardingService.SubdomainCheckResult(
+                true, false, "이미 신청 중인 서브도메인입니다. 다른 서브도메인을 선택해주세요.", true
+            );
+        }
+        
+        log.info("서브도메인 사용 가능: subdomain={}", normalizedSubdomain);
+        return new OnboardingService.SubdomainCheckResult(
+            false, true, "사용 가능한 서브도메인입니다.", true
+        );
+    }
+    
 }
 

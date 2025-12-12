@@ -88,6 +88,14 @@ export default function OnboardingPage() {
     sendEmailVerificationCode,
     verifyEmailCode,
     createPaymentMethod,
+    subdomainDuplicateChecked,
+    subdomainDuplicateChecking,
+    subdomainDuplicateError,
+    subdomainPreview,
+    setSubdomainDuplicateChecked,
+    setSubdomainDuplicateError,
+    setSubdomainPreview,
+    checkSubdomainDuplicate,
   } = useOnboarding();
 
   // 단계 변경 시 방향 감지 및 애니메이션 방향 설정
@@ -449,6 +457,14 @@ export default function OnboardingPage() {
                 verifyEmailCode={verifyEmailCode}
                 validateEmailFormat={validateEmailFormat}
                 checkEmailDuplicate={checkEmailDuplicate}
+                subdomainDuplicateChecked={subdomainDuplicateChecked}
+                subdomainDuplicateChecking={subdomainDuplicateChecking}
+                subdomainDuplicateError={subdomainDuplicateError}
+                subdomainPreview={subdomainPreview}
+                setSubdomainDuplicateChecked={setSubdomainDuplicateChecked}
+                setSubdomainDuplicateError={setSubdomainDuplicateError}
+                setSubdomainPreview={setSubdomainPreview}
+                checkSubdomainDuplicate={checkSubdomainDuplicate}
                 setError={setError}
                 setEmailFormatError={setEmailFormatError}
                 regionCodes={regionCodes}

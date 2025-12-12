@@ -197,6 +197,7 @@ export interface OnboardingCreateRequest {
   businessType: string;
   regionCode?: string; // 지역 코드 (테넌트 ID 생성 시 사용, 선택적)
   brandName?: string; // 브랜드명 (상호, 브랜딩 적용 시 사용, 선택적)
+  subdomain?: string; // 서브도메인 (와일드카드 도메인용, 선택적)
   adminPassword?: string; // 관리자 계정 비밀번호 (승인 시 계정 생성에 사용)
 }
 
@@ -219,7 +220,34 @@ export interface OnboardingRequest {
 /**
  * 이메일 중복 확인
  */
-export async function checkEmailDuplicate(email: string): Promise<{ 
+/**
+ * 서브도메인 중복 확인
+ */
+export async function checkSubdomainDuplicate(subdomain: string): Promise<{
+  subdomain: string;
+  isDuplicate: boolean;
+  available: boolean;
+  isValid: boolean;
+  message: string;
+  previewDomain?: string | null;
+}> {
+  const response = await apiGet<ApiResponse<{
+    subdomain: string;
+    isDuplicate: boolean;
+    available: boolean;
+    isValid: boolean;
+    message: string;
+    previewDomain?: string | null;
+  }>>(
+    `/api/v1/onboarding/subdomain-check?subdomain=${encodeURIComponent(subdomain)}`
+  );
+  if (!response.success) {
+    throw new Error(response.message || '서브도메인 중복 확인에 실패했습니다.');
+  }
+  return response.data;
+}
+
+export async function checkEmailDuplicate(email: string): Promise<{
   email: string; 
   isDuplicate: boolean; 
   available: boolean;

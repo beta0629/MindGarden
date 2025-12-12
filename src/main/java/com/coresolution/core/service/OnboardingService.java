@@ -120,5 +120,22 @@ public interface OnboardingService {
         String message,
         String status
     ) {}
+    
+    /**
+     * 서브도메인 중복 확인 (온보딩 요청 및 테넌트 확인)
+     * @param subdomain 확인할 서브도메인
+     * @return 서브도메인 중복 확인 결과 (중복 여부, 사용 가능 여부, 메시지 포함)
+     */
+    SubdomainCheckResult checkSubdomainDuplicate(String subdomain);
+    
+    /**
+     * 서브도메인 중복 확인 결과 DTO
+     */
+    record SubdomainCheckResult(
+        boolean isDuplicate,
+        boolean available,
+        String message,
+        boolean isValid
+    ) {}
 }
 

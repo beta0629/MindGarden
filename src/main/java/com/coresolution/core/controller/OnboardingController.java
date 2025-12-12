@@ -286,6 +286,38 @@ public class OnboardingController extends BaseApiController {
     }
 
     /**
+     * 서브도메인 중복 확인 /** GET /api/v1/onboarding/subdomain-check?subdomain={subdomain} /** 새로운 테넌트를
+     * 등록하려는 사용자만 접근 가능 /** (이미 테넌트에 속한 사용자는 접근 불가)
+     */
+    @GetMapping("/subdomain-check")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> checkSubdomainDuplicate(
+            @RequestParam String subdomain, HttpSession session) {
+        validateOnboardingAccess(session);
+        log.debug("서브도메인 중복 확인 요청: subdomain={}", subdomain);
+
+        OnboardingService.SubdomainCheckResult result =
+                onboardingService.checkSubdomainDuplicate(subdomain);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("subdomain", subdomain);
+        response.put("isDuplicate", result.isDuplicate());
+        response.put("available", result.available());
+        response.put("isValid", result.isValid());
+        response.put("message", result.message() != null ? result.message() : "");
+        response.put("previewDomain",
+                result.isValid() && result.available()
+                        ? subdomain.trim().toLowerCase() + ".dev.core-solution.co.kr"
+                        : null);
+
+        log.debug(
+                "서브도메인 중복 확인 결과: subdomain={}, isDuplicate={}, available={}, isValid={}, message={}",
+                subdomain, result.isDuplicate(), result.available(), result.isValid(),
+                result.message());
+
+        return success(response);
+    }
+
+    /**
      * 온보딩 요청 상세 조회 (ID + 이메일로 본인 확인) /** GET /api/v1/onboarding/requests/public/{id}?email={email}
      * /** 새로운 테넌트를 등록하려는 사용자만 접근 가능 /** (이미 테넌트에 속한 사용자는 접근 불가)
      */

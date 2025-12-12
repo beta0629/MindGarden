@@ -15,6 +15,7 @@ import {
   sendEmailVerificationCode,
   verifyEmailCode,
   checkEmailDuplicate,
+  checkSubdomainDuplicate,
   type OnboardingCreateRequest,
   type PricingPlan,
   type BusinessCategory,
@@ -29,6 +30,7 @@ export interface OnboardingFormData {
   businessType: string;
   regionCode: string; // 지역 코드 (테넌트 ID 생성 시 사용)
   brandName: string; // 브랜드명 (상호, 브랜딩 적용 시 사용)
+  subdomain: string; // 서브도메인 (와일드카드 도메인용, 선택적)
   contactEmail: string;
   contactEmailLocal: string;
   contactEmailDomain: string;
@@ -58,6 +60,7 @@ export const useOnboarding = () => {
     businessType: "",
     regionCode: "",
     brandName: "",
+    subdomain: "",
     contactEmail: "",
     contactEmailLocal: "",
     contactEmailDomain: "",
@@ -82,6 +85,10 @@ export const useOnboarding = () => {
   const [emailDuplicateChecked, setEmailDuplicateChecked] = useState(false);
   const [emailDuplicateChecking, setEmailDuplicateChecking] = useState(false);
   const [emailDuplicateError, setEmailDuplicateError] = useState<string | null>(null);
+  const [subdomainDuplicateChecked, setSubdomainDuplicateChecked] = useState(false);
+  const [subdomainDuplicateChecking, setSubdomainDuplicateChecking] = useState(false);
+  const [subdomainDuplicateError, setSubdomainDuplicateError] = useState<string | null>(null);
+  const [subdomainPreview, setSubdomainPreview] = useState<string | null>(null);
   const [emailVerificationTimeLeft, setEmailVerificationTimeLeft] = useState<number | null>(null);
   const [emailFormatError, setEmailFormatError] = useState<string | null>(null);
   const [verificationAttempts, setVerificationAttempts] = useState(0);
@@ -420,6 +427,7 @@ export const useOnboarding = () => {
         businessType: formData.businessType,
         regionCode: formData.regionCode || undefined,
         brandName: formData.brandName || undefined,
+        subdomain: formData.subdomain || undefined,
         checklistJson: JSON.stringify({
           contactPhone: formData.contactPhone,
           planId: formData.planId,
@@ -428,6 +436,7 @@ export const useOnboarding = () => {
           subscriptionId: formData.subscriptionId,
           regionCode: formData.regionCode || undefined, // 지역 코드 추가
           brandName: formData.brandName || undefined, // 브랜드명 추가
+          subdomain: formData.subdomain || undefined, // 서브도메인 추가
           dashboardTemplates: formData.dashboardTemplates || {}, // 대시보드 템플릿 설정
           dashboardWidgets: formData.dashboardWidgets || {}, // 대시보드 위젯 설정 (템플릿 수정 시)
         }),
@@ -507,6 +516,16 @@ export const useOnboarding = () => {
     verifyEmailCode: handleVerifyEmailCode,
     createPaymentMethod,
     createSubscription,
+    
+    // Subdomain
+    subdomainDuplicateChecked,
+    subdomainDuplicateChecking,
+    subdomainDuplicateError,
+    subdomainPreview,
+    setSubdomainDuplicateChecked,
+    setSubdomainDuplicateError,
+    setSubdomainPreview,
+    checkSubdomainDuplicate: handleCheckSubdomainDuplicate,
   };
 };
 

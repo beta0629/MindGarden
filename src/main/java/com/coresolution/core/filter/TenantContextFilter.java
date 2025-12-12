@@ -310,9 +310,9 @@ public class TenantContextFilter implements Filter {
                 try {
                     return tenantRepository.findBySubdomainIgnoreCase(subdomain)
                         .map(tenant -> {
-                            String tenantId = tenant.getTenantId();
-                            log.info("✅ 서브도메인으로 테넌트 조회 성공: subdomain={}, tenantId={}", subdomain, tenantId);
-                            return tenantId;
+                            String foundTenantId = tenant.getTenantId();
+                            log.info("✅ 서브도메인으로 테넌트 조회 성공: subdomain={}, tenantId={}", subdomain, foundTenantId);
+                            return foundTenantId;
                         })
                         .orElseGet(() -> {
                             log.warn("⚠️ 서브도메인으로 테넌트를 찾을 수 없음: subdomain={}", subdomain);

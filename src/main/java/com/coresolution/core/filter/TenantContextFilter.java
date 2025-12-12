@@ -32,6 +32,11 @@ import lombok.extern.slf4j.Slf4j;
 public class TenantContextFilter implements Filter {
 
     // 브랜치 개념 제거: BranchRepository 의존성 제거됨 (표준화 2025-12-05)
+    private final com.coresolution.core.repository.TenantRepository tenantRepository;
+
+    public TenantContextFilter(com.coresolution.core.repository.TenantRepository tenantRepository) {
+        this.tenantRepository = tenantRepository;
+    }
 
     /**
      * HTTP 헤더에서 tenant_id 추출 키
@@ -293,18 +298,30 @@ public class TenantContextFilter implements Filter {
         }
 
         // 3. Host 헤더에서 테넌트 서브도메인 추출 (우선순위 3)
-        // 예: tenant1.dev.core-solution.co.kr → tenant1
-        // 예: tenant1.core-solution.co.kr → tenant1
+        // 예: mindgarden.dev.core-solution.co.kr → mindgarden → tenant-incheon-counseling-001
+        // 예: tenant1.core-solution.co.kr → tenant1 → tenant-seoul-consultation-001
         String host = request.getHeader("Host");
         if (host != null && !host.isEmpty()) {
             String subdomain = extractTenantSubdomain(host);
             if (subdomain != null && !subdomain.isEmpty()) {
-                // 서브도메인을 tenant_id로 사용 (향후 매핑 테이블 조회로 변경 가능)
-                log.debug("Tenant subdomain extracted from Host header: {} (from {})", subdomain,
-                        host);
-                // TODO: 서브도메인 → tenant_id 매핑 테이블 조회 로직 추가 필요
-                // 현재는 서브도메인을 그대로 tenant_id로 사용 (임시)
-                return subdomain;
+                log.info("서브도메인 추출: host={}, subdomain={}", host, subdomain);
+                
+                // 서브도메인으로 테넌트 조회하여 실제 tenant_id 반환
+                try {
+                    return tenantRepository.findBySubdomainIgnoreCase(subdomain)
+                        .map(tenant -> {
+                            String tenantId = tenant.getTenantId();
+                            log.info("✅ 서브도메인으로 테넌트 조회 성공: subdomain={}, tenantId={}", subdomain, tenantId);
+                            return tenantId;
+                        })
+                        .orElseGet(() -> {
+                            log.warn("⚠️ 서브도메인으로 테넌트를 찾을 수 없음: subdomain={}", subdomain);
+                            return null;
+                        });
+                } catch (Exception e) {
+                    log.error("❌ 서브도메인으로 테넌트 조회 중 오류 발생: subdomain={}, error={}", subdomain, e.getMessage(), e);
+                    return null;
+                }
             }
         }
 

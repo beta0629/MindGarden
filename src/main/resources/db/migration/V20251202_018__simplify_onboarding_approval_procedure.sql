@@ -63,42 +63,48 @@ proc_label: BEGIN
         SET v_result_message = CONCAT(v_result_message, '테넌트=OK');
         
         -- 2. 기본 역할 템플릿 적용 (필수)
+        SET @role_success = NULL;
+        SET @role_message = NULL;
+        
         CALL ApplyDefaultRoleTemplates(
             p_tenant_id, p_business_type, p_approved_by,
             @role_success, @role_message
         );
         
-        IF @role_success = FALSE THEN
+        IF @role_success IS NULL OR @role_success = FALSE THEN
             SET p_success = FALSE;
             SET p_message = CONCAT('역할 템플릿 적용 실패: ', IFNULL(@role_message, '알 수 없는 오류'));
             ROLLBACK;
+            LEAVE proc_label;
         ELSE
             SET v_result_message = CONCAT(v_result_message, ', 역할=OK');
             
             -- 3. 관리자 계정 생성 (필수)
             IF p_contact_email IS NOT NULL AND p_contact_email != ''
                AND p_admin_password_hash IS NOT NULL AND p_admin_password_hash != '' THEN
+                SET @admin_success = NULL;
+                SET @admin_message = NULL;
+                
                 CALL CreateTenantAdminAccount(
                     p_tenant_id, p_contact_email, p_tenant_name,
                     p_admin_password_hash, p_approved_by,
                     @admin_success, @admin_message
                 );
                 
-                IF @admin_success = FALSE THEN
+                IF @admin_success IS NULL OR @admin_success = FALSE THEN
                     SET p_success = FALSE;
                     SET p_message = CONCAT('관리자 계정 생성 실패: ', IFNULL(@admin_message, '알 수 없는 오류'));
                     ROLLBACK;
+                    LEAVE proc_label;
                 ELSE
                     SET v_result_message = CONCAT(v_result_message, ', 관리자=OK');
                 END IF;
             END IF;
             
             -- 모든 필수 단계 성공
-            IF p_success IS NULL OR p_success = TRUE THEN
-                SET p_success = TRUE;
-                SET p_message = CONCAT('온보딩 승인 완료: ', v_result_message);
-                COMMIT;
-            END IF;
+            SET p_success = TRUE;
+            SET p_message = CONCAT('온보딩 승인 완료: ', v_result_message);
+            COMMIT;
         END IF;
     END IF;
 END //

@@ -14,3 +14,4 @@ CREATE UNIQUE INDEX idx_subdomain ON tenants(subdomain) WHERE subdomain IS NOT N
 -- 서브도메인 인덱스 추가 (조회 성능 향상)
 CREATE INDEX idx_subdomain_lookup ON tenants(subdomain) WHERE subdomain IS NOT NULL;
 
+

@@ -124,10 +124,18 @@ public class EmailServiceImpl implements EmailService {
             String replyTo = EmailConstants.REPLY_TO_EMAIL;
             
             if (EmailConstants.TEMPLATE_EMAIL_VERIFICATION.equals(templateType)) {
-                // 온보딩 이메일 인증은 Trinity로 발송
-                fromEmail = "noreply@e-trinity.co.kr";
-                fromName = "Trinity";
-                replyTo = "admin@e-trinity.co.kr";
+                // 온보딩 이메일 인증은 Gmail 계정으로 발송 (Gmail SMTP 인증 계정과 일치해야 함)
+                // 환경 변수에서 발신자 이메일 읽기 (없으면 기본값 사용)
+                String mailUsername = System.getenv("MAIL_USERNAME");
+                if (mailUsername != null && !mailUsername.isEmpty()) {
+                    fromEmail = mailUsername; // Gmail 인증 계정과 동일하게 설정
+                    fromName = "Trinity";
+                    replyTo = mailUsername; // 회신도 같은 계정으로
+                } else {
+                    fromEmail = "noreply@e-trinity.co.kr";
+                    fromName = "Trinity";
+                    replyTo = "admin@e-trinity.co.kr";
+                }
             }
             
             // 이메일 요청 생성

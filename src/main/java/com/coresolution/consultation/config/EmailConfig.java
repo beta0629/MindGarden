@@ -91,10 +91,11 @@ public class EmailConfig {
         
         // 디버그: 이메일 설정 로그 (비밀번호는 마스킹)
         System.out.println("=== EmailConfig Debug ===");
-        System.out.println("Host (from env): " + environment.getProperty("spring.mail.host"));
+        System.out.println("System.getProperty(spring.mail.host): " + System.getProperty("spring.mail.host"));
+        System.out.println("System.getProperty(spring.mail.userId): " + System.getProperty("spring.mail.userId"));
+        System.out.println("System.getProperty(spring.mail.password): " + (System.getProperty("spring.mail.password") != null ? "***" : "null"));
         System.out.println("Host (final): " + mailSender.getHost());
         System.out.println("Port (final): " + mailSender.getPort());
-        System.out.println("UserId (from env): " + environment.getProperty("spring.mail.userId"));
         System.out.println("UserId (final): " + mailSender.getUsername());
         System.out.println("Password length: " + (mailPassword != null ? mailPassword.length() : 0));
         System.out.println("Password is empty: " + (mailPassword == null || mailPassword.isEmpty()));

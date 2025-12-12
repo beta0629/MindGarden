@@ -61,23 +61,55 @@ public class EmailConfig {
     public JavaMailSender javaMailSender() {
         JavaMailSenderImpl mailSender = new JavaMailSenderImpl();
 
-        // @Value로 주입받은 값 사용 (Spring Boot가 -D 옵션과 환경 변수를 자동으로 처리)
+        // 환경 변수에서 직접 읽기 (가장 확실한 방법)
+        // 우선순위: 환경 변수 > @Value > 기본값
+        String mailHost = System.getenv("MAIL_HOST");
+        if (mailHost == null || mailHost.isEmpty()) {
+            mailHost = host != null && !host.isEmpty() ? host : "smtp.gmail.com";
+        }
+        
+        String mailPortStr = System.getenv("MAIL_PORT");
+        int mailPort = 587;
+        if (mailPortStr != null && !mailPortStr.isEmpty()) {
+            try {
+                mailPort = Integer.parseInt(mailPortStr);
+            } catch (NumberFormatException e) {
+                mailPort = port > 0 ? port : 587;
+            }
+        } else {
+            mailPort = port > 0 ? port : 587;
+        }
+        
+        String mailUserId = System.getenv("MAIL_USERNAME");
+        if (mailUserId == null || mailUserId.isEmpty()) {
+            mailUserId = userId != null && !userId.isEmpty() ? userId : "";
+        }
+        
+        String mailPassword = System.getenv("MAIL_PASSWORD");
+        // MAIL_PASSWORD에서 따옴표 제거 (환경 변수 파일에서 따옴표 포함되어 있을 수 있음)
+        if (mailPassword != null) {
+            mailPassword = mailPassword.replaceAll("^['\"]+|['\"]+$", "");
+        }
+        if (mailPassword == null || mailPassword.isEmpty()) {
+            mailPassword = password != null && !password.isEmpty() ? password : "";
+        }
+        
         // SMTP 서버 설정
-        mailSender.setHost(host != null && !host.isEmpty() ? host : "smtp.gmail.com");
-        mailSender.setPort(port > 0 ? port : 587);
-        mailSender.setUsername(userId);
-        mailSender.setPassword(password);
+        mailSender.setHost(mailHost);
+        mailSender.setPort(mailPort);
+        mailSender.setUsername(mailUserId);
+        mailSender.setPassword(mailPassword);
         
         // 디버그: 이메일 설정 로그 (비밀번호는 마스킹)
         System.out.println("=== EmailConfig Debug ===");
-        System.out.println("Host (@Value): " + host);
-        System.out.println("Port (@Value): " + port);
-        System.out.println("UserId (@Value): " + userId);
-        System.out.println("Password length (@Value): " + (password != null ? password.length() : 0));
+        System.out.println("MAIL_HOST (env): " + System.getenv("MAIL_HOST"));
+        System.out.println("MAIL_USERNAME (env): " + System.getenv("MAIL_USERNAME"));
+        System.out.println("MAIL_PASSWORD length (env): " + (System.getenv("MAIL_PASSWORD") != null ? System.getenv("MAIL_PASSWORD").length() : 0));
         System.out.println("Host (final): " + mailSender.getHost());
         System.out.println("Port (final): " + mailSender.getPort());
         System.out.println("UserId (final): " + mailSender.getUsername());
-        System.out.println("Password is empty: " + (password == null || password.isEmpty()));
+        System.out.println("Password length (final): " + (mailPassword != null ? mailPassword.length() : 0));
+        System.out.println("Password is empty: " + (mailPassword == null || mailPassword.isEmpty()));
         System.out.println("========================");
 
         // SMTP 프로퍼티 설정

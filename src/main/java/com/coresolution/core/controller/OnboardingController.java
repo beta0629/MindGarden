@@ -55,6 +55,8 @@ import lombok.extern.slf4j.Slf4j;
 @CrossOrigin(origins = "*")
 public class OnboardingController extends BaseApiController {
 
+    private static final String CHECKLIST_KEY_SUBDOMAIN = "subdomain";
+
     private final OnboardingService onboardingService;
     private final UserRepository userRepository;
 
@@ -213,14 +215,16 @@ public class OnboardingController extends BaseApiController {
 
                 // subdomain 추가 (와일드카드 도메인용)
                 if (payload.subdomain() != null && !payload.subdomain().trim().isEmpty()) {
-                    checklist.put("subdomain", payload.subdomain().trim().toLowerCase());
+                    checklist.put(CHECKLIST_KEY_SUBDOMAIN,
+                            payload.subdomain().trim().toLowerCase());
                 }
 
                 finalChecklistJson = objectMapper.writeValueAsString(checklist);
                 log.info(
                         "checklistJson 병합 완료: hasAdminPassword={}, hasRegionCode={}, hasBrandName={}, hasSubdomain={}",
                         checklist.containsKey("adminPassword"), checklist.containsKey("regionCode"),
-                        checklist.containsKey("brandName"), checklist.containsKey("subdomain"));
+                        checklist.containsKey("brandName"),
+                        checklist.containsKey(CHECKLIST_KEY_SUBDOMAIN));
             } catch (Exception e) {
                 log.error("checklistJson 병합 실패: {}", e.getMessage(), e);
             }
@@ -333,7 +337,7 @@ public class OnboardingController extends BaseApiController {
                 onboardingService.checkSubdomainDuplicate(subdomain);
 
         Map<String, Object> response = new HashMap<>();
-        response.put("subdomain", subdomain);
+        response.put(CHECKLIST_KEY_SUBDOMAIN, subdomain);
         response.put("isDuplicate", result.isDuplicate());
         response.put("available", result.available());
         response.put("isValid", result.isValid());

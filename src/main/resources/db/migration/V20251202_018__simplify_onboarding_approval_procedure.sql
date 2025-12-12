@@ -18,7 +18,7 @@ CREATE PROCEDURE ProcessOnboardingApproval(
     OUT p_success BOOLEAN,
     OUT p_message TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
 )
-BEGIN
+proc_label: BEGIN
     DECLARE v_error_message VARCHAR(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
     DECLARE v_result_message TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT '';
     
@@ -28,8 +28,12 @@ BEGIN
         GET DIAGNOSTICS CONDITION 1
             v_error_message = MESSAGE_TEXT;
         SET p_success = FALSE;
-        SET p_message = CONCAT('온보딩 승인 프로세스 중 오류 발생: ', v_error_message);
+        SET p_message = CONCAT('온보딩 승인 프로세스 중 오류 발생: ', IFNULL(v_error_message, '알 수 없는 오류'));
     END;
+    
+    -- 초기값 설정
+    SET p_success = FALSE;
+    SET p_message = '프로세스 시작';
     
     START TRANSACTION;
     
@@ -39,10 +43,11 @@ BEGIN
         p_approved_by, @tenant_success, @tenant_message
     );
     
-    IF @tenant_success = FALSE THEN
+    IF @tenant_success = FALSE OR @tenant_success IS NULL THEN
         SET p_success = FALSE;
         SET p_message = CONCAT('테넌트 생성 실패: ', IFNULL(@tenant_message, '알 수 없는 오류'));
         ROLLBACK;
+        LEAVE proc_label;
     ELSE
         SET v_result_message = CONCAT(v_result_message, '테넌트=OK');
         

@@ -142,7 +142,7 @@ export default function EmailVerification({
                 value={emailVerificationCode}
                 onChange={(e) => setEmailVerificationCode(e.target.value.replace(/[^0-9]/g, ''))}
                 className={`${COMPONENT_CSS.ONBOARDING.INPUT} ${COMPONENT_CSS.ONBOARDING.VERIFICATION_CODE_INPUT}`}
-                placeholder="인증 코드 입력 (6자리)"
+                placeholder="인증 코드 (6자리)"
                 maxLength={6}
               />
               <Button

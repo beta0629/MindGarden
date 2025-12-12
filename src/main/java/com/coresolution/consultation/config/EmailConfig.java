@@ -62,10 +62,26 @@ public class EmailConfig {
         JavaMailSenderImpl mailSender = new JavaMailSenderImpl();
 
         // 시스템 프로퍼티(-D) 또는 환경 변수에서 직접 읽기 (우선순위: 시스템 프로퍼티 > 환경 변수 > @Value)
-        String mailHost = environment.getProperty("spring.mail.host", host);
-        String mailPort = environment.getProperty("spring.mail.port", String.valueOf(port));
-        String mailUserId = environment.getProperty("spring.mail.userId", userId);
-        String mailPassword = environment.getProperty("spring.mail.password", password);
+        // System.getProperty()로 직접 읽기 (시스템 프로퍼티 우선)
+        String mailHost = System.getProperty("spring.mail.host");
+        if (mailHost == null || mailHost.isEmpty()) {
+            mailHost = environment.getProperty("spring.mail.host", host);
+        }
+        
+        String mailPort = System.getProperty("spring.mail.port");
+        if (mailPort == null || mailPort.isEmpty()) {
+            mailPort = environment.getProperty("spring.mail.port", String.valueOf(port));
+        }
+        
+        String mailUserId = System.getProperty("spring.mail.userId");
+        if (mailUserId == null || mailUserId.isEmpty()) {
+            mailUserId = environment.getProperty("spring.mail.userId", userId);
+        }
+        
+        String mailPassword = System.getProperty("spring.mail.password");
+        if (mailPassword == null || mailPassword.isEmpty()) {
+            mailPassword = environment.getProperty("spring.mail.password", password);
+        }
         
         // SMTP 서버 설정
         mailSender.setHost(mailHost != null && !mailHost.isEmpty() ? mailHost : "smtp.gmail.com");

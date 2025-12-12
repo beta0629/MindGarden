@@ -190,6 +190,146 @@ public class OnboardingServiceImpl implements OnboardingService {
         return saved;
     }
     
+    @Override
+    @Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
+    public OnboardingRequest update(
+            java.util.UUID requestId,
+            String tenantName,
+            String subdomain,
+            String brandName,
+            String regionCode,
+            String businessType) {
+        
+        log.info("온보딩 요청 수정: requestId={}, tenantName={}, subdomain={}, brandName={}, regionCode={}, businessType={}", 
+            requestId, tenantName, subdomain, brandName, regionCode, businessType);
+        
+        OnboardingRequest request = repository.findById(requestId)
+            .orElseThrow(() -> new IllegalArgumentException(
+                OnboardingConstants.formatError(OnboardingConstants.ERROR_TENANT_NOT_FOUND, requestId)
+            ));
+        
+        // 수정 가능한 상태인지 확인 (PENDING, IN_REVIEW, ON_HOLD만 수정 가능)
+        OnboardingStatus currentStatus = request.getStatus();
+        if (currentStatus != OnboardingStatus.PENDING && 
+            currentStatus != OnboardingStatus.IN_REVIEW && 
+            currentStatus != OnboardingStatus.ON_HOLD) {
+            throw new IllegalStateException(
+                String.format("온보딩 요청을 수정할 수 없습니다. 현재 상태: %s (수정 가능한 상태: PENDING, IN_REVIEW, ON_HOLD)", 
+                    currentStatus.name())
+            );
+        }
+        
+        // tenantName 수정
+        if (tenantName != null && !tenantName.trim().isEmpty()) {
+            request.setTenantName(tenantName.trim());
+            log.info("✅ 테넌트 이름 수정: {}", tenantName.trim());
+        }
+        
+        // subdomain 수정 (중복 확인 포함)
+        if (subdomain != null) {
+            String normalizedSubdomain = subdomain.trim().toLowerCase();
+            if (normalizedSubdomain.isEmpty()) {
+                // 빈 문자열이면 null로 설정
+                request.setSubdomain(null);
+                log.info("✅ 서브도메인 제거");
+            } else {
+                // 기존 서브도메인과 다를 때만 중복 확인
+                String currentSubdomain = request.getSubdomain();
+                if (currentSubdomain == null || !currentSubdomain.equals(normalizedSubdomain)) {
+                    // 서브도메인 중복 확인
+                    OnboardingService.SubdomainCheckResult checkResult = checkSubdomainDuplicate(normalizedSubdomain);
+                    if (!checkResult.isValid() || !checkResult.available() || checkResult.isDuplicate()) {
+                        throw new IllegalArgumentException(
+                            String.format("서브도메인을 사용할 수 없습니다: %s", checkResult.message())
+                        );
+                    }
+                    request.setSubdomain(normalizedSubdomain);
+                    log.info("✅ 서브도메인 수정: {}", normalizedSubdomain);
+                } else {
+                    log.debug("서브도메인 변경 없음: {}", normalizedSubdomain);
+                }
+            }
+        }
+        
+        // brandName 수정
+        if (brandName != null) {
+            String trimmedBrandName = brandName.trim();
+            if (trimmedBrandName.isEmpty()) {
+                request.setBrandName(null);
+            } else {
+                request.setBrandName(trimmedBrandName);
+            }
+            log.info("✅ 브랜드명 수정: {}", request.getBrandName());
+        }
+        
+        // regionCode 수정
+        if (regionCode != null) {
+            String trimmedRegionCode = regionCode.trim();
+            if (trimmedRegionCode.isEmpty()) {
+                request.setRegion(null);
+            } else {
+                request.setRegion(trimmedRegionCode);
+            }
+            log.info("✅ 지역 코드 수정: {}", request.getRegion());
+        }
+        
+        // businessType 수정
+        if (businessType != null && !businessType.trim().isEmpty()) {
+            request.setBusinessType(businessType.trim());
+            log.info("✅ 업종 타입 수정: {}", businessType.trim());
+        }
+        
+        // checklistJson 업데이트 (subdomain, brandName, regionCode 반영)
+        try {
+            Map<String, Object> checklist = new java.util.HashMap<>();
+            if (request.getChecklistJson() != null && !request.getChecklistJson().trim().isEmpty()) {
+                checklist = objectMapper.readValue(
+                    request.getChecklistJson(),
+                    new TypeReference<Map<String, Object>>() {}
+                );
+            }
+            
+            // checklistJson에 subdomain, brandName, regionCode 업데이트
+            if (subdomain != null) {
+                String normalizedSubdomain = subdomain.trim().toLowerCase();
+                if (normalizedSubdomain.isEmpty()) {
+                    checklist.remove("subdomain");
+                } else {
+                    checklist.put("subdomain", normalizedSubdomain);
+                }
+            }
+            
+            if (brandName != null) {
+                String trimmedBrandName = brandName.trim();
+                if (trimmedBrandName.isEmpty()) {
+                    checklist.remove("brandName");
+                } else {
+                    checklist.put("brandName", trimmedBrandName);
+                }
+            }
+            
+            if (regionCode != null) {
+                String trimmedRegionCode = regionCode.trim();
+                if (trimmedRegionCode.isEmpty()) {
+                    checklist.remove("regionCode");
+                } else {
+                    checklist.put("regionCode", trimmedRegionCode);
+                }
+            }
+            
+            request.setChecklistJson(objectMapper.writeValueAsString(checklist));
+            log.info("✅ checklistJson 업데이트 완료");
+        } catch (JsonProcessingException e) {
+            log.warn("checklistJson 업데이트 실패: {}", e.getMessage());
+            // checklistJson 업데이트 실패해도 계속 진행
+        }
+        
+        OnboardingRequest updated = repository.save(request);
+        log.info("✅ 온보딩 요청 수정 완료: id={}", updated.getId());
+        
+        return updated;
+    }
+    
     /**
      * 별도 트랜잭션에서 decide 메서드 실행
      * 자동 승인 실패 시에도 원래 트랜잭션이 롤백되지 않도록 함

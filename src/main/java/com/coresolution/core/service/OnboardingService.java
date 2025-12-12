@@ -41,6 +41,20 @@ public interface OnboardingService {
     );
     
     /**
+     * 온보딩 요청 수정
+     * PENDING, IN_REVIEW, ON_HOLD 상태에서만 수정 가능
+     * 서브도메인 수정 시 중복 확인 수행
+     */
+    OnboardingRequest update(
+        java.util.UUID requestId,
+        String tenantName,
+        String subdomain,
+        String brandName,
+        String regionCode,
+        String businessType
+    );
+    
+    /**
      * 온보딩 요청 결정 (승인/거부)
      * 승인 시 PL/SQL 프로시저를 통해 테넌트 생성 및 ERD 생성 등 자동 처리
      */

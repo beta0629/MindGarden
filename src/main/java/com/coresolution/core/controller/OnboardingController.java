@@ -344,16 +344,27 @@ public class OnboardingController extends BaseApiController {
             OpsPermissionUtils.requireAdminOrOps();
         }
 
+        // status 검증 (추가 안전장치)
+        if (payload.status() == null) {
+            log.error("온보딩 요청 결정 실패: status가 null입니다. id={}, payload={}", id, payload);
+            throw new IllegalArgumentException("상태(status)는 필수입니다. 가능한 값: PENDING, IN_REVIEW, APPROVED, REJECTED, ON_HOLD");
+        }
+
         log.info("온보딩 요청 결정: id={}, status={}, actorId={}", id, payload.status(),
                 payload.actorId());
 
-        OnboardingRequest updated =
-                onboardingService.decide(id, payload.status(), payload.actorId(), payload.note());
+        try {
+            OnboardingRequest updated =
+                    onboardingService.decide(id, payload.status(), payload.actorId(), payload.note());
 
-        log.info("✅ 온보딩 요청 결정 완료: id={}, status={}", id, payload.status());
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
-        return updated("온보딩 요청이 " + (payload.status() == OnboardingStatus.APPROVED ? "승인" : "거부")
-                + "되었습니다.", updated);
+            log.info("✅ 온보딩 요청 결정 완료: id={}, status={}", id, payload.status());
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
+            return updated("온보딩 요청이 " + (payload.status() == OnboardingStatus.APPROVED ? "승인" : "거부")
+                    + "되었습니다.", updated);
+        } catch (IllegalArgumentException e) {
+            log.error("온보딩 요청 결정 실패: id={}, status={}, error={}", id, payload.status(), e.getMessage());
+            throw e;
+        }
     }
 
     /**

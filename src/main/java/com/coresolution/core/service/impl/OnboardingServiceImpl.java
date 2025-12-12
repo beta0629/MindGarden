@@ -1792,7 +1792,7 @@ public class OnboardingServiceImpl implements OnboardingService {
         }
         
         // 4. 테넌트 테이블에서 중복 확인
-        boolean existsInTenants = tenantRepository.existsBySubdomainIgnoreCase(normalizedSubdomain);
+        boolean existsInTenants = tenantRepository.existsBySubdomain(normalizedSubdomain);
         if (existsInTenants) {
             log.warn("서브도메인 중복 (테넌트): subdomain={}", normalizedSubdomain);
             return new OnboardingService.SubdomainCheckResult(

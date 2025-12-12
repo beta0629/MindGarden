@@ -38,16 +38,23 @@ proc_label: BEGIN
     START TRANSACTION;
     
     -- 1. 테넌트 생성/활성화 (필수)
-    -- CreateOrActivateTenant는 8개 파라미터 (V62 버전) 또는 6개 파라미터 (V20251202_016 버전)를 사용할 수 있음
-    -- 8개 파라미터 버전: p_tenant_id, p_tenant_name, p_business_type, p_approved_by, p_admin_email, p_admin_password_hash, p_success, p_message
-    -- 6개 파라미터 버전: p_tenant_id, p_tenant_name, p_business_type, p_created_by, p_success, p_message
+    -- CreateOrActivateTenant는 8개 파라미터 (V62 버전)를 사용
     -- 관리자 계정은 별도 프로시저로 생성하므로 NULL 전달
+    SET @tenant_success = NULL;
+    SET @tenant_message = NULL;
+    
     CALL CreateOrActivateTenant(
         p_tenant_id, p_tenant_name, p_business_type, 
         p_approved_by, NULL, NULL, @tenant_success, @tenant_message
     );
     
-    IF @tenant_success = FALSE OR @tenant_success IS NULL THEN
+    -- 변수 값 확인 및 처리
+    IF @tenant_success IS NULL THEN
+        SET p_success = FALSE;
+        SET p_message = '테넌트 생성 실패: 프로시저가 성공 값을 반환하지 않았습니다.';
+        ROLLBACK;
+        LEAVE proc_label;
+    ELSEIF @tenant_success = FALSE THEN
         SET p_success = FALSE;
         SET p_message = CONCAT('테넌트 생성 실패: ', IFNULL(@tenant_message, '알 수 없는 오류'));
         ROLLBACK;

@@ -34,7 +34,7 @@ proc_label: BEGIN
             description_en,
             display_order
         FROM role_templates
-        WHERE CAST(business_type AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_unicode_ci = CAST(p_business_type AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_unicode_ci
+        WHERE business_type = p_business_type
             AND is_active = TRUE
             AND is_deleted = FALSE
         ORDER BY display_order ASC;
@@ -116,8 +116,8 @@ proc_label: BEGIN
         WHERE NOT EXISTS (
             SELECT 1
             FROM tenant_roles
-            WHERE CAST(tenant_id AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_unicode_ci = CAST(p_tenant_id AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_unicode_ci
-                AND CAST(role_template_id AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_unicode_ci = CAST(v_template_id AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_unicode_ci
+            WHERE tenant_id = p_tenant_id
+                AND role_template_id = v_template_id
                 AND is_deleted = FALSE
         );
         

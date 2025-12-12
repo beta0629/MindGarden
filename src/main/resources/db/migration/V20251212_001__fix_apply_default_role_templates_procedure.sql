@@ -34,7 +34,7 @@ proc_label: BEGIN
             description_en,
             display_order
         FROM role_templates
-        WHERE business_type COLLATE utf8mb4_unicode_ci = p_business_type COLLATE utf8mb4_unicode_ci
+        WHERE BINARY business_type = BINARY p_business_type
             AND is_active = TRUE
             AND is_deleted = FALSE
         ORDER BY display_order ASC;
@@ -116,8 +116,8 @@ proc_label: BEGIN
         WHERE NOT EXISTS (
             SELECT 1
             FROM tenant_roles
-            WHERE tenant_id = p_tenant_id
-                AND role_template_id = v_template_id
+            WHERE BINARY tenant_id = BINARY p_tenant_id
+                AND BINARY role_template_id = BINARY v_template_id
                 AND is_deleted = FALSE
         );
         

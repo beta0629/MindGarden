@@ -166,10 +166,18 @@ export default function Step1BasicInfoProgressive({
         if (!value || value.trim().length === 0) {
           return true; // 선택사항이므로 빈 값도 유효
         }
+        // 길이 제한: 최대 63자 (DNS 표준)
+        if (value.trim().length > 63) {
+          return false;
+        }
+        // 영문, 숫자, 하이픈만 허용
+        if (!/^[a-z0-9-]+$/.test(value)) {
+          return false;
+        }
         // 값이 있으면 반드시 중복 확인이 완료되어야 함
         return subdomainDuplicateChecked && !subdomainDuplicateError;
       },
-      placeholder: 'mycompany (영문, 숫자, 하이픈만 사용)',
+      placeholder: 'mycompany (영문, 숫자, 하이픈만, 최대 63자)',
       hint: '와일드카드 도메인 테스트용 서브도메인입니다. 입력하지 않으면 자동으로 생성됩니다. (예: mycompany → mycompany.dev.core-solution.co.kr)',
     },
     {
@@ -353,6 +361,23 @@ export default function Step1BasicInfoProgressive({
       return emailFormatResult.valid && emailDuplicateChecked && emailVerified;
     }
     
+    // 서브도메인 필드의 경우 최신 상태를 직접 확인
+    if (currentField.id === 'subdomain') {
+      if (!value || value.trim().length === 0) {
+        return true; // 선택사항이므로 빈 값도 유효
+      }
+      // 길이 제한: 최대 63자
+      if (value.trim().length > 63) {
+        return false;
+      }
+      // 영문, 숫자, 하이픈만 허용
+      if (!/^[a-z0-9-]+$/.test(value)) {
+        return false;
+      }
+      // 중복 확인이 완료되어야 함
+      return subdomainDuplicateChecked && !subdomainDuplicateError;
+    }
+    
     return currentField.validation ? currentField.validation(value) : true;
   };
 
@@ -449,7 +474,14 @@ export default function Step1BasicInfoProgressive({
                     type="text"
                     value={getFieldValue(field.id)}
                     onChange={(e) => {
-                      const value = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '');
+                      // 한글 및 특수문자 제거, 소문자 변환, 최대 63자 제한
+                      let value = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '');
+                      // 하이픈이 연속으로 오거나 시작/끝에 오는 경우 제거
+                      value = value.replace(/^-+|-+$/g, '').replace(/-{2,}/g, '-');
+                      // 최대 63자 제한
+                      if (value.length > 63) {
+                        value = value.substring(0, 63);
+                      }
                       handleFieldChange(field.id, value);
                       setSubdomainDuplicateChecked(false);
                       setSubdomainDuplicateError(null);
@@ -501,6 +533,8 @@ export default function Step1BasicInfoProgressive({
                     className={COMPONENT_CSS.ONBOARDING.INPUT}
                     style={{ flex: 1 }}
                     maxLength={63}
+                    pattern="[a-z0-9-]+"
+                    title="영문, 숫자, 하이픈(-)만 사용 가능하며 최대 63자까지 입력 가능합니다"
                   />
                   <button
                     type="button"

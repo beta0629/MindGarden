@@ -177,30 +177,68 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
             return;
         }
         
-        // 사용자 ID 생성 (이메일의 로컬 파트)
-        String userId = contactEmail.substring(0, contactEmail.indexOf('@'));
+        // 사용자 ID 생성 (이메일의 로컬 파트, 전역 중복 체크)
+        String localPart = contactEmail.substring(0, contactEmail.indexOf('@'));
+        String base = localPart.replaceAll("[^a-zA-Z0-9]", "").toLowerCase();
+        if (base.isEmpty()) {
+            base = "admin";
+        }
+        
+        String userId = base;
+        int suffix = 1;
+        
+        // user_id는 전역적으로 UNIQUE하므로 중복 체크
+        while (true) {
+            Integer count = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM users WHERE user_id = ? AND (is_deleted IS NULL OR is_deleted = FALSE)",
+                Integer.class,
+                userId
+            );
+            if (count == null || count == 0) {
+                break; // 사용 가능한 user_id
+            }
+            userId = base + suffix;
+            suffix++;
+        }
+        
         String email = contactEmail.toLowerCase().trim();
         
         // 관리자 계정 생성
-        jdbcTemplate.update(
-            "INSERT INTO users (" +
-            "    tenant_id, user_id, email, password, name, role, " +
-            "    phone, is_active, is_email_verified, is_social_account, " +
-            "    created_at, updated_at, created_by, updated_by, is_deleted, version" +
-            ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW(), ?, ?, FALSE, 0)",
-            tenantId,
-            userId,
-            email,
-            adminPasswordHash,
-            tenantName + " 관리자",
-            "ADMIN",
-            null, // phone
-            true, // is_active
-            true, // is_email_verified
-            false, // is_social_account
-            approvedBy,
-            approvedBy
-        );
+        try {
+            jdbcTemplate.update(
+                "INSERT INTO users (" +
+                "    tenant_id, user_id, email, password, name, role, " +
+                "    phone, is_active, is_email_verified, is_social_account, " +
+                "    created_at, updated_at, created_by, updated_by, is_deleted, version" +
+                ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW(), ?, ?, FALSE, 0)",
+                tenantId,
+                userId,
+                email,
+                adminPasswordHash,
+                tenantName + " 관리자",
+                "ADMIN",
+                null, // phone
+                true, // is_active
+                true, // is_email_verified
+                false, // is_social_account
+                approvedBy,
+                approvedBy
+            );
+        } catch (org.springframework.dao.DuplicateKeyException e) {
+            // 중복 키 오류 발생 시 (다른 프로세스에서 동시에 생성한 경우)
+            log.warn("관리자 계정 생성 중 중복 키 오류 (다른 프로세스에서 이미 생성되었을 수 있음): userId={}, email={}", userId, email);
+            // 이미 존재하는지 다시 확인
+            Integer finalCount = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM users WHERE tenant_id = ? AND email = ? AND role = 'ADMIN' AND (is_deleted IS NULL OR is_deleted = FALSE)",
+                Integer.class,
+                tenantId, email
+            );
+            if (finalCount != null && finalCount > 0) {
+                log.info("관리자 계정이 이미 존재합니다 (중복 키 오류 후 확인): {}", email);
+                return;
+            }
+            throw e; // 다른 오류면 재발생
+        }
         
         log.info("관리자 계정 생성 완료: email={}, tenantId={}", email, tenantId);
     }

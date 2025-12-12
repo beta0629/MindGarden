@@ -34,7 +34,7 @@ proc_label: BEGIN
             description_en,
             display_order
         FROM role_templates
-        WHERE business_type = p_business_type
+        WHERE business_type COLLATE utf8mb4_unicode_ci = p_business_type COLLATE utf8mb4_unicode_ci
             AND is_active = TRUE
             AND is_deleted = FALSE
         ORDER BY display_order ASC;

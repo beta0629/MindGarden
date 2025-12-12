@@ -24,6 +24,7 @@ public interface OnboardingApprovalService {
      * @param decisionNote 결정 노트
      * @param contactEmail 연락 이메일 (관리자 계정 생성용)
      * @param adminPasswordHash BCrypt 해시된 관리자 비밀번호 (관리자 계정 생성용)
+     * @param subdomain 서브도메인 (온보딩 요청에서 입력한 서브도메인, 없으면 NULL)
      * @return 처리 결과 (success, message)
      */
     Map<String, Object> processOnboardingApproval(
@@ -34,7 +35,8 @@ public interface OnboardingApprovalService {
             String approvedBy,
             String decisionNote,
             String contactEmail,
-            String adminPasswordHash
+            String adminPasswordHash,
+            String subdomain
     );
 }
 

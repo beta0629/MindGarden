@@ -40,10 +40,11 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
             String approvedBy,
             String decisionNote,
             String contactEmail,
-            String adminPasswordHash) {
+            String adminPasswordHash,
+            String subdomain) {
         
-        log.info("온보딩 승인 프로세스 시작: requestId={}, tenantId={}, tenantName={}, contactEmail={}", 
-                requestId, tenantId, tenantName, contactEmail);
+        log.info("온보딩 승인 프로세스 시작: requestId={}, tenantId={}, tenantName={}, contactEmail={}, subdomain={}", 
+                requestId, tenantId, tenantName, contactEmail, subdomain);
         
         Map<String, Object> result = new HashMap<>();
         
@@ -60,7 +61,7 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
             }
             
             try (CallableStatement cs = connection.prepareCall(
-                 "{CALL ProcessOnboardingApproval(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}")) {
+                 "{CALL ProcessOnboardingApproval(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}")) {
             
             // IN 파라미터 설정 - UUID를 BINARY(16)으로 변환
             byte[] uuidBytes = convertUuidToBytes(requestId);
@@ -72,14 +73,15 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
             cs.setString(6, decisionNote);
             cs.setString(7, contactEmail);  // 추가: 연락 이메일
             cs.setString(8, adminPasswordHash);  // 추가: BCrypt 해시된 비밀번호
+            cs.setString(9, subdomain);  // 추가: 서브도메인
             
             // OUT 파라미터 등록
-            cs.registerOutParameter(9, Types.BOOLEAN);  // p_success
-            cs.registerOutParameter(10, Types.VARCHAR); // p_message
+            cs.registerOutParameter(10, Types.BOOLEAN);  // p_success
+            cs.registerOutParameter(11, Types.VARCHAR); // p_message
             
             // 프로시저 실행
-            log.info("프로시저 실행 시작: requestId={}, tenantId={}, tenantName={}, businessType={}, contactEmail={}", 
-                requestId, tenantId, tenantName, businessType, contactEmail);
+            log.info("프로시저 실행 시작: requestId={}, tenantId={}, tenantName={}, businessType={}, contactEmail={}, subdomain={}", 
+                requestId, tenantId, tenantName, businessType, contactEmail, subdomain);
             boolean hasResult = cs.execute();
             log.info("프로시저 실행 완료: hasResult={}", hasResult);
             
@@ -88,14 +90,14 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
             String message = null;
             
             try {
-                success = cs.getBoolean(9);
-                log.info("프로시저 OUT 파라미터 [9] (success) 읽기: {}", success);
+                success = cs.getBoolean(10);
+                log.info("프로시저 OUT 파라미터 [10] (success) 읽기: {}", success);
             } catch (SQLException e) {
-                log.error("프로시저 OUT 파라미터 [9] (success) 읽기 실패: {}", e.getMessage(), e);
+                log.error("프로시저 OUT 파라미터 [10] (success) 읽기 실패: {}", e.getMessage(), e);
                 // VARCHAR로 읽어보기 시도
                 try {
-                    Object successObj = cs.getObject(9);
-                    log.info("프로시저 OUT 파라미터 [9] (success) 원본 값: {}, 타입: {}", successObj, successObj != null ? successObj.getClass().getName() : "null");
+                    Object successObj = cs.getObject(10);
+                    log.info("프로시저 OUT 파라미터 [10] (success) 원본 값: {}, 타입: {}", successObj, successObj != null ? successObj.getClass().getName() : "null");
                     if (successObj instanceof Boolean) {
                         success = (Boolean) successObj;
                     } else if (successObj instanceof Number) {
@@ -104,24 +106,24 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                         success = Boolean.parseBoolean((String) successObj) || "1".equals(successObj) || "true".equalsIgnoreCase((String) successObj);
                     }
                 } catch (SQLException e2) {
-                    log.error("프로시저 OUT 파라미터 [9] (success) 대체 읽기 실패: {}", e2.getMessage());
+                    log.error("프로시저 OUT 파라미터 [10] (success) 대체 읽기 실패: {}", e2.getMessage());
                 }
             }
             
             try {
-                message = cs.getString(10);
-                log.info("프로시저 OUT 파라미터 [10] (message) 읽기: {}", message);
+                message = cs.getString(11);
+                log.info("프로시저 OUT 파라미터 [11] (message) 읽기: {}", message);
             } catch (SQLException e) {
-                log.error("프로시저 OUT 파라미터 [10] (message) 읽기 실패: {}", e.getMessage(), e);
+                log.error("프로시저 OUT 파라미터 [11] (message) 읽기 실패: {}", e.getMessage(), e);
                 // TEXT로 읽어보기 시도
                 try {
-                    Object messageObj = cs.getObject(10);
-                    log.info("프로시저 OUT 파라미터 [10] (message) 원본 값: {}", messageObj);
+                    Object messageObj = cs.getObject(11);
+                    log.info("프로시저 OUT 파라미터 [11] (message) 원본 값: {}", messageObj);
                     if (messageObj != null) {
                         message = messageObj.toString();
                     }
                 } catch (SQLException e2) {
-                    log.error("프로시저 OUT 파라미터 [10] (message) 대체 읽기 실패: {}", e2.getMessage());
+                    log.error("프로시저 OUT 파라미터 [11] (message) 대체 읽기 실패: {}", e2.getMessage());
                 }
             }
             

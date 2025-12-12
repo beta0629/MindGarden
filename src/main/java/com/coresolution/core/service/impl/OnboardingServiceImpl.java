@@ -494,6 +494,7 @@ public class OnboardingServiceImpl implements OnboardingService {
             
             String contactEmail = request.getRequestedBy();  // 기본값: requestedBy
             String adminPasswordHash = null;
+            String subdomain = request.getSubdomain();  // 온보딩 요청의 서브도메인
             Map<String, String> dashboardTemplates = null;
             
             if (request.getChecklistJson() != null && !request.getChecklistJson().isEmpty()) {
@@ -509,6 +510,15 @@ public class OnboardingServiceImpl implements OnboardingService {
                         log.info("관리자 비밀번호 해시 완료: requestId={}", requestId);
                     } else {
                         log.warn("checklistJson에 adminPassword가 없음: requestId={}", requestId);
+                    }
+                    
+                    // 서브도메인이 없으면 checklistJson에서 추출 시도
+                    if (subdomain == null || subdomain.trim().isEmpty()) {
+                        String checklistSubdomain = (String) checklist.get("subdomain");
+                        if (checklistSubdomain != null && !checklistSubdomain.trim().isEmpty()) {
+                            subdomain = checklistSubdomain.trim().toLowerCase();
+                            log.info("checklistJson에서 서브도메인 추출: requestId={}, subdomain={}", requestId, subdomain);
+                        }
                     }
                     
                     @SuppressWarnings("unchecked")
@@ -537,6 +547,8 @@ public class OnboardingServiceImpl implements OnboardingService {
             
             final String finalContactEmail = contactEmail;
             final String finalAdminPasswordHash = adminPasswordHash;
+            final String finalSubdomain = (subdomain != null && !subdomain.trim().isEmpty()) 
+                ? subdomain.trim().toLowerCase() : null;
             final Map<String, String> finalDashboardTemplates = dashboardTemplates;
             
             Map<String, java.util.List<String>> dashboardWidgets = null;
@@ -570,7 +582,8 @@ public class OnboardingServiceImpl implements OnboardingService {
                             actorId,
                             note,
                             finalContactEmail,
-                            finalAdminPasswordHash
+                            finalAdminPasswordHash,
+                            finalSubdomain
                         );
                         Boolean success = (Boolean) result.get("success");
                         return success != null && success;
@@ -592,7 +605,8 @@ public class OnboardingServiceImpl implements OnboardingService {
                     actorId,
                     note,
                     finalContactEmail,
-                    finalAdminPasswordHash
+                    finalAdminPasswordHash,
+                    finalSubdomain
                 );
                 success = (Boolean) approvalResult.get("success");
                 message = (String) approvalResult.get("message");
@@ -665,20 +679,8 @@ public class OnboardingServiceImpl implements OnboardingService {
                     log.info("🔄 테넌트 초기화 작업 시작: tenantId={}", tenantId);
                     initializeTenantAfterOnboarding(tenantId, request.getBusinessType(), actorId);
                     
-                    // 서브도메인 설정
-                    try {
-                        String subdomain = request.getSubdomain();
-                        if (subdomain != null && !subdomain.trim().isEmpty()) {
-                            Tenant tenant = tenantRepository.findByTenantId(tenantId)
-                                .orElseThrow(() -> new IllegalArgumentException("테넌트를 찾을 수 없습니다: " + tenantId));
-                            tenant.setSubdomain(subdomain.trim().toLowerCase());
-                            tenantRepository.save(tenant);
-                            log.info("✅ 테넌트 서브도메인 설정 완료: tenantId={}, subdomain={}", tenantId, subdomain);
-                        }
-                    } catch (Exception e) {
-                        log.warn("서브도메인 설정 실패 (온보딩 프로세스는 계속 진행): tenantId={}, error={}", 
-                            tenantId, e.getMessage());
-                    }
+                    // 서브도메인은 프로시저에서 처리하므로 여기서는 제거
+                    // (CreateOrActivateTenant 프로시저에서 서브도메인을 받아서 저장)
                     
                     // 브랜드명 설정 (branding_json에 저장)
                     try {

@@ -61,6 +61,15 @@ public class EmailConfig {
         mailSender.setPort(port);
         mailSender.setUsername(userId);
         mailSender.setPassword(password);
+        
+        // 디버그: 이메일 설정 로그 (비밀번호는 마스킹)
+        System.out.println("=== EmailConfig Debug ===");
+        System.out.println("Host: " + host);
+        System.out.println("Port: " + port);
+        System.out.println("UserId: " + userId);
+        System.out.println("Password length: " + (password != null ? password.length() : 0));
+        System.out.println("Password is empty: " + (password == null || password.isEmpty()));
+        System.out.println("========================");
 
         // SMTP 프로퍼티 설정
         Properties props = mailSender.getJavaMailProperties();

@@ -78,14 +78,16 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
             cs.registerOutParameter(10, Types.VARCHAR); // p_message
             
             // 프로시저 실행
+            log.info("프로시저 실행 시작: requestId={}, tenantId={}, tenantName={}, businessType={}, contactEmail={}", 
+                requestId, tenantId, tenantName, businessType, contactEmail);
             boolean hasResult = cs.execute();
-            log.debug("프로시저 실행 완료: hasResult={}", hasResult);
+            log.info("프로시저 실행 완료: hasResult={}", hasResult);
             
             // 결과 추출
             Boolean success = cs.getBoolean(9);
             String message = cs.getString(10);
             
-            log.debug("프로시저 결과: success={}, message={}", success, message);
+            log.info("프로시저 결과: success={}, message={}", success, message);
             
             // NULL 체크 및 기본값 설정
             if (success == null) {

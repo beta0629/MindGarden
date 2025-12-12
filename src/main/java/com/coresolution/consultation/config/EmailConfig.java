@@ -1,9 +1,11 @@
 package com.coresolution.consultation.config;
 
 import java.util.Properties;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.scheduling.annotation.EnableAsync;
@@ -18,6 +20,9 @@ import org.springframework.scheduling.annotation.EnableAsync;
 @Configuration
 @EnableAsync
 public class EmailConfig {
+
+    @Autowired
+    private Environment environment;
 
     @Value("${spring.mail.host:}")
     private String host;
@@ -56,19 +61,27 @@ public class EmailConfig {
     public JavaMailSender javaMailSender() {
         JavaMailSenderImpl mailSender = new JavaMailSenderImpl();
 
+        // 시스템 프로퍼티(-D) 또는 환경 변수에서 직접 읽기 (우선순위: 시스템 프로퍼티 > 환경 변수 > @Value)
+        String mailHost = environment.getProperty("spring.mail.host", host);
+        String mailPort = environment.getProperty("spring.mail.port", String.valueOf(port));
+        String mailUserId = environment.getProperty("spring.mail.userId", userId);
+        String mailPassword = environment.getProperty("spring.mail.password", password);
+        
         // SMTP 서버 설정
-        mailSender.setHost(host);
-        mailSender.setPort(port);
-        mailSender.setUsername(userId);
-        mailSender.setPassword(password);
+        mailSender.setHost(mailHost != null && !mailHost.isEmpty() ? mailHost : "smtp.gmail.com");
+        mailSender.setPort(mailPort != null && !mailPort.isEmpty() ? Integer.parseInt(mailPort) : 587);
+        mailSender.setUsername(mailUserId);
+        mailSender.setPassword(mailPassword);
         
         // 디버그: 이메일 설정 로그 (비밀번호는 마스킹)
         System.out.println("=== EmailConfig Debug ===");
-        System.out.println("Host: " + host);
-        System.out.println("Port: " + port);
-        System.out.println("UserId: " + userId);
-        System.out.println("Password length: " + (password != null ? password.length() : 0));
-        System.out.println("Password is empty: " + (password == null || password.isEmpty()));
+        System.out.println("Host (from env): " + environment.getProperty("spring.mail.host"));
+        System.out.println("Host (final): " + mailSender.getHost());
+        System.out.println("Port (final): " + mailSender.getPort());
+        System.out.println("UserId (from env): " + environment.getProperty("spring.mail.userId"));
+        System.out.println("UserId (final): " + mailSender.getUsername());
+        System.out.println("Password length: " + (mailPassword != null ? mailPassword.length() : 0));
+        System.out.println("Password is empty: " + (mailPassword == null || mailPassword.isEmpty()));
         System.out.println("========================");
 
         // SMTP 프로퍼티 설정

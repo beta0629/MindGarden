@@ -406,6 +406,41 @@ export const useOnboarding = () => {
     }
   };
 
+  // 서브도메인 중복 확인
+  const handleCheckSubdomainDuplicate = async (subdomain: string) => {
+    if (!subdomain || subdomain.trim().length === 0) {
+      setSubdomainDuplicateChecked(false);
+      setSubdomainDuplicateError(null);
+      setSubdomainPreview(null);
+      return;
+    }
+
+    try {
+      setSubdomainDuplicateChecking(true);
+      setSubdomainDuplicateError(null);
+      setError(null);
+      
+      const result = await checkSubdomainDuplicate(subdomain.trim());
+      
+      if (result.isValid && result.available && !result.isDuplicate) {
+        setSubdomainDuplicateChecked(true);
+        setSubdomainDuplicateError(null);
+        setSubdomainPreview(result.previewDomain || null);
+      } else {
+        setSubdomainDuplicateChecked(false);
+        setSubdomainDuplicateError(result.message || '사용할 수 없는 서브도메인입니다.');
+        setSubdomainPreview(null);
+      }
+    } catch (err) {
+      console.error('서브도메인 중복 확인 실패:', err);
+      setSubdomainDuplicateChecked(false);
+      setSubdomainDuplicateError(err instanceof Error ? err.message : '서브도메인 중복 확인에 실패했습니다.');
+      setSubdomainPreview(null);
+    } finally {
+      setSubdomainDuplicateChecking(false);
+    }
+  };
+
   // 온보딩 제출
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -1615,6 +1615,18 @@ public class OnboardingServiceImpl implements OnboardingService {
                     "{\"isAdmin\": false, \"isStaff\": true, \"roleType\": \"STAFF\", \"isDefault\": true, \"businessType\": \"CONSULTATION\"}", 4, createdByValue);
                 insertedCount = 4;
             }
+            // 심리상담(COUNSELING)
+            else if ("COUNSELING".equals(businessType)) {
+                insertCommonCodeIfNotExists(tenantId, "ROLE", "ADMIN", "원장", "원장", "심리상담 원장 역할",
+                    "{\"isAdmin\": true, \"roleType\": \"ADMIN\", \"isDefault\": true, \"businessType\": \"COUNSELING\"}", 1, createdByValue);
+                insertCommonCodeIfNotExists(tenantId, "ROLE", "CONSULTANT", "상담사", "상담사", "심리상담 상담사 역할",
+                    "{\"isAdmin\": false, \"roleType\": \"CONSULTANT\", \"isDefault\": true, \"businessType\": \"COUNSELING\"}", 2, createdByValue);
+                insertCommonCodeIfNotExists(tenantId, "ROLE", "CLIENT", "내담자", "내담자", "심리상담 내담자 역할",
+                    "{\"isAdmin\": false, \"roleType\": \"CLIENT\", \"isDefault\": true, \"businessType\": \"COUNSELING\"}", 3, createdByValue);
+                insertCommonCodeIfNotExists(tenantId, "ROLE", "STAFF", "사무원", "사무원", "심리상담 사무원 역할",
+                    "{\"isAdmin\": false, \"isStaff\": true, \"roleType\": \"STAFF\", \"isDefault\": true, \"businessType\": \"COUNSELING\"}", 4, createdByValue);
+                insertedCount = 4;
+            }
             // 학원(ACADEMY)
             else if ("ACADEMY".equals(businessType)) {
                 insertCommonCodeIfNotExists(tenantId, "ROLE", "ADMIN", "원장", "원장", "학원 원장 역할",

@@ -166,6 +166,7 @@ export default function Step1BasicInfoProgressive({
         if (!value || value.trim().length === 0) {
           return true; // 선택사항이므로 빈 값도 유효
         }
+        // 값이 있으면 반드시 중복 확인이 완료되어야 함
         return subdomainDuplicateChecked && !subdomainDuplicateError;
       },
       placeholder: 'mycompany (영문, 숫자, 하이픈만 사용)',
@@ -454,27 +455,44 @@ export default function Step1BasicInfoProgressive({
                       setSubdomainDuplicateError(null);
                       setSubdomainPreview(null);
                     }}
-                    onBlur={(e) => {
+                    onBlur={async (e) => {
                       const value = e.target.value.trim();
                       if (value) {
-                        checkSubdomainDuplicate(value);
+                        // 서브도메인 입력 시 자동으로 중복 확인 실행
+                        try {
+                          await checkSubdomainDuplicate(value);
+                          // 중복 확인 완료 후 validation 체크
+                          if (field.validation && field.validation(value)) {
+                            handleFieldComplete(field.id, value);
+                          }
+                        } catch (err) {
+                          // 에러 발생 시에도 필드 완료 처리하지 않음
+                          console.error('서브도메인 중복 확인 실패:', err);
+                        }
                       } else {
                         setSubdomainDuplicateChecked(false);
                         setSubdomainDuplicateError(null);
                         setSubdomainPreview(null);
-                      }
-                      // 선택 필드이므로 값이 없거나 검증 통과하면 완료
-                      if (!value || (field.validation && field.validation(value))) {
+                        // 빈 값이면 선택 필드이므로 완료 처리
                         handleFieldComplete(field.id, value);
                       }
                     }}
-                    onKeyDown={(e) => {
+                    onKeyDown={async (e) => {
                       if (e.key === 'Enter') {
                         const value = e.currentTarget.value.trim();
                         if (value) {
-                          checkSubdomainDuplicate(value);
-                        }
-                        if (!value || (field.validation && field.validation(value))) {
+                          // Enter 키 입력 시 자동으로 중복 확인 실행
+                          try {
+                            await checkSubdomainDuplicate(value);
+                            // 중복 확인 완료 후 validation 체크
+                            if (field.validation && field.validation(value)) {
+                              handleFieldComplete(field.id, value);
+                            }
+                          } catch (err) {
+                            console.error('서브도메인 중복 확인 실패:', err);
+                          }
+                        } else {
+                          // 빈 값이면 선택 필드이므로 완료 처리
                           handleFieldComplete(field.id, value);
                         }
                       }

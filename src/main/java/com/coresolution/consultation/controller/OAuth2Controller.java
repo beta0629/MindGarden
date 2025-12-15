@@ -63,7 +63,7 @@ public class OAuth2Controller extends BaseApiController {
     @Value("${spring.security.oauth2.client.registration.kakao.scope:profile_nickname,account_email}")
     private String kakaoScope;
 
-    @Value("${spring.security.oauth2.client.registration.naver.client-id:dummy}")
+    @Value("${spring.security.oauth2.client.registration.naver.client-id:${security.oauth2.client.registration.naver.client-id:vTKNlxYKIfo1uCCXaDfk}}")
     private String naverClientId;
 
     @Value("${spring.security.oauth2.client.registration.naver.redirect-uri:${NAVER_REDIRECT_URI:}}")

@@ -1558,12 +1558,12 @@ public class OAuth2Controller extends BaseApiController {
                         extractedSubdomain = hostWithoutPort.substring(0, dotIndex);
                     }
                 } else {
-                    // 프로덕션 도메인 패턴
+                    // 프로덕션 도메인 패턴 (coresolution 도메인 우선, 기존 m-garden 호환성 유지)
                     String[] patterns = {
                         "\\.dev\\.core-solution\\.co\\.kr$",
                         "\\.core-solution\\.co\\.kr$",
-                        "\\.dev\\.m-garden\\.co\\.kr$",
-                        "\\.m-garden\\.co\\.kr$"
+                        "\\.dev\\.m-garden\\.co\\.kr$",  // 기존 호환성 유지
+                        "\\.m-garden\\.co\\.kr$"  // 기존 호환성 유지
                     };
                     
                     for (String pattern : patterns) {

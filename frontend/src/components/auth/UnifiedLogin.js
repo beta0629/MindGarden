@@ -116,11 +116,12 @@ const UnifiedLogin = () => {
         if (!host) return;
         
         // 3. 서브도메인 패턴 매칭 (로컬 환경도 지원)
+        // coresolution 도메인 우선, 기존 m-garden 호환성 유지
         const patterns = [
           /^([^.]+)\.dev\.core-solution\.co\.kr$/,
           /^([^.]+)\.core-solution\.co\.kr$/,
-          /^([^.]+)\.dev\.m-garden\.co\.kr$/,
-          /^([^.]+)\.m-garden\.co\.kr$/,
+          /^([^.]+)\.dev\.m-garden\.co\.kr$/,  // 기존 호환성 유지
+          /^([^.]+)\.m-garden\.co\.kr$/,  // 기존 호환성 유지
           // 로컬 환경 지원: localhost 서브도메인 패턴
           /^([^.]+)\.localhost(:[0-9]+)?$/,
           /^([^.]+)\.127\.0\.0\.1(:[0-9]+)?$/

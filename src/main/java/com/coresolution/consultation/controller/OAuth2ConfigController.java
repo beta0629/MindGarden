@@ -26,13 +26,13 @@ public class OAuth2ConfigController {
     @Value("${spring.security.oauth2.client.registration.kakao.client-id:dummy}")
     private String kakaoClientId;
 
-    @Value("${spring.security.oauth2.client.registration.kakao.redirect-uri:http://m-garden.co.kr/api/auth/kakao/callback}")
+    @Value("${spring.security.oauth2.client.registration.kakao.redirect-uri:https://dev.core-solution.co.kr/api/auth/kakao/callback}")
     private String kakaoRedirectUri;
 
     @Value("${spring.security.oauth2.client.registration.naver.client-id:dummy}")
     private String naverClientId;
 
-    @Value("${spring.security.oauth2.client.registration.naver.redirect-uri:http://m-garden.co.kr/api/auth/naver/callback}")
+    @Value("${spring.security.oauth2.client.registration.naver.redirect-uri:https://dev.core-solution.co.kr/api/auth/naver/callback}")
     private String naverRedirectUri;
 
     @Value("${server.port:8080}")
@@ -76,15 +76,22 @@ public class OAuth2ConfigController {
         } catch (Exception e) {
             log.error("❌ OAuth2 설정 조회 실패", e);
             // 기본값 반환 (오류 시에도 프론트엔드가 동작하도록)
+            // 로컬 환경에서는 localhost, 운영 환경에서는 coresolution 도메인 사용
+            String fallbackBaseUrl = "https://dev.core-solution.co.kr";
+            // 환경 변수나 설정에서 baseUrl 확인
+            if (oauth2BaseUrl != null && !oauth2BaseUrl.isEmpty()) {
+                fallbackBaseUrl = oauth2BaseUrl;
+            }
+            
             Map<String, Object> fallbackConfig = Map.of(
                 "kakao", Map.of(
                     "clientId", "dummy",
-                    "redirectUri", "http://localhost:8080/api/auth/kakao/callback",
+                    "redirectUri", fallbackBaseUrl + "/api/auth/kakao/callback",
                     "authUrl", "https://kauth.kakao.com/oauth/authorize"
                 ),
                 "naver", Map.of(
                     "clientId", "dummy",
-                    "redirectUri", "http://localhost:8080/api/auth/naver/callback",
+                    "redirectUri", fallbackBaseUrl + "/api/auth/naver/callback",
                     "authUrl", "https://nid.naver.com/oauth2.0/authorize"
                 )
             );
@@ -125,13 +132,16 @@ public class OAuth2ConfigController {
         
         int serverPort = request.getServerPort();
         
-        // 개발 환경 (localhost)
+        // 개발 환경 (localhost) - 로컬에서도 coresolution 도메인 사용
         if ("localhost".equals(serverName) || "127.0.0.1".equals(serverName)) {
-            if (serverPort == 80 || serverPort == 443) {
-                return scheme + "://" + serverName;
-            } else {
-                return scheme + "://" + serverName + ":" + serverPort;
+            // 환경 변수로 coresolution 도메인 강제 사용 가능
+            if (oauth2BaseUrl != null && !oauth2BaseUrl.isEmpty()) {
+                log.debug("OAuth2 BaseUrl (환경변수, localhost 오버라이드): {}", oauth2BaseUrl);
+                return oauth2BaseUrl;
             }
+            // 로컬 환경에서도 기본값으로 coresolution 도메인 사용
+            // localhost를 사용하려면 환경 변수 oauth2.base-url로 오버라이드 필요
+            return "https://dev.core-solution.co.kr";
         }
         
         // 운영/개발 환경 (실제 도메인)

@@ -81,9 +81,42 @@ public class OAuth2Controller extends BaseApiController {
     }
 
     /**
-     * 프론트엔드 URL 동적 감지 Referer 헤더에서 프론트엔드 URL을 추출
+     * 프론트엔드 URL 동적 감지
+     * 우선순위: 1. 요청의 Host 헤더 (서브도메인 지원) 2. Referer 헤더 3. 프로퍼티/환경변수
      */
     private String getFrontendBaseUrl(HttpServletRequest request) {
+        // 1. 요청의 Host 헤더를 우선 사용 (서브도메인 지원)
+        try {
+            String requestScheme = request.getHeader("X-Forwarded-Proto");
+            if (requestScheme == null || requestScheme.isEmpty()) {
+                requestScheme = request.getScheme();
+            }
+
+            String requestHost = request.getHeader("X-Forwarded-Host");
+            if (requestHost == null || requestHost.isEmpty()) {
+                requestHost = request.getHeader("Host");
+            }
+            if (requestHost == null || requestHost.isEmpty()) {
+                requestHost = request.getServerName();
+                int port = request.getServerPort();
+                if (port != 80 && port != 443) {
+                    requestHost = requestHost + ":" + port;
+                }
+            }
+
+            // 포트 제거 (프론트엔드 URL에는 포트가 필요 없음)
+            String hostWithoutPort = requestHost.split(":")[0];
+            
+            if (hostWithoutPort != null && !hostWithoutPort.isEmpty()) {
+                String dynamicUrl = requestScheme + "://" + hostWithoutPort;
+                log.info("프론트엔드 URL (요청 Host 기반): {}", dynamicUrl);
+                return dynamicUrl;
+            }
+        } catch (Exception e) {
+            log.warn("요청 Host 기반 프론트엔드 URL 생성 실패", e);
+        }
+
+        // 2. Referer 헤더 확인
         String referer = request.getHeader("Referer");
         if (referer != null && !referer.isEmpty() && !referer.contains("null")) {
             try {
@@ -95,7 +128,7 @@ public class OAuth2Controller extends BaseApiController {
                 if (frontendUrl.contains("null")) {
                     log.warn("Referer URL에 null이 포함됨, 무시: {}", frontendUrl);
                 } else {
-                    log.info("프론트엔드 URL 감지: {}", frontendUrl);
+                    log.info("프론트엔드 URL (Referer 기반): {}", frontendUrl);
                     return frontendUrl;
                 }
             } catch (Exception e) {
@@ -103,47 +136,23 @@ public class OAuth2Controller extends BaseApiController {
             }
         }
 
-        // Referer가 없거나 파싱 실패 시 프로퍼티 값 사용
-        log.info("프로퍼티 프론트엔드 URL 사용: {}", frontendBaseUrl);
-
-        // 프로퍼티 값도 null인 경우 환경에 따른 기본값 사용
-        if (frontendBaseUrl == null || frontendBaseUrl.trim().isEmpty()) {
-            // 환경변수에서 프론트엔드 URL 확인
-            String envFrontendUrl = System.getenv("FRONTEND_BASE_URL");
-            if (envFrontendUrl != null && !envFrontendUrl.trim().isEmpty()) {
-                log.info("환경변수에서 프론트엔드 URL 사용: {}", envFrontendUrl);
-                return envFrontendUrl;
-            }
-
-            // 모든 설정이 없으면 요청의 scheme과 host로 동적 생성
-            try {
-                String requestScheme = request.getHeader("X-Forwarded-Proto");
-                if (requestScheme == null || requestScheme.isEmpty()) {
-                    requestScheme = request.getScheme();
-                }
-
-                String requestHost = request.getHeader("X-Forwarded-Host");
-                if (requestHost == null || requestHost.isEmpty()) {
-                    requestHost = request.getHeader("Host");
-                }
-                if (requestHost == null || requestHost.isEmpty()) {
-                    requestHost = request.getServerName();
-                }
-
-                if (requestHost != null && !requestHost.isEmpty()) {
-                    String dynamicUrl = requestScheme + "://" + requestHost;
-                    log.warn("프론트엔드 URL이 설정되지 않음, 동적 생성: {}", dynamicUrl);
-                    return dynamicUrl;
-                }
-            } catch (Exception e) {
-                log.error("프론트엔드 URL 동적 생성 실패", e);
-            }
-
-            log.error("프론트엔드 URL을 생성할 수 없습니다. FRONTEND_BASE_URL 환경 변수를 설정하세요.");
-            return ""; // 빈 문자열 반환 (에러 처리 필요)
+        // 3. 프로퍼티 값 사용
+        if (frontendBaseUrl != null && !frontendBaseUrl.trim().isEmpty()) {
+            log.info("프론트엔드 URL (프로퍼티): {}", frontendBaseUrl);
+            return frontendBaseUrl;
         }
 
-        return frontendBaseUrl;
+        // 4. 환경변수 확인
+        String envFrontendUrl = System.getenv("FRONTEND_BASE_URL");
+        if (envFrontendUrl != null && !envFrontendUrl.trim().isEmpty()) {
+            log.info("프론트엔드 URL (환경변수): {}", envFrontendUrl);
+            return envFrontendUrl;
+        }
+
+        // 5. 기본값 사용
+        String defaultUrl = "https://dev.core-solution.co.kr";
+        log.warn("프론트엔드 URL을 동적으로 생성할 수 없어 기본값 사용: {}", defaultUrl);
+        return defaultUrl;
     }
 
     @GetMapping("/oauth2/kakao/authorize")
@@ -204,30 +213,34 @@ public class OAuth2Controller extends BaseApiController {
                 if (requestHost != null && !requestHost.isEmpty()) {
                     String hostWithoutPort = requestHost.split(":")[0];
                     String mainDomain = hostWithoutPort;
-                    
+
                     // 서브도메인 패턴 감지 및 메인 도메인으로 변환
                     if (hostWithoutPort.matches(".*\\.dev\\.core-solution\\.co\\.kr$")) {
                         // mindgarden.dev.core-solution.co.kr -> dev.core-solution.co.kr
                         mainDomain = "dev.core-solution.co.kr";
-                        log.info("카카오 OAuth2 - 서브도메인을 메인 도메인으로 변환: {} -> {}", hostWithoutPort, mainDomain);
-                    } else if (hostWithoutPort.matches(".*\\.core-solution\\.co\\.kr$") 
-                            && !hostWithoutPort.equals("dev.core-solution.co.kr") 
+                        log.info("카카오 OAuth2 - 서브도메인을 메인 도메인으로 변환: {} -> {}", hostWithoutPort,
+                                mainDomain);
+                    } else if (hostWithoutPort.matches(".*\\.core-solution\\.co\\.kr$")
+                            && !hostWithoutPort.equals("dev.core-solution.co.kr")
                             && !hostWithoutPort.equals("core-solution.co.kr")) {
                         // 서브도메인이 있으면 메인 도메인 사용
                         mainDomain = "dev.core-solution.co.kr";
-                        log.info("카카오 OAuth2 - 서브도메인을 메인 도메인으로 변환: {} -> {}", hostWithoutPort, mainDomain);
+                        log.info("카카오 OAuth2 - 서브도메인을 메인 도메인으로 변환: {} -> {}", hostWithoutPort,
+                                mainDomain);
                     } else if (hostWithoutPort.matches(".*\\.dev\\.m-garden\\.co\\.kr$")) {
                         // 기존 m-garden 도메인 호환성
                         mainDomain = "dev.m-garden.co.kr";
-                        log.info("카카오 OAuth2 - 서브도메인을 메인 도메인으로 변환: {} -> {}", hostWithoutPort, mainDomain);
-                    } else if (hostWithoutPort.matches(".*\\.m-garden\\.co\\.kr$") 
-                            && !hostWithoutPort.equals("dev.m-garden.co.kr") 
+                        log.info("카카오 OAuth2 - 서브도메인을 메인 도메인으로 변환: {} -> {}", hostWithoutPort,
+                                mainDomain);
+                    } else if (hostWithoutPort.matches(".*\\.m-garden\\.co\\.kr$")
+                            && !hostWithoutPort.equals("dev.m-garden.co.kr")
                             && !hostWithoutPort.equals("m-garden.co.kr")) {
                         // 기존 m-garden 도메인 호환성
                         mainDomain = "dev.m-garden.co.kr";
-                        log.info("카카오 OAuth2 - 서브도메인을 메인 도메인으로 변환: {} -> {}", hostWithoutPort, mainDomain);
+                        log.info("카카오 OAuth2 - 서브도메인을 메인 도메인으로 변환: {} -> {}", hostWithoutPort,
+                                mainDomain);
                     }
-                    
+
                     // 포트 처리
                     String portSuffix = "";
                     if (requestHost.contains(":")) {
@@ -250,8 +263,9 @@ public class OAuth2Controller extends BaseApiController {
                             }
                         }
                     }
-                    
-                    callbackUrl = requestScheme + "://" + mainDomain + portSuffix + "/api/auth/kakao/callback";
+
+                    callbackUrl = requestScheme + "://" + mainDomain + portSuffix
+                            + "/api/auth/kakao/callback";
                     log.info(
                             "카카오 OAuth2 - 동적 redirect URI 생성: {} (원본 host={}, scheme={}, forwardedProto={}, forwardedHost={})",
                             callbackUrl, requestHost, request.getScheme(),
@@ -343,30 +357,34 @@ public class OAuth2Controller extends BaseApiController {
                 if (requestHost != null && !requestHost.isEmpty()) {
                     String hostWithoutPort = requestHost.split(":")[0];
                     String mainDomain = hostWithoutPort;
-                    
+
                     // 서브도메인 패턴 감지 및 메인 도메인으로 변환
                     if (hostWithoutPort.matches(".*\\.dev\\.core-solution\\.co\\.kr$")) {
                         // mindgarden.dev.core-solution.co.kr -> dev.core-solution.co.kr
                         mainDomain = "dev.core-solution.co.kr";
-                        log.info("네이버 OAuth2 - 서브도메인을 메인 도메인으로 변환: {} -> {}", hostWithoutPort, mainDomain);
-                    } else if (hostWithoutPort.matches(".*\\.core-solution\\.co\\.kr$") 
-                            && !hostWithoutPort.equals("dev.core-solution.co.kr") 
+                        log.info("네이버 OAuth2 - 서브도메인을 메인 도메인으로 변환: {} -> {}", hostWithoutPort,
+                                mainDomain);
+                    } else if (hostWithoutPort.matches(".*\\.core-solution\\.co\\.kr$")
+                            && !hostWithoutPort.equals("dev.core-solution.co.kr")
                             && !hostWithoutPort.equals("core-solution.co.kr")) {
                         // 서브도메인이 있으면 메인 도메인 사용
                         mainDomain = "dev.core-solution.co.kr";
-                        log.info("네이버 OAuth2 - 서브도메인을 메인 도메인으로 변환: {} -> {}", hostWithoutPort, mainDomain);
+                        log.info("네이버 OAuth2 - 서브도메인을 메인 도메인으로 변환: {} -> {}", hostWithoutPort,
+                                mainDomain);
                     } else if (hostWithoutPort.matches(".*\\.dev\\.m-garden\\.co\\.kr$")) {
                         // 기존 m-garden 도메인 호환성
                         mainDomain = "dev.m-garden.co.kr";
-                        log.info("네이버 OAuth2 - 서브도메인을 메인 도메인으로 변환: {} -> {}", hostWithoutPort, mainDomain);
-                    } else if (hostWithoutPort.matches(".*\\.m-garden\\.co\\.kr$") 
-                            && !hostWithoutPort.equals("dev.m-garden.co.kr") 
+                        log.info("네이버 OAuth2 - 서브도메인을 메인 도메인으로 변환: {} -> {}", hostWithoutPort,
+                                mainDomain);
+                    } else if (hostWithoutPort.matches(".*\\.m-garden\\.co\\.kr$")
+                            && !hostWithoutPort.equals("dev.m-garden.co.kr")
                             && !hostWithoutPort.equals("m-garden.co.kr")) {
                         // 기존 m-garden 도메인 호환성
                         mainDomain = "dev.m-garden.co.kr";
-                        log.info("네이버 OAuth2 - 서브도메인을 메인 도메인으로 변환: {} -> {}", hostWithoutPort, mainDomain);
+                        log.info("네이버 OAuth2 - 서브도메인을 메인 도메인으로 변환: {} -> {}", hostWithoutPort,
+                                mainDomain);
                     }
-                    
+
                     // 포트 처리
                     String portSuffix = "";
                     if (requestHost.contains(":")) {
@@ -389,8 +407,9 @@ public class OAuth2Controller extends BaseApiController {
                             }
                         }
                     }
-                    
-                    callbackUrl = requestScheme + "://" + mainDomain + portSuffix + "/api/auth/naver/callback";
+
+                    callbackUrl = requestScheme + "://" + mainDomain + portSuffix
+                            + "/api/auth/naver/callback";
                     log.info(
                             "네이버 OAuth2 - 동적 redirect URI 생성: {} (원본 host={}, scheme={}, forwardedProto={}, forwardedHost={})",
                             callbackUrl, requestHost, request.getScheme(),

@@ -170,17 +170,19 @@ export const naverLogin = async () => {
     
     // ApiResponse 래퍼 처리: data.data.authUrl 또는 data.authUrl
     const authUrl = (data.data && data.data.authUrl) || data.authUrl;
+    const state = (data.data && data.data.state) || data.state;
     
     if (data.success && authUrl) {
-      const state = generateRandomState();
-      sessionStorage.set('oauth_state', state);
+      // 백엔드에서 이미 state를 포함한 URL을 반환하므로, 프론트엔드에서 추가하지 않음
+      // 백엔드에서 반환한 state를 sessionStorage에 저장
+      if (state) {
+        sessionStorage.set('oauth_state', state);
+      }
       
-      // state 파라미터 추가하여 리다이렉트
-      const finalAuthUrl = `${authUrl}&state=${state}`;
-      console.log('최종 네이버 OAuth2 인증 URL:', finalAuthUrl);
+      console.log('최종 네이버 OAuth2 인증 URL:', authUrl);
       console.log('=== 네이버 로그인 완료 ===');
       
-      window.location.href = finalAuthUrl;
+      window.location.href = authUrl;
     } else {
       console.error('백엔드 응답 데이터 구조 오류:', data);
       throw new Error('백엔드에서 인증 URL을 받지 못했습니다.');

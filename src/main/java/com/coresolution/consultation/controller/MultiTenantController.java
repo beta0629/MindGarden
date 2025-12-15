@@ -179,6 +179,9 @@ public class MultiTenantController extends BaseApiController {
     /**
      * 서브도메인으로 테넌트 정보 조회 (로그인 전에도 사용 가능)
      * GET /api/v1/auth/tenant/by-subdomain?subdomain={subdomain}
+     * 
+     * @param subdomain 서브도메인 (예: mindgarden)
+     * @return 테넌트 정보
      */
     @GetMapping("/by-subdomain")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getTenantBySubdomain(

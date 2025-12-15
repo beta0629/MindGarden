@@ -54,7 +54,7 @@ public class OAuth2Controller extends BaseApiController {
     private final UserSessionService userSessionService;
     private final com.coresolution.core.repository.TenantRepository tenantRepository;
 
-    @Value("${spring.security.oauth2.client.registration.kakao.client-id:dummy}")
+    @Value("${spring.security.oauth2.client.registration.kakao.client-id:${security.oauth2.client.registration.kakao.client-id:cbb457cfb5f9351fd495be4af2b11a34}}")
     private String kakaoClientId;
 
     @Value("${spring.security.oauth2.client.registration.kakao.redirect-uri:${KAKAO_REDIRECT_URI:}}")

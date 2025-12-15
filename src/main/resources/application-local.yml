@@ -81,28 +81,7 @@ spring:
     scheduling:
       enabled: false  # 로컬에서는 모든 스케줄러 비활성화 (무한루프 방지)
 
-# 스케줄러 비활성화 (로컬 개발 환경 - 무한루프 방지)
-scheduler:
-  schema-change-detection:
-    enabled: false  # 로컬에서는 ERD 자동 재생성 비활성화 (Flyway 설정 오류 방지)
-  session-cleanup:
-    enabled: false  # 로컬에서는 세션 정리 스케줄러 비활성화
-  wellness-notification:
-    enabled: false  # 로컬에서는 웰니스 알림 스케줄러 비활성화
-  salary-batch:
-    enabled: false  # 로컬에서는 급여 배치 스케줄러 비활성화
-  consultation-record-alert:
-    enabled: false  # 로컬에서는 상담일지 알림 스케줄러 비활성화
-
-# ERD 자동 생성 설정 (로컬 개발 환경)
-erd:
-  auto-generation:
-    enabled: false  # 로컬에서는 ERD 자동 생성 비활성화
-    schedule-enabled: false  # 스케줄 기반 ERD 생성 비활성화
-    schema-change-detection:
-      enabled: false  # 스키마 변경 감지 비활성화
-
-  # OAuth2 설정
+  # OAuth2 설정 (Java 코드 호환성)
   security:
     oauth2:
       client:

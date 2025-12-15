@@ -80,6 +80,15 @@ public class TenantContextFilter implements Filter {
                     sessionUser != null ? sessionUser.getId() : "null",
                     sessionUser != null ? sessionUser.getRole() : "null",
                     sessionUser != null ? sessionUser.getTenantId() : "null");
+            
+            // 세션 속성 확인 (디버깅용)
+            Object tenantIdAttr = session.getAttribute(SESSION_TENANT_ID);
+            Object tenantIdConst = session.getAttribute(SessionConstants.TENANT_ID);
+            Object userObject = session.getAttribute(SessionConstants.USER_OBJECT);
+            log.info("🔍 세션 속성 확인: SESSION_TENANT_ID={}, SessionConstants.TENANT_ID={}, USER_OBJECT={}",
+                    tenantIdAttr != null ? tenantIdAttr.toString() : "null",
+                    tenantIdConst != null ? tenantIdConst.toString() : "null",
+                    userObject != null ? "있음" : "없음");
         }
 
         try {

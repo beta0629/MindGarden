@@ -168,7 +168,7 @@ public class OAuth2Controller extends BaseApiController {
                 log.info("카카오 OAuth2 - 모바일 클라이언트 감지 (Redis 저장): state={}", state);
             }
 
-            // 콜백 URL 동적 생성 (항상 요청의 scheme과 host 사용, 프록시 헤더 고려)
+            // 콜백 URL 동적 생성 (서브도메인은 메인 도메인으로 변환 - 카카오 개발자 센터 등록 문제 해결)
             String callbackUrl = null;
             try {
                 // 프록시 헤더 확인 (X-Forwarded-Proto, X-Forwarded-Host)
@@ -200,37 +200,61 @@ public class OAuth2Controller extends BaseApiController {
                     }
                 }
 
+                // 서브도메인을 메인 도메인으로 변환 (카카오 개발자 센터 등록 문제 해결)
                 if (requestHost != null && !requestHost.isEmpty()) {
-                    // 포트가 포함된 경우와 아닌 경우 모두 처리
+                    String hostWithoutPort = requestHost.split(":")[0];
+                    String mainDomain = hostWithoutPort;
+                    
+                    // 서브도메인 패턴 감지 및 메인 도메인으로 변환
+                    if (hostWithoutPort.matches(".*\\.dev\\.core-solution\\.co\\.kr$")) {
+                        // mindgarden.dev.core-solution.co.kr -> dev.core-solution.co.kr
+                        mainDomain = "dev.core-solution.co.kr";
+                        log.info("카카오 OAuth2 - 서브도메인을 메인 도메인으로 변환: {} -> {}", hostWithoutPort, mainDomain);
+                    } else if (hostWithoutPort.matches(".*\\.core-solution\\.co\\.kr$") 
+                            && !hostWithoutPort.equals("dev.core-solution.co.kr") 
+                            && !hostWithoutPort.equals("core-solution.co.kr")) {
+                        // 서브도메인이 있으면 메인 도메인 사용
+                        mainDomain = "dev.core-solution.co.kr";
+                        log.info("카카오 OAuth2 - 서브도메인을 메인 도메인으로 변환: {} -> {}", hostWithoutPort, mainDomain);
+                    } else if (hostWithoutPort.matches(".*\\.dev\\.m-garden\\.co\\.kr$")) {
+                        // 기존 m-garden 도메인 호환성
+                        mainDomain = "dev.m-garden.co.kr";
+                        log.info("카카오 OAuth2 - 서브도메인을 메인 도메인으로 변환: {} -> {}", hostWithoutPort, mainDomain);
+                    } else if (hostWithoutPort.matches(".*\\.m-garden\\.co\\.kr$") 
+                            && !hostWithoutPort.equals("dev.m-garden.co.kr") 
+                            && !hostWithoutPort.equals("m-garden.co.kr")) {
+                        // 기존 m-garden 도메인 호환성
+                        mainDomain = "dev.m-garden.co.kr";
+                        log.info("카카오 OAuth2 - 서브도메인을 메인 도메인으로 변환: {} -> {}", hostWithoutPort, mainDomain);
+                    }
+                    
+                    // 포트 처리
+                    String portSuffix = "";
                     if (requestHost.contains(":")) {
-                        callbackUrl =
-                                requestScheme + "://" + requestHost + "/api/auth/kakao/callback";
+                        String port = requestHost.split(":")[1];
+                        if (!port.equals("80") && !port.equals("443")) {
+                            portSuffix = ":" + port;
+                        }
                     } else {
                         // 프록시를 통해 들어온 경우 포트는 헤더에서 확인
                         String forwardedPort = request.getHeader("X-Forwarded-Port");
                         if (forwardedPort != null && !forwardedPort.isEmpty()) {
                             int port = Integer.parseInt(forwardedPort);
-                            if (port == 80 || port == 443) {
-                                callbackUrl = requestScheme + "://" + requestHost
-                                        + "/api/auth/kakao/callback";
-                            } else {
-                                callbackUrl = requestScheme + "://" + requestHost + ":" + port
-                                        + "/api/auth/kakao/callback";
+                            if (port != 80 && port != 443) {
+                                portSuffix = ":" + port;
                             }
                         } else {
                             int port = request.getServerPort();
-                            if (port == 80 || port == 443) {
-                                callbackUrl = requestScheme + "://" + requestHost
-                                        + "/api/auth/kakao/callback";
-                            } else {
-                                callbackUrl = requestScheme + "://" + requestHost + ":" + port
-                                        + "/api/auth/kakao/callback";
+                            if (port != 80 && port != 443) {
+                                portSuffix = ":" + port;
                             }
                         }
                     }
+                    
+                    callbackUrl = requestScheme + "://" + mainDomain + portSuffix + "/api/auth/kakao/callback";
                     log.info(
-                            "카카오 OAuth2 - 동적 redirect URI 생성: {} (scheme={}, host={}, forwardedProto={}, forwardedHost={})",
-                            callbackUrl, request.getScheme(), request.getHeader("Host"),
+                            "카카오 OAuth2 - 동적 redirect URI 생성: {} (원본 host={}, scheme={}, forwardedProto={}, forwardedHost={})",
+                            callbackUrl, requestHost, request.getScheme(),
                             request.getHeader("X-Forwarded-Proto"),
                             request.getHeader("X-Forwarded-Host"));
                 }
@@ -283,7 +307,7 @@ public class OAuth2Controller extends BaseApiController {
                 log.info("네이버 OAuth2 - 모바일 클라이언트 감지 (Redis 저장): state={}", state);
             }
 
-            // 콜백 URL 동적 생성 (항상 요청의 scheme과 host 사용, 프록시 헤더 고려)
+            // 콜백 URL 동적 생성 (서브도메인은 메인 도메인으로 변환 - 네이버 개발자 센터 등록 문제 해결)
             String callbackUrl = null;
             try {
                 // 프록시 헤더 확인 (X-Forwarded-Proto, X-Forwarded-Host)
@@ -315,37 +339,61 @@ public class OAuth2Controller extends BaseApiController {
                     }
                 }
 
+                // 서브도메인을 메인 도메인으로 변환 (네이버 개발자 센터 등록 문제 해결)
                 if (requestHost != null && !requestHost.isEmpty()) {
-                    // 포트가 포함된 경우와 아닌 경우 모두 처리
+                    String hostWithoutPort = requestHost.split(":")[0];
+                    String mainDomain = hostWithoutPort;
+                    
+                    // 서브도메인 패턴 감지 및 메인 도메인으로 변환
+                    if (hostWithoutPort.matches(".*\\.dev\\.core-solution\\.co\\.kr$")) {
+                        // mindgarden.dev.core-solution.co.kr -> dev.core-solution.co.kr
+                        mainDomain = "dev.core-solution.co.kr";
+                        log.info("네이버 OAuth2 - 서브도메인을 메인 도메인으로 변환: {} -> {}", hostWithoutPort, mainDomain);
+                    } else if (hostWithoutPort.matches(".*\\.core-solution\\.co\\.kr$") 
+                            && !hostWithoutPort.equals("dev.core-solution.co.kr") 
+                            && !hostWithoutPort.equals("core-solution.co.kr")) {
+                        // 서브도메인이 있으면 메인 도메인 사용
+                        mainDomain = "dev.core-solution.co.kr";
+                        log.info("네이버 OAuth2 - 서브도메인을 메인 도메인으로 변환: {} -> {}", hostWithoutPort, mainDomain);
+                    } else if (hostWithoutPort.matches(".*\\.dev\\.m-garden\\.co\\.kr$")) {
+                        // 기존 m-garden 도메인 호환성
+                        mainDomain = "dev.m-garden.co.kr";
+                        log.info("네이버 OAuth2 - 서브도메인을 메인 도메인으로 변환: {} -> {}", hostWithoutPort, mainDomain);
+                    } else if (hostWithoutPort.matches(".*\\.m-garden\\.co\\.kr$") 
+                            && !hostWithoutPort.equals("dev.m-garden.co.kr") 
+                            && !hostWithoutPort.equals("m-garden.co.kr")) {
+                        // 기존 m-garden 도메인 호환성
+                        mainDomain = "dev.m-garden.co.kr";
+                        log.info("네이버 OAuth2 - 서브도메인을 메인 도메인으로 변환: {} -> {}", hostWithoutPort, mainDomain);
+                    }
+                    
+                    // 포트 처리
+                    String portSuffix = "";
                     if (requestHost.contains(":")) {
-                        callbackUrl =
-                                requestScheme + "://" + requestHost + "/api/auth/naver/callback";
+                        String port = requestHost.split(":")[1];
+                        if (!port.equals("80") && !port.equals("443")) {
+                            portSuffix = ":" + port;
+                        }
                     } else {
                         // 프록시를 통해 들어온 경우 포트는 헤더에서 확인
                         String forwardedPort = request.getHeader("X-Forwarded-Port");
                         if (forwardedPort != null && !forwardedPort.isEmpty()) {
                             int port = Integer.parseInt(forwardedPort);
-                            if (port == 80 || port == 443) {
-                                callbackUrl = requestScheme + "://" + requestHost
-                                        + "/api/auth/naver/callback";
-                            } else {
-                                callbackUrl = requestScheme + "://" + requestHost + ":" + port
-                                        + "/api/auth/naver/callback";
+                            if (port != 80 && port != 443) {
+                                portSuffix = ":" + port;
                             }
                         } else {
                             int port = request.getServerPort();
-                            if (port == 80 || port == 443) {
-                                callbackUrl = requestScheme + "://" + requestHost
-                                        + "/api/auth/naver/callback";
-                            } else {
-                                callbackUrl = requestScheme + "://" + requestHost + ":" + port
-                                        + "/api/auth/naver/callback";
+                            if (port != 80 && port != 443) {
+                                portSuffix = ":" + port;
                             }
                         }
                     }
+                    
+                    callbackUrl = requestScheme + "://" + mainDomain + portSuffix + "/api/auth/naver/callback";
                     log.info(
-                            "네이버 OAuth2 - 동적 redirect URI 생성: {} (scheme={}, host={}, forwardedProto={}, forwardedHost={})",
-                            callbackUrl, request.getScheme(), request.getHeader("Host"),
+                            "네이버 OAuth2 - 동적 redirect URI 생성: {} (원본 host={}, scheme={}, forwardedProto={}, forwardedHost={})",
+                            callbackUrl, requestHost, request.getScheme(),
                             request.getHeader("X-Forwarded-Proto"),
                             request.getHeader("X-Forwarded-Host"));
                 }

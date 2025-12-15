@@ -40,6 +40,7 @@ const OAuth2Callback = () => {
         const requiresAccountIntegration = searchParams.get('requiresAccountIntegration');
         const profileImageUrl = searchParams.get('profileImageUrl');
         const providerUserId = searchParams.get('providerUserId'); // 추가: SNS 사용자 ID
+        const tenantId = searchParams.get('tenantId'); // 서브도메인에서 추출한 tenant_id
         // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
         const branchId = searchParams.get('branchId');
         const branchName = searchParams.get('branchName');
@@ -135,6 +136,9 @@ const OAuth2Callback = () => {
             return;
           }
           
+          // 서브도메인에서 감지한 tenant_id 확인 (URL 파라미터 또는 sessionStorage)
+          const detectedTenantId = tenantId || sessionStorage.getItem('subdomain_tenant_id');
+          
           // 일반 회원가입 모드
           // 성공 메시지 표시
           notificationManager.show(`${provider} 소셜 로그인 성공! 회원가입을 완료해주세요.`, 'success');
@@ -146,8 +150,14 @@ const OAuth2Callback = () => {
             email: email,
             name: name,
             nickname: nickname,
-            profileImageUrl: profileImageUrl
+            profileImageUrl: profileImageUrl,
+            tenantId: detectedTenantId // 서브도메인에서 추출한 tenant_id 포함
           };
+          
+          // tenantId가 있으면 로그 출력
+          if (detectedTenantId) {
+            console.log('✅ 서브도메인에서 추출한 tenant_id 사용: tenantId=', detectedTenantId);
+          }
           
           setSocialUserData(userData);
           setShowSignupModal(true);

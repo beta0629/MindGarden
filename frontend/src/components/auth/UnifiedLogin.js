@@ -46,7 +46,7 @@ const UnifiedLogin = () => {
   console.log('🚀 UnifiedLogin 컴포넌트 렌더링 시작');
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, checkSession, setDuplicateLoginModal } = useSession();
+  const { login, checkSession, setDuplicateLoginModal, user } = useSession();
   
   // URL 파라미터에서 email과 redirect 가져오기
   const searchParams = new URLSearchParams(location.search);
@@ -91,15 +91,105 @@ const UnifiedLogin = () => {
     }, 6000);
   };
 
+  // 서브도메인에서 tenant_id 자동 감지 (로컬 환경 지원 포함)
+  useEffect(() => {
+    const detectTenantFromSubdomain = async () => {
+      try {
+        // 1. URL 파라미터에서 tenantId 확인 (로컬 테스트용)
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlTenantId = urlParams.get('tenantId');
+        if (urlTenantId) {
+          console.log('🔧 URL 파라미터에서 tenantId 감지 (로컬 테스트용): tenantId=', urlTenantId);
+          sessionStorage.setItem('subdomain_tenant_id', urlTenantId);
+          return;
+        }
+        
+        // 2. 환경 변수에서 테스트용 tenantId 확인 (로컬 개발용)
+        const envTenantId = process.env.REACT_APP_TEST_TENANT_ID;
+        if (envTenantId && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+          console.log('🔧 환경 변수에서 tenantId 감지 (로컬 개발용): tenantId=', envTenantId);
+          sessionStorage.setItem('subdomain_tenant_id', envTenantId);
+          return;
+        }
+        
+        const host = window.location.host;
+        if (!host) return;
+        
+        // 3. 서브도메인 패턴 매칭 (로컬 환경도 지원)
+        const patterns = [
+          /^([^.]+)\.dev\.core-solution\.co\.kr$/,
+          /^([^.]+)\.core-solution\.co\.kr$/,
+          /^([^.]+)\.dev\.m-garden\.co\.kr$/,
+          /^([^.]+)\.m-garden\.co\.kr$/,
+          // 로컬 환경 지원: localhost 서브도메인 패턴
+          /^([^.]+)\.localhost(:[0-9]+)?$/,
+          /^([^.]+)\.127\.0\.0\.1(:[0-9]+)?$/
+        ];
+        
+        let subdomain = null;
+        for (const pattern of patterns) {
+          const match = host.match(pattern);
+          if (match && match[1]) {
+            subdomain = match[1];
+            // 기본 서브도메인 제외
+            const defaultSubdomains = ['dev', 'app', 'api', 'staging', 'www'];
+            if (!defaultSubdomains.includes(subdomain)) {
+              break;
+            } else {
+              subdomain = null;
+            }
+          }
+        }
+        
+        if (subdomain) {
+          console.log('🔍 서브도메인 감지: subdomain=', subdomain);
+          
+          // 백엔드 API로 tenant_id 조회
+          const response = await fetch(`${API_BASE_URL}/api/v1/auth/tenant/by-subdomain?subdomain=${encodeURIComponent(subdomain)}`, {
+            credentials: 'include',
+            method: 'GET',
+            headers: {
+              'Accept': 'application/json'
+            }
+          });
+          
+          if (response.ok) {
+            const result = await response.json();
+            const tenantData = result.success && result.data ? result.data : result;
+            
+            if (tenantData.found && tenantData.tenant && tenantData.tenant.tenantId) {
+              const tenantId = tenantData.tenant.tenantId;
+              console.log('✅ 서브도메인으로 tenant_id 조회 성공: tenantId=', tenantId);
+              
+              // sessionStorage에 저장 (SNS 로그인 시 사용)
+              sessionStorage.setItem('subdomain_tenant_id', tenantId);
+              sessionStorage.setItem('subdomain', subdomain);
+            } else {
+              console.log('⚠️ 서브도메인으로 테넌트를 찾을 수 없음: subdomain=', subdomain);
+            }
+          }
+        } else if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+          // 로컬 환경에서 서브도메인이 없으면 안내 메시지
+          console.log('💡 로컬 환경: 서브도메인 없음. 테스트를 위해 다음 방법을 사용하세요:');
+          console.log('   1. URL 파라미터: ?tenantId=tenant-incheon-counseling-001');
+          console.log('   2. 환경 변수: REACT_APP_TEST_TENANT_ID=tenant-incheon-counseling-001');
+          console.log('   3. /etc/hosts 설정: mindgarden.localhost → 127.0.0.1');
+        }
+      } catch (error) {
+        console.error('❌ 서브도메인에서 tenant_id 감지 실패:', error);
+      }
+    };
+    
+    detectTenantFromSubdomain();
+  }, []);
+
   // 컴포넌트 마운트 시 한 번만 실행
   useEffect(() => {
     getOAuth2Config();
     checkOAuthCallback();
     
-    // 세션 체크는 한 번만 실행 (무한 루프 방지)
-    if (!sessionCheckedRef.current && !isLoading) {
-      checkExistingSession();
-    }
+    // 세션 체크는 useSession 훅에서 처리하므로 여기서는 제거 (무한 루프 방지)
+    // checkExistingSession은 제거하고 useSession의 세션 체크만 사용
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // 빈 의존성 배열: 마운트 시 한 번만 실행
 
@@ -108,6 +198,15 @@ const UnifiedLogin = () => {
     checkOAuthCallback();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.search]);
+
+  // useSession에서 사용자 정보가 감지되면 리다이렉트
+  useEffect(() => {
+    if (user && user.id && !isLoading && !tooltip.show) {
+      console.log('✅ useSession에서 사용자 정보 감지, 리다이렉트 시작:', user.id);
+      checkMultiTenantAndRedirect(user);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, isLoading, tooltip.show]);
 
   // OAuth2 설정 가져오기
   const getOAuth2Config = async () => {
@@ -169,7 +268,13 @@ const UnifiedLogin = () => {
           
           // 멀티 테넌트 사용자 확인
           await checkMultiTenantAndRedirect(userData);
+        } else {
+          // 사용자 정보가 없어도 체크 완료로 표시 (무한 루프 방지)
+          console.log('🔍 세션 확인 완료: 로그인되지 않은 상태');
         }
+      } else {
+        // 응답이 OK가 아니어도 체크 완료로 표시 (무한 루프 방지)
+        console.log('🔍 세션 확인 완료: 응답 상태', response.status);
       }
     } catch (error) {
       console.error('세션 확인 오류:', error);

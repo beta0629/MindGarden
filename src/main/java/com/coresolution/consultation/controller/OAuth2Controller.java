@@ -53,6 +53,7 @@ public class OAuth2Controller extends BaseApiController {
     private final com.coresolution.consultation.service.JwtService jwtService;
     private final com.coresolution.consultation.service.DynamicPermissionService dynamicPermissionService;
     private final UserSessionService userSessionService;
+    private final com.coresolution.core.repository.TenantRepository tenantRepository;
     
     @Value("${spring.security.oauth2.client.registration.kakao.client-id:dummy}")
     private String kakaoClientId;
@@ -157,6 +158,13 @@ public class OAuth2Controller extends BaseApiController {
             String state = UUID.randomUUID().toString();
             session.setAttribute("oauth2_kakao_state", state);
             
+            // 서브도메인에서 tenant_id 추출하여 세션에 저장 (SNS 로그인 시 사용)
+            String tenantId = extractTenantIdFromSubdomain(request);
+            if (tenantId != null && !tenantId.isEmpty()) {
+                session.setAttribute("oauth2_tenant_id", tenantId);
+                log.info("카카오 OAuth2 - 서브도메인에서 tenant_id 추출: tenantId={}", tenantId);
+            }
+            
             // 모바일 클라이언트인 경우 Redis에 저장 (세션 의존성 제거)
             if ("mobile".equals(client)) {
                 String cacheKey = "oauth2_kakao_client:" + state;
@@ -260,6 +268,13 @@ public class OAuth2Controller extends BaseApiController {
         try {
             String state = UUID.randomUUID().toString();
             session.setAttribute("oauth2_naver_state", state);
+            
+            // 서브도메인에서 tenant_id 추출하여 세션에 저장 (SNS 로그인 시 사용)
+            String tenantId = extractTenantIdFromSubdomain(request);
+            if (tenantId != null && !tenantId.isEmpty()) {
+                session.setAttribute("oauth2_tenant_id", tenantId);
+                log.info("네이버 OAuth2 - 서브도메인에서 tenant_id 추출: tenantId={}", tenantId);
+            }
             
             // 모바일 클라이언트인 경우 Redis에 저장 (세션 의존성 제거)
             if ("mobile".equals(client)) {
@@ -730,6 +745,13 @@ public class OAuth2Controller extends BaseApiController {
                 // 간편 회원가입이 필요한 경우
                 log.info("네이버 OAuth2 간편 회원가입 필요: {}", response.getSocialUserInfo());
                 
+                // 세션에서 tenant_id 확인 (서브도메인에서 추출한 값)
+                String tenantId = (String) session.getAttribute("oauth2_tenant_id");
+                if (tenantId != null && !tenantId.isEmpty()) {
+                    log.info("네이버 OAuth2 - 서브도메인에서 추출한 tenant_id 사용: tenantId={}", tenantId);
+                    session.removeAttribute("oauth2_tenant_id"); // 사용 후 제거
+                }
+                
                 // 소셜 사용자 정보를 URL 파라미터로 전달 (한글 인코딩 처리)
                 String frontendUrl = getFrontendBaseUrl(request);
                 String email = response.getSocialUserInfo() != null ? response.getSocialUserInfo().getEmail() : "";
@@ -739,6 +761,7 @@ public class OAuth2Controller extends BaseApiController {
                 String signupUrl = frontendUrl + "/login?" +
                     "signup=required" +
                     "&provider=naver" +
+                    (tenantId != null && !tenantId.isEmpty() ? "&tenantId=" + URLEncoder.encode(tenantId, StandardCharsets.UTF_8) : "") +
                     "&email=" + URLEncoder.encode(email, StandardCharsets.UTF_8) +
                     "&name=" + URLEncoder.encode(name, StandardCharsets.UTF_8) +
                     "&nickname=" + URLEncoder.encode(nickname, StandardCharsets.UTF_8);
@@ -1158,6 +1181,13 @@ public class OAuth2Controller extends BaseApiController {
                 // 간편 회원가입이 필요한 경우
                 log.info("카카오 OAuth2 간편 회원가입 필요: {}", response.getSocialUserInfo());
                 
+                // 세션에서 tenant_id 확인 (서브도메인에서 추출한 값)
+                String tenantId = (String) session.getAttribute("oauth2_tenant_id");
+                if (tenantId != null && !tenantId.isEmpty()) {
+                    log.info("카카오 OAuth2 - 서브도메인에서 추출한 tenant_id 사용: tenantId={}", tenantId);
+                    session.removeAttribute("oauth2_tenant_id"); // 사용 후 제거
+                }
+                
                 // 소셜 사용자 정보를 URL 파라미터로 전달 (한글 인코딩 처리)
                 String email = response.getSocialUserInfo() != null ? response.getSocialUserInfo().getEmail() : "";
                 String name = response.getSocialUserInfo() != null ? response.getSocialUserInfo().getName() : "";
@@ -1167,6 +1197,7 @@ public class OAuth2Controller extends BaseApiController {
                 String signupUrl = frontendUrl + "/login?" +
                     "signup=required" +
                     "&provider=kakao" +
+                    (tenantId != null && !tenantId.isEmpty() ? "&tenantId=" + URLEncoder.encode(tenantId, StandardCharsets.UTF_8) : "") +
                     "&email=" + URLEncoder.encode(email, StandardCharsets.UTF_8) +
                     "&name=" + URLEncoder.encode(name, StandardCharsets.UTF_8) +
                     "&nickname=" + URLEncoder.encode(nickname, StandardCharsets.UTF_8);
@@ -1483,13 +1514,91 @@ public class OAuth2Controller extends BaseApiController {
                 "sessionId", session.getId(),
                 "message", "로그인 성공"
             ));
-            
         } catch (Exception e) {
             log.error("네이티브 SDK 로그인 오류:", e);
             return ResponseEntity.status(500).body(Map.of(
                 "success", false,
                 "message", "로그인 처리 중 오류가 발생했습니다: " + e.getMessage()
             ));
+        }
+    }
+    
+    /**
+     * 서브도메인에서 tenant_id 추출
+     * 
+     * @param request HTTP 요청
+     * @return tenant_id 또는 null
+     */
+    private String extractTenantIdFromSubdomain(HttpServletRequest request) {
+        try {
+                String host = request.getHeader("Host");
+                if (host == null || host.isEmpty()) {
+                    host = request.getHeader("X-Forwarded-Host");
+                }
+                
+                if (host == null || host.isEmpty()) {
+                    return null;
+                }
+                
+                // 포트 제거
+                String hostWithoutPort = host.split(":")[0];
+                
+                // 서브도메인 추출
+                String extractedSubdomain = null;
+                
+                // 로컬 환경 지원: localhost 서브도메인 패턴 (우선 처리)
+                if (hostWithoutPort.endsWith(".localhost")) {
+                    extractedSubdomain = hostWithoutPort.replace(".localhost", "");
+                } else if (hostWithoutPort.endsWith(".127.0.0.1")) {
+                    extractedSubdomain = hostWithoutPort.replace(".127.0.0.1", "");
+                } else if (hostWithoutPort.contains("localhost") && hostWithoutPort.contains(".")) {
+                    // mindgarden.localhost 형식
+                    int dotIndex = hostWithoutPort.indexOf('.');
+                    if (dotIndex > 0) {
+                        extractedSubdomain = hostWithoutPort.substring(0, dotIndex);
+                    }
+                } else {
+                    // 프로덕션 도메인 패턴
+                    String[] patterns = {
+                        "\\.dev\\.core-solution\\.co\\.kr$",
+                        "\\.core-solution\\.co\\.kr$",
+                        "\\.dev\\.m-garden\\.co\\.kr$",
+                        "\\.m-garden\\.co\\.kr$"
+                    };
+                    
+                    for (String pattern : patterns) {
+                        if (hostWithoutPort.matches(".*" + pattern)) {
+                            extractedSubdomain = hostWithoutPort.replaceFirst(pattern, "");
+                            break;
+                        }
+                    }
+                }
+                
+                // 기본 서브도메인 제외
+                if (extractedSubdomain != null) {
+                    final String subdomain = extractedSubdomain; // final로 선언하여 람다에서 사용 가능하도록
+                    String[] defaultSubdomains = {"dev", "app", "api", "staging", "www"};
+                    for (String defaultSub : defaultSubdomains) {
+                        if (subdomain.equals(defaultSub)) {
+                            return null;
+                        }
+                    }
+                    
+                    // 서브도메인으로 테넌트 조회
+                    if (!subdomain.isEmpty()) {
+                        return tenantRepository.findBySubdomainIgnoreCase(subdomain)
+                            .map(tenant -> {
+                                log.info("✅ 서브도메인으로 테넌트 조회 성공: subdomain={}, tenantId={}", subdomain, tenant.getTenantId());
+                                return tenant.getTenantId();
+                            })
+                            .orElse(null);
+                    }
+                }
+                
+                return null;
+        } catch (Exception e) {
+            log.error("❌ 서브도메인에서 tenant_id 추출 실패: {}", e.getMessage(), e);
+            return null;
         }
     }
 }

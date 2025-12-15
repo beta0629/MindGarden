@@ -294,8 +294,24 @@ const SocialSignupModal = ({
           }
         );
         response = await academySignupResponse.json();
+      } else if (socialUser.tenantId) {
+        // 서브도메인에서 추출한 tenantId가 있는 경우 (일반 회원가입이지만 특정 테넌트에 가입)
+        console.log('✅ 서브도메인 기반 SNS 회원가입 요청:', { tenantId: socialUser.tenantId });
+        const { API_BASE_URL } = require('../../constants/api');
+        const tenantSignupResponse = await fetch(
+          `${API_BASE_URL}/api/v1/auth/social/signup?tenantId=${socialUser.tenantId}`,
+          {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(signupData)
+          }
+        );
+        response = await tenantSignupResponse.json();
       } else {
-        // 일반 회원가입
+        // 일반 회원가입 (tenantId 없음)
         response = await userAPI.socialSignup(signupData);
       }
       

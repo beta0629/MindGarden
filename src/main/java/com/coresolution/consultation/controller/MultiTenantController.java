@@ -3,6 +3,7 @@ package com.coresolution.consultation.controller;
 import com.coresolution.core.controller.BaseApiController;
 import com.coresolution.core.dto.ApiResponse;
 import com.coresolution.core.domain.Tenant;
+import com.coresolution.core.repository.TenantRepository;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.service.MultiTenantUserService;
 import com.coresolution.consultation.utils.SessionUtils;
@@ -33,6 +34,7 @@ import java.util.stream.Collectors;
 public class MultiTenantController extends BaseApiController {
     
     private final MultiTenantUserService multiTenantUserService;
+    private final TenantRepository tenantRepository;
     
     /**
      * 사용자가 접근 가능한 모든 테넌트 목록 조회
@@ -172,6 +174,47 @@ public class MultiTenantController extends BaseApiController {
         }
         
         return success(data);
+    }
+    
+    /**
+     * 서브도메인으로 테넌트 정보 조회 (로그인 전에도 사용 가능)
+     * GET /api/v1/auth/tenant/by-subdomain?subdomain={subdomain}
+     */
+    @GetMapping("/by-subdomain")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getTenantBySubdomain(
+            @RequestParam String subdomain) {
+        log.info("서브도메인으로 테넌트 조회 요청: subdomain={}", subdomain);
+        
+        try {
+            return tenantRepository.findBySubdomainIgnoreCase(subdomain)
+                .map(tenant -> {
+                    Map<String, Object> tenantMap = new HashMap<>();
+                    tenantMap.put("tenantId", tenant.getTenantId());
+                    tenantMap.put("name", tenant.getName());
+                    tenantMap.put("businessType", tenant.getBusinessType());
+                    tenantMap.put("status", tenant.getStatus() != null ? tenant.getStatus().name() : null);
+                    tenantMap.put("subdomain", tenant.getSubdomain());
+                    
+                    Map<String, Object> data = new HashMap<>();
+                    data.put("tenant", tenantMap);
+                    data.put("found", true);
+                    
+                    log.info("✅ 서브도메인으로 테넌트 조회 성공: subdomain={}, tenantId={}", subdomain, tenant.getTenantId());
+                    return success(data);
+                })
+                .orElseGet(() -> {
+                    Map<String, Object> data = new HashMap<>();
+                    data.put("tenant", null);
+                    data.put("found", false);
+                    data.put("message", "서브도메인에 해당하는 테넌트를 찾을 수 없습니다.");
+                    
+                    log.warn("⚠️ 서브도메인으로 테넌트를 찾을 수 없음: subdomain={}", subdomain);
+                    return success(data);
+                });
+        } catch (Exception e) {
+            log.error("❌ 서브도메인으로 테넌트 조회 중 오류 발생: subdomain={}, error={}", subdomain, e.getMessage(), e);
+            throw new RuntimeException("테넌트 조회 중 오류가 발생했습니다: " + e.getMessage());
+        }
     }
     
     /**

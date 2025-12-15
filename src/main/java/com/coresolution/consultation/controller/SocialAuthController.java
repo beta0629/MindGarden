@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
@@ -42,10 +43,19 @@ public class SocialAuthController {
      * @return 회원가입 결과
      */
     @PostMapping("/signup")
-    public ResponseEntity<SocialSignupResponse> socialSignup(@RequestBody SocialSignupRequest request, HttpSession session) {
-        log.info("소셜 회원가입 요청: {}", request.getEmail());
+    public ResponseEntity<SocialSignupResponse> socialSignup(
+            @RequestBody SocialSignupRequest request,
+            @RequestParam(required = false) String tenantId,
+            HttpSession session) {
+        log.info("소셜 회원가입 요청: email={}, tenantId={}", request.getEmail(), tenantId);
         
         try {
+            // 서브도메인에서 추출한 tenantId가 있으면 TenantContext에 설정
+            if (tenantId != null && !tenantId.isEmpty()) {
+                com.coresolution.core.context.TenantContextHolder.setTenantId(tenantId);
+                log.info("✅ 서브도메인에서 추출한 tenantId 사용: tenantId={}", tenantId);
+            }
+            
             // 세션에서 현재 사용자의 지점 정보 가져오기 (관리자가 등록하는 경우)
             User currentUser = SessionUtils.getCurrentUser(session);
             if (currentUser != null && currentUser.getBranch() != null) {

@@ -52,8 +52,11 @@ public class KakaoOAuth2ServiceImpl extends AbstractOAuth2Service {
             PersonalDataEncryptionUtil encryptionUtil) {
         super(userRepository, clientRepository, userSocialAccountRepository, jwtService, dynamicPermissionService, encryptionUtil);
         this.restTemplate = restTemplate;
-        
-        // 초기화 시 로깅으로 값 확인
+    }
+    
+    @jakarta.annotation.PostConstruct
+    public void init() {
+        // 의존성 주입 완료 후 로깅으로 값 확인
         log.info("카카오 OAuth2 설정 로드: clientId={}, clientSecret={} (길이: {}), redirectUri={}", 
                 clientId != null ? clientId.substring(0, Math.min(10, clientId.length())) + "..." : "null",
                 clientSecret != null ? (clientSecret.length() > 5 ? clientSecret.substring(0, 5) + "..." : "***") : "null",
@@ -199,10 +202,10 @@ public class KakaoOAuth2ServiceImpl extends AbstractOAuth2Service {
                 
             } catch (Exception e) {
                 retryCount++;
-                log.error("카카오 액세스 토큰 획득 실패 (시도 {}): {}", retryCount, e.getMessage());
+                log.error("카카오 액세스 토큰 획득 실패 (시도 {}): {}", retryCount, e.getMessage(), e);
                 
                 if (retryCount > maxRetries) {
-                    log.error("카카오 액세스 토큰 획득 최대 재시도 횟수 초과");
+                    log.error("카카오 액세스 토큰 획득 최대 재시도 횟수 초과", e);
                     throw new RuntimeException("카카오 액세스 토큰을 가져올 수 없습니다: " + e.getMessage(), e);
                 }
                 

@@ -135,7 +135,7 @@ export const kakaoLogin = async () => {
       // 백엔드에서 이미 state를 포함한 URL을 반환하므로, 프론트엔드에서 추가하지 않음
       // 백엔드에서 반환한 state를 sessionStorage에 저장
       if (state) {
-        sessionStorage.setItem('oauth_state', state);
+        sessionStorage.set('oauth_state', state);
       }
       
       console.log('최종 카카오 OAuth2 인증 URL:', authUrl);

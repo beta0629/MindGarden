@@ -42,7 +42,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/v1/auth") // 표준화 2025-12-05: 레거시 경로 제거
+@RequestMapping({"/api/v1/auth", "/api/auth"}) // 표준화 2025-12-05: 레거시 경로도 지원 (OAuth 콜백 호환성)
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
 public class OAuth2Controller extends BaseApiController {

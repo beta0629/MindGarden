@@ -9,17 +9,15 @@
 
 **URL**: https://developers.kakao.com/
 
-**등록할 콜백 URL:**
-```
-https://dev.core-solution.co.kr/api/auth/kakao/callback
-https://dev.m-garden.co.kr/api/auth/kakao/callback (기존 유지)
-```
+**⚠️ 2025년 정책 변경**: 카카오 개발자 센터에서 Redirect URI 등록 항목이 제거되었습니다.
+- 리다이렉트 URI는 코드에서 동적으로 생성되며, 개발자 센터에 별도 등록이 필요 없습니다.
+- 기존 등록된 URI가 있다면 그대로 유지해도 무방합니다.
 
 **설정 위치:**
 1. 내 애플리케이션 → 앱 설정 → 플랫폼
 2. Web 플랫폼 등록 (이미 등록되어 있으면 수정)
 3. 사이트 도메인: `dev.core-solution.co.kr`, `dev.m-garden.co.kr`
-4. Redirect URI: 위 콜백 URL 추가
+4. ~~Redirect URI: 위 콜백 URL 추가~~ (더 이상 필요 없음)
 
 ### 1.2 네이버 개발자 센터
 

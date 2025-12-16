@@ -576,6 +576,14 @@ public class OAuth2Controller extends BaseApiController {
                             "네이버 콜백 - 세션에서 저장된 redirect_uri 확인: savedRedirectUri={}, callbackRedirectUri={}, sessionId={}",
                             savedRedirectUri, callbackRedirectUri, session.getId());
 
+                    // 네이버 개발자 센터에 등록된 URL 목록 (전체 스코프에서 사용)
+                    List<String> registeredUrls =
+                            Arrays.asList("https://core-solution.co.kr/api/auth/naver/callback",
+                                    "http://localhost:8080/api/auth/naver/callback",
+                                    "https://dev.m-garden.co.kr/api/auth/naver/callback",
+                                    "https://m-garden.co.kr/api/auth/naver/callback",
+                                    "https://dev.core-solution.co.kr/api/auth/naver/callback");
+
                     if (savedRedirectUri != null && !savedRedirectUri.isEmpty()) {
                         if (!savedRedirectUri.equals(callbackRedirectUri)) {
                             log.warn("⚠️ 네이버 redirect_uri 불일치: 인증 URL 생성 시={}, 콜백 처리 시={}",
@@ -611,14 +619,6 @@ public class OAuth2Controller extends BaseApiController {
                         // requestScheme과 portSuffix는 이미 위에서 설정됨
                         String configuredRedirectUri = requestScheme + "://" + configuredDomain
                                 + portSuffix + naverCallbackPath;
-
-                        // 네이버 개발자 센터에 등록된 URL 목록과 비교
-                        List<String> registeredUrls =
-                                Arrays.asList("https://core-solution.co.kr/api/auth/naver/callback",
-                                        "http://localhost:8080/api/auth/naver/callback",
-                                        "https://dev.m-garden.co.kr/api/auth/naver/callback",
-                                        "https://m-garden.co.kr/api/auth/naver/callback",
-                                        "https://dev.core-solution.co.kr/api/auth/naver/callback");
 
                         // 동적으로 생성한 redirect_uri가 등록된 URL 목록에 있는지 확인
                         boolean isRegistered = registeredUrls.contains(callbackRedirectUri);

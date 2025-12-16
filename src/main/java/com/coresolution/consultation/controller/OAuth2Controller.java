@@ -550,6 +550,7 @@ public class OAuth2Controller extends BaseApiController {
                         && naverService instanceof com.coresolution.consultation.service.impl.NaverOAuth2ServiceImpl) {
                     com.coresolution.consultation.service.impl.NaverOAuth2ServiceImpl naverServiceImpl =
                             (com.coresolution.consultation.service.impl.NaverOAuth2ServiceImpl) naverService;
+                    log.info("네이버 콜백 - 토큰 요청 시 사용할 redirect_uri: {}", callbackRedirectUri);
                     String accessToken = naverServiceImpl.getAccessToken(code, callbackRedirectUri);
                     SocialUserInfo socialUserInfo = naverServiceImpl.getUserInfo(accessToken);
                     socialUserInfo.setProvider("NAVER");

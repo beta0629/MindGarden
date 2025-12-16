@@ -538,22 +538,10 @@ public class DynamicPermissionServiceImpl implements DynamicPermissionService {
                 log.warn("⚠️ 기본 권한 조회 중 JPA 시스템 예외 발생 (빈 리스트로 시작): 사용자={}, 오류={}", user.getUserId(),
                         e.getMessage());
                 permissionMaps = new ArrayList<>();
-                // 트랜잭션 롤백 방지
-                try {
-                    org.springframework.transaction.interceptor.TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-                } catch (Exception txException) {
-                    log.debug("트랜잭션 상태 확인 실패 (이미 롤백되었거나 트랜잭션이 없는 경우): {}", txException.getMessage());
-                }
             } catch (Exception e) {
                 log.warn("⚠️ 기본 권한 조회 실패 (빈 리스트로 시작): 사용자={}, 오류={}", user.getUserId(),
                         e.getMessage());
                 permissionMaps = new ArrayList<>();
-                // 트랜잭션 롤백 방지
-                try {
-                    org.springframework.transaction.interceptor.TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-                } catch (Exception txException) {
-                    log.debug("트랜잭션 상태 확인 실패 (이미 롤백되었거나 트랜잭션이 없는 경우): {}", txException.getMessage());
-                }
             }
 
             List<String> permissions = permissionMaps.stream()
@@ -579,22 +567,10 @@ public class DynamicPermissionServiceImpl implements DynamicPermissionService {
                     // 데이터베이스 날짜 필드 오류 (Zero date value prohibited) 등 JPA 시스템 예외
                     log.warn("⚠️ 동적 권한 조회 중 JPA 시스템 예외 발생 (기본 권한만 반환): 역할={}, 오류={}",
                             user.getRole().name(), e.getMessage());
-                    // 트랜잭션 롤백 방지
-                    try {
-                        org.springframework.transaction.interceptor.TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-                    } catch (Exception txException) {
-                        log.debug("트랜잭션 상태 확인 실패 (이미 롤백되었거나 트랜잭션이 없는 경우): {}", txException.getMessage());
-                    }
                 } catch (Exception e) {
                     // 동적 권한 조회 실패해도 기본 권한은 반환
                     log.warn("⚠️ 동적 권한 조회 실패 (기본 권한만 반환): 역할={}, 오류={}", user.getRole().name(),
                             e.getMessage());
-                    // 트랜잭션 롤백 방지
-                    try {
-                        org.springframework.transaction.interceptor.TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-                    } catch (Exception txException) {
-                        log.debug("트랜잭션 상태 확인 실패 (이미 롤백되었거나 트랜잭션이 없는 경우): {}", txException.getMessage());
-                    }
                 }
             }
 
@@ -605,22 +581,10 @@ public class DynamicPermissionServiceImpl implements DynamicPermissionService {
         } catch (org.springframework.orm.jpa.JpaSystemException e) {
             log.error("사용자 권한 목록 조회 중 JPA 시스템 예외 발생 (String 리스트): 사용자={}, 오류={}", user.getUserId(),
                     e.getMessage(), e);
-            // 트랜잭션 롤백 방지
-            try {
-                org.springframework.transaction.interceptor.TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-            } catch (Exception txException) {
-                log.debug("트랜잭션 상태 확인 실패 (이미 롤백되었거나 트랜잭션이 없는 경우): {}", txException.getMessage());
-            }
             return new ArrayList<>();
         } catch (Exception e) {
             log.error("사용자 권한 목록 조회 실패 (String 리스트): 사용자={}, 오류={}", user.getUserId(),
                     e.getMessage(), e);
-            // 트랜잭션 롤백 방지
-            try {
-                org.springframework.transaction.interceptor.TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-            } catch (Exception txException) {
-                log.debug("트랜잭션 상태 확인 실패 (이미 롤백되었거나 트랜잭션이 없는 경우): {}", txException.getMessage());
-            }
             return new ArrayList<>();
         }
     }

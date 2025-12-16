@@ -165,10 +165,51 @@ public class OAuth2Controller extends BaseApiController {
             return envFrontendUrl;
         }
 
-        // 5. 기본값 사용
-        String defaultUrl = "https://dev.core-solution.co.kr";
-        log.warn("프론트엔드 URL을 동적으로 생성할 수 없어 기본값 사용: {}", defaultUrl);
-        return defaultUrl;
+        // 5. 모든 방법이 실패한 경우 요청 정보로 동적 생성 시도
+        try {
+            String scheme = request.getHeader("X-Forwarded-Proto");
+            if (scheme == null || scheme.isEmpty()) {
+                scheme = request.getScheme();
+            }
+
+            String serverName = request.getHeader("X-Forwarded-Host");
+            if (serverName == null || serverName.isEmpty()) {
+                serverName = request.getHeader("Host");
+            }
+            if (serverName == null || serverName.isEmpty()) {
+                serverName = request.getServerName();
+            }
+
+            // 포트 제거
+            if (serverName != null && serverName.contains(":")) {
+                serverName = serverName.split(":")[0];
+            }
+
+            if (serverName != null && !serverName.isEmpty()) {
+                String dynamicUrl = scheme + "://" + serverName;
+                log.warn("프론트엔드 URL을 동적으로 생성 (서버 정보 기반): {}", dynamicUrl);
+                return dynamicUrl;
+            }
+        } catch (Exception e) {
+            log.error("프론트엔드 URL 생성 실패", e);
+        }
+
+        // 최후의 수단: 요청의 서버 정보로 강제 생성
+        try {
+            String scheme = request.getScheme();
+            String serverName = request.getServerName();
+            if (serverName != null && !serverName.isEmpty()) {
+                String fallbackUrl = scheme + "://" + serverName;
+                log.error("❌ 프론트엔드 URL을 동적으로 생성할 수 없어 서버 정보로 생성: {}", fallbackUrl);
+                return fallbackUrl;
+            }
+        } catch (Exception e) {
+            log.error("프론트엔드 URL 생성 실패 (서버 정보 기반)", e);
+        }
+
+        // 모든 방법이 실패한 경우: 오류 로그만 남기고 빈 문자열 반환 (호출하는 쪽에서 처리)
+        log.error("❌ 프론트엔드 URL을 동적으로 생성할 수 없습니다. 요청 정보를 확인해주세요.");
+        return "";
     }
 
     @GetMapping("/oauth2/kakao/authorize")
@@ -535,8 +576,33 @@ public class OAuth2Controller extends BaseApiController {
                             "네이버 OAuth2 콜백 - 세션에서 tenant_id 추출 및 TenantContextHolder 설정: tenantId={}",
                             sessionTenantId);
                 } else {
-                    log.warn("⚠️ 네이버 OAuth2 콜백 - tenant_id를 찾을 수 없습니다. 서브도메인 또는 세션에서 확인 필요");
+                    // tenantId를 찾을 수 없으면 오류 페이지로 리다이렉트 (테넌트 등록 필요)
+                    log.error("❌ 네이버 OAuth2 콜백 - tenant_id를 찾을 수 없습니다. 테넌트 등록이 필요합니다.");
+                    String frontendUrl = getFrontendBaseUrl(request);
+                    return ResponseEntity.status(302)
+                            .header("Location",
+                                    frontendUrl + "/login?error="
+                                            + URLEncoder.encode(
+                                                    "테넌트가 등록되지 않았습니다. 먼저 테넌트 등록을 진행해주세요.",
+                                                    StandardCharsets.UTF_8)
+                                            + "&provider=NAVER")
+                            .build();
                 }
+            }
+
+            // TenantContextHolder에 tenantId가 설정되었는지 최종 확인
+            String finalTenantId = com.coresolution.core.context.TenantContextHolder.getTenantId();
+            if (finalTenantId == null || finalTenantId.isEmpty()) {
+                log.error(
+                        "❌ 네이버 OAuth2 콜백 - TenantContextHolder에 tenant_id가 설정되지 않았습니다. 테넌트 등록이 필요합니다.");
+                String frontendUrl = getFrontendBaseUrl(request);
+                return ResponseEntity.status(302)
+                        .header("Location",
+                                frontendUrl + "/login?error="
+                                        + URLEncoder.encode("테넌트가 등록되지 않았습니다. 먼저 테넌트 등록을 진행해주세요.",
+                                                StandardCharsets.UTF_8)
+                                        + "&provider=NAVER")
+                        .build();
             }
 
             // 모바일 클라이언트 정보를 Redis에서 조회 (state 기반)
@@ -785,18 +851,11 @@ public class OAuth2Controller extends BaseApiController {
                                         socialUserInfo.getEmail(), tenantIdForLookup);
                             }
                         } else {
-                            // TenantContextHolder에 tenantId가 없으면 멀티 테넌트 사용자 고려하여 조회
-                            // (이메일 로그인과 동일한 fallback 로직)
-                            log.warn(
-                                    "⚠️ TenantContextHolder에 tenantId가 없어 findAllByEmail() 사용: email={}",
+                            // TenantContextHolder에 tenantId가 없으면 오류 처리
+                            log.error(
+                                    "❌ 네이버 OAuth2 - TenantContextHolder에 tenantId가 없어 사용자 조회 불가: email={}",
                                     socialUserInfo.getEmail());
-                            List<User> users =
-                                    userRepository.findAllByEmail(socialUserInfo.getEmail());
-                            existingUserId = users.isEmpty() ? null : users.get(0).getId();
-                            if (existingUserId != null) {
-                                log.info("✅ 이메일로 사용자 조회 성공 (멀티 테넌트 fallback): email={}, userId={}",
-                                        socialUserInfo.getEmail(), existingUserId);
-                            }
+                            // 오류는 상위 catch 블록에서 처리되므로 여기서는 로그만 남김
                         }
                     }
 
@@ -1023,17 +1082,19 @@ public class OAuth2Controller extends BaseApiController {
                         log.info("네이버 계정 연동 성공: 기존 사용자 userId={}, 소셜 사용자 providerUserId={}",
                                 currentUser.getId(), userInfo.getId());
 
+                        String frontendUrl = getFrontendBaseUrl(request);
                         return ResponseEntity.status(302)
                                 .header("Location",
-                                        frontendBaseUrl + "/mypage?success="
+                                        frontendUrl + "/mypage?success="
                                                 + URLEncoder.encode("연동완료", StandardCharsets.UTF_8)
                                                 + "&provider=NAVER")
                                 .build();
                     } catch (Exception e) {
                         log.error("네이버 계정 연동 실패", e);
+                        String frontendUrl = getFrontendBaseUrl(request);
                         return ResponseEntity.status(302)
                                 .header("Location",
-                                        frontendBaseUrl + "/mypage?error="
+                                        frontendUrl + "/mypage?error="
                                                 + URLEncoder.encode("연동실패", StandardCharsets.UTF_8)
                                                 + "&provider=NAVER")
                                 .build();
@@ -1212,9 +1273,10 @@ public class OAuth2Controller extends BaseApiController {
 
                 return ResponseEntity.status(302).header("Location", signupUrl).build();
             } else {
+                String frontendUrl = getFrontendBaseUrl(request);
                 return ResponseEntity.status(302)
                         .header("Location",
-                                frontendBaseUrl + "/login?error="
+                                frontendUrl + "/login?error="
                                         + URLEncoder.encode(response.getMessage(),
                                                 StandardCharsets.UTF_8)
                                         + "&provider=NAVER")
@@ -1222,8 +1284,9 @@ public class OAuth2Controller extends BaseApiController {
             }
         } catch (Exception e) {
             log.error("네이버 OAuth2 콜백 처리 실패", e);
+            String frontendUrl = getFrontendBaseUrl(request);
             return ResponseEntity.status(302)
-                    .header("Location", frontendBaseUrl + "/login?error="
+                    .header("Location", frontendUrl + "/login?error="
                             + URLEncoder.encode("처리실패", StandardCharsets.UTF_8) + "&provider=NAVER")
                     .build();
         }
@@ -1234,8 +1297,8 @@ public class OAuth2Controller extends BaseApiController {
     public ResponseEntity<?> testSignupRequired(HttpServletRequest request) {
         log.info("테스트용 간편 회원가입 시뮬레이션 요청");
 
-        String frontendBaseUrl = getFrontendBaseUrl(request);
-        String signupUrl = frontendBaseUrl + "/login?" + "signup=required" + "&provider=kakao"
+        String frontendUrl = getFrontendBaseUrl(request);
+        String signupUrl = frontendUrl + "/login?" + "signup=required" + "&provider=kakao"
                 + "&email=" + URLEncoder.encode("test@example.com", StandardCharsets.UTF_8)
                 + "&name=" + URLEncoder.encode("테스트사용자", StandardCharsets.UTF_8) + "&nickname="
                 + URLEncoder.encode("테스트닉네임", StandardCharsets.UTF_8);
@@ -1292,14 +1355,42 @@ public class OAuth2Controller extends BaseApiController {
             } else {
                 // 서브도메인이 없으면 세션에서 tenant_id 확인
                 String sessionTenantId = (String) session.getAttribute("tenantId");
+                if (sessionTenantId == null || sessionTenantId.isEmpty()) {
+                    sessionTenantId = (String) session.getAttribute("oauth2_tenant_id");
+                }
                 if (sessionTenantId != null && !sessionTenantId.isEmpty()) {
                     com.coresolution.core.context.TenantContextHolder.setTenantId(sessionTenantId);
                     log.info(
                             "카카오 OAuth2 콜백 - 세션에서 tenant_id 추출 및 TenantContextHolder 설정: tenantId={}",
                             sessionTenantId);
                 } else {
-                    log.warn("⚠️ 카카오 OAuth2 콜백 - tenant_id를 찾을 수 없습니다. 서브도메인 또는 세션에서 확인 필요");
+                    // tenantId를 찾을 수 없으면 오류 페이지로 리다이렉트 (테넌트 등록 필요)
+                    log.error("❌ 카카오 OAuth2 콜백 - tenant_id를 찾을 수 없습니다. 테넌트 등록이 필요합니다.");
+                    String frontendUrl = getFrontendBaseUrl(request);
+                    return ResponseEntity.status(302)
+                            .header("Location",
+                                    frontendUrl + "/login?error="
+                                            + URLEncoder.encode(
+                                                    "테넌트가 등록되지 않았습니다. 먼저 테넌트 등록을 진행해주세요.",
+                                                    StandardCharsets.UTF_8)
+                                            + "&provider=KAKAO")
+                            .build();
                 }
+            }
+
+            // TenantContextHolder에 tenantId가 설정되었는지 최종 확인
+            String finalTenantId = com.coresolution.core.context.TenantContextHolder.getTenantId();
+            if (finalTenantId == null || finalTenantId.isEmpty()) {
+                log.error(
+                        "❌ 카카오 OAuth2 콜백 - TenantContextHolder에 tenant_id가 설정되지 않았습니다. 테넌트 등록이 필요합니다.");
+                String frontendUrl = getFrontendBaseUrl(request);
+                return ResponseEntity.status(302)
+                        .header("Location",
+                                frontendUrl + "/login?error="
+                                        + URLEncoder.encode("테넌트가 등록되지 않았습니다. 먼저 테넌트 등록을 진행해주세요.",
+                                                StandardCharsets.UTF_8)
+                                        + "&provider=KAKAO")
+                        .build();
             }
 
             // 모바일 클라이언트 정보를 Redis에서 조회 (state 기반)
@@ -1467,17 +1558,11 @@ public class OAuth2Controller extends BaseApiController {
                                     socialUserInfo.getEmail(), tenantIdForLookup);
                         }
                     } else {
-                        // TenantContextHolder에 tenantId가 없으면 멀티 테넌트 사용자 고려하여 조회
-                        // (이메일 로그인과 동일한 fallback 로직)
-                        log.warn(
-                                "⚠️ TenantContextHolder에 tenantId가 없어 findAllByEmail() 사용: email={}",
+                        // TenantContextHolder에 tenantId가 없으면 오류 처리
+                        log.error(
+                                "❌ 카카오 OAuth2 - TenantContextHolder에 tenantId가 없어 사용자 조회 불가: email={}",
                                 socialUserInfo.getEmail());
-                        List<User> users = userRepository.findAllByEmail(socialUserInfo.getEmail());
-                        existingUserId = users.isEmpty() ? null : users.get(0).getId();
-                        if (existingUserId != null) {
-                            log.info("✅ 이메일로 사용자 조회 성공 (멀티 테넌트 fallback): email={}, userId={}",
-                                    socialUserInfo.getEmail(), existingUserId);
-                        }
+                        // 오류는 상위 catch 블록에서 처리되므로 여기서는 로그만 남김
                     }
                 }
 
@@ -1977,18 +2062,12 @@ public class OAuth2Controller extends BaseApiController {
                                 socialUserInfo.getEmail(), tenantIdForLookup, existingUserId);
                     }
                 } else {
-                    // TenantContextHolder에 tenantId가 없으면 멀티 테넌트 사용자 고려하여 조회
-                    // (이메일 로그인과 동일한 fallback 로직)
-                    log.warn(
-                            "⚠️ 네이티브 SDK - TenantContextHolder에 tenantId가 없어 findAllByEmail() 사용: email={}",
+                    // TenantContextHolder에 tenantId가 없으면 오류 처리 (테넌트 등록 필요)
+                    log.error(
+                            "❌ 네이티브 SDK - TenantContextHolder에 tenantId가 없어 사용자 조회 불가: email={} (테넌트 등록 필요)",
                             socialUserInfo.getEmail());
-                    List<User> users = userRepository.findAllByEmail(socialUserInfo.getEmail());
-                    existingUserId = users.isEmpty() ? null : users.get(0).getId();
-                    if (existingUserId != null) {
-                        log.info(
-                                "✅ 네이티브 SDK - 이메일로 사용자 조회 성공 (멀티 테넌트 fallback): email={}, userId={}",
-                                socialUserInfo.getEmail(), existingUserId);
-                    }
+                    return ResponseEntity.badRequest().body(Map.of("success", false, "message",
+                            "테넌트가 등록되지 않았습니다. 먼저 테넌트 등록을 진행해주세요."));
                 }
             }
 
@@ -2155,7 +2234,10 @@ public class OAuth2Controller extends BaseApiController {
                         log.info("✅ 서브도메인으로 테넌트 조회 성공: subdomain={}, tenantId={}", subdomain,
                                 tenant.getTenantId());
                         return tenant.getTenantId();
-                    }).orElse(null);
+                    }).orElseGet(() -> {
+                        log.warn("⚠️ 서브도메인으로 테넌트를 찾을 수 없음: subdomain={} (테넌트 등록 필요)", subdomain);
+                        return null;
+                    });
                 }
             }
 

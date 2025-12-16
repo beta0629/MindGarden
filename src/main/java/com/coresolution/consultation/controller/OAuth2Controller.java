@@ -75,6 +75,12 @@ public class OAuth2Controller extends BaseApiController {
     @Value("${spring.security.oauth2.client.registration.naver.scope:name,email}")
     private String naverScope;
 
+    @Value("${spring.security.oauth2.client.callback.kakao-path:/api/auth/kakao/callback}")
+    private String kakaoCallbackPath;
+
+    @Value("${spring.security.oauth2.client.callback.naver-path:/api/auth/naver/callback}")
+    private String naverCallbackPath;
+
     @Value("${frontend.base-url:${FRONTEND_BASE_URL:}}")
     private String frontendBaseUrl;
 
@@ -235,7 +241,7 @@ public class OAuth2Controller extends BaseApiController {
                     }
 
                     callbackUrl = requestScheme + "://" + mainDomain + portSuffix
-                            + "/api/auth/kakao/callback";
+                            + kakaoCallbackPath;
                     log.info(
                             "카카오 OAuth2 - 동적 redirect URI 생성: {} (원본 host={}, scheme={}, forwardedProto={}, forwardedHost={})",
                             callbackUrl, requestHost, request.getScheme(),
@@ -348,7 +354,7 @@ public class OAuth2Controller extends BaseApiController {
                     }
 
                     callbackUrl = requestScheme + "://" + mainDomain + portSuffix
-                            + "/api/auth/naver/callback";
+                            + naverCallbackPath;
                     log.info(
                             "네이버 OAuth2 - 동적 redirect URI 생성: {} (원본 host={}, scheme={}, forwardedProto={}, forwardedHost={})",
                             callbackUrl, requestHost, request.getScheme(),
@@ -525,7 +531,7 @@ public class OAuth2Controller extends BaseApiController {
                         }
                     }
                     
-                    callbackRedirectUri = requestScheme + "://" + mainDomain + portSuffix + "/api/auth/naver/callback";
+                    callbackRedirectUri = requestScheme + "://" + mainDomain + portSuffix + naverCallbackPath;
                     
                     log.info(
                             "네이버 콜백 - 동적 redirect_uri 생성: {} (scheme={}, originalHost={}, mainDomain={}, forwardedProto={}, forwardedHost={})",
@@ -1058,7 +1064,7 @@ public class OAuth2Controller extends BaseApiController {
                     }
                     
                     actualRedirectUri = requestScheme + "://" + mainDomain + portSuffix
-                            + "/api/auth/kakao/callback";
+                            + kakaoCallbackPath;
                     
                     log.info(
                             "카카오 콜백 - 동적 redirect_uri 생성: {} (원본 host={}, 변환된 mainDomain={}, scheme={}, forwardedProto={}, forwardedHost={})",

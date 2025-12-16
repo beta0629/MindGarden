@@ -719,10 +719,12 @@ public class OAuth2Controller extends BaseApiController {
                         log.debug("트랜잭션 상태 확인 실패 (이미 롤백되었거나 트랜잭션이 없는 경우): {}",
                                 txException.getMessage());
                     }
+                    // 네이버 로그인 오류 시 원래 도메인으로 리다이렉트 (요청 도메인 유지)
                     String frontendUrl = getFrontendBaseUrl(request);
                     String errorMessage =
                             authException.getMessage() != null ? authException.getMessage()
                                     : "인증 처리 중 오류가 발생했습니다";
+                    log.warn("네이버 로그인 오류 발생 - 원래 도메인으로 리다이렉트: frontendUrl={}, error={}", frontendUrl, errorMessage);
                     return ResponseEntity.status(302)
                             .header("Location",
                                     frontendUrl + "/login?error="

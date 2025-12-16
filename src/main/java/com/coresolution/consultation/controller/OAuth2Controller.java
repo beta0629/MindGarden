@@ -75,9 +75,6 @@ public class OAuth2Controller extends BaseApiController {
     @Value("${spring.security.oauth2.client.registration.naver.scope:name,email}")
     private String naverScope;
 
-    @Value("${spring.security.oauth2.domain.naver-callback-domain:dev.core-solution.co.kr}")
-    private String naverCallbackDomain;
-
     @Value("${frontend.base-url:${FRONTEND_BASE_URL:}}")
     private String frontendBaseUrl;
 
@@ -295,34 +292,69 @@ public class OAuth2Controller extends BaseApiController {
                 log.info("네이버 OAuth2 - 모바일 클라이언트 감지 (Redis 저장): state={}", state);
             }
 
-            // 콜백 URL 동적 생성 (설정 파일에서 네이버 콜백 도메인 가져오기)
+            // 콜백 URL 동적 생성 (서브도메인은 메인 도메인으로 변환 - 카카오와 동일한 로직)
             String callbackUrl = null;
             try {
                 // 프록시 헤더 확인 (X-Forwarded-Proto, X-Forwarded-Host)
+                // Nginx를 통해 들어온 요청은 X-Forwarded-Host를 우선 확인
                 String requestScheme = request.getHeader("X-Forwarded-Proto");
                 if (requestScheme == null || requestScheme.isEmpty()) {
                     requestScheme = request.getScheme();
                 }
 
-                // 설정 파일에서 네이버 콜백 도메인 가져오기 (환경 변수로도 오버라이드 가능)
-                String naverCallbackDomainToUse = naverCallbackDomain;
-                
-                // 환경 변수에서도 확인 (운영 환경에서 설정 가능)
-                String envNaverCallbackDomain = System.getenv("NAVER_CALLBACK_DOMAIN");
-                if (envNaverCallbackDomain != null && !envNaverCallbackDomain.isEmpty()) {
-                    naverCallbackDomainToUse = envNaverCallbackDomain;
-                    log.info("네이버 OAuth2 - 환경 변수에서 콜백 도메인 사용: {}", naverCallbackDomainToUse);
-                }
-                
-                // 기본값 확인
-                if (naverCallbackDomainToUse == null || naverCallbackDomainToUse.isEmpty()) {
-                    naverCallbackDomainToUse = "dev.core-solution.co.kr";
-                    log.warn("네이버 OAuth2 - 설정값이 없어 기본값 사용: {}", naverCallbackDomainToUse);
+                // X-Forwarded-Host 우선 확인 (Nginx를 통해 들어온 요청)
+                String requestHost = request.getHeader("X-Forwarded-Host");
+                if (requestHost == null || requestHost.isEmpty()) {
+                    // X-Forwarded-Host가 없으면 Host 헤더 확인
+                    requestHost = request.getHeader("Host");
                 }
 
-                callbackUrl = requestScheme + "://" + naverCallbackDomainToUse + "/api/auth/naver/callback";
-                log.info("네이버 OAuth2 - redirect URI 생성: {} (도메인={}, scheme={})", 
-                        callbackUrl, naverCallbackDomainToUse, requestScheme);
+                // 로컬 환경에서 프론트엔드 프록시를 통해 온 경우 처리
+                if (requestHost != null && requestHost.contains("localhost")
+                        && !requestHost.contains(":8080")) {
+                    // 프론트엔드(localhost:3000)에서 프록시로 온 경우, 실제 백엔드 주소 사용
+                    requestHost = request.getServerName() + ":" + request.getServerPort();
+                } else if (requestHost == null || requestHost.isEmpty()) {
+                    // Host 헤더도 없으면 서버 정보 사용
+                    requestHost = request.getServerName() + ":" + request.getServerPort();
+                }
+
+                // 서브도메인을 메인 도메인으로 변환 (설정 파일 기반, 카카오와 동일)
+                if (requestHost != null && !requestHost.isEmpty()) {
+                    String hostWithoutPort = requestHost.split(":")[0];
+                    String mainDomain = oauth2DomainUtil.convertToMainDomain(hostWithoutPort);
+
+                    // 포트 처리
+                    String portSuffix = "";
+                    if (requestHost.contains(":")) {
+                        String port = requestHost.split(":")[1];
+                        if (!port.equals("80") && !port.equals("443")) {
+                            portSuffix = ":" + port;
+                        }
+                    } else {
+                        // 프록시를 통해 들어온 경우 포트는 헤더에서 확인
+                        String forwardedPort = request.getHeader("X-Forwarded-Port");
+                        if (forwardedPort != null && !forwardedPort.isEmpty()) {
+                            int port = Integer.parseInt(forwardedPort);
+                            if (port != 80 && port != 443) {
+                                portSuffix = ":" + port;
+                            }
+                        } else {
+                            int port = request.getServerPort();
+                            if (port != 80 && port != 443) {
+                                portSuffix = ":" + port;
+                            }
+                        }
+                    }
+
+                    callbackUrl = requestScheme + "://" + mainDomain + portSuffix
+                            + "/api/auth/naver/callback";
+                    log.info(
+                            "네이버 OAuth2 - 동적 redirect URI 생성: {} (원본 host={}, scheme={}, forwardedProto={}, forwardedHost={})",
+                            callbackUrl, requestHost, request.getScheme(),
+                            request.getHeader("X-Forwarded-Proto"),
+                            request.getHeader("X-Forwarded-Host"));
+                }
             } catch (Exception e) {
                 log.error("네이버 OAuth2 - redirect URI 동적 생성 실패", e);
             }

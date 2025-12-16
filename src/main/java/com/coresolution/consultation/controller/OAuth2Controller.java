@@ -85,6 +85,9 @@ public class OAuth2Controller extends BaseApiController {
     @Value("${spring.security.oauth2.domain.naver-callback-domain:dev.core-solution.co.kr}")
     private String naverCallbackDomain;
 
+    @Value("${spring.security.oauth2.domain.naver-registered-urls:https://dev.core-solution.co.kr/api/auth/naver/callback}")
+    private String naverRegisteredUrls;
+
     @Value("${frontend.base-url:${FRONTEND_BASE_URL:}}")
     private String frontendBaseUrl;
 
@@ -576,13 +579,9 @@ public class OAuth2Controller extends BaseApiController {
                             "네이버 콜백 - 세션에서 저장된 redirect_uri 확인: savedRedirectUri={}, callbackRedirectUri={}, sessionId={}",
                             savedRedirectUri, callbackRedirectUri, session.getId());
 
-                    // 네이버 개발자 센터에 등록된 URL 목록 (전체 스코프에서 사용)
-                    List<String> registeredUrls =
-                            Arrays.asList("https://core-solution.co.kr/api/auth/naver/callback",
-                                    "http://localhost:8080/api/auth/naver/callback",
-                                    "https://dev.m-garden.co.kr/api/auth/naver/callback",
-                                    "https://m-garden.co.kr/api/auth/naver/callback",
-                                    "https://dev.core-solution.co.kr/api/auth/naver/callback");
+                    // 네이버 개발자 센터에 등록된 URL 목록 (설정 파일에서 읽어옴)
+                    List<String> registeredUrls = Arrays.asList(naverRegisteredUrls.split(","));
+                    log.debug("네이버 등록된 URL 목록: {}", registeredUrls);
 
                     if (savedRedirectUri != null && !savedRedirectUri.isEmpty()) {
                         if (!savedRedirectUri.equals(callbackRedirectUri)) {
@@ -600,12 +599,6 @@ public class OAuth2Controller extends BaseApiController {
                                 "⚠️ 네이버 콜백 - 세션에 저장된 redirect_uri가 없습니다. 동적으로 생성한 redirect_uri 사용: {}",
                                 callbackRedirectUri);
                         // 세션에 저장된 redirect_uri가 없을 경우, 네이버 개발자 센터에 등록된 URL 중 하나를 사용
-                        // 네이버 개발자 센터에 등록된 URL 목록:
-                        // 1. https://core-solution.co.kr/api/auth/naver/callback
-                        // 2. http://localhost:8080/api/auth/naver/callback
-                        // 3. https://dev.m-garden.co.kr/api/auth/naver/callback
-                        // 4. https://m-garden.co.kr/api/auth/naver/callback
-                        // 5. https://dev.core-solution.co.kr/api/auth/naver/callback
                         // 동적으로 생성한 redirect_uri가 네이버 개발자 센터에 등록된 URL과 일치하는지 확인
                         // 일치하지 않으면 설정 파일의 기본 도메인 사용
                         String configuredDomain = naverCallbackDomain;
@@ -633,14 +626,22 @@ public class OAuth2Controller extends BaseApiController {
                             if (isConfiguredRegistered) {
                                 callbackRedirectUri = configuredRedirectUri;
                             } else {
-                                // 등록된 URL 중 하나를 사용 (우선순위: dev.core-solution.co.kr >
-                                // dev.m-garden.co.kr)
-                                String fallbackUrl =
-                                        "https://dev.core-solution.co.kr/api/auth/naver/callback";
-                                log.warn(
-                                        "⚠️ 네이버 콜백 - 설정 파일 기반 redirect_uri도 등록된 URL 목록에 없음. 기본값 사용: {}",
-                                        fallbackUrl);
-                                callbackRedirectUri = fallbackUrl;
+                                // 등록된 URL 목록에서 첫 번째 URL을 기본값으로 사용
+                                if (!registeredUrls.isEmpty()) {
+                                    String fallbackUrl = registeredUrls.get(0).trim();
+                                    log.warn(
+                                            "⚠️ 네이버 콜백 - 설정 파일 기반 redirect_uri도 등록된 URL 목록에 없음. 등록된 URL 목록의 첫 번째 URL 사용: {}",
+                                            fallbackUrl);
+                                    callbackRedirectUri = fallbackUrl;
+                                } else {
+                                    // 등록된 URL 목록이 비어있으면 설정 파일의 기본 도메인 사용
+                                    String fallbackUrl = requestScheme + "://" + configuredDomain
+                                            + portSuffix + naverCallbackPath;
+                                    log.warn(
+                                            "⚠️ 네이버 콜백 - 등록된 URL 목록이 비어있음. 설정 파일의 기본 도메인 사용: {}",
+                                            fallbackUrl);
+                                    callbackRedirectUri = fallbackUrl;
+                                }
                             }
                         } else {
                             log.info("네이버 콜백 - 동적으로 생성한 redirect_uri가 등록된 URL 목록에 있음: {}",
@@ -724,7 +725,8 @@ public class OAuth2Controller extends BaseApiController {
                     String errorMessage =
                             authException.getMessage() != null ? authException.getMessage()
                                     : "인증 처리 중 오류가 발생했습니다";
-                    log.warn("네이버 로그인 오류 발생 - 원래 도메인으로 리다이렉트: frontendUrl={}, error={}", frontendUrl, errorMessage);
+                    log.warn("네이버 로그인 오류 발생 - 원래 도메인으로 리다이렉트: frontendUrl={}, error={}",
+                            frontendUrl, errorMessage);
                     return ResponseEntity.status(302)
                             .header("Location",
                                     frontendUrl + "/login?error="

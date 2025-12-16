@@ -478,13 +478,15 @@ public class OAuth2Controller extends BaseApiController {
             // 인증 URL 생성 시 사용한 redirect_uri와 일치시켜야 함
             // 카카오와 동일하게 OAuth2DomainUtil을 사용하여 서브도메인을 메인 도메인으로 변환
             String callbackRedirectUri = null;
+            // requestScheme과 portSuffix는 try 블록 밖에서도 사용해야 하므로 먼저 선언
+            String requestScheme = request.getHeader("X-Forwarded-Proto");
+            if (requestScheme == null || requestScheme.isEmpty()) {
+                requestScheme = request.getScheme();
+            }
+            String portSuffix = "";
             try {
                 // 프록시 헤더 확인 (X-Forwarded-Proto, X-Forwarded-Host)
                 // Nginx를 통해 들어온 요청은 X-Forwarded-Host를 우선 확인
-                String requestScheme = request.getHeader("X-Forwarded-Proto");
-                if (requestScheme == null || requestScheme.isEmpty()) {
-                    requestScheme = request.getScheme();
-                }
 
                 // X-Forwarded-Host 우선 확인 (Nginx를 통해 들어온 요청)
                 String requestHost = request.getHeader("X-Forwarded-Host");
@@ -589,6 +591,7 @@ public class OAuth2Controller extends BaseApiController {
                         if (configuredDomain == null || configuredDomain.isEmpty()) {
                             configuredDomain = "dev.core-solution.co.kr";
                         }
+                        // requestScheme과 portSuffix는 이미 위에서 설정됨
                         String configuredRedirectUri = requestScheme + "://" + configuredDomain + portSuffix + naverCallbackPath;
                         log.info("네이버 콜백 - 세션에 저장된 redirect_uri가 없어 설정 파일 기반 redirect_uri 사용: {} (동적 생성: {})", configuredRedirectUri, callbackRedirectUri);
                         callbackRedirectUri = configuredRedirectUri;

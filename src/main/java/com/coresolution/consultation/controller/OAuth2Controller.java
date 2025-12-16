@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import com.coresolution.consultation.constant.OAuth2Constants;
 import com.coresolution.consultation.dto.SocialLoginResponse;
@@ -752,8 +753,8 @@ public class OAuth2Controller extends BaseApiController {
                             com.coresolution.core.context.TenantContextHolder.getTenantId();
                     if (currentTenantId != null && !currentTenantId.isEmpty()) {
                         try {
-                            existingUserId = naverServiceImpl
-                                    .findExistingUserByProviderId(socialUserInfo.getProviderUserId());
+                            existingUserId = naverServiceImpl.findExistingUserByProviderId(
+                                    socialUserInfo.getProviderUserId());
                             if (existingUserId == null && socialUserInfo.getEmail() != null) {
                                 existingUserId = naverServiceImpl
                                         .findExistingUserByProviderId(socialUserInfo.getEmail());
@@ -764,14 +765,38 @@ public class OAuth2Controller extends BaseApiController {
                         }
                     }
 
-                    // tenant ID가 없거나 findExistingUserByProviderId로 찾지 못한 경우, 이메일로 조회 (카카오와 동일)
-                    if (existingUserId == null) {
-                        // 멀티 테넌트 사용자 고려하여 조회
-                        List<User> users = userRepository.findAllByEmail(socialUserInfo.getEmail());
-                        existingUserId = users.isEmpty() ? null : users.get(0).getId();
-                        if (existingUserId != null) {
-                            log.info("✅ 이메일로 사용자 조회 성공: email={}, userId={}", socialUserInfo.getEmail(),
-                                    existingUserId);
+                    // tenant ID가 없거나 findExistingUserByProviderId로 찾지 못한 경우, 이메일로 조회
+                    // 이메일 로그인과 동일하게 TenantContextHolder의 tenantId 사용
+                    if (existingUserId == null && socialUserInfo.getEmail() != null) {
+                        String tenantIdForLookup =
+                                com.coresolution.core.context.TenantContextHolder.getTenantId();
+                        if (tenantIdForLookup != null && !tenantIdForLookup.isEmpty()) {
+                            // TenantContextHolder에 tenantId가 있으면 정확한 사용자 조회 (이메일 로그인과 동일)
+                            Optional<User> userOptional = userRepository.findByTenantIdAndEmail(
+                                    tenantIdForLookup, socialUserInfo.getEmail());
+                            if (userOptional.isPresent()) {
+                                existingUserId = userOptional.get().getId();
+                                log.info(
+                                        "✅ 이메일로 사용자 조회 성공 (tenantId 사용): email={}, tenantId={}, userId={}",
+                                        socialUserInfo.getEmail(), tenantIdForLookup,
+                                        existingUserId);
+                            } else {
+                                log.warn("⚠️ 이메일로 사용자 조회 실패 (tenantId 사용): email={}, tenantId={}",
+                                        socialUserInfo.getEmail(), tenantIdForLookup);
+                            }
+                        } else {
+                            // TenantContextHolder에 tenantId가 없으면 멀티 테넌트 사용자 고려하여 조회
+                            // (이메일 로그인과 동일한 fallback 로직)
+                            log.warn(
+                                    "⚠️ TenantContextHolder에 tenantId가 없어 findAllByEmail() 사용: email={}",
+                                    socialUserInfo.getEmail());
+                            List<User> users =
+                                    userRepository.findAllByEmail(socialUserInfo.getEmail());
+                            existingUserId = users.isEmpty() ? null : users.get(0).getId();
+                            if (existingUserId != null) {
+                                log.info("✅ 이메일로 사용자 조회 성공 (멀티 테넌트 fallback): email={}, userId={}",
+                                        socialUserInfo.getEmail(), existingUserId);
+                            }
                         }
                     }
 
@@ -1424,13 +1449,35 @@ public class OAuth2Controller extends BaseApiController {
                 }
 
                 // tenant ID가 없거나 findExistingUserByProviderId로 찾지 못한 경우, 이메일로 조회
-                if (existingUserId == null) {
-                    // 멀티 테넌트 사용자 고려하여 조회
-                    List<User> users = userRepository.findAllByEmail(socialUserInfo.getEmail());
-                    existingUserId = users.isEmpty() ? null : users.get(0).getId();
-                    if (existingUserId != null) {
-                        log.info("✅ 이메일로 사용자 조회 성공: email={}, userId={}", socialUserInfo.getEmail(),
-                                existingUserId);
+                // 이메일 로그인과 동일하게 TenantContextHolder의 tenantId 사용
+                if (existingUserId == null && socialUserInfo.getEmail() != null) {
+                    String tenantIdForLookup =
+                            com.coresolution.core.context.TenantContextHolder.getTenantId();
+                    if (tenantIdForLookup != null && !tenantIdForLookup.isEmpty()) {
+                        // TenantContextHolder에 tenantId가 있으면 정확한 사용자 조회 (이메일 로그인과 동일)
+                        Optional<User> userOptional = userRepository.findByTenantIdAndEmail(
+                                tenantIdForLookup, socialUserInfo.getEmail());
+                        if (userOptional.isPresent()) {
+                            existingUserId = userOptional.get().getId();
+                            log.info(
+                                    "✅ 이메일로 사용자 조회 성공 (tenantId 사용): email={}, tenantId={}, userId={}",
+                                    socialUserInfo.getEmail(), tenantIdForLookup, existingUserId);
+                        } else {
+                            log.warn("⚠️ 이메일로 사용자 조회 실패 (tenantId 사용): email={}, tenantId={}",
+                                    socialUserInfo.getEmail(), tenantIdForLookup);
+                        }
+                    } else {
+                        // TenantContextHolder에 tenantId가 없으면 멀티 테넌트 사용자 고려하여 조회
+                        // (이메일 로그인과 동일한 fallback 로직)
+                        log.warn(
+                                "⚠️ TenantContextHolder에 tenantId가 없어 findAllByEmail() 사용: email={}",
+                                socialUserInfo.getEmail());
+                        List<User> users = userRepository.findAllByEmail(socialUserInfo.getEmail());
+                        existingUserId = users.isEmpty() ? null : users.get(0).getId();
+                        if (existingUserId != null) {
+                            log.info("✅ 이메일로 사용자 조회 성공 (멀티 테넌트 fallback): email={}, userId={}",
+                                    socialUserInfo.getEmail(), existingUserId);
+                        }
                     }
                 }
 
@@ -1915,10 +1962,34 @@ public class OAuth2Controller extends BaseApiController {
             Long existingUserId =
                     oauth2Service.findExistingUserByProviderId(socialUserInfo.getProviderUserId());
 
-            if (existingUserId == null) {
-                // 이메일로도 확인 (멀티 테넌트 사용자 고려)
-                List<User> users = userRepository.findAllByEmail(socialUserInfo.getEmail());
-                existingUserId = users.isEmpty() ? null : users.get(0).getId();
+            if (existingUserId == null && socialUserInfo.getEmail() != null) {
+                // 이메일로도 확인 (이메일 로그인과 동일하게 TenantContextHolder의 tenantId 사용)
+                String tenantIdForLookup =
+                        com.coresolution.core.context.TenantContextHolder.getTenantId();
+                if (tenantIdForLookup != null && !tenantIdForLookup.isEmpty()) {
+                    // TenantContextHolder에 tenantId가 있으면 정확한 사용자 조회 (이메일 로그인과 동일)
+                    Optional<User> userOptional = userRepository
+                            .findByTenantIdAndEmail(tenantIdForLookup, socialUserInfo.getEmail());
+                    if (userOptional.isPresent()) {
+                        existingUserId = userOptional.get().getId();
+                        log.info(
+                                "✅ 네이티브 SDK - 이메일로 사용자 조회 성공 (tenantId 사용): email={}, tenantId={}, userId={}",
+                                socialUserInfo.getEmail(), tenantIdForLookup, existingUserId);
+                    }
+                } else {
+                    // TenantContextHolder에 tenantId가 없으면 멀티 테넌트 사용자 고려하여 조회
+                    // (이메일 로그인과 동일한 fallback 로직)
+                    log.warn(
+                            "⚠️ 네이티브 SDK - TenantContextHolder에 tenantId가 없어 findAllByEmail() 사용: email={}",
+                            socialUserInfo.getEmail());
+                    List<User> users = userRepository.findAllByEmail(socialUserInfo.getEmail());
+                    existingUserId = users.isEmpty() ? null : users.get(0).getId();
+                    if (existingUserId != null) {
+                        log.info(
+                                "✅ 네이티브 SDK - 이메일로 사용자 조회 성공 (멀티 테넌트 fallback): email={}, userId={}",
+                                socialUserInfo.getEmail(), existingUserId);
+                    }
+                }
             }
 
             if (existingUserId == null) {

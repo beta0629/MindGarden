@@ -146,10 +146,11 @@ public class KakaoOAuth2ServiceImpl extends AbstractOAuth2Service {
                 params.add("client_id", clientId);
                 params.add("client_secret", clientSecret);
                 params.add("code", code);
-                params.add("redirect_uri", redirectUriToUse);
+                // 카카오 OAuth2 API 변경: redirect_uri 파라미터 제거 (2024년 이후 선택적 또는 불필요)
+                // params.add("redirect_uri", redirectUriToUse);
                 
-                log.debug("카카오 토큰 요청 파라미터: grant_type={}, client_id={}, redirect_uri={}", 
-                         "authorization_code", clientId, redirectUriToUse);
+                log.debug("카카오 토큰 요청 파라미터: grant_type={}, client_id={}, code={} (redirect_uri 제거됨)", 
+                         "authorization_code", clientId, code);
                 
                 HttpEntity<MultiValueMap<String, String>> entity = new HttpEntity<>(params, headers);
                 

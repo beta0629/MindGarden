@@ -295,7 +295,9 @@ public class OAuth2Controller extends BaseApiController {
             String tenantId = extractTenantIdFromSubdomain(request);
             if (tenantId != null && !tenantId.isEmpty()) {
                 session.setAttribute("oauth2_tenant_id", tenantId);
-                log.info("네이버 OAuth2 - 서브도메인에서 tenant_id 추출: tenantId={}", tenantId);
+                // state와 함께 tenantId도 세션에 저장 (콜백에서 state로 조회 가능하도록)
+                session.setAttribute("oauth2_naver_tenant_id_" + state, tenantId);
+                log.info("네이버 OAuth2 - 서브도메인에서 tenant_id 추출: tenantId={}, state={}", tenantId, state);
             }
 
             // 모바일 클라이언트인 경우 Redis에 저장 (세션 의존성 제거)
@@ -433,6 +435,16 @@ public class OAuth2Controller extends BaseApiController {
                     .build();
         }
 
+        // state로 저장된 tenantId 조회 (authorize 시 저장한 값)
+        String stateBasedTenantId = null;
+        if (state != null && savedState != null && savedState.equals(state)) {
+            stateBasedTenantId = (String) session.getAttribute("oauth2_naver_tenant_id_" + state);
+            if (stateBasedTenantId != null && !stateBasedTenantId.isEmpty()) {
+                log.info("네이버 OAuth2 콜백 - state로 tenant_id 조회: tenantId={}, state={}", stateBasedTenantId, state);
+                session.removeAttribute("oauth2_naver_tenant_id_" + state); // 사용 후 제거
+            }
+        }
+
         if (savedState != null) {
             session.removeAttribute("oauth2_naver_state");
         }
@@ -445,6 +457,12 @@ public class OAuth2Controller extends BaseApiController {
                 log.info(
                         "네이버 OAuth2 콜백 - 서브도메인에서 tenant_id 추출 및 TenantContextHolder 설정: tenantId={}",
                         callbackTenantId);
+            } else if (stateBasedTenantId != null && !stateBasedTenantId.isEmpty()) {
+                // state로 조회한 tenantId 사용
+                com.coresolution.core.context.TenantContextHolder.setTenantId(stateBasedTenantId);
+                log.info(
+                        "네이버 OAuth2 콜백 - state로 조회한 tenant_id를 TenantContextHolder에 설정: tenantId={}",
+                        stateBasedTenantId);
             } else {
                 // 서브도메인이 없으면 세션에서 tenant_id 확인 (카카오와 동일하게 tenantId 우선 확인)
                 String sessionTenantId = (String) session.getAttribute("tenantId");

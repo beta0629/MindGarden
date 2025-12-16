@@ -554,13 +554,19 @@ public class OAuth2Controller extends BaseApiController {
                     
                     // 네이버 인증 URL 생성 시 사용한 redirect_uri와 비교
                     String savedRedirectUri = (String) session.getAttribute("oauth2_naver_redirect_uri");
-                    if (savedRedirectUri != null && !savedRedirectUri.equals(callbackRedirectUri)) {
-                        log.warn("⚠️ 네이버 redirect_uri 불일치: 인증 URL 생성 시={}, 콜백 처리 시={}", savedRedirectUri, callbackRedirectUri);
-                        // 인증 URL 생성 시 사용한 redirect_uri를 우선 사용
-                        callbackRedirectUri = savedRedirectUri;
-                        log.info("네이버 콜백 - 인증 URL 생성 시 사용한 redirect_uri로 변경: {}", callbackRedirectUri);
+                    log.info("네이버 콜백 - 세션에서 저장된 redirect_uri 확인: savedRedirectUri={}, callbackRedirectUri={}", savedRedirectUri, callbackRedirectUri);
+                    
+                    if (savedRedirectUri != null && !savedRedirectUri.isEmpty()) {
+                        if (!savedRedirectUri.equals(callbackRedirectUri)) {
+                            log.warn("⚠️ 네이버 redirect_uri 불일치: 인증 URL 생성 시={}, 콜백 처리 시={}", savedRedirectUri, callbackRedirectUri);
+                            // 인증 URL 생성 시 사용한 redirect_uri를 우선 사용 (네이버 개발자 센터에 등록된 URL과 일치)
+                            callbackRedirectUri = savedRedirectUri;
+                            log.info("네이버 콜백 - 인증 URL 생성 시 사용한 redirect_uri로 변경: {}", callbackRedirectUri);
+                        } else {
+                            log.info("네이버 콜백 - redirect_uri 일치 확인: {}", callbackRedirectUri);
+                        }
                     } else {
-                        log.info("네이버 콜백 - redirect_uri 일치 확인: {}", callbackRedirectUri);
+                        log.warn("⚠️ 네이버 콜백 - 세션에 저장된 redirect_uri가 없습니다. 동적으로 생성한 redirect_uri 사용: {}", callbackRedirectUri);
                     }
                     
                     log.info("네이버 콜백 - 토큰 요청 시 사용할 redirect_uri: {}", callbackRedirectUri);

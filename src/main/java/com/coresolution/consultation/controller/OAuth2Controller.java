@@ -192,7 +192,7 @@ public class OAuth2Controller extends BaseApiController {
                     // X-Forwarded-Host가 없으면 Host 헤더 확인
                     requestHost = request.getHeader("Host");
                 }
-                
+
                 // 로컬 환경에서 프론트엔드 프록시를 통해 온 경우 처리
                 if (requestHost != null && requestHost.contains("localhost")
                         && !requestHost.contains(":8080")) {
@@ -331,7 +331,7 @@ public class OAuth2Controller extends BaseApiController {
                     // X-Forwarded-Host가 없으면 Host 헤더 확인
                     requestHost = request.getHeader("Host");
                 }
-                
+
                 // 로컬 환경에서 프론트엔드 프록시를 통해 온 경우 처리
                 if (requestHost != null && requestHost.contains("localhost")
                         && !requestHost.contains(":8080")) {
@@ -1037,36 +1037,53 @@ public class OAuth2Controller extends BaseApiController {
                 }
 
                 if (requestHost != null && !requestHost.isEmpty()) {
+                    String hostWithoutPort = requestHost.split(":")[0];
+                    String mainDomain = hostWithoutPort;
+                    
+                    // 서브도메인을 메인 도메인으로 변환 (인증 코드 발급 시와 동일하게)
+                    if (hostWithoutPort.matches(".*\\.dev\\.core-solution\\.co\\.kr$")) {
+                        mainDomain = "dev.core-solution.co.kr";
+                    } else if (hostWithoutPort.matches(".*\\.core-solution\\.co\\.kr$")
+                            && !hostWithoutPort.equals("dev.core-solution.co.kr")
+                            && !hostWithoutPort.equals("core-solution.co.kr")) {
+                        mainDomain = "dev.core-solution.co.kr";
+                    } else if (hostWithoutPort.matches(".*\\.dev\\.m-garden\\.co\\.kr$")) {
+                        mainDomain = "dev.m-garden.co.kr";
+                    } else if (hostWithoutPort.matches(".*\\.m-garden\\.co\\.kr$")
+                            && !hostWithoutPort.equals("dev.m-garden.co.kr")
+                            && !hostWithoutPort.equals("m-garden.co.kr")) {
+                        mainDomain = "dev.m-garden.co.kr";
+                    }
+                    
                     // 포트가 포함된 경우와 아닌 경우 모두 처리
+                    String portSuffix = "";
                     if (requestHost.contains(":")) {
-                        actualRedirectUri =
-                                requestScheme + "://" + requestHost + "/api/auth/kakao/callback";
+                        String port = requestHost.split(":")[1];
+                        if (!port.equals("80") && !port.equals("443")) {
+                            portSuffix = ":" + port;
+                        }
                     } else {
                         // 프록시를 통해 들어온 경우 포트는 헤더에서 확인
                         String forwardedPort = request.getHeader("X-Forwarded-Port");
                         if (forwardedPort != null && !forwardedPort.isEmpty()) {
                             int port = Integer.parseInt(forwardedPort);
-                            if (port == 80 || port == 443) {
-                                actualRedirectUri = requestScheme + "://" + requestHost
-                                        + "/api/auth/kakao/callback";
-                            } else {
-                                actualRedirectUri = requestScheme + "://" + requestHost + ":" + port
-                                        + "/api/auth/kakao/callback";
+                            if (port != 80 && port != 443) {
+                                portSuffix = ":" + port;
                             }
                         } else {
                             int port = request.getServerPort();
-                            if (port == 80 || port == 443) {
-                                actualRedirectUri = requestScheme + "://" + requestHost
-                                        + "/api/auth/kakao/callback";
-                            } else {
-                                actualRedirectUri = requestScheme + "://" + requestHost + ":" + port
-                                        + "/api/auth/kakao/callback";
+                            if (port != 80 && port != 443) {
+                                portSuffix = ":" + port;
                             }
                         }
                     }
+                    
+                    actualRedirectUri = requestScheme + "://" + mainDomain + portSuffix
+                            + "/api/auth/kakao/callback";
+                    
                     log.info(
-                            "카카오 콜백 - 동적 redirect_uri 생성: {} (scheme={}, host={}, forwardedProto={}, forwardedHost={})",
-                            actualRedirectUri, request.getScheme(), request.getHeader("Host"),
+                            "카카오 콜백 - 동적 redirect_uri 생성: {} (원본 host={}, 변환된 mainDomain={}, scheme={}, forwardedProto={}, forwardedHost={})",
+                            actualRedirectUri, requestHost, mainDomain, request.getScheme(),
                             request.getHeader("X-Forwarded-Proto"),
                             request.getHeader("X-Forwarded-Host"));
                 }

@@ -887,11 +887,20 @@ public class OAuth2Controller extends BaseApiController {
                 if (response.isRequiresSignup()) {
                     log.info("네이버 OAuth2 간편 회원가입 필요: {}", response.getSocialUserInfo());
 
-                    // 세션에서 tenant_id 확인 (서브도메인에서 추출한 값)
-                    String tenantId = (String) session.getAttribute("oauth2_tenant_id");
+                    // tenant_id 확인 (TenantContextHolder 우선, 그 다음 세션)
+                    String tenantId = com.coresolution.core.context.TenantContextHolder.getTenantId();
+                    if (tenantId == null || tenantId.isEmpty()) {
+                        // TenantContextHolder에 없으면 세션에서 확인
+                        tenantId = (String) session.getAttribute("oauth2_tenant_id");
+                        if (tenantId == null || tenantId.isEmpty()) {
+                            tenantId = (String) session.getAttribute("tenantId");
+                        }
+                    }
                     if (tenantId != null && !tenantId.isEmpty()) {
-                        log.info("네이버 OAuth2 - 서브도메인에서 추출한 tenant_id 사용: tenantId={}", tenantId);
-                        session.removeAttribute("oauth2_tenant_id"); // 사용 후 제거
+                        log.info("네이버 OAuth2 - 회원가입 리다이렉트에 사용할 tenant_id: tenantId={}", tenantId);
+                        // 세션에서 제거하지 않음 (회원가입 완료 후에도 필요할 수 있음)
+                    } else {
+                        log.warn("⚠️ 네이버 OAuth2 - 회원가입 리다이렉트에 tenant_id가 없습니다.");
                     }
 
                     // 소셜 사용자 정보를 URL 파라미터로 전달 (한글 인코딩 처리)

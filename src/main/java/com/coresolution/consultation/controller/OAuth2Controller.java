@@ -290,6 +290,19 @@ public class OAuth2Controller extends BaseApiController {
             // 서브도메인에서 tenant_id 추출 (state 생성 전에 추출)
             String tenantId = extractTenantIdFromSubdomain(request);
             
+            // 서브도메인에서 추출하지 못한 경우 세션에서 확인 (메인 도메인에서 로그인할 때)
+            if (tenantId == null || tenantId.isEmpty()) {
+                if (session != null) {
+                    tenantId = (String) session.getAttribute("tenantId");
+                    if (tenantId == null || tenantId.isEmpty()) {
+                        tenantId = (String) session.getAttribute("oauth2_tenant_id");
+                    }
+                    if (tenantId != null && !tenantId.isEmpty()) {
+                        log.info("네이버 OAuth2 - 세션에서 tenant_id 추출: tenantId={}", tenantId);
+                    }
+                }
+            }
+
             // state 생성: tenantId가 있으면 base64로 인코딩하여 포함 (세션과 무관하게 조회 가능)
             String state = UUID.randomUUID().toString();
             if (tenantId != null && !tenantId.isEmpty()) {
@@ -300,7 +313,7 @@ public class OAuth2Controller extends BaseApiController {
                 log.info("네이버 OAuth2 - state에 tenantId 인코딩: tenantId={}, encodedState={}", tenantId,
                         state);
             }
-            
+
             session.setAttribute("oauth2_naver_state", state);
             // 네이버 인증 URL 생성 시 사용한 redirect_uri를 세션에 저장 (콜백에서 일치 여부 확인용)
 
@@ -309,8 +322,8 @@ public class OAuth2Controller extends BaseApiController {
                 session.setAttribute("oauth2_tenant_id", tenantId);
                 // state와 함께 tenantId도 세션에 저장 (콜백에서 state로 조회 가능하도록)
                 session.setAttribute("oauth2_naver_tenant_id_" + state, tenantId);
-                log.info("네이버 OAuth2 - 서브도메인에서 tenant_id 추출: tenantId={}, state={}", tenantId,
-                        state);
+                log.info("네이버 OAuth2 - tenant_id 추출 완료: tenantId={}, state={}, source={}", tenantId,
+                        state, extractTenantIdFromSubdomain(request) != null ? "서브도메인" : "세션");
             }
 
             // 모바일 클라이언트인 경우 Redis에 저장 (세션 의존성 제거)
@@ -442,7 +455,7 @@ public class OAuth2Controller extends BaseApiController {
         String savedState = (String) session.getAttribute("oauth2_naver_state");
         log.info("네이버 OAuth2 콜백 - state 검증: savedState={}, state={}, sessionId={}", savedState,
                 state, session.getId());
-        
+
         // state에서 tenantId 디코딩 시도 (state에 tenantId가 인코딩되어 있는 경우)
         String stateBasedTenantId = null;
         String actualState = state; // 실제 state (tenantId가 인코딩되지 않은 경우 원본 state 사용)
@@ -453,18 +466,18 @@ public class OAuth2Controller extends BaseApiController {
                     String encodedTenantId = parts[0];
                     actualState = parts[1];
                     // base64 디코딩
-                    stateBasedTenantId = new String(
-                            java.util.Base64.getUrlDecoder().decode(encodedTenantId),
-                            StandardCharsets.UTF_8);
+                    stateBasedTenantId =
+                            new String(java.util.Base64.getUrlDecoder().decode(encodedTenantId),
+                                    StandardCharsets.UTF_8);
                     log.info("네이버 OAuth2 콜백 - state에서 tenantId 디코딩 성공: tenantId={}, actualState={}",
                             stateBasedTenantId, actualState);
                 }
             } catch (Exception e) {
-                log.warn("⚠️ 네이버 OAuth2 콜백 - state에서 tenantId 디코딩 실패: state={}, error={}",
-                        state, e.getMessage());
+                log.warn("⚠️ 네이버 OAuth2 콜백 - state에서 tenantId 디코딩 실패: state={}, error={}", state,
+                        e.getMessage());
             }
         }
-        
+
         // state 검증 (actualState 사용)
         if (savedState != null && !savedState.equals(state) && !savedState.equals(actualState)) {
             session.removeAttribute("oauth2_naver_state");
@@ -473,7 +486,7 @@ public class OAuth2Controller extends BaseApiController {
                     + URLEncoder.encode("보안검증실패", StandardCharsets.UTF_8) + "&provider=NAVER")
                     .build();
         }
-        
+
         // 기존 방식: 세션에서 state로 tenantId 조회 (호환성 유지, stateBasedTenantId가 없는 경우에만)
         if (stateBasedTenantId == null && state != null) {
             String tenantIdKey = "oauth2_naver_tenant_id_" + state;

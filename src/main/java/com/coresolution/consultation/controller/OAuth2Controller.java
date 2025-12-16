@@ -514,7 +514,7 @@ public class OAuth2Controller extends BaseApiController {
                     String mainDomain = oauth2DomainUtil.convertToMainDomain(hostWithoutPort);
                     
                     // 포트가 포함된 경우와 아닌 경우 모두 처리
-                    String portSuffix = "";
+                    // portSuffix는 이미 try 블록 밖에서 선언됨
                     if (requestHost.contains(":")) {
                         String port = requestHost.split(":")[1];
                         if (!port.equals("80") && !port.equals("443")) {

@@ -244,8 +244,8 @@ public class OAuth2Controller extends BaseApiController {
                         }
                     }
 
-                    callbackUrl = requestScheme + "://" + mainDomain + portSuffix
-                            + kakaoCallbackPath;
+                    callbackUrl =
+                            requestScheme + "://" + mainDomain + portSuffix + kakaoCallbackPath;
                     log.info(
                             "카카오 OAuth2 - 동적 redirect URI 생성: {} (원본 host={}, scheme={}, forwardedProto={}, forwardedHost={})",
                             callbackUrl, requestHost, request.getScheme(),
@@ -357,8 +357,8 @@ public class OAuth2Controller extends BaseApiController {
                         }
                     }
 
-                    callbackUrl = requestScheme + "://" + mainDomain + portSuffix
-                            + naverCallbackPath;
+                    callbackUrl =
+                            requestScheme + "://" + mainDomain + portSuffix + naverCallbackPath;
                     log.info(
                             "네이버 OAuth2 - 동적 redirect URI 생성: {} (원본 host={}, scheme={}, forwardedProto={}, forwardedHost={})",
                             callbackUrl, requestHost, request.getScheme(),
@@ -377,7 +377,7 @@ public class OAuth2Controller extends BaseApiController {
 
             log.info("네이버 OAuth2 인증 URL 생성: client_id={}, redirect_uri={}, state={}", naverClientId,
                     callbackUrl, state);
-            
+
             // 네이버 인증 URL 생성 시 사용한 redirect_uri를 세션에 저장 (콜백에서 일치 여부 확인용)
             session.setAttribute("oauth2_naver_redirect_uri", callbackUrl);
             log.info("네이버 OAuth2 - 세션에 redirect_uri 저장: {}", callbackUrl);
@@ -513,7 +513,7 @@ public class OAuth2Controller extends BaseApiController {
                     String hostWithoutPort = requestHost.split(":")[0];
                     // 서브도메인을 메인 도메인으로 변환 (설정 파일 기반)
                     String mainDomain = oauth2DomainUtil.convertToMainDomain(hostWithoutPort);
-                    
+
                     // 포트가 포함된 경우와 아닌 경우 모두 처리
                     // portSuffix는 이미 try 블록 밖에서 선언됨
                     if (requestHost.contains(":")) {
@@ -536,9 +536,10 @@ public class OAuth2Controller extends BaseApiController {
                             }
                         }
                     }
-                    
-                    callbackRedirectUri = requestScheme + "://" + mainDomain + portSuffix + naverCallbackPath;
-                    
+
+                    callbackRedirectUri =
+                            requestScheme + "://" + mainDomain + portSuffix + naverCallbackPath;
+
                     log.info(
                             "네이버 콜백 - 동적 redirect_uri 생성: {} (scheme={}, originalHost={}, mainDomain={}, forwardedProto={}, forwardedHost={})",
                             callbackRedirectUri, requestScheme, requestHost, mainDomain,
@@ -567,22 +568,29 @@ public class OAuth2Controller extends BaseApiController {
                         && naverService instanceof com.coresolution.consultation.service.impl.NaverOAuth2ServiceImpl) {
                     com.coresolution.consultation.service.impl.NaverOAuth2ServiceImpl naverServiceImpl =
                             (com.coresolution.consultation.service.impl.NaverOAuth2ServiceImpl) naverService;
-                    
+
                     // 네이버 인증 URL 생성 시 사용한 redirect_uri와 비교
-                    String savedRedirectUri = (String) session.getAttribute("oauth2_naver_redirect_uri");
-                    log.info("네이버 콜백 - 세션에서 저장된 redirect_uri 확인: savedRedirectUri={}, callbackRedirectUri={}", savedRedirectUri, callbackRedirectUri);
-                    
+                    String savedRedirectUri =
+                            (String) session.getAttribute("oauth2_naver_redirect_uri");
+                    log.info(
+                            "네이버 콜백 - 세션에서 저장된 redirect_uri 확인: savedRedirectUri={}, callbackRedirectUri={}, sessionId={}",
+                            savedRedirectUri, callbackRedirectUri, session.getId());
+
                     if (savedRedirectUri != null && !savedRedirectUri.isEmpty()) {
                         if (!savedRedirectUri.equals(callbackRedirectUri)) {
-                            log.warn("⚠️ 네이버 redirect_uri 불일치: 인증 URL 생성 시={}, 콜백 처리 시={}", savedRedirectUri, callbackRedirectUri);
+                            log.warn("⚠️ 네이버 redirect_uri 불일치: 인증 URL 생성 시={}, 콜백 처리 시={}",
+                                    savedRedirectUri, callbackRedirectUri);
                             // 인증 URL 생성 시 사용한 redirect_uri를 우선 사용 (네이버 개발자 센터에 등록된 URL과 일치)
                             callbackRedirectUri = savedRedirectUri;
-                            log.info("네이버 콜백 - 인증 URL 생성 시 사용한 redirect_uri로 변경: {}", callbackRedirectUri);
+                            log.info("네이버 콜백 - 인증 URL 생성 시 사용한 redirect_uri로 변경: {}",
+                                    callbackRedirectUri);
                         } else {
                             log.info("네이버 콜백 - redirect_uri 일치 확인: {}", callbackRedirectUri);
                         }
                     } else {
-                        log.warn("⚠️ 네이버 콜백 - 세션에 저장된 redirect_uri가 없습니다. 동적으로 생성한 redirect_uri 사용: {}", callbackRedirectUri);
+                        log.warn(
+                                "⚠️ 네이버 콜백 - 세션에 저장된 redirect_uri가 없습니다. 동적으로 생성한 redirect_uri 사용: {}",
+                                callbackRedirectUri);
                         // 세션에 저장된 redirect_uri가 없을 경우, 네이버 개발자 센터에 등록된 URL 중 하나를 사용
                         // 네이버 개발자 센터에 등록된 URL 목록:
                         // 1. https://core-solution.co.kr/api/auth/naver/callback
@@ -601,40 +609,54 @@ public class OAuth2Controller extends BaseApiController {
                             configuredDomain = "dev.core-solution.co.kr";
                         }
                         // requestScheme과 portSuffix는 이미 위에서 설정됨
-                        String configuredRedirectUri = requestScheme + "://" + configuredDomain + portSuffix + naverCallbackPath;
-                        
+                        String configuredRedirectUri = requestScheme + "://" + configuredDomain
+                                + portSuffix + naverCallbackPath;
+
                         // 네이버 개발자 센터에 등록된 URL 목록과 비교
-                        List<String> registeredUrls = Arrays.asList(
-                            "https://core-solution.co.kr/api/auth/naver/callback",
-                            "http://localhost:8080/api/auth/naver/callback",
-                            "https://dev.m-garden.co.kr/api/auth/naver/callback",
-                            "https://m-garden.co.kr/api/auth/naver/callback",
-                            "https://dev.core-solution.co.kr/api/auth/naver/callback"
-                        );
-                        
+                        List<String> registeredUrls =
+                                Arrays.asList("https://core-solution.co.kr/api/auth/naver/callback",
+                                        "http://localhost:8080/api/auth/naver/callback",
+                                        "https://dev.m-garden.co.kr/api/auth/naver/callback",
+                                        "https://m-garden.co.kr/api/auth/naver/callback",
+                                        "https://dev.core-solution.co.kr/api/auth/naver/callback");
+
                         // 동적으로 생성한 redirect_uri가 등록된 URL 목록에 있는지 확인
                         boolean isRegistered = registeredUrls.contains(callbackRedirectUri);
                         if (!isRegistered) {
-                            log.warn("⚠️ 네이버 콜백 - 동적으로 생성한 redirect_uri가 등록된 URL 목록에 없음: {}", callbackRedirectUri);
-                            log.info("네이버 콜백 - 설정 파일 기반 redirect_uri 사용: {} (등록된 URL 목록 확인)", configuredRedirectUri);
+                            log.warn("⚠️ 네이버 콜백 - 동적으로 생성한 redirect_uri가 등록된 URL 목록에 없음: {}",
+                                    callbackRedirectUri);
+                            log.info("네이버 콜백 - 설정 파일 기반 redirect_uri 사용: {} (등록된 URL 목록 확인)",
+                                    configuredRedirectUri);
                             // 설정 파일 기반 redirect_uri가 등록된 URL 목록에 있는지 확인
-                            boolean isConfiguredRegistered = registeredUrls.contains(configuredRedirectUri);
+                            boolean isConfiguredRegistered =
+                                    registeredUrls.contains(configuredRedirectUri);
                             if (isConfiguredRegistered) {
                                 callbackRedirectUri = configuredRedirectUri;
                             } else {
-                                // 등록된 URL 중 하나를 사용 (우선순위: dev.core-solution.co.kr > dev.m-garden.co.kr)
-                                String fallbackUrl = "https://dev.core-solution.co.kr/api/auth/naver/callback";
-                                log.warn("⚠️ 네이버 콜백 - 설정 파일 기반 redirect_uri도 등록된 URL 목록에 없음. 기본값 사용: {}", fallbackUrl);
+                                // 등록된 URL 중 하나를 사용 (우선순위: dev.core-solution.co.kr >
+                                // dev.m-garden.co.kr)
+                                String fallbackUrl =
+                                        "https://dev.core-solution.co.kr/api/auth/naver/callback";
+                                log.warn(
+                                        "⚠️ 네이버 콜백 - 설정 파일 기반 redirect_uri도 등록된 URL 목록에 없음. 기본값 사용: {}",
+                                        fallbackUrl);
                                 callbackRedirectUri = fallbackUrl;
                             }
                         } else {
-                            log.info("네이버 콜백 - 동적으로 생성한 redirect_uri가 등록된 URL 목록에 있음: {}", callbackRedirectUri);
+                            log.info("네이버 콜백 - 동적으로 생성한 redirect_uri가 등록된 URL 목록에 있음: {}",
+                                    callbackRedirectUri);
                         }
                     }
-                    
+
                     log.info("네이버 콜백 - 토큰 요청 시 사용할 redirect_uri: {}", callbackRedirectUri);
-                    log.info("네이버 콜백 - 토큰 요청 파라미터: code={}, redirect_uri={}", 
-                            code != null ? code.substring(0, Math.min(10, code.length())) + "..." : "null", callbackRedirectUri);
+                    log.info("네이버 콜백 - 토큰 요청 파라미터: code={}, redirect_uri={}",
+                            code != null ? code.substring(0, Math.min(10, code.length())) + "..."
+                                    : "null",
+                            callbackRedirectUri);
+                    log.info("네이버 콜백 - 최종 redirect_uri 결정: {} (세션 저장 여부: {}, 등록된 URL 목록 포함 여부: {})",
+                            callbackRedirectUri,
+                            savedRedirectUri != null && !savedRedirectUri.isEmpty(),
+                            registeredUrls != null && registeredUrls.contains(callbackRedirectUri));
                     String accessToken = naverServiceImpl.getAccessToken(code, callbackRedirectUri);
                     SocialUserInfo socialUserInfo = naverServiceImpl.getUserInfo(accessToken);
                     socialUserInfo.setProvider("NAVER");
@@ -683,7 +705,8 @@ public class OAuth2Controller extends BaseApiController {
                 try {
                     TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
                 } catch (Exception txException) {
-                    log.debug("트랜잭션 상태 확인 실패 (이미 롤백되었거나 트랜잭션이 없는 경우): {}", txException.getMessage());
+                    log.debug("트랜잭션 상태 확인 실패 (이미 롤백되었거나 트랜잭션이 없는 경우): {}",
+                            txException.getMessage());
                 }
                 try {
                     response = oauth2FactoryService.authenticateWithProvider("NAVER", code);
@@ -693,12 +716,19 @@ public class OAuth2Controller extends BaseApiController {
                     try {
                         TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
                     } catch (Exception txException) {
-                        log.debug("트랜잭션 상태 확인 실패 (이미 롤백되었거나 트랜잭션이 없는 경우): {}", txException.getMessage());
+                        log.debug("트랜잭션 상태 확인 실패 (이미 롤백되었거나 트랜잭션이 없는 경우): {}",
+                                txException.getMessage());
                     }
                     String frontendUrl = getFrontendBaseUrl(request);
-                    String errorMessage = authException.getMessage() != null ? authException.getMessage() : "인증 처리 중 오류가 발생했습니다";
-                    return ResponseEntity.status(302).header("Location", frontendUrl + "/login?error="
-                            + URLEncoder.encode(errorMessage, StandardCharsets.UTF_8) + "&provider=NAVER")
+                    String errorMessage =
+                            authException.getMessage() != null ? authException.getMessage()
+                                    : "인증 처리 중 오류가 발생했습니다";
+                    return ResponseEntity.status(302)
+                            .header("Location",
+                                    frontendUrl + "/login?error="
+                                            + URLEncoder.encode(errorMessage,
+                                                    StandardCharsets.UTF_8)
+                                            + "&provider=NAVER")
                             .build();
                 }
             }
@@ -1087,7 +1117,7 @@ public class OAuth2Controller extends BaseApiController {
                     String hostWithoutPort = requestHost.split(":")[0];
                     // 서브도메인을 메인 도메인으로 변환 (설정 파일 기반)
                     String mainDomain = oauth2DomainUtil.convertToMainDomain(hostWithoutPort);
-                    
+
                     // 포트가 포함된 경우와 아닌 경우 모두 처리
                     String portSuffix = "";
                     if (requestHost.contains(":")) {
@@ -1110,10 +1140,10 @@ public class OAuth2Controller extends BaseApiController {
                             }
                         }
                     }
-                    
-                    actualRedirectUri = requestScheme + "://" + mainDomain + portSuffix
-                            + kakaoCallbackPath;
-                    
+
+                    actualRedirectUri =
+                            requestScheme + "://" + mainDomain + portSuffix + kakaoCallbackPath;
+
                     log.info(
                             "카카오 콜백 - 동적 redirect_uri 생성: {} (원본 host={}, 변환된 mainDomain={}, scheme={}, forwardedProto={}, forwardedHost={})",
                             actualRedirectUri, requestHost, mainDomain, request.getScheme(),
@@ -1193,7 +1223,8 @@ public class OAuth2Controller extends BaseApiController {
                     try {
                         permissions = dynamicPermissionService.getUserPermissionsAsStringList(user);
                     } catch (Exception e) {
-                        log.warn("⚠️ 권한 조회 실패 (빈 리스트 반환): userId={}, 오류={}", user.getId(), e.getMessage());
+                        log.warn("⚠️ 권한 조회 실패 (빈 리스트 반환): userId={}, 오류={}", user.getId(),
+                                e.getMessage());
                         permissions = new java.util.ArrayList<>();
                     }
                     String jwtToken = jwtService.generateToken(user, permissions);
@@ -1228,12 +1259,18 @@ public class OAuth2Controller extends BaseApiController {
                     try {
                         TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
                     } catch (Exception txException) {
-                        log.debug("트랜잭션 상태 확인 실패 (이미 롤백되었거나 트랜잭션이 없는 경우): {}", txException.getMessage());
+                        log.debug("트랜잭션 상태 확인 실패 (이미 롤백되었거나 트랜잭션이 없는 경우): {}",
+                                txException.getMessage());
                     }
                     String frontendUrl = getFrontendBaseUrl(request);
-                    String errorMessage = e.getMessage() != null ? e.getMessage() : "인증 처리 중 오류가 발생했습니다";
-                    return ResponseEntity.status(302).header("Location", frontendUrl + "/login?error="
-                            + URLEncoder.encode(errorMessage, StandardCharsets.UTF_8) + "&provider=KAKAO")
+                    String errorMessage =
+                            e.getMessage() != null ? e.getMessage() : "인증 처리 중 오류가 발생했습니다";
+                    return ResponseEntity.status(302)
+                            .header("Location",
+                                    frontendUrl + "/login?error="
+                                            + URLEncoder.encode(errorMessage,
+                                                    StandardCharsets.UTF_8)
+                                            + "&provider=KAKAO")
                             .build();
                 }
             }

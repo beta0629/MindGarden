@@ -582,10 +582,15 @@ public class OAuth2Controller extends BaseApiController {
                         }
                     } else {
                         log.warn("⚠️ 네이버 콜백 - 세션에 저장된 redirect_uri가 없습니다. 동적으로 생성한 redirect_uri 사용: {}", callbackRedirectUri);
-                        // 세션에 저장된 redirect_uri가 없을 경우, 네이버 개발자 센터에 등록된 URL을 사용
-                        // 네이버 개발자 센터에 등록된 URL은 설정 파일에서 관리 (naverCallbackDomain + naverCallbackPath)
-                        // 동적으로 생성한 redirect_uri가 네이버 개발자 센터에 등록된 URL과 일치하는지 확인 필요
-                        // 세션이 유지되지 않은 경우를 대비하여 설정 파일의 기본 도메인 사용
+                        // 세션에 저장된 redirect_uri가 없을 경우, 네이버 개발자 센터에 등록된 URL 중 하나를 사용
+                        // 네이버 개발자 센터에 등록된 URL 목록:
+                        // 1. https://core-solution.co.kr/api/auth/naver/callback
+                        // 2. http://localhost:8080/api/auth/naver/callback
+                        // 3. https://dev.m-garden.co.kr/api/auth/naver/callback
+                        // 4. https://m-garden.co.kr/api/auth/naver/callback
+                        // 5. https://dev.core-solution.co.kr/api/auth/naver/callback
+                        // 동적으로 생성한 redirect_uri가 네이버 개발자 센터에 등록된 URL과 일치하는지 확인
+                        // 일치하지 않으면 설정 파일의 기본 도메인 사용
                         String configuredDomain = naverCallbackDomain;
                         String envDomain = System.getenv("NAVER_CALLBACK_DOMAIN");
                         if (envDomain != null && !envDomain.isEmpty()) {
@@ -596,8 +601,34 @@ public class OAuth2Controller extends BaseApiController {
                         }
                         // requestScheme과 portSuffix는 이미 위에서 설정됨
                         String configuredRedirectUri = requestScheme + "://" + configuredDomain + portSuffix + naverCallbackPath;
-                        log.info("네이버 콜백 - 세션에 저장된 redirect_uri가 없어 설정 파일 기반 redirect_uri 사용: {} (동적 생성: {})", configuredRedirectUri, callbackRedirectUri);
-                        callbackRedirectUri = configuredRedirectUri;
+                        
+                        // 네이버 개발자 센터에 등록된 URL 목록과 비교
+                        List<String> registeredUrls = Arrays.asList(
+                            "https://core-solution.co.kr/api/auth/naver/callback",
+                            "http://localhost:8080/api/auth/naver/callback",
+                            "https://dev.m-garden.co.kr/api/auth/naver/callback",
+                            "https://m-garden.co.kr/api/auth/naver/callback",
+                            "https://dev.core-solution.co.kr/api/auth/naver/callback"
+                        );
+                        
+                        // 동적으로 생성한 redirect_uri가 등록된 URL 목록에 있는지 확인
+                        boolean isRegistered = registeredUrls.contains(callbackRedirectUri);
+                        if (!isRegistered) {
+                            log.warn("⚠️ 네이버 콜백 - 동적으로 생성한 redirect_uri가 등록된 URL 목록에 없음: {}", callbackRedirectUri);
+                            log.info("네이버 콜백 - 설정 파일 기반 redirect_uri 사용: {} (등록된 URL 목록 확인)", configuredRedirectUri);
+                            // 설정 파일 기반 redirect_uri가 등록된 URL 목록에 있는지 확인
+                            boolean isConfiguredRegistered = registeredUrls.contains(configuredRedirectUri);
+                            if (isConfiguredRegistered) {
+                                callbackRedirectUri = configuredRedirectUri;
+                            } else {
+                                // 등록된 URL 중 하나를 사용 (우선순위: dev.core-solution.co.kr > dev.m-garden.co.kr)
+                                String fallbackUrl = "https://dev.core-solution.co.kr/api/auth/naver/callback";
+                                log.warn("⚠️ 네이버 콜백 - 설정 파일 기반 redirect_uri도 등록된 URL 목록에 없음. 기본값 사용: {}", fallbackUrl);
+                                callbackRedirectUri = fallbackUrl;
+                            }
+                        } else {
+                            log.info("네이버 콜백 - 동적으로 생성한 redirect_uri가 등록된 URL 목록에 있음: {}", callbackRedirectUri);
+                        }
                     }
                     
                     log.info("네이버 콜백 - 토큰 요청 시 사용할 redirect_uri: {}", callbackRedirectUri);

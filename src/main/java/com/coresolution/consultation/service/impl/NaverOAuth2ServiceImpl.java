@@ -183,16 +183,19 @@ public class NaverOAuth2ServiceImpl extends AbstractOAuth2Service {
             
             Map<String, Object> tokenInfo = response.getBody();
             
+            // 응답 본문 전체 로깅 (디버깅용)
+            log.info("네이버 토큰 응답 본문: {}", tokenInfo);
+            
             if (tokenInfo == null) {
-                log.error("네이버 토큰 응답이 null 입니다. status={}", response.getStatusCode());
+                log.error("네이버 토큰 응답이 null 입니다. status={}, headers={}", response.getStatusCode(), response.getHeaders());
                 throw new RuntimeException("네이버 액세스 토큰을 가져올 수 없습니다.");
             }
             
             if (tokenInfo.containsKey("error")) {
                 String error = (String) tokenInfo.getOrDefault("error", "");
                 String errorDescription = (String) tokenInfo.getOrDefault("error_description", "");
-                log.error("네이버 OAuth2 에러 응답: error={}, description={}, raw={}", 
-                        error, errorDescription, tokenInfo);
+                log.error("네이버 OAuth2 에러 응답: error={}, description={}, redirect_uri={}, raw={}", 
+                        error, errorDescription, redirectUriToUse, tokenInfo);
                 throw new RuntimeException("네이버 액세스 토큰을 가져올 수 없습니다. (" + error + ": " + errorDescription + ")");
             }
             

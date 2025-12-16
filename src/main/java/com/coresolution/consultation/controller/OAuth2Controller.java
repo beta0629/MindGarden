@@ -276,6 +276,7 @@ public class OAuth2Controller extends BaseApiController {
         try {
             String state = UUID.randomUUID().toString();
             session.setAttribute("oauth2_naver_state", state);
+            // 네이버 인증 URL 생성 시 사용한 redirect_uri를 세션에 저장 (콜백에서 일치 여부 확인용)
 
             // 서브도메인에서 tenant_id 추출하여 세션에 저장 (SNS 로그인 시 사용)
             String tenantId = extractTenantIdFromSubdomain(request);
@@ -550,6 +551,18 @@ public class OAuth2Controller extends BaseApiController {
                         && naverService instanceof com.coresolution.consultation.service.impl.NaverOAuth2ServiceImpl) {
                     com.coresolution.consultation.service.impl.NaverOAuth2ServiceImpl naverServiceImpl =
                             (com.coresolution.consultation.service.impl.NaverOAuth2ServiceImpl) naverService;
+                    
+                    // 네이버 인증 URL 생성 시 사용한 redirect_uri와 비교
+                    String savedRedirectUri = (String) session.getAttribute("oauth2_naver_redirect_uri");
+                    if (savedRedirectUri != null && !savedRedirectUri.equals(callbackRedirectUri)) {
+                        log.warn("⚠️ 네이버 redirect_uri 불일치: 인증 URL 생성 시={}, 콜백 처리 시={}", savedRedirectUri, callbackRedirectUri);
+                        // 인증 URL 생성 시 사용한 redirect_uri를 우선 사용
+                        callbackRedirectUri = savedRedirectUri;
+                        log.info("네이버 콜백 - 인증 URL 생성 시 사용한 redirect_uri로 변경: {}", callbackRedirectUri);
+                    } else {
+                        log.info("네이버 콜백 - redirect_uri 일치 확인: {}", callbackRedirectUri);
+                    }
+                    
                     log.info("네이버 콜백 - 토큰 요청 시 사용할 redirect_uri: {}", callbackRedirectUri);
                     String accessToken = naverServiceImpl.getAccessToken(code, callbackRedirectUri);
                     SocialUserInfo socialUserInfo = naverServiceImpl.getUserInfo(accessToken);

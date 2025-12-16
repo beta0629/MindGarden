@@ -292,10 +292,36 @@ public class OAuth2Controller extends BaseApiController {
                 log.info("네이버 OAuth2 - 모바일 클라이언트 감지 (Redis 저장): state={}", state);
             }
 
-            // 네이버 콜백 URL: 네이버 개발자 센터에 등록된 URL 사용 (고정)
-            // 네이버 개발자 센터에 등록된 URL: https://dev.core-solution.co.kr/api/auth/naver/callback
-            String callbackUrl = "https://dev.core-solution.co.kr/api/auth/naver/callback";
-            log.info("네이버 OAuth2 - 고정 redirect URI 사용: {}", callbackUrl);
+            // 콜백 URL 동적 생성 (서브도메인은 항상 dev.core-solution.co.kr로 변환 - 네이버 개발자 센터 등록 문제 해결)
+            String callbackUrl = null;
+            try {
+                // 프록시 헤더 확인 (X-Forwarded-Proto, X-Forwarded-Host)
+                String requestScheme = request.getHeader("X-Forwarded-Proto");
+                if (requestScheme == null || requestScheme.isEmpty()) {
+                    requestScheme = request.getScheme();
+                }
+
+                // 네이버 개발자 센터에 등록된 도메인 사용 (dev.core-solution.co.kr)
+                // 운영 환경에서는 환경 변수나 설정 파일에서 가져올 수 있도록 확장 가능
+                String naverCallbackDomain = System.getenv("NAVER_CALLBACK_DOMAIN");
+                if (naverCallbackDomain == null || naverCallbackDomain.isEmpty()) {
+                    // 개발 환경 기본값: dev.core-solution.co.kr
+                    // 운영 환경에서는 환경 변수로 설정 필요
+                    naverCallbackDomain = "dev.core-solution.co.kr";
+                }
+
+                callbackUrl = requestScheme + "://" + naverCallbackDomain + "/api/auth/naver/callback";
+                log.info("네이버 OAuth2 - redirect URI 생성: {} (도메인={}, scheme={})", 
+                        callbackUrl, naverCallbackDomain, requestScheme);
+            } catch (Exception e) {
+                log.error("네이버 OAuth2 - redirect URI 동적 생성 실패", e);
+            }
+
+            if (callbackUrl == null || callbackUrl.isEmpty()) {
+                // 폴백: 설정값 사용
+                callbackUrl = naverRedirectUri;
+                log.warn("네이버 OAuth2 - 동적 생성 실패, 설정값 사용: {}", callbackUrl);
+            }
 
             log.info("네이버 OAuth2 인증 URL 생성: client_id={}, redirect_uri={}, state={}", naverClientId,
                     callbackUrl, state);

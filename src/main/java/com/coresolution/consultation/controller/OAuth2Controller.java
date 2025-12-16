@@ -367,6 +367,10 @@ public class OAuth2Controller extends BaseApiController {
 
             log.info("네이버 OAuth2 인증 URL 생성: client_id={}, redirect_uri={}, state={}", naverClientId,
                     callbackUrl, state);
+            
+            // 네이버 인증 URL 생성 시 사용한 redirect_uri를 세션에 저장 (콜백에서 일치 여부 확인용)
+            session.setAttribute("oauth2_naver_redirect_uri", callbackUrl);
+            log.info("네이버 OAuth2 - 세션에 redirect_uri 저장: {}", callbackUrl);
 
             String authUrl = "https://nid.naver.com/oauth2.0/authorize?" + "response_type=code"
                     + "&client_id=" + naverClientId + "&redirect_uri="

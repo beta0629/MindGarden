@@ -130,7 +130,7 @@ public abstract class AbstractOAuth2Service implements OAuth2Service {
                 permissions = dynamicPermissionService.getUserPermissionsAsStringList(user);
             } catch (Exception e) {
                 log.warn("⚠️ 권한 조회 실패 (빈 리스트 반환): userId={}, 오류={}", user.getId(), e.getMessage());
-                permissions = new ArrayList<>();
+                permissions = new java.util.ArrayList<>();
             }
             String jwtToken = jwtService.generateToken(user, permissions);
             // 표준화 2025-12-08: username = userId이므로 refreshToken도 userId 사용, User 객체로 생성하여 tenantId, email 포함

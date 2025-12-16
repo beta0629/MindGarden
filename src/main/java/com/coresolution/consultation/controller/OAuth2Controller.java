@@ -723,7 +723,8 @@ public class OAuth2Controller extends BaseApiController {
                         com.coresolution.consultation.service.impl.NaverOAuth2ServiceImpl naverServiceImpl =
                                 (com.coresolution.consultation.service.impl.NaverOAuth2ServiceImpl) naverService;
                         // callbackRedirectUri를 사용하여 토큰 획득 및 사용자 정보 조회
-                        String accessToken = naverServiceImpl.getAccessToken(code, callbackRedirectUri);
+                        String accessToken =
+                                naverServiceImpl.getAccessToken(code, callbackRedirectUri);
                         SocialUserInfo socialUserInfo = naverServiceImpl.getUserInfo(accessToken);
                         socialUserInfo.setProvider("NAVER");
                         socialUserInfo.setAccessToken(accessToken);
@@ -731,23 +732,26 @@ public class OAuth2Controller extends BaseApiController {
                         // 기존 사용자 확인 (예외 발생해도 계속 진행)
                         Long existingUserId = null;
                         try {
-                            existingUserId = naverServiceImpl
-                                    .findExistingUserByProviderId(socialUserInfo.getProviderUserId());
+                            existingUserId = naverServiceImpl.findExistingUserByProviderId(
+                                    socialUserInfo.getProviderUserId());
                             if (existingUserId == null && socialUserInfo.getEmail() != null) {
                                 existingUserId = naverServiceImpl
                                         .findExistingUserByProviderId(socialUserInfo.getEmail());
                             }
                         } catch (Exception findUserException) {
-                            log.warn("기존 사용자 확인 중 오류 발생 (계속 진행): {}", findUserException.getMessage());
+                            log.warn("기존 사용자 확인 중 오류 발생 (계속 진행): {}",
+                                    findUserException.getMessage());
                         }
                         // 사용자 처리 로직
                         if (existingUserId != null) {
-                            User existingUser = userRepository.findById(existingUserId).orElse(null);
+                            User existingUser =
+                                    userRepository.findById(existingUserId).orElse(null);
                             if (existingUser != null) {
                                 response = SocialLoginResponse.builder().success(true)
                                         .requiresSignup(false)
                                         .userInfo(SocialLoginResponse.UserInfo.builder()
-                                                .id(existingUser.getId()).email(existingUser.getEmail())
+                                                .id(existingUser.getId())
+                                                .email(existingUser.getEmail())
                                                 .name(existingUser.getName())
                                                 .nickname(existingUser.getNickname())
                                                 .role(existingUser.getRole() != null
@@ -762,8 +766,8 @@ public class OAuth2Controller extends BaseApiController {
                                         .message("사용자를 찾을 수 없습니다.").build();
                             }
                         } else {
-                            response = SocialLoginResponse.builder().success(true).requiresSignup(true)
-                                    .socialUserInfo(socialUserInfo).build();
+                            response = SocialLoginResponse.builder().success(true)
+                                    .requiresSignup(true).socialUserInfo(socialUserInfo).build();
                         }
                     } else {
                         // 기본 방식 사용 (callbackRedirectUri가 없는 경우)
@@ -799,8 +803,61 @@ public class OAuth2Controller extends BaseApiController {
                     response.isSuccess(), response.isRequiresSignup(), response.getMessage());
 
             if (response.isSuccess()) {
+                // 회원가입이 필요한 경우 처리
+                if (response.isRequiresSignup()) {
+                    log.info("네이버 OAuth2 - 회원가입 필요: socialUserInfo={}", response.getSocialUserInfo());
+                    String frontendUrl = getFrontendBaseUrl(request);
+                    SocialUserInfo socialUserInfo = response.getSocialUserInfo();
+                    if (socialUserInfo != null) {
+                        String redirectUrl = frontendUrl + "/signup?provider=NAVER"
+                                + "&email=" + URLEncoder.encode(
+                                        socialUserInfo.getEmail() != null ? socialUserInfo.getEmail() : "",
+                                        StandardCharsets.UTF_8)
+                                + "&name=" + URLEncoder.encode(
+                                        socialUserInfo.getName() != null ? socialUserInfo.getName() : "",
+                                        StandardCharsets.UTF_8)
+                                + "&nickname=" + URLEncoder.encode(
+                                        socialUserInfo.getNickname() != null ? socialUserInfo.getNickname() : "",
+                                        StandardCharsets.UTF_8)
+                                + "&profileImage=" + URLEncoder.encode(
+                                        socialUserInfo.getProfileImageUrl() != null
+                                                ? socialUserInfo.getProfileImageUrl()
+                                                : "",
+                                        StandardCharsets.UTF_8)
+                                + "&socialId=" + URLEncoder.encode(
+                                        socialUserInfo.getProviderUserId() != null
+                                                ? socialUserInfo.getProviderUserId()
+                                                : "",
+                                        StandardCharsets.UTF_8);
+                        log.info("네이버 OAuth2 - 회원가입 페이지로 리다이렉트: {}", redirectUrl);
+                        return ResponseEntity.status(302).header("Location", redirectUrl).build();
+                    } else {
+                        log.error("네이버 OAuth2 - 회원가입 필요하지만 socialUserInfo가 null");
+                        return ResponseEntity.status(302)
+                                .header("Location",
+                                        frontendUrl + "/login?error="
+                                                + URLEncoder.encode("소셜 사용자 정보를 가져올 수 없습니다.",
+                                                        StandardCharsets.UTF_8)
+                                                + "&provider=NAVER")
+                                .build();
+                    }
+                }
+
                 // SocialLoginResponse에서 이미 완성된 UserInfo 사용 (공통 SNS 처리 로직 활용)
                 SocialLoginResponse.UserInfo userInfo = response.getUserInfo();
+                
+                // userInfo가 null인 경우 처리
+                if (userInfo == null) {
+                    log.error("네이버 OAuth2 - userInfo가 null입니다. requiresSignup={}", response.isRequiresSignup());
+                    String frontendUrl = getFrontendBaseUrl(request);
+                    return ResponseEntity.status(302)
+                            .header("Location",
+                                    frontendUrl + "/login?error="
+                                            + URLEncoder.encode("사용자 정보를 가져올 수 없습니다.",
+                                                    StandardCharsets.UTF_8)
+                                            + "&provider=NAVER")
+                            .build();
+                }
 
                 // 계정 연동 모드인지 확인
                 if ("link".equals(mode)) {

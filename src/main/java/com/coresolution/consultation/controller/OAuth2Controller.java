@@ -81,8 +81,7 @@ public class OAuth2Controller extends BaseApiController {
     }
 
     /**
-     * 프론트엔드 URL 동적 감지
-     * 우선순위: 1. 요청의 Host 헤더 (서브도메인 지원) 2. Referer 헤더 3. 프로퍼티/환경변수
+     * 프론트엔드 URL 동적 감지 우선순위: 1. 요청의 Host 헤더 (서브도메인 지원) 2. Referer 헤더 3. 프로퍼티/환경변수
      */
     private String getFrontendBaseUrl(HttpServletRequest request) {
         // 1. 요청의 Host 헤더를 우선 사용 (서브도메인 지원)
@@ -106,7 +105,7 @@ public class OAuth2Controller extends BaseApiController {
 
             // 포트 제거 (프론트엔드 URL에는 포트가 필요 없음)
             String hostWithoutPort = requestHost.split(":")[0];
-            
+
             if (hostWithoutPort != null && !hostWithoutPort.isEmpty()) {
                 String dynamicUrl = requestScheme + "://" + hostWithoutPort;
                 log.info("프론트엔드 URL (요청 Host 기반): {}", dynamicUrl);
@@ -181,32 +180,27 @@ public class OAuth2Controller extends BaseApiController {
             String callbackUrl = null;
             try {
                 // 프록시 헤더 확인 (X-Forwarded-Proto, X-Forwarded-Host)
+                // Nginx를 통해 들어온 요청은 X-Forwarded-Host를 우선 확인
                 String requestScheme = request.getHeader("X-Forwarded-Proto");
                 if (requestScheme == null || requestScheme.isEmpty()) {
                     requestScheme = request.getScheme();
                 }
 
-                // Host 헤더 우선 확인 (실제 백엔드 서버 주소)
-                String requestHost = request.getHeader("Host");
+                // X-Forwarded-Host 우선 확인 (Nginx를 통해 들어온 요청)
+                String requestHost = request.getHeader("X-Forwarded-Host");
+                if (requestHost == null || requestHost.isEmpty()) {
+                    // X-Forwarded-Host가 없으면 Host 헤더 확인
+                    requestHost = request.getHeader("Host");
+                }
+                
                 // 로컬 환경에서 프론트엔드 프록시를 통해 온 경우 처리
                 if (requestHost != null && requestHost.contains("localhost")
                         && !requestHost.contains(":8080")) {
                     // 프론트엔드(localhost:3000)에서 프록시로 온 경우, 실제 백엔드 주소 사용
                     requestHost = request.getServerName() + ":" + request.getServerPort();
                 } else if (requestHost == null || requestHost.isEmpty()) {
-                    // Host 헤더가 없으면 X-Forwarded-Host 확인
-                    String forwardedHost = request.getHeader("X-Forwarded-Host");
-                    if (forwardedHost != null && !forwardedHost.isEmpty()) {
-                        // X-Forwarded-Host가 백엔드 포트를 포함하는 경우만 사용
-                        if (forwardedHost.contains(":8080")) {
-                            requestHost = forwardedHost;
-                        } else {
-                            // 아니면 실제 서버 주소 사용
-                            requestHost = request.getServerName() + ":" + request.getServerPort();
-                        }
-                    } else {
-                        requestHost = request.getServerName() + ":" + request.getServerPort();
-                    }
+                    // Host 헤더도 없으면 서버 정보 사용
+                    requestHost = request.getServerName() + ":" + request.getServerPort();
                 }
 
                 // 서브도메인을 메인 도메인으로 변환 (카카오 개발자 센터 등록 문제 해결)
@@ -325,32 +319,27 @@ public class OAuth2Controller extends BaseApiController {
             String callbackUrl = null;
             try {
                 // 프록시 헤더 확인 (X-Forwarded-Proto, X-Forwarded-Host)
+                // Nginx를 통해 들어온 요청은 X-Forwarded-Host를 우선 확인
                 String requestScheme = request.getHeader("X-Forwarded-Proto");
                 if (requestScheme == null || requestScheme.isEmpty()) {
                     requestScheme = request.getScheme();
                 }
 
-                // Host 헤더 우선 확인 (실제 백엔드 서버 주소)
-                String requestHost = request.getHeader("Host");
+                // X-Forwarded-Host 우선 확인 (Nginx를 통해 들어온 요청)
+                String requestHost = request.getHeader("X-Forwarded-Host");
+                if (requestHost == null || requestHost.isEmpty()) {
+                    // X-Forwarded-Host가 없으면 Host 헤더 확인
+                    requestHost = request.getHeader("Host");
+                }
+                
                 // 로컬 환경에서 프론트엔드 프록시를 통해 온 경우 처리
                 if (requestHost != null && requestHost.contains("localhost")
                         && !requestHost.contains(":8080")) {
                     // 프론트엔드(localhost:3000)에서 프록시로 온 경우, 실제 백엔드 주소 사용
                     requestHost = request.getServerName() + ":" + request.getServerPort();
                 } else if (requestHost == null || requestHost.isEmpty()) {
-                    // Host 헤더가 없으면 X-Forwarded-Host 확인
-                    String forwardedHost = request.getHeader("X-Forwarded-Host");
-                    if (forwardedHost != null && !forwardedHost.isEmpty()) {
-                        // X-Forwarded-Host가 백엔드 포트를 포함하는 경우만 사용
-                        if (forwardedHost.contains(":8080")) {
-                            requestHost = forwardedHost;
-                        } else {
-                            // 아니면 실제 서버 주소 사용
-                            requestHost = request.getServerName() + ":" + request.getServerPort();
-                        }
-                    } else {
-                        requestHost = request.getServerName() + ":" + request.getServerPort();
-                    }
+                    // Host 헤더도 없으면 서버 정보 사용
+                    requestHost = request.getServerName() + ":" + request.getServerPort();
                 }
 
                 // 서브도메인을 메인 도메인으로 변환 (네이버 개발자 센터 등록 문제 해결)

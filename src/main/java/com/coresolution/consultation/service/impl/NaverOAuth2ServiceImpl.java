@@ -172,12 +172,23 @@ public class NaverOAuth2ServiceImpl extends AbstractOAuth2Service {
             
             HttpEntity<MultiValueMap<String, String>> entity = new HttpEntity<>(params, headers);
             
-            ResponseEntity<Map> response = restTemplate.exchange(
-                "https://nid.naver.com/oauth2.0/token",
-                HttpMethod.POST,
-                entity,
-                Map.class
-            );
+            ResponseEntity<Map> response;
+            try {
+                response = restTemplate.exchange(
+                    "https://nid.naver.com/oauth2.0/token",
+                    HttpMethod.POST,
+                    entity,
+                    Map.class
+                );
+            } catch (org.springframework.web.client.HttpClientErrorException e) {
+                log.error("⚠️ 네이버 토큰 요청 HTTP 에러: status={}, responseBody={}, redirect_uri={}", 
+                        e.getStatusCode(), e.getResponseBodyAsString(), redirectUriToUse);
+                throw new RuntimeException("네이버 액세스 토큰을 가져올 수 없습니다. HTTP 에러: " + e.getStatusCode() + " - " + e.getResponseBodyAsString(), e);
+            } catch (org.springframework.web.client.RestClientException e) {
+                log.error("⚠️ 네이버 토큰 요청 네트워크 에러: message={}, redirect_uri={}", 
+                        e.getMessage(), redirectUriToUse, e);
+                throw new RuntimeException("네이버 액세스 토큰을 가져올 수 없습니다. 네트워크 에러: " + e.getMessage(), e);
+            }
             
             log.info("네이버 토큰 응답 상태: {}, 헤더: {}", response.getStatusCode(), response.getHeaders());
             

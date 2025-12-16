@@ -1090,8 +1090,14 @@ public class OAuth2Controller extends BaseApiController {
                             .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
 
                     // Phase 3: 확장된 JWT 토큰 생성 (tenantId, branchId, permissions 포함)
-                    java.util.List<String> permissions =
-                            dynamicPermissionService.getUserPermissionsAsStringList(user);
+                    // 권한 조회 시 예외 발생해도 빈 리스트 반환 (트랜잭션 롤백 오류 방지)
+                    java.util.List<String> permissions;
+                    try {
+                        permissions = dynamicPermissionService.getUserPermissionsAsStringList(user);
+                    } catch (Exception e) {
+                        log.warn("⚠️ 권한 조회 실패 (빈 리스트 반환): userId={}, 오류={}", user.getId(), e.getMessage());
+                        permissions = new java.util.ArrayList<>();
+                    }
                     String jwtToken = jwtService.generateToken(user, permissions);
                     // 표준화 2025-12-08: username = userId이므로 refreshToken도 userId 사용, User 객체로 생성하여
                     // tenantId, email 포함
@@ -1620,8 +1626,14 @@ public class OAuth2Controller extends BaseApiController {
             }
 
             // Phase 3: 확장된 JWT 토큰 생성 (tenantId, branchId, permissions 포함)
-            java.util.List<String> permissions =
-                    dynamicPermissionService.getUserPermissionsAsStringList(user);
+            // 권한 조회 시 예외 발생해도 빈 리스트 반환 (트랜잭션 롤백 오류 방지)
+            java.util.List<String> permissions;
+            try {
+                permissions = dynamicPermissionService.getUserPermissionsAsStringList(user);
+            } catch (Exception e) {
+                log.warn("⚠️ 권한 조회 실패 (빈 리스트 반환): userId={}, 오류={}", user.getId(), e.getMessage());
+                permissions = new java.util.ArrayList<>();
+            }
             String jwtToken = jwtService.generateToken(user, permissions);
             String refreshToken = jwtService.generateRefreshToken(user.getEmail());
 

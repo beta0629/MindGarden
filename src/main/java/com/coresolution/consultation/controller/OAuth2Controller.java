@@ -289,7 +289,7 @@ public class OAuth2Controller extends BaseApiController {
         try {
             // 서브도메인에서 tenant_id 추출 (state 생성 전에 추출)
             String tenantId = extractTenantIdFromSubdomain(request);
-            
+
             // 서브도메인에서 추출하지 못한 경우 세션에서 확인 (메인 도메인에서 로그인할 때)
             if (tenantId == null || tenantId.isEmpty()) {
                 if (session != null) {
@@ -917,6 +917,7 @@ public class OAuth2Controller extends BaseApiController {
                                     + "&nickname="
                                     + URLEncoder.encode(nickname, StandardCharsets.UTF_8);
 
+                    log.info("네이버 OAuth2 회원가입 리다이렉트 URL: {}", signupUrl);
                     return ResponseEntity.status(302).header("Location", signupUrl).build();
                 }
 

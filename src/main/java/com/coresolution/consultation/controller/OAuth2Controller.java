@@ -297,7 +297,8 @@ public class OAuth2Controller extends BaseApiController {
                 session.setAttribute("oauth2_tenant_id", tenantId);
                 // state와 함께 tenantId도 세션에 저장 (콜백에서 state로 조회 가능하도록)
                 session.setAttribute("oauth2_naver_tenant_id_" + state, tenantId);
-                log.info("네이버 OAuth2 - 서브도메인에서 tenant_id 추출: tenantId={}, state={}", tenantId, state);
+                log.info("네이버 OAuth2 - 서브도메인에서 tenant_id 추출: tenantId={}, state={}", tenantId,
+                        state);
             }
 
             // 모바일 클라이언트인 경우 Redis에 저장 (세션 의존성 제거)
@@ -427,6 +428,8 @@ public class OAuth2Controller extends BaseApiController {
         }
 
         String savedState = (String) session.getAttribute("oauth2_naver_state");
+        log.info("네이버 OAuth2 콜백 - state 검증: savedState={}, state={}, sessionId={}",
+                savedState, state, session.getId());
         if (savedState != null && !savedState.equals(state)) {
             session.removeAttribute("oauth2_naver_state");
             String frontendUrl = getFrontendBaseUrl(request);
@@ -437,11 +440,19 @@ public class OAuth2Controller extends BaseApiController {
 
         // state로 저장된 tenantId 조회 (authorize 시 저장한 값)
         String stateBasedTenantId = null;
-        if (state != null && savedState != null && savedState.equals(state)) {
-            stateBasedTenantId = (String) session.getAttribute("oauth2_naver_tenant_id_" + state);
+        if (state != null) {
+            // savedState가 null이어도 state로 직접 조회 시도 (세션이 달라도 state는 동일)
+            String tenantIdKey = "oauth2_naver_tenant_id_" + state;
+            stateBasedTenantId = (String) session.getAttribute(tenantIdKey);
+            log.info("네이버 OAuth2 콜백 - state로 tenant_id 조회 시도: state={}, tenantIdKey={}, found={}, sessionId={}",
+                    state, tenantIdKey, stateBasedTenantId != null, session.getId());
             if (stateBasedTenantId != null && !stateBasedTenantId.isEmpty()) {
-                log.info("네이버 OAuth2 콜백 - state로 tenant_id 조회: tenantId={}, state={}", stateBasedTenantId, state);
-                session.removeAttribute("oauth2_naver_tenant_id_" + state); // 사용 후 제거
+                log.info("네이버 OAuth2 콜백 - state로 tenant_id 조회 성공: tenantId={}, state={}",
+                        stateBasedTenantId, state);
+                session.removeAttribute(tenantIdKey); // 사용 후 제거
+            } else {
+                log.warn("⚠️ 네이버 OAuth2 콜백 - state로 tenant_id를 찾지 못함: state={}, sessionId={}",
+                        state, session.getId());
             }
         }
 

@@ -81,6 +81,9 @@ public class OAuth2Controller extends BaseApiController {
     @Value("${spring.security.oauth2.client.callback.naver-path:/api/auth/naver/callback}")
     private String naverCallbackPath;
 
+    @Value("${spring.security.oauth2.domain.naver-callback-domain:dev.core-solution.co.kr}")
+    private String naverCallbackDomain;
+
     @Value("${frontend.base-url:${FRONTEND_BASE_URL:}}")
     private String frontendBaseUrl;
 

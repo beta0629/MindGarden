@@ -581,9 +581,7 @@ public class OAuth2Controller extends BaseApiController {
 
                     // 네이버 개발자 센터에 등록된 URL 목록 (설정 파일에서 읽어옴)
                     List<String> registeredUrls = Arrays.stream(naverRegisteredUrls.split(","))
-                            .map(String::trim)
-                            .filter(url -> !url.isEmpty())
-                            .toList();
+                            .map(String::trim).filter(url -> !url.isEmpty()).toList();
                     log.debug("네이버 등록된 URL 목록: {}", registeredUrls);
 
                     if (savedRedirectUri != null && !savedRedirectUri.isEmpty()) {
@@ -666,12 +664,18 @@ public class OAuth2Controller extends BaseApiController {
                     socialUserInfo.setAccessToken(accessToken);
                     socialUserInfo.normalizeData();
 
-                    // 기존 사용자 확인
-                    Long existingUserId = naverServiceImpl
-                            .findExistingUserByProviderId(socialUserInfo.getProviderUserId());
-                    if (existingUserId == null && socialUserInfo.getEmail() != null) {
+                    // 기존 사용자 확인 (예외 발생해도 계속 진행)
+                    Long existingUserId = null;
+                    try {
                         existingUserId = naverServiceImpl
-                                .findExistingUserByProviderId(socialUserInfo.getEmail());
+                                .findExistingUserByProviderId(socialUserInfo.getProviderUserId());
+                        if (existingUserId == null && socialUserInfo.getEmail() != null) {
+                            existingUserId = naverServiceImpl
+                                    .findExistingUserByProviderId(socialUserInfo.getEmail());
+                        }
+                    } catch (Exception findUserException) {
+                        log.warn("기존 사용자 확인 중 오류 발생 (계속 진행): {}", findUserException.getMessage());
+                        // 예외가 발생해도 계속 진행 (신규 사용자로 처리)
                     }
 
                     if (existingUserId != null) {
@@ -711,8 +715,60 @@ public class OAuth2Controller extends BaseApiController {
                     log.debug("트랜잭션 상태 확인 실패 (이미 롤백되었거나 트랜잭션이 없는 경우): {}",
                             txException.getMessage());
                 }
+                // catch 블록에서도 callbackRedirectUri를 사용하여 재시도
                 try {
-                    response = oauth2FactoryService.authenticateWithProvider("NAVER", code);
+                    OAuth2Service naverService = oauth2FactoryService.getOAuth2Service("NAVER");
+                    if (callbackRedirectUri != null
+                            && naverService instanceof com.coresolution.consultation.service.impl.NaverOAuth2ServiceImpl) {
+                        com.coresolution.consultation.service.impl.NaverOAuth2ServiceImpl naverServiceImpl =
+                                (com.coresolution.consultation.service.impl.NaverOAuth2ServiceImpl) naverService;
+                        // callbackRedirectUri를 사용하여 토큰 획득 및 사용자 정보 조회
+                        String accessToken = naverServiceImpl.getAccessToken(code, callbackRedirectUri);
+                        SocialUserInfo socialUserInfo = naverServiceImpl.getUserInfo(accessToken);
+                        socialUserInfo.setProvider("NAVER");
+                        socialUserInfo.setAccessToken(accessToken);
+                        socialUserInfo.normalizeData();
+                        // 기존 사용자 확인 (예외 발생해도 계속 진행)
+                        Long existingUserId = null;
+                        try {
+                            existingUserId = naverServiceImpl
+                                    .findExistingUserByProviderId(socialUserInfo.getProviderUserId());
+                            if (existingUserId == null && socialUserInfo.getEmail() != null) {
+                                existingUserId = naverServiceImpl
+                                        .findExistingUserByProviderId(socialUserInfo.getEmail());
+                            }
+                        } catch (Exception findUserException) {
+                            log.warn("기존 사용자 확인 중 오류 발생 (계속 진행): {}", findUserException.getMessage());
+                        }
+                        // 사용자 처리 로직
+                        if (existingUserId != null) {
+                            User existingUser = userRepository.findById(existingUserId).orElse(null);
+                            if (existingUser != null) {
+                                response = SocialLoginResponse.builder().success(true)
+                                        .requiresSignup(false)
+                                        .userInfo(SocialLoginResponse.UserInfo.builder()
+                                                .id(existingUser.getId()).email(existingUser.getEmail())
+                                                .name(existingUser.getName())
+                                                .nickname(existingUser.getNickname())
+                                                .role(existingUser.getRole() != null
+                                                        ? existingUser.getRole().name()
+                                                        : null)
+                                                .profileImageUrl(existingUser.getProfileImageUrl())
+                                                .branch(existingUser.getBranch())
+                                                .branchCode(existingUser.getBranchCode()).build())
+                                        .build();
+                            } else {
+                                response = SocialLoginResponse.builder().success(false)
+                                        .message("사용자를 찾을 수 없습니다.").build();
+                            }
+                        } else {
+                            response = SocialLoginResponse.builder().success(true).requiresSignup(true)
+                                    .socialUserInfo(socialUserInfo).build();
+                        }
+                    } else {
+                        // 기본 방식 사용 (callbackRedirectUri가 없는 경우)
+                        response = oauth2FactoryService.authenticateWithProvider("NAVER", code);
+                    }
                 } catch (Exception authException) {
                     log.error("네이버 OAuth2 인증 처리 중 오류 발생", authException);
                     // 트랜잭션이 롤백 전용으로 표시된 경우 명시적으로 롤백 처리

@@ -26,6 +26,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -1115,7 +1116,22 @@ public class OAuth2Controller extends BaseApiController {
                             .build();
                 }
             } else {
-                response = oauth2FactoryService.authenticateWithProvider("KAKAO", code);
+                try {
+                    response = oauth2FactoryService.authenticateWithProvider("KAKAO", code);
+                } catch (Exception e) {
+                    log.error("카카오 OAuth2 인증 처리 중 오류 발생", e);
+                    // 트랜잭션이 롤백 전용으로 표시된 경우 명시적으로 롤백 처리
+                    try {
+                        TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+                    } catch (Exception txException) {
+                        log.debug("트랜잭션 상태 확인 실패 (이미 롤백되었거나 트랜잭션이 없는 경우): {}", txException.getMessage());
+                    }
+                    String frontendUrl = getFrontendBaseUrl(request);
+                    String errorMessage = e.getMessage() != null ? e.getMessage() : "인증 처리 중 오류가 발생했습니다";
+                    return ResponseEntity.status(302).header("Location", frontendUrl + "/login?error="
+                            + URLEncoder.encode(errorMessage, StandardCharsets.UTF_8) + "&provider=KAKAO")
+                            .build();
+                }
             }
 
             if (response.isSuccess()) {

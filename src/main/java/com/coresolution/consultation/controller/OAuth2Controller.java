@@ -578,8 +578,7 @@ public class OAuth2Controller extends BaseApiController {
                     } else {
                         log.warn("⚠️ 네이버 콜백 - 세션에 저장된 redirect_uri가 없습니다. 동적으로 생성한 redirect_uri 사용: {}", callbackRedirectUri);
                         // 세션에 저장된 redirect_uri가 없을 경우, 네이버 개발자 센터에 등록된 URL 중 하나를 사용
-                        // 네이버 개발자 센터에 등록된 URL: https://dev.core-solution.co.kr/api/auth/naver/callback
-                        // 또는 https://dev.m-garden.co.kr/api/auth/naver/callback
+                        // 네이버 개발자 센터에 등록된 URL은 설정 파일에서 관리 (naverCallbackPath)
                         // 동적으로 생성한 redirect_uri가 네이버 개발자 센터에 등록된 URL과 일치하는지 확인 필요
                         log.warn("⚠️ 네이버 콜백 - 세션에 저장된 redirect_uri가 없어 동적 생성한 redirect_uri 사용. 네이버 개발자 센터에 등록된 URL과 일치하는지 확인 필요: {}", callbackRedirectUri);
                     }

@@ -129,6 +129,41 @@ public class OAuth2ConfigController {
             serverName = serverName.split(":")[0];
         }
         
+        // 정규식 패턴 제거 (Nginx 서브도메인 패턴이 포함된 경우)
+        if (serverName != null && serverName.contains("~")) {
+            // 정규식 패턴을 메인 도메인으로 변환
+            if (serverName.matches(".*\\.dev\\.core-solution\\.co\\.kr.*")) {
+                serverName = "dev.core-solution.co.kr";
+            } else if (serverName.matches(".*\\.dev\\.m-garden\\.co\\.kr.*")) {
+                serverName = "dev.m-garden.co.kr";
+            } else {
+                // 정규식 패턴에서 도메인 추출 시도
+                serverName = serverName.replaceAll(".*(dev\\.core-solution\\.co\\.kr|dev\\.m-garden\\.co\\.kr).*", "$1");
+            }
+        }
+        
+        // 서브도메인을 메인 도메인으로 변환 (카카오 개발자 센터 등록 문제 해결)
+        if (serverName != null && !serverName.isEmpty()) {
+            String hostWithoutPort = serverName;
+            if (hostWithoutPort.matches(".*\\.dev\\.core-solution\\.co\\.kr$")) {
+                serverName = "dev.core-solution.co.kr";
+                log.debug("OAuth2 BaseUrl - 서브도메인을 메인 도메인으로 변환: {} -> {}", hostWithoutPort, serverName);
+            } else if (hostWithoutPort.matches(".*\\.core-solution\\.co\\.kr$")
+                    && !hostWithoutPort.equals("dev.core-solution.co.kr")
+                    && !hostWithoutPort.equals("core-solution.co.kr")) {
+                serverName = "dev.core-solution.co.kr";
+                log.debug("OAuth2 BaseUrl - 서브도메인을 메인 도메인으로 변환: {} -> {}", hostWithoutPort, serverName);
+            } else if (hostWithoutPort.matches(".*\\.dev\\.m-garden\\.co\\.kr$")) {
+                serverName = "dev.m-garden.co.kr";
+                log.debug("OAuth2 BaseUrl - 서브도메인을 메인 도메인으로 변환: {} -> {}", hostWithoutPort, serverName);
+            } else if (hostWithoutPort.matches(".*\\.m-garden\\.co\\.kr$")
+                    && !hostWithoutPort.equals("dev.m-garden.co.kr")
+                    && !hostWithoutPort.equals("m-garden.co.kr")) {
+                serverName = "dev.m-garden.co.kr";
+                log.debug("OAuth2 BaseUrl - 서브도메인을 메인 도메인으로 변환: {} -> {}", hostWithoutPort, serverName);
+            }
+        }
+        
         int serverPort = request.getServerPort();
         
         // 개발 환경 (localhost) - 로컬에서는 localhost 사용

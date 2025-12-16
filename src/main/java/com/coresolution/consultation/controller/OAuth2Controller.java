@@ -803,52 +803,48 @@ public class OAuth2Controller extends BaseApiController {
                     response.isSuccess(), response.isRequiresSignup(), response.getMessage());
 
             if (response.isSuccess()) {
-                // 회원가입이 필요한 경우 처리
+                // 회원가입이 필요한 경우 처리 (카카오와 동일한 방식)
                 if (response.isRequiresSignup()) {
-                    log.info("네이버 OAuth2 - 회원가입 필요: socialUserInfo={}", response.getSocialUserInfo());
-                    String frontendUrl = getFrontendBaseUrl(request);
-                    SocialUserInfo socialUserInfo = response.getSocialUserInfo();
-                    if (socialUserInfo != null) {
-                        String redirectUrl = frontendUrl + "/signup?provider=NAVER"
-                                + "&email=" + URLEncoder.encode(
-                                        socialUserInfo.getEmail() != null ? socialUserInfo.getEmail() : "",
-                                        StandardCharsets.UTF_8)
-                                + "&name=" + URLEncoder.encode(
-                                        socialUserInfo.getName() != null ? socialUserInfo.getName() : "",
-                                        StandardCharsets.UTF_8)
-                                + "&nickname=" + URLEncoder.encode(
-                                        socialUserInfo.getNickname() != null ? socialUserInfo.getNickname() : "",
-                                        StandardCharsets.UTF_8)
-                                + "&profileImage=" + URLEncoder.encode(
-                                        socialUserInfo.getProfileImageUrl() != null
-                                                ? socialUserInfo.getProfileImageUrl()
-                                                : "",
-                                        StandardCharsets.UTF_8)
-                                + "&socialId=" + URLEncoder.encode(
-                                        socialUserInfo.getProviderUserId() != null
-                                                ? socialUserInfo.getProviderUserId()
-                                                : "",
-                                        StandardCharsets.UTF_8);
-                        log.info("네이버 OAuth2 - 회원가입 페이지로 리다이렉트: {}", redirectUrl);
-                        return ResponseEntity.status(302).header("Location", redirectUrl).build();
-                    } else {
-                        log.error("네이버 OAuth2 - 회원가입 필요하지만 socialUserInfo가 null");
-                        return ResponseEntity.status(302)
-                                .header("Location",
-                                        frontendUrl + "/login?error="
-                                                + URLEncoder.encode("소셜 사용자 정보를 가져올 수 없습니다.",
-                                                        StandardCharsets.UTF_8)
-                                                + "&provider=NAVER")
-                                .build();
+                    log.info("네이버 OAuth2 간편 회원가입 필요: {}", response.getSocialUserInfo());
+
+                    // 세션에서 tenant_id 확인 (서브도메인에서 추출한 값)
+                    String tenantId = (String) session.getAttribute("oauth2_tenant_id");
+                    if (tenantId != null && !tenantId.isEmpty()) {
+                        log.info("네이버 OAuth2 - 서브도메인에서 추출한 tenant_id 사용: tenantId={}", tenantId);
+                        session.removeAttribute("oauth2_tenant_id"); // 사용 후 제거
                     }
+
+                    // 소셜 사용자 정보를 URL 파라미터로 전달 (한글 인코딩 처리)
+                    String email = response.getSocialUserInfo() != null
+                            ? response.getSocialUserInfo().getEmail()
+                            : "";
+                    String name = response.getSocialUserInfo() != null
+                            ? response.getSocialUserInfo().getName()
+                            : "";
+                    String nickname = response.getSocialUserInfo() != null
+                            ? response.getSocialUserInfo().getNickname()
+                            : "";
+
+                    String frontendUrl = getFrontendBaseUrl(request);
+                    String signupUrl =
+                            frontendUrl + "/login?" + "signup=required" + "&provider=naver"
+                                    + (tenantId != null && !tenantId.isEmpty() ? "&tenantId="
+                                            + URLEncoder.encode(tenantId, StandardCharsets.UTF_8) : "")
+                                    + "&email=" + URLEncoder.encode(email, StandardCharsets.UTF_8)
+                                    + "&name=" + URLEncoder.encode(name, StandardCharsets.UTF_8)
+                                    + "&nickname="
+                                    + URLEncoder.encode(nickname, StandardCharsets.UTF_8);
+
+                    return ResponseEntity.status(302).header("Location", signupUrl).build();
                 }
 
                 // SocialLoginResponse에서 이미 완성된 UserInfo 사용 (공통 SNS 처리 로직 활용)
                 SocialLoginResponse.UserInfo userInfo = response.getUserInfo();
-                
+
                 // userInfo가 null인 경우 처리
                 if (userInfo == null) {
-                    log.error("네이버 OAuth2 - userInfo가 null입니다. requiresSignup={}", response.isRequiresSignup());
+                    log.error("네이버 OAuth2 - userInfo가 null입니다. requiresSignup={}",
+                            response.isRequiresSignup());
                     String frontendUrl = getFrontendBaseUrl(request);
                     return ResponseEntity.status(302)
                             .header("Location",

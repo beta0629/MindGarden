@@ -15,6 +15,7 @@ import com.coresolution.consultation.service.OAuth2FactoryService;
 import com.coresolution.consultation.service.OAuth2Service;
 import com.coresolution.consultation.service.UserSessionService;
 import com.coresolution.consultation.util.DashboardRedirectUtil;
+import com.coresolution.consultation.util.OAuth2DomainUtil;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.controller.BaseApiController;
@@ -48,6 +49,7 @@ public class OAuth2Controller extends BaseApiController {
 
     private final OAuth2FactoryService oauth2FactoryService;
     private final PersonalDataEncryptionUtil encryptionUtil;
+    private final OAuth2DomainUtil oauth2DomainUtil;
     private final UserRepository userRepository;
     private final com.coresolution.consultation.service.JwtService jwtService;
     private final com.coresolution.consultation.service.DynamicPermissionService dynamicPermissionService;
@@ -203,58 +205,10 @@ public class OAuth2Controller extends BaseApiController {
                     requestHost = request.getServerName() + ":" + request.getServerPort();
                 }
 
-                // 정규식 패턴 제거 (Nginx 서브도메인 패턴이 포함된 경우)
-                if (requestHost != null && requestHost.contains("~")) {
-                    String originalHost = requestHost;
-                    // 정규식 패턴을 메인 도메인으로 변환
-                    if (requestHost.matches(".*\\.dev\\.core-solution\\.co\\.kr.*")) {
-                        requestHost = "dev.core-solution.co.kr";
-                        log.info("카카오 OAuth2 - 정규식 패턴 제거 및 메인 도메인 변환: {} -> {}", originalHost, requestHost);
-                    } else if (requestHost.matches(".*\\.dev\\.m-garden\\.co\\.kr.*")) {
-                        requestHost = "dev.m-garden.co.kr";
-                        log.info("카카오 OAuth2 - 정규식 패턴 제거 및 메인 도메인 변환: {} -> {}", originalHost, requestHost);
-                    } else {
-                        // 정규식 패턴에서 도메인 추출 시도
-                        requestHost = requestHost.replaceAll(".*(dev\\.core-solution\\.co\\.kr|dev\\.m-garden\\.co\\.kr).*", "$1");
-                        if (requestHost.equals(originalHost)) {
-                            // 추출 실패 시 기본값 사용
-                            requestHost = "dev.core-solution.co.kr";
-                        }
-                        log.info("카카오 OAuth2 - 정규식 패턴에서 도메인 추출: {} -> {}", originalHost, requestHost);
-                    }
-                }
-
-                // 서브도메인을 메인 도메인으로 변환 (카카오 개발자 센터 등록 문제 해결)
+                // 서브도메인을 메인 도메인으로 변환 (설정 파일 기반)
                 if (requestHost != null && !requestHost.isEmpty()) {
                     String hostWithoutPort = requestHost.split(":")[0];
-                    String mainDomain = hostWithoutPort;
-
-                    // 서브도메인 패턴 감지 및 메인 도메인으로 변환
-                    if (hostWithoutPort.matches(".*\\.dev\\.core-solution\\.co\\.kr$")) {
-                        // mindgarden.dev.core-solution.co.kr -> dev.core-solution.co.kr
-                        mainDomain = "dev.core-solution.co.kr";
-                        log.info("카카오 OAuth2 - 서브도메인을 메인 도메인으로 변환: {} -> {}", hostWithoutPort,
-                                mainDomain);
-                    } else if (hostWithoutPort.matches(".*\\.core-solution\\.co\\.kr$")
-                            && !hostWithoutPort.equals("dev.core-solution.co.kr")
-                            && !hostWithoutPort.equals("core-solution.co.kr")) {
-                        // 서브도메인이 있으면 메인 도메인 사용
-                        mainDomain = "dev.core-solution.co.kr";
-                        log.info("카카오 OAuth2 - 서브도메인을 메인 도메인으로 변환: {} -> {}", hostWithoutPort,
-                                mainDomain);
-                    } else if (hostWithoutPort.matches(".*\\.dev\\.m-garden\\.co\\.kr$")) {
-                        // 기존 m-garden 도메인 호환성
-                        mainDomain = "dev.m-garden.co.kr";
-                        log.info("카카오 OAuth2 - 서브도메인을 메인 도메인으로 변환: {} -> {}", hostWithoutPort,
-                                mainDomain);
-                    } else if (hostWithoutPort.matches(".*\\.m-garden\\.co\\.kr$")
-                            && !hostWithoutPort.equals("dev.m-garden.co.kr")
-                            && !hostWithoutPort.equals("m-garden.co.kr")) {
-                        // 기존 m-garden 도메인 호환성
-                        mainDomain = "dev.m-garden.co.kr";
-                        log.info("카카오 OAuth2 - 서브도메인을 메인 도메인으로 변환: {} -> {}", hostWithoutPort,
-                                mainDomain);
-                    }
+                    String mainDomain = oauth2DomainUtil.convertToMainDomain(hostWithoutPort);
 
                     // 포트 처리
                     String portSuffix = "";
@@ -363,37 +317,10 @@ public class OAuth2Controller extends BaseApiController {
                     requestHost = request.getServerName() + ":" + request.getServerPort();
                 }
 
-                // 서브도메인을 메인 도메인으로 변환 (네이버 개발자 센터 등록 문제 해결)
+                // 서브도메인을 메인 도메인으로 변환 (설정 파일 기반)
                 if (requestHost != null && !requestHost.isEmpty()) {
                     String hostWithoutPort = requestHost.split(":")[0];
-                    String mainDomain = hostWithoutPort;
-
-                    // 서브도메인 패턴 감지 및 메인 도메인으로 변환
-                    if (hostWithoutPort.matches(".*\\.dev\\.core-solution\\.co\\.kr$")) {
-                        // mindgarden.dev.core-solution.co.kr -> dev.core-solution.co.kr
-                        mainDomain = "dev.core-solution.co.kr";
-                        log.info("네이버 OAuth2 - 서브도메인을 메인 도메인으로 변환: {} -> {}", hostWithoutPort,
-                                mainDomain);
-                    } else if (hostWithoutPort.matches(".*\\.core-solution\\.co\\.kr$")
-                            && !hostWithoutPort.equals("dev.core-solution.co.kr")
-                            && !hostWithoutPort.equals("core-solution.co.kr")) {
-                        // 서브도메인이 있으면 메인 도메인 사용
-                        mainDomain = "dev.core-solution.co.kr";
-                        log.info("네이버 OAuth2 - 서브도메인을 메인 도메인으로 변환: {} -> {}", hostWithoutPort,
-                                mainDomain);
-                    } else if (hostWithoutPort.matches(".*\\.dev\\.m-garden\\.co\\.kr$")) {
-                        // 기존 m-garden 도메인 호환성
-                        mainDomain = "dev.m-garden.co.kr";
-                        log.info("네이버 OAuth2 - 서브도메인을 메인 도메인으로 변환: {} -> {}", hostWithoutPort,
-                                mainDomain);
-                    } else if (hostWithoutPort.matches(".*\\.m-garden\\.co\\.kr$")
-                            && !hostWithoutPort.equals("dev.m-garden.co.kr")
-                            && !hostWithoutPort.equals("m-garden.co.kr")) {
-                        // 기존 m-garden 도메인 호환성
-                        mainDomain = "dev.m-garden.co.kr";
-                        log.info("네이버 OAuth2 - 서브도메인을 메인 도메인으로 변환: {} -> {}", hostWithoutPort,
-                                mainDomain);
-                    }
+                    String mainDomain = oauth2DomainUtil.convertToMainDomain(hostWithoutPort);
 
                     // 포트 처리
                     String portSuffix = "";
@@ -1059,22 +986,8 @@ public class OAuth2Controller extends BaseApiController {
 
                 if (requestHost != null && !requestHost.isEmpty()) {
                     String hostWithoutPort = requestHost.split(":")[0];
-                    String mainDomain = hostWithoutPort;
-                    
-                    // 서브도메인을 메인 도메인으로 변환 (인증 코드 발급 시와 동일하게)
-                    if (hostWithoutPort.matches(".*\\.dev\\.core-solution\\.co\\.kr$")) {
-                        mainDomain = "dev.core-solution.co.kr";
-                    } else if (hostWithoutPort.matches(".*\\.core-solution\\.co\\.kr$")
-                            && !hostWithoutPort.equals("dev.core-solution.co.kr")
-                            && !hostWithoutPort.equals("core-solution.co.kr")) {
-                        mainDomain = "dev.core-solution.co.kr";
-                    } else if (hostWithoutPort.matches(".*\\.dev\\.m-garden\\.co\\.kr$")) {
-                        mainDomain = "dev.m-garden.co.kr";
-                    } else if (hostWithoutPort.matches(".*\\.m-garden\\.co\\.kr$")
-                            && !hostWithoutPort.equals("dev.m-garden.co.kr")
-                            && !hostWithoutPort.equals("m-garden.co.kr")) {
-                        mainDomain = "dev.m-garden.co.kr";
-                    }
+                    // 서브도메인을 메인 도메인으로 변환 (설정 파일 기반)
+                    String mainDomain = oauth2DomainUtil.convertToMainDomain(hostWithoutPort);
                     
                     // 포트가 포함된 경우와 아닌 경우 모두 처리
                     String portSuffix = "";

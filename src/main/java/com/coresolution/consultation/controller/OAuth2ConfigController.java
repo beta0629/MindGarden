@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import jakarta.servlet.http.HttpServletRequest;
+import com.coresolution.consultation.util.OAuth2DomainUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -22,6 +23,8 @@ import lombok.extern.slf4j.Slf4j;
 @RequestMapping("/api/v1/auth/config") // 표준화 2025-12-05: 레거시 경로 제거
 @RequiredArgsConstructor
 public class OAuth2ConfigController {
+
+    private final OAuth2DomainUtil oauth2DomainUtil;
 
     @Value("${spring.security.oauth2.client.registration.kakao.client-id:${security.oauth2.client.registration.kakao.client-id:cbb457cfb5f9351fd495be4af2b11a34}}")
     private String kakaoClientId;
@@ -129,39 +132,9 @@ public class OAuth2ConfigController {
             serverName = serverName.split(":")[0];
         }
         
-        // 정규식 패턴 제거 (Nginx 서브도메인 패턴이 포함된 경우)
-        if (serverName != null && serverName.contains("~")) {
-            // 정규식 패턴을 메인 도메인으로 변환
-            if (serverName.matches(".*\\.dev\\.core-solution\\.co\\.kr.*")) {
-                serverName = "dev.core-solution.co.kr";
-            } else if (serverName.matches(".*\\.dev\\.m-garden\\.co\\.kr.*")) {
-                serverName = "dev.m-garden.co.kr";
-            } else {
-                // 정규식 패턴에서 도메인 추출 시도
-                serverName = serverName.replaceAll(".*(dev\\.core-solution\\.co\\.kr|dev\\.m-garden\\.co\\.kr).*", "$1");
-            }
-        }
-        
-        // 서브도메인을 메인 도메인으로 변환 (카카오 개발자 센터 등록 문제 해결)
+        // 서브도메인을 메인 도메인으로 변환 (설정 파일 기반)
         if (serverName != null && !serverName.isEmpty()) {
-            String hostWithoutPort = serverName;
-            if (hostWithoutPort.matches(".*\\.dev\\.core-solution\\.co\\.kr$")) {
-                serverName = "dev.core-solution.co.kr";
-                log.debug("OAuth2 BaseUrl - 서브도메인을 메인 도메인으로 변환: {} -> {}", hostWithoutPort, serverName);
-            } else if (hostWithoutPort.matches(".*\\.core-solution\\.co\\.kr$")
-                    && !hostWithoutPort.equals("dev.core-solution.co.kr")
-                    && !hostWithoutPort.equals("core-solution.co.kr")) {
-                serverName = "dev.core-solution.co.kr";
-                log.debug("OAuth2 BaseUrl - 서브도메인을 메인 도메인으로 변환: {} -> {}", hostWithoutPort, serverName);
-            } else if (hostWithoutPort.matches(".*\\.dev\\.m-garden\\.co\\.kr$")) {
-                serverName = "dev.m-garden.co.kr";
-                log.debug("OAuth2 BaseUrl - 서브도메인을 메인 도메인으로 변환: {} -> {}", hostWithoutPort, serverName);
-            } else if (hostWithoutPort.matches(".*\\.m-garden\\.co\\.kr$")
-                    && !hostWithoutPort.equals("dev.m-garden.co.kr")
-                    && !hostWithoutPort.equals("m-garden.co.kr")) {
-                serverName = "dev.m-garden.co.kr";
-                log.debug("OAuth2 BaseUrl - 서브도메인을 메인 도메인으로 변환: {} -> {}", hostWithoutPort, serverName);
-            }
+            serverName = oauth2DomainUtil.convertToMainDomain(serverName);
         }
         
         int serverPort = request.getServerPort();

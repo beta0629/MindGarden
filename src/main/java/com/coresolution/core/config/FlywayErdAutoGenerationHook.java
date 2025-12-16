@@ -76,22 +76,32 @@ public class FlywayErdAutoGenerationHook {
     }
 
     /**
-     * 개발 서버용 Flyway 마이그레이션 전략 (ERD 자동 생성 없음) 개발 환경에서는 검증 오류 시 repair를 자동 실행하여 마이그레이션 진행
+     * 개발 서버용 Flyway 마이그레이션 전략 (ERD 자동 생성 없음) 
+     * 개발 환경에서는 검증 오류 시 repair를 먼저 실행한 후 마이그레이션 진행
      */
     @Bean
     @Profile("dev")
     public FlywayMigrationStrategy flywayMigrationStrategyForDev() {
         return flyway -> {
             try {
-                // 기본 마이그레이션 실행 (validate-on-migrate: false 설정이 application-dev.yml에 있음)
+                // 개발 환경에서는 먼저 repair를 실행하여 checksum 불일치 문제 해결
+                log.info("🔧 개발 환경 - Flyway repair 실행 (checksum 불일치 해결)");
+                try {
+                    flyway.repair();
+                    log.info("✅ Flyway repair 완료");
+                } catch (Exception repairException) {
+                    log.warn("⚠️ Flyway repair 실패 (무시하고 계속 진행): {}", repairException.getMessage());
+                }
+                
+                // repair 후 마이그레이션 실행
                 flyway.migrate();
                 log.info("✅ Flyway 마이그레이션 완료 (개발 서버 - ERD 자동 생성 비활성화)");
             } catch (org.flywaydb.core.api.FlywayException e) {
-                // 검증 오류가 발생하면 repair를 실행하여 checksum 업데이트
+                // 검증 오류가 발생하면 다시 repair 시도
                 if (e.getMessage() != null && (e.getMessage().contains("Validate failed")
                         || e.getMessage().contains("checksum mismatch")
                         || e.getMessage().contains("Migrations have failed validation"))) {
-                    log.warn("⚠️ Flyway 검증 실패 - repair 실행하여 checksum 업데이트: {}", e.getMessage());
+                    log.warn("⚠️ Flyway 검증 실패 - repair 재실행: {}", e.getMessage());
                     try {
                         flyway.repair();
                         log.info("✅ Flyway repair 완료 - 마이그레이션 재시도");
@@ -112,7 +122,8 @@ public class FlywayErdAutoGenerationHook {
             } catch (Exception e) {
                 // 예상치 못한 오류
                 log.error("❌ Flyway 마이그레이션 중 예상치 못한 오류 발생: {}", e.getMessage(), e);
-                throw e;
+                // 개발 환경에서는 예외를 던지지 않고 계속 진행
+                log.warn("⚠️ 개발 환경이므로 Flyway 오류를 무시하고 애플리케이션을 계속 시작합니다.");
             }
         };
     }

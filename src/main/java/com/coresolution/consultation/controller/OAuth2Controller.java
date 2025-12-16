@@ -465,74 +465,66 @@ public class OAuth2Controller extends BaseApiController {
 
             // 콜백 요청의 scheme과 host를 사용해서 redirect_uri 동적 생성 (필수, 프록시 헤더 고려)
             // 인증 URL 생성 시 사용한 redirect_uri와 일치시켜야 함
+            // 카카오와 동일하게 OAuth2DomainUtil을 사용하여 서브도메인을 메인 도메인으로 변환
             String callbackRedirectUri = null;
             try {
                 // 프록시 헤더 확인 (X-Forwarded-Proto, X-Forwarded-Host)
-                // 단, 로컬 환경(localhost)에서는 실제 요청 Host를 우선 사용
+                // Nginx를 통해 들어온 요청은 X-Forwarded-Host를 우선 확인
                 String requestScheme = request.getHeader("X-Forwarded-Proto");
                 if (requestScheme == null || requestScheme.isEmpty()) {
                     requestScheme = request.getScheme();
                 }
 
-                // Host 헤더 우선 확인 (실제 백엔드 서버 주소)
-                String requestHost = request.getHeader("Host");
+                // X-Forwarded-Host 우선 확인 (Nginx를 통해 들어온 요청)
+                String requestHost = request.getHeader("X-Forwarded-Host");
+                if (requestHost == null || requestHost.isEmpty()) {
+                    // X-Forwarded-Host가 없으면 Host 헤더 확인
+                    requestHost = request.getHeader("Host");
+                }
+
                 // 로컬 환경에서 프론트엔드 프록시를 통해 온 경우 처리
                 if (requestHost != null && requestHost.contains("localhost")
                         && !requestHost.contains(":8080")) {
                     // 프론트엔드(localhost:3000)에서 프록시로 온 경우, 실제 백엔드 주소 사용
                     requestHost = request.getServerName() + ":" + request.getServerPort();
                 } else if (requestHost == null || requestHost.isEmpty()) {
-                    // Host 헤더가 없으면 X-Forwarded-Host 확인
-                    String forwardedHost = request.getHeader("X-Forwarded-Host");
-                    if (forwardedHost != null && !forwardedHost.isEmpty()) {
-                        // X-Forwarded-Host가 백엔드 포트를 포함하는 경우만 사용
-                        if (forwardedHost.contains(":8080")) {
-                            requestHost = forwardedHost;
-                        } else {
-                            // 아니면 실제 서버 주소 사용
-                            requestHost = request.getServerName() + ":" + request.getServerPort();
-                        }
-                    }
-                }
-                if (requestHost == null || requestHost.isEmpty()) {
-                    requestHost = request.getServerName();
-                    int port = request.getServerPort();
-                    if (port != 80 && port != 443) {
-                        requestHost = requestHost + ":" + port;
-                    }
+                    // Host 헤더도 없으면 서버 정보 사용
+                    requestHost = request.getServerName() + ":" + request.getServerPort();
                 }
 
                 if (requestHost != null && !requestHost.isEmpty()) {
+                    String hostWithoutPort = requestHost.split(":")[0];
+                    // 서브도메인을 메인 도메인으로 변환 (설정 파일 기반)
+                    String mainDomain = oauth2DomainUtil.convertToMainDomain(hostWithoutPort);
+                    
                     // 포트가 포함된 경우와 아닌 경우 모두 처리
+                    String portSuffix = "";
                     if (requestHost.contains(":")) {
-                        callbackRedirectUri =
-                                requestScheme + "://" + requestHost + "/api/auth/naver/callback";
+                        String port = requestHost.split(":")[1];
+                        if (!port.equals("80") && !port.equals("443")) {
+                            portSuffix = ":" + port;
+                        }
                     } else {
                         // 프록시를 통해 들어온 경우 포트는 헤더에서 확인
                         String forwardedPort = request.getHeader("X-Forwarded-Port");
                         if (forwardedPort != null && !forwardedPort.isEmpty()) {
                             int port = Integer.parseInt(forwardedPort);
-                            if (port == 80 || port == 443) {
-                                callbackRedirectUri = requestScheme + "://" + requestHost
-                                        + "/api/auth/naver/callback";
-                            } else {
-                                callbackRedirectUri = requestScheme + "://" + requestHost + ":"
-                                        + port + "/api/auth/naver/callback";
+                            if (port != 80 && port != 443) {
+                                portSuffix = ":" + port;
                             }
                         } else {
                             int port = request.getServerPort();
-                            if (port == 80 || port == 443) {
-                                callbackRedirectUri = requestScheme + "://" + requestHost
-                                        + "/api/auth/naver/callback";
-                            } else {
-                                callbackRedirectUri = requestScheme + "://" + requestHost + ":"
-                                        + port + "/api/auth/naver/callback";
+                            if (port != 80 && port != 443) {
+                                portSuffix = ":" + port;
                             }
                         }
                     }
+                    
+                    callbackRedirectUri = requestScheme + "://" + mainDomain + portSuffix + "/api/auth/naver/callback";
+                    
                     log.info(
-                            "네이버 콜백 - 동적 redirect_uri 생성: {} (scheme={}, host={}, forwardedProto={}, forwardedHost={})",
-                            callbackRedirectUri, request.getScheme(), request.getHeader("Host"),
+                            "네이버 콜백 - 동적 redirect_uri 생성: {} (scheme={}, originalHost={}, mainDomain={}, forwardedProto={}, forwardedHost={})",
+                            callbackRedirectUri, requestScheme, requestHost, mainDomain,
                             request.getHeader("X-Forwarded-Proto"),
                             request.getHeader("X-Forwarded-Host"));
                 }

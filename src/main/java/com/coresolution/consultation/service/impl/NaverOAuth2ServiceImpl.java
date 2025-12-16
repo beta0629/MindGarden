@@ -140,7 +140,7 @@ public class NaverOAuth2ServiceImpl extends AbstractOAuth2Service {
             params.add("client_id", clientId);
             params.add("client_secret", clientSecret);
             params.add("code", code);
-            params.add("state", "naver_oauth_state"); // 보안을 위한 state 값
+            // 네이버 OAuth2 토큰 요청에는 state 파라미터가 필요 없음 (인증 요청 시에만 사용)
             params.add("redirect_uri", redirectUriToUse);
             
             log.info("네이버 액세스 토큰 획득 시도: client_id={}, redirect_uri={}, code={}", 

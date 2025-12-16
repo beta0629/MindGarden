@@ -446,10 +446,10 @@ public class OAuth2Controller extends BaseApiController {
                         "네이버 OAuth2 콜백 - 서브도메인에서 tenant_id 추출 및 TenantContextHolder 설정: tenantId={}",
                         callbackTenantId);
             } else {
-                // 서브도메인이 없으면 세션에서 tenant_id 확인 (oauth2_tenant_id 우선)
-                String sessionTenantId = (String) session.getAttribute("oauth2_tenant_id");
+                // 서브도메인이 없으면 세션에서 tenant_id 확인 (카카오와 동일하게 tenantId 우선 확인)
+                String sessionTenantId = (String) session.getAttribute("tenantId");
                 if (sessionTenantId == null || sessionTenantId.isEmpty()) {
-                    sessionTenantId = (String) session.getAttribute("tenantId");
+                    sessionTenantId = (String) session.getAttribute("oauth2_tenant_id");
                 }
                 if (sessionTenantId != null && !sessionTenantId.isEmpty()) {
                     com.coresolution.core.context.TenantContextHolder.setTenantId(sessionTenantId);

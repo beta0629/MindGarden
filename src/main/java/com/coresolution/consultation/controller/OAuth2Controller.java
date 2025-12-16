@@ -744,18 +744,35 @@ public class OAuth2Controller extends BaseApiController {
                     socialUserInfo.setAccessToken(accessToken);
                     socialUserInfo.normalizeData();
 
-                    // 기존 사용자 확인 (예외 발생해도 계속 진행)
+                    // 기존 사용자 확인 (카카오와 동일한 방식)
                     Long existingUserId = null;
-                    try {
-                        existingUserId = naverServiceImpl
-                                .findExistingUserByProviderId(socialUserInfo.getProviderUserId());
-                        if (existingUserId == null && socialUserInfo.getEmail() != null) {
+
+                    // tenant ID가 설정되어 있으면 findExistingUserByProviderId 사용
+                    String currentTenantId =
+                            com.coresolution.core.context.TenantContextHolder.getTenantId();
+                    if (currentTenantId != null && !currentTenantId.isEmpty()) {
+                        try {
                             existingUserId = naverServiceImpl
-                                    .findExistingUserByProviderId(socialUserInfo.getEmail());
+                                    .findExistingUserByProviderId(socialUserInfo.getProviderUserId());
+                            if (existingUserId == null && socialUserInfo.getEmail() != null) {
+                                existingUserId = naverServiceImpl
+                                        .findExistingUserByProviderId(socialUserInfo.getEmail());
+                            }
+                        } catch (Exception e) {
+                            log.warn("⚠️ findExistingUserByProviderId 호출 실패 (tenant ID 있음): {}",
+                                    e.getMessage());
                         }
-                    } catch (Exception findUserException) {
-                        log.warn("기존 사용자 확인 중 오류 발생 (계속 진행): {}", findUserException.getMessage());
-                        // 예외가 발생해도 계속 진행 (신규 사용자로 처리)
+                    }
+
+                    // tenant ID가 없거나 findExistingUserByProviderId로 찾지 못한 경우, 이메일로 조회 (카카오와 동일)
+                    if (existingUserId == null) {
+                        // 멀티 테넌트 사용자 고려하여 조회
+                        List<User> users = userRepository.findAllByEmail(socialUserInfo.getEmail());
+                        existingUserId = users.isEmpty() ? null : users.get(0).getId();
+                        if (existingUserId != null) {
+                            log.info("✅ 이메일로 사용자 조회 성공: email={}, userId={}", socialUserInfo.getEmail(),
+                                    existingUserId);
+                        }
                     }
 
                     if (existingUserId != null) {
@@ -888,7 +905,8 @@ public class OAuth2Controller extends BaseApiController {
                     log.info("네이버 OAuth2 간편 회원가입 필요: {}", response.getSocialUserInfo());
 
                     // tenant_id 확인 (TenantContextHolder 우선, 그 다음 세션)
-                    String tenantId = com.coresolution.core.context.TenantContextHolder.getTenantId();
+                    String tenantId =
+                            com.coresolution.core.context.TenantContextHolder.getTenantId();
                     if (tenantId == null || tenantId.isEmpty()) {
                         // TenantContextHolder에 없으면 세션에서 확인
                         tenantId = (String) session.getAttribute("oauth2_tenant_id");

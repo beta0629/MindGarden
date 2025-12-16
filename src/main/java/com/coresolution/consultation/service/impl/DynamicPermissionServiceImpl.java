@@ -524,8 +524,7 @@ public class DynamicPermissionServiceImpl implements DynamicPermissionService {
 
     @Override
     @Transactional(readOnly = true,
-            propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW,
-            noRollbackFor = {org.springframework.orm.jpa.JpaSystemException.class, Exception.class})
+            propagation = org.springframework.transaction.annotation.Propagation.NOT_SUPPORTED)
     public List<String> getUserPermissionsAsStringList(User user) {
         try {
             log.debug("사용자 권한 목록 조회 (String 리스트): 사용자={}", user.getUserId());

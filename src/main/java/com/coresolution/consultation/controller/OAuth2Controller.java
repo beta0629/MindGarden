@@ -203,6 +203,27 @@ public class OAuth2Controller extends BaseApiController {
                     requestHost = request.getServerName() + ":" + request.getServerPort();
                 }
 
+                // 정규식 패턴 제거 (Nginx 서브도메인 패턴이 포함된 경우)
+                if (requestHost != null && requestHost.contains("~")) {
+                    // 정규식 패턴을 메인 도메인으로 변환
+                    if (requestHost.matches(".*\\.dev\\.core-solution\\.co\\.kr.*")) {
+                        requestHost = "dev.core-solution.co.kr";
+                        log.info("카카오 OAuth2 - 정규식 패턴 제거 및 메인 도메인 변환: {} -> {}", requestHost, requestHost);
+                    } else if (requestHost.matches(".*\\.dev\\.m-garden\\.co\\.kr.*")) {
+                        requestHost = "dev.m-garden.co.kr";
+                        log.info("카카오 OAuth2 - 정규식 패턴 제거 및 메인 도메인 변환: {} -> {}", requestHost, requestHost);
+                    } else {
+                        // 정규식 패턴에서 도메인 추출 시도
+                        String originalHost = requestHost;
+                        requestHost = requestHost.replaceAll(".*(dev\\.core-solution\\.co\\.kr|dev\\.m-garden\\.co\\.kr).*", "$1");
+                        if (requestHost.equals(originalHost)) {
+                            // 추출 실패 시 기본값 사용
+                            requestHost = "dev.core-solution.co.kr";
+                        }
+                        log.info("카카오 OAuth2 - 정규식 패턴에서 도메인 추출: {} -> {}", originalHost, requestHost);
+                    }
+                }
+
                 // 서브도메인을 메인 도메인으로 변환 (카카오 개발자 센터 등록 문제 해결)
                 if (requestHost != null && !requestHost.isEmpty()) {
                     String hostWithoutPort = requestHost.split(":")[0];

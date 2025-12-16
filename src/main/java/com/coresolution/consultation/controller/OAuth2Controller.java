@@ -602,7 +602,28 @@ public class OAuth2Controller extends BaseApiController {
                 }
             } catch (Exception e) {
                 log.error("네이버 OAuth2 인증 처리 중 오류", e);
-                response = oauth2FactoryService.authenticateWithProvider("NAVER", code);
+                // 트랜잭션이 롤백 전용으로 표시된 경우 명시적으로 롤백 처리
+                try {
+                    TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+                } catch (Exception txException) {
+                    log.debug("트랜잭션 상태 확인 실패 (이미 롤백되었거나 트랜잭션이 없는 경우): {}", txException.getMessage());
+                }
+                try {
+                    response = oauth2FactoryService.authenticateWithProvider("NAVER", code);
+                } catch (Exception authException) {
+                    log.error("네이버 OAuth2 인증 처리 중 오류 발생", authException);
+                    // 트랜잭션이 롤백 전용으로 표시된 경우 명시적으로 롤백 처리
+                    try {
+                        TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+                    } catch (Exception txException) {
+                        log.debug("트랜잭션 상태 확인 실패 (이미 롤백되었거나 트랜잭션이 없는 경우): {}", txException.getMessage());
+                    }
+                    String frontendUrl = getFrontendBaseUrl(request);
+                    String errorMessage = authException.getMessage() != null ? authException.getMessage() : "인증 처리 중 오류가 발생했습니다";
+                    return ResponseEntity.status(302).header("Location", frontendUrl + "/login?error="
+                            + URLEncoder.encode(errorMessage, StandardCharsets.UTF_8) + "&provider=NAVER")
+                            .build();
+                }
             }
 
             log.info("네이버 OAuth2 응답: success={}, requiresSignup={}, message={}",

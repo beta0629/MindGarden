@@ -205,16 +205,16 @@ public class OAuth2Controller extends BaseApiController {
 
                 // 정규식 패턴 제거 (Nginx 서브도메인 패턴이 포함된 경우)
                 if (requestHost != null && requestHost.contains("~")) {
+                    String originalHost = requestHost;
                     // 정규식 패턴을 메인 도메인으로 변환
                     if (requestHost.matches(".*\\.dev\\.core-solution\\.co\\.kr.*")) {
                         requestHost = "dev.core-solution.co.kr";
-                        log.info("카카오 OAuth2 - 정규식 패턴 제거 및 메인 도메인 변환: {} -> {}", requestHost, requestHost);
+                        log.info("카카오 OAuth2 - 정규식 패턴 제거 및 메인 도메인 변환: {} -> {}", originalHost, requestHost);
                     } else if (requestHost.matches(".*\\.dev\\.m-garden\\.co\\.kr.*")) {
                         requestHost = "dev.m-garden.co.kr";
-                        log.info("카카오 OAuth2 - 정규식 패턴 제거 및 메인 도메인 변환: {} -> {}", requestHost, requestHost);
+                        log.info("카카오 OAuth2 - 정규식 패턴 제거 및 메인 도메인 변환: {} -> {}", originalHost, requestHost);
                     } else {
                         // 정규식 패턴에서 도메인 추출 시도
-                        String originalHost = requestHost;
                         requestHost = requestHost.replaceAll(".*(dev\\.core-solution\\.co\\.kr|dev\\.m-garden\\.co\\.kr).*", "$1");
                         if (requestHost.equals(originalHost)) {
                             // 추출 실패 시 기본값 사용

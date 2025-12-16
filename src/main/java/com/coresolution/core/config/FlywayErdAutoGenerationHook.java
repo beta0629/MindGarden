@@ -1,7 +1,6 @@
 package com.coresolution.core.config;
 
 import com.coresolution.core.service.ErdGenerationService;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.flyway.FlywayMigrationStrategy;
@@ -9,6 +8,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Flyway 마이그레이션 후 ERD 자동 생성 Hook
@@ -45,11 +45,10 @@ public class FlywayErdAutoGenerationHook {
     }
 
     /**
-     * Flyway 마이그레이션 전략 커스터마이징
-     * 마이그레이션 완료 후 ERD 자동 생성
-     * 
-     * 주의: 개발 서버(dev 프로파일)에서는 ERD 자동 생성을 비활성화하여
-     * jpaSharedEM_entityManagerFactory 빈 초기화 순환 참조 문제를 방지합니다.
+     * Flyway 마이그레이션 전략 커스터마이징 마이그레이션 완료 후 ERD 자동 생성
+     *
+     * 주의: 개발 서버(dev 프로파일)에서는 ERD 자동 생성을 비활성화하여 jpaSharedEM_entityManagerFactory 빈 초기화 순환 참조 문제를
+     * 방지합니다.
      */
     @Bean
     @Profile("!test & !dev & !local") // 테스트, 개발, 로컬 환경에서는 비활성화
@@ -57,16 +56,16 @@ public class FlywayErdAutoGenerationHook {
         return flyway -> {
             // 기본 마이그레이션 실행
             flyway.migrate();
-            
+
             // 마이그레이션 완료 후 ERD 자동 생성
             if (autoGenerationEnabled && triggerOnMigration) {
                 log.info("🔄 Flyway 마이그레이션 완료 - ERD 자동 생성 시작");
-                
+
                 try {
                     // 전체 시스템 ERD 자동 생성
                     String createdBy = "system-flyway-hook";
                     erdGenerationService.generateFullSystemErd(defaultSchemaName, createdBy);
-                    
+
                     log.info("✅ ERD 자동 생성 완료 (Flyway 마이그레이션 후)");
                 } catch (Exception e) {
                     log.error("❌ ERD 자동 생성 실패 (Flyway 마이그레이션 후): {}", e.getMessage(), e);
@@ -75,10 +74,9 @@ public class FlywayErdAutoGenerationHook {
             }
         };
     }
-    
+
     /**
-     * 개발 서버용 Flyway 마이그레이션 전략 (ERD 자동 생성 없음)
-     * 개발 환경에서는 검증 오류 시 repair를 자동 실행하여 마이그레이션 진행
+     * 개발 서버용 Flyway 마이그레이션 전략 (ERD 자동 생성 없음) 개발 환경에서는 검증 오류 시 repair를 자동 실행하여 마이그레이션 진행
      */
     @Bean
     @Profile("dev")
@@ -90,8 +88,8 @@ public class FlywayErdAutoGenerationHook {
                 log.info("✅ Flyway 마이그레이션 완료 (개발 서버 - ERD 자동 생성 비활성화)");
             } catch (org.flywaydb.core.api.FlywayException e) {
                 // 검증 오류가 발생하면 repair를 실행하여 checksum 업데이트
-                if (e.getMessage() != null && (e.getMessage().contains("Validate failed") 
-                        || e.getMessage().contains("checksum mismatch") 
+                if (e.getMessage() != null && (e.getMessage().contains("Validate failed")
+                        || e.getMessage().contains("checksum mismatch")
                         || e.getMessage().contains("Migrations have failed validation"))) {
                     log.warn("⚠️ Flyway 검증 실패 - repair 실행하여 checksum 업데이트: {}", e.getMessage());
                     try {
@@ -100,10 +98,11 @@ public class FlywayErdAutoGenerationHook {
                         flyway.migrate();
                         log.info("✅ Flyway 마이그레이션 완료 (repair 후)");
                     } catch (Exception repairException) {
-                        log.error("❌ Flyway repair 실패: {}", repairException.getMessage(), repairException);
-                        // repair 실패해도 마이그레이션은 계속 시도 (개발 환경이므로)
-                        log.warn("⚠️ 개발 환경이므로 검증 오류를 무시하고 계속 진행합니다.");
-                        throw repairException;
+                        log.error("❌ Flyway repair 실패: {}", repairException.getMessage(),
+                                repairException);
+                        // 개발 환경에서는 repair 실패해도 애플리케이션 시작 계속 진행
+                        log.warn("⚠️ 개발 환경이므로 Flyway 검증 오류를 무시하고 애플리케이션을 계속 시작합니다.");
+                        // 예외를 던지지 않고 계속 진행 (개발 환경이므로)
                     }
                 } else {
                     // 다른 오류는 그대로 전파

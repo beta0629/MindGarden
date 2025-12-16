@@ -64,9 +64,15 @@ jobs:
           fi
           
           # dev.e-trinity.co.kr 인증서 확인 및 발급
+          DEV_ETRINITY_CERT_EXISTS=false
           if [ ! -f /etc/letsencrypt/live/dev.e-trinity.co.kr/fullchain.pem ]; then
             echo "⚠️ dev.e-trinity.co.kr 인증서가 없습니다. 발급 시도 중..."
-            sudo certbot --nginx -d dev.e-trinity.co.kr --non-interactive --agree-tos --email admin@e-trinity.co.kr --redirect || echo "⚠️ 인증서 발급 실패 (수동 발급 필요)"
+            if sudo certbot --nginx -d dev.e-trinity.co.kr --non-interactive --agree-tos --email admin@e-trinity.co.kr --redirect 2>/dev/null; then
+              DEV_ETRINITY_CERT_EXISTS=true
+              echo "✅ dev.e-trinity.co.kr 인증서 발급 성공"
+            else
+              echo "⚠️ 인증서 발급 실패 (수동 발급 필요) - 해당 서버 블록 비활성화"
+            fi
           else
             # 인증서가 있지만 잘못된 인증서일 수 있으므로 확인 후 재발급
             echo "🔍 dev.e-trinity.co.kr 인증서 확인 중..."
@@ -74,22 +80,142 @@ jobs:
             if [ "$CERT_CN" != "dev.e-trinity.co.kr" ]; then
               echo "⚠️ 잘못된 인증서 감지 (CN=$CERT_CN). 재발급 시도 중..."
               sudo certbot delete --cert-name dev.e-trinity.co.kr --non-interactive 2>/dev/null || true
-              sudo certbot --nginx -d dev.e-trinity.co.kr --non-interactive --agree-tos --email admin@e-trinity.co.kr --redirect || echo "⚠️ 인증서 재발급 실패 (수동 발급 필요)"
+              if sudo certbot --nginx -d dev.e-trinity.co.kr --non-interactive --agree-tos --email admin@e-trinity.co.kr --redirect 2>/dev/null; then
+                DEV_ETRINITY_CERT_EXISTS=true
+                echo "✅ dev.e-trinity.co.kr 인증서 재발급 성공"
+              else
+                echo "⚠️ 인증서 재발급 실패 (수동 발급 필요) - 해당 서버 블록 비활성화"
+              fi
+            else
+              DEV_ETRINITY_CERT_EXISTS=true
+              echo "✅ dev.e-trinity.co.kr 인증서 유효"
             fi
           fi
+          
+          # apply.dev.e-trinity.co.kr 인증서 확인 및 발급
+          APPLY_ETRINITY_CERT_EXISTS=false
           if [ ! -f /etc/letsencrypt/live/apply.dev.e-trinity.co.kr/fullchain.pem ]; then
             echo "⚠️ apply.dev.e-trinity.co.kr 인증서가 없습니다. 발급 시도 중..."
-            sudo certbot --nginx -d apply.dev.e-trinity.co.kr --non-interactive --agree-tos --email admin@e-trinity.co.kr || echo "⚠️ 인증서 발급 실패 (수동 발급 필요)"
+            if sudo certbot --nginx -d apply.dev.e-trinity.co.kr --non-interactive --agree-tos --email admin@e-trinity.co.kr 2>/dev/null; then
+              APPLY_ETRINITY_CERT_EXISTS=true
+              echo "✅ apply.dev.e-trinity.co.kr 인증서 발급 성공"
+            else
+              echo "⚠️ 인증서 발급 실패 (수동 발급 필요) - 해당 서버 블록 비활성화"
+            fi
+          else
+            APPLY_ETRINITY_CERT_EXISTS=true
+            echo "✅ apply.dev.e-trinity.co.kr 인증서 유효"
           fi
+          
+          # ops.dev.e-trinity.co.kr 인증서 확인 및 발급
+          OPS_ETRINITY_CERT_EXISTS=false
           if [ ! -f /etc/letsencrypt/live/ops.dev.e-trinity.co.kr/fullchain.pem ]; then
             echo "⚠️ ops.dev.e-trinity.co.kr 인증서가 없습니다. 발급 시도 중..."
-            sudo certbot --nginx -d ops.dev.e-trinity.co.kr --non-interactive --agree-tos --email admin@e-trinity.co.kr || echo "⚠️ 인증서 발급 실패 (수동 발급 필요)"
+            if sudo certbot --nginx -d ops.dev.e-trinity.co.kr --non-interactive --agree-tos --email admin@e-trinity.co.kr 2>/dev/null; then
+              OPS_ETRINITY_CERT_EXISTS=true
+              echo "✅ ops.dev.e-trinity.co.kr 인증서 발급 성공"
+            else
+              echo "⚠️ 인증서 발급 실패 (수동 발급 필요) - 해당 서버 블록 비활성화"
+            fi
+          else
+            OPS_ETRINITY_CERT_EXISTS=true
+            echo "✅ ops.dev.e-trinity.co.kr 인증서 유효"
           fi
           
           # Nginx 설정 업데이트 (통합 설정 파일 우선)
           if [ -f /tmp/core-solution-dev.conf ]; then
             echo "🌐 Nginx 통합 설정 업데이트 중..."
             sudo cp /tmp/core-solution-dev.conf /etc/nginx/sites-available/core-solution-dev
+            
+            # 인증서가 없는 서버 블록 주석 처리 (Python 스크립트 사용)
+            if [ "$DEV_ETRINITY_CERT_EXISTS" = "false" ] || [ "$APPLY_ETRINITY_CERT_EXISTS" = "false" ] || [ "$OPS_ETRINITY_CERT_EXISTS" = "false" ]; then
+              echo "⚠️ 인증서가 없는 서버 블록 비활성화 중..."
+              sudo python3 << PYTHON_SCRIPT
+import re
+import os
+
+config_file = '/etc/nginx/sites-available/core-solution-dev'
+
+# 인증서 존재 여부 확인
+dev_cert_exists = os.path.exists('/etc/letsencrypt/live/dev.e-trinity.co.kr/fullchain.pem')
+apply_cert_exists = os.path.exists('/etc/letsencrypt/live/apply.dev.e-trinity.co.kr/fullchain.pem')
+ops_cert_exists = os.path.exists('/etc/letsencrypt/live/ops.dev.e-trinity.co.kr/fullchain.pem')
+
+try:
+    with open(config_file, 'r') as f:
+        lines = f.readlines()
+    
+    result = []
+    in_dev_server = False
+    in_apply_server = False
+    in_ops_server = False
+    brace_count = 0
+    i = 0
+    
+    while i < len(lines):
+        line = lines[i]
+        
+        # dev.e-trinity.co.kr 서버 블록 감지
+        if 'server_name dev.e-trinity.co.kr;' in line:
+            in_dev_server = True
+            brace_count = 0
+            if not dev_cert_exists:
+                # 주석 블록 시작
+                result.append('# DISABLED_NO_CERT: 다음 서버 블록은 인증서가 없어 비활성화됨\n')
+        
+        # apply.dev.e-trinity.co.kr 서버 블록 감지
+        elif 'server_name apply.dev.e-trinity.co.kr;' in line:
+            in_apply_server = True
+            brace_count = 0
+            if not apply_cert_exists:
+                result.append('# DISABLED_NO_CERT: 다음 서버 블록은 인증서가 없어 비활성화됨\n')
+        
+        # ops.dev.e-trinity.co.kr 서버 블록 감지
+        elif 'server_name ops.dev.e-trinity.co.kr;' in line:
+            in_ops_server = True
+            brace_count = 0
+            if not ops_cert_exists:
+                result.append('# DISABLED_NO_CERT: 다음 서버 블록은 인증서가 없어 비활성화됨\n')
+        
+        # 서버 블록 내부 처리
+        if in_dev_server or in_apply_server or in_ops_server:
+            brace_count += line.count('{')
+            brace_count -= line.count('}')
+            
+            should_disable = False
+            if in_dev_server and not dev_cert_exists:
+                should_disable = True
+            elif in_apply_server and not apply_cert_exists:
+                should_disable = True
+            elif in_ops_server and not ops_cert_exists:
+                should_disable = True
+            
+            if should_disable:
+                result.append('# DISABLED_NO_CERT: ' + line)
+            else:
+                result.append(line)
+            
+            # 서버 블록 종료
+            if brace_count == 0:
+                in_dev_server = False
+                in_apply_server = False
+                in_ops_server = False
+        else:
+            result.append(line)
+        
+        i += 1
+    
+    with open(config_file, 'w') as f:
+        f.writelines(result)
+    
+    print("✅ 인증서 없는 서버 블록 비활성화 완료")
+except Exception as e:
+    print(f"⚠️ 서버 블록 주석 처리 실패: {e}")
+    import sys
+    sys.exit(0)  # 실패해도 계속 진행
+PYTHON_SCRIPT
+            fi
+            
             sudo ln -sf /etc/nginx/sites-available/core-solution-dev /etc/nginx/sites-enabled/core-solution-dev
             echo "✅ 통합 설정 파일 적용 완료"
           fi

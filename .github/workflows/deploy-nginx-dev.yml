@@ -27,7 +27,7 @@ jobs:
         port: 22
         timeout: 120s
         source: "config/nginx/core-solution-dev.conf"
-        target: "/tmp/core-solution-dev.conf"
+        target: "/tmp/"
         overwrite: true
         
     - name: 📤 Nginx 설정 파일 업로드 (개발 서버 - 기존 도메인)
@@ -39,7 +39,7 @@ jobs:
         port: 22
         timeout: 120s
         source: "config/nginx/dev.m-garden.co.kr.conf"
-        target: "/tmp/dev.m-garden.co.kr.conf"
+        target: "/tmp/"
         overwrite: true
         
     - name: 🔄 Nginx 설정 적용 및 재시작

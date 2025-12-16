@@ -185,6 +185,7 @@ public class NaverOAuth2ServiceImpl extends AbstractOAuth2Service {
             
             // 응답 본문 전체 로깅 (디버깅용)
             log.info("네이버 토큰 응답 본문: {}", tokenInfo);
+            log.info("네이버 토큰 요청 시 사용한 redirect_uri: {}", redirectUriToUse);
             
             if (tokenInfo == null) {
                 log.error("네이버 토큰 응답이 null 입니다. status={}, headers={}", response.getStatusCode(), response.getHeaders());

@@ -75,6 +75,9 @@ public class OAuth2Controller extends BaseApiController {
     @Value("${spring.security.oauth2.client.registration.naver.scope:name,email}")
     private String naverScope;
 
+    @Value("${spring.security.oauth2.domain.naver-callback-domain:dev.core-solution.co.kr}")
+    private String naverCallbackDomain;
+
     @Value("${frontend.base-url:${FRONTEND_BASE_URL:}}")
     private String frontendBaseUrl;
 
@@ -292,7 +295,7 @@ public class OAuth2Controller extends BaseApiController {
                 log.info("네이버 OAuth2 - 모바일 클라이언트 감지 (Redis 저장): state={}", state);
             }
 
-            // 콜백 URL 동적 생성 (서브도메인은 항상 dev.core-solution.co.kr로 변환 - 네이버 개발자 센터 등록 문제 해결)
+            // 콜백 URL 동적 생성 (설정 파일에서 네이버 콜백 도메인 가져오기)
             String callbackUrl = null;
             try {
                 // 프록시 헤더 확인 (X-Forwarded-Proto, X-Forwarded-Host)
@@ -301,18 +304,25 @@ public class OAuth2Controller extends BaseApiController {
                     requestScheme = request.getScheme();
                 }
 
-                // 네이버 개발자 센터에 등록된 도메인 사용 (dev.core-solution.co.kr)
-                // 운영 환경에서는 환경 변수나 설정 파일에서 가져올 수 있도록 확장 가능
-                String naverCallbackDomain = System.getenv("NAVER_CALLBACK_DOMAIN");
-                if (naverCallbackDomain == null || naverCallbackDomain.isEmpty()) {
-                    // 개발 환경 기본값: dev.core-solution.co.kr
-                    // 운영 환경에서는 환경 변수로 설정 필요
-                    naverCallbackDomain = "dev.core-solution.co.kr";
+                // 설정 파일에서 네이버 콜백 도메인 가져오기 (환경 변수로도 오버라이드 가능)
+                String naverCallbackDomainToUse = naverCallbackDomain;
+                
+                // 환경 변수에서도 확인 (운영 환경에서 설정 가능)
+                String envNaverCallbackDomain = System.getenv("NAVER_CALLBACK_DOMAIN");
+                if (envNaverCallbackDomain != null && !envNaverCallbackDomain.isEmpty()) {
+                    naverCallbackDomainToUse = envNaverCallbackDomain;
+                    log.info("네이버 OAuth2 - 환경 변수에서 콜백 도메인 사용: {}", naverCallbackDomainToUse);
+                }
+                
+                // 기본값 확인
+                if (naverCallbackDomainToUse == null || naverCallbackDomainToUse.isEmpty()) {
+                    naverCallbackDomainToUse = "dev.core-solution.co.kr";
+                    log.warn("네이버 OAuth2 - 설정값이 없어 기본값 사용: {}", naverCallbackDomainToUse);
                 }
 
-                callbackUrl = requestScheme + "://" + naverCallbackDomain + "/api/auth/naver/callback";
+                callbackUrl = requestScheme + "://" + naverCallbackDomainToUse + "/api/auth/naver/callback";
                 log.info("네이버 OAuth2 - redirect URI 생성: {} (도메인={}, scheme={})", 
-                        callbackUrl, naverCallbackDomain, requestScheme);
+                        callbackUrl, naverCallbackDomainToUse, requestScheme);
             } catch (Exception e) {
                 log.error("네이버 OAuth2 - redirect URI 동적 생성 실패", e);
             }

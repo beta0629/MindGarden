@@ -580,7 +580,10 @@ public class OAuth2Controller extends BaseApiController {
                             savedRedirectUri, callbackRedirectUri, session.getId());
 
                     // 네이버 개발자 센터에 등록된 URL 목록 (설정 파일에서 읽어옴)
-                    List<String> registeredUrls = Arrays.asList(naverRegisteredUrls.split(","));
+                    List<String> registeredUrls = Arrays.stream(naverRegisteredUrls.split(","))
+                            .map(String::trim)
+                            .filter(url -> !url.isEmpty())
+                            .toList();
                     log.debug("네이버 등록된 URL 목록: {}", registeredUrls);
 
                     if (savedRedirectUri != null && !savedRedirectUri.isEmpty()) {
@@ -637,8 +640,7 @@ public class OAuth2Controller extends BaseApiController {
                                     // 등록된 URL 목록이 비어있으면 설정 파일의 기본 도메인 사용
                                     String fallbackUrl = requestScheme + "://" + configuredDomain
                                             + portSuffix + naverCallbackPath;
-                                    log.warn(
-                                            "⚠️ 네이버 콜백 - 등록된 URL 목록이 비어있음. 설정 파일의 기본 도메인 사용: {}",
+                                    log.warn("⚠️ 네이버 콜백 - 등록된 URL 목록이 비어있음. 설정 파일의 기본 도메인 사용: {}",
                                             fallbackUrl);
                                     callbackRedirectUri = fallbackUrl;
                                 }

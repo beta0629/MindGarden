@@ -25,6 +25,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class PsychAssessmentController extends BaseApiController {
 
     private final PsychAssessmentIngestService ingestService;
+    private final com.coresolution.consultation.assessment.service.PsychAssessmentReportService reportService;
 
     @PostMapping(value = "/documents", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("isAuthenticated()")
@@ -40,6 +41,15 @@ public class PsychAssessmentController extends BaseApiController {
         log.info("Psych assessment uploaded: tenantId={}, type={}, documentId={}", tenantId, type,
                 response.getDocumentId());
         return success(response);
+    }
+
+    @PostMapping("/documents/{documentId}/report")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "최신 리포트 생성", description = "추출된 지표를 기반으로 최신 리포트를 생성합니다(MVP).")
+    public ResponseEntity<ApiResponse<java.util.Map<String, Object>>> generateReport(
+            @PathVariable Long documentId) {
+        Long reportId = reportService.generateLatestReport(documentId);
+        return success(java.util.Map.of("reportId", reportId));
     }
 }
 

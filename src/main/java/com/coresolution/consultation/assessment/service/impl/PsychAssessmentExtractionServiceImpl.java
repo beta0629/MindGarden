@@ -8,15 +8,14 @@ import com.coresolution.consultation.assessment.repository.PsychAssessmentDocume
 import com.coresolution.consultation.assessment.repository.PsychAssessmentExtractionRepository;
 import com.coresolution.consultation.assessment.service.PsychAssessmentExtractionService;
 import com.coresolution.core.context.TenantContextHolder;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
- * 템플릿 감지/필드 추출 MVP 구현.
- * - 실제 OCR/템플릿별 좌표 추출은 확장 포인트로 남김
- * - 현재는 "업로드된 문서에 대해 추출 레코드 생성 + NEEDS_REVIEW"까지 제공
+ * 템플릿 감지/필드 추출 MVP 구현. - 실제 OCR/템플릿별 좌표 추출은 확장 포인트로 남김 - 현재는 "업로드된 문서에 대해 추출 레코드 생성 +
+ * NEEDS_REVIEW"까지 제공
  */
 @Slf4j
 @Service
@@ -46,30 +45,28 @@ public class PsychAssessmentExtractionServiceImpl implements PsychAssessmentExtr
         @Async
         public void processAsync(Long documentId) {
             String tenantId = TenantContextHolder.getRequiredTenantId();
-            PsychAssessmentDocument doc = documentRepository.findByTenantIdAndId(tenantId, documentId)
-                    .orElseThrow(() -> new IllegalArgumentException("문서를 찾을 수 없습니다."));
+            PsychAssessmentDocument doc =
+                    documentRepository.findByTenantIdAndId(tenantId, documentId)
+                            .orElseThrow(() -> new IllegalArgumentException("문서를 찾을 수 없습니다."));
 
             String templateId = null;
             String extractionMode = "GENERIC";
             String ocrEngine = "UNCONFIGURED";
 
             PsychAssessmentExtraction extraction = PsychAssessmentExtraction.builder()
-                    .tenantId(tenantId)
-                    .documentId(doc.getId())
-                    .templateId(templateId)
-                    .extractionMode(extractionMode)
-                    .ocrEngine(ocrEngine)
-                    .ocrConfidence(null)
+                    .tenantId(tenantId).documentId(doc.getId()).templateId(templateId)
+                    .extractionMode(extractionMode).ocrEngine(ocrEngine).ocrConfidence(null)
                     .extractedJson(null)
                     .validationJson("{\"warnings\":[\"OCR/템플릿 추출이 아직 구성되지 않았습니다.\"],\"errors\":[]}")
-                    .status(PsychAssessmentExtractionStatus.NEEDS_REVIEW)
-                    .build();
+                    .status(PsychAssessmentExtractionStatus.NEEDS_REVIEW).build();
 
             PsychAssessmentExtraction savedExtraction = extractionRepository.save(extraction);
 
             var validation = validationService.validate(savedExtraction, java.util.List.of());
             savedExtraction.setValidationJson(validation.validationJson());
-            savedExtraction.setStatus(validation.needsReview() ? PsychAssessmentExtractionStatus.NEEDS_REVIEW : PsychAssessmentExtractionStatus.DONE);
+            savedExtraction.setStatus(
+                    validation.needsReview() ? PsychAssessmentExtractionStatus.NEEDS_REVIEW
+                            : PsychAssessmentExtractionStatus.DONE);
             extractionRepository.save(savedExtraction);
 
             doc.setStatus(PsychAssessmentDocumentStatus.OCR_DONE);
@@ -92,16 +89,11 @@ public class PsychAssessmentExtractionServiceImpl implements PsychAssessmentExtr
         String ocrEngine = "UNCONFIGURED";
 
         PsychAssessmentExtraction extraction = PsychAssessmentExtraction.builder()
-                .tenantId(tenantId)
-                .documentId(doc.getId())
-                .templateId(templateId)
-                .extractionMode(extractionMode)
-                .ocrEngine(ocrEngine)
-                .ocrConfidence(null)
+                .tenantId(tenantId).documentId(doc.getId()).templateId(templateId)
+                .extractionMode(extractionMode).ocrEngine(ocrEngine).ocrConfidence(null)
                 .extractedJson(null)
                 .validationJson("{\"warnings\":[\"OCR/템플릿 추출이 아직 구성되지 않았습니다.\"],\"errors\":[]}")
-                .status(PsychAssessmentExtractionStatus.NEEDS_REVIEW)
-                .build();
+                .status(PsychAssessmentExtractionStatus.NEEDS_REVIEW).build();
 
         PsychAssessmentExtraction savedExtraction = extractionRepository.save(extraction);
 
@@ -109,14 +101,16 @@ public class PsychAssessmentExtractionServiceImpl implements PsychAssessmentExtr
         // 검증 결과만 갱신해 "사람 검수 필요" 상태를 명확히 함.
         var validation = validationService.validate(savedExtraction, java.util.List.of());
         savedExtraction.setValidationJson(validation.validationJson());
-        savedExtraction.setStatus(validation.needsReview() ? PsychAssessmentExtractionStatus.NEEDS_REVIEW : PsychAssessmentExtractionStatus.DONE);
+        savedExtraction
+                .setStatus(validation.needsReview() ? PsychAssessmentExtractionStatus.NEEDS_REVIEW
+                        : PsychAssessmentExtractionStatus.DONE);
         extractionRepository.save(savedExtraction);
 
         doc.setStatus(PsychAssessmentDocumentStatus.OCR_DONE);
         documentRepository.save(doc);
 
-        log.info("Psych extraction created (MVP): tenantId={}, documentId={}, status={}",
-                tenantId, documentId, savedExtraction.getStatus());
+        log.info("Psych extraction created (MVP): tenantId={}, documentId={}, status={}", tenantId,
+                documentId, savedExtraction.getStatus());
     }
 }
 

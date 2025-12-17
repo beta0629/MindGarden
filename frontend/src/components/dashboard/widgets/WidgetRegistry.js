@@ -71,6 +71,7 @@ import SystemOverviewWidget from './admin/SystemOverviewWidget';
 import TodayStatsWidget from './admin/TodayStatsWidget';
 import PendingDepositsWidget from './admin/PendingDepositsWidget.js';
 import VacationStatsWidget from './admin/VacationStatsWidget.js';
+import PsychAssessmentAdminWidget from './admin/PsychAssessmentAdminWidget';
 
 // 학원 특화 위젯 (학원 업종에서만 사용)
 // import AcademyScheduleWidget from './academy/AcademyScheduleWidget';
@@ -118,7 +119,8 @@ const COMMON_WIDGETS = {
   'admin-management': ManagementGridWidget,
   'admin-system-status': SystemStatusWidget,
   'admin-system-tools': SystemToolsWidget,
-  'admin-permissions': PermissionWidget
+  'admin-permissions': PermissionWidget,
+  'psych-assessment-admin': PsychAssessmentAdminWidget
 };
 
 /**

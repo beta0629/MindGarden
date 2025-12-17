@@ -82,7 +82,8 @@ export const useWidget = (config = {}, user = null, options = {}) => {
     url,
     params = {},
     refreshInterval,
-    transform
+    transform,
+    endpoints = [] // multi-api 전용
   } = dataSource;
 
 /**
@@ -144,7 +145,8 @@ export const useWidget = (config = {}, user = null, options = {}) => {
    * API 데이터 로드
    */
   const loadData = useCallback(async (showLoading = true) => {
-    if (type !== 'api' || !url) {
+    // static 타입은 그대로 종료
+    if (type === 'static') {
       if (showLoading) setLoading(false);
       return;
     }
@@ -155,7 +157,7 @@ export const useWidget = (config = {}, user = null, options = {}) => {
       }
       setError(null);
 
-      // 캐시된 데이터 확인
+      // 캐시된 데이터 확인 (api/multi-api 모두 동일)
       const cachedData = getCachedData();
       if (cachedData) {
         setData(cachedData);
@@ -164,35 +166,74 @@ export const useWidget = (config = {}, user = null, options = {}) => {
         return;
       }
 
-      console.debug(`🔄 위젯 데이터 로드: ${url}`, params);
+      // 단일 API
+      if (type === 'api') {
+        if (!url) {
+          if (showLoading) setLoading(false);
+          return;
+        }
+        console.debug(`🔄 위젯 데이터 로드: ${url}`, params);
 
-      // API 호출
-      const response = await apiGet(url, params);
-      
-      if (response !== null && response !== undefined) {
-        const transformedData = transformData(response);
-        setData(transformedData);
+        const response = await apiGet(url, params);
+        if (response !== null && response !== undefined) {
+          const transformedData = transformData(response);
+          setData(transformedData);
+          setLastUpdated(new Date());
+          setRetryAttempt(0);
+          setCachedData(transformedData);
+          console.debug(`✅ 위젯 데이터 로드 성공: ${url}`, transformedData);
+        } else {
+          setData(config.defaultValue || null);
+          console.warn(`⚠️ 위젯 데이터 응답이 비어있음: ${url}`);
+        }
+        return;
+      }
+
+      // 다중 API (표준 위젯들이 이미 사용 중인 type)
+      if (type === 'multi-api') {
+        const safeEndpoints = Array.isArray(endpoints) ? endpoints : [];
+        if (safeEndpoints.length === 0) {
+          setData(config.defaultValue || null);
+          return;
+        }
+
+        const responses = await Promise.all(
+          safeEndpoints.map(async (ep) => {
+            const epUrl = ep?.url;
+            const epParams = ep?.params || {};
+            const fallback = ep?.fallback;
+            if (!epUrl) return fallback;
+            try {
+              const r = await apiGet(epUrl, epParams);
+              return r !== null && r !== undefined ? transformData(r) : fallback;
+            } catch (e) {
+              return fallback;
+            }
+          })
+        );
+
+        const multiTransformed = transform && typeof transform === 'function'
+          ? transform(responses)
+          : responses;
+
+        setData(multiTransformed);
         setLastUpdated(new Date());
         setRetryAttempt(0);
-        
-        // 캐시 저장
-        setCachedData(transformedData);
-        
-        console.debug(`✅ 위젯 데이터 로드 성공: ${url}`, transformedData);
-      } else {
-        // 응답이 null/undefined인 경우 기본값 사용
-        setData(config.defaultValue || null);
-        console.warn(`⚠️ 위젯 데이터 응답이 비어있음: ${url}`);
+        setCachedData(multiTransformed);
+        return;
       }
+
+      // 알 수 없는 타입
+      setData(config.defaultValue || null);
     } catch (err) {
-      console.error(`❌ 위젯 데이터 로드 실패: ${url}`, err);
+      console.error(`❌ 위젯 데이터 로드 실패: ${url || 'multi-api'}`, err);
       
       const errorMessage = err.message || WIDGET_CONSTANTS.ERROR_MESSAGES.LOAD_FAILED;
       setError(errorMessage);
       
       // 재시도 로직
       if (retryAttempt < retryCount) {
-        console.log(`🔄 위젯 데이터 재시도 (${retryAttempt + 1}/${retryCount}): ${url}`);
+        console.log(`🔄 위젯 데이터 재시도 (${retryAttempt + 1}/${retryCount}): ${url || 'multi-api'}`);
         setRetryAttempt(prev => prev + 1);
         
         retryTimeoutRef.current = setTimeout(() => {
@@ -208,7 +249,7 @@ export const useWidget = (config = {}, user = null, options = {}) => {
       }
     }
   }, [
-    type, url, params, getCachedData, setCachedData, transformData, 
+    type, url, params, endpoints, transform, getCachedData, setCachedData, transformData, 
     config.defaultValue, retryAttempt, retryCount, retryDelay
   ]);
 

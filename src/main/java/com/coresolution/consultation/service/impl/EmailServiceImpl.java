@@ -16,11 +16,16 @@ import com.coresolution.consultation.dto.EmailRequest;
 import com.coresolution.consultation.dto.EmailResponse;
 import com.coresolution.consultation.service.EmailService;
 import com.coresolution.core.context.TenantContextHolder;
+import com.coresolution.consultation.service.CommonCodeService;
+import com.coresolution.consultation.entity.CommonCode;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import org.springframework.beans.factory.annotation.Value;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.extern.slf4j.Slf4j;
@@ -38,6 +43,14 @@ public class EmailServiceImpl implements EmailService {
     
     @Autowired
     private JavaMailSender javaMailSender;
+
+    @Autowired
+    private CommonCodeService commonCodeService;
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
+    @Value("${email.block-legacy-branch-recipients:true}")
+    private boolean blockLegacyBranchRecipients;
     
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(5);
     private final Map<String, EmailResponse> emailStatusMap = new ConcurrentHashMap<>();
@@ -386,6 +399,11 @@ public class EmailServiceImpl implements EmailService {
         if (!StringUtils.hasText(request.getToEmail())) {
             throw new IllegalArgumentException(EmailConstants.ERROR_EMAIL_INVALID_RECIPIENT);
         }
+
+        // 지점관리 미사용 정책: BRANCH 공통코드(레거시 지점 이메일)로의 발송을 전면 차단
+        if (blockLegacyBranchRecipients && isLegacyBranchRecipient(request.getToEmail())) {
+            throw new IllegalArgumentException("레거시 지점 이메일로는 발송하지 않습니다.");
+        }
         
         if (!StringUtils.hasText(request.getSubject())) {
             throw new IllegalArgumentException("이메일 제목은 필수입니다.");
@@ -393,6 +411,44 @@ public class EmailServiceImpl implements EmailService {
         
         if (!StringUtils.hasText(request.getContent())) {
             throw new IllegalArgumentException("이메일 내용은 필수입니다.");
+        }
+    }
+
+    private boolean isLegacyBranchRecipient(String toEmail) {
+        try {
+            String tenantId = TenantContextHolder.getTenantId();
+            List<CommonCode> branchCodes = commonCodeService.getActiveCommonCodesByGroup("BRANCH");
+            if (branchCodes == null || branchCodes.isEmpty()) {
+                return false;
+            }
+
+            for (CommonCode code : branchCodes) {
+                String extra = code.getExtraData();
+                if (!StringUtils.hasText(extra)) {
+                    continue;
+                }
+                String email = extractEmailFromExtraData(extra);
+                if (StringUtils.hasText(email) && toEmail.equalsIgnoreCase(email.trim())) {
+                    log.warn("⚠️ 레거시 지점 이메일 수신자 차단: tenantId={}, codeValue={}, to={}",
+                            tenantId, code.getCodeValue(), toEmail);
+                    return true;
+                }
+            }
+            return false;
+        } catch (Exception e) {
+            // 차단 로직이 실패해도 이메일 시스템 전체를 막지 않도록 "차단하지 않음"으로 폴백
+            log.warn("레거시 지점 이메일 차단 검사 실패(무시): to={}", toEmail, e);
+            return false;
+        }
+    }
+
+    private String extractEmailFromExtraData(String extraDataJson) {
+        try {
+            JsonNode node = objectMapper.readTree(extraDataJson);
+            JsonNode emailNode = node.get("email");
+            return emailNode != null && !emailNode.isNull() ? emailNode.asText() : null;
+        } catch (Exception e) {
+            return null;
         }
     }
     

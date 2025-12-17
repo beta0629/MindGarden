@@ -26,6 +26,7 @@ public class PsychAssessmentController extends BaseApiController {
 
     private final PsychAssessmentIngestService ingestService;
     private final com.coresolution.consultation.assessment.service.PsychAssessmentReportService reportService;
+    private final com.coresolution.consultation.assessment.service.PsychAssessmentStatsService statsService;
 
     @PostMapping(value = "/documents", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("isAuthenticated()")
@@ -50,6 +51,13 @@ public class PsychAssessmentController extends BaseApiController {
             @PathVariable Long documentId) {
         Long reportId = reportService.generateLatestReport(documentId);
         return success(java.util.Map.of("reportId", reportId));
+    }
+
+    @GetMapping("/stats")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "심리검사 분석 통계(MVP)", description = "테넌트 단위 업로드/추출/리포트 생성 통계를 제공합니다.")
+    public ResponseEntity<ApiResponse<java.util.Map<String, Object>>> stats() {
+        return success(statsService.getTenantStats());
     }
 }
 

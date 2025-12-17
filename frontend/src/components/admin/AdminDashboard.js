@@ -5,7 +5,7 @@ import notificationManager from '../../utils/notification';
 import { useNavigate } from 'react-router-dom';
 import { RoleUtils, USER_ROLES } from '../../constants/roles';
 import { WIDGET_CONSTANTS } from '../../constants/widgetConstants';
-import { FaUsers, FaUserTie, FaLink, FaCalendarAlt, FaCalendarCheck, FaCog, FaDollarSign, FaChartLine, FaCogs, FaBox, FaShoppingCart, FaCheckCircle, FaWallet, FaTruck, FaSyncAlt, FaExclamationTriangle, FaBuilding, FaMapMarkerAlt, FaUserCog, FaToggleOn, FaCompressAlt, FaChartBar, FaUserGraduate, FaRedo, FaFileExport, FaBell, FaDatabase, FaRocket, FaShieldAlt } from 'react-icons/fa';
+import { FaUsers, FaUserTie, FaLink, FaCalendarAlt, FaCalendarCheck, FaCog, FaDollarSign, FaChartLine, FaCogs, FaBox, FaShoppingCart, FaCheckCircle, FaWallet, FaTruck, FaSyncAlt, FaExclamationTriangle, FaBuilding, FaMapMarkerAlt, FaUserCog, FaToggleOn, FaCompressAlt, FaChartBar, FaUserGraduate, FaRedo, FaFileExport, FaBell, FaDatabase, FaRocket, FaShieldAlt, FaFileAlt } from 'react-icons/fa';
 import { Calendar, CheckCircle, TrendingUp, AlertTriangle, BarChart, Settings, LayoutDashboard, Heart, Trophy, Users, CalendarDays, User, Clock, PieChart, Target, Shield, Activity, Link2, DollarSign, RotateCcw, Receipt, MessageSquare, Sparkles, XCircle } from 'lucide-react';
 import SimpleLayout from '../layout/SimpleLayout';
 import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
@@ -1068,6 +1068,14 @@ const AdminDashboard = ({ user: propUser }) => {
                         </div>
                         <h3>메시지 관리</h3>
                         <p className="mg-management-description">상담사-내담자 메시지를 관리합니다</p>
+                    </div>
+
+                    <div className="mg-management-card" onClick={() => navigate(ADMIN_ROUTES.PSYCH_ASSESSMENTS)}>
+                        <div className="mg-management-icon">
+                            <FaFileAlt />
+                        </div>
+                        <h3>심리검사 리포트(AI)</h3>
+                        <p className="mg-management-description">TCI/MMPI 업로드 및 리포트 생성을 관리합니다</p>
                     </div>
                     
                     <div className="mg-management-card" onClick={() => navigate('/admin/wellness')}>

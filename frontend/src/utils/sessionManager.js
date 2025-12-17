@@ -366,7 +366,20 @@ class SessionManager {
             localStorage.removeItem('sessionInfo');
             localStorage.removeItem('accessToken');
             localStorage.removeItem('refreshToken');
+            
+            // ⚠️ 표준화/멀티테넌트: 로그아웃 후에도 "현재 접속 서브도메인" 컨텍스트는 유지해야 함
+            // (subdomain → tenantId 자동 매핑을 위해 subdomain 관련 값은 보존)
+            const preserved = {
+                subdomain_tenant_id: sessionStorage.getItem('subdomain_tenant_id'),
+                subdomain: sessionStorage.getItem('subdomain')
+            };
             sessionStorage.clear();
+            if (preserved.subdomain_tenant_id) {
+                sessionStorage.setItem('subdomain_tenant_id', preserved.subdomain_tenant_id);
+            }
+            if (preserved.subdomain) {
+                sessionStorage.setItem('subdomain', preserved.subdomain);
+            }
             
             // 쿠키 정리 (가능한 범위에서)
             document.cookie = 'JSESSIONID=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
@@ -380,7 +393,8 @@ class SessionManager {
             
             // 로그인 페이지로 리다이렉트
             console.log('🔍 로그인 페이지로 리다이렉트');
-            window.location.href = '/login';
+            // 현재 origin(서브도메인 포함) 유지
+            window.location.replace(`${window.location.origin}/login`);
         }
     }
     

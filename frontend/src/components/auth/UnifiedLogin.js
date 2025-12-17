@@ -243,6 +243,8 @@ const UnifiedLogin = () => {
       const tenantId = searchParams.get('tenantId') || sessionStorage.getItem('subdomain_tenant_id');
 
       console.log('📝 간편 회원가입 필요 감지 (signup=required):', { provider, tenantId, email });
+      // 사용자 안내 메시지 (표준: notificationManager 사용, alert 금지)
+      notificationManager.show(`${provider} 소셜 로그인 성공! 회원가입을 완료해주세요.`, 'success');
 
       setSocialUserInfo({
         provider,

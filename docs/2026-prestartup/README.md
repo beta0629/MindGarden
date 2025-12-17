@@ -12,9 +12,6 @@
 
 ## 기존 문서(참고)
 
-- 기존 초안(As-Is): `docs/project-management/archive/26년도사업계획서.md`
-- 보안/인증 표준: `docs/standards/SECURITY_AUTHENTICATION_STANDARD.md`
-- 배포 표준: `docs/standards/DEPLOYMENT_STANDARD.md`
-- 온보딩 데이터 저장 표준: `docs/standards/ONBOARDING_DATA_STORAGE_STANDARD.md`
+PPT/제출본에는 링크를 넣지 않습니다. 내부 작성 시 참고용으로만 활용합니다.
 
 

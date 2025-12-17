@@ -9,16 +9,21 @@ CoreSolution은 멀티테넌트 SaaS로서 다음을 목표로 합니다.
 - 운영 관점에서 **감사/추적 가능성** 확보(로그/이력)
 - AI 기능 도입 시 **오판/환각 방지** 및 **사람 검수 플로우** 내재화
 
-## 2) 표준화 문서 근거(필수)
+## 2) 표준화 근거(증빙) — 링크 없이 요약
 
-- 보안/인증: `docs/standards/SECURITY_AUTHENTICATION_STANDARD.md`, `docs/standards/SECURITY_STANDARD.md`
-- 암호화: `docs/standards/ENCRYPTION_STANDARD.md`
-- 파일 저장: `docs/standards/FILE_STORAGE_STANDARD.md`
-- 로깅/마스킹: `docs/standards/LOGGING_STANDARD.md`
-- 환경변수/키 관리: `docs/standards/ENVIRONMENT_VARIABLE_STANDARD.md`
-- 에러 처리: `docs/standards/ERROR_HANDLING_STANDARD.md`, `docs/standards/API_ERROR_HANDLING_STANDARD.md`
-- 권한/세션: `docs/standards/TENANT_ROLE_SYSTEM_STANDARD.md`, `docs/standards/PERMISSION_SYSTEM_STANDARD.md`, `docs/standards/SESSION_STANDARD.md`
-- 배포: `docs/standards/DEPLOYMENT_STANDARD.md`
+| 구분 | 표준 문서명 | 버전 | 작성일 | 핵심 준수 항목 |
+|---|---|---:|---:|---|
+| 보안/인증 | 보안 및 인증 표준 | 1.0.0 | 2025-12-02 | 키 환경변수 관리, 최소권한, 감사, 하드코딩 금지 |
+| 보안(일반) | 보안 표준 | 1.0.0 | 2025-12-02 | 심층방어, 민감정보 보호, 운영 체크리스트 |
+| 암호화 | 암호화 표준 | 1.0.0 | 2025-12-02 | AES-GCM, 키 버전/로테이션 |
+| 파일 저장 | 파일 저장 표준 | 1.0.0 | 2025-12-02 | 업로드/권한/감사, 민감문서 통제 |
+| 로깅 | 로깅 표준 | 1.0.0 | 2025-12-02 | 구조화 로깅, 민감정보 마스킹/미기록 |
+| 환경변수 | 환경변수 표준 | 1.0.0 | 2025-12-02 | 비밀키/도메인/포트 환경변수화 |
+| 에러 처리 | 에러 처리 표준 | 1.0.0 | 2025-12-02 | 중앙 예외 처리, 표준 에러 형식 |
+| API 에러 | API 에러 처리 표준 | 1.0.0 | 2025-12-02 | 에러 코드/응답 표준화 |
+| 권한 | 권한 시스템 표준 | 1.0.0 | 2025-12-02 | 역할 기반 + 동적 권한, 권한 체크 |
+| 세션 | 세션 표준 | 1.0.0 | 2025-12-02 | 세션/토큰 처리, 로그아웃/만료 정책 |
+| 배포 | 배포 표준 | 1.0.0 | 2025-12-03 | 자동 배포, 환경 분리, 롤백/헬스체크 |
 
 ## 3) 인증/권한(요약)
 

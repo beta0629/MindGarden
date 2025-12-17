@@ -20,6 +20,8 @@ import org.springframework.web.client.RestTemplate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  * 심리검사(TCI/MMPI) 전용 LLM 서비스 (OpenAI Chat Completions)
@@ -34,6 +36,18 @@ public class OpenAIPsychAiServiceImpl implements PsychAiService {
     private static final String PROMPT_VERSION = "psych-prompt-v1";
     private static final int MAX_TOKENS = 1200;
     private static final double TEMPERATURE = 0.3;
+    private static final int MIN_EVIDENCE_HIGHLIGHTS = 3;
+
+    // “확정 진단/법적 결론” 방지(오판 리스크 방어): 발견 시 폴백 + 사람 검수 필요 처리
+    private static final List<Pattern> FORBIDDEN_PATTERNS = List.of(
+            Pattern.compile("확정\\s*진단", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("진단\\s*확정", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("법적\\s*결론", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("반드시\\s*.*장애", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("정신병", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("정신\\s*질환\\s*확정", Pattern.CASE_INSENSITIVE)
+    );
+
 
     private final SystemConfigService systemConfigService;
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -86,15 +100,50 @@ public class OpenAIPsychAiServiceImpl implements PsychAiService {
             }
 
             // 모델 출력은 JSON 문자열로 고정(리포트 + evidence)
-            // 파싱 실패 시에는 전체 텍스트를 reportMarkdown에 넣고 evidence는 폴백
+            // 파싱/검증 실패 시에는 규칙 기반(baseMarkdown)으로 폴백 + needsReview=true 처리
             try {
                 JsonNode out = objectMapper.readTree(content.trim());
+                Validation validation = validateModelOutput(out, metrics);
+                if (!validation.ok) {
+                    return new AiResult(
+                            baseMarkdownWithDisclaimer(baseMarkdown, validation.reason),
+                            buildEvidenceJson("rejected", validation.reason, true),
+                            model,
+                            PROMPT_VERSION
+                    );
+                }
+
                 String reportMarkdown = out.path("reportMarkdown").asText(baseMarkdown);
+                if (!isMostlyKorean(reportMarkdown)) {
+                    return new AiResult(
+                            baseMarkdownWithDisclaimer(baseMarkdown, "한국어 출력 위반"),
+                            buildEvidenceJson("rejected", "non_korean", true),
+                            model,
+                            PROMPT_VERSION
+                    );
+                }
+                if (containsForbiddenText(reportMarkdown)) {
+                    return new AiResult(
+                            baseMarkdownWithDisclaimer(baseMarkdown, "금지 문구 탐지"),
+                            buildEvidenceJson("rejected", "forbidden_text", true),
+                            model,
+                            PROMPT_VERSION
+                    );
+                }
+
                 JsonNode evidence = out.path("evidence");
-                String evidenceJson = evidence.isMissingNode() ? "{\"ai\":\"ok\",\"evidence\":\"missing\"}" : evidence.toString();
+                String evidenceJson = evidence.isMissingNode()
+                        ? buildEvidenceJson("ok", "missing_evidence", true)
+                        : evidence.toString();
+
                 return new AiResult(reportMarkdown, evidenceJson, model, PROMPT_VERSION);
             } catch (Exception parseError) {
-                return new AiResult(content, "{\"ai\":\"ok\",\"evidence\":\"unparsed\"}", model, PROMPT_VERSION);
+                return new AiResult(
+                        baseMarkdownWithDisclaimer(baseMarkdown, "AI 출력 파싱 실패"),
+                        buildEvidenceJson("rejected", "unparsed", true),
+                        model,
+                        PROMPT_VERSION
+                );
             }
 
         } catch (Exception e) {
@@ -102,6 +151,95 @@ public class OpenAIPsychAiServiceImpl implements PsychAiService {
                     tenantId, assessmentType, e.getMessage(), e);
             return new AiResult(baseMarkdown, "{\"ai\":\"failed\"}", model, PROMPT_VERSION);
         }
+    }
+
+    private record Validation(boolean ok, String reason) {}
+
+    private Validation validateModelOutput(JsonNode out, List<MetricInput> metrics) {
+        if (out == null || out.isMissingNode() || !out.isObject()) {
+            return new Validation(false, "invalid_json_root");
+        }
+
+        String reportMarkdown = out.path("reportMarkdown").asText("");
+        if (!StringUtils.hasText(reportMarkdown)) {
+            return new Validation(false, "missing_report_markdown");
+        }
+
+        // 섹션 최소 요건(오판 방어: 구조가 깨지면 즉시 폴백)
+        if (!reportMarkdown.contains("## 요약") || !reportMarkdown.contains("## 권고")) {
+            return new Validation(false, "missing_required_sections");
+        }
+
+        JsonNode evidence = out.path("evidence");
+        JsonNode highlights = evidence.path("highlights");
+        if (!highlights.isArray() || highlights.size() < MIN_EVIDENCE_HIGHLIGHTS) {
+            return new Validation(false, "insufficient_evidence");
+        }
+
+        // 근거 매칭: evidence에 등장한 scaleCode는 입력 metrics에 존재해야 함(환각 방지)
+        Set<String> allowedScaleCodes = metrics == null ? Set.of() : metrics.stream()
+                .map(MetricInput::scaleCode)
+                .filter(StringUtils::hasText)
+                .collect(java.util.stream.Collectors.toSet());
+
+        for (JsonNode h : highlights) {
+            JsonNode basedOn = h.path("basedOn");
+            if (!basedOn.isArray() || basedOn.isEmpty()) {
+                return new Validation(false, "missing_basedOn");
+            }
+            for (JsonNode b : basedOn) {
+                String scaleCode = b.path("scaleCode").asText("");
+                if (!StringUtils.hasText(scaleCode)) {
+                    return new Validation(false, "missing_scaleCode");
+                }
+                if (!allowedScaleCodes.isEmpty() && !allowedScaleCodes.contains(scaleCode)) {
+                    return new Validation(false, "hallucinated_scaleCode:" + scaleCode);
+                }
+            }
+        }
+
+        return new Validation(true, "ok");
+    }
+
+    private boolean containsForbiddenText(String text) {
+        if (!StringUtils.hasText(text)) return false;
+        for (Pattern p : FORBIDDEN_PATTERNS) {
+            if (p.matcher(text).find()) return true;
+        }
+        return false;
+    }
+
+    private boolean isMostlyKorean(String text) {
+        if (!StringUtils.hasText(text)) return false;
+        int total = Math.min(text.length(), 8000);
+        int hangul = 0;
+        for (int i = 0; i < total; i++) {
+            char c = text.charAt(i);
+            if (c >= '가' && c <= '힣') hangul++;
+        }
+        // 너무 엄격하면 false positive가 많아서, 최소 15% 정도만 한국어면 통과
+        return hangul >= Math.max(30, (int) (total * 0.15));
+    }
+
+    private String baseMarkdownWithDisclaimer(String baseMarkdown, String reason) {
+        return baseMarkdown
+                + "\n\n---\n\n"
+                + "## 안내\n"
+                + "- AI 생성 결과가 검증 기준을 통과하지 못해 자동으로 제외되었습니다.\n"
+                + "- 사유: " + reason + "\n"
+                + "- 이 리포트는 참고용이며, 최종 해석은 전문가의 종합 판단이 필요합니다.\n";
+    }
+
+    private String buildEvidenceJson(String status, String reason, boolean needsReview) {
+        String safeStatus = StringUtils.hasText(status) ? status : "unknown";
+        String safeReason = StringUtils.hasText(reason) ? reason : "unknown";
+        return "{\"ai\":\"" + escapeJson(safeStatus) + "\","
+                + "\"reason\":\"" + escapeJson(safeReason) + "\","
+                + "\"quality\":{\"templateMatched\":false,\"needsReview\":" + needsReview + "}}";
+    }
+
+    private String escapeJson(String s) {
+        return s.replace("\\", "\\\\").replace("\"", "\\\"");
     }
 
     private String buildSystemPrompt() {

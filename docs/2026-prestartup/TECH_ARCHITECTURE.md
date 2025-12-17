@@ -1,0 +1,58 @@
+# 기술 아키텍처 (CoreSolution, 2025-12 기준)
+
+## 1) 아키텍처 개요
+
+CoreSolution은 **멀티테넌트 SaaS**를 전제로, 다음 원칙을 중심으로 설계/구현되어 있습니다.
+
+- **테넌트 격리(데이터 분리)**: 모든 핵심 도메인 데이터는 `tenant_id`를 기준으로 격리
+- **표준화 우선**: 하드코딩 금지, 공통코드/설정 기반 동적 조회, 저장 필드 표준 준수
+- **보안/감사**: 인증(JWT), 최소권한, 민감정보 마스킹/암호화, 감사로그
+- **CI/CD 자동화**: GitHub Actions 기반 개발/운영 환경 분리 배포
+
+## 2) 핵심 구성요소(요약)
+
+- **프론트엔드(관리자/대시보드)**
+  - React 기반 대시보드/관리 화면
+  - 공통 UI/알림/세션 관리/권한 체크 표준 준수
+- **백엔드(API/도메인 서비스)**
+  - Spring 기반 API(` /api/v1/ ` 버전) + 도메인 서비스 계층
+  - 표준 응답/표준 에러 처리/테넌트 컨텍스트 기반 접근 제어
+- **데이터 저장**
+  - 테넌트 격리 + 감사 필드 + 무결성/조회 성능을 고려한 필드 분리 저장
+- **배포/운영**
+  - GitHub Actions 자동 배포, 개발(`develop`)과 운영(`main`) 분리
+
+## 3) 심리검사 리포트 AI 모듈(신규 기능 축)
+
+### 목적
+TCI/MMPI 등 심리검사 결과(스캔 PDF)를 **표준화 지표 + 구조화 리포트**로 변환해 상담/케이스 관리에 활용합니다.
+
+### 파이프라인(현재 구현: MVP)
+1. **문서 업로드(스캔 PDF)**
+2. **원본 암호화 저장(AES-GCM)**
+3. **추출 레코드 생성 + 기본 검증(누락/범위 이상)**
+4. **리포트 생성(규칙 기반 초안 + LLM 보강)**
+5. **LLM 오판 방어(거절/폴백/사람 검수 플래그)**
+6. **내담자별 지표 저장 + 통계**
+
+### 오판 방어(핵심)
+LLM 결과는 **그대로 채택하지 않고**, 아래 검증을 통과해야만 저장됩니다.
+- JSON 구조/필수 섹션 검증
+- evidence 근거 연결(입력 metrics의 `scaleCode`와 매칭)
+- 금지 문구(확정 진단/법적 결론 등) 탐지
+- 한국어 출력 위반 탐지
+- 실패 시: **규칙 기반 리포트로 자동 폴백 + `needsReview=true`**
+
+## 4) “표준화 문서” 근거(필수 준수)
+
+아래 표준 문서들을 본 사업계획서의 기술 근거로 사용합니다.
+
+- 보안/인증: `docs/standards/SECURITY_AUTHENTICATION_STANDARD.md`
+- 배포: `docs/standards/DEPLOYMENT_STANDARD.md`
+- DB 스키마/테넌트 격리: `docs/standards/DATABASE_SCHEMA_STANDARD.md`
+- API 설계: `docs/standards/API_DESIGN_STANDARD.md`
+- 온보딩 데이터 저장: `docs/standards/ONBOARDING_DATA_STORAGE_STANDARD.md`
+- 환경변수/하드코딩 금지: `docs/standards/ENVIRONMENT_VARIABLE_STANDARD.md`
+- 암호화/파일 저장: `docs/standards/ENCRYPTION_STANDARD.md`, `docs/standards/FILE_STORAGE_STANDARD.md`
+
+

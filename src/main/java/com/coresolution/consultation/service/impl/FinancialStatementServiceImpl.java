@@ -1,7 +1,6 @@
 package com.coresolution.consultation.service.impl;
 
 import com.coresolution.consultation.entity.Ledger;
-import com.coresolution.consultation.repository.LedgerRepository;
 import com.coresolution.consultation.service.FinancialStatementService;
 import com.coresolution.consultation.service.LedgerService;
 import com.coresolution.core.context.TenantContextHolder;

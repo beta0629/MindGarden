@@ -83,10 +83,12 @@ public class OAuth2Controller extends BaseApiController {
     @Value("${spring.security.oauth2.client.callback.naver-path:/api/auth/naver/callback}")
     private String naverCallbackPath;
 
-    @Value("${spring.security.oauth2.domain.naver-callback-domain:dev.core-solution.co.kr}")
+    // NOTE: 도메인 하드코딩 금지. 값은 환경변수/프로퍼티로만 주입 (없으면 요청 기반으로 동적 추론)
+    @Value("${spring.security.oauth2.domain.naver-callback-domain:${NAVER_CALLBACK_DOMAIN:}}")
     private String naverCallbackDomain;
 
-    @Value("${spring.security.oauth2.domain.naver-registered-urls:https://dev.core-solution.co.kr/api/auth/naver/callback}")
+    // NOTE: 도메인 하드코딩 금지. 값은 환경변수/프로퍼티로만 주입 (없으면 검증 로직에서 graceful fallback)
+    @Value("${spring.security.oauth2.domain.naver-registered-urls:${NAVER_REGISTERED_URLS:}}")
     private String naverRegisteredUrls;
 
     @Value("${frontend.base-url:${FRONTEND_BASE_URL:}}")
@@ -255,7 +257,7 @@ public class OAuth2Controller extends BaseApiController {
     }
 
     /**
-     * OAuth2 콜백은 메인 도메인(dev.core-solution.co.kr)로 들어오는 경우가 있어, 회원가입/오류 리다이렉트는 tenantId 기준으로 원래 테넌트
+     * OAuth2 콜백은 메인 도메인으로 들어오는 경우가 있어, 회원가입/오류 리다이렉트는 tenantId 기준으로 원래 테넌트
      * 서브도메인으로 복원해야 함. 우선순위: - tenantId로 Tenant.subdomain 조회 성공 시:
      * https://{subdomain}.{parentDomain} - 실패 시: 기존 getFrontendBaseUrl(request) fallback
      */
@@ -278,14 +280,15 @@ public class OAuth2Controller extends BaseApiController {
                             requestHost = request.getServerName();
                         }
                         // 포트 제거
-                        String hostWithoutPort = requestHost != null ? requestHost.split(":")[0] : "";
+                        String hostWithoutPort =
+                                requestHost != null ? requestHost.split(":")[0] : "";
 
                         // host가 tenant 서브도메인을 포함하면 제거해서 parent domain만 남김
                         String parentDomain = hostWithoutPort;
                         if (hostWithoutPort != null
                                 && hostWithoutPort.startsWith(subdomain.trim() + ".")) {
-                            parentDomain = hostWithoutPort
-                                    .substring((subdomain.trim() + ".").length());
+                            parentDomain =
+                                    hostWithoutPort.substring((subdomain.trim() + ".").length());
                         }
 
                         String dynamicUrl =
@@ -357,7 +360,7 @@ public class OAuth2Controller extends BaseApiController {
             HttpSession session) {
         try {
             // 서브도메인에서 tenant_id 추출 (state 생성 전에 추출)
-            // 카카오 콜백은 메인 도메인(dev.core-solution.co.kr)으로 고정되는 경우가 많아
+            // 카카오 콜백은 메인 도메인으로 고정되는 경우가 많아
             // 콜백 시점에 Host 기반 tenant 추출이 불가능할 수 있으므로 state에 tenantId를 인코딩하여 포함합니다.
             String tenantId = extractTenantIdFromSubdomain(request);
             if ((tenantId == null || tenantId.isEmpty()) && session != null) {
@@ -370,8 +373,7 @@ public class OAuth2Controller extends BaseApiController {
 
             // tenantId는 소셜 로그인에서 필수 (서브도메인 기반 멀티테넌트)
             if (tenantId == null || tenantId.isEmpty()) {
-                return badRequest(
-                        "테넌트 정보가 없습니다. 반드시 서브도메인으로 접속 후 소셜 로그인을 진행해주세요. 예) https://mindgarden.dev.core-solution.co.kr/login",
+                return badRequest("테넌트 정보가 없습니다. 반드시 서브도메인으로 접속 후 소셜 로그인을 진행해주세요.",
                         "TENANT_REQUIRED");
             }
 
@@ -510,8 +512,7 @@ public class OAuth2Controller extends BaseApiController {
 
             // tenantId는 소셜 로그인에서 필수 (서브도메인 기반 멀티테넌트)
             if (tenantId == null || tenantId.isEmpty()) {
-                return badRequest(
-                        "테넌트 정보가 없습니다. 반드시 서브도메인으로 접속 후 소셜 로그인을 진행해주세요. 예) https://mindgarden.dev.core-solution.co.kr/login",
+                return badRequest("테넌트 정보가 없습니다. 반드시 서브도메인으로 접속 후 소셜 로그인을 진행해주세요.",
                         "TENANT_REQUIRED");
             }
 
@@ -925,7 +926,18 @@ public class OAuth2Controller extends BaseApiController {
                             configuredDomain = envDomain;
                         }
                         if (configuredDomain == null || configuredDomain.isEmpty()) {
-                            configuredDomain = "dev.core-solution.co.kr";
+                            // 도메인 하드코딩 금지: 요청 호스트를 기반으로 main domain 추론
+                            String hostForFallback = request.getHeader("X-Forwarded-Host");
+                            if (hostForFallback == null || hostForFallback.isEmpty()) {
+                                hostForFallback = request.getHeader("Host");
+                            }
+                            if (hostForFallback == null || hostForFallback.isEmpty()) {
+                                hostForFallback = request.getServerName();
+                            }
+                            // 포트 제거
+                            String hostWithoutPort =
+                                    hostForFallback != null ? hostForFallback.split(":")[0] : "";
+                            configuredDomain = oauth2DomainUtil.convertToMainDomain(hostWithoutPort);
                         }
                         // requestScheme과 portSuffix는 이미 위에서 설정됨
                         String configuredRedirectUri = requestScheme + "://" + configuredDomain

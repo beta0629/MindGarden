@@ -51,6 +51,17 @@ public class EmailServiceImpl implements EmailService {
 
     @Value("${email.block-legacy-branch-recipients:true}")
     private boolean blockLegacyBranchRecipients;
+
+    /**
+     * 이메일 발송 전면 차단 (운영 정책: 시스템에서 이메일 미사용)
+     * - true이면 모든 수신자(to)에 대해 발송을 막음
+     * - 필요 시 email.send-allowlist 로 예외 허용 가능 (콤마 구분)
+     */
+    @Value("${email.block-all-outbound:false}")
+    private boolean blockAllOutboundEmail;
+
+    @Value("${email.send-allowlist:}")
+    private String sendAllowlist;
     
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(5);
     private final Map<String, EmailResponse> emailStatusMap = new ConcurrentHashMap<>();
@@ -400,6 +411,13 @@ public class EmailServiceImpl implements EmailService {
             throw new IllegalArgumentException(EmailConstants.ERROR_EMAIL_INVALID_RECIPIENT);
         }
 
+        // 이메일 전면 차단(정책)
+        if (blockAllOutboundEmail && !isAllowlistedRecipient(request.getToEmail())) {
+            log.warn("⚠️ 이메일 전면 차단 정책으로 발송 차단: tenantId={}, to={}, subject={}",
+                    TenantContextHolder.getTenantId(), request.getToEmail(), request.getSubject());
+            throw new IllegalArgumentException("이 시스템에서는 이메일 발송을 사용하지 않습니다.");
+        }
+
         // 지점관리 미사용 정책: BRANCH 공통코드(레거시 지점 이메일)로의 발송을 전면 차단
         if (blockLegacyBranchRecipients && isLegacyBranchRecipient(request.getToEmail())) {
             throw new IllegalArgumentException("레거시 지점 이메일로는 발송하지 않습니다.");
@@ -450,6 +468,22 @@ public class EmailServiceImpl implements EmailService {
         } catch (Exception e) {
             return null;
         }
+    }
+
+    private boolean isAllowlistedRecipient(String toEmail) {
+        if (!StringUtils.hasText(toEmail)) {
+            return false;
+        }
+        if (!StringUtils.hasText(sendAllowlist)) {
+            return false;
+        }
+        String[] allowed = sendAllowlist.split(",");
+        for (String a : allowed) {
+            if (StringUtils.hasText(a) && toEmail.equalsIgnoreCase(a.trim())) {
+                return true;
+            }
+        }
+        return false;
     }
     
     private EmailResponse sendEmailInternal(EmailRequest request, String emailId) {

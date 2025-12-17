@@ -227,10 +227,33 @@ const UnifiedLogin = () => {
     const searchParams = new URLSearchParams(location.search);
     const success = searchParams.get('success');
     const provider = searchParams.get('provider');
+    const signupRequired = searchParams.get('signup');
     
     if (success === 'true' && provider) {
       // OAuth2Callback 컴포넌트에서 처리하도록 리다이렉트
       navigate(`/auth/oauth2/callback${location.search}`, { replace: true });
+      return;
+    }
+
+    // 간편 회원가입 필요: /login?signup=required&provider=...&tenantId=...&email=...&name=...&nickname=...
+    if (signupRequired === 'required' && provider) {
+      const email = searchParams.get('email') || '';
+      const name = searchParams.get('name') || '';
+      const nickname = searchParams.get('nickname') || '';
+      const tenantId = searchParams.get('tenantId') || sessionStorage.getItem('subdomain_tenant_id');
+
+      console.log('📝 간편 회원가입 필요 감지 (signup=required):', { provider, tenantId, email });
+
+      setSocialUserInfo({
+        provider,
+        providerUserId: searchParams.get('providerUserId') || null,
+        email,
+        name,
+        nickname,
+        profileImageUrl: searchParams.get('profileImageUrl') || null,
+        tenantId: tenantId || null
+      });
+      setShowSocialSignupModal(true);
     }
   };
 

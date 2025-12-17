@@ -19,7 +19,7 @@ import { useNavigate } from 'react-router-dom';
 import { 
   Users, User, Link2, Calendar, Settings, 
   BarChart, Shield, Database, Bell, 
-  Building, MapPin, UserCog, Cog 
+  Building, MapPin, UserCog, Cog, FileText
 } from 'lucide-react';
 import { ADMIN_ROUTES } from '../../../../constants/adminRoutes';
 import '../Widget.css';
@@ -104,6 +104,14 @@ const ManagementGridWidget = ({ widget, user }) => {
       icon: <BarChart size={24} />,
       url: ADMIN_ROUTES.STATISTICS,
       color: 'yellow'
+    },
+    {
+      id: 'psych-assessments',
+      title: '심리검사 리포트(AI)',
+      description: 'TCI/MMPI 업로드 및 리포트 생성을 관리합니다',
+      icon: <FileText size={24} />,
+      url: ADMIN_ROUTES.PSYCH_ASSESSMENTS,
+      color: 'violet'
     },
     {
       id: 'notifications',

@@ -38,6 +38,7 @@ export const ADMIN_ROUTES = {
     DASHBOARDS: '/admin/dashboards',
     CACHE_MONITORING: '/admin/cache-monitoring',
     SECURITY_MONITORING: '/admin/security-monitoring',
-    API_PERFORMANCE: '/admin/api-performance'
+    API_PERFORMANCE: '/admin/api-performance',
+    PSYCH_ASSESSMENTS: '/admin/psych-assessments'
 };
 

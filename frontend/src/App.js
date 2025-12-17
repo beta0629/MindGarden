@@ -118,6 +118,7 @@ import UnifiedNotifications from './components/notifications/UnifiedNotification
 import SystemNotificationManagement from './components/admin/SystemNotificationManagement';
 import AdminMessages from './components/admin/AdminMessages';
 import SystemConfigManagement from './components/admin/SystemConfigManagement';
+import PsychAssessmentManagement from './components/admin/PsychAssessmentManagement';
 import BrandingManagementPage from './pages/BrandingManagementPage';
 import CacheMonitoringDashboard from './components/admin/CacheMonitoringDashboard';
 import UnifiedHeader from './components/common/UnifiedHeader';
@@ -479,6 +480,7 @@ function AppContent() {
             <Route path="/admin/api-performance" element={<ApiPerformanceMonitoring />} />
             <Route path="/admin/system-notifications" element={<SystemNotificationManagement />} />
             <Route path="/admin/system-config" element={<SystemConfigManagement />} />
+            <Route path="/admin/psych-assessments" element={<PsychAssessmentManagement user={user} />} />
             <Route path="/admin/branding" element={<BrandingManagementPage />} />
             <Route path="/admin/messages" element={<AdminMessages />} />
             

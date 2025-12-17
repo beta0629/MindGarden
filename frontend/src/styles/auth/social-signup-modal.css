@@ -23,7 +23,7 @@
   max-width: 500px;
   background-color: var(--mg-white);
   border-radius: 24px;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px var(--cs-glass-light-subtle);
+  box-shadow: var(--cs-shadow-xxl), 0 0 0 1px var(--cs-glass-light-subtle);
   z-index: var(--z-modal-content, 10002);
   overflow: hidden;
   animation: scaleIn 0.3s ease-out;
@@ -155,14 +155,14 @@
 }
 
 .social-signup-modal .mg-form__input:disabled {
-  background-color: #f9fafb;
-  color: #6b7280;
+  background-color: var(--cs-secondary-50);
+  color: var(--cs-secondary-500);
   cursor: not-allowed;
 }
 
 .social-signup-modal .mg-form__input.error {
   border-color: var(--mg-error-500);
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--cs-error-500) 10%, transparent);
 }
 
 .social-signup-modal .mg-form__input.loading {
@@ -183,11 +183,11 @@
 }
 
 .error-summary {
-  background-color: #fef2f2;
-  border: 1px solid #fecaca;
+  background-color: var(--cs-error-50);
+  border: 1px solid var(--cs-error-200);
   border-radius: 8px;
   padding: 12px;
-  color: #dc2626;
+  color: var(--cs-error-600);
   font-size: var(--font-size-sm);
   display: flex;
   align-items: center;
@@ -197,7 +197,7 @@
 
 .mg-form__help {
   font-size: var(--font-size-xs);
-  color: #6b7280;
+  color: var(--cs-secondary-500);
   margin-top: 4px;
 }
 
@@ -212,7 +212,7 @@
   right: 16px;
   background: none;
   border: none;
-  color: #6b7280;
+  color: var(--cs-secondary-500);
   cursor: pointer;
   padding: 4px;
   border-radius: 4px;
@@ -221,7 +221,7 @@
 
 .password-toggle:hover {
   color: var(--cs-slate-700);
-  background-color: #f3f4f6;
+  background-color: var(--cs-secondary-100);
 }
 
 .form-actions {
@@ -252,7 +252,7 @@
 
 .mg-btn--primary:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 10px 25px var(--cs-glass-primary-30);
 }
 
 .mg-btn--primary:disabled {
@@ -262,7 +262,7 @@
 }
 
 .mg-btn--secondary {
-  background-color: #f3f4f6;
+  background-color: var(--cs-secondary-100);
   color: var(--cs-slate-700);
   border: 1px solid var(--cs-gray-200);
 }
@@ -307,7 +307,7 @@
 /* 개인정보 동의 섹션 스타일 */
 .privacy-consent-section {
   background: var(--mg-gray-100);
-  border: 1px solid #e9ecef;
+  border: 1px solid var(--cs-secondary-200);
   border-radius: 12px;
   padding: 20px;
   margin-top: var(--spacing-base);
@@ -316,7 +316,7 @@
 .privacy-consent-title {
   font-size: var(--font-size-base);
   font-weight: 600;
-  color: #495057;
+  color: var(--cs-secondary-700);
   margin: 0 0 16px 0;
   display: flex;
   align-items: center;
@@ -377,7 +377,7 @@
   background-color: var(--mg-primary-500);
   color: var(--mg-white);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--cs-blue-500) 30%, transparent);
 }
 
 .privacy-consent-button i {

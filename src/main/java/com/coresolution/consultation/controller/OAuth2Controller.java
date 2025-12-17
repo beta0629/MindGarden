@@ -270,7 +270,7 @@ public class OAuth2Controller extends BaseApiController {
                     String subdomain = tenantOptional.get().getSubdomain();
                     if (subdomain != null && !subdomain.trim().isEmpty()) {
                         String requestScheme = resolveExternalScheme(request);
-                        
+
                         // 1) 환경 기준 도메인 우선: SERVER_BASE_URL / server.base-url
                         String parentDomain = null;
                         try {
@@ -281,7 +281,7 @@ public class OAuth2Controller extends BaseApiController {
                         } catch (Exception e) {
                             log.warn("serverBaseUrl 파싱 실패: serverBaseUrl={}", serverBaseUrl);
                         }
-                        
+
                         // 2) fallback: 요청 Host에서 추출
                         if (parentDomain == null || parentDomain.isEmpty()) {
                             String requestHost = request.getHeader("X-Forwarded-Host");
@@ -292,12 +292,15 @@ public class OAuth2Controller extends BaseApiController {
                                 requestHost = request.getServerName();
                             }
                             // 포트 제거
-                            String hostWithoutPort = requestHost != null ? requestHost.split(":")[0] : "";
-                            
+                            String hostWithoutPort =
+                                    requestHost != null ? requestHost.split(":")[0] : "";
+
                             // host가 tenant 서브도메인을 포함하면 제거해서 parent domain만 남김
                             parentDomain = hostWithoutPort;
-                            if (hostWithoutPort != null && hostWithoutPort.startsWith(subdomain.trim() + ".")) {
-                                parentDomain = hostWithoutPort.substring((subdomain.trim() + ".").length());
+                            if (hostWithoutPort != null
+                                    && hostWithoutPort.startsWith(subdomain.trim() + ".")) {
+                                parentDomain = hostWithoutPort
+                                        .substring((subdomain.trim() + ".").length());
                             }
                         }
 
@@ -314,6 +317,54 @@ public class OAuth2Controller extends BaseApiController {
         }
 
         return getFrontendBaseUrl(request);
+    }
+
+    /**
+     * 실패/오류 리다이렉트에서 서브도메인을 유지하기 위한 tenantId 복구 헬퍼
+     * 우선순위: state(인코딩) -> session(oauth2_tenant_id) -> TenantContextHolder
+     */
+    private String resolveTenantIdForRedirect(HttpSession session, String state) {
+        // 1) state에서 tenantId 디코딩 (형식: {base64TenantId}.{uuid})
+        if (state != null && state.contains(".")) {
+            try {
+                String[] parts = state.split("\\.", 2);
+                if (parts.length == 2) {
+                    String encodedTenantId = parts[0];
+                    String decoded =
+                            new String(java.util.Base64.getUrlDecoder().decode(encodedTenantId),
+                                    StandardCharsets.UTF_8);
+                    if (decoded != null && !decoded.trim().isEmpty()) {
+                        return decoded.trim();
+                    }
+                }
+            } catch (Exception e) {
+                // ignore (fallback to session/holder)
+            }
+        }
+
+        // 2) 세션에서 tenantId
+        if (session != null) {
+            try {
+                String tenantId = (String) session.getAttribute("oauth2_tenant_id");
+                if (tenantId != null && !tenantId.trim().isEmpty()) {
+                    return tenantId.trim();
+                }
+            } catch (Exception e) {
+                // ignore
+            }
+        }
+
+        // 3) TenantContextHolder
+        try {
+            String tenantId = com.coresolution.core.context.TenantContextHolder.getTenantId();
+            if (tenantId != null && !tenantId.trim().isEmpty()) {
+                return tenantId.trim();
+            }
+        } catch (Exception e) {
+            // ignore
+        }
+
+        return null;
     }
 
     @GetMapping("/oauth2/kakao/authorize")
@@ -612,7 +663,8 @@ public class OAuth2Controller extends BaseApiController {
             HttpServletRequest request, HttpSession session) {
 
         if (error != null) {
-            String frontendUrl = getFrontendBaseUrl(request);
+            String redirectTenantId = resolveTenantIdForRedirect(session, state);
+            String frontendUrl = getTenantAwareFrontendBaseUrl(request, redirectTenantId);
             return ResponseEntity.status(302)
                     .header("Location", frontendUrl + "/login?error="
                             + URLEncoder.encode(error, StandardCharsets.UTF_8) + "&provider=NAVER")
@@ -620,7 +672,8 @@ public class OAuth2Controller extends BaseApiController {
         }
 
         if (code == null) {
-            String frontendUrl = getFrontendBaseUrl(request);
+            String redirectTenantId = resolveTenantIdForRedirect(session, state);
+            String frontendUrl = getTenantAwareFrontendBaseUrl(request, redirectTenantId);
             return ResponseEntity.status(302).header("Location", frontendUrl + "/login?error="
                     + URLEncoder.encode("인증코드없음", StandardCharsets.UTF_8) + "&provider=NAVER")
                     .build();
@@ -655,7 +708,8 @@ public class OAuth2Controller extends BaseApiController {
         // state 검증 (actualState 사용)
         if (savedState != null && !savedState.equals(state) && !savedState.equals(actualState)) {
             session.removeAttribute("oauth2_naver_state");
-            String frontendUrl = getFrontendBaseUrl(request);
+            String redirectTenantId = resolveTenantIdForRedirect(session, state);
+            String frontendUrl = getTenantAwareFrontendBaseUrl(request, redirectTenantId);
             return ResponseEntity.status(302).header("Location", frontendUrl + "/login?error="
                     + URLEncoder.encode("보안검증실패", StandardCharsets.UTF_8) + "&provider=NAVER")
                     .build();
@@ -710,7 +764,8 @@ public class OAuth2Controller extends BaseApiController {
                 } else {
                     // tenantId를 찾을 수 없으면 오류 페이지로 리다이렉트 (테넌트 등록 필요)
                     log.error("❌ 네이버 OAuth2 콜백 - tenant_id를 찾을 수 없습니다. 테넌트 등록이 필요합니다.");
-                    String frontendUrl = getFrontendBaseUrl(request);
+                    String redirectTenantId = resolveTenantIdForRedirect(session, state);
+                    String frontendUrl = getTenantAwareFrontendBaseUrl(request, redirectTenantId);
                     return ResponseEntity.status(302)
                             .header("Location",
                                     frontendUrl + "/login?error="
@@ -727,7 +782,8 @@ public class OAuth2Controller extends BaseApiController {
             if (finalTenantId == null || finalTenantId.isEmpty()) {
                 log.error(
                         "❌ 네이버 OAuth2 콜백 - TenantContextHolder에 tenant_id가 설정되지 않았습니다. 테넌트 등록이 필요합니다.");
-                String frontendUrl = getFrontendBaseUrl(request);
+                String redirectTenantId = resolveTenantIdForRedirect(session, state);
+                String frontendUrl = getTenantAwareFrontendBaseUrl(request, redirectTenantId);
                 return ResponseEntity.status(302)
                         .header("Location",
                                 frontendUrl + "/login?error="
@@ -833,7 +889,8 @@ public class OAuth2Controller extends BaseApiController {
                 log.error(
                         "네이버 콜백 - redirect_uri를 생성할 수 없습니다. 요청 정보: scheme={}, host={}, serverName={}",
                         request.getScheme(), request.getHeader("Host"), request.getServerName());
-                String frontendUrl = getFrontendBaseUrl(request);
+                String redirectTenantId = resolveTenantIdForRedirect(session, state);
+                String frontendUrl = getTenantAwareFrontendBaseUrl(request, redirectTenantId);
                 return ResponseEntity.status(302).header("Location", frontendUrl + "/login?error="
                         + URLEncoder.encode("시스템오류", StandardCharsets.UTF_8) + "&provider=NAVER")
                         .build();
@@ -946,7 +1003,8 @@ public class OAuth2Controller extends BaseApiController {
                         log.warn(
                                 "⚠️ 네이버 OAuth2 - 이메일이 제공되지 않아 로그인 진행 불가. email=null/empty, providerUserId={}",
                                 socialUserInfo.getProviderUserId());
-                        String frontendUrl = getFrontendBaseUrl(request);
+                        String redirectTenantId = resolveTenantIdForRedirect(session, state);
+                        String frontendUrl = getTenantAwareFrontendBaseUrl(request, redirectTenantId);
                         return ResponseEntity.status(302)
                                 .header("Location",
                                         frontendUrl + "/login?error="
@@ -1392,9 +1450,13 @@ public class OAuth2Controller extends BaseApiController {
                     log.info("네이버 OAuth2 - 서브도메인에서 추출한 tenant_id 사용: tenantId={}", tenantId);
                     session.removeAttribute("oauth2_tenant_id"); // 사용 후 제거
                 }
+                // tenantId가 없으면 TenantContextHolder 값 사용 (state로 복원된 값)
+                if (tenantId == null || tenantId.isEmpty()) {
+                    tenantId = com.coresolution.core.context.TenantContextHolder.getTenantId();
+                }
 
                 // 소셜 사용자 정보를 URL 파라미터로 전달 (한글 인코딩 처리)
-                String frontendUrl = getFrontendBaseUrl(request);
+                String frontendUrl = getTenantAwareFrontendBaseUrl(request, tenantId);
                 String email = response.getSocialUserInfo() != null
                         ? response.getSocialUserInfo().getEmail()
                         : "";
@@ -1444,7 +1506,8 @@ public class OAuth2Controller extends BaseApiController {
     public ResponseEntity<?> testSignupRequired(HttpServletRequest request) {
         log.info("테스트용 간편 회원가입 시뮬레이션 요청");
 
-        String frontendUrl = getFrontendBaseUrl(request);
+        String frontendUrl = getTenantAwareFrontendBaseUrl(request,
+                com.coresolution.core.context.TenantContextHolder.getTenantId());
         String signupUrl = frontendUrl + "/login?" + "signup=required" + "&provider=kakao"
                 + "&email=" + URLEncoder.encode("test@example.com", StandardCharsets.UTF_8)
                 + "&name=" + URLEncoder.encode("테스트사용자", StandardCharsets.UTF_8) + "&nickname="
@@ -1463,7 +1526,8 @@ public class OAuth2Controller extends BaseApiController {
             HttpServletRequest request, HttpSession session) {
 
         if (error != null) {
-            String frontendUrl = getFrontendBaseUrl(request);
+            String redirectTenantId = resolveTenantIdForRedirect(session, state);
+            String frontendUrl = getTenantAwareFrontendBaseUrl(request, redirectTenantId);
             return ResponseEntity.status(302)
                     .header("Location", frontendUrl + "/login?error="
                             + URLEncoder.encode(error, StandardCharsets.UTF_8) + "&provider=KAKAO")
@@ -1472,7 +1536,8 @@ public class OAuth2Controller extends BaseApiController {
 
         if (code == null) {
             log.warn("카카오 OAuth2 콜백에서 인증 코드가 없습니다. error={}, state={}", error, state);
-            String frontendUrl = getFrontendBaseUrl(request);
+            String redirectTenantId = resolveTenantIdForRedirect(session, state);
+            String frontendUrl = getTenantAwareFrontendBaseUrl(request, redirectTenantId);
             return ResponseEntity.status(302).header("Location", frontendUrl + "/login?error="
                     + URLEncoder.encode("인증코드없음", StandardCharsets.UTF_8) + "&provider=KAKAO")
                     .build();
@@ -1504,7 +1569,8 @@ public class OAuth2Controller extends BaseApiController {
         // state 검증 (actualState 지원)
         if (savedState != null && !savedState.equals(state) && !savedState.equals(actualState)) {
             session.removeAttribute("oauth2_kakao_state");
-            String frontendUrl = getFrontendBaseUrl(request);
+            String redirectTenantId = resolveTenantIdForRedirect(session, state);
+            String frontendUrl = getTenantAwareFrontendBaseUrl(request, redirectTenantId);
             return ResponseEntity.status(302).header("Location", frontendUrl + "/login?error="
                     + URLEncoder.encode("보안검증실패", StandardCharsets.UTF_8) + "&provider=KAKAO")
                     .build();
@@ -1542,7 +1608,8 @@ public class OAuth2Controller extends BaseApiController {
                 } else {
                     // tenantId를 찾을 수 없으면 오류 페이지로 리다이렉트 (테넌트 등록 필요)
                     log.error("❌ 카카오 OAuth2 콜백 - tenant_id를 찾을 수 없습니다. 테넌트 등록이 필요합니다.");
-                    String frontendUrl = getFrontendBaseUrl(request);
+                    String redirectTenantId = resolveTenantIdForRedirect(session, state);
+                    String frontendUrl = getTenantAwareFrontendBaseUrl(request, redirectTenantId);
                     return ResponseEntity.status(302)
                             .header("Location",
                                     frontendUrl + "/login?error="
@@ -1559,7 +1626,8 @@ public class OAuth2Controller extends BaseApiController {
             if (finalTenantId == null || finalTenantId.isEmpty()) {
                 log.error(
                         "❌ 카카오 OAuth2 콜백 - TenantContextHolder에 tenant_id가 설정되지 않았습니다. 테넌트 등록이 필요합니다.");
-                String frontendUrl = getFrontendBaseUrl(request);
+                String redirectTenantId = resolveTenantIdForRedirect(session, state);
+                String frontendUrl = getTenantAwareFrontendBaseUrl(request, redirectTenantId);
                 return ResponseEntity.status(302)
                         .header("Location",
                                 frontendUrl + "/login?error="
@@ -1672,7 +1740,8 @@ public class OAuth2Controller extends BaseApiController {
                 log.error(
                         "카카오 콜백 - redirect_uri를 생성할 수 없습니다. 요청 정보: scheme={}, host={}, serverName={}",
                         request.getScheme(), request.getHeader("Host"), request.getServerName());
-                String frontendUrl = getFrontendBaseUrl(request);
+                String redirectTenantId = resolveTenantIdForRedirect(session, state);
+                String frontendUrl = getTenantAwareFrontendBaseUrl(request, redirectTenantId);
                 return ResponseEntity.status(302).header("Location", frontendUrl + "/login?error="
                         + URLEncoder.encode("시스템오류", StandardCharsets.UTF_8) + "&provider=KAKAO")
                         .build();
@@ -1702,7 +1771,8 @@ public class OAuth2Controller extends BaseApiController {
                     log.warn(
                             "⚠️ 카카오 OAuth2 - 이메일이 제공되지 않아 로그인 진행 불가. email=null/empty, providerUserId={}",
                             socialUserInfo.getProviderUserId());
-                    String frontendUrl = getFrontendBaseUrl(request);
+                    String redirectTenantId = resolveTenantIdForRedirect(session, state);
+                    String frontendUrl = getTenantAwareFrontendBaseUrl(request, redirectTenantId);
                     return ResponseEntity.status(302)
                             .header("Location",
                                     frontendUrl + "/login?error="

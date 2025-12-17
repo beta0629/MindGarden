@@ -257,14 +257,41 @@ public class OAuth2Controller extends BaseApiController {
             @RequestParam(required = false) String client, HttpServletRequest request,
             HttpSession session) {
         try {
-            String state = UUID.randomUUID().toString();
-            session.setAttribute("oauth2_kakao_state", state);
-
-            // 서브도메인에서 tenant_id 추출하여 세션에 저장 (SNS 로그인 시 사용)
+            // 서브도메인에서 tenant_id 추출 (state 생성 전에 추출)
+            // 카카오 콜백은 메인 도메인(dev.core-solution.co.kr)으로 고정되는 경우가 많아
+            // 콜백 시점에 Host 기반 tenant 추출이 불가능할 수 있으므로 state에 tenantId를 인코딩하여 포함합니다.
             String tenantId = extractTenantIdFromSubdomain(request);
+            if ((tenantId == null || tenantId.isEmpty()) && session != null) {
+                // 메인 도메인에서 로그인 시작하는 케이스(서브도메인 없음)에서는 세션의 tenantId도 확인
+                tenantId = (String) session.getAttribute("tenantId");
+                if (tenantId == null || tenantId.isEmpty()) {
+                    tenantId = (String) session.getAttribute("oauth2_tenant_id");
+                }
+            }
+
+            // tenantId는 소셜 로그인에서 필수 (서브도메인 기반 멀티테넌트)
+            if (tenantId == null || tenantId.isEmpty()) {
+                return badRequest(
+                        "테넌트 정보가 없습니다. 반드시 서브도메인으로 접속 후 소셜 로그인을 진행해주세요. 예) https://mindgarden.dev.core-solution.co.kr/login",
+                        "TENANT_REQUIRED");
+            }
+
+            // state 생성: tenantId가 있으면 base64로 인코딩하여 포함 (세션/도메인에 의존하지 않도록)
+            String state = UUID.randomUUID().toString();
             if (tenantId != null && !tenantId.isEmpty()) {
-                session.setAttribute("oauth2_tenant_id", tenantId);
-                log.info("카카오 OAuth2 - 서브도메인에서 tenant_id 추출: tenantId={}", tenantId);
+                String encodedTenantId = java.util.Base64.getUrlEncoder().withoutPadding()
+                        .encodeToString(tenantId.getBytes(StandardCharsets.UTF_8));
+                state = encodedTenantId + "." + state;
+                log.info("카카오 OAuth2 - state에 tenantId 인코딩: tenantId={}, encodedState={}", tenantId,
+                        state);
+                // 호환성 유지: 세션에도 tenantId 저장
+                if (session != null) {
+                    session.setAttribute("oauth2_tenant_id", tenantId);
+                }
+            }
+
+            if (session != null) {
+                session.setAttribute("oauth2_kakao_state", state);
             }
 
             // 모바일 클라이언트인 경우 Redis에 저장 (세션 의존성 제거)
@@ -380,6 +407,13 @@ public class OAuth2Controller extends BaseApiController {
                         log.info("네이버 OAuth2 - 세션에서 tenant_id 추출: tenantId={}", tenantId);
                     }
                 }
+            }
+
+            // tenantId는 소셜 로그인에서 필수 (서브도메인 기반 멀티테넌트)
+            if (tenantId == null || tenantId.isEmpty()) {
+                return badRequest(
+                        "테넌트 정보가 없습니다. 반드시 서브도메인으로 접속 후 소셜 로그인을 진행해주세요. 예) https://mindgarden.dev.core-solution.co.kr/login",
+                        "TENANT_REQUIRED");
             }
 
             // state 생성: tenantId가 있으면 base64로 인코딩하여 포함 (세션과 무관하게 조회 가능)
@@ -841,6 +875,22 @@ public class OAuth2Controller extends BaseApiController {
                     socialUserInfo.setProvider("NAVER");
                     socialUserInfo.setAccessToken(accessToken);
                     socialUserInfo.normalizeData();
+
+                    // 이메일은 필수 정책: SNS에서 이메일이 내려오지 않으면 진행 불가 (알림으로 유도)
+                    if (socialUserInfo.getEmail() == null
+                            || socialUserInfo.getEmail().trim().isEmpty()) {
+                        log.warn(
+                                "⚠️ 네이버 OAuth2 - 이메일이 제공되지 않아 로그인 진행 불가. email=null/empty, providerUserId={}",
+                                socialUserInfo.getProviderUserId());
+                        String frontendUrl = getFrontendBaseUrl(request);
+                        return ResponseEntity.status(302)
+                                .header("Location",
+                                        frontendUrl + "/login?error="
+                                                + URLEncoder.encode("이메일 제공 동의가 필요합니다.",
+                                                        StandardCharsets.UTF_8)
+                                                + "&provider=NAVER")
+                                .build();
+                    }
 
                     // 기존 사용자 확인 (카카오와 동일한 방식)
                     Long existingUserId = null;
@@ -1363,7 +1413,30 @@ public class OAuth2Controller extends BaseApiController {
         }
 
         String savedState = (String) session.getAttribute("oauth2_kakao_state");
-        if (savedState != null && !savedState.equals(state)) {
+
+        // state에 tenantId가 인코딩되어 있는 경우 디코딩 (네이버와 동일 패턴)
+        String stateBasedTenantId = null;
+        String actualState = state;
+        if (state != null && state.contains(".")) {
+            try {
+                String[] parts = state.split("\\.", 2);
+                if (parts.length == 2) {
+                    String encodedTenantId = parts[0];
+                    actualState = parts[1];
+                    stateBasedTenantId =
+                            new String(java.util.Base64.getUrlDecoder().decode(encodedTenantId),
+                                    StandardCharsets.UTF_8);
+                    log.info("카카오 OAuth2 콜백 - state에서 tenantId 디코딩 성공: tenantId={}, actualState={}",
+                            stateBasedTenantId, actualState);
+                }
+            } catch (Exception e) {
+                log.warn("⚠️ 카카오 OAuth2 콜백 - state에서 tenantId 디코딩 실패: state={}, error={}", state,
+                        e.getMessage());
+            }
+        }
+
+        // state 검증 (actualState 지원)
+        if (savedState != null && !savedState.equals(state) && !savedState.equals(actualState)) {
             session.removeAttribute("oauth2_kakao_state");
             String frontendUrl = getFrontendBaseUrl(request);
             return ResponseEntity.status(302).header("Location", frontendUrl + "/login?error="
@@ -1383,6 +1456,12 @@ public class OAuth2Controller extends BaseApiController {
                 log.info(
                         "카카오 OAuth2 콜백 - 서브도메인에서 tenant_id 추출 및 TenantContextHolder 설정: tenantId={}",
                         callbackTenantId);
+            } else if (stateBasedTenantId != null && !stateBasedTenantId.isEmpty()) {
+                // state로 전달된 tenantId 우선 적용 (메인 도메인 콜백에서도 안정적으로 동작)
+                com.coresolution.core.context.TenantContextHolder.setTenantId(stateBasedTenantId);
+                log.info(
+                        "카카오 OAuth2 콜백 - state로 전달된 tenant_id를 TenantContextHolder에 설정: tenantId={}",
+                        stateBasedTenantId);
             } else {
                 // 서브도메인이 없으면 세션에서 tenant_id 확인
                 String sessionTenantId = (String) session.getAttribute("tenantId");
@@ -1550,6 +1629,22 @@ public class OAuth2Controller extends BaseApiController {
                 socialUserInfo.setProvider("KAKAO");
                 socialUserInfo.setAccessToken(accessToken);
                 socialUserInfo.normalizeData();
+
+                // 이메일은 필수 정책: SNS에서 이메일이 내려오지 않으면 진행 불가 (알림으로 유도)
+                if (socialUserInfo.getEmail() == null
+                        || socialUserInfo.getEmail().trim().isEmpty()) {
+                    log.warn(
+                            "⚠️ 카카오 OAuth2 - 이메일이 제공되지 않아 로그인 진행 불가. email=null/empty, providerUserId={}",
+                            socialUserInfo.getProviderUserId());
+                    String frontendUrl = getFrontendBaseUrl(request);
+                    return ResponseEntity.status(302)
+                            .header("Location",
+                                    frontendUrl + "/login?error="
+                                            + URLEncoder.encode("이메일 제공 동의가 필요합니다.",
+                                                    StandardCharsets.UTF_8)
+                                            + "&provider=KAKAO")
+                            .build();
+                }
 
                 // 기존 사용자 확인
                 Long existingUserId = null;

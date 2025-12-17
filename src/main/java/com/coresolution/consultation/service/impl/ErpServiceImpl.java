@@ -57,6 +57,10 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
     private final FinancialTransactionRepository financialTransactionRepository;
     private final UserService userService;
     private final FinancialTransactionService financialTransactionService;
+    // ERP 고도화 서비스 연동 (표준 문서: docs/standards/ERP_ADVANCEMENT_STANDARD.md)
+    private final com.coresolution.consultation.service.FinancialStatementService financialStatementService;
+    private final com.coresolution.consultation.service.AccountingService accountingService;
+    private final com.coresolution.consultation.service.SettlementService settlementService;
     
     
     @Override
@@ -1281,16 +1285,38 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
     @Transactional(readOnly = true)
     public Map<String, Object> getBalanceSheet(String reportDate, String branchCode) {
         String tenantId = getTenantId();
-        log.info("대차대조표 조회: {}, tenantId: {}", reportDate, tenantId);
+        log.info("대차대조표 조회: {}, tenantId: {} (ERP 고도화 서비스 사용)", reportDate, tenantId);
+        
+        try {
+            // ERP 고도화 서비스 사용 (표준 문서: docs/standards/ERP_ADVANCEMENT_STANDARD.md)
+            java.time.LocalDate asOfDate = reportDate != null 
+                ? java.time.LocalDate.parse(reportDate) 
+                : java.time.LocalDate.now();
+            
+            return financialStatementService.generateBalanceSheet(tenantId, asOfDate);
+        } catch (Exception e) {
+            log.error("ERP 고도화 서비스에서 대차대조표 조회 실패, 레거시 방식으로 폴백: {}", e.getMessage(), e);
+            // 레거시 방식으로 폴백 (하위 호환성)
+            return getBalanceSheetLegacy(reportDate, branchCode);
+        }
+    }
+    
+    /**
+     * 레거시 대차대조표 조회 (하위 호환성)
+     * @deprecated ERP 고도화 서비스를 사용하세요
+     */
+    @Deprecated
+    private Map<String, Object> getBalanceSheetLegacy(String reportDate, String branchCode) {
+        String tenantId = getTenantId();
+        log.info("레거시 대차대조표 조회: {}, tenantId: {}", reportDate, tenantId);
         
         Map<String, Object> balanceSheet = new HashMap<>();
-        
         balanceSheet.put("reportDate", reportDate);
         balanceSheet.put("tenantId", tenantId);
         balanceSheet.put("reportPeriod", "대차대조표");
         
+        // 레거시 로직 유지 (기존 코드)
         Map<String, Object> assets = new HashMap<>();
-        
         Map<String, Object> currentAssets = new HashMap<>();
         
         try {
@@ -1310,14 +1336,12 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
             
             BigDecimal netCash = totalIncome.subtract(totalExpense).max(BigDecimal.ZERO);
-            
-            currentAssets.put("cash", netCash); // 순현금
-            currentAssets.put("bankDeposits", BigDecimal.ZERO); // 예금 (실제 데이터 없음)
-            currentAssets.put("accountsReceivable", BigDecimal.ZERO); // 매출채권 (실제 데이터 없음)
-            currentAssets.put("inventory", BigDecimal.ZERO); // 재고자산 (실제 데이터 없음)
-            currentAssets.put("prepaidExpenses", BigDecimal.ZERO); // 선급비용 (실제 데이터 없음)
-            currentAssets.put("shortTermInvestments", BigDecimal.ZERO); // 단기투자 (실제 데이터 없음)
-            
+            currentAssets.put("cash", netCash);
+            currentAssets.put("bankDeposits", BigDecimal.ZERO);
+            currentAssets.put("accountsReceivable", BigDecimal.ZERO);
+            currentAssets.put("inventory", BigDecimal.ZERO);
+            currentAssets.put("prepaidExpenses", BigDecimal.ZERO);
+            currentAssets.put("shortTermInvestments", BigDecimal.ZERO);
         } catch (Exception e) {
             log.error("자산 데이터 조회 실패: {}", e.getMessage(), e);
             currentAssets.put("cash", BigDecimal.ZERO);
@@ -1327,30 +1351,31 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
             currentAssets.put("prepaidExpenses", BigDecimal.ZERO);
             currentAssets.put("shortTermInvestments", BigDecimal.ZERO);
         }
+        
         BigDecimal currentAssetsTotal = currentAssets.values().stream()
-                .map(amount -> (BigDecimal) amount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+            .map(amount -> (BigDecimal) amount)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
         currentAssets.put("total", currentAssetsTotal);
         assets.put("currentAssets", currentAssets);
         
         Map<String, Object> fixedAssets = new HashMap<>();
-        fixedAssets.put("officeEquipment", BigDecimal.ZERO); // 사무용품
-        fixedAssets.put("computerEquipment", BigDecimal.ZERO); // 컴퓨터 장비
-        fixedAssets.put("leaseDeposits", BigDecimal.ZERO); // 임대료지불보증금
-        fixedAssets.put("furniture", BigDecimal.ZERO); // 가구
-        fixedAssets.put("software", BigDecimal.ZERO); // 소프트웨어
+        fixedAssets.put("officeEquipment", BigDecimal.ZERO);
+        fixedAssets.put("computerEquipment", BigDecimal.ZERO);
+        fixedAssets.put("leaseDeposits", BigDecimal.ZERO);
+        fixedAssets.put("furniture", BigDecimal.ZERO);
+        fixedAssets.put("software", BigDecimal.ZERO);
         BigDecimal fixedAssetsTotal = fixedAssets.values().stream()
-                .map(amount -> (BigDecimal) amount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+            .map(amount -> (BigDecimal) amount)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
         
         Map<String, Object> accumulatedDepreciation = new HashMap<>();
-        accumulatedDepreciation.put("officeEquipmentDepreciation", BigDecimal.ZERO); // 사무용품 감가상각
-        accumulatedDepreciation.put("computerDepreciation", BigDecimal.ZERO); // 컴퓨터 감가상각
-        accumulatedDepreciation.put("furnitureDepreciation", BigDecimal.ZERO); // 가구 감가상각
-        accumulatedDepreciation.put("softwareDepreciation", BigDecimal.ZERO); // 소프트웨어 감가상각
+        accumulatedDepreciation.put("officeEquipmentDepreciation", BigDecimal.ZERO);
+        accumulatedDepreciation.put("computerDepreciation", BigDecimal.ZERO);
+        accumulatedDepreciation.put("furnitureDepreciation", BigDecimal.ZERO);
+        accumulatedDepreciation.put("softwareDepreciation", BigDecimal.ZERO);
         BigDecimal totalDepreciation = accumulatedDepreciation.values().stream()
-                .map(amount -> (BigDecimal) amount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+            .map(amount -> (BigDecimal) amount)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
         accumulatedDepreciation.put("total", totalDepreciation);
         
         BigDecimal netFixedAssets = fixedAssetsTotal.add(totalDepreciation);
@@ -1360,12 +1385,12 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
         assets.put("fixedAssets", fixedAssets);
         
         Map<String, Object> intangibleAssets = new HashMap<>();
-        intangibleAssets.put("goodwill", BigDecimal.ZERO); // 영업권
-        intangibleAssets.put("patents", BigDecimal.ZERO); // 특허권
-        intangibleAssets.put("trademarks", BigDecimal.ZERO); // 상표권
+        intangibleAssets.put("goodwill", BigDecimal.ZERO);
+        intangibleAssets.put("patents", BigDecimal.ZERO);
+        intangibleAssets.put("trademarks", BigDecimal.ZERO);
         BigDecimal intangibleAssetsTotal = intangibleAssets.values().stream()
-                .map(amount -> (BigDecimal) amount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+            .map(amount -> (BigDecimal) amount)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
         intangibleAssets.put("total", intangibleAssetsTotal);
         assets.put("intangibleAssets", intangibleAssets);
         
@@ -1374,27 +1399,26 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
         balanceSheet.put("assets", assets);
         
         Map<String, Object> liabilities = new HashMap<>();
-        
         Map<String, Object> currentLiabilities = new HashMap<>();
-        currentLiabilities.put("accountsPayable", BigDecimal.ZERO); // 매입채무
-        currentLiabilities.put("shortTermLoans", BigDecimal.ZERO); // 단기차입금
-        currentLiabilities.put("accruedExpenses", BigDecimal.ZERO); // 미지급비용
-        currentLiabilities.put("taxesPayable", BigDecimal.ZERO); // 미지급세금
-        currentLiabilities.put("salaryPayable", BigDecimal.ZERO); // 미지급급여
-        currentLiabilities.put("provisions", BigDecimal.ZERO); // 충당금
+        currentLiabilities.put("accountsPayable", BigDecimal.ZERO);
+        currentLiabilities.put("shortTermLoans", BigDecimal.ZERO);
+        currentLiabilities.put("accruedExpenses", BigDecimal.ZERO);
+        currentLiabilities.put("taxesPayable", BigDecimal.ZERO);
+        currentLiabilities.put("salaryPayable", BigDecimal.ZERO);
+        currentLiabilities.put("provisions", BigDecimal.ZERO);
         BigDecimal currentLiabilitiesTotal = currentLiabilities.values().stream()
-                .map(amount -> (BigDecimal) amount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+            .map(amount -> (BigDecimal) amount)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
         currentLiabilities.put("total", currentLiabilitiesTotal);
         liabilities.put("currentLiabilities", currentLiabilities);
         
         Map<String, Object> longTermLiabilities = new HashMap<>();
-        longTermLiabilities.put("longTermLoans", BigDecimal.ZERO); // 장기차입금
-        longTermLiabilities.put("leaseObligations", BigDecimal.ZERO); // 임대차의무
-        longTermLiabilities.put("retirementBenefits", BigDecimal.ZERO); // 퇴직급여충당금
+        longTermLiabilities.put("longTermLoans", BigDecimal.ZERO);
+        longTermLiabilities.put("leaseObligations", BigDecimal.ZERO);
+        longTermLiabilities.put("retirementBenefits", BigDecimal.ZERO);
         BigDecimal longTermLiabilitiesTotal = longTermLiabilities.values().stream()
-                .map(amount -> (BigDecimal) amount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+            .map(amount -> (BigDecimal) amount)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
         longTermLiabilities.put("total", longTermLiabilitiesTotal);
         liabilities.put("longTermLiabilities", longTermLiabilities);
         
@@ -1403,54 +1427,48 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
         balanceSheet.put("liabilities", liabilities);
         
         Map<String, Object> equity = new HashMap<>();
-        
         Map<String, Object> capital = new HashMap<>();
-        capital.put("paidInCapital", BigDecimal.ZERO); // 납입자본금
-        capital.put("additionalPaidInCapital", BigDecimal.ZERO); // 자본잉여금
+        capital.put("paidInCapital", BigDecimal.ZERO);
+        capital.put("additionalPaidInCapital", BigDecimal.ZERO);
         BigDecimal totalCapital = capital.values().stream()
-                .map(amount -> (BigDecimal) amount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+            .map(amount -> (BigDecimal) amount)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
         capital.put("total", totalCapital);
         equity.put("capital", capital);
         
         Map<String, Object> retainedEarnings = new HashMap<>();
-        retainedEarnings.put("beginningRetainedEarnings", BigDecimal.ZERO); // 기초이익잉여금 (실제 데이터 없음)
-        
+        retainedEarnings.put("beginningRetainedEarnings", BigDecimal.ZERO);
         try {
             List<com.coresolution.consultation.dto.FinancialTransactionResponse> transactions = 
                 financialTransactionService.getTransactions(org.springframework.data.domain.PageRequest.of(0, 1000))
                     .getContent();
-            
             BigDecimal totalIncome = transactions.stream()
                 .filter(t -> "INCOME".equals(t.getTransactionType()))
                 .map(com.coresolution.consultation.dto.FinancialTransactionResponse::getAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-            
             BigDecimal totalExpense = transactions.stream()
                 .filter(t -> "EXPENSE".equals(t.getTransactionType()))
                 .map(com.coresolution.consultation.dto.FinancialTransactionResponse::getAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-            
             BigDecimal netIncome = totalIncome.subtract(totalExpense);
             retainedEarnings.put("netIncome", netIncome);
         } catch (Exception e) {
             log.error("당기순이익 계산 실패: {}", e.getMessage(), e);
             retainedEarnings.put("netIncome", BigDecimal.ZERO);
         }
-        
-        retainedEarnings.put("dividends", BigDecimal.ZERO); // 배당금 (실제 데이터 없음)
+        retainedEarnings.put("dividends", BigDecimal.ZERO);
         BigDecimal totalRetainedEarnings = retainedEarnings.values().stream()
-                .map(amount -> (BigDecimal) amount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+            .map(amount -> (BigDecimal) amount)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
         retainedEarnings.put("total", totalRetainedEarnings);
         equity.put("retainedEarnings", retainedEarnings);
         
         Map<String, Object> otherEquity = new HashMap<>();
-        otherEquity.put("reserveFunds", BigDecimal.ZERO); // 적립금
-        otherEquity.put("revaluationSurplus", BigDecimal.ZERO); // 재평가잉여금
+        otherEquity.put("reserveFunds", BigDecimal.ZERO);
+        otherEquity.put("revaluationSurplus", BigDecimal.ZERO);
         BigDecimal totalOtherEquity = otherEquity.values().stream()
-                .map(amount -> (BigDecimal) amount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+            .map(amount -> (BigDecimal) amount)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
         otherEquity.put("total", totalOtherEquity);
         equity.put("otherEquity", otherEquity);
         
@@ -1475,7 +1493,33 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
     @Transactional(readOnly = true)
     public Map<String, Object> getIncomeStatement(String startDate, String endDate, String branchCode) {
         String tenantId = getTenantId();
-        log.info("손익계산서 조회: {} ~ {}, tenantId: {}", startDate, endDate, tenantId);
+        log.info("손익계산서 조회: {} ~ {}, tenantId: {} (ERP 고도화 서비스 사용)", startDate, endDate, tenantId);
+        
+        try {
+            // ERP 고도화 서비스 사용 (표준 문서: docs/standards/ERP_ADVANCEMENT_STANDARD.md)
+            java.time.LocalDate start = startDate != null 
+                ? java.time.LocalDate.parse(startDate) 
+                : java.time.LocalDate.now().withDayOfMonth(1);
+            java.time.LocalDate end = endDate != null 
+                ? java.time.LocalDate.parse(endDate) 
+                : java.time.LocalDate.now();
+            
+            return financialStatementService.generateIncomeStatement(tenantId, start, end);
+        } catch (Exception e) {
+            log.error("ERP 고도화 서비스에서 손익계산서 조회 실패, 레거시 방식으로 폴백: {}", e.getMessage(), e);
+            // 레거시 방식으로 폴백 (하위 호환성)
+            return getIncomeStatementLegacy(startDate, endDate, branchCode);
+        }
+    }
+    
+    /**
+     * 레거시 손익계산서 조회 (하위 호환성)
+     * @deprecated ERP 고도화 서비스를 사용하세요
+     */
+    @Deprecated
+    private Map<String, Object> getIncomeStatementLegacy(String startDate, String endDate, String branchCode) {
+        String tenantId = getTenantId();
+        log.info("레거시 손익계산서 조회: {} ~ {}, tenantId: {}", startDate, endDate, tenantId);
         
         Map<String, Object> incomeStatement = new HashMap<>();
         incomeStatement.put("startDate", startDate);
@@ -1484,7 +1528,6 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
         incomeStatement.put("reportPeriod", "손익계산서");
         
         Map<String, Object> revenue = new HashMap<>();
-        
         try {
             List<com.coresolution.consultation.dto.FinancialTransactionResponse> transactions = 
                 financialTransactionService.getTransactions(
@@ -1511,8 +1554,8 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
             revenue.put("otherRevenue", BigDecimal.ZERO);
         }
         BigDecimal totalRevenue = revenue.values().stream()
-                .map(amount -> (BigDecimal) amount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+            .map(amount -> (BigDecimal) amount)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
         revenue.put("total", totalRevenue);
         incomeStatement.put("revenue", revenue);
         
@@ -1543,7 +1586,6 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
                 .map(Map.Entry::getValue)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
             expenses.put("otherExpense", otherExpense);
-            
         } catch (Exception e) {
             log.error("비용 데이터 조회 실패: {}", e.getMessage(), e);
             expenses.put("salaryExpense", BigDecimal.ZERO);
@@ -1554,8 +1596,8 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
             expenses.put("otherExpense", BigDecimal.ZERO);
         }
         BigDecimal totalExpenses = expenses.values().stream()
-                .map(amount -> (BigDecimal) amount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+            .map(amount -> (BigDecimal) amount)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
         expenses.put("total", totalExpenses);
         incomeStatement.put("expenses", expenses);
         

@@ -2,7 +2,7 @@
  * 통합 로그인 컴포넌트
  * Phase 3: 통합 로그인 시스템 프론트엔드
 /**
- * 
+ *
 /**
  * 모든 업종 통합 로그인 페이지
 /**
@@ -12,7 +12,7 @@
 /**
  * - 테넌트 자동 감지 및 라우팅
 /**
- * 
+ *
 /**
  * @author CoreSolution
 /**
@@ -21,46 +21,44 @@
  * @since 2025-01-XX
  */
 
-import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 // import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import { API_BASE_URL } from '../../constants/api';
+import { LOGIN_SESSION_CHECK_DELAY } from '../../constants/session';
+import { useSession } from '../../contexts/SessionContext';
+import { authAPI } from '../../utils/ajax';
+import { sessionManager } from '../../utils/sessionManager';
+import { googleLogin, kakaoLogin, naverLogin } from '../../utils/socialLogin';
 import CommonPageTemplate from '../common/CommonPageTemplate';
 import SimpleLayout from '../layout/SimpleLayout';
 import SocialSignupModal from './SocialSignupModal';
-import DuplicateLoginModal from '../common/DuplicateLoginModal';
 import TenantSelection from './TenantSelection';
-import { authAPI } from '../../utils/ajax';
-import { API_BASE_URL } from '../../constants/api';
-import { kakaoLogin, naverLogin, googleLogin } from '../../utils/socialLogin';
-import { sessionManager } from '../../utils/sessionManager';
-import { useSession } from '../../contexts/SessionContext';
-import { LOGIN_SESSION_CHECK_DELAY } from '../../constants/session';
 // @deprecated 레거시 함수는 하위 호환성을 위해 유지하되, 새로운 코드에서는 사용하지 않음
 // import { getDashboardPath, redirectToDashboardWithFallback } from '../../utils/session';
-import notificationManager from '../../utils/notification';
-import csrfTokenManager from '../../utils/csrfTokenManager';
-import { TABLET_LOGIN_CONSTANTS, COMPONENT_CSS } from '../../constants/css-variables';
 import '../../styles/auth/UnifiedLogin.css';
+import csrfTokenManager from '../../utils/csrfTokenManager';
+import notificationManager from '../../utils/notification';
 
 const UnifiedLogin = () => {
   console.log('🚀 UnifiedLogin 컴포넌트 렌더링 시작');
   const navigate = useNavigate();
   const location = useLocation();
   const { login, checkSession, setDuplicateLoginModal, user } = useSession();
-  
+
   // URL 파라미터에서 email과 redirect 가져오기
   const searchParams = new URLSearchParams(location.search);
   const emailFromUrl = searchParams.get('email');
   const redirectFromUrl = searchParams.get('redirect');
-  
+
   const [formData, setFormData] = useState({
     email: emailFromUrl || '',
     password: ''
   });
-  
+
   console.log('📋 초기 formData 상태:', formData);
   const [showPassword, setShowPassword] = useState(false);
-  
+
   // 컴포넌트 마운트 확인
   useEffect(() => {
     console.log('✅ UnifiedLogin 컴포넌트 마운트됨');
@@ -91,7 +89,7 @@ const UnifiedLogin = () => {
     }, 6000);
   };
 
-  // 서브도메인에서 tenant_id 자동 감지 (로컬 환경 지원 포함)
+  // 서브도메인에서 tenant_id 자동 감지 (표준화: 특정 도메인 정규식 하드코딩 금지)
   useEffect(() => {
     const detectTenantFromSubdomain = async () => {
       try {
@@ -103,7 +101,7 @@ const UnifiedLogin = () => {
           sessionStorage.setItem('subdomain_tenant_id', urlTenantId);
           return;
         }
-        
+
         // 2. 환경 변수에서 테스트용 tenantId 확인 (로컬 개발용)
         const envTenantId = process.env.REACT_APP_TEST_TENANT_ID;
         if (envTenantId && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
@@ -111,40 +109,21 @@ const UnifiedLogin = () => {
           sessionStorage.setItem('subdomain_tenant_id', envTenantId);
           return;
         }
-        
+
         const host = window.location.host;
         if (!host) return;
-        
-        // 3. 서브도메인 패턴 매칭 (로컬 환경도 지원)
-        // coresolution 도메인 우선, 기존 m-garden 호환성 유지
-        const patterns = [
-          /^([^.]+)\.dev\.core-solution\.co\.kr$/,
-          /^([^.]+)\.core-solution\.co\.kr$/,
-          /^([^.]+)\.dev\.m-garden\.co\.kr$/,  // 기존 호환성 유지
-          /^([^.]+)\.m-garden\.co\.kr$/,  // 기존 호환성 유지
-          // 로컬 환경 지원: localhost 서브도메인 패턴
-          /^([^.]+)\.localhost(:[0-9]+)?$/,
-          /^([^.]+)\.127\.0\.0\.1(:[0-9]+)?$/
-        ];
-        
-        let subdomain = null;
-        for (const pattern of patterns) {
-          const match = host.match(pattern);
-          if (match && match[1]) {
-            subdomain = match[1];
-            // 기본 서브도메인 제외
-            const defaultSubdomains = ['dev', 'app', 'api', 'staging', 'www'];
-            if (!defaultSubdomains.includes(subdomain)) {
-              break;
-            } else {
-              subdomain = null;
-            }
-          }
-        }
-        
+
+        // 3. subdomain 추출: host의 첫 라벨을 사용 (도메인 문자열 하드코딩 금지)
+        // 예) mindgarden.dev.core-solution.co.kr -> mindgarden
+        // 예) dev.core-solution.co.kr -> dev (기본 서브도메인으로 간주하여 제외)
+        const hostWithoutPort = host.split(':')[0];
+        const firstLabel = hostWithoutPort.split('.')[0];
+        const defaultSubdomains = ['dev', 'app', 'api', 'staging', 'www', 'localhost', '127'];
+        const subdomain = firstLabel && !defaultSubdomains.includes(firstLabel) ? firstLabel : null;
+
         if (subdomain) {
           console.log('🔍 서브도메인 감지: subdomain=', subdomain);
-          
+
           // 백엔드 API로 tenant_id 조회
           const response = await fetch(`${API_BASE_URL}/api/v1/auth/tenant/by-subdomain?subdomain=${encodeURIComponent(subdomain)}`, {
             credentials: 'include',
@@ -153,15 +132,15 @@ const UnifiedLogin = () => {
               'Accept': 'application/json'
             }
           });
-          
+
           if (response.ok) {
             const result = await response.json();
             const tenantData = result.success && result.data ? result.data : result;
-            
+
             if (tenantData.found && tenantData.tenant && tenantData.tenant.tenantId) {
               const tenantId = tenantData.tenant.tenantId;
               console.log('✅ 서브도메인으로 tenant_id 조회 성공: tenantId=', tenantId);
-              
+
               // sessionStorage에 저장 (SNS 로그인 시 사용)
               sessionStorage.setItem('subdomain_tenant_id', tenantId);
               sessionStorage.setItem('subdomain', subdomain);
@@ -180,7 +159,7 @@ const UnifiedLogin = () => {
         console.error('❌ 서브도메인에서 tenant_id 감지 실패:', error);
       }
     };
-    
+
     detectTenantFromSubdomain();
   }, []);
 
@@ -188,7 +167,7 @@ const UnifiedLogin = () => {
   useEffect(() => {
     getOAuth2Config();
     checkOAuthCallback();
-    
+
     // 세션 체크는 useSession 훅에서 처리하므로 여기서는 제거 (무한 루프 방지)
     // checkExistingSession은 제거하고 useSession의 세션 체크만 사용
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -228,7 +207,7 @@ const UnifiedLogin = () => {
     const success = searchParams.get('success');
     const provider = searchParams.get('provider');
     const signupRequired = searchParams.get('signup');
-    
+
     if (success === 'true' && provider) {
       // OAuth2Callback 컴포넌트에서 처리하도록 리다이렉트
       navigate(`/auth/oauth2/callback${location.search}`, { replace: true });
@@ -272,7 +251,7 @@ const UnifiedLogin = () => {
     try {
       // SessionContext의 checkSession을 우회하여 직접 API 호출 (무한 루프 방지)
       await new Promise(resolve => setTimeout(resolve, LOGIN_SESSION_CHECK_DELAY));
-      
+
       const response = await fetch(`${API_BASE_URL}/api/v1/auth/current-user`, {
         credentials: 'include',
         method: 'GET',
@@ -280,18 +259,18 @@ const UnifiedLogin = () => {
           'Accept': 'application/json'
         }
       });
-      
+
       if (response.ok) {
         const responseData = await response.json();
         // ApiResponse 래퍼 처리
         const userData = (responseData && typeof responseData === 'object' && 'success' in responseData && 'data' in responseData)
           ? responseData.data
           : responseData;
-        
+
         if (userData && userData.id) {
           // 사용자 정보가 있으면 sessionManager에 설정
           sessionManager.setUser(userData);
-          
+
           // 멀티 테넌트 사용자 확인
           await checkMultiTenantAndRedirect(userData);
         } else {
@@ -315,7 +294,7 @@ const UnifiedLogin = () => {
       const response = await fetch(`${API_BASE_URL}/api/v1/auth/tenant/check-multi`, {
         credentials: 'include'
       });
-      
+
       if (response.ok) {
         const responseData = await response.json();
         // ApiResponse 래퍼 처리: { success: true, data: T } 형태면 data 추출
@@ -329,22 +308,22 @@ const UnifiedLogin = () => {
           return;
         }
       }
-      
+
       // 단일 테넌트 또는 멀티 테넌트가 아닌 경우: redirect 파라미터 확인 후 리다이렉트
       const searchParams = new URLSearchParams(location.search);
       const redirectPath = searchParams.get('redirect');
-      
+
       if (redirectPath) {
         // redirect 파라미터가 있으면 해당 경로로 이동
         navigate(redirectPath, { replace: true });
       } else {
         // redirect 파라미터가 없으면 동적 대시보드로 이동
-      const { redirectToDynamicDashboard } = await import('../../utils/dashboardUtils');
-      const authResponse = {
-        user: user,
-        isMultiTenant: false
-      };
-      await redirectToDynamicDashboard(authResponse, navigate);
+        const { redirectToDynamicDashboard } = await import('../../utils/dashboardUtils');
+        const authResponse = {
+          user: user,
+          isMultiTenant: false
+        };
+        await redirectToDynamicDashboard(authResponse, navigate);
       }
     } catch (error) {
       console.error('멀티 테넌트 확인 오류:', error);
@@ -353,18 +332,18 @@ const UnifiedLogin = () => {
       if (user) {
         const searchParams = new URLSearchParams(location.search);
         const redirectPath = searchParams.get('redirect');
-        
+
         if (redirectPath) {
           // redirect 파라미터가 있으면 해당 경로로 이동
           navigate(redirectPath, { replace: true });
         } else {
           // redirect 파라미터가 없으면 동적 대시보드로 이동
-        const { redirectToDynamicDashboard } = await import('../../utils/dashboardUtils');
-        const authResponse = {
-          user: user,
-          isMultiTenant: false
-        };
-        await redirectToDynamicDashboard(authResponse, navigate);
+          const { redirectToDynamicDashboard } = await import('../../utils/dashboardUtils');
+          const authResponse = {
+            user: user,
+            isMultiTenant: false
+          };
+          await redirectToDynamicDashboard(authResponse, navigate);
         }
       }
     }
@@ -376,7 +355,7 @@ const UnifiedLogin = () => {
       const response = await fetch(`${API_BASE_URL}/api/v1/auth/tenant/accessible`, {
         credentials: 'include'
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         if (data.success) {
@@ -393,22 +372,22 @@ const UnifiedLogin = () => {
   const handleSubmit = async (e) => {
     console.log('🚀 handleSubmit 함수 호출됨!', e);
     e.preventDefault();
-    
+
     // DOM에서 직접 값 가져오기
     const formElement = e.target;
     const emailInput = formElement.querySelector('input[name="email"]');
     const passwordInput = formElement.querySelector('input[name="password"]');
-    
+
     const actualFormData = {
       email: emailInput?.value || '',
       password: passwordInput?.value || ''
     };
-    
+
     console.log('📋 DOM에서 가져온 실제 폼 데이터:', actualFormData);
     console.log('📧 실제 이메일 값:', JSON.stringify(actualFormData.email), '길이:', actualFormData.email?.length);
     console.log('🔒 실제 비밀번호 값:', JSON.stringify(actualFormData.password), '길이:', actualFormData.password?.length);
     console.log('📋 React 상태 formData:', JSON.stringify(formData));
-    
+
     if (!actualFormData.email || !actualFormData.password) {
       console.log('❌ 폼 데이터 유효성 검사 실패');
       showTooltip('이메일과 비밀번호를 입력해주세요.', 'warning');
@@ -419,13 +398,13 @@ const UnifiedLogin = () => {
     setIsLoading(true);
     try {
       console.log('🔐 통합 로그인 요청:', actualFormData);
-      
+
       const result = await authAPI.login(actualFormData);
       console.log('🔐 로그인 응답:', result);
-      
+
       // ApiResponse 래퍼 처리: result.data 또는 result 직접 사용
       const loginData = result.data || result;
-      
+
       // 중복 로그인 확인 요청 체크 (성공 체크보다 먼저)
       if (loginData.requiresConfirmation || result.data?.requiresConfirmation || result.requiresConfirmation) {
         // 중복 로그인 확인 요청
@@ -441,15 +420,15 @@ const UnifiedLogin = () => {
               });
               const confirmResponse = await confirmResult.json();
               console.log('🔔 중복 로그인 확인 응답:', confirmResponse);
-              
+
               // ApiResponse 래퍼 처리
               const confirmData = confirmResponse.data || confirmResponse;
-              
+
               if (confirmResponse.success && confirmData.user) {
                 sessionManager.setUser(confirmData.user, {
                   sessionId: confirmData.sessionId
                 });
-                
+
                 // 백엔드에서 반환한 멀티 테넌트 정보 확인
                 if (confirmData.isMultiTenant && confirmData.requiresTenantSelection && confirmData.accessibleTenants) {
                   // 멀티 테넌트 사용자: 테넌트 선택 화면 표시
@@ -460,19 +439,19 @@ const UnifiedLogin = () => {
                   setIsLoading(false);
                   return;
                 }
-                
+
                 // 단일 테넌트 사용자: redirect 파라미터 확인 후 리다이렉트
                 const searchParams = new URLSearchParams(location.search);
                 const redirectPath = searchParams.get('redirect');
-                
+
                 if (redirectPath) {
                   // redirect 파라미터가 있으면 해당 경로로 이동
                   navigate(redirectPath, { replace: true });
                 } else {
                   // redirect 파라미터가 없으면 동적 대시보드로 이동
-                await new Promise(resolve => setTimeout(resolve, 300));
-                const { redirectToDynamicDashboard } = await import('../../utils/dashboardUtils');
-                await redirectToDynamicDashboard(confirmData, navigate);
+                  await new Promise(resolve => setTimeout(resolve, 300));
+                  const { redirectToDynamicDashboard } = await import('../../utils/dashboardUtils');
+                  await redirectToDynamicDashboard(confirmData, navigate);
                 }
               }
             } catch (error) {
@@ -487,30 +466,30 @@ const UnifiedLogin = () => {
         setDuplicateLoginModal(modalData);
         return;
       }
-      
+
       if (result.success && loginData.user) {
         // tenantId 확인 로그
         console.log('🔍 로그인 응답 user 객체:', loginData.user);
         console.log('🔍 로그인 응답 user.tenantId:', loginData.user.tenantId);
         console.log('🔍 로그인 응답 userResponse:', loginData.userResponse);
         console.log('🔍 로그인 응답 userResponse?.tenantId:', loginData.userResponse?.tenantId);
-        
+
         // userResponse에 tenantId가 있으면 user에도 설정
         if (loginData.userResponse && loginData.userResponse.tenantId && !loginData.user.tenantId) {
           console.log('✅ userResponse에서 tenantId 복사:', loginData.userResponse.tenantId);
           loginData.user.tenantId = loginData.userResponse.tenantId;
         }
-        
+
         // sessionManager에 사용자 정보 설정 (세션 기반이므로 토큰 없음)
         sessionManager.setUser(loginData.user, {
           sessionId: loginData.sessionId
         });
-        
+
         // 로그인 직후 플래그 설정 (세션 체크 시 리다이렉트 방지)
         sessionStorage.setItem('justLoggedIn', 'true');
-        
+
         showTooltip('로그인에 성공했습니다.', 'success');
-        
+
         // 백엔드에서 반환한 멀티 테넌트 정보 확인
         if (loginData.isMultiTenant && loginData.requiresTenantSelection && loginData.accessibleTenants) {
           // 멀티 테넌트 사용자: 테넌트 선택 화면 표시
@@ -521,19 +500,19 @@ const UnifiedLogin = () => {
           setIsLoading(false);
           return;
         }
-        
+
         // 단일 테넌트 사용자: redirect 파라미터 확인 후 리다이렉트
         const searchParams = new URLSearchParams(location.search);
         const redirectPath = searchParams.get('redirect');
-        
+
         if (redirectPath) {
           // redirect 파라미터가 있으면 해당 경로로 이동
           navigate(redirectPath, { replace: true });
         } else {
           // redirect 파라미터가 없으면 동적 대시보드로 이동
-        await new Promise(resolve => setTimeout(resolve, 300));
-        const { redirectToDynamicDashboard } = await import('../../utils/dashboardUtils');
-        await redirectToDynamicDashboard(loginData, navigate);
+          await new Promise(resolve => setTimeout(resolve, 300));
+          const { redirectToDynamicDashboard } = await import('../../utils/dashboardUtils');
+          await redirectToDynamicDashboard(loginData, navigate);
         }
       } else {
         console.log('❌ 로그인 실패:', result.message);

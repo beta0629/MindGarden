@@ -199,6 +199,103 @@ public class AccountingServiceImpl implements AccountingService {
         return entry;
     }
     
+    @Override
+    @Transactional
+    public AccountingEntry createJournalEntryFromTransaction(com.coresolution.consultation.entity.FinancialTransaction transaction) {
+        String tenantId = transaction.getTenantId();
+        if (tenantId == null || tenantId.isEmpty()) {
+            log.warn("FinancialTransaction에 tenantId가 없어 분개를 생성할 수 없습니다: transactionId={}", transaction.getId());
+            return null;
+        }
+        
+        // 0. 테넌트 컨텍스트 검증
+        String currentTenantId = TenantContextHolder.getTenantId();
+        if (currentTenantId == null || !currentTenantId.equals(tenantId)) {
+            log.warn("테넌트 ID 불일치: 분개 생성 건너뜀. transactionTenantId={}, currentTenantId={}", tenantId, currentTenantId);
+            return null;
+        }
+        
+        try {
+            // 1. 거래 유형에 따라 계정 매핑
+            // TODO: 계정과목 마스터가 추가되면 동적으로 조회하도록 변경
+            // 현재는 기본 계정 매핑 사용
+            Long revenueAccountId = getDefaultAccountId(tenantId, "REVENUE"); // 수익 계정
+            Long expenseAccountId = getDefaultAccountId(tenantId, "EXPENSE"); // 비용 계정
+            Long cashAccountId = getDefaultAccountId(tenantId, "CASH"); // 현금 계정
+            
+            if (revenueAccountId == null || expenseAccountId == null || cashAccountId == null) {
+                log.warn("기본 계정을 찾을 수 없어 분개를 생성할 수 없습니다: tenantId={}", tenantId);
+                return null;
+            }
+            
+            // 2. 분개 생성
+            AccountingEntry entry = AccountingEntry.builder()
+                .entryDate(transaction.getTransactionDate())
+                .description(String.format("거래 자동 분개: %s", transaction.getDescription()))
+                .build();
+            
+            java.util.List<JournalEntryLine> lines = new java.util.ArrayList<>();
+            
+            if (transaction.getTransactionType() == com.coresolution.consultation.entity.FinancialTransaction.TransactionType.INCOME) {
+                // 수익 거래: 현금(차변) / 수익(대변)
+                lines.add(JournalEntryLine.builder()
+                    .accountId(cashAccountId)
+                    .debitAmount(transaction.getAmount())
+                    .creditAmount(BigDecimal.ZERO)
+                    .description("수익 입금")
+                    .build());
+                
+                lines.add(JournalEntryLine.builder()
+                    .accountId(revenueAccountId)
+                    .debitAmount(BigDecimal.ZERO)
+                    .creditAmount(transaction.getAmount())
+                    .description(transaction.getDescription())
+                    .build());
+            } else if (transaction.getTransactionType() == com.coresolution.consultation.entity.FinancialTransaction.TransactionType.EXPENSE) {
+                // 비용 거래: 비용(차변) / 현금(대변)
+                lines.add(JournalEntryLine.builder()
+                    .accountId(expenseAccountId)
+                    .debitAmount(transaction.getAmount())
+                    .creditAmount(BigDecimal.ZERO)
+                    .description(transaction.getDescription())
+                    .build());
+                
+                lines.add(JournalEntryLine.builder()
+                    .accountId(cashAccountId)
+                    .debitAmount(BigDecimal.ZERO)
+                    .creditAmount(transaction.getAmount())
+                    .description("비용 지출")
+                    .build());
+            } else {
+                log.warn("지원하지 않는 거래 유형: {}", transaction.getTransactionType());
+                return null;
+            }
+            
+            // 3. 분개 저장
+            AccountingEntry saved = createJournalEntry(tenantId, entry, lines);
+            
+            log.info("FinancialTransaction에서 분개 자동 생성 완료: transactionId={}, entryId={}, entryNumber={}", 
+                transaction.getId(), saved.getId(), saved.getEntryNumber());
+            
+            return saved;
+        } catch (Exception e) {
+            log.error("FinancialTransaction에서 분개 생성 실패: transactionId={}, error={}", 
+                transaction.getId(), e.getMessage(), e);
+            return null;
+        }
+    }
+    
+    /**
+     * 기본 계정 ID 조회 (임시 구현)
+     * TODO: 계정과목 마스터가 추가되면 동적으로 조회하도록 변경
+     */
+    private Long getDefaultAccountId(String tenantId, String accountType) {
+        // TODO: 계정과목 마스터에서 조회
+        // 현재는 임시로 1L 반환 (나중에 확장 필요)
+        // 실제로는 erp_accounts 테이블이나 공통코드에서 조회해야 함
+        return 1L;
+    }
+    
     /**
      * 분개 번호 생성 (테넌트별 독립 채번)
      * 형식: JE-{tenantId}-{YYYY}-{sequence}

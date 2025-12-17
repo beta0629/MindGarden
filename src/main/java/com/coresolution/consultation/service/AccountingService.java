@@ -37,5 +37,11 @@ public interface AccountingService {
      * 분개 상세 조회
      */
     AccountingEntry getJournalEntry(String tenantId, Long entryId);
+    
+    /**
+     * FinancialTransaction에서 분개 자동 생성
+     * 표준 문서: docs/standards/ERP_ADVANCEMENT_STANDARD.md
+     */
+    AccountingEntry createJournalEntryFromTransaction(com.coresolution.consultation.entity.FinancialTransaction transaction);
 }
 

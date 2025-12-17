@@ -61,6 +61,7 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
     private final CommonCodeService commonCodeService;
     private final RealTimeStatisticsService realTimeStatisticsService;
     private final UserRepository userRepository;
+    private final com.coresolution.consultation.service.AccountingService accountingService;
     
     @Override
     public FinancialTransactionResponse createTransaction(FinancialTransactionRequest request, User currentUser) {
@@ -130,6 +131,18 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
             log.info("✅ 회계 거래 생성시 실시간 통계 업데이트 완료: transactionId={}", savedTransaction.getId());
         } catch (Exception e) {
             log.error("❌ 회계 거래 생성시 실시간 통계 업데이트 실패: {}", e.getMessage(), e);
+        }
+        
+        // ERP 연동: FinancialTransaction에서 분개 자동 생성
+        // 표준 문서: docs/standards/ERP_ADVANCEMENT_STANDARD.md
+        try {
+            if (accountingService != null && savedTransaction.getTenantId() != null) {
+                accountingService.createJournalEntryFromTransaction(savedTransaction);
+                log.info("✅ 회계 거래에서 분개 자동 생성 완료: transactionId={}", savedTransaction.getId());
+            }
+        } catch (Exception e) {
+            log.error("❌ 회계 거래에서 분개 자동 생성 실패: transactionId={}, error={}", 
+                savedTransaction.getId(), e.getMessage(), e);
         }
         
         log.info("✅ 회계 거래 생성 완료: ID={}", savedTransaction.getId());

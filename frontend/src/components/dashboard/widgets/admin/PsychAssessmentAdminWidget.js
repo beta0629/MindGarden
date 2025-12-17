@@ -22,10 +22,7 @@ const PsychAssessmentAdminWidget = ({ widget, user }) => {
   const [uploadFile, setUploadFile] = useState(null);
   const [uploading, setUploading] = useState(false);
 
-  // 관리자만 표시
-  if (!RoleUtils.isAdmin(user) && !RoleUtils.hasRole(user, 'HQ_MASTER')) {
-    return null;
-  }
+  const isAdminUser = RoleUtils.isAdmin(user) || RoleUtils.hasRole(user, 'HQ_MASTER');
 
   const widgetWithDataSource = useMemo(() => {
     const dataSource = {
@@ -75,6 +72,11 @@ const PsychAssessmentAdminWidget = ({ widget, user }) => {
     cache: false,
     retryCount: 2
   });
+
+  // 관리자만 표시 (훅 호출 이후에 처리해야 rules-of-hooks 위반이 없음)
+  if (!isAdminUser) {
+    return null;
+  }
 
   const stats = data?.stats || {};
   const recent = data?.recent || [];

@@ -2,8 +2,11 @@ package com.coresolution.consultation.entity;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -11,10 +14,11 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.persistence.Index;
+import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -37,12 +41,21 @@ import lombok.NoArgsConstructor;
  * @since 2025-01-11
  */
 @Entity
-@Table(name = "accounting_entries", indexes = {
-    @Index(name = "idx_accounting_entry_date", columnList = "entry_date"),
-    @Index(name = "idx_accounting_entry_type", columnList = "entry_type"),
-    @Index(name = "idx_accounting_entry_account", columnList = "account_code"),
-    @Index(name = "idx_accounting_entry_created_at", columnList = "created_at")
-})
+@Table(name = "accounting_entries", 
+    indexes = {
+        @Index(name = "idx_accounting_entry_date", columnList = "entry_date"),
+        @Index(name = "idx_accounting_entry_type", columnList = "entry_type"),
+        @Index(name = "idx_accounting_entry_account", columnList = "account_code"),
+        @Index(name = "idx_accounting_entry_created_at", columnList = "created_at"),
+        @Index(name = "idx_accounting_entries_tenant_id", columnList = "tenant_id"),
+        @Index(name = "idx_accounting_entries_entry_number", columnList = "entry_number"),
+        @Index(name = "idx_accounting_entries_tenant_entry_date", columnList = "tenant_id, entry_date")
+    },
+    uniqueConstraints = {
+        @UniqueConstraint(name = "uk_accounting_entries_tenant_entry_number", 
+            columnNames = {"tenant_id", "entry_number"})
+    }
+)
 @Data
 @Builder
 @NoArgsConstructor
@@ -53,8 +66,24 @@ public class AccountingEntry {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
-    @Column(name = "tenant_id", length = 100)
+    /**
+     * 테넌트 ID (ERP 독립성 보장)
+     * 표준 문서: docs/standards/ERP_ADVANCEMENT_STANDARD.md
+     */
+    @NotNull(message = "테넌트 ID는 필수입니다.")
+    @Column(name = "tenant_id", nullable = false, length = 36)
     private String tenantId;
+    
+    /**
+     * 분개 번호 (테넌트별 독립 채번)
+     * 형식: JE-{tenantId}-{YYYY}-{sequence}
+     * 예시: JE-tenant-seoul-consultation-001-2025-0001
+     * 표준 문서: docs/standards/ERP_ADVANCEMENT_STANDARD.md
+     */
+    @NotNull(message = "분개 번호는 필수입니다.")
+    @Size(max = 100, message = "분개 번호는 100자 이하여야 합니다.")
+    @Column(name = "entry_number", nullable = false, length = 100)
+    private String entryNumber;
     
      /**
      * 분개 일자
@@ -149,14 +178,52 @@ public class AccountingEntry {
     @Column(name = "approved_at")
     private LocalDateTime approvedAt;
     
-     /**
+    /**
      * 승인 코멘트
      */
     @Size(max = 500, message = "승인 코멘트는 500자 이하여야 합니다.")
     @Column(name = "approval_comment", length = 500)
     private String approvalComment;
     
-     /**
+    /**
+     * 차변 합계 (분개 상세 라인의 차변 합계)
+     * 표준 문서: docs/standards/ERP_ADVANCEMENT_STANDARD.md
+     */
+    @Column(name = "total_debit", precision = 15, scale = 2)
+    private BigDecimal totalDebit;
+    
+    /**
+     * 대변 합계 (분개 상세 라인의 대변 합계)
+     * 표준 문서: docs/standards/ERP_ADVANCEMENT_STANDARD.md
+     */
+    @Column(name = "total_credit", precision = 15, scale = 2)
+    private BigDecimal totalCredit;
+    
+    /**
+     * 분개 상태 (DRAFT/APPROVED/POSTED)
+     * 표준 문서: docs/standards/ERP_ADVANCEMENT_STANDARD.md
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "entry_status", length = 20)
+    @Builder.Default
+    private EntryStatus entryStatus = EntryStatus.DRAFT;
+    
+    /**
+     * 전기 시간 (분개가 원장에 반영된 시간)
+     * 표준 문서: docs/standards/ERP_ADVANCEMENT_STANDARD.md
+     */
+    @Column(name = "posted_at")
+    private LocalDateTime postedAt;
+    
+    /**
+     * 분개 상세 라인 (One-to-Many)
+     * 표준 문서: docs/standards/ERP_ADVANCEMENT_STANDARD.md
+     */
+    @OneToMany(mappedBy = "journalEntry", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<JournalEntryLine> lines = new ArrayList<>();
+    
+    /**
      * 삭제 여부
      */
     @Column(name = "is_deleted", nullable = false)
@@ -308,5 +375,34 @@ public class AccountingEntry {
      */
     public boolean isCredit() {
         return EntryType.CREDIT.equals(entryType);
+    }
+    
+    /**
+     * 차변/대변 균형 검증
+     * 표준 문서: docs/standards/ERP_ADVANCEMENT_STANDARD.md
+     */
+    public boolean isBalanced() {
+        return totalDebit != null && totalCredit != null 
+            && totalDebit.compareTo(totalCredit) == 0;
+    }
+    
+    /**
+     * 분개 상태 열거형 (ERP 고도화)
+     * 표준 문서: docs/standards/ERP_ADVANCEMENT_STANDARD.md
+     */
+    public enum EntryStatus {
+        DRAFT("초안"),
+        APPROVED("승인됨"),
+        POSTED("전기됨");
+        
+        private final String displayName;
+        
+        EntryStatus(String displayName) {
+            this.displayName = displayName;
+        }
+        
+        public String getDisplayName() {
+            return displayName;
+        }
     }
 }

@@ -115,7 +115,7 @@ public class OAuth2DomainUtil {
 
         final String patternStr = pattern.pattern();
 
-        // 패턴 문자열에 포함된 메인 도메인을 설정(mainDomains)에서 동적으로 매핑
+        // 1) 패턴 문자열에 메인 도메인이 직접 포함된 경우(또는 \.로 escape된 경우) 우선 매핑
         // 예) ".*\\.dev\\.m-garden\\.co\\.kr" 에서 "dev.m-garden.co.kr" 을 찾음
         for (String mainDomain : mainDomains) {
             if (mainDomain == null) {
@@ -129,6 +129,23 @@ public class OAuth2DomainUtil {
             String escaped = trimmed.replace(".", "\\.");
             if (patternStr.contains(trimmed) || patternStr.contains(escaped)) {
                 return trimmed;
+            }
+        }
+
+        // 2) 패턴 문자열이 "m-garden.co.kr" 또는 "core-solution.co.kr" 같은 상위 도메인만 포함하는 케이스 대응
+        // (예: ".*\\.m-garden\\.co\\.kr" 은 "dev.m-garden.co.kr" 을 직접 포함하지 않음)
+        if (patternStr.contains("m-garden") || patternStr.contains("m\\-garden")) {
+            for (String mainDomain : mainDomains) {
+                if (mainDomain != null && mainDomain.contains("m-garden")) {
+                    return mainDomain.trim();
+                }
+            }
+        }
+        if (patternStr.contains("core-solution") || patternStr.contains("core\\-solution")) {
+            for (String mainDomain : mainDomains) {
+                if (mainDomain != null && mainDomain.contains("core-solution")) {
+                    return mainDomain.trim();
+                }
             }
         }
 

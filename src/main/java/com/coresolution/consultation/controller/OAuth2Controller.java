@@ -253,11 +253,9 @@ public class OAuth2Controller extends BaseApiController {
     }
 
     /**
-     * OAuth2 콜백은 메인 도메인(dev.core-solution.co.kr)로 들어오는 경우가 있어,
-     * 회원가입/오류 리다이렉트는 tenantId 기준으로 원래 테넌트 서브도메인으로 복원해야 함.
-     * 우선순위:
-     * - tenantId로 Tenant.subdomain 조회 성공 시: https://{subdomain}.{parentDomain}
-     * - 실패 시: 기존 getFrontendBaseUrl(request) fallback
+     * OAuth2 콜백은 메인 도메인(dev.core-solution.co.kr)로 들어오는 경우가 있어, 회원가입/오류 리다이렉트는 tenantId 기준으로 원래 테넌트
+     * 서브도메인으로 복원해야 함. 우선순위: - tenantId로 Tenant.subdomain 조회 성공 시:
+     * https://{subdomain}.{parentDomain} - 실패 시: 기존 getFrontendBaseUrl(request) fallback
      */
     private String getTenantAwareFrontendBaseUrl(HttpServletRequest request, String tenantId) {
         try {
@@ -276,18 +274,22 @@ public class OAuth2Controller extends BaseApiController {
                             requestHost = request.getServerName();
                         }
                         // 포트 제거
-                        String hostWithoutPort = requestHost != null ? requestHost.split(":")[0] : "";
+                        String hostWithoutPort =
+                                requestHost != null ? requestHost.split(":")[0] : "";
                         // 부모 도메인 추출 (예: dev.core-solution.co.kr)
                         String parentDomain = hostWithoutPort;
                         if (hostWithoutPort != null && !hostWithoutPort.isEmpty()
                                 && hostWithoutPort.contains(".")) {
                             String[] parts = hostWithoutPort.split("\\.");
-                            // host가 이미 서브도메인을 포함하는 경우(예: mindgarden.dev.core-solution.co.kr) 첫 라벨 제거
+                            // host가 이미 서브도메인을 포함하는 경우(예: mindgarden.dev.core-solution.co.kr) 첫 라벨
+                            // 제거
                             if (parts.length >= 3) {
-                                parentDomain = String.join(".", java.util.Arrays.copyOfRange(parts, 1, parts.length));
+                                parentDomain = String.join(".",
+                                        java.util.Arrays.copyOfRange(parts, 1, parts.length));
                             }
                         }
-                        String dynamicUrl = requestScheme + "://" + subdomain.trim() + "." + parentDomain;
+                        String dynamicUrl =
+                                requestScheme + "://" + subdomain.trim() + "." + parentDomain;
                         log.info("프론트엔드 URL (tenantId 기반 서브도메인 복원): tenantId={}, url={}", tenantId,
                                 dynamicUrl);
                         return dynamicUrl;
@@ -1403,9 +1405,8 @@ public class OAuth2Controller extends BaseApiController {
 
                 return ResponseEntity.status(302).header("Location", signupUrl).build();
             } else {
-                String frontendUrl =
-                        getTenantAwareFrontendBaseUrl(request,
-                                com.coresolution.core.context.TenantContextHolder.getTenantId());
+                String frontendUrl = getTenantAwareFrontendBaseUrl(request,
+                        com.coresolution.core.context.TenantContextHolder.getTenantId());
                 return ResponseEntity.status(302)
                         .header("Location",
                                 frontendUrl + "/login?error="
@@ -1416,9 +1417,8 @@ public class OAuth2Controller extends BaseApiController {
             }
         } catch (Exception e) {
             log.error("네이버 OAuth2 콜백 처리 실패", e);
-            String frontendUrl =
-                    getTenantAwareFrontendBaseUrl(request,
-                            com.coresolution.core.context.TenantContextHolder.getTenantId());
+            String frontendUrl = getTenantAwareFrontendBaseUrl(request,
+                    com.coresolution.core.context.TenantContextHolder.getTenantId());
             return ResponseEntity.status(302)
                     .header("Location", frontendUrl + "/login?error="
                             + URLEncoder.encode("처리실패", StandardCharsets.UTF_8) + "&provider=NAVER")
@@ -2033,9 +2033,8 @@ public class OAuth2Controller extends BaseApiController {
 
                 return ResponseEntity.status(302).header("Location", signupUrl).build();
             } else {
-                String frontendUrl =
-                        getTenantAwareFrontendBaseUrl(request,
-                                com.coresolution.core.context.TenantContextHolder.getTenantId());
+                String frontendUrl = getTenantAwareFrontendBaseUrl(request,
+                        com.coresolution.core.context.TenantContextHolder.getTenantId());
                 return ResponseEntity.status(302)
                         .header("Location",
                                 frontendUrl + "/login?error="
@@ -2047,9 +2046,8 @@ public class OAuth2Controller extends BaseApiController {
         } catch (Exception e) {
             log.error("카카오 OAuth2 콜백 처리 실패: {}", e.getMessage(), e);
             String errorMessage = e.getMessage() != null ? e.getMessage() : "처리실패";
-            String frontendUrl =
-                    getTenantAwareFrontendBaseUrl(request,
-                            com.coresolution.core.context.TenantContextHolder.getTenantId());
+            String frontendUrl = getTenantAwareFrontendBaseUrl(request,
+                    com.coresolution.core.context.TenantContextHolder.getTenantId());
             return ResponseEntity.status(302).header("Location", frontendUrl + "/login?error="
                     + URLEncoder.encode(errorMessage, StandardCharsets.UTF_8) + "&provider=KAKAO")
                     .build();

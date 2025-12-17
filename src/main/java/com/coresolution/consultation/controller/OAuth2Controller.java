@@ -92,9 +92,7 @@ public class OAuth2Controller extends BaseApiController {
     @Value("${frontend.base-url:${FRONTEND_BASE_URL:}}")
     private String frontendBaseUrl;
 
-    // OAuth2 콜백 이후 프론트 리다이렉트 도메인 기준값 (dev/prod 환경 구분용)
-    @Value("${server.base-url:${SERVER_BASE_URL:https://dev.core-solution.co.kr}}")
-    private String serverBaseUrl;
+    // OAuth2 콜백 이후 리다이렉트는 '실제 유입 Host' 기준으로 유지 (proxy/env 설정 불일치로 다른 도메인으로 튀는 문제 방지)
 
     @PostConstruct
     public void init() {
@@ -271,37 +269,23 @@ public class OAuth2Controller extends BaseApiController {
                     if (subdomain != null && !subdomain.trim().isEmpty()) {
                         String requestScheme = resolveExternalScheme(request);
 
-                        // 1) 환경 기준 도메인 우선: SERVER_BASE_URL / server.base-url
-                        String parentDomain = null;
-                        try {
-                            if (serverBaseUrl != null && !serverBaseUrl.trim().isEmpty()) {
-                                java.net.URI uri = java.net.URI.create(serverBaseUrl.trim());
-                                parentDomain = uri.getHost();
-                            }
-                        } catch (Exception e) {
-                            log.warn("serverBaseUrl 파싱 실패: serverBaseUrl={}", serverBaseUrl);
+                        // 요청 Host에서 parent domain 추출 (유입 도메인 유지)
+                        String requestHost = request.getHeader("X-Forwarded-Host");
+                        if (requestHost == null || requestHost.isEmpty()) {
+                            requestHost = request.getHeader("Host");
                         }
+                        if (requestHost == null || requestHost.isEmpty()) {
+                            requestHost = request.getServerName();
+                        }
+                        // 포트 제거
+                        String hostWithoutPort = requestHost != null ? requestHost.split(":")[0] : "";
 
-                        // 2) fallback: 요청 Host에서 추출
-                        if (parentDomain == null || parentDomain.isEmpty()) {
-                            String requestHost = request.getHeader("X-Forwarded-Host");
-                            if (requestHost == null || requestHost.isEmpty()) {
-                                requestHost = request.getHeader("Host");
-                            }
-                            if (requestHost == null || requestHost.isEmpty()) {
-                                requestHost = request.getServerName();
-                            }
-                            // 포트 제거
-                            String hostWithoutPort =
-                                    requestHost != null ? requestHost.split(":")[0] : "";
-
-                            // host가 tenant 서브도메인을 포함하면 제거해서 parent domain만 남김
-                            parentDomain = hostWithoutPort;
-                            if (hostWithoutPort != null
-                                    && hostWithoutPort.startsWith(subdomain.trim() + ".")) {
-                                parentDomain = hostWithoutPort
-                                        .substring((subdomain.trim() + ".").length());
-                            }
+                        // host가 tenant 서브도메인을 포함하면 제거해서 parent domain만 남김
+                        String parentDomain = hostWithoutPort;
+                        if (hostWithoutPort != null
+                                && hostWithoutPort.startsWith(subdomain.trim() + ".")) {
+                            parentDomain = hostWithoutPort
+                                    .substring((subdomain.trim() + ".").length());
                         }
 
                         String dynamicUrl =
@@ -320,8 +304,8 @@ public class OAuth2Controller extends BaseApiController {
     }
 
     /**
-     * 실패/오류 리다이렉트에서 서브도메인을 유지하기 위한 tenantId 복구 헬퍼
-     * 우선순위: state(인코딩) -> session(oauth2_tenant_id) -> TenantContextHolder
+     * 실패/오류 리다이렉트에서 서브도메인을 유지하기 위한 tenantId 복구 헬퍼 우선순위: state(인코딩) -> session(oauth2_tenant_id) ->
+     * TenantContextHolder
      */
     private String resolveTenantIdForRedirect(HttpSession session, String state) {
         // 1) state에서 tenantId 디코딩 (형식: {base64TenantId}.{uuid})
@@ -1004,7 +988,8 @@ public class OAuth2Controller extends BaseApiController {
                                 "⚠️ 네이버 OAuth2 - 이메일이 제공되지 않아 로그인 진행 불가. email=null/empty, providerUserId={}",
                                 socialUserInfo.getProviderUserId());
                         String redirectTenantId = resolveTenantIdForRedirect(session, state);
-                        String frontendUrl = getTenantAwareFrontendBaseUrl(request, redirectTenantId);
+                        String frontendUrl =
+                                getTenantAwareFrontendBaseUrl(request, redirectTenantId);
                         return ResponseEntity.status(302)
                                 .header("Location",
                                         frontendUrl + "/login?error="

@@ -281,9 +281,11 @@ public class OAuth2Controller extends BaseApiController {
                         if (hostWithoutPort != null && !hostWithoutPort.isEmpty()
                                 && hostWithoutPort.contains(".")) {
                             String[] parts = hostWithoutPort.split("\\.");
-                            // host가 이미 서브도메인을 포함하는 경우(예: mindgarden.dev.core-solution.co.kr) 첫 라벨
-                            // 제거
-                            if (parts.length >= 3) {
+                            // host가 이미 "현재 테넌트 서브도메인"을 포함하는 경우에만 첫 라벨 제거
+                            // 예) mindgarden.dev.core-solution.co.kr -> dev.core-solution.co.kr
+                            // (dev.core-solution.co.kr 같은 환경 서브도메인은 제거하면 안 됨)
+                            if (hostWithoutPort.startsWith(subdomain.trim() + ".")
+                                    && parts.length >= 4) {
                                 parentDomain = String.join(".",
                                         java.util.Arrays.copyOfRange(parts, 1, parts.length));
                             }

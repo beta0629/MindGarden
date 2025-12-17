@@ -21,6 +21,7 @@ const PsychAssessmentAdminWidget = ({ widget, user }) => {
   const [uploadType, setUploadType] = useState('TCI');
   const [uploadFile, setUploadFile] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
 
   const isAdminUser = RoleUtils.isAdmin(user) || RoleUtils.hasRole(user, 'HQ_MASTER');
 
@@ -80,6 +81,35 @@ const PsychAssessmentAdminWidget = ({ widget, user }) => {
 
   const stats = data?.stats || {};
   const recent = data?.recent || [];
+
+  const handlePickFile = (file) => {
+    if (!file) return;
+    if (file.type !== 'application/pdf') {
+      notificationManager.show('PDF 파일만 업로드할 수 있습니다.', 'warning');
+      return;
+    }
+    setUploadFile(file);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+    const file = e.dataTransfer?.files?.[0];
+    handlePickFile(file);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isDragOver) setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+  };
 
   const handleUpload = async () => {
     if (!uploadFile) {
@@ -174,6 +204,31 @@ const PsychAssessmentAdminWidget = ({ widget, user }) => {
             <h4 className="mg-h5 mg-mb-0">PDF 업로드</h4>
           </div>
           <div className="mg-card__body">
+            <div
+              className="mg-card mg-mb-sm"
+              onDrop={handleDrop}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              role="button"
+              tabIndex={0}
+              onKeyDown={() => {}}
+              style={{
+                borderStyle: 'dashed',
+                borderWidth: '2px',
+                borderColor: isDragOver ? 'var(--cs-primary-400)' : 'var(--cs-gray-300)',
+                background: isDragOver ? 'var(--cs-primary-50)' : 'var(--cs-slate-50)'
+              }}
+            >
+              <div className="mg-card__body mg-flex mg-flex-col mg-align-center mg-justify-center mg-gap-sm">
+                <p className="mg-text-muted mg-mb-0">
+                  파일을 여기로 드래그&드롭 하거나 아래에서 선택하세요.
+                </p>
+                <p className="mg-text-muted mg-mb-0">
+                  {uploadFile ? `선택됨: ${uploadFile.name}` : '선택된 파일 없음'}
+                </p>
+              </div>
+            </div>
+
             <div className="mg-flex mg-gap-sm mg-flex-wrap">
               <select
                 className="mg-select"
@@ -187,7 +242,7 @@ const PsychAssessmentAdminWidget = ({ widget, user }) => {
                 className="mg-input"
                 type="file"
                 accept="application/pdf"
-                onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
+                onChange={(e) => handlePickFile(e.target.files?.[0] || null)}
               />
               <button
                 type="button"

@@ -92,6 +92,10 @@ public class OAuth2Controller extends BaseApiController {
     @Value("${frontend.base-url:${FRONTEND_BASE_URL:}}")
     private String frontendBaseUrl;
 
+    // OAuth2 콜백 이후 프론트 리다이렉트 도메인 기준값 (dev/prod 환경 구분용)
+    @Value("${server.base-url:${SERVER_BASE_URL:https://dev.core-solution.co.kr}}")
+    private String serverBaseUrl;
+
     @PostConstruct
     public void init() {
         log.info("🔧 OAuth2Controller 초기화 - frontendBaseUrl: {}", frontendBaseUrl);
@@ -266,30 +270,37 @@ public class OAuth2Controller extends BaseApiController {
                     String subdomain = tenantOptional.get().getSubdomain();
                     if (subdomain != null && !subdomain.trim().isEmpty()) {
                         String requestScheme = resolveExternalScheme(request);
-                        String requestHost = request.getHeader("X-Forwarded-Host");
-                        if (requestHost == null || requestHost.isEmpty()) {
-                            requestHost = request.getHeader("Host");
+                        
+                        // 1) 환경 기준 도메인 우선: SERVER_BASE_URL / server.base-url
+                        String parentDomain = null;
+                        try {
+                            if (serverBaseUrl != null && !serverBaseUrl.trim().isEmpty()) {
+                                java.net.URI uri = java.net.URI.create(serverBaseUrl.trim());
+                                parentDomain = uri.getHost();
+                            }
+                        } catch (Exception e) {
+                            log.warn("serverBaseUrl 파싱 실패: serverBaseUrl={}", serverBaseUrl);
                         }
-                        if (requestHost == null || requestHost.isEmpty()) {
-                            requestHost = request.getServerName();
-                        }
-                        // 포트 제거
-                        String hostWithoutPort =
-                                requestHost != null ? requestHost.split(":")[0] : "";
-                        // 부모 도메인 추출 (예: dev.core-solution.co.kr)
-                        String parentDomain = hostWithoutPort;
-                        if (hostWithoutPort != null && !hostWithoutPort.isEmpty()
-                                && hostWithoutPort.contains(".")) {
-                            String[] parts = hostWithoutPort.split("\\.");
-                            // host가 이미 "현재 테넌트 서브도메인"을 포함하는 경우에만 첫 라벨 제거
-                            // 예) mindgarden.dev.core-solution.co.kr -> dev.core-solution.co.kr
-                            // (dev.core-solution.co.kr 같은 환경 서브도메인은 제거하면 안 됨)
-                            if (hostWithoutPort.startsWith(subdomain.trim() + ".")
-                                    && parts.length >= 4) {
-                                parentDomain = String.join(".",
-                                        java.util.Arrays.copyOfRange(parts, 1, parts.length));
+                        
+                        // 2) fallback: 요청 Host에서 추출
+                        if (parentDomain == null || parentDomain.isEmpty()) {
+                            String requestHost = request.getHeader("X-Forwarded-Host");
+                            if (requestHost == null || requestHost.isEmpty()) {
+                                requestHost = request.getHeader("Host");
+                            }
+                            if (requestHost == null || requestHost.isEmpty()) {
+                                requestHost = request.getServerName();
+                            }
+                            // 포트 제거
+                            String hostWithoutPort = requestHost != null ? requestHost.split(":")[0] : "";
+                            
+                            // host가 tenant 서브도메인을 포함하면 제거해서 parent domain만 남김
+                            parentDomain = hostWithoutPort;
+                            if (hostWithoutPort != null && hostWithoutPort.startsWith(subdomain.trim() + ".")) {
+                                parentDomain = hostWithoutPort.substring((subdomain.trim() + ".").length());
                             }
                         }
+
                         String dynamicUrl =
                                 requestScheme + "://" + subdomain.trim() + "." + parentDomain;
                         log.info("프론트엔드 URL (tenantId 기반 서브도메인 복원): tenantId={}, url={}", tenantId,

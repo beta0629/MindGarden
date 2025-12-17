@@ -5,7 +5,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration;
 import org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.ComponentScan;
 // import org.springframework.context.annotation.EnableAspectJAutoProxy; // 주석 처리
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
@@ -33,11 +32,13 @@ import org.springframework.scheduling.annotation.EnableScheduling;
     "com.coresolution.core.domain",
     "com.coresolution.core.entity",
     "com.coresolution.consultation.entity",
+    "com.coresolution.consultation.assessment.entity",
     "com.coresolution.user.entity"
 })
 @EnableJpaRepositories(basePackages = {
     "com.coresolution.core.repository",
     "com.coresolution.consultation.repository",
+    "com.coresolution.consultation.assessment.repository",
     "com.coresolution.user.repository"
 })
 @EnableJpaAuditing

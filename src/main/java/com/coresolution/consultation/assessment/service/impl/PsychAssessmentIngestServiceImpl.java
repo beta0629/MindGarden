@@ -19,6 +19,7 @@ public class PsychAssessmentIngestServiceImpl implements PsychAssessmentIngestSe
 
     private final PsychAssessmentDocumentRepository documentRepository;
     private final EncryptedFileStorageService encryptedFileStorageService;
+    private final com.coresolution.consultation.assessment.service.PsychAssessmentExtractionService extractionService;
 
     @Override
     @Transactional
@@ -45,6 +46,9 @@ public class PsychAssessmentIngestServiceImpl implements PsychAssessmentIngestSe
                 .build();
 
         PsychAssessmentDocument saved = documentRepository.save(doc);
+
+        // MVP: 업로드 직후 추출 작업을 큐잉 (실제 OCR/템플릿은 추후 확장)
+        extractionService.enqueueExtraction(saved.getId());
 
         return PsychAssessmentUploadResponse.builder()
                 .documentId(saved.getId())

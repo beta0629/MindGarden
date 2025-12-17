@@ -109,21 +109,31 @@ public class OAuth2DomainUtil {
      * 패턴에 매칭되는 메인 도메인 찾기
      */
     private String findMainDomainForPattern(String host, Pattern pattern) {
-        String patternStr = pattern.pattern();
-        
-        // 패턴에서 메인 도메인 추출
-        if (patternStr.contains("dev.core-solution.co.kr")) {
-            return "dev.core-solution.co.kr";
-        } else if (patternStr.contains("core-solution.co.kr") && !host.equals("dev.core-solution.co.kr") && !host.equals("core-solution.co.kr")) {
-            return "dev.core-solution.co.kr";
-        } else if (patternStr.contains("dev.m-garden.co.kr")) {
-            return "dev.m-garden.co.kr";
-        } else if (patternStr.contains("m-garden.co.kr") && !host.equals("dev.m-garden.co.kr") && !host.equals("m-garden.co.kr")) {
-            return "dev.m-garden.co.kr";
+        if (pattern == null) {
+            return mainDomains.isEmpty() ? host : mainDomains.get(0);
         }
-        
+
+        final String patternStr = pattern.pattern();
+
+        // 패턴 문자열에 포함된 메인 도메인을 설정(mainDomains)에서 동적으로 매핑
+        // 예) ".*\\.dev\\.m-garden\\.co\\.kr" 에서 "dev.m-garden.co.kr" 을 찾음
+        for (String mainDomain : mainDomains) {
+            if (mainDomain == null) {
+                continue;
+            }
+            String trimmed = mainDomain.trim();
+            if (trimmed.isEmpty()) {
+                continue;
+            }
+            // 정규식 문자열에는 '.'이 '\\.'로 들어갈 수 있으므로 둘 다 대응
+            String escaped = trimmed.replace(".", "\\.");
+            if (patternStr.contains(trimmed) || patternStr.contains(escaped)) {
+                return trimmed;
+            }
+        }
+
         // 기본값: 첫 번째 메인 도메인
-        return mainDomains.isEmpty() ? host : mainDomains.get(0);
+        return mainDomains.isEmpty() ? host : mainDomains.get(0).trim();
     }
 }
 

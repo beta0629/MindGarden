@@ -98,15 +98,58 @@ public class OAuth2Controller extends BaseApiController {
     }
 
     /**
+     * 외부(클라이언트 기준) 스킴을 최대한 정확히 추정합니다. - 프록시 환경에서는 request.getScheme()가 http로 들어오는 경우가 있어 OAuth2
+     * redirect_uri 불일치가 발생할 수 있음
+     */
+    private String resolveExternalScheme(HttpServletRequest request) {
+        String forwardedProto = request.getHeader("X-Forwarded-Proto");
+        if (forwardedProto != null && !forwardedProto.isEmpty()) {
+            return forwardedProto;
+        }
+
+        String forwardedSsl = request.getHeader("X-Forwarded-Ssl");
+        if (forwardedSsl != null && forwardedSsl.equalsIgnoreCase("on")) {
+            return "https";
+        }
+
+        // Origin/Referer로 보정 (브라우저에서 온 요청인 경우 도움이 됨)
+        String origin = request.getHeader("Origin");
+        if (origin != null && !origin.isEmpty() && origin.startsWith("http")) {
+            try {
+                return new java.net.URL(origin).getProtocol();
+            } catch (Exception ignored) {
+            }
+        }
+        String referer = request.getHeader("Referer");
+        if (referer != null && !referer.isEmpty() && referer.startsWith("http")) {
+            try {
+                return new java.net.URL(referer).getProtocol();
+            } catch (Exception ignored) {
+            }
+        }
+
+        // 포트 기반 보정
+        String forwardedPort = request.getHeader("X-Forwarded-Port");
+        if (forwardedPort != null && !forwardedPort.isEmpty()) {
+            if ("443".equals(forwardedPort)) {
+                return "https";
+            }
+        }
+        int serverPort = request.getServerPort();
+        if (serverPort == 443) {
+            return "https";
+        }
+
+        return request.getScheme();
+    }
+
+    /**
      * 프론트엔드 URL 동적 감지 우선순위: 1. 요청의 Host 헤더 (서브도메인 지원) 2. Referer 헤더 3. 프로퍼티/환경변수
      */
     private String getFrontendBaseUrl(HttpServletRequest request) {
         // 1. 요청의 Host 헤더를 우선 사용 (서브도메인 지원)
         try {
-            String requestScheme = request.getHeader("X-Forwarded-Proto");
-            if (requestScheme == null || requestScheme.isEmpty()) {
-                requestScheme = request.getScheme();
-            }
+            String requestScheme = resolveExternalScheme(request);
 
             String requestHost = request.getHeader("X-Forwarded-Host");
             if (requestHost == null || requestHost.isEmpty()) {
@@ -167,10 +210,7 @@ public class OAuth2Controller extends BaseApiController {
 
         // 5. 모든 방법이 실패한 경우 요청 정보로 동적 생성 시도
         try {
-            String scheme = request.getHeader("X-Forwarded-Proto");
-            if (scheme == null || scheme.isEmpty()) {
-                scheme = request.getScheme();
-            }
+            String scheme = resolveExternalScheme(request);
 
             String serverName = request.getHeader("X-Forwarded-Host");
             if (serverName == null || serverName.isEmpty()) {
@@ -196,7 +236,7 @@ public class OAuth2Controller extends BaseApiController {
 
         // 최후의 수단: 요청의 서버 정보로 강제 생성
         try {
-            String scheme = request.getScheme();
+            String scheme = resolveExternalScheme(request);
             String serverName = request.getServerName();
             if (serverName != null && !serverName.isEmpty()) {
                 String fallbackUrl = scheme + "://" + serverName;
@@ -239,10 +279,7 @@ public class OAuth2Controller extends BaseApiController {
             try {
                 // 프록시 헤더 확인 (X-Forwarded-Proto, X-Forwarded-Host)
                 // Nginx를 통해 들어온 요청은 X-Forwarded-Host를 우선 확인
-                String requestScheme = request.getHeader("X-Forwarded-Proto");
-                if (requestScheme == null || requestScheme.isEmpty()) {
-                    requestScheme = request.getScheme();
-                }
+                String requestScheme = resolveExternalScheme(request);
 
                 // X-Forwarded-Host 우선 확인 (Nginx를 통해 들어온 요청)
                 String requestHost = request.getHeader("X-Forwarded-Host");
@@ -380,10 +417,7 @@ public class OAuth2Controller extends BaseApiController {
             try {
                 // 프록시 헤더 확인 (X-Forwarded-Proto, X-Forwarded-Host)
                 // Nginx를 통해 들어온 요청은 X-Forwarded-Host를 우선 확인
-                String requestScheme = request.getHeader("X-Forwarded-Proto");
-                if (requestScheme == null || requestScheme.isEmpty()) {
-                    requestScheme = request.getScheme();
-                }
+                String requestScheme = resolveExternalScheme(request);
 
                 // X-Forwarded-Host 우선 확인 (Nginx를 통해 들어온 요청)
                 String requestHost = request.getHeader("X-Forwarded-Host");
@@ -633,10 +667,7 @@ public class OAuth2Controller extends BaseApiController {
             // 카카오와 동일하게 OAuth2DomainUtil을 사용하여 서브도메인을 메인 도메인으로 변환
             String callbackRedirectUri = null;
             // requestScheme과 portSuffix는 try 블록 밖에서도 사용해야 하므로 먼저 선언
-            String requestScheme = request.getHeader("X-Forwarded-Proto");
-            if (requestScheme == null || requestScheme.isEmpty()) {
-                requestScheme = request.getScheme();
-            }
+            String requestScheme = resolveExternalScheme(request);
             String portSuffix = "";
             try {
                 // 프록시 헤더 확인 (X-Forwarded-Proto, X-Forwarded-Host)
@@ -1421,10 +1452,7 @@ public class OAuth2Controller extends BaseApiController {
             try {
                 // 프록시 헤더 확인 (X-Forwarded-Proto, X-Forwarded-Host)
                 // 단, 로컬 환경(localhost)에서는 실제 요청 Host를 우선 사용
-                String requestScheme = request.getHeader("X-Forwarded-Proto");
-                if (requestScheme == null || requestScheme.isEmpty()) {
-                    requestScheme = request.getScheme();
-                }
+                String requestScheme = resolveExternalScheme(request);
 
                 // Host 헤더 우선 확인 (실제 백엔드 서버 주소)
                 String requestHost = request.getHeader("Host");

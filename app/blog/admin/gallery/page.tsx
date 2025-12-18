@@ -94,7 +94,7 @@ export default function GalleryAdminPage() {
       const apiService = getApiService();
       await apiService.addGalleryImage({
         imageUrl: newImage.imageUrl,
-        altText: newImage.altText || null,
+        altText: newImage.altText || undefined,
         displayOrder: newImage.displayOrder,
       });
       setSuccess('갤러리 이미지가 추가되었습니다.');

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
 import { sessionManager } from '../../utils/sessionManager';
 import { fetchUserPermissions, PermissionChecks, PERMISSIONS } from '../../utils/permissionUtils';
+import { RoleUtils } from '../../constants/roles';
 import SimpleLayout from '../layout/SimpleLayout';
 import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import StatCard from '../ui/Card/StatCard';
@@ -130,15 +131,20 @@ const ErpDashboard = ({ user: propUser }) => {
   useEffect(() => {
     // 권한 조회 성공 시 즉시 체크
     if (userPermissions.length > 0) {
+      const currentUser = propUser || sessionUser;
+      // 관리자 역할 체크 (PermissionGroupGuard와 동일한 로직)
+      const isAdmin = currentUser && RoleUtils.isAdmin(currentUser);
+      
       // 표준화 2025-12-08: 하드코딩 제거, 데이터베이스 기반 동적 권한 체크만 사용
-      const hasErpPermission = PermissionChecks.canAccessERP(userPermissions);
+      // 단, 관리자 역할이면 ERP_ACCESS 권한이 없어도 접근 허용 (PermissionGroupGuard와 동일)
+      const hasErpPermission = PermissionChecks.canAccessERP(userPermissions) || isAdmin;
       
       if (!hasErpPermission) {
         console.log('❌ ERP 접근 권한 없음 (동적 권한 체크), 일반 대시보드로 이동');
         navigate('/dashboard', { replace: true });
         return;
       }
-      console.log('✅ ERP 접근 권한 확인됨 (동적 권한 시스템)');
+      console.log('✅ ERP 접근 권한 확인됨 (동적 권한 시스템)', isAdmin ? '(관리자 특권)' : '');
       loadDashboardData();
       return;
     }

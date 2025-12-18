@@ -387,6 +387,11 @@
   --text-primary: var(--cs-secondary-800);
   --color-primary-main: var(--cs-primary-500);
   --color-primary-hover: var(--cs-primary-600);
+  --color-success-hover: var(--cs-success-600);
+  --color-danger-hover: var(--cs-error-600);
+  --color-text-on-primary: #ffffff;
+  --color-text-on-success: #ffffff;
+  --color-text-on-danger: #ffffff;
   --color-primary-active: var(--cs-primary-700);
 
   /* ===== TENANT BRANDING VARIABLES ===== */
@@ -6185,51 +6190,56 @@ body {
   width: 40px;
   height: 40px;
   border-radius: var(--radius-md);
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  background: rgba(255, 255, 255, 0.6);
-  backdrop-filter: blur(10px);
+  border: 1px solid var(--color-border-light);
+  background-color: var(--color-bg-primary);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s ease;
-  color: var(--olive-green);
+  color: var(--color-text-primary);
 }
 
 .mg-dashboard-icon-btn:hover {
-  background: rgba(255, 255, 255, 0.8);
-  border-color: var(--olive-green);
+  background-color: var(--color-bg-hover);
+  border-color: var(--color-border);
 }
 
-/* 아이콘 버튼 색상 변형 */
-.mg-dashboard-icon-btn.mg-button-primary {
-  color: var(--mint-green);
-  border-color: var(--mint-green);
+/* 아이콘 버튼 색상 변형 - MGButton의 mg-button--${variant} 클래스 사용 */
+.mg-dashboard-icon-btn.mg-button--primary {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--color-text-on-primary);
 }
 
-.mg-dashboard-icon-btn.mg-button-primary:hover {
-  background: var(--mint-green);
-  color: white;
+.mg-dashboard-icon-btn.mg-button--primary:hover {
+  background-color: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
+  color: var(--color-text-on-primary);
 }
 
-.mg-dashboard-icon-btn.mg-button-success {
-  color: var(--olive-green);
-  border-color: var(--olive-green);
+.mg-dashboard-icon-btn.mg-button--success {
+  background-color: var(--color-success);
+  border-color: var(--color-success);
+  color: var(--color-text-on-success);
 }
 
-.mg-dashboard-icon-btn.mg-button-success:hover {
-  background: var(--olive-green);
-  color: white;
+.mg-dashboard-icon-btn.mg-button--success:hover {
+  background-color: var(--color-success-hover);
+  border-color: var(--color-success-hover);
+  color: var(--color-text-on-success);
 }
 
-.mg-dashboard-icon-btn.mg-button-danger {
-  color: var(--color-danger);
+.mg-dashboard-icon-btn.mg-button--danger {
+  background-color: var(--color-danger);
   border-color: var(--color-danger);
+  color: var(--color-text-on-danger);
 }
 
-.mg-dashboard-icon-btn.mg-button-danger:hover {
-  background: var(--color-danger);
-  color: white;
+.mg-dashboard-icon-btn.mg-button--danger:hover {
+  background-color: var(--color-danger-hover);
+  border-color: var(--color-danger-hover);
+  color: var(--color-text-on-danger);
 }
 
 /* Dashboard Stats */

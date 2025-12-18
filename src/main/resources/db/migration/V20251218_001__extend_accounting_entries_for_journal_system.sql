@@ -1,73 +1,213 @@
--- =====================================================
--- ERP 고도화: 분개 시스템 완성 (Phase 1-1)
--- 표준 문서: docs/standards/ERP_ADVANCEMENT_STANDARD.md
--- =====================================================
+-- ============================================
+-- ERP 분개 시스템 확장 마이그레이션
+-- ============================================
+-- 목적: accounting_entries 테이블을 분개 시스템으로 확장
+-- 날짜: 2025-12-18
+-- ============================================
 
 -- 1. accounting_entries 테이블 확장
--- 1-1. tenant_id를 NOT NULL로 변경 (기존 NULL 데이터는 기본값 설정)
-UPDATE accounting_entries SET tenant_id = 'unknown' WHERE tenant_id IS NULL;
-ALTER TABLE accounting_entries 
-    MODIFY COLUMN tenant_id VARCHAR(36) NOT NULL COMMENT '테넌트 ID';
+-- 1-1. 기존 컬럼 확인 및 추가 (조건부)
 
--- 1-2. 분개 번호 컬럼 추가
-ALTER TABLE accounting_entries 
-    ADD COLUMN entry_number VARCHAR(100) NULL COMMENT '분개 번호 (테넌트별 독립 채번)';
+-- 1-2. 분개 번호 컬럼 추가 (이미 존재하는 경우 스킵)
+SET @dbname = DATABASE();
+SET @tablename = 'accounting_entries';
+SET @columnname = 'entry_number';
+SET @preparedStatement = (SELECT IF(
+    (
+        SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE
+            (TABLE_SCHEMA = @dbname)
+            AND (TABLE_NAME = @tablename)
+            AND (COLUMN_NAME = @columnname)
+    ) > 0,
+    'SELECT 1',
+    CONCAT('ALTER TABLE ', @tablename, ' ADD COLUMN ', @columnname, ' VARCHAR(100) NULL COMMENT ''분개 번호 (테넌트별 독립 채번)''')
+));
+PREPARE alterIfNotExists FROM @preparedStatement;
+EXECUTE alterIfNotExists;
+DEALLOCATE PREPARE alterIfNotExists;
 
--- 1-3. 차변/대변 합계 컬럼 추가
-ALTER TABLE accounting_entries 
-    ADD COLUMN total_debit DECIMAL(15, 2) DEFAULT 0 COMMENT '차변 합계',
-    ADD COLUMN total_credit DECIMAL(15, 2) DEFAULT 0 COMMENT '대변 합계';
+-- 1-3. 총 차변/대변 금액 컬럼 추가 (이미 존재하는 경우 스킵)
+SET @columnname = 'total_debit';
+SET @preparedStatement = (SELECT IF(
+    (
+        SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE
+            (TABLE_SCHEMA = @dbname)
+            AND (TABLE_NAME = @tablename)
+            AND (COLUMN_NAME = @columnname)
+    ) > 0,
+    'SELECT 1',
+    CONCAT('ALTER TABLE ', @tablename, ' ADD COLUMN ', @columnname, ' DECIMAL(19, 2) DEFAULT 0.00 COMMENT ''총 차변 금액''')
+));
+PREPARE alterIfNotExists FROM @preparedStatement;
+EXECUTE alterIfNotExists;
+DEALLOCATE PREPARE alterIfNotExists;
 
--- 1-4. 분개 상태 컬럼 추가 (DRAFT/APPROVED/POSTED)
-ALTER TABLE accounting_entries 
-    ADD COLUMN entry_status VARCHAR(20) DEFAULT 'DRAFT' COMMENT '분개 상태: DRAFT, APPROVED, POSTED';
+SET @columnname = 'total_credit';
+SET @preparedStatement = (SELECT IF(
+    (
+        SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE
+            (TABLE_SCHEMA = @dbname)
+            AND (TABLE_NAME = @tablename)
+            AND (COLUMN_NAME = @columnname)
+    ) > 0,
+    'SELECT 1',
+    CONCAT('ALTER TABLE ', @tablename, ' ADD COLUMN ', @columnname, ' DECIMAL(19, 2) DEFAULT 0.00 COMMENT ''총 대변 금액''')
+));
+PREPARE alterIfNotExists FROM @preparedStatement;
+EXECUTE alterIfNotExists;
+DEALLOCATE PREPARE alterIfNotExists;
 
--- 1-5. 전기 시간 컬럼 추가
-ALTER TABLE accounting_entries 
-    ADD COLUMN posted_at TIMESTAMP NULL COMMENT '전기 시간';
+-- 1-4. 분개 상태 컬럼 추가 (이미 존재하는 경우 스킵)
+SET @columnname = 'entry_status';
+SET @preparedStatement = (SELECT IF(
+    (
+        SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE
+            (TABLE_SCHEMA = @dbname)
+            AND (TABLE_NAME = @tablename)
+            AND (COLUMN_NAME = @columnname)
+    ) > 0,
+    'SELECT 1',
+    CONCAT('ALTER TABLE ', @tablename, ' ADD COLUMN ', @columnname, ' VARCHAR(20) DEFAULT ''DRAFT'' COMMENT ''분개 상태 (DRAFT, APPROVED, POSTED)''')
+));
+PREPARE alterIfNotExists FROM @preparedStatement;
+EXECUTE alterIfNotExists;
+DEALLOCATE PREPARE alterIfNotExists;
 
--- 1-6. entry_number를 NOT NULL로 변경 (기존 데이터는 임시 번호 생성)
-UPDATE accounting_entries 
-SET entry_number = CONCAT('JE-TEMP-', id, '-', DATE_FORMAT(entry_date, '%Y%m%d'))
-WHERE entry_number IS NULL;
-ALTER TABLE accounting_entries 
-    MODIFY COLUMN entry_number VARCHAR(100) NOT NULL COMMENT '분개 번호';
+-- 1-5. 승인 관련 컬럼 추가 (이미 존재하는 경우 스킵)
+SET @columnname = 'approved_by';
+SET @preparedStatement = (SELECT IF(
+    (
+        SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE
+            (TABLE_SCHEMA = @dbname)
+            AND (TABLE_NAME = @tablename)
+            AND (COLUMN_NAME = @columnname)
+    ) > 0,
+    'SELECT 1',
+    CONCAT('ALTER TABLE ', @tablename, ' ADD COLUMN ', @columnname, ' BIGINT NULL COMMENT ''승인자 ID''')
+));
+PREPARE alterIfNotExists FROM @preparedStatement;
+EXECUTE alterIfNotExists;
+DEALLOCATE PREPARE alterIfNotExists;
 
--- 1-7. 인덱스 추가
-CREATE INDEX IF NOT EXISTS idx_accounting_entries_tenant_id ON accounting_entries(tenant_id);
-CREATE INDEX IF NOT EXISTS idx_accounting_entries_entry_number ON accounting_entries(entry_number);
-CREATE INDEX IF NOT EXISTS idx_accounting_entries_tenant_entry_date ON accounting_entries(tenant_id, entry_date);
-CREATE UNIQUE INDEX IF NOT EXISTS uk_accounting_entries_tenant_entry_number ON accounting_entries(tenant_id, entry_number);
+SET @columnname = 'approved_at';
+SET @preparedStatement = (SELECT IF(
+    (
+        SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE
+            (TABLE_SCHEMA = @dbname)
+            AND (TABLE_NAME = @tablename)
+            AND (COLUMN_NAME = @columnname)
+    ) > 0,
+    'SELECT 1',
+    CONCAT('ALTER TABLE ', @tablename, ' ADD COLUMN ', @columnname, ' DATETIME NULL COMMENT ''승인 일시''')
+));
+PREPARE alterIfNotExists FROM @preparedStatement;
+EXECUTE alterIfNotExists;
+DEALLOCATE PREPARE alterIfNotExists;
 
--- 2. erp_journal_entry_lines 테이블 생성 (분개 상세)
-CREATE TABLE IF NOT EXISTS erp_journal_entry_lines (
+SET @columnname = 'posted_at';
+SET @preparedStatement = (SELECT IF(
+    (
+        SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE
+            (TABLE_SCHEMA = @dbname)
+            AND (TABLE_NAME = @tablename)
+            AND (COLUMN_NAME = @columnname)
+    ) > 0,
+    'SELECT 1',
+    CONCAT('ALTER TABLE ', @tablename, ' ADD COLUMN ', @columnname, ' DATETIME NULL COMMENT ''전기 일시''')
+));
+PREPARE alterIfNotExists FROM @preparedStatement;
+EXECUTE alterIfNotExists;
+DEALLOCATE PREPARE alterIfNotExists;
+
+-- 2. 인덱스 및 제약조건 추가 (이미 존재하는 경우 스킵)
+-- 2-1. 분개 번호 유니크 제약조건 (테넌트별)
+SET @constraintname = 'uk_tenant_entry_number';
+SET @preparedStatement = (SELECT IF(
+    (
+        SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS
+        WHERE
+            (TABLE_SCHEMA = @dbname)
+            AND (TABLE_NAME = @tablename)
+            AND (CONSTRAINT_NAME = @constraintname)
+    ) > 0,
+    'SELECT 1',
+    CONCAT('ALTER TABLE ', @tablename, ' ADD CONSTRAINT ', @constraintname, ' UNIQUE (tenant_id, entry_number)')
+));
+PREPARE alterIfNotExists FROM @preparedStatement;
+EXECUTE alterIfNotExists;
+DEALLOCATE PREPARE alterIfNotExists;
+
+-- 2-2. 인덱스 추가
+SET @indexname = 'idx_entry_status';
+SET @preparedStatement = (SELECT IF(
+    (
+        SELECT COUNT(*) FROM INFORMATION_SCHEMA.STATISTICS
+        WHERE
+            (TABLE_SCHEMA = @dbname)
+            AND (TABLE_NAME = @tablename)
+            AND (INDEX_NAME = @indexname)
+    ) > 0,
+    'SELECT 1',
+    CONCAT('CREATE INDEX ', @indexname, ' ON ', @tablename, ' (entry_status)')
+));
+PREPARE alterIfNotExists FROM @preparedStatement;
+EXECUTE alterIfNotExists;
+DEALLOCATE PREPARE alterIfNotExists;
+
+SET @indexname = 'idx_posted_at';
+SET @preparedStatement = (SELECT IF(
+    (
+        SELECT COUNT(*) FROM INFORMATION_SCHEMA.STATISTICS
+        WHERE
+            (TABLE_SCHEMA = @dbname)
+            AND (TABLE_NAME = @tablename)
+            AND (INDEX_NAME = @indexname)
+    ) > 0,
+    'SELECT 1',
+    CONCAT('CREATE INDEX ', @indexname, ' ON ', @tablename, ' (posted_at)')
+));
+PREPARE alterIfNotExists FROM @preparedStatement;
+EXECUTE alterIfNotExists;
+DEALLOCATE PREPARE alterIfNotExists;
+
+-- 3. erp_journal_entry_lines 테이블 생성 (이미 존재하는 경우 스킵)
+SET @tablename = 'erp_journal_entry_lines';
+SET @preparedStatement = (SELECT IF(
+    (
+        SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES
+        WHERE
+            (TABLE_SCHEMA = @dbname)
+            AND (TABLE_NAME = @tablename)
+    ) > 0,
+    'SELECT 1',
+    CONCAT('CREATE TABLE ', @tablename, ' (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    tenant_id VARCHAR(36) NOT NULL COMMENT '테넌트 ID',
-    journal_entry_id BIGINT NOT NULL COMMENT '분개 ID (accounting_entries.id)',
-    account_id BIGINT NOT NULL COMMENT '계정 ID (accounts.id)',
-    debit_amount DECIMAL(15, 2) DEFAULT 0 COMMENT '차변 금액',
-    credit_amount DECIMAL(15, 2) DEFAULT 0 COMMENT '대변 금액',
-    description TEXT COMMENT '설명',
-    line_number INT NOT NULL COMMENT '라인 번호',
-    
-    -- 감사 필드
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    created_by BIGINT COMMENT '생성자 ID',
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    updated_by BIGINT COMMENT '수정자 ID',
-    
-    -- 소프트 삭제
-    is_deleted BOOLEAN DEFAULT FALSE,
-    deleted_at TIMESTAMP NULL,
-    deleted_by BIGINT COMMENT '삭제자 ID',
-    
+    tenant_id VARCHAR(50) NOT NULL COMMENT ''테넌트 ID'',
+    journal_entry_id BIGINT NOT NULL COMMENT ''분개 ID (accounting_entries.id)'',
+    account_id BIGINT NOT NULL COMMENT ''계정 ID'',
+    debit_amount DECIMAL(19, 2) DEFAULT 0.00 COMMENT ''차변 금액'',
+    credit_amount DECIMAL(19, 2) DEFAULT 0.00 COMMENT ''대변 금액'',
+    description TEXT COMMENT ''설명'',
+    line_number INT NOT NULL DEFAULT 1 COMMENT ''라인 번호'',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT ''생성 일시'',
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT ''수정 일시'',
+    created_by VARCHAR(100) NULL COMMENT ''생성자'',
+    updated_by VARCHAR(100) NULL COMMENT ''수정자'',
+    is_deleted BOOLEAN DEFAULT FALSE COMMENT ''삭제 여부'',
+    deleted_at DATETIME NULL COMMENT ''삭제 일시'',
+    INDEX idx_tenant_journal_entry (tenant_id, journal_entry_id),
+    INDEX idx_account (account_id),
     FOREIGN KEY (journal_entry_id) REFERENCES accounting_entries(id) ON DELETE CASCADE,
-    FOREIGN KEY (account_id) REFERENCES accounts(id),
-    
-    INDEX idx_erp_journal_entry_lines_tenant_id (tenant_id),
-    INDEX idx_erp_journal_entry_lines_journal_entry_id (journal_entry_id),
-    INDEX idx_erp_journal_entry_lines_account_id (account_id),
-    INDEX idx_erp_journal_entry_lines_is_deleted (is_deleted)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-COMMENT='분개 상세 테이블';
-
+    FOREIGN KEY (account_id) REFERENCES accounts(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT=''분개 라인 테이블''')
+));
+PREPARE alterIfNotExists FROM @preparedStatement;
+EXECUTE alterIfNotExists;
+DEALLOCATE PREPARE alterIfNotExists;

@@ -30,7 +30,10 @@ import {
   FileText,
   BookOpen,
   Receipt,
-  Calculator
+  Calculator,
+  Info,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import '../../styles/main.css';
 import './IntegratedFinanceDashboard.css';
@@ -1583,9 +1586,76 @@ const JournalEntriesTab = () => {
     return <UnifiedLoading text="분개 목록을 불러오는 중..." size="medium" type="inline" />;
   }
 
+  const [showHelp, setShowHelp] = useState(false);
+
   return (
     <section className="mg-v2-section">
       <DashboardSection title="분개 관리" icon={<Receipt size={20} />}>
+        {/* 분개 설명 섹션 */}
+        <div className="mg-v2-mb-md" style={{ 
+          backgroundColor: 'var(--color-bg-secondary)', 
+          borderRadius: 'var(--border-radius-md)',
+          padding: 'var(--spacing-md)',
+          border: '1px solid var(--color-border-light)'
+        }}>
+          <button
+            onClick={() => setShowHelp(!showHelp)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 'var(--spacing-sm)',
+              width: '100%',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              padding: 0,
+              color: 'var(--color-text-primary)',
+              fontWeight: 600
+            }}
+          >
+            <Info size={18} />
+            <span>분개란 무엇인가요?</span>
+            {showHelp ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+          </button>
+          {showHelp && (
+            <div style={{ 
+              marginTop: 'var(--spacing-md)',
+              paddingTop: 'var(--spacing-md)',
+              borderTop: '1px solid var(--color-border-light)',
+              color: 'var(--color-text-secondary)',
+              lineHeight: 1.6
+            }}>
+              <div style={{ marginBottom: 'var(--spacing-sm)' }}>
+                <strong style={{ color: 'var(--color-text-primary)' }}>분개(Journal Entry)</strong>는 모든 회계 거래를 기록하는 기본 단위입니다.
+              </div>
+              <ul style={{ margin: 0, paddingLeft: 'var(--spacing-lg)' }}>
+                <li style={{ marginBottom: 'var(--spacing-xs)' }}>
+                  <strong>차변(Debit):</strong> 자산 증가, 비용 발생, 부채 감소, 자본 감소를 의미합니다.
+                </li>
+                <li style={{ marginBottom: 'var(--spacing-xs)' }}>
+                  <strong>대변(Credit):</strong> 자산 감소, 수익 발생, 부채 증가, 자본 증가를 의미합니다.
+                </li>
+                <li style={{ marginBottom: 'var(--spacing-xs)' }}>
+                  <strong>복식부기 원칙:</strong> 모든 분개는 차변 합계와 대변 합계가 반드시 일치해야 합니다.
+                </li>
+                <li style={{ marginBottom: 'var(--spacing-xs)' }}>
+                  <strong>분개 프로세스:</strong> 초안 작성 → 승인 → 전기 순서로 진행됩니다.
+                </li>
+              </ul>
+              <div style={{ 
+                marginTop: 'var(--spacing-md)',
+                padding: 'var(--spacing-sm)',
+                backgroundColor: 'var(--color-info-light)',
+                borderRadius: 'var(--border-radius-sm)',
+                fontSize: 'var(--font-size-sm)'
+              }}>
+                💡 <strong>예시:</strong> 현금 100만원으로 사무용품을 구매한 경우<br />
+                &nbsp;&nbsp;&nbsp;&nbsp;차변: 사무용품비 100만원 / 대변: 현금 100만원
+              </div>
+            </div>
+          )}
+        </div>
+
         <div className="mg-v2-mb-md">
           <MGButton
             variant="primary"
@@ -2324,6 +2394,29 @@ const JournalEntryCreateModal = ({ onClose, onRefresh }) => {
           <button className="mg-v2-modal-close" onClick={onClose}>×</button>
         </div>
         <div className="mg-v2-modal-body">
+          {/* 분개 작성 가이드 */}
+          <div style={{
+            backgroundColor: 'var(--color-info-light)',
+            borderRadius: 'var(--border-radius-sm)',
+            padding: 'var(--spacing-sm)',
+            marginBottom: 'var(--spacing-md)',
+            fontSize: 'var(--font-size-sm)',
+            color: 'var(--color-text-secondary)',
+            lineHeight: 1.5
+          }}>
+            <div style={{ display: 'flex', alignItems: 'start', gap: 'var(--spacing-xs)' }}>
+              <Info size={16} style={{ marginTop: '2px', flexShrink: 0 }} />
+              <div>
+                <strong style={{ color: 'var(--color-text-primary)' }}>분개 작성 가이드:</strong>
+                <ul style={{ margin: 'var(--spacing-xs) 0 0 0', paddingLeft: 'var(--spacing-md)' }}>
+                  <li>차변과 대변은 한 라인에 동시에 입력할 수 없습니다.</li>
+                  <li>차변 합계와 대변 합계가 반드시 일치해야 합니다.</li>
+                  <li>최소 2개 이상의 라인이 필요합니다.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
           <div className="mg-v2-form-group">
             <div className="mg-v2-mb-md">
               <label className="mg-v2-label">

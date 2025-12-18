@@ -1603,6 +1603,8 @@ const SettlementTab = () => {
   const [settlements, setSettlements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeSubTab, setActiveSubTab] = useState('rules');
+  const [showCreateRuleModal, setShowCreateRuleModal] = useState(false);
+  const [editingRule, setEditingRule] = useState(null);
 
   useEffect(() => {
     if (activeSubTab === 'rules') {
@@ -1686,8 +1688,18 @@ const SettlementTab = () => {
         </div>
 
         {activeSubTab === 'rules' && (
-          <div className="mg-v2-table-container mg-v2-mt-md">
-            <table className="mg-table" data-label="정산 규칙 목록">
+          <div className="mg-v2-mt-md">
+            <div className="mg-v2-mb-md">
+              <MGButton
+                variant="primary"
+                size="medium"
+                onClick={() => { setEditingRule(null); setShowCreateRuleModal(true); }}
+              >
+                규칙 생성
+              </MGButton>
+            </div>
+            <div className="mg-v2-table-container">
+              <table className="mg-table" data-label="정산 규칙 목록">
               <thead>
                 <tr>
                   <th>규칙명</th>
@@ -1716,11 +1728,21 @@ const SettlementTab = () => {
                           {rule.isActive ? '활성' : '비활성'}
                         </span>
                       </td>
+                      <td data-label="작업">
+                        <MGButton
+                          variant="outline"
+                          size="small"
+                          onClick={() => { setEditingRule(rule); setShowCreateRuleModal(true); }}
+                        >
+                          수정
+                        </MGButton>
+                      </td>
                     </tr>
                   ))
                 )}
               </tbody>
             </table>
+            </div>
           </div>
         )}
 
@@ -1815,6 +1837,15 @@ const SettlementTab = () => {
               </table>
             </div>
           </div>
+        )}
+
+        {/* 정산 규칙 생성/수정 모달 */}
+        {showCreateRuleModal && (
+          <SettlementRuleModal
+            rule={editingRule}
+            onClose={() => { setShowCreateRuleModal(false); setEditingRule(null); }}
+            onRefresh={fetchRules}
+          />
         )}
       </DashboardSection>
     </section>
@@ -2183,6 +2214,212 @@ const JournalEntryCreateModal = ({ onClose, onRefresh }) => {
             variant="primary" 
             onClick={handleSubmit} 
             disabled={loading || !isBalanced}
+            loading={loading}
+          >
+            저장
+          </MGButton>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// 정산 규칙 생성/수정 모달 컴포넌트
+const SettlementRuleModal = ({ rule, onClose, onRefresh }) => {
+  const [formData, setFormData] = useState({
+    ruleName: rule?.ruleName || '',
+    businessType: rule?.businessType || '',
+    settlementType: rule?.settlementType || '',
+    calculationMethod: rule?.calculationMethod || 'PERCENTAGE',
+    calculationParams: rule?.calculationParams ? JSON.stringify(JSON.parse(rule.calculationParams), null, 2) : '{}',
+    isActive: rule?.isActive !== undefined ? rule.isActive : true
+  });
+  const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState({});
+
+  const validateForm = () => {
+    const newErrors = {};
+    
+    if (!formData.ruleName.trim()) {
+      newErrors.ruleName = '규칙명은 필수입니다.';
+    }
+    
+    if (!formData.settlementType) {
+      newErrors.settlementType = '정산 유형은 필수입니다.';
+    }
+    
+    if (!formData.calculationMethod) {
+      newErrors.calculationMethod = '계산 방법은 필수입니다.';
+    }
+    
+    // calculationParams JSON 검증
+    try {
+      const params = JSON.parse(formData.calculationParams);
+      if (formData.calculationMethod === 'PERCENTAGE' && !params.percentage) {
+        newErrors.calculationParams = 'PERCENTAGE 방법은 percentage 파라미터가 필요합니다.';
+      } else if (formData.calculationMethod === 'FIXED' && !params.amount) {
+        newErrors.calculationParams = 'FIXED 방법은 amount 파라미터가 필요합니다.';
+      } else if (formData.calculationMethod === 'TIERED' && !params.tiers) {
+        newErrors.calculationParams = 'TIERED 방법은 tiers 파라미터가 필요합니다.';
+      }
+    } catch (e) {
+      newErrors.calculationParams = '유효한 JSON 형식이 아닙니다.';
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async () => {
+    if (!validateForm()) {
+      notificationManager.show('입력 정보를 확인해주세요.', 'error');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const requestData = {
+        ruleName: formData.ruleName,
+        businessType: formData.businessType || null,
+        settlementType: formData.settlementType,
+        calculationMethod: formData.calculationMethod,
+        calculationParams: formData.calculationParams,
+        isActive: formData.isActive
+      };
+
+      const response = await axios.post(ERP_API.SETTLEMENT_RULES, requestData, {
+        withCredentials: true
+      });
+
+      if (response.data.success) {
+        notificationManager.show(rule ? '정산 규칙이 수정되었습니다.' : '정산 규칙이 생성되었습니다.', 'success');
+        onRefresh();
+        onClose();
+      } else {
+        notificationManager.show(response.data.message || '정산 규칙 저장에 실패했습니다.', 'error');
+      }
+    } catch (err) {
+      console.error('Settlement rule save error:', err);
+      notificationManager.show('정산 규칙 저장에 실패했습니다.', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="mg-v2-modal-overlay" onClick={onClose}>
+      <div className="mg-v2-modal-content" style={{ maxWidth: '600px' }} onClick={(e) => e.stopPropagation()}>
+        <div className="mg-v2-modal-header">
+          <h3 className="mg-v2-modal-title">{rule ? '정산 규칙 수정' : '정산 규칙 생성'}</h3>
+          <button className="mg-v2-modal-close" onClick={onClose}>×</button>
+        </div>
+        <div className="mg-v2-modal-body">
+          <div className="mg-v2-form-group">
+            <div className="mg-v2-mb-md">
+              <label className="mg-v2-label">
+                규칙명 <span className="mg-v2-text-danger">*</span>
+              </label>
+              <input
+                type="text"
+                className={`mg-v2-input ${errors.ruleName ? 'mg-v2-input-error' : ''}`}
+                placeholder="정산 규칙명을 입력하세요"
+                value={formData.ruleName}
+                onChange={(e) => setFormData({ ...formData, ruleName: e.target.value })}
+              />
+              {errors.ruleName && <div className="mg-v2-text-danger mg-v2-text-xs">{errors.ruleName}</div>}
+            </div>
+
+            <div className="mg-v2-mb-md">
+              <label className="mg-v2-label">업종 유형</label>
+              <select
+                className="mg-v2-select"
+                value={formData.businessType}
+                onChange={(e) => setFormData({ ...formData, businessType: e.target.value })}
+              >
+                <option value="">선택 안함</option>
+                <option value="CONSULTATION">상담</option>
+                <option value="EDUCATION">교육</option>
+                <option value="HEALTHCARE">의료</option>
+              </select>
+            </div>
+
+            <div className="mg-v2-mb-md">
+              <label className="mg-v2-label">
+                정산 유형 <span className="mg-v2-text-danger">*</span>
+              </label>
+              <select
+                className={`mg-v2-select ${errors.settlementType ? 'mg-v2-input-error' : ''}`}
+                value={formData.settlementType}
+                onChange={(e) => setFormData({ ...formData, settlementType: e.target.value })}
+              >
+                <option value="">선택하세요</option>
+                <option value="COMMISSION">수수료</option>
+                <option value="ROYALTY">로열티</option>
+                <option value="REVENUE_SHARE">매출 분배</option>
+              </select>
+              {errors.settlementType && <div className="mg-v2-text-danger mg-v2-text-xs">{errors.settlementType}</div>}
+            </div>
+
+            <div className="mg-v2-mb-md">
+              <label className="mg-v2-label">
+                계산 방법 <span className="mg-v2-text-danger">*</span>
+              </label>
+              <select
+                className={`mg-v2-select ${errors.calculationMethod ? 'mg-v2-input-error' : ''}`}
+                value={formData.calculationMethod}
+                onChange={(e) => setFormData({ ...formData, calculationMethod: e.target.value })}
+              >
+                <option value="PERCENTAGE">비율 (PERCENTAGE)</option>
+                <option value="FIXED">고정액 (FIXED)</option>
+                <option value="TIERED">구간별 (TIERED)</option>
+              </select>
+              {errors.calculationMethod && <div className="mg-v2-text-danger mg-v2-text-xs">{errors.calculationMethod}</div>}
+            </div>
+
+            <div className="mg-v2-mb-md">
+              <label className="mg-v2-label">
+                계산 파라미터 (JSON) <span className="mg-v2-text-danger">*</span>
+              </label>
+              <textarea
+                className={`mg-v2-input ${errors.calculationParams ? 'mg-v2-input-error' : ''}`}
+                rows="6"
+                placeholder={
+                  formData.calculationMethod === 'PERCENTAGE' ? '{"percentage": 10.0}' :
+                  formData.calculationMethod === 'FIXED' ? '{"amount": 10000}' :
+                  '{"tiers": [{"min": 0, "max": 1000000, "percentage": 5}, {"min": 1000000, "max": null, "percentage": 10}]}'
+                }
+                value={formData.calculationParams}
+                onChange={(e) => setFormData({ ...formData, calculationParams: e.target.value })}
+              />
+              {errors.calculationParams && <div className="mg-v2-text-danger mg-v2-text-xs">{errors.calculationParams}</div>}
+              <div className="mg-v2-text-xs mg-v2-text-secondary mg-v2-mt-xs">
+                {formData.calculationMethod === 'PERCENTAGE' && '예: {"percentage": 10.0}'}
+                {formData.calculationMethod === 'FIXED' && '예: {"amount": 10000}'}
+                {formData.calculationMethod === 'TIERED' && '예: {"tiers": [{"min": 0, "max": 1000000, "percentage": 5}]}'}
+              </div>
+            </div>
+
+            <div className="mg-v2-mb-md">
+              <label className="mg-v2-label">
+                <input
+                  type="checkbox"
+                  className="mg-v2-checkbox"
+                  checked={formData.isActive}
+                  onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+                />
+                활성화
+              </label>
+            </div>
+          </div>
+        </div>
+        <div className="mg-v2-modal-footer">
+          <MGButton variant="secondary" onClick={onClose} disabled={loading}>
+            취소
+          </MGButton>
+          <MGButton 
+            variant="primary" 
+            onClick={handleSubmit} 
+            disabled={loading}
             loading={loading}
           >
             저장

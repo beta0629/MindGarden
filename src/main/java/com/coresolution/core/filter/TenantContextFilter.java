@@ -33,6 +33,7 @@ public class TenantContextFilter implements Filter {
 
     // 브랜치 개념 제거: BranchRepository 의존성 제거됨 (표준화 2025-12-05)
     private final com.coresolution.core.repository.TenantRepository tenantRepository;
+    private final org.springframework.core.env.Environment environment;
     
     // 로컬 개발 환경용 기본 테넌트 ID (서브도메인이 없을 때 사용)
     @org.springframework.beans.factory.annotation.Value("${local.default-tenant-id:${LOCAL_DEFAULT_TENANT_ID:}}")

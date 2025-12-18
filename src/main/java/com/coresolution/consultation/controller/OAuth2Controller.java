@@ -58,6 +58,7 @@ public class OAuth2Controller extends BaseApiController {
     private final com.coresolution.consultation.service.DynamicPermissionService dynamicPermissionService;
     private final UserSessionService userSessionService;
     private final com.coresolution.core.repository.TenantRepository tenantRepository;
+    private final org.springframework.core.env.Environment environment;
 
     @Value("${spring.security.oauth2.client.registration.kakao.client-id:${security.oauth2.client.registration.kakao.client-id:cbb457cfb5f9351fd495be4af2b11a34}}")
     private String kakaoClientId;

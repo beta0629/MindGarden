@@ -24,10 +24,15 @@ const FinancialCalendarView = () => {
       const year = currentDate.getFullYear();
       const month = currentDate.getMonth() + 1;
       
-      // 해당 월의 모든 거래 조회
-      const response = await apiGet(`/api/admin/financial-transactions?year=${year}&month=${month}&size=1000`);
+      // 해당 월의 시작일과 종료일 계산
+      const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
+      const lastDay = new Date(year, month, 0).getDate();
+      const endDate = `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
       
-      if (response.success) {
+      // 해당 월의 모든 거래 조회
+      const response = await apiGet(`/api/v1/admin/financial-transactions?startDate=${startDate}&endDate=${endDate}&size=1000`);
+      
+      if (response && response.success) {
         // 날짜별로 거래 그룹화
         const groupedByDate = {};
         response.data.forEach(transaction => {

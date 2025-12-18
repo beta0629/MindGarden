@@ -127,11 +127,11 @@ const FinancialManagement = () => {
         console.log('📍 사용자 정보:', user);
       }
       
-      const response = await apiGet(`/api/admin/financial-transactions?${params.toString()}`);
+      const response = await apiGet(`/api/v1/admin/financial-transactions?${params.toString()}`);
       console.log('📡 API 응답:', response);
-      console.log('📡 API URL:', `/api/admin/financial-transactions?${params.toString()}`);
+      console.log('📡 API URL:', `/api/v1/admin/financial-transactions?${params.toString()}`);
       
-      if (response.success) {
+      if (response && response.success) {
         let filteredTransactions = response.data || [];
         console.log('📊 조회된 거래 데이터:', filteredTransactions.length, '건');
         console.log('📊 첫 번째 거래 샘플:', filteredTransactions[0]);
@@ -154,9 +154,9 @@ const FinancialManagement = () => {
         
         await calculateDashboardStats(filteredTransactions);
       } else {
-        setError(response.message || '재무 거래 목록을 불러올 수 없습니다.');
+        setError(response?.message || '재무 거래 목록을 불러올 수 없습니다.');
         
-        if (response.redirectToLogin) {
+        if (response?.redirectToLogin) {
           console.error('🔒 세션 만료 - 로그인 화면으로 이동');
           window.location.href = '/login';
           return;

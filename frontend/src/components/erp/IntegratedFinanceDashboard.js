@@ -1442,6 +1442,15 @@ const JournalEntriesTab = () => {
           </table>
         </div>
       </DashboardSection>
+
+      {/* 분개 상세 모달 */}
+      {showDetailModal && selectedEntry && (
+        <JournalEntryDetailModal
+          entry={selectedEntry}
+          onClose={() => { setShowDetailModal(false); setSelectedEntry(null); }}
+          onRefresh={fetchJournalEntries}
+        />
+      )}
     </section>
   );
 };

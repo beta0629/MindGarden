@@ -3,7 +3,9 @@ package com.coresolution.consultation.service.impl;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import com.coresolution.consultation.service.PlSqlDiscountAccountingService;
 import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -27,6 +29,9 @@ import lombok.extern.slf4j.Slf4j;
 public class PlSqlDiscountAccountingServiceImpl implements PlSqlDiscountAccountingService {
     
     private final JdbcTemplate jdbcTemplate;
+    // ERP 고도화 서비스 연동 (표준 문서: docs/standards/ERP_ADVANCEMENT_STANDARD.md)
+    private final com.coresolution.consultation.service.AccountingService accountingService;
+    private final com.coresolution.consultation.repository.FinancialTransactionRepository financialTransactionRepository;
     
     @Override
     public Map<String, Object> applyDiscountAccounting(
@@ -65,6 +70,43 @@ public class PlSqlDiscountAccountingServiceImpl implements PlSqlDiscountAccounti
             
             if (success != null && success) {
                 log.info("✅ PL/SQL 할인 적용 완료: MappingID={}, Message={}", mappingId, message);
+                
+                // ERP 고도화 연동: 프로시저에서 생성된 FinancialTransaction에 대해 분개 자동 생성
+                // 표준 문서: docs/standards/ERP_ADVANCEMENT_STANDARD.md
+                try {
+                    // 프로시저가 생성한 financial_transactions 조회
+                    // revenue_transaction_id: INCOME 타입, related_entity_id = mapping_id
+                    // discount_transaction_id: DISCOUNT 타입, related_entity_id = mapping_id
+                    List<com.coresolution.consultation.entity.FinancialTransaction> transactions = 
+                        financialTransactionRepository.findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
+                            tenantId, mappingId, "CONSULTANT_CLIENT_MAPPING"
+                        );
+                    
+                    // 최근 생성된 거래만 필터링 (프로시저 실행 직후 생성된 것)
+                    transactions = transactions.stream()
+                        .filter(t -> t.getTransactionType() == com.coresolution.consultation.entity.FinancialTransaction.TransactionType.INCOME ||
+                                   t.getTransactionType() == com.coresolution.consultation.entity.FinancialTransaction.TransactionType.DISCOUNT)
+                        .filter(t -> t.getDiscountCode() != null && t.getDiscountCode().equals(discountCode))
+                        .sorted((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()))
+                        .limit(2) // revenue + discount
+                        .collect(Collectors.toList());
+                    
+                    // 각 거래에 대해 분개 생성
+                    for (com.coresolution.consultation.entity.FinancialTransaction transaction : transactions) {
+                        try {
+                            accountingService.createJournalEntryFromTransaction(transaction);
+                            log.info("🔗 ERP 고도화 연동: 분개 생성 완료 - TransactionID={}, Type={}", 
+                                transaction.getId(), transaction.getTransactionType());
+                        } catch (Exception e) {
+                            log.warn("⚠️ ERP 고도화 연동: 분개 생성 실패 (프로시저는 성공) - TransactionID={}, Error={}", 
+                                transaction.getId(), e.getMessage());
+                            // 프로시저는 성공했으므로 계속 진행
+                        }
+                    }
+                } catch (Exception e) {
+                    log.warn("⚠️ ERP 고도화 연동 실패 (프로시저는 성공): {}", e.getMessage());
+                    // 프로시저는 성공했으므로 계속 진행
+                }
             } else {
                 log.warn("⚠️ PL/SQL 할인 적용 실패: MappingID={}, Message={}", mappingId, message);
             }

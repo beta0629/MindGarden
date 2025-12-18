@@ -456,6 +456,7 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
                 { key: 'ledgers', label: '원장 조회' },
                 { key: 'balance-sheet', label: '대차대조표' },
                 { key: 'income-statement', label: '손익계산서' },
+                { key: 'cash-flow', label: '현금흐름표' },
                 { key: 'settlement', label: '정산 관리' },
                 { key: 'daily', label: '일간 리포트' },
                 { key: 'monthly', label: '월간 리포트' },
@@ -476,8 +477,9 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
               {activeTab === 'overview' && <OverviewTab data={dashboardData} />}
               {activeTab === 'journal-entries' && <JournalEntriesTab />}
               {activeTab === 'ledgers' && <LedgersTab />}
-              {activeTab === 'balance-sheet' && <BalanceSheetTab selectedBranch={selectedBranch} isHQUser={isHQUser} />}
-              {activeTab === 'income-statement' && <IncomeStatementTab selectedBranch={selectedBranch} isHQUser={isHQUser} />}
+              {activeTab === 'balance-sheet' && <BalanceSheetTab />}
+              {activeTab === 'income-statement' && <IncomeStatementTab />}
+              {activeTab === 'cash-flow' && <CashFlowStatementTab />}
               {activeTab === 'settlement' && <SettlementTab />}
               {activeTab === 'daily' && <DailyReportTab period={selectedPeriod} />}
               {activeTab === 'monthly' && <MonthlyReportTab period={selectedPeriod} />}
@@ -673,20 +675,18 @@ const OverviewTab = ({ data }) => {
 };
 
 // 대차대조표 탭 컴포넌트
-const BalanceSheetTab = ({ selectedBranch, isHQUser }) => {
+const BalanceSheetTab = () => {
   const [balanceSheetData, setBalanceSheetData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [asOfDate, setAsOfDate] = useState(new Date().toISOString().split('T')[0]);
 
   useEffect(() => {
     fetchBalanceSheet();
-  }, [selectedBranch]);
+  }, [asOfDate]);
 
   const fetchBalanceSheet = async () => {
     try {
-      let url = ERP_API.FINANCE_BALANCE_SHEET;
-      if (isHQUser && selectedBranch && selectedBranch !== 'HQ') {
-        url += `?branchCode=${selectedBranch}`;
-      }
+      const url = `${ERP_API.FINANCIAL_STATEMENT_BALANCE}?asOfDate=${asOfDate}`;
       
       const response = await axios.get(url, {
         withCredentials: true
@@ -696,6 +696,7 @@ const BalanceSheetTab = ({ selectedBranch, isHQUser }) => {
       }
     } catch (err) {
       console.error('Balance sheet fetch error:', err);
+      notificationManager.show('대차대조표를 불러오는데 실패했습니다.', 'error');
     } finally {
       setLoading(false);
     }
@@ -711,6 +712,15 @@ const BalanceSheetTab = ({ selectedBranch, isHQUser }) => {
         title="대차대조표"
         icon={<PieChart size={24} />}
       >
+      <div className="mg-v2-mb-md">
+        <label className="mg-v2-label">기준일자</label>
+        <input
+          type="date"
+          value={asOfDate}
+          onChange={(e) => setAsOfDate(e.target.value)}
+          className="mg-v2-input"
+        />
+      </div>
       
       <div className="balance-sheet-grid">
         {/* 자산 */}
@@ -823,20 +833,23 @@ const BalanceSheetTab = ({ selectedBranch, isHQUser }) => {
 };
 
 // 손익계산서 탭 컴포넌트
-const IncomeStatementTab = ({ selectedBranch, isHQUser }) => {
+const IncomeStatementTab = () => {
   const [incomeStatementData, setIncomeStatementData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [startDate, setStartDate] = useState(() => {
+    const date = new Date();
+    date.setDate(1); // 이번 달 1일
+    return date.toISOString().split('T')[0];
+  });
+  const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
 
   useEffect(() => {
     fetchIncomeStatement();
-  }, [selectedBranch]);
+  }, [startDate, endDate]);
 
   const fetchIncomeStatement = async () => {
     try {
-      let url = ERP_API.FINANCE_INCOME_STATEMENT;
-      if (isHQUser && selectedBranch && selectedBranch !== 'HQ') {
-        url += `?branchCode=${selectedBranch}`;
-      }
+      const url = `${ERP_API.FINANCIAL_STATEMENT_INCOME}?startDate=${startDate}&endDate=${endDate}`;
       
       const response = await axios.get(url, {
         withCredentials: true
@@ -846,6 +859,7 @@ const IncomeStatementTab = ({ selectedBranch, isHQUser }) => {
       }
     } catch (err) {
       console.error('Income statement fetch error:', err);
+      notificationManager.show('손익계산서를 불러오는데 실패했습니다.', 'error');
     } finally {
       setLoading(false);
     }
@@ -861,6 +875,28 @@ const IncomeStatementTab = ({ selectedBranch, isHQUser }) => {
         title="손익계산서"
         icon={<BarChart3 size={24} />}
       >
+      <div className="mg-v2-mb-md">
+        <div className="mg-v2-form-row">
+          <div className="mg-v2-form-group">
+            <label className="mg-v2-label">시작일</label>
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="mg-v2-input"
+            />
+          </div>
+          <div className="mg-v2-form-group">
+            <label className="mg-v2-label">종료일</label>
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className="mg-v2-input"
+            />
+          </div>
+        </div>
+      </div>
       
       <div className="income-statement-grid">
         {/* 수익 */}
@@ -941,6 +977,163 @@ const IncomeStatementTab = ({ selectedBranch, isHQUser }) => {
         </div>
         <div className="net-income-subtitle">
           수익 총계 - 비용 총계
+        </div>
+      </div>
+      </DashboardSection>
+    </div>
+  );
+};
+
+// 현금흐름표 탭 컴포넌트
+const CashFlowStatementTab = () => {
+  const [cashFlowData, setCashFlowData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [startDate, setStartDate] = useState(() => {
+    const date = new Date();
+    date.setDate(1); // 이번 달 1일
+    return date.toISOString().split('T')[0];
+  });
+  const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
+
+  useEffect(() => {
+    fetchCashFlowStatement();
+  }, [startDate, endDate]);
+
+  const fetchCashFlowStatement = async () => {
+    try {
+      const url = `${ERP_API.FINANCIAL_STATEMENT_CASHFLOW}?startDate=${startDate}&endDate=${endDate}`;
+      
+      const response = await axios.get(url, {
+        withCredentials: true
+      });
+      if (response.data.success) {
+        setCashFlowData(response.data.data);
+      }
+    } catch (err) {
+      console.error('Cash flow statement fetch error:', err);
+      notificationManager.show('현금흐름표를 불러오는데 실패했습니다.', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return <UnifiedLoading text="현금흐름표를 불러오는 중..." size="medium" type="inline" />;
+  }
+
+  return (
+    <div>
+      <DashboardSection
+        title="현금흐름표"
+        icon={<TrendingUp size={24} />}
+      >
+      <div className="mg-v2-mb-md">
+        <div className="mg-v2-form-row">
+          <div className="mg-v2-form-group">
+            <label className="mg-v2-label">시작일</label>
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="mg-v2-input"
+            />
+          </div>
+          <div className="mg-v2-form-group">
+            <label className="mg-v2-label">종료일</label>
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className="mg-v2-input"
+            />
+          </div>
+        </div>
+      </div>
+      
+      <div className="cash-flow-grid">
+        {/* 영업 활동 현금흐름 */}
+        <div className="balance-sheet-card balance-sheet-card--assets">
+          <h3 className="balance-sheet-card-title">
+            <TrendingUp className="balance-sheet-card-icon" size={24} />
+            영업 활동 현금흐름
+          </h3>
+          <div className="balance-sheet-items">
+            <div className="balance-sheet-item">
+              당기순이익: {formatCurrency(cashFlowData?.operating?.netIncome || 0)}
+            </div>
+            <div className="balance-sheet-item">
+              비현금성 항목 조정: {formatCurrency(cashFlowData?.operating?.nonCashAdjustments || 0)}
+            </div>
+            <div className="balance-sheet-item">
+              운전자본 변동: {formatCurrency(cashFlowData?.operating?.workingCapitalChange || 0)}
+            </div>
+            <div className="balance-sheet-total">
+              영업 활동 현금흐름 합계: {formatCurrency(cashFlowData?.operating?.total || 0)}
+            </div>
+          </div>
+        </div>
+
+        {/* 투자 활동 현금흐름 */}
+        <div className="balance-sheet-card balance-sheet-card--liabilities">
+          <h3 className="balance-sheet-card-title">
+            <TrendingDown className="balance-sheet-card-icon" size={24} />
+            투자 활동 현금흐름
+          </h3>
+          <div className="balance-sheet-items">
+            <div className="balance-sheet-item">
+              자산 매입: {formatCurrency(cashFlowData?.investing?.assetPurchases || 0)}
+            </div>
+            <div className="balance-sheet-item">
+              자산 매각: {formatCurrency(cashFlowData?.investing?.assetSales || 0)}
+            </div>
+            <div className="balance-sheet-item">
+              투자 수익: {formatCurrency(cashFlowData?.investing?.investmentIncome || 0)}
+            </div>
+            <div className="balance-sheet-total">
+              투자 활동 현금흐름 합계: {formatCurrency(cashFlowData?.investing?.total || 0)}
+            </div>
+          </div>
+        </div>
+
+        {/* 재무 활동 현금흐름 */}
+        <div className="balance-sheet-card balance-sheet-card--equity">
+          <h3 className="balance-sheet-card-title">
+            <PieChart className="balance-sheet-card-icon" size={24} />
+            재무 활동 현금흐름
+          </h3>
+          <div className="balance-sheet-items">
+            <div className="balance-sheet-item">
+              차입금 증가: {formatCurrency(cashFlowData?.financing?.borrowingIncrease || 0)}
+            </div>
+            <div className="balance-sheet-item">
+              차입금 상환: {formatCurrency(cashFlowData?.financing?.borrowingRepayment || 0)}
+            </div>
+            <div className="balance-sheet-item">
+              자본금 증가: {formatCurrency(cashFlowData?.financing?.capitalIncrease || 0)}
+            </div>
+            <div className="balance-sheet-item">
+              배당금 지급: {formatCurrency(cashFlowData?.financing?.dividendPayment || 0)}
+            </div>
+            <div className="balance-sheet-total">
+              재무 활동 현금흐름 합계: {formatCurrency(cashFlowData?.financing?.total || 0)}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 현금 및 현금성 자산 증가 */}
+      <div className="net-income-card">
+        <div className="net-income-decoration-1"></div>
+        <div className="net-income-decoration-2"></div>
+        <h3 className="net-income-title">
+          <DollarSign className="net-income-icon" size={32} />
+          현금 및 현금성 자산 증가
+        </h3>
+        <div className="net-income-value">
+          {formatCurrency(cashFlowData?.netCashIncrease || 0)}
+        </div>
+        <div className="net-income-subtitle">
+          영업 + 투자 + 재무 활동 현금흐름 합계
         </div>
       </div>
       </DashboardSection>

@@ -249,7 +249,7 @@ const ErpDashboard = ({ user: propUser }) => {
                 <p className="mg-dashboard-subtitle">
                   통합 자원 관리 및 회계 시스템
                   {tenantId && tenantId !== '알 수 없음' && (
-                    <span style={{ marginLeft: '12px', fontSize: '0.85em', color: 'var(--mg-color-text-secondary, #6b7280)' }}>
+                    <span className="mg-dashboard-tenant-info">
                       (터넌트: {tenantId})
                     </span>
                   )}

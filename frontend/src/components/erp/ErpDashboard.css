@@ -8,6 +8,13 @@
   padding: var(--spacing-lg);
 }
 
+/* 터넌트 정보 스타일 */
+.mg-dashboard-tenant-info {
+  margin-left: var(--spacing-md, 12px);
+  font-size: 0.85em;
+  color: var(--mg-color-text-secondary, var(--medium-gray, #6b7280));
+}
+
 /* 통계 카드 그리드 */
 .erp-stats-grid {
   display: grid;

@@ -33,6 +33,10 @@ public class TenantContextFilter implements Filter {
 
     // 브랜치 개념 제거: BranchRepository 의존성 제거됨 (표준화 2025-12-05)
     private final com.coresolution.core.repository.TenantRepository tenantRepository;
+    
+    // 로컬 개발 환경용 기본 테넌트 ID (서브도메인이 없을 때 사용)
+    @org.springframework.beans.factory.annotation.Value("${local.default-tenant-id:${LOCAL_DEFAULT_TENANT_ID:}}")
+    private String localDefaultTenantId;
 
     public TenantContextFilter(com.coresolution.core.repository.TenantRepository tenantRepository) {
         this.tenantRepository = tenantRepository;
@@ -313,6 +317,14 @@ public class TenantContextFilter implements Filter {
         // 예: tenant1.core-solution.co.kr → tenant1 → tenant-seoul-consultation-001
         String host = request.getHeader("Host");
         if (host != null && !host.isEmpty()) {
+            // 로컬 환경 감지 (localhost 또는 127.0.0.1)
+            boolean isLocalhost = host.contains("localhost") || host.contains("127.0.0.1");
+            
+            if (isLocalhost && localDefaultTenantId != null && !localDefaultTenantId.isEmpty()) {
+                log.info("로컬 환경 감지 - 기본 테넌트 사용: tenantId={}", localDefaultTenantId);
+                return localDefaultTenantId;
+            }
+            
             String subdomain = extractTenantSubdomain(host);
             if (subdomain != null && !subdomain.isEmpty()) {
                 log.info("서브도메인 추출: host={}, subdomain={}", host, subdomain);
@@ -336,7 +348,17 @@ public class TenantContextFilter implements Filter {
             }
         }
 
-        // 4. tenant_id를 찾을 수 없는 경우
+        // 4. 로컬 환경이지만 서브도메인도 없는 경우 기본 테넌트 사용
+        if (host != null && (host.contains("localhost") || host.contains("127.0.0.1"))) {
+            if (localDefaultTenantId != null && !localDefaultTenantId.isEmpty()) {
+                log.info("로컬 환경 감지 (서브도메인 없음) - 기본 테넌트 사용: tenantId={}", localDefaultTenantId);
+                return localDefaultTenantId;
+            } else {
+                log.warn("⚠️ 로컬 환경에서 테넌트 정보가 없습니다. local.default-tenant-id 또는 LOCAL_DEFAULT_TENANT_ID 환경 변수를 설정해주세요.");
+            }
+        }
+
+        // 5. tenant_id를 찾을 수 없는 경우
         log.warn("❌ Tenant ID not found in request");
         return null;
     }

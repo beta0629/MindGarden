@@ -1870,11 +1870,11 @@ const SettlementTab = () => {
     }
   };
 
+  const [settlementPeriod, setSettlementPeriod] = useState('');
+
   if (loading) {
     return <UnifiedLoading text="데이터를 불러오는 중..." size="medium" type="inline" />;
   }
-
-  const [settlementPeriod, setSettlementPeriod] = useState('');
 
   return (
     <section className="mg-v2-section">

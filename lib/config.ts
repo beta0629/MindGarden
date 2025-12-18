@@ -8,12 +8,12 @@ export const CONFIG = {
   API_BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL || process.env.API_BASE_URL || 'https://api.mindgarden.co.kr',
   
   // 로컬 개발 서버 포트 (환경 변수에서 가져오기)
-  LOCAL_PORT: parseInt(process.env.PORT || process.env.NEXT_PUBLIC_PORT || '3000', 10),
+  LOCAL_PORT: parseInt(process.env.PORT || process.env.NEXT_PUBLIC_PORT || '4000', 10),
   
   // 로컬 개발 서버 URL
   LOCAL_URL: process.env.NEXT_PUBLIC_SITE_URL || 
              (process.env.NODE_ENV === 'development' 
-               ? `http://localhost:${parseInt(process.env.PORT || process.env.NEXT_PUBLIC_PORT || '3000', 10)}`
+               ? `http://localhost:${parseInt(process.env.PORT || process.env.NEXT_PUBLIC_PORT || '4000', 10)}`
                : undefined),
   
   // API 엔드포인트

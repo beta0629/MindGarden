@@ -3786,7 +3786,7 @@ body {
 }
 
 .mg-table thead {
-  background-color: var(--mg-gray-100, #f3f4f6);
+  background-color: var(--mg-gray-100);
 }
 
 .mg-table th {
@@ -3794,19 +3794,29 @@ body {
   text-align: left;
   font-size: 0.875rem;
   font-weight: 600;
-  color: var(--color-text-primary, #1f2937);
-  background-color: var(--mg-gray-100, #f3f4f6);
-  border-bottom: 2px solid var(--color-border-light, #e5e7eb);
+  color: var(--color-text-primary);
+  background-color: var(--mg-gray-100);
+  border-bottom: 2px solid var(--color-border-light);
 }
 
 /* 모달 내부의 테이블 헤더는 더 명확한 색상 사용 */
 .mg-v2-modal-overlay .mg-table thead {
-  background-color: var(--mg-gray-100, #f3f4f6);
+  background-color: var(--mg-gray-100);
 }
 
 .mg-v2-modal-overlay .mg-table th {
-  background-color: var(--mg-gray-100, #f3f4f6);
-  color: var(--color-text-primary, #1f2937);
+  background-color: var(--mg-gray-100);
+  color: var(--color-text-primary);
+}
+
+/* 분개 관리 화면의 테이블 헤더 명시적 설정 */
+.mg-v2-table-container .mg-table thead {
+  background-color: var(--mg-gray-100);
+}
+
+.mg-v2-table-container .mg-table th {
+  background-color: var(--mg-gray-100);
+  color: var(--color-text-primary);
 }
 
 .mg-table td {

@@ -16,7 +16,7 @@ const getDbConnection = async () => {
 
 // 블로그 이미지 업로드
 export async function POST(request: NextRequest) {
-  let connection;
+  let connection: mysql.PoolConnection | null = null;
   
   try {
     // 인증 확인

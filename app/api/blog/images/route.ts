@@ -16,8 +16,6 @@ const getDbConnection = async () => {
 
 // 블로그 이미지 업로드
 export async function POST(request: NextRequest) {
-  let connection: mysql.Connection | null = null;
-  
   try {
     // 인증 확인
     const cookies = request.cookies;
@@ -92,10 +90,6 @@ export async function POST(request: NextRequest) {
       { success: false, error: '이미지 업로드에 실패했습니다.' },
       { status: 500 }
     );
-  } finally {
-    if (connection) {
-      await connection.end();
-    }
   }
 }
 

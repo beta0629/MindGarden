@@ -153,10 +153,10 @@ BEGIN
             created_at,
             created_by
         ) VALUES (
-            'REFUND',
+            'EXPENSE',
             'CONSULTATION',
             'PARTIAL_SESSION_REFUND',
-            -p_refund_amount,
+            p_refund_amount,
             CONCAT('부분 환불 - ', p_refund_reason, ' (', v_refunded_sessions, '회기)'),
             p_mapping_id,
             'CONSULTANT_CLIENT_MAPPING',

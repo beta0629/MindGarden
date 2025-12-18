@@ -103,7 +103,7 @@ BEGIN
             created_by,
             discount_code
         ) VALUES (
-            'REFUND', 
+            'EXPENSE', 
             'DISCOUNT_REFUND', 
             'PACKAGE_DISCOUNT_REFUND', 
             p_refund_amount,

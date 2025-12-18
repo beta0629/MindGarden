@@ -167,6 +167,48 @@ public class PlSqlDiscountAccountingServiceImpl implements PlSqlDiscountAccounti
             
             if (success != null && success) {
                 log.info("✅ PL/SQL 할인 환불 처리 완료: MappingID={}, Message={}", mappingId, message);
+                
+                // ERP 고도화 연동: 프로시저에서 생성된 FinancialTransaction에 대해 분개 자동 생성
+                // 표준 문서: docs/standards/ERP_ADVANCEMENT_STANDARD.md
+                // 자동화 원칙: 모든 거래는 자동으로 분개에 반영
+                try {
+                    // 프로시저가 생성한 financial_transactions 조회
+                    // 환불 거래: EXPENSE 타입, category='DISCOUNT_REFUND', subcategory='PACKAGE_DISCOUNT_REFUND'
+                    List<FinancialTransaction> transactions = 
+                        financialTransactionRepository.findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
+                            tenantId, mappingId, "CONSULTANT_CLIENT_MAPPING"
+                        );
+                    
+                    // 최근 생성된 환불 거래만 필터링 (프로시저 실행 직후 생성된 것)
+                    transactions = transactions.stream()
+                        .filter(t -> {
+                            // 환불 거래: EXPENSE, category='DISCOUNT_REFUND', subcategory='PACKAGE_DISCOUNT_REFUND'
+                            boolean isRefund = t.getTransactionType() == FinancialTransaction.TransactionType.EXPENSE &&
+                                             "DISCOUNT_REFUND".equals(t.getCategory()) &&
+                                             "PACKAGE_DISCOUNT_REFUND".equals(t.getSubcategory());
+                            return isRefund;
+                        })
+                        .filter(t -> t.getDescription() != null && t.getDescription().contains("할인 환불"))
+                        .sorted((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()))
+                        .limit(1) // 가장 최근 환불 거래
+                        .collect(Collectors.toList());
+                    
+                    // 각 거래에 대해 분개 생성
+                    for (FinancialTransaction transaction : transactions) {
+                        try {
+                            accountingService.createJournalEntryFromTransaction(transaction);
+                            log.info("🔗 ERP 고도화 연동: 환불 분개 생성 완료 - TransactionID={}, Type={}", 
+                                transaction.getId(), transaction.getTransactionType());
+                        } catch (Exception e) {
+                            log.warn("⚠️ ERP 고도화 연동: 환불 분개 생성 실패 (프로시저는 성공) - TransactionID={}, Error={}", 
+                                transaction.getId(), e.getMessage());
+                            // 프로시저는 성공했으므로 계속 진행
+                        }
+                    }
+                } catch (Exception e) {
+                    log.warn("⚠️ ERP 고도화 연동 실패 (프로시저는 성공): {}", e.getMessage());
+                    // 프로시저는 성공했으므로 계속 진행
+                }
             } else {
                 log.warn("⚠️ PL/SQL 할인 환불 처리 실패: MappingID={}, Message={}", mappingId, message);
             }

@@ -291,7 +291,7 @@ export default function BlogEditor({
           }}
           theme="snow"
           value={value}
-          onChange={(content, delta, source, editor) => {
+          onChange={(content: string, delta: any, source: any, editor: any) => {
             // onChange에서 editor 인스턴스를 받을 수 있음
             if (editor && !quillInstanceRef.current) {
               quillInstanceRef.current = editor;

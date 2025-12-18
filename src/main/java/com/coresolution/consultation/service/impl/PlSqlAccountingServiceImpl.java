@@ -29,6 +29,8 @@ import lombok.extern.slf4j.Slf4j;
 public class PlSqlAccountingServiceImpl implements PlSqlAccountingService {
     
     private final JdbcTemplate jdbcTemplate;
+    // ERP 고도화 서비스 연동 (표준 문서: docs/standards/ERP_ADVANCEMENT_STANDARD.md)
+    private final com.coresolution.consultation.service.AccountingService accountingService;
     
     @Override
     public Map<String, Object> validateIntegratedAmount(Long mappingId, BigDecimal inputAmount) {
@@ -198,6 +200,24 @@ public class PlSqlAccountingServiceImpl implements PlSqlAccountingService {
             
             log.info("✅ PL/SQL 할인 회계 처리 완료: Success={}, AccountingID={}, ERPTransactionID={}", 
                 stmt.getBoolean(9), stmt.getLong(11), stmt.getString(12));
+            
+            // ERP 고도화 연동: 프로시저에서 생성된 FinancialTransaction에 대해 분개 자동 생성
+            // 표준 문서: docs/standards/ERP_ADVANCEMENT_STANDARD.md
+            if (stmt.getBoolean(9) && stmt.getString(12) != null) {
+                try {
+                    // erp_transaction_id에서 FinancialTransaction 조회
+                    String erpTransactionId = stmt.getString(12);
+                    log.info("🔗 ERP 고도화 연동: FinancialTransaction에서 분개 생성 시도: erpTransactionId={}", erpTransactionId);
+                    
+                    // TODO: erpTransactionId로 FinancialTransaction 조회 후 분개 생성
+                    // 현재는 프로시저가 직접 처리하므로, 프로시저 내부에서 분개 생성 로직 추가 필요
+                    // 또는 프로시저 결과를 받아서 Java에서 분개 생성
+                    
+                } catch (Exception e) {
+                    log.warn("⚠️ ERP 고도화 연동 실패 (프로시저는 성공): {}", e.getMessage());
+                    // 프로시저는 성공했으므로 계속 진행
+                }
+            }
             
         } catch (Exception e) {
             log.error("❌ PL/SQL 할인 회계 처리 실패: MappingID={}, DiscountCode={}", mappingId, discountCode, e);

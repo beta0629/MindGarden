@@ -24,7 +24,10 @@ import {
   BarChart3,
   PieChart,
   Calendar,
-  FileText
+  FileText,
+  BookOpen,
+  Receipt,
+  Calculator
 } from 'lucide-react';
 import '../../styles/main.css';
 import './IntegratedFinanceDashboard.css';
@@ -447,8 +450,11 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
             <div className="integrated-finance-tabs">
               {[
                 { key: 'overview', label: '개요' },
+                { key: 'journal-entries', label: '분개 관리' },
+                { key: 'ledgers', label: '원장 조회' },
                 { key: 'balance-sheet', label: '대차대조표' },
                 { key: 'income-statement', label: '손익계산서' },
+                { key: 'settlement', label: '정산 관리' },
                 { key: 'daily', label: '일간 리포트' },
                 { key: 'monthly', label: '월간 리포트' },
                 { key: 'yearly', label: '년간 리포트' }
@@ -466,8 +472,11 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
             {/* 콘텐츠 영역 */}
             <div className="integrated-finance-content">
               {activeTab === 'overview' && <OverviewTab data={dashboardData} />}
+              {activeTab === 'journal-entries' && <JournalEntriesTab />}
+              {activeTab === 'ledgers' && <LedgersTab />}
               {activeTab === 'balance-sheet' && <BalanceSheetTab selectedBranch={selectedBranch} isHQUser={isHQUser} />}
               {activeTab === 'income-statement' && <IncomeStatementTab selectedBranch={selectedBranch} isHQUser={isHQUser} />}
+              {activeTab === 'settlement' && <SettlementTab />}
               {activeTab === 'daily' && <DailyReportTab period={selectedPeriod} />}
               {activeTab === 'monthly' && <MonthlyReportTab period={selectedPeriod} />}
               {activeTab === 'yearly' && <YearlyReportTab period={selectedPeriod} />}
@@ -1293,6 +1302,431 @@ const YearlyReportTab = ({ period }) => {
           </div>
         </div>
       </div>
+      </DashboardSection>
+    </div>
+  );
+};
+
+// 분개 관리 탭 컴포넌트
+const JournalEntriesTab = () => {
+  const [entries, setEntries] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedEntry, setSelectedEntry] = useState(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+
+  useEffect(() => {
+    fetchJournalEntries();
+  }, []);
+
+  const fetchJournalEntries = async () => {
+    try {
+      const response = await axios.get(ERP_API.JOURNAL_ENTRIES, {
+        withCredentials: true
+      });
+      if (response.data.success) {
+        setEntries(response.data.data || []);
+      }
+    } catch (err) {
+      console.error('Journal entries fetch error:', err);
+      notificationManager.show('분개 목록을 불러오는데 실패했습니다.', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleApprove = async (id) => {
+    try {
+      const response = await axios.put(ERP_API.JOURNAL_ENTRY_APPROVE(id), {}, {
+        withCredentials: true
+      });
+      if (response.data.success) {
+        notificationManager.show('분개가 승인되었습니다.', 'success');
+        fetchJournalEntries();
+      }
+    } catch (err) {
+      console.error('Approve error:', err);
+      notificationManager.show('분개 승인에 실패했습니다.', 'error');
+    }
+  };
+
+  const handlePost = async (id) => {
+    try {
+      const response = await axios.put(ERP_API.JOURNAL_ENTRY_POST(id), {}, {
+        withCredentials: true
+      });
+      if (response.data.success) {
+        notificationManager.show('분개가 전기되었습니다.', 'success');
+        fetchJournalEntries();
+      }
+    } catch (err) {
+      console.error('Post error:', err);
+      notificationManager.show('분개 전기에 실패했습니다.', 'error');
+    }
+  };
+
+  if (loading) {
+    return <UnifiedLoading text="분개 목록을 불러오는 중..." size="medium" type="inline" />;
+  }
+
+  return (
+    <div>
+      <DashboardSection title="분개 관리" icon={<Receipt size={20} />}>
+        <div className="journal-entries-table">
+          <table className="mg-table">
+            <thead>
+              <tr>
+                <th>분개번호</th>
+                <th>분개일자</th>
+                <th>차변합계</th>
+                <th>대변합계</th>
+                <th>상태</th>
+                <th>작업</th>
+              </tr>
+            </thead>
+            <tbody>
+              {entries.map(entry => (
+                <tr key={entry.id}>
+                  <td>{entry.entryNumber}</td>
+                  <td>{entry.entryDate}</td>
+                  <td>{formatCurrency(entry.totalDebit || 0)}</td>
+                  <td>{formatCurrency(entry.totalCredit || 0)}</td>
+                  <td>
+                    <span className={`status-badge status-${entry.entryStatus?.toLowerCase()}`}>
+                      {entry.entryStatus === 'DRAFT' ? '초안' : 
+                       entry.entryStatus === 'APPROVED' ? '승인됨' : 
+                       entry.entryStatus === 'POSTED' ? '전기됨' : entry.entryStatus}
+                    </span>
+                  </td>
+                  <td>
+                    <div className="action-buttons">
+                      <button 
+                        onClick={() => { setSelectedEntry(entry); setShowDetailModal(true); }}
+                        className="btn-view"
+                      >
+                        상세
+                      </button>
+                      {entry.entryStatus === 'DRAFT' && (
+                        <button 
+                          onClick={() => handleApprove(entry.id)}
+                          className="btn-approve"
+                        >
+                          승인
+                        </button>
+                      )}
+                      {entry.entryStatus === 'APPROVED' && (
+                        <button 
+                          onClick={() => handlePost(entry.id)}
+                          className="btn-post"
+                        >
+                          전기
+                        </button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </DashboardSection>
+    </div>
+  );
+};
+
+// 원장 조회 탭 컴포넌트
+const LedgersTab = () => {
+  const [ledgers, setLedgers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedAccountId, setSelectedAccountId] = useState(null);
+  const [periodStart, setPeriodStart] = useState('');
+  const [periodEnd, setPeriodEnd] = useState('');
+
+  useEffect(() => {
+    if (selectedAccountId) {
+      fetchLedger();
+    }
+  }, [selectedAccountId, periodStart, periodEnd]);
+
+  const fetchLedger = async () => {
+    if (!selectedAccountId) return;
+    
+    setLoading(true);
+    try {
+      let url = ERP_API.LEDGERS_ACCOUNT(selectedAccountId);
+      if (periodStart && periodEnd) {
+        url = `${ERP_API.LEDGERS_PERIOD}?accountId=${selectedAccountId}&startDate=${periodStart}&endDate=${periodEnd}`;
+      }
+      
+      const response = await axios.get(url, {
+        withCredentials: true
+      });
+      if (response.data.success) {
+        setLedgers(Array.isArray(response.data.data) ? response.data.data : [response.data.data]);
+      }
+    } catch (err) {
+      console.error('Ledger fetch error:', err);
+      notificationManager.show('원장을 불러오는데 실패했습니다.', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading && !selectedAccountId) {
+    return (
+      <div>
+        <DashboardSection title="원장 조회" icon={<BookOpen size={20} />}>
+          <p>계정을 선택해주세요.</p>
+        </DashboardSection>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <DashboardSection title="원장 조회" icon={<BookOpen size={20} />}>
+        <div className="ledger-filters">
+          <input
+            type="number"
+            placeholder="계정 ID"
+            value={selectedAccountId || ''}
+            onChange={(e) => setSelectedAccountId(e.target.value ? parseInt(e.target.value) : null)}
+          />
+          <input
+            type="date"
+            placeholder="시작일"
+            value={periodStart}
+            onChange={(e) => setPeriodStart(e.target.value)}
+          />
+          <input
+            type="date"
+            placeholder="종료일"
+            value={periodEnd}
+            onChange={(e) => setPeriodEnd(e.target.value)}
+          />
+          <button onClick={fetchLedger}>조회</button>
+        </div>
+        
+        {ledgers.length > 0 && (
+          <div className="ledgers-table">
+            <table className="mg-table">
+              <thead>
+                <tr>
+                  <th>계정 ID</th>
+                  <th>기간 시작</th>
+                  <th>기간 종료</th>
+                  <th>기초잔액</th>
+                  <th>차변합계</th>
+                  <th>대변합계</th>
+                  <th>기말잔액</th>
+                </tr>
+              </thead>
+              <tbody>
+                {ledgers.map((ledger, idx) => (
+                  <tr key={idx}>
+                    <td>{ledger.accountId}</td>
+                    <td>{ledger.periodStart}</td>
+                    <td>{ledger.periodEnd}</td>
+                    <td>{formatCurrency(ledger.openingBalance || 0)}</td>
+                    <td>{formatCurrency(ledger.totalDebit || 0)}</td>
+                    <td>{formatCurrency(ledger.totalCredit || 0)}</td>
+                    <td>{formatCurrency(ledger.closingBalance || 0)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </DashboardSection>
+    </div>
+  );
+};
+
+// 정산 관리 탭 컴포넌트
+const SettlementTab = () => {
+  const [rules, setRules] = useState([]);
+  const [settlements, setSettlements] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [activeSubTab, setActiveSubTab] = useState('rules');
+
+  useEffect(() => {
+    if (activeSubTab === 'rules') {
+      fetchRules();
+    } else {
+      fetchSettlements();
+    }
+  }, [activeSubTab]);
+
+  const fetchRules = async () => {
+    setLoading(true);
+    try {
+      const response = await axios.get(ERP_API.SETTLEMENT_RULES, {
+        withCredentials: true
+      });
+      if (response.data.success) {
+        setRules(response.data.data || []);
+      }
+    } catch (err) {
+      console.error('Settlement rules fetch error:', err);
+      notificationManager.show('정산 규칙을 불러오는데 실패했습니다.', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchSettlements = async () => {
+    setLoading(true);
+    try {
+      const response = await axios.get(ERP_API.SETTLEMENT_RESULTS, {
+        withCredentials: true
+      });
+      if (response.data.success) {
+        setSettlements(response.data.data || []);
+      }
+    } catch (err) {
+      console.error('Settlements fetch error:', err);
+      notificationManager.show('정산 결과를 불러오는데 실패했습니다.', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCalculate = async (period) => {
+    try {
+      const response = await axios.post(`${ERP_API.SETTLEMENT_CALCULATE}?period=${period}`, {}, {
+        withCredentials: true
+      });
+      if (response.data.success) {
+        notificationManager.show('정산이 계산되었습니다.', 'success');
+        fetchSettlements();
+      }
+    } catch (err) {
+      console.error('Calculate error:', err);
+      notificationManager.show('정산 계산에 실패했습니다.', 'error');
+    }
+  };
+
+  if (loading) {
+    return <UnifiedLoading text="데이터를 불러오는 중..." size="medium" type="inline" />;
+  }
+
+  return (
+    <div>
+      <DashboardSection title="정산 관리" icon={<Calculator size={20} />}>
+        <div className="settlement-tabs">
+          <button 
+            className={activeSubTab === 'rules' ? 'active' : ''}
+            onClick={() => setActiveSubTab('rules')}
+          >
+            정산 규칙
+          </button>
+          <button 
+            className={activeSubTab === 'results' ? 'active' : ''}
+            onClick={() => setActiveSubTab('results')}
+          >
+            정산 결과
+          </button>
+        </div>
+
+        {activeSubTab === 'rules' && (
+          <div className="settlement-rules">
+            <table className="mg-table">
+              <thead>
+                <tr>
+                  <th>규칙명</th>
+                  <th>업종 유형</th>
+                  <th>정산 유형</th>
+                  <th>계산 방법</th>
+                  <th>활성화</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rules.map(rule => (
+                  <tr key={rule.id}>
+                    <td>{rule.ruleName}</td>
+                    <td>{rule.businessType}</td>
+                    <td>{rule.settlementType}</td>
+                    <td>{rule.calculationMethod}</td>
+                    <td>{rule.isActive ? '활성' : '비활성'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {activeSubTab === 'results' && (
+          <div className="settlement-results">
+            <div className="settlement-actions">
+              <input
+                type="text"
+                placeholder="정산 기간 (예: 202512)"
+                id="settlement-period"
+              />
+              <button onClick={() => {
+                const period = document.getElementById('settlement-period').value;
+                if (period) handleCalculate(period);
+              }}>
+                정산 계산
+              </button>
+            </div>
+            
+            <table className="mg-table">
+              <thead>
+                <tr>
+                  <th>정산번호</th>
+                  <th>정산기간</th>
+                  <th>총매출</th>
+                  <th>수수료</th>
+                  <th>로열티</th>
+                  <th>순정산액</th>
+                  <th>상태</th>
+                  <th>작업</th>
+                </tr>
+              </thead>
+              <tbody>
+                {settlements.map(settlement => (
+                  <tr key={settlement.id}>
+                    <td>{settlement.settlementNumber}</td>
+                    <td>{settlement.settlementPeriod}</td>
+                    <td>{formatCurrency(settlement.totalRevenue || 0)}</td>
+                    <td>{formatCurrency(settlement.commissionAmount || 0)}</td>
+                    <td>{formatCurrency(settlement.royaltyAmount || 0)}</td>
+                    <td>{formatCurrency(settlement.netSettlementAmount || 0)}</td>
+                    <td>
+                      <span className={`status-badge status-${settlement.status?.toLowerCase()}`}>
+                        {settlement.status === 'PENDING' ? '대기중' : 
+                         settlement.status === 'APPROVED' ? '승인됨' : 
+                         settlement.status === 'PAID' ? '지급완료' : settlement.status}
+                      </span>
+                    </td>
+                    <td>
+                      {settlement.status === 'PENDING' && (
+                        <button 
+                          onClick={async () => {
+                            try {
+                              const response = await axios.post(ERP_API.SETTLEMENT_APPROVE(settlement.id), {}, {
+                                withCredentials: true
+                              });
+                              if (response.data.success) {
+                                notificationManager.show('정산이 승인되었습니다.', 'success');
+                                fetchSettlements();
+                              }
+                            } catch (err) {
+                              notificationManager.show('정산 승인에 실패했습니다.', 'error');
+                            }
+                          }}
+                          className="btn-approve"
+                        >
+                          승인
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </DashboardSection>
     </div>
   );

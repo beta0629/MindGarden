@@ -275,6 +275,30 @@ export const SEARCH_API = {
 
 // ERP 및 재무 관련 API (표준 경로: /api/v1/erp)
 export const ERP_API = {
+  // ERP 고도화 API (표준 문서: docs/standards/ERP_ADVANCEMENT_STANDARD.md)
+  // 분개 관리
+  JOURNAL_ENTRIES: '/api/v1/erp/accounting/entries',
+  JOURNAL_ENTRY_DETAIL: (id) => `/api/v1/erp/accounting/entries/${id}`,
+  JOURNAL_ENTRY_APPROVE: (id) => `/api/v1/erp/accounting/entries/${id}/approve`,
+  JOURNAL_ENTRY_POST: (id) => `/api/v1/erp/accounting/entries/${id}/post`,
+  
+  // 원장 조회
+  LEDGERS_ACCOUNT: (accountId) => `/api/v1/erp/accounting/ledgers/account/${accountId}`,
+  LEDGERS_PERIOD: '/api/v1/erp/accounting/ledgers/period',
+  LEDGERS_BALANCE: (accountId) => `/api/v1/erp/accounting/ledgers/balance/${accountId}`,
+  
+  // 재무제표
+  FINANCIAL_STATEMENT_INCOME: '/api/v1/erp/accounting/statements/income',
+  FINANCIAL_STATEMENT_BALANCE: '/api/v1/erp/accounting/statements/balance',
+  FINANCIAL_STATEMENT_CASHFLOW: '/api/v1/erp/accounting/statements/cash-flow',
+  
+  // 정산 관리
+  SETTLEMENT_RULES: '/api/v1/erp/settlement/rules',
+  SETTLEMENT_CALCULATE: '/api/v1/erp/settlement/calculate',
+  SETTLEMENT_RESULTS: '/api/v1/erp/settlement/results',
+  SETTLEMENT_APPROVE: (id) => `/api/v1/erp/settlement/results/${id}/approve`,
+  
+  // 기존 ERP API
   // 통합 재무 대시보드
   FINANCE_DASHBOARD: '/api/v1/erp/finance/dashboard',
   FINANCE_BALANCE_SHEET: '/api/v1/erp/finance/balance-sheet',

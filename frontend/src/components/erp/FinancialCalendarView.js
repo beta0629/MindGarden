@@ -31,31 +31,50 @@ const FinancialCalendarView = () => {
       
       // 해당 월의 모든 거래 조회
       const response = await apiGet(`/api/v1/admin/financial-transactions?startDate=${startDate}&endDate=${endDate}&size=1000`);
+      console.log('📅 달력 뷰 API 응답:', response);
       
-      if (response && response.success) {
-        // 날짜별로 거래 그룹화
-        const groupedByDate = {};
-        response.data.forEach(transaction => {
-          const date = transaction.transactionDate;
-          if (!groupedByDate[date]) {
-            groupedByDate[date] = {
-              income: 0,
-              expense: 0,
-              transactions: []
-            };
-          }
-          
-          if (transaction.transactionType === 'INCOME') {
-            groupedByDate[date].income += transaction.amount;
-          } else {
-            groupedByDate[date].expense += transaction.amount;
-          }
-          
-          groupedByDate[date].transactions.push(transaction);
-        });
-        
-        setCalendarData(groupedByDate);
+      // apiGet이 {success, data} 형태면 data만 반환하므로, 배열인지 객체인지 확인
+      let transactions = [];
+      
+      if (Array.isArray(response)) {
+        // apiGet이 data 배열만 반환한 경우
+        transactions = response;
+        console.log('📅 달력 뷰 거래 데이터 (배열):', transactions.length, '건');
+      } else if (response && typeof response === 'object') {
+        // apiGet이 전체 응답 객체를 반환한 경우
+        if (response.success && response.data) {
+          transactions = response.data;
+          console.log('📅 달력 뷰 거래 데이터 (객체):', transactions.length, '건');
+        } else {
+          console.warn('⚠️ 달력 뷰 응답 형식 오류:', response);
+        }
       }
+      
+      // 날짜별로 거래 그룹화
+      const groupedByDate = {};
+      transactions.forEach(transaction => {
+        const date = transaction.transactionDate;
+        if (!date) return; // 날짜가 없으면 스킵
+        
+        if (!groupedByDate[date]) {
+          groupedByDate[date] = {
+            income: 0,
+            expense: 0,
+            transactions: []
+          };
+        }
+        
+        if (transaction.transactionType === 'INCOME') {
+          groupedByDate[date].income += Number(transaction.amount) || 0;
+        } else {
+          groupedByDate[date].expense += Number(transaction.amount) || 0;
+        }
+        
+        groupedByDate[date].transactions.push(transaction);
+      });
+      
+      console.log('📅 달력 뷰 그룹화 완료:', Object.keys(groupedByDate).length, '일');
+      setCalendarData(groupedByDate);
     } catch (err) {
       console.error('달력 데이터 로드 실패:', err);
     } finally {

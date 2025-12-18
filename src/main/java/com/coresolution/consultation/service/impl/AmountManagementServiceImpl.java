@@ -143,18 +143,22 @@ public class AmountManagementServiceImpl implements AmountManagementService {
         amountInfo.put("recommendation", consistency.getRecommendation());
         
         // 관련 ERP 거래 조회
+        String tenantId = TenantContextHolder.getTenantId();
         List<FinancialTransaction> relatedTransactions = financialTransactionRepository
-            .findByRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(mappingId, "CONSULTANT_CLIENT_MAPPING");
+            .findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(tenantId, mappingId, "CONSULTANT_CLIENT_MAPPING");
         
         amountInfo.put("relatedTransactionCount", relatedTransactions.size());
-        amountInfo.put("relatedTransactions", relatedTransactions.stream()
-            .map((FinancialTransaction t) -> Map.of(
-                "id", t.getId(),
-                "amount", t.getAmount(),
-                "type", t.getTransactionType(),
-                "description", t.getDescription(),
-                "createdAt", t.getCreatedAt()
-            )).toList());
+        List<Map<String, Object>> transactionList = new java.util.ArrayList<>();
+        for (FinancialTransaction t : relatedTransactions) {
+            Map<String, Object> txMap = new HashMap<>();
+            txMap.put("id", t.getId());
+            txMap.put("amount", t.getAmount());
+            txMap.put("type", t.getTransactionType());
+            txMap.put("description", t.getDescription());
+            txMap.put("createdAt", t.getCreatedAt());
+            transactionList.add(txMap);
+        }
+        amountInfo.put("relatedTransactions", transactionList);
         
         // 회기당 단가 계산
         if (mapping.getTotalSessions() != null && mapping.getTotalSessions() > 0 && accurateAmount != null) {

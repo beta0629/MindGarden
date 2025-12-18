@@ -75,6 +75,10 @@ public class AuthController extends BaseApiController {
     private final TenantRoleRepository tenantRoleRepository;
     private final UserPersonalDataCacheService userPersonalDataCacheService;
     
+    // 로컬 개발 환경용 기본 테넌트 ID (서브도메인이 없을 때 사용)
+    @org.springframework.beans.factory.annotation.Value("${local.default-tenant-id:${LOCAL_DEFAULT_TENANT_ID:}}")
+    private String localDefaultTenantId;
+    
     // 메모리 저장을 위한 ConcurrentHashMap (Redis 없을 때 사용)
     private final Map<String, String> verificationCodes = new ConcurrentHashMap<>();
     private final Map<String, Long> verificationTimes = new ConcurrentHashMap<>();
@@ -533,6 +537,14 @@ public class AuthController extends BaseApiController {
         }
         
         log.info("🔐 로그인 시도: email={}, password={}", email, password != null ? "***" : "null");
+        
+        // 로컬 환경에서 기본 테넌트 ID 설정 (로그인 API는 공개 API이므로 필터를 건너뛰므로 여기서 설정)
+        String host = httpRequest.getHeader("Host");
+        boolean isLocalhost = host != null && (host.contains("localhost") || host.contains("127.0.0.1"));
+        if (isLocalhost && localDefaultTenantId != null && !localDefaultTenantId.isEmpty()) {
+            TenantContextHolder.setTenantId(localDefaultTenantId);
+            log.info("로컬 환경 감지 - 기본 테넌트 설정: tenantId={}", localDefaultTenantId);
+        }
         
         // 클라이언트 정보 추출
         String clientIp = getClientIpAddress(httpRequest);

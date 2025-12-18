@@ -33,7 +33,9 @@ import {
   Calculator,
   Info,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import '../../styles/main.css';
 import './IntegratedFinanceDashboard.css';
@@ -422,15 +424,6 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
                   ))}
                 </select>
               )}
-              <select
-                value={selectedPeriod}
-                onChange={(e) => setSelectedPeriod(e.target.value)}
-                className="mg-v2-select"
-              >
-                <option key="daily" value="daily">일간</option>
-                <option key="monthly" value="monthly">월간</option>
-                <option key="yearly" value="yearly">년간</option>
-              </select>
               <MGButton
                 variant="danger"
                 size="small"
@@ -1326,15 +1319,20 @@ const MonthlyReportTab = ({ period }) => {
   const [reportData, setReportData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [currentMonth, setCurrentMonth] = useState(() => {
+    const now = new Date();
+    return { year: now.getFullYear(), month: now.getMonth() + 1 };
+  });
 
   useEffect(() => {
     fetchMonthlyReport();
-  }, []);
+  }, [currentMonth]);
 
   const fetchMonthlyReport = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(ERP_API.FINANCE_MONTHLY_REPORT, {
+      const url = `${ERP_API.FINANCE_MONTHLY_REPORT}?year=${currentMonth.year}&month=${currentMonth.month}`;
+      const response = await axios.get(url, {
         withCredentials: true
       });
       if (response.data.success) {
@@ -1348,6 +1346,34 @@ const MonthlyReportTab = ({ period }) => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handlePreviousMonth = () => {
+    setCurrentMonth(prev => {
+      let newMonth = prev.month - 1;
+      let newYear = prev.year;
+      if (newMonth < 1) {
+        newMonth = 12;
+        newYear -= 1;
+      }
+      return { year: newYear, month: newMonth };
+    });
+  };
+
+  const handleNextMonth = () => {
+    setCurrentMonth(prev => {
+      let newMonth = prev.month + 1;
+      let newYear = prev.year;
+      if (newMonth > 12) {
+        newMonth = 1;
+        newYear += 1;
+      }
+      return { year: newYear, month: newMonth };
+    });
+  };
+
+  const formatMonthYear = (year, month) => {
+    return `${year}년 ${month}월`;
   };
 
   if (loading) {
@@ -1365,7 +1391,27 @@ const MonthlyReportTab = ({ period }) => {
   return (
     <div>
       <DashboardSection
-        title="월간 재무 리포트"
+        title={
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)' }}>
+            <MGButton
+              variant="outline"
+              size="small"
+              onClick={handlePreviousMonth}
+              title="이전 달"
+            >
+              <ChevronLeft size={18} />
+            </MGButton>
+            <span>월간 재무 리포트 - {formatMonthYear(currentMonth.year, currentMonth.month)}</span>
+            <MGButton
+              variant="outline"
+              size="small"
+              onClick={handleNextMonth}
+              title="다음 달"
+            >
+              <ChevronRight size={18} />
+            </MGButton>
+          </div>
+        }
         icon={<BarChart3 size={24} />}
       >
       
@@ -1456,15 +1502,19 @@ const YearlyReportTab = ({ period }) => {
   const [reportData, setReportData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [currentYear, setCurrentYear] = useState(() => {
+    return new Date().getFullYear();
+  });
 
   useEffect(() => {
     fetchYearlyReport();
-  }, []);
+  }, [currentYear]);
 
   const fetchYearlyReport = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(ERP_API.FINANCE_YEARLY_REPORT, {
+      const url = `${ERP_API.FINANCE_YEARLY_REPORT}?year=${currentYear}`;
+      const response = await axios.get(url, {
         withCredentials: true
       });
       if (response.data.success) {
@@ -1478,6 +1528,14 @@ const YearlyReportTab = ({ period }) => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handlePreviousYear = () => {
+    setCurrentYear(prev => prev - 1);
+  };
+
+  const handleNextYear = () => {
+    setCurrentYear(prev => prev + 1);
   };
 
   if (loading) {
@@ -1495,7 +1553,27 @@ const YearlyReportTab = ({ period }) => {
   return (
     <div>
       <DashboardSection
-        title="년간 재무 리포트"
+        title={
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)' }}>
+            <MGButton
+              variant="outline"
+              size="small"
+              onClick={handlePreviousYear}
+              title="전년도"
+            >
+              <ChevronLeft size={18} />
+            </MGButton>
+            <span>년간 재무 리포트 - {currentYear}년</span>
+            <MGButton
+              variant="outline"
+              size="small"
+              onClick={handleNextYear}
+              title="다음 년도"
+            >
+              <ChevronRight size={18} />
+            </MGButton>
+          </div>
+        }
         icon={<TrendingUp size={24} />}
       >
       

@@ -152,9 +152,15 @@ const FinancialManagement = () => {
           totalElements: response.totalCount || 0
         }));
         
+        // 데이터가 없는 경우 에러가 아닌 빈 상태로 표시
+        setError(null);
+        
         await calculateDashboardStats(filteredTransactions);
       } else {
-        setError(response?.message || '재무 거래 목록을 불러올 수 없습니다.');
+        // 실제 API 에러인 경우
+        const errorMessage = response?.message || '재무 거래 목록을 불러올 수 없습니다.';
+        console.error('❌ API 에러:', errorMessage, response);
+        setError(errorMessage);
         
         if (response?.redirectToLogin) {
           console.error('🔒 세션 만료 - 로그인 화면으로 이동');
@@ -171,7 +177,12 @@ const FinancialManagement = () => {
         return;
       }
       
-      setError('재무 거래 목록을 불러오는 중 오류가 발생했습니다.');
+      // 네트워크 에러 또는 서버 에러
+      const errorMessage = err.response?.data?.message || 
+                          err.message || 
+                          '재무 거래 목록을 불러오는 중 오류가 발생했습니다. 서버 연결을 확인해주세요.';
+      console.error('❌ 네트워크/서버 에러:', errorMessage);
+      setError(errorMessage);
     }
   };
 

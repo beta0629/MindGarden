@@ -211,8 +211,13 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
     @Override
     @Transactional(readOnly = true)
     public Page<FinancialTransactionResponse> getTransactions(Pageable pageable) {
+        String tenantId = getTenantIdOrNull();
+        log.info("🏢 재무 거래 목록 조회 (테넌트 필터링): tenantId={}", tenantId);
+        
         Page<FinancialTransaction> transactions = financialTransactionRepository
-                .findByIsDeletedFalseOrderByTransactionDateDescCreatedAtDesc(pageable);
+                .findByTenantIdAndIsDeletedFalseOrderByTransactionDateDescCreatedAtDesc(tenantId, pageable);
+        
+        log.info("✅ 재무 거래 목록 조회 완료: tenantId={}, 총 {}건", tenantId, transactions.getTotalElements());
         
         return transactions.map(this::convertToResponse);
     }

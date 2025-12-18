@@ -11,6 +11,11 @@
 
 isDev: true  # 개발 모드 활성화
 
+# 로컬 개발 환경용 기본 테넌트 ID (서브도메인이 없을 때 사용)
+# 환경 변수 LOCAL_DEFAULT_TENANT_ID로도 설정 가능
+local:
+  default-tenant-id: ${LOCAL_DEFAULT_TENANT_ID:}  # 예: tenant-incheon-counseling-001
+
 spring:
   # 데이터베이스 설정 (개발 서버 DB 사용)
   datasource:

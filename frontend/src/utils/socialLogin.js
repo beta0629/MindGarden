@@ -119,9 +119,23 @@ export const kakaoLogin = async () => {
     console.log('백엔드 응답 상태:', response.status, response.statusText);
     
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('백엔드 응답 오류:', errorText);
-      throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+      let errorMessage = '카카오 로그인을 시작할 수 없습니다.';
+      try {
+        const errorData = await response.json();
+        // 백엔드 오류 메시지 추출
+        if (errorData.message) {
+          errorMessage = errorData.message;
+        } else if (errorData.data && errorData.data.message) {
+          errorMessage = errorData.data.message;
+        }
+      } catch (parseError) {
+        // JSON 파싱 실패 시 텍스트로 처리
+        const errorText = await response.text();
+        console.error('백엔드 응답 오류:', errorText);
+      }
+      // 공통 알림으로 오류 표시
+      notificationManager.show(errorMessage, 'error');
+      throw new Error(`HTTP error! status: ${response.status}, message: ${errorMessage}`);
     }
     
     const data = await response.json();
@@ -162,7 +176,22 @@ export const naverLogin = async () => {
     // 백엔드의 인증 URL 생성 엔드포인트 호출
     const response = await fetch(`${API_BASE_URL}${AUTH_API.NAVER_AUTHORIZE}`);
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      let errorMessage = '네이버 로그인을 시작할 수 없습니다.';
+      try {
+        const errorData = await response.json();
+        // 백엔드 오류 메시지 추출
+        if (errorData.message) {
+          errorMessage = errorData.message;
+        } else if (errorData.data && errorData.data.message) {
+          errorMessage = errorData.data.message;
+        }
+      } catch (parseError) {
+        // JSON 파싱 실패 시 기본 메시지 사용
+        console.error('네이버 로그인 오류:', parseError);
+      }
+      // 공통 알림으로 오류 표시
+      notificationManager.show(errorMessage, 'error');
+      throw new Error(`HTTP error! status: ${response.status}, message: ${errorMessage}`);
     }
     
     const data = await response.json();

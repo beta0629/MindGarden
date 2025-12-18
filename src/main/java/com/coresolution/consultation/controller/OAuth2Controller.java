@@ -94,6 +94,10 @@ public class OAuth2Controller extends BaseApiController {
     @Value("${frontend.base-url:${FRONTEND_BASE_URL:}}")
     private String frontendBaseUrl;
 
+    // 로컬 개발 환경용 기본 테넌트 ID (서브도메인이 없을 때 사용)
+    @Value("${local.default-tenant-id:${LOCAL_DEFAULT_TENANT_ID:}}")
+    private String localDefaultTenantId;
+
     // OAuth2 콜백 이후 리다이렉트는 '실제 유입 Host' 기준으로 유지 (proxy/env 설정 불일치로 다른 도메인으로 튀는 문제 방지)
 
     @PostConstruct
@@ -371,10 +375,27 @@ public class OAuth2Controller extends BaseApiController {
                 }
             }
 
-            // tenantId는 소셜 로그인에서 필수 (서브도메인 기반 멀티테넌트)
+            // 로컬 환경(localhost)에서는 기본 테넌트 사용 또는 환경 변수에서 가져오기
             if (tenantId == null || tenantId.isEmpty()) {
-                return badRequest("테넌트 정보가 없습니다. 반드시 서브도메인으로 접속 후 소셜 로그인을 진행해주세요.",
-                        "TENANT_REQUIRED");
+                String host = request.getHeader("Host");
+                if (host == null || host.isEmpty()) {
+                    host = request.getHeader("X-Forwarded-Host");
+                }
+                boolean isLocalhost = host != null && (host.contains("localhost") || host.contains("127.0.0.1"));
+                
+                if (isLocalhost && localDefaultTenantId != null && !localDefaultTenantId.isEmpty()) {
+                    tenantId = localDefaultTenantId;
+                    log.info("로컬 환경 감지 - 기본 테넌트 사용: tenantId={}", tenantId);
+                } else if (isLocalhost) {
+                    // 로컬 환경이지만 기본 테넌트가 설정되지 않은 경우
+                    log.warn("로컬 환경에서 테넌트 정보가 없습니다. local.default-tenant-id 또는 LOCAL_DEFAULT_TENANT_ID 환경 변수를 설정해주세요.");
+                    return badRequest("테넌트 정보가 없습니다. 로컬 환경에서는 local.default-tenant-id 또는 LOCAL_DEFAULT_TENANT_ID 환경 변수를 설정해주세요.",
+                            "TENANT_REQUIRED");
+                } else {
+                    // 프로덕션 환경에서는 서브도메인 필수
+                    return badRequest("테넌트 정보가 없습니다. 반드시 서브도메인으로 접속 후 소셜 로그인을 진행해주세요.",
+                            "TENANT_REQUIRED");
+                }
             }
 
             // state 생성: tenantId가 있으면 base64로 인코딩하여 포함 (세션/도메인에 의존하지 않도록)
@@ -510,10 +531,27 @@ public class OAuth2Controller extends BaseApiController {
                 }
             }
 
-            // tenantId는 소셜 로그인에서 필수 (서브도메인 기반 멀티테넌트)
+            // 로컬 환경(localhost)에서는 기본 테넌트 사용 또는 환경 변수에서 가져오기
             if (tenantId == null || tenantId.isEmpty()) {
-                return badRequest("테넌트 정보가 없습니다. 반드시 서브도메인으로 접속 후 소셜 로그인을 진행해주세요.",
-                        "TENANT_REQUIRED");
+                String host = request.getHeader("Host");
+                if (host == null || host.isEmpty()) {
+                    host = request.getHeader("X-Forwarded-Host");
+                }
+                boolean isLocalhost = host != null && (host.contains("localhost") || host.contains("127.0.0.1"));
+                
+                if (isLocalhost && localDefaultTenantId != null && !localDefaultTenantId.isEmpty()) {
+                    tenantId = localDefaultTenantId;
+                    log.info("로컬 환경 감지 - 기본 테넌트 사용: tenantId={}", tenantId);
+                } else if (isLocalhost) {
+                    // 로컬 환경이지만 기본 테넌트가 설정되지 않은 경우
+                    log.warn("로컬 환경에서 테넌트 정보가 없습니다. local.default-tenant-id 또는 LOCAL_DEFAULT_TENANT_ID 환경 변수를 설정해주세요.");
+                    return badRequest("테넌트 정보가 없습니다. 로컬 환경에서는 local.default-tenant-id 또는 LOCAL_DEFAULT_TENANT_ID 환경 변수를 설정해주세요.",
+                            "TENANT_REQUIRED");
+                } else {
+                    // 프로덕션 환경에서는 서브도메인 필수
+                    return badRequest("테넌트 정보가 없습니다. 반드시 서브도메인으로 접속 후 소셜 로그인을 진행해주세요.",
+                            "TENANT_REQUIRED");
+                }
             }
 
             // state 생성: tenantId가 있으면 base64로 인코딩하여 포함 (세션과 무관하게 조회 가능)

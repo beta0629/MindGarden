@@ -30,7 +30,7 @@ public class PlSqlAccountingServiceImpl implements PlSqlAccountingService {
     
     private final JdbcTemplate jdbcTemplate;
     // ERP 고도화 서비스 연동 (표준 문서: docs/standards/ERP_ADVANCEMENT_STANDARD.md)
-    private final com.coresolution.consultation.service.AccountingService accountingService;
+    private final com.coresolution.consultation.service.erp.accounting.AccountingService accountingService;
     
     @Override
     public Map<String, Object> validateIntegratedAmount(Long mappingId, BigDecimal inputAmount) {

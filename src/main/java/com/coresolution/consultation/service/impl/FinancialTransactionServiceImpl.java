@@ -61,7 +61,7 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
     private final CommonCodeService commonCodeService;
     private final RealTimeStatisticsService realTimeStatisticsService;
     private final UserRepository userRepository;
-    private final com.coresolution.consultation.service.AccountingService accountingService;
+    private final com.coresolution.consultation.service.erp.accounting.AccountingService accountingService;
     
     @Override
     public FinancialTransactionResponse createTransaction(FinancialTransactionRequest request, User currentUser) {

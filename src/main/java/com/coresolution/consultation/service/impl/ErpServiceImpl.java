@@ -58,9 +58,9 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
     private final UserService userService;
     private final FinancialTransactionService financialTransactionService;
     // ERP 고도화 서비스 연동 (표준 문서: docs/standards/ERP_ADVANCEMENT_STANDARD.md)
-    private final com.coresolution.consultation.service.FinancialStatementService financialStatementService;
-    private final com.coresolution.consultation.service.AccountingService accountingService;
-    private final com.coresolution.consultation.service.SettlementService settlementService;
+    private final com.coresolution.consultation.service.erp.accounting.FinancialStatementService financialStatementService;
+    private final com.coresolution.consultation.service.erp.accounting.AccountingService accountingService;
+    private final com.coresolution.consultation.service.erp.settlement.SettlementService settlementService;
     
     
     @Override

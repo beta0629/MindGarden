@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import com.coresolution.consultation.service.PlSqlDiscountAccountingService;
+import com.coresolution.consultation.entity.erp.financial.FinancialTransaction;
 import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.SqlOutParameter;
@@ -30,8 +31,8 @@ public class PlSqlDiscountAccountingServiceImpl implements PlSqlDiscountAccounti
     
     private final JdbcTemplate jdbcTemplate;
     // ERP 고도화 서비스 연동 (표준 문서: docs/standards/ERP_ADVANCEMENT_STANDARD.md)
-    private final com.coresolution.consultation.service.AccountingService accountingService;
-    private final com.coresolution.consultation.repository.FinancialTransactionRepository financialTransactionRepository;
+    private final com.coresolution.consultation.service.erp.accounting.AccountingService accountingService;
+    private final com.coresolution.consultation.repository.erp.financial.FinancialTransactionRepository financialTransactionRepository;
     
     @Override
     public Map<String, Object> applyDiscountAccounting(
@@ -77,7 +78,7 @@ public class PlSqlDiscountAccountingServiceImpl implements PlSqlDiscountAccounti
                     // 프로시저가 생성한 financial_transactions 조회
                     // revenue_transaction_id: INCOME 타입, related_entity_id = mapping_id
                     // discount_transaction_id: DISCOUNT 타입, related_entity_id = mapping_id
-                    List<com.coresolution.consultation.entity.FinancialTransaction> transactions = 
+                    List<FinancialTransaction> transactions = 
                         financialTransactionRepository.findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
                             tenantId, mappingId, "CONSULTANT_CLIENT_MAPPING"
                         );
@@ -87,11 +88,11 @@ public class PlSqlDiscountAccountingServiceImpl implements PlSqlDiscountAccounti
                     transactions = transactions.stream()
                         .filter(t -> {
                             // 매출 거래: INCOME, category='CONSULTATION', subcategory='PACKAGE_SALE'
-                            boolean isRevenue = t.getTransactionType() == com.coresolution.consultation.entity.FinancialTransaction.TransactionType.INCOME &&
+                            boolean isRevenue = t.getTransactionType() == FinancialTransaction.TransactionType.INCOME &&
                                               "CONSULTATION".equals(t.getCategory()) &&
                                               "PACKAGE_SALE".equals(t.getSubcategory());
                             // 할인 거래: EXPENSE, category='SALES_DISCOUNT', subcategory='PACKAGE_DISCOUNT'
-                            boolean isDiscount = t.getTransactionType() == com.coresolution.consultation.entity.FinancialTransaction.TransactionType.EXPENSE &&
+                            boolean isDiscount = t.getTransactionType() == FinancialTransaction.TransactionType.EXPENSE &&
                                                "SALES_DISCOUNT".equals(t.getCategory()) &&
                                                "PACKAGE_DISCOUNT".equals(t.getSubcategory());
                             return isRevenue || isDiscount;
@@ -102,7 +103,7 @@ public class PlSqlDiscountAccountingServiceImpl implements PlSqlDiscountAccounti
                         .collect(Collectors.toList());
                     
                     // 각 거래에 대해 분개 생성
-                    for (com.coresolution.consultation.entity.FinancialTransaction transaction : transactions) {
+                    for (FinancialTransaction transaction : transactions) {
                         try {
                             accountingService.createJournalEntryFromTransaction(transaction);
                             log.info("🔗 ERP 고도화 연동: 분개 생성 완료 - TransactionID={}, Type={}", 

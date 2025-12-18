@@ -4,14 +4,14 @@
 /* 기본 알림 컨테이너 */
 .mg-notification-container {
   position: fixed;
-  z-index: var(--z-notification);
+  z-index: var(--z-notification, 20000);
   pointer-events: none;
 }
 
 /* 위치별 컨테이너 */
 .mg-notification-container--top-right {
-  top: var(--notification-container-top);
-  right: var(--notification-container-right);
+  top: var(--notification-container-top, 1rem);
+  right: var(--notification-container-right, 1rem);
 }
 
 .mg-notification-container--top-center {
@@ -33,17 +33,17 @@
 
 /* 기본 알림 */
 .mg-notification {
-  background: var(--notification-toast-bg);
+  background: var(--notification-toast-bg, rgba(255, 255, 255, 0.95));
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border-radius: var(--notification-toast-border-radius);
-  border: var(--notification-toast-border-width) solid var(--notification-toast-border-color);
-  box-shadow: var(--notification-toast-shadow);
-  margin-bottom: var(--notification-toast-margin-bottom);
-  max-width: var(--notification-toast-max-width);
-  min-width: var(--notification-toast-min-width);
+  border-radius: var(--notification-toast-border-radius, 0.5rem);
+  border: var(--notification-toast-border-width, 1px) solid var(--notification-toast-border-color, rgba(0, 0, 0, 0.1));
+  box-shadow: var(--notification-toast-shadow, 0 4px 12px rgba(0, 0, 0, 0.15));
+  margin-bottom: var(--notification-toast-margin-bottom, 0.75rem);
+  max-width: var(--notification-toast-max-width, 400px);
+  min-width: var(--notification-toast-min-width, 300px);
   pointer-events: auto;
-  animation: mg-notification-slide-in var(--notification-animation-duration) var(--notification-animation-timing);
+  animation: mg-notification-slide-in var(--notification-animation-duration, 0.3s) var(--notification-animation-timing, ease-out);
   overflow: hidden;
 }
 
@@ -61,46 +61,46 @@
 .mg-notification-content {
   display: flex;
   align-items: flex-start;
-  padding: var(--notification-toast-padding);
-  gap: var(--spacing-sm);
+  padding: var(--notification-toast-padding, 1rem);
+  gap: var(--spacing-sm, 0.5rem);
 }
 
 /* 알림 아이콘 */
 .mg-notification-icon {
   flex-shrink: 0;
-  width: var(--notification-icon-size);
-  height: var(--notification-icon-size);
+  width: var(--notification-icon-size, 24px);
+  height: var(--notification-icon-size, 24px);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: var(--notification-icon-font-size);
+  font-size: var(--notification-icon-font-size, 1.25rem);
 }
 
 /* 알림 메시지 */
 .mg-notification-message {
   flex: 1;
-  font-size: var(--notification-message-font-size);
-  line-height: var(--notification-message-line-height);
-  color: var(--color-text-primary);
+  font-size: var(--notification-message-font-size, 0.875rem);
+  line-height: var(--notification-message-line-height, 1.5);
+  color: var(--color-text-primary, #1f2937);
   margin: 0;
 }
 
 /* 닫기 버튼 */
 .mg-notification-close {
   flex-shrink: 0;
-  width: var(--notification-close-size);
-  height: var(--notification-close-size);
+  width: var(--notification-close-size, 24px);
+  height: var(--notification-close-size, 24px);
   border: none;
   background: none;
-  color: var(--color-text-secondary);
+  color: var(--color-text-secondary, #6b7280);
   cursor: pointer;
-  border-radius: var(--notification-close-border-radius);
+  border-radius: var(--notification-close-border-radius, 0.25rem);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: var(--notification-close-font-size);
+  font-size: var(--notification-close-font-size, 1.25rem);
   line-height: 1;
-  transition: var(--notification-transition);
+  transition: var(--notification-transition, all 0.2s ease);
 }
 
 .mg-notification-close:hover {

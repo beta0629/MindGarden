@@ -230,9 +230,10 @@ const UnifiedNotification = ({
                 )}
               </div>
 
-              <div className="mg-notification-actions">
-                {notification.actions && notification.actions.length > 0 ? (
-                  notification.actions.map((action, index) => (
+              {/* 액션 버튼이 명시적으로 제공된 경우에만 표시 */}
+              {notification.actions && notification.actions.length > 0 && (
+                <div className="mg-notification-actions">
+                  {notification.actions.map((action, index) => (
                     <button
                       key={index}
                       className={`mg-btn mg-btn--${action.variant || 'secondary'}`}
@@ -243,27 +244,9 @@ const UnifiedNotification = ({
                         : action.label
                       }
                     </button>
-                  ))
-                ) : (
-                  <>
-                    <button 
-                      className="mg-btn mg-btn--secondary"
-                      onClick={() => removeNotification(notification.id)}
-                    >
-                      취소
-                    </button>
-                    <button 
-                      className="mg-btn mg-btn--primary"
-                      onClick={() => handleAction({ id: 'confirm' }, notification.id)}
-                    >
-                      {countdowns[notification.id] 
-                        ? `확인 (${countdowns[notification.id]}초)`
-                        : '확인'
-                      }
-                    </button>
-                  </>
-                )}
-              </div>
+                  ))}
+                </div>
+              )}
 
               {/* 카운트다운 진행바 */}
               {notification.showCountdown && countdowns[notification.id] && (

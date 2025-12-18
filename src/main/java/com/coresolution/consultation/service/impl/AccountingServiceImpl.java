@@ -305,22 +305,42 @@ public class AccountingServiceImpl implements AccountingService {
                 accountType
             );
             
-            if (accountCode.isPresent() && accountCode.get().getDescription() != null) {
-                try {
-                    // description 필드에 계정 ID가 저장되어 있다고 가정
-                    // 형식: "accountId:123" 또는 "123"
-                    String description = accountCode.get().getDescription();
-                    String accountIdStr = description.contains(":") 
-                        ? description.split(":")[1].trim() 
-                        : description.trim();
-                    return Long.parseLong(accountIdStr);
-                } catch (NumberFormatException e) {
-                    log.warn("계정 ID 파싱 실패: tenantId={}, accountType={}, description={}", 
-                        tenantId, accountType, accountCode.get().getDescription());
+            if (accountCode.isPresent()) {
+                CommonCode code = accountCode.get();
+                
+                // 1. extraData 필드에서 계정 ID 조회 (JSON 형태: {"accountId": 123})
+                if (code.getExtraData() != null && !code.getExtraData().trim().isEmpty()) {
+                    try {
+                        // 간단한 JSON 파싱 ({"accountId": 123} 형식)
+                        String extraData = code.getExtraData().trim();
+                        if (extraData.startsWith("{") && extraData.contains("accountId")) {
+                            String accountIdStr = extraData.replaceAll(".*\"accountId\"\\s*:\\s*(\\d+).*", "$1");
+                            if (!accountIdStr.equals(extraData)) {
+                                return Long.parseLong(accountIdStr);
+                            }
+                        }
+                    } catch (NumberFormatException e) {
+                        log.warn("계정 ID 파싱 실패 (extraData): tenantId={}, accountType={}, extraData={}", 
+                            tenantId, accountType, code.getExtraData());
+                    }
+                }
+                
+                // 2. codeDescription 필드에서 계정 ID 조회 (형식: "accountId:123" 또는 "123")
+                if (code.getCodeDescription() != null && !code.getCodeDescription().trim().isEmpty()) {
+                    try {
+                        String description = code.getCodeDescription().trim();
+                        String accountIdStr = description.contains(":") 
+                            ? description.split(":")[1].trim() 
+                            : description.trim();
+                        return Long.parseLong(accountIdStr);
+                    } catch (NumberFormatException e) {
+                        log.warn("계정 ID 파싱 실패 (codeDescription): tenantId={}, accountType={}, description={}", 
+                            tenantId, accountType, code.getCodeDescription());
+                    }
                 }
             }
             
-            // 공통코드에 없으면 null 반환 (분개 생성 실패 처리)
+            // 공통코드에 없거나 계정 ID가 없으면 null 반환 (분개 생성 실패 처리)
             log.warn("기본 계정을 찾을 수 없습니다: tenantId={}, accountType={}, codeGroup=ERP_ACCOUNT_TYPE", 
                 tenantId, accountType);
             return null;

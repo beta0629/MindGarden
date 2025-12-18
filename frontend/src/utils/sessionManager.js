@@ -230,67 +230,30 @@ class SessionManager {
             if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
                 console.log('ℹ️ 네트워크 연결 실패 - 서버가 실행되지 않았을 수 있습니다');
                 
-                // 네트워크 오류 시에도 세션 체크를 한 번 더 시도
-                try {
-                    const errorCheckHeaders = getDefaultApiHeaders();
-                    const sessionResponse = await fetch(`${API_BASE_URL}/api/v1/auth/current-user`, {
-                        credentials: 'include',
-                        method: 'GET',
-                        headers: errorCheckHeaders
-                    });
-                    
-                    if (!sessionResponse.ok) {
-                        console.log('🔐 네트워크 오류 시 세션 없음');
-                        this.user = null;
-                        this.sessionInfo = null;
-                        
-                        // 현재 페이지가 공개 페이지가 아닐 때만 리다이렉트
-                        const currentPath = window.location.pathname;
-                        const isPublicPage = currentPath === '/login' || 
-                                           currentPath.startsWith('/login/') || 
-                                           currentPath === '/landing' || 
-                                           currentPath === '/' ||
-                                           currentPath.startsWith('/register') ||
-                                           currentPath.startsWith('/forgot-password') ||
-                                           currentPath.startsWith('/reset-password') ||
-                                           currentPath.startsWith('/auth/oauth2/callback');
-                        
-                        if (!isPublicPage) {
-                            console.log('🔐 네트워크 오류 시 로그인 페이지로 리다이렉트');
-                            localStorage.removeItem('accessToken');
-                            localStorage.removeItem('refreshToken');
-                            window.location.href = '/login';
-                        } else {
-                            console.log('🔐 네트워크 오류 - 공개 페이지에 있음 - 리다이렉트 스킵');
-                        }
-                        return false;
-                    }
-                } catch (sessionError) {
-                    console.log('🔐 네트워크 오류 시 세션 체크 실패');
-                    this.user = null;
-                    this.sessionInfo = null;
-                    
-                    // 현재 페이지가 공개 페이지가 아닐 때만 리다이렉트
-                    const currentPath = window.location.pathname;
-                    const isPublicPage = currentPath === '/login' || 
-                                       currentPath.startsWith('/login/') || 
-                                       currentPath === '/landing' || 
-                                       currentPath === '/' ||
-                                       currentPath.startsWith('/register') ||
-                                       currentPath.startsWith('/forgot-password') ||
-                                       currentPath.startsWith('/reset-password') ||
-                                       currentPath.startsWith('/auth/oauth2/callback');
-                    
-                    if (!isPublicPage) {
-                        console.log('🔐 네트워크 오류 시 로그인 페이지로 리다이렉트');
-                        localStorage.removeItem('accessToken');
-                        localStorage.removeItem('refreshToken');
-                        window.location.href = '/login';
-                    } else {
-                        console.log('🔐 네트워크 오류 - 공개 페이지에 있음 - 리다이렉트 스킵');
-                    }
-                    return false;
+                // 네트워크 오류 시 재시도하지 않고 바로 로그인 페이지로 리다이렉트
+                this.user = null;
+                this.sessionInfo = null;
+                
+                // 현재 페이지가 공개 페이지가 아닐 때만 리다이렉트
+                const currentPath = window.location.pathname;
+                const isPublicPage = currentPath === '/login' || 
+                                   currentPath.startsWith('/login/') || 
+                                   currentPath === '/landing' || 
+                                   currentPath === '/' ||
+                                   currentPath.startsWith('/register') ||
+                                   currentPath.startsWith('/forgot-password') ||
+                                   currentPath.startsWith('/reset-password') ||
+                                   currentPath.startsWith('/auth/oauth2/callback');
+                
+                if (!isPublicPage) {
+                    console.log('🔐 네트워크 오류 시 로그인 페이지로 리다이렉트 (재시도 없음)');
+                    localStorage.removeItem('accessToken');
+                    localStorage.removeItem('refreshToken');
+                    window.location.href = '/login';
+                } else {
+                    console.log('🔐 네트워크 오류 - 공개 페이지에 있음 - 리다이렉트 스킵');
                 }
+                return false;
             } else if (error.message && error.message.includes('401')) {
                 // 401 오류는 정상적인 상황이므로 콘솔에 오류로 표시하지 않음
                 // 조용히 처리

@@ -200,38 +200,32 @@ export const apiGet = async (endpoint, params = {}, options = {}) => {
     // 403이 아닌 오류만 콘솔에 표시
     console.error('GET 요청 오류:', error);
     
-    // 네트워크 오류 시에도 세션 체크
+    // 네트워크 오류 시 재시도하지 않고 바로 로그인 페이지로 리다이렉트
     if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
       // 현재 페이지가 로그인 페이지인지 확인
       const currentPath = window.location.pathname;
       const isLoginPage = currentPath === '/login' || currentPath.startsWith('/login/');
+      const isPublicPage = currentPath === '/login' || 
+                         currentPath.startsWith('/login/') || 
+                         currentPath === '/landing' || 
+                         currentPath === '/' ||
+                         currentPath.startsWith('/register') ||
+                         currentPath.startsWith('/forgot-password') ||
+                         currentPath.startsWith('/reset-password') ||
+                         currentPath.startsWith('/auth/oauth2/callback');
       
       // 이미 로그인 페이지에 있으면 리다이렉트하지 않음
-      if (isLoginPage) {
-        console.log('🔐 네트워크 오류 - 이미 로그인 페이지에 있음 - 리다이렉트 스킵');
+      if (isLoginPage || isPublicPage) {
+        console.log('🔐 네트워크 오류 - 이미 공개 페이지에 있음 - 리다이렉트 스킵');
         return null;
       }
       
-      try {
-        const sessionResponse = await fetch(`${getApiBaseUrl()}/api/v1/auth/current-user`, {
-          credentials: 'include',
-          method: 'GET'
-        });
-        
-        if (!sessionResponse.ok) {
-          console.log('🔐 네트워크 오류 시 세션 없음 - 로그인 페이지로 리다이렉트');
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('refreshToken');
-          window.location.href = '/login';
-          return null;
-        }
-      } catch (sessionError) {
-        console.log('🔐 네트워크 오류 시 세션 체크 실패 - 로그인 페이지로 리다이렉트');
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-        window.location.href = '/login';
-        return null;
-      }
+      // 네트워크 오류 시 재시도 없이 바로 로그인 페이지로 리다이렉트
+      console.log('🔐 네트워크 오류 시 로그인 페이지로 리다이렉트 (재시도 없음)');
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      window.location.href = '/login';
+      return null;
     }
     
     throw error;

@@ -130,6 +130,25 @@ export async function cachedApiCall(url, options = {}, ttl = 5 * 60 * 1000) {
         });
 
         if (!response.ok) {
+            // 401, 403 오류 시 로그인 페이지로 리다이렉트
+            if (response.status === 401 || response.status === 403) {
+                const currentPath = window.location.pathname;
+                const isPublicPage = currentPath === '/login' || 
+                                   currentPath.startsWith('/login/') || 
+                                   currentPath === '/landing' || 
+                                   currentPath === '/' ||
+                                   currentPath.startsWith('/register') ||
+                                   currentPath.startsWith('/forgot-password') ||
+                                   currentPath.startsWith('/reset-password') ||
+                                   currentPath.startsWith('/auth/oauth2/callback');
+                
+                if (!isPublicPage) {
+                    console.log('🔐 API 캐시 호출 실패 - 로그인 페이지로 리다이렉트');
+                    localStorage.removeItem('accessToken');
+                    localStorage.removeItem('refreshToken');
+                    window.location.href = '/login';
+                }
+            }
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
 
@@ -141,6 +160,25 @@ export async function cachedApiCall(url, options = {}, ttl = 5 * 60 * 1000) {
         
         return data;
     } catch (error) {
+        // 네트워크 오류 시 로그인 페이지로 리다이렉트
+        if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+            const currentPath = window.location.pathname;
+            const isPublicPage = currentPath === '/login' || 
+                               currentPath.startsWith('/login/') || 
+                               currentPath === '/landing' || 
+                               currentPath === '/' ||
+                               currentPath.startsWith('/register') ||
+                               currentPath.startsWith('/forgot-password') ||
+                               currentPath.startsWith('/reset-password') ||
+                               currentPath.startsWith('/auth/oauth2/callback');
+            
+            if (!isPublicPage) {
+                console.log('🔐 API 캐시 네트워크 오류 - 로그인 페이지로 리다이렉트');
+                localStorage.removeItem('accessToken');
+                localStorage.removeItem('refreshToken');
+                window.location.href = '/login';
+            }
+        }
         console.error(`❌ API 호출 실패: ${url}`, error);
         throw error;
     }

@@ -467,7 +467,13 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
               ].map(tab => (
                 <button
                   key={tab.key}
-                  onClick={() => setActiveTab(tab.key)}
+                  onClick={() => {
+                    setActiveTab(tab.key);
+                    // URL 파라미터 업데이트
+                    const newSearchParams = new URLSearchParams(searchParams);
+                    newSearchParams.set('tab', tab.key);
+                    setSearchParams(newSearchParams);
+                  }}
                   className={`integrated-finance-tab-btn ${activeTab === tab.key ? 'active' : ''}`}
                 >
                   {tab.label}

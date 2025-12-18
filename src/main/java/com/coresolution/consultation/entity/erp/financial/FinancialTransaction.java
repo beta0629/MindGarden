@@ -26,6 +26,9 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import com.coresolution.consultation.entity.CommonCode;
+import com.coresolution.consultation.entity.User;
+import com.coresolution.core.entity.BaseEntity;
 
  /**
  * 회계 거래 엔티티

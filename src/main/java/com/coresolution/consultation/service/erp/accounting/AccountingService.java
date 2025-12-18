@@ -1,6 +1,8 @@
 package com.coresolution.consultation.service.erp.accounting;
 
 import com.coresolution.consultation.entity.erp.accounting.AccountingEntry;
+import com.coresolution.consultation.entity.erp.accounting.JournalEntryLine;
+import com.coresolution.consultation.entity.erp.financial.FinancialTransaction;
 
 import java.util.List;
 
@@ -14,7 +16,7 @@ public interface AccountingService {
      * 분개 생성
      * 표준 문서: docs/standards/ERP_ADVANCEMENT_STANDARD.md
      */
-    AccountingEntry createJournalEntry(String tenantId, AccountingEntry entry, List<com.coresolution.consultation.entity.JournalEntryLine> lines);
+    AccountingEntry createJournalEntry(String tenantId, AccountingEntry entry, List<JournalEntryLine> lines);
     
     /**
      * 분개 승인
@@ -42,12 +44,12 @@ public interface AccountingService {
      * FinancialTransaction에서 분개 자동 생성
      * 표준 문서: docs/standards/ERP_ADVANCEMENT_STANDARD.md
      */
-    AccountingEntry createJournalEntryFromTransaction(com.coresolution.consultation.entity.FinancialTransaction transaction);
+    AccountingEntry createJournalEntryFromTransaction(FinancialTransaction transaction);
     
     /**
      * 분개 수정 (DRAFT 상태에서만 가능)
      * 표준 문서: docs/standards/ERP_ADVANCEMENT_STANDARD.md
      */
-    AccountingEntry updateJournalEntry(String tenantId, Long entryId, AccountingEntry entry, List<com.coresolution.consultation.entity.JournalEntryLine> lines);
+    AccountingEntry updateJournalEntry(String tenantId, Long entryId, AccountingEntry entry, List<JournalEntryLine> lines);
 }
 

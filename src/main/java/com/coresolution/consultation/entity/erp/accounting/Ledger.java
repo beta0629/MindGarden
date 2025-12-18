@@ -21,6 +21,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import com.coresolution.consultation.entity.Account;
 
 /**
  * 원장 엔티티

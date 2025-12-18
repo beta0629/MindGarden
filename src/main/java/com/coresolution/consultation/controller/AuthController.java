@@ -1683,8 +1683,8 @@ public class AuthController extends BaseApiController {
     }
     
     /**
-     * 로컬 프로파일 여부 확인
-     * @return 로컬 프로파일이면 true
+     * 로컬 또는 개발 프로파일 여부 확인
+     * @return 로컬 또는 개발 프로파일이면 true
      */
     private boolean isLocalProfile() {
         if (environment == null) {
@@ -1692,7 +1692,7 @@ public class AuthController extends BaseApiController {
         }
         String[] activeProfiles = environment.getActiveProfiles();
         for (String profile : activeProfiles) {
-            if ("local".equals(profile)) {
+            if ("local".equals(profile) || "dev".equals(profile)) {
                 return true;
             }
         }

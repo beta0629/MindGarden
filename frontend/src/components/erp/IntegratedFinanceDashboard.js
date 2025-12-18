@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { useSession } from '../../contexts/SessionContext';
 import { sessionManager } from '../../utils/sessionManager';
@@ -124,6 +124,7 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
   const { user: sessionUser, isLoggedIn, isLoading: sessionLoading } = useSession();
   const [userPermissions, setUserPermissions] = useState([]);
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -451,7 +452,25 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
               <MGButton
                 variant="primary"
                 size="small"
-                onClick={() => navigate('/admin/erp/financial')}
+                onClick={() => {
+                  // 현재 경로가 이미 /admin/erp/financial이면 탭을 활성화하고 스크롤
+                  if (location.pathname === '/admin/erp/financial') {
+                    setActiveTab('overview');
+                    const newSearchParams = new URLSearchParams(searchParams);
+                    newSearchParams.set('tab', 'overview');
+                    setSearchParams(newSearchParams);
+                    // 콘텐츠 영역으로 스크롤
+                    setTimeout(() => {
+                      const contentArea = document.querySelector('.integrated-finance-content');
+                      if (contentArea) {
+                        contentArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                      }
+                    }, 100);
+                  } else {
+                    // 다른 페이지에 있으면 이동
+                    navigate('/admin/erp/financial?tab=overview');
+                  }
+                }}
                 title="상세 내역 보기"
                 className="mg-dashboard-icon-btn"
               >

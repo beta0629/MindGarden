@@ -233,6 +233,9 @@ const ErpDashboard = ({ user: propUser }) => {
     );
   }
 
+  const currentUser = propUser || sessionUser;
+  const tenantId = currentUser?.tenantId || sessionManager.getSessionInfo()?.tenantId || '알 수 없음';
+  
   return (
     <SimpleLayout title="ERP 관리 시스템">
       <div className="mg-dashboard-layout">
@@ -243,7 +246,14 @@ const ErpDashboard = ({ user: propUser }) => {
               <LayoutDashboard />
               <div>
                 <h1 className="mg-dashboard-title">ERP 관리 시스템</h1>
-                <p className="mg-dashboard-subtitle">통합 자원 관리 및 회계 시스템</p>
+                <p className="mg-dashboard-subtitle">
+                  통합 자원 관리 및 회계 시스템
+                  {tenantId && tenantId !== '알 수 없음' && (
+                    <span style={{ marginLeft: '12px', fontSize: '0.85em', color: 'var(--mg-color-text-secondary, #6b7280)' }}>
+                      (터넌트: {tenantId})
+                    </span>
+                  )}
+                </p>
               </div>
             </div>
             <div className="mg-dashboard-header-right">
@@ -301,121 +311,95 @@ const ErpDashboard = ({ user: propUser }) => {
             icon={<LayoutDashboard />}
           >
             <div className="mg-management-grid">
-              {(PermissionChecks.canViewPurchaseRequests(userPermissions) || 
-                PermissionChecks.canManagePurchaseRequests(userPermissions)) && (
-                <div className="mg-management-card" onClick={() => navigate('/erp/purchase-requests')}>
-                  <div className="mg-management-icon">
-                    <ShoppingCart />
-                  </div>
-                  <h3>구매 요청하기</h3>
-                  <p className="mg-management-description">상품 및 비품 구매 요청을 제출합니다</p>
-                </div>
-              )}
-              
-              {PermissionChecks.canManageApprovals(userPermissions) && (
-                <div className="mg-management-card" onClick={() => navigate('/erp/approvals')}>
-                  <div className="mg-management-icon">
-                    <Clock />
-                  </div>
-                  <h3>승인 관리</h3>
-                  <p className="mg-management-description">구매 요청 승인 및 거부를 관리합니다</p>
-                </div>
-              )}
-              
-              {PermissionChecks.canManageItems(userPermissions) && (
-                <div className="mg-management-card" onClick={() => navigate('/erp/items')}>
-                  <div className="mg-management-icon">
-                    <Package />
-                  </div>
-                  <h3>아이템 관리</h3>
-                  <p className="mg-management-description">등록된 비품 및 상품을 관리합니다</p>
-                </div>
-              )}
-              
-              {PermissionChecks.canManageBudget(userPermissions) && (
-                <div className="mg-management-card" onClick={() => navigate('/erp/budget')}>
-                  <div className="mg-management-icon">
-                    <TrendingUp />
-                  </div>
-                  <h3>예산 관리</h3>
-                  <p className="mg-management-description">지점별 예산을 설정하고 관리합니다</p>
-                </div>
-              )}
-              
-              {PermissionChecks.canManageSalary(userPermissions) && (
-                <div className="mg-management-card" onClick={() => navigate('/erp/salary')}>
-                  <div className="mg-management-icon">
-                    <DollarSign />
-                  </div>
-                  <h3>급여 관리</h3>
-                  <p className="mg-management-description">상담사 급여 계산 및 지급을 관리합니다</p>
-                </div>
-              )}
-              
-              {PermissionChecks.canManageTax(userPermissions) && (
-                <div className="mg-management-card" onClick={() => navigate('/erp/tax')}>
-                  <div className="mg-management-icon">
-                    <LayoutDashboard />
-                  </div>
-                  <h3>세금 관리</h3>
-                  <p className="mg-management-description">원천징수 및 세금 관련 업무를 관리합니다</p>
-                </div>
-              )}
-              
-              {PermissionChecks.canViewIntegratedFinance(userPermissions) && (
-                <div className="mg-management-card" onClick={() => navigate('/admin/erp/financial')}>
-                  <div className="mg-management-icon">
-                    <TrendingUp />
-                  </div>
-                  <h3>통합 회계 시스템</h3>
-                  <p className="mg-management-description">전체 재무 데이터 및 통계를 확인합니다</p>
-                </div>
-              )}
-              
-              {PermissionChecks.canManageRefund(userPermissions) && (
-                <div className="mg-management-card" onClick={() => navigate('/erp/refund-management')}>
-                  <div className="mg-management-icon">
-                    <Clock />
-                  </div>
-                  <h3>환불 관리 시스템</h3>
-                  <p className="mg-management-description">환불 요청 및 처리 내역을 관리합니다</p>
-                </div>
-              )}
-              
-              {/* 권한이 없을 때 기본 빠른 액션 표시 (관리자 역할인 경우) */}
-              {userPermissions.length === 0 && (propUser || sessionUser)?.role && 
-               ['ADMIN', 'TENANT_ADMIN', 'PRINCIPAL', 'OWNER'].includes((propUser || sessionUser).role) && (
-                <>
-                  <div className="mg-management-card" onClick={() => navigate('/erp/purchase-requests')}>
-                    <div className="mg-management-icon">
-                      <ShoppingCart />
-                    </div>
-                    <h3>구매 요청하기</h3>
-                    <p className="mg-management-description">상품 및 비품 구매 요청을 제출합니다</p>
-                  </div>
-                  <div className="mg-management-card" onClick={() => navigate('/erp/approvals')}>
-                    <div className="mg-management-icon">
-                      <Clock />
-                    </div>
-                    <h3>승인 관리</h3>
-                    <p className="mg-management-description">구매 요청 승인 및 거부를 관리합니다</p>
-                  </div>
-                  <div className="mg-management-card" onClick={() => navigate('/erp/items')}>
-                    <div className="mg-management-icon">
-                      <Package />
-                    </div>
-                    <h3>아이템 관리</h3>
-                    <p className="mg-management-description">등록된 비품 및 상품을 관리합니다</p>
-                  </div>
-                  <div className="mg-management-card" onClick={() => navigate('/erp/budget')}>
-                    <div className="mg-management-icon">
-                      <TrendingUp />
-                    </div>
-                    <h3>예산 관리</h3>
-                    <p className="mg-management-description">지점별 예산을 설정하고 관리합니다</p>
-                  </div>
-                </>
-              )}
+              {(() => {
+                const currentUser = propUser || sessionUser;
+                const isAdmin = currentUser && RoleUtils.isAdmin(currentUser);
+                
+                return (
+                  <>
+                    {(PermissionChecks.canViewPurchaseRequests(userPermissions) || 
+                      PermissionChecks.canManagePurchaseRequests(userPermissions) || isAdmin) && (
+                      <div className="mg-management-card" onClick={() => navigate('/erp/purchase-requests')}>
+                        <div className="mg-management-icon">
+                          <ShoppingCart />
+                        </div>
+                        <h3>구매 요청하기</h3>
+                        <p className="mg-management-description">상품 및 비품 구매 요청을 제출합니다</p>
+                      </div>
+                    )}
+                    
+                    {(PermissionChecks.canManageApprovals(userPermissions) || isAdmin) && (
+                      <div className="mg-management-card" onClick={() => navigate('/erp/approvals')}>
+                        <div className="mg-management-icon">
+                          <Clock />
+                        </div>
+                        <h3>승인 관리</h3>
+                        <p className="mg-management-description">구매 요청 승인 및 거부를 관리합니다</p>
+                      </div>
+                    )}
+                    
+                    {(PermissionChecks.canManageItems(userPermissions) || isAdmin) && (
+                      <div className="mg-management-card" onClick={() => navigate('/erp/items')}>
+                        <div className="mg-management-icon">
+                          <Package />
+                        </div>
+                        <h3>아이템 관리</h3>
+                        <p className="mg-management-description">등록된 비품 및 상품을 관리합니다</p>
+                      </div>
+                    )}
+                    
+                    {(PermissionChecks.canManageBudget(userPermissions) || isAdmin) && (
+                      <div className="mg-management-card" onClick={() => navigate('/erp/budget')}>
+                        <div className="mg-management-icon">
+                          <TrendingUp />
+                        </div>
+                        <h3>예산 관리</h3>
+                        <p className="mg-management-description">지점별 예산을 설정하고 관리합니다</p>
+                      </div>
+                    )}
+                    
+                    {(PermissionChecks.canManageSalary(userPermissions) || isAdmin) && (
+                      <div className="mg-management-card" onClick={() => navigate('/erp/salary')}>
+                        <div className="mg-management-icon">
+                          <DollarSign />
+                        </div>
+                        <h3>급여 관리</h3>
+                        <p className="mg-management-description">상담사 급여 계산 및 지급을 관리합니다</p>
+                      </div>
+                    )}
+                    
+                    {(PermissionChecks.canManageTax(userPermissions) || isAdmin) && (
+                      <div className="mg-management-card" onClick={() => navigate('/erp/tax')}>
+                        <div className="mg-management-icon">
+                          <LayoutDashboard />
+                        </div>
+                        <h3>세금 관리</h3>
+                        <p className="mg-management-description">원천징수 및 세금 관련 업무를 관리합니다</p>
+                      </div>
+                    )}
+                    
+                    {(PermissionChecks.canViewIntegratedFinance(userPermissions) || isAdmin) && (
+                      <div className="mg-management-card" onClick={() => navigate('/admin/erp/financial')}>
+                        <div className="mg-management-icon">
+                          <TrendingUp />
+                        </div>
+                        <h3>통합 회계 시스템</h3>
+                        <p className="mg-management-description">전체 재무 데이터 및 통계를 확인합니다</p>
+                      </div>
+                    )}
+                    
+                    {(PermissionChecks.canManageRefund(userPermissions) || isAdmin) && (
+                      <div className="mg-management-card" onClick={() => navigate('/erp/refund-management')}>
+                        <div className="mg-management-icon">
+                          <Clock />
+                        </div>
+                        <h3>환불 관리 시스템</h3>
+                        <p className="mg-management-description">환불 요청 및 처리 내역을 관리합니다</p>
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
             </div>
           </DashboardSection>
 

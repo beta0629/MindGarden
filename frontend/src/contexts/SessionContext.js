@@ -457,7 +457,7 @@ export const SessionProvider = ({ children }) => {
     hasPermission: async (permission) => {
       try {
         const { apiPost } = await import('../utils/ajax');
-        const result = await apiPost('/api/admin/permissions/check-permission', { permission });
+        const result = await apiPost('/api/v1/permissions/check-permission', { permission });
         return result?.success && result?.data?.hasPermission === true;
       } catch (error) {
         console.error('권한 체크 오류:', error);

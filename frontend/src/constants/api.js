@@ -53,13 +53,13 @@ export const AUTH_API = {
   CONFIRM_DUPLICATE_LOGIN: '/api/v1/auth/confirm-duplicate-login'
 };
 
-// 권한 관련 API (표준 경로: /api/v1/admin/permissions)
+// 권한 관련 API (표준 경로: /api/v1/permissions)
 export const PERMISSIONS_API = {
-  MY_PERMISSIONS: '/api/v1/admin/permissions/my-permissions',
-  CHECK_PERMISSION: '/api/v1/admin/permissions/check-permission',
-  ROLE_PERMISSIONS: '/api/v1/admin/permissions/role',
-  PERMISSION_ROLES: '/api/v1/admin/permissions/permission',
-  ALL_PERMISSION_CODES: '/api/v1/admin/permissions/codes'
+  MY_PERMISSIONS: '/api/v1/permissions/my-permissions',
+  CHECK_PERMISSION: '/api/v1/permissions/check-permission',
+  ROLE_PERMISSIONS: '/api/v1/permissions/role',
+  PERMISSION_ROLES: '/api/v1/permissions/permission',
+  ALL_PERMISSION_CODES: '/api/v1/permissions/codes'
 };
 
 // 사용자 관련 API (표준 경로: /api/v1/users)

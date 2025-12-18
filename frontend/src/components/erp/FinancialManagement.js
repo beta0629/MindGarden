@@ -962,7 +962,7 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
             
             {loading ? (
               <div style={{ textAlign: 'center', padding: '20px' }}>
-                <div>로딩 중...</div>
+                <UnifiedLoading type="inline" text="매핑 정보를 불러오는 중..." />
               </div>
             ) : mappingDetail ? (
               <div className="mg-v2-form-grid">

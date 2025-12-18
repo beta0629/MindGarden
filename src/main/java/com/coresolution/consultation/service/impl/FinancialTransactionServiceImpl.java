@@ -225,8 +225,13 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
     @Override
     @Transactional(readOnly = true)
     public Page<FinancialTransactionResponse> getTransactionsByType(FinancialTransaction.TransactionType type, Pageable pageable) {
+        String tenantId = getTenantIdOrNull();
+        log.info("🏢 재무 거래 유형별 조회 (테넌트 필터링): tenantId={}, 유형={}", tenantId, type);
+        
         Page<FinancialTransaction> transactions = financialTransactionRepository
-                .findByTransactionTypeAndIsDeletedFalseOrderByTransactionDateDescCreatedAtDesc(type, pageable);
+                .findByTenantIdAndTransactionTypeAndIsDeletedFalseOrderByTransactionDateDescCreatedAtDesc(tenantId, type, pageable);
+        
+        log.info("✅ 재무 거래 유형별 조회 완료: tenantId={}, 유형={}, 총 {}건", tenantId, type, transactions.getTotalElements());
         
         return transactions.map(this::convertToResponse);
     }
@@ -234,8 +239,13 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
     @Override
     @Transactional(readOnly = true)
     public Page<FinancialTransactionResponse> getTransactionsByCategory(String category, Pageable pageable) {
+        String tenantId = getTenantIdOrNull();
+        log.info("🏢 재무 거래 카테고리별 조회 (테넌트 필터링): tenantId={}, 카테고리={}", tenantId, category);
+        
         Page<FinancialTransaction> transactions = financialTransactionRepository
-                .findByCategoryAndIsDeletedFalseOrderByTransactionDateDescCreatedAtDesc(category, pageable);
+                .findByTenantIdAndCategoryAndIsDeletedFalseOrderByTransactionDateDescCreatedAtDesc(tenantId, category, pageable);
+        
+        log.info("✅ 재무 거래 카테고리별 조회 완료: tenantId={}, 카테고리={}, 총 {}건", tenantId, category, transactions.getTotalElements());
         
         return transactions.map(this::convertToResponse);
     }
@@ -243,8 +253,13 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
     @Override
     @Transactional(readOnly = true)
     public Page<FinancialTransactionResponse> getTransactionsByDateRange(LocalDate startDate, LocalDate endDate, Pageable pageable) {
+        String tenantId = getTenantIdOrNull();
+        log.info("🏢 재무 거래 기간별 조회 (테넌트 필터링): tenantId={}, 기간={}~{}", tenantId, startDate, endDate);
+        
         Page<FinancialTransaction> transactions = financialTransactionRepository
-                .findByTransactionDateBetweenAndIsDeletedFalseOrderByTransactionDateDescCreatedAtDesc(startDate, endDate, pageable);
+                .findByTenantIdAndTransactionDateBetweenAndIsDeletedFalseOrderByTransactionDateDescCreatedAtDesc(tenantId, startDate, endDate, pageable);
+        
+        log.info("✅ 재무 거래 기간별 조회 완료: tenantId={}, 기간={}~{}, 총 {}건", tenantId, startDate, endDate, transactions.getTotalElements());
         
         return transactions.map(this::convertToResponse);
     }
@@ -252,9 +267,14 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
     @Override
     @Transactional(readOnly = true)
     public List<FinancialTransactionResponse> getPendingTransactions() {
+        String tenantId = getTenantIdOrNull();
+        log.info("🏢 승인 대기 거래 조회 (테넌트 필터링): tenantId={}", tenantId);
+        
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         List<FinancialTransaction> transactions = financialTransactionRepository
-                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
-                .findByStatusAndIsDeletedFalseOrderByCreatedAtDesc(FinancialTransaction.TransactionStatus.PENDING);
+                .findByTenantIdAndStatusAndIsDeletedFalseOrderByCreatedAtDesc(tenantId, FinancialTransaction.TransactionStatus.PENDING);
+        
+        log.info("✅ 승인 대기 거래 조회 완료: tenantId={}, 총 {}건", tenantId, transactions.size());
         
         return transactions.stream()
                 .map(this::convertToResponse)
@@ -401,9 +421,15 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
         try {
             log.info("💰 총 세금 계산 시작: {} ~ {}", startDate, endDate);
             
+            String tenantId = getTenantIdOrNull();
+            if (tenantId == null) {
+                log.error("❌ tenantId가 설정되지 않았습니다");
+                return BigDecimal.ZERO;
+            }
+            
             String taxCategory = getSafeCodeName("FINANCIAL_CATEGORY", "TAX", "세금");
             List<FinancialTransaction> taxTransactions = financialTransactionRepository
-                    .findByCategoryAndIsDeletedFalse(taxCategory);
+                    .findByTenantIdAndCategoryAndIsDeletedFalse(tenantId, taxCategory);
             
             List<FinancialTransaction> filteredTaxTransactions = taxTransactions.stream()
                     .filter(t -> !t.getTransactionDate().isBefore(startDate) && !t.getTransactionDate().isAfter(endDate))
@@ -415,7 +441,7 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
             
             String paymentCategory = getSafeCodeName("FINANCIAL_CATEGORY", "PAYMENT", "결제");
             List<FinancialTransaction> paymentTransactions = financialTransactionRepository
-                    .findByCategoryAndIsDeletedFalse(paymentCategory);
+                    .findByTenantIdAndCategoryAndIsDeletedFalse(tenantId, paymentCategory);
             
             BigDecimal totalVatAmount = paymentTransactions.stream()
                     .filter(t -> !t.getTransactionDate().isBefore(startDate) && !t.getTransactionDate().isAfter(endDate))
@@ -755,9 +781,21 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
     
     private FinancialDashboardResponse.SalaryFinancialData getSalaryFinancialData() {
         try {
+            String tenantId = getTenantIdOrNull();
+            if (tenantId == null) {
+                log.error("❌ tenantId가 설정되지 않았습니다");
+                return FinancialDashboardResponse.SalaryFinancialData.builder()
+                        .totalSalaryPaid(BigDecimal.ZERO)
+                        .totalTaxWithheld(BigDecimal.ZERO)
+                        .consultantCount(0)
+                        .averageSalary(BigDecimal.ZERO)
+                        .salaryByGrade(new ArrayList<>())
+                        .build();
+            }
+            
             String salaryCategory = getSafeCodeName("FINANCIAL_CATEGORY", "SALARY", "급여");
             List<FinancialTransaction> salaryTransactions = financialTransactionRepository
-                    .findByCategoryAndIsDeletedFalse(salaryCategory);
+                    .findByTenantIdAndCategoryAndIsDeletedFalse(tenantId, salaryCategory);
             
             BigDecimal totalSalaryPaid = salaryTransactions.stream()
                     .filter(t -> "INCOME".equals(t.getTransactionType().name()))
@@ -770,7 +808,6 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
                     .map(FinancialTransaction::getAmount)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
             
-            String tenantId = getTenantIdOrNull();
             long consultantCount = tenantId != null ? 
                     userRepository.findByRoleAndIsActiveTrue(tenantId, UserRole.CONSULTANT).size() : 0;
             
@@ -806,12 +843,26 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
     
     private FinancialDashboardResponse.ErpFinancialData getErpFinancialData() {
         try {
+            String tenantId = getTenantIdOrNull();
+            if (tenantId == null) {
+                log.error("❌ tenantId가 설정되지 않았습니다");
+                return FinancialDashboardResponse.ErpFinancialData.builder()
+                        .totalPurchaseAmount(BigDecimal.ZERO)
+                        .totalBudget(BigDecimal.ZERO)
+                        .usedBudget(BigDecimal.ZERO)
+                        .remainingBudget(BigDecimal.ZERO)
+                        .pendingRequests(0)
+                        .approvedRequests(0)
+                        .budgetByCategory(new ArrayList<>())
+                        .build();
+            }
+            
             String purchaseCategory = getSafeCodeName("FINANCIAL_CATEGORY", "PURCHASE", "구매");
             String budgetCategory = getSafeCodeName("FINANCIAL_CATEGORY", "BUDGET", "예산");
             List<FinancialTransaction> purchaseTransactions = financialTransactionRepository
-                    .findByCategoryAndIsDeletedFalse(purchaseCategory);
+                    .findByTenantIdAndCategoryAndIsDeletedFalse(tenantId, purchaseCategory);
             List<FinancialTransaction> budgetTransactions = financialTransactionRepository
-                    .findByCategoryAndIsDeletedFalse(budgetCategory);
+                    .findByTenantIdAndCategoryAndIsDeletedFalse(tenantId, budgetCategory);
             
             BigDecimal totalPurchaseAmount = purchaseTransactions.stream()
                     .map(FinancialTransaction::getAmount)
@@ -849,7 +900,7 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
                         
                         String categoryExpenseType = getSafeCodeName("TRANSACTION_TYPE", "EXPENSE", "EXPENSE");
                         BigDecimal categoryUsedBudget = financialTransactionRepository
-                                .findByCategoryAndIsDeletedFalse(category)
+                                .findByTenantIdAndCategoryAndIsDeletedFalse(tenantId, category)
                                 .stream()
                                 .filter(t -> categoryExpenseType.equals(t.getTransactionType().name()))
                                 .map(FinancialTransaction::getAmount)
@@ -896,9 +947,23 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
     
     private FinancialDashboardResponse.PaymentFinancialData getPaymentFinancialData() {
         try {
+            String tenantId = getTenantIdOrNull();
+            if (tenantId == null) {
+                log.error("❌ tenantId가 설정되지 않았습니다");
+                return FinancialDashboardResponse.PaymentFinancialData.builder()
+                        .totalPaymentAmount(BigDecimal.ZERO)
+                        .totalPaymentCount(0)
+                        .pendingPayments(0)
+                        .completedPayments(0)
+                        .failedPayments(0)
+                        .paymentByMethod(new HashMap<>())
+                        .paymentByProvider(new HashMap<>())
+                        .build();
+            }
+            
             String paymentCategory = getSafeCodeName("FINANCIAL_CATEGORY", "PAYMENT", "결제");
             List<FinancialTransaction> paymentTransactions = financialTransactionRepository
-                    .findByCategoryAndIsDeletedFalse(paymentCategory);
+                    .findByTenantIdAndCategoryAndIsDeletedFalse(tenantId, paymentCategory);
             
             BigDecimal totalPaymentAmount = paymentTransactions.stream()
                     .filter(t -> "INCOME".equals(t.getTransactionType().name()))
@@ -907,8 +972,6 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
             
             int totalPaymentCount = paymentTransactions.size();
             
-            // 표준화 2025-12-05: tenantId 필터링 필수 (BaseTenantAwareService 상속)
-            String tenantId = getTenantId();
             // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
             int pendingPayments = (int) consultantClientMappingRepository.countByTenantIdAndPaymentStatus(tenantId, ConsultantClientMapping.PaymentStatus.PENDING);
             // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용

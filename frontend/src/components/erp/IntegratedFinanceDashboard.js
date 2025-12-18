@@ -193,6 +193,14 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
     setTimeout(checkSessionWithDelay, 100);
   }, [sessionLoading, isLoggedIn, navigate]); // user 의존성 제거
 
+  // URL 파라미터에서 탭 읽기
+  useEffect(() => {
+    const tabFromUrl = searchParams.get('tab');
+    if (tabFromUrl) {
+      setActiveTab(tabFromUrl);
+    }
+  }, [searchParams]);
+
   // 권한 체크 및 데이터 로드
   useEffect(() => {
     const checkPermissionAndLoad = async () => {

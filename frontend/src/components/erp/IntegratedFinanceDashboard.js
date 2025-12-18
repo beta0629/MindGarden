@@ -1803,4 +1803,99 @@ const SettlementTab = () => {
   );
 };
 
+// 분개 상세 모달 컴포넌트
+const JournalEntryDetailModal = ({ entry, onClose, onRefresh }) => {
+  const [entryDetail, setEntryDetail] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchEntryDetail();
+  }, [entry.id]);
+
+  const fetchEntryDetail = async () => {
+    try {
+      const response = await axios.get(ERP_API.JOURNAL_ENTRY_DETAIL(entry.id), {
+        withCredentials: true
+      });
+      if (response.data.success) {
+        setEntryDetail(response.data.data);
+      }
+    } catch (err) {
+      console.error('Entry detail fetch error:', err);
+      notificationManager.show('분개 상세를 불러오는데 실패했습니다.', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="mg-v2-modal-overlay" onClick={onClose}>
+      <div className="mg-v2-modal-content" onClick={(e) => e.stopPropagation()}>
+        <div className="mg-v2-modal-header">
+          <h3 className="mg-v2-modal-title">분개 상세</h3>
+          <button className="mg-v2-modal-close" onClick={onClose}>×</button>
+        </div>
+        <div className="mg-v2-modal-body">
+          {loading ? (
+            <UnifiedLoading text="분개 상세를 불러오는 중..." size="medium" type="inline" />
+          ) : entryDetail ? (
+            <div className="mg-v2-form-group">
+              <div className="mg-v2-mb-md">
+                <label className="mg-v2-label">분개번호</label>
+                <div className="mg-v2-text">{entryDetail.entryNumber}</div>
+              </div>
+              <div className="mg-v2-mb-md">
+                <label className="mg-v2-label">분개일자</label>
+                <div className="mg-v2-text">{entryDetail.entryDate}</div>
+              </div>
+              <div className="mg-v2-mb-md">
+                <label className="mg-v2-label">상태</label>
+                <div className="mg-v2-text">
+                  <span className={`mg-v2-badge mg-v2-badge--${entryDetail.entryStatus?.toLowerCase() || 'default'}`}>
+                    {entryDetail.entryStatus === 'DRAFT' ? '초안' : 
+                     entryDetail.entryStatus === 'APPROVED' ? '승인됨' : 
+                     entryDetail.entryStatus === 'POSTED' ? '전기됨' : entryDetail.entryStatus}
+                  </span>
+                </div>
+              </div>
+              {entryDetail.lines && entryDetail.lines.length > 0 && (
+                <div className="mg-v2-mb-md">
+                  <label className="mg-v2-label">분개 라인</label>
+                  <div className="mg-v2-table-container">
+                    <table className="mg-table" data-label="분개 라인 목록">
+                      <thead>
+                        <tr>
+                          <th>계정</th>
+                          <th>차변</th>
+                          <th>대변</th>
+                          <th>설명</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {entryDetail.lines.map((line, idx) => (
+                          <tr key={idx}>
+                            <td data-label="계정">{line.accountName || line.accountId}</td>
+                            <td data-label="차변">{formatCurrency(line.debitAmount || 0)}</td>
+                            <td data-label="대변">{formatCurrency(line.creditAmount || 0)}</td>
+                            <td data-label="설명">{line.description || '-'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <p className="mg-v2-text-center mg-v2-text-secondary">분개 상세를 불러올 수 없습니다.</p>
+          )}
+        </div>
+        <div className="mg-v2-modal-footer">
+          <MGButton variant="secondary" onClick={onClose}>닫기</MGButton>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export default IntegratedFinanceDashboard;

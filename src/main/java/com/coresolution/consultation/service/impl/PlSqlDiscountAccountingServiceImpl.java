@@ -83,10 +83,20 @@ public class PlSqlDiscountAccountingServiceImpl implements PlSqlDiscountAccounti
                         );
                     
                     // 최근 생성된 거래만 필터링 (프로시저 실행 직후 생성된 것)
+                    // 프로시저는 INCOME 타입의 매출 거래와 EXPENSE 타입의 할인 거래를 생성
                     transactions = transactions.stream()
-                        .filter(t -> t.getTransactionType() == com.coresolution.consultation.entity.FinancialTransaction.TransactionType.INCOME ||
-                                   t.getTransactionType() == com.coresolution.consultation.entity.FinancialTransaction.TransactionType.DISCOUNT)
-                        .filter(t -> t.getDiscountCode() != null && t.getDiscountCode().equals(discountCode))
+                        .filter(t -> {
+                            // 매출 거래: INCOME, category='CONSULTATION', subcategory='PACKAGE_SALE'
+                            boolean isRevenue = t.getTransactionType() == com.coresolution.consultation.entity.FinancialTransaction.TransactionType.INCOME &&
+                                              "CONSULTATION".equals(t.getCategory()) &&
+                                              "PACKAGE_SALE".equals(t.getSubcategory());
+                            // 할인 거래: EXPENSE, category='SALES_DISCOUNT', subcategory='PACKAGE_DISCOUNT'
+                            boolean isDiscount = t.getTransactionType() == com.coresolution.consultation.entity.FinancialTransaction.TransactionType.EXPENSE &&
+                                               "SALES_DISCOUNT".equals(t.getCategory()) &&
+                                               "PACKAGE_DISCOUNT".equals(t.getSubcategory());
+                            return isRevenue || isDiscount;
+                        })
+                        .filter(t -> t.getDescription() != null && t.getDescription().contains(discountCode))
                         .sorted((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()))
                         .limit(2) // revenue + discount
                         .collect(Collectors.toList());

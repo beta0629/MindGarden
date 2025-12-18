@@ -35,7 +35,7 @@ echo ""
 echo -e "${YELLOW}[1/3] ApplyDiscountAccounting 프로시저 테스트${NC}"
 echo "할인 적용 프로시저 실행 중..."
 
-RESPONSE=$(curl -s -X POST "${BASE_URL}/api/v1/erp/discount-accounting/apply" \
+RESPONSE=$(curl -s -X POST "${BASE_URL}/api/v1/admin/plsql-discount-accounting/apply" \
   -H "Content-Type: application/json" \
   -H "X-Tenant-Id: ${TENANT_ID}" \
   -d "{

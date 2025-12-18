@@ -1531,6 +1531,7 @@ const JournalEntriesTab = () => {
   const [selectedEntry, setSelectedEntry] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
 
   useEffect(() => {
     fetchJournalEntries();
@@ -1585,8 +1586,6 @@ const JournalEntriesTab = () => {
   if (loading) {
     return <UnifiedLoading text="분개 목록을 불러오는 중..." size="medium" type="inline" />;
   }
-
-  const [showHelp, setShowHelp] = useState(false);
 
   return (
     <section className="mg-v2-section">

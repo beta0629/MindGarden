@@ -23,6 +23,8 @@
 
 import React from 'react';
 import { usePermissionGroups } from '../../hooks/usePermissionGroups';
+import { useSession } from '../../contexts/SessionContext';
+import { RoleUtils } from '../../constants/roles';
 
 /**
  * 권한 그룹 가드 컴포넌트
@@ -48,9 +50,16 @@ const PermissionGroupGuard = ({
     requireAll = false 
 }) => {
     const { hasPermissionGroup, hasAnyPermissionGroup, hasAllPermissionGroups, loading } = usePermissionGroups();
+    const { user } = useSession();
 
     if (loading) {
         return null; // 로딩 중에는 아무것도 렌더링하지 않음
+    }
+
+    // 관리자 역할 체크 (DASHBOARD_ERP 권한 그룹의 경우 관리자는 기본적으로 접근 가능)
+    const isAdmin = user && RoleUtils.isAdmin(user);
+    if (isAdmin && groupCode === 'DASHBOARD_ERP') {
+        return <>{children}</>;
     }
 
     // 그룹 코드가 배열인 경우

@@ -2,10 +2,12 @@ package com.coresolution.consultation.service.impl;
 
 import com.coresolution.consultation.entity.AccountingEntry;
 import com.coresolution.consultation.entity.JournalEntryLine;
+import com.coresolution.consultation.entity.CommonCode;
 import com.coresolution.consultation.repository.AccountingEntryRepository;
 import com.coresolution.consultation.repository.JournalEntryLineRepository;
 import com.coresolution.consultation.service.AccountingService;
 import com.coresolution.consultation.service.LedgerService;
+import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.core.context.TenantContextHolder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * 회계 Service 구현체
@@ -28,6 +31,7 @@ public class AccountingServiceImpl implements AccountingService {
     private final AccountingEntryRepository accountingEntryRepository;
     private final JournalEntryLineRepository journalEntryLineRepository;
     private final LedgerService ledgerService;
+    private final CommonCodeService commonCodeService;
     
     @Override
     @Transactional
@@ -286,14 +290,45 @@ public class AccountingServiceImpl implements AccountingService {
     }
     
     /**
-     * 기본 계정 ID 조회 (임시 구현)
-     * TODO: 계정과목 마스터가 추가되면 동적으로 조회하도록 변경
+     * 기본 계정 ID 조회 (공통코드에서 동적 조회)
+     * 표준 문서: docs/standards/ERP_ADVANCEMENT_STANDARD.md
+     * 하드코딩 금지 원칙 준수
      */
     private Long getDefaultAccountId(String tenantId, String accountType) {
-        // TODO: 계정과목 마스터에서 조회
-        // 현재는 임시로 1L 반환 (나중에 확장 필요)
-        // 실제로는 erp_accounts 테이블이나 공통코드에서 조회해야 함
-        return 1L;
+        try {
+            // 공통코드에서 계정 타입별 기본 계정 ID 조회
+            // 코드 그룹: ERP_ACCOUNT_TYPE
+            // 코드 값: REVENUE, EXPENSE, CASH 등
+            Optional<CommonCode> accountCode = commonCodeService.getTenantCodeByGroupAndValue(
+                tenantId, 
+                "ERP_ACCOUNT_TYPE", 
+                accountType
+            );
+            
+            if (accountCode.isPresent() && accountCode.get().getDescription() != null) {
+                try {
+                    // description 필드에 계정 ID가 저장되어 있다고 가정
+                    // 형식: "accountId:123" 또는 "123"
+                    String description = accountCode.get().getDescription();
+                    String accountIdStr = description.contains(":") 
+                        ? description.split(":")[1].trim() 
+                        : description.trim();
+                    return Long.parseLong(accountIdStr);
+                } catch (NumberFormatException e) {
+                    log.warn("계정 ID 파싱 실패: tenantId={}, accountType={}, description={}", 
+                        tenantId, accountType, accountCode.get().getDescription());
+                }
+            }
+            
+            // 공통코드에 없으면 null 반환 (분개 생성 실패 처리)
+            log.warn("기본 계정을 찾을 수 없습니다: tenantId={}, accountType={}, codeGroup=ERP_ACCOUNT_TYPE", 
+                tenantId, accountType);
+            return null;
+        } catch (Exception e) {
+            log.error("기본 계정 ID 조회 실패: tenantId={}, accountType={}, error={}", 
+                tenantId, accountType, e.getMessage(), e);
+            return null;
+        }
     }
     
     /**

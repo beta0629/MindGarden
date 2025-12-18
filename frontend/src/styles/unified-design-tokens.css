@@ -1861,6 +1861,8 @@ body {
   padding: var(--spacing-lg);
   box-shadow: var(--shadow-md);
   transition: all 0.3s ease;
+  overflow: visible;
+  min-height: auto;
 }
 
 .mg-card:hover {
@@ -5099,6 +5101,13 @@ body {
 
 .mg-text-sm {
   font-size: var(--font-size-sm);
+  line-height: 1.5;
+  margin-bottom: var(--spacing-xs);
+}
+
+.mg-text-sm.mg-text-muted {
+  margin-bottom: var(--spacing-xs);
+  padding-bottom: var(--spacing-xs);
 }
 
 /* ============================================
@@ -5313,10 +5322,13 @@ body {
 /* 매핑 카드 본문 */
 .mg-card__body {
     padding: var(--spacing-md);
+    padding-bottom: calc(var(--spacing-md) + var(--spacing-sm));
     flex: 1;
     display: flex;
     flex-direction: column;
     gap: var(--spacing-md);
+    overflow: visible;
+    min-height: auto;
 }
 
 /* 매핑 정보 */

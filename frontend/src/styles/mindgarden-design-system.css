@@ -334,6 +334,9 @@
 
 .mg-card__body {
   padding: var(--spacing-md, 1rem);
+  padding-bottom: calc(var(--spacing-md, 1rem) + var(--spacing-sm, 0.5rem));
+  overflow: visible;
+  min-height: auto;
 }
 
 .mg-card__footer {

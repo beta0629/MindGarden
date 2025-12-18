@@ -55,9 +55,10 @@ const setDefaultPermissionsForRole = (user, setUserPermissions) => {
  */
 const ErpDashboard = ({ user: propUser }) => {
   const navigate = useNavigate();
-  const { user: sessionUser, isLoggedIn, isLoading: sessionLoading } = useSession();
+  const { user: sessionUser, isLoggedIn, isLoading: sessionLoading, hasPermission } = useSession();
   const [userPermissions, setUserPermissions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [permissionChecks, setPermissionChecks] = useState({});
   const [stats, setStats] = useState({
     totalItems: 0,
     pendingRequests: 0,
@@ -122,10 +123,37 @@ const ErpDashboard = ({ user: propUser }) => {
         console.warn('⚠️ 권한 조회 실패 (기본 권한 설정):', error);
         setDefaultPermissionsForRole(currentUser, setUserPermissions);
       }
+      
+      // 동적 권한 체크 (백엔드 API 호출)
+      if (hasPermission) {
+        const permissionCodes = [
+          PERMISSIONS.PURCHASE_REQUEST_VIEW,
+          PERMISSIONS.PURCHASE_REQUEST_MANAGE,
+          PERMISSIONS.APPROVAL_MANAGE,
+          PERMISSIONS.ITEM_MANAGE,
+          PERMISSIONS.BUDGET_MANAGE,
+          PERMISSIONS.SALARY_MANAGE,
+          PERMISSIONS.TAX_MANAGE,
+          PERMISSIONS.INTEGRATED_FINANCE_VIEW,
+          PERMISSIONS.REFUND_MANAGE
+        ];
+        
+        const checks = {};
+        for (const code of permissionCodes) {
+          try {
+            checks[code] = await hasPermission(code);
+          } catch (error) {
+            console.warn(`⚠️ 권한 체크 실패 (${code}):`, error);
+            checks[code] = false;
+          }
+        }
+        setPermissionChecks(checks);
+        console.log('✅ 동적 권한 체크 완료:', checks);
+      }
     };
 
     setTimeout(checkSessionWithDelay, 100);
-  }, [sessionLoading, isLoggedIn, navigate]); // propUser, sessionUser 의존성 제거
+  }, [sessionLoading, isLoggedIn, navigate, hasPermission]); // propUser, sessionUser 의존성 제거
 
   // 권한이 로드된 후 또는 타임아웃 후 ERP 접근 권한 확인 (동적 권한 시스템)
   useEffect(() => {
@@ -315,10 +343,29 @@ const ErpDashboard = ({ user: propUser }) => {
                 const currentUser = propUser || sessionUser;
                 const isAdmin = currentUser && RoleUtils.isAdmin(currentUser);
                 
+                // 동적 권한 체크 우선, 없으면 정적 권한 체크, 관리자는 항상 허용
+                const hasPurchaseRequestView = permissionChecks[PERMISSIONS.PURCHASE_REQUEST_VIEW] ?? 
+                  permissionChecks[PERMISSIONS.PURCHASE_REQUEST_MANAGE] ??
+                  (PermissionChecks.canViewPurchaseRequests(userPermissions) || 
+                   PermissionChecks.canManagePurchaseRequests(userPermissions)) || isAdmin;
+                const hasApprovalManage = permissionChecks[PERMISSIONS.APPROVAL_MANAGE] ?? 
+                  PermissionChecks.canManageApprovals(userPermissions) || isAdmin;
+                const hasItemManage = permissionChecks[PERMISSIONS.ITEM_MANAGE] ?? 
+                  PermissionChecks.canManageItems(userPermissions) || isAdmin;
+                const hasBudgetManage = permissionChecks[PERMISSIONS.BUDGET_MANAGE] ?? 
+                  PermissionChecks.canManageBudget(userPermissions) || isAdmin;
+                const hasSalaryManage = permissionChecks[PERMISSIONS.SALARY_MANAGE] ?? 
+                  PermissionChecks.canManageSalary(userPermissions) || isAdmin;
+                const hasTaxManage = permissionChecks[PERMISSIONS.TAX_MANAGE] ?? 
+                  PermissionChecks.canManageTax(userPermissions) || isAdmin;
+                const hasIntegratedFinanceView = permissionChecks[PERMISSIONS.INTEGRATED_FINANCE_VIEW] ?? 
+                  PermissionChecks.canViewIntegratedFinance(userPermissions) || isAdmin;
+                const hasRefundManage = permissionChecks[PERMISSIONS.REFUND_MANAGE] ?? 
+                  PermissionChecks.canManageRefund(userPermissions) || isAdmin;
+                
                 return (
                   <>
-                    {(PermissionChecks.canViewPurchaseRequests(userPermissions) || 
-                      PermissionChecks.canManagePurchaseRequests(userPermissions) || isAdmin) && (
+                    {hasPurchaseRequestView && (
                       <div className="mg-management-card" onClick={() => navigate('/erp/purchase-requests')}>
                         <div className="mg-management-icon">
                           <ShoppingCart />
@@ -328,7 +375,7 @@ const ErpDashboard = ({ user: propUser }) => {
                       </div>
                     )}
                     
-                    {(PermissionChecks.canManageApprovals(userPermissions) || isAdmin) && (
+                    {hasApprovalManage && (
                       <div className="mg-management-card" onClick={() => navigate('/erp/approvals')}>
                         <div className="mg-management-icon">
                           <Clock />
@@ -338,7 +385,7 @@ const ErpDashboard = ({ user: propUser }) => {
                       </div>
                     )}
                     
-                    {(PermissionChecks.canManageItems(userPermissions) || isAdmin) && (
+                    {hasItemManage && (
                       <div className="mg-management-card" onClick={() => navigate('/erp/items')}>
                         <div className="mg-management-icon">
                           <Package />
@@ -348,7 +395,7 @@ const ErpDashboard = ({ user: propUser }) => {
                       </div>
                     )}
                     
-                    {(PermissionChecks.canManageBudget(userPermissions) || isAdmin) && (
+                    {hasBudgetManage && (
                       <div className="mg-management-card" onClick={() => navigate('/erp/budget')}>
                         <div className="mg-management-icon">
                           <TrendingUp />
@@ -358,7 +405,7 @@ const ErpDashboard = ({ user: propUser }) => {
                       </div>
                     )}
                     
-                    {(PermissionChecks.canManageSalary(userPermissions) || isAdmin) && (
+                    {hasSalaryManage && (
                       <div className="mg-management-card" onClick={() => navigate('/erp/salary')}>
                         <div className="mg-management-icon">
                           <DollarSign />
@@ -368,7 +415,7 @@ const ErpDashboard = ({ user: propUser }) => {
                       </div>
                     )}
                     
-                    {(PermissionChecks.canManageTax(userPermissions) || isAdmin) && (
+                    {hasTaxManage && (
                       <div className="mg-management-card" onClick={() => navigate('/erp/tax')}>
                         <div className="mg-management-icon">
                           <LayoutDashboard />
@@ -378,7 +425,7 @@ const ErpDashboard = ({ user: propUser }) => {
                       </div>
                     )}
                     
-                    {(PermissionChecks.canViewIntegratedFinance(userPermissions) || isAdmin) && (
+                    {hasIntegratedFinanceView && (
                       <div className="mg-management-card" onClick={() => navigate('/admin/erp/financial')}>
                         <div className="mg-management-icon">
                           <TrendingUp />
@@ -388,7 +435,7 @@ const ErpDashboard = ({ user: propUser }) => {
                       </div>
                     )}
                     
-                    {(PermissionChecks.canManageRefund(userPermissions) || isAdmin) && (
+                    {hasRefundManage && (
                       <div className="mg-management-card" onClick={() => navigate('/erp/refund-management')}>
                         <div className="mg-management-icon">
                           <Clock />

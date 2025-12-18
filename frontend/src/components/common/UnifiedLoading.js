@@ -122,8 +122,10 @@ const UnifiedLoading = ({
       case 'spinner':
       default:
         return (
-          <div className={`${baseClasses} mg-loading-spinner`}>
-            <div className="mg-loading-spinner-icon"></div>
+          <div className={baseClasses}>
+            <div className="mg-loading-spinner">
+              <div className="mg-loading-spinner-icon"></div>
+            </div>
           </div>
         );
     }

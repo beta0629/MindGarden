@@ -131,10 +131,11 @@ const FinancialManagement = () => {
       console.log('📡 API 응답:', response);
       console.log('📡 API URL:', `/api/v1/admin/financial-transactions?${params.toString()}`);
       
-      if (response && response.success) {
-        let filteredTransactions = response.data || [];
-        console.log('📊 조회된 거래 데이터:', filteredTransactions.length, '건');
-        console.log('📊 첫 번째 거래 샘플:', filteredTransactions[0]);
+      // apiGet이 {success, data} 형태면 data만 반환하므로, 배열인지 객체인지 확인
+      if (Array.isArray(response)) {
+        // apiGet이 data 배열만 반환한 경우
+        let filteredTransactions = response || [];
+        console.log('📊 조회된 거래 데이터 (배열):', filteredTransactions.length, '건');
         
         if (filters.searchText) {
           const searchLower = filters.searchText.toLowerCase();
@@ -148,25 +149,53 @@ const FinancialManagement = () => {
         setTransactions(filteredTransactions);
         setPagination(prev => ({
           ...prev,
-          totalPages: response.totalPages || 0,
-          totalElements: response.totalCount || 0
+          totalPages: 1,
+          totalElements: filteredTransactions.length
         }));
         
-        // 데이터가 없는 경우 에러가 아닌 빈 상태로 표시
         setError(null);
-        
         await calculateDashboardStats(filteredTransactions);
-      } else {
-        // 실제 API 에러인 경우
-        const errorMessage = response?.message || '재무 거래 목록을 불러올 수 없습니다.';
-        console.error('❌ API 에러:', errorMessage, response);
-        setError(errorMessage);
-        
-        if (response?.redirectToLogin) {
-          console.error('🔒 세션 만료 - 로그인 화면으로 이동');
-          window.location.href = '/login';
-          return;
+      } else if (response && typeof response === 'object') {
+        // apiGet이 전체 응답 객체를 반환한 경우
+        if (response.success) {
+          let filteredTransactions = response.data || [];
+          console.log('📊 조회된 거래 데이터 (객체):', filteredTransactions.length, '건');
+          console.log('📊 첫 번째 거래 샘플:', filteredTransactions[0]);
+          
+          if (filters.searchText) {
+            const searchLower = filters.searchText.toLowerCase();
+            filteredTransactions = filteredTransactions.filter(transaction => 
+              transaction.description?.toLowerCase().includes(searchLower) ||
+              transaction.category?.toLowerCase().includes(searchLower) ||
+              transaction.subcategory?.toLowerCase().includes(searchLower)
+            );
+          }
+          
+          setTransactions(filteredTransactions);
+          setPagination(prev => ({
+            ...prev,
+            totalPages: response.totalPages || 0,
+            totalElements: response.totalCount || 0
+          }));
+          
+          setError(null);
+          await calculateDashboardStats(filteredTransactions);
+        } else {
+          // 실제 API 에러인 경우
+          const errorMessage = response?.message || '재무 거래 목록을 불러올 수 없습니다.';
+          console.error('❌ API 에러:', errorMessage, response);
+          setError(errorMessage);
+          
+          if (response?.redirectToLogin) {
+            console.error('🔒 세션 만료 - 로그인 화면으로 이동');
+            window.location.href = '/login';
+            return;
+          }
         }
+      } else {
+        // 응답이 null이거나 예상치 못한 형태
+        console.warn('⚠️ 예상치 못한 응답 형태:', response);
+        setError('재무 거래 목록을 불러올 수 없습니다.');
       }
     } catch (err) {
       console.error('재무 거래 로드 실패:', err);

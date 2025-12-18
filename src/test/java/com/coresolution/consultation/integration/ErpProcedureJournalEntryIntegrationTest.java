@@ -205,8 +205,7 @@ public class ErpProcedureJournalEntryIntegrationTest {
                     
                     if (!relatedEntries.isEmpty()) {
                         AccountingEntry entry = relatedEntries.get(0);
-                        List<JournalEntryLine> lines = journalEntryLineRepository.findByTenantIdAndJournalEntryId(
-                            testTenantId, entry.getId());
+                        List<JournalEntryLine> lines = journalEntryLineRepository.findByJournalEntryId(entry.getId());
                         
                         assertThat(lines).hasSize(2); // 차변 + 대변
                         log.info("✅ 환불 거래 분개 생성 확인: EntryNumber={}, Lines={}", 
@@ -253,8 +252,7 @@ public class ErpProcedureJournalEntryIntegrationTest {
 
         if (!relatedEntries.isEmpty()) {
             AccountingEntry entry = relatedEntries.get(0);
-            List<JournalEntryLine> lines = journalEntryLineRepository.findByTenantIdAndJournalEntryId(
-                testTenantId, entry.getId());
+            List<JournalEntryLine> lines = journalEntryLineRepository.findByJournalEntryId(entry.getId());
             
             assertThat(lines).hasSize(2); // 차변 + 대변
             log.info("✅ 자동 분개 생성 확인: EntryNumber={}, Lines={}", 
@@ -314,8 +312,7 @@ public class ErpProcedureJournalEntryIntegrationTest {
         
         // 모든 분개가 올바르게 생성되었는지 확인
         for (AccountingEntry entry : finalEntries) {
-            List<JournalEntryLine> lines = journalEntryLineRepository.findByTenantIdAndJournalEntryId(
-                testTenantId, entry.getId());
+            List<JournalEntryLine> lines = journalEntryLineRepository.findByJournalEntryId(entry.getId());
             
             // 분개는 차변과 대변이 같아야 함
             BigDecimal totalDebit = lines.stream()

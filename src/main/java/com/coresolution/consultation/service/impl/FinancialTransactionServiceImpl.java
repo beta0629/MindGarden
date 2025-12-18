@@ -27,6 +27,7 @@ import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
 import com.coresolution.consultation.service.RealTimeStatisticsService;
+import com.coresolution.consultation.service.UserPersonalDataCacheService;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.service.impl.BaseTenantAwareService;
 import org.springframework.data.domain.Page;
@@ -62,6 +63,7 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
     private final RealTimeStatisticsService realTimeStatisticsService;
     private final UserRepository userRepository;
     private final com.coresolution.consultation.service.erp.accounting.AccountingService accountingService;
+    private final com.coresolution.consultation.service.UserPersonalDataCacheService userPersonalDataCacheService;
     
     @Override
     public FinancialTransactionResponse createTransaction(FinancialTransactionRequest request, User currentUser) {
@@ -707,11 +709,45 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
                             .orElse(null);
                     
                     if (mapping != null) {
-                        String consultantName = mapping.getConsultant() != null ? mapping.getConsultant().getName() : null;
-                        String clientName = mapping.getClient() != null ? mapping.getClient().getName() : null;
+                        // 표준화 2025-12-18: 개인정보 복호화 (캐시 활용)
+                        String consultantName = null;
+                        String clientName = null;
+                        
+                        if (mapping.getConsultant() != null) {
+                            try {
+                                Map<String, String> decryptedConsultant = userPersonalDataCacheService.getDecryptedUserData(mapping.getConsultant());
+                                consultantName = decryptedConsultant != null ? decryptedConsultant.get("name") : null;
+                                if (consultantName == null) {
+                                    // 캐시에 없으면 직접 복호화 (fallback)
+                                    log.warn("⚠️ 상담사 개인정보 캐시 없음, 직접 복호화: consultantId={}", mapping.getConsultant().getId());
+                                    consultantName = mapping.getConsultant().getName(); // 암호화된 이름이면 그대로 표시 (복호화는 PersonalDataEncryptionUtil 필요)
+                                }
+                            } catch (Exception e) {
+                                log.warn("⚠️ 상담사 이름 복호화 실패: consultantId={}, error={}", 
+                                        mapping.getConsultant().getId(), e.getMessage());
+                                consultantName = mapping.getConsultant().getName();
+                            }
+                        }
+                        
+                        if (mapping.getClient() != null) {
+                            try {
+                                Map<String, String> decryptedClient = userPersonalDataCacheService.getDecryptedUserData(mapping.getClient());
+                                clientName = decryptedClient != null ? decryptedClient.get("name") : null;
+                                if (clientName == null) {
+                                    // 캐시에 없으면 직접 복호화 (fallback)
+                                    log.warn("⚠️ 내담자 개인정보 캐시 없음, 직접 복호화: clientId={}", mapping.getClient().getId());
+                                    clientName = mapping.getClient().getName(); // 암호화된 이름이면 그대로 표시
+                                }
+                            } catch (Exception e) {
+                                log.warn("⚠️ 내담자 이름 복호화 실패: clientId={}, error={}", 
+                                        mapping.getClient().getId(), e.getMessage());
+                                clientName = mapping.getClient().getName();
+                            }
+                        }
+                        
                         builder.consultantName(consultantName);
                         builder.clientName(clientName);
-                        log.debug("✅ 매핑 정보 포함: mappingId={}, 상담사={}, 내담자={}", 
+                        log.debug("✅ 매핑 정보 포함 (복호화): mappingId={}, 상담사={}, 내담자={}", 
                                 transaction.getRelatedEntityId(), consultantName, clientName);
                     }
                 } catch (Exception e) {

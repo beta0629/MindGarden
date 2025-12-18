@@ -1,9 +1,9 @@
 package com.coresolution.consultation.controller.erp;
 
 import java.util.List;
-import com.coresolution.consultation.entity.Settlement;
-import com.coresolution.consultation.entity.SettlementRule;
-import com.coresolution.consultation.service.SettlementService;
+import com.coresolution.consultation.entity.erp.settlement.Settlement;
+import com.coresolution.consultation.entity.erp.settlement.SettlementRule;
+import com.coresolution.consultation.service.erp.settlement.SettlementService;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.controller.BaseApiController;
 import com.coresolution.core.dto.ApiResponse;

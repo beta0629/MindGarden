@@ -2,7 +2,7 @@ package com.coresolution.consultation.controller.erp;
 
 import com.coresolution.core.controller.BaseApiController;
 import com.coresolution.core.dto.ApiResponse;
-import com.coresolution.consultation.service.FinancialStatementService;
+import com.coresolution.consultation.service.erp.accounting.FinancialStatementService;
 import com.coresolution.core.context.TenantContextHolder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

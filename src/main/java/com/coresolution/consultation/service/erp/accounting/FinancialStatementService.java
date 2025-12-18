@@ -1,4 +1,4 @@
-package com.coresolution.consultation.service;
+package com.coresolution.consultation.service.erp.accounting;
 
 import java.time.LocalDate;
 import java.util.Map;

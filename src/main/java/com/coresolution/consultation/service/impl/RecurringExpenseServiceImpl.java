@@ -15,7 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.coresolution.consultation.dto.FinancialTransactionRequest;
 import com.coresolution.consultation.entity.RecurringExpense;
 import com.coresolution.consultation.repository.RecurringExpenseRepository;
-import com.coresolution.consultation.service.FinancialTransactionService;
+import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
 import com.coresolution.consultation.service.RecurringExpenseService;
 import com.coresolution.consultation.util.TaxCalculationUtil;
 import com.coresolution.core.context.TenantContextHolder;

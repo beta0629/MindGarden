@@ -1,6 +1,6 @@
-package com.coresolution.consultation.service;
+package com.coresolution.consultation.service.erp.accounting;
 
-import com.coresolution.consultation.entity.Ledger;
+import com.coresolution.consultation.entity.erp.accounting.Ledger;
 
 import java.time.LocalDate;
 import java.util.List;

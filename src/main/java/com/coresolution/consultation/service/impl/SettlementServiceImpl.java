@@ -1,13 +1,13 @@
 package com.coresolution.consultation.service.impl;
 
-import com.coresolution.consultation.entity.FinancialTransaction;
-import com.coresolution.consultation.entity.Settlement;
-import com.coresolution.consultation.entity.SettlementRule;
-import com.coresolution.consultation.repository.FinancialTransactionRepository;
-import com.coresolution.consultation.repository.SettlementRepository;
-import com.coresolution.consultation.repository.SettlementRuleRepository;
-import com.coresolution.consultation.service.SettlementCalculationEngine;
-import com.coresolution.consultation.service.SettlementService;
+import com.coresolution.consultation.entity.erp.financial.FinancialTransaction;
+import com.coresolution.consultation.entity.erp.settlement.Settlement;
+import com.coresolution.consultation.entity.erp.settlement.SettlementRule;
+import com.coresolution.consultation.repository.erp.financial.FinancialTransactionRepository;
+import com.coresolution.consultation.repository.erp.settlement.SettlementRepository;
+import com.coresolution.consultation.repository.erp.settlement.SettlementRuleRepository;
+import com.coresolution.consultation.service.erp.settlement.SettlementCalculationEngine;
+import com.coresolution.consultation.service.erp.settlement.SettlementService;
 import com.coresolution.core.context.TenantContextHolder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

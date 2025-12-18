@@ -2,8 +2,8 @@ package com.coresolution.consultation.controller.erp;
 
 import com.coresolution.core.controller.BaseApiController;
 import com.coresolution.core.dto.ApiResponse;
-import com.coresolution.consultation.entity.Ledger;
-import com.coresolution.consultation.service.LedgerService;
+import com.coresolution.consultation.entity.erp.accounting.Ledger;
+import com.coresolution.consultation.service.erp.accounting.LedgerService;
 import com.coresolution.core.context.TenantContextHolder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

@@ -1,4 +1,4 @@
-package com.coresolution.consultation.service;
+package com.coresolution.consultation.service.erp.financial;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -9,7 +9,7 @@ import org.springframework.data.domain.Pageable;
 import com.coresolution.consultation.dto.FinancialDashboardResponse;
 import com.coresolution.consultation.dto.FinancialTransactionRequest;
 import com.coresolution.consultation.dto.FinancialTransactionResponse;
-import com.coresolution.consultation.entity.FinancialTransaction;
+import com.coresolution.consultation.entity.erp.financial.FinancialTransaction;
 import com.coresolution.consultation.entity.User;
 
 /**

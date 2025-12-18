@@ -1,4 +1,4 @@
-package com.coresolution.consultation.entity;
+package com.coresolution.consultation.entity.erp.accounting;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;

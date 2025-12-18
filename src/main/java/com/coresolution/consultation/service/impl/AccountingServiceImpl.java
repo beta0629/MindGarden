@@ -1,12 +1,12 @@
 package com.coresolution.consultation.service.impl;
 
-import com.coresolution.consultation.entity.AccountingEntry;
-import com.coresolution.consultation.entity.JournalEntryLine;
+import com.coresolution.consultation.entity.erp.accounting.AccountingEntry;
+import com.coresolution.consultation.entity.erp.accounting.JournalEntryLine;
 import com.coresolution.consultation.entity.CommonCode;
-import com.coresolution.consultation.repository.AccountingEntryRepository;
-import com.coresolution.consultation.repository.JournalEntryLineRepository;
-import com.coresolution.consultation.service.AccountingService;
-import com.coresolution.consultation.service.LedgerService;
+import com.coresolution.consultation.repository.erp.accounting.AccountingEntryRepository;
+import com.coresolution.consultation.repository.erp.accounting.JournalEntryLineRepository;
+import com.coresolution.consultation.service.erp.accounting.AccountingService;
+import com.coresolution.consultation.service.erp.accounting.LedgerService;
 import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.core.context.TenantContextHolder;
 import lombok.RequiredArgsConstructor;

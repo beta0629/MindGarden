@@ -7,7 +7,7 @@ import com.coresolution.consultation.dto.SuperAdminCreateRequest;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.DynamicPermissionService;
-import com.coresolution.consultation.service.FinancialTransactionService;
+import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
 import com.coresolution.consultation.service.SuperAdminService;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.consultation.utils.SessionUtils;

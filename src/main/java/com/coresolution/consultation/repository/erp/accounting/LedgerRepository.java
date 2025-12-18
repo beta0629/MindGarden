@@ -1,6 +1,6 @@
-package com.coresolution.consultation.repository;
+package com.coresolution.consultation.repository.erp.accounting;
 
-import com.coresolution.consultation.entity.Ledger;
+import com.coresolution.consultation.entity.erp.accounting.Ledger;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

@@ -17,7 +17,7 @@ import com.coresolution.consultation.repository.PaymentRepository;
 import com.coresolution.consultation.service.AdminService;
 import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.consultation.service.ConsultationMessageService;
-import com.coresolution.consultation.service.FinancialTransactionService;
+import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
 import com.coresolution.consultation.service.PaymentService;
 import com.coresolution.consultation.service.ReserveFundService;
 import com.coresolution.consultation.service.StatisticsService;

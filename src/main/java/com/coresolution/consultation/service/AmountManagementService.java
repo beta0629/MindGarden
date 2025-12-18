@@ -2,7 +2,7 @@ package com.coresolution.consultation.service;
 
 import java.util.Map;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
-import com.coresolution.consultation.entity.FinancialTransaction;
+import com.coresolution.consultation.entity.erp.financial.FinancialTransaction;
 
 /**
  * 금액 관리 중앙화 서비스

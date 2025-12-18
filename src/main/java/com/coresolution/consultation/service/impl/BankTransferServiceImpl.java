@@ -8,7 +8,7 @@ import com.coresolution.consultation.dto.BankTransferResponse;
 import com.coresolution.consultation.entity.Payment;
 import com.coresolution.consultation.repository.PaymentRepository;
 import com.coresolution.consultation.service.BankTransferService;
-import com.coresolution.consultation.service.FinancialTransactionService;
+import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
 import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;

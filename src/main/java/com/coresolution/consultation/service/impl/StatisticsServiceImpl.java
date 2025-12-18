@@ -22,7 +22,7 @@ import com.coresolution.consultation.repository.ConsultantPerformanceRepository;
 import com.coresolution.consultation.repository.ConsultantRatingRepository;
 import com.coresolution.consultation.repository.ConsultationRecordRepository;
 import com.coresolution.consultation.repository.DailyStatisticsRepository;
-import com.coresolution.consultation.repository.FinancialTransactionRepository;
+import com.coresolution.consultation.repository.erp.financial.FinancialTransactionRepository;
 import com.coresolution.consultation.repository.PerformanceAlertRepository;
 import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.consultation.repository.UserRepository;

@@ -2,9 +2,9 @@ package com.coresolution.consultation.controller.erp;
 
 import com.coresolution.core.controller.BaseApiController;
 import com.coresolution.core.dto.ApiResponse;
-import com.coresolution.consultation.entity.AccountingEntry;
-import com.coresolution.consultation.entity.JournalEntryLine;
-import com.coresolution.consultation.service.AccountingService;
+import com.coresolution.consultation.entity.erp.accounting.AccountingEntry;
+import com.coresolution.consultation.entity.erp.accounting.JournalEntryLine;
+import com.coresolution.consultation.service.erp.accounting.AccountingService;
 import com.coresolution.core.context.TenantContextHolder;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;

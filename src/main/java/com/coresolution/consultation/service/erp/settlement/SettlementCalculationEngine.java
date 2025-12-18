@@ -1,6 +1,6 @@
-package com.coresolution.consultation.service;
+package com.coresolution.consultation.service.erp.accounting;
 
-import com.coresolution.consultation.entity.SettlementRule;
+import com.coresolution.consultation.entity.erp.settlement.SettlementRule;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 

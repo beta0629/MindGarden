@@ -1,7 +1,7 @@
 package com.coresolution.consultation.service.impl;
 
-import com.coresolution.consultation.entity.SettlementRule;
-import com.coresolution.consultation.service.SettlementCalculationEngine;
+import com.coresolution.consultation.entity.erp.settlement.SettlementRule;
+import com.coresolution.consultation.service.erp.settlement.SettlementCalculationEngine;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;

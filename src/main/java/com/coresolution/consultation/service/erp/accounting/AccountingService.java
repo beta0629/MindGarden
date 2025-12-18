@@ -1,6 +1,6 @@
-package com.coresolution.consultation.service;
+package com.coresolution.consultation.service.erp.accounting;
 
-import com.coresolution.consultation.entity.AccountingEntry;
+import com.coresolution.consultation.entity.erp.accounting.AccountingEntry;
 
 import java.util.List;
 

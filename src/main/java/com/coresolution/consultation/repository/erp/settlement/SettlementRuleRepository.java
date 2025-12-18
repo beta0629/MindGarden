@@ -1,6 +1,6 @@
-package com.coresolution.consultation.repository;
+package com.coresolution.consultation.repository.erp.settlement;
 
-import com.coresolution.consultation.entity.SettlementRule;
+import com.coresolution.consultation.entity.erp.settlement.SettlementRule;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

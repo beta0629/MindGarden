@@ -453,19 +453,30 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
                 variant="primary"
                 size="small"
                 onClick={() => {
-                  // 현재 경로가 이미 /admin/erp/financial이면 탭을 활성화하고 스크롤
+                  // 현재 경로가 이미 /admin/erp/financial이면 탭을 활성화하고 데이터 로드
                   if (location.pathname === '/admin/erp/financial') {
+                    // 데이터가 없으면 다시 불러오기
+                    if (!dashboardData) {
+                      fetchDashboardData();
+                    }
+                    // overview 탭 활성화
                     setActiveTab('overview');
                     const newSearchParams = new URLSearchParams(searchParams);
                     newSearchParams.set('tab', 'overview');
                     setSearchParams(newSearchParams);
-                    // 콘텐츠 영역으로 스크롤
+                    // 콘텐츠 영역으로 스크롤 (더 긴 딜레이로 DOM 업데이트 대기)
                     setTimeout(() => {
                       const contentArea = document.querySelector('.integrated-finance-content');
                       if (contentArea) {
                         contentArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                      } else {
+                        // 대체 선택자 시도
+                        const cardArea = document.querySelector('.mg-v2-card');
+                        if (cardArea) {
+                          cardArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }
                       }
-                    }, 100);
+                    }, 300);
                   } else {
                     // 다른 페이지에 있으면 이동
                     navigate('/admin/erp/financial?tab=overview');

@@ -367,7 +367,7 @@ const FinancialCalendarView = () => {
 
           {/* 거래 목록 */}
           <div>
-            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #495057 -> var(--mg-custom-495057)
+            {/* ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #495057 -> var(--mg-custom-495057) */}
             <h4 style={{ marginBottom: '12px', color: '#495057' }}>
               📋 거래 내역 ({dayDetail.transactions.length}건)
             </h4>
@@ -461,7 +461,7 @@ const FinancialCalendarView = () => {
         backgroundColor: 'var(--mg-gray-100)',
         borderRadius: '8px'
       }}>
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #495057 -> var(--mg-custom-495057)
+        {/* ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #495057 -> var(--mg-custom-495057) */}
         <h3 style={{ marginBottom: '15px', color: '#495057' }}>
           📊 {currentDate.getFullYear()}년 {currentDate.getMonth() + 1}월 통계
         </h3>

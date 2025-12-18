@@ -13723,8 +13723,10 @@ body {
 .mg-v2-modal-content {
     position: relative;
     padding: var(--spacing-lg);
-    background-color: var(--color-bg-primary, #ffffff);
+    background-color: var(--color-bg-primary, #ffffff) !important;
     border-radius: var(--border-radius-lg, 8px);
+    color: var(--color-text-primary, #1f2937) !important;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
 }
 
 .mg-v2-modal-content--scrollable {
@@ -13744,7 +13746,8 @@ body {
     padding: var(--spacing-lg) var(--spacing-lg) 0;
     border-bottom: 1px solid var(--color-border-light);
     margin-bottom: var(--spacing-lg);
-    background-color: var(--color-bg-primary, #ffffff);
+    background-color: var(--color-bg-primary, #ffffff) !important;
+    color: var(--color-text-primary, #1f2937) !important;
 }
 
 .mg-v2-modal-large {
@@ -13775,7 +13778,7 @@ body {
 .mg-v2-modal-title {
     font-size: var(--font-size-xl);
     font-weight: 600;
-    color: var(--color-text-primary, #1f2937);
+    color: var(--color-text-primary, #1f2937) !important;
     margin-bottom: var(--spacing-sm);
 }
 

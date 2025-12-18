@@ -13678,8 +13678,14 @@ body {
     flex: 1;
     overflow-y: auto;
     max-height: calc(90vh - 120px);
-    background-color: var(--color-bg-primary, #ffffff);
-    color: var(--color-text-primary, #1f2937);
+    background-color: var(--color-bg-primary);
+    color: var(--color-text-primary);
+}
+
+/* 모달 오버레이 내부의 바디는 항상 흰 배경과 어두운 글자 */
+.mg-v2-modal-overlay .mg-v2-modal-body {
+    background-color: var(--color-bg-primary);
+    color: var(--color-text-primary);
 }
 
 .mg-v2-modal-close {
@@ -13723,10 +13729,16 @@ body {
 .mg-v2-modal-content {
     position: relative;
     padding: var(--spacing-lg);
-    background-color: var(--color-bg-primary, #ffffff) !important;
-    border-radius: var(--border-radius-lg, 8px);
-    color: var(--color-text-primary, #1f2937) !important;
+    background-color: var(--color-bg-primary);
+    border-radius: var(--border-radius-lg);
+    color: var(--color-text-primary);
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+/* 모달 오버레이 내부의 컨텐츠는 항상 흰 배경과 어두운 글자 */
+.mg-v2-modal-overlay .mg-v2-modal-content {
+    background-color: var(--color-bg-primary);
+    color: var(--color-text-primary);
 }
 
 .mg-v2-modal-content--scrollable {
@@ -13746,8 +13758,14 @@ body {
     padding: var(--spacing-lg) var(--spacing-lg) 0;
     border-bottom: 1px solid var(--color-border-light);
     margin-bottom: var(--spacing-lg);
-    background-color: var(--color-bg-primary, #ffffff) !important;
-    color: var(--color-text-primary, #1f2937) !important;
+    background-color: var(--color-bg-primary);
+    color: var(--color-text-primary);
+}
+
+/* 모달 오버레이 내부의 헤더는 항상 흰 배경과 어두운 글자 */
+.mg-v2-modal-overlay .mg-v2-modal-header {
+    background-color: var(--color-bg-primary);
+    color: var(--color-text-primary);
 }
 
 .mg-v2-modal-large {
@@ -13778,8 +13796,13 @@ body {
 .mg-v2-modal-title {
     font-size: var(--font-size-xl);
     font-weight: 600;
-    color: var(--color-text-primary, #1f2937) !important;
+    color: var(--color-text-primary);
     margin-bottom: var(--spacing-sm);
+}
+
+/* 모달 오버레이 내부의 제목은 항상 어두운 글자 */
+.mg-v2-modal-overlay .mg-v2-modal-title {
+    color: var(--color-text-primary);
 }
 
 .mg-v2-modal-title-icon {

@@ -5126,7 +5126,22 @@ body {
 
 .mg-widget .mg-card__body {
   overflow: visible;
-  padding-bottom: calc(var(--spacing-md) + var(--spacing-sm));
+  padding-bottom: calc(var(--spacing-md) + var(--spacing-md));
+}
+
+/* 위젯 내부 카드의 마지막 요소에 추가 여백 */
+.mg-widget .mg-card__body > .mg-mt-xs:last-child,
+.mg-widget .mg-card__body > *:last-child.mg-mt-xs {
+    margin-bottom: var(--spacing-xs);
+    padding-bottom: var(--spacing-xs);
+}
+
+/* 위젯 내부 프로그레스 바 다음에 오는 텍스트에 추가 여백 */
+.mg-widget .mg-card__body .mg-progress-bar + .mg-mt-xs,
+.mg-widget .mg-card__body .mg-progress-bar + * .mg-mt-xs {
+    margin-top: var(--spacing-sm);
+    margin-bottom: var(--spacing-xs);
+    padding-bottom: var(--spacing-xs);
 }
 
 /* ============================================
@@ -5341,13 +5356,28 @@ body {
 /* 매핑 카드 본문 */
 .mg-card__body {
     padding: var(--spacing-md);
-    padding-bottom: calc(var(--spacing-md) + var(--spacing-sm));
+    padding-bottom: calc(var(--spacing-md) + var(--spacing-md));
     flex: 1;
     display: flex;
     flex-direction: column;
     gap: var(--spacing-md);
     overflow: visible;
     min-height: auto;
+}
+
+/* 카드 내부의 마지막 요소(특히 mg-mt-xs)에 추가 여백 확보 */
+.mg-card__body > .mg-mt-xs:last-child,
+.mg-card__body > *:last-child.mg-mt-xs {
+    margin-bottom: var(--spacing-xs);
+    padding-bottom: var(--spacing-xs);
+}
+
+/* 프로그레스 바 다음에 오는 텍스트에 추가 여백 */
+.mg-card__body .mg-progress-bar + .mg-mt-xs,
+.mg-card__body .mg-progress-bar + * .mg-mt-xs {
+    margin-top: var(--spacing-sm);
+    margin-bottom: var(--spacing-xs);
+    padding-bottom: var(--spacing-xs);
 }
 
 /* 매핑 정보 */

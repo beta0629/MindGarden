@@ -164,8 +164,8 @@ const ErpDashboard = ({ user: propUser }) => {
       const isAdmin = currentUser && RoleUtils.isAdmin(currentUser);
       
       // 표준화 2025-12-08: 하드코딩 제거, 데이터베이스 기반 동적 권한 체크만 사용
-      // 단, 관리자 역할이면 ERP_ACCESS 권한이 없어도 접근 허용 (PermissionGroupGuard와 동일)
-      const hasErpPermission = PermissionChecks.canAccessERP(userPermissions) || isAdmin;
+      // PermissionChecks.canAccessERP가 이제 user를 받아서 관리자 권한을 자동으로 허용
+      const hasErpPermission = PermissionChecks.canAccessERP(userPermissions, currentUser) || isAdmin;
       
       if (!hasErpPermission) {
         console.log('❌ ERP 접근 권한 없음 (동적 권한 체크), 일반 대시보드로 이동');
@@ -344,24 +344,25 @@ const ErpDashboard = ({ user: propUser }) => {
                 const isAdmin = currentUser && RoleUtils.isAdmin(currentUser);
                 
                 // 동적 권한 체크 우선, 없으면 정적 권한 체크, 관리자는 항상 허용
+                // PermissionChecks 함수들이 이제 user를 받아서 관리자 권한을 자동으로 허용
                 const hasPurchaseRequestView = permissionChecks[PERMISSIONS.PURCHASE_REQUEST_VIEW] ?? 
                   permissionChecks[PERMISSIONS.PURCHASE_REQUEST_MANAGE] ??
-                  (PermissionChecks.canViewPurchaseRequests(userPermissions) || 
-                   PermissionChecks.canManagePurchaseRequests(userPermissions)) || isAdmin;
+                  (PermissionChecks.canViewPurchaseRequests(userPermissions, currentUser) || 
+                   PermissionChecks.canManagePurchaseRequests(userPermissions, currentUser)) || isAdmin;
                 const hasApprovalManage = permissionChecks[PERMISSIONS.APPROVAL_MANAGE] ?? 
-                  PermissionChecks.canManageApprovals(userPermissions) || isAdmin;
+                  PermissionChecks.canManageApprovals(userPermissions, currentUser) || isAdmin;
                 const hasItemManage = permissionChecks[PERMISSIONS.ITEM_MANAGE] ?? 
-                  PermissionChecks.canManageItems(userPermissions) || isAdmin;
+                  PermissionChecks.canManageItems(userPermissions, currentUser) || isAdmin;
                 const hasBudgetManage = permissionChecks[PERMISSIONS.BUDGET_MANAGE] ?? 
-                  PermissionChecks.canManageBudget(userPermissions) || isAdmin;
+                  PermissionChecks.canManageBudget(userPermissions, currentUser) || isAdmin;
                 const hasSalaryManage = permissionChecks[PERMISSIONS.SALARY_MANAGE] ?? 
-                  PermissionChecks.canManageSalary(userPermissions) || isAdmin;
+                  PermissionChecks.canManageSalary(userPermissions, currentUser) || isAdmin;
                 const hasTaxManage = permissionChecks[PERMISSIONS.TAX_MANAGE] ?? 
-                  PermissionChecks.canManageTax(userPermissions) || isAdmin;
+                  PermissionChecks.canManageTax(userPermissions, currentUser) || isAdmin;
                 const hasIntegratedFinanceView = permissionChecks[PERMISSIONS.INTEGRATED_FINANCE_VIEW] ?? 
-                  PermissionChecks.canViewIntegratedFinance(userPermissions) || isAdmin;
+                  PermissionChecks.canViewIntegratedFinance(userPermissions, currentUser) || isAdmin;
                 const hasRefundManage = permissionChecks[PERMISSIONS.REFUND_MANAGE] ?? 
-                  PermissionChecks.canManageRefund(userPermissions) || isAdmin;
+                  PermissionChecks.canManageRefund(userPermissions, currentUser) || isAdmin;
                 
                 return (
                   <>

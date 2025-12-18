@@ -5,6 +5,7 @@
  */
 
 import { apiGet } from './ajax';
+import { RoleUtils } from '../constants/roles';
 
 /**
  * 사용자의 권한 목록을 가져옵니다.
@@ -280,10 +281,14 @@ export const PERMISSION_ROLES = {
 
 /**
  * 권한 체크를 위한 편의 함수들
+ * ERP 관련 권한은 관리자 역할이면 항상 허용
  */
 export const PermissionChecks = {
     // 사용자 관리 권한
-    canManageUsers: (permissions) => hasPermission(permissions, PERMISSIONS.USER_MANAGE),
+    canManageUsers: (permissions, user = null) => {
+        if (user && RoleUtils.isAdmin(user)) return true;
+        return hasPermission(permissions, PERMISSIONS.USER_MANAGE);
+    },
     canViewUsers: (permissions) => hasPermission(permissions, PERMISSIONS.USER_VIEW),
     canChangeUserRoles: (permissions) => hasPermission(permissions, PERMISSIONS.USER_ROLE_CHANGE),
     
@@ -309,19 +314,49 @@ export const PermissionChecks = {
     canManageFinancial: (permissions) => hasPermission(permissions, PERMISSIONS.FINANCIAL_MANAGE),
     canViewFinancial: (permissions) => hasPermission(permissions, PERMISSIONS.FINANCIAL_VIEW),
     
-    // ERP 접근 권한
-    canAccessERP: (permissions) => hasPermission(permissions, PERMISSIONS.ERP_ACCESS),
-    canViewERPDashboard: (permissions) => hasPermission(permissions, PERMISSIONS.ERP_DASHBOARD_VIEW),
+    // ERP 접근 권한 (관리자 허용)
+    canAccessERP: (permissions, user = null) => {
+        if (user && RoleUtils.isAdmin(user)) return true;
+        return hasPermission(permissions, PERMISSIONS.ERP_ACCESS);
+    },
+    canViewERPDashboard: (permissions, user = null) => {
+        if (user && RoleUtils.isAdmin(user)) return true;
+        return hasPermission(permissions, PERMISSIONS.ERP_DASHBOARD_VIEW);
+    },
     
-    // ERP 하위 메뉴 권한
-    canManageSalary: (permissions) => hasPermission(permissions, PERMISSIONS.SALARY_MANAGE),
-    canManageTax: (permissions) => hasPermission(permissions, PERMISSIONS.TAX_MANAGE),
-    canManageRefund: (permissions) => hasPermission(permissions, PERMISSIONS.REFUND_MANAGE),
-    canViewPurchaseRequests: (permissions) => hasPermission(permissions, PERMISSIONS.PURCHASE_REQUEST_VIEW),
-    canManagePurchaseRequests: (permissions) => hasPermission(permissions, PERMISSIONS.PURCHASE_REQUEST_MANAGE),
-    canManageApprovals: (permissions) => hasPermission(permissions, PERMISSIONS.APPROVAL_MANAGE),
-    canManageItems: (permissions) => hasPermission(permissions, PERMISSIONS.ITEM_MANAGE),
-    canManageBudget: (permissions) => hasPermission(permissions, PERMISSIONS.BUDGET_MANAGE),
+    // ERP 하위 메뉴 권한 (관리자 허용)
+    canManageSalary: (permissions, user = null) => {
+        if (user && RoleUtils.isAdmin(user)) return true;
+        return hasPermission(permissions, PERMISSIONS.SALARY_MANAGE);
+    },
+    canManageTax: (permissions, user = null) => {
+        if (user && RoleUtils.isAdmin(user)) return true;
+        return hasPermission(permissions, PERMISSIONS.TAX_MANAGE);
+    },
+    canManageRefund: (permissions, user = null) => {
+        if (user && RoleUtils.isAdmin(user)) return true;
+        return hasPermission(permissions, PERMISSIONS.REFUND_MANAGE);
+    },
+    canViewPurchaseRequests: (permissions, user = null) => {
+        if (user && RoleUtils.isAdmin(user)) return true;
+        return hasPermission(permissions, PERMISSIONS.PURCHASE_REQUEST_VIEW);
+    },
+    canManagePurchaseRequests: (permissions, user = null) => {
+        if (user && RoleUtils.isAdmin(user)) return true;
+        return hasPermission(permissions, PERMISSIONS.PURCHASE_REQUEST_MANAGE);
+    },
+    canManageApprovals: (permissions, user = null) => {
+        if (user && RoleUtils.isAdmin(user)) return true;
+        return hasPermission(permissions, PERMISSIONS.APPROVAL_MANAGE);
+    },
+    canManageItems: (permissions, user = null) => {
+        if (user && RoleUtils.isAdmin(user)) return true;
+        return hasPermission(permissions, PERMISSIONS.ITEM_MANAGE);
+    },
+    canManageBudget: (permissions, user = null) => {
+        if (user && RoleUtils.isAdmin(user)) return true;
+        return hasPermission(permissions, PERMISSIONS.BUDGET_MANAGE);
+    },
     
     // 결제 관리 권한
     canAccessPayment: (permissions) => hasPermission(permissions, PERMISSIONS.PAYMENT_ACCESS),
@@ -335,7 +370,10 @@ export const PermissionChecks = {
     canViewReports: (permissions) => hasPermission(permissions, PERMISSIONS.REPORT_VIEW),
     canViewDashboard: (permissions) => hasPermission(permissions, PERMISSIONS.DASHBOARD_VIEW),
     canViewHQDashboard: (permissions) => hasPermission(permissions, PERMISSIONS.HQ_DASHBOARD_VIEW),
-    canViewIntegratedFinance: (permissions) => hasPermission(permissions, PERMISSIONS.INTEGRATED_FINANCE_VIEW),
+    canViewIntegratedFinance: (permissions, user = null) => {
+        if (user && RoleUtils.isAdmin(user)) return true;
+        return hasPermission(permissions, PERMISSIONS.INTEGRATED_FINANCE_VIEW);
+    },
     canViewStatistics: (permissions) => hasPermission(permissions, PERMISSIONS.REPORT_VIEW) || hasPermission(permissions, PERMISSIONS.DASHBOARD_VIEW),
     
     // 재무 접근 권한 (반복 지출 관리용)

@@ -222,10 +222,12 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
         }
         
         // 권한 확인 (표준화: 상수 사용)
-        const hasIntegratedFinancePermission = PermissionChecks.canViewIntegratedFinance(permissions);
+        // PermissionChecks.canViewIntegratedFinance가 이제 user를 받아서 관리자 권한을 자동으로 허용
+        const hasIntegratedFinancePermission = PermissionChecks.canViewIntegratedFinance(permissions, user);
         console.log('🔍 통합재무관리 권한 체크:', {
           permissionsCount: permissions.length,
           hasPermission: hasIntegratedFinancePermission,
+          isAdmin: isAdmin,
           permissions: permissions
         });
         

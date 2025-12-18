@@ -143,10 +143,10 @@ export async function cachedApiCall(url, options = {}, ttl = 5 * 60 * 1000) {
                                    currentPath.startsWith('/auth/oauth2/callback');
                 
                 if (!isPublicPage) {
-                    console.log('🔐 API 캐시 호출 실패 - 로그인 페이지로 리다이렉트');
+                    console.log('🔐 API 캐시 호출 실패 - 로그인 페이지로 리다이렉트 (서브도메인 유지)');
                     localStorage.removeItem('accessToken');
                     localStorage.removeItem('refreshToken');
-                    window.location.href = '/login';
+                    window.location.href = `${window.location.origin}/login`;
                 }
             }
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -173,10 +173,10 @@ export async function cachedApiCall(url, options = {}, ttl = 5 * 60 * 1000) {
                                currentPath.startsWith('/auth/oauth2/callback');
             
             if (!isPublicPage) {
-                console.log('🔐 API 캐시 네트워크 오류 - 로그인 페이지로 리다이렉트');
+                console.log('🔐 API 캐시 네트워크 오류 - 로그인 페이지로 리다이렉트 (서브도메인 유지)');
                 localStorage.removeItem('accessToken');
                 localStorage.removeItem('refreshToken');
-                window.location.href = '/login';
+                window.location.href = `${window.location.origin}/login`;
             }
         }
         console.error(`❌ API 호출 실패: ${url}`, error);

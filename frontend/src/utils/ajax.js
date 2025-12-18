@@ -66,12 +66,12 @@ const checkSessionAndRedirect = async (response) => {
         method: 'GET'
       });
       
-      // 세션이 없으면 로그인 페이지로 리다이렉트
+      // 세션이 없으면 로그인 페이지로 리다이렉트 (서브도메인 유지)
       if (!sessionResponse.ok) {
-        console.log('🔐 세션 없음 - 로그인 페이지로 리다이렉트');
+        console.log('🔐 세션 없음 - 로그인 페이지로 리다이렉트 (서브도메인 유지)');
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
-        window.location.href = '/login';
+        window.location.href = `${window.location.origin}/login`;
         return true; // 리다이렉트됨
       }
       
@@ -79,10 +79,10 @@ const checkSessionAndRedirect = async (response) => {
       console.log('🔐 세션 있음 - 리다이렉트 스킵 (권한 문제일 수 있음)');
       return false;
     } catch (sessionError) {
-      console.log('🔐 세션 체크 실패 - 로그인 페이지로 리다이렉트');
+      console.log('🔐 세션 체크 실패 - 로그인 페이지로 리다이렉트 (서브도메인 유지)');
       localStorage.removeItem('accessToken');
       localStorage.removeItem('refreshToken');
-      window.location.href = '/login';
+      window.location.href = `${window.location.origin}/login`;
       return true; // 리다이렉트됨
     }
   }
@@ -101,8 +101,8 @@ const handleError = (error, status) => {
   if (status === API_STATUS.UNAUTHORIZED) {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
-    // 로그인 페이지로 리다이렉트 (홈이 아닌)
-    window.location.href = '/login';
+    // 로그인 페이지로 리다이렉트 (서브도메인 유지)
+    window.location.href = `${window.location.origin}/login`;
   }
   throw new Error(getErrorMessage(status));
 };
@@ -220,11 +220,11 @@ export const apiGet = async (endpoint, params = {}, options = {}) => {
         return null;
       }
       
-      // 네트워크 오류 시 재시도 없이 바로 로그인 페이지로 리다이렉트
-      console.log('🔐 네트워크 오류 시 로그인 페이지로 리다이렉트 (재시도 없음)');
+      // 네트워크 오류 시 재시도 없이 바로 로그인 페이지로 리다이렉트 (서브도메인 유지)
+      console.log('🔐 네트워크 오류 시 로그인 페이지로 리다이렉트 (재시도 없음, 서브도메인 유지)');
       localStorage.removeItem('accessToken');
       localStorage.removeItem('refreshToken');
-      window.location.href = '/login';
+      window.location.href = `${window.location.origin}/login`;
       return null;
     }
     

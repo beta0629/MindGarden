@@ -155,10 +155,10 @@ class SessionManager {
                 }
                 
                 if (!isPublicPage) {
-                    console.log('🔍 로그인 페이지로 리다이렉트');
+                    console.log('🔍 로그인 페이지로 리다이렉트 (서브도메인 유지)');
                     localStorage.removeItem('accessToken');
                     localStorage.removeItem('refreshToken');
-                    window.location.href = '/login';
+                    window.location.href = `${window.location.origin}/login`;
                 } else {
                     console.log('🔍 공개 페이지에 있음 - 리다이렉트 스킵');
                 }
@@ -246,10 +246,10 @@ class SessionManager {
                                    currentPath.startsWith('/auth/oauth2/callback');
                 
                 if (!isPublicPage) {
-                    console.log('🔐 네트워크 오류 시 로그인 페이지로 리다이렉트 (재시도 없음)');
+                    console.log('🔐 네트워크 오류 시 로그인 페이지로 리다이렉트 (재시도 없음, 서브도메인 유지)');
                     localStorage.removeItem('accessToken');
                     localStorage.removeItem('refreshToken');
-                    window.location.href = '/login';
+                    window.location.href = `${window.location.origin}/login`;
                 } else {
                     console.log('🔐 네트워크 오류 - 공개 페이지에 있음 - 리다이렉트 스킵');
                 }

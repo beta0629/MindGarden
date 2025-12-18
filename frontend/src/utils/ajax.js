@@ -153,6 +153,46 @@ export const apiGet = async (endpoint, params = {}, options = {}) => {
     }
     
     if (!response.ok) {
+      // 400 Bad Request는 tenantId 부족 등 클라이언트 오류이므로 로그인 페이지로 리다이렉트
+      if (response.status === 400) {
+        try {
+          const errorData = jsonData || {};
+          const errorCode = errorData.errorCode || errorData.error || '';
+          const errorMessage = errorData.message || errorData.error || '';
+          
+          // TENANT_ID_REQUIRED 에러 코드 또는 관련 메시지 확인
+          const isTenantIdError = errorCode === 'TENANT_ID_REQUIRED' ||
+                                   errorMessage.includes('Tenant ID') || 
+                                   errorMessage.includes('tenant') ||
+                                   errorMessage.includes('세션') ||
+                                   errorMessage.includes('로그인') ||
+                                   errorMessage.includes('로그인이 필요');
+          
+          if (isTenantIdError) {
+            const currentPath = window.location.pathname;
+            const isPublicPage = currentPath === '/login' || 
+                               currentPath.startsWith('/login/') || 
+                               currentPath === '/landing' || 
+                               currentPath === '/' ||
+                               currentPath.startsWith('/register') ||
+                               currentPath.startsWith('/forgot-password') ||
+                               currentPath.startsWith('/reset-password') ||
+                               currentPath.startsWith('/auth/oauth2/callback');
+            
+            if (!isPublicPage) {
+              console.log('🔐 400 오류 (Tenant ID 부족) - 로그인 페이지로 리다이렉트 (서브도메인 유지)');
+              localStorage.removeItem('accessToken');
+              localStorage.removeItem('refreshToken');
+              window.location.href = `${window.location.origin}/login`;
+              return null;
+            }
+          }
+        } catch (e) {
+          // JSON 파싱 실패 시 무시하고 계속 진행
+          console.warn('400 에러 응답 파싱 실패:', e);
+        }
+      }
+      
       // 세션 체크 및 리다이렉트
       const redirected = await checkSessionAndRedirect(response);
       if (redirected) {
@@ -191,10 +231,66 @@ export const apiGet = async (endpoint, params = {}, options = {}) => {
     // ApiResponse 래퍼가 없으면 그대로 반환
     return jsonData;
   } catch (error) {
+    // 400 Bad Request는 tenantId 부족 등 클라이언트 오류이므로 로그인 페이지로 리다이렉트
+    if (error.status === 400) {
+      const errorMessage = error.message || '';
+      const errorResponse = error.response?.data || {};
+      const errorCode = errorResponse.errorCode || errorResponse.error || '';
+      
+      // TENANT_ID_REQUIRED 에러 코드 또는 관련 메시지 확인
+      const isTenantIdError = errorCode === 'TENANT_ID_REQUIRED' ||
+                               errorMessage.includes('Tenant ID') || 
+                               errorMessage.includes('tenant') ||
+                               errorMessage.includes('세션') ||
+                               errorMessage.includes('로그인') ||
+                               errorMessage.includes('로그인이 필요');
+      
+      if (isTenantIdError) {
+        const currentPath = window.location.pathname;
+        const isPublicPage = currentPath === '/login' || 
+                           currentPath.startsWith('/login/') || 
+                           currentPath === '/landing' || 
+                           currentPath === '/' ||
+                           currentPath.startsWith('/register') ||
+                           currentPath.startsWith('/forgot-password') ||
+                           currentPath.startsWith('/reset-password') ||
+                           currentPath.startsWith('/auth/oauth2/callback');
+        
+        if (!isPublicPage) {
+          console.log('🔐 400 오류 (Tenant ID 부족) - 로그인 페이지로 리다이렉트 (서브도메인 유지)');
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('refreshToken');
+          window.location.href = `${window.location.origin}/login`;
+          return null;
+        }
+      }
+    }
+    
     // 403 오류는 권한 문제이므로 조용히 처리 (콘솔 오류 표시 안 함)
     if (error.status === 403 || error.message?.includes('접근 권한')) {
       // 조용히 에러를 다시 throw하여 호출자가 처리할 수 있도록 함
       throw error;
+    }
+    
+    // 401 Unauthorized는 인증 문제이므로 로그인 페이지로 리다이렉트
+    if (error.status === 401) {
+      const currentPath = window.location.pathname;
+      const isPublicPage = currentPath === '/login' || 
+                         currentPath.startsWith('/login/') || 
+                         currentPath === '/landing' || 
+                         currentPath === '/' ||
+                         currentPath.startsWith('/register') ||
+                         currentPath.startsWith('/forgot-password') ||
+                         currentPath.startsWith('/reset-password') ||
+                         currentPath.startsWith('/auth/oauth2/callback');
+      
+      if (!isPublicPage) {
+        console.log('🔐 401 오류 - 로그인 페이지로 리다이렉트 (서브도메인 유지)');
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        window.location.href = `${window.location.origin}/login`;
+        return null;
+      }
     }
     
     // 403이 아닌 오류만 콘솔에 표시

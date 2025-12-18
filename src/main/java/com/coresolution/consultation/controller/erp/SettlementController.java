@@ -2,16 +2,15 @@ package com.coresolution.consultation.controller.erp;
 
 import java.util.List;
 import java.util.Map;
+import com.coresolution.consultation.constant.UserRole;
+import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.entity.erp.settlement.Settlement;
 import com.coresolution.consultation.entity.erp.settlement.SettlementRule;
-import com.coresolution.consultation.service.erp.settlement.SettlementService;
 import com.coresolution.consultation.service.DynamicPermissionService;
-import com.coresolution.consultation.entity.User;
+import com.coresolution.consultation.service.erp.settlement.SettlementService;
 import com.coresolution.consultation.utils.SessionUtils;
-import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.controller.BaseApiController;
-import com.coresolution.core.dto.ApiResponse;
 import org.springframework.core.env.Environment;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -39,7 +38,7 @@ public class SettlementController extends BaseApiController {
     private final SettlementService settlementService;
     private final DynamicPermissionService dynamicPermissionService;
     private final Environment environment;
-    
+
     /**
      * ERP 접근 권한 체크 (동적 권한 시스템)
      */
@@ -51,22 +50,24 @@ public class SettlementController extends BaseApiController {
         }
 
         // 로컬/개발 환경에서는 관리자 역할이면 허용
-        if (environment != null && (environment.acceptsProfiles(org.springframework.core.env.Profiles.of("local"))
+        if (environment != null && (environment
+                .acceptsProfiles(org.springframework.core.env.Profiles.of("local"))
                 || environment.acceptsProfiles(org.springframework.core.env.Profiles.of("dev")))) {
-            if (currentUser.getRole() != null && (currentUser.getRole().isAdmin()
-                    || currentUser.getRole() == UserRole.ADMIN
-                    || currentUser.getRole() == UserRole.TENANT_ADMIN
-                    || currentUser.getRole() == UserRole.PRINCIPAL
-                    || currentUser.getRole() == UserRole.OWNER)) {
-                log.debug("로컬/개발 모드: 관리자 역할로 ERP 접근 허용, 사용자={}, 역할={}", 
-                        currentUser.getEmail(), currentUser.getRole());
+            if (currentUser.getRole() != null
+                    && (currentUser.getRole().isAdmin() || currentUser.getRole() == UserRole.ADMIN
+                            || currentUser.getRole() == UserRole.TENANT_ADMIN
+                            || currentUser.getRole() == UserRole.PRINCIPAL
+                            || currentUser.getRole() == UserRole.OWNER)) {
+                log.debug("로컬/개발 모드: 관리자 역할로 ERP 접근 허용, 사용자={}, 역할={}", currentUser.getEmail(),
+                        currentUser.getRole());
                 return null; // 권한 있음
             }
         }
 
         // 동적 권한 체크 (ERP_ACCESS 권한 필요)
         if (!dynamicPermissionService.hasPermission(currentUser, "ERP_ACCESS")) {
-            log.warn("❌ ERP 접근 권한 없음: 사용자={}, 역할={}", currentUser.getEmail(), currentUser.getRole());
+            log.warn("❌ ERP 접근 권한 없음: 사용자={}, 역할={}", currentUser.getEmail(),
+                    currentUser.getRole());
             return ResponseEntity.status(403)
                     .body(Map.of("success", false, "message", "ERP 접근 권한이 없습니다. 관리자만 접근 가능합니다."));
         }
@@ -78,14 +79,13 @@ public class SettlementController extends BaseApiController {
      * 정산 규칙 생성 POST /api/v1/erp/settlement/rules 표준 문서: docs/standards/ERP_ADVANCEMENT_STANDARD.md
      */
     @PostMapping("/rules")
-    public ResponseEntity<?> createRule(
-            @RequestBody SettlementRuleCreateRequest request,
+    public ResponseEntity<?> createRule(@RequestBody SettlementRuleCreateRequest request,
             HttpSession session) {
         ResponseEntity<?> accessCheck = checkErpAccess(session);
         if (accessCheck != null) {
             return accessCheck;
         }
-        
+
         String tenantId = TenantContextHolder.getRequiredTenantId();
         log.info("정산 규칙 생성 요청: tenantId={}", tenantId);
 
@@ -104,7 +104,7 @@ public class SettlementController extends BaseApiController {
         if (accessCheck != null) {
             return accessCheck;
         }
-        
+
         String tenantId = TenantContextHolder.getRequiredTenantId();
         log.info("정산 규칙 목록 조회: tenantId={}", tenantId);
 
@@ -117,14 +117,12 @@ public class SettlementController extends BaseApiController {
      * docs/standards/ERP_ADVANCEMENT_STANDARD.md
      */
     @PostMapping("/calculate")
-    public ResponseEntity<?> calculateSettlement(
-            @RequestParam String period,
-            HttpSession session) {
+    public ResponseEntity<?> calculateSettlement(@RequestParam String period, HttpSession session) {
         ResponseEntity<?> accessCheck = checkErpAccess(session);
         if (accessCheck != null) {
             return accessCheck;
         }
-        
+
         String tenantId = TenantContextHolder.getRequiredTenantId();
         log.info("정산 계산 요청: tenantId={}, period={}", tenantId, period);
 
@@ -142,7 +140,7 @@ public class SettlementController extends BaseApiController {
         if (accessCheck != null) {
             return accessCheck;
         }
-        
+
         String tenantId = TenantContextHolder.getRequiredTenantId();
         log.info("정산 결과 목록 조회: tenantId={}", tenantId);
 
@@ -156,13 +154,12 @@ public class SettlementController extends BaseApiController {
      */
     @PostMapping("/results/{id}/approve")
     public ResponseEntity<?> approveSettlement(@PathVariable Long id,
-            @RequestBody SettlementApproveRequest request,
-            HttpSession session) {
+            @RequestBody SettlementApproveRequest request, HttpSession session) {
         ResponseEntity<?> accessCheck = checkErpAccess(session);
         if (accessCheck != null) {
             return accessCheck;
         }
-        
+
         String tenantId = TenantContextHolder.getRequiredTenantId();
         log.info("정산 승인 요청: tenantId={}, settlementId={}", tenantId, id);
 

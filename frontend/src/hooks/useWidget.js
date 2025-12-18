@@ -231,7 +231,16 @@ export const useWidget = (config = {}, user = null, options = {}) => {
       const errorMessage = err.message || WIDGET_CONSTANTS.ERROR_MESSAGES.LOAD_FAILED;
       setError(errorMessage);
       
-      // 재시도 로직
+      // 400 Bad Request는 클라이언트 오류이므로 재시도하지 않음 (무한 루프 방지)
+      // 401, 403은 인증/권한 문제이므로 재시도하지 않음
+      const isClientError = err.status === 400 || err.status === 401 || err.status === 403;
+      if (isClientError) {
+        console.warn(`⚠️ 클라이언트 오류 (${err.status}) - 재시도 중단: ${url || 'multi-api'}`);
+        setData(config.defaultValue || null);
+        return; // 재시도하지 않고 종료
+      }
+      
+      // 재시도 로직 (500 이상의 서버 오류만 재시도)
       if (retryAttempt < retryCount) {
         console.log(`🔄 위젯 데이터 재시도 (${retryAttempt + 1}/${retryCount}): ${url || 'multi-api'}`);
         setRetryAttempt(prev => prev + 1);

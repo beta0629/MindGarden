@@ -161,9 +161,10 @@ public class TenantContextFilter implements Filter {
 
                 HttpServletResponse httpResponse = (HttpServletResponse) response;
                 httpResponse.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                httpResponse.setContentType("application/json");
-                httpResponse.getWriter().write(
-                        "{\"error\":\"Bad Request\",\"message\":\"Tenant ID is required for security. Please ensure you are logged in and have a valid tenant ID.\"}");
+                httpResponse.setContentType("application/json;charset=UTF-8");
+                // 표준화: ErrorResponse 형식과 일치하도록 수정
+                String errorJson = "{\"success\":false,\"message\":\"Tenant ID is required for security. Please ensure you are logged in and have a valid tenant ID.\",\"errorCode\":\"TENANT_ID_REQUIRED\",\"status\":400}";
+                httpResponse.getWriter().write(errorJson);
                 return;
             }
 

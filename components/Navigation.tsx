@@ -1,0 +1,199 @@
+'use client';
+
+import type { MouseEvent } from 'react';
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+
+export default function Navigation() {
+  const pathname = usePathname();
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [isWhite, setIsWhite] = useState(true);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const heroSection = document.querySelector('.hero-section');
+      
+      // 히어로 섹션이 없으면 (블로그 페이지 등) 자동으로 scrolled 상태
+      if (!heroSection) {
+        setIsScrolled(true);
+        setIsWhite(false);
+        return;
+      }
+
+      const heroBottom = heroSection.getBoundingClientRect().bottom;
+      const scrolled = heroBottom < 50;
+
+      setIsScrolled(scrolled);
+      setIsWhite(!scrolled);
+    };
+
+    // 초기 상태 확인
+    handleScroll();
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsMenuOpen(false);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, []);
+
+  // scrolled 상태에서는 CSS가 자동으로 색상을 변경하므로 인라인 스타일 제거
+  const textColor = isWhite && !isScrolled ? 'var(--white)' : undefined;
+  const lineColor = isWhite && !isScrolled ? 'var(--white)' : undefined;
+
+  const menu = [
+    { label: '소개', href: '#about' },
+    { label: '프로그램', href: '#programs' },
+    { label: '블로그', href: '/blog' },
+    { label: '공간', href: '#gallery' },
+    { label: '문의', href: '#contact' },
+  ];
+
+  const onNavClick =
+    (href: string) =>
+    (e: MouseEvent<HTMLAnchorElement>) => {
+      setIsMenuOpen(false);
+      
+      // 외부 링크(/)인 경우 기본 동작 사용 (Next.js Link가 처리)
+      if (href.startsWith('/')) {
+        return;
+      }
+      
+      // 해시 링크인 경우
+      if (href.startsWith('#')) {
+        e.preventDefault();
+        
+        // 현재 페이지가 홈페이지가 아니면 홈페이지로 이동 후 스크롤
+        if (pathname !== '/') {
+          window.location.href = `/${href}`;
+          return;
+        }
+        
+        // 홈페이지에 있으면 해당 섹션으로 스크롤
+        setTimeout(() => {
+          const el = document.querySelector(href);
+          if (el) {
+            const offset = 80; // GNB 높이 고려
+            const elementPosition = el.getBoundingClientRect().top;
+            const offsetPosition = elementPosition + window.pageYOffset - offset;
+            
+            window.scrollTo({
+              top: offsetPosition,
+              behavior: 'smooth'
+            });
+          }
+        }, 100);
+      }
+    };
+
+  return (
+    <>
+      <nav className={`gnb ${isScrolled ? 'scrolled' : ''}`}>
+        <div className="gnb-inner">
+          <Link 
+            className="logo" 
+            href="/" 
+            onClick={(e) => {
+              if (pathname === '/') {
+                e.preventDefault();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }
+            }}
+            style={textColor ? { color: textColor } : undefined}
+          >
+            마인드 가든
+          </Link>
+
+          <div className="gnb-right">
+            <ul className="gnb-menu" aria-label="Global Navigation">
+              {menu.map((m) => (
+                <li key={m.href}>
+                  {m.href.startsWith('/') ? (
+                    <Link 
+                      href={m.href}
+                      className="gnb-link" 
+                      style={textColor ? { color: textColor } : undefined}
+                    >
+                      {m.label}
+                    </Link>
+                  ) : (
+                    <a 
+                      href={pathname === '/' ? m.href : `/${m.href}`}
+                      onClick={onNavClick(m.href)} 
+                      className="gnb-link" 
+                      style={textColor ? { color: textColor } : undefined}
+                    >
+                      {m.label}
+                    </a>
+                  )}
+                </li>
+              ))}
+            </ul>
+
+            <a 
+              href={pathname === '/' ? '#contact' : '/#contact'} 
+              onClick={onNavClick('#contact')} 
+              className={`gnb-cta ${isScrolled ? 'scrolled' : ''}`}
+            >
+              상담 예약
+            </a>
+
+            <button
+              type="button"
+              className="menu-trigger"
+              aria-label="메뉴 열기"
+              aria-expanded={isMenuOpen}
+              onClick={() => setIsMenuOpen((v) => !v)}
+            >
+              <span className="line" style={lineColor ? { backgroundColor: lineColor } : undefined}></span>
+              <span className="line short" style={lineColor ? { backgroundColor: lineColor } : undefined}></span>
+            </button>
+          </div>
+        </div>
+      </nav>
+
+      {isMenuOpen && <div className="gnb-backdrop" onClick={() => setIsMenuOpen(false)} />}
+      <aside className={`gnb-drawer ${isMenuOpen ? 'open' : ''}`} aria-hidden={!isMenuOpen}>
+        <div className="gnb-drawer-header">
+          <div className="gnb-drawer-title">메뉴</div>
+          <button type="button" className="gnb-drawer-close" onClick={() => setIsMenuOpen(false)}>
+            닫기
+          </button>
+        </div>
+        <nav className="gnb-drawer-nav" aria-label="Mobile Navigation">
+          {menu.map((m) => (
+            m.href.startsWith('/') ? (
+              <Link key={m.href} className="gnb-drawer-link" href={m.href}>
+                {m.label}
+              </Link>
+            ) : (
+              <a 
+                key={m.href} 
+                className="gnb-drawer-link" 
+                href={pathname === '/' ? m.href : `/${m.href}`} 
+                onClick={onNavClick(m.href)}
+              >
+                {m.label}
+              </a>
+            )
+          ))}
+          <a 
+            className="gnb-drawer-cta" 
+            href={pathname === '/' ? '#contact' : '/#contact'} 
+            onClick={onNavClick('#contact')}
+          >
+            상담 예약
+          </a>
+        </nav>
+      </aside>
+    </>
+  );
+}
+

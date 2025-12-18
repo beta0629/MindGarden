@@ -1,0 +1,227 @@
+'use client';
+
+import { useState } from 'react';
+
+interface ConsultationFormData {
+  name: string;
+  phone: string;
+  email: string;
+  preferredContactMethod: 'phone' | 'email' | 'kakao';
+  inquiryType: 'general' | 'adhd' | 'coaching' | 'family';
+  message: string;
+  preferredDate: string;
+  preferredTime: string;
+}
+
+export default function ConsultationForm() {
+  const [formData, setFormData] = useState<ConsultationFormData>({
+    name: '',
+    phone: '',
+    email: '',
+    preferredContactMethod: 'phone',
+    inquiryType: 'general',
+    message: '',
+    preferredDate: '',
+    preferredTime: '',
+  });
+
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+    setError(null);
+    setSuccess(false);
+
+    try {
+      const response = await fetch('/api/consultation', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setSuccess(true);
+        // 폼 초기화
+        setFormData({
+          name: '',
+          phone: '',
+          email: '',
+          preferredContactMethod: 'phone',
+          inquiryType: 'general',
+          message: '',
+          preferredDate: '',
+          preferredTime: '',
+        });
+        // 5초 후 성공 메시지 숨기기
+        setTimeout(() => setSuccess(false), 5000);
+      } else {
+        setError(data.error || '상담 문의 접수에 실패했습니다.');
+      }
+    } catch (err) {
+      setError('상담 문의 접수 중 오류가 발생했습니다.');
+      console.error('Submit error:', err);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="consultation-form">
+      {error && (
+        <div className="form-error">
+          {error}
+        </div>
+      )}
+
+      {success && (
+        <div className="form-success">
+          상담 문의가 접수되었습니다. 빠른 시일 내에 연락드리겠습니다.
+        </div>
+      )}
+
+      <div className="form-row">
+        <div className="form-group">
+          <label htmlFor="name" className="form-label">
+            이름 <span className="required">*</span>
+          </label>
+          <input
+            type="text"
+            id="name"
+            required
+            value={formData.name}
+            onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+            className="form-input"
+            placeholder="홍길동"
+          />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="phone" className="form-label">
+            전화번호 <span className="required">*</span>
+          </label>
+          <input
+            type="tel"
+            id="phone"
+            required
+            value={formData.phone}
+            onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+            className="form-input"
+            placeholder="010-1234-5678"
+          />
+        </div>
+      </div>
+
+      <div className="form-row">
+        <div className="form-group">
+          <label htmlFor="email" className="form-label">
+            이메일
+          </label>
+          <input
+            type="email"
+            id="email"
+            value={formData.email}
+            onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+            className="form-input"
+            placeholder="example@email.com"
+          />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="preferredContactMethod" className="form-label">
+            선호 연락 방법
+          </label>
+          <select
+            id="preferredContactMethod"
+            value={formData.preferredContactMethod}
+            onChange={(e) => setFormData(prev => ({ ...prev, preferredContactMethod: e.target.value as any }))}
+            className="form-input"
+          >
+            <option value="phone">전화</option>
+            <option value="email">이메일</option>
+            <option value="kakao">카카오톡</option>
+          </select>
+        </div>
+      </div>
+
+      <div className="form-group">
+        <label htmlFor="inquiryType" className="form-label">
+          문의 유형
+        </label>
+        <select
+          id="inquiryType"
+          value={formData.inquiryType}
+          onChange={(e) => setFormData(prev => ({ ...prev, inquiryType: e.target.value as any }))}
+          className="form-input"
+        >
+          <option value="general">일반 상담</option>
+          <option value="adhd">ADHD 개인 상담</option>
+          <option value="coaching">코칭(실행 전략)</option>
+          <option value="family">가족/부모 상담</option>
+        </select>
+      </div>
+
+      <div className="form-row">
+        <div className="form-group">
+          <label htmlFor="preferredDate" className="form-label">
+            희망 상담 일자
+          </label>
+          <input
+            type="date"
+            id="preferredDate"
+            value={formData.preferredDate}
+            onChange={(e) => setFormData(prev => ({ ...prev, preferredDate: e.target.value }))}
+            className="form-input"
+            min={new Date().toISOString().split('T')[0]}
+          />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="preferredTime" className="form-label">
+            희망 상담 시간
+          </label>
+          <select
+            id="preferredTime"
+            value={formData.preferredTime}
+            onChange={(e) => setFormData(prev => ({ ...prev, preferredTime: e.target.value }))}
+            className="form-input"
+          >
+            <option value="">선택 안함</option>
+            <option value="morning">오전 (9시-12시)</option>
+            <option value="afternoon">오후 (12시-6시)</option>
+            <option value="evening">저녁 (6시-9시)</option>
+          </select>
+        </div>
+      </div>
+
+      <div className="form-group">
+        <label htmlFor="message" className="form-label">
+          문의 내용
+        </label>
+        <textarea
+          id="message"
+          value={formData.message}
+          onChange={(e) => setFormData(prev => ({ ...prev, message: e.target.value }))}
+          className="form-input"
+          rows={5}
+          placeholder="상담하고 싶은 내용을 자유롭게 작성해주세요."
+        />
+      </div>
+
+      <button
+        type="submit"
+        disabled={submitting}
+        className="form-submit"
+      >
+        {submitting ? '접수 중...' : '상담 문의 접수'}
+      </button>
+    </form>
+  );
+}
+

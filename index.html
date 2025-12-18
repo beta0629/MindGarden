@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>마인드 가든 | 맑고 밝은 마음</title>
+    <!-- Pretendard Font -->
+    <link rel="stylesheet" as="style" crossorigin
+        href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+    <link rel="stylesheet" href="styles.css">
+    <!-- 코어솔루션 API 설정 -->
+    <script src="config.js"></script>
+    <script src="api.js"></script>
+</head>
+
+<body>
+
+    <!-- Navigation -->
+    <nav class="gnb">
+        <div class="logo">마인드 가든</div>
+        <div class="menu-trigger">
+            <span class="line"></span>
+            <span class="line short"></span>
+        </div>
+    </nav>
+
+    <main>
+        <!-- Hero Section -->
+        <section class="hero-section">
+            <div class="video-container">
+                <!-- Bright, Sunny, Uplifting Video (Sky/Field) -->
+                <video autoplay muted loop playsinline class="bg-video">
+                    <source src="https://videos.pexels.com/video-files/856973/856973-hd_1920_1080_30fps.mp4"
+                        type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+                <div class="video-overlay"></div>
+            </div>
+
+            <div class="hero-text">
+                <p class="slogan-sub">새로운 희망이 시작되는 곳</p>
+                <h1 class="slogan-main">당신의 하루가<br>더 맑아지도록</h1>
+            </div>
+
+            <div class="scroll-down">
+                <span class="scroll-text">Scroll</span>
+                <span class="scroll-line"></span>
+            </div>
+        </section>
+
+        <!-- Main Visual Flow (Marquee) -->
+        <section class="flow-section">
+            <div class="flow-header">
+                <h2>따뜻한 동행</h2>
+                <p>밝은 햇살처럼 당신의 마음에 온기를 전합니다.</p>
+            </div>
+
+            <div class="marquee-container">
+                <div class="marquee-track">
+                    <!-- 로컬 이미지 우선 사용, API에서 동적으로 업데이트 가능 -->
+                    <div class="marquee-item">
+                        <img src="assets/images/gallery_1.png" alt="Gallery Image 1" loading="lazy">
+                    </div>
+                    <div class="marquee-item">
+                        <img src="assets/images/gallery_2.png" alt="Gallery Image 2" loading="lazy">
+                    </div>
+                    <div class="marquee-item">
+                        <img src="assets/images/gallery_3.png" alt="Gallery Image 3" loading="lazy">
+                    </div>
+                    <div class="marquee-item">
+                        <img src="assets/images/gallery_4.png" alt="Gallery Image 4" loading="lazy">
+                    </div>
+                    <!-- 추가 이미지가 있으면 여기에 표시됨 -->
+                </div>
+            </div>
+        </section>
+
+        <section class="footer-simple">
+            <p>&copy; 2025 Mind Garden. 언제나 당신 곁에.</p>
+        </section>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+
+</html>

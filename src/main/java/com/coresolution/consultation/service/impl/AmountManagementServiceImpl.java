@@ -98,8 +98,9 @@ public class AmountManagementServiceImpl implements AmountManagementService {
     @Override
     @Transactional(readOnly = true)
     public boolean isDuplicateTransaction(Long mappingId, FinancialTransaction.TransactionType transactionType) {
-        boolean exists = financialTransactionRepository.existsByRelatedEntityIdAndRelatedEntityTypeAndTransactionTypeAndIsDeletedFalse(
-            mappingId, 
+        String tenantId = TenantContextHolder.getTenantId();
+        boolean exists = financialTransactionRepository.existsByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndTransactionTypeAndIsDeletedFalse(
+            tenantId, mappingId, 
             "CONSULTANT_CLIENT_MAPPING", 
             transactionType
         );
@@ -147,7 +148,7 @@ public class AmountManagementServiceImpl implements AmountManagementService {
         
         amountInfo.put("relatedTransactionCount", relatedTransactions.size());
         amountInfo.put("relatedTransactions", relatedTransactions.stream()
-            .map(t -> Map.of(
+            .map((FinancialTransaction t) -> Map.of(
                 "id", t.getId(),
                 "amount", t.getAmount(),
                 "type", t.getTransactionType(),

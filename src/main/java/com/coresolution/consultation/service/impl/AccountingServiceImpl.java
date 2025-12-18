@@ -2,6 +2,7 @@ package com.coresolution.consultation.service.impl;
 
 import com.coresolution.consultation.entity.erp.accounting.AccountingEntry;
 import com.coresolution.consultation.entity.erp.accounting.JournalEntryLine;
+import com.coresolution.consultation.entity.erp.financial.FinancialTransaction;
 import com.coresolution.consultation.entity.CommonCode;
 import com.coresolution.consultation.repository.erp.accounting.AccountingEntryRepository;
 import com.coresolution.consultation.repository.erp.accounting.JournalEntryLineRepository;
@@ -205,7 +206,7 @@ public class AccountingServiceImpl implements AccountingService {
     
     @Override
     @Transactional
-    public AccountingEntry createJournalEntryFromTransaction(com.coresolution.consultation.entity.FinancialTransaction transaction) {
+    public AccountingEntry createJournalEntryFromTransaction(FinancialTransaction transaction) {
         String tenantId = transaction.getTenantId();
         if (tenantId == null || tenantId.isEmpty()) {
             log.warn("FinancialTransaction에 tenantId가 없어 분개를 생성할 수 없습니다: transactionId={}", transaction.getId());
@@ -240,7 +241,7 @@ public class AccountingServiceImpl implements AccountingService {
             
             java.util.List<JournalEntryLine> lines = new java.util.ArrayList<>();
             
-            if (transaction.getTransactionType() == com.coresolution.consultation.entity.FinancialTransaction.TransactionType.INCOME) {
+            if (transaction.getTransactionType() == FinancialTransaction.TransactionType.INCOME) {
                 // 수익 거래: 현금(차변) / 수익(대변)
                 lines.add(JournalEntryLine.builder()
                     .accountId(cashAccountId)
@@ -255,7 +256,7 @@ public class AccountingServiceImpl implements AccountingService {
                     .creditAmount(transaction.getAmount())
                     .description(transaction.getDescription())
                     .build());
-            } else if (transaction.getTransactionType() == com.coresolution.consultation.entity.FinancialTransaction.TransactionType.EXPENSE) {
+            } else if (transaction.getTransactionType() == FinancialTransaction.TransactionType.EXPENSE) {
                 // 비용 거래: 비용(차변) / 현금(대변)
                 lines.add(JournalEntryLine.builder()
                     .accountId(expenseAccountId)

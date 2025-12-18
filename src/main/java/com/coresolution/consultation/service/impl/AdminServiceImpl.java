@@ -27,6 +27,7 @@ import com.coresolution.consultation.entity.Consultant;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.Schedule;
 import com.coresolution.consultation.entity.User;
+import com.coresolution.consultation.entity.erp.financial.FinancialTransaction;
 import com.coresolution.consultation.repository.CommonCodeRepository;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.repository.ConsultantRatingRepository;
@@ -525,7 +526,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         
         try {
             if (amountManagementService.isDuplicateTransaction(mapping.getId(), 
-                    com.coresolution.consultation.entity.FinancialTransaction.TransactionType.INCOME)) {
+                    FinancialTransaction.TransactionType.INCOME)) {
                 log.warn("🚫 중복 거래 방지: MappingID={}에 대한 수입 거래가 이미 존재합니다. 정상 종료합니다.", mapping.getId());
                 return; // 중복 거래는 정상적인 상황이므로 예외 없이 종료
             }
@@ -569,7 +570,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             financialTransactionService.createTransaction(request, null);
         
         try {
-            com.coresolution.consultation.entity.FinancialTransaction transaction = 
+            FinancialTransaction transaction = 
                 financialTransactionRepository.findById(response.getId()).orElse(null);
             if (transaction != null) {
                 transaction.complete(); // 완료 상태로 변경
@@ -627,7 +628,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             financialTransactionService.createTransaction(request, null);
         
         try {
-            com.coresolution.consultation.entity.FinancialTransaction transaction = 
+            FinancialTransaction transaction = 
                 financialTransactionRepository.findById(response.getId()).orElse(null);
             if (transaction != null) {
                 transaction.complete(); // 완료 상태로 변경
@@ -742,7 +743,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             financialTransactionService.createTransaction(request, null);
         
         try {
-            com.coresolution.consultation.entity.FinancialTransaction transaction = 
+            FinancialTransaction transaction = 
                 financialTransactionRepository.findById(response.getId()).orElse(null);
             if (transaction != null) {
                 transaction.complete(); // 완료 상태로 변경
@@ -814,7 +815,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         log.info("💰 [미수금] 매출채권 거래 생성 시작: MappingID={}", mapping.getId());
         
         if (amountManagementService.isDuplicateTransaction(mapping.getId(), 
-                com.coresolution.consultation.entity.FinancialTransaction.TransactionType.RECEIVABLES)) {
+                FinancialTransaction.TransactionType.RECEIVABLES)) {
             log.warn("🚫 중복 거래 방지: MappingID={}에 대한 미수금 거래가 이미 존재합니다.", mapping.getId());
             return;
         }
@@ -2633,9 +2634,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 .collect(Collectors.toList());
         
         // 표준화 2025-12-06: 브랜치 코드 필터링 제거 - tenantId만 사용
-        List<com.coresolution.consultation.entity.FinancialTransaction> partialRefundTransactions = 
+        List<FinancialTransaction> partialRefundTransactions = 
             financialTransactionRepository.findByTenantIdAndTransactionTypeAndSubcategoryAndTransactionDateBetweenAndIsDeletedFalse(tenantId, 
-                com.coresolution.consultation.entity.FinancialTransaction.TransactionType.EXPENSE, "CONSULTATION_PARTIAL_REFUND", startDate.toLocalDate(), endDate.toLocalDate());
+                FinancialTransaction.TransactionType.EXPENSE, "CONSULTATION_PARTIAL_REFUND", startDate.toLocalDate(), endDate.toLocalDate());
         
         int totalTerminatedRefundCount = terminatedMappings.size();
         int totalTerminatedRefundedSessions = terminatedMappings.stream()
@@ -2734,7 +2735,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                     })
                     .collect(Collectors.toList());
             
-            List<com.coresolution.consultation.entity.FinancialTransaction> monthlyPartialRefunds = partialRefundTransactions.stream()
+            List<FinancialTransaction> monthlyPartialRefunds = partialRefundTransactions.stream()
                     .filter(transaction -> {
                         LocalDate transactionDate = transaction.getTransactionDate();
                         return !transactionDate.isBefore(monthStart) && !transactionDate.isAfter(monthEnd);
@@ -2904,9 +2905,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 .filter(mapping -> mapping.getNotes() != null && mapping.getNotes().contains("강제 종료"))
                 .collect(Collectors.toList());
         
-        List<com.coresolution.consultation.entity.FinancialTransaction> partialRefundTransactions = 
+        List<FinancialTransaction> partialRefundTransactions = 
             financialTransactionRepository.findByTenantIdAndTransactionTypeAndSubcategoryAndTransactionDateBetweenAndIsDeletedFalse(tenantId, 
-                com.coresolution.consultation.entity.FinancialTransaction.TransactionType.EXPENSE, "CONSULTATION_PARTIAL_REFUND", startDate.toLocalDate(), endDate.toLocalDate());
+                FinancialTransaction.TransactionType.EXPENSE, "CONSULTATION_PARTIAL_REFUND", startDate.toLocalDate(), endDate.toLocalDate());
         
         List<Map<String, Object>> partialRefundHistory = partialRefundTransactions.stream()
                 .map(transaction -> {
@@ -3058,11 +3059,11 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 // 표준화 2025-12-07: 브랜치 개념 제거됨, 필터링 제거
                 .collect(Collectors.toList());
         
-        List<com.coresolution.consultation.entity.FinancialTransaction> allPartialRefundTransactions = 
+        List<FinancialTransaction> allPartialRefundTransactions = 
             financialTransactionRepository.findByTenantIdAndTransactionTypeAndSubcategoryAndTransactionDateBetweenAndIsDeletedFalse(tenantId, 
-                com.coresolution.consultation.entity.FinancialTransaction.TransactionType.EXPENSE, "CONSULTATION_PARTIAL_REFUND", startDate.toLocalDate(), endDate.toLocalDate());
+                FinancialTransaction.TransactionType.EXPENSE, "CONSULTATION_PARTIAL_REFUND", startDate.toLocalDate(), endDate.toLocalDate());
         
-        List<com.coresolution.consultation.entity.FinancialTransaction> partialRefundTransactions = allPartialRefundTransactions.stream()
+        List<FinancialTransaction> partialRefundTransactions = allPartialRefundTransactions.stream()
                 // 표준화 2025-12-07: 브랜치 개념 제거됨, 필터링 제거
                 .collect(Collectors.toList());
         

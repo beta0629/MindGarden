@@ -25,10 +25,12 @@ import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 import com.coresolution.consultation.entity.CommonCode;
 import com.coresolution.consultation.entity.User;
-import com.coresolution.core.entity.BaseEntity;
+import com.coresolution.consultation.entity.BaseEntity;
 
  /**
  * 회계 거래 엔티티
@@ -52,6 +54,8 @@ import com.coresolution.core.entity.BaseEntity;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@EqualsAndHashCode(callSuper = true)
+@ToString(callSuper = true)
 public class FinancialTransaction extends BaseEntity {
     
     

@@ -1406,15 +1406,18 @@ public class ErpController extends BaseApiController {
             currentUser = fullUser;
 
             // 통합재무관리 접근 권한 확인 (관리자 역할이면 허용)
-            boolean isAdmin = currentUser.getRole() != null && (
-                    currentUser.getRole().isAdmin()
-                    || currentUser.getRole() == com.coresolution.consultation.constant.UserRole.ADMIN
-                    || currentUser.getRole() == com.coresolution.consultation.constant.UserRole.TENANT_ADMIN
-                    || currentUser.getRole() == com.coresolution.consultation.constant.UserRole.PRINCIPAL
-                    || currentUser.getRole() == com.coresolution.consultation.constant.UserRole.OWNER
-            );
-            
-            if (!isAdmin && !dynamicPermissionService.hasPermission(currentUser, "INTEGRATED_FINANCE_VIEW")) {
+            boolean isAdmin = currentUser.getRole() != null && (currentUser.getRole().isAdmin()
+                    || currentUser
+                            .getRole() == com.coresolution.consultation.constant.UserRole.ADMIN
+                    || currentUser
+                            .getRole() == com.coresolution.consultation.constant.UserRole.TENANT_ADMIN
+                    || currentUser
+                            .getRole() == com.coresolution.consultation.constant.UserRole.PRINCIPAL
+                    || currentUser
+                            .getRole() == com.coresolution.consultation.constant.UserRole.OWNER);
+
+            if (!isAdmin && !dynamicPermissionService.hasPermission(currentUser,
+                    "INTEGRATED_FINANCE_VIEW")) {
                 return ResponseEntity.status(403)
                         .body(Map.of("success", false, "message", "통합재무관리 접근 권한이 없습니다."));
             }

@@ -345,24 +345,24 @@ const ErpDashboard = ({ user: propUser }) => {
                 
                 // 동적 권한 체크 우선, 없으면 정적 권한 체크, 관리자는 항상 허용
                 // PermissionChecks 함수들이 이제 user를 받아서 관리자 권한을 자동으로 허용
-                const hasPurchaseRequestView = permissionChecks[PERMISSIONS.PURCHASE_REQUEST_VIEW] ?? 
+                const hasPurchaseRequestView = (permissionChecks[PERMISSIONS.PURCHASE_REQUEST_VIEW] ?? 
                   permissionChecks[PERMISSIONS.PURCHASE_REQUEST_MANAGE] ??
                   (PermissionChecks.canViewPurchaseRequests(userPermissions, currentUser) || 
-                   PermissionChecks.canManagePurchaseRequests(userPermissions, currentUser)) || isAdmin;
-                const hasApprovalManage = permissionChecks[PERMISSIONS.APPROVAL_MANAGE] ?? 
-                  PermissionChecks.canManageApprovals(userPermissions, currentUser) || isAdmin;
-                const hasItemManage = permissionChecks[PERMISSIONS.ITEM_MANAGE] ?? 
-                  PermissionChecks.canManageItems(userPermissions, currentUser) || isAdmin;
-                const hasBudgetManage = permissionChecks[PERMISSIONS.BUDGET_MANAGE] ?? 
-                  PermissionChecks.canManageBudget(userPermissions, currentUser) || isAdmin;
-                const hasSalaryManage = permissionChecks[PERMISSIONS.SALARY_MANAGE] ?? 
-                  PermissionChecks.canManageSalary(userPermissions, currentUser) || isAdmin;
-                const hasTaxManage = permissionChecks[PERMISSIONS.TAX_MANAGE] ?? 
-                  PermissionChecks.canManageTax(userPermissions, currentUser) || isAdmin;
-                const hasIntegratedFinanceView = permissionChecks[PERMISSIONS.INTEGRATED_FINANCE_VIEW] ?? 
-                  PermissionChecks.canViewIntegratedFinance(userPermissions, currentUser) || isAdmin;
-                const hasRefundManage = permissionChecks[PERMISSIONS.REFUND_MANAGE] ?? 
-                  PermissionChecks.canManageRefund(userPermissions, currentUser) || isAdmin;
+                   PermissionChecks.canManagePurchaseRequests(userPermissions, currentUser))) || isAdmin;
+                const hasApprovalManage = (permissionChecks[PERMISSIONS.APPROVAL_MANAGE] ?? 
+                  PermissionChecks.canManageApprovals(userPermissions, currentUser)) || isAdmin;
+                const hasItemManage = (permissionChecks[PERMISSIONS.ITEM_MANAGE] ?? 
+                  PermissionChecks.canManageItems(userPermissions, currentUser)) || isAdmin;
+                const hasBudgetManage = (permissionChecks[PERMISSIONS.BUDGET_MANAGE] ?? 
+                  PermissionChecks.canManageBudget(userPermissions, currentUser)) || isAdmin;
+                const hasSalaryManage = (permissionChecks[PERMISSIONS.SALARY_MANAGE] ?? 
+                  PermissionChecks.canManageSalary(userPermissions, currentUser)) || isAdmin;
+                const hasTaxManage = (permissionChecks[PERMISSIONS.TAX_MANAGE] ?? 
+                  PermissionChecks.canManageTax(userPermissions, currentUser)) || isAdmin;
+                const hasIntegratedFinanceView = (permissionChecks[PERMISSIONS.INTEGRATED_FINANCE_VIEW] ?? 
+                  PermissionChecks.canViewIntegratedFinance(userPermissions, currentUser)) || isAdmin;
+                const hasRefundManage = (permissionChecks[PERMISSIONS.REFUND_MANAGE] ?? 
+                  PermissionChecks.canManageRefund(userPermissions, currentUser)) || isAdmin;
                 
                 return (
                   <>

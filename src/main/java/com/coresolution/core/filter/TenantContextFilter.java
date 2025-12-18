@@ -38,8 +38,27 @@ public class TenantContextFilter implements Filter {
     @org.springframework.beans.factory.annotation.Value("${local.default-tenant-id:${LOCAL_DEFAULT_TENANT_ID:}}")
     private String localDefaultTenantId;
 
-    public TenantContextFilter(com.coresolution.core.repository.TenantRepository tenantRepository) {
+    public TenantContextFilter(com.coresolution.core.repository.TenantRepository tenantRepository,
+                               org.springframework.core.env.Environment environment) {
         this.tenantRepository = tenantRepository;
+        this.environment = environment;
+    }
+    
+    /**
+     * 로컬 프로파일 여부 확인
+     * @return 로컬 프로파일이면 true
+     */
+    private boolean isLocalProfile() {
+        if (environment == null) {
+            return false;
+        }
+        String[] activeProfiles = environment.getActiveProfiles();
+        for (String profile : activeProfiles) {
+            if ("local".equals(profile)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

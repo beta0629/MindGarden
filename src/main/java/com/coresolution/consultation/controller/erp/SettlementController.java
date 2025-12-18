@@ -37,7 +37,6 @@ public class SettlementController extends BaseApiController {
 
     private final SettlementService settlementService;
     private final DynamicPermissionService dynamicPermissionService;
-    private final Environment environment;
 
     /**
      * ERP 접근 권한 체크 (동적 권한 시스템)
@@ -49,19 +48,15 @@ public class SettlementController extends BaseApiController {
                     Map.of("success", false, "message", "로그인이 필요합니다.", "redirectToLogin", true));
         }
 
-        // 로컬/개발 환경에서는 관리자 역할이면 허용
-        if (environment != null && (environment
-                .acceptsProfiles(org.springframework.core.env.Profiles.of("local"))
-                || environment.acceptsProfiles(org.springframework.core.env.Profiles.of("dev")))) {
-            if (currentUser.getRole() != null
-                    && (currentUser.getRole().isAdmin() || currentUser.getRole() == UserRole.ADMIN
-                            || currentUser.getRole() == UserRole.TENANT_ADMIN
-                            || currentUser.getRole() == UserRole.PRINCIPAL
-                            || currentUser.getRole() == UserRole.OWNER)) {
-                log.debug("로컬/개발 모드: 관리자 역할로 ERP 접근 허용, 사용자={}, 역할={}", currentUser.getEmail(),
-                        currentUser.getRole());
-                return null; // 권한 있음
-            }
+        // 관리자 역할이면 항상 허용 (모든 환경)
+        if (currentUser.getRole() != null
+                && (currentUser.getRole().isAdmin() || currentUser.getRole() == UserRole.ADMIN
+                        || currentUser.getRole() == UserRole.TENANT_ADMIN
+                        || currentUser.getRole() == UserRole.PRINCIPAL
+                        || currentUser.getRole() == UserRole.OWNER)) {
+            log.debug("관리자 역할로 ERP 접근 허용, 사용자={}, 역할={}", currentUser.getEmail(),
+                    currentUser.getRole());
+            return null; // 권한 있음
         }
 
         // 동적 권한 체크 (ERP_ACCESS 권한 필요)

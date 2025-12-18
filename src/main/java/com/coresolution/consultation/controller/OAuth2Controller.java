@@ -375,24 +375,27 @@ public class OAuth2Controller extends BaseApiController {
                 }
             }
 
-            // 로컬 환경(localhost)에서는 기본 테넌트 사용 또는 환경 변수에서 가져오기
+            // 로컬 프로파일에서만 기본 테넌트 사용 (개발/운영 환경에서는 서브도메인 필수)
             if (tenantId == null || tenantId.isEmpty()) {
+                // Spring Profile 확인 (로컬 환경만)
+                boolean isLocalProfile = isLocalProfile();
                 String host = request.getHeader("Host");
                 if (host == null || host.isEmpty()) {
                     host = request.getHeader("X-Forwarded-Host");
                 }
                 boolean isLocalhost = host != null && (host.contains("localhost") || host.contains("127.0.0.1"));
                 
-                if (isLocalhost && localDefaultTenantId != null && !localDefaultTenantId.isEmpty()) {
+                // 로컬 프로파일이고 localhost인 경우에만 기본 테넌트 사용
+                if (isLocalProfile && isLocalhost && localDefaultTenantId != null && !localDefaultTenantId.isEmpty()) {
                     tenantId = localDefaultTenantId;
-                    log.info("로컬 환경 감지 - 기본 테넌트 사용: tenantId={}", tenantId);
-                } else if (isLocalhost) {
-                    // 로컬 환경이지만 기본 테넌트가 설정되지 않은 경우
+                    log.info("로컬 프로파일 감지 - 기본 테넌트 사용: tenantId={}", tenantId);
+                } else if (isLocalProfile && isLocalhost) {
+                    // 로컬 프로파일이지만 기본 테넌트가 설정되지 않은 경우
                     log.warn("로컬 환경에서 테넌트 정보가 없습니다. local.default-tenant-id 또는 LOCAL_DEFAULT_TENANT_ID 환경 변수를 설정해주세요.");
                     return badRequest("테넌트 정보가 없습니다. 로컬 환경에서는 local.default-tenant-id 또는 LOCAL_DEFAULT_TENANT_ID 환경 변수를 설정해주세요.",
                             "TENANT_REQUIRED");
                 } else {
-                    // 프로덕션 환경에서는 서브도메인 필수
+                    // 개발/운영 환경에서는 서브도메인 필수
                     return badRequest("테넌트 정보가 없습니다. 반드시 서브도메인으로 접속 후 소셜 로그인을 진행해주세요.",
                             "TENANT_REQUIRED");
                 }
@@ -531,24 +534,27 @@ public class OAuth2Controller extends BaseApiController {
                 }
             }
 
-            // 로컬 환경(localhost)에서는 기본 테넌트 사용 또는 환경 변수에서 가져오기
+            // 로컬 프로파일에서만 기본 테넌트 사용 (개발/운영 환경에서는 서브도메인 필수)
             if (tenantId == null || tenantId.isEmpty()) {
+                // Spring Profile 확인 (로컬 환경만)
+                boolean isLocalProfile = isLocalProfile();
                 String host = request.getHeader("Host");
                 if (host == null || host.isEmpty()) {
                     host = request.getHeader("X-Forwarded-Host");
                 }
                 boolean isLocalhost = host != null && (host.contains("localhost") || host.contains("127.0.0.1"));
                 
-                if (isLocalhost && localDefaultTenantId != null && !localDefaultTenantId.isEmpty()) {
+                // 로컬 프로파일이고 localhost인 경우에만 기본 테넌트 사용
+                if (isLocalProfile && isLocalhost && localDefaultTenantId != null && !localDefaultTenantId.isEmpty()) {
                     tenantId = localDefaultTenantId;
-                    log.info("로컬 환경 감지 - 기본 테넌트 사용: tenantId={}", tenantId);
-                } else if (isLocalhost) {
-                    // 로컬 환경이지만 기본 테넌트가 설정되지 않은 경우
+                    log.info("로컬 프로파일 감지 - 기본 테넌트 사용: tenantId={}", tenantId);
+                } else if (isLocalProfile && isLocalhost) {
+                    // 로컬 프로파일이지만 기본 테넌트가 설정되지 않은 경우
                     log.warn("로컬 환경에서 테넌트 정보가 없습니다. local.default-tenant-id 또는 LOCAL_DEFAULT_TENANT_ID 환경 변수를 설정해주세요.");
                     return badRequest("테넌트 정보가 없습니다. 로컬 환경에서는 local.default-tenant-id 또는 LOCAL_DEFAULT_TENANT_ID 환경 변수를 설정해주세요.",
                             "TENANT_REQUIRED");
                 } else {
-                    // 프로덕션 환경에서는 서브도메인 필수
+                    // 개발/운영 환경에서는 서브도메인 필수
                     return badRequest("테넌트 정보가 없습니다. 반드시 서브도메인으로 접속 후 소셜 로그인을 진행해주세요.",
                             "TENANT_REQUIRED");
                 }

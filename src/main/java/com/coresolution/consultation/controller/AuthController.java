@@ -74,6 +74,7 @@ public class AuthController extends BaseApiController {
     private final UserRoleQueryService userRoleQueryService;
     private final TenantRoleRepository tenantRoleRepository;
     private final UserPersonalDataCacheService userPersonalDataCacheService;
+    private final org.springframework.core.env.Environment environment;
     
     // 로컬 개발 환경용 기본 테넌트 ID (서브도메인이 없을 때 사용)
     @org.springframework.beans.factory.annotation.Value("${local.default-tenant-id:${LOCAL_DEFAULT_TENANT_ID:}}")
@@ -538,12 +539,14 @@ public class AuthController extends BaseApiController {
         
         log.info("🔐 로그인 시도: email={}, password={}", email, password != null ? "***" : "null");
         
-        // 로컬 환경에서 기본 테넌트 ID 설정 (로그인 API는 공개 API이므로 필터를 건너뛰므로 여기서 설정)
+        // 로컬 프로파일에서만 기본 테넌트 ID 설정 (로그인 API는 공개 API이므로 필터를 건너뛰므로 여기서 설정)
+        // 개발/운영 환경에서는 서브도메인 기반으로 정상 동작
+        boolean isLocalProfile = isLocalProfile();
         String host = httpRequest.getHeader("Host");
         boolean isLocalhost = host != null && (host.contains("localhost") || host.contains("127.0.0.1"));
-        if (isLocalhost && localDefaultTenantId != null && !localDefaultTenantId.isEmpty()) {
+        if (isLocalProfile && isLocalhost && localDefaultTenantId != null && !localDefaultTenantId.isEmpty()) {
             TenantContextHolder.setTenantId(localDefaultTenantId);
-            log.info("로컬 환경 감지 - 기본 테넌트 설정: tenantId={}", localDefaultTenantId);
+            log.info("로컬 프로파일 감지 - 기본 테넌트 설정: tenantId={}", localDefaultTenantId);
         }
         
         // 클라이언트 정보 추출

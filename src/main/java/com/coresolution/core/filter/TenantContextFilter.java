@@ -317,11 +317,12 @@ public class TenantContextFilter implements Filter {
         // 예: tenant1.core-solution.co.kr → tenant1 → tenant-seoul-consultation-001
         String host = request.getHeader("Host");
         if (host != null && !host.isEmpty()) {
-            // 로컬 환경 감지 (localhost 또는 127.0.0.1)
+            // 로컬 프로파일이고 localhost인 경우에만 기본 테넌트 사용
             boolean isLocalhost = host.contains("localhost") || host.contains("127.0.0.1");
+            boolean isLocalProfile = isLocalProfile();
             
-            if (isLocalhost && localDefaultTenantId != null && !localDefaultTenantId.isEmpty()) {
-                log.info("로컬 환경 감지 - 기본 테넌트 사용: tenantId={}", localDefaultTenantId);
+            if (isLocalProfile && isLocalhost && localDefaultTenantId != null && !localDefaultTenantId.isEmpty()) {
+                log.info("로컬 프로파일 감지 - 기본 테넌트 사용: tenantId={}", localDefaultTenantId);
                 return localDefaultTenantId;
             }
             
@@ -348,13 +349,14 @@ public class TenantContextFilter implements Filter {
             }
         }
 
-        // 4. 로컬 환경이지만 서브도메인도 없는 경우 기본 테넌트 사용
+        // 4. 로컬 프로파일이지만 서브도메인도 없는 경우 기본 테넌트 사용
         if (host != null && (host.contains("localhost") || host.contains("127.0.0.1"))) {
-            if (localDefaultTenantId != null && !localDefaultTenantId.isEmpty()) {
-                log.info("로컬 환경 감지 (서브도메인 없음) - 기본 테넌트 사용: tenantId={}", localDefaultTenantId);
+            boolean isLocalProfile = isLocalProfile();
+            if (isLocalProfile && localDefaultTenantId != null && !localDefaultTenantId.isEmpty()) {
+                log.info("로컬 프로파일 감지 (서브도메인 없음) - 기본 테넌트 사용: tenantId={}", localDefaultTenantId);
                 return localDefaultTenantId;
-            } else {
-                log.warn("⚠️ 로컬 환경에서 테넌트 정보가 없습니다. local.default-tenant-id 또는 LOCAL_DEFAULT_TENANT_ID 환경 변수를 설정해주세요.");
+            } else if (isLocalProfile) {
+                log.warn("⚠️ 로컬 프로파일에서 테넌트 정보가 없습니다. local.default-tenant-id 또는 LOCAL_DEFAULT_TENANT_ID 환경 변수를 설정해주세요.");
             }
         }
 

@@ -1480,6 +1480,8 @@ const LedgersTab = () => {
   const [selectedAccountId, setSelectedAccountId] = useState(null);
   const [periodStart, setPeriodStart] = useState('');
   const [periodEnd, setPeriodEnd] = useState('');
+  const [selectedLedger, setSelectedLedger] = useState(null);
+  const [showLedgerDetailModal, setShowLedgerDetailModal] = useState(false);
 
   useEffect(() => {
     if (selectedAccountId) {
@@ -1574,7 +1576,11 @@ const LedgersTab = () => {
               </thead>
               <tbody>
                 {ledgers.map((ledger, idx) => (
-                  <tr key={idx}>
+                  <tr 
+                    key={idx}
+                    style={{ cursor: 'pointer' }}
+                    onClick={() => { setSelectedLedger(ledger); setShowLedgerDetailModal(true); }}
+                  >
                     <td data-label="계정 ID">{ledger.accountId}</td>
                     <td data-label="기간 시작">{ledger.periodStart}</td>
                     <td data-label="기간 종료">{ledger.periodEnd}</td>
@@ -1591,6 +1597,14 @@ const LedgersTab = () => {
           <p className="mg-v2-text-center mg-v2-text-secondary">원장 데이터가 없습니다.</p>
         ) : (
           <p className="mg-v2-text-center mg-v2-text-secondary">계정을 선택해주세요.</p>
+        )}
+
+        {/* 원장 상세 모달 */}
+        {showLedgerDetailModal && selectedLedger && (
+          <LedgerDetailModal
+            ledger={selectedLedger}
+            onClose={() => { setShowLedgerDetailModal(false); setSelectedLedger(null); }}
+          />
         )}
       </DashboardSection>
     </section>
@@ -2424,6 +2438,51 @@ const SettlementRuleModal = ({ rule, onClose, onRefresh }) => {
           >
             저장
           </MGButton>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// 원장 상세 모달 컴포넌트
+const LedgerDetailModal = ({ ledger, onClose }) => {
+  return (
+    <div className="mg-v2-modal-overlay" onClick={onClose}>
+      <div className="mg-v2-modal-content" onClick={(e) => e.stopPropagation()}>
+        <div className="mg-v2-modal-header">
+          <h3 className="mg-v2-modal-title">원장 상세</h3>
+          <button className="mg-v2-modal-close" onClick={onClose}>×</button>
+        </div>
+        <div className="mg-v2-modal-body">
+          <div className="mg-v2-form-group">
+            <div className="mg-v2-mb-md">
+              <label className="mg-v2-label">계정 ID</label>
+              <div className="mg-v2-text">{ledger.accountId}</div>
+            </div>
+            <div className="mg-v2-mb-md">
+              <label className="mg-v2-label">기간</label>
+              <div className="mg-v2-text">{ledger.periodStart} ~ {ledger.periodEnd}</div>
+            </div>
+            <div className="mg-v2-mb-md">
+              <label className="mg-v2-label">기초잔액</label>
+              <div className="mg-v2-text">{formatCurrency(ledger.openingBalance || 0)}</div>
+            </div>
+            <div className="mg-v2-mb-md">
+              <label className="mg-v2-label">차변합계</label>
+              <div className="mg-v2-text">{formatCurrency(ledger.totalDebit || 0)}</div>
+            </div>
+            <div className="mg-v2-mb-md">
+              <label className="mg-v2-label">대변합계</label>
+              <div className="mg-v2-text">{formatCurrency(ledger.totalCredit || 0)}</div>
+            </div>
+            <div className="mg-v2-mb-md">
+              <label className="mg-v2-label">기말잔액</label>
+              <div className="mg-v2-text mg-v2-font-weight-bold">{formatCurrency(ledger.closingBalance || 0)}</div>
+            </div>
+          </div>
+        </div>
+        <div className="mg-v2-modal-footer">
+          <MGButton variant="secondary" onClick={onClose}>닫기</MGButton>
         </div>
       </div>
     </div>

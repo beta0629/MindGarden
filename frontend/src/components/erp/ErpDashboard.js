@@ -8,7 +8,7 @@ import SimpleLayout from '../layout/SimpleLayout';
 import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import StatCard from '../ui/Card/StatCard';
 import DashboardSection from '../layout/DashboardSection';
-import { LayoutDashboard, Package, Clock, ShoppingCart, TrendingUp, DollarSign } from 'lucide-react';
+import { LayoutDashboard, Package, Clock, ShoppingCart, TrendingUp, DollarSign, Receipt, BookOpen, Calculator, FileText } from 'lucide-react';
 import { WIDGET_CONSTANTS } from '../../constants/widgetConstants';
 import Button from '../ui/Button/Button';
 // import MGButton from '../../components/common/MGButton'; // 임시 비활성화
@@ -444,6 +444,43 @@ const ErpDashboard = ({ user: propUser }) => {
                         <h3>환불 관리 시스템</h3>
                         <p className="mg-management-description">환불 요청 및 처리 내역을 관리합니다</p>
                       </div>
+                    )}
+                    
+                    {/* ERP 고도화 메뉴 (관리자는 항상 접근 가능) */}
+                    {hasIntegratedFinanceView && (
+                      <>
+                        <div className="mg-management-card" onClick={() => navigate('/admin/erp/financial?tab=journal-entries')}>
+                          <div className="mg-management-icon">
+                            <Receipt />
+                          </div>
+                          <h3>분개 관리</h3>
+                          <p className="mg-management-description">회계 분개를 생성, 승인, 전기합니다</p>
+                        </div>
+                        
+                        <div className="mg-management-card" onClick={() => navigate('/admin/erp/financial?tab=ledgers')}>
+                          <div className="mg-management-icon">
+                            <BookOpen />
+                          </div>
+                          <h3>원장 조회</h3>
+                          <p className="mg-management-description">계정별 원장을 조회하고 상세 내역을 확인합니다</p>
+                        </div>
+                        
+                        <div className="mg-management-card" onClick={() => navigate('/admin/erp/financial?tab=settlement')}>
+                          <div className="mg-management-icon">
+                            <Calculator />
+                          </div>
+                          <h3>정산 관리</h3>
+                          <p className="mg-management-description">정산 규칙을 설정하고 정산을 계산 및 승인합니다</p>
+                        </div>
+                        
+                        <div className="mg-management-card" onClick={() => navigate('/admin/erp/financial?tab=cash-flow')}>
+                          <div className="mg-management-icon">
+                            <FileText />
+                          </div>
+                          <h3>현금흐름표</h3>
+                          <p className="mg-management-description">영업, 투자, 재무 활동의 현금흐름을 확인합니다</p>
+                        </div>
+                      </>
                     )}
                   </>
                 );

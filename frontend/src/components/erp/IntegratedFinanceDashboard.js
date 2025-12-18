@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { useSession } from '../../contexts/SessionContext';
 import { sessionManager } from '../../utils/sessionManager';
@@ -120,10 +120,11 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
   const { user: sessionUser, isLoggedIn, isLoading: sessionLoading } = useSession();
   const [userPermissions, setUserPermissions] = useState([]);
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'overview');
   const [selectedPeriod, setSelectedPeriod] = useState('monthly');
   const [showTransactionForm, setShowTransactionForm] = useState(false);
   const [showQuickExpenseForm, setShowQuickExpenseForm] = useState(false);

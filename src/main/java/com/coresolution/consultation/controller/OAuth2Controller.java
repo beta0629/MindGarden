@@ -257,9 +257,9 @@ public class OAuth2Controller extends BaseApiController {
     }
 
     /**
-     * OAuth2 콜백은 메인 도메인으로 들어오는 경우가 있어, 회원가입/오류 리다이렉트는 tenantId 기준으로 원래 테넌트
-     * 서브도메인으로 복원해야 함. 우선순위: - tenantId로 Tenant.subdomain 조회 성공 시:
-     * https://{subdomain}.{parentDomain} - 실패 시: 기존 getFrontendBaseUrl(request) fallback
+     * OAuth2 콜백은 메인 도메인으로 들어오는 경우가 있어, 회원가입/오류 리다이렉트는 tenantId 기준으로 원래 테넌트 서브도메인으로 복원해야 함. 우선순위: -
+     * tenantId로 Tenant.subdomain 조회 성공 시: https://{subdomain}.{parentDomain} - 실패 시: 기존
+     * getFrontendBaseUrl(request) fallback
      */
     private String getTenantAwareFrontendBaseUrl(HttpServletRequest request, String tenantId) {
         try {
@@ -937,7 +937,8 @@ public class OAuth2Controller extends BaseApiController {
                             // 포트 제거
                             String hostWithoutPort =
                                     hostForFallback != null ? hostForFallback.split(":")[0] : "";
-                            configuredDomain = oauth2DomainUtil.convertToMainDomain(hostWithoutPort);
+                            configuredDomain =
+                                    oauth2DomainUtil.convertToMainDomain(hostWithoutPort);
                         }
                         // requestScheme과 portSuffix는 이미 위에서 설정됨
                         String configuredRedirectUri = requestScheme + "://" + configuredDomain

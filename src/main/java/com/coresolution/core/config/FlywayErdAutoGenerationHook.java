@@ -76,8 +76,7 @@ public class FlywayErdAutoGenerationHook {
     }
 
     /**
-     * 개발 서버용 Flyway 마이그레이션 전략 (ERD 자동 생성 없음) 
-     * 개발 환경에서는 검증 오류 시 repair를 먼저 실행한 후 마이그레이션 진행
+     * 개발 서버용 Flyway 마이그레이션 전략 (ERD 자동 생성 없음) 개발 환경에서는 검증 오류 시 repair를 먼저 실행한 후 마이그레이션 진행
      */
     @Bean
     @Profile("dev")
@@ -92,7 +91,7 @@ public class FlywayErdAutoGenerationHook {
                 } catch (Exception repairException) {
                     log.warn("⚠️ Flyway repair 실패 (무시하고 계속 진행): {}", repairException.getMessage());
                 }
-                
+
                 // repair 후 마이그레이션 실행
                 flyway.migrate();
                 log.info("✅ Flyway 마이그레이션 완료 (개발 서버 - ERD 자동 생성 비활성화)");

@@ -21,10 +21,10 @@ import java.util.regex.Pattern;
 @Component
 public class OAuth2DomainUtil {
 
-    @Value("${spring.security.oauth2.domain.main-domains:dev.core-solution.co.kr,dev.m-garden.co.kr}")
+    @Value("${spring.security.oauth2.domain.main-domains:dev.core-solution.co.kr}")
     private String mainDomainsConfig;
 
-    @Value("${spring.security.oauth2.domain.subdomain-patterns:.*\\.dev\\.core-solution\\.co\\.kr,.*\\.core-solution\\.co\\.kr,.*\\.dev\\.m-garden\\.co\\.kr,.*\\.m-garden\\.co\\.kr}")
+    @Value("${spring.security.oauth2.domain.subdomain-patterns:.*\\.dev\\.core-solution\\.co\\.kr,.*\\.core-solution\\.co\\.kr}")
     private String subdomainPatternsConfig;
 
     @Value("${spring.security.oauth2.domain.remove-regex-pattern:true}")

@@ -279,6 +279,7 @@ export const ERP_API = {
   // 분개 관리
   JOURNAL_ENTRIES: '/api/v1/erp/accounting/entries',
   JOURNAL_ENTRY_DETAIL: (id) => `/api/v1/erp/accounting/entries/${id}`,
+  JOURNAL_ENTRY_UPDATE: (id) => `/api/v1/erp/accounting/entries/${id}`,
   JOURNAL_ENTRY_APPROVE: (id) => `/api/v1/erp/accounting/entries/${id}/approve`,
   JOURNAL_ENTRY_POST: (id) => `/api/v1/erp/accounting/entries/${id}/post`,
   

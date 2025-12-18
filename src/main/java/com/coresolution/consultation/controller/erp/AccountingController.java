@@ -108,6 +108,27 @@ public class AccountingController extends BaseApiController {
     }
     
     /**
+     * 분개 수정 (DRAFT 상태에서만 가능)
+     * PUT /api/v1/erp/accounting/entries/{id}
+     * 표준 문서: docs/standards/ERP_ADVANCEMENT_STANDARD.md
+     */
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse<AccountingEntry>> updateJournalEntry(
+            @PathVariable Long id,
+            @RequestBody JournalEntryCreateRequest request) {
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        log.info("분개 수정 요청: tenantId={}, entryId={}", tenantId, id);
+        
+        AccountingEntry entry = request.toAccountingEntry();
+        List<JournalEntryLine> lines = request.getLines().stream()
+            .map(JournalEntryLineRequest::toJournalEntryLine)
+            .toList();
+        
+        AccountingEntry updated = accountingService.updateJournalEntry(tenantId, id, entry, lines);
+        return success("분개가 수정되었습니다.", updated);
+    }
+    
+    /**
      * 분개 생성 요청 DTO
      */
     @Data

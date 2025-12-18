@@ -310,5 +310,77 @@ public class AccountingServiceImpl implements AccountingService {
         
         return String.format("JE-%s-%d-%04d", tenantId, currentYear, nextSequence);
     }
+    
+    @Override
+    @Transactional
+    public AccountingEntry updateJournalEntry(String tenantId, Long entryId, AccountingEntry entry, List<JournalEntryLine> lines) {
+        // 0. 테넌트 컨텍스트 검증
+        String currentTenantId = TenantContextHolder.getTenantId();
+        if (currentTenantId == null || !currentTenantId.equals(tenantId)) {
+            throw new IllegalStateException("테넌트 ID 불일치");
+        }
+        
+        // 1. 분개 조회 (테넌트 검증)
+        AccountingEntry existingEntry = accountingEntryRepository.findById(entryId)
+            .orElseThrow(() -> new IllegalArgumentException("분개를 찾을 수 없습니다: " + entryId));
+        
+        if (!existingEntry.getTenantId().equals(tenantId)) {
+            throw new IllegalStateException("다른 테넌트의 분개입니다.");
+        }
+        
+        // 2. DRAFT 상태 확인 (DRAFT 상태에서만 수정 가능)
+        if (existingEntry.getEntryStatus() != AccountingEntry.EntryStatus.DRAFT) {
+            throw new IllegalStateException("DRAFT 상태의 분개만 수정할 수 있습니다. 현재 상태: " + existingEntry.getEntryStatus());
+        }
+        
+        // 3. 차변/대변 합계 계산
+        BigDecimal totalDebit = lines.stream()
+            .map(JournalEntryLine::getDebitAmount)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+        
+        BigDecimal totalCredit = lines.stream()
+            .map(JournalEntryLine::getCreditAmount)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+        
+        // 4. 차변/대변 균형 검증
+        if (totalDebit.compareTo(totalCredit) != 0) {
+            throw new IllegalArgumentException(
+                String.format("차변/대변 불균형: 차변=%s, 대변=%s", totalDebit, totalCredit)
+            );
+        }
+        
+        // 5. 분개 정보 업데이트
+        existingEntry.setEntryDate(entry.getEntryDate());
+        existingEntry.setDescription(entry.getDescription());
+        existingEntry.setTotalDebit(totalDebit);
+        existingEntry.setTotalCredit(totalCredit);
+        
+        // 6. 기존 라인 삭제 (soft delete)
+        List<JournalEntryLine> existingLines = journalEntryLineRepository.findByJournalEntryId(entryId);
+        for (JournalEntryLine existingLine : existingLines) {
+            existingLine.setIsDeleted(true);
+            existingLine.setDeletedAt(LocalDateTime.now());
+            journalEntryLineRepository.save(existingLine);
+        }
+        
+        // 7. 새 라인 저장
+        for (int i = 0; i < lines.size(); i++) {
+            JournalEntryLine line = lines.get(i);
+            line.setId(null); // 새로 생성
+            line.setJournalEntry(existingEntry);
+            line.setTenantId(tenantId);
+            line.setLineNumber(i + 1);
+            line.setIsDeleted(false);
+            journalEntryLineRepository.save(line);
+        }
+        
+        // 8. 분개 저장
+        AccountingEntry savedEntry = accountingEntryRepository.save(existingEntry);
+        
+        log.info("분개 수정 완료: tenantId={}, entryId={}, entryNumber={}", 
+            tenantId, entryId, savedEntry.getEntryNumber());
+        
+        return savedEntry;
+    }
 }
 

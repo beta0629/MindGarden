@@ -43,5 +43,11 @@ public interface AccountingService {
      * 표준 문서: docs/standards/ERP_ADVANCEMENT_STANDARD.md
      */
     AccountingEntry createJournalEntryFromTransaction(com.coresolution.consultation.entity.FinancialTransaction transaction);
+    
+    /**
+     * 분개 수정 (DRAFT 상태에서만 가능)
+     * 표준 문서: docs/standards/ERP_ADVANCEMENT_STANDARD.md
+     */
+    AccountingEntry updateJournalEntry(String tenantId, Long entryId, AccountingEntry entry, List<com.coresolution.consultation.entity.JournalEntryLine> lines);
 }
 

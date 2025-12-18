@@ -327,11 +327,17 @@ if [ -d "backend-ops" ]; then
     if [ -f "./gradlew" ]; then
         echo -e "${BLUE}   Gradle Wrapper로 실행${NC}"
         chmod +x gradlew
-        ./gradlew bootRun > ../logs/ops-backend.log 2>&1 &
+        # ⚠️ 중요: OPS 백엔드는 메인(CoreSolution) 백엔드(8080)와 포트가 겹치면 안 됩니다.
+        # load-env.sh 또는 외부 환경에서 SERVER_PORT=8080이 설정되어 있을 수 있으므로
+        # OPS 백엔드 실행 프로세스에만 SERVER_PORT=8081을 강제 주입합니다.
+        (
+            export SERVER_PORT=8081
+            ./gradlew bootRun
+        ) > ../logs/ops-backend.log 2>&1 &
         OPS_BACKEND_PID=$!
     elif [ -f "./gradlew.bat" ]; then
         echo -e "${BLUE}   Gradle Wrapper (Windows)로 실행${NC}"
-        cmd.exe //c "cd /d $PROJECT_ROOT/backend-ops && gradlew.bat bootRun" > ../logs/ops-backend.log 2>&1 &
+        cmd.exe //c "set SERVER_PORT=8081 && cd /d $PROJECT_ROOT/backend-ops && gradlew.bat bootRun" > ../logs/ops-backend.log 2>&1 &
         OPS_BACKEND_PID=$!
     else
         echo -e "${YELLOW}⚠️  backend-ops/gradlew를 찾을 수 없습니다. OPS 백엔드를 건너뜁니다.${NC}"

@@ -2104,7 +2104,7 @@ const JournalEntryDetailModal = ({ entry, onClose, onRefresh }) => {
     }
   };
 
-  return (
+  return ReactDOM.createPortal(
     <div className="mg-v2-modal-overlay" onClick={onClose}>
       <div className="mg-v2-modal-content" onClick={(e) => e.stopPropagation()}>
         <div className="mg-v2-modal-header">
@@ -2187,7 +2187,8 @@ const JournalEntryDetailModal = ({ entry, onClose, onRefresh }) => {
           onRefresh={() => { onRefresh(); onClose(); }}
         />
       )}
-    </div>
+    </div>,
+    document.body
   );
 };
 
@@ -2315,7 +2316,7 @@ const JournalEntryCreateModal = ({ onClose, onRefresh }) => {
   const { totalDebit, totalCredit } = calculateTotals();
   const isBalanced = totalDebit === totalCredit;
 
-  return (
+  return ReactDOM.createPortal(
     <div className="mg-v2-modal-overlay" onClick={onClose}>
       <div className="mg-v2-modal-content" style={{ maxWidth: '800px' }} onClick={(e) => e.stopPropagation()}>
         <div className="mg-v2-modal-header">
@@ -2464,7 +2465,8 @@ const JournalEntryCreateModal = ({ onClose, onRefresh }) => {
           </MGButton>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
@@ -2713,7 +2715,7 @@ const LedgerDetailModal = ({ ledger, onClose }) => {
     }
   };
 
-  return (
+  return ReactDOM.createPortal(
     <div className="mg-v2-modal-overlay" onClick={onClose}>
       <div className="mg-v2-modal-content" style={{ maxWidth: '900px' }} onClick={(e) => e.stopPropagation()}>
         <div className="mg-v2-modal-header">
@@ -2790,7 +2792,8 @@ const LedgerDetailModal = ({ ledger, onClose }) => {
           <MGButton variant="secondary" onClick={onClose}>닫기</MGButton>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
@@ -2925,7 +2928,7 @@ const JournalEntryEditModal = ({ entry, onClose, onRefresh }) => {
   const { totalDebit, totalCredit } = calculateTotals();
   const isBalanced = totalDebit === totalCredit;
 
-  return (
+  return ReactDOM.createPortal(
     <div className="mg-v2-modal-overlay" onClick={onClose}>
       <div className="mg-v2-modal-content" style={{ maxWidth: '800px' }} onClick={(e) => e.stopPropagation()}>
         <div className="mg-v2-modal-header">
@@ -3080,7 +3083,8 @@ const JournalEntryEditModal = ({ entry, onClose, onRefresh }) => {
           </MGButton>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

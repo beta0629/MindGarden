@@ -41,8 +41,8 @@ export const getCurrentUserDashboard = async (tenantId, tenantRoleId = null) => 
     return null;
   } catch (error) {
     // 404 오류는 조용히 처리 (대시보드가 없을 수 있음)
-    if (error.message && (error.message.includes('404') || error.message.includes('찾을 수 없습니다'))) {
-      console.log('⚠️ 동적 대시보드 없음, 역할 기반 라우팅으로 폴백');
+    if (error.status === 404 || (error.message && (error.message.includes('404') || error.message.includes('찾을 수 없습니다')))) {
+      // 404는 정상적인 상황이므로 조용히 처리 (콘솔 로그 제거)
       return null;
     }
     // 기타 오류는 로그만 남기고 null 반환

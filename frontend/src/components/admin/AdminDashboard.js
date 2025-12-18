@@ -1167,7 +1167,16 @@ const AdminDashboard = ({ user: propUser }) => {
                     icon={<Settings />}
                 >
                     <div className="mg-management-grid">
-                        <div className="mg-management-card" onClick={() => navigate('/erp/dashboard')}>
+                        <div 
+                            className="mg-management-card" 
+                            onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                console.log('🔗 ERP 대시보드 클릭 - 네비게이션 시작');
+                                navigate('/erp/dashboard');
+                            }}
+                            style={{ cursor: 'pointer' }}
+                        >
                             <div className="mg-management-icon">
                                 <FaChartLine />
                             </div>

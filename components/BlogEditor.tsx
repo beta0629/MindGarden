@@ -273,7 +273,7 @@ export default function BlogEditor({
       )}
       {isQuillLoaded && ReactQuill ? (
         <ReactQuill
-          ref={(el) => {
+          ref={(el: any) => {
             reactQuillRef.current = el;
             // ref가 설정되면 즉시 Quill 인스턴스 가져오기 시도
             if (el) {

@@ -3665,6 +3665,7 @@ body {
   background: var(--light-beige);
   border-radius: var(--radius-lg);
   overflow: hidden;
+  margin-bottom: var(--spacing-xs);
 }
 
 .mg-progress-fill {
@@ -5108,6 +5109,24 @@ body {
 .mg-text-sm.mg-text-muted {
   margin-bottom: var(--spacing-xs);
   padding-bottom: var(--spacing-xs);
+}
+
+/* mg-mt-xs를 사용하는 요소들에 추가 여백 확보 */
+.mg-mt-xs {
+  margin-top: var(--spacing-xs);
+  margin-bottom: var(--spacing-xs);
+  padding-bottom: var(--spacing-xs);
+}
+
+/* 위젯 내부 카드의 하단 텍스트 잘림 방지 */
+.mg-widget .mg-card {
+  overflow: visible;
+  padding-bottom: calc(var(--spacing-lg) + var(--spacing-sm));
+}
+
+.mg-widget .mg-card__body {
+  overflow: visible;
+  padding-bottom: calc(var(--spacing-md) + var(--spacing-sm));
 }
 
 /* ============================================

@@ -16,7 +16,7 @@
   min-height: 180px;
   transition: all 0.3s ease;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .widget:hover {
@@ -46,6 +46,13 @@
 
 .mg-widget__body {
   min-height: 100px;
+  padding-bottom: calc(var(--spacing-md, 1rem) + var(--spacing-sm, 0.5rem));
+  overflow: visible;
+}
+
+.mg-widget__content {
+  padding-bottom: var(--spacing-xs, 0.25rem);
+  overflow: visible;
 }
 
 .mg-widget--error {
@@ -86,10 +93,11 @@
   border: 1px solid var(--cs-primary-200);
   border-radius: 16px;
   padding: 1.5rem;
+  padding-bottom: calc(1.5rem + 0.5rem);
   text-align: center;
   transition: all 0.3s ease;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
   cursor: pointer;
 }
 

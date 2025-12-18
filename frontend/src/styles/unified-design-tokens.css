@@ -2402,6 +2402,87 @@ body {
   font-weight: 500;
 }
 
+/* 위젯 통계 카드 스타일 (mg-stats-card__*) */
+.mg-stats-card {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  background-color: var(--color-bg-primary);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--border-radius-md);
+  min-height: 80px;
+  box-shadow: var(--mg-shadow-sm);
+  transition: all 0.2s ease;
+}
+
+.mg-stats-card:hover {
+  box-shadow: var(--mg-shadow-md);
+  transform: translateY(-2px);
+}
+
+.mg-stats-card__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--border-radius-md);
+  background-color: var(--color-bg-secondary);
+  flex-shrink: 0;
+}
+
+.mg-stats-card__content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding-bottom: var(--spacing-xs);
+}
+
+.mg-stats-card__value {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: var(--color-text-primary);
+  line-height: 1.2;
+  margin-bottom: var(--spacing-xs);
+}
+
+.mg-stats-card__label {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  line-height: 1.4;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  margin: 0;
+  padding-bottom: var(--spacing-xs);
+}
+
+/* 통계 카드 변형 */
+.mg-stats-card--info {
+  border-left: 4px solid var(--color-info);
+}
+
+.mg-stats-card--success {
+  border-left: 4px solid var(--color-success);
+}
+
+.mg-stats-card--error {
+  border-left: 4px solid var(--color-danger);
+}
+
+.mg-stats-card--warning {
+  border-left: 4px solid var(--color-warning);
+}
+
+.mg-stats-card--primary {
+  border-left: 4px solid var(--color-primary);
+}
+
+.mg-stats-card--secondary {
+  border-left: 4px solid var(--color-secondary);
+}
+
 .mg-stat-change.positive {
   color: var(--status-success);
 }

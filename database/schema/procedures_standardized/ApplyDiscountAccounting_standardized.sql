@@ -134,7 +134,8 @@ BEGIN
         
         SET v_revenue_transaction_id = LAST_INSERT_ID();
         
-        -- 5. 할인 거래 생성 (음수로 저장, 테넌트 격리)
+        -- 5. 할인 거래 생성 (EXPENSE 타입으로 저장, 테넌트 격리)
+        -- 표준화: transaction_type은 INCOME 또는 EXPENSE만 사용 (DISCOUNT는 사용하지 않음)
         INSERT INTO financial_transactions (
             transaction_type, 
             category, 
@@ -151,10 +152,10 @@ BEGIN
             created_by,
             discount_code
         ) VALUES (
-            'DISCOUNT', 
+            'EXPENSE', 
             'SALES_DISCOUNT', 
             'PACKAGE_DISCOUNT', 
-            -p_discount_amount,
+            p_discount_amount,
             CONCAT('패키지 할인 - ', IFNULL(p_discount_code, '자동할인'), ' (', p_discount_amount, '원)'),
             p_mapping_id, 
             'CONSULTANT_CLIENT_MAPPING', 

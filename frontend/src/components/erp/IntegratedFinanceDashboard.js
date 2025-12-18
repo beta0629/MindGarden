@@ -7,6 +7,7 @@ import { getCodeLabel } from '../../utils/commonCodeUtils';
 import { fetchUserPermissions, PermissionChecks, PERMISSIONS } from '../../utils/permissionUtils';
 import { AUTH_API, ERP_API } from '../../constants/api';
 import { RoleUtils, USER_ROLES } from '../../constants/roles';
+import { COMMON_CSS_CLASSES } from '../../constants/css';
 import SimpleLayout from '../layout/SimpleLayout';
 import FinancialTransactionForm from './FinancialTransactionForm';
 import QuickExpenseForm from './QuickExpenseForm';
@@ -14,6 +15,7 @@ import UnifiedLoading from '../../components/common/UnifiedLoading';
 import StatCard from '../ui/Card/StatCard';
 import DashboardSection from '../layout/DashboardSection';
 import MGButton from '../../components/common/MGButton';
+import notificationManager from '../../utils/notification';
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -1369,10 +1371,10 @@ const JournalEntriesTab = () => {
   }
 
   return (
-    <div>
+    <section className="mg-v2-section">
       <DashboardSection title="분개 관리" icon={<Receipt size={20} />}>
-        <div className="journal-entries-table">
-          <table className="mg-table">
+        <div className="mg-v2-table-container">
+          <table className="mg-table" data-label="분개 목록">
             <thead>
               <tr>
                 <th>분개번호</th>
@@ -1384,52 +1386,63 @@ const JournalEntriesTab = () => {
               </tr>
             </thead>
             <tbody>
-              {entries.map(entry => (
-                <tr key={entry.id}>
-                  <td>{entry.entryNumber}</td>
-                  <td>{entry.entryDate}</td>
-                  <td>{formatCurrency(entry.totalDebit || 0)}</td>
-                  <td>{formatCurrency(entry.totalCredit || 0)}</td>
-                  <td>
-                    <span className={`status-badge status-${entry.entryStatus?.toLowerCase()}`}>
-                      {entry.entryStatus === 'DRAFT' ? '초안' : 
-                       entry.entryStatus === 'APPROVED' ? '승인됨' : 
-                       entry.entryStatus === 'POSTED' ? '전기됨' : entry.entryStatus}
-                    </span>
-                  </td>
-                  <td>
-                    <div className="action-buttons">
-                      <button 
-                        onClick={() => { setSelectedEntry(entry); setShowDetailModal(true); }}
-                        className="btn-view"
-                      >
-                        상세
-                      </button>
-                      {entry.entryStatus === 'DRAFT' && (
-                        <button 
-                          onClick={() => handleApprove(entry.id)}
-                          className="btn-approve"
-                        >
-                          승인
-                        </button>
-                      )}
-                      {entry.entryStatus === 'APPROVED' && (
-                        <button 
-                          onClick={() => handlePost(entry.id)}
-                          className="btn-post"
-                        >
-                          전기
-                        </button>
-                      )}
-                    </div>
+              {entries.length === 0 ? (
+                <tr>
+                  <td colSpan="6" className="mg-v2-text-center mg-v2-text-secondary">
+                    분개가 없습니다.
                   </td>
                 </tr>
-              ))}
+              ) : (
+                entries.map(entry => (
+                  <tr key={entry.id}>
+                    <td data-label="분개번호">{entry.entryNumber}</td>
+                    <td data-label="분개일자">{entry.entryDate}</td>
+                    <td data-label="차변합계">{formatCurrency(entry.totalDebit || 0)}</td>
+                    <td data-label="대변합계">{formatCurrency(entry.totalCredit || 0)}</td>
+                    <td data-label="상태">
+                      <span className={`mg-v2-badge mg-v2-badge--${entry.entryStatus?.toLowerCase() || 'default'}`}>
+                        {entry.entryStatus === 'DRAFT' ? '초안' : 
+                         entry.entryStatus === 'APPROVED' ? '승인됨' : 
+                         entry.entryStatus === 'POSTED' ? '전기됨' : entry.entryStatus}
+                      </span>
+                    </td>
+                    <td data-label="작업">
+                      <div className={COMMON_CSS_CLASSES.ACTION_BUTTONS}>
+                        <MGButton
+                          variant="outline"
+                          size="small"
+                          onClick={() => { setSelectedEntry(entry); setShowDetailModal(true); }}
+                        >
+                          상세
+                        </MGButton>
+                        {entry.entryStatus === 'DRAFT' && (
+                          <MGButton
+                            variant="success"
+                            size="small"
+                            onClick={() => handleApprove(entry.id)}
+                          >
+                            승인
+                          </MGButton>
+                        )}
+                        {entry.entryStatus === 'APPROVED' && (
+                          <MGButton
+                            variant="primary"
+                            size="small"
+                            onClick={() => handlePost(entry.id)}
+                          >
+                            전기
+                          </MGButton>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
       </DashboardSection>
-    </div>
+    </section>
   );
 };
 
@@ -1482,33 +1495,45 @@ const LedgersTab = () => {
   }
 
   return (
-    <div>
+    <section className="mg-v2-section">
       <DashboardSection title="원장 조회" icon={<BookOpen size={20} />}>
-        <div className="ledger-filters">
-          <input
-            type="number"
-            placeholder="계정 ID"
-            value={selectedAccountId || ''}
-            onChange={(e) => setSelectedAccountId(e.target.value ? parseInt(e.target.value) : null)}
-          />
-          <input
-            type="date"
-            placeholder="시작일"
-            value={periodStart}
-            onChange={(e) => setPeriodStart(e.target.value)}
-          />
-          <input
-            type="date"
-            placeholder="종료일"
-            value={periodEnd}
-            onChange={(e) => setPeriodEnd(e.target.value)}
-          />
-          <button onClick={fetchLedger}>조회</button>
+        <div className="mg-v2-form-group mg-v2-mb-md">
+          <div className="mg-v2-flex mg-v2-gap-sm" style={{ flexWrap: 'wrap' }}>
+            <input
+              type="number"
+              className="mg-v2-input"
+              placeholder="계정 ID"
+              value={selectedAccountId || ''}
+              onChange={(e) => setSelectedAccountId(e.target.value ? parseInt(e.target.value) : null)}
+            />
+            <input
+              type="date"
+              className="mg-v2-input"
+              placeholder="시작일"
+              value={periodStart}
+              onChange={(e) => setPeriodStart(e.target.value)}
+            />
+            <input
+              type="date"
+              className="mg-v2-input"
+              placeholder="종료일"
+              value={periodEnd}
+              onChange={(e) => setPeriodEnd(e.target.value)}
+            />
+            <MGButton
+              variant="primary"
+              size="medium"
+              onClick={fetchLedger}
+              disabled={!selectedAccountId}
+            >
+              조회
+            </MGButton>
+          </div>
         </div>
         
-        {ledgers.length > 0 && (
-          <div className="ledgers-table">
-            <table className="mg-table">
+        {ledgers.length > 0 ? (
+          <div className="mg-v2-table-container">
+            <table className="mg-table" data-label="원장 목록">
               <thead>
                 <tr>
                   <th>계정 ID</th>
@@ -1523,21 +1548,25 @@ const LedgersTab = () => {
               <tbody>
                 {ledgers.map((ledger, idx) => (
                   <tr key={idx}>
-                    <td>{ledger.accountId}</td>
-                    <td>{ledger.periodStart}</td>
-                    <td>{ledger.periodEnd}</td>
-                    <td>{formatCurrency(ledger.openingBalance || 0)}</td>
-                    <td>{formatCurrency(ledger.totalDebit || 0)}</td>
-                    <td>{formatCurrency(ledger.totalCredit || 0)}</td>
-                    <td>{formatCurrency(ledger.closingBalance || 0)}</td>
+                    <td data-label="계정 ID">{ledger.accountId}</td>
+                    <td data-label="기간 시작">{ledger.periodStart}</td>
+                    <td data-label="기간 종료">{ledger.periodEnd}</td>
+                    <td data-label="기초잔액">{formatCurrency(ledger.openingBalance || 0)}</td>
+                    <td data-label="차변합계">{formatCurrency(ledger.totalDebit || 0)}</td>
+                    <td data-label="대변합계">{formatCurrency(ledger.totalCredit || 0)}</td>
+                    <td data-label="기말잔액">{formatCurrency(ledger.closingBalance || 0)}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
+        ) : selectedAccountId ? (
+          <p className="mg-v2-text-center mg-v2-text-secondary">원장 데이터가 없습니다.</p>
+        ) : (
+          <p className="mg-v2-text-center mg-v2-text-secondary">계정을 선택해주세요.</p>
         )}
       </DashboardSection>
-    </div>
+    </section>
   );
 };
 
@@ -1609,18 +1638,20 @@ const SettlementTab = () => {
     return <UnifiedLoading text="데이터를 불러오는 중..." size="medium" type="inline" />;
   }
 
+  const [settlementPeriod, setSettlementPeriod] = useState('');
+
   return (
-    <div>
+    <section className="mg-v2-section">
       <DashboardSection title="정산 관리" icon={<Calculator size={20} />}>
-        <div className="settlement-tabs">
+        <div className="mg-v2-tabs">
           <button 
-            className={activeSubTab === 'rules' ? 'active' : ''}
+            className={`mg-v2-tab ${activeSubTab === 'rules' ? COMMON_CSS_CLASSES.ACTIVE : ''}`}
             onClick={() => setActiveSubTab('rules')}
           >
             정산 규칙
           </button>
           <button 
-            className={activeSubTab === 'results' ? 'active' : ''}
+            className={`mg-v2-tab ${activeSubTab === 'results' ? COMMON_CSS_CLASSES.ACTIVE : ''}`}
             onClick={() => setActiveSubTab('results')}
           >
             정산 결과
@@ -1628,8 +1659,8 @@ const SettlementTab = () => {
         </div>
 
         {activeSubTab === 'rules' && (
-          <div className="settlement-rules">
-            <table className="mg-table">
+          <div className="mg-v2-table-container mg-v2-mt-md">
+            <table className="mg-table" data-label="정산 규칙 목록">
               <thead>
                 <tr>
                   <th>규칙명</th>
@@ -1640,95 +1671,126 @@ const SettlementTab = () => {
                 </tr>
               </thead>
               <tbody>
-                {rules.map(rule => (
-                  <tr key={rule.id}>
-                    <td>{rule.ruleName}</td>
-                    <td>{rule.businessType}</td>
-                    <td>{rule.settlementType}</td>
-                    <td>{rule.calculationMethod}</td>
-                    <td>{rule.isActive ? '활성' : '비활성'}</td>
+                {rules.length === 0 ? (
+                  <tr>
+                    <td colSpan="5" className="mg-v2-text-center mg-v2-text-secondary">
+                      정산 규칙이 없습니다.
+                    </td>
                   </tr>
-                ))}
+                ) : (
+                  rules.map(rule => (
+                    <tr key={rule.id}>
+                      <td data-label="규칙명">{rule.ruleName}</td>
+                      <td data-label="업종 유형">{rule.businessType}</td>
+                      <td data-label="정산 유형">{rule.settlementType}</td>
+                      <td data-label="계산 방법">{rule.calculationMethod}</td>
+                      <td data-label="활성화">
+                        <span className={`mg-v2-badge ${rule.isActive ? 'mg-v2-badge--success' : 'mg-v2-badge--secondary'}`}>
+                          {rule.isActive ? '활성' : '비활성'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
         )}
 
         {activeSubTab === 'results' && (
-          <div className="settlement-results">
-            <div className="settlement-actions">
-              <input
-                type="text"
-                placeholder="정산 기간 (예: 202512)"
-                id="settlement-period"
-              />
-              <button onClick={() => {
-                const period = document.getElementById('settlement-period').value;
-                if (period) handleCalculate(period);
-              }}>
-                정산 계산
-              </button>
+          <div className="mg-v2-mt-md">
+            <div className="mg-v2-form-group mg-v2-mb-md">
+              <div className="mg-v2-flex mg-v2-gap-sm">
+                <input
+                  type="text"
+                  className="mg-v2-input"
+                  placeholder="정산 기간 (예: 202512)"
+                  value={settlementPeriod}
+                  onChange={(e) => setSettlementPeriod(e.target.value)}
+                />
+                <MGButton
+                  variant="primary"
+                  size="medium"
+                  onClick={() => {
+                    if (settlementPeriod) handleCalculate(settlementPeriod);
+                  }}
+                  disabled={!settlementPeriod}
+                >
+                  정산 계산
+                </MGButton>
+              </div>
             </div>
             
-            <table className="mg-table">
-              <thead>
-                <tr>
-                  <th>정산번호</th>
-                  <th>정산기간</th>
-                  <th>총매출</th>
-                  <th>수수료</th>
-                  <th>로열티</th>
-                  <th>순정산액</th>
-                  <th>상태</th>
-                  <th>작업</th>
-                </tr>
-              </thead>
-              <tbody>
-                {settlements.map(settlement => (
-                  <tr key={settlement.id}>
-                    <td>{settlement.settlementNumber}</td>
-                    <td>{settlement.settlementPeriod}</td>
-                    <td>{formatCurrency(settlement.totalRevenue || 0)}</td>
-                    <td>{formatCurrency(settlement.commissionAmount || 0)}</td>
-                    <td>{formatCurrency(settlement.royaltyAmount || 0)}</td>
-                    <td>{formatCurrency(settlement.netSettlementAmount || 0)}</td>
-                    <td>
-                      <span className={`status-badge status-${settlement.status?.toLowerCase()}`}>
-                        {settlement.status === 'PENDING' ? '대기중' : 
-                         settlement.status === 'APPROVED' ? '승인됨' : 
-                         settlement.status === 'PAID' ? '지급완료' : settlement.status}
-                      </span>
-                    </td>
-                    <td>
-                      {settlement.status === 'PENDING' && (
-                        <button 
-                          onClick={async () => {
-                            try {
-                              const response = await axios.post(ERP_API.SETTLEMENT_APPROVE(settlement.id), {}, {
-                                withCredentials: true
-                              });
-                              if (response.data.success) {
-                                notificationManager.show('정산이 승인되었습니다.', 'success');
-                                fetchSettlements();
-                              }
-                            } catch (err) {
-                              notificationManager.show('정산 승인에 실패했습니다.', 'error');
-                            }
-                          }}
-                          className="btn-approve"
-                        >
-                          승인
-                        </button>
-                      )}
-                    </td>
+            <div className="mg-v2-table-container">
+              <table className="mg-table" data-label="정산 결과 목록">
+                <thead>
+                  <tr>
+                    <th>정산번호</th>
+                    <th>정산기간</th>
+                    <th>총매출</th>
+                    <th>수수료</th>
+                    <th>로열티</th>
+                    <th>순정산액</th>
+                    <th>상태</th>
+                    <th>작업</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {settlements.length === 0 ? (
+                    <tr>
+                      <td colSpan="8" className="mg-v2-text-center mg-v2-text-secondary">
+                        정산 결과가 없습니다.
+                      </td>
+                    </tr>
+                  ) : (
+                    settlements.map(settlement => (
+                      <tr key={settlement.id}>
+                        <td data-label="정산번호">{settlement.settlementNumber}</td>
+                        <td data-label="정산기간">{settlement.settlementPeriod}</td>
+                        <td data-label="총매출">{formatCurrency(settlement.totalRevenue || 0)}</td>
+                        <td data-label="수수료">{formatCurrency(settlement.commissionAmount || 0)}</td>
+                        <td data-label="로열티">{formatCurrency(settlement.royaltyAmount || 0)}</td>
+                        <td data-label="순정산액">{formatCurrency(settlement.netSettlementAmount || 0)}</td>
+                        <td data-label="상태">
+                          <span className={`mg-v2-badge mg-v2-badge--${settlement.status?.toLowerCase() || 'default'}`}>
+                            {settlement.status === 'PENDING' ? '대기중' : 
+                             settlement.status === 'APPROVED' ? '승인됨' : 
+                             settlement.status === 'PAID' ? '지급완료' : settlement.status}
+                          </span>
+                        </td>
+                        <td data-label="작업">
+                          {settlement.status === 'PENDING' && (
+                            <MGButton
+                              variant="success"
+                              size="small"
+                              onClick={async () => {
+                                try {
+                                  const response = await axios.post(ERP_API.SETTLEMENT_APPROVE(settlement.id), {}, {
+                                    withCredentials: true
+                                  });
+                                  if (response.data.success) {
+                                    notificationManager.show('정산이 승인되었습니다.', 'success');
+                                    fetchSettlements();
+                                  }
+                                } catch (err) {
+                                  notificationManager.show('정산 승인에 실패했습니다.', 'error');
+                                }
+                              }}
+                            >
+                              승인
+                            </MGButton>
+                          )}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </DashboardSection>
-    </div>
+    </section>
   );
 };
 

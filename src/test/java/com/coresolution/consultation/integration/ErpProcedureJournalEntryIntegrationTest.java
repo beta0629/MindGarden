@@ -136,8 +136,7 @@ public class ErpProcedureJournalEntryIntegrationTest {
             
             if (!relatedEntries.isEmpty()) {
                 AccountingEntry entry = relatedEntries.get(0);
-                List<JournalEntryLine> lines = journalEntryLineRepository.findByTenantIdAndJournalEntryId(
-                    testTenantId, entry.getId());
+                List<JournalEntryLine> lines = journalEntryLineRepository.findByJournalEntryId(entry.getId());
                 
                 assertThat(lines).hasSize(2); // 차변 + 대변
                 log.info("✅ 매출 거래 분개 생성 확인: EntryNumber={}, Lines={}", 

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import ReactDOM from 'react-dom';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { useSession } from '../../contexts/SessionContext';
@@ -2549,7 +2550,8 @@ const SettlementRuleModal = ({ rule, onClose, onRefresh }) => {
     }
   };
 
-  return (
+  // ReactDOM.createPortal을 사용하여 document.body에 렌더링
+  return ReactDOM.createPortal(
     <div className="mg-v2-modal-overlay" onClick={onClose}>
       <div className="mg-v2-modal-content" style={{ maxWidth: '600px' }} onClick={(e) => e.stopPropagation()}>
         <div className="mg-v2-modal-header">
@@ -2669,7 +2671,8 @@ const SettlementRuleModal = ({ rule, onClose, onRefresh }) => {
           </MGButton>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

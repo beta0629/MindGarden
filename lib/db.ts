@@ -22,8 +22,7 @@ export const getDbConnection = async () => {
     database: dbName,
     // 연결 타임아웃 설정
     connectTimeout: 10000,
-    // 연결 옵션
-    ssl: false,
+    // 연결 옵션 (SSL 사용 안 함)
     timezone: '+09:00',
     charset: 'utf8mb4',
   });

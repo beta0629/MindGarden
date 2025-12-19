@@ -1,15 +1,12 @@
--- ============================================
--- V62: CreateOrActivateTenant 프로시저에서 user_id 생성 로직 추가
--- ============================================
--- 목적: 관리자 계정 생성 시 user_id 필드를 자동 생성하도록 수정
---      user_id는 VARCHAR(50) UNIQUE NOT NULL이므로 반드시 값이 필요함
--- 작성일: 2025-12-10
--- ============================================
+-- V20251219_001: CreateOrActivateTenant 프로시저에 서브도메인 파라미터 추가
+-- 목적: ProcessOnboardingApproval 프로시저와의 파라미터 호환성 확보
+-- 주의: 데이터 수정 없이 프로시저 정의만 업데이트
+-- 작성일: 2025-12-19
 
 DELIMITER //
 
 -- CreateOrActivateTenant 프로시저 업데이트
--- 관리자 계정 생성 로직 통합
+-- 서브도메인 파라미터 추가 (V20251212_003의 ProcessOnboardingApproval과 호환)
 DROP PROCEDURE IF EXISTS CreateOrActivateTenant //
 
 CREATE PROCEDURE CreateOrActivateTenant(
@@ -332,17 +329,33 @@ BEGIN
             -- 서브도메인 자동 생성 (중복 방지)
             SET v_counter = 0;
             SET v_subdomain = LOWER(REPLACE(REPLACE(p_tenant_name, ' ', '-'), '_', '-'));
-            
-            -- 서브도메인 중복 체크 및 고유화
-            WHILE (SELECT COUNT(*) FROM tenants WHERE (subdomain = v_subdomain OR JSON_EXTRACT(COALESCE(settings_json, '{}'), '$.subdomain') = v_subdomain) AND is_deleted = FALSE) > 0 DO
-                SET v_counter = v_counter + 1;
-                SET v_subdomain = CONCAT(LOWER(REPLACE(REPLACE(p_tenant_name, ' ', '-'), '_', '-')), '-', v_counter);
-            END WHILE;
+            SET v_subdomain = REPLACE(v_subdomain, '가든', 'garden');
+            SET v_subdomain = REPLACE(v_subdomain, '마인드', 'mind');
+            SET v_subdomain = REPLACE(v_subdomain, '상담', 'consultation');
+            SET v_subdomain = REPLACE(v_subdomain, '학원', 'academy');
+            -- 영문/숫자/하이픈만 남기기
+            SET v_subdomain = REGEXP_REPLACE(v_subdomain, '[^a-z0-9-]', '');
+            IF LENGTH(v_subdomain) > 63 THEN
+                SET v_subdomain = LEFT(v_subdomain, 63);
+            END IF;
+            IF v_subdomain = '' OR v_subdomain IS NULL THEN
+                SET v_subdomain = CONCAT('tenant-', SUBSTRING(p_tenant_id, 1, 8));
+            END IF;
         END IF;
         
         -- 서브도메인 중복 체크 및 고유화 (전달받은 서브도메인도 중복 체크)
         SET v_counter = 0;
-        WHILE (SELECT COUNT(*) FROM tenants WHERE (subdomain = v_subdomain OR JSON_EXTRACT(COALESCE(settings_json, '{}'), '$.subdomain') = v_subdomain) AND is_deleted = FALSE AND tenant_id != p_tenant_id) > 0 DO
+        WHILE v_counter < 100 DO
+            SELECT COUNT(*) > 0 INTO v_exists
+            FROM tenants
+            WHERE (subdomain = v_subdomain OR JSON_EXTRACT(COALESCE(settings_json, '{}'), '$.subdomain') = v_subdomain)
+            AND is_deleted = FALSE
+            AND tenant_id != p_tenant_id;
+            
+            IF NOT v_exists THEN
+                LEAVE;
+            END IF;
+            
             SET v_counter = v_counter + 1;
             SET v_subdomain = CONCAT(v_subdomain, '-', v_counter);
         END WHILE;
@@ -394,6 +407,144 @@ BEGIN
             0,
             'ko'
         );
+        
+        -- 관리자 계정 생성 시도 (옵셔널)
+        IF p_admin_email IS NOT NULL AND p_admin_email != '' 
+           AND p_admin_password_hash IS NOT NULL AND p_admin_password_hash != '' THEN
+            
+            -- 이메일 정규화
+            SET p_admin_email = LOWER(TRIM(p_admin_email));
+            
+            -- 사용자명 생성
+            SET v_username = SUBSTRING_INDEX(p_admin_email, '@', 1);
+            
+            -- generate user_id from email local part (simplified)
+            SET v_user_id_string = LOWER(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(
+                SUBSTRING_INDEX(p_admin_email, '@', 1), 
+                '.', ''), '-', ''), '_', ''), '+', ''), ' ', ''));
+            
+            IF v_user_id_string = '' OR v_user_id_string IS NULL THEN
+                SET v_user_id_string = 'admin';
+            END IF;
+            
+            SET v_user_id_suffix = 1;
+            -- user_id는 전역적으로 UNIQUE하므로 tenant_id 조건 없이 체크
+            WHILE EXISTS (
+                SELECT 1 FROM users
+                WHERE user_id COLLATE utf8mb4_unicode_ci = v_user_id_string COLLATE utf8mb4_unicode_ci
+                  AND (is_deleted IS NULL OR is_deleted = FALSE)
+            ) DO
+                SET v_user_id_string = CONCAT(LOWER(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(
+                    SUBSTRING_INDEX(p_admin_email, '@', 1), 
+                    '.', ''), '-', ''), '_', ''), '+', ''), ' ', '')), v_user_id_suffix);
+                SET v_user_id_suffix = v_user_id_suffix + 1;
+            END WHILE;
+
+            INSERT INTO users (
+                user_id,
+                tenant_id,
+                email,
+                password,
+                name,
+                role,
+                is_active,
+                is_email_verified,
+                is_social_account,
+                created_at,
+                updated_at,
+                created_by,
+                updated_by,
+                is_deleted,
+                version
+            ) VALUES (
+                v_user_id_string,
+                p_tenant_id,
+                p_admin_email,
+                p_admin_password_hash,
+                CONCAT(p_tenant_name, ' 관리자'),
+                'ADMIN',
+                TRUE,
+                TRUE,
+                FALSE,
+                NOW(),
+                NOW(),
+                p_approved_by,
+                p_approved_by,
+                FALSE,
+                0
+            );
+            
+            SET v_user_id = LAST_INSERT_ID();
+            
+            -- INSERT 실패 확인 (LAST_INSERT_ID()가 0이면 실패)
+            IF v_user_id = 0 OR v_user_id IS NULL THEN
+                SET v_admin_success = FALSE;
+                SET v_admin_message = CONCAT('관리자 계정 생성 실패: INSERT 후 user_id를 가져올 수 없음 (user_id: ', v_user_id_string, ')');
+            ELSE
+                -- 관리자 역할 할당 (user_id가 유효한 경우에만)
+                SET v_admin_role_id = NULL;
+                SELECT tenant_role_id INTO v_admin_role_id
+                FROM tenant_roles
+                WHERE tenant_id COLLATE utf8mb4_unicode_ci = p_tenant_id COLLATE utf8mb4_unicode_ci
+                    AND (
+                        name COLLATE utf8mb4_unicode_ci = '원장'
+                        OR name COLLATE utf8mb4_unicode_ci = '관리자'
+                        OR name_ko COLLATE utf8mb4_unicode_ci = '원장'
+                        OR name_ko COLLATE utf8mb4_unicode_ci = '관리자'
+                        OR name COLLATE utf8mb4_unicode_ci LIKE '%관리자%'
+                        OR name_ko COLLATE utf8mb4_unicode_ci LIKE '%관리자%'
+                    )
+                    AND (is_deleted IS NULL OR is_deleted = FALSE)
+                    AND (is_active IS NULL OR is_active = TRUE)
+                ORDER BY 
+                    CASE WHEN name COLLATE utf8mb4_unicode_ci = '원장' OR name_ko COLLATE utf8mb4_unicode_ci = '원장' THEN 1
+                         WHEN name COLLATE utf8mb4_unicode_ci = '관리자' OR name_ko COLLATE utf8mb4_unicode_ci = '관리자' THEN 2
+                         ELSE 3 END,
+                    created_at ASC
+                LIMIT 1;
+                
+                -- 역할 할당 (역할이 있는 경우에만)
+                IF v_admin_role_id IS NOT NULL THEN
+                    INSERT INTO user_role_assignments (
+                        assignment_id,
+                        user_id,
+                        tenant_id,
+                        tenant_role_id,
+                        branch_id,
+                        effective_from,
+                        effective_to,
+                        is_active,
+                        assigned_by,
+                        assignment_reason,
+                        created_at,
+                        updated_at,
+                        is_deleted,
+                        version
+                    ) VALUES (
+                        UUID(),
+                        v_user_id,
+                        p_tenant_id,
+                        v_admin_role_id,
+                        NULL,
+                        CURDATE(),
+                        NULL,
+                        TRUE,
+                        p_approved_by,
+                        '온보딩 승인 시 자동 할당',
+                        NOW(),
+                        NOW(),
+                        FALSE,
+                        0
+                    );
+                    
+                    SET v_admin_message = CONCAT('관리자 계정 생성 및 역할 할당 완료: ', p_admin_email);
+                ELSE
+                    SET v_admin_message = CONCAT('관리자 계정 생성 완료 (역할 할당 실패 - 역할을 찾을 수 없음): ', p_admin_email);
+                END IF;
+                
+                SET v_admin_success = TRUE;
+            END IF; -- v_user_id > 0 체크 종료
+        END IF;
         
         -- 새 테넌트 생성 시 기본 역할(tenant_roles) 자동 생성
         -- 상담소(CONSULTATION) 업종: 원장, 상담사, 내담자, 사무원 (4개)
@@ -548,159 +699,6 @@ BEGIN
             @user_success,
             @user_message
         );
-        
-        -- 관리자 계정 생성 (제공된 경우)
-        IF p_admin_email IS NOT NULL AND p_admin_email != '' 
-           AND p_admin_password_hash IS NOT NULL AND p_admin_password_hash != '' THEN
-            
-            -- 이메일 정규화
-            SET p_admin_email = LOWER(TRIM(p_admin_email));
-            
-            -- 사용자명 생성
-            SET v_username = SUBSTRING_INDEX(p_admin_email, '@', 1);
-            
-            -- 같은 테넌트에 이미 ADMIN 역할의 사용자가 있는지 확인
-            SELECT COUNT(*) INTO v_existing_user_count
-            FROM users
-            WHERE tenant_id COLLATE utf8mb4_unicode_ci = p_tenant_id COLLATE utf8mb4_unicode_ci
-                AND email COLLATE utf8mb4_unicode_ci = p_admin_email COLLATE utf8mb4_unicode_ci
-                AND role = 'ADMIN'
-                AND (is_deleted IS NULL OR is_deleted = FALSE);
-            
-            IF v_existing_user_count = 0 THEN
-                -- 관리자 계정 생성
-
-                -- generate user_id from email local part (simplified)
-                SET v_user_id_string = LOWER(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(
-                    SUBSTRING_INDEX(p_admin_email, '@', 1), 
-                    '.', ''), '-', ''), '_', ''), '+', ''), ' ', ''));
-                
-                IF v_user_id_string = '' OR v_user_id_string IS NULL THEN
-                    SET v_user_id_string = 'admin';
-                END IF;
-                
-                SET v_user_id_suffix = 1;
-                -- user_id는 전역적으로 UNIQUE하므로 tenant_id 조건 없이 체크
-                WHILE EXISTS (
-                    SELECT 1 FROM users
-                    WHERE user_id COLLATE utf8mb4_unicode_ci = v_user_id_string COLLATE utf8mb4_unicode_ci
-                      AND (is_deleted IS NULL OR is_deleted = FALSE)
-                ) DO
-                    SET v_user_id_string = CONCAT(LOWER(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(
-                        SUBSTRING_INDEX(p_admin_email, '@', 1), 
-                        '.', ''), '-', ''), '_', ''), '+', ''), ' ', '')), v_user_id_suffix);
-                    SET v_user_id_suffix = v_user_id_suffix + 1;
-                END WHILE;
-
-                INSERT INTO users (
-                    user_id,
-                    tenant_id,
-                    email,
-                    password,
-                    name,
-                    role,
-                    is_active,
-                    is_email_verified,
-                    is_social_account,
-                    created_at,
-                    updated_at,
-                    created_by,
-                    updated_by,
-                    is_deleted,
-                    version
-                ) VALUES (
-                    v_user_id_string,
-                    p_tenant_id,
-                    p_admin_email,
-                    p_admin_password_hash,
-                    CONCAT(p_tenant_name, ' 관리자'),
-                    'ADMIN',
-                    TRUE,
-                    TRUE,
-                    FALSE,
-                    NOW(),
-                    NOW(),
-                    p_approved_by,
-                    p_approved_by,
-                    FALSE,
-                    0
-                );
-                
-                SET v_user_id = LAST_INSERT_ID();
-                
-                -- INSERT 실패 확인 (LAST_INSERT_ID()가 0이면 실패)
-                IF v_user_id = 0 OR v_user_id IS NULL THEN
-                    SET v_admin_success = FALSE;
-                    SET v_admin_message = CONCAT('관리자 계정 생성 실패: INSERT 후 user_id를 가져올 수 없음 (user_id: ', v_user_id_string, ')');
-                ELSE
-                    -- 관리자 역할 할당 (user_id가 유효한 경우에만)
-                    SET v_admin_role_id = NULL;
-                    SELECT tenant_role_id INTO v_admin_role_id
-                    FROM tenant_roles
-                    WHERE tenant_id COLLATE utf8mb4_unicode_ci = p_tenant_id COLLATE utf8mb4_unicode_ci
-                        AND (
-                            name COLLATE utf8mb4_unicode_ci = '원장'
-                            OR name COLLATE utf8mb4_unicode_ci = '관리자'
-                            OR name_ko COLLATE utf8mb4_unicode_ci = '원장'
-                            OR name_ko COLLATE utf8mb4_unicode_ci = '관리자'
-                            OR name COLLATE utf8mb4_unicode_ci LIKE '%관리자%'
-                            OR name_ko COLLATE utf8mb4_unicode_ci LIKE '%관리자%'
-                        )
-                        AND (is_deleted IS NULL OR is_deleted = FALSE)
-                        AND (is_active IS NULL OR is_active = TRUE)
-                    ORDER BY 
-                        CASE WHEN name COLLATE utf8mb4_unicode_ci = '원장' OR name_ko COLLATE utf8mb4_unicode_ci = '원장' THEN 1
-                             WHEN name COLLATE utf8mb4_unicode_ci = '관리자' OR name_ko COLLATE utf8mb4_unicode_ci = '관리자' THEN 2
-                             ELSE 3 END,
-                        created_at ASC
-                    LIMIT 1;
-                    
-                    -- 역할 할당 (역할이 있는 경우에만)
-                    IF v_admin_role_id IS NOT NULL THEN
-                        INSERT INTO user_role_assignments (
-                            assignment_id,
-                            user_id,
-                            tenant_id,
-                            tenant_role_id,
-                            branch_id,
-                            effective_from,
-                            effective_to,
-                            is_active,
-                            assigned_by,
-                            assignment_reason,
-                            created_at,
-                            updated_at,
-                            is_deleted,
-                            version
-                        ) VALUES (
-                            UUID(),
-                            v_user_id,
-                            p_tenant_id,
-                            v_admin_role_id,
-                            NULL,
-                            CURDATE(),
-                            NULL,
-                            TRUE,
-                            p_approved_by,
-                            '온보딩 승인 시 자동 할당',
-                            NOW(),
-                            NOW(),
-                            FALSE,
-                            0
-                        );
-                        
-                        SET v_admin_message = CONCAT('관리자 계정 생성 및 역할 할당 완료: ', p_admin_email);
-                    ELSE
-                        SET v_admin_message = CONCAT('관리자 계정 생성 완료 (역할 할당 실패 - 역할을 찾을 수 없음): ', p_admin_email);
-                    END IF;
-                    
-                    SET v_admin_success = TRUE;
-                END IF; -- v_user_id > 0 체크 종료
-            ELSE
-                SET v_admin_success = TRUE;
-                SET v_admin_message = CONCAT('이미 해당 테넌트에 관리자 계정이 존재합니다: ', p_admin_email);
-            END IF;
-        END IF;
         
         -- 결과 메시지 구성
         SET p_success = TRUE;

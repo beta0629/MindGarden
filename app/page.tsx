@@ -51,6 +51,7 @@ async function getHomeData() {
     
     // 갤러리 이미지 조회 (DB에서 관리자가 등록한 이미지)
     const galleryImages = await getGalleryImages();
+    console.log('getHomeData - galleryImages:', galleryImages ? galleryImages.length : 'null', galleryImages);
     
     // 기본 이미지 (갤러리 이미지가 없을 때 사용)
     const defaultGallery = [
@@ -60,13 +61,16 @@ async function getHomeData() {
       { url: '/assets/images/gallery_4.png', alt: '따뜻한 조명의 공간' },
     ];
     
+    const finalGallery = galleryImages || defaultGallery;
+    console.log('getHomeData - finalGallery:', finalGallery.length, finalGallery);
+    
     return {
       slogan: homeData.slogan || {
         sub: 'ADHD 전문 상담과 함께',
         main: '마인드 가든\nADHD 전문 상담소'
       },
       videoUrl: videoUrl || null,
-      gallery: galleryImages || defaultGallery,
+      gallery: finalGallery,
     };
   } catch (error) {
     console.error('Failed to load home data:', error);

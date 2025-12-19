@@ -7,6 +7,7 @@ Next.js 기반의 반응형 홈페이지입니다.
 - **Next.js 14** (App Router)
 - **React 18**
 - **TypeScript**
+- **MySQL** (홈페이지 전용 데이터베이스)
 - **코어솔루션 API 연동**
 
 ## 주요 기능

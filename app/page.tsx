@@ -8,6 +8,10 @@ import HashScroll from '@/components/HashScroll';
 import { getApiService } from '@/lib/api';
 import { getDbConnection } from '@/lib/db';
 
+// 동적 렌더링 강제 (갤러리 이미지가 실시간으로 변경될 수 있으므로)
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 // 갤러리 이미지 조회 (서버 사이드에서 직접 DB 조회)
 async function getGalleryImages() {
   let connection;
@@ -26,6 +30,7 @@ async function getGalleryImages() {
       alt: row.alt_text || '갤러리 이미지',
     }));
 
+    console.log('Gallery images loaded:', images.length, images);
     return images.length > 0 ? images : null;
   } catch (error) {
     console.error('Failed to load gallery images:', error);

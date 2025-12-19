@@ -66,7 +66,7 @@ async function getHomeData() {
     
     return {
       slogan: homeData.slogan || {
-        sub: 'ADHD 전문 상담과 함께',
+        sub: '마인드가든 심리상담센터와 함께',
         main: '마인드가든 심리상담센터'
       },
       videoUrl: videoUrl || null,
@@ -76,7 +76,7 @@ async function getHomeData() {
     console.error('Failed to load home data:', error);
     return {
       slogan: {
-        sub: 'ADHD 전문 상담과 함께',
+        sub: '마인드가든 심리상담센터와 함께',
         main: '마인드가든 심리상담센터'
       },
       videoUrl: null,

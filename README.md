@@ -18,6 +18,9 @@ Next.js 기반의 반응형 홈페이지입니다.
 - ✅ 밝은 파스텔 톤 디자인
 - ✅ 블로그 기능 (글 작성, 이미지 업로드)
 - ✅ 블로그 관리자 인증 시스템
+- ✅ 홈페이지 전용 독립 데이터베이스 (코어솔루션과 완전 분리)
+- ✅ 갤러리 이미지 관리 (서버 사이드 자동 리사이징)
+- ✅ 상담 문의 접수 시스템
 
 ## 시작하기
 
@@ -38,12 +41,12 @@ NEXT_PUBLIC_API_BASE_URL=https://api.mindgarden.co.kr
 # 블로그 관리자 비밀번호 (필수)
 BLOG_ADMIN_PASSWORD=your-secure-password-here
 
-# 데이터베이스 연결 정보 (상담 문의 저장용)
-DB_HOST=beta0629.cafe24.com
+# 홈페이지 전용 데이터베이스 연결 정보
+DB_HOST=localhost
 DB_PORT=3306
-DB_USER=mindgarden_dev
-DB_PASSWORD=MindGardenDev2025!@#
-DB_NAME=core_solution
+DB_USER=homepage_user
+DB_PASSWORD=Homepage2025
+DB_NAME=mindgarden_homepage
 ```
 
 또는 개발 서버 사용 시:

@@ -16,7 +16,7 @@ export default function HeroSection({ slogan, videoUrl }: HeroSectionProps) {
   
   const defaultSlogan = {
     sub: '마인드가든 심리상담센터와 함께',
-    main: '마인드가든 심리상담센터'
+    main: 'ADHD 전문 심리상담센터'
   };
 
   const finalSlogan = slogan || defaultSlogan;

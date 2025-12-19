@@ -366,7 +366,7 @@ class ApiService {
     return {
       slogan: {
         sub: '마인드가든 심리상담센터와 함께',
-        main: '마인드가든 심리상담센터'
+        main: 'ADHD 전문 심리상담센터'
       },
       videoUrl: null, // 로컬 비디오 또는 기본 비디오 사용
       gallery: [

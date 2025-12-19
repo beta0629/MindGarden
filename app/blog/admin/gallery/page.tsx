@@ -84,14 +84,30 @@ export default function GalleryAdminPage() {
     }
   };
 
-  const handleImageUploaded = (imageUrl: string) => {
-    setNewImage(prev => ({
-      ...prev,
-      imageUrl: imageUrl
-    }));
-    setSuccess('이미지가 업로드되었습니다.');
-    setTimeout(() => setSuccess(null), 3000);
-    setError(null);
+  const handleImageUploaded = async (imageUrl: string) => {
+    // 갤러리 이미지는 업로드와 동시에 DB에 저장
+    try {
+      const apiService = getApiService();
+      const result = await apiService.addGalleryImage({
+        imageUrl: imageUrl,
+        altText: newImage.altText || undefined,
+        displayOrder: newImage.displayOrder,
+      });
+      
+      if (result.success) {
+        setSuccess('갤러리 이미지가 추가되었습니다.');
+        setNewImage({ imageUrl: '', altText: '', displayOrder: 0 });
+        loadImages(); // 목록 새로고침
+        setTimeout(() => setSuccess(null), 3000);
+        setError(null);
+      } else {
+        throw new Error(result.error || '이미지 추가에 실패했습니다.');
+      }
+    } catch (err: any) {
+      const errorMessage = err.message || '이미지 추가에 실패했습니다.';
+      setError(errorMessage);
+      console.error('Add gallery image error:', err);
+    }
   };
 
   const handleImageUploadError = (errorMessage: string) => {

@@ -1,16 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import mysql from 'mysql2/promise';
-
-// MySQL 연결 설정
-const getDbConnection = async () => {
-  return mysql.createConnection({
-    host: process.env.DB_HOST || 'beta0629.cafe24.com',
-    port: parseInt(process.env.DB_PORT || '3306'),
-    user: process.env.DB_USER || 'mindgarden_dev',
-    password: process.env.DB_PASSWORD || 'MindGardenDev2025!@#',
-    database: process.env.DB_NAME || 'core_solution',
-  });
-};
+import { getDbConnection } from '@/lib/db';
 
 // 갤러리 이미지 수정
 export async function PUT(

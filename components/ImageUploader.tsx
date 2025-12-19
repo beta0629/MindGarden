@@ -37,9 +37,17 @@ export default function ImageUploader({
 
   const isUploading = externalUploading !== undefined ? externalUploading : uploading;
 
-  // 이미지 리사이징 함수
+  // 이미지 리사이징 함수 (갤러리 이미지는 서버에서 자동 리사이징)
   const resizeImage = (file: File): Promise<Blob> => {
     return new Promise((resolve, reject) => {
+      // 갤러리 페이지에서는 서버 사이드 리사이징 사용 (클라이언트 리사이징 스킵)
+      const isGalleryUpload = window.location.pathname.includes('/gallery');
+      if (isGalleryUpload) {
+        // 서버에서 리사이징하므로 원본 파일 그대로 반환
+        resolve(new Blob([file], { type: file.type }));
+        return;
+      }
+
       const reader = new FileReader();
       reader.onload = (e) => {
         const img = new Image();
@@ -160,11 +168,15 @@ export default function ImageUploader({
         // Blob을 File로 변환
         const file = new File([blob], 'resized-image.jpg', { type: 'image/jpeg' });
 
-        // 업로드
+        // 업로드 (갤러리 이미지인 경우 /api/gallery 사용)
         const formData = new FormData();
         formData.append('image', file);
 
-        const response = await fetch('/api/blog/images', {
+        // 갤러리 페이지에서 사용 중인지 확인 (URL 기반)
+        const isGalleryUpload = window.location.pathname.includes('/gallery');
+        const uploadUrl = isGalleryUpload ? '/api/gallery' : '/api/blog/images';
+
+        const response = await fetch(uploadUrl, {
           method: 'POST',
           body: formData,
         });

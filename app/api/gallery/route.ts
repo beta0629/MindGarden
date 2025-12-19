@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDbConnection } from '@/lib/db';
+import { writeFile, mkdir } from 'fs/promises';
+import { join } from 'path';
+import sharp from 'sharp';
+import { cookies } from 'next/headers';
 
 // 갤러리 이미지 목록 조회
 export async function GET(request: NextRequest) {
@@ -59,34 +63,122 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// 갤러리 이미지 추가 (관리자용)
+// 갤러리 이미지 추가 (관리자용) - 파일 업로드 및 자동 리사이징
 export async function POST(request: NextRequest) {
   let connection;
   
   try {
-    const body = await request.json();
-    const { imageUrl, altText, displayOrder = 0 } = body;
-
-    if (!imageUrl) {
+    // 인증 확인
+    const cookiesStore = cookies();
+    const authCookie = cookiesStore.get('blog_admin_token');
+    if (!authCookie || !authCookie.value) {
       return NextResponse.json(
-        { success: false, error: '이미지 URL은 필수입니다.' },
-        { status: 400 }
+        { success: false, error: '인증이 필요합니다.' },
+        { status: 401 }
       );
     }
 
-    connection = await getDbConnection();
+    const contentType = request.headers.get('content-type');
+    
+    // FormData로 파일 업로드인 경우
+    if (contentType && contentType.includes('multipart/form-data')) {
+      const formData = await request.formData();
+      const file = formData.get('image') as File;
+      const altText = formData.get('altText') as string | null;
+      const displayOrder = parseInt(formData.get('displayOrder') as string || '0', 10);
 
-    const [result] = await connection.execute(
-      `INSERT INTO gallery_images (image_url, alt_text, display_order, is_active)
-       VALUES (?, ?, ?, 1)`,
-      [imageUrl, altText || null, displayOrder]
-    );
+      if (!file) {
+        return NextResponse.json(
+          { success: false, error: '이미지 파일이 필요합니다.' },
+          { status: 400 }
+        );
+      }
 
-    return NextResponse.json({
-      success: true,
-      id: (result as any).insertId,
-      message: '갤러리 이미지가 추가되었습니다.',
-    });
+      // 파일 크기 확인 (10MB 제한)
+      if (file.size > 10 * 1024 * 1024) {
+        return NextResponse.json(
+          { success: false, error: '이미지 크기는 10MB 이하여야 합니다.' },
+          { status: 400 }
+        );
+      }
+
+      // 파일 타입 확인
+      if (!file.type.startsWith('image/')) {
+        return NextResponse.json(
+          { success: false, error: '이미지 파일만 업로드 가능합니다.' },
+          { status: 400 }
+        );
+      }
+
+      // 파일 읽기
+      const bytes = await file.arrayBuffer();
+      const buffer = Buffer.from(bytes);
+
+      // 이미지 자동 리사이징 (최대 1920x1080, 품질 90%)
+      const resizedBuffer = await sharp(buffer)
+        .resize(1920, 1080, {
+          fit: 'inside',
+          withoutEnlargement: true,
+        })
+        .jpeg({ quality: 90 })
+        .toBuffer();
+
+      // 파일명 생성 (타임스탬프 + 원본 파일명)
+      const timestamp = Date.now();
+      const originalName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+      const fileName = `gallery_${timestamp}_${originalName.replace(/\.[^.]+$/, '.jpg')}`;
+      const uploadDir = join(process.cwd(), 'public', 'uploads', 'gallery');
+      
+      // 디렉토리 생성
+      await mkdir(uploadDir, { recursive: true });
+
+      const filePath = join(uploadDir, fileName);
+      await writeFile(filePath, resizedBuffer);
+
+      // URL 생성
+      const imageUrl = `/uploads/gallery/${fileName}`;
+
+      // DB에 저장
+      connection = await getDbConnection();
+      const [result] = await connection.execute(
+        `INSERT INTO gallery_images (image_url, alt_text, display_order, is_active)
+         VALUES (?, ?, ?, 1)`,
+        [imageUrl, altText || null, displayOrder]
+      );
+
+      return NextResponse.json({
+        success: true,
+        id: (result as any).insertId,
+        imageUrl,
+        url: imageUrl,
+        message: '갤러리 이미지가 추가되었습니다.',
+      });
+    } else {
+      // JSON으로 이미지 URL만 전달하는 경우 (기존 방식 지원)
+      const body = await request.json();
+      const { imageUrl, altText, displayOrder = 0 } = body;
+
+      if (!imageUrl) {
+        return NextResponse.json(
+          { success: false, error: '이미지 URL은 필수입니다.' },
+          { status: 400 }
+        );
+      }
+
+      connection = await getDbConnection();
+
+      const [result] = await connection.execute(
+        `INSERT INTO gallery_images (image_url, alt_text, display_order, is_active)
+         VALUES (?, ?, ?, 1)`,
+        [imageUrl, altText || null, displayOrder]
+      );
+
+      return NextResponse.json({
+        success: true,
+        id: (result as any).insertId,
+        message: '갤러리 이미지가 추가되었습니다.',
+      });
+    }
   } catch (error: any) {
     console.error('Add gallery image error:', error);
     console.error('Error details:', {

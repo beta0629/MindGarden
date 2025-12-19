@@ -1,16 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import mysql from 'mysql2/promise';
-
-// MySQL 연결 설정
-const getDbConnection = async () => {
-  return mysql.createConnection({
-    host: process.env.DB_HOST || 'beta0629.cafe24.com',
-    port: parseInt(process.env.DB_PORT || '3306'),
-    user: process.env.DB_USER || 'mindgarden_dev',
-    password: process.env.DB_PASSWORD || 'MindGardenDev2025!@#',
-    database: process.env.DB_NAME || 'core_solution',
-  });
-};
+import { getDbConnection } from '@/lib/db';
 
 // 갤러리 이미지 목록 조회
 export async function GET(request: NextRequest) {
@@ -76,7 +65,7 @@ export async function POST(request: NextRequest) {
   
   try {
     const body = await request.json();
-    const { imageUrl, altText, displayOrder = 0, tenantId = null } = body;
+    const { imageUrl, altText, displayOrder = 0 } = body;
 
     if (!imageUrl) {
       return NextResponse.json(
@@ -88,9 +77,9 @@ export async function POST(request: NextRequest) {
     connection = await getDbConnection();
 
     const [result] = await connection.execute(
-      `INSERT INTO gallery_images (tenant_id, image_url, alt_text, display_order, is_active)
-       VALUES (?, ?, ?, ?, 1)`,
-      [tenantId, imageUrl, altText || null, displayOrder]
+      `INSERT INTO gallery_images (image_url, alt_text, display_order, is_active)
+       VALUES (?, ?, ?, 1)`,
+      [imageUrl, altText || null, displayOrder]
     );
 
     return NextResponse.json({
@@ -98,8 +87,13 @@ export async function POST(request: NextRequest) {
       id: (result as any).insertId,
       message: '갤러리 이미지가 추가되었습니다.',
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Add gallery image error:', error);
+    console.error('Error details:', {
+      message: error?.message,
+      code: error?.code,
+      sqlMessage: error?.sqlMessage,
+    });
     return NextResponse.json(
       { success: false, error: '갤러리 이미지 추가에 실패했습니다.' },
       { status: 500 }

@@ -6,6 +6,36 @@ import SectionTabs from '@/components/SectionTabs';
 import ConsultationForm from '@/components/ConsultationForm';
 import HashScroll from '@/components/HashScroll';
 import { getApiService } from '@/lib/api';
+import { getDbConnection } from '@/lib/db';
+
+// 갤러리 이미지 조회 (서버 사이드에서 직접 DB 조회)
+async function getGalleryImages() {
+  let connection;
+  try {
+    connection = await getDbConnection();
+    
+    const [rows] = await connection.execute(
+      `SELECT image_url, alt_text 
+       FROM gallery_images
+       WHERE is_active = 1
+       ORDER BY display_order ASC, created_at ASC`
+    );
+
+    const images = (rows as any[]).map((row: any) => ({
+      url: row.image_url,
+      alt: row.alt_text || '갤러리 이미지',
+    }));
+
+    return images.length > 0 ? images : null;
+  } catch (error) {
+    console.error('Failed to load gallery images:', error);
+    return null;
+  } finally {
+    if (connection) {
+      await connection.end();
+    }
+  }
+}
 
 // 서버 컴포넌트에서 데이터 가져오기
 async function getHomeData() {
@@ -15,7 +45,7 @@ async function getHomeData() {
     const videoUrl = await apiService.getHeroVideo();
     
     // 갤러리 이미지 조회 (DB에서 관리자가 등록한 이미지)
-    const galleryImages = await apiService.getGalleryImages();
+    const galleryImages = await getGalleryImages();
     
     // 기본 이미지 (갤러리 이미지가 없을 때 사용)
     const defaultGallery = [

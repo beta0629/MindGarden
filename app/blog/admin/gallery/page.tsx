@@ -57,14 +57,28 @@ export default function GalleryAdminPage() {
   const loadImages = async () => {
     try {
       setLoading(true);
+      setError(null);
       const response = await fetch('/api/gallery?all=true');
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
       const data = await response.json();
-      if (data.success) {
-        setImages(data.images || []);
+      console.log('Gallery images response:', data);
+      
+      if (data.success && data.images) {
+        setImages(data.images);
+        console.log('Images loaded:', data.images.length);
+      } else {
+        console.warn('No images in response:', data);
+        setImages([]);
       }
     } catch (err) {
-      setError('갤러리 이미지를 불러오는데 실패했습니다.');
+      const errorMessage = err instanceof Error ? err.message : '갤러리 이미지를 불러오는데 실패했습니다.';
+      setError(errorMessage);
       console.error('Load images error:', err);
+      setImages([]);
     } finally {
       setLoading(false);
     }

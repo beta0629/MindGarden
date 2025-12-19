@@ -1,6 +1,6 @@
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
-import { getApiService } from '@/lib/api';
+import { getDbConnection } from '@/lib/db';
 import Link from 'next/link';
 
 interface BlogPost {
@@ -13,14 +13,39 @@ interface BlogPost {
   isHomepageOnly?: boolean;
 }
 
-async function getBlogPosts() {
+async function getBlogPosts(): Promise<BlogPost[]> {
+  let connection;
   try {
-    const apiService = getApiService();
-    const posts = await apiService.getBlogPosts(1, 20);
+    connection = await getDbConnection();
+    
+    // published 상태의 포스트만 조회
+    const [rows] = await connection.execute(
+      `SELECT id, title, content, summary, thumbnail_image_url, status, 
+              published_at, created_at, is_homepage_only
+       FROM blog_posts
+       WHERE status = 'published'
+       ORDER BY COALESCE(published_at, created_at) DESC
+       LIMIT 20`
+    );
+
+    const posts = (rows as any[]).map((row: any) => ({
+      id: row.id,
+      title: row.title,
+      summary: row.summary,
+      thumbnailImageUrl: row.thumbnail_image_url,
+      publishedAt: row.published_at,
+      createdAt: row.created_at,
+      isHomepageOnly: row.is_homepage_only === 1,
+    }));
+
     return posts;
   } catch (error) {
     console.error('Failed to load blog posts:', error);
     return [];
+  } finally {
+    if (connection) {
+      await connection.end();
+    }
   }
 }
 

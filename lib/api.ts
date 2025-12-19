@@ -365,8 +365,8 @@ class ApiService {
   getDefaultHomeData() {
     return {
       slogan: {
-        sub: 'ADHD 전문 상담과 함께',
-        main: '마인드 가든\nADHD 전문 상담소'
+        sub: '마인드가든 심리상담센터와 함께',
+        main: '마인드가든 심리상담센터'
       },
       videoUrl: null, // 로컬 비디오 또는 기본 비디오 사용
       gallery: [

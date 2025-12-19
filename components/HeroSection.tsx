@@ -15,8 +15,8 @@ export default function HeroSection({ slogan, videoUrl }: HeroSectionProps) {
   const [videoError, setVideoError] = useState(false);
   
   const defaultSlogan = {
-    sub: 'ADHD 전문 상담과 함께',
-    main: '마인드 가든\nADHD 전문 상담소'
+    sub: '마인드가든 심리상담센터와 함께',
+    main: '마인드가든 심리상담센터'
   };
 
   const finalSlogan = slogan || defaultSlogan;
@@ -197,7 +197,7 @@ export default function HeroSection({ slogan, videoUrl }: HeroSectionProps) {
           ))}
         </h1>
         <div className="hero-info" style={{ animationDelay: '1.5s' }}>
-          <p className="info-text">ADHD 전문 상담으로 새로운 시작을 함께합니다</p>
+          <p className="info-text">마인드가든 심리상담센터에서 새로운 시작을 함께합니다</p>
           <p className="info-subtext">전문 상담사와 함께하는 따뜻하고 안전한 공간</p>
         </div>
       </div>

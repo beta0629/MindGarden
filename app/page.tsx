@@ -67,7 +67,7 @@ async function getHomeData() {
     return {
       slogan: homeData.slogan || {
         sub: 'ADHD 전문 상담과 함께',
-        main: '마인드 가든\nADHD 전문 상담소'
+        main: '마인드가든 심리상담센터'
       },
       videoUrl: videoUrl || null,
       gallery: finalGallery,
@@ -77,7 +77,7 @@ async function getHomeData() {
     return {
       slogan: {
         sub: 'ADHD 전문 상담과 함께',
-        main: '마인드 가든\nADHD 전문 상담소'
+        main: '마인드가든 심리상담센터'
       },
       videoUrl: null,
       gallery: [
@@ -106,7 +106,7 @@ export default async function Home() {
           <section id="about" className="content-section">
             <h2 className="section-title">마인드 가든 소개</h2>
             <p className="section-desc">
-              ADHD 전문 상담으로 일상의 집중과 감정 조절, 관계의 균형을 함께 만들어갑니다. 밝고 편안한 공간에서
+              마인드가든 심리상담센터에서 일상의 집중과 감정 조절, 관계의 균형을 함께 만들어갑니다. 밝고 편안한 공간에서
               당신의 속도에 맞춰 동행합니다.
             </p>
             <div className="feature-grid">

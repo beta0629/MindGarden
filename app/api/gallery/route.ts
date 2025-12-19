@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getDbConnection } from '@/lib/db';
 import { writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
-import sharp from 'sharp';
 
 // 갤러리 이미지 목록 조회
 export async function GET(request: NextRequest) {
@@ -113,6 +112,8 @@ export async function POST(request: NextRequest) {
       const buffer = Buffer.from(bytes);
 
       // 이미지 자동 리사이징 (최대 1920x1080, 품질 90%)
+      // 동적 import로 sharp 로드 (빌드 타임 오류 방지)
+      const sharp = (await import('sharp')).default;
       const resizedBuffer = await sharp(buffer)
         .resize(1920, 1080, {
           fit: 'inside',

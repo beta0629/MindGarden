@@ -12,7 +12,7 @@ export const getDbConnection = async () => {
   const dbHost = process.env.DB_HOST || 'localhost';
   const dbName = process.env.DB_NAME || 'mindgarden_homepage';
   const dbUser = process.env.DB_USER || process.env.DB_USERNAME || 'homepage_user';
-  const dbPassword = process.env.DB_PASSWORD || 'Homepage2025!@#';
+  const dbPassword = process.env.DB_PASSWORD || 'Homepage2025';
   
   return await mysql.createConnection({
     host: dbHost,

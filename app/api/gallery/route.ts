@@ -3,7 +3,6 @@ import { getDbConnection } from '@/lib/db';
 import { writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
 import sharp from 'sharp';
-import { cookies } from 'next/headers';
 
 // 갤러리 이미지 목록 조회
 export async function GET(request: NextRequest) {
@@ -69,8 +68,7 @@ export async function POST(request: NextRequest) {
   
   try {
     // 인증 확인
-    const cookiesStore = cookies();
-    const authCookie = cookiesStore.get('blog_admin_token');
+    const authCookie = request.cookies.get('blog_admin_token');
     if (!authCookie || !authCookie.value) {
       return NextResponse.json(
         { success: false, error: '인증이 필요합니다.' },

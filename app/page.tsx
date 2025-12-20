@@ -66,8 +66,8 @@ async function getHomeData() {
     
     return {
       slogan: homeData.slogan || {
-        sub: '마인드가든 심리상담센터와 함께',
-        main: 'ADHD 전문 심리상담센터'
+        sub: '임상경험이 풍부한 검증된 전문가 . ADHD 특화.차별화된 프로그램',
+        main: 'ADHD 전문.심리상담센터'
       },
       videoUrl: videoUrl || null,
       gallery: finalGallery,
@@ -76,8 +76,8 @@ async function getHomeData() {
     console.error('Failed to load home data:', error);
     return {
       slogan: {
-        sub: '마인드가든 심리상담센터와 함께',
-        main: 'ADHD 전문 심리상담센터'
+        sub: '임상경험이 풍부한 검증된 전문가 . ADHD 특화.차별화된 프로그램',
+        main: 'ADHD 전문.심리상담센터'
       },
       videoUrl: null,
       gallery: [

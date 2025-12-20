@@ -2,39 +2,6 @@ import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 
 export default function ValuesPage() {
-  const values = [
-    {
-      title: '전문성과 신뢰',
-      description: '임상경험이 풍부한 검증된 전문가들이 ADHD 특성을 깊이 이해하고, 과학적 근거 기반의 상담과 치료를 제공합니다.',
-      icon: '🎯',
-    },
-    {
-      title: '따뜻하고 안전한 환경',
-      description: '편안하고 안전한 공간에서 편견 없이 존중받으며, 당신의 속도에 맞춰 함께 걷는 것을 약속합니다.',
-      icon: '🌱',
-    },
-    {
-      title: '개인 맞춤형 접근',
-      description: '모든 사람은 고유한 특성을 가지고 있습니다. 표준화된 해결책이 아닌, 당신만의 방식에 맞춘 맞춤형 프로그램을 제공합니다.',
-      icon: '✨',
-    },
-    {
-      title: '지속 가능한 변화',
-      description: '일시적인 해결이 아닌, 일상에서 지속 가능한 실천 방법과 루틴을 함께 만들어가며 근본적인 변화를 추구합니다.',
-      icon: '🌳',
-    },
-    {
-      title: '존중과 배려',
-      description: '모든 상담은 존중과 배려를 바탕으로 진행됩니다. 당신의 선택과 결정을 존중하며, 함께 성장하는 파트너가 되겠습니다.',
-      icon: '🤝',
-    },
-    {
-      title: '함께 성장',
-      description: '마인드 가든은 단순히 상담을 제공하는 곳이 아니라, 당신의 성장과 변화를 함께 만들어가는 동반자입니다.',
-      icon: '💚',
-    },
-  ];
-
   return (
     <main id="top">
       <Navigation />
@@ -42,77 +9,153 @@ export default function ValuesPage() {
       <div className="content-shell">
         <div className="content-main">
           <section className="content-section" style={{ paddingTop: '120px' }}>
-            <h1 className="section-title" style={{ marginBottom: '24px' }}>마인드 가든의 가치관</h1>
-            <p className="section-desc" style={{ marginBottom: '64px', maxWidth: '800px', marginLeft: 'auto', marginRight: 'auto' }}>
-              마인드 가든은 ADHD 전문 심리상담센터로서, 모든 상담과 치료의 근본에 우리의 핵심 가치가 있습니다. 
-              이 가치들이 우리가 하는 모든 일의 기준이 됩니다.
-            </p>
-
-            <div className="values-grid" style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-              gap: '32px',
-              marginTop: '48px'
+            <h1 className="section-title" style={{ marginBottom: '32px', textAlign: 'center' }}>
+              '마인드 가든' 심리상담센터의 가치와 목표
+            </h1>
+            
+            <div style={{
+              textAlign: 'center',
+              fontSize: '1.5rem',
+              fontWeight: '600',
+              color: 'var(--text-main)',
+              marginBottom: '64px',
+              fontStyle: 'italic',
+              lineHeight: '1.8'
             }}>
-              {values.map((value, index) => (
-                <div 
-                  key={index}
-                  className="value-card"
-                >
-                  <div style={{
-                    fontSize: '3rem',
-                    marginBottom: '24px',
-                    textAlign: 'center'
-                  }}>
-                    {value.icon}
-                  </div>
-                  <h3 style={{
-                    fontSize: '1.5rem',
-                    fontWeight: '700',
-                    marginBottom: '16px',
-                    color: 'var(--text-main)',
-                    textAlign: 'center'
-                  }}>
-                    {value.title}
-                  </h3>
-                  <p style={{
-                    fontSize: '1rem',
-                    lineHeight: '1.8',
-                    color: 'var(--text-sub)',
-                    textAlign: 'center'
-                  }}>
-                    {value.description}
-                  </p>
-                </div>
-              ))}
+              '마음이 건강하고 안정되게 자라나도록 돌보고 가꾸다'
             </div>
 
             <div style={{
-              marginTop: '80px',
-              padding: '48px',
-              background: 'linear-gradient(135deg, var(--accent-sky) 0%, var(--accent-mint) 100%)',
-              borderRadius: 'var(--radius-lg)',
+              maxWidth: '900px',
+              margin: '0 auto 80px',
+              fontSize: '1.125rem',
+              lineHeight: '2',
+              color: 'var(--text-sub)',
               textAlign: 'center'
             }}>
+              <p style={{ marginBottom: '24px' }}>
+                시들고 메마른 가뭄과 같은 삶이, 5월의 어느 푸른 찬란한 봄날처럼, 자신만의 색과 모양으로 인생의 꽃을 다시 꽃 피울 수 있도록, 머물러 회복하고 성장하는 곳
+              </p>
+              <p>
+                사람마다 꽃을 피우고 열매를 맺는 시기는 각각 다르기에, 그 시간과 과정을 귀히 여기고, 소중하고 정성스럽게 가꾸고 돌보며, 누구나의 마음의 봄이 오도록 함께 하겠습니다
+              </p>
+            </div>
+
+            <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
               <h2 style={{
                 fontSize: '1.75rem',
                 fontWeight: '700',
-                marginBottom: '16px',
-                color: 'var(--text-main)'
-              }}>
-                함께 만들어가는 변화
-              </h2>
-              <p style={{
-                fontSize: '1.125rem',
-                lineHeight: '1.8',
                 color: 'var(--text-main)',
-                maxWidth: '700px',
-                margin: '0 auto'
+                marginBottom: '32px',
+                textAlign: 'center'
               }}>
-                마인드 가든은 당신의 성장과 변화를 진심으로 응원합니다. 
-                우리는 단순히 상담을 제공하는 곳이 아니라, 당신의 인생 여정에 함께하는 동반자입니다. 
-                함께 걸어가며 더 나은 내일을 만들어갑니다.
-              </p>
+                '마인드 가든' 심리상담센터는
+              </h2>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '64px' }}>
+                {/* 1. 전문성 */}
+                <div className="value-section-card" style={{
+                  background: 'var(--white)',
+                  borderRadius: 'var(--radius-lg)',
+                  padding: '48px',
+                  boxShadow: 'var(--shadow-1)',
+                  border: '1px solid var(--border-soft)'
+                }}>
+                  <h3 style={{
+                    fontSize: '1.5rem',
+                    fontWeight: '700',
+                    color: 'var(--text-main)',
+                    marginBottom: '24px',
+                    paddingBottom: '16px',
+                    borderBottom: '2px solid var(--accent-sky)'
+                  }}>
+                    1. 전문성(상담사로서의 윤리와 책임감)
+                  </h3>
+                  <div style={{
+                    fontSize: '1rem',
+                    lineHeight: '2',
+                    color: 'var(--text-sub)'
+                  }}>
+                    <p style={{ marginBottom: '16px' }}>
+                      내담자의 호소내용에 귀 기울이고, 최우선 적으로 증상을 완화 하는데 노력 하겠습니다.
+                      전문성에 입각하여 실제적인 도움을 드리겠습니다. 관련학과전공자(대학원), 주요 학회 등 검증된 자격을 갖춘, 다양하고 오랜 경험이 축적된 상담사례를 가진, 전문적인 상담사가 함께 하겠습니다.
+                    </p>
+                    <p style={{ marginBottom: '16px' }}>
+                      상담사 개인은 내담자 특성을 잘 이해하고, 1:1 맞춤형 상담 계획을 진행해 나가기 위해, 전문가로서 지속적으로 훈련하고 임상을 쌓아 나아가며, 전문성을 유지, 발전하기 위해서 노력할 것을 다짐 합니다. 상담사로서의 직업적 윤리의식을 철저 하게 준수하기 위해 상담사가 속해 있는 자격기관(학회)에서 윤리교육을 지속적으로 받기 위해 노력하겠습니다.
+                    </p>
+                    <p>
+                      내담자를 보다 잘 돕기 위해서, 상담자 스스로 정서적 회복을 위해 필요한 충분한 휴식시간을 가지며 소진되지 않도록 노력하겠습니다.
+                    </p>
+                  </div>
+                </div>
+
+                {/* 2. 인류애 */}
+                <div className="value-section-card" style={{
+                  background: 'var(--white)',
+                  borderRadius: 'var(--radius-lg)',
+                  padding: '48px',
+                  boxShadow: 'var(--shadow-1)',
+                  border: '1px solid var(--border-soft)'
+                }}>
+                  <h3 style={{
+                    fontSize: '1.5rem',
+                    fontWeight: '700',
+                    color: 'var(--text-main)',
+                    marginBottom: '24px',
+                    paddingBottom: '16px',
+                    borderBottom: '2px solid var(--accent-peach)'
+                  }}>
+                    2. 인류애(인간적이고 따뜻한 마음과 존중)
+                  </h3>
+                  <div style={{
+                    fontSize: '1rem',
+                    lineHeight: '2',
+                    color: 'var(--text-sub)'
+                  }}>
+                    <p style={{ marginBottom: '16px' }}>
+                      삶을 살아가다가 가장 지치고 힘들 때 지푸라기를 잡는 심정으로 문을 두드린 분들께, 상담을 통해서 진짜 쉼을 경험하고, 각자의 고단함을 내려놓을 수 있도록, 안전하고 따듯한, 진정성 있는 배려를 잃지 않도록 노력겠습니다. 한결 같은 마음으로 버텨주는 든든하고 믿음스러운 나무와 같은 벗이 되겠습니다.
+                    </p>
+                    <p>
+                      내담자를 가르침을 받는 대상으로서가 아닌, 인간 본연의 힘이 있다는 것을 믿고, 그 안에 자원이 있음을 발견하고, 강점을 찾아, 내적인 힘을 다시 회복할 수 있도록 조력하겠습니다. 그리고 한 사람으로서 성장하고 성숙해가는 과정을 정성스럽게 돕겠습니다.
+                    </p>
+                  </div>
+                </div>
+
+                {/* 3. 회복과 성장 */}
+                <div className="value-section-card" style={{
+                  background: 'var(--white)',
+                  borderRadius: 'var(--radius-lg)',
+                  padding: '48px',
+                  boxShadow: 'var(--shadow-1)',
+                  border: '1px solid var(--border-soft)'
+                }}>
+                  <h3 style={{
+                    fontSize: '1.5rem',
+                    fontWeight: '700',
+                    color: 'var(--text-main)',
+                    marginBottom: '24px',
+                    paddingBottom: '16px',
+                    borderBottom: '2px solid var(--accent-mint)'
+                  }}>
+                    3. 회복과 성장. 건강한 독립
+                  </h3>
+                  <div style={{
+                    fontSize: '1rem',
+                    lineHeight: '2',
+                    color: 'var(--text-sub)'
+                  }}>
+                    <p style={{ marginBottom: '16px' }}>
+                      '마인드 가든'의 모든 상담사들은 내담자의 마음을 깊이 들여다보고, 각자의 고유한 모습을 발견하고, 스스로의 자신을 수용하고 통합 해 나갈 수 있도록 돕겠습니다.
+                    </p>
+                    <p style={{ marginBottom: '16px' }}>
+                      적응적이고 건강한 방식으로 삶을 디자인하고, 건강한 방향으로 자리를 잡아가며, 사회에 구성원으로서 건강한 인격체로 독립적인 사람으로 성장할 수 있도록 돕겠습니다.
+                    </p>
+                    <p>
+                      삶의 방향성을 회복하고, 내담자가 미래를 다시 디자인 할 수 있도록 최선을 다하겠습니다.
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
           </section>
         </div>
@@ -122,4 +165,3 @@ export default function ValuesPage() {
     </main>
   );
 }
-

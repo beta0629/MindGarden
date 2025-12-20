@@ -49,6 +49,7 @@ export default function Navigation() {
   const lineColor = isWhite && !isScrolled ? 'var(--white)' : undefined;
 
   const menu = [
+    { label: '가치관', href: '/values' },
     { label: '소개', href: '#about' },
     { label: '프로그램', href: '#programs' },
     { label: '블로그', href: '/blog' },

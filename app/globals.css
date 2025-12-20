@@ -1088,6 +1088,22 @@ main:not(:has(.hero-section)) .gnb .gnb-cta {
     border-color: var(--border-strong);
 }
 
+/* Values Page Styles */
+.value-card {
+    background: var(--white);
+    border-radius: var(--radius-lg);
+    padding: 40px;
+    box-shadow: var(--shadow-1);
+    border: 1px solid var(--border-soft);
+    transition: all 0.3s ease;
+}
+
+.value-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-2);
+    border-color: var(--border-strong);
+}
+
 .blog-card-image {
     width: 100%;
     height: 200px;

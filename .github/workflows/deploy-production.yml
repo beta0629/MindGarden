@@ -86,12 +86,28 @@ jobs:
           
           # 백업 생성
           if [ -f app.jar ]; then
-            cp app.jar app.jar.backup.$(date +%Y%m%d_%H%M%S)
+            BACKUP_DIR="/var/www/mindgarden/backups"
+            mkdir -p $BACKUP_DIR
+            BACKUP_FILE="$BACKUP_DIR/app.jar.backup.$(date +%Y%m%d_%H%M%S)"
+            # 같은 타임스탬프 파일이 있으면 초까지 포함한 타임스탬프 사용
+            while [ -f "$BACKUP_FILE" ]; do
+              BACKUP_FILE="$BACKUP_DIR/app.jar.backup.$(date +%Y%m%d_%H%M%S.%N | cut -b1-19)"
+            done
+            cp app.jar "$BACKUP_FILE"
+            echo "✅ 백업 완료: $BACKUP_FILE"
           fi
           
           # 프론트엔드 백업
           if [ -d frontend ]; then
-            tar -czf frontend.backup.$(date +%Y%m%d_%H%M%S).tar.gz frontend/
+            BACKUP_DIR="/var/www/mindgarden/backups"
+            mkdir -p $BACKUP_DIR
+            FRONTEND_BACKUP_FILE="$BACKUP_DIR/frontend.backup.$(date +%Y%m%d_%H%M%S).tar.gz"
+            # 같은 타임스탬프 파일이 있으면 초까지 포함한 타임스탬프 사용
+            while [ -f "$FRONTEND_BACKUP_FILE" ]; do
+              FRONTEND_BACKUP_FILE="$BACKUP_DIR/frontend.backup.$(date +%Y%m%d_%H%M%S.%N | cut -b1-19).tar.gz"
+            done
+            tar -czf "$FRONTEND_BACKUP_FILE" frontend/
+            echo "✅ 프론트엔드 백업 완료: $FRONTEND_BACKUP_FILE"
           fi
           
     - name: 📤 백엔드 파일 업로드

@@ -29,7 +29,8 @@ const ConsultantComprehensiveManagement = () => {
     const [modalType, setModalType] = useState('view');
     const [formData, setFormData] = useState({
         name: '', // 이름 (선택사항, 없으면 이메일 로컬 파트에서 자동 생성)
-        email: '', // 표준화 2025-12-08: 이메일만 입력받음 (userId, password 자동 생성)
+        email: '', // 표준화 2025-12-08: 이메일만 입력받음 (userId 자동 생성)
+        password: '', // 비밀번호 (선택사항, 없으면 자동 생성)
         phone: '',
         // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         status: 'ACTIVE',
@@ -537,6 +538,7 @@ const ConsultantComprehensiveManagement = () => {
             setFormData({
                 name: '', // 이름 (선택사항)
                 email: '', // 표준화 2025-12-08: 이메일만 입력받음
+                password: '', // 비밀번호 (선택사항, 없으면 자동 생성)
                 phone: '',
                 // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                 status: 'ACTIVE',
@@ -553,6 +555,7 @@ const ConsultantComprehensiveManagement = () => {
         setFormData({
             name: '', // 이름 (선택사항)
             email: '', // 표준화 2025-12-08: 이메일만 입력받음
+            password: '', // 비밀번호 (선택사항, 없으면 자동 생성)
             phone: '',
             // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
             status: 'ACTIVE',
@@ -1287,7 +1290,7 @@ const ConsultantComprehensiveManagement = () => {
                                     {modalType === 'create' && (
                                         <div className="mg-v2-info-box" style={{ marginBottom: '1rem', padding: '0.75rem', backgroundColor: 'var(--color-background-light)', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border-light)' }}>
                                             <p className="mg-v2-info-text" style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', margin: 0 }}>
-                                                💡 이름과 이메일 주소는 필수입니다. 아이디와 비밀번호는 자동으로 생성됩니다.
+                                                💡 비밀번호를 입력하지 않으면 임시 비밀번호가 자동으로 생성됩니다.
                                             </p>
                                         </div>
                                     )}
@@ -1350,6 +1353,21 @@ const ConsultantComprehensiveManagement = () => {
                                             </small>
                                         )}
                                     </div>
+                                    
+                                    {modalType === 'create' && (
+                                        <div className="mg-v2-form-group">
+                                            <label className="mg-v2-form-label">비밀번호</label>
+                                            <input
+                                                type="password"
+                                                name="password"
+                                                value={ formData.password || '' }
+                                                onChange={ handleFormChange }
+                                                placeholder="비밀번호를 입력하지 않으면 자동 생성됩니다"
+                                                className="mg-v2-form-input"
+                                            />
+                                            <small className="mg-v2-form-help">비밀번호를 입력하지 않으면 임시 비밀번호가 자동으로 생성됩니다.</small>
+                                        </div>
+                                    )}
                                     
                                     <div className="mg-v2-form-group">
                                         <label className="mg-v2-form-label">전화번호</label>

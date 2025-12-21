@@ -153,6 +153,13 @@ public class User extends BaseEntity {
     @Column(name = "password_reset_expires_at")
     private LocalDateTime passwordResetExpiresAt;
     
+    /**
+     * 비밀번호 변경 여부 (임시 비밀번호인 경우 false, 비밀번호 변경 후 true)
+     */
+    @Column(name = "is_password_changed", nullable = false)
+    @Builder.Default
+    private Boolean isPasswordChanged = true; // 기본값은 true (기존 사용자는 이미 비밀번호 변경 완료)
+    
     @Column(name = "profile_image_url", columnDefinition = "TEXT")
     private String profileImageUrl;
     
@@ -327,6 +334,7 @@ public class User extends BaseEntity {
         this.password = newPassword;
         this.passwordResetToken = null;
         this.passwordResetExpiresAt = null;
+        this.isPasswordChanged = true; // 비밀번호 변경 완료
     }
     
     /**

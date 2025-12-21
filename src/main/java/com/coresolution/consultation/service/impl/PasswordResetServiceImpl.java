@@ -173,6 +173,7 @@ public class PasswordResetServiceImpl implements PasswordResetService {
             // 비밀번호 암호화 및 업데이트
             String encodedPassword = passwordEncoder.encode(newPassword);
             user.setPassword(encodedPassword);
+            user.setIsPasswordChanged(true); // 비밀번호 변경 완료
             user.setUpdatedAt(LocalDateTime.now());
             userRepository.save(user);
             

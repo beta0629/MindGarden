@@ -65,6 +65,7 @@ const ClientComprehensiveManagement = () => {
     const [formData, setFormData] = useState({
         name: '',
         email: '',
+        password: '',
         phone: '',
         // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         status: 'ACTIVE',
@@ -251,6 +252,7 @@ const ClientComprehensiveManagement = () => {
         setFormData({
             name: '', // 이름 입력
             email: '', // 이메일 입력
+            password: '', // 비밀번호 입력 (선택사항, 없으면 자동 생성)
             phone: '', // 전화번호 입력 (선택사항)
             // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
             status: 'ACTIVE',

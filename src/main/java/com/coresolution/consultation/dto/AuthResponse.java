@@ -78,6 +78,11 @@ public class AuthResponse {
     private List<TenantInfo> accessibleTenants;
     
     /**
+     * 비밀번호 변경 필요 여부 (임시 비밀번호로 로그인한 경우)
+     */
+    private boolean requiresPasswordChange;
+    
+    /**
      * 테넌트 정보 DTO
      */
     @Data

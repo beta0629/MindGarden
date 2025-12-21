@@ -3,7 +3,6 @@ package com.coresolution.consultation.service.impl;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import com.coresolution.consultation.constant.AdminConstants;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.dto.SocialLoginResponse;
 import com.coresolution.consultation.dto.SocialUserInfo;
@@ -206,32 +205,125 @@ public abstract class AbstractOAuth2Service implements OAuth2Service {
     
     /**
      * 이메일로 기존 사용자 찾기 (소셜 계정의 경우)
+     * 같은 이메일로 여러 계정이 있는 경우, 가장 적절한 계정 선택:
+     * 1. 활성 상태인 계정 우선
+     * 2. 가장 최근에 생성된 계정 우선
+     * 3. 역할 우선순위: CLIENT > CONSULTANT > ADMIN > 기타
      */
     protected Long findExistingUserByEmail(String email) {
         log.info("이메일로 사용자 찾기: email={}", email);
         String tenantId = TenantContextHolder.getRequiredTenantId();
         
         try {
-            // 이메일로 사용자 찾기 (tenantId 필터링)
-            var userOptional = userRepository.findByTenantIdAndEmail(tenantId, email);
-            log.info("UserRepository.findByEmail 결과: userOptional={}", userOptional);
+            // 같은 이메일로 여러 계정이 있을 수 있으므로 모두 조회
+            List<User> users = userRepository.findAllByTenantIdAndEmail(tenantId, email);
             
-            if (userOptional.isPresent()) {
-                User user = userOptional.get();
-                log.info("찾은 사용자 정보: id={}, email={}, role={}, isDeleted={}", 
-                        user.getId(), user.getEmail(), user.getRole(), user.getIsDeleted());
+            if (users == null || users.isEmpty()) {
+                log.info("이메일로 사용자를 찾지 못함: email={}, tenantId={}", email, tenantId);
+                return null;
             }
             
-            var result = userOptional
-                .map(User::getId)
-                .orElse(null);
+            log.info("이메일로 찾은 사용자 수: email={}, tenantId={}, count={}", email, tenantId, users.size());
             
-            log.info("이메일로 사용자 찾기 결과: result={}", result);
-            return result;
+            // 여러 계정이 있는 경우 가장 적절한 계정 선택
+            User selectedUser = selectBestMatchingUser(users);
+            
+            if (selectedUser != null) {
+                log.info("선택된 사용자 정보: id={}, email={}, role={}, isActive={}, createdAt={}", 
+                        selectedUser.getId(), selectedUser.getEmail(), selectedUser.getRole(), 
+                        selectedUser.getIsActive(), selectedUser.getCreatedAt());
+                
+                // 여러 계정이 있는 경우 경고 로그
+                if (users.size() > 1) {
+                    log.warn("⚠️ 같은 이메일로 {}개의 계정이 발견됨. 가장 적절한 계정 선택: userId={}, role={}, isActive={}", 
+                            users.size(), selectedUser.getId(), selectedUser.getRole(), selectedUser.getIsActive());
+                    // 모든 계정 정보 로깅
+                    for (User user : users) {
+                        log.info("  - 계정: userId={}, role={}, isActive={}, createdAt={}", 
+                                user.getId(), user.getRole(), user.getIsActive(), user.getCreatedAt());
+                    }
+                }
+                
+                return selectedUser.getId();
+            }
+            
+            log.warn("이메일로 사용자를 찾았지만 선택할 수 없음: email={}, tenantId={}, count={}", 
+                    email, tenantId, users.size());
+            return null;
             
         } catch (Exception e) {
             log.error("이메일로 사용자 찾기 중 오류 발생: email={}, error={}", email, e.getMessage(), e);
             return null;
+        }
+    }
+    
+    /**
+     * 여러 사용자 중 가장 적절한 사용자 선택
+     * 우선순위:
+     * 1. 활성 상태인 계정 우선
+     * 2. 역할 우선순위: CLIENT > CONSULTANT > ADMIN > 기타
+     * 3. 가장 최근에 생성된 계정 우선
+     */
+    private User selectBestMatchingUser(List<User> users) {
+        if (users == null || users.isEmpty()) {
+            return null;
+        }
+        
+        if (users.size() == 1) {
+            return users.get(0);
+        }
+        
+        // 1. 활성 상태인 계정만 필터링 (활성 계정이 있으면)
+        List<User> activeUsers = users.stream()
+                .filter(user -> user.getIsActive() != null && user.getIsActive())
+                .collect(java.util.stream.Collectors.toList());
+        
+        List<User> candidates = activeUsers.isEmpty() ? users : activeUsers;
+        
+        // 2. 역할 우선순위로 정렬: CLIENT > CONSULTANT > ADMIN > 기타
+        candidates.sort((u1, u2) -> {
+            int priority1 = getRolePriority(u1.getRole());
+            int priority2 = getRolePriority(u2.getRole());
+            
+            if (priority1 != priority2) {
+                return Integer.compare(priority1, priority2); // 낮은 숫자가 우선순위 높음
+            }
+            
+            // 3. 같은 역할이면 최근 생성일 순으로 정렬
+            if (u1.getCreatedAt() != null && u2.getCreatedAt() != null) {
+                return u2.getCreatedAt().compareTo(u1.getCreatedAt()); // 최근 것이 우선
+            }
+            
+            return 0;
+        });
+        
+        return candidates.get(0);
+    }
+    
+    /**
+     * 역할 우선순위 반환 (낮은 숫자가 우선순위 높음)
+     */
+    private int getRolePriority(com.coresolution.consultation.constant.UserRole role) {
+        if (role == null) {
+            return 999;
+        }
+        
+        switch (role) {
+            case CLIENT:
+                return 1; // 가장 높은 우선순위
+            case CONSULTANT:
+                return 2;
+            case ADMIN:
+            case TENANT_ADMIN:
+            case PRINCIPAL:
+            case OWNER:
+                return 3;
+            case STAFF:
+                return 4;
+            case PARENT:
+                return 5;
+            default:
+                return 999;
         }
     }
 

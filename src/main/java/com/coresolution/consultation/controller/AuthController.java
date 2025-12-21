@@ -688,6 +688,7 @@ public class AuthController extends BaseApiController {
             response.put("message", authResponse.getMessage());
             response.put("user", authResponse.getUser());
             response.put("sessionId", sessionId);
+            response.put("requiresPasswordChange", authResponse.isRequiresPasswordChange()); // 임시 비밀번호인 경우 비밀번호 변경 필요
             
             return success(response);
         } else if (authResponse.isRequiresConfirmation()) {

@@ -103,6 +103,12 @@ public class AuthServiceImpl implements AuthService {
                 User user = userService.findByEmail(email)
                     .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다: " + email));
                 
+                // 임시 비밀번호로 로그인 차단 (isPasswordChanged = false인 경우)
+                if (user.getIsPasswordChanged() != null && !user.getIsPasswordChanged()) {
+                    log.warn("❌ 임시 비밀번호로 로그인 시도 차단: email={}, userId={}. 비밀번호 변경 링크를 통해 비밀번호를 변경한 후 로그인해주세요.", email, user.getId());
+                    return AuthResponse.failure("임시 비밀번호로는 로그인할 수 없습니다. 이메일로 발송된 비밀번호 변경 링크를 통해 비밀번호를 변경한 후 로그인해주세요.");
+                }
+                
                 // Phase 3: 사용자 권한 조회
                 List<String> permissions = dynamicPermissionService.getUserPermissionsAsStringList(user);
                 log.debug("사용자 권한 조회 완료: userId={}, permissions={}", user.getId(), permissions);
@@ -137,7 +143,8 @@ public class AuthServiceImpl implements AuthService {
                     .token(token)
                     .refreshToken(refreshToken)
                     .userResponse(userResponse)
-                    .user(userDto); // 하위 호환성
+                    .user(userDto) // 하위 호환성
+                    .requiresPasswordChange(false); // 임시 비밀번호는 로그인 차단되므로 false
                 
                 if (accessibleTenants != null && !accessibleTenants.isEmpty()) {
                     // 멀티 테넌트 사용자인 경우 테넌트 선택 필요
@@ -311,6 +318,12 @@ public class AuthServiceImpl implements AuthService {
                 log.info("👤 사용자 정보 조회 완료: userId={}, email={}, tenantId={}, role={}", 
                     user.getId(), user.getEmail(), user.getTenantId(), user.getRole());
                 
+                // 임시 비밀번호로 로그인 차단 (isPasswordChanged = false인 경우)
+                if (user.getIsPasswordChanged() != null && !user.getIsPasswordChanged()) {
+                    log.warn("❌ 임시 비밀번호로 로그인 시도 차단: email={}, userId={}. 비밀번호 변경 링크를 통해 비밀번호를 변경한 후 로그인해주세요.", email, user.getId());
+                    return AuthResponse.failure("임시 비밀번호로는 로그인할 수 없습니다. 이메일로 발송된 비밀번호 변경 링크를 통해 비밀번호를 변경한 후 로그인해주세요.");
+                }
+                
                 // 입점사(코어솔루션 테넌트)만 접근 가능 - Trinity 회사 직원(ADMIN/OPS 역할) 제외
                 log.info("🔍 테넌트 접근 검증 시작: email={}, tenantId={}", email, user.getTenantId());
                 validateCoreSolutionTenantAccess(user);
@@ -359,7 +372,8 @@ public class AuthServiceImpl implements AuthService {
                     .token(null)
                     .refreshToken(null)
                     .userResponse(userResponse)
-                    .user(userDto); // 하위 호환성
+                    .user(userDto) // 하위 호환성
+                    .requiresPasswordChange(false); // 임시 비밀번호는 로그인 차단되므로 false
                 
                 if (accessibleTenants != null && !accessibleTenants.isEmpty()) {
                     // 멀티 테넌트 사용자인 경우 테넌트 선택 필요
@@ -371,7 +385,8 @@ public class AuthServiceImpl implements AuthService {
                     
                     log.info("✅ 멀티 테넌트 사용자 로그인: email={}, tenantCount={}", email, accessibleTenants.size());
                 } else {
-                    log.info("✅ 세션 기반 로그인 성공: email={}, sessionId={}", email, sessionId);
+                    log.info("✅ 세션 기반 로그인 성공: email={}, sessionId={}", 
+                        email, sessionId);
                 }
                 
                 return responseBuilder.build();

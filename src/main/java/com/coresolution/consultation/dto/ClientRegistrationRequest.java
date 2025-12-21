@@ -27,7 +27,7 @@ public class ClientRegistrationRequest {
     @Email(message = "올바른 이메일 형식이 아닙니다.")
     private String email;
     
-    // 표준화 2025-12-08: password는 자동 생성됨 (프론트엔드에서 전송하지 않음)
+    // 비밀번호: 사용자가 입력하면 사용, 없으면 임시 비밀번호 자동 생성
     private String password;
     
     // 표준화 2025-12-08: name은 이메일 기반으로 자동 생성됨 (프론트엔드에서 전송하지 않음)

@@ -34,6 +34,7 @@ import CommonPageTemplate from '../common/CommonPageTemplate';
 import SimpleLayout from '../layout/SimpleLayout';
 import SocialSignupModal from './SocialSignupModal';
 import TenantSelection from './TenantSelection';
+import PasswordChangeModal from '../mypage/components/PasswordChangeModal';
 // @deprecated 레거시 함수는 하위 호환성을 위해 유지하되, 새로운 코드에서는 사용하지 않음
 // import { getDashboardPath, redirectToDashboardWithFallback } from '../../utils/session';
 import '../../styles/auth/UnifiedLogin.css';
@@ -72,6 +73,8 @@ const UnifiedLogin = () => {
   const [showTenantSelection, setShowTenantSelection] = useState(false);
   const [accessibleTenants, setAccessibleTenants] = useState([]);
   const [isMultiTenant, setIsMultiTenant] = useState(false);
+  const [showPasswordChangeModal, setShowPasswordChangeModal] = useState(false);
+  const [tempPassword, setTempPassword] = useState(''); // 임시 비밀번호 저장 (비밀번호 변경 모달에 전달)
   const sessionCheckedRef = useRef(false); // 세션 체크 완료 여부 (ref 사용으로 리렌더링 방지)
 
   // 툴팁 상태
@@ -490,6 +493,16 @@ const UnifiedLogin = () => {
 
         showTooltip('로그인에 성공했습니다.', 'success');
 
+        // 임시 비밀번호로 로그인한 경우 비밀번호 변경 모달 표시
+        if (result.data?.requiresPasswordChange || loginData.requiresPasswordChange) {
+          console.log('⚠️ 임시 비밀번호로 로그인 감지 - 비밀번호 변경 모달 표시');
+          // 입력한 비밀번호를 임시 비밀번호로 저장 (비밀번호 변경 모달에서 현재 비밀번호로 사용)
+          setTempPassword(formData.password);
+          setIsLoading(false);
+          setShowPasswordChangeModal(true);
+          return; // 비밀번호 변경 완료 전까지 리다이렉트하지 않음
+        }
+
         // 백엔드에서 반환한 멀티 테넌트 정보 확인
         if (loginData.isMultiTenant && loginData.requiresTenantSelection && loginData.accessibleTenants) {
           // 멀티 테넌트 사용자: 테넌트 선택 화면 표시
@@ -709,6 +722,39 @@ const UnifiedLogin = () => {
             </div>
           </div>
         </div>
+
+        {/* 비밀번호 변경 모달 (임시 비밀번호로 로그인한 경우) */}
+        {showPasswordChangeModal && (
+          <PasswordChangeModal
+            isOpen={showPasswordChangeModal}
+            tempPassword={tempPassword} // 임시 비밀번호 전달 (현재 비밀번호로 자동 입력)
+            onClose={() => {
+              // 비밀번호 변경 모달을 닫을 수 없도록 설정 (임시 비밀번호인 경우 필수)
+              notificationManager.show('임시 비밀번호를 변경해야 합니다.', 'warning');
+            }}
+            onSuccess={async () => {
+              // 비밀번호 변경 성공 시 대시보드로 리다이렉트
+              console.log('✅ 비밀번호 변경 완료 - 대시보드로 리다이렉트');
+              setShowPasswordChangeModal(false);
+              setTempPassword(''); // 임시 비밀번호 초기화
+              
+              // 세션 정보 다시 확인 후 대시보드로 이동
+              try {
+                const checkResult = await checkSession(true);
+                if (checkResult && user) {
+                  const { redirectToDynamicDashboard } = await import('../../utils/dashboardUtils');
+                  await redirectToDynamicDashboard({ user }, navigate);
+                } else {
+                  // 세션 확인 실패 시 로그인 페이지로 이동
+                  navigate('/login');
+                }
+              } catch (error) {
+                console.error('❌ 세션 확인 실패:', error);
+                navigate('/login');
+              }
+            }}
+          />
+        )}
 
         {/* 소셜 회원가입 모달 */}
         {showSocialSignupModal && (

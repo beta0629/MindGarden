@@ -130,6 +130,7 @@ const ClientModal = ({
         const safeFormData = {
             name: formData.name || '',
             email: formData.email || '',
+            password: formData.password || '',
             phone: formData.phone || '',
             // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
             status: formData.status || 'ACTIVE',
@@ -142,7 +143,7 @@ const ClientModal = ({
                 {type === 'create' && (
                     <div className="mg-v2-info-box" style={{ marginBottom: '1rem', padding: '0.75rem', backgroundColor: 'var(--color-background-light)', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border-light)' }}>
                         <p className="mg-v2-info-text" style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', margin: 0 }}>
-                            💡 이름과 이메일 주소를 입력하시면 됩니다. 아이디와 비밀번호는 자동으로 생성됩니다.
+                            💡 비밀번호를 입력하지 않으면 임시 비밀번호가 자동으로 생성됩니다.
                         </p>
                     </div>
                 )}
@@ -207,6 +208,22 @@ const ClientModal = ({
                         </small>
                     )}
                 </div>
+                
+                {type === 'create' && (
+                    <div className="mg-v2-form-group">
+                        <label htmlFor="password" className="mg-v2-form-label">비밀번호</label>
+                        <input
+                            type="password"
+                            id="password"
+                            name="password"
+                            value={safeFormData.password}
+                            onChange={handleInputChange}
+                            placeholder="비밀번호를 입력하지 않으면 자동 생성됩니다"
+                            className="mg-v2-form-input"
+                        />
+                        <small className="mg-v2-form-help">비밀번호를 입력하지 않으면 임시 비밀번호가 자동으로 생성됩니다.</small>
+                    </div>
+                )}
                 
                 <div className="mg-v2-form-group">
                     <label htmlFor="phone" className="mg-v2-form-label">전화번호</label>

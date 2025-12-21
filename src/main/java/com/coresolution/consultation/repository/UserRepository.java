@@ -88,6 +88,13 @@ public interface UserRepository extends BaseRepository<User, Long> {
     Optional<User> findByTenantIdAndEmail(@Param("tenantId") String tenantId, @Param("email") String email);
     
     /**
+     * 테넌트별 이메일로 모든 사용자 조회 (같은 이메일로 여러 계정이 있을 수 있음)
+     * 활성 상태 우선, 최근 생성일 순으로 정렬
+     */
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.email = :email AND u.isDeleted = false ORDER BY u.isActive DESC, u.createdAt DESC")
+    List<User> findAllByTenantIdAndEmail(@Param("tenantId") String tenantId, @Param("email") String email);
+    
+    /**
      * @Deprecated - 🚨 극도로 위험: 모든 테넌트 이메일 정보 노출!
      * 주의: 멀티 테넌트 사용자의 경우 첫 번째 결과만 반환
      * 모든 테넌트의 사용자를 조회하려면 findAllByEmail 사용

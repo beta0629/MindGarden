@@ -638,13 +638,23 @@ public class OnboardingServiceImpl implements OnboardingService {
             if (success == null || !success) {
                 String errorMessage = (message != null && !message.trim().isEmpty()) ? message
                         : "온보딩 승인 프로세스 중 알 수 없는 오류가 발생했습니다. (상세 오류 정보 없음)";
-                log.error("온보딩 승인 프로세스 실패: requestId={}, tenantId={}, message={}", requestId,
-                        tenantId, errorMessage);
-                log.error("온보딩 승인 프로세스 실패 상세: success={}, message={}, approvalResult={}", success,
-                        message, approvalResult);
-                request.setStatus(OnboardingStatus.ON_HOLD);
-                request.setDecisionNote(note != null ? note + "\n[시스템 오류] " + errorMessage
-                        : "[시스템 오류] " + errorMessage);
+                
+                // "이미 활성화된 테넌트" 메시지는 정상 케이스로 처리 (프로시저 버그 대응)
+                if (message != null && message.contains("이미 활성화") && message.contains("정상")) {
+                    log.warn("이미 활성화된 테넌트 (정상 케이스): requestId={}, tenantId={}, message={}", requestId,
+                            tenantId, message);
+                    // success를 true로 강제 설정하여 정상 처리
+                    success = true;
+                    message = "테넌트가 이미 활성화되어 있습니다 (정상): " + tenantId;
+                } else {
+                    log.error("온보딩 승인 프로세스 실패: requestId={}, tenantId={}, message={}", requestId,
+                            tenantId, errorMessage);
+                    log.error("온보딩 승인 프로세스 실패 상세: success={}, message={}, approvalResult={}", success,
+                            message, approvalResult);
+                    request.setStatus(OnboardingStatus.ON_HOLD);
+                    request.setDecisionNote(note != null ? note + "\n[시스템 오류] " + errorMessage
+                            : "[시스템 오류] " + errorMessage);
+                }
             } else {
                 log.info("온보딩 승인 프로세스 완료: {}", message);
 

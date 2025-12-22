@@ -1983,7 +1983,7 @@ public class OnboardingServiceImpl implements OnboardingService {
     }
 
     @Override
-    @Transactional
+    @Transactional(noRollbackFor = Exception.class)
     public OnboardingRequest retryInitializationTask(java.util.UUID requestId, String taskType,
             String actorId) {
         log.info("초기화 작업 재실행: requestId={}, taskType={}, actorId={}", requestId, taskType, actorId);
@@ -2015,7 +2015,7 @@ public class OnboardingServiceImpl implements OnboardingService {
         // 작업 타입별 재실행
         boolean success = false;
         String errorMsg = null;
-        
+
         // 잘못된 작업 타입 검증
         if (!taskType.equals("commonCodes") && !taskType.equals("roleCodes")
                 && !taskType.equals("permissionGroups")) {
@@ -2023,7 +2023,7 @@ public class OnboardingServiceImpl implements OnboardingService {
             statusMap.put(taskType, createInitializationStatus("FAILED", errorMsg));
             log.error("초기화 작업 재실행 실패: requestId={}, taskType={}, error={}", requestId, taskType,
                     errorMsg);
-            
+
             // 상태 저장 후 예외 throw
             try {
                 String statusJson = objectMapper.writeValueAsString(statusMap);
@@ -2032,10 +2032,10 @@ public class OnboardingServiceImpl implements OnboardingService {
             } catch (Exception e) {
                 log.error("초기화 작업 상태 저장 실패: requestId={}, error={}", requestId, e.getMessage(), e);
             }
-            
+
             throw new IllegalArgumentException(errorMsg);
         }
-        
+
         try {
             switch (taskType) {
                 case "commonCodes":

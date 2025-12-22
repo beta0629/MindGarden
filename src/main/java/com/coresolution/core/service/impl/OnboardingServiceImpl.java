@@ -1545,7 +1545,8 @@ public class OnboardingServiceImpl implements OnboardingService {
         } catch (Exception e) {
             log.error("공통코드 삽입 실패: tenantId={}, codeGroup={}, codeValue={}, error={}", tenantId,
                     codeGroup, codeValue, e.getMessage());
-            throw e; // 상위로 전파하여 개별 처리
+            // 예외를 throw하지 않고 로그만 남김 (온보딩 프로세스 중단 방지)
+            // 상위에서 이미 try-catch로 처리하고 있으므로 예외를 전파하지 않음
         }
     }
 
@@ -1704,7 +1705,8 @@ public class OnboardingServiceImpl implements OnboardingService {
         } catch (Exception e) {
             log.error("❌ 테넌트 역할 코드 생성 실패: tenantId={}, businessType={}, error={}", tenantId,
                     businessType, e.getMessage(), e);
-            throw e;
+            // 예외를 throw하지 않고 로그만 남김 (온보딩 프로세스 중단 방지)
+            // 상위에서 이미 try-catch로 처리하고 있으므로 예외를 전파하지 않음
         }
     }
 

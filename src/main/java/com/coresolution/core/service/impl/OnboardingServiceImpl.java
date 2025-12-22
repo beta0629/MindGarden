@@ -1344,8 +1344,11 @@ public class OnboardingServiceImpl implements OnboardingService {
             String actorId) {
         try {
             assignDefaultPermissionGroupsToAdmin(tenantId, actorId);
+            log.info("✅ 권한 그룹 할당 완료: tenantId={}", tenantId);
         } catch (Exception e) {
             log.error("권한 그룹 할당 실패 (트랜잭션은 커밋): tenantId={}, error={}", tenantId, e.getMessage(), e);
+            // 예외를 다시 throw하지 않음 (noRollbackFor로 설정되어 있어도 예외를 throw하면 롤백될 수 있음)
+            // 대신 로그만 남기고 트랜잭션은 커밋됨
         }
     }
 
@@ -2007,6 +2010,14 @@ public class OnboardingServiceImpl implements OnboardingService {
             try {
                 statusMap = objectMapper.readValue(request.getInitializationStatusJson(),
                         new TypeReference<Map<String, Object>>() {});
+                
+                // 재실행 중인지 확인 (무한 루프 방지)
+                @SuppressWarnings("unchecked")
+                Map<String, Object> taskStatus = (Map<String, Object>) statusMap.get(taskType);
+                if (taskStatus != null && "RUNNING".equals(taskStatus.get("status"))) {
+                    log.warn("이미 재실행 중인 작업입니다: requestId={}, taskType={}", requestId, taskType);
+                    return request; // 이미 실행 중이면 현재 상태 반환
+                }
             } catch (JsonProcessingException e) {
                 log.warn("초기화 작업 상태 JSON 파싱 실패, 새로 생성: requestId={}, error={}", requestId,
                         e.getMessage());
@@ -2028,13 +2039,21 @@ public class OnboardingServiceImpl implements OnboardingService {
             // 상태 저장 후 예외 throw
             try {
                 String statusJson = objectMapper.writeValueAsString(statusMap);
-                request.setInitializationStatusJson(statusJson);
-                repository.save(request);
+                self.saveInitializationStatusInNewTransaction(requestId, statusJson);
             } catch (Exception e) {
                 log.error("초기화 작업 상태 저장 실패: requestId={}, error={}", requestId, e.getMessage(), e);
             }
 
             throw new IllegalArgumentException(errorMsg);
+        }
+
+        // 재실행 시작 상태로 설정
+        statusMap.put(taskType, createInitializationStatus("RUNNING", null));
+        try {
+            String statusJson = objectMapper.writeValueAsString(statusMap);
+            self.saveInitializationStatusInNewTransaction(requestId, statusJson);
+        } catch (Exception e) {
+            log.warn("재실행 시작 상태 저장 실패 (계속 진행): requestId={}, error={}", requestId, e.getMessage());
         }
 
         try {

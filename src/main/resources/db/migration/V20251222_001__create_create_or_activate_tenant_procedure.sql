@@ -87,7 +87,7 @@ proc_label: BEGIN
     
     IF v_duplicate_check > 0 THEN
         -- 기존 테넌트가 있는 경우는 활성화로 처리 (정상 케이스)
-        -- 하지만 이미 ACTIVE 상태인 경우 경고
+        -- 이미 ACTIVE 상태인 경우도 성공으로 처리 (중복 호출 방지)
         SELECT COUNT(*) INTO v_duplicate_check
         FROM tenants
         WHERE tenant_id COLLATE utf8mb4_unicode_ci = p_tenant_id COLLATE utf8mb4_unicode_ci
@@ -95,8 +95,9 @@ proc_label: BEGIN
           AND is_deleted = FALSE;
         
         IF v_duplicate_check > 0 THEN
-            SET p_success = FALSE;
-            SET p_message = CONCAT('이미 활성화된 테넌트입니다: ', p_tenant_id);
+            -- 이미 활성화된 테넌트는 성공으로 처리 (중복 호출 허용)
+            SET p_success = TRUE;
+            SET p_message = CONCAT('테넌트가 이미 활성화되어 있습니다: ', p_tenant_id);
             LEAVE proc_label;
         END IF;
     END IF;

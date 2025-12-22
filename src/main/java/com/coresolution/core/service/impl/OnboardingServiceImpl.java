@@ -27,6 +27,7 @@ import com.coresolution.core.service.TenantIdGenerator;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.context.ApplicationContext;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -64,6 +65,7 @@ public class OnboardingServiceImpl implements OnboardingService {
     private final OnboardingErrorHandlingService errorHandlingService;
     private final com.coresolution.core.service.PermissionGroupService permissionGroupService;
     private final com.coresolution.core.repository.TenantRoleRepository tenantRoleRepository;
+    private final ApplicationContext applicationContext;
     @jakarta.persistence.PersistenceContext
     private jakarta.persistence.EntityManager entityManager;
 
@@ -667,7 +669,9 @@ public class OnboardingServiceImpl implements OnboardingService {
                 // 테넌트 초기화 작업은 별도 트랜잭션으로 분리하여 메인 트랜잭션에 영향 없도록 처리
                 try {
                     log.info("🔄 테넌트 초기화 작업 시작: tenantId={}", tenantId);
-                    initializeTenantAfterOnboardingInNewTransaction(tenantId,
+                    // ApplicationContext를 통해 프록시를 가져와서 @Transactional이 적용되도록 함
+                    OnboardingServiceImpl self = applicationContext.getBean(OnboardingServiceImpl.class);
+                    self.initializeTenantAfterOnboardingInNewTransaction(tenantId,
                             request.getBusinessType(), actorId);
 
                     // 서브도메인은 프로시저에서 처리하므로 여기서는 제거
@@ -1224,16 +1228,15 @@ public class OnboardingServiceImpl implements OnboardingService {
     }
 
     /**
-     * 별도 트랜잭션에서 테넌트 초기화 작업 실행
-     * 메인 트랜잭션에 영향을 주지 않도록 별도 트랜잭션으로 분리
+     * 별도 트랜잭션에서 테넌트 초기화 작업 실행 메인 트랜잭션에 영향을 주지 않도록 별도 트랜잭션으로 분리
      *
      * @param tenantId 테넌트 ID
      * @param businessType 업종 타입
      * @param actorId 실행자 ID
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW, rollbackFor = Exception.class)
-    public void initializeTenantAfterOnboardingInNewTransaction(String tenantId, String businessType,
-            String actorId) {
+    public void initializeTenantAfterOnboardingInNewTransaction(String tenantId,
+            String businessType, String actorId) {
         try {
             initializeTenantAfterOnboarding(tenantId, businessType, actorId);
         } catch (Exception e) {

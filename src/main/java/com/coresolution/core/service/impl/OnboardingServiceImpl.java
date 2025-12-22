@@ -670,7 +670,8 @@ public class OnboardingServiceImpl implements OnboardingService {
                 try {
                     log.info("🔄 테넌트 초기화 작업 시작: tenantId={}", tenantId);
                     // ApplicationContext를 통해 프록시를 가져와서 @Transactional이 적용되도록 함
-                    OnboardingServiceImpl self = applicationContext.getBean(OnboardingServiceImpl.class);
+                    OnboardingServiceImpl self =
+                            applicationContext.getBean(OnboardingServiceImpl.class);
                     self.initializeTenantAfterOnboardingInNewTransaction(tenantId,
                             request.getBusinessType(), actorId);
 
@@ -1234,7 +1235,7 @@ public class OnboardingServiceImpl implements OnboardingService {
      * @param businessType 업종 타입
      * @param actorId 실행자 ID
      */
-    @Transactional(propagation = Propagation.REQUIRES_NEW, rollbackFor = Exception.class)
+    @Transactional(propagation = Propagation.REQUIRES_NEW, noRollbackFor = Exception.class)
     public void initializeTenantAfterOnboardingInNewTransaction(String tenantId,
             String businessType, String actorId) {
         try {
@@ -1243,6 +1244,7 @@ public class OnboardingServiceImpl implements OnboardingService {
             log.error("별도 트랜잭션에서 테넌트 초기화 실패 (메인 트랜잭션에 영향 없음): tenantId={}, error={}", tenantId,
                     e.getMessage(), e);
             // 예외를 다시 throw하지 않음 (메인 트랜잭션에 영향 없도록)
+            // noRollbackFor로 설정하여 예외가 발생해도 트랜잭션은 커밋됨
         }
     }
 

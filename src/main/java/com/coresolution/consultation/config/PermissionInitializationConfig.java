@@ -23,23 +23,20 @@ public class PermissionInitializationConfig {
     @EventListener(ApplicationReadyEvent.class)
     @Order(50) // PlSqlInitializer(100)보다 먼저 실행
     public void initialize(ApplicationReadyEvent event) {
-        log.info("🚀 애플리케이션 시작 - 권한 시스템 초기화 상태 확인...");
-        
-        try {
-            // 이미 초기화되어 있으면 완전히 스킵
-            if (permissionInitializationService.isPermissionSystemInitialized()) {
-                log.info("✅ 권한 시스템이 이미 초기화되어 있음 - 초기화 작업 스킵");
-                return;
-            }
-            
-            // 개발 환경에서는 초기화 작업을 비활성화하여 타임아웃 방지
-            // 필요시 수동으로 초기화하거나 Flyway 마이그레이션으로 처리
-            log.warn("⚠️ 권한 시스템 초기화가 필요하지만 타임아웃 방지를 위해 자동 초기화를 비활성화했습니다.");
-            log.warn("⚠️ 필요시 수동으로 초기화하거나 Flyway 마이그레이션으로 처리하세요.");
-            // permissionInitializationService.initializePermissionSystem();
-        } catch (Exception e) {
-            log.error("❌ 권한 시스템 초기화 상태 확인 실패", e);
-            // 초기화 실패해도 애플리케이션은 계속 실행
-        }
+        // 타임아웃 방지를 위해 권한 시스템 초기화 상태 확인도 비활성화
+        log.info("ℹ️ 권한 시스템 초기화 상태 확인 건너뜀 (타임아웃 방지)");
+        // try {
+        //     // 이미 초기화되어 있으면 완전히 스킵
+        //     if (permissionInitializationService.isPermissionSystemInitialized()) {
+        //         log.info("✅ 권한 시스템이 이미 초기화되어 있음 - 초기화 작업 스킵");
+        //         return;
+        //     }
+        //     
+        //     // 개발 환경에서는 초기화 작업을 비활성화하여 타임아웃 방지
+        //     log.warn("⚠️ 권한 시스템 초기화가 필요하지만 타임아웃 방지를 위해 자동 초기화를 비활성화했습니다.");
+        //     // permissionInitializationService.initializePermissionSystem();
+        // } catch (Exception e) {
+        //     log.error("❌ 권한 시스템 초기화 상태 확인 실패", e);
+        // }
     }
 }

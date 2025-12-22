@@ -1998,7 +1998,6 @@ public class OnboardingServiceImpl implements OnboardingService {
         }
 
         String tenantId = request.getTenantId();
-        String businessType = request.getBusinessType();
         OnboardingServiceImpl self = applicationContext.getBean(OnboardingServiceImpl.class);
 
         // 초기화 작업 상태 맵 읽기
@@ -2110,8 +2109,7 @@ public class OnboardingServiceImpl implements OnboardingService {
         }
 
         // 최신 상태로 다시 조회하여 반환
-        OnboardingRequest updatedRequest = repository.findById(requestId)
-                .orElse(request);
+        OnboardingRequest updatedRequest = repository.findById(requestId).orElse(request);
 
         // 작업이 실패한 경우에도 성공 응답 반환 (상태는 이미 저장됨)
         // 프론트엔드에서 상태를 확인하여 실패 여부를 판단할 수 있음
@@ -2124,11 +2122,11 @@ public class OnboardingServiceImpl implements OnboardingService {
     }
 
     /**
-     * 별도 트랜잭션에서 초기화 작업 상태 저장
-     * 롤백 방지를 위해 별도 트랜잭션으로 처리
+     * 별도 트랜잭션에서 초기화 작업 상태 저장 롤백 방지를 위해 별도 트랜잭션으로 처리
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW, noRollbackFor = Exception.class)
-    public void saveInitializationStatusInNewTransaction(java.util.UUID requestId, String statusJson) {
+    public void saveInitializationStatusInNewTransaction(java.util.UUID requestId,
+            String statusJson) {
         try {
             OnboardingRequest request = repository.findById(requestId).orElse(null);
             if (request != null) {

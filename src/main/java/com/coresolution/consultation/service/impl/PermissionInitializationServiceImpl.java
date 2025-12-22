@@ -91,16 +91,20 @@ public class PermissionInitializationServiceImpl implements PermissionInitializa
             Permission.of("SYSTEM_NOTIFICATION_MANAGE", "시스템 공지 관리", "SYSTEM")
         );
         
-        int createdCount = 0;
+        // 배치 저장으로 변경하여 트랜잭션 시간 단축
+        List<Permission> permissionsToSave = new java.util.ArrayList<>();
         for (Permission permission : defaultPermissions) {
             if (!permissionRepository.existsByPermissionCode(permission.getPermissionCode())) {
-                permissionRepository.save(permission);
-                createdCount++;
-                log.debug("권한 생성: {}", permission.getPermissionCode());
+                permissionsToSave.add(permission);
             }
         }
         
-        log.info("기본 권한 초기화 완료: {}개 생성", createdCount);
+        if (!permissionsToSave.isEmpty()) {
+            permissionRepository.saveAll(permissionsToSave);
+            log.info("기본 권한 초기화 완료: {}개 생성", permissionsToSave.size());
+        } else {
+            log.info("기본 권한 초기화 완료: 모든 권한이 이미 존재함");
+        }
     }
     
     @Override

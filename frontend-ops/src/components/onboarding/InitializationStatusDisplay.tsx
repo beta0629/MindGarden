@@ -53,6 +53,14 @@ export default function InitializationStatusDisplay({
     );
   }
 
+  if (!status) {
+    return (
+      <div className="initialization-status-empty">
+        <p>초기화 작업 상태 정보가 없습니다.</p>
+      </div>
+    );
+  }
+
   const handleRetry = async (taskType: string) => {
     if (!request.id) {
       setError("요청 ID가 없습니다.");

@@ -32,8 +32,9 @@ public class MigrationRunner implements CommandLineRunner {
         if ("true".equals(runMigration)) {
             log.info("🔄 전화번호 암호화 마이그레이션 시작");
             migratePhoneNumbers();
+            log.info("✅ 전화번호 암호화 마이그레이션 완료");
         } else {
-            log.info("⏭️ 마이그레이션 건너뜀 (run.migration=true로 설정하여 실행)");
+            log.info("⏭️ 마이그레이션 건너뜀 (run.migration이 true가 아니므로 건너뜀)");
         }
     }
     

@@ -1970,12 +1970,13 @@ public class OnboardingServiceImpl implements OnboardingService {
 
     @Override
     @Transactional
-    public OnboardingRequest retryInitializationTask(java.util.UUID requestId, String taskType, String actorId) {
+    public OnboardingRequest retryInitializationTask(java.util.UUID requestId, String taskType,
+            String actorId) {
         log.info("초기화 작업 재실행: requestId={}, taskType={}, actorId={}", requestId, taskType, actorId);
 
         OnboardingRequest request = repository.findById(requestId)
-                .orElseThrow(() -> new IllegalArgumentException(
-                        OnboardingConstants.formatError(OnboardingConstants.ERROR_TENANT_NOT_FOUND, requestId)));
+                .orElseThrow(() -> new IllegalArgumentException(OnboardingConstants
+                        .formatError(OnboardingConstants.ERROR_TENANT_NOT_FOUND, requestId)));
 
         if (request.getTenantId() == null || request.getTenantId().trim().isEmpty()) {
             throw new IllegalStateException("테넌트 ID가 없어 초기화 작업을 재실행할 수 없습니다.");
@@ -2006,7 +2007,8 @@ public class OnboardingServiceImpl implements OnboardingService {
                     log.info("✅ 공통코드 삽입 재실행 성공: tenantId={}", tenantId);
                     break;
                 case "roleCodes":
-                    self.insertTenantRoleCodesInNewTransaction(tenantId, request.getBusinessType(), actorId);
+                    self.insertTenantRoleCodesInNewTransaction(tenantId, request.getBusinessType(),
+                            actorId);
                     statusMap.put("roleCodes", createInitializationStatus("SUCCESS", null));
                     log.info("✅ 역할 코드 생성 재실행 성공: tenantId={}", tenantId);
                     break;

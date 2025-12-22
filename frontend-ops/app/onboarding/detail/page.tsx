@@ -6,6 +6,7 @@ import Link from "next/link";
 
 import { OnboardingDecisionForm } from "@/components/onboarding/OnboardingDecisionForm";
 import ChecklistDisplay from "@/components/onboarding/ChecklistDisplay";
+import InitializationStatusDisplay from "@/components/onboarding/InitializationStatusDisplay";
 import { fetchOnboardingDetail } from "@/services/onboardingService";
 import { OnboardingRequest } from "@/types/onboarding";
 
@@ -173,6 +174,22 @@ function OnboardingDetailPageContent() {
           <h2>체크리스트</h2>
           <ChecklistDisplay checklistJson={detail.checklistJson} />
         </div>
+        {detail.status === "APPROVED" && detail.tenantId && (
+          <div className="detail-grid__section">
+            <InitializationStatusDisplay
+              request={detail}
+              onUpdate={async () => {
+                // 상세 정보 다시 로드
+                try {
+                  const updated = await fetchOnboardingDetail(String(detail.id));
+                  setDetail(updated);
+                } catch (err) {
+                  console.error("상세 정보 업데이트 실패:", err);
+                }
+              }}
+            />
+          </div>
+        )}
       </div>
 
       <OnboardingDecisionForm

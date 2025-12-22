@@ -91,20 +91,15 @@ public class PlSqlInitializer {
             log.error("❌ CreateDefaultTenantUsers 프로시저 초기화 실패 (계속 진행): {}", e.getMessage(), e);
         }
         
-        // 3. 상담일지 알림 프로시저 초기화 (선택적 - 실패해도 계속 진행)
-        try {
-            initializeConsultationRecordAlertProcedures();
-            Thread.sleep(500);
-        } catch (Exception e) {
-            log.warn("⚠️ 상담일지 알림 프로시저 초기화 실패 (계속 진행): {}", e.getMessage());
-        }
+        // 3. 상담일지 알림 프로시저 초기화 (비활성화 - Flyway 마이그레이션으로 관리)
+        // 이 프로시저들은 Flyway 마이그레이션으로 관리되므로 Java 코드에서 초기화하지 않음
+        // 연결 타임아웃 방지를 위해 비활성화
+        log.info("ℹ️ 상담일지 알림 프로시저 초기화 건너뜀 (Flyway 마이그레이션으로 관리)");
         
-        // 4. 상담일지 검증 프로시저 초기화 (선택적 - 실패해도 계속 진행)
-        try {
-            initializeConsultationRecordValidationProcedures();
-        } catch (Exception e) {
-            log.warn("⚠️ 상담일지 검증 프로시저 초기화 실패 (계속 진행): {}", e.getMessage());
-        }
+        // 4. 상담일지 검증 프로시저 초기화 (비활성화 - Flyway 마이그레이션으로 관리)
+        // 이 프로시저들은 Flyway 마이그레이션으로 관리되므로 Java 코드에서 초기화하지 않음
+        // 연결 타임아웃 방지를 위해 비활성화
+        log.info("ℹ️ 상담일지 검증 프로시저 초기화 건너뜀 (Flyway 마이그레이션으로 관리)");
         
         log.info("✅ PL/SQL 프로시저 자동 초기화 완료");
     }

@@ -352,42 +352,24 @@ proc_label: BEGIN
         -- 기본 코드 복사 (실패해도 계속 진행)
         SET @copy_success = FALSE;
         SET @copy_message = '코드 복사 건너뜀 (테이블 없음)';
-        
-        BEGIN
-            DECLARE CONTINUE HANDLER FOR SQLEXCEPTION
-            BEGIN
-                SET @copy_success = FALSE;
-                SET @copy_message = '코드 복사 중 오류 발생 (계속 진행)';
-            END;
-            
-            CALL CopyDefaultTenantCodes(
-                p_tenant_id,
-                (SELECT tenant_id FROM tenants WHERE is_deleted = FALSE AND status = 'ACTIVE' LIMIT 1),
-                p_approved_by,
-                @copy_success,
-                @copy_message
-            );
-        END;
+        CALL CopyDefaultTenantCodes(
+            p_tenant_id,
+            (SELECT tenant_id FROM tenants WHERE is_deleted = FALSE AND status = 'ACTIVE' LIMIT 1),
+            p_approved_by,
+            @copy_success,
+            @copy_message
+        );
         
         -- 기본 사용자 생성 (실패해도 계속 진행)
         SET @user_success = FALSE;
         SET @user_message = '기본 사용자 생성 건너뜀';
-        
-        BEGIN
-            DECLARE CONTINUE HANDLER FOR SQLEXCEPTION
-            BEGIN
-                SET @user_success = FALSE;
-                SET @user_message = '기본 사용자 생성 중 오류 발생 (계속 진행)';
-            END;
-            
-            CALL CreateDefaultTenantUsers(
-                p_tenant_id,
-                p_business_type,
-                p_approved_by,
-                @user_success,
-                @user_message
-            );
-        END;
+        CALL CreateDefaultTenantUsers(
+            p_tenant_id,
+            p_business_type,
+            p_approved_by,
+            @user_success,
+            @user_message
+        );
         
         IF p_admin_email IS NOT NULL AND p_admin_email != '' 
            AND p_admin_password_hash IS NOT NULL AND p_admin_password_hash != '' THEN

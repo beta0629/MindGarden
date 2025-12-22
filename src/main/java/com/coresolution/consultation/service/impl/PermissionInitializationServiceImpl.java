@@ -186,11 +186,31 @@ public class PermissionInitializationServiceImpl implements PermissionInitializa
         );
         
         // 권한 매핑 생성 (표준화 2025-12-05: 표준 역할만 사용)
-        // 표준 관리자 역할 권한 설정
-        createRolePermissions(UserRole.ADMIN.name(), adminPermissions);
-        createRolePermissions(UserRole.TENANT_ADMIN.name(), adminPermissions); // 테넌트 관리자는 ADMIN과 동일 권한
-        createRolePermissions(UserRole.PRINCIPAL.name(), adminPermissions); // 원장은 ADMIN과 동일 권한
-        createRolePermissions(UserRole.OWNER.name(), hqMasterPermissions); // 사장은 모든 권한
+        // 각 역할별 권한 매핑을 독립적으로 실행하여 하나의 실패가 다른 것에 영향을 주지 않도록 함
+        // 타임아웃 방지를 위해 각각 try-catch로 처리
+        try {
+            createRolePermissions(UserRole.ADMIN.name(), adminPermissions);
+        } catch (Exception e) {
+            log.error("❌ ADMIN 권한 매핑 실패 (계속 진행): {}", e.getMessage(), e);
+        }
+        
+        try {
+            createRolePermissions(UserRole.TENANT_ADMIN.name(), adminPermissions); // 테넌트 관리자는 ADMIN과 동일 권한
+        } catch (Exception e) {
+            log.error("❌ TENANT_ADMIN 권한 매핑 실패 (계속 진행): {}", e.getMessage(), e);
+        }
+        
+        try {
+            createRolePermissions(UserRole.PRINCIPAL.name(), adminPermissions); // 원장은 ADMIN과 동일 권한
+        } catch (Exception e) {
+            log.error("❌ PRINCIPAL 권한 매핑 실패 (계속 진행): {}", e.getMessage(), e);
+        }
+        
+        try {
+            createRolePermissions(UserRole.OWNER.name(), hqMasterPermissions); // 사장은 모든 권한
+        } catch (Exception e) {
+            log.error("❌ OWNER 권한 매핑 실패 (계속 진행): {}", e.getMessage(), e);
+        }
         
         // 표준화 2025-12-05: 레거시 역할 제거
         // 레거시 역할은 더 이상 사용하지 않으므로 권한 설정도 제거

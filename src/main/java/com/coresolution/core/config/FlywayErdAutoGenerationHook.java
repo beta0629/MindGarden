@@ -82,48 +82,94 @@ public class FlywayErdAutoGenerationHook {
     @Profile("dev")
     public FlywayMigrationStrategy flywayMigrationStrategyForDev() {
         return flyway -> {
-            try {
-                // 개발 환경에서는 먼저 repair를 실행하여 checksum 불일치 문제 해결
-                log.info("🔧 개발 환경 - Flyway repair 실행 (checksum 불일치 해결)");
+            int maxRetries = 3;
+            int retryDelayMs = 2000; // 2초 대기
+            
+            for (int attempt = 1; attempt <= maxRetries; attempt++) {
                 try {
-                    flyway.repair();
-                    log.info("✅ Flyway repair 완료");
-                } catch (Exception repairException) {
-                    log.warn("⚠️ Flyway repair 실패 (무시하고 계속 진행): {}", repairException.getMessage());
-                }
-
-                // repair 후 마이그레이션 실행
-                flyway.migrate();
-                log.info("✅ Flyway 마이그레이션 완료 (개발 서버 - ERD 자동 생성 비활성화)");
-            } catch (org.flywaydb.core.api.FlywayException e) {
-                // 검증 오류가 발생하면 다시 repair 시도
-                if (e.getMessage() != null && (e.getMessage().contains("Validate failed")
-                        || e.getMessage().contains("checksum mismatch")
-                        || e.getMessage().contains("Migrations have failed validation"))) {
-                    log.warn("⚠️ Flyway 검증 실패 - repair 재실행: {}", e.getMessage());
+                    // 개발 환경에서는 먼저 repair를 실행하여 checksum 불일치 문제 해결
+                    log.info("🔧 개발 환경 - Flyway repair 실행 (시도 {}/{} - checksum 불일치 해결)", attempt, maxRetries);
                     try {
                         flyway.repair();
-                        log.info("✅ Flyway repair 완료 - 마이그레이션 재시도");
-                        flyway.migrate();
-                        log.info("✅ Flyway 마이그레이션 완료 (repair 후)");
+                        log.info("✅ Flyway repair 완료");
                     } catch (Exception repairException) {
-                        log.error("❌ Flyway repair 실패: {}", repairException.getMessage(),
-                                repairException);
-                        // 개발 환경에서는 repair 실패해도 애플리케이션 시작 계속 진행
-                        log.warn("⚠️ 개발 환경이므로 Flyway 검증 오류를 무시하고 애플리케이션을 계속 시작합니다.");
-                        // 예외를 던지지 않고 계속 진행 (개발 환경이므로)
+                        log.warn("⚠️ Flyway repair 실패 (무시하고 계속 진행): {}", repairException.getMessage());
                     }
-                } else {
-                    // 다른 오류는 그대로 전파
-                    log.error("❌ Flyway 마이그레이션 실패 (검증 오류 아님): {}", e.getMessage(), e);
-                    throw e;
+
+                    // repair 후 마이그레이션 실행
+                    flyway.migrate();
+                    log.info("✅ Flyway 마이그레이션 완료 (개발 서버 - ERD 자동 생성 비활성화)");
+                    return; // 성공 시 종료
+                } catch (org.flywaydb.core.api.FlywayException e) {
+                    // 검증 오류 또는 연결 오류 처리
+                    if (e.getMessage() != null && (e.getMessage().contains("Validate failed")
+                            || e.getMessage().contains("checksum mismatch")
+                            || e.getMessage().contains("Migrations have failed validation"))) {
+                        log.warn("⚠️ Flyway 검증 실패 (시도 {}/{}): {}", attempt, maxRetries, e.getMessage());
+                        if (attempt < maxRetries) {
+                            try {
+                                Thread.sleep(retryDelayMs);
+                            } catch (InterruptedException ie) {
+                                Thread.currentThread().interrupt();
+                            }
+                            continue; // 재시도
+                        }
+                    } else if (e.getMessage() != null && (e.getMessage().contains("Too many connections")
+                            || e.getMessage().contains("Could not create connection"))) {
+                        log.warn("⚠️ Flyway 연결 실패 (시도 {}/{}): {} - 재시도 대기 중...", attempt, maxRetries, e.getMessage());
+                        if (attempt < maxRetries) {
+                            try {
+                                Thread.sleep(retryDelayMs * attempt); // 지수 백오프
+                            } catch (InterruptedException ie) {
+                                Thread.currentThread().interrupt();
+                            }
+                            continue; // 재시도
+                        }
+                    } else {
+                        // 다른 오류는 마지막 시도에서만 전파
+                        if (attempt == maxRetries) {
+                            log.error("❌ Flyway 마이그레이션 실패 (최대 재시도 횟수 초과): {}", e.getMessage(), e);
+                            throw e;
+                        }
+                        log.warn("⚠️ Flyway 오류 발생 (시도 {}/{}): {} - 재시도 중...", attempt, maxRetries, e.getMessage());
+                        try {
+                            Thread.sleep(retryDelayMs);
+                        } catch (InterruptedException ie) {
+                            Thread.currentThread().interrupt();
+                        }
+                        continue;
+                    }
+                } catch (Exception e) {
+                    // 예상치 못한 오류
+                    if (e.getMessage() != null && (e.getMessage().contains("Too many connections")
+                            || e.getMessage().contains("Could not create connection"))) {
+                        log.warn("⚠️ Flyway 연결 실패 (시도 {}/{}): {} - 재시도 대기 중...", attempt, maxRetries, e.getMessage());
+                        if (attempt < maxRetries) {
+                            try {
+                                Thread.sleep(retryDelayMs * attempt); // 지수 백오프
+                            } catch (InterruptedException ie) {
+                                Thread.currentThread().interrupt();
+                            }
+                            continue; // 재시도
+                        }
+                    }
+                    
+                    log.error("❌ Flyway 마이그레이션 중 예상치 못한 오류 발생 (시도 {}/{}): {}", attempt, maxRetries, e.getMessage(), e);
+                    if (attempt == maxRetries) {
+                        // 개발 환경에서는 예외를 던지지 않고 계속 진행
+                        log.warn("⚠️ 개발 환경이므로 Flyway 오류를 무시하고 애플리케이션을 계속 시작합니다.");
+                        return; // 마지막 시도에서도 실패하면 무시하고 계속 진행
+                    }
+                    try {
+                        Thread.sleep(retryDelayMs);
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                    }
                 }
-            } catch (Exception e) {
-                // 예상치 못한 오류
-                log.error("❌ Flyway 마이그레이션 중 예상치 못한 오류 발생: {}", e.getMessage(), e);
-                // 개발 환경에서는 예외를 던지지 않고 계속 진행
-                log.warn("⚠️ 개발 환경이므로 Flyway 오류를 무시하고 애플리케이션을 계속 시작합니다.");
             }
+            
+            // 모든 재시도 실패
+            log.warn("⚠️ Flyway 마이그레이션 최대 재시도 횟수 초과 - 개발 환경이므로 무시하고 계속 진행합니다.");
         };
     }
 }

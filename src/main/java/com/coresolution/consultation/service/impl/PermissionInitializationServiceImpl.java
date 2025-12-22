@@ -109,7 +109,7 @@ public class PermissionInitializationServiceImpl implements PermissionInitializa
     }
     
     @Override
-    @Transactional(propagation = Propagation.REQUIRES_NEW, timeout = 60)
+    @Transactional(propagation = Propagation.REQUIRES_NEW, timeout = 300)
     public void initializeDefaultRolePermissions() {
         log.info("기본 역할별 권한 매핑 초기화 시작");
         

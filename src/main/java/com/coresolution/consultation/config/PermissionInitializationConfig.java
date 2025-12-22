@@ -1,8 +1,9 @@
 package com.coresolution.consultation.config;
 
 import com.coresolution.consultation.service.PermissionInitializationService;
-import org.springframework.boot.ApplicationArguments;
-import org.springframework.boot.ApplicationRunner;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -10,16 +11,18 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * 권한 시스템 초기화 설정
  * 애플리케이션 시작 시 자동으로 권한 시스템을 초기화합니다.
+ * ApplicationReadyEvent를 사용하여 데이터베이스 연결 풀이 완전히 초기화된 후 실행
  */
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class PermissionInitializationConfig implements ApplicationRunner {
+public class PermissionInitializationConfig {
 
     private final PermissionInitializationService permissionInitializationService;
 
-    @Override
-    public void run(ApplicationArguments args) throws Exception {
+    @EventListener(ApplicationReadyEvent.class)
+    @Order(50) // PlSqlInitializer(100)보다 먼저 실행
+    public void initialize(ApplicationReadyEvent event) {
         log.info("🚀 애플리케이션 시작 - 권한 시스템 초기화 시작...");
         
         try {

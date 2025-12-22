@@ -490,5 +490,36 @@ public class OnboardingController extends BaseApiController {
         log.info("✅ 온보딩 승인 프로세스 재시도 완료: id={}", id);
         return updated("온보딩 승인 프로세스가 재시도되었습니다.", updated);
     }
+
+    /**
+     * 초기화 작업 재실행 API POST /api/v1/ops/onboarding/requests/{id}/retry-initialization
+     */
+    @PostMapping("/requests/{id}/retry-initialization")
+    public ResponseEntity<ApiResponse<OnboardingRequest>> retryInitialization(
+            @PathVariable java.util.UUID id, @RequestBody Map<String, String> payload,
+            HttpServletRequest httpRequest) {
+        // /api/v1/ops/onboarding 경로로 접근한 경우에만 권한 체크
+        if (httpRequest.getRequestURI().startsWith("/api/v1/ops/onboarding")) {
+            OpsPermissionUtils.requireAdminOrOps();
+        }
+
+        String actorId = payload != null && payload.containsKey("actorId") ? payload.get("actorId")
+                : "SYSTEM";
+        String taskType =
+                payload != null && payload.containsKey("taskType") ? payload.get("taskType") : null;
+
+        if (taskType == null || taskType.trim().isEmpty()) {
+            throw new IllegalArgumentException(
+                    "taskType은 필수입니다. 가능한 값: commonCodes, roleCodes, permissionGroups");
+        }
+
+        log.info("초기화 작업 재실행: id={}, taskType={}, actorId={}", id, taskType, actorId);
+
+        OnboardingRequest updated =
+                onboardingService.retryInitializationTask(id, taskType, actorId);
+
+        log.info("✅ 초기화 작업 재실행 완료: id={}, taskType={}", id, taskType);
+        return updated("초기화 작업이 재실행되었습니다.", updated);
+    }
 }
 

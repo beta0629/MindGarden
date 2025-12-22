@@ -380,12 +380,13 @@ public class OnboardingServiceImpl implements OnboardingService {
             log.info("이미 승인된 테넌트 재승인: 프로시저는 건너뛰고 초기화 작업만 실행: tenantId={}", existingTenantId);
             // 프로시저는 건너뛰고 바로 초기화 작업 실행
             OnboardingRequest saved = repository.save(request);
-            
+
             try {
-                OnboardingServiceImpl self = applicationContext.getBean(OnboardingServiceImpl.class);
+                OnboardingServiceImpl self =
+                        applicationContext.getBean(OnboardingServiceImpl.class);
                 self.initializeTenantAfterOnboardingInNewTransaction(existingTenantId,
-                        request.getBusinessType(), actorId);
-                
+                        request.getBusinessType(), actorId, requestId);
+
                 // 브랜드명 설정
                 try {
                     setTenantBranding(existingTenantId, request);
@@ -396,11 +397,11 @@ public class OnboardingServiceImpl implements OnboardingService {
                 log.error("이미 승인된 테넌트 초기화 작업 실패: tenantId={}, error={}", existingTenantId,
                         e.getMessage(), e);
             }
-            
+
             log.info("온보딩 요청 결정 완료: id={}, status={}", saved.getId(), saved.getStatus());
             return saved;
         }
-        
+
         if (status == OnboardingStatus.APPROVED) {
             log.info("테넌트 생성 진행: requestedBy={}, tenantName={}", request.getRequestedBy(),
                     request.getTenantName());
@@ -696,7 +697,7 @@ public class OnboardingServiceImpl implements OnboardingService {
                     OnboardingServiceImpl self =
                             applicationContext.getBean(OnboardingServiceImpl.class);
                     self.initializeTenantAfterOnboardingInNewTransaction(tenantId,
-                            request.getBusinessType(), actorId);
+                            request.getBusinessType(), actorId, requestId);
 
                     // 서브도메인은 프로시저에서 처리하므로 여기서는 제거
                     // (CreateOrActivateTenant 프로시저에서 서브도메인을 받아서 저장)
@@ -1219,35 +1220,80 @@ public class OnboardingServiceImpl implements OnboardingService {
      * @param tenantId 테넌트 ID
      * @param businessType 업종 타입
      * @param actorId 실행자 ID
+     * @param requestId 온보딩 요청 ID (상태 저장용)
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW, noRollbackFor = Exception.class)
     public void initializeTenantAfterOnboardingInNewTransaction(String tenantId,
-            String businessType, String actorId) {
+            String businessType, String actorId, java.util.UUID requestId) {
         // 각 작업을 별도 트랜잭션으로 분리하여 하나가 실패해도 다른 것들은 성공하도록 처리
         OnboardingServiceImpl self = applicationContext.getBean(OnboardingServiceImpl.class);
+
+        // 초기화 작업 상태 맵 생성
+        Map<String, Object> statusMap = new java.util.HashMap<>();
+        statusMap.put("commonCodes", createInitializationStatus("PENDING", null));
+        statusMap.put("roleCodes", createInitializationStatus("PENDING", null));
+        statusMap.put("permissionGroups", createInitializationStatus("PENDING", null));
 
         // 1. 공통코드 삽입 (별도 트랜잭션)
         try {
             self.insertDefaultTenantCommonCodesInNewTransaction(tenantId, actorId);
+            statusMap.put("commonCodes", createInitializationStatus("SUCCESS", null));
+            log.info("✅ 공통코드 삽입 성공: tenantId={}", tenantId);
         } catch (Exception e) {
-            log.error("공통코드 삽입 실패 (계속 진행): tenantId={}, error={}", tenantId, e.getMessage(), e);
+            String errorMsg = e.getMessage() != null ? e.getMessage() : "알 수 없는 오류";
+            statusMap.put("commonCodes", createInitializationStatus("FAILED", errorMsg));
+            log.error("공통코드 삽입 실패 (계속 진행): tenantId={}, error={}", tenantId, errorMsg, e);
         }
 
         // 2. 역할 코드 생성 (별도 트랜잭션)
         try {
             self.insertTenantRoleCodesInNewTransaction(tenantId, businessType, actorId);
+            statusMap.put("roleCodes", createInitializationStatus("SUCCESS", null));
+            log.info("✅ 역할 코드 생성 성공: tenantId={}", tenantId);
         } catch (Exception e) {
-            log.error("역할 코드 생성 실패 (계속 진행): tenantId={}, error={}", tenantId, e.getMessage(), e);
+            String errorMsg = e.getMessage() != null ? e.getMessage() : "알 수 없는 오류";
+            statusMap.put("roleCodes", createInitializationStatus("FAILED", errorMsg));
+            log.error("역할 코드 생성 실패 (계속 진행): tenantId={}, error={}", tenantId, errorMsg, e);
         }
 
         // 3. 권한 그룹 할당 (별도 트랜잭션)
         try {
             self.assignDefaultPermissionGroupsToAdminInNewTransaction(tenantId, actorId);
+            statusMap.put("permissionGroups", createInitializationStatus("SUCCESS", null));
+            log.info("✅ 권한 그룹 할당 성공: tenantId={}", tenantId);
         } catch (Exception e) {
-            log.error("권한 그룹 할당 실패 (계속 진행): tenantId={}, error={}", tenantId, e.getMessage(), e);
+            String errorMsg = e.getMessage() != null ? e.getMessage() : "알 수 없는 오류";
+            statusMap.put("permissionGroups", createInitializationStatus("FAILED", errorMsg));
+            log.error("권한 그룹 할당 실패 (계속 진행): tenantId={}, error={}", tenantId, errorMsg, e);
+        }
+
+        // 상태 저장
+        try {
+            String statusJson = objectMapper.writeValueAsString(statusMap);
+            OnboardingRequest request = repository.findById(requestId).orElse(null);
+            if (request != null) {
+                request.setInitializationStatusJson(statusJson);
+                repository.save(request);
+                log.info("✅ 초기화 작업 상태 저장 완료: requestId={}", requestId);
+            }
+        } catch (Exception e) {
+            log.warn("초기화 작업 상태 저장 실패 (무시): requestId={}, error={}", requestId, e.getMessage());
         }
 
         log.info("✅ 온보딩 후 테넌트 초기화 완료: tenantId={}", tenantId);
+    }
+
+    /**
+     * 초기화 작업 상태 객체 생성
+     */
+    private Map<String, Object> createInitializationStatus(String status, String errorMessage) {
+        Map<String, Object> statusObj = new java.util.HashMap<>();
+        statusObj.put("status", status); // PENDING, SUCCESS, FAILED
+        statusObj.put("updatedAt", java.time.Instant.now().toString());
+        if (errorMessage != null) {
+            statusObj.put("errorMessage", errorMessage);
+        }
+        return statusObj;
     }
 
     /**
@@ -1920,6 +1966,78 @@ public class OnboardingServiceImpl implements OnboardingService {
         log.info("서브도메인 사용 가능: subdomain={}, excludeRequestId={}", normalizedSubdomain,
                 excludeRequestId);
         return new OnboardingService.SubdomainCheckResult(false, true, "사용 가능한 서브도메인입니다.", true);
+    }
+
+    @Override
+    @Transactional
+    public OnboardingRequest retryInitializationTask(java.util.UUID requestId, String taskType, String actorId) {
+        log.info("초기화 작업 재실행: requestId={}, taskType={}, actorId={}", requestId, taskType, actorId);
+
+        OnboardingRequest request = repository.findById(requestId)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        OnboardingConstants.formatError(OnboardingConstants.ERROR_TENANT_NOT_FOUND, requestId)));
+
+        if (request.getTenantId() == null || request.getTenantId().trim().isEmpty()) {
+            throw new IllegalStateException("테넌트 ID가 없어 초기화 작업을 재실행할 수 없습니다.");
+        }
+
+        String tenantId = request.getTenantId();
+        OnboardingServiceImpl self = applicationContext.getBean(OnboardingServiceImpl.class);
+
+        // 초기화 작업 상태 맵 읽기
+        Map<String, Object> statusMap = new java.util.HashMap<>();
+        if (request.getInitializationStatusJson() != null
+                && !request.getInitializationStatusJson().trim().isEmpty()) {
+            try {
+                statusMap = objectMapper.readValue(request.getInitializationStatusJson(),
+                        new TypeReference<Map<String, Object>>() {});
+            } catch (JsonProcessingException e) {
+                log.warn("초기화 작업 상태 JSON 파싱 실패, 새로 생성: requestId={}, error={}", requestId,
+                        e.getMessage());
+            }
+        }
+
+        // 작업 타입별 재실행
+        try {
+            switch (taskType) {
+                case "commonCodes":
+                    self.insertDefaultTenantCommonCodesInNewTransaction(tenantId, actorId);
+                    statusMap.put("commonCodes", createInitializationStatus("SUCCESS", null));
+                    log.info("✅ 공통코드 삽입 재실행 성공: tenantId={}", tenantId);
+                    break;
+                case "roleCodes":
+                    self.insertTenantRoleCodesInNewTransaction(tenantId, request.getBusinessType(), actorId);
+                    statusMap.put("roleCodes", createInitializationStatus("SUCCESS", null));
+                    log.info("✅ 역할 코드 생성 재실행 성공: tenantId={}", tenantId);
+                    break;
+                case "permissionGroups":
+                    self.assignDefaultPermissionGroupsToAdminInNewTransaction(tenantId, actorId);
+                    statusMap.put("permissionGroups", createInitializationStatus("SUCCESS", null));
+                    log.info("✅ 권한 그룹 할당 재실행 성공: tenantId={}", tenantId);
+                    break;
+                default:
+                    throw new IllegalArgumentException(
+                            "지원하지 않는 작업 타입입니다. 가능한 값: commonCodes, roleCodes, permissionGroups");
+            }
+        } catch (Exception e) {
+            String errorMsg = e.getMessage() != null ? e.getMessage() : "알 수 없는 오류";
+            statusMap.put(taskType, createInitializationStatus("FAILED", errorMsg));
+            log.error("초기화 작업 재실행 실패: requestId={}, taskType={}, error={}", requestId, taskType,
+                    errorMsg, e);
+            throw new RuntimeException("초기화 작업 재실행 실패: " + errorMsg, e);
+        }
+
+        // 상태 저장
+        try {
+            String statusJson = objectMapper.writeValueAsString(statusMap);
+            request.setInitializationStatusJson(statusJson);
+            request = repository.save(request);
+            log.info("✅ 초기화 작업 상태 업데이트 완료: requestId={}, taskType={}", requestId, taskType);
+        } catch (JsonProcessingException e) {
+            log.warn("초기화 작업 상태 저장 실패 (무시): requestId={}, error={}", requestId, e.getMessage());
+        }
+
+        return request;
     }
 
 }

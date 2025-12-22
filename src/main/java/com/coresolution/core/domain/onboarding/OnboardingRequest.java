@@ -98,6 +98,9 @@ public class OnboardingRequest {
     @Column(name = "business_type", length = 50)
     private String businessType; // 업종 타입 (동적 카테고리 시스템 사용)
     
+    @Column(name = "initialization_status_json", columnDefinition = "TEXT")
+    private String initializationStatusJson; // 초기화 작업 단계별 상태 (JSON)
+    
     @PrePersist
     protected void onCreate() {
         if (this.createdAt == null) {

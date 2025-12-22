@@ -98,6 +98,16 @@ public interface OnboardingService {
     OnboardingRequest retryApproval(java.util.UUID requestId, String actorId, String note);
     
     /**
+     * 초기화 작업 재실행
+     * 개별 초기화 작업(공통코드, 역할 코드, 권한 그룹)을 재실행
+     * @param requestId 온보딩 요청 ID
+     * @param taskType 작업 타입 (commonCodes, roleCodes, permissionGroups)
+     * @param actorId 실행자 ID
+     * @return 업데이트된 온보딩 요청
+     */
+    OnboardingRequest retryInitializationTask(java.util.UUID requestId, String taskType, String actorId);
+    
+    /**
      * 이메일로 온보딩 요청 조회 (공개 조회용)
      */
     List<OnboardingRequest> findByEmail(String email);

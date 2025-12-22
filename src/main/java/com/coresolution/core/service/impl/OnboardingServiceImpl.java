@@ -2053,19 +2053,25 @@ public class OnboardingServiceImpl implements OnboardingService {
                     }
                     break;
                 case "permissionGroups":
+                    // 권한 그룹 할당은 별도 트랜잭션에서 실행되므로 예외가 발생해도 상위 트랜잭션에 영향 없음
+                    // 하지만 안전을 위해 try-catch로 감싸서 상태만 업데이트
                     try {
                         self.assignDefaultPermissionGroupsToAdminInNewTransaction(tenantId,
                                 actorId);
+                        // assignDefaultPermissionGroupsToAdminInNewTransaction는 내부에서 예외를 catch하므로
+                        // 여기까지 도달했다는 것은 성공을 의미함
                         statusMap.put("permissionGroups",
                                 createInitializationStatus("SUCCESS", null));
                         success = true;
                         log.info("✅ 권한 그룹 할당 재실행 성공: tenantId={}", tenantId);
                     } catch (Exception e) {
+                        // assignDefaultPermissionGroupsToAdminInNewTransaction는 예외를 throw하지 않으므로
+                        // 여기서 예외가 발생한다면 예상치 못한 상황
                         String taskErrorMsg = e.getMessage() != null ? e.getMessage() : "알 수 없는 오류";
                         statusMap.put("permissionGroups",
                                 createInitializationStatus("FAILED", taskErrorMsg));
                         errorMsg = taskErrorMsg;
-                        log.error("권한 그룹 할당 재실행 실패: tenantId={}, error={}", tenantId, taskErrorMsg,
+                        log.error("권한 그룹 할당 재실행 실패 (예상치 못한 오류): tenantId={}, error={}", tenantId, taskErrorMsg,
                                 e);
                     }
                     break;

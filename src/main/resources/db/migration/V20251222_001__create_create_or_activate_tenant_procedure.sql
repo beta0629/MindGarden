@@ -141,18 +141,20 @@ proc_label: BEGIN
                     SET v_subdomain = CONCAT('tenant-', SUBSTRING(p_tenant_id, 1, 8));
                 END IF;
                 
+                -- 서브도메인 중복 체크 및 고유화
                 SET v_counter = 0;
-                WHILE v_counter < 100 DO
-                    SELECT COUNT(*) > 0 INTO v_exists
-                    FROM tenants
+                WHILE EXISTS (
+                    SELECT 1 FROM tenants
                     WHERE (subdomain = v_subdomain OR JSON_EXTRACT(COALESCE(settings_json, '{}'), '$.subdomain') = v_subdomain)
                     AND is_deleted = FALSE
-                    AND tenant_id != p_tenant_id;
-                    IF NOT v_exists THEN
-                        LEAVE;
-                    END IF;
+                    AND tenant_id != p_tenant_id
+                ) DO
                     SET v_counter = v_counter + 1;
                     SET v_subdomain = CONCAT(v_subdomain, '-', v_counter);
+                    IF v_counter >= 100 THEN
+                        SET v_subdomain = CONCAT('tenant-', SUBSTRING(p_tenant_id, 1, 8), '-', v_counter);
+                        LEAVE;
+                    END IF;
                 END WHILE;
             ELSE
                 SET v_subdomain = JSON_UNQUOTE(JSON_EXTRACT(v_settings_json, '$.subdomain'));
@@ -197,28 +199,22 @@ proc_label: BEGIN
                     SET v_user_id_string = 'admin';
                 END IF;
                 
-                -- user_id 중복 체크 및 고유성 보장 (최대 1000번 시도)
+                -- user_id 중복 체크 및 고유성 보장 (V62 형식 사용)
                 SET v_user_id_suffix = 1;
-                WHILE v_user_id_suffix <= 1000 DO
-                    SELECT COUNT(*) INTO v_duplicate_check
-                    FROM users
+                WHILE EXISTS (
+                    SELECT 1 FROM users
                     WHERE user_id COLLATE utf8mb4_unicode_ci = v_user_id_string COLLATE utf8mb4_unicode_ci
-                      AND (is_deleted IS NULL OR is_deleted = FALSE);
-                    
-                    IF v_duplicate_check = 0 THEN
-                        LEAVE;
-                    END IF;
-                    
+                      AND (is_deleted IS NULL OR is_deleted = FALSE)
+                ) DO
                     SET v_user_id_string = CONCAT(LOWER(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(
                         SUBSTRING_INDEX(p_admin_email, '@', 1), 
                         '.', ''), '-', ''), '_', ''), '+', ''), ' ', '')), v_user_id_suffix);
                     SET v_user_id_suffix = v_user_id_suffix + 1;
+                    IF v_user_id_suffix > 1000 THEN
+                        SET v_user_id_string = CONCAT('admin-', REPLACE(UUID(), '-', ''), '-', SUBSTRING(p_tenant_id, 1, 8));
+                        LEAVE;
+                    END IF;
                 END WHILE;
-                
-                -- 1000번 시도 후에도 중복이면 UUID 기반으로 변경
-                IF v_user_id_suffix > 1000 THEN
-                    SET v_user_id_string = CONCAT('admin-', REPLACE(UUID(), '-', ''), '-', SUBSTRING(p_tenant_id, 1, 8));
-                END IF;
 
                 INSERT INTO users (
                     user_id, tenant_id, email, password, name, role,
@@ -392,28 +388,22 @@ proc_label: BEGIN
                     SET v_user_id_string = 'admin';
                 END IF;
                 
-                -- user_id 중복 체크 및 고유성 보장 (최대 1000번 시도)
+                -- user_id 중복 체크 및 고유성 보장 (V62 형식 사용)
                 SET v_user_id_suffix = 1;
-                WHILE v_user_id_suffix <= 1000 DO
-                    SELECT COUNT(*) INTO v_duplicate_check
-                    FROM users
+                WHILE EXISTS (
+                    SELECT 1 FROM users
                     WHERE user_id COLLATE utf8mb4_unicode_ci = v_user_id_string COLLATE utf8mb4_unicode_ci
-                      AND (is_deleted IS NULL OR is_deleted = FALSE);
-                    
-                    IF v_duplicate_check = 0 THEN
-                        LEAVE;
-                    END IF;
-                    
+                      AND (is_deleted IS NULL OR is_deleted = FALSE)
+                ) DO
                     SET v_user_id_string = CONCAT(LOWER(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(
                         SUBSTRING_INDEX(p_admin_email, '@', 1), 
                         '.', ''), '-', ''), '_', ''), '+', ''), ' ', '')), v_user_id_suffix);
                     SET v_user_id_suffix = v_user_id_suffix + 1;
+                    IF v_user_id_suffix > 1000 THEN
+                        SET v_user_id_string = CONCAT('admin-', REPLACE(UUID(), '-', ''), '-', SUBSTRING(p_tenant_id, 1, 8));
+                        LEAVE;
+                    END IF;
                 END WHILE;
-                
-                -- 1000번 시도 후에도 중복이면 UUID 기반으로 변경
-                IF v_user_id_suffix > 1000 THEN
-                    SET v_user_id_string = CONCAT('admin-', REPLACE(UUID(), '-', ''), '-', SUBSTRING(p_tenant_id, 1, 8));
-                END IF;
 
                 INSERT INTO users (
                     user_id, tenant_id, email, password, name, role,

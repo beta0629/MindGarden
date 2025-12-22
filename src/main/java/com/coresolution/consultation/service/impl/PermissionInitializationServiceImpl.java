@@ -109,7 +109,7 @@ public class PermissionInitializationServiceImpl implements PermissionInitializa
     }
     
     @Override
-    @Transactional(propagation = Propagation.REQUIRES_NEW, timeout = 300)
+    @Transactional(propagation = Propagation.REQUIRES_NEW, timeout = 60)
     public void initializeDefaultRolePermissions() {
         log.info("기본 역할별 권한 매핑 초기화 시작");
         
@@ -341,20 +341,19 @@ public class PermissionInitializationServiceImpl implements PermissionInitializa
     @Override
     public boolean isPermissionSystemInitialized() {
         try {
-            long permissionCount = permissionRepository.count();
-            long rolePermissionCount = rolePermissionRepository.count();
+            // 빠른 체크: 특정 권한이 존재하는지만 확인 (count()는 느릴 수 있음)
+            boolean hasSystemNotificationPermission = permissionRepository.existsByPermissionCode("SYSTEM_NOTIFICATION_MANAGE");
+            boolean hasErpAccessPermission = permissionRepository.existsByPermissionCode("ERP_ACCESS");
+            boolean hasAdminDashboardPermission = permissionRepository.existsByPermissionCode("ADMIN_DASHBOARD_VIEW");
             
-            log.debug("권한 시스템 초기화 상태 확인: 권한={}개, 역할권한={}개", permissionCount, rolePermissionCount);
-            
-            // 최소한의 권한과 역할권한이 있어야 초기화된 것으로 간주
-            // 추가: 특정 권한이 존재하는지도 확인 (더 정확한 판단)
-            boolean hasSpecificPermission = permissionRepository.existsByPermissionCode("SYSTEM_NOTIFICATION_MANAGE");
-            
-            boolean initialized = permissionCount > 10 && rolePermissionCount > 20;
+            // 핵심 권한 3개가 모두 존재하면 초기화된 것으로 간주
+            boolean initialized = hasSystemNotificationPermission && hasErpAccessPermission && hasAdminDashboardPermission;
             
             if (initialized) {
-                log.info("✅ 권한 시스템이 이미 초기화되어 있음 (권한={}개, 역할권한={}개, 시스템공지권한={})", 
-                    permissionCount, rolePermissionCount, hasSpecificPermission);
+                log.info("✅ 권한 시스템이 이미 초기화되어 있음 (핵심 권한 존재 확인)");
+            } else {
+                log.info("⚠️ 권한 시스템 초기화 필요 (핵심 권한 누락: SYSTEM_NOTIFICATION={}, ERP_ACCESS={}, ADMIN_DASHBOARD={})", 
+                    hasSystemNotificationPermission, hasErpAccessPermission, hasAdminDashboardPermission);
             }
             
             return initialized;

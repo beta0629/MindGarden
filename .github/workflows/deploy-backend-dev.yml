@@ -92,6 +92,20 @@ jobs:
         script: |
           cd /var/www/mindgarden-dev
           
+          # 💾 배포 전 디스크 공간 확인 및 정리 (20% 이상 여유 공간 유지)
+          echo "💾 배포 전 디스크 공간 확인..."
+          DISK_USAGE=$(df -h / | awk 'NR==2 {print $5}' | sed 's/%//')
+          if [ "$DISK_USAGE" -ge 80 ]; then
+            echo "⚠️ 디스크 사용률이 80% 이상입니다. 자동 정리 시작..."
+            if [ -f /opt/mindgarden/scripts/development/utilities/auto-disk-cleanup.sh ]; then
+              /opt/mindgarden/scripts/development/utilities/auto-disk-cleanup.sh || true
+            else
+              echo "⚠️ 디스크 정리 스크립트를 찾을 수 없습니다. 수동 정리 필요"
+            fi
+          else
+            echo "✅ 디스크 공간 충분: ${DISK_USAGE}% 사용 중"
+          fi
+          
           # 🔧 배포 전 DB 연결 정리 (Too many connections 오류 방지)
           echo "🔧 배포 전 DB 연결 정리 시작..."
           if [ -f /opt/mindgarden/scripts/development/utilities/cleanup-db-connections.sh ]; then

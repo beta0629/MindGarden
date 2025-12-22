@@ -32,13 +32,12 @@ public class PermissionInitializationConfig {
                 return;
             }
             
-            // 개발 환경에서는 초기화 작업을 비활성화하여 타임아웃 방지
-            // 필요시 수동으로 초기화하거나 Flyway 마이그레이션으로 처리
-            log.warn("⚠️ 권한 시스템 초기화가 필요하지만 타임아웃 방지를 위해 자동 초기화를 비활성화했습니다.");
-            log.warn("⚠️ 필요시 수동으로 초기화하거나 Flyway 마이그레이션으로 처리하세요.");
-            // permissionInitializationService.initializePermissionSystem();
+            // 권한 시스템 초기화 실행
+            log.info("🔧 권한 시스템 초기화 시작...");
+            permissionInitializationService.initializePermissionSystem();
+            log.info("✅ 권한 시스템 초기화 완료");
         } catch (Exception e) {
-            log.error("❌ 권한 시스템 초기화 상태 확인 실패", e);
+            log.error("❌ 권한 시스템 초기화 실패", e);
             // 초기화 실패해도 애플리케이션은 계속 실행
         }
     }

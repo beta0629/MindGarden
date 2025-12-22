@@ -1,7 +1,6 @@
 package com.coresolution.consultation.service.impl;
 
 
-import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.consultation.entity.CommonCode;
 import com.coresolution.consultation.repository.CommonCodeRepository;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -32,9 +31,9 @@ public class FinancialCommonCodeInitializer {
     @Transactional
     public void initialize(ApplicationReadyEvent event) {
         try {
-            // 타임아웃 방지를 위해 자동 초기화 비활성화
-            log.info("ℹ️ 재무 공통코드 초기화 건너뜀 (타임아웃 방지)");
-            // initializeFinancialCommonCodes();
+            log.info("🚀 재무 공통코드 초기화 시작");
+            initializeFinancialCommonCodes();
+            log.info("✅ 재무 공통코드 초기화 완료");
         } catch (Exception e) {
             log.error("❌ 재무 거래 관련 공통 코드 초기화 실패 (계속 진행): {}", e.getMessage(), e);
         }

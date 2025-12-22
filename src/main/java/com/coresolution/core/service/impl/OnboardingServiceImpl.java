@@ -2,9 +2,12 @@ package com.coresolution.core.service.impl;
 
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import com.coresolution.consultation.entity.CommonCode;
 import com.coresolution.consultation.repository.CommonCodeRepository;
 import com.coresolution.consultation.service.CommonCodeService;
@@ -1430,199 +1433,138 @@ public class OnboardingServiceImpl implements OnboardingService {
     }
 
     /**
-     * 프로시저가 실패한 경우를 대비한 Java 코드에서 직접 삽입
+     * 프로시저가 실패한 경우를 대비한 Java 코드에서 직접 삽입 배치 처리로 최적화: 개별 save() 대신 saveAll() 사용하여 DB 쿼리 수 대폭 감소
      *
      * @param tenantId 테넌트 ID
      * @param createdBy 생성자 ID
      */
     private void insertDefaultTenantCommonCodes(String tenantId, String createdBy) {
-        // 표준화 2025-12-08: 기존 코드가 있어도 누락된 코드는 추가하도록 변경
-        // insertCommonCodeIfNotExists가 중복 체크를 하므로 항상 실행
-        log.info("🔄 기본 테넌트 공통코드 추가 시작: tenantId={}", tenantId);
+        log.info("🔄 기본 테넌트 공통코드 추가 시작 (배치 처리): tenantId={}", tenantId);
 
-        int insertedCount = 0;
         String createdByValue = createdBy != null ? createdBy : "SYSTEM_ONBOARDING";
 
         try {
-            // 표준화 2025-12-08: extraData에 sessions 필드 추가 (20회기)
-            insertCommonCodeIfNotExists(tenantId, "CONSULTATION_PACKAGE", "INDIVIDUAL", "개인상담",
-                    "개인상담", "1:1 개인 심리상담",
+            // 1. 기존 코드를 한 번에 조회하여 중복 체크용 Set 생성
+            List<CommonCode> existingCodes = commonCodeRepository.findByTenantId(tenantId);
+            Set<String> existingCodeKeys = new HashSet<>();
+            for (CommonCode code : existingCodes) {
+                existingCodeKeys.add(code.getCodeGroup() + ":" + code.getCodeValue());
+            }
+            log.debug("기존 공통코드 개수: {}, tenantId={}", existingCodes.size(), tenantId);
+
+            // 2. 삽입할 공통코드 리스트 생성
+            List<CommonCode> codesToInsert = new ArrayList<>();
+
+            // 상담 패키지 코드
+            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "CONSULTATION_PACKAGE",
+                    "INDIVIDUAL", "개인상담", "개인상담", "1:1 개인 심리상담",
                     "{\"price\": 80000, \"sessions\": 20, \"duration\": 50, \"unit\": \"회\"}", 1,
                     createdByValue);
-            insertedCount++;
-        } catch (Exception e) {
-            log.warn("⚠️ 상담 패키지 코드 삽입 실패 (건너뜀): {}", e.getMessage());
-        }
-
-        try {
-            // 표준화 2025-12-08: extraData에 sessions 필드 추가 (20회기)
-            insertCommonCodeIfNotExists(tenantId, "CONSULTATION_PACKAGE", "FAMILY", "가족상담", "가족상담",
-                    "가족 단위 상담",
+            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "CONSULTATION_PACKAGE",
+                    "FAMILY", "가족상담", "가족상담", "가족 단위 상담",
                     "{\"price\": 120000, \"sessions\": 20, \"duration\": 60, \"unit\": \"회\"}", 2,
                     createdByValue);
-            insertedCount++;
-        } catch (Exception e) {
-            log.warn("⚠️ 상담 패키지 코드 삽입 실패 (건너뜀): {}", e.getMessage());
-        }
-
-        try {
-            // 표준화 2025-12-08: extraData에 sessions 필드 추가 (20회기)
-            insertCommonCodeIfNotExists(tenantId, "CONSULTATION_PACKAGE", "GROUP", "집단상담", "집단상담",
-                    "그룹 심리상담",
+            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "CONSULTATION_PACKAGE",
+                    "GROUP", "집단상담", "집단상담", "그룹 심리상담",
                     "{\"price\": 50000, \"sessions\": 20, \"duration\": 90, \"unit\": \"회\"}", 3,
                     createdByValue);
-            insertedCount++;
-        } catch (Exception e) {
-            log.warn("⚠️ 상담 패키지 코드 삽입 실패 (건너뜀): {}", e.getMessage());
-        }
-
-        // 표준화 2025-12-08: 단회기 패키지 기본 데이터 추가 (1회기)
-        try {
-            insertCommonCodeIfNotExists(tenantId, "CONSULTATION_PACKAGE", "SINGLE_75000",
-                    "단회기 75,000원", "단회기 75,000원", "1회기 상담 패키지",
+            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "CONSULTATION_PACKAGE",
+                    "SINGLE_75000", "단회기 75,000원", "단회기 75,000원", "1회기 상담 패키지",
                     "{\"price\": 75000, \"duration\": 50, \"unit\": \"회\", \"sessions\": 1}", 4,
                     createdByValue);
-            insertedCount++;
-        } catch (Exception e) {
-            log.warn("⚠️ 단회기 패키지 코드 삽입 실패 (건너뜀): {}", e.getMessage());
-        }
-
-        try {
-            insertCommonCodeIfNotExists(tenantId, "CONSULTATION_PACKAGE", "SINGLE_80000",
-                    "단회기 80,000원", "단회기 80,000원", "1회기 상담 패키지",
+            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "CONSULTATION_PACKAGE",
+                    "SINGLE_80000", "단회기 80,000원", "단회기 80,000원", "1회기 상담 패키지",
                     "{\"price\": 80000, \"duration\": 50, \"unit\": \"회\", \"sessions\": 1}", 5,
                     createdByValue);
-            insertedCount++;
-        } catch (Exception e) {
-            log.warn("⚠️ 단회기 패키지 코드 삽입 실패 (건너뜀): {}", e.getMessage());
-        }
-
-        try {
-            insertCommonCodeIfNotExists(tenantId, "CONSULTATION_PACKAGE", "SINGLE_85000",
-                    "단회기 85,000원", "단회기 85,000원", "1회기 상담 패키지",
+            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "CONSULTATION_PACKAGE",
+                    "SINGLE_85000", "단회기 85,000원", "단회기 85,000원", "1회기 상담 패키지",
                     "{\"price\": 85000, \"duration\": 50, \"unit\": \"회\", \"sessions\": 1}", 6,
                     createdByValue);
-            insertedCount++;
-        } catch (Exception e) {
-            log.warn("⚠️ 단회기 패키지 코드 삽입 실패 (건너뜀): {}", e.getMessage());
-        }
-
-        try {
-            insertCommonCodeIfNotExists(tenantId, "CONSULTATION_PACKAGE", "SINGLE_90000",
-                    "단회기 90,000원", "단회기 90,000원", "1회기 상담 패키지",
+            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "CONSULTATION_PACKAGE",
+                    "SINGLE_90000", "단회기 90,000원", "단회기 90,000원", "1회기 상담 패키지",
                     "{\"price\": 90000, \"duration\": 50, \"unit\": \"회\", \"sessions\": 1}", 7,
                     createdByValue);
-            insertedCount++;
-        } catch (Exception e) {
-            log.warn("⚠️ 단회기 패키지 코드 삽입 실패 (건너뜀): {}", e.getMessage());
-        }
-
-        try {
-            insertCommonCodeIfNotExists(tenantId, "CONSULTATION_PACKAGE", "SINGLE_95000",
-                    "단회기 95,000원", "단회기 95,000원", "1회기 상담 패키지",
+            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "CONSULTATION_PACKAGE",
+                    "SINGLE_95000", "단회기 95,000원", "단회기 95,000원", "1회기 상담 패키지",
                     "{\"price\": 95000, \"duration\": 50, \"unit\": \"회\", \"sessions\": 1}", 8,
                     createdByValue);
-            insertedCount++;
-        } catch (Exception e) {
-            log.warn("⚠️ 단회기 패키지 코드 삽입 실패 (건너뜀): {}", e.getMessage());
-        }
-
-        try {
-            insertCommonCodeIfNotExists(tenantId, "CONSULTATION_PACKAGE", "SINGLE_100000",
-                    "단회기 100,000원", "단회기 100,000원", "1회기 상담 패키지",
+            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "CONSULTATION_PACKAGE",
+                    "SINGLE_100000", "단회기 100,000원", "단회기 100,000원", "1회기 상담 패키지",
                     "{\"price\": 100000, \"duration\": 50, \"unit\": \"회\", \"sessions\": 1}", 9,
                     createdByValue);
-            insertedCount++;
-        } catch (Exception e) {
-            log.warn("⚠️ 단회기 패키지 코드 삽입 실패 (건너뜀): {}", e.getMessage());
-        }
 
-        try {
-            insertCommonCodeIfNotExists(tenantId, "PAYMENT_METHOD", "CASH", "현금", "현금", "현금 결제",
-                    null, 1, createdByValue);
-            insertedCount++;
-        } catch (Exception e) {
-            log.warn("⚠️ 결제 방법 코드 삽입 실패 (건너뜀): {}", e.getMessage());
-        }
+            // 결제 방법 코드
+            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "PAYMENT_METHOD", "CASH",
+                    "현금", "현금", "현금 결제", null, 1, createdByValue);
+            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "PAYMENT_METHOD", "CARD",
+                    "카드", "카드", "카드 결제", null, 2, createdByValue);
+            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "PAYMENT_METHOD",
+                    "TRANSFER", "계좌이체", "계좌이체", "계좌이체 결제", null, 3, createdByValue);
 
-        try {
-            insertCommonCodeIfNotExists(tenantId, "PAYMENT_METHOD", "CARD", "카드", "카드", "카드 결제",
-                    null, 2, createdByValue);
-            insertedCount++;
-        } catch (Exception e) {
-            log.warn("⚠️ 결제 방법 코드 삽입 실패 (건너뜀): {}", e.getMessage());
-        }
+            // 전문분야 코드
+            String[][] specialtyCodes = {{"DEPRESSION", "우울증", "우울증 상담", "1"},
+                    {"ANXIETY", "불안장애", "불안장애 상담", "2"}, {"TRAUMA", "트라우마", "트라우마 상담", "3"},
+                    {"RELATIONSHIP", "인간관계", "인간관계 상담", "4"}, {"FAMILY", "가족상담", "가족 상담", "5"},
+                    {"COUPLE", "부부상담", "부부 상담", "6"}, {"CHILD", "아동상담", "아동 상담", "7"},
+                    {"ADOLESCENT", "청소년상담", "청소년 상담", "8"}, {"ADULT", "성인상담", "성인 상담", "9"},
+                    {"STRESS", "스트레스", "스트레스 관리 상담", "10"}, {"CAREER", "진로상담", "진로 상담", "11"}};
 
-        try {
-            insertCommonCodeIfNotExists(tenantId, "PAYMENT_METHOD", "TRANSFER", "계좌이체", "계좌이체",
-                    "계좌이체 결제", null, 3, createdByValue);
-            insertedCount++;
-        } catch (Exception e) {
-            log.warn("⚠️ 결제 방법 코드 삽입 실패 (건너뜀): {}", e.getMessage());
-        }
-
-        // 표준화 2025-12-08: 테넌트 초기화 시 기본 전문분야 코드 생성
-        // 더 다양한 전문분야 코드를 초기 데이터로 제공
-        String[][] specialtyCodes = {{"DEPRESSION", "우울증", "우울증 상담", "1"},
-                {"ANXIETY", "불안장애", "불안장애 상담", "2"}, {"TRAUMA", "트라우마", "트라우마 상담", "3"},
-                {"RELATIONSHIP", "인간관계", "인간관계 상담", "4"}, {"FAMILY", "가족상담", "가족 상담", "5"},
-                {"COUPLE", "부부상담", "부부 상담", "6"}, {"CHILD", "아동상담", "아동 상담", "7"},
-                {"ADOLESCENT", "청소년상담", "청소년 상담", "8"}, {"ADULT", "성인상담", "성인 상담", "9"},
-                {"STRESS", "스트레스", "스트레스 관리 상담", "10"}, {"CAREER", "진로상담", "진로 상담", "11"}};
-
-        for (String[] specialty : specialtyCodes) {
-            try {
-                insertCommonCodeIfNotExists(tenantId, "SPECIALTY", specialty[0], specialty[1],
-                        specialty[1], specialty[2], null, Integer.parseInt(specialty[3]),
-                        createdByValue);
-                insertedCount++;
-            } catch (Exception e) {
-                log.warn("⚠️ 전문 분야 코드 삽입 실패 (건너뜀): {} - {}", specialty[0], e.getMessage());
+            for (String[] specialty : specialtyCodes) {
+                addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "SPECIALTY",
+                        specialty[0], specialty[1], specialty[1], specialty[2], null,
+                        Integer.parseInt(specialty[3]), createdByValue);
             }
-        }
 
-        try {
-            insertCommonCodeIfNotExists(tenantId, "CONSULTATION_TYPE", "FACE_TO_FACE", "대면상담",
-                    "대면상담", "대면 상담", null, 1, createdByValue);
-            insertedCount++;
+            // 상담 유형 코드
+            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "CONSULTATION_TYPE",
+                    "FACE_TO_FACE", "대면상담", "대면상담", "대면 상담", null, 1, createdByValue);
+            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "CONSULTATION_TYPE",
+                    "ONLINE", "비대면상담", "비대면상담", "비대면 상담", null, 2, createdByValue);
+            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "CONSULTATION_TYPE",
+                    "PHONE", "전화상담", "전화상담", "전화 상담", null, 3, createdByValue);
+
+            // 담당 업무 코드
+            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "RESPONSIBILITY",
+                    "COUNSELING", "상담", "상담", "상담 업무", null, 1, createdByValue);
+            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "RESPONSIBILITY",
+                    "ADMINISTRATION", "행정", "행정", "행정 업무", null, 2, createdByValue);
+
+            // 3. 배치 저장 (한 번의 쿼리로 모든 코드 삽입)
+            if (!codesToInsert.isEmpty()) {
+                commonCodeRepository.saveAll(codesToInsert);
+                log.info("✅ 기본 테넌트 공통코드 배치 저장 완료: tenantId={}, insertedCount={}", tenantId,
+                        codesToInsert.size());
+            } else {
+                log.info("✅ 모든 공통코드가 이미 존재함: tenantId={}", tenantId);
+            }
+
         } catch (Exception e) {
-            log.warn("⚠️ 상담 유형 코드 삽입 실패 (건너뜀): {}", e.getMessage());
+            log.error("❌ 기본 테넌트 공통코드 추가 실패: tenantId={}, error={}", tenantId, e.getMessage(), e);
+            throw e;
+        }
+    }
+
+    /**
+     * 공통코드 리스트에 추가 (중복 체크)
+     */
+    private void addCodeIfNotExists(List<CommonCode> codesToInsert, Set<String> existingCodeKeys,
+            String tenantId, String codeGroup, String codeValue, String koreanName,
+            String codeLabel, String description, String extraData, Integer sortOrder,
+            String createdBy) {
+        String codeKey = codeGroup + ":" + codeValue;
+        if (existingCodeKeys.contains(codeKey)) {
+            log.debug("공통코드가 이미 존재함 (건너뜀): tenantId={}, codeGroup={}, codeValue={}", tenantId,
+                    codeGroup, codeValue);
+            return;
         }
 
-        try {
-            insertCommonCodeIfNotExists(tenantId, "CONSULTATION_TYPE", "ONLINE", "비대면상담", "비대면상담",
-                    "비대면 상담", null, 2, createdByValue);
-            insertedCount++;
-        } catch (Exception e) {
-            log.warn("⚠️ 상담 유형 코드 삽입 실패 (건너뜀): {}", e.getMessage());
-        }
+        CommonCode code = CommonCode.builder().codeGroup(codeGroup).codeValue(codeValue)
+                .koreanName(koreanName).codeLabel(codeLabel).codeDescription(description)
+                .sortOrder(sortOrder != null ? sortOrder : 0).isActive(true).extraData(extraData)
+                .build();
 
-        try {
-            insertCommonCodeIfNotExists(tenantId, "CONSULTATION_TYPE", "PHONE", "전화상담", "전화상담",
-                    "전화 상담", null, 3, createdByValue);
-            insertedCount++;
-        } catch (Exception e) {
-            log.warn("⚠️ 상담 유형 코드 삽입 실패 (건너뜀): {}", e.getMessage());
-        }
-
-        // 표준화 2025-12-08: 담당 업무 코드 추가
-        try {
-            insertCommonCodeIfNotExists(tenantId, "RESPONSIBILITY", "COUNSELING", "상담", "상담",
-                    "상담 업무", null, 1, createdByValue);
-            insertedCount++;
-        } catch (Exception e) {
-            log.warn("⚠️ 담당 업무 코드 삽입 실패 (건너뜀): {}", e.getMessage());
-        }
-
-        try {
-            insertCommonCodeIfNotExists(tenantId, "RESPONSIBILITY", "ADMINISTRATION", "행정", "행정",
-                    "행정 업무", null, 2, createdByValue);
-            insertedCount++;
-        } catch (Exception e) {
-            log.warn("⚠️ 담당 업무 코드 삽입 실패 (건너뜀): {}", e.getMessage());
-        }
-
-        log.info("✅ 기본 테넌트 공통코드 추가 완료: tenantId={}, insertedCount={}", tenantId, insertedCount);
+        code.setTenantId(tenantId);
+        codesToInsert.add(code);
     }
 
     /**
@@ -1658,42 +1600,23 @@ public class OnboardingServiceImpl implements OnboardingService {
     }
 
     /**
-     * 공통코드 삽입 (중복 체크)
+     * 공통코드 삽입 (중복 체크) - Deprecated: 배치 처리로 대체됨
+     *
+     * @deprecated 배치 처리를 위해 addCodeIfNotExists()와 saveAll() 사용
      */
+    @Deprecated
     private void insertCommonCodeIfNotExists(String tenantId, String codeGroup, String codeValue,
             String koreanName, String codeLabel, String description, String extraData,
             Integer sortOrder, String createdBy) {
-        try {
-            Optional<CommonCode> existing = commonCodeRepository
-                    .findTenantCodeByGroupAndValue(tenantId, codeGroup, codeValue);
-
-            if (existing.isPresent()) {
-                log.debug("공통코드가 이미 존재함: tenantId={}, codeGroup={}, codeValue={}", tenantId,
-                        codeGroup, codeValue);
-                return;
-            }
-
-            CommonCode code = CommonCode.builder().codeGroup(codeGroup).codeValue(codeValue)
-                    .koreanName(koreanName).codeLabel(codeLabel).codeDescription(description)
-                    .sortOrder(sortOrder != null ? sortOrder : 0).isActive(true)
-                    .extraData(extraData).build();
-
-            code.setTenantId(tenantId);
-
-            commonCodeRepository.save(code);
-            log.debug("공통코드 삽입 완료: tenantId={}, codeGroup={}, codeValue={}", tenantId, codeGroup,
-                    codeValue);
-
-        } catch (Exception e) {
-            log.error("공통코드 삽입 실패: tenantId={}, codeGroup={}, codeValue={}, error={}", tenantId,
-                    codeGroup, codeValue, e.getMessage());
-            // 예외를 throw하지 않고 로그만 남김 (온보딩 프로세스 중단 방지)
-            // 상위에서 이미 try-catch로 처리하고 있으므로 예외를 전파하지 않음
-        }
+        // 레거시 호환성을 위해 유지하지만 사용하지 않음
+        // 배치 처리를 위해 addCodeIfNotExists()와 saveAll() 사용
+        log.warn(
+                "⚠️ Deprecated 메서드 호출: insertCommonCodeIfNotExists는 더 이상 사용하지 않습니다. 배치 처리를 사용하세요.");
     }
 
     /**
-     * 테넌트별 비즈니스 타입별 역할 코드 생성 표준화 2025-12-05: 비즈니스 타입에 따라 역할 코드 자동 생성
+     * 테넌트별 비즈니스 타입별 역할 코드 생성 표준화 2025-12-05: 비즈니스 타입에 따라 역할 코드 자동 생성 배치 처리로 최적화: 개별 save() 대신
+     * saveAll() 사용하여 DB 쿼리 수 대폭 감소
      *
      * @param tenantId 테넌트 ID
      * @param businessType 비즈니스 타입
@@ -1710,145 +1633,184 @@ public class OnboardingServiceImpl implements OnboardingService {
             return;
         }
 
-        log.info("🔄 테넌트 역할 코드 생성 시작: tenantId={}, businessType={}", tenantId, businessType);
+        log.info("🔄 테넌트 역할 코드 생성 시작 (배치 처리): tenantId={}, businessType={}", tenantId,
+                businessType);
 
         String createdByValue = createdBy != null ? createdBy : "SYSTEM_ONBOARDING";
-        int insertedCount = 0;
 
         try {
+            // 1. 기존 코드를 한 번에 조회하여 중복 체크용 Set 생성
+            List<CommonCode> existingCodes = commonCodeRepository.findByTenantId(tenantId);
+            Set<String> existingCodeKeys = new HashSet<>();
+            for (CommonCode code : existingCodes) {
+                if ("ROLE".equals(code.getCodeGroup())) {
+                    existingCodeKeys.add(code.getCodeGroup() + ":" + code.getCodeValue());
+                }
+            }
+
+            // 2. 삽입할 역할 코드 리스트 생성
+            List<CommonCode> codesToInsert = new ArrayList<>();
+
             // 상담소(CONSULTATION)
             if ("CONSULTATION".equals(businessType)) {
-                insertCommonCodeIfNotExists(tenantId, "ROLE", "ADMIN", "원장", "원장", "상담소 원장 역할",
+                addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "ROLE", "ADMIN", "원장",
+                        "원장", "상담소 원장 역할",
                         "{\"isAdmin\": true, \"roleType\": \"ADMIN\", \"isDefault\": true, \"businessType\": \"CONSULTATION\"}",
                         1, createdByValue);
-                insertCommonCodeIfNotExists(tenantId, "ROLE", "CONSULTANT", "상담사", "상담사", "상담사 역할",
+                addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "ROLE", "CONSULTANT",
+                        "상담사", "상담사", "상담사 역할",
                         "{\"isAdmin\": false, \"roleType\": \"CONSULTANT\", \"isDefault\": true, \"businessType\": \"CONSULTATION\"}",
                         2, createdByValue);
-                insertCommonCodeIfNotExists(tenantId, "ROLE", "CLIENT", "내담자", "내담자", "내담자 역할",
+                addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "ROLE", "CLIENT",
+                        "내담자", "내담자", "내담자 역할",
                         "{\"isAdmin\": false, \"roleType\": \"CLIENT\", \"isDefault\": true, \"businessType\": \"CONSULTATION\"}",
                         3, createdByValue);
-                insertCommonCodeIfNotExists(tenantId, "ROLE", "STAFF", "사무원", "사무원", "사무원 역할",
+                addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "ROLE", "STAFF",
+                        "사무원", "사무원", "사무원 역할",
                         "{\"isAdmin\": false, \"isStaff\": true, \"roleType\": \"STAFF\", \"isDefault\": true, \"businessType\": \"CONSULTATION\"}",
                         4, createdByValue);
-                insertedCount = 4;
             }
             // 심리상담(COUNSELING)
             else if ("COUNSELING".equals(businessType)) {
-                insertCommonCodeIfNotExists(tenantId, "ROLE", "ADMIN", "원장", "원장", "심리상담 원장 역할",
+                addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "ROLE", "ADMIN", "원장",
+                        "원장", "심리상담 원장 역할",
                         "{\"isAdmin\": true, \"roleType\": \"ADMIN\", \"isDefault\": true, \"businessType\": \"COUNSELING\"}",
                         1, createdByValue);
-                insertCommonCodeIfNotExists(tenantId, "ROLE", "CONSULTANT", "상담사", "상담사",
-                        "심리상담 상담사 역할",
+                addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "ROLE", "CONSULTANT",
+                        "상담사", "상담사", "심리상담 상담사 역할",
                         "{\"isAdmin\": false, \"roleType\": \"CONSULTANT\", \"isDefault\": true, \"businessType\": \"COUNSELING\"}",
                         2, createdByValue);
-                insertCommonCodeIfNotExists(tenantId, "ROLE", "CLIENT", "내담자", "내담자", "심리상담 내담자 역할",
+                addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "ROLE", "CLIENT",
+                        "내담자", "내담자", "심리상담 내담자 역할",
                         "{\"isAdmin\": false, \"roleType\": \"CLIENT\", \"isDefault\": true, \"businessType\": \"COUNSELING\"}",
                         3, createdByValue);
-                insertCommonCodeIfNotExists(tenantId, "ROLE", "STAFF", "사무원", "사무원", "심리상담 사무원 역할",
+                addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "ROLE", "STAFF",
+                        "사무원", "사무원", "심리상담 사무원 역할",
                         "{\"isAdmin\": false, \"isStaff\": true, \"roleType\": \"STAFF\", \"isDefault\": true, \"businessType\": \"COUNSELING\"}",
                         4, createdByValue);
-                insertedCount = 4;
             }
             // 학원(ACADEMY)
             else if ("ACADEMY".equals(businessType)) {
-                insertCommonCodeIfNotExists(tenantId, "ROLE", "ADMIN", "원장", "원장", "학원 원장 역할",
+                addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "ROLE", "ADMIN", "원장",
+                        "원장", "학원 원장 역할",
                         "{\"isAdmin\": true, \"roleType\": \"ADMIN\", \"isDefault\": true, \"businessType\": \"ACADEMY\"}",
                         1, createdByValue);
-                insertCommonCodeIfNotExists(tenantId, "ROLE", "CONSULTANT", "강사", "강사", "강사 역할",
+                addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "ROLE", "CONSULTANT",
+                        "강사", "강사", "강사 역할",
                         "{\"isAdmin\": false, \"roleType\": \"CONSULTANT\", \"isDefault\": true, \"businessType\": \"ACADEMY\"}",
                         2, createdByValue);
-                insertCommonCodeIfNotExists(tenantId, "ROLE", "CLIENT", "학생", "학생", "학생 역할",
+                addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "ROLE", "CLIENT",
+                        "학생", "학생", "학생 역할",
                         "{\"isAdmin\": false, \"roleType\": \"CLIENT\", \"isDefault\": true, \"businessType\": \"ACADEMY\"}",
                         3, createdByValue);
-                insertCommonCodeIfNotExists(tenantId, "ROLE", "PARENT", "학부모", "학부모",
-                        "학부모 역할 (학원 전용)",
+                addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "ROLE", "PARENT",
+                        "학부모", "학부모", "학부모 역할 (학원 전용)",
                         "{\"isAdmin\": false, \"roleType\": \"PARENT\", \"isDefault\": true, \"businessType\": \"ACADEMY\"}",
                         4, createdByValue);
-                insertCommonCodeIfNotExists(tenantId, "ROLE", "STAFF", "행정직원", "행정직원", "행정직원 역할",
+                addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "ROLE", "STAFF",
+                        "행정직원", "행정직원", "행정직원 역할",
                         "{\"isAdmin\": false, \"isStaff\": true, \"roleType\": \"STAFF\", \"isDefault\": true, \"businessType\": \"ACADEMY\"}",
                         5, createdByValue);
-                insertedCount = 5;
             }
             // 요식업(FOOD_SERVICE)
             else if ("FOOD_SERVICE".equals(businessType)) {
-                insertCommonCodeIfNotExists(tenantId, "ROLE", "ADMIN", "사장", "사장", "요식업 사장 역할",
+                addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "ROLE", "ADMIN", "사장",
+                        "사장", "요식업 사장 역할",
                         "{\"isAdmin\": true, \"roleType\": \"ADMIN\", \"isDefault\": true, \"businessType\": \"FOOD_SERVICE\"}",
                         1, createdByValue);
-                insertCommonCodeIfNotExists(tenantId, "ROLE", "CONSULTANT", "요리사", "요리사", "요리사 역할",
+                addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "ROLE", "CONSULTANT",
+                        "요리사", "요리사", "요리사 역할",
                         "{\"isAdmin\": false, \"roleType\": \"CONSULTANT\", \"isDefault\": true, \"businessType\": \"FOOD_SERVICE\"}",
                         2, createdByValue);
-                insertCommonCodeIfNotExists(tenantId, "ROLE", "CLIENT", "고객", "고객", "고객 역할",
+                addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "ROLE", "CLIENT",
+                        "고객", "고객", "고객 역할",
                         "{\"isAdmin\": false, \"roleType\": \"CLIENT\", \"isDefault\": true, \"businessType\": \"FOOD_SERVICE\"}",
                         3, createdByValue);
-                insertCommonCodeIfNotExists(tenantId, "ROLE", "STAFF", "직원", "직원", "직원 역할",
+                addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "ROLE", "STAFF", "직원",
+                        "직원", "직원 역할",
                         "{\"isAdmin\": false, \"isStaff\": true, \"roleType\": \"STAFF\", \"isDefault\": true, \"businessType\": \"FOOD_SERVICE\"}",
                         4, createdByValue);
-                insertedCount = 4;
             }
             // 태권도(TAEKWONDO)
             else if ("TAEKWONDO".equals(businessType)) {
-                insertCommonCodeIfNotExists(tenantId, "ROLE", "ADMIN", "관장", "관장", "태권도 관장 역할",
+                addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "ROLE", "ADMIN", "관장",
+                        "관장", "태권도 관장 역할",
                         "{\"isAdmin\": true, \"roleType\": \"ADMIN\", \"isDefault\": true, \"businessType\": \"TAEKWONDO\"}",
                         1, createdByValue);
-                insertCommonCodeIfNotExists(tenantId, "ROLE", "CONSULTANT", "사범", "사범", "태권도 사범 역할",
+                addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "ROLE", "CONSULTANT",
+                        "사범", "사범", "태권도 사범 역할",
                         "{\"isAdmin\": false, \"roleType\": \"CONSULTANT\", \"isDefault\": true, \"businessType\": \"TAEKWONDO\"}",
                         2, createdByValue);
-                insertCommonCodeIfNotExists(tenantId, "ROLE", "CLIENT", "학생", "학생", "태권도 학생 역할",
+                addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "ROLE", "CLIENT",
+                        "학생", "학생", "태권도 학생 역할",
                         "{\"isAdmin\": false, \"roleType\": \"CLIENT\", \"isDefault\": true, \"businessType\": \"TAEKWONDO\"}",
                         3, createdByValue);
-                insertCommonCodeIfNotExists(tenantId, "ROLE", "STAFF", "직원", "직원", "태권도 직원 역할",
+                addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "ROLE", "STAFF", "직원",
+                        "직원", "태권도 직원 역할",
                         "{\"isAdmin\": false, \"isStaff\": true, \"roleType\": \"STAFF\", \"isDefault\": true, \"businessType\": \"TAEKWONDO\"}",
                         4, createdByValue);
-                insertedCount = 4;
             }
             // 과외(TUTORING)
             else if ("TUTORING".equals(businessType)) {
-                insertCommonCodeIfNotExists(tenantId, "ROLE", "ADMIN", "원장", "원장", "과외 원장 역할",
+                addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "ROLE", "ADMIN", "원장",
+                        "원장", "과외 원장 역할",
                         "{\"isAdmin\": true, \"roleType\": \"ADMIN\", \"isDefault\": true, \"businessType\": \"TUTORING\"}",
                         1, createdByValue);
-                insertCommonCodeIfNotExists(tenantId, "ROLE", "CONSULTANT", "강사", "강사", "과외 강사 역할",
+                addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "ROLE", "CONSULTANT",
+                        "강사", "강사", "과외 강사 역할",
                         "{\"isAdmin\": false, \"roleType\": \"CONSULTANT\", \"isDefault\": true, \"businessType\": \"TUTORING\"}",
                         2, createdByValue);
-                insertCommonCodeIfNotExists(tenantId, "ROLE", "CLIENT", "학생", "학생", "과외 학생 역할",
+                addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "ROLE", "CLIENT",
+                        "학생", "학생", "과외 학생 역할",
                         "{\"isAdmin\": false, \"roleType\": \"CLIENT\", \"isDefault\": true, \"businessType\": \"TUTORING\"}",
                         3, createdByValue);
-                insertCommonCodeIfNotExists(tenantId, "ROLE", "STAFF", "직원", "직원", "과외 직원 역할",
+                addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "ROLE", "STAFF", "직원",
+                        "직원", "과외 직원 역할",
                         "{\"isAdmin\": false, \"isStaff\": true, \"roleType\": \"STAFF\", \"isDefault\": true, \"businessType\": \"TUTORING\"}",
                         4, createdByValue);
-                insertedCount = 4;
             }
             // 기타 비즈니스 타입
             else {
-                insertCommonCodeIfNotExists(tenantId, "ROLE", "ADMIN", "관리자", "관리자", "관리자 역할",
+                addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "ROLE", "ADMIN",
+                        "관리자", "관리자", "관리자 역할",
                         String.format(
                                 "{\"isAdmin\": true, \"roleType\": \"ADMIN\", \"isDefault\": true, \"businessType\": \"%s\"}",
                                 businessType),
                         1, createdByValue);
-                insertCommonCodeIfNotExists(tenantId, "ROLE", "CONSULTANT", "전문가", "전문가", "전문가 역할",
+                addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "ROLE", "CONSULTANT",
+                        "전문가", "전문가", "전문가 역할",
                         String.format(
                                 "{\"isAdmin\": false, \"roleType\": \"CONSULTANT\", \"isDefault\": true, \"businessType\": \"%s\"}",
                                 businessType),
                         2, createdByValue);
-                insertCommonCodeIfNotExists(tenantId, "ROLE", "CLIENT", "고객", "고객", "고객 역할",
+                addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "ROLE", "CLIENT",
+                        "고객", "고객", "고객 역할",
                         String.format(
                                 "{\"isAdmin\": false, \"roleType\": \"CLIENT\", \"isDefault\": true, \"businessType\": \"%s\"}",
                                 businessType),
                         3, createdByValue);
-                insertCommonCodeIfNotExists(tenantId, "ROLE", "STAFF", "직원", "직원", "직원 역할",
+                addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId, "ROLE", "STAFF", "직원",
+                        "직원", "직원 역할",
                         String.format(
                                 "{\"isAdmin\": false, \"isStaff\": true, \"roleType\": \"STAFF\", \"isDefault\": true, \"businessType\": \"%s\"}",
                                 businessType),
                         4, createdByValue);
-                insertedCount = 4;
             }
 
-            log.info("✅ 테넌트 역할 코드 생성 완료: tenantId={}, businessType={}, count={}", tenantId,
-                    businessType, insertedCount);
+            // 3. 배치 저장 (한 번의 쿼리로 모든 역할 코드 삽입)
+            if (!codesToInsert.isEmpty()) {
+                commonCodeRepository.saveAll(codesToInsert);
+                log.info("✅ 테넌트 역할 코드 배치 저장 완료: tenantId={}, businessType={}, insertedCount={}",
+                        tenantId, businessType, codesToInsert.size());
+            } else {
+                log.info("✅ 모든 역할 코드가 이미 존재함: tenantId={}, businessType={}", tenantId,
+                        businessType);
+            }
+
         } catch (Exception e) {
             log.error("❌ 테넌트 역할 코드 생성 실패: tenantId={}, businessType={}, error={}", tenantId,
                     businessType, e.getMessage(), e);
-            // 예외를 throw하지 않고 로그만 남김 (온보딩 프로세스 중단 방지)
-            // 상위에서 이미 try-catch로 처리하고 있으므로 예외를 전파하지 않음
+            throw e;
         }
     }
 

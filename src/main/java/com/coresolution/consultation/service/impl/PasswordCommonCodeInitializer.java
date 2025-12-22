@@ -5,7 +5,6 @@ import com.coresolution.consultation.entity.CommonCode;
 import com.coresolution.consultation.repository.CommonCodeRepository;
 import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.annotation.Order;
@@ -37,9 +36,9 @@ public class PasswordCommonCodeInitializer {
     @Transactional
     public void initialize(ApplicationReadyEvent event) {
         try {
-            // 타임아웃 방지를 위해 자동 초기화 비활성화
-            log.info("ℹ️ 비밀번호 공통코드 초기화 건너뜀 (타임아웃 방지)");
-            // initializePasswordCommonCodes();
+            log.info("🚀 비밀번호 공통코드 초기화 시작");
+            initializePasswordCommonCodes();
+            log.info("✅ 비밀번호 공통코드 초기화 완료");
         } catch (Exception e) {
             log.error("❌ 비밀번호 관련 공통코드 초기화 실패 (계속 진행): {}", e.getMessage(), e);
         }

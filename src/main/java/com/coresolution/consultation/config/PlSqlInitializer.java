@@ -29,8 +29,6 @@ public class PlSqlInitializer {
     @Autowired
     private DataSource dataSource;
 
-    // H2 데이터베이스 체크 제거 - 모든 환경에서 개발 DB(MySQL) 사용
-
     /**
      * 애플리케이션이 완전히 시작된 후 프로시저 초기화 ApplicationReadyEvent를 사용하여 데이터베이스 연결 풀이 완전히 초기화된 후 실행 연결 누수 방지를
      * 위해 @PostConstruct 대신 사용 각 초기화 작업을 독립적으로 실행하여 하나의 실패가 다른 작업에 영향을 주지 않도록 함

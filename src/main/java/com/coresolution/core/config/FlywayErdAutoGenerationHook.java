@@ -169,7 +169,12 @@ public class FlywayErdAutoGenerationHook {
             }
             
             // 모든 재시도 실패
-            log.warn("⚠️ Flyway 마이그레이션 최대 재시도 횟수 초과 - 개발 환경이므로 무시하고 계속 진행합니다.");
+            log.error("❌ Flyway 마이그레이션 최대 재시도 횟수 초과 - 개발 환경이므로 무시하고 계속 진행합니다.");
+            log.error("💡 서버에서 다음 명령어로 연결 상태를 확인하고 정리하세요:");
+            log.error("   ssh root@beta0629.cafe24.com");
+            log.error("   /opt/mindgarden/scripts/development/utilities/check-db-connections.sh");
+            log.error("   /opt/mindgarden/scripts/development/utilities/cleanup-db-connections.sh");
+            // 개발 환경에서는 예외를 던지지 않고 계속 진행
         };
     }
 }

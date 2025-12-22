@@ -630,7 +630,8 @@ public class OnboardingServiceImpl implements OnboardingService {
                     success = false;
                     message = dashboardError;
                     // 예외를 발생시켜 전체 트랜잭션 롤백
-                    throw new RuntimeException("온보딩 승인 프로세스 실패: " + dashboardError);
+                    // RuntimeException을 throw하면 트랜잭션이 롤백되지만, 예외는 상위로 전파되어 500 오류 발생
+                    // 따라서 예외를 throw하지 않고 success = false로 처리하여 아래에서 ON_HOLD 상태로 변경
                 }
             }
 

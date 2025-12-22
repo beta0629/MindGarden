@@ -405,6 +405,20 @@ public class OnboardingController extends BaseApiController {
             log.error("온보딩 요청 결정 실패: id={}, status={}, error={}", id, payload.status(),
                     e.getMessage());
             throw e;
+        } catch (RuntimeException e) {
+            // 대시보드 생성 실패 등으로 인한 롤백 시 예외 처리
+            log.error("온보딩 승인 프로세스 실패 (롤백됨): id={}, status={}, error={}", id, payload.status(),
+                    e.getMessage(), e);
+            // 롤백 후 상태를 다시 조회하여 ON_HOLD 상태인지 확인
+            OnboardingRequest request = onboardingService.getById(id);
+            if (request.getStatus() == OnboardingStatus.ON_HOLD) {
+                // ON_HOLD 상태로 변경되었으면 정상 응답 (롤백 완료)
+                return updated("온보딩 승인 프로세스 중 오류가 발생하여 보류 상태로 변경되었습니다. 재시도해주세요.",
+                        request);
+            } else {
+                // 예상치 못한 상태면 예외를 다시 throw
+                throw e;
+            }
         }
     }
 

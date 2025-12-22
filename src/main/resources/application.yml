@@ -2,8 +2,9 @@
 # Spring Boot 3.x + Hibernate 6.x + MySQL 8.x
 
 spring:
-  profiles:
-    active: local
+  # 프로파일은 환경 변수나 실행 인자로 지정 (기본값 없음)
+  # profiles:
+  #   active: local  # 주석 처리 - 환경 변수나 실행 인자로 지정
 
   application:
     name: consultation-management-system

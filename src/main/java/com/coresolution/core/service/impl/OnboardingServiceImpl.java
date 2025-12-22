@@ -384,11 +384,13 @@ public class OnboardingServiceImpl implements OnboardingService {
             try {
                 OnboardingServiceImpl self =
                         applicationContext.getBean(OnboardingServiceImpl.class);
-                String initializationStatusJson = self.initializeTenantAfterOnboardingInNewTransaction(
-                        existingTenantId, request.getBusinessType(), actorId, requestId);
+                String initializationStatusJson =
+                        self.initializeTenantAfterOnboardingInNewTransaction(existingTenantId,
+                                request.getBusinessType(), actorId, requestId);
 
                 // 초기화 작업 상태를 메인 트랜잭션에서 저장
-                if (initializationStatusJson != null && !initializationStatusJson.trim().isEmpty()) {
+                if (initializationStatusJson != null
+                        && !initializationStatusJson.trim().isEmpty()) {
                     request.setInitializationStatusJson(initializationStatusJson);
                     log.info("✅ 초기화 작업 상태 저장 완료: requestId={}", requestId);
                 }
@@ -2011,44 +2013,63 @@ public class OnboardingServiceImpl implements OnboardingService {
         }
 
         // 작업 타입별 재실행
+        boolean success = false;
+        String errorMsg = null;
         try {
             switch (taskType) {
                 case "commonCodes":
                     self.insertDefaultTenantCommonCodesInNewTransaction(tenantId, actorId);
                     statusMap.put("commonCodes", createInitializationStatus("SUCCESS", null));
+                    success = true;
                     log.info("✅ 공통코드 삽입 재실행 성공: tenantId={}", tenantId);
                     break;
                 case "roleCodes":
                     self.insertTenantRoleCodesInNewTransaction(tenantId, request.getBusinessType(),
                             actorId);
                     statusMap.put("roleCodes", createInitializationStatus("SUCCESS", null));
+                    success = true;
                     log.info("✅ 역할 코드 생성 재실행 성공: tenantId={}", tenantId);
                     break;
                 case "permissionGroups":
                     self.assignDefaultPermissionGroupsToAdminInNewTransaction(tenantId, actorId);
                     statusMap.put("permissionGroups", createInitializationStatus("SUCCESS", null));
+                    success = true;
                     log.info("✅ 권한 그룹 할당 재실행 성공: tenantId={}", tenantId);
                     break;
                 default:
-                    throw new IllegalArgumentException(
-                            "지원하지 않는 작업 타입입니다. 가능한 값: commonCodes, roleCodes, permissionGroups");
+                    errorMsg = "지원하지 않는 작업 타입입니다. 가능한 값: commonCodes, roleCodes, permissionGroups";
+                    statusMap.put(taskType, createInitializationStatus("FAILED", errorMsg));
+                    log.error("초기화 작업 재실행 실패: requestId={}, taskType={}, error={}", requestId, taskType,
+                            errorMsg);
+                    throw new IllegalArgumentException(errorMsg);
             }
+        } catch (IllegalArgumentException e) {
+            // 잘못된 작업 타입 등 검증 오류는 즉시 throw
+            throw e;
         } catch (Exception e) {
-            String errorMsg = e.getMessage() != null ? e.getMessage() : "알 수 없는 오류";
+            errorMsg = e.getMessage() != null ? e.getMessage() : "알 수 없는 오류";
             statusMap.put(taskType, createInitializationStatus("FAILED", errorMsg));
             log.error("초기화 작업 재실행 실패: requestId={}, taskType={}, error={}", requestId, taskType,
                     errorMsg, e);
-            throw new RuntimeException("초기화 작업 재실행 실패: " + errorMsg, e);
+            // 예외는 나중에 throw하되, 상태는 먼저 저장
         }
 
-        // 상태 저장
+        // 상태 저장 (성공/실패 여부와 관계없이 저장)
         try {
             String statusJson = objectMapper.writeValueAsString(statusMap);
             request.setInitializationStatusJson(statusJson);
             request = repository.save(request);
-            log.info("✅ 초기화 작업 상태 업데이트 완료: requestId={}, taskType={}", requestId, taskType);
-        } catch (JsonProcessingException e) {
-            log.warn("초기화 작업 상태 저장 실패 (무시): requestId={}, error={}", requestId, e.getMessage());
+            log.info("✅ 초기화 작업 상태 업데이트 완료: requestId={}, taskType={}, success={}", requestId,
+                    taskType, success);
+        } catch (Exception e) {
+            log.error("초기화 작업 상태 저장 실패: requestId={}, error={}", requestId, e.getMessage(), e);
+            // 상태 저장 실패는 치명적이므로 예외 throw
+            throw new RuntimeException("초기화 작업 상태 저장 실패: " + e.getMessage(), e);
+        }
+
+        // 작업이 실패한 경우 예외 throw
+        if (!success && errorMsg != null) {
+            throw new RuntimeException("초기화 작업 재실행 실패: " + errorMsg);
         }
 
         return request;

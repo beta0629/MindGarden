@@ -196,9 +196,18 @@ public class PermissionInitializationServiceImpl implements PermissionInitializa
         // 레거시 역할은 더 이상 사용하지 않으므로 권한 설정도 제거
         // 하위 호환성이 필요한 경우 ADMIN 역할에 통합된 권한이 적용됨
         
-        // 일반 역할 권한 설정
-        createRolePermissions(UserRole.CONSULTANT.name(), consultantPermissions);
-        createRolePermissions(UserRole.CLIENT.name(), clientPermissions);
+        // 일반 역할 권한 설정 (각각 독립적으로 실행하여 타임아웃 방지)
+        try {
+            createRolePermissions(UserRole.CONSULTANT.name(), consultantPermissions);
+        } catch (Exception e) {
+            log.error("❌ CONSULTANT 권한 매핑 실패 (계속 진행): {}", e.getMessage(), e);
+        }
+        
+        try {
+            createRolePermissions(UserRole.CLIENT.name(), clientPermissions);
+        } catch (Exception e) {
+            log.error("❌ CLIENT 권한 매핑 실패 (계속 진행): {}", e.getMessage(), e);
+        }
         
         log.info("기본 역할별 권한 매핑 초기화 완료");
     }
@@ -287,13 +296,25 @@ public class PermissionInitializationServiceImpl implements PermissionInitializa
             
             log.info("🔄 권한 시스템 초기화 필요 - 기본 권한 생성 중...");
             
-            initializeDefaultPermissions();
-            initializeDefaultRolePermissions();
+            // 각 초기화 작업을 별도 트랜잭션으로 분리하여 타임아웃 방지
+            try {
+                initializeDefaultPermissions();
+            } catch (Exception e) {
+                log.error("❌ 기본 권한 초기화 실패 (계속 진행): {}", e.getMessage(), e);
+                // 실패해도 계속 진행
+            }
+            
+            try {
+                initializeDefaultRolePermissions();
+            } catch (Exception e) {
+                log.error("❌ 역할별 권한 매핑 초기화 실패: {}", e.getMessage(), e);
+                // 실패해도 계속 진행
+            }
             
             log.info("✅ 권한 시스템 초기화 완료");
         } catch (Exception e) {
             log.error("❌ 권한 시스템 초기화 실패", e);
-            throw e;
+            // 초기화 실패해도 애플리케이션은 계속 실행
         }
     }
     

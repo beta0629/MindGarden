@@ -15,7 +15,7 @@ spring:
   # 데이터베이스 설정 (개발 서버 DB 사용)
   datasource:
     # IPv4 우선 사용을 위해 IP 주소 직접 사용 (DNS 문제 해결)
-    url: jdbc:mysql://beta0629.cafe24.com:3306/core_solution?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8&useUnicode=true&characterSetResults=UTF-8&allowPublicKeyRetrieval=true&connectionCollation=utf8mb4_unicode_ci&connectTimeout=60000&socketTimeout=300000&autoReconnect=true&maxReconnects=5&initialTimeout=2&failOverReadOnly=false&rewriteBatchedStatements=true&useLocalSessionState=true&useServerPrepStmts=true&cachePrepStmts=true&prepStmtCacheSize=250&prepStmtCacheSqlLimit=2048
+    url: jdbc:mysql://beta0629.cafe24.com:3306/core_solution?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8&useUnicode=true&characterSetResults=UTF-8&allowPublicKeyRetrieval=true&connectionCollation=utf8mb4_unicode_ci&connectTimeout=60000&socketTimeout=300000&autoReconnect=true&maxReconnects=5&initialTimeout=2&failOverReadOnly=false&rewriteBatchedStatements=true&useLocalSessionState=true&useServerPrepStmts=true&cachePrepStmts=true&prepStmtCacheSize=250&prepStmtCacheSqlLimit=2048&sessionVariables=wait_timeout=600,interactive_timeout=600
     username: mindgarden_dev
     password: MindGardenDev2025!@#
     driver-class-name: com.mysql.cj.jdbc.Driver

@@ -92,8 +92,20 @@ jobs:
         script: |
           cd /var/www/mindgarden-dev
           
+          # 🔧 배포 전 DB 연결 정리 (Too many connections 오류 방지)
+          echo "🔧 배포 전 DB 연결 정리 시작..."
+          if [ -f /opt/mindgarden/scripts/development/utilities/cleanup-db-connections.sh ]; then
+            source /etc/mindgarden/dev.env || true
+            /opt/mindgarden/scripts/development/utilities/cleanup-db-connections.sh <<< "y" || true
+          else
+            echo "⚠️ 연결 정리 스크립트를 찾을 수 없습니다. 수동 정리 필요"
+          fi
+          
           # 서비스 중지
           sudo systemctl stop mindgarden-dev.service || true
+          
+          # 서비스 중지 후 추가 대기 (연결 정리 시간 확보)
+          sleep 5
           
           # 백업 생성
           if [ -f app.jar ]; then
@@ -214,6 +226,15 @@ jobs:
           echo "🔄 개발 서버 서비스 재시작..."
           sudo systemctl daemon-reload
           
+          # 🔧 서비스 중지 전 DB 연결 정리 (Too many connections 오류 방지)
+          echo "🔧 서비스 중지 전 DB 연결 정리..."
+          if [ -f /opt/mindgarden/scripts/development/utilities/cleanup-db-connections.sh ]; then
+            source /etc/mindgarden/dev.env || true
+            echo "y" | /opt/mindgarden/scripts/development/utilities/cleanup-db-connections.sh || true
+          else
+            echo "⚠️ 연결 정리 스크립트를 찾을 수 없습니다"
+          fi
+          
           # 서비스 중지 (systemd가 자동으로 프로세스 종료 처리)
           echo "🛑 서비스 중지 중..."
           if sudo systemctl is-active --quiet mindgarden-dev.service; then
@@ -226,8 +247,8 @@ jobs:
               fi
               sleep 1
             done
-            # 추가 안정화 대기
-            sleep 3
+            # 추가 안정화 대기 (연결 정리 시간 확보)
+            sleep 5
           else
             echo "ℹ️ 서비스가 이미 중지되어 있음"
           fi

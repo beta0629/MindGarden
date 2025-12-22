@@ -36,9 +36,12 @@ public class CodeInitializationServiceImpl implements CodeInitializationService 
     @Order(30) // 다른 초기화 작업보다 먼저 실행
     public void initialize(ApplicationReadyEvent event) {
         try {
-            log.info("🚀 급여 시스템 코드 초기화 시작");
-            initializeSalarySystemCodes();
-            initializePackageCodes();
+            // 타임아웃 방지를 위해 자동 초기화 비활성화
+            // 필요시 수동으로 초기화하거나 Flyway 마이그레이션으로 처리
+            log.info("ℹ️ 급여 시스템 코드 초기화 건너뜀 (타임아웃 방지)");
+            // log.info("🚀 급여 시스템 코드 초기화 시작");
+            // initializeSalarySystemCodes();
+            // initializePackageCodes();
         } catch (Exception e) {
             log.error("❌ 급여 시스템 코드 초기화 실패 (계속 진행): {}", e.getMessage(), e);
         }

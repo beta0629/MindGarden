@@ -2015,6 +2015,27 @@ public class OnboardingServiceImpl implements OnboardingService {
         // 작업 타입별 재실행
         boolean success = false;
         String errorMsg = null;
+        
+        // 잘못된 작업 타입 검증
+        if (!taskType.equals("commonCodes") && !taskType.equals("roleCodes")
+                && !taskType.equals("permissionGroups")) {
+            errorMsg = "지원하지 않는 작업 타입입니다. 가능한 값: commonCodes, roleCodes, permissionGroups";
+            statusMap.put(taskType, createInitializationStatus("FAILED", errorMsg));
+            log.error("초기화 작업 재실행 실패: requestId={}, taskType={}, error={}", requestId, taskType,
+                    errorMsg);
+            
+            // 상태 저장 후 예외 throw
+            try {
+                String statusJson = objectMapper.writeValueAsString(statusMap);
+                request.setInitializationStatusJson(statusJson);
+                repository.save(request);
+            } catch (Exception e) {
+                log.error("초기화 작업 상태 저장 실패: requestId={}, error={}", requestId, e.getMessage(), e);
+            }
+            
+            throw new IllegalArgumentException(errorMsg);
+        }
+        
         try {
             switch (taskType) {
                 case "commonCodes":
@@ -2036,22 +2057,13 @@ public class OnboardingServiceImpl implements OnboardingService {
                     success = true;
                     log.info("✅ 권한 그룹 할당 재실행 성공: tenantId={}", tenantId);
                     break;
-                default:
-                    errorMsg = "지원하지 않는 작업 타입입니다. 가능한 값: commonCodes, roleCodes, permissionGroups";
-                    statusMap.put(taskType, createInitializationStatus("FAILED", errorMsg));
-                    log.error("초기화 작업 재실행 실패: requestId={}, taskType={}, error={}", requestId, taskType,
-                            errorMsg);
-                    throw new IllegalArgumentException(errorMsg);
             }
-        } catch (IllegalArgumentException e) {
-            // 잘못된 작업 타입 등 검증 오류는 즉시 throw
-            throw e;
         } catch (Exception e) {
             errorMsg = e.getMessage() != null ? e.getMessage() : "알 수 없는 오류";
             statusMap.put(taskType, createInitializationStatus("FAILED", errorMsg));
             log.error("초기화 작업 재실행 실패: requestId={}, taskType={}, error={}", requestId, taskType,
                     errorMsg, e);
-            // 예외는 나중에 throw하되, 상태는 먼저 저장
+            // 예외는 catch하되, 상태는 저장하고 계속 진행
         }
 
         // 상태 저장 (성공/실패 여부와 관계없이 저장)
@@ -2067,9 +2079,11 @@ public class OnboardingServiceImpl implements OnboardingService {
             throw new RuntimeException("초기화 작업 상태 저장 실패: " + e.getMessage(), e);
         }
 
-        // 작업이 실패한 경우 예외 throw
+        // 작업이 실패한 경우에도 성공 응답 반환 (상태는 이미 저장됨)
+        // 프론트엔드에서 상태를 확인하여 실패 여부를 판단할 수 있음
         if (!success && errorMsg != null) {
-            throw new RuntimeException("초기화 작업 재실행 실패: " + errorMsg);
+            log.warn("초기화 작업 재실행 실패 (상태는 저장됨): requestId={}, taskType={}, error={}", requestId,
+                    taskType, errorMsg);
         }
 
         return request;

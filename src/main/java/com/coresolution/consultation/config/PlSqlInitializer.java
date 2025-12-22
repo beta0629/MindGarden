@@ -7,7 +7,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
-import jakarta.annotation.PostConstruct;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
+import org.springframework.core.annotation.Order;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -52,7 +54,13 @@ public class PlSqlInitializer {
         }
     }
     
-    @PostConstruct
+    /**
+     * 애플리케이션이 완전히 시작된 후 프로시저 초기화
+     * ApplicationReadyEvent를 사용하여 데이터베이스 연결 풀이 완전히 초기화된 후 실행
+     * 연결 누수 방지를 위해 @PostConstruct 대신 사용
+     */
+    @EventListener(ApplicationReadyEvent.class)
+    @Order(100) // 다른 초기화 작업 이후 실행
     public void init() {
         // H2 데이터베이스인 경우 프로시저 초기화 건너뛰기
         if (isH2Database()) {
@@ -60,9 +68,10 @@ public class PlSqlInitializer {
             return;
         }
         
-        log.info("🚀 PL/SQL 프로시저 자동 초기화 시작");
+        log.info("🚀 PL/SQL 프로시저 자동 초기화 시작 (ApplicationReadyEvent)");
         
         try {
+            // 각 프로시저 초기화를 독립적으로 실행하여 연결 누수 방지
             // CreateOrActivateTenant 프로시저 초기화
             initializeCreateOrActivateTenantProcedure();
             

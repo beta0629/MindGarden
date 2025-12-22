@@ -15,12 +15,21 @@ spring:
   # 데이터베이스 설정 (개발 서버 DB 사용)
   datasource:
     # IPv4 우선 사용을 위해 IP 주소 직접 사용 (DNS 문제 해결)
-    url: jdbc:mysql://beta0629.cafe24.com:3306/core_solution?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8&useUnicode=true&characterSetResults=UTF-8&allowPublicKeyRetrieval=true&connectionCollation=utf8mb4_unicode_ci
+    url: jdbc:mysql://beta0629.cafe24.com:3306/core_solution?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8&useUnicode=true&characterSetResults=UTF-8&allowPublicKeyRetrieval=true&connectionCollation=utf8mb4_unicode_ci&connectTimeout=30000&socketTimeout=120000&autoReconnect=true&maxReconnects=3
     username: mindgarden_dev
     password: MindGardenDev2025!@#
     driver-class-name: com.mysql.cj.jdbc.Driver
     # 문자셋 설정 추가
     connection-init-sql: "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci"
+    # HikariCP 연결 풀 설정
+    hikari:
+      connection-timeout: 30000  # 30초 (연결 대기 시간)
+      validation-timeout: 5000   # 5초 (연결 검증 시간)
+      idle-timeout: 600000       # 10분 (유휴 연결 타임아웃)
+      max-lifetime: 1800000      # 30분 (연결 최대 수명)
+      maximum-pool-size: 10     # 최대 연결 수
+      minimum-idle: 2           # 최소 유휴 연결 수
+      leak-detection-threshold: 60000  # 60초 (연결 누수 감지)
   # JPA 설정
   jpa:
     hibernate:

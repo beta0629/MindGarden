@@ -32,14 +32,25 @@ public class PlSqlInitializer {
     
     /**
      * 현재 데이터베이스가 H2인지 확인
+     * 연결 없이 URL 문자열로 확인하여 타임아웃 방지
      */
     private boolean isH2Database() {
         try {
-            String url = dataSource.getConnection().getMetaData().getURL();
-            return url != null && url.startsWith("jdbc:h2:");
+            // HikariCP DataSource인 경우 URL을 직접 가져올 수 있음
+            if (dataSource instanceof com.zaxxer.hikari.HikariDataSource) {
+                com.zaxxer.hikari.HikariDataSource hikariDataSource = (com.zaxxer.hikari.HikariDataSource) dataSource;
+                String url = hikariDataSource.getJdbcUrl();
+                return url != null && url.startsWith("jdbc:h2:");
+            }
+            
+            // 다른 DataSource인 경우 연결을 시도하되, 반드시 close() 호출
+            try (java.sql.Connection connection = dataSource.getConnection()) {
+                String url = connection.getMetaData().getURL();
+                return url != null && url.startsWith("jdbc:h2:");
+            }
         } catch (Exception e) {
-            log.warn("데이터베이스 타입 확인 실패: {}", e.getMessage());
-            return false;
+            log.warn("데이터베이스 타입 확인 실패 (기본값: MySQL로 가정): {}", e.getMessage());
+            return false; // 확인 실패 시 MySQL로 가정
         }
     }
     

@@ -28,11 +28,12 @@ spring:
       idle-timeout: 300000       # 5분 (유휴 연결 타임아웃 - 감소)
       max-lifetime: 600000       # 10분 (연결 최대 수명 - 감소)
       maximum-pool-size: 5       # 최대 연결 수 (감소)
-      minimum-idle: 1           # 최소 유휴 연결 수 (감소)
+      minimum-idle: 0           # 최소 유휴 연결 수 (0으로 설정하여 시작 시 연결 시도 방지)
       leak-detection-threshold: 120000  # 120초 (연결 누수 감지 - 증가)
       connection-test-query: SELECT 1  # 연결 검증 쿼리
       keepalive-time: 30000     # 30초 (연결 유지 시간)
       register-mbeans: true     # JMX 모니터링 활성화
+      initialization-fail-timeout: -1  # 연결 실패 시에도 애플리케이션 시작 허용
   # JPA 설정
   jpa:
     hibernate:

@@ -1955,12 +1955,18 @@ public class OnboardingServiceImpl implements OnboardingService {
         log.info("초기화 작업 재실행: requestId={}, taskType={}, actorId={}", requestId, taskType, actorId);
 
         // 별도 트랜잭션에서 요청 조회
-        OnboardingRequest request = repository.findById(requestId)
-                .orElseThrow(() -> new IllegalArgumentException(OnboardingConstants
-                        .formatError(OnboardingConstants.ERROR_TENANT_NOT_FOUND, requestId)));
+        OnboardingRequest request = repository.findById(requestId).orElse(null);
+        if (request == null) {
+            String errorMsg = OnboardingConstants.formatError(OnboardingConstants.ERROR_TENANT_NOT_FOUND, requestId);
+            log.error("온보딩 요청을 찾을 수 없음: requestId={}", requestId);
+            // 예외를 throw하지 않고 null 반환 (상위에서 처리)
+            return null;
+        }
 
         if (request.getTenantId() == null || request.getTenantId().trim().isEmpty()) {
-            throw new IllegalStateException("테넌트 ID가 없어 초기화 작업을 재실행할 수 없습니다.");
+            log.error("테넌트 ID가 없어 초기화 작업을 재실행할 수 없음: requestId={}", requestId);
+            // 예외를 throw하지 않고 현재 요청 반환
+            return request;
         }
 
         String tenantId = request.getTenantId();
@@ -1999,7 +2005,7 @@ public class OnboardingServiceImpl implements OnboardingService {
             log.error("초기화 작업 재실행 실패: requestId={}, taskType={}, error={}", requestId, taskType,
                     errorMsg);
 
-            // 상태 저장 후 예외 throw
+            // 상태 저장 후 현재 요청 반환 (예외 throw하지 않음)
             try {
                 String statusJson = objectMapper.writeValueAsString(statusMap);
                 self.saveInitializationStatusInNewTransaction(requestId, statusJson);
@@ -2007,7 +2013,8 @@ public class OnboardingServiceImpl implements OnboardingService {
                 log.error("초기화 작업 상태 저장 실패: requestId={}, error={}", requestId, e.getMessage(), e);
             }
 
-            throw new IllegalArgumentException(errorMsg);
+            // 예외를 throw하지 않고 현재 요청 반환
+            return request;
         }
 
         // 재실행 시작 상태로 설정
@@ -2071,8 +2078,8 @@ public class OnboardingServiceImpl implements OnboardingService {
                         statusMap.put("permissionGroups",
                                 createInitializationStatus("FAILED", taskErrorMsg));
                         errorMsg = taskErrorMsg;
-                        log.error("권한 그룹 할당 재실행 실패 (예상치 못한 오류): tenantId={}, error={}", tenantId, taskErrorMsg,
-                                e);
+                        log.error("권한 그룹 할당 재실행 실패 (예상치 못한 오류): tenantId={}, error={}", tenantId,
+                                taskErrorMsg, e);
                     }
                     break;
             }

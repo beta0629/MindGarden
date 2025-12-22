@@ -39,7 +39,7 @@ public class PlSqlInitializer {
     @Order(100) // 다른 초기화 작업 이후 실행
     public void init() {
         log.info("🚀 PL/SQL 프로시저 자동 초기화 시작 (ApplicationReadyEvent)");
-        
+
         // 프로시저는 Flyway 마이그레이션으로 관리되지만, 백업 메커니즘으로 확인만 수행
         // 실제 생성은 Flyway가 담당하므로, 존재 여부만 확인하고 없을 때만 생성 시도
         try {
@@ -48,14 +48,14 @@ public class PlSqlInitializer {
         } catch (Exception e) {
             log.error("❌ CreateOrActivateTenant 프로시저 초기화 실패 (계속 진행): {}", e.getMessage(), e);
         }
-        
+
         try {
             initializeCreateDefaultTenantUsersProcedure();
             Thread.sleep(500); // 연결 풀 정리 시간 확보
         } catch (Exception e) {
             log.error("❌ CreateDefaultTenantUsers 프로시저 초기화 실패 (계속 진행): {}", e.getMessage(), e);
         }
-        
+
         // 상담일지 알림/검증 프로시저는 Flyway로 관리되므로 Java 코드에서 초기화하지 않음
         log.info("✅ PL/SQL 프로시저 자동 초기화 완료");
     }

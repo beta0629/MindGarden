@@ -2,8 +2,8 @@
 # Spring Boot 3.x + Hibernate 6.x + MySQL 8.x
 
 spring:
-  profiles:
-    # active: local  # 환경 변수나 명령줄 인자로 설정 (--spring.profiles.active=dev)
+  # 프로파일은 환경 변수나 명령줄 인자로 설정 (--spring.profiles.active=dev)
+  # Spring Boot 3.x에서는 spring.profiles 대신 환경 변수 사용
 
   application:
     name: consultation-management-system

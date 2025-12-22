@@ -696,8 +696,14 @@ public class OnboardingServiceImpl implements OnboardingService {
                     // ApplicationContext를 통해 프록시를 가져와서 @Transactional이 적용되도록 함
                     OnboardingServiceImpl self =
                             applicationContext.getBean(OnboardingServiceImpl.class);
-                    self.initializeTenantAfterOnboardingInNewTransaction(tenantId,
-                            request.getBusinessType(), actorId, requestId);
+                    String initializationStatusJson = self.initializeTenantAfterOnboardingInNewTransaction(
+                            tenantId, request.getBusinessType(), actorId, requestId);
+
+                    // 초기화 작업 상태를 메인 트랜잭션에서 저장
+                    if (initializationStatusJson != null && !initializationStatusJson.trim().isEmpty()) {
+                        request.setInitializationStatusJson(initializationStatusJson);
+                        log.info("✅ 초기화 작업 상태 저장 완료: requestId={}", requestId);
+                    }
 
                     // 서브도메인은 프로시저에서 처리하므로 여기서는 제거
                     // (CreateOrActivateTenant 프로시저에서 서브도메인을 받아서 저장)
@@ -1221,9 +1227,10 @@ public class OnboardingServiceImpl implements OnboardingService {
      * @param businessType 업종 타입
      * @param actorId 실행자 ID
      * @param requestId 온보딩 요청 ID (상태 저장용)
+     * @return 초기화 작업 상태 JSON 문자열 (메인 트랜잭션에서 저장하기 위해 반환)
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW, noRollbackFor = Exception.class)
-    public void initializeTenantAfterOnboardingInNewTransaction(String tenantId,
+    public String initializeTenantAfterOnboardingInNewTransaction(String tenantId,
             String businessType, String actorId, java.util.UUID requestId) {
         // 각 작업을 별도 트랜잭션으로 분리하여 하나가 실패해도 다른 것들은 성공하도록 처리
         OnboardingServiceImpl self = applicationContext.getBean(OnboardingServiceImpl.class);
@@ -1267,20 +1274,16 @@ public class OnboardingServiceImpl implements OnboardingService {
             log.error("권한 그룹 할당 실패 (계속 진행): tenantId={}, error={}", tenantId, errorMsg, e);
         }
 
-        // 상태 저장
+        // 상태 JSON 생성 (메인 트랜잭션에서 저장하기 위해 반환)
         try {
             String statusJson = objectMapper.writeValueAsString(statusMap);
-            OnboardingRequest request = repository.findById(requestId).orElse(null);
-            if (request != null) {
-                request.setInitializationStatusJson(statusJson);
-                repository.save(request);
-                log.info("✅ 초기화 작업 상태 저장 완료: requestId={}", requestId);
-            }
+            log.info("✅ 초기화 작업 상태 생성 완료: requestId={}", requestId);
+            log.info("✅ 온보딩 후 테넌트 초기화 완료: tenantId={}", tenantId);
+            return statusJson;
         } catch (Exception e) {
-            log.warn("초기화 작업 상태 저장 실패 (무시): requestId={}, error={}", requestId, e.getMessage());
+            log.warn("초기화 작업 상태 JSON 생성 실패 (무시): requestId={}, error={}", requestId, e.getMessage());
+            return null;
         }
-
-        log.info("✅ 온보딩 후 테넌트 초기화 완료: tenantId={}", tenantId);
     }
 
     /**

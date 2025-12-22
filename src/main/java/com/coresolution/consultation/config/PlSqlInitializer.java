@@ -58,6 +58,7 @@ public class PlSqlInitializer {
      * 애플리케이션이 완전히 시작된 후 프로시저 초기화
      * ApplicationReadyEvent를 사용하여 데이터베이스 연결 풀이 완전히 초기화된 후 실행
      * 연결 누수 방지를 위해 @PostConstruct 대신 사용
+     * 각 초기화 작업을 독립적으로 실행하여 하나의 실패가 다른 작업에 영향을 주지 않도록 함
      */
     @EventListener(ApplicationReadyEvent.class)
     @Order(100) // 다른 초기화 작업 이후 실행
@@ -70,25 +71,42 @@ public class PlSqlInitializer {
         
         log.info("🚀 PL/SQL 프로시저 자동 초기화 시작 (ApplicationReadyEvent)");
         
+        // 각 프로시저 초기화를 독립적으로 실행하여 연결 누수 방지
+        // 하나의 실패가 다른 작업에 영향을 주지 않도록 각각 try-catch로 처리
+        
+        // 1. CreateOrActivateTenant 프로시저 초기화
         try {
-            // 각 프로시저 초기화를 독립적으로 실행하여 연결 누수 방지
-            // CreateOrActivateTenant 프로시저 초기화
             initializeCreateOrActivateTenantProcedure();
-            
-            // CreateDefaultTenantUsers 프로시저 초기화
-            initializeCreateDefaultTenantUsersProcedure();
-            
-            // 상담일지 알림 프로시저 초기화
-            initializeConsultationRecordAlertProcedures();
-            
-            // 상담일지 검증 프로시저 초기화
-            initializeConsultationRecordValidationProcedures();
-            
-            log.info("✅ PL/SQL 프로시저 자동 초기화 완료");
-            
+            // 각 작업 사이에 짧은 대기 시간 추가하여 연결 풀 정리 시간 확보
+            Thread.sleep(500);
         } catch (Exception e) {
-            log.error("❌ PL/SQL 프로시저 자동 초기화 실패: {}", e.getMessage(), e);
+            log.error("❌ CreateOrActivateTenant 프로시저 초기화 실패 (계속 진행): {}", e.getMessage(), e);
         }
+        
+        // 2. CreateDefaultTenantUsers 프로시저 초기화
+        try {
+            initializeCreateDefaultTenantUsersProcedure();
+            Thread.sleep(500);
+        } catch (Exception e) {
+            log.error("❌ CreateDefaultTenantUsers 프로시저 초기화 실패 (계속 진행): {}", e.getMessage(), e);
+        }
+        
+        // 3. 상담일지 알림 프로시저 초기화 (선택적 - 실패해도 계속 진행)
+        try {
+            initializeConsultationRecordAlertProcedures();
+            Thread.sleep(500);
+        } catch (Exception e) {
+            log.warn("⚠️ 상담일지 알림 프로시저 초기화 실패 (계속 진행): {}", e.getMessage());
+        }
+        
+        // 4. 상담일지 검증 프로시저 초기화 (선택적 - 실패해도 계속 진행)
+        try {
+            initializeConsultationRecordValidationProcedures();
+        } catch (Exception e) {
+            log.warn("⚠️ 상담일지 검증 프로시저 초기화 실패 (계속 진행): {}", e.getMessage());
+        }
+        
+        log.info("✅ PL/SQL 프로시저 자동 초기화 완료");
     }
     
     /**
@@ -276,13 +294,22 @@ public class PlSqlInitializer {
                 try {
                     jdbcTemplate.execute(procedure);
                     log.info("✅ PL/SQL 프로시저 {} 생성 성공", i + 1);
+                    // 각 프로시저 실행 후 짧은 대기 시간 추가하여 연결 풀 정리 시간 확보
+                    Thread.sleep(200);
                 } catch (Exception e) {
-                    if (e.getMessage().contains("already exists") || 
-                        e.getMessage().contains("Duplicate procedure")) {
-                        log.info("ℹ️ PL/SQL 프로시저 {}가 이미 존재합니다: {}", i + 1, e.getMessage());
+                    if (e.getMessage() != null && 
+                        (e.getMessage().contains("already exists") || 
+                         e.getMessage().contains("Duplicate procedure") ||
+                         e.getMessage().contains("Communications link failure"))) {
+                        if (e.getMessage().contains("Communications link failure")) {
+                            log.warn("⚠️ PL/SQL 프로시저 {} 실행 중 연결 오류 (건너뜀): {}", i + 1, e.getMessage());
+                        } else {
+                            log.info("ℹ️ PL/SQL 프로시저 {}가 이미 존재합니다: {}", i + 1, e.getMessage());
+                        }
                     } else {
                         log.warn("⚠️ PL/SQL 프로시저 {} 생성 중 오류: {}", i + 1, e.getMessage());
                     }
+                    // 오류 발생 시에도 다음 프로시저 시도 가능하도록 계속 진행
                 }
             }
             

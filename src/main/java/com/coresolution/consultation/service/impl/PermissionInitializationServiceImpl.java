@@ -331,32 +331,39 @@ public class PermissionInitializationServiceImpl implements PermissionInitializa
     private void createRolePermissions(String roleName, List<String> permissionCodes) {
         int createdCount = 0;
         int skippedCount = 0;
+        List<RolePermission> permissionsToSave = new java.util.ArrayList<>();
         
         for (String permissionCode : permissionCodes) {
             // 권한이 존재하는지 확인 (is_active 상태와 관계없이)
             boolean exists = rolePermissionRepository.existsByRoleNameAndPermissionCode(roleName, permissionCode);
             
             if (!exists) {
-                // 권한이 없으면 새로 생성
+                // 권한이 없으면 새로 생성 (배치 저장을 위해 리스트에 추가)
                 RolePermission rolePermission = RolePermission.grant(roleName, permissionCode, "SYSTEM");
-                rolePermissionRepository.save(rolePermission);
+                permissionsToSave.add(rolePermission);
                 createdCount++;
-                log.debug("역할권한 생성: {} - {}", roleName, permissionCode);
+                log.debug("역할권한 생성 예정: {} - {}", roleName, permissionCode);
             } else {
                 // 권한이 있으면 활성화 상태로 업데이트 (비활성화된 권한을 활성화)
                 var existingPermission = rolePermissionRepository.findByRoleNameAndPermissionCode(roleName, permissionCode);
                 if (existingPermission.isPresent() && !existingPermission.get().getIsActive()) {
                     existingPermission.get().setIsActive(true);
                     existingPermission.get().setUpdatedAt(java.time.LocalDateTime.now());
-                    rolePermissionRepository.save(existingPermission.get());
+                    permissionsToSave.add(existingPermission.get());
                     createdCount++;
-                    log.debug("역할권한 활성화: {} - {}", roleName, permissionCode);
+                    log.debug("역할권한 활성화 예정: {} - {}", roleName, permissionCode);
                 } else {
                     skippedCount++;
                     log.debug("역할권한 이미 존재: {} - {}", roleName, permissionCode);
                 }
             }
         }
+        
+        // 배치 저장
+        if (!permissionsToSave.isEmpty()) {
+            rolePermissionRepository.saveAll(permissionsToSave);
+        }
+        
         log.info("{} 권한 매핑 완료: {}개 생성/활성화, {}개 스킵", roleName, createdCount, skippedCount);
     }
 }

@@ -38,14 +38,15 @@ proc_label: BEGIN
     DECLARE v_user_id_suffix INT DEFAULT 1;
     DECLARE v_duplicate_check INT DEFAULT 0;
     
-    -- 치명적 오류 시 롤백 및 종료
+    -- 치명적 오류 시 오류 메시지 설정 (트랜잭션은 호출 프로시저에서 관리)
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
     BEGIN
-        ROLLBACK;
         GET DIAGNOSTICS CONDITION 1
             v_error_message = MESSAGE_TEXT;
         SET p_success = FALSE;
         SET p_message = CONCAT('테넌트 생성/활성화 중 치명적 오류 발생: ', IFNULL(v_error_message, '알 수 없는 오류'));
+        -- 트랜잭션 롤백은 호출 프로시저(ProcessOnboardingApproval)에서 처리
+        RESIGNAL;
     END;
     
     -- 초기값 설정
@@ -102,7 +103,8 @@ proc_label: BEGIN
         END IF;
     END IF;
     
-    START TRANSACTION;
+    -- 트랜잭션은 호출 프로시저(ProcessOnboardingApproval)에서 관리
+    -- START TRANSACTION 제거
     
     IF p_business_type = 'CONSULTATION' THEN
         SET v_consultation_enabled = TRUE;
@@ -502,19 +504,14 @@ proc_label: BEGIN
           AND is_deleted = FALSE;
         
         IF v_duplicate_check = 0 THEN
-            ROLLBACK;
             SET p_success = FALSE;
             SET p_message = CONCAT('테넌트 생성/활성화 검증 실패: ', p_tenant_id, '가 ACTIVE 상태로 설정되지 않았습니다.');
             LEAVE proc_label;
         END IF;
     END IF;
     
-    -- 모든 검증 통과 시 커밋
-    IF p_success = TRUE THEN
-        COMMIT;
-    ELSE
-        ROLLBACK;
-    END IF;
+    -- 트랜잭션 커밋/롤백은 호출 프로시저(ProcessOnboardingApproval)에서 처리
+    -- COMMIT/ROLLBACK 제거
 END //
 
 DELIMITER ;

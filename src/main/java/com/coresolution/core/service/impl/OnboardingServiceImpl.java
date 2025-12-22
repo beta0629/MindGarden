@@ -621,6 +621,7 @@ public class OnboardingServiceImpl implements OnboardingService {
             }
             
             if (success != null && success) {
+                // 대시보드 생성 (필수) - 실패 시 전체 롤백
                 OnboardingErrorHandlingService.ExecutionResult dashboardResult = 
                     errorHandlingService.executeWithRetry(
                         () -> {
@@ -651,8 +652,14 @@ public class OnboardingServiceImpl implements OnboardingService {
                     );
                 
                 if (!dashboardResult.isSuccess()) {
+                    // 대시보드 생성 실패 시 전체 프로세스 실패 처리 및 롤백
+                    String dashboardError = "대시보드 생성 실패: " + (dashboardResult.getErrorMessage() != null ? dashboardResult.getErrorMessage() : "알 수 없는 오류");
                     log.error("기본 대시보드 생성 재시도 실패: tenantId={}, attempts={}, error={}", 
                         tenantId, dashboardResult.getAttemptCount(), dashboardResult.getErrorMessage());
+                    success = false;
+                    message = dashboardError;
+                    // 예외를 발생시켜 전체 트랜잭션 롤백
+                    throw new RuntimeException("온보딩 승인 프로세스 실패: " + dashboardError);
                 }
             }
             

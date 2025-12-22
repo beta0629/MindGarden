@@ -31,7 +31,7 @@ public class PermissionInitializationServiceImpl implements PermissionInitializa
     private final ObjectMapper objectMapper;
     
     @Override
-    @Transactional
+    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW, timeout = 300)
     public void initializeDefaultPermissions() {
         log.info("기본 권한 초기화 시작");
         
@@ -108,7 +108,7 @@ public class PermissionInitializationServiceImpl implements PermissionInitializa
     }
     
     @Override
-    @Transactional
+    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW, timeout = 300)
     public void initializeDefaultRolePermissions() {
         log.info("기본 역할별 권한 매핑 초기화 시작");
         

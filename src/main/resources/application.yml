@@ -19,8 +19,8 @@ spring:
     username: mindgarden_dev
     password: MindGardenDev2025!@#
     driver-class-name: com.mysql.cj.jdbc.Driver
-    # 문자셋 설정 추가
-    connection-init-sql: "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci"
+    # 문자셋 설정 및 세션 타임아웃 설정
+    connection-init-sql: "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci; SET SESSION wait_timeout=600; SET SESSION interactive_timeout=600"
     # HikariCP 연결 풀 설정
     hikari:
       connection-timeout: 60000  # 60초 (연결 대기 시간 - 증가)

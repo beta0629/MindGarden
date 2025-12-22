@@ -99,7 +99,7 @@ proc_label: BEGIN
         IF v_duplicate_check > 0 THEN
             -- 이미 활성화된 테넌트는 성공으로 처리 (중복 호출 허용)
             SET p_success = TRUE;
-            SET p_message = CONCAT('테넌트가 이미 활성화되어 있습니다: ', p_tenant_id);
+            SET p_message = CONCAT('테넌트가 이미 활성화되어 있습니다 (정상): ', p_tenant_id);
             LEAVE proc_label;
         END IF;
     END IF;

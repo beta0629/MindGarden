@@ -2010,7 +2010,7 @@ public class OnboardingServiceImpl implements OnboardingService {
             try {
                 statusMap = objectMapper.readValue(request.getInitializationStatusJson(),
                         new TypeReference<Map<String, Object>>() {});
-                
+
                 // 재실행 중인지 확인 (무한 루프 방지)
                 @SuppressWarnings("unchecked")
                 Map<String, Object> taskStatus = (Map<String, Object>) statusMap.get(taskType);

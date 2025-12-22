@@ -81,10 +81,8 @@ public class PlSqlInitializer {
 
             log.warn("⚠️ CreateOrActivateTenant 프로시저가 없습니다. Java 코드에서 생성 시도...");
 
-            // UTF-8 인코딩 설정 (MySQL만 지원)
-            if (!isH2Database()) {
-                jdbcTemplate.execute("SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci");
-            }
+            // UTF-8 인코딩 설정 (모든 환경에서 MySQL 사용)
+            jdbcTemplate.execute("SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci");
 
             // SQL 파일 읽기
             ClassPathResource resource =
@@ -275,10 +273,8 @@ public class PlSqlInitializer {
         try {
             log.info("🔍 상담일지 검증 프로시저 초기화 시작");
 
-            // UTF-8 인코딩 설정 (MySQL만 지원)
-            if (!isH2Database()) {
-                jdbcTemplate.execute("SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci");
-            }
+            // UTF-8 인코딩 설정 (모든 환경에서 MySQL 사용)
+            jdbcTemplate.execute("SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci");
 
             // SQL 파일 읽기 (간단한 버전 사용)
             ClassPathResource resource =

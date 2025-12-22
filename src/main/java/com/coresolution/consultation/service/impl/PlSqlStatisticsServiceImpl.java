@@ -53,9 +53,6 @@ public class PlSqlStatisticsServiceImpl implements PlSqlStatisticsService {
             jdbcTemplate.execute("SET character_set_client = utf8mb4");
             jdbcTemplate.execute("SET character_set_connection = utf8mb4");
             jdbcTemplate.execute("SET character_set_results = utf8mb4");
-            } catch (Exception e) {
-                // 데이터베이스 타입 확인 실패 시 무시 (이미 연결된 경우)
-            }
             
             SimpleJdbcCall jdbcCall = new SimpleJdbcCall(dataSource)
                 .withProcedureName("UpdateDailyStatistics")

@@ -82,19 +82,22 @@ public class FlywayErdAutoGenerationHook {
     @Profile("dev")
     public FlywayMigrationStrategy flywayMigrationStrategyForDev() {
         return flyway -> {
-            try {
-                // 개발 환경에서는 먼저 repair를 실행하여 checksum 불일치 문제 해결
-                log.info("🔧 개발 환경 - Flyway repair 실행 (checksum 불일치 해결)");
-                try {
-                    flyway.repair();
-                    log.info("✅ Flyway repair 완료");
-                } catch (Exception repairException) {
-                    log.warn("⚠️ Flyway repair 실패 (무시하고 계속 진행): {}", repairException.getMessage());
-                }
-
-                // repair 후 마이그레이션 실행
-                flyway.migrate();
-                log.info("✅ Flyway 마이그레이션 완료 (개발 서버 - ERD 자동 생성 비활성화)");
+            // 타임아웃 방지를 위해 Flyway 마이그레이션 비활성화
+            // 필요시 수동으로 마이그레이션 실행
+            log.info("ℹ️ Flyway 마이그레이션 건너뜀 (타임아웃 방지)");
+            // try {
+            //     // 개발 환경에서는 먼저 repair를 실행하여 checksum 불일치 문제 해결
+            //     log.info("🔧 개발 환경 - Flyway repair 실행 (checksum 불일치 해결)");
+            //     try {
+            //         flyway.repair();
+            //         log.info("✅ Flyway repair 완료");
+            //     } catch (Exception repairException) {
+            //         log.warn("⚠️ Flyway repair 실패 (무시하고 계속 진행): {}", repairException.getMessage());
+            //     }
+            //
+            //     // repair 후 마이그레이션 실행
+            //     flyway.migrate();
+            //     log.info("✅ Flyway 마이그레이션 완료 (개발 서버 - ERD 자동 생성 비활성화)");
             } catch (org.flywaydb.core.api.FlywayException e) {
                 // 검증 오류가 발생하면 다시 repair 시도
                 if (e.getMessage() != null && (e.getMessage().contains("Validate failed")

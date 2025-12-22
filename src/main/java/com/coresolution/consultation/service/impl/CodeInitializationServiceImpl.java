@@ -6,7 +6,9 @@ import com.coresolution.consultation.repository.CommonCodeRepository;
 import com.coresolution.consultation.service.CodeInitializationService;
 import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.core.context.TenantContextHolder;
-import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * 코드 초기화 서비스 구현체
  * 애플리케이션 시작 시 기본 코드 그룹과 코드 값들을 자동 생성
+ * ApplicationReadyEvent를 사용하여 데이터베이스 연결 풀이 완전히 초기화된 후 실행
  * 
  * @author MindGarden
  * @version 1.0.0
@@ -24,16 +27,21 @@ import lombok.extern.slf4j.Slf4j;
 @Service  // 급여 시스템 데이터 초기화를 위해 활성화
 @RequiredArgsConstructor
 @Transactional
-public class CodeInitializationServiceImpl implements CodeInitializationService, CommandLineRunner {
+public class CodeInitializationServiceImpl implements CodeInitializationService {
     
     private final CommonCodeRepository commonCodeRepository;
     private final CommonCodeService commonCodeService;
     
-    @Override
-    public void run(String... args) throws Exception {
-        log.info("🚀 급여 시스템 코드 초기화 시작");
-        initializeSalarySystemCodes();
-        initializePackageCodes();
+    @EventListener(ApplicationReadyEvent.class)
+    @Order(30) // 다른 초기화 작업보다 먼저 실행
+    public void initialize(ApplicationReadyEvent event) {
+        try {
+            log.info("🚀 급여 시스템 코드 초기화 시작");
+            initializeSalarySystemCodes();
+            initializePackageCodes();
+        } catch (Exception e) {
+            log.error("❌ 급여 시스템 코드 초기화 실패 (계속 진행): {}", e.getMessage(), e);
+        }
     }
     
     @Override

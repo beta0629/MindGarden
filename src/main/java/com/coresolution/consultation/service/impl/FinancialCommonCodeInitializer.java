@@ -4,7 +4,9 @@ package com.coresolution.consultation.service.impl;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.consultation.entity.CommonCode;
 import com.coresolution.consultation.repository.CommonCodeRepository;
-import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -12,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * 재무 거래 관련 공통 코드 초기화 서비스
+ * ApplicationReadyEvent를 사용하여 데이터베이스 연결 풀이 완전히 초기화된 후 실행
  * 
  * @author MindGarden
  * @version 1.0.0
@@ -20,14 +23,19 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class FinancialCommonCodeInitializer implements CommandLineRunner {
+public class FinancialCommonCodeInitializer {
 
     private final CommonCodeRepository commonCodeRepository;
 
-    @Override
+    @EventListener(ApplicationReadyEvent.class)
+    @Order(30) // 다른 초기화 작업보다 먼저 실행
     @Transactional
-    public void run(String... args) throws Exception {
-        initializeFinancialCommonCodes();
+    public void initialize(ApplicationReadyEvent event) {
+        try {
+            initializeFinancialCommonCodes();
+        } catch (Exception e) {
+            log.error("❌ 재무 거래 관련 공통 코드 초기화 실패 (계속 진행): {}", e.getMessage(), e);
+        }
     }
 
     /**

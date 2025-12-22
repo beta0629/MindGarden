@@ -3,9 +3,7 @@ package com.coresolution.consultation.service.impl;
 import java.time.LocalTime;
 import com.coresolution.consultation.entity.Branch;
 import com.coresolution.consultation.repository.BranchRepository;
-import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -22,17 +20,13 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class BranchInitializationService implements CommandLineRunner {
+public class BranchInitializationService {
     
     private final BranchRepository branchRepository;
     
-    @Override
-    @Transactional
-    public void run(String... args) throws Exception {
-        // 표준화 2025-12-06: 지점 개념이 제거되어 더 이상 지점 초기화를 수행하지 않음
-        log.warn("⚠️ BranchInitializationService는 더 이상 사용하지 않습니다. 지점 개념이 제거되었습니다.");
-        // initializeMainBranch(); // 비활성화됨
-    }
+    // CommandLineRunner 제거 - 더 이상 초기화 작업을 수행하지 않음
+    // 표준화 2025-12-06: 지점 개념이 제거되어 더 이상 지점 초기화를 수행하지 않음
+    // log.warn("⚠️ BranchInitializationService는 더 이상 사용하지 않습니다. 지점 개념이 제거되었습니다.");
     
     /**
      * 본점 데이터 초기화

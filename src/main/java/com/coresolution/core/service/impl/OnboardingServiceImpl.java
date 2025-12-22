@@ -667,7 +667,8 @@ public class OnboardingServiceImpl implements OnboardingService {
                 // 테넌트 초기화 작업은 별도 트랜잭션으로 분리하여 메인 트랜잭션에 영향 없도록 처리
                 try {
                     log.info("🔄 테넌트 초기화 작업 시작: tenantId={}", tenantId);
-                    initializeTenantAfterOnboardingInNewTransaction(tenantId, request.getBusinessType(), actorId);
+                    initializeTenantAfterOnboardingInNewTransaction(tenantId,
+                            request.getBusinessType(), actorId);
 
                     // 서브도메인은 프로시저에서 처리하므로 여기서는 제거
                     // (CreateOrActivateTenant 프로시저에서 서브도메인을 받아서 저장)
@@ -1220,6 +1221,26 @@ public class OnboardingServiceImpl implements OnboardingService {
         }
 
         log.info("✅ 온보딩 후 테넌트 초기화 완료: tenantId={}", tenantId);
+    }
+
+    /**
+     * 별도 트랜잭션에서 테넌트 초기화 작업 실행
+     * 메인 트랜잭션에 영향을 주지 않도록 별도 트랜잭션으로 분리
+     *
+     * @param tenantId 테넌트 ID
+     * @param businessType 업종 타입
+     * @param actorId 실행자 ID
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW, rollbackFor = Exception.class)
+    public void initializeTenantAfterOnboardingInNewTransaction(String tenantId, String businessType,
+            String actorId) {
+        try {
+            initializeTenantAfterOnboarding(tenantId, businessType, actorId);
+        } catch (Exception e) {
+            log.error("별도 트랜잭션에서 테넌트 초기화 실패 (메인 트랜잭션에 영향 없음): tenantId={}, error={}", tenantId,
+                    e.getMessage(), e);
+            // 예외를 다시 throw하지 않음 (메인 트랜잭션에 영향 없도록)
+        }
     }
 
     /**

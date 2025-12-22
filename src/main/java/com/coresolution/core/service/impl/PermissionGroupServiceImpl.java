@@ -69,9 +69,22 @@ public class PermissionGroupServiceImpl implements PermissionGroupService {
         log.info("권한 그룹 부여: tenantId={}, tenantRoleId={}, groupCode={}, accessLevel={}", 
             tenantId, tenantRoleId, groupCode, accessLevel);
 
-        // 1. 그룹 존재 확인
-        PermissionGroup group = permissionGroupRepository.findByGroupCode(groupCode)
-            .orElseThrow(() -> new IllegalArgumentException("권한 그룹을 찾을 수 없습니다: " + groupCode));
+        // 1. 그룹 존재 확인 (중복 결과 처리)
+        PermissionGroup group;
+        try {
+            group = permissionGroupRepository.findByGroupCode(groupCode)
+                .orElseThrow(() -> new IllegalArgumentException("권한 그룹을 찾을 수 없습니다: " + groupCode));
+        } catch (org.springframework.dao.IncorrectResultSizeDataAccessException e) {
+            // 중복 결과가 있는 경우 첫 번째 결과 사용
+            log.warn("⚠️ 권한 그룹 중복 발견 (첫 번째 결과 사용): groupCode={}, error={}", groupCode, e.getMessage());
+            List<PermissionGroup> groups = permissionGroupRepository.findAll().stream()
+                .filter(g -> groupCode.equals(g.getGroupCode()))
+                .collect(java.util.stream.Collectors.toList());
+            if (groups.isEmpty()) {
+                throw new IllegalArgumentException("권한 그룹을 찾을 수 없습니다: " + groupCode);
+            }
+            group = groups.get(0);
+        }
         
         log.debug("그룹 확인: groupCode={}, groupName={}", group.getGroupCode(), group.getGroupName());
 

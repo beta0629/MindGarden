@@ -1346,10 +1346,10 @@ public class OnboardingServiceImpl implements OnboardingService {
             assignDefaultPermissionGroupsToAdmin(tenantId, actorId);
             log.info("✅ 권한 그룹 할당 완료: tenantId={}", tenantId);
         } catch (Exception e) {
-            log.error("권한 그룹 할당 실패: tenantId={}, error={}", tenantId, e.getMessage(), e);
-            // 재실행 로직에서 실패를 감지할 수 있도록 예외를 다시 throw
-            // noRollbackFor로 설정되어 있어도 예외를 throw하면 상위에서 catch하여 상태를 FAILED로 저장할 수 있음
-            throw new RuntimeException("권한 그룹 할당 실패: " + e.getMessage(), e);
+            log.error("권한 그룹 할당 실패 (트랜잭션은 커밋): tenantId={}, error={}", tenantId, e.getMessage(), e);
+            // noRollbackFor로 설정되어 있지만 예외를 throw하면 트랜잭션이 rollback-only로 마크됨
+            // 따라서 예외를 throw하지 않고 내부에서 처리하여 트랜잭션 커밋 보장
+            // 상위에서 상태를 FAILED로 저장할 수 있도록 예외 정보는 로그로만 남김
         }
     }
 

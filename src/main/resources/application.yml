@@ -14,7 +14,7 @@ spring:
 
   # 데이터베이스 설정 (환경 변수로 설정 - 하드코딩 금지)
   datasource:
-    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:core_solution}?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8&useUnicode=true&characterSetResults=UTF-8&allowPublicKeyRetrieval=true&connectionCollation=utf8mb4_unicode_ci&connectTimeout=10000&socketTimeout=300000&autoReconnect=true&maxReconnects=5&initialTimeout=2&failOverReadOnly=false&rewriteBatchedStatements=true&useLocalSessionState=true&useServerPrepStmts=true&cachePrepStmts=true&prepStmtCacheSize=250&prepStmtCacheSqlLimit=2048&sessionVariables=wait_timeout=600,interactive_timeout=600
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:core_solution}?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8&useUnicode=true&characterSetResults=UTF-8&allowPublicKeyRetrieval=true&connectionCollation=utf8mb4_unicode_ci&connectTimeout=30000&socketTimeout=120000&autoReconnect=true&maxReconnects=3&initialTimeout=2&failOverReadOnly=false&rewriteBatchedStatements=true&useLocalSessionState=true&useServerPrepStmts=true&cachePrepStmts=true&prepStmtCacheSize=250&prepStmtCacheSqlLimit=2048&sessionVariables=wait_timeout=600,interactive_timeout=600
     username: ${DB_USERNAME:root}
     password: ${DB_PASSWORD:}
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -22,7 +22,7 @@ spring:
     connection-init-sql: "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci; SET SESSION wait_timeout=600; SET SESSION interactive_timeout=600"
     # HikariCP 연결 풀 설정
     hikari:
-      connection-timeout: 10000  # 10초 (연결 대기 시간 - 타임아웃 방지)
+      connection-timeout: 30000  # 30초 (연결 대기 시간 - 원래 설정으로 복원)
       validation-timeout: 10000  # 10초 (연결 검증 시간 - 증가)
       idle-timeout: 300000       # 5분 (유휴 연결 타임아웃 - 감소)
       max-lifetime: 600000       # 10분 (연결 최대 수명 - 감소)

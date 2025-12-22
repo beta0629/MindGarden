@@ -82,46 +82,48 @@ public class FlywayErdAutoGenerationHook {
     @Profile("dev")
     public FlywayMigrationStrategy flywayMigrationStrategyForDev() {
         return flyway -> {
-            // 타임아웃 방지를 위해 Flyway 마이그레이션 비활성화
-            // 필요시 수동으로 마이그레이션 실행
-            log.info("ℹ️ Flyway 마이그레이션 건너뜀 (타임아웃 방지)");
-            // try {
-            //     // 개발 환경에서는 먼저 repair를 실행하여 checksum 불일치 문제 해결
-            //     log.info("🔧 개발 환경 - Flyway repair 실행 (checksum 불일치 해결)");
-            //     try {
-            //         flyway.repair();
-            //         log.info("✅ Flyway repair 완료");
-            //     } catch (Exception repairException) {
-            //         log.warn("⚠️ Flyway repair 실패 (무시하고 계속 진행): {}", repairException.getMessage());
-            //     }
-            //
-            //     // repair 후 마이그레이션 실행
-            //     flyway.migrate();
-            //     log.info("✅ Flyway 마이그레이션 완료 (개발 서버 - ERD 자동 생성 비활성화)");
-            // } catch (org.flywaydb.core.api.FlywayException e) {
-            //     // 검증 오류가 발생하면 다시 repair 시도
-            //     if (e.getMessage() != null && (e.getMessage().contains("Validate failed")
-            //             || e.getMessage().contains("checksum mismatch")
-            //             || e.getMessage().contains("Migrations have failed validation"))) {
-            //         log.warn("⚠️ Flyway 검증 실패 - repair 재실행: {}", e.getMessage());
-            //         try {
-            //             flyway.repair();
-            //             log.info("✅ Flyway repair 완료 - 마이그레이션 재시도");
-            //             flyway.migrate();
-            //             log.info("✅ Flyway 마이그레이션 완료 (repair 후)");
-            //         } catch (Exception repairException) {
-            //             log.error("❌ Flyway repair 실패: {}", repairException.getMessage(),
-            //                     repairException);
-            //             log.warn("⚠️ 개발 환경이므로 Flyway 검증 오류를 무시하고 애플리케이션을 계속 시작합니다.");
-            //         }
-            //     } else {
-            //         log.error("❌ Flyway 마이그레이션 실패 (검증 오류 아님): {}", e.getMessage(), e);
-            //         throw e;
-            //     }
-            // } catch (Exception e) {
-            //     log.error("❌ Flyway 마이그레이션 중 예상치 못한 오류 발생: {}", e.getMessage(), e);
-            //     log.warn("⚠️ 개발 환경이므로 Flyway 오류를 무시하고 애플리케이션을 계속 시작합니다.");
-            // }
+            try {
+                // 개발 환경에서는 먼저 repair를 실행하여 checksum 불일치 문제 해결
+                log.info("🔧 개발 환경 - Flyway repair 실행 (checksum 불일치 해결)");
+                try {
+                    flyway.repair();
+                    log.info("✅ Flyway repair 완료");
+                } catch (Exception repairException) {
+                    log.warn("⚠️ Flyway repair 실패 (무시하고 계속 진행): {}", repairException.getMessage());
+                }
+
+                // repair 후 마이그레이션 실행
+                flyway.migrate();
+                log.info("✅ Flyway 마이그레이션 완료 (개발 서버 - ERD 자동 생성 비활성화)");
+            } catch (org.flywaydb.core.api.FlywayException e) {
+                // 검증 오류가 발생하면 다시 repair 시도
+                if (e.getMessage() != null && (e.getMessage().contains("Validate failed")
+                        || e.getMessage().contains("checksum mismatch")
+                        || e.getMessage().contains("Migrations have failed validation"))) {
+                    log.warn("⚠️ Flyway 검증 실패 - repair 재실행: {}", e.getMessage());
+                    try {
+                        flyway.repair();
+                        log.info("✅ Flyway repair 완료 - 마이그레이션 재시도");
+                        flyway.migrate();
+                        log.info("✅ Flyway 마이그레이션 완료 (repair 후)");
+                    } catch (Exception repairException) {
+                        log.error("❌ Flyway repair 실패: {}", repairException.getMessage(),
+                                repairException);
+                        // 개발 환경에서는 repair 실패해도 애플리케이션 시작 계속 진행
+                        log.warn("⚠️ 개발 환경이므로 Flyway 검증 오류를 무시하고 애플리케이션을 계속 시작합니다.");
+                        // 예외를 던지지 않고 계속 진행 (개발 환경이므로)
+                    }
+                } else {
+                    // 다른 오류는 그대로 전파
+                    log.error("❌ Flyway 마이그레이션 실패 (검증 오류 아님): {}", e.getMessage(), e);
+                    throw e;
+                }
+            } catch (Exception e) {
+                // 예상치 못한 오류
+                log.error("❌ Flyway 마이그레이션 중 예상치 못한 오류 발생: {}", e.getMessage(), e);
+                // 개발 환경에서는 예외를 던지지 않고 계속 진행
+                log.warn("⚠️ 개발 환경이므로 Flyway 오류를 무시하고 애플리케이션을 계속 시작합니다.");
+            }
         };
     }
 }

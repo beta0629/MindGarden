@@ -69,39 +69,26 @@ public class PlSqlInitializer {
             return;
         }
         
-        log.info("🚀 PL/SQL 프로시저 자동 초기화 시작 (ApplicationReadyEvent)");
+        // 타임아웃 방지를 위해 모든 프로시저 초기화 비활성화
+        // 프로시저는 Flyway 마이그레이션으로 관리되므로 Java 코드에서 초기화하지 않음
+        log.info("ℹ️ PL/SQL 프로시저 자동 초기화 건너뜀 (타임아웃 방지 - Flyway 마이그레이션으로 관리)");
         
-        // 각 프로시저 초기화를 독립적으로 실행하여 연결 누수 방지
-        // 하나의 실패가 다른 작업에 영향을 주지 않도록 각각 try-catch로 처리
+        // 모든 프로시저 초기화 비활성화
+        // log.info("🚀 PL/SQL 프로시저 자동 초기화 시작 (ApplicationReadyEvent)");
+        // try {
+        //     initializeCreateOrActivateTenantProcedure();
+        //     Thread.sleep(500);
+        // } catch (Exception e) {
+        //     log.error("❌ CreateOrActivateTenant 프로시저 초기화 실패 (계속 진행): {}", e.getMessage(), e);
+        // }
+        // try {
+        //     initializeCreateDefaultTenantUsersProcedure();
+        //     Thread.sleep(500);
+        // } catch (Exception e) {
+        //     log.error("❌ CreateDefaultTenantUsers 프로시저 초기화 실패 (계속 진행): {}", e.getMessage(), e);
+        // }
         
-        // 1. CreateOrActivateTenant 프로시저 초기화
-        try {
-            initializeCreateOrActivateTenantProcedure();
-            // 각 작업 사이에 짧은 대기 시간 추가하여 연결 풀 정리 시간 확보
-            Thread.sleep(500);
-        } catch (Exception e) {
-            log.error("❌ CreateOrActivateTenant 프로시저 초기화 실패 (계속 진행): {}", e.getMessage(), e);
-        }
-        
-        // 2. CreateDefaultTenantUsers 프로시저 초기화
-        try {
-            initializeCreateDefaultTenantUsersProcedure();
-            Thread.sleep(500);
-        } catch (Exception e) {
-            log.error("❌ CreateDefaultTenantUsers 프로시저 초기화 실패 (계속 진행): {}", e.getMessage(), e);
-        }
-        
-        // 3. 상담일지 알림 프로시저 초기화 (비활성화 - Flyway 마이그레이션으로 관리)
-        // 이 프로시저들은 Flyway 마이그레이션으로 관리되므로 Java 코드에서 초기화하지 않음
-        // 연결 타임아웃 방지를 위해 비활성화
-        log.info("ℹ️ 상담일지 알림 프로시저 초기화 건너뜀 (Flyway 마이그레이션으로 관리)");
-        
-        // 4. 상담일지 검증 프로시저 초기화 (비활성화 - Flyway 마이그레이션으로 관리)
-        // 이 프로시저들은 Flyway 마이그레이션으로 관리되므로 Java 코드에서 초기화하지 않음
-        // 연결 타임아웃 방지를 위해 비활성화
-        log.info("ℹ️ 상담일지 검증 프로시저 초기화 건너뜀 (Flyway 마이그레이션으로 관리)");
-        
-        log.info("✅ PL/SQL 프로시저 자동 초기화 완료");
+        log.info("✅ PL/SQL 프로시저 자동 초기화 완료 (스킵)");
     }
     
     /**

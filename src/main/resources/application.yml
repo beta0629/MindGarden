@@ -22,13 +22,13 @@ spring:
     connection-init-sql: "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci; SET SESSION wait_timeout=600; SET SESSION interactive_timeout=600"
     # HikariCP 연결 풀 설정
     hikari:
-      connection-timeout: 30000  # 30초 (연결 대기 시간 - 원래 설정으로 복원)
-      validation-timeout: 10000  # 10초 (연결 검증 시간 - 증가)
-      idle-timeout: 300000       # 5분 (유휴 연결 타임아웃 - 감소)
-      max-lifetime: 600000       # 10분 (연결 최대 수명 - 감소)
-      maximum-pool-size: 3       # 최대 연결 수 (Too many connections 오류 방지)
+      connection-timeout: 5000   # 5초 (연결 대기 시간 - 빠른 실패로 누수 방지)
+      validation-timeout: 3000   # 3초 (연결 검증 시간 - 빠른 실패)
+      idle-timeout: 180000       # 3분 (유휴 연결 타임아웃 - 더 짧게)
+      max-lifetime: 300000       # 5분 (연결 최대 수명 - 더 짧게)
+      maximum-pool-size: 2       # 최대 연결 수 (최소화 - Too many connections 오류 방지)
       minimum-idle: 0           # 최소 유휴 연결 수 (0으로 설정하여 시작 시 연결 시도 방지)
-      leak-detection-threshold: 60000  # 60초 (연결 누수 감지 - 더 빠른 감지)
+      leak-detection-threshold: 30000  # 30초 (연결 누수 감지 - 매우 빠른 감지)
       connection-test-query: SELECT 1  # 연결 검증 쿼리
       keepalive-time: 30000     # 30초 (연결 유지 시간)
       register-mbeans: true     # JMX 모니터링 활성화

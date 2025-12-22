@@ -28,11 +28,13 @@ spring:
       max-lifetime: 600000       # 10분 (연결 최대 수명 - 감소)
       maximum-pool-size: 3       # 최대 연결 수 (Too many connections 오류 방지)
       minimum-idle: 0           # 최소 유휴 연결 수 (0으로 설정하여 시작 시 연결 시도 방지)
-      leak-detection-threshold: 120000  # 120초 (연결 누수 감지 - 증가)
+      leak-detection-threshold: 60000  # 60초 (연결 누수 감지 - 더 빠른 감지)
       connection-test-query: SELECT 1  # 연결 검증 쿼리
       keepalive-time: 30000     # 30초 (연결 유지 시간)
       register-mbeans: true     # JMX 모니터링 활성화
       initialization-fail-timeout: -1  # 연결 실패 시에도 애플리케이션 시작 허용
+      # 애플리케이션 종료 시 연결 정리 보장
+      allow-pool-suspension: false  # 풀 일시 중단 비활성화 (안정성 향상)
   # JPA 설정
   jpa:
     hibernate:
@@ -63,7 +65,7 @@ spring:
 
   # ⚠️ 포트 충돌 방지: 애플리케이션 종료 설정
   lifecycle:
-    timeout-per-shutdown-phase: 10s  # 종료 시 최대 10초 대기 (포트 해제 시간 확보)
+    timeout-per-shutdown-phase: 30s  # 종료 시 최대 30초 대기 (연결 풀 정리 시간 확보)
 
   # Thymeleaf 설정
   thymeleaf:

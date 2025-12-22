@@ -148,14 +148,15 @@ proc_label: BEGIN
                     WHERE (subdomain = v_subdomain OR JSON_EXTRACT(COALESCE(settings_json, '{}'), '$.subdomain') = v_subdomain)
                     AND is_deleted = FALSE
                     AND tenant_id != p_tenant_id
-                ) DO
+                ) AND v_counter < 100 DO
                     SET v_counter = v_counter + 1;
                     SET v_subdomain = CONCAT(v_subdomain, '-', v_counter);
-                    IF v_counter >= 100 THEN
-                        SET v_subdomain = CONCAT('tenant-', SUBSTRING(p_tenant_id, 1, 8), '-', v_counter);
-                        LEAVE;
-                    END IF;
                 END WHILE;
+                
+                -- 100번 시도 후에도 중복이면 UUID 기반으로 변경
+                IF v_counter >= 100 THEN
+                    SET v_subdomain = CONCAT('tenant-', SUBSTRING(p_tenant_id, 1, 8), '-', v_counter);
+                END IF;
             ELSE
                 SET v_subdomain = JSON_UNQUOTE(JSON_EXTRACT(v_settings_json, '$.subdomain'));
             END IF;
@@ -205,16 +206,17 @@ proc_label: BEGIN
                     SELECT 1 FROM users
                     WHERE user_id COLLATE utf8mb4_unicode_ci = v_user_id_string COLLATE utf8mb4_unicode_ci
                       AND (is_deleted IS NULL OR is_deleted = FALSE)
-                ) DO
+                ) AND v_user_id_suffix <= 1000 DO
                     SET v_user_id_string = CONCAT(LOWER(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(
                         SUBSTRING_INDEX(p_admin_email, '@', 1), 
                         '.', ''), '-', ''), '_', ''), '+', ''), ' ', '')), v_user_id_suffix);
                     SET v_user_id_suffix = v_user_id_suffix + 1;
-                    IF v_user_id_suffix > 1000 THEN
-                        SET v_user_id_string = CONCAT('admin-', REPLACE(UUID(), '-', ''), '-', SUBSTRING(p_tenant_id, 1, 8));
-                        LEAVE;
-                    END IF;
                 END WHILE;
+                
+                -- 1000번 시도 후에도 중복이면 UUID 기반으로 변경
+                IF v_user_id_suffix > 1000 THEN
+                    SET v_user_id_string = CONCAT('admin-', REPLACE(UUID(), '-', ''), '-', SUBSTRING(p_tenant_id, 1, 8));
+                END IF;
 
                 INSERT INTO users (
                     user_id, tenant_id, email, password, name, role,
@@ -394,16 +396,17 @@ proc_label: BEGIN
                     SELECT 1 FROM users
                     WHERE user_id COLLATE utf8mb4_unicode_ci = v_user_id_string COLLATE utf8mb4_unicode_ci
                       AND (is_deleted IS NULL OR is_deleted = FALSE)
-                ) DO
+                ) AND v_user_id_suffix <= 1000 DO
                     SET v_user_id_string = CONCAT(LOWER(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(
                         SUBSTRING_INDEX(p_admin_email, '@', 1), 
                         '.', ''), '-', ''), '_', ''), '+', ''), ' ', '')), v_user_id_suffix);
                     SET v_user_id_suffix = v_user_id_suffix + 1;
-                    IF v_user_id_suffix > 1000 THEN
-                        SET v_user_id_string = CONCAT('admin-', REPLACE(UUID(), '-', ''), '-', SUBSTRING(p_tenant_id, 1, 8));
-                        LEAVE;
-                    END IF;
                 END WHILE;
+                
+                -- 1000번 시도 후에도 중복이면 UUID 기반으로 변경
+                IF v_user_id_suffix > 1000 THEN
+                    SET v_user_id_string = CONCAT('admin-', REPLACE(UUID(), '-', ''), '-', SUBSTRING(p_tenant_id, 1, 8));
+                END IF;
 
                 INSERT INTO users (
                     user_id, tenant_id, email, password, name, role,

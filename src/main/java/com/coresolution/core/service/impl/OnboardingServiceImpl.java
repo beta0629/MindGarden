@@ -344,7 +344,7 @@ public class OnboardingServiceImpl implements OnboardingService {
         boolean isReApproval = status == OnboardingStatus.APPROVED
                 && request.getStatus() == OnboardingStatus.APPROVED;
         String existingTenantId = null;
-        
+
         if (isReApproval) {
             log.warn("이미 승인된 온보딩 요청을 다시 승인 시도: requestId={}, tenantId={}, 현재 상태={}", requestId,
                     request.getTenantId(), request.getStatus());
@@ -375,6 +375,32 @@ public class OnboardingServiceImpl implements OnboardingService {
         request.setDecisionNote(note);
 
         // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
+        // 이미 승인된 테넌트에 대해 재승인한 경우, 프로시저는 건너뛰지만 초기화 작업은 실행
+        if (isReApproval && existingTenantId != null) {
+            log.info("이미 승인된 테넌트 재승인: 프로시저는 건너뛰고 초기화 작업만 실행: tenantId={}", existingTenantId);
+            // 프로시저는 건너뛰고 바로 초기화 작업 실행
+            OnboardingRequest saved = repository.save(request);
+            
+            try {
+                OnboardingServiceImpl self = applicationContext.getBean(OnboardingServiceImpl.class);
+                self.initializeTenantAfterOnboardingInNewTransaction(existingTenantId,
+                        request.getBusinessType(), actorId);
+                
+                // 브랜드명 설정
+                try {
+                    setTenantBranding(existingTenantId, request);
+                } catch (Exception e) {
+                    log.warn("브랜드명 설정 실패: tenantId={}, error={}", existingTenantId, e.getMessage());
+                }
+            } catch (Exception e) {
+                log.error("이미 승인된 테넌트 초기화 작업 실패: tenantId={}, error={}", existingTenantId,
+                        e.getMessage(), e);
+            }
+            
+            log.info("온보딩 요청 결정 완료: id={}, status={}", saved.getId(), saved.getStatus());
+            return saved;
+        }
+        
         if (status == OnboardingStatus.APPROVED) {
             log.info("테넌트 생성 진행: requestedBy={}, tenantName={}", request.getRequestedBy(),
                     request.getTenantName());

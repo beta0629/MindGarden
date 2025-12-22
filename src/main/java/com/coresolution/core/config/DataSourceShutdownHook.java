@@ -15,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
  *
  * @author CoreSolution
  * @since 2025-12-22
+ * @version 1.0 - DB 연결 정리 후 배포 검증
  */
 @Slf4j
 @Component

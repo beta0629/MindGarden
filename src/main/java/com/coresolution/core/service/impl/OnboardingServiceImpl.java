@@ -664,9 +664,10 @@ public class OnboardingServiceImpl implements OnboardingService {
                     log.warn("구독 tenant_id 업데이트 실패 (계속 진행): {}", e.getMessage());
                 }
 
+                // 테넌트 초기화 작업은 별도 트랜잭션으로 분리하여 메인 트랜잭션에 영향 없도록 처리
                 try {
                     log.info("🔄 테넌트 초기화 작업 시작: tenantId={}", tenantId);
-                    initializeTenantAfterOnboarding(tenantId, request.getBusinessType(), actorId);
+                    initializeTenantAfterOnboardingInNewTransaction(tenantId, request.getBusinessType(), actorId);
 
                     // 서브도메인은 프로시저에서 처리하므로 여기서는 제거
                     // (CreateOrActivateTenant 프로시저에서 서브도메인을 받아서 저장)

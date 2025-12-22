@@ -10,7 +10,7 @@ interface InitializationStatusDisplayProps {
 }
 
 interface TaskStatus {
-  status: "PENDING" | "SUCCESS" | "FAILED";
+  status: "PENDING" | "RUNNING" | "SUCCESS" | "FAILED";
   updatedAt?: string;
   errorMessage?: string;
 }
@@ -116,6 +116,8 @@ export default function InitializationStatusDisplay({
         return <span className="status-badge status-badge--success">성공</span>;
       case "FAILED":
         return <span className="status-badge status-badge--failed">실패</span>;
+      case "RUNNING":
+        return <span className="status-badge status-badge--running">재실행 중...</span>;
       case "PENDING":
       default:
         return <span className="status-badge status-badge--pending">대기 중</span>;
@@ -167,7 +169,7 @@ export default function InitializationStatusDisplay({
                   <button
                     className="retry-button"
                     onClick={() => handleRetry(task.key)}
-                    disabled={loading === task.key}
+                    disabled={loading === task.key || task.status?.status === "RUNNING"}
                     style={{
                       marginLeft: "1rem",
                       padding: "0.25rem 0.75rem",
@@ -176,10 +178,10 @@ export default function InitializationStatusDisplay({
                       color: "white",
                       border: "none",
                       borderRadius: "4px",
-                      cursor: loading === task.key ? "not-allowed" : "pointer",
+                      cursor: loading === task.key || task.status?.status === "RUNNING" ? "not-allowed" : "pointer",
                     }}
                   >
-                    {loading === task.key ? "재실행 중..." : "재실행"}
+                    {loading === task.key || task.status?.status === "RUNNING" ? "재실행 중..." : "재실행"}
                   </button>
                 )}
               </div>

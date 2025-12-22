@@ -1,5 +1,6 @@
--- V68: CreateOrActivateTenant 프로시저 생성 (V62 실행되었지만 프로시저가 없음)
+-- V20251222_001: CreateOrActivateTenant 프로시저 생성 (강화된 방어 로직 포함)
 -- 목적: 온보딩 승인 프로세스에서 필요한 CreateOrActivateTenant 프로시저 생성
+-- 특징: 필수 파라미터 검증, 강화된 에러 처리, 트랜잭션 안전성 보장
 -- 주의: 데이터 수정 없이 프로시저만 생성
 
 DELIMITER //
@@ -17,7 +18,7 @@ CREATE PROCEDURE CreateOrActivateTenant(
     OUT p_success BOOLEAN,
     OUT p_message TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
 )
-BEGIN
+proc_label: BEGIN
     DECLARE v_exists BOOLEAN DEFAULT FALSE;
     DECLARE v_error_message VARCHAR(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
     DECLARE v_subdomain VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT '';
@@ -35,23 +36,70 @@ BEGIN
     DECLARE v_admin_message TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT '';
     DECLARE v_result_message TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT '';
     DECLARE v_user_id_suffix INT DEFAULT 1;
+    DECLARE v_duplicate_check INT DEFAULT 0;
     
-    DECLARE CONTINUE HANDLER FOR SQLEXCEPTION
+    -- 치명적 오류 시 롤백 및 종료
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
     BEGIN
+        ROLLBACK;
         GET DIAGNOSTICS CONDITION 1
             v_error_message = MESSAGE_TEXT;
-        IF v_error_message LIKE '%INSERT INTO tenants%' 
-           OR v_error_message LIKE '%테넌트 생성%'
-           OR (v_error_message LIKE '%Duplicate entry%' AND v_error_message LIKE '%tenant_id%') THEN
-            ROLLBACK;
-            SET p_success = FALSE;
-            SET p_message = CONCAT('테넌트 생성/활성화 중 오류 발생: ', v_error_message);
-        ELSEIF v_error_message LIKE '%INSERT INTO users%' 
-              OR (v_error_message LIKE '%Duplicate entry%' AND v_error_message LIKE '%user_id%') THEN
-            SET v_admin_message = CONCAT('관리자 계정 생성 실패: ', v_error_message);
-            SET v_admin_success = FALSE;
-        END IF;
+        SET p_success = FALSE;
+        SET p_message = CONCAT('테넌트 생성/활성화 중 치명적 오류 발생: ', IFNULL(v_error_message, '알 수 없는 오류'));
     END;
+    
+    -- 초기값 설정
+    SET p_success = FALSE;
+    SET p_message = '';
+    
+    -- ============================================
+    -- 1. 필수 파라미터 검증 (방어 로직)
+    -- ============================================
+    IF p_tenant_id IS NULL OR TRIM(p_tenant_id) = '' THEN
+        SET p_success = FALSE;
+        SET p_message = '테넌트 ID는 필수입니다.';
+        LEAVE proc_label;
+    END IF;
+    
+    IF p_tenant_name IS NULL OR TRIM(p_tenant_name) = '' THEN
+        SET p_success = FALSE;
+        SET p_message = '테넌트 이름은 필수입니다.';
+        LEAVE proc_label;
+    END IF;
+    
+    IF p_business_type IS NULL OR TRIM(p_business_type) = '' THEN
+        SET p_success = FALSE;
+        SET p_message = '업종 타입은 필수입니다.';
+        LEAVE proc_label;
+    END IF;
+    
+    IF p_approved_by IS NULL OR TRIM(p_approved_by) = '' THEN
+        SET p_success = FALSE;
+        SET p_message = '승인자 정보는 필수입니다.';
+        LEAVE proc_label;
+    END IF;
+    
+    -- tenant_id 중복 체크 (방어 로직)
+    SELECT COUNT(*) INTO v_duplicate_check
+    FROM tenants
+    WHERE tenant_id COLLATE utf8mb4_unicode_ci = p_tenant_id COLLATE utf8mb4_unicode_ci
+      AND is_deleted = FALSE;
+    
+    IF v_duplicate_check > 0 THEN
+        -- 기존 테넌트가 있는 경우는 활성화로 처리 (정상 케이스)
+        -- 하지만 이미 ACTIVE 상태인 경우 경고
+        SELECT COUNT(*) INTO v_duplicate_check
+        FROM tenants
+        WHERE tenant_id COLLATE utf8mb4_unicode_ci = p_tenant_id COLLATE utf8mb4_unicode_ci
+          AND status = 'ACTIVE'
+          AND is_deleted = FALSE;
+        
+        IF v_duplicate_check > 0 THEN
+            SET p_success = FALSE;
+            SET p_message = CONCAT('이미 활성화된 테넌트입니다: ', p_tenant_id);
+            LEAVE proc_label;
+        END IF;
+    END IF;
     
     START TRANSACTION;
     
@@ -149,17 +197,28 @@ BEGIN
                     SET v_user_id_string = 'admin';
                 END IF;
                 
+                -- user_id 중복 체크 및 고유성 보장 (최대 1000번 시도)
                 SET v_user_id_suffix = 1;
-                WHILE EXISTS (
-                    SELECT 1 FROM users
+                WHILE v_user_id_suffix <= 1000 DO
+                    SELECT COUNT(*) INTO v_duplicate_check
+                    FROM users
                     WHERE user_id COLLATE utf8mb4_unicode_ci = v_user_id_string COLLATE utf8mb4_unicode_ci
-                      AND (is_deleted IS NULL OR is_deleted = FALSE)
-                ) DO
+                      AND (is_deleted IS NULL OR is_deleted = FALSE);
+                    
+                    IF v_duplicate_check = 0 THEN
+                        LEAVE;
+                    END IF;
+                    
                     SET v_user_id_string = CONCAT(LOWER(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(
                         SUBSTRING_INDEX(p_admin_email, '@', 1), 
                         '.', ''), '-', ''), '_', ''), '+', ''), ' ', '')), v_user_id_suffix);
                     SET v_user_id_suffix = v_user_id_suffix + 1;
                 END WHILE;
+                
+                -- 1000번 시도 후에도 중복이면 UUID 기반으로 변경
+                IF v_user_id_suffix > 1000 THEN
+                    SET v_user_id_string = CONCAT('admin-', REPLACE(UUID(), '-', ''), '-', SUBSTRING(p_tenant_id, 1, 8));
+                END IF;
 
                 INSERT INTO users (
                     user_id, tenant_id, email, password, name, role,
@@ -290,25 +349,45 @@ BEGIN
             (UUID(), p_tenant_id, '사무원', '사무원', 'Staff', '사무원 역할', '사무원 역할', 'Staff role', TRUE, 5, NOW(), NOW(), p_approved_by, p_approved_by, FALSE, 0, 'ko');
         END IF;
         
+        -- 기본 코드 복사 (실패해도 계속 진행)
         SET @copy_success = FALSE;
         SET @copy_message = '코드 복사 건너뜀 (테이블 없음)';
-        CALL CopyDefaultTenantCodes(
-            p_tenant_id,
-            (SELECT tenant_id FROM tenants WHERE is_deleted = FALSE AND status = 'ACTIVE' LIMIT 1),
-            p_approved_by,
-            @copy_success,
-            @copy_message
-        );
         
+        BEGIN
+            DECLARE CONTINUE HANDLER FOR SQLEXCEPTION
+            BEGIN
+                SET @copy_success = FALSE;
+                SET @copy_message = '코드 복사 중 오류 발생 (계속 진행)';
+            END;
+            
+            CALL CopyDefaultTenantCodes(
+                p_tenant_id,
+                (SELECT tenant_id FROM tenants WHERE is_deleted = FALSE AND status = 'ACTIVE' LIMIT 1),
+                p_approved_by,
+                @copy_success,
+                @copy_message
+            );
+        END;
+        
+        -- 기본 사용자 생성 (실패해도 계속 진행)
         SET @user_success = FALSE;
         SET @user_message = '기본 사용자 생성 건너뜀';
-        CALL CreateDefaultTenantUsers(
-            p_tenant_id,
-            p_business_type,
-            p_approved_by,
-            @user_success,
-            @user_message
-        );
+        
+        BEGIN
+            DECLARE CONTINUE HANDLER FOR SQLEXCEPTION
+            BEGIN
+                SET @user_success = FALSE;
+                SET @user_message = '기본 사용자 생성 중 오류 발생 (계속 진행)';
+            END;
+            
+            CALL CreateDefaultTenantUsers(
+                p_tenant_id,
+                p_business_type,
+                p_approved_by,
+                @user_success,
+                @user_message
+            );
+        END;
         
         IF p_admin_email IS NOT NULL AND p_admin_email != '' 
            AND p_admin_password_hash IS NOT NULL AND p_admin_password_hash != '' THEN
@@ -331,17 +410,28 @@ BEGIN
                     SET v_user_id_string = 'admin';
                 END IF;
                 
+                -- user_id 중복 체크 및 고유성 보장 (최대 1000번 시도)
                 SET v_user_id_suffix = 1;
-                WHILE EXISTS (
-                    SELECT 1 FROM users
+                WHILE v_user_id_suffix <= 1000 DO
+                    SELECT COUNT(*) INTO v_duplicate_check
+                    FROM users
                     WHERE user_id COLLATE utf8mb4_unicode_ci = v_user_id_string COLLATE utf8mb4_unicode_ci
-                      AND (is_deleted IS NULL OR is_deleted = FALSE)
-                ) DO
+                      AND (is_deleted IS NULL OR is_deleted = FALSE);
+                    
+                    IF v_duplicate_check = 0 THEN
+                        LEAVE;
+                    END IF;
+                    
                     SET v_user_id_string = CONCAT(LOWER(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(
                         SUBSTRING_INDEX(p_admin_email, '@', 1), 
                         '.', ''), '-', ''), '_', ''), '+', ''), ' ', '')), v_user_id_suffix);
                     SET v_user_id_suffix = v_user_id_suffix + 1;
                 END WHILE;
+                
+                -- 1000번 시도 후에도 중복이면 UUID 기반으로 변경
+                IF v_user_id_suffix > 1000 THEN
+                    SET v_user_id_string = CONCAT('admin-', REPLACE(UUID(), '-', ''), '-', SUBSTRING(p_tenant_id, 1, 8));
+                END IF;
 
                 INSERT INTO users (
                     user_id, tenant_id, email, password, name, role,
@@ -427,7 +517,28 @@ BEGIN
         SET p_message = v_result_message;
     END IF;
     
-    COMMIT;
+    -- 최종 검증: 테넌트가 정상적으로 생성/활성화되었는지 확인
+    IF p_success = TRUE THEN
+        SELECT COUNT(*) INTO v_duplicate_check
+        FROM tenants
+        WHERE tenant_id COLLATE utf8mb4_unicode_ci = p_tenant_id COLLATE utf8mb4_unicode_ci
+          AND status = 'ACTIVE'
+          AND is_deleted = FALSE;
+        
+        IF v_duplicate_check = 0 THEN
+            ROLLBACK;
+            SET p_success = FALSE;
+            SET p_message = CONCAT('테넌트 생성/활성화 검증 실패: ', p_tenant_id, '가 ACTIVE 상태로 설정되지 않았습니다.');
+            LEAVE proc_label;
+        END IF;
+    END IF;
+    
+    -- 모든 검증 통과 시 커밋
+    IF p_success = TRUE THEN
+        COMMIT;
+    ELSE
+        ROLLBACK;
+    END IF;
 END //
 
 DELIMITER ;

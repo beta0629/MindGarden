@@ -376,9 +376,9 @@ public class OnboardingController extends BaseApiController {
      */
     @PostMapping("/requests/{id}/decision")
     public ResponseEntity<ApiResponse<OnboardingRequest>> decide(@PathVariable java.util.UUID id,
-            @RequestBody @Valid OnboardingDecisionRequest payload, HttpServletRequest request) {
+            @RequestBody @Valid OnboardingDecisionRequest payload, HttpServletRequest httpRequest) {
         // /api/v1/ops/onboarding 경로로 접근한 경우에만 권한 체크
-        if (request.getRequestURI().startsWith("/api/v1/ops/onboarding")) {
+        if (httpRequest.getRequestURI().startsWith("/api/v1/ops/onboarding")) {
             OpsPermissionUtils.requireAdminOrOps();
         }
 
@@ -410,11 +410,10 @@ public class OnboardingController extends BaseApiController {
             log.error("온보딩 승인 프로세스 실패 (롤백됨): id={}, status={}, error={}", id, payload.status(),
                     e.getMessage(), e);
             // 롤백 후 상태를 다시 조회하여 ON_HOLD 상태인지 확인
-            OnboardingRequest request = onboardingService.getById(id);
-            if (request.getStatus() == OnboardingStatus.ON_HOLD) {
+            OnboardingRequest updatedRequest = onboardingService.getById(id);
+            if (updatedRequest.getStatus() == OnboardingStatus.ON_HOLD) {
                 // ON_HOLD 상태로 변경되었으면 정상 응답 (롤백 완료)
-                return updated("온보딩 승인 프로세스 중 오류가 발생하여 보류 상태로 변경되었습니다. 재시도해주세요.",
-                        request);
+                return updated("온보딩 승인 프로세스 중 오류가 발생하여 보류 상태로 변경되었습니다. 재시도해주세요.", updatedRequest);
             } else {
                 // 예상치 못한 상태면 예외를 다시 throw
                 throw e;

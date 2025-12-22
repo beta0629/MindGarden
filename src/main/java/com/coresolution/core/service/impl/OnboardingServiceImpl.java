@@ -1983,11 +1983,12 @@ public class OnboardingServiceImpl implements OnboardingService {
     }
 
     @Override
-    @Transactional(noRollbackFor = Exception.class)
+    @Transactional(propagation = Propagation.REQUIRES_NEW, noRollbackFor = Exception.class)
     public OnboardingRequest retryInitializationTask(java.util.UUID requestId, String taskType,
             String actorId) {
         log.info("초기화 작업 재실행: requestId={}, taskType={}, actorId={}", requestId, taskType, actorId);
 
+        // 별도 트랜잭션에서 요청 조회
         OnboardingRequest request = repository.findById(requestId)
                 .orElseThrow(() -> new IllegalArgumentException(OnboardingConstants
                         .formatError(OnboardingConstants.ERROR_TENANT_NOT_FOUND, requestId)));
@@ -1997,6 +1998,7 @@ public class OnboardingServiceImpl implements OnboardingService {
         }
 
         String tenantId = request.getTenantId();
+        String businessType = request.getBusinessType();
         OnboardingServiceImpl self = applicationContext.getBean(OnboardingServiceImpl.class);
 
         // 초기화 작업 상태 맵 읽기
@@ -2046,36 +2048,44 @@ public class OnboardingServiceImpl implements OnboardingService {
                         log.info("✅ 공통코드 삽입 재실행 성공: tenantId={}", tenantId);
                     } catch (Exception e) {
                         String taskErrorMsg = e.getMessage() != null ? e.getMessage() : "알 수 없는 오류";
-                        statusMap.put("commonCodes", createInitializationStatus("FAILED", taskErrorMsg));
+                        statusMap.put("commonCodes",
+                                createInitializationStatus("FAILED", taskErrorMsg));
                         errorMsg = taskErrorMsg;
-                        log.error("공통코드 삽입 재실행 실패: tenantId={}, error={}", tenantId, taskErrorMsg, e);
+                        log.error("공통코드 삽입 재실행 실패: tenantId={}, error={}", tenantId, taskErrorMsg,
+                                e);
                     }
                     break;
                 case "roleCodes":
                     try {
-                        self.insertTenantRoleCodesInNewTransaction(tenantId, request.getBusinessType(),
-                                actorId);
+                        self.insertTenantRoleCodesInNewTransaction(tenantId,
+                                request.getBusinessType(), actorId);
                         statusMap.put("roleCodes", createInitializationStatus("SUCCESS", null));
                         success = true;
                         log.info("✅ 역할 코드 생성 재실행 성공: tenantId={}", tenantId);
                     } catch (Exception e) {
                         String taskErrorMsg = e.getMessage() != null ? e.getMessage() : "알 수 없는 오류";
-                        statusMap.put("roleCodes", createInitializationStatus("FAILED", taskErrorMsg));
+                        statusMap.put("roleCodes",
+                                createInitializationStatus("FAILED", taskErrorMsg));
                         errorMsg = taskErrorMsg;
-                        log.error("역할 코드 생성 재실행 실패: tenantId={}, error={}", tenantId, taskErrorMsg, e);
+                        log.error("역할 코드 생성 재실행 실패: tenantId={}, error={}", tenantId, taskErrorMsg,
+                                e);
                     }
                     break;
                 case "permissionGroups":
                     try {
-                        self.assignDefaultPermissionGroupsToAdminInNewTransaction(tenantId, actorId);
-                        statusMap.put("permissionGroups", createInitializationStatus("SUCCESS", null));
+                        self.assignDefaultPermissionGroupsToAdminInNewTransaction(tenantId,
+                                actorId);
+                        statusMap.put("permissionGroups",
+                                createInitializationStatus("SUCCESS", null));
                         success = true;
                         log.info("✅ 권한 그룹 할당 재실행 성공: tenantId={}", tenantId);
                     } catch (Exception e) {
                         String taskErrorMsg = e.getMessage() != null ? e.getMessage() : "알 수 없는 오류";
-                        statusMap.put("permissionGroups", createInitializationStatus("FAILED", taskErrorMsg));
+                        statusMap.put("permissionGroups",
+                                createInitializationStatus("FAILED", taskErrorMsg));
                         errorMsg = taskErrorMsg;
-                        log.error("권한 그룹 할당 재실행 실패: tenantId={}, error={}", tenantId, taskErrorMsg, e);
+                        log.error("권한 그룹 할당 재실행 실패: tenantId={}, error={}", tenantId, taskErrorMsg,
+                                e);
                     }
                     break;
             }

@@ -2097,18 +2097,21 @@ public class OnboardingServiceImpl implements OnboardingService {
                     taskType, errorMsg, e);
         }
 
-        // 상태 저장 (성공/실패 여부와 관계없이 저장)
+        // 상태 저장 (성공/실패 여부와 관계없이 저장) - 별도 트랜잭션으로 처리
         try {
             String statusJson = objectMapper.writeValueAsString(statusMap);
-            request.setInitializationStatusJson(statusJson);
-            request = repository.save(request);
+            // 상태 저장을 별도 트랜잭션으로 처리하여 롤백 방지
+            self.saveInitializationStatusInNewTransaction(requestId, statusJson);
             log.info("✅ 초기화 작업 상태 업데이트 완료: requestId={}, taskType={}, success={}", requestId,
                     taskType, success);
         } catch (Exception e) {
             log.error("초기화 작업 상태 저장 실패: requestId={}, error={}", requestId, e.getMessage(), e);
-            // 상태 저장 실패는 치명적이므로 예외 throw
-            throw new RuntimeException("초기화 작업 상태 저장 실패: " + e.getMessage(), e);
+            // 상태 저장 실패는 치명적이지만, 예외를 throw하지 않고 계속 진행
         }
+
+        // 최신 상태로 다시 조회하여 반환
+        OnboardingRequest updatedRequest = repository.findById(requestId)
+                .orElse(request);
 
         // 작업이 실패한 경우에도 성공 응답 반환 (상태는 이미 저장됨)
         // 프론트엔드에서 상태를 확인하여 실패 여부를 판단할 수 있음
@@ -2117,7 +2120,28 @@ public class OnboardingServiceImpl implements OnboardingService {
                     taskType, errorMsg);
         }
 
-        return request;
+        return updatedRequest;
+    }
+
+    /**
+     * 별도 트랜잭션에서 초기화 작업 상태 저장
+     * 롤백 방지를 위해 별도 트랜잭션으로 처리
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW, noRollbackFor = Exception.class)
+    public void saveInitializationStatusInNewTransaction(java.util.UUID requestId, String statusJson) {
+        try {
+            OnboardingRequest request = repository.findById(requestId).orElse(null);
+            if (request != null) {
+                request.setInitializationStatusJson(statusJson);
+                repository.save(request);
+                log.info("✅ 초기화 작업 상태 저장 완료: requestId={}", requestId);
+            } else {
+                log.warn("온보딩 요청을 찾을 수 없어 상태 저장 실패: requestId={}", requestId);
+            }
+        } catch (Exception e) {
+            log.error("초기화 작업 상태 저장 실패: requestId={}, error={}", requestId, e.getMessage(), e);
+            // 예외를 throw하지 않음 (noRollbackFor로 설정되어 있어도 예외를 throw하면 롤백될 수 있음)
+        }
     }
 
 }

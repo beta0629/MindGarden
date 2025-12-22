@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { API_BASE_URL } from '../../../constants/api';
 import './PasswordChangeModal.css';
 import notificationManager from '../../../utils/notification';

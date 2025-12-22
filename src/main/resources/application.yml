@@ -3,7 +3,7 @@
 
 spring:
   profiles:
-    active: local
+    # active: local  # 환경 변수나 명령줄 인자로 설정 (--spring.profiles.active=dev)
 
   application:
     name: consultation-management-system
@@ -23,7 +23,7 @@ spring:
     connection-init-sql: "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci; SET SESSION wait_timeout=600; SET SESSION interactive_timeout=600"
     # HikariCP 연결 풀 설정
     hikari:
-      connection-timeout: 60000  # 60초 (연결 대기 시간 - 증가)
+      connection-timeout: 10000  # 10초 (연결 대기 시간 - 타임아웃 방지)
       validation-timeout: 10000  # 10초 (연결 검증 시간 - 증가)
       idle-timeout: 300000       # 5분 (유휴 연결 타임아웃 - 감소)
       max-lifetime: 600000       # 10분 (연결 최대 수명 - 감소)

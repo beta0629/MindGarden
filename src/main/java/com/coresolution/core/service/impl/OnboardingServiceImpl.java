@@ -341,8 +341,11 @@ public class OnboardingServiceImpl implements OnboardingService {
                         .formatError(OnboardingConstants.ERROR_TENANT_NOT_FOUND, requestId)));
 
         // 이미 승인된 요청을 다시 승인하려는 경우 검증
-        if (status == OnboardingStatus.APPROVED
-                && request.getStatus() == OnboardingStatus.APPROVED) {
+        boolean isReApproval = status == OnboardingStatus.APPROVED
+                && request.getStatus() == OnboardingStatus.APPROVED;
+        String existingTenantId = null;
+        
+        if (isReApproval) {
             log.warn("이미 승인된 온보딩 요청을 다시 승인 시도: requestId={}, tenantId={}, 현재 상태={}", requestId,
                     request.getTenantId(), request.getStatus());
 
@@ -351,25 +354,19 @@ public class OnboardingServiceImpl implements OnboardingService {
                 boolean tenantExists = tenantRepository
                         .findByTenantIdAndIsDeletedFalse(request.getTenantId()).isPresent();
                 if (tenantExists) {
+                    existingTenantId = request.getTenantId();
                     log.info(
-                            "이미 승인된 요청이며 테넌트가 존재함. 상태만 업데이트하고 프로시저는 건너뜀: requestId={}, tenantId={}",
-                            requestId, request.getTenantId());
-
-                    // 상태 정보만 업데이트 (프로시저는 실행하지 않음)
-                    request.setStatus(status);
-                    request.setDecidedBy(actorId);
-                    request.setDecisionAt(DateTimeFormatter.ISO_INSTANT.format(Instant.now()));
-                    String updatedNote = (note != null && !note.trim().isEmpty()) ? note
-                            : "이미 승인된 요청 재처리 (테넌트 이미 존재)";
-                    request.setDecisionNote(updatedNote);
-
-                    return repository.save(request);
+                            "이미 승인된 요청이며 테넌트가 존재함. 프로시저는 건너뛰지만 테넌트 초기화 작업은 실행: requestId={}, tenantId={}",
+                            requestId, existingTenantId);
+                    // 프로시저는 건너뛰지만 테넌트 초기화 작업(공통코드 등)은 실행하도록 계속 진행
                 }
             }
 
             // 테넌트가 없으면 프로시저 실행 (이전 승인 실패했을 수 있음)
-            log.info("이미 승인된 요청이지만 테넌트가 없음. 프로시저 재실행: requestId={}, tenantId={}", requestId,
-                    request.getTenantId());
+            if (existingTenantId == null) {
+                log.info("이미 승인된 요청이지만 테넌트가 없음. 프로시저 재실행: requestId={}, tenantId={}", requestId,
+                        request.getTenantId());
+            }
         }
 
         request.setStatus(status);

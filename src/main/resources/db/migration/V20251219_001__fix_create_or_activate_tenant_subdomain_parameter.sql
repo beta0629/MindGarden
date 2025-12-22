@@ -93,40 +93,42 @@ BEGIN
         -- 전달받은 서브도메인이 있으면 사용
         IF p_subdomain IS NOT NULL AND p_subdomain != '' THEN
             SET v_subdomain = LOWER(TRIM(p_subdomain));
-        ELSEIF v_settings_json IS NULL OR JSON_EXTRACT(v_settings_json, '$.subdomain') IS NULL THEN
-            -- 서브도메인 자동 생성
-            SET v_subdomain = LOWER(p_tenant_name);
-            SET v_subdomain = REPLACE(v_subdomain, ' ', '-');
-            SET v_subdomain = REPLACE(v_subdomain, '가든', 'garden');
-            SET v_subdomain = REPLACE(v_subdomain, '마인드', 'mind');
-            SET v_subdomain = REPLACE(v_subdomain, '상담', 'consultation');
-            SET v_subdomain = REPLACE(v_subdomain, '학원', 'academy');
-            -- 영문/숫자/하이픈만 남기기
-            SET v_subdomain = REGEXP_REPLACE(v_subdomain, '[^a-z0-9-]', '');
-            IF LENGTH(v_subdomain) > 63 THEN
-                SET v_subdomain = LEFT(v_subdomain, 63);
-            END IF;
-            IF v_subdomain = '' OR v_subdomain IS NULL THEN
-                SET v_subdomain = CONCAT('tenant-', SUBSTRING(p_tenant_id, 1, 8));
-            END IF;
-            
-            -- 중복 체크
-            SET v_counter = 0;
-            WHILE v_counter < 100 DO
-                SELECT COUNT(*) > 0 INTO v_exists
-                FROM tenants
-                WHERE (subdomain = v_subdomain OR JSON_EXTRACT(COALESCE(settings_json, '{}'), '$.subdomain') = v_subdomain)
-                AND is_deleted = FALSE
-                AND tenant_id != p_tenant_id;
-                IF NOT v_exists THEN
-                    LEAVE;
-                END IF;
-                SET v_counter = v_counter + 1;
-                SET v_subdomain = CONCAT(v_subdomain, '-', v_counter);
-            END WHILE;
         ELSE
-            -- 기존 서브도메인 유지
-            SET v_subdomain = JSON_UNQUOTE(JSON_EXTRACT(v_settings_json, '$.subdomain'));
+            IF v_settings_json IS NULL OR JSON_EXTRACT(v_settings_json, '$.subdomain') IS NULL THEN
+                -- 서브도메인 자동 생성
+                SET v_subdomain = LOWER(p_tenant_name);
+                SET v_subdomain = REPLACE(v_subdomain, ' ', '-');
+                SET v_subdomain = REPLACE(v_subdomain, '가든', 'garden');
+                SET v_subdomain = REPLACE(v_subdomain, '마인드', 'mind');
+                SET v_subdomain = REPLACE(v_subdomain, '상담', 'consultation');
+                SET v_subdomain = REPLACE(v_subdomain, '학원', 'academy');
+                -- 영문/숫자/하이픈만 남기기
+                SET v_subdomain = REGEXP_REPLACE(v_subdomain, '[^a-z0-9-]', '');
+                IF LENGTH(v_subdomain) > 63 THEN
+                    SET v_subdomain = LEFT(v_subdomain, 63);
+                END IF;
+                IF v_subdomain = '' OR v_subdomain IS NULL THEN
+                    SET v_subdomain = CONCAT('tenant-', SUBSTRING(p_tenant_id, 1, 8));
+                END IF;
+                
+                -- 중복 체크
+                SET v_counter = 0;
+                WHILE v_counter < 100 DO
+                    SELECT COUNT(*) > 0 INTO v_exists
+                    FROM tenants
+                    WHERE (subdomain = v_subdomain OR JSON_EXTRACT(COALESCE(settings_json, '{}'), '$.subdomain') = v_subdomain)
+                    AND is_deleted = FALSE
+                    AND tenant_id != p_tenant_id;
+                    IF NOT v_exists THEN
+                        LEAVE;
+                    END IF;
+                    SET v_counter = v_counter + 1;
+                    SET v_subdomain = CONCAT(v_subdomain, '-', v_counter);
+                END WHILE;
+            ELSE
+                -- 기존 서브도메인 유지
+                SET v_subdomain = JSON_UNQUOTE(JSON_EXTRACT(v_settings_json, '$.subdomain'));
+            END IF;
         END IF;
         
         SET v_domain = CONCAT(v_subdomain, '.dev.core-solution.co.kr');

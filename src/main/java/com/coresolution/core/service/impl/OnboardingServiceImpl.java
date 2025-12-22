@@ -2039,31 +2039,52 @@ public class OnboardingServiceImpl implements OnboardingService {
         try {
             switch (taskType) {
                 case "commonCodes":
-                    self.insertDefaultTenantCommonCodesInNewTransaction(tenantId, actorId);
-                    statusMap.put("commonCodes", createInitializationStatus("SUCCESS", null));
-                    success = true;
-                    log.info("✅ 공통코드 삽입 재실행 성공: tenantId={}", tenantId);
+                    try {
+                        self.insertDefaultTenantCommonCodesInNewTransaction(tenantId, actorId);
+                        statusMap.put("commonCodes", createInitializationStatus("SUCCESS", null));
+                        success = true;
+                        log.info("✅ 공통코드 삽입 재실행 성공: tenantId={}", tenantId);
+                    } catch (Exception e) {
+                        String taskErrorMsg = e.getMessage() != null ? e.getMessage() : "알 수 없는 오류";
+                        statusMap.put("commonCodes", createInitializationStatus("FAILED", taskErrorMsg));
+                        errorMsg = taskErrorMsg;
+                        log.error("공통코드 삽입 재실행 실패: tenantId={}, error={}", tenantId, taskErrorMsg, e);
+                    }
                     break;
                 case "roleCodes":
-                    self.insertTenantRoleCodesInNewTransaction(tenantId, request.getBusinessType(),
-                            actorId);
-                    statusMap.put("roleCodes", createInitializationStatus("SUCCESS", null));
-                    success = true;
-                    log.info("✅ 역할 코드 생성 재실행 성공: tenantId={}", tenantId);
+                    try {
+                        self.insertTenantRoleCodesInNewTransaction(tenantId, request.getBusinessType(),
+                                actorId);
+                        statusMap.put("roleCodes", createInitializationStatus("SUCCESS", null));
+                        success = true;
+                        log.info("✅ 역할 코드 생성 재실행 성공: tenantId={}", tenantId);
+                    } catch (Exception e) {
+                        String taskErrorMsg = e.getMessage() != null ? e.getMessage() : "알 수 없는 오류";
+                        statusMap.put("roleCodes", createInitializationStatus("FAILED", taskErrorMsg));
+                        errorMsg = taskErrorMsg;
+                        log.error("역할 코드 생성 재실행 실패: tenantId={}, error={}", tenantId, taskErrorMsg, e);
+                    }
                     break;
                 case "permissionGroups":
-                    self.assignDefaultPermissionGroupsToAdminInNewTransaction(tenantId, actorId);
-                    statusMap.put("permissionGroups", createInitializationStatus("SUCCESS", null));
-                    success = true;
-                    log.info("✅ 권한 그룹 할당 재실행 성공: tenantId={}", tenantId);
+                    try {
+                        self.assignDefaultPermissionGroupsToAdminInNewTransaction(tenantId, actorId);
+                        statusMap.put("permissionGroups", createInitializationStatus("SUCCESS", null));
+                        success = true;
+                        log.info("✅ 권한 그룹 할당 재실행 성공: tenantId={}", tenantId);
+                    } catch (Exception e) {
+                        String taskErrorMsg = e.getMessage() != null ? e.getMessage() : "알 수 없는 오류";
+                        statusMap.put("permissionGroups", createInitializationStatus("FAILED", taskErrorMsg));
+                        errorMsg = taskErrorMsg;
+                        log.error("권한 그룹 할당 재실행 실패: tenantId={}, error={}", tenantId, taskErrorMsg, e);
+                    }
                     break;
             }
         } catch (Exception e) {
+            // switch 문 자체에서 발생하는 예외 (거의 없음)
             errorMsg = e.getMessage() != null ? e.getMessage() : "알 수 없는 오류";
             statusMap.put(taskType, createInitializationStatus("FAILED", errorMsg));
-            log.error("초기화 작업 재실행 실패: requestId={}, taskType={}, error={}", requestId, taskType,
-                    errorMsg, e);
-            // 예외는 catch하되, 상태는 저장하고 계속 진행
+            log.error("초기화 작업 재실행 실패 (예상치 못한 오류): requestId={}, taskType={}, error={}", requestId,
+                    taskType, errorMsg, e);
         }
 
         // 상태 저장 (성공/실패 여부와 관계없이 저장)

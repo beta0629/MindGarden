@@ -32,7 +32,9 @@ public class FinancialCommonCodeInitializer {
     @Transactional
     public void initialize(ApplicationReadyEvent event) {
         try {
-            initializeFinancialCommonCodes();
+            // 타임아웃 방지를 위해 자동 초기화 비활성화
+            log.info("ℹ️ 재무 공통코드 초기화 건너뜀 (타임아웃 방지)");
+            // initializeFinancialCommonCodes();
         } catch (Exception e) {
             log.error("❌ 재무 거래 관련 공통 코드 초기화 실패 (계속 진행): {}", e.getMessage(), e);
         }

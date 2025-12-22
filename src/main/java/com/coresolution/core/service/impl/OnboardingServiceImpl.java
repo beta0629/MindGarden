@@ -384,8 +384,14 @@ public class OnboardingServiceImpl implements OnboardingService {
             try {
                 OnboardingServiceImpl self =
                         applicationContext.getBean(OnboardingServiceImpl.class);
-                self.initializeTenantAfterOnboardingInNewTransaction(existingTenantId,
-                        request.getBusinessType(), actorId, requestId);
+                String initializationStatusJson = self.initializeTenantAfterOnboardingInNewTransaction(
+                        existingTenantId, request.getBusinessType(), actorId, requestId);
+
+                // 초기화 작업 상태를 메인 트랜잭션에서 저장
+                if (initializationStatusJson != null && !initializationStatusJson.trim().isEmpty()) {
+                    request.setInitializationStatusJson(initializationStatusJson);
+                    log.info("✅ 초기화 작업 상태 저장 완료: requestId={}", requestId);
+                }
 
                 // 브랜드명 설정
                 try {
@@ -696,11 +702,13 @@ public class OnboardingServiceImpl implements OnboardingService {
                     // ApplicationContext를 통해 프록시를 가져와서 @Transactional이 적용되도록 함
                     OnboardingServiceImpl self =
                             applicationContext.getBean(OnboardingServiceImpl.class);
-                    String initializationStatusJson = self.initializeTenantAfterOnboardingInNewTransaction(
-                            tenantId, request.getBusinessType(), actorId, requestId);
+                    String initializationStatusJson =
+                            self.initializeTenantAfterOnboardingInNewTransaction(tenantId,
+                                    request.getBusinessType(), actorId, requestId);
 
                     // 초기화 작업 상태를 메인 트랜잭션에서 저장
-                    if (initializationStatusJson != null && !initializationStatusJson.trim().isEmpty()) {
+                    if (initializationStatusJson != null
+                            && !initializationStatusJson.trim().isEmpty()) {
                         request.setInitializationStatusJson(initializationStatusJson);
                         log.info("✅ 초기화 작업 상태 저장 완료: requestId={}", requestId);
                     }
@@ -1281,7 +1289,8 @@ public class OnboardingServiceImpl implements OnboardingService {
             log.info("✅ 온보딩 후 테넌트 초기화 완료: tenantId={}", tenantId);
             return statusJson;
         } catch (Exception e) {
-            log.warn("초기화 작업 상태 JSON 생성 실패 (무시): requestId={}, error={}", requestId, e.getMessage());
+            log.warn("초기화 작업 상태 JSON 생성 실패 (무시): requestId={}, error={}", requestId,
+                    e.getMessage());
             return null;
         }
     }

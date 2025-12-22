@@ -1189,44 +1189,6 @@ public class OnboardingServiceImpl implements OnboardingService {
         return null;
     }
 
-    /**
-     * 온보딩 승인 후 테넌트 초기화 작업 - 역할별 권한 그룹 자동 할당
-     *
-     * 방어 코드: 모든 단계에서 오류가 발생해도 온보딩 프로세스는 계속 진행되도록 처리
-     *
-     * @param tenantId 테넌트 ID
-     * @param businessType 업종 타입
-     * @param actorId 실행자 ID
-     */
-    private void initializeTenantAfterOnboarding(String tenantId, String businessType,
-            String actorId) {
-        if (tenantId == null || tenantId.trim().isEmpty()) {
-            log.warn("⚠️ 테넌트 ID가 없어 초기화 작업을 건너뜁니다.");
-            return;
-        }
-
-        log.info("🔄 온보딩 후 테넌트 초기화 시작: tenantId={}, businessType={}", tenantId, businessType);
-
-        try {
-            insertDefaultTenantCommonCodes(tenantId, actorId);
-        } catch (Exception e) {
-            log.warn("⚠️ 기본 공통코드 삽입 실패 (건너뜀): {}", e.getMessage());
-        }
-
-        try {
-            insertTenantRoleCodes(tenantId, businessType, actorId);
-        } catch (Exception e) {
-            log.warn("⚠️ 테넌트 역할 코드 삽입 실패 (건너뜀): {}", e.getMessage());
-        }
-
-        try {
-            assignDefaultPermissionGroupsToAdmin(tenantId, actorId);
-        } catch (Exception e) {
-            log.warn("⚠️ 관리자 권한 그룹 할당 실패 (건너뜀): {}", e.getMessage());
-        }
-
-        log.info("✅ 온보딩 후 테넌트 초기화 완료: tenantId={}", tenantId);
-    }
 
     /**
      * 별도 트랜잭션에서 테넌트 초기화 작업 실행 메인 트랜잭션에 영향을 주지 않도록 별도 트랜잭션으로 분리
@@ -1240,31 +1202,31 @@ public class OnboardingServiceImpl implements OnboardingService {
             String businessType, String actorId) {
         // 각 작업을 별도 트랜잭션으로 분리하여 하나가 실패해도 다른 것들은 성공하도록 처리
         OnboardingServiceImpl self = applicationContext.getBean(OnboardingServiceImpl.class);
-        
+
         // 1. 공통코드 삽입 (별도 트랜잭션)
         try {
             self.insertDefaultTenantCommonCodesInNewTransaction(tenantId, actorId);
         } catch (Exception e) {
             log.error("공통코드 삽입 실패 (계속 진행): tenantId={}, error={}", tenantId, e.getMessage(), e);
         }
-        
+
         // 2. 역할 코드 생성 (별도 트랜잭션)
         try {
             self.insertTenantRoleCodesInNewTransaction(tenantId, businessType, actorId);
         } catch (Exception e) {
             log.error("역할 코드 생성 실패 (계속 진행): tenantId={}, error={}", tenantId, e.getMessage(), e);
         }
-        
+
         // 3. 권한 그룹 할당 (별도 트랜잭션)
         try {
             self.assignDefaultPermissionGroupsToAdminInNewTransaction(tenantId, actorId);
         } catch (Exception e) {
             log.error("권한 그룹 할당 실패 (계속 진행): tenantId={}, error={}", tenantId, e.getMessage(), e);
         }
-        
+
         log.info("✅ 온보딩 후 테넌트 초기화 완료: tenantId={}", tenantId);
     }
-    
+
     /**
      * 별도 트랜잭션에서 공통코드 삽입
      */
@@ -1277,24 +1239,26 @@ public class OnboardingServiceImpl implements OnboardingService {
             // 예외를 다시 throw하지 않음 (noRollbackFor로 설정되어 있어도 예외를 throw하면 롤백될 수 있음)
         }
     }
-    
+
     /**
      * 별도 트랜잭션에서 역할 코드 생성
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW, noRollbackFor = Exception.class)
-    public void insertTenantRoleCodesInNewTransaction(String tenantId, String businessType, String createdBy) {
+    public void insertTenantRoleCodesInNewTransaction(String tenantId, String businessType,
+            String createdBy) {
         try {
             insertTenantRoleCodes(tenantId, businessType, createdBy);
         } catch (Exception e) {
             log.error("역할 코드 생성 실패 (트랜잭션은 커밋): tenantId={}, error={}", tenantId, e.getMessage(), e);
         }
     }
-    
+
     /**
      * 별도 트랜잭션에서 권한 그룹 할당
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW, noRollbackFor = Exception.class)
-    public void assignDefaultPermissionGroupsToAdminInNewTransaction(String tenantId, String actorId) {
+    public void assignDefaultPermissionGroupsToAdminInNewTransaction(String tenantId,
+            String actorId) {
         try {
             assignDefaultPermissionGroupsToAdmin(tenantId, actorId);
         } catch (Exception e) {

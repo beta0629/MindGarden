@@ -83,7 +83,7 @@ BEGIN
     SELECT COUNT(*) > 0 INTO v_exists
     FROM tenants
     WHERE tenant_id = p_tenant_id
-    FOR UPDATE
+    FOR UPDATE;
     
     IF v_exists THEN
         -- 기존 테넌트 활성화
@@ -120,7 +120,7 @@ BEGIN
                 WHERE (subdomain = v_subdomain OR JSON_EXTRACT(COALESCE(settings_json, '{}'), '$.subdomain') = v_subdomain)
                 AND is_deleted = FALSE
                 AND tenant_id != p_tenant_id
-                FOR UPDATE
+                FOR UPDATE;
                 IF NOT v_exists THEN
                     LEAVE;
                 END IF;
@@ -197,7 +197,7 @@ BEGIN
             WHERE (subdomain = v_subdomain OR JSON_EXTRACT(COALESCE(settings_json, '{}'), '$.subdomain') = v_subdomain)
             AND is_deleted = FALSE
             AND tenant_id != p_tenant_id
-            FOR UPDATE
+            FOR UPDATE;
             
             IF NOT v_exists THEN
                 LEAVE;

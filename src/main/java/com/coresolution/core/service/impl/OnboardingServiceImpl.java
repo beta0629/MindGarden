@@ -620,7 +620,7 @@ public class OnboardingServiceImpl implements OnboardingService {
                         approvalResultRef.set(result); // 결과 저장
                         Boolean resultSuccess = (Boolean) result.get("success");
                         String resultMessage = (String) result.get("message");
-                        
+
                         if (resultSuccess == null || !resultSuccess) {
                             // 실패 시 실제 프로시저 오류 메시지를 포함한 예외 발생
                             String errorMsg =

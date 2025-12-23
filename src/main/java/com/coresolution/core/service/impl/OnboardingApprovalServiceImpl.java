@@ -72,6 +72,17 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
             
             // IN 파라미터 설정 - UUID를 BINARY(16)으로 변환
             byte[] uuidBytes = convertUuidToBytes(requestId);
+            log.info("프로시저 파라미터 설정:");
+            log.info("  [1] requestId (BINARY): {}", java.util.Base64.getEncoder().encodeToString(uuidBytes));
+            log.info("  [2] tenantId: {}", tenantId);
+            log.info("  [3] tenantName: {}", tenantName);
+            log.info("  [4] businessType: {}", businessType);
+            log.info("  [5] approvedBy: {}", approvedBy);
+            log.info("  [6] decisionNote: {}", decisionNote != null ? (decisionNote.length() > 100 ? decisionNote.substring(0, 100) + "..." : decisionNote) : "null");
+            log.info("  [7] contactEmail: {}", contactEmail);
+            log.info("  [8] adminPasswordHash: {}", adminPasswordHash != null ? (adminPasswordHash.length() > 20 ? adminPasswordHash.substring(0, 20) + "..." : adminPasswordHash) : "null");
+            log.info("  [9] subdomain: {}", subdomain);
+            
             cs.setBytes(1, uuidBytes);
             cs.setString(2, tenantId);
             cs.setString(3, tenantName);
@@ -85,6 +96,7 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
             // OUT 파라미터 등록
             cs.registerOutParameter(10, Types.BOOLEAN);  // p_success
             cs.registerOutParameter(11, Types.VARCHAR); // p_message
+            log.info("OUT 파라미터 등록 완료: [10] success (BOOLEAN), [11] message (VARCHAR)");
             
             // 프로시저 실행
             log.info("==========================================");

@@ -589,8 +589,8 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
             return true;
         }
 
-        // 기본 역할 생성 (CONSULTATION 업종 기준)
-        if ("CONSULTATION".equals(businessType)) {
+        // 기본 역할 생성 (CONSULTATION 또는 COUNSELING 업종 기준 - 둘 다 상담소이므로 동일한 역할 사용)
+        if ("CONSULTATION".equals(businessType) || "COUNSELING".equals(businessType)) {
             try {
                 // 원장 (ADMIN)
                 jdbcTemplate.update(

@@ -377,6 +377,10 @@ public class OnboardingServiceImpl implements OnboardingService {
         request.setDecisionAt(DateTimeFormatter.ISO_INSTANT.format(Instant.now()));
         request.setDecisionNote(note);
 
+        // 승인 프로세스 결과를 저장할 변수 (블록 밖에서도 사용)
+        Boolean success = null;
+        String message = null;
+
         // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         // 이미 승인된 테넌트에 대해 재승인한 경우, 프로시저는 건너뛰지만 초기화 작업은 실행
         if (isReApproval && existingTenantId != null) {

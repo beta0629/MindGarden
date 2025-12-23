@@ -1,7 +1,7 @@
 -- V20251223_002: CreateOrActivateTenant 프로시저 오류 로깅 강화
 -- 목적: 락 타임아웃 및 기타 오류를 더 명확하게 감지하고 상세 정보 반환
 -- 문제: 프로시저가 50초 후 "알 수 없는 오류"로 실패 (innodb_lock_wait_timeout=50초)
--- 기반: V20251212_003 파일의 작동하는 프로시저 패턴 사용
+-- 기반: V20251212_003 파일의 작동하는 프로시저를 그대로 복사하고 오류 핸들러만 수정
 
 DROP PROCEDURE IF EXISTS CreateOrActivateTenant;
 
@@ -52,8 +52,7 @@ BEGIN
     
     SELECT COUNT(*) > 0 INTO v_exists
     FROM tenants
-    WHERE tenant_id = p_tenant_id
-    FOR UPDATE;
+    WHERE tenant_id = p_tenant_id;
     
     IF v_exists THEN
         SELECT settings_json INTO v_settings_json

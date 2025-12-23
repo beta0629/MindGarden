@@ -50,24 +50,30 @@ BEGIN
     
     START TRANSACTION;
     
+    -- 테넌트 존재 확인
     SELECT COUNT(*) > 0 INTO v_exists
     FROM tenants
     WHERE tenant_id = p_tenant_id;
     
     IF v_exists THEN
+        -- 기존 테넌트 활성화
+        -- 서브도메인 처리: 전달받은 서브도메인이 있으면 사용, 없으면 기존 서브도메인 유지 또는 자동 생성
         SELECT settings_json INTO v_settings_json
         FROM tenants
         WHERE tenant_id = p_tenant_id;
         
+        -- 전달받은 서브도메인이 있으면 사용
         IF p_subdomain IS NOT NULL AND p_subdomain != '' THEN
             SET v_subdomain = LOWER(TRIM(p_subdomain));
         ELSEIF v_settings_json IS NULL OR JSON_EXTRACT(v_settings_json, '$.subdomain') IS NULL THEN
+            -- 서브도메인 자동 생성
             SET v_subdomain = LOWER(p_tenant_name);
             SET v_subdomain = REPLACE(v_subdomain, ' ', '-');
             SET v_subdomain = REPLACE(v_subdomain, '가든', 'garden');
             SET v_subdomain = REPLACE(v_subdomain, '마인드', 'mind');
             SET v_subdomain = REPLACE(v_subdomain, '상담', 'consultation');
             SET v_subdomain = REPLACE(v_subdomain, '학원', 'academy');
+            -- 영문/숫자/하이픈만 남기기
             SET v_subdomain = REGEXP_REPLACE(v_subdomain, '[^a-z0-9-]', '');
             IF LENGTH(v_subdomain) > 63 THEN
                 SET v_subdomain = LEFT(v_subdomain, 63);
@@ -76,6 +82,7 @@ BEGIN
                 SET v_subdomain = CONCAT('tenant-', SUBSTRING(p_tenant_id, 1, 8));
             END IF;
             
+            -- 중복 체크
             SET v_counter = 0;
             WHILE v_counter < 100 DO
                 SELECT COUNT(*) > 0 INTO v_exists
@@ -90,15 +97,24 @@ BEGIN
                 SET v_subdomain = CONCAT(v_subdomain, '-', v_counter);
             END WHILE;
         ELSE
+            -- 기존 서브도메인 유지
             SET v_subdomain = JSON_UNQUOTE(JSON_EXTRACT(v_settings_json, '$.subdomain'));
         END IF;
         
         SET v_domain = CONCAT(v_subdomain, '.dev.core-solution.co.kr');
         
+        -- settings_json 업데이트
         IF v_settings_json IS NULL THEN
-            SET v_settings_json = JSON_OBJECT('subdomain', v_subdomain, 'domain', v_domain);
+            SET v_settings_json = JSON_OBJECT(
+                'subdomain', v_subdomain,
+                'domain', v_domain
+            );
         ELSE
-            SET v_settings_json = JSON_SET(v_settings_json, '$.subdomain', v_subdomain, '$.domain', v_domain);
+            SET v_settings_json = JSON_SET(
+                v_settings_json,
+                '$.subdomain', v_subdomain,
+                '$.domain', v_domain
+            );
         END IF;
         
         UPDATE tenants
@@ -113,19 +129,36 @@ BEGIN
         SET p_success = TRUE;
         SET p_message = CONCAT('테넌트 활성화 완료 (서브도메인: ', v_subdomain, '): ', p_tenant_id);
     ELSE
+        -- 새 테넌트 생성
+        -- 서브도메인 처리: 전달받은 서브도메인이 있으면 사용, 없으면 자동 생성
         IF p_subdomain IS NOT NULL AND p_subdomain != '' THEN
             SET v_subdomain = LOWER(TRIM(p_subdomain));
         ELSE
-            SET v_subdomain = LOWER(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(p_tenant_name, ' ', '-'), '가든', 'garden'), '마인드', 'mind'), '상담', 'consultation'), '학원', 'academy'));
+            -- 서브도메인 자동 생성 (테넌트명 기반)
+            SET v_subdomain = LOWER(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(
+                p_tenant_name,
+                ' ', '-'),
+                '가든', 'garden'),
+                '마인드', 'mind'),
+                '상담', 'consultation'),
+                '학원', 'academy'
+            )));
+            
+            -- 영문/숫자/하이픈만 남기기
             SET v_subdomain = REGEXP_REPLACE(v_subdomain, '[^a-z0-9-]', '');
+            
+            -- 최대 길이 제한 (63자, DNS 제약)
             IF LENGTH(v_subdomain) > 63 THEN
                 SET v_subdomain = LEFT(v_subdomain, 63);
             END IF;
+            
+            -- 빈 문자열 체크
             IF v_subdomain = '' OR v_subdomain IS NULL THEN
                 SET v_subdomain = CONCAT('tenant-', SUBSTRING(p_tenant_id, 1, 8));
             END IF;
         END IF;
         
+        -- 중복 체크 및 고유성 보장
         SET v_counter = 0;
         WHILE v_counter < 100 DO
             SELECT COUNT(*) > 0 INTO v_exists
@@ -142,24 +175,56 @@ BEGIN
             SET v_subdomain = CONCAT(v_subdomain, '-', v_counter);
         END WHILE;
         
+        -- 도메인 생성
         SET v_domain = CONCAT(v_subdomain, '.dev.core-solution.co.kr');
         
+        -- 업종별 기능 활성화 설정
         IF p_business_type = 'CONSULTATION' THEN
             SET v_consultation_enabled = TRUE;
         ELSEIF p_business_type = 'ACADEMY' THEN
             SET v_academy_enabled = TRUE;
         END IF;
         
-        SET v_settings_json = JSON_OBJECT('subdomain', v_subdomain, 'domain', v_domain, 'features', JSON_OBJECT('consultation', v_consultation_enabled, 'academy', v_academy_enabled));
+        -- settings_json에 서브도메인 및 기능 활성화 정보 저장
+        SET v_settings_json = JSON_OBJECT(
+            'subdomain', v_subdomain,
+            'domain', v_domain,
+            'features', JSON_OBJECT(
+                'consultation', v_consultation_enabled,
+                'academy', v_academy_enabled
+            )
+        );
         
         INSERT INTO tenants (
-            tenant_id, name, business_type, status, subscription_status,
-            settings_json, subdomain, created_at, updated_at,
-            created_by, updated_by, is_deleted, version, lang_code
+            tenant_id,
+            name,
+            business_type,
+            status,
+            subscription_status,
+            settings_json,
+            subdomain,
+            created_at,
+            updated_at,
+            created_by,
+            updated_by,
+            is_deleted,
+            version,
+            lang_code
         ) VALUES (
-            p_tenant_id, p_tenant_name, p_business_type, 'ACTIVE', 'ACTIVE',
-            v_settings_json, v_subdomain, NOW(), NOW(),
-            p_approved_by, p_approved_by, FALSE, 0, 'ko'
+            p_tenant_id,
+            p_tenant_name,
+            p_business_type,
+            'ACTIVE',
+            'ACTIVE',
+            v_settings_json,
+            v_subdomain,
+            NOW(),
+            NOW(),
+            p_approved_by,
+            p_approved_by,
+            FALSE,
+            0,
+            'ko'
         );
         
         SET p_success = TRUE;

@@ -159,31 +159,37 @@ export default function InitializationStatusDisplay({
         </div>
       )}
       <dl className="initialization-status-list">
-        {tasks.map((task) => (
-          <div key={task.key} className="initialization-status-item">
-            <dt className="initialization-status-label">{task.label}</dt>
-            <dd className="initialization-status-value">
-              <div className="initialization-status-row">
-                {getStatusBadge(task.status)}
-                {task.status?.status === "FAILED" && (
-                  <button
-                    className="retry-button"
-                    onClick={() => handleRetry(task.key)}
-                    disabled={loading === task.key || (task.status && task.status.status === "RUNNING")}
-                    style={{
-                      marginLeft: "1rem",
-                      padding: "0.25rem 0.75rem",
-                      fontSize: "0.875rem",
-                      backgroundColor: "#007bff",
-                      color: "white",
-                      border: "none",
-                      borderRadius: "4px",
-                      cursor: loading === task.key || (task.status && task.status.status === "RUNNING") ? "not-allowed" : "pointer",
-                    }}
-                  >
-                    {loading === task.key || (task.status && task.status.status === "RUNNING") ? "재실행 중..." : "재실행"}
-                  </button>
-                )}
+        {tasks.map((task) => {
+          const taskStatus = task.status?.status;
+          const isFailed = taskStatus === "FAILED";
+          const isRunning = taskStatus === "RUNNING";
+          const isLoading = loading === task.key;
+          
+          return (
+            <div key={task.key} className="initialization-status-item">
+              <dt className="initialization-status-label">{task.label}</dt>
+              <dd className="initialization-status-value">
+                <div className="initialization-status-row">
+                  {getStatusBadge(task.status)}
+                  {isFailed && (
+                    <button
+                      className="retry-button"
+                      onClick={() => handleRetry(task.key)}
+                      disabled={isLoading || isRunning}
+                      style={{
+                        marginLeft: "1rem",
+                        padding: "0.25rem 0.75rem",
+                        fontSize: "0.875rem",
+                        backgroundColor: "#007bff",
+                        color: "white",
+                        border: "none",
+                        borderRadius: "4px",
+                        cursor: isLoading || isRunning ? "not-allowed" : "pointer",
+                      }}
+                    >
+                      {isLoading || isRunning ? "재실행 중..." : "재실행"}
+                    </button>
+                  )}
               </div>
               {task.status?.errorMessage && (
                 <div
@@ -203,7 +209,8 @@ export default function InitializationStatusDisplay({
               )}
             </dd>
           </div>
-        ))}
+          );
+        })}
       </dl>
     </div>
   );

@@ -3,7 +3,7 @@
 import { useState, useTransition, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
-import { decideOnboarding, retryOnboardingApproval } from "@/services/onboardingClient";
+import { decideOnboarding, retryOnboardingApproval, getProcessingStatus } from "@/services/onboardingClient";
 import { OnboardingStatus } from "@/types/shared";
 import { getOnboardingStatusCodes, CommonCode } from "@/services/commonCodeService";
 import { OnboardingDecisionResponse } from "@/types/onboarding";
@@ -49,6 +49,8 @@ export function OnboardingDecisionForm({ requestId, initialStatus }: Props) {
   const [statusCodes, setStatusCodes] = useState<CommonCode[]>([]);
   const [adminAccount, setAdminAccount] = useState<OnboardingDecisionResponse["adminAccount"] | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [processingStatus, setProcessingStatus] = useState<Record<string, any> | null>(null);
+  const [isPolling, setIsPolling] = useState(false);
 
   // 공통코드에서 온보딩 상태 코드 조회
   useEffect(() => {
@@ -118,6 +120,12 @@ export function OnboardingDecisionForm({ requestId, initialStatus }: Props) {
           setAdminAccount(response.adminAccount);
         }
         
+        // 승인 요청 시 처리 현황 폴링 시작
+        if (statusToSend === "APPROVED") {
+          setIsPolling(true);
+          startPolling();
+        }
+        
         // 공통 알림 표시
         if (updated.status === "APPROVED") {
           if (response.adminAccount) {
@@ -128,8 +136,10 @@ export function OnboardingDecisionForm({ requestId, initialStatus }: Props) {
         } else if (updated.status === "ON_HOLD") {
           const errorMsg = updated.decisionNote ? updated.decisionNote.split("\n").pop() : "테넌트 생성 중 오류가 발생했습니다.";
           notificationManager.error(`⚠️ 보류됨: ${errorMsg}`);
+          setIsPolling(false);
         } else if (updated.status === "REJECTED") {
           notificationManager.success("❌ 거부됨: 온보딩 요청이 거부되었습니다.");
+          setIsPolling(false);
         } else {
           notificationManager.success("결정이 저장되었습니다.");
         }
@@ -190,6 +200,37 @@ export function OnboardingDecisionForm({ requestId, initialStatus }: Props) {
       notificationManager.error("복사에 실패했습니다.");
     });
   };
+
+  // 처리 현황 폴링
+  const startPolling = () => {
+    const pollInterval = setInterval(async () => {
+      try {
+        const status = await getProcessingStatus(requestId);
+        setProcessingStatus(status);
+        
+        // 완료 또는 실패 시 폴링 중지
+        if (status.progress === 100 || status.COMPLETE?.status === "SUCCESS" || status.COMPLETE?.status === "FAILED") {
+          clearInterval(pollInterval);
+          setIsPolling(false);
+        }
+      } catch (err) {
+        console.error("[OnboardingDecisionForm] 처리 상태 조회 실패:", err);
+      }
+    }, 1000); // 1초마다 조회
+    
+    // 60초 후 자동 중지 (타임아웃)
+    setTimeout(() => {
+      clearInterval(pollInterval);
+      setIsPolling(false);
+    }, 60000);
+  };
+
+  // 컴포넌트 언마운트 시 폴링 중지
+  useEffect(() => {
+    return () => {
+      setIsPolling(false);
+    };
+  }, []);
 
   return (
     <>
@@ -259,6 +300,99 @@ export function OnboardingDecisionForm({ requestId, initialStatus }: Props) {
           </div>
         </div>
       </form>
+
+      {/* 실시간 처리 현황 표시 */}
+      {(isPolling || processingStatus) && status === "APPROVED" && (
+        <div className="form-card" style={{ marginTop: "1rem" }}>
+          <h2>🔄 실시간 처리 현황</h2>
+          {processingStatus && (
+            <div style={{ marginTop: "1rem" }}>
+              {/* 진행률 표시 */}
+              {processingStatus.progress !== undefined && (
+                <div style={{ marginBottom: "1rem" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.5rem" }}>
+                    <span>전체 진행률</span>
+                    <span>{processingStatus.progress}%</span>
+                  </div>
+                  <div style={{ 
+                    width: "100%", 
+                    height: "20px", 
+                    backgroundColor: "#e0e0e0", 
+                    borderRadius: "4px",
+                    overflow: "hidden"
+                  }}>
+                    <div style={{ 
+                      width: `${processingStatus.progress}%`, 
+                      height: "100%", 
+                      backgroundColor: processingStatus.progress === 100 ? "#4caf50" : "#2196f3",
+                      transition: "width 0.3s ease"
+                    }} />
+                  </div>
+                </div>
+              )}
+              
+              {/* 단계별 상태 표시 */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                {[
+                  { key: "PROCEDURE_START", label: "프로시저 실행 시작" },
+                  { key: "TENANT_CREATE", label: "테넌트 생성/활성화" },
+                  { key: "ROLE_APPLY", label: "역할 템플릿 적용" },
+                  { key: "ADMIN_CREATE", label: "관리자 계정 생성" },
+                  { key: "DASHBOARD_CREATE", label: "대시보드 생성" },
+                  { key: "COMPLETE", label: "완료" }
+                ].map((step) => {
+                  const stepData = processingStatus[step.key] as any;
+                  if (!stepData) return null;
+                  
+                  const statusIcon = stepData.status === "SUCCESS" ? "✅" 
+                    : stepData.status === "FAILED" ? "❌" 
+                    : stepData.status === "IN_PROGRESS" ? "🔄" 
+                    : "⏳";
+                  
+                  return (
+                    <div key={step.key} style={{ 
+                      padding: "0.75rem", 
+                      backgroundColor: stepData.status === "SUCCESS" ? "#e8f5e9" 
+                        : stepData.status === "FAILED" ? "#ffebee" 
+                        : stepData.status === "IN_PROGRESS" ? "#e3f2fd" 
+                        : "#f5f5f5",
+                      borderRadius: "4px",
+                      border: `1px solid ${stepData.status === "SUCCESS" ? "#4caf50" 
+                        : stepData.status === "FAILED" ? "#f44336" 
+                        : stepData.status === "IN_PROGRESS" ? "#2196f3" 
+                        : "#9e9e9e"}`
+                    }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                        <span>{statusIcon}</span>
+                        <strong>{step.label}</strong>
+                        <span style={{ marginLeft: "auto", fontSize: "0.875rem", color: "#666" }}>
+                          {stepData.status}
+                        </span>
+                      </div>
+                      {stepData.message && (
+                        <div style={{ marginTop: "0.5rem", fontSize: "0.875rem", color: "#666" }}>
+                          {stepData.message}
+                        </div>
+                      )}
+                      {stepData.updatedAt && (
+                        <div style={{ marginTop: "0.25rem", fontSize: "0.75rem", color: "#999" }}>
+                          {new Date(stepData.updatedAt).toLocaleString("ko-KR")}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+              
+              {isPolling && (
+                <div style={{ marginTop: "1rem", textAlign: "center", color: "#666", fontSize: "0.875rem" }}>
+                  🔄 실시간 업데이트 중...
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* 관리자 계정 정보 표시 (승인 완료 시) */}
       {adminAccount && status === "APPROVED" && (

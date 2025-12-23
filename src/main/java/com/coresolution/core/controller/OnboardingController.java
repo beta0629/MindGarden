@@ -444,6 +444,36 @@ public class OnboardingController extends BaseApiController {
     }
 
     /**
+     * 온보딩 요청 처리 상태 조회 (실시간 처리 현황) /** GET /api/v1/ops/onboarding/requests/{id}/processing-status (관리자 전용)
+     */
+    @GetMapping("/requests/{id}/processing-status")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getProcessingStatus(
+            @PathVariable java.util.UUID id, HttpServletRequest request) {
+        // /api/v1/ops/onboarding 경로로 접근한 경우에만 권한 체크
+        if (request.getRequestURI().startsWith("/api/v1/ops/onboarding")) {
+            OpsPermissionUtils.requireAdminOrOps();
+        }
+
+        OnboardingRequest onboardingRequest = onboardingService.getById(id);
+        Map<String, Object> statusMap = new java.util.HashMap<>();
+        
+        if (onboardingRequest.getInitializationStatusJson() != null 
+                && !onboardingRequest.getInitializationStatusJson().trim().isEmpty()) {
+            try {
+                com.fasterxml.jackson.databind.ObjectMapper objectMapper = 
+                        new com.fasterxml.jackson.databind.ObjectMapper();
+                statusMap = objectMapper.readValue(
+                        onboardingRequest.getInitializationStatusJson(),
+                        new com.fasterxml.jackson.core.type.TypeReference<Map<String, Object>>() {});
+            } catch (Exception e) {
+                log.warn("처리 상태 JSON 파싱 실패: id={}, error={}", id, e.getMessage());
+            }
+        }
+        
+        return success(statusMap);
+    }
+
+    /**
      * 상태별 온보딩 요청 개수 조회 /** GET /api/v1/ops/onboarding/requests/count?status={status} (관리자 전용)
      */
     @GetMapping("/requests/count")

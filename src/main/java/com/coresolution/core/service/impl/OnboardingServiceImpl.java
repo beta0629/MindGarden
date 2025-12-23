@@ -598,12 +598,16 @@ public class OnboardingServiceImpl implements OnboardingService {
             }
             final Map<String, java.util.List<String>> finalDashboardWidgets = dashboardWidgets;
 
+            // 처리 상태 초기화
+            updateProcessingStatus(requestId, "PROCEDURE_START", "IN_PROGRESS", "프로시저 실행 시작...");
+            
             // 프로시저 결과를 저장할 변수
             final java.util.concurrent.atomic.AtomicReference<Map<String, Object>> approvalResultRef = 
                     new java.util.concurrent.atomic.AtomicReference<>();
             
             OnboardingErrorHandlingService.ExecutionResult executionResult =
                     errorHandlingService.executeWithRetry(() -> {
+                        updateProcessingStatus(requestId, "TENANT_CREATE", "IN_PROGRESS", "테넌트 생성/활성화 중...");
                         Map<String, Object> result = approvalService.processOnboardingApproval(
                                 requestId, tenantId, request.getTenantName(), businessType, actorId,
                                 note, finalContactEmail, finalAdminPasswordHash, finalSubdomain);
@@ -617,8 +621,10 @@ public class OnboardingServiceImpl implements OnboardingService {
                                     ? resultMessage 
                                     : "프로세스가 false를 반환했습니다.";
                             log.error("❌ 프로시저 실행 실패: requestId={}, message={}", requestId, resultMessage);
+                            updateProcessingStatus(requestId, "TENANT_CREATE", "FAILED", errorMsg);
                             throw new RuntimeException(errorMsg);
                         }
+                        updateProcessingStatus(requestId, "TENANT_CREATE", "SUCCESS", "테넌트 생성/활성화 완료");
                         return true;
                     }, 5, // 최대 5회 재시도
                             2000 // 2초 지연
@@ -678,6 +684,7 @@ public class OnboardingServiceImpl implements OnboardingService {
                 
                 // 역할이 존재하는 경우에만 대시보드 생성 시도
                 if (rolesExist) {
+                    updateProcessingStatus(requestId, "DASHBOARD_CREATE", "IN_PROGRESS", "대시보드 생성 중...");
                     // 대시보드 생성 (방어 코드: 실패해도 프로세스 계속 진행)
                     OnboardingErrorHandlingService.ExecutionResult dashboardResult =
                             errorHandlingService.executeWithRetry(() -> {
@@ -696,6 +703,8 @@ public class OnboardingServiceImpl implements OnboardingService {
 
                                 log.info("기본 대시보드 생성 완료: tenantId={}, count={}, templates={}",
                                         tenantId, dashboards != null ? dashboards.size() : 0, finalDashboardTemplates);
+                                updateProcessingStatus(requestId, "DASHBOARD_CREATE", "SUCCESS", 
+                                        "대시보드 생성 완료: " + (dashboards != null ? dashboards.size() : 0) + "개");
                                 return dashboards != null && !dashboards.isEmpty();
                             } catch (org.springframework.dao.PessimisticLockingFailureException e) {
                                 // 락 타임아웃 예외는 재시도 가능하도록 다시 throw
@@ -730,6 +739,8 @@ public class OnboardingServiceImpl implements OnboardingService {
                     // 대시보드 생성 실패 시 경고만 로그하고 프로세스 계속 진행 (방어 코드)
                     log.warn("⚠️ 기본 대시보드 생성 재시도 실패 (프로세스 계속 진행): tenantId={}, attempts={}, error={}", 
                             tenantId, dashboardResult.getAttemptCount(), dashboardResult.getErrorMessage());
+                    updateProcessingStatus(requestId, "DASHBOARD_CREATE", "FAILED", 
+                            "대시보드 생성 실패: " + dashboardResult.getErrorMessage() + " (나중에 수동으로 생성 가능)");
                     
                     // 대시보드 생성 실패는 치명적이지 않으므로 프로세스 계속 진행
                     // 메시지에 "실패"라는 단어를 포함하지 않도록 주의 (프론트엔드에서 에러로 인식할 수 있음)
@@ -779,6 +790,7 @@ public class OnboardingServiceImpl implements OnboardingService {
                 }
             } else {
                 log.info("온보딩 승인 프로세스 완료: {}", message);
+                updateProcessingStatus(requestId, "COMPLETE", "SUCCESS", "온보딩 프로세스 완료: " + message);
 
                 try {
                     updateSubscriptionTenantId(request);
@@ -2220,6 +2232,67 @@ public class OnboardingServiceImpl implements OnboardingService {
         } catch (Exception e) {
             log.error("초기화 작업 상태 저장 실패: requestId={}, error={}", requestId, e.getMessage(), e);
             // 예외를 throw하지 않음 (noRollbackFor로 설정되어 있어도 예외를 throw하면 롤백될 수 있음)
+        }
+    }
+
+    /**
+     * 처리 단계별 상태를 업데이트하는 헬퍼 메서드
+     * 
+     * @param requestId 온보딩 요청 ID
+     * @param step 처리 단계 (PROCEDURE_START, TENANT_CREATE, ROLE_APPLY, ADMIN_CREATE, DASHBOARD_CREATE, COMPLETE)
+     * @param status 단계 상태 (PENDING, IN_PROGRESS, SUCCESS, FAILED)
+     * @param message 상태 메시지
+     */
+    private void updateProcessingStatus(java.util.UUID requestId, String step, String status, String message) {
+        try {
+            OnboardingRequest request = repository.findById(requestId).orElse(null);
+            if (request == null) {
+                log.warn("온보딩 요청을 찾을 수 없어 상태 업데이트 실패: requestId={}", requestId);
+                return;
+            }
+
+            Map<String, Object> statusMap = new java.util.HashMap<>();
+            String existingJson = request.getInitializationStatusJson();
+            if (existingJson != null && !existingJson.trim().isEmpty()) {
+                try {
+                    statusMap = objectMapper.readValue(existingJson, new TypeReference<Map<String, Object>>() {});
+                } catch (JsonProcessingException e) {
+                    log.warn("기존 상태 JSON 파싱 실패, 새로 생성: requestId={}, error={}", requestId, e.getMessage());
+                }
+            }
+
+            // 단계별 상태 업데이트
+            Map<String, Object> stepStatus = new java.util.HashMap<>();
+            stepStatus.put("status", status);
+            stepStatus.put("message", message != null ? message : "");
+            stepStatus.put("updatedAt", java.time.LocalDateTime.now().toString());
+            statusMap.put(step, stepStatus);
+
+            // 전체 진행률 계산
+            int totalSteps = 5; // PROCEDURE_START, TENANT_CREATE, ROLE_APPLY, ADMIN_CREATE, DASHBOARD_CREATE
+            int completedSteps = 0;
+            String[] steps = {"PROCEDURE_START", "TENANT_CREATE", "ROLE_APPLY", "ADMIN_CREATE", "DASHBOARD_CREATE"};
+            for (String s : steps) {
+                if (statusMap.containsKey(s)) {
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> stepData = (Map<String, Object>) statusMap.get(s);
+                    if (stepData != null && "SUCCESS".equals(stepData.get("status"))) {
+                        completedSteps++;
+                    }
+                }
+            }
+            int progress = (int) ((completedSteps / (double) totalSteps) * 100);
+            statusMap.put("progress", progress);
+            statusMap.put("lastUpdated", java.time.LocalDateTime.now().toString());
+
+            String statusJson = objectMapper.writeValueAsString(statusMap);
+            request.setInitializationStatusJson(statusJson);
+            repository.save(request);
+
+            log.debug("처리 상태 업데이트: requestId={}, step={}, status={}, progress={}%", requestId, step, status, progress);
+        } catch (Exception e) {
+            log.error("처리 상태 업데이트 실패: requestId={}, step={}, error={}", requestId, step, e.getMessage(), e);
+            // 예외를 throw하지 않음 (상태 업데이트 실패가 전체 프로세스를 중단시키면 안 됨)
         }
     }
 

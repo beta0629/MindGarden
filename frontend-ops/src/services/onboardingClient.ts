@@ -32,3 +32,11 @@ export async function retryOnboardingApproval(
   });
 }
 
+export async function getProcessingStatus(
+  id: string
+): Promise<Record<string, any>> {
+  return clientApiFetch<Record<string, any>>(OPS_API_PATHS.ONBOARDING.PROCESSING_STATUS(id), {
+    method: "GET"
+  });
+}
+

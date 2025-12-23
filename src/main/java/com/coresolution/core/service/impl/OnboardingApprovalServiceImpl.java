@@ -713,7 +713,7 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                 // JPA 캐시 갱신 (jdbcTemplate으로 생성한 데이터를 JPA에서 조회할 수 있도록)
                 entityManager.flush();
                 entityManager.clear();
-                
+
                 log.info(
                         "기본 역할 생성 완료: tenantId={}, roleTemplateIds=[director={}, counselor={}, client={}, staff={}]",
                         tenantId, directorTemplateId, counselorTemplateId, clientTemplateId,

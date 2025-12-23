@@ -23,7 +23,8 @@ export const OPS_API_PATHS = {
     ALL: "/ops/onboarding/requests",
     DETAIL: (id: string) => `/ops/onboarding/requests/${id}`,
     DECISION: (id: string) => `/ops/onboarding/requests/${id}/decision`,
-    RETRY: (id: string) => `/ops/onboarding/requests/${id}/retry`
+    RETRY: (id: string) => `/ops/onboarding/requests/${id}/retry`,
+    PROCESSING_STATUS: (id: string) => `/ops/onboarding/requests/${id}/processing-status`
   },
   
   // 요금제

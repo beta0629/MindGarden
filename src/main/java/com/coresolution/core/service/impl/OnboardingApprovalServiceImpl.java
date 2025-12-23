@@ -212,19 +212,81 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                 log.error("💡 위 단계 중 하나에서 실패했을 가능성이 높습니다.");
             }
             
-            result.put("success", success);
-            result.put("message", message);
-            
-            // 프로시저 성공 여부와 관계없이 관리자 계정 생성 시도 (프로시저 문제 대응)
-            if (contactEmail != null && !contactEmail.trim().isEmpty() 
-                && adminPasswordHash != null && !adminPasswordHash.trim().isEmpty()) {
+            // 프로시저 실패 시 Java에서 각 단계를 개별적으로 실행 (fallback)
+            if (success == null || !success) {
+                log.warn("⚠️ 프로시저 실행 실패 - Java에서 단계별 재시도 시작: tenantId={}", tenantId);
+                
+                boolean tenantCreated = false;
+                boolean rolesApplied = false;
+                boolean adminCreated = false;
+                StringBuilder fallbackMessage = new StringBuilder("프로시저 실패 후 Java 재시도: ");
+                
+                // 1. 테넌트 생성/활성화 확인 및 필요시 생성
                 try {
-                    createAdminAccountDirectly(tenantId, contactEmail, tenantName, adminPasswordHash, approvedBy);
-                    log.info("관리자 계정 생성 완료 (Java 직접 생성)");
+                    tenantCreated = ensureTenantExists(tenantId, tenantName, businessType, subdomain, approvedBy);
+                    if (tenantCreated) {
+                        fallbackMessage.append("테넌트=OK, ");
+                    } else {
+                        fallbackMessage.append("테넌트=실패, ");
+                    }
                 } catch (Exception e) {
-                    log.warn("관리자 계정 직접 생성 실패 (프로시저에서 이미 생성되었을 수 있음): {}", e.getMessage());
+                    log.error("테넌트 생성/활성화 실패: tenantId={}, error={}", tenantId, e.getMessage());
+                    fallbackMessage.append("테넌트=오류, ");
+                }
+                
+                // 2. 역할 템플릿 적용 확인 (테넌트가 존재하는 경우에만)
+                if (tenantCreated) {
+                    try {
+                        rolesApplied = ensureRolesApplied(tenantId, businessType, approvedBy);
+                        if (rolesApplied) {
+                            fallbackMessage.append("역할=OK, ");
+                        } else {
+                            fallbackMessage.append("역할=실패, ");
+                        }
+                    } catch (Exception e) {
+                        log.error("역할 템플릿 적용 실패: tenantId={}, error={}", tenantId, e.getMessage());
+                        fallbackMessage.append("역할=오류, ");
+                    }
+                }
+                
+                // 3. 관리자 계정 생성 (테넌트가 존재하는 경우에만)
+                if (tenantCreated && contactEmail != null && !contactEmail.trim().isEmpty() 
+                    && adminPasswordHash != null && !adminPasswordHash.trim().isEmpty()) {
+                    try {
+                        createAdminAccountDirectly(tenantId, contactEmail, tenantName, adminPasswordHash, approvedBy);
+                        adminCreated = true;
+                        fallbackMessage.append("관리자=OK");
+                    } catch (Exception e) {
+                        log.warn("관리자 계정 직접 생성 실패: tenantId={}, error={}", tenantId, e.getMessage());
+                        fallbackMessage.append("관리자=실패");
+                    }
+                }
+                
+                // 최소한 테넌트가 생성되었으면 성공으로 처리
+                if (tenantCreated) {
+                    success = true;
+                    message = fallbackMessage.toString();
+                    log.info("✅ Java 재시도 성공: {}", message);
+                } else {
+                    success = false;
+                    message = "프로시저 실패 및 Java 재시도 실패: " + (message != null ? message : "알 수 없는 오류");
+                    log.error("❌ Java 재시도 실패: {}", message);
+                }
+            } else {
+                // 프로시저 성공 시에도 관리자 계정이 없으면 생성 시도
+                if (contactEmail != null && !contactEmail.trim().isEmpty() 
+                    && adminPasswordHash != null && !adminPasswordHash.trim().isEmpty()) {
+                    try {
+                        createAdminAccountDirectly(tenantId, contactEmail, tenantName, adminPasswordHash, approvedBy);
+                        log.info("관리자 계정 생성 완료 (Java 직접 생성)");
+                    } catch (Exception e) {
+                        log.warn("관리자 계정 직접 생성 실패 (프로시저에서 이미 생성되었을 수 있음): {}", e.getMessage());
+                    }
                 }
             }
+            
+            result.put("success", success);
+            result.put("message", message);
             
             if (success) {
                 log.info("온보딩 승인 프로세스 완료: {}", message);
@@ -369,6 +431,164 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
         }
         
         log.info("관리자 계정 생성 완료: email={}, tenantId={}", email, tenantId);
+    }
+    
+    /**
+     * 테넌트가 존재하는지 확인하고, 없으면 생성/활성화
+     */
+    private boolean ensureTenantExists(String tenantId, String tenantName, String businessType, 
+                                       String subdomain, String approvedBy) {
+        log.info("테넌트 존재 확인 및 생성: tenantId={}", tenantId);
+        
+        // 테넌트 존재 확인
+        Integer count = jdbcTemplate.queryForObject(
+            "SELECT COUNT(*) FROM tenants WHERE tenant_id = ? AND (is_deleted IS NULL OR is_deleted = FALSE)",
+            Integer.class,
+            tenantId
+        );
+        
+        if (count != null && count > 0) {
+            // 기존 테넌트 활성화
+            try {
+                jdbcTemplate.update(
+                    "UPDATE tenants SET status = 'ACTIVE', updated_at = NOW(), updated_by = ? WHERE tenant_id = ?",
+                    approvedBy, tenantId
+                );
+                log.info("기존 테넌트 활성화 완료: tenantId={}", tenantId);
+                return true;
+            } catch (Exception e) {
+                log.error("테넌트 활성화 실패: tenantId={}, error={}", tenantId, e.getMessage());
+                return false;
+            }
+        } else {
+            // 새 테넌트 생성
+            try {
+                // 서브도메인 생성
+                String finalSubdomain = subdomain;
+                if (finalSubdomain == null || finalSubdomain.trim().isEmpty()) {
+                    finalSubdomain = generateSubdomain(tenantName);
+                }
+                
+                // 도메인 생성
+                String domain = finalSubdomain + ".dev.core-solution.co.kr";
+                
+                // settings_json 생성
+                String settingsJson = String.format(
+                    "{\"subdomain\":\"%s\",\"domain\":\"%s\",\"features\":{\"consultation\":%s,\"academy\":%s}}",
+                    finalSubdomain, domain,
+                    "CONSULTATION".equals(businessType) ? "true" : "false",
+                    "ACADEMY".equals(businessType) ? "true" : "false"
+                );
+                
+                jdbcTemplate.update(
+                    "INSERT INTO tenants (" +
+                    "    tenant_id, name, business_type, status, subscription_status, " +
+                    "    subdomain, settings_json, created_at, updated_at, created_by, updated_by, " +
+                    "    is_deleted, version, lang_code" +
+                    ") VALUES (?, ?, ?, 'ACTIVE', 'ACTIVE', ?, ?, NOW(), NOW(), ?, ?, FALSE, 0, 'ko')",
+                    tenantId, tenantName, businessType, finalSubdomain, settingsJson, approvedBy, approvedBy
+                );
+                
+                log.info("새 테넌트 생성 완료: tenantId={}, subdomain={}", tenantId, finalSubdomain);
+                return true;
+            } catch (Exception e) {
+                log.error("테넌트 생성 실패: tenantId={}, error={}", tenantId, e.getMessage());
+                return false;
+            }
+        }
+    }
+    
+    /**
+     * 서브도메인 생성
+     */
+    private String generateSubdomain(String tenantName) {
+        if (tenantName == null || tenantName.trim().isEmpty()) {
+            return "tenant-" + System.currentTimeMillis();
+        }
+        
+        String subdomain = tenantName.toLowerCase()
+            .replaceAll("[^a-z0-9가-힣]", "-")
+            .replaceAll("-+", "-")
+            .replaceAll("^-|-$", "");
+        
+        // 한글 처리 (간단한 변환)
+        subdomain = subdomain.replace("상담", "consultation")
+            .replace("학원", "academy")
+            .replace("센터", "center");
+        
+        // 영문/숫자/하이픈만 남기기
+        subdomain = subdomain.replaceAll("[^a-z0-9-]", "");
+        
+        if (subdomain.isEmpty() || subdomain.length() > 63) {
+            subdomain = "tenant-" + System.currentTimeMillis();
+        }
+        
+        return subdomain;
+    }
+    
+    /**
+     * 역할 템플릿이 적용되었는지 확인하고, 없으면 기본 역할 생성
+     */
+    private boolean ensureRolesApplied(String tenantId, String businessType, String approvedBy) {
+        log.info("역할 템플릿 적용 확인: tenantId={}, businessType={}", tenantId, businessType);
+        
+        // 역할 존재 확인
+        Integer roleCount = jdbcTemplate.queryForObject(
+            "SELECT COUNT(*) FROM tenant_roles WHERE tenant_id = ? AND (is_deleted IS NULL OR is_deleted = FALSE)",
+            Integer.class,
+            tenantId
+        );
+        
+        if (roleCount != null && roleCount > 0) {
+            log.info("역할이 이미 존재합니다: tenantId={}, count={}", tenantId, roleCount);
+            return true;
+        }
+        
+        // 기본 역할 생성 (CONSULTATION 업종 기준)
+        if ("CONSULTATION".equals(businessType)) {
+            try {
+                // 원장 (ADMIN)
+                jdbcTemplate.update(
+                    "INSERT INTO tenant_roles (tenant_id, name_ko, name_en, role_type, display_order, " +
+                    "created_at, updated_at, created_by, updated_by, is_deleted, version) " +
+                    "VALUES (?, '원장', 'Principal', 'ADMIN', 1, NOW(), NOW(), ?, ?, FALSE, 0)",
+                    tenantId, approvedBy, approvedBy
+                );
+                
+                // 상담사
+                jdbcTemplate.update(
+                    "INSERT INTO tenant_roles (tenant_id, name_ko, name_en, role_type, display_order, " +
+                    "created_at, updated_at, created_by, updated_by, is_deleted, version) " +
+                    "VALUES (?, '상담사', 'Consultant', 'STAFF', 2, NOW(), NOW(), ?, ?, FALSE, 0)",
+                    tenantId, approvedBy, approvedBy
+                );
+                
+                // 내담자
+                jdbcTemplate.update(
+                    "INSERT INTO tenant_roles (tenant_id, name_ko, name_en, role_type, display_order, " +
+                    "created_at, updated_at, created_by, updated_by, is_deleted, version) " +
+                    "VALUES (?, '내담자', 'Client', 'CLIENT', 3, NOW(), NOW(), ?, ?, FALSE, 0)",
+                    tenantId, approvedBy, approvedBy
+                );
+                
+                // 사무원
+                jdbcTemplate.update(
+                    "INSERT INTO tenant_roles (tenant_id, name_ko, name_en, role_type, display_order, " +
+                    "created_at, updated_at, created_by, updated_by, is_deleted, version) " +
+                    "VALUES (?, '사무원', 'Staff', 'STAFF', 4, NOW(), NOW(), ?, ?, FALSE, 0)",
+                    tenantId, approvedBy, approvedBy
+                );
+                
+                log.info("기본 역할 생성 완료: tenantId={}", tenantId);
+                return true;
+            } catch (Exception e) {
+                log.error("역할 생성 실패: tenantId={}, error={}", tenantId, e.getMessage());
+                return false;
+            }
+        } else {
+            log.warn("지원하지 않는 업종: businessType={}", businessType);
+            return false;
+        }
     }
 }
 

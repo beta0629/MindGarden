@@ -594,36 +594,52 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
             try {
                 // 원장 (ADMIN)
                 jdbcTemplate.update(
-                        "INSERT INTO tenant_roles (tenant_id, name_ko, name_en, role_type, display_order, "
-                                + "created_at, updated_at, created_by, updated_by, is_deleted, version) "
-                                + "VALUES (?, '원장', 'Principal', 'ADMIN', 1, NOW(), NOW(), ?, ?, FALSE, 0)",
+                        "INSERT INTO tenant_roles (tenant_role_id, tenant_id, name, name_ko, name_en, "
+                                + "description, description_ko, description_en, "
+                                + "is_active, display_order, created_at, updated_at, "
+                                + "created_by, updated_by, is_deleted, version, lang_code) "
+                                + "VALUES (UUID(), ?, '원장', '원장', 'Principal', "
+                                + "'상담소 원장 역할', '상담소 원장 역할', 'Principal role for consultation center', "
+                                + "TRUE, 1, NOW(), NOW(), ?, ?, FALSE, 0, 'ko')",
                         tenantId, approvedBy, approvedBy);
 
-                // 상담사
+                // 상담사 (CONSULTANT)
                 jdbcTemplate.update(
-                        "INSERT INTO tenant_roles (tenant_id, name_ko, name_en, role_type, display_order, "
-                                + "created_at, updated_at, created_by, updated_by, is_deleted, version) "
-                                + "VALUES (?, '상담사', 'Consultant', 'STAFF', 2, NOW(), NOW(), ?, ?, FALSE, 0)",
+                        "INSERT INTO tenant_roles (tenant_role_id, tenant_id, name, name_ko, name_en, "
+                                + "description, description_ko, description_en, "
+                                + "is_active, display_order, created_at, updated_at, "
+                                + "created_by, updated_by, is_deleted, version, lang_code) "
+                                + "VALUES (UUID(), ?, '상담사', '상담사', 'Consultant', "
+                                + "'상담사 역할', '상담사 역할', 'Consultant role', "
+                                + "TRUE, 2, NOW(), NOW(), ?, ?, FALSE, 0, 'ko')",
                         tenantId, approvedBy, approvedBy);
 
-                // 내담자
+                // 내담자 (CLIENT)
                 jdbcTemplate.update(
-                        "INSERT INTO tenant_roles (tenant_id, name_ko, name_en, role_type, display_order, "
-                                + "created_at, updated_at, created_by, updated_by, is_deleted, version) "
-                                + "VALUES (?, '내담자', 'Client', 'CLIENT', 3, NOW(), NOW(), ?, ?, FALSE, 0)",
+                        "INSERT INTO tenant_roles (tenant_role_id, tenant_id, name, name_ko, name_en, "
+                                + "description, description_ko, description_en, "
+                                + "is_active, display_order, created_at, updated_at, "
+                                + "created_by, updated_by, is_deleted, version, lang_code) "
+                                + "VALUES (UUID(), ?, '내담자', '내담자', 'Client', "
+                                + "'내담자 역할', '내담자 역할', 'Client role', "
+                                + "TRUE, 3, NOW(), NOW(), ?, ?, FALSE, 0, 'ko')",
                         tenantId, approvedBy, approvedBy);
 
-                // 사무원
+                // 사무원 (STAFF)
                 jdbcTemplate.update(
-                        "INSERT INTO tenant_roles (tenant_id, name_ko, name_en, role_type, display_order, "
-                                + "created_at, updated_at, created_by, updated_by, is_deleted, version) "
-                                + "VALUES (?, '사무원', 'Staff', 'STAFF', 4, NOW(), NOW(), ?, ?, FALSE, 0)",
+                        "INSERT INTO tenant_roles (tenant_role_id, tenant_id, name, name_ko, name_en, "
+                                + "description, description_ko, description_en, "
+                                + "is_active, display_order, created_at, updated_at, "
+                                + "created_by, updated_by, is_deleted, version, lang_code) "
+                                + "VALUES (UUID(), ?, '사무원', '사무원', 'Staff', "
+                                + "'사무원 역할', '사무원 역할', 'Staff role', "
+                                + "TRUE, 4, NOW(), NOW(), ?, ?, FALSE, 0, 'ko')",
                         tenantId, approvedBy, approvedBy);
 
                 log.info("기본 역할 생성 완료: tenantId={}", tenantId);
                 return true;
             } catch (Exception e) {
-                log.error("역할 생성 실패: tenantId={}, error={}", tenantId, e.getMessage());
+                log.error("역할 생성 실패: tenantId={}, error={}", tenantId, e.getMessage(), e);
                 return false;
             }
         } else {

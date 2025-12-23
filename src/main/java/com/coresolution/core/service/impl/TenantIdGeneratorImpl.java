@@ -5,6 +5,8 @@ import com.coresolution.core.service.TenantIdGenerator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Isolation;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -33,6 +35,7 @@ public class TenantIdGeneratorImpl implements TenantIdGenerator {
     private final TenantRepository tenantRepository;
     
     @Override
+    @Transactional(isolation = Isolation.REPEATABLE_READ)
     public String generateTenantId(String tenantName, String businessType, String regionCode) {
         // 업종과 지역이 있으면 새로운 형식 사용: tenant-{지역}-{업종}-{순번}
         if (businessType != null && !businessType.trim().isEmpty()) {

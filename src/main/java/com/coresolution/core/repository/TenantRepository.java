@@ -154,6 +154,8 @@ public interface TenantRepository extends JpaRepository<Tenant, Long> {
      * tenant_id로 시작하는 삭제되지 않은 테넌트 중 마지막 순번 조회
      * 형식: tenant-{지역}-{업종}-{순번}에서 마지막 순번 반환
      * 
+     * 동시성 문제 방지를 위해 FOR UPDATE 사용 (락 걸어서 다른 트랜잭션이 동시에 조회하지 못하도록)
+     * 
      * @param prefix tenant_id 접두사 (예: "tenant-incheon-counseling-")
      * @return 마지막 순번 (없으면 0)
      */
@@ -161,7 +163,7 @@ public interface TenantRepository extends JpaRepository<Tenant, Long> {
                    "FROM tenants " +
                    "WHERE tenant_id LIKE CONCAT(:prefix, '%') " +
                    "AND (is_deleted IS NULL OR is_deleted = FALSE) " +
-                   "ORDER BY seq DESC LIMIT 1", nativeQuery = true)
+                   "ORDER BY seq DESC LIMIT 1 FOR UPDATE", nativeQuery = true)
     Integer findLastSequenceByTenantIdPrefix(@Param("prefix") String prefix);
     
     /**

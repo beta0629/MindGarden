@@ -111,11 +111,39 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                 log.info("  - approvedBy: {}", approvedBy);
                 log.info("==========================================");
 
+                // 프로시저 실행 전 상태 확인
+                try {
+                    java.sql.Statement checkStmt = connection.createStatement();
+                    java.sql.ResultSet rs = checkStmt.executeQuery("SELECT CONNECTION_ID(), DATABASE(), USER()");
+                    if (rs.next()) {
+                        log.info("프로시저 실행 전 상태: connectionId={}, database={}, user={}", 
+                                rs.getLong(1), rs.getString(2), rs.getString(3));
+                    }
+                    rs.close();
+                    checkStmt.close();
+                } catch (SQLException e) {
+                    log.warn("프로시저 실행 전 상태 확인 실패 (무시): {}", e.getMessage());
+                }
+                
                 long startTime = System.currentTimeMillis();
                 boolean hasResult = cs.execute();
                 long duration = System.currentTimeMillis() - startTime;
 
                 log.info("프로시저 실행 완료: hasResult={}, duration={}ms", hasResult, duration);
+                
+                // 프로시저 실행 후 상태 확인
+                try {
+                    java.sql.Statement checkStmt = connection.createStatement();
+                    java.sql.ResultSet rs = checkStmt.executeQuery("SELECT @@error_count, @@warning_count, LAST_INSERT_ID()");
+                    if (rs.next()) {
+                        log.info("프로시저 실행 후 상태: errorCount={}, warningCount={}, lastInsertId={}", 
+                                rs.getInt(1), rs.getInt(2), rs.getLong(3));
+                    }
+                    rs.close();
+                    checkStmt.close();
+                } catch (SQLException e) {
+                    log.warn("프로시저 실행 후 상태 확인 실패 (무시): {}", e.getMessage());
+                }
 
                 // 결과 추출
                 Boolean success = null;
@@ -160,6 +188,27 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                     } catch (SQLException e2) {
                         log.error("프로시저 OUT 파라미터 [11] (message) 대체 읽기 실패: {}", e2.getMessage());
                     }
+                }
+
+                // SQL Warnings 확인 (프로시저 내부 경고)
+                try {
+                    java.sql.SQLWarning warning = cs.getWarnings();
+                    if (warning != null) {
+                        log.warn("⚠️ 프로시저 실행 중 SQL Warning 발생:");
+                        java.sql.SQLWarning currentWarning = warning;
+                        int warningCount = 0;
+                        while (currentWarning != null && warningCount < 10) {
+                            log.warn("  Warning [{}]: SQLState={}, ErrorCode={}, Message={}",
+                                    warningCount + 1,
+                                    currentWarning.getSQLState(),
+                                    currentWarning.getErrorCode(),
+                                    currentWarning.getMessage());
+                            currentWarning = currentWarning.getNextWarning();
+                            warningCount++;
+                        }
+                    }
+                } catch (SQLException e) {
+                    log.debug("SQL Warning 조회 실패 (무시): {}", e.getMessage());
                 }
 
                 log.info("==========================================");
@@ -596,8 +645,9 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
             try {
                 // 역할 템플릿 조회 (roleTemplateId 설정을 위해)
                 // 각 업종별 템플릿 사용 (COUNSELING은 COUNSELING 템플릿, CONSULTATION은 CONSULTATION 템플릿)
-                String templatePrefix = "COUNSELING".equals(businessType) ? "COUNSELING" : "CONSULTATION";
-                
+                String templatePrefix =
+                        "COUNSELING".equals(businessType) ? "COUNSELING" : "CONSULTATION";
+
                 String directorTemplateId = roleTemplateRepository
                         .findByTemplateCodeAndIsDeletedFalse(templatePrefix + "_DIRECTOR")
                         .map(rt -> rt.getRoleTemplateId()).orElse(null);

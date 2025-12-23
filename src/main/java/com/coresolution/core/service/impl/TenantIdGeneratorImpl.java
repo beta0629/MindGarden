@@ -66,9 +66,9 @@ public class TenantIdGeneratorImpl implements TenantIdGenerator {
             // 지역 코드 정규화
             String normalizedRegion = normalizeRegionCode(regionCode);
             
-            // 같은 지역+업종의 기존 테넌트 수 조회하여 순번 결정
-            long existingCount = countTenantsByBusinessTypeAndRegion(businessType, normalizedRegion);
-            int sequenceNumber = (int) (existingCount + 1);
+            // 같은 지역+업종의 마지막 순번 조회하여 다음 순번 결정
+            int lastSequence = getLastSequenceByBusinessTypeAndRegion(businessType, normalizedRegion);
+            int sequenceNumber = lastSequence + 1;
             
             // 순번을 3자리 숫자로 포맷팅 (001, 002, ...)
             String formattedSequence = String.format("%03d", sequenceNumber);
@@ -151,19 +151,20 @@ public class TenantIdGeneratorImpl implements TenantIdGenerator {
     }
     
     /**
-     * 같은 지역+업종의 기존 테넌트 수 조회
+     * 같은 지역+업종의 마지막 순번 조회
      * 
      * @param businessType 업종 타입
      * @param normalizedRegion 정규화된 지역 코드
-     * @return 기존 테넌트 수
+     * @return 마지막 순번 (없으면 0)
      */
-    private long countTenantsByBusinessTypeAndRegion(String businessType, String normalizedRegion) {
+    private int getLastSequenceByBusinessTypeAndRegion(String businessType, String normalizedRegion) {
         try {
             // tenant_id 패턴으로 조회: tenant-{지역}-{업종}-{순번}
             String prefix = "tenant-" + normalizedRegion + "-" + normalizeBusinessType(businessType) + "-";
-            return tenantRepository.countByTenantIdStartingWithAndIsDeletedFalse(prefix);
+            Integer lastSequence = tenantRepository.findLastSequenceByTenantIdPrefix(prefix);
+            return lastSequence != null ? lastSequence : 0;
         } catch (Exception e) {
-            log.warn("지역+업종별 테넌트 수 조회 실패, 0으로 설정: businessType={}, region={}, error={}", 
+            log.warn("지역+업종별 마지막 순번 조회 실패, 0으로 설정: businessType={}, region={}, error={}", 
                 businessType, normalizedRegion, e.getMessage());
             return 0;
         }

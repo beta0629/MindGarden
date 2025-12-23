@@ -151,6 +151,20 @@ public interface TenantRepository extends JpaRepository<Tenant, Long> {
     long countByTenantIdStartingWithAndIsDeletedFalse(@Param("prefix") String prefix);
     
     /**
+     * tenant_id로 시작하는 삭제되지 않은 테넌트 중 마지막 순번 조회
+     * 형식: tenant-{지역}-{업종}-{순번}에서 마지막 순번 반환
+     * 
+     * @param prefix tenant_id 접두사 (예: "tenant-incheon-counseling-")
+     * @return 마지막 순번 (없으면 0)
+     */
+    @Query(value = "SELECT CAST(SUBSTRING_INDEX(tenant_id, '-', -1) AS UNSIGNED) as seq " +
+                   "FROM tenants " +
+                   "WHERE tenant_id LIKE CONCAT(:prefix, '%') " +
+                   "AND (is_deleted IS NULL OR is_deleted = FALSE) " +
+                   "ORDER BY seq DESC LIMIT 1", nativeQuery = true)
+    Integer findLastSequenceByTenantIdPrefix(@Param("prefix") String prefix);
+    
+    /**
      * 서브도메인으로 테넌트 존재 여부 확인 (중복 체크용)
      * 
      * @param subdomain 서브도메인

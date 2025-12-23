@@ -460,11 +460,12 @@ public class OnboardingServiceImpl implements OnboardingService {
                             "테넌트 ID 자동 생성: tenantName={}, businessType={}, regionCode={}, tenantId={}",
                             request.getTenantName(), request.getBusinessType(), regionCode,
                             tenantIdValue);
-                    
+
                     // 생성된 테넌트 ID를 즉시 DB에 저장하여 다른 요청이 같은 순번을 조회하지 못하도록 함
                     request.setTenantId(tenantIdValue);
                     repository.save(request); // 즉시 저장하여 동시성 문제 방지
-                    log.debug("생성된 테넌트 ID를 DB에 즉시 저장: requestId={}, tenantId={}", requestId, tenantIdValue);
+                    log.debug("생성된 테넌트 ID를 DB에 즉시 저장: requestId={}, tenantId={}", requestId,
+                            tenantIdValue);
                 } else {
                     request.setTenantId(tenantIdValue);
                 }
@@ -600,31 +601,35 @@ public class OnboardingServiceImpl implements OnboardingService {
 
             // 처리 상태 초기화
             updateProcessingStatus(requestId, "PROCEDURE_START", "IN_PROGRESS", "프로시저 실행 시작...");
-            
+
             // 프로시저 결과를 저장할 변수
-            final java.util.concurrent.atomic.AtomicReference<Map<String, Object>> approvalResultRef = 
+            final java.util.concurrent.atomic.AtomicReference<Map<String, Object>> approvalResultRef =
                     new java.util.concurrent.atomic.AtomicReference<>();
-            
+
             OnboardingErrorHandlingService.ExecutionResult executionResult =
                     errorHandlingService.executeWithRetry(() -> {
-                        updateProcessingStatus(requestId, "TENANT_CREATE", "IN_PROGRESS", "테넌트 생성/활성화 중...");
+                        updateProcessingStatus(requestId, "TENANT_CREATE", "IN_PROGRESS",
+                                "테넌트 생성/활성화 중...");
                         Map<String, Object> result = approvalService.processOnboardingApproval(
                                 requestId, tenantId, request.getTenantName(), businessType, actorId,
                                 note, finalContactEmail, finalAdminPasswordHash, finalSubdomain);
                         approvalResultRef.set(result); // 결과 저장
                         Boolean success = (Boolean) result.get("success");
                         String resultMessage = (String) result.get("message");
-                        
+
                         if (success == null || !success) {
                             // 실패 시 실제 프로시저 오류 메시지를 포함한 예외 발생
-                            String errorMsg = resultMessage != null && !resultMessage.trim().isEmpty() 
-                                    ? resultMessage 
-                                    : "프로세스가 false를 반환했습니다.";
-                            log.error("❌ 프로시저 실행 실패: requestId={}, message={}", requestId, resultMessage);
+                            String errorMsg =
+                                    resultMessage != null && !resultMessage.trim().isEmpty()
+                                            ? resultMessage
+                                            : "프로세스가 false를 반환했습니다.";
+                            log.error("❌ 프로시저 실행 실패: requestId={}, message={}", requestId,
+                                    resultMessage);
                             updateProcessingStatus(requestId, "TENANT_CREATE", "FAILED", errorMsg);
                             throw new RuntimeException(errorMsg);
                         }
-                        updateProcessingStatus(requestId, "TENANT_CREATE", "SUCCESS", "테넌트 생성/활성화 완료");
+                        updateProcessingStatus(requestId, "TENANT_CREATE", "SUCCESS",
+                                "테넌트 생성/활성화 완료");
                         return true;
                     }, 5, // 최대 5회 재시도
                             2000 // 2초 지연
@@ -641,8 +646,10 @@ public class OnboardingServiceImpl implements OnboardingService {
                             request.getTenantName(), businessType, actorId, note, finalContactEmail,
                             finalAdminPasswordHash, finalSubdomain);
                 }
-                success = (Boolean) approvalResult.get("success");
-                message = (String) approvalResult.get("message");
+                Boolean resultSuccess = (Boolean) approvalResult.get("success");
+                String resultMessage = (String) approvalResult.get("message");
+                success = resultSuccess;
+                message = resultMessage;
             } else {
                 // 실패 시 저장된 결과에서 메시지 추출 시도
                 Map<String, Object> lastResult = approvalResultRef.get();
@@ -656,7 +663,7 @@ public class OnboardingServiceImpl implements OnboardingService {
                 } else {
                     message = executionResult.getErrorMessage();
                 }
-                
+
                 success = false;
                 approvalResult = new java.util.HashMap<>();
                 approvalResult.put("success", false);
@@ -669,97 +676,110 @@ public class OnboardingServiceImpl implements OnboardingService {
                 // 역할이 존재하는지 확인 (대시보드 생성 전 필수)
                 boolean rolesExist = false;
                 try {
-                    List<com.coresolution.core.domain.TenantRole> roles = tenantRoleRepository.findByTenantIdAndIsDeletedFalse(tenantId);
+                    List<com.coresolution.core.domain.TenantRole> roles =
+                            tenantRoleRepository.findByTenantIdAndIsDeletedFalse(tenantId);
                     rolesExist = roles != null && !roles.isEmpty();
                     if (!rolesExist) {
                         log.warn("⚠️ 역할이 없어 대시보드 생성 건너뜀: tenantId={}, roleCount=0", tenantId);
                     } else {
-                        log.info("✅ 역할 존재 확인: tenantId={}, roleCount={}, 대시보드 생성 진행", tenantId, roles.size());
+                        log.info("✅ 역할 존재 확인: tenantId={}, roleCount={}, 대시보드 생성 진행", tenantId,
+                                roles.size());
                     }
                 } catch (Exception e) {
-                    log.warn("⚠️ 역할 존재 확인 실패, 대시보드 생성 건너뜀: tenantId={}, error={}", tenantId, e.getMessage());
+                    log.warn("⚠️ 역할 존재 확인 실패, 대시보드 생성 건너뜀: tenantId={}, error={}", tenantId,
+                            e.getMessage());
                 }
-                
+
                 // 역할이 존재하는 경우에만 대시보드 생성 시도
                 if (rolesExist) {
-                    updateProcessingStatus(requestId, "DASHBOARD_CREATE", "IN_PROGRESS", "대시보드 생성 중...");
+                    updateProcessingStatus(requestId, "DASHBOARD_CREATE", "IN_PROGRESS",
+                            "대시보드 생성 중...");
                     // 대시보드 생성 (방어 코드: 실패해도 프로세스 계속 진행)
                     OnboardingErrorHandlingService.ExecutionResult dashboardResult =
                             errorHandlingService.executeWithRetry(() -> {
-                            // 테넌트 컨텍스트 설정 (대시보드 생성 시 필요)
-                            String previousTenantId = TenantContextHolder.getTenantId();
-                            try {
-                                TenantContextHolder.setTenantId(tenantId);
-                                log.debug("테넌트 컨텍스트 설정: tenantId={}", tenantId);
+                                // 테넌트 컨텍스트 설정 (대시보드 생성 시 필요)
+                                String previousTenantId = TenantContextHolder.getTenantId();
+                                try {
+                                    TenantContextHolder.setTenantId(tenantId);
+                                    log.debug("테넌트 컨텍스트 설정: tenantId={}", tenantId);
 
-                                String dashboardBusinessType =
-                                        getDefaultBusinessType(request.getBusinessType());
-                                List<com.coresolution.core.dto.TenantDashboardResponse> dashboards =
-                                        tenantDashboardService.createDefaultDashboards(tenantId,
-                                                dashboardBusinessType, actorId,
-                                                finalDashboardTemplates, finalDashboardWidgets);
+                                    String dashboardBusinessType =
+                                            getDefaultBusinessType(request.getBusinessType());
+                                    List<com.coresolution.core.dto.TenantDashboardResponse> dashboards =
+                                            tenantDashboardService.createDefaultDashboards(tenantId,
+                                                    dashboardBusinessType, actorId,
+                                                    finalDashboardTemplates, finalDashboardWidgets);
 
-                                log.info("기본 대시보드 생성 완료: tenantId={}, count={}, templates={}",
-                                        tenantId, dashboards != null ? dashboards.size() : 0, finalDashboardTemplates);
-                                updateProcessingStatus(requestId, "DASHBOARD_CREATE", "SUCCESS", 
-                                        "대시보드 생성 완료: " + (dashboards != null ? dashboards.size() : 0) + "개");
-                                return dashboards != null && !dashboards.isEmpty();
-                            } catch (org.springframework.dao.PessimisticLockingFailureException e) {
-                                // 락 타임아웃 예외는 재시도 가능하도록 다시 throw
-                                log.warn("대시보드 생성 중 락 타임아웃 발생 (재시도 예정): tenantId={}, error={}", 
-                                        tenantId, e.getMessage());
-                                throw e;
-                            } catch (Exception e) {
-                                // 다른 예외도 재시도 가능하도록 throw
-                                String errorMsg = e.getMessage();
-                                if (errorMsg != null && (errorMsg.contains("Lock wait timeout") || 
-                                                         errorMsg.contains("lock timeout") ||
-                                                         errorMsg.contains("deadlock"))) {
-                                    log.warn("대시보드 생성 중 락 관련 오류 발생 (재시도 예정): tenantId={}, error={}", 
-                                            tenantId, errorMsg);
+                                    log.info("기본 대시보드 생성 완료: tenantId={}, count={}, templates={}",
+                                            tenantId, dashboards != null ? dashboards.size() : 0,
+                                            finalDashboardTemplates);
+                                    updateProcessingStatus(requestId, "DASHBOARD_CREATE", "SUCCESS",
+                                            "대시보드 생성 완료: "
+                                                    + (dashboards != null ? dashboards.size() : 0)
+                                                    + "개");
+                                    return dashboards != null && !dashboards.isEmpty();
+                                } catch (org.springframework.dao.PessimisticLockingFailureException e) {
+                                    // 락 타임아웃 예외는 재시도 가능하도록 다시 throw
+                                    log.warn("대시보드 생성 중 락 타임아웃 발생 (재시도 예정): tenantId={}, error={}",
+                                            tenantId, e.getMessage());
                                     throw e;
+                                } catch (Exception e) {
+                                    // 다른 예외도 재시도 가능하도록 throw
+                                    String errorMsg = e.getMessage();
+                                    if (errorMsg != null && (errorMsg.contains("Lock wait timeout")
+                                            || errorMsg.contains("lock timeout")
+                                            || errorMsg.contains("deadlock"))) {
+                                        log.warn(
+                                                "대시보드 생성 중 락 관련 오류 발생 (재시도 예정): tenantId={}, error={}",
+                                                tenantId, errorMsg);
+                                        throw e;
+                                    }
+                                    // 락 관련이 아닌 오류는 그대로 throw
+                                    throw e;
+                                } finally {
+                                    // 테넌트 컨텍스트 복원
+                                    if (previousTenantId != null) {
+                                        TenantContextHolder.setTenantId(previousTenantId);
+                                    } else {
+                                        TenantContextHolder.clear();
+                                    }
                                 }
-                                // 락 관련이 아닌 오류는 그대로 throw
-                                throw e;
-                            } finally {
-                                // 테넌트 컨텍스트 복원
-                                if (previousTenantId != null) {
-                                    TenantContextHolder.setTenantId(previousTenantId);
-                                } else {
-                                    TenantContextHolder.clear();
-                                }
-                            }
-                        }, 3, // 최대 3회 재시도 (타임아웃 방지를 위해 감소)
-                                500 // 0.5초 지연 (타임아웃 방지를 위해 감소)
-                        );
+                            }, 3, // 최대 3회 재시도 (타임아웃 방지를 위해 감소)
+                                    500 // 0.5초 지연 (타임아웃 방지를 위해 감소)
+                            );
 
-                if (!dashboardResult.isSuccess()) {
-                    // 대시보드 생성 실패 시 경고만 로그하고 프로세스 계속 진행 (방어 코드)
-                    log.warn("⚠️ 기본 대시보드 생성 재시도 실패 (프로세스 계속 진행): tenantId={}, attempts={}, error={}", 
-                            tenantId, dashboardResult.getAttemptCount(), dashboardResult.getErrorMessage());
-                    updateProcessingStatus(requestId, "DASHBOARD_CREATE", "FAILED", 
-                            "대시보드 생성 실패: " + dashboardResult.getErrorMessage() + " (나중에 수동으로 생성 가능)");
-                    
-                    // 대시보드 생성 실패는 치명적이지 않으므로 프로세스 계속 진행
-                    // 메시지에 "실패"라는 단어를 포함하지 않도록 주의 (프론트엔드에서 에러로 인식할 수 있음)
-                    if (message != null && !message.trim().isEmpty()) {
-                        // 기존 메시지가 성공 메시지인 경우에만 경고 추가
-                        if (!message.toLowerCase().contains("실패") && !message.toLowerCase().contains("fail")) {
-                            message += " (대시보드 생성은 나중에 수동으로 가능)";
+                    if (!dashboardResult.isSuccess()) {
+                        // 대시보드 생성 실패 시 경고만 로그하고 프로세스 계속 진행 (방어 코드)
+                        log.warn(
+                                "⚠️ 기본 대시보드 생성 재시도 실패 (프로세스 계속 진행): tenantId={}, attempts={}, error={}",
+                                tenantId, dashboardResult.getAttemptCount(),
+                                dashboardResult.getErrorMessage());
+                        updateProcessingStatus(requestId, "DASHBOARD_CREATE", "FAILED",
+                                "대시보드 생성 실패: " + dashboardResult.getErrorMessage()
+                                        + " (나중에 수동으로 생성 가능)");
+
+                        // 대시보드 생성 실패는 치명적이지 않으므로 프로세스 계속 진행
+                        // 메시지에 "실패"라는 단어를 포함하지 않도록 주의 (프론트엔드에서 에러로 인식할 수 있음)
+                        if (message != null && !message.trim().isEmpty()) {
+                            // 기존 메시지가 성공 메시지인 경우에만 경고 추가
+                            if (!message.toLowerCase().contains("실패")
+                                    && !message.toLowerCase().contains("fail")) {
+                                message += " (대시보드 생성은 나중에 수동으로 가능)";
+                            }
+                        } else {
+                            message = "온보딩 완료 (대시보드 생성은 나중에 수동으로 가능)";
                         }
+
+                        // success는 그대로 유지 (대시보드 생성 실패해도 온보딩은 성공으로 처리)
+                        log.info("✅ 온보딩 프로세스 완료 (대시보드 생성 실패 무시): tenantId={}", tenantId);
                     } else {
-                        message = "온보딩 완료 (대시보드 생성은 나중에 수동으로 가능)";
+                        log.info("✅ 대시보드 생성 성공: tenantId={}", tenantId);
                     }
-                    
-                    // success는 그대로 유지 (대시보드 생성 실패해도 온보딩은 성공으로 처리)
-                    log.info("✅ 온보딩 프로세스 완료 (대시보드 생성 실패 무시): tenantId={}", tenantId);
-                } else {
-                    log.info("✅ 대시보드 생성 성공: tenantId={}", tenantId);
-                }
                 } else {
                     log.info("⚠️ 역할이 없어 대시보드 생성 건너뜀: tenantId={}", tenantId);
                     if (message != null && !message.trim().isEmpty()) {
-                        if (!message.toLowerCase().contains("실패") && !message.toLowerCase().contains("fail")) {
+                        if (!message.toLowerCase().contains("실패")
+                                && !message.toLowerCase().contains("fail")) {
                             message += " (역할이 없어 대시보드 생성 건너뜀)";
                         }
                     }
@@ -833,17 +853,19 @@ public class OnboardingServiceImpl implements OnboardingService {
         // 엔티티를 refresh하여 최신 버전을 가져옴 (OptimisticLockException 방지)
         try {
             entityManager.refresh(request);
-            log.debug("OnboardingRequest 엔티티 refresh 완료: requestId={}, version={}", requestId, request.getVersion());
+            log.debug("OnboardingRequest 엔티티 refresh 완료: requestId={}, version={}", requestId,
+                    request.getVersion());
         } catch (Exception e) {
-            log.warn("OnboardingRequest 엔티티 refresh 실패 (계속 진행): requestId={}, error={}", requestId, e.getMessage());
+            log.warn("OnboardingRequest 엔티티 refresh 실패 (계속 진행): requestId={}, error={}", requestId,
+                    e.getMessage());
             // refresh 실패해도 계속 진행 (이미 메모리에 있는 엔티티 사용)
         }
 
         // 최종 상태 결정 (success 변수는 블록 스코프 밖에서 사용 불가하므로 로컬 변수로 저장)
         final Boolean finalSuccess = success;
-        final OnboardingStatus finalStatus = (finalSuccess != null && finalSuccess) 
-                ? OnboardingStatus.APPROVED 
-                : OnboardingStatus.ON_HOLD;
+        final OnboardingStatus finalStatus =
+                (finalSuccess != null && finalSuccess) ? OnboardingStatus.APPROVED
+                        : OnboardingStatus.ON_HOLD;
 
         // OptimisticLockException 방지를 위해 재시도 로직 추가
         OnboardingRequest saved = null;
@@ -851,15 +873,18 @@ public class OnboardingServiceImpl implements OnboardingService {
         for (int attempt = 1; attempt <= maxRetries; attempt++) {
             try {
                 saved = repository.save(request);
-                log.info("온보딩 요청 결정 완료: id={}, status={}, version={}", saved.getId(), saved.getStatus(), saved.getVersion());
+                log.info("온보딩 요청 결정 완료: id={}, status={}, version={}", saved.getId(),
+                        saved.getStatus(), saved.getVersion());
                 break;
             } catch (org.springframework.orm.ObjectOptimisticLockingFailureException e) {
                 if (attempt < maxRetries) {
-                    log.warn("OptimisticLockException 발생 (재시도 {}/{}): requestId={}, error={}", attempt, maxRetries, requestId, e.getMessage());
+                    log.warn("OptimisticLockException 발생 (재시도 {}/{}): requestId={}, error={}",
+                            attempt, maxRetries, requestId, e.getMessage());
                     // 엔티티를 다시 조회하여 최신 버전 가져오기
                     request = repository.findById(requestId)
                             .orElseThrow(() -> new IllegalArgumentException(OnboardingConstants
-                                    .formatError(OnboardingConstants.ERROR_TENANT_NOT_FOUND, requestId)));
+                                    .formatError(OnboardingConstants.ERROR_TENANT_NOT_FOUND,
+                                            requestId)));
                     // 상태를 다시 설정
                     request.setStatus(finalStatus);
                     request.setDecidedBy(actorId);
@@ -872,7 +897,9 @@ public class OnboardingServiceImpl implements OnboardingService {
                         Thread.currentThread().interrupt();
                     }
                 } else {
-                    log.error("OptimisticLockException 재시도 실패 (최대 시도 횟수 초과): requestId={}, error={}", requestId, e.getMessage());
+                    log.error(
+                            "OptimisticLockException 재시도 실패 (최대 시도 횟수 초과): requestId={}, error={}",
+                            requestId, e.getMessage());
                     throw new org.springframework.dao.OptimisticLockingFailureException(
                             "온보딩 요청 상태 업데이트 중 동시성 충돌이 발생했습니다. 잠시 후 다시 시도해주세요.", e);
                 }
@@ -2285,13 +2312,15 @@ public class OnboardingServiceImpl implements OnboardingService {
 
     /**
      * 처리 단계별 상태를 업데이트하는 헬퍼 메서드
-     * 
+     *
      * @param requestId 온보딩 요청 ID
-     * @param step 처리 단계 (PROCEDURE_START, TENANT_CREATE, ROLE_APPLY, ADMIN_CREATE, DASHBOARD_CREATE, COMPLETE)
+     * @param step 처리 단계 (PROCEDURE_START, TENANT_CREATE, ROLE_APPLY, ADMIN_CREATE,
+     *        DASHBOARD_CREATE, COMPLETE)
      * @param status 단계 상태 (PENDING, IN_PROGRESS, SUCCESS, FAILED)
      * @param message 상태 메시지
      */
-    private void updateProcessingStatus(java.util.UUID requestId, String step, String status, String message) {
+    private void updateProcessingStatus(java.util.UUID requestId, String step, String status,
+            String message) {
         try {
             OnboardingRequest request = repository.findById(requestId).orElse(null);
             if (request == null) {
@@ -2303,9 +2332,11 @@ public class OnboardingServiceImpl implements OnboardingService {
             String existingJson = request.getInitializationStatusJson();
             if (existingJson != null && !existingJson.trim().isEmpty()) {
                 try {
-                    statusMap = objectMapper.readValue(existingJson, new TypeReference<Map<String, Object>>() {});
+                    statusMap = objectMapper.readValue(existingJson,
+                            new TypeReference<Map<String, Object>>() {});
                 } catch (JsonProcessingException e) {
-                    log.warn("기존 상태 JSON 파싱 실패, 새로 생성: requestId={}, error={}", requestId, e.getMessage());
+                    log.warn("기존 상태 JSON 파싱 실패, 새로 생성: requestId={}, error={}", requestId,
+                            e.getMessage());
                 }
             }
 
@@ -2317,9 +2348,11 @@ public class OnboardingServiceImpl implements OnboardingService {
             statusMap.put(step, stepStatus);
 
             // 전체 진행률 계산
-            int totalSteps = 5; // PROCEDURE_START, TENANT_CREATE, ROLE_APPLY, ADMIN_CREATE, DASHBOARD_CREATE
+            int totalSteps = 5; // PROCEDURE_START, TENANT_CREATE, ROLE_APPLY, ADMIN_CREATE,
+                                // DASHBOARD_CREATE
             int completedSteps = 0;
-            String[] steps = {"PROCEDURE_START", "TENANT_CREATE", "ROLE_APPLY", "ADMIN_CREATE", "DASHBOARD_CREATE"};
+            String[] steps = {"PROCEDURE_START", "TENANT_CREATE", "ROLE_APPLY", "ADMIN_CREATE",
+                    "DASHBOARD_CREATE"};
             for (String s : steps) {
                 if (statusMap.containsKey(s)) {
                     @SuppressWarnings("unchecked")
@@ -2337,9 +2370,11 @@ public class OnboardingServiceImpl implements OnboardingService {
             request.setInitializationStatusJson(statusJson);
             repository.save(request);
 
-            log.debug("처리 상태 업데이트: requestId={}, step={}, status={}, progress={}%", requestId, step, status, progress);
+            log.debug("처리 상태 업데이트: requestId={}, step={}, status={}, progress={}%", requestId, step,
+                    status, progress);
         } catch (Exception e) {
-            log.error("처리 상태 업데이트 실패: requestId={}, step={}, error={}", requestId, step, e.getMessage(), e);
+            log.error("처리 상태 업데이트 실패: requestId={}, step={}, error={}", requestId, step,
+                    e.getMessage(), e);
             // 예외를 throw하지 않음 (상태 업데이트 실패가 전체 프로세스를 중단시키면 안 됨)
         }
     }

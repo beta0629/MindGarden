@@ -516,8 +516,24 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
 
                 log.info("새 테넌트 생성 완료: tenantId={}, subdomain={}", tenantId, finalSubdomain);
                 return true;
+            } catch (org.springframework.dao.DuplicateKeyException e) {
+                // 동시성 문제로 테넌트가 이미 생성된 경우 (다른 프로세스에서 생성)
+                log.warn("테넌트 생성 중 중복 키 오류 (이미 존재하는 테넌트): tenantId={}, error={}", 
+                        tenantId, e.getMessage());
+                // 기존 테넌트 활성화로 처리
+                try {
+                    jdbcTemplate.update(
+                            "UPDATE tenants SET status = 'ACTIVE', updated_at = NOW(), updated_by = ? WHERE tenant_id = ?",
+                            approvedBy, tenantId);
+                    log.info("기존 테넌트 활성화 완료 (중복 키 오류 후): tenantId={}", tenantId);
+                    return true;
+                } catch (Exception updateEx) {
+                    log.error("테넌트 활성화 실패 (중복 키 오류 후): tenantId={}, error={}", 
+                            tenantId, updateEx.getMessage());
+                    return false;
+                }
             } catch (Exception e) {
-                log.error("테넌트 생성 실패: tenantId={}, error={}", tenantId, e.getMessage());
+                log.error("테넌트 생성 실패: tenantId={}, error={}", tenantId, e.getMessage(), e);
                 return false;
             }
         }

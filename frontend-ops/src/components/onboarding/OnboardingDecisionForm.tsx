@@ -423,8 +423,18 @@ export function OnboardingDecisionForm({ requestId, initialStatus }: Props) {
               )}
             </div>
           ) : (
-            <div style={{ marginTop: "1rem", textAlign: "center", color: "#666", fontSize: "0.875rem" }}>
-              {isPolling ? "처리 상태 조회 중..." : "처리 상태 정보가 없습니다."}
+            <div style={{ marginTop: "1rem", padding: "1rem", textAlign: "center", color: "#666", fontSize: "0.875rem", backgroundColor: "#f5f5f5", borderRadius: "4px" }}>
+              {isPolling ? (
+                <div>
+                  <div style={{ marginBottom: "0.5rem" }}>🔄 처리 상태 조회 중...</div>
+                  <div style={{ fontSize: "0.75rem", color: "#999" }}>백엔드에서 처리 상태를 가져오는 중입니다.</div>
+                </div>
+              ) : (
+                <div>
+                  <div style={{ marginBottom: "0.5rem" }}>⏳ 처리 상태 정보가 없습니다.</div>
+                  <div style={{ fontSize: "0.75rem", color: "#999" }}>처리 상태가 업데이트되면 자동으로 표시됩니다.</div>
+                </div>
+              )}
             </div>
           )}
         </div>

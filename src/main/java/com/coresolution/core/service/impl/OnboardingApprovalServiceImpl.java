@@ -437,11 +437,11 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                 finalCount = jdbcTemplate.queryForObject(
                         "SELECT COUNT(*) FROM users WHERE tenant_id = ? AND email = ? AND role = 'ADMIN' AND (is_deleted IS NULL OR is_deleted = FALSE)",
                         Integer.class, tenantId, email);
-            } catch (org.springframework.dao.EmptyResultDataAccessException e) {
+            } catch (org.springframework.dao.EmptyResultDataAccessException ex) {
                 finalCount = 0; // 결과 없음
-            } catch (Exception e) {
+            } catch (Exception ex) {
                 log.error("관리자 계정 재확인 실패: tenantId={}, email={}, error={}", tenantId, email,
-                        e.getMessage(), e);
+                        ex.getMessage(), ex);
                 finalCount = 0; // 오류 시 0으로 처리
             }
             if (finalCount != null && finalCount > 0) {

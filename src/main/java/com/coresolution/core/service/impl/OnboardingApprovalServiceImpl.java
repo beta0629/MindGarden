@@ -218,7 +218,6 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                 
                 boolean tenantCreated = false;
                 boolean rolesApplied = false;
-                boolean adminCreated = false;
                 StringBuilder fallbackMessage = new StringBuilder("프로시저 실패 후 Java 재시도: ");
                 
                 // 1. 테넌트 생성/활성화 확인 및 필요시 생성
@@ -254,7 +253,6 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                     && adminPasswordHash != null && !adminPasswordHash.trim().isEmpty()) {
                     try {
                         createAdminAccountDirectly(tenantId, contactEmail, tenantName, adminPasswordHash, approvedBy);
-                        adminCreated = true;
                         fallbackMessage.append("관리자=OK");
                     } catch (Exception e) {
                         log.warn("관리자 계정 직접 생성 실패: tenantId={}, error={}", tenantId, e.getMessage());

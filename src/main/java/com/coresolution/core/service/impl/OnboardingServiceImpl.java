@@ -662,9 +662,25 @@ public class OnboardingServiceImpl implements OnboardingService {
             }
 
             if (success != null && success) {
-                // 대시보드 생성 (방어 코드: 실패해도 프로세스 계속 진행)
-                OnboardingErrorHandlingService.ExecutionResult dashboardResult =
-                        errorHandlingService.executeWithRetry(() -> {
+                // 역할이 존재하는지 확인 (대시보드 생성 전 필수)
+                boolean rolesExist = false;
+                try {
+                    List<com.coresolution.core.domain.TenantRole> roles = tenantRoleRepository.findByTenantIdAndIsDeletedFalse(tenantId);
+                    rolesExist = roles != null && !roles.isEmpty();
+                    if (!rolesExist) {
+                        log.warn("⚠️ 역할이 없어 대시보드 생성 건너뜀: tenantId={}, roleCount=0", tenantId);
+                    } else {
+                        log.info("✅ 역할 존재 확인: tenantId={}, roleCount={}, 대시보드 생성 진행", tenantId, roles.size());
+                    }
+                } catch (Exception e) {
+                    log.warn("⚠️ 역할 존재 확인 실패, 대시보드 생성 건너뜀: tenantId={}, error={}", tenantId, e.getMessage());
+                }
+                
+                // 역할이 존재하는 경우에만 대시보드 생성 시도
+                if (rolesExist) {
+                    // 대시보드 생성 (방어 코드: 실패해도 프로세스 계속 진행)
+                    OnboardingErrorHandlingService.ExecutionResult dashboardResult =
+                            errorHandlingService.executeWithRetry(() -> {
                             // 테넌트 컨텍스트 설정 (대시보드 생성 시 필요)
                             String previousTenantId = TenantContextHolder.getTenantId();
                             try {
@@ -706,8 +722,8 @@ public class OnboardingServiceImpl implements OnboardingService {
                                     TenantContextHolder.clear();
                                 }
                             }
-                        }, 15, // 최대 15회 재시도 (락 타임아웃 대응)
-                                1000 // 1초 지연 (락 해제 대기 시간 증가)
+                        }, 3, // 최대 3회 재시도 (타임아웃 방지를 위해 감소)
+                                500 // 0.5초 지연 (타임아웃 방지를 위해 감소)
                         );
 
                 if (!dashboardResult.isSuccess()) {

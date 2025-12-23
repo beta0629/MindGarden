@@ -460,9 +460,14 @@ public class OnboardingServiceImpl implements OnboardingService {
                             "테넌트 ID 자동 생성: tenantName={}, businessType={}, regionCode={}, tenantId={}",
                             request.getTenantName(), request.getBusinessType(), regionCode,
                             tenantIdValue);
+                    
+                    // 생성된 테넌트 ID를 즉시 DB에 저장하여 다른 요청이 같은 순번을 조회하지 못하도록 함
+                    request.setTenantId(tenantIdValue);
+                    repository.save(request); // 즉시 저장하여 동시성 문제 방지
+                    log.debug("생성된 테넌트 ID를 DB에 즉시 저장: requestId={}, tenantId={}", requestId, tenantIdValue);
+                } else {
+                    request.setTenantId(tenantIdValue);
                 }
-
-                request.setTenantId(tenantIdValue);
             }
 
             final String tenantId =

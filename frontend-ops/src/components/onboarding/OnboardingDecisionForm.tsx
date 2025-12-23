@@ -254,15 +254,33 @@ export function OnboardingDecisionForm({ requestId, initialStatus }: Props) {
     };
   }, [pollIntervalRef]);
   
-  // 승인 상태일 때 자동으로 폴링 시작 (초기 로드 시)
+  // 승인 상태일 때 자동으로 폴링 시작 (초기 로드 시 및 상태 변경 시)
   useEffect(() => {
     if (status === "APPROVED" && !isPolling && !pollIntervalRef) {
-      console.log("[OnboardingDecisionForm] 승인 상태 감지, 폴링 시작");
+      console.log("[OnboardingDecisionForm] 승인 상태 감지, 폴링 시작", { status, isPolling, pollIntervalRef });
       setIsPolling(true);
       startPolling();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [status]);
+  }, [status, initialStatus]);
+  
+  // 컴포넌트 마운트 시 승인 상태면 즉시 상태 조회
+  useEffect(() => {
+    if (initialStatus === "APPROVED" && !processingStatus) {
+      console.log("[OnboardingDecisionForm] 초기 로드 시 승인 상태 감지, 즉시 상태 조회");
+      getProcessingStatus(requestId).then(status => {
+        console.log("[OnboardingDecisionForm] 초기 처리 상태 조회 결과:", status);
+        setProcessingStatus(status);
+        if (status && Object.keys(status).length > 0) {
+          setIsPolling(true);
+          startPolling();
+        }
+      }).catch(err => {
+        console.error("[OnboardingDecisionForm] 초기 처리 상태 조회 실패:", err);
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <>

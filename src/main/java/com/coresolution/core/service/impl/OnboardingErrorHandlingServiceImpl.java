@@ -45,13 +45,23 @@ public class OnboardingErrorHandlingServiceImpl implements OnboardingErrorHandli
                 
             } catch (Exception e) {
                 lastException = e;
-                log.warn("온보딩 프로세스 실행 중 예외 발생: attempt={}/{}, error={}", 
-                    attempt, maxRetries, e.getMessage());
+                boolean isRetryable = isRetryableError(e);
+                
+                log.warn("온보딩 프로세스 실행 중 예외 발생: attempt={}/{}, error={}, retryable={}", 
+                    attempt, maxRetries, e.getMessage(), isRetryable);
                 
                 // 재시도 가능한 에러인지 확인
-                if (!isRetryableError(e) && attempt < maxRetries) {
-                    log.error("재시도 불가능한 에러로 인해 재시도 중단: error={}", e.getMessage());
-                    break;
+                if (!isRetryable) {
+                    if (attempt < maxRetries) {
+                        log.error("재시도 불가능한 에러로 인해 재시도 중단: error={}, attempt={}/{}", 
+                                e.getMessage(), attempt, maxRetries);
+                        break;
+                    } else {
+                        log.error("재시도 불가능한 에러 (최대 재시도 횟수 도달): error={}", e.getMessage());
+                    }
+                } else {
+                    log.info("재시도 가능한 에러 감지 - 재시도 진행: error={}, attempt={}/{}", 
+                            e.getMessage(), attempt, maxRetries);
                 }
             }
             
@@ -82,58 +92,82 @@ public class OnboardingErrorHandlingServiceImpl implements OnboardingErrorHandli
     }
     
     /**
-     * 재시도 가능한 에러인지 확인
+     * 재시도 가능한 에러인지 확인 (예외 체인 포함)
      * @param e 예외
      * @return 재시도 가능 여부
      */
     private boolean isRetryableError(Exception e) {
-        // PessimisticLockingFailureException (락 타임아웃) - 재시도 가능
-        if (e instanceof org.springframework.dao.PessimisticLockingFailureException) {
-            log.debug("락 타임아웃 감지 - 재시도 가능: {}", e.getMessage());
-            return true;
-        }
-        
-        // 락 관련 예외 체크 (메시지 기반)
-        String errorMessage = e.getMessage();
-        if (errorMessage != null) {
-            String lowerMessage = errorMessage.toLowerCase();
-            if (lowerMessage.contains("lock wait timeout") || 
-                lowerMessage.contains("lock timeout") ||
-                lowerMessage.contains("deadlock") ||
-                lowerMessage.contains("try restarting transaction")) {
-                log.debug("락 관련 오류 감지 - 재시도 가능: {}", errorMessage);
-                return true;
-            }
-        }
-        
-        // 트랜잭션 타이밍 문제, 일시적인 DB 연결 문제 등은 재시도 가능
-        if (e instanceof java.sql.SQLException) {
-            java.sql.SQLException sqlEx = (java.sql.SQLException) e;
-            String sqlState = sqlEx.getSQLState();
+        // 예외 체인을 따라가면서 확인
+        Throwable current = e;
+        int depth = 0;
+        while (current != null && depth < 10) { // 최대 10단계까지 체인 확인
+            depth++;
             
-            // Deadlock, Lock wait timeout 등은 재시도 가능
-            if ("40001".equals(sqlState) || "40P01".equals(sqlState)) { // Deadlock
+            // PessimisticLockingFailureException (락 타임아웃) - 재시도 가능
+            if (current instanceof org.springframework.dao.PessimisticLockingFailureException) {
+                log.debug("락 타임아웃 감지 (예외 체인 depth={}) - 재시도 가능: {}", depth, current.getMessage());
                 return true;
             }
-            if ("HY000".equals(sqlState) && sqlEx.getErrorCode() == 1205) { // Lock wait timeout
+            
+            // Hibernate 락 예외
+            if (current instanceof org.hibernate.PessimisticLockException) {
+                log.debug("Hibernate 락 예외 감지 (예외 체인 depth={}) - 재시도 가능: {}", depth, current.getMessage());
                 return true;
             }
-        }
-        
-        // Hibernate 락 예외
-        if (e instanceof org.hibernate.PessimisticLockException) {
-            log.debug("Hibernate 락 예외 감지 - 재시도 가능: {}", e.getMessage());
-            return true;
-        }
-        
-        // IllegalStateException 중 일부는 재시도 가능 (예: RoleTemplate이 아직 생성되지 않음)
-        if (e instanceof IllegalStateException) {
-            String message = e.getMessage();
-            if (message != null && (message.contains("아직 생성되지 않음") || 
-                                    message.contains("not found") ||
-                                    message.contains("존재하지 않음"))) {
-                return true;
+            
+            // MySQL 락 타임아웃 예외
+            if (current instanceof com.mysql.cj.jdbc.exceptions.MySQLTransactionRollbackException) {
+                String msg = current.getMessage();
+                if (msg != null && (msg.contains("Lock wait timeout") || msg.contains("lock timeout"))) {
+                    log.debug("MySQL 락 타임아웃 감지 (예외 체인 depth={}) - 재시도 가능: {}", depth, msg);
+                    return true;
+                }
             }
+            
+            // SQLException 체크
+            if (current instanceof java.sql.SQLException) {
+                java.sql.SQLException sqlEx = (java.sql.SQLException) current;
+                String sqlState = sqlEx.getSQLState();
+                
+                // Deadlock
+                if ("40001".equals(sqlState) || "40P01".equals(sqlState)) {
+                    log.debug("Deadlock 감지 (예외 체인 depth={}) - 재시도 가능", depth);
+                    return true;
+                }
+                // Lock wait timeout (MySQL 에러 코드 1205)
+                if ("HY000".equals(sqlState) && sqlEx.getErrorCode() == 1205) {
+                    log.debug("Lock wait timeout 감지 (예외 체인 depth={}, errorCode={}) - 재시도 가능", 
+                            depth, sqlEx.getErrorCode());
+                    return true;
+                }
+            }
+            
+            // 락 관련 예외 체크 (메시지 기반) - 모든 예외 레벨에서 확인
+            String errorMessage = current.getMessage();
+            if (errorMessage != null) {
+                String lowerMessage = errorMessage.toLowerCase();
+                if (lowerMessage.contains("lock wait timeout") || 
+                    lowerMessage.contains("lock wait timeout exceeded") ||
+                    lowerMessage.contains("lock timeout") ||
+                    lowerMessage.contains("deadlock") ||
+                    lowerMessage.contains("try restarting transaction")) {
+                    log.debug("락 관련 오류 감지 (예외 체인 depth={}) - 재시도 가능: {}", depth, errorMessage);
+                    return true;
+                }
+            }
+            
+            // IllegalStateException 중 일부는 재시도 가능 (예: RoleTemplate이 아직 생성되지 않음)
+            if (current instanceof IllegalStateException) {
+                String message = current.getMessage();
+                if (message != null && (message.contains("아직 생성되지 않음") || 
+                                        message.contains("not found") ||
+                                        message.contains("존재하지 않음"))) {
+                    return true;
+                }
+            }
+            
+            // 다음 예외 체인으로 이동
+            current = current.getCause();
         }
         
         // 기본적으로는 재시도 불가능 (데이터 검증 오류 등)

@@ -832,9 +832,57 @@ public class OnboardingServiceImpl implements OnboardingService {
             }
         }
 
-        OnboardingRequest saved = repository.save(request);
+        // 엔티티를 refresh하여 최신 버전을 가져옴 (OptimisticLockException 방지)
+        try {
+            entityManager.refresh(request);
+            log.debug("OnboardingRequest 엔티티 refresh 완료: requestId={}, version={}", requestId, request.getVersion());
+        } catch (Exception e) {
+            log.warn("OnboardingRequest 엔티티 refresh 실패 (계속 진행): requestId={}, error={}", requestId, e.getMessage());
+            // refresh 실패해도 계속 진행 (이미 메모리에 있는 엔티티 사용)
+        }
 
-        log.info("온보딩 요청 결정 완료: id={}, status={}", saved.getId(), saved.getStatus());
+        // OptimisticLockException 방지를 위해 재시도 로직 추가
+        OnboardingRequest saved = null;
+        int maxRetries = 3;
+        for (int attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+                saved = repository.save(request);
+                log.info("온보딩 요청 결정 완료: id={}, status={}, version={}", saved.getId(), saved.getStatus(), saved.getVersion());
+                break;
+            } catch (org.springframework.orm.ObjectOptimisticLockingFailureException e) {
+                if (attempt < maxRetries) {
+                    log.warn("OptimisticLockException 발생 (재시도 {}/{}): requestId={}, error={}", attempt, maxRetries, requestId, e.getMessage());
+                    // 엔티티를 다시 조회하여 최신 버전 가져오기
+                    request = repository.findById(requestId)
+                            .orElseThrow(() -> new IllegalArgumentException(OnboardingConstants
+                                    .formatError(OnboardingConstants.ERROR_TENANT_NOT_FOUND, requestId)));
+                    // 상태를 다시 설정
+                    if (success != null && success) {
+                        request.setStatus(OnboardingStatus.APPROVED);
+                    } else {
+                        request.setStatus(OnboardingStatus.ON_HOLD);
+                    }
+                    request.setDecidedBy(actorId);
+                    request.setDecisionAt(DateTimeFormatter.ISO_INSTANT.format(Instant.now()));
+                    request.setDecisionNote(note);
+                    // 잠시 대기 후 재시도
+                    try {
+                        Thread.sleep(100 * attempt); // 100ms, 200ms, 300ms
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                    }
+                } else {
+                    log.error("OptimisticLockException 재시도 실패 (최대 시도 횟수 초과): requestId={}, error={}", requestId, e.getMessage());
+                    throw new org.springframework.dao.OptimisticLockingFailureException(
+                            "온보딩 요청 상태 업데이트 중 동시성 충돌이 발생했습니다. 잠시 후 다시 시도해주세요.", e);
+                }
+            }
+        }
+
+        if (saved == null) {
+            throw new IllegalStateException("온보딩 요청 저장 실패: requestId=" + requestId);
+        }
+
         return saved;
     }
 

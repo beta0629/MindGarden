@@ -631,8 +631,6 @@ public class OnboardingServiceImpl implements OnboardingService {
                     );
 
             Map<String, Object> approvalResult;
-            Boolean success;
-            String message;
 
             if (executionResult.isSuccess()) {
                 // 성공 시 저장된 결과 사용

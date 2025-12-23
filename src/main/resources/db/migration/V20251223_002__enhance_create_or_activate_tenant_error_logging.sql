@@ -2,9 +2,9 @@
 -- 목적: 락 타임아웃 및 기타 오류를 더 명확하게 감지하고 상세 정보 반환
 -- 문제: 프로시저가 50초 후 "알 수 없는 오류"로 실패 (innodb_lock_wait_timeout=50초)
 
-DROP PROCEDURE IF EXISTS CreateOrActivateTenant;
-
 DELIMITER //
+
+DROP PROCEDURE IF EXISTS CreateOrActivateTenant //
 
 CREATE PROCEDURE CreateOrActivateTenant(
     IN p_tenant_id VARCHAR(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
@@ -120,7 +120,7 @@ BEGIN
                 WHERE (subdomain = v_subdomain OR JSON_EXTRACT(COALESCE(settings_json, '{}'), '$.subdomain') = v_subdomain)
                 AND is_deleted = FALSE
                 AND tenant_id != p_tenant_id
-                FOR UPDATE;  -- 락 추가
+                FOR UPDATE
                 IF NOT v_exists THEN
                     LEAVE;
                 END IF;
@@ -197,7 +197,7 @@ BEGIN
             WHERE (subdomain = v_subdomain OR JSON_EXTRACT(COALESCE(settings_json, '{}'), '$.subdomain') = v_subdomain)
             AND is_deleted = FALSE
             AND tenant_id != p_tenant_id
-            FOR UPDATE;  -- 락 추가
+            FOR UPDATE
             
             IF NOT v_exists THEN
                 LEAVE;

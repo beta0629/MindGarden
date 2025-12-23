@@ -368,10 +368,12 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                     "SELECT COUNT(*) FROM users WHERE tenant_id = ? AND email = ? AND role = 'ADMIN' AND (is_deleted IS NULL OR is_deleted = FALSE)",
                     Integer.class, tenantId, contactEmail.toLowerCase().trim());
         } catch (org.springframework.dao.EmptyResultDataAccessException e) {
-            log.warn("관리자 계정 존재 확인 쿼리 결과 없음 (0으로 처리): tenantId={}, email={}", tenantId, contactEmail);
+            log.warn("관리자 계정 존재 확인 쿼리 결과 없음 (0으로 처리): tenantId={}, email={}", tenantId,
+                    contactEmail);
             existingCount = 0;
         } catch (Exception e) {
-            log.error("관리자 계정 존재 확인 실패: tenantId={}, email={}, error={}", tenantId, contactEmail, e.getMessage(), e);
+            log.error("관리자 계정 존재 확인 실패: tenantId={}, email={}, error={}", tenantId, contactEmail,
+                    e.getMessage(), e);
             throw e; // 예외를 다시 throw하여 상위에서 처리
         }
 
@@ -438,7 +440,8 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
             } catch (org.springframework.dao.EmptyResultDataAccessException e) {
                 finalCount = 0; // 결과 없음
             } catch (Exception e) {
-                log.error("관리자 계정 재확인 실패: tenantId={}, email={}, error={}", tenantId, email, e.getMessage(), e);
+                log.error("관리자 계정 재확인 실패: tenantId={}, email={}, error={}", tenantId, email,
+                        e.getMessage(), e);
                 finalCount = 0; // 오류 시 0으로 처리
             }
             if (finalCount != null && finalCount > 0) {
@@ -464,11 +467,11 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
             count = jdbcTemplate.queryForObject(
                     "SELECT COUNT(*) FROM tenants WHERE tenant_id = ? AND (is_deleted IS NULL OR is_deleted = FALSE)",
                     Integer.class, tenantId);
-        } catch (org.springframework.dao.EmptyResultDataAccessException e) {
+        } catch (org.springframework.dao.EmptyResultDataAccessException ex) {
             log.warn("테넌트 존재 확인 쿼리 결과 없음 (0으로 처리): tenantId={}", tenantId);
             count = 0;
-        } catch (Exception e) {
-            log.error("테넌트 존재 확인 실패: tenantId={}, error={}", tenantId, e.getMessage(), e);
+        } catch (Exception ex) {
+            log.error("테넌트 존재 확인 실패: tenantId={}, error={}", tenantId, ex.getMessage(), ex);
             return false;
         }
 

@@ -79,11 +79,11 @@ BEGIN
     
     START TRANSACTION;
     
-    -- 테넌트 존재 확인 (락 없이 빠르게 확인)
+    -- 테넌트 존재 확인 (락을 걸어서 동시성 문제 방지)
     SELECT COUNT(*) > 0 INTO v_exists
     FROM tenants
     WHERE tenant_id = p_tenant_id
-    FOR UPDATE;  -- 락을 걸어서 동시성 문제 방지
+    FOR UPDATE
     
     IF v_exists THEN
         -- 기존 테넌트 활성화

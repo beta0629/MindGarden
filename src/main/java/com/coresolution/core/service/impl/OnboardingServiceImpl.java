@@ -747,6 +747,14 @@ public class OnboardingServiceImpl implements OnboardingService {
                 } else {
                     log.info("✅ 대시보드 생성 성공: tenantId={}", tenantId);
                 }
+                } else {
+                    log.info("⚠️ 역할이 없어 대시보드 생성 건너뜀: tenantId={}", tenantId);
+                    if (message != null && !message.trim().isEmpty()) {
+                        if (!message.toLowerCase().contains("실패") && !message.toLowerCase().contains("fail")) {
+                            message += " (역할이 없어 대시보드 생성 건너뜀)";
+                        }
+                    }
+                }
             }
 
             if (success == null || !success) {

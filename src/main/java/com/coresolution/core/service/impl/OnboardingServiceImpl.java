@@ -841,6 +841,12 @@ public class OnboardingServiceImpl implements OnboardingService {
             // refresh 실패해도 계속 진행 (이미 메모리에 있는 엔티티 사용)
         }
 
+        // 최종 상태 결정 (success 변수는 블록 스코프 밖에서 사용 불가하므로 로컬 변수로 저장)
+        final Boolean finalSuccess = success;
+        final OnboardingStatus finalStatus = (finalSuccess != null && finalSuccess) 
+                ? OnboardingStatus.APPROVED 
+                : OnboardingStatus.ON_HOLD;
+
         // OptimisticLockException 방지를 위해 재시도 로직 추가
         OnboardingRequest saved = null;
         int maxRetries = 3;
@@ -857,11 +863,7 @@ public class OnboardingServiceImpl implements OnboardingService {
                             .orElseThrow(() -> new IllegalArgumentException(OnboardingConstants
                                     .formatError(OnboardingConstants.ERROR_TENANT_NOT_FOUND, requestId)));
                     // 상태를 다시 설정
-                    if (success != null && success) {
-                        request.setStatus(OnboardingStatus.APPROVED);
-                    } else {
-                        request.setStatus(OnboardingStatus.ON_HOLD);
-                    }
+                    request.setStatus(finalStatus);
                     request.setDecidedBy(actorId);
                     request.setDecisionAt(DateTimeFormatter.ISO_INSTANT.format(Instant.now()));
                     request.setDecisionNote(note);

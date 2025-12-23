@@ -874,9 +874,12 @@ public class OnboardingServiceImpl implements OnboardingService {
         // OptimisticLockException 방지를 위해 재시도 로직 추가
         OnboardingRequest saved = null;
         int maxRetries = 3;
+        OnboardingRequest currentRequest = request; // effectively final을 위한 로컬 변수
+        final String finalActorId = actorId;
+        final String finalNote = note;
         for (int attempt = 1; attempt <= maxRetries; attempt++) {
             try {
-                saved = repository.save(request);
+                saved = repository.save(currentRequest);
                 log.info("온보딩 요청 결정 완료: id={}, status={}, version={}", saved.getId(),
                         saved.getStatus(), saved.getVersion());
                 break;
@@ -885,18 +888,19 @@ public class OnboardingServiceImpl implements OnboardingService {
                     log.warn("OptimisticLockException 발생 (재시도 {}/{}): requestId={}, error={}",
                             attempt, maxRetries, requestId, e.getMessage());
                     // 엔티티를 다시 조회하여 최신 버전 가져오기
-                    request = repository.findById(requestId)
+                    OnboardingRequest refreshedRequest = repository.findById(requestId)
                             .orElseThrow(() -> new IllegalArgumentException(OnboardingConstants
                                     .formatError(OnboardingConstants.ERROR_TENANT_NOT_FOUND,
                                             requestId)));
                     // 상태를 다시 설정
-                    request.setStatus(finalStatus);
-                    request.setDecidedBy(actorId);
-                    request.setDecisionAt(DateTimeFormatter.ISO_INSTANT.format(Instant.now()));
-                    request.setDecisionNote(note);
+                    refreshedRequest.setStatus(finalStatus);
+                    refreshedRequest.setDecidedBy(finalActorId);
+                    refreshedRequest.setDecisionAt(DateTimeFormatter.ISO_INSTANT.format(Instant.now()));
+                    refreshedRequest.setDecisionNote(finalNote);
+                    currentRequest = refreshedRequest; // 로컬 변수 업데이트
                     // 잠시 대기 후 재시도
                     try {
-                        Thread.sleep(100 * attempt); // 100ms, 200ms, 300ms
+                        Thread.sleep(100L * attempt); // 100ms, 200ms, 300ms
                     } catch (InterruptedException ie) {
                         Thread.currentThread().interrupt();
                     }

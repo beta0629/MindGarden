@@ -6,8 +6,8 @@ import java.sql.SQLException;
 import java.sql.Types;
 import java.util.HashMap;
 import java.util.Map;
-import com.coresolution.core.service.OnboardingApprovalService;
 import com.coresolution.core.repository.RoleTemplateRepository;
+import com.coresolution.core.service.OnboardingApprovalService;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -591,27 +591,29 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
             return true;
         }
 
-        // 기본 역할 생성 (CONSULTATION 또는 COUNSELING 업종 기준 - 둘 다 상담소이므로 동일한 역할 사용)
+        // 기본 역할 생성 (CONSULTATION 또는 COUNSELING 업종 기준)
         if ("CONSULTATION".equals(businessType) || "COUNSELING".equals(businessType)) {
             try {
                 // 역할 템플릿 조회 (roleTemplateId 설정을 위해)
-                // COUNSELING은 CONSULTATION과 동일한 템플릿 사용
-                String directorTemplateId = roleTemplateRepository.findByTemplateCodeAndIsDeletedFalse("CONSULTATION_DIRECTOR")
-                        .map(rt -> rt.getRoleTemplateId())
-                        .orElse(null);
-                String counselorTemplateId = roleTemplateRepository.findByTemplateCodeAndIsDeletedFalse("CONSULTATION_COUNSELOR")
-                        .map(rt -> rt.getRoleTemplateId())
-                        .orElse(null);
-                String clientTemplateId = roleTemplateRepository.findByTemplateCodeAndIsDeletedFalse("CONSULTATION_CLIENT")
-                        .map(rt -> rt.getRoleTemplateId())
-                        .orElse(null);
-                String staffTemplateId = roleTemplateRepository.findByTemplateCodeAndIsDeletedFalse("CONSULTATION_STAFF")
-                        .map(rt -> rt.getRoleTemplateId())
-                        .orElse(null);
+                // 각 업종별 템플릿 사용 (COUNSELING은 COUNSELING 템플릿, CONSULTATION은 CONSULTATION 템플릿)
+                String templatePrefix = "COUNSELING".equals(businessType) ? "COUNSELING" : "CONSULTATION";
                 
-                log.debug("역할 템플릿 ID 조회: director={}, counselor={}, client={}, staff={}", 
+                String directorTemplateId = roleTemplateRepository
+                        .findByTemplateCodeAndIsDeletedFalse(templatePrefix + "_DIRECTOR")
+                        .map(rt -> rt.getRoleTemplateId()).orElse(null);
+                String counselorTemplateId = roleTemplateRepository
+                        .findByTemplateCodeAndIsDeletedFalse(templatePrefix + "_COUNSELOR")
+                        .map(rt -> rt.getRoleTemplateId()).orElse(null);
+                String clientTemplateId = roleTemplateRepository
+                        .findByTemplateCodeAndIsDeletedFalse(templatePrefix + "_CLIENT")
+                        .map(rt -> rt.getRoleTemplateId()).orElse(null);
+                String staffTemplateId = roleTemplateRepository
+                        .findByTemplateCodeAndIsDeletedFalse(templatePrefix + "_STAFF")
+                        .map(rt -> rt.getRoleTemplateId()).orElse(null);
+
+                log.debug("역할 템플릿 ID 조회: director={}, counselor={}, client={}, staff={}",
                         directorTemplateId, counselorTemplateId, clientTemplateId, staffTemplateId);
-                
+
                 // 원장 (ADMIN)
                 jdbcTemplate.update(
                         "INSERT INTO tenant_roles (tenant_role_id, tenant_id, role_template_id, name, name_ko, name_en, "
@@ -656,8 +658,10 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                                 + "TRUE, 4, NOW(), NOW(), ?, ?, FALSE, 0, 'ko')",
                         tenantId, staffTemplateId, approvedBy, approvedBy);
 
-                log.info("기본 역할 생성 완료: tenantId={}, roleTemplateIds=[director={}, counselor={}, client={}, staff={}]", 
-                        tenantId, directorTemplateId, counselorTemplateId, clientTemplateId, staffTemplateId);
+                log.info(
+                        "기본 역할 생성 완료: tenantId={}, roleTemplateIds=[director={}, counselor={}, client={}, staff={}]",
+                        tenantId, directorTemplateId, counselorTemplateId, clientTemplateId,
+                        staffTemplateId);
                 return true;
             } catch (Exception e) {
                 log.error("역할 생성 실패: tenantId={}, error={}", tenantId, e.getMessage(), e);

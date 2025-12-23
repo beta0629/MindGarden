@@ -169,7 +169,7 @@ export default function InitializationStatusDisplay({
                   <button
                     className="retry-button"
                     onClick={() => handleRetry(task.key)}
-                    disabled={loading === task.key || task.status?.status === "RUNNING"}
+                    disabled={loading === task.key || (task.status && task.status.status === "RUNNING")}
                     style={{
                       marginLeft: "1rem",
                       padding: "0.25rem 0.75rem",
@@ -178,10 +178,10 @@ export default function InitializationStatusDisplay({
                       color: "white",
                       border: "none",
                       borderRadius: "4px",
-                      cursor: loading === task.key || task.status?.status === "RUNNING" ? "not-allowed" : "pointer",
+                      cursor: loading === task.key || (task.status && task.status.status === "RUNNING") ? "not-allowed" : "pointer",
                     }}
                   >
-                    {loading === task.key || task.status?.status === "RUNNING" ? "재실행 중..." : "재실행"}
+                    {loading === task.key || (task.status && task.status.status === "RUNNING") ? "재실행 중..." : "재실행"}
                   </button>
                 )}
               </div>

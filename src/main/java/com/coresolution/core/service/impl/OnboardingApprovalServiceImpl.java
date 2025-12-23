@@ -11,6 +11,7 @@ import com.coresolution.core.service.OnboardingApprovalService;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -29,6 +30,7 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
 
     private final JdbcTemplate jdbcTemplate;
     private final RoleTemplateRepository roleTemplateRepository;
+    private final EntityManager entityManager;
 
     @Override
     public Map<String, Object> processOnboardingApproval(java.util.UUID requestId, String tenantId,
@@ -708,6 +710,10 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                                 + "TRUE, 4, NOW(), NOW(), ?, ?, FALSE, 0, 'ko')",
                         tenantId, staffTemplateId, approvedBy, approvedBy);
 
+                // JPA 캐시 갱신 (jdbcTemplate으로 생성한 데이터를 JPA에서 조회할 수 있도록)
+                entityManager.flush();
+                entityManager.clear();
+                
                 log.info(
                         "기본 역할 생성 완료: tenantId={}, roleTemplateIds=[director={}, counselor={}, client={}, staff={}]",
                         tenantId, directorTemplateId, counselorTemplateId, clientTemplateId,

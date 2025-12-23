@@ -716,11 +716,14 @@ public class OnboardingServiceImpl implements OnboardingService {
                             tenantId, dashboardResult.getAttemptCount(), dashboardResult.getErrorMessage());
                     
                     // 대시보드 생성 실패는 치명적이지 않으므로 프로세스 계속 진행
-                    // 단, 메시지에 경고 추가
+                    // 메시지에 "실패"라는 단어를 포함하지 않도록 주의 (프론트엔드에서 에러로 인식할 수 있음)
                     if (message != null && !message.trim().isEmpty()) {
-                        message += " [경고: 대시보드 생성 실패 - 나중에 수동으로 생성 가능]";
+                        // 기존 메시지가 성공 메시지인 경우에만 경고 추가
+                        if (!message.toLowerCase().contains("실패") && !message.toLowerCase().contains("fail")) {
+                            message += " (대시보드 생성은 나중에 수동으로 가능)";
+                        }
                     } else {
-                        message = "온보딩 완료 (대시보드 생성 실패 - 나중에 수동으로 생성 가능)";
+                        message = "온보딩 완료 (대시보드 생성은 나중에 수동으로 가능)";
                     }
                     
                     // success는 그대로 유지 (대시보드 생성 실패해도 온보딩은 성공으로 처리)

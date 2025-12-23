@@ -352,7 +352,7 @@ export function OnboardingDecisionForm({ requestId, initialStatus }: Props) {
       </form>
 
       {/* 실시간 처리 현황 표시 */}
-      {status === "APPROVED" && (
+      {(status === "APPROVED" || isPolling) && (
         <div className="form-card" style={{ marginTop: "1rem" }}>
           <h2>🔄 실시간 처리 현황</h2>
           {processingStatus ? (

@@ -593,13 +593,28 @@ public class OnboardingServiceImpl implements OnboardingService {
             }
             final Map<String, java.util.List<String>> finalDashboardWidgets = dashboardWidgets;
 
+            // 프로시저 결과를 저장할 변수
+            final java.util.concurrent.atomic.AtomicReference<Map<String, Object>> approvalResultRef = 
+                    new java.util.concurrent.atomic.AtomicReference<>();
+            
             OnboardingErrorHandlingService.ExecutionResult executionResult =
                     errorHandlingService.executeWithRetry(() -> {
                         Map<String, Object> result = approvalService.processOnboardingApproval(
                                 requestId, tenantId, request.getTenantName(), businessType, actorId,
                                 note, finalContactEmail, finalAdminPasswordHash, finalSubdomain);
+                        approvalResultRef.set(result); // 결과 저장
                         Boolean success = (Boolean) result.get("success");
-                        return success != null && success;
+                        String resultMessage = (String) result.get("message");
+                        
+                        if (success == null || !success) {
+                            // 실패 시 실제 프로시저 오류 메시지를 포함한 예외 발생
+                            String errorMsg = resultMessage != null && !resultMessage.trim().isEmpty() 
+                                    ? resultMessage 
+                                    : "프로세스가 false를 반환했습니다.";
+                            log.error("❌ 프로시저 실행 실패: requestId={}, message={}", requestId, resultMessage);
+                            throw new RuntimeException(errorMsg);
+                        }
+                        return true;
                     }, 5, // 최대 5회 재시도
                             2000 // 2초 지연
                     );
@@ -609,18 +624,35 @@ public class OnboardingServiceImpl implements OnboardingService {
             String message;
 
             if (executionResult.isSuccess()) {
-                approvalResult = approvalService.processOnboardingApproval(requestId, tenantId,
-                        request.getTenantName(), businessType, actorId, note, finalContactEmail,
-                        finalAdminPasswordHash, finalSubdomain);
+                // 성공 시 저장된 결과 사용
+                approvalResult = approvalResultRef.get();
+                if (approvalResult == null) {
+                    // 저장된 결과가 없으면 다시 호출
+                    approvalResult = approvalService.processOnboardingApproval(requestId, tenantId,
+                            request.getTenantName(), businessType, actorId, note, finalContactEmail,
+                            finalAdminPasswordHash, finalSubdomain);
+                }
                 success = (Boolean) approvalResult.get("success");
                 message = (String) approvalResult.get("message");
             } else {
+                // 실패 시 저장된 결과에서 메시지 추출 시도
+                Map<String, Object> lastResult = approvalResultRef.get();
+                if (lastResult != null) {
+                    String lastMessage = (String) lastResult.get("message");
+                    if (lastMessage != null && !lastMessage.trim().isEmpty()) {
+                        message = lastMessage;
+                    } else {
+                        message = executionResult.getErrorMessage();
+                    }
+                } else {
+                    message = executionResult.getErrorMessage();
+                }
+                
                 success = false;
-                message = executionResult.getErrorMessage();
                 approvalResult = new java.util.HashMap<>();
                 approvalResult.put("success", false);
                 approvalResult.put("message", message);
-                log.error("온보딩 승인 프로세스 재시도 실패: requestId={}, attempts={}, error={}", requestId,
+                log.error("❌ 온보딩 승인 프로세스 재시도 실패: requestId={}, attempts={}, error={}", requestId,
                         executionResult.getAttemptCount(), message);
             }
 
@@ -1957,8 +1989,9 @@ public class OnboardingServiceImpl implements OnboardingService {
         // 별도 트랜잭션에서 요청 조회
         OnboardingRequest request = repository.findById(requestId).orElse(null);
         if (request == null) {
-            String errorMsg = OnboardingConstants.formatError(OnboardingConstants.ERROR_TENANT_NOT_FOUND, requestId);
-            log.error("온보딩 요청을 찾을 수 없음: requestId={}", requestId);
+            String errorMsg = OnboardingConstants
+                    .formatError(OnboardingConstants.ERROR_TENANT_NOT_FOUND, requestId);
+            log.error("온보딩 요청을 찾을 수 없음: requestId={}, error={}", requestId, errorMsg);
             // 예외를 throw하지 않고 null 반환 (상위에서 처리)
             return null;
         }

@@ -1,5 +1,4 @@
 package com.coresolution.core.service.impl;
-import com.coresolution.core.context.TenantContextHolder;
 
 import com.coresolution.core.service.OnboardingApprovalService;
 import lombok.RequiredArgsConstructor;
@@ -48,7 +47,15 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
         
         Map<String, Object> result = new HashMap<>();
         
-        try (Connection connection = jdbcTemplate.getDataSource().getConnection()) {
+        javax.sql.DataSource dataSource = jdbcTemplate.getDataSource();
+        if (dataSource == null) {
+            log.error("❌ DataSource가 null입니다. JDBC Template 설정을 확인하세요.");
+            result.put("success", false);
+            result.put("message", "데이터베이스 연결 설정 오류: DataSource가 null입니다.");
+            return result;
+        }
+        
+        try (Connection connection = dataSource.getConnection()) {
             
             // Collation 설정 (프로시저 실행 전)
             try (java.sql.Statement stmt = connection.createStatement()) {
@@ -131,22 +138,35 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
             
             // NULL 체크 및 기본값 설정
             if (success == null) {
-                log.warn("프로시저 success 값이 NULL입니다. 기본값 FALSE로 설정합니다.");
+                log.error("❌ 프로시저 success 값이 NULL입니다. 기본값 FALSE로 설정합니다. requestId={}, tenantId={}", requestId, tenantId);
                 success = false;
             }
             if (message == null || message.trim().isEmpty()) {
-                log.warn("프로시저 message 값이 NULL이거나 비어있습니다. 기본 메시지로 설정합니다.");
+                log.error("❌ 프로시저 message 값이 NULL이거나 비어있습니다. 기본 메시지로 설정합니다. requestId={}, tenantId={}", requestId, tenantId);
                 message = "프로시저 실행 중 오류가 발생했습니다. (상세 오류 정보 없음)";
                 // 프로시저 내부 오류 가능성 확인을 위해 SQL 경고 확인
                 try {
                     java.sql.SQLWarning warning = cs.getWarnings();
                     if (warning != null) {
-                        log.warn("프로시저 실행 경고: {}", warning.getMessage());
+                        log.error("❌ 프로시저 실행 경고: {}", warning.getMessage());
                         message += " [경고: " + warning.getMessage() + "]";
                     }
                 } catch (SQLException e) {
                     log.debug("경고 확인 중 오류 (무시): {}", e.getMessage());
                 }
+            }
+            
+            // 실패 시 상세 로그 출력
+            if (success == null || !success) {
+                log.error("❌ 프로시저 실행 실패 상세 정보:");
+                log.error("  - requestId: {}", requestId);
+                log.error("  - tenantId: {}", tenantId);
+                log.error("  - tenantName: {}", tenantName);
+                log.error("  - businessType: {}", businessType);
+                log.error("  - contactEmail: {}", contactEmail);
+                log.error("  - subdomain: {}", subdomain);
+                log.error("  - success: {}", success);
+                log.error("  - message: {}", message);
             }
             
             result.put("success", success);

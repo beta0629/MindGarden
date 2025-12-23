@@ -7,6 +7,7 @@ import java.sql.Types;
 import java.util.HashMap;
 import java.util.Map;
 import com.coresolution.core.service.OnboardingApprovalService;
+import com.coresolution.core.repository.RoleTemplateRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,6 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 public class OnboardingApprovalServiceImpl implements OnboardingApprovalService {
 
     private final JdbcTemplate jdbcTemplate;
+    private final RoleTemplateRepository roleTemplateRepository;
 
     @Override
     public Map<String, Object> processOnboardingApproval(java.util.UUID requestId, String tenantId,
@@ -592,51 +594,70 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
         // 기본 역할 생성 (CONSULTATION 또는 COUNSELING 업종 기준 - 둘 다 상담소이므로 동일한 역할 사용)
         if ("CONSULTATION".equals(businessType) || "COUNSELING".equals(businessType)) {
             try {
+                // 역할 템플릿 조회 (roleTemplateId 설정을 위해)
+                // COUNSELING은 CONSULTATION과 동일한 템플릿 사용
+                String directorTemplateId = roleTemplateRepository.findByTemplateCodeAndIsDeletedFalse("CONSULTATION_DIRECTOR")
+                        .map(rt -> rt.getRoleTemplateId())
+                        .orElse(null);
+                String counselorTemplateId = roleTemplateRepository.findByTemplateCodeAndIsDeletedFalse("CONSULTATION_COUNSELOR")
+                        .map(rt -> rt.getRoleTemplateId())
+                        .orElse(null);
+                String clientTemplateId = roleTemplateRepository.findByTemplateCodeAndIsDeletedFalse("CONSULTATION_CLIENT")
+                        .map(rt -> rt.getRoleTemplateId())
+                        .orElse(null);
+                String staffTemplateId = roleTemplateRepository.findByTemplateCodeAndIsDeletedFalse("CONSULTATION_STAFF")
+                        .map(rt -> rt.getRoleTemplateId())
+                        .orElse(null);
+                
+                log.debug("역할 템플릿 ID 조회: director={}, counselor={}, client={}, staff={}", 
+                        directorTemplateId, counselorTemplateId, clientTemplateId, staffTemplateId);
+                
                 // 원장 (ADMIN)
                 jdbcTemplate.update(
-                        "INSERT INTO tenant_roles (tenant_role_id, tenant_id, name, name_ko, name_en, "
+                        "INSERT INTO tenant_roles (tenant_role_id, tenant_id, role_template_id, name, name_ko, name_en, "
                                 + "description, description_ko, description_en, "
                                 + "is_active, display_order, created_at, updated_at, "
                                 + "created_by, updated_by, is_deleted, version, lang_code) "
-                                + "VALUES (UUID(), ?, '원장', '원장', 'Principal', "
+                                + "VALUES (UUID(), ?, ?, '원장', '원장', 'Principal', "
                                 + "'상담소 원장 역할', '상담소 원장 역할', 'Principal role for consultation center', "
                                 + "TRUE, 1, NOW(), NOW(), ?, ?, FALSE, 0, 'ko')",
-                        tenantId, approvedBy, approvedBy);
+                        tenantId, directorTemplateId, approvedBy, approvedBy);
 
                 // 상담사 (CONSULTANT)
                 jdbcTemplate.update(
-                        "INSERT INTO tenant_roles (tenant_role_id, tenant_id, name, name_ko, name_en, "
+                        "INSERT INTO tenant_roles (tenant_role_id, tenant_id, role_template_id, name, name_ko, name_en, "
                                 + "description, description_ko, description_en, "
                                 + "is_active, display_order, created_at, updated_at, "
                                 + "created_by, updated_by, is_deleted, version, lang_code) "
-                                + "VALUES (UUID(), ?, '상담사', '상담사', 'Consultant', "
+                                + "VALUES (UUID(), ?, ?, '상담사', '상담사', 'Consultant', "
                                 + "'상담사 역할', '상담사 역할', 'Consultant role', "
                                 + "TRUE, 2, NOW(), NOW(), ?, ?, FALSE, 0, 'ko')",
-                        tenantId, approvedBy, approvedBy);
+                        tenantId, counselorTemplateId, approvedBy, approvedBy);
 
                 // 내담자 (CLIENT)
                 jdbcTemplate.update(
-                        "INSERT INTO tenant_roles (tenant_role_id, tenant_id, name, name_ko, name_en, "
+                        "INSERT INTO tenant_roles (tenant_role_id, tenant_id, role_template_id, name, name_ko, name_en, "
                                 + "description, description_ko, description_en, "
                                 + "is_active, display_order, created_at, updated_at, "
                                 + "created_by, updated_by, is_deleted, version, lang_code) "
-                                + "VALUES (UUID(), ?, '내담자', '내담자', 'Client', "
+                                + "VALUES (UUID(), ?, ?, '내담자', '내담자', 'Client', "
                                 + "'내담자 역할', '내담자 역할', 'Client role', "
                                 + "TRUE, 3, NOW(), NOW(), ?, ?, FALSE, 0, 'ko')",
-                        tenantId, approvedBy, approvedBy);
+                        tenantId, clientTemplateId, approvedBy, approvedBy);
 
                 // 사무원 (STAFF)
                 jdbcTemplate.update(
-                        "INSERT INTO tenant_roles (tenant_role_id, tenant_id, name, name_ko, name_en, "
+                        "INSERT INTO tenant_roles (tenant_role_id, tenant_id, role_template_id, name, name_ko, name_en, "
                                 + "description, description_ko, description_en, "
                                 + "is_active, display_order, created_at, updated_at, "
                                 + "created_by, updated_by, is_deleted, version, lang_code) "
-                                + "VALUES (UUID(), ?, '사무원', '사무원', 'Staff', "
+                                + "VALUES (UUID(), ?, ?, '사무원', '사무원', 'Staff', "
                                 + "'사무원 역할', '사무원 역할', 'Staff role', "
                                 + "TRUE, 4, NOW(), NOW(), ?, ?, FALSE, 0, 'ko')",
-                        tenantId, approvedBy, approvedBy);
+                        tenantId, staffTemplateId, approvedBy, approvedBy);
 
-                log.info("기본 역할 생성 완료: tenantId={}", tenantId);
+                log.info("기본 역할 생성 완료: tenantId={}, roleTemplateIds=[director={}, counselor={}, client={}, staff={}]", 
+                        tenantId, directorTemplateId, counselorTemplateId, clientTemplateId, staffTemplateId);
                 return true;
             } catch (Exception e) {
                 log.error("역할 생성 실패: tenantId={}, error={}", tenantId, e.getMessage(), e);

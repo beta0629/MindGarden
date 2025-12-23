@@ -30,7 +30,7 @@ public class SchedulerExecutionLogService {
     /**
      * 실행 로그 저장
      */
-    @Transactional
+    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW, noRollbackFor = Exception.class)
     public void saveExecutionLog(
         String executionId,
         String tenantId,
@@ -59,7 +59,7 @@ public class SchedulerExecutionLogService {
     /**
      * 실행 로그 저장 (에러 포함)
      */
-    @Transactional
+    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW, noRollbackFor = Exception.class)
     public void saveExecutionLog(
         String executionId,
         String tenantId,
@@ -91,7 +91,7 @@ public class SchedulerExecutionLogService {
     /**
      * 실행 요약 저장
      */
-    @Transactional
+    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW, noRollbackFor = Exception.class)
     public void saveSummaryLog(
         String executionId,
         String schedulerName,
@@ -125,7 +125,7 @@ public class SchedulerExecutionLogService {
     /**
      * 실행 요약 저장 (시작/종료 시간 포함)
      */
-    @Transactional
+    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW, noRollbackFor = Exception.class)
     public void saveSummaryLog(
         String executionId,
         String schedulerName,

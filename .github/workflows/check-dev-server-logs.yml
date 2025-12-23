@@ -36,10 +36,22 @@ jobs:
           sudo journalctl -u mindgarden-dev.service --no-pager -n 100 || true
           echo ""
           
+          # 온보딩 프로세스 관련 로그 (최근 200줄)
+          echo "📋 온보딩 프로세스 관련 로그 (최근 200줄):"
+          echo "=========================================="
+          sudo journalctl -u mindgarden-dev.service --no-pager -n 500 | grep -i -E "(온보딩|onboarding|ProcessOnboardingApproval|프로시저 실행|프로시저 결과|권한 그룹|commonCodes|roleCodes|permissionGroups)" || echo "온보딩 관련 로그 없음"
+          echo ""
+          
           # 애플리케이션 에러 로그
           echo "📋 애플리케이션 에러 로그:"
           echo "=========================================="
           sudo tail -100 /var/log/mindgarden/dev-error.log 2>/dev/null || echo "에러 로그 파일 없음"
+          echo ""
+          
+          # 온보딩 프로세스 에러 로그 (필터링)
+          echo "📋 온보딩 프로세스 에러 로그 (필터링):"
+          echo "=========================================="
+          sudo tail -200 /var/log/mindgarden/dev-error.log 2>/dev/null | grep -i -E "(온보딩|onboarding|ProcessOnboardingApproval|프로시저 실행 실패|프로시저 결과|권한 그룹|Transaction.*rolled back)" || echo "온보딩 관련 에러 로그 없음"
           echo ""
           
           # 애플리케이션 일반 로그

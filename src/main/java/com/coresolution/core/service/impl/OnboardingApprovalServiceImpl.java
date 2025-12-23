@@ -87,10 +87,22 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
             cs.registerOutParameter(11, Types.VARCHAR); // p_message
             
             // 프로시저 실행
-            log.info("프로시저 실행 시작: requestId={}, tenantId={}, tenantName={}, businessType={}, contactEmail={}, subdomain={}", 
-                requestId, tenantId, tenantName, businessType, contactEmail, subdomain);
+            log.info("==========================================");
+            log.info("🚀 프로시저 실행 시작");
+            log.info("  - requestId: {}", requestId);
+            log.info("  - tenantId: {}", tenantId);
+            log.info("  - tenantName: {}", tenantName);
+            log.info("  - businessType: {}", businessType);
+            log.info("  - contactEmail: {}", contactEmail);
+            log.info("  - subdomain: {}", subdomain);
+            log.info("  - approvedBy: {}", approvedBy);
+            log.info("==========================================");
+            
+            long startTime = System.currentTimeMillis();
             boolean hasResult = cs.execute();
-            log.info("프로시저 실행 완료: hasResult={}", hasResult);
+            long duration = System.currentTimeMillis() - startTime;
+            
+            log.info("프로시저 실행 완료: hasResult={}, duration={}ms", hasResult, duration);
             
             // 결과 추출
             Boolean success = null;
@@ -134,15 +146,23 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                 }
             }
             
-            log.info("프로시저 결과 (최종): success={}, message={}", success, message);
+            log.info("==========================================");
+            log.info("📋 프로시저 결과 (최종)");
+            log.info("  - success: {}", success);
+            log.info("  - message: {}", message);
+            log.info("==========================================");
             
             // NULL 체크 및 기본값 설정
             if (success == null) {
-                log.error("❌ 프로시저 success 값이 NULL입니다. 기본값 FALSE로 설정합니다. requestId={}, tenantId={}", requestId, tenantId);
+                log.error("❌❌❌ 프로시저 success 값이 NULL입니다. 기본값 FALSE로 설정합니다.");
+                log.error("  - requestId: {}", requestId);
+                log.error("  - tenantId: {}", tenantId);
                 success = false;
             }
             if (message == null || message.trim().isEmpty()) {
-                log.error("❌ 프로시저 message 값이 NULL이거나 비어있습니다. 기본 메시지로 설정합니다. requestId={}, tenantId={}", requestId, tenantId);
+                log.error("❌❌❌ 프로시저 message 값이 NULL이거나 비어있습니다. 기본 메시지로 설정합니다.");
+                log.error("  - requestId: {}", requestId);
+                log.error("  - tenantId: {}", tenantId);
                 message = "프로시저 실행 중 오류가 발생했습니다. (상세 오류 정보 없음)";
                 // 프로시저 내부 오류 가능성 확인을 위해 SQL 경고 확인
                 try {
@@ -158,15 +178,26 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
             
             // 실패 시 상세 로그 출력
             if (success == null || !success) {
-                log.error("❌ 프로시저 실행 실패 상세 정보:");
+                log.error("==========================================");
+                log.error("❌❌❌ 프로시저 실행 실패 상세 정보");
+                log.error("==========================================");
                 log.error("  - requestId: {}", requestId);
                 log.error("  - tenantId: {}", tenantId);
                 log.error("  - tenantName: {}", tenantName);
                 log.error("  - businessType: {}", businessType);
                 log.error("  - contactEmail: {}", contactEmail);
                 log.error("  - subdomain: {}", subdomain);
+                log.error("  - approvedBy: {}", approvedBy);
                 log.error("  - success: {}", success);
                 log.error("  - message: {}", message);
+                log.error("==========================================");
+                
+                // 프로시저 내부 단계별 오류 확인을 위한 추가 정보
+                log.error("💡 프로시저 실패 가능 단계:");
+                log.error("  1. CreateOrActivateTenant - 테넌트 생성/활성화");
+                log.error("  2. ApplyDefaultRoleTemplates - 역할 템플릿 적용");
+                log.error("  3. CreateTenantAdminAccount - 관리자 계정 생성");
+                log.error("💡 위 단계 중 하나에서 실패했을 가능성이 높습니다.");
             }
             
             result.put("success", success);
@@ -192,17 +223,40 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
             } // CallableStatement 닫기
             
         } catch (SQLException e) {
-            log.error("온보딩 승인 프로세스 중 SQL 오류 발생: {}", e.getMessage(), e);
-            log.error("SQL 상태 코드: {}, 오류 코드: {}", e.getSQLState(), e.getErrorCode());
+            log.error("==========================================");
+            log.error("❌❌❌ 온보딩 승인 프로세스 중 SQL 오류 발생");
+            log.error("==========================================");
+            log.error("  - requestId: {}", requestId);
+            log.error("  - tenantId: {}", tenantId);
+            log.error("  - 오류 메시지: {}", e.getMessage());
+            log.error("  - SQL 상태 코드: {}", e.getSQLState());
+            log.error("  - 오류 코드: {}", e.getErrorCode());
             if (e.getNextException() != null) {
-                log.error("연결된 예외: {}", e.getNextException().getMessage());
+                log.error("  - 연결된 예외: {}", e.getNextException().getMessage());
             }
+            log.error("==========================================");
+            log.error("스택 트레이스:", e);
+            
+            String errorMessage = "온보딩 승인 프로세스 중 SQL 오류 발생: " + e.getMessage();
+            if (e.getSQLState() != null) {
+                errorMessage += " [SQL State: " + e.getSQLState() + "]";
+            }
+            if (e.getErrorCode() != 0) {
+                errorMessage += " [Error Code: " + e.getErrorCode() + "]";
+            }
+            
             result.put("success", false);
-            result.put("message", "온보딩 승인 프로세스 중 오류 발생: " + e.getMessage() + 
-                (e.getSQLState() != null ? " [SQL State: " + e.getSQLState() + "]" : "") +
-                (e.getErrorCode() != 0 ? " [Error Code: " + e.getErrorCode() + "]" : ""));
+            result.put("message", errorMessage);
         } catch (Exception e) {
-            log.error("온보딩 승인 프로세스 중 예외 발생: {}", e.getMessage(), e);
+            log.error("==========================================");
+            log.error("❌❌❌ 온보딩 승인 프로세스 중 예외 발생");
+            log.error("==========================================");
+            log.error("  - requestId: {}", requestId);
+            log.error("  - tenantId: {}", tenantId);
+            log.error("  - 오류 메시지: {}", e.getMessage());
+            log.error("==========================================");
+            log.error("스택 트레이스:", e);
+            
             result.put("success", false);
             result.put("message", "온보딩 승인 프로세스 중 오류 발생: " + e.getMessage());
         }

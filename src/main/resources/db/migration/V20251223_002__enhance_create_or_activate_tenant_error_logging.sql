@@ -1,29 +1,29 @@
 -- V20251223_002: CreateOrActivateTenant 프로시저 오류 로깅 강화
 -- 목적: 락 타임아웃 및 기타 오류를 더 명확하게 감지하고 상세 정보 반환
 -- 문제: 프로시저가 50초 후 "알 수 없는 오류"로 실패 (innodb_lock_wait_timeout=50초)
+-- 기반: V20251212_003 파일의 작동하는 프로시저 패턴 사용
 
 DROP PROCEDURE IF EXISTS CreateOrActivateTenant;
 
 DELIMITER //
 
 CREATE PROCEDURE CreateOrActivateTenant(
-    IN p_tenant_id VARCHAR(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-    IN p_tenant_name VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-    IN p_business_type VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-    IN p_approved_by VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-    IN p_admin_email VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-    IN p_admin_password_hash VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-    IN p_subdomain VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+    IN p_tenant_id VARCHAR(64),
+    IN p_tenant_name VARCHAR(255),
+    IN p_business_type VARCHAR(50),
+    IN p_approved_by VARCHAR(100),
+    IN p_admin_email VARCHAR(100),
+    IN p_admin_password_hash VARCHAR(100),
+    IN p_subdomain VARCHAR(100),
     OUT p_success BOOLEAN,
-    OUT p_message TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
+    OUT p_message TEXT
 )
 BEGIN
     DECLARE v_exists BOOLEAN DEFAULT FALSE;
-    DECLARE v_error_message VARCHAR(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+    DECLARE v_error_message VARCHAR(500);
     DECLARE v_error_code INT DEFAULT 0;
-    DECLARE v_error_state VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-    DECLARE v_subdomain VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT '';
-    DECLARE v_domain VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT '';
+    DECLARE v_subdomain VARCHAR(100) DEFAULT '';
+    DECLARE v_domain VARCHAR(255) DEFAULT '';
     DECLARE v_settings_json JSON DEFAULT NULL;
     DECLARE v_counter INT DEFAULT 0;
     DECLARE v_consultation_enabled BOOLEAN DEFAULT FALSE;
@@ -34,26 +34,19 @@ BEGIN
         ROLLBACK;
         GET DIAGNOSTICS CONDITION 1
             v_error_code = MYSQL_ERRNO,
-            v_error_state = RETURNED_SQLSTATE,
             v_error_message = MESSAGE_TEXT;
         
         IF v_error_code = 1205 THEN
             SET p_success = FALSE;
-            SET p_message = CONCAT('테넌트 생성/활성화 실패: 락 타임아웃 발생. Error Code: ', v_error_code, ', SQL State: ', IFNULL(v_error_state, 'UNKNOWN'));
+            SET p_message = CONCAT('테넌트 생성/활성화 실패: 락 타임아웃 발생 (Error Code: ', v_error_code, ')');
         ELSEIF v_error_code = 1213 THEN
             SET p_success = FALSE;
-            SET p_message = CONCAT('테넌트 생성/활성화 실패: 데드락 발생. Error Code: ', v_error_code, ', SQL State: ', IFNULL(v_error_state, 'UNKNOWN'));
-        ELSEIF v_error_message IS NOT NULL AND v_error_message != '' THEN
-            SET p_success = FALSE;
-            SET p_message = CONCAT('테넌트 생성/활성화 중 오류 발생: ', v_error_message, ' [Error Code: ', v_error_code, ', SQL State: ', IFNULL(v_error_state, 'UNKNOWN'), ']');
+            SET p_message = CONCAT('테넌트 생성/활성화 실패: 데드락 발생 (Error Code: ', v_error_code, ')');
         ELSE
             SET p_success = FALSE;
-            SET p_message = CONCAT('테넌트 생성/활성화 중 알 수 없는 오류 발생. Error Code: ', IFNULL(v_error_code, 'NULL'), ', SQL State: ', IFNULL(v_error_state, 'NULL'));
+            SET p_message = CONCAT('테넌트 생성/활성화 중 오류 발생: ', IFNULL(v_error_message, '알 수 없는 오류'), ' (Error Code: ', IFNULL(v_error_code, 'NULL'), ')');
         END IF;
     END;
-    
-    SET p_success = FALSE;
-    SET p_message = '';
     
     START TRANSACTION;
     
@@ -90,8 +83,7 @@ BEGIN
                 FROM tenants
                 WHERE (subdomain = v_subdomain OR JSON_EXTRACT(COALESCE(settings_json, '{}'), '$.subdomain') = v_subdomain)
                 AND is_deleted = FALSE
-                AND tenant_id != p_tenant_id
-                FOR UPDATE;
+                AND tenant_id != p_tenant_id;
                 IF NOT v_exists THEN
                     LEAVE;
                 END IF;
@@ -141,8 +133,7 @@ BEGIN
             FROM tenants
             WHERE (subdomain = v_subdomain OR JSON_EXTRACT(COALESCE(settings_json, '{}'), '$.subdomain') = v_subdomain)
             AND is_deleted = FALSE
-            AND tenant_id != p_tenant_id
-            FOR UPDATE;
+            AND tenant_id != p_tenant_id;
             
             IF NOT v_exists THEN
                 LEAVE;

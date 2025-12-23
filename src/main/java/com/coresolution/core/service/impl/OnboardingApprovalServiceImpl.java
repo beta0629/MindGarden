@@ -114,9 +114,10 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                 // 프로시저 실행 전 상태 확인
                 try {
                     java.sql.Statement checkStmt = connection.createStatement();
-                    java.sql.ResultSet rs = checkStmt.executeQuery("SELECT CONNECTION_ID(), DATABASE(), USER()");
+                    java.sql.ResultSet rs =
+                            checkStmt.executeQuery("SELECT CONNECTION_ID(), DATABASE(), USER()");
                     if (rs.next()) {
-                        log.info("프로시저 실행 전 상태: connectionId={}, database={}, user={}", 
+                        log.info("프로시저 실행 전 상태: connectionId={}, database={}, user={}",
                                 rs.getLong(1), rs.getString(2), rs.getString(3));
                     }
                     rs.close();
@@ -124,19 +125,20 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                 } catch (SQLException e) {
                     log.warn("프로시저 실행 전 상태 확인 실패 (무시): {}", e.getMessage());
                 }
-                
+
                 long startTime = System.currentTimeMillis();
                 boolean hasResult = cs.execute();
                 long duration = System.currentTimeMillis() - startTime;
 
                 log.info("프로시저 실행 완료: hasResult={}, duration={}ms", hasResult, duration);
-                
+
                 // 프로시저 실행 후 상태 확인
                 try {
                     java.sql.Statement checkStmt = connection.createStatement();
-                    java.sql.ResultSet rs = checkStmt.executeQuery("SELECT @@error_count, @@warning_count, LAST_INSERT_ID()");
+                    java.sql.ResultSet rs = checkStmt.executeQuery(
+                            "SELECT @@error_count, @@warning_count, LAST_INSERT_ID()");
                     if (rs.next()) {
-                        log.info("프로시저 실행 후 상태: errorCount={}, warningCount={}, lastInsertId={}", 
+                        log.info("프로시저 실행 후 상태: errorCount={}, warningCount={}, lastInsertId={}",
                                 rs.getInt(1), rs.getInt(2), rs.getLong(3));
                     }
                     rs.close();
@@ -199,10 +201,8 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                         int warningCount = 0;
                         while (currentWarning != null && warningCount < 10) {
                             log.warn("  Warning [{}]: SQLState={}, ErrorCode={}, Message={}",
-                                    warningCount + 1,
-                                    currentWarning.getSQLState(),
-                                    currentWarning.getErrorCode(),
-                                    currentWarning.getMessage());
+                                    warningCount + 1, currentWarning.getSQLState(),
+                                    currentWarning.getErrorCode(), currentWarning.getMessage());
                             currentWarning = currentWarning.getNextWarning();
                             warningCount++;
                         }

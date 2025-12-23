@@ -31,6 +31,8 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
     private final JdbcTemplate jdbcTemplate;
     private final RoleTemplateRepository roleTemplateRepository;
     private final EntityManager entityManager;
+    private final com.coresolution.core.repository.onboarding.OnboardingRequestRepository onboardingRequestRepository;
+    private final com.fasterxml.jackson.databind.ObjectMapper objectMapper;
 
     @Override
     public Map<String, Object> processOnboardingApproval(java.util.UUID requestId, String tenantId,
@@ -276,46 +278,57 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                     StringBuilder fallbackMessage = new StringBuilder("프로시저 실패 후 Java 재시도: ");
 
                     // 1. 테넌트 생성/활성화 확인 및 필요시 생성
+                    updateProcessingStatus(requestId, "TENANT_CREATE", "IN_PROGRESS", "테넌트 생성/활성화 중 (Java 재시도)...");
                     try {
                         tenantCreated = ensureTenantExists(tenantId, tenantName, businessType,
                                 subdomain, approvedBy);
                         if (tenantCreated) {
                             fallbackMessage.append("테넌트=OK, ");
+                            updateProcessingStatus(requestId, "TENANT_CREATE", "SUCCESS", "테넌트 생성/활성화 완료");
                         } else {
                             fallbackMessage.append("테넌트=실패, ");
+                            updateProcessingStatus(requestId, "TENANT_CREATE", "FAILED", "테넌트 생성/활성화 실패");
                         }
                     } catch (Exception e) {
                         log.error("테넌트 생성/활성화 실패: tenantId={}, error={}", tenantId, e.getMessage());
                         fallbackMessage.append("테넌트=오류, ");
+                        updateProcessingStatus(requestId, "TENANT_CREATE", "FAILED", "테넌트 생성/활성화 오류: " + e.getMessage());
                     }
 
                     // 2. 역할 템플릿 적용 확인 (테넌트가 존재하는 경우에만)
                     if (tenantCreated) {
+                        updateProcessingStatus(requestId, "ROLE_APPLY", "IN_PROGRESS", "역할 템플릿 적용 중 (Java 재시도)...");
                         try {
                             rolesApplied = ensureRolesApplied(tenantId, businessType, approvedBy);
                             if (rolesApplied) {
                                 fallbackMessage.append("역할=OK, ");
+                                updateProcessingStatus(requestId, "ROLE_APPLY", "SUCCESS", "역할 템플릿 적용 완료");
                             } else {
                                 fallbackMessage.append("역할=실패, ");
+                                updateProcessingStatus(requestId, "ROLE_APPLY", "FAILED", "역할 템플릿 적용 실패");
                             }
                         } catch (Exception e) {
                             log.error("역할 템플릿 적용 실패: tenantId={}, error={}", tenantId,
                                     e.getMessage());
                             fallbackMessage.append("역할=오류, ");
+                            updateProcessingStatus(requestId, "ROLE_APPLY", "FAILED", "역할 템플릿 적용 오류: " + e.getMessage());
                         }
                     }
 
                     // 3. 관리자 계정 생성 (테넌트가 존재하는 경우에만)
                     if (tenantCreated && contactEmail != null && !contactEmail.trim().isEmpty()
                             && adminPasswordHash != null && !adminPasswordHash.trim().isEmpty()) {
+                        updateProcessingStatus(requestId, "ADMIN_CREATE", "IN_PROGRESS", "관리자 계정 생성 중 (Java 재시도)...");
                         try {
                             createAdminAccountDirectly(tenantId, contactEmail, tenantName,
                                     adminPasswordHash, approvedBy);
                             fallbackMessage.append("관리자=OK");
+                            updateProcessingStatus(requestId, "ADMIN_CREATE", "SUCCESS", "관리자 계정 생성 완료");
                         } catch (Exception e) {
                             log.warn("관리자 계정 직접 생성 실패: tenantId={}, error={}", tenantId,
                                     e.getMessage());
                             fallbackMessage.append("관리자=실패");
+                            updateProcessingStatus(requestId, "ADMIN_CREATE", "FAILED", "관리자 계정 생성 실패: " + e.getMessage());
                         }
                     }
 
@@ -726,6 +739,62 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
         } else {
             log.warn("지원하지 않는 업종: businessType={}", businessType);
             return false;
+        }
+    }
+
+    /**
+     * 처리 상태 업데이트 (Java 재시도 단계별 상태 표시용)
+     */
+    private void updateProcessingStatus(java.util.UUID requestId, String step, String status, String message) {
+        try {
+            OnboardingRequest request = onboardingRequestRepository.findById(requestId).orElse(null);
+            if (request == null) {
+                log.warn("온보딩 요청을 찾을 수 없어 상태 업데이트 실패: requestId={}", requestId);
+                return;
+            }
+
+            Map<String, Object> statusMap = new HashMap<>();
+            String existingJson = request.getInitializationStatusJson();
+            if (existingJson != null && !existingJson.trim().isEmpty()) {
+                try {
+                    statusMap = objectMapper.readValue(existingJson, new TypeReference<Map<String, Object>>() {});
+                } catch (JsonProcessingException e) {
+                    log.warn("기존 상태 JSON 파싱 실패, 새로 생성: requestId={}, error={}", requestId, e.getMessage());
+                }
+            }
+
+            // 단계별 상태 업데이트
+            Map<String, Object> stepStatus = new HashMap<>();
+            stepStatus.put("status", status);
+            stepStatus.put("message", message != null ? message : "");
+            stepStatus.put("updatedAt", java.time.LocalDateTime.now().toString());
+            statusMap.put(step, stepStatus);
+
+            // 전체 진행률 계산
+            int totalSteps = 5; // PROCEDURE_START, TENANT_CREATE, ROLE_APPLY, ADMIN_CREATE, DASHBOARD_CREATE
+            int completedSteps = 0;
+            String[] steps = {"PROCEDURE_START", "TENANT_CREATE", "ROLE_APPLY", "ADMIN_CREATE", "DASHBOARD_CREATE"};
+            for (String s : steps) {
+                if (statusMap.containsKey(s)) {
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> stepData = (Map<String, Object>) statusMap.get(s);
+                    if (stepData != null && "SUCCESS".equals(stepData.get("status"))) {
+                        completedSteps++;
+                    }
+                }
+            }
+            int progress = (int) ((completedSteps / (double) totalSteps) * 100);
+            statusMap.put("progress", progress);
+            statusMap.put("lastUpdated", java.time.LocalDateTime.now().toString());
+
+            String statusJson = objectMapper.writeValueAsString(statusMap);
+            request.setInitializationStatusJson(statusJson);
+            onboardingRequestRepository.save(request);
+
+            log.debug("처리 상태 업데이트: requestId={}, step={}, status={}, progress={}%", requestId, step, status, progress);
+        } catch (Exception e) {
+            log.error("처리 상태 업데이트 실패: requestId={}, step={}, error={}", requestId, step, e.getMessage(), e);
+            // 예외를 throw하지 않음 (상태 업데이트 실패가 전체 프로세스를 중단시키면 안 됨)
         }
     }
 }

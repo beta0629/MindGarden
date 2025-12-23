@@ -51,6 +51,7 @@ export function OnboardingDecisionForm({ requestId, initialStatus }: Props) {
   const [showPassword, setShowPassword] = useState(false);
   const [processingStatus, setProcessingStatus] = useState<Record<string, any> | null>(null);
   const [isPolling, setIsPolling] = useState(false);
+  const [pollIntervalRef, setPollIntervalRef] = useState<NodeJS.Timeout | null>(null);
 
   // 공통코드에서 온보딩 상태 코드 조회
   useEffect(() => {
@@ -203,34 +204,65 @@ export function OnboardingDecisionForm({ requestId, initialStatus }: Props) {
 
   // 처리 현황 폴링
   const startPolling = () => {
+    // 기존 폴링이 있으면 중지
+    if (pollIntervalRef) {
+      clearInterval(pollIntervalRef);
+    }
+    
+    // 즉시 한 번 조회
+    getProcessingStatus(requestId).then(status => {
+      setProcessingStatus(status);
+      console.log("[OnboardingDecisionForm] 초기 처리 상태:", status);
+    }).catch(err => {
+      console.error("[OnboardingDecisionForm] 초기 처리 상태 조회 실패:", err);
+    });
+    
     const pollInterval = setInterval(async () => {
       try {
         const status = await getProcessingStatus(requestId);
+        console.log("[OnboardingDecisionForm] 처리 상태 업데이트:", status);
         setProcessingStatus(status);
         
         // 완료 또는 실패 시 폴링 중지
         if (status.progress === 100 || status.COMPLETE?.status === "SUCCESS" || status.COMPLETE?.status === "FAILED") {
           clearInterval(pollInterval);
           setIsPolling(false);
+          setPollIntervalRef(null);
         }
       } catch (err) {
         console.error("[OnboardingDecisionForm] 처리 상태 조회 실패:", err);
       }
     }, 1000); // 1초마다 조회
     
+    setPollIntervalRef(pollInterval);
+    
     // 60초 후 자동 중지 (타임아웃)
     setTimeout(() => {
       clearInterval(pollInterval);
       setIsPolling(false);
+      setPollIntervalRef(null);
     }, 60000);
   };
 
   // 컴포넌트 언마운트 시 폴링 중지
   useEffect(() => {
     return () => {
+      if (pollIntervalRef) {
+        clearInterval(pollIntervalRef);
+      }
       setIsPolling(false);
     };
-  }, []);
+  }, [pollIntervalRef]);
+  
+  // 승인 상태일 때 자동으로 폴링 시작 (초기 로드 시)
+  useEffect(() => {
+    if (status === "APPROVED" && !isPolling && !pollIntervalRef) {
+      console.log("[OnboardingDecisionForm] 승인 상태 감지, 폴링 시작");
+      setIsPolling(true);
+      startPolling();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status]);
 
   return (
     <>
@@ -302,10 +334,10 @@ export function OnboardingDecisionForm({ requestId, initialStatus }: Props) {
       </form>
 
       {/* 실시간 처리 현황 표시 */}
-      {(isPolling || processingStatus) && status === "APPROVED" && (
+      {status === "APPROVED" && (
         <div className="form-card" style={{ marginTop: "1rem" }}>
           <h2>🔄 실시간 처리 현황</h2>
-          {processingStatus && (
+          {processingStatus ? (
             <div style={{ marginTop: "1rem" }}>
               {/* 진행률 표시 */}
               {processingStatus.progress !== undefined && (
@@ -389,6 +421,10 @@ export function OnboardingDecisionForm({ requestId, initialStatus }: Props) {
                   🔄 실시간 업데이트 중...
                 </div>
               )}
+            </div>
+          ) : (
+            <div style={{ marginTop: "1rem", textAlign: "center", color: "#666", fontSize: "0.875rem" }}>
+              {isPolling ? "처리 상태 조회 중..." : "처리 상태 정보가 없습니다."}
             </div>
           )}
         </div>

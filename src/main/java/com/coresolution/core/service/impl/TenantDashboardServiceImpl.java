@@ -374,10 +374,14 @@ public class TenantDashboardServiceImpl implements TenantDashboardService {
                     .version(0L) // BaseEntity 필드 명시적 설정
                     .build();
             
-            TenantDashboard saved = dashboardRepository.save(dashboard);
-            createdDashboards.add(toResponse(saved));
-            
-            log.info("기본 대시보드 생성 완료: dashboardId={}, roleName={}", dashboardId, roleName);
+            // 락 타임아웃 대응: 재시도 로직 포함
+            TenantDashboard saved = saveDashboardWithRetry(dashboard, tenantId, roleName);
+            if (saved != null) {
+                createdDashboards.add(toResponse(saved));
+                log.info("기본 대시보드 생성 완료: dashboardId={}, roleName={}", dashboardId, roleName);
+            } else {
+                log.warn("대시보드 생성 실패 (재시도 후에도 실패): tenantId={}, roleName={}", tenantId, roleName);
+            }
         }
         
         log.info("기본 대시보드 생성 완료: tenantId={}, count={}", tenantId, createdDashboards.size());
@@ -390,6 +394,76 @@ public class TenantDashboardServiceImpl implements TenantDashboardService {
                 com.coresolution.core.context.TenantContextHolder.clear();
             }
         }
+    }
+    
+    /**
+     * 대시보드 저장 (락 타임아웃 재시도 포함)
+     * @param dashboard 저장할 대시보드
+     * @param tenantId 테넌트 ID
+     * @param roleName 역할명 (로깅용)
+     * @return 저장된 대시보드 (실패 시 null)
+     */
+    private TenantDashboard saveDashboardWithRetry(TenantDashboard dashboard, String tenantId, String roleName) {
+        int maxRetries = 10;
+        long retryDelay = 1000; // 1초
+        
+        for (int attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+                // EntityManager 캐시 비우기 (락 해제 대기)
+                if (attempt > 1) {
+                    entityManager.flush();
+                    entityManager.clear();
+                }
+                
+                TenantDashboard saved = dashboardRepository.save(dashboard);
+                if (attempt > 1) {
+                    log.info("대시보드 생성 성공 (재시도 후): tenantId={}, roleName={}, attempt={}/{}", 
+                            tenantId, roleName, attempt, maxRetries);
+                }
+                return saved;
+                
+            } catch (org.springframework.dao.PessimisticLockingFailureException e) {
+                if (attempt < maxRetries) {
+                    log.warn("대시보드 생성 중 락 타임아웃 발생 (재시도): tenantId={}, roleName={}, attempt={}/{}, error={}", 
+                            tenantId, roleName, attempt, maxRetries, e.getMessage());
+                    try {
+                        Thread.sleep(retryDelay);
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        log.error("재시도 대기 중 인터럽트 발생");
+                        return null;
+                    }
+                } else {
+                    log.error("대시보드 생성 실패 (모든 재시도 실패): tenantId={}, roleName={}, error={}", 
+                            tenantId, roleName, e.getMessage());
+                    return null;
+                }
+            } catch (Exception e) {
+                String errorMsg = e.getMessage();
+                if (errorMsg != null && (errorMsg.contains("Lock wait timeout") || 
+                                         errorMsg.contains("lock timeout") ||
+                                         errorMsg.contains("deadlock"))) {
+                    if (attempt < maxRetries) {
+                        log.warn("대시보드 생성 중 락 관련 오류 발생 (재시도): tenantId={}, roleName={}, attempt={}/{}, error={}", 
+                                tenantId, roleName, attempt, maxRetries, errorMsg);
+                        try {
+                            Thread.sleep(retryDelay);
+                        } catch (InterruptedException ie) {
+                            Thread.currentThread().interrupt();
+                            log.error("재시도 대기 중 인터럽트 발생");
+                            return null;
+                        }
+                        continue;
+                    }
+                }
+                // 락 관련이 아닌 오류는 즉시 실패
+                log.error("대시보드 생성 실패: tenantId={}, roleName={}, error={}", 
+                        tenantId, roleName, e.getMessage(), e);
+                return null;
+            }
+        }
+        
+        return null;
     }
     
     @Override

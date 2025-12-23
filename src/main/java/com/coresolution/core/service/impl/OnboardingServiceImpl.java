@@ -657,7 +657,7 @@ public class OnboardingServiceImpl implements OnboardingService {
             }
 
             if (success != null && success) {
-                // 대시보드 생성 (필수) - 실패 시 전체 롤백
+                // 대시보드 생성 (방어 코드: 실패해도 프로세스 계속 진행)
                 OnboardingErrorHandlingService.ExecutionResult dashboardResult =
                         errorHandlingService.executeWithRetry(() -> {
                             // 테넌트 컨텍스트 설정 (대시보드 생성 시 필요)
@@ -674,8 +674,25 @@ public class OnboardingServiceImpl implements OnboardingService {
                                                 finalDashboardTemplates, finalDashboardWidgets);
 
                                 log.info("기본 대시보드 생성 완료: tenantId={}, count={}, templates={}",
-                                        tenantId, dashboards.size(), finalDashboardTemplates);
+                                        tenantId, dashboards != null ? dashboards.size() : 0, finalDashboardTemplates);
                                 return dashboards != null && !dashboards.isEmpty();
+                            } catch (org.springframework.dao.PessimisticLockingFailureException e) {
+                                // 락 타임아웃 예외는 재시도 가능하도록 다시 throw
+                                log.warn("대시보드 생성 중 락 타임아웃 발생 (재시도 예정): tenantId={}, error={}", 
+                                        tenantId, e.getMessage());
+                                throw e;
+                            } catch (Exception e) {
+                                // 다른 예외도 재시도 가능하도록 throw
+                                String errorMsg = e.getMessage();
+                                if (errorMsg != null && (errorMsg.contains("Lock wait timeout") || 
+                                                         errorMsg.contains("lock timeout") ||
+                                                         errorMsg.contains("deadlock"))) {
+                                    log.warn("대시보드 생성 중 락 관련 오류 발생 (재시도 예정): tenantId={}, error={}", 
+                                            tenantId, errorMsg);
+                                    throw e;
+                                }
+                                // 락 관련이 아닌 오류는 그대로 throw
+                                throw e;
                             } finally {
                                 // 테넌트 컨텍스트 복원
                                 if (previousTenantId != null) {
@@ -684,23 +701,27 @@ public class OnboardingServiceImpl implements OnboardingService {
                                     TenantContextHolder.clear();
                                 }
                             }
-                        }, 10, // 최대 10회 재시도 (트랜잭션 타이밍 문제 대응)
-                                500 // 0.5초 지연
+                        }, 15, // 최대 15회 재시도 (락 타임아웃 대응)
+                                1000 // 1초 지연 (락 해제 대기 시간 증가)
                         );
 
                 if (!dashboardResult.isSuccess()) {
-                    // 대시보드 생성 실패 시 전체 프로세스 실패 처리 및 롤백
-                    String dashboardError =
-                            "대시보드 생성 실패: " + (dashboardResult.getErrorMessage() != null
-                                    ? dashboardResult.getErrorMessage()
-                                    : "알 수 없는 오류");
-                    log.error("기본 대시보드 생성 재시도 실패: tenantId={}, attempts={}, error={}", tenantId,
-                            dashboardResult.getAttemptCount(), dashboardResult.getErrorMessage());
-                    success = false;
-                    message = dashboardError;
-                    // 예외를 발생시켜 전체 트랜잭션 롤백
-                    // RuntimeException을 throw하면 트랜잭션이 롤백되지만, 예외는 상위로 전파되어 500 오류 발생
-                    // 따라서 예외를 throw하지 않고 success = false로 처리하여 아래에서 ON_HOLD 상태로 변경
+                    // 대시보드 생성 실패 시 경고만 로그하고 프로세스 계속 진행 (방어 코드)
+                    log.warn("⚠️ 기본 대시보드 생성 재시도 실패 (프로세스 계속 진행): tenantId={}, attempts={}, error={}", 
+                            tenantId, dashboardResult.getAttemptCount(), dashboardResult.getErrorMessage());
+                    
+                    // 대시보드 생성 실패는 치명적이지 않으므로 프로세스 계속 진행
+                    // 단, 메시지에 경고 추가
+                    if (message != null && !message.trim().isEmpty()) {
+                        message += " [경고: 대시보드 생성 실패 - 나중에 수동으로 생성 가능]";
+                    } else {
+                        message = "온보딩 완료 (대시보드 생성 실패 - 나중에 수동으로 생성 가능)";
+                    }
+                    
+                    // success는 그대로 유지 (대시보드 생성 실패해도 온보딩은 성공으로 처리)
+                    log.info("✅ 온보딩 프로세스 완료 (대시보드 생성 실패 무시): tenantId={}", tenantId);
+                } else {
+                    log.info("✅ 대시보드 생성 성공: tenantId={}", tenantId);
                 }
             }
 

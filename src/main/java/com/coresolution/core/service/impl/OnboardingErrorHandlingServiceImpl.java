@@ -87,6 +87,25 @@ public class OnboardingErrorHandlingServiceImpl implements OnboardingErrorHandli
      * @return 재시도 가능 여부
      */
     private boolean isRetryableError(Exception e) {
+        // PessimisticLockingFailureException (락 타임아웃) - 재시도 가능
+        if (e instanceof org.springframework.dao.PessimisticLockingFailureException) {
+            log.debug("락 타임아웃 감지 - 재시도 가능: {}", e.getMessage());
+            return true;
+        }
+        
+        // 락 관련 예외 체크 (메시지 기반)
+        String errorMessage = e.getMessage();
+        if (errorMessage != null) {
+            String lowerMessage = errorMessage.toLowerCase();
+            if (lowerMessage.contains("lock wait timeout") || 
+                lowerMessage.contains("lock timeout") ||
+                lowerMessage.contains("deadlock") ||
+                lowerMessage.contains("try restarting transaction")) {
+                log.debug("락 관련 오류 감지 - 재시도 가능: {}", errorMessage);
+                return true;
+            }
+        }
+        
         // 트랜잭션 타이밍 문제, 일시적인 DB 연결 문제 등은 재시도 가능
         if (e instanceof java.sql.SQLException) {
             java.sql.SQLException sqlEx = (java.sql.SQLException) e;
@@ -101,10 +120,18 @@ public class OnboardingErrorHandlingServiceImpl implements OnboardingErrorHandli
             }
         }
         
+        // Hibernate 락 예외
+        if (e instanceof org.hibernate.PessimisticLockException) {
+            log.debug("Hibernate 락 예외 감지 - 재시도 가능: {}", e.getMessage());
+            return true;
+        }
+        
         // IllegalStateException 중 일부는 재시도 가능 (예: RoleTemplate이 아직 생성되지 않음)
         if (e instanceof IllegalStateException) {
             String message = e.getMessage();
-            if (message != null && message.contains("아직 생성되지 않음")) {
+            if (message != null && (message.contains("아직 생성되지 않음") || 
+                                    message.contains("not found") ||
+                                    message.contains("존재하지 않음"))) {
                 return true;
             }
         }

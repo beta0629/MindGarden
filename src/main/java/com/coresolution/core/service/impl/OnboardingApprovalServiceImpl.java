@@ -358,11 +358,14 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                                     roleResult = false;
                                 } catch (Exception e) {
                                     String errorMsg = e.getMessage();
+                                    // Query execution was interrupted (MySQL 에러 코드 1317)도 재시도 가능한 오류로 처리
                                     if (errorMsg != null && (errorMsg.contains("Lock wait timeout")
                                             || errorMsg.contains("lock timeout")
-                                            || errorMsg.contains("deadlock"))) {
+                                            || errorMsg.contains("deadlock")
+                                            || errorMsg.contains("Query execution was interrupted")
+                                            || (errorMsg.contains("1317") && errorMsg.contains("interrupted")))) {
                                         log.warn(
-                                                "역할 생성 중 락 관련 오류 (재시도 예정): tenantId={}, attempt={}/{}, error={}",
+                                                "역할 생성 중 락/쿼리 중단 관련 오류 (재시도 예정): tenantId={}, attempt={}/{}, error={}",
                                                 tenantId, attempt, maxRetries, errorMsg);
                                         roleResult = false;
                                     } else {

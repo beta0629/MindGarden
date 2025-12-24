@@ -38,24 +38,46 @@ public class PlSqlInitializer {
     public void init() {
         log.info("🚀 PL/SQL 프로시저 자동 초기화 시작 (ApplicationReadyEvent)");
 
-        // 프로시저는 Flyway 마이그레이션으로 관리되지만, 백업 메커니즘으로 확인만 수행
-        // 실제 생성은 Flyway가 담당하므로, 존재 여부만 확인하고 없을 때만 생성 시도
+        // 프로시저는 Flyway 마이그레이션으로 관리되므로 Java 코드에서 생성 시도하지 않음
+        // Flyway 마이그레이션이 실패한 경우에만 수동으로 확인 필요
+        // 백업 메커니즘은 SQL 파일 파싱 오류로 인해 비활성화
+        log.info("ℹ️ 프로시저는 Flyway 마이그레이션으로 관리됩니다 (Java 코드 백업 메커니즘 비활성화)");
+
+        // 프로시저 존재 여부만 확인 (생성 시도하지 않음)
         try {
-            initializeCreateOrActivateTenantProcedure();
-            Thread.sleep(500); // 연결 풀 정리 시간 확보
+            Boolean procedureExists = jdbcTemplate
+                    .queryForObject("SELECT COUNT(*) > 0 FROM information_schema.ROUTINES "
+                            + "WHERE ROUTINE_SCHEMA = DATABASE() "
+                            + "AND ROUTINE_NAME = 'CreateOrActivateTenant' "
+                            + "AND ROUTINE_TYPE = 'PROCEDURE'", Boolean.class);
+
+            if (Boolean.TRUE.equals(procedureExists)) {
+                log.info("✅ CreateOrActivateTenant 프로시저가 존재합니다 (Flyway 마이그레이션으로 생성됨)");
+            } else {
+                log.warn("⚠️ CreateOrActivateTenant 프로시저가 없습니다. Flyway 마이그레이션을 확인하세요.");
+            }
         } catch (Exception e) {
-            log.error("❌ CreateOrActivateTenant 프로시저 초기화 실패 (계속 진행): {}", e.getMessage(), e);
+            log.warn("⚠️ 프로시저 존재 여부 확인 실패: {}", e.getMessage());
         }
 
         try {
-            initializeCreateDefaultTenantUsersProcedure();
-            Thread.sleep(500); // 연결 풀 정리 시간 확보
+            Integer procedureCount = jdbcTemplate.queryForObject(
+                    "SELECT COUNT(*) FROM information_schema.routines "
+                            + "WHERE routine_schema = DATABASE() "
+                            + "AND routine_name = 'CreateDefaultTenantUsers' "
+                            + "AND routine_type = 'PROCEDURE'",
+                    Integer.class);
+
+            if (procedureCount != null && procedureCount > 0) {
+                log.info("✅ CreateDefaultTenantUsers 프로시저가 존재합니다 (Flyway 마이그레이션으로 생성됨)");
+            } else {
+                log.warn("⚠️ CreateDefaultTenantUsers 프로시저가 없습니다. Flyway 마이그레이션을 확인하세요.");
+            }
         } catch (Exception e) {
-            log.error("❌ CreateDefaultTenantUsers 프로시저 초기화 실패 (계속 진행): {}", e.getMessage(), e);
+            log.warn("⚠️ 프로시저 존재 여부 확인 실패: {}", e.getMessage());
         }
 
-        // 상담일지 알림/검증 프로시저는 Flyway로 관리되므로 Java 코드에서 초기화하지 않음
-        log.info("✅ PL/SQL 프로시저 자동 초기화 완료");
+        log.info("✅ PL/SQL 프로시저 자동 초기화 완료 (확인만 수행)");
     }
 
     /**

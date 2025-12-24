@@ -11,6 +11,7 @@ import com.coresolution.core.repository.RoleTemplateRepository;
 import com.coresolution.core.service.OnboardingApprovalService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
+import org.springframework.context.ApplicationContext;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -37,6 +38,7 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
     private final EntityManager entityManager;
     private final com.coresolution.core.repository.onboarding.OnboardingRequestRepository onboardingRequestRepository;
     private final com.fasterxml.jackson.databind.ObjectMapper objectMapper;
+    private final ApplicationContext applicationContext;
 
     @Override
     public Map<String, Object> processOnboardingApproval(java.util.UUID requestId, String tenantId,
@@ -308,7 +310,10 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                         updateProcessingStatus(requestId, "ROLE_APPLY", "IN_PROGRESS",
                                 "역할 템플릿 적용 중 (Java 재시도)...");
                         try {
-                            rolesApplied = ensureRolesApplied(tenantId, businessType, approvedBy);
+                            // ApplicationContext를 통해 프록시를 가져와서 @Transactional이 적용되도록 함
+                            OnboardingApprovalServiceImpl self =
+                                    applicationContext.getBean(OnboardingApprovalServiceImpl.class);
+                            rolesApplied = self.ensureRolesApplied(tenantId, businessType, approvedBy);
                             if (rolesApplied) {
                                 fallbackMessage.append("역할=OK, ");
                                 updateProcessingStatus(requestId, "ROLE_APPLY", "SUCCESS",

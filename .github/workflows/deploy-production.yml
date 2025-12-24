@@ -50,7 +50,7 @@ jobs:
         npm run build:ci
         
     - name: 🔍 SSH 연결 테스트
-      uses: appleboy/ssh-action@v1.2.0
+      uses: appleboy/ssh-action@v1.2.4
       with:
         host: ${{ secrets.PRODUCTION_HOST }}
         username: ${{ secrets.PRODUCTION_USER }}
@@ -69,7 +69,7 @@ jobs:
           echo "🔧 서버 상태 확인 완료 (SSH 보호됨)"
           
     - name: 🚀 서버 배포
-      uses: appleboy/ssh-action@v1.2.0
+      uses: appleboy/ssh-action@v1.2.4
       with:
         host: ${{ secrets.PRODUCTION_HOST }}
         username: ${{ secrets.PRODUCTION_USER }}
@@ -245,7 +245,7 @@ jobs:
     #       echo "✅ SQL 파일 권한 설정 완료"
         
     - name: 🔧 프론트엔드 파일 권한 설정
-      uses: appleboy/ssh-action@v1.2.0
+      uses: appleboy/ssh-action@v1.2.4
       with:
         host: ${{ secrets.PRODUCTION_HOST }}
         username: ${{ secrets.PRODUCTION_USER }}
@@ -268,7 +268,7 @@ jobs:
     # sudo mysql -u root -p'!QAZ2wsx#EDC4rfv' mindgarden < /tmp/update_all_role_menus.sql
         
     - name: 🔄 서비스 재시작
-      uses: appleboy/ssh-action@v1.2.0
+      uses: appleboy/ssh-action@v1.2.4
       with:
         host: ${{ secrets.PRODUCTION_HOST }}
         username: ${{ secrets.PRODUCTION_USER }}
@@ -453,7 +453,7 @@ jobs:
           fi
           
     - name: 🏥 헬스체크
-      uses: appleboy/ssh-action@v1.2.0
+      uses: appleboy/ssh-action@v1.2.4
       with:
         host: ${{ secrets.PRODUCTION_HOST }}
         username: ${{ secrets.PRODUCTION_USER }}
@@ -491,7 +491,7 @@ jobs:
           echo "🎉 배포 완료!"
           
     - name: 🧹 메모리 정리
-      uses: appleboy/ssh-action@v1.2.0
+      uses: appleboy/ssh-action@v1.2.4
       with:
         host: ${{ secrets.PRODUCTION_HOST }}
         username: ${{ secrets.PRODUCTION_USER }}

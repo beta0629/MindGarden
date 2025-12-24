@@ -871,61 +871,48 @@ public class OnboardingServiceImpl implements OnboardingService {
                 (finalSuccess != null && finalSuccess) ? OnboardingStatus.APPROVED
                         : OnboardingStatus.ON_HOLD;
 
-        // OptimisticLockException 방지를 위해 재시도 로직 추가
-        OnboardingRequest saved = null;
-        int maxRetries = 3;
-        OnboardingRequest currentRequest = request; // effectively final을 위한 로컬 변수
-        final String finalActorId = actorId;
-        final String finalNote = note;
-        for (int attempt = 1; attempt <= maxRetries; attempt++) {
-            try {
-                saved = repository.save(currentRequest);
-                log.info("온보딩 요청 결정 완료: id={}, status={}, version={}", saved.getId(),
-                        saved.getStatus(), saved.getVersion());
-                break;
-            } catch (org.springframework.orm.ObjectOptimisticLockingFailureException e) {
-                if (attempt < maxRetries) {
-                    log.warn("OptimisticLockException 발생 (재시도 {}/{}): requestId={}, error={}",
-                            attempt, maxRetries, requestId, e.getMessage());
-                    // 엔티티를 다시 조회하여 최신 버전 가져오기
-                    OnboardingRequest refreshedRequest = repository.findById(requestId)
-                            .orElseThrow(() -> new IllegalArgumentException(OnboardingConstants
-                                    .formatError(OnboardingConstants.ERROR_TENANT_NOT_FOUND,
-                                            requestId)));
-                    // 상태를 다시 설정
-                    refreshedRequest.setStatus(finalStatus);
-                    refreshedRequest.setDecidedBy(finalActorId);
-                    refreshedRequest.setDecisionAt(DateTimeFormatter.ISO_INSTANT.format(Instant.now()));
-                    refreshedRequest.setDecisionNote(finalNote);
-                    currentRequest = refreshedRequest; // 로컬 변수 업데이트
-                    // 잠시 대기 후 재시도
-                    try {
-                        Thread.sleep(100L * attempt); // 100ms, 200ms, 300ms
-                    } catch (InterruptedException ie) {
-                        Thread.currentThread().interrupt();
-                    }
-                } else {
-                    log.error(
-                            "OptimisticLockException 재시도 실패 (최대 시도 횟수 초과): requestId={}, error={}",
-                            requestId, e.getMessage());
-                    throw new org.springframework.dao.OptimisticLockingFailureException(
-                            "온보딩 요청 상태 업데이트 중 동시성 충돌이 발생했습니다. 잠시 후 다시 시도해주세요.", e);
-                }
-            }
+        // 최종 저장 시도 (OptimisticLockException 발생 시 상위에서 별도 트랜잭션으로 재시도)
+        try {
+            OnboardingRequest saved = repository.save(request);
+            log.info("온보딩 요청 결정 완료: id={}, status={}, version={}", saved.getId(),
+                    saved.getStatus(), saved.getVersion());
+            return saved;
+        } catch (org.springframework.orm.ObjectOptimisticLockingFailureException e) {
+            // OptimisticLockException 발생 시 트랜잭션이 rollback-only로 마크되므로
+            // 예외를 다시 throw하여 상위에서 별도 트랜잭션으로 재시도하도록 함
+            log.warn("OptimisticLockException 발생 (상위에서 별도 트랜잭션으로 재시도 예정): requestId={}, error={}",
+                    requestId, e.getMessage());
+            throw e;
+        } catch (org.springframework.dao.OptimisticLockingFailureException e) {
+            // OptimisticLockException 발생 시 트랜잭션이 rollback-only로 마크되므로
+            // 예외를 다시 throw하여 상위에서 별도 트랜잭션으로 재시도하도록 함
+            log.warn("OptimisticLockingFailureException 발생 (상위에서 별도 트랜잭션으로 재시도 예정): requestId={}, error={}",
+                    requestId, e.getMessage());
+            throw e;
         }
-
-        if (saved == null) {
-            throw new IllegalStateException("온보딩 요청 저장 실패: requestId=" + requestId);
-        }
-
-        return saved;
     }
 
     @Override
     @Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
     public OnboardingRequest decide(java.util.UUID requestId, OnboardingStatus status,
             String actorId, String note) {
-        return decideInternal(requestId, status, actorId, note);
+        try {
+            return decideInternal(requestId, status, actorId, note);
+        } catch (org.springframework.orm.ObjectOptimisticLockingFailureException e) {
+            // OptimisticLockException 발생 시 트랜잭션이 rollback-only로 마크됨
+            // 별도 트랜잭션에서 재시도
+            log.warn("OptimisticLockException 발생, 별도 트랜잭션에서 재시도: requestId={}, error={}", 
+                    requestId, e.getMessage());
+            OnboardingServiceImpl self = applicationContext.getBean(OnboardingServiceImpl.class);
+            return self.decideInNewTransaction(requestId, status, actorId, note);
+        } catch (org.springframework.dao.OptimisticLockingFailureException e) {
+            // OptimisticLockException 발생 시 트랜잭션이 rollback-only로 마크됨
+            // 별도 트랜잭션에서 재시도
+            log.warn("OptimisticLockingFailureException 발생, 별도 트랜잭션에서 재시도: requestId={}, error={}", 
+                    requestId, e.getMessage());
+            OnboardingServiceImpl self = applicationContext.getBean(OnboardingServiceImpl.class);
+            return self.decideInNewTransaction(requestId, status, actorId, note);
+        }
     }
 
     @Override

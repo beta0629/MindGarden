@@ -783,6 +783,22 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                 log.debug("역할 템플릿 ID 조회: director={}, counselor={}, client={}, staff={}",
                         directorTemplateId, counselorTemplateId, clientTemplateId, staffTemplateId);
 
+                // INSERT 전에 역할 존재 여부를 다시 한 번 확인 (락 경합 최소화)
+                // 다른 트랜잭션이 이미 역할을 생성했을 수 있음
+                Integer doubleCheckCount = null;
+                try {
+                    doubleCheckCount = jdbcTemplate.queryForObject(
+                            "SELECT COUNT(*) FROM tenant_roles WHERE tenant_id = ? AND (is_deleted IS NULL OR is_deleted = FALSE)",
+                            Integer.class, tenantId);
+                } catch (Exception e) {
+                    log.warn("역할 존재 재확인 실패: tenantId={}, error={}", tenantId, e.getMessage());
+                }
+                
+                if (doubleCheckCount != null && doubleCheckCount > 0) {
+                    log.info("역할이 이미 존재함 (INSERT 전 재확인): tenantId={}, count={}", tenantId, doubleCheckCount);
+                    return true;
+                }
+
                 // INSERT IGNORE를 사용하여 중복 삽입 시도 시 오류 대신 무시 (락 경합 최소화)
                 // 배치 INSERT로 락 시간 최소화 (4개 역할을 하나의 쿼리로 생성)
                 String insertSql =
@@ -810,20 +826,24 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
 
                 // INSERT IGNORE는 중복 시 0개 행이 영향을 받을 수 있음
                 // 하지만 역할이 이미 존재하는 경우도 성공으로 처리
-                if (rowsAffected >= 0) {
-                    // 역할이 실제로 생성되었는지 확인
-                    Integer finalCount = jdbcTemplate.queryForObject(
+                // INSERT 후 역할 존재 여부 확인 (다른 트랜잭션이 생성했을 수 있음)
+                Integer finalCount = null;
+                try {
+                    finalCount = jdbcTemplate.queryForObject(
                             "SELECT COUNT(*) FROM tenant_roles WHERE tenant_id = ? AND (is_deleted IS NULL OR is_deleted = FALSE)",
                             Integer.class, tenantId);
-                    if (finalCount != null && finalCount > 0) {
-                        log.info(
-                                "역할 생성 완료 (INSERT IGNORE): tenantId={}, rowsAffected={}, finalCount={}",
-                                tenantId, rowsAffected, finalCount);
-                    } else {
-                        log.warn("역할 생성 후에도 역할이 없음: tenantId={}, rowsAffected={}", tenantId,
-                                rowsAffected);
-                        return false;
-                    }
+                } catch (Exception e) {
+                    log.warn("역할 생성 후 존재 확인 실패: tenantId={}, error={}", tenantId, e.getMessage());
+                }
+                
+                if (finalCount != null && finalCount > 0) {
+                    log.info(
+                            "역할 생성 완료 (INSERT IGNORE): tenantId={}, rowsAffected={}, finalCount={}",
+                            tenantId, rowsAffected, finalCount);
+                } else {
+                    log.warn("역할 생성 후에도 역할이 없음: tenantId={}, rowsAffected={}, finalCount={}", 
+                            tenantId, rowsAffected, finalCount);
+                    return false;
                 }
 
                 // JPA 캐시 갱신 (jdbcTemplate으로 생성한 데이터를 JPA에서 조회할 수 있도록)

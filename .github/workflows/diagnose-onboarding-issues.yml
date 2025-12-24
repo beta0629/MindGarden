@@ -10,11 +10,11 @@ on:
 
 jobs:
   diagnose:
-    name: 📋 온보딩 프로세스 종합 진단
+    name: 온보딩 프로세스 종합 진단
     runs-on: ubuntu-latest
     
     steps:
-    - name: 🔍 종합 진단 실행
+    - name: 종합 진단 실행
       uses: appleboy/ssh-action@v1.2.4
       with:
         host: ${{ secrets.DEV_SERVER_HOST }}
@@ -50,14 +50,14 @@ jobs:
           
           # 3. 최근 온보딩 프로세스 로그
           echo "=========================================="
-          echo "3️⃣ 최근 온보딩 프로세스 로그 (최근 500줄)"
+          echo "3. 최근 온보딩 프로세스 로그 (최근 500줄)"
           echo "=========================================="
           sudo journalctl -u mindgarden-dev.service --no-pager -n 1000 | grep -i -E "(온보딩|onboarding|ProcessOnboardingApproval|프로시저 실행|프로시저 결과|프로시저 실패|메타데이터 검증|roleTemplates|COUNSELING|권한 그룹|commonCodes|roleCodes|permissionGroups|Transaction.*rolled back|알 수 없는 오류)" | tail -100
           echo ""
           
           # 4. 에러 로그 상세 확인
           echo "=========================================="
-          echo "4️⃣ 에러 로그 상세 확인"
+          echo "4. 에러 로그 상세 확인"
           echo "=========================================="
           sudo journalctl -u mindgarden-dev.service --no-pager -n 1000 | grep -i "ERROR" | grep -i -E "(온보딩|onboarding)" | tail -50
           echo ""

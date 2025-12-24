@@ -684,8 +684,8 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
 
         // 기본 역할 생성 (CONSULTATION 또는 COUNSELING 업종 기준)
         if ("CONSULTATION".equals(businessType) || "COUNSELING".equals(businessType)) {
-            int maxRetries = 3;
-            long retryDelay = 500; // 0.5초
+            int maxRetries = 5; // 재시도 횟수 증가 (3 -> 5)
+            long baseRetryDelay = 1000; // 기본 재시도 지연 시간 1초로 증가
 
             for (int attempt = 1; attempt <= maxRetries; attempt++) {
                 try {

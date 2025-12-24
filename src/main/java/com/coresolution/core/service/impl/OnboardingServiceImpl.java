@@ -854,28 +854,35 @@ public class OnboardingServiceImpl implements OnboardingService {
             }
         }
 
-        // 엔티티를 refresh하여 최신 버전을 가져옴 (OptimisticLockException 방지)
-        try {
-            entityManager.refresh(request);
-            log.debug("OnboardingRequest 엔티티 refresh 완료: requestId={}, version={}", requestId,
-                    request.getVersion());
-        } catch (Exception e) {
-            log.warn("OnboardingRequest 엔티티 refresh 실패 (계속 진행): requestId={}, error={}", requestId,
-                    e.getMessage());
-            // refresh 실패해도 계속 진행 (이미 메모리에 있는 엔티티 사용)
-        }
-
-        // 최종 상태 결정 (success 변수는 블록 스코프 밖에서 사용 불가하므로 로컬 변수로 저장)
+        // 최종 상태 결정
         final Boolean finalSuccess = success;
         final OnboardingStatus finalStatus =
                 (finalSuccess != null && finalSuccess) ? OnboardingStatus.APPROVED
                         : OnboardingStatus.ON_HOLD;
 
+        // 엔티티를 다시 조회하여 최신 버전 사용 (OptimisticLockException 방지)
+        // initializeTenantAfterOnboardingInNewTransaction에서 별도 트랜잭션을 사용하면서
+        // 엔티티가 detached 상태가 될 수 있으므로 다시 조회
+        OnboardingRequest requestToSave = repository.findById(requestId)
+                .orElseThrow(() -> new IllegalArgumentException(OnboardingConstants
+                        .formatError(OnboardingConstants.ERROR_TENANT_NOT_FOUND, requestId)));
+        
+        // 상태를 다시 설정
+        requestToSave.setStatus(finalStatus);
+        requestToSave.setDecidedBy(actorId);
+        requestToSave.setDecisionAt(DateTimeFormatter.ISO_INSTANT.format(Instant.now()));
+        requestToSave.setDecisionNote(note);
+        
+        // 초기화 작업 상태가 있으면 설정
+        if (request.getInitializationStatusJson() != null && !request.getInitializationStatusJson().trim().isEmpty()) {
+            requestToSave.setInitializationStatusJson(request.getInitializationStatusJson());
+        }
+
         // 최종 저장 시도 (OptimisticLockException 발생 시 상위에서 별도 트랜잭션으로 재시도)
         try {
-            OnboardingRequest saved = repository.save(request);
-            log.info("온보딩 요청 결정 완료: id={}, status={}, version={}", saved.getId(),
-                    saved.getStatus(), saved.getVersion());
+            OnboardingRequest saved = repository.save(requestToSave);
+            log.info("온보딩 요청 결정 완료: id={}, status={}, version={}", saved.getId(), saved.getStatus(),
+                    saved.getVersion());
             return saved;
         } catch (org.springframework.orm.ObjectOptimisticLockingFailureException e) {
             // OptimisticLockException 발생 시 트랜잭션이 rollback-only로 마크되므로
@@ -886,7 +893,8 @@ public class OnboardingServiceImpl implements OnboardingService {
         } catch (org.springframework.dao.OptimisticLockingFailureException e) {
             // OptimisticLockException 발생 시 트랜잭션이 rollback-only로 마크되므로
             // 예외를 다시 throw하여 상위에서 별도 트랜잭션으로 재시도하도록 함
-            log.warn("OptimisticLockingFailureException 발생 (상위에서 별도 트랜잭션으로 재시도 예정): requestId={}, error={}",
+            log.warn(
+                    "OptimisticLockingFailureException 발생 (상위에서 별도 트랜잭션으로 재시도 예정): requestId={}, error={}",
                     requestId, e.getMessage());
             throw e;
         }
@@ -901,14 +909,14 @@ public class OnboardingServiceImpl implements OnboardingService {
         } catch (org.springframework.orm.ObjectOptimisticLockingFailureException e) {
             // OptimisticLockException 발생 시 트랜잭션이 rollback-only로 마크됨
             // 별도 트랜잭션에서 재시도
-            log.warn("OptimisticLockException 발생, 별도 트랜잭션에서 재시도: requestId={}, error={}", 
-                    requestId, e.getMessage());
+            log.warn("OptimisticLockException 발생, 별도 트랜잭션에서 재시도: requestId={}, error={}", requestId,
+                    e.getMessage());
             OnboardingServiceImpl self = applicationContext.getBean(OnboardingServiceImpl.class);
             return self.decideInNewTransaction(requestId, status, actorId, note);
         } catch (org.springframework.dao.OptimisticLockingFailureException e) {
             // OptimisticLockException 발생 시 트랜잭션이 rollback-only로 마크됨
             // 별도 트랜잭션에서 재시도
-            log.warn("OptimisticLockingFailureException 발생, 별도 트랜잭션에서 재시도: requestId={}, error={}", 
+            log.warn("OptimisticLockingFailureException 발생, 별도 트랜잭션에서 재시도: requestId={}, error={}",
                     requestId, e.getMessage());
             OnboardingServiceImpl self = applicationContext.getBean(OnboardingServiceImpl.class);
             return self.decideInNewTransaction(requestId, status, actorId, note);

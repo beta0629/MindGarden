@@ -16,6 +16,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -310,10 +311,12 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                         updateProcessingStatus(requestId, "ROLE_APPLY", "IN_PROGRESS",
                                 "역할 템플릿 적용 중 (Java 재시도)...");
                         try {
-                            // ApplicationContext를 통해 프록시를 가져와서 @Transactional이 적용되도록 함
-                            OnboardingApprovalServiceImpl self =
-                                    applicationContext.getBean(OnboardingApprovalServiceImpl.class);
-                            rolesApplied = self.ensureRolesApplied(tenantId, businessType, approvedBy);
+                            // TransactionTemplate을 사용하여 별도 트랜잭션에서 실행
+                            TransactionTemplate transactionTemplate = new TransactionTemplate(transactionManager);
+                            transactionTemplate.setPropagationBehavior(org.springframework.transaction.TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+                            rolesApplied = transactionTemplate.execute(status -> {
+                                return ensureRolesApplied(tenantId, businessType, approvedBy);
+                            });
                             if (rolesApplied) {
                                 fallbackMessage.append("역할=OK, ");
                                 updateProcessingStatus(requestId, "ROLE_APPLY", "SUCCESS",
@@ -651,9 +654,9 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
     }
 
     /**
-     * 역할 템플릿이 적용되었는지 확인하고, 없으면 기본 역할 생성 별도 트랜잭션에서 실행하여 즉시 커밋되도록 함 (대시보드 생성 시 조회 가능하도록)
+     * 역할 템플릿이 적용되었는지 확인하고, 없으면 기본 역할 생성
+     * TransactionTemplate을 통해 별도 트랜잭션에서 실행하여 즉시 커밋되도록 함 (대시보드 생성 시 조회 가능하도록)
      */
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
     private boolean ensureRolesApplied(String tenantId, String businessType, String approvedBy) {
         log.info("역할 템플릿 적용 확인: tenantId={}, businessType={}", tenantId, businessType);
 

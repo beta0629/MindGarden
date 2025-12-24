@@ -134,18 +134,26 @@ export function OnboardingDecisionForm({ requestId, initialStatus }: Props) {
           } else {
             notificationManager.success("✅ 승인 완료: 테넌트가 생성되었고 관리자 계정이 자동 생성되었습니다.");
           }
+          // 승인 완료 시 폴링이 끝날 때까지 대기 후 페이지 새로고침
+          // (폴링 완료 시 새로고침하도록 처리됨)
         } else if (updated.status === "ON_HOLD") {
           const errorMsg = updated.decisionNote ? updated.decisionNote.split("\n").pop() : "테넌트 생성 중 오류가 발생했습니다.";
           notificationManager.error(`⚠️ 보류됨: ${errorMsg}`);
           setIsPolling(false);
+          // 보류 시 즉시 페이지 새로고침
+          setTimeout(() => {
+            window.location.reload();
+          }, 2000);
         } else if (updated.status === "REJECTED") {
           notificationManager.success("❌ 거부됨: 온보딩 요청이 거부되었습니다.");
           setIsPolling(false);
+          // 거부 시 즉시 페이지 새로고침
+          setTimeout(() => {
+            window.location.reload();
+          }, 2000);
         } else {
           notificationManager.success("결정이 저장되었습니다.");
         }
-        
-        // 페이지 새로고침은 사용자가 수동으로 하도록 함 (로그 확인을 위해)
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : "결정 처리 중 오류가 발생했습니다.";
         notificationManager.error(errorMessage);
@@ -170,7 +178,11 @@ export function OnboardingDecisionForm({ requestId, initialStatus }: Props) {
         }
         // 상태 업데이트
         setStatus(updated.status);
-        // 페이지 새로고침은 사용자가 수동으로 하도록 함 (로그 확인을 위해)
+        
+        // 재시도 완료 후 페이지 새로고침
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : "재시도 처리 중 오류가 발생했습니다.";
         notificationManager.error(errorMessage);
@@ -223,11 +235,16 @@ export function OnboardingDecisionForm({ requestId, initialStatus }: Props) {
         console.log("[OnboardingDecisionForm] 처리 상태 업데이트:", status);
         setProcessingStatus(status);
         
-        // 완료 또는 실패 시 폴링 중지
+        // 완료 또는 실패 시 폴링 중지 및 페이지 새로고침
         if (status.progress === 100 || status.COMPLETE?.status === "SUCCESS" || status.COMPLETE?.status === "FAILED") {
           clearInterval(pollInterval);
           setIsPolling(false);
           setPollIntervalRef(null);
+          
+          // 완료/실패 시 2초 후 페이지 새로고침
+          setTimeout(() => {
+            window.location.reload();
+          }, 2000);
         }
       } catch (err) {
         console.error("[OnboardingDecisionForm] 처리 상태 조회 실패:", err);

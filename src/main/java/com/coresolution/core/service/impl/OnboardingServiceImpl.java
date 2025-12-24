@@ -27,6 +27,9 @@ import com.coresolution.core.service.OnboardingPreValidationService;
 import com.coresolution.core.service.OnboardingService;
 import com.coresolution.core.service.TenantDashboardService;
 import com.coresolution.core.service.TenantIdGenerator;
+import com.coresolution.consultation.constant.EmailConstants;
+import com.coresolution.consultation.dto.EmailResponse;
+import com.coresolution.consultation.service.EmailService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -69,6 +72,7 @@ public class OnboardingServiceImpl implements OnboardingService {
     private final com.coresolution.core.service.PermissionGroupService permissionGroupService;
     private final com.coresolution.core.repository.TenantRoleRepository tenantRoleRepository;
     private final ApplicationContext applicationContext;
+    private final EmailService emailService;
     @jakarta.persistence.PersistenceContext
     private jakarta.persistence.EntityManager entityManager;
 
@@ -866,15 +870,16 @@ public class OnboardingServiceImpl implements OnboardingService {
         OnboardingRequest requestToSave = repository.findById(requestId)
                 .orElseThrow(() -> new IllegalArgumentException(OnboardingConstants
                         .formatError(OnboardingConstants.ERROR_TENANT_NOT_FOUND, requestId)));
-        
+
         // 상태를 다시 설정
         requestToSave.setStatus(finalStatus);
         requestToSave.setDecidedBy(actorId);
         requestToSave.setDecisionAt(DateTimeFormatter.ISO_INSTANT.format(Instant.now()));
         requestToSave.setDecisionNote(note);
-        
+
         // 초기화 작업 상태가 있으면 설정
-        if (request.getInitializationStatusJson() != null && !request.getInitializationStatusJson().trim().isEmpty()) {
+        if (request.getInitializationStatusJson() != null
+                && !request.getInitializationStatusJson().trim().isEmpty()) {
             requestToSave.setInitializationStatusJson(request.getInitializationStatusJson());
         }
 
@@ -883,6 +888,23 @@ public class OnboardingServiceImpl implements OnboardingService {
             OnboardingRequest saved = repository.save(requestToSave);
             log.info("온보딩 요청 결정 완료: id={}, status={}, version={}", saved.getId(), saved.getStatus(),
                     saved.getVersion());
+            
+            // 승인 성공 시 이메일 발송 (비동기로 처리하여 트랜잭션에 영향 없도록)
+            if (finalStatus == OnboardingStatus.APPROVED && finalSuccess != null && finalSuccess) {
+                try {
+                    String finalTenantId = requestToSave.getTenantId();
+                    if (finalTenantId != null) {
+                        sendOnboardingApprovalEmail(saved, finalTenantId);
+                    } else {
+                        log.warn("테넌트 ID가 없어 이메일 발송을 건너뜁니다: requestId={}", requestId);
+                    }
+                } catch (Exception e) {
+                    // 이메일 발송 실패는 로그만 남기고 온보딩 프로세스는 계속 진행
+                    log.error("온보딩 승인 이메일 발송 실패 (온보딩 프로세스는 계속 진행): requestId={}, error={}",
+                            requestId, e.getMessage(), e);
+                }
+            }
+            
             return saved;
         } catch (org.springframework.orm.ObjectOptimisticLockingFailureException e) {
             // OptimisticLockException 발생 시 트랜잭션이 rollback-only로 마크되므로
@@ -2382,5 +2404,55 @@ public class OnboardingServiceImpl implements OnboardingService {
         }
     }
 
+    /**
+     * 온보딩 승인 완료 이메일 발송
+     */
+    private void sendOnboardingApprovalEmail(OnboardingRequest request, String tenantId) {
+        try {
+            String contactEmail = request.getRequestedBy(); // requestedBy가 이메일 주소
+            log.info("온보딩 승인 완료 이메일 발송 시작: requestId={}, tenantId={}, contactEmail={}",
+                    request.getId(), tenantId, contactEmail);
+
+            if (contactEmail == null || contactEmail.trim().isEmpty()) {
+                log.warn("연락처 이메일이 없어 이메일 발송을 건너뜁니다: requestId={}", request.getId());
+                return;
+            }
+
+            // 테넌트 정보 조회
+            Tenant tenant = tenantRepository.findByTenantIdAndIsDeletedFalse(tenantId).orElse(null);
+            String tenantName = tenant != null ? tenant.getName() : request.getTenantName();
+
+            // 이메일 템플릿 변수 설정
+            Map<String, Object> variables = new java.util.HashMap<>();
+            variables.put(EmailConstants.VAR_USER_NAME, request.getTenantName() != null ? request.getTenantName() : "고객님");
+            variables.put(EmailConstants.VAR_USER_EMAIL, contactEmail);
+            variables.put(EmailConstants.VAR_COMPANY_NAME, "CoreSolution");
+            variables.put(EmailConstants.VAR_SUPPORT_EMAIL, EmailConstants.SUPPORT_EMAIL);
+            variables.put(EmailConstants.VAR_CURRENT_YEAR, String.valueOf(java.time.Year.now().getValue()));
+            variables.put("tenantName", tenantName != null ? tenantName : request.getTenantName());
+            variables.put("tenantId", tenantId);
+            variables.put("businessType", request.getBusinessType() != null ? request.getBusinessType() : "");
+
+            // 템플릿 기반 이메일 발송 (ADMIN_APPROVAL 템플릿 재사용)
+            EmailResponse response = emailService.sendTemplateEmail(
+                    EmailConstants.TEMPLATE_ADMIN_APPROVAL,
+                    contactEmail,
+                    request.getTenantName() != null ? request.getTenantName() : "고객님",
+                    variables
+            );
+
+            if (response.isSuccess()) {
+                log.info("온보딩 승인 완료 이메일 발송 성공: requestId={}, emailId={}", request.getId(),
+                        response.getEmailId());
+            } else {
+                log.error("온보딩 승인 완료 이메일 발송 실패: requestId={}, error={}", request.getId(),
+                        response.getErrorMessage());
+            }
+
+        } catch (Exception e) {
+            log.error("온보딩 승인 완료 이메일 발송 중 오류: requestId={}, error={}", request.getId(),
+                    e.getMessage(), e);
+        }
+    }
 }
 

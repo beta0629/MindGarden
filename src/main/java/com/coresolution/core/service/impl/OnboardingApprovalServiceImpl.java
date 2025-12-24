@@ -803,23 +803,14 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                 // 개별 INSERT로 분리하여 락 경합 최소화
                 // 각 역할을 개별적으로 INSERT하여 락 타임아웃 발생 시 빠르게 실패하고 재시도
                 int successCount = 0;
-                String[] roleNames = { "원장", "상담사", "내담자", "사무원" };
-                String[] roleNamesEn = { "Principal", "Consultant", "Client", "Staff" };
-                String[] roleDescriptions = {
-                        "상담소 원장 역할",
-                        "상담사 역할",
-                        "내담자 역할",
-                        "사무원 역할"
-                };
-                String[] roleDescriptionsEn = {
-                        "Principal role for consultation center",
-                        "Consultant role",
-                        "Client role",
-                        "Staff role"
-                };
-                String[] templateIds = { directorTemplateId, counselorTemplateId, clientTemplateId,
-                        staffTemplateId };
-                int[] displayOrders = { 1, 2, 3, 4 };
+                String[] roleNames = {"원장", "상담사", "내담자", "사무원"};
+                String[] roleNamesEn = {"Principal", "Consultant", "Client", "Staff"};
+                String[] roleDescriptions = {"상담소 원장 역할", "상담사 역할", "내담자 역할", "사무원 역할"};
+                String[] roleDescriptionsEn = {"Principal role for consultation center",
+                        "Consultant role", "Client role", "Staff role"};
+                String[] templateIds = {directorTemplateId, counselorTemplateId, clientTemplateId,
+                        staffTemplateId};
+                int[] displayOrders = {1, 2, 3, 4};
 
                 for (int i = 0; i < roleNames.length; i++) {
                     // 각 역할이 이미 존재하는지 확인
@@ -866,8 +857,8 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                                         "SELECT COUNT(*) FROM tenant_roles WHERE tenant_id = ? AND name_ko = ? AND (is_deleted IS NULL OR is_deleted = FALSE)",
                                         Integer.class, tenantId, roleNames[i]);
                             } catch (Exception e) {
-                                log.warn("역할 재확인 실패: tenantId={}, roleName={}, error={}",
-                                        tenantId, roleNames[i], e.getMessage());
+                                log.warn("역할 재확인 실패: tenantId={}, roleName={}, error={}", tenantId,
+                                        roleNames[i], e.getMessage());
                             }
 
                             if (checkAgain != null && checkAgain > 0) {
@@ -887,13 +878,15 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                         if (errorMsg != null && (errorMsg.contains("Lock wait timeout")
                                 || errorMsg.contains("lock timeout")
                                 || errorMsg.contains("deadlock"))) {
-                            log.warn("역할 생성 중 락 타임아웃 (개별 INSERT): tenantId={}, roleName={}, error={}",
+                            log.warn(
+                                    "역할 생성 중 락 타임아웃 (개별 INSERT): tenantId={}, roleName={}, error={}",
                                     tenantId, roleNames[i], errorMsg);
                             // 락 타임아웃 발생 시 해당 역할만 실패하고 다음 역할 시도
                             // 호출부에서 재시도 처리
                             throw e;
                         } else {
-                            log.warn("역할 생성 중 예상치 못한 오류 (개별 INSERT): tenantId={}, roleName={}, error={}",
+                            log.warn(
+                                    "역할 생성 중 예상치 못한 오류 (개별 INSERT): tenantId={}, roleName={}, error={}",
                                     tenantId, roleNames[i], e.getMessage());
                             // 다른 오류는 무시하고 다음 역할 시도
                         }
@@ -914,7 +907,8 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                     }
 
                     if (finalCount != null && finalCount > 0) {
-                        log.info("역할 생성 완료 (개별 INSERT): tenantId={}, successCount={}, finalCount={}",
+                        log.info(
+                                "역할 생성 완료 (개별 INSERT): tenantId={}, successCount={}, finalCount={}",
                                 tenantId, successCount, finalCount);
                         return true;
                     }

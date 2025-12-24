@@ -803,11 +803,11 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                                 + "'사무원 역할', '사무원 역할', 'Staff role', "
                                 + "TRUE, 4, NOW(), NOW(), ?, ?, FALSE, 0, 'ko')";
 
-                int rowsAffected = jdbcTemplate.update(insertSql, tenantId, directorTemplateId, approvedBy, approvedBy,
-                        tenantId, counselorTemplateId, approvedBy, approvedBy, tenantId,
-                        clientTemplateId, approvedBy, approvedBy, tenantId, staffTemplateId,
-                        approvedBy, approvedBy);
-                
+                int rowsAffected = jdbcTemplate.update(insertSql, tenantId, directorTemplateId,
+                        approvedBy, approvedBy, tenantId, counselorTemplateId, approvedBy,
+                        approvedBy, tenantId, clientTemplateId, approvedBy, approvedBy, tenantId,
+                        staffTemplateId, approvedBy, approvedBy);
+
                 // INSERT IGNORE는 중복 시 0개 행이 영향을 받을 수 있음
                 // 하지만 역할이 이미 존재하는 경우도 성공으로 처리
                 if (rowsAffected >= 0) {
@@ -816,10 +816,12 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                             "SELECT COUNT(*) FROM tenant_roles WHERE tenant_id = ? AND (is_deleted IS NULL OR is_deleted = FALSE)",
                             Integer.class, tenantId);
                     if (finalCount != null && finalCount > 0) {
-                        log.info("역할 생성 완료 (INSERT IGNORE): tenantId={}, rowsAffected={}, finalCount={}",
+                        log.info(
+                                "역할 생성 완료 (INSERT IGNORE): tenantId={}, rowsAffected={}, finalCount={}",
                                 tenantId, rowsAffected, finalCount);
                     } else {
-                        log.warn("역할 생성 후에도 역할이 없음: tenantId={}, rowsAffected={}", tenantId, rowsAffected);
+                        log.warn("역할 생성 후에도 역할이 없음: tenantId={}, rowsAffected={}", tenantId,
+                                rowsAffected);
                         return false;
                     }
                 }

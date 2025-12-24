@@ -11,7 +11,6 @@ import com.coresolution.core.repository.RoleTemplateRepository;
 import com.coresolution.core.service.OnboardingApprovalService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -647,8 +646,7 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
     }
 
     /**
-     * 역할 템플릿이 적용되었는지 확인하고, 없으면 기본 역할 생성
-     * 별도 트랜잭션에서 실행하여 즉시 커밋되도록 함 (대시보드 생성 시 조회 가능하도록)
+     * 역할 템플릿이 적용되었는지 확인하고, 없으면 기본 역할 생성 별도 트랜잭션에서 실행하여 즉시 커밋되도록 함 (대시보드 생성 시 조회 가능하도록)
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     private boolean ensureRolesApplied(String tenantId, String businessType, String approvedBy) {

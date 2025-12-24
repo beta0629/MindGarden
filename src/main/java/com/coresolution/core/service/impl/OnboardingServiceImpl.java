@@ -11,6 +11,7 @@ import java.util.Set;
 import com.coresolution.consultation.entity.CommonCode;
 import com.coresolution.consultation.repository.CommonCodeRepository;
 import com.coresolution.consultation.service.CommonCodeService;
+import com.coresolution.consultation.service.EmailService;
 import com.coresolution.core.constant.OnboardingConstants;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.domain.Tenant;
@@ -27,9 +28,6 @@ import com.coresolution.core.service.OnboardingPreValidationService;
 import com.coresolution.core.service.OnboardingService;
 import com.coresolution.core.service.TenantDashboardService;
 import com.coresolution.core.service.TenantIdGenerator;
-import com.coresolution.consultation.constant.EmailConstants;
-import com.coresolution.consultation.dto.EmailResponse;
-import com.coresolution.consultation.service.EmailService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -888,7 +886,7 @@ public class OnboardingServiceImpl implements OnboardingService {
             OnboardingRequest saved = repository.save(requestToSave);
             log.info("온보딩 요청 결정 완료: id={}, status={}, version={}", saved.getId(), saved.getStatus(),
                     saved.getVersion());
-            
+
             // 승인 성공 시 이메일 발송 (비동기로 처리하여 트랜잭션에 영향 없도록)
             if (finalStatus == OnboardingStatus.APPROVED && finalSuccess != null && finalSuccess) {
                 try {
@@ -904,7 +902,7 @@ public class OnboardingServiceImpl implements OnboardingService {
                             requestId, e.getMessage(), e);
                 }
             }
-            
+
             return saved;
         } catch (org.springframework.orm.ObjectOptimisticLockingFailureException e) {
             // OptimisticLockException 발생 시 트랜잭션이 rollback-only로 마크되므로
@@ -2422,32 +2420,9 @@ public class OnboardingServiceImpl implements OnboardingService {
             Tenant tenant = tenantRepository.findByTenantIdAndIsDeletedFalse(tenantId).orElse(null);
             String tenantName = tenant != null ? tenant.getName() : request.getTenantName();
 
-            // 이메일 템플릿 변수 설정
-            Map<String, Object> variables = new java.util.HashMap<>();
-            variables.put(EmailConstants.VAR_USER_NAME, request.getTenantName() != null ? request.getTenantName() : "고객님");
-            variables.put(EmailConstants.VAR_USER_EMAIL, contactEmail);
-            variables.put(EmailConstants.VAR_COMPANY_NAME, "CoreSolution");
-            variables.put(EmailConstants.VAR_SUPPORT_EMAIL, EmailConstants.SUPPORT_EMAIL);
-            variables.put(EmailConstants.VAR_CURRENT_YEAR, String.valueOf(java.time.Year.now().getValue()));
-            variables.put("tenantName", tenantName != null ? tenantName : request.getTenantName());
-            variables.put("tenantId", tenantId);
-            variables.put("businessType", request.getBusinessType() != null ? request.getBusinessType() : "");
-
-            // 템플릿 기반 이메일 발송 (ADMIN_APPROVAL 템플릿 재사용)
-            EmailResponse response = emailService.sendTemplateEmail(
-                    EmailConstants.TEMPLATE_ADMIN_APPROVAL,
-                    contactEmail,
-                    request.getTenantName() != null ? request.getTenantName() : "고객님",
-                    variables
-            );
-
-            if (response.isSuccess()) {
-                log.info("온보딩 승인 완료 이메일 발송 성공: requestId={}, emailId={}", request.getId(),
-                        response.getEmailId());
-            } else {
-                log.error("온보딩 승인 완료 이메일 발송 실패: requestId={}, error={}", request.getId(),
-                        response.getErrorMessage());
-            }
+            // EmailUtil을 사용하여 이메일 발송
+            com.coresolution.core.util.EmailUtil.sendOnboardingApprovalEmail(emailService, contactEmail,
+                    tenantName, tenantId, request.getBusinessType());
 
         } catch (Exception e) {
             log.error("온보딩 승인 완료 이메일 발송 중 오류: requestId={}, error={}", request.getId(),

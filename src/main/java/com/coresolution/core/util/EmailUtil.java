@@ -143,11 +143,11 @@ public class EmailUtil {
      * 에러 응답 생성
      */
     private static EmailResponse createErrorResponse(String errorMessage) {
-        EmailResponse response = new EmailResponse();
-        response.setSuccess(false);
-        response.setErrorMessage(errorMessage);
-        response.setStatus(EmailConstants.STATUS_FAILED);
-        return response;
+        return EmailResponse.builder()
+                .success(false)
+                .errorMessage(errorMessage)
+                .status(EmailConstants.STATUS_FAILED)
+                .build();
     }
 }
 

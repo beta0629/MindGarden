@@ -52,11 +52,39 @@ cd /var/www/homepage
 ./deploy.sh
 ```
 
+### 3. GitHub Webhook (자동 - 푸시 시 즉시 배포)
+
+GitHub에 코드를 푸시하면 자동으로 서버가 배포됩니다.
+
+**Webhook 리스너**: PM2로 실행 중 (`homepage-webhook`)
+- **포트**: 3001
+- **URL**: `http://beta0629.cafe24.com:3001/webhook` 또는 `http://114.202.247.246:3001/webhook`
+- **Secret**: `mindgarden-webhook-secret-2025` (환경변수에서 변경 가능)
+
+**GitHub Webhook 설정 방법**:
+
+1. GitHub 저장소로 이동: https://github.com/beta0629/MindGarden
+2. Settings → Webhooks → Add webhook 클릭
+3. 다음 정보 입력:
+   - **Payload URL**: `http://114.202.247.246:3001/webhook`
+   - **Content type**: `application/json`
+   - **Secret**: `mindgarden-webhook-secret-2025`
+   - **Which events**: "Just the push event" 선택
+   - **Active**: 체크
+4. Add webhook 클릭
+
+**동작 방식**:
+- `homepage/develop` 브랜치에 푸시 시 자동으로 배포 실행
+- 다른 브랜치는 무시
+
 ## 주의사항
 
 1. **Git Pull 시**: post-merge hook이 자동 실행됩니다
-2. **직접 수정 시**: hook이 실행되지 않으므로 수동으로 배포 스크립트를 실행해야 합니다
-3. **PM2 프로세스**: `homepage-dev` 이름으로 관리됩니다
+2. **GitHub 푸시 시**: Webhook이 자동으로 배포를 트리거합니다 (설정 완료 후)
+3. **직접 수정 시**: hook이 실행되지 않으므로 수동으로 배포 스크립트를 실행해야 합니다
+4. **PM2 프로세스**: 
+   - `homepage-dev`: Next.js 앱
+   - `homepage-webhook`: Webhook 리스너
 
 ## PM2 관리 명령어
 

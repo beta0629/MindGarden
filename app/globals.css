@@ -1113,6 +1113,105 @@ main:not(:has(.hero-section)) .gnb .gnb-cta {
     transform: translateY(-2px);
 }
 
+/* 가치관 페이지 헤드라인 스타일 */
+.values-page h1.section-title {
+    font-family: var(--font-main);
+}
+
+.values-page h1.section-title span {
+    display: block;
+}
+
+/* 가치관 페이지 반응형 스타일 */
+@media (max-width: 768px) {
+    .content-section {
+        padding-left: 16px !important;
+        padding-right: 16px !important;
+    }
+    
+    .values-page h1.section-title {
+        font-size: 1.75rem !important;
+        padding: 0 16px !important;
+    }
+    
+    .values-page h1.section-title span {
+        margin-bottom: 4px !important;
+    }
+    
+    .value-section-card {
+        padding: 32px 20px !important;
+    }
+    
+    .value-section-card h3 {
+        font-size: 1.25rem !important;
+        padding-right: 0 !important;
+        margin-bottom: 24px !important;
+    }
+    
+    .value-section-card > div[style*="fontSize"] {
+        font-size: 1rem !important;
+        line-height: 1.9 !important;
+    }
+    
+    .value-section-card > div[style*="fontSize"] > div {
+        padding-left: 16px !important;
+        margin-bottom: 20px !important;
+    }
+    
+    .value-section-card > div[style*="position: absolute"][style*="top: 24px"] {
+        width: 48px !important;
+        height: 48px !important;
+        font-size: 1.25rem !important;
+        top: 16px !important;
+        right: 16px !important;
+    }
+    
+    .values-page > div[style*="fontStyle: italic"] {
+        font-size: 1.125rem !important;
+        padding: 0 16px !important;
+    }
+    
+    .values-page > div[style*="maxWidth: '900px'"] > div[style*="background"] {
+        padding: 32px 24px !important;
+    }
+    
+    .values-page > div[style*="maxWidth: '900px'"] > div[style*="background"] p {
+        font-size: 1.0625rem !important;
+        line-height: 2 !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .values-page h1.section-title {
+        font-size: 1.5rem !important;
+    }
+    
+    .values-page > div[style*="fontStyle: italic"] {
+        font-size: 1rem !important;
+    }
+    
+    .value-section-card {
+        padding: 24px 16px !important;
+    }
+    
+    .value-section-card h3 {
+        font-size: 1.125rem !important;
+    }
+    
+    .value-section-card > div[style*="fontSize"] {
+        font-size: 0.9375rem !important;
+    }
+    
+    .values-page > div[style*="maxWidth: '900px'"] > div[style*="background"] {
+        padding: 24px 20px !important;
+    }
+    
+    .values-page > div[style*="maxWidth: '900px'"] > div[style*="background"] p {
+        font-size: 1rem !important;
+        line-height: 1.9 !important;
+    }
+}
+
 .blog-card-image {
     width: 100%;
     height: 200px;

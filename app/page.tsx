@@ -106,8 +106,9 @@ export default async function Home() {
           <section id="about" className="content-section">
             <h2 className="section-title">마인드 가든 소개</h2>
             <p className="section-desc">
-              마인드가든 심리상담센터에서 일상의 집중과 감정 조절, 관계의 균형을 함께 만들어갑니다. 밝고 편안한 공간에서
-              당신의 속도에 맞춰 동행합니다.
+              내담자의 주호소 문제에 대해 풍부한 임상경력의 전문가가 객관화 된 검사와 내담자의 기질, 성격적 특성, 자라나온 양육환경 등을 고려해서 핵심문제를 찾습니다.<br /><br />
+              내담자와 함께 치료계획과 합의된 목표 세우고 최우선적으로<br />
+              증상완화를, 이후 더 깊은 회복과 성장을 돕습니다.
             </p>
             <div className="feature-grid">
               <div className="feature-card">

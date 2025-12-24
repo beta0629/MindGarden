@@ -2,9 +2,10 @@
 -- 목적: 프로시저 정의가 NULL인 문제를 해결하여 정상 실행 가능하도록 수정
 -- 근본 원인: 프로시저가 존재하지만 본문이 없어 실행할 수 없음
 
-DELIMITER //
+-- 1. ProcessOnboardingApproval 프로시저 재생성
+DROP PROCEDURE IF EXISTS ProcessOnboardingApproval;
 
-DROP PROCEDURE IF EXISTS ProcessOnboardingApproval //
+DELIMITER //
 
 CREATE PROCEDURE ProcessOnboardingApproval(
     IN p_request_id BINARY(16),

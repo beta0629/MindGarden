@@ -152,6 +152,7 @@ public class EmailUtil {
             String userName, String reason) {
         Map<String, Object> variables = createBaseEmailVariables(userName, toEmail, "mindgarden");
         variables.put("reason", reason != null ? reason : "");
+        variables.put("rejectionReason", reason != null ? reason : ""); // 일부 템플릿에서 사용
 
         return sendTemplateEmail(emailService, EmailConstants.TEMPLATE_CONSULTANT_REJECTION, toEmail,
                 userName, variables, "상담사 신청 거부");

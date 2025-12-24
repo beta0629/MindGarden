@@ -111,9 +111,26 @@ public class OnboardingPreValidationServiceImpl implements OnboardingPreValidati
         Map<String, String> warnings = new HashMap<>();
         
         // RoleTemplate 메타데이터 검증
-        long templateCount = roleTemplateRepository
-                .findByBusinessTypeAndActive(businessType)
-                .size();
+        List<com.coresolution.core.domain.RoleTemplate> templates = roleTemplateRepository
+                .findByBusinessTypeAndActive(businessType);
+        long templateCount = templates.size();
+        
+        // 상세 로그 추가
+        log.info("시스템 메타데이터 검증: businessType={}, templateCount={}", businessType, templateCount);
+        if (templateCount > 0) {
+            log.info("조회된 템플릿 목록: {}", templates.stream()
+                    .map(t -> String.format("%s(%s)", t.getTemplateCode(), t.getRoleTemplateId()))
+                    .collect(java.util.stream.Collectors.joining(", ")));
+        } else {
+            // 템플릿이 없을 때 전체 템플릿 목록 확인
+            List<com.coresolution.core.domain.RoleTemplate> allTemplates = roleTemplateRepository.findAllActive();
+            log.warn("업종 '{}'에 대한 템플릿이 없습니다. 전체 활성 템플릿 수: {}, 업종별 분포: {}", 
+                    businessType, allTemplates.size(),
+                    allTemplates.stream()
+                            .collect(java.util.stream.Collectors.groupingBy(
+                                    com.coresolution.core.domain.RoleTemplate::getBusinessType,
+                                    java.util.stream.Collectors.counting())));
+        }
         
         if (templateCount == 0) {
             String errorMessage = String.format(

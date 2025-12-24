@@ -33,38 +33,11 @@ jobs:
           echo "1️⃣ 데이터베이스 상태 확인"
           echo "=========================================="
           source /etc/mindgarden/dev.env
-          mysql -h "$DB_HOST" -u "$DB_USERNAME" -p"$DB_PASSWORD" "$DB_NAME" << 'SQL'
-            -- Flyway 마이그레이션 상태
-            SELECT 'Flyway 마이그레이션 상태:' as info;
-            SELECT * FROM flyway_schema_history ORDER BY installed_rank DESC LIMIT 10;
-            
-            -- role_templates 테이블 상태
-            SELECT 'role_templates 테이블 상태:' as info;
-            SELECT business_type, COUNT(*) as count, GROUP_CONCAT(template_code) as templates
-            FROM role_templates 
-            WHERE is_deleted = FALSE AND is_active = TRUE
-            GROUP BY business_type;
-            
-            -- COUNSELING 업종 템플릿 확인
-            SELECT 'COUNSELING 업종 템플릿 상세:' as info;
-            SELECT template_code, name_ko, is_active, is_deleted 
-            FROM role_templates 
-            WHERE business_type = 'COUNSELING';
-            
-            -- 최근 온보딩 요청 상태
-            SELECT '최근 온보딩 요청 상태:' as info;
-            SELECT id, tenant_id, tenant_name, business_type, status, decision_note
-            FROM onboarding_requests
-            ORDER BY created_at DESC
-            LIMIT 5;
-            
-            -- 프로시저 존재 확인
-            SELECT '프로시저 존재 확인:' as info;
-            SELECT ROUTINE_NAME, ROUTINE_TYPE, CREATED, LAST_ALTERED
-            FROM information_schema.ROUTINES
-            WHERE ROUTINE_SCHEMA = DATABASE()
-            AND ROUTINE_NAME IN ('ProcessOnboardingApproval', 'CreateOrActivateTenant', 'ApplyDefaultRoleTemplates', 'CreateTenantAdminAccount');
-SQL
+          mysql -h "$DB_HOST" -u "$DB_USERNAME" -p"$DB_PASSWORD" "$DB_NAME" -e "SELECT 'Flyway 마이그레이션 상태:' as info; SELECT * FROM flyway_schema_history ORDER BY installed_rank DESC LIMIT 10;"
+          mysql -h "$DB_HOST" -u "$DB_USERNAME" -p"$DB_PASSWORD" "$DB_NAME" -e "SELECT 'role_templates 테이블 상태:' as info; SELECT business_type, COUNT(*) as count, GROUP_CONCAT(template_code) as templates FROM role_templates WHERE is_deleted = FALSE AND is_active = TRUE GROUP BY business_type;"
+          mysql -h "$DB_HOST" -u "$DB_USERNAME" -p"$DB_PASSWORD" "$DB_NAME" -e "SELECT 'COUNSELING 업종 템플릿 상세:' as info; SELECT template_code, name_ko, is_active, is_deleted FROM role_templates WHERE business_type = 'COUNSELING';"
+          mysql -h "$DB_HOST" -u "$DB_USERNAME" -p"$DB_PASSWORD" "$DB_NAME" -e "SELECT '최근 온보딩 요청 상태:' as info; SELECT id, tenant_id, tenant_name, business_type, status, decision_note FROM onboarding_requests ORDER BY created_at DESC LIMIT 5;"
+          mysql -h "$DB_HOST" -u "$DB_USERNAME" -p"$DB_PASSWORD" "$DB_NAME" -e "SELECT '프로시저 존재 확인:' as info; SELECT ROUTINE_NAME, ROUTINE_TYPE, CREATED, LAST_ALTERED FROM information_schema.ROUTINES WHERE ROUTINE_SCHEMA = DATABASE() AND ROUTINE_NAME IN ('ProcessOnboardingApproval', 'CreateOrActivateTenant', 'ApplyDefaultRoleTemplates', 'CreateTenantAdminAccount');"
           echo ""
           
           # 2. 프로시저 정의 확인
@@ -72,9 +45,7 @@ SQL
           echo "2️⃣ 프로시저 정의 확인"
           echo "=========================================="
           source /etc/mindgarden/dev.env
-          mysql -h "$DB_HOST" -u "$DB_USERNAME" -p"$DB_PASSWORD" "$DB_NAME" << 'SQL'
-            SHOW CREATE PROCEDURE ProcessOnboardingApproval\G
-SQL
+          mysql -h "$DB_HOST" -u "$DB_USERNAME" -p"$DB_PASSWORD" "$DB_NAME" -e "SHOW CREATE PROCEDURE ProcessOnboardingApproval\G"
           echo ""
           
           # 3. 최근 온보딩 프로세스 로그

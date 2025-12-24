@@ -313,28 +313,11 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                         try {
                             // TransactionTemplate을 사용하여 별도 트랜잭션에서 실행
                             // 재시도 로직을 TransactionTemplate 밖으로 이동하여 각 재시도마다 새로운 트랜잭션 시작
-                            int maxRetries = 5;
-                            long baseRetryDelay = 1000;
+                            int maxRetries = 10; // 재시도 횟수 증가 (5 -> 10)
+                            long baseRetryDelay = 2000; // 재시도 지연 시간 증가 (1초 -> 2초)
                             rolesApplied = false;
 
                             for (int attempt = 1; attempt <= maxRetries; attempt++) {
-                                TransactionTemplate transactionTemplate =
-                                        new TransactionTemplate(transactionManager);
-                                transactionTemplate.setPropagationBehavior(
-                                        org.springframework.transaction.TransactionDefinition.PROPAGATION_REQUIRES_NEW);
-                                transactionTemplate.setIsolationLevel(
-                                        org.springframework.transaction.TransactionDefinition.ISOLATION_READ_COMMITTED);
-
-                                Boolean roleResult = transactionTemplate.execute(status -> {
-                                    return ensureRolesAppliedOnce(tenantId, businessType,
-                                            approvedBy);
-                                });
-
-                                if (roleResult != null && roleResult) {
-                                    rolesApplied = true;
-                                    break;
-                                }
-
                                 // 재시도 전 역할 존재 확인 (다른 트랜잭션이 생성했을 수 있음)
                                 try {
                                     Integer checkCount = jdbcTemplate.queryForObject(
@@ -352,8 +335,46 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                                             checkEx.getMessage());
                                 }
 
+                                TransactionTemplate transactionTemplate =
+                                        new TransactionTemplate(transactionManager);
+                                transactionTemplate.setPropagationBehavior(
+                                        org.springframework.transaction.TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+                                transactionTemplate.setIsolationLevel(
+                                        org.springframework.transaction.TransactionDefinition.ISOLATION_READ_COMMITTED);
+                                // 락 타임아웃 설정 (초 단위, 기본값보다 길게)
+                                transactionTemplate.setTimeout(30); // 30초
+
+                                Boolean roleResult = null;
+                                try {
+                                    roleResult = transactionTemplate.execute(status -> {
+                                        return ensureRolesAppliedOnce(tenantId, businessType,
+                                                approvedBy);
+                                    });
+                                } catch (org.springframework.dao.CannotAcquireLockException e) {
+                                    log.warn("역할 생성 중 락 획득 실패 (재시도 예정): tenantId={}, attempt={}/{}, error={}",
+                                            tenantId, attempt, maxRetries, e.getMessage());
+                                    roleResult = false;
+                                } catch (Exception e) {
+                                    String errorMsg = e.getMessage();
+                                    if (errorMsg != null && (errorMsg.contains("Lock wait timeout")
+                                            || errorMsg.contains("lock timeout") || errorMsg.contains("deadlock"))) {
+                                        log.warn("역할 생성 중 락 관련 오류 (재시도 예정): tenantId={}, attempt={}/{}, error={}",
+                                                tenantId, attempt, maxRetries, errorMsg);
+                                        roleResult = false;
+                                    } else {
+                                        log.error("역할 생성 중 예상치 못한 오류: tenantId={}, attempt={}/{}, error={}",
+                                                tenantId, attempt, maxRetries, e.getMessage(), e);
+                                        roleResult = false;
+                                    }
+                                }
+
+                                if (roleResult != null && roleResult) {
+                                    rolesApplied = true;
+                                    break;
+                                }
+
                                 if (attempt < maxRetries) {
-                                    long delay = baseRetryDelay * attempt;
+                                    long delay = baseRetryDelay * attempt; // 지수 백오프
                                     log.warn(
                                             "역할 생성 실패 (재시도): tenantId={}, attempt={}/{}, delay={}ms",
                                             tenantId, attempt, maxRetries, delay);
@@ -753,28 +774,28 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                         directorTemplateId, counselorTemplateId, clientTemplateId, staffTemplateId);
 
                 // 배치 INSERT로 락 시간 최소화 (4개 역할을 하나의 쿼리로 생성)
-                String insertSql = "INSERT INTO tenant_roles (tenant_role_id, tenant_id, role_template_id, name, name_ko, name_en, "
-                        + "description, description_ko, description_en, "
-                        + "is_active, display_order, created_at, updated_at, "
-                        + "created_by, updated_by, is_deleted, version, lang_code) VALUES "
-                        + "(UUID(), ?, ?, '원장', '원장', 'Principal', "
-                        + "'상담소 원장 역할', '상담소 원장 역할', 'Principal role for consultation center', "
-                        + "TRUE, 1, NOW(), NOW(), ?, ?, FALSE, 0, 'ko'), "
-                        + "(UUID(), ?, ?, '상담사', '상담사', 'Consultant', "
-                        + "'상담사 역할', '상담사 역할', 'Consultant role', "
-                        + "TRUE, 2, NOW(), NOW(), ?, ?, FALSE, 0, 'ko'), "
-                        + "(UUID(), ?, ?, '내담자', '내담자', 'Client', "
-                        + "'내담자 역할', '내담자 역할', 'Client role', "
-                        + "TRUE, 3, NOW(), NOW(), ?, ?, FALSE, 0, 'ko'), "
-                        + "(UUID(), ?, ?, '사무원', '사무원', 'Staff', "
-                        + "'사무원 역할', '사무원 역할', 'Staff role', "
-                        + "TRUE, 4, NOW(), NOW(), ?, ?, FALSE, 0, 'ko')";
+                String insertSql =
+                        "INSERT INTO tenant_roles (tenant_role_id, tenant_id, role_template_id, name, name_ko, name_en, "
+                                + "description, description_ko, description_en, "
+                                + "is_active, display_order, created_at, updated_at, "
+                                + "created_by, updated_by, is_deleted, version, lang_code) VALUES "
+                                + "(UUID(), ?, ?, '원장', '원장', 'Principal', "
+                                + "'상담소 원장 역할', '상담소 원장 역할', 'Principal role for consultation center', "
+                                + "TRUE, 1, NOW(), NOW(), ?, ?, FALSE, 0, 'ko'), "
+                                + "(UUID(), ?, ?, '상담사', '상담사', 'Consultant', "
+                                + "'상담사 역할', '상담사 역할', 'Consultant role', "
+                                + "TRUE, 2, NOW(), NOW(), ?, ?, FALSE, 0, 'ko'), "
+                                + "(UUID(), ?, ?, '내담자', '내담자', 'Client', "
+                                + "'내담자 역할', '내담자 역할', 'Client role', "
+                                + "TRUE, 3, NOW(), NOW(), ?, ?, FALSE, 0, 'ko'), "
+                                + "(UUID(), ?, ?, '사무원', '사무원', 'Staff', "
+                                + "'사무원 역할', '사무원 역할', 'Staff role', "
+                                + "TRUE, 4, NOW(), NOW(), ?, ?, FALSE, 0, 'ko')";
 
-                jdbcTemplate.update(insertSql,
-                        tenantId, directorTemplateId, approvedBy, approvedBy,
-                        tenantId, counselorTemplateId, approvedBy, approvedBy,
-                        tenantId, clientTemplateId, approvedBy, approvedBy,
-                        tenantId, staffTemplateId, approvedBy, approvedBy);
+                jdbcTemplate.update(insertSql, tenantId, directorTemplateId, approvedBy, approvedBy,
+                        tenantId, counselorTemplateId, approvedBy, approvedBy, tenantId,
+                        clientTemplateId, approvedBy, approvedBy, tenantId, staffTemplateId,
+                        approvedBy, approvedBy);
 
                 // JPA 캐시 갱신 (jdbcTemplate으로 생성한 데이터를 JPA에서 조회할 수 있도록)
                 entityManager.flush();

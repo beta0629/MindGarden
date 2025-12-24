@@ -24,13 +24,13 @@ jobs:
         timeout: 120s
         script: |
           echo "=========================================="
-          echo "🔍 온보딩 프로세스 종합 진단"
+          echo "온보딩 프로세스 종합 진단"
           echo "=========================================="
           echo ""
           
           # 1. 데이터베이스 상태 확인
           echo "=========================================="
-          echo "1️⃣ 데이터베이스 상태 확인"
+          echo "1. 데이터베이스 상태 확인"
           echo "=========================================="
           source /etc/mindgarden/dev.env
           mysql -h "$DB_HOST" -u "$DB_USERNAME" -p"$DB_PASSWORD" "$DB_NAME" -e "SELECT 'Flyway 마이그레이션 상태:' as info; SELECT * FROM flyway_schema_history ORDER BY installed_rank DESC LIMIT 10;"
@@ -42,7 +42,7 @@ jobs:
           
           # 2. 프로시저 정의 확인
           echo "=========================================="
-          echo "2️⃣ 프로시저 정의 확인"
+          echo "2. 프로시저 정의 확인"
           echo "=========================================="
           source /etc/mindgarden/dev.env
           mysql -h "$DB_HOST" -u "$DB_USERNAME" -p"$DB_PASSWORD" "$DB_NAME" -e "SHOW CREATE PROCEDURE ProcessOnboardingApproval\G"
@@ -64,12 +64,12 @@ jobs:
           
           # 5. 애플리케이션 상태 확인
           echo "=========================================="
-          echo "5️⃣ 애플리케이션 상태 확인"
+          echo "5. 애플리케이션 상태 확인"
           echo "=========================================="
           sudo systemctl status mindgarden-dev.service --no-pager -l | head -20
           echo ""
           
           echo "=========================================="
-          echo "✅ 종합 진단 완료"
+          echo "종합 진단 완료"
           echo "=========================================="
 

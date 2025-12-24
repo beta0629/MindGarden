@@ -922,16 +922,6 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
 
                 log.warn("역할 생성 실패: tenantId={}, successCount={}", tenantId, successCount);
                 return false;
-
-                // JPA 캐시 갱신 (jdbcTemplate으로 생성한 데이터를 JPA에서 조회할 수 있도록)
-                entityManager.flush();
-                entityManager.clear();
-
-                log.info(
-                        "기본 역할 생성 완료: tenantId={}, roleTemplateIds=[director={}, counselor={}, client={}, staff={}]",
-                        tenantId, directorTemplateId, counselorTemplateId, clientTemplateId,
-                        staffTemplateId);
-                return true;
             } catch (org.springframework.dao.CannotAcquireLockException e) {
                 log.warn("역할 생성 중 락 획득 실패: tenantId={}, error={}", tenantId, e.getMessage());
                 throw e; // 호출부에서 재시도 처리

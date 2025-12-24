@@ -1,4 +1,4 @@
-name: 프로시저 직접 수정
+name: Fix ProcessOnboardingApproval Procedure
 
 on:
   workflow_dispatch:

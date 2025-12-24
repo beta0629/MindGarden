@@ -766,10 +766,11 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                     return true;
                 } catch (org.springframework.dao.CannotAcquireLockException e) {
                     if (attempt < maxRetries) {
-                        log.warn("역할 생성 중 락 타임아웃 발생 (재시도): tenantId={}, attempt={}/{}, error={}",
-                                tenantId, attempt, maxRetries, e.getMessage());
+                        long delay = baseRetryDelay * attempt; // 지수 백오프 (1초, 2초, 3초, 4초, 5초)
+                        log.warn("역할 생성 중 락 타임아웃 발생 (재시도): tenantId={}, attempt={}/{}, delay={}ms, error={}",
+                                tenantId, attempt, maxRetries, delay, e.getMessage());
                         try {
-                            Thread.sleep(retryDelay * attempt); // 지수 백오프
+                            Thread.sleep(delay);
                         } catch (InterruptedException ie) {
                             Thread.currentThread().interrupt();
                             log.error("재시도 대기 중 인터럽트 발생");
@@ -787,11 +788,12 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                             || errorMsg.contains("lock timeout")
                             || errorMsg.contains("deadlock"))) {
                         if (attempt < maxRetries) {
+                            long delay = baseRetryDelay * attempt; // 지수 백오프 (1초, 2초, 3초, 4초, 5초)
                             log.warn(
-                                    "역할 생성 중 락 관련 오류 발생 (재시도): tenantId={}, attempt={}/{}, error={}",
-                                    tenantId, attempt, maxRetries, errorMsg);
+                                    "역할 생성 중 락 관련 오류 발생 (재시도): tenantId={}, attempt={}/{}, delay={}ms, error={}",
+                                    tenantId, attempt, maxRetries, delay, errorMsg);
                             try {
-                                Thread.sleep(retryDelay * attempt); // 지수 백오프
+                                Thread.sleep(delay);
                             } catch (InterruptedException ie) {
                                 Thread.currentThread().interrupt();
                                 log.error("재시도 대기 중 인터럽트 발생");

@@ -5,13 +5,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import com.coresolution.consultation.constant.AdminConstants;
-import com.coresolution.consultation.constant.EmailConstants;
 import com.coresolution.consultation.constant.UserRole;
-import com.coresolution.consultation.dto.EmailResponse;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.service.BranchService;
 import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.service.EmailService;
+import com.coresolution.core.util.EmailUtil;
 import com.coresolution.consultation.service.UserAddressService;
 import com.coresolution.consultation.service.UserProfileService;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
@@ -515,27 +514,8 @@ public class AdminUserController {
                 return;
             }
             
-            // 이메일 템플릿 변수 설정
-            Map<String, Object> variables = new HashMap<>();
-            variables.put(EmailConstants.VAR_USER_NAME, user.getName());
-            variables.put(EmailConstants.VAR_USER_EMAIL, user.getEmail());
-            variables.put(EmailConstants.VAR_COMPANY_NAME, "mindgarden");
-            variables.put(EmailConstants.VAR_SUPPORT_EMAIL, EmailConstants.SUPPORT_EMAIL);
-            variables.put(EmailConstants.VAR_CURRENT_YEAR, String.valueOf(java.time.Year.now().getValue()));
-            
-            // 템플릿 기반 이메일 발송
-            EmailResponse response = emailService.sendTemplateEmail(
-                    EmailConstants.TEMPLATE_CONSULTANT_APPROVAL,
-                    user.getEmail(),
-                    user.getName(),
-                    variables
-            );
-            
-            if (response.isSuccess()) {
-                log.info("상담사 승인 완료 이메일 발송 성공: userId={}, emailId={}", userId, response.getEmailId());
-            } else {
-                log.error("상담사 승인 완료 이메일 발송 실패: userId={}, error={}", userId, response.getErrorMessage());
-            }
+            // EmailUtil을 사용하여 이메일 발송
+            EmailUtil.sendConsultantApprovalEmail(emailService, user.getEmail(), user.getName());
             
         } catch (Exception e) {
             log.error("상담사 승인 완료 이메일 발송 중 오류: userId={}, error={}", userId, e.getMessage(), e);
@@ -556,27 +536,8 @@ public class AdminUserController {
                 return;
             }
             
-            // 이메일 템플릿 변수 설정
-            Map<String, Object> variables = new HashMap<>();
-            variables.put(EmailConstants.VAR_USER_NAME, user.getName());
-            variables.put(EmailConstants.VAR_USER_EMAIL, user.getEmail());
-            variables.put(EmailConstants.VAR_COMPANY_NAME, "mindgarden");
-            variables.put(EmailConstants.VAR_SUPPORT_EMAIL, EmailConstants.SUPPORT_EMAIL);
-            variables.put(EmailConstants.VAR_CURRENT_YEAR, String.valueOf(java.time.Year.now().getValue()));
-            
-            // 템플릿 기반 이메일 발송
-            EmailResponse response = emailService.sendTemplateEmail(
-                    EmailConstants.TEMPLATE_ADMIN_APPROVAL,
-                    user.getEmail(),
-                    user.getName(),
-                    variables
-            );
-            
-            if (response.isSuccess()) {
-                log.info("관리자 승인 완료 이메일 발송 성공: userId={}, emailId={}", userId, response.getEmailId());
-            } else {
-                log.error("관리자 승인 완료 이메일 발송 실패: userId={}, error={}", userId, response.getErrorMessage());
-            }
+            // EmailUtil을 사용하여 이메일 발송
+            EmailUtil.sendAdminApprovalEmail(emailService, user.getEmail(), user.getName());
             
         } catch (Exception e) {
             log.error("관리자 승인 완료 이메일 발송 중 오류: userId={}, error={}", userId, e.getMessage(), e);
@@ -598,28 +559,9 @@ public class AdminUserController {
                 return;
             }
             
-            // 이메일 템플릿 변수 설정
-            Map<String, Object> variables = new HashMap<>();
-            variables.put(EmailConstants.VAR_USER_NAME, user.getName());
-            variables.put(EmailConstants.VAR_USER_EMAIL, user.getEmail());
-            variables.put(EmailConstants.VAR_COMPANY_NAME, "mindgarden");
-            variables.put(EmailConstants.VAR_SUPPORT_EMAIL, EmailConstants.SUPPORT_EMAIL);
-            variables.put(EmailConstants.VAR_CURRENT_YEAR, String.valueOf(java.time.Year.now().getValue()));
-            variables.put("rejectionReason", reason != null ? reason : "자격 요건을 충족하지 못했습니다.");
-            
-            // 템플릿 기반 이메일 발송
-            EmailResponse response = emailService.sendTemplateEmail(
-                    EmailConstants.TEMPLATE_CONSULTANT_REJECTION,
-                    user.getEmail(),
-                    user.getName(),
-                    variables
-            );
-            
-            if (response.isSuccess()) {
-                log.info("상담사 신청 거부 이메일 발송 성공: userId={}, emailId={}", userId, response.getEmailId());
-            } else {
-                log.error("상담사 신청 거부 이메일 발송 실패: userId={}, error={}", userId, response.getErrorMessage());
-            }
+            // EmailUtil을 사용하여 이메일 발송
+            String rejectionReason = reason != null ? reason : "자격 요건을 충족하지 못했습니다.";
+            EmailUtil.sendConsultantRejectionEmail(emailService, user.getEmail(), user.getName(), rejectionReason);
             
         } catch (Exception e) {
             log.error("상담사 신청 거부 이메일 발송 중 오류: userId={}, error={}", userId, e.getMessage(), e);
@@ -634,28 +576,8 @@ public class AdminUserController {
         try {
             log.info("시스템 알림 이메일 발송: to={}, message={}", toEmail, message);
             
-            // 이메일 템플릿 변수 설정
-            Map<String, Object> variables = new HashMap<>();
-            variables.put(EmailConstants.VAR_USER_NAME, toName);
-            variables.put(EmailConstants.VAR_USER_EMAIL, toEmail);
-            variables.put(EmailConstants.VAR_COMPANY_NAME, "mindgarden");
-            variables.put(EmailConstants.VAR_SUPPORT_EMAIL, EmailConstants.SUPPORT_EMAIL);
-            variables.put(EmailConstants.VAR_CURRENT_YEAR, String.valueOf(java.time.Year.now().getValue()));
-            variables.put("message", message);
-            
-            // 템플릿 기반 이메일 발송
-            EmailResponse response = emailService.sendTemplateEmail(
-                    EmailConstants.TEMPLATE_SYSTEM_NOTIFICATION,
-                    toEmail,
-                    toName,
-                    variables
-            );
-            
-            if (response.isSuccess()) {
-                log.info("시스템 알림 이메일 발송 성공: to={}, emailId={}", toEmail, response.getEmailId());
-            } else {
-                log.error("시스템 알림 이메일 발송 실패: to={}, error={}", toEmail, response.getErrorMessage());
-            }
+            // EmailUtil을 사용하여 이메일 발송
+            EmailUtil.sendSystemNotificationEmail(emailService, toEmail, toName, message);
             
         } catch (Exception e) {
             log.error("시스템 알림 이메일 발송 중 오류: to={}, error={}", toEmail, e.getMessage(), e);

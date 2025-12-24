@@ -2421,8 +2421,8 @@ public class OnboardingServiceImpl implements OnboardingService {
             String tenantName = tenant != null ? tenant.getName() : request.getTenantName();
 
             // EmailUtil을 사용하여 이메일 발송
-            com.coresolution.core.util.EmailUtil.sendOnboardingApprovalEmail(emailService, contactEmail,
-                    tenantName, tenantId, request.getBusinessType());
+            com.coresolution.core.util.EmailUtil.sendOnboardingApprovalEmail(emailService,
+                    contactEmail, tenantName, tenantId, request.getBusinessType());
 
         } catch (Exception e) {
             log.error("온보딩 승인 완료 이메일 발송 중 오류: requestId={}, error={}", request.getId(),

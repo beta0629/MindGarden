@@ -753,28 +753,10 @@ public class UserServiceImpl implements UserService {
         
         // 이메일로 임시 비밀번호 발송
         try {
-            // EmailService를 통한 이메일 발송
-            Map<String, Object> variables = new HashMap<>();
-            variables.put("userName", user.getName());
-            variables.put("userEmail", user.getEmail());
-            variables.put("tempPassword", tempPassword);
-            variables.put("companyName", "mindgarden");
-            variables.put("supportEmail", "support@mindgarden.com");
-            variables.put("currentYear", String.valueOf(java.time.Year.now().getValue()));
-            
-            // EmailService를 통한 템플릿 이메일 발송
-            EmailResponse response = emailService.sendTemplateEmail(
-                EmailConstants.TEMPLATE_PASSWORD_RESET,
-                user.getEmail(),
-                user.getName(),
-                variables
-            );
-            
-            if (response.isSuccess()) {
-                log.info("임시 비밀번호 이메일 발송 성공: emailId={}, email={}", response.getEmailId(), user.getEmail());
-            } else {
-                log.error("임시 비밀번호 이메일 발송 실패: email={}, error={}", user.getEmail(), response.getErrorMessage());
-            }
+            // EmailUtil을 사용하여 이메일 발송
+            // 임시 비밀번호는 시스템 알림으로 발송
+            String message = String.format("임시 비밀번호가 발급되었습니다. 임시 비밀번호: %s\n로그인 후 반드시 비밀번호를 변경해주세요.", tempPassword);
+            com.coresolution.core.util.EmailUtil.sendSystemNotificationEmail(emailService, user.getEmail(), user.getName(), message);
         } catch (Exception e) {
             log.error("임시 비밀번호 이메일 발송 실패: {}, error: {}", user.getEmail(), e.getMessage());
         }

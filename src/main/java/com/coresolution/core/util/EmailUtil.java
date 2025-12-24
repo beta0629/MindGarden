@@ -140,6 +140,60 @@ public class EmailUtil {
     }
 
     /**
+     * 상담사 신청 거부 이메일 발송
+     * 
+     * @param emailService 이메일 서비스
+     * @param toEmail 수신자 이메일
+     * @param userName 사용자명
+     * @param reason 거부 사유
+     * @return EmailResponse
+     */
+    public static EmailResponse sendConsultantRejectionEmail(EmailService emailService, String toEmail,
+            String userName, String reason) {
+        Map<String, Object> variables = createBaseEmailVariables(userName, toEmail, "mindgarden");
+        variables.put("reason", reason != null ? reason : "");
+
+        return sendTemplateEmail(emailService, EmailConstants.TEMPLATE_CONSULTANT_REJECTION, toEmail,
+                userName, variables, "상담사 신청 거부");
+    }
+
+    /**
+     * 시스템 알림 이메일 발송
+     * 
+     * @param emailService 이메일 서비스
+     * @param toEmail 수신자 이메일
+     * @param toName 수신자 이름
+     * @param message 알림 메시지
+     * @return EmailResponse
+     */
+    public static EmailResponse sendSystemNotificationEmail(EmailService emailService, String toEmail,
+            String toName, String message) {
+        Map<String, Object> variables = createBaseEmailVariables(toName, toEmail, "mindgarden");
+        variables.put("message", message != null ? message : "");
+
+        return sendTemplateEmail(emailService, EmailConstants.TEMPLATE_SYSTEM_NOTIFICATION, toEmail,
+                toName, variables, "시스템 알림");
+    }
+
+    /**
+     * 비밀번호 재설정 이메일 발송
+     * 
+     * @param emailService 이메일 서비스
+     * @param toEmail 수신자 이메일
+     * @param userName 사용자명
+     * @param resetLink 비밀번호 재설정 링크
+     * @return EmailResponse
+     */
+    public static EmailResponse sendPasswordResetEmail(EmailService emailService, String toEmail,
+            String userName, String resetLink) {
+        Map<String, Object> variables = createBaseEmailVariables(userName, toEmail, "mindgarden");
+        variables.put(EmailConstants.VAR_RESET_LINK, resetLink != null ? resetLink : "");
+
+        return sendTemplateEmail(emailService, EmailConstants.TEMPLATE_PASSWORD_RESET, toEmail, userName,
+                variables, "비밀번호 재설정");
+    }
+
+    /**
      * 에러 응답 생성
      */
     private static EmailResponse createErrorResponse(String errorMessage) {

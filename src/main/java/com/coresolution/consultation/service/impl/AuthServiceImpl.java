@@ -738,28 +738,9 @@ public class AuthServiceImpl implements AuthService {
         try {
             log.info("비밀번호 재설정 이메일 발송: email={}", email);
             
-            // 이메일 템플릿 변수 설정
-            Map<String, Object> variables = new HashMap<>();
-            variables.put(EmailConstants.VAR_USER_NAME, name);
-            variables.put(EmailConstants.VAR_USER_EMAIL, email);
-            variables.put(EmailConstants.VAR_COMPANY_NAME, "mindgarden");
-            variables.put(EmailConstants.VAR_SUPPORT_EMAIL, EmailConstants.SUPPORT_EMAIL);
-            variables.put(EmailConstants.VAR_CURRENT_YEAR, String.valueOf(java.time.Year.now().getValue()));
-            variables.put(EmailConstants.VAR_RESET_LINK, "https://mindgarden.com/reset-password?token=" + resetToken);
-            
-            // 템플릿 기반 이메일 발송
-            EmailResponse response = emailService.sendTemplateEmail(
-                    EmailConstants.TEMPLATE_PASSWORD_RESET,
-                    email,
-                    name,
-                    variables
-            );
-            
-            if (response.isSuccess()) {
-                log.info("비밀번호 재설정 이메일 발송 성공: email={}, emailId={}", email, response.getEmailId());
-            } else {
-                log.error("비밀번호 재설정 이메일 발송 실패: email={}, error={}", email, response.getErrorMessage());
-            }
+            // EmailUtil을 사용하여 이메일 발송
+            String resetLink = "https://mindgarden.com/reset-password?token=" + resetToken;
+            com.coresolution.core.util.EmailUtil.sendPasswordResetEmail(emailService, email, name, resetLink);
             
         } catch (Exception e) {
             log.error("비밀번호 재설정 이메일 발송 중 오류: email={}, error={}", email, e.getMessage(), e);
@@ -773,28 +754,9 @@ public class AuthServiceImpl implements AuthService {
         try {
             log.info("비밀번호 재설정 완료 이메일 발송: email={}", email);
             
-            // 이메일 템플릿 변수 설정
-            Map<String, Object> variables = new HashMap<>();
-            variables.put(EmailConstants.VAR_USER_NAME, name);
-            variables.put(EmailConstants.VAR_USER_EMAIL, email);
-            variables.put(EmailConstants.VAR_COMPANY_NAME, "mindgarden");
-            variables.put(EmailConstants.VAR_SUPPORT_EMAIL, EmailConstants.SUPPORT_EMAIL);
-            variables.put(EmailConstants.VAR_CURRENT_YEAR, String.valueOf(java.time.Year.now().getValue()));
-            variables.put("resetMessage", "비밀번호가 성공적으로 변경되었습니다.");
-            
-            // 템플릿 기반 이메일 발송
-            EmailResponse response = emailService.sendTemplateEmail(
-                    EmailConstants.TEMPLATE_SYSTEM_NOTIFICATION,
-                    email,
-                    name,
-                    variables
-            );
-            
-            if (response.isSuccess()) {
-                log.info("비밀번호 재설정 완료 이메일 발송 성공: email={}, emailId={}", email, response.getEmailId());
-            } else {
-                log.error("비밀번호 재설정 완료 이메일 발송 실패: email={}, error={}", email, response.getErrorMessage());
-            }
+            // EmailUtil을 사용하여 이메일 발송
+            String message = "비밀번호가 성공적으로 변경되었습니다.";
+            com.coresolution.core.util.EmailUtil.sendSystemNotificationEmail(emailService, email, name, message);
             
         } catch (Exception e) {
             log.error("비밀번호 재설정 완료 이메일 발송 중 오류: email={}, error={}", email, e.getMessage(), e);

@@ -793,58 +793,135 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                 } catch (Exception e) {
                     log.warn("역할 존재 재확인 실패: tenantId={}, error={}", tenantId, e.getMessage());
                 }
-                
+
                 if (doubleCheckCount != null && doubleCheckCount > 0) {
-                    log.info("역할이 이미 존재함 (INSERT 전 재확인): tenantId={}, count={}", tenantId, doubleCheckCount);
+                    log.info("역할이 이미 존재함 (INSERT 전 재확인): tenantId={}, count={}", tenantId,
+                            doubleCheckCount);
                     return true;
                 }
 
-                // INSERT IGNORE를 사용하여 중복 삽입 시도 시 오류 대신 무시 (락 경합 최소화)
-                // 배치 INSERT로 락 시간 최소화 (4개 역할을 하나의 쿼리로 생성)
-                String insertSql =
-                        "INSERT IGNORE INTO tenant_roles (tenant_role_id, tenant_id, role_template_id, name, name_ko, name_en, "
-                                + "description, description_ko, description_en, "
-                                + "is_active, display_order, created_at, updated_at, "
-                                + "created_by, updated_by, is_deleted, version, lang_code) VALUES "
-                                + "(UUID(), ?, ?, '원장', '원장', 'Principal', "
-                                + "'상담소 원장 역할', '상담소 원장 역할', 'Principal role for consultation center', "
-                                + "TRUE, 1, NOW(), NOW(), ?, ?, FALSE, 0, 'ko'), "
-                                + "(UUID(), ?, ?, '상담사', '상담사', 'Consultant', "
-                                + "'상담사 역할', '상담사 역할', 'Consultant role', "
-                                + "TRUE, 2, NOW(), NOW(), ?, ?, FALSE, 0, 'ko'), "
-                                + "(UUID(), ?, ?, '내담자', '내담자', 'Client', "
-                                + "'내담자 역할', '내담자 역할', 'Client role', "
-                                + "TRUE, 3, NOW(), NOW(), ?, ?, FALSE, 0, 'ko'), "
-                                + "(UUID(), ?, ?, '사무원', '사무원', 'Staff', "
-                                + "'사무원 역할', '사무원 역할', 'Staff role', "
-                                + "TRUE, 4, NOW(), NOW(), ?, ?, FALSE, 0, 'ko')";
+                // 개별 INSERT로 분리하여 락 경합 최소화
+                // 각 역할을 개별적으로 INSERT하여 락 타임아웃 발생 시 빠르게 실패하고 재시도
+                int successCount = 0;
+                String[] roleNames = { "원장", "상담사", "내담자", "사무원" };
+                String[] roleNamesEn = { "Principal", "Consultant", "Client", "Staff" };
+                String[] roleDescriptions = {
+                        "상담소 원장 역할",
+                        "상담사 역할",
+                        "내담자 역할",
+                        "사무원 역할"
+                };
+                String[] roleDescriptionsEn = {
+                        "Principal role for consultation center",
+                        "Consultant role",
+                        "Client role",
+                        "Staff role"
+                };
+                String[] templateIds = { directorTemplateId, counselorTemplateId, clientTemplateId,
+                        staffTemplateId };
+                int[] displayOrders = { 1, 2, 3, 4 };
 
-                int rowsAffected = jdbcTemplate.update(insertSql, tenantId, directorTemplateId,
-                        approvedBy, approvedBy, tenantId, counselorTemplateId, approvedBy,
-                        approvedBy, tenantId, clientTemplateId, approvedBy, approvedBy, tenantId,
-                        staffTemplateId, approvedBy, approvedBy);
+                for (int i = 0; i < roleNames.length; i++) {
+                    // 각 역할이 이미 존재하는지 확인
+                    Integer roleExists = null;
+                    try {
+                        roleExists = jdbcTemplate.queryForObject(
+                                "SELECT COUNT(*) FROM tenant_roles WHERE tenant_id = ? AND name_ko = ? AND (is_deleted IS NULL OR is_deleted = FALSE)",
+                                Integer.class, tenantId, roleNames[i]);
+                    } catch (Exception e) {
+                        log.warn("역할 존재 확인 실패: tenantId={}, roleName={}, error={}", tenantId,
+                                roleNames[i], e.getMessage());
+                    }
 
-                // INSERT IGNORE는 중복 시 0개 행이 영향을 받을 수 있음
-                // 하지만 역할이 이미 존재하는 경우도 성공으로 처리
-                // INSERT 후 역할 존재 여부 확인 (다른 트랜잭션이 생성했을 수 있음)
-                Integer finalCount = null;
-                try {
-                    finalCount = jdbcTemplate.queryForObject(
-                            "SELECT COUNT(*) FROM tenant_roles WHERE tenant_id = ? AND (is_deleted IS NULL OR is_deleted = FALSE)",
-                            Integer.class, tenantId);
-                } catch (Exception e) {
-                    log.warn("역할 생성 후 존재 확인 실패: tenantId={}, error={}", tenantId, e.getMessage());
+                    if (roleExists != null && roleExists > 0) {
+                        log.debug("역할이 이미 존재함: tenantId={}, roleName={}", tenantId, roleNames[i]);
+                        successCount++;
+                        continue;
+                    }
+
+                    // 개별 INSERT 시도
+                    try {
+                        String singleInsertSql =
+                                "INSERT IGNORE INTO tenant_roles (tenant_role_id, tenant_id, role_template_id, name, name_ko, name_en, "
+                                        + "description, description_ko, description_en, "
+                                        + "is_active, display_order, created_at, updated_at, "
+                                        + "created_by, updated_by, is_deleted, version, lang_code) VALUES "
+                                        + "(UUID(), ?, ?, ?, ?, ?, ?, ?, ?, TRUE, ?, NOW(), NOW(), ?, ?, FALSE, 0, 'ko')";
+
+                        int rowsAffected = jdbcTemplate.update(singleInsertSql, tenantId,
+                                templateIds[i], roleNames[i], roleNames[i], roleNamesEn[i],
+                                roleDescriptions[i], roleDescriptions[i], roleDescriptionsEn[i],
+                                displayOrders[i], approvedBy, approvedBy);
+
+                        if (rowsAffected > 0) {
+                            successCount++;
+                            log.debug("역할 생성 성공: tenantId={}, roleName={}, rowsAffected={}",
+                                    tenantId, roleNames[i], rowsAffected);
+                        } else {
+                            // INSERT IGNORE로 인해 0개 행이 영향을 받았을 수 있음 (중복)
+                            // 다시 확인
+                            Integer checkAgain = null;
+                            try {
+                                checkAgain = jdbcTemplate.queryForObject(
+                                        "SELECT COUNT(*) FROM tenant_roles WHERE tenant_id = ? AND name_ko = ? AND (is_deleted IS NULL OR is_deleted = FALSE)",
+                                        Integer.class, tenantId, roleNames[i]);
+                            } catch (Exception e) {
+                                log.warn("역할 재확인 실패: tenantId={}, roleName={}, error={}",
+                                        tenantId, roleNames[i], e.getMessage());
+                            }
+
+                            if (checkAgain != null && checkAgain > 0) {
+                                successCount++;
+                                log.debug("역할이 존재함 (INSERT IGNORE 후 재확인): tenantId={}, roleName={}",
+                                        tenantId, roleNames[i]);
+                            }
+                        }
+                    } catch (org.springframework.dao.CannotAcquireLockException e) {
+                        log.warn("역할 생성 중 락 획득 실패 (개별 INSERT): tenantId={}, roleName={}, error={}",
+                                tenantId, roleNames[i], e.getMessage());
+                        // 락 타임아웃 발생 시 해당 역할만 실패하고 다음 역할 시도
+                        // 호출부에서 재시도 처리
+                        throw e;
+                    } catch (Exception e) {
+                        String errorMsg = e.getMessage();
+                        if (errorMsg != null && (errorMsg.contains("Lock wait timeout")
+                                || errorMsg.contains("lock timeout")
+                                || errorMsg.contains("deadlock"))) {
+                            log.warn("역할 생성 중 락 타임아웃 (개별 INSERT): tenantId={}, roleName={}, error={}",
+                                    tenantId, roleNames[i], errorMsg);
+                            // 락 타임아웃 발생 시 해당 역할만 실패하고 다음 역할 시도
+                            // 호출부에서 재시도 처리
+                            throw e;
+                        } else {
+                            log.warn("역할 생성 중 예상치 못한 오류 (개별 INSERT): tenantId={}, roleName={}, error={}",
+                                    tenantId, roleNames[i], e.getMessage());
+                            // 다른 오류는 무시하고 다음 역할 시도
+                        }
+                    }
                 }
-                
-                if (finalCount != null && finalCount > 0) {
-                    log.info(
-                            "역할 생성 완료 (INSERT IGNORE): tenantId={}, rowsAffected={}, finalCount={}",
-                            tenantId, rowsAffected, finalCount);
-                } else {
-                    log.warn("역할 생성 후에도 역할이 없음: tenantId={}, rowsAffected={}, finalCount={}", 
-                            tenantId, rowsAffected, finalCount);
-                    return false;
+
+                // 최소 1개 이상의 역할이 생성되었는지 확인
+                if (successCount > 0) {
+                    // 최종 확인: 실제로 역할이 생성되었는지 확인
+                    Integer finalCount = null;
+                    try {
+                        finalCount = jdbcTemplate.queryForObject(
+                                "SELECT COUNT(*) FROM tenant_roles WHERE tenant_id = ? AND (is_deleted IS NULL OR is_deleted = FALSE)",
+                                Integer.class, tenantId);
+                    } catch (Exception e) {
+                        log.warn("역할 생성 후 존재 확인 실패: tenantId={}, error={}", tenantId,
+                                e.getMessage());
+                    }
+
+                    if (finalCount != null && finalCount > 0) {
+                        log.info("역할 생성 완료 (개별 INSERT): tenantId={}, successCount={}, finalCount={}",
+                                tenantId, successCount, finalCount);
+                        return true;
+                    }
                 }
+
+                log.warn("역할 생성 실패: tenantId={}, successCount={}", tenantId, successCount);
+                return false;
 
                 // JPA 캐시 갱신 (jdbcTemplate으로 생성한 데이터를 JPA에서 조회할 수 있도록)
                 entityManager.flush();

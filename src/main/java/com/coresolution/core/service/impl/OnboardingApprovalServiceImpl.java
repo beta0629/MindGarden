@@ -40,6 +40,7 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
     private final com.coresolution.core.repository.onboarding.OnboardingRequestRepository onboardingRequestRepository;
     private final com.fasterxml.jackson.databind.ObjectMapper objectMapper;
     private final ApplicationContext applicationContext;
+    private final org.springframework.transaction.PlatformTransactionManager transactionManager;
 
     @Override
     public Map<String, Object> processOnboardingApproval(java.util.UUID requestId, String tenantId,

@@ -315,10 +315,10 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                             // TransactionTemplate을 사용하여 별도 트랜잭션에서 실행
                             TransactionTemplate transactionTemplate = new TransactionTemplate(transactionManager);
                             transactionTemplate.setPropagationBehavior(org.springframework.transaction.TransactionDefinition.PROPAGATION_REQUIRES_NEW);
-                            Boolean result = transactionTemplate.execute(status -> {
+                            Boolean roleResult = transactionTemplate.execute(status -> {
                                 return ensureRolesApplied(tenantId, businessType, approvedBy);
                             });
-                            rolesApplied = result != null && result;
+                            rolesApplied = roleResult != null && roleResult;
                             if (rolesApplied) {
                                 fallbackMessage.append("역할=OK, ");
                                 updateProcessingStatus(requestId, "ROLE_APPLY", "SUCCESS",

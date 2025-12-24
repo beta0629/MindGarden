@@ -358,12 +358,14 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                                     roleResult = false;
                                 } catch (Exception e) {
                                     String errorMsg = e.getMessage();
-                                    // Query execution was interrupted (MySQL 에러 코드 1317)도 재시도 가능한 오류로 처리
+                                    // Query execution was interrupted (MySQL 에러 코드 1317)도 재시도 가능한
+                                    // 오류로 처리
                                     if (errorMsg != null && (errorMsg.contains("Lock wait timeout")
                                             || errorMsg.contains("lock timeout")
                                             || errorMsg.contains("deadlock")
                                             || errorMsg.contains("Query execution was interrupted")
-                                            || (errorMsg.contains("1317") && errorMsg.contains("interrupted")))) {
+                                            || (errorMsg.contains("1317")
+                                                    && errorMsg.contains("interrupted")))) {
                                         log.warn(
                                                 "역할 생성 중 락/쿼리 중단 관련 오류 (재시도 예정): tenantId={}, attempt={}/{}, error={}",
                                                 tenantId, attempt, maxRetries, errorMsg);
@@ -781,9 +783,10 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                 log.debug("역할 템플릿 ID 조회: director={}, counselor={}, client={}, staff={}",
                         directorTemplateId, counselorTemplateId, clientTemplateId, staffTemplateId);
 
+                // INSERT IGNORE를 사용하여 중복 삽입 시도 시 오류 대신 무시 (락 경합 최소화)
                 // 배치 INSERT로 락 시간 최소화 (4개 역할을 하나의 쿼리로 생성)
                 String insertSql =
-                        "INSERT INTO tenant_roles (tenant_role_id, tenant_id, role_template_id, name, name_ko, name_en, "
+                        "INSERT IGNORE INTO tenant_roles (tenant_role_id, tenant_id, role_template_id, name, name_ko, name_en, "
                                 + "description, description_ko, description_en, "
                                 + "is_active, display_order, created_at, updated_at, "
                                 + "created_by, updated_by, is_deleted, version, lang_code) VALUES "
@@ -800,10 +803,26 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                                 + "'사무원 역할', '사무원 역할', 'Staff role', "
                                 + "TRUE, 4, NOW(), NOW(), ?, ?, FALSE, 0, 'ko')";
 
-                jdbcTemplate.update(insertSql, tenantId, directorTemplateId, approvedBy, approvedBy,
+                int rowsAffected = jdbcTemplate.update(insertSql, tenantId, directorTemplateId, approvedBy, approvedBy,
                         tenantId, counselorTemplateId, approvedBy, approvedBy, tenantId,
                         clientTemplateId, approvedBy, approvedBy, tenantId, staffTemplateId,
                         approvedBy, approvedBy);
+                
+                // INSERT IGNORE는 중복 시 0개 행이 영향을 받을 수 있음
+                // 하지만 역할이 이미 존재하는 경우도 성공으로 처리
+                if (rowsAffected >= 0) {
+                    // 역할이 실제로 생성되었는지 확인
+                    Integer finalCount = jdbcTemplate.queryForObject(
+                            "SELECT COUNT(*) FROM tenant_roles WHERE tenant_id = ? AND (is_deleted IS NULL OR is_deleted = FALSE)",
+                            Integer.class, tenantId);
+                    if (finalCount != null && finalCount > 0) {
+                        log.info("역할 생성 완료 (INSERT IGNORE): tenantId={}, rowsAffected={}, finalCount={}",
+                                tenantId, rowsAffected, finalCount);
+                    } else {
+                        log.warn("역할 생성 후에도 역할이 없음: tenantId={}, rowsAffected={}", tenantId, rowsAffected);
+                        return false;
+                    }
+                }
 
                 // JPA 캐시 갱신 (jdbcTemplate으로 생성한 데이터를 JPA에서 조회할 수 있도록)
                 entityManager.flush();

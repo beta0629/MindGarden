@@ -686,7 +686,7 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
         if ("CONSULTATION".equals(businessType) || "COUNSELING".equals(businessType)) {
             int maxRetries = 3;
             long retryDelay = 500; // 0.5초
-            
+
             for (int attempt = 1; attempt <= maxRetries; attempt++) {
                 try {
                     // 역할 템플릿 조회 (roleTemplateId 설정을 위해)
@@ -708,7 +708,8 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                             .map(rt -> rt.getRoleTemplateId()).orElse(null);
 
                     log.debug("역할 템플릿 ID 조회: director={}, counselor={}, client={}, staff={}",
-                            directorTemplateId, counselorTemplateId, clientTemplateId, staffTemplateId);
+                            directorTemplateId, counselorTemplateId, clientTemplateId,
+                            staffTemplateId);
 
                     // 원장 (ADMIN)
                     jdbcTemplate.update(
@@ -776,16 +777,18 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                         }
                         continue;
                     } else {
-                        log.error("역할 생성 실패 (모든 재시도 실패): tenantId={}, error={}", tenantId, e.getMessage(), e);
+                        log.error("역할 생성 실패 (모든 재시도 실패): tenantId={}, error={}", tenantId,
+                                e.getMessage(), e);
                         return false;
                     }
                 } catch (Exception e) {
                     String errorMsg = e.getMessage();
-                    if (errorMsg != null && (errorMsg.contains("Lock wait timeout") ||
-                            errorMsg.contains("lock timeout") ||
-                            errorMsg.contains("deadlock"))) {
+                    if (errorMsg != null && (errorMsg.contains("Lock wait timeout")
+                            || errorMsg.contains("lock timeout")
+                            || errorMsg.contains("deadlock"))) {
                         if (attempt < maxRetries) {
-                            log.warn("역할 생성 중 락 관련 오류 발생 (재시도): tenantId={}, attempt={}/{}, error={}",
+                            log.warn(
+                                    "역할 생성 중 락 관련 오류 발생 (재시도): tenantId={}, attempt={}/{}, error={}",
                                     tenantId, attempt, maxRetries, errorMsg);
                             try {
                                 Thread.sleep(retryDelay * attempt); // 지수 백오프
@@ -802,6 +805,9 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                     return false;
                 }
             }
+            // 모든 재시도 실패
+            log.error("역할 생성 실패 (모든 재시도 실패): tenantId={}", tenantId);
+            return false;
         } else {
             log.warn("지원하지 않는 업종: businessType={}", businessType);
             return false;

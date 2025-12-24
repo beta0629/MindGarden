@@ -342,7 +342,8 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                                 transactionTemplate.setIsolationLevel(
                                         org.springframework.transaction.TransactionDefinition.ISOLATION_READ_COMMITTED);
                                 // 락 타임아웃 설정 (초 단위, 기본값보다 길게)
-                                transactionTemplate.setTimeout(30); // 30초
+                                // 30초는 너무 짧아서 쿼리 실행 중단 오류 발생, 60초로 증가
+                                transactionTemplate.setTimeout(60); // 60초
 
                                 Boolean roleResult = null;
                                 try {
@@ -351,18 +352,22 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                                                 approvedBy);
                                     });
                                 } catch (org.springframework.dao.CannotAcquireLockException e) {
-                                    log.warn("역할 생성 중 락 획득 실패 (재시도 예정): tenantId={}, attempt={}/{}, error={}",
+                                    log.warn(
+                                            "역할 생성 중 락 획득 실패 (재시도 예정): tenantId={}, attempt={}/{}, error={}",
                                             tenantId, attempt, maxRetries, e.getMessage());
                                     roleResult = false;
                                 } catch (Exception e) {
                                     String errorMsg = e.getMessage();
                                     if (errorMsg != null && (errorMsg.contains("Lock wait timeout")
-                                            || errorMsg.contains("lock timeout") || errorMsg.contains("deadlock"))) {
-                                        log.warn("역할 생성 중 락 관련 오류 (재시도 예정): tenantId={}, attempt={}/{}, error={}",
+                                            || errorMsg.contains("lock timeout")
+                                            || errorMsg.contains("deadlock"))) {
+                                        log.warn(
+                                                "역할 생성 중 락 관련 오류 (재시도 예정): tenantId={}, attempt={}/{}, error={}",
                                                 tenantId, attempt, maxRetries, errorMsg);
                                         roleResult = false;
                                     } else {
-                                        log.error("역할 생성 중 예상치 못한 오류: tenantId={}, attempt={}/{}, error={}",
+                                        log.error(
+                                                "역할 생성 중 예상치 못한 오류: tenantId={}, attempt={}/{}, error={}",
                                                 tenantId, attempt, maxRetries, e.getMessage(), e);
                                         roleResult = false;
                                     }
@@ -811,9 +816,12 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                 throw e; // 호출부에서 재시도 처리
             } catch (Exception e) {
                 String errorMsg = e.getMessage();
+                // Query execution was interrupted (MySQL 에러 코드 1317)도 재시도 가능한 오류로 처리
                 if (errorMsg != null && (errorMsg.contains("Lock wait timeout")
-                        || errorMsg.contains("lock timeout") || errorMsg.contains("deadlock"))) {
-                    log.warn("역할 생성 중 락 관련 오류 발생: tenantId={}, error={}", tenantId, errorMsg);
+                        || errorMsg.contains("lock timeout") || errorMsg.contains("deadlock")
+                        || errorMsg.contains("Query execution was interrupted")
+                        || (errorMsg.contains("1317") && errorMsg.contains("interrupted")))) {
+                    log.warn("역할 생성 중 락/쿼리 중단 관련 오류 발생: tenantId={}, error={}", tenantId, errorMsg);
                     throw e; // 호출부에서 재시도 처리
                 } else {
                     log.error("역할 생성 실패: tenantId={}, error={}", tenantId, errorMsg, e);

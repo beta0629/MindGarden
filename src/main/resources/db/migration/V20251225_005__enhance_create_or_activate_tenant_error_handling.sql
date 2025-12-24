@@ -5,9 +5,9 @@
 -- 작성일: 2025-12-25
 -- ============================================
 
-DROP PROCEDURE IF EXISTS CreateOrActivateTenant;
-
 DELIMITER //
+
+DROP PROCEDURE IF EXISTS CreateOrActivateTenant //
 
 CREATE PROCEDURE CreateOrActivateTenant(
     IN p_tenant_id VARCHAR(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,

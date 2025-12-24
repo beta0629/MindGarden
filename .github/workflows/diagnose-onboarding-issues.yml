@@ -2,11 +2,6 @@ name: 온보딩 프로세스 종합 진단
 
 on:
   workflow_dispatch:
-    inputs:
-      request_id:
-        description: '온보딩 요청 ID (선택)'
-        required: false
-        type: string
 
 jobs:
   diagnose:

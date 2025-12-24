@@ -312,14 +312,57 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                                 "역할 템플릿 적용 중 (Java 재시도)...");
                         try {
                             // TransactionTemplate을 사용하여 별도 트랜잭션에서 실행
-                            TransactionTemplate transactionTemplate =
-                                    new TransactionTemplate(transactionManager);
-                            transactionTemplate.setPropagationBehavior(
-                                    org.springframework.transaction.TransactionDefinition.PROPAGATION_REQUIRES_NEW);
-                            Boolean roleResult = transactionTemplate.execute(status -> {
-                                return ensureRolesApplied(tenantId, businessType, approvedBy);
-                            });
-                            rolesApplied = roleResult != null && roleResult;
+                            // 재시도 로직을 TransactionTemplate 밖으로 이동하여 각 재시도마다 새로운 트랜잭션 시작
+                            int maxRetries = 5;
+                            long baseRetryDelay = 1000;
+                            rolesApplied = false;
+                            
+                            for (int attempt = 1; attempt <= maxRetries; attempt++) {
+                                TransactionTemplate transactionTemplate =
+                                        new TransactionTemplate(transactionManager);
+                                transactionTemplate.setPropagationBehavior(
+                                        org.springframework.transaction.TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+                                transactionTemplate.setIsolationLevel(
+                                        org.springframework.transaction.TransactionDefinition.ISOLATION_READ_COMMITTED);
+                                
+                                Boolean roleResult = transactionTemplate.execute(status -> {
+                                    return ensureRolesAppliedOnce(tenantId, businessType, approvedBy);
+                                });
+                                
+                                if (roleResult != null && roleResult) {
+                                    rolesApplied = true;
+                                    break;
+                                }
+                                
+                                // 재시도 전 역할 존재 확인 (다른 트랜잭션이 생성했을 수 있음)
+                                try {
+                                    Integer checkCount = jdbcTemplate.queryForObject(
+                                            "SELECT COUNT(*) FROM tenant_roles WHERE tenant_id = ? AND (is_deleted IS NULL OR is_deleted = FALSE)",
+                                            Integer.class, tenantId);
+                                    if (checkCount != null && checkCount > 0) {
+                                        log.info("재시도 전 역할 존재 확인: tenantId={}, count={} (다른 트랜잭션이 생성함)",
+                                                tenantId, checkCount);
+                                        rolesApplied = true;
+                                        break;
+                                    }
+                                } catch (Exception checkEx) {
+                                    log.warn("재시도 전 역할 존재 확인 실패: tenantId={}, error={}", tenantId,
+                                            checkEx.getMessage());
+                                }
+                                
+                                if (attempt < maxRetries) {
+                                    long delay = baseRetryDelay * attempt;
+                                    log.warn("역할 생성 실패 (재시도): tenantId={}, attempt={}/{}, delay={}ms",
+                                            tenantId, attempt, maxRetries, delay);
+                                    try {
+                                        Thread.sleep(delay);
+                                    } catch (InterruptedException ie) {
+                                        Thread.currentThread().interrupt();
+                                        log.error("재시도 대기 중 인터럽트 발생");
+                                        break;
+                                    }
+                                }
+                            }
                             if (rolesApplied) {
                                 fallbackMessage.append("역할=OK, ");
                                 updateProcessingStatus(requestId, "ROLE_APPLY", "SUCCESS",
@@ -657,10 +700,9 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
     }
 
     /**
-     * 역할 템플릿이 적용되었는지 확인하고, 없으면 기본 역할 생성 TransactionTemplate을 통해 별도 트랜잭션에서 실행하여 즉시 커밋되도록 함 (대시보드 생성
-     * 시 조회 가능하도록)
+     * 역할 템플릿이 적용되었는지 확인하고, 없으면 기본 역할 생성 (한 번만 시도, 재시도는 호출부에서 처리)
      */
-    private boolean ensureRolesApplied(String tenantId, String businessType, String approvedBy) {
+    private boolean ensureRolesAppliedOnce(String tenantId, String businessType, String approvedBy) {
         log.info("역할 템플릿 적용 확인: tenantId={}, businessType={}", tenantId, businessType);
 
         // 역할 존재 확인
@@ -684,11 +726,7 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
 
         // 기본 역할 생성 (CONSULTATION 또는 COUNSELING 업종 기준)
         if ("CONSULTATION".equals(businessType) || "COUNSELING".equals(businessType)) {
-            int maxRetries = 5; // 재시도 횟수 증가 (3 -> 5)
-            long baseRetryDelay = 1000; // 기본 재시도 지연 시간 1초로 증가
-
-            for (int attempt = 1; attempt <= maxRetries; attempt++) {
-                try {
+            try {
                     // 역할 템플릿 조회 (roleTemplateId 설정을 위해)
                     // 각 업종별 템플릿 사용 (COUNSELING은 COUNSELING 템플릿, CONSULTATION은 CONSULTATION 템플릿)
                     String templatePrefix =
@@ -759,118 +797,26 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                     entityManager.flush();
                     entityManager.clear();
 
-                    log.info(
-                            "기본 역할 생성 완료: tenantId={}, roleTemplateIds=[director={}, counselor={}, client={}, staff={}]",
-                            tenantId, directorTemplateId, counselorTemplateId, clientTemplateId,
-                            staffTemplateId);
-                    return true;
-                } catch (org.springframework.dao.CannotAcquireLockException e) {
-                    if (attempt < maxRetries) {
-                        long delay = baseRetryDelay * attempt; // 지수 백오프 (1초, 2초, 3초, 4초, 5초)
-                        log.warn(
-                                "역할 생성 중 락 타임아웃 발생 (재시도): tenantId={}, attempt={}/{}, delay={}ms, error={}",
-                                tenantId, attempt, maxRetries, delay, e.getMessage());
-                        try {
-                            Thread.sleep(delay);
-                        } catch (InterruptedException ie) {
-                            Thread.currentThread().interrupt();
-                            log.error("재시도 대기 중 인터럽트 발생");
-                            return false;
-                        }
-                        // 재시도 전에 역할 존재 여부 다시 확인 (다른 트랜잭션이 생성했을 수 있음)
-                        try {
-                            Integer checkCount = jdbcTemplate.queryForObject(
-                                    "SELECT COUNT(*) FROM tenant_roles WHERE tenant_id = ? AND (is_deleted IS NULL OR is_deleted = FALSE)",
-                                    Integer.class, tenantId);
-                            if (checkCount != null && checkCount > 0) {
-                                log.info("재시도 전 역할 존재 확인: tenantId={}, count={} (다른 트랜잭션이 생성함)", tenantId, checkCount);
-                                return true;
-                            }
-                        } catch (Exception checkEx) {
-                            log.warn("재시도 전 역할 존재 확인 실패: tenantId={}, error={}", tenantId, checkEx.getMessage());
-                        }
-                        continue;
-                    } else {
-                        // 모든 재시도 실패 후에도 역할 존재 여부 최종 확인
-                        try {
-                            Integer finalCount = jdbcTemplate.queryForObject(
-                                    "SELECT COUNT(*) FROM tenant_roles WHERE tenant_id = ? AND (is_deleted IS NULL OR is_deleted = FALSE)",
-                                    Integer.class, tenantId);
-                            if (finalCount != null && finalCount > 0) {
-                                log.info("모든 재시도 실패 후 역할 존재 확인: tenantId={}, count={} (다른 트랜잭션이 생성함)", tenantId, finalCount);
-                                return true;
-                            }
-                        } catch (Exception checkEx) {
-                            log.warn("최종 역할 존재 확인 실패: tenantId={}, error={}", tenantId, checkEx.getMessage());
-                        }
-                        log.error("역할 생성 실패 (모든 재시도 실패): tenantId={}, error={}", tenantId,
-                                e.getMessage(), e);
-                        return false;
-                    }
-                } catch (Exception e) {
-                    String errorMsg = e.getMessage();
-                    if (errorMsg != null && (errorMsg.contains("Lock wait timeout")
-                            || errorMsg.contains("lock timeout")
-                            || errorMsg.contains("deadlock"))) {
-                        if (attempt < maxRetries) {
-                            long delay = baseRetryDelay * attempt; // 지수 백오프 (1초, 2초, 3초, 4초, 5초)
-                            log.warn(
-                                    "역할 생성 중 락 관련 오류 발생 (재시도): tenantId={}, attempt={}/{}, delay={}ms, error={}",
-                                    tenantId, attempt, maxRetries, delay, errorMsg);
-                            try {
-                                Thread.sleep(delay);
-                            } catch (InterruptedException ie) {
-                                Thread.currentThread().interrupt();
-                                log.error("재시도 대기 중 인터럽트 발생");
-                                return false;
-                            }
-                            // 재시도 전에 역할 존재 여부 다시 확인 (다른 트랜잭션이 생성했을 수 있음)
-                            try {
-                                Integer checkCount = jdbcTemplate.queryForObject(
-                                        "SELECT COUNT(*) FROM tenant_roles WHERE tenant_id = ? AND (is_deleted IS NULL OR is_deleted = FALSE)",
-                                        Integer.class, tenantId);
-                                if (checkCount != null && checkCount > 0) {
-                                    log.info("재시도 전 역할 존재 확인: tenantId={}, count={} (다른 트랜잭션이 생성함)", tenantId, checkCount);
-                                    return true;
-                                }
-                            } catch (Exception checkEx) {
-                                log.warn("재시도 전 역할 존재 확인 실패: tenantId={}, error={}", tenantId, checkEx.getMessage());
-                            }
-                            continue;
-                        } else {
-                            // 모든 재시도 실패 후에도 역할 존재 여부 최종 확인
-                            try {
-                                Integer finalCount = jdbcTemplate.queryForObject(
-                                        "SELECT COUNT(*) FROM tenant_roles WHERE tenant_id = ? AND (is_deleted IS NULL OR is_deleted = FALSE)",
-                                        Integer.class, tenantId);
-                                if (finalCount != null && finalCount > 0) {
-                                    log.info("모든 재시도 실패 후 역할 존재 확인: tenantId={}, count={} (다른 트랜잭션이 생성함)", tenantId, finalCount);
-                                    return true;
-                                }
-                            } catch (Exception checkEx) {
-                                log.warn("최종 역할 존재 확인 실패: tenantId={}, error={}", tenantId, checkEx.getMessage());
-                            }
-                        }
-                    }
-                    // 락 관련이 아닌 오류는 즉시 실패
-                    log.error("역할 생성 실패: tenantId={}, error={}", tenantId, e.getMessage(), e);
+                log.info(
+                        "기본 역할 생성 완료: tenantId={}, roleTemplateIds=[director={}, counselor={}, client={}, staff={}]",
+                        tenantId, directorTemplateId, counselorTemplateId, clientTemplateId,
+                        staffTemplateId);
+                return true;
+            } catch (org.springframework.dao.CannotAcquireLockException e) {
+                log.warn("역할 생성 중 락 획득 실패: tenantId={}, error={}", tenantId, e.getMessage());
+                throw e; // 호출부에서 재시도 처리
+            } catch (Exception e) {
+                String errorMsg = e.getMessage();
+                if (errorMsg != null && (errorMsg.contains("Lock wait timeout")
+                        || errorMsg.contains("lock timeout")
+                        || errorMsg.contains("deadlock"))) {
+                    log.warn("역할 생성 중 락 관련 오류 발생: tenantId={}, error={}", tenantId, errorMsg);
+                    throw e; // 호출부에서 재시도 처리
+                } else {
+                    log.error("역할 생성 실패: tenantId={}, error={}", tenantId, errorMsg, e);
                     return false;
                 }
             }
-            // 모든 재시도 실패 후에도 역할 존재 여부 최종 확인
-            try {
-                Integer finalCount = jdbcTemplate.queryForObject(
-                        "SELECT COUNT(*) FROM tenant_roles WHERE tenant_id = ? AND (is_deleted IS NULL OR is_deleted = FALSE)",
-                        Integer.class, tenantId);
-                if (finalCount != null && finalCount > 0) {
-                    log.info("모든 재시도 실패 후 역할 존재 확인: tenantId={}, count={} (다른 트랜잭션이 생성함)", tenantId, finalCount);
-                    return true;
-                }
-            } catch (Exception checkEx) {
-                log.warn("최종 역할 존재 확인 실패: tenantId={}, error={}", tenantId, checkEx.getMessage());
-            }
-            log.error("역할 생성 실패 (모든 재시도 실패): tenantId={}", tenantId);
-            return false;
         } else {
             log.warn("지원하지 않는 업종: businessType={}", businessType);
             return false;

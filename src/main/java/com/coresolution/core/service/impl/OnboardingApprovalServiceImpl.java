@@ -752,48 +752,28 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                 log.debug("역할 템플릿 ID 조회: director={}, counselor={}, client={}, staff={}",
                         directorTemplateId, counselorTemplateId, clientTemplateId, staffTemplateId);
 
-                // 원장 (ADMIN)
-                jdbcTemplate.update(
-                        "INSERT INTO tenant_roles (tenant_role_id, tenant_id, role_template_id, name, name_ko, name_en, "
-                                + "description, description_ko, description_en, "
-                                + "is_active, display_order, created_at, updated_at, "
-                                + "created_by, updated_by, is_deleted, version, lang_code) "
-                                + "VALUES (UUID(), ?, ?, '원장', '원장', 'Principal', "
-                                + "'상담소 원장 역할', '상담소 원장 역할', 'Principal role for consultation center', "
-                                + "TRUE, 1, NOW(), NOW(), ?, ?, FALSE, 0, 'ko')",
-                        tenantId, directorTemplateId, approvedBy, approvedBy);
+                // 배치 INSERT로 락 시간 최소화 (4개 역할을 하나의 쿼리로 생성)
+                String insertSql = "INSERT INTO tenant_roles (tenant_role_id, tenant_id, role_template_id, name, name_ko, name_en, "
+                        + "description, description_ko, description_en, "
+                        + "is_active, display_order, created_at, updated_at, "
+                        + "created_by, updated_by, is_deleted, version, lang_code) VALUES "
+                        + "(UUID(), ?, ?, '원장', '원장', 'Principal', "
+                        + "'상담소 원장 역할', '상담소 원장 역할', 'Principal role for consultation center', "
+                        + "TRUE, 1, NOW(), NOW(), ?, ?, FALSE, 0, 'ko'), "
+                        + "(UUID(), ?, ?, '상담사', '상담사', 'Consultant', "
+                        + "'상담사 역할', '상담사 역할', 'Consultant role', "
+                        + "TRUE, 2, NOW(), NOW(), ?, ?, FALSE, 0, 'ko'), "
+                        + "(UUID(), ?, ?, '내담자', '내담자', 'Client', "
+                        + "'내담자 역할', '내담자 역할', 'Client role', "
+                        + "TRUE, 3, NOW(), NOW(), ?, ?, FALSE, 0, 'ko'), "
+                        + "(UUID(), ?, ?, '사무원', '사무원', 'Staff', "
+                        + "'사무원 역할', '사무원 역할', 'Staff role', "
+                        + "TRUE, 4, NOW(), NOW(), ?, ?, FALSE, 0, 'ko')";
 
-                // 상담사 (CONSULTANT)
-                jdbcTemplate.update(
-                        "INSERT INTO tenant_roles (tenant_role_id, tenant_id, role_template_id, name, name_ko, name_en, "
-                                + "description, description_ko, description_en, "
-                                + "is_active, display_order, created_at, updated_at, "
-                                + "created_by, updated_by, is_deleted, version, lang_code) "
-                                + "VALUES (UUID(), ?, ?, '상담사', '상담사', 'Consultant', "
-                                + "'상담사 역할', '상담사 역할', 'Consultant role', "
-                                + "TRUE, 2, NOW(), NOW(), ?, ?, FALSE, 0, 'ko')",
-                        tenantId, counselorTemplateId, approvedBy, approvedBy);
-
-                // 내담자 (CLIENT)
-                jdbcTemplate.update(
-                        "INSERT INTO tenant_roles (tenant_role_id, tenant_id, role_template_id, name, name_ko, name_en, "
-                                + "description, description_ko, description_en, "
-                                + "is_active, display_order, created_at, updated_at, "
-                                + "created_by, updated_by, is_deleted, version, lang_code) "
-                                + "VALUES (UUID(), ?, ?, '내담자', '내담자', 'Client', "
-                                + "'내담자 역할', '내담자 역할', 'Client role', "
-                                + "TRUE, 3, NOW(), NOW(), ?, ?, FALSE, 0, 'ko')",
-                        tenantId, clientTemplateId, approvedBy, approvedBy);
-
-                // 사무원 (STAFF)
-                jdbcTemplate.update(
-                        "INSERT INTO tenant_roles (tenant_role_id, tenant_id, role_template_id, name, name_ko, name_en, "
-                                + "description, description_ko, description_en, "
-                                + "is_active, display_order, created_at, updated_at, "
-                                + "created_by, updated_by, is_deleted, version, lang_code) "
-                                + "VALUES (UUID(), ?, ?, '사무원', '사무원', 'Staff', "
-                                + "'사무원 역할', '사무원 역할', 'Staff role', "
-                                + "TRUE, 4, NOW(), NOW(), ?, ?, FALSE, 0, 'ko')",
+                jdbcTemplate.update(insertSql,
+                        tenantId, directorTemplateId, approvedBy, approvedBy,
+                        tenantId, counselorTemplateId, approvedBy, approvedBy,
+                        tenantId, clientTemplateId, approvedBy, approvedBy,
                         tenantId, staffTemplateId, approvedBy, approvedBy);
 
                 // JPA 캐시 갱신 (jdbcTemplate으로 생성한 데이터를 JPA에서 조회할 수 있도록)

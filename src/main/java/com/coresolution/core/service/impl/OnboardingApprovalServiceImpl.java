@@ -767,7 +767,8 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                 } catch (org.springframework.dao.CannotAcquireLockException e) {
                     if (attempt < maxRetries) {
                         long delay = baseRetryDelay * attempt; // 지수 백오프 (1초, 2초, 3초, 4초, 5초)
-                        log.warn("역할 생성 중 락 타임아웃 발생 (재시도): tenantId={}, attempt={}/{}, delay={}ms, error={}",
+                        log.warn(
+                                "역할 생성 중 락 타임아웃 발생 (재시도): tenantId={}, attempt={}/{}, delay={}ms, error={}",
                                 tenantId, attempt, maxRetries, delay, e.getMessage());
                         try {
                             Thread.sleep(delay);
@@ -776,8 +777,32 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                             log.error("재시도 대기 중 인터럽트 발생");
                             return false;
                         }
+                        // 재시도 전에 역할 존재 여부 다시 확인 (다른 트랜잭션이 생성했을 수 있음)
+                        try {
+                            Integer checkCount = jdbcTemplate.queryForObject(
+                                    "SELECT COUNT(*) FROM tenant_roles WHERE tenant_id = ? AND (is_deleted IS NULL OR is_deleted = FALSE)",
+                                    Integer.class, tenantId);
+                            if (checkCount != null && checkCount > 0) {
+                                log.info("재시도 전 역할 존재 확인: tenantId={}, count={} (다른 트랜잭션이 생성함)", tenantId, checkCount);
+                                return true;
+                            }
+                        } catch (Exception checkEx) {
+                            log.warn("재시도 전 역할 존재 확인 실패: tenantId={}, error={}", tenantId, checkEx.getMessage());
+                        }
                         continue;
                     } else {
+                        // 모든 재시도 실패 후에도 역할 존재 여부 최종 확인
+                        try {
+                            Integer finalCount = jdbcTemplate.queryForObject(
+                                    "SELECT COUNT(*) FROM tenant_roles WHERE tenant_id = ? AND (is_deleted IS NULL OR is_deleted = FALSE)",
+                                    Integer.class, tenantId);
+                            if (finalCount != null && finalCount > 0) {
+                                log.info("모든 재시도 실패 후 역할 존재 확인: tenantId={}, count={} (다른 트랜잭션이 생성함)", tenantId, finalCount);
+                                return true;
+                            }
+                        } catch (Exception checkEx) {
+                            log.warn("최종 역할 존재 확인 실패: tenantId={}, error={}", tenantId, checkEx.getMessage());
+                        }
                         log.error("역할 생성 실패 (모든 재시도 실패): tenantId={}, error={}", tenantId,
                                 e.getMessage(), e);
                         return false;
@@ -799,7 +824,32 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                                 log.error("재시도 대기 중 인터럽트 발생");
                                 return false;
                             }
+                            // 재시도 전에 역할 존재 여부 다시 확인 (다른 트랜잭션이 생성했을 수 있음)
+                            try {
+                                Integer checkCount = jdbcTemplate.queryForObject(
+                                        "SELECT COUNT(*) FROM tenant_roles WHERE tenant_id = ? AND (is_deleted IS NULL OR is_deleted = FALSE)",
+                                        Integer.class, tenantId);
+                                if (checkCount != null && checkCount > 0) {
+                                    log.info("재시도 전 역할 존재 확인: tenantId={}, count={} (다른 트랜잭션이 생성함)", tenantId, checkCount);
+                                    return true;
+                                }
+                            } catch (Exception checkEx) {
+                                log.warn("재시도 전 역할 존재 확인 실패: tenantId={}, error={}", tenantId, checkEx.getMessage());
+                            }
                             continue;
+                        } else {
+                            // 모든 재시도 실패 후에도 역할 존재 여부 최종 확인
+                            try {
+                                Integer finalCount = jdbcTemplate.queryForObject(
+                                        "SELECT COUNT(*) FROM tenant_roles WHERE tenant_id = ? AND (is_deleted IS NULL OR is_deleted = FALSE)",
+                                        Integer.class, tenantId);
+                                if (finalCount != null && finalCount > 0) {
+                                    log.info("모든 재시도 실패 후 역할 존재 확인: tenantId={}, count={} (다른 트랜잭션이 생성함)", tenantId, finalCount);
+                                    return true;
+                                }
+                            } catch (Exception checkEx) {
+                                log.warn("최종 역할 존재 확인 실패: tenantId={}, error={}", tenantId, checkEx.getMessage());
+                            }
                         }
                     }
                     // 락 관련이 아닌 오류는 즉시 실패
@@ -807,7 +857,18 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                     return false;
                 }
             }
-            // 모든 재시도 실패
+            // 모든 재시도 실패 후에도 역할 존재 여부 최종 확인
+            try {
+                Integer finalCount = jdbcTemplate.queryForObject(
+                        "SELECT COUNT(*) FROM tenant_roles WHERE tenant_id = ? AND (is_deleted IS NULL OR is_deleted = FALSE)",
+                        Integer.class, tenantId);
+                if (finalCount != null && finalCount > 0) {
+                    log.info("모든 재시도 실패 후 역할 존재 확인: tenantId={}, count={} (다른 트랜잭션이 생성함)", tenantId, finalCount);
+                    return true;
+                }
+            } catch (Exception checkEx) {
+                log.warn("최종 역할 존재 확인 실패: tenantId={}, error={}", tenantId, checkEx.getMessage());
+            }
             log.error("역할 생성 실패 (모든 재시도 실패): tenantId={}", tenantId);
             return false;
         } else {

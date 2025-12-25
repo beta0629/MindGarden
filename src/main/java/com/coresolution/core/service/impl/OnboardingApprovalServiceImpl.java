@@ -152,24 +152,29 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
             // 역할 생성 후 JPA 캐시를 비워서 대시보드 생성 시 역할이 보이도록 보장
             entityManager.flush();
             entityManager.clear();
-            
+
             updateProcessingStatus(requestId, OnboardingConstants.STEP_DASHBOARD_CREATE,
-                    OnboardingConstants.STATUS_IN_PROGRESS, OnboardingConstants.MSG_DASHBOARD_CREATE_START);
-            StepResult dashboardResult = executeStepDashboardCreation(requestId, tenantId, businessType, approvedBy);
+                    OnboardingConstants.STATUS_IN_PROGRESS,
+                    OnboardingConstants.MSG_DASHBOARD_CREATE_START);
+            StepResult dashboardResult =
+                    executeStepDashboardCreation(requestId, tenantId, businessType, approvedBy);
             stepResults.put(OnboardingConstants.STEP_DASHBOARD_CREATE, dashboardResult);
 
             if (!dashboardResult.isSuccess()) {
                 log.error("❌ Step 4 실패: 대시보드 생성 실패 - 트랜잭션 롤백 예정");
                 markTransactionForRollback("Step 4 실패: 대시보드 생성 실패");
                 result.put("success", false);
-                result.put("message", OnboardingConstants.MSG_DASHBOARD_CREATE_FAILED + ": " + dashboardResult.getMessage());
+                result.put("message", OnboardingConstants.MSG_DASHBOARD_CREATE_FAILED + ": "
+                        + dashboardResult.getMessage());
                 result.put("stepResults", stepResults);
                 updateProcessingStatus(requestId, OnboardingConstants.STEP_DASHBOARD_CREATE,
                         OnboardingConstants.STATUS_FAILED, dashboardResult.getMessage());
-                throw new RuntimeException(OnboardingConstants.MSG_DASHBOARD_CREATE_FAILED + ": " + dashboardResult.getMessage());
+                throw new RuntimeException(OnboardingConstants.MSG_DASHBOARD_CREATE_FAILED + ": "
+                        + dashboardResult.getMessage());
             }
             updateProcessingStatus(requestId, OnboardingConstants.STEP_DASHBOARD_CREATE,
-                    OnboardingConstants.STATUS_SUCCESS, OnboardingConstants.MSG_DASHBOARD_CREATE_COMPLETE);
+                    OnboardingConstants.STATUS_SUCCESS,
+                    OnboardingConstants.MSG_DASHBOARD_CREATE_COMPLETE);
 
             // 모든 단계 성공
             log.info(OnboardingConstants.LOG_SEPARATOR);
@@ -379,6 +384,49 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                     contactEmail, e.getMessage(), e);
             return StepResult
                     .failure(OnboardingConstants.MSG_ADMIN_CREATE_FAILED + ": " + e.getMessage());
+        }
+    }
+
+    /**
+     * Step 4: 대시보드 생성
+     */
+    private StepResult executeStepDashboardCreation(java.util.UUID requestId, String tenantId,
+            String businessType, String approvedBy) {
+        log.info(OnboardingConstants.LOG_SEPARATOR);
+        log.info("📋 Step 4: 대시보드 생성");
+        log.info(OnboardingConstants.LOG_SEPARATOR);
+
+        try {
+            // 테넌트 컨텍스트 설정
+            String previousTenantId = com.coresolution.core.context.TenantContextHolder.getTenantId();
+            try {
+                if (previousTenantId == null || !previousTenantId.equals(tenantId)) {
+                    com.coresolution.core.context.TenantContextHolder.setTenantId(tenantId);
+                    log.debug("테넌트 컨텍스트 설정: tenantId={}", tenantId);
+                }
+
+                // 대시보드 생성 (역할이 이미 생성되어 있으므로 바로 생성 가능)
+                List<com.coresolution.core.dto.TenantDashboardResponse> dashboards =
+                        tenantDashboardService.createDefaultDashboards(tenantId, businessType, approvedBy, null, null);
+
+                if (dashboards == null || dashboards.isEmpty()) {
+                    log.error("❌ Step 4 실패: 대시보드가 생성되지 않음 - tenantId={}", tenantId);
+                    return StepResult.failure(OnboardingConstants.MSG_DASHBOARD_CREATE_FAILED + ": 대시보드가 생성되지 않음");
+                }
+
+                log.info("✅ Step 4 성공: 대시보드 생성 완료 - tenantId={}, count={}", tenantId, dashboards.size());
+                return StepResult.success(OnboardingConstants.MSG_DASHBOARD_CREATE_COMPLETE + ": " + dashboards.size() + "개");
+            } finally {
+                // 테넌트 컨텍스트 복원
+                if (previousTenantId != null) {
+                    com.coresolution.core.context.TenantContextHolder.setTenantId(previousTenantId);
+                } else {
+                    com.coresolution.core.context.TenantContextHolder.clear();
+                }
+            }
+        } catch (Exception e) {
+            log.error("❌ Step 4 예외: 대시보드 생성 중 오류 발생 - tenantId={}, error={}", tenantId, e.getMessage(), e);
+            return StepResult.failure(OnboardingConstants.MSG_DASHBOARD_CREATE_FAILED + ": " + e.getMessage());
         }
     }
 

@@ -58,8 +58,11 @@ public class OnboardingConstants {
     public static final String MSG_ADMIN_CREATE_COMPLETE = "관리자 계정 생성 완료";
     public static final String MSG_ADMIN_CREATE_FAILED = "관리자 계정 생성 실패";
     public static final String MSG_ADMIN_CREATE_SKIPPED = "관리자 계정 정보 없음";
+    public static final String MSG_DASHBOARD_CREATE_START = "대시보드 생성 시작...";
+    public static final String MSG_DASHBOARD_CREATE_COMPLETE = "대시보드 생성 완료";
+    public static final String MSG_DASHBOARD_CREATE_FAILED = "대시보드 생성 실패";
     public static final String MSG_ALL_STEPS_COMPLETE = "모든 단계 완료";
-    public static final String MSG_PROCESS_COMPLETE = "온보딩 승인 프로세스 완료: 테넌트 생성, 역할 적용, 관리자 계정 생성 완료";
+    public static final String MSG_PROCESS_COMPLETE = "온보딩 승인 프로세스 완료: 테넌트 생성, 역할 적용, 관리자 계정 생성, 대시보드 생성 완료";
     
     // 로그 구분선 상수
     public static final String LOG_SEPARATOR = "==========================================";

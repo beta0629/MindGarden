@@ -41,6 +41,8 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
     private final com.fasterxml.jackson.databind.ObjectMapper objectMapper;
     private final ApplicationContext applicationContext;
     private final org.springframework.transaction.PlatformTransactionManager transactionManager;
+    private final com.coresolution.core.service.TenantDashboardService tenantDashboardService;
+    private final com.coresolution.core.context.TenantContextHolder tenantContextHolder;
 
     /**
      * 온보딩 승인 프로세스를 단계별로 실행 프로시저 의존을 제거하고 Java 코드로 명확하게 단계별 처리 전체 프로세스를 하나의 트랜잭션으로 감싸서 실패 시 롤백 보장
@@ -68,8 +70,9 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
 
         try {
             // Step 1: 테넌트 생성/활성화
-            updateProcessingStatus(requestId, OnboardingConstants.STEP_TENANT_CREATE, 
-                    OnboardingConstants.STATUS_IN_PROGRESS, OnboardingConstants.MSG_TENANT_CREATE_START);
+            updateProcessingStatus(requestId, OnboardingConstants.STEP_TENANT_CREATE,
+                    OnboardingConstants.STATUS_IN_PROGRESS,
+                    OnboardingConstants.MSG_TENANT_CREATE_START);
             StepResult tenantResult = executeStepTenantCreation(requestId, tenantId, tenantName,
                     businessType, subdomain, approvedBy);
             stepResults.put(OnboardingConstants.STEP_TENANT_CREATE, tenantResult);
@@ -78,18 +81,22 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                 log.error("❌ Step 1 실패: 테넌트 생성/활성화 실패 - 트랜잭션 롤백 예정");
                 markTransactionForRollback("Step 1 실패: 테넌트 생성/활성화 실패");
                 result.put("success", false);
-                result.put("message", OnboardingConstants.MSG_TENANT_CREATE_FAILED + ": " + tenantResult.getMessage());
+                result.put("message", OnboardingConstants.MSG_TENANT_CREATE_FAILED + ": "
+                        + tenantResult.getMessage());
                 result.put("stepResults", stepResults);
-                updateProcessingStatus(requestId, OnboardingConstants.STEP_TENANT_CREATE, 
+                updateProcessingStatus(requestId, OnboardingConstants.STEP_TENANT_CREATE,
                         OnboardingConstants.STATUS_FAILED, tenantResult.getMessage());
-                throw new RuntimeException(OnboardingConstants.MSG_TENANT_CREATE_FAILED + ": " + tenantResult.getMessage());
+                throw new RuntimeException(OnboardingConstants.MSG_TENANT_CREATE_FAILED + ": "
+                        + tenantResult.getMessage());
             }
-            updateProcessingStatus(requestId, OnboardingConstants.STEP_TENANT_CREATE, 
-                    OnboardingConstants.STATUS_SUCCESS, OnboardingConstants.MSG_TENANT_CREATE_COMPLETE);
+            updateProcessingStatus(requestId, OnboardingConstants.STEP_TENANT_CREATE,
+                    OnboardingConstants.STATUS_SUCCESS,
+                    OnboardingConstants.MSG_TENANT_CREATE_COMPLETE);
 
             // Step 2: 역할 템플릿 적용
-            updateProcessingStatus(requestId, OnboardingConstants.STEP_ROLE_APPLY, 
-                    OnboardingConstants.STATUS_IN_PROGRESS, OnboardingConstants.MSG_ROLE_APPLY_START);
+            updateProcessingStatus(requestId, OnboardingConstants.STEP_ROLE_APPLY,
+                    OnboardingConstants.STATUS_IN_PROGRESS,
+                    OnboardingConstants.MSG_ROLE_APPLY_START);
             StepResult roleResult =
                     executeStepRoleApplication(requestId, tenantId, businessType, approvedBy);
             stepResults.put(OnboardingConstants.STEP_ROLE_APPLY, roleResult);
@@ -98,20 +105,24 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                 log.error("❌ Step 2 실패: 역할 템플릿 적용 실패 - 트랜잭션 롤백 예정");
                 markTransactionForRollback("Step 2 실패: 역할 템플릿 적용 실패");
                 result.put("success", false);
-                result.put("message", OnboardingConstants.MSG_ROLE_APPLY_FAILED + ": " + roleResult.getMessage());
+                result.put("message",
+                        OnboardingConstants.MSG_ROLE_APPLY_FAILED + ": " + roleResult.getMessage());
                 result.put("stepResults", stepResults);
-                updateProcessingStatus(requestId, OnboardingConstants.STEP_ROLE_APPLY, 
+                updateProcessingStatus(requestId, OnboardingConstants.STEP_ROLE_APPLY,
                         OnboardingConstants.STATUS_FAILED, roleResult.getMessage());
-                throw new RuntimeException(OnboardingConstants.MSG_ROLE_APPLY_FAILED + ": " + roleResult.getMessage());
+                throw new RuntimeException(
+                        OnboardingConstants.MSG_ROLE_APPLY_FAILED + ": " + roleResult.getMessage());
             }
-            updateProcessingStatus(requestId, OnboardingConstants.STEP_ROLE_APPLY, 
-                    OnboardingConstants.STATUS_SUCCESS, OnboardingConstants.MSG_ROLE_APPLY_COMPLETE);
+            updateProcessingStatus(requestId, OnboardingConstants.STEP_ROLE_APPLY,
+                    OnboardingConstants.STATUS_SUCCESS,
+                    OnboardingConstants.MSG_ROLE_APPLY_COMPLETE);
 
             // Step 3: 관리자 계정 생성
             if (contactEmail != null && !contactEmail.trim().isEmpty() && adminPasswordHash != null
                     && !adminPasswordHash.trim().isEmpty()) {
-                updateProcessingStatus(requestId, OnboardingConstants.STEP_ADMIN_CREATE, 
-                        OnboardingConstants.STATUS_IN_PROGRESS, OnboardingConstants.MSG_ADMIN_CREATE_START);
+                updateProcessingStatus(requestId, OnboardingConstants.STEP_ADMIN_CREATE,
+                        OnboardingConstants.STATUS_IN_PROGRESS,
+                        OnboardingConstants.MSG_ADMIN_CREATE_START);
                 StepResult adminResult = executeStepAdminAccountCreation(requestId, tenantId,
                         contactEmail, tenantName, adminPasswordHash, approvedBy);
                 stepResults.put(OnboardingConstants.STEP_ADMIN_CREATE, adminResult);
@@ -120,19 +131,45 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                     log.error("❌ Step 3 실패: 관리자 계정 생성 실패 - 트랜잭션 롤백 예정");
                     markTransactionForRollback("Step 3 실패: 관리자 계정 생성 실패");
                     result.put("success", false);
-                    result.put("message", OnboardingConstants.MSG_ADMIN_CREATE_FAILED + ": " + adminResult.getMessage());
+                    result.put("message", OnboardingConstants.MSG_ADMIN_CREATE_FAILED + ": "
+                            + adminResult.getMessage());
                     result.put("stepResults", stepResults);
-                    updateProcessingStatus(requestId, OnboardingConstants.STEP_ADMIN_CREATE, 
+                    updateProcessingStatus(requestId, OnboardingConstants.STEP_ADMIN_CREATE,
                             OnboardingConstants.STATUS_FAILED, adminResult.getMessage());
-                    throw new RuntimeException(OnboardingConstants.MSG_ADMIN_CREATE_FAILED + ": " + adminResult.getMessage());
+                    throw new RuntimeException(OnboardingConstants.MSG_ADMIN_CREATE_FAILED + ": "
+                            + adminResult.getMessage());
                 }
-                updateProcessingStatus(requestId, OnboardingConstants.STEP_ADMIN_CREATE, 
-                        OnboardingConstants.STATUS_SUCCESS, OnboardingConstants.MSG_ADMIN_CREATE_COMPLETE);
+                updateProcessingStatus(requestId, OnboardingConstants.STEP_ADMIN_CREATE,
+                        OnboardingConstants.STATUS_SUCCESS,
+                        OnboardingConstants.MSG_ADMIN_CREATE_COMPLETE);
             } else {
                 log.warn("⚠️ 관리자 계정 생성 건너뜀: contactEmail 또는 adminPasswordHash가 없음");
-                stepResults.put(OnboardingConstants.STEP_ADMIN_CREATE, 
+                stepResults.put(OnboardingConstants.STEP_ADMIN_CREATE,
                         StepResult.skip(OnboardingConstants.MSG_ADMIN_CREATE_SKIPPED));
             }
+
+            // Step 4: 대시보드 생성 (역할 생성 후 반드시 생성되어야 함)
+            // 역할 생성 후 JPA 캐시를 비워서 대시보드 생성 시 역할이 보이도록 보장
+            entityManager.flush();
+            entityManager.clear();
+            
+            updateProcessingStatus(requestId, OnboardingConstants.STEP_DASHBOARD_CREATE,
+                    OnboardingConstants.STATUS_IN_PROGRESS, OnboardingConstants.MSG_DASHBOARD_CREATE_START);
+            StepResult dashboardResult = executeStepDashboardCreation(requestId, tenantId, businessType, approvedBy);
+            stepResults.put(OnboardingConstants.STEP_DASHBOARD_CREATE, dashboardResult);
+
+            if (!dashboardResult.isSuccess()) {
+                log.error("❌ Step 4 실패: 대시보드 생성 실패 - 트랜잭션 롤백 예정");
+                markTransactionForRollback("Step 4 실패: 대시보드 생성 실패");
+                result.put("success", false);
+                result.put("message", OnboardingConstants.MSG_DASHBOARD_CREATE_FAILED + ": " + dashboardResult.getMessage());
+                result.put("stepResults", stepResults);
+                updateProcessingStatus(requestId, OnboardingConstants.STEP_DASHBOARD_CREATE,
+                        OnboardingConstants.STATUS_FAILED, dashboardResult.getMessage());
+                throw new RuntimeException(OnboardingConstants.MSG_DASHBOARD_CREATE_FAILED + ": " + dashboardResult.getMessage());
+            }
+            updateProcessingStatus(requestId, OnboardingConstants.STEP_DASHBOARD_CREATE,
+                    OnboardingConstants.STATUS_SUCCESS, OnboardingConstants.MSG_DASHBOARD_CREATE_COMPLETE);
 
             // 모든 단계 성공
             log.info(OnboardingConstants.LOG_SEPARATOR);
@@ -141,7 +178,7 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
             result.put("success", true);
             result.put("message", OnboardingConstants.MSG_PROCESS_COMPLETE);
             result.put("stepResults", stepResults);
-            updateProcessingStatus(requestId, OnboardingConstants.STEP_COMPLETE, 
+            updateProcessingStatus(requestId, OnboardingConstants.STEP_COMPLETE,
                     OnboardingConstants.STATUS_SUCCESS, OnboardingConstants.MSG_ALL_STEPS_COMPLETE);
 
             return result;
@@ -208,7 +245,8 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
         } catch (Exception e) {
             log.error("❌ Step 1 예외: 테넌트 생성/활성화 중 오류 발생 - tenantId={}, error={}", tenantId,
                     e.getMessage(), e);
-            return StepResult.failure(OnboardingConstants.MSG_TENANT_CREATE_FAILED + ": " + e.getMessage());
+            return StepResult
+                    .failure(OnboardingConstants.MSG_TENANT_CREATE_FAILED + ": " + e.getMessage());
         }
     }
 
@@ -266,12 +304,14 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                     roleResult = false;
                 } catch (Exception e) {
                     String errorMsg = e.getMessage();
-                    if (errorMsg != null && (errorMsg.contains(OnboardingConstants.ERROR_PATTERN_LOCK_WAIT_TIMEOUT)
-                            || errorMsg.contains(OnboardingConstants.ERROR_PATTERN_LOCK_TIMEOUT) 
+                    if (errorMsg != null && (errorMsg
+                            .contains(OnboardingConstants.ERROR_PATTERN_LOCK_WAIT_TIMEOUT)
+                            || errorMsg.contains(OnboardingConstants.ERROR_PATTERN_LOCK_TIMEOUT)
                             || errorMsg.contains(OnboardingConstants.ERROR_PATTERN_DEADLOCK)
-                            || errorMsg.contains(OnboardingConstants.ERROR_PATTERN_QUERY_INTERRUPTED)
-                            || (errorMsg.contains(OnboardingConstants.ERROR_CODE_1317) 
-                                    && errorMsg.contains(OnboardingConstants.ERROR_PATTERN_INTERRUPTED)))) {
+                            || errorMsg
+                                    .contains(OnboardingConstants.ERROR_PATTERN_QUERY_INTERRUPTED)
+                            || (errorMsg.contains(OnboardingConstants.ERROR_CODE_1317) && errorMsg
+                                    .contains(OnboardingConstants.ERROR_PATTERN_INTERRUPTED)))) {
                         log.warn(
                                 "역할 생성 중 락/쿼리 중단 관련 오류 (재시도 예정): tenantId={}, attempt={}/{}, error={}",
                                 tenantId, attempt, maxRetries, errorMsg);
@@ -279,7 +319,8 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                     } else {
                         log.error("역할 생성 중 예상치 못한 오류: tenantId={}, attempt={}/{}, error={}",
                                 tenantId, attempt, maxRetries, e.getMessage(), e);
-                        return StepResult.failure(OnboardingConstants.MSG_ROLE_APPLY_FAILED + ": " + e.getMessage());
+                        return StepResult.failure(
+                                OnboardingConstants.MSG_ROLE_APPLY_FAILED + ": " + e.getMessage());
                     }
                 }
 
@@ -308,12 +349,14 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                 return StepResult.success(OnboardingConstants.MSG_ROLE_APPLY_COMPLETE);
             } else {
                 log.error("❌ Step 2 실패: 역할 템플릿 적용 실패 (모든 재시도 실패) - tenantId={}", tenantId);
-                return StepResult.failure(OnboardingConstants.MSG_ROLE_APPLY_FAILED + ": 모든 재시도 실패");
+                return StepResult
+                        .failure(OnboardingConstants.MSG_ROLE_APPLY_FAILED + ": 모든 재시도 실패");
             }
         } catch (Exception e) {
             log.error("❌ Step 2 예외: 역할 템플릿 적용 중 오류 발생 - tenantId={}, error={}", tenantId,
                     e.getMessage(), e);
-            return StepResult.failure(OnboardingConstants.MSG_ROLE_APPLY_FAILED + ": " + e.getMessage());
+            return StepResult
+                    .failure(OnboardingConstants.MSG_ROLE_APPLY_FAILED + ": " + e.getMessage());
         }
     }
 
@@ -334,7 +377,8 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
         } catch (Exception e) {
             log.error("❌ Step 3 예외: 관리자 계정 생성 중 오류 발생 - tenantId={}, email={}, error={}", tenantId,
                     contactEmail, e.getMessage(), e);
-            return StepResult.failure(OnboardingConstants.MSG_ADMIN_CREATE_FAILED + ": " + e.getMessage());
+            return StepResult
+                    .failure(OnboardingConstants.MSG_ADMIN_CREATE_FAILED + ": " + e.getMessage());
         }
     }
 

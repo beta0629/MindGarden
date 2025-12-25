@@ -217,7 +217,7 @@ public class TenantDashboardServiceImpl implements TenantDashboardService {
     }
     
     @Override
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional(propagation = Propagation.REQUIRED) // 메인 트랜잭션에 참여하여 롤백 보장
     public List<TenantDashboardResponse> createDefaultDashboards(String tenantId, String businessType, String createdBy, java.util.Map<String, String> dashboardTemplates, java.util.Map<String, java.util.List<String>> dashboardWidgets) {
         log.info("기본 대시보드 생성: tenantId={}, businessType={}, createdBy={}, dashboardTemplates={}", 
             tenantId, businessType, createdBy, dashboardTemplates);

@@ -276,36 +276,56 @@ public class TenantDashboardServiceImpl implements TenantDashboardService {
                 entityManager.flush();
                 entityManager.clear();
                 
-                // JPA 조회 전에 JDBC로 직접 확인 (트랜잭션 커밋 확인)
+                // JDBC로 직접 역할 조회 (트랜잭션 커밋 확인)
                 try {
-                    Integer count = jdbcTemplate.queryForObject(
-                            "SELECT COUNT(*) FROM tenant_roles WHERE tenant_id = ? AND role_template_id = ? AND (is_deleted IS NULL OR is_deleted = FALSE)",
-                            Integer.class, tenantId, template.getRoleTemplateId());
+                    List<java.util.Map<String, Object>> roleRows = jdbcTemplate.queryForList(
+                            "SELECT tenant_role_id, tenant_id, role_template_id, name, name_ko, name_en, " +
+                            "description, description_ko, description_en, is_active, display_order " +
+                            "FROM tenant_roles WHERE tenant_id = ? AND role_template_id = ? " +
+                            "AND (is_deleted IS NULL OR is_deleted = FALSE) LIMIT 1",
+                            tenantId, template.getRoleTemplateId());
                     
-                    if (count != null && count > 0) {
-                        // JDBC로 역할이 확인되었으므로 JPA로 조회
-                        tenantRoles = tenantRoleRepository.findByTenantIdAndRoleTemplateId(
-                                tenantId, template.getRoleTemplateId());
+                    if (!roleRows.isEmpty()) {
+                        // JDBC로 역할을 찾았으므로 TenantRole 객체 생성
+                        java.util.Map<String, Object> row = roleRows.get(0);
+                        TenantRole tenantRole = TenantRole.builder()
+                                .tenantRoleId((String) row.get("tenant_role_id"))
+                                .tenantId((String) row.get("tenant_id"))
+                                .roleTemplateId((String) row.get("role_template_id"))
+                                .name((String) row.get("name"))
+                                .nameKo((String) row.get("name_ko"))
+                                .nameEn((String) row.get("name_en"))
+                                .description((String) row.get("description"))
+                                .descriptionKo((String) row.get("description_ko"))
+                                .descriptionEn((String) row.get("description_en"))
+                                .isActive((Boolean) row.get("is_active"))
+                                .displayOrder(row.get("display_order") != null ? 
+                                        ((Number) row.get("display_order")).intValue() : null)
+                                .build();
                         
-                        if (!tenantRoles.isEmpty()) {
-                            log.debug("테넌트 역할 찾음 (JDBC 확인 후 JPA 조회): roleTemplateId={}, retry={}/{}", 
-                                    template.getRoleTemplateId(), retry + 1, maxRetries);
-                            break;
-                        }
+                        tenantRoles.add(tenantRole);
+                        log.debug("테넌트 역할 찾음 (JDBC 직접 조회): roleTemplateId={}, tenantRoleId={}, retry={}/{}", 
+                                template.getRoleTemplateId(), tenantRole.getTenantRoleId(), retry + 1, maxRetries);
+                        break;
                     }
                 } catch (Exception jdbcEx) {
-                    log.debug("JDBC 역할 확인 실패 (계속 시도): roleTemplateId={}, retry={}/{}, error={}", 
+                    log.debug("JDBC 역할 조회 실패 (계속 시도): roleTemplateId={}, retry={}/{}, error={}", 
                             template.getRoleTemplateId(), retry + 1, maxRetries, jdbcEx.getMessage());
                 }
                 
-                // JDBC로 확인되지 않았거나 JPA 조회 실패 시 JPA로 직접 조회 시도
-                tenantRoles = tenantRoleRepository.findByTenantIdAndRoleTemplateId(
-                        tenantId, template.getRoleTemplateId());
-                
-                if (!tenantRoles.isEmpty()) {
-                    log.debug("테넌트 역할 찾음 (JPA 조회): roleTemplateId={}, retry={}/{}", 
-                            template.getRoleTemplateId(), retry + 1, maxRetries);
-                    break;
+                // JDBC 조회 실패 시 JPA로 조회 시도 (백업)
+                try {
+                    tenantRoles = tenantRoleRepository.findByTenantIdAndRoleTemplateId(
+                            tenantId, template.getRoleTemplateId());
+                    
+                    if (!tenantRoles.isEmpty()) {
+                        log.debug("테넌트 역할 찾음 (JPA 조회): roleTemplateId={}, retry={}/{}", 
+                                template.getRoleTemplateId(), retry + 1, maxRetries);
+                        break;
+                    }
+                } catch (Exception jpaEx) {
+                    log.debug("JPA 역할 조회 실패 (계속 시도): roleTemplateId={}, retry={}/{}, error={}", 
+                            template.getRoleTemplateId(), retry + 1, maxRetries, jpaEx.getMessage());
                 }
                 
                 if (retry < maxRetries - 1) {

@@ -760,7 +760,7 @@ public class OnboardingServiceImpl implements OnboardingService {
                         log.error("대시보드 생성 중 예외 발생 (프로세스 계속 진행): tenantId={}, error={}", 
                                 tenantId, e.getMessage(), e);
                         dashboardResult = OnboardingErrorHandlingService.ExecutionResult.failure(
-                                1, "대시보드 생성 중 예외 발생: " + e.getMessage());
+                                1, e, "대시보드 생성 중 예외 발생: " + e.getMessage());
                     }
 
                     if (!dashboardResult.isSuccess()) {

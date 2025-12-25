@@ -701,58 +701,67 @@ public class OnboardingServiceImpl implements OnboardingService {
                     updateProcessingStatus(requestId, "DASHBOARD_CREATE", "IN_PROGRESS",
                             "대시보드 생성 중...");
                     // 대시보드 생성 (방어 코드: 실패해도 프로세스 계속 진행)
-                    OnboardingErrorHandlingService.ExecutionResult dashboardResult =
-                            errorHandlingService.executeWithRetry(() -> {
-                                // 테넌트 컨텍스트 설정 (대시보드 생성 시 필요)
-                                String previousTenantId = TenantContextHolder.getTenantId();
-                                try {
-                                    TenantContextHolder.setTenantId(tenantId);
-                                    log.debug("테넌트 컨텍스트 설정: tenantId={}", tenantId);
+                    // 대시보드 생성 실패가 메인 트랜잭션을 롤백하지 않도록 별도 try-catch로 감싸기
+                    OnboardingErrorHandlingService.ExecutionResult dashboardResult;
+                    try {
+                        dashboardResult = errorHandlingService.executeWithRetry(() -> {
+                            // 테넌트 컨텍스트 설정 (대시보드 생성 시 필요)
+                            String previousTenantId = TenantContextHolder.getTenantId();
+                            try {
+                                TenantContextHolder.setTenantId(tenantId);
+                                log.debug("테넌트 컨텍스트 설정: tenantId={}", tenantId);
 
-                                    String dashboardBusinessType =
-                                            getDefaultBusinessType(request.getBusinessType());
-                                    List<com.coresolution.core.dto.TenantDashboardResponse> dashboards =
-                                            tenantDashboardService.createDefaultDashboards(tenantId,
-                                                    dashboardBusinessType, actorId,
-                                                    finalDashboardTemplates, finalDashboardWidgets);
+                                String dashboardBusinessType =
+                                        getDefaultBusinessType(request.getBusinessType());
+                                List<com.coresolution.core.dto.TenantDashboardResponse> dashboards =
+                                        tenantDashboardService.createDefaultDashboards(tenantId,
+                                                dashboardBusinessType, actorId,
+                                                finalDashboardTemplates, finalDashboardWidgets);
 
-                                    log.info("기본 대시보드 생성 완료: tenantId={}, count={}, templates={}",
-                                            tenantId, dashboards != null ? dashboards.size() : 0,
-                                            finalDashboardTemplates);
-                                    updateProcessingStatus(requestId, "DASHBOARD_CREATE", "SUCCESS",
-                                            "대시보드 생성 완료: "
-                                                    + (dashboards != null ? dashboards.size() : 0)
-                                                    + "개");
-                                    return dashboards != null && !dashboards.isEmpty();
-                                } catch (org.springframework.dao.PessimisticLockingFailureException e) {
-                                    // 락 타임아웃 예외는 재시도 가능하도록 다시 throw
-                                    log.warn("대시보드 생성 중 락 타임아웃 발생 (재시도 예정): tenantId={}, error={}",
-                                            tenantId, e.getMessage());
+                                log.info("기본 대시보드 생성 완료: tenantId={}, count={}, templates={}",
+                                        tenantId, dashboards != null ? dashboards.size() : 0,
+                                        finalDashboardTemplates);
+                                updateProcessingStatus(requestId, "DASHBOARD_CREATE", "SUCCESS",
+                                        "대시보드 생성 완료: "
+                                                + (dashboards != null ? dashboards.size() : 0)
+                                                + "개");
+                                return dashboards != null && !dashboards.isEmpty();
+                            } catch (org.springframework.dao.PessimisticLockingFailureException e) {
+                                // 락 타임아웃 예외는 재시도 가능하도록 다시 throw
+                                log.warn("대시보드 생성 중 락 타임아웃 발생 (재시도 예정): tenantId={}, error={}",
+                                        tenantId, e.getMessage());
+                                throw e;
+                            } catch (Exception e) {
+                                // 다른 예외도 재시도 가능하도록 throw
+                                String errorMsg = e.getMessage();
+                                if (errorMsg != null && (errorMsg.contains("Lock wait timeout")
+                                        || errorMsg.contains("lock timeout")
+                                        || errorMsg.contains("deadlock"))) {
+                                    log.warn(
+                                            "대시보드 생성 중 락 관련 오류 발생 (재시도 예정): tenantId={}, error={}",
+                                            tenantId, errorMsg);
                                     throw e;
-                                } catch (Exception e) {
-                                    // 다른 예외도 재시도 가능하도록 throw
-                                    String errorMsg = e.getMessage();
-                                    if (errorMsg != null && (errorMsg.contains("Lock wait timeout")
-                                            || errorMsg.contains("lock timeout")
-                                            || errorMsg.contains("deadlock"))) {
-                                        log.warn(
-                                                "대시보드 생성 중 락 관련 오류 발생 (재시도 예정): tenantId={}, error={}",
-                                                tenantId, errorMsg);
-                                        throw e;
-                                    }
-                                    // 락 관련이 아닌 오류는 그대로 throw
-                                    throw e;
-                                } finally {
-                                    // 테넌트 컨텍스트 복원
-                                    if (previousTenantId != null) {
-                                        TenantContextHolder.setTenantId(previousTenantId);
-                                    } else {
-                                        TenantContextHolder.clear();
-                                    }
                                 }
-                            }, 3, // 최대 3회 재시도 (타임아웃 방지를 위해 감소)
-                                    500 // 0.5초 지연 (타임아웃 방지를 위해 감소)
-                            );
+                                // 락 관련이 아닌 오류는 그대로 throw
+                                throw e;
+                            } finally {
+                                // 테넌트 컨텍스트 복원
+                                if (previousTenantId != null) {
+                                    TenantContextHolder.setTenantId(previousTenantId);
+                                } else {
+                                    TenantContextHolder.clear();
+                                }
+                            }
+                        }, 3, // 최대 3회 재시도 (타임아웃 방지를 위해 감소)
+                                500 // 0.5초 지연 (타임아웃 방지를 위해 감소)
+                        );
+                    } catch (Exception e) {
+                        // 대시보드 생성 중 예외가 발생해도 메인 트랜잭션에 영향을 주지 않도록 catch
+                        log.error("대시보드 생성 중 예외 발생 (프로세스 계속 진행): tenantId={}, error={}", 
+                                tenantId, e.getMessage(), e);
+                        dashboardResult = OnboardingErrorHandlingService.ExecutionResult.failure(
+                                1, "대시보드 생성 중 예외 발생: " + e.getMessage());
+                    }
 
                     if (!dashboardResult.isSuccess()) {
                         // 대시보드 생성 실패 시 경고만 로그하고 프로세스 계속 진행 (방어 코드)

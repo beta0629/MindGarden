@@ -836,13 +836,11 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                             "SELECT COUNT(*) FROM tenant_roles WHERE tenant_id = ? AND (is_deleted IS NULL OR is_deleted = FALSE)",
                             Integer.class, tenantId);
                 } catch (Exception e) {
-                    log.warn("역할 생성 후 존재 확인 실패: tenantId={}, error={}", tenantId,
-                            e.getMessage());
+                    log.warn("역할 생성 후 존재 확인 실패: tenantId={}, error={}", tenantId, e.getMessage());
                 }
 
                 if (finalCount != null && finalCount > 0) {
-                    log.info(
-                            "역할 생성 완료 (배치 INSERT): tenantId={}, rowsAffected={}, finalCount={}",
+                    log.info("역할 생성 완료 (배치 INSERT): tenantId={}, rowsAffected={}, finalCount={}",
                             tenantId, rowsAffected, finalCount);
                     // JPA 캐시 갱신 (jdbcTemplate으로 생성한 데이터를 JPA에서 조회할 수 있도록)
                     entityManager.flush();

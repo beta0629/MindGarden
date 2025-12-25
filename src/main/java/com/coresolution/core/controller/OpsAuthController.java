@@ -35,10 +35,10 @@ public class OpsAuthController extends BaseApiController {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     
-    @Value("${ops.admin.userId:superadmin@mindgarden.com}")
+    @Value("${ops.admin.userId:ops_core}")
     private String opsAdminUsername;
     
-    @Value("${ops.admin.password:admin123}")
+    @Value("${ops.admin.password:godgod826!}")
     private String opsAdminPassword;
     
     @Value("${ops.admin.role:HQ_ADMIN}")

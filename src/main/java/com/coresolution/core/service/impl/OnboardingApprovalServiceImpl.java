@@ -16,6 +16,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,7 +30,6 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @Service
-@Transactional
 @RequiredArgsConstructor
 public class OnboardingApprovalServiceImpl implements OnboardingApprovalService {
 
@@ -42,16 +42,17 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
     private final org.springframework.transaction.PlatformTransactionManager transactionManager;
 
     /**
-     * 온보딩 승인 프로세스를 단계별로 실행
-     * 프로시저 의존을 제거하고 Java 코드로 명확하게 단계별 처리
+     * 온보딩 승인 프로세스를 단계별로 실행 프로시저 의존을 제거하고 Java 코드로 명확하게 단계별 처리
+     * 전체 프로세스를 하나의 트랜잭션으로 감싸서 실패 시 롤백 보장
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Map<String, Object> processOnboardingApproval(java.util.UUID requestId, String tenantId,
             String tenantName, String businessType, String approvedBy, String decisionNote,
             String contactEmail, String adminPasswordHash, String subdomain) {
 
         log.info("==========================================");
-        log.info("🚀 온보딩 승인 프로세스 시작 (단계별 처리)");
+        log.info("🚀 온보딩 승인 프로세스 시작 (단계별 처리, 트랜잭션 롤백 보장)");
         log.info("==========================================");
         log.info("  - requestId: {}", requestId);
         log.info("  - tenantId: {}", tenantId);
@@ -65,80 +66,128 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
         Map<String, Object> result = new HashMap<>();
         Map<String, Object> stepResults = new HashMap<>();
 
-        // Step 1: 테넌트 생성/활성화
-        updateProcessingStatus(requestId, "TENANT_CREATE", "IN_PROGRESS", "테넌트 생성/활성화 시작...");
-        StepResult tenantResult = executeStepTenantCreation(requestId, tenantId, tenantName, businessType, subdomain, approvedBy);
-        stepResults.put("TENANT_CREATE", tenantResult);
-        
-        if (!tenantResult.isSuccess()) {
-            log.error("❌ Step 1 실패: 테넌트 생성/활성화 실패 - 프로세스 중단");
-            result.put("success", false);
-            result.put("message", "테넌트 생성/활성화 실패: " + tenantResult.getMessage());
-            result.put("stepResults", stepResults);
-            updateProcessingStatus(requestId, "TENANT_CREATE", "FAILED", tenantResult.getMessage());
-            return result;
-        }
-        updateProcessingStatus(requestId, "TENANT_CREATE", "SUCCESS", "테넌트 생성/활성화 완료");
+        try {
+            // Step 1: 테넌트 생성/활성화
+            updateProcessingStatus(requestId, "TENANT_CREATE", "IN_PROGRESS", "테넌트 생성/활성화 시작...");
+            StepResult tenantResult = executeStepTenantCreation(requestId, tenantId, tenantName,
+                    businessType, subdomain, approvedBy);
+            stepResults.put("TENANT_CREATE", tenantResult);
 
-        // Step 2: 역할 템플릿 적용
-        updateProcessingStatus(requestId, "ROLE_APPLY", "IN_PROGRESS", "역할 템플릿 적용 시작...");
-        StepResult roleResult = executeStepRoleApplication(requestId, tenantId, businessType, approvedBy);
-        stepResults.put("ROLE_APPLY", roleResult);
-        
-        if (!roleResult.isSuccess()) {
-            log.error("❌ Step 2 실패: 역할 템플릿 적용 실패 - 프로세스 중단");
-            result.put("success", false);
-            result.put("message", "역할 템플릿 적용 실패: " + roleResult.getMessage());
-            result.put("stepResults", stepResults);
-            updateProcessingStatus(requestId, "ROLE_APPLY", "FAILED", roleResult.getMessage());
-            return result;
-        }
-        updateProcessingStatus(requestId, "ROLE_APPLY", "SUCCESS", "역할 템플릿 적용 완료");
-
-        // Step 3: 관리자 계정 생성
-        if (contactEmail != null && !contactEmail.trim().isEmpty() 
-                && adminPasswordHash != null && !adminPasswordHash.trim().isEmpty()) {
-            updateProcessingStatus(requestId, "ADMIN_CREATE", "IN_PROGRESS", "관리자 계정 생성 시작...");
-            StepResult adminResult = executeStepAdminAccountCreation(requestId, tenantId, contactEmail, tenantName, adminPasswordHash, approvedBy);
-            stepResults.put("ADMIN_CREATE", adminResult);
-            
-            if (!adminResult.isSuccess()) {
-                log.error("❌ Step 3 실패: 관리자 계정 생성 실패");
+            if (!tenantResult.isSuccess()) {
+                log.error("❌ Step 1 실패: 테넌트 생성/활성화 실패 - 트랜잭션 롤백 예정");
+                markTransactionForRollback("Step 1 실패: 테넌트 생성/활성화 실패");
                 result.put("success", false);
-                result.put("message", "관리자 계정 생성 실패: " + adminResult.getMessage());
+                result.put("message", "테넌트 생성/활성화 실패: " + tenantResult.getMessage());
                 result.put("stepResults", stepResults);
-                updateProcessingStatus(requestId, "ADMIN_CREATE", "FAILED", adminResult.getMessage());
-                return result;
+                updateProcessingStatus(requestId, "TENANT_CREATE", "FAILED", tenantResult.getMessage());
+                throw new RuntimeException("테넌트 생성/활성화 실패: " + tenantResult.getMessage());
             }
-            updateProcessingStatus(requestId, "ADMIN_CREATE", "SUCCESS", "관리자 계정 생성 완료");
-        } else {
-            log.warn("⚠️ 관리자 계정 생성 건너뜀: contactEmail 또는 adminPasswordHash가 없음");
-            stepResults.put("ADMIN_CREATE", StepResult.skip("관리자 계정 정보 없음"));
+            updateProcessingStatus(requestId, "TENANT_CREATE", "SUCCESS", "테넌트 생성/활성화 완료");
+
+            // Step 2: 역할 템플릿 적용
+            updateProcessingStatus(requestId, "ROLE_APPLY", "IN_PROGRESS", "역할 템플릿 적용 시작...");
+            StepResult roleResult =
+                    executeStepRoleApplication(requestId, tenantId, businessType, approvedBy);
+            stepResults.put("ROLE_APPLY", roleResult);
+
+            if (!roleResult.isSuccess()) {
+                log.error("❌ Step 2 실패: 역할 템플릿 적용 실패 - 트랜잭션 롤백 예정");
+                markTransactionForRollback("Step 2 실패: 역할 템플릿 적용 실패");
+                result.put("success", false);
+                result.put("message", "역할 템플릿 적용 실패: " + roleResult.getMessage());
+                result.put("stepResults", stepResults);
+                updateProcessingStatus(requestId, "ROLE_APPLY", "FAILED", roleResult.getMessage());
+                throw new RuntimeException("역할 템플릿 적용 실패: " + roleResult.getMessage());
+            }
+            updateProcessingStatus(requestId, "ROLE_APPLY", "SUCCESS", "역할 템플릿 적용 완료");
+
+            // Step 3: 관리자 계정 생성
+            if (contactEmail != null && !contactEmail.trim().isEmpty() && adminPasswordHash != null
+                    && !adminPasswordHash.trim().isEmpty()) {
+                updateProcessingStatus(requestId, "ADMIN_CREATE", "IN_PROGRESS", "관리자 계정 생성 시작...");
+                StepResult adminResult = executeStepAdminAccountCreation(requestId, tenantId,
+                        contactEmail, tenantName, adminPasswordHash, approvedBy);
+                stepResults.put("ADMIN_CREATE", adminResult);
+
+                if (!adminResult.isSuccess()) {
+                    log.error("❌ Step 3 실패: 관리자 계정 생성 실패 - 트랜잭션 롤백 예정");
+                    markTransactionForRollback("Step 3 실패: 관리자 계정 생성 실패");
+                    result.put("success", false);
+                    result.put("message", "관리자 계정 생성 실패: " + adminResult.getMessage());
+                    result.put("stepResults", stepResults);
+                    updateProcessingStatus(requestId, "ADMIN_CREATE", "FAILED",
+                            adminResult.getMessage());
+                    throw new RuntimeException("관리자 계정 생성 실패: " + adminResult.getMessage());
+                }
+                updateProcessingStatus(requestId, "ADMIN_CREATE", "SUCCESS", "관리자 계정 생성 완료");
+            } else {
+                log.warn("⚠️ 관리자 계정 생성 건너뜀: contactEmail 또는 adminPasswordHash가 없음");
+                stepResults.put("ADMIN_CREATE", StepResult.skip("관리자 계정 정보 없음"));
+            }
+
+            // 모든 단계 성공
+            log.info("==========================================");
+            log.info("✅ 온보딩 승인 프로세스 완료 (트랜잭션 커밋 예정)");
+            log.info("==========================================");
+            result.put("success", true);
+            result.put("message", "온보딩 승인 프로세스 완료: 테넌트 생성, 역할 적용, 관리자 계정 생성 완료");
+            result.put("stepResults", stepResults);
+            updateProcessingStatus(requestId, "COMPLETE", "SUCCESS", "모든 단계 완료");
+
+            return result;
+        } catch (RuntimeException e) {
+            // RuntimeException이 발생하면 트랜잭션이 자동으로 롤백됨
+            log.error("==========================================");
+            log.error("❌ 온보딩 승인 프로세스 실패 - 트랜잭션 롤백");
+            log.error("==========================================");
+            log.error("  - requestId: {}", requestId);
+            log.error("  - tenantId: {}", tenantId);
+            log.error("  - 오류: {}", e.getMessage());
+            log.error("==========================================");
+            // 예외를 다시 throw하여 트랜잭션 롤백 보장
+            throw e;
+        } catch (Exception e) {
+            // 예상치 못한 예외도 롤백
+            log.error("==========================================");
+            log.error("❌ 온보딩 승인 프로세스 예외 발생 - 트랜잭션 롤백");
+            log.error("==========================================");
+            log.error("  - requestId: {}", requestId);
+            log.error("  - tenantId: {}", tenantId);
+            log.error("  - 오류: {}", e.getMessage(), e);
+            log.error("==========================================");
+            markTransactionForRollback("예상치 못한 예외 발생: " + e.getMessage());
+            throw new RuntimeException("온보딩 승인 프로세스 중 예외 발생: " + e.getMessage(), e);
         }
+    }
 
-        // 모든 단계 성공
-        log.info("==========================================");
-        log.info("✅ 온보딩 승인 프로세스 완료");
-        log.info("==========================================");
-        result.put("success", true);
-        result.put("message", "온보딩 승인 프로세스 완료: 테넌트 생성, 역할 적용, 관리자 계정 생성 완료");
-        result.put("stepResults", stepResults);
-        updateProcessingStatus(requestId, "COMPLETE", "SUCCESS", "모든 단계 완료");
-
-        return result;
+    /**
+     * 현재 트랜잭션을 롤백하도록 표시
+     */
+    private void markTransactionForRollback(String reason) {
+        try {
+            org.springframework.transaction.TransactionStatus status = 
+                    TransactionAspectSupport.currentTransactionStatus();
+            if (status != null && !status.isRollbackOnly()) {
+                status.setRollbackOnly();
+                log.warn("⚠️ 트랜잭션 롤백 표시: {}", reason);
+            }
+        } catch (Exception e) {
+            log.warn("트랜잭션 롤백 표시 실패 (무시): {}", e.getMessage());
+        }
     }
 
     /**
      * Step 1: 테넌트 생성/활성화
      */
-    private StepResult executeStepTenantCreation(java.util.UUID requestId, String tenantId, 
+    private StepResult executeStepTenantCreation(java.util.UUID requestId, String tenantId,
             String tenantName, String businessType, String subdomain, String approvedBy) {
         log.info("==========================================");
         log.info("📋 Step 1: 테넌트 생성/활성화");
         log.info("==========================================");
-        
+
         try {
-            boolean created = ensureTenantExists(tenantId, tenantName, businessType, subdomain, approvedBy);
+            boolean created =
+                    ensureTenantExists(tenantId, tenantName, businessType, subdomain, approvedBy);
             if (created) {
                 log.info("✅ Step 1 성공: 테넌트 생성/활성화 완료 - tenantId={}", tenantId);
                 return StepResult.success("테넌트 생성/활성화 완료");
@@ -147,7 +196,8 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                 return StepResult.failure("테넌트 생성/활성화 실패");
             }
         } catch (Exception e) {
-            log.error("❌ Step 1 예외: 테넌트 생성/활성화 중 오류 발생 - tenantId={}, error={}", tenantId, e.getMessage(), e);
+            log.error("❌ Step 1 예외: 테넌트 생성/활성화 중 오류 발생 - tenantId={}, error={}", tenantId,
+                    e.getMessage(), e);
             return StepResult.failure("테넌트 생성/활성화 오류: " + e.getMessage());
         }
     }
@@ -155,12 +205,12 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
     /**
      * Step 2: 역할 템플릿 적용
      */
-    private StepResult executeStepRoleApplication(java.util.UUID requestId, String tenantId, 
+    private StepResult executeStepRoleApplication(java.util.UUID requestId, String tenantId,
             String businessType, String approvedBy) {
         log.info("==========================================");
         log.info("📋 Step 2: 역할 템플릿 적용");
         log.info("==========================================");
-        
+
         try {
             int maxRetries = 10;
             long baseRetryDelay = 2000;
@@ -173,7 +223,8 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                             "SELECT COUNT(*) FROM tenant_roles WHERE tenant_id = ? AND (is_deleted IS NULL OR is_deleted = FALSE)",
                             Integer.class, tenantId);
                     if (checkCount != null && checkCount > 0) {
-                        log.info("✅ Step 2 성공: 역할이 이미 존재함 (다른 트랜잭션이 생성) - tenantId={}, count={}", tenantId, checkCount);
+                        log.info("✅ Step 2 성공: 역할이 이미 존재함 (다른 트랜잭션이 생성) - tenantId={}, count={}",
+                                tenantId, checkCount);
                         rolesApplied = true;
                         break;
                     }
@@ -181,9 +232,15 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                     log.warn("역할 존재 확인 실패: tenantId={}, error={}", tenantId, checkEx.getMessage());
                 }
 
-                TransactionTemplate transactionTemplate = new TransactionTemplate(transactionManager);
+                // 역할 생성은 메인 트랜잭션 내에서 실행 (롤백 보장을 위해)
+                // 단, 락 타임아웃을 방지하기 위해 별도 트랜잭션으로 실행하되
+                // 실패 시 메인 트랜잭션도 롤백되도록 처리
+                TransactionTemplate transactionTemplate =
+                        new TransactionTemplate(transactionManager);
+                // PROPAGATION_REQUIRES_NEW 대신 PROPAGATION_REQUIRED 사용하여 메인 트랜잭션에 참여
+                // 단, 락 문제를 피하기 위해 ISOLATION_READ_COMMITTED 사용
                 transactionTemplate.setPropagationBehavior(
-                        org.springframework.transaction.TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+                        org.springframework.transaction.TransactionDefinition.PROPAGATION_REQUIRED);
                 transactionTemplate.setIsolationLevel(
                         org.springframework.transaction.TransactionDefinition.ISOLATION_READ_COMMITTED);
                 transactionTemplate.setTimeout(60);
@@ -200,11 +257,11 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                 } catch (Exception e) {
                     String errorMsg = e.getMessage();
                     if (errorMsg != null && (errorMsg.contains("Lock wait timeout")
-                            || errorMsg.contains("lock timeout")
-                            || errorMsg.contains("deadlock")
+                            || errorMsg.contains("lock timeout") || errorMsg.contains("deadlock")
                             || errorMsg.contains("Query execution was interrupted")
                             || (errorMsg.contains("1317") && errorMsg.contains("interrupted")))) {
-                        log.warn("역할 생성 중 락/쿼리 중단 관련 오류 (재시도 예정): tenantId={}, attempt={}/{}, error={}",
+                        log.warn(
+                                "역할 생성 중 락/쿼리 중단 관련 오류 (재시도 예정): tenantId={}, attempt={}/{}, error={}",
                                 tenantId, attempt, maxRetries, errorMsg);
                         roleResult = false;
                     } else {
@@ -216,14 +273,15 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
 
                 if (roleResult != null && roleResult) {
                     rolesApplied = true;
-                    log.info("✅ Step 2 성공: 역할 템플릿 적용 완료 - tenantId={}, attempt={}", tenantId, attempt);
+                    log.info("✅ Step 2 성공: 역할 템플릿 적용 완료 - tenantId={}, attempt={}", tenantId,
+                            attempt);
                     break;
                 }
 
                 if (attempt < maxRetries) {
                     long delay = baseRetryDelay * attempt;
-                    log.warn("역할 생성 실패 (재시도): tenantId={}, attempt={}/{}, delay={}ms",
-                            tenantId, attempt, maxRetries, delay);
+                    log.warn("역할 생성 실패 (재시도): tenantId={}, attempt={}/{}, delay={}ms", tenantId,
+                            attempt, maxRetries, delay);
                     try {
                         Thread.sleep(delay);
                     } catch (InterruptedException ie) {
@@ -241,7 +299,8 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                 return StepResult.failure("역할 템플릿 적용 실패: 모든 재시도 실패");
             }
         } catch (Exception e) {
-            log.error("❌ Step 2 예외: 역할 템플릿 적용 중 오류 발생 - tenantId={}, error={}", tenantId, e.getMessage(), e);
+            log.error("❌ Step 2 예외: 역할 템플릿 적용 중 오류 발생 - tenantId={}, error={}", tenantId,
+                    e.getMessage(), e);
             return StepResult.failure("역할 템플릿 적용 오류: " + e.getMessage());
         }
     }
@@ -254,14 +313,15 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
         log.info("==========================================");
         log.info("📋 Step 3: 관리자 계정 생성");
         log.info("==========================================");
-        
+
         try {
-            createAdminAccountDirectly(tenantId, contactEmail, tenantName, adminPasswordHash, approvedBy);
+            createAdminAccountDirectly(tenantId, contactEmail, tenantName, adminPasswordHash,
+                    approvedBy);
             log.info("✅ Step 3 성공: 관리자 계정 생성 완료 - tenantId={}, email={}", tenantId, contactEmail);
             return StepResult.success("관리자 계정 생성 완료");
         } catch (Exception e) {
-            log.error("❌ Step 3 예외: 관리자 계정 생성 중 오류 발생 - tenantId={}, email={}, error={}", 
-                    tenantId, contactEmail, e.getMessage(), e);
+            log.error("❌ Step 3 예외: 관리자 계정 생성 중 오류 발생 - tenantId={}, email={}, error={}", tenantId,
+                    contactEmail, e.getMessage(), e);
             return StepResult.failure("관리자 계정 생성 오류: " + e.getMessage());
         }
     }
@@ -317,9 +377,9 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
      * 기존 프로시저 호출 방식 (레거시 - 참고용으로 유지하되 사용 안 함)
      */
     @Deprecated
-    private Map<String, Object> processOnboardingApprovalLegacy(java.util.UUID requestId, String tenantId,
-            String tenantName, String businessType, String approvedBy, String decisionNote,
-            String contactEmail, String adminPasswordHash, String subdomain) {
+    private Map<String, Object> processOnboardingApprovalLegacy(java.util.UUID requestId,
+            String tenantId, String tenantName, String businessType, String approvedBy,
+            String decisionNote, String contactEmail, String adminPasswordHash, String subdomain) {
 
         log.info(
                 "온보딩 승인 프로세스 시작 (레거시): requestId={}, tenantId={}, tenantName={}, contactEmail={}, subdomain={}",

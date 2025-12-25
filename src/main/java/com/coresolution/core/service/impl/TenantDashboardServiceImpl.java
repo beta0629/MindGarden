@@ -53,6 +53,7 @@ public class TenantDashboardServiceImpl implements TenantDashboardService {
     private final TenantAccessControlService accessControlService;
     private final EntityManager entityManager;
     private final WidgetGroupService widgetGroupService;
+    private final org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
     
     @Override
     @Transactional(readOnly = true)
@@ -267,19 +268,42 @@ public class TenantDashboardServiceImpl implements TenantDashboardService {
             // 템플릿 기반 역할이 이미 생성되었는지 확인 (재시도 로직 포함)
             // 프로시저가 별도 트랜잭션에서 실행되므로 명시적으로 flush/clear 필요
             List<TenantRole> tenantRoles = new java.util.ArrayList<>();
-            int maxRetries = 10;
-            int retryDelay = 500; // 0.5초
+            int maxRetries = 20; // 재시도 횟수 증가 (10 → 20)
+            int retryDelay = 1000; // 재시도 간격 증가 (500ms → 1000ms)
             
             for (int retry = 0; retry < maxRetries; retry++) {
                 // EntityManager 캐시를 비워서 최신 데이터 조회
                 entityManager.flush();
                 entityManager.clear();
                 
+                // JPA 조회 전에 JDBC로 직접 확인 (트랜잭션 커밋 확인)
+                try {
+                    Integer count = jdbcTemplate.queryForObject(
+                            "SELECT COUNT(*) FROM tenant_roles WHERE tenant_id = ? AND role_template_id = ? AND (is_deleted IS NULL OR is_deleted = FALSE)",
+                            Integer.class, tenantId, template.getRoleTemplateId());
+                    
+                    if (count != null && count > 0) {
+                        // JDBC로 역할이 확인되었으므로 JPA로 조회
+                        tenantRoles = tenantRoleRepository.findByTenantIdAndRoleTemplateId(
+                                tenantId, template.getRoleTemplateId());
+                        
+                        if (!tenantRoles.isEmpty()) {
+                            log.debug("테넌트 역할 찾음 (JDBC 확인 후 JPA 조회): roleTemplateId={}, retry={}/{}", 
+                                    template.getRoleTemplateId(), retry + 1, maxRetries);
+                            break;
+                        }
+                    }
+                } catch (Exception jdbcEx) {
+                    log.debug("JDBC 역할 확인 실패 (계속 시도): roleTemplateId={}, retry={}/{}, error={}", 
+                            template.getRoleTemplateId(), retry + 1, maxRetries, jdbcEx.getMessage());
+                }
+                
+                // JDBC로 확인되지 않았거나 JPA 조회 실패 시 JPA로 직접 조회 시도
                 tenantRoles = tenantRoleRepository.findByTenantIdAndRoleTemplateId(
                         tenantId, template.getRoleTemplateId());
                 
                 if (!tenantRoles.isEmpty()) {
-                    log.debug("테넌트 역할 찾음: roleTemplateId={}, retry={}/{}", 
+                    log.debug("테넌트 역할 찾음 (JPA 조회): roleTemplateId={}, retry={}/{}", 
                             template.getRoleTemplateId(), retry + 1, maxRetries);
                     break;
                 }

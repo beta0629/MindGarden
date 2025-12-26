@@ -420,6 +420,15 @@ public class OnboardingServiceImpl implements OnboardingService {
             return saved;
         }
 
+        // ON_HOLD 상태로 처리할 때는 단순히 상태만 변경하고 저장
+        if (status == OnboardingStatus.ON_HOLD) {
+            log.info("보류 상태로 처리: requestId={}, note={}", requestId, note);
+            OnboardingRequest saved = repository.save(request);
+            log.info("온보딩 요청 결정 완료: id={}, status={}, version={}", saved.getId(), saved.getStatus(),
+                    saved.getVersion());
+            return saved;
+        }
+
         if (status == OnboardingStatus.APPROVED) {
             log.info("테넌트 생성 진행: requestedBy={}, tenantName={}", request.getRequestedBy(),
                     request.getTenantName());

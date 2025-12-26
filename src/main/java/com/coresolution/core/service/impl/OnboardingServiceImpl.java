@@ -1927,6 +1927,11 @@ public class OnboardingServiceImpl implements OnboardingService {
         log.info("🔄 관리자 권한 그룹 할당 시작: tenantId={}", tenantId);
 
         try {
+            // JPA 캐시 동기화 (REQUIRES_NEW 트랜잭션에서 최신 데이터 조회 보장)
+            entityManager.flush();
+            entityManager.clear();
+            log.debug("JPA 캐시 동기화 완료: tenantId={}", tenantId);
+
             // 관리자 역할 찾기 (nameEn이 "Director", "Admin" 또는 nameKo가 "관리자", "원장")
             List<String> adminRoleNames = List.of("Director", "Admin", "관리자", "원장");
             Optional<com.coresolution.core.domain.TenantRole> adminRole = Optional.empty();
@@ -1947,10 +1952,10 @@ public class OnboardingServiceImpl implements OnboardingService {
             // Fallback: display_order=1인 역할 찾기 (일반적으로 관리자 역할이 첫 번째)
             if (adminRole.isEmpty()) {
                 log.debug("관리자 역할 이름으로 찾기 실패, display_order=1인 역할 확인: tenantId={}", tenantId);
-                List<com.coresolution.core.domain.TenantRole> allRoles = tenantRoleRepository
-                        .findByTenantIdAndIsDeletedFalse(tenantId);
-                adminRole = allRoles.stream()
-                        .filter(role -> role.getDisplayOrder() != null && role.getDisplayOrder() == 1)
+                List<com.coresolution.core.domain.TenantRole> allRoles =
+                        tenantRoleRepository.findByTenantIdAndIsDeletedFalse(tenantId);
+                adminRole = allRoles.stream().filter(
+                        role -> role.getDisplayOrder() != null && role.getDisplayOrder() == 1)
                         .findFirst();
             }
 

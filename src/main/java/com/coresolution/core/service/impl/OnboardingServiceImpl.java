@@ -33,6 +33,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.context.ApplicationContext;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -70,7 +71,7 @@ public class OnboardingServiceImpl implements OnboardingService {
     private final com.coresolution.core.repository.TenantRoleRepository tenantRoleRepository;
     private final ApplicationContext applicationContext;
     private final EmailService emailService;
-    private final org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
+    private final JdbcTemplate jdbcTemplate;
     @jakarta.persistence.PersistenceContext
     private jakarta.persistence.EntityManager entityManager;
 
@@ -1934,12 +1935,14 @@ public class OnboardingServiceImpl implements OnboardingService {
 
             // 1. "원장" 역할 찾기 (CONSULTATION/COUNSELING 업종)
             try {
-                String sql = "SELECT tenant_role_id, name_ko FROM tenant_roles WHERE tenant_id = ? AND name_ko = '원장' AND (is_deleted IS NULL OR is_deleted = FALSE) LIMIT 1";
+                String sql =
+                        "SELECT tenant_role_id, name_ko FROM tenant_roles WHERE tenant_id = ? AND name_ko = '원장' AND (is_deleted IS NULL OR is_deleted = FALSE) LIMIT 1";
                 java.util.Map<String, Object> result = jdbcTemplate.queryForMap(sql, tenantId);
                 if (result != null && result.get("tenant_role_id") != null) {
                     tenantRoleId = (String) result.get("tenant_role_id");
                     roleName = (String) result.get("name_ko");
-                    log.debug("JDBC로 '원장' 역할 찾음: tenantId={}, tenantRoleId={}", tenantId, tenantRoleId);
+                    log.debug("JDBC로 '원장' 역할 찾음: tenantId={}, tenantRoleId={}", tenantId,
+                            tenantRoleId);
                 }
             } catch (org.springframework.dao.EmptyResultDataAccessException e) {
                 log.debug("'원장' 역할 없음, 다음 검색 시도: tenantId={}", tenantId);
@@ -1948,12 +1951,14 @@ public class OnboardingServiceImpl implements OnboardingService {
             // 2. "관리자" 역할 찾기
             if (tenantRoleId == null) {
                 try {
-                    String sql = "SELECT tenant_role_id, name_ko FROM tenant_roles WHERE tenant_id = ? AND name_ko = '관리자' AND (is_deleted IS NULL OR is_deleted = FALSE) LIMIT 1";
+                    String sql =
+                            "SELECT tenant_role_id, name_ko FROM tenant_roles WHERE tenant_id = ? AND name_ko = '관리자' AND (is_deleted IS NULL OR is_deleted = FALSE) LIMIT 1";
                     java.util.Map<String, Object> result = jdbcTemplate.queryForMap(sql, tenantId);
                     if (result != null && result.get("tenant_role_id") != null) {
                         tenantRoleId = (String) result.get("tenant_role_id");
                         roleName = (String) result.get("name_ko");
-                        log.debug("JDBC로 '관리자' 역할 찾음: tenantId={}, tenantRoleId={}", tenantId, tenantRoleId);
+                        log.debug("JDBC로 '관리자' 역할 찾음: tenantId={}, tenantRoleId={}", tenantId,
+                                tenantRoleId);
                     }
                 } catch (org.springframework.dao.EmptyResultDataAccessException e) {
                     log.debug("'관리자' 역할 없음, 다음 검색 시도: tenantId={}", tenantId);
@@ -1963,12 +1968,14 @@ public class OnboardingServiceImpl implements OnboardingService {
             // 3. name_en이 "Director"인 역할 찾기
             if (tenantRoleId == null) {
                 try {
-                    String sql = "SELECT tenant_role_id, name_ko FROM tenant_roles WHERE tenant_id = ? AND name_en = 'Director' AND (is_deleted IS NULL OR is_deleted = FALSE) LIMIT 1";
+                    String sql =
+                            "SELECT tenant_role_id, name_ko FROM tenant_roles WHERE tenant_id = ? AND name_en = 'Director' AND (is_deleted IS NULL OR is_deleted = FALSE) LIMIT 1";
                     java.util.Map<String, Object> result = jdbcTemplate.queryForMap(sql, tenantId);
                     if (result != null && result.get("tenant_role_id") != null) {
                         tenantRoleId = (String) result.get("tenant_role_id");
                         roleName = (String) result.get("name_ko");
-                        log.debug("JDBC로 'Director' 역할 찾음: tenantId={}, tenantRoleId={}", tenantId, tenantRoleId);
+                        log.debug("JDBC로 'Director' 역할 찾음: tenantId={}, tenantRoleId={}", tenantId,
+                                tenantRoleId);
                     }
                 } catch (org.springframework.dao.EmptyResultDataAccessException e) {
                     log.debug("'Director' 역할 없음, 다음 검색 시도: tenantId={}", tenantId);
@@ -1978,12 +1985,14 @@ public class OnboardingServiceImpl implements OnboardingService {
             // 4. name_en이 "Admin"인 역할 찾기
             if (tenantRoleId == null) {
                 try {
-                    String sql = "SELECT tenant_role_id, name_ko FROM tenant_roles WHERE tenant_id = ? AND name_en = 'Admin' AND (is_deleted IS NULL OR is_deleted = FALSE) LIMIT 1";
+                    String sql =
+                            "SELECT tenant_role_id, name_ko FROM tenant_roles WHERE tenant_id = ? AND name_en = 'Admin' AND (is_deleted IS NULL OR is_deleted = FALSE) LIMIT 1";
                     java.util.Map<String, Object> result = jdbcTemplate.queryForMap(sql, tenantId);
                     if (result != null && result.get("tenant_role_id") != null) {
                         tenantRoleId = (String) result.get("tenant_role_id");
                         roleName = (String) result.get("name_ko");
-                        log.debug("JDBC로 'Admin' 역할 찾음: tenantId={}, tenantRoleId={}", tenantId, tenantRoleId);
+                        log.debug("JDBC로 'Admin' 역할 찾음: tenantId={}, tenantRoleId={}", tenantId,
+                                tenantRoleId);
                     }
                 } catch (org.springframework.dao.EmptyResultDataAccessException e) {
                     log.debug("'Admin' 역할 없음, 다음 검색 시도: tenantId={}", tenantId);
@@ -1993,12 +2002,14 @@ public class OnboardingServiceImpl implements OnboardingService {
             // 5. Fallback: display_order=1인 역할 찾기
             if (tenantRoleId == null) {
                 try {
-                    String sql = "SELECT tenant_role_id, name_ko FROM tenant_roles WHERE tenant_id = ? AND display_order = 1 AND (is_deleted IS NULL OR is_deleted = FALSE) LIMIT 1";
+                    String sql =
+                            "SELECT tenant_role_id, name_ko FROM tenant_roles WHERE tenant_id = ? AND display_order = 1 AND (is_deleted IS NULL OR is_deleted = FALSE) LIMIT 1";
                     java.util.Map<String, Object> result = jdbcTemplate.queryForMap(sql, tenantId);
                     if (result != null && result.get("tenant_role_id") != null) {
                         tenantRoleId = (String) result.get("tenant_role_id");
                         roleName = (String) result.get("name_ko");
-                        log.debug("JDBC로 display_order=1 역할 찾음: tenantId={}, tenantRoleId={}", tenantId, tenantRoleId);
+                        log.debug("JDBC로 display_order=1 역할 찾음: tenantId={}, tenantRoleId={}",
+                                tenantId, tenantRoleId);
                     }
                 } catch (org.springframework.dao.EmptyResultDataAccessException e) {
                     log.debug("display_order=1 역할 없음: tenantId={}", tenantId);
@@ -2010,7 +2021,8 @@ public class OnboardingServiceImpl implements OnboardingService {
                 return;
             }
 
-            log.info("✅ 관리자 역할 찾음: tenantId={}, tenantRoleId={}, roleName={}", tenantId, tenantRoleId, roleName);
+            log.info("✅ 관리자 역할 찾음: tenantId={}, tenantRoleId={}, roleName={}", tenantId,
+                    tenantRoleId, roleName);
 
             // DASHBOARD_ERP 권한 그룹 할당
             try {

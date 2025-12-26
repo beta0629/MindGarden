@@ -1927,12 +1927,12 @@ public class OnboardingServiceImpl implements OnboardingService {
         log.info("🔄 관리자 권한 그룹 할당 시작: tenantId={}", tenantId);
 
         try {
-            // 관리자 역할 찾기 (nameEn이 "Director", "Admin" 또는 nameKo가 "관리자")
-            List<String> adminRoleNames = List.of("Director", "Admin", "관리자");
+            // 관리자 역할 찾기 (nameEn이 "Director", "Admin" 또는 nameKo가 "관리자", "원장")
+            List<String> adminRoleNames = List.of("Director", "Admin", "관리자", "원장");
             Optional<com.coresolution.core.domain.TenantRole> adminRole = Optional.empty();
 
             for (String roleName : adminRoleNames) {
-                if (roleName.equals("관리자")) {
+                if (roleName.equals("관리자") || roleName.equals("원장")) {
                     adminRole = tenantRoleRepository.findByTenantIdAndNameKo(tenantId, roleName);
                 } else {
                     adminRole = tenantRoleRepository

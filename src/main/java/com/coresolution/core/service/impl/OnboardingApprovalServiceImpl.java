@@ -5,6 +5,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import com.coresolution.core.constant.OnboardingConstants;
 import com.coresolution.core.domain.onboarding.OnboardingRequest;
@@ -42,7 +43,6 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
     private final ApplicationContext applicationContext;
     private final org.springframework.transaction.PlatformTransactionManager transactionManager;
     private final com.coresolution.core.service.TenantDashboardService tenantDashboardService;
-    private final com.coresolution.core.context.TenantContextHolder tenantContextHolder;
 
     /**
      * 온보딩 승인 프로세스를 단계별로 실행 프로시저 의존을 제거하고 Java 코드로 명확하게 단계별 처리 전체 프로세스를 하나의 트랜잭션으로 감싸서 실패 시 롤백 보장
@@ -398,7 +398,8 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
 
         try {
             // 테넌트 컨텍스트 설정
-            String previousTenantId = com.coresolution.core.context.TenantContextHolder.getTenantId();
+            String previousTenantId =
+                    com.coresolution.core.context.TenantContextHolder.getTenantId();
             try {
                 if (previousTenantId == null || !previousTenantId.equals(tenantId)) {
                     com.coresolution.core.context.TenantContextHolder.setTenantId(tenantId);
@@ -407,15 +408,19 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
 
                 // 대시보드 생성 (역할이 이미 생성되어 있으므로 바로 생성 가능)
                 List<com.coresolution.core.dto.TenantDashboardResponse> dashboards =
-                        tenantDashboardService.createDefaultDashboards(tenantId, businessType, approvedBy, null, null);
+                        tenantDashboardService.createDefaultDashboards(tenantId, businessType,
+                                approvedBy, null, null);
 
                 if (dashboards == null || dashboards.isEmpty()) {
                     log.error("❌ Step 4 실패: 대시보드가 생성되지 않음 - tenantId={}", tenantId);
-                    return StepResult.failure(OnboardingConstants.MSG_DASHBOARD_CREATE_FAILED + ": 대시보드가 생성되지 않음");
+                    return StepResult.failure(
+                            OnboardingConstants.MSG_DASHBOARD_CREATE_FAILED + ": 대시보드가 생성되지 않음");
                 }
 
-                log.info("✅ Step 4 성공: 대시보드 생성 완료 - tenantId={}, count={}", tenantId, dashboards.size());
-                return StepResult.success(OnboardingConstants.MSG_DASHBOARD_CREATE_COMPLETE + ": " + dashboards.size() + "개");
+                log.info("✅ Step 4 성공: 대시보드 생성 완료 - tenantId={}, count={}", tenantId,
+                        dashboards.size());
+                return StepResult.success(OnboardingConstants.MSG_DASHBOARD_CREATE_COMPLETE + ": "
+                        + dashboards.size() + "개");
             } finally {
                 // 테넌트 컨텍스트 복원
                 if (previousTenantId != null) {
@@ -425,8 +430,10 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                 }
             }
         } catch (Exception e) {
-            log.error("❌ Step 4 예외: 대시보드 생성 중 오류 발생 - tenantId={}, error={}", tenantId, e.getMessage(), e);
-            return StepResult.failure(OnboardingConstants.MSG_DASHBOARD_CREATE_FAILED + ": " + e.getMessage());
+            log.error("❌ Step 4 예외: 대시보드 생성 중 오류 발생 - tenantId={}, error={}", tenantId,
+                    e.getMessage(), e);
+            return StepResult.failure(
+                    OnboardingConstants.MSG_DASHBOARD_CREATE_FAILED + ": " + e.getMessage());
         }
     }
 

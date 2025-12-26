@@ -1944,6 +1944,16 @@ public class OnboardingServiceImpl implements OnboardingService {
                 }
             }
 
+            // Fallback: display_order=1인 역할 찾기 (일반적으로 관리자 역할이 첫 번째)
+            if (adminRole.isEmpty()) {
+                log.debug("관리자 역할 이름으로 찾기 실패, display_order=1인 역할 확인: tenantId={}", tenantId);
+                List<com.coresolution.core.domain.TenantRole> allRoles = tenantRoleRepository
+                        .findByTenantIdAndIsDeletedFalse(tenantId);
+                adminRole = allRoles.stream()
+                        .filter(role -> role.getDisplayOrder() != null && role.getDisplayOrder() == 1)
+                        .findFirst();
+            }
+
             if (adminRole.isEmpty()) {
                 log.warn("⚠️ 관리자 역할을 찾을 수 없습니다: tenantId={}", tenantId);
                 return;

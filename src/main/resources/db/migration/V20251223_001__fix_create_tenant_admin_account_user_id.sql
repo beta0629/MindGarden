@@ -29,14 +29,14 @@ BEGIN
     
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
     BEGIN
-        ROLLBACK;
+        -- 주의: ROLLBACK 제거 - Java 코드에서 예외 발생 시 자동 롤백
         GET DIAGNOSTICS CONDITION 1
             v_error_message = MESSAGE_TEXT;
         SET p_success = FALSE;
         SET p_message = CONCAT('관리자 계정 생성 중 오류: ', IFNULL(v_error_message, '알 수 없는 오류'));
     END;
     
-    START TRANSACTION;
+    -- 주의: START TRANSACTION 제거 - Java 코드에서 @Transactional로 이미 트랜잭션이 시작됨
     
     -- 이미 계정이 있는지 확인
     SELECT COUNT(*) INTO v_user_count
@@ -48,7 +48,7 @@ BEGIN
     IF v_user_count > 0 THEN
         SET p_success = TRUE;
         SET p_message = '관리자 계정이 이미 존재합니다.';
-        COMMIT;
+        -- 주의: COMMIT 제거 - Java 코드에서 @Transactional로 트랜잭션 관리
     ELSE
         -- user_id 생성 (email의 @ 앞부분 사용)
         SET v_user_id = LOWER(SUBSTRING_INDEX(p_contact_email, '@', 1));
@@ -83,8 +83,7 @@ BEGIN
         
         SET p_success = TRUE;
         SET p_message = CONCAT('관리자 계정이 생성되었습니다. (user_id: ', v_user_id, ')');
-        
-        COMMIT;
+        -- 주의: COMMIT 제거 - Java 코드에서 @Transactional로 트랜잭션 관리
     END IF;
 END;
 

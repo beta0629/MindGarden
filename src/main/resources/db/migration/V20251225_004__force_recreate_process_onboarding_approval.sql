@@ -33,7 +33,7 @@ proc_label: BEGIN
     -- 오류 처리 핸들러: 구체적인 오류 코드와 메시지 추출
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
     BEGIN
-        ROLLBACK;
+        -- 주의: ROLLBACK 제거 - Java 코드에서 예외 발생 시 자동 롤백
         GET DIAGNOSTICS CONDITION 1
             v_error_code = MYSQL_ERRNO,
             v_error_message = MESSAGE_TEXT;
@@ -58,7 +58,8 @@ proc_label: BEGIN
     SET p_success = FALSE;
     SET p_message = '프로세스 시작';
     
-    START TRANSACTION;
+    -- 주의: START TRANSACTION 제거 - Java 코드에서 @Transactional로 이미 트랜잭션이 시작됨
+    -- 프로시저 내부에서 START TRANSACTION을 하면 중첩 트랜잭션이 되어 락 대기 및 타임아웃 발생
     
     -- 1. 테넌트 생성/활성화 (필수)
     SET v_step = '테넌트 생성/활성화';
@@ -74,12 +75,12 @@ proc_label: BEGIN
     IF @tenant_success IS NULL THEN
         SET p_success = FALSE;
         SET p_message = CONCAT('테넌트 생성 실패: 프로시저가 성공 값을 반환하지 않았습니다. (', IFNULL(@tenant_message, '메시지 없음'), ')');
-        ROLLBACK;
+        -- 주의: ROLLBACK 제거 - Java 코드에서 예외 발생 시 자동 롤백
         LEAVE proc_label;
     ELSEIF @tenant_success = FALSE THEN
         SET p_success = FALSE;
         SET p_message = CONCAT('테넌트 생성 실패: ', IFNULL(@tenant_message, '알 수 없는 오류'));
-        ROLLBACK;
+        -- 주의: ROLLBACK 제거 - Java 코드에서 예외 발생 시 자동 롤백
         LEAVE proc_label;
     ELSE
         SET v_result_message = CONCAT(v_result_message, '테넌트=OK');
@@ -97,12 +98,12 @@ proc_label: BEGIN
         IF @role_success IS NULL THEN
             SET p_success = FALSE;
             SET p_message = CONCAT('역할 템플릿 적용 실패: 프로시저가 성공 값을 반환하지 않았습니다. (', IFNULL(@role_message, '메시지 없음'), ')');
-            ROLLBACK;
+            -- 주의: ROLLBACK 제거 - Java 코드에서 예외 발생 시 자동 롤백
             LEAVE proc_label;
         ELSEIF @role_success = FALSE THEN
             SET p_success = FALSE;
             SET p_message = CONCAT('역할 템플릿 적용 실패: ', IFNULL(@role_message, '알 수 없는 오류'));
-            ROLLBACK;
+            -- 주의: ROLLBACK 제거 - Java 코드에서 예외 발생 시 자동 롤백
             LEAVE proc_label;
         ELSE
             SET v_result_message = CONCAT(v_result_message, ', 역할=OK');
@@ -123,12 +124,12 @@ proc_label: BEGIN
                 IF @admin_success IS NULL THEN
                     SET p_success = FALSE;
                     SET p_message = CONCAT('관리자 계정 생성 실패: 프로시저가 성공 값을 반환하지 않았습니다. (', IFNULL(@admin_message, '메시지 없음'), ')');
-                    ROLLBACK;
+                    -- 주의: ROLLBACK 제거 - Java 코드에서 예외 발생 시 자동 롤백
                     LEAVE proc_label;
                 ELSEIF @admin_success = FALSE THEN
                     SET p_success = FALSE;
                     SET p_message = CONCAT('관리자 계정 생성 실패: ', IFNULL(@admin_message, '알 수 없는 오류'));
-                    ROLLBACK;
+                    -- 주의: ROLLBACK 제거 - Java 코드에서 예외 발생 시 자동 롤백
                     LEAVE proc_label;
                 ELSE
                     SET v_result_message = CONCAT(v_result_message, ', 관리자=OK');
@@ -136,14 +137,15 @@ proc_label: BEGIN
             ELSE
                 SET p_success = FALSE;
                 SET p_message = '관리자 계정 생성 실패: 이메일 또는 비밀번호 해시가 제공되지 않았습니다.';
-                ROLLBACK;
+                -- 주의: ROLLBACK 제거 - Java 코드에서 예외 발생 시 자동 롤백
                 LEAVE proc_label;
             END IF;
             
             -- 모든 필수 단계 성공
             SET p_success = TRUE;
             SET p_message = CONCAT('온보딩 승인 완료: ', v_result_message);
-            COMMIT;
+            -- 주의: COMMIT 제거 - Java 코드에서 @Transactional로 트랜잭션 관리
+            -- 프로시저 내부에서 COMMIT을 하면 Java 트랜잭션과 충돌
         END IF;
     END IF;
 END;

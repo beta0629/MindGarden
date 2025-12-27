@@ -964,10 +964,24 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
             result.put("message", "온보딩 승인 프로세스 중 오류 발생: " + e.getMessage());
         } finally {
             // 주의: DataSourceUtils.getConnection()으로 가져온 Connection은
-            // DataSourceUtils.releaseConnection()으로 해제해야 함
+            // Spring 트랜잭션이 관리하므로, 트랜잭션이 활성화되어 있으면 해제하지 않음
+            // 트랜잭션이 없거나 이미 종료된 경우에만 해제
             if (connection != null) {
-                DataSourceUtils.releaseConnection(connection, dataSource);
-                log.debug("Connection 해제 완료");
+                try {
+                    // Spring 트랜잭션이 활성화되어 있는지 확인
+                    boolean isTransactionActive = org.springframework.transaction.support.TransactionSynchronizationManager
+                            .isActualTransactionActive();
+                    if (!isTransactionActive) {
+                        // 트랜잭션이 없으면 해제
+                        DataSourceUtils.releaseConnection(connection, dataSource);
+                        log.debug("Connection 해제 완료 (트랜잭션 비활성)");
+                    } else {
+                        // 트랜잭션이 활성화되어 있으면 Spring이 자동으로 해제하므로 해제하지 않음
+                        log.debug("Connection은 Spring 트랜잭션이 관리 (자동 해제 예정)");
+                    }
+                } catch (Exception e) {
+                    log.warn("Connection 해제 중 오류 (무시): {}", e.getMessage());
+                }
             }
         }
 

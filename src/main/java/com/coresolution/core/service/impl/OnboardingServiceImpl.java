@@ -821,7 +821,7 @@ public class OnboardingServiceImpl implements OnboardingService {
                     // TransactionSynchronizationManager를 사용하여 트랜잭션 커밋 후 실행
                     org.springframework.transaction.support.TransactionSynchronizationManager
                             .registerSynchronization(
-                                    new org.springframework.transaction.support.TransactionSynchronizationAdapter() {
+                                    new org.springframework.transaction.support.TransactionSynchronization() {
                                         @Override
                                         public void afterCommit() {
                                             try {

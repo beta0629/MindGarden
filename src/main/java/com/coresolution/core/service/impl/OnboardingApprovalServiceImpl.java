@@ -816,7 +816,8 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                                         org.springframework.transaction.TransactionDefinition.ISOLATION_READ_COMMITTED);
                                 // 락 타임아웃 설정 (초 단위, 기본값보다 길게)
                                 // 30초는 너무 짧아서 쿼리 실행 중단 오류 발생, 60초로 증가
-                                transactionTemplate.setTimeout(120); // 60초 -> 120초로 증가 (프로시저 실행 시간 고려) // 60초
+                                transactionTemplate.setTimeout(120); // 60초 -> 120초로 증가 (프로시저 실행 시간
+                                                                     // 고려) // 60초
 
                                 Boolean roleResult = null;
                                 try {
@@ -1232,13 +1233,19 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
             return true;
         }
 
-        // 기본 역할 생성 (CONSULTATION 또는 COUNSELING 업종 기준)
-        if ("CONSULTATION".equals(businessType) || "COUNSELING".equals(businessType)) {
+        // 기본 역할 생성 (CONSULTATION, COUNSELING, ACADEMY 업종 지원)
+        if ("CONSULTATION".equals(businessType) || "COUNSELING".equals(businessType) || "ACADEMY".equals(businessType)) {
             try {
                 // 역할 템플릿 조회 (roleTemplateId 설정을 위해)
-                // 각 업종별 템플릿 사용 (COUNSELING은 COUNSELING 템플릿, CONSULTATION은 CONSULTATION 템플릿)
-                String templatePrefix =
-                        "COUNSELING".equals(businessType) ? "COUNSELING" : "CONSULTATION";
+                // 각 업종별 템플릿 사용
+                String templatePrefix;
+                if ("COUNSELING".equals(businessType)) {
+                    templatePrefix = "COUNSELING";
+                } else if ("ACADEMY".equals(businessType)) {
+                    templatePrefix = "ACADEMY";
+                } else {
+                    templatePrefix = "CONSULTATION";
+                }
 
                 String directorTemplateId = roleTemplateRepository
                         .findByTemplateCodeAndIsDeletedFalse(templatePrefix + "_DIRECTOR")
@@ -1252,9 +1259,21 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                 String staffTemplateId = roleTemplateRepository
                         .findByTemplateCodeAndIsDeletedFalse(templatePrefix + "_STAFF")
                         .map(rt -> rt.getRoleTemplateId()).orElse(null);
+                
+                // ACADEMY 업종의 경우 추가 템플릿 조회
+                String teacherTemplateId = null;
+                String parentTemplateId = null;
+                if ("ACADEMY".equals(businessType)) {
+                    teacherTemplateId = roleTemplateRepository
+                            .findByTemplateCodeAndIsDeletedFalse("ACADEMY_TEACHER")
+                            .map(rt -> rt.getRoleTemplateId()).orElse(null);
+                    parentTemplateId = roleTemplateRepository
+                            .findByTemplateCodeAndIsDeletedFalse("ACADEMY_PARENT")
+                            .map(rt -> rt.getRoleTemplateId()).orElse(null);
+                }
 
-                log.debug("역할 템플릿 ID 조회: director={}, counselor={}, client={}, staff={}",
-                        directorTemplateId, counselorTemplateId, clientTemplateId, staffTemplateId);
+                log.debug("역할 템플릿 ID 조회: director={}, counselor={}, client={}, staff={}, teacher={}, parent={}",
+                        directorTemplateId, counselorTemplateId, clientTemplateId, staffTemplateId, teacherTemplateId, parentTemplateId);
 
                 // INSERT 전에 역할 존재 여부를 다시 한 번 확인 (락 경합 최소화)
                 // 다른 트랜잭션이 이미 역할을 생성했을 수 있음
@@ -1276,29 +1295,67 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                 // 원자성 보장: 모든 역할을 하나의 배치 INSERT로 생성
                 // 실패 시 전체 롤백되어 부분적으로만 생성되는 것을 방지
                 // INSERT IGNORE를 사용하여 중복 삽입 시도 시 오류 대신 무시 (락 경합 최소화)
-                String insertSql =
-                        "INSERT IGNORE INTO tenant_roles (tenant_role_id, tenant_id, role_template_id, name, name_ko, name_en, "
-                                + "description, description_ko, description_en, "
-                                + "is_active, display_order, created_at, updated_at, "
-                                + "created_by, updated_by, is_deleted, version, lang_code) VALUES "
-                                + "(UUID(), ?, ?, '원장', '원장', 'Principal', "
-                                + "'상담소 원장 역할', '상담소 원장 역할', 'Principal role for consultation center', "
-                                + "TRUE, 1, NOW(), NOW(), ?, ?, FALSE, 0, 'ko'), "
-                                + "(UUID(), ?, ?, '상담사', '상담사', 'Consultant', "
-                                + "'상담사 역할', '상담사 역할', 'Consultant role', "
-                                + "TRUE, 2, NOW(), NOW(), ?, ?, FALSE, 0, 'ko'), "
-                                + "(UUID(), ?, ?, '내담자', '내담자', 'Client', "
-                                + "'내담자 역할', '내담자 역할', 'Client role', "
-                                + "TRUE, 3, NOW(), NOW(), ?, ?, FALSE, 0, 'ko'), "
-                                + "(UUID(), ?, ?, '사무원', '사무원', 'Staff', "
-                                + "'사무원 역할', '사무원 역할', 'Staff role', "
-                                + "TRUE, 4, NOW(), NOW(), ?, ?, FALSE, 0, 'ko')";
+                String insertSql;
+                Object[] params;
+                
+                if ("ACADEMY".equals(businessType)) {
+                    // ACADEMY 업종: 원장, 교사, 학생, 학부모, 사무원
+                    insertSql = "INSERT IGNORE INTO tenant_roles (tenant_role_id, tenant_id, role_template_id, name, name_ko, name_en, "
+                            + "description, description_ko, description_en, "
+                            + "is_active, display_order, created_at, updated_at, "
+                            + "created_by, updated_by, is_deleted, version, lang_code) VALUES "
+                            + "(UUID(), ?, ?, '원장', '원장', 'Director', "
+                            + "'학원 원장 역할', '학원 원장 역할', 'Director role for academy', "
+                            + "TRUE, 1, NOW(), NOW(), ?, ?, FALSE, 0, 'ko'), "
+                            + "(UUID(), ?, ?, '교사', '교사', 'Teacher', "
+                            + "'교사 역할', '교사 역할', 'Teacher role', "
+                            + "TRUE, 2, NOW(), NOW(), ?, ?, FALSE, 0, 'ko'), "
+                            + "(UUID(), ?, ?, '학생', '학생', 'Student', "
+                            + "'학생 역할', '학생 역할', 'Student role', "
+                            + "TRUE, 3, NOW(), NOW(), ?, ?, FALSE, 0, 'ko'), "
+                            + "(UUID(), ?, ?, '학부모', '학부모', 'Parent', "
+                            + "'학부모 역할', '학부모 역할', 'Parent role', "
+                            + "TRUE, 4, NOW(), NOW(), ?, ?, FALSE, 0, 'ko'), "
+                            + "(UUID(), ?, ?, '사무원', '사무원', 'Staff', "
+                            + "'사무원 역할', '사무원 역할', 'Staff role', "
+                            + "TRUE, 5, NOW(), NOW(), ?, ?, FALSE, 0, 'ko')";
+                    
+                    params = new Object[]{
+                        tenantId, directorTemplateId, approvedBy, approvedBy,
+                        tenantId, teacherTemplateId, approvedBy, approvedBy,
+                        tenantId, clientTemplateId, approvedBy, approvedBy,
+                        tenantId, parentTemplateId, approvedBy, approvedBy,
+                        tenantId, staffTemplateId, approvedBy, approvedBy
+                    };
+                } else {
+                    // CONSULTATION 또는 COUNSELING 업종: 원장, 상담사, 내담자, 사무원
+                    insertSql = "INSERT IGNORE INTO tenant_roles (tenant_role_id, tenant_id, role_template_id, name, name_ko, name_en, "
+                            + "description, description_ko, description_en, "
+                            + "is_active, display_order, created_at, updated_at, "
+                            + "created_by, updated_by, is_deleted, version, lang_code) VALUES "
+                            + "(UUID(), ?, ?, '원장', '원장', 'Principal', "
+                            + "'상담소 원장 역할', '상담소 원장 역할', 'Principal role for consultation center', "
+                            + "TRUE, 1, NOW(), NOW(), ?, ?, FALSE, 0, 'ko'), "
+                            + "(UUID(), ?, ?, '상담사', '상담사', 'Consultant', "
+                            + "'상담사 역할', '상담사 역할', 'Consultant role', "
+                            + "TRUE, 2, NOW(), NOW(), ?, ?, FALSE, 0, 'ko'), "
+                            + "(UUID(), ?, ?, '내담자', '내담자', 'Client', "
+                            + "'내담자 역할', '내담자 역할', 'Client role', "
+                            + "TRUE, 3, NOW(), NOW(), ?, ?, FALSE, 0, 'ko'), "
+                            + "(UUID(), ?, ?, '사무원', '사무원', 'Staff', "
+                            + "'사무원 역할', '사무원 역할', 'Staff role', "
+                            + "TRUE, 4, NOW(), NOW(), ?, ?, FALSE, 0, 'ko')";
+                    
+                    params = new Object[]{
+                        tenantId, directorTemplateId, approvedBy, approvedBy,
+                        tenantId, counselorTemplateId, approvedBy, approvedBy,
+                        tenantId, clientTemplateId, approvedBy, approvedBy,
+                        tenantId, staffTemplateId, approvedBy, approvedBy
+                    };
+                }
 
                 // 배치 INSERT 실행 (원자성 보장: 하나라도 실패하면 전체 롤백)
-                int rowsAffected = jdbcTemplate.update(insertSql, tenantId, directorTemplateId,
-                        approvedBy, approvedBy, tenantId, counselorTemplateId, approvedBy,
-                        approvedBy, tenantId, clientTemplateId, approvedBy, approvedBy, tenantId,
-                        staffTemplateId, approvedBy, approvedBy);
+                int rowsAffected = jdbcTemplate.update(insertSql, params);
 
                 // INSERT IGNORE는 중복 시 0개 행이 영향을 받을 수 있음
                 // 하지만 역할이 이미 존재하는 경우도 성공으로 처리

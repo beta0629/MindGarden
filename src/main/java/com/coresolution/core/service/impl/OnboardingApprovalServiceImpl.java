@@ -45,7 +45,10 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
     private final com.coresolution.core.service.TenantDashboardService tenantDashboardService;
 
     /**
-     * 온보딩 승인 프로세스를 단계별로 실행 프로시저 의존을 제거하고 Java 코드로 명확하게 단계별 처리 전체 프로세스를 하나의 트랜잭션으로 감싸서 실패 시 롤백 보장
+     * 온보딩 승인 프로세스 실행
+     * 1. 프로시저를 먼저 시도
+     * 2. 프로시저 실패 시 Java 코드로 단계별 처리 (fallback)
+     * 전체 프로세스를 하나의 트랜잭션으로 감싸서 실패 시 롤백 보장
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -54,7 +57,7 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
             String contactEmail, String adminPasswordHash, String subdomain) {
 
         log.info(OnboardingConstants.LOG_SEPARATOR);
-        log.info("🚀 온보딩 승인 프로세스 시작 (단계별 처리, 트랜잭션 롤백 보장)");
+        log.info("🚀 온보딩 승인 프로세스 시작");
         log.info(OnboardingConstants.LOG_SEPARATOR);
         log.info("  - requestId: {}", requestId);
         log.info("  - tenantId: {}", tenantId);
@@ -63,6 +66,30 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
         log.info("  - contactEmail: {}", contactEmail);
         log.info("  - subdomain: {}", subdomain);
         log.info("  - approvedBy: {}", approvedBy);
+        log.info(OnboardingConstants.LOG_SEPARATOR);
+
+        // 1. 프로시저 먼저 시도
+        try {
+            log.info("📞 프로시저 호출 시도: ProcessOnboardingApproval");
+            Map<String, Object> procedureResult = processOnboardingApprovalLegacy(requestId, tenantId,
+                    tenantName, businessType, approvedBy, decisionNote, contactEmail,
+                    adminPasswordHash, subdomain);
+            Boolean procedureSuccess = (Boolean) procedureResult.get("success");
+            String procedureMessage = (String) procedureResult.get("message");
+
+            if (procedureSuccess != null && procedureSuccess) {
+                log.info("✅ 프로시저 실행 성공: {}", procedureMessage);
+                return procedureResult;
+            } else {
+                log.warn("⚠️ 프로시저 실행 실패: {} - Java fallback으로 전환", procedureMessage);
+            }
+        } catch (Exception e) {
+            log.error("❌ 프로시저 호출 중 예외 발생 - Java fallback으로 전환: {}", e.getMessage(), e);
+        }
+
+        // 2. 프로시저 실패 시 Java 코드로 단계별 처리 (fallback)
+        log.info(OnboardingConstants.LOG_SEPARATOR);
+        log.info("🔄 Java 코드로 단계별 처리 시작 (프로시저 실패 후 fallback)");
         log.info(OnboardingConstants.LOG_SEPARATOR);
 
         Map<String, Object> result = new HashMap<>();
@@ -485,9 +512,8 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
     }
 
     /**
-     * 기존 프로시저 호출 방식 (레거시 - 참고용으로 유지하되 사용 안 함)
+     * 프로시저 호출 방식 (프로시저 먼저 시도, 실패 시 Java fallback 사용)
      */
-    @Deprecated
     private Map<String, Object> processOnboardingApprovalLegacy(java.util.UUID requestId,
             String tenantId, String tenantName, String businessType, String approvedBy,
             String decisionNote, String contactEmail, String adminPasswordHash, String subdomain) {

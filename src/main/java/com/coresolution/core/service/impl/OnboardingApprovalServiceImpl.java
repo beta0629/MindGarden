@@ -1435,7 +1435,7 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                     org.springframework.transaction.TransactionDefinition.ISOLATION_READ_COMMITTED);
             transactionTemplate.setTimeout(30); // 30초 타임아웃
 
-            transactionTemplate.executeWithoutResult(status -> {
+            transactionTemplate.executeWithoutResult(transactionStatus -> {
                 try {
                     // 엔티티를 다시 조회하여 최신 버전 사용
                     OnboardingRequest request =

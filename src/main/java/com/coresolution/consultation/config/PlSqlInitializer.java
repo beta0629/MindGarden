@@ -38,64 +38,21 @@ public class PlSqlInitializer {
     @Order(100) // 다른 초기화 작업 이후 실행
     public void init() {
         log.info("🚀 PL/SQL 프로시저 자동 초기화 시작 (ApplicationReadyEvent)");
+        log.info("🔧 온보딩 프로시저 강제 생성 모드 (Flyway 문제 우회)");
 
-        log.info("ℹ️ 프로시저는 Flyway 마이그레이션으로 관리됩니다 (백업 메커니즘 활성화)");
+        // 1. ProcessOnboardingApproval 프로시저 강제 생성
+        initializeProcessOnboardingApprovalProcedure();
 
-        // 프로시저 존재 여부 확인 및 없으면 자동 생성
-        try {
-            Boolean procedureExists = jdbcTemplate
-                    .queryForObject("SELECT COUNT(*) > 0 FROM information_schema.ROUTINES "
-                            + "WHERE ROUTINE_SCHEMA = DATABASE() "
-                            + "AND ROUTINE_NAME = 'CreateOrActivateTenant' "
-                            + "AND ROUTINE_TYPE = 'PROCEDURE'", Boolean.class);
+        // 2. CreateOrActivateTenant 프로시저 강제 생성
+        initializeCreateOrActivateTenantProcedureFromMigration();
 
-            if (Boolean.TRUE.equals(procedureExists)) {
-                log.info("✅ CreateOrActivateTenant 프로시저가 존재합니다 (Flyway 마이그레이션으로 생성됨)");
-            } else {
-                log.warn("⚠️ CreateOrActivateTenant 프로시저가 없습니다. 백업 메커니즘으로 자동 생성 시도...");
-                initializeCreateOrActivateTenantProcedureFromMigration();
-            }
-        } catch (Exception e) {
-            log.warn("⚠️ 프로시저 존재 여부 확인 실패: {}", e.getMessage());
-        }
+        // 3. ApplyDefaultRoleTemplates 프로시저 강제 생성
+        initializeApplyDefaultRoleTemplatesProcedure();
 
-        try {
-            Integer procedureCount = jdbcTemplate.queryForObject(
-                    "SELECT COUNT(*) FROM information_schema.routines "
-                            + "WHERE routine_schema = DATABASE() "
-                            + "AND routine_name = 'CreateDefaultTenantUsers' "
-                            + "AND routine_type = 'PROCEDURE'",
-                    Integer.class);
+        // 4. CreateTenantAdminAccount 프로시저 강제 생성
+        initializeCreateTenantAdminAccountProcedureFromMigration();
 
-            if (procedureCount != null && procedureCount > 0) {
-                log.info("✅ CreateDefaultTenantUsers 프로시저가 존재합니다 (Flyway 마이그레이션으로 생성됨)");
-            } else {
-                log.warn("⚠️ CreateDefaultTenantUsers 프로시저가 없습니다. Flyway 마이그레이션을 확인하세요.");
-            }
-        } catch (Exception e) {
-            log.warn("⚠️ 프로시저 존재 여부 확인 실패: {}", e.getMessage());
-        }
-
-        // CreateTenantAdminAccount 프로시저 확인 및 초기화
-        try {
-            Boolean procedureExists = jdbcTemplate
-                    .queryForObject("SELECT COUNT(*) > 0 FROM information_schema.ROUTINES "
-                            + "WHERE ROUTINE_SCHEMA = DATABASE() "
-                            + "AND ROUTINE_NAME = 'CreateTenantAdminAccount' "
-                            + "AND ROUTINE_TYPE = 'PROCEDURE' "
-                            + "AND ROUTINE_DEFINITION IS NOT NULL", Boolean.class);
-
-            if (Boolean.TRUE.equals(procedureExists)) {
-                log.info("✅ CreateTenantAdminAccount 프로시저가 존재합니다 (Flyway 마이그레이션으로 생성됨)");
-            } else {
-                log.warn("⚠️ CreateTenantAdminAccount 프로시저가 없거나 정의가 NULL입니다. 백업 메커니즘으로 자동 생성 시도...");
-                initializeCreateTenantAdminAccountProcedureFromMigration();
-            }
-        } catch (Exception e) {
-            log.warn("⚠️ CreateTenantAdminAccount 프로시저 존재 여부 확인 실패: {}", e.getMessage());
-        }
-
-        log.info("✅ PL/SQL 프로시저 자동 초기화 완료 (확인만 수행)");
+        log.info("✅ PL/SQL 프로시저 자동 초기화 완료 (4개 프로시저 강제 생성)");
     }
 
     /**
@@ -652,6 +609,76 @@ public class PlSqlInitializer {
         } catch (Exception e) {
             log.warn("⚠️ CreateDefaultTenantUsers 프로시저 초기화 실패 (Flyway에서 처리될 예정): {}",
                     e.getMessage());
+        }
+    }
+
+    /**
+     * ProcessOnboardingApproval 프로시저 강제 생성 (마이그레이션 파일에서 직접 읽기)
+     */
+    private void initializeProcessOnboardingApprovalProcedure() {
+        try {
+            log.info("📝 ProcessOnboardingApproval 프로시저 강제 생성 시작");
+
+            ClassPathResource resource = new ClassPathResource(
+                    "db/migration/V20251225_004__force_recreate_process_onboarding_approval.sql");
+            String sqlContent = new String(resource.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+
+            String procedureSQL = extractProcedureFromMigration(sqlContent);
+
+            if (procedureSQL != null && !procedureSQL.trim().isEmpty()) {
+                try (java.sql.Connection conn = dataSource.getConnection()) {
+                    try (java.sql.Statement stmt = conn.createStatement()) {
+                        stmt.execute("DROP PROCEDURE IF EXISTS ProcessOnboardingApproval;");
+                        log.info("🗑️ 기존 ProcessOnboardingApproval 프로시저 삭제 완료");
+                    } catch (SQLException e) {
+                        log.debug("ProcessOnboardingApproval 프로시저 삭제 중 오류 (무시 가능): {}", e.getMessage());
+                    }
+                    try (java.sql.Statement stmt = conn.createStatement()) {
+                        stmt.execute(procedureSQL);
+                        log.info("✅ ProcessOnboardingApproval 프로시저 생성 완료");
+                    }
+                }
+                verifyProcedureExists("ProcessOnboardingApproval");
+            } else {
+                log.warn("⚠️ ProcessOnboardingApproval 프로시저 SQL을 추출할 수 없습니다");
+            }
+        } catch (Exception e) {
+            log.error("❌ ProcessOnboardingApproval 프로시저 생성 실패: {}", e.getMessage(), e);
+        }
+    }
+
+    /**
+     * ApplyDefaultRoleTemplates 프로시저 강제 생성 (마이그레이션 파일에서 직접 읽기)
+     */
+    private void initializeApplyDefaultRoleTemplatesProcedure() {
+        try {
+            log.info("📝 ApplyDefaultRoleTemplates 프로시저 강제 생성 시작");
+
+            ClassPathResource resource = new ClassPathResource(
+                    "db/migration/V20251212_001__fix_apply_default_role_templates_procedure.sql");
+            String sqlContent = new String(resource.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+
+            String procedureSQL = extractProcedureFromMigration(sqlContent);
+
+            if (procedureSQL != null && !procedureSQL.trim().isEmpty()) {
+                try (java.sql.Connection conn = dataSource.getConnection()) {
+                    try (java.sql.Statement stmt = conn.createStatement()) {
+                        stmt.execute("DROP PROCEDURE IF EXISTS ApplyDefaultRoleTemplates;");
+                        log.info("🗑️ 기존 ApplyDefaultRoleTemplates 프로시저 삭제 완료");
+                    } catch (SQLException e) {
+                        log.debug("ApplyDefaultRoleTemplates 프로시저 삭제 중 오류 (무시 가능): {}", e.getMessage());
+                    }
+                    try (java.sql.Statement stmt = conn.createStatement()) {
+                        stmt.execute(procedureSQL);
+                        log.info("✅ ApplyDefaultRoleTemplates 프로시저 생성 완료");
+                    }
+                }
+                verifyProcedureExists("ApplyDefaultRoleTemplates");
+            } else {
+                log.warn("⚠️ ApplyDefaultRoleTemplates 프로시저 SQL을 추출할 수 없습니다");
+            }
+        } catch (Exception e) {
+            log.error("❌ ApplyDefaultRoleTemplates 프로시저 생성 실패: {}", e.getMessage(), e);
         }
     }
 

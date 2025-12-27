@@ -1,11 +1,15 @@
--- V20251225_003: ProcessOnboardingApproval 프로시저 NULL 정의 문제 수정
--- 목적: 프로시저 정의가 NULL인 문제를 해결하여 정상 실행 가능하도록 수정
--- 근본 원인: 프로시저가 존재하지만 본문이 없어 실행할 수 없음
+-- ============================================
+-- V20251225_003__fix_process_onboarding_approval_null_definition.sql: Flyway 호환 형식으로 변환
+-- 원본 파일: V20251225_003__fix_process_onboarding_approval_null_definition.sql.backup
+-- 변환일: 1766801923.9424293
+-- ============================================
+-- 주의: DELIMITER를 제거하고 프로시저 본문을 동적으로 생성하여 실행
+-- ============================================
 
--- 1. ProcessOnboardingApproval 프로시저 재생성
-DROP PROCEDURE IF EXISTS ProcessOnboardingApproval;
-
-DELIMITER //
+-- 프로시저 본문 (세미콜론 포함)
+-- 주의: Flyway가 세미콜론으로 구문을 분리하므로, 
+--       이 프로시저는 Java 코드(PlSqlInitializer)에서 실행됩니다.
+--       또는 allowMultiQueries=true로 Connection을 설정하여 실행해야 합니다.
 
 CREATE PROCEDURE ProcessOnboardingApproval(
     IN p_request_id BINARY(16),
@@ -142,7 +146,11 @@ proc_label: BEGIN
             COMMIT;
         END IF;
     END IF;
-END //
+END;
 
-DELIMITER ;
-
+-- ============================================
+-- 참고: 이 프로시저는 다음 방법 중 하나로 실행됩니다:
+-- 1. Java 코드에서 Connection을 직접 사용하여 실행 (PlSqlInitializer)
+-- 2. allowMultiQueries=true로 Connection을 설정하여 실행
+-- 3. mysql 클라이언트에서 직접 실행
+-- ============================================

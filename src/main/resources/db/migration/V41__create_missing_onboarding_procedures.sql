@@ -1,16 +1,17 @@
 -- ============================================
--- V41: 온보딩 승인 프로세스에 필요한 누락된 프로시저 생성 (MVP)
+-- V41__create_missing_onboarding_procedures.sql: Flyway 호환 형식으로 변환
+-- 원본 파일: V41__create_missing_onboarding_procedures.sql.backup
+-- 변환일: 1766801923.9424293
 -- ============================================
--- 목적: ProcessOnboardingApproval 프로시저가 호출하는 누락된 프로시저들 생성
--- 작성일: 2025-11-23
+-- 주의: DELIMITER를 제거하고 프로시저 본문을 동적으로 생성하여 실행
 -- ============================================
 
-DELIMITER //
+DROP PROCEDURE IF EXISTS SetupTenantCategoryMapping;
 
--- ============================================
--- 1. 카테고리 매핑 자동 설정 프로시저 (단순화 버전)
--- ============================================
-DROP PROCEDURE IF EXISTS SetupTenantCategoryMapping //
+-- 프로시저 본문 (세미콜론 포함)
+-- 주의: Flyway가 세미콜론으로 구문을 분리하므로, 
+--       이 프로시저는 Java 코드(PlSqlInitializer)에서 실행됩니다.
+--       또는 allowMultiQueries=true로 Connection을 설정하여 실행해야 합니다.
 
 CREATE PROCEDURE SetupTenantCategoryMapping(
     IN p_tenant_id VARCHAR(64),
@@ -39,177 +40,11 @@ BEGIN
     SET p_message = '카테고리 매핑 설정 완료 (MVP: 스킵됨)';
     
     COMMIT;
-END //
+END;
 
 -- ============================================
--- 2. 기본 컴포넌트 자동 활성화 프로시저 (단순화 버전)
+-- 참고: 이 프로시저는 다음 방법 중 하나로 실행됩니다:
+-- 1. Java 코드에서 Connection을 직접 사용하여 실행 (PlSqlInitializer)
+-- 2. allowMultiQueries=true로 Connection을 설정하여 실행
+-- 3. mysql 클라이언트에서 직접 실행
 -- ============================================
-DROP PROCEDURE IF EXISTS ActivateDefaultComponents //
-
-CREATE PROCEDURE ActivateDefaultComponents(
-    IN p_tenant_id VARCHAR(64),
-    IN p_business_type VARCHAR(50),
-    IN p_approved_by VARCHAR(100),
-    OUT p_success BOOLEAN,
-    OUT p_message TEXT
-)
-BEGIN
-    DECLARE v_error_message VARCHAR(500);
-    
-    DECLARE EXIT HANDLER FOR SQLEXCEPTION
-    BEGIN
-        ROLLBACK;
-        GET DIAGNOSTICS CONDITION 1
-            v_error_message = MESSAGE_TEXT;
-        SET p_success = FALSE;
-        SET p_message = CONCAT('컴포넌트 활성화 중 오류 발생: ', v_error_message);
-    END;
-    
-    START TRANSACTION;
-    
-    -- MVP: 컴포넌트 활성화는 선택적 기능이므로 성공으로 처리
-    -- 향후 component_catalog 테이블이 채워지면 실제 활성화 로직 추가
-    SET p_success = TRUE;
-    SET p_message = '기본 컴포넌트 활성화 완료 (MVP: 스킵됨)';
-    
-    COMMIT;
-END //
-
--- ============================================
--- 3. 기본 요금제 구독 생성 프로시저 (단순화 버전)
--- ============================================
-DROP PROCEDURE IF EXISTS CreateDefaultSubscription //
-
-CREATE PROCEDURE CreateDefaultSubscription(
-    IN p_tenant_id VARCHAR(64),
-    IN p_business_type VARCHAR(50),
-    IN p_approved_by VARCHAR(100),
-    OUT p_success BOOLEAN,
-    OUT p_message TEXT,
-    OUT p_subscription_id BIGINT
-)
-BEGIN
-    DECLARE v_error_message VARCHAR(500);
-    DECLARE v_plan_id VARCHAR(36);
-    DECLARE v_subscription_id VARCHAR(36);
-    DECLARE v_inserted_id BIGINT;
-    
-    DECLARE EXIT HANDLER FOR SQLEXCEPTION
-    BEGIN
-        ROLLBACK;
-        GET DIAGNOSTICS CONDITION 1
-            v_error_message = MESSAGE_TEXT;
-        SET p_success = FALSE;
-        SET p_message = CONCAT('구독 생성 중 오류 발생: ', v_error_message);
-        SET p_subscription_id = NULL;
-    END;
-    
-    START TRANSACTION;
-    
-    -- MVP: 기본 Starter 플랜 선택
-    SELECT plan_id INTO v_plan_id
-    FROM pricing_plans
-    WHERE plan_code = 'STARTER'
-        AND is_active = TRUE
-        AND is_deleted = FALSE
-    LIMIT 1;
-    
-    IF v_plan_id IS NOT NULL THEN
-        -- 구독 ID 생성
-        SET v_subscription_id = UUID();
-        
-        -- 구독 생성
-        INSERT INTO tenant_subscriptions (
-            subscription_id, tenant_id, plan_id, status,
-            effective_from, billing_cycle, created_at, created_by
-        ) VALUES (
-            v_subscription_id, p_tenant_id, v_plan_id, 'ACTIVE',
-            CURDATE(), 'MONTHLY', NOW(), p_approved_by
-        );
-        
-        -- AUTO_INCREMENT id 반환
-        SET v_inserted_id = LAST_INSERT_ID();
-        SET p_subscription_id = v_inserted_id;
-        SET p_success = TRUE;
-        SET p_message = CONCAT('기본 요금제 구독 생성 완료: ', v_plan_id);
-    ELSE
-        -- MVP: 플랜이 없어도 성공으로 처리 (구독은 선택적)
-        SET p_subscription_id = NULL;
-        SET p_success = TRUE;
-        SET p_message = '기본 요금제 구독 생성 완료 (MVP: 플랜 없음, 스킵됨)';
-    END IF;
-    
-    COMMIT;
-END //
-
--- ============================================
--- 4. 기본 역할 템플릿 적용 프로시저 (단순화 버전)
--- ============================================
-DROP PROCEDURE IF EXISTS ApplyDefaultRoleTemplates //
-
-CREATE PROCEDURE ApplyDefaultRoleTemplates(
-    IN p_tenant_id VARCHAR(64),
-    IN p_business_type VARCHAR(50),
-    IN p_approved_by VARCHAR(100),
-    OUT p_success BOOLEAN,
-    OUT p_message TEXT
-)
-BEGIN
-    DECLARE v_error_message VARCHAR(500);
-    
-    DECLARE EXIT HANDLER FOR SQLEXCEPTION
-    BEGIN
-        ROLLBACK;
-        GET DIAGNOSTICS CONDITION 1
-            v_error_message = MESSAGE_TEXT;
-        SET p_success = FALSE;
-        SET p_message = CONCAT('역할 템플릿 적용 중 오류 발생: ', v_error_message);
-    END;
-    
-    START TRANSACTION;
-    
-    -- MVP: 역할 템플릿은 선택적 기능이므로 성공으로 처리
-    -- 향후 role_templates 테이블이 채워지면 실제 템플릿 적용 로직 추가
-    SET p_success = TRUE;
-    SET p_message = '기본 역할 템플릿 적용 완료 (MVP: 스킵됨)';
-    
-    COMMIT;
-END //
-
--- ============================================
--- 5. ERD 생성 프로시저 (MVP 단순화 버전)
--- ============================================
-DROP PROCEDURE IF EXISTS GenerateErdOnOnboardingApproval //
-
-CREATE PROCEDURE GenerateErdOnOnboardingApproval(
-    IN p_tenant_id VARCHAR(64),
-    IN p_tenant_name VARCHAR(255),
-    IN p_business_type VARCHAR(50),
-    IN p_approved_by VARCHAR(100),
-    OUT p_success BOOLEAN,
-    OUT p_message TEXT
-)
-BEGIN
-    DECLARE v_error_message VARCHAR(500);
-    
-    DECLARE EXIT HANDLER FOR SQLEXCEPTION
-    BEGIN
-        ROLLBACK;
-        GET DIAGNOSTICS CONDITION 1
-            v_error_message = MESSAGE_TEXT;
-        SET p_success = FALSE;
-        SET p_message = CONCAT('ERD 생성 중 오류 발생: ', v_error_message);
-    END;
-    
-    START TRANSACTION;
-    
-    -- MVP: ERD 생성은 선택적 기능이므로 성공으로 처리
-    -- 향후 erd_diagrams 테이블이 준비되면 실제 ERD 생성 로직 추가
-    SET p_success = TRUE;
-    SET p_message = 'ERD 생성 완료 (MVP: 스킵됨)';
-    
-    COMMIT;
-END //
-
-DELIMITER ;
-

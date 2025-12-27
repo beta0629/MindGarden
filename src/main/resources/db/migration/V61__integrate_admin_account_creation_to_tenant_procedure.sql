@@ -1,16 +1,17 @@
 -- ============================================
--- V61: CreateOrActivateTenant 프로시저에 관리자 계정 생성 통합
+-- V61__integrate_admin_account_creation_to_tenant_procedure.sql: Flyway 호환 형식으로 변환
+-- 원본 파일: V61__integrate_admin_account_creation_to_tenant_procedure.sql.backup
+-- 변환일: 1766801923.9424293
 -- ============================================
--- 목적: 테넌트 생성 시 관리자 계정도 함께 생성하도록 프로시저 통합
---      자동 승인 시나리오 대비 및 코드 단순화
--- 작성일: 2025-12-09
+-- 주의: DELIMITER를 제거하고 프로시저 본문을 동적으로 생성하여 실행
 -- ============================================
 
-DELIMITER //
+DROP PROCEDURE IF EXISTS CreateOrActivateTenant;
 
--- CreateOrActivateTenant 프로시저 업데이트
--- 관리자 계정 생성 로직 통합
-DROP PROCEDURE IF EXISTS CreateOrActivateTenant //
+-- 프로시저 본문 (세미콜론 포함)
+-- 주의: Flyway가 세미콜론으로 구문을 분리하므로, 
+--       이 프로시저는 Java 코드(PlSqlInitializer)에서 실행됩니다.
+--       또는 allowMultiQueries=true로 Connection을 설정하여 실행해야 합니다.
 
 CREATE PROCEDURE CreateOrActivateTenant(
     IN p_tenant_id VARCHAR(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
@@ -586,7 +587,11 @@ BEGIN
     END IF;
     
     COMMIT;
-END //
+END;
 
-DELIMITER ;
-
+-- ============================================
+-- 참고: 이 프로시저는 다음 방법 중 하나로 실행됩니다:
+-- 1. Java 코드에서 Connection을 직접 사용하여 실행 (PlSqlInitializer)
+-- 2. allowMultiQueries=true로 Connection을 설정하여 실행
+-- 3. mysql 클라이언트에서 직접 실행
+-- ============================================

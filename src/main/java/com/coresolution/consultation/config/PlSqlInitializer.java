@@ -98,8 +98,19 @@ public class PlSqlInitializer {
 
             if (procedureSQL != null && !procedureSQL.trim().isEmpty()) {
                 // 프로시저 생성 실행
-                jdbcTemplate.execute(procedureSQL);
-                log.info("✅ CreateOrActivateTenant 프로시저 생성 완료 (백업 메커니즘)");
+                // 주의: 프로시저 본문 내부의 세미콜론 때문에 jdbcTemplate.execute()로는 실행 불가
+                // Connection을 직접 사용하여 allowMultiQueries=true로 설정
+                // 프로시저 본문 전체를 하나의 구문으로 실행
+                try (java.sql.Connection conn = dataSource.getConnection()) {
+                    // allowMultiQueries=true 설정 (URL에 이미 설정되어 있을 수 있음)
+                    // 프로시저 본문 전체를 하나의 구문으로 실행
+                    try (java.sql.Statement stmt = conn.createStatement()) {
+                        // 프로시저 본문 전체를 하나의 구문으로 실행
+                        // 세미콜론으로 구문을 분리하지 않도록 주의
+                        boolean hasResult = stmt.execute(procedureSQL);
+                        log.info("✅ CreateOrActivateTenant 프로시저 생성 완료 (백업 메커니즘), hasResult={}", hasResult);
+                    }
+                }
 
                 // 검증
                 verifyProcedureExists("CreateOrActivateTenant");
@@ -113,38 +124,61 @@ public class PlSqlInitializer {
 
     /**
      * 마이그레이션 파일에서 프로시저 본문 추출 (DELIMITER 처리)
+     * Flyway가 DELIMITER를 처리하지 못하므로, Java에서 직접 처리
      */
     private String extractProcedureFromMigration(String sqlContent) {
         try {
-            // DELIMITER // 제거
+            // 1단계: DROP PROCEDURE 실행 (별도로 처리)
+            if (sqlContent.contains("DROP PROCEDURE IF EXISTS")) {
+                try {
+                    String dropStatement = sqlContent.substring(
+                            sqlContent.indexOf("DROP PROCEDURE IF EXISTS"),
+                            sqlContent.indexOf("CREATE PROCEDURE", sqlContent.indexOf("DROP PROCEDURE IF EXISTS"))
+                    ).trim();
+                    // // 제거
+                    dropStatement = dropStatement.replaceAll("//", "").trim();
+                    if (!dropStatement.endsWith(";")) {
+                        dropStatement += ";";
+                    }
+                    jdbcTemplate.execute(dropStatement);
+                    log.info("🗑️ 기존 프로시저 삭제 완료");
+                } catch (Exception e) {
+                    log.debug("프로시저 삭제 중 오류 (무시 가능): {}", e.getMessage());
+                }
+            }
+
+            // 2단계: DELIMITER 제거
             sqlContent = sqlContent.replaceAll("(?i)DELIMITER\\s+//", "");
             sqlContent = sqlContent.replaceAll("(?i)DELIMITER\\s+;", "");
 
-            // DROP PROCEDURE IF EXISTS 제거 (이미 존재하면 삭제)
-            sqlContent = sqlContent.replaceAll("(?i)DROP\\s+PROCEDURE\\s+IF\\s+EXISTS[^;]*;?", "");
-
-            // CREATE PROCEDURE부터 END // 까지 추출
+            // 3단계: CREATE PROCEDURE부터 END까지 추출
             int createStart = sqlContent.indexOf("CREATE PROCEDURE");
             if (createStart == -1) {
                 log.warn("⚠️ CREATE PROCEDURE를 찾을 수 없습니다");
                 return null;
             }
 
-            // END // 찾기
+            // END // 또는 END; 찾기
             int endIndex = sqlContent.indexOf("END //", createStart);
             if (endIndex == -1) {
-                // END // 가 없으면 END; 찾기
                 endIndex = sqlContent.indexOf("END;", createStart);
                 if (endIndex == -1) {
                     log.warn("⚠️ END를 찾을 수 없습니다");
                     return null;
                 }
+                // END;로 끝나는 경우
                 return sqlContent.substring(createStart, endIndex + 4).trim();
             }
 
-            // END // 를 END;로 변경
+            // END // 로 끝나는 경우 -> END;로 변경
             String procedure = sqlContent.substring(createStart, endIndex + 6).trim();
             procedure = procedure.replace("END //", "END;");
+            
+            // 프로시저 본문 내부의 // 제거 (주석이 아닌 경우)
+            // 단, 문자열 내부의 //는 유지해야 하므로 주의
+            // DROP PROCEDURE IF EXISTS ... // 형태의 // 제거
+            procedure = procedure.replaceAll("DROP\\s+PROCEDURE\\s+IF\\s+EXISTS[^;]*//", "");
+            
             return procedure;
 
         } catch (Exception e) {

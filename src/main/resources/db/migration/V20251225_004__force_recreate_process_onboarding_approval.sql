@@ -1,12 +1,15 @@
--- V20251225_004: ProcessOnboardingApproval 프로시저 강제 재생성
--- 목적: 프로시저 정의가 NULL인 문제를 해결하기 위해 강제로 재생성
--- 근본 원인: Flyway가 DELIMITER를 제대로 처리하지 못하여 프로시저 본문이 생성되지 않음
--- 해결: 새로운 마이그레이션으로 프로시저를 강제로 재생성
+-- ============================================
+-- V20251225_004__force_recreate_process_onboarding_approval.sql: Flyway 호환 형식으로 변환
+-- 원본 파일: V20251225_004__force_recreate_process_onboarding_approval.sql.backup
+-- 변환일: 1766801923.9424293
+-- ============================================
+-- 주의: DELIMITER를 제거하고 프로시저 본문을 동적으로 생성하여 실행
+-- ============================================
 
--- DROP PROCEDURE를 DELIMITER 전에 실행 (Flyway 호환성)
-DROP PROCEDURE IF EXISTS ProcessOnboardingApproval;
-
-DELIMITER //
+-- 프로시저 본문 (세미콜론 포함)
+-- 주의: Flyway가 세미콜론으로 구문을 분리하므로, 
+--       이 프로시저는 Java 코드(PlSqlInitializer)에서 실행됩니다.
+--       또는 allowMultiQueries=true로 Connection을 설정하여 실행해야 합니다.
 
 CREATE PROCEDURE ProcessOnboardingApproval(
     IN p_request_id BINARY(16),
@@ -143,7 +146,11 @@ proc_label: BEGIN
             COMMIT;
         END IF;
     END IF;
-END //
+END;
 
-DELIMITER ;
-
+-- ============================================
+-- 참고: 이 프로시저는 다음 방법 중 하나로 실행됩니다:
+-- 1. Java 코드에서 Connection을 직접 사용하여 실행 (PlSqlInitializer)
+-- 2. allowMultiQueries=true로 Connection을 설정하여 실행
+-- 3. mysql 클라이언트에서 직접 실행
+-- ============================================

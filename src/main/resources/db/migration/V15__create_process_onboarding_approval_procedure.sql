@@ -1,16 +1,16 @@
 -- ============================================
--- Week 3 Day 4: 온보딩 승인 전체 프로세스 메인 프로시저
+-- V15__create_process_onboarding_approval_procedure.sql: Flyway 호환 형식으로 변환
+-- 원본 파일: V15__create_process_onboarding_approval_procedure.sql.backup
+-- 변환일: 1766801923.9424293
 -- ============================================
--- 목적: 온보딩 승인 시 전체 프로세스를 한 번에 처리 (코어 로직)
--- 작성일: 2025-01-XX
--- 주의: 개발 서버 DB에 직접 적용
+-- 주의: DELIMITER를 제거하고 프로시저 본문을 동적으로 생성하여 실행
 -- ============================================
 
-DELIMITER //
+-- 프로시저 본문 (세미콜론 포함)
+-- 주의: Flyway가 세미콜론으로 구문을 분리하므로, 
+--       이 프로시저는 Java 코드(PlSqlInitializer)에서 실행됩니다.
+--       또는 allowMultiQueries=true로 Connection을 설정하여 실행해야 합니다.
 
--- ============================================
--- 온보딩 승인 전체 프로세스 메인 프로시저
--- ============================================
 CREATE PROCEDURE ProcessOnboardingApproval(
     IN p_request_id BIGINT,
     IN p_tenant_id VARCHAR(64),
@@ -120,7 +120,11 @@ BEGIN
             END IF;
         END IF;
     END IF;
-END //
+END;
 
-DELIMITER ;
-
+-- ============================================
+-- 참고: 이 프로시저는 다음 방법 중 하나로 실행됩니다:
+-- 1. Java 코드에서 Connection을 직접 사용하여 실행 (PlSqlInitializer)
+-- 2. allowMultiQueries=true로 Connection을 설정하여 실행
+-- 3. mysql 클라이언트에서 직접 실행
+-- ============================================

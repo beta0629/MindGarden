@@ -1,10 +1,15 @@
--- V20251202_018: ProcessOnboardingApproval 프로시저 단순화
--- 목적: 필수 프로시저만 실행하고 나머지는 선택적 처리
--- 원칙: 역할 생성과 관리자 계정 생성만 필수, 나머지는 실패해도 진행
+-- ============================================
+-- V20251202_018__simplify_onboarding_approval_procedure.sql: Flyway 호환 형식으로 변환
+-- 원본 파일: V20251202_018__simplify_onboarding_approval_procedure.sql.backup
+-- 변환일: 1766801923.9424293
+-- ============================================
+-- 주의: DELIMITER를 제거하고 프로시저 본문을 동적으로 생성하여 실행
+-- ============================================
 
-DROP PROCEDURE IF EXISTS ProcessOnboardingApproval;
-
-DELIMITER //
+-- 프로시저 본문 (세미콜론 포함)
+-- 주의: Flyway가 세미콜론으로 구문을 분리하므로, 
+--       이 프로시저는 Java 코드(PlSqlInitializer)에서 실행됩니다.
+--       또는 allowMultiQueries=true로 Connection을 설정하여 실행해야 합니다.
 
 CREATE PROCEDURE ProcessOnboardingApproval(
     IN p_request_id BINARY(16),
@@ -107,7 +112,11 @@ proc_label: BEGIN
             COMMIT;
         END IF;
     END IF;
-END //
+END;
 
-DELIMITER ;
-
+-- ============================================
+-- 참고: 이 프로시저는 다음 방법 중 하나로 실행됩니다:
+-- 1. Java 코드에서 Connection을 직접 사용하여 실행 (PlSqlInitializer)
+-- 2. allowMultiQueries=true로 Connection을 설정하여 실행
+-- 3. mysql 클라이언트에서 직접 실행
+-- ============================================

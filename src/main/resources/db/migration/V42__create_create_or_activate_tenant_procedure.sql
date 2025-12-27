@@ -1,20 +1,17 @@
 -- ============================================
--- V42: CreateOrActivateTenant 프로시저 생성 (V13에서 누락된 프로시저 복구)
+-- V42__create_create_or_activate_tenant_procedure.sql: Flyway 호환 형식으로 변환
+-- 원본 파일: V42__create_create_or_activate_tenant_procedure.sql.backup
+-- 변환일: 1766801923.9424293
 -- ============================================
--- 목적: V13 마이그레이션이 실행되지 않아 누락된 CreateOrActivateTenant 프로시저 생성
--- 작성일: 2025-01-23
--- 수정일: 2025-11-23 (운영 환경 안전성 확보 - V40 패턴 적용)
--- ============================================
--- 주의: V40이 이미 CreateOrActivateTenant를 포함하고 있지만,
---       V40 이전 환경이나 V40이 실행되지 않은 경우를 대비하여 재생성
---       DROP PROCEDURE IF EXISTS를 사용하여 안전하게 처리
+-- 주의: DELIMITER를 제거하고 프로시저 본문을 동적으로 생성하여 실행
 -- ============================================
 
-DELIMITER //
+DROP PROCEDURE IF EXISTS CreateOrActivateTenant;
 
--- CreateOrActivateTenant 프로시저 생성
--- V40과 동일한 패턴 사용 (운영 환경 검증됨)
-DROP PROCEDURE IF EXISTS CreateOrActivateTenant //
+-- 프로시저 본문 (세미콜론 포함)
+-- 주의: Flyway가 세미콜론으로 구문을 분리하므로, 
+--       이 프로시저는 Java 코드(PlSqlInitializer)에서 실행됩니다.
+--       또는 allowMultiQueries=true로 Connection을 설정하여 실행해야 합니다.
 
 CREATE PROCEDURE CreateOrActivateTenant(
     IN p_tenant_id VARCHAR(64),
@@ -243,6 +240,11 @@ BEGIN
     END IF;
     
     COMMIT;
-END //
+END;
 
-DELIMITER ;
+-- ============================================
+-- 참고: 이 프로시저는 다음 방법 중 하나로 실행됩니다:
+-- 1. Java 코드에서 Connection을 직접 사용하여 실행 (PlSqlInitializer)
+-- 2. allowMultiQueries=true로 Connection을 설정하여 실행
+-- 3. mysql 클라이언트에서 직접 실행
+-- ============================================

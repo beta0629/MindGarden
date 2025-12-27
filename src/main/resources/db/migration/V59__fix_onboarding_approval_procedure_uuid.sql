@@ -1,13 +1,17 @@
 -- ============================================
--- V59: ProcessOnboardingApproval 프로시저 request_id 타입 수정
+-- V59__fix_onboarding_approval_procedure_uuid.sql: Flyway 호환 형식으로 변환
+-- 원본 파일: V59__fix_onboarding_approval_procedure_uuid.sql.backup
+-- 변환일: 1766801923.9424293
 -- ============================================
--- 목적: p_request_id를 BIGINT에서 BINARY(16)로 변경하여 UUID 지원
--- 작성일: 2025-11-29
+-- 주의: DELIMITER를 제거하고 프로시저 본문을 동적으로 생성하여 실행
 -- ============================================
 
-DELIMITER //
+DROP PROCEDURE IF EXISTS ProcessOnboardingApproval;
 
-DROP PROCEDURE IF EXISTS ProcessOnboardingApproval //
+-- 프로시저 본문 (세미콜론 포함)
+-- 주의: Flyway가 세미콜론으로 구문을 분리하므로, 
+--       이 프로시저는 Java 코드(PlSqlInitializer)에서 실행됩니다.
+--       또는 allowMultiQueries=true로 Connection을 설정하여 실행해야 합니다.
 
 CREATE PROCEDURE ProcessOnboardingApproval(
     IN p_request_id BINARY(16),  -- BIGINT -> BINARY(16) 변경
@@ -193,7 +197,11 @@ BEGIN
             END IF;
         END IF;
     END IF;
-END //
+END;
 
-DELIMITER ;
-
+-- ============================================
+-- 참고: 이 프로시저는 다음 방법 중 하나로 실행됩니다:
+-- 1. Java 코드에서 Connection을 직접 사용하여 실행 (PlSqlInitializer)
+-- 2. allowMultiQueries=true로 Connection을 설정하여 실행
+-- 3. mysql 클라이언트에서 직접 실행
+-- ============================================

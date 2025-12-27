@@ -1,14 +1,17 @@
 -- ============================================
--- V64: CopyDefaultTenantCodes 프로시저 업데이트 - 단회기 패키지 추가
+-- V64__update_copy_default_tenant_codes_add_single_session_packages.sql: Flyway 호환 형식으로 변환
+-- 원본 파일: V64__update_copy_default_tenant_codes_add_single_session_packages.sql.backup
+-- 변환일: 1766801923.9424293
 -- ============================================
--- 목적: 테넌트 생성 시 기본 단회기 패키지 자동 등록
---      단회기 패키지: 75,000원, 80,000원, 85,000원, 90,000원, 95,000원, 100,000원 (각 1회기)
--- 작성일: 2025-12-11
+-- 주의: DELIMITER를 제거하고 프로시저 본문을 동적으로 생성하여 실행
 -- ============================================
 
-DELIMITER //
+DROP PROCEDURE IF EXISTS CopyDefaultTenantCodes;
 
-DROP PROCEDURE IF EXISTS CopyDefaultTenantCodes //
+-- 프로시저 본문 (세미콜론 포함)
+-- 주의: Flyway가 세미콜론으로 구문을 분리하므로, 
+--       이 프로시저는 Java 코드(PlSqlInitializer)에서 실행됩니다.
+--       또는 allowMultiQueries=true로 Connection을 설정하여 실행해야 합니다.
 
 CREATE PROCEDURE CopyDefaultTenantCodes(
     IN p_tenant_id VARCHAR(64),
@@ -248,7 +251,11 @@ BEGIN
     
     SET p_success = TRUE;
     COMMIT;
-END //
+END;
 
-DELIMITER ;
-
+-- ============================================
+-- 참고: 이 프로시저는 다음 방법 중 하나로 실행됩니다:
+-- 1. Java 코드에서 Connection을 직접 사용하여 실행 (PlSqlInitializer)
+-- 2. allowMultiQueries=true로 Connection을 설정하여 실행
+-- 3. mysql 클라이언트에서 직접 실행
+-- ============================================

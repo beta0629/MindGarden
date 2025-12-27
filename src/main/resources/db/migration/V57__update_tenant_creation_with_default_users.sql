@@ -1,16 +1,17 @@
 -- ============================================
--- V57: 테넌트 생성 시 기본 사용자 데이터 자동 생성 기능 추가
+-- V57__update_tenant_creation_with_default_users.sql: Flyway 호환 형식으로 변환
+-- 원본 파일: V57__update_tenant_creation_with_default_users.sql.backup
+-- 변환일: 1766801923.9424293
 -- ============================================
--- 목적: 새 테넌트 생성 시 샘플 상담사, 내담자, 매칭 데이터 자동 생성
--- 작성일: 2025-11-28
+-- 주의: DELIMITER를 제거하고 프로시저 본문을 동적으로 생성하여 실행
 -- ============================================
 
-DELIMITER //
+DROP PROCEDURE IF EXISTS CreateDefaultTenantUsers;
 
--- ============================================
--- CreateDefaultTenantUsers 프로시저 생성
--- ============================================
-DROP PROCEDURE IF EXISTS CreateDefaultTenantUsers //
+-- 프로시저 본문 (세미콜론 포함)
+-- 주의: Flyway가 세미콜론으로 구문을 분리하므로, 
+--       이 프로시저는 Java 코드(PlSqlInitializer)에서 실행됩니다.
+--       또는 allowMultiQueries=true로 Connection을 설정하여 실행해야 합니다.
 
 CREATE PROCEDURE CreateDefaultTenantUsers(
     IN p_tenant_id VARCHAR(64),
@@ -215,164 +216,11 @@ BEGIN
         
         COMMIT;
     END IF;
-END //
+END;
 
 -- ============================================
--- CreateOrActivateTenant 프로시저 업데이트
+-- 참고: 이 프로시저는 다음 방법 중 하나로 실행됩니다:
+-- 1. Java 코드에서 Connection을 직접 사용하여 실행 (PlSqlInitializer)
+-- 2. allowMultiQueries=true로 Connection을 설정하여 실행
+-- 3. mysql 클라이언트에서 직접 실행
 -- ============================================
-DROP PROCEDURE IF EXISTS CreateOrActivateTenant //
-
-CREATE PROCEDURE CreateOrActivateTenant(
-    IN p_tenant_id VARCHAR(64),
-    IN p_tenant_name VARCHAR(255),
-    IN p_business_type VARCHAR(50),
-    IN p_approved_by VARCHAR(100),
-    OUT p_success BOOLEAN,
-    OUT p_message TEXT
-)
-BEGIN
-    DECLARE v_exists BOOLEAN DEFAULT FALSE;
-    DECLARE v_error_message VARCHAR(500);
-    DECLARE v_subdomain VARCHAR(100) DEFAULT '';
-    DECLARE v_domain VARCHAR(255) DEFAULT '';
-    DECLARE v_settings_json JSON DEFAULT NULL;
-    DECLARE v_counter INT DEFAULT 0;
-    DECLARE v_consultation_enabled BOOLEAN DEFAULT FALSE;
-    DECLARE v_academy_enabled BOOLEAN DEFAULT FALSE;
-    
-    DECLARE EXIT HANDLER FOR SQLEXCEPTION
-    BEGIN
-        ROLLBACK;
-        GET DIAGNOSTICS CONDITION 1
-            v_error_message = MESSAGE_TEXT;
-        SET p_success = FALSE;
-        SET p_message = CONCAT('테넌트 생성/활성화 중 오류 발생: ', v_error_message);
-    END;
-    
-    START TRANSACTION;
-    
-    -- 업종별 기능 활성화 설정
-    IF p_business_type = 'CONSULTATION' THEN
-        SET v_consultation_enabled = TRUE;
-        SET v_academy_enabled = FALSE;
-    ELSEIF p_business_type = 'ACADEMY' THEN
-        SET v_consultation_enabled = FALSE;
-        SET v_academy_enabled = TRUE;
-    ELSE
-        -- 기타 업종은 기본적으로 상담 기능 활성화
-        SET v_consultation_enabled = TRUE;
-        SET v_academy_enabled = FALSE;
-    END IF;
-    
-    -- 테넌트 존재 확인
-    SELECT COUNT(*) > 0 INTO v_exists
-    FROM tenants
-    WHERE tenant_id = p_tenant_id;
-    
-    IF v_exists THEN
-        -- 기존 테넌트 활성화
-        UPDATE tenants 
-        SET status = 'ACTIVE',
-            subscription_status = 'ACTIVE',
-            updated_at = NOW(),
-            updated_by = p_approved_by
-        WHERE tenant_id = p_tenant_id;
-        
-        SET p_success = TRUE;
-        SET p_message = CONCAT('기존 테넌트 활성화 완료: ', p_tenant_id);
-    ELSE
-        -- 새 테넌트 생성
-        
-        -- 서브도메인 생성 (중복 방지)
-        SET v_counter = 0;
-        SET v_subdomain = LOWER(REPLACE(REPLACE(p_tenant_name, ' ', '-'), '_', '-'));
-        
-        -- 서브도메인 중복 체크 및 고유화
-        WHILE (SELECT COUNT(*) FROM tenants WHERE settings_json->'$.subdomain' = v_subdomain) > 0 DO
-            SET v_counter = v_counter + 1;
-            SET v_subdomain = CONCAT(LOWER(REPLACE(REPLACE(p_tenant_name, ' ', '-'), '_', '-')), '-', v_counter);
-        END WHILE;
-        
-        -- 도메인 설정
-        SET v_domain = CONCAT(v_subdomain, '.m-garden.co.kr');
-        
-        -- settings_json 구성
-        SET v_settings_json = JSON_OBJECT(
-            'features', JSON_OBJECT(
-                'consultation', v_consultation_enabled,
-                'academy', v_academy_enabled,
-                'wellness', TRUE,
-                'payment', TRUE,
-                'notification', TRUE
-            ),
-            'subdomain', v_subdomain,
-            'domain', v_domain
-        );
-        
-        INSERT INTO tenants (
-            tenant_id,
-            name,
-            business_type,
-            status,
-            subscription_status,
-            settings_json,
-            created_at,
-            updated_at,
-            created_by,
-            updated_by,
-            is_deleted,
-            version,
-            lang_code
-        ) VALUES (
-            p_tenant_id,
-            p_tenant_name,
-            p_business_type,
-            'ACTIVE',
-            'ACTIVE',
-            v_settings_json,
-            NOW(),
-            NOW(),
-            p_approved_by,
-            p_approved_by,
-            FALSE,
-            0,
-            'ko'
-        );
-        
-        -- 새 테넌트 생성 시 기본 테넌트 코드 자동 복사
-        -- 기존 테넌트에서 기본 코드 복사 (첫 번째 활성 테넌트 사용)
-        CALL CopyDefaultTenantCodes(
-            p_tenant_id,
-            (SELECT tenant_id FROM tenants WHERE is_deleted = FALSE AND status = 'ACTIVE' LIMIT 1),
-            @copy_success,
-            @copy_message
-        );
-        
-        -- 새 테넌트 생성 시 기본 사용자 데이터 자동 생성
-        CALL CreateDefaultTenantUsers(
-            p_tenant_id,
-            p_business_type,
-            p_approved_by,
-            @user_success,
-            @user_message
-        );
-        
-        IF @copy_success = TRUE AND @user_success = TRUE THEN
-            SET p_success = TRUE;
-            SET p_message = CONCAT('테넌트 생성 완료 (서브도메인: ', v_subdomain, ', 코드 복사: ', @copy_message, ', 사용자 생성: ', @user_message, '): ', p_tenant_id);
-        ELSEIF @copy_success = TRUE AND @user_success = FALSE THEN
-            SET p_success = TRUE;  -- 사용자 생성 실패해도 테넌트 생성은 성공으로 처리
-            SET p_message = CONCAT('테넌트 생성 완료 (서브도메인: ', v_subdomain, ', 코드 복사: ', @copy_message, ', 사용자 생성 실패: ', @user_message, '): ', p_tenant_id);
-        ELSEIF @copy_success = FALSE AND @user_success = TRUE THEN
-            SET p_success = TRUE;  -- 코드 복사 실패해도 테넌트 생성은 성공으로 처리
-            SET p_message = CONCAT('테넌트 생성 완료 (서브도메인: ', v_subdomain, ', 코드 복사 실패: ', @copy_message, ', 사용자 생성: ', @user_message, '): ', p_tenant_id);
-        ELSE
-            SET p_success = TRUE;  -- 둘 다 실패해도 테넌트 생성은 성공으로 처리
-            SET p_message = CONCAT('테넌트 생성 완료 (서브도메인: ', v_subdomain, ', 코드 복사 실패: ', @copy_message, ', 사용자 생성 실패: ', @user_message, '): ', p_tenant_id);
-        END IF;
-    END IF;
-    
-    COMMIT;
-END //
-
-DELIMITER ;

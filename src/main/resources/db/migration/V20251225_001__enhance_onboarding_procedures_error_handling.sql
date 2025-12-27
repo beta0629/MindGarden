@@ -1,11 +1,17 @@
--- V20251225_001: 온보딩 프로시저 오류 처리 강화 및 상세 로그 추가
--- 목적: 프로시저 실패 원인을 정확히 파악하고 구체적인 오류 메시지 반환
--- 특징: 각 단계별 상세 로그, 구체적인 오류 메시지, 트랜잭션 안전성 보장
+-- ============================================
+-- V20251225_001__enhance_onboarding_procedures_error_handling.sql: Flyway 호환 형식으로 변환
+-- 원본 파일: V20251225_001__enhance_onboarding_procedures_error_handling.sql.backup
+-- 변환일: 1766801923.9424293
+-- ============================================
+-- 주의: DELIMITER를 제거하고 프로시저 본문을 동적으로 생성하여 실행
+-- ============================================
 
-DELIMITER //
+DROP PROCEDURE IF EXISTS ProcessOnboardingApproval;
 
--- 1. ProcessOnboardingApproval 프로시저 오류 처리 강화
-DROP PROCEDURE IF EXISTS ProcessOnboardingApproval //
+-- 프로시저 본문 (세미콜론 포함)
+-- 주의: Flyway가 세미콜론으로 구문을 분리하므로, 
+--       이 프로시저는 Java 코드(PlSqlInitializer)에서 실행됩니다.
+--       또는 allowMultiQueries=true로 Connection을 설정하여 실행해야 합니다.
 
 CREATE PROCEDURE ProcessOnboardingApproval(
     IN p_request_id BINARY(16),
@@ -142,7 +148,11 @@ proc_label: BEGIN
             COMMIT;
         END IF;
     END IF;
-END //
+END;
 
-DELIMITER ;
-
+-- ============================================
+-- 참고: 이 프로시저는 다음 방법 중 하나로 실행됩니다:
+-- 1. Java 코드에서 Connection을 직접 사용하여 실행 (PlSqlInitializer)
+-- 2. allowMultiQueries=true로 Connection을 설정하여 실행
+-- 3. mysql 클라이언트에서 직접 실행
+-- ============================================

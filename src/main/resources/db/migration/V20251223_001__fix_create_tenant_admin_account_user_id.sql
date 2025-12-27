@@ -1,11 +1,17 @@
--- V20251223_001: CreateTenantAdminAccount 프로시저 수정 - username을 user_id로 변경
--- 목적: users 테이블이 username이 아닌 user_id를 사용하므로 프로시저 수정
--- 문제: 프로시저가 username 컬럼을 사용하여 INSERT 실패
--- 해결: user_id 컬럼을 사용하도록 수정
+-- ============================================
+-- V20251223_001__fix_create_tenant_admin_account_user_id.sql: Flyway 호환 형식으로 변환
+-- 원본 파일: V20251223_001__fix_create_tenant_admin_account_user_id.sql.backup
+-- 변환일: 1766801923.9424293
+-- ============================================
+-- 주의: DELIMITER를 제거하고 프로시저 본문을 동적으로 생성하여 실행
+-- ============================================
 
-DELIMITER //
+DROP PROCEDURE IF EXISTS CreateTenantAdminAccount;
 
-DROP PROCEDURE IF EXISTS CreateTenantAdminAccount //
+-- 프로시저 본문 (세미콜론 포함)
+-- 주의: Flyway가 세미콜론으로 구문을 분리하므로, 
+--       이 프로시저는 Java 코드(PlSqlInitializer)에서 실행됩니다.
+--       또는 allowMultiQueries=true로 Connection을 설정하여 실행해야 합니다.
 
 CREATE PROCEDURE CreateTenantAdminAccount(
     IN p_tenant_id VARCHAR(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
@@ -80,7 +86,11 @@ BEGIN
         
         COMMIT;
     END IF;
-END //
+END;
 
-DELIMITER ;
-
+-- ============================================
+-- 참고: 이 프로시저는 다음 방법 중 하나로 실행됩니다:
+-- 1. Java 코드에서 Connection을 직접 사용하여 실행 (PlSqlInitializer)
+-- 2. allowMultiQueries=true로 Connection을 설정하여 실행
+-- 3. mysql 클라이언트에서 직접 실행
+-- ============================================

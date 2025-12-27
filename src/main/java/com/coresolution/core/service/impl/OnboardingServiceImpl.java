@@ -622,7 +622,8 @@ public class OnboardingServiceImpl implements OnboardingService {
             final Map<String, java.util.List<String>> finalDashboardWidgets = dashboardWidgets;
 
             // 처리 상태 초기화
-            updateProcessingStatus(requestId, "PROCEDURE_START", "IN_PROGRESS", "프로시저 실행 시작...");
+            // updateProcessingStatus 제거: 별도 트랜잭션에서 version 충돌 발생
+            // 상태는 OnboardingApprovalServiceImpl에서 initializationStatusJson에 저장됨
 
             // 프로시저 결과를 저장할 변수
             final java.util.concurrent.atomic.AtomicReference<Map<String, Object>> approvalResultRef =
@@ -630,8 +631,7 @@ public class OnboardingServiceImpl implements OnboardingService {
 
             OnboardingErrorHandlingService.ExecutionResult executionResult =
                     errorHandlingService.executeWithRetry(() -> {
-                        updateProcessingStatus(requestId, "TENANT_CREATE", "IN_PROGRESS",
-                                "테넌트 생성/활성화 중...");
+                        // updateProcessingStatus 제거: 별도 트랜잭션에서 version 충돌 발생
                         Map<String, Object> result = approvalService.processOnboardingApproval(
                                 requestId, tenantId, request.getTenantName(), businessType, actorId,
                                 note, finalContactEmail, finalAdminPasswordHash, finalSubdomain);
@@ -647,11 +647,10 @@ public class OnboardingServiceImpl implements OnboardingService {
                                             : "프로세스가 false를 반환했습니다.";
                             log.error("❌ 프로시저 실행 실패: requestId={}, message={}", requestId,
                                     resultMessage);
-                            updateProcessingStatus(requestId, "TENANT_CREATE", "FAILED", errorMsg);
+                            // updateProcessingStatus 제거: 별도 트랜잭션에서 version 충돌 발생
                             throw new RuntimeException(errorMsg);
                         }
-                        updateProcessingStatus(requestId, "TENANT_CREATE", "SUCCESS",
-                                "테넌트 생성/활성화 완료");
+                        // updateProcessingStatus 제거: 별도 트랜잭션에서 version 충돌 발생
                         return true;
                     }, 5, // 최대 5회 재시도
                             2000 // 2초 지연

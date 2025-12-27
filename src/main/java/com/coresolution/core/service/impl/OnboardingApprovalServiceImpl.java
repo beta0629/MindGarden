@@ -96,9 +96,7 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
 
         try {
             // Step 1: 테넌트 생성/활성화
-            updateProcessingStatus(requestId, OnboardingConstants.STEP_TENANT_CREATE,
-                    OnboardingConstants.STATUS_IN_PROGRESS,
-                    OnboardingConstants.MSG_TENANT_CREATE_START);
+            // updateProcessingStatus 제거: 별도 트랜잭션에서 version 충돌 발생
             StepResult tenantResult = executeStepTenantCreation(requestId, tenantId, tenantName,
                     businessType, subdomain, approvedBy);
             stepResults.put(OnboardingConstants.STEP_TENANT_CREATE, tenantResult);
@@ -110,19 +108,14 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                 result.put("message", OnboardingConstants.MSG_TENANT_CREATE_FAILED + ": "
                         + tenantResult.getMessage());
                 result.put("stepResults", stepResults);
-                updateProcessingStatus(requestId, OnboardingConstants.STEP_TENANT_CREATE,
-                        OnboardingConstants.STATUS_FAILED, tenantResult.getMessage());
+                // updateProcessingStatus 제거: 별도 트랜잭션에서 version 충돌 발생
                 throw new RuntimeException(OnboardingConstants.MSG_TENANT_CREATE_FAILED + ": "
                         + tenantResult.getMessage());
             }
-            updateProcessingStatus(requestId, OnboardingConstants.STEP_TENANT_CREATE,
-                    OnboardingConstants.STATUS_SUCCESS,
-                    OnboardingConstants.MSG_TENANT_CREATE_COMPLETE);
+            // updateProcessingStatus 제거: 별도 트랜잭션에서 version 충돌 발생
 
             // Step 2: 역할 템플릿 적용
-            updateProcessingStatus(requestId, OnboardingConstants.STEP_ROLE_APPLY,
-                    OnboardingConstants.STATUS_IN_PROGRESS,
-                    OnboardingConstants.MSG_ROLE_APPLY_START);
+            // updateProcessingStatus 제거: 별도 트랜잭션에서 version 충돌 발생
             StepResult roleResult =
                     executeStepRoleApplication(requestId, tenantId, businessType, approvedBy);
             stepResults.put(OnboardingConstants.STEP_ROLE_APPLY, roleResult);
@@ -134,21 +127,16 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                 result.put("message",
                         OnboardingConstants.MSG_ROLE_APPLY_FAILED + ": " + roleResult.getMessage());
                 result.put("stepResults", stepResults);
-                updateProcessingStatus(requestId, OnboardingConstants.STEP_ROLE_APPLY,
-                        OnboardingConstants.STATUS_FAILED, roleResult.getMessage());
+                // updateProcessingStatus 제거: 별도 트랜잭션에서 version 충돌 발생
                 throw new RuntimeException(
                         OnboardingConstants.MSG_ROLE_APPLY_FAILED + ": " + roleResult.getMessage());
             }
-            updateProcessingStatus(requestId, OnboardingConstants.STEP_ROLE_APPLY,
-                    OnboardingConstants.STATUS_SUCCESS,
-                    OnboardingConstants.MSG_ROLE_APPLY_COMPLETE);
+            // updateProcessingStatus 제거: 별도 트랜잭션에서 version 충돌 발생
 
             // Step 3: 관리자 계정 생성
             if (contactEmail != null && !contactEmail.trim().isEmpty() && adminPasswordHash != null
                     && !adminPasswordHash.trim().isEmpty()) {
-                updateProcessingStatus(requestId, OnboardingConstants.STEP_ADMIN_CREATE,
-                        OnboardingConstants.STATUS_IN_PROGRESS,
-                        OnboardingConstants.MSG_ADMIN_CREATE_START);
+                // updateProcessingStatus 제거: 별도 트랜잭션에서 version 충돌 발생
                 StepResult adminResult = executeStepAdminAccountCreation(requestId, tenantId,
                         contactEmail, tenantName, adminPasswordHash, approvedBy);
                 stepResults.put(OnboardingConstants.STEP_ADMIN_CREATE, adminResult);
@@ -160,14 +148,11 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                     result.put("message", OnboardingConstants.MSG_ADMIN_CREATE_FAILED + ": "
                             + adminResult.getMessage());
                     result.put("stepResults", stepResults);
-                    updateProcessingStatus(requestId, OnboardingConstants.STEP_ADMIN_CREATE,
-                            OnboardingConstants.STATUS_FAILED, adminResult.getMessage());
+                    // updateProcessingStatus 제거: 별도 트랜잭션에서 version 충돌 발생
                     throw new RuntimeException(OnboardingConstants.MSG_ADMIN_CREATE_FAILED + ": "
                             + adminResult.getMessage());
                 }
-                updateProcessingStatus(requestId, OnboardingConstants.STEP_ADMIN_CREATE,
-                        OnboardingConstants.STATUS_SUCCESS,
-                        OnboardingConstants.MSG_ADMIN_CREATE_COMPLETE);
+                // updateProcessingStatus 제거: 별도 트랜잭션에서 version 충돌 발생
             } else {
                 log.warn("⚠️ 관리자 계정 생성 건너뜀: contactEmail 또는 adminPasswordHash가 없음");
                 stepResults.put(OnboardingConstants.STEP_ADMIN_CREATE,
@@ -179,9 +164,7 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
             entityManager.flush();
             entityManager.clear();
 
-            updateProcessingStatus(requestId, OnboardingConstants.STEP_DASHBOARD_CREATE,
-                    OnboardingConstants.STATUS_IN_PROGRESS,
-                    OnboardingConstants.MSG_DASHBOARD_CREATE_START);
+            // updateProcessingStatus 제거: 별도 트랜잭션에서 version 충돌 발생
             StepResult dashboardResult =
                     executeStepDashboardCreation(requestId, tenantId, businessType, approvedBy);
             stepResults.put(OnboardingConstants.STEP_DASHBOARD_CREATE, dashboardResult);
@@ -193,14 +176,11 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                 result.put("message", OnboardingConstants.MSG_DASHBOARD_CREATE_FAILED + ": "
                         + dashboardResult.getMessage());
                 result.put("stepResults", stepResults);
-                updateProcessingStatus(requestId, OnboardingConstants.STEP_DASHBOARD_CREATE,
-                        OnboardingConstants.STATUS_FAILED, dashboardResult.getMessage());
+                // updateProcessingStatus 제거: 별도 트랜잭션에서 version 충돌 발생
                 throw new RuntimeException(OnboardingConstants.MSG_DASHBOARD_CREATE_FAILED + ": "
                         + dashboardResult.getMessage());
             }
-            updateProcessingStatus(requestId, OnboardingConstants.STEP_DASHBOARD_CREATE,
-                    OnboardingConstants.STATUS_SUCCESS,
-                    OnboardingConstants.MSG_DASHBOARD_CREATE_COMPLETE);
+            // updateProcessingStatus 제거: 별도 트랜잭션에서 version 충돌 발생
 
             // 모든 단계 성공
             log.info(OnboardingConstants.LOG_SEPARATOR);
@@ -209,8 +189,7 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
             result.put("success", true);
             result.put("message", OnboardingConstants.MSG_PROCESS_COMPLETE);
             result.put("stepResults", stepResults);
-            updateProcessingStatus(requestId, OnboardingConstants.STEP_COMPLETE,
-                    OnboardingConstants.STATUS_SUCCESS, OnboardingConstants.MSG_ALL_STEPS_COMPLETE);
+            // updateProcessingStatus 제거: 별도 트랜잭션에서 version 충돌 발생
 
             return result;
         } catch (RuntimeException e) {

@@ -811,19 +811,31 @@ public class OnboardingServiceImpl implements OnboardingService {
             log.info("온보딩 요청 결정 완료: id={}, status={}, version={}", saved.getId(), saved.getStatus(),
                     saved.getVersion());
 
-            // 승인 성공 시 이메일 발송 (비동기로 처리하여 트랜잭션에 영향 없도록)
+            // 승인 성공 시 이메일 발송은 트랜잭션 커밋 후 별도 트랜잭션에서 처리
+            // ObjectOptimisticLockingFailureException 발생 시 트랜잭션이 rollback-only로 마크되므로
+            // 이메일 발송을 트랜잭션 외부로 분리하여 트랜잭션 롤백 방지
             if (finalStatus == OnboardingStatus.APPROVED && finalSuccess != null && finalSuccess) {
-                try {
-                    String finalTenantId = requestToSave.getTenantId();
-                    if (finalTenantId != null) {
-                        sendOnboardingApprovalEmail(saved, finalTenantId);
-                    } else {
-                        log.warn("테넌트 ID가 없어 이메일 발송을 건너뜁니다: requestId={}", requestId);
-                    }
-                } catch (Exception e) {
-                    // 이메일 발송 실패는 로그만 남기고 온보딩 프로세스는 계속 진행
-                    log.error("온보딩 승인 이메일 발송 실패 (온보딩 프로세스는 계속 진행): requestId={}, error={}",
-                            requestId, e.getMessage(), e);
+                String finalTenantId = requestToSave.getTenantId();
+                if (finalTenantId != null) {
+                    // 트랜잭션 커밋 후 별도 트랜잭션에서 이메일 발송
+                    // TransactionSynchronizationManager를 사용하여 트랜잭션 커밋 후 실행
+                    org.springframework.transaction.support.TransactionSynchronizationManager
+                            .registerSynchronization(
+                                    new org.springframework.transaction.support.TransactionSynchronizationAdapter() {
+                                        @Override
+                                        public void afterCommit() {
+                                            try {
+                                                sendOnboardingApprovalEmail(saved, finalTenantId);
+                                            } catch (Exception e) {
+                                                // 이메일 발송 실패는 로그만 남기고 온보딩 프로세스는 계속 진행
+                                                log.error(
+                                                        "온보딩 승인 이메일 발송 실패 (온보딩 프로세스는 계속 진행): requestId={}, error={}",
+                                                        requestId, e.getMessage(), e);
+                                            }
+                                        }
+                                    });
+                } else {
+                    log.warn("테넌트 ID가 없어 이메일 발송을 건너뜁니다: requestId={}", requestId);
                 }
             }
 

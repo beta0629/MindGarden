@@ -34,9 +34,9 @@ CONVERTED_FILES=$(git status --short | grep "\.sql$" | awk '{print $2}' | grep -
 
 for file in $CONVERTED_FILES; do
     if [ -f "$file" ]; then
-        # DELIMITER가 남아있는지 확인
-        if grep -q "DELIMITER" "$file"; then
-            echo "  ⚠️  ${file}: DELIMITER가 남아있음"
+        # DELIMITER 명령어가 남아있는지 확인 (주석 제외)
+        if grep -q "^[[:space:]]*DELIMITER[[:space:]]" "$file"; then
+            echo "  ⚠️  ${file}: DELIMITER 명령어가 남아있음"
         else
             echo "  ✅ ${file}: DELIMITER 제거됨"
         fi

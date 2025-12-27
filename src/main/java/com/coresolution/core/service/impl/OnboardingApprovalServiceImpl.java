@@ -49,7 +49,7 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
      * 실패 시 롤백 보장
      */
     @Override
-    @Transactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class, timeout = 300) // 5분 타임아웃
     public Map<String, Object> processOnboardingApproval(java.util.UUID requestId, String tenantId,
             String tenantName, String businessType, String approvedBy, String decisionNote,
             String contactEmail, String adminPasswordHash, String subdomain) {
@@ -290,8 +290,8 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
         log.info("==========================================");
 
         try {
-            int maxRetries = 10;
-            long baseRetryDelay = 2000;
+            int maxRetries = 5; // 10 -> 5로 감소 (타임아웃 방지)
+            long baseRetryDelay = 1000; // 2초 -> 1초로 감소
             boolean rolesApplied = false;
 
             for (int attempt = 1; attempt <= maxRetries; attempt++) {
@@ -321,7 +321,7 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                         org.springframework.transaction.TransactionDefinition.PROPAGATION_REQUIRED);
                 transactionTemplate.setIsolationLevel(
                         org.springframework.transaction.TransactionDefinition.ISOLATION_READ_COMMITTED);
-                transactionTemplate.setTimeout(60);
+                transactionTemplate.setTimeout(120); // 60초 -> 120초로 증가 (프로시저 실행 시간 고려)
 
                 Boolean roleResult = null;
                 try {
@@ -544,6 +544,9 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
 
             try (CallableStatement cs = connection.prepareCall(
                     "{CALL ProcessOnboardingApproval(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}")) {
+
+                // 프로시저 실행 타임아웃 설정 (초 단위)
+                cs.setQueryTimeout(180); // 3분 타임아웃 (프로시저 실행 시간 고려)
 
                 // IN 파라미터 설정 - UUID를 BINARY(16)으로 변환
                 byte[] uuidBytes = convertUuidToBytes(requestId);
@@ -813,7 +816,7 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                                         org.springframework.transaction.TransactionDefinition.ISOLATION_READ_COMMITTED);
                                 // 락 타임아웃 설정 (초 단위, 기본값보다 길게)
                                 // 30초는 너무 짧아서 쿼리 실행 중단 오류 발생, 60초로 증가
-                                transactionTemplate.setTimeout(60); // 60초
+                                transactionTemplate.setTimeout(120); // 60초 -> 120초로 증가 (프로시저 실행 시간 고려) // 60초
 
                                 Boolean roleResult = null;
                                 try {

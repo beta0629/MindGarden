@@ -530,7 +530,12 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
             return result;
         }
 
-        try (Connection connection = dataSource.getConnection()) {
+        // 주의: Spring 트랜잭션과 연결된 Connection 사용
+        // dataSource.getConnection()은 Spring 트랜잭션과 분리된 Connection을 반환하므로
+        // DataSourceUtils.getConnection()을 사용하여 Spring이 관리하는 Connection을 가져옴
+        Connection connection = null;
+        try {
+            connection = org.springframework.jdbc.datasource.DataSourceUtils.getConnection(dataSource);
 
             // Collation 설정 (프로시저 실행 전)
             try (java.sql.Statement stmt = connection.createStatement()) {

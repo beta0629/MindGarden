@@ -535,7 +535,8 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
         // DataSourceUtils.getConnection()을 사용하여 Spring이 관리하는 Connection을 가져옴
         Connection connection = null;
         try {
-            connection = org.springframework.jdbc.datasource.DataSourceUtils.getConnection(dataSource);
+            connection =
+                    org.springframework.jdbc.datasource.DataSourceUtils.getConnection(dataSource);
 
             // Collation 설정 (프로시저 실행 전)
             try (java.sql.Statement stmt = connection.createStatement()) {

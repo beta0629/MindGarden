@@ -38,8 +38,9 @@ proc_label: BEGIN
     
     -- 주의: START TRANSACTION 제거 - Java 코드에서 @Transactional로 이미 트랜잭션이 시작됨
     
-    -- role_templates에서 해당 업종의 템플릿을 직접 INSERT (CURSOR 없이)
-    INSERT INTO tenant_roles (
+    -- role_templates에서 해당 업종의 템플릿을 직접 INSERT IGNORE (락 최소화)
+    -- NOT EXISTS 대신 INSERT IGNORE를 사용하여 락 대기 시간 최소화
+    INSERT IGNORE INTO tenant_roles (
         tenant_role_id,
         tenant_id,
         role_template_id,
@@ -82,9 +83,14 @@ proc_label: BEGIN
     WHERE BINARY business_type = BINARY p_business_type
         AND is_active = TRUE
         AND is_deleted = FALSE
-    ORDER BY display_order ASC
-    ON DUPLICATE KEY UPDATE
-        tenant_role_id = tenant_role_id; -- 중복 시 업데이트하지 않고 무시
+        AND NOT EXISTS (
+            SELECT 1
+            FROM tenant_roles
+            WHERE BINARY tenant_id = BINARY p_tenant_id
+                AND BINARY role_template_id = BINARY role_templates.role_template_id
+                AND is_deleted = FALSE
+        )
+    ORDER BY display_order ASC;
     
     SET v_role_count = ROW_COUNT();
     

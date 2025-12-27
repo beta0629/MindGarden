@@ -1947,8 +1947,8 @@ public class OnboardingServiceImpl implements OnboardingService {
             // 메인 트랜잭션이 아직 커밋되지 않았을 수 있으므로 재시도 로직 추가
             String tenantRoleId = null;
             String roleName = null;
-            int maxRetries = 10; // 5회 → 10회로 증가
-            long retryDelay = 1000; // 500ms → 1000ms로 증가 (메인 트랜잭션 커밋 대기)
+            int maxRetries = 3; // 3회로 감소 (프로시저가 이미 역할을 생성했으므로 빠르게 조회 가능)
+            long retryDelay = 200; // 200ms로 감소 (프로시저가 이미 역할을 생성했으므로 빠른 조회 가능)
 
             for (int attempt = 1; attempt <= maxRetries; attempt++) {
                 tenantRoleId = null;

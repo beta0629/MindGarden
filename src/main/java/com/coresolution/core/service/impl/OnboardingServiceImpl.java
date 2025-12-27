@@ -1947,8 +1947,8 @@ public class OnboardingServiceImpl implements OnboardingService {
             // 메인 트랜잭션이 아직 커밋되지 않았을 수 있으므로 재시도 로직 추가
             String tenantRoleId = null;
             String roleName = null;
-            int maxRetries = 5;
-            long retryDelay = 500; // 500ms
+            int maxRetries = 10; // 5회 → 10회로 증가
+            long retryDelay = 1000; // 500ms → 1000ms로 증가 (메인 트랜잭션 커밋 대기)
 
             for (int attempt = 1; attempt <= maxRetries; attempt++) {
                 tenantRoleId = null;
@@ -1962,8 +1962,8 @@ public class OnboardingServiceImpl implements OnboardingService {
                     if (result != null && result.get("tenant_role_id") != null) {
                         tenantRoleId = (String) result.get("tenant_role_id");
                         roleName = (String) result.get("name_ko");
-                        log.debug("JDBC로 '원장' 역할 찾음: tenantId={}, tenantRoleId={}, attempt={}", tenantId,
-                                tenantRoleId, attempt);
+                        log.debug("JDBC로 '원장' 역할 찾음: tenantId={}, tenantRoleId={}, attempt={}",
+                                tenantId, tenantRoleId, attempt);
                         break; // 역할을 찾았으므로 루프 종료
                     }
                 } catch (org.springframework.dao.EmptyResultDataAccessException e) {
@@ -1975,16 +1975,18 @@ public class OnboardingServiceImpl implements OnboardingService {
                     try {
                         String sql =
                                 "SELECT tenant_role_id, name_ko FROM tenant_roles WHERE tenant_id = ? AND name_ko = '관리자' AND (is_deleted IS NULL OR is_deleted = FALSE) LIMIT 1";
-                        java.util.Map<String, Object> result = jdbcTemplate.queryForMap(sql, tenantId);
+                        java.util.Map<String, Object> result =
+                                jdbcTemplate.queryForMap(sql, tenantId);
                         if (result != null && result.get("tenant_role_id") != null) {
                             tenantRoleId = (String) result.get("tenant_role_id");
                             roleName = (String) result.get("name_ko");
-                            log.debug("JDBC로 '관리자' 역할 찾음: tenantId={}, tenantRoleId={}, attempt={}", tenantId,
-                                    tenantRoleId, attempt);
+                            log.debug("JDBC로 '관리자' 역할 찾음: tenantId={}, tenantRoleId={}, attempt={}",
+                                    tenantId, tenantRoleId, attempt);
                             break; // 역할을 찾았으므로 루프 종료
                         }
                     } catch (org.springframework.dao.EmptyResultDataAccessException e) {
-                        log.debug("'관리자' 역할 없음, 다음 검색 시도: tenantId={}, attempt={}", tenantId, attempt);
+                        log.debug("'관리자' 역할 없음, 다음 검색 시도: tenantId={}, attempt={}", tenantId,
+                                attempt);
                     }
                 }
 
@@ -1993,16 +1995,19 @@ public class OnboardingServiceImpl implements OnboardingService {
                     try {
                         String sql =
                                 "SELECT tenant_role_id, name_ko FROM tenant_roles WHERE tenant_id = ? AND name_en = 'Director' AND (is_deleted IS NULL OR is_deleted = FALSE) LIMIT 1";
-                        java.util.Map<String, Object> result = jdbcTemplate.queryForMap(sql, tenantId);
+                        java.util.Map<String, Object> result =
+                                jdbcTemplate.queryForMap(sql, tenantId);
                         if (result != null && result.get("tenant_role_id") != null) {
                             tenantRoleId = (String) result.get("tenant_role_id");
                             roleName = (String) result.get("name_ko");
-                            log.debug("JDBC로 'Director' 역할 찾음: tenantId={}, tenantRoleId={}, attempt={}", tenantId,
-                                    tenantRoleId, attempt);
+                            log.debug(
+                                    "JDBC로 'Director' 역할 찾음: tenantId={}, tenantRoleId={}, attempt={}",
+                                    tenantId, tenantRoleId, attempt);
                             break; // 역할을 찾았으므로 루프 종료
                         }
                     } catch (org.springframework.dao.EmptyResultDataAccessException e) {
-                        log.debug("'Director' 역할 없음, 다음 검색 시도: tenantId={}, attempt={}", tenantId, attempt);
+                        log.debug("'Director' 역할 없음, 다음 검색 시도: tenantId={}, attempt={}", tenantId,
+                                attempt);
                     }
                 }
 
@@ -2011,16 +2016,19 @@ public class OnboardingServiceImpl implements OnboardingService {
                     try {
                         String sql =
                                 "SELECT tenant_role_id, name_ko FROM tenant_roles WHERE tenant_id = ? AND name_en = 'Admin' AND (is_deleted IS NULL OR is_deleted = FALSE) LIMIT 1";
-                        java.util.Map<String, Object> result = jdbcTemplate.queryForMap(sql, tenantId);
+                        java.util.Map<String, Object> result =
+                                jdbcTemplate.queryForMap(sql, tenantId);
                         if (result != null && result.get("tenant_role_id") != null) {
                             tenantRoleId = (String) result.get("tenant_role_id");
                             roleName = (String) result.get("name_ko");
-                            log.debug("JDBC로 'Admin' 역할 찾음: tenantId={}, tenantRoleId={}, attempt={}", tenantId,
-                                    tenantRoleId, attempt);
+                            log.debug(
+                                    "JDBC로 'Admin' 역할 찾음: tenantId={}, tenantRoleId={}, attempt={}",
+                                    tenantId, tenantRoleId, attempt);
                             break; // 역할을 찾았으므로 루프 종료
                         }
                     } catch (org.springframework.dao.EmptyResultDataAccessException e) {
-                        log.debug("'Admin' 역할 없음, 다음 검색 시도: tenantId={}, attempt={}", tenantId, attempt);
+                        log.debug("'Admin' 역할 없음, 다음 검색 시도: tenantId={}, attempt={}", tenantId,
+                                attempt);
                     }
                 }
 
@@ -2029,16 +2037,19 @@ public class OnboardingServiceImpl implements OnboardingService {
                     try {
                         String sql =
                                 "SELECT tenant_role_id, name_ko FROM tenant_roles WHERE tenant_id = ? AND display_order = 1 AND (is_deleted IS NULL OR is_deleted = FALSE) LIMIT 1";
-                        java.util.Map<String, Object> result = jdbcTemplate.queryForMap(sql, tenantId);
+                        java.util.Map<String, Object> result =
+                                jdbcTemplate.queryForMap(sql, tenantId);
                         if (result != null && result.get("tenant_role_id") != null) {
                             tenantRoleId = (String) result.get("tenant_role_id");
                             roleName = (String) result.get("name_ko");
-                            log.debug("JDBC로 display_order=1 역할 찾음: tenantId={}, tenantRoleId={}, attempt={}",
+                            log.debug(
+                                    "JDBC로 display_order=1 역할 찾음: tenantId={}, tenantRoleId={}, attempt={}",
                                     tenantId, tenantRoleId, attempt);
                             break; // 역할을 찾았으므로 루프 종료
                         }
                     } catch (org.springframework.dao.EmptyResultDataAccessException e) {
-                        log.debug("display_order=1 역할 없음: tenantId={}, attempt={}", tenantId, attempt);
+                        log.debug("display_order=1 역할 없음: tenantId={}, attempt={}", tenantId,
+                                attempt);
                     }
                 }
 
@@ -2051,8 +2062,8 @@ public class OnboardingServiceImpl implements OnboardingService {
                 if (attempt < maxRetries) {
                     try {
                         Thread.sleep(retryDelay);
-                        log.debug("역할을 찾지 못함, 재시도 대기: tenantId={}, attempt={}/{}, delay={}ms", tenantId,
-                                attempt, maxRetries, retryDelay);
+                        log.debug("역할을 찾지 못함, 재시도 대기: tenantId={}, attempt={}/{}, delay={}ms",
+                                tenantId, attempt, maxRetries, retryDelay);
                     } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
                         log.warn("재시도 대기 중 인터럽트: tenantId={}", tenantId);

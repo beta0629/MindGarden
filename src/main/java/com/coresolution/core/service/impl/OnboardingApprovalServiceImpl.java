@@ -45,10 +45,8 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
     private final com.coresolution.core.service.TenantDashboardService tenantDashboardService;
 
     /**
-     * 온보딩 승인 프로세스 실행
-     * 1. 프로시저를 먼저 시도
-     * 2. 프로시저 실패 시 Java 코드로 단계별 처리 (fallback)
-     * 전체 프로세스를 하나의 트랜잭션으로 감싸서 실패 시 롤백 보장
+     * 온보딩 승인 프로세스 실행 1. 프로시저를 먼저 시도 2. 프로시저 실패 시 Java 코드로 단계별 처리 (fallback) 전체 프로세스를 하나의 트랜잭션으로 감싸서
+     * 실패 시 롤백 보장
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -71,9 +69,9 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
         // 1. 프로시저 먼저 시도
         try {
             log.info("📞 프로시저 호출 시도: ProcessOnboardingApproval");
-            Map<String, Object> procedureResult = processOnboardingApprovalLegacy(requestId, tenantId,
-                    tenantName, businessType, approvedBy, decisionNote, contactEmail,
-                    adminPasswordHash, subdomain);
+            Map<String, Object> procedureResult =
+                    processOnboardingApprovalLegacy(requestId, tenantId, tenantName, businessType,
+                            approvedBy, decisionNote, contactEmail, adminPasswordHash, subdomain);
             Boolean procedureSuccess = (Boolean) procedureResult.get("success");
             String procedureMessage = (String) procedureResult.get("message");
 
@@ -1231,29 +1229,59 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
             return true;
         }
 
-        // 기본 역할 생성 (CONSULTATION 또는 COUNSELING 업종 기준)
-        if ("CONSULTATION".equals(businessType) || "COUNSELING".equals(businessType)) {
+        // 기본 역할 생성 (CONSULTATION, COUNSELING, ACADEMY 업종 지원)
+        if ("CONSULTATION".equals(businessType) || "COUNSELING".equals(businessType)
+                || "ACADEMY".equals(businessType)) {
             try {
                 // 역할 템플릿 조회 (roleTemplateId 설정을 위해)
-                // 각 업종별 템플릿 사용 (COUNSELING은 COUNSELING 템플릿, CONSULTATION은 CONSULTATION 템플릿)
-                String templatePrefix =
-                        "COUNSELING".equals(businessType) ? "COUNSELING" : "CONSULTATION";
+                // 각 업종별 템플릿 사용
+                String templatePrefix;
+                if ("COUNSELING".equals(businessType)) {
+                    templatePrefix = "COUNSELING";
+                } else if ("ACADEMY".equals(businessType)) {
+                    templatePrefix = "ACADEMY";
+                } else {
+                    templatePrefix = "CONSULTATION";
+                }
 
+                // 업종별 역할 템플릿 조회
                 String directorTemplateId = roleTemplateRepository
                         .findByTemplateCodeAndIsDeletedFalse(templatePrefix + "_DIRECTOR")
-                        .map(rt -> rt.getRoleTemplateId()).orElse(null);
-                String counselorTemplateId = roleTemplateRepository
-                        .findByTemplateCodeAndIsDeletedFalse(templatePrefix + "_COUNSELOR")
-                        .map(rt -> rt.getRoleTemplateId()).orElse(null);
-                String clientTemplateId = roleTemplateRepository
-                        .findByTemplateCodeAndIsDeletedFalse(templatePrefix + "_CLIENT")
                         .map(rt -> rt.getRoleTemplateId()).orElse(null);
                 String staffTemplateId = roleTemplateRepository
                         .findByTemplateCodeAndIsDeletedFalse(templatePrefix + "_STAFF")
                         .map(rt -> rt.getRoleTemplateId()).orElse(null);
 
-                log.debug("역할 템플릿 ID 조회: director={}, counselor={}, client={}, staff={}",
-                        directorTemplateId, counselorTemplateId, clientTemplateId, staffTemplateId);
+                String counselorTemplateId = null;
+                String clientTemplateId = null;
+                String teacherTemplateId = null;
+                String studentTemplateId = null;
+                String parentTemplateId = null;
+
+                if ("ACADEMY".equals(businessType)) {
+                    // ACADEMY 업종: 원장, 교사, 학생, 학부모, 사무원
+                    teacherTemplateId = roleTemplateRepository
+                            .findByTemplateCodeAndIsDeletedFalse(templatePrefix + "_TEACHER")
+                            .map(rt -> rt.getRoleTemplateId()).orElse(null);
+                    studentTemplateId = roleTemplateRepository
+                            .findByTemplateCodeAndIsDeletedFalse(templatePrefix + "_STUDENT")
+                            .map(rt -> rt.getRoleTemplateId()).orElse(null);
+                    parentTemplateId = roleTemplateRepository
+                            .findByTemplateCodeAndIsDeletedFalse(templatePrefix + "_PARENT")
+                            .map(rt -> rt.getRoleTemplateId()).orElse(null);
+                    log.debug("역할 템플릿 ID 조회 (ACADEMY): director={}, teacher={}, student={}, parent={}, staff={}",
+                            directorTemplateId, teacherTemplateId, studentTemplateId, parentTemplateId, staffTemplateId);
+                } else {
+                    // CONSULTATION/COUNSELING 업종: 원장, 상담사, 내담자, 사무원
+                    counselorTemplateId = roleTemplateRepository
+                            .findByTemplateCodeAndIsDeletedFalse(templatePrefix + "_COUNSELOR")
+                            .map(rt -> rt.getRoleTemplateId()).orElse(null);
+                    clientTemplateId = roleTemplateRepository
+                            .findByTemplateCodeAndIsDeletedFalse(templatePrefix + "_CLIENT")
+                            .map(rt -> rt.getRoleTemplateId()).orElse(null);
+                    log.debug("역할 템플릿 ID 조회 (CONSULTATION/COUNSELING): director={}, counselor={}, client={}, staff={}",
+                            directorTemplateId, counselorTemplateId, clientTemplateId, staffTemplateId);
+                }
 
                 // INSERT 전에 역할 존재 여부를 다시 한 번 확인 (락 경합 최소화)
                 // 다른 트랜잭션이 이미 역할을 생성했을 수 있음
@@ -1275,29 +1303,60 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                 // 원자성 보장: 모든 역할을 하나의 배치 INSERT로 생성
                 // 실패 시 전체 롤백되어 부분적으로만 생성되는 것을 방지
                 // INSERT IGNORE를 사용하여 중복 삽입 시도 시 오류 대신 무시 (락 경합 최소화)
-                String insertSql =
-                        "INSERT IGNORE INTO tenant_roles (tenant_role_id, tenant_id, role_template_id, name, name_ko, name_en, "
-                                + "description, description_ko, description_en, "
-                                + "is_active, display_order, created_at, updated_at, "
-                                + "created_by, updated_by, is_deleted, version, lang_code) VALUES "
-                                + "(UUID(), ?, ?, '원장', '원장', 'Principal', "
-                                + "'상담소 원장 역할', '상담소 원장 역할', 'Principal role for consultation center', "
-                                + "TRUE, 1, NOW(), NOW(), ?, ?, FALSE, 0, 'ko'), "
-                                + "(UUID(), ?, ?, '상담사', '상담사', 'Consultant', "
-                                + "'상담사 역할', '상담사 역할', 'Consultant role', "
-                                + "TRUE, 2, NOW(), NOW(), ?, ?, FALSE, 0, 'ko'), "
-                                + "(UUID(), ?, ?, '내담자', '내담자', 'Client', "
-                                + "'내담자 역할', '내담자 역할', 'Client role', "
-                                + "TRUE, 3, NOW(), NOW(), ?, ?, FALSE, 0, 'ko'), "
-                                + "(UUID(), ?, ?, '사무원', '사무원', 'Staff', "
-                                + "'사무원 역할', '사무원 역할', 'Staff role', "
-                                + "TRUE, 4, NOW(), NOW(), ?, ?, FALSE, 0, 'ko')";
+                String insertSql;
+                int rowsAffected;
 
-                // 배치 INSERT 실행 (원자성 보장: 하나라도 실패하면 전체 롤백)
-                int rowsAffected = jdbcTemplate.update(insertSql, tenantId, directorTemplateId,
-                        approvedBy, approvedBy, tenantId, counselorTemplateId, approvedBy,
-                        approvedBy, tenantId, clientTemplateId, approvedBy, approvedBy, tenantId,
-                        staffTemplateId, approvedBy, approvedBy);
+                if ("ACADEMY".equals(businessType)) {
+                    // ACADEMY 업종: 원장, 교사, 학생, 학부모, 사무원
+                    insertSql = "INSERT IGNORE INTO tenant_roles (tenant_role_id, tenant_id, role_template_id, name, name_ko, name_en, "
+                            + "description, description_ko, description_en, "
+                            + "is_active, display_order, created_at, updated_at, "
+                            + "created_by, updated_by, is_deleted, version, lang_code) VALUES "
+                            + "(UUID(), ?, ?, '원장', '원장', 'Director', "
+                            + "'학원 원장 역할', '학원 원장 역할', 'Academy director role', "
+                            + "TRUE, 1, NOW(), NOW(), ?, ?, FALSE, 0, 'ko'), "
+                            + "(UUID(), ?, ?, '교사', '교사', 'Teacher', "
+                            + "'학원 교사 역할', '학원 교사 역할', 'Academy teacher role', "
+                            + "TRUE, 2, NOW(), NOW(), ?, ?, FALSE, 0, 'ko'), "
+                            + "(UUID(), ?, ?, '학생', '학생', 'Student', "
+                            + "'학원 학생 역할', '학원 학생 역할', 'Academy student role', "
+                            + "TRUE, 3, NOW(), NOW(), ?, ?, FALSE, 0, 'ko'), "
+                            + "(UUID(), ?, ?, '학부모', '학부모', 'Parent', "
+                            + "'학원 학부모 역할', '학원 학부모 역할', 'Academy parent role', "
+                            + "TRUE, 4, NOW(), NOW(), ?, ?, FALSE, 0, 'ko'), "
+                            + "(UUID(), ?, ?, '사무원', '사무원', 'Staff', "
+                            + "'학원 사무원 역할', '학원 사무원 역할', 'Academy staff role', "
+                            + "TRUE, 5, NOW(), NOW(), ?, ?, FALSE, 0, 'ko')";
+
+                    rowsAffected = jdbcTemplate.update(insertSql, tenantId, directorTemplateId,
+                            approvedBy, approvedBy, tenantId, teacherTemplateId, approvedBy,
+                            approvedBy, tenantId, studentTemplateId, approvedBy, approvedBy, tenantId,
+                            parentTemplateId, approvedBy, approvedBy, tenantId, staffTemplateId,
+                            approvedBy, approvedBy);
+                } else {
+                    // CONSULTATION/COUNSELING 업종: 원장, 상담사, 내담자, 사무원
+                    insertSql = "INSERT IGNORE INTO tenant_roles (tenant_role_id, tenant_id, role_template_id, name, name_ko, name_en, "
+                            + "description, description_ko, description_en, "
+                            + "is_active, display_order, created_at, updated_at, "
+                            + "created_by, updated_by, is_deleted, version, lang_code) VALUES "
+                            + "(UUID(), ?, ?, '원장', '원장', 'Principal', "
+                            + "'상담소 원장 역할', '상담소 원장 역할', 'Principal role for consultation center', "
+                            + "TRUE, 1, NOW(), NOW(), ?, ?, FALSE, 0, 'ko'), "
+                            + "(UUID(), ?, ?, '상담사', '상담사', 'Consultant', "
+                            + "'상담사 역할', '상담사 역할', 'Consultant role', "
+                            + "TRUE, 2, NOW(), NOW(), ?, ?, FALSE, 0, 'ko'), "
+                            + "(UUID(), ?, ?, '내담자', '내담자', 'Client', "
+                            + "'내담자 역할', '내담자 역할', 'Client role', "
+                            + "TRUE, 3, NOW(), NOW(), ?, ?, FALSE, 0, 'ko'), "
+                            + "(UUID(), ?, ?, '사무원', '사무원', 'Staff', "
+                            + "'사무원 역할', '사무원 역할', 'Staff role', "
+                            + "TRUE, 4, NOW(), NOW(), ?, ?, FALSE, 0, 'ko')";
+
+                    rowsAffected = jdbcTemplate.update(insertSql, tenantId, directorTemplateId,
+                            approvedBy, approvedBy, tenantId, counselorTemplateId, approvedBy,
+                            approvedBy, tenantId, clientTemplateId, approvedBy, approvedBy, tenantId,
+                            staffTemplateId, approvedBy, approvedBy);
+                }
 
                 // INSERT IGNORE는 중복 시 0개 행이 영향을 받을 수 있음
                 // 하지만 역할이 이미 존재하는 경우도 성공으로 처리
@@ -1341,8 +1400,8 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                 }
             }
         } else {
-            log.warn("지원하지 않는 업종: businessType={}", businessType);
-            return false;
+            log.error("지원하지 않는 업종: businessType={} - 즉시 실패 처리 (재시도 방지)", businessType);
+            return false; // 지원하지 않는 업종은 즉시 실패 (재시도 방지)
         }
     }
 

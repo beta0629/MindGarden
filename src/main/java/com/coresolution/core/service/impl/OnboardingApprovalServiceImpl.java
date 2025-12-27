@@ -1421,63 +1421,82 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
 
     /**
      * 처리 상태 업데이트 (Java 재시도 단계별 상태 표시용)
+     * 별도 트랜잭션으로 분리하여 메인 트랜잭션의 version 충돌 방지
      */
     private void updateProcessingStatus(java.util.UUID requestId, String step, String status,
             String message) {
         try {
-            OnboardingRequest request =
-                    onboardingRequestRepository.findById(requestId).orElse(null);
-            if (request == null) {
-                log.warn("온보딩 요청을 찾을 수 없어 상태 업데이트 실패: requestId={}", requestId);
-                return;
-            }
+            // 별도 트랜잭션에서 실행하여 메인 트랜잭션의 version 충돌 방지
+            org.springframework.transaction.support.TransactionTemplate transactionTemplate =
+                    new org.springframework.transaction.support.TransactionTemplate(transactionManager);
+            transactionTemplate.setPropagationBehavior(
+                    org.springframework.transaction.TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+            transactionTemplate.setIsolationLevel(
+                    org.springframework.transaction.TransactionDefinition.ISOLATION_READ_COMMITTED);
+            transactionTemplate.setTimeout(30); // 30초 타임아웃
 
-            Map<String, Object> statusMap = new HashMap<>();
-            String existingJson = request.getInitializationStatusJson();
-            if (existingJson != null && !existingJson.trim().isEmpty()) {
+            transactionTemplate.executeWithoutResult(status -> {
                 try {
-                    statusMap = objectMapper.readValue(existingJson,
-                            new TypeReference<Map<String, Object>>() {});
-                } catch (JsonProcessingException e) {
-                    log.warn("기존 상태 JSON 파싱 실패, 새로 생성: requestId={}, error={}", requestId,
-                            e.getMessage());
-                }
-            }
-
-            // 단계별 상태 업데이트
-            Map<String, Object> stepStatus = new HashMap<>();
-            stepStatus.put("status", status);
-            stepStatus.put("message", message != null ? message : "");
-            stepStatus.put("updatedAt", java.time.LocalDateTime.now().toString());
-            statusMap.put(step, stepStatus);
-
-            // 전체 진행률 계산
-            int totalSteps = 5; // PROCEDURE_START, TENANT_CREATE, ROLE_APPLY, ADMIN_CREATE,
-                                // DASHBOARD_CREATE
-            int completedSteps = 0;
-            String[] steps = {"PROCEDURE_START", "TENANT_CREATE", "ROLE_APPLY", "ADMIN_CREATE",
-                    "DASHBOARD_CREATE"};
-            for (String s : steps) {
-                if (statusMap.containsKey(s)) {
-                    @SuppressWarnings("unchecked")
-                    Map<String, Object> stepData = (Map<String, Object>) statusMap.get(s);
-                    if (stepData != null && "SUCCESS".equals(stepData.get("status"))) {
-                        completedSteps++;
+                    // 엔티티를 다시 조회하여 최신 버전 사용
+                    OnboardingRequest request =
+                            onboardingRequestRepository.findById(requestId).orElse(null);
+                    if (request == null) {
+                        log.warn("온보딩 요청을 찾을 수 없어 상태 업데이트 실패: requestId={}", requestId);
+                        return;
                     }
+
+                    Map<String, Object> statusMap = new HashMap<>();
+                    String existingJson = request.getInitializationStatusJson();
+                    if (existingJson != null && !existingJson.trim().isEmpty()) {
+                        try {
+                            statusMap = objectMapper.readValue(existingJson,
+                                    new TypeReference<Map<String, Object>>() {});
+                        } catch (JsonProcessingException e) {
+                            log.warn("기존 상태 JSON 파싱 실패, 새로 생성: requestId={}, error={}", requestId,
+                                    e.getMessage());
+                        }
+                    }
+
+                    // 단계별 상태 업데이트
+                    Map<String, Object> stepStatus = new HashMap<>();
+                    stepStatus.put("status", status);
+                    stepStatus.put("message", message != null ? message : "");
+                    stepStatus.put("updatedAt", java.time.LocalDateTime.now().toString());
+                    statusMap.put(step, stepStatus);
+
+                    // 전체 진행률 계산
+                    int totalSteps = 5; // PROCEDURE_START, TENANT_CREATE, ROLE_APPLY, ADMIN_CREATE,
+                                        // DASHBOARD_CREATE
+                    int completedSteps = 0;
+                    String[] steps = {"PROCEDURE_START", "TENANT_CREATE", "ROLE_APPLY", "ADMIN_CREATE",
+                            "DASHBOARD_CREATE"};
+                    for (String s : steps) {
+                        if (statusMap.containsKey(s)) {
+                            @SuppressWarnings("unchecked")
+                            Map<String, Object> stepData = (Map<String, Object>) statusMap.get(s);
+                            if (stepData != null && "SUCCESS".equals(stepData.get("status"))) {
+                                completedSteps++;
+                            }
+                        }
+                    }
+                    int progress = (int) ((completedSteps / (double) totalSteps) * 100);
+                    statusMap.put("progress", progress);
+                    statusMap.put("lastUpdated", java.time.LocalDateTime.now().toString());
+
+                    String statusJson = objectMapper.writeValueAsString(statusMap);
+                    request.setInitializationStatusJson(statusJson);
+                    onboardingRequestRepository.save(request);
+
+                    log.debug("처리 상태 업데이트: requestId={}, step={}, status={}, progress={}%", requestId,
+                            step, status, progress);
+                } catch (Exception e) {
+                    log.error("처리 상태 업데이트 실패: requestId={}, step={}, error={}", requestId, step,
+                            e.getMessage(), e);
+                    // 예외를 throw하지 않음 (상태 업데이트 실패가 전체 프로세스를 중단시키면 안 됨)
                 }
-            }
-            int progress = (int) ((completedSteps / (double) totalSteps) * 100);
-            statusMap.put("progress", progress);
-            statusMap.put("lastUpdated", java.time.LocalDateTime.now().toString());
-
-            String statusJson = objectMapper.writeValueAsString(statusMap);
-            request.setInitializationStatusJson(statusJson);
-            onboardingRequestRepository.save(request);
-
-            log.debug("처리 상태 업데이트: requestId={}, step={}, status={}, progress={}%", requestId, step,
-                    status, progress);
+            });
         } catch (Exception e) {
-            log.error("처리 상태 업데이트 실패: requestId={}, step={}, error={}", requestId, step,
+            log.error("처리 상태 업데이트 트랜잭션 실패: requestId={}, step={}, error={}", requestId, step,
                     e.getMessage(), e);
             // 예외를 throw하지 않음 (상태 업데이트 실패가 전체 프로세스를 중단시키면 안 됨)
         }

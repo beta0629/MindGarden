@@ -82,14 +82,9 @@ proc_label: BEGIN
     WHERE BINARY business_type = BINARY p_business_type
         AND is_active = TRUE
         AND is_deleted = FALSE
-        AND NOT EXISTS (
-            SELECT 1
-            FROM tenant_roles
-            WHERE BINARY tenant_id = BINARY p_tenant_id
-                AND BINARY role_template_id = BINARY role_templates.role_template_id
-                AND is_deleted = FALSE
-        )
-    ORDER BY display_order ASC;
+    ORDER BY display_order ASC
+    ON DUPLICATE KEY UPDATE
+        tenant_role_id = tenant_role_id; -- 중복 시 업데이트하지 않고 무시
     
     SET v_role_count = ROW_COUNT();
     

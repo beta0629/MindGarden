@@ -816,13 +816,15 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
 
                                 TransactionTemplate transactionTemplate =
                                         new TransactionTemplate(transactionManager);
+                                // PROPAGATION_REQUIRED 사용하여 메인 트랜잭션에 참여 (락 문제 최소화)
                                 transactionTemplate.setPropagationBehavior(
-                                        org.springframework.transaction.TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+                                        org.springframework.transaction.TransactionDefinition.PROPAGATION_REQUIRED);
                                 transactionTemplate.setIsolationLevel(
                                         org.springframework.transaction.TransactionDefinition.ISOLATION_READ_COMMITTED);
                                 // 락 타임아웃 설정 (초 단위, 기본값보다 길게)
                                 // 30초는 너무 짧아서 쿼리 실행 중단 오류 발생, 60초로 증가
-                                transactionTemplate.setTimeout(300); // 5분 타임아웃 (프로시저 실행 시간 고려, 안전 마진)
+                                transactionTemplate.setTimeout(300); // 5분 타임아웃 (프로시저 실행 시간 고려, 안전
+                                                                     // 마진)
 
                                 Boolean roleResult = null;
                                 try {

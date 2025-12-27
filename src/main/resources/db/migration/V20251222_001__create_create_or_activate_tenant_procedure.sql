@@ -47,7 +47,7 @@ proc_label: BEGIN
     -- 치명적 오류 시 롤백 및 종료
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
     BEGIN
-        ROLLBACK;
+        -- 주의: ROLLBACK 제거 - Java 코드에서 예외 발생 시 자동 롤백
         GET DIAGNOSTICS CONDITION 1
             v_error_message = MESSAGE_TEXT;
         SET p_success = FALSE;
@@ -108,7 +108,7 @@ proc_label: BEGIN
         END IF;
     END IF;
     
-    START TRANSACTION;
+    -- 주의: START TRANSACTION 제거 - Java 코드에서 @Transactional로 이미 트랜잭션이 시작됨
     
     IF p_business_type = 'CONSULTATION' THEN
         SET v_consultation_enabled = TRUE;
@@ -508,19 +508,14 @@ proc_label: BEGIN
           AND is_deleted = FALSE;
         
         IF v_duplicate_check = 0 THEN
-            ROLLBACK;
+            -- 주의: ROLLBACK 제거 - Java 코드에서 예외 발생 시 자동 롤백
             SET p_success = FALSE;
             SET p_message = CONCAT('테넌트 생성/활성화 검증 실패: ', p_tenant_id, '가 ACTIVE 상태로 설정되지 않았습니다.');
             LEAVE proc_label;
         END IF;
     END IF;
     
-    -- 모든 검증 통과 시 커밋
-    IF p_success = TRUE THEN
-        COMMIT;
-    ELSE
-        ROLLBACK;
-    END IF;
+    -- 주의: COMMIT/ROLLBACK 제거 - Java 코드에서 @Transactional로 트랜잭션 관리
 END;
 
 -- ============================================

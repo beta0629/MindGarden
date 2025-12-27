@@ -24,7 +24,7 @@ proc_label: BEGIN
     
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
     BEGIN
-        ROLLBACK;
+        -- 주의: ROLLBACK 제거 - Java 코드에서 예외 발생 시 자동 롤백
         GET DIAGNOSTICS CONDITION 1
             v_error_message = MESSAGE_TEXT;
         SET p_success = FALSE;
@@ -36,7 +36,7 @@ proc_label: BEGIN
     SET p_success = FALSE;
     SET p_message = '프로세스 시작';
     
-    START TRANSACTION;
+    -- 주의: START TRANSACTION 제거 - Java 코드에서 @Transactional로 이미 트랜잭션이 시작됨
     
     -- role_templates에서 해당 업종의 템플릿을 직접 INSERT (CURSOR 없이)
     INSERT INTO tenant_roles (
@@ -102,7 +102,7 @@ proc_label: BEGIN
         SET p_message = CONCAT('기본 역할 템플릿 적용 완료 (0개) - 업종 ', p_business_type, '에 대한 역할 템플릿이 없거나 이미 생성되었습니다.');
     END IF;
     
-    COMMIT;
+    -- 주의: COMMIT 제거 - Java 코드에서 @Transactional로 트랜잭션 관리
 END;
 
 -- ============================================

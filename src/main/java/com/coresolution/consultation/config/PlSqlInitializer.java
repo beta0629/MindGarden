@@ -38,12 +38,9 @@ public class PlSqlInitializer {
     public void init() {
         log.info("🚀 PL/SQL 프로시저 자동 초기화 시작 (ApplicationReadyEvent)");
 
-        // 프로시저는 Flyway 마이그레이션으로 관리되므로 Java 코드에서 생성 시도하지 않음
-        // Flyway 마이그레이션이 실패한 경우에만 수동으로 확인 필요
-        // 백업 메커니즘은 SQL 파일 파싱 오류로 인해 비활성화
-        log.info("ℹ️ 프로시저는 Flyway 마이그레이션으로 관리됩니다 (Java 코드 백업 메커니즘 비활성화)");
+        log.info("ℹ️ 프로시저는 Flyway 마이그레이션으로 관리됩니다 (백업 메커니즘 활성화)");
 
-        // 프로시저 존재 여부만 확인 (생성 시도하지 않음)
+        // 프로시저 존재 여부 확인 및 없으면 자동 생성
         try {
             Boolean procedureExists = jdbcTemplate
                     .queryForObject("SELECT COUNT(*) > 0 FROM information_schema.ROUTINES "
@@ -54,7 +51,8 @@ public class PlSqlInitializer {
             if (Boolean.TRUE.equals(procedureExists)) {
                 log.info("✅ CreateOrActivateTenant 프로시저가 존재합니다 (Flyway 마이그레이션으로 생성됨)");
             } else {
-                log.warn("⚠️ CreateOrActivateTenant 프로시저가 없습니다. Flyway 마이그레이션을 확인하세요.");
+                log.warn("⚠️ CreateOrActivateTenant 프로시저가 없습니다. 백업 메커니즘으로 자동 생성 시도...");
+                initializeCreateOrActivateTenantProcedureFromMigration();
             }
         } catch (Exception e) {
             log.warn("⚠️ 프로시저 존재 여부 확인 실패: {}", e.getMessage());
@@ -81,8 +79,85 @@ public class PlSqlInitializer {
     }
 
     /**
-     * CreateOrActivateTenant 프로시저 초기화 백업 메커니즘: Flyway 마이그레이션이 실패한 경우를 대비하여 Java 코드에서도 프로시저 생성 시도
+     * CreateOrActivateTenant 프로시저 초기화 (마이그레이션 파일에서 직접 읽기)
+     * Flyway가 DELIMITER를 제대로 처리하지 못해 프로시저가 생성되지 않는 경우를 대비
      */
+    private void initializeCreateOrActivateTenantProcedureFromMigration() {
+        try {
+            log.info("📝 CreateOrActivateTenant 프로시저 생성 시작 (마이그레이션 파일에서)");
+
+            // 마이그레이션 파일 읽기
+            ClassPathResource resource = new ClassPathResource(
+                    "db/migration/V20251222_001__create_create_or_activate_tenant_procedure.sql");
+            String sqlContent = new String(resource.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+
+            log.info("📄 마이그레이션 파일 크기: {} bytes", sqlContent.length());
+
+            // DELIMITER // 제거하고 프로시저 본문만 추출
+            String procedureSQL = extractProcedureFromMigration(sqlContent);
+
+            if (procedureSQL != null && !procedureSQL.trim().isEmpty()) {
+                // 프로시저 생성 실행
+                jdbcTemplate.execute(procedureSQL);
+                log.info("✅ CreateOrActivateTenant 프로시저 생성 완료 (백업 메커니즘)");
+
+                // 검증
+                verifyProcedureExists("CreateOrActivateTenant");
+            } else {
+                log.warn("⚠️ 프로시저 SQL을 추출할 수 없습니다");
+            }
+        } catch (Exception e) {
+            log.error("❌ CreateOrActivateTenant 프로시저 생성 실패: {}", e.getMessage(), e);
+        }
+    }
+
+    /**
+     * 마이그레이션 파일에서 프로시저 본문 추출 (DELIMITER 처리)
+     */
+    private String extractProcedureFromMigration(String sqlContent) {
+        try {
+            // DELIMITER // 제거
+            sqlContent = sqlContent.replaceAll("(?i)DELIMITER\\s+//", "");
+            sqlContent = sqlContent.replaceAll("(?i)DELIMITER\\s+;", "");
+
+            // DROP PROCEDURE IF EXISTS 제거 (이미 존재하면 삭제)
+            sqlContent = sqlContent.replaceAll("(?i)DROP\\s+PROCEDURE\\s+IF\\s+EXISTS[^;]*;?", "");
+
+            // CREATE PROCEDURE부터 END // 까지 추출
+            int createStart = sqlContent.indexOf("CREATE PROCEDURE");
+            if (createStart == -1) {
+                log.warn("⚠️ CREATE PROCEDURE를 찾을 수 없습니다");
+                return null;
+            }
+
+            // END // 찾기
+            int endIndex = sqlContent.indexOf("END //", createStart);
+            if (endIndex == -1) {
+                // END // 가 없으면 END; 찾기
+                endIndex = sqlContent.indexOf("END;", createStart);
+                if (endIndex == -1) {
+                    log.warn("⚠️ END를 찾을 수 없습니다");
+                    return null;
+                }
+                return sqlContent.substring(createStart, endIndex + 4).trim();
+            }
+
+            // END // 를 END;로 변경
+            String procedure = sqlContent.substring(createStart, endIndex + 6).trim();
+            procedure = procedure.replace("END //", "END;");
+            return procedure;
+
+        } catch (Exception e) {
+            log.error("❌ 프로시저 추출 실패: {}", e.getMessage(), e);
+            return null;
+        }
+    }
+
+    /**
+     * CreateOrActivateTenant 프로시저 초기화 백업 메커니즘: Flyway 마이그레이션이 실패한 경우를 대비하여 Java 코드에서도 프로시저 생성 시도
+     * @deprecated 마이그레이션 파일에서 직접 읽는 방식으로 대체됨
+     */
+    @Deprecated
     private void initializeCreateOrActivateTenantProcedure() {
         try {
             log.info("📝 CreateOrActivateTenant 프로시저 초기화 시작 (백업 메커니즘)");

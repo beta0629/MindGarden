@@ -2,6 +2,7 @@ package com.coresolution.consultation.config;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.sql.SQLException;
 import javax.sql.DataSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -73,6 +74,25 @@ public class PlSqlInitializer {
             }
         } catch (Exception e) {
             log.warn("⚠️ 프로시저 존재 여부 확인 실패: {}", e.getMessage());
+        }
+
+        // CreateTenantAdminAccount 프로시저 확인 및 초기화
+        try {
+            Boolean procedureExists = jdbcTemplate
+                    .queryForObject("SELECT COUNT(*) > 0 FROM information_schema.ROUTINES "
+                            + "WHERE ROUTINE_SCHEMA = DATABASE() "
+                            + "AND ROUTINE_NAME = 'CreateTenantAdminAccount' "
+                            + "AND ROUTINE_TYPE = 'PROCEDURE' "
+                            + "AND ROUTINE_DEFINITION IS NOT NULL", Boolean.class);
+
+            if (Boolean.TRUE.equals(procedureExists)) {
+                log.info("✅ CreateTenantAdminAccount 프로시저가 존재합니다 (Flyway 마이그레이션으로 생성됨)");
+            } else {
+                log.warn("⚠️ CreateTenantAdminAccount 프로시저가 없거나 정의가 NULL입니다. 백업 메커니즘으로 자동 생성 시도...");
+                initializeCreateTenantAdminAccountProcedureFromMigration();
+            }
+        } catch (Exception e) {
+            log.warn("⚠️ CreateTenantAdminAccount 프로시저 존재 여부 확인 실패: {}", e.getMessage());
         }
 
         log.info("✅ PL/SQL 프로시저 자동 초기화 완료 (확인만 수행)");
@@ -632,6 +652,56 @@ public class PlSqlInitializer {
         } catch (Exception e) {
             log.warn("⚠️ CreateDefaultTenantUsers 프로시저 초기화 실패 (Flyway에서 처리될 예정): {}",
                     e.getMessage());
+        }
+    }
+
+    /**
+     * CreateTenantAdminAccount 프로시저 초기화 (마이그레이션 파일에서 직접 읽기)
+     * Flyway가 DELIMITER를 제대로 처리하지 못해 프로시저가 생성되지 않는 경우를 대비
+     */
+    private void initializeCreateTenantAdminAccountProcedureFromMigration() {
+        try {
+            log.info("📝 CreateTenantAdminAccount 프로시저 생성 시작 (마이그레이션 파일에서)");
+
+            ClassPathResource resource = new ClassPathResource(
+                    "db/migration/V20251223_001__fix_create_tenant_admin_account_user_id.sql");
+            String sqlContent = new String(resource.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+
+            log.info("📄 마이그레이션 파일 크기: {} bytes", sqlContent.length());
+
+            String procedureSQL = extractProcedureFromMigration(sqlContent);
+
+            if (procedureSQL != null && !procedureSQL.trim().isEmpty()) {
+                // Connection을 직접 사용하여 프로시저 본문 전체를 하나의 구문으로 실행
+                try (java.sql.Connection conn = dataSource.getConnection()) {
+                    // DROP PROCEDURE IF EXISTS; 와 CREATE PROCEDURE ... END; 를 분리하여 실행
+                    String[] statements = procedureSQL.split("(?i)DROP\\s+PROCEDURE\\s+IF\\s+EXISTS[^;]*;");
+                    if (statements.length > 1) {
+                        try (java.sql.Statement stmt = conn.createStatement()) {
+                            stmt.execute("DROP PROCEDURE IF EXISTS CreateTenantAdminAccount;");
+                            log.info("🗑️ 기존 CreateTenantAdminAccount 프로시저 삭제 완료");
+                        } catch (SQLException e) {
+                            log.debug("CreateTenantAdminAccount 프로시저 삭제 중 오류 (무시 가능): {}", e.getMessage());
+                        }
+                        try (java.sql.Statement stmt = conn.createStatement()) {
+                            stmt.execute(statements[1].trim()); // CREATE PROCEDURE 부분 실행
+                            log.info("✅ CreateTenantAdminAccount 프로시저 생성 완료 (백업 메커니즘)");
+                        }
+                    } else {
+                        // DROP 문이 없는 경우, CREATE 문만 실행
+                        try (java.sql.Statement stmt = conn.createStatement()) {
+                            stmt.execute(procedureSQL);
+                            log.info("✅ CreateTenantAdminAccount 프로시저 생성 완료 (백업 메커니즘)");
+                        }
+                    }
+                }
+
+                verifyProcedureExists("CreateTenantAdminAccount");
+            } else {
+                log.warn("⚠️ 프로시저 SQL을 추출할 수 없습니다");
+            }
+        } catch (Exception e) {
+            log.error("❌ CreateTenantAdminAccount 프로시저 생성 실패: {}", e.getMessage(), e);
         }
     }
 }

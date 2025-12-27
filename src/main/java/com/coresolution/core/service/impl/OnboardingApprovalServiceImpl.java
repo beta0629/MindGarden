@@ -1234,7 +1234,8 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
         }
 
         // 기본 역할 생성 (CONSULTATION, COUNSELING, ACADEMY 업종 지원)
-        if ("CONSULTATION".equals(businessType) || "COUNSELING".equals(businessType) || "ACADEMY".equals(businessType)) {
+        if ("CONSULTATION".equals(businessType) || "COUNSELING".equals(businessType)
+                || "ACADEMY".equals(businessType)) {
             try {
                 // 역할 템플릿 조회 (roleTemplateId 설정을 위해)
                 // 각 업종별 템플릿 사용
@@ -1259,7 +1260,7 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                 String staffTemplateId = roleTemplateRepository
                         .findByTemplateCodeAndIsDeletedFalse(templatePrefix + "_STAFF")
                         .map(rt -> rt.getRoleTemplateId()).orElse(null);
-                
+
                 // ACADEMY 업종의 경우 추가 템플릿 조회
                 String teacherTemplateId = null;
                 String parentTemplateId = null;
@@ -1272,8 +1273,10 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                             .map(rt -> rt.getRoleTemplateId()).orElse(null);
                 }
 
-                log.debug("역할 템플릿 ID 조회: director={}, counselor={}, client={}, staff={}, teacher={}, parent={}",
-                        directorTemplateId, counselorTemplateId, clientTemplateId, staffTemplateId, teacherTemplateId, parentTemplateId);
+                log.debug(
+                        "역할 템플릿 ID 조회: director={}, counselor={}, client={}, staff={}, teacher={}, parent={}",
+                        directorTemplateId, counselorTemplateId, clientTemplateId, staffTemplateId,
+                        teacherTemplateId, parentTemplateId);
 
                 // INSERT 전에 역할 존재 여부를 다시 한 번 확인 (락 경합 최소화)
                 // 다른 트랜잭션이 이미 역할을 생성했을 수 있음
@@ -1297,61 +1300,59 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                 // INSERT IGNORE를 사용하여 중복 삽입 시도 시 오류 대신 무시 (락 경합 최소화)
                 String insertSql;
                 Object[] params;
-                
+
                 if ("ACADEMY".equals(businessType)) {
                     // ACADEMY 업종: 원장, 교사, 학생, 학부모, 사무원
-                    insertSql = "INSERT IGNORE INTO tenant_roles (tenant_role_id, tenant_id, role_template_id, name, name_ko, name_en, "
-                            + "description, description_ko, description_en, "
-                            + "is_active, display_order, created_at, updated_at, "
-                            + "created_by, updated_by, is_deleted, version, lang_code) VALUES "
-                            + "(UUID(), ?, ?, '원장', '원장', 'Director', "
-                            + "'학원 원장 역할', '학원 원장 역할', 'Director role for academy', "
-                            + "TRUE, 1, NOW(), NOW(), ?, ?, FALSE, 0, 'ko'), "
-                            + "(UUID(), ?, ?, '교사', '교사', 'Teacher', "
-                            + "'교사 역할', '교사 역할', 'Teacher role', "
-                            + "TRUE, 2, NOW(), NOW(), ?, ?, FALSE, 0, 'ko'), "
-                            + "(UUID(), ?, ?, '학생', '학생', 'Student', "
-                            + "'학생 역할', '학생 역할', 'Student role', "
-                            + "TRUE, 3, NOW(), NOW(), ?, ?, FALSE, 0, 'ko'), "
-                            + "(UUID(), ?, ?, '학부모', '학부모', 'Parent', "
-                            + "'학부모 역할', '학부모 역할', 'Parent role', "
-                            + "TRUE, 4, NOW(), NOW(), ?, ?, FALSE, 0, 'ko'), "
-                            + "(UUID(), ?, ?, '사무원', '사무원', 'Staff', "
-                            + "'사무원 역할', '사무원 역할', 'Staff role', "
-                            + "TRUE, 5, NOW(), NOW(), ?, ?, FALSE, 0, 'ko')";
-                    
-                    params = new Object[]{
-                        tenantId, directorTemplateId, approvedBy, approvedBy,
-                        tenantId, teacherTemplateId, approvedBy, approvedBy,
-                        tenantId, clientTemplateId, approvedBy, approvedBy,
-                        tenantId, parentTemplateId, approvedBy, approvedBy,
-                        tenantId, staffTemplateId, approvedBy, approvedBy
-                    };
+                    insertSql =
+                            "INSERT IGNORE INTO tenant_roles (tenant_role_id, tenant_id, role_template_id, name, name_ko, name_en, "
+                                    + "description, description_ko, description_en, "
+                                    + "is_active, display_order, created_at, updated_at, "
+                                    + "created_by, updated_by, is_deleted, version, lang_code) VALUES "
+                                    + "(UUID(), ?, ?, '원장', '원장', 'Director', "
+                                    + "'학원 원장 역할', '학원 원장 역할', 'Director role for academy', "
+                                    + "TRUE, 1, NOW(), NOW(), ?, ?, FALSE, 0, 'ko'), "
+                                    + "(UUID(), ?, ?, '교사', '교사', 'Teacher', "
+                                    + "'교사 역할', '교사 역할', 'Teacher role', "
+                                    + "TRUE, 2, NOW(), NOW(), ?, ?, FALSE, 0, 'ko'), "
+                                    + "(UUID(), ?, ?, '학생', '학생', 'Student', "
+                                    + "'학생 역할', '학생 역할', 'Student role', "
+                                    + "TRUE, 3, NOW(), NOW(), ?, ?, FALSE, 0, 'ko'), "
+                                    + "(UUID(), ?, ?, '학부모', '학부모', 'Parent', "
+                                    + "'학부모 역할', '학부모 역할', 'Parent role', "
+                                    + "TRUE, 4, NOW(), NOW(), ?, ?, FALSE, 0, 'ko'), "
+                                    + "(UUID(), ?, ?, '사무원', '사무원', 'Staff', "
+                                    + "'사무원 역할', '사무원 역할', 'Staff role', "
+                                    + "TRUE, 5, NOW(), NOW(), ?, ?, FALSE, 0, 'ko')";
+
+                    params = new Object[] {tenantId, directorTemplateId, approvedBy, approvedBy,
+                            tenantId, teacherTemplateId, approvedBy, approvedBy, tenantId,
+                            clientTemplateId, approvedBy, approvedBy, tenantId, parentTemplateId,
+                            approvedBy, approvedBy, tenantId, staffTemplateId, approvedBy,
+                            approvedBy};
                 } else {
                     // CONSULTATION 또는 COUNSELING 업종: 원장, 상담사, 내담자, 사무원
-                    insertSql = "INSERT IGNORE INTO tenant_roles (tenant_role_id, tenant_id, role_template_id, name, name_ko, name_en, "
-                            + "description, description_ko, description_en, "
-                            + "is_active, display_order, created_at, updated_at, "
-                            + "created_by, updated_by, is_deleted, version, lang_code) VALUES "
-                            + "(UUID(), ?, ?, '원장', '원장', 'Principal', "
-                            + "'상담소 원장 역할', '상담소 원장 역할', 'Principal role for consultation center', "
-                            + "TRUE, 1, NOW(), NOW(), ?, ?, FALSE, 0, 'ko'), "
-                            + "(UUID(), ?, ?, '상담사', '상담사', 'Consultant', "
-                            + "'상담사 역할', '상담사 역할', 'Consultant role', "
-                            + "TRUE, 2, NOW(), NOW(), ?, ?, FALSE, 0, 'ko'), "
-                            + "(UUID(), ?, ?, '내담자', '내담자', 'Client', "
-                            + "'내담자 역할', '내담자 역할', 'Client role', "
-                            + "TRUE, 3, NOW(), NOW(), ?, ?, FALSE, 0, 'ko'), "
-                            + "(UUID(), ?, ?, '사무원', '사무원', 'Staff', "
-                            + "'사무원 역할', '사무원 역할', 'Staff role', "
-                            + "TRUE, 4, NOW(), NOW(), ?, ?, FALSE, 0, 'ko')";
-                    
-                    params = new Object[]{
-                        tenantId, directorTemplateId, approvedBy, approvedBy,
-                        tenantId, counselorTemplateId, approvedBy, approvedBy,
-                        tenantId, clientTemplateId, approvedBy, approvedBy,
-                        tenantId, staffTemplateId, approvedBy, approvedBy
-                    };
+                    insertSql =
+                            "INSERT IGNORE INTO tenant_roles (tenant_role_id, tenant_id, role_template_id, name, name_ko, name_en, "
+                                    + "description, description_ko, description_en, "
+                                    + "is_active, display_order, created_at, updated_at, "
+                                    + "created_by, updated_by, is_deleted, version, lang_code) VALUES "
+                                    + "(UUID(), ?, ?, '원장', '원장', 'Principal', "
+                                    + "'상담소 원장 역할', '상담소 원장 역할', 'Principal role for consultation center', "
+                                    + "TRUE, 1, NOW(), NOW(), ?, ?, FALSE, 0, 'ko'), "
+                                    + "(UUID(), ?, ?, '상담사', '상담사', 'Consultant', "
+                                    + "'상담사 역할', '상담사 역할', 'Consultant role', "
+                                    + "TRUE, 2, NOW(), NOW(), ?, ?, FALSE, 0, 'ko'), "
+                                    + "(UUID(), ?, ?, '내담자', '내담자', 'Client', "
+                                    + "'내담자 역할', '내담자 역할', 'Client role', "
+                                    + "TRUE, 3, NOW(), NOW(), ?, ?, FALSE, 0, 'ko'), "
+                                    + "(UUID(), ?, ?, '사무원', '사무원', 'Staff', "
+                                    + "'사무원 역할', '사무원 역할', 'Staff role', "
+                                    + "TRUE, 4, NOW(), NOW(), ?, ?, FALSE, 0, 'ko')";
+
+                    params = new Object[] {tenantId, directorTemplateId, approvedBy, approvedBy,
+                            tenantId, counselorTemplateId, approvedBy, approvedBy, tenantId,
+                            clientTemplateId, approvedBy, approvedBy, tenantId, staffTemplateId,
+                            approvedBy, approvedBy};
                 }
 
                 // 배치 INSERT 실행 (원자성 보장: 하나라도 실패하면 전체 롤백)

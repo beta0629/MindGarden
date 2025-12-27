@@ -50,7 +50,7 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
      * 실패 시 롤백 보장
      */
     @Override
-    @Transactional(rollbackFor = Exception.class, timeout = 300) // 5분 타임아웃
+    @Transactional(rollbackFor = Exception.class, timeout = 600) // 10분 타임아웃 (안전 마진)
     public Map<String, Object> processOnboardingApproval(java.util.UUID requestId, String tenantId,
             String tenantName, String businessType, String approvedBy, String decisionNote,
             String contactEmail, String adminPasswordHash, String subdomain) {
@@ -552,7 +552,7 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                     "{CALL ProcessOnboardingApproval(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}")) {
 
                 // 프로시저 실행 타임아웃 설정 (초 단위)
-                cs.setQueryTimeout(180); // 3분 타임아웃 (프로시저 실행 시간 고려)
+                cs.setQueryTimeout(300); // 5분 타임아웃 (프로시저 실행 시간 고려, 안전 마진)
 
                 // IN 파라미터 설정 - UUID를 BINARY(16)으로 변환
                 byte[] uuidBytes = convertUuidToBytes(requestId);

@@ -497,7 +497,10 @@ public class PlSqlInitializer {
     /**
      * 안전장치 1: 프로시저 존재 여부 검증
      */
-    private void verifyProcedureExists(String procedureName) {
+    /**
+     * 프로시저 존재 여부 확인 (boolean 반환)
+     */
+    private boolean verifyProcedureExists(String procedureName) {
         try {
             Boolean exists =
                     jdbcTemplate.queryForObject(
@@ -508,11 +511,14 @@ public class PlSqlInitializer {
 
             if (Boolean.TRUE.equals(exists)) {
                 log.info("✅ 프로시저 존재 확인 완료: {}", procedureName);
+                return true;
             } else {
                 log.error("❌ 프로시저가 존재하지 않습니다: {}", procedureName);
+                return false;
             }
         } catch (Exception e) {
             log.error("❌ 프로시저 존재 여부 확인 실패: {} - {}", procedureName, e.getMessage());
+            return false;
         }
     }
 
@@ -614,6 +620,7 @@ public class PlSqlInitializer {
 
     /**
      * ProcessOnboardingApproval 프로시저 강제 생성 (마이그레이션 파일에서 직접 읽기)
+     * 프로시저 생성 실패 시 애플리케이션 시작 차단
      */
     private void initializeProcessOnboardingApprovalProcedure() {
         try {
@@ -623,51 +630,105 @@ public class PlSqlInitializer {
                     "db/migration/V20251225_004__force_recreate_process_onboarding_approval.sql");
             String sqlContent = new String(resource.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
 
-            // 주석 제거
-            sqlContent = sqlContent.replaceAll("--[^\n]*", "");
+            // 주석 제거 (단일 라인 주석만)
+            sqlContent = sqlContent.replaceAll("--[^\n]*\n", "\n");
+            // 블록 주석 제거
             sqlContent = sqlContent.replaceAll("/\\*[\\s\\S]*?\\*/", "");
 
             // CREATE PROCEDURE부터 END;까지 추출
             int createStart = sqlContent.indexOf("CREATE PROCEDURE");
             if (createStart == -1) {
-                log.warn("⚠️ CREATE PROCEDURE를 찾을 수 없습니다");
-                return;
+                String errorMsg = "❌ CREATE PROCEDURE를 찾을 수 없습니다. 프로시저 생성 실패로 애플리케이션 시작 불가";
+                log.error(errorMsg);
+                throw new IllegalStateException(errorMsg);
             }
 
             // END; 찾기 (마지막 END;)
             int endIndex = sqlContent.lastIndexOf("END;");
             if (endIndex == -1 || endIndex < createStart) {
-                log.warn("⚠️ END;를 찾을 수 없습니다");
-                return;
+                String errorMsg = "❌ END;를 찾을 수 없습니다. 프로시저 생성 실패로 애플리케이션 시작 불가";
+                log.error(errorMsg);
+                throw new IllegalStateException(errorMsg);
             }
 
             String procedureSQL = sqlContent.substring(createStart, endIndex + 4).trim();
 
-            if (procedureSQL != null && !procedureSQL.trim().isEmpty()) {
-                try (java.sql.Connection conn = dataSource.getConnection()) {
-                    // allowMultiQueries=true 설정 확인
-                    String url = conn.getMetaData().getURL();
-                    if (!url.contains("allowMultiQueries=true")) {
-                        log.warn("⚠️ allowMultiQueries=true가 설정되지 않았습니다. 프로시저 생성이 실패할 수 있습니다.");
-                    }
-
-                    try (java.sql.Statement stmt = conn.createStatement()) {
-                        stmt.execute("DROP PROCEDURE IF EXISTS ProcessOnboardingApproval;");
-                        log.info("🗑️ 기존 ProcessOnboardingApproval 프로시저 삭제 완료");
-                    } catch (SQLException e) {
-                        log.debug("ProcessOnboardingApproval 프로시저 삭제 중 오류 (무시 가능): {}", e.getMessage());
-                    }
-                    try (java.sql.Statement stmt = conn.createStatement()) {
-                        stmt.execute(procedureSQL);
-                        log.info("✅ ProcessOnboardingApproval 프로시저 생성 완료");
-                    }
-                }
-                verifyProcedureExists("ProcessOnboardingApproval");
-            } else {
-                log.warn("⚠️ ProcessOnboardingApproval 프로시저 SQL을 추출할 수 없습니다");
+            if (procedureSQL == null || procedureSQL.trim().isEmpty()) {
+                String errorMsg = "❌ ProcessOnboardingApproval 프로시저 SQL을 추출할 수 없습니다. 프로시저 생성 실패로 애플리케이션 시작 불가";
+                log.error(errorMsg);
+                throw new IllegalStateException(errorMsg);
             }
+
+            // 프로시저 생성 실행
+            try (java.sql.Connection conn = dataSource.getConnection()) {
+                // DROP 먼저 실행
+                try (java.sql.Statement stmt = conn.createStatement()) {
+                    stmt.execute("DROP PROCEDURE IF EXISTS ProcessOnboardingApproval;");
+                    log.info("🗑️ 기존 ProcessOnboardingApproval 프로시저 삭제 완료");
+                } catch (SQLException e) {
+                    log.debug("ProcessOnboardingApproval 프로시저 삭제 중 오류 (무시 가능): {}", e.getMessage());
+                }
+
+                // CREATE 실행
+                try (java.sql.Statement stmt = conn.createStatement()) {
+                    stmt.execute(procedureSQL);
+                    log.info("✅ ProcessOnboardingApproval 프로시저 생성 완료");
+                } catch (SQLException e) {
+                    String errorMsg = String.format("❌ ProcessOnboardingApproval 프로시저 생성 실패: %s. 프로시저 생성 실패로 애플리케이션 시작 불가", e.getMessage());
+                    log.error(errorMsg);
+                    log.error("프로시저 SQL (처음 500자): {}", procedureSQL.substring(0, Math.min(500, procedureSQL.length())));
+                    throw new IllegalStateException(errorMsg, e);
+                }
+            }
+
+            // 프로시저 생성 검증 (필수)
+            if (!verifyProcedureExists("ProcessOnboardingApproval")) {
+                String errorMsg = "❌ ProcessOnboardingApproval 프로시저가 생성되지 않았습니다. 프로시저 생성 실패로 애플리케이션 시작 불가";
+                log.error(errorMsg);
+                throw new IllegalStateException(errorMsg);
+            }
+
+            // 프로시저 파라미터 검증 (필수)
+            if (!verifyProcedureParameters("ProcessOnboardingApproval", 11)) {
+                String errorMsg = "❌ ProcessOnboardingApproval 프로시저 파라미터가 올바르지 않습니다. 프로시저 생성 실패로 애플리케이션 시작 불가";
+                log.error(errorMsg);
+                throw new IllegalStateException(errorMsg);
+            }
+
+            log.info("✅ ProcessOnboardingApproval 프로시저 생성 및 검증 완료");
+        } catch (IllegalStateException e) {
+            // 프로시저 생성 실패는 치명적 오류이므로 애플리케이션 시작 차단
+            log.error("==========================================");
+            log.error("❌❌❌ ProcessOnboardingApproval 프로시저 생성 실패 - 애플리케이션 시작 불가");
+            log.error("==========================================");
+            throw e; // 예외를 다시 throw하여 애플리케이션 시작 차단
         } catch (Exception e) {
-            log.error("❌ ProcessOnboardingApproval 프로시저 생성 실패: {}", e.getMessage(), e);
+            String errorMsg = String.format("❌ ProcessOnboardingApproval 프로시저 생성 중 예외 발생: %s. 프로시저 생성 실패로 애플리케이션 시작 불가", e.getMessage());
+            log.error(errorMsg, e);
+            throw new IllegalStateException(errorMsg, e);
+        }
+    }
+
+    /**
+     * 프로시저 파라미터 개수 검증
+     */
+    private boolean verifyProcedureParameters(String procedureName, int expectedParamCount) {
+        try {
+            Integer paramCount = jdbcTemplate.queryForObject(
+                    "SELECT COUNT(*) FROM information_schema.PARAMETERS " +
+                            "WHERE SPECIFIC_SCHEMA = DATABASE() AND SPECIFIC_NAME = ?",
+                    Integer.class, procedureName);
+            
+            boolean isValid = paramCount != null && paramCount == expectedParamCount;
+            if (isValid) {
+                log.info("✅ {} 프로시저 파라미터 검증 성공: {}개 (예상: {}개)", procedureName, paramCount, expectedParamCount);
+            } else {
+                log.error("❌ {} 프로시저 파라미터 검증 실패: {}개 (예상: {}개)", procedureName, paramCount, expectedParamCount);
+            }
+            return isValid;
+        } catch (Exception e) {
+            log.error("❌ {} 프로시저 파라미터 검증 중 오류: {}", procedureName, e.getMessage());
+            return false;
         }
     }
 

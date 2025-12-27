@@ -988,6 +988,13 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
 
             result.put("success", false);
             result.put("message", "온보딩 승인 프로세스 중 오류 발생: " + e.getMessage());
+        } finally {
+            // 주의: DataSourceUtils.getConnection()으로 가져온 Connection은
+            // DataSourceUtils.releaseConnection()으로 해제해야 함
+            if (connection != null) {
+                org.springframework.jdbc.datasource.DataSourceUtils.releaseConnection(connection, dataSource);
+                log.debug("Connection 해제 완료");
+            }
         }
 
         return result;

@@ -1944,94 +1944,125 @@ public class OnboardingServiceImpl implements OnboardingService {
 
         try {
             // JDBC를 사용하여 역할 직접 조회 (REQUIRES_NEW 트랜잭션에서도 메인 트랜잭션의 데이터 조회 가능)
+            // 메인 트랜잭션이 아직 커밋되지 않았을 수 있으므로 재시도 로직 추가
             String tenantRoleId = null;
             String roleName = null;
+            int maxRetries = 5;
+            long retryDelay = 500; // 500ms
 
-            // 1. "원장" 역할 찾기 (CONSULTATION/COUNSELING 업종)
-            try {
-                String sql =
-                        "SELECT tenant_role_id, name_ko FROM tenant_roles WHERE tenant_id = ? AND name_ko = '원장' AND (is_deleted IS NULL OR is_deleted = FALSE) LIMIT 1";
-                java.util.Map<String, Object> result = jdbcTemplate.queryForMap(sql, tenantId);
-                if (result != null && result.get("tenant_role_id") != null) {
-                    tenantRoleId = (String) result.get("tenant_role_id");
-                    roleName = (String) result.get("name_ko");
-                    log.debug("JDBC로 '원장' 역할 찾음: tenantId={}, tenantRoleId={}", tenantId,
-                            tenantRoleId);
-                }
-            } catch (org.springframework.dao.EmptyResultDataAccessException e) {
-                log.debug("'원장' 역할 없음, 다음 검색 시도: tenantId={}", tenantId);
-            }
+            for (int attempt = 1; attempt <= maxRetries; attempt++) {
+                tenantRoleId = null;
+                roleName = null;
 
-            // 2. "관리자" 역할 찾기
-            if (tenantRoleId == null) {
+                // 1. "원장" 역할 찾기 (CONSULTATION/COUNSELING 업종)
                 try {
                     String sql =
-                            "SELECT tenant_role_id, name_ko FROM tenant_roles WHERE tenant_id = ? AND name_ko = '관리자' AND (is_deleted IS NULL OR is_deleted = FALSE) LIMIT 1";
+                            "SELECT tenant_role_id, name_ko FROM tenant_roles WHERE tenant_id = ? AND name_ko = '원장' AND (is_deleted IS NULL OR is_deleted = FALSE) LIMIT 1";
                     java.util.Map<String, Object> result = jdbcTemplate.queryForMap(sql, tenantId);
                     if (result != null && result.get("tenant_role_id") != null) {
                         tenantRoleId = (String) result.get("tenant_role_id");
                         roleName = (String) result.get("name_ko");
-                        log.debug("JDBC로 '관리자' 역할 찾음: tenantId={}, tenantRoleId={}", tenantId,
-                                tenantRoleId);
+                        log.debug("JDBC로 '원장' 역할 찾음: tenantId={}, tenantRoleId={}, attempt={}", tenantId,
+                                tenantRoleId, attempt);
+                        break; // 역할을 찾았으므로 루프 종료
                     }
                 } catch (org.springframework.dao.EmptyResultDataAccessException e) {
-                    log.debug("'관리자' 역할 없음, 다음 검색 시도: tenantId={}", tenantId);
+                    log.debug("'원장' 역할 없음, 다음 검색 시도: tenantId={}, attempt={}", tenantId, attempt);
+                }
+
+                // 2. "관리자" 역할 찾기
+                if (tenantRoleId == null) {
+                    try {
+                        String sql =
+                                "SELECT tenant_role_id, name_ko FROM tenant_roles WHERE tenant_id = ? AND name_ko = '관리자' AND (is_deleted IS NULL OR is_deleted = FALSE) LIMIT 1";
+                        java.util.Map<String, Object> result = jdbcTemplate.queryForMap(sql, tenantId);
+                        if (result != null && result.get("tenant_role_id") != null) {
+                            tenantRoleId = (String) result.get("tenant_role_id");
+                            roleName = (String) result.get("name_ko");
+                            log.debug("JDBC로 '관리자' 역할 찾음: tenantId={}, tenantRoleId={}, attempt={}", tenantId,
+                                    tenantRoleId, attempt);
+                            break; // 역할을 찾았으므로 루프 종료
+                        }
+                    } catch (org.springframework.dao.EmptyResultDataAccessException e) {
+                        log.debug("'관리자' 역할 없음, 다음 검색 시도: tenantId={}, attempt={}", tenantId, attempt);
+                    }
+                }
+
+                // 3. name_en이 "Director"인 역할 찾기
+                if (tenantRoleId == null) {
+                    try {
+                        String sql =
+                                "SELECT tenant_role_id, name_ko FROM tenant_roles WHERE tenant_id = ? AND name_en = 'Director' AND (is_deleted IS NULL OR is_deleted = FALSE) LIMIT 1";
+                        java.util.Map<String, Object> result = jdbcTemplate.queryForMap(sql, tenantId);
+                        if (result != null && result.get("tenant_role_id") != null) {
+                            tenantRoleId = (String) result.get("tenant_role_id");
+                            roleName = (String) result.get("name_ko");
+                            log.debug("JDBC로 'Director' 역할 찾음: tenantId={}, tenantRoleId={}, attempt={}", tenantId,
+                                    tenantRoleId, attempt);
+                            break; // 역할을 찾았으므로 루프 종료
+                        }
+                    } catch (org.springframework.dao.EmptyResultDataAccessException e) {
+                        log.debug("'Director' 역할 없음, 다음 검색 시도: tenantId={}, attempt={}", tenantId, attempt);
+                    }
+                }
+
+                // 4. name_en이 "Admin"인 역할 찾기
+                if (tenantRoleId == null) {
+                    try {
+                        String sql =
+                                "SELECT tenant_role_id, name_ko FROM tenant_roles WHERE tenant_id = ? AND name_en = 'Admin' AND (is_deleted IS NULL OR is_deleted = FALSE) LIMIT 1";
+                        java.util.Map<String, Object> result = jdbcTemplate.queryForMap(sql, tenantId);
+                        if (result != null && result.get("tenant_role_id") != null) {
+                            tenantRoleId = (String) result.get("tenant_role_id");
+                            roleName = (String) result.get("name_ko");
+                            log.debug("JDBC로 'Admin' 역할 찾음: tenantId={}, tenantRoleId={}, attempt={}", tenantId,
+                                    tenantRoleId, attempt);
+                            break; // 역할을 찾았으므로 루프 종료
+                        }
+                    } catch (org.springframework.dao.EmptyResultDataAccessException e) {
+                        log.debug("'Admin' 역할 없음, 다음 검색 시도: tenantId={}, attempt={}", tenantId, attempt);
+                    }
+                }
+
+                // 5. Fallback: display_order=1인 역할 찾기
+                if (tenantRoleId == null) {
+                    try {
+                        String sql =
+                                "SELECT tenant_role_id, name_ko FROM tenant_roles WHERE tenant_id = ? AND display_order = 1 AND (is_deleted IS NULL OR is_deleted = FALSE) LIMIT 1";
+                        java.util.Map<String, Object> result = jdbcTemplate.queryForMap(sql, tenantId);
+                        if (result != null && result.get("tenant_role_id") != null) {
+                            tenantRoleId = (String) result.get("tenant_role_id");
+                            roleName = (String) result.get("name_ko");
+                            log.debug("JDBC로 display_order=1 역할 찾음: tenantId={}, tenantRoleId={}, attempt={}",
+                                    tenantId, tenantRoleId, attempt);
+                            break; // 역할을 찾았으므로 루프 종료
+                        }
+                    } catch (org.springframework.dao.EmptyResultDataAccessException e) {
+                        log.debug("display_order=1 역할 없음: tenantId={}, attempt={}", tenantId, attempt);
+                    }
+                }
+
+                // 역할을 찾았으면 루프 종료
+                if (tenantRoleId != null) {
+                    break;
+                }
+
+                // 마지막 시도가 아니면 대기 후 재시도
+                if (attempt < maxRetries) {
+                    try {
+                        Thread.sleep(retryDelay);
+                        log.debug("역할을 찾지 못함, 재시도 대기: tenantId={}, attempt={}/{}, delay={}ms", tenantId,
+                                attempt, maxRetries, retryDelay);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        log.warn("재시도 대기 중 인터럽트: tenantId={}", tenantId);
+                        break;
+                    }
                 }
             }
 
-            // 3. name_en이 "Director"인 역할 찾기
             if (tenantRoleId == null) {
-                try {
-                    String sql =
-                            "SELECT tenant_role_id, name_ko FROM tenant_roles WHERE tenant_id = ? AND name_en = 'Director' AND (is_deleted IS NULL OR is_deleted = FALSE) LIMIT 1";
-                    java.util.Map<String, Object> result = jdbcTemplate.queryForMap(sql, tenantId);
-                    if (result != null && result.get("tenant_role_id") != null) {
-                        tenantRoleId = (String) result.get("tenant_role_id");
-                        roleName = (String) result.get("name_ko");
-                        log.debug("JDBC로 'Director' 역할 찾음: tenantId={}, tenantRoleId={}", tenantId,
-                                tenantRoleId);
-                    }
-                } catch (org.springframework.dao.EmptyResultDataAccessException e) {
-                    log.debug("'Director' 역할 없음, 다음 검색 시도: tenantId={}", tenantId);
-                }
-            }
-
-            // 4. name_en이 "Admin"인 역할 찾기
-            if (tenantRoleId == null) {
-                try {
-                    String sql =
-                            "SELECT tenant_role_id, name_ko FROM tenant_roles WHERE tenant_id = ? AND name_en = 'Admin' AND (is_deleted IS NULL OR is_deleted = FALSE) LIMIT 1";
-                    java.util.Map<String, Object> result = jdbcTemplate.queryForMap(sql, tenantId);
-                    if (result != null && result.get("tenant_role_id") != null) {
-                        tenantRoleId = (String) result.get("tenant_role_id");
-                        roleName = (String) result.get("name_ko");
-                        log.debug("JDBC로 'Admin' 역할 찾음: tenantId={}, tenantRoleId={}", tenantId,
-                                tenantRoleId);
-                    }
-                } catch (org.springframework.dao.EmptyResultDataAccessException e) {
-                    log.debug("'Admin' 역할 없음, 다음 검색 시도: tenantId={}", tenantId);
-                }
-            }
-
-            // 5. Fallback: display_order=1인 역할 찾기
-            if (tenantRoleId == null) {
-                try {
-                    String sql =
-                            "SELECT tenant_role_id, name_ko FROM tenant_roles WHERE tenant_id = ? AND display_order = 1 AND (is_deleted IS NULL OR is_deleted = FALSE) LIMIT 1";
-                    java.util.Map<String, Object> result = jdbcTemplate.queryForMap(sql, tenantId);
-                    if (result != null && result.get("tenant_role_id") != null) {
-                        tenantRoleId = (String) result.get("tenant_role_id");
-                        roleName = (String) result.get("name_ko");
-                        log.debug("JDBC로 display_order=1 역할 찾음: tenantId={}, tenantRoleId={}",
-                                tenantId, tenantRoleId);
-                    }
-                } catch (org.springframework.dao.EmptyResultDataAccessException e) {
-                    log.debug("display_order=1 역할 없음: tenantId={}", tenantId);
-                }
-            }
-
-            if (tenantRoleId == null) {
-                log.warn("⚠️ 관리자 역할을 찾을 수 없습니다: tenantId={}", tenantId);
+                log.warn("⚠️ 관리자 역할을 찾을 수 없습니다 ({}회 시도 후): tenantId={}", maxRetries, tenantId);
                 return;
             }
 

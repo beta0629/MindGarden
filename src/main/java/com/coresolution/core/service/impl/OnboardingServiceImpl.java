@@ -739,7 +739,8 @@ public class OnboardingServiceImpl implements OnboardingService {
                 }
             } else {
                 log.info("온보딩 승인 프로세스 완료: {}", message);
-                updateProcessingStatus(requestId, "COMPLETE", "SUCCESS", "온보딩 프로세스 완료: " + message);
+                // updateProcessingStatus 제거: 별도 트랜잭션에서 version 충돌 발생
+                // 상태는 initializationStatusJson에 저장되므로 별도 업데이트 불필요
 
                 try {
                     updateSubscriptionTenantId(request);

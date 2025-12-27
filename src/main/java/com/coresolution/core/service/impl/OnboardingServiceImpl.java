@@ -375,9 +375,9 @@ public class OnboardingServiceImpl implements OnboardingService {
             }
         }
 
-        // ON_HOLD 상태로 처리할 때는 단순히 상태만 변경하고 저장 (다른 상태로 변경하는 경우 제외)
-        if (status == OnboardingStatus.ON_HOLD && request.getStatus() != OnboardingStatus.ON_HOLD) {
-            log.info("보류 상태로 처리: requestId={}, note={}", requestId, note);
+        // ON_HOLD 상태로 처리할 때는 단순히 상태만 변경하고 저장
+        if (status == OnboardingStatus.ON_HOLD) {
+            log.info("보류 상태로 처리: requestId={}, currentStatus={}, note={}", requestId, request.getStatus(), note);
             request.setStatus(status);
             request.setDecidedBy(actorId);
             request.setDecisionAt(DateTimeFormatter.ISO_INSTANT.format(Instant.now()));

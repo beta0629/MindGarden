@@ -623,10 +623,34 @@ public class PlSqlInitializer {
                     "db/migration/V20251225_004__force_recreate_process_onboarding_approval.sql");
             String sqlContent = new String(resource.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
 
-            String procedureSQL = extractProcedureFromMigration(sqlContent);
+            // 주석 제거
+            sqlContent = sqlContent.replaceAll("--[^\n]*", "");
+            sqlContent = sqlContent.replaceAll("/\\*[\\s\\S]*?\\*/", "");
+
+            // CREATE PROCEDURE부터 END;까지 추출
+            int createStart = sqlContent.indexOf("CREATE PROCEDURE");
+            if (createStart == -1) {
+                log.warn("⚠️ CREATE PROCEDURE를 찾을 수 없습니다");
+                return;
+            }
+
+            // END; 찾기 (마지막 END;)
+            int endIndex = sqlContent.lastIndexOf("END;");
+            if (endIndex == -1 || endIndex < createStart) {
+                log.warn("⚠️ END;를 찾을 수 없습니다");
+                return;
+            }
+
+            String procedureSQL = sqlContent.substring(createStart, endIndex + 4).trim();
 
             if (procedureSQL != null && !procedureSQL.trim().isEmpty()) {
                 try (java.sql.Connection conn = dataSource.getConnection()) {
+                    // allowMultiQueries=true 설정 확인
+                    String url = conn.getMetaData().getURL();
+                    if (!url.contains("allowMultiQueries=true")) {
+                        log.warn("⚠️ allowMultiQueries=true가 설정되지 않았습니다. 프로시저 생성이 실패할 수 있습니다.");
+                    }
+
                     try (java.sql.Statement stmt = conn.createStatement()) {
                         stmt.execute("DROP PROCEDURE IF EXISTS ProcessOnboardingApproval;");
                         log.info("🗑️ 기존 ProcessOnboardingApproval 프로시저 삭제 완료");

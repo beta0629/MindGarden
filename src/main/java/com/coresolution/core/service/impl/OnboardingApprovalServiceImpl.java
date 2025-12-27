@@ -15,6 +15,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.springframework.context.ApplicationContext;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.datasource.DataSourceUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
@@ -535,8 +536,7 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
         // DataSourceUtils.getConnection()을 사용하여 Spring이 관리하는 Connection을 가져옴
         Connection connection = null;
         try {
-            connection =
-                    org.springframework.jdbc.datasource.DataSourceUtils.getConnection(dataSource);
+            connection = DataSourceUtils.getConnection(dataSource);
 
             // Collation 설정 (프로시저 실행 전)
             try (java.sql.Statement stmt = connection.createStatement()) {
@@ -992,7 +992,7 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
             // 주의: DataSourceUtils.getConnection()으로 가져온 Connection은
             // DataSourceUtils.releaseConnection()으로 해제해야 함
             if (connection != null) {
-                org.springframework.jdbc.datasource.DataSourceUtils.releaseConnection(connection, dataSource);
+                DataSourceUtils.releaseConnection(connection, dataSource);
                 log.debug("Connection 해제 완료");
             }
         }

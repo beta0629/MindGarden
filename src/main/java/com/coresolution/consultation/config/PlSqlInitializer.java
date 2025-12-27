@@ -58,44 +58,92 @@ public class PlSqlInitializer {
     /**
      * CreateOrActivateTenant 프로시저 초기화 (마이그레이션 파일에서 직접 읽기)
      * Flyway가 DELIMITER를 제대로 처리하지 못해 프로시저가 생성되지 않는 경우를 대비
+     * 프로시저 생성 실패 시 애플리케이션 시작 차단
      */
     private void initializeCreateOrActivateTenantProcedureFromMigration() {
         try {
-            log.info("📝 CreateOrActivateTenant 프로시저 생성 시작 (마이그레이션 파일에서)");
+            log.info("📝 CreateOrActivateTenant 프로시저 강제 생성 시작");
 
-            // 마이그레이션 파일 읽기
             ClassPathResource resource = new ClassPathResource(
                     "db/migration/V20251222_001__create_create_or_activate_tenant_procedure.sql");
             String sqlContent = new String(resource.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
 
-            log.info("📄 마이그레이션 파일 크기: {} bytes", sqlContent.length());
+            // 주석 제거 (단일 라인 주석만)
+            sqlContent = sqlContent.replaceAll("--[^\n]*\n", "\n");
+            // 블록 주석 제거
+            sqlContent = sqlContent.replaceAll("/\\*[\\s\\S]*?\\*/", "");
 
-            // DELIMITER // 제거하고 프로시저 본문만 추출
-            String procedureSQL = extractProcedureFromMigration(sqlContent);
+            // CREATE PROCEDURE부터 END;까지 추출
+            int createStart = sqlContent.indexOf("CREATE PROCEDURE");
+            if (createStart == -1) {
+                String errorMsg = "❌ CREATE PROCEDURE를 찾을 수 없습니다. 프로시저 생성 실패로 애플리케이션 시작 불가";
+                log.error(errorMsg);
+                throw new IllegalStateException(errorMsg);
+            }
 
-            if (procedureSQL != null && !procedureSQL.trim().isEmpty()) {
-                // 프로시저 생성 실행
-                // 주의: 프로시저 본문 내부의 세미콜론 때문에 jdbcTemplate.execute()로는 실행 불가
-                // Connection을 직접 사용하여 allowMultiQueries=true로 설정
-                // 프로시저 본문 전체를 하나의 구문으로 실행
-                try (java.sql.Connection conn = dataSource.getConnection()) {
-                    // allowMultiQueries=true 설정 (URL에 이미 설정되어 있을 수 있음)
-                    // 프로시저 본문 전체를 하나의 구문으로 실행
-                    try (java.sql.Statement stmt = conn.createStatement()) {
-                        // 프로시저 본문 전체를 하나의 구문으로 실행
-                        // 세미콜론으로 구문을 분리하지 않도록 주의
-                        boolean hasResult = stmt.execute(procedureSQL);
-                        log.info("✅ CreateOrActivateTenant 프로시저 생성 완료 (백업 메커니즘), hasResult={}", hasResult);
-                    }
+            // END; 찾기 (마지막 END;)
+            int endIndex = sqlContent.lastIndexOf("END;");
+            if (endIndex == -1 || endIndex < createStart) {
+                String errorMsg = "❌ END;를 찾을 수 없습니다. 프로시저 생성 실패로 애플리케이션 시작 불가";
+                log.error(errorMsg);
+                throw new IllegalStateException(errorMsg);
+            }
+
+            String procedureSQL = sqlContent.substring(createStart, endIndex + 4).trim();
+
+            if (procedureSQL == null || procedureSQL.trim().isEmpty()) {
+                String errorMsg = "❌ CreateOrActivateTenant 프로시저 SQL을 추출할 수 없습니다. 프로시저 생성 실패로 애플리케이션 시작 불가";
+                log.error(errorMsg);
+                throw new IllegalStateException(errorMsg);
+            }
+
+            // 프로시저 생성 실행
+            try (java.sql.Connection conn = dataSource.getConnection()) {
+                // DROP 먼저 실행
+                try (java.sql.Statement stmt = conn.createStatement()) {
+                    stmt.execute("DROP PROCEDURE IF EXISTS CreateOrActivateTenant;");
+                    log.info("🗑️ 기존 CreateOrActivateTenant 프로시저 삭제 완료");
+                } catch (SQLException e) {
+                    log.debug("CreateOrActivateTenant 프로시저 삭제 중 오류 (무시 가능): {}", e.getMessage());
                 }
 
-                // 검증
-                verifyProcedureExists("CreateOrActivateTenant");
-            } else {
-                log.warn("⚠️ 프로시저 SQL을 추출할 수 없습니다");
+                // CREATE 실행
+                try (java.sql.Statement stmt = conn.createStatement()) {
+                    stmt.execute(procedureSQL);
+                    log.info("✅ CreateOrActivateTenant 프로시저 생성 완료");
+                } catch (SQLException e) {
+                    String errorMsg = String.format("❌ CreateOrActivateTenant 프로시저 생성 실패: %s. 프로시저 생성 실패로 애플리케이션 시작 불가", e.getMessage());
+                    log.error(errorMsg);
+                    log.error("프로시저 SQL (처음 500자): {}", procedureSQL.substring(0, Math.min(500, procedureSQL.length())));
+                    throw new IllegalStateException(errorMsg, e);
+                }
             }
+
+            // 프로시저 생성 검증 (필수)
+            if (!verifyProcedureExists("CreateOrActivateTenant")) {
+                String errorMsg = "❌ CreateOrActivateTenant 프로시저가 생성되지 않았습니다. 프로시저 생성 실패로 애플리케이션 시작 불가";
+                log.error(errorMsg);
+                throw new IllegalStateException(errorMsg);
+            }
+
+            // 프로시저 파라미터 검증 (필수) - CreateOrActivateTenant는 9개 파라미터
+            if (!verifyProcedureParameters("CreateOrActivateTenant", 9)) {
+                String errorMsg = "❌ CreateOrActivateTenant 프로시저 파라미터가 올바르지 않습니다. 프로시저 생성 실패로 애플리케이션 시작 불가";
+                log.error(errorMsg);
+                throw new IllegalStateException(errorMsg);
+            }
+
+            log.info("✅ CreateOrActivateTenant 프로시저 생성 및 검증 완료");
+        } catch (IllegalStateException e) {
+            // 프로시저 생성 실패는 치명적 오류이므로 애플리케이션 시작 차단
+            log.error("==========================================");
+            log.error("❌❌❌ CreateOrActivateTenant 프로시저 생성 실패 - 애플리케이션 시작 불가");
+            log.error("==========================================");
+            throw e; // 예외를 다시 throw하여 애플리케이션 시작 차단
         } catch (Exception e) {
-            log.error("❌ CreateOrActivateTenant 프로시저 생성 실패: {}", e.getMessage(), e);
+            String errorMsg = String.format("❌ CreateOrActivateTenant 프로시저 생성 중 예외 발생: %s. 프로시저 생성 실패로 애플리케이션 시작 불가", e.getMessage());
+            log.error(errorMsg, e);
+            throw new IllegalStateException(errorMsg, e);
         }
     }
 
@@ -734,6 +782,7 @@ public class PlSqlInitializer {
 
     /**
      * ApplyDefaultRoleTemplates 프로시저 강제 생성 (마이그레이션 파일에서 직접 읽기)
+     * 프로시저 생성 실패 시 애플리케이션 시작 차단
      */
     private void initializeApplyDefaultRoleTemplatesProcedure() {
         try {
@@ -743,77 +792,174 @@ public class PlSqlInitializer {
                     "db/migration/V20251212_001__fix_apply_default_role_templates_procedure.sql");
             String sqlContent = new String(resource.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
 
-            String procedureSQL = extractProcedureFromMigration(sqlContent);
+            // 주석 제거 (단일 라인 주석만)
+            sqlContent = sqlContent.replaceAll("--[^\n]*\n", "\n");
+            // 블록 주석 제거
+            sqlContent = sqlContent.replaceAll("/\\*[\\s\\S]*?\\*/", "");
 
-            if (procedureSQL != null && !procedureSQL.trim().isEmpty()) {
-                try (java.sql.Connection conn = dataSource.getConnection()) {
-                    try (java.sql.Statement stmt = conn.createStatement()) {
-                        stmt.execute("DROP PROCEDURE IF EXISTS ApplyDefaultRoleTemplates;");
-                        log.info("🗑️ 기존 ApplyDefaultRoleTemplates 프로시저 삭제 완료");
-                    } catch (SQLException e) {
-                        log.debug("ApplyDefaultRoleTemplates 프로시저 삭제 중 오류 (무시 가능): {}", e.getMessage());
-                    }
-                    try (java.sql.Statement stmt = conn.createStatement()) {
-                        stmt.execute(procedureSQL);
-                        log.info("✅ ApplyDefaultRoleTemplates 프로시저 생성 완료");
-                    }
-                }
-                verifyProcedureExists("ApplyDefaultRoleTemplates");
-            } else {
-                log.warn("⚠️ ApplyDefaultRoleTemplates 프로시저 SQL을 추출할 수 없습니다");
+            // CREATE PROCEDURE부터 END;까지 추출
+            int createStart = sqlContent.indexOf("CREATE PROCEDURE");
+            if (createStart == -1) {
+                String errorMsg = "❌ CREATE PROCEDURE를 찾을 수 없습니다. 프로시저 생성 실패로 애플리케이션 시작 불가";
+                log.error(errorMsg);
+                throw new IllegalStateException(errorMsg);
             }
+
+            // END; 찾기 (마지막 END;)
+            int endIndex = sqlContent.lastIndexOf("END;");
+            if (endIndex == -1 || endIndex < createStart) {
+                String errorMsg = "❌ END;를 찾을 수 없습니다. 프로시저 생성 실패로 애플리케이션 시작 불가";
+                log.error(errorMsg);
+                throw new IllegalStateException(errorMsg);
+            }
+
+            String procedureSQL = sqlContent.substring(createStart, endIndex + 4).trim();
+
+            if (procedureSQL == null || procedureSQL.trim().isEmpty()) {
+                String errorMsg = "❌ ApplyDefaultRoleTemplates 프로시저 SQL을 추출할 수 없습니다. 프로시저 생성 실패로 애플리케이션 시작 불가";
+                log.error(errorMsg);
+                throw new IllegalStateException(errorMsg);
+            }
+
+            // 프로시저 생성 실행
+            try (java.sql.Connection conn = dataSource.getConnection()) {
+                // DROP 먼저 실행
+                try (java.sql.Statement stmt = conn.createStatement()) {
+                    stmt.execute("DROP PROCEDURE IF EXISTS ApplyDefaultRoleTemplates;");
+                    log.info("🗑️ 기존 ApplyDefaultRoleTemplates 프로시저 삭제 완료");
+                } catch (SQLException e) {
+                    log.debug("ApplyDefaultRoleTemplates 프로시저 삭제 중 오류 (무시 가능): {}", e.getMessage());
+                }
+
+                // CREATE 실행
+                try (java.sql.Statement stmt = conn.createStatement()) {
+                    stmt.execute(procedureSQL);
+                    log.info("✅ ApplyDefaultRoleTemplates 프로시저 생성 완료");
+                } catch (SQLException e) {
+                    String errorMsg = String.format("❌ ApplyDefaultRoleTemplates 프로시저 생성 실패: %s. 프로시저 생성 실패로 애플리케이션 시작 불가", e.getMessage());
+                    log.error(errorMsg);
+                    log.error("프로시저 SQL (처음 500자): {}", procedureSQL.substring(0, Math.min(500, procedureSQL.length())));
+                    throw new IllegalStateException(errorMsg, e);
+                }
+            }
+
+            // 프로시저 생성 검증 (필수)
+            if (!verifyProcedureExists("ApplyDefaultRoleTemplates")) {
+                String errorMsg = "❌ ApplyDefaultRoleTemplates 프로시저가 생성되지 않았습니다. 프로시저 생성 실패로 애플리케이션 시작 불가";
+                log.error(errorMsg);
+                throw new IllegalStateException(errorMsg);
+            }
+
+            // 프로시저 파라미터 검증 (필수) - ApplyDefaultRoleTemplates는 5개 파라미터
+            if (!verifyProcedureParameters("ApplyDefaultRoleTemplates", 5)) {
+                String errorMsg = "❌ ApplyDefaultRoleTemplates 프로시저 파라미터가 올바르지 않습니다. 프로시저 생성 실패로 애플리케이션 시작 불가";
+                log.error(errorMsg);
+                throw new IllegalStateException(errorMsg);
+            }
+
+            log.info("✅ ApplyDefaultRoleTemplates 프로시저 생성 및 검증 완료");
+        } catch (IllegalStateException e) {
+            // 프로시저 생성 실패는 치명적 오류이므로 애플리케이션 시작 차단
+            log.error("==========================================");
+            log.error("❌❌❌ ApplyDefaultRoleTemplates 프로시저 생성 실패 - 애플리케이션 시작 불가");
+            log.error("==========================================");
+            throw e; // 예외를 다시 throw하여 애플리케이션 시작 차단
         } catch (Exception e) {
-            log.error("❌ ApplyDefaultRoleTemplates 프로시저 생성 실패: {}", e.getMessage(), e);
+            String errorMsg = String.format("❌ ApplyDefaultRoleTemplates 프로시저 생성 중 예외 발생: %s. 프로시저 생성 실패로 애플리케이션 시작 불가", e.getMessage());
+            log.error(errorMsg, e);
+            throw new IllegalStateException(errorMsg, e);
         }
     }
 
     /**
      * CreateTenantAdminAccount 프로시저 초기화 (마이그레이션 파일에서 직접 읽기)
      * Flyway가 DELIMITER를 제대로 처리하지 못해 프로시저가 생성되지 않는 경우를 대비
+     * 프로시저 생성 실패 시 애플리케이션 시작 차단
      */
     private void initializeCreateTenantAdminAccountProcedureFromMigration() {
         try {
-            log.info("📝 CreateTenantAdminAccount 프로시저 생성 시작 (마이그레이션 파일에서)");
+            log.info("📝 CreateTenantAdminAccount 프로시저 강제 생성 시작");
 
             ClassPathResource resource = new ClassPathResource(
                     "db/migration/V20251223_001__fix_create_tenant_admin_account_user_id.sql");
             String sqlContent = new String(resource.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
 
-            log.info("📄 마이그레이션 파일 크기: {} bytes", sqlContent.length());
+            // 주석 제거 (단일 라인 주석만)
+            sqlContent = sqlContent.replaceAll("--[^\n]*\n", "\n");
+            // 블록 주석 제거
+            sqlContent = sqlContent.replaceAll("/\\*[\\s\\S]*?\\*/", "");
 
-            String procedureSQL = extractProcedureFromMigration(sqlContent);
+            // CREATE PROCEDURE부터 END;까지 추출
+            int createStart = sqlContent.indexOf("CREATE PROCEDURE");
+            if (createStart == -1) {
+                String errorMsg = "❌ CREATE PROCEDURE를 찾을 수 없습니다. 프로시저 생성 실패로 애플리케이션 시작 불가";
+                log.error(errorMsg);
+                throw new IllegalStateException(errorMsg);
+            }
 
-            if (procedureSQL != null && !procedureSQL.trim().isEmpty()) {
-                // Connection을 직접 사용하여 프로시저 본문 전체를 하나의 구문으로 실행
-                try (java.sql.Connection conn = dataSource.getConnection()) {
-                    // DROP PROCEDURE IF EXISTS; 와 CREATE PROCEDURE ... END; 를 분리하여 실행
-                    String[] statements = procedureSQL.split("(?i)DROP\\s+PROCEDURE\\s+IF\\s+EXISTS[^;]*;");
-                    if (statements.length > 1) {
-                        try (java.sql.Statement stmt = conn.createStatement()) {
-                            stmt.execute("DROP PROCEDURE IF EXISTS CreateTenantAdminAccount;");
-                            log.info("🗑️ 기존 CreateTenantAdminAccount 프로시저 삭제 완료");
-                        } catch (SQLException e) {
-                            log.debug("CreateTenantAdminAccount 프로시저 삭제 중 오류 (무시 가능): {}", e.getMessage());
-                        }
-                        try (java.sql.Statement stmt = conn.createStatement()) {
-                            stmt.execute(statements[1].trim()); // CREATE PROCEDURE 부분 실행
-                            log.info("✅ CreateTenantAdminAccount 프로시저 생성 완료 (백업 메커니즘)");
-                        }
-                    } else {
-                        // DROP 문이 없는 경우, CREATE 문만 실행
-                        try (java.sql.Statement stmt = conn.createStatement()) {
-                            stmt.execute(procedureSQL);
-                            log.info("✅ CreateTenantAdminAccount 프로시저 생성 완료 (백업 메커니즘)");
-                        }
-                    }
+            // END; 찾기 (마지막 END;)
+            int endIndex = sqlContent.lastIndexOf("END;");
+            if (endIndex == -1 || endIndex < createStart) {
+                String errorMsg = "❌ END;를 찾을 수 없습니다. 프로시저 생성 실패로 애플리케이션 시작 불가";
+                log.error(errorMsg);
+                throw new IllegalStateException(errorMsg);
+            }
+
+            String procedureSQL = sqlContent.substring(createStart, endIndex + 4).trim();
+
+            if (procedureSQL == null || procedureSQL.trim().isEmpty()) {
+                String errorMsg = "❌ CreateTenantAdminAccount 프로시저 SQL을 추출할 수 없습니다. 프로시저 생성 실패로 애플리케이션 시작 불가";
+                log.error(errorMsg);
+                throw new IllegalStateException(errorMsg);
+            }
+
+            // 프로시저 생성 실행
+            try (java.sql.Connection conn = dataSource.getConnection()) {
+                // DROP 먼저 실행
+                try (java.sql.Statement stmt = conn.createStatement()) {
+                    stmt.execute("DROP PROCEDURE IF EXISTS CreateTenantAdminAccount;");
+                    log.info("🗑️ 기존 CreateTenantAdminAccount 프로시저 삭제 완료");
+                } catch (SQLException e) {
+                    log.debug("CreateTenantAdminAccount 프로시저 삭제 중 오류 (무시 가능): {}", e.getMessage());
                 }
 
-                verifyProcedureExists("CreateTenantAdminAccount");
-            } else {
-                log.warn("⚠️ 프로시저 SQL을 추출할 수 없습니다");
+                // CREATE 실행
+                try (java.sql.Statement stmt = conn.createStatement()) {
+                    stmt.execute(procedureSQL);
+                    log.info("✅ CreateTenantAdminAccount 프로시저 생성 완료");
+                } catch (SQLException e) {
+                    String errorMsg = String.format("❌ CreateTenantAdminAccount 프로시저 생성 실패: %s. 프로시저 생성 실패로 애플리케이션 시작 불가", e.getMessage());
+                    log.error(errorMsg);
+                    log.error("프로시저 SQL (처음 500자): {}", procedureSQL.substring(0, Math.min(500, procedureSQL.length())));
+                    throw new IllegalStateException(errorMsg, e);
+                }
             }
+
+            // 프로시저 생성 검증 (필수)
+            if (!verifyProcedureExists("CreateTenantAdminAccount")) {
+                String errorMsg = "❌ CreateTenantAdminAccount 프로시저가 생성되지 않았습니다. 프로시저 생성 실패로 애플리케이션 시작 불가";
+                log.error(errorMsg);
+                throw new IllegalStateException(errorMsg);
+            }
+
+            // 프로시저 파라미터 검증 (필수) - CreateTenantAdminAccount는 7개 파라미터
+            if (!verifyProcedureParameters("CreateTenantAdminAccount", 7)) {
+                String errorMsg = "❌ CreateTenantAdminAccount 프로시저 파라미터가 올바르지 않습니다. 프로시저 생성 실패로 애플리케이션 시작 불가";
+                log.error(errorMsg);
+                throw new IllegalStateException(errorMsg);
+            }
+
+            log.info("✅ CreateTenantAdminAccount 프로시저 생성 및 검증 완료");
+        } catch (IllegalStateException e) {
+            // 프로시저 생성 실패는 치명적 오류이므로 애플리케이션 시작 차단
+            log.error("==========================================");
+            log.error("❌❌❌ CreateTenantAdminAccount 프로시저 생성 실패 - 애플리케이션 시작 불가");
+            log.error("==========================================");
+            throw e; // 예외를 다시 throw하여 애플리케이션 시작 차단
         } catch (Exception e) {
-            log.error("❌ CreateTenantAdminAccount 프로시저 생성 실패: {}", e.getMessage(), e);
+            String errorMsg = String.format("❌ CreateTenantAdminAccount 프로시저 생성 중 예외 발생: %s. 프로시저 생성 실패로 애플리케이션 시작 불가", e.getMessage());
+            log.error(errorMsg, e);
+            throw new IllegalStateException(errorMsg, e);
         }
     }
 }

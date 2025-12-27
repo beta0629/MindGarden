@@ -1459,9 +1459,10 @@ public class OnboardingServiceImpl implements OnboardingService {
     }
 
     /**
-     * 별도 트랜잭션에서 권한 그룹 할당
+     * 메인 트랜잭션에서 권한 그룹 할당
+     * REQUIRED를 사용하여 메인 트랜잭션에 참여하여 프로시저가 생성한 역할을 즉시 조회 가능
      */
-    @Transactional(propagation = Propagation.REQUIRES_NEW, noRollbackFor = Exception.class)
+    @Transactional(propagation = Propagation.REQUIRED, noRollbackFor = Exception.class)
     public void assignDefaultPermissionGroupsToAdminInNewTransaction(String tenantId,
             String actorId) {
         try {

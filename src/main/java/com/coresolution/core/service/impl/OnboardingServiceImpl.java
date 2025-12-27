@@ -800,10 +800,14 @@ public class OnboardingServiceImpl implements OnboardingService {
         requestToSave.setDecisionAt(DateTimeFormatter.ISO_INSTANT.format(Instant.now()));
         requestToSave.setDecisionNote(note);
 
-        // 초기화 작업 상태가 있으면 설정
-        if (request.getInitializationStatusJson() != null
-                && !request.getInitializationStatusJson().trim().isEmpty()) {
-            requestToSave.setInitializationStatusJson(request.getInitializationStatusJson());
+        // 초기화 작업 상태는 initializeTenantAfterOnboardingInNewTransaction에서 별도 트랜잭션으로 저장되므로
+        // 최종 저장 시 다시 조회한 엔티티에서 최신 initializationStatusJson을 가져옴
+        // 별도 트랜잭션에서 저장된 상태를 메인 트랜잭션에서 조회하여 사용
+        OnboardingRequest latestRequest = repository.findById(requestId).orElse(null);
+        if (latestRequest != null
+                && latestRequest.getInitializationStatusJson() != null
+                && !latestRequest.getInitializationStatusJson().trim().isEmpty()) {
+            requestToSave.setInitializationStatusJson(latestRequest.getInitializationStatusJson());
         }
 
         // 최종 저장 시도 (OptimisticLockException 발생 시 상위에서 별도 트랜잭션으로 재시도)

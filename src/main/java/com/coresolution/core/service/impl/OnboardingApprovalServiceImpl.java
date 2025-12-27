@@ -880,39 +880,33 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                             }
                             if (rolesApplied) {
                                 fallbackMessage.append("역할=OK, ");
-                                updateProcessingStatus(requestId, "ROLE_APPLY", "SUCCESS",
-                                        "역할 템플릿 적용 완료");
+                                // updateProcessingStatus 제거: 별도 트랜잭션에서 version 충돌 발생
                             } else {
                                 fallbackMessage.append("역할=실패, ");
-                                updateProcessingStatus(requestId, "ROLE_APPLY", "FAILED",
-                                        "역할 템플릿 적용 실패");
+                                // updateProcessingStatus 제거: 별도 트랜잭션에서 version 충돌 발생
                             }
                         } catch (Exception e) {
                             log.error("역할 템플릿 적용 실패: tenantId={}, error={}", tenantId,
                                     e.getMessage());
                             fallbackMessage.append("역할=오류, ");
-                            updateProcessingStatus(requestId, "ROLE_APPLY", "FAILED",
-                                    "역할 템플릿 적용 오류: " + e.getMessage());
+                            // updateProcessingStatus 제거: 별도 트랜잭션에서 version 충돌 발생
                         }
                     }
 
                     // 3. 관리자 계정 생성 (테넌트가 존재하는 경우에만)
                     if (tenantCreated && contactEmail != null && !contactEmail.trim().isEmpty()
                             && adminPasswordHash != null && !adminPasswordHash.trim().isEmpty()) {
-                        updateProcessingStatus(requestId, "ADMIN_CREATE", "IN_PROGRESS",
-                                "관리자 계정 생성 중 (Java 재시도)...");
+                        // updateProcessingStatus 제거: 별도 트랜잭션에서 version 충돌 발생
                         try {
                             createAdminAccountDirectly(tenantId, contactEmail, tenantName,
                                     adminPasswordHash, approvedBy);
                             fallbackMessage.append("관리자=OK");
-                            updateProcessingStatus(requestId, "ADMIN_CREATE", "SUCCESS",
-                                    "관리자 계정 생성 완료");
+                            // updateProcessingStatus 제거: 별도 트랜잭션에서 version 충돌 발생
                         } catch (Exception e) {
                             log.warn("관리자 계정 직접 생성 실패: tenantId={}, error={}", tenantId,
                                     e.getMessage());
                             fallbackMessage.append("관리자=실패");
-                            updateProcessingStatus(requestId, "ADMIN_CREATE", "FAILED",
-                                    "관리자 계정 생성 실패: " + e.getMessage());
+                            // updateProcessingStatus 제거: 별도 트랜잭션에서 version 충돌 발생
                         }
                     }
 
@@ -1420,15 +1414,15 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
     }
 
     /**
-     * 처리 상태 업데이트 (Java 재시도 단계별 상태 표시용)
-     * 별도 트랜잭션으로 분리하여 메인 트랜잭션의 version 충돌 방지
+     * 처리 상태 업데이트 (Java 재시도 단계별 상태 표시용) 별도 트랜잭션으로 분리하여 메인 트랜잭션의 version 충돌 방지
      */
     private void updateProcessingStatus(java.util.UUID requestId, String step, String status,
             String message) {
         try {
             // 별도 트랜잭션에서 실행하여 메인 트랜잭션의 version 충돌 방지
             org.springframework.transaction.support.TransactionTemplate transactionTemplate =
-                    new org.springframework.transaction.support.TransactionTemplate(transactionManager);
+                    new org.springframework.transaction.support.TransactionTemplate(
+                            transactionManager);
             transactionTemplate.setPropagationBehavior(
                     org.springframework.transaction.TransactionDefinition.PROPAGATION_REQUIRES_NEW);
             transactionTemplate.setIsolationLevel(
@@ -1468,8 +1462,8 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                     int totalSteps = 5; // PROCEDURE_START, TENANT_CREATE, ROLE_APPLY, ADMIN_CREATE,
                                         // DASHBOARD_CREATE
                     int completedSteps = 0;
-                    String[] steps = {"PROCEDURE_START", "TENANT_CREATE", "ROLE_APPLY", "ADMIN_CREATE",
-                            "DASHBOARD_CREATE"};
+                    String[] steps = {"PROCEDURE_START", "TENANT_CREATE", "ROLE_APPLY",
+                            "ADMIN_CREATE", "DASHBOARD_CREATE"};
                     for (String s : steps) {
                         if (statusMap.containsKey(s)) {
                             @SuppressWarnings("unchecked")
@@ -1487,8 +1481,8 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                     request.setInitializationStatusJson(statusJson);
                     onboardingRequestRepository.save(request);
 
-                    log.debug("처리 상태 업데이트: requestId={}, step={}, status={}, progress={}%", requestId,
-                            step, status, progress);
+                    log.debug("처리 상태 업데이트: requestId={}, step={}, status={}, progress={}%",
+                            requestId, step, status, progress);
                 } catch (Exception e) {
                     log.error("처리 상태 업데이트 실패: requestId={}, step={}, error={}", requestId, step,
                             e.getMessage(), e);

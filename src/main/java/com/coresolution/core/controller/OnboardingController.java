@@ -9,6 +9,7 @@ import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.controller.dto.OnboardingCreateRequest;
 import com.coresolution.core.controller.dto.OnboardingDecisionRequest;
+import com.coresolution.core.controller.dto.OnboardingDecisionResponse;
 import com.coresolution.core.controller.dto.OnboardingUpdateRequest;
 import com.coresolution.core.domain.onboarding.OnboardingRequest;
 import com.coresolution.core.domain.onboarding.OnboardingStatus;
@@ -59,6 +60,7 @@ public class OnboardingController extends BaseApiController {
 
     private final OnboardingService onboardingService;
     private final UserRepository userRepository;
+    private final ObjectMapper objectMapper;
 
     /**
      * 온보딩 접근 권한 확인 /** 온보딩은 새로운 테넌트를 등록하는 것이므로, 이미 테넌트에 속한 사용자는 접근할 수 없음 /**
@@ -375,7 +377,7 @@ public class OnboardingController extends BaseApiController {
      * 프로시저를 통해 테넌트 생성 및 ERD 생성 등 자동 처리 관리자 또는 OPS 역할만 접근 가능
      */
     @PostMapping("/requests/{id}/decision")
-    public ResponseEntity<ApiResponse<OnboardingRequest>> decide(@PathVariable java.util.UUID id,
+    public ResponseEntity<ApiResponse<OnboardingDecisionResponse>> decide(@PathVariable java.util.UUID id,
             @RequestBody @Valid OnboardingDecisionRequest payload, HttpServletRequest httpRequest) {
         // /api/v1/ops/onboarding 경로로 접근한 경우에만 권한 체크
         if (httpRequest.getRequestURI().startsWith("/api/v1/ops/onboarding")) {
@@ -397,10 +399,50 @@ public class OnboardingController extends BaseApiController {
                     payload.actorId(), payload.note());
 
             log.info("✅ 온보딩 요청 결정 완료: id={}, status={}", id, payload.status());
+            
+            // 관리자 계정 정보 조회 (승인 성공 시)
+            OnboardingDecisionResponse.AdminAccountInfo adminAccount = null;
+            if (updated.getStatus() == OnboardingStatus.APPROVED && updated.getTenantId() != null) {
+                try {
+                    String contactEmail = updated.getRequestedBy();
+                    if (contactEmail != null && !contactEmail.trim().isEmpty()) {
+                        User adminUser = userRepository.findByEmailAndTenantId(contactEmail, updated.getTenantId())
+                                .orElse(null);
+                        if (adminUser != null) {
+                            // checklistJson에서 원본 비밀번호 추출 (보안상 실제 비밀번호는 반환하지 않음)
+                            // 프론트엔드에서는 이미 알고 있는 비밀번호를 사용하도록 함
+                            String adminPassword = null;
+                            if (updated.getChecklistJson() != null && !updated.getChecklistJson().isEmpty()) {
+                                try {
+                                    Map<String, Object> checklist = objectMapper.readValue(updated.getChecklistJson(),
+                                            new TypeReference<Map<String, Object>>() {});
+                                    adminPassword = (String) checklist.get("adminPassword");
+                                } catch (Exception e) {
+                                    log.warn("checklistJson에서 adminPassword 추출 실패: {}", e.getMessage());
+                                }
+                            }
+                            
+                            if (adminPassword != null) {
+                                adminAccount = new OnboardingDecisionResponse.AdminAccountInfo(
+                                        adminUser.getEmail(),
+                                        adminPassword,
+                                        updated.getTenantId(),
+                                        updated.getTenantName()
+                                );
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    log.warn("관리자 계정 정보 조회 실패 (무시): {}", e.getMessage());
+                }
+            }
+            
+            OnboardingDecisionResponse response = new OnboardingDecisionResponse(updated, adminAccount);
+            
             // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
             return updated("온보딩 요청이 "
                     + (payload.status() == OnboardingStatus.APPROVED ? "승인" : "거부") + "되었습니다.",
-                    updated);
+                    response);
         } catch (IllegalArgumentException e) {
             log.error("온보딩 요청 결정 실패: id={}, status={}, error={}", id, payload.status(),
                     e.getMessage());
@@ -416,10 +458,46 @@ public class OnboardingController extends BaseApiController {
             if (updatedRequest.getStatus() == OnboardingStatus.APPROVED) {
                 // 승인이 성공했으면 성공 메시지 반환
                 log.warn("RuntimeException 발생했지만 실제로는 승인 성공: id={}, status={}", id, updatedRequest.getStatus());
-                return updated("온보딩 요청이 승인되었습니다.", updatedRequest);
+                
+                // 관리자 계정 정보 조회
+                OnboardingDecisionResponse.AdminAccountInfo adminAccount = null;
+                try {
+                    String contactEmail = updatedRequest.getRequestedBy();
+                    if (contactEmail != null && !contactEmail.trim().isEmpty() && updatedRequest.getTenantId() != null) {
+                        User adminUser = userRepository.findByEmailAndTenantId(contactEmail, updatedRequest.getTenantId())
+                                .orElse(null);
+                        if (adminUser != null) {
+                            String adminPassword = null;
+                            if (updatedRequest.getChecklistJson() != null && !updatedRequest.getChecklistJson().isEmpty()) {
+                                try {
+                                    Map<String, Object> checklist = objectMapper.readValue(updatedRequest.getChecklistJson(),
+                                            new TypeReference<Map<String, Object>>() {});
+                                    adminPassword = (String) checklist.get("adminPassword");
+                                } catch (Exception ex) {
+                                    log.warn("checklistJson에서 adminPassword 추출 실패: {}", ex.getMessage());
+                                }
+                            }
+                            
+                            if (adminPassword != null) {
+                                adminAccount = new OnboardingDecisionResponse.AdminAccountInfo(
+                                        adminUser.getEmail(),
+                                        adminPassword,
+                                        updatedRequest.getTenantId(),
+                                        updatedRequest.getTenantName()
+                                );
+                            }
+                        }
+                    }
+                } catch (Exception ex) {
+                    log.warn("관리자 계정 정보 조회 실패 (무시): {}", ex.getMessage());
+                }
+                
+                OnboardingDecisionResponse response = new OnboardingDecisionResponse(updatedRequest, adminAccount);
+                return updated("온보딩 요청이 승인되었습니다.", response);
             } else if (updatedRequest.getStatus() == OnboardingStatus.ON_HOLD) {
                 // ON_HOLD 상태로 변경되었으면 정상 응답 (롤백 완료)
-                return updated("온보딩 승인 프로세스 중 오류가 발생하여 보류 상태로 변경되었습니다. 재시도해주세요.", updatedRequest);
+                OnboardingDecisionResponse response = new OnboardingDecisionResponse(updatedRequest, null);
+                return updated("온보딩 승인 프로세스 중 오류가 발생하여 보류 상태로 변경되었습니다. 재시도해주세요.", response);
             } else {
                 // 예상치 못한 상태면 예외를 다시 throw
                 throw e;

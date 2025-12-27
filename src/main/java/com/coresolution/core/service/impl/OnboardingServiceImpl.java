@@ -757,11 +757,12 @@ public class OnboardingServiceImpl implements OnboardingService {
                             self.initializeTenantAfterOnboardingInNewTransaction(tenantId,
                                     request.getBusinessType(), actorId, requestId);
 
-                    // 초기화 작업 상태를 메인 트랜잭션에서 저장
+                    // 초기화 작업 상태는 initializeTenantAfterOnboardingInNewTransaction에서 별도 트랜잭션으로 저장됨
+                    // 메인 트랜잭션의 request 객체는 detached 상태이므로 여기서 설정하지 않음
+                    // 최종 저장 시 다시 조회한 엔티티에서 가져옴
                     if (initializationStatusJson != null
                             && !initializationStatusJson.trim().isEmpty()) {
-                        request.setInitializationStatusJson(initializationStatusJson);
-                        log.info("✅ 초기화 작업 상태 저장 완료: requestId={}", requestId);
+                        log.info("✅ 초기화 작업 상태 생성 완료: requestId={}", requestId);
                     }
 
                     // 서브도메인은 프로시저에서 처리하므로 여기서는 제거

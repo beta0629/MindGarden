@@ -354,8 +354,8 @@ class SessionManager {
             
             console.log('✅ 클라이언트 로그아웃 완료');
             
-            // 로그인 페이지로 리다이렉트 (서브도메인 유지)
-            console.log('🔍 로그인 페이지로 리다이렉트 (서브도메인 유지)');
+            // 로그인 페이지로 리다이렉트 (서브도메인별로 이동)
+            console.log('🔍 로그인 페이지로 리다이렉트 (서브도메인별 이동)');
             
             // 현재 호스트 확인
             const host = window.location.hostname;
@@ -373,13 +373,13 @@ class SessionManager {
               const hasSubdomain = !defaultSubdomains.includes(firstLabel) && hostParts.length > 2;
               
               if (hasSubdomain) {
-                // 서브도메인이 있으면 해당 서브도메인으로 이동
+                // 서브도메인이 있으면 해당 서브도메인/login으로 이동
+                // 예: mindgarden.dev.core-solution.co.kr -> mindgarden.dev.core-solution.co.kr/login
                 const subdomainUrl = `${window.location.protocol}//${host}/login?logout=success`;
-                console.log('✅ 서브도메인 유지:', subdomainUrl);
+                console.log('✅ 서브도메인별 이동:', subdomainUrl);
                 window.location.replace(subdomainUrl);
               } else {
                 // 서브도메인이 없으면 dev.core-solution.co.kr/login으로 이동
-                // (UnifiedLogin.js에서 서브도메인 안내 메시지 표시됨)
                 const loginUrl = 'https://dev.core-solution.co.kr/login?logout=success';
                 console.log('⚠️ 서브도메인 없음 - dev.core-solution.co.kr/login으로 이동:', loginUrl);
                 window.location.replace(loginUrl);

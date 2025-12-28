@@ -283,7 +283,7 @@ class SessionManager {
     // 로그아웃
     async logout() {
         try {
-            console.log('🚪 로그아웃 시작...');
+            console.log('🔓 로그아웃 시작...');
             
             // CSRF 토큰 가져오기
             const csrfToken = this.getCsrfToken();

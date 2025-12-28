@@ -204,12 +204,63 @@ const UnifiedLogin = () => {
     }
   };
 
+  // 로그아웃 상태 확인
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const logoutStatus = searchParams.get('logout');
+    const logoutMessage = searchParams.get('message');
+    
+    if (logoutStatus === 'success') {
+      notificationManager.show('로그아웃되었습니다.', 'success');
+      // URL에서 파라미터 제거
+      window.history.replaceState({}, document.title, '/login');
+    } else if (logoutStatus === 'error') {
+      const errorMsg = logoutMessage ? decodeURIComponent(logoutMessage) : '로그아웃 중 오류가 발생했습니다.';
+      showTooltip(errorMsg, 'error');
+      notificationManager.show(errorMsg, 'error');
+      // URL에서 파라미터 제거
+      window.history.replaceState({}, document.title, '/login');
+    }
+  }, [location.search]);
+
   // OAuth 콜백 확인
   const checkOAuthCallback = () => {
     const searchParams = new URLSearchParams(location.search);
     const success = searchParams.get('success');
     const provider = searchParams.get('provider');
     const signupRequired = searchParams.get('signup');
+    const error = searchParams.get('error');
+
+    // OAuth 오류 처리 (서브도메인 없음 등)
+    if (error) {
+      try {
+        const decodedError = decodeURIComponent(error);
+        console.log('🔤 디코딩된 OAuth 에러 메시지:', decodedError);
+        
+        // 서브도메인 관련 오류인 경우 명확한 메시지 표시
+        if (decodedError.includes('테넌트 정보가 없습니다') || decodedError.includes('서브도메인')) {
+          const host = window.location.hostname;
+          const friendlyMessage = '서브도메인이 필요합니다.\n\n예: mindgarden.dev.core-solution.co.kr\n\n현재 도메인: ' + host + '\n\n올바른 서브도메인으로 접속 후 다시 시도해주세요.';
+          showTooltip(friendlyMessage, 'error');
+          notificationManager.show(friendlyMessage, 'error');
+        } else {
+          // 일반 에러는 원본 메시지 표시
+          showTooltip(decodedError, 'error');
+          notificationManager.show(decodedError, 'error');
+        }
+        
+        // URL에서 에러 파라미터 제거
+        window.history.replaceState({}, document.title, '/login');
+        console.log('🧹 URL에서 에러 파라미터 제거됨');
+        return;
+      } catch (parseError) {
+        console.error('OAuth 에러 메시지 파싱 실패:', parseError);
+        showTooltip('로그인 중 오류가 발생했습니다.', 'error');
+        // URL에서 에러 파라미터 제거
+        window.history.replaceState({}, document.title, '/login');
+        return;
+      }
+    }
 
     if (success === 'true' && provider) {
       // OAuth2Callback 컴포넌트에서 처리하도록 리다이렉트

@@ -212,6 +212,23 @@ const UnifiedLogin = () => {
     
     if (logoutStatus === 'success') {
       notificationManager.show('로그아웃되었습니다.', 'success');
+      
+      // 서브도메인 확인 및 안내
+      const host = window.location.hostname;
+      const defaultSubdomains = ['dev', 'app', 'api', 'staging', 'www'];
+      const hostParts = host.split('.');
+      const firstLabel = hostParts[0];
+      const hasSubdomain = !defaultSubdomains.includes(firstLabel) && hostParts.length > 2;
+      
+      // 서브도메인이 없으면 안내 메시지 추가
+      if (!hasSubdomain && !host.includes('localhost') && !host.includes('127.0.0.1')) {
+        const subdomainMessage = '서브도메인으로 접속해주세요.\n\n예: mindgarden.dev.core-solution.co.kr';
+        setTimeout(() => {
+          showTooltip(subdomainMessage, 'warning');
+          notificationManager.show(subdomainMessage, 'warning');
+        }, 1000);
+      }
+      
       // URL에서 파라미터 제거
       window.history.replaceState({}, document.title, '/login');
     } else if (logoutStatus === 'error') {

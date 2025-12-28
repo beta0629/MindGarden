@@ -248,28 +248,41 @@ public class SecurityConfig {
         log.info("🔧 isLocal: {}, isDev: {}, isProd: {}", isLocal, isDev, isProd);
         
         if (isProd) {
-            log.info("🌐 CORS 설정: 운영 환경 - 프로덕션 도메인 허용");
-            // 운영: 실제 운영 도메인들
-            configuration.setAllowedOrigins(Arrays.asList(
-                "https://core-solution.co.kr", 
+            log.info("🌐 CORS 설정: 운영 환경 - 프로덕션 도메인 + 서브도메인 허용");
+            // 운영: 실제 운영 도메인들 + 서브도메인 패턴
+            configuration.setAllowedOriginPatterns(Arrays.asList(
+                "https://*.core-solution.co.kr",  // 서브도메인 패턴
+                "http://*.core-solution.co.kr",
+                "https://core-solution.co.kr",    // 기본 도메인도 명시적으로 허용
                 "http://core-solution.co.kr",
+                "https://*.e-trinity.co.kr",
+                "http://*.e-trinity.co.kr",
                 "https://apply.e-trinity.co.kr", 
                 "http://apply.e-trinity.co.kr",
                 "https://ops.e-trinity.co.kr", 
                 "http://ops.e-trinity.co.kr",
+                "https://*.m-garden.co.kr",
+                "http://*.m-garden.co.kr",
                 "https://m-garden.co.kr",
                 "http://m-garden.co.kr"
             ));
         } else if (isDev) {
-            log.info("🌐 CORS 설정: 개발 환경 - 개발 도메인 + localhost 허용");
-            // 개발: 실제 개발 도메인들 + localhost
-            configuration.setAllowedOrigins(Arrays.asList(
-                "https://dev.core-solution.co.kr",
+            log.info("🌐 CORS 설정: 개발 환경 - 개발 도메인 + 서브도메인 + localhost 허용");
+            // 개발: 실제 개발 도메인들 + 서브도메인 패턴 + localhost
+            // 서브도메인 패턴 사용 (예: *.dev.core-solution.co.kr, *.dev.e-trinity.co.kr 등)
+            configuration.setAllowedOriginPatterns(Arrays.asList(
+                "https://*.dev.core-solution.co.kr",  // 서브도메인 패턴 (mindgarden.dev.core-solution.co.kr 등)
+                "http://*.dev.core-solution.co.kr",
+                "https://dev.core-solution.co.kr",    // 기본 도메인도 명시적으로 허용
                 "http://dev.core-solution.co.kr", 
+                "https://*.dev.e-trinity.co.kr",
+                "http://*.dev.e-trinity.co.kr",
                 "https://apply.dev.e-trinity.co.kr",
                 "http://apply.dev.e-trinity.co.kr",
                 "https://ops.dev.e-trinity.co.kr",
                 "http://ops.dev.e-trinity.co.kr",
+                "https://*.dev.m-garden.co.kr",
+                "http://*.dev.m-garden.co.kr",
                 "https://dev.m-garden.co.kr",
                 "http://dev.m-garden.co.kr",
                 "http://localhost:3000", 

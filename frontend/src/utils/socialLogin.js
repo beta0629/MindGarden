@@ -113,6 +113,20 @@ export const kakaoLogin = async () => {
   try {
     console.log('=== 카카오 로그인 시작 ===');
     
+    // 서브도메인 확인 (서브도메인이 없으면 명확한 안내)
+    const host = window.location.hostname;
+    const defaultSubdomains = ['dev', 'app', 'api', 'staging', 'www'];
+    const hostParts = host.split('.');
+    const firstLabel = hostParts[0];
+    const hasSubdomain = !defaultSubdomains.includes(firstLabel) && hostParts.length > 2;
+    
+    if (!hasSubdomain) {
+      const friendlyMessage = '서브도메인이 필요합니다.\n\n예: mindgarden.dev.core-solution.co.kr\n\n현재 도메인: ' + host + '\n\n올바른 서브도메인으로 접속 후 다시 시도해주세요.';
+      console.error('⚠️ 서브도메인 없음:', friendlyMessage);
+      notificationManager.show(friendlyMessage, 'error');
+      throw new Error('서브도메인이 필요합니다. 올바른 서브도메인으로 접속 후 다시 시도해주세요.');
+    }
+    
     // 백엔드의 인증 URL 생성 엔드포인트 호출
     console.log('백엔드 API 호출 시작:', `${API_BASE_URL}${AUTH_API.KAKAO_AUTHORIZE}`);
     const response = await fetch(`${API_BASE_URL}${AUTH_API.KAKAO_AUTHORIZE}`);
@@ -125,8 +139,16 @@ export const kakaoLogin = async () => {
         // 백엔드 오류 메시지 추출
         if (errorData.message) {
           errorMessage = errorData.message;
+          // 서브도메인 관련 오류인 경우 명확한 메시지로 변환
+          if (errorMessage.includes('테넌트 정보가 없습니다') || errorMessage.includes('서브도메인')) {
+            errorMessage = '서브도메인이 필요합니다.\n\n예: mindgarden.dev.core-solution.co.kr\n\n현재 도메인: ' + host + '\n\n올바른 서브도메인으로 접속 후 다시 시도해주세요.';
+          }
         } else if (errorData.data && errorData.data.message) {
           errorMessage = errorData.data.message;
+          // 서브도메인 관련 오류인 경우 명확한 메시지로 변환
+          if (errorMessage.includes('테넌트 정보가 없습니다') || errorMessage.includes('서브도메인')) {
+            errorMessage = '서브도메인이 필요합니다.\n\n예: mindgarden.dev.core-solution.co.kr\n\n현재 도메인: ' + host + '\n\n올바른 서브도메인으로 접속 후 다시 시도해주세요.';
+          }
         }
       } catch (parseError) {
         // JSON 파싱 실패 시 텍스트로 처리

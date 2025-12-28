@@ -969,8 +969,9 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
             if (connection != null) {
                 try {
                     // Spring 트랜잭션이 활성화되어 있는지 확인
-                    boolean isTransactionActive = org.springframework.transaction.support.TransactionSynchronizationManager
-                            .isActualTransactionActive();
+                    boolean isTransactionActive =
+                            org.springframework.transaction.support.TransactionSynchronizationManager
+                                    .isActualTransactionActive();
                     if (!isTransactionActive) {
                         // 트랜잭션이 없으면 해제
                         DataSourceUtils.releaseConnection(connection, dataSource);

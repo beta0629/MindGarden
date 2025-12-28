@@ -1394,7 +1394,19 @@ public class OAuth2Controller extends BaseApiController {
                             auth != null && auth.isAuthenticated() ? "성공" : "실패");
 
                     // 사용자 역할에 따른 리다이렉트 (서브도메인 유지를 위해 getTenantAwareFrontendBaseUrl 사용)
+                    // tenantId 우선순위: user.getTenantId() -> TenantContextHolder -> 세션
                     String tenantId = user.getTenantId();
+                    if (tenantId == null || tenantId.isEmpty()) {
+                        tenantId = com.coresolution.core.context.TenantContextHolder.getTenantId();
+                        if (tenantId == null || tenantId.isEmpty()) {
+                            tenantId = (String) session.getAttribute("oauth2_tenant_id");
+                            if (tenantId == null || tenantId.isEmpty()) {
+                                tenantId = (String) session.getAttribute("tenantId");
+                            }
+                        }
+                    }
+                    log.info("네이버 OAuth2 로그인 성공 - 리다이렉트에 사용할 tenantId: tenantId={}, user.tenantId={}", 
+                            tenantId, user.getTenantId());
                     String frontendUrl = getTenantAwareFrontendBaseUrl(request, tenantId);
                     String baseRedirectUrl =
                             DashboardRedirectUtil.getDashboardUrl(user.getRole(), frontendUrl);

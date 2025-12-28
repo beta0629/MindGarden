@@ -532,6 +532,21 @@ export const authAPI = {
           return responseData;
         }
         
+        // 서브도메인 관련 오류인 경우 명확한 에러 메시지 설정
+        const errorMessage = responseData.message || responseData.data?.message || '';
+        const errorCode = responseData.errorCode || responseData.data?.errorCode || '';
+        if (errorMessage.includes('테넌트 정보가 없습니다') || 
+            errorMessage.includes('서브도메인') || 
+            errorCode === 'TENANT_REQUIRED' ||
+            errorCode === 'TENANT_ID_REQUIRED') {
+          const host = window.location.hostname;
+          const friendlyMessage = `서브도메인이 필요합니다.\n\n예: mindgarden.dev.core-solution.co.kr\n\n현재 도메인: ${host}\n\n올바른 서브도메인으로 접속 후 다시 시도해주세요.`;
+          console.error('⚠️ 로그인 실패 - 서브도메인 없음:', friendlyMessage);
+          const subdomainError = new Error(friendlyMessage);
+          subdomainError.isSubdomainError = true;
+          throw subdomainError;
+        }
+        
         console.error('로그인 실패 응답:', responseData);
         throw new Error(`HTTP ${response.status}: ${JSON.stringify(responseData)}`);
       }

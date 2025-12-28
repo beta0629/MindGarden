@@ -598,12 +598,37 @@ const UnifiedLogin = () => {
       } else {
         console.log('❌ 로그인 실패:', result.message);
         setIsLoading(false);
-        showTooltip('아이디 또는 비밀번호가 틀리니 다시 확인하시고 입력해주세요', 'error');
+        
+        // 서브도메인 관련 오류인 경우 명확한 메시지 표시
+        const errorMessage = result.message || '';
+        if (errorMessage.includes('테넌트 정보가 없습니다') || 
+            errorMessage.includes('서브도메인') || 
+            errorMessage.includes('TENANT_REQUIRED')) {
+          const friendlyMessage = '서브도메인이 필요합니다.\n\n예: mindgarden.dev.core-solution.co.kr\n\n현재 도메인: ' + window.location.hostname + '\n\n올바른 서브도메인으로 접속 후 다시 시도해주세요.';
+          showTooltip(friendlyMessage, 'error');
+          notificationManager.show(friendlyMessage, 'error');
+        } else {
+          showTooltip('아이디 또는 비밀번호가 틀리니 다시 확인하시고 입력해주세요', 'error');
+        }
       }
     } catch (error) {
       console.error('❌ 로그인 오류:', error);
       setIsLoading(false);
-      showTooltip('아이디 또는 비밀번호가 틀리니 다시 한번 확인 부탁해요', 'error');
+      
+      // 서브도메인 관련 오류인 경우 명확한 메시지 표시
+      const errorMessage = error.message || '';
+      if (error.isSubdomainError || 
+          errorMessage.includes('테넌트 정보가 없습니다') || 
+          errorMessage.includes('서브도메인') || 
+          errorMessage.includes('TENANT_REQUIRED')) {
+        const friendlyMessage = errorMessage.includes('서브도메인이 필요합니다') 
+          ? errorMessage 
+          : '서브도메인이 필요합니다.\n\n예: mindgarden.dev.core-solution.co.kr\n\n현재 도메인: ' + window.location.hostname + '\n\n올바른 서브도메인으로 접속 후 다시 시도해주세요.';
+        showTooltip(friendlyMessage, 'error');
+        notificationManager.show(friendlyMessage, 'error');
+      } else {
+        showTooltip('아이디 또는 비밀번호가 틀리니 다시 한번 확인 부탁해요', 'error');
+      }
     }
   };
 

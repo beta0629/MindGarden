@@ -1393,8 +1393,9 @@ public class OAuth2Controller extends BaseApiController {
                     log.info("SecurityContext 설정 확인: {}",
                             auth != null && auth.isAuthenticated() ? "성공" : "실패");
 
-                    // 사용자 역할에 따른 리다이렉트 (공통 유틸리티 사용)
-                    String frontendUrl = getFrontendBaseUrl(request);
+                    // 사용자 역할에 따른 리다이렉트 (서브도메인 유지를 위해 getTenantAwareFrontendBaseUrl 사용)
+                    String tenantId = user.getTenantId();
+                    String frontendUrl = getTenantAwareFrontendBaseUrl(request, tenantId);
                     String baseRedirectUrl =
                             DashboardRedirectUtil.getDashboardUrl(user.getRole(), frontendUrl);
 
@@ -2085,8 +2086,9 @@ public class OAuth2Controller extends BaseApiController {
                     }
 
                     // 웹 클라이언트인 경우 기존 로직 사용
-                    // 사용자 역할에 따른 리다이렉트 (공통 유틸리티 사용)
-                    String frontendUrl = getFrontendBaseUrl(request);
+                    // 사용자 역할에 따른 리다이렉트 (서브도메인 유지를 위해 getTenantAwareFrontendBaseUrl 사용)
+                    String tenantId = user.getTenantId();
+                    String frontendUrl = getTenantAwareFrontendBaseUrl(request, tenantId);
                     String baseRedirectUrl =
                             DashboardRedirectUtil.getDashboardUrl(user.getRole(), frontendUrl);
 

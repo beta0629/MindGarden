@@ -10,18 +10,19 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
     connection-init-sql: "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci"
     hikari:
-      minimum-idle: 5
-      maximum-pool-size: 20
+      minimum-idle: 2  # 최소 유휴 연결 수 감소 (5 -> 2)
+      maximum-pool-size: 5  # 최대 연결 수 감소 (20 -> 5) - Too many connections 오류 방지
       auto-commit: true
-      connection-timeout: 30000
-      validation-timeout: 5000
-      idle-timeout: 600000
-      max-lifetime: 1800000
+      connection-timeout: 5000  # 연결 대기 시간 단축 (30초 -> 5초) - 빠른 실패로 누수 방지
+      validation-timeout: 3000  # 연결 검증 시간 단축 (5초 -> 3초)
+      idle-timeout: 180000  # 유휴 연결 타임아웃 단축 (10분 -> 3분) - 연결 해제 촉진
+      max-lifetime: 300000  # 연결 최대 수명 단축 (30분 -> 5분) - 연결 순환 촉진
       connection-test-query: SELECT 1
-      leak-detection-threshold: 60000
+      leak-detection-threshold: 30000  # 연결 누수 감지 시간 단축 (60초 -> 30초) - 빠른 감지
       pool-name: MindGardenOpsHikariPool-Dev
       initialization-fail-timeout: 1
-      register-mbeans: true
+      register-mbeans: true  # JMX 모니터링 활성화
+      keepalive-time: 30000  # 연결 유지 시간 (30초) - 연결 상태 확인
   
   # JPA 설정
   jpa:

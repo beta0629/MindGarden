@@ -425,6 +425,23 @@ const UnifiedLogin = () => {
   // ID/PW 로그인 처리
   const handleSubmit = async (e) => {
     console.log('🚀 handleSubmit 함수 호출됨!', e);
+    
+    // 서브도메인 확인 (서브도메인이 없으면 명확한 안내)
+    const host = window.location.hostname;
+    const defaultSubdomains = ['dev', 'app', 'api', 'staging', 'www'];
+    const hostParts = host.split('.');
+    const firstLabel = hostParts[0];
+    const hasSubdomain = !defaultSubdomains.includes(firstLabel) && hostParts.length > 2;
+    
+    // 로컬 환경이 아닌 경우 서브도메인 체크
+    if (!hasSubdomain && !host.includes('localhost') && !host.includes('127.0.0.1')) {
+      const friendlyMessage = '서브도메인이 필요합니다.\n\n예: mindgarden.dev.core-solution.co.kr\n\n현재 도메인: ' + host + '\n\n올바른 서브도메인으로 접속 후 다시 시도해주세요.';
+      console.error('⚠️ 서브도메인 없음:', friendlyMessage);
+      showTooltip(friendlyMessage, 'error');
+      notificationManager.show(friendlyMessage, 'error');
+      setIsLoading(false);
+      return;
+    }
     e.preventDefault();
 
     // DOM에서 직접 값 가져오기

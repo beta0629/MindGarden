@@ -352,7 +352,7 @@ class SessionManager {
 
       console.log('✅ 클라이언트 로그아웃 완료');
 
-      // 로그인 페이지로 리다이렉트 (서브도메인별로 이동)
+      // 로그인 페이지로 리다이렉트 (서브도메인별로 이동 - 서브도메인 필수)
       console.log('🔍 로그인 페이지로 리다이렉트 (서브도메인별 이동)');
 
       // 현재 호스트 확인
@@ -364,29 +364,36 @@ class SessionManager {
         console.log('✅ 로컬 환경 - 현재 origin 유지:', window.location.origin);
         window.location.replace(`${window.location.origin}/login?logout=success`);
       } else {
-        // 서브도메인 추출
+        // 서브도메인 추출 로직
         const defaultSubdomains = ['dev', 'app', 'api', 'staging', 'www'];
+        let targetSubdomain = null;
+
+        // 1. 현재 호스트에서 서브도메인 추출 시도
         const hostParts = host.split('.');
         const firstLabel = hostParts[0];
         const hasSubdomain = !defaultSubdomains.includes(firstLabel) && hostParts.length > 2;
-
+        
         if (hasSubdomain) {
-          // 서브도메인이 있으면 해당 서브도메인/login으로 이동
-          // 예: mindgarden.dev.core-solution.co.kr -> mindgarden.dev.core-solution.co.kr/login
-          const subdomainUrl = `${window.location.protocol}//${host}/login?logout=success`;
-          console.log('✅ 서브도메인별 이동:', subdomainUrl);
-          window.location.replace(subdomainUrl);
+          // 현재 호스트에 서브도메인이 있으면 사용
+          targetSubdomain = firstLabel;
+          console.log('✅ 현재 호스트에서 서브도메인 추출:', targetSubdomain);
         } else if (preserved.subdomain) {
-          // 서브도메인이 없지만 보존된 서브도메인 정보가 있으면 해당 서브도메인/login으로 이동
-          // 예: mindgarden -> https://mindgarden.dev.core-solution.co.kr/login
-          const subdomainUrl = `https://${preserved.subdomain}.dev.core-solution.co.kr/login?logout=success`;
-          console.log('✅ 보존된 서브도메인으로 이동:', subdomainUrl);
+          // 현재 호스트에 서브도메인이 없지만 보존된 서브도메인 정보가 있으면 사용
+          targetSubdomain = preserved.subdomain;
+          console.log('✅ 보존된 서브도메인 사용:', targetSubdomain);
+        }
+
+        // 서브도메인이 있으면 해당 서브도메인/login으로 이동
+        if (targetSubdomain) {
+          const subdomainUrl = `https://${targetSubdomain}.dev.core-solution.co.kr/login?logout=success`;
+          console.log('✅ 서브도메인으로 이동:', subdomainUrl);
           window.location.replace(subdomainUrl);
         } else {
-          // 서브도메인 정보가 전혀 없으면 dev.core-solution.co.kr/login으로 이동 (최후의 수단)
-          const loginUrl = 'https://dev.core-solution.co.kr/login?logout=success';
-          console.log('⚠️ 서브도메인 정보 없음 - dev.core-solution.co.kr/login으로 이동:', loginUrl);
-          window.location.replace(loginUrl);
+          // 서브도메인 정보가 전혀 없으면 에러 (dev.core-solution.co.kr/login으로 이동하지 않음)
+          console.error('❌ 서브도메인 정보 없음 - 로그인 페이지로 이동 불가');
+          // 사용자에게 명확한 에러 메시지 표시를 위해 현재 페이지에 에러 파라미터 추가
+          const errorUrl = `${window.location.origin}/login?logout=error&message=${encodeURIComponent('서브도메인 정보가 없습니다. 올바른 서브도메인으로 접속해주세요. 예: mindgarden.dev.core-solution.co.kr')}`;
+          window.location.replace(errorUrl);
         }
       }
     }

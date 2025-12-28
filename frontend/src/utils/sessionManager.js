@@ -354,10 +354,36 @@ class SessionManager {
             
             console.log('✅ 클라이언트 로그아웃 완료');
             
-            // 로그인 페이지로 리다이렉트
-            console.log('🔍 로그인 페이지로 리다이렉트');
-            // 현재 origin(서브도메인 포함) 유지
-            window.location.replace(`${window.location.origin}/login`);
+            // 로그인 페이지로 리다이렉트 (서브도메인 유지)
+            console.log('🔍 로그인 페이지로 리다이렉트 (서브도메인 유지)');
+            
+            // 서브도메인 확인 및 유지
+            const host = window.location.hostname;
+            const defaultSubdomains = ['dev', 'app', 'api', 'staging', 'www'];
+            const hostParts = host.split('.');
+            const firstLabel = hostParts[0];
+            const hasSubdomain = !defaultSubdomains.includes(firstLabel) && hostParts.length > 2;
+            
+            // 서브도메인이 있으면 서브도메인 유지, 없으면 보존된 서브도메인으로 이동 시도
+            if (hasSubdomain || host.includes('localhost') || host.includes('127.0.0.1')) {
+              // 서브도메인 또는 로컬 환경: 현재 origin 유지
+              console.log('✅ 서브도메인 유지:', window.location.origin);
+              window.location.replace(`${window.location.origin}/login?logout=success`);
+            } else if (preserved.subdomain) {
+              // 보존된 서브도메인이 있으면 해당 서브도메인으로 이동
+              const subdomainUrl = host.includes('dev.') 
+                ? `https://${preserved.subdomain}.dev.core-solution.co.kr/login?logout=success`
+                : `https://${preserved.subdomain}.core-solution.co.kr/login?logout=success`;
+              console.log('✅ 보존된 서브도메인으로 이동:', subdomainUrl);
+              window.location.replace(subdomainUrl);
+            } else {
+              // 서브도메인 없음: 메인 도메인으로 이동 후 안내 메시지
+              const mainDomain = host.includes('dev.') ? 'https://dev.core-solution.co.kr' : 
+                                 host.includes('core-solution.co.kr') ? 'https://core-solution.co.kr' :
+                                 window.location.origin;
+              console.log('⚠️ 서브도메인 없음 - 메인 도메인으로 이동:', mainDomain);
+              window.location.replace(`${mainDomain}/login?logout=success&message=${encodeURIComponent('서브도메인으로 접속해주세요. 예: mindgarden.dev.core-solution.co.kr')}`);
+            }
         }
     }
     

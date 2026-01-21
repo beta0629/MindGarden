@@ -2,7 +2,7 @@
 <!-- 배포 트리거: 2025-12-10 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
          http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
@@ -29,8 +29,10 @@
         <oauth2.version>3.1.0</oauth2.version>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
-        <maven.compiler.fork>true</maven.compiler.fork>
-        <maven.compiler.maxmem>4g</maven.compiler.maxmem>
+        <maven.compiler.fork>false</maven.compiler.fork>
+        <maven.compiler.showWarnings>true</maven.compiler.showWarnings>
+        <maven.compiler.showDeprecation>true</maven.compiler.showDeprecation>
+        <maven.compiler.verbose>true</maven.compiler.verbose>
         <!-- 인코딩 설정 (한글 깨짐 방지) -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -43,40 +45,40 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
-        
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
         </dependency>
-        
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
-        
+
         <!-- Thymeleaf 제거됨 - React 프론트엔드 사용 -->
-        
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
-        
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-websocket</artifactId>
         </dependency>
-        
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
-        
+
         <!-- Mail -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-mail</artifactId>
         </dependency>
-        
+
         <!-- Redis -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -89,7 +91,7 @@
             <artifactId>mysql-connector-java</artifactId>
             <version>${mysql.version}</version>
         </dependency>
-        
+
         <!-- Hibernate -->
         <dependency>
             <groupId>org.hibernate.orm</groupId>
@@ -103,14 +105,14 @@
             <artifactId>jjwt-api</artifactId>
             <version>${jwt.version}</version>
         </dependency>
-        
+
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-impl</artifactId>
             <version>${jwt.version}</version>
             <scope>runtime</scope>
         </dependency>
-        
+
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-jackson</artifactId>
@@ -143,7 +145,7 @@
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
         </dependency>
-        
+
         <dependency>
             <groupId>com.fasterxml.jackson.datatype</groupId>
             <artifactId>jackson-datatype-jsr310</artifactId>
@@ -154,7 +156,7 @@
             <groupId>org.hibernate.validator</groupId>
             <artifactId>hibernate-validator</artifactId>
         </dependency>
-        
+
         <!-- Lombok -->
         <dependency>
             <groupId>org.projectlombok</groupId>
@@ -169,15 +171,15 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
-        
+
         <dependency>
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-test</artifactId>
             <scope>test</scope>
         </dependency>
-        
+
         <!-- H2 Database 제거 - 모든 환경에서 개발 DB 사용 -->
-        
+
 
 
         <!-- Flyway -->
@@ -185,11 +187,39 @@
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-core</artifactId>
         </dependency>
-        
+
         <dependency>
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-mysql</artifactId>
         </dependency>
+
+        <!-- Google Cloud Speech-to-Text -->
+        <dependency>
+            <groupId>com.google.cloud</groupId>
+            <artifactId>google-cloud-speech</artifactId>
+            <version>4.13.0</version>
+        </dependency>
+
+        <!-- Google Cloud AI Platform (Gemini) -->
+        <dependency>
+            <groupId>com.google.cloud</groupId>
+            <artifactId>google-cloud-aiplatform</artifactId>
+            <version>3.36.0</version>
+        </dependency>
+
+		<!-- Google Cloud Video Intelligence (비디오 감정 분석) -->
+		<dependency>
+			<groupId>com.google.cloud</groupId>
+			<artifactId>google-cloud-video-intelligence</artifactId>
+			<version>2.5.0</version>
+		</dependency>
+
+		<!-- Google Cloud Natural Language (텍스트 감정 분석) -->
+		<dependency>
+			<groupId>com.google.cloud</groupId>
+			<artifactId>google-cloud-language</artifactId>
+			<version>2.5.0</version>
+		</dependency>
 
         <!-- Development Tools -->
         <dependency>
@@ -198,7 +228,7 @@
             <scope>runtime</scope>
             <optional>true</optional>
         </dependency>
-        
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-configuration-processor</artifactId>
@@ -223,7 +253,7 @@
                         -Xmx4g -Xms2g -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -XX:+UseStringDeduplication
                     </jvmArguments>
                 </configuration>            </plugin>
-            
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -243,7 +273,7 @@
                     </compilerArgs>
                 </configuration>
             </plugin>
-            
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
@@ -259,7 +289,7 @@
                     <reuseForks>false</reuseForks>
                 </configuration>
             </plugin>
-            
+
             <!-- DTO 표준화 검증 플러그인 (임시 비활성화) -->
             <!--
             <plugin>
@@ -296,7 +326,7 @@
                 <spring.profiles.active>local</spring.profiles.active>
             </properties>
         </profile>
-        
+
         <profile>
             <id>prod</id>
             <properties>

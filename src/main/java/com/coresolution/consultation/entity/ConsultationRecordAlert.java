@@ -25,7 +25,7 @@ import lombok.NoArgsConstructor;
  /**
  * 상담일지 미작성 시 자동 알림 생성
  /**
- * 
+ *
  /**
  * @author MindGarden
  /**
@@ -43,7 +43,7 @@ import lombok.NoArgsConstructor;
         @Index(name = "idx_consultation_record_alerts_type", columnList = "alertType"),
         @Index(name = "idx_consultation_record_alerts_created", columnList = "createdAt"),
         @Index(name = "idx_consultation_record_alerts_deleted", columnList = "isDeleted"),
-        @Index(name = "idx_consultation_record_alerts_duplicate_check", 
+        @Index(name = "idx_consultation_record_alerts_duplicate_check",
                columnList = "scheduleId, consultantId, alertType, status, createdAt")
     })
 @Data
@@ -55,7 +55,7 @@ public class ConsultationRecordAlert {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    
+
     @Column(name = "tenant_id", length = 100)
     private String tenantId;
 
@@ -114,7 +114,8 @@ public class ConsultationRecordAlert {
     public enum AlertType {
         MISSING_RECORD("상담일지 미작성"),
         OVERDUE_RECORD("상담일지 지연"),
-        REMINDER("리마인더");
+        REMINDER("리마인더"),
+        RISK_DETECTED("위험 징후 감지");
 
         private final String koreanName;
 
@@ -172,6 +173,8 @@ public class ConsultationRecordAlert {
 
     public int getPriorityScore() {
         switch (alertType) {
+            case RISK_DETECTED:
+                return 10;
             case MISSING_RECORD:
                 return 3;
             case OVERDUE_RECORD:

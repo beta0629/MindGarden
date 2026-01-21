@@ -8,6 +8,10 @@ import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
 
 /**
  * 상담일지 엔티티
@@ -24,6 +28,10 @@ import jakarta.validation.constraints.Size;
     @Index(name = "idx_consultation_records_session_date", columnList = "session_date"),
     @Index(name = "idx_consultation_records_is_deleted", columnList = "is_deleted")
 })
+@Getter
+@Setter
+@SuperBuilder
+@NoArgsConstructor
 public class ConsultationRecord extends BaseEntity {
     
     @NotNull(message = "상담 ID는 필수입니다.")
@@ -135,7 +143,7 @@ public class ConsultationRecord extends BaseEntity {
     private Integer sessionDurationMinutes; // 세션 시간 (분)
     
     @Column(name = "is_session_completed")
-    private Boolean isSessionCompleted = false; // 세션 완료 여부
+    private Boolean isSessionCompleted; // 세션 완료 여부
     
     @Column(name = "completion_time")
     private LocalDateTime completionTime; // 세션 완료 시간
@@ -153,13 +161,6 @@ public class ConsultationRecord extends BaseEntity {
     
     @Column(name = "follow_up_due_date")
     private LocalDate followUpDueDate; // 후속 조치 기한
-    
-    // 생성자
-    public ConsultationRecord() {
-        super();
-        this.isSessionCompleted = false;
-        this.sessionDate = LocalDate.now();
-    }
     
     // 비즈니스 메서드
     /**

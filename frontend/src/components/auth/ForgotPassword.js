@@ -39,7 +39,7 @@ const ForgotPassword = () => {
     setIsLoading(true);
 
     try {
-      const response = await apiPost('/api/v1/password-reset/send-email', {
+      const response = await apiPost('/api/v1/auth/password-reset/send-email', {
         email: formData.email
       });
 

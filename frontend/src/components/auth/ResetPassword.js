@@ -101,7 +101,7 @@ const ResetPassword = () => {
     setIsLoading(true);
 
     try {
-      const response = await apiPost('/api/v1/password-reset/reset', {
+      const response = await apiPost('/api/v1/auth/password-reset/reset', {
         token: token,
         newPassword: formData.newPassword,
         confirmPassword: formData.confirmPassword

@@ -28,7 +28,7 @@ public interface VoiceBiomarkerRepository extends JpaRepository<VoiceBiomarker, 
     @Query("SELECT v FROM VoiceBiomarker v " +
            "WHERE v.consultationRecordId IN " +
            "(SELECT cr.id FROM ConsultationRecord cr " +
-           " WHERE cr.consultation.client.id = :clientId " +
+           " WHERE cr.clientId = :clientId " +
            " AND cr.isDeleted = false) " +
            "AND v.isDeleted = false " +
            "ORDER BY v.createdAt DESC")

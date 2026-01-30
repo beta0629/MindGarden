@@ -26,7 +26,7 @@ public interface MultimodalEmotionReportRepository extends JpaRepository<Multimo
     @Query("SELECT m FROM MultimodalEmotionReport m " +
            "WHERE m.consultationRecordId IN " +
            "(SELECT cr.id FROM ConsultationRecord cr " +
-           " WHERE cr.consultation.client.id = :clientId " +
+           " WHERE cr.clientId = :clientId " +
            " AND cr.isDeleted = false) " +
            "AND m.isDeleted = false " +
            "ORDER BY m.createdAt DESC")

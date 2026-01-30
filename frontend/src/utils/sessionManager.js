@@ -372,7 +372,7 @@ class SessionManager {
         const hostParts = host.split('.');
         const firstLabel = hostParts[0];
         const hasSubdomain = !defaultSubdomains.includes(firstLabel) && hostParts.length > 2;
-        
+
         if (hasSubdomain) {
           // 현재 호스트에 서브도메인이 있으면 사용
           targetSubdomain = firstLabel;

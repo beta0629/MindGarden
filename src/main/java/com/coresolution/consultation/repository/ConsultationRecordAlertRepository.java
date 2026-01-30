@@ -43,7 +43,7 @@ public interface ConsultationRecordAlertRepository extends JpaRepository<Consult
      * 고위험 알림 조회 (HIGH 이상)
      */
     @Query("SELECT a FROM ConsultationRecordAlert a WHERE a.isDeleted = false " +
-           "AND (a.alertLevel = 'HIGH' OR a.alertLevel = 'CRITICAL') " +
+           "AND a.alertType = 'RISK_DETECTED' " +
            "AND a.status = 'PENDING' ORDER BY a.createdAt DESC")
     List<ConsultationRecordAlert> findHighRiskPendingAlerts();
 

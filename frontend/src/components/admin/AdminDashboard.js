@@ -184,13 +184,15 @@ const AdminDashboard = ({ user: propUser }) => {
                 refreshToken: 'oauth2_refresh_token'
             });
             
-            // URL 파라미터 완전히 제거 후 새로고침 (무한 루프 방지)
+            // URL 파라미터 완전히 제거 (새로고침 없이)
             const cleanUrl = window.location.origin + window.location.pathname;
             window.history.replaceState({}, document.title, cleanUrl);
             
-            console.log('🔄 세션 복원 완료, 페이지 새로고침...');
-            // URL 파라미터가 제거된 상태로 새로고침
-            window.location.href = cleanUrl;
+            // 세션 체크만 강제 실행 (새로고침 없이)
+            console.log('🔄 세션 복원 완료, 세션 체크만 실행...');
+            sessionManager.checkSession(true).then(() => {
+                console.log('✅ 세션 체크 완료');
+            });
             return;
         }
         

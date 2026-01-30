@@ -77,6 +77,7 @@ const SessionGuard = ({ children }) => {
                 console.log('🔍 [SessionGuard] 페이지 이동 감지 - 세션 체크 시작:', currentPath);
                 
                 // SessionContext의 checkSession 사용 (기존 공통 모듈 활용)
+                // 페이지 이동 중에는 강제 체크하지 않음 (무한 루프 방지)
                 const isLoggedIn = await checkSession(false);
                 
                 if (isLoggedIn && user) {
@@ -98,7 +99,7 @@ const SessionGuard = ({ children }) => {
                             tenantId: tenantId || 'null'
                         });
                         
-                        // tenantId가 없으면 강제 갱신
+                        // tenantId가 없으면 강제 갱신 (단, 체크 중 플래그를 유지하여 무한 루프 방지)
                         await checkSession(true);
                         
                         // 갱신 후 다시 확인 (user는 SessionContext에서 자동 업데이트됨)
@@ -128,7 +129,7 @@ const SessionGuard = ({ children }) => {
         return () => {
             clearTimeout(timeoutId);
         };
-    }, [location.pathname, user, checkSession]);
+    }, [location.pathname, checkSession]); // user 의존성 제거 (무한 루프 방지)
     
     return <>{children}</>;
 };

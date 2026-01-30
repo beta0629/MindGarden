@@ -160,6 +160,40 @@ const AdminDashboard = ({ user: propUser }) => {
     }, []); // 사용자 객체 의존성 제거
 
     useEffect(() => {
+        // OAuth 콜백 처리 (무한 새로고침 방지)
+        const urlParams = new URLSearchParams(window.location.search);
+        const oauth = urlParams.get('oauth');
+        
+        if (oauth === 'success') {
+            console.log('🔗 OAuth 로그인 성공, URL 파라미터에서 사용자 정보 복원...');
+            
+            const userInfo = {
+                id: parseInt(urlParams.get('userId')) || 0,
+                email: urlParams.get('email') || '',
+                name: decodeURIComponent(urlParams.get('name') || ''),
+                nickname: decodeURIComponent(urlParams.get('nickname') || ''),
+                role: urlParams.get('role') || 'ADMIN',
+                profileImageUrl: decodeURIComponent(urlParams.get('profileImage') || ''),
+                provider: urlParams.get('provider') || 'UNKNOWN'
+            };
+            
+            console.log('✅ URL 파라미터에서 사용자 정보:', userInfo);
+            
+            sessionManager.setUser(userInfo, {
+                accessToken: 'oauth2_token',
+                refreshToken: 'oauth2_refresh_token'
+            });
+            
+            // URL 파라미터 완전히 제거 후 새로고침 (무한 루프 방지)
+            const cleanUrl = window.location.origin + window.location.pathname;
+            window.history.replaceState({}, document.title, cleanUrl);
+            
+            console.log('🔄 세션 복원 완료, 페이지 새로고침...');
+            // URL 파라미터가 제거된 상태로 새로고침
+            window.location.href = cleanUrl;
+            return;
+        }
+        
         if (isInitialized.current) return;
         
         const initializeDashboard = async () => {

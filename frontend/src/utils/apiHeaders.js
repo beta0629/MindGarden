@@ -192,10 +192,13 @@ export const getDefaultApiHeaders = (additionalHeaders = {}) => {
             }
         }
         
-        // 3. tenantId가 있으면 헤더에 추가
-        if (tenantId) {
+        // 3. tenantId가 있으면 헤더에 추가 (단, 문자열인 경우만)
+        if (tenantId && typeof tenantId === 'string') {
             headers['X-Tenant-Id'] = tenantId;
             console.log('✅ X-Tenant-Id 헤더 추가:', tenantId);
+        } else if (tenantId) {
+            // Promise나 다른 객체가 들어온 경우 경고
+            console.warn('⚠️ tenantId가 문자열이 아님 (Promise 또는 객체):', typeof tenantId, tenantId);
         } else {
             console.warn('⚠️ tenantId를 찾을 수 없어 헤더에 포함하지 않음');
         }

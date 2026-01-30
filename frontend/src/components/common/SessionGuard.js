@@ -28,6 +28,8 @@ const SessionGuard = ({ children }) => {
     
     // 공개 경로 정의 (인증 없이 접근 가능)
     const publicPaths = [
+        '/',
+        '/landing',
         '/login',
         '/register',
         '/forgot-password',

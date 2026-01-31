@@ -325,10 +325,15 @@ public class TenantContextFilter implements Filter {
         String tenantId = request.getHeader(TENANT_ID_HEADER);
         log.info("🔍 Tenant ID 추출 시도: 헤더={}, 모든 헤더={}", tenantId, getHeadersAsString(request));
         if (tenantId != null && !tenantId.isEmpty()) {
+            // ⚠️ 잘못된 값 체크: Promise 객체나 잘못된 형식 필터링
+            if (tenantId.contains("[object") || tenantId.contains("Promise") || tenantId.contains("Object")) {
+                log.warn("⚠️ 잘못된 tenantId 형식 감지 (헤더): {}, 헤더 무시하고 서브도메인에서 추출 시도", tenantId);
+                // 잘못된 값이면 헤더를 무시하고 서브도메인에서 추출 시도
+                tenantId = null;
+            }
+            
             // ⚠️ 기본값/더미 값 체크 (헤더에서 받은 경우에만)
-            // "tenant-unknown" 또는 "tenant-default"만 기본값으로 간주
-            // "tenant-unknown-consultation-*" 같은 실제 tenantId는 허용
-            if (tenantId.equals("tenant-unknown") || tenantId.equals("tenant-default")) {
+            if (tenantId != null && (tenantId.equals("tenant-unknown") || tenantId.equals("tenant-default"))) {
                 log.warn("⚠️ 기본값/더미 tenantId 감지 (헤더): {}, 세션의 User 정보를 우선 사용", tenantId);
                 // 기본값이면 세션의 User 정보를 다시 확인
                 if (session != null) {
@@ -346,10 +351,14 @@ public class TenantContextFilter implements Filter {
                 }
                 // 기본값이면 null 반환 (백엔드에서 오류 발생)
                 log.error("❌ 기본값 tenantId는 사용할 수 없습니다: {}", tenantId);
-                return null;
+                tenantId = null; // null로 설정하여 서브도메인에서 추출 시도
             }
-            log.info("✅ Tenant ID extracted from header: {}", tenantId);
-            return tenantId;
+            
+            // 유효한 tenantId가 있으면 반환
+            if (tenantId != null && !tenantId.isEmpty()) {
+                log.info("✅ Tenant ID extracted from header: {}", tenantId);
+                return tenantId;
+            }
         }
 
         // 3. Host 헤더에서 테넌트 서브도메인 추출 (우선순위 3)

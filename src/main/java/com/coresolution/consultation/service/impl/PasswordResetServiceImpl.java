@@ -109,7 +109,7 @@ public class PasswordResetServiceImpl implements PasswordResetService {
             EmailResponse emailResponse = emailService.sendEmail(emailRequest);
             boolean emailSent = emailResponse != null && emailResponse.isSuccess();
             
-            if (emailSent) {
+            if (emailSent && emailResponse != null) {
                 log.info("✅ 비밀번호 재설정 이메일 발송 완료: email={}, emailId={}, status={}", 
                     email, emailResponse.getEmailId(), emailResponse.getStatus());
             } else {

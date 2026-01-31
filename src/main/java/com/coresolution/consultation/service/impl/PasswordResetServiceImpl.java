@@ -110,12 +110,20 @@ public class PasswordResetServiceImpl implements PasswordResetService {
             boolean emailSent = emailResponse != null && emailResponse.isSuccess();
             
             if (emailSent) {
-                log.info("✅ 비밀번호 재설정 이메일 발송 완료: {}", email);
+                log.info("✅ 비밀번호 재설정 이메일 발송 완료: email={}, emailId={}, status={}", 
+                    email, emailResponse.getEmailId(), emailResponse.getStatus());
             } else {
-                log.error("❌ 비밀번호 재설정 이메일 발송 실패: {}", email);
+                log.error("❌ 비밀번호 재설정 이메일 발송 실패: email={}, emailId={}, status={}, errorCode={}, errorMessage={}", 
+                    email, 
+                    emailResponse != null ? emailResponse.getEmailId() : "null",
+                    emailResponse != null ? emailResponse.getStatus() : "null",
+                    emailResponse != null ? emailResponse.getErrorCode() : "null",
+                    emailResponse != null ? emailResponse.getErrorMessage() : "null");
             }
             
-            return emailSent;
+            // 보안상 이유로 항상 성공으로 응답 (이메일 발송 실패 여부를 알려주지 않음)
+            // 하지만 실제로는 이메일이 발송되지 않았을 수 있으므로 로그는 남김
+            return true;
             
         } catch (Exception e) {
             log.error("❌ 비밀번호 재설정 이메일 발송 중 오류: {}", email, e);

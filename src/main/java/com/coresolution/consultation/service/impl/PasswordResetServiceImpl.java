@@ -47,7 +47,16 @@ public class PasswordResetServiceImpl implements PasswordResetService {
     public boolean sendPasswordResetEmail(String email) {
         try {
             log.info("🔑 비밀번호 재설정 이메일 발송 요청: {}", email);
-            String tenantId = TenantContextHolder.getRequiredTenantId();
+            
+            // tenantId 추출 (서브도메인에서 자동 추출됨)
+            String tenantId = TenantContextHolder.getTenantId();
+            if (tenantId == null || tenantId.isEmpty()) {
+                log.error("❌ 비밀번호 재설정 실패: tenantId가 없습니다. 서브도메인을 확인해주세요.");
+                // 보안상 이유로 성공으로 응답 (tenantId 부족을 알려주지 않음)
+                return true;
+            }
+            
+            log.info("✅ tenantId 추출 성공: tenantId={}, email={}", tenantId, email);
             
             // 사용자 확인 (tenantId 필터링)
             Optional<User> userOpt = userRepository.findByTenantIdAndEmail(tenantId, email);

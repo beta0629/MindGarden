@@ -245,7 +245,7 @@ function BannerContent({ banner }: { banner: BannerItem }) {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          padding: '8px 0',
+          padding: '8px 0 40px 0', // 하단 패딩 추가 (인디케이터 공간 확보)
         }}
       >
         <img
@@ -271,7 +271,7 @@ function BannerContent({ banner }: { banner: BannerItem }) {
           alignItems: 'center',
           justifyContent: 'center',
           gap: '16px',
-          padding: '12px 20px',
+          padding: '12px 20px 40px 20px', // 하단 패딩 추가 (인디케이터 공간 확보)
           maxWidth: '1200px',
           margin: '0 auto',
         }}
@@ -317,7 +317,7 @@ function BannerContent({ banner }: { banner: BannerItem }) {
     return (
       <div
         style={{
-          padding: '16px 24px',
+          padding: '16px 24px 40px 24px', // 하단 패딩 추가 (인디케이터 공간 확보)
           maxWidth: '1200px',
           margin: '0 auto',
           background: 'linear-gradient(135deg, rgba(248, 245, 240, 0.8) 0%, rgba(254, 249, 243, 0.8) 100%)',

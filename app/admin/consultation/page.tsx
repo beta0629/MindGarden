@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
+import AdminNavigation from '@/components/AdminNavigation';
 
 interface ConsultationInquiry {
   id: number;
@@ -161,34 +161,7 @@ export default function ConsultationAdminPage() {
             <h1 style={{ fontSize: '1.875rem', fontWeight: '700', color: '#1f2937' }}>
               상담 문의 관리
             </h1>
-            <div style={{ display: 'flex', gap: '1rem' }}>
-              <Link
-                href="/admin"
-                style={{
-                  padding: '0.5rem 1rem',
-                  backgroundColor: '#6b7280',
-                  color: 'white',
-                  textDecoration: 'none',
-                  borderRadius: '0.5rem',
-                  fontSize: '0.875rem',
-                }}
-              >
-                관리자 홈
-              </Link>
-              <Link
-                href="/admin/blog"
-                style={{
-                  padding: '0.5rem 1rem',
-                  backgroundColor: '#6b7280',
-                  color: 'white',
-                  textDecoration: 'none',
-                  borderRadius: '0.5rem',
-                  fontSize: '0.875rem',
-                }}
-              >
-                블로그 관리
-              </Link>
-            </div>
+            <AdminNavigation />
           </div>
 
           {/* 상태 필터 */}

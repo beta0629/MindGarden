@@ -1,11 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Navigation from '@/components/Navigation';
-import Footer from '@/components/Footer';
 import { getApiService } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import AdminNavigation from '@/components/AdminNavigation';
 
 interface BlogPost {
   id: number;
@@ -91,19 +90,11 @@ export default function BlogAdminListPage() {
   };
 
   // 인증되지 않았으면 로딩 표시
-  if (authenticated === null) {
+  if (authenticated === null || loading) {
     return (
-      <main id="top">
-        <Navigation />
-        <div className="content-shell">
-          <div className="content-main">
-            <section className="content-section" style={{ paddingTop: '120px', textAlign: 'center' }}>
-              <p>인증 확인 중...</p>
-            </section>
-          </div>
-        </div>
-        <Footer />
-      </main>
+      <div style={{ padding: '2rem', textAlign: 'center' }}>
+        <p>로딩 중...</p>
+      </div>
     );
   }
 
@@ -113,165 +104,103 @@ export default function BlogAdminListPage() {
   }
 
   return (
-    <main id="top">
-      <Navigation />
-      
-      <div className="content-shell">
-        <div className="content-main">
-          <section className="content-section" style={{ paddingTop: '120px', maxWidth: '1200px', margin: '0 auto' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
-              <h1 className="section-title" style={{ margin: 0 }}>블로그 관리</h1>
-              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                <Link
-                  href="/admin/blog/new"
-                  style={{
-                    padding: '10px 20px',
-                    backgroundColor: 'var(--accent-sky)',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: 'var(--radius-sm)',
-                    fontSize: '14px',
-                    fontWeight: '600',
-                    textDecoration: 'none',
-                    cursor: 'pointer'
-                  }}
-                >
-                  새 글 작성
-                </Link>
-                <Link
-                  href="/admin/gallery"
-                  style={{
-                    padding: '10px 20px',
-                    backgroundColor: 'transparent',
-                    color: 'var(--text-sub)',
-                    border: '1px solid var(--border-soft)',
-                    borderRadius: 'var(--radius-sm)',
-                    fontSize: '14px',
-                    fontWeight: '600',
-                    textDecoration: 'none',
-                    cursor: 'pointer'
-                  }}
-                >
-                  갤러리 관리
-                </Link>
-                <Link
-                  href="/admin/popups"
-                  style={{
-                    padding: '10px 20px',
-                    backgroundColor: 'transparent',
-                    color: 'var(--text-sub)',
-                    border: '1px solid var(--border-soft)',
-                    borderRadius: 'var(--radius-sm)',
-                    fontSize: '14px',
-                    fontWeight: '600',
-                    textDecoration: 'none',
-                    cursor: 'pointer'
-                  }}
-                >
-                  팝업 관리
-                </Link>
-                <Link
-                  href="/admin/banners"
-                  style={{
-                    padding: '10px 20px',
-                    backgroundColor: 'transparent',
-                    color: 'var(--text-sub)',
-                    border: '1px solid var(--border-soft)',
-                    borderRadius: 'var(--radius-sm)',
-                    fontSize: '14px',
-                    fontWeight: '600',
-                    textDecoration: 'none',
-                    cursor: 'pointer'
-                  }}
-                >
-                  배너 관리
-                </Link>
-                <Link
-                  href="/admin/consultation"
-                  style={{
-                    padding: '10px 20px',
-                    backgroundColor: 'transparent',
-                    color: 'var(--text-sub)',
-                    border: '1px solid var(--border-soft)',
-                    borderRadius: 'var(--radius-sm)',
-                    fontSize: '14px',
-                    fontWeight: '600',
-                    textDecoration: 'none',
-                    cursor: 'pointer'
-                  }}
-                >
-                  상담 문의 관리
-                </Link>
-                <button
-                  type="button"
-                  onClick={handleLogout}
-                  style={{
-                    padding: '10px 20px',
-                    backgroundColor: 'transparent',
-                    color: 'var(--text-sub)',
-                    border: '1px solid var(--border-soft)',
-                    borderRadius: 'var(--radius-sm)',
-                    fontSize: '14px',
-                    cursor: 'pointer'
-                  }}
-                >
-                  로그아웃
-                </button>
-              </div>
+    <div style={{ minHeight: '100vh', backgroundColor: '#f9fafb' }}>
+      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '2rem' }}>
+        {/* 헤더 */}
+        <div style={{ marginBottom: '2rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <h1 style={{ fontSize: '1.875rem', fontWeight: '700', color: '#1f2937' }}>
+              블로그 관리
+            </h1>
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+              <Link
+                href="/admin/blog/new"
+                style={{
+                  padding: '0.5rem 1rem',
+                  backgroundColor: '#3b82f6',
+                  color: 'white',
+                  textDecoration: 'none',
+                  borderRadius: '0.5rem',
+                  fontSize: '0.875rem',
+                  fontWeight: '600',
+                }}
+              >
+                새 글 작성
+              </Link>
+              <button
+                type="button"
+                onClick={handleLogout}
+                style={{
+                  padding: '0.5rem 1rem',
+                  backgroundColor: '#ef4444',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '0.5rem',
+                  fontSize: '0.875rem',
+                  cursor: 'pointer',
+                }}
+              >
+                로그아웃
+              </button>
             </div>
+          </div>
+          <AdminNavigation />
+        </div>
 
-            {error && (
-              <div style={{
-                padding: '16px',
-                marginBottom: '24px',
-                backgroundColor: '#fee',
-                border: '1px solid #fcc',
-                borderRadius: 'var(--radius-sm)',
-                color: '#c33'
-              }}>
-                {error}
-              </div>
-            )}
+        {error && (
+          <div style={{
+            padding: '1rem',
+            backgroundColor: '#fee2e2',
+            color: '#991b1b',
+            borderRadius: '0.5rem',
+            marginBottom: '1rem',
+          }}>
+            {error}
+          </div>
+        )}
 
-            {loading ? (
-              <div style={{ textAlign: 'center', padding: '80px 20px' }}>
-                <p>로딩 중...</p>
-              </div>
-            ) : posts.length === 0 ? (
-              <div style={{ 
-                textAlign: 'center', 
-                padding: '80px 20px',
-                color: 'var(--text-sub)'
-              }}>
-                <p>작성된 글이 없습니다.</p>
-                <Link 
-                  href="/admin"
-                  style={{
-                    display: 'inline-block',
-                    marginTop: '16px',
-                    padding: '12px 24px',
-                    backgroundColor: 'var(--accent-sky)',
-                    color: 'white',
-                    textDecoration: 'none',
-                    borderRadius: 'var(--radius-sm)',
-                    fontWeight: '600'
-                  }}
-                >
-                  첫 글 작성하기
-                </Link>
-              </div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        {loading ? (
+          <div style={{ textAlign: 'center', padding: '3rem' }}>
+            <p style={{ color: '#6b7280' }}>로딩 중...</p>
+          </div>
+        ) : posts.length === 0 ? (
+          <div style={{ 
+            padding: '3rem',
+            textAlign: 'center',
+            backgroundColor: 'white',
+            borderRadius: '0.5rem',
+            border: '1px solid #e5e7eb',
+          }}>
+            <p style={{ color: '#6b7280', fontSize: '1rem', marginBottom: '1rem' }}>작성된 글이 없습니다.</p>
+            <Link 
+              href="/admin/blog/new"
+              style={{
+                display: 'inline-block',
+                padding: '0.75rem 1.5rem',
+                backgroundColor: '#3b82f6',
+                color: 'white',
+                textDecoration: 'none',
+                borderRadius: '0.5rem',
+                fontWeight: '600',
+                fontSize: '0.875rem',
+              }}
+            >
+              첫 글 작성하기
+            </Link>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 {posts.map((post) => (
                   <div
                     key={post.id}
                     style={{
-                      padding: '20px',
-                      backgroundColor: 'var(--surface-1)',
-                      border: '1px solid var(--border-soft)',
-                      borderRadius: 'var(--radius-md)',
+                      backgroundColor: 'white',
+                      padding: '1.5rem',
+                      borderRadius: '0.5rem',
+                      border: '1px solid #e5e7eb',
+                      boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
                       display: 'flex',
-                      gap: '20px',
+                      gap: '1.5rem',
                       alignItems: 'flex-start'
                     }}
                   >
@@ -291,31 +220,32 @@ export default function BlogAdminListPage() {
                     <div style={{ flex: 1 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
                         <h3 style={{ 
-                          fontSize: '18px', 
-                          fontWeight: '700', 
+                          fontSize: '1.25rem', 
+                          fontWeight: '600', 
                           margin: 0,
-                          color: 'var(--text-main)'
+                          color: '#1f2937',
+                          marginBottom: '0.5rem'
                         }}>
                           {post.title}
                         </h3>
-                        <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
+                        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
                           <span style={{
-                            padding: '4px 12px',
-                            backgroundColor: post.status === 'published' ? '#efe' : '#fee',
-                            color: post.status === 'published' ? '#3c3' : '#c33',
-                            borderRadius: '12px',
-                            fontSize: '12px',
+                            padding: '0.25rem 0.75rem',
+                            backgroundColor: post.status === 'published' ? '#10b981' : '#f59e0b',
+                            color: 'white',
+                            borderRadius: '9999px',
+                            fontSize: '0.75rem',
                             fontWeight: '600'
                           }}>
                             {post.status === 'published' ? '발행됨' : '임시저장'}
                           </span>
                           {post.isHomepageOnly && (
                             <span style={{
-                              padding: '4px 12px',
-                              backgroundColor: '#eef',
-                              color: '#33c',
-                              borderRadius: '12px',
-                              fontSize: '12px',
+                              padding: '0.25rem 0.75rem',
+                              backgroundColor: '#3b82f6',
+                              color: 'white',
+                              borderRadius: '9999px',
+                              fontSize: '0.75rem',
                               fontWeight: '600'
                             }}>
                               홈페이지 전용
@@ -325,9 +255,9 @@ export default function BlogAdminListPage() {
                       </div>
                       {post.summary && (
                         <p style={{ 
-                          color: 'var(--text-sub)', 
-                          fontSize: '14px',
-                          marginBottom: '8px',
+                          color: '#6b7280', 
+                          fontSize: '0.875rem',
+                          marginBottom: '0.5rem',
                           display: '-webkit-box',
                           WebkitLineClamp: 2,
                           WebkitBoxOrient: 'vertical',
@@ -340,9 +270,11 @@ export default function BlogAdminListPage() {
                         display: 'flex', 
                         justifyContent: 'space-between', 
                         alignItems: 'center',
-                        marginTop: '12px'
+                        marginTop: '1rem',
+                        paddingTop: '1rem',
+                        borderTop: '1px solid #e5e7eb'
                       }}>
-                        <div style={{ fontSize: '12px', color: 'var(--text-light)' }}>
+                        <div style={{ fontSize: '0.875rem', color: '#9ca3af' }}>
                           {post.publishedAt ? (
                             <time dateTime={post.publishedAt}>
                               발행: {new Date(post.publishedAt).toLocaleDateString('ko-KR')}
@@ -351,17 +283,17 @@ export default function BlogAdminListPage() {
                             <span>작성: {new Date(post.createdAt).toLocaleDateString('ko-KR')}</span>
                           )}
                         </div>
-                        <div style={{ display: 'flex', gap: '8px' }}>
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
                           <Link
                             href={`/blog/${post.id}`}
                             target="_blank"
                             style={{
-                              padding: '6px 12px',
+                              padding: '0.5rem 1rem',
                               backgroundColor: 'transparent',
-                              color: 'var(--text-sub)',
-                              border: '1px solid var(--border-soft)',
-                              borderRadius: 'var(--radius-sm)',
-                              fontSize: '12px',
+                              color: '#6b7280',
+                              border: '1px solid #d1d5db',
+                              borderRadius: '0.375rem',
+                              fontSize: '0.875rem',
                               textDecoration: 'none',
                               cursor: 'pointer'
                             }}
@@ -371,12 +303,12 @@ export default function BlogAdminListPage() {
                           <Link
                             href={`/admin/blog/edit/${post.id}`}
                             style={{
-                              padding: '6px 12px',
-                              backgroundColor: 'var(--accent-sky)',
+                              padding: '0.5rem 1rem',
+                              backgroundColor: '#3b82f6',
                               color: 'white',
                               border: 'none',
-                              borderRadius: 'var(--radius-sm)',
-                              fontSize: '12px',
+                              borderRadius: '0.375rem',
+                              fontSize: '0.875rem',
                               textDecoration: 'none',
                               cursor: 'pointer'
                             }}
@@ -387,12 +319,12 @@ export default function BlogAdminListPage() {
                             type="button"
                             onClick={() => handleDelete(post.id, post.title)}
                             style={{
-                              padding: '6px 12px',
-                              backgroundColor: '#fcc',
-                              color: '#c33',
+                              padding: '0.5rem 1rem',
+                              backgroundColor: '#ef4444',
+                              color: 'white',
                               border: 'none',
-                              borderRadius: 'var(--radius-sm)',
-                              fontSize: '12px',
+                              borderRadius: '0.375rem',
+                              fontSize: '0.875rem',
                               cursor: 'pointer'
                             }}
                           >
@@ -404,13 +336,9 @@ export default function BlogAdminListPage() {
                   </div>
                 ))}
               </div>
-            )}
-          </section>
-        </div>
+        )}
       </div>
-
-      <Footer />
-    </main>
+    </div>
   );
 }
 

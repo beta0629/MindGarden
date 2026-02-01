@@ -1,11 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Navigation from '@/components/Navigation';
-import Footer from '@/components/Footer';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import ImageUploader from '@/components/ImageUploader';
+import AdminNavigation from '@/components/AdminNavigation';
 
 interface Popup {
   id: number;
@@ -193,17 +192,9 @@ export default function PopupsAdminPage() {
 
   if (authenticated === null) {
     return (
-      <main id="top">
-        <Navigation />
-        <div className="content-shell">
-          <div className="content-main">
-            <section className="content-section" style={{ paddingTop: '120px', textAlign: 'center' }}>
-              <p>인증 확인 중...</p>
-            </section>
-          </div>
-        </div>
-        <Footer />
-      </main>
+      <div style={{ padding: '2rem', textAlign: 'center' }}>
+        <p>로딩 중...</p>
+      </div>
     );
   }
 
@@ -212,96 +203,32 @@ export default function PopupsAdminPage() {
   }
 
   return (
-    <main id="top">
-      <Navigation />
-      
-      <div className="content-shell">
-        <div className="content-main">
-          <section className="content-section" style={{ paddingTop: '120px', maxWidth: '1200px', margin: '0 auto' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
-              <h1 className="section-title" style={{ margin: 0 }}>팝업 관리</h1>
-              <div style={{ display: 'flex', gap: '12px' }}>
-                <Link
-                  href="/admin/list"
-                  style={{
-                    padding: '10px 20px',
-                    backgroundColor: 'transparent',
-                    color: 'var(--text-sub)',
-                    border: '1px solid var(--border-soft)',
-                    borderRadius: 'var(--radius-sm)',
-                    fontSize: '14px',
-                    fontWeight: '600',
-                    textDecoration: 'none',
-                    cursor: 'pointer'
-                  }}
-                >
-                  블로그 관리
-                </Link>
-                <Link
-                  href="/admin/gallery"
-                  style={{
-                    padding: '10px 20px',
-                    backgroundColor: 'transparent',
-                    color: 'var(--text-sub)',
-                    border: '1px solid var(--border-soft)',
-                    borderRadius: 'var(--radius-sm)',
-                    fontSize: '14px',
-                    fontWeight: '600',
-                    textDecoration: 'none',
-                    cursor: 'pointer'
-                  }}
-                >
-                  갤러리 관리
-                </Link>
-                <Link
-                  href="/admin/banners"
-                  style={{
-                    padding: '10px 20px',
-                    backgroundColor: 'transparent',
-                    color: 'var(--text-sub)',
-                    border: '1px solid var(--border-soft)',
-                    borderRadius: 'var(--radius-sm)',
-                    fontSize: '14px',
-                    fontWeight: '600',
-                    textDecoration: 'none',
-                    cursor: 'pointer'
-                  }}
-                >
-                  배너 관리
-                </Link>
-                <Link
-                  href="/admin/consultation"
-                  style={{
-                    padding: '10px 20px',
-                    backgroundColor: 'transparent',
-                    color: 'var(--text-sub)',
-                    border: '1px solid var(--border-soft)',
-                    borderRadius: 'var(--radius-sm)',
-                    fontSize: '14px',
-                    fontWeight: '600',
-                    textDecoration: 'none',
-                    cursor: 'pointer'
-                  }}
-                >
-                  상담 문의 관리
-                </Link>
-                <button
-                  type="button"
-                  onClick={handleLogout}
-                  style={{
-                    padding: '10px 20px',
-                    backgroundColor: 'transparent',
-                    color: 'var(--text-sub)',
-                    border: '1px solid var(--border-soft)',
-                    borderRadius: 'var(--radius-sm)',
-                    fontSize: '14px',
-                    cursor: 'pointer'
-                  }}
-                >
-                  로그아웃
-                </button>
-              </div>
-            </div>
+    <div style={{ minHeight: '100vh', backgroundColor: '#f9fafb' }}>
+      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '2rem' }}>
+        {/* 헤더 */}
+        <div style={{ marginBottom: '2rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <h1 style={{ fontSize: '1.875rem', fontWeight: '700', color: '#1f2937' }}>
+              팝업 관리
+            </h1>
+            <button
+              type="button"
+              onClick={handleLogout}
+              style={{
+                padding: '0.5rem 1rem',
+                backgroundColor: '#ef4444',
+                color: 'white',
+                border: 'none',
+                borderRadius: '0.5rem',
+                fontSize: '0.875rem',
+                cursor: 'pointer',
+              }}
+            >
+              로그아웃
+            </button>
+          </div>
+          <AdminNavigation />
+        </div>
 
             {error && (
               <div style={{
@@ -652,11 +579,7 @@ export default function PopupsAdminPage() {
                 ))}
               </div>
             )}
-          </section>
-        </div>
       </div>
-
-      <Footer />
-    </main>
+    </div>
   );
 }

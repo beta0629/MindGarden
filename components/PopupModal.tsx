@@ -70,8 +70,8 @@ export default function PopupModal({ popup, onClose }: PopupModalProps) {
       <div
         onClick={handleContentClick}
         style={{
-          backgroundColor: hasImageInContent ? 'transparent' : 'white',
-          borderRadius: hasImageInContent ? 0 : 'var(--radius-md)',
+          backgroundColor: 'transparent',
+          borderRadius: 'var(--radius-md)',
           maxWidth: hasImageInContent ? '90vw' : '600px',
           width: '100%',
           maxHeight: '90vh',
@@ -79,7 +79,7 @@ export default function PopupModal({ popup, onClose }: PopupModalProps) {
           position: 'relative',
           transform: isVisible ? 'scale(1)' : 'scale(0.9)',
           transition: 'transform 0.3s ease',
-          boxShadow: hasImageInContent ? 'none' : '0 10px 40px rgba(0, 0, 0, 0.2)',
+          boxShadow: 'var(--shadow-2)',
         }}
       >
         {/* 닫기 버튼 */}
@@ -93,38 +93,114 @@ export default function PopupModal({ popup, onClose }: PopupModalProps) {
             height: '36px',
             borderRadius: '50%',
             border: 'none',
-            backgroundColor: hasImageInContent ? 'rgba(255, 255, 255, 0.9)' : 'rgba(0, 0, 0, 0.1)',
+            backgroundColor: 'rgba(255, 255, 255, 0.95)',
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             fontSize: '24px',
-            color: hasImageInContent ? 'var(--text-main)' : 'var(--text-main)',
+            color: 'var(--text-main)',
             zIndex: 10,
             transition: 'all 0.2s',
-            boxShadow: hasImageInContent ? '0 2px 8px rgba(0, 0, 0, 0.15)' : 'none',
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+            backdropFilter: 'blur(8px)',
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = hasImageInContent ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 0.2)';
+            e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 1)';
             e.currentTarget.style.transform = 'scale(1.1)';
+            e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.2)';
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = hasImageInContent ? 'rgba(255, 255, 255, 0.9)' : 'rgba(0, 0, 0, 0.1)';
+            e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.95)';
             e.currentTarget.style.transform = 'scale(1)';
+            e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.15)';
           }}
         >
           ×
         </button>
 
-        {/* content에 이미지가 포함된 경우: content를 그대로 렌더링 */}
+        {/* content에 이미지가 포함된 경우: 홈페이지와 일체감 있는 디자인 적용 */}
         {hasImageInContent && (
           <div 
             style={{ 
               position: 'relative',
-              padding: '20px',
+              padding: '40px',
+              paddingBottom: '90px', // 체크박스 공간 확보
+              background: 'linear-gradient(135deg, var(--bg-pastel-1) 0%, var(--bg-pastel-2) 100%)',
+              borderRadius: 'var(--radius-md)',
+              border: '1px solid var(--border-soft)',
             }}
-            dangerouslySetInnerHTML={{ __html: popup.content || '' }}
-          />
+          >
+            {/* 제목이 있으면 표시 */}
+            {popup.title && (
+              <h2
+                style={{
+                  fontSize: '1.75rem',
+                  fontWeight: '700',
+                  marginBottom: '24px',
+                  color: 'var(--text-main)',
+                  background: 'linear-gradient(135deg, var(--accent-sky) 0%, var(--accent-lavender) 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                  textAlign: 'center',
+                }}
+              >
+                {popup.title}
+              </h2>
+            )}
+            
+            {/* 이미지와 텍스트를 담는 컨테이너 */}
+            <div
+              style={{
+                padding: '24px',
+                backgroundColor: 'white',
+                borderRadius: 'var(--radius-sm)',
+                boxShadow: 'var(--shadow-1)',
+                border: '1px solid var(--border-soft)',
+                overflow: 'hidden',
+              }}
+            >
+              <div
+                style={{
+                  lineHeight: '1.8',
+                }}
+                dangerouslySetInnerHTML={{ __html: popup.content || '' }}
+              />
+            </div>
+            
+            {/* 링크가 있으면 버튼 표시 */}
+            {popup.linkUrl && (
+              <div style={{ textAlign: 'center', marginTop: '24px' }}>
+                <a
+                  href={popup.linkUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: 'inline-block',
+                    padding: '14px 28px',
+                    background: 'linear-gradient(135deg, var(--accent-sky) 0%, var(--accent-mint) 100%)',
+                    color: 'var(--text-main)',
+                    textDecoration: 'none',
+                    borderRadius: 'var(--radius-sm)',
+                    fontWeight: '600',
+                    transition: 'all 0.2s',
+                    boxShadow: '0 4px 12px rgba(184, 212, 227, 0.3)',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                    e.currentTarget.style.boxShadow = '0 6px 16px rgba(184, 212, 227, 0.4)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(184, 212, 227, 0.3)';
+                  }}
+                >
+                  자세히 보기
+                </a>
+              </div>
+            )}
+          </div>
         )}
 
         {/* 텍스트만 있을 때: 기본 디자인 템플릿 적용 */}

@@ -298,7 +298,7 @@ export default function BlogEditor({
         // onImageUpload가 제공되면 서버 업로드 사용, 아니면 base64 사용
         if (onImageUpload) {
           const result = await onImageUpload(file);
-          imageUrl = result.imageUrl || result.url;
+          imageUrl = result.imageUrl;
           if (!imageUrl) {
             throw new Error('이미지 URL을 받지 못했습니다.');
           }

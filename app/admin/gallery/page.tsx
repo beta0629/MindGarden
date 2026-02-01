@@ -97,6 +97,7 @@ export default function GalleryAdminPage() {
   const handleImageUploaded = async (imageUrl: string) => {
     // 갤러리 이미지는 업로드와 동시에 DB에 저장
     try {
+      console.log('Image uploaded, adding to gallery:', imageUrl);
       const apiService = getApiService();
       const result = await apiService.addGalleryImage({
         imageUrl: imageUrl,
@@ -104,14 +105,22 @@ export default function GalleryAdminPage() {
         displayOrder: newImage.displayOrder,
       });
       
+      console.log('Add gallery image result:', result);
+      
       if (result.success) {
         setSuccess('갤러리 이미지가 추가되었습니다.');
         setNewImage({ imageUrl: '', altText: '', displayOrder: 0 });
-        loadImages(); // 목록 새로고침
+        // 약간의 지연 후 목록 새로고침 (DB 반영 시간 고려)
+        setTimeout(() => {
+          loadImages();
+        }, 500);
         setTimeout(() => setSuccess(null), 3000);
         setError(null);
       } else {
-        throw new Error(result.error || '이미지 추가에 실패했습니다.');
+        const errorMsg = result.error || '이미지 추가에 실패했습니다.';
+        console.error('Add gallery image failed:', errorMsg);
+        setError(errorMsg);
+        throw new Error(errorMsg);
       }
     } catch (err: any) {
       const errorMessage = err.message || '이미지 추가에 실패했습니다.';

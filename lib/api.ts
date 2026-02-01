@@ -59,7 +59,28 @@ class ApiService {
       clearTimeout(timeoutId);
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        // 응답 본문 읽기 시도
+        let errorMessage = `HTTP error! status: ${response.status}`;
+        try {
+          const errorData = await response.json();
+          if (errorData.error) {
+            errorMessage = errorData.error;
+          }
+          if (errorData.details) {
+            console.error('API error details:', errorData.details);
+          }
+        } catch {
+          // JSON 파싱 실패 시 텍스트로 읽기 시도
+          try {
+            const errorText = await response.text();
+            if (errorText) {
+              errorMessage = errorText.substring(0, 200);
+            }
+          } catch {
+            // 무시
+          }
+        }
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();

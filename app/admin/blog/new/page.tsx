@@ -120,15 +120,29 @@ export default function BlogNewPage() {
     setError(null);
 
     try {
+      // 요청 데이터 로깅 (디버깅용)
+      console.log('Submitting blog post formData:', {
+        title: formData.title,
+        contentLength: formData.content?.length || 0,
+        summary: formData.summary,
+        thumbnailImageUrl: formData.thumbnailImageUrl,
+      });
+
       const apiService = getApiService();
-      await apiService.createBlogPost(formData);
-      setSuccess(true);
-      setTimeout(() => {
-        router.push('/admin/blog');
-      }, 1500);
-    } catch (err) {
-      setError('글 작성에 실패했습니다.');
+      const result = await apiService.createBlogPost(formData);
+      
+      if (result.success) {
+        setSuccess(true);
+        setTimeout(() => {
+          router.push('/admin/blog');
+        }, 1500);
+      } else {
+        setError(result.error || '글 작성에 실패했습니다.');
+      }
+    } catch (err: any) {
       console.error('Create post error:', err);
+      const errorMessage = err?.message || '글 작성에 실패했습니다.';
+      setError(errorMessage);
     } finally {
       setSubmitting(false);
     }

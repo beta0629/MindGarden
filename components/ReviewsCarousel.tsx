@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { FaKakao, FaFacebook, FaTwitter, FaInstagram, FaLink } from 'react-icons/fa';
+import { FaFacebook, FaTwitter, FaInstagram, FaLink } from 'react-icons/fa';
+import KakaoIcon from './KakaoIcon';
 
 interface Review {
   id: number;
@@ -423,7 +424,7 @@ export default function ReviewsCarousel({ reviews }: ReviewsCarouselProps) {
                               e.currentTarget.style.boxShadow = 'none';
                             }}
                           >
-                            <FaKakao size={18} />
+                            <KakaoIcon size={18} />
                           </button>
                           <button
                             onClick={() => handleShare('facebook', currentReview.id)}

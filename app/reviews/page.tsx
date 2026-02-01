@@ -5,7 +5,8 @@ import Link from 'next/link';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import BlogEditor from '@/components/BlogEditor';
-import { FaKakao, FaFacebook, FaTwitter, FaInstagram, FaLink } from 'react-icons/fa';
+import { FaFacebook, FaTwitter, FaInstagram, FaLink } from 'react-icons/fa';
+import KakaoIcon from '@/components/KakaoIcon';
 
 // 이미지를 base64로 변환하는 헬퍼 함수
 const convertImageToBase64 = (file: File, maxWidth: number = 1200, maxHeight: number = 675, quality: number = 0.75): Promise<string> => {
@@ -569,7 +570,7 @@ export default function ReviewsPage() {
                               e.currentTarget.style.boxShadow = 'none';
                             }}
                           >
-                            <FaKakao size={18} />
+                            <KakaoIcon size={18} />
                           </button>
                           <button
                             onClick={() => handleShare('facebook', review.id)}

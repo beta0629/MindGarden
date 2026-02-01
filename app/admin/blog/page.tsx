@@ -54,7 +54,16 @@ export default function BlogAdminListPage() {
       const apiService = getApiService();
       // 관리자는 모든 상태의 포스트 조회 (draft 포함)
       const data = await apiService.getBlogPosts(1, 100, false, true);
-      setPosts(data);
+      
+      // 최신순 정렬 (published_at 우선, 없으면 created_at)
+      const sortedPosts = Array.isArray(data) ? data : (data.posts || []);
+      sortedPosts.sort((a: BlogPost, b: BlogPost) => {
+        const aDate = a.publishedAt ? new Date(a.publishedAt).getTime() : new Date(a.createdAt).getTime();
+        const bDate = b.publishedAt ? new Date(b.publishedAt).getTime() : new Date(b.createdAt).getTime();
+        return bDate - aDate; // 내림차순 (최신순)
+      });
+      
+      setPosts(sortedPosts);
     } catch (err) {
       setError('블로그 목록을 불러오는데 실패했습니다.');
       console.error('Load posts error:', err);

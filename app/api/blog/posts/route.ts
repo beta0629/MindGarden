@@ -36,7 +36,8 @@ export async function GET(request: NextRequest) {
     
     // LIMIT와 OFFSET은 플레이스홀더를 사용할 수 없으므로 직접 값을 넣어야 함
     // 값은 이미 검증되었으므로 안전함
-    query += ` ORDER BY COALESCE(published_at, created_at) DESC LIMIT ${Number(limit)} OFFSET ${Number(offset)}`;
+    // 최신순 정렬: published_at 우선, 없으면 created_at
+    query += ` ORDER BY published_at DESC, created_at DESC LIMIT ${Number(limit)} OFFSET ${Number(offset)}`;
 
     let rows: any[] = [];
     let total = 0;

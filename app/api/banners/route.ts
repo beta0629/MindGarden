@@ -20,7 +20,22 @@ export async function GET(request: NextRequest) {
 
     const banners = rows as any[];
     
+    // 디버깅: 쿼리 결과 로그
+    console.log('Banner query result:', {
+      rowCount: banners.length,
+      rows: banners,
+      sample: banners[0]
+    });
+    
     if (banners.length === 0) {
+      // 디버깅: 빈 결과일 때 전체 배너 확인
+      const [allRows] = await connection.execute(
+        `SELECT id, title, is_active, start_datetime, end_datetime, NOW() as current_time
+         FROM banners
+         ORDER BY id DESC
+         LIMIT 5`
+      );
+      console.log('All banners (for debugging):', allRows);
       return NextResponse.json({ success: true, banners: [] });
     }
 

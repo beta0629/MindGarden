@@ -41,6 +41,7 @@ export async function GET(request: NextRequest) {
       id: row.id,
       authorName: row.author_name,
       content: row.content,
+      likeCount: row.like_count || 0,
       isApproved: row.is_approved,
       createdAt: row.created_at,
       updatedAt: row.updated_at,

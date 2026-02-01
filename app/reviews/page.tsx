@@ -60,6 +60,7 @@ interface Review {
   id: number;
   authorName: string;
   content: string;
+  likeCount?: number;
   createdAt: string;
   updatedAt: string;
 }

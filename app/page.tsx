@@ -80,7 +80,7 @@ async function getReviews() {
   try {
     connection = await getDbConnection();
     const [rows] = await connection.execute(
-      `SELECT id, author_name, content, created_at, updated_at
+      `SELECT id, author_name, content, like_count, created_at, updated_at
        FROM homepage_reviews
        WHERE is_approved = 1
        ORDER BY created_at DESC
@@ -91,6 +91,7 @@ async function getReviews() {
       id: row.id,
       authorName: row.author_name,
       content: row.content,
+      likeCount: row.like_count || 0,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
     }));

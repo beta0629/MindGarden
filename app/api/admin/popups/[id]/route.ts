@@ -81,10 +81,17 @@ export async function PUT(
     );
 
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Update popup error:', error);
+    console.error('Error details:', {
+      message: error?.message,
+      code: error?.code,
+      sqlMessage: error?.sqlMessage,
+      stack: error?.stack,
+    });
+    const errorMessage = error?.message || error?.sqlMessage || '알 수 없는 오류';
     return NextResponse.json(
-      { success: false, error: '팝업 수정에 실패했습니다.' },
+      { success: false, error: `팝업 수정에 실패했습니다: ${errorMessage}` },
       { status: 500 }
     );
   } finally {

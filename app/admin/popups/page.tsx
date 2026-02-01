@@ -172,13 +172,40 @@ export default function PopupsAdminPage() {
       const url = editingId ? `/api/admin/popups/${editingId}` : '/api/admin/popups';
       const method = editingId ? 'PUT' : 'POST';
 
+      // 요청 데이터 로깅 (디버깅용)
+      console.log('Submitting popup formData:', {
+        title: formData.title,
+        contentLength: formData.content?.length || 0,
+        imageUrlLength: formData.imageUrl?.length || 0,
+        startDatetime: formData.startDatetime,
+        endDatetime: formData.endDatetime,
+      });
+
       const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       });
 
+      // 응답 상태 확인
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('API response error:', {
+          status: response.status,
+          statusText: response.statusText,
+          body: errorText,
+        });
+        try {
+          const errorData = JSON.parse(errorText);
+          setError(errorData.error || `서버 오류 (${response.status}): ${errorText}`);
+        } catch {
+          setError(`서버 오류 (${response.status}): ${errorText.substring(0, 200)}`);
+        }
+        return;
+      }
+
       const data = await response.json();
+      console.log('API response:', data);
 
       if (data.success) {
         setSuccess(editingId ? '팝업이 수정되었습니다.' : '팝업이 생성되었습니다.');
@@ -198,9 +225,9 @@ export default function PopupsAdminPage() {
       } else {
         setError(data.error || '팝업 저장에 실패했습니다.');
       }
-    } catch (err) {
-      setError('팝업 저장에 실패했습니다.');
+    } catch (err: any) {
       console.error('Save popup error:', err);
+      setError(`팝업 저장에 실패했습니다: ${err?.message || '알 수 없는 오류'}`);
     }
   };
 

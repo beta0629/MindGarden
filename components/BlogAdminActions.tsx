@@ -70,7 +70,7 @@ export default function BlogAdminActions({ postId, postTitle }: BlogAdminActions
       </div>
       <div style={{ display: 'flex', gap: '12px' }}>
         <Link
-          href={`/blog/admin/edit/${postId}`}
+          href={`/admin/blog/edit/${postId}`}
           style={{
             padding: '10px 20px',
             backgroundColor: 'var(--accent-sky)',
@@ -104,7 +104,7 @@ export default function BlogAdminActions({ postId, postTitle }: BlogAdminActions
           {deleting ? '삭제 중...' : '삭제'}
         </button>
         <Link
-          href="/blog/admin/list"
+          href="/admin/blog"
           style={{
             padding: '10px 20px',
             backgroundColor: 'transparent',

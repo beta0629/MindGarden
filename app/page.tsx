@@ -57,13 +57,15 @@ async function getHeroVideo() {
 
     const videos = rows as any[];
     if (videos.length === 0) {
-      return null;
+      // DB에 비디오가 없으면 기본 비디오 경로 반환
+      return '/assets/videos/hero-video.mp4';
     }
 
     return videos[0].video_url;
   } catch (error) {
     console.error('Failed to load hero video:', error);
-    return null;
+    // 에러 발생 시에도 기본 비디오 경로 반환
+    return '/assets/videos/hero-video.mp4';
   } finally {
     if (connection) {
       await connection.end();
@@ -100,7 +102,7 @@ async function getHomeData() {
         sub: '임상경험이 풍부한 검증된 전문가 . ADHD 특화.차별화된 프로그램',
         main: 'ADHD 전문.심리상담센터'
       },
-      videoUrl: videoUrl || null,
+      videoUrl: videoUrl || '/assets/videos/hero-video.mp4', // 기본 비디오 경로
       gallery: finalGallery,
     };
   } catch (error) {
@@ -110,7 +112,7 @@ async function getHomeData() {
         sub: '임상경험이 풍부한 검증된 전문가 . ADHD 특화.차별화된 프로그램',
         main: 'ADHD 전문.심리상담센터'
       },
-      videoUrl: null,
+      videoUrl: '/assets/videos/hero-video.mp4', // 기본 비디오 경로
       gallery: [
         { url: '/assets/images/gallery_1.png', alt: '따뜻한 상담 공간' },
         { url: '/assets/images/gallery_2.png', alt: '편안한 치료실' },

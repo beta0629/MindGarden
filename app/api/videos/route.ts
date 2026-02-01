@@ -16,7 +16,17 @@ export async function GET(request: NextRequest) {
 
     const videos = rows as any[];
     if (videos.length === 0) {
-      return NextResponse.json({ success: true, video: null });
+      // DB에 비디오가 없으면 기본 비디오 반환
+      return NextResponse.json({
+        success: true,
+        video: {
+          id: null,
+          title: '기본 비디오',
+          videoUrl: '/assets/videos/hero-video.mp4',
+          posterUrl: null,
+          description: '기본 히어로 비디오',
+        },
+      });
     }
 
     const video = videos[0];

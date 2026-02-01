@@ -11,6 +11,7 @@ interface ConsultationInquiry {
   email: string | null;
   preferred_contact_method: string;
   inquiry_type: string;
+  referral_source: string | null;
   message: string | null;
   preferred_date: string | null;
   preferred_time: string | null;
@@ -148,6 +149,23 @@ export default function ConsultationAdminPage() {
       evening: '저녁',
     };
     return labels[time] || time;
+  };
+
+  // 유입 경로 한글 변환
+  const getReferralSourceLabel = (source: string | null) => {
+    if (!source) return '미입력';
+    const labels: { [key: string]: string } = {
+      homepage: '홈페이지',
+      search_google: '검색엔진 (구글)',
+      search_naver: '검색엔진 (네이버)',
+      sns_instagram: 'SNS (인스타그램)',
+      sns_facebook: 'SNS (페이스북)',
+      sns_kakao: 'SNS (카카오톡)',
+      blog: '블로그',
+      referral: '지인 소개',
+      other: '기타',
+    };
+    return labels[source] || source;
   };
 
   // 날짜 포맷팅 (가독성 있게)
@@ -361,6 +379,12 @@ export default function ConsultationAdminPage() {
                       <strong style={{ color: '#374151' }}>문의 유형:</strong>
                       <span style={{ color: '#6b7280', marginLeft: '0.5rem' }}>
                         {getInquiryTypeLabel(inquiry.inquiry_type)}
+                      </span>
+                    </div>
+                    <div>
+                      <strong style={{ color: '#374151' }}>유입 경로:</strong>
+                      <span style={{ color: '#6b7280', marginLeft: '0.5rem' }}>
+                        {getReferralSourceLabel(inquiry.referral_source)}
                       </span>
                     </div>
                     {inquiry.preferred_date && (

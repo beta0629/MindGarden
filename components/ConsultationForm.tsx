@@ -8,6 +8,7 @@ interface ConsultationFormData {
   email: string;
   preferredContactMethod: 'phone' | 'email' | 'kakao';
   inquiryType: 'general' | 'adhd' | 'coaching' | 'family';
+  referralSource: string;
   message: string;
   preferredDate: string;
   preferredTime: string;
@@ -20,6 +21,7 @@ export default function ConsultationForm() {
     email: '',
     preferredContactMethod: 'phone',
     inquiryType: 'general',
+    referralSource: '',
     message: '',
     preferredDate: '',
     preferredTime: '',
@@ -55,6 +57,7 @@ export default function ConsultationForm() {
           email: '',
           preferredContactMethod: 'phone',
           inquiryType: 'general',
+          referralSource: '',
           message: '',
           preferredDate: '',
           preferredTime: '',
@@ -150,21 +153,46 @@ export default function ConsultationForm() {
         </div>
       </div>
 
-      <div className="form-group">
-        <label htmlFor="inquiryType" className="form-label">
-          문의 유형
-        </label>
-        <select
-          id="inquiryType"
-          value={formData.inquiryType}
-          onChange={(e) => setFormData(prev => ({ ...prev, inquiryType: e.target.value as any }))}
-          className="form-input"
-        >
-          <option value="general">일반 상담</option>
-          <option value="adhd">ADHD 개인 상담</option>
-          <option value="coaching">코칭(실행 전략)</option>
-          <option value="family">가족/부모 상담</option>
-        </select>
+      <div className="form-row">
+        <div className="form-group">
+          <label htmlFor="inquiryType" className="form-label">
+            문의 유형
+          </label>
+          <select
+            id="inquiryType"
+            value={formData.inquiryType}
+            onChange={(e) => setFormData(prev => ({ ...prev, inquiryType: e.target.value as any }))}
+            className="form-input"
+          >
+            <option value="general">일반 상담</option>
+            <option value="adhd">ADHD 개인 상담</option>
+            <option value="coaching">코칭(실행 전략)</option>
+            <option value="family">가족/부모 상담</option>
+          </select>
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="referralSource" className="form-label">
+            유입 경로
+          </label>
+          <select
+            id="referralSource"
+            value={formData.referralSource}
+            onChange={(e) => setFormData(prev => ({ ...prev, referralSource: e.target.value }))}
+            className="form-input"
+          >
+            <option value="">선택 안함</option>
+            <option value="homepage">홈페이지</option>
+            <option value="search_google">검색엔진 (구글)</option>
+            <option value="search_naver">검색엔진 (네이버)</option>
+            <option value="sns_instagram">SNS (인스타그램)</option>
+            <option value="sns_facebook">SNS (페이스북)</option>
+            <option value="sns_kakao">SNS (카카오톡)</option>
+            <option value="blog">블로그</option>
+            <option value="referral">지인 소개</option>
+            <option value="other">기타</option>
+          </select>
+        </div>
       </div>
 
       <div className="form-row">

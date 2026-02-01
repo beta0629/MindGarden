@@ -13,6 +13,7 @@ export async function POST(request: NextRequest) {
       email,
       preferredContactMethod = 'phone',
       inquiryType = 'general',
+      referralSource,
       message,
       preferredDate,
       preferredTime,
@@ -51,14 +52,15 @@ export async function POST(request: NextRequest) {
 
     const [result] = await connection.execute(
       `INSERT INTO consultation_inquiries 
-       (name, phone, email, preferred_contact_method, inquiry_type, message, preferred_date, preferred_time, status)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
+       (name, phone, email, preferred_contact_method, inquiry_type, referral_source, message, preferred_date, preferred_time, status)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
       [
         name,
         phone,
         email || null,
         preferredContactMethod,
         inquiryType,
+        referralSource || null,
         message || null,
         preferredDate || null,
         preferredTime || null,
@@ -119,6 +121,7 @@ export async function GET(request: NextRequest) {
       email: row.email,
       preferredContactMethod: row.preferred_contact_method,
       inquiryType: row.inquiry_type,
+      referralSource: row.referral_source,
       message: row.message,
       preferredDate: row.preferred_date,
       preferredTime: row.preferred_time,

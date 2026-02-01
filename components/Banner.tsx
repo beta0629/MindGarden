@@ -292,6 +292,14 @@ function BannerContent({ banner }: { banner: BannerItem }) {
             objectFit: 'contain',
             flexShrink: 0,
           }}
+          onError={(e) => {
+            console.error('Banner image load error (with text):', banner.imageUrl, e);
+            // 이미지 로드 실패 시 숨김 처리
+            e.currentTarget.style.display = 'none';
+          }}
+          onLoad={() => {
+            console.log('Banner image loaded successfully:', banner.imageUrl);
+          }}
         />
         <div style={{ flex: 1, textAlign: 'left' }}>
           {banner.title && (

@@ -13,6 +13,17 @@ export default function PopupBannerProvider() {
     loadPopupAndBanner();
   }, []);
 
+  // 쿠키에서 팝업 숨김 여부 확인
+  const isPopupHidden = (popupId: number): boolean => {
+    if (typeof document === 'undefined') return false;
+    const cookies = document.cookie.split(';');
+    const cookieName = `popup_hidden_${popupId}`;
+    return cookies.some(cookie => {
+      const [name] = cookie.trim().split('=');
+      return name === cookieName;
+    });
+  };
+
   const loadPopupAndBanner = async () => {
     try {
       setLoading(true);
@@ -30,7 +41,12 @@ export default function PopupBannerProvider() {
       console.log('Banner data:', bannerData);
 
       if (popupData.success && popupData.popup) {
-        setPopup(popupData.popup);
+        // 쿠키 확인: 24시간 동안 보지 않기로 설정된 팝업은 표시하지 않음
+        if (!isPopupHidden(popupData.popup.id)) {
+          setPopup(popupData.popup);
+        } else {
+          console.log('Popup is hidden by cookie:', popupData.popup.id);
+        }
       }
 
       if (bannerData.success && bannerData.banners && bannerData.banners.length > 0) {

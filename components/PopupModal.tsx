@@ -15,6 +15,7 @@ interface PopupModalProps {
 
 export default function PopupModal({ popup, onClose }: PopupModalProps) {
   const [isVisible, setIsVisible] = useState(false);
+  const [dontShowAgain, setDontShowAgain] = useState(false);
 
   useEffect(() => {
     // 애니메이션을 위한 지연
@@ -23,12 +24,22 @@ export default function PopupModal({ popup, onClose }: PopupModalProps) {
 
   const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.target === e.currentTarget) {
-      onClose();
+      handleClose();
     }
   };
 
   const handleContentClick = (e: React.MouseEvent) => {
     e.stopPropagation();
+  };
+
+  const handleClose = () => {
+    if (dontShowAgain) {
+      // 24시간 동안 보지 않기 쿠키 설정
+      const expires = new Date();
+      expires.setTime(expires.getTime() + 24 * 60 * 60 * 1000); // 24시간 후
+      document.cookie = `popup_hidden_${popup.id}=true; expires=${expires.toUTCString()}; path=/; SameSite=Lax`;
+    }
+    onClose();
   };
 
   // 이미지가 있으면 기본 디자인 없이 이미지만 표시
@@ -72,7 +83,7 @@ export default function PopupModal({ popup, onClose }: PopupModalProps) {
       >
         {/* 닫기 버튼 */}
         <button
-          onClick={onClose}
+          onClick={handleClose}
           style={{
             position: 'absolute',
             top: '12px',
@@ -229,6 +240,49 @@ export default function PopupModal({ popup, onClose }: PopupModalProps) {
             </div>
           </div>
         )}
+
+        {/* 24시간 동안 보지 않기 체크박스 */}
+        <div
+          style={{
+            position: 'absolute',
+            bottom: hasImage ? '20px' : '16px',
+            left: hasImage ? '20px' : '50%',
+            transform: hasImage ? 'none' : 'translateX(-50%)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            backgroundColor: hasImage ? 'rgba(255, 255, 255, 0.95)' : 'rgba(255, 255, 255, 0.9)',
+            padding: '8px 12px',
+            borderRadius: 'var(--radius-sm)',
+            fontSize: '14px',
+            zIndex: 10,
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+            backdropFilter: 'blur(8px)',
+          }}
+        >
+          <input
+            type="checkbox"
+            id={`popup-dont-show-${popup.id}`}
+            checked={dontShowAgain}
+            onChange={(e) => setDontShowAgain(e.target.checked)}
+            style={{
+              width: '18px',
+              height: '18px',
+              cursor: 'pointer',
+              accentColor: 'var(--accent-sky)',
+            }}
+          />
+          <label
+            htmlFor={`popup-dont-show-${popup.id}`}
+            style={{
+              cursor: 'pointer',
+              color: 'var(--text-main)',
+              userSelect: 'none',
+            }}
+          >
+            24시간 동안 보지 않기
+          </label>
+        </div>
       </div>
     </div>
   );

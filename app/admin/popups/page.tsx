@@ -115,13 +115,15 @@ export default function PopupsAdminPage() {
         return;
       }
 
-      // 클라이언트 사이드 리사이징 후 base64로 변환 (팝업 이미지: 최대 1920x1080)
+      // 클라이언트 사이드 리사이징 후 base64로 변환 (팝업 이미지: 최대 1200x675, 품질 0.75)
+      // base64 크기를 줄이기 위해 크기와 품질을 낮춤
       const reader = new FileReader();
       reader.onload = (e) => {
         const img = new Image();
         img.onload = () => {
-          const maxWidth = 1920;
-          const maxHeight = 1080;
+          // base64 크기를 줄이기 위해 더 작은 크기로 리사이징
+          const maxWidth = 1200;  // 1920 → 1200으로 축소
+          const maxHeight = 675;   // 1080 → 675로 축소
           
           let width = img.width;
           let height = img.height;
@@ -145,8 +147,16 @@ export default function PopupsAdminPage() {
 
           ctx.drawImage(img, 0, 0, width, height);
           
-          // base64로 변환 (서버 업로드 없이 직접 사용)
-          const base64 = canvas.toDataURL('image/jpeg', 0.9);
+          // base64로 변환 (품질 0.75로 낮춤 - base64 크기 감소)
+          const base64 = canvas.toDataURL('image/jpeg', 0.75);
+          
+          // base64 크기 확인 (약 2MB 제한)
+          const base64Size = (base64.length * 3) / 4; // base64 크기 추정 (바이트)
+          if (base64Size > 2 * 1024 * 1024) {
+            reject(new Error('이미지가 너무 큽니다. 더 작은 이미지를 사용해주세요.'));
+            return;
+          }
+          
           resolve({
             imageUrl: base64,
           });

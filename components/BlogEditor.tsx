@@ -177,8 +177,9 @@ export default function BlogEditor({
               throw new Error('이미지 URL을 받지 못했습니다.');
             }
           } else {
-            // base64로 변환 (리사이징 포함)
-            imageUrl = await convertImageToBase64(file, 1920, 1080, 0.9);
+            // base64로 변환 (리사이징 포함, 크기와 품질 낮춤)
+            // base64 크기를 줄이기 위해 1200x675, 품질 0.75 사용
+            imageUrl = await convertImageToBase64(file, 1200, 675, 0.75);
           }
 
           const quill = getQuillInstance();
@@ -303,8 +304,9 @@ export default function BlogEditor({
             throw new Error('이미지 URL을 받지 못했습니다.');
           }
         } else {
-          // base64로 변환 (리사이징 포함)
-          imageUrl = await convertImageToBase64(file, 1920, 1080, 0.9);
+          // base64로 변환 (리사이징 포함, 크기와 품질 낮춤)
+          // base64 크기를 줄이기 위해 1200x675, 품질 0.75 사용
+          imageUrl = await convertImageToBase64(file, 1200, 675, 0.75);
         }
 
         console.log('이미지 업로드 완료:', imageUrl.substring(0, 50) + '...');

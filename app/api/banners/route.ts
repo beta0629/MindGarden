@@ -53,10 +53,20 @@ export async function GET(request: NextRequest) {
       priority: banner.priority,
     }));
 
-    return NextResponse.json({
-      success: true,
-      banners: bannerList,
-    });
+    // 캐시 방지 헤더 추가
+    return NextResponse.json(
+      {
+        success: true,
+        banners: bannerList,
+      },
+      {
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0',
+        },
+      }
+    );
   } catch (error: any) {
     console.error('Get banner error:', error);
     const errorMessage = error?.message || '알 수 없는 오류';

@@ -141,6 +141,10 @@ export default function BannersAdminPage() {
         setEditingId(null);
         loadBanners();
         setTimeout(() => setSuccess(null), 3000);
+        
+        // 배너 수정 시 메인 페이지 캐시 무효화를 위한 알림
+        // (실제로는 API가 동적으로 처리되므로 자동 반영됨)
+        console.log('Banner updated successfully. Changes will be reflected immediately.');
       } else {
         setError(data.error || '배너 저장에 실패했습니다.');
       }

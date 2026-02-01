@@ -22,6 +22,18 @@ export default function PopupBannerProvider() {
     }
   }, [isAdminPage]);
 
+  // 페이지 포커스 시 배너/팝업 다시 로드 (다른 탭에서 수정했을 경우 대응)
+  useEffect(() => {
+    if (isAdminPage) return;
+    
+    const handleFocus = () => {
+      loadPopupAndBanner();
+    };
+    
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [isAdminPage]);
+
   // 쿠키에서 팝업 숨김 여부 확인
   const isPopupHidden = (popupId: number): boolean => {
     if (typeof document === 'undefined') return false;

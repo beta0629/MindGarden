@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDbConnection } from '@/lib/db';
 
+// 동적 렌더링 강제 (캐시 방지)
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 // 활성 팝업 조회 (현재 시간 기준으로 기간 내이고 활성화된 것 중 우선순위 가장 높은 것)
 export async function GET(request: NextRequest) {
   let connection;

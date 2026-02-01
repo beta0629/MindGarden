@@ -100,7 +100,7 @@ export default function PopupsAdminPage() {
     setError(errorMessage);
   };
 
-  // BlogEditor에서 이미지 업로드 시 클라이언트 사이드 리사이징 처리
+  // BlogEditor에서 이미지 업로드 시 base64로 변환 (편집 편의성 향상)
   const handleBlogEditorImageUpload = async (file: File): Promise<{ imageUrl: string }> => {
     return new Promise((resolve, reject) => {
       // 파일 크기 확인 (10MB 제한)
@@ -115,7 +115,7 @@ export default function PopupsAdminPage() {
         return;
       }
 
-      // 클라이언트 사이드 리사이징 (팝업 이미지: 최대 1920x1080)
+      // 클라이언트 사이드 리사이징 후 base64로 변환 (팝업 이미지: 최대 1920x1080)
       const reader = new FileReader();
       reader.onload = (e) => {
         const img = new Image();
@@ -145,39 +145,11 @@ export default function PopupsAdminPage() {
 
           ctx.drawImage(img, 0, 0, width, height);
           
-          canvas.toBlob(async (blob) => {
-            if (!blob) {
-              reject(new Error('이미지 변환에 실패했습니다.'));
-              return;
-            }
-
-            // Blob을 File로 변환
-            const resizedFile = new File([blob], 'resized-image.jpg', { type: 'image/jpeg' });
-
-            // 업로드
-            const formData = new FormData();
-            formData.append('image', resizedFile);
-
-            try {
-              const response = await fetch('/api/blog/images', {
-                method: 'POST',
-                body: formData,
-              });
-
-              if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
-              }
-
-              const result = await response.json();
-              resolve({
-                imageUrl: result.imageUrl || result.url,
-              });
-            } catch (error: any) {
-              console.error('Image upload error:', error);
-              reject(error);
-            }
-          }, 'image/jpeg', 0.9);
+          // base64로 변환 (서버 업로드 없이 직접 사용)
+          const base64 = canvas.toDataURL('image/jpeg', 0.9);
+          resolve({
+            imageUrl: base64,
+          });
         };
         img.onerror = () => reject(new Error('이미지를 로드할 수 없습니다.'));
         img.src = e.target?.result as string;

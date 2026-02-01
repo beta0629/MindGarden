@@ -245,19 +245,21 @@ export default function PopupModal({ popup, onClose }: PopupModalProps) {
         <div
           style={{
             position: 'absolute',
-            bottom: hasImage ? '20px' : '16px',
+            bottom: hasImage ? '20px' : '20px',
             left: hasImage ? '20px' : '50%',
             transform: hasImage ? 'none' : 'translateX(-50%)',
             display: 'flex',
             alignItems: 'center',
             gap: '8px',
-            backgroundColor: hasImage ? 'rgba(255, 255, 255, 0.95)' : 'rgba(255, 255, 255, 0.9)',
-            padding: '8px 12px',
+            backgroundColor: hasImage ? 'rgba(255, 255, 255, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+            padding: '10px 16px',
             borderRadius: 'var(--radius-sm)',
             fontSize: '14px',
-            zIndex: 10,
-            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+            fontWeight: '500',
+            zIndex: 100,
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
             backdropFilter: 'blur(8px)',
+            border: '1px solid rgba(0, 0, 0, 0.1)',
           }}
         >
           <input

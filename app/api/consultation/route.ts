@@ -103,10 +103,13 @@ export async function GET(request: NextRequest) {
       params.push(status);
     }
 
-    query += ' ORDER BY created_at DESC LIMIT ? OFFSET ?';
-    params.push(limit, offset);
+    // LIMIT와 OFFSET은 플레이스홀더를 사용할 수 없으므로 직접 값을 넣어야 함
+    // 값은 이미 parseInt로 검증되었으므로 안전함
+    query += ` ORDER BY created_at DESC LIMIT ${Number(limit)} OFFSET ${Number(offset)}`;
 
-    const [rows] = await connection.execute(query, params);
+    const [rows] = params.length > 0 
+      ? await connection.execute(query, params)
+      : await connection.execute(query);
 
     // snake_case를 camelCase로 변환
     const inquiries = (rows as any[]).map((row: any) => ({

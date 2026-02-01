@@ -55,11 +55,9 @@ export default function PopupBannerProvider() {
         console.log('Popup details:', {
           id: popupData.popup.id,
           title: popupData.popup.title,
-          imageUrl: popupData.popup.imageUrl,
-          imageUrlType: typeof popupData.popup.imageUrl,
-          imageUrlLength: popupData.popup.imageUrl?.length,
-          hasImageUrl: !!popupData.popup.imageUrl,
-          content: popupData.popup.content,
+          contentLength: popupData.popup.content?.length || 0,
+          hasImageInContent: popupData.popup.content?.includes('<img') || false,
+          content: popupData.popup.content?.substring(0, 100) + '...',
         });
         
         // 쿠키 확인: 24시간 동안 보지 않기로 설정된 팝업은 표시하지 않음

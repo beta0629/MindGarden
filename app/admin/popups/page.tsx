@@ -100,6 +100,93 @@ export default function PopupsAdminPage() {
     setError(errorMessage);
   };
 
+  // BlogEditor에서 이미지 업로드 시 클라이언트 사이드 리사이징 처리
+  const handleBlogEditorImageUpload = async (file: File): Promise<{ imageUrl: string }> => {
+    return new Promise((resolve, reject) => {
+      // 파일 크기 확인 (10MB 제한)
+      if (file.size > 10 * 1024 * 1024) {
+        reject(new Error('이미지 크기는 10MB 이하여야 합니다.'));
+        return;
+      }
+
+      // 파일 타입 확인
+      if (!file.type.startsWith('image/')) {
+        reject(new Error('이미지 파일만 업로드 가능합니다.'));
+        return;
+      }
+
+      // 클라이언트 사이드 리사이징 (팝업 이미지: 최대 1920x1080)
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const maxWidth = 1920;
+          const maxHeight = 1080;
+          
+          let width = img.width;
+          let height = img.height;
+          
+          // 비율 유지하며 최대 크기로 리사이징
+          const ratio = Math.min(maxWidth / width, maxHeight / height);
+          if (ratio < 1) {
+            width = width * ratio;
+            height = height * ratio;
+          }
+
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          
+          if (!ctx) {
+            reject(new Error('Canvas context를 가져올 수 없습니다.'));
+            return;
+          }
+
+          ctx.drawImage(img, 0, 0, width, height);
+          
+          canvas.toBlob(async (blob) => {
+            if (!blob) {
+              reject(new Error('이미지 변환에 실패했습니다.'));
+              return;
+            }
+
+            // Blob을 File로 변환
+            const resizedFile = new File([blob], 'resized-image.jpg', { type: 'image/jpeg' });
+
+            // 업로드
+            const formData = new FormData();
+            formData.append('image', resizedFile);
+
+            try {
+              const response = await fetch('/api/blog/images', {
+                method: 'POST',
+                body: formData,
+              });
+
+              if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+              }
+
+              const result = await response.json();
+              resolve({
+                imageUrl: result.imageUrl || result.url,
+              });
+            } catch (error: any) {
+              console.error('Image upload error:', error);
+              reject(error);
+            }
+          }, 'image/jpeg', 0.9);
+        };
+        img.onerror = () => reject(new Error('이미지를 로드할 수 없습니다.'));
+        img.src = e.target?.result as string;
+      };
+      reader.onerror = () => reject(new Error('파일을 읽을 수 없습니다.'));
+      reader.readAsDataURL(file);
+    });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -309,6 +396,7 @@ export default function PopupsAdminPage() {
                     value={formData.content}
                     onChange={(value) => setFormData(prev => ({ ...prev, content: value }))}
                     placeholder="팝업 내용을 입력하세요. HTML 편집이 가능하며, 이미지를 드래그 앤 드롭하거나 툴바의 이미지 버튼을 클릭하여 추가할 수 있습니다."
+                    onImageUpload={handleBlogEditorImageUpload}
                   />
                   <p style={{ marginTop: '8px', fontSize: '14px', color: 'var(--text-sub)' }}>
                     이미지를 드래그 앤 드롭하거나 툴바의 이미지 버튼을 클릭하여 추가할 수 있습니다.

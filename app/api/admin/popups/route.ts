@@ -28,19 +28,27 @@ export async function GET(request: NextRequest) {
        ORDER BY created_at DESC`
     );
 
-    const popups = (rows as any[]).map((row: any) => ({
-      id: row.id,
-      title: row.title,
-      content: row.content,
-      imageUrl: row.image_url,
-      linkUrl: row.link_url,
-      startDatetime: row.start_datetime,
-      endDatetime: row.end_datetime,
-      isActive: row.is_active,
-      priority: row.priority,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at,
-    }));
+    const popups = (rows as any[]).map((row: any) => {
+      // 기존 image_url이 있으면 content에 이미지 태그로 추가 (호환성)
+      let content = row.content || '';
+      if (row.image_url && !content.includes('<img')) {
+        content = `<img src="${row.image_url}" alt="${row.title}" style="max-width: 100%; height: auto;" />${content ? '<br/><br/>' + content : ''}`;
+      }
+      
+      return {
+        id: row.id,
+        title: row.title,
+        content: content,
+        imageUrl: null, // 더 이상 사용하지 않음
+        linkUrl: row.link_url,
+        startDatetime: row.start_datetime,
+        endDatetime: row.end_datetime,
+        isActive: row.is_active,
+        priority: row.priority,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
+      };
+    });
 
     return NextResponse.json({ success: true, popups });
   } catch (error: any) {
@@ -75,7 +83,6 @@ export async function POST(request: NextRequest) {
     const {
       title,
       content,
-      imageUrl,
       linkUrl,
       startDatetime,
       endDatetime,
@@ -109,7 +116,7 @@ export async function POST(request: NextRequest) {
       [
         title,
         content || null,
-        imageUrl || null,
+        null, // image_url은 더 이상 사용하지 않음 (호환성을 위해 null 저장)
         linkUrl || null,
         startDatetime,
         endDatetime,
@@ -125,7 +132,6 @@ export async function POST(request: NextRequest) {
         id: insertResult.insertId,
         title,
         content,
-        imageUrl,
         linkUrl,
         startDatetime,
         endDatetime,

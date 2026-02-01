@@ -35,7 +35,6 @@ export async function PUT(
     const {
       title,
       content,
-      imageUrl,
       linkUrl,
       startDatetime,
       endDatetime,
@@ -70,7 +69,7 @@ export async function PUT(
       [
         title,
         content || null,
-        imageUrl || null,
+        null, // image_url은 더 이상 사용하지 않음 (호환성을 위해 null 저장)
         linkUrl || null,
         startDatetime,
         endDatetime,

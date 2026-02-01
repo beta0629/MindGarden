@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import ImageUploader from '@/components/ImageUploader';
 import BlogEditor from '@/components/BlogEditor';
 import AdminNavigation from '@/components/AdminNavigation';
 
@@ -28,12 +27,10 @@ export default function PopupsAdminPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [uploading, setUploading] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [formData, setFormData] = useState({
     title: '',
     content: '',
-    imageUrl: '',
     linkUrl: '',
     startDatetime: '',
     endDatetime: '',
@@ -92,13 +89,6 @@ export default function PopupsAdminPage() {
     }
   };
 
-  const handleImageUploaded = async (imageUrl: string) => {
-    setFormData(prev => ({ ...prev, imageUrl }));
-  };
-
-  const handleImageUploadError = (errorMessage: string) => {
-    setError(errorMessage);
-  };
 
   // BlogEditor에서 이미지 업로드 시 base64로 변환 (편집 편의성 향상)
   const handleBlogEditorImageUpload = async (file: File): Promise<{ imageUrl: string }> => {
@@ -186,7 +176,6 @@ export default function PopupsAdminPage() {
       console.log('Submitting popup formData:', {
         title: formData.title,
         contentLength: formData.content?.length || 0,
-        imageUrlLength: formData.imageUrl?.length || 0,
         startDatetime: formData.startDatetime,
         endDatetime: formData.endDatetime,
       });
@@ -222,7 +211,6 @@ export default function PopupsAdminPage() {
         setFormData({
           title: '',
           content: '',
-          imageUrl: '',
           linkUrl: '',
           startDatetime: '',
           endDatetime: '',
@@ -242,10 +230,16 @@ export default function PopupsAdminPage() {
   };
 
   const handleEdit = (popup: Popup) => {
+    // imageUrl이 있으면 content에 이미지 태그로 추가 (기존 데이터 호환성)
+    let content = popup.content || '';
+    if (popup.imageUrl && !content.includes('<img')) {
+      // content에 이미지가 없고 imageUrl이 있으면 이미지 태그 추가
+      content = `<img src="${popup.imageUrl}" alt="${popup.title}" style="max-width: 100%; height: auto;" />${content ? '<br/><br/>' + content : ''}`;
+    }
+    
     setFormData({
       title: popup.title,
-      content: popup.content || '',
-      imageUrl: popup.imageUrl || '',
+      content: content,
       linkUrl: popup.linkUrl || '',
       startDatetime: popup.startDatetime.slice(0, 16),
       endDatetime: popup.endDatetime.slice(0, 16),
@@ -397,70 +391,18 @@ export default function PopupsAdminPage() {
                     color: '#0369a1'
                   }}>
                     <div style={{ fontWeight: '600', marginBottom: '4px' }}>💡 팝업 내용 작성 방법</div>
-                    <div>• 이미지만 표시: 이미지 업로드만 하면 됩니다</div>
-                    <div>• 텍스트 + 이미지: 내용에 HTML로 작성하고 이미지도 업로드할 수 있습니다</div>
-                    <div>• 텍스트만: 내용에 HTML로 작성하면 기본 디자인이 적용됩니다</div>
+                    <div>• HTML 편집기에서 자유롭게 텍스트, 이미지, 링크 등을 추가할 수 있습니다</div>
+                    <div>• 이미지는 드래그 앤 드롭하거나 툴바의 이미지 버튼을 클릭하여 추가하세요</div>
+                    <div>• 이미지는 자동으로 base64로 변환되어 content에 저장됩니다</div>
+                    <div style={{ marginTop: '8px', fontSize: '12px', color: '#64748b' }}>
+                      💡 팝업은 모달로 표시되므로 큰 이미지도 사용할 수 있습니다. 권장 사이즈: 1920px × 1080px (16:9)
+                    </div>
                   </div>
                   <BlogEditor
                     value={formData.content}
                     onChange={(value) => setFormData(prev => ({ ...prev, content: value }))}
                     placeholder="팝업 내용을 입력하세요. HTML 편집이 가능하며, 이미지를 드래그 앤 드롭하거나 툴바의 이미지 버튼을 클릭하여 추가할 수 있습니다."
                     onImageUpload={handleBlogEditorImageUpload}
-                  />
-                  <p style={{ marginTop: '8px', fontSize: '14px', color: 'var(--text-sub)' }}>
-                    이미지를 드래그 앤 드롭하거나 툴바의 이미지 버튼을 클릭하여 추가할 수 있습니다.
-                  </p>
-                </div>
-                <div>
-                  <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600' }}>
-                    이미지 업로드
-                  </label>
-                  <div style={{
-                    padding: '12px 16px',
-                    marginBottom: '12px',
-                    backgroundColor: '#f0f9ff',
-                    border: '1px solid #bae6fd',
-                    borderRadius: 'var(--radius-sm)',
-                    fontSize: '14px',
-                    color: '#0369a1'
-                  }}>
-                    <div style={{ fontWeight: '600', marginBottom: '4px' }}>📐 팝업 이미지 권장 사이즈</div>
-                    <div>• 권장 사이즈: <strong>1920px × 1080px</strong> (모달용 큰 이미지)</div>
-                    <div>• 비율: <strong>16:9</strong> (가로형 이미지)</div>
-                    <div>• 최대 사이즈: 1920px × 1080px (자동 리사이징됨)</div>
-                    <div style={{ marginTop: '8px', fontSize: '12px', color: '#64748b' }}>
-                      💡 팝업은 모달로 표시되므로 큰 이미지를 사용할 수 있습니다.
-                    </div>
-                  </div>
-                  <ImageUploader
-                    onImageUploaded={handleImageUploaded}
-                    onError={handleImageUploadError}
-                    maxWidth={1920}
-                    maxHeight={1080}
-                    quality={0.9}
-                    uploading={uploading}
-                    onUploadingChange={setUploading}
-                    recommendedAspectRatio={16/9}
-                    recommendedSize={{ width: 1920, height: 1080 }}
-                    autoResize={true}
-                  />
-                </div>
-                <div>
-                  <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600' }}>
-                    또는 이미지 URL 직접 입력
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.imageUrl}
-                    onChange={(e) => setFormData(prev => ({ ...prev, imageUrl: e.target.value }))}
-                    placeholder="https://example.com/image.jpg"
-                    style={{
-                      width: '100%',
-                      padding: '12px 16px',
-                      border: '1px solid var(--border-soft)',
-                      borderRadius: 'var(--radius-sm)',
-                      fontSize: '16px'
-                    }}
                   />
                 </div>
                 <div>
@@ -550,20 +492,6 @@ export default function PopupsAdminPage() {
                     </label>
                   </div>
                 </div>
-                {formData.imageUrl && (
-                  <div style={{ marginTop: '12px' }}>
-                    <img 
-                      src={formData.imageUrl} 
-                      alt="미리보기"
-                      style={{
-                        maxWidth: '300px',
-                        maxHeight: '200px',
-                        borderRadius: 'var(--radius-sm)',
-                        border: '1px solid var(--border-soft)'
-                      }}
-                    />
-                  </div>
-                )}
                 <div style={{ display: 'flex', gap: '12px' }}>
                   <button
                     type="submit"
@@ -588,7 +516,6 @@ export default function PopupsAdminPage() {
                         setFormData({
                           title: '',
                           content: '',
-                          imageUrl: '',
                           linkUrl: '',
                           startDatetime: '',
                           endDatetime: '',
@@ -639,27 +566,22 @@ export default function PopupsAdminPage() {
                     }}
                   >
                     <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start' }}>
-                      {popup.imageUrl && (
-                        <img
-                          src={popup.imageUrl}
-                          alt={popup.title}
-                          style={{
-                            width: '150px',
-                            height: '150px',
-                            objectFit: 'cover',
-                            borderRadius: 'var(--radius-sm)',
-                            flexShrink: 0
-                          }}
-                        />
-                      )}
                       <div style={{ flex: 1 }}>
                         <h4 style={{ fontSize: '1.1rem', fontWeight: '700', marginBottom: '8px' }}>
                           {popup.title}
                         </h4>
                         {popup.content && (
-                          <p style={{ fontSize: '14px', color: 'var(--text-sub)', marginBottom: '12px' }}>
-                            {popup.content}
-                          </p>
+                          <div 
+                            style={{ 
+                              fontSize: '14px', 
+                              color: 'var(--text-sub)', 
+                              marginBottom: '12px',
+                              maxHeight: '200px',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis'
+                            }}
+                            dangerouslySetInnerHTML={{ __html: popup.content.substring(0, 200) + (popup.content.length > 200 ? '...' : '') }}
+                          />
                         )}
                         <div style={{ fontSize: '14px', color: 'var(--text-sub)', marginBottom: '12px' }}>
                           <div>시작: {new Date(popup.startDatetime).toLocaleString('ko-KR')}</div>

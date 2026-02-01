@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import AdminNavigation from '@/components/AdminNavigation';
 
 interface Video {
   id: number;
@@ -226,27 +227,13 @@ export default function VideoManagementPage() {
       <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
         {/* 헤더 */}
         <div style={{ marginBottom: '2rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
             <h1 style={{ fontSize: '2rem', fontWeight: '700', color: '#1f2937' }}>
               히어로 비디오 관리
             </h1>
-            <button
-              type="button"
-              onClick={() => router.push('/admin')}
-              style={{
-                padding: '0.5rem 1rem',
-                backgroundColor: 'transparent',
-                color: '#6b7280',
-                border: '1px solid #d1d5db',
-                borderRadius: '0.5rem',
-                fontSize: '0.875rem',
-                cursor: 'pointer',
-              }}
-            >
-              뒤로 가기
-            </button>
           </div>
-          <p style={{ color: '#6b7280', marginTop: '0.5rem' }}>
+          <AdminNavigation />
+          <p style={{ color: '#6b7280', marginTop: '1rem' }}>
             메인 페이지 히어로 섹션에 표시되는 비디오를 관리합니다.
           </p>
         </div>

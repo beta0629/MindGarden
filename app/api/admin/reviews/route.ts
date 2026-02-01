@@ -21,12 +21,14 @@ export async function GET(request: NextRequest) {
     const offset = (page - 1) * limit;
 
     connection = await getDbConnection();
+    // MySQL2에서 LIMIT/OFFSET은 플레이스홀더 대신 직접 값을 사용 (SQL 인젝션 방지를 위해 숫자로 변환)
+    const safeLimit = Math.max(1, Math.min(100, limit)); // 1-100 사이로 제한
+    const safeOffset = Math.max(0, offset); // 0 이상으로 제한
     const [rows] = await connection.execute(
       `SELECT id, author_name, content, is_approved, created_at, updated_at
        FROM homepage_reviews
        ORDER BY created_at DESC
-       LIMIT ? OFFSET ?`,
-      [limit, offset]
+       LIMIT ${safeLimit} OFFSET ${safeOffset}`
     );
 
     // 전체 개수 조회

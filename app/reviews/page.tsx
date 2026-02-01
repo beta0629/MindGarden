@@ -182,7 +182,7 @@ export default function ReviewsPage() {
 
     switch (platform) {
       case 'kakao':
-        // 카카오톡 공유
+        // 카카오톡 공유 (카카오 SDK 사용)
         if (typeof window !== 'undefined' && (window as any).Kakao) {
           (window as any).Kakao.Share.sendDefault({
             objectType: 'feed',
@@ -197,10 +197,14 @@ export default function ReviewsPage() {
             },
           });
         } else {
-          window.open(
-            `https://talk.kakao.com/share?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`,
-            '_blank'
-          );
+          // 카카오 SDK가 없으면 링크 복사 후 안내
+          if (navigator.clipboard) {
+            navigator.clipboard.writeText(shareText + '\n' + shareUrl).then(() => {
+              alert('카카오톡에 공유할 내용이 클립보드에 복사되었습니다!\n카카오톡에서 붙여넣기하여 공유해주세요.');
+            });
+          } else {
+            alert(`카카오톡 공유:\n${shareText}\n${shareUrl}\n\n위 내용을 복사하여 카카오톡에서 공유해주세요.`);
+          }
         }
         break;
       case 'facebook':
@@ -211,25 +215,35 @@ export default function ReviewsPage() {
         );
         break;
       case 'twitter':
+        // 트위터/X 공유 (공식 URL 형식)
         window.open(
-          `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`,
+          `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}&via=mindgarden`,
           '_blank',
           'width=600,height=400'
         );
         break;
       case 'instagram':
-        // 인스타그램 공유
+        // 인스타그램 공유 (인스타그램은 웹에서 직접 공유 링크를 지원하지 않음)
         if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-          window.open(
-            `instagram://share?url=${encodeURIComponent(shareUrl)}`,
-            '_blank'
-          );
-        } else {
-          window.open('https://www.instagram.com/', '_blank');
+          // 모바일: 클립보드 복사 후 인스타그램 앱 열기
           if (navigator.clipboard) {
             navigator.clipboard.writeText(shareText + '\n' + shareUrl).then(() => {
-              alert('인스타그램에 공유할 내용이 클립보드에 복사되었습니다!');
+              alert('인스타그램에 공유할 내용이 클립보드에 복사되었습니다!\n인스타그램 앱에서 붙여넣기하여 공유해주세요.');
+              // 인스타그램 앱 열기 시도
+              window.open('instagram://', '_blank');
             });
+          } else {
+            alert(`인스타그램 공유:\n${shareText}\n${shareUrl}\n\n위 내용을 복사하여 인스타그램에서 공유해주세요.`);
+          }
+        } else {
+          // 데스크톱: 클립보드 복사 후 안내
+          if (navigator.clipboard) {
+            navigator.clipboard.writeText(shareText + '\n' + shareUrl).then(() => {
+              alert('인스타그램에 공유할 내용이 클립보드에 복사되었습니다!\n인스타그램 웹에서 붙여넣기하여 공유해주세요.');
+              window.open('https://www.instagram.com/', '_blank');
+            });
+          } else {
+            alert(`인스타그램 공유:\n${shareText}\n${shareUrl}\n\n위 내용을 복사하여 인스타그램에서 공유해주세요.`);
           }
         }
         break;

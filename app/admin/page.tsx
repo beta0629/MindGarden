@@ -41,8 +41,8 @@ export default function AdminDashboard() {
   // 통계 로드
   const loadStats = async () => {
     try {
-      // 블로그 포스트 수
-      const blogResponse = await fetch('/api/blog/posts?limit=100');
+      // 블로그 포스트 수 (관리자용: 모든 상태 포함)
+      const blogResponse = await fetch('/api/blog/posts?limit=100&includeAllStatus=true');
       const blogData = await blogResponse.json();
       
       // 대기 중인 상담 문의 수
@@ -58,10 +58,10 @@ export default function AdminDashboard() {
       const bannerData = await bannerResponse.json();
 
       setStats({
-        blogPosts: Array.isArray(blogData) ? blogData.length : 0,
-        pendingConsultations: consultationData.inquiries?.length || 0,
-        activePopups: popupData.popup ? 1 : 0,
-        activeBanners: bannerData.banners?.length || 0,
+        blogPosts: blogData.success && blogData.posts ? blogData.posts.length : (blogData.pagination?.total || 0),
+        pendingConsultations: consultationData.success && consultationData.inquiries ? consultationData.inquiries.length : 0,
+        activePopups: popupData.success && popupData.popup ? 1 : 0,
+        activeBanners: bannerData.success && bannerData.banners ? bannerData.banners.length : 0,
       });
     } catch (err) {
       console.error('Load stats error:', err);

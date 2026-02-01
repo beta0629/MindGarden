@@ -1,17 +1,26 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import PopupModal from './PopupModal';
 import Banner from './Banner';
 
 export default function PopupBannerProvider() {
+  const pathname = usePathname();
   const [popup, setPopup] = useState<any>(null);
   const [banners, setBanners] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // 관리자 페이지에서는 팝업과 배너를 표시하지 않음
+  const isAdminPage = pathname?.startsWith('/admin');
+
   useEffect(() => {
-    loadPopupAndBanner();
-  }, []);
+    if (!isAdminPage) {
+      loadPopupAndBanner();
+    } else {
+      setLoading(false);
+    }
+  }, [isAdminPage]);
 
   // 쿠키에서 팝업 숨김 여부 확인
   const isPopupHidden = (popupId: number): boolean => {
@@ -65,6 +74,11 @@ export default function PopupBannerProvider() {
   const handleClosePopup = () => {
     setPopup(null);
   };
+
+  // 관리자 페이지에서는 아무것도 렌더링하지 않음
+  if (isAdminPage) {
+    return null;
+  }
 
   if (loading) {
     return null;

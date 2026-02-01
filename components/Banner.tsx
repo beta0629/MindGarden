@@ -124,7 +124,7 @@ function BannerContent({ banner }: { banner: BannerItem }) {
         }}
       >
         <img
-          src={banner.imageUrl}
+          src={banner.imageUrl || ''}
           alt={banner.title || '배너'}
           style={{
             maxHeight: '80px',

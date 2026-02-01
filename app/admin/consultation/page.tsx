@@ -62,11 +62,21 @@ export default function ConsultationAdminPage() {
         : `/api/consultation?status=${statusFilter}`;
       
       const response = await fetch(url);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('API response error:', response.status, errorText);
+        setError(`서버 오류 (${response.status}): ${errorText}`);
+        return;
+      }
+      
       const data = await response.json();
+      console.log('API response data:', data);
       
       if (data.success) {
         setInquiries(data.inquiries || []);
       } else {
+        console.error('API returned error:', data);
         setError(data.error || '상담 문의 목록을 불러오는데 실패했습니다.');
       }
     } catch (err: any) {

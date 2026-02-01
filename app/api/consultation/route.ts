@@ -51,10 +51,9 @@ export async function POST(request: NextRequest) {
 
     const [result] = await connection.execute(
       `INSERT INTO consultation_inquiries 
-       (tenant_id, name, phone, email, preferred_contact_method, inquiry_type, message, preferred_date, preferred_time, status)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
+       (name, phone, email, preferred_contact_method, inquiry_type, message, preferred_date, preferred_time, status)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
       [
-        tenantId,
         name,
         phone,
         email || null,
@@ -129,10 +128,18 @@ export async function GET(request: NextRequest) {
       success: true,
       inquiries,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Get inquiries error:', error);
+    console.error('Error details:', {
+      message: error?.message,
+      code: error?.code,
+      stack: error?.stack,
+    });
     return NextResponse.json(
-      { success: false, error: '문의 목록을 불러오는데 실패했습니다.' },
+      { 
+        success: false, 
+        error: `문의 목록을 불러오는데 실패했습니다: ${error?.message || '알 수 없는 오류'}` 
+      },
       { status: 500 }
     );
   } finally {

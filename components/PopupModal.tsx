@@ -169,21 +169,22 @@ export default function PopupModal({ popup, onClose }: PopupModalProps) {
           <div
             style={{
               padding: '40px',
-              paddingBottom: '120px', // 체크박스 공간 확보 (더 여유있게)
+              paddingBottom: '140px', // 체크박스 공간 확보 (충분한 여유)
               background: 'linear-gradient(135deg, var(--bg-pastel-1) 0%, var(--bg-pastel-2) 100%)',
               borderRadius: 'var(--radius-md)',
               border: '1px solid var(--border-soft)',
-              marginBottom: '0', // 하단 마진 제거
+              marginBottom: '0',
             }}
           >
             <div
               style={{
                 padding: '24px',
-                paddingBottom: '24px', // 내부 div는 기본 패딩 유지
+                paddingBottom: '24px',
                 backgroundColor: 'white',
                 borderRadius: 'var(--radius-sm)',
                 boxShadow: 'var(--shadow-1)',
                 border: '1px solid var(--border-soft)',
+                marginBottom: '0', // 하단 마진 제거
               }}
             >
               <h2
@@ -248,7 +249,7 @@ export default function PopupModal({ popup, onClose }: PopupModalProps) {
         <div
           style={{
             position: 'absolute',
-            bottom: hasTextOnly ? '15px' : '20px', // 텍스트 팝업일 때 더 아래로
+            bottom: hasTextOnly ? '20px' : '20px', // 텍스트 팝업일 때도 충분한 여유
             left: '20px',
             right: 'auto',
             transform: 'none',

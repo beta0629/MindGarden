@@ -14,6 +14,7 @@ interface ImageUploaderProps {
   displayOrder?: number;
   recommendedAspectRatio?: number; // 권장 비율 (예: 6.4 = 가로/세로)
   recommendedSize?: { width: number; height: number }; // 권장 사이즈
+  autoResize?: boolean; // 자동 리사이징 (리사이징 옵션 UI 없이 바로 업로드)
 }
 
 export default function ImageUploader({
@@ -27,7 +28,8 @@ export default function ImageUploader({
   altText,
   displayOrder,
   recommendedAspectRatio,
-  recommendedSize
+  recommendedSize,
+  autoResize = false
 }: ImageUploaderProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
@@ -110,8 +112,131 @@ export default function ImageUploader({
     });
   };
 
+  // 자동 리사이징 및 업로드 (리사이징 옵션 UI 없이)
+  const autoResizeAndUpload = async (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      onError?.('이미지 파일만 업로드 가능합니다.');
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      onError?.('이미지 크기는 10MB 이하여야 합니다.');
+      return;
+    }
+
+    const currentUploading = externalUploading !== undefined ? externalUploading : uploading;
+    if (currentUploading) return;
+
+    if (externalUploading !== undefined && onUploadingChange) {
+      onUploadingChange(true);
+    } else {
+      setUploading(true);
+    }
+
+    try {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          let width = img.width;
+          let height = img.height;
+          
+          // 비율 유지하며 최대 크기로 리사이징
+          const ratio = Math.min(maxWidth / width, maxHeight / height);
+          if (ratio < 1) {
+            width = width * ratio;
+            height = height * ratio;
+          }
+
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          
+          if (!ctx) {
+            throw new Error('Canvas context를 가져올 수 없습니다.');
+          }
+
+          ctx.drawImage(img, 0, 0, width, height);
+          
+          canvas.toBlob(async (blob) => {
+            if (!blob) {
+              throw new Error('이미지 변환에 실패했습니다.');
+            }
+
+            // Blob을 File로 변환
+            const resizedFile = new File([blob], 'resized-image.jpg', { type: 'image/jpeg' });
+
+            // 업로드 (갤러리 이미지인 경우 /api/gallery 사용)
+            const formData = new FormData();
+            formData.append('image', resizedFile);
+            
+            // 갤러리 페이지에서 사용 중인지 확인 (URL 기반)
+            const isGalleryUpload = window.location.pathname.includes('/gallery');
+            if (isGalleryUpload) {
+              // 갤러리 이미지인 경우 altText와 displayOrder도 함께 전달
+              if (altText !== undefined) {
+                formData.append('altText', altText || '');
+              }
+              if (displayOrder !== undefined) {
+                formData.append('displayOrder', displayOrder.toString());
+              }
+            }
+            
+            const uploadUrl = isGalleryUpload ? '/api/gallery' : '/api/blog/images';
+
+            const response = await fetch(uploadUrl, {
+              method: 'POST',
+              body: formData,
+            });
+
+            if (!response.ok) {
+              const errorData = await response.json().catch(() => ({}));
+              throw new Error(errorData.error || '이미지 업로드에 실패했습니다.');
+            }
+
+            const result = await response.json();
+            onImageUploaded(result.imageUrl || result.url);
+          }, 'image/jpeg', quality);
+        };
+        img.onerror = () => {
+          onError?.('이미지를 로드할 수 없습니다.');
+          if (externalUploading !== undefined && onUploadingChange) {
+            onUploadingChange(false);
+          } else {
+            setUploading(false);
+          }
+        };
+        img.src = e.target?.result as string;
+      };
+      reader.onerror = () => {
+        onError?.('파일을 읽을 수 없습니다.');
+        if (externalUploading !== undefined && onUploadingChange) {
+          onUploadingChange(false);
+        } else {
+          setUploading(false);
+        }
+      };
+      reader.readAsDataURL(file);
+    } catch (error: any) {
+      onError?.(error.message || '이미지 업로드에 실패했습니다.');
+      console.error('Auto resize upload error:', error);
+      if (externalUploading !== undefined && onUploadingChange) {
+        onUploadingChange(false);
+      } else {
+        setUploading(false);
+      }
+    }
+  };
+
   // 파일 처리
   const processFile = async (file: File) => {
+    // 자동 리사이징 모드인 경우 바로 업로드
+    if (autoResize) {
+      await autoResizeAndUpload(file);
+      return;
+    }
+
     if (!file.type.startsWith('image/')) {
       onError?.('이미지 파일만 업로드 가능합니다.');
       return;

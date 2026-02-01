@@ -341,6 +341,7 @@ export default function BannersAdminPage() {
                     onUploadingChange={setUploading}
                     recommendedAspectRatio={6.4}
                     recommendedSize={{ width: 1920, height: 300 }}
+                    autoResize={true}
                   />
                 </div>
                 <div>

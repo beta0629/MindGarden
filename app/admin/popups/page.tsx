@@ -433,6 +433,7 @@ export default function PopupsAdminPage() {
                     onUploadingChange={setUploading}
                     recommendedAspectRatio={16/9}
                     recommendedSize={{ width: 1920, height: 1080 }}
+                    autoResize={true}
                   />
                 </div>
                 <div>

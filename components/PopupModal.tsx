@@ -250,7 +250,7 @@ export default function PopupModal({ popup, onClose }: PopupModalProps) {
           style={{
             position: 'absolute',
             bottom: hasTextOnly ? '15px' : '20px', // 텍스트 팝업일 때 본문과 겹치지 않도록 조정
-            left: hasTextOnly ? '64px' : '20px', // 텍스트 팝업일 때 컨텐츠 영역 시작점과 맞춤 (외부 패딩 40px + 내부 패딩 24px)
+            left: '20px',
             right: 'auto',
             transform: 'none',
             display: 'flex',

@@ -124,14 +124,22 @@ export async function POST(request: NextRequest) {
 
       // 이미지 자동 리사이징 (최대 1920x1080, 품질 90%)
       // 동적 import로 sharp 로드 (빌드 타임 오류 방지)
-      const sharp = (await import('sharp')).default;
-      const resizedBuffer = await sharp(buffer)
-        .resize(1920, 1080, {
-          fit: 'inside',
-          withoutEnlargement: true,
-        })
-        .jpeg({ quality: 90 })
-        .toBuffer();
+      let resizedBuffer: Buffer;
+      try {
+        const sharp = (await import('sharp')).default;
+        resizedBuffer = await sharp(buffer)
+          .resize(1920, 1080, {
+            fit: 'inside',
+            withoutEnlargement: true,
+          })
+          .jpeg({ quality: 90 })
+          .toBuffer();
+      } catch (sharpError: any) {
+        console.error('Sharp import/resize error:', sharpError);
+        // sharp가 실패하면 원본 이미지를 그대로 사용 (클라이언트에서 이미 리사이징했을 수 있음)
+        console.warn('Using original image buffer (sharp unavailable)');
+        resizedBuffer = buffer;
+      }
 
       // 파일명 생성 (타임스탬프 + 원본 파일명)
       const timestamp = Date.now();

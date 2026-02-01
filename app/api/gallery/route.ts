@@ -23,18 +23,29 @@ export async function GET(request: NextRequest) {
     query += ` ORDER BY display_order ASC, created_at ASC`;
 
     const [rows] = await connection.execute(query);
+    const imageRows = rows as any[];
+    
+    console.log('Gallery query result:', {
+      rowCount: imageRows.length,
+      rows: imageRows,
+      sample: imageRows[0],
+    });
 
     if (all) {
       // 관리자용: 전체 정보 반환
+      const images = imageRows.map((row: any) => ({
+        id: row.id,
+        imageUrl: row.image_url,
+        altText: row.alt_text,
+        displayOrder: row.display_order,
+        isActive: row.is_active === 1,
+      }));
+      
+      console.log('Returning images for admin:', images.length);
+      
       return NextResponse.json({
         success: true,
-        images: (rows as any[]).map((row: any) => ({
-          id: row.id,
-          imageUrl: row.image_url,
-          altText: row.alt_text,
-          displayOrder: row.display_order,
-          isActive: row.is_active === 1,
-        })),
+        images: images,
       });
     } else {
       // 일반용: 활성화된 이미지만 반환

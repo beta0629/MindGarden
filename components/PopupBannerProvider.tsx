@@ -37,10 +37,11 @@ export default function PopupBannerProvider() {
     try {
       setLoading(true);
       
-      // 팝업과 배너를 동시에 조회
+      // 팝업과 배너를 동시에 조회 (캐시 방지를 위해 timestamp 추가)
+      const timestamp = Date.now();
       const [popupResponse, bannerResponse] = await Promise.all([
-        fetch('/api/popups'),
-        fetch('/api/banners'),
+        fetch(`/api/popups?t=${timestamp}`, { cache: 'no-store' }),
+        fetch(`/api/banners?t=${timestamp}`, { cache: 'no-store' }),
       ]);
 
       const popupData = await popupResponse.json();

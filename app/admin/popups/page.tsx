@@ -289,21 +289,30 @@ export default function PopupsAdminPage() {
                 </div>
                 <div>
                   <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600' }}>
-                    내용
+                    내용 (HTML 편집 가능)
                   </label>
-                  <textarea
+                  <div style={{
+                    padding: '12px 16px',
+                    marginBottom: '12px',
+                    backgroundColor: '#f0f9ff',
+                    border: '1px solid #bae6fd',
+                    borderRadius: 'var(--radius-sm)',
+                    fontSize: '14px',
+                    color: '#0369a1'
+                  }}>
+                    <div style={{ fontWeight: '600', marginBottom: '4px' }}>💡 팝업 내용 작성 방법</div>
+                    <div>• 이미지만 표시: 이미지 업로드만 하면 됩니다</div>
+                    <div>• 텍스트 + 이미지: 내용에 HTML로 작성하고 이미지도 업로드할 수 있습니다</div>
+                    <div>• 텍스트만: 내용에 HTML로 작성하면 기본 디자인이 적용됩니다</div>
+                  </div>
+                  <BlogEditor
                     value={formData.content}
-                    onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
-                    rows={4}
-                    style={{
-                      width: '100%',
-                      padding: '12px 16px',
-                      border: '1px solid var(--border-soft)',
-                      borderRadius: 'var(--radius-sm)',
-                      fontSize: '16px',
-                      fontFamily: 'inherit'
-                    }}
+                    onChange={(value) => setFormData(prev => ({ ...prev, content: value }))}
+                    placeholder="팝업 내용을 입력하세요. HTML 편집이 가능하며, 이미지를 드래그 앤 드롭하거나 툴바의 이미지 버튼을 클릭하여 추가할 수 있습니다."
                   />
+                  <p style={{ marginTop: '8px', fontSize: '14px', color: 'var(--text-sub)' }}>
+                    이미지를 드래그 앤 드롭하거나 툴바의 이미지 버튼을 클릭하여 추가할 수 있습니다.
+                  </p>
                 </div>
                 <div>
                   <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600' }}>

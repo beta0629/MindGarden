@@ -10,6 +10,8 @@ interface ImageUploaderProps {
   quality?: number;
   uploading?: boolean;
   onUploadingChange?: (uploading: boolean) => void;
+  altText?: string;
+  displayOrder?: number;
 }
 
 export default function ImageUploader({
@@ -19,7 +21,9 @@ export default function ImageUploader({
   maxHeight = 1080,
   quality = 0.9,
   uploading: externalUploading,
-  onUploadingChange
+  onUploadingChange,
+  altText,
+  displayOrder
 }: ImageUploaderProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
@@ -171,9 +175,19 @@ export default function ImageUploader({
         // 업로드 (갤러리 이미지인 경우 /api/gallery 사용)
         const formData = new FormData();
         formData.append('image', file);
-
+        
         // 갤러리 페이지에서 사용 중인지 확인 (URL 기반)
         const isGalleryUpload = window.location.pathname.includes('/gallery');
+        if (isGalleryUpload) {
+          // 갤러리 이미지인 경우 altText와 displayOrder도 함께 전달
+          if (altText !== undefined) {
+            formData.append('altText', altText || '');
+          }
+          if (displayOrder !== undefined) {
+            formData.append('displayOrder', displayOrder.toString());
+          }
+        }
+        
         const uploadUrl = isGalleryUpload ? '/api/gallery' : '/api/blog/images';
 
         const response = await fetch(uploadUrl, {

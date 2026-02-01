@@ -95,37 +95,22 @@ export default function GalleryAdminPage() {
   };
 
   const handleImageUploaded = async (imageUrl: string) => {
-    // 갤러리 이미지는 업로드와 동시에 DB에 저장
+    // ImageUploader에서 이미 /api/gallery로 업로드했고, 그 과정에서 DB에도 저장되었음
+    // 따라서 여기서는 목록만 새로고침하면 됨
     try {
-      console.log('Image uploaded, adding to gallery:', imageUrl);
-      const apiService = getApiService();
-      const result = await apiService.addGalleryImage({
-        imageUrl: imageUrl,
-        altText: newImage.altText || undefined,
-        displayOrder: newImage.displayOrder,
-      });
-      
-      console.log('Add gallery image result:', result);
-      
-      if (result.success) {
-        setSuccess('갤러리 이미지가 추가되었습니다.');
-        setNewImage({ imageUrl: '', altText: '', displayOrder: 0 });
-        // 약간의 지연 후 목록 새로고침 (DB 반영 시간 고려)
-        setTimeout(() => {
-          loadImages();
-        }, 500);
-        setTimeout(() => setSuccess(null), 3000);
-        setError(null);
-      } else {
-        const errorMsg = result.error || '이미지 추가에 실패했습니다.';
-        console.error('Add gallery image failed:', errorMsg);
-        setError(errorMsg);
-        throw new Error(errorMsg);
-      }
+      console.log('Image uploaded, refreshing gallery list:', imageUrl);
+      setSuccess('갤러리 이미지가 추가되었습니다.');
+      setNewImage({ imageUrl: '', altText: '', displayOrder: 0 });
+      // 약간의 지연 후 목록 새로고침 (DB 반영 시간 고려)
+      setTimeout(() => {
+        loadImages();
+      }, 500);
+      setTimeout(() => setSuccess(null), 3000);
+      setError(null);
     } catch (err: any) {
       const errorMessage = err.message || '이미지 추가에 실패했습니다.';
       setError(errorMessage);
-      console.error('Add gallery image error:', err);
+      console.error('Handle image uploaded error:', err);
     }
   };
 
@@ -285,6 +270,8 @@ export default function GalleryAdminPage() {
                     quality={0.9}
                     uploading={uploading}
                     onUploadingChange={setUploading}
+                    altText={newImage.altText}
+                    displayOrder={newImage.displayOrder}
                   />
                 </div>
                 <div>

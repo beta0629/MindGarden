@@ -92,7 +92,12 @@ export default function BannersAdminPage() {
   };
 
   const handleImageUploaded = async (imageUrl: string) => {
-    setFormData(prev => ({ ...prev, imageUrl }));
+    console.log('Banner image uploaded, URL:', imageUrl);
+    setFormData(prev => {
+      const updated = { ...prev, imageUrl };
+      console.log('Updated formData:', updated);
+      return updated;
+    });
   };
 
   const handleImageUploadError = (errorMessage: string) => {
@@ -112,6 +117,7 @@ export default function BannersAdminPage() {
       const url = editingId ? `/api/admin/banners/${editingId}` : '/api/admin/banners';
       const method = editingId ? 'PUT' : 'POST';
 
+      console.log('Submitting banner formData:', formData);
       const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },

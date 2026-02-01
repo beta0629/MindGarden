@@ -153,7 +153,7 @@ export async function POST(request: NextRequest) {
       const filePath = join(uploadDir, fileName);
       await writeFile(filePath, resizedBuffer);
 
-      // URL 생성
+      // URL 생성 (Next.js API Route를 통해 서빙)
       const imageUrl = `/uploads/gallery/${fileName}`;
 
       // DB에 저장

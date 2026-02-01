@@ -48,17 +48,19 @@ export async function POST(request: NextRequest) {
 
     // 요청 경로 확인 (배너/팝업 페이지인지 확인)
     const referer = request.headers.get('referer') || '';
-    const isBannerOrPopup = referer.includes('/admin/banners') || referer.includes('/admin/popups');
+    const isBanner = referer.includes('/admin/banners');
+    const isPopup = referer.includes('/admin/popups');
     
     // 이미지 자동 리사이징
-    // 배너/팝업: 가로형 배너 규격 (최대 1920x300, 품질 90%)
+    // 배너: 가로형 배너 규격 (최대 1920x300, 품질 90%)
+    // 팝업: 모달용 큰 이미지 규격 (최대 1920x1080, 품질 90%)
     // 블로그: 일반 이미지 규격 (최대 1920x1080, 품질 90%)
     // 동적 import로 sharp 로드 (빌드 타임 오류 방지)
     let resizedBuffer: Buffer;
     try {
       const sharp = (await import('sharp')).default;
-      if (isBannerOrPopup) {
-        // 배너/팝업 이미지: 가로형 배너 규격
+      if (isBanner) {
+        // 배너 이미지: 가로형 배너 규격
         resizedBuffer = await sharp(buffer)
           .resize(1920, 300, {
             fit: 'inside',
@@ -66,7 +68,17 @@ export async function POST(request: NextRequest) {
           })
           .jpeg({ quality: 90 })
           .toBuffer();
-        console.log('Banner/Popup image resized successfully with sharp (1920x300).');
+        console.log('Banner image resized successfully with sharp (1920x300).');
+      } else if (isPopup) {
+        // 팝업 이미지: 모달용 큰 이미지 규격
+        resizedBuffer = await sharp(buffer)
+          .resize(1920, 1080, {
+            fit: 'inside',
+            withoutEnlargement: true,
+          })
+          .jpeg({ quality: 90 })
+          .toBuffer();
+        console.log('Popup image resized successfully with sharp (1920x1080).');
       } else {
         // 블로그 이미지: 일반 규격
         resizedBuffer = await sharp(buffer)

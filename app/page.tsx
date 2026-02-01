@@ -1,6 +1,7 @@
 import Navigation from '@/components/Navigation';
 import HeroSection from '@/components/HeroSection';
 import GalleryMarquee from '@/components/GalleryMarquee';
+import ReviewsCarousel from '@/components/ReviewsCarousel';
 import Footer from '@/components/Footer';
 import SectionTabs from '@/components/SectionTabs';
 import ConsultationForm from '@/components/ConsultationForm';
@@ -73,6 +74,38 @@ async function getHeroVideo() {
   }
 }
 
+// 후기 목록 조회 (최신 5개)
+async function getReviews() {
+  let connection;
+  try {
+    connection = await getDbConnection();
+    const [rows] = await connection.execute(
+      `SELECT id, author_name, content, created_at, updated_at
+       FROM homepage_reviews
+       WHERE is_approved = 1
+       ORDER BY created_at DESC
+       LIMIT 5`
+    );
+
+    const reviews = (rows as any[]).map((row: any) => ({
+      id: row.id,
+      authorName: row.author_name,
+      content: row.content,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    }));
+
+    return reviews;
+  } catch (error) {
+    console.error('Failed to load reviews:', error);
+    return [];
+  } finally {
+    if (connection) {
+      await connection.end();
+    }
+  }
+}
+
 // 서버 컴포넌트에서 데이터 가져오기
 async function getHomeData() {
   try {
@@ -85,6 +118,10 @@ async function getHomeData() {
     // 갤러리 이미지 조회 (DB에서 관리자가 등록한 이미지)
     const galleryImages = await getGalleryImages();
     console.log('getHomeData - galleryImages:', galleryImages ? galleryImages.length : 'null', galleryImages);
+    
+    // 후기 목록 조회
+    const reviews = await getReviews();
+    console.log('getHomeData - reviews:', reviews.length);
     
     // 기본 이미지 (갤러리 이미지가 없을 때 사용)
     const defaultGallery = [
@@ -104,6 +141,7 @@ async function getHomeData() {
       },
       videoUrl: videoUrl || '/assets/videos/hero-video.mp4', // 기본 비디오 경로
       gallery: finalGallery,
+      reviews: reviews,
     };
   } catch (error) {
     console.error('Failed to load home data:', error);
@@ -119,6 +157,7 @@ async function getHomeData() {
         { url: '/assets/images/gallery_3.png', alt: '평화로운 공간' },
         { url: '/assets/images/gallery_4.png', alt: '따뜻한 조명의 공간' },
       ],
+      reviews: [],
     };
   }
 }
@@ -180,6 +219,10 @@ export default async function Home() {
 
           <section id="gallery" className="content-section content-section-full">
             <GalleryMarquee images={homeData.gallery} />
+          </section>
+
+          <section id="reviews" className="content-section">
+            <ReviewsCarousel reviews={homeData.reviews} />
           </section>
 
           <section id="contact" className="content-section">

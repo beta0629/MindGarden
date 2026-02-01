@@ -197,8 +197,6 @@ export default function BannersAdminPage() {
       </div>
     );
   }
-  );
-}
 
   if (!authenticated) {
     return null;

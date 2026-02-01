@@ -31,6 +31,11 @@ export default function PopupModal({ popup, onClose }: PopupModalProps) {
     e.stopPropagation();
   };
 
+  // 이미지가 있으면 기본 디자인 없이 이미지만 표시
+  const hasImage = !!popup.imageUrl;
+  // 텍스트만 있으면 기본 디자인 적용
+  const hasTextOnly = !hasImage && (popup.title || popup.content);
+
   return (
     <div
       onClick={handleOverlayClick}
@@ -53,16 +58,16 @@ export default function PopupModal({ popup, onClose }: PopupModalProps) {
       <div
         onClick={handleContentClick}
         style={{
-          backgroundColor: 'white',
-          borderRadius: 'var(--radius-md)',
-          maxWidth: '600px',
+          backgroundColor: hasImage ? 'transparent' : 'white',
+          borderRadius: hasImage ? 0 : 'var(--radius-md)',
+          maxWidth: hasImage ? '90vw' : '600px',
           width: '100%',
           maxHeight: '90vh',
           overflow: 'auto',
           position: 'relative',
           transform: isVisible ? 'scale(1)' : 'scale(0.9)',
           transition: 'transform 0.3s ease',
-          boxShadow: '0 10px 40px rgba(0, 0, 0, 0.2)',
+          boxShadow: hasImage ? 'none' : '0 10px 40px rgba(0, 0, 0, 0.2)',
         }}
       >
         {/* 닫기 버튼 */}
@@ -72,91 +77,158 @@ export default function PopupModal({ popup, onClose }: PopupModalProps) {
             position: 'absolute',
             top: '12px',
             right: '12px',
-            width: '32px',
-            height: '32px',
+            width: '36px',
+            height: '36px',
             borderRadius: '50%',
             border: 'none',
-            backgroundColor: 'rgba(0, 0, 0, 0.1)',
+            backgroundColor: hasImage ? 'rgba(255, 255, 255, 0.9)' : 'rgba(0, 0, 0, 0.1)',
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: '20px',
-            color: 'var(--text-main)',
+            fontSize: '24px',
+            color: hasImage ? 'var(--text-main)' : 'var(--text-main)',
             zIndex: 10,
-            transition: 'background-color 0.2s',
+            transition: 'all 0.2s',
+            boxShadow: hasImage ? '0 2px 8px rgba(0, 0, 0, 0.15)' : 'none',
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.2)';
+            e.currentTarget.style.backgroundColor = hasImage ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 0.2)';
+            e.currentTarget.style.transform = 'scale(1.1)';
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.1)';
+            e.currentTarget.style.backgroundColor = hasImage ? 'rgba(255, 255, 255, 0.9)' : 'rgba(0, 0, 0, 0.1)';
+            e.currentTarget.style.transform = 'scale(1)';
           }}
         >
           ×
         </button>
 
-        {/* 팝업 내용 */}
-        <div style={{ padding: '24px' }}>
-          {popup.imageUrl && (
+        {/* 이미지가 있을 때: 이미지만 표시 */}
+        {hasImage && (
+          <div style={{ position: 'relative' }}>
             <img
-              src={popup.imageUrl}
+              src={popup.imageUrl!}
               alt={popup.title}
               style={{
                 width: '100%',
-                maxHeight: '400px',
+                maxHeight: '90vh',
                 objectFit: 'contain',
-                borderRadius: 'var(--radius-sm)',
-                marginBottom: '16px',
+                display: 'block',
               }}
             />
-          )}
-          <h2 style={{
-            fontSize: '1.5rem',
-            fontWeight: '700',
-            marginBottom: '12px',
-            color: 'var(--text-main)',
-          }}>
-            {popup.title}
-          </h2>
-          {popup.content && (
+            {popup.linkUrl && (
+              <a
+                href={popup.linkUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  position: 'absolute',
+                  bottom: '20px',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  display: 'inline-block',
+                  padding: '12px 32px',
+                  backgroundColor: 'rgba(184, 212, 227, 0.95)',
+                  color: 'var(--text-main)',
+                  textDecoration: 'none',
+                  borderRadius: 'var(--radius-sm)',
+                  fontWeight: '600',
+                  transition: 'all 0.2s',
+                  backdropFilter: 'blur(8px)',
+                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(184, 212, 227, 1)';
+                  e.currentTarget.style.transform = 'translateX(-50%) scale(1.05)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(184, 212, 227, 0.95)';
+                  e.currentTarget.style.transform = 'translateX(-50%) scale(1)';
+                }}
+              >
+                자세히 보기
+              </a>
+            )}
+          </div>
+        )}
+
+        {/* 텍스트만 있을 때: 기본 디자인 템플릿 적용 */}
+        {hasTextOnly && (
+          <div
+            style={{
+              padding: '40px',
+              background: 'linear-gradient(135deg, var(--bg-pastel-1) 0%, var(--bg-pastel-2) 100%)',
+              borderRadius: 'var(--radius-md)',
+              border: '1px solid var(--border-soft)',
+            }}
+          >
             <div
               style={{
-                fontSize: '1rem',
-                color: 'var(--text-sub)',
-                lineHeight: '1.6',
-                marginBottom: '16px',
-                whiteSpace: 'pre-wrap',
-              }}
-              dangerouslySetInnerHTML={{ __html: popup.content }}
-            />
-          )}
-          {popup.linkUrl && (
-            <a
-              href={popup.linkUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                display: 'inline-block',
-                padding: '12px 24px',
-                backgroundColor: 'var(--accent-sky)',
-                color: 'white',
-                textDecoration: 'none',
+                padding: '24px',
+                backgroundColor: 'white',
                 borderRadius: 'var(--radius-sm)',
-                fontWeight: '600',
-                transition: 'opacity 0.2s',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.opacity = '0.9';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.opacity = '1';
+                boxShadow: 'var(--shadow-1)',
+                border: '1px solid var(--border-soft)',
               }}
             >
-              자세히 보기
-            </a>
-          )}
-        </div>
+              <h2
+                style={{
+                  fontSize: '1.75rem',
+                  fontWeight: '700',
+                  marginBottom: '16px',
+                  color: 'var(--text-main)',
+                  background: 'linear-gradient(135deg, var(--accent-sky) 0%, var(--accent-lavender) 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                }}
+              >
+                {popup.title}
+              </h2>
+              {popup.content && (
+                <div
+                  style={{
+                    fontSize: '1.05rem',
+                    color: 'var(--text-sub)',
+                    lineHeight: '1.8',
+                    marginBottom: '24px',
+                    whiteSpace: 'pre-wrap',
+                  }}
+                  dangerouslySetInnerHTML={{ __html: popup.content }}
+                />
+              )}
+              {popup.linkUrl && (
+                <a
+                  href={popup.linkUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: 'inline-block',
+                    padding: '14px 28px',
+                    background: 'linear-gradient(135deg, var(--accent-sky) 0%, var(--accent-mint) 100%)',
+                    color: 'var(--text-main)',
+                    textDecoration: 'none',
+                    borderRadius: 'var(--radius-sm)',
+                    fontWeight: '600',
+                    transition: 'all 0.2s',
+                    boxShadow: '0 4px 12px rgba(184, 212, 227, 0.3)',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                    e.currentTarget.style.boxShadow = '0 6px 16px rgba(184, 212, 227, 0.4)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(184, 212, 227, 0.3)';
+                  }}
+                >
+                  자세히 보기
+                </a>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

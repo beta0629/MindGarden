@@ -99,7 +99,6 @@ export default function Banner({ banners }: BannerProps) {
         <button
           type="button"
           onClick={goToPrevious}
-          onMouseEnter={() => setIsPaused(true)}
           style={{
             position: 'absolute',
             left: '12px',
@@ -122,10 +121,12 @@ export default function Banner({ banners }: BannerProps) {
             transition: 'all 0.2s',
           }}
           onMouseEnter={(e) => {
+            setIsPaused(true);
             e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 1)';
             e.currentTarget.style.transform = 'translateY(-50%) scale(1.1)';
           }}
           onMouseLeave={(e) => {
+            setIsPaused(false);
             e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.9)';
             e.currentTarget.style.transform = 'translateY(-50%) scale(1)';
           }}
@@ -152,7 +153,6 @@ export default function Banner({ banners }: BannerProps) {
         <button
           type="button"
           onClick={goToNext}
-          onMouseEnter={() => setIsPaused(true)}
           style={{
             position: 'absolute',
             right: '12px',
@@ -175,10 +175,12 @@ export default function Banner({ banners }: BannerProps) {
             transition: 'all 0.2s',
           }}
           onMouseEnter={(e) => {
+            setIsPaused(true);
             e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 1)';
             e.currentTarget.style.transform = 'translateY(-50%) scale(1.1)';
           }}
           onMouseLeave={(e) => {
+            setIsPaused(false);
             e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.9)';
             e.currentTarget.style.transform = 'translateY(-50%) scale(1)';
           }}

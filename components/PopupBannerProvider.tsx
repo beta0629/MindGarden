@@ -26,12 +26,18 @@ export default function PopupBannerProvider() {
       const popupData = await popupResponse.json();
       const bannerData = await bannerResponse.json();
 
+      console.log('Popup data:', popupData);
+      console.log('Banner data:', bannerData);
+
       if (popupData.success && popupData.popup) {
         setPopup(popupData.popup);
       }
 
       if (bannerData.success && bannerData.banners && bannerData.banners.length > 0) {
+        console.log('Setting banners:', bannerData.banners);
         setBanners(bannerData.banners);
+      } else {
+        console.log('No banners to display:', { success: bannerData.success, banners: bannerData.banners });
       }
     } catch (error) {
       console.error('Failed to load popup/banner:', error);
@@ -47,6 +53,8 @@ export default function PopupBannerProvider() {
   if (loading) {
     return null;
   }
+
+  console.log('PopupBannerProvider render:', { bannersCount: banners.length, banners });
 
   return (
     <>

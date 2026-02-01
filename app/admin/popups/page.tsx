@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import ImageUploader from '@/components/ImageUploader';
+import BlogEditor from '@/components/BlogEditor';
 import AdminNavigation from '@/components/AdminNavigation';
 
 interface Popup {

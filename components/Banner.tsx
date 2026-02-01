@@ -287,10 +287,13 @@ function BannerContent({ banner }: { banner: BannerItem }) {
           src={banner.imageUrl || ''}
           alt={banner.title || '배너'}
           style={{
-            maxHeight: '60px',
-            maxWidth: '200px',
+            maxHeight: '100px',
+            maxWidth: '400px',
+            width: 'auto',
+            height: 'auto',
             objectFit: 'contain',
             flexShrink: 0,
+            display: 'block',
           }}
           onError={(e) => {
             console.error('Banner image load error (with text):', banner.imageUrl, e);

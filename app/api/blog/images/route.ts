@@ -42,21 +42,41 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 파일 저장
+    // 파일 읽기
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
+
+    // 이미지 자동 리사이징 (최대 1920x1080, 품질 90%)
+    // 동적 import로 sharp 로드 (빌드 타임 오류 방지)
+    let resizedBuffer: Buffer;
+    try {
+      const sharp = (await import('sharp')).default;
+      resizedBuffer = await sharp(buffer)
+        .resize(1920, 1080, {
+          fit: 'inside',
+          withoutEnlargement: true,
+        })
+        .jpeg({ quality: 90 })
+        .toBuffer();
+      console.log('Blog image resized successfully with sharp.');
+    } catch (sharpError: any) {
+      console.error('Sharp import/resize error:', sharpError);
+      // sharp가 실패하면 원본 이미지를 그대로 사용
+      console.warn('Using original image buffer (sharp unavailable or failed).');
+      resizedBuffer = buffer;
+    }
 
     // 파일명 생성 (타임스탬프 + 원본 파일명)
     const timestamp = Date.now();
     const originalName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
-    const fileName = `${timestamp}_${originalName}`;
+    const fileName = `${timestamp}_${originalName.replace(/\.[^.]+$/, '.jpg')}`;
     const uploadDir = join(process.cwd(), 'public', 'uploads', 'blog');
     
     // 디렉토리 생성
     await mkdir(uploadDir, { recursive: true });
 
     const filePath = join(uploadDir, fileName);
-    await writeFile(filePath, buffer);
+    await writeFile(filePath, resizedBuffer);
 
     // URL 생성
     const imageUrl = `/uploads/blog/${fileName}`;

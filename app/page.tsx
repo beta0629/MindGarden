@@ -184,10 +184,10 @@ export default async function Home() {
               증상완화를, 이후 더 깊은 회복과 성장을 돕습니다.
             </p>
             <div className="feature-grid">
-              <div className="feature-card">
-                <div className="feature-title">전문성</div>
-                <div className="feature-body">ADHD 특성을 이해하는 맞춤 상담과 코칭</div>
-              </div>
+              <a href="/about/mindgarden" className="feature-card" style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
+                <div className="feature-title">최초 ADHD와 동반질환 전문 심리상담센터</div>
+                <div className="feature-body">15년의 임상경험과 전문성을 바탕으로 한 맞춤 상담</div>
+              </a>
               <div className="feature-card">
                 <div className="feature-title">따뜻한 환경</div>
                 <div className="feature-body">불안이 줄고 편안해지는 밝은 상담실</div>

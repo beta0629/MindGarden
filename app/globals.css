@@ -642,6 +642,21 @@ main:not(:has(.hero-section)) .gnb .gnb-cta {
     border-radius: var(--radius-md);
     box-shadow: var(--shadow-1);
     padding: 18px 16px;
+    transition: all 0.2s ease;
+}
+
+a.feature-card {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    cursor: pointer;
+}
+
+a.feature-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-2);
+    border-color: var(--accent-sky);
+    background: linear-gradient(to bottom, var(--surface-1) 0%, rgba(184, 212, 227, 0.08) 100%);
 }
 
 .feature-title,

@@ -7,7 +7,6 @@ interface PopupModalProps {
     id: number;
     title: string;
     content: string | null;
-    imageUrl: string | null;
     linkUrl: string | null;
   };
   onClose: () => void;
@@ -42,40 +41,12 @@ export default function PopupModal({ popup, onClose }: PopupModalProps) {
     onClose();
   };
 
-  // 이미지 URL 정규화 (상대 경로를 절대 경로로 변환)
-  const normalizeImageUrl = (url: string | null): string | null => {
-    if (!url || url.trim() === '') return null;
-    const trimmedUrl = url.trim();
-    // 이미 절대 URL인 경우 (http:// 또는 https:// 또는 //)
-    if (trimmedUrl.startsWith('http://') || trimmedUrl.startsWith('https://') || trimmedUrl.startsWith('//')) {
-      return trimmedUrl;
-    }
-    // 상대 경로인 경우 (/, ./ 또는 파일명으로 시작)
-    if (trimmedUrl.startsWith('/')) {
-      return trimmedUrl; // 이미 루트 상대 경로
-    }
-    // 상대 경로를 절대 경로로 변환
-    return `/${trimmedUrl}`;
-  };
-
-  const normalizedImageUrl = normalizeImageUrl(popup.imageUrl);
-  
-  // 이미지가 있으면 기본 디자인 없이 이미지만 표시
-  const hasImage = !!normalizedImageUrl;
+  // content에 이미지가 포함되어 있는지 확인
+  const hasImageInContent = popup.content?.includes('<img') || false;
+  // content에 텍스트가 있는지 확인 (이미지 태그 제외)
+  const hasTextInContent = popup.content ? popup.content.replace(/<img[^>]*>/gi, '').trim().length > 0 : false;
   // 텍스트만 있으면 기본 디자인 적용
-  const hasTextOnly = !hasImage && (popup.title || popup.content);
-
-  // 디버깅: 팝업 데이터 확인
-  useEffect(() => {
-    console.log('PopupModal - popup data:', {
-      id: popup.id,
-      title: popup.title,
-      originalImageUrl: popup.imageUrl,
-      normalizedImageUrl: normalizedImageUrl,
-      hasImage,
-      hasTextOnly,
-    });
-  }, [popup, normalizedImageUrl, hasImage, hasTextOnly]);
+  const hasTextOnly = !hasImageInContent && (popup.title || hasTextInContent);
 
   return (
     <div
@@ -99,16 +70,16 @@ export default function PopupModal({ popup, onClose }: PopupModalProps) {
       <div
         onClick={handleContentClick}
         style={{
-          backgroundColor: hasImage ? 'transparent' : 'white',
-          borderRadius: hasImage ? 0 : 'var(--radius-md)',
-          maxWidth: hasImage ? '90vw' : '600px',
+          backgroundColor: hasImageInContent ? 'transparent' : 'white',
+          borderRadius: hasImageInContent ? 0 : 'var(--radius-md)',
+          maxWidth: hasImageInContent ? '90vw' : '600px',
           width: '100%',
           maxHeight: '90vh',
           overflow: 'auto',
           position: 'relative',
           transform: isVisible ? 'scale(1)' : 'scale(0.9)',
           transition: 'transform 0.3s ease',
-          boxShadow: hasImage ? 'none' : '0 10px 40px rgba(0, 0, 0, 0.2)',
+          boxShadow: hasImageInContent ? 'none' : '0 10px 40px rgba(0, 0, 0, 0.2)',
         }}
       >
         {/* 닫기 버튼 */}
@@ -122,102 +93,38 @@ export default function PopupModal({ popup, onClose }: PopupModalProps) {
             height: '36px',
             borderRadius: '50%',
             border: 'none',
-            backgroundColor: hasImage ? 'rgba(255, 255, 255, 0.9)' : 'rgba(0, 0, 0, 0.1)',
+            backgroundColor: hasImageInContent ? 'rgba(255, 255, 255, 0.9)' : 'rgba(0, 0, 0, 0.1)',
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             fontSize: '24px',
-            color: hasImage ? 'var(--text-main)' : 'var(--text-main)',
+            color: hasImageInContent ? 'var(--text-main)' : 'var(--text-main)',
             zIndex: 10,
             transition: 'all 0.2s',
-            boxShadow: hasImage ? '0 2px 8px rgba(0, 0, 0, 0.15)' : 'none',
+            boxShadow: hasImageInContent ? '0 2px 8px rgba(0, 0, 0, 0.15)' : 'none',
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = hasImage ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 0.2)';
+            e.currentTarget.style.backgroundColor = hasImageInContent ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 0.2)';
             e.currentTarget.style.transform = 'scale(1.1)';
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = hasImage ? 'rgba(255, 255, 255, 0.9)' : 'rgba(0, 0, 0, 0.1)';
+            e.currentTarget.style.backgroundColor = hasImageInContent ? 'rgba(255, 255, 255, 0.9)' : 'rgba(0, 0, 0, 0.1)';
             e.currentTarget.style.transform = 'scale(1)';
           }}
         >
           ×
         </button>
 
-        {/* 이미지가 있을 때: 이미지만 표시 */}
-        {hasImage && (
-          <div style={{ position: 'relative' }}>
-            <img
-              src={normalizedImageUrl!}
-              alt={popup.title}
-              style={{
-                width: '100%',
-                maxHeight: '90vh',
-                objectFit: 'contain',
-                display: 'block',
-              }}
-              onError={(e) => {
-                console.error('Popup image load error:', {
-                  originalImageUrl: popup.imageUrl,
-                  normalizedImageUrl: normalizedImageUrl,
-                  error: e,
-                });
-                // 이미지 로드 실패 시 숨김 처리
-                e.currentTarget.style.display = 'none';
-                // 이미지 로드 실패 시 텍스트만 표시하도록 상태 변경
-                const parent = e.currentTarget.parentElement;
-                if (parent) {
-                  parent.innerHTML = `
-                    <div style="padding: 40px; text-align: center; color: var(--text-sub);">
-                      <p>이미지를 불러올 수 없습니다.</p>
-                      <p style="font-size: 0.875rem; margin-top: 8px;">URL: ${normalizedImageUrl}</p>
-                      <p style="font-size: 0.875rem; margin-top: 8px;">${popup.title || ''}</p>
-                    </div>
-                  `;
-                }
-              }}
-              onLoad={() => {
-                console.log('Popup image loaded successfully:', {
-                  originalImageUrl: popup.imageUrl,
-                  normalizedImageUrl: normalizedImageUrl,
-                });
-              }}
-            />
-            {popup.linkUrl && (
-              <a
-                href={popup.linkUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  position: 'absolute',
-                  bottom: '20px',
-                  left: '50%',
-                  transform: 'translateX(-50%)',
-                  display: 'inline-block',
-                  padding: '12px 32px',
-                  backgroundColor: 'rgba(184, 212, 227, 0.95)',
-                  color: 'var(--text-main)',
-                  textDecoration: 'none',
-                  borderRadius: 'var(--radius-sm)',
-                  fontWeight: '600',
-                  transition: 'all 0.2s',
-                  backdropFilter: 'blur(8px)',
-                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(184, 212, 227, 1)';
-                  e.currentTarget.style.transform = 'translateX(-50%) scale(1.05)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(184, 212, 227, 0.95)';
-                  e.currentTarget.style.transform = 'translateX(-50%) scale(1)';
-                }}
-              >
-                자세히 보기
-              </a>
-            )}
-          </div>
+        {/* content에 이미지가 포함된 경우: content를 그대로 렌더링 */}
+        {hasImageInContent && (
+          <div 
+            style={{ 
+              position: 'relative',
+              padding: '20px',
+            }}
+            dangerouslySetInnerHTML={{ __html: popup.content || '' }}
+          />
         )}
 
         {/* 텍스트만 있을 때: 기본 디자인 템플릿 적용 */}

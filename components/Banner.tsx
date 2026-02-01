@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 interface BannerItem {
   id: number;
@@ -16,16 +16,48 @@ interface BannerProps {
 
 export default function Banner({ banners }: BannerProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+  const autoScrollTimerRef = useRef<NodeJS.Timeout | null>(null);
 
+  // 특정 인덱스로 이동
+  const goToIndex = (index: number) => {
+    if (index < 0 || index >= banners.length) return;
+    setCurrentIndex(index);
+  };
+
+  // 이전 배너로 이동
+  const goToPrevious = () => {
+    const newIndex = currentIndex === 0 ? banners.length - 1 : currentIndex - 1;
+    goToIndex(newIndex);
+  };
+
+  // 다음 배너로 이동
+  const goToNext = () => {
+    const newIndex = (currentIndex + 1) % banners.length;
+    goToIndex(newIndex);
+  };
+
+  // 자동 스크롤
   useEffect(() => {
-    if (banners.length <= 1) return;
+    if (isPaused || banners.length <= 1) {
+      if (autoScrollTimerRef.current) {
+        clearInterval(autoScrollTimerRef.current);
+        autoScrollTimerRef.current = null;
+      }
+      return;
+    }
 
-    const interval = setInterval(() => {
+    autoScrollTimerRef.current = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % banners.length);
     }, 5000); // 5초마다 전환
 
-    return () => clearInterval(interval);
-  }, [banners.length]);
+    return () => {
+      if (autoScrollTimerRef.current) {
+        clearInterval(autoScrollTimerRef.current);
+        autoScrollTimerRef.current = null;
+      }
+    };
+  }, [isPaused, banners.length]);
 
   if (banners.length === 0) {
     return null;
@@ -59,42 +91,133 @@ export default function Banner({ banners }: BannerProps) {
         position: 'relative',
         overflow: 'hidden',
       }}
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
     >
+      {/* 이전 버튼 */}
+      {banners.length > 1 && (
+        <button
+          type="button"
+          onClick={goToPrevious}
+          onMouseEnter={() => setIsPaused(true)}
+          style={{
+            position: 'absolute',
+            left: '12px',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            width: '40px',
+            height: '40px',
+            borderRadius: '50%',
+            border: 'none',
+            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+            color: 'var(--text-main)',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '20px',
+            fontWeight: 'bold',
+            zIndex: 20,
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+            transition: 'all 0.2s',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 1)';
+            e.currentTarget.style.transform = 'translateY(-50%) scale(1.1)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.9)';
+            e.currentTarget.style.transform = 'translateY(-50%) scale(1)';
+          }}
+          aria-label="이전 배너"
+        >
+          ‹
+        </button>
+      )}
+
+      {/* 배너 콘텐츠 */}
       <div
         key={currentBanner.id}
         className="banner-item"
         style={{
           opacity: 1,
-          transition: 'opacity 0.5s ease-in-out',
+          animation: 'bannerFadeIn 0.5s ease-in-out',
         }}
       >
         {content}
       </div>
+
+      {/* 다음 버튼 */}
+      {banners.length > 1 && (
+        <button
+          type="button"
+          onClick={goToNext}
+          onMouseEnter={() => setIsPaused(true)}
+          style={{
+            position: 'absolute',
+            right: '12px',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            width: '40px',
+            height: '40px',
+            borderRadius: '50%',
+            border: 'none',
+            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+            color: 'var(--text-main)',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '20px',
+            fontWeight: 'bold',
+            zIndex: 20,
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+            transition: 'all 0.2s',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 1)';
+            e.currentTarget.style.transform = 'translateY(-50%) scale(1.1)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.9)';
+            e.currentTarget.style.transform = 'translateY(-50%) scale(1)';
+          }}
+          aria-label="다음 배너"
+        >
+          ›
+        </button>
+      )}
+
+      {/* 인디케이터 점 */}
       {banners.length > 1 && (
         <div
           style={{
             position: 'absolute',
-            bottom: '8px',
+            bottom: '12px',
             left: '50%',
             transform: 'translateX(-50%)',
             display: 'flex',
-            gap: '6px',
-            zIndex: 10,
+            gap: '8px',
+            zIndex: 20,
+            backgroundColor: 'rgba(255, 255, 255, 0.8)',
+            padding: '6px 12px',
+            borderRadius: '20px',
+            backdropFilter: 'blur(8px)',
           }}
         >
           {banners.map((_, index) => (
             <button
               key={index}
               type="button"
-              onClick={() => setCurrentIndex(index)}
+              onClick={() => goToIndex(index)}
               style={{
-                width: '8px',
+                width: index === currentIndex ? '24px' : '8px',
                 height: '8px',
-                borderRadius: '50%',
+                borderRadius: '4px',
                 border: 'none',
-                backgroundColor: index === currentIndex ? 'var(--accent-sky)' : 'rgba(0, 0, 0, 0.2)',
+                backgroundColor: index === currentIndex ? 'var(--accent-sky)' : 'rgba(0, 0, 0, 0.3)',
                 cursor: 'pointer',
-                transition: 'background-color 0.3s',
+                transition: 'all 0.3s',
                 padding: 0,
               }}
               aria-label={`배너 ${index + 1}로 이동`}

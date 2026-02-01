@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { FaKakao, FaFacebook, FaTwitter, FaInstagram, FaLink } from 'react-icons/fa';
 
 interface Review {
   id: number;
@@ -396,146 +397,146 @@ export default function ReviewsCarousel({ reviews }: ReviewsCarouselProps) {
               gap: '0.5rem',
               alignItems: 'center',
             }}>
-              <button
-                onClick={() => handleShare('kakao', currentReview.id)}
-                style={{
-                  width: '36px',
-                  height: '36px',
-                  borderRadius: '50%',
-                  border: '1px solid var(--border-soft)',
-                  backgroundColor: '#FEE500',
-                  color: '#000',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '1.1rem',
-                  transition: 'all 0.2s',
-                }}
-                title="카카오톡 공유"
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'scale(1.1)';
-                  e.currentTarget.style.boxShadow = '0 2px 8px rgba(254, 229, 0, 0.4)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'scale(1)';
-                  e.currentTarget.style.boxShadow = 'none';
-                }}
-              >
-                💬
-              </button>
-              <button
-                onClick={() => handleShare('facebook', currentReview.id)}
-                style={{
-                  width: '36px',
-                  height: '36px',
-                  borderRadius: '50%',
-                  border: '1px solid var(--border-soft)',
-                  backgroundColor: '#1877F2',
-                  color: '#fff',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '1.1rem',
-                  transition: 'all 0.2s',
-                }}
-                title="페이스북 공유"
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'scale(1.1)';
-                  e.currentTarget.style.boxShadow = '0 2px 8px rgba(24, 119, 242, 0.4)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'scale(1)';
-                  e.currentTarget.style.boxShadow = 'none';
-                }}
-              >
-                📘
-              </button>
-              <button
-                onClick={() => handleShare('twitter', currentReview.id)}
-                style={{
-                  width: '36px',
-                  height: '36px',
-                  borderRadius: '50%',
-                  border: '1px solid var(--border-soft)',
-                  backgroundColor: '#1DA1F2',
-                  color: '#fff',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '1.1rem',
-                  transition: 'all 0.2s',
-                }}
-                title="트위터 공유"
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'scale(1.1)';
-                  e.currentTarget.style.boxShadow = '0 2px 8px rgba(29, 161, 242, 0.4)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'scale(1)';
-                  e.currentTarget.style.boxShadow = 'none';
-                }}
-              >
-                🐦
-              </button>
-              <button
-                onClick={() => handleShare('instagram', currentReview.id)}
-                style={{
-                  width: '36px',
-                  height: '36px',
-                  borderRadius: '50%',
-                  border: '1px solid var(--border-soft)',
-                  background: 'linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)',
-                  color: '#fff',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '1.1rem',
-                  transition: 'all 0.2s',
-                }}
-                title="인스타그램 공유"
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'scale(1.1)';
-                  e.currentTarget.style.boxShadow = '0 2px 8px rgba(188, 24, 136, 0.4)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'scale(1)';
-                  e.currentTarget.style.boxShadow = 'none';
-                }}
-              >
-                📷
-              </button>
-              <button
-                onClick={() => handleShare('link', currentReview.id)}
-                style={{
-                  width: '36px',
-                  height: '36px',
-                  borderRadius: '50%',
-                  border: '1px solid var(--border-soft)',
-                  backgroundColor: 'var(--surface-1)',
-                  color: 'var(--text-main)',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '1.1rem',
-                  transition: 'all 0.2s',
-                }}
-                title="링크 복사"
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'scale(1.1)';
-                  e.currentTarget.style.boxShadow = 'var(--shadow-1)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'scale(1)';
-                  e.currentTarget.style.boxShadow = 'none';
-                }}
-              >
-                🔗
-              </button>
+                          <button
+                            onClick={() => handleShare('kakao', currentReview.id)}
+                            style={{
+                              width: '36px',
+                              height: '36px',
+                              borderRadius: '50%',
+                              border: '1px solid var(--border-soft)',
+                              backgroundColor: '#FEE500',
+                              color: '#000',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '1.1rem',
+                              transition: 'all 0.2s',
+                            }}
+                            title="카카오톡 공유"
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.transform = 'scale(1.1)';
+                              e.currentTarget.style.boxShadow = '0 2px 8px rgba(254, 229, 0, 0.4)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.transform = 'scale(1)';
+                              e.currentTarget.style.boxShadow = 'none';
+                            }}
+                          >
+                            <FaKakao size={18} />
+                          </button>
+                          <button
+                            onClick={() => handleShare('facebook', currentReview.id)}
+                            style={{
+                              width: '36px',
+                              height: '36px',
+                              borderRadius: '50%',
+                              border: '1px solid var(--border-soft)',
+                              backgroundColor: '#1877F2',
+                              color: '#fff',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '1.1rem',
+                              transition: 'all 0.2s',
+                            }}
+                            title="페이스북 공유"
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.transform = 'scale(1.1)';
+                              e.currentTarget.style.boxShadow = '0 2px 8px rgba(24, 119, 242, 0.4)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.transform = 'scale(1)';
+                              e.currentTarget.style.boxShadow = 'none';
+                            }}
+                          >
+                            <FaFacebook size={18} />
+                          </button>
+                          <button
+                            onClick={() => handleShare('twitter', currentReview.id)}
+                            style={{
+                              width: '36px',
+                              height: '36px',
+                              borderRadius: '50%',
+                              border: '1px solid var(--border-soft)',
+                              backgroundColor: '#1DA1F2',
+                              color: '#fff',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '1.1rem',
+                              transition: 'all 0.2s',
+                            }}
+                            title="트위터 공유"
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.transform = 'scale(1.1)';
+                              e.currentTarget.style.boxShadow = '0 2px 8px rgba(29, 161, 242, 0.4)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.transform = 'scale(1)';
+                              e.currentTarget.style.boxShadow = 'none';
+                            }}
+                          >
+                            <FaTwitter size={18} />
+                          </button>
+                          <button
+                            onClick={() => handleShare('instagram', currentReview.id)}
+                            style={{
+                              width: '36px',
+                              height: '36px',
+                              borderRadius: '50%',
+                              border: '1px solid var(--border-soft)',
+                              background: 'linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)',
+                              color: '#fff',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '1.1rem',
+                              transition: 'all 0.2s',
+                            }}
+                            title="인스타그램 공유"
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.transform = 'scale(1.1)';
+                              e.currentTarget.style.boxShadow = '0 2px 8px rgba(188, 24, 136, 0.4)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.transform = 'scale(1)';
+                              e.currentTarget.style.boxShadow = 'none';
+                            }}
+                          >
+                            <FaInstagram size={18} />
+                          </button>
+                          <button
+                            onClick={() => handleShare('link', currentReview.id)}
+                            style={{
+                              width: '36px',
+                              height: '36px',
+                              borderRadius: '50%',
+                              border: '1px solid var(--border-soft)',
+                              backgroundColor: 'var(--surface-1)',
+                              color: 'var(--text-main)',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '1.1rem',
+                              transition: 'all 0.2s',
+                            }}
+                            title="링크 복사"
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.transform = 'scale(1.1)';
+                              e.currentTarget.style.boxShadow = 'var(--shadow-1)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.transform = 'scale(1)';
+                              e.currentTarget.style.boxShadow = 'none';
+                            }}
+                          >
+                            <FaLink size={16} />
+                          </button>
             </div>
           </div>
         </div>

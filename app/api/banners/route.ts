@@ -6,19 +6,16 @@ export async function GET(request: NextRequest) {
   let connection;
   
   try {
-    const now = new Date();
-    const nowStr = now.toISOString().slice(0, 19).replace('T', ' ');
-
     connection = await getDbConnection();
 
+    // 데이터베이스의 현재 시간을 직접 사용 (타임존 문제 방지)
     const [rows] = await connection.execute(
       `SELECT id, title, content, image_url, link_url, start_datetime, end_datetime, priority
        FROM banners
        WHERE is_active = 1
-         AND start_datetime <= ?
-         AND end_datetime >= ?
-       ORDER BY priority ASC, created_at DESC`,
-      [nowStr, nowStr]
+         AND start_datetime <= NOW()
+         AND end_datetime >= NOW()
+       ORDER BY priority ASC, created_at DESC`
     );
 
     const banners = rows as any[];

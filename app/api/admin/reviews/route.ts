@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
     connection = await getDbConnection();
     const [rows] = await connection.execute(
       `SELECT id, author_name, content, is_approved, created_at, updated_at
-       FROM reviews
+       FROM homepage_reviews
        ORDER BY created_at DESC
        LIMIT ? OFFSET ?`,
       [limit, offset]
@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
 
     // 전체 개수 조회
     const [countRows] = await connection.execute(
-      `SELECT COUNT(*) as total FROM reviews`
+      `SELECT COUNT(*) as total FROM homepage_reviews`
     );
     const total = (countRows as any[])[0].total;
 

@@ -85,17 +85,29 @@ export default function ReviewsPage() {
       setLoading(true);
       setError(null);
       const response = await fetch(`/api/reviews?page=${page}&limit=10`);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('API response error:', response.status, errorText);
+        setError(`서버 오류 (${response.status}): 후기 목록을 불러오는데 실패했습니다.`);
+        return;
+      }
+
       const data = await response.json();
+      console.log('Reviews API response:', data);
 
       if (data.success) {
         setReviews(data.reviews || []);
         setTotalPages(data.pagination?.totalPages || 1);
       } else {
-        setError('후기 목록을 불러오는데 실패했습니다.');
+        setError(data.error || '후기 목록을 불러오는데 실패했습니다.');
+        if (data.details) {
+          console.error('Error details:', data.details);
+        }
       }
     } catch (err) {
       console.error('Load reviews error:', err);
-      setError('후기 목록을 불러오는데 실패했습니다.');
+      setError(`네트워크 오류: 후기 목록을 불러오는데 실패했습니다. ${err instanceof Error ? err.message : ''}`);
     } finally {
       setLoading(false);
     }

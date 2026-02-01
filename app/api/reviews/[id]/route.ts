@@ -70,7 +70,7 @@ export async function PUT(
 
     // 후기 수정
     await connection.execute(
-      `UPDATE reviews SET content = ?, updated_at = NOW() WHERE id = ?`,
+      `UPDATE homepage_reviews SET content = ?, updated_at = NOW() WHERE id = ?`,
       [sanitizedContent, id]
     );
 
@@ -117,7 +117,7 @@ export async function DELETE(
 
     // 기존 후기 조회
     const [existingRows] = await connection.execute(
-      `SELECT password_hash FROM reviews WHERE id = ?`,
+      `SELECT password_hash FROM homepage_reviews WHERE id = ?`,
       [id]
     );
     const existingReview = (existingRows as any[])[0];
@@ -139,7 +139,7 @@ export async function DELETE(
     }
 
     // 후기 삭제
-    await connection.execute(`DELETE FROM reviews WHERE id = ?`, [id]);
+    await connection.execute(`DELETE FROM homepage_reviews WHERE id = ?`, [id]);
 
     return NextResponse.json({ success: true, message: '후기가 삭제되었습니다.' });
   } catch (error: any) {

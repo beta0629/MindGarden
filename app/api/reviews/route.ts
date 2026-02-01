@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     connection = await getDbConnection();
     const [rows] = await connection.execute(
       `SELECT id, author_name, content, created_at, updated_at
-       FROM reviews
+       FROM homepage_reviews
        WHERE is_approved = 1
        ORDER BY created_at DESC
        LIMIT ? OFFSET ?`,
@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
 
     // 전체 개수 조회
     const [countRows] = await connection.execute(
-      `SELECT COUNT(*) as total FROM reviews WHERE is_approved = 1`
+      `SELECT COUNT(*) as total FROM homepage_reviews WHERE is_approved = 1`
     );
     const total = (countRows as any[])[0].total;
 
@@ -48,8 +48,19 @@ export async function GET(request: NextRequest) {
     });
   } catch (error: any) {
     console.error('Get reviews error:', error);
+    console.error('Error details:', {
+      message: error.message,
+      code: error.code,
+      errno: error.errno,
+      sqlState: error.sqlState,
+      sql: error.sql,
+    });
     return NextResponse.json(
-      { success: false, error: '후기 목록을 불러오는데 실패했습니다.' },
+      { 
+        success: false, 
+        error: '후기 목록을 불러오는데 실패했습니다.',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+      },
       { status: 500 }
     );
   } finally {
@@ -112,7 +123,7 @@ export async function POST(request: NextRequest) {
     // DB에 저장
     connection = await getDbConnection();
     const [result] = await connection.execute(
-      `INSERT INTO reviews (author_name, content, password_hash, is_approved)
+      `INSERT INTO homepage_reviews (author_name, content, password_hash, is_approved)
        VALUES (?, ?, ?, 1)`,
       [finalAuthorName, sanitizedContent, passwordHash]
     );

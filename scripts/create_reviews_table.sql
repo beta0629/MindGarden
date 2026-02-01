@@ -1,10 +1,10 @@
--- 후기 테이블 생성
+-- 홈페이지 후기 테이블 생성
 -- 실행 방법: mysql -u mindgarden_dev -p core_solution < scripts/create_reviews_table.sql
 
 USE core_solution;
 
--- 후기 테이블
-CREATE TABLE IF NOT EXISTS reviews (
+-- 홈페이지 후기 테이블 (코어솔루션의 reviews 테이블과 구분)
+CREATE TABLE IF NOT EXISTS homepage_reviews (
   id BIGINT AUTO_INCREMENT PRIMARY KEY,
   author_name VARCHAR(100) NOT NULL DEFAULT '익명',
   content MEDIUMTEXT NOT NULL,

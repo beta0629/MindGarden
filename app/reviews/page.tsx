@@ -406,6 +406,236 @@ export default function ReviewsPage() {
         </div>
       </div>
       <Footer />
+
+      {/* 수정 모달 */}
+      {editingId && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            padding: '20px',
+          }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setEditingId(null);
+              setPassword('');
+              setEditContent('');
+              setPasswordError(null);
+            }
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: 'white',
+              borderRadius: 'var(--radius-md)',
+              padding: '2rem',
+              maxWidth: '800px',
+              width: '100%',
+              maxHeight: '90vh',
+              overflow: 'auto',
+              boxShadow: 'var(--shadow-2)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 style={{ fontSize: '1.5rem', fontWeight: '600', marginBottom: '1.5rem' }}>
+              후기 수정
+            </h3>
+            {passwordError && (
+              <div style={{
+                padding: '1rem',
+                marginBottom: '1rem',
+                backgroundColor: '#fee2e2',
+                color: '#991b1b',
+                borderRadius: 'var(--radius-sm)',
+              }}>
+                {passwordError}
+              </div>
+            )}
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>
+                후기 내용 *
+              </label>
+              <BlogEditor
+                value={editContent}
+                onChange={setEditContent}
+                onImageUpload={handleBlogEditorImageUpload}
+                placeholder="후기를 수정해주세요..."
+              />
+            </div>
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>
+                비밀번호 *
+              </label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="비밀번호를 입력하세요"
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  border: '1px solid var(--border-soft)',
+                  borderRadius: 'var(--radius-sm)',
+                  fontSize: '1rem',
+                }}
+              />
+            </div>
+            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => {
+                  setEditingId(null);
+                  setPassword('');
+                  setEditContent('');
+                  setPasswordError(null);
+                }}
+                style={{
+                  padding: '0.75rem 1.5rem',
+                  backgroundColor: 'transparent',
+                  color: 'var(--text-sub)',
+                  border: '1px solid var(--border-soft)',
+                  borderRadius: 'var(--radius-sm)',
+                  fontSize: '1rem',
+                  cursor: 'pointer',
+                }}
+              >
+                취소
+              </button>
+              <button
+                onClick={handleEditSubmit}
+                style={{
+                  padding: '0.75rem 1.5rem',
+                  background: 'linear-gradient(135deg, var(--accent-sky) 0%, var(--accent-mint) 100%)',
+                  color: 'var(--text-main)',
+                  border: 'none',
+                  borderRadius: 'var(--radius-sm)',
+                  fontSize: '1rem',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                }}
+              >
+                수정하기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 삭제 모달 */}
+      {deletingId && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            padding: '20px',
+          }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setDeletingId(null);
+              setPassword('');
+              setPasswordError(null);
+            }
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: 'white',
+              borderRadius: 'var(--radius-md)',
+              padding: '2rem',
+              maxWidth: '400px',
+              width: '100%',
+              boxShadow: 'var(--shadow-2)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 style={{ fontSize: '1.5rem', fontWeight: '600', marginBottom: '1rem' }}>
+              후기 삭제
+            </h3>
+            <p style={{ color: 'var(--text-sub)', marginBottom: '1.5rem' }}>
+              정말 이 후기를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
+            </p>
+            {passwordError && (
+              <div style={{
+                padding: '1rem',
+                marginBottom: '1rem',
+                backgroundColor: '#fee2e2',
+                color: '#991b1b',
+                borderRadius: 'var(--radius-sm)',
+              }}>
+                {passwordError}
+              </div>
+            )}
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>
+                비밀번호 *
+              </label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="비밀번호를 입력하세요"
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  border: '1px solid var(--border-soft)',
+                  borderRadius: 'var(--radius-sm)',
+                  fontSize: '1rem',
+                }}
+              />
+            </div>
+            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => {
+                  setDeletingId(null);
+                  setPassword('');
+                  setPasswordError(null);
+                }}
+                style={{
+                  padding: '0.75rem 1.5rem',
+                  backgroundColor: 'transparent',
+                  color: 'var(--text-sub)',
+                  border: '1px solid var(--border-soft)',
+                  borderRadius: 'var(--radius-sm)',
+                  fontSize: '1rem',
+                  cursor: 'pointer',
+                }}
+              >
+                취소
+              </button>
+              <button
+                onClick={handleDeleteSubmit}
+                style={{
+                  padding: '0.75rem 1.5rem',
+                  backgroundColor: '#ef4444',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: 'var(--radius-sm)',
+                  fontSize: '1rem',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                }}
+              >
+                삭제하기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

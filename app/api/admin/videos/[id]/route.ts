@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { writeFile, unlink } from 'fs/promises';
+import { writeFile, unlink, mkdir } from 'fs/promises';
 import { join } from 'path';
 import { existsSync } from 'fs';
+import { exec } from 'child_process';
+import { promisify } from 'util';
 import { getDbConnection } from '@/lib/db';
+
+const execAsync = promisify(exec);
 
 // 히어로 비디오 수정
 export async function PUT(
@@ -62,13 +66,13 @@ export async function PUT(
 
     // 새 비디오 파일이 있으면 업로드
     if (file) {
-      // 파일 크기 확인 (100MB 제한)
-      if (file.size > 100 * 1024 * 1024) {
-        return NextResponse.json(
-          { success: false, error: '비디오 크기는 100MB 이하여야 합니다.' },
-          { status: 400 }
-        );
-      }
+    // 파일 크기 확인 (500MB 제한 - 4K 동영상 지원)
+    if (file.size > 500 * 1024 * 1024) {
+      return NextResponse.json(
+        { success: false, error: '비디오 크기는 500MB 이하여야 합니다.' },
+        { status: 400 }
+      );
+    }
 
       // 파일 타입 확인
       if (!file.type.startsWith('video/')) {
@@ -85,12 +89,47 @@ export async function PUT(
       // 파일명 생성
       const timestamp = Date.now();
       const originalName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
-      const fileExtension = originalName.split('.').pop()?.toLowerCase() || 'mp4';
+      const fileExtension = 'mp4'; // 항상 MP4로 변환
       const fileName = `hero_video_${timestamp}.${fileExtension}`;
       const uploadDir = join(process.cwd(), 'public', 'uploads', 'videos');
-      const filePath = join(uploadDir, fileName);
+      
+      // 디렉토리 생성
+      await mkdir(uploadDir, { recursive: true });
 
-      await writeFile(filePath, buffer);
+      // 임시 원본 파일 저장
+      const tempFileName = `temp_${timestamp}_${originalName}`;
+      const tempFilePath = join(uploadDir, tempFileName);
+      await writeFile(tempFilePath, buffer);
+
+      // 최종 파일 경로
+      const finalFilePath = join(uploadDir, fileName);
+
+      // FFmpeg를 사용하여 비디오 리사이징 (4K → 1080p)
+      try {
+        await execAsync(
+          `ffmpeg -i "${tempFilePath}" -vf "scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2" -c:v libx264 -preset medium -crf 23 -c:a aac -b:a 128k -r 30 -movflags +faststart -y "${finalFilePath}"`
+        );
+        console.log('Video resized successfully with FFmpeg (4K → 1080p).');
+        
+        // 임시 파일 삭제
+        try {
+          await unlink(tempFilePath);
+        } catch (unlinkError) {
+          console.error('Failed to delete temp file:', unlinkError);
+        }
+      } catch (ffmpegError: any) {
+        console.warn('FFmpeg not available or failed, using original video:', ffmpegError.message);
+        // FFmpeg가 없거나 실패하면 원본 파일을 그대로 사용
+        await writeFile(finalFilePath, buffer);
+        
+        // 임시 파일 삭제
+        try {
+          await unlink(tempFilePath);
+        } catch (unlinkError) {
+          console.error('Failed to delete temp file:', unlinkError);
+        }
+      }
+
       videoUrl = `/uploads/videos/${fileName}`;
 
       // 기존 파일 삭제

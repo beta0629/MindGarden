@@ -114,8 +114,9 @@ export default function VideoManagementPage() {
       return;
     }
 
-    if (file.size > 100 * 1024 * 1024) {
-      setError('비디오 크기는 100MB 이하여야 합니다.');
+    // 4K 동영상 지원: 파일 크기 제한을 500MB로 증가
+    if (file.size > 500 * 1024 * 1024) {
+      setError('비디오 크기는 500MB 이하여야 합니다.');
       return;
     }
 
@@ -327,7 +328,7 @@ export default function VideoManagementPage() {
                 required={!editingId}
               />
               <p style={{ fontSize: '0.875rem', color: '#6b7280', marginTop: '0.5rem' }}>
-                최대 100MB, MP4 형식 권장
+                최대 500MB, MP4 형식 권장 (4K 동영상 지원, 자동으로 1080p로 리사이징됨)
               </p>
             </div>
 

@@ -63,6 +63,15 @@ export async function PUT(
 
     connection = await getDbConnection();
 
+    // imageUrl 처리: 빈 문자열이나 공백만 있는 경우 null로 변환
+    const imageUrlValue = imageUrl && imageUrl.trim() !== '' ? imageUrl : null;
+    console.log('Updating banner with imageUrl:', {
+      id,
+      imageUrl,
+      imageUrlValue,
+      hasImageUrl: !!imageUrlValue,
+    });
+
     await connection.execute(
       `UPDATE banners
        SET title = ?, content = ?, image_url = ?, link_url = ?, start_datetime = ?, end_datetime = ?, is_active = ?, priority = ?
@@ -70,7 +79,7 @@ export async function PUT(
       [
         title,
         content || null,
-        imageUrl || null,
+        imageUrlValue,
         linkUrl || null,
         startDatetime,
         endDatetime,

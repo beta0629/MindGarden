@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getDbConnection } from '@/lib/db';
 
 // 활성 배너 조회 (현재 시간 기준으로 기간 내이고 활성화된 모든 배너)
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export async function GET(request: NextRequest) {
   let connection;
   

@@ -127,6 +127,13 @@ export default function AdminDashboard() {
       icon: '🖼️',
       color: '#ec4899',
     },
+    {
+      title: '히어로 비디오 관리',
+      description: '메인 페이지 비디오 관리',
+      href: '/admin/videos',
+      icon: '🎬',
+      color: '#06b6d4',
+    },
   ];
 
   return (

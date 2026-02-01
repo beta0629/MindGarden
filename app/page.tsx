@@ -42,12 +42,43 @@ async function getGalleryImages() {
   }
 }
 
+// 활성 히어로 비디오 조회 (DB에서 직접 조회)
+async function getHeroVideo() {
+  let connection;
+  try {
+    connection = await getDbConnection();
+    const [rows] = await connection.execute(
+      `SELECT video_url, poster_url
+       FROM hero_videos
+       WHERE is_active = 1
+       ORDER BY display_order ASC, created_at DESC
+       LIMIT 1`
+    );
+
+    const videos = rows as any[];
+    if (videos.length === 0) {
+      return null;
+    }
+
+    return videos[0].video_url;
+  } catch (error) {
+    console.error('Failed to load hero video:', error);
+    return null;
+  } finally {
+    if (connection) {
+      await connection.end();
+    }
+  }
+}
+
 // 서버 컴포넌트에서 데이터 가져오기
 async function getHomeData() {
   try {
     const apiService = getApiService();
     const homeData = await apiService.getHomeData();
-    const videoUrl = await apiService.getHeroVideo();
+    
+    // 히어로 비디오 조회 (DB에서 직접 조회)
+    const videoUrl = await getHeroVideo();
     
     // 갤러리 이미지 조회 (DB에서 관리자가 등록한 이미지)
     const galleryImages = await getGalleryImages();

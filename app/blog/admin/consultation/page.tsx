@@ -119,6 +119,63 @@ export default function ConsultationAdminPage() {
     return labels[status] || status;
   };
 
+  // 선호 연락 방법 한글 변환
+  const getContactMethodLabel = (method: string) => {
+    const labels: { [key: string]: string } = {
+      phone: '전화',
+      email: '이메일',
+      kakao: '카카오톡',
+    };
+    return labels[method] || method;
+  };
+
+  // 문의 유형 한글 변환
+  const getInquiryTypeLabel = (type: string) => {
+    const labels: { [key: string]: string } = {
+      general: '일반 상담',
+      adhd: 'ADHD 개인 상담',
+      coaching: '코칭(실행 전략)',
+      family: '가족/부모 상담',
+    };
+    return labels[type] || type;
+  };
+
+  // 희망 시간 한글 변환
+  const getPreferredTimeLabel = (time: string) => {
+    const labels: { [key: string]: string } = {
+      morning: '오전',
+      afternoon: '오후',
+      evening: '저녁',
+    };
+    return labels[time] || time;
+  };
+
+  // 날짜 포맷팅 (가독성 있게)
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return '';
+    
+    try {
+      // ISO 형식 또는 다른 형식의 날짜를 파싱
+      const date = new Date(dateString);
+      
+      // 유효한 날짜인지 확인
+      if (isNaN(date.getTime())) {
+        return dateString; // 파싱 실패 시 원본 반환
+      }
+      
+      // 한국어 형식으로 변환 (예: 2026년 2월 2일)
+      return date.toLocaleDateString('ko-KR', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        weekday: 'short',
+      });
+    } catch (error) {
+      console.error('Date formatting error:', error);
+      return dateString; // 에러 발생 시 원본 반환
+    }
+  };
+
   // 상태 색상
   const getStatusColor = (status: string) => {
     const colors: { [key: string]: string } = {
@@ -297,24 +354,29 @@ export default function ConsultationAdminPage() {
                     <div>
                       <strong style={{ color: '#374151' }}>선호 연락 방법:</strong>
                       <span style={{ color: '#6b7280', marginLeft: '0.5rem' }}>
-                        {inquiry.preferred_contact_method === 'phone' ? '전화' : 
-                         inquiry.preferred_contact_method === 'email' ? '이메일' : '둘 다'}
+                        {getContactMethodLabel(inquiry.preferred_contact_method)}
                       </span>
                     </div>
                     <div>
                       <strong style={{ color: '#374151' }}>문의 유형:</strong>
-                      <span style={{ color: '#6b7280', marginLeft: '0.5rem' }}>{inquiry.inquiry_type}</span>
+                      <span style={{ color: '#6b7280', marginLeft: '0.5rem' }}>
+                        {getInquiryTypeLabel(inquiry.inquiry_type)}
+                      </span>
                     </div>
                     {inquiry.preferred_date && (
                       <div>
                         <strong style={{ color: '#374151' }}>희망 일자:</strong>
-                        <span style={{ color: '#6b7280', marginLeft: '0.5rem' }}>{inquiry.preferred_date}</span>
+                        <span style={{ color: '#6b7280', marginLeft: '0.5rem' }}>
+                          {formatDate(inquiry.preferred_date)}
+                        </span>
                       </div>
                     )}
                     {inquiry.preferred_time && (
                       <div>
                         <strong style={{ color: '#374151' }}>희망 시간:</strong>
-                        <span style={{ color: '#6b7280', marginLeft: '0.5rem' }}>{inquiry.preferred_time}</span>
+                        <span style={{ color: '#6b7280', marginLeft: '0.5rem' }}>
+                          {getPreferredTimeLabel(inquiry.preferred_time)}
+                        </span>
                       </div>
                     )}
                   </div>

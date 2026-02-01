@@ -204,6 +204,21 @@ export default function BlogAdminPage() {
                 >
                   배너 관리
                 </Link>
+                <Link
+                  href="/blog/admin/consultation"
+                  style={{
+                    padding: '8px 16px',
+                    backgroundColor: 'transparent',
+                    color: 'var(--text-sub)',
+                    border: '1px solid var(--border-soft)',
+                    borderRadius: 'var(--radius-sm)',
+                    fontSize: '14px',
+                    textDecoration: 'none',
+                    cursor: 'pointer'
+                  }}
+                >
+                  상담 문의 관리
+                </Link>
                 <button
                   type="button"
                   onClick={handleLogout}

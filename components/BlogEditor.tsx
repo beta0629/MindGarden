@@ -128,30 +128,36 @@ export default function BlogEditor({
             result = await apiService.uploadBlogImage(file);
           }
           const imageUrl = result.imageUrl || result.url;
+          if (!imageUrl) {
+            throw new Error('이미지 URL을 받지 못했습니다.');
+          }
 
           const quill = getQuillInstance();
-          if (quill) {
-            // 현재 selection 가져오기 (null일 수 있음)
-            const range = quill.getSelection();
-            const index = range ? range.index : quill.getLength();
-            
-            // 이미지 삽입
-            quill.insertEmbed(index, 'image', imageUrl);
-            
-            // DOM 업데이트 후 selection 설정 (안전하게)
-            setTimeout(() => {
-              try {
-                const newLength = quill.getLength();
-                const newIndex = Math.min(index + 1, newLength - 1);
-                if (newIndex >= 0 && newIndex < newLength) {
-                  quill.setSelection(newIndex, 0);
-                }
-              } catch (error) {
-                // selection 설정 실패는 무시 (경고만 발생)
-                console.warn('Failed to set selection after image insert:', error);
-              }
-            }, 0);
+          if (!quill) {
+            throw new Error('에디터를 찾을 수 없습니다.');
           }
+
+          // 현재 selection 가져오기 (null일 수 있음)
+          const range = quill.getSelection();
+          const index = range ? range.index : quill.getLength();
+          
+          // 이미지 삽입 (insertEmbed는 동기적으로 작동)
+          quill.insertEmbed(index, 'image', imageUrl);
+          
+          // 이미지 삽입 후 커서를 이미지 다음으로 이동 (requestAnimationFrame 사용)
+          requestAnimationFrame(() => {
+            try {
+              const newLength = quill.getLength();
+              // 이미지가 삽입되었으므로 index + 1 위치로 이동
+              const newIndex = Math.min(index + 1, newLength - 1);
+              if (newIndex >= 0 && newIndex < newLength) {
+                quill.setSelection(newIndex, 0, 'user');
+              }
+            } catch (error) {
+              // selection 설정 실패는 무시 (에디터는 정상 작동)
+              console.warn('Selection 설정 실패 (무시됨):', error);
+            }
+          });
         } catch (error) {
           console.error('Image upload error:', error);
           alert('이미지 업로드에 실패했습니다.');
@@ -246,26 +252,31 @@ export default function BlogEditor({
 
         console.log('이미지 업로드 완료:', imageUrl);
 
+        if (!imageUrl) {
+          throw new Error('이미지 URL을 받지 못했습니다.');
+        }
+
         // 현재 selection 가져오기 (null일 수 있음)
         const range = quill.getSelection();
         const index = range ? range.index : quill.getLength();
         
-        // 이미지 삽입
+        // 이미지 삽입 (insertEmbed는 동기적으로 작동)
         quill.insertEmbed(index, 'image', imageUrl);
         
-        // DOM 업데이트 후 selection 설정 (안전하게)
-        setTimeout(() => {
+        // 이미지 삽입 후 커서를 이미지 다음으로 이동 (requestAnimationFrame 사용)
+        requestAnimationFrame(() => {
           try {
             const newLength = quill.getLength();
+            // 이미지가 삽입되었으므로 index + 1 위치로 이동
             const newIndex = Math.min(index + 1, newLength - 1);
             if (newIndex >= 0 && newIndex < newLength) {
-              quill.setSelection(newIndex, 0);
+              quill.setSelection(newIndex, 0, 'user');
             }
           } catch (error) {
-            // selection 설정 실패는 무시 (경고만 발생)
-            console.warn('Failed to set selection after image insert:', error);
+            // selection 설정 실패는 무시 (에디터는 정상 작동)
+            console.warn('Selection 설정 실패 (무시됨):', error);
           }
-        }, 0);
+        });
         
         console.log('이미지 삽입 완료');
       } catch (error: any) {
@@ -327,10 +338,13 @@ export default function BlogEditor({
           value={value}
           onChange={(content: string, delta: any, source: any, editor: any) => {
             // onChange에서 editor 인스턴스를 받을 수 있음
-            if (editor && !quillInstanceRef.current) {
+            if (editor) {
               quillInstanceRef.current = editor;
             }
-            onChange(content);
+            // 'user' 소스만 onChange 호출 (내부 업데이트는 무시)
+            if (source === 'user' || source === 'api') {
+              onChange(content);
+            }
           }}
           modules={modules}
           placeholder={placeholder}

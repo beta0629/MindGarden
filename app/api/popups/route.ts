@@ -22,17 +22,31 @@ export async function GET(request: NextRequest) {
     const popups = rows as any[];
     
     if (popups.length === 0) {
+      console.log('No active popup found');
       return NextResponse.json({ success: true, popup: null });
     }
 
     const popup = popups[0];
+    
+    // 기존 image_url이 있으면 content에 이미지 태그로 추가 (호환성)
+    let content = popup.content || '';
+    if (popup.image_url && !content.includes('<img')) {
+      content = `<img src="${popup.image_url}" alt="${popup.title}" style="max-width: 100%; height: auto;" />${content ? '<br/><br/>' + content : ''}`;
+    }
+    
+    console.log('Active popup found:', {
+      id: popup.id,
+      title: popup.title,
+      contentLength: content?.length || 0,
+      hasImageInContent: content?.includes('<img') || false,
+    });
+    
     return NextResponse.json({
       success: true,
       popup: {
         id: popup.id,
         title: popup.title,
-        content: popup.content,
-        imageUrl: popup.image_url,
+        content: content,
         linkUrl: popup.link_url,
         startDatetime: popup.start_datetime,
         endDatetime: popup.end_datetime,

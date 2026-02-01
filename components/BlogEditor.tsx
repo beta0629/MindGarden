@@ -131,9 +131,26 @@ export default function BlogEditor({
 
           const quill = getQuillInstance();
           if (quill) {
-            const range = quill.getSelection(true);
-            quill.insertEmbed(range.index, 'image', imageUrl);
-            quill.setSelection(range.index + 1);
+            // 현재 selection 가져오기 (null일 수 있음)
+            const range = quill.getSelection();
+            const index = range ? range.index : quill.getLength();
+            
+            // 이미지 삽입
+            quill.insertEmbed(index, 'image', imageUrl);
+            
+            // DOM 업데이트 후 selection 설정 (안전하게)
+            setTimeout(() => {
+              try {
+                const newLength = quill.getLength();
+                const newIndex = Math.min(index + 1, newLength - 1);
+                if (newIndex >= 0 && newIndex < newLength) {
+                  quill.setSelection(newIndex, 0);
+                }
+              } catch (error) {
+                // selection 설정 실패는 무시 (경고만 발생)
+                console.warn('Failed to set selection after image insert:', error);
+              }
+            }, 0);
           }
         } catch (error) {
           console.error('Image upload error:', error);
@@ -229,9 +246,26 @@ export default function BlogEditor({
 
         console.log('이미지 업로드 완료:', imageUrl);
 
-        const range = quill.getSelection(true) || { index: quill.getLength(), length: 0 };
-        quill.insertEmbed(range.index, 'image', imageUrl);
-        quill.setSelection(range.index + 1);
+        // 현재 selection 가져오기 (null일 수 있음)
+        const range = quill.getSelection();
+        const index = range ? range.index : quill.getLength();
+        
+        // 이미지 삽입
+        quill.insertEmbed(index, 'image', imageUrl);
+        
+        // DOM 업데이트 후 selection 설정 (안전하게)
+        setTimeout(() => {
+          try {
+            const newLength = quill.getLength();
+            const newIndex = Math.min(index + 1, newLength - 1);
+            if (newIndex >= 0 && newIndex < newLength) {
+              quill.setSelection(newIndex, 0);
+            }
+          } catch (error) {
+            // selection 설정 실패는 무시 (경고만 발생)
+            console.warn('Failed to set selection after image insert:', error);
+          }
+        }, 0);
         
         console.log('이미지 삽입 완료');
       } catch (error: any) {

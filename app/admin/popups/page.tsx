@@ -308,6 +308,23 @@ export default function PopupsAdminPage() {
                   <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600' }}>
                     이미지 업로드
                   </label>
+                  <div style={{
+                    padding: '12px 16px',
+                    marginBottom: '12px',
+                    backgroundColor: '#f0f9ff',
+                    border: '1px solid #bae6fd',
+                    borderRadius: 'var(--radius-sm)',
+                    fontSize: '14px',
+                    color: '#0369a1'
+                  }}>
+                    <div style={{ fontWeight: '600', marginBottom: '4px' }}>📐 팝업 이미지 권장 사이즈</div>
+                    <div>• 권장 사이즈: <strong>1920px × 1080px</strong> (모달용 큰 이미지)</div>
+                    <div>• 비율: <strong>16:9</strong> (가로형 이미지)</div>
+                    <div>• 최대 사이즈: 1920px × 1080px (자동 리사이징됨)</div>
+                    <div style={{ marginTop: '8px', fontSize: '12px', color: '#64748b' }}>
+                      💡 팝업은 모달로 표시되므로 큰 이미지를 사용할 수 있습니다.
+                    </div>
+                  </div>
                   <ImageUploader
                     onImageUploaded={handleImageUploaded}
                     onError={handleImageUploadError}
@@ -316,6 +333,8 @@ export default function PopupsAdminPage() {
                     quality={0.9}
                     uploading={uploading}
                     onUploadingChange={setUploading}
+                    recommendedAspectRatio={16/9}
+                    recommendedSize={{ width: 1920, height: 1080 }}
                   />
                 </div>
                 <div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import BlogEditor from '@/components/BlogEditor';
@@ -90,8 +90,13 @@ export default function PopupsAdminPage() {
   };
 
 
+  // content 변경 핸들러를 useCallback으로 메모이제이션
+  const handleContentChange = useCallback((value: string) => {
+    setFormData(prev => ({ ...prev, content: value }));
+  }, []);
+
   // BlogEditor에서 이미지 업로드 시 base64로 변환 (편집 편의성 향상)
-  const handleBlogEditorImageUpload = async (file: File): Promise<{ imageUrl: string }> => {
+  const handleBlogEditorImageUpload = useCallback(async (file: File): Promise<{ imageUrl: string }> => {
     return new Promise((resolve, reject) => {
       // 파일 크기 확인 (10MB 제한)
       if (file.size > 10 * 1024 * 1024) {
@@ -399,8 +404,9 @@ export default function PopupsAdminPage() {
                     </div>
                   </div>
                   <BlogEditor
+                    key={`popup-editor-${editingId || 'new'}`}
                     value={formData.content}
-                    onChange={(value) => setFormData(prev => ({ ...prev, content: value }))}
+                    onChange={handleContentChange}
                     placeholder="팝업 내용을 입력하세요. HTML 편집이 가능하며, 이미지를 드래그 앤 드롭하거나 툴바의 이미지 버튼을 클릭하여 추가할 수 있습니다."
                     onImageUpload={handleBlogEditorImageUpload}
                   />

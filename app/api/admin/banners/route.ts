@@ -83,6 +83,14 @@ export async function POST(request: NextRequest) {
       priority = 0,
     } = body;
 
+    // 디버깅: 받은 데이터 로그
+    console.log('Banner POST request body:', {
+      title,
+      imageUrl,
+      hasImageUrl: !!imageUrl,
+      imageUrlLength: imageUrl?.length || 0,
+    });
+
     // 필수 필드 검증
     if (!title || !startDatetime || !endDatetime) {
       return NextResponse.json(
@@ -103,13 +111,16 @@ export async function POST(request: NextRequest) {
 
     connection = await getDbConnection();
 
+    const imageUrlValue = imageUrl && imageUrl.trim() !== '' ? imageUrl : null;
+    console.log('Inserting banner with imageUrl:', imageUrlValue);
+    
     const [result] = await connection.execute(
       `INSERT INTO banners (title, content, image_url, link_url, start_datetime, end_datetime, is_active, priority)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         title,
         content || null,
-        imageUrl || null,
+        imageUrlValue,
         linkUrl || null,
         startDatetime,
         endDatetime,

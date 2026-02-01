@@ -72,14 +72,15 @@ export default function PopupModal({ popup, onClose }: PopupModalProps) {
         style={{
           backgroundColor: 'transparent',
           borderRadius: 'var(--radius-md)',
-          maxWidth: hasImageInContent ? '90vw' : '600px',
-          width: '100%',
+          maxWidth: hasImageInContent ? 'min(90vw, 1200px)' : '600px',
+          width: 'fit-content',
           maxHeight: '90vh',
           overflow: 'auto',
           position: 'relative',
           transform: isVisible ? 'scale(1)' : 'scale(0.9)',
           transition: 'transform 0.3s ease',
           boxShadow: 'var(--shadow-2)',
+          margin: '0 auto',
         }}
       >
         {/* 닫기 버튼 */}
@@ -129,6 +130,9 @@ export default function PopupModal({ popup, onClose }: PopupModalProps) {
               background: 'linear-gradient(135deg, var(--bg-pastel-1) 0%, var(--bg-pastel-2) 100%)',
               borderRadius: 'var(--radius-md)',
               border: '1px solid var(--border-soft)',
+              width: 'fit-content',
+              minWidth: '320px',
+              maxWidth: '100%',
             }}
           >
             {/* 제목이 있으면 표시 */}
@@ -159,6 +163,8 @@ export default function PopupModal({ popup, onClose }: PopupModalProps) {
                 boxShadow: 'var(--shadow-1)',
                 border: '1px solid var(--border-soft)',
                 overflow: 'hidden',
+                width: 'fit-content',
+                maxWidth: '100%',
               }}
             >
               <div

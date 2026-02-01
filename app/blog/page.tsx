@@ -3,6 +3,10 @@ import Footer from '@/components/Footer';
 import { getDbConnection } from '@/lib/db';
 import Link from 'next/link';
 
+// 동적 렌더링 강제 (캐시 방지)
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 interface BlogPost {
   id: number;
   title: string;
@@ -18,13 +22,13 @@ async function getBlogPosts(): Promise<BlogPost[]> {
   try {
     connection = await getDbConnection();
     
-    // published 상태의 포스트만 조회
+    // published 상태의 포스트만 조회 (최신순 정렬)
     const [rows] = await connection.execute(
       `SELECT id, title, content, summary, thumbnail_image_url, status, 
               published_at, created_at, is_homepage_only
        FROM blog_posts
        WHERE status = 'published'
-       ORDER BY COALESCE(published_at, created_at) DESC
+       ORDER BY published_at DESC, created_at DESC
        LIMIT 20`
     );
 

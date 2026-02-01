@@ -245,13 +245,12 @@ export default function PopupModal({ popup, onClose }: PopupModalProps) {
         <div
           style={{
             position: 'absolute',
-            bottom: hasImage ? '20px' : '20px',
-            left: hasImage ? '20px' : '50%',
-            transform: hasImage ? 'none' : 'translateX(-50%)',
+            bottom: '20px',
+            left: '20px',
             display: 'flex',
             alignItems: 'center',
             gap: '8px',
-            backgroundColor: hasImage ? 'rgba(255, 255, 255, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+            backgroundColor: 'rgba(255, 255, 255, 0.95)',
             padding: '10px 16px',
             borderRadius: 'var(--radius-sm)',
             fontSize: '14px',

@@ -152,8 +152,8 @@ function BannerContent({ banner }: { banner: BannerItem }) {
         }}
       >
         <img
-          src={banner.imageUrl}
-          alt={banner.title}
+          src={banner.imageUrl || ''}
+          alt={banner.title || '배너'}
           style={{
             maxHeight: '60px',
             maxWidth: '200px',

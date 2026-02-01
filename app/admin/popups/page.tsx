@@ -162,7 +162,7 @@ export default function PopupsAdminPage() {
       reader.onerror = () => reject(new Error('파일을 읽을 수 없습니다.'));
       reader.readAsDataURL(file);
     });
-  };
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

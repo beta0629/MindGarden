@@ -9,14 +9,14 @@ interface ConsultationInquiry {
   name: string;
   phone: string;
   email: string | null;
-  preferred_contact_method: string;
-  inquiry_type: string;
+  preferredContactMethod: string;
+  inquiryType: string;
   message: string | null;
-  preferred_date: string | null;
-  preferred_time: string | null;
+  preferredDate: string | null;
+  preferredTime: string | null;
   status: 'pending' | 'contacted' | 'completed' | 'cancelled';
-  created_at: string;
-  updated_at: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export default function ConsultationAdminPage() {
@@ -269,7 +269,7 @@ export default function ConsultationAdminPage() {
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', fontSize: '0.875rem', color: '#6b7280' }}>
                       <span>📞 {inquiry.phone}</span>
                       {inquiry.email && <span>✉️ {inquiry.email}</span>}
-                      <span>📅 {new Date(inquiry.created_at).toLocaleString('ko-KR')}</span>
+                      <span>📅 {new Date(inquiry.createdAt).toLocaleString('ko-KR')}</span>
                     </div>
                   </div>
                   <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -297,24 +297,24 @@ export default function ConsultationAdminPage() {
                     <div>
                       <strong style={{ color: '#374151' }}>선호 연락 방법:</strong>
                       <span style={{ color: '#6b7280', marginLeft: '0.5rem' }}>
-                        {inquiry.preferred_contact_method === 'phone' ? '전화' : 
-                         inquiry.preferred_contact_method === 'email' ? '이메일' : '둘 다'}
+                        {inquiry.preferredContactMethod === 'phone' ? '전화' : 
+                         inquiry.preferredContactMethod === 'email' ? '이메일' : '둘 다'}
                       </span>
                     </div>
                     <div>
                       <strong style={{ color: '#374151' }}>문의 유형:</strong>
-                      <span style={{ color: '#6b7280', marginLeft: '0.5rem' }}>{inquiry.inquiry_type}</span>
+                      <span style={{ color: '#6b7280', marginLeft: '0.5rem' }}>{inquiry.inquiryType}</span>
                     </div>
-                    {inquiry.preferred_date && (
+                    {inquiry.preferredDate && (
                       <div>
                         <strong style={{ color: '#374151' }}>희망 일자:</strong>
-                        <span style={{ color: '#6b7280', marginLeft: '0.5rem' }}>{inquiry.preferred_date}</span>
+                        <span style={{ color: '#6b7280', marginLeft: '0.5rem' }}>{inquiry.preferredDate}</span>
                       </div>
                     )}
-                    {inquiry.preferred_time && (
+                    {inquiry.preferredTime && (
                       <div>
                         <strong style={{ color: '#374151' }}>희망 시간:</strong>
-                        <span style={{ color: '#6b7280', marginLeft: '0.5rem' }}>{inquiry.preferred_time}</span>
+                        <span style={{ color: '#6b7280', marginLeft: '0.5rem' }}>{inquiry.preferredTime}</span>
                       </div>
                     )}
                   </div>

@@ -109,9 +109,25 @@ export async function GET(request: NextRequest) {
 
     const [rows] = await connection.execute(query, params);
 
+    // snake_case를 camelCase로 변환
+    const inquiries = (rows as any[]).map((row: any) => ({
+      id: row.id,
+      name: row.name,
+      phone: row.phone,
+      email: row.email,
+      preferredContactMethod: row.preferred_contact_method,
+      inquiryType: row.inquiry_type,
+      message: row.message,
+      preferredDate: row.preferred_date,
+      preferredTime: row.preferred_time,
+      status: row.status,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    }));
+
     return NextResponse.json({
       success: true,
-      inquiries: rows,
+      inquiries,
     });
   } catch (error) {
     console.error('Get inquiries error:', error);

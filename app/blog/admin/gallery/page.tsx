@@ -254,6 +254,22 @@ export default function GalleryAdminPage() {
                 >
                   배너 관리
                 </Link>
+                <Link
+                  href="/blog/admin/consultation"
+                  style={{
+                    padding: '10px 20px',
+                    backgroundColor: 'transparent',
+                    color: 'var(--text-sub)',
+                    border: '1px solid var(--border-soft)',
+                    borderRadius: 'var(--radius-sm)',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    textDecoration: 'none',
+                    cursor: 'pointer'
+                  }}
+                >
+                  상담 문의 관리
+                </Link>
                 <button
                   type="button"
                   onClick={handleLogout}

@@ -65,12 +65,23 @@ export default function GalleryAdminPage() {
       
       const data = await response.json();
       console.log('Gallery images response:', data);
+      console.log('Response success:', data.success);
+      console.log('Response images:', data.images);
+      console.log('Images array check:', Array.isArray(data.images));
+      console.log('Images length:', data.images?.length);
       
-      if (data.success && data.images) {
-        setImages(data.images);
-        console.log('Images loaded:', data.images.length);
+      if (data.success) {
+        // images가 배열인지 확인하고 설정
+        if (Array.isArray(data.images)) {
+          setImages(data.images);
+          console.log('Images loaded:', data.images.length);
+        } else {
+          console.warn('Images is not an array:', data.images);
+          setImages([]);
+        }
       } else {
-        console.warn('No images in response:', data);
+        console.warn('API returned success: false:', data);
+        setError(data.error || '갤러리 이미지를 불러오는데 실패했습니다.');
         setImages([]);
       }
     } catch (err) {

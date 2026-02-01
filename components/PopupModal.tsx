@@ -169,6 +169,7 @@ export default function PopupModal({ popup, onClose }: PopupModalProps) {
           <div
             style={{
               padding: '40px',
+              paddingBottom: '80px', // 체크박스 공간 확보
               background: 'linear-gradient(135deg, var(--bg-pastel-1) 0%, var(--bg-pastel-2) 100%)',
               borderRadius: 'var(--radius-md)',
               border: '1px solid var(--border-soft)',

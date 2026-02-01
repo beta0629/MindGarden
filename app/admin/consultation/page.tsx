@@ -172,6 +172,7 @@ export default function ConsultationAdminPage() {
       sns_facebook: 'SNS (페이스북)',
       sns_kakao: 'SNS (카카오톡)',
       blog: '블로그',
+      mom_cafe: '맘카페',
       referral: '지인 소개',
       other: '기타',
     };

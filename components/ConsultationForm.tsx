@@ -189,6 +189,7 @@ export default function ConsultationForm() {
             <option value="sns_facebook">SNS (페이스북)</option>
             <option value="sns_kakao">SNS (카카오톡)</option>
             <option value="blog">블로그</option>
+            <option value="mom_cafe">맘카페</option>
             <option value="referral">지인 소개</option>
             <option value="other">기타</option>
           </select>

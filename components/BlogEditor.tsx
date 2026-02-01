@@ -108,6 +108,47 @@ export default function BlogEditor({
     return null;
   }, []);
 
+  // 이미지를 base64로 변환하는 헬퍼 함수 (공통 사용)
+  const convertImageToBase64 = useCallback((file: File, maxWidth: number = 1920, maxHeight: number = 1080, quality: number = 0.9): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          let width = img.width;
+          let height = img.height;
+          
+          // 비율 유지하며 최대 크기로 리사이징
+          const ratio = Math.min(maxWidth / width, maxHeight / height);
+          if (ratio < 1) {
+            width = width * ratio;
+            height = height * ratio;
+          }
+
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          
+          if (!ctx) {
+            reject(new Error('Canvas context를 가져올 수 없습니다.'));
+            return;
+          }
+
+          ctx.drawImage(img, 0, 0, width, height);
+          
+          // base64로 변환
+          const base64 = canvas.toDataURL('image/jpeg', quality);
+          resolve(base64);
+        };
+        img.onerror = () => reject(new Error('이미지를 로드할 수 없습니다.'));
+        img.src = e.target?.result as string;
+      };
+      reader.onerror = () => reject(new Error('파일을 읽을 수 없습니다.'));
+      reader.readAsDataURL(file);
+    });
+  }, []);
+
     // 이미지 핸들러
     const imageHandler = useCallback(async () => {
       const input = document.createElement('input');
@@ -119,17 +160,25 @@ export default function BlogEditor({
         const file = input.files?.[0];
         if (!file) return;
 
+        // 파일 크기 확인 (10MB 제한)
+        if (file.size > 10 * 1024 * 1024) {
+          alert('이미지 크기는 10MB 이하여야 합니다.');
+          return;
+        }
+
         try {
-          let result;
+          let imageUrl: string;
+
+          // onImageUpload가 제공되면 서버 업로드 사용, 아니면 base64 사용
           if (onImageUpload) {
-            result = await onImageUpload(file);
+            const result = await onImageUpload(file);
+            imageUrl = result.imageUrl || result.url;
+            if (!imageUrl) {
+              throw new Error('이미지 URL을 받지 못했습니다.');
+            }
           } else {
-            const apiService = getApiService();
-            result = await apiService.uploadBlogImage(file);
-          }
-          const imageUrl = result.imageUrl || result.url;
-          if (!imageUrl) {
-            throw new Error('이미지 URL을 받지 못했습니다.');
+            // base64로 변환 (리사이징 포함)
+            imageUrl = await convertImageToBase64(file, 1920, 1080, 0.9);
           }
 
           const quill = getQuillInstance();
@@ -141,7 +190,7 @@ export default function BlogEditor({
           const range = quill.getSelection();
           const index = range ? range.index : quill.getLength();
           
-          // 이미지 삽입 (insertEmbed는 동기적으로 작동)
+          // 이미지 삽입 (base64 또는 URL)
           quill.insertEmbed(index, 'image', imageUrl);
           
           // 이미지 삽입 후 커서를 이미지 다음으로 이동 (requestAnimationFrame 사용)
@@ -164,7 +213,7 @@ export default function BlogEditor({
         }
       };
     },
-    [onImageUpload, getQuillInstance]
+    [onImageUpload, getQuillInstance, convertImageToBase64]
   );
 
   // Quill 모듈 설정
@@ -233,34 +282,38 @@ export default function BlogEditor({
       }
     }
 
+
     for (const file of files) {
       try {
         console.log('이미지 업로드 시작:', file.name, file.type, file.size);
         
-        let result;
+        // 파일 크기 확인 (10MB 제한)
+        if (file.size > 10 * 1024 * 1024) {
+          alert(`${file.name}: 이미지 크기는 10MB 이하여야 합니다.`);
+          continue;
+        }
+
+        let imageUrl: string;
+
+        // onImageUpload가 제공되면 서버 업로드 사용, 아니면 base64 사용
         if (onImageUpload) {
-          result = await onImageUpload(file);
+          const result = await onImageUpload(file);
+          imageUrl = result.imageUrl || result.url;
+          if (!imageUrl) {
+            throw new Error('이미지 URL을 받지 못했습니다.');
+          }
         } else {
-          const apiService = getApiService();
-          result = await apiService.uploadBlogImage(file);
-        }
-        
-        const imageUrl = result.imageUrl || result.url;
-        if (!imageUrl) {
-          throw new Error('이미지 URL을 받지 못했습니다.');
+          // base64로 변환 (리사이징 포함)
+          imageUrl = await convertImageToBase64(file, 1920, 1080, 0.9);
         }
 
-        console.log('이미지 업로드 완료:', imageUrl);
-
-        if (!imageUrl) {
-          throw new Error('이미지 URL을 받지 못했습니다.');
-        }
+        console.log('이미지 업로드 완료:', imageUrl.substring(0, 50) + '...');
 
         // 현재 selection 가져오기 (null일 수 있음)
         const range = quill.getSelection();
         const index = range ? range.index : quill.getLength();
         
-        // 이미지 삽입 (insertEmbed는 동기적으로 작동)
+        // 이미지 삽입 (base64 또는 URL)
         quill.insertEmbed(index, 'image', imageUrl);
         
         // 이미지 삽입 후 커서를 이미지 다음으로 이동 (requestAnimationFrame 사용)
@@ -285,7 +338,7 @@ export default function BlogEditor({
         alert(`${file.name}: ${errorMessage}`);
       }
     }
-  }, [onImageUpload, getQuillInstance]);
+  }, [onImageUpload, getQuillInstance, convertImageToBase64]);
 
   return (
     <div

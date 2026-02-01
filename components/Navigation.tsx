@@ -53,6 +53,7 @@ export default function Navigation() {
     { label: '소개', href: '#about' },
     { label: '프로그램', href: '#programs' },
     { label: '블로그', href: '/blog' },
+    { label: '후기', href: '/reviews' },
     { label: '공간', href: '#gallery' },
     { label: '문의', href: '#contact' },
   ];

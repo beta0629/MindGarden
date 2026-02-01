@@ -134,6 +134,13 @@ export default function AdminDashboard() {
       icon: '🎬',
       color: '#06b6d4',
     },
+    {
+      title: '후기 관리',
+      description: '고객 후기 관리 및 삭제',
+      href: '/admin/reviews',
+      icon: '⭐',
+      color: '#f97316',
+    },
   ];
 
   return (

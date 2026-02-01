@@ -51,12 +51,26 @@ export default function PopupBannerProvider() {
       console.log('Banner data:', bannerData);
 
       if (popupData.success && popupData.popup) {
+        // 팝업 데이터 상세 로깅
+        console.log('Popup details:', {
+          id: popupData.popup.id,
+          title: popupData.popup.title,
+          imageUrl: popupData.popup.imageUrl,
+          imageUrlType: typeof popupData.popup.imageUrl,
+          imageUrlLength: popupData.popup.imageUrl?.length,
+          hasImageUrl: !!popupData.popup.imageUrl,
+          content: popupData.popup.content,
+        });
+        
         // 쿠키 확인: 24시간 동안 보지 않기로 설정된 팝업은 표시하지 않음
         if (!isPopupHidden(popupData.popup.id)) {
           setPopup(popupData.popup);
+          console.log('Popup set to state:', popupData.popup);
         } else {
           console.log('Popup is hidden by cookie:', popupData.popup.id);
         }
+      } else {
+        console.log('No popup to display:', { success: popupData.success, popup: popupData.popup });
       }
 
       if (bannerData.success && bannerData.banners && bannerData.banners.length > 0) {

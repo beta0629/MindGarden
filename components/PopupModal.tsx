@@ -42,10 +42,40 @@ export default function PopupModal({ popup, onClose }: PopupModalProps) {
     onClose();
   };
 
+  // 이미지 URL 정규화 (상대 경로를 절대 경로로 변환)
+  const normalizeImageUrl = (url: string | null): string | null => {
+    if (!url || url.trim() === '') return null;
+    const trimmedUrl = url.trim();
+    // 이미 절대 URL인 경우 (http:// 또는 https:// 또는 //)
+    if (trimmedUrl.startsWith('http://') || trimmedUrl.startsWith('https://') || trimmedUrl.startsWith('//')) {
+      return trimmedUrl;
+    }
+    // 상대 경로인 경우 (/, ./ 또는 파일명으로 시작)
+    if (trimmedUrl.startsWith('/')) {
+      return trimmedUrl; // 이미 루트 상대 경로
+    }
+    // 상대 경로를 절대 경로로 변환
+    return `/${trimmedUrl}`;
+  };
+
+  const normalizedImageUrl = normalizeImageUrl(popup.imageUrl);
+  
   // 이미지가 있으면 기본 디자인 없이 이미지만 표시
-  const hasImage = !!popup.imageUrl;
+  const hasImage = !!normalizedImageUrl;
   // 텍스트만 있으면 기본 디자인 적용
   const hasTextOnly = !hasImage && (popup.title || popup.content);
+
+  // 디버깅: 팝업 데이터 확인
+  useEffect(() => {
+    console.log('PopupModal - popup data:', {
+      id: popup.id,
+      title: popup.title,
+      originalImageUrl: popup.imageUrl,
+      normalizedImageUrl: normalizedImageUrl,
+      hasImage,
+      hasTextOnly,
+    });
+  }, [popup, normalizedImageUrl, hasImage, hasTextOnly]);
 
   return (
     <div
@@ -119,13 +149,39 @@ export default function PopupModal({ popup, onClose }: PopupModalProps) {
         {hasImage && (
           <div style={{ position: 'relative' }}>
             <img
-              src={popup.imageUrl!}
+              src={normalizedImageUrl!}
               alt={popup.title}
               style={{
                 width: '100%',
                 maxHeight: '90vh',
                 objectFit: 'contain',
                 display: 'block',
+              }}
+              onError={(e) => {
+                console.error('Popup image load error:', {
+                  originalImageUrl: popup.imageUrl,
+                  normalizedImageUrl: normalizedImageUrl,
+                  error: e,
+                });
+                // 이미지 로드 실패 시 숨김 처리
+                e.currentTarget.style.display = 'none';
+                // 이미지 로드 실패 시 텍스트만 표시하도록 상태 변경
+                const parent = e.currentTarget.parentElement;
+                if (parent) {
+                  parent.innerHTML = `
+                    <div style="padding: 40px; text-align: center; color: var(--text-sub);">
+                      <p>이미지를 불러올 수 없습니다.</p>
+                      <p style="font-size: 0.875rem; margin-top: 8px;">URL: ${normalizedImageUrl}</p>
+                      <p style="font-size: 0.875rem; margin-top: 8px;">${popup.title || ''}</p>
+                    </div>
+                  `;
+                }
+              }}
+              onLoad={() => {
+                console.log('Popup image loaded successfully:', {
+                  originalImageUrl: popup.imageUrl,
+                  normalizedImageUrl: normalizedImageUrl,
+                });
               }}
             />
             {popup.linkUrl && (

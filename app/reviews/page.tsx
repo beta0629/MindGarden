@@ -76,6 +76,17 @@ export default function ReviewsPage() {
   const [password, setPassword] = useState('');
   const [editContent, setEditContent] = useState('');
   const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [likeCounts, setLikeCounts] = useState<Record<number, number>>({});
+  const [likedReviews, setLikedReviews] = useState<Set<number>>(new Set());
+
+  // 초기 좋아요 수 설정
+  useEffect(() => {
+    const initialCounts: Record<number, number> = {};
+    reviews.forEach((review) => {
+      initialCounts[review.id] = review.likeCount || 0;
+    });
+    setLikeCounts(initialCounts);
+  }, [reviews]);
 
   useEffect(() => {
     loadReviews();
@@ -131,6 +142,112 @@ export default function ReviewsPage() {
     setDeletingId(id);
     setPassword('');
     setPasswordError(null);
+  };
+
+  // 좋아요 처리
+  const handleLike = async (reviewId: number) => {
+    if (likedReviews.has(reviewId)) {
+      return; // 이미 좋아요를 누른 경우
+    }
+
+    try {
+      const response = await fetch(`/api/reviews/${reviewId}/like`, {
+        method: 'POST',
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        setLikeCounts((prev) => ({
+          ...prev,
+          [reviewId]: data.likeCount,
+        }));
+        setLikedReviews((prev) => new Set([...prev, reviewId]));
+      }
+    } catch (error) {
+      console.error('Like error:', error);
+    }
+  };
+
+  // SNS 공유
+  const handleShare = (platform: string, reviewId: number) => {
+    const review = reviews.find((r) => r.id === reviewId);
+    if (!review) return;
+
+    const url = typeof window !== 'undefined' ? window.location.origin : '';
+    const shareUrl = `${url}/reviews#review-${reviewId}`;
+    const shareText = `${review.authorName}님의 후기 - 마인드가든`;
+    const shareContent = review.content.replace(/<[^>]*>/g, '').substring(0, 100) + '...';
+
+    switch (platform) {
+      case 'kakao':
+        // 카카오톡 공유
+        if (typeof window !== 'undefined' && (window as any).Kakao) {
+          (window as any).Kakao.Share.sendDefault({
+            objectType: 'feed',
+            content: {
+              title: shareText,
+              description: shareContent,
+              imageUrl: `${url}/assets/images/gallery_1.png`,
+              link: {
+                mobileWebUrl: shareUrl,
+                webUrl: shareUrl,
+              },
+            },
+          });
+        } else {
+          window.open(
+            `https://talk.kakao.com/share?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`,
+            '_blank'
+          );
+        }
+        break;
+      case 'facebook':
+        window.open(
+          `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`,
+          '_blank',
+          'width=600,height=400'
+        );
+        break;
+      case 'twitter':
+        window.open(
+          `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`,
+          '_blank',
+          'width=600,height=400'
+        );
+        break;
+      case 'instagram':
+        // 인스타그램 공유
+        if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+          window.open(
+            `instagram://share?url=${encodeURIComponent(shareUrl)}`,
+            '_blank'
+          );
+        } else {
+          window.open('https://www.instagram.com/', '_blank');
+          if (navigator.clipboard) {
+            navigator.clipboard.writeText(shareText + '\n' + shareUrl).then(() => {
+              alert('인스타그램에 공유할 내용이 클립보드에 복사되었습니다!');
+            });
+          }
+        }
+        break;
+      case 'link':
+        // 링크 복사
+        if (navigator.clipboard) {
+          navigator.clipboard.writeText(shareUrl).then(() => {
+            alert('링크가 클립보드에 복사되었습니다!');
+          });
+        } else {
+          const textArea = document.createElement('textarea');
+          textArea.value = shareUrl;
+          document.body.appendChild(textArea);
+          textArea.select();
+          document.execCommand('copy');
+          document.body.removeChild(textArea);
+          alert('링크가 클립보드에 복사되었습니다!');
+        }
+        break;
+    }
   };
 
   const handleEditSubmit = async () => {
@@ -363,9 +480,210 @@ export default function ReviewsPage() {
                           color: 'var(--text-main)',
                           lineHeight: '1.8',
                           fontSize: '1rem',
+                          marginBottom: '1.5rem',
                         }}
                         dangerouslySetInnerHTML={{ __html: review.content }}
                       />
+
+                      {/* 좋아요 및 공유 버튼 */}
+                      <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        paddingTop: '1rem',
+                        borderTop: '1px solid var(--border-soft)',
+                        gap: '1rem',
+                        flexWrap: 'wrap',
+                      }}>
+                        {/* 좋아요 버튼 */}
+                        <button
+                          onClick={() => handleLike(review.id)}
+                          disabled={likedReviews.has(review.id)}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.5rem',
+                            padding: '0.5rem 1rem',
+                            backgroundColor: likedReviews.has(review.id)
+                              ? 'rgba(239, 68, 68, 0.1)'
+                              : 'transparent',
+                            border: `1px solid ${likedReviews.has(review.id) ? '#ef4444' : 'var(--border-soft)'}`,
+                            borderRadius: 'var(--radius-sm)',
+                            color: likedReviews.has(review.id) ? '#ef4444' : 'var(--text-sub)',
+                            cursor: likedReviews.has(review.id) ? 'default' : 'pointer',
+                            fontSize: '0.9rem',
+                            fontWeight: '600',
+                            transition: 'all 0.2s',
+                          }}
+                          onMouseEnter={(e) => {
+                            if (!likedReviews.has(review.id)) {
+                              e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.05)';
+                              e.currentTarget.style.borderColor = '#ef4444';
+                              e.currentTarget.style.color = '#ef4444';
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            if (!likedReviews.has(review.id)) {
+                              e.currentTarget.style.backgroundColor = 'transparent';
+                              e.currentTarget.style.borderColor = 'var(--border-soft)';
+                              e.currentTarget.style.color = 'var(--text-sub)';
+                            }
+                          }}
+                        >
+                          <span style={{ fontSize: '1.2rem' }}>
+                            {likedReviews.has(review.id) ? '❤️' : '🤍'}
+                          </span>
+                          <span>{likeCounts[review.id] || review.likeCount || 0}</span>
+                        </button>
+
+                        {/* SNS 공유 버튼 */}
+                        <div style={{
+                          display: 'flex',
+                          gap: '0.5rem',
+                          alignItems: 'center',
+                        }}>
+                          <button
+                            onClick={() => handleShare('kakao', review.id)}
+                            style={{
+                              width: '36px',
+                              height: '36px',
+                              borderRadius: '50%',
+                              border: '1px solid var(--border-soft)',
+                              backgroundColor: '#FEE500',
+                              color: '#000',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '1.1rem',
+                              transition: 'all 0.2s',
+                            }}
+                            title="카카오톡 공유"
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.transform = 'scale(1.1)';
+                              e.currentTarget.style.boxShadow = '0 2px 8px rgba(254, 229, 0, 0.4)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.transform = 'scale(1)';
+                              e.currentTarget.style.boxShadow = 'none';
+                            }}
+                          >
+                            💬
+                          </button>
+                          <button
+                            onClick={() => handleShare('facebook', review.id)}
+                            style={{
+                              width: '36px',
+                              height: '36px',
+                              borderRadius: '50%',
+                              border: '1px solid var(--border-soft)',
+                              backgroundColor: '#1877F2',
+                              color: '#fff',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '1.1rem',
+                              transition: 'all 0.2s',
+                            }}
+                            title="페이스북 공유"
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.transform = 'scale(1.1)';
+                              e.currentTarget.style.boxShadow = '0 2px 8px rgba(24, 119, 242, 0.4)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.transform = 'scale(1)';
+                              e.currentTarget.style.boxShadow = 'none';
+                            }}
+                          >
+                            📘
+                          </button>
+                          <button
+                            onClick={() => handleShare('twitter', review.id)}
+                            style={{
+                              width: '36px',
+                              height: '36px',
+                              borderRadius: '50%',
+                              border: '1px solid var(--border-soft)',
+                              backgroundColor: '#1DA1F2',
+                              color: '#fff',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '1.1rem',
+                              transition: 'all 0.2s',
+                            }}
+                            title="트위터 공유"
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.transform = 'scale(1.1)';
+                              e.currentTarget.style.boxShadow = '0 2px 8px rgba(29, 161, 242, 0.4)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.transform = 'scale(1)';
+                              e.currentTarget.style.boxShadow = 'none';
+                            }}
+                          >
+                            🐦
+                          </button>
+                          <button
+                            onClick={() => handleShare('instagram', review.id)}
+                            style={{
+                              width: '36px',
+                              height: '36px',
+                              borderRadius: '50%',
+                              border: '1px solid var(--border-soft)',
+                              background: 'linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)',
+                              color: '#fff',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '1.1rem',
+                              transition: 'all 0.2s',
+                            }}
+                            title="인스타그램 공유"
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.transform = 'scale(1.1)';
+                              e.currentTarget.style.boxShadow = '0 2px 8px rgba(188, 24, 136, 0.4)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.transform = 'scale(1)';
+                              e.currentTarget.style.boxShadow = 'none';
+                            }}
+                          >
+                            📷
+                          </button>
+                          <button
+                            onClick={() => handleShare('link', review.id)}
+                            style={{
+                              width: '36px',
+                              height: '36px',
+                              borderRadius: '50%',
+                              border: '1px solid var(--border-soft)',
+                              backgroundColor: 'var(--surface-1)',
+                              color: 'var(--text-main)',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '1.1rem',
+                              transition: 'all 0.2s',
+                            }}
+                            title="링크 복사"
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.transform = 'scale(1.1)';
+                              e.currentTarget.style.boxShadow = 'var(--shadow-1)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.transform = 'scale(1)';
+                              e.currentTarget.style.boxShadow = 'none';
+                            }}
+                          >
+                            🔗
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   ))}
                 </div>

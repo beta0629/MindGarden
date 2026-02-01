@@ -129,6 +129,28 @@ export default function ReviewsCarousel({ reviews }: ReviewsCarouselProps) {
           'width=600,height=400'
         );
         break;
+      case 'instagram':
+        // 인스타그램 공유 (모바일 앱 또는 웹)
+        if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+          // 모바일: 인스타그램 앱으로 공유 (스토리 또는 피드)
+          window.open(
+            `instagram://share?url=${encodeURIComponent(shareUrl)}`,
+            '_blank'
+          );
+        } else {
+          // 데스크톱: 인스타그램 웹으로 이동
+          window.open(
+            'https://www.instagram.com/',
+            '_blank'
+          );
+          // 데스크톱에서는 사용자가 직접 복사하여 공유해야 함
+          if (navigator.clipboard) {
+            navigator.clipboard.writeText(shareText + '\n' + shareUrl).then(() => {
+              alert('인스타그램에 공유할 내용이 클립보드에 복사되었습니다!');
+            });
+          }
+        }
+        break;
       case 'link':
         // 링크 복사
         if (navigator.clipboard) {
@@ -457,6 +479,34 @@ export default function ReviewsCarousel({ reviews }: ReviewsCarouselProps) {
                 }}
               >
                 🐦
+              </button>
+              <button
+                onClick={() => handleShare('instagram', currentReview.id)}
+                style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '50%',
+                  border: '1px solid var(--border-soft)',
+                  background: 'linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)',
+                  color: '#fff',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '1.1rem',
+                  transition: 'all 0.2s',
+                }}
+                title="인스타그램 공유"
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'scale(1.1)';
+                  e.currentTarget.style.boxShadow = '0 2px 8px rgba(188, 24, 136, 0.4)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'scale(1)';
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
+              >
+                📷
               </button>
               <button
                 onClick={() => handleShare('link', currentReview.id)}

@@ -205,7 +205,7 @@ export default function GalleryAdminPage() {
           <section className="content-section" style={{ paddingTop: '120px', maxWidth: '1200px', margin: '0 auto' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
               <h1 className="section-title" style={{ margin: 0 }}>따뜻한 동행 갤러리 관리</h1>
-              <div style={{ display: 'flex', gap: '12px' }}>
+              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
                 <Link
                   href="/blog/admin/list"
                   style={{
@@ -221,6 +221,38 @@ export default function GalleryAdminPage() {
                   }}
                 >
                   블로그 관리
+                </Link>
+                <Link
+                  href="/blog/admin/popups"
+                  style={{
+                    padding: '10px 20px',
+                    backgroundColor: 'transparent',
+                    color: 'var(--text-sub)',
+                    border: '1px solid var(--border-soft)',
+                    borderRadius: 'var(--radius-sm)',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    textDecoration: 'none',
+                    cursor: 'pointer'
+                  }}
+                >
+                  팝업 관리
+                </Link>
+                <Link
+                  href="/blog/admin/banners"
+                  style={{
+                    padding: '10px 20px',
+                    backgroundColor: 'transparent',
+                    color: 'var(--text-sub)',
+                    border: '1px solid var(--border-soft)',
+                    borderRadius: 'var(--radius-sm)',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    textDecoration: 'none',
+                    cursor: 'pointer'
+                  }}
+                >
+                  배너 관리
                 </Link>
                 <button
                   type="button"

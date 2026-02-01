@@ -1,0 +1,58 @@
+<svg width="600" height="600" viewBox="0 0 600 600" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+        <!-- Glass Filter -->
+        <filter id="glass-blur" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="8" result="blur" />
+            <feColorMatrix in="blur" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 18 -7" result="goo" />
+        </filter>
+
+        <!-- Left Wing Gradient (Coral Pink #F4A5A5 -> Lavender #C797D7) -->
+        <linearGradient id="grad-left" x1="100" y1="100" x2="300" y2="400" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#F4A5A5" stop-opacity="0.9" />
+            <stop offset="100%" stop-color="#C797D7" stop-opacity="0.8" />
+        </linearGradient>
+
+        <!-- Right Wing Gradient (Sky Blue #7EB5D3 -> Teal #5DBEBD) -->
+        <linearGradient id="grad-right" x1="300" y1="100" x2="500" y2="400" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#7EB5D3" stop-opacity="0.9" />
+            <stop offset="100%" stop-color="#5DBEBD" stop-opacity="0.8" />
+        </linearGradient>
+
+        <!-- Body Gradient -->
+        <linearGradient id="grad-body" x1="300" y1="150" x2="300" y2="450" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.9" />
+            <stop offset="50%" stop-color="#B8A5D6" stop-opacity="0.6" />
+            <stop offset="100%" stop-color="#8AA8C4" stop-opacity="0.8" />
+        </linearGradient>
+    </defs>
+
+    <!-- Group with animation class -->
+    <g class="butterfly-art">
+        <!-- Upper Left Wing -->
+        <path d="M290 280 C 250 200, 100 150, 80 250 C 60 350, 200 400, 290 320 Z" 
+              fill="url(#grad-left)" stroke="white" stroke-width="2" style="mix-blend-mode: multiply; filter: drop-shadow(0 10px 20px rgba(244, 165, 165, 0.4));" />
+        
+        <!-- Lower Left Wing -->
+        <path d="M295 330 C 250 400, 150 450, 160 380 C 170 310, 280 320, 295 330 Z" 
+              fill="url(#grad-left)" stroke="white" stroke-width="1.5" opacity="0.9" />
+
+        <!-- Upper Right Wing -->
+        <path d="M310 280 C 350 200, 500 150, 520 250 C 540 350, 400 400, 310 320 Z" 
+              fill="url(#grad-right)" stroke="white" stroke-width="2" style="mix-blend-mode: multiply; filter: drop-shadow(0 10px 20px rgba(126, 181, 211, 0.4));" />
+
+        <!-- Lower Right Wing -->
+        <path d="M305 330 C 350 400, 450 450, 440 380 C 430 310, 320 320, 305 330 Z" 
+              fill="url(#grad-right)" stroke="white" stroke-width="1.5" opacity="0.9" />
+        
+        <!-- Glossy Highlights (Rim) -->
+        <path d="M290 280 Q 150 200 100 250" stroke="white" stroke-width="3" stroke-linecap="round" opacity="0.6" fill="none" />
+        <path d="M310 280 Q 450 200 500 250" stroke="white" stroke-width="3" stroke-linecap="round" opacity="0.6" fill="none" />
+
+        <!-- Body -->
+        <rect x="292" y="180" width="16" height="240" rx="8" fill="url(#grad-body)" stroke="white" stroke-width="1" />
+        
+        <!-- Antennas -->
+        <path d="M300 180 Q 280 140 260 150" stroke="#8AA8C4" stroke-width="2" fill="none" stroke-linecap="round" />
+        <path d="M300 180 Q 320 140 340 150" stroke="#8AA8C4" stroke-width="2" fill="none" stroke-linecap="round" />
+    </g>
+</svg>

@@ -143,7 +143,7 @@ export default function BlogAdminPage() {
           <section className="content-section" style={{ paddingTop: '120px', maxWidth: '900px', margin: '0 auto' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
               <h1 className="section-title" style={{ margin: 0 }}>블로그 글 작성</h1>
-              <div style={{ display: 'flex', gap: '12px' }}>
+              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
                 <Link
                   href="/blog/admin/list"
                   style={{
@@ -158,6 +158,51 @@ export default function BlogAdminPage() {
                   }}
                 >
                   목록
+                </Link>
+                <Link
+                  href="/blog/admin/gallery"
+                  style={{
+                    padding: '8px 16px',
+                    backgroundColor: 'transparent',
+                    color: 'var(--text-sub)',
+                    border: '1px solid var(--border-soft)',
+                    borderRadius: 'var(--radius-sm)',
+                    fontSize: '14px',
+                    textDecoration: 'none',
+                    cursor: 'pointer'
+                  }}
+                >
+                  갤러리 관리
+                </Link>
+                <Link
+                  href="/blog/admin/popups"
+                  style={{
+                    padding: '8px 16px',
+                    backgroundColor: 'transparent',
+                    color: 'var(--text-sub)',
+                    border: '1px solid var(--border-soft)',
+                    borderRadius: 'var(--radius-sm)',
+                    fontSize: '14px',
+                    textDecoration: 'none',
+                    cursor: 'pointer'
+                  }}
+                >
+                  팝업 관리
+                </Link>
+                <Link
+                  href="/blog/admin/banners"
+                  style={{
+                    padding: '8px 16px',
+                    backgroundColor: 'transparent',
+                    color: 'var(--text-sub)',
+                    border: '1px solid var(--border-soft)',
+                    borderRadius: 'var(--radius-sm)',
+                    fontSize: '14px',
+                    textDecoration: 'none',
+                    cursor: 'pointer'
+                  }}
+                >
+                  배너 관리
                 </Link>
                 <button
                   type="button"

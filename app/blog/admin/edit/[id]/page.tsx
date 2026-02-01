@@ -6,6 +6,7 @@ import Footer from '@/components/Footer';
 import BlogEditor from '@/components/BlogEditor';
 import { getApiService } from '@/lib/api';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 export default function BlogEditPage({ params }: { params: { id: string } }) {
   const router = useRouter();
@@ -162,21 +163,83 @@ export default function BlogEditPage({ params }: { params: { id: string } }) {
           <section className="content-section" style={{ paddingTop: '120px', maxWidth: '900px', margin: '0 auto' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
               <h1 className="section-title" style={{ margin: 0 }}>블로그 글 수정</h1>
-              <button
-                type="button"
-                onClick={handleLogout}
-                style={{
-                  padding: '8px 16px',
-                  backgroundColor: 'transparent',
-                  color: 'var(--text-sub)',
-                  border: '1px solid var(--border-soft)',
-                  borderRadius: 'var(--radius-sm)',
-                  fontSize: '14px',
-                  cursor: 'pointer'
-                }}
-              >
-                로그아웃
-              </button>
+              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                <Link
+                  href="/blog/admin/list"
+                  style={{
+                    padding: '8px 16px',
+                    backgroundColor: 'transparent',
+                    color: 'var(--text-sub)',
+                    border: '1px solid var(--border-soft)',
+                    borderRadius: 'var(--radius-sm)',
+                    fontSize: '14px',
+                    textDecoration: 'none',
+                    cursor: 'pointer'
+                  }}
+                >
+                  목록
+                </Link>
+                <Link
+                  href="/blog/admin/gallery"
+                  style={{
+                    padding: '8px 16px',
+                    backgroundColor: 'transparent',
+                    color: 'var(--text-sub)',
+                    border: '1px solid var(--border-soft)',
+                    borderRadius: 'var(--radius-sm)',
+                    fontSize: '14px',
+                    textDecoration: 'none',
+                    cursor: 'pointer'
+                  }}
+                >
+                  갤러리 관리
+                </Link>
+                <Link
+                  href="/blog/admin/popups"
+                  style={{
+                    padding: '8px 16px',
+                    backgroundColor: 'transparent',
+                    color: 'var(--text-sub)',
+                    border: '1px solid var(--border-soft)',
+                    borderRadius: 'var(--radius-sm)',
+                    fontSize: '14px',
+                    textDecoration: 'none',
+                    cursor: 'pointer'
+                  }}
+                >
+                  팝업 관리
+                </Link>
+                <Link
+                  href="/blog/admin/banners"
+                  style={{
+                    padding: '8px 16px',
+                    backgroundColor: 'transparent',
+                    color: 'var(--text-sub)',
+                    border: '1px solid var(--border-soft)',
+                    borderRadius: 'var(--radius-sm)',
+                    fontSize: '14px',
+                    textDecoration: 'none',
+                    cursor: 'pointer'
+                  }}
+                >
+                  배너 관리
+                </Link>
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  style={{
+                    padding: '8px 16px',
+                    backgroundColor: 'transparent',
+                    color: 'var(--text-sub)',
+                    border: '1px solid var(--border-soft)',
+                    borderRadius: 'var(--radius-sm)',
+                    fontSize: '14px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  로그아웃
+                </button>
+              </div>
             </div>
             
             {error && (

@@ -18,6 +18,7 @@ export default function Banner({ banners }: BannerProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const autoScrollTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const isMobile = useIsMobile();
 
   // 특정 인덱스로 이동
   const goToIndex = (index: number) => {
@@ -101,11 +102,11 @@ export default function Banner({ banners }: BannerProps) {
           onClick={goToPrevious}
           style={{
             position: 'absolute',
-            left: '12px',
+            left: isMobile ? '8px' : '12px',
             top: '50%',
             transform: 'translateY(-50%)',
-            width: '40px',
-            height: '40px',
+            width: isMobile ? '32px' : '40px',
+            height: isMobile ? '32px' : '40px',
             borderRadius: '50%',
             border: 'none',
             backgroundColor: 'rgba(255, 255, 255, 0.9)',
@@ -114,7 +115,7 @@ export default function Banner({ banners }: BannerProps) {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: '20px',
+            fontSize: isMobile ? '18px' : '20px',
             fontWeight: 'bold',
             zIndex: 20,
             boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
@@ -155,11 +156,11 @@ export default function Banner({ banners }: BannerProps) {
           onClick={goToNext}
           style={{
             position: 'absolute',
-            right: '12px',
+            right: isMobile ? '8px' : '12px',
             top: '50%',
             transform: 'translateY(-50%)',
-            width: '40px',
-            height: '40px',
+            width: isMobile ? '32px' : '40px',
+            height: isMobile ? '32px' : '40px',
             borderRadius: '50%',
             border: 'none',
             backgroundColor: 'rgba(255, 255, 255, 0.9)',
@@ -168,7 +169,7 @@ export default function Banner({ banners }: BannerProps) {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: '20px',
+            fontSize: isMobile ? '18px' : '20px',
             fontWeight: 'bold',
             zIndex: 20,
             boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
@@ -236,6 +237,7 @@ function BannerContent({ banner }: { banner: BannerItem }) {
   const hasImage = !!banner.imageUrl;
   // 텍스트만 있으면 기본 디자인 적용
   const hasTextOnly = !hasImage && (banner.title || banner.content);
+  const isMobile = useIsMobile();
 
   // 이미지만 있을 때
   if (hasImage && !banner.title && !banner.content) {
@@ -245,7 +247,7 @@ function BannerContent({ banner }: { banner: BannerItem }) {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          padding: '8px 0 40px 0', // 하단 패딩 추가 (인디케이터 공간 확보)
+          padding: '8px 16px 40px 16px', // 좌우 패딩 추가 (모바일 대응)
         }}
       >
         <img
@@ -275,10 +277,11 @@ function BannerContent({ banner }: { banner: BannerItem }) {
       <div
         style={{
           display: 'flex',
+          flexDirection: isMobile ? 'column' : 'row',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: '16px',
-          padding: '12px 20px 40px 20px', // 하단 패딩 추가 (인디케이터 공간 확보)
+          gap: isMobile ? '12px' : '16px',
+          padding: isMobile ? '12px 16px 40px 16px' : '12px 20px 40px 20px',
           maxWidth: '1200px',
           margin: '0 auto',
         }}
@@ -287,9 +290,9 @@ function BannerContent({ banner }: { banner: BannerItem }) {
           src={banner.imageUrl || ''}
           alt={banner.title || '배너'}
           style={{
-            maxHeight: '100px',
-            maxWidth: '400px',
-            width: 'auto',
+            maxHeight: isMobile ? '80px' : '100px',
+            maxWidth: isMobile ? '100%' : '400px',
+            width: isMobile ? '100%' : 'auto',
             height: 'auto',
             objectFit: 'contain',
             flexShrink: 0,
@@ -304,10 +307,14 @@ function BannerContent({ banner }: { banner: BannerItem }) {
             console.log('Banner image loaded successfully:', banner.imageUrl);
           }}
         />
-        <div style={{ flex: 1, textAlign: 'left' }}>
+        <div style={{ 
+          flex: 1, 
+          textAlign: isMobile ? 'center' : 'left',
+          width: isMobile ? '100%' : 'auto',
+        }}>
           {banner.title && (
             <h3 style={{
-              fontSize: '1rem',
+              fontSize: isMobile ? '0.9rem' : '1rem',
               fontWeight: '700',
               marginBottom: banner.content ? '4px' : 0,
               color: 'var(--text-main)',
@@ -318,7 +325,7 @@ function BannerContent({ banner }: { banner: BannerItem }) {
           {banner.content && (
             <div
               style={{
-                fontSize: '0.9rem',
+                fontSize: isMobile ? '0.85rem' : '0.9rem',
                 color: 'var(--text-sub)',
                 lineHeight: '1.5',
               }}
@@ -371,11 +378,26 @@ function BannerContent({ banner }: { banner: BannerItem }) {
             {banner.content && (
               <div
                 style={{
-                  fontSize: '0.95rem',
+                  fontSize: isMobile ? '0.85rem' : '0.95rem',
                   color: 'var(--text-sub)',
                   lineHeight: '1.6',
                 }}
-                dangerouslySetInnerHTML={{ __html: banner.content }}
+                dangerouslySetInnerHTML={{ 
+                  __html: banner.content.replace(
+                    /<img([^>]*?)src="([^"]+)"([^>]*?)>/gi,
+                    (match, before, src, after) => {
+                      const styleMatch = before.match(/style="([^"]*)"/i) || after.match(/style="([^"]*)"/i);
+                      const existingStyle = styleMatch ? styleMatch[1] : '';
+                      const newStyle = `max-width: 100%; height: auto; ${existingStyle}`;
+                      
+                      if (before.includes('style=') || after.includes('style=')) {
+                        return match.replace(/style="[^"]*"/i, `style="${newStyle}"`);
+                      } else {
+                        return `<img${before} style="${newStyle}" src="${src}"${after}>`;
+                      }
+                    }
+                  )
+                }}
               />
             )}
           </div>

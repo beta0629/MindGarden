@@ -127,7 +127,7 @@ export default function ImageUploader({
     setIsResizing(true);
     setShowResizeOptions(true);
 
-    // 미리보기 표시
+    // 미리보기 표시 및 사이즈 체크
     const reader = new FileReader();
     reader.onload = (e) => {
       setPreview(e.target?.result as string);
@@ -136,8 +136,41 @@ export default function ImageUploader({
         imageRef.current = img;
         setResizeWidth(Math.min(img.width, maxWidth));
         setResizeHeight(Math.min(img.height, maxHeight));
+        
+        // 권장 사이즈/비율 체크 및 경고
+        if (recommendedAspectRatio || recommendedSize) {
+          const currentAspectRatio = img.width / img.height;
+          let warningMessage = '';
+          
+          if (recommendedAspectRatio) {
+            const ratioDiff = Math.abs(currentAspectRatio - recommendedAspectRatio) / recommendedAspectRatio;
+            if (ratioDiff > 0.2) { // 20% 이상 차이
+              warningMessage = `⚠️ 이미지 비율이 권장 비율(${recommendedAspectRatio.toFixed(1)}:1)과 다릅니다. 현재 비율: ${currentAspectRatio.toFixed(1)}:1`;
+            }
+          }
+          
+          if (recommendedSize) {
+            const widthDiff = Math.abs(img.width - recommendedSize.width);
+            const heightDiff = Math.abs(img.height - recommendedSize.height);
+            if (widthDiff > recommendedSize.width * 0.1 || heightDiff > recommendedSize.height * 0.1) {
+              if (warningMessage) warningMessage += '\n';
+              warningMessage += `⚠️ 권장 사이즈: ${recommendedSize.width}px × ${recommendedSize.height}px, 현재: ${img.width}px × ${img.height}px`;
+            }
+          }
+          
+          if (warningMessage) {
+            console.warn('Image size warning:', warningMessage);
+            // 경고는 콘솔에만 출력 (사용자에게는 리사이징 옵션 제공)
+          }
+        }
+      };
+      img.onerror = () => {
+        onError?.('이미지를 로드할 수 없습니다.');
       };
       img.src = e.target?.result as string;
+    };
+    reader.onerror = () => {
+      onError?.('파일을 읽을 수 없습니다.');
     };
     reader.readAsDataURL(file);
   };

@@ -252,10 +252,17 @@ function BannerContent({ banner }: { banner: BannerItem }) {
           src={banner.imageUrl || ''}
           alt={banner.title || '배너'}
           style={{
-            maxHeight: '80px',
+            maxHeight: '120px',
             maxWidth: '100%',
+            width: '100%',
+            height: 'auto',
             objectFit: 'contain',
             display: 'block',
+          }}
+          onError={(e) => {
+            console.error('Banner image load error:', banner.imageUrl, e);
+            // 이미지 로드 실패 시 숨김 처리
+            e.currentTarget.style.display = 'none';
           }}
         />
       </div>

@@ -12,6 +12,8 @@ interface ImageUploaderProps {
   onUploadingChange?: (uploading: boolean) => void;
   altText?: string;
   displayOrder?: number;
+  recommendedAspectRatio?: number; // 권장 비율 (예: 6.4 = 가로/세로)
+  recommendedSize?: { width: number; height: number }; // 권장 사이즈
 }
 
 export default function ImageUploader({
@@ -23,7 +25,9 @@ export default function ImageUploader({
   uploading: externalUploading,
   onUploadingChange,
   altText,
-  displayOrder
+  displayOrder,
+  recommendedAspectRatio,
+  recommendedSize
 }: ImageUploaderProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);

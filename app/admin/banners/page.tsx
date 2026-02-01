@@ -314,14 +314,33 @@ export default function BannersAdminPage() {
                   <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600' }}>
                     이미지 업로드
                   </label>
+                  <div style={{
+                    padding: '12px 16px',
+                    marginBottom: '12px',
+                    backgroundColor: '#f0f9ff',
+                    border: '1px solid #bae6fd',
+                    borderRadius: 'var(--radius-sm)',
+                    fontSize: '14px',
+                    color: '#0369a1'
+                  }}>
+                    <div style={{ fontWeight: '600', marginBottom: '4px' }}>📐 배너 이미지 권장 사이즈</div>
+                    <div>• 권장 사이즈: <strong>1920px × 300px</strong> (가로형 배너)</div>
+                    <div>• 비율: 약 <strong>6.4:1</strong> (가로가 세로보다 훨씬 긴 형태)</div>
+                    <div>• 최대 사이즈: 1920px × 300px (자동 리사이징됨)</div>
+                    <div style={{ marginTop: '8px', fontSize: '12px', color: '#64748b' }}>
+                      💡 가로형 배너 이미지를 사용하면 더 나은 표시 효과를 얻을 수 있습니다.
+                    </div>
+                  </div>
                   <ImageUploader
                     onImageUploaded={handleImageUploaded}
                     onError={handleImageUploadError}
                     maxWidth={1920}
-                    maxHeight={1080}
+                    maxHeight={300}
                     quality={0.9}
                     uploading={uploading}
                     onUploadingChange={setUploading}
+                    recommendedAspectRatio={6.4}
+                    recommendedSize={{ width: 1920, height: 300 }}
                   />
                 </div>
                 <div>

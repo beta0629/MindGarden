@@ -247,6 +247,8 @@ export default function PopupModal({ popup, onClose }: PopupModalProps) {
             position: 'absolute',
             bottom: '20px',
             left: '20px',
+            right: 'auto',
+            transform: 'none',
             display: 'flex',
             alignItems: 'center',
             gap: '8px',

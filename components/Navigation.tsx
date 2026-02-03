@@ -48,9 +48,17 @@ export default function Navigation() {
   const textColor = isWhite && !isScrolled ? 'var(--white)' : undefined;
   const lineColor = isWhite && !isScrolled ? 'var(--white)' : undefined;
 
+  const [hoveredMenu, setHoveredMenu] = useState<string | null>(null);
+
   const menu = [
     { label: '가치관', href: '/values' },
-    { label: '소개', href: '#about' },
+    { 
+      label: '소개', 
+      href: '#about',
+      submenu: [
+        { label: '프로필 소개', href: '/counselors' }
+      ]
+    },
     { label: '프로그램', href: '#programs' },
     { label: '블로그', href: '/blog' },
     { label: '후기', href: '/reviews' },
@@ -116,7 +124,12 @@ export default function Navigation() {
           <div className="gnb-right">
             <ul className="gnb-menu" aria-label="Global Navigation">
               {menu.map((m) => (
-                <li key={m.href}>
+                <li 
+                  key={m.href}
+                  className={m.submenu ? 'has-submenu' : ''}
+                  onMouseEnter={() => m.submenu && setHoveredMenu(m.href)}
+                  onMouseLeave={() => setHoveredMenu(null)}
+                >
                   {m.href.startsWith('/') ? (
                     <Link 
                       href={m.href}
@@ -134,6 +147,21 @@ export default function Navigation() {
                     >
                       {m.label}
                     </a>
+                  )}
+                  {m.submenu && hoveredMenu === m.href && (
+                    <ul className="gnb-submenu">
+                      {m.submenu.map((sub) => (
+                        <li key={sub.href}>
+                          <Link 
+                            href={sub.href}
+                            className="gnb-submenu-link"
+                            onClick={() => setIsMenuOpen(false)}
+                          >
+                            {sub.label}
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
                   )}
                 </li>
               ))}
@@ -171,20 +199,34 @@ export default function Navigation() {
         </div>
         <nav className="gnb-drawer-nav" aria-label="Mobile Navigation">
           {menu.map((m) => (
-            m.href.startsWith('/') ? (
-              <Link key={m.href} className="gnb-drawer-link" href={m.href}>
-                {m.label}
-              </Link>
-            ) : (
-              <a 
-                key={m.href} 
-                className="gnb-drawer-link" 
-                href={pathname === '/' ? m.href : `/${m.href}`} 
-                onClick={onNavClick(m.href)}
-              >
-                {m.label}
-              </a>
-            )
+            <div key={m.href}>
+              {m.href.startsWith('/') ? (
+                <Link className="gnb-drawer-link" href={m.href}>
+                  {m.label}
+                </Link>
+              ) : (
+                <a 
+                  className="gnb-drawer-link" 
+                  href={pathname === '/' ? m.href : `/${m.href}`} 
+                  onClick={onNavClick(m.href)}
+                >
+                  {m.label}
+                </a>
+              )}
+              {m.submenu && (
+                <div className="gnb-drawer-submenu">
+                  {m.submenu.map((sub) => (
+                    <Link 
+                      key={sub.href} 
+                      className="gnb-drawer-submenu-link" 
+                      href={sub.href}
+                    >
+                      {sub.label}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
           ))}
           <a 
             className="gnb-drawer-cta" 

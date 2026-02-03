@@ -51,11 +51,11 @@ export default function Navigation() {
   const [hoveredMenu, setHoveredMenu] = useState<string | null>(null);
 
   const menu = [
-    { label: '가치관', href: '/values' },
     { 
       label: '소개', 
       href: '#about',
       submenu: [
+        { label: '가치관', href: '/values' },
         { label: '마인드가든 소개', href: '/about/mindgarden' },
         { label: '프로필 소개', href: '/counselors' }
       ]

@@ -70,7 +70,7 @@ export default function CounselorsPage() {
                 letterSpacing: '-0.02em',
                 wordBreak: 'keep-all'
               }}>
-                상담사와 치료사 선생님들
+                마인드가든 선생님들
               </h1>
               <p style={{
                 fontSize: '1.25rem',
@@ -79,7 +79,7 @@ export default function CounselorsPage() {
                 maxWidth: '700px',
                 margin: '0 auto'
               }}>
-                마인드 가든의 전문 상담사와 치료사 선생님들을 소개합니다
+                마인드 가든의 전문 선생님들을 소개합니다
               </p>
             </div>
 

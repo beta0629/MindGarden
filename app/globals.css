@@ -739,7 +739,7 @@ main:not(:has(.hero-section)) .gnb .gnb-cta {
     background: linear-gradient(to bottom, rgba(255, 252, 248, 0.98) 0%, rgba(255, 250, 245, 0.95) 100%);
     border: 1px solid rgba(255, 212, 184, 0.35);
     border-radius: var(--radius-md);
-    box-shadow: 0 4px 20px rgba(255, 212, 184, 0.15), 0 2px 8px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 6px 24px rgba(255, 212, 184, 0.25), 0 3px 12px rgba(0, 0, 0, 0.12);
     padding: 18px 16px;
     transition: all 0.2s ease;
 }
@@ -753,7 +753,7 @@ a.feature-card {
 
 a.feature-card:hover {
     transform: translateY(-4px);
-    box-shadow: 0 8px 30px rgba(255, 212, 184, 0.25), 0 4px 12px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 10px 35px rgba(255, 212, 184, 0.35), 0 5px 15px rgba(0, 0, 0, 0.15);
     border-color: rgba(255, 212, 184, 0.55);
     background: linear-gradient(to bottom, rgba(255, 253, 250, 1) 0%, rgba(255, 251, 247, 0.98) 100%);
 }
@@ -1187,7 +1187,7 @@ a.feature-card:hover {
     background: linear-gradient(to bottom, rgba(255, 252, 248, 0.98) 0%, rgba(255, 250, 245, 0.95) 100%);
     border: 1px solid rgba(255, 212, 184, 0.35);
     border-radius: var(--radius-md);
-    box-shadow: 0 4px 20px rgba(255, 212, 184, 0.15), 0 2px 8px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 6px 24px rgba(255, 212, 184, 0.25), 0 3px 12px rgba(0, 0, 0, 0.12);
     overflow: hidden;
     text-decoration: none;
     color: inherit;
@@ -1198,7 +1198,7 @@ a.feature-card:hover {
 
 .blog-card:hover {
     transform: translateY(-4px);
-    box-shadow: 0 8px 30px rgba(255, 212, 184, 0.25), 0 4px 12px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 10px 35px rgba(255, 212, 184, 0.35), 0 5px 15px rgba(0, 0, 0, 0.15);
     border-color: rgba(255, 212, 184, 0.55);
     background: linear-gradient(to bottom, rgba(255, 253, 250, 1) 0%, rgba(255, 251, 247, 0.98) 100%);
 }
@@ -1208,14 +1208,14 @@ a.feature-card:hover {
     background: linear-gradient(to bottom, rgba(255, 252, 248, 0.98) 0%, rgba(255, 250, 245, 0.95) 100%);
     border-radius: var(--radius-lg);
     padding: 40px;
-    box-shadow: 0 4px 20px rgba(255, 212, 184, 0.15), 0 2px 8px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 6px 24px rgba(255, 212, 184, 0.25), 0 3px 12px rgba(0, 0, 0, 0.12);
     border: 1px solid rgba(255, 212, 184, 0.35);
     transition: all 0.3s ease;
 }
 
 .value-card:hover {
     transform: translateY(-4px);
-    box-shadow: 0 8px 30px rgba(255, 212, 184, 0.25), 0 4px 12px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 10px 35px rgba(255, 212, 184, 0.35), 0 5px 15px rgba(0, 0, 0, 0.15);
     border-color: rgba(255, 212, 184, 0.55);
     background: linear-gradient(to bottom, rgba(255, 253, 250, 1) 0%, rgba(255, 251, 247, 0.98) 100%);
 }

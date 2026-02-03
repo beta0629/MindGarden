@@ -33,11 +33,23 @@ export default function MindGardenAboutPage() {
     {
       id: 'origin',
       title: 'Origin 심층 근본문제. 감별평가의 중요성. 동반질환관리',
-      content: `ADHD로 진단되는 경우의 67~80%에서 다른 정신과적 질환이 하나 이상 동반됩니다.
-적대적 반항장애(45~84%), 품행장애(25~50%), 강박불안장애, 우울장애(~30%), 양극성장애, 틱장애(10%), 학습장애, 언어장애, 지적장애, 자폐범주 장애, 수면장애, 유뇨증, 성격장애 등이 있습니다. ADHD 경향성으로 인한 2차문제로 자존감 하락, 가족갈등, 학습문제, 또래 관계 갈등, 과한 걱정.특정버릇 성향, 강박, 사회기술부족, 감정조절의 어려움, 공격성, 충동성, 짜증 등으로 문제의 반복으로 인해, 삶의 질이 전반적으로 낮아지게 됩니다.
+      content: `ADHD 경향성으로 인한 2차문제로 자존감 하락, 가족갈등, 학습문제, 또래 관계 갈등, 과한 걱정.특정버릇 성향, 강박, 사회기술부족, 감정조절의 어려움, 공격성, 충동성, 짜증 등으로 문제의 반복으로 인해, 삶의 질이 전반적으로 낮아지게 됩니다.
 안타깝게도 다양한 기관을 다녔지만, 시간이 지나도 개선되지 않거나, 실제적인 도움을 받지 못해서, 방치되는 경우를 보게 됩니다. 증상만 다루다 끝나는 것이 아닌, 핵심문제를 정확히 파악해야 필요한 도움을 받을 수 있습니다. 감별평가가 제대로 될 때 조기개입이 가능해집니다. 평가 이후에도 높은 동반질환의 특성을 이해하고, 동반질환을 함께 다뤄주면 증상이 완화.개선되고 상담 이전보다 삶이 안정적으로 유지되는 것을 보게 됩니다.`,
       icon: '🔍',
       color: 'var(--accent-sky)',
+      hasChart: true,
+      comorbidityData: {
+        overallRate: { min: 67, max: 80 },
+        disorders: [
+          { name: '적대적 반항장애', min: 45, max: 84 },
+          { name: '품행장애', min: 25, max: 50 },
+          { name: '우울장애', min: 25, max: 30 },
+          { name: '틱장애', min: 8, max: 10 },
+          { name: '강박불안장애', min: 15, max: 25 },
+          { name: '양극성장애', min: 10, max: 20 },
+        ],
+        otherDisorders: ['학습장애', '언어장애', '지적장애', '자폐범주 장애', '수면장애', '유뇨증', '성격장애']
+      }
     },
     {
       id: 'late-diagnosis',
@@ -150,6 +162,204 @@ ADHD인 중에서는 의사, 변호사, 전문직종사자, CEO 등도 계십니
                   >
                     {section.title}
                   </h2>
+
+                  {/* 그래프 (origin 섹션만) */}
+                  {section.hasChart && section.comorbidityData && (
+                    <div style={{
+                      marginBottom: '32px',
+                      padding: '24px',
+                      background: 'rgba(255, 255, 255, 0.6)',
+                      borderRadius: 'var(--radius-md)',
+                      border: '1px solid rgba(255, 212, 184, 0.2)'
+                    }}>
+                      {/* 전체 동반질환 비율 */}
+                      <div style={{
+                        marginBottom: '32px',
+                        textAlign: 'center'
+                      }}>
+                        <div style={{
+                          fontSize: '0.9rem',
+                          color: 'var(--text-sub)',
+                          marginBottom: '12px',
+                          fontWeight: '600'
+                        }}>
+                          ADHD 진단 시 동반질환 발생률
+                        </div>
+                        <div style={{
+                          position: 'relative',
+                          width: '200px',
+                          height: '200px',
+                          margin: '0 auto'
+                        }}>
+                          <svg width="200" height="200" viewBox="0 0 200 200" style={{ transform: 'rotate(-90deg)' }}>
+                            <circle
+                              cx="100"
+                              cy="100"
+                              r="80"
+                              fill="none"
+                              stroke="rgba(255, 212, 184, 0.2)"
+                              strokeWidth="20"
+                            />
+                            <circle
+                              cx="100"
+                              cy="100"
+                              r="80"
+                              fill="none"
+                              stroke="rgba(255, 212, 184, 0.8)"
+                              strokeWidth="20"
+                              strokeDasharray={`${(section.comorbidityData.overallRate.max * 2 * Math.PI * 80) / 100} ${2 * Math.PI * 80}`}
+                              strokeLinecap="round"
+                              style={{ transition: 'all 0.5s ease' }}
+                            />
+                          </svg>
+                          <div style={{
+                            position: 'absolute',
+                            top: '50%',
+                            left: '50%',
+                            transform: 'translate(-50%, -50%)',
+                            textAlign: 'center'
+                          }}>
+                            <div style={{
+                              fontSize: '2rem',
+                              fontWeight: '700',
+                              color: 'var(--accent-peach)',
+                              lineHeight: '1.2'
+                            }}>
+                              {section.comorbidityData.overallRate.min}~{section.comorbidityData.overallRate.max}%
+                            </div>
+                            <div style={{
+                              fontSize: '0.85rem',
+                              color: 'var(--text-sub)',
+                              marginTop: '4px'
+                            }}>
+                              동반질환 발생
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 주요 동반질환 막대 그래프 */}
+                      <div style={{
+                        marginBottom: '24px'
+                      }}>
+                        <div style={{
+                          fontSize: '0.9rem',
+                          color: 'var(--text-sub)',
+                          marginBottom: '16px',
+                          fontWeight: '600',
+                          textAlign: 'center'
+                        }}>
+                          주요 동반질환별 발생률
+                        </div>
+                        <div style={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '12px'
+                        }}>
+                          {section.comorbidityData.disorders.map((disorder, idx) => {
+                            const avgRate = (disorder.min + disorder.max) / 2;
+                            const colors = [
+                              'rgba(255, 212, 184, 0.8)',
+                              'rgba(184, 212, 227, 0.8)',
+                              'rgba(212, 240, 232, 0.8)',
+                              'rgba(232, 213, 227, 0.8)',
+                              'rgba(255, 244, 212, 0.8)',
+                              'rgba(255, 212, 184, 0.6)',
+                            ];
+                            return (
+                              <div key={idx} style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '12px'
+                              }}>
+                                <div style={{
+                                  flex: '0 0 140px',
+                                  fontSize: '0.9rem',
+                                  color: 'var(--text-main)',
+                                  fontWeight: '500',
+                                  wordBreak: 'keep-all'
+                                }}>
+                                  {disorder.name}
+                                </div>
+                                <div style={{
+                                  flex: '1',
+                                  position: 'relative',
+                                  height: '28px',
+                                  background: 'rgba(255, 212, 184, 0.15)',
+                                  borderRadius: '14px',
+                                  overflow: 'hidden'
+                                }}>
+                                  <div style={{
+                                    position: 'absolute',
+                                    left: 0,
+                                    top: 0,
+                                    height: '100%',
+                                    width: `${avgRate}%`,
+                                    background: `linear-gradient(90deg, ${colors[idx % colors.length]} 0%, ${colors[idx % colors.length].replace('0.8', '0.6')} 100%)`,
+                                    borderRadius: '14px',
+                                    transition: 'width 0.8s ease',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'flex-end',
+                                    paddingRight: '8px',
+                                    boxShadow: `0 2px 8px ${colors[idx % colors.length].replace('0.8', '0.3')}`
+                                  }}>
+                                    <span style={{
+                                      fontSize: '0.75rem',
+                                      fontWeight: '700',
+                                      color: 'var(--text-main)',
+                                      whiteSpace: 'nowrap'
+                                    }}>
+                                      {disorder.min}~{disorder.max}%
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* 기타 동반질환 */}
+                      <div style={{
+                        paddingTop: '20px',
+                        borderTop: '1px solid rgba(255, 212, 184, 0.2)'
+                      }}>
+                        <div style={{
+                          fontSize: '0.85rem',
+                          color: 'var(--text-sub)',
+                          marginBottom: '12px',
+                          fontWeight: '600',
+                          textAlign: 'center'
+                        }}>
+                          기타 동반질환
+                        </div>
+                        <div style={{
+                          display: 'flex',
+                          flexWrap: 'wrap',
+                          gap: '8px',
+                          justifyContent: 'center'
+                        }}>
+                          {section.comorbidityData.otherDisorders.map((disorder, idx) => (
+                            <span
+                              key={idx}
+                              style={{
+                                display: 'inline-block',
+                                padding: '6px 12px',
+                                background: 'rgba(255, 212, 184, 0.15)',
+                                borderRadius: '16px',
+                                fontSize: '0.8rem',
+                                color: 'var(--text-main)',
+                                fontWeight: '500'
+                              }}
+                            >
+                              {disorder}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   {/* 내용 */}
                   <div style={{

@@ -108,7 +108,7 @@ export default function CounselorsAdminPage() {
     setFormData(prev => ({ ...prev, bio: content }));
   }, []);
 
-  const handleBlogEditorImageUpload = useCallback(async (file: File): Promise<string> => {
+  const handleBlogEditorImageUpload = useCallback(async (file: File): Promise<{ imageUrl: string }> => {
     const formData = new FormData();
     formData.append('image', file);
 
@@ -124,7 +124,7 @@ export default function CounselorsAdminPage() {
         throw new Error(data.error || '이미지 업로드에 실패했습니다.');
       }
 
-      return data.imageUrl || data.url;
+      return { imageUrl: data.imageUrl || data.url };
     } catch (error) {
       console.error('Image upload error:', error);
       throw error;

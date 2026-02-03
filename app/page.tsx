@@ -204,16 +204,20 @@ export default async function Home() {
             <p className="section-desc">개인 특성에 따라 아래 프로그램을 조합해 진행할 수 있어요.</p>
             <div className="program-grid">
               <div className="program-card">
-                <div className="program-title">ADHD 개인 상담</div>
-                <div className="program-body">집중·충동·감정 조절을 함께 다루는 1:1 상담</div>
+                <div className="program-title">대상</div>
+                <div className="program-body">상담 대상 안내</div>
               </div>
               <div className="program-card">
-                <div className="program-title">코칭(실행 전략)</div>
-                <div className="program-body">루틴 설계, 시간관리, 실행력 향상 중심 코칭</div>
+                <div className="program-title">증상</div>
+                <div className="program-body">주요 증상 안내</div>
               </div>
               <div className="program-card">
-                <div className="program-title">가족/부모 상담</div>
-                <div className="program-body">가정 내 소통과 역할 조정, 지지 환경 만들기</div>
+                <div className="program-title">치료</div>
+                <div className="program-body">치료 프로그램 안내</div>
+              </div>
+              <div className="program-card">
+                <div className="program-title">심리검사</div>
+                <div className="program-body">심리검사 안내</div>
               </div>
             </div>
           </section>

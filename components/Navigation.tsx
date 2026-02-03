@@ -60,7 +60,16 @@ export default function Navigation() {
         { label: '전문가', href: '/counselors' }
       ]
     },
-    { label: '프로그램', href: '#programs' },
+    { 
+      label: '프로그램', 
+      href: '#programs',
+      submenu: [
+        { label: '대상', href: '#' },
+        { label: '증상', href: '#' },
+        { label: '치료', href: '#' },
+        { label: '심리검사', href: '#' }
+      ]
+    },
     { label: '칼럼', href: '/blog' },
     { label: '후기', href: '/reviews' },
     { label: '공간', href: '#gallery' },

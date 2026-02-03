@@ -142,26 +142,6 @@ ADHD인 중에서는 의사, 변호사, 전문직종사자, CEO 등도 계십니
                     e.currentTarget.style.boxShadow = 'var(--shadow-1)';
                   }}
                 >
-                  {/* 아이콘 배지 */}
-                  <div style={{
-                    position: 'absolute',
-                    top: '24px',
-                    right: '32px',
-                    width: '64px',
-                    height: '64px',
-                    borderRadius: '50%',
-                    background: `${section.color}15`,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '2rem',
-                    border: `2px solid ${section.color}30`
-                  }}
-                  className="about-icon-badge"
-                  >
-                    {section.icon}
-                  </div>
-
                   {/* 섹션 번호 */}
                   <div style={{
                     position: 'absolute',

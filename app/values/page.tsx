@@ -81,201 +81,107 @@ export default function ValuesPage() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '48px' }}>
                 {/* 1. 전문성 */}
                 <div className="value-section-card" style={{
-                  background: 'linear-gradient(to bottom, var(--white) 0%, rgba(184, 212, 227, 0.05) 100%)',
+                  background: 'linear-gradient(to bottom, rgba(255, 252, 248, 0.98) 0%, rgba(255, 250, 245, 0.95) 100%)',
                   borderRadius: 'var(--radius-lg)',
-                  padding: '56px 48px',
-                  boxShadow: 'var(--shadow-1)',
-                  border: '2px solid var(--accent-sky)',
-                  borderLeft: '6px solid var(--accent-sky)',
-                  position: 'relative',
-                  overflow: 'hidden'
+                  padding: '40px 32px',
+                  boxShadow: '0 6px 24px rgba(255, 212, 184, 0.25), 0 3px 12px rgba(0, 0, 0, 0.12)',
+                  border: '1px solid rgba(255, 212, 184, 0.35)',
+                  transition: 'all 0.3s ease'
                 }}>
-                  <div style={{
-                    position: 'absolute',
-                    top: '0',
-                    left: '0',
-                    width: '6px',
-                    height: '100%',
-                    background: 'var(--accent-sky)'
-                  }}></div>
-                  <div style={{
-                    position: 'absolute',
-                    top: '24px',
-                    right: '32px',
-                    width: '60px',
-                    height: '60px',
-                    borderRadius: '50%',
-                    background: 'rgba(184, 212, 227, 0.2)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
+                  <h3 style={{
                     fontSize: '1.5rem',
                     fontWeight: '700',
-                    color: 'var(--accent-sky)'
-                  }}>1</div>
-                  <h3 style={{
-                    fontSize: '1.625rem',
-                    fontWeight: '700',
                     color: 'var(--text-main)',
-                    marginBottom: '32px',
-                    paddingBottom: '20px',
-                    borderBottom: '2px solid var(--accent-sky)',
-                    paddingRight: '80px'
+                    marginBottom: '24px',
+                    paddingBottom: '16px',
+                    borderBottom: '2px solid rgba(255, 212, 184, 0.3)'
                   }}>
                     전문성(상담사로서의 윤리와 책임감)
                   </h3>
                   <div style={{
                     fontSize: '1.0625rem',
-                    lineHeight: '2.2',
+                    lineHeight: '2',
                     color: 'var(--text-sub)'
                   }}>
-                    <div style={{ marginBottom: '24px', paddingLeft: '20px', borderLeft: '3px solid rgba(184, 212, 227, 0.4)' }}>
-                      <p style={{ marginBottom: '12px' }}>
-                        내담자의 호소내용에 귀 기울이고, 최우선 적으로 증상을 완화 하는데 노력 하겠습니다.
-                        전문성에 입각하여 실제적인 도움을 드리겠습니다. 관련학과전공자(대학원), 주요 학회 등 검증된 자격을 갖춘, 다양하고 오랜 경험이 축적된 상담사례를 가진, 전문적인 상담사가 함께 하겠습니다.
-                      </p>
-                    </div>
-                    <div style={{ marginBottom: '24px', paddingLeft: '20px', borderLeft: '3px solid rgba(184, 212, 227, 0.4)' }}>
-                      <p style={{ marginBottom: '12px' }}>
-                        상담사 개인은 내담자 특성을 잘 이해하고, 1:1 맞춤형 상담 계획을 진행해 나가기 위해, 전문가로서 지속적으로 훈련하고 임상을 쌓아 나아가며, 전문성을 유지, 발전하기 위해서 노력할 것을 다짐 합니다. 상담사로서의 직업적 윤리의식을 철저 하게 준수하기 위해 상담사가 속해 있는 자격기관(학회)에서 윤리교육을 지속적으로 받기 위해 노력하겠습니다.
-                      </p>
-                    </div>
-                    <div style={{ paddingLeft: '20px', borderLeft: '3px solid rgba(184, 212, 227, 0.4)' }}>
-                      <p>
-                        내담자를 보다 잘 돕기 위해서, 상담자 스스로 정서적 회복을 위해 필요한 충분한 휴식시간을 가지며 소진되지 않도록 노력하겠습니다.
-                      </p>
-                    </div>
+                    <p style={{ marginBottom: '16px' }}>
+                      내담자의 호소내용에 귀 기울이고, 최우선 적으로 증상을 완화 하는데 노력 하겠습니다.
+                      전문성에 입각하여 실제적인 도움을 드리겠습니다. 관련학과전공자(대학원), 주요 학회 등 검증된 자격을 갖춘, 다양하고 오랜 경험이 축적된 상담사례를 가진, 전문적인 상담사가 함께 하겠습니다.
+                    </p>
+                    <p style={{ marginBottom: '16px' }}>
+                      상담사 개인은 내담자 특성을 잘 이해하고, 1:1 맞춤형 상담 계획을 진행해 나가기 위해, 전문가로서 지속적으로 훈련하고 임상을 쌓아 나아가며, 전문성을 유지, 발전하기 위해서 노력할 것을 다짐 합니다. 상담사로서의 직업적 윤리의식을 철저 하게 준수하기 위해 상담사가 속해 있는 자격기관(학회)에서 윤리교육을 지속적으로 받기 위해 노력하겠습니다.
+                    </p>
+                    <p>
+                      내담자를 보다 잘 돕기 위해서, 상담자 스스로 정서적 회복을 위해 필요한 충분한 휴식시간을 가지며 소진되지 않도록 노력하겠습니다.
+                    </p>
                   </div>
                 </div>
 
                 {/* 2. 인류애 */}
                 <div className="value-section-card" style={{
-                  background: 'linear-gradient(to bottom, var(--white) 0%, rgba(255, 212, 184, 0.05) 100%)',
+                  background: 'linear-gradient(to bottom, rgba(255, 252, 248, 0.98) 0%, rgba(255, 250, 245, 0.95) 100%)',
                   borderRadius: 'var(--radius-lg)',
-                  padding: '56px 48px',
-                  boxShadow: 'var(--shadow-1)',
-                  border: '2px solid var(--accent-peach)',
-                  borderLeft: '6px solid var(--accent-peach)',
-                  position: 'relative',
-                  overflow: 'hidden'
+                  padding: '40px 32px',
+                  boxShadow: '0 6px 24px rgba(255, 212, 184, 0.25), 0 3px 12px rgba(0, 0, 0, 0.12)',
+                  border: '1px solid rgba(255, 212, 184, 0.35)',
+                  transition: 'all 0.3s ease'
                 }}>
-                  <div style={{
-                    position: 'absolute',
-                    top: '0',
-                    left: '0',
-                    width: '6px',
-                    height: '100%',
-                    background: 'var(--accent-peach)'
-                  }}></div>
-                  <div style={{
-                    position: 'absolute',
-                    top: '24px',
-                    right: '32px',
-                    width: '60px',
-                    height: '60px',
-                    borderRadius: '50%',
-                    background: 'rgba(255, 212, 184, 0.2)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
+                  <h3 style={{
                     fontSize: '1.5rem',
                     fontWeight: '700',
-                    color: '#E8A87C'
-                  }}>2</div>
-                  <h3 style={{
-                    fontSize: '1.625rem',
-                    fontWeight: '700',
                     color: 'var(--text-main)',
-                    marginBottom: '32px',
-                    paddingBottom: '20px',
-                    borderBottom: '2px solid var(--accent-peach)',
-                    paddingRight: '80px'
+                    marginBottom: '24px',
+                    paddingBottom: '16px',
+                    borderBottom: '2px solid rgba(255, 212, 184, 0.3)'
                   }}>
                     인류애(인간적이고 따뜻한 마음과 존중)
                   </h3>
                   <div style={{
                     fontSize: '1.0625rem',
-                    lineHeight: '2.2',
+                    lineHeight: '2',
                     color: 'var(--text-sub)'
                   }}>
-                    <div style={{ marginBottom: '24px', paddingLeft: '20px', borderLeft: '3px solid rgba(255, 212, 184, 0.4)' }}>
-                      <p style={{ marginBottom: '12px' }}>
-                        삶을 살아가다가 가장 지치고 힘들 때 지푸라기를 잡는 심정으로 문을 두드린 분들께, 상담을 통해서 진짜 쉼을 경험하고, 각자의 고단함을 내려놓을 수 있도록, 안전하고 따듯한, 진정성 있는 배려를 잃지 않도록 노력겠습니다. 한결 같은 마음으로 버텨주는 든든하고 믿음스러운 나무와 같은 벗이 되겠습니다.
-                      </p>
-                    </div>
-                    <div style={{ paddingLeft: '20px', borderLeft: '3px solid rgba(255, 212, 184, 0.4)' }}>
-                      <p>
-                        내담자를 가르침을 받는 대상으로서가 아닌, 인간 본연의 힘이 있다는 것을 믿고, 그 안에 자원이 있음을 발견하고, 강점을 찾아, 내적인 힘을 다시 회복할 수 있도록 조력하겠습니다. 그리고 한 사람으로서 성장하고 성숙해가는 과정을 정성스럽게 돕겠습니다.
-                      </p>
-                    </div>
+                    <p style={{ marginBottom: '16px' }}>
+                      삶을 살아가다가 가장 지치고 힘들 때 지푸라기를 잡는 심정으로 문을 두드린 분들께, 상담을 통해서 진짜 쉼을 경험하고, 각자의 고단함을 내려놓을 수 있도록, 안전하고 따듯한, 진정성 있는 배려를 잃지 않도록 노력겠습니다. 한결 같은 마음으로 버텨주는 든든하고 믿음스러운 나무와 같은 벗이 되겠습니다.
+                    </p>
+                    <p>
+                      내담자를 가르침을 받는 대상으로서가 아닌, 인간 본연의 힘이 있다는 것을 믿고, 그 안에 자원이 있음을 발견하고, 강점을 찾아, 내적인 힘을 다시 회복할 수 있도록 조력하겠습니다. 그리고 한 사람으로서 성장하고 성숙해가는 과정을 정성스럽게 돕겠습니다.
+                    </p>
                   </div>
                 </div>
 
                 {/* 3. 회복과 성장 */}
                 <div className="value-section-card" style={{
-                  background: 'linear-gradient(to bottom, var(--white) 0%, rgba(212, 240, 232, 0.05) 100%)',
+                  background: 'linear-gradient(to bottom, rgba(255, 252, 248, 0.98) 0%, rgba(255, 250, 245, 0.95) 100%)',
                   borderRadius: 'var(--radius-lg)',
-                  padding: '56px 48px',
-                  boxShadow: 'var(--shadow-1)',
-                  border: '2px solid var(--accent-mint)',
-                  borderLeft: '6px solid var(--accent-mint)',
-                  position: 'relative',
-                  overflow: 'hidden'
+                  padding: '40px 32px',
+                  boxShadow: '0 6px 24px rgba(255, 212, 184, 0.25), 0 3px 12px rgba(0, 0, 0, 0.12)',
+                  border: '1px solid rgba(255, 212, 184, 0.35)',
+                  transition: 'all 0.3s ease'
                 }}>
-                  <div style={{
-                    position: 'absolute',
-                    top: '0',
-                    left: '0',
-                    width: '6px',
-                    height: '100%',
-                    background: 'var(--accent-mint)'
-                  }}></div>
-                  <div style={{
-                    position: 'absolute',
-                    top: '24px',
-                    right: '32px',
-                    width: '60px',
-                    height: '60px',
-                    borderRadius: '50%',
-                    background: 'rgba(212, 240, 232, 0.2)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
+                  <h3 style={{
                     fontSize: '1.5rem',
                     fontWeight: '700',
-                    color: '#5AB89E'
-                  }}>3</div>
-                  <h3 style={{
-                    fontSize: '1.625rem',
-                    fontWeight: '700',
                     color: 'var(--text-main)',
-                    marginBottom: '32px',
-                    paddingBottom: '20px',
-                    borderBottom: '2px solid var(--accent-mint)',
-                    paddingRight: '80px'
+                    marginBottom: '24px',
+                    paddingBottom: '16px',
+                    borderBottom: '2px solid rgba(255, 212, 184, 0.3)'
                   }}>
                     회복과 성장. 건강한 독립
                   </h3>
                   <div style={{
                     fontSize: '1.0625rem',
-                    lineHeight: '2.2',
+                    lineHeight: '2',
                     color: 'var(--text-sub)'
                   }}>
-                    <div style={{ marginBottom: '24px', paddingLeft: '20px', borderLeft: '3px solid rgba(212, 240, 232, 0.4)' }}>
-                      <p style={{ marginBottom: '12px' }}>
-                        '마인드 가든'의 모든 상담사들은 내담자의 마음을 깊이 들여다보고, 각자의 고유한 모습을 발견하고, 스스로의 자신을 수용하고 통합 해 나갈 수 있도록 돕겠습니다.
-                      </p>
-                    </div>
-                    <div style={{ marginBottom: '24px', paddingLeft: '20px', borderLeft: '3px solid rgba(212, 240, 232, 0.4)' }}>
-                      <p style={{ marginBottom: '12px' }}>
-                        적응적이고 건강한 방식으로 삶을 디자인하고, 건강한 방향으로 자리를 잡아가며, 사회에 구성원으로서 건강한 인격체로 독립적인 사람으로 성장할 수 있도록 돕겠습니다.
-                      </p>
-                    </div>
-                    <div style={{ paddingLeft: '20px', borderLeft: '3px solid rgba(212, 240, 232, 0.4)' }}>
-                      <p>
-                        삶의 방향성을 회복하고, 내담자가 미래를 다시 디자인 할 수 있도록 최선을 다하겠습니다.
-                      </p>
-                    </div>
+                    <p style={{ marginBottom: '16px' }}>
+                      '마인드 가든'의 모든 상담사들은 내담자의 마음을 깊이 들여다보고, 각자의 고유한 모습을 발견하고, 스스로의 자신을 수용하고 통합 해 나갈 수 있도록 돕겠습니다.
+                    </p>
+                    <p style={{ marginBottom: '16px' }}>
+                      적응적이고 건강한 방식으로 삶을 디자인하고, 건강한 방향으로 자리를 잡아가며, 사회에 구성원으로서 건강한 인격체로 독립적인 사람으로 성장할 수 있도록 돕겠습니다.
+                    </p>
+                    <p>
+                      삶의 방향성을 회복하고, 내담자가 미래를 다시 디자인 할 수 있도록 최선을 다하겠습니다.
+                    </p>
                   </div>
                 </div>
               </div>

@@ -56,6 +56,7 @@ export default function Navigation() {
       label: '소개', 
       href: '#about',
       submenu: [
+        { label: '마인드가든 소개', href: '/about/mindgarden' },
         { label: '프로필 소개', href: '/counselors' }
       ]
     },

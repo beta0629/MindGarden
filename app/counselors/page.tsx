@@ -70,7 +70,7 @@ export default function CounselorsPage() {
                 letterSpacing: '-0.02em',
                 wordBreak: 'keep-all'
               }}>
-                마인드가든 선생님들
+                전문가
               </h1>
               <p style={{
                 fontSize: '1.25rem',

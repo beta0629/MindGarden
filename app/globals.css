@@ -752,10 +752,10 @@ a.feature-card {
 }
 
 a.feature-card:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-2);
-    border-color: var(--accent-sky);
-    background: linear-gradient(to bottom, var(--surface-1) 0%, rgba(184, 212, 227, 0.08) 100%);
+    transform: translateY(-4px);
+    box-shadow: 0 8px 30px rgba(255, 212, 184, 0.25), 0 4px 12px rgba(0, 0, 0, 0.08);
+    border-color: rgba(255, 212, 184, 0.55);
+    background: linear-gradient(to bottom, rgba(255, 253, 250, 1) 0%, rgba(255, 251, 247, 0.98) 100%);
 }
 
 .feature-title,

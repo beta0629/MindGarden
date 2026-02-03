@@ -123,56 +123,26 @@ ADHD인 중에서는 의사, 변호사, 전문직종사자, CEO 등도 계십니
                 <div
                   key={section.id}
                   id={section.id}
+                  className="value-section-card"
                   style={{
-                    background: `linear-gradient(to bottom, var(--white) 0%, ${section.color}08 100%)`,
+                    background: 'linear-gradient(to bottom, rgba(255, 252, 248, 0.98) 0%, rgba(255, 250, 245, 0.95) 100%)',
                     borderRadius: 'var(--radius-lg)',
-                    padding: '48px 40px',
-                    boxShadow: 'var(--shadow-1)',
-                    border: `2px solid ${section.color}40`,
-                    borderLeft: `6px solid ${section.color}`,
-                    position: 'relative',
-                    transition: 'transform 0.2s, box-shadow 0.2s',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-4px)';
-                    e.currentTarget.style.boxShadow = 'var(--shadow-2)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = 'var(--shadow-1)';
+                    padding: '40px 32px',
+                    boxShadow: '0 6px 24px rgba(255, 212, 184, 0.25), 0 3px 12px rgba(0, 0, 0, 0.12)',
+                    border: '1px solid rgba(255, 212, 184, 0.35)',
+                    transition: 'all 0.3s ease'
                   }}
                 >
-                  {/* 섹션 번호 */}
-                  <div style={{
-                    position: 'absolute',
-                    top: '24px',
-                    left: '32px',
-                    width: '48px',
-                    height: '48px',
-                    borderRadius: '50%',
-                    background: section.color,
-                    color: 'white',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '1.25rem',
-                    fontWeight: '700',
-                    boxShadow: `0 4px 12px ${section.color}40`
-                  }}>
-                    {index + 1}
-                  </div>
-
                   {/* 제목 */}
                   <h2 
                     className="about-section-title"
                     style={{
-                      fontSize: '1.75rem',
+                      fontSize: '1.5rem',
                       fontWeight: '700',
                       color: 'var(--text-main)',
                       marginBottom: '24px',
-                      paddingRight: '120px',
-                      paddingTop: '8px',
-                      paddingLeft: '72px',
+                      paddingBottom: '16px',
+                      borderBottom: '2px solid rgba(255, 212, 184, 0.3)',
                       lineHeight: '1.5',
                       letterSpacing: '-0.01em',
                       wordBreak: 'keep-all'
@@ -185,14 +155,12 @@ ADHD인 중에서는 의사, 변호사, 전문직종사자, CEO 등도 계십니
                   <div style={{
                     fontSize: '1.0625rem',
                     lineHeight: '2',
-                    color: 'var(--text-sub)',
-                    paddingLeft: '20px',
-                    borderLeft: `3px solid ${section.color}40`
+                    color: 'var(--text-sub)'
                   }}>
                     {section.content.split('\n').map((paragraph, pIndex) => (
                       paragraph.trim() && (
                         <p key={pIndex} style={{
-                          marginBottom: paragraph.trim() ? '20px' : '0',
+                          marginBottom: pIndex < section.content.split('\n').filter(p => p.trim()).length - 1 ? '16px' : '0',
                           wordBreak: 'keep-all',
                           overflowWrap: 'break-word'
                         }}>

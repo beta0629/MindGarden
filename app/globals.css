@@ -726,10 +726,15 @@ main:not(:has(.hero-section)) .gnb .gnb-cta {
     margin-bottom: 26px;
 }
 
-.feature-grid,
-.program-grid {
+.feature-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.program-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 16px;
 }
 

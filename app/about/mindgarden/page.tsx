@@ -4,8 +4,24 @@ import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import Link from 'next/link';
 
+interface ComorbidityData {
+  overallRate: { min: number; max: number };
+  disorders: Array<{ name: string; min: number; max: number }>;
+  otherDisorders: string[];
+}
+
+interface Section {
+  id: string;
+  title: string;
+  content: string;
+  icon: string;
+  color: string;
+  hasChart?: boolean;
+  comorbidityData?: ComorbidityData;
+}
+
 export default function MindGardenAboutPage() {
-  const sections = [
+  const sections: Section[] = [
     {
       id: 'responsibility',
       title: '경력이 쌓일수록 늘어나는 책임감',

@@ -15,6 +15,7 @@ export default function AdminNavigation() {
     { href: '/admin/gallery', label: '갤러리 관리' },
     { href: '/admin/videos', label: '히어로 비디오 관리' },
     { href: '/admin/reviews', label: '후기 관리' },
+    { href: '/admin/counselors', label: '상담사 관리' },
   ];
 
   return (

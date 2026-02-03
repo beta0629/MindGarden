@@ -188,10 +188,10 @@ export default async function Home() {
                 <div className="feature-title">최초 ADHD와 동반질환 전문 심리상담센터</div>
                 <div className="feature-body">15년의 임상경험과 전문성을 바탕으로 한 맞춤 상담</div>
               </a>
-              <div className="feature-card">
-                <div className="feature-title">따뜻한 환경</div>
-                <div className="feature-body">불안이 줄고 편안해지는 밝은 상담실</div>
-              </div>
+              <a href="/counselors" className="feature-card" style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
+                <div className="feature-title">상담사와 치료사 선생님들</div>
+                <div className="feature-body">프로필 및 약력 소개</div>
+              </a>
               <div className="feature-card">
                 <div className="feature-title">지속 가능한 변화</div>
                 <div className="feature-body">일상에 적용 가능한 루틴/실행 전략 중심</div>

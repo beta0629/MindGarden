@@ -185,7 +185,7 @@ export default async function Home() {
             </p>
             <div className="feature-grid">
               <a href="/about/mindgarden" className="feature-card" style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
-                <div className="feature-title">최초 ADHD와 동반질환 전문 심리상담센터</div>
+                <div className="feature-title">전문특화</div>
                 <div className="feature-body">15년의 임상경험과 전문성을 바탕으로 한 맞춤 상담</div>
               </a>
               <a href="/counselors" className="feature-card" style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>

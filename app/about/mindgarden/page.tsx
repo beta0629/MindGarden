@@ -124,8 +124,7 @@ ADHD인 중에서는 의사, 변호사, 전문직종사자, CEO 등도 계십니
                 letterSpacing: '-0.02em',
                 wordBreak: 'keep-all'
               }}>
-                최초 ADHD와 동반질환<br />
-                전문 심리상담센터
+                전문특화
               </h1>
               <p style={{
                 fontSize: '1.25rem',

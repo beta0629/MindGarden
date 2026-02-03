@@ -56,8 +56,8 @@ export default function Navigation() {
       href: '#about',
       submenu: [
         { label: '가치관', href: '/values' },
-        { label: '마인드가든 소개', href: '/about/mindgarden' },
-        { label: '프로필 소개', href: '/counselors' }
+        { label: '전문특화', href: '/about/mindgarden' },
+        { label: '전문가', href: '/counselors' }
       ]
     },
     { label: '상담프로그램', href: '#programs' },

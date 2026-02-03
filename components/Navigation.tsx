@@ -128,7 +128,7 @@ export default function Navigation() {
                   key={m.href}
                   className={m.submenu ? 'has-submenu' : ''}
                   onMouseEnter={() => m.submenu && setHoveredMenu(m.href)}
-                  onMouseLeave={() => setHoveredMenu(null)}
+                  onMouseLeave={() => m.submenu && setHoveredMenu(null)}
                 >
                   {m.href.startsWith('/') ? (
                     <Link 
@@ -149,7 +149,11 @@ export default function Navigation() {
                     </a>
                   )}
                   {m.submenu && hoveredMenu === m.href && (
-                    <ul className="gnb-submenu">
+                    <ul 
+                      className="gnb-submenu"
+                      onMouseEnter={() => setHoveredMenu(m.href)}
+                      onMouseLeave={() => setHoveredMenu(null)}
+                    >
                       {m.submenu.map((sub) => (
                         <li key={sub.href}>
                           <Link 

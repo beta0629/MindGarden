@@ -6,11 +6,11 @@
 
 /* CSS Reset & Variables */
 :root {
-    /* 밝은 파스텔 톤 - 상담소에 맞는 부드러운 색상 */
-    --bg-color: #ffffff;
-    --bg-light: #fafafa;
-    --bg-pastel-1: #f8f5f0;
-    --bg-pastel-2: #fef9f3;
+    /* 따뜻한 톤 - 상담소에 맞는 부드러운 색상 */
+    --bg-color: #FFF8F0;
+    --bg-light: #FFF5E6;
+    --bg-pastel-1: #FEF7ED;
+    --bg-pastel-2: #FFF5E6;
     
     --text-main: #2c2c2c;
     --text-sub: #6b6b6b;

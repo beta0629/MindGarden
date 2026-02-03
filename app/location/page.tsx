@@ -1,9 +1,119 @@
 'use client';
 
+import { useEffect, useRef } from 'react';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 
+declare global {
+  interface Window {
+    kakao: any;
+  }
+}
+
 export default function LocationPage() {
+  const mapRef = useRef<HTMLDivElement>(null);
+  const mapInstanceRef = useRef<any>(null);
+
+  useEffect(() => {
+    // 카카오맵 API 스크립트 동적 로드
+    const script = document.createElement('script');
+    script.async = true;
+    script.src = `//dapi.kakao.com/v2/maps/sdk.js?appkey=${process.env.NEXT_PUBLIC_KAKAO_MAP_API_KEY || 'YOUR_KAKAO_MAP_API_KEY'}&autoload=false`;
+    script.onload = () => {
+      if (window.kakao && window.kakao.maps) {
+        window.kakao.maps.load(() => {
+          if (mapRef.current && !mapInstanceRef.current) {
+            // 주소를 좌표로 변환 (Geocoding)
+            const geocoder = new window.kakao.maps.services.Geocoder();
+            const address = '인천광역시 연수구 송도과학로 123';
+            
+            geocoder.addressSearch(address, (result: any, status: any) => {
+              if (status === window.kakao.maps.services.Status.OK) {
+                const coords = new window.kakao.maps.LatLng(result[0].y, result[0].x);
+                
+                // 지도 생성
+                const mapOption = {
+                  center: coords,
+                  level: 3 // 지도의 확대 레벨
+                };
+                
+                const map = new window.kakao.maps.Map(mapRef.current, mapOption);
+                mapInstanceRef.current = map;
+                
+                // 마커 생성
+                const marker = new window.kakao.maps.Marker({
+                  position: coords,
+                  map: map
+                });
+                
+                // 인포윈도우 생성
+                const infowindow = new window.kakao.maps.InfoWindow({
+                  content: `
+                    <div style="padding: 10px; font-size: 14px; line-height: 1.5;">
+                      <strong style="font-size: 16px; display: block; margin-bottom: 5px;">마인드 가든 심리상담센터</strong>
+                      <div>송도 아크리아2 204호</div>
+                      <div>${address}</div>
+                    </div>
+                  `
+                });
+                
+                // 마커 클릭 시 인포윈도우 표시
+                window.kakao.maps.event.addListener(marker, 'click', () => {
+                  infowindow.open(map, marker);
+                });
+                
+                // 지도 로드 시 인포윈도우 자동 표시
+                infowindow.open(map, marker);
+              } else {
+                // 주소 검색 실패 시 기본 좌표 사용 (송도 아크리아2 근처)
+                const defaultCoords = new window.kakao.maps.LatLng(37.3885, 126.6584);
+                
+                const mapOption = {
+                  center: defaultCoords,
+                  level: 3
+                };
+                
+                const map = new window.kakao.maps.Map(mapRef.current, mapOption);
+                mapInstanceRef.current = map;
+                
+                const marker = new window.kakao.maps.Marker({
+                  position: defaultCoords,
+                  map: map
+                });
+                
+                const infowindow = new window.kakao.maps.InfoWindow({
+                  content: `
+                    <div style="padding: 10px; font-size: 14px; line-height: 1.5;">
+                      <strong style="font-size: 16px; display: block; margin-bottom: 5px;">마인드 가든 심리상담센터</strong>
+                      <div>송도 아크리아2 204호</div>
+                      <div>인천광역시 연수구 송도과학로 123</div>
+                    </div>
+                  `
+                });
+                
+                window.kakao.maps.event.addListener(marker, 'click', () => {
+                  infowindow.open(map, marker);
+                });
+                
+                infowindow.open(map, marker);
+              }
+            });
+          }
+        });
+      }
+    };
+    
+    document.head.appendChild(script);
+    
+    return () => {
+      // 컴포넌트 언마운트 시 스크립트 제거
+      const existingScript = document.querySelector(`script[src*="dapi.kakao.com"]`);
+      if (existingScript) {
+        existingScript.remove();
+      }
+    };
+  }, []);
+
   return (
     <main id="top">
       <Navigation />
@@ -170,20 +280,16 @@ export default function LocationPage() {
               }}>
                 🗺️ 지도
               </h2>
-              <div style={{
-                width: '100%',
-                height: '400px',
-                background: 'rgba(255, 212, 184, 0.1)',
-                borderRadius: 'var(--radius-md)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'var(--text-sub)',
-                fontSize: '1.125rem',
-                border: '2px dashed rgba(255, 212, 184, 0.3)'
-              }}>
-                지도 영역 (추후 지도 API 연동 예정)
-              </div>
+              <div 
+                ref={mapRef}
+                style={{
+                  width: '100%',
+                  height: '400px',
+                  borderRadius: 'var(--radius-md)',
+                  overflow: 'hidden',
+                  border: '2px solid rgba(255, 212, 184, 0.3)'
+                }}
+              />
             </div>
 
             {/* 하단 CTA */}

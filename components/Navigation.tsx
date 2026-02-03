@@ -52,7 +52,7 @@ export default function Navigation() {
 
   const menu = [
     { 
-      label: '소개', 
+      label: '센터소개', 
       href: '#about',
       submenu: [
         { label: '가치관', href: '/values' },
@@ -60,7 +60,7 @@ export default function Navigation() {
         { label: '프로필 소개', href: '/counselors' }
       ]
     },
-    { label: '프로그램', href: '#programs' },
+    { label: '상담프로그램', href: '#programs' },
     { label: '칼럼', href: '/blog' },
     { label: '후기', href: '/reviews' },
     { label: '공간', href: '#gallery' },

@@ -8,7 +8,7 @@ export default function AdminNavigation() {
 
   const menuItems = [
     { href: '/admin', label: '관리자 홈' },
-    { href: '/admin/blog', label: '블로그 관리' },
+    { href: '/admin/blog', label: '칼럼 관리' },
     { href: '/admin/consultation', label: '상담 문의 관리' },
     { href: '/admin/popups', label: '팝업 관리' },
     { href: '/admin/banners', label: '배너 관리' },

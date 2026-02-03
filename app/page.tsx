@@ -189,7 +189,7 @@ export default async function Home() {
                 <div className="feature-body">15년의 임상경험과 전문성을 바탕으로 한 맞춤 상담</div>
               </a>
               <a href="/counselors" className="feature-card" style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
-                <div className="feature-title">마인드가든 선생님들</div>
+                <div className="feature-title">전문가</div>
                 <div className="feature-body">프로필 및 약력 소개</div>
               </a>
               <div className="feature-card">

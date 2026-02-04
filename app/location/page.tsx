@@ -184,21 +184,60 @@ export default function LocationPage() {
                 borderRadius: 'var(--radius-md)',
                 overflow: 'hidden',
                 border: '2px solid rgba(255, 212, 184, 0.3)',
-                position: 'relative'
+                position: 'relative',
+                background: 'linear-gradient(to bottom, rgba(255, 252, 248, 0.98) 0%, rgba(255, 250, 245, 0.95) 100%)',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '20px',
+                padding: '40px'
               }}>
-                <iframe
-                  src={mapEmbedUrl}
-                  width="100%"
-                  height="100%"
+                <div style={{
+                  fontSize: '1.125rem',
+                  color: 'var(--text-sub)',
+                  textAlign: 'center',
+                  lineHeight: '1.8'
+                }}>
+                  <p style={{ marginBottom: '16px', fontWeight: '600', color: 'var(--text-main)' }}>
+                    마인드 가든 심리상담센터
+                  </p>
+                  <p style={{ marginBottom: '8px' }}>
+                    송도 아크리아2 204호
+                  </p>
+                  <p style={{ marginBottom: '0' }}>
+                    인천광역시 연수구 송도과학로 123
+                  </p>
+                </div>
+                <a
+                  href="https://map.naver.com/v5/search/인천광역시 연수구 송도과학로 123"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   style={{
-                    border: 'none',
-                    borderRadius: 'var(--radius-md)'
+                    display: 'inline-block',
+                    padding: '12px 24px',
+                    background: 'rgba(168, 213, 186, 0.8)',
+                    color: 'white',
+                    borderRadius: 'var(--radius-sm)',
+                    fontSize: '1rem',
+                    fontWeight: '600',
+                    textDecoration: 'none',
+                    transition: 'all 0.2s',
+                    boxShadow: 'var(--shadow-1)'
                   }}
-                  allowFullScreen
-                  loading="lazy"
-                  referrerPolicy="no-referrer-when-downgrade"
-                  title="마인드 가든 심리상담센터 위치"
-                />
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                    e.currentTarget.style.boxShadow = 'var(--shadow-2)';
+                    e.currentTarget.style.background = 'rgba(168, 213, 186, 1)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = 'var(--shadow-1)';
+                    e.currentTarget.style.background = 'rgba(168, 213, 186, 0.8)';
+                  }}
+                >
+                  네이버 지도에서 보기
+                </a>
               </div>
             </div>
 

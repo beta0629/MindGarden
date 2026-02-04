@@ -304,6 +304,43 @@ public class AdminUserController {
     }
     
     /**
+     * 사용자 비밀번호 초기화 (관리자 전용)
+     * 기존 비밀번호 없이 관리자가 직접 비밀번호를 초기화할 수 있습니다.
+     */
+    @PutMapping("/{userId}/reset-password")
+    public ResponseEntity<Map<String, Object>> resetUserPassword(
+            @PathVariable Long userId,
+            @RequestParam String newPassword) {
+        try {
+            log.info("🔑 관리자 권한으로 사용자 비밀번호 초기화: userId={}", userId);
+            
+            // 사용자 조회
+            User user = userService.findActiveByIdOrThrow(userId);
+            
+            // 비밀번호 변경 (기존 비밀번호 불필요)
+            userService.changePassword(userId, newPassword);
+            
+            log.info("✅ 관리자 권한으로 사용자 비밀번호 초기화 완료: userId={}", userId);
+            
+            Map<String, Object> successResponse = new HashMap<>();
+            successResponse.put("success", true);
+            successResponse.put("message", "비밀번호가 성공적으로 초기화되었습니다.");
+            successResponse.put("userId", userId);
+            
+            return ResponseEntity.ok(successResponse);
+            
+        } catch (Exception e) {
+            log.error("❌ 사용자 비밀번호 초기화 중 오류 발생: userId={}, error={}", 
+                    userId, e.getMessage(), e);
+            
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", "비밀번호 초기화 중 오류가 발생했습니다: " + e.getMessage());
+            return ResponseEntity.badRequest().body(errorResponse);
+        }
+    }
+    
+    /**
      * 사용자 지점 이동 (관리자 전용)
      */
     @PutMapping("/{userId}/branch")

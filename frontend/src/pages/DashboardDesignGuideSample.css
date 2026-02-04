@@ -563,7 +563,7 @@
 /* ==================== KPI 카드 (디자인 가이드 스펙) ==================== */
 .kpi-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
   gap: 24px;
 }
 
@@ -741,6 +741,300 @@
   color: white;
 }
 
+/* ==================== 세로 배치 컴포넌트 (2열 그리드) ==================== */
+.vertical-layout-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.vertical-section {
+  background: var(--dashboard-surface-light);
+  border: 1px solid var(--dashboard-border-light);
+  border-radius: 16px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  min-height: 400px;
+}
+
+.dashboard-design-guide-sample.dark .vertical-section {
+  background: var(--dashboard-surface-dark);
+  border-color: var(--dashboard-border-dark);
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+}
+
+.section-subtitle {
+  font-size: 13px;
+  color: var(--dashboard-text-secondary-light);
+  margin: 4px 0 0 0;
+}
+
+.dashboard-design-guide-sample.dark .section-subtitle {
+  color: var(--dashboard-text-secondary-dark);
+}
+
+.section-controls {
+  display: flex;
+  gap: 8px;
+}
+
+.control-btn {
+  padding: 6px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--dashboard-text-secondary-light);
+  background: transparent;
+  border: 1px solid var(--dashboard-border-light);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.control-btn:hover {
+  background: var(--dashboard-bg-light);
+}
+
+.control-btn.active {
+  color: var(--dashboard-primary);
+  background: rgba(79, 70, 229, 0.1);
+  border-color: var(--dashboard-primary);
+}
+
+.dashboard-design-guide-sample.dark .control-btn {
+  color: var(--dashboard-text-secondary-dark);
+  border-color: var(--dashboard-border-dark);
+}
+
+.dashboard-design-guide-sample.dark .control-btn:hover {
+  background: var(--dashboard-bg-dark);
+}
+
+.dashboard-design-guide-sample.dark .control-btn.active {
+  background: rgba(79, 70, 229, 0.2);
+}
+
+/* 차트 섹션 */
+.chart-placeholder {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+}
+
+.chart-content {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.chart-legend {
+  display: flex;
+  gap: 24px;
+  justify-content: center;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--dashboard-text-secondary-light);
+}
+
+.dashboard-design-guide-sample.dark .legend-item {
+  color: var(--dashboard-text-secondary-dark);
+}
+
+.legend-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.legend-dot-blue {
+  background: #3b82f6;
+}
+
+.legend-dot-indigo {
+  background: #6366f1;
+}
+
+.chart-area {
+  flex: 1;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 20px 0;
+}
+
+.chart-line {
+  flex: 1;
+  border-bottom: 2px solid var(--dashboard-border-light);
+  border-left: 2px solid var(--dashboard-border-light);
+  margin-bottom: 8px;
+  position: relative;
+}
+
+.dashboard-design-guide-sample.dark .chart-line {
+  border-color: var(--dashboard-border-dark);
+}
+
+.chart-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--dashboard-text-secondary-light);
+  padding: 0 8px;
+}
+
+.dashboard-design-guide-sample.dark .chart-labels {
+  color: var(--dashboard-text-secondary-dark);
+}
+
+/* 리스트 섹션 */
+.list-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.list-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  background: var(--dashboard-bg-light);
+  border-radius: 12px;
+  transition: all 0.2s;
+}
+
+.list-item:hover {
+  background: var(--dashboard-surface-light);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.dashboard-design-guide-sample.dark .list-item {
+  background: var(--dashboard-bg-dark);
+}
+
+.dashboard-design-guide-sample.dark .list-item:hover {
+  background: var(--dashboard-surface-dark);
+}
+
+.list-item-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 700;
+  color: white;
+  flex-shrink: 0;
+}
+
+.list-item-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.list-item-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--dashboard-text-light);
+}
+
+.dashboard-design-guide-sample.dark .list-item-name {
+  color: var(--dashboard-text-dark);
+}
+
+.list-item-rating {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.rating-value {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--dashboard-text-secondary-light);
+  min-width: 50px;
+}
+
+.dashboard-design-guide-sample.dark .rating-value {
+  color: var(--dashboard-text-secondary-dark);
+}
+
+.rating-bar {
+  flex: 1;
+  height: 8px;
+  background: var(--dashboard-border-light);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.dashboard-design-guide-sample.dark .rating-bar {
+  background: var(--dashboard-border-dark);
+}
+
+.rating-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.section-footer {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--dashboard-border-light);
+}
+
+.dashboard-design-guide-sample.dark .section-footer {
+  border-top-color: var(--dashboard-border-dark);
+}
+
+.view-all-btn {
+  width: 100%;
+  padding: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--dashboard-primary);
+  background: rgba(79, 70, 229, 0.1);
+  border: 1px solid var(--dashboard-primary);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.view-all-btn:hover {
+  background: rgba(79, 70, 229, 0.15);
+  transform: translateY(-1px);
+}
+
+.dashboard-design-guide-sample.dark .view-all-btn {
+  background: rgba(79, 70, 229, 0.2);
+}
+
+.dashboard-design-guide-sample.dark .view-all-btn:hover {
+  background: rgba(79, 70, 229, 0.3);
+}
+
 /* ==================== 추가 콘텐츠 ==================== */
 .content-section {
   background: var(--dashboard-surface-light);
@@ -874,6 +1168,11 @@
     grid-template-columns: 1fr;
     gap: 16px;
   }
+
+  .vertical-layout-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
 }
 
 /* 태블릿 */
@@ -921,6 +1220,11 @@
     grid-template-columns: repeat(2, 1fr);
     gap: 20px;
   }
+
+  .vertical-layout-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
 }
 
 /* 데스크톱 */
@@ -930,7 +1234,7 @@
   }
   
   .kpi-grid {
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    grid-template-columns: repeat(3, 1fr);
     gap: 24px;
   }
 }

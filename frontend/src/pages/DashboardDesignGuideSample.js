@@ -227,6 +227,89 @@ const DashboardDesignGuideSample = () => {
                 ))}
               </div>
 
+              {/* 세로 배치 컴포넌트 샘플 - 2열 그리드 */}
+              <div className="vertical-layout-grid">
+                {/* 왼쪽: 차트/그래프 섹션 */}
+                <div className="vertical-section chart-section">
+                  <div className="section-header">
+                    <div>
+                      <h3 className="section-title">시스템 성장 개요</h3>
+                      <p className="section-subtitle">입주사 및 상담사 증가 추이 (최근 6개월)</p>
+                    </div>
+                    <div className="section-controls">
+                      <button className="control-btn active">월간</button>
+                      <button className="control-btn">주간</button>
+                    </div>
+                  </div>
+                  <div className="chart-placeholder">
+                    <div className="chart-content">
+                      <div className="chart-legend">
+                        <div className="legend-item">
+                          <span className="legend-dot legend-dot-blue"></span>
+                          <span>입주사 수</span>
+                        </div>
+                        <div className="legend-item">
+                          <span className="legend-dot legend-dot-indigo"></span>
+                          <span>활성 상담사</span>
+                        </div>
+                      </div>
+                      <div className="chart-area">
+                        <div className="chart-line"></div>
+                        <div className="chart-labels">
+                          <span>5월</span>
+                          <span>6월</span>
+                          <span>7월</span>
+                          <span>8월</span>
+                          <span>9월</span>
+                          <span>10월</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 오른쪽: 리스트 섹션 */}
+                <div className="vertical-section list-section">
+                  <div className="section-header">
+                    <div>
+                      <h3 className="section-title">우수 상담사 평점</h3>
+                    </div>
+                  </div>
+                  <div className="list-content">
+                    {[
+                      { name: '김상담', rating: 4.9, color: 'blue', initial: '김' },
+                      { name: '이마음', rating: 4.8, color: 'green', initial: '이' },
+                      { name: '박치유', rating: 4.7, color: 'orange', initial: '박' },
+                      { name: '최행복', rating: 4.6, color: 'indigo', initial: '최' }
+                    ].map((consultant, idx) => (
+                      <div key={idx} className="list-item">
+                        <div className="list-item-avatar" style={{ backgroundColor: `var(--dashboard-primary-${consultant.color})` }}>
+                          {consultant.initial}
+                        </div>
+                        <div className="list-item-content">
+                          <div className="list-item-name">{consultant.name}</div>
+                          <div className="list-item-rating">
+                            <span className="rating-value">{consultant.rating}/5.0</span>
+                            <div className="rating-bar">
+                              <div 
+                                className="rating-bar-fill" 
+                                style={{ 
+                                  width: `${(consultant.rating / 5) * 100}%`,
+                                  backgroundColor: `var(--dashboard-primary-${consultant.color})`
+                                }}
+                              ></div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="section-footer">
+                    <button className="view-all-btn">전체 순위 보기</button>
+                  </div>
+                </div>
+              </div>
+
               {/* 추가 콘텐츠 예시 */}
               <div className="content-section">
                 <h3 className="section-title">디자인 가이드 스펙 준수</h3>

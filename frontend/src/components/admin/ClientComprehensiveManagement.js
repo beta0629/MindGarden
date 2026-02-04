@@ -21,6 +21,7 @@ import ClientStatisticsTab from './ClientComprehensiveManagement/ClientStatistic
 import ClientModal from './ClientComprehensiveManagement/ClientModal';
 import UnifiedFilterSearch from '../ui/FilterSearch/UnifiedFilterSearch';
 import MGButton from '../common/MGButton';
+import PasswordResetModal from './PasswordResetModal';
 import { Plus } from 'lucide-react';
 
 /**
@@ -62,6 +63,8 @@ const ClientComprehensiveManagement = () => {
     const [showModal, setShowModal] = useState(false);
     const [modalType, setModalType] = useState(''); // 'create', 'edit', 'delete'
     const [editingClient, setEditingClient] = useState(null);
+    const [showPasswordResetModal, setShowPasswordResetModal] = useState(false);
+    const [passwordResetClient, setPasswordResetClient] = useState(null);
     const [formData, setFormData] = useState({
         name: '',
         email: '',
@@ -283,6 +286,35 @@ const ClientComprehensiveManagement = () => {
         setShowModal(true);
     }, []);
 
+    const handleResetPassword = useCallback((client) => {
+        setPasswordResetClient(client);
+        setShowPasswordResetModal(true);
+    }, []);
+
+    const handlePasswordResetConfirm = useCallback(async (newPassword) => {
+        if (!passwordResetClient) return;
+
+        try {
+            console.log('🔑 내담자 비밀번호 초기화 시작:', passwordResetClient.id);
+            
+            const endpoint = `/api/v1/admin/user-management/${passwordResetClient.id}/reset-password?newPassword=${encodeURIComponent(newPassword)}`;
+            const response = await apiPut(endpoint, {});
+            
+            console.log('✅ 비밀번호 초기화 응답:', response);
+            
+            if (response && (response.success !== false)) {
+                showSuccess('비밀번호가 성공적으로 초기화되었습니다.');
+                setShowPasswordResetModal(false);
+                setPasswordResetClient(null);
+            } else {
+                throw new Error(response?.message || '비밀번호 초기화에 실패했습니다.');
+            }
+        } catch (error) {
+            console.error('❌ 비밀번호 초기화 실패:', error);
+            showError('비밀번호 초기화 중 오류가 발생했습니다: ' + (error.message || '알 수 없는 오류'));
+        }
+    }, [passwordResetClient]);
+
     const handleCloseModal = useCallback(() => {
         setShowModal(false);
         setModalType('');
@@ -419,6 +451,7 @@ const ClientComprehensiveManagement = () => {
                             onClientSelect={handleClientSelect}
                             onEditClient={handleEditClient}
                             onDeleteClient={handleDeleteClient}
+                            onResetPassword={handleResetPassword}
                             consultants={consultants}
                             mappings={mappings}
                             consultations={consultations}
@@ -508,6 +541,19 @@ const ClientComprehensiveManagement = () => {
                         userStatusOptions={userStatusOptions}
                     />
             )}
+
+                {/* 비밀번호 초기화 모달 */}
+                {showPasswordResetModal && passwordResetClient && (
+                    <PasswordResetModal
+                        user={passwordResetClient}
+                        userType="client"
+                        onClose={() => {
+                            setShowPasswordResetModal(false);
+                            setPasswordResetClient(null);
+                        }}
+                        onConfirm={handlePasswordResetConfirm}
+                    />
+                )}
             </div>
         </SimpleLayout>
     );

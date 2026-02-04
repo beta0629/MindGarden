@@ -12,6 +12,7 @@ import { MGConfirmModal } from '../common/MGModal';
 import UnifiedFilterSearch from '../ui/FilterSearch/UnifiedFilterSearch';
 import { getCommonCodes } from '../../utils/commonCodeApi';
 import { sessionManager } from '../../utils/sessionManager';
+import PasswordResetModal from './PasswordResetModal';
 
 const ConsultantComprehensiveManagement = () => {
     const [consultants, setConsultants] = useState([]);
@@ -27,6 +28,8 @@ const ConsultantComprehensiveManagement = () => {
     const [userStatusOptions, setUserStatusOptions] = useState([]);
     const [showModal, setShowModal] = useState(false);
     const [modalType, setModalType] = useState('view');
+    const [showPasswordResetModal, setShowPasswordResetModal] = useState(false);
+    const [passwordResetConsultant, setPasswordResetConsultant] = useState(null);
     const [formData, setFormData] = useState({
         name: '', // 이름 (선택사항, 없으면 이메일 로컬 파트에서 자동 생성)
         email: '', // 표준화 2025-12-08: 이메일만 입력받음 (userId 자동 생성)
@@ -881,6 +884,34 @@ const ConsultantComprehensiveManagement = () => {
         }
     }, [loadConsultants]);
 
+    const handlePasswordResetConfirm = useCallback(async (newPassword) => {
+        if (!passwordResetConsultant) return;
+
+        try {
+            console.log('🔑 상담사 비밀번호 초기화 시작:', passwordResetConsultant.id);
+            
+            const endpoint = `/api/v1/admin/user-management/${passwordResetConsultant.id}/reset-password?newPassword=${encodeURIComponent(newPassword)}`;
+            const response = await apiPut(endpoint, {});
+            
+            console.log('✅ 비밀번호 초기화 응답:', response);
+            
+            if (response && (response.success !== false)) {
+                window.dispatchEvent(new CustomEvent('showNotification', {
+                    detail: { message: '비밀번호가 성공적으로 초기화되었습니다.', type: 'success' }
+                }));
+                setShowPasswordResetModal(false);
+                setPasswordResetConsultant(null);
+            } else {
+                throw new Error(response?.message || '비밀번호 초기화에 실패했습니다.');
+            }
+        } catch (error) {
+            console.error('❌ 비밀번호 초기화 실패:', error);
+            window.dispatchEvent(new CustomEvent('showNotification', {
+                detail: { message: '비밀번호 초기화 중 오류가 발생했습니다: ' + (error.message || '알 수 없는 오류'), type: 'error' }
+            }));
+        }
+    }, [passwordResetConsultant]);
+
     const handleModalSubmit = useCallback(async (e) => {
         e.preventDefault();
         
@@ -1053,6 +1084,19 @@ const ConsultantComprehensiveManagement = () => {
                                                     preventDoubleClick={true}
                                                 >
                                                     수정
+                                                </Button>
+                                                <Button 
+                                                    variant="secondary"
+                                                    size="small"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setPasswordResetConsultant(consultant);
+                                                        setShowPasswordResetModal(true);
+                                                    }}
+                                                    preventDoubleClick={true}
+                                                    title="비밀번호 초기화"
+                                                >
+                                                    🔑 비밀번호 초기화
                                                 </Button>
                                                 <Button 
                                                     variant="danger"
@@ -1445,6 +1489,19 @@ const ConsultantComprehensiveManagement = () => {
                 cancelText="취소"
                 confirmVariant="danger"
             />
+
+            {/* 비밀번호 초기화 모달 */}
+            {showPasswordResetModal && passwordResetConsultant && (
+                <PasswordResetModal
+                    user={passwordResetConsultant}
+                    userType="consultant"
+                    onClose={() => {
+                        setShowPasswordResetModal(false);
+                        setPasswordResetConsultant(null);
+                    }}
+                    onConfirm={handlePasswordResetConfirm}
+                />
+            )}
         </SimpleLayout>
     );
 };

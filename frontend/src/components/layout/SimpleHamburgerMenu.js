@@ -61,8 +61,19 @@ const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
           'CONSULTANT_MENU': ['CONSULTATION_RECORD_VIEW', 'SCHEDULE_MANAGE']
         };
         
-        // HQ_MASTER는 모든 메뉴 접근 가능
-        const isHqMaster = user?.role === 'HQ_MASTER';
+        // 관리자 역할 체크 (ADMIN, BRANCH_SUPER_ADMIN, HQ_ADMIN, HQ_MASTER 등)
+        const isAdmin = user?.role === 'ADMIN' || 
+                       user?.role === 'BRANCH_SUPER_ADMIN' || 
+                       user?.role === 'HQ_ADMIN' || 
+                       user?.role === 'HQ_MASTER' ||
+                       user?.role === 'SUPER_ADMIN';
+        
+        console.log('🔍 사용자 역할 및 권한 체크:', {
+          role: user?.role,
+          isAdmin,
+          userPermissionsCount: userPermissions?.length || 0,
+          userPermissions: userPermissions
+        });
         
         // 모든 메뉴 그룹의 권한을 한 번에 체크 (병렬 처리)
         const menuAccessChecks = transformedStructure.mainMenus.map(menu => {
@@ -71,7 +82,9 @@ const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
             return { menu, hasAccess: true };
           }
           
-          if (isHqMaster) {
+          // 관리자는 모든 메뉴 접근 가능
+          if (isAdmin) {
+            console.log(`✅ 관리자 권한으로 메뉴 접근 허용: ${menu.label} (${menu.menuGroup})`);
             return { menu, hasAccess: true };
           }
           
@@ -85,6 +98,10 @@ const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
           const hasAccess = requiredPermissions.some(permission => 
             userPermissions && userPermissions.includes(permission)
           );
+          
+          if (!hasAccess) {
+            console.log(`🚫 메뉴 접근 거부: ${menu.label} (${menu.menuGroup}) - 필요한 권한: ${requiredPermissions.join(', ')}`);
+          }
           
           return { menu, hasAccess };
         });
@@ -239,7 +256,25 @@ const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
           <div className="user-info">
             <div className="user-name">{user?.name || '사용자'}</div>
         <div className="user-role">
-          {menuStructure?.roleDisplayName || user?.role || 'USER'}
+          {(() => {
+            // 역할 표시명 우선순위: menuStructure > user.role 매핑 > user.role
+            if (menuStructure?.roleDisplayName) {
+              return menuStructure.roleDisplayName;
+            }
+            
+            // user.role을 한국어로 매핑
+            const roleDisplayMap = {
+              'ADMIN': '관리자',
+              'BRANCH_SUPER_ADMIN': '지점 관리자',
+              'HQ_ADMIN': '본사 관리자',
+              'HQ_MASTER': '본사 마스터',
+              'SUPER_ADMIN': '슈퍼 관리자',
+              'CONSULTANT': '상담사',
+              'CLIENT': '내담자'
+            };
+            
+            return roleDisplayMap[user?.role] || user?.role || '사용자';
+          })()}
         </div>
           </div>
           <button className="simple-hamburger-close" onClick={onClose}>

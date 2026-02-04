@@ -55,13 +55,40 @@ export const loadMenuStructure = async () => {
     } catch (error) {
         console.error('❌ 메뉴 구조 로드 실패:', error);
         
-        // API 실패 시 기본 구조 반환
-        return {
-            menus: [],
-            totalMenus: 0,
-            userRole: 'CLIENT',
-            roleDisplayName: '내담자'
-        };
+        // API 실패 시 사용자 역할에 맞는 기본 구조 반환
+        // sessionManager에서 현재 사용자 정보 가져오기
+        try {
+            const { sessionManager } = await import('./sessionManager');
+            const user = sessionManager.getUser();
+            const userRole = user?.role || 'CLIENT';
+            
+            // 역할별 표시명 매핑
+            const roleDisplayMap = {
+                'ADMIN': '관리자',
+                'BRANCH_SUPER_ADMIN': '지점 관리자',
+                'HQ_ADMIN': '본사 관리자',
+                'HQ_MASTER': '본사 마스터',
+                'SUPER_ADMIN': '슈퍼 관리자',
+                'CONSULTANT': '상담사',
+                'CLIENT': '내담자'
+            };
+            
+            return {
+                menus: [],
+                totalMenus: 0,
+                userRole: userRole,
+                roleDisplayName: roleDisplayMap[userRole] || userRole
+            };
+        } catch (importError) {
+            console.error('❌ sessionManager import 실패:', importError);
+            // 최후의 수단: 기본값 반환
+            return {
+                menus: [],
+                totalMenus: 0,
+                userRole: 'CLIENT',
+                roleDisplayName: '내담자'
+            };
+        }
     }
 };
 

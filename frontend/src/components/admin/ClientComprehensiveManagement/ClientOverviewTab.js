@@ -1,6 +1,6 @@
 // import React from 'react';
 import MGButton from '../../../components/common/MGButton'; // 임시 비활성화
-import { FaUser, FaEdit, FaTrash, FaEye } from 'react-icons/fa';
+import { FaUser, FaEdit, FaTrash, FaEye, FaKey } from 'react-icons/fa';
 import { getUserStatusKoreanNameSync, getUserGradeKoreanNameSync, getUserGradeIconSync, getStatusColorSync } from '../../../utils/codeHelper';
 
 /**
@@ -11,6 +11,7 @@ const ClientOverviewTab = ({
     onClientSelect,
     onEditClient,
     onDeleteClient,
+    onResetPassword,
     consultants,
     mappings,
     consultations
@@ -95,6 +96,16 @@ const ClientOverviewTab = ({
                     >
                         <FaEdit /> 수정
                     </button>
+                    {onResetPassword && (
+                        <button className="mg-button"
+                            variant="secondary"
+                            size="small"
+                            onClick={() => onResetPassword(client)}
+                            title="비밀번호 초기화"
+                        >
+                            <FaKey /> 비밀번호 초기화
+                        </button>
+                    )}
                     <button className="mg-button"
                         variant="secondary"
                         size="small"

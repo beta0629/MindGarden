@@ -167,12 +167,24 @@ export default function LocationPage() {
       // 인증 오류가 발생해도 지도가 표시되도록 여러 번 시도
       setTimeout(() => {
         initMap();
-        // 인증 오류로 인해 지도가 사라질 수 있으므로 재시도
-        setTimeout(() => {
+        // 인증 오류로 인해 지도가 사라질 수 있으므로 지속적으로 재시도
+        const retryInterval = setInterval(() => {
           if (!mapInstanceRef.current && mapRef.current) {
-            initMap();
+            // 지도가 사라진 경우 재생성 시도
+            const mapElement = mapRef.current;
+            if (mapElement && mapElement.children.length === 0) {
+              initMap();
+            }
+          } else {
+            // 지도가 정상적으로 표시되면 재시도 중단
+            clearInterval(retryInterval);
           }
-        }, 500);
+        }, 1000);
+        
+        // 10초 후 재시도 중단
+        setTimeout(() => {
+          clearInterval(retryInterval);
+        }, 10000);
       }, 100);
     };
     

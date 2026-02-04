@@ -1,21 +1,28 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import MindGardenDesignSystemShowcase from './pages/MindGardenDesignSystemShowcase';
-import AdminDashboardSample from './pages/AdminDashboardSample';
+import ReactDOM from 'react-dom/client';
+import 'bootstrap/dist/css/bootstrap.min.css';
+import './styles/unified-design-tokens.css';
+import './index.css';
+import App from './App';
+import AppPublic from './AppPublic';
+import reportWebVitals from './reportWebVitals';
 
-// 공개 경로만을 위한 별도 앱 - 세션 체크 없음
-function AppPublic() {
-  return (
-    <Router>
-      <div className="App">
-        <Routes>
-          <Route path="/design-system" element={<MindGardenDesignSystemShowcase />} />
-          <Route path="/admin-dashboard-sample" element={<AdminDashboardSample />} />
-          <Route path="*" element={<div>페이지를 찾을 수 없습니다.</div>} />
-        </Routes>
-      </div>
-    </Router>
-  );
-}
+const root = ReactDOM.createRoot(document.getElementById('root'));
+
+// 공개 경로 정의
+const publicPaths = [
+  '/design-system-v9',
+  '/design-system',
+  '/landing',
+  '/admin-dashboard-sample',
+  '/dashboard-design-guide-sample',
+  '/test/notifications',
+  '/test/payment',
+  '/test/integration',
+  '/test/ios-cards',
+  '/test/design-sample',
+  '/test/premium-sample',
+  '/test/advanced-sample'
+];
 
 export default AppPublic;

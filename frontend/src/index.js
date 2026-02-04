@@ -15,6 +15,7 @@ const publicPaths = [
   '/design-system',
   '/landing',
   '/admin-dashboard-sample',
+  '/dashboard-design-guide-sample',
   '/test/notifications',
   '/test/payment',
   '/test/integration',

@@ -541,10 +541,24 @@
   }
 }
 
-/* Large Desktop: 1440px 이상 */
-@media (min-width: 1440px) {
+/* Large Desktop: 1440px - 1919px */
+@media (min-width: 1440px) and (max-width: 1919px) {
   .content-wrapper {
-    max-width: 1440px;
+    max-width: 1600px;
+  }
+}
+
+/* XL Desktop: 1920px - 2559px */
+@media (min-width: 1920px) and (max-width: 2559px) {
+  .content-wrapper {
+    max-width: 1800px;
+  }
+}
+
+/* 2K/4K Desktop: 2560px 이상 */
+@media (min-width: 2560px) {
+  .content-wrapper {
+    max-width: 2000px;
   }
 }
 ```

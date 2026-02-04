@@ -33,6 +33,32 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
         
         String requestPath = request.getRequestURI();
         
+        // 프론트엔드 공개 경로는 인증 없이 접근 가능해야 함
+        String[] publicPaths = {
+            "/admin-dashboard-sample",
+            "/design-system",
+            "/design-system-v2",
+            "/landing",
+            "/test/notifications",
+            "/test/payment",
+            "/test/integration",
+            "/test/ios-cards",
+            "/test/design-sample",
+            "/test/premium-sample",
+            "/test/advanced-sample"
+        };
+        
+        // 프론트엔드 공개 경로 체크
+        if (requestPath != null) {
+            for (String publicPath : publicPaths) {
+                if (requestPath.equals(publicPath) || requestPath.startsWith(publicPath + "/")) {
+                    log.debug("프론트엔드 공개 경로 - 인증 오류 무시: path={}", requestPath);
+                    // 필터 체인을 계속 진행하도록 하기 위해 여기서는 아무것도 하지 않음
+                    return;
+                }
+            }
+        }
+        
         // 온보딩 API는 인증 없이 접근 가능해야 함
         if (requestPath != null && requestPath.startsWith("/api/v1/onboarding/")) {
             // 온보딩 API는 인증 오류를 반환하지 않고 계속 진행

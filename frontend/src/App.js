@@ -654,7 +654,7 @@ function AppContent() {
             <Route path="/test/components" element={<ComponentTestPage />} />
             <Route path="/design-system" element={<MindGardenDesignSystemShowcase />} />
             <Route path="/filter-search" element={<FilterSearchShowcase />} />
-            <Route path="/admin-dashboard-sample" element={<AdminDashboardSample />} />
+            {/* /admin-dashboard-sample은 AppPublic에서 처리 */}
             
             {/* 추후 홈페이지 추가 시 사용할 경로들 */}
             {/* <Route path="/homepage" element={<Homepage />} /> */}

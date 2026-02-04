@@ -25,13 +25,33 @@ const publicPaths = [
 ];
 
 // 현재 경로가 공개 경로인지 확인
-const isPublicPath = publicPaths.includes(window.location.pathname);
+function checkPublicPath() {
+  const currentPath = window.location.pathname;
+  const isPublicPath = publicPaths.includes(currentPath);
+  
+  console.log('🔍 현재 경로:', currentPath);
+  console.log('🔍 공개 경로 여부:', isPublicPath);
+  console.log('🔍 공개 경로 목록:', publicPaths);
+  
+  return isPublicPath;
+}
+
+// 초기 렌더링
+const isPublicPath = checkPublicPath();
 
 root.render(
   <React.StrictMode>
     {isPublicPath ? <AppPublic /> : <App />}
   </React.StrictMode>
 );
+
+// 경로 변경 감지 (SPA 라우팅 대응)
+window.addEventListener('popstate', () => {
+  const newIsPublicPath = checkPublicPath();
+  if (newIsPublicPath !== isPublicPath) {
+    window.location.reload();
+  }
+});
 
 // If you want to start measuring performance in your app, pass a function
 // to log results (for example: reportWebVitals(console.log))

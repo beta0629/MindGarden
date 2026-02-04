@@ -53,31 +53,33 @@ const DashboardDesignGuideSample = () => {
   const kpiData = [
     {
       id: 1,
-      label: '총 사용자',
-      value: '2,456',
+      label: '총 입주사',
+      value: '124',
       change: '+12%',
       changeType: 'up',
-      icon: 'group',
-      color: 'indigo'
+      icon: 'apartment',
+      color: 'indigo',
+      detail: '전월 대비 14개 증가'
     },
     {
       id: 2,
-      label: '이번 달 예약 건수',
-      value: '3,420',
-      change: '+18%',
+      label: '활성 상담 세션',
+      value: '842',
+      change: '+5.4%',
       changeType: 'up',
-      icon: 'event_note',
-      color: 'purple'
+      icon: 'psychology',
+      color: 'purple',
+      detail: '현재 진행중인 상담 건수'
     },
     {
       id: 3,
-      label: '상담 완료율',
-      value: '94.2%',
-      change: '+2.4%',
+      label: '이번 달 매출',
+      value: '₩1.25억',
+      change: '+8.2%',
       changeType: 'up',
-      icon: 'check_circle',
+      icon: 'payments',
       color: 'emerald',
-      isDark: true
+      detail: '목표 매출 달성률 92%'
     }
   ];
 
@@ -221,6 +223,7 @@ const DashboardDesignGuideSample = () => {
                       <div className="kpi-card-body">
                         <p className="kpi-label">{kpi.label}</p>
                         <h3 className="kpi-value">{kpi.value}</h3>
+                        {kpi.detail && <p className="kpi-detail">{kpi.detail}</p>}
                       </div>
                     </div>
                   </div>
@@ -314,7 +317,7 @@ const DashboardDesignGuideSample = () => {
               <div className="admin-sections-showcase">
                 <h2 className="showcase-title">관리자 대시보드 섹션별 디자인 샘플</h2>
                 
-                {/* 1. 관리 기능 카드 그리드 */}
+                {/* 1. 관리 기능 카드 그리드 - 섹션별 그룹화 */}
                 <div className="admin-section-sample">
                   <div className="section-header">
                     <div>
@@ -322,23 +325,95 @@ const DashboardDesignGuideSample = () => {
                       <p className="section-subtitle">주요 관리 기능에 빠르게 접근</p>
                     </div>
                   </div>
-                  <div className="management-grid">
-                    {[
-                      { icon: 'group', title: '상담사 관리', desc: '상담사 정보 및 권한 관리' },
-                      { icon: 'person', title: '내담자 관리', desc: '내담자 정보 및 상담 이력 관리' },
-                      { icon: 'link', title: '매칭 관리', desc: '상담사-내담자 매칭 관리' },
-                      { icon: 'calendar_month', title: '예약 관리', desc: '상담 예약 및 일정 관리' },
-                      { icon: 'payments', title: '결제 관리', desc: '결제 내역 및 환불 관리' },
-                      { icon: 'settings', title: '시스템 설정', desc: '시스템 설정 및 구성 관리' }
-                    ].map((item, idx) => (
-                      <div key={idx} className="management-card">
-                        <div className="management-icon">
-                          <span className="material-symbols-outlined">{item.icon}</span>
+                  
+                  {/* 운영 관리 (CORE OPS) */}
+                  <div className="function-group">
+                    <div className="group-label">운영 관리 (CORE OPS)</div>
+                    <div className="management-grid">
+                      {[
+                        { icon: 'schedule', title: '스케줄 관리', desc: '상담사 및 센터의 일정을 통합 관리하고 조정합니다.', gradient: 'blue-green' },
+                        { icon: 'group', title: '상담사 관리', desc: '상담사 프로필 및 자격, 배정 내역을 관리합니다.', gradient: 'purple-blue' },
+                        { icon: 'receipt', title: '회계 및 정산 관리', desc: '상담 회기 등록 및 월별 정산 내역을 자동으로 처리합니다.', gradient: 'blue-green', badge: 'AUTO' }
+                      ].map((item, idx) => (
+                        <div key={idx} className="management-card">
+                          <div className={`management-icon-bg gradient-${item.gradient}`}>
+                            <span className="material-symbols-outlined">{item.icon}</span>
+                          </div>
+                          <div className="management-card-content">
+                            <div className="management-card-header">
+                              <h4 className="management-title">{item.title}</h4>
+                              {item.badge && <span className="management-badge">{item.badge}</span>}
+                            </div>
+                            <p className="management-desc">{item.desc}</p>
+                          </div>
+                          <div className="management-arrow">
+                            <span className="material-symbols-outlined">arrow_forward</span>
+                          </div>
                         </div>
-                        <h4 className="management-title">{item.title}</h4>
-                        <p className="management-desc">{item.desc}</p>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* AI & 데이터 */}
+                  <div className="function-group">
+                    <div className="group-label">AI & 데이터</div>
+                    <div className="management-grid">
+                      {[
+                        { icon: 'psychology', title: '심리검사 리포트 (AI)', desc: 'TCI/MMPI 업로드 및 AI 분석', gradient: 'dark', badge: 'BETA', isDark: true },
+                        { icon: 'dashboard', title: '대시보드 설정', desc: '위젯 및 레이아웃 커스텀', gradient: 'purple-blue' }
+                      ].map((item, idx) => (
+                        <div key={idx} className={`management-card ${item.isDark ? 'card-dark' : ''}`}>
+                          <div className={`management-icon-bg gradient-${item.gradient}`}>
+                            <span className="material-symbols-outlined">{item.icon}</span>
+                          </div>
+                          <div className="management-card-content">
+                            <div className="management-card-header">
+                              <h4 className="management-title">{item.title}</h4>
+                              {item.badge && <span className="management-badge badge-${item.badge.toLowerCase()}">{item.badge}</span>}
+                            </div>
+                            <p className="management-desc">{item.desc}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* 모니터링 */}
+                  <div className="function-group">
+                    <div className="group-label">모니터링</div>
+                    <div className="management-grid">
+                      {[
+                        { icon: 'shield', title: '보안 모니터링', desc: '실시간 보안 위협 감지 중', gradient: 'purple-blue', progress: 98 },
+                        { icon: 'speed', title: 'API 성능 상태', desc: 'Response Time: 45ms', gradient: 'blue-green', metric: '45ms' },
+                        { icon: 'memory', title: '캐시 모니터링', desc: '시스템 리소스 최적화', gradient: 'purple-blue' }
+                      ].map((item, idx) => (
+                        <div key={idx} className="management-card">
+                          <div className={`management-icon-bg gradient-${item.gradient}`}>
+                            <span className="material-symbols-outlined">{item.icon}</span>
+                          </div>
+                          <div className="management-card-content">
+                            <div className="management-card-header">
+                              <h4 className="management-title">{item.title}</h4>
+                            </div>
+                            {item.progress && (
+                              <div className="management-progress">
+                                <div className="progress-bar">
+                                  <div className="progress-fill" style={{ width: `${item.progress}%` }}></div>
+                                </div>
+                                <span className="progress-value">{item.progress}%</span>
+                              </div>
+                            )}
+                            {item.metric && (
+                              <div className="management-metric">
+                                <span className="metric-label">Response Time</span>
+                                <span className="metric-value">{item.metric}</span>
+                              </div>
+                            )}
+                            <p className="management-desc">{item.desc}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
 
@@ -439,6 +514,42 @@ const DashboardDesignGuideSample = () => {
                         ))}
                       </tbody>
                     </table>
+                  </div>
+                </div>
+              </div>
+
+              {/* 하단 카드 섹션 */}
+              <div className="bottom-cards-grid">
+                {/* 플랫폼 성장 추이 */}
+                <div className="trend-card">
+                  <div className="trend-card-header">
+                    <div>
+                      <h3 className="trend-title">플랫폼 성장 추이</h3>
+                      <p className="trend-subtitle">지난 6개월간 신규 사용자 유입 현황</p>
+                    </div>
+                    <span className="trend-badge">최근 6개월</span>
+                  </div>
+                  <div className="trend-content">
+                    <div className="trend-value">2,450</div>
+                    <div className="trend-label">명 (신규 사용자)</div>
+                    <div className="trend-chart">
+                      <div className="chart-line-sample"></div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 시스템 점검 안내 */}
+                <div className="notice-card card-dark">
+                  <div className="notice-icon">
+                    <span className="material-symbols-outlined">notifications</span>
+                    <span className="notice-dot"></span>
+                  </div>
+                  <div className="notice-content">
+                    <h3 className="notice-title">시스템 점검 안내</h3>
+                    <p className="notice-desc">
+                      이번 주 일요일 02:00 ~ 04:00 정기 점검이 예정되어 있습니다.
+                    </p>
+                    <button className="notice-action">고지사항 작성하기</button>
                   </div>
                 </div>
               </div>

@@ -234,6 +234,29 @@ public class TenantContextFilter implements Filter {
             path = path.substring(0, path.indexOf("?"));
         }
 
+        // 프론트엔드 공개 경로 (React Router 경로)
+        // 이 경로들은 API가 아니므로 tenantId 검증 불필요
+        String[] frontendPublicPaths = {
+            "/admin-dashboard-sample",
+            "/design-system",
+            "/design-system-v2",
+            "/landing",
+            "/test/notifications",
+            "/test/payment",
+            "/test/integration",
+            "/test/ios-cards",
+            "/test/design-sample",
+            "/test/premium-sample",
+            "/test/advanced-sample"
+        };
+        
+        for (String frontendPath : frontendPublicPaths) {
+            if (path.equals(frontendPath) || path.startsWith(frontendPath + "/")) {
+                log.debug("프론트엔드 공개 경로 매칭: {} -> {}", requestURI, frontendPath);
+                return true;
+            }
+        }
+
         // 공개 API 경로 목록 (SecurityConfig의 permitAll 경로와 일치해야 함)
         // 표준화 원칙: 온보딩 관련 API는 공개 API로 설정
         // Ops Portal API는 테넌트별 시스템이 아니므로 tenantId 검증 불필요

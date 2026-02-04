@@ -17,10 +17,15 @@ export default function LocationPage() {
   useEffect(() => {
     if (!mapRef.current || mapInstanceRef.current) return;
 
+    // 네이버 지도 API Client ID 확인
+    const clientId = process.env.NEXT_PUBLIC_NAVER_MAP_CLIENT_ID || 'x72gn6c20o';
+    console.log('Naver Map Client ID:', clientId);
+    console.log('Current URL:', typeof window !== 'undefined' ? window.location.href : 'N/A');
+
     // 네이버 지도 API 스크립트 동적 로드
     const script = document.createElement('script');
     script.async = true;
-    script.src = `https://oapi.map.naver.com/openapi/v3/maps.js?ncpClientId=${process.env.NEXT_PUBLIC_NAVER_MAP_CLIENT_ID || 'x72gn6c20o'}`;
+    script.src = `https://oapi.map.naver.com/openapi/v3/maps.js?ncpClientId=${clientId}`;
     
     script.onload = () => {
       // API가 완전히 로드될 때까지 대기

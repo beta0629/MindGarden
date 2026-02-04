@@ -2282,14 +2282,15 @@
 .counselor-card-actions-compact {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   margin-top: 12px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  overflow: hidden;
 }
 
 .counselor-action-btn-small {
-  padding: 6px 12px;
-  font-size: 12px;
+  padding: 6px 10px;
+  font-size: 11px;
   font-weight: 500;
   color: var(--dashboard-primary);
   background: rgba(79, 70, 229, 0.1);
@@ -2297,6 +2298,8 @@
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .dashboard-design-guide-sample.dark .counselor-action-btn-small {
@@ -2323,6 +2326,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
+  min-width: 28px;
 }
 
 .counselor-delete-btn-small:hover {

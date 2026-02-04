@@ -1147,6 +1147,12 @@
   color: #10b981;
 }
 
+/* 상담사 아바타를 아이콘 배경에 표시 */
+.management-icon-bg .counselor-avatar-small {
+  position: relative;
+  z-index: 1;
+}
+
 .gradient-blue-green {
   background: linear-gradient(135deg, #e0f2fe 0%, #d1fae5 100%);
 }
@@ -2025,205 +2031,7 @@
 }
 
 /* ==================== 상담사 관리 상세 화면 ==================== */
-.counselor-management-section {
-  margin-top: 48px;
-}
-
-/* 헤더 */
-.counselor-header {
-  margin-bottom: 32px;
-}
-
-.counselor-header-content {
-  display: flex;
-  align-items: flex-start;
-  gap: 16px;
-}
-
-.counselor-icon-wrapper {
-  padding: 12px;
-  background: rgba(79, 70, 229, 0.1);
-  border-radius: 12px;
-  color: var(--dashboard-primary);
-}
-
-.dashboard-design-guide-sample.dark .counselor-icon-wrapper {
-  background: rgba(79, 70, 229, 0.3);
-}
-
-.counselor-icon-wrapper .material-symbols-outlined {
-  font-size: 32px;
-}
-
-.counselor-title {
-  font-size: 24px;
-  font-weight: 700;
-  color: var(--dashboard-text-light);
-  margin: 0;
-}
-
-.dashboard-design-guide-sample.dark .counselor-title {
-  color: var(--dashboard-text-dark);
-}
-
-.counselor-subtitle {
-  margin-top: 4px;
-  font-size: 14px;
-  color: var(--dashboard-text-secondary-light);
-}
-
-.dashboard-design-guide-sample.dark .counselor-subtitle {
-  color: var(--dashboard-text-secondary-dark);
-}
-
-/* 탭 */
-.counselor-tabs {
-  display: flex;
-  gap: 4px;
-  margin-bottom: 32px;
-  border-bottom: 1px solid var(--dashboard-border-light);
-  padding-bottom: 0;
-}
-
-.dashboard-design-guide-sample.dark .counselor-tabs {
-  border-bottom-color: var(--dashboard-border-dark);
-}
-
-.counselor-tab {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 24px;
-  border: none;
-  border-bottom: 2px solid transparent;
-  background: transparent;
-  color: var(--dashboard-text-secondary-light);
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.counselor-tab:hover {
-  color: var(--dashboard-text-light);
-}
-
-.dashboard-design-guide-sample.dark .counselor-tab {
-  color: var(--dashboard-text-secondary-dark);
-}
-
-.dashboard-design-guide-sample.dark .counselor-tab:hover {
-  color: var(--dashboard-text-dark);
-}
-
-.counselor-tab.active {
-  color: var(--dashboard-primary);
-  border-bottom-color: var(--dashboard-primary);
-}
-
-.counselor-tab .material-symbols-outlined {
-  font-size: 18px;
-}
-
-/* 현황 요약 */
-.counselor-summary {
-  margin-bottom: 32px;
-}
-
-.counselor-section-label {
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--dashboard-text-secondary-light);
-  margin-bottom: 16px;
-}
-
-.dashboard-design-guide-sample.dark .counselor-section-label {
-  color: var(--dashboard-text-secondary-dark);
-}
-
-.counselor-summary-cards {
-  display: flex;
-  overflow-x: auto;
-  gap: 16px;
-  padding-bottom: 16px;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-
-.counselor-summary-cards::-webkit-scrollbar {
-  display: none;
-}
-
-.counselor-summary-card {
-  min-width: 240px;
-  flex: 1;
-  padding: 20px;
-  border-radius: 16px;
-  border: 1px solid var(--dashboard-border-light);
-  background: var(--dashboard-surface-light);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  position: relative;
-  overflow: hidden;
-}
-
-.dashboard-design-guide-sample.dark .counselor-summary-card {
-  background: var(--dashboard-surface-dark);
-  border-color: var(--dashboard-border-dark);
-}
-
-.counselor-summary-card-indigo {
-  background: linear-gradient(to bottom right, rgba(99, 102, 241, 0.05), var(--dashboard-surface-light));
-  border-color: rgba(99, 102, 241, 0.2);
-}
-
-.dashboard-design-guide-sample.dark .counselor-summary-card-indigo {
-  background: linear-gradient(to bottom right, rgba(30, 41, 59, 0.8), rgba(30, 41, 59, 0.5));
-}
-
-.counselor-summary-card-emerald {
-  background: linear-gradient(to bottom right, rgba(16, 185, 129, 0.05), var(--dashboard-surface-light));
-  border-color: rgba(16, 185, 129, 0.2);
-}
-
-.dashboard-design-guide-sample.dark .counselor-summary-card-emerald {
-  background: linear-gradient(to bottom right, rgba(30, 41, 59, 0.8), rgba(30, 41, 59, 0.5));
-}
-
-.counselor-summary-card-blue {
-  background: linear-gradient(to bottom right, rgba(59, 130, 246, 0.05), var(--dashboard-surface-light));
-  border-color: rgba(59, 130, 246, 0.2);
-}
-
-.dashboard-design-guide-sample.dark .counselor-summary-card-blue {
-  background: linear-gradient(to bottom right, rgba(30, 41, 59, 0.8), rgba(30, 41, 59, 0.5));
-}
-
-.counselor-summary-card-purple {
-  background: linear-gradient(to bottom right, rgba(147, 51, 234, 0.05), var(--dashboard-surface-light));
-  border-color: rgba(147, 51, 234, 0.2);
-}
-
-.dashboard-design-guide-sample.dark .counselor-summary-card-purple {
-  background: linear-gradient(to bottom right, rgba(30, 41, 59, 0.8), rgba(30, 41, 59, 0.5));
-}
-
-.counselor-summary-icon-indigo .material-symbols-outlined {
-  color: var(--dashboard-primary);
-}
-
-.counselor-summary-icon-emerald .material-symbols-outlined {
-  color: #10b981;
-}
-
-.counselor-summary-icon-blue .material-symbols-outlined {
-  color: #3b82f6;
-}
-
-.counselor-summary-icon-purple .material-symbols-outlined {
-  color: #9333ea;
-}
+/* 기존 상담사 관리 스타일은 제거하고 샘플 페이지 스타일 사용 */
 
 .counselor-summary-icon-bg {
   position: absolute;
@@ -2317,7 +2125,7 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
-  margin-bottom: 32px;
+  margin-bottom: 24px;
 }
 
 @media (min-width: 640px) {
@@ -2410,27 +2218,123 @@
   font-size: 18px;
 }
 
-/* 상담사 목록 */
-.counselor-list-section {
-  margin-bottom: 32px;
+/* 상담사 카드 내부 요소 (Management Card 스타일 적용) */
+.counselor-avatar-small {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--dashboard-text-light);
+  background: rgba(255, 255, 255, 0.3);
 }
 
-.counselor-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 24px;
+.dashboard-design-guide-sample.dark .counselor-avatar-small {
+  color: var(--dashboard-text-dark);
+  background: rgba(255, 255, 255, 0.1);
 }
 
-@media (min-width: 768px) {
-  .counselor-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
+.counselor-status-dot-small {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid var(--dashboard-surface-light);
 }
 
-@media (min-width: 1024px) {
-  .counselor-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
+.dashboard-design-guide-sample.dark .counselor-status-dot-small {
+  border-color: var(--dashboard-surface-dark);
+}
+
+.counselor-card-info-compact {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.counselor-info-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--dashboard-text-secondary-light);
+}
+
+.dashboard-design-guide-sample.dark .counselor-info-row {
+  color: var(--dashboard-text-secondary-dark);
+}
+
+.counselor-info-row .material-symbols-outlined {
+  font-size: 16px;
+  color: var(--dashboard-text-secondary-light);
+}
+
+.dashboard-design-guide-sample.dark .counselor-info-row .material-symbols-outlined {
+  color: var(--dashboard-text-secondary-dark);
+}
+
+.counselor-card-actions-compact {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.counselor-action-btn-small {
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--dashboard-primary);
+  background: rgba(79, 70, 229, 0.1);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.dashboard-design-guide-sample.dark .counselor-action-btn-small {
+  background: rgba(79, 70, 229, 0.2);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.counselor-action-btn-small:hover {
+  background: rgba(79, 70, 229, 0.15);
+}
+
+.dashboard-design-guide-sample.dark .counselor-action-btn-small:hover {
+  background: rgba(79, 70, 229, 0.3);
+}
+
+.counselor-delete-btn-small {
+  padding: 6px;
+  color: #ef4444;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.counselor-delete-btn-small:hover {
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.dashboard-design-guide-sample.dark .counselor-delete-btn-small:hover {
+  background: rgba(239, 68, 68, 0.3);
+}
+
+.counselor-delete-btn-small .material-symbols-outlined {
+  font-size: 18px;
 }
 
 .counselor-card {

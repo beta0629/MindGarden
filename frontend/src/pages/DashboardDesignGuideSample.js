@@ -516,60 +516,46 @@ const DashboardDesignGuideSample = () => {
               </div>
 
               {/* 상담사 관리 상세 화면 */}
-              <div className="counselor-management-section">
-                {/* 헤더 */}
-                <header className="counselor-header">
-                  <div className="counselor-header-content">
-                    <div className="counselor-icon-wrapper">
-                      <span className="material-symbols-outlined">manage_accounts</span>
-                    </div>
-                    <div>
-                      <h1 className="counselor-title">상담사 관리</h1>
-                      <p className="counselor-subtitle">상담사의 모든 정보를 종합적으로 관리하고 분석할 수 있습니다.</p>
-                    </div>
+              <div className="admin-section-sample">
+                {/* 섹션 헤더 */}
+                <div className="section-header">
+                  <div>
+                    <h3 className="section-title">상담사 관리</h3>
+                    <p className="section-subtitle">상담사의 모든 정보를 종합적으로 관리하고 분석할 수 있습니다.</p>
                   </div>
-                </header>
-
-                {/* 탭 */}
-                <div className="counselor-tabs">
-                  <button className="counselor-tab active">
-                    <span className="material-symbols-outlined">dashboard</span>
-                    <span>상담사 종합관리</span>
-                  </button>
-                  <button className="counselor-tab">
-                    <span className="material-symbols-outlined">settings</span>
-                    <span>상담사 기본관리</span>
-                  </button>
+                  <div className="section-controls">
+                    <button className="control-btn active">종합관리</button>
+                    <button className="control-btn">기본관리</button>
+                  </div>
                 </div>
 
-                {/* 현황 요약 */}
-                <div className="counselor-summary">
-                  <h3 className="counselor-section-label">현황 요약</h3>
-                  <div className="counselor-summary-cards">
-                    {[
-                      { icon: 'groups', label: '총 상담사', value: '2', unit: '명', color: 'indigo' },
-                      { icon: 'link', label: '활성 매칭', value: '0', unit: '건', color: 'emerald' },
-                      { icon: 'event', label: '총 스케줄', value: '0', unit: '건', color: 'blue' },
-                      { icon: 'list_alt', label: '오늘 스케줄', value: '0', unit: '건', color: 'purple' }
-                    ].map((item, idx) => (
-                      <div key={idx} className={`counselor-summary-card counselor-summary-card-${item.color}`}>
-                        <div className={`counselor-summary-icon-bg counselor-summary-icon-${item.color}`}>
-                          <span className="material-symbols-outlined">{item.icon}</span>
+                {/* 현황 요약 - KPI 카드 스타일 */}
+                <div className="kpi-grid" style={{ marginBottom: '32px' }}>
+                  {[
+                    { icon: 'groups', label: '총 상담사', value: '2', change: '+0', changeType: 'neutral', color: 'indigo' },
+                    { icon: 'link', label: '활성 매칭', value: '0', change: '+0', changeType: 'neutral', color: 'emerald' },
+                    { icon: 'event', label: '총 스케줄', value: '0', change: '+0', changeType: 'neutral', color: 'purple' },
+                    { icon: 'list_alt', label: '오늘 스케줄', value: '0', change: '+0', changeType: 'neutral', color: 'blue' }
+                  ].map((item, idx) => (
+                    <div key={idx} className="kpi-card">
+                      <div className={`kpi-card-bg kpi-card-bg-${item.color}`}></div>
+                      <div className="kpi-card-content">
+                        <div className="kpi-card-header">
+                          <div className={`kpi-icon kpi-icon-${item.color}`}>
+                            <span className="material-symbols-outlined">{item.icon}</span>
+                          </div>
+                          <div className={`kpi-trend kpi-trend-${item.changeType}`}>
+                            <span className="material-symbols-outlined">trending_up</span>
+                            <span>{item.change}</span>
+                          </div>
                         </div>
-                        <div className="counselor-summary-content">
-                          <div className="counselor-summary-header">
-                            <div className={`counselor-summary-icon icon-${item.color}`}>
-                              <span className="material-symbols-outlined">{item.icon}</span>
-                            </div>
-                            <span className="counselor-summary-label">{item.label}</span>
-                          </div>
-                          <div className="counselor-summary-value">
-                            {item.value} <span className="counselor-summary-unit">{item.unit}</span>
-                          </div>
+                        <div className="kpi-card-body">
+                          <p className="kpi-label">{item.label}</p>
+                          <h3 className="kpi-value">{item.value}</h3>
                         </div>
                       </div>
-                    ))}
-                  </div>
+                    </div>
+                  ))}
                 </div>
 
                 {/* 검색 및 필터 */}
@@ -588,91 +574,84 @@ const DashboardDesignGuideSample = () => {
                   </button>
                 </div>
 
-                {/* 상담사 목록 */}
-                <div className="counselor-list-section">
-                  <h3 className="counselor-section-label">상담사 목록</h3>
-                  <div className="counselor-grid">
-                    {[
-                      { 
-                        name: 'test11', email: 'test11@gamil.com', phone: '010-0000-0000', 
-                        joinDate: '2025. 12. 11.', status: 'available', statusColor: 'emerald',
-                        avatarBg: 'teal', avatarText: 't', badge: '전문 상담사', badgeColor: 'indigo',
-                        clients: 0, maxClients: 20, clientColor: 'indigo'
-                      },
-                      { 
-                        name: '테스트 상담사', email: '222@gmail.com', phone: '010-0000-0000', 
-                        joinDate: '2025. 12. 11.', status: 'offline', statusColor: 'slate',
-                        avatarBg: 'emerald', avatarText: '테', badge: null, badgeColor: null,
-                        clients: 0, maxClients: 20, clientColor: 'slate'
-                      },
-                      { 
-                        name: '김상담', email: 'kim.counsel@example.com', phone: '010-1234-5678', 
-                        joinDate: '2024. 11. 05.', status: 'busy', statusColor: 'orange',
-                        avatarBg: 'orange', avatarText: 'K', badge: null, badgeColor: null,
-                        clients: 12, maxClients: 20, clientColor: 'orange'
-                      }
-                    ].map((counselor, idx) => (
-                      <div key={idx} className="counselor-card">
-                        <div className="counselor-card-body">
-                          <div className="counselor-card-header">
-                            <div className="counselor-card-profile">
-                              <div className={`counselor-avatar counselor-avatar-${counselor.avatarBg}`}>
-                                {counselor.avatarText}
-                              </div>
-                              <div className={`counselor-status-dot counselor-status-${counselor.statusColor}`}></div>
-                            </div>
-                            <div className="counselor-card-info">
-                              <h2 className="counselor-card-name">
-                                {counselor.name}
-                                {counselor.badge && (
-                                  <span className={`counselor-badge counselor-badge-${counselor.badgeColor}`}>
-                                    {counselor.badge}
-                                  </span>
-                                )}
-                              </h2>
-                              <p className="counselor-card-date">가입일: {counselor.joinDate}</p>
-                            </div>
-                            <button className="counselor-more-btn">
-                              <span className="material-symbols-outlined">more_horiz</span>
-                            </button>
+                {/* 상담사 목록 - Management Card 스타일 */}
+                <div className="management-grid" style={{ marginTop: '24px' }}>
+                  {[
+                    { 
+                      name: 'test11', email: 'test11@gamil.com', phone: '010-0000-0000', 
+                      joinDate: '2025. 12. 11.', status: 'available', statusColor: 'emerald',
+                      avatarText: 't', badge: '전문 상담사', badgeColor: 'indigo',
+                      clients: 0, maxClients: 20, clientColor: 'indigo', gradient: 'blue-green'
+                    },
+                    { 
+                      name: '테스트 상담사', email: '222@gmail.com', phone: '010-0000-0000', 
+                      joinDate: '2025. 12. 11.', status: 'offline', statusColor: 'slate',
+                      avatarText: '테', badge: null, badgeColor: null,
+                      clients: 0, maxClients: 20, clientColor: 'slate', gradient: 'purple-blue'
+                    },
+                    { 
+                      name: '김상담', email: 'kim.counsel@example.com', phone: '010-1234-5678', 
+                      joinDate: '2024. 11. 05.', status: 'busy', statusColor: 'orange',
+                      avatarText: 'K', badge: null, badgeColor: null,
+                      clients: 12, maxClients: 20, clientColor: 'orange', gradient: 'blue-green'
+                    }
+                  ].map((counselor, idx) => (
+                    <div key={idx} className="management-card">
+                      <div className={`management-icon-bg gradient-${counselor.gradient}`}>
+                        <div className="counselor-avatar-small">
+                          {counselor.avatarText}
+                        </div>
+                        <div className={`counselor-status-dot-small counselor-status-${counselor.statusColor}`}></div>
+                      </div>
+                      <div className="management-card-content">
+                        <div className="management-card-header">
+                          <h4 className="management-title">
+                            {counselor.name}
+                            {counselor.badge && (
+                              <span className="management-badge">{counselor.badge}</span>
+                            )}
+                          </h4>
+                        </div>
+                        <div className="counselor-card-info-compact">
+                          <div className="counselor-info-row">
+                            <span className="material-symbols-outlined">email</span>
+                            <span>{counselor.email}</span>
                           </div>
-                          <div className="counselor-card-details">
-                            <div className="counselor-detail-item">
-                              <span className="material-symbols-outlined">email</span>
-                              {counselor.email}
-                            </div>
-                            <div className="counselor-detail-item">
-                              <span className="material-symbols-outlined">phone</span>
-                              {counselor.phone}
-                            </div>
+                          <div className="counselor-info-row">
+                            <span className="material-symbols-outlined">phone</span>
+                            <span>{counselor.phone}</span>
                           </div>
-                          <div className="counselor-client-progress">
-                            <div className="counselor-progress-header">
-                              <span className="counselor-progress-label">현재 담당 클라이언트</span>
-                              <span className={`counselor-progress-value counselor-progress-${counselor.clientColor}`}>
-                                {counselor.clients}명 <span className="counselor-progress-max">/ {counselor.maxClients}명</span>
-                              </span>
-                            </div>
-                            <div className="counselor-progress-bar">
+                          <div className="counselor-info-row">
+                            <span className="material-symbols-outlined">calendar_today</span>
+                            <span>가입일: {counselor.joinDate}</span>
+                          </div>
+                        </div>
+                        {counselor.clients > 0 && (
+                          <div className="management-progress">
+                            <div className="progress-bar">
                               <div 
-                                className={`counselor-progress-fill counselor-progress-fill-${counselor.clientColor}`}
+                                className="progress-fill" 
                                 style={{ width: `${(counselor.clients / counselor.maxClients) * 100}%` }}
                               ></div>
                             </div>
+                            <span className="progress-value">
+                              담당 클라이언트: {counselor.clients}/{counselor.maxClients}명
+                            </span>
                           </div>
-                        </div>
-                        <div className="counselor-card-footer">
-                          <div className="counselor-card-actions">
-                            <button className="counselor-action-btn counselor-action-edit">수정</button>
-                            <button className="counselor-action-btn counselor-action-reset">비밀번호 초기화</button>
-                          </div>
-                          <button className="counselor-delete-btn" title="삭제">
+                        )}
+                        <div className="counselor-card-actions-compact">
+                          <button className="counselor-action-btn-small">수정</button>
+                          <button className="counselor-action-btn-small">비밀번호 초기화</button>
+                          <button className="counselor-delete-btn-small" title="삭제">
                             <span className="material-symbols-outlined">delete</span>
                           </button>
                         </div>
                       </div>
-                    ))}
-                  </div>
+                      <div className="management-arrow">
+                        <span className="material-symbols-outlined">arrow_forward</span>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
 

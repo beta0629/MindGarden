@@ -5,9 +5,9 @@ import Footer from '@/components/Footer';
 
 export default function LocationPage() {
   // 네이버 지도 임베드 방식 사용 (API 키 인증 불필요)
-  // 송도 아크리아2 204호 좌표를 네이버 지도 임베드 URL로 변환
-  // 좌표: 37.3885, 126.6584
-  const mapEmbedUrl = `https://map.naver.com/v5/search/인천광역시 연수구 송도과학로 123/place/14135647.0000000,4514567.0000000,15,0,0,0,dh`;
+  // 송도 아크리아2 204호 주소를 네이버 지도에서 검색하여 임베드
+  // 주소: 인천광역시 연수구 송도과학로 123
+  const mapEmbedUrl = `https://map.naver.com/v5/search/인천광역시 연수구 송도과학로 123`;
 
   return (
     <main id="top">

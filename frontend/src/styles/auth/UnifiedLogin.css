@@ -210,6 +210,13 @@
   font-size: var(--font-size-lg);
 }
 
+.unified-login__social-logo {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  display: block;
+}
+
 .unified-login__links {
   text-align: center;
   font-size: var(--font-size-sm);

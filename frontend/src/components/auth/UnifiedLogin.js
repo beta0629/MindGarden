@@ -794,7 +794,19 @@ const UnifiedLogin = () => {
                   onClick={handleKakaoLogin}
                   className="unified-login__social-button unified-login__social-button--kakao"
                 >
-                  <span className="unified-login__social-icon">카카오</span>
+                  <svg 
+                    className="unified-login__social-logo" 
+                    width="18" 
+                    height="18" 
+                    viewBox="0 0 18 18" 
+                    fill="none" 
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path 
+                      d="M9 0C4.03 0 0 2.69 0 6c0 1.92 1.21 3.61 3.04 4.61L1.5 14.85l4.49-1.24C6.64 13.95 7.81 14 9 14c4.97 0 9-2.69 9-6s-4.03-6-9-6z" 
+                      fill="#000000"
+                    />
+                  </svg>
                   카카오로 로그인
                 </button>
 
@@ -803,7 +815,43 @@ const UnifiedLogin = () => {
                   onClick={handleNaverLogin}
                   className="unified-login__social-button unified-login__social-button--naver"
                 >
-                  <span className="unified-login__social-icon">네이버</span>
+                  <svg 
+                    className="unified-login__social-logo" 
+                    width="18" 
+                    height="18" 
+                    viewBox="0 0 18 18" 
+                    fill="none" 
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path 
+                      d="M0 0h9v9H0V0z" 
+                      fill="#FFFFFF"
+                    />
+                    <path 
+                      d="M9 9h9v9H9V9z" 
+                      fill="#03C75A"
+                    />
+                    <path 
+                      d="M9 0h9v9H9V0z" 
+                      fill="#03C75A"
+                    />
+                    <path 
+                      d="M0 9h9v9H0V9z" 
+                      fill="#FFFFFF"
+                    />
+                    <text 
+                      x="9" 
+                      y="12.5" 
+                      fontFamily="Arial, sans-serif" 
+                      fontSize="10" 
+                      fontWeight="bold" 
+                      fill="#FFFFFF" 
+                      textAnchor="middle"
+                      dominantBaseline="middle"
+                    >
+                      N
+                    </text>
+                  </svg>
                   네이버로 로그인
                 </button>
 

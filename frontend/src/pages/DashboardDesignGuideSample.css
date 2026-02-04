@@ -1017,7 +1017,7 @@
   font-weight: 600;
   color: var(--dashboard-primary);
   background: rgba(79, 70, 229, 0.1);
-  border: 1px solid var(--dashboard-primary);
+  border: none;
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s;
@@ -1030,10 +1030,12 @@
 
 .dashboard-design-guide-sample.dark .view-all-btn {
   background: rgba(79, 70, 229, 0.2);
+  border: none;
 }
 
 .dashboard-design-guide-sample.dark .view-all-btn:hover {
   background: rgba(79, 70, 229, 0.3);
+  border: none;
 }
 
 /* ==================== 추가 콘텐츠 ==================== */
@@ -1054,10 +1056,15 @@
   font-weight: 700;
   color: var(--dashboard-text-light);
   margin: 0 0 8px 0;
+  background: rgba(79, 70, 229, 0.08);
+  padding: 8px 16px;
+  border-radius: 8px;
+  display: inline-block;
 }
 
 .dashboard-design-guide-sample.dark .section-title {
   color: var(--dashboard-text-dark);
+  background: rgba(99, 102, 241, 0.15);
 }
 
 .section-description {

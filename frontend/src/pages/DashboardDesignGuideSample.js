@@ -53,33 +53,31 @@ const DashboardDesignGuideSample = () => {
   const kpiData = [
     {
       id: 1,
-      label: '총 입주사',
-      value: '124',
+      label: '총 사용자',
+      value: '2,456',
       change: '+12%',
       changeType: 'up',
-      icon: 'apartment',
-      color: 'indigo',
-      detail: '전월 대비 14개 증가'
+      icon: 'group',
+      color: 'indigo'
     },
     {
       id: 2,
-      label: '활성 상담 세션',
-      value: '842',
-      change: '+5.4%',
+      label: '이번 달 예약 건수',
+      value: '3,420',
+      change: '+18%',
       changeType: 'up',
-      icon: 'psychology',
-      color: 'purple',
-      detail: '현재 진행중인 상담 건수'
+      icon: 'event_note',
+      color: 'purple'
     },
     {
       id: 3,
-      label: '이번 달 매출',
-      value: '₩1.25억',
-      change: '+8.2%',
+      label: '상담 완료율',
+      value: '94.2%',
+      change: '+2.4%',
       changeType: 'up',
-      icon: 'payments',
+      icon: 'check_circle',
       color: 'emerald',
-      detail: '목표 매출 달성률 92%'
+      isDark: true
     }
   ];
 
@@ -223,7 +221,6 @@ const DashboardDesignGuideSample = () => {
                       <div className="kpi-card-body">
                         <p className="kpi-label">{kpi.label}</p>
                         <h3 className="kpi-value">{kpi.value}</h3>
-                        {kpi.detail && <p className="kpi-detail">{kpi.detail}</p>}
                       </div>
                     </div>
                   </div>
@@ -514,42 +511,6 @@ const DashboardDesignGuideSample = () => {
                         ))}
                       </tbody>
                     </table>
-                  </div>
-                </div>
-              </div>
-
-              {/* 하단 카드 섹션 */}
-              <div className="bottom-cards-grid">
-                {/* 플랫폼 성장 추이 */}
-                <div className="trend-card">
-                  <div className="trend-card-header">
-                    <div>
-                      <h3 className="trend-title">플랫폼 성장 추이</h3>
-                      <p className="trend-subtitle">지난 6개월간 신규 사용자 유입 현황</p>
-                    </div>
-                    <span className="trend-badge">최근 6개월</span>
-                  </div>
-                  <div className="trend-content">
-                    <div className="trend-value">2,450</div>
-                    <div className="trend-label">명 (신규 사용자)</div>
-                    <div className="trend-chart">
-                      <div className="chart-line-sample"></div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* 시스템 점검 안내 */}
-                <div className="notice-card card-dark">
-                  <div className="notice-icon">
-                    <span className="material-symbols-outlined">notifications</span>
-                    <span className="notice-dot"></span>
-                  </div>
-                  <div className="notice-content">
-                    <h3 className="notice-title">시스템 점검 안내</h3>
-                    <p className="notice-desc">
-                      이번 주 일요일 02:00 ~ 04:00 정기 점검이 예정되어 있습니다.
-                    </p>
-                    <button className="notice-action">고지사항 작성하기</button>
                   </div>
                 </div>
               </div>

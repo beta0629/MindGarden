@@ -99,16 +99,30 @@ public class StatisticsMetadataServiceImpl implements StatisticsMetadataService 
             
             BigDecimal value = calculationEngine.calculate(definition, date, calculationParams);
             
-            // 캐시 저장
-            StatisticsValue statisticsValue = StatisticsValue.builder()
-                .tenantId(tenantId)
-                .statisticCode(statisticCode)
-                .calculationDate(date)
-                .calculatedValue(value)
-                .expiresAt(LocalDateTime.now().plusHours(1)) // 1시간 캐시
-                .build();
+            // 캐시 저장 (중복 방지: 존재하면 업데이트, 없으면 저장)
+            StatisticsValue existingValue = valueRepository.findByTenantIdAndStatisticCodeAndCalculationDate(
+                tenantId, statisticCode, date
+            ).orElse(null);
             
-            valueRepository.save(statisticsValue);
+            StatisticsValue statisticsValue;
+            if (existingValue != null) {
+                // 기존 값 업데이트
+                existingValue.setCalculatedValue(value);
+                existingValue.setExpiresAt(LocalDateTime.now().plusHours(1)); // 1시간 캐시 갱신
+                statisticsValue = valueRepository.save(existingValue);
+                log.debug("기존 통계 값 업데이트: code={}, value={}", statisticCode, value);
+            } else {
+                // 새 값 저장
+                statisticsValue = StatisticsValue.builder()
+                    .tenantId(tenantId)
+                    .statisticCode(statisticCode)
+                    .calculationDate(date)
+                    .calculatedValue(value)
+                    .expiresAt(LocalDateTime.now().plusHours(1)) // 1시간 캐시
+                    .build();
+                statisticsValue = valueRepository.save(statisticsValue);
+                log.debug("새 통계 값 저장: code={}, value={}", statisticCode, value);
+            }
             
             // 생성 이력 저장
             long calculationTime = System.currentTimeMillis() - startTime;

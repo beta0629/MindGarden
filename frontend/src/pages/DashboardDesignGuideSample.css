@@ -1227,8 +1227,20 @@
   }
 }
 
-/* 데스크톱 */
-@media (min-width: 1024px) {
+/* 작은 데스크톱: 1024px - 1439px */
+@media (min-width: 1024px) and (max-width: 1439px) {
+  .dashboard-sidebar {
+    width: 256px;
+  }
+  
+  .kpi-grid {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 24px;
+  }
+}
+
+/* 큰 데스크톱: 1440px 이상 */
+@media (min-width: 1440px) {
   .dashboard-sidebar {
     width: 256px;
   }

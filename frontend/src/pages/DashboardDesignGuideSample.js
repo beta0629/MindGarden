@@ -310,6 +310,139 @@ const DashboardDesignGuideSample = () => {
                 </div>
               </div>
 
+              {/* 관리자 대시보드 섹션별 디자인 샘플 */}
+              <div className="admin-sections-showcase">
+                <h2 className="showcase-title">관리자 대시보드 섹션별 디자인 샘플</h2>
+                
+                {/* 1. 관리 기능 카드 그리드 */}
+                <div className="admin-section-sample">
+                  <div className="section-header">
+                    <div>
+                      <h3 className="section-title">관리 기능</h3>
+                      <p className="section-subtitle">주요 관리 기능에 빠르게 접근</p>
+                    </div>
+                  </div>
+                  <div className="management-grid">
+                    {[
+                      { icon: 'group', title: '상담사 관리', desc: '상담사 정보 및 권한 관리' },
+                      { icon: 'person', title: '내담자 관리', desc: '내담자 정보 및 상담 이력 관리' },
+                      { icon: 'link', title: '매칭 관리', desc: '상담사-내담자 매칭 관리' },
+                      { icon: 'calendar_month', title: '예약 관리', desc: '상담 예약 및 일정 관리' },
+                      { icon: 'payments', title: '결제 관리', desc: '결제 내역 및 환불 관리' },
+                      { icon: 'settings', title: '시스템 설정', desc: '시스템 설정 및 구성 관리' }
+                    ].map((item, idx) => (
+                      <div key={idx} className="management-card">
+                        <div className="management-icon">
+                          <span className="material-symbols-outlined">{item.icon}</span>
+                        </div>
+                        <h4 className="management-title">{item.title}</h4>
+                        <p className="management-desc">{item.desc}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 2. 시스템 상태 섹션 */}
+                <div className="admin-section-sample">
+                  <div className="section-header">
+                    <div>
+                      <h3 className="section-title">시스템 상태</h3>
+                      <p className="section-subtitle">서버 및 데이터베이스 상태 모니터링</p>
+                    </div>
+                    <button className="status-check-btn">
+                      <span className="material-symbols-outlined">refresh</span>
+                      상태 체크
+                    </button>
+                  </div>
+                  <div className="system-status-grid">
+                    {[
+                      { label: '서버', status: 'healthy', icon: 'dns' },
+                      { label: '데이터베이스', status: 'healthy', icon: 'storage' },
+                      { label: '캐시', status: 'warning', icon: 'memory' },
+                      { label: 'API', status: 'healthy', icon: 'api' }
+                    ].map((item, idx) => (
+                      <div key={idx} className="status-item">
+                        <div className="status-icon">
+                          <span className="material-symbols-outlined">{item.icon}</span>
+                          <span className={`status-dot status-${item.status}`}></span>
+                        </div>
+                        <div className="status-info">
+                          <span className="status-label">{item.label}</span>
+                          <span className="status-value">
+                            {item.status === 'healthy' ? '정상' : item.status === 'warning' ? '경고' : '오류'}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 3. 시스템 도구 섹션 */}
+                <div className="admin-section-sample">
+                  <div className="section-header">
+                    <div>
+                      <h3 className="section-title">시스템 도구</h3>
+                      <p className="section-subtitle">시스템 관리 및 유지보수 도구</p>
+                    </div>
+                  </div>
+                  <div className="system-tools-grid">
+                    {[
+                      { icon: 'refresh', label: '캐시 초기화', desc: '시스템 캐시를 초기화합니다' },
+                      { icon: 'backup', label: '백업 생성', desc: '시스템 백업을 생성합니다' },
+                      { icon: 'description', label: '로그 보기', desc: '시스템 로그를 확인합니다' },
+                      { icon: 'update', label: '시스템 업데이트', desc: '시스템을 업데이트합니다' }
+                    ].map((item, idx) => (
+                      <button key={idx} className="tool-btn">
+                        <span className="material-symbols-outlined">{item.icon}</span>
+                        <div className="tool-info">
+                          <span className="tool-label">{item.label}</span>
+                          <span className="tool-desc">{item.desc}</span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 4. 통계 테이블 섹션 */}
+                <div className="admin-section-sample">
+                  <div className="section-header">
+                    <div>
+                      <h3 className="section-title">상담 통계</h3>
+                      <p className="section-subtitle">최근 상담 완료 통계</p>
+                    </div>
+                  </div>
+                  <div className="stats-table">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>날짜</th>
+                          <th>완료 건수</th>
+                          <th>완료율</th>
+                          <th>평균 소요시간</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {[
+                          { date: '2025-02-04', count: 45, rate: '94.2%', time: '32분' },
+                          { date: '2025-02-03', count: 52, rate: '96.3%', time: '28분' },
+                          { date: '2025-02-02', count: 38, rate: '92.1%', time: '35분' },
+                          { date: '2025-02-01', count: 48, rate: '95.8%', time: '30분' }
+                        ].map((row, idx) => (
+                          <tr key={idx}>
+                            <td>{row.date}</td>
+                            <td>{row.count}건</td>
+                            <td>
+                              <span className="rate-badge">{row.rate}</span>
+                            </td>
+                            <td>{row.time}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+
               {/* 추가 콘텐츠 예시 */}
               <div className="content-section">
                 <h3 className="section-title">디자인 가이드 스펙 준수</h3>

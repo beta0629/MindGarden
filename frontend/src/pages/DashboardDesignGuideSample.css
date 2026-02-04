@@ -1038,6 +1038,359 @@
   border: none;
 }
 
+/* ==================== 관리자 대시보드 섹션별 샘플 ==================== */
+.admin-sections-showcase {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.showcase-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--dashboard-text-light);
+  margin: 0 0 8px 0;
+}
+
+.dashboard-design-guide-sample.dark .showcase-title {
+  color: var(--dashboard-text-dark);
+}
+
+.admin-section-sample {
+  background: transparent;
+  border: none;
+  border-radius: 16px;
+  padding: 24px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* 관리 기능 카드 그리드 */
+.management-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.management-card {
+  background: var(--dashboard-surface-light);
+  border: 1px solid var(--dashboard-border-light);
+  border-radius: 12px;
+  padding: 20px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 12px;
+}
+
+.management-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  border-color: var(--dashboard-primary);
+}
+
+.dashboard-design-guide-sample.dark .management-card {
+  background: var(--dashboard-surface-dark);
+  border-color: var(--dashboard-border-dark);
+}
+
+.management-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: rgba(79, 70, 229, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--dashboard-primary);
+}
+
+.management-icon .material-symbols-outlined {
+  font-size: 24px;
+}
+
+.management-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--dashboard-text-light);
+  margin: 0;
+}
+
+.dashboard-design-guide-sample.dark .management-title {
+  color: var(--dashboard-text-dark);
+}
+
+.management-desc {
+  font-size: 13px;
+  color: var(--dashboard-text-secondary-light);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.dashboard-design-guide-sample.dark .management-desc {
+  color: var(--dashboard-text-secondary-dark);
+}
+
+/* 시스템 상태 */
+.status-check-btn {
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--dashboard-primary);
+  background: rgba(79, 70, 229, 0.1);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+}
+
+.status-check-btn:hover {
+  background: rgba(79, 70, 229, 0.15);
+}
+
+.status-check-btn .material-symbols-outlined {
+  font-size: 18px;
+}
+
+.system-status-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.status-item {
+  background: var(--dashboard-surface-light);
+  border: 1px solid var(--dashboard-border-light);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.dashboard-design-guide-sample.dark .status-item {
+  background: var(--dashboard-surface-dark);
+  border-color: var(--dashboard-border-dark);
+}
+
+.status-icon {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.status-icon .material-symbols-outlined {
+  font-size: 24px;
+  color: var(--dashboard-text-secondary-light);
+}
+
+.dashboard-design-guide-sample.dark .status-icon .material-symbols-outlined {
+  color: var(--dashboard-text-secondary-dark);
+}
+
+.status-dot {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid var(--dashboard-surface-light);
+}
+
+.dashboard-design-guide-sample.dark .status-dot {
+  border-color: var(--dashboard-surface-dark);
+}
+
+.status-dot.status-healthy {
+  background: #10b981;
+}
+
+.status-dot.status-warning {
+  background: #f59e0b;
+}
+
+.status-dot.status-error {
+  background: #ef4444;
+}
+
+.status-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.status-label {
+  font-size: 13px;
+  color: var(--dashboard-text-secondary-light);
+}
+
+.dashboard-design-guide-sample.dark .status-label {
+  color: var(--dashboard-text-secondary-dark);
+}
+
+.status-value {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--dashboard-text-light);
+}
+
+.dashboard-design-guide-sample.dark .status-value {
+  color: var(--dashboard-text-dark);
+}
+
+/* 시스템 도구 */
+.system-tools-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.tool-btn {
+  background: var(--dashboard-surface-light);
+  border: 1px solid var(--dashboard-border-light);
+  border-radius: 12px;
+  padding: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+}
+
+.tool-btn:hover {
+  background: var(--dashboard-bg-light);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.dashboard-design-guide-sample.dark .tool-btn {
+  background: var(--dashboard-surface-dark);
+  border-color: var(--dashboard-border-dark);
+}
+
+.dashboard-design-guide-sample.dark .tool-btn:hover {
+  background: var(--dashboard-bg-dark);
+}
+
+.tool-btn .material-symbols-outlined {
+  font-size: 24px;
+  color: var(--dashboard-primary);
+  flex-shrink: 0;
+}
+
+.tool-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tool-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--dashboard-text-light);
+}
+
+.dashboard-design-guide-sample.dark .tool-label {
+  color: var(--dashboard-text-dark);
+}
+
+.tool-desc {
+  font-size: 12px;
+  color: var(--dashboard-text-secondary-light);
+}
+
+.dashboard-design-guide-sample.dark .tool-desc {
+  color: var(--dashboard-text-secondary-dark);
+}
+
+/* 통계 테이블 */
+.stats-table {
+  background: var(--dashboard-surface-light);
+  border: 1px solid var(--dashboard-border-light);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.dashboard-design-guide-sample.dark .stats-table {
+  background: var(--dashboard-surface-dark);
+  border-color: var(--dashboard-border-dark);
+}
+
+.stats-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.stats-table thead {
+  background: var(--dashboard-bg-light);
+  border-bottom: 1px solid var(--dashboard-border-light);
+}
+
+.dashboard-design-guide-sample.dark .stats-table thead {
+  background: var(--dashboard-bg-dark);
+  border-bottom-color: var(--dashboard-border-dark);
+}
+
+.stats-table th {
+  padding: 12px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--dashboard-text-light);
+  text-align: left;
+}
+
+.dashboard-design-guide-sample.dark .stats-table th {
+  color: var(--dashboard-text-dark);
+}
+
+.stats-table td {
+  padding: 12px 16px;
+  font-size: 14px;
+  color: var(--dashboard-text-light);
+  border-bottom: 1px solid var(--dashboard-border-light);
+}
+
+.dashboard-design-guide-sample.dark .stats-table td {
+  color: var(--dashboard-text-dark);
+  border-bottom-color: var(--dashboard-border-dark);
+}
+
+.stats-table tbody tr:hover {
+  background: var(--dashboard-bg-light);
+}
+
+.dashboard-design-guide-sample.dark .stats-table tbody tr:hover {
+  background: var(--dashboard-bg-dark);
+}
+
+.stats-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.rate-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.1);
+  border-radius: 6px;
+}
+
 /* ==================== 추가 콘텐츠 ==================== */
 .content-section {
   background: var(--dashboard-surface-light);

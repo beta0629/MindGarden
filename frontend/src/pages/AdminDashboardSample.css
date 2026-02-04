@@ -69,6 +69,7 @@
 }
 
 /* ==================== 사이드바 ==================== */
+/* 모바일 기본 스타일 (모바일 우선) */
 .dashboard-sidebar {
   width: 256px;
   background: var(--surface-light);
@@ -78,7 +79,19 @@
   flex-shrink: 0;
   transition: transform 0.3s ease;
   z-index: 20;
-  position: relative; /* 기본값 */
+  position: fixed;
+  left: 0;
+  top: 0;
+  height: 100vh;
+  transform: translateX(-100%);
+}
+
+/* 태블릿 이상에서만 사이드바 표시 */
+@media (min-width: 768px) {
+  .dashboard-sidebar {
+    position: relative;
+    transform: none;
+  }
 }
 
 .admin-dashboard-sample.dark .dashboard-sidebar {

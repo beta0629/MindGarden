@@ -47,6 +47,7 @@ import AdvancedDesignSample from './pages/AdvancedDesignSample';
 import MindGardenDesignSystemShowcase from './pages/MindGardenDesignSystemShowcase';
 import ComponentTestPage from './pages/ComponentTestPage';
 import FilterSearchShowcase from './components/ui/FilterSearch/FilterSearchShowcase';
+import AdminDashboardSample from './pages/AdminDashboardSample';
 import SimpleLayout from './components/layout/SimpleLayout';
 import AcademyDashboard from './components/academy/AcademyDashboard';
 import AcademyRegister from './components/academy/AcademyRegister';
@@ -653,6 +654,7 @@ function AppContent() {
             <Route path="/test/components" element={<ComponentTestPage />} />
             <Route path="/design-system" element={<MindGardenDesignSystemShowcase />} />
             <Route path="/filter-search" element={<FilterSearchShowcase />} />
+            <Route path="/admin-dashboard-sample" element={<AdminDashboardSample />} />
             
             {/* 추후 홈페이지 추가 시 사용할 경로들 */}
             {/* <Route path="/homepage" element={<Homepage />} /> */}

@@ -308,11 +308,12 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 80px;
-  padding: 0 32px;
+  min-height: 80px;
+  padding: 16px 32px;
   z-index: 10;
   flex-shrink: 0;
   background: transparent;
+  gap: 16px;
 }
 
 .header-left {
@@ -369,15 +370,18 @@
 .header-right {
   display: flex;
   align-items: center;
-  gap: 24px;
+  gap: 12px;
+  flex-shrink: 0;
 }
 
 .search-box {
   position: relative;
   width: 320px;
+  min-width: 200px;
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-shrink: 1;
 }
 
 .search-box .material-symbols-outlined {
@@ -783,12 +787,51 @@
     display: block;
   }
 
-  .search-box {
-    display: none;
+  /* 모바일 헤더 반응형 개선 */
+  .dashboard-header {
+    flex-direction: column;
+    align-items: flex-start;
+    min-height: auto;
+    padding: 12px 16px;
+    gap: 12px;
   }
 
-  .dashboard-header {
-    padding: 0 16px;
+  .header-left {
+    width: 100%;
+    gap: 12px;
+  }
+
+  .header-title h2 {
+    font-size: 20px;
+  }
+
+  .header-title p {
+    font-size: 13px;
+  }
+
+  .header-right {
+    width: 100%;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .search-box {
+    display: flex;
+    width: 100%;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .search-box input {
+    font-size: 14px;
+    padding: 8px 12px 8px 36px;
+  }
+
+  .notification-btn,
+  .theme-toggle-btn {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
   }
 
   .dashboard-content {
@@ -805,6 +848,41 @@
 @media (min-width: 768px) and (max-width: 1023px) {
   .dashboard-sidebar {
     width: 240px;
+  }
+
+  /* 태블릿 헤더 반응형 개선 */
+  .dashboard-header {
+    padding: 16px 24px;
+    min-height: 72px;
+  }
+
+  .header-title h2 {
+    font-size: 22px;
+  }
+
+  .header-title p {
+    font-size: 13px;
+  }
+
+  .header-right {
+    gap: 16px;
+  }
+
+  .search-box {
+    width: 240px;
+    min-width: 180px;
+  }
+
+  .search-box input {
+    font-size: 14px;
+    padding: 9px 14px 9px 38px;
+  }
+
+  .notification-btn,
+  .theme-toggle-btn {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
   }
   
   .kpi-grid {

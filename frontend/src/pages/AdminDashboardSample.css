@@ -69,8 +69,7 @@
 }
 
 /* ==================== 사이드바 ==================== */
-/* 모바일 기본 스타일 (모바일 우선) - 강제 적용 */
-.admin-dashboard-sample .dashboard-sidebar {
+.dashboard-sidebar {
   width: 256px;
   background: var(--surface-light);
   border-right: 1px solid var(--border-light);
@@ -79,18 +78,32 @@
   flex-shrink: 0;
   transition: transform 0.3s ease;
   z-index: 20;
-  position: fixed !important;
-  left: 0 !important;
-  top: 0 !important;
-  height: 100vh !important;
-  transform: translateX(-100%) !important;
 }
 
-/* 태블릿 이상에서만 사이드바 표시 */
+/* 모바일: 사이드바는 기본적으로 숨김 */
+@media (max-width: 767px) {
+  .dashboard-sidebar {
+    position: fixed !important;
+    left: 0 !important;
+    top: 0 !important;
+    height: 100vh !important;
+    transform: translateX(-100%) !important;
+    z-index: 1000 !important;
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1) !important;
+  }
+  
+  /* 사이드바가 열려있을 때만 표시 */
+  .dashboard-sidebar.open {
+    transform: translateX(0) !important;
+  }
+}
+
+/* 태블릿 이상: 사이드바는 항상 표시 */
 @media (min-width: 768px) {
-  .admin-dashboard-sample .dashboard-sidebar {
+  .dashboard-sidebar {
     position: relative !important;
     transform: none !important;
+    z-index: 20 !important;
   }
 }
 

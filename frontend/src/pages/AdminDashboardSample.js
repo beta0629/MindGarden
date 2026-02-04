@@ -13,12 +13,25 @@ const AdminDashboardSample = () => {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('finance');
-  const [isMobile, setIsMobile] = useState(false);
+  // 초기값을 실제 화면 크기로 설정 (SSR 대응)
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth <= 767;
+    }
+    return false;
+  });
 
   // 모바일 감지
   useEffect(() => {
     const checkMobile = () => {
-      setIsMobile(window.innerWidth <= 767);
+      const mobile = window.innerWidth <= 767;
+      setIsMobile(mobile);
+      // 모바일이 아니면 사이드바를 항상 열어둠
+      if (!mobile) {
+        setIsSidebarOpen(true);
+      } else {
+        setIsSidebarOpen(false);
+      }
     };
     
     checkMobile();

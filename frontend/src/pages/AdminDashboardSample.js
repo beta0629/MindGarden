@@ -53,6 +53,15 @@ const AdminDashboardSample = () => {
   return (
     <div className={`admin-dashboard-sample ${isDarkMode ? 'dark' : ''}`}>
       <div className="dashboard-container">
+        {/* 사이드바 오버레이 (모바일에서만) */}
+        {isSidebarOpen && (
+          <div 
+            className="sidebar-overlay"
+            onClick={toggleSidebar}
+            aria-label="사이드바 닫기"
+          />
+        )}
+        
         {/* 사이드바 */}
         <aside className={`dashboard-sidebar ${isSidebarOpen ? 'open' : ''}`}>
           <div className="sidebar-header">

@@ -91,16 +91,6 @@ const AdminDashboardSample = () => {
         {/* 사이드바 */}
         <aside 
           className={`dashboard-sidebar ${isSidebarOpen ? 'open' : ''}`}
-          style={{
-            ...(isMobile && !isSidebarOpen && {
-              transform: 'translateX(-100%)',
-              position: 'fixed',
-              left: 0,
-              top: 0,
-              height: '100vh',
-              zIndex: 1000
-            })
-          }}
         >
           <div className="sidebar-header">
             <div className="sidebar-logo">

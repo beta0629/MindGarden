@@ -189,57 +189,71 @@ export default function LocationPage() {
                 border: '2px solid rgba(255, 212, 184, 0.3)',
                 position: 'relative',
                 background: 'linear-gradient(to bottom, rgba(255, 252, 248, 0.98) 0%, rgba(255, 250, 245, 0.95) 100%)',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '20px',
-                padding: '40px'
+                cursor: 'pointer'
               }}>
-                <div style={{
-                  fontSize: '1.125rem',
-                  color: 'var(--text-sub)',
-                  textAlign: 'center',
-                  lineHeight: '1.8'
-                }}>
-                  <p style={{ marginBottom: '16px', fontWeight: '600', color: 'var(--text-main)' }}>
-                    마인드 가든 심리상담센터
-                  </p>
-                  <p style={{ marginBottom: '8px' }}>
-                    송도 아크리아2 204호
-                  </p>
-                  <p style={{ marginBottom: '0' }}>
-                    인천광역시 연수구 송도과학로 123
-                  </p>
-                </div>
                 <a
-                  href="https://map.naver.com/v5/search/인천광역시 연수구 송도과학로 123"
+                  href={mapLinkUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   style={{
-                    display: 'inline-block',
-                    padding: '12px 24px',
-                    background: 'rgba(168, 213, 186, 0.8)',
-                    color: 'white',
-                    borderRadius: 'var(--radius-sm)',
-                    fontSize: '1rem',
-                    fontWeight: '600',
+                    display: 'block',
+                    width: '100%',
+                    height: '100%',
                     textDecoration: 'none',
-                    transition: 'all 0.2s',
-                    boxShadow: 'var(--shadow-1)'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-2px)';
-                    e.currentTarget.style.boxShadow = 'var(--shadow-2)';
-                    e.currentTarget.style.background = 'rgba(168, 213, 186, 1)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = 'var(--shadow-1)';
-                    e.currentTarget.style.background = 'rgba(168, 213, 186, 0.8)';
+                    position: 'relative'
                   }}
                 >
-                  네이버 지도에서 보기
+                  <img
+                    src={staticMapUrl}
+                    alt="마인드 가든 심리상담센터 위치"
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      display: 'block'
+                    }}
+                    onError={(e) => {
+                      // Static Map API 실패 시 fallback
+                      const target = e.currentTarget;
+                      target.style.display = 'none';
+                      const parent = target.parentElement;
+                      if (parent) {
+                        parent.innerHTML = `
+                          <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 20px; padding: 40px;">
+                            <div style="font-size: 1.125rem; color: var(--text-sub); text-align: center; line-height: 1.8;">
+                              <p style="margin-bottom: 16px; font-weight: 600; color: var(--text-main);">
+                                마인드 가든 심리상담센터
+                              </p>
+                              <p style="margin-bottom: 8px;">
+                                송도 아크리아2 204호
+                              </p>
+                              <p style="margin-bottom: 0;">
+                                인천광역시 연수구 송도과학로 123
+                              </p>
+                            </div>
+                            <div style="padding: 12px 24px; background: rgba(168, 213, 186, 0.8); color: white; border-radius: var(--radius-sm); font-size: 1rem; font-weight: 600;">
+                              네이버 지도에서 보기
+                            </div>
+                          </div>
+                        `;
+                      }
+                    }}
+                  />
+                  <div style={{
+                    position: 'absolute',
+                    bottom: '16px',
+                    right: '16px',
+                    padding: '8px 16px',
+                    background: 'rgba(255, 255, 255, 0.95)',
+                    borderRadius: 'var(--radius-sm)',
+                    fontSize: '0.875rem',
+                    fontWeight: '600',
+                    color: 'var(--text-main)',
+                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+                    pointerEvents: 'none'
+                  }}>
+                    지도에서 보기 →
+                  </div>
                 </a>
               </div>
             </div>

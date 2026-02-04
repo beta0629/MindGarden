@@ -749,8 +749,8 @@
 }
 
 .vertical-section {
-  background: var(--dashboard-surface-light);
-  border: 1px solid var(--dashboard-border-light);
+  background: transparent;
+  border: none;
   border-radius: 16px;
   padding: 24px;
   display: flex;
@@ -759,8 +759,8 @@
 }
 
 .dashboard-design-guide-sample.dark .vertical-section {
-  background: var(--dashboard-surface-dark);
-  border-color: var(--dashboard-border-dark);
+  background: transparent;
+  border: none;
 }
 
 .section-header {
@@ -791,7 +791,7 @@
   font-weight: 500;
   color: var(--dashboard-text-secondary-light);
   background: transparent;
-  border: 1px solid var(--dashboard-border-light);
+  border: none;
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s;
@@ -804,12 +804,12 @@
 .control-btn.active {
   color: var(--dashboard-primary);
   background: rgba(79, 70, 229, 0.1);
-  border-color: var(--dashboard-primary);
+  border: none;
 }
 
 .dashboard-design-guide-sample.dark .control-btn {
   color: var(--dashboard-text-secondary-dark);
-  border-color: var(--dashboard-border-dark);
+  border: none;
 }
 
 .dashboard-design-guide-sample.dark .control-btn:hover {
@@ -818,6 +818,7 @@
 
 .dashboard-design-guide-sample.dark .control-btn.active {
   background: rgba(79, 70, 229, 0.2);
+  border: none;
 }
 
 /* 차트 섹션 */

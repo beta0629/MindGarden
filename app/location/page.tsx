@@ -8,11 +8,20 @@ export default function LocationPage() {
   // 송도 아크리아2 204호 주소
   const address = '인천광역시 연수구 송도과학로 123';
   const buildingName = '송도 아크리아2 204호';
+  const fullAddress = `${address} ${buildingName}`;
+  
   // 구글 지도 임베드 URL (API 키 없이도 작동하는 공개 방식)
-  // 주소를 검색어로 사용하여 구글 지도에 표시
-  const googleMapEmbedUrl = `https://www.google.com/maps/embed/v1/place?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || ''}&q=${encodeURIComponent(address + ' ' + buildingName)}`;
-  // API 키가 없을 경우를 대비한 대체 URL (공개 검색)
-  const googleMapSearchUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address + ' ' + buildingName)}`;
+  // 방법 1: API 키가 있는 경우 - Embed API 사용
+  const googleMapEmbedUrlWithKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY 
+    ? `https://www.google.com/maps/embed/v1/place?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&q=${encodeURIComponent(fullAddress)}`
+    : null;
+  
+  // 방법 2: API 키 없이도 작동하는 공개 임베드 URL (구글 지도 공유 링크 기반)
+  // 구글 지도에서 주소를 검색한 후 공유 > 지도 퍼가기에서 얻은 iframe URL 형식
+  const googleMapEmbedUrl = `https://www.google.com/maps?q=${encodeURIComponent(fullAddress)}&output=embed`;
+  
+  // 구글 지도 검색 링크 (새 탭에서 열기)
+  const googleMapSearchUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(fullAddress)}`;
   // 네이버 지도 링크 (대체 옵션)
   const naverMapLinkUrl = `https://map.naver.com/v5/search/${encodeURIComponent(address)}`;
 
@@ -191,87 +200,20 @@ export default function LocationPage() {
                 position: 'relative',
                 background: '#f5f5f5'
               }}>
-                {process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ? (
-                  // 구글 지도 임베드 (API 키가 있는 경우)
-                  <iframe
-                    src={googleMapEmbedUrl}
-                    width="100%"
-                    height="100%"
-                    style={{
-                      border: 'none',
-                      borderRadius: 'var(--radius-md)'
-                    }}
-                    allowFullScreen
-                    loading="lazy"
-                    referrerPolicy="no-referrer-when-downgrade"
-                    title="마인드 가든 심리상담센터 위치"
-                  />
-                ) : (
-                  // API 키가 없는 경우: 구글 지도 검색 링크 (클릭 시 지도 열림)
-                  <a
-                    href={googleMapSearchUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{
-                      display: 'block',
-                      width: '100%',
-                      height: '100%',
-                      textDecoration: 'none',
-                      position: 'relative',
-                      background: 'linear-gradient(135deg, rgba(168, 213, 186, 0.15) 0%, rgba(196, 230, 212, 0.1) 100%)'
-                    }}
-                  >
-                    <div style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      height: '100%',
-                      gap: '24px',
-                      padding: '40px',
-                      textAlign: 'center'
-                    }}>
-                      <div style={{
-                        fontSize: '3rem',
-                        marginBottom: '8px'
-                      }}>
-                        🗺️
-                      </div>
-                      <div style={{
-                        fontSize: '1.25rem',
-                        fontWeight: '700',
-                        color: 'var(--text-main)',
-                        marginBottom: '8px'
-                      }}>
-                        마인드 가든 심리상담센터
-                      </div>
-                      <div style={{
-                        fontSize: '1.125rem',
-                        color: 'var(--text-sub)',
-                        lineHeight: '1.8',
-                        marginBottom: '8px'
-                      }}>
-                        <p style={{ marginBottom: '8px' }}>
-                          {buildingName}
-                        </p>
-                        <p style={{ marginBottom: '0' }}>
-                          {address}
-                        </p>
-                      </div>
-                      <div style={{
-                        padding: '14px 28px',
-                        background: 'rgba(168, 213, 186, 0.9)',
-                        color: 'white',
-                        borderRadius: 'var(--radius-sm)',
-                        fontSize: '1.0625rem',
-                        fontWeight: '600',
-                        boxShadow: '0 4px 12px rgba(168, 213, 186, 0.3)'
-                      }}>
-                        구글 지도에서 보기 →
-                      </div>
-                    </div>
-                  </a>
-                )}
+                {/* 구글 지도 임베드 (API 키 없이도 작동) */}
+                <iframe
+                  src={googleMapEmbedUrlWithKey || googleMapEmbedUrl}
+                  width="100%"
+                  height="100%"
+                  style={{
+                    border: 'none',
+                    borderRadius: 'var(--radius-md)'
+                  }}
+                  allowFullScreen
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  title="마인드 가든 심리상담센터 위치"
+                />
               </div>
               {/* 지도 옵션 링크 */}
               <div style={{

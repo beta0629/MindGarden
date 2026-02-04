@@ -13,6 +13,19 @@ const AdminDashboardSample = () => {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('finance');
+  const [isMobile, setIsMobile] = useState(false);
+
+  // 모바일 감지
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 767);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const toggleDarkMode = () => {
     setIsDarkMode(!isDarkMode);
@@ -66,7 +79,7 @@ const AdminDashboardSample = () => {
         <aside 
           className={`dashboard-sidebar ${isSidebarOpen ? 'open' : ''}`}
           style={{
-            ...(window.innerWidth <= 767 && !isSidebarOpen && {
+            ...(isMobile && !isSidebarOpen && {
               transform: 'translateX(-100%)',
               position: 'fixed',
               left: 0,

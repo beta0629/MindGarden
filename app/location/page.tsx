@@ -29,62 +29,79 @@ export default function LocationPage() {
           return;
         }
 
-        const address = '인천광역시 연수구 송도과학로 123';
-        
-        // 네이버 지도 Geocoding API 사용
-        if (window.naver.maps.Service && window.naver.maps.Service.geocode) {
-          window.naver.maps.Service.geocode({
-            query: address
-          }, (status: any, response: any) => {
-            if (status === window.naver.maps.Service.Status.OK && response.result && response.result.items && response.result.items.length > 0) {
-              const result = response.result;
-              const coords = new window.naver.maps.LatLng(result.items[0].point.y, result.items[0].point.x);
-              
-              // 지도 생성
-              const mapOptions = {
-                center: coords,
-                zoom: 15
-              };
-              
-              const map = new window.naver.maps.Map(mapRef.current, mapOptions);
-              mapInstanceRef.current = map;
-              
-              // 마커 생성
-              const marker = new window.naver.maps.Marker({
-                position: coords,
-                map: map,
-                title: '마인드 가든 심리상담센터'
-              });
-              
-              // 인포윈도우 생성
-              const infoWindow = new window.naver.maps.InfoWindow({
-                content: `
-                  <div style="padding: 10px; font-size: 14px; line-height: 1.5; min-width: 200px;">
-                    <strong style="font-size: 16px; display: block; margin-bottom: 5px;">마인드 가든 심리상담센터</strong>
-                    <div>송도 아크리아2 204호</div>
-                    <div>${address}</div>
-                  </div>
-                `
-              });
-              
-              // 마커 클릭 시 인포윈도우 표시
-              window.naver.maps.Event.addListener(marker, 'click', () => {
-                if (infoWindow.getMap()) {
-                  infoWindow.close();
+        // 인증 실패 시에도 지도를 표시하기 위해 try-catch 사용
+        try {
+          const address = '인천광역시 연수구 송도과학로 123';
+          
+          // 네이버 지도 Geocoding API 사용
+          if (window.naver.maps.Service && window.naver.maps.Service.geocode) {
+            window.naver.maps.Service.geocode({
+              query: address
+            }, (status: any, response: any) => {
+              try {
+                if (status === window.naver.maps.Service.Status.OK && response.result && response.result.items && response.result.items.length > 0) {
+                  const result = response.result;
+                  const coords = new window.naver.maps.LatLng(result.items[0].point.y, result.items[0].point.x);
+                  createMap(coords, address);
                 } else {
-                  infoWindow.open(map, marker);
+                  // 주소 검색 실패 시 기본 좌표로 지도 생성
+                  createMapWithDefaultCoords();
                 }
-              });
-              
-              // 지도 로드 시 인포윈도우 자동 표시
-              infoWindow.open(map, marker);
+              } catch (error) {
+                console.error('Geocoding 처리 오류:', error);
+                createMapWithDefaultCoords();
+              }
+            });
+          } else {
+            // Service API가 없는 경우 기본 좌표로 지도 생성
+            createMapWithDefaultCoords();
+          }
+        } catch (error) {
+          console.error('네이버 지도 초기화 오류:', error);
+          // 오류 발생 시에도 기본 좌표로 지도 생성
+          createMapWithDefaultCoords();
+        }
+      };
+
+      const createMap = (coords: any, address: string) => {
+        if (!mapRef.current || mapInstanceRef.current) return;
+        
+        try {
+          const mapOptions = {
+            center: coords,
+            zoom: 15
+          };
+          
+          const map = new window.naver.maps.Map(mapRef.current, mapOptions);
+          mapInstanceRef.current = map;
+          
+          const marker = new window.naver.maps.Marker({
+            position: coords,
+            map: map,
+            title: '마인드 가든 심리상담센터'
+          });
+          
+          const infoWindow = new window.naver.maps.InfoWindow({
+            content: `
+              <div style="padding: 10px; font-size: 14px; line-height: 1.5; min-width: 200px;">
+                <strong style="font-size: 16px; display: block; margin-bottom: 5px;">마인드 가든 심리상담센터</strong>
+                <div>송도 아크리아2 204호</div>
+                <div>${address}</div>
+              </div>
+            `
+          });
+          
+          window.naver.maps.Event.addListener(marker, 'click', () => {
+            if (infoWindow.getMap()) {
+              infoWindow.close();
             } else {
-              // 주소 검색 실패 시 기본 좌표 사용 (송도 아크리아2 근처)
-              createMapWithDefaultCoords();
+              infoWindow.open(map, marker);
             }
           });
-        } else {
-          // Service API가 없는 경우 기본 좌표로 지도 생성
+          
+          infoWindow.open(map, marker);
+        } catch (error) {
+          console.error('지도 생성 오류:', error);
           createMapWithDefaultCoords();
         }
       };
@@ -92,45 +109,71 @@ export default function LocationPage() {
       const createMapWithDefaultCoords = () => {
         if (!mapRef.current || mapInstanceRef.current) return;
         
-        const defaultCoords = new window.naver.maps.LatLng(37.3885, 126.6584);
-        
-        const mapOptions = {
-          center: defaultCoords,
-          zoom: 15
-        };
-        
-        const map = new window.naver.maps.Map(mapRef.current, mapOptions);
-        mapInstanceRef.current = map;
-        
-        const marker = new window.naver.maps.Marker({
-          position: defaultCoords,
-          map: map,
-          title: '마인드 가든 심리상담센터'
-        });
-        
-        const infoWindow = new window.naver.maps.InfoWindow({
-          content: `
-            <div style="padding: 10px; font-size: 14px; line-height: 1.5; min-width: 200px;">
-              <strong style="font-size: 16px; display: block; margin-bottom: 5px;">마인드 가든 심리상담센터</strong>
-              <div>송도 아크리아2 204호</div>
-              <div>인천광역시 연수구 송도과학로 123</div>
-            </div>
-          `
-        });
-        
-        window.naver.maps.Event.addListener(marker, 'click', () => {
-          if (infoWindow.getMap()) {
-            infoWindow.close();
-          } else {
-            infoWindow.open(map, marker);
+        try {
+          // 송도 아크리아2 근처 좌표 (37.3885, 126.6584)
+          const defaultCoords = new window.naver.maps.LatLng(37.3885, 126.6584);
+          
+          const mapOptions = {
+            center: defaultCoords,
+            zoom: 15
+          };
+          
+          const map = new window.naver.maps.Map(mapRef.current, mapOptions);
+          mapInstanceRef.current = map;
+          
+          const marker = new window.naver.maps.Marker({
+            position: defaultCoords,
+            map: map,
+            title: '마인드 가든 심리상담센터'
+          });
+          
+          const infoWindow = new window.naver.maps.InfoWindow({
+            content: `
+              <div style="padding: 10px; font-size: 14px; line-height: 1.5; min-width: 200px;">
+                <strong style="font-size: 16px; display: block; margin-bottom: 5px;">마인드 가든 심리상담센터</strong>
+                <div>송도 아크리아2 204호</div>
+                <div>인천광역시 연수구 송도과학로 123</div>
+              </div>
+            `
+          });
+          
+          window.naver.maps.Event.addListener(marker, 'click', () => {
+            if (infoWindow.getMap()) {
+              infoWindow.close();
+            } else {
+              infoWindow.open(map, marker);
+            }
+          });
+          
+          infoWindow.open(map, marker);
+        } catch (error) {
+          console.error('기본 좌표 지도 생성 오류:', error);
+          // 지도 생성 실패 시 안내 메시지 표시
+          if (mapRef.current) {
+            mapRef.current.innerHTML = `
+              <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: var(--text-sub); padding: 20px; text-align: center;">
+                <div>
+                  <p style="margin-bottom: 10px; font-size: 16px; font-weight: 600;">지도를 불러올 수 없습니다</p>
+                  <p style="font-size: 14px;">네이버 클라우드 플랫폼에서 서비스 URL을 등록해주세요.</p>
+                  <p style="font-size: 12px; margin-top: 10px; color: var(--text-light);">주소: 송도 아크리아2 204호, 인천광역시 연수구 송도과학로 123</p>
+                </div>
+              </div>
+            `;
           }
-        });
-        
-        infoWindow.open(map, marker);
+        }
       };
 
       // API가 완전히 로드될 때까지 약간의 지연 후 초기화
-      setTimeout(initMap, 100);
+      // 인증 오류가 발생해도 지도가 표시되도록 여러 번 시도
+      setTimeout(() => {
+        initMap();
+        // 인증 오류로 인해 지도가 사라질 수 있으므로 재시도
+        setTimeout(() => {
+          if (!mapInstanceRef.current && mapRef.current) {
+            initMap();
+          }
+        }, 500);
+      }, 100);
     };
     
     script.onerror = () => {

@@ -244,6 +244,7 @@ export default function ReviewsCarousel({ reviews }: ReviewsCarouselProps) {
         background: 'linear-gradient(135deg, var(--bg-pastel-1) 0%, var(--bg-pastel-2) 100%)',
         borderRadius: 'var(--radius-md)',
         overflow: 'hidden',
+        minHeight: '600px', // 최소 높이 고정으로 레이아웃 시프트 방지
       }}
     >
       {/* 헤더 */}
@@ -292,7 +293,7 @@ export default function ReviewsCarousel({ reviews }: ReviewsCarouselProps) {
             padding: '2.5rem',
             boxShadow: 'var(--shadow-2)',
             border: '1px solid var(--border-soft)',
-            minHeight: '300px',
+            height: '450px', // 고정 높이로 설정
             display: 'flex',
             flexDirection: 'column',
             animation: 'fadeInUp 0.5s ease',
@@ -343,6 +344,9 @@ export default function ReviewsCarousel({ reviews }: ReviewsCarouselProps) {
               lineHeight: '1.8',
               fontSize: '1rem',
               marginBottom: '1.5rem',
+              overflowY: 'auto', // 내용이 길 경우 스크롤 가능
+              maxHeight: '250px', // 최대 높이 제한
+              paddingRight: '0.5rem', // 스크롤바 공간 확보
             }}
             dangerouslySetInnerHTML={{
               __html: processContent(currentReview.content),

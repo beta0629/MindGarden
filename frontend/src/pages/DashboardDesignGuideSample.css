@@ -1534,6 +1534,22 @@
     grid-template-columns: 1fr;
     gap: 16px;
   }
+
+  .management-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .system-status-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .system-tools-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .stats-table {
+    overflow-x: auto;
+  }
 }
 
 /* 태블릿 */
@@ -1585,6 +1601,18 @@
   .vertical-layout-grid {
     grid-template-columns: 1fr;
     gap: 20px;
+  }
+
+  .management-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .system-status-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .system-tools-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 

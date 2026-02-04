@@ -256,7 +256,7 @@ export default async function Home() {
                   </div>
                   <div className="contact-row">
                     <div className="contact-label">주소</div>
-                    <div className="contact-value">서울시 ○○구 ○○로 00</div>
+                    <div className="contact-value">인천광역시 연수구 송도과학로 123<br />송도 아크리아2 204호</div>
                   </div>
                   <div className="contact-row">
                     <div className="contact-label">운영시간</div>

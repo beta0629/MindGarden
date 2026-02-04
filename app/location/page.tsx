@@ -7,7 +7,9 @@ export default function LocationPage() {
   // 네이버 지도 임베드 방식 사용 (API 키 인증 불필요)
   // 송도 아크리아2 204호 주소를 네이버 지도에서 검색하여 임베드
   // 주소: 인천광역시 연수구 송도과학로 123
-  const mapEmbedUrl = `https://map.naver.com/v5/search/인천광역시 연수구 송도과학로 123`;
+  // HTTPS로 변경하여 Mixed Content 오류 방지
+  const address = encodeURIComponent('인천광역시 연수구 송도과학로 123');
+  const mapEmbedUrl = `https://map.naver.com/v5/search/${address}`;
 
   return (
     <main id="top">

@@ -66,20 +66,20 @@ const getRandomName = (reviewId: number) => {
   return names[index];
 };
 
-// 별점 렌더링
-const renderStars = (rating: number) => {
-  const fullStars = Math.floor(rating);
-  const hasHalfStar = rating % 1 >= 0.5;
-  const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+// 하트 렌더링
+const renderHearts = (rating: number) => {
+  const fullHearts = Math.floor(rating);
+  const hasHalfHeart = rating % 1 >= 0.5;
+  const emptyHearts = 5 - fullHearts - (hasHalfHeart ? 1 : 0);
   
   return (
-    <div style={{ display: 'flex', color: '#4ADE80' }}>
-      {Array.from({ length: fullStars }).map((_, i) => (
-        <span key={i} style={{ fontSize: '0.875rem' }}>⭐</span>
+    <div style={{ display: 'flex', gap: '0.125rem' }}>
+      {Array.from({ length: fullHearts }).map((_, i) => (
+        <span key={i} style={{ fontSize: '0.875rem', color: '#ef4444' }}>❤️</span>
       ))}
-      {hasHalfStar && <span style={{ fontSize: '0.875rem' }}>⭐</span>}
-      {Array.from({ length: emptyStars }).map((_, i) => (
-        <span key={i} style={{ fontSize: '0.875rem', opacity: 0.3 }}>⭐</span>
+      {hasHalfHeart && <span style={{ fontSize: '0.875rem', color: '#ef4444', opacity: 0.5 }}>❤️</span>}
+      {Array.from({ length: emptyHearts }).map((_, i) => (
+        <span key={i} style={{ fontSize: '0.875rem', color: '#cbd5e1' }}>🤍</span>
       ))}
     </div>
   );
@@ -449,16 +449,15 @@ export default function ReviewsPage() {
                     display: 'flex',
                     gap: '0.25rem',
                     marginBottom: '1rem',
-                    color: '#4ADE80',
                   }}>
                     {Array.from({ length: 5 }).map((_, i) => {
                       const rating = stats.ratingStats.overall.average;
                       if (i < Math.floor(rating)) {
-                        return <span key={i} style={{ fontSize: '1.25rem' }}>⭐</span>;
+                        return <span key={i} style={{ fontSize: '1.25rem', color: '#ef4444' }}>❤️</span>;
                       } else if (i === Math.floor(rating) && rating % 1 >= 0.5) {
-                        return <span key={i} style={{ fontSize: '1.25rem' }}>⭐</span>;
+                        return <span key={i} style={{ fontSize: '1.25rem', color: '#ef4444', opacity: 0.5 }}>❤️</span>;
                       } else {
-                        return <span key={i} style={{ fontSize: '1.25rem', opacity: 0.3 }}>⭐</span>;
+                        return <span key={i} style={{ fontSize: '1.25rem', color: '#cbd5e1' }}>🤍</span>;
                       }
                     })}
                   </div>
@@ -944,7 +943,7 @@ export default function ReviewsPage() {
                                   }}>
                                     {labels[key] || key}
                                   </span>
-                                  {renderStars(value)}
+                                  {renderHearts(value)}
                                 </div>
                               );
                             })}

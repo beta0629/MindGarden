@@ -15,6 +15,7 @@ interface ConsultationInquiry {
   message: string | null;
   preferredDate: string | null;
   preferredTime: string | null;
+  tags: string[]; // 해시태그 배열 추가
   status: 'pending' | 'contacted' | 'completed' | 'cancelled';
   createdAt: string;
   updatedAt: string;
@@ -385,6 +386,29 @@ export default function ConsultationAdminPage() {
                         <span style={{ color: '#6b7280', marginLeft: '0.5rem' }}>
                           {getPreferredTimeLabel(inquiry.preferredTime)}
                         </span>
+                      </div>
+                    )}
+                    {inquiry.tags && inquiry.tags.length > 0 && (
+                      <div style={{ gridColumn: '1 / -1' }}>
+                        <strong style={{ color: '#374151' }}>선택한 항목:</strong>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.5rem' }}>
+                          {inquiry.tags.map((tag, index) => (
+                            <span
+                              key={index}
+                              style={{
+                                display: 'inline-block',
+                                padding: '4px 10px',
+                                backgroundColor: '#A8D5BA',
+                                color: 'white',
+                                borderRadius: '0.375rem',
+                                fontSize: '0.8125rem',
+                                fontWeight: '500',
+                              }}
+                            >
+                              #{tag}
+                            </span>
+                          ))}
+                        </div>
                       </div>
                     )}
                   </div>

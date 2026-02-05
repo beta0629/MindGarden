@@ -167,29 +167,23 @@ export default function Navigation() {
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '0.5rem',
               textDecoration: 'none',
-              ...(textColor ? { color: textColor } : {}),
             }}
           >
             <Image
               src="/assets/images/logo/logo.png"
               alt="마인드가든 심리상담센터"
-              width={40}
-              height={40}
+              width={120}
+              height={120}
               style={{
                 objectFit: 'contain',
                 flexShrink: 0,
+                height: 'auto',
+                maxHeight: '50px',
+                width: 'auto',
               }}
               priority
             />
-            <span style={{ 
-              fontSize: '1.125rem',
-              fontWeight: '700',
-              whiteSpace: 'nowrap',
-            }}>
-              마인드 가든
-            </span>
           </Link>
 
           <div className="gnb-right">

@@ -26,8 +26,14 @@ export async function GET(request: NextRequest) {
     }
     
     if (category) {
-      conditions.push('category = ?');
-      params.push(category);
+      // "기타" 카테고리인 경우 category가 null인 이미지도 포함
+      if (category === '기타') {
+        conditions.push('(category = ? OR category IS NULL)');
+        params.push(category);
+      } else {
+        conditions.push('category = ?');
+        params.push(category);
+      }
     }
     
     if (conditions.length > 0) {

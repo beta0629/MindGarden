@@ -245,8 +245,9 @@ export default function GalleryMarquee({ images }: GalleryMarqueeProps) {
         >
           {displayImages.map((image, index) => {
             // DB에서 가져온 이미지인 경우 상세 페이지 링크 추가
-            const hasDetailPage = image.id && image.category;
-            const detailUrl = hasDetailPage ? `/gallery/${encodeURIComponent(image.category!)}/${image.id}` : null;
+            const hasDetailPage = image.id;
+            const category = image.category || '기타';
+            const detailUrl = hasDetailPage ? `/gallery/${encodeURIComponent(category)}/${image.id}` : null;
             
             const imageElement = (
               <img

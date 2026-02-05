@@ -68,6 +68,7 @@ export default function ConsultationBottomSheet() {
     <>
       {/* 바텀시트 */}
       <div
+        data-bottom-sheet
         style={{
           position: 'fixed',
           bottom: 0,

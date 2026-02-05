@@ -1051,6 +1051,8 @@ a.feature-card:hover {
 
 /* Footer Spacer */
 .footer-simple {
+  background-color: var(--bg-pastel-2);
+  border-top: 1px solid var(--border-soft);
     text-align: center;
     padding: 4rem;
     color: var(--text-sub);

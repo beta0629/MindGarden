@@ -49,40 +49,69 @@ export default function Footer() {
         maxWidth: '1200px',
         margin: '0 auto',
         padding: '3rem 2rem',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        textAlign: 'center',
       }}>
-        {/* 센터 정보 */}
+        {/* 센터 정보 - 가로 배치 */}
         <div style={{
-          maxWidth: '600px',
+          display: 'flex',
+          flexDirection: 'row',
+          justifyContent: 'center',
+          alignItems: 'flex-start',
+          gap: '3rem',
           marginBottom: '2rem',
+          flexWrap: 'wrap',
         }}>
-          <h3 style={{
-            fontSize: '1.125rem',
-            fontWeight: '700',
-            color: 'var(--text-main)',
-            marginBottom: '1rem',
-          }}>
-            마인드가든 심리상담센터
-          </h3>
           <div style={{
-            fontSize: '0.875rem',
-            color: 'var(--text-sub)',
-            lineHeight: '1.8',
+            flex: '0 0 auto',
           }}>
-            <p style={{ marginBottom: '0.5rem' }}>
-              <strong>주소:</strong> 인천광역시 연수구 송도과학로 123<br />
-              송도 아크리아2 204호
-            </p>
-            <p style={{ marginBottom: '0.5rem' }}>
-              <strong>운영시간:</strong> 평일 09:00 - 18:00
-            </p>
-            <p>
-              <strong>문의:</strong> 상담 예약 및 문의는<br />
-              하단 문의/예약 버튼을 이용해주세요.
-            </p>
+            <h3 style={{
+              fontSize: '1.125rem',
+              fontWeight: '700',
+              color: 'var(--text-main)',
+              marginBottom: '1rem',
+            }}>
+              마인드가든 심리상담센터
+            </h3>
+            <div style={{
+              fontSize: '0.875rem',
+              color: 'var(--text-sub)',
+              lineHeight: '1.8',
+            }}>
+              <p style={{ marginBottom: '0.5rem' }}>
+                <strong>주소:</strong> 인천광역시 연수구 송도과학로 123<br />
+                송도 아크리아2 204호
+              </p>
+            </div>
+          </div>
+
+          <div style={{
+            flex: '0 0 auto',
+          }}>
+            <div style={{
+              fontSize: '0.875rem',
+              color: 'var(--text-sub)',
+              lineHeight: '1.8',
+              marginTop: '2.5rem', // h3 높이만큼 상단 여백
+            }}>
+              <p style={{ marginBottom: '0.5rem' }}>
+                <strong>운영시간:</strong> 평일 09:00 - 18:00
+              </p>
+            </div>
+          </div>
+
+          <div style={{
+            flex: '0 0 auto',
+          }}>
+            <div style={{
+              fontSize: '0.875rem',
+              color: 'var(--text-sub)',
+              lineHeight: '1.8',
+              marginTop: '2.5rem', // h3 높이만큼 상단 여백
+            }}>
+              <p>
+                <strong>문의:</strong> 상담 예약 및 문의는<br />
+                하단 문의/예약 버튼을 이용해주세요.
+              </p>
+            </div>
           </div>
         </div>
 
@@ -90,14 +119,14 @@ export default function Footer() {
         <div style={{
           borderTop: '1px solid var(--border-soft)',
           paddingTop: '1.5rem',
-          width: '100%',
+          textAlign: 'center',
         }}>
           <p style={{
             fontSize: '0.875rem',
             color: 'var(--text-sub)',
             margin: 0,
           }}>
-            &copy; 2025 Mind Garden. 언제나 당신 곁에.
+            &copy; 2026 Mind Garden. 언제나 당신 곁에.
           </p>
         </div>
       </div>

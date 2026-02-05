@@ -700,6 +700,16 @@
   color: #ef4444;
 }
 
+.kpi-trend-neutral {
+  background: rgba(100, 116, 139, 0.1);
+  color: var(--dashboard-text-secondary-light);
+}
+
+.dashboard-design-guide-sample.dark .kpi-trend-neutral {
+  background: rgba(148, 163, 184, 0.1);
+  color: var(--dashboard-text-secondary-dark);
+}
+
 .kpi-trend .material-symbols-outlined {
   font-size: 16px;
 }

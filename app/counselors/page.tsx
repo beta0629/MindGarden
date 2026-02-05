@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import Link from 'next/link';
@@ -21,6 +21,65 @@ export default function CounselorsPage() {
   const [counselors, setCounselors] = useState<Counselor[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  
+  // 모바일 감지
+  const [isMobile, setIsMobile] = useState(false);
+  
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+  
+  // 터치 스와이프 관련 상태
+  const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
+  const touchEndX = useRef<number | null>(null);
+  const touchEndY = useRef<number | null>(null);
+  
+  // 터치 스와이프 핸들러
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+  };
+  
+  const handleTouchMove = (e: React.TouchEvent) => {
+    touchEndX.current = e.touches[0].clientX;
+    touchEndY.current = e.touches[0].clientY;
+  };
+  
+  const handleTouchEnd = () => {
+    if (!touchStartX.current || !touchEndX.current || !touchStartY.current || !touchEndY.current) return;
+    if (!scrollContainerRef.current) return;
+    
+    const deltaX = touchStartX.current - touchEndX.current;
+    const deltaY = touchStartY.current - touchEndY.current;
+    const minSwipeDistance = 50;
+    
+    // 수평 스와이프가 수직 스와이프보다 큰 경우에만 처리
+    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > minSwipeDistance) {
+      const container = scrollContainerRef.current;
+      const scrollAmount = container.offsetWidth * 0.8; // 한 번에 80% 스크롤
+      
+      if (deltaX > 0) {
+        // 왼쪽으로 스와이프 (다음으로)
+        container.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+      } else {
+        // 오른쪽으로 스와이프 (이전으로)
+        container.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+      }
+    }
+    
+    // 리셋
+    touchStartX.current = null;
+    touchStartY.current = null;
+    touchEndX.current = null;
+    touchEndY.current = null;
+  };
 
   useEffect(() => {
     loadCounselors();
@@ -105,13 +164,27 @@ export default function CounselorsPage() {
                 <p>등록된 상담사가 없습니다.</p>
               </div>
             ) : (
-              <div style={{
-                maxWidth: '1000px',
-                margin: '0 auto',
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-                gap: '32px'
-              }}>
+              <div 
+                ref={scrollContainerRef}
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+                style={{
+                  maxWidth: '1000px',
+                  margin: '0 auto',
+                  display: isMobile ? 'flex' : 'grid',
+                  gridTemplateColumns: isMobile ? 'none' : 'repeat(auto-fit, minmax(300px, 1fr))',
+                  gap: '32px',
+                  overflowX: isMobile ? 'auto' : 'visible',
+                  overflowY: 'visible',
+                  scrollSnapType: isMobile ? 'x mandatory' : 'none',
+                  scrollBehavior: 'smooth',
+                  scrollbarWidth: isMobile ? 'thin' : 'auto',
+                  msOverflowStyle: isMobile ? 'auto' : 'none',
+                  WebkitOverflowScrolling: 'touch',
+                  touchAction: isMobile ? 'pan-x pinch-zoom' : 'auto',
+                }}
+              >
                 {counselors.map((counselor) => (
                   <div
                     key={counselor.id}
@@ -125,7 +198,10 @@ export default function CounselorsPage() {
                       display: 'flex',
                       flexDirection: 'column',
                       alignItems: 'center',
-                      textAlign: 'center'
+                      textAlign: 'center',
+                      minWidth: isMobile ? 'calc(100vw - 64px)' : 'auto',
+                      flexShrink: 0,
+                      scrollSnapAlign: isMobile ? 'start' : 'none',
                     }}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.transform = 'translateY(-4px)';
@@ -259,58 +335,6 @@ export default function CounselorsPage() {
                 ))}
               </div>
             )}
-
-            {/* 하단 CTA */}
-            <div style={{
-              marginTop: '80px',
-              textAlign: 'center',
-              padding: '48px 32px',
-              background: 'linear-gradient(135deg, var(--bg-pastel-1) 0%, var(--bg-pastel-2) 100%)',
-              borderRadius: 'var(--radius-lg)',
-              border: '2px solid var(--accent-sky)40'
-            }}>
-              <h3 style={{
-                fontSize: '1.75rem',
-                fontWeight: '700',
-                color: 'var(--text-main)',
-                marginBottom: '16px'
-              }}>
-                상담 문의하기
-              </h3>
-              <p style={{
-                fontSize: '1.125rem',
-                color: 'var(--text-sub)',
-                marginBottom: '32px',
-                lineHeight: '1.8'
-              }}>
-                전문 상담사와 함께 시작하는 회복의 여정
-              </p>
-              <Link
-                href="/#contact"
-                style={{
-                  display: 'inline-block',
-                  padding: '14px 32px',
-                  background: 'var(--accent-sky)',
-                  color: 'white',
-                  borderRadius: 'var(--radius-sm)',
-                  fontSize: '1.0625rem',
-                  fontWeight: '600',
-                  textDecoration: 'none',
-                  transition: 'all 0.2s',
-                  boxShadow: 'var(--shadow-1)'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.boxShadow = 'var(--shadow-2)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = 'var(--shadow-1)';
-                }}
-              >
-                상담 예약하기
-              </Link>
-            </div>
           </section>
         </div>
       </div>

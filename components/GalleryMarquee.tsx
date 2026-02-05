@@ -1,10 +1,13 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
+import Link from 'next/link';
 
 interface GalleryImage {
+  id?: number;
   url: string;
   alt: string;
+  category?: string;
 }
 
 interface GalleryMarqueeProps {
@@ -240,16 +243,12 @@ export default function GalleryMarquee({ images }: GalleryMarqueeProps) {
             touchAction: 'pan-y pinch-zoom', // 수직 스크롤과 핀치 줌은 허용
           }}
         >
-          {displayImages.map((image, index) => (
-            <div
-              key={index}
-              className="marquee-item"
-              style={{
-                scrollSnapAlign: 'start',
-                flexShrink: 0,
-                width: '100%',
-              }}
-            >
+          {displayImages.map((image, index) => {
+            // DB에서 가져온 이미지인 경우 상세 페이지 링크 추가
+            const hasDetailPage = image.id && image.category;
+            const detailUrl = hasDetailPage ? `/gallery/${encodeURIComponent(image.category!)}/${image.id}` : null;
+            
+            const imageElement = (
               <img
                 src={image.url}
                 alt={image.alt}
@@ -257,11 +256,41 @@ export default function GalleryMarquee({ images }: GalleryMarqueeProps) {
                   width: '100%',
                   height: '100%',
                   objectFit: 'cover',
+                  cursor: hasDetailPage ? 'pointer' : 'default',
                 }}
                 loading={index >= 2 ? 'lazy' : 'eager'}
               />
-            </div>
-          ))}
+            );
+            
+            return (
+              <div
+                key={index}
+                className="marquee-item"
+                style={{
+                  scrollSnapAlign: 'start',
+                  flexShrink: 0,
+                  width: '100%',
+                  position: 'relative',
+                }}
+              >
+                {hasDetailPage && detailUrl ? (
+                  <Link
+                    href={detailUrl}
+                    style={{
+                      display: 'block',
+                      width: '100%',
+                      height: '100%',
+                      textDecoration: 'none',
+                    }}
+                  >
+                    {imageElement}
+                  </Link>
+                ) : (
+                  imageElement
+                )}
+              </div>
+            );
+          })}
         </div>
 
         {/* 인디케이터 (점) */}

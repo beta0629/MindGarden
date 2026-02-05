@@ -19,15 +19,17 @@ async function getGalleryImages() {
     connection = await getDbConnection();
     
     const [rows] = await connection.execute(
-      `SELECT image_url, alt_text 
+      `SELECT id, image_url, alt_text, category 
        FROM gallery_images
        WHERE is_active = 1
        ORDER BY display_order ASC, created_at ASC`
     );
 
     const images = (rows as any[]).map((row: any) => ({
+      id: row.id,
       url: row.image_url,
       alt: row.alt_text || '갤러리 이미지',
+      category: row.category || '기타',
     }));
 
     console.log('Gallery images loaded:', images.length, images);

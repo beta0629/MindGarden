@@ -17,6 +17,7 @@ export async function POST(request: NextRequest) {
       message,
       preferredDate,
       preferredTime,
+      tags = [],
       tenantId = null,
     } = body;
 
@@ -50,10 +51,15 @@ export async function POST(request: NextRequest) {
 
     connection = await getDbConnection();
 
+    // tags를 JSON 문자열로 변환
+    const tagsJson = Array.isArray(tags) && tags.length > 0 
+      ? JSON.stringify(tags) 
+      : null;
+
     const [result] = await connection.execute(
       `INSERT INTO consultation_inquiries 
-       (name, phone, email, preferred_contact_method, inquiry_type, referral_source, message, preferred_date, preferred_time, status)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
+       (name, phone, email, preferred_contact_method, inquiry_type, referral_source, message, preferred_date, preferred_time, tags, status)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
       [
         name,
         phone,
@@ -64,6 +70,7 @@ export async function POST(request: NextRequest) {
         message || null,
         preferredDate || null,
         preferredTime || null,
+        tagsJson,
       ]
     );
 
@@ -114,21 +121,32 @@ export async function GET(request: NextRequest) {
       : await connection.execute(query);
 
     // snake_case를 camelCase로 변환
-    const inquiries = (rows as any[]).map((row: any) => ({
-      id: row.id,
-      name: row.name,
-      phone: row.phone,
-      email: row.email,
-      preferredContactMethod: row.preferred_contact_method,
-      inquiryType: row.inquiry_type,
-      referralSource: row.referral_source,
-      message: row.message,
-      preferredDate: row.preferred_date,
-      preferredTime: row.preferred_time,
-      status: row.status,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at,
-    }));
+    const inquiries = (rows as any[]).map((row: any) => {
+      let tags = [];
+      try {
+        tags = row.tags ? JSON.parse(row.tags) : [];
+      } catch (e) {
+        // JSON 파싱 실패 시 빈 배열
+        tags = [];
+      }
+      
+      return {
+        id: row.id,
+        name: row.name,
+        phone: row.phone,
+        email: row.email,
+        preferredContactMethod: row.preferred_contact_method,
+        inquiryType: row.inquiry_type,
+        referralSource: row.referral_source,
+        message: row.message,
+        preferredDate: row.preferred_date,
+        preferredTime: row.preferred_time,
+        tags,
+        status: row.status,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
+      };
+    });
 
     return NextResponse.json({
       success: true,

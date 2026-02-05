@@ -12,7 +12,24 @@ interface ConsultationFormData {
   message: string;
   preferredDate: string;
   preferredTime: string;
+  tags: string[]; // 해시태그 배열 추가
 }
+
+// 기본 해시태그 옵션
+const DEFAULT_TAGS = [
+  'ADHD',
+  '주의력 결핍',
+  '과잉행동',
+  '충동성',
+  '학습 문제',
+  '정서 조절',
+  '대인관계',
+  '가족 상담',
+  '부모 상담',
+  '코칭',
+  '심리검사',
+  '기타',
+];
 
 export default function ConsultationForm() {
   const [formData, setFormData] = useState<ConsultationFormData>({
@@ -25,6 +42,7 @@ export default function ConsultationForm() {
     message: '',
     preferredDate: '',
     preferredTime: '',
+    tags: [],
   });
 
   const [submitting, setSubmitting] = useState(false);
@@ -61,6 +79,7 @@ export default function ConsultationForm() {
           message: '',
           preferredDate: '',
           preferredTime: '',
+          tags: [],
         });
         // 5초 후 성공 메시지 숨기기
         setTimeout(() => setSuccess(false), 5000);
@@ -230,9 +249,118 @@ export default function ConsultationForm() {
       </div>
 
       <div className="form-group">
-        <label htmlFor="message" className="form-label">
+        <label className="form-label">
           문의 내용
         </label>
+        
+        {/* 해시태그 선택 영역 */}
+        <div style={{ marginBottom: '16px' }}>
+          <div style={{
+            fontSize: '0.875rem',
+            color: 'var(--text-sub)',
+            marginBottom: '12px',
+          }}>
+            기본사항을 선택하세요 (다중 선택 가능)
+          </div>
+          <div style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: '8px',
+          }}>
+            {DEFAULT_TAGS.map((tag) => {
+              const isSelected = formData.tags.includes(tag);
+              return (
+                <button
+                  key={tag}
+                  type="button"
+                  onClick={() => {
+                    if (isSelected) {
+                      // 해시태그 제거
+                      setFormData(prev => ({
+                        ...prev,
+                        tags: prev.tags.filter(t => t !== tag),
+                      }));
+                    } else {
+                      // 해시태그 추가
+                      setFormData(prev => ({
+                        ...prev,
+                        tags: [...prev.tags, tag],
+                      }));
+                    }
+                  }}
+                  style={{
+                    padding: '8px 16px',
+                    borderRadius: 'var(--radius-sm)',
+                    border: `1px solid ${isSelected ? 'var(--accent-sky)' : 'var(--border-soft)'}`,
+                    backgroundColor: isSelected ? 'rgba(168, 213, 186, 0.2)' : 'var(--surface-0)',
+                    color: isSelected ? 'var(--accent-sky)' : 'var(--text-main)',
+                    fontSize: '0.875rem',
+                    fontWeight: isSelected ? '600' : '400',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isSelected) {
+                      e.currentTarget.style.borderColor = 'var(--accent-sky)';
+                      e.currentTarget.style.backgroundColor = 'rgba(168, 213, 186, 0.1)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isSelected) {
+                      e.currentTarget.style.borderColor = 'var(--border-soft)';
+                      e.currentTarget.style.backgroundColor = 'var(--surface-0)';
+                    }
+                  }}
+                >
+                  #{tag}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* 선택된 해시태그 표시 */}
+        {formData.tags.length > 0 && (
+          <div style={{
+            marginBottom: '12px',
+            padding: '12px',
+            backgroundColor: 'var(--bg-pastel-1)',
+            borderRadius: 'var(--radius-sm)',
+            border: '1px solid var(--border-soft)',
+          }}>
+            <div style={{
+              fontSize: '0.875rem',
+              color: 'var(--text-sub)',
+              marginBottom: '8px',
+            }}>
+              선택된 항목:
+            </div>
+            <div style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: '6px',
+            }}>
+              {formData.tags.map((tag) => (
+                <span
+                  key={tag}
+                  style={{
+                    display: 'inline-block',
+                    padding: '4px 10px',
+                    backgroundColor: 'var(--accent-sky)',
+                    color: 'white',
+                    borderRadius: 'var(--radius-sm)',
+                    fontSize: '0.8125rem',
+                    fontWeight: '500',
+                  }}
+                >
+                  #{tag}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* 문의 내용 텍스트 영역 */}
         <textarea
           id="message"
           value={formData.message}

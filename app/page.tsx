@@ -4,7 +4,7 @@ import GalleryMarquee from '@/components/GalleryMarquee';
 import ReviewsCarousel from '@/components/ReviewsCarousel';
 import Footer from '@/components/Footer';
 import SectionTabs from '@/components/SectionTabs';
-import ConsultationForm from '@/components/ConsultationForm';
+import ConsultationBottomSheet from '@/components/ConsultationBottomSheet';
 import HashScroll from '@/components/HashScroll';
 import { getApiService } from '@/lib/api';
 import { getDbConnection } from '@/lib/db';
@@ -230,46 +230,14 @@ export default async function Home() {
             <ReviewsCarousel reviews={homeData.reviews} />
           </section>
 
-          <section id="contact" className="content-section">
-            <h2 className="section-title">문의 / 예약</h2>
-            <p className="section-desc">
-              아래 폼을 작성해주시면 빠른 시일 내에 연락드리겠습니다.
-            </p>
-            
-            <div className="contact-layout" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '48px', marginTop: '40px' }}>
-              <div>
-                <ConsultationForm />
-              </div>
-              
-              <div>
-                <div className="contact-card">
-                  <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '24px', color: 'var(--text-main)' }}>
-                    연락처 정보
-                  </h3>
-                  <div className="contact-row">
-                    <div className="contact-label">전화</div>
-                    <div className="contact-value">010-0000-0000</div>
-                  </div>
-                  <div className="contact-row">
-                    <div className="contact-label">카카오</div>
-                    <div className="contact-value">mindgarden (채널)</div>
-                  </div>
-                  <div className="contact-row">
-                    <div className="contact-label">주소</div>
-                    <div className="contact-value">인천광역시 연수구 송도과학로 123<br />송도 아크리아2 204호</div>
-                  </div>
-                  <div className="contact-row">
-                    <div className="contact-label">운영시간</div>
-                    <div className="contact-value">평일 09:00 - 18:00</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
+          {/* 문의/예약 섹션은 바텀시트로 이동 - 섹션 제거 */}
 
           <Footer />
         </div>
       </div>
+
+      {/* 문의/예약 바텀시트 (항상 하단에 고정) */}
+      <ConsultationBottomSheet />
     </main>
   );
 }

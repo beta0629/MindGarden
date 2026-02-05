@@ -8,7 +8,7 @@ import { usePathname } from 'next/navigation';
 export default function Navigation() {
   const pathname = usePathname();
   const [isScrolled, setIsScrolled] = useState(false);
-  const [isWhite, setIsWhite] = useState(true);
+  const [isWhite, setIsWhite] = useState(false); // 초기값을 false로 변경하여 어두운 색상으로 시작
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -22,18 +22,34 @@ export default function Navigation() {
         return;
       }
 
-      const heroBottom = heroSection.getBoundingClientRect().bottom;
+      const heroRect = heroSection.getBoundingClientRect();
+      const heroBottom = heroRect.bottom;
+      const heroTop = heroRect.top;
       const scrolled = heroBottom < 50;
+      
+      // 히어로 섹션이 화면 상단에 있고 네비게이션 영역이 히어로 섹션 내부에 있을 때만 흰색 사용
+      // 네비게이션은 top: 0에 있으므로, 히어로 섹션이 네비게이션 아래에 있으면 흰색 사용
+      const navHeight = 80; // 네비게이션 높이 대략값
+      const isNavOverHero = heroTop < navHeight && heroBottom > navHeight;
+      const shouldUseWhite = isNavOverHero && !scrolled;
 
       setIsScrolled(scrolled);
-      setIsWhite(!scrolled);
+      setIsWhite(shouldUseWhite);
     };
 
-    // 초기 상태 확인
-    handleScroll();
+    // 초기 상태 확인 (약간의 지연을 두어 DOM이 완전히 로드된 후 확인)
+    const timer = setTimeout(() => {
+      handleScroll();
+    }, 200);
 
     window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener('resize', handleScroll);
+    
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('resize', handleScroll);
+    };
   }, []);
 
   useEffect(() => {

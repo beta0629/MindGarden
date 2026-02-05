@@ -41,15 +41,33 @@ export default function GalleryDetailPage() {
   const loadImages = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/gallery?category=${encodeURIComponent(category)}`);
-      const data = await response.json();
+      
+      // 먼저 URL의 category로 시도
+      let response = await fetch(`/api/gallery?category=${encodeURIComponent(category)}`);
+      let data = await response.json();
+      
+      // 이미지를 찾지 못했고, category가 "기타"가 아니면 "기타"로 다시 시도
+      if (data.success && data.images) {
+        const foundImage = data.images.find((img: GalleryImage) => img.id === id);
+        if (!foundImage && category !== '기타') {
+          // "기타" 카테고리로 다시 시도
+          response = await fetch(`/api/gallery?category=${encodeURIComponent('기타')}`);
+          data = await response.json();
+        }
+      }
       
       if (data.success && data.images) {
-        setAllImages(data.images);
-        const foundImage = data.images.find((img: GalleryImage) => img.id === id);
+        // category가 null인 이미지는 "기타"로 표시
+        const processedImages = data.images.map((img: GalleryImage) => ({
+          ...img,
+          category: img.category || '기타',
+        }));
+        
+        setAllImages(processedImages);
+        const foundImage = processedImages.find((img: GalleryImage) => img.id === id);
         if (foundImage) {
           setImage(foundImage);
-          setCurrentIndex(data.images.findIndex((img: GalleryImage) => img.id === id));
+          setCurrentIndex(processedImages.findIndex((img: GalleryImage) => img.id === id));
         }
       }
     } catch (error) {
@@ -62,14 +80,16 @@ export default function GalleryDetailPage() {
   const handlePrevious = () => {
     if (currentIndex > 0) {
       const prevImage = allImages[currentIndex - 1];
-      router.push(`/gallery/${category}/${prevImage.id}`);
+      const prevCategory = prevImage.category || '기타';
+      router.push(`/gallery/${encodeURIComponent(prevCategory)}/${prevImage.id}`);
     }
   };
 
   const handleNext = () => {
     if (currentIndex < allImages.length - 1) {
       const nextImage = allImages[currentIndex + 1];
-      router.push(`/gallery/${category}/${nextImage.id}`);
+      const nextCategory = nextImage.category || '기타';
+      router.push(`/gallery/${encodeURIComponent(nextCategory)}/${nextImage.id}`);
     }
   };
 
@@ -144,14 +164,14 @@ export default function GalleryDetailPage() {
               </Link>
               <span style={{ color: '#cbd5e1' }}>/</span>
               <Link
-                href={`/gallery?category=${encodeURIComponent(category)}`}
+                href={`/gallery?category=${encodeURIComponent(image.category || '기타')}`}
                 style={{
                   color: '#64748b',
                   textDecoration: 'none',
                   fontSize: '0.875rem',
                 }}
               >
-                {category}
+                {image.category || '기타'}
               </Link>
             </div>
 
@@ -275,7 +295,7 @@ export default function GalleryDetailPage() {
                     fontSize: '0.75rem',
                     fontWeight: '500',
                   }}>
-                    {category}
+                    {image.category || '기타'}
                   </span>
                   <span>
                     {currentIndex + 1} / {allImages.length}
@@ -302,10 +322,12 @@ export default function GalleryDetailPage() {
                   gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
                   gap: '1rem',
                 }}>
-                  {allImages.map((img, idx) => (
+                  {allImages.map((img, idx) => {
+                    const imgCategory = img.category || '기타';
+                    return (
                     <Link
                       key={img.id}
-                      href={`/gallery/${category}/${img.id}`}
+                      href={`/gallery/${encodeURIComponent(imgCategory)}/${img.id}`}
                       style={{
                         textDecoration: 'none',
                         display: 'block',

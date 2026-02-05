@@ -1147,11 +1147,27 @@ export default function ReviewsPage() {
           100% { transform: rotate(360deg); }
         }
         @media (min-width: 1024px) {
+          .reviews-container {
+            display: grid !important;
+            grid-template-columns: 300px 1fr !important;
+            gap: 2rem !important;
+            align-items: start;
+          }
           .reviews-sidebar {
             display: block !important;
+            position: sticky;
+            top: 2rem;
+            align-self: start;
+            height: fit-content;
           }
-          main {
-            grid-column: span 8;
+          .reviews-main {
+            grid-column: 2;
+            width: 100%;
+          }
+        }
+        @media (min-width: 1280px) {
+          .reviews-container {
+            grid-template-columns: 350px 1fr !important;
           }
         }
       `}</style>

@@ -44,12 +44,30 @@ export default function Banner({ banners }: BannerProps) {
   const touchEndX = useRef<number | null>(null);
   const touchEndY = useRef<number | null>(null);
   
-  // 배너 닫기 상태 확인 (sessionStorage 사용)
+  // 배너 닫기 상태 확인 (localStorage 사용, 24시간 유지)
   useEffect(() => {
-    const bannerClosed = sessionStorage.getItem('banner_closed');
-    if (bannerClosed === 'true') {
-      setIsVisible(false);
-    }
+    const checkBannerStatus = () => {
+      try {
+        const bannerClosedData = localStorage.getItem('banner_closed');
+        if (bannerClosedData) {
+          const { timestamp } = JSON.parse(bannerClosedData);
+          const now = Date.now();
+          const twentyFourHours = 24 * 60 * 60 * 1000; // 24시간을 밀리초로 변환
+          
+          // 24시간이 지나지 않았으면 배너 숨김
+          if (now - timestamp < twentyFourHours) {
+            setIsVisible(false);
+          } else {
+            // 24시간이 지났으면 localStorage에서 제거
+            localStorage.removeItem('banner_closed');
+          }
+        }
+      } catch (error) {
+        console.error('Error checking banner status:', error);
+      }
+    };
+    
+    checkBannerStatus();
   }, []);
   
   // 스크롤 감지하여 배너 숨기기
@@ -65,7 +83,14 @@ export default function Banner({ banners }: BannerProps) {
         if (scrollTimeout) clearTimeout(scrollTimeout);
         scrollTimeout = setTimeout(() => {
           setIsVisible(false);
-          sessionStorage.setItem('banner_closed', 'true');
+          // 24시간 동안 저장
+          try {
+            localStorage.setItem('banner_closed', JSON.stringify({
+              timestamp: Date.now()
+            }));
+          } catch (error) {
+            console.error('Error saving banner status:', error);
+          }
         }, 300); // 300ms 지연 후 숨김
       }
       
@@ -82,7 +107,14 @@ export default function Banner({ banners }: BannerProps) {
   // 배너 닫기 핸들러
   const handleClose = () => {
     setIsVisible(false);
-    sessionStorage.setItem('banner_closed', 'true');
+    // 24시간 동안 저장
+    try {
+      localStorage.setItem('banner_closed', JSON.stringify({
+        timestamp: Date.now()
+      }));
+    } catch (error) {
+      console.error('Error saving banner status:', error);
+    }
   };
 
   // 특정 인덱스로 이동

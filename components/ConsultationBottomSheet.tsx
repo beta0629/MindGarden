@@ -1,9 +1,18 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import ConsultationForm from './ConsultationForm';
 
 export default function ConsultationBottomSheet() {
+  const pathname = usePathname();
+  
+  // 관리자 페이지에서는 바텀시트를 표시하지 않음
+  const isAdminPage = pathname?.startsWith('/admin') || pathname?.startsWith('/blog/admin');
+  
+  if (isAdminPage) {
+    return null;
+  }
   const [isOpen, setIsOpen] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [startY, setStartY] = useState(0);

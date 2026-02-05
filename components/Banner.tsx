@@ -34,6 +34,7 @@ interface BannerProps {
 export default function Banner({ banners }: BannerProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
   const autoScrollTimerRef = useRef<NodeJS.Timeout | null>(null);
   const isMobile = useIsMobile();
   
@@ -42,6 +43,47 @@ export default function Banner({ banners }: BannerProps) {
   const touchStartY = useRef<number | null>(null);
   const touchEndX = useRef<number | null>(null);
   const touchEndY = useRef<number | null>(null);
+  
+  // 배너 닫기 상태 확인 (sessionStorage 사용)
+  useEffect(() => {
+    const bannerClosed = sessionStorage.getItem('banner_closed');
+    if (bannerClosed === 'true') {
+      setIsVisible(false);
+    }
+  }, []);
+  
+  // 스크롤 감지하여 배너 숨기기
+  useEffect(() => {
+    let lastScrollY = window.scrollY;
+    let scrollTimeout: NodeJS.Timeout | null = null;
+    
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      
+      // 아래로 스크롤하면 배너 숨기기
+      if (currentScrollY > lastScrollY && currentScrollY > 100) {
+        if (scrollTimeout) clearTimeout(scrollTimeout);
+        scrollTimeout = setTimeout(() => {
+          setIsVisible(false);
+          sessionStorage.setItem('banner_closed', 'true');
+        }, 300); // 300ms 지연 후 숨김
+      }
+      
+      lastScrollY = currentScrollY;
+    };
+    
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      if (scrollTimeout) clearTimeout(scrollTimeout);
+    };
+  }, []);
+  
+  // 배너 닫기 핸들러
+  const handleClose = () => {
+    setIsVisible(false);
+    sessionStorage.setItem('banner_closed', 'true');
+  };
 
   // 특정 인덱스로 이동
   const goToIndex = (index: number) => {
@@ -120,7 +162,7 @@ export default function Banner({ banners }: BannerProps) {
     touchEndY.current = null;
   };
 
-  if (banners.length === 0) {
+  if (banners.length === 0 || !isVisible) {
     return null;
   }
 
@@ -151,6 +193,10 @@ export default function Banner({ banners }: BannerProps) {
         borderBottom: '1px solid var(--border-soft)',
         position: 'relative',
         overflow: 'hidden',
+        height: '152px', // 고정 높이 설정
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
       }}
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
@@ -158,6 +204,42 @@ export default function Banner({ banners }: BannerProps) {
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
+      {/* 닫기 버튼 */}
+      <button
+        type="button"
+        onClick={handleClose}
+        aria-label="배너 닫기"
+        style={{
+          position: 'absolute',
+          top: isMobile ? '8px' : '12px',
+          right: isMobile ? '8px' : '12px',
+          width: isMobile ? '28px' : '32px',
+          height: isMobile ? '28px' : '32px',
+          borderRadius: '50%',
+          border: 'none',
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          color: 'var(--white)',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: isMobile ? '16px' : '18px',
+          fontWeight: 'bold',
+          zIndex: 30,
+          transition: 'all 0.2s',
+          lineHeight: 1,
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+          e.currentTarget.style.transform = 'scale(1.1)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+          e.currentTarget.style.transform = 'scale(1)';
+        }}
+      >
+        ×
+      </button>
       {/* 이전 버튼 */}
       {banners.length > 1 && (
         <button
@@ -207,6 +289,11 @@ export default function Banner({ banners }: BannerProps) {
         style={{
           opacity: 1,
           animation: 'bannerFadeIn 0.5s ease-in-out',
+          width: '100%',
+          height: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
         }}
       >
         {content}
@@ -349,16 +436,19 @@ function BannerContent({ banner }: { banner: BannerItem }) {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          padding: '8px 16px 40px 16px', // 좌우 패딩 추가 (모바일 대응)
+          width: '100%',
+          height: '152px', // 고정 높이
+          padding: '8px 16px',
+          boxSizing: 'border-box',
         }}
       >
         <img
           src={banner.imageUrl || ''}
           alt={banner.title || '배너'}
           style={{
-            maxHeight: '120px',
+            maxHeight: '136px', // 152px - 16px (상하 패딩)
             maxWidth: '100%',
-            width: '100%',
+            width: 'auto',
             height: 'auto',
             objectFit: 'contain',
             display: 'block',
@@ -386,29 +476,42 @@ function BannerContent({ banner }: { banner: BannerItem }) {
           padding: isMobile ? '12px 16px 40px 16px' : '12px 20px 40px 20px',
           maxWidth: '1200px',
           margin: '0 auto',
+          width: '100%',
+          height: '152px', // 고정 높이
+          boxSizing: 'border-box',
         }}
       >
-        <img
-          src={banner.imageUrl || ''}
-          alt={banner.title || '배너'}
+        <div
           style={{
-            maxHeight: isMobile ? '80px' : '100px',
-            maxWidth: isMobile ? '100%' : '400px',
-            width: isMobile ? '100%' : 'auto',
-            height: 'auto',
-            objectFit: 'contain',
+            width: isMobile ? '100%' : '400px',
+            height: '136px', // 고정 높이 (152px - 16px 패딩)
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
             flexShrink: 0,
-            display: 'block',
           }}
-          onError={(e) => {
-            console.error('Banner image load error (with text):', banner.imageUrl, e);
-            // 이미지 로드 실패 시 숨김 처리
-            e.currentTarget.style.display = 'none';
-          }}
-          onLoad={() => {
-            console.log('Banner image loaded successfully:', banner.imageUrl);
-          }}
-        />
+        >
+          <img
+            src={banner.imageUrl || ''}
+            alt={banner.title || '배너'}
+            style={{
+              maxHeight: '136px',
+              maxWidth: '100%',
+              width: 'auto',
+              height: 'auto',
+              objectFit: 'contain',
+              display: 'block',
+            }}
+            onError={(e) => {
+              console.error('Banner image load error (with text):', banner.imageUrl, e);
+              // 이미지 로드 실패 시 숨김 처리
+              e.currentTarget.style.display = 'none';
+            }}
+            onLoad={() => {
+              console.log('Banner image loaded successfully:', banner.imageUrl);
+            }}
+          />
+        </div>
         <div style={{ 
           flex: 1, 
           textAlign: isMobile ? 'center' : 'left',
@@ -447,9 +550,15 @@ function BannerContent({ banner }: { banner: BannerItem }) {
           padding: '16px 24px 40px 24px', // 하단 패딩 추가 (인디케이터 공간 확보)
           maxWidth: '1200px',
           margin: '0 auto',
+          width: '100%',
+          height: '152px', // 고정 높이
+          boxSizing: 'border-box',
           background: 'linear-gradient(135deg, rgba(248, 245, 240, 0.8) 0%, rgba(254, 249, 243, 0.8) 100%)',
           borderLeft: '4px solid var(--accent-sky)',
           borderRadius: 'var(--radius-sm)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
         }}
       >
         <div

@@ -33,7 +33,6 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
   const [stats, setStats] = useState<ReviewStats | null>(null);
   const [bestReview, setBestReview] = useState<Review | null>(null);
   const [latestReviews, setLatestReviews] = useState<Review[]>([]);
-  const [isPaused, setIsPaused] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
   const [scrollLeft, setScrollLeft] = useState(0);

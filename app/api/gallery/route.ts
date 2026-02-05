@@ -13,16 +13,30 @@ export async function GET(request: NextRequest) {
 
     connection = await getDbConnection();
 
-    let query = `SELECT id, image_url, alt_text, display_order, is_active 
+    const category = searchParams.get('category'); // 카테고리 필터링
+    
+    let query = `SELECT id, image_url, alt_text, category, display_order, is_active 
                  FROM gallery_images`;
     
+    const conditions: string[] = [];
+    const params: any[] = [];
+    
     if (!all) {
-      query += ` WHERE is_active = 1`;
+      conditions.push('is_active = 1');
+    }
+    
+    if (category) {
+      conditions.push('category = ?');
+      params.push(category);
+    }
+    
+    if (conditions.length > 0) {
+      query += ` WHERE ${conditions.join(' AND ')}`;
     }
     
     query += ` ORDER BY display_order ASC, created_at ASC`;
 
-    const [rows] = await connection.execute(query);
+    const [rows] = await connection.execute(query, params);
     const imageRows = rows as any[];
     
     console.log('Gallery query result:', {
@@ -37,6 +51,7 @@ export async function GET(request: NextRequest) {
         id: row.id,
         imageUrl: row.image_url,
         altText: row.alt_text,
+        category: row.category,
         displayOrder: row.display_order,
         isActive: row.is_active === 1,
       }));
@@ -50,8 +65,10 @@ export async function GET(request: NextRequest) {
     } else {
       // 일반용: 활성화된 이미지만 반환
       const images = (rows as any[]).map((row: any) => ({
+        id: row.id,
         url: row.image_url,
         alt: row.alt_text || '갤러리 이미지',
+        category: row.category,
       }));
 
       return NextResponse.json({
@@ -93,6 +110,7 @@ export async function POST(request: NextRequest) {
       const formData = await request.formData();
       const file = formData.get('image') as File;
       const altText = formData.get('altText') as string | null;
+      const category = formData.get('category') as string | null;
       const displayOrder = parseInt(formData.get('displayOrder') as string || '0', 10);
 
       if (!file) {
@@ -159,9 +177,9 @@ export async function POST(request: NextRequest) {
       // DB에 저장
       connection = await getDbConnection();
       const [result] = await connection.execute(
-        `INSERT INTO gallery_images (image_url, alt_text, display_order, is_active)
-         VALUES (?, ?, ?, 1)`,
-        [imageUrl, altText || null, displayOrder]
+        `INSERT INTO gallery_images (image_url, alt_text, category, display_order, is_active)
+         VALUES (?, ?, ?, ?, 1)`,
+        [imageUrl, altText || null, category || null, displayOrder]
       );
 
       return NextResponse.json({
@@ -174,7 +192,7 @@ export async function POST(request: NextRequest) {
     } else {
       // JSON으로 이미지 URL만 전달하는 경우 (기존 방식 지원)
       const body = await request.json();
-      const { imageUrl, altText, displayOrder = 0 } = body;
+      const { imageUrl, altText, category, displayOrder = 0 } = body;
 
       if (!imageUrl) {
         return NextResponse.json(
@@ -186,9 +204,9 @@ export async function POST(request: NextRequest) {
       connection = await getDbConnection();
 
       const [result] = await connection.execute(
-        `INSERT INTO gallery_images (image_url, alt_text, display_order, is_active)
-         VALUES (?, ?, ?, 1)`,
-        [imageUrl, altText || null, displayOrder]
+        `INSERT INTO gallery_images (image_url, alt_text, category, display_order, is_active)
+         VALUES (?, ?, ?, ?, 1)`,
+        [imageUrl, altText || null, category || null, displayOrder]
       );
 
       return NextResponse.json({

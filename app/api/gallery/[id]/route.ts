@@ -10,7 +10,7 @@ export async function PUT(
   
   try {
     const body = await request.json();
-    const { imageUrl, altText, displayOrder, isActive } = body;
+    const { imageUrl, altText, category, displayOrder, isActive } = body;
 
     connection = await getDbConnection();
 
@@ -24,6 +24,10 @@ export async function PUT(
     if (altText !== undefined) {
       updates.push('alt_text = ?');
       values.push(altText);
+    }
+    if (category !== undefined) {
+      updates.push('category = ?');
+      values.push(category);
     }
     if (displayOrder !== undefined) {
       updates.push('display_order = ?');

@@ -11,6 +11,7 @@ interface ImageUploaderProps {
   uploading?: boolean;
   onUploadingChange?: (uploading: boolean) => void;
   altText?: string;
+  category?: string;
   displayOrder?: number;
   recommendedAspectRatio?: number; // 권장 비율 (예: 6.4 = 가로/세로)
   recommendedSize?: { width: number; height: number }; // 권장 사이즈
@@ -26,6 +27,7 @@ export default function ImageUploader({
   uploading: externalUploading,
   onUploadingChange,
   altText,
+  category,
   displayOrder,
   recommendedAspectRatio,
   recommendedSize,
@@ -174,9 +176,12 @@ export default function ImageUploader({
             // 갤러리 페이지에서 사용 중인지 확인 (URL 기반)
             const isGalleryUpload = window.location.pathname.includes('/gallery');
             if (isGalleryUpload) {
-              // 갤러리 이미지인 경우 altText와 displayOrder도 함께 전달
+              // 갤러리 이미지인 경우 altText, category, displayOrder도 함께 전달
               if (altText !== undefined) {
                 formData.append('altText', altText || '');
+              }
+              if (category !== undefined) {
+                formData.append('category', category || '');
               }
               if (displayOrder !== undefined) {
                 formData.append('displayOrder', displayOrder.toString());
@@ -341,9 +346,12 @@ export default function ImageUploader({
         // 갤러리 페이지에서 사용 중인지 확인 (URL 기반)
         const isGalleryUpload = window.location.pathname.includes('/gallery');
         if (isGalleryUpload) {
-          // 갤러리 이미지인 경우 altText와 displayOrder도 함께 전달
+          // 갤러리 이미지인 경우 altText, category, displayOrder도 함께 전달
           if (altText !== undefined) {
             formData.append('altText', altText || '');
+          }
+          if (category !== undefined) {
+            formData.append('category', category || '');
           }
           if (displayOrder !== undefined) {
             formData.append('displayOrder', displayOrder.toString());

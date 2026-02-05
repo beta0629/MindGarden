@@ -132,6 +132,7 @@ class ApiService {
   async addGalleryImage(imageData: {
     imageUrl: string;
     altText?: string;
+    category?: string;
     displayOrder?: number;
   }) {
     try {
@@ -155,6 +156,7 @@ class ApiService {
   async updateGalleryImage(id: number, imageData: {
     imageUrl?: string;
     altText?: string;
+    category?: string;
     displayOrder?: number;
     isActive?: boolean;
   }) {

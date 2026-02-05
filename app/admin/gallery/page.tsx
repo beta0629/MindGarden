@@ -11,9 +11,20 @@ interface GalleryImage {
   id: number;
   imageUrl: string;
   altText: string | null;
+  category: string | null;
   displayOrder: number;
   isActive: boolean;
 }
+
+const CATEGORIES = [
+  { value: '모래놀이실', label: '모래놀이실' },
+  { value: '미술치료', label: '미술치료' },
+  { value: '놀이치료', label: '놀이치료' },
+  { value: '언어치료', label: '언어치료' },
+  { value: '가족상담실', label: '가족상담실' },
+  { value: '상담실', label: '상담실' },
+  { value: '대기실', label: '대기실' },
+];
 
 export default function GalleryAdminPage() {
   const router = useRouter();
@@ -26,6 +37,7 @@ export default function GalleryAdminPage() {
   const [newImage, setNewImage] = useState({
     imageUrl: '',
     altText: '',
+    category: '',
     displayOrder: 0,
   });
 
@@ -100,7 +112,7 @@ export default function GalleryAdminPage() {
     try {
       console.log('Image uploaded, refreshing gallery list:', imageUrl);
       setSuccess('갤러리 이미지가 추가되었습니다.');
-      setNewImage({ imageUrl: '', altText: '', displayOrder: 0 });
+      setNewImage({ imageUrl: '', altText: '', category: '', displayOrder: 0 });
       // 약간의 지연 후 목록 새로고침 (DB 반영 시간 고려)
       setTimeout(() => {
         loadImages();
@@ -129,10 +141,11 @@ export default function GalleryAdminPage() {
       await apiService.addGalleryImage({
         imageUrl: newImage.imageUrl,
         altText: newImage.altText || undefined,
+        category: newImage.category || undefined,
         displayOrder: newImage.displayOrder,
       });
       setSuccess('갤러리 이미지가 추가되었습니다.');
-      setNewImage({ imageUrl: '', altText: '', displayOrder: 0 });
+      setNewImage({ imageUrl: '', altText: '', category: '', displayOrder: 0 });
       loadImages();
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
@@ -271,6 +284,7 @@ export default function GalleryAdminPage() {
                     uploading={uploading}
                     onUploadingChange={setUploading}
                     altText={newImage.altText}
+                    category={newImage.category}
                     displayOrder={newImage.displayOrder}
                   />
                 </div>
@@ -291,6 +305,30 @@ export default function GalleryAdminPage() {
                       fontSize: '16px'
                     }}
                   />
+                </div>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600' }}>
+                    카테고리
+                  </label>
+                  <select
+                    value={newImage.category}
+                    onChange={(e) => setNewImage(prev => ({ ...prev, category: e.target.value }))}
+                    style={{
+                      width: '100%',
+                      padding: '12px 16px',
+                      border: '1px solid var(--border-soft)',
+                      borderRadius: 'var(--radius-sm)',
+                      fontSize: '16px',
+                      backgroundColor: 'white',
+                    }}
+                  >
+                    <option value="">카테고리 선택</option>
+                    {CATEGORIES.map(cat => (
+                      <option key={cat.value} value={cat.value}>
+                        {cat.label}
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div>
                   <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600' }}>
@@ -401,8 +439,11 @@ export default function GalleryAdminPage() {
                         flexShrink: 0
                       }}
                     />
-                    <div style={{ flex: 1 }}>
+                      <div style={{ flex: 1 }}>
                       <div style={{ marginBottom: '12px' }}>
+                        <div style={{ fontSize: '14px', color: 'var(--text-sub)', marginBottom: '4px' }}>
+                          카테고리: {image.category || '(카테고리 없음)'}
+                        </div>
                         <div style={{ fontSize: '14px', color: 'var(--text-sub)', marginBottom: '4px' }}>
                           순서: {image.displayOrder}
                         </div>

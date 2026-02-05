@@ -543,11 +543,11 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
                 </div>
                 <div style={{
                   gridColumn: 'span 12',
-                  background: 'rgba(255, 255, 255, 0.1)',
+                  background: '#FFF8E7',
                   backdropFilter: 'blur(12px)',
                   borderRadius: '1rem',
                   padding: '1.5rem',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
                   display: 'flex',
                   flexDirection: 'column',
                   justifyContent: 'space-between',
@@ -556,7 +556,8 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
                   <div style={{ marginBottom: '1rem' }}>
                     <span style={{
                       fontSize: '2.5rem',
-                      color: 'rgba(255, 255, 255, 0.4)',
+                      color: '#8B6F47',
+                      opacity: 0.6,
                     }}>"</span>
                     <p style={{
                       color: 'rgba(199, 210, 254, 1)',
@@ -606,7 +607,7 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
                         </p>
                         <p style={{
                           fontSize: '0.75rem',
-                          color: 'rgba(199, 210, 254, 0.8)',
+                          color: '#8B6F47',
                         }}>
                           {new Date(bestReview.createdAt).toLocaleDateString('ko-KR', {
                             year: 'numeric',

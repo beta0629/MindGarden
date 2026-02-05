@@ -325,45 +325,46 @@ export default function GalleryDetailPage() {
                   {allImages.map((img, idx) => {
                     const imgCategory = img.category || '기타';
                     return (
-                    <Link
-                      key={img.id}
-                      href={`/gallery/${encodeURIComponent(imgCategory)}/${img.id}`}
-                      style={{
-                        textDecoration: 'none',
-                        display: 'block',
-                      }}
-                    >
-                      <div style={{
-                        position: 'relative',
-                        aspectRatio: '4/3',
-                        borderRadius: '0.5rem',
-                        overflow: 'hidden',
-                        backgroundColor: '#f1f5f9',
-                        border: currentIndex === idx ? '3px solid #B8956A' : '1px solid #e2e8f0',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s',
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.transform = 'scale(1.05)';
-                        e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = 'scale(1)';
-                        e.currentTarget.style.boxShadow = 'none';
-                      }}
+                      <Link
+                        key={img.id}
+                        href={`/gallery/${encodeURIComponent(imgCategory)}/${img.id}`}
+                        style={{
+                          textDecoration: 'none',
+                          display: 'block',
+                        }}
                       >
-                        <img
-                          src={img.url}
-                          alt={img.alt}
-                          style={{
-                            width: '100%',
-                            height: '100%',
-                            objectFit: 'cover',
-                          }}
-                        />
-                      </div>
-                    </Link>
-                  ))}
+                        <div style={{
+                          position: 'relative',
+                          aspectRatio: '4/3',
+                          borderRadius: '0.5rem',
+                          overflow: 'hidden',
+                          backgroundColor: '#f1f5f9',
+                          border: currentIndex === idx ? '3px solid #B8956A' : '1px solid #e2e8f0',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.transform = 'scale(1.05)';
+                          e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.transform = 'scale(1)';
+                          e.currentTarget.style.boxShadow = 'none';
+                        }}
+                        >
+                          <img
+                            src={img.url}
+                            alt={img.alt}
+                            style={{
+                              width: '100%',
+                              height: '100%',
+                              objectFit: 'cover',
+                            }}
+                          />
+                        </div>
+                      </Link>
+                    );
+                  })}
                 </div>
               </div>
             )}

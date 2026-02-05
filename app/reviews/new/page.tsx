@@ -292,11 +292,11 @@ export default function NewReviewPage() {
                         {category.label}:
                       </span>
                       <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                        {[1, 2, 3, 4, 5].map(star => (
+                        {[1, 2, 3, 4, 5].map(heart => (
                           <button
-                            key={star}
+                            key={heart}
                             type="button"
-                            onClick={() => handleRatingChange(category.key, star)}
+                            onClick={() => handleRatingChange(category.key, heart)}
                             style={{
                               width: '32px',
                               height: '32px',
@@ -308,9 +308,10 @@ export default function NewReviewPage() {
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
+                              transition: 'transform 0.2s ease',
                             }}
                             onMouseEnter={(e) => {
-                              if (formData.ratings[category.key as keyof typeof formData.ratings] < star) {
+                              if (formData.ratings[category.key as keyof typeof formData.ratings] < heart) {
                                 e.currentTarget.style.transform = 'scale(1.2)';
                               }
                             }}
@@ -318,7 +319,7 @@ export default function NewReviewPage() {
                               e.currentTarget.style.transform = 'scale(1)';
                             }}
                           >
-                            {star <= formData.ratings[category.key as keyof typeof formData.ratings] ? '⭐' : '☆'}
+                            {heart <= formData.ratings[category.key as keyof typeof formData.ratings] ? '❤️' : '🤍'}
                           </button>
                         ))}
                         {formData.ratings[category.key as keyof typeof formData.ratings] > 0 && (

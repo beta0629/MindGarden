@@ -356,7 +356,7 @@ export default function ReviewsPage() {
           display: 'grid',
           gridTemplateColumns: '1fr',
           gap: '2rem',
-        }}>
+        }} className="reviews-container">
           {/* 사이드바 - 데스크탑에서만 표시 */}
           <aside style={{
             display: 'none',
@@ -615,7 +615,7 @@ export default function ReviewsPage() {
           </aside>
 
           {/* 메인 콘텐츠 */}
-          <main style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          <main className="reviews-main" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
             {/* 필터 및 검색 */}
             <div style={{
               backgroundColor: 'white',

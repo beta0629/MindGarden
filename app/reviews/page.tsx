@@ -513,6 +513,14 @@ export default function ReviewsPage() {
                         effectiveness: '효과',
                         facility: '시설',
                       };
+                      // 각 항목별 색상 정의
+                      const colorMap: Record<string, { dot: string; bar: string }> = {
+                        professionalism: { dot: '#3B82F6', bar: '#3B82F6' }, // 파란색
+                        kindness: { dot: '#10B981', bar: '#10B981' }, // 초록색
+                        effectiveness: { dot: '#F59E0B', bar: '#F59E0B' }, // 주황색
+                        facility: { dot: '#8B5CF6', bar: '#8B5CF6' }, // 보라색
+                      };
+                      const colors = colorMap[key] || { dot: '#6366F1', bar: '#6366F1' };
                       const percentage = (stat.average / 5) * 100;
                       return (
                         <div key={key} style={{
@@ -529,7 +537,7 @@ export default function ReviewsPage() {
                               width: '0.5rem',
                               height: '0.5rem',
                               borderRadius: '50%',
-                              backgroundColor: '#94a3b8',
+                              backgroundColor: colors.dot,
                             }}></span>
                             <span style={{
                               fontSize: '0.75rem',
@@ -549,8 +557,9 @@ export default function ReviewsPage() {
                             <div
                               style={{
                                 height: '100%',
-                                backgroundColor: '#6366F1',
+                                backgroundColor: colors.bar,
                                 width: `${percentage}%`,
+                                transition: 'width 0.3s ease',
                               }}
                             ></div>
                           </div>

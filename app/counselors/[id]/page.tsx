@@ -83,16 +83,32 @@ export default function CounselorDetailPage() {
               <Link
                 href="/counselors"
                 style={{
-                  display: 'inline-block',
-                  padding: '12px 24px',
-                  backgroundColor: 'var(--accent-sky)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  padding: '0.625rem 1.25rem',
+                  backgroundColor: '#B8956A',
                   color: 'white',
-                  borderRadius: 'var(--radius-sm)',
                   textDecoration: 'none',
-                  fontWeight: '600'
+                  fontSize: '0.875rem',
+                  fontWeight: '600',
+                  borderRadius: '0.75rem',
+                  boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+                  transition: 'all 0.2s',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#A0825A';
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.15)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = '#B8956A';
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
                 }}
               >
-                상담사 목록으로 돌아가기
+                <span>←</span>
+                <span>전문가 목록으로</span>
               </Link>
             </section>
           </div>
@@ -110,19 +126,37 @@ export default function CounselorDetailPage() {
         <div className="content-main">
           <section className="content-section" style={{ paddingTop: '120px' }}>
             <div style={{ maxWidth: '900px', margin: '0 auto' }}>
-              {/* 뒤로가기 버튼 */}
+              {/* 목록으로 버튼 */}
               <Link
                 href="/counselors"
                 style={{
-                  display: 'inline-block',
-                  marginBottom: '32px',
-                  color: 'var(--text-sub)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  marginBottom: '2rem',
+                  padding: '0.625rem 1.25rem',
+                  backgroundColor: '#B8956A',
+                  color: 'white',
                   textDecoration: 'none',
-                  fontSize: '0.95rem',
-                  fontWeight: '600'
+                  fontSize: '0.875rem',
+                  fontWeight: '600',
+                  borderRadius: '0.75rem',
+                  boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+                  transition: 'all 0.2s',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#A0825A';
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.15)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = '#B8956A';
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
                 }}
               >
-                ← 상담사 목록으로
+                <span>←</span>
+                <span>전문가 목록으로</span>
               </Link>
 
               {/* 프로필 헤더 */}

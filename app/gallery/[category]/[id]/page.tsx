@@ -165,35 +165,38 @@ export default function GalleryDetailPage() {
       <div className="content-shell">
         <div className="content-main">
           <section className="content-section" style={{ paddingTop: '4rem' }}>
-            {/* 네비게이션 */}
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '1rem',
-              marginBottom: '2rem',
-            }}>
-              <Link
-                href="/gallery"
-                style={{
-                  color: '#64748b',
-                  textDecoration: 'none',
-                  fontSize: '0.875rem',
-                }}
-              >
-                갤러리
-              </Link>
-              <span style={{ color: '#cbd5e1' }}>/</span>
-              <Link
-                href={`/gallery?category=${encodeURIComponent(image.category || '기타')}`}
-                style={{
-                  color: '#64748b',
-                  textDecoration: 'none',
-                  fontSize: '0.875rem',
-                }}
-              >
-                {image.category || '기타'}
-              </Link>
-            </div>
+            {/* 목록으로 버튼 */}
+            <Link
+              href="/gallery"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                marginBottom: '2rem',
+                padding: '0.625rem 1.25rem',
+                backgroundColor: '#B8956A',
+                color: 'white',
+                textDecoration: 'none',
+                fontSize: '0.875rem',
+                fontWeight: '600',
+                borderRadius: '0.75rem',
+                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+                transition: 'all 0.2s',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#A0825A';
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.15)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#B8956A';
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
+              }}
+            >
+              <span>←</span>
+              <span>갤러리 목록으로</span>
+            </Link>
 
             {/* 이미지 뷰어 */}
             <div style={{

@@ -50,14 +50,33 @@ export default async function BlogPostPage({ params }: { params: { id: string } 
             <Link 
               href="/blog" 
               style={{ 
-                display: 'inline-block',
-                marginBottom: '32px',
-                color: 'var(--text-sub)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                marginBottom: '2rem',
+                padding: '0.625rem 1.25rem',
+                backgroundColor: '#B8956A',
+                color: 'white',
                 textDecoration: 'none',
-                fontSize: '14px'
+                fontSize: '0.875rem',
+                fontWeight: '600',
+                borderRadius: '0.75rem',
+                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+                transition: 'all 0.2s',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#A0825A';
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.15)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#B8956A';
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
               }}
             >
-              ← 블로그 목록으로
+              <span>←</span>
+              <span>블로그 목록으로</span>
             </Link>
 
             <header className="blog-post-header" style={{ marginBottom: '48px' }}>
@@ -150,13 +169,32 @@ export default async function BlogPostPage({ params }: { params: { id: string } 
               <Link 
                 href="/blog"
                 style={{
-                  display: 'inline-block',
-                  color: 'var(--text-sub)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  padding: '0.625rem 1.25rem',
+                  backgroundColor: '#B8956A',
+                  color: 'white',
                   textDecoration: 'none',
-                  fontSize: '14px'
+                  fontSize: '0.875rem',
+                  fontWeight: '600',
+                  borderRadius: '0.75rem',
+                  boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+                  transition: 'all 0.2s',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#A0825A';
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.15)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = '#B8956A';
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
                 }}
               >
-                ← 블로그 목록으로
+                <span>←</span>
+                <span>블로그 목록으로</span>
               </Link>
             </div>
           </article>

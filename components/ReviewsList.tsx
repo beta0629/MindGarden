@@ -46,6 +46,41 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
     return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
   };
 
+  // 재미있는 랜덤 이름 생성 (후기 ID 기반으로 결정적 랜덤)
+  const getRandomName = (reviewId: number) => {
+    const names = [
+      '마음이 따뜻한 분',
+      '긍정 에너지',
+      '희망의 별',
+      '소중한 고객님',
+      '따뜻한 마음',
+      '행복한 하루',
+      '밝은 에너지',
+      '감사한 분',
+      '따뜻한 인연',
+      '소중한 인연',
+      '마음의 힐링',
+      '평화로운 마음',
+      '따뜻한 이야기',
+      '희망의 메시지',
+      '긍정의 힘',
+      '마음의 여행자',
+      '따뜻한 손길',
+      '소중한 경험',
+      '행복한 순간',
+      '감사한 마음',
+      '밝은 미래',
+      '따뜻한 하루',
+      '소중한 기억',
+      '희망의 등불',
+      '마음의 평화',
+    ];
+    
+    // 후기 ID를 기반으로 결정적 랜덤 선택 (같은 후기는 항상 같은 이름)
+    const index = reviewId % names.length;
+    return names[index];
+  };
+
   // 통계 데이터 로드
   useEffect(() => {
     const loadStats = async () => {
@@ -595,8 +630,9 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
                         fontWeight: '700',
                         color: 'white',
                         boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+                        fontSize: '0.875rem',
                       }}>
-                        익
+                        {getRandomName(bestReview.id).charAt(0)}
                       </div>
                       <div>
                         <p style={{
@@ -604,7 +640,7 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
                           fontSize: '0.875rem',
                           color: '#5C4033',
                         }}>
-                          익명
+                          {getRandomName(bestReview.id)}
                         </p>
                         <p style={{
                           fontSize: '0.75rem',

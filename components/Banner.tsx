@@ -44,6 +44,17 @@ export default function Banner({ banners }: BannerProps) {
   const touchEndX = useRef<number | null>(null);
   const touchEndY = useRef<number | null>(null);
   
+  // 5초 후 자동으로 배너 숨기기
+  useEffect(() => {
+    const autoHideTimer = setTimeout(() => {
+      setIsVisible(false);
+    }, 5000); // 5초 후 자동 숨김
+
+    return () => {
+      clearTimeout(autoHideTimer);
+    };
+  }, []);
+
   // 스크롤 감지하여 배너 숨기기 (현재 세션 동안만)
   useEffect(() => {
     let lastScrollY = window.scrollY;

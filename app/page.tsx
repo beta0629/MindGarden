@@ -4,7 +4,6 @@ import GalleryMarquee from '@/components/GalleryMarquee';
 import ReviewsCarousel from '@/components/ReviewsCarousel';
 import Footer from '@/components/Footer';
 import SectionTabs from '@/components/SectionTabs';
-import ConsultationBottomSheet from '@/components/ConsultationBottomSheet';
 import HashScroll from '@/components/HashScroll';
 import { getApiService } from '@/lib/api';
 import { getDbConnection } from '@/lib/db';
@@ -235,9 +234,6 @@ export default async function Home() {
           <Footer />
         </div>
       </div>
-
-      {/* 문의/예약 바텀시트 (항상 하단에 고정) */}
-      <ConsultationBottomSheet />
     </main>
   );
 }

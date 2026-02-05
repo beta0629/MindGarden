@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import PopupBannerProvider from '@/components/PopupBannerProvider';
+import ConsultationBottomSheet from '@/components/ConsultationBottomSheet';
 
 export const metadata: Metadata = {
   title: '마인드가든 심리상담센터',
@@ -17,6 +18,7 @@ export default function RootLayout({
       <body>
         <PopupBannerProvider />
         {children}
+        <ConsultationBottomSheet />
       </body>
     </html>
   );

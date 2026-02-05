@@ -42,7 +42,9 @@
     --shadow-1: 0 8px 30px rgba(0, 0, 0, 0.06);
     --shadow-2: 0 14px 45px rgba(0, 0, 0, 0.10);
 
-    --font-main: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+    /* 폰트 설정 - 롤백 시 아래 주석 해제하고 위 줄 주석 처리 */
+    /* --font-main: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif; */
+    --font-main: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
 
     --spacing-unit: 8px;
     --container-width: 1200px;

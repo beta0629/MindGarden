@@ -278,59 +278,6 @@ export default function LocationPage() {
               </div>
             </div>
 
-            {/* 하단 CTA */}
-            <div style={{
-              marginTop: '80px',
-              textAlign: 'center',
-              padding: '48px 32px',
-              background: 'linear-gradient(135deg, var(--bg-pastel-1) 0%, var(--bg-pastel-2) 100%)',
-              borderRadius: 'var(--radius-lg)',
-              border: '2px solid rgba(168, 213, 186, 0.4)'
-            }}>
-              <h3 style={{
-                fontSize: '1.75rem',
-                fontWeight: '700',
-                color: 'var(--text-main)',
-                marginBottom: '16px'
-              }}>
-                상담 문의하기
-              </h3>
-              <p style={{
-                fontSize: '1.125rem',
-                color: 'var(--text-sub)',
-                marginBottom: '32px',
-                lineHeight: '1.8'
-              }}>
-                센터 방문 전 상담 예약을 원하시면 아래 버튼을 클릭해주세요
-              </p>
-              <a
-                href="/#contact"
-                style={{
-                  display: 'inline-block',
-                  padding: '14px 32px',
-                  background: 'rgba(168, 213, 186, 0.8)',
-                  color: 'white',
-                  borderRadius: 'var(--radius-sm)',
-                  fontSize: '1.0625rem',
-                  fontWeight: '600',
-                  textDecoration: 'none',
-                  transition: 'all 0.2s',
-                  boxShadow: 'var(--shadow-1)'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.boxShadow = 'var(--shadow-2)';
-                  e.currentTarget.style.background = 'rgba(168, 213, 186, 1)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = 'var(--shadow-1)';
-                  e.currentTarget.style.background = 'rgba(168, 213, 186, 0.8)';
-                }}
-              >
-                상담 예약하기
-              </a>
-            </div>
           </section>
         </div>
       </div>

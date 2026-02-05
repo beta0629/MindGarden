@@ -173,13 +173,13 @@ export default function Navigation() {
             <Image
               src="/assets/images/logo/logo.png"
               alt="마인드가든 심리상담센터"
-              width={120}
-              height={120}
+              width={180}
+              height={180}
               style={{
                 objectFit: 'contain',
                 flexShrink: 0,
                 height: 'auto',
-                maxHeight: '50px',
+                maxHeight: '70px',
                 width: 'auto',
               }}
               priority

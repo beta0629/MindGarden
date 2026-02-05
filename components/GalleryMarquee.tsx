@@ -16,6 +16,12 @@ export default function GalleryMarquee({ images }: GalleryMarqueeProps) {
   const [isPaused, setIsPaused] = useState(false);
   const trackRef = useRef<HTMLDivElement>(null);
   const autoScrollTimerRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // 터치 스와이프 관련 상태
+  const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
+  const touchEndX = useRef<number | null>(null);
+  const touchEndY = useRef<number | null>(null);
 
   // 로컬 무료 이미지 사용 (public/assets/images/ 폴더)
   const defaultImages: GalleryImage[] = [
@@ -116,6 +122,42 @@ export default function GalleryMarquee({ images }: GalleryMarqueeProps) {
     return () => track.removeEventListener('scroll', handleScroll);
   }, [currentIndex, imageCount]);
 
+  // 터치 스와이프 핸들러
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    touchEndX.current = e.touches[0].clientX;
+    touchEndY.current = e.touches[0].clientY;
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStartX.current || !touchEndX.current || !touchStartY.current || !touchEndY.current) return;
+    
+    const deltaX = touchStartX.current - touchEndX.current;
+    const deltaY = touchStartY.current - touchEndY.current;
+    const minSwipeDistance = 50; // 최소 스와이프 거리
+    
+    // 수평 스와이프가 수직 스와이프보다 큰 경우에만 처리
+    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > minSwipeDistance) {
+      if (deltaX > 0) {
+        // 왼쪽으로 스와이프 (다음 이미지)
+        goToNext();
+      } else {
+        // 오른쪽으로 스와이프 (이전 이미지)
+        goToPrevious();
+      }
+    }
+    
+    // 리셋
+    touchStartX.current = null;
+    touchStartY.current = null;
+    touchEndX.current = null;
+    touchEndY.current = null;
+  };
+
   return (
     <section className="flow-section">
       <div className="flow-header">
@@ -185,6 +227,9 @@ export default function GalleryMarquee({ images }: GalleryMarqueeProps) {
         <div
           ref={trackRef}
           className="marquee-track"
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
           style={{
             display: 'flex',
             overflowX: 'auto',
@@ -192,6 +237,7 @@ export default function GalleryMarquee({ images }: GalleryMarqueeProps) {
             scrollBehavior: 'smooth',
             scrollbarWidth: 'none',
             msOverflowStyle: 'none',
+            touchAction: 'pan-y pinch-zoom', // 수직 스크롤과 핀치 줌은 허용
           }}
         >
           {displayImages.map((image, index) => (

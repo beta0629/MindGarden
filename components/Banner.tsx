@@ -36,6 +36,12 @@ export default function Banner({ banners }: BannerProps) {
   const [isPaused, setIsPaused] = useState(false);
   const autoScrollTimerRef = useRef<NodeJS.Timeout | null>(null);
   const isMobile = useIsMobile();
+  
+  // 터치 스와이프 관련 상태
+  const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
+  const touchEndX = useRef<number | null>(null);
+  const touchEndY = useRef<number | null>(null);
 
   // 특정 인덱스로 이동
   const goToIndex = (index: number) => {
@@ -77,6 +83,43 @@ export default function Banner({ banners }: BannerProps) {
     };
   }, [isPaused, banners.length]);
 
+  // 터치 스와이프 핸들러
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    touchEndX.current = e.touches[0].clientX;
+    touchEndY.current = e.touches[0].clientY;
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStartX.current || !touchEndX.current || !touchStartY.current || !touchEndY.current) return;
+    if (banners.length <= 1) return;
+    
+    const deltaX = touchStartX.current - touchEndX.current;
+    const deltaY = touchStartY.current - touchEndY.current;
+    const minSwipeDistance = 50; // 최소 스와이프 거리
+    
+    // 수평 스와이프가 수직 스와이프보다 큰 경우에만 처리
+    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > minSwipeDistance) {
+      if (deltaX > 0) {
+        // 왼쪽으로 스와이프 (다음 배너)
+        goToNext();
+      } else {
+        // 오른쪽으로 스와이프 (이전 배너)
+        goToPrevious();
+      }
+    }
+    
+    // 리셋
+    touchStartX.current = null;
+    touchStartY.current = null;
+    touchEndX.current = null;
+    touchEndY.current = null;
+  };
+
   if (banners.length === 0) {
     return null;
   }
@@ -111,6 +154,9 @@ export default function Banner({ banners }: BannerProps) {
       }}
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
     >
       {/* 이전 버튼 */}
       {banners.length > 1 && (

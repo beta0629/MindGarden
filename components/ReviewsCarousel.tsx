@@ -23,6 +23,12 @@ export default function ReviewsCarousel({ reviews }: ReviewsCarouselProps) {
   const [likeCounts, setLikeCounts] = useState<Record<number, number>>({});
   const [likedReviews, setLikedReviews] = useState<Set<number>>(new Set());
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // 터치 스와이프 관련 상태
+  const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
+  const touchEndX = useRef<number | null>(null);
+  const touchEndY = useRef<number | null>(null);
 
   // 초기 좋아요 수 설정
   useEffect(() => {
@@ -57,6 +63,47 @@ export default function ReviewsCarousel({ reviews }: ReviewsCarouselProps) {
 
   const handleMouseLeave = () => {
     setIsAutoPlaying(true);
+  };
+
+  // 터치 스와이프 핸들러
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    touchEndX.current = e.touches[0].clientX;
+    touchEndY.current = e.touches[0].clientY;
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStartX.current || !touchEndX.current || !touchStartY.current || !touchEndY.current) return;
+    if (reviews.length <= 1) return;
+    
+    const deltaX = touchStartX.current - touchEndX.current;
+    const deltaY = touchStartY.current - touchEndY.current;
+    const minSwipeDistance = 50; // 최소 스와이프 거리
+    
+    // 수평 스와이프가 수직 스와이프보다 큰 경우에만 처리
+    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > minSwipeDistance) {
+      if (deltaX > 0) {
+        // 왼쪽으로 스와이프 (다음 후기)
+        setCurrentIndex((prev) => (prev + 1) % reviews.length);
+        setIsAutoPlaying(false);
+        setTimeout(() => setIsAutoPlaying(true), 3000);
+      } else {
+        // 오른쪽으로 스와이프 (이전 후기)
+        setCurrentIndex((prev) => (prev - 1 + reviews.length) % reviews.length);
+        setIsAutoPlaying(false);
+        setTimeout(() => setIsAutoPlaying(true), 3000);
+      }
+    }
+    
+    // 리셋
+    touchStartX.current = null;
+    touchStartY.current = null;
+    touchEndX.current = null;
+    touchEndY.current = null;
   };
 
   // 좋아요 처리
@@ -287,6 +334,9 @@ export default function ReviewsCarousel({ reviews }: ReviewsCarouselProps) {
       }}>
         <div
           key={currentReview.id}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
           style={{
             backgroundColor: 'var(--surface-0)',
             borderRadius: 'var(--radius-md)',
@@ -297,6 +347,7 @@ export default function ReviewsCarousel({ reviews }: ReviewsCarouselProps) {
             display: 'flex',
             flexDirection: 'column',
             animation: 'fadeInUp 0.5s ease',
+            touchAction: 'pan-y pinch-zoom', // 수직 스크롤과 핀치 줌은 허용
           }}
         >
           {/* 작성자 정보 */}

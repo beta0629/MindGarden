@@ -168,42 +168,106 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
 
   return (
     <div style={{
-      padding: '2rem 0',
+      padding: '5rem 0',
+      background: 'linear-gradient(135deg, rgba(168, 213, 186, 0.08) 0%, rgba(184, 212, 227, 0.12) 50%, rgba(200, 180, 255, 0.08) 100%)',
+      position: 'relative',
+      overflow: 'hidden',
     }}>
+      {/* 배경 장식 요소 */}
+      <div style={{
+        position: 'absolute',
+        top: '-50%',
+        right: '-10%',
+        width: '600px',
+        height: '600px',
+        background: 'radial-gradient(circle, rgba(168, 213, 186, 0.15) 0%, transparent 70%)',
+        borderRadius: '50%',
+        pointerEvents: 'none',
+      }} />
+      <div style={{
+        position: 'absolute',
+        bottom: '-30%',
+        left: '-5%',
+        width: '500px',
+        height: '500px',
+        background: 'radial-gradient(circle, rgba(184, 212, 227, 0.12) 0%, transparent 70%)',
+        borderRadius: '50%',
+        pointerEvents: 'none',
+      }} />
+
       {/* 헤더 */}
       <div style={{
         textAlign: 'center',
-        marginBottom: '3rem',
+        marginBottom: '4rem',
+        position: 'relative',
+        zIndex: 1,
       }}>
+        <div style={{
+          display: 'inline-block',
+          padding: '0.5rem 2rem',
+          background: 'linear-gradient(135deg, var(--accent-sky) 0%, var(--accent-mint) 100%)',
+          borderRadius: '50px',
+          marginBottom: '1.5rem',
+          boxShadow: '0 4px 20px rgba(168, 213, 186, 0.3)',
+        }}>
+          <span style={{
+            fontSize: '0.875rem',
+            fontWeight: '700',
+            color: 'white',
+            letterSpacing: '0.1em',
+            textTransform: 'uppercase',
+          }}>
+            ✨ 실시간 후기
+          </span>
+        </div>
         <h2 className="section-title" style={{
+          fontSize: '3rem',
+          fontWeight: '800',
           background: 'linear-gradient(135deg, var(--accent-sky) 0%, var(--accent-lavender) 100%)',
           WebkitBackgroundClip: 'text',
           WebkitTextFillColor: 'transparent',
           backgroundClip: 'text',
+          marginBottom: '1rem',
+          textShadow: '0 2px 10px rgba(168, 213, 186, 0.2)',
+          lineHeight: '1.2',
         }}>
           이용자 후기
         </h2>
-        <p className="section-desc" style={{ marginBottom: '1rem' }}>
+        <p className="section-desc" style={{
+          marginBottom: '2rem',
+          fontSize: '1.125rem',
+          color: 'var(--text-main)',
+          fontWeight: '500',
+        }}>
           마인드가든을 이용하신 분들의 소중한 후기입니다
         </p>
         <Link
           href="/reviews"
           style={{
-            display: 'inline-block',
-            fontSize: '0.9rem',
-            color: 'var(--accent-sky)',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            padding: '0.875rem 2rem',
+            fontSize: '1rem',
+            color: 'white',
             textDecoration: 'none',
             fontWeight: '600',
-            transition: 'all 0.2s',
+            background: 'linear-gradient(135deg, var(--accent-sky) 0%, var(--accent-mint) 100%)',
+            borderRadius: 'var(--radius-md)',
+            transition: 'all 0.3s ease',
+            boxShadow: '0 4px 15px rgba(168, 213, 186, 0.4)',
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.textDecoration = 'underline';
+            e.currentTarget.style.transform = 'translateY(-2px)';
+            e.currentTarget.style.boxShadow = '0 6px 20px rgba(168, 213, 186, 0.5)';
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.textDecoration = 'none';
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.boxShadow = '0 4px 15px rgba(168, 213, 186, 0.4)';
           }}
         >
-          전체 후기 보기 →
+          전체 후기 보기
+          <span style={{ fontSize: '1.2rem' }}>→</span>
         </Link>
       </div>
 
@@ -220,18 +284,20 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
         onTouchEnd={handleTouchEnd}
         style={{
           display: 'flex',
-          gap: '1.5rem',
+          gap: '2rem',
           overflowX: 'auto',
           overflowY: 'hidden',
           scrollBehavior: 'auto',
           cursor: isDragging ? 'grabbing' : 'grab',
-          padding: '1rem 0',
-          margin: '0 -1rem',
-          paddingLeft: '1rem',
-          paddingRight: '1rem',
+          padding: '2rem 0',
+          margin: '0 -2rem',
+          paddingLeft: '2rem',
+          paddingRight: '2rem',
           WebkitOverflowScrolling: 'touch',
           scrollbarWidth: 'thin',
           scrollbarColor: 'var(--accent-sky) transparent',
+          position: 'relative',
+          zIndex: 1,
         }}
         onScroll={() => {
           lastScrollTime.current = Date.now();
@@ -247,7 +313,7 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
               color: 'inherit',
               display: 'block',
               flexShrink: 0,
-              width: '320px',
+              width: '360px',
             }}
             onClick={(e) => {
               // 드래그 중일 때는 링크 클릭 방지
@@ -258,68 +324,123 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
           >
             <div
               style={{
-                backgroundColor: 'var(--surface-0)',
-                borderRadius: 'var(--radius-md)',
-                padding: '1.5rem',
-                boxShadow: 'var(--shadow-1)',
-                border: '1px solid var(--border-soft)',
+                backgroundColor: 'white',
+                borderRadius: 'var(--radius-lg)',
+                padding: '2rem',
+                boxShadow: '0 8px 30px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08)',
+                border: '2px solid transparent',
+                backgroundImage: 'linear-gradient(white, white), linear-gradient(135deg, var(--accent-sky), var(--accent-mint))',
+                backgroundOrigin: 'border-box',
+                backgroundClip: 'padding-box, border-box',
                 height: '100%',
                 display: 'flex',
                 flexDirection: 'column',
-                transition: isDragging ? 'none' : 'all 0.3s ease',
+                transition: isDragging ? 'none' : 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
                 cursor: isDragging ? 'grabbing' : 'pointer',
                 userSelect: 'none',
+                position: 'relative',
+                overflow: 'hidden',
               }}
               onMouseEnter={(e) => {
                 if (!isDragging) {
-                  e.currentTarget.style.transform = 'translateY(-4px)';
-                  e.currentTarget.style.boxShadow = 'var(--shadow-2)';
-                  e.currentTarget.style.borderColor = 'var(--accent-sky)';
+                  e.currentTarget.style.transform = 'translateY(-8px) scale(1.02)';
+                  e.currentTarget.style.boxShadow = '0 16px 40px rgba(168, 213, 186, 0.25), 0 4px 12px rgba(0, 0, 0, 0.15)';
+                  e.currentTarget.style.borderImage = 'linear-gradient(135deg, var(--accent-sky), var(--accent-mint)) 1';
                 }
               }}
               onMouseLeave={(e) => {
                 if (!isDragging) {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = 'var(--shadow-1)';
-                  e.currentTarget.style.borderColor = 'var(--border-soft)';
+                  e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                  e.currentTarget.style.boxShadow = '0 8px 30px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08)';
                 }
               }}
             >
+              {/* 카드 상단 장식 */}
+              <div style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                height: '4px',
+                background: 'linear-gradient(90deg, var(--accent-sky) 0%, var(--accent-mint) 100%)',
+              }} />
               {/* 작성자 정보 */}
               <div style={{
                 display: 'flex',
                 justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: '1rem',
-                paddingBottom: '0.75rem',
-                borderBottom: '1px solid var(--border-soft)',
+                alignItems: 'flex-start',
+                marginBottom: '1.5rem',
+                paddingTop: '0.5rem',
+                paddingBottom: '1rem',
+                borderBottom: '2px solid rgba(168, 213, 186, 0.2)',
               }}>
-                <div>
+                <div style={{ flex: 1 }}>
                   <div style={{
-                    fontSize: '1rem',
-                    fontWeight: '700',
-                    color: 'var(--text-main)',
-                    marginBottom: '0.25rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.75rem',
+                    marginBottom: '0.5rem',
                   }}>
-                    {review.authorName}
-                  </div>
-                  <div style={{
-                    fontSize: '0.75rem',
-                    color: 'var(--text-sub)',
-                  }}>
-                    {new Date(review.createdAt).toLocaleDateString('ko-KR', {
-                      year: 'numeric',
-                      month: 'short',
-                      day: 'numeric',
-                    })}
+                    <div style={{
+                      width: '48px',
+                      height: '48px',
+                      borderRadius: '50%',
+                      background: 'linear-gradient(135deg, var(--accent-sky) 0%, var(--accent-mint) 100%)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '1.25rem',
+                      fontWeight: '700',
+                      color: 'white',
+                      boxShadow: '0 4px 12px rgba(168, 213, 186, 0.3)',
+                    }}>
+                      {review.authorName.charAt(0)}
+                    </div>
+                    <div>
+                      <div style={{
+                        fontSize: '1.125rem',
+                        fontWeight: '700',
+                        color: 'var(--text-main)',
+                        marginBottom: '0.25rem',
+                      }}>
+                        {review.authorName}
+                      </div>
+                      <div style={{
+                        fontSize: '0.8rem',
+                        color: 'var(--text-sub)',
+                      }}>
+                        {new Date(review.createdAt).toLocaleDateString('ko-KR', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric',
+                        })}
+                      </div>
+                    </div>
                   </div>
                 </div>
                 {review.ratings && review.ratings.overall && review.ratings.overall > 0 && (
                   <div style={{
-                    fontSize: '1.25rem',
-                    color: 'var(--accent-sky)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '0.25rem',
+                    padding: '0.5rem',
+                    background: 'linear-gradient(135deg, rgba(168, 213, 186, 0.1) 0%, rgba(184, 212, 227, 0.1) 100%)',
+                    borderRadius: 'var(--radius-md)',
                   }}>
-                    {'⭐'.repeat(review.ratings.overall)}
+                    <div style={{
+                      fontSize: '1.5rem',
+                      lineHeight: '1',
+                    }}>
+                      {'❤️'.repeat(review.ratings.overall)}
+                    </div>
+                    <div style={{
+                      fontSize: '0.75rem',
+                      fontWeight: '600',
+                      color: 'var(--accent-sky)',
+                    }}>
+                      {review.ratings.overall}/5
+                    </div>
                   </div>
                 )}
               </div>
@@ -330,18 +451,20 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
                   display: 'flex',
                   flexWrap: 'wrap',
                   gap: '0.5rem',
-                  marginBottom: '1rem',
+                  marginBottom: '1.25rem',
                 }}>
                   {review.tags.slice(0, 3).map((tag, idx) => (
                     <span
                       key={idx}
                       style={{
-                        padding: '4px 8px',
-                        backgroundColor: 'rgba(168, 213, 186, 0.15)',
+                        padding: '6px 12px',
+                        background: 'linear-gradient(135deg, rgba(168, 213, 186, 0.2) 0%, rgba(184, 212, 227, 0.2) 100%)',
                         color: 'var(--accent-sky)',
-                        borderRadius: 'var(--radius-sm)',
-                        fontSize: '0.75rem',
-                        fontWeight: '500',
+                        borderRadius: '20px',
+                        fontSize: '0.8rem',
+                        fontWeight: '600',
+                        border: '1px solid rgba(168, 213, 186, 0.3)',
+                        boxShadow: '0 2px 4px rgba(168, 213, 186, 0.1)',
                       }}
                     >
                       #{tag}
@@ -349,9 +472,10 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
                   ))}
                   {review.tags.length > 3 && (
                     <span style={{
-                      padding: '4px 8px',
+                      padding: '6px 12px',
                       color: 'var(--text-sub)',
-                      fontSize: '0.75rem',
+                      fontSize: '0.8rem',
+                      fontWeight: '500',
                     }}>
                       +{review.tags.length - 3}
                     </span>
@@ -364,13 +488,14 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
                 style={{
                   flex: 1,
                   color: 'var(--text-main)',
-                  lineHeight: '1.6',
-                  fontSize: '0.9rem',
-                  marginBottom: '1rem',
+                  lineHeight: '1.8',
+                  fontSize: '0.95rem',
+                  marginBottom: '1.5rem',
                   overflow: 'hidden',
                   display: '-webkit-box',
                   WebkitLineClamp: 4,
                   WebkitBoxOrient: 'vertical',
+                  fontWeight: '400',
                 }}
               >
                 {getPreviewText(review.content)}
@@ -381,25 +506,38 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                paddingTop: '0.75rem',
-                borderTop: '1px solid var(--border-soft)',
-                fontSize: '0.85rem',
-                color: 'var(--text-sub)',
+                paddingTop: '1rem',
+                borderTop: '2px solid rgba(168, 213, 186, 0.15)',
               }}>
                 <div style={{
                   display: 'flex',
                   alignItems: 'center',
                   gap: '0.5rem',
+                  padding: '0.5rem 1rem',
+                  background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(255, 182, 193, 0.1) 100%)',
+                  borderRadius: 'var(--radius-md)',
+                  fontSize: '0.9rem',
+                  fontWeight: '600',
+                  color: '#ef4444',
                 }}>
-                  <span>❤️</span>
+                  <span style={{ fontSize: '1.1rem' }}>❤️</span>
                   <span>{review.likeCount || 0}</span>
                 </div>
-                <span style={{
-                  color: 'var(--accent-sky)',
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  padding: '0.5rem 1rem',
+                  background: 'linear-gradient(135deg, var(--accent-sky) 0%, var(--accent-mint) 100%)',
+                  borderRadius: 'var(--radius-md)',
+                  color: 'white',
                   fontWeight: '600',
+                  fontSize: '0.9rem',
+                  boxShadow: '0 2px 8px rgba(168, 213, 186, 0.3)',
                 }}>
-                  자세히 보기 →
-                </span>
+                  <span>자세히 보기</span>
+                  <span style={{ fontSize: '1.1rem' }}>→</span>
+                </div>
               </div>
             </div>
           </Link>

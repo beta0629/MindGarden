@@ -62,9 +62,23 @@ interface Review {
   id: number;
   authorName: string;
   content: string;
+  tags?: string[];
+  ratings?: {
+    professionalism?: number;
+    kindness?: number;
+    effectiveness?: number;
+    facility?: number;
+    overall?: number;
+  };
   likeCount?: number;
   createdAt: string;
   updatedAt: string;
+}
+
+interface ReviewStats {
+  totalReviews: number;
+  tagCounts: Array<{ tag: string; count: number }>;
+  ratingStats: Record<string, { sum: number; count: number; average: number }>;
 }
 
 export default function ReviewsPage() {
@@ -80,6 +94,8 @@ export default function ReviewsPage() {
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [likeCounts, setLikeCounts] = useState<Record<number, number>>({});
   const [likedReviews, setLikedReviews] = useState<Set<number>>(new Set());
+  const [stats, setStats] = useState<ReviewStats | null>(null);
+  const [showStats, setShowStats] = useState(true);
 
   // 초기 좋아요 수 설정
   useEffect(() => {
@@ -92,7 +108,20 @@ export default function ReviewsPage() {
 
   useEffect(() => {
     loadReviews();
+    loadStats();
   }, [page]);
+  
+  const loadStats = async () => {
+    try {
+      const response = await fetch('/api/reviews/stats');
+      const data = await response.json();
+      if (data.success) {
+        setStats(data.stats);
+      }
+    } catch (err) {
+      console.error('Load stats error:', err);
+    }
+  };
 
   const loadReviews = async () => {
     try {
@@ -377,6 +406,146 @@ export default function ReviewsPage() {
               </Link>
             </div>
 
+            {/* 통계 섹션 */}
+            {stats && showStats && stats.totalReviews > 0 && (
+              <div style={{
+                backgroundColor: 'var(--surface-0)',
+                padding: '2rem',
+                borderRadius: 'var(--radius-md)',
+                boxShadow: 'var(--shadow-1)',
+                border: '1px solid var(--border-soft)',
+                marginBottom: '2rem',
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                  <h3 style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--text-main)' }}>
+                    후기 통계
+                  </h3>
+                  <button
+                    onClick={() => setShowStats(false)}
+                    style={{
+                      padding: '0.5rem',
+                      background: 'transparent',
+                      border: 'none',
+                      cursor: 'pointer',
+                      fontSize: '1.2rem',
+                      color: 'var(--text-sub)',
+                    }}
+                    aria-label="통계 숨기기"
+                  >
+                    ×
+                  </button>
+                </div>
+
+                {/* 해시태그 통계 */}
+                {stats.tagCounts.length > 0 && (
+                  <div style={{ marginBottom: '2rem' }}>
+                    <h4 style={{ fontSize: '1.125rem', fontWeight: '600', color: 'var(--text-main)', marginBottom: '1rem' }}>
+                      많이 언급된 항목
+                    </h4>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
+                      {stats.tagCounts.slice(0, 10).map(({ tag, count }) => (
+                        <div
+                          key={tag}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.5rem',
+                            padding: '0.5rem 1rem',
+                            backgroundColor: 'rgba(168, 213, 186, 0.15)',
+                            borderRadius: 'var(--radius-sm)',
+                            border: '1px solid rgba(168, 213, 186, 0.3)',
+                          }}
+                        >
+                          <span style={{ fontWeight: '600', color: 'var(--accent-sky)' }}>#{tag}</span>
+                          <span style={{ fontSize: '0.875rem', color: 'var(--text-sub)' }}>{count}회</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* 점수 통계 그래프 */}
+                {stats.ratingStats && Object.values(stats.ratingStats).some(r => r.count > 0) && (
+                  <div>
+                    <h4 style={{ fontSize: '1.125rem', fontWeight: '600', color: 'var(--text-main)', marginBottom: '1rem' }}>
+                      평균 점수
+                    </h4>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                      {Object.entries(stats.ratingStats).map(([key, stat]) => {
+                        if (stat.count === 0) return null;
+                        
+                        const categoryLabels: Record<string, string> = {
+                          professionalism: '전문성',
+                          kindness: '친절도',
+                          effectiveness: '효과',
+                          facility: '시설',
+                          overall: '전반적 만족도',
+                        };
+                        
+                        const percentage = (stat.average / 5) * 100;
+                        
+                        return (
+                          <div key={key}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                              <span style={{ fontSize: '0.95rem', fontWeight: '500', color: 'var(--text-main)' }}>
+                                {categoryLabels[key] || key}
+                              </span>
+                              <span style={{ fontSize: '0.95rem', color: 'var(--text-sub)' }}>
+                                {stat.average.toFixed(1)}점 ({stat.count}명 평가)
+                              </span>
+                            </div>
+                            <div style={{
+                              width: '100%',
+                              height: '24px',
+                              backgroundColor: 'var(--bg-light)',
+                              borderRadius: 'var(--radius-sm)',
+                              overflow: 'hidden',
+                              position: 'relative',
+                            }}>
+                              <div style={{
+                                width: `${percentage}%`,
+                                height: '100%',
+                                background: `linear-gradient(90deg, var(--accent-sky) 0%, var(--accent-mint) 100%)`,
+                                borderRadius: 'var(--radius-sm)',
+                                transition: 'width 0.5s ease',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'flex-end',
+                                paddingRight: '8px',
+                              }}>
+                                <span style={{ fontSize: '0.75rem', color: 'white', fontWeight: '600' }}>
+                                  {stat.average.toFixed(1)}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {stats && !showStats && (
+              <button
+                onClick={() => setShowStats(true)}
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  marginBottom: '2rem',
+                  backgroundColor: 'var(--surface-0)',
+                  border: '1px solid var(--border-soft)',
+                  borderRadius: 'var(--radius-sm)',
+                  color: 'var(--text-sub)',
+                  cursor: 'pointer',
+                  fontSize: '0.9rem',
+                }}
+              >
+                통계 보기
+              </button>
+            )}
+
             {error && (
               <div style={{
                 padding: '1rem',
@@ -491,6 +660,61 @@ export default function ReviewsPage() {
                           </button>
                         </div>
                       </div>
+                      {/* 해시태그 표시 */}
+                      {review.tags && review.tags.length > 0 && (
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1rem' }}>
+                          {review.tags.map((tag, idx) => (
+                            <span
+                              key={idx}
+                              style={{
+                                padding: '4px 10px',
+                                backgroundColor: 'rgba(168, 213, 186, 0.15)',
+                                color: 'var(--accent-sky)',
+                                borderRadius: 'var(--radius-sm)',
+                                fontSize: '0.8rem',
+                                fontWeight: '500',
+                              }}
+                            >
+                              #{tag}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* 점수 표시 */}
+                      {review.ratings && Object.values(review.ratings).some(r => r && r > 0) && (
+                        <div style={{
+                          display: 'flex',
+                          flexWrap: 'wrap',
+                          gap: '1rem',
+                          marginBottom: '1rem',
+                          padding: '0.75rem',
+                          backgroundColor: 'rgba(168, 213, 186, 0.05)',
+                          borderRadius: 'var(--radius-sm)',
+                        }}>
+                          {Object.entries(review.ratings).map(([key, value]) => {
+                            if (!value || value === 0) return null;
+                            const labels: Record<string, string> = {
+                              professionalism: '전문성',
+                              kindness: '친절도',
+                              effectiveness: '효과',
+                              facility: '시설',
+                              overall: '전반적 만족도',
+                            };
+                            return (
+                              <div key={key} style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                                <span style={{ fontSize: '0.85rem', color: 'var(--text-sub)' }}>
+                                  {labels[key] || key}:
+                                </span>
+                                <span style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--accent-sky)' }}>
+                                  {'⭐'.repeat(value)}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+
                       <div
                         style={{
                           color: 'var(--text-main)',

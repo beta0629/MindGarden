@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
     const safeLimit = Math.max(1, Math.min(100, limit)); // 1-100 사이로 제한
     const safeOffset = Math.max(0, offset); // 0 이상으로 제한
     const [rows] = await connection.execute(
-      `SELECT id, author_name, content, created_at, updated_at
+      `SELECT id, author_name, content, tags, ratings, created_at, updated_at
        FROM homepage_reviews
        WHERE is_approved = 1
        ORDER BY created_at DESC
@@ -30,14 +30,33 @@ export async function GET(request: NextRequest) {
     );
     const total = (countRows as any[])[0].total;
 
-    const reviews = (rows as any[]).map((row: any) => ({
-      id: row.id,
-      authorName: row.author_name,
-      content: row.content,
-      likeCount: row.like_count || 0,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at,
-    }));
+    const reviews = (rows as any[]).map((row: any) => {
+      let tags = [];
+      let ratings = null;
+      
+      try {
+        tags = row.tags ? JSON.parse(row.tags) : [];
+      } catch (e) {
+        tags = [];
+      }
+      
+      try {
+        ratings = row.ratings ? JSON.parse(row.ratings) : null;
+      } catch (e) {
+        ratings = null;
+      }
+      
+      return {
+        id: row.id,
+        authorName: row.author_name,
+        content: row.content,
+        tags,
+        ratings,
+        likeCount: row.like_count || 0,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
+      };
+    });
 
     return NextResponse.json({
       success: true,
@@ -78,7 +97,7 @@ export async function POST(request: NextRequest) {
   let connection;
   try {
     const body = await request.json();
-    const { authorName, content, password } = body;
+    const { authorName, content, password, tags, ratings } = body;
 
     // 입력 검증
     if (!content || content.trim().length === 0) {
@@ -123,12 +142,21 @@ export async function POST(request: NextRequest) {
     const saltRounds = 10;
     const passwordHash = await bcrypt.hash(password, saltRounds);
 
+    // tags와 ratings를 JSON 문자열로 변환
+    const tagsJson = Array.isArray(tags) && tags.length > 0
+      ? JSON.stringify(tags)
+      : null;
+    
+    const ratingsJson = ratings && typeof ratings === 'object'
+      ? JSON.stringify(ratings)
+      : null;
+
     // DB에 저장
     connection = await getDbConnection();
     const [result] = await connection.execute(
-      `INSERT INTO homepage_reviews (author_name, content, password_hash, is_approved)
-       VALUES (?, ?, ?, 1)`,
-      [finalAuthorName, sanitizedContent, passwordHash]
+      `INSERT INTO homepage_reviews (author_name, content, password_hash, tags, ratings, is_approved)
+       VALUES (?, ?, ?, ?, ?, 1)`,
+      [finalAuthorName, sanitizedContent, passwordHash, tagsJson, ratingsJson]
     );
 
     const insertResult = result as any;

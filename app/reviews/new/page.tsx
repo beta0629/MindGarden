@@ -56,16 +56,59 @@ const convertImageToBase64 = (file: File, maxWidth: number = 1200, maxHeight: nu
   });
 };
 
+// 해시태그 옵션
+const REVIEW_TAGS = [
+  '전문성', '친절도', '효과', '시설', '접근성', '가격', '추천', '재방문', '기타'
+];
+
+// 평가 항목
+const RATING_CATEGORIES = [
+  { key: 'professionalism', label: '전문성' },
+  { key: 'kindness', label: '친절도' },
+  { key: 'effectiveness', label: '효과' },
+  { key: 'facility', label: '시설' },
+  { key: 'overall', label: '전반적 만족도' },
+];
+
 export default function NewReviewPage() {
   const router = useRouter();
   const [formData, setFormData] = useState({
     authorName: '',
     content: '',
     password: '',
+    tags: [] as string[],
+    ratings: {
+      professionalism: 0,
+      kindness: 0,
+      effectiveness: 0,
+      facility: 0,
+      overall: 0,
+    },
   });
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  
+  // 해시태그 토글
+  const handleTagToggle = (tag: string) => {
+    setFormData(prev => ({
+      ...prev,
+      tags: prev.tags.includes(tag)
+        ? prev.tags.filter(t => t !== tag)
+        : [...prev.tags, tag]
+    }));
+  };
+  
+  // 점수 변경
+  const handleRatingChange = (category: string, value: number) => {
+    setFormData(prev => ({
+      ...prev,
+      ratings: {
+        ...prev.ratings,
+        [category]: value,
+      }
+    }));
+  };
 
   // BlogEditor에서 이미지 업로드 시 base64로 변환
   const handleBlogEditorImageUpload = useCallback(async (file: File): Promise<{ imageUrl: string }> => {
@@ -104,6 +147,8 @@ export default function NewReviewPage() {
           authorName: formData.authorName || '익명',
           content: formData.content,
           password: formData.password,
+          tags: formData.tags,
+          ratings: formData.ratings,
         }),
       });
 
@@ -199,6 +244,92 @@ export default function NewReviewPage() {
                   onImageUpload={handleBlogEditorImageUpload}
                   placeholder="후기를 작성해주세요..."
                 />
+              </div>
+
+              {/* 해시태그 선택 */}
+              <div style={{ marginBottom: '1.5rem' }}>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500', color: 'var(--text-main)' }}>
+                  관련 항목 선택 (복수 선택 가능)
+                </label>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                  {REVIEW_TAGS.map(tag => (
+                    <button
+                      key={tag}
+                      type="button"
+                      onClick={() => handleTagToggle(tag)}
+                      style={{
+                        padding: '8px 16px',
+                        borderRadius: 'var(--radius-sm)',
+                        border: `1px solid ${formData.tags.includes(tag) ? 'var(--accent-sky)' : 'var(--border-soft)'}`,
+                        backgroundColor: formData.tags.includes(tag) ? 'rgba(168, 213, 186, 0.2)' : 'var(--surface-0)',
+                        color: formData.tags.includes(tag) ? 'var(--accent-sky)' : 'var(--text-sub)',
+                        cursor: 'pointer',
+                        fontSize: '0.9rem',
+                        fontWeight: '500',
+                        transition: 'all 0.2s ease',
+                      }}
+                    >
+                      #{tag}
+                    </button>
+                  ))}
+                </div>
+                {formData.tags.length > 0 && (
+                  <p style={{ fontSize: '0.875rem', color: 'var(--text-sub)', marginTop: '0.5rem' }}>
+                    선택된 항목: {formData.tags.map(t => `#${t}`).join(', ')}
+                  </p>
+                )}
+              </div>
+
+              {/* 점수 평가 */}
+              <div style={{ marginBottom: '1.5rem' }}>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500', color: 'var(--text-main)' }}>
+                  평가 (선택사항)
+                </label>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  {RATING_CATEGORIES.map(category => (
+                    <div key={category.key} style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                      <span style={{ minWidth: '120px', fontSize: '0.95rem', color: 'var(--text-main)', fontWeight: '500' }}>
+                        {category.label}:
+                      </span>
+                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                        {[1, 2, 3, 4, 5].map(star => (
+                          <button
+                            key={star}
+                            type="button"
+                            onClick={() => handleRatingChange(category.key, star)}
+                            style={{
+                              width: '32px',
+                              height: '32px',
+                              border: 'none',
+                              background: 'transparent',
+                              cursor: 'pointer',
+                              fontSize: '1.5rem',
+                              padding: 0,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                            }}
+                            onMouseEnter={(e) => {
+                              if (formData.ratings[category.key as keyof typeof formData.ratings] < star) {
+                                e.currentTarget.style.transform = 'scale(1.2)';
+                              }
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.transform = 'scale(1)';
+                            }}
+                          >
+                            {star <= formData.ratings[category.key as keyof typeof formData.ratings] ? '⭐' : '☆'}
+                          </button>
+                        ))}
+                        {formData.ratings[category.key as keyof typeof formData.ratings] > 0 && (
+                          <span style={{ fontSize: '0.875rem', color: 'var(--text-sub)', marginLeft: '0.5rem' }}>
+                            {formData.ratings[category.key as keyof typeof formData.ratings]}점
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
 
               <div style={{ marginBottom: '1.5rem' }}>

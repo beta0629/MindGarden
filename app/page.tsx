@@ -1,7 +1,7 @@
 import Navigation from '@/components/Navigation';
 import HeroSection from '@/components/HeroSection';
 import GalleryMarquee from '@/components/GalleryMarquee';
-import ReviewsCarousel from '@/components/ReviewsCarousel';
+import ReviewsList from '@/components/ReviewsList';
 import Footer from '@/components/Footer';
 import SectionTabs from '@/components/SectionTabs';
 import HashScroll from '@/components/HashScroll';
@@ -73,27 +73,46 @@ async function getHeroVideo() {
   }
 }
 
-// 후기 목록 조회 (최신 5개)
+// 후기 목록 조회 (전체 후기)
 async function getReviews() {
   let connection;
   try {
     connection = await getDbConnection();
     const [rows] = await connection.execute(
-      `SELECT id, author_name, content, like_count, created_at, updated_at
+      `SELECT id, author_name, content, tags, ratings, like_count, created_at, updated_at
        FROM homepage_reviews
        WHERE is_approved = 1
        ORDER BY created_at DESC
-       LIMIT 5`
+       LIMIT 20`
     );
 
-    const reviews = (rows as any[]).map((row: any) => ({
-      id: row.id,
-      authorName: row.author_name,
-      content: row.content,
-      likeCount: row.like_count || 0,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at,
-    }));
+    const reviews = (rows as any[]).map((row: any) => {
+      let tags = [];
+      let ratings = null;
+      
+      try {
+        tags = row.tags ? JSON.parse(row.tags) : [];
+      } catch (e) {
+        tags = [];
+      }
+      
+      try {
+        ratings = row.ratings ? JSON.parse(row.ratings) : null;
+      } catch (e) {
+        ratings = null;
+      }
+      
+      return {
+        id: row.id,
+        authorName: row.author_name,
+        content: row.content,
+        tags,
+        ratings,
+        likeCount: row.like_count || 0,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
+      };
+    });
 
     return reviews;
   } catch (error) {
@@ -226,7 +245,7 @@ export default async function Home() {
           </section>
 
           <section id="reviews" className="content-section">
-            <ReviewsCarousel reviews={homeData.reviews} />
+            <ReviewsList reviews={homeData.reviews} />
           </section>
 
           {/* 문의/예약 섹션은 바텀시트로 이동 - 섹션 제거 */}

@@ -11,23 +11,49 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1', 10);
     const limit = parseInt(searchParams.get('limit') || '10', 10);
     const offset = (page - 1) * limit;
+    const sortBy = searchParams.get('sortBy') || 'latest'; // latest, ratingHigh, ratingLow
+    const search = searchParams.get('search') || '';
 
     connection = await getDbConnection();
     // MySQL2에서 LIMIT/OFFSET은 플레이스홀더 대신 직접 값을 사용 (SQL 인젝션 방지를 위해 숫자로 변환)
     const safeLimit = Math.max(1, Math.min(100, limit)); // 1-100 사이로 제한
     const safeOffset = Math.max(0, offset); // 0 이상으로 제한
-    const [rows] = await connection.execute(
-      `SELECT id, author_name, content, tags, ratings, created_at, updated_at
+    
+    // 정렬 기준 설정
+    let orderBy = 'ORDER BY created_at DESC';
+    if (sortBy === 'ratingHigh') {
+      orderBy = 'ORDER BY JSON_EXTRACT(ratings, "$.overall") DESC, created_at DESC';
+    } else if (sortBy === 'ratingLow') {
+      orderBy = 'ORDER BY JSON_EXTRACT(ratings, "$.overall") ASC, created_at DESC';
+    }
+    
+    // 검색 조건 (Prepared Statement 사용)
+    let query = `SELECT id, author_name, content, tags, ratings, COALESCE(like_count, 0) as like_count, created_at, updated_at
        FROM homepage_reviews
-       WHERE is_approved = 1
-       ORDER BY created_at DESC
-       LIMIT ${safeLimit} OFFSET ${safeOffset}`
-    );
+       WHERE is_approved = 1`;
+    const queryParams: any[] = [];
+    
+    if (search && search.trim()) {
+      const searchTerm = `%${search.trim()}%`;
+      query += ` AND (content LIKE ? OR author_name LIKE ? OR tags LIKE ?)`;
+      queryParams.push(searchTerm, searchTerm, searchTerm);
+    }
+    
+    query += ` ${orderBy} LIMIT ${safeLimit} OFFSET ${safeOffset}`;
+    
+    const [rows] = await connection.execute(query, queryParams.length > 0 ? queryParams : undefined);
 
     // 전체 개수 조회
-    const [countRows] = await connection.execute(
-      `SELECT COUNT(*) as total FROM homepage_reviews WHERE is_approved = 1`
-    );
+    let countQuery = `SELECT COUNT(*) as total FROM homepage_reviews WHERE is_approved = 1`;
+    const countParams: any[] = [];
+    
+    if (search && search.trim()) {
+      const searchTerm = `%${search.trim()}%`;
+      countQuery += ` AND (content LIKE ? OR author_name LIKE ? OR tags LIKE ?)`;
+      countParams.push(searchTerm, searchTerm, searchTerm);
+    }
+    
+    const [countRows] = await connection.execute(countQuery, countParams.length > 0 ? countParams : undefined);
     const total = (countRows as any[])[0].total;
 
     const reviews = (rows as any[]).map((row: any) => {

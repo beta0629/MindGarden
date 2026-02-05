@@ -297,18 +297,18 @@ export default function ReviewsPage() {
   return (
     <main id="top" style={{ backgroundColor: '#F8FAFC', minHeight: '100vh' }}>
       <Navigation />
-      <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '2rem 1rem' }}>
+      <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '1rem 0.75rem' }} className="reviews-page-container">
         <header style={{
           display: 'flex',
-          flexDirection: 'row',
+          flexDirection: 'column',
           justifyContent: 'space-between',
           alignItems: 'flex-start',
-          marginBottom: '2rem',
+          marginBottom: '1.5rem',
           gap: '1rem',
-        }}>
+        }} className="reviews-header">
           <div>
             <h1 style={{
-              fontSize: '2rem',
+              fontSize: '1.5rem',
               fontWeight: '700',
               color: '#1e1b4b',
               marginBottom: '0.25rem',
@@ -339,7 +339,10 @@ export default function ReviewsPage() {
               boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
               transition: 'all 0.2s',
               whiteSpace: 'nowrap',
+              width: '100%',
+              justifyContent: 'center',
             }}
+            className="write-review-button"
             onMouseEnter={(e) => {
               e.currentTarget.style.backgroundColor = '#A0825A';
               e.currentTarget.style.transform = 'translateY(-2px)';
@@ -634,15 +637,15 @@ export default function ReviewsPage() {
               display: 'flex',
               flexWrap: 'wrap',
               alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: '0.75rem',
+              justifyContent: 'flex-start',
+              gap: '0.5rem',
               boxShadow: '0 1px 2px 0 rgb(0 0 0 / 0.05)',
               border: '1px solid #e2e8f0',
               position: 'sticky',
               top: '4rem',
               zIndex: 40,
               backdropFilter: 'blur(12px)',
-            }}>
+            }} className="reviews-filter-bar">
               <div style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -816,12 +819,13 @@ export default function ReviewsPage() {
                       id={`review-${review.id}`}
                       style={{
                         backgroundColor: 'white',
-                        padding: '1.5rem 2rem',
+                        padding: '1rem 1.25rem',
                         borderRadius: '1.5rem',
                         boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)',
                         border: '1px solid #f1f5f9',
                         transition: 'all 0.3s',
                       }}
+                      className="review-card"
                       onMouseEnter={(e) => {
                         e.currentTarget.style.boxShadow = '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)';
                         e.currentTarget.style.borderColor = '#c7d2fe';
@@ -842,10 +846,10 @@ export default function ReviewsPage() {
                           alignItems: 'center',
                           gap: '1rem',
                         }}>
-                          <div style={{ position: 'relative' }}>
+                          <div style={{ position: 'relative' }} className="review-avatar-container">
                             <div style={{
-                              width: '3.5rem',
-                              height: '3.5rem',
+                              width: '3rem',
+                              height: '3rem',
                               borderRadius: '1rem',
                               background: `linear-gradient(135deg, ${gradientFrom} 0%, ${gradientTo} 100%)`,
                               display: 'flex',
@@ -853,9 +857,9 @@ export default function ReviewsPage() {
                               justifyContent: 'center',
                               color: 'white',
                               fontWeight: '700',
-                              fontSize: '1.25rem',
+                              fontSize: '1rem',
                               boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
-                            }}>
+                            }} className="review-avatar">
                               {randomName.charAt(0)}
                             </div>
                             {isNew && (
@@ -880,9 +884,9 @@ export default function ReviewsPage() {
                             <h3 style={{
                               fontWeight: '700',
                               color: '#1e293b',
-                              fontSize: '1.125rem',
+                              fontSize: '1rem',
                               marginBottom: '0.25rem',
-                            }}>
+                            }} className="review-title">
                               {getPreviewText(review.content, 30)} - {review.tags?.[0] || '후기'}
                             </h3>
                             <div style={{
@@ -924,14 +928,14 @@ export default function ReviewsPage() {
                       {review.ratings && Object.values(review.ratings).some(r => r && r > 0) && (
                         <div style={{
                           backgroundColor: '#f8fafc',
-                          padding: '1.25rem',
+                          padding: '1rem',
                           borderRadius: '1rem',
                           marginBottom: '1.5rem',
                           display: 'grid',
                           gridTemplateColumns: 'repeat(2, 1fr)',
-                          gap: '1rem',
+                          gap: '0.75rem',
                           border: '1px solid #f1f5f9',
-                        }}>
+                        }} className="review-ratings">
                           {Object.entries(review.ratings)
                             .filter(([key]) => key !== 'overall')
                             .map(([key, value]) => {
@@ -1114,7 +1118,7 @@ export default function ReviewsPage() {
       </div>
       <Footer />
 
-      {/* 스피너 스타일 */}
+      {/* 스피너 스타일 및 반응형 */}
       <style jsx>{`
         .spinner {
           border: 3px solid rgba(226, 232, 240, 0.3);
@@ -1128,7 +1132,78 @@ export default function ReviewsPage() {
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }
         }
+        
+        /* 모바일 기본 스타일 */
+        .reviews-page-container {
+          padding: 1rem 0.75rem !important;
+        }
+        .reviews-header {
+          flex-direction: column !important;
+        }
+        .write-review-button {
+          width: 100% !important;
+          justify-content: center !important;
+        }
+        .review-card {
+          padding: 1rem 1.25rem !important;
+        }
+        .reviews-filter-bar {
+          justify-content: flex-start !important;
+          gap: 0.5rem !important;
+        }
+        .review-avatar {
+          width: 3rem !important;
+          height: 3rem !important;
+          font-size: 1rem !important;
+        }
+        .review-title {
+          font-size: 1rem !important;
+        }
+        .review-ratings {
+          padding: 1rem !important;
+          gap: 0.75rem !important;
+        }
+        
+        /* 태블릿 (768px 이상) */
+        @media (min-width: 768px) {
+          .reviews-page-container {
+            padding: 1.5rem 1.5rem !important;
+          }
+          .reviews-header {
+            flex-direction: row !important;
+            align-items: flex-start !important;
+          }
+          .write-review-button {
+            width: auto !important;
+          }
+          .review-card {
+            padding: 1.25rem 1.75rem !important;
+          }
+          .reviews-header h1 {
+            font-size: 1.75rem !important;
+          }
+          .review-avatar {
+            width: 3.25rem !important;
+            height: 3.25rem !important;
+            font-size: 1.125rem !important;
+          }
+          .review-title {
+            font-size: 1.0625rem !important;
+          }
+          .review-ratings {
+            padding: 1.125rem !important;
+            gap: 0.875rem !important;
+          }
+        }
+        
+        /* 데스크탑 (1024px 이상) */
         @media (min-width: 1024px) {
+          .reviews-page-container {
+            padding: 2rem 1rem !important;
+          }
+          .reviews-header h1 {
+            font-size: 2rem !important;
+          }
           .reviews-container {
             display: grid !important;
             grid-template-columns: 300px 1fr !important;
@@ -1146,7 +1221,28 @@ export default function ReviewsPage() {
             grid-column: 2;
             width: 100%;
           }
+          .review-card {
+            padding: 1.5rem 2rem !important;
+          }
+          .reviews-filter-bar {
+            justify-content: space-between !important;
+            gap: 0.75rem !important;
+          }
+          .review-avatar {
+            width: 3.5rem !important;
+            height: 3.5rem !important;
+            font-size: 1.25rem !important;
+          }
+          .review-title {
+            font-size: 1.125rem !important;
+          }
+          .review-ratings {
+            padding: 1.25rem !important;
+            gap: 1rem !important;
+          }
         }
+        
+        /* 와이드 데스크탑 (1280px 이상) */
         @media (min-width: 1280px) {
           .reviews-container {
             grid-template-columns: 350px 1fr !important;

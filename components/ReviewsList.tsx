@@ -152,7 +152,7 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
           marginBottom: '4rem',
         }}>
           <div style={{ gridColumn: 'span 12', display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: '2rem' }}>
-            <div style={{ gridColumn: 'span 12', lg: { gridColumn: 'span 8' } }}>
+            <div style={{ gridColumn: 'span 12' }} className="reviews-header-text">
               <div style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -221,8 +221,8 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
             {stats && stats.ratingStats.overall.count > 0 && (
               <div style={{
                 gridColumn: 'span 12',
-                lg: { gridColumn: 'span 4' },
                 background: 'white',
+              }} className="reviews-header-stats">
                 borderRadius: '1.5rem',
                 padding: '2rem',
                 boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
@@ -393,7 +393,7 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
                 gap: '2.5rem',
                 alignItems: 'center',
               }}>
-                <div style={{ gridColumn: 'span 12', md: { gridColumn: 'span 6' } }}>
+                <div style={{ gridColumn: 'span 12' }} className="best-review-text">
                   <div style={{
                     display: 'inline-block',
                     padding: '0.375rem 1rem',
@@ -440,7 +440,6 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
                 </div>
                 <div style={{
                   gridColumn: 'span 12',
-                  md: { gridColumn: 'span 6' },
                   background: 'rgba(255, 255, 255, 0.1)',
                   backdropFilter: 'blur(12px)',
                   borderRadius: '1rem',
@@ -450,7 +449,7 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
                   flexDirection: 'column',
                   justifyContent: 'space-between',
                   minHeight: '200px',
-                }}>
+                }} className="best-review-card">
                   <div style={{ marginBottom: '1rem' }}>
                     <span style={{
                       fontSize: '2.5rem',

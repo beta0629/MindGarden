@@ -173,7 +173,7 @@ export default function Navigation() {
             }}
           >
             <Image
-              src="/assets/images/logo/logo copy.png"
+              src="/assets/images/logo/logo.png"
               alt="마인드가든 심리상담센터"
               width={120}
               height={120}

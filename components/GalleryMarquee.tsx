@@ -128,6 +128,44 @@ export default function GalleryMarquee({ images }: GalleryMarqueeProps) {
         onMouseEnter={() => setIsPaused(true)}
         onMouseLeave={() => setIsPaused(false)}
       >
+        {/* 일시정지/재생 버튼 (웹 접근성) */}
+        {imageCount > 1 && (
+          <button
+            type="button"
+            onClick={() => setIsPaused(!isPaused)}
+            aria-label={isPaused ? '자동 재생 시작' : '자동 재생 일시정지'}
+            style={{
+              position: 'absolute',
+              top: '16px',
+              right: '16px',
+              zIndex: 30,
+              width: '40px',
+              height: '40px',
+              borderRadius: '50%',
+              border: 'none',
+              backgroundColor: 'rgba(255, 255, 255, 0.9)',
+              color: 'var(--text-main)',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '18px',
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+              transition: 'all 0.2s',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 1)';
+              e.currentTarget.style.transform = 'scale(1.1)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.9)';
+              e.currentTarget.style.transform = 'scale(1)';
+            }}
+          >
+            {isPaused ? '▶' : '⏸'}
+          </button>
+        )}
+
         {/* 좌우 이동 버튼 */}
         <button
           className="marquee-nav-button marquee-nav-prev"

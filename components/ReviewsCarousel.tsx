@@ -555,36 +555,76 @@ export default function ReviewsCarousel({ reviews }: ReviewsCarouselProps) {
         </div>
       </div>
 
-      {/* 네비게이션 도트 */}
+      {/* 일시정지/재생 버튼 (웹 접근성) */}
       {reviews.length > 1 && (
         <div style={{
           display: 'flex',
           justifyContent: 'center',
-          gap: '0.5rem',
+          alignItems: 'center',
+          gap: '1rem',
           marginTop: '2rem',
         }}>
-          {reviews.map((_, index) => (
-            <button
-              key={index}
-              onClick={() => {
-                setCurrentIndex(index);
-                setIsAutoPlaying(false);
-                setTimeout(() => setIsAutoPlaying(true), 3000);
-              }}
-              style={{
-                width: index === currentIndex ? '24px' : '8px',
-                height: '8px',
-                borderRadius: '4px',
-                border: 'none',
-                backgroundColor: index === currentIndex
-                  ? 'var(--accent-sky)'
-                  : 'rgba(184, 212, 227, 0.4)',
-                cursor: 'pointer',
-                transition: 'all 0.3s ease',
-              }}
-              aria-label={`후기 ${index + 1}로 이동`}
-            />
-          ))}
+          <button
+            type="button"
+            onClick={() => setIsAutoPlaying(!isAutoPlaying)}
+            aria-label={isAutoPlaying ? '후기 자동 재생 일시정지' : '후기 자동 재생 시작'}
+            style={{
+              width: '40px',
+              height: '40px',
+              borderRadius: '50%',
+              border: 'none',
+              backgroundColor: 'rgba(255, 255, 255, 0.9)',
+              color: 'var(--text-main)',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '18px',
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+              transition: 'all 0.2s',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 1)';
+              e.currentTarget.style.transform = 'scale(1.1)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.9)';
+              e.currentTarget.style.transform = 'scale(1)';
+            }}
+          >
+            {isAutoPlaying ? '⏸' : '▶'}
+          </button>
+
+          {/* 네비게이션 도트 */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'center',
+            gap: '0.5rem',
+          }}>
+            {reviews.map((_, index) => (
+              <button
+                key={index}
+                type="button"
+                onClick={() => {
+                  setCurrentIndex(index);
+                  setIsAutoPlaying(false);
+                  setTimeout(() => setIsAutoPlaying(true), 3000);
+                }}
+                style={{
+                  width: index === currentIndex ? '24px' : '8px',
+                  height: '8px',
+                  borderRadius: '4px',
+                  border: 'none',
+                  backgroundColor: index === currentIndex
+                    ? 'var(--accent-sky)'
+                    : 'rgba(184, 212, 227, 0.4)',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                }}
+                aria-label={`후기 ${index + 1}로 이동`}
+              />
+            ))}
+          </div>
         </div>
       )}
 

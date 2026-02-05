@@ -208,6 +208,45 @@ export default function Banner({ banners }: BannerProps) {
         </button>
       )}
 
+      {/* 일시정지/재생 버튼 (웹 접근성) */}
+      {banners.length > 1 && (
+        <button
+          type="button"
+          onClick={() => setIsPaused(!isPaused)}
+          aria-label={isPaused ? '배너 자동 재생 시작' : '배너 자동 재생 일시정지'}
+          style={{
+            position: 'absolute',
+            bottom: isMobile ? '60px' : '50px',
+            right: isMobile ? '8px' : '12px',
+            zIndex: 30,
+            width: isMobile ? '32px' : '40px',
+            height: isMobile ? '32px' : '40px',
+            borderRadius: '50%',
+            border: 'none',
+            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+            color: 'var(--text-main)',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: isMobile ? '14px' : '18px',
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+            transition: 'all 0.2s',
+          }}
+          onMouseEnter={(e) => {
+            setIsPaused(true);
+            e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 1)';
+            e.currentTarget.style.transform = 'scale(1.1)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.9)';
+            e.currentTarget.style.transform = 'scale(1)';
+          }}
+        >
+          {isPaused ? '▶' : '⏸'}
+        </button>
+      )}
+
       {/* 인디케이터 점 */}
       {banners.length > 1 && (
         <div

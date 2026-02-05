@@ -39,6 +39,7 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const animationRef = useRef<number | null>(null);
   const lastScrollTime = useRef<number>(Date.now());
+  const isAutoScrolling = useRef<boolean>(false);
 
   // HTML 콘텐츠에서 텍스트만 추출
   const getPreviewText = (content: string, maxLength: number = 150) => {
@@ -138,22 +139,27 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
 
   // 무한 롤링 애니메이션 (항상 롤링)
   useEffect(() => {
-    if (!containerRef.current || latestReviews.length === 0 || isDragging) return;
+    if (!containerRef.current || latestReviews.length === 0) return;
 
     const container = containerRef.current;
     const scrollSpeed = 0.5; // 픽셀/프레임
 
     const animate = () => {
-      // 드래그 중일 때만 멈춤
-      if (isDragging) return;
+      // 드래그 중이거나 터치 중일 때는 멈춤
+      if (isDragging || touchStartX.current !== null) {
+        animationRef.current = requestAnimationFrame(animate);
+        return;
+      }
       
       const now = Date.now();
-      // 사용자가 직접 스크롤한 경우 잠시 멈춤 (100ms)
-      if (now - lastScrollTime.current < 100) {
+      // 사용자가 직접 스크롤한 경우 잠시 멈춤 (200ms) - 자동 스크롤은 제외
+      if (!isAutoScrolling.current && now - lastScrollTime.current < 200) {
         animationRef.current = requestAnimationFrame(animate);
         return;
       }
 
+      // 자동 스크롤 시작
+      isAutoScrolling.current = true;
       container.scrollLeft += scrollSpeed;
 
       // 끝에 도달하면 처음으로 순환
@@ -164,12 +170,17 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
       animationRef.current = requestAnimationFrame(animate);
     };
 
-    animationRef.current = requestAnimationFrame(animate);
+    // 초기 지연 후 시작
+    const timeout = setTimeout(() => {
+      animationRef.current = requestAnimationFrame(animate);
+    }, 500);
 
     return () => {
+      clearTimeout(timeout);
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current);
       }
+      isAutoScrolling.current = false;
     };
   }, [latestReviews.length, isDragging]);
 
@@ -213,6 +224,7 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
     touchStartY.current = e.touches[0].clientY;
     touchScrollLeft.current = containerRef.current.scrollLeft;
     lastScrollTime.current = Date.now();
+    isAutoScrolling.current = false;
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
@@ -226,12 +238,17 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
       e.preventDefault();
       containerRef.current.scrollLeft = touchScrollLeft.current - deltaX;
       lastScrollTime.current = Date.now();
+      isAutoScrolling.current = false;
     }
   };
 
   const handleTouchEnd = () => {
     touchStartX.current = null;
     touchStartY.current = null;
+    // 터치 종료 후 500ms 후에 자동 스크롤 재개
+    setTimeout(() => {
+      isAutoScrolling.current = true;
+    }, 500);
   };
 
   // 평균 점수 계산
@@ -750,7 +767,10 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
                 scrollbarColor: '#10B981 transparent',
               }}
               onScroll={() => {
-                lastScrollTime.current = Date.now();
+                // 자동 스크롤이 아닐 때만 lastScrollTime 업데이트
+                if (!isAutoScrolling.current) {
+                  lastScrollTime.current = Date.now();
+                }
               }}
             >
               {latestReviews.map((review, index) => (

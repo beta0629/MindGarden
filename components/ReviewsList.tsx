@@ -33,7 +33,13 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
   const [stats, setStats] = useState<ReviewStats | null>(null);
   const [bestReview, setBestReview] = useState<Review | null>(null);
   const [latestReviews, setLatestReviews] = useState<Review[]>([]);
-  const [currentPage, setCurrentPage] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeft, setScrollLeft] = useState(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const animationRef = useRef<number | null>(null);
+  const lastScrollTime = useRef<number>(Date.now());
 
   // HTML 콘텐츠에서 텍스트만 추출
   const getPreviewText = (content: string, maxLength: number = 150) => {
@@ -71,14 +77,130 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
 
     setBestReview(best);
 
-    // 최신 후기 (베스트 제외)
+    // 최신 후기 (베스트 제외, 오늘 기준 신규 등록된 후기들)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
     const latest = reviews
-      .filter(r => r.id !== best.id)
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-      .slice(0, 6);
+      .filter(r => {
+        if (r.id === best.id) return false;
+        const reviewDate = new Date(r.createdAt);
+        reviewDate.setHours(0, 0, 0, 0);
+        return reviewDate.getTime() >= today.getTime();
+      })
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
-    setLatestReviews(latest);
+    // 오늘 등록된 후기가 없으면 최신 후기 전체 사용
+    const finalLatest = latest.length > 0 
+      ? latest 
+      : reviews
+          .filter(r => r.id !== best.id)
+          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+          .slice(0, 10);
+
+    // 롤링을 위해 두 번 반복
+    setLatestReviews([...finalLatest, ...finalLatest]);
   }, [reviews]);
+
+  // 무한 롤링 애니메이션
+  useEffect(() => {
+    if (!containerRef.current || latestReviews.length === 0 || isPaused || isDragging) return;
+
+    const container = containerRef.current;
+    const scrollSpeed = 0.5; // 픽셀/프레임
+
+    const animate = () => {
+      if (isPaused || isDragging) return;
+      
+      const now = Date.now();
+      // 사용자가 직접 스크롤한 경우 일시 정지
+      if (now - lastScrollTime.current < 100) {
+        animationRef.current = requestAnimationFrame(animate);
+        return;
+      }
+
+      container.scrollLeft += scrollSpeed;
+
+      // 끝에 도달하면 처음으로 순환
+      if (container.scrollLeft >= container.scrollWidth / 2) {
+        container.scrollLeft = 0;
+      }
+
+      animationRef.current = requestAnimationFrame(animate);
+    };
+
+    animationRef.current = requestAnimationFrame(animate);
+
+    return () => {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
+    };
+  }, [latestReviews.length, isPaused, isDragging]);
+
+  // 마우스 드래그 시작
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (!containerRef.current) return;
+    setIsDragging(true);
+    setStartX(e.pageX - containerRef.current.offsetLeft);
+    setScrollLeft(containerRef.current.scrollLeft);
+    lastScrollTime.current = Date.now();
+  };
+
+  // 마우스 드래그 중
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging || !containerRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - containerRef.current.offsetLeft;
+    const walk = (x - startX) * 2; // 스크롤 속도 조절
+    containerRef.current.scrollLeft = scrollLeft - walk;
+    lastScrollTime.current = Date.now();
+  };
+
+  // 마우스 드래그 종료
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  // 마우스 떠남
+  const handleMouseLeave = () => {
+    setIsDragging(false);
+    setIsPaused(false);
+  };
+
+  // 터치 이벤트 처리
+  const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
+  const touchScrollLeft = useRef<number>(0);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (!containerRef.current) return;
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+    touchScrollLeft.current = containerRef.current.scrollLeft;
+    setIsPaused(true);
+    lastScrollTime.current = Date.now();
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!containerRef.current || touchStartX.current === null || touchStartY.current === null) return;
+    
+    const deltaX = e.touches[0].clientX - touchStartX.current;
+    const deltaY = e.touches[0].clientY - touchStartY.current;
+    
+    // 수평 스와이프인 경우에만 처리
+    if (Math.abs(deltaX) > Math.abs(deltaY)) {
+      e.preventDefault();
+      containerRef.current.scrollLeft = touchScrollLeft.current - deltaX;
+      lastScrollTime.current = Date.now();
+    }
+  };
+
+  const handleTouchEnd = () => {
+    touchStartX.current = null;
+    touchStartY.current = null;
+    setIsPaused(false);
+  };
 
   // 평균 점수 계산
   const getAverageRating = () => {
@@ -120,11 +242,10 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
     );
   }
 
-  // 페이지네이션
-  const reviewsPerPage = 3;
-  const totalPages = Math.ceil(latestReviews.length / reviewsPerPage);
-  const startIndex = currentPage * reviewsPerPage;
-  const displayedReviews = latestReviews.slice(startIndex, startIndex + reviewsPerPage);
+  // 중복 제거 (롤링을 위해 두 번 반복했으므로)
+  const uniqueReviews = latestReviews.length > 0 
+    ? latestReviews.slice(0, latestReviews.length / 2)
+    : [];
 
   return (
     <div style={{
@@ -542,7 +663,7 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
         )}
 
         {/* 최신 후기 섹션 */}
-        {displayedReviews.length > 0 && (
+        {uniqueReviews.length > 0 && (
           <section>
             <div style={{
               display: 'flex',
@@ -566,82 +687,52 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
                 }} />
                 최신 후기
               </h2>
-              {totalPages > 1 && (
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <button
-                    onClick={() => setCurrentPage(p => Math.max(0, p - 1))}
-                    disabled={currentPage === 0}
-                    style={{
-                      width: '2.5rem',
-                      height: '2.5rem',
-                      borderRadius: '50%',
-                      border: '1px solid rgba(226, 232, 240, 0.8)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      background: currentPage === 0 ? 'transparent' : 'white',
-                      color: 'var(--text-sub)',
-                      cursor: currentPage === 0 ? 'not-allowed' : 'pointer',
-                      transition: 'all 0.2s',
-                    }}
-                    onMouseEnter={(e) => {
-                      if (currentPage !== 0) {
-                        e.currentTarget.style.background = 'rgba(241, 245, 249, 0.8)';
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (currentPage !== 0) {
-                        e.currentTarget.style.background = 'white';
-                      }
-                    }}
-                  >
-                    ←
-                  </button>
-                  <button
-                    onClick={() => setCurrentPage(p => Math.min(totalPages - 1, p + 1))}
-                    disabled={currentPage === totalPages - 1}
-                    style={{
-                      width: '2.5rem',
-                      height: '2.5rem',
-                      borderRadius: '50%',
-                      border: '1px solid rgba(226, 232, 240, 0.8)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      background: currentPage === totalPages - 1 ? 'transparent' : 'white',
-                      color: 'var(--text-sub)',
-                      cursor: currentPage === totalPages - 1 ? 'not-allowed' : 'pointer',
-                      transition: 'all 0.2s',
-                    }}
-                    onMouseEnter={(e) => {
-                      if (currentPage !== totalPages - 1) {
-                        e.currentTarget.style.background = 'rgba(241, 245, 249, 0.8)';
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (currentPage !== totalPages - 1) {
-                        e.currentTarget.style.background = 'white';
-                      }
-                    }}
-                  >
-                    →
-                  </button>
-                </div>
-              )}
             </div>
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-              gap: '1.5rem',
-            }}>
-              {displayedReviews.map((review, index) => (
+            <div
+              ref={containerRef}
+              onMouseDown={handleMouseDown}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
+              onMouseLeave={handleMouseLeave}
+              onMouseEnter={() => setIsPaused(true)}
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+              style={{
+                display: 'flex',
+                gap: '1.5rem',
+                overflowX: 'auto',
+                overflowY: 'hidden',
+                scrollBehavior: 'auto',
+                cursor: isDragging ? 'grabbing' : 'grab',
+                padding: '1rem 0',
+                margin: '0 -1rem',
+                paddingLeft: '1rem',
+                paddingRight: '1rem',
+                WebkitOverflowScrolling: 'touch',
+                scrollbarWidth: 'thin',
+                scrollbarColor: '#10B981 transparent',
+              }}
+              onScroll={() => {
+                lastScrollTime.current = Date.now();
+              }}
+            >
+              {latestReviews.map((review, index) => (
                 <Link
-                  key={review.id}
+                  key={`${review.id}-${index}`}
                   href={`/reviews#review-${review.id}`}
                   style={{
                     textDecoration: 'none',
                     color: 'inherit',
                     display: 'block',
+                    flexShrink: 0,
+                    width: '320px',
+                  }}
+                  onClick={(e) => {
+                    // 드래그 중일 때는 링크 클릭 방지
+                    if (isDragging) {
+                      e.preventDefault();
+                    }
                   }}
                 >
                   <article style={{
@@ -654,17 +745,22 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
                     flexDirection: 'column',
                     justifyContent: 'space-between',
                     minHeight: '280px',
-                    transition: 'all 0.3s',
+                    transition: isDragging ? 'none' : 'all 0.3s',
                     position: 'relative',
                     overflow: 'hidden',
+                    userSelect: 'none',
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.boxShadow = '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)';
-                    e.currentTarget.style.transform = 'translateY(-4px)';
+                    if (!isDragging) {
+                      e.currentTarget.style.boxShadow = '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)';
+                      e.currentTarget.style.transform = 'translateY(-4px)';
+                    }
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.boxShadow = '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)';
-                    e.currentTarget.style.transform = 'translateY(0)';
+                    if (!isDragging) {
+                      e.currentTarget.style.boxShadow = '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)';
+                      e.currentTarget.style.transform = 'translateY(0)';
+                    }
                   }}
                   >
                     {index === 0 && (
@@ -845,6 +941,23 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
                 </Link>
               ))}
             </div>
+            {/* 스크롤바 스타일 */}
+            <style jsx>{`
+              div::-webkit-scrollbar {
+                height: 8px;
+              }
+              div::-webkit-scrollbar-track {
+                background: rgba(241, 245, 249, 0.5);
+                border-radius: 4px;
+              }
+              div::-webkit-scrollbar-thumb {
+                background: #10B981;
+                border-radius: 4px;
+              }
+              div::-webkit-scrollbar-thumb:hover {
+                background: #059669;
+              }
+            `}</style>
           </section>
         )}
 

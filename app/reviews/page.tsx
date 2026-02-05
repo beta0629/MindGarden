@@ -330,7 +330,7 @@ export default function ReviewsPage() {
               display: 'inline-flex',
               alignItems: 'center',
               gap: '0.5rem',
-              backgroundColor: '#1e1b4b',
+              backgroundColor: '#B8956A',
               color: 'white',
               padding: '0.625rem 1.25rem',
               borderRadius: '0.75rem',
@@ -342,11 +342,11 @@ export default function ReviewsPage() {
               whiteSpace: 'nowrap',
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#312e81';
+              e.currentTarget.style.backgroundColor = '#A0825A';
               e.currentTarget.style.transform = 'translateY(-2px)';
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = '#1e1b4b';
+              e.currentTarget.style.backgroundColor = '#B8956A';
               e.currentTarget.style.transform = 'translateY(0)';
             }}
           >
@@ -367,7 +367,7 @@ export default function ReviewsPage() {
             {/* 평균 만족도 카드 */}
             {stats && stats.ratingStats.overall.count > 0 && (
               <div style={{
-                backgroundColor: '#1e1b4b',
+                backgroundColor: '#B8956A',
                 borderRadius: '1.5rem',
                 padding: '1.5rem',
                 color: 'white',
@@ -382,7 +382,7 @@ export default function ReviewsPage() {
                   right: 0,
                   width: '8rem',
                   height: '8rem',
-                  background: 'rgba(74, 222, 128, 0.2)',
+                  background: 'rgba(255, 255, 255, 0.15)',
                   borderRadius: '50%',
                   filter: 'blur(3rem)',
                   transform: 'translate(25%, -25%)',
@@ -393,7 +393,7 @@ export default function ReviewsPage() {
                   left: 0,
                   width: '8rem',
                   height: '8rem',
-                  background: 'rgba(99, 102, 241, 0.2)',
+                  background: 'rgba(255, 255, 255, 0.1)',
                   borderRadius: '50%',
                   filter: 'blur(3rem)',
                   transform: 'translate(-25%, 25%)',
@@ -406,7 +406,7 @@ export default function ReviewsPage() {
                     marginBottom: '0.5rem',
                   }}>
                     <p style={{
-                      color: 'rgba(199, 210, 254, 1)',
+                      color: 'rgba(255, 255, 255, 0.9)',
                       fontSize: '0.75rem',
                       fontWeight: '600',
                       letterSpacing: '0.05em',
@@ -440,7 +440,7 @@ export default function ReviewsPage() {
                     </span>
                     <span style={{
                       fontSize: '1.125rem',
-                      color: 'rgba(199, 210, 254, 1)',
+                      color: 'rgba(255, 255, 255, 0.9)',
                     }}>
                       / 5.0
                     </span>
@@ -470,11 +470,11 @@ export default function ReviewsPage() {
                     display: 'flex',
                     justifyContent: 'space-between',
                     fontSize: '0.75rem',
-                    color: 'rgba(199, 210, 254, 1)',
+                    color: 'rgba(255, 255, 255, 0.9)',
                     fontWeight: '500',
                   }}>
                     <span>총 누적 후기</span>
-                    <span style={{ color: 'white' }}>{stats.totalReviews.toLocaleString()}건</span>
+                    <span style={{ color: 'white', fontWeight: '600' }}>{stats.totalReviews.toLocaleString()}건</span>
                   </div>
                 </div>
               </div>
@@ -651,7 +651,7 @@ export default function ReviewsPage() {
                     borderRadius: '0.75rem',
                     fontSize: '0.875rem',
                     fontWeight: sortBy === 'latest' ? '600' : '500',
-                    backgroundColor: sortBy === 'latest' ? '#1e1b4b' : 'transparent',
+                    backgroundColor: sortBy === 'latest' ? '#B8956A' : 'transparent',
                     color: sortBy === 'latest' ? 'white' : '#475569',
                     border: 'none',
                     cursor: 'pointer',
@@ -671,7 +671,7 @@ export default function ReviewsPage() {
                     borderRadius: '0.75rem',
                     fontSize: '0.875rem',
                     fontWeight: sortBy === 'ratingHigh' ? '600' : '500',
-                    backgroundColor: sortBy === 'ratingHigh' ? '#1e1b4b' : 'transparent',
+                    backgroundColor: sortBy === 'ratingHigh' ? '#B8956A' : 'transparent',
                     color: sortBy === 'ratingHigh' ? 'white' : '#475569',
                     border: 'none',
                     cursor: 'pointer',
@@ -691,7 +691,7 @@ export default function ReviewsPage() {
                     borderRadius: '0.75rem',
                     fontSize: '0.875rem',
                     fontWeight: sortBy === 'ratingLow' ? '600' : '500',
-                    backgroundColor: sortBy === 'ratingLow' ? '#1e1b4b' : 'transparent',
+                    backgroundColor: sortBy === 'ratingLow' ? '#B8956A' : 'transparent',
                     color: sortBy === 'ratingLow' ? 'white' : '#475569',
                     border: 'none',
                     cursor: 'pointer',
@@ -777,13 +777,19 @@ export default function ReviewsPage() {
                   style={{
                     display: 'inline-block',
                     padding: '0.625rem 1.25rem',
-                    backgroundColor: '#1e1b4b',
+                    backgroundColor: '#B8956A',
                     color: 'white',
                     borderRadius: '0.75rem',
                     textDecoration: 'none',
                     fontWeight: '500',
                     fontSize: '0.875rem',
                     transition: 'all 0.2s',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#A0825A';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = '#B8956A';
                   }}
                 >
                   첫 후기 작성하기

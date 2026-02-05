@@ -179,8 +179,8 @@ export default function Banner({ banners }: BannerProps) {
     <div
       style={{
         width: '100%',
-        backgroundColor: 'var(--surface-1)',
-        borderBottom: '1px solid var(--border-soft)',
+        backgroundColor: '#B8956A',
+        borderBottom: '1px solid rgba(184, 149, 106, 0.3)',
         position: 'relative',
         overflow: 'hidden',
         height: '152px', // 고정 높이 설정

@@ -515,16 +515,18 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
         {/* 베스트 후기 섹션 */}
         {bestReview && (
           <section style={{ marginBottom: '4rem' }}>
-            <div style={{
-              position: 'relative',
-              background: 'linear-gradient(135deg, #D4A574 0%, #B8956A 100%)',
-              borderRadius: '1.5rem',
-              padding: '2rem',
-              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-              overflow: 'hidden',
-              className: 'best-review-section',
-              color: 'white',
-            }}>
+            <div 
+              className="best-review-section"
+              style={{
+                position: 'relative',
+                background: 'linear-gradient(135deg, #D4A574 0%, #B8956A 100%)',
+                borderRadius: '1.5rem',
+                padding: '2rem',
+                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+                overflow: 'hidden',
+                color: 'white',
+              }}
+            >
               <div style={{
                 position: 'absolute',
                 top: 0,

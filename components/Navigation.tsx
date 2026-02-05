@@ -4,6 +4,7 @@ import type { MouseEvent } from 'react';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import Image from 'next/image';
 
 export default function Navigation() {
   const pathname = usePathname();
@@ -163,9 +164,32 @@ export default function Navigation() {
                 window.scrollTo({ top: 0, behavior: 'smooth' });
               }
             }}
-            style={textColor ? { color: textColor } : undefined}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              textDecoration: 'none',
+              ...(textColor ? { color: textColor } : {}),
+            }}
           >
-            마인드 가든
+            <Image
+              src="/assets/images/logo/logo.png"
+              alt="마인드가든 심리상담센터"
+              width={40}
+              height={40}
+              style={{
+                objectFit: 'contain',
+                flexShrink: 0,
+              }}
+              priority
+            />
+            <span style={{ 
+              fontSize: '1.125rem',
+              fontWeight: '700',
+              whiteSpace: 'nowrap',
+            }}>
+              마인드 가든
+            </span>
           </Link>
 
           <div className="gnb-right">

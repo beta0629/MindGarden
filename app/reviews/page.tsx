@@ -73,13 +73,13 @@ const renderStars = (rating: number) => {
   const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
   
   return (
-    <div className="flex text-primary">
+    <div style={{ display: 'flex', color: '#4ADE80' }}>
       {Array.from({ length: fullStars }).map((_, i) => (
-        <span key={i} className="material-icons-round text-sm">star</span>
+        <span key={i} style={{ fontSize: '0.875rem' }}>⭐</span>
       ))}
-      {hasHalfStar && <span className="material-icons-round text-sm">star_half</span>}
+      {hasHalfStar && <span style={{ fontSize: '0.875rem' }}>⭐</span>}
       {Array.from({ length: emptyStars }).map((_, i) => (
-        <span key={i} className="material-icons-round text-sm text-slate-300 dark:text-slate-600">star</span>
+        <span key={i} style={{ fontSize: '0.875rem', opacity: 0.3 }}>⭐</span>
       ))}
     </div>
   );
@@ -177,10 +177,12 @@ export default function ReviewsPage() {
     setReviews([]);
     setHasMore(true);
     loadReviews(1, false);
-  }, [sortBy, searchQuery]);
+  }, [sortBy, searchQuery, loadReviews]);
 
   // 무한 스크롤
   useEffect(() => {
+    if (!hasMore || loadingMore || loading) return;
+    
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting && hasMore && !loadingMore && !loading) {
@@ -281,79 +283,196 @@ export default function ReviewsPage() {
   // 아바타 그라데이션 색상 생성
   const getAvatarGradient = (id: number) => {
     const gradients = [
-      'from-indigo-500 to-purple-600',
-      'from-primary to-teal-500',
-      'from-pink-500 to-rose-600',
-      'from-blue-500 to-cyan-600',
-      'from-emerald-500 to-green-600',
-      'from-amber-500 to-orange-600',
-      'from-violet-500 to-purple-600',
-      'from-cyan-500 to-blue-600',
+      ['#6366F1', '#8B5CF6'], // indigo to purple
+      ['#4ADE80', '#14B8A6'], // primary to teal
+      ['#EC4899', '#F43F5E'], // pink to rose
+      ['#3B82F6', '#06B6D4'], // blue to cyan
+      ['#10B981', '#059669'], // emerald to green
+      ['#F59E0B', '#F97316'], // amber to orange
+      ['#8B5CF6', '#7C3AED'], // violet to purple
+      ['#06B6D4', '#3B82F6'], // cyan to blue
     ];
     return gradients[id % gradients.length];
   };
 
   return (
-    <main id="top" className="bg-background-light dark:bg-background-dark min-h-screen">
+    <main id="top" style={{ backgroundColor: '#F8FAFC', minHeight: '100vh' }}>
       <Navigation />
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+      <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '2rem 1rem' }}>
+        <header style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '1rem',
+          marginBottom: '2rem',
+        }}>
           <div>
-            <h1 className="text-3xl font-bold text-indigo-900 dark:text-white mb-1 tracking-tight">
+            <h1 style={{
+              fontSize: '2rem',
+              fontWeight: '700',
+              color: '#1e1b4b',
+              marginBottom: '0.25rem',
+              letterSpacing: '-0.02em',
+            }}>
               마인드가든 후기 피드
             </h1>
-            <p className="text-slate-500 dark:text-slate-400 text-sm">
+            <p style={{
+              color: '#64748b',
+              fontSize: '0.875rem',
+            }}>
               실시간으로 업데이트되는 내담자들의 생생한 후기를 확인하세요.
             </p>
           </div>
           <Link
             href="/reviews/new"
-            className="flex items-center gap-2 bg-indigo-900 hover:bg-indigo-800 text-white px-5 py-2.5 rounded-xl shadow-lg hover:shadow-indigo-900/30 transition-all transform hover:-translate-y-0.5 font-medium text-sm"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              backgroundColor: '#1e1b4b',
+              color: 'white',
+              padding: '0.625rem 1.25rem',
+              borderRadius: '0.75rem',
+              textDecoration: 'none',
+              fontWeight: '500',
+              fontSize: '0.875rem',
+              boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+              transition: 'all 0.2s',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#312e81';
+              e.currentTarget.style.transform = 'translateY(-2px)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = '#1e1b4b';
+              e.currentTarget.style.transform = 'translateY(0)';
+            }}
           >
-            <span className="material-icons-round text-primary text-lg">edit</span>
+            <span style={{ fontSize: '1.125rem' }}>✏️</span>
             후기 작성하기
           </Link>
         </header>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          {/* 사이드바 */}
-          <aside className="hidden lg:block lg:col-span-4 xl:col-span-3 lg:sticky lg:top-8 space-y-5">
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: '1fr',
+          gap: '2rem',
+        }}>
+          {/* 사이드바 - 데스크탑에서만 표시 */}
+          <aside style={{
+            display: 'none',
+          }} className="reviews-sidebar">
             {/* 평균 만족도 카드 */}
             {stats && stats.ratingStats.overall.count > 0 && (
-              <div className="bg-indigo-900 rounded-3xl p-6 text-white relative overflow-hidden shadow-card hover:shadow-glow transition-shadow duration-300">
-                <div className="absolute top-0 right-0 -mt-8 -mr-8 w-32 h-32 bg-primary opacity-20 rounded-full blur-3xl"></div>
-                <div className="absolute bottom-0 left-0 -mb-8 -ml-8 w-32 h-32 bg-indigo-500 opacity-20 rounded-full blur-3xl"></div>
-                <div className="relative z-10">
-                  <div className="flex items-center justify-between mb-2">
-                    <p className="text-indigo-200 text-xs font-semibold tracking-wider uppercase">
+              <div style={{
+                backgroundColor: '#1e1b4b',
+                borderRadius: '1.5rem',
+                padding: '1.5rem',
+                color: 'white',
+                position: 'relative',
+                overflow: 'hidden',
+                boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1)',
+                marginBottom: '1.25rem',
+              }}>
+                <div style={{
+                  position: 'absolute',
+                  top: 0,
+                  right: 0,
+                  width: '8rem',
+                  height: '8rem',
+                  background: 'rgba(74, 222, 128, 0.2)',
+                  borderRadius: '50%',
+                  filter: 'blur(3rem)',
+                  transform: 'translate(25%, -25%)',
+                }}></div>
+                <div style={{
+                  position: 'absolute',
+                  bottom: 0,
+                  left: 0,
+                  width: '8rem',
+                  height: '8rem',
+                  background: 'rgba(99, 102, 241, 0.2)',
+                  borderRadius: '50%',
+                  filter: 'blur(3rem)',
+                  transform: 'translate(-25%, 25%)',
+                }}></div>
+                <div style={{ position: 'relative', zIndex: 1 }}>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    marginBottom: '0.5rem',
+                  }}>
+                    <p style={{
+                      color: 'rgba(199, 210, 254, 1)',
+                      fontSize: '0.75rem',
+                      fontWeight: '600',
+                      letterSpacing: '0.05em',
+                      textTransform: 'uppercase',
+                    }}>
                       전체 평균 만족도
                     </p>
-                    <span className="bg-indigo-800/50 text-indigo-100 text-[10px] px-2 py-0.5 rounded-full border border-indigo-700">
+                    <span style={{
+                      backgroundColor: 'rgba(99, 102, 241, 0.5)',
+                      color: 'rgba(199, 210, 254, 1)',
+                      fontSize: '0.625rem',
+                      padding: '0.125rem 0.5rem',
+                      borderRadius: '9999px',
+                      border: '1px solid rgba(99, 102, 241, 0.7)',
+                    }}>
                       Monthly
                     </span>
                   </div>
-                  <div className="flex items-baseline gap-2 mb-3">
-                    <span className="text-5xl font-bold tracking-tight text-white">
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'baseline',
+                    gap: '0.5rem',
+                    marginBottom: '0.75rem',
+                  }}>
+                    <span style={{
+                      fontSize: '3rem',
+                      fontWeight: '700',
+                      color: 'white',
+                    }}>
                       {stats.ratingStats.overall.average.toFixed(1)}
                     </span>
-                    <span className="text-lg text-indigo-300">/ 5.0</span>
+                    <span style={{
+                      fontSize: '1.125rem',
+                      color: 'rgba(199, 210, 254, 1)',
+                    }}>
+                      / 5.0
+                    </span>
                   </div>
-                  <div className="flex gap-1 mb-4 text-primary">
+                  <div style={{
+                    display: 'flex',
+                    gap: '0.25rem',
+                    marginBottom: '1rem',
+                    color: '#4ADE80',
+                  }}>
                     {Array.from({ length: 5 }).map((_, i) => {
                       const rating = stats.ratingStats.overall.average;
                       if (i < Math.floor(rating)) {
-                        return <span key={i} className="material-icons-round text-xl">star</span>;
+                        return <span key={i} style={{ fontSize: '1.25rem' }}>⭐</span>;
                       } else if (i === Math.floor(rating) && rating % 1 >= 0.5) {
-                        return <span key={i} className="material-icons-round text-xl">star_half</span>;
+                        return <span key={i} style={{ fontSize: '1.25rem' }}>⭐</span>;
                       } else {
-                        return <span key={i} className="material-icons-round text-xl text-indigo-700">star</span>;
+                        return <span key={i} style={{ fontSize: '1.25rem', opacity: 0.3 }}>⭐</span>;
                       }
                     })}
                   </div>
-                  <div className="h-px bg-indigo-800 my-4"></div>
-                  <div className="flex justify-between text-xs text-indigo-200 font-medium">
+                  <div style={{
+                    height: '1px',
+                    backgroundColor: 'rgba(99, 102, 241, 0.8)',
+                    margin: '1rem 0',
+                  }}></div>
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    fontSize: '0.75rem',
+                    color: 'rgba(199, 210, 254, 1)',
+                    fontWeight: '500',
+                  }}>
                     <span>총 누적 후기</span>
-                    <span className="text-white">{stats.totalReviews.toLocaleString()}건</span>
+                    <span style={{ color: 'white' }}>{stats.totalReviews.toLocaleString()}건</span>
                   </div>
                 </div>
               </div>
@@ -361,12 +480,27 @@ export default function ReviewsPage() {
 
             {/* 평가 상세 */}
             {stats && (
-              <div className="bg-surface-light dark:bg-surface-dark p-5 rounded-3xl shadow-card border border-slate-200 dark:border-slate-700">
-                <h3 className="text-sm font-bold text-slate-800 dark:text-white mb-4 flex items-center gap-2">
-                  <span className="material-icons-round text-indigo-600 dark:text-primary text-base">pie_chart</span>
+              <div style={{
+                backgroundColor: 'white',
+                padding: '1.25rem',
+                borderRadius: '1.5rem',
+                boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1)',
+                border: '1px solid #e2e8f0',
+                marginBottom: '1.25rem',
+              }}>
+                <h3 style={{
+                  fontSize: '0.875rem',
+                  fontWeight: '700',
+                  color: '#1e293b',
+                  marginBottom: '1rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                }}>
+                  <span style={{ fontSize: '1rem' }}>📊</span>
                   평가 상세
                 </h3>
-                <div className="space-y-4">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                   {Object.entries(stats.ratingStats)
                     .filter(([key]) => key !== 'overall')
                     .map(([key, stat]) => {
@@ -379,20 +513,50 @@ export default function ReviewsPage() {
                       };
                       const percentage = (stat.average / 5) * 100;
                       return (
-                        <div key={key} className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <span className="w-2 h-2 rounded-full bg-slate-400"></span>
-                            <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
+                        <div key={key} style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                        }}>
+                          <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.5rem',
+                          }}>
+                            <span style={{
+                              width: '0.5rem',
+                              height: '0.5rem',
+                              borderRadius: '50%',
+                              backgroundColor: '#94a3b8',
+                            }}></span>
+                            <span style={{
+                              fontSize: '0.75rem',
+                              fontWeight: '500',
+                              color: '#475569',
+                            }}>
                               {labels[key] || key}
                             </span>
                           </div>
-                          <div className="w-32 h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                          <div style={{
+                            width: '8rem',
+                            height: '0.5rem',
+                            backgroundColor: '#f1f5f9',
+                            borderRadius: '9999px',
+                            overflow: 'hidden',
+                          }}>
                             <div
-                              className="h-full bg-indigo-500"
-                              style={{ width: `${percentage}%` }}
+                              style={{
+                                height: '100%',
+                                backgroundColor: '#6366F1',
+                                width: `${percentage}%`,
+                              }}
                             ></div>
                           </div>
-                          <span className="text-xs font-bold text-slate-800 dark:text-white">
+                          <span style={{
+                            fontSize: '0.75rem',
+                            fontWeight: '700',
+                            color: '#1e293b',
+                          }}>
                             {stat.average.toFixed(1)}
                           </span>
                         </div>
@@ -404,18 +568,44 @@ export default function ReviewsPage() {
 
             {/* 인기 키워드 */}
             {stats && stats.tagCounts.length > 0 && (
-              <div className="bg-surface-light dark:bg-surface-dark p-5 rounded-3xl shadow-card border border-slate-200 dark:border-slate-700">
-                <h3 className="text-sm font-bold text-slate-800 dark:text-white mb-4 flex items-center gap-2">
-                  <span className="material-icons-round text-indigo-600 dark:text-primary text-base">tag</span>
+              <div style={{
+                backgroundColor: 'white',
+                padding: '1.25rem',
+                borderRadius: '1.5rem',
+                boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1)',
+                border: '1px solid #e2e8f0',
+              }}>
+                <h3 style={{
+                  fontSize: '0.875rem',
+                  fontWeight: '700',
+                  color: '#1e293b',
+                  marginBottom: '1rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                }}>
+                  <span style={{ fontSize: '1rem' }}>🏷️</span>
                   인기 키워드
                 </h3>
-                <div className="flex flex-wrap gap-2">
+                <div style={{
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: '0.5rem',
+                }}>
                   {stats.tagCounts.slice(0, 8).map(({ tag, count }) => (
                     <span
                       key={tag}
-                      className="bg-indigo-50 dark:bg-indigo-900/40 text-indigo-900 dark:text-indigo-200 px-3 py-1.5 rounded-lg text-xs font-medium border border-indigo-100 dark:border-indigo-800 hover:border-indigo-300 transition-colors cursor-pointer"
+                      style={{
+                        backgroundColor: '#eef2ff',
+                        color: '#1e1b4b',
+                        padding: '0.375rem 0.75rem',
+                        borderRadius: '0.5rem',
+                        fontSize: '0.75rem',
+                        fontWeight: '500',
+                        border: '1px solid #c7d2fe',
+                      }}
                     >
-                      <span className="text-primary font-bold">#</span>
+                      <span style={{ color: '#4ADE80', fontWeight: '700' }}>#</span>
                       {tag}
                     </span>
                   ))}
@@ -425,20 +615,47 @@ export default function ReviewsPage() {
           </aside>
 
           {/* 메인 콘텐츠 */}
-          <main className="lg:col-span-8 xl:col-span-9 flex flex-col gap-6">
+          <main style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
             {/* 필터 및 검색 */}
-            <div className="bg-surface-light dark:bg-surface-dark p-2 rounded-2xl flex flex-wrap items-center justify-between gap-3 shadow-sm border border-slate-200 dark:border-slate-700 sticky top-4 z-40 backdrop-blur-md bg-opacity-95 dark:bg-opacity-95">
-              <div className="flex items-center gap-1.5 px-1">
+            <div style={{
+              backgroundColor: 'white',
+              padding: '0.5rem',
+              borderRadius: '1rem',
+              display: 'flex',
+              flexWrap: 'wrap',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '0.75rem',
+              boxShadow: '0 1px 2px 0 rgb(0 0 0 / 0.05)',
+              border: '1px solid #e2e8f0',
+              position: 'sticky',
+              top: '4rem',
+              zIndex: 40,
+              backdropFilter: 'blur(12px)',
+            }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.375rem',
+                padding: '0 0.25rem',
+              }}>
                 <button
                   onClick={() => {
                     setSortBy('latest');
                     setPage(1);
                   }}
-                  className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
-                    sortBy === 'latest'
-                      ? 'bg-indigo-900 text-white shadow-md'
-                      : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
-                  }`}
+                  style={{
+                    padding: '0.5rem 1rem',
+                    borderRadius: '0.75rem',
+                    fontSize: '0.875rem',
+                    fontWeight: sortBy === 'latest' ? '600' : '500',
+                    backgroundColor: sortBy === 'latest' ? '#1e1b4b' : 'transparent',
+                    color: sortBy === 'latest' ? 'white' : '#475569',
+                    border: 'none',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                    boxShadow: sortBy === 'latest' ? '0 4px 6px -1px rgba(0, 0, 0, 0.1)' : 'none',
+                  }}
                 >
                   최신순
                 </button>
@@ -447,11 +664,18 @@ export default function ReviewsPage() {
                     setSortBy('ratingHigh');
                     setPage(1);
                   }}
-                  className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                    sortBy === 'ratingHigh'
-                      ? 'bg-indigo-900 text-white shadow-md'
-                      : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
-                  }`}
+                  style={{
+                    padding: '0.5rem 1rem',
+                    borderRadius: '0.75rem',
+                    fontSize: '0.875rem',
+                    fontWeight: sortBy === 'ratingHigh' ? '600' : '500',
+                    backgroundColor: sortBy === 'ratingHigh' ? '#1e1b4b' : 'transparent',
+                    color: sortBy === 'ratingHigh' ? 'white' : '#475569',
+                    border: 'none',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                    boxShadow: sortBy === 'ratingHigh' ? '0 4px 6px -1px rgba(0, 0, 0, 0.1)' : 'none',
+                  }}
                 >
                   별점 높은순
                 </button>
@@ -460,82 +684,200 @@ export default function ReviewsPage() {
                     setSortBy('ratingLow');
                     setPage(1);
                   }}
-                  className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                    sortBy === 'ratingLow'
-                      ? 'bg-indigo-900 text-white shadow-md'
-                      : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
-                  }`}
+                  style={{
+                    padding: '0.5rem 1rem',
+                    borderRadius: '0.75rem',
+                    fontSize: '0.875rem',
+                    fontWeight: sortBy === 'ratingLow' ? '600' : '500',
+                    backgroundColor: sortBy === 'ratingLow' ? '#1e1b4b' : 'transparent',
+                    color: sortBy === 'ratingLow' ? 'white' : '#475569',
+                    border: 'none',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                    boxShadow: sortBy === 'ratingLow' ? '0 4px 6px -1px rgba(0, 0, 0, 0.1)' : 'none',
+                  }}
                 >
                   별점 낮은순
                 </button>
               </div>
-              <form onSubmit={handleSearch} className="relative w-full sm:w-auto px-1">
-                <span className="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400">
-                  <span className="material-icons-round text-lg">search</span>
+              <form onSubmit={handleSearch} style={{
+                position: 'relative',
+                width: '100%',
+                padding: '0 0.25rem',
+              }}>
+                <span style={{
+                  position: 'absolute',
+                  inset: '0 0 0 0',
+                  display: 'flex',
+                  alignItems: 'center',
+                  paddingLeft: '1rem',
+                  color: '#94a3b8',
+                  pointerEvents: 'none',
+                }}>
+                  🔍
                 </span>
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="키워드 검색"
-                  className="w-full sm:w-60 pl-10 pr-4 py-2 rounded-xl border-none bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-white shadow-inner ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary text-sm placeholder-slate-400 transition-shadow"
+                  style={{
+                    width: '100%',
+                    paddingLeft: '2.5rem',
+                    paddingRight: '1rem',
+                    paddingTop: '0.5rem',
+                    paddingBottom: '0.5rem',
+                    borderRadius: '0.75rem',
+                    border: 'none',
+                    backgroundColor: '#f8fafc',
+                    color: '#1e293b',
+                    fontSize: '0.875rem',
+                    boxShadow: 'inset 0 1px 2px 0 rgb(0 0 0 / 0.05)',
+                  }}
                 />
               </form>
             </div>
 
             {/* 후기 목록 */}
             {error && (
-              <div className="p-4 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded-xl border border-red-200 dark:border-red-800">
+              <div style={{
+                padding: '1rem',
+                backgroundColor: '#fee2e2',
+                color: '#991b1b',
+                borderRadius: '0.75rem',
+                border: '1px solid #fecaca',
+              }}>
                 {error}
               </div>
             )}
 
             {loading && reviews.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-20 gap-3">
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '5rem 0',
+                gap: '0.75rem',
+              }}>
                 <div className="spinner"></div>
-                <span className="text-sm text-slate-400 font-medium animate-pulse">후기를 불러오는 중...</span>
+                <span style={{
+                  fontSize: '0.875rem',
+                  color: '#94a3b8',
+                  fontWeight: '500',
+                }}>후기를 불러오는 중...</span>
               </div>
             ) : reviews.length === 0 ? (
-              <div className="text-center py-20">
-                <p className="text-slate-500 dark:text-slate-400 mb-4">등록된 후기가 없습니다.</p>
+              <div style={{ textAlign: 'center', padding: '5rem 0' }}>
+                <p style={{ color: '#64748b', marginBottom: '1rem' }}>등록된 후기가 없습니다.</p>
                 <Link
                   href="/reviews/new"
-                  className="inline-block px-5 py-2.5 bg-indigo-900 hover:bg-indigo-800 text-white rounded-xl font-medium transition-all"
+                  style={{
+                    display: 'inline-block',
+                    padding: '0.625rem 1.25rem',
+                    backgroundColor: '#1e1b4b',
+                    color: 'white',
+                    borderRadius: '0.75rem',
+                    textDecoration: 'none',
+                    fontWeight: '500',
+                    fontSize: '0.875rem',
+                    transition: 'all 0.2s',
+                  }}
                 >
                   첫 후기 작성하기
                 </Link>
               </div>
             ) : (
-              <div className="space-y-6">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                 {reviews.map((review) => {
                   const randomName = getRandomName(review.id);
                   const isNew = new Date(review.createdAt).getTime() > Date.now() - 7 * 24 * 60 * 60 * 1000;
+                  const [gradientFrom, gradientTo] = getAvatarGradient(review.id);
                   
                   return (
                     <article
                       key={review.id}
                       id={`review-${review.id}`}
-                      className="group bg-surface-light dark:bg-surface-dark p-6 sm:p-8 rounded-3xl shadow-card hover:shadow-card-hover border border-slate-100 dark:border-slate-800 hover:border-indigo-200 dark:hover:border-indigo-800 transition-all duration-300"
+                      style={{
+                        backgroundColor: 'white',
+                        padding: '1.5rem 2rem',
+                        borderRadius: '1.5rem',
+                        boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)',
+                        border: '1px solid #f1f5f9',
+                        transition: 'all 0.3s',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.boxShadow = '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)';
+                        e.currentTarget.style.borderColor = '#c7d2fe';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.boxShadow = '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)';
+                        e.currentTarget.style.borderColor = '#f1f5f9';
+                      }}
                     >
-                      <div className="flex justify-between items-start mb-6">
-                        <div className="flex items-center gap-4">
-                          <div className="relative">
-                            <div
-                              className={`h-14 w-14 rounded-2xl bg-gradient-to-br ${getAvatarGradient(review.id)} flex items-center justify-center text-white font-bold text-xl shadow-lg`}
-                            >
+                      <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'flex-start',
+                        marginBottom: '1.5rem',
+                      }}>
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '1rem',
+                        }}>
+                          <div style={{ position: 'relative' }}>
+                            <div style={{
+                              width: '3.5rem',
+                              height: '3.5rem',
+                              borderRadius: '1rem',
+                              background: `linear-gradient(135deg, ${gradientFrom} 0%, ${gradientTo} 100%)`,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              color: 'white',
+                              fontWeight: '700',
+                              fontSize: '1.25rem',
+                              boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+                            }}>
                               {randomName.charAt(0)}
                             </div>
                             {isNew && (
-                              <div className="absolute -top-2 -right-2 bg-primary text-indigo-900 text-[10px] font-bold px-2 py-0.5 rounded-full border-2 border-white dark:border-slate-800 shadow-sm">
+                              <div style={{
+                                position: 'absolute',
+                                top: '-0.5rem',
+                                right: '-0.5rem',
+                                backgroundColor: '#4ADE80',
+                                color: '#1e1b4b',
+                                fontSize: '0.625rem',
+                                fontWeight: '700',
+                                padding: '0.125rem 0.5rem',
+                                borderRadius: '9999px',
+                                border: '2px solid white',
+                                boxShadow: '0 1px 2px 0 rgb(0 0 0 / 0.05)',
+                              }}>
                                 NEW
                               </div>
                             )}
                           </div>
                           <div>
-                            <h3 className="font-bold text-slate-900 dark:text-white text-lg group-hover:text-indigo-700 dark:group-hover:text-primary transition-colors">
+                            <h3 style={{
+                              fontWeight: '700',
+                              color: '#1e293b',
+                              fontSize: '1.125rem',
+                              marginBottom: '0.25rem',
+                            }}>
                               {getPreviewText(review.content, 30)} - {review.tags?.[0] || '후기'}
                             </h3>
-                            <div className="flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-slate-400 mt-1">
+                            <div style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '0.5rem',
+                              fontSize: '0.75rem',
+                              fontWeight: '500',
+                              color: '#64748b',
+                              marginTop: '0.25rem',
+                            }}>
                               <span>
                                 {new Date(review.createdAt).toLocaleDateString('ko-KR', {
                                   year: 'numeric',
@@ -543,9 +885,18 @@ export default function ReviewsPage() {
                                   day: 'numeric',
                                 })}
                               </span>
-                              <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
-                              <span className="flex items-center gap-1">
-                                <span className="material-icons-round text-[14px]">verified</span>
+                              <span style={{
+                                width: '0.25rem',
+                                height: '0.25rem',
+                                backgroundColor: '#cbd5e1',
+                                borderRadius: '50%',
+                              }}></span>
+                              <span style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.25rem',
+                              }}>
+                                <span style={{ fontSize: '0.875rem' }}>✓</span>
                                 {randomName}
                               </span>
                             </div>
@@ -555,7 +906,16 @@ export default function ReviewsPage() {
 
                       {/* 평가 점수 */}
                       {review.ratings && Object.values(review.ratings).some(r => r && r > 0) && (
-                        <div className="bg-slate-50 dark:bg-slate-800/50 p-5 rounded-2xl mb-6 grid grid-cols-2 sm:grid-cols-4 gap-4 border border-slate-100 dark:border-slate-700/50">
+                        <div style={{
+                          backgroundColor: '#f8fafc',
+                          padding: '1.25rem',
+                          borderRadius: '1rem',
+                          marginBottom: '1.5rem',
+                          display: 'grid',
+                          gridTemplateColumns: 'repeat(2, 1fr)',
+                          gap: '1rem',
+                          border: '1px solid #f1f5f9',
+                        }}>
                           {Object.entries(review.ratings)
                             .filter(([key]) => key !== 'overall')
                             .map(([key, value]) => {
@@ -567,8 +927,18 @@ export default function ReviewsPage() {
                                 facility: '시설',
                               };
                               return (
-                                <div key={key} className="flex flex-col gap-1.5">
-                                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                                <div key={key} style={{
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  gap: '0.375rem',
+                                }}>
+                                  <span style={{
+                                    fontSize: '0.75rem',
+                                    fontWeight: '600',
+                                    color: '#64748b',
+                                    textTransform: 'uppercase',
+                                    letterSpacing: '0.05em',
+                                  }}>
                                     {labels[key] || key}
                                   </span>
                                   {renderStars(value)}
@@ -579,17 +949,35 @@ export default function ReviewsPage() {
                       )}
 
                       {/* 후기 내용 */}
-                      <div className="mb-6 px-1">
-                        <p
-                          className="text-slate-700 dark:text-slate-300 text-[15px] leading-relaxed whitespace-pre-line"
+                      <div style={{ marginBottom: '1.5rem', padding: '0 0.25rem' }}>
+                        <div
+                          style={{
+                            color: '#334155',
+                            fontSize: '0.9375rem',
+                            lineHeight: '1.75',
+                            whiteSpace: 'pre-line',
+                          }}
                           dangerouslySetInnerHTML={{ __html: review.content }}
                         />
                         {review.tags && review.tags.length > 0 && (
-                          <div className="flex flex-wrap gap-2 mt-5">
+                          <div style={{
+                            display: 'flex',
+                            flexWrap: 'wrap',
+                            gap: '0.5rem',
+                            marginTop: '1.25rem',
+                          }}>
                             {review.tags.map((tag, idx) => (
                               <span
                                 key={idx}
-                                className="px-3 py-1.5 rounded-full bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 text-xs font-bold border border-indigo-100 dark:border-indigo-800"
+                                style={{
+                                  padding: '0.375rem 0.75rem',
+                                  borderRadius: '9999px',
+                                  backgroundColor: '#eef2ff',
+                                  color: '#4338ca',
+                                  fontSize: '0.75rem',
+                                  fontWeight: '700',
+                                  border: '1px solid #c7d2fe',
+                                }}
                               >
                                 #{tag}
                               </span>
@@ -599,38 +987,117 @@ export default function ReviewsPage() {
                       </div>
 
                       {/* 액션 버튼 */}
-                      <div className="flex items-center gap-4 border-t border-slate-100 dark:border-slate-800 pt-5">
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '1rem',
+                        borderTop: '1px solid #f1f5f9',
+                        paddingTop: '1.25rem',
+                      }}>
                         <button
                           onClick={() => handleLike(review.id)}
                           disabled={likedReviews.has(review.id)}
-                          className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-all group/btn ${
-                            likedReviews.has(review.id)
-                              ? 'text-red-500'
-                              : 'text-slate-500 hover:text-indigo-600 dark:hover:text-primary'
-                          }`}
+                          style={{
+                            flex: 1,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '0.5rem',
+                            padding: '0.625rem',
+                            borderRadius: '0.75rem',
+                            backgroundColor: 'transparent',
+                            border: 'none',
+                            cursor: likedReviews.has(review.id) ? 'default' : 'pointer',
+                            color: likedReviews.has(review.id) ? '#ef4444' : '#64748b',
+                            fontSize: '0.875rem',
+                            fontWeight: '600',
+                            transition: 'all 0.2s',
+                          }}
+                          onMouseEnter={(e) => {
+                            if (!likedReviews.has(review.id)) {
+                              e.currentTarget.style.backgroundColor = '#f8fafc';
+                              e.currentTarget.style.color = '#6366F1';
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            if (!likedReviews.has(review.id)) {
+                              e.currentTarget.style.backgroundColor = 'transparent';
+                              e.currentTarget.style.color = '#64748b';
+                            }
+                          }}
                         >
                           <FaHeart
-                            className={`text-[20px] group-hover/btn:scale-110 transition-transform ${
-                              likedReviews.has(review.id) ? 'fill-current' : ''
-                            }`}
+                            style={{
+                              fontSize: '1.25rem',
+                              fill: likedReviews.has(review.id) ? '#ef4444' : 'none',
+                              stroke: likedReviews.has(review.id) ? '#ef4444' : 'currentColor',
+                            }}
                           />
-                          <span className="text-sm font-semibold">
-                            좋아요 <span className="text-xs font-normal ml-0.5">{likeCounts[review.id] || review.likeCount || 0}</span>
+                          <span>
+                            좋아요 <span style={{ fontSize: '0.75rem', fontWeight: '400', marginLeft: '0.125rem' }}>
+                              {likeCounts[review.id] || review.likeCount || 0}
+                            </span>
                           </span>
                         </button>
                         <button
                           onClick={() => handleShare('kakao', review.id)}
-                          className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-500 hover:text-indigo-600 dark:hover:text-primary transition-all group/btn"
+                          style={{
+                            flex: 1,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '0.5rem',
+                            padding: '0.625rem',
+                            borderRadius: '0.75rem',
+                            backgroundColor: 'transparent',
+                            border: 'none',
+                            cursor: 'pointer',
+                            color: '#64748b',
+                            fontSize: '0.875rem',
+                            fontWeight: '600',
+                            transition: 'all 0.2s',
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = '#f8fafc';
+                            e.currentTarget.style.color = '#6366F1';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = 'transparent';
+                            e.currentTarget.style.color = '#64748b';
+                          }}
                         >
-                          <span className="material-icons-round text-[20px] group-hover/btn:scale-110 transition-transform">chat_bubble_outline</span>
-                          <span className="text-sm font-semibold">댓글</span>
+                          <span style={{ fontSize: '1.25rem' }}>💬</span>
+                          <span>댓글</span>
                         </button>
                         <button
                           onClick={() => handleShare('link', review.id)}
-                          className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-500 hover:text-indigo-600 dark:hover:text-primary transition-all group/btn"
+                          style={{
+                            flex: 1,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '0.5rem',
+                            padding: '0.625rem',
+                            borderRadius: '0.75rem',
+                            backgroundColor: 'transparent',
+                            border: 'none',
+                            cursor: 'pointer',
+                            color: '#64748b',
+                            fontSize: '0.875rem',
+                            fontWeight: '600',
+                            transition: 'all 0.2s',
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = '#f8fafc';
+                            e.currentTarget.style.color = '#6366F1';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = 'transparent';
+                            e.currentTarget.style.color = '#64748b';
+                          }}
                         >
-                          <span className="material-icons-round text-[20px] group-hover/btn:scale-110 transition-transform">share</span>
-                          <span className="text-sm font-semibold">공유</span>
+                          <span style={{ fontSize: '1.25rem' }}>🔗</span>
+                          <span>공유</span>
                         </button>
                       </div>
                     </article>
@@ -639,14 +1106,25 @@ export default function ReviewsPage() {
 
                 {/* 무한 스크롤 로딩 인디케이터 */}
                 {loadingMore && (
-                  <div className="flex flex-col items-center justify-center py-10 gap-3">
+                  <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '2.5rem 0',
+                    gap: '0.75rem',
+                  }}>
                     <div className="spinner"></div>
-                    <span className="text-sm text-slate-400 font-medium animate-pulse">후기 더 불러오는 중...</span>
+                    <span style={{
+                      fontSize: '0.875rem',
+                      color: '#94a3b8',
+                      fontWeight: '500',
+                    }}>후기 더 불러오는 중...</span>
                   </div>
                 )}
 
                 {/* 무한 스크롤 타겟 */}
-                <div ref={observerTarget} className="h-1"></div>
+                <div ref={observerTarget} style={{ height: '4px' }}></div>
               </div>
             )}
           </main>
@@ -654,9 +1132,8 @@ export default function ReviewsPage() {
       </div>
       <Footer />
 
-      {/* Material Icons 및 스타일 */}
-      <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet" />
-      <style jsx global>{`
+      {/* 스피너 스타일 */}
+      <style jsx>{`
         .spinner {
           border: 3px solid rgba(226, 232, 240, 0.3);
           border-radius: 50%;
@@ -669,29 +1146,13 @@ export default function ReviewsPage() {
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }
         }
-        .bg-background-light {
-          background-color: #F8FAFC;
-        }
-        .dark .bg-background-dark {
-          background-color: #0F172A;
-        }
-        .bg-surface-light {
-          background-color: #ffffff;
-        }
-        .dark .bg-surface-dark {
-          background-color: #1e293b;
-        }
-        .text-primary {
-          color: #4ADE80;
-        }
-        .shadow-card {
-          box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-        }
-        .shadow-card-hover {
-          box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
-        }
-        .shadow-glow {
-          box-shadow: 0 0 20px rgba(74, 222, 128, 0.25);
+        @media (min-width: 1024px) {
+          .reviews-sidebar {
+            display: block !important;
+          }
+          main {
+            grid-column: span 8;
+          }
         }
       `}</style>
     </main>

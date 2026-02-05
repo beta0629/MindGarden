@@ -588,7 +588,7 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
                         width: '2.5rem',
                         height: '2.5rem',
                         borderRadius: '50%',
-                        background: 'linear-gradient(135deg, #10B981 0%, #06B6D4 100%)',
+                        background: 'linear-gradient(135deg, #D4A574 0%, #B8956A 100%)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -596,7 +596,7 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
                         color: 'white',
                         boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
                       }}>
-                        {bestReview.authorName.charAt(0)}
+                        익
                       </div>
                       <div>
                         <p style={{
@@ -604,7 +604,7 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
                           fontSize: '0.875rem',
                           color: '#5C4033',
                         }}>
-                          {bestReview.authorName} 님
+                          익명
                         </p>
                         <p style={{
                           fontSize: '0.75rem',

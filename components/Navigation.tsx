@@ -132,7 +132,7 @@ export default function Navigation() {
 
   return (
     <>
-      <nav className={`gnb ${isScrolled ? 'scrolled' : ''}`}>
+      <nav className={`gnb ${isScrolled ? 'scrolled' : ''} ${isWhite && !isScrolled ? 'white-text' : ''}`}>
         <div className="gnb-inner">
           <Link 
             className="logo" 

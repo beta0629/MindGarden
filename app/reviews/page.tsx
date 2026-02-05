@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
-import { FaHeart } from 'react-icons/fa';
 import KakaoIcon from '@/components/KakaoIcon';
 
 interface Review {
@@ -1043,48 +1042,14 @@ export default function ReviewsPage() {
                             }
                           }}
                         >
-                          <FaHeart
-                            style={{
-                              fontSize: '1.25rem',
-                              fill: likedReviews.has(review.id) ? '#ef4444' : 'none',
-                              stroke: likedReviews.has(review.id) ? '#ef4444' : 'currentColor',
-                            }}
-                          />
+                          <span style={{ fontSize: '1.25rem' }}>
+                            {likedReviews.has(review.id) ? '❤️' : '🤍'}
+                          </span>
                           <span>
                             좋아요 <span style={{ fontSize: '0.75rem', fontWeight: '400', marginLeft: '0.125rem' }}>
                               {likeCounts[review.id] || review.likeCount || 0}
                             </span>
                           </span>
-                        </button>
-                        <button
-                          onClick={() => handleShare('kakao', review.id)}
-                          style={{
-                            flex: 1,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: '0.5rem',
-                            padding: '0.625rem',
-                            borderRadius: '0.75rem',
-                            backgroundColor: 'transparent',
-                            border: 'none',
-                            cursor: 'pointer',
-                            color: '#64748b',
-                            fontSize: '0.875rem',
-                            fontWeight: '600',
-                            transition: 'all 0.2s',
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.backgroundColor = '#f8fafc';
-                            e.currentTarget.style.color = '#6366F1';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.backgroundColor = 'transparent';
-                            e.currentTarget.style.color = '#64748b';
-                          }}
-                        >
-                          <span style={{ fontSize: '1.25rem' }}>💬</span>
-                          <span>댓글</span>
                         </button>
                         <button
                           onClick={() => handleShare('link', review.id)}

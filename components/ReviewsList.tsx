@@ -620,8 +620,8 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
                     <Link
                       href={`/reviews#review-${bestReview.id}`}
                       style={{
-                        background: 'white',
-                        color: '#4F46E5',
+                        background: '#D4A574',
+                        color: 'white',
                         padding: '0.5rem 1rem',
                         borderRadius: '0.5rem',
                         fontSize: '0.875rem',
@@ -631,10 +631,10 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
                         boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
                       }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.background = '#EEF2FF';
+                        e.currentTarget.style.background = '#B8956A';
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.background = 'white';
+                        e.currentTarget.style.background = '#D4A574';
                       }}
                     >
                       전체 읽기

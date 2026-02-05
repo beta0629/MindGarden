@@ -301,9 +301,11 @@ export default function ReviewsPage() {
       <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '2rem 1rem' }}>
         <header style={{
           display: 'flex',
-          flexDirection: 'column',
-          gap: '1rem',
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
           marginBottom: '2rem',
+          gap: '1rem',
         }}>
           <div>
             <h1 style={{
@@ -337,6 +339,7 @@ export default function ReviewsPage() {
               fontSize: '0.875rem',
               boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
               transition: 'all 0.2s',
+              whiteSpace: 'nowrap',
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.backgroundColor = '#312e81';
@@ -347,7 +350,7 @@ export default function ReviewsPage() {
               e.currentTarget.style.transform = 'translateY(0)';
             }}
           >
-            <span style={{ fontSize: '1.125rem' }}>✏️</span>
+            <span style={{ fontSize: '1rem', color: '#4ADE80' }}>✏️</span>
             후기 작성하기
           </Link>
         </header>

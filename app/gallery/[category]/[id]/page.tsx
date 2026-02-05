@@ -46,29 +46,49 @@ export default function GalleryDetailPage() {
       let response = await fetch(`/api/gallery?category=${encodeURIComponent(category)}`);
       let data = await response.json();
       
+      console.log('Initial API response:', { category, id, data });
+      
       // 이미지를 찾지 못했고, category가 "기타"가 아니면 "기타"로 다시 시도
-      if (data.success && data.images) {
+      if (data.success && data.images && Array.isArray(data.images)) {
         const foundImage = data.images.find((img: GalleryImage) => img.id === id);
+        console.log('Found image in initial response:', foundImage);
+        
         if (!foundImage && category !== '기타') {
           // "기타" 카테고리로 다시 시도
+          console.log('Trying "기타" category...');
           response = await fetch(`/api/gallery?category=${encodeURIComponent('기타')}`);
           data = await response.json();
+          console.log('"기타" category API response:', data);
         }
+      } else if (data.success && !data.images && category !== '기타') {
+        // images가 null이거나 빈 배열인 경우 "기타"로 다시 시도
+        console.log('No images found, trying "기타" category...');
+        response = await fetch(`/api/gallery?category=${encodeURIComponent('기타')}`);
+        data = await response.json();
+        console.log('"기타" category API response:', data);
       }
       
-      if (data.success && data.images) {
+      if (data.success && data.images && Array.isArray(data.images) && data.images.length > 0) {
         // category가 null인 이미지는 "기타"로 표시
         const processedImages = data.images.map((img: GalleryImage) => ({
           ...img,
           category: img.category || '기타',
         }));
         
+        console.log('Processed images:', processedImages);
+        
         setAllImages(processedImages);
         const foundImage = processedImages.find((img: GalleryImage) => img.id === id);
+        console.log('Found image after processing:', foundImage);
+        
         if (foundImage) {
           setImage(foundImage);
           setCurrentIndex(processedImages.findIndex((img: GalleryImage) => img.id === id));
+        } else {
+          console.error('Image not found:', { id, processedImages });
         }
+      } else {
+        console.error('No images returned from API:', data);
       }
     } catch (error) {
       console.error('Load gallery image error:', error);

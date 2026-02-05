@@ -143,24 +143,32 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
 
     const container = containerRef.current;
     const scrollSpeed = 0.5; // 픽셀/프레임
+    let paused = false;
 
     const animate = () => {
       // 드래그 중이거나 터치 중일 때는 멈춤
       if (isDragging || touchStartX.current !== null) {
+        paused = true;
         animationRef.current = requestAnimationFrame(animate);
         return;
       }
       
+      // 일시정지 상태에서 재개
+      if (paused) {
+        paused = false;
+      }
+      
       const now = Date.now();
-      // 사용자가 직접 스크롤한 경우 잠시 멈춤 (200ms) - 자동 스크롤은 제외
-      if (!isAutoScrolling.current && now - lastScrollTime.current < 200) {
+      // 사용자가 직접 스크롤한 경우 잠시 멈춤 (300ms) - 자동 스크롤은 제외
+      if (!isAutoScrolling.current && now - lastScrollTime.current < 300) {
         animationRef.current = requestAnimationFrame(animate);
         return;
       }
 
       // 자동 스크롤 시작
       isAutoScrolling.current = true;
-      container.scrollLeft += scrollSpeed;
+      const currentScroll = container.scrollLeft;
+      container.scrollLeft = currentScroll + scrollSpeed;
 
       // 끝에 도달하면 처음으로 순환
       if (container.scrollLeft >= container.scrollWidth / 2) {
@@ -172,8 +180,10 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
 
     // 초기 지연 후 시작
     const timeout = setTimeout(() => {
-      animationRef.current = requestAnimationFrame(animate);
-    }, 500);
+      if (containerRef.current) {
+        animationRef.current = requestAnimationFrame(animate);
+      }
+    }, 1000);
 
     return () => {
       clearTimeout(timeout);
@@ -182,7 +192,7 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
       }
       isAutoScrolling.current = false;
     };
-  }, [latestReviews.length, isDragging]);
+  }, [latestReviews.length]);
 
   // 마우스 드래그 시작
   const handleMouseDown = (e: React.MouseEvent) => {

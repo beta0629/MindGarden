@@ -32,6 +32,15 @@ const DEFAULT_TAGS = [
 ];
 
 export default function ConsultationForm() {
+  // 오늘 날짜를 YYYY-MM-DD 형식으로 가져오기
+  const getTodayDate = () => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   const [formData, setFormData] = useState<ConsultationFormData>({
     name: '',
     phone: '',
@@ -40,7 +49,7 @@ export default function ConsultationForm() {
     inquiryType: 'general',
     referralSource: '',
     message: '',
-    preferredDate: '',
+    preferredDate: getTodayDate(), // 오늘 날짜를 기본값으로 설정
     preferredTime: '',
     tags: [],
   });
@@ -77,7 +86,7 @@ export default function ConsultationForm() {
           inquiryType: 'general',
           referralSource: '',
           message: '',
-          preferredDate: '',
+          preferredDate: getTodayDate(), // 초기화 시에도 오늘 날짜로 설정
           preferredTime: '',
           tags: [],
         });

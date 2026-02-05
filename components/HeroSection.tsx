@@ -187,18 +187,27 @@ export default function HeroSection({ slogan, videoUrl }: HeroSectionProps) {
       </div>
 
       <div className="hero-text">
-        <p className="slogan-sub">{finalSlogan.sub}</p>
-        <h1 className="slogan-main">
-          {finalSlogan.main?.split('\n').map((line, i) => (
-            <span key={i} className="slogan-line" style={{ animationDelay: `${0.5 + i * 0.3}s` }}>
-              {line}
-              {i < finalSlogan.main!.split('\n').length - 1 && <br />}
-            </span>
-          ))}
-        </h1>
-        <div className="hero-info" style={{ animationDelay: '1.5s' }}>
+        {/* 장식적 배경 요소 */}
+        <div className="hero-text-decoration">
+          <div className="hero-decoration-line hero-decoration-line-1"></div>
+          <div className="hero-decoration-line hero-decoration-line-2"></div>
+          <div className="hero-decoration-circle hero-decoration-circle-1"></div>
+          <div className="hero-decoration-circle hero-decoration-circle-2"></div>
+        </div>
         
-          <p className="info-subtext"><span style={{ fontSize: '1.4em', fontWeight: '600' }}>마인드 가든</span>이 , 여러분의 성장과 변화를 위해 함께 하겠습니다.</p>
+        <div className="hero-text-content">
+          <p className="slogan-sub">{finalSlogan.sub}</p>
+          <h1 className="slogan-main">
+            {finalSlogan.main?.split('\n').map((line, i) => (
+              <span key={i} className="slogan-line" style={{ animationDelay: `${0.5 + i * 0.3}s` }}>
+                {line}
+                {i < finalSlogan.main!.split('\n').length - 1 && <br />}
+              </span>
+            ))}
+          </h1>
+          <div className="hero-info" style={{ animationDelay: '1.5s' }}>
+            <p className="info-subtext"><span style={{ fontSize: '1.4em', fontWeight: '600' }}>마인드 가든</span>이 , 여러분의 성장과 변화를 위해 함께 하겠습니다.</p>
+          </div>
         </div>
       </div>
 

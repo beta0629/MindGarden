@@ -102,18 +102,19 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
     setLatestReviews([...finalLatest, ...finalLatest]);
   }, [reviews]);
 
-  // 무한 롤링 애니메이션
+  // 무한 롤링 애니메이션 (항상 롤링)
   useEffect(() => {
-    if (!containerRef.current || latestReviews.length === 0 || isPaused || isDragging) return;
+    if (!containerRef.current || latestReviews.length === 0 || isDragging) return;
 
     const container = containerRef.current;
     const scrollSpeed = 0.5; // 픽셀/프레임
 
     const animate = () => {
-      if (isPaused || isDragging) return;
+      // 드래그 중일 때만 멈춤
+      if (isDragging) return;
       
       const now = Date.now();
-      // 사용자가 직접 스크롤한 경우 일시 정지
+      // 사용자가 직접 스크롤한 경우 잠시 멈춤 (100ms)
       if (now - lastScrollTime.current < 100) {
         animationRef.current = requestAnimationFrame(animate);
         return;
@@ -136,7 +137,7 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [latestReviews.length, isPaused, isDragging]);
+  }, [latestReviews.length, isDragging]);
 
   // 마우스 드래그 시작
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -165,7 +166,6 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
   // 마우스 떠남
   const handleMouseLeave = () => {
     setIsDragging(false);
-    setIsPaused(false);
   };
 
   // 터치 이벤트 처리
@@ -178,7 +178,6 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
     touchStartX.current = e.touches[0].clientX;
     touchStartY.current = e.touches[0].clientY;
     touchScrollLeft.current = containerRef.current.scrollLeft;
-    setIsPaused(true);
     lastScrollTime.current = Date.now();
   };
 
@@ -199,7 +198,6 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
   const handleTouchEnd = () => {
     touchStartX.current = null;
     touchStartY.current = null;
-    setIsPaused(false);
   };
 
   // 평균 점수 계산
@@ -458,7 +456,7 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
           <section style={{ marginBottom: '4rem' }}>
             <div style={{
               position: 'relative',
-              background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+              background: 'linear-gradient(135deg, #D4A574 0%, #B8956A 100%)',
               borderRadius: '1.5rem',
               padding: '3rem',
               boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
@@ -484,7 +482,7 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
                 left: 0,
                 width: '16rem',
                 height: '16rem',
-                background: 'rgba(16, 185, 129, 0.2)',
+                background: 'rgba(212, 165, 116, 0.3)',
                 borderRadius: '50%',
                 filter: 'blur(3rem)',
                 marginLeft: '-4rem',
@@ -680,7 +678,6 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
               onMouseMove={handleMouseMove}
               onMouseUp={handleMouseUp}
               onMouseLeave={handleMouseLeave}
-              onMouseEnter={() => setIsPaused(true)}
               onTouchStart={handleTouchStart}
               onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}

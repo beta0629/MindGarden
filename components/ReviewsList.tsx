@@ -222,14 +222,13 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
               <div style={{
                 gridColumn: 'span 12',
                 background: 'white',
-              }} className="reviews-header-stats">
                 borderRadius: '1.5rem',
                 padding: '2rem',
                 boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
                 border: '1px solid rgba(226, 232, 240, 0.8)',
                 position: 'relative',
                 overflow: 'hidden',
-              }}>
+              }} className="reviews-header-stats">
                 <div style={{
                   position: 'absolute',
                   right: '-1.5rem',

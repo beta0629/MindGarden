@@ -588,22 +588,38 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
                   justifyContent: 'space-between',
                   minHeight: '200px',
                 }} className="best-review-card">
-                  <div style={{ marginBottom: '1rem' }}>
+                  <div style={{ marginBottom: '1rem', position: 'relative' }}>
                     <span style={{
                       fontSize: '2.5rem',
                       color: '#8B6F47',
                       opacity: 0.6,
+                      lineHeight: '1',
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
                     }}>"</span>
                     <p style={{
                       color: '#5C4033',
                       lineHeight: '1.8',
                       marginTop: '0.5rem',
+                      paddingLeft: '1.5rem',
                       display: '-webkit-box',
                       WebkitLineClamp: 4,
                       WebkitBoxOrient: 'vertical',
                       overflow: 'hidden',
+                      position: 'relative',
                     }}>
                       {getPreviewText(bestReview.content, 200)}
+                      <span style={{
+                        fontSize: '2.5rem',
+                        color: '#8B6F47',
+                        opacity: 0.6,
+                        lineHeight: '1',
+                        position: 'absolute',
+                        bottom: 0,
+                        right: 0,
+                        transform: 'translateY(0.5rem)',
+                      }}>"</span>
                     </p>
                   </div>
                   <div style={{

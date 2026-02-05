@@ -169,6 +169,10 @@ export default function ReviewsPage() {
   // 초기 로드
   useEffect(() => {
     loadStats();
+  }, []);
+
+  // 정렬 또는 검색 변경 시 리로드
+  useEffect(() => {
     setPage(1);
     setReviews([]);
     setHasMore(true);

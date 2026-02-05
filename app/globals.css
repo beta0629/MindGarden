@@ -54,6 +54,31 @@
     --breakpoint-wide: 1440px;
 }
 
+/* 후기 섹션 반응형 스타일 */
+@media (min-width: 1024px) {
+    .reviews-header-text {
+        grid-column: span 8 !important;
+    }
+    .reviews-header-stats {
+        grid-column: span 4 !important;
+    }
+    .best-review-text {
+        grid-column: span 6 !important;
+    }
+    .best-review-card {
+        grid-column: span 6 !important;
+    }
+}
+
+@media (min-width: 768px) {
+    .best-review-text {
+        grid-column: span 6 !important;
+    }
+    .best-review-card {
+        grid-column: span 6 !important;
+    }
+}
+
 * {
     margin: 0;
     padding: 0;

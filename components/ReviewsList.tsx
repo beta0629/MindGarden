@@ -274,20 +274,6 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
         }}>
           <div style={{ gridColumn: 'span 12', display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: '2rem' }}>
             <div style={{ gridColumn: 'span 12' }} className="reviews-header-text">
-              <div style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                padding: '0.25rem 0.75rem',
-                borderRadius: '9999px',
-                background: 'rgba(209, 250, 229, 0.8)',
-                color: 'rgb(4, 120, 87)',
-                fontSize: '0.875rem',
-                fontWeight: '600',
-                marginBottom: '1rem',
-              }}>
-                <span style={{ marginRight: '0.25rem' }}>✨</span>
-                실시간 후기 대시보드
-              </div>
               <h1 style={{
                 fontSize: '3rem',
                 fontWeight: '900',
@@ -472,7 +458,7 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
           <section style={{ marginBottom: '4rem' }}>
             <div style={{
               position: 'relative',
-              background: 'linear-gradient(135deg, #4F46E5 0%, #6366F1 100%)',
+              background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
               borderRadius: '1.5rem',
               padding: '3rem',
               boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',

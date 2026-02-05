@@ -463,7 +463,7 @@ export default function ReviewsPage() {
                   </div>
                   <div style={{
                     height: '1px',
-                    backgroundColor: 'rgba(99, 102, 241, 0.8)',
+                    backgroundColor: 'rgba(255, 255, 255, 0.3)',
                     margin: '1rem 0',
                   }}></div>
                   <div style={{

@@ -308,10 +308,10 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
 
   return (
     <div style={{
-      padding: '5rem 0',
+      padding: '3rem 0',
       background: 'linear-gradient(135deg, rgba(240, 253, 249, 0.5) 0%, rgba(255, 255, 255, 0.8) 100%)',
       position: 'relative',
-    }}>
+    }} className="reviews-section-container">
       {/* 배경 패턴 */}
       <div style={{
         position: 'absolute',
@@ -322,24 +322,24 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
         pointerEvents: 'none',
       }} />
 
-      <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '0 2rem', position: 'relative', zIndex: 1 }}>
+      <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '0 1rem', position: 'relative', zIndex: 1 }} className="reviews-content-wrapper">
         {/* 헤더 섹션 */}
         <header style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(12, 1fr)',
-          gap: '2rem',
+          gap: '1rem',
           alignItems: 'center',
-          marginBottom: '4rem',
-        }}>
+          marginBottom: '2rem',
+        }} className="reviews-header-grid">
           <div style={{ gridColumn: 'span 12', display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: '2rem' }}>
             <div style={{ gridColumn: 'span 12' }} className="reviews-header-text">
               <h1 style={{
-                fontSize: '3rem',
+                fontSize: '2rem',
                 fontWeight: '900',
                 lineHeight: '1.2',
                 color: 'var(--text-main)',
-                marginBottom: '1.5rem',
-              }}>
+                marginBottom: '1rem',
+              }} className="reviews-title">
                 마인드가든<br />
                 <span style={{
                   background: 'linear-gradient(135deg, #10B981 0%, #4F46E5 100%)',
@@ -351,11 +351,11 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
                 </span>
               </h1>
               <p style={{
-                fontSize: '1.125rem',
+                fontSize: '0.875rem',
                 color: 'var(--text-sub)',
                 lineHeight: '1.8',
                 marginBottom: '1rem',
-              }}>
+              }} className="reviews-description">
                 마인드가든을 이용하신 분들의 소중한 이야기입니다.<br />
                 진솔한 상담 경험이 만들어낸 변화를 확인해보세요.
               </p>
@@ -389,7 +389,7 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
                 gridColumn: 'span 12',
                 background: 'white',
                 borderRadius: '1.5rem',
-                padding: '2rem',
+                padding: '1.5rem',
                 boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
                 border: '1px solid rgba(226, 232, 240, 0.8)',
                 position: 'relative',
@@ -423,10 +423,10 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
                     marginBottom: '0.5rem',
                   }}>
                     <span style={{
-                      fontSize: '3.75rem',
+                      fontSize: '2.5rem',
                       fontWeight: '900',
                       color: 'var(--text-main)',
-                    }}>
+                    }} className="reviews-average-score">
                       {roundedAverage.toFixed(1)}
                     </span>
                     <span style={{
@@ -519,9 +519,10 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
               position: 'relative',
               background: 'linear-gradient(135deg, #D4A574 0%, #B8956A 100%)',
               borderRadius: '1.5rem',
-              padding: '3rem',
+              padding: '2rem',
               boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
               overflow: 'hidden',
+              className: 'best-review-section',
               color: 'white',
             }}>
               <div style={{
@@ -792,8 +793,9 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
                     color: 'inherit',
                     display: 'block',
                     flexShrink: 0,
-                    width: '320px',
+                    width: '280px',
                   }}
+                  className="latest-review-card"
                   onClick={(e) => {
                     // 드래그 중일 때는 링크 클릭 방지
                     if (isDragging) {
@@ -1007,7 +1009,7 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
                 </Link>
               ))}
             </div>
-            {/* 스크롤바 스타일 */}
+            {/* 스크롤바 스타일 및 반응형 */}
             <style jsx>{`
               div::-webkit-scrollbar {
                 height: 8px;
@@ -1022,6 +1024,103 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
               }
               div::-webkit-scrollbar-thumb:hover {
                 background: #059669;
+              }
+              
+              /* 모바일 기본 스타일 */
+              .reviews-section-container {
+                padding: 2rem 0 !important;
+              }
+              .reviews-content-wrapper {
+                padding: 0 0.75rem !important;
+              }
+              .reviews-header-grid {
+                gap: 1rem !important;
+                margin-bottom: 2rem !important;
+              }
+              .reviews-title {
+                font-size: 1.75rem !important;
+                margin-bottom: 0.75rem !important;
+              }
+              .reviews-description {
+                font-size: 0.875rem !important;
+              }
+              .reviews-header-stats {
+                padding: 1.25rem !important;
+              }
+              .reviews-average-score {
+                font-size: 2rem !important;
+              }
+              .best-review-section {
+                padding: 1.5rem !important;
+              }
+              .latest-review-card {
+                width: 260px !important;
+              }
+              
+              /* 태블릿 (768px 이상) */
+              @media (min-width: 768px) {
+                .reviews-section-container {
+                  padding: 3.5rem 0 !important;
+                }
+                .reviews-content-wrapper {
+                  padding: 0 1.5rem !important;
+                }
+                .reviews-header-grid {
+                  gap: 1.5rem !important;
+                  margin-bottom: 3rem !important;
+                }
+                .reviews-title {
+                  font-size: 2.5rem !important;
+                  margin-bottom: 1.25rem !important;
+                }
+                .reviews-description {
+                  font-size: 1rem !important;
+                }
+                .reviews-header-stats {
+                  padding: 1.75rem !important;
+                }
+                .reviews-average-score {
+                  font-size: 3rem !important;
+                }
+                .best-review-section {
+                  padding: 2.5rem !important;
+                }
+                .latest-review-card {
+                  width: 300px !important;
+                }
+              }
+              
+              /* 데스크탑 (1024px 이상) */
+              @media (min-width: 1024px) {
+                .reviews-section-container {
+                  padding: 5rem 0 !important;
+                }
+                .reviews-content-wrapper {
+                  padding: 0 2rem !important;
+                }
+                .reviews-header-grid {
+                  gap: 2rem !important;
+                  margin-bottom: 4rem !important;
+                }
+                .reviews-title {
+                  font-size: 3rem !important;
+                  margin-bottom: 1.5rem !important;
+                }
+                .reviews-description {
+                  font-size: 1.125rem !important;
+                }
+                .reviews-header-stats {
+                  padding: 2rem !important;
+                }
+                .reviews-average-score {
+                  font-size: 3.75rem !important;
+                }
+                .best-review-section {
+                  padding: 3rem !important;
+                }
+                .latest-review-card {
+                  width: 320px !important;
+                }
               }
             `}</style>
           </section>

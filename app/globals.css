@@ -311,14 +311,22 @@ main {
     padding: 12px 12px;
     border-radius: 12px;
     background: rgba(168, 213, 186, 0.18);
+    border: none;
+    font-size: inherit;
+    font-family: inherit;
+}
+
+.gnb-drawer-link-with-submenu {
+    background: rgba(168, 213, 186, 0.25);
 }
 
 .gnb-drawer-submenu {
-    margin-top: 8px;
+    margin-top: 0;
     margin-left: 16px;
     display: flex;
     flex-direction: column;
     gap: 6px;
+    padding-top: 8px;
 }
 
 .gnb-drawer-submenu-link {
@@ -330,11 +338,18 @@ main {
     border-radius: 8px;
     background: rgba(168, 213, 186, 0.1);
     transition: all 0.2s ease;
+    display: block;
 }
 
 .gnb-drawer-submenu-link:hover {
     background: rgba(168, 213, 186, 0.25);
     color: var(--text-main);
+}
+
+.gnb-drawer-submenu-link.active {
+    background: rgba(168, 213, 186, 0.35);
+    color: var(--text-main);
+    font-weight: 600;
 }
 
 .gnb-drawer-cta {

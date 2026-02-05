@@ -65,6 +65,26 @@ export default function Navigation() {
   const lineColor = isWhite && !isScrolled ? 'var(--white)' : undefined;
 
   const [hoveredMenu, setHoveredMenu] = useState<string | null>(null);
+  
+  // 모바일 드로어에서 열린 서브메뉴 상태 관리
+  const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
+  
+  // 현재 경로가 서브메뉴 항목 중 하나인지 확인
+  useEffect(() => {
+    const currentSubmenu = menu.find(m => 
+      m.submenu && m.submenu.some(sub => sub.href === pathname || pathname.startsWith(sub.href + '/'))
+    );
+    if (currentSubmenu) {
+      setOpenSubmenu(currentSubmenu.href);
+    } else {
+      setOpenSubmenu(null);
+    }
+  }, [pathname]);
+  
+  // 서브메뉴 토글 핸들러
+  const toggleSubmenu = (href: string) => {
+    setOpenSubmenu(prev => prev === href ? null : href);
+  };
 
   const menu = [
     { 
@@ -229,36 +249,88 @@ export default function Navigation() {
           </button>
         </div>
         <nav className="gnb-drawer-nav" aria-label="Mobile Navigation">
-          {menu.map((m) => (
-            <div key={m.href}>
-              {m.href.startsWith('/') ? (
-                <Link className="gnb-drawer-link" href={m.href}>
-                  {m.label}
-                </Link>
-              ) : (
-                <a 
-                  className="gnb-drawer-link" 
-                  href={pathname === '/' ? m.href : `/${m.href}`} 
-                  onClick={onNavClick(m.href)}
-                >
-                  {m.label}
-                </a>
-              )}
-              {m.submenu && (
-                <div className="gnb-drawer-submenu">
-                  {m.submenu.map((sub) => (
-                    <Link 
-                      key={sub.href} 
-                      className="gnb-drawer-submenu-link" 
-                      href={sub.href}
+          {menu.map((m) => {
+            const isSubmenuOpen = openSubmenu === m.href;
+            const hasActiveSubmenu = m.submenu && m.submenu.some(sub => 
+              sub.href === pathname || pathname.startsWith(sub.href + '/')
+            );
+            
+            return (
+              <div key={m.href}>
+                {m.submenu ? (
+                  // 서브메뉴가 있는 경우: 아코디언 버튼
+                  <div>
+                    <button
+                      type="button"
+                      className="gnb-drawer-link gnb-drawer-link-with-submenu"
+                      onClick={() => toggleSubmenu(m.href)}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        width: '100%',
+                        textAlign: 'left',
+                        cursor: 'pointer',
+                      }}
                     >
-                      {sub.label}
+                      <span>{m.label}</span>
+                      <span style={{
+                        transition: 'transform 0.3s ease',
+                        transform: isSubmenuOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                        fontSize: '0.8rem',
+                      }}>
+                        ▼
+                      </span>
+                    </button>
+                    <div 
+                      className={`gnb-drawer-submenu ${isSubmenuOpen ? 'open' : ''}`}
+                      style={{
+                        maxHeight: isSubmenuOpen ? '500px' : '0',
+                        overflow: 'hidden',
+                        transition: 'max-height 0.3s ease',
+                      }}
+                    >
+                      {m.submenu.map((sub) => {
+                        const isActive = sub.href === pathname || pathname.startsWith(sub.href + '/');
+                        return (
+                          <Link 
+                            key={sub.href} 
+                            className={`gnb-drawer-submenu-link ${isActive ? 'active' : ''}`}
+                            href={sub.href}
+                            onClick={() => setIsMenuOpen(false)}
+                          >
+                            {sub.label}
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) : (
+                  // 서브메뉴가 없는 경우: 일반 링크
+                  m.href.startsWith('/') ? (
+                    <Link 
+                      className="gnb-drawer-link" 
+                      href={m.href}
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      {m.label}
                     </Link>
-                  ))}
-                </div>
-              )}
-            </div>
-          ))}
+                  ) : (
+                    <a 
+                      className="gnb-drawer-link" 
+                      href={pathname === '/' ? m.href : `/${m.href}`} 
+                      onClick={(e) => {
+                        onNavClick(m.href)(e);
+                        setIsMenuOpen(false);
+                      }}
+                    >
+                      {m.label}
+                    </a>
+                  )
+                )}
+              </div>
+            );
+          })}
           <a 
             className="gnb-drawer-cta" 
             href={pathname === '/' ? '#contact' : '/#contact'} 

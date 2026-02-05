@@ -560,7 +560,7 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
                       opacity: 0.6,
                     }}>"</span>
                     <p style={{
-                      color: 'rgba(199, 210, 254, 1)',
+                      color: '#5C4033',
                       lineHeight: '1.8',
                       marginTop: '0.5rem',
                       display: '-webkit-box',
@@ -576,7 +576,7 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     paddingTop: '1rem',
-                    borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+                    borderTop: '1px solid rgba(139, 111, 71, 0.2)',
                     marginTop: '0.5rem',
                   }}>
                     <div style={{
@@ -602,6 +602,7 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
                         <p style={{
                           fontWeight: '700',
                           fontSize: '0.875rem',
+                          color: '#5C4033',
                         }}>
                           {bestReview.authorName} 님
                         </p>

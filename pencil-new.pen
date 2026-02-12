@@ -3,54 +3,9 @@
   "children": [
     {
       "type": "frame",
-      "id": "odUZF",
-      "x": 850,
-      "y": 0,
-      "name": "testFrame",
-      "width": 400,
-      "height": 300,
-      "fill": "#F8FAFC",
-      "layout": "vertical",
-      "gap": 16,
-      "padding": 24,
-      "children": [
-        {
-          "type": "text",
-          "id": "JihEa",
-          "name": "title",
-          "fill": "#1E293B",
-          "content": "Pencil MCP 테스트",
-          "fontFamily": "Inter",
-          "fontSize": 24,
-          "fontWeight": "bold"
-        },
-        {
-          "type": "text",
-          "id": "M7Ad9",
-          "name": "description",
-          "fill": "#64748B",
-          "content": "MCP 서버가 정상적으로 동작하고 있습니다.",
-          "fontFamily": "Inter",
-          "fontSize": 16,
-          "fontWeight": "normal"
-        },
-        {
-          "type": "text",
-          "id": "jyDdk",
-          "name": "status",
-          "fill": "#10B981",
-          "content": "✅ 모든 기능 정상",
-          "fontFamily": "Inter",
-          "fontSize": 14,
-          "fontWeight": "normal"
-        }
-      ]
-    },
-    {
-      "type": "frame",
       "id": "nYhti",
-      "x": 1300,
-      "y": 0,
+      "x": 0,
+      "y": 400,
       "name": "CoreSolution Atomic Design System",
       "width": 1600,
       "fill": "#FFFFFF",
@@ -904,7 +859,6 @@
                   "id": "RAHif",
                   "name": "Sidebar",
                   "width": 240,
-                  "height": "fill_container",
                   "fill": "#FFFFFF",
                   "layout": "vertical",
                   "gap": 48,
@@ -1021,7 +975,6 @@
                   "id": "ARmBk",
                   "name": "Main Content",
                   "width": "fill_container",
-                  "height": "fill_container",
                   "fill": "#FFFFFF",
                   "layout": "vertical",
                   "gap": 48,

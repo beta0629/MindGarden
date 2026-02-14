@@ -16,7 +16,6 @@ export default function SectionTabs() {
       { label: '공간', href: '#gallery' },
       { label: '후기', href: '#reviews' },
       { label: '칼럼', href: '/blog' },
-      { label: '문의', href: '#contact' },
     ],
     []
   );

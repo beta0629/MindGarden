@@ -98,6 +98,16 @@ export default function Navigation() {
       ]
     },
     { 
+      label: '상담의 종류', 
+      href: '#counseling-types',
+      submenu: [
+        { label: '아동.청소년ADHD', href: '#' },
+        { label: '성인 ADHD', href: '#' },
+        { label: '동반질환', href: '#' },
+        { label: '상담과목', href: '#' }
+      ]
+    },
+    { 
       label: '프로그램', 
       href: '#programs',
       submenu: [

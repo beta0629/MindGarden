@@ -1,74 +1,99 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useParams, notFound } from 'next/navigation';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import BlogPostView from '@/components/BlogPostView';
-import { getApiService } from '@/lib/api';
-import { notFound } from 'next/navigation';
+import type { BlogPostViewPost } from '@/components/BlogPostView';
 
-interface BlogPost {
-  id: number;
-  title: string;
-  content: string;
-  summary: string | null;
-  thumbnailImageUrl: string | null;
-  publishedAt: string | null;
-  createdAt: string;
-  isHomepageOnly?: boolean;
-  images?: Array<{
-    id: number;
-    imageUrl: string;
-    altText: string | null;
-    displayOrder: number;
-  }>;
-}
+export default function BlogPostPage() {
+  const params = useParams();
+  const id = params?.id as string | undefined;
+  const [post, setPost] = useState<BlogPostViewPost | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
 
-async function getBlogPost(id: string): Promise<BlogPost | null> {
-  try {
-    const apiService = getApiService();
-    const post = await apiService.getBlogPost(parseInt(id));
-    return post;
-  } catch (error) {
-    console.error('Failed to load blog post:', error);
-    return null;
-  }
-}
+  useEffect(() => {
+    if (!id) {
+      setFailed(true);
+      setLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setLoading(true);
+    setFailed(false);
+    fetch(`/api/blog/posts/${id}`)
+      .then((res) => {
+        if (!res.ok) {
+          if (res.status === 404) setFailed(true);
+          return null;
+        }
+        return res.json();
+      })
+      .then((data) => {
+        if (cancelled) return;
+        if (data?.success && data?.id) {
+          const p: BlogPostViewPost = {
+            id: data.id,
+            title: data.title,
+            content: data.content ?? '',
+            summary: data.summary ?? null,
+            thumbnailImageUrl: data.thumbnailImageUrl ?? null,
+            publishedAt: data.publishedAt ?? null,
+            createdAt: data.createdAt ?? '',
+            isHomepageOnly: data.isHomepageOnly,
+            images: Array.isArray(data.images) ? data.images : undefined,
+          };
+          setPost(p);
+        } else {
+          setFailed(true);
+        }
+      })
+      .catch(() => setFailed(true))
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
 
-export default async function BlogPostPage({
-  params,
-}: {
-  params: { id: string };
-}) {
-  const post = await getBlogPost(params.id);
-
-  if (!post) {
+  if (failed || (!loading && !post)) {
     notFound();
   }
 
-  // 서버→클라이언트 직렬화 오류 방지: 순수 데이터만 전달
-  const serializablePost = {
-    id: post.id,
-    title: post.title,
-    content: post.content,
-    summary: post.summary,
-    thumbnailImageUrl: post.thumbnailImageUrl,
-    publishedAt: post.publishedAt,
-    createdAt: post.createdAt,
-    isHomepageOnly: post.isHomepageOnly,
-    images: post.images
-      ? post.images.map((img) => ({
-          id: img.id,
-          imageUrl: img.imageUrl,
-          altText: img.altText,
-          displayOrder: img.displayOrder,
-        }))
-      : undefined,
-  };
+  if (loading || !post) {
+    return (
+      <main id="top">
+        <Navigation />
+        <div className="content-shell">
+          <div className="content-main">
+            <div
+              className="blog-post"
+              style={{
+                paddingTop: '120px',
+                maxWidth: '800px',
+                margin: '0 auto',
+                textAlign: 'center',
+                color: 'var(--text-sub)',
+              }}
+            >
+              로딩 중...
+            </div>
+          </div>
+        </div>
+        <Footer />
+      </main>
+    );
+  }
 
   return (
     <main id="top">
       <Navigation />
       <div className="content-shell">
         <div className="content-main">
-          <BlogPostView post={serializablePost} />
+          <BlogPostView post={post} />
         </div>
       </div>
       <Footer />

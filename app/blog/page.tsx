@@ -1,7 +1,7 @@
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
+import BlogCard from '@/components/BlogCard';
 import { getDbConnection } from '@/lib/db';
-import Link from 'next/link';
 
 // 동적 렌더링 강제 (캐시 방지)
 export const dynamic = 'force-dynamic';
@@ -79,38 +79,7 @@ export default async function BlogPage() {
             ) : (
               <div className="blog-grid">
                 {posts.map((post: BlogPost) => (
-                  <Link 
-                    key={post.id} 
-                    href={`/blog/${post.id}`}
-                    className="blog-card"
-                  >
-                    {post.thumbnailImageUrl && (
-                      <div className="blog-card-image">
-                        <img 
-                          src={post.thumbnailImageUrl} 
-                          alt={post.title}
-                          loading="lazy"
-                        />
-                      </div>
-                    )}
-                    <div className="blog-card-content">
-                      <h3 className="blog-card-title">{post.title}</h3>
-                      {post.summary && (
-                        <p className="blog-card-summary">{post.summary}</p>
-                      )}
-                      <div className="blog-card-meta">
-                        {post.publishedAt && (
-                          <time dateTime={post.publishedAt}>
-                            {new Date(post.publishedAt).toLocaleDateString('ko-KR', {
-                              year: 'numeric',
-                              month: 'long',
-                              day: 'numeric'
-                            })}
-                          </time>
-                        )}
-                      </div>
-                    </div>
-                  </Link>
+                  <BlogCard key={post.id} post={post} />
                 ))}
               </div>
             )}

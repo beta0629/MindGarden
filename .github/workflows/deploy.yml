@@ -5,19 +5,21 @@ on:
     branches:
       - develop
       - dev
+      - homepage/develop
       - main
       - master
   pull_request:
     branches:
       - develop
       - dev
+      - homepage/develop
       - main
       - master
 
 jobs:
   # 개발 브랜치 배포
   deploy-dev:
-    if: github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/dev'
+    if: github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/homepage/develop'
     runs-on: ubuntu-latest
     
     steps:

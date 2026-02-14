@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 
 export default function Footer() {
   const [bottomSheetHeight, setBottomSheetHeight] = useState(80); // 바텀시트 높이 (접혀있을 때 기본값)
@@ -79,6 +80,11 @@ export default function Footer() {
               <p style={{ marginBottom: '0.5rem' }}>
                 <strong>주소:</strong> 인천광역시 연수구 송도과학로 123<br />
                 송도 아크리아2 204호
+              </p>
+              <p style={{ marginTop: '0.5rem', marginBottom: 0 }}>
+                <Link href="/location" style={{ color: 'var(--primary)', fontWeight: 600, textDecoration: 'none' }}>
+                  센터 위치 보기 →
+                </Link>
               </p>
             </div>
           </div>

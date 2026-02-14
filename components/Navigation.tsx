@@ -399,13 +399,6 @@ export default function Navigation() {
               </div>
             );
           })}
-          <Link
-            className="gnb-drawer-cta"
-            href="/location"
-            onClick={() => setIsMenuOpen(false)}
-          >
-            센터 위치
-          </Link>
         </nav>
       </aside>
     </>

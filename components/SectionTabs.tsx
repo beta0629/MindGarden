@@ -2,16 +2,20 @@
 
 import type { MouseEvent } from 'react';
 import { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 type TabItem = { label: string; href: string };
 
 export default function SectionTabs() {
+  const pathname = usePathname();
   const items: TabItem[] = useMemo(
     () => [
       { label: '소개', href: '#about' },
       { label: '프로그램', href: '#programs' },
       { label: '공간', href: '#gallery' },
       { label: '후기', href: '#reviews' },
+      { label: '칼럼', href: '/blog' },
       { label: '문의', href: '#contact' },
     ],
     []
@@ -19,8 +23,11 @@ export default function SectionTabs() {
 
   const [activeHref, setActiveHref] = useState<string>('#about');
 
+  const hashItems = useMemo(() => items.filter((it) => it.href.startsWith('#')), [items]);
+
   useEffect(() => {
-    const sections = items
+    if (pathname !== '/') return;
+    const sections = hashItems
       .map((it) => document.querySelector(it.href))
       .filter(Boolean) as HTMLElement[];
 
@@ -38,9 +45,9 @@ export default function SectionTabs() {
 
     sections.forEach((s) => obs.observe(s));
     return () => obs.disconnect();
-  }, [items]);
+  }, [pathname, hashItems]);
 
-  const onClick =
+  const onClickHash =
     (href: string) =>
     (e: MouseEvent<HTMLAnchorElement>) => {
       e.preventDefault();
@@ -51,16 +58,29 @@ export default function SectionTabs() {
   return (
     <div className="section-tabs" aria-label="Section Navigation">
       <div className="section-tabs-inner">
-        {items.map((it) => (
-          <a
-            key={it.href}
-            href={it.href}
-            onClick={onClick(it.href)}
-            className={`section-tab ${activeHref === it.href ? 'active' : ''}`}
-          >
-            {it.label}
-          </a>
-        ))}
+        {items.map((it) => {
+          const isPageLink = it.href.startsWith('/');
+          const isActive =
+            isPageLink ? pathname === it.href : activeHref === it.href;
+          return isPageLink ? (
+            <Link
+              key={it.href}
+              href={it.href}
+              className={`section-tab ${isActive ? 'active' : ''}`}
+            >
+              {it.label}
+            </Link>
+          ) : (
+            <a
+              key={it.href}
+              href={it.href}
+              onClick={onClickHash(it.href)}
+              className={`section-tab ${isActive ? 'active' : ''}`}
+            >
+              {it.label}
+            </a>
+          );
+        })}
       </div>
     </div>
   );

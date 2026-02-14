@@ -1584,6 +1584,32 @@ a.feature-card:hover {
     padding-bottom: 80px;
 }
 
+.blog-back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+    padding: 0.625rem 1.25rem;
+    background-color: #B8956A;
+    color: white;
+    text-decoration: none;
+    font-size: 0.875rem;
+    font-weight: 600;
+    border-radius: 0.75rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: background-color 0.2s, transform 0.2s, box-shadow 0.2s;
+}
+
+.blog-back-link:hover {
+    background-color: #A0825A;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.blog-post .blog-back-link-bottom {
+    margin-bottom: 0;
+}
+
 .blog-post-header {
     border-bottom: 1px solid var(--border-soft);
     padding-bottom: 24px;

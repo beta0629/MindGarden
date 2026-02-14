@@ -207,49 +207,53 @@ export default function Navigation() {
           <div className="gnb-right">
             <ul className="gnb-menu" aria-label="Global Navigation">
               {menu.map((m) => (
-                <li 
+                <li
                   key={m.href}
                   className={m.submenu ? 'has-submenu' : ''}
-                  onMouseEnter={() => m.submenu && setHoveredMenu(m.href)}
-                  onMouseLeave={() => m.submenu && setHoveredMenu(null)}
                 >
-                  {m.href.startsWith('/') ? (
-                    <Link 
-                      href={m.href}
-                      className="gnb-link" 
-                      style={textColor ? { color: textColor } : undefined}
-                    >
-                      {m.label}
-                    </Link>
-                  ) : (
-                    <a 
-                      href={pathname === '/' ? m.href : `/${m.href}`}
-                      onClick={onNavClick(m.href)} 
-                      className="gnb-link" 
-                      style={textColor ? { color: textColor } : undefined}
-                    >
-                      {m.label}
-                    </a>
-                  )}
-                  {m.submenu && hoveredMenu === m.href && (
-                    <ul 
-                      className="gnb-submenu"
-                      onMouseEnter={() => setHoveredMenu(m.href)}
-                      onMouseLeave={() => setHoveredMenu(null)}
-                    >
-                      {m.submenu.map((sub) => (
-                        <li key={sub.href}>
-                          <Link 
-                            href={sub.href}
-                            className="gnb-submenu-link"
-                            onClick={() => setIsMenuOpen(false)}
-                          >
-                            {sub.label}
-                          </Link>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
+                  <div
+                    onMouseEnter={() => m.submenu && setHoveredMenu(m.href)}
+                    onMouseLeave={() => m.submenu && setHoveredMenu(null)}
+                    style={{ display: 'contents' }}
+                  >
+                    {m.href.startsWith('/') ? (
+                      <Link
+                        href={m.href}
+                        className="gnb-link"
+                        style={textColor ? { color: textColor } : undefined}
+                      >
+                        {m.label}
+                      </Link>
+                    ) : (
+                      <a
+                        href={pathname === '/' ? m.href : `/${m.href}`}
+                        onClick={onNavClick(m.href)}
+                        className="gnb-link"
+                        style={textColor ? { color: textColor } : undefined}
+                      >
+                        {m.label}
+                      </a>
+                    )}
+                    {m.submenu && hoveredMenu === m.href && (
+                      <ul
+                        className="gnb-submenu"
+                        onMouseEnter={() => setHoveredMenu(m.href)}
+                        onMouseLeave={() => setHoveredMenu(null)}
+                      >
+                        {m.submenu.map((sub) => (
+                          <li key={sub.href}>
+                            <Link
+                              href={sub.href}
+                              className="gnb-submenu-link"
+                              onClick={() => setIsMenuOpen(false)}
+                            >
+                              {sub.label}
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
                 </li>
               ))}
             </ul>

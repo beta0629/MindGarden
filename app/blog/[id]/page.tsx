@@ -47,34 +47,7 @@ export default async function BlogPostPage({ params }: { params: { id: string } 
       <div className="content-shell">
         <div className="content-main">
           <article className="blog-post" style={{ paddingTop: '120px', maxWidth: '800px', margin: '0 auto' }}>
-            <Link 
-              href="/blog" 
-              style={{ 
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                marginBottom: '2rem',
-                padding: '0.625rem 1.25rem',
-                backgroundColor: '#B8956A',
-                color: 'white',
-                textDecoration: 'none',
-                fontSize: '0.875rem',
-                fontWeight: '600',
-                borderRadius: '0.75rem',
-                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-                transition: 'all 0.2s',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#A0825A';
-                e.currentTarget.style.transform = 'translateY(-2px)';
-                e.currentTarget.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.15)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = '#B8956A';
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
-              }}
-            >
+            <Link href="/blog" className="blog-back-link">
               <span>←</span>
               <span>블로그 목록으로</span>
             </Link>
@@ -166,33 +139,7 @@ export default async function BlogPostPage({ params }: { params: { id: string } 
             <BlogAdminActions postId={post.id} postTitle={post.title} />
 
             <div style={{ marginTop: '32px', paddingTop: '32px', borderTop: '1px solid var(--border-soft)' }}>
-              <Link 
-                href="/blog"
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  padding: '0.625rem 1.25rem',
-                  backgroundColor: '#B8956A',
-                  color: 'white',
-                  textDecoration: 'none',
-                  fontSize: '0.875rem',
-                  fontWeight: '600',
-                  borderRadius: '0.75rem',
-                  boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-                  transition: 'all 0.2s',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#A0825A';
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.15)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = '#B8956A';
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
-                }}
-              >
+              <Link href="/blog" className="blog-back-link blog-back-link-bottom">
                 <span>←</span>
                 <span>블로그 목록으로</span>
               </Link>

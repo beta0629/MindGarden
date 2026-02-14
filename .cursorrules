@@ -1,5 +1,10 @@
 # 마인드가든 홈페이지 프로젝트 규칙
 
+## 스킬·서브에이전트 사용 (반드시 준수)
+- **배포·서버** 요청(배포해, 서버 접속, 재기동, 웹훅 등): 먼저 `.cursor/skills/deploy-and-servers/SKILL.md` 를 읽고 그 내용대로 수행할 것. 배포를 수행한 뒤에는 가능하면 `./scripts/verify-ui-changes.sh` 를 실행해 결과를 보고할 것.
+- **GNB·네비·CTA** 수정 시: `.cursor/skills/gnb-inquiry-bottom-sheet/SKILL.md` 를 참조해 문의/상담 예약 정책을 위반하지 않을 것.
+- **검증** 요청("배포 후 검증해줘", "수정됐을 때 확인해줘", "바뀐 내용 검증해줘" 등): `.cursor/agents/verify-changes.md` 서브에이전트 절차대로 동작할 것. 즉 `./scripts/verify-ui-changes.sh` 실행 → exit 0이면 통과 보고, exit 1이면 실패 항목·수정 제안. 상세: `.cursor/skills/verify-changes/SKILL.md`
+
 ## 배포 및 서버 관련
 - 배포, 개발 서버 접속, 재기동, 웹훅, SSH, PM2 관련 요청이 있으면 **반드시** `.cursor/skills/deploy-and-servers/SKILL.md` 를 참조하여 일관된 정보로 응답할 것.
 - 서버 호스트·경로·PM2 앱 이름·배포 절차는 해당 스킬 문서에 정리되어 있음.

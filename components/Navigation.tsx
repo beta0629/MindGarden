@@ -120,7 +120,6 @@ export default function Navigation() {
     },
     { label: '칼럼', href: '/blog' },
     { label: '후기', href: '/reviews' },
-    { label: '센터 위치', href: '/location' },
   ];
 
   const onNavClick =

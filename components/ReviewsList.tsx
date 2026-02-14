@@ -144,20 +144,23 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
     const container = containerRef.current;
     const scrollSpeed = 0.5; // 픽셀/프레임
     let paused = false;
+    const halfWidth = () => container.scrollWidth / 2;
 
     const animate = () => {
+      if (!containerRef.current) return;
+
       // 드래그 중이거나 터치 중일 때는 멈춤
       if (isDragging || touchStartX.current !== null) {
         paused = true;
         animationRef.current = requestAnimationFrame(animate);
         return;
       }
-      
+
       // 일시정지 상태에서 재개
       if (paused) {
         paused = false;
       }
-      
+
       const now = Date.now();
       // 사용자가 직접 스크롤한 경우 잠시 멈춤 (300ms) - 자동 스크롤은 제외
       if (!isAutoScrolling.current && now - lastScrollTime.current < 300) {
@@ -165,16 +168,17 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
         return;
       }
 
-      // 자동 스크롤 시작
       isAutoScrolling.current = true;
-      const currentScroll = container.scrollLeft;
-      container.scrollLeft = currentScroll + scrollSpeed;
 
-      // 끝에 도달하면 처음으로 순환
-      if (container.scrollLeft >= container.scrollWidth / 2) {
+      // 끝에 도달하면 처음으로 순환 (리셋만 하고 다음 프레임에서 다시 스크롤 → 한 바퀴 후 멈춤 방지)
+      const currentScroll = container.scrollLeft;
+      if (currentScroll >= halfWidth() - 1) {
         container.scrollLeft = 0;
+        animationRef.current = requestAnimationFrame(animate);
+        return;
       }
 
+      container.scrollLeft = currentScroll + scrollSpeed;
       animationRef.current = requestAnimationFrame(animate);
     };
 

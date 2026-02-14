@@ -85,7 +85,7 @@ export default function Navigation() {
     }
   };
 
-  const openSubmenu = (href: string) => {
+  const enterSubmenu = (href: string) => {
     cancelCloseSubmenu();
     setHoveredMenu(href);
   };
@@ -240,7 +240,7 @@ export default function Navigation() {
                   className={m.submenu ? 'has-submenu' : ''}
                 >
                   <div
-                    onMouseEnter={() => m.submenu && openSubmenu(m.href)}
+                    onMouseEnter={() => m.submenu && enterSubmenu(m.href)}
                     onMouseLeave={() => m.submenu && scheduleCloseSubmenu()}
                     style={{ display: 'contents' }}
                   >
@@ -265,7 +265,7 @@ export default function Navigation() {
                     {m.submenu && hoveredMenu === m.href && (
                       <ul
                         className="gnb-submenu"
-                        onMouseEnter={() => openSubmenu(m.href)}
+                        onMouseEnter={() => enterSubmenu(m.href)}
                         onMouseLeave={() => scheduleCloseSubmenu()}
                       >
                         {m.submenu.map((sub) => (

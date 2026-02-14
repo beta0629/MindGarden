@@ -50,32 +50,9 @@ jobs:
           DB_USER: ${{ secrets.DEV_DB_USER || secrets.DB_USER }}
           DB_PASSWORD: ${{ secrets.DEV_DB_PASSWORD || secrets.DB_PASSWORD }}
           DB_NAME: ${{ secrets.DEV_DB_NAME || secrets.DB_NAME }}
-      
-      # 개발 서버 배포 (SSH를 통한 배포 예시)
-      - name: Deploy to Development Server
-        if: github.event_name == 'push'
-        uses: appleboy/scp-action@master
-        with:
-          host: ${{ secrets.DEV_HOST }}
-          username: ${{ secrets.DEV_USERNAME }}
-          key: ${{ secrets.DEV_SSH_KEY }}
-          port: ${{ secrets.DEV_SSH_PORT || 22 }}
-          source: ".next,package.json,package-lock.json,next.config.js,tsconfig.json,public,app,components,lib"
-          target: ${{ secrets.DEV_DEPLOY_PATH }}
-          strip_components: 0
-      
-      - name: Restart Development Server
-        if: github.event_name == 'push'
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.DEV_HOST }}
-          username: ${{ secrets.DEV_USERNAME }}
-          key: ${{ secrets.DEV_SSH_KEY }}
-          port: ${{ secrets.DEV_SSH_PORT || 22 }}
-          script: |
-            cd ${{ secrets.DEV_DEPLOY_PATH }}
-            npm ci --production
-            pm2 restart homepage-dev || pm2 start npm --name "homepage-dev" -- start
+
+      # 실제 배포는 GitHub Webhook으로 처리 (별도 SSH 키 불필요)
+      # 푸시 시 서버 homepage-webhook이 수신 → deploy-from-webhook.sh (git pull, build, pm2 restart)
 
   # 프로덕션 브랜치 빌드 및 테스트
   build-and-test:

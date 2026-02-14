@@ -34,6 +34,10 @@
 - **동작**: `homepage/develop` 푸시 → GitHub이 서버로 POST → `deploy-from-webhook.sh` 실행 → git pull, build, **pm2 restart homepage-dev** 자동
 - **재기동**: 웹훅이 정상 동작하면 **수동 재기동 불필요** (스크립트에 포함됨)
 
+**자동 배포가 되는지 확인**: 푸시 후에도 사이트에 오류가 나거나 예전 버전이 보이면 웹훅이 동작하지 않는 것이다. (1) GitHub 저장소 → Settings → Webhooks 에서 해당 URL이 등록돼 있는지, (2) 서버에서 `pm2 list` 로 `homepage-webhook` 이 떠 있는지 확인. **자동이 안 되면 아래 5번 수동 배포**로 반영하면 된다.
+
+**배포 후 자동 재기동이 안 되는 경우**: 코드는 갱신됐는데(빌드까지 됐는데) 앱이 예전 버전으로 보이면 **재기동 단계가 빠진 것**이다. 서버에서 다음을 확인할 것. (1) `deploy-from-webhook.sh` 스크립트 **끝**에 `pm2 restart homepage-dev` 가 반드시 있는지. (2) `git pull` 만 쓰는 경로라면 `.git/hooks/post-merge` 에도 빌드 후 `pm2 restart homepage-dev` 가 있는지. 없으면 추가. 참고 예시: `docs/DEPLOY_SCRIPT_REFERENCE.md`
+
 ---
 
 ## 4. 서버 배포 스크립트 경로
@@ -85,6 +89,7 @@ pm2 restart homepage-dev
 
 - `docs/GITHUB_WEBHOOK_SETUP.md` — 웹훅 설정 방법
 - `docs/AUTO_DEPLOY_SETUP.md` — 자동 배포 개요
+- `docs/DEPLOY_SCRIPT_REFERENCE.md` — 배포 스크립트 예시·**재기동(pm2 restart) 확인** 방법
 - Webhook Secret: `mindgarden-webhook-secret-2025` (GitHub Webhooks 설정 시 사용)
 
 ---

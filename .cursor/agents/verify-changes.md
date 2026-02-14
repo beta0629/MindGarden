@@ -11,8 +11,8 @@ tools: Read, Grep, Glob, run_terminal_cmd
 1. **검증 스크립트 실행**  
    프로젝트 루트에서 `./scripts/verify-ui-changes.sh` 를 실행한다.
 2. **결과 해석**  
-   - exit 0 → "검증 통과"로 보고, 필요 시 요약만 전달한다.  
-   - exit 1 → 실패한 항목(스크립트 출력)을 그대로 전달하고, 해당 파일(예: `components/Navigation.tsx`)을 열어 원인과 수정 제안을 한다.
+   - exit 0 → "검증 통과"로 보고. **개발 배포까지 진행**하는 요청("소스 수정 끝나면 배포해줘" 등)이 있으면 `.cursor/skills/deploy-and-servers/SKILL.md` 를 참조해 변경사항 커밋 후 `git push origin homepage/develop` 으로 개발 배포를 진행한다.  
+   - exit 1 → 실패한 항목(스크립트 출력)을 그대로 전달하고, 해당 파일(예: `components/Navigation.tsx`)을 열어 원인과 수정 제안을 한다. 배포는 하지 않는다.
 3. **추가 확인**  
    검증 스크립트에 없는 항목을 사용자가 요청하면 `.cursor/skills/verify-changes/SKILL.md` 체크리스트를 참고해 동일한 방식으로 확인한다.
 

@@ -121,7 +121,6 @@ export default function Navigation() {
     { label: '칼럼', href: '/blog' },
     { label: '후기', href: '/reviews' },
     { label: '센터 위치', href: '/location' },
-    { label: '문의', href: '#contact' },
   ];
 
   const onNavClick =
@@ -255,13 +254,13 @@ export default function Navigation() {
               ))}
             </ul>
 
-            <a 
-              href={pathname === '/' ? '#contact' : '/#contact'} 
-              onClick={onNavClick('#contact')} 
+            <Link
+              href="/location"
               className={`gnb-cta ${isScrolled ? 'scrolled' : ''}`}
+              onClick={() => setIsMenuOpen(false)}
             >
-              상담 예약
-            </a>
+              센터 위치
+            </Link>
 
             <button
               type="button"
@@ -368,13 +367,13 @@ export default function Navigation() {
               </div>
             );
           })}
-          <a 
-            className="gnb-drawer-cta" 
-            href={pathname === '/' ? '#contact' : '/#contact'} 
-            onClick={onNavClick('#contact')}
+          <Link
+            className="gnb-drawer-cta"
+            href="/location"
+            onClick={() => setIsMenuOpen(false)}
           >
-            상담 예약
-          </a>
+            센터 위치
+          </Link>
         </nav>
       </aside>
     </>

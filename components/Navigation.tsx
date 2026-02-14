@@ -1,7 +1,7 @@
 'use client';
 
 import type { MouseEvent } from 'react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import Image from 'next/image';
@@ -66,7 +66,36 @@ export default function Navigation() {
   const lineColor = isWhite && !isScrolled ? 'var(--white)' : undefined;
 
   const [hoveredMenu, setHoveredMenu] = useState<string | null>(null);
-  
+  const closeSubmenuTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const SUBMENU_CLOSE_DELAY_MS = 250;
+
+  const scheduleCloseSubmenu = () => {
+    if (closeSubmenuTimerRef.current) clearTimeout(closeSubmenuTimerRef.current);
+    closeSubmenuTimerRef.current = setTimeout(() => {
+      setHoveredMenu(null);
+      closeSubmenuTimerRef.current = null;
+    }, SUBMENU_CLOSE_DELAY_MS);
+  };
+
+  const cancelCloseSubmenu = () => {
+    if (closeSubmenuTimerRef.current) {
+      clearTimeout(closeSubmenuTimerRef.current);
+      closeSubmenuTimerRef.current = null;
+    }
+  };
+
+  const openSubmenu = (href: string) => {
+    cancelCloseSubmenu();
+    setHoveredMenu(href);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (closeSubmenuTimerRef.current) clearTimeout(closeSubmenuTimerRef.current);
+    };
+  }, []);
+
   // 모바일 드로어에서 열린 서브메뉴 상태 관리
   const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
   
@@ -211,8 +240,8 @@ export default function Navigation() {
                   className={m.submenu ? 'has-submenu' : ''}
                 >
                   <div
-                    onMouseEnter={() => m.submenu && setHoveredMenu(m.href)}
-                    onMouseLeave={() => m.submenu && setHoveredMenu(null)}
+                    onMouseEnter={() => m.submenu && openSubmenu(m.href)}
+                    onMouseLeave={() => m.submenu && scheduleCloseSubmenu()}
                     style={{ display: 'contents' }}
                   >
                     {m.href.startsWith('/') ? (
@@ -236,8 +265,8 @@ export default function Navigation() {
                     {m.submenu && hoveredMenu === m.href && (
                       <ul
                         className="gnb-submenu"
-                        onMouseEnter={() => setHoveredMenu(m.href)}
-                        onMouseLeave={() => setHoveredMenu(null)}
+                        onMouseEnter={() => openSubmenu(m.href)}
+                        onMouseLeave={() => scheduleCloseSubmenu()}
                       >
                         {m.submenu.map((sub) => (
                           <li key={sub.href}>

@@ -38,6 +38,23 @@
 
 **배포 후 자동 재기동이 안 되는 경우**: 코드는 갱신됐는데(빌드까지 됐는데) 앱이 예전 버전으로 보이면 **재기동 단계가 빠진 것**이다. 서버에서 다음을 확인할 것. (1) `deploy-from-webhook.sh` 스크립트 **끝**에 `pm2 restart homepage-dev` 가 반드시 있는지. (2) `git pull` 만 쓰는 경로라면 `.git/hooks/post-merge` 에도 빌드 후 `pm2 restart homepage-dev` 가 있는지. 없으면 추가. 참고 예시: `docs/DEPLOY_SCRIPT_REFERENCE.md`
 
+**자동 배포 자체가 안 될 때 점검 (웹훅 → 재기동까지)**  
+푸시해도 자동으로 배포·재기동이 안 되면 아래 순서로 점검한다. 상세: `docs/AUTO_DEPLOY_TROUBLESHOOTING.md`
+
+1. **웹훅이 서버에 도달하는지**  
+   - GitHub 저장소 → Settings → Webhooks → Payload URL `http://114.202.247.246:3001/webhook` 등록 여부  
+   - Recent Deliveries에서 푸시 시 **200** 응답·성공 여부 (실패 시 URL/방화벽/시크릿 확인)
+2. **서버 웹훅 로그**  
+   - `pm2 logs homepage-webhook --lines 100`  
+   - "Webhook received for ref:", "Deployment triggered" 등이 **전혀 없으면** 1번부터 재확인 (요청이 서버에 안 옴)
+3. **배포 스크립트·리스너**  
+   - `deploy-from-webhook.sh` 끝에 `pm2 restart homepage-dev` 있는지  
+   - `webhook-listener.js`: `refs/heads/homepage/develop` 일 때만 `exec`로 위 스크립트 실행 (서버에 이미 있음)
+4. **빌드 실패로 재기동까지 못 가는 경우**  
+   - 웹훅은 오지만 빌드가 실패하면 `set -e` 등으로 스크립트가 중단되어 `pm2 restart`가 실행되지 않음  
+   - `pm2 logs homepage-webhook` 에 "Deployment error" 등이 있는지 확인  
+   - 서버에서 수동 실행으로 동일 환경 검증: `cd /var/www/homepage && bash deploy-from-webhook.sh` (실패 시 env/노드 버전 등 확인)
+
 ---
 
 ## 4. 서버 배포 스크립트 경로
@@ -89,6 +106,7 @@ pm2 restart homepage-dev
 
 - `docs/GITHUB_WEBHOOK_SETUP.md` — 웹훅 설정 방법
 - `docs/AUTO_DEPLOY_SETUP.md` — 자동 배포 개요
+- `docs/AUTO_DEPLOY_TROUBLESHOOTING.md` — **자동 배포가 안 될 때 점검 절차** (웹훅 수신 → 재기동)
 - `docs/DEPLOY_SCRIPT_REFERENCE.md` — 배포 스크립트 예시·**재기동(pm2 restart) 확인** 방법
 - Webhook Secret: `mindgarden-webhook-secret-2025` (GitHub Webhooks 설정 시 사용)
 

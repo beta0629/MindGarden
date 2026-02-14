@@ -94,7 +94,8 @@ export default function Navigation() {
       submenu: [
         { label: '가치관', href: '/values' },
         { label: '전문특화', href: '/about/mindgarden' },
-        { label: '전문가', href: '/counselors' }
+        { label: '전문가', href: '/counselors' },
+        { label: '센터사진 및 동영상', href: '/#gallery' }
       ]
     },
     { 
@@ -119,7 +120,6 @@ export default function Navigation() {
     },
     { label: '칼럼', href: '/blog' },
     { label: '후기', href: '/reviews' },
-    { label: '공간', href: '#gallery' },
     { label: '센터 위치', href: '/location' },
     { label: '문의', href: '#contact' },
   ];

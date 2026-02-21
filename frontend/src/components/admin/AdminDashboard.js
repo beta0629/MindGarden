@@ -23,7 +23,15 @@ import SpecialtyManagementModal from '../consultant/SpecialtyManagementModal';
 import PerformanceMetricsModal from '../statistics/PerformanceMetricsModal';
 import RecurringExpenseModal from '../finance/RecurringExpenseModal';
 import ErpReportModal from '../erp/ErpReportModal';
+import MappingDepositModal from '../mapping/MappingDepositModal';
 import AdminDashboardMonitoring from './AdminDashboard/AdminDashboardMonitoring';
+import StandardizedApi from '../../utils/standardizedApi';
+import {
+  CoreFlowPipeline,
+  ManualMatchingQueue,
+  DepositPendingList,
+  SchedulePendingList
+} from './AdminDashboard/index';
 import { useSession } from '../../contexts/SessionContext';
 import { COMPONENT_CSS } from '../../constants/css-variables';
 import csrfTokenManager from '../../utils/csrfTokenManager';
@@ -36,6 +44,7 @@ import '../../styles/dashboard-tokens-extension.css';
 import '../../styles/dashboard-common-v3.css';
 import '../../styles/themes/admin-theme.css';
 import './AdminDashboard.new.css';
+import './AdminDashboard/AdminDashboardPipeline.css';
 import './system/SystemStatus.css';
 import './system/SystemTools.css';
 import { ADMIN_ROUTES } from '../../constants/adminRoutes';
@@ -106,6 +115,11 @@ const AdminDashboard = ({ user: propUser }) => {
         totalAmount: 0,
         oldestHours: 0
     });
+    const [unassignedClients, setUnassignedClients] = useState([]);
+    const [consultants, setConsultants] = useState([]);
+    const [pendingDepositList, setPendingDepositList] = useState([]);
+    const [matchingQueueLoading, setMatchingQueueLoading] = useState(false);
+    const [depositModalMapping, setDepositModalMapping] = useState(null);
     
     const [showErpReport, setShowErpReport] = useState(false);
     const [showPerformanceMetrics, setShowPerformanceMetrics] = useState(false);
@@ -357,54 +371,68 @@ const AdminDashboard = ({ user: propUser }) => {
         }
     }, []);
 
+    const loadUnassignedClientsAndConsultants = useCallback(async () => {
+        setMatchingQueueLoading(true);
+        try {
+            const dateStr = new Date().toISOString().split('T')[0];
+            const [clientsRes, consultantsRes] = await Promise.all([
+                StandardizedApi.get('/api/v1/admin/clients/with-mapping-info'),
+                StandardizedApi.get('/api/v1/admin/consultants/with-vacation', { date: dateStr })
+            ]);
+            const clientsRaw = clientsRes?.clients ?? clientsRes?.data?.clients ?? [];
+            const clients = Array.isArray(clientsRaw) ? clientsRaw : [];
+            const unassigned = clients.filter((c) => (c.mappingCount ?? 0) === 0);
+            setUnassignedClients(unassigned);
+            const consultantsRaw = consultantsRes?.consultants ?? consultantsRes?.data?.consultants ?? consultantsRes;
+            const consultantsList = Array.isArray(consultantsRaw) ? consultantsRaw : [];
+            setConsultants(consultantsList);
+        } catch (error) {
+            console.error('미배정 내담자/상담사 로드 실패:', error);
+            notificationManager.error(error?.message || '미배정 내담자 목록을 불러오는데 실패했습니다.');
+            setUnassignedClients([]);
+            setConsultants([]);
+        } finally {
+            setMatchingQueueLoading(false);
+        }
+    }, []);
+
+    const handleConfirmMatch = useCallback(async (clientId, consultantId) => {
+        try {
+            await StandardizedApi.post('/api/v1/admin/mappings', {
+                clientId: Number(clientId),
+                consultantId: Number(consultantId),
+                status: 'PENDING_PAYMENT',
+                totalSessions: 1,
+                remainingSessions: 1,
+                packageName: '초기 상담',
+                packagePrice: 0,
+                paymentStatus: 'PENDING'
+            });
+            notificationManager.success('매칭이 성공적으로 생성되었습니다.');
+            await Promise.all([loadUnassignedClientsAndConsultants(), loadStats(), loadPendingDepositStats()]);
+        } catch (error) {
+            const msg = error?.message || error?.response?.data?.message || '매칭 생성에 실패했습니다.';
+            notificationManager.error(msg);
+        }
+    }, [loadUnassignedClientsAndConsultants, loadStats, loadPendingDepositStats]);
+
     const loadPendingDepositStats = useCallback(async () => {
         try {
-            console.log('🔍 입금 확인 대기 통계 로드 시작...');
-            const response = await fetch('/api/v1/admin/mappings/pending-deposit');
-            console.log('🔍 API 응답 상태:', response.status);
-            
-            if (response.ok) {
-                const data = await response.json();
-                console.log('🔍 API 응답 데이터:', data);
-                
-                if (data.success && data.data) {
-                    const pendingList = Array.isArray(data.data) ? data.data : [];
-                    const count = pendingList.length;
-                    const totalAmount = pendingList.reduce((sum, mapping) => sum + (mapping.packagePrice || 0), 0);
-                    const oldestHours = pendingList.length > 0 
-                        ? Math.max(...pendingList.map(mapping => mapping.hoursElapsed || 0), 0)
-                        : 0;
-                    
-                    console.log('🔍 계산된 통계:', { count, totalAmount, oldestHours });
-                    
-                    setPendingDepositStats({
-                        count,
-                        totalAmount,
-                        oldestHours
-                    });
-                } else {
-                    console.log('🔍 데이터가 없거나 실패:', data);
-                    setPendingDepositStats({
-                        count: 0,
-                        totalAmount: 0,
-                        oldestHours: 0
-                    });
-                }
-            } else {
-                console.error('🔍 API 호출 실패:', response.status, response.statusText);
-                setPendingDepositStats({
-                    count: 0,
-                    totalAmount: 0,
-                    oldestHours: 0
-                });
-            }
+            const data = await StandardizedApi.get('/api/v1/admin/mappings/pending-deposit');
+            const rawMappings = data?.mappings ?? data?.data?.mappings ?? (Array.isArray(data) ? data : []);
+            const pendingList = Array.isArray(rawMappings) ? rawMappings : [];
+            const count = pendingList.length;
+            const totalAmount = pendingList.reduce((sum, m) => sum + (m.packagePrice || 0), 0);
+            const oldestHours = pendingList.length > 0
+                ? Math.max(...pendingList.map((m) => m.hoursElapsed || 0), 0)
+                : 0;
+            setPendingDepositStats({ count, totalAmount, oldestHours });
+            setPendingDepositList(pendingList);
         } catch (error) {
             console.error('입금 확인 대기 통계 로드 실패:', error);
-            setPendingDepositStats({
-                count: 0,
-                totalAmount: 0,
-                oldestHours: 0
-            });
+            notificationManager.error(error?.message || '입금 확인 대기 목록을 불러오는데 실패했습니다.');
+            setPendingDepositStats({ count: 0, totalAmount: 0, oldestHours: 0 });
+            setPendingDepositList([]);
         }
     }, []);
 
@@ -487,7 +515,8 @@ const AdminDashboard = ({ user: propUser }) => {
         loadStats();
         loadRefundStats();
         loadPendingDepositStats();
-    }, [loadStats, loadRefundStats, loadPendingDepositStats]);
+        loadUnassignedClientsAndConsultants();
+    }, [loadStats, loadRefundStats, loadPendingDepositStats, loadUnassignedClientsAndConsultants]);
 
     const createTestData = async () => {
         try {
@@ -635,6 +664,16 @@ const AdminDashboard = ({ user: propUser }) => {
                 </div>
             </div>
 
+            {/* Core Flow Pipeline (5단계) */}
+            <CoreFlowPipeline
+              stats={{
+                totalMappings: stats.totalMappings,
+                pendingDepositCount: pendingDepositStats.count,
+                activeMappings: stats.activeMappings,
+                schedulePendingCount: 0
+              }}
+            />
+
             {/* Dashboard Stats Grid */}
             <div className="mg-dashboard-stats">
                 <StatCard
@@ -658,6 +697,41 @@ const AdminDashboard = ({ user: propUser }) => {
                     change={todayStats.completedGrowthRate !== undefined ? `${todayStats.completedGrowthRate > 0 ? '+' : ''}${todayStats.completedGrowthRate}%` : null}
                     changeType={todayStats.completedGrowthRate > 0 ? "positive" : todayStats.completedGrowthRate < 0 ? "negative" : "neutral"}
                 />
+            </div>
+
+            {/* 미배정 내담자 매칭 대기열 */}
+            <ManualMatchingQueue
+              items={unassignedClients.map((client) => ({
+                id: client.id,
+                clientName: client.name || '-',
+                clientMeta: client.email || '매칭 없음',
+                consultantOptions: consultants.map((c) => ({
+                  value: String(c.id),
+                  label: c.name || `상담사 ${c.id}`
+                }))
+              }))}
+              onConfirmMatch={handleConfirmMatch}
+              loading={matchingQueueLoading}
+            />
+
+            {/* 입금 확인 대기 / 스케줄 등록 대기 (파이프라인 하단) */}
+            <div className="mg-dashboard-pipeline-detail">
+              <DepositPendingList
+                items={pendingDepositList.map((m) => ({
+                  id: m.id,
+                  clientName: m.clientName,
+                  amount: m.packagePrice,
+                  _raw: m
+                }))}
+                onDepositConfirm={(item) => {
+                  const mapping = item._raw || item;
+                  setDepositModalMapping(mapping);
+                }}
+              />
+              <SchedulePendingList
+                items={[]}
+                onScheduleRegister={() => navigate(ADMIN_ROUTES.SCHEDULES)}
+              />
             </div>
 
             {/* 상세 통계 섹션들 */}
@@ -1496,6 +1570,16 @@ const AdminDashboard = ({ user: propUser }) => {
                     onClose={() => setShowErpReport(false)}
                 />
             )}
+
+            <MappingDepositModal
+                isOpen={!!depositModalMapping}
+                onClose={() => setDepositModalMapping(null)}
+                mapping={depositModalMapping || {}}
+                onDepositConfirmed={() => {
+                    setDepositModalMapping(null);
+                    loadPendingDepositStats();
+                }}
+            />
 
             {/* AI 및 시스템 모니터링 - 관리자만 접근 가능 */}
             {(() => {

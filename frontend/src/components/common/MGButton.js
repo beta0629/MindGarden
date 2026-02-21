@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-// import UnifiedLoading from './UnifiedLoading'; // 임시 비활성화
+import { Loader } from 'lucide-react';
 import './MGButton.css';
 
 /**
@@ -10,7 +10,7 @@ import './MGButton.css';
  * - 접근성 고려
  * 
  * @param {Object} props - 컴포넌트 props
- * @param {string} props.variant - 버튼 스타일 (primary, secondary, success, danger, warning, info, outline)
+ * @param {string} props.variant - 버튼 스타일 (primary, secondary, success, danger, warning, info, outline, progress)
  * @param {string} props.size - 버튼 크기 (small, medium, large)
  * @param {boolean} props.disabled - 비활성화 상태
  * @param {boolean} props.loading - 로딩 상태
@@ -19,23 +19,15 @@ import './MGButton.css';
  * @param {number} props.clickDelay - 클릭 후 대기 시간 (ms)
  * @param {Function} props.onClick - 클릭 핸들러
  * @param {string} props.className - 추가 CSS 클래스
-/**
  * @param {string} props.type - 버튼 타입 (button, submit, reset)
-/**
  * @param {React.ReactNode} props.children - 버튼 내용
-/**
  * @param {Object} props.style - 인라인 스타일
-/**
  * @param {string} props.title - 툴팁 텍스트
-/**
  * @param {boolean} props.fullWidth - 전체 너비 사용 여부
-/**
+ * @param {number} props.progress - 진행률 (0-100), variant="progress"일 때 사용
  * 
-/**
  * @author MindGarden
-/**
- * @version 1.0.0
-/**
+ * @version 1.1.0
  * @since 2025-01-22
  */
 const MGButton = ({
@@ -53,6 +45,7 @@ const MGButton = ({
   style = {},
   title = '',
   fullWidth = false,
+  progress = 0,
   ...props
 }) => {
   const [isProcessing, setIsProcessing] = useState(false);
@@ -86,50 +79,54 @@ const MGButton = ({
     }
   }, [isProcessing, disabled, loading, preventDoubleClick, clickDelay, onClick]);
 
+  const isLoadingState = loading || isProcessing;
+  const isDisabledState = disabled;
+
   // 버튼 클래스 구성
   const buttonClasses = [
     'mg-button',
     `mg-button--${variant}`,
     `mg-button--${size}`,
-    disabled || loading || isProcessing ? 'mg-button--disabled' : '',
+    isDisabledState ? 'mg-button--disabled' : '',
+    isLoadingState ? 'mg-button--loading' : '',
     fullWidth ? 'mg-button--full-width' : '',
     className
   ].filter(Boolean).join(' ');
 
   // 버튼 상태 확인
-  const isDisabled = disabled || loading || isProcessing;
+  const isButtonDisabled = isDisabledState || isLoadingState;
 
   return (
     <button
       type={type}
       className={buttonClasses}
-      disabled={isDisabled}
+      disabled={isButtonDisabled}
       onClick={handleClick}
       style={style}
-      title={title || (isProcessing ? '처리 중입니다...' : '')}
-      aria-disabled={isDisabled}
+      title={title || (isLoadingState ? '처리 중입니다...' : '')}
+      aria-disabled={isButtonDisabled}
       {...props}
     >
+      {variant === 'progress' && (
+        <div 
+          className="mg-button__progress-bar" 
+          style={{ width: `${Math.min(100, Math.max(0, progress))}%` }} 
+        />
+      )}
+
       <span className="mg-button__content">
         {/* 로딩 상태 표시 */}
-        {loading && (
+        {isLoadingState && (
           <span className="mg-button__loading">
-            <div className="mg-loading">로딩중...</div>
+            <Loader className="mg-button__spinner" size={size === 'small' ? 14 : 16} />
           </span>
         )}
         
         {/* 버튼 텍스트/내용 */}
-        <span className={`mg-button__text ${loading ? 'mg-button__text--loading' : ''}`}>
-          {loading ? loadingText : children}
+        <span className={`mg-button__text ${isLoadingState ? 'mg-button__text--loading' : ''}`}>
+          {isLoadingState ? loadingText : children}
         </span>
       </span>
-      
-      {/* 처리 중 오버레이 */}
-      {isProcessing && !loading && (
-        <span className="mg-button__processing-overlay">
-          <div className="mg-loading">로딩중...</div>
-        </span>
-      )}
     </button>
   );
 };

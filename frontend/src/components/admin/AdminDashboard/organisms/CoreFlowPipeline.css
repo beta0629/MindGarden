@@ -1,0 +1,22 @@
+/**
+ * CoreFlowPipeline - 5단계 파이프라인 스타일
+ */
+.core-flow-pipeline {
+  margin-bottom: var(--mg-spacing-lg, 24px);
+}
+
+.core-flow-pipeline__steps {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  overflow-x: auto;
+  padding: var(--mg-spacing-md, 12px) 0;
+}
+
+.core-flow-pipeline__connector {
+  width: 24px;
+  min-width: 24px;
+  flex-shrink: 0;
+  border-top: 2px dashed var(--mg-border-default, #cbd5e1);
+  margin-top: 40px;
+}

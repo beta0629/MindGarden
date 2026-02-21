@@ -1,0 +1,26 @@
+/**
+ * AdminDashboard Core Flow Pipeline 디자인 토큰
+ * 5단계 파이프라인 및 매칭 대기열 스타일
+ *
+ * @author MindGarden
+ * @since 2025-02-21
+ */
+.mg-dashboard-pipeline-detail {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+.mg-dashboard-layout {
+  /* 파이프라인 전용 토큰 */
+  --mg-pipeline-primary: #4b745c;
+  --mg-pipeline-text: #2d3748;
+  --mg-pipeline-radius: 12px;
+  --mg-pipeline-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  --mg-pipeline-card-bg-neutral: #f8fafc;
+  --mg-pipeline-card-bg-warning: #fff5f5;
+  --mg-pipeline-card-bg-success: #ebf2ee;
+  --mg-pipeline-card-bg-info: #fcf3ed;
+  --mg-pipeline-card-bg-auto: #f8fafc;
+}

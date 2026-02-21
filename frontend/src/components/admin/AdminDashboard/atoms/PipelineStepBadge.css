@@ -1,0 +1,45 @@
+/**
+ * PipelineStepBadge - 파이프라인 단계 배지 스타일
+ * 디자인 토큰: --mg-pipeline-* 변수 사용
+ */
+.pipeline-step-badge {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  line-height: 1.2;
+  font-weight: 500;
+}
+
+.pipeline-step-badge__value {
+  font-weight: 600;
+  color: var(--mg-pipeline-badge-value, #2d3748);
+}
+
+.pipeline-step-badge__label {
+  font-size: 0.7rem;
+  color: var(--mg-pipeline-badge-label, #64748b);
+}
+
+.pipeline-step-badge--neutral {
+  background: #f8fafc;
+}
+
+.pipeline-step-badge--warning {
+  background: #fff5f5;
+}
+
+.pipeline-step-badge--success {
+  background: #ebf2ee;
+}
+
+.pipeline-step-badge--info {
+  background: #fcf3ed;
+}
+
+.pipeline-step-badge--auto {
+  background: #f8fafc;
+}

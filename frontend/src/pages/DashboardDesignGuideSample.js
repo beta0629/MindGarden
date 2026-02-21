@@ -1,675 +1,257 @@
-import React, { useState, useEffect } from 'react';
-import './DashboardDesignGuideSample.css';
+import React from 'react';
 
 /**
- * 디자인 가이드 기반 대시보드 샘플 페이지
+ * 🎨 [Atomic Design Sample - Pure Presentational Component]
  * 
- * 디자인 가이드(DASHBOARD_DESIGN_GUIDE.md)에 정의된 스펙을 정확히 구현한 샘플
- * 실제 대시보드에 적용하기 전 레이아웃 및 디자인 확인용
+ * Role & Objective:
+ * - UI/UX Publisher & Atomic Design Expert
+ * - Analyzed from Pencil MCP Wireframe
+ * - Pure visual validation mockup (No business logic)
  * 
- * @author MindGarden
- * @version 1.0.0
- * @since 2025-02-04
- * @reference docs/standards/DASHBOARD_DESIGN_GUIDE.md
+ * Strict Rules Applied:
+ * - NO state management (useState, useEffect, useSession, etc.)
+ * - Mock data used for rendering
+ * - No hardcoded colors (using CSS variables mapped via inline styles or Tailwind config)
+ * - Soft rounded corners, subtle shadows, and ample padding applied for a warm, calming aesthetic.
  */
-const DashboardDesignGuideSample = () => {
-  const [isDarkMode, setIsDarkMode] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return window.innerWidth <= 767;
-    }
-    return false;
-  });
 
-  // 모바일 감지
-  useEffect(() => {
-    const checkMobile = () => {
-      const mobile = window.innerWidth <= 767;
-      setIsMobile(mobile);
-      if (!mobile) {
-        setIsSidebarOpen(true);
-      } else {
-        setIsSidebarOpen(false);
-      }
-    };
-    
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
+// --- Mock Data ---
+const kpiData = [
+  { id: 1, label: '총 사용자 (입주사/상담사)', value: '2,456', badge: '12% ↑', icon: '👥', iconBg: 'var(--mg-primary-100)', iconColor: 'var(--mg-primary-600)' },
+  { id: 2, label: '이번 달 예약 건수', value: '3,420', badge: '18% ↑', icon: '📅', iconBg: 'var(--mg-grade-consultant-expert-light, #ffedd5)', iconColor: 'var(--mg-grade-consultant-expert-dark, #ea580c)' },
+  { id: 3, label: '상담 완료율', value: '94.2%', badge: '+2.4%', icon: '✓', iconBg: 'var(--mg-grade-client-platinum-light, #bbf7d0)', iconColor: 'var(--mg-grade-client-platinum-dark, #16a34a)', isDark: true }
+];
 
-  const toggleDarkMode = () => {
-    setIsDarkMode(!isDarkMode);
-    document.documentElement.classList.toggle('dark');
-  };
+const counselorData = [
+  { name: '김상담', rating: '4.9/5.0', initial: '김', bgColor: '#e0e7ff', barColor: '#6366f1' },
+  { name: '이마음', rating: '4.8/5.0', initial: '이', bgColor: '#dcfce7', barColor: '#22c55e' },
+  { name: '박치유', rating: '4.7/5.0', initial: '박', bgColor: '#ffedd5', barColor: '#f97316' },
+  { name: '최행복', rating: '4.6/5.0', initial: '최', bgColor: '#dbeafe', barColor: '#3b82f6' }
+];
 
-  const toggleSidebar = () => {
-    setIsSidebarOpen(!isSidebarOpen);
-  };
+const metricData = [
+  { label: '이번 달 환불 건수', value: '12건', icon: '↩', iconBg: '#fee2e2', iconColor: '#ef4444' },
+  { label: '총 환불 금액', value: '₩840,000', icon: '₩', iconBg: '#fef3c7', iconColor: '#f59e0b' },
+  { label: '상담 정상 완료', value: '3,105 건', icon: '✓', iconBg: '#dcfce7', iconColor: '#22c55e' },
+  { label: '평균 상담 완료 시간', value: '52분', icon: '⏱', iconBg: '#dbeafe', iconColor: '#3b82f6' }
+];
 
-  // 샘플 데이터
-  const kpiData = [
-    {
-      id: 1,
-      label: '총 사용자',
-      value: '2,456',
-      change: '+12%',
-      changeType: 'up',
-      icon: 'group',
-      color: 'indigo'
-    },
-    {
-      id: 2,
-      label: '이번 달 예약 건수',
-      value: '3,420',
-      change: '+18%',
-      changeType: 'up',
-      icon: 'event_note',
-      color: 'purple'
-    },
-    {
-      id: 3,
-      label: '상담 완료율',
-      value: '94.2%',
-      change: '+2.4%',
-      changeType: 'up',
-      icon: 'check_circle',
-      color: 'emerald',
-      isDark: true
-    }
-  ];
+const adminFeaturesData = [
+  { title: '신규 입주사 등록', desc: '계약 및 계정 생성', icon: '🏢', bgColor: '#6366f1' },
+  { title: '상담사 승인 관리', desc: '자격 증명 검토', icon: '✓', bgColor: '#22c55e' },
+  { title: '전체 공지 발송', desc: '앱 푸시 및 메일', icon: '📢', bgColor: '#f97316' },
+  { title: '시스템 설정', desc: 'API 및 연동 관리', icon: '⚙', bgColor: '#64748b' }
+];
 
+// --- Components (Atoms, Molecules, Organisms) ---
+
+// [Atom] Badge Component
+const TrendBadge = ({ text, isDark }) => (
+  <span 
+    className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold"
+    style={{
+      backgroundColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'var(--mg-grade-client-platinum-light, #dcfce7)',
+      color: isDark ? 'var(--mg-white, #ffffff)' : 'var(--mg-grade-client-platinum-dark, #16a34a)'
+    }}
+  >
+    {text}
+  </span>
+);
+
+// [Atom] Icon Container
+const IconBox = ({ icon, bgColor, color, size = 'w-12 h-12', rounded = 'rounded-full', fontSize = 'text-xl' }) => (
+  <div 
+    className={`flex items-center justify-center ${size} ${rounded}`}
+    style={{ backgroundColor: bgColor, color: color }}
+  >
+    <span className={`font-semibold ${fontSize}`}>{icon}</span>
+  </div>
+);
+
+// [Molecule] KPI Card
+const KpiCard = ({ label, value, badge, icon, iconBg, iconColor, isDark }) => (
+  <div 
+    className="p-6 rounded-2xl shadow-md flex items-center gap-5 border"
+    style={{ 
+      backgroundColor: isDark ? 'var(--mg-text-primary, #1a1d24)' : 'var(--mg-bg-card, #ffffff)',
+      borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'var(--mg-border-light, #e2e8f0)',
+      color: isDark ? 'var(--mg-white, #ffffff)' : 'var(--mg-text-primary, #1e293b)'
+    }}
+  >
+    <IconBox icon={icon} bgColor={iconBg} color={iconColor} />
+    <div className="flex-1 flex flex-col gap-2">
+      <div className="flex justify-between items-center w-full">
+        <span style={{ color: isDark ? 'rgba(255,255,255,0.7)' : 'var(--mg-text-secondary, #64748b)' }} className="text-sm">
+          {label}
+        </span>
+        <TrendBadge text={badge} isDark={isDark} />
+      </div>
+      <h3 className="text-3xl font-bold tracking-tight">{value}</h3>
+    </div>
+  </div>
+);
+
+// [Organism] Header Section
+const DashboardHeader = () => (
+  <header className="flex justify-between items-center mb-8">
+    <div className="flex flex-col gap-1">
+      <h1 className="text-2xl font-bold" style={{ color: 'var(--mg-text-primary, #1e293b)' }}>대시보드 개요</h1>
+      <p className="text-sm" style={{ color: 'var(--mg-text-secondary, #64748b)' }}>오늘의 주요 지표와 현황을 한눈에 확인하세요.</p>
+    </div>
+    <div className="flex items-center gap-6">
+      <div 
+        className="flex items-center px-4 py-2 rounded-xl border w-80"
+        style={{ backgroundColor: 'var(--mg-bg-dashboard, #f8fafc)', borderColor: 'var(--mg-border-light, #e2e8f0)' }}
+      >
+        <span className="text-sm" style={{ color: 'var(--mg-text-secondary, #94a3b8)' }}>통합 검색...</span>
+      </div>
+      <div className="flex gap-4 items-center">
+        <div className="relative">
+          <span className="text-2xl">📅</span>
+          <div className="absolute top-0 right-0 w-2 h-2 rounded-full" style={{ backgroundColor: 'var(--mg-grade-client-bronze-dark, #ef4444)' }}></div>
+        </div>
+        <span className="text-2xl">🔔</span>
+        <span className="text-xl">🌙</span>
+      </div>
+    </div>
+  </header>
+);
+
+// [Organism] System Growth & Counselors
+const SystemGrowthSection = () => (
+  <div className="flex gap-6 mt-6">
+    {/* Left: System Growth Chart Placeholder */}
+    <div 
+      className="flex-1 p-6 rounded-2xl shadow-md border flex flex-col gap-6"
+      style={{ backgroundColor: 'var(--mg-bg-card, #ffffff)', borderColor: 'var(--mg-border-light, #e2e8f0)' }}
+    >
+      <div className="flex justify-between items-center">
+        <div className="flex flex-col gap-1">
+          <h3 className="text-lg font-bold" style={{ color: 'var(--mg-text-primary, #1e293b)' }}>시스템 성장 개요</h3>
+          <p className="text-xs" style={{ color: 'var(--mg-text-secondary, #64748b)' }}>입주사 및 상담사 증가 추이 (최근 6개월)</p>
+        </div>
+        <div className="flex gap-2 bg-gray-50 p-1 rounded-full border border-gray-200">
+          <span className="px-4 py-1.5 rounded-full text-xs font-bold bg-white shadow-sm border border-gray-200" style={{ color: 'var(--mg-text-primary, #1e293b)' }}>월간</span>
+          <span className="px-4 py-1.5 rounded-full text-xs" style={{ color: 'var(--mg-text-secondary, #64748b)' }}>주간</span>
+        </div>
+      </div>
+      <div className="h-40 rounded-xl border flex flex-col justify-end p-4 pb-2" style={{ backgroundColor: 'var(--mg-bg-dashboard, #f8fafc)', borderColor: 'var(--mg-border-light, #e2e8f0)' }}>
+        <div className="flex justify-between w-full mt-4">
+          {['5월', '6월', '7월', '8월', '9월', '10월'].map(month => (
+            <span key={month} className="text-xs" style={{ color: month === '10월' ? 'var(--mg-primary-600, #4f46e5)' : 'var(--mg-text-secondary, #94a3b8)', fontWeight: month === '10월' ? 'bold' : 'normal' }}>{month}</span>
+          ))}
+        </div>
+      </div>
+      <div className="flex gap-6 justify-center">
+        <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-indigo-300"></div><span className="text-xs text-gray-500">입주사 수</span></div>
+        <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-indigo-500"></div><span className="text-xs text-gray-500">활성 상담사</span></div>
+      </div>
+    </div>
+
+    {/* Right: Counselors List */}
+    <div 
+      className="w-1/3 p-6 rounded-2xl shadow-md border flex flex-col gap-6"
+      style={{ backgroundColor: 'var(--mg-bg-card, #ffffff)', borderColor: 'var(--mg-border-light, #e2e8f0)' }}
+    >
+      <h3 className="text-lg font-bold" style={{ color: 'var(--mg-text-primary, #1e293b)' }}>우수 상담사 평점</h3>
+      <div className="flex flex-col gap-4">
+        {counselorData.map((c, i) => (
+          <div key={i} className="flex items-center gap-4">
+            <IconBox icon={c.initial} bgColor={c.bgColor} color={c.barColor} size="w-10 h-10" fontSize="text-sm" />
+            <div className="flex-1 flex flex-col gap-1">
+              <span className="text-sm font-bold" style={{ color: 'var(--mg-text-primary, #1e293b)' }}>{c.name}</span>
+              <div className="flex items-center gap-2">
+                <span className="text-xs" style={{ color: 'var(--mg-text-secondary, #64748b)' }}>{c.rating}</span>
+                <div className="flex-1 h-2 rounded-full bg-gray-200 overflow-hidden">
+                  <div className="h-full rounded-full" style={{ width: '85%', backgroundColor: c.barColor }}></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+      <button className="w-full py-3 mt-2 rounded-xl border text-sm font-semibold hover:bg-gray-50 transition-colors" style={{ borderColor: 'var(--mg-border-light, #e2e8f0)', color: 'var(--mg-text-primary, #1e293b)' }}>
+        전체 순위 보기
+      </button>
+    </div>
+  </div>
+);
+
+// [Organism] Metrics Section
+const MetricsSection = () => (
+  <div 
+    className="mt-6 p-6 rounded-2xl shadow-md border flex flex-col gap-6"
+    style={{ backgroundColor: 'var(--mg-bg-card, #ffffff)', borderColor: 'var(--mg-border-light, #e2e8f0)' }}
+  >
+    <div className="flex gap-8 border-b pb-2" style={{ borderColor: 'var(--mg-border-light, #e2e8f0)' }}>
+      <div className="flex items-center gap-2 border-b-2 pb-2 -mb-2.5" style={{ borderColor: 'var(--mg-primary-600, #4f46e5)' }}>
+        <span>📊</span><span className="text-sm font-bold" style={{ color: 'var(--mg-primary-600, #4f46e5)' }}>재무 및 성과 지표</span>
+      </div>
+      <div className="flex items-center gap-2 pb-2">
+        <span>💰</span><span className="text-sm" style={{ color: 'var(--mg-text-secondary, #64748b)' }}>환불 현황</span>
+      </div>
+      <div className="flex items-center gap-2 pb-2">
+        <span>✅</span><span className="text-sm" style={{ color: 'var(--mg-text-secondary, #64748b)' }}>상담 완료 통계</span>
+      </div>
+    </div>
+    <div className="flex gap-4">
+      {metricData.map((m, i) => (
+        <div key={i} className="flex-1 p-5 rounded-xl border flex items-center gap-4" style={{ borderColor: 'var(--mg-border-light, #e2e8f0)' }}>
+          <IconBox icon={m.icon} bgColor={m.iconBg} color={m.iconColor} size="w-12 h-12" />
+          <div className="flex flex-col gap-1">
+            <span className="text-xs" style={{ color: 'var(--mg-text-secondary, #64748b)' }}>{m.label}</span>
+            <span className="text-xl font-bold" style={{ color: 'var(--mg-text-primary, #1e293b)' }}>{m.value}</span>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
+// [Organism] Admin Features
+const AdminFeaturesSection = () => (
+  <div 
+    className="mt-6 p-6 rounded-2xl shadow-md border flex flex-col gap-6"
+    style={{ backgroundColor: 'var(--mg-bg-card, #ffffff)', borderColor: 'var(--mg-border-light, #e2e8f0)' }}
+  >
+    <h3 className="text-lg font-bold" style={{ color: 'var(--mg-text-primary, #1e293b)' }}>관리자 주요 기능</h3>
+    <div className="flex gap-4">
+      {adminFeaturesData.map((a, i) => (
+        <div key={i} className="flex-1 p-5 rounded-xl border flex flex-col gap-4 items-center text-center hover:-translate-y-1 transition-transform cursor-pointer" style={{ borderColor: 'var(--mg-border-light, #e2e8f0)' }}>
+          <IconBox icon={a.icon} bgColor={a.bgColor} color="#fff" rounded="rounded-xl" size="w-14 h-14" fontSize="text-2xl" />
+          <div className="flex flex-col gap-1">
+            <span className="text-sm font-bold" style={{ color: 'var(--mg-text-primary, #1e293b)' }}>{a.title}</span>
+            <span className="text-xs" style={{ color: 'var(--mg-text-secondary, #94a3b8)' }}>{a.desc}</span>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
+// --- Page Template ---
+const AtomicDesignSample = () => {
   return (
-    <div className={`dashboard-design-guide-sample ${isDarkMode ? 'dark' : ''}`}>
-      <div className="dashboard-container">
-        {/* 사이드바 오버레이 (모바일에서만) */}
-        {isMobile && isSidebarOpen && (
-          <div 
-            className="sidebar-overlay"
-            onClick={toggleSidebar}
-            aria-label="사이드바 닫기"
-          />
-        )}
+    <div className="min-h-screen p-8" style={{ backgroundColor: 'var(--mg-bg-dashboard, #f8fafc)' }}>
+      <div className="max-w-6xl mx-auto">
+        <DashboardHeader />
         
-        {/* 사이드바 - 디자인 가이드 스펙 준수 */}
-        <aside 
-          className={`dashboard-sidebar ${isSidebarOpen ? 'open' : ''}`}
-        >
-          <div className="sidebar-header">
-            <div className="sidebar-logo">
-              <div className="logo-icon">
-                <span className="material-symbols-outlined">grid_view</span>
-              </div>
-              <div>
-                <h1 className="logo-title">상담 관리 CRM</h1>
-                <p className="logo-subtitle">Super Admin</p>
-              </div>
-            </div>
+        {/* Dashboard Content */}
+        <div className="flex flex-col">
+          {/* Top KPIs */}
+          <div className="grid grid-cols-3 gap-6">
+            {kpiData.map((data) => (
+              <KpiCard key={data.id} {...data} />
+            ))}
           </div>
-          
-          <nav className="sidebar-nav">
-            <a className="nav-item active">
-              <span className="material-symbols-outlined">dashboard</span>
-              <span>대시보드</span>
-            </a>
-            <a className="nav-item">
-              <span className="material-symbols-outlined">apartment</span>
-              <span>입주사 관리</span>
-            </a>
-            <a className="nav-item">
-              <span className="material-symbols-outlined">group</span>
-              <span>상담사 관리</span>
-            </a>
-            <a className="nav-item">
-              <span className="material-symbols-outlined">calendar_month</span>
-              <span>예약 현황</span>
-            </a>
-            
-            <div className="nav-divider"></div>
-            
-            <div className="nav-section-label">Finance</div>
-            <a className="nav-item">
-              <span className="material-symbols-outlined">payments</span>
-              <span>매출 및 정산</span>
-            </a>
-            <a className="nav-item">
-              <span className="material-symbols-outlined">settings</span>
-              <span>시스템 설정</span>
-            </a>
-          </nav>
-          
-          <div className="sidebar-footer">
-            <div className="user-profile">
-              <div className="user-avatar">
-                <img src="https://via.placeholder.com/40" alt="프로필" />
-              </div>
-              <div className="user-info">
-                <p className="user-name">김관리 님</p>
-                <p className="user-email">admin@crm.com</p>
-              </div>
-            </div>
-          </div>
-        </aside>
 
-        {/* 메인 콘텐츠 - 디자인 가이드 스펙 준수 */}
-        <main className="dashboard-main">
-          {/* 배경 그라데이션 및 블러 효과 */}
-          <div className="dashboard-bg-gradient"></div>
-          <div className="dashboard-bg-blur"></div>
-          
-          {/* 헤더 - 디자인 가이드 스펙 준수 */}
-          <header className="dashboard-header">
-            <div className="header-left">
-              {isMobile && (
-                <button 
-                  className="hamburger-btn"
-                  onClick={toggleSidebar}
-                  aria-label="메뉴 열기"
-                >
-                  <span className="material-symbols-outlined">menu</span>
-                </button>
-              )}
-              <div className="header-title">
-                <h2>대시보드 개요</h2>
-                <p>오늘의 주요 지표와 현황을 한눈에 확인하세요.</p>
-              </div>
-            </div>
-            <div className="header-right">
-              <div className="search-box">
-                <span className="material-symbols-outlined">search</span>
-                <input type="text" placeholder="통합 검색..." />
-              </div>
-              <button className="notification-btn">
-                <span className="material-symbols-outlined">notifications</span>
-                <span className="notification-badge"></span>
-              </button>
-              <button 
-                className="theme-toggle-btn"
-                onClick={toggleDarkMode}
-                aria-label="다크 모드 토글"
-              >
-                <span className="material-symbols-outlined">
-                  {isDarkMode ? 'light_mode' : 'dark_mode'}
-                </span>
-              </button>
-            </div>
-          </header>
-
-          {/* 컨텐츠 영역 */}
-          <div className="dashboard-content">
-            <div className="content-wrapper">
-              {/* KPI 카드 그리드 - 디자인 가이드 스펙 준수 */}
-              <div className="kpi-grid">
-                {kpiData.map((kpi) => (
-                  <div 
-                    key={kpi.id} 
-                    className={`kpi-card ${kpi.isDark ? 'kpi-card-dark' : ''}`}
-                  >
-                    <div className={`kpi-card-bg kpi-card-bg-${kpi.color}`}></div>
-                    <div className="kpi-card-content">
-                      <div className="kpi-card-header">
-                        <div className={`kpi-icon kpi-icon-${kpi.color}`}>
-                          <span className="material-symbols-outlined">{kpi.icon}</span>
-                        </div>
-                        <div className={`kpi-trend kpi-trend-${kpi.changeType}`}>
-                          <span className="material-symbols-outlined">trending_up</span>
-                          <span>{kpi.change}</span>
-                        </div>
-                      </div>
-                      <div className="kpi-card-body">
-                        <p className="kpi-label">{kpi.label}</p>
-                        <h3 className="kpi-value">{kpi.value}</h3>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* 세로 배치 컴포넌트 샘플 - 2열 그리드 */}
-              <div className="vertical-layout-grid">
-                {/* 왼쪽: 차트/그래프 섹션 */}
-                <div className="vertical-section chart-section">
-                  <div className="section-header">
-                    <div>
-                      <h3 className="section-title">시스템 성장 개요</h3>
-                      <p className="section-subtitle">입주사 및 상담사 증가 추이 (최근 6개월)</p>
-                    </div>
-                    <div className="section-controls">
-                      <button className="control-btn active">월간</button>
-                      <button className="control-btn">주간</button>
-                    </div>
-                  </div>
-                  <div className="chart-placeholder">
-                    <div className="chart-content">
-                      <div className="chart-legend">
-                        <div className="legend-item">
-                          <span className="legend-dot legend-dot-blue"></span>
-                          <span>입주사 수</span>
-                        </div>
-                        <div className="legend-item">
-                          <span className="legend-dot legend-dot-indigo"></span>
-                          <span>활성 상담사</span>
-                        </div>
-                      </div>
-                      <div className="chart-area">
-                        <div className="chart-line"></div>
-                        <div className="chart-labels">
-                          <span>5월</span>
-                          <span>6월</span>
-                          <span>7월</span>
-                          <span>8월</span>
-                          <span>9월</span>
-                          <span>10월</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* 오른쪽: 리스트 섹션 */}
-                <div className="vertical-section list-section">
-                  <div className="section-header">
-                    <div>
-                      <h3 className="section-title">우수 상담사 평점</h3>
-                    </div>
-                  </div>
-                  <div className="list-content">
-                    {[
-                      { name: '김상담', rating: 4.9, color: 'blue', initial: '김' },
-                      { name: '이마음', rating: 4.8, color: 'green', initial: '이' },
-                      { name: '박치유', rating: 4.7, color: 'orange', initial: '박' },
-                      { name: '최행복', rating: 4.6, color: 'indigo', initial: '최' }
-                    ].map((consultant, idx) => (
-                      <div key={idx} className="list-item">
-                        <div className="list-item-avatar" style={{ backgroundColor: `var(--dashboard-primary-${consultant.color})` }}>
-                          {consultant.initial}
-                        </div>
-                        <div className="list-item-content">
-                          <div className="list-item-name">{consultant.name}</div>
-                          <div className="list-item-rating">
-                            <span className="rating-value">{consultant.rating}/5.0</span>
-                            <div className="rating-bar">
-                              <div 
-                                className="rating-bar-fill" 
-                                style={{ 
-                                  width: `${(consultant.rating / 5) * 100}%`,
-                                  backgroundColor: `var(--dashboard-primary-${consultant.color})`
-                                }}
-                              ></div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="section-footer">
-                    <button className="view-all-btn">전체 순위 보기</button>
-                  </div>
-                </div>
-              </div>
-
-              {/* 관리자 대시보드 섹션별 디자인 샘플 */}
-              <div className="admin-sections-showcase">
-                <h2 className="showcase-title">관리자 대시보드 섹션별 디자인 샘플</h2>
-                
-                {/* 1. 관리 기능 카드 그리드 - 섹션별 그룹화 */}
-                <div className="admin-section-sample">
-                  <div className="section-header">
-                    <div>
-                      <h3 className="section-title">관리 기능</h3>
-                      <p className="section-subtitle">주요 관리 기능에 빠르게 접근</p>
-                    </div>
-                  </div>
-                  
-                  {/* 운영 관리 (CORE OPS) */}
-                  <div className="function-group">
-                    <div className="group-label">운영 관리 (CORE OPS)</div>
-                    <div className="management-grid">
-                      {[
-                        { icon: 'schedule', title: '스케줄 관리', desc: '상담사 및 센터의 일정을 통합 관리하고 조정합니다.', gradient: 'blue-green' },
-                        { icon: 'group', title: '상담사 관리', desc: '상담사 프로필 및 자격, 배정 내역을 관리합니다.', gradient: 'purple-blue' },
-                        { icon: 'receipt', title: '회계 및 정산 관리', desc: '상담 회기 등록 및 월별 정산 내역을 자동으로 처리합니다.', gradient: 'blue-green', badge: 'AUTO' }
-                      ].map((item, idx) => (
-                        <div key={idx} className="management-card">
-                          <div className={`management-icon-bg gradient-${item.gradient}`}>
-                            <span className="material-symbols-outlined">{item.icon}</span>
-                          </div>
-                          <div className="management-card-content">
-                            <div className="management-card-header">
-                              <h4 className="management-title">{item.title}</h4>
-                              {item.badge && <span className="management-badge">{item.badge}</span>}
-                            </div>
-                            <p className="management-desc">{item.desc}</p>
-                          </div>
-                          <div className="management-arrow">
-                            <span className="material-symbols-outlined">arrow_forward</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* AI & 데이터 */}
-                  <div className="function-group">
-                    <div className="group-label">AI & 데이터</div>
-                    <div className="management-grid">
-                      {[
-                        { icon: 'psychology', title: '심리검사 리포트 (AI)', desc: 'TCI/MMPI 업로드 및 AI 분석', gradient: 'dark', badge: 'BETA', isDark: true },
-                        { icon: 'dashboard', title: '대시보드 설정', desc: '위젯 및 레이아웃 커스텀', gradient: 'purple-blue' }
-                      ].map((item, idx) => (
-                        <div key={idx} className={`management-card ${item.isDark ? 'card-dark' : ''}`}>
-                          <div className={`management-icon-bg gradient-${item.gradient}`}>
-                            <span className="material-symbols-outlined">{item.icon}</span>
-                          </div>
-                          <div className="management-card-content">
-                            <div className="management-card-header">
-                              <h4 className="management-title">{item.title}</h4>
-                              {item.badge && <span className="management-badge badge-${item.badge.toLowerCase()}">{item.badge}</span>}
-                            </div>
-                            <p className="management-desc">{item.desc}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* 모니터링 */}
-                  <div className="function-group">
-                    <div className="group-label">모니터링</div>
-                    <div className="management-grid">
-                      {[
-                        { icon: 'shield', title: '보안 모니터링', desc: '실시간 보안 위협 감지 중', gradient: 'purple-blue', progress: 98 },
-                        { icon: 'speed', title: 'API 성능 상태', desc: 'Response Time: 45ms', gradient: 'blue-green', metric: '45ms' },
-                        { icon: 'memory', title: '캐시 모니터링', desc: '시스템 리소스 최적화', gradient: 'purple-blue' }
-                      ].map((item, idx) => (
-                        <div key={idx} className="management-card">
-                          <div className={`management-icon-bg gradient-${item.gradient}`}>
-                            <span className="material-symbols-outlined">{item.icon}</span>
-                          </div>
-                          <div className="management-card-content">
-                            <div className="management-card-header">
-                              <h4 className="management-title">{item.title}</h4>
-                            </div>
-                            {item.progress && (
-                              <div className="management-progress">
-                                <div className="progress-bar">
-                                  <div className="progress-fill" style={{ width: `${item.progress}%` }}></div>
-                                </div>
-                                <span className="progress-value">{item.progress}%</span>
-                              </div>
-                            )}
-                            {item.metric && (
-                              <div className="management-metric">
-                                <span className="metric-label">Response Time</span>
-                                <span className="metric-value">{item.metric}</span>
-                              </div>
-                            )}
-                            <p className="management-desc">{item.desc}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                {/* 2. 시스템 상태 섹션 */}
-                <div className="admin-section-sample">
-                  <div className="section-header">
-                    <div>
-                      <h3 className="section-title">시스템 상태</h3>
-                      <p className="section-subtitle">서버 및 데이터베이스 상태 모니터링</p>
-                    </div>
-                    <button className="status-check-btn">
-                      <span className="material-symbols-outlined">refresh</span>
-                      상태 체크
-                    </button>
-                  </div>
-                  <div className="system-status-grid">
-                    {[
-                      { label: '서버', status: 'healthy', icon: 'dns' },
-                      { label: '데이터베이스', status: 'healthy', icon: 'storage' },
-                      { label: '캐시', status: 'warning', icon: 'memory' },
-                      { label: 'API', status: 'healthy', icon: 'api' }
-                    ].map((item, idx) => (
-                      <div key={idx} className="status-item">
-                        <div className="status-icon">
-                          <span className="material-symbols-outlined">{item.icon}</span>
-                          <span className={`status-dot status-${item.status}`}></span>
-                        </div>
-                        <div className="status-info">
-                          <span className="status-label">{item.label}</span>
-                          <span className="status-value">
-                            {item.status === 'healthy' ? '정상' : item.status === 'warning' ? '경고' : '오류'}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* 3. 시스템 도구 섹션 */}
-                <div className="admin-section-sample">
-                  <div className="section-header">
-                    <div>
-                      <h3 className="section-title">시스템 도구</h3>
-                      <p className="section-subtitle">시스템 관리 및 유지보수 도구</p>
-                    </div>
-                  </div>
-                  <div className="system-tools-grid">
-                    {[
-                      { icon: 'refresh', label: '캐시 초기화', desc: '시스템 캐시를 초기화합니다' },
-                      { icon: 'backup', label: '백업 생성', desc: '시스템 백업을 생성합니다' },
-                      { icon: 'description', label: '로그 보기', desc: '시스템 로그를 확인합니다' },
-                      { icon: 'update', label: '시스템 업데이트', desc: '시스템을 업데이트합니다' }
-                    ].map((item, idx) => (
-                      <button key={idx} className="tool-btn">
-                        <span className="material-symbols-outlined">{item.icon}</span>
-                        <div className="tool-info">
-                          <span className="tool-label">{item.label}</span>
-                          <span className="tool-desc">{item.desc}</span>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* 4. 통계 테이블 섹션 */}
-                <div className="admin-section-sample">
-                  <div className="section-header">
-                    <div>
-                      <h3 className="section-title">상담 통계</h3>
-                      <p className="section-subtitle">최근 상담 완료 통계</p>
-                    </div>
-                  </div>
-                  <div className="stats-table">
-                    <table>
-                      <thead>
-                        <tr>
-                          <th>날짜</th>
-                          <th>완료 건수</th>
-                          <th>완료율</th>
-                          <th>평균 소요시간</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {[
-                          { date: '2025-02-04', count: 45, rate: '94.2%', time: '32분' },
-                          { date: '2025-02-03', count: 52, rate: '96.3%', time: '28분' },
-                          { date: '2025-02-02', count: 38, rate: '92.1%', time: '35분' },
-                          { date: '2025-02-01', count: 48, rate: '95.8%', time: '30분' }
-                        ].map((row, idx) => (
-                          <tr key={idx}>
-                            <td>{row.date}</td>
-                            <td>{row.count}건</td>
-                            <td>
-                              <span className="rate-badge">{row.rate}</span>
-                            </td>
-                            <td>{row.time}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </div>
-
-              {/* 상담사 관리 상세 화면 */}
-              <div className="admin-section-sample">
-                {/* 섹션 헤더 */}
-                <div className="section-header">
-                  <div>
-                    <h3 className="section-title">상담사 관리</h3>
-                    <p className="section-subtitle">상담사의 모든 정보를 종합적으로 관리하고 분석할 수 있습니다.</p>
-                  </div>
-                  <div className="section-controls">
-                    <button className="control-btn active">종합관리</button>
-                    <button className="control-btn">기본관리</button>
-                  </div>
-                </div>
-
-                {/* 현황 요약 - KPI 카드 스타일 */}
-                <div className="kpi-grid" style={{ marginBottom: '32px' }}>
-                  {[
-                    { icon: 'groups', label: '총 상담사', value: '2', change: '+0', changeType: 'neutral', color: 'indigo' },
-                    { icon: 'link', label: '활성 매칭', value: '0', change: '+0', changeType: 'neutral', color: 'emerald' },
-                    { icon: 'event', label: '총 스케줄', value: '0', change: '+0', changeType: 'neutral', color: 'purple' },
-                    { icon: 'list_alt', label: '오늘 스케줄', value: '0', change: '+0', changeType: 'neutral', color: 'blue' }
-                  ].map((item, idx) => (
-                    <div key={idx} className="kpi-card">
-                      <div className={`kpi-card-bg kpi-card-bg-${item.color}`}></div>
-                      <div className="kpi-card-content">
-                        <div className="kpi-card-header">
-                          <div className={`kpi-icon kpi-icon-${item.color}`}>
-                            <span className="material-symbols-outlined">{item.icon}</span>
-                          </div>
-                          <div className={`kpi-trend kpi-trend-${item.changeType}`}>
-                            <span className="material-symbols-outlined">trending_up</span>
-                            <span>{item.change}</span>
-                          </div>
-                        </div>
-                        <div className="kpi-card-body">
-                          <p className="kpi-label">{item.label}</p>
-                          <h3 className="kpi-value">{item.value}</h3>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* 검색 및 필터 */}
-                <div className="counselor-search-section">
-                  <div className="counselor-search-wrapper">
-                    <span className="material-symbols-outlined counselor-search-icon">search</span>
-                    <input 
-                      type="text" 
-                      className="counselor-search-input"
-                      placeholder="이름, 이메일, 전화번호 또는 #태그로 검색..."
-                    />
-                  </div>
-                  <button className="counselor-filter-btn">
-                    <span className="material-symbols-outlined">filter_list</span>
-                    필터
-                  </button>
-                </div>
-
-                {/* 상담사 목록 - Management Card 스타일 */}
-                <div className="management-grid" style={{ marginTop: '24px' }}>
-                  {[
-                    { 
-                      name: 'test11', email: 'test11@gamil.com', phone: '010-0000-0000', 
-                      joinDate: '2025. 12. 11.', status: 'available', statusColor: 'emerald',
-                      avatarText: 't', badge: '전문 상담사', badgeColor: 'indigo',
-                      clients: 0, maxClients: 20, clientColor: 'indigo', gradient: 'blue-green'
-                    },
-                    { 
-                      name: '테스트 상담사', email: '222@gmail.com', phone: '010-0000-0000', 
-                      joinDate: '2025. 12. 11.', status: 'offline', statusColor: 'slate',
-                      avatarText: '테', badge: null, badgeColor: null,
-                      clients: 0, maxClients: 20, clientColor: 'slate', gradient: 'purple-blue'
-                    },
-                    { 
-                      name: '김상담', email: 'kim.counsel@example.com', phone: '010-1234-5678', 
-                      joinDate: '2024. 11. 05.', status: 'busy', statusColor: 'orange',
-                      avatarText: 'K', badge: null, badgeColor: null,
-                      clients: 12, maxClients: 20, clientColor: 'orange', gradient: 'blue-green'
-                    }
-                  ].map((counselor, idx) => (
-                    <div key={idx} className="management-card">
-                      <div className={`management-icon-bg gradient-${counselor.gradient}`}>
-                        <div className="counselor-avatar-small">
-                          {counselor.avatarText}
-                        </div>
-                        <div className={`counselor-status-dot-small counselor-status-${counselor.statusColor}`}></div>
-                      </div>
-                      <div className="management-card-content">
-                        <div className="management-card-header">
-                          <h4 className="management-title">
-                            {counselor.name}
-                            {counselor.badge && (
-                              <span className="management-badge">{counselor.badge}</span>
-                            )}
-                          </h4>
-                        </div>
-                        <div className="counselor-card-info-compact">
-                          <div className="counselor-info-row">
-                            <span className="material-symbols-outlined">email</span>
-                            <span>{counselor.email}</span>
-                          </div>
-                          <div className="counselor-info-row">
-                            <span className="material-symbols-outlined">phone</span>
-                            <span>{counselor.phone}</span>
-                          </div>
-                          <div className="counselor-info-row">
-                            <span className="material-symbols-outlined">calendar_today</span>
-                            <span>가입일: {counselor.joinDate}</span>
-                          </div>
-                        </div>
-                        {counselor.clients > 0 && (
-                          <div className="management-progress">
-                            <div className="progress-bar">
-                              <div 
-                                className="progress-fill" 
-                                style={{ width: `${(counselor.clients / counselor.maxClients) * 100}%` }}
-                              ></div>
-                            </div>
-                            <span className="progress-value">
-                              담당 클라이언트: {counselor.clients}/{counselor.maxClients}명
-                            </span>
-                          </div>
-                        )}
-                        <div className="counselor-card-actions-compact">
-                          <button className="counselor-action-btn-small">수정</button>
-                          <button className="counselor-action-btn-small">비밀번호 초기화</button>
-                          <button className="counselor-delete-btn-small" title="삭제">
-                            <span className="material-symbols-outlined">delete</span>
-                          </button>
-                        </div>
-                      </div>
-                      <div className="management-arrow">
-                        <span className="material-symbols-outlined">arrow_forward</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* 추가 콘텐츠 예시 */}
-              <div className="content-section">
-                <h3 className="section-title">디자인 가이드 스펙 준수</h3>
-                <p className="section-description">
-                  이 샘플 페이지는 디자인 가이드(DASHBOARD_DESIGN_GUIDE.md)에 정의된 
-                  모든 스펙을 정확히 구현한 것입니다. 실제 대시보드에 적용하기 전 
-                  레이아웃 및 디자인을 확인할 수 있습니다.
-                </p>
-              </div>
-            </div>
-          </div>
-        </main>
+          <SystemGrowthSection />
+          <MetricsSection />
+          <AdminFeaturesSection />
+        </div>
       </div>
     </div>
   );
 };
 
-export default DashboardDesignGuideSample;
+export default AtomicDesignSample;

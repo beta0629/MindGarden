@@ -1,21 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { ChevronDown } from 'lucide-react';
 import './CustomSelect.css';
 
 /**
  * 커스텀 드롭다운 컴포넌트
-/**
  * - 네이티브 select의 스크롤 문제 해결
-/**
  * - 완전한 CSS 제어 가능
-/**
  * - 접근성 지원
-/**
  * 
-/**
  * @author MindGarden
-/**
  * @version 1.0.0
-/**
  * @since 2025-01-11
  */
 const CustomSelect = ({ 
@@ -25,7 +19,8 @@ const CustomSelect = ({
   placeholder = '선택하세요',
   className = '',
   disabled = false,
-  loading = false
+  loading = false,
+  error = false
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -146,7 +141,7 @@ const CustomSelect = ({
   return (
     <div 
       ref={selectRef}
-      className={`custom-select ${className} ${isOpen ? 'open' : ''} ${disabled ? 'disabled' : ''}`}
+      className={`custom-select ${className} ${isOpen ? 'open' : ''} ${disabled ? 'disabled' : ''} ${error ? 'error' : ''}`}
       tabIndex={disabled ? -1 : 0}
       onKeyDown={handleKeyDown}
     >
@@ -165,7 +160,7 @@ const CustomSelect = ({
           {loading ? '로딩 중...' : selectedOption ? selectedOption.label : placeholder}
         </span>
         <span className="custom-select__arrow">
-          {isOpen ? '▲' : '▼'}
+          <ChevronDown size={16} style={{ transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s ease' }} />
         </span>
       </div>
 

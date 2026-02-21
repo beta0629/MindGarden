@@ -1,0 +1,55 @@
+/**
+ * DepositPendingList - 입금 확인 대기 목록 스타일
+ */
+.deposit-pending-list {
+  background: var(--mg-bg-surface, #fff);
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  padding: var(--mg-spacing-md, 12px);
+  margin-bottom: var(--mg-spacing-md, 16px);
+}
+
+.deposit-pending-list__header {
+  margin-bottom: var(--mg-spacing-sm, 8px);
+}
+
+.deposit-pending-list__title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--mg-text-primary, #2d3748);
+  margin: 0;
+}
+
+.deposit-pending-list__items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.deposit-pending-list__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--mg-spacing-sm, 8px) 0;
+  border-bottom: 1px solid var(--mg-border-light, #e5e7eb);
+}
+
+.deposit-pending-list__item:last-child {
+  border-bottom: none;
+}
+
+.deposit-pending-list__info {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-spacing-sm, 8px);
+}
+
+.deposit-pending-list__name {
+  font-weight: 500;
+  color: var(--mg-text-primary, #2d3748);
+}
+
+.deposit-pending-list__amount {
+  font-size: 0.85rem;
+  color: var(--mg-text-secondary, #64748b);
+}

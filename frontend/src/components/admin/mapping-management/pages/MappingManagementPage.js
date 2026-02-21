@@ -8,7 +8,6 @@
 
 import React, { useState, useEffect } from 'react';
 import Button from '../../../ui/Button/Button';
-import SimpleLayout from '../../../layout/SimpleLayout';
 import { apiGet, apiPost } from '../../../../utils/ajax';
 import notificationManager from '../../../../utils/notification';
 import { useSession } from '../../../../contexts/SessionContext';
@@ -393,17 +392,18 @@ const MappingManagementPage = () => {
 
   if (loading) {
     return (
-      <SimpleLayout title="매칭 관리">
-        <UnifiedLoading type="page" text="데이터를 불러오는 중..." variant="pulse" />
-      </SimpleLayout>
+      <div className="mg-v2-ad-b0kla mg-v2-mapping-management">
+        <div className="mg-v2-ad-b0kla__container">
+          <UnifiedLoading type="page" text="데이터를 불러오는 중..." variant="pulse" />
+        </div>
+      </div>
     );
   }
 
   return (
-    <SimpleLayout>
-      <div className="mg-v2-ad-b0kla mg-v2-mapping-management">
-        <div className="mg-v2-ad-b0kla__container">
-          <ContentArea>
+    <div className="mg-v2-ad-b0kla mg-v2-mapping-management">
+      <div className="mg-v2-ad-b0kla__container">
+        <ContentArea>
             <MappingContentHeader
               title="🔗 매칭 관리"
               subtitle="상담사와 내담자 간의 매칭을 관리합니다."
@@ -439,7 +439,6 @@ const MappingManagementPage = () => {
               onCreateClick={() => setShowCreateModal(true)}
             />
           </ContentArea>
-        </div>
       </div>
 
       <MappingCreationModal
@@ -577,7 +576,7 @@ const MappingManagementPage = () => {
         mapping={editMapping}
         onSuccess={handleEditSuccess}
       />
-    </SimpleLayout>
+    </div>
   );
 };
 

@@ -18,9 +18,9 @@
 }
 
 .mg-v2-gnb-right__logout {
-  color: var(--mg-color-danger, #ef4444);
+  color: var(--color-danger);
 }
 
 .mg-v2-gnb-right__logout:hover {
-  color: var(--mg-color-danger-dark, #dc2626);
+  color: var(--color-danger-hover);
 }

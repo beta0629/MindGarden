@@ -9,7 +9,7 @@
 .mg-v2-mobile-lnb-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.4);
+  background: color-mix(in srgb, var(--cs-black) 40%, transparent);
   z-index: 999;
   opacity: 0;
   visibility: hidden;
@@ -34,7 +34,7 @@
   transition: transform 0.25s ease;
   display: flex;
   flex-direction: column;
-  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.15);
+  box-shadow: 4px 0 24px var(--mg-shadow-light);
 }
 
 .mg-v2-mobile-lnb-drawer--open {
@@ -43,13 +43,13 @@
 
 .mg-v2-mobile-lnb-drawer__header {
   padding: 20px 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid var(--cs-glass-light-subtle);
 }
 
 .mg-v2-mobile-lnb-drawer__title {
   font-size: 16px;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--cs-glass-white-90);
 }
 
 .mg-v2-mobile-lnb-drawer__nav {
@@ -69,7 +69,7 @@
 
 .mg-v2-mobile-lnb-drawer__footer {
   padding: 16px 12px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid var(--cs-glass-light-subtle);
 }
 
 .mg-v2-mobile-lnb-drawer__logout {
@@ -81,7 +81,7 @@
   background: transparent;
   border: none;
   border-radius: 8px;
-  color: #ef4444;
+  color: var(--color-danger);
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
@@ -89,9 +89,9 @@
 }
 
 .mg-v2-mobile-lnb-drawer__logout:hover {
-  background: rgba(239, 68, 68, 0.15);
+  background: color-mix(in srgb, var(--color-danger) 15%, transparent);
 }
 
 .mg-v2-mobile-lnb-drawer__logout:active {
-  background: rgba(239, 68, 68, 0.25);
+  background: color-mix(in srgb, var(--color-danger) 25%, transparent);
 }

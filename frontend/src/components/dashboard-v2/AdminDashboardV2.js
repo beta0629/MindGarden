@@ -530,7 +530,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
       initial: getAvatarInitial(c.consultantName),
       rating: c.averageScore ? c.averageScore.toFixed(1) : '-',
       barWidth: c.averageScore ? Math.min(100, (c.averageScore / 5) * 100) : 0,
-      barColor: '#4b745c'
+      barColor: 'var(--mg-success-600)'
     }));
 
   const handleLogout = useCallback(async () => {

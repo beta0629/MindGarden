@@ -1,23 +1,24 @@
 /**
- * MappingManagementPage - 매칭 관리 페이지 (아토믹 구조)
- * ContentArea + ContentHeader/Section 레이아웃, B0KlA 스타일
+ * MappingManagementPage - 매칭 관리 페이지 (신규 구성)
+ * ContentArea + ContentHeader + MappingKpiSection + MappingSearchSection + MappingListBlock
+ * 비즈니스 로직 유지, 화면·구조 완전 신규
  *
  * @author MindGarden
  * @since 2025-02-22
  */
 
 import React, { useState, useEffect } from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, RotateCcw } from 'lucide-react';
 import Button from '../../../ui/Button/Button';
-import { apiGet, apiPost } from '../../../../utils/ajax';
+import StandardizedApi from '../../../../utils/standardizedApi';
 import notificationManager from '../../../../utils/notification';
 import { useSession } from '../../../../contexts/SessionContext';
 import UnifiedLoading from '../../../common/UnifiedLoading';
 import ContentArea from '../../../dashboard-v2/content/ContentArea';
 import ContentHeader from '../../../dashboard-v2/content/ContentHeader';
-import MappingFilterSection from '../organisms/MappingFilterSection';
-import MappingStatsSection from '../organisms/MappingStatsSection';
-import MappingListSection from '../organisms/MappingListSection';
+import MappingKpiSection from '../organisms/MappingKpiSection';
+import MappingSearchSection from '../organisms/MappingSearchSection';
+import MappingListBlock from '../organisms/MappingListBlock';
 import MappingCreationModal from '../../MappingCreationModal';
 import ConsultantTransferModal from '../../mapping/ConsultantTransferModal';
 import ConsultantTransferHistory from '../../mapping/ConsultantTransferHistory';
@@ -37,14 +38,12 @@ const MappingManagementPage = () => {
   const [selectedMapping, setSelectedMapping] = useState(null);
   const [filterStatus, setFilterStatus] = useState('ALL');
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeFilters, setActiveFilters] = useState({});
-  const [mappingStatusOptions, setMappingStatusOptions] = useState([]);
+  const [mappingStatusInfo, setMappingStatusInfo] = useState({});
   const [showTransferModal, setShowTransferModal] = useState(false);
   const [showTransferHistory, setShowTransferHistory] = useState(false);
   const [selectedClientId, setSelectedClientId] = useState(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [pendingMappings, setPendingMappings] = useState([]);
-  const [mappingStatusInfo, setMappingStatusInfo] = useState({});
   const [showRefundModal, setShowRefundModal] = useState(false);
   const [refundMapping, setRefundMapping] = useState(null);
   const [refundReason, setRefundReason] = useState('');
@@ -61,7 +60,7 @@ const MappingManagementPage = () => {
     setIsLoadingMappings(true);
     setLoading(true);
     try {
-      const response = await apiGet('/api/v1/admin/mappings');
+      const response = await StandardizedApi.get('/api/v1/admin/mappings');
       if (response && response.mappings) {
         setMappings(response.mappings);
       } else if (response && Array.isArray(response)) {
@@ -70,7 +69,7 @@ const MappingManagementPage = () => {
         setMappings([]);
       }
     } catch (error) {
-      console.error('❌ 매칭 목록 로드 실패:', error);
+      console.error('매칭 목록 로드 실패:', error);
       setMappings([]);
       notificationManager.error('매칭 목록을 불러오는데 실패했습니다.');
     } finally {
@@ -103,15 +102,15 @@ const MappingManagementPage = () => {
 
   const getStatusColor = (status) => {
     const colorMap = {
-      ACTIVE: 'var(--color-success)',
-      INACTIVE: 'var(--color-text-secondary)',
-      PENDING_PAYMENT: 'var(--color-warning)',
-      PAYMENT_CONFIRMED: 'var(--color-info)',
-      TERMINATED: 'var(--color-danger)',
-      SESSIONS_EXHAUSTED: 'var(--color-warning)',
-      SUSPENDED: 'var(--color-text-secondary)'
+      ACTIVE: 'var(--mg-success-500)',
+      INACTIVE: 'var(--mg-secondary-500)',
+      PENDING_PAYMENT: 'var(--mg-warning-500)',
+      PAYMENT_CONFIRMED: 'var(--mg-info-500)',
+      TERMINATED: 'var(--mg-error-500)',
+      SESSIONS_EXHAUSTED: 'var(--mg-purple-500)',
+      SUSPENDED: 'var(--mg-warning-500)'
     };
-    return colorMap[status] || 'var(--color-primary)';
+    return colorMap[status] || 'var(--mg-secondary-500)';
   };
 
   const getStatusIcon = (status) => {
@@ -120,8 +119,8 @@ const MappingManagementPage = () => {
       INACTIVE: '⏸️',
       PENDING_PAYMENT: '⏳',
       PAYMENT_CONFIRMED: '💰',
-      TERMINATED: '🚫',
-      SESSIONS_EXHAUSTED: '⚠️',
+      TERMINATED: '❌',
+      SESSIONS_EXHAUSTED: '🔚',
       SUSPENDED: '⏸️'
     };
     return iconMap[status] || '📋';
@@ -129,7 +128,7 @@ const MappingManagementPage = () => {
 
   const loadMappingStatusInfo = async () => {
     try {
-      const response = await apiGet('/api/v1/common-codes/groups/MAPPING_STATUS');
+      const response = await StandardizedApi.get('/api/v1/common-codes/groups/MAPPING_STATUS');
       if (response && response.length > 0) {
         const statusInfoMap = {};
         response.forEach((code) => {
@@ -180,7 +179,7 @@ const MappingManagementPage = () => {
 
   const handleApproveMapping = async (mappingId) => {
     try {
-      const response = await apiPost(`/api/v1/admin/mappings/${mappingId}/approve`, {
+      const response = await StandardizedApi.post(`/api/v1/admin/mappings/${mappingId}/approve`, {
         adminName: user?.name || user?.userId || '관리자'
       });
       if (response) {
@@ -201,23 +200,6 @@ const MappingManagementPage = () => {
 
   const handleConfirmDeposit = async () => {
     loadMappings();
-  };
-
-  const handleRejectMapping = async (mappingId) => {
-    try {
-      const response = await apiPost(`/api/v1/admin/mappings/${mappingId}/reject`, {
-        reason: '관리자 거부'
-      });
-      if (response) {
-        notificationManager.success('매칭이 거부되었습니다.');
-        loadMappings();
-      } else {
-        notificationManager.error('매칭 거부에 실패했습니다.');
-      }
-    } catch (error) {
-      console.error('매칭 거부 실패:', error);
-      notificationManager.error(error.message || '매칭 거부에 실패했습니다.');
-    }
   };
 
   const handleMappingCreated = () => {
@@ -279,11 +261,11 @@ const MappingManagementPage = () => {
 
   const handleRefundProcess = async () => {
     if (!refundReason.trim()) {
-      notificationManager.warning('⚠️ 환불 사유를 반드시 입력해주세요.');
+      notificationManager.warning('환불 사유를 반드시 입력해주세요.');
       return;
     }
     if (refundReason.trim().length < 5) {
-      notificationManager.warning('⚠️ 환불 사유를 5자 이상 상세히 입력해주세요.');
+      notificationManager.warning('환불 사유를 5자 이상 상세히 입력해주세요.');
       return;
     }
     const confirmMessage = `${refundMapping.clientName}과의 매칭을 환불 처리하시겠습니까?\n\n환불 회기: ${refundMapping.remainingSessions}회\n환불 사유: ${refundReason.trim()}\n\n이 작업은 되돌릴 수 없습니다.`;
@@ -294,7 +276,7 @@ const MappingManagementPage = () => {
 
     try {
       setLoading(true);
-      const response = await apiPost(`/api/v1/admin/mappings/${refundMapping.id}/terminate`, {
+      const response = await StandardizedApi.post(`/api/v1/admin/mappings/${refundMapping.id}/terminate`, {
         reason: refundReason.trim()
       });
       if (response?.success) {
@@ -334,11 +316,12 @@ const MappingManagementPage = () => {
   };
 
   const handleStatCardClick = (stat) => {
+    const count = stat.count ?? (parseInt(String(stat.value).replace(/[^0-9]/g, ''), 10) || 0);
     switch (stat.action) {
       case 'payment':
-        if (stat.value > 0) {
+        if (count > 0) {
           const pending = mappings.filter(
-            (m) => m.status === 'PENDING' || m.paymentStatus === 'PENDING'
+            (m) => m.status === 'PENDING_PAYMENT' || m.paymentStatus === 'PENDING'
           );
           setPendingMappings(pending);
           setShowPaymentModal(true);
@@ -349,11 +332,9 @@ const MappingManagementPage = () => {
         break;
       case 'view':
         setFilterStatus(stat.id);
-        notificationManager.info(`${stat.label} 매칭을 필터링합니다.`);
         break;
       case 'view_all':
         setFilterStatus('ALL');
-        notificationManager.info('전체 매칭을 표시합니다.');
         break;
       default:
         break;
@@ -374,9 +355,7 @@ const MappingManagementPage = () => {
   const filteredMappings = mappings
     .filter((mapping) => {
       const matchesStatus =
-        !activeFilters.status ||
-        activeFilters.status === 'ALL' ||
-        mapping.status === activeFilters.status;
+        filterStatus === 'ALL' || mapping.status === filterStatus;
       const matchesSearch =
         !searchTerm ||
         (mapping.consultantName &&
@@ -389,7 +368,7 @@ const MappingManagementPage = () => {
           mapping.status === searchTerm.substring(1).toUpperCase());
       return matchesStatus && matchesSearch;
     })
-    .sort((a, b) => b.id - a.id);
+    .sort((a, b) => (b.id || 0) - (a.id || 0));
 
   if (loading) {
     return (
@@ -405,50 +384,46 @@ const MappingManagementPage = () => {
     <div className="mg-v2-ad-b0kla mg-v2-mapping-management">
       <div className="mg-v2-ad-b0kla__container">
         <ContentArea>
-            <ContentHeader
-              title="매칭 관리"
-              subtitle="상담사와 내담자 간의 매칭을 관리합니다."
-              actions={
-                <button
-                  type="button"
-                  className="mg-v2-button mg-v2-button-primary"
-                  onClick={() => setShowCreateModal(true)}
-                >
-                  <Plus size={20} style={{ marginRight: 8 }} />
-                  새 매칭 생성
-                </button>
-              }
-            />
+          <ContentHeader
+            title="매칭 관리"
+            subtitle="상담사와 내담자 간의 매칭을 관리합니다."
+            actions={
+              <button
+                type="button"
+                className="mg-v2-mapping-header-btn mg-v2-mapping-header-btn--primary"
+                onClick={() => setShowCreateModal(true)}
+              >
+                <Plus size={20} />
+                새 매칭 생성
+              </button>
+            }
+          />
 
-            <MappingFilterSection
-              onSearch={(term) => setSearchTerm(term)}
-              onFilterChange={(filters) => {
-                setActiveFilters(filters);
-                setFilterStatus(filters.status || 'ALL');
-              }}
-              searchPlaceholder="상담사, 내담자, 패키지명 또는 #태그로 검색..."
-              compact
-              showQuickFilters
-              quickFilterOptions={mappingStatusOptions}
-            />
+          <MappingSearchSection
+            searchValue={searchTerm}
+            onSearchChange={setSearchTerm}
+            filterStatus={filterStatus}
+            onFilterChange={setFilterStatus}
+            placeholder="상담사, 내담자, 패키지명 또는 #상태로 검색..."
+          />
 
-            <MappingStatsSection mappings={mappings} onStatCardClick={handleStatCardClick} />
+          <MappingKpiSection mappings={mappings} onStatCardClick={handleStatCardClick} />
 
-            <MappingListSection
-              mappings={filteredMappings}
-              mappingStatusInfo={mappingStatusInfo}
-              getStatusKoreanName={getStatusKoreanName}
-              getStatusColor={getStatusColor}
-              getStatusIcon={getStatusIcon}
-              onView={handleViewMapping}
-              onEdit={handleEditMapping}
-              onRefund={handleRefundMapping}
-              onConfirmPayment={handleConfirmPayment}
-              onConfirmDeposit={handleConfirmDeposit}
-              onApprove={handleApproveMapping}
-              onCreateClick={() => setShowCreateModal(true)}
-            />
-          </ContentArea>
+          <MappingListBlock
+            mappings={filteredMappings}
+            mappingStatusInfo={mappingStatusInfo}
+            getStatusKoreanName={getStatusKoreanName}
+            getStatusColor={getStatusColor}
+            getStatusIcon={getStatusIcon}
+            onView={handleViewMapping}
+            onEdit={handleEditMapping}
+            onRefund={handleRefundMapping}
+            onConfirmPayment={handleConfirmPayment}
+            onConfirmDeposit={handleConfirmDeposit}
+            onApprove={handleApproveMapping}
+            onCreateClick={() => setShowCreateModal(true)}
+          />
+        </ContentArea>
       </div>
 
       <MappingCreationModal
@@ -501,7 +476,10 @@ const MappingManagementPage = () => {
           <div className="mapping-refund-modal">
             <div className="mapping-refund-modal-header">
               <div className="mapping-refund-modal-header-content">
-                <h3 className="mapping-refund-modal-title">🔄 매칭 환불 처리</h3>
+                <h3 className="mapping-refund-modal-title">
+                  <RotateCcw size={20} style={{ marginRight: 8, verticalAlign: 'middle' }} />
+                  매칭 환불 처리
+                </h3>
                 <button
                   type="button"
                   onClick={handleCloseRefundModal}
@@ -547,9 +525,7 @@ const MappingManagementPage = () => {
                   className={`mapping-refund-reason-input ${!refundReason.trim() ? 'mapping-refund-reason-input--error' : ''}`}
                 />
                 {!refundReason.trim() && (
-                  <div className="mapping-refund-reason-error">
-                    ⚠️ 환불 사유를 반드시 입력해주세요.
-                  </div>
+                  <div className="mapping-refund-reason-error">환불 사유를 반드시 입력해주세요.</div>
                 )}
               </div>
             </div>

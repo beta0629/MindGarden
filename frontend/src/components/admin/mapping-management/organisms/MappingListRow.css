@@ -1,0 +1,127 @@
+/**
+ * MappingListRow - 테이블 행 스타일
+ * @author MindGarden
+ * @since 2025-02-22
+ */
+
+.mg-v2-mapping-list-row {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  background: var(--ad-b0kla-card-bg, #ffffff);
+  border: 1px solid var(--ad-b0kla-border, #e2e8f0);
+  border-radius: var(--ad-b0kla-radius-sm, 12px);
+  transition: all 0.2s;
+}
+
+.mg-v2-mapping-list-row:hover {
+  border-color: var(--ad-b0kla-green, #4b745c);
+  box-shadow: 0 4px 12px rgba(75, 116, 92, 0.08);
+}
+
+@media (min-width: 900px) {
+  .mg-v2-mapping-list-row {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+  }
+}
+
+.mg-v2-mapping-list-row__main {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.mg-v2-mapping-list-row__status-col {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.mg-v2-mapping-list-row__status {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  border: 1px solid;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.mg-v2-mapping-list-row__erp {
+  font-size: 11px;
+  color: var(--ad-b0kla-blue, #6d9dc5);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.mg-v2-mapping-list-row__participants {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.mg-v2-mapping-list-row__party {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ad-b0kla-title-color, #2d3748);
+}
+
+.mg-v2-mapping-list-row__party svg {
+  flex-shrink: 0;
+  color: var(--ad-b0kla-text-secondary, #64748b);
+}
+
+.mg-v2-mapping-list-row__arrow {
+  color: var(--ad-b0kla-placeholder, #a0aec0);
+  font-size: 12px;
+}
+
+.mg-v2-mapping-list-row__package {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--ad-b0kla-text-secondary, #64748b);
+}
+
+.mg-v2-mapping-list-row__amount {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ad-b0kla-title-color, #2d3748);
+}
+
+.mg-v2-mapping-list-row__sessions {
+  font-size: 13px;
+  color: var(--ad-b0kla-text-secondary, #64748b);
+}
+
+.mg-v2-mapping-list-row__date {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--ad-b0kla-text-secondary, #64748b);
+}
+
+.mg-v2-mapping-list-row__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.mg-v2-mapping-list-row__actions .mg-button {
+  white-space: nowrap;
+}

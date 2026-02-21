@@ -1,0 +1,81 @@
+/**
+ * MappingKpiSection - B0KlA 토큰 기반
+ * @author MindGarden
+ * @since 2025-02-22
+ */
+
+.mg-v2-mapping-kpi-section {
+  margin-bottom: var(--mg-layout-gap, 1.5rem);
+}
+
+.mg-v2-mapping-kpi-section__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 1rem;
+}
+
+.mg-v2-mapping-kpi-section__card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  background: var(--ad-b0kla-card-bg, #ffffff);
+  border: 1px solid var(--ad-b0kla-border, #e2e8f0);
+  border-radius: var(--ad-b0kla-radius-sm, 12px);
+  box-shadow: var(--ad-b0kla-shadow, 0 4px 12px rgba(0, 0, 0, 0.04));
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+}
+
+.mg-v2-mapping-kpi-section__card:hover {
+  border-color: var(--ad-b0kla-green, #4b745c);
+  box-shadow: 0 6px 20px rgba(75, 116, 92, 0.12);
+}
+
+.mg-v2-mapping-kpi-section__icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.mg-v2-mapping-kpi-section__icon--green {
+  background: var(--ad-b0kla-green-bg, #ebf2ee);
+  color: var(--ad-b0kla-green, #4b745c);
+}
+
+.mg-v2-mapping-kpi-section__icon--orange {
+  background: var(--ad-b0kla-orange-bg, #fcf3ed);
+  color: var(--ad-b0kla-orange, #e8a87c);
+}
+
+.mg-v2-mapping-kpi-section__icon--blue {
+  background: var(--ad-b0kla-blue-bg, #f0f5f9);
+  color: var(--ad-b0kla-blue, #6d9dc5);
+}
+
+.mg-v2-mapping-kpi-section__icon--gray {
+  background: #edf2f7;
+  color: #4a5568;
+}
+
+.mg-v2-mapping-kpi-section__info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.mg-v2-mapping-kpi-section__label {
+  font-size: 12px;
+  color: var(--ad-b0kla-text-secondary, #64748b);
+}
+
+.mg-v2-mapping-kpi-section__value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--ad-b0kla-title-color, #2d3748);
+}

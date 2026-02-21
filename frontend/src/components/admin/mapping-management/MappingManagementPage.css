@@ -5,6 +5,29 @@
  * @since 2025-02-22
  */
 
+.mg-v2-mapping-header-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0.75rem 1.25rem;
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  border-radius: var(--ad-b0kla-radius-sm, 12px);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.mg-v2-mapping-header-btn--primary {
+  background: var(--ad-b0kla-green, #4b745c);
+  color: #fff;
+}
+
+.mg-v2-mapping-header-btn--primary:hover {
+  background: #3d5f4c;
+  transform: translateY(-1px);
+}
+
 /* Admin Dashboard V2 본문 영역과 동일 (레이아웃 main이 padding 제공) */
 .mg-v2-mapping-management.mg-v2-ad-b0kla {
   min-height: 100%;

@@ -23,7 +23,7 @@ import SpecialtyManagementModal from '../consultant/SpecialtyManagementModal';
 import PerformanceMetricsModal from '../statistics/PerformanceMetricsModal';
 import RecurringExpenseModal from '../finance/RecurringExpenseModal';
 import ErpReportModal from '../erp/ErpReportModal';
-import MappingDepositModal from '../mapping/MappingDepositModal';
+import MappingDepositModal from './mapping/MappingDepositModal';
 import AdminDashboardMonitoring from './AdminDashboard/AdminDashboardMonitoring';
 import StandardizedApi from '../../utils/standardizedApi';
 import {

@@ -6,7 +6,7 @@
  * @since 2025-02-22
  */
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   User,
   Package,
@@ -19,7 +19,6 @@ import {
   DollarSign,
   Database
 } from 'lucide-react';
-import MGButton from '../../../common/MGButton';
 import MappingPaymentModal from '../../mapping/MappingPaymentModal';
 import MappingDepositModal from '../../mapping/MappingDepositModal';
 import './MappingListRow.css';
@@ -54,6 +53,20 @@ const MappingListRow = ({
 }) => {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showDepositModal, setShowDepositModal] = useState(false);
+  const [processing, setProcessing] = useState(false);
+
+  const handleCriticalAction = useCallback(
+    async (fn) => {
+      if (processing) return;
+      setProcessing(true);
+      try {
+        if (fn) await fn();
+      } finally {
+        setTimeout(() => setProcessing(false), 1000);
+      }
+    },
+    [processing]
+  );
 
   const isErpIntegrated =
     mapping.status === 'ACTIVE' ||
@@ -112,56 +125,66 @@ const MappingListRow = ({
       </div>
       <div className="mg-v2-mapping-list-row__actions">
         {onView && (
-          <MGButton variant="primary" size="sm" onClick={() => onView(mapping)} preventDoubleClick>
+          <button
+            type="button"
+            className="mg-v2-button mg-v2-button-primary mg-v2-button-sm"
+            onClick={() => onView(mapping)}
+          >
             <Eye size={14} />
             상세
-          </MGButton>
+          </button>
         )}
         {mapping.status === 'PENDING_PAYMENT' && (
-          <MGButton
-            variant="success"
-            size="sm"
+          <button
+            type="button"
+            className="mg-v2-button mg-v2-button-success mg-v2-button-sm"
             onClick={() => setShowPaymentModal(true)}
-            preventDoubleClick
           >
             <CreditCard size={14} />
             결제 확인
-          </MGButton>
+          </button>
         )}
         {mapping.status === 'PAYMENT_CONFIRMED' && (
-          <MGButton
-            variant="primary"
-            size="sm"
+          <button
+            type="button"
+            className="mg-v2-button mg-v2-button-primary mg-v2-button-sm"
             onClick={() => setShowDepositModal(true)}
-            preventDoubleClick
           >
             <DollarSign size={14} />
             입금 확인
-          </MGButton>
+          </button>
         )}
         {mapping.status === 'DEPOSIT_PENDING' && onApprove && (
-          <MGButton
-            variant="success"
-            size="sm"
-            onClick={() => onApprove(mapping.id)}
-            preventDoubleClick
-            clickDelay={1000}
+          <button
+            type="button"
+            className="mg-v2-button mg-v2-button-success mg-v2-button-sm"
+            onClick={() => handleCriticalAction(() => onApprove(mapping.id))}
+            disabled={processing}
           >
             <CheckCircle size={14} />
             승인
-          </MGButton>
+          </button>
         )}
         {onEdit && (
-          <MGButton variant="outline" size="sm" onClick={() => onEdit(mapping)} preventDoubleClick>
+          <button
+            type="button"
+            className="mg-v2-button mg-v2-button-outline mg-v2-button-sm"
+            onClick={() => onEdit(mapping)}
+          >
             <Edit size={14} />
             수정
-          </MGButton>
+          </button>
         )}
         {onRefund && (
-          <MGButton variant="danger" size="sm" onClick={() => onRefund(mapping)} preventDoubleClick clickDelay={1000}>
+          <button
+            type="button"
+            className="mg-v2-button mg-v2-button-danger mg-v2-button-sm"
+            onClick={() => handleCriticalAction(() => onRefund(mapping))}
+            disabled={processing}
+          >
             <XCircle size={14} />
             환불
-          </MGButton>
+          </button>
         )}
       </div>
 

@@ -23,6 +23,7 @@ description: Core Solution(MindGarden) 프로젝트 전체 룰 인덱스. 백엔
 - **멀티테넌트**: tenantId 없는 데이터·API·쿼리는 절대 허용 안 됨. `/core-solution-multi-tenant` 참조.
 - **표준화**: 디자인·소스 코드는 docs/standards/ 문서 및 디자인 시스템을 반드시 따름. `/core-solution-standardization` 참조.
 - **디자인·개발 일관성**: core-designer와 core-coder 산출물은 **한 사람이 한 것처럼** 동일한 디자인·코드가 나와야 한다. 토큰·클래스명·구조를 통일하고, 단일 소스(`mindgarden-design-system.pen`, `unified-design-tokens.css`)만 사용한다.
+- **페이지 수정 시 연관 요소 전체 수정**: 한 페이지를 수정할 때는 메인 화면뿐 아니라 모달·버튼·연관 컴포넌트 등 **연관된 모든 부수 요소**를 찾아 함께 수정한다. import·모달·라우트 검색으로 연관 파일을 파악한다.
 
 ## 사용할 스킬
 

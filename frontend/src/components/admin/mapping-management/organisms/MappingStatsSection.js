@@ -9,6 +9,7 @@
 import React from 'react';
 import ContentSection from '../../../dashboard-v2/content/ContentSection';
 import MappingStats from '../../mapping/MappingStats';
+import '../../../dashboard-v2/content/ContentKpiRow.css';
 import './MappingStatsSection.css';
 
 const MappingStatsSection = ({ mappings, onStatCardClick }) => {

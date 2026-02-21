@@ -7,8 +7,15 @@
 .mg-v2-content-header {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   flex-wrap: wrap;
   gap: var(--mg-layout-gap, 1rem);
+}
+
+.mg-v2-content-header__right {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-spacing-md, 1rem);
 }
 
 .mg-v2-content-header__left {

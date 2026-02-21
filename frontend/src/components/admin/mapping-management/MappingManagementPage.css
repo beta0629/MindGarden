@@ -5,10 +5,11 @@
  * @since 2025-02-22
  */
 
+/* Admin Dashboard V2 본문 영역과 동일 (레이아웃 main이 padding 제공) */
 .mg-v2-mapping-management.mg-v2-ad-b0kla {
-  min-height: 100vh;
-  background: var(--ad-b0kla-bg);
-  padding: var(--mg-spacing-xl, 1.5rem);
+  min-height: 100%;
+  background: transparent;
+  padding: 0;
 }
 
 .mg-v2-mapping-management .mg-v2-ad-b0kla__container {

@@ -7,7 +7,6 @@
  */
 
 import React from 'react';
-import ContentSection from '../../../dashboard-v2/content/ContentSection';
 import UnifiedFilterSearch from '../../../ui/FilterSearch/UnifiedFilterSearch';
 import './MappingFilterSection.css';
 
@@ -20,8 +19,9 @@ const MappingFilterSection = ({
   quickFilterOptions = []
 }) => {
   return (
-    <ContentSection noCard className="mg-v2-mapping-filter-section">
-      <UnifiedFilterSearch
+    <div className="mg-v2-mapping-filter-section">
+      <div className="mg-v2-ad-b0kla__card mg-v2-mapping-filter-card">
+        <UnifiedFilterSearch
         onSearch={onSearch}
         onFilterChange={onFilterChange}
         searchPlaceholder={searchPlaceholder}
@@ -29,7 +29,8 @@ const MappingFilterSection = ({
         showQuickFilters={showQuickFilters}
         quickFilterOptions={quickFilterOptions}
       />
-    </ContentSection>
+      </div>
+    </div>
   );
 };
 

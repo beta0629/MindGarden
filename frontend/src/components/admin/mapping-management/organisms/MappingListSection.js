@@ -8,7 +8,7 @@
 
 import React from 'react';
 import { Plus } from 'lucide-react';
-import ContentSection from '../../../dashboard-v2/content/ContentSection';
+import ContentCard from '../../../dashboard-v2/content/ContentCard';
 import MappingCard from '../../mapping/MappingCard';
 import { MAPPING_MESSAGES } from '../../../../constants/mapping';
 import './MappingListSection.css';
@@ -30,20 +30,20 @@ const MappingListSection = ({
   const isEmpty = !mappings || mappings.length === 0;
 
   return (
-    <ContentSection noCard className="mg-v2-mapping-list-section">
-      <div className="mg-v2-ad-b0kla__card mg-v2-mapping-list-card">
+    <div className="mg-v2-mapping-list-section">
+      <ContentCard className="mg-v2-mapping-list-card">
         {isEmpty ? (
-          <div className="mg-v2-mapping-empty">
+          <div className="mg-v2-ad-b0kla__chart-placeholder mg-v2-mapping-empty">
             <div className="mg-v2-mapping-empty__icon">🔗</div>
             <h3 className="mg-v2-mapping-empty__title">{MAPPING_MESSAGES.NO_MAPPINGS}</h3>
-            <p className="mg-v2-mapping-empty__desc">{MAPPING_MESSAGES.NO_MAPPINGS_DESC}</p>
+            <p className="mg-v2-ad-b0kla__chart-empty-desc mg-v2-mapping-empty__desc">{MAPPING_MESSAGES.NO_MAPPINGS_DESC}</p>
             {onCreateClick && (
               <button
                 type="button"
-                className="mg-v2-button mg-v2-button-primary"
+                className="mg-v2-button mg-v2-button-primary mg-v2-mapping-empty__action"
                 onClick={onCreateClick}
               >
-                <Plus size={20} />
+                <Plus size={20} style={{ marginRight: 8 }} />
                 매칭 생성하기
               </button>
             )}
@@ -71,8 +71,8 @@ const MappingListSection = ({
             ))}
           </div>
         )}
-      </div>
-    </ContentSection>
+      </ContentCard>
+    </div>
   );
 };
 

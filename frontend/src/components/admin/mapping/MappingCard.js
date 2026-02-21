@@ -5,9 +5,12 @@ import MappingDepositModal from './MappingDepositModal';
 import MGButton from '../../common/MGButton';
 
 /**
- * 매칭 카드 컴포넌트 - 글래스모피즘 디자인
-/**
- * SessionManagement 디자인 시스템 기반
+ * 매칭 카드 컴포넌트
+ * B0KlA ContentCard 스타일 (mg-v2-content-card)
+ *
+ * @author MindGarden
+ * @since 2024-12-19
+ * @updated 2025-02-22 - B0KlA 어드민 대시보드 스타일 적용
  */
 const MappingCard = ({ 
     mapping, 
@@ -56,7 +59,7 @@ const MappingCard = ({
     };
 
     return (
-        <div className="mg-v2-card mg-v2-card-glass">
+        <div className="mg-v2-content-card mg-v2-mapping-card">
             {/* Header */}
             <div className="mg-v2-card-header">
                 <div className="mg-v2-mapping-card-header-left">

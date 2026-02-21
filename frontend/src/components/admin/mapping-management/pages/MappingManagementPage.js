@@ -7,13 +7,14 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { Plus } from 'lucide-react';
 import Button from '../../../ui/Button/Button';
 import { apiGet, apiPost } from '../../../../utils/ajax';
 import notificationManager from '../../../../utils/notification';
 import { useSession } from '../../../../contexts/SessionContext';
 import UnifiedLoading from '../../../common/UnifiedLoading';
 import ContentArea from '../../../dashboard-v2/content/ContentArea';
-import MappingContentHeader from '../content/MappingContentHeader';
+import ContentHeader from '../../../dashboard-v2/content/ContentHeader';
 import MappingFilterSection from '../organisms/MappingFilterSection';
 import MappingStatsSection from '../organisms/MappingStatsSection';
 import MappingListSection from '../organisms/MappingListSection';
@@ -404,10 +405,19 @@ const MappingManagementPage = () => {
     <div className="mg-v2-ad-b0kla mg-v2-mapping-management">
       <div className="mg-v2-ad-b0kla__container">
         <ContentArea>
-            <MappingContentHeader
-              title="🔗 매칭 관리"
+            <ContentHeader
+              title="매칭 관리"
               subtitle="상담사와 내담자 간의 매칭을 관리합니다."
-              onCreateClick={() => setShowCreateModal(true)}
+              actions={
+                <button
+                  type="button"
+                  className="mg-v2-button mg-v2-button-primary"
+                  onClick={() => setShowCreateModal(true)}
+                >
+                  <Plus size={20} style={{ marginRight: 8 }} />
+                  새 매칭 생성
+                </button>
+              }
             />
 
             <MappingFilterSection

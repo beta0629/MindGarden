@@ -220,72 +220,63 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
         loadStatCards();
     }, [mappings]); // mappings가 변경될 때마다 재로드
 
+    const ICON_VARIANT_MAP = {
+        PENDING_PAYMENT: 'orange',
+        ACTIVE: 'green',
+        PAYMENT_CONFIRMED: 'blue',
+        TOTAL: 'blue',
+        TERMINATED: 'gray',
+        SESSIONS_EXHAUSTED: 'orange'
+    };
+
     if (loading) {
         return (
-            <div className="mapping-stats-container">
-                <div className="mg-v2-loading-container">
-                    <div className="mg-v2-spinner"></div>
-                    <p>매칭 통계를 불러오는 중...</p>
-                </div>
+            <div className="mg-v2-content-kpi-row mg-v2-mapping-stats-loading">
+                {[1, 2, 3, 4].map((i) => (
+                    <div key={i} className="mg-v2-content-kpi-card mg-v2-content-kpi-card--skeleton">
+                        <div className="mg-v2-content-kpi-card__icon mg-v2-content-kpi-card__icon--gray" />
+                        <div className="mg-v2-content-kpi-card__info">
+                            <span className="mg-v2-content-kpi-card__label">로딩 중...</span>
+                            <span className="mg-v2-content-kpi-card__value">-</span>
+                        </div>
+                    </div>
+                ))}
             </div>
         );
     }
 
     return (
-        <div className="mg-v2-mapping-stats-container">
-            <div className="mg-v2-mapping-stats-header">
-                <h3 className="mg-v2-mapping-stats-title">📊 매칭 통계</h3>
-                <p className="mg-v2-mapping-stats-subtitle">현재 매칭 상태별 통계입니다.</p>
-            </div>
-            
-            <div className="mg-v2-mapping-stats-grid">
-                {statCards.map((stat, index) => (
-                    <div 
-                        key={index} 
-                        className={`mg-v2-mapping-stat-card ${stat.status.toLowerCase()}-stat`}
+        <div className="mg-v2-content-kpi-row">
+            {statCards.map((stat, index) => {
+                const iconVariant = ICON_VARIANT_MAP[stat.id] || (['green', 'orange', 'blue', 'gray'][index % 4]);
+                const percentage = stats.total > 0 ? Math.round((stat.value / stats.total) * 100) : 0;
+                return (
+                    <button
+                        key={stat.id || index}
+                        type="button"
+                        className="mg-v2-content-kpi-card mg-v2-content-kpi-card--clickable"
                         onClick={() => onStatCardClick && onStatCardClick(stat)}
                         title={`${stat.label} 클릭하여 ${stat.action === 'payment' ? '결제 확인' : '상세 조회'}`}
-                        data-color={stat.color}
                     >
-                        <div className="mg-v2-mapping-stat-icon">
-                            {stat.icon}
+                        <div className={`mg-v2-content-kpi-card__icon mg-v2-content-kpi-card__icon--${iconVariant}`}>
+                            <span className="mg-v2-content-kpi-card__icon-emoji">{stat.icon}</span>
                         </div>
-                        <div className="mg-v2-mapping-stat-content">
-                            <div className="mg-v2-mapping-stat-label">{stat.label}</div>
-                            <div className="mg-v2-mapping-stat-count">
-                                {stat.value}건
+                        <div className="mg-v2-content-kpi-card__info">
+                            <div className="mg-v2-content-kpi-card__top">
+                                <span className="mg-v2-content-kpi-card__label">{stat.label}</span>
+                                {stat.action === 'payment' && stat.value > 0 && (
+                                    <span className="mg-v2-content-kpi-card__badge mg-v2-content-kpi-card__badge--orange">
+                                        결제 확인
+                                    </span>
+                                )}
                             </div>
+                            <span className="mg-v2-content-kpi-card__value">
+                                {stat.value}건{percentage > 0 ? ` (${percentage}%)` : ''}
+                            </span>
                         </div>
-                        <div className="mg-v2-mapping-stat-percentage">
-                            {stats.total > 0 ? Math.round((stat.value / stats.total) * 100) : 0}%
-                        </div>
-                        {stat.action === 'payment' && stat.value > 0 && (
-                            <div className="mg-v2-mapping-stat-payment-badge">
-                                💳 결제 확인
-                            </div>
-                        )}
-                    </div>
-                ))}
-            </div>
-            
-            <div className="mg-v2-mapping-stats-summary">
-                <div className="mg-v2-mapping-summary-item">
-                    <span className="mg-v2-mapping-summary-label">총 매칭 수:</span>
-                    <span className="mg-v2-mapping-summary-value">{stats.total}건</span>
-                </div>
-                <div className="mg-v2-mapping-summary-item">
-                    <span className="mg-v2-mapping-summary-label">활성 비율:</span>
-                    <span className="mg-v2-mapping-summary-value">
-                        {stats.total > 0 ? Math.round((stats.active / stats.total) * 100) : 0}%
-                    </span>
-                </div>
-                <div className="mg-v2-mapping-summary-item">
-                    <span className="mg-v2-mapping-summary-label">승인 대기 비율:</span>
-                    <span className="mg-v2-mapping-summary-value">
-                        {stats.total > 0 ? Math.round((stats.pending / stats.total) * 100) : 0}%
-                    </span>
-                </div>
-            </div>
+                    </button>
+                );
+            })}
         </div>
     );
 };

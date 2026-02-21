@@ -22,6 +22,7 @@ description: Core Solution(MindGarden) 프로젝트 전체 룰 인덱스. 백엔
 
 - **멀티테넌트**: tenantId 없는 데이터·API·쿼리는 절대 허용 안 됨. `/core-solution-multi-tenant` 참조.
 - **표준화**: 디자인·소스 코드는 docs/standards/ 문서 및 디자인 시스템을 반드시 따름. `/core-solution-standardization` 참조.
+- **디자인·개발 일관성**: core-designer와 core-coder 산출물은 **한 사람이 한 것처럼** 동일한 디자인·코드가 나와야 한다. 토큰·클래스명·구조를 통일하고, 단일 소스(`mindgarden-design-system.pen`, `unified-design-tokens.css`)만 사용한다.
 
 ## 사용할 스킬
 
@@ -40,6 +41,14 @@ description: Core Solution(MindGarden) 프로젝트 전체 룰 인덱스. 백엔
 
 - Agent 채팅에서 `/` 입력 후 스킬 이름 검색하여 수동 호출 가능
 - 관련 작업 시 Agent가 자동으로 위 스킬 중 적절한 것을 적용할 수 있음
+
+## 문서 참조 시 주의 (최신 문서 우선)
+
+**문서를 참조할 때는 반드시 최신 문서부터 확인**합니다.
+
+- `docs/standards/`, `docs/design-system/` 등 동일 주제 문서가 여러 개 있으면 **최신 수정일·버전이 높은 문서**를 우선 참조
+- `docs/archive/`, `docs/project-management/archive/` 등 **과거·아카이브 문서**를 우선 사용하면 이전 표준으로 되돌아갈 수 있음
+- 불확실하면 파일 수정일·버전 히스토리 확인 후 최신 문서 사용
 
 ## 표준 문서 위치 (docs/standards/)
 

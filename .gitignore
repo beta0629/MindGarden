@@ -68,6 +68,9 @@ deployment/*template*
 !src/**/*Template.java
 !src/**/*Template*.java
 
+# Exception: dashboard-v2 templates folder (atomic design)
+!frontend/src/components/dashboard-v2/templates/
+
 # API Keys and Secrets
 **/api-keys/
 **/secrets/

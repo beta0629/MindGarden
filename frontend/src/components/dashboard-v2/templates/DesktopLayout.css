@@ -1,0 +1,31 @@
+/**
+ * DesktopLayout - GNB + LNB + 메인
+ * RESPONSIVE_LAYOUT_SPEC
+ *
+ * @author CoreSolution
+ * @since 2025-02-22
+ */
+
+.mg-v2-desktop-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: linear-gradient(
+    180deg,
+    var(--mg-layout-main-bg-start, #FAF9F7) 0%,
+    var(--mg-layout-main-bg-end, #F2EDE8) 100%
+  );
+}
+
+.mg-v2-desktop-layout__body {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+.mg-v2-desktop-layout__main {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--mg-layout-page-padding, 24px);
+  min-height: 0;
+}

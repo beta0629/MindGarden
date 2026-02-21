@@ -22,21 +22,21 @@
 
 .mg-v2-mapping-empty {
   text-align: center;
-  padding: var(--mg-spacing-xxxl, 3rem) var(--mg-spacing-lg, 1.5rem);
-  color: var(--ad-b0kla-text-secondary, #64748b);
+  padding: var(--mg-spacing-xxxl) var(--mg-spacing-lg);
+  color: var(--ad-b0kla-text-secondary);
 }
 
 .mg-v2-mapping-empty__icon {
   font-size: 3rem;
-  margin-bottom: var(--mg-spacing-lg, 1.5rem);
+  margin-bottom: var(--mg-spacing-lg);
   opacity: 0.6;
 }
 
 .mg-v2-mapping-empty__title {
-  margin: 0 0 var(--mg-spacing-sm, 0.5rem) 0;
+  margin: 0 0 var(--mg-spacing-sm) 0;
   font-size: 1.5rem;
   font-weight: 600;
-  color: var(--ad-b0kla-title-color, #2d3748);
+  color: var(--ad-b0kla-title-color);
 }
 
 .mg-v2-mapping-empty__desc {

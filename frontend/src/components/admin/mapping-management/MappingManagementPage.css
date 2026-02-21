@@ -29,7 +29,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: var(--modal-backdrop);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -38,10 +38,10 @@
 }
 
 .mapping-refund-modal {
-  background: var(--ad-b0kla-card-bg, #ffffff);
-  border-radius: var(--ad-b0kla-radius, 24px);
+  background: var(--ad-b0kla-card-bg);
+  border-radius: var(--ad-b0kla-radius);
   box-shadow: var(--ad-b0kla-shadow);
-  border: 1px solid var(--ad-b0kla-border, #e2e8f0);
+  border: 1px solid var(--ad-b0kla-border);
   width: 90%;
   max-width: 500px;
   max-height: 90vh;
@@ -50,7 +50,7 @@
 
 .mapping-refund-modal-header {
   padding: 1.5rem;
-  border-bottom: 1px solid var(--ad-b0kla-border, #e2e8f0);
+  border-bottom: 1px solid var(--ad-b0kla-border);
 }
 
 .mapping-refund-modal-header-content {
@@ -63,7 +63,7 @@
   margin: 0;
   font-size: 1.25rem;
   font-weight: 700;
-  color: var(--ad-b0kla-title-color, #2d3748);
+  color: var(--ad-b0kla-title-color);
 }
 
 .mapping-refund-modal-close {
@@ -71,13 +71,13 @@
   border: none;
   font-size: 1.5rem;
   cursor: pointer;
-  color: var(--ad-b0kla-text-secondary, #64748b);
+  color: var(--ad-b0kla-text-secondary);
   padding: 0;
   line-height: 1;
 }
 
 .mapping-refund-modal-close:hover {
-  color: var(--ad-b0kla-title-color, #2d3748);
+  color: var(--ad-b0kla-title-color);
 }
 
 .mapping-refund-modal-body {
@@ -92,49 +92,49 @@
   margin: 0 0 0.75rem 0;
   font-size: 1rem;
   font-weight: 600;
-  color: var(--ad-b0kla-title-color, #2d3748);
+  color: var(--ad-b0kla-title-color);
 }
 
 .mapping-refund-info-content p {
   margin: 0.5rem 0;
   font-size: 0.9rem;
-  color: var(--ad-b0kla-text-secondary, #64748b);
+  color: var(--ad-b0kla-text-secondary);
 }
 
 .mapping-refund-info-sessions {
   font-weight: 600;
-  color: var(--ad-b0kla-title-color, #2d3748) !important;
+  color: var(--ad-b0kla-title-color) !important;
 }
 
 .mapping-refund-reason-title {
   margin: 0 0 0.5rem 0;
   font-size: 1rem;
   font-weight: 600;
-  color: var(--ad-b0kla-title-color, #2d3748);
+  color: var(--ad-b0kla-title-color);
 }
 
 .mapping-refund-required {
-  color: var(--mg-error-500, #dc2626);
+  color: var(--mg-error-500);
 }
 
 .mapping-refund-reason-input {
   width: 100%;
   padding: 0.75rem;
-  border: 1px solid var(--ad-b0kla-border, #e2e8f0);
-  border-radius: var(--ad-b0kla-radius-sm, 12px);
+  border: 1px solid var(--ad-b0kla-border);
+  border-radius: var(--ad-b0kla-radius-sm);
   font-size: 0.9rem;
   resize: vertical;
   min-height: 80px;
 }
 
 .mapping-refund-reason-input--error {
-  border-color: var(--mg-error-500, #dc2626);
+  border-color: var(--mg-error-500);
 }
 
 .mapping-refund-reason-error {
   margin-top: 0.5rem;
   font-size: 0.85rem;
-  color: var(--mg-error-500, #dc2626);
+  color: var(--mg-error-500);
 }
 
 .mapping-refund-modal-footer {
@@ -142,5 +142,5 @@
   justify-content: flex-end;
   gap: 0.75rem;
   padding: 1.5rem;
-  border-top: 1px solid var(--ad-b0kla-border, #e2e8f0);
+  border-top: 1px solid var(--ad-b0kla-border);
 }

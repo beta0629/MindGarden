@@ -157,9 +157,9 @@ const MappingManagementPage = () => {
           PAYMENT_CONFIRMED: { label: '입금확인', color: 'var(--mg-info-500)', icon: '💰' },
           ACTIVE: { label: '활성', color: 'var(--mg-success-500)', icon: '✅' },
           TERMINATED: { label: '종료', color: 'var(--mg-error-500)', icon: '❌' },
-          SESSIONS_EXHAUSTED: { label: '회기소진', color: '#6f42c1', icon: '🔚' },
+          SESSIONS_EXHAUSTED: { label: '회기소진', color: 'var(--mg-purple-500)', icon: '🔚' },
           INACTIVE: { label: '비활성', color: 'var(--mg-secondary-500)', icon: '⚪' },
-          SUSPENDED: { label: '일시정지', color: '#fd7e14', icon: '⏸️' },
+          SUSPENDED: { label: '일시정지', color: 'var(--mg-warning-500)', icon: '⏸️' },
           CANCELLED: { label: '취소', color: 'var(--mg-error-500)', icon: '🚫' }
         });
       }
@@ -170,9 +170,9 @@ const MappingManagementPage = () => {
         PAYMENT_CONFIRMED: { label: '입금확인', color: 'var(--mg-info-500)', icon: '💰' },
         ACTIVE: { label: '활성', color: 'var(--mg-success-500)', icon: '✅' },
         TERMINATED: { label: '종료', color: 'var(--mg-error-500)', icon: '❌' },
-        SESSIONS_EXHAUSTED: { label: '회기소진', color: '#6f42c1', icon: '🔚' },
+        SESSIONS_EXHAUSTED: { label: '회기소진', color: 'var(--mg-purple-500)', icon: '🔚' },
         INACTIVE: { label: '비활성', color: 'var(--mg-secondary-500)', icon: '⚪' },
-        SUSPENDED: { label: '일시정지', color: '#fd7e14', icon: '⏸️' },
+        SUSPENDED: { label: '일시정지', color: 'var(--mg-warning-500)', icon: '⏸️' },
         CANCELLED: { label: '취소', color: 'var(--mg-error-500)', icon: '🚫' }
       });
     }

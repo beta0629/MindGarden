@@ -27,12 +27,12 @@
 .mg-v2-content-header__title {
   font-size: 28px;
   font-weight: 700;
-  color: var(--ad-b0kla-title-color, #2d3748);
+  color: var(--ad-b0kla-title-color);
   margin: 0;
 }
 
 .mg-v2-content-header__subtitle {
   font-size: 15px;
-  color: var(--ad-b0kla-subtitle-color, #718096);
+  color: var(--ad-b0kla-subtitle-color);
   margin: 0;
 }

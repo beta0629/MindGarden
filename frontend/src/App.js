@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback, lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import './styles/main.css'; // 새로운 통합 디자인 시스템 사용
 import { USER_ROLES } from './constants/roles';
@@ -51,12 +51,13 @@ import AdminDashboardSample from './pages/AdminDashboardSample';
 import SimpleLayout from './components/layout/SimpleLayout';
 import AcademyDashboard from './components/academy/AcademyDashboard';
 import AcademyRegister from './components/academy/AcademyRegister';
-import DynamicDashboard from './components/dashboard/DynamicDashboard';
-import DashboardManagement from './components/admin/DashboardManagement';
-import WidgetBasedAdminDashboard from './components/admin/WidgetBasedAdminDashboard';
-import AdminDashboard from './components/admin/AdminDashboard';
-import ClientDashboard from './components/client/ClientDashboard';
-import CommonDashboard from './components/dashboard/CommonDashboard';
+// 대시보드 컴포넌트 지연 로드 (로그인 직후 초기화 순서 오류 방지)
+const DynamicDashboard = lazy(() => import('./components/dashboard/DynamicDashboard'));
+const DashboardManagement = lazy(() => import('./components/admin/DashboardManagement'));
+const WidgetBasedAdminDashboard = lazy(() => import('./components/admin/WidgetBasedAdminDashboard'));
+const AdminDashboard = lazy(() => import('./components/admin/AdminDashboard'));
+const ClientDashboard = lazy(() => import('./components/client/ClientDashboard'));
+const CommonDashboard = lazy(() => import('./components/dashboard/CommonDashboard'));
 import UnifiedNotification from './components/common/UnifiedNotification';
 import NotificationTest from './components/test/NotificationTest';
 import PaymentTest from './components/test/PaymentTest';
@@ -333,6 +334,7 @@ function AppContent() {
         <SessionGuard>
         <div className="App">
           <UnifiedNotification type="toast" position="top-right" />
+          <Suspense fallback={<div className="mg-loading" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '200px' }}>로딩 중...</div>}>
           <Routes>
             <Route path="/" element={<TabletHomepage />} />
             <Route path="/landing" element={<CounselingCenterLanding />} />
@@ -662,6 +664,7 @@ function AppContent() {
             {/* catch-all 라우트 제거 (개발 중) */}
             {/* <Route path="*" element={<Navigate to="/" replace />} /> */}
           </Routes>
+          </Suspense>
           
           {/* 통계 모달 */}
           <StatisticsModal

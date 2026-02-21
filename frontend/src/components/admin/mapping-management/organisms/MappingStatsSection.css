@@ -1,0 +1,11 @@
+/**
+ * MappingStatsSection - B0KlA 스타일
+ *
+ * @author MindGarden
+ * @since 2025-02-22
+ */
+
+.mg-v2-mapping-stats-section.mg-v2-content-section--plain {
+  padding: 0;
+  margin-bottom: var(--mg-spacing-md, 1rem);
+}

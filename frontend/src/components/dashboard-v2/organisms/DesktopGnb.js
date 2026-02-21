@@ -19,7 +19,8 @@ const DesktopGnb = ({
   onSearchChange,
   onCalendarClick,
   onBellClick,
-  onMoonClick
+  onMoonClick,
+  onLogout
 }) => {
   return (
     <header className="mg-v2-desktop-gnb" role="banner">
@@ -37,6 +38,7 @@ const DesktopGnb = ({
           onCalendarClick={onCalendarClick}
           onBellClick={onBellClick}
           onMoonClick={onMoonClick}
+          onLogout={onLogout}
         />
       </div>
     </header>

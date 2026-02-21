@@ -6,11 +6,11 @@
  */
 
 import React from 'react';
-import { Calendar, Bell, Moon } from 'lucide-react';
+import { Calendar, Bell, Moon, LogOut } from 'lucide-react';
 import { SearchInput, NavIcon } from '../atoms';
 import './GnbRight.css';
 
-const GnbRight = ({ searchValue = '', onSearchChange, onCalendarClick, onBellClick, onMoonClick }) => {
+const GnbRight = ({ searchValue = '', onSearchChange, onCalendarClick, onBellClick, onMoonClick, onLogout }) => {
   return (
     <div className="mg-v2-gnb-right">
       <SearchInput value={searchValue} onChange={onSearchChange} />
@@ -18,6 +18,9 @@ const GnbRight = ({ searchValue = '', onSearchChange, onCalendarClick, onBellCli
         <NavIcon icon={Calendar} label="캘린더" onClick={onCalendarClick} />
         <NavIcon icon={Bell} label="알림" onClick={onBellClick} />
         <NavIcon icon={Moon} label="다크 모드" onClick={onMoonClick} />
+        {onLogout && (
+          <NavIcon icon={LogOut} label="로그아웃" onClick={onLogout} className="mg-v2-gnb-right__logout" />
+        )}
       </div>
     </div>
   );

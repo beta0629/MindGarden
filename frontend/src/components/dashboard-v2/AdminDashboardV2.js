@@ -65,7 +65,7 @@ import '../admin/AdminDashboard/AdminDashboardPipeline.css';
 import '../admin/system/SystemStatus.css';
 const AdminDashboardV2 = ({ user: propUser }) => {
   const navigate = useNavigate();
-  const { user: sessionUser, isLoading: sessionLoading } = useSession();
+  const { user: sessionUser, isLoading: sessionLoading, logout } = useSession();
   const { windowSize } = useResponsive();
   const isDesktop = windowSize.width >= BREAKPOINT_DESKTOP;
 
@@ -533,12 +533,21 @@ const AdminDashboardV2 = ({ user: propUser }) => {
       barColor: '#4b745c'
     }));
 
+  const handleLogout = useCallback(async () => {
+    try {
+      await logout();
+    } catch (e) {
+      console.error('로그아웃 실패:', e);
+    }
+  }, [logout]);
+
   const layoutProps = {
     menuItems: DEFAULT_MENU_ITEMS,
     headerTitle: '시스템 관리',
     searchValue,
     onSearchChange: setSearchValue,
-    onBellClick: () => navigate(ADMIN_ROUTES.MESSAGES)
+    onBellClick: () => navigate(ADMIN_ROUTES.MESSAGES),
+    onLogout: handleLogout
   };
 
   const kpiItems = [

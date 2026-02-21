@@ -16,3 +16,11 @@
   align-items: center;
   gap: 0.5rem;
 }
+
+.mg-v2-gnb-right__logout {
+  color: var(--mg-color-danger, #ef4444);
+}
+
+.mg-v2-gnb-right__logout:hover {
+  color: var(--mg-color-danger-dark, #dc2626);
+}

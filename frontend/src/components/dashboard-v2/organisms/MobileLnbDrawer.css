@@ -66,3 +66,32 @@
   padding: 0;
   list-style: none;
 }
+
+.mg-v2-mobile-lnb-drawer__footer {
+  padding: 16px 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.mg-v2-mobile-lnb-drawer__logout {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 16px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  color: #ef4444;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.mg-v2-mobile-lnb-drawer__logout:hover {
+  background: rgba(239, 68, 68, 0.15);
+}
+
+.mg-v2-mobile-lnb-drawer__logout:active {
+  background: rgba(239, 68, 68, 0.25);
+}

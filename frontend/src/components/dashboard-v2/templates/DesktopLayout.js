@@ -20,7 +20,8 @@ const DesktopLayout = ({
   onSearchChange,
   onCalendarClick,
   onBellClick,
-  onMoonClick
+  onMoonClick,
+  onLogout
 }) => {
   return (
     <div className="mg-v2-desktop-layout">
@@ -32,6 +33,7 @@ const DesktopLayout = ({
         onCalendarClick={onCalendarClick}
         onBellClick={onBellClick}
         onMoonClick={onMoonClick}
+        onLogout={onLogout}
       />
       <div className="mg-v2-desktop-layout__body">
         <DesktopLnb menuItems={menuItems} headerTitle={headerTitle} />

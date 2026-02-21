@@ -7,10 +7,11 @@
  */
 
 import React, { useEffect } from 'react';
+import { LogOut } from 'lucide-react';
 import { LnbMenuItem } from '../molecules';
 import './MobileLnbDrawer.css';
 
-const MobileLnbDrawer = ({ isOpen, onClose, menuItems = [], headerTitle = '시스템 관리' }) => {
+const MobileLnbDrawer = ({ isOpen, onClose, menuItems = [], headerTitle = '시스템 관리', onLogout }) => {
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -53,6 +54,19 @@ const MobileLnbDrawer = ({ isOpen, onClose, menuItems = [], headerTitle = '시�
             ))}
           </ul>
         </nav>
+        {onLogout && (
+          <div className="mg-v2-mobile-lnb-drawer__footer">
+            <button
+              type="button"
+              className="mg-v2-mobile-lnb-drawer__logout"
+              onClick={onLogout}
+              aria-label="로그아웃"
+            >
+              <LogOut size={20} aria-hidden />
+              <span>로그아웃</span>
+            </button>
+          </div>
+        )}
       </aside>
     </>
   );

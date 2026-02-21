@@ -18,6 +18,7 @@ const MobileLayout = ({
   logoUrl,
   onBellClick,
   onProfileClick,
+  onLogout,
   showBottomTabBar = false,
   bottomTabContent
 }) => {
@@ -25,6 +26,11 @@ const MobileLayout = ({
 
   const handleMenuClick = () => setDrawerOpen(true);
   const handleDrawerClose = () => setDrawerOpen(false);
+
+  const handleLogout = () => {
+    handleDrawerClose();
+    onLogout?.();
+  };
 
   return (
     <div className="mg-v2-mobile-layout">
@@ -40,6 +46,7 @@ const MobileLayout = ({
         onClose={handleDrawerClose}
         menuItems={menuItems}
         headerTitle={headerTitle}
+        onLogout={onLogout ? handleLogout : undefined}
       />
       <main className="mg-v2-mobile-layout__main" role="main">
         {children}

@@ -1,0 +1,41 @@
+/**
+ * DesktopGnb - GNB 64px
+ * RESPONSIVE_LAYOUT_SPEC: 배경 #FAF9F7, 하단 1px #D4CFC8
+ *
+ * @author CoreSolution
+ * @since 2025-02-22
+ */
+
+.mg-v2-desktop-gnb {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: var(--mg-layout-header-height, 64px);
+  padding: 0 24px;
+  background: var(--mg-layout-header-bg, #FAF9F7);
+  border-bottom: 1px solid var(--mg-layout-header-border, #D4CFC8);
+}
+
+.mg-v2-desktop-gnb__logo {
+  flex-shrink: 0;
+}
+
+.mg-v2-desktop-gnb__logo-img {
+  height: 32px;
+  width: auto;
+  object-fit: contain;
+}
+
+.mg-v2-desktop-gnb__logo-text {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ad-b0kla-title-color, #2d3748);
+}
+
+.mg-v2-desktop-gnb__center {
+  flex: 1;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-left: 24px;
+}

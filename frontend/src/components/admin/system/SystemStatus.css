@@ -54,7 +54,15 @@
     position: relative;
 }
 
-.status-indicator svg {
+.status-icon-wrap {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.status-indicator svg,
+.status-icon-wrap svg {
     font-size: var(--admin-font-lg);
     color: var(--admin-text-secondary);
 }
@@ -68,6 +76,19 @@
     right: -2px;
     border: 2px solid var(--admin-white);
     box-shadow: 0 0 0 1px var(--admin-border-color);
+    background: var(--mg-warning-500, #f59e0b);
+}
+
+.status-dot[data-status='healthy'] {
+    background: var(--mg-success-500, #10b981);
+}
+
+.status-dot[data-status='error'] {
+    background: var(--mg-error-500, #ef4444);
+}
+
+.status-dot[data-status='warning'] {
+    background: var(--mg-warning-500, #f59e0b);
 }
 
 .status-info {

@@ -1,0 +1,37 @@
+/**
+ * Dashboard Content Area - B0KlA 스펙 기반
+ * mindgarden-design-system.pen B0KlA + RESPONSIVE_LAYOUT_SPEC
+ * 레거시 mg-dashboard-layout 미사용, 토큰 기반 신규 구조
+ *
+ * @author CoreSolution
+ * @since 2025-02-22
+ */
+
+.mg-v2-content-area {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-layout-grid-gap, 1.5rem);
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+
+/* B0KlA growth-row: 차트 + 상담사 2fr 1fr */
+.mg-v2-content-growth-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: var(--mg-layout-grid-gap, 1.5rem);
+}
+
+@media (max-width: 900px) {
+  .mg-v2-content-growth-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* pipeline-detail: 입금대기 + 스케줄대기 flex */
+.mg-v2-content-detail-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mg-layout-grid-gap, 1.5rem);
+}

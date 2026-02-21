@@ -1,0 +1,68 @@
+/**
+ * ContentSection - B0KlA 스타일 섹션
+ * @author CoreSolution
+ * @since 2025-02-22
+ */
+
+.mg-v2-content-section {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.mg-v2-content-section--card {
+  background: var(--ad-b0kla-card-bg, #ffffff);
+  border: 1px solid var(--ad-b0kla-border, #e2e8f0);
+  border-radius: var(--ad-b0kla-radius, 24px);
+  box-shadow: var(--ad-b0kla-shadow, 0 8px 24px rgba(0, 0, 0, 0.05));
+  padding: 1.5rem;
+}
+
+.mg-v2-content-section--plain {
+  padding: 0;
+}
+
+.mg-v2-content-section__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: var(--mg-layout-gap, 1rem);
+  margin-bottom: var(--mg-layout-gap, 1rem);
+  padding-bottom: var(--mg-spacing-md, 1rem);
+  border-bottom: 1px solid var(--ad-b0kla-border, #e2e8f0);
+}
+
+.mg-v2-content-section__title-wrap {
+  display: flex;
+  align-items: flex-start;
+}
+
+.mg-v2-content-section__title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--ad-b0kla-title-color, #2d3748);
+  margin: 0;
+}
+
+.mg-v2-content-section__subtitle {
+  font-size: 13px;
+  color: var(--ad-b0kla-text-secondary, #64748b);
+  margin: 0.25rem 0 0 0;
+}
+
+.mg-v2-content-section__actions {
+  display: flex;
+  gap: var(--mg-spacing-sm, 0.5rem);
+  align-items: center;
+}
+
+.mg-v2-content-section__body {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
+}

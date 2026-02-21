@@ -1,6 +1,7 @@
 import React from 'react';
 import { RefreshCw, FileText, Trash2, Download } from 'lucide-react';
-// import MGButton from '../../../components/common/MGButton'; // 임시 비활성화
+import Button from '../../ui/Button/Button';
+
 const SystemTools = ({ 
     onRefresh, 
     onViewLogs, 
@@ -47,8 +48,11 @@ const SystemTools = ({
         <div className="mg-v2-stats-grid">
             {tools.map((tool) => (
                 <div key={tool.id} className="mg-v2-dashboard-stat-card mg-system-tool-card">
-                    <button 
-                        className="mg-system-tool-button mg-button--full-width" 
+                    <Button
+                        variant={tool.variant}
+                        size="medium"
+                        fullWidth
+                        className="mg-system-tool-button"
                         onClick={tool.onClick}
                         disabled={loading}
                         title={tool.description}
@@ -60,7 +64,7 @@ const SystemTools = ({
                             <span className="mg-v2-system-tool-label">{tool.label}</span>
                             <div className="mg-v2-system-tool-description">{tool.description}</div>
                         </div>
-                    </button>
+                    </Button>
                 </div>
             ))}
         </div>

@@ -23,16 +23,16 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import { getAdminMenus } from '../../utils/menuApi';
 import AdminMenuSidebarUI from '../ui/AdminMenuSidebarUI';
+import './AdminLayout.css';
 
 const AdminLayout = () => {
     const [adminMenus, setAdminMenus] = useState([]);
     const [expandedMenus, setExpandedMenus] = useState([]);
     const [loading, setLoading] = useState(true);
     const location = useLocation();
-    const navigate = useNavigate();
 
 /**
      * 초기 로드: 관리자 메뉴 조회
@@ -138,8 +138,7 @@ const AdminLayout = () => {
     }
 
     return (
-        <div style={{ display: 'flex', height: '100vh' }}>
-            {/* 좌측 사이드바 */}
+        <div className="mg-admin-layout">
             <AdminMenuSidebarUI
                 menus={adminMenus}
                 expandedMenus={expandedMenus}
@@ -147,15 +146,7 @@ const AdminLayout = () => {
                 onToggleMenu={handleToggleMenu}
                 onMenuClick={handleMenuClick}
             />
-
-            {/* 우측 컨텐츠 영역 */}
-            <main style={{
-                flex: 1,
-                marginLeft: '280px',
-                background: 'var(--mg-gray-50)',
-                overflowY: 'auto',
-                padding: 'var(--mg-spacing-6)'
-            }}>
+            <main className="mg-admin-layout__main">
                 <Outlet />
             </main>
         </div>

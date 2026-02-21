@@ -1,0 +1,19 @@
+/**
+ * ContentCard - B0KlA 카드 래퍼
+ * 부모 너비 제한, 내부 여백 토큰 기반
+ *
+ * @author CoreSolution
+ * @since 2025-02-22
+ */
+.mg-v2-content-card {
+  background: var(--ad-b0kla-card-bg, #ffffff);
+  border: 1px solid var(--ad-b0kla-border, #e2e8f0);
+  border-radius: var(--ad-b0kla-radius, 24px);
+  box-shadow: var(--ad-b0kla-shadow, 0 8px 24px rgba(0, 0, 0, 0.05));
+  padding: var(--mg-layout-section-padding, 1.5rem);
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+}

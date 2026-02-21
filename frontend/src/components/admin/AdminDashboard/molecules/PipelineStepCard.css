@@ -7,9 +7,10 @@
   gap: var(--mg-spacing-sm, 8px);
   padding: var(--mg-spacing-md, 12px);
   background: var(--mg-pipeline-card-bg, #f8fafc);
-  border-radius: 12px;
+  border-radius: var(--ad-b0kla-radius-sm, 12px);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
   min-width: 140px;
+  flex-shrink: 0;
 }
 
 .pipeline-step-card__icon {

@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { RoleUtils, USER_ROLES } from '../../constants/roles';
 import { WIDGET_CONSTANTS } from '../../constants/widgetConstants';
 import { FaUsers, FaUserTie, FaLink, FaCalendarAlt, FaCalendarCheck, FaCog, FaDollarSign, FaChartLine, FaCogs, FaBox, FaShoppingCart, FaCheckCircle, FaWallet, FaTruck, FaSyncAlt, FaExclamationTriangle, FaBuilding, FaMapMarkerAlt, FaUserCog, FaToggleOn, FaCompressAlt, FaChartBar, FaUserGraduate, FaRedo, FaFileExport, FaBell, FaDatabase, FaRocket, FaShieldAlt, FaFileAlt } from 'react-icons/fa';
-import { Calendar, CheckCircle, TrendingUp, AlertTriangle, BarChart, Settings, LayoutDashboard, Heart, Trophy, Users, CalendarDays, User, Clock, PieChart, Target, Shield, Activity, Link2, DollarSign, RotateCcw, Receipt, MessageSquare, Sparkles, XCircle } from 'lucide-react';
+import { Calendar, CheckCircle, Check, TrendingUp, AlertTriangle, BarChart, Settings, LayoutDashboard, Heart, Trophy, Users, CalendarDays, User, Clock, PieChart, Target, Shield, Activity, Link2, DollarSign, RotateCcw, Receipt, MessageSquare, Sparkles, XCircle, Search, Bell, Moon, Building, ShieldCheck, Megaphone } from 'lucide-react';
 import SimpleLayout from '../layout/SimpleLayout';
 import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import SystemStatus from './system/SystemStatus';
@@ -45,6 +45,7 @@ import '../../styles/dashboard-common-v3.css';
 import '../../styles/themes/admin-theme.css';
 import './AdminDashboard.new.css';
 import './AdminDashboard/AdminDashboardPipeline.css';
+import './AdminDashboard/AdminDashboardB0KlA.css';
 import './system/SystemStatus.css';
 import './system/SystemTools.css';
 import { ADMIN_ROUTES } from '../../constants/adminRoutes';
@@ -141,6 +142,7 @@ const AdminDashboard = ({ user: propUser }) => {
     const [toastMessage, setToastMessage] = useState('');
     const [toastType, setToastType] = useState('success');
     const [isPermissionSectionExpanded, setIsPermissionSectionExpanded] = useState(false);
+    const [chartPeriod, setChartPeriod] = useState('monthly');
     const [systemStatus, setSystemStatus] = useState({
         server: 'unknown',
         database: 'unknown',
@@ -396,26 +398,6 @@ const AdminDashboard = ({ user: propUser }) => {
         }
     }, []);
 
-    const handleConfirmMatch = useCallback(async (clientId, consultantId) => {
-        try {
-            await StandardizedApi.post('/api/v1/admin/mappings', {
-                clientId: Number(clientId),
-                consultantId: Number(consultantId),
-                status: 'PENDING_PAYMENT',
-                totalSessions: 1,
-                remainingSessions: 1,
-                packageName: '초기 상담',
-                packagePrice: 0,
-                paymentStatus: 'PENDING'
-            });
-            notificationManager.success('매칭이 성공적으로 생성되었습니다.');
-            await Promise.all([loadUnassignedClientsAndConsultants(), loadStats(), loadPendingDepositStats()]);
-        } catch (error) {
-            const msg = error?.message || error?.response?.data?.message || '매칭 생성에 실패했습니다.';
-            notificationManager.error(msg);
-        }
-    }, [loadUnassignedClientsAndConsultants, loadStats, loadPendingDepositStats]);
-
     const loadPendingDepositStats = useCallback(async () => {
         try {
             const data = await StandardizedApi.get('/api/v1/admin/mappings/pending-deposit');
@@ -435,6 +417,26 @@ const AdminDashboard = ({ user: propUser }) => {
             setPendingDepositList([]);
         }
     }, []);
+
+    const handleConfirmMatch = useCallback(async (clientId, consultantId) => {
+        try {
+            await StandardizedApi.post('/api/v1/admin/mappings', {
+                clientId: Number(clientId),
+                consultantId: Number(consultantId),
+                status: 'PENDING_PAYMENT',
+                totalSessions: 1,
+                remainingSessions: 1,
+                packageName: '초기 상담',
+                packagePrice: 0,
+                paymentStatus: 'PENDING'
+            });
+            notificationManager.success('매칭이 성공적으로 생성되었습니다.');
+            await Promise.all([loadUnassignedClientsAndConsultants(), loadStats(), loadPendingDepositStats()]);
+        } catch (error) {
+            const msg = error?.message || error?.response?.data?.message || '매칭 생성에 실패했습니다.';
+            notificationManager.error(msg);
+        }
+    }, [loadUnassignedClientsAndConsultants, loadStats, loadPendingDepositStats]);
 
     const handleAutoCompleteSchedules = async () => {
         try {
@@ -627,6 +629,14 @@ const AdminDashboard = ({ user: propUser }) => {
         }
     };
 
+    const topConsultantsData = (stats.consultantRatingStats?.topConsultants || []).slice(0, 4).map((c) => ({
+      name: c.consultantName || '-',
+      initial: getAvatarInitial(c.consultantName),
+      rating: c.averageScore ? c.averageScore.toFixed(1) : '-',
+      barWidth: c.averageScore ? Math.min(100, (c.averageScore / 5) * 100) : 0,
+      barColor: '#4b745c'
+    }));
+
     if (sessionLoading) {
         return (
             <div className="admin-dashboard">
@@ -639,32 +649,101 @@ const AdminDashboard = ({ user: propUser }) => {
 
     return (
         <SimpleLayout title="관리자 대시보드" loading={false}>
-        <div className="mg-dashboard-layout">
-            {/* Dashboard Header */}
-            <div className="mg-dashboard-header">
-                <div className="mg-dashboard-header-content">
-                    <div className="mg-dashboard-header-left">
-                        <LayoutDashboard />
-                        <div>
-                            <h1 className="mg-dashboard-title">관리자 대시보드</h1>
-                            <p className="mg-dashboard-subtitle">시스템 전체 현황을 관리합니다</p>
-                        </div>
+        <div className="mg-v2-ad-b0kla">
+        <div className="mg-v2-ad-b0kla__container mg-dashboard-layout">
+            {/* B0KlA Header */}
+            <header className="mg-v2-ad-b0kla__header">
+                <div className="mg-v2-ad-b0kla__header-left">
+                    <h1>대시보드 개요</h1>
+                    <p>오늘의 주요 지표와 현황을 한눈에 확인하세요.</p>
+                </div>
+                <div className="mg-v2-ad-b0kla__header-right">
+                    <div className="mg-v2-ad-b0kla__search">
+                        <Search size={18} className="mg-v2-ad-b0kla__search-icon" />
+                        <span className="mg-v2-ad-b0kla__search-placeholder">통합 검색...</span>
                     </div>
-                    <div className="mg-dashboard-header-right">
-                        <Button 
-                            variant="outline" 
+                    <div className="mg-v2-ad-b0kla__icon-group">
+                        <Button
+                            variant="outline"
                             size="small"
-                            className="mg-dashboard-icon-btn" 
+                            className="mg-v2-ad-b0kla__icon-btn"
                             onClick={() => setShowStatisticsModal(true)}
                             preventDoubleClick={true}
+                            aria-label="통계"
                         >
-                            <BarChart />
+                            <BarChart size={20} />
                         </Button>
+                        <button type="button" className="mg-v2-ad-b0kla__icon-btn" aria-label="캘린더">
+                            <Calendar size={20} />
+                        </button>
+                        <button type="button" className="mg-v2-ad-b0kla__icon-btn" aria-label="알림" onClick={() => navigate(ADMIN_ROUTES.MESSAGES)}>
+                            <Bell size={20} />
+                        </button>
+                        <button type="button" className="mg-v2-ad-b0kla__icon-btn" aria-label="테마">
+                            <Moon size={20} />
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            {/* B0KlA KPI Row */}
+            <div className="mg-v2-ad-b0kla__kpi-row">
+                <div className="mg-v2-ad-b0kla__kpi-card">
+                    <div className="mg-v2-ad-b0kla__kpi-icon mg-v2-ad-b0kla__kpi-icon--green">
+                        <Users size={28} />
+                    </div>
+                    <div className="mg-v2-ad-b0kla__kpi-info">
+                        <div className="mg-v2-ad-b0kla__kpi-top">
+                            <span className="mg-v2-ad-b0kla__kpi-label">총 사용자</span>
+                            {todayStats.totalUsersGrowthRate !== undefined && (
+                                <span className="mg-v2-ad-b0kla__kpi-badge mg-v2-ad-b0kla__kpi-badge--green">
+                                    {todayStats.totalUsersGrowthRate > 0 ? '+' : ''}{todayStats.totalUsersGrowthRate}%
+                                </span>
+                            )}
+                        </div>
+                        <span className="mg-v2-ad-b0kla__kpi-value">
+                            {(stats.totalConsultants + stats.totalClients).toLocaleString()}
+                        </span>
+                    </div>
+                </div>
+                <div className="mg-v2-ad-b0kla__kpi-card">
+                    <div className="mg-v2-ad-b0kla__kpi-icon mg-v2-ad-b0kla__kpi-icon--orange">
+                        <Calendar size={28} />
+                    </div>
+                    <div className="mg-v2-ad-b0kla__kpi-info">
+                        <div className="mg-v2-ad-b0kla__kpi-top">
+                            <span className="mg-v2-ad-b0kla__kpi-label">예약된 상담</span>
+                            {todayStats.bookedGrowthRate !== undefined && (
+                                <span className="mg-v2-ad-b0kla__kpi-badge mg-v2-ad-b0kla__kpi-badge--orange">
+                                    {todayStats.bookedGrowthRate > 0 ? '+' : ''}{todayStats.bookedGrowthRate}%
+                                </span>
+                            )}
+                        </div>
+                        <span className="mg-v2-ad-b0kla__kpi-value">{todayStats.totalToday}</span>
+                    </div>
+                </div>
+                <div className="mg-v2-ad-b0kla__kpi-card">
+                    <div className="mg-v2-ad-b0kla__kpi-icon mg-v2-ad-b0kla__kpi-icon--blue">
+                        <Check size={28} />
+                    </div>
+                    <div className="mg-v2-ad-b0kla__kpi-info">
+                        <div className="mg-v2-ad-b0kla__kpi-top">
+                            <span className="mg-v2-ad-b0kla__kpi-label">완료율</span>
+                            {stats.consultationStats?.completionRate !== undefined && (
+                                <span className="mg-v2-ad-b0kla__kpi-badge mg-v2-ad-b0kla__kpi-badge--blue">
+                                    {stats.consultationStats.completionRate}%
+                                </span>
+                            )}
+                        </div>
+                        <span className="mg-v2-ad-b0kla__kpi-value">
+                            {stats.consultationStats?.completionRate != null ? `${stats.consultationStats.completionRate}%` : todayStats.completedToday}
+                        </span>
                     </div>
                 </div>
             </div>
 
             {/* Core Flow Pipeline (5단계) */}
+            <div className="mg-v2-ad-b0kla__card">
             <CoreFlowPipeline
               stats={{
                 totalMappings: stats.totalMappings,
@@ -673,30 +752,87 @@ const AdminDashboard = ({ user: propUser }) => {
                 schedulePendingCount: 0
               }}
             />
+            </div>
 
-            {/* Dashboard Stats Grid */}
-            <div className="mg-dashboard-stats">
-                <StatCard
-                    icon={<Users />}
-                    value={stats.totalConsultants + stats.totalClients}
-                    label="총 사용자"
-                    change={todayStats.totalUsersGrowthRate !== undefined ? `${todayStats.totalUsersGrowthRate > 0 ? '+' : ''}${todayStats.totalUsersGrowthRate}%` : null}
-                    changeType={todayStats.totalUsersGrowthRate > 0 ? "positive" : todayStats.totalUsersGrowthRate < 0 ? "negative" : "neutral"}
-                />
-                <StatCard
-                    icon={<Calendar />}
-                    value={todayStats.totalToday}
-                    label="예약된 상담"
-                    change={todayStats.bookedGrowthRate !== undefined ? `${todayStats.bookedGrowthRate > 0 ? '+' : ''}${todayStats.bookedGrowthRate}%` : null}
-                    changeType={todayStats.bookedGrowthRate > 0 ? "positive" : todayStats.bookedGrowthRate < 0 ? "negative" : "neutral"}
-                />
-                <StatCard
-                    icon={<CheckCircle />}
-                    value={todayStats.completedToday}
-                    label="완료된 상담"
-                    change={todayStats.completedGrowthRate !== undefined ? `${todayStats.completedGrowthRate > 0 ? '+' : ''}${todayStats.completedGrowthRate}%` : null}
-                    changeType={todayStats.completedGrowthRate > 0 ? "positive" : todayStats.completedGrowthRate < 0 ? "negative" : "neutral"}
-                />
+            {/* B0KlA Chart + Counselor Row */}
+            <div className="mg-v2-ad-b0kla__growth-row">
+                <div className="mg-v2-ad-b0kla__card">
+                    <div className="mg-v2-ad-b0kla__chart-header">
+                        <div>
+                            <h3 className="mg-v2-ad-b0kla__chart-title">상담 현황 추이</h3>
+                            <p className="mg-v2-ad-b0kla__chart-desc">최근 6개월 간의 예약 및 완료 추이</p>
+                        </div>
+                        <div className="mg-v2-ad-b0kla__pill-toggle">
+                            <button
+                                type="button"
+                                className={`mg-v2-ad-b0kla__pill ${chartPeriod === 'monthly' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+                                onClick={() => setChartPeriod('monthly')}
+                            >
+                                월간
+                            </button>
+                            <button
+                                type="button"
+                                className={`mg-v2-ad-b0kla__pill ${chartPeriod === 'weekly' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+                                onClick={() => setChartPeriod('weekly')}
+                            >
+                                주간
+                            </button>
+                        </div>
+                    </div>
+                    <div className="mg-v2-ad-b0kla__chart-placeholder">
+                        {stats.consultationStats?.monthlyData?.length > 0 ? (
+                            <div className="mg-v2-ad-b0kla__chart-bars">
+                                {stats.consultationStats.monthlyData.slice(0, 6).map((data) => {
+                                    const maxCount = Math.max(...stats.consultationStats.monthlyData.map((d) => d.completedCount || 0), 1);
+                                    const heightPercent = Math.max(10, ((data.completedCount || 0) / maxCount) * 100);
+                                    return (
+                                        <div key={data.period} className="mg-v2-ad-b0kla__chart-bar-item">
+                                            <span className="mg-v2-ad-b0kla__chart-bar-value">{data.completedCount || 0}</span>
+                                            <div
+                                                className="mg-v2-ad-b0kla__chart-bar-fill"
+                                                style={{ '--chart-bar-height': `${heightPercent}%` }}
+                                            />
+                                            <span className="mg-v2-ad-b0kla__chart-bar-label">{data.period}</span>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        ) : (
+                            <>
+                                <Activity size={48} className="mg-v2-ad-b0kla__chart-placeholder-icon" />
+                                <span>차트 영역</span>
+                            </>
+                        )}
+                    </div>
+                </div>
+                <div className="mg-v2-ad-b0kla__card">
+                    <h3 className="mg-v2-ad-b0kla__counselor-title">우수 상담사 평점</h3>
+                    <div className="mg-v2-ad-b0kla__counselor-list">
+                        {topConsultantsData.length > 0 ? (
+                            topConsultantsData.map((c, i) => (
+                                <div key={i} className="mg-v2-ad-b0kla__counselor-item">
+                                    <div className="mg-v2-ad-b0kla__counselor-avatar mg-v2-ad-b0kla__counselor-avatar--green">
+                                        {c.initial}
+                                    </div>
+                                    <div className="mg-v2-ad-b0kla__counselor-data">
+                                        <span className="mg-v2-ad-b0kla__counselor-name">{c.name}</span>
+                                        <div className="mg-v2-ad-b0kla__counselor-rating-row">
+                                            <span className="mg-v2-ad-b0kla__counselor-rating">{c.rating}</span>
+                                            <div className="mg-v2-ad-b0kla__counselor-bar-track">
+                                                <div
+                                                    className="mg-v2-ad-b0kla__counselor-bar-fill"
+                                                    style={{ width: `${c.barWidth}%`, backgroundColor: c.barColor }}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))
+                        ) : (
+                            <p className="mg-v2-ad-b0kla__counselor-empty">평가 데이터가 없습니다.</p>
+                        )}
+                    </div>
+                </div>
             </div>
 
             {/* 미배정 내담자 매칭 대기열 */}
@@ -1047,6 +1183,52 @@ const AdminDashboard = ({ user: propUser }) => {
                 subtitle="시스템 관리 및 설정 기능"
                 icon={<Settings />}
             >
+                <div className="mg-v2-ad-b0kla__admin-grid mg-v2-ad-b0kla__admin-grid--primary">
+                    <button
+                        type="button"
+                        className="mg-v2-ad-b0kla__admin-card"
+                        onClick={() => { if (PermissionChecks.canViewHQDashboard(userPermissions)) navigate('/hq/dashboard'); }}
+                    >
+                        <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--green">
+                            <Building size={28} />
+                        </div>
+                        <span className="mg-v2-ad-b0kla__admin-label">신규 입주사 등록</span>
+                        <span className="mg-v2-ad-b0kla__admin-desc">계약 및 계정 생성</span>
+                    </button>
+                    <button
+                        type="button"
+                        className="mg-v2-ad-b0kla__admin-card"
+                        onClick={() => navigate(ADMIN_ROUTES.COMPLIANCE)}
+                    >
+                        <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--orange">
+                            <ShieldCheck size={28} />
+                        </div>
+                        <span className="mg-v2-ad-b0kla__admin-label">상담사 승인 관리</span>
+                        <span className="mg-v2-ad-b0kla__admin-desc">자격 증명 검토</span>
+                    </button>
+                    <button
+                        type="button"
+                        className="mg-v2-ad-b0kla__admin-card"
+                        onClick={() => navigate(ADMIN_ROUTES.SYSTEM_NOTIFICATIONS)}
+                    >
+                        <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--blue">
+                            <Megaphone size={28} />
+                        </div>
+                        <span className="mg-v2-ad-b0kla__admin-label">전체 공지 발송</span>
+                        <span className="mg-v2-ad-b0kla__admin-desc">앱 푸시 및 메일</span>
+                    </button>
+                    <button
+                        type="button"
+                        className="mg-v2-ad-b0kla__admin-card"
+                        onClick={() => navigate(ADMIN_ROUTES.SYSTEM_CONFIG)}
+                    >
+                        <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--gray">
+                            <Settings size={28} />
+                        </div>
+                        <span className="mg-v2-ad-b0kla__admin-label">시스템 설정</span>
+                        <span className="mg-v2-ad-b0kla__admin-desc">API 및 연동 관리</span>
+                    </button>
+                </div>
                 <div className="mg-management-grid">
                     <div className="mg-management-card" onClick={() => navigate(ADMIN_ROUTES.SCHEDULES)}>
                         <div className="mg-management-icon">
@@ -1628,6 +1810,7 @@ const AdminDashboard = ({ user: propUser }) => {
                 </div>
             )}
 
+        </div>
         </div>
         </SimpleLayout>
     );

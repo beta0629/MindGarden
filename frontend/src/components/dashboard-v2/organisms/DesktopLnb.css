@@ -1,0 +1,42 @@
+/**
+ * DesktopLnb - LNB 260px 다크 사이드바
+ * RESPONSIVE_LAYOUT_SPEC: #2C2C2C, 메뉴 항목 44px
+ *
+ * @author CoreSolution
+ * @since 2025-02-22
+ */
+
+.mg-v2-desktop-lnb {
+  width: var(--mg-layout-sidebar-width, 260px);
+  min-width: var(--mg-layout-sidebar-width, 260px);
+  height: 100%;
+  background: var(--mg-layout-sidebar-bg, #2C2C2C);
+  display: flex;
+  flex-direction: column;
+}
+
+.mg-v2-desktop-lnb__header {
+  padding: 16px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.mg-v2-desktop-lnb__title {
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.mg-v2-desktop-lnb__nav {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 10px;
+}
+
+.mg-v2-desktop-lnb__list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}

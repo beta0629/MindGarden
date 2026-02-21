@@ -47,10 +47,15 @@ const getErrorMessage = (status) => {
 
 // 세션 체크 및 리다이렉트 공통 함수
 const checkSessionAndRedirect = async (response) => {
+  const isLocalEnv = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  if (isLocalEnv) {
+    return false;
+  }
+
   // 현재 페이지가 로그인 페이지인지 확인
   const currentPath = window.location.pathname;
   const isLoginPage = currentPath === '/login' || currentPath.startsWith('/login/');
-  
+
   // 401, 403 오류 시에만 세션 체크 (500 오류는 서버 오류이므로 세션 체크하지 않음)
   if (response.status === 401 || response.status === 403) {
     // 이미 로그인 페이지에 있으면 리다이렉트하지 않음
@@ -98,10 +103,10 @@ const checkSessionAndRedirect = async (response) => {
 
 // 에러 처리
 const handleError = (error, status) => {
-  if (status === API_STATUS.UNAUTHORIZED) {
+  const isLocalEnv = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  if (status === API_STATUS.UNAUTHORIZED && !isLocalEnv) {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
-    // 로그인 페이지로 리다이렉트 (서브도메인 유지)
     window.location.href = `${window.location.origin}/login`;
   }
   throw new Error(getErrorMessage(status));
@@ -162,23 +167,27 @@ export const apiGet = async (endpoint, params = {}, options = {}) => {
           
           // TENANT_ID_REQUIRED 에러 코드 또는 관련 메시지 확인
           const isTenantIdError = errorCode === 'TENANT_ID_REQUIRED' ||
-                                   errorMessage.includes('Tenant ID') || 
+                                   errorMessage.includes('Tenant ID') ||
                                    errorMessage.includes('tenant') ||
                                    errorMessage.includes('세션') ||
                                    errorMessage.includes('로그인') ||
                                    errorMessage.includes('로그인이 필요');
-          
+
           if (isTenantIdError) {
+            const isLocalEnv = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            if (isLocalEnv) {
+              return null;
+            }
             const currentPath = window.location.pathname;
-            const isPublicPage = currentPath === '/login' || 
-                               currentPath.startsWith('/login/') || 
-                               currentPath === '/landing' || 
+            const isPublicPage = currentPath === '/login' ||
+                               currentPath.startsWith('/login/') ||
+                               currentPath === '/landing' ||
                                currentPath === '/' ||
                                currentPath.startsWith('/register') ||
                                currentPath.startsWith('/forgot-password') ||
                                currentPath.startsWith('/reset-password') ||
                                currentPath.startsWith('/auth/oauth2/callback');
-            
+
             if (!isPublicPage) {
               console.log('🔐 400 오류 (Tenant ID 부족) - 로그인 페이지로 리다이렉트 (서브도메인 유지)');
               localStorage.removeItem('accessToken');
@@ -239,23 +248,27 @@ export const apiGet = async (endpoint, params = {}, options = {}) => {
       
       // TENANT_ID_REQUIRED 에러 코드 또는 관련 메시지 확인
       const isTenantIdError = errorCode === 'TENANT_ID_REQUIRED' ||
-                               errorMessage.includes('Tenant ID') || 
+                               errorMessage.includes('Tenant ID') ||
                                errorMessage.includes('tenant') ||
                                errorMessage.includes('세션') ||
                                errorMessage.includes('로그인') ||
                                errorMessage.includes('로그인이 필요');
-      
+
       if (isTenantIdError) {
+        const isLocalEnv = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        if (isLocalEnv) {
+          throw error;
+        }
         const currentPath = window.location.pathname;
-        const isPublicPage = currentPath === '/login' || 
-                           currentPath.startsWith('/login/') || 
-                           currentPath === '/landing' || 
+        const isPublicPage = currentPath === '/login' ||
+                           currentPath.startsWith('/login/') ||
+                           currentPath === '/landing' ||
                            currentPath === '/' ||
                            currentPath.startsWith('/register') ||
                            currentPath.startsWith('/forgot-password') ||
                            currentPath.startsWith('/reset-password') ||
                            currentPath.startsWith('/auth/oauth2/callback');
-        
+
         if (!isPublicPage) {
           console.log('🔐 400 오류 (Tenant ID 부족) - 로그인 페이지로 리다이렉트 (서브도메인 유지)');
           localStorage.removeItem('accessToken');
@@ -265,7 +278,7 @@ export const apiGet = async (endpoint, params = {}, options = {}) => {
         }
       }
     }
-    
+
     // 403 오류는 권한 문제이므로 조용히 처리 (콘솔 오류 표시 안 함)
     if (error.status === 403 || error.message?.includes('접근 권한')) {
       // 조용히 에러를 다시 throw하여 호출자가 처리할 수 있도록 함
@@ -274,16 +287,20 @@ export const apiGet = async (endpoint, params = {}, options = {}) => {
     
     // 401 Unauthorized는 인증 문제이므로 로그인 페이지로 리다이렉트
     if (error.status === 401) {
+      const isLocalEnv = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      if (isLocalEnv) {
+        throw error;
+      }
       const currentPath = window.location.pathname;
-      const isPublicPage = currentPath === '/login' || 
-                         currentPath.startsWith('/login/') || 
-                         currentPath === '/landing' || 
+      const isPublicPage = currentPath === '/login' ||
+                         currentPath.startsWith('/login/') ||
+                         currentPath === '/landing' ||
                          currentPath === '/' ||
                          currentPath.startsWith('/register') ||
                          currentPath.startsWith('/forgot-password') ||
                          currentPath.startsWith('/reset-password') ||
                          currentPath.startsWith('/auth/oauth2/callback');
-      
+
       if (!isPublicPage) {
         console.log('🔐 401 오류 - 로그인 페이지로 리다이렉트 (서브도메인 유지)');
         localStorage.removeItem('accessToken');
@@ -298,6 +315,10 @@ export const apiGet = async (endpoint, params = {}, options = {}) => {
     
     // 네트워크 오류 시 재시도하지 않고 바로 로그인 페이지로 리다이렉트
     if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+      const isLocalEnv = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      if (isLocalEnv) {
+        throw error;
+      }
       // 현재 페이지가 로그인 페이지인지 확인
       const currentPath = window.location.pathname;
       const isLoginPage = currentPath === '/login' || currentPath.startsWith('/login/');

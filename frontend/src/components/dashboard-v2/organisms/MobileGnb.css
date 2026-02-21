@@ -1,0 +1,42 @@
+/**
+ * MobileGnb - GNB 56px
+ * RESPONSIVE_LAYOUT_SPEC: 모바일 헤더 56px, 패딩 16px
+ *
+ * @author CoreSolution
+ * @since 2025-02-22
+ */
+
+.mg-v2-mobile-gnb {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: var(--mg-layout-header-height-mobile, 56px);
+  padding: 0 16px;
+  background: var(--mg-layout-header-bg, #FAF9F7);
+  border-bottom: 1px solid var(--mg-layout-header-border, #D4CFC8);
+}
+
+.mg-v2-mobile-gnb__logo {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.mg-v2-mobile-gnb__logo-img {
+  height: 28px;
+  width: auto;
+  object-fit: contain;
+}
+
+.mg-v2-mobile-gnb__logo-text {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ad-b0kla-title-color, #2d3748);
+}
+
+.mg-v2-mobile-gnb__actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}

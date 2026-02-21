@@ -1,0 +1,18 @@
+/**
+ * GnbRight - GNB 우측 검색+아이콘 그룹
+ *
+ * @author CoreSolution
+ * @since 2025-02-22
+ */
+
+.mg-v2-gnb-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.mg-v2-gnb-right__icons {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}

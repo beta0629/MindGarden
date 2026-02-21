@@ -1,0 +1,137 @@
+/**
+ * MindGarden 4K 반응형 레이아웃 토큰
+ * RESPONSIVE_LAYOUT_SPEC.md 및 mindgarden-design-system.pen 기준
+ *
+ * @author MindGarden
+ * @version 1.0.0
+ * @since 2025-02-21
+ */
+
+:root {
+  /* ===== 브레이크포인트 ===== */
+  --mg-breakpoint-mobile: 375px;
+  --mg-breakpoint-tablet: 768px;
+  --mg-breakpoint-desktop: 1280px;
+  --mg-breakpoint-fhd: 1920px;
+  --mg-breakpoint-2k: 2560px;
+  --mg-breakpoint-4k: 3840px;
+
+  /* ===== 레이아웃 컴포넌트 ===== */
+  --mg-layout-sidebar-width: 260px;
+  --mg-layout-sidebar-width-mobile: 280px;
+  --mg-layout-header-height: 64px;
+  --mg-layout-header-height-mobile: 56px;
+
+  /* ===== 컨테이너 max-width (브레이크포인트별) ===== */
+  --mg-container-max-mobile: 100%;
+  --mg-container-max-tablet: 100%;
+  --mg-container-max-desktop: 1200px;
+  --mg-container-max-fhd: 1440px;
+  --mg-container-max-2k: 1680px;
+  --mg-container-max-4k: 1920px;
+
+  /* ===== 페이지 패딩 ===== */
+  --mg-layout-page-padding-mobile: 16px;
+  --mg-layout-page-padding-tablet: 20px;
+  --mg-layout-page-padding-desktop: 24px;
+  --mg-layout-page-padding-fhd: 28px;
+  --mg-layout-page-padding-2k: 32px;
+  --mg-layout-page-padding-4k: 40px;
+
+  /* ===== 섹션 패딩 ===== */
+  --mg-layout-section-padding-mobile: 16px;
+  --mg-layout-section-padding-tablet: 20px;
+  --mg-layout-section-padding-desktop: 24px;
+  --mg-layout-section-padding-fhd: 24px;
+  --mg-layout-section-padding-2k: 28px;
+  --mg-layout-section-padding-4k: 32px;
+
+  /* ===== 섹션/그리드 gap ===== */
+  --mg-layout-gap-mobile: 12px;
+  --mg-layout-gap-tablet: 16px;
+  --mg-layout-gap-desktop: 20px;
+  --mg-layout-gap-fhd: 24px;
+  --mg-layout-gap-2k: 28px;
+  --mg-layout-gap-4k: 32px;
+
+  /* 그리드 컬럼 gap / 행 gap (동일) */
+  --mg-layout-grid-gap-mobile: 16px;
+  --mg-layout-grid-gap-tablet: 20px;
+  --mg-layout-grid-gap-desktop: 24px;
+  --mg-layout-grid-gap-fhd: 28px;
+  --mg-layout-grid-gap-2k: 32px;
+  --mg-layout-grid-gap-4k: 40px;
+
+  /* ===== 사이드바 / 헤더 색상 ===== */
+  --mg-layout-sidebar-bg: #2C2C2C;
+  --mg-layout-sidebar-active-bg: #3D5246;
+  --mg-layout-sidebar-text: rgba(255, 255, 255, 0.7);
+  --mg-layout-header-bg: #FAF9F7;
+  --mg-layout-header-border: #D4CFC8;
+  --mg-layout-main-bg-start: #FAF9F7;
+  --mg-layout-main-bg-end: #F2EDE8;
+  --mg-layout-section-bg: #F5F3EF;
+  --mg-layout-section-border: #D4CFC8;
+
+  /* ===== 기본값 (모바일 우선) ===== */
+  --mg-layout-page-padding: var(--mg-layout-page-padding-mobile);
+  --mg-layout-section-padding: var(--mg-layout-section-padding-mobile);
+  --mg-layout-gap: var(--mg-layout-gap-mobile);
+  --mg-layout-grid-gap: var(--mg-layout-grid-gap-mobile);
+  --mg-container-max: var(--mg-container-max-mobile);
+}
+
+/* 태블릿 이상 */
+@media (min-width: 768px) {
+  :root {
+    --mg-layout-page-padding: var(--mg-layout-page-padding-tablet);
+    --mg-layout-section-padding: var(--mg-layout-section-padding-tablet);
+    --mg-layout-gap: var(--mg-layout-gap-tablet);
+    --mg-layout-grid-gap: var(--mg-layout-grid-gap-tablet);
+    --mg-container-max: var(--mg-container-max-tablet);
+  }
+}
+
+/* 데스크톱 이상 */
+@media (min-width: 1280px) {
+  :root {
+    --mg-layout-page-padding: var(--mg-layout-page-padding-desktop);
+    --mg-layout-section-padding: var(--mg-layout-section-padding-desktop);
+    --mg-layout-gap: var(--mg-layout-gap-desktop);
+    --mg-layout-grid-gap: var(--mg-layout-grid-gap-desktop);
+    --mg-container-max: var(--mg-container-max-desktop);
+  }
+}
+
+/* Full HD 이상 */
+@media (min-width: 1920px) {
+  :root {
+    --mg-layout-page-padding: var(--mg-layout-page-padding-fhd);
+    --mg-layout-section-padding: var(--mg-layout-section-padding-fhd);
+    --mg-layout-gap: var(--mg-layout-gap-fhd);
+    --mg-layout-grid-gap: var(--mg-layout-grid-gap-fhd);
+    --mg-container-max: var(--mg-container-max-fhd);
+  }
+}
+
+/* 2K 이상 */
+@media (min-width: 2560px) {
+  :root {
+    --mg-layout-page-padding: var(--mg-layout-page-padding-2k);
+    --mg-layout-section-padding: var(--mg-layout-section-padding-2k);
+    --mg-layout-gap: var(--mg-layout-gap-2k);
+    --mg-layout-grid-gap: var(--mg-layout-grid-gap-2k);
+    --mg-container-max: var(--mg-container-max-2k);
+  }
+}
+
+/* 4K 이상 */
+@media (min-width: 3840px) {
+  :root {
+    --mg-layout-page-padding: var(--mg-layout-page-padding-4k);
+    --mg-layout-section-padding: var(--mg-layout-section-padding-4k);
+    --mg-layout-gap: var(--mg-layout-gap-4k);
+    --mg-layout-grid-gap: var(--mg-layout-grid-gap-4k);
+    --mg-container-max: var(--mg-container-max-4k);
+  }
+}

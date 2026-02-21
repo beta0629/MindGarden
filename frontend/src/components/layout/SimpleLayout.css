@@ -31,35 +31,36 @@
 
 .simple-layout {
     min-height: 100vh;
-    background: var(--ios-bg-primary);
+    background: linear-gradient(to bottom, var(--mg-layout-main-bg-start), var(--mg-layout-main-bg-end));
     font-family: var(--font-family-ios);
 }
 
 /* ==================== Responsive ==================== */
 /* 표준화 원칙 준수: CSS 변수 사용, 모바일 우선 접근법 */
 
-/* 모바일 (기본) */
+/* 모바일 (기본) - RESPONSIVE_LAYOUT_SPEC */
 .simple-main {
     flex: 1;
-    padding: var(--spacing-md);
-    /* 헤더가 sticky이므로 헤더 높이만큼 상단 여백 추가 */
-    padding-top: calc(var(--header-height-mobile, 56px) + var(--spacing-md));
+    padding: var(--mg-layout-page-padding-mobile, 16px);
+    padding-top: calc(var(--mg-layout-header-height-mobile, 56px) + var(--mg-layout-page-padding-mobile, 16px));
+    background: linear-gradient(to bottom, var(--mg-layout-main-bg-start), var(--mg-layout-main-bg-end));
 }
 
 .simple-container {
     margin: 0 auto;
     width: 100%;
+    max-width: var(--mg-container-max);
     padding: 0;
 }
 
-/* 대시보드 레이아웃이 있는 경우 컨테이너 제한 해제 */
+/* 대시보드 레이아웃이 있는 경우 넓은 컨테이너 */
 .simple-container:has(.mg-dashboard-layout) {
-    max-width: var(--dashboard-max-width);
+    max-width: var(--mg-container-max);
 }
 
-/* 일반 컨텐츠는 기본 컨테이너 너비 사용 */
+/* 기존 호환 */
 .simple-container:not(:has(.mg-dashboard-layout)) {
-    max-width: var(--container-max-width, 75rem);
+    max-width: var(--mg-container-max, var(--container-max-width, 75rem));
 }
 
 .page-header {
@@ -85,36 +86,11 @@
     width: 100%;
 }
 
-/* ==================== Responsive ==================== */
-/* 표준화 원칙 준수: CSS 변수 사용, 모바일 우선 접근법 */
-
-/* 모바일 (기본) */
-.simple-main {
-    flex: 1;
-    padding: var(--spacing-md);
-    /* 헤더가 sticky이므로 헤더 높이만큼 상단 여백 추가 */
-    padding-top: calc(var(--header-height-mobile, 56px) + var(--spacing-md));
-}
-
-.page-title {
-    font-size: var(--font-size-xxl);
-    font-weight: var(--font-weight-bold);
-    color: var(--ios-text-primary);
-    margin: 0;
-    text-shadow: 0 var(--spacing-xs, 0.125rem) var(--spacing-xs, 0.125rem) var(--mg-shadow-light);
-    font-family: var(--font-family-ios);
-}
-
-.page-header {
-    margin-bottom: var(--spacing-xl);
-    text-align: center;
-}
-
-/* 태블릿 이상 (표준화 원칙: CSS 변수 사용) */
-@media (min-width: var(--breakpoint-tablet, 768px)) {
+/* 태블릿 이상 - RESPONSIVE_LAYOUT_SPEC */
+@media (min-width: var(--mg-breakpoint-tablet, 768px)) {
     .simple-main {
-        padding: var(--spacing-lg) var(--spacing-xl);
-        padding-top: calc(var(--header-height, 64px) + var(--spacing-lg));
+        padding: var(--mg-layout-page-padding-tablet, 20px);
+        padding-top: calc(var(--mg-layout-header-height, 64px) + var(--mg-layout-page-padding-tablet, 20px));
     }
 
     .page-title {
@@ -126,11 +102,34 @@
     }
 }
 
-/* 데스크톱 이상 (표준화 원칙: CSS 변수 사용) */
-@media (min-width: var(--breakpoint-desktop, 1024px)) {
+/* 데스크톱 이상 */
+@media (min-width: var(--mg-breakpoint-desktop, 1280px)) {
     .simple-main {
-        padding: var(--spacing-lg);
-        padding-top: calc(var(--header-height, 64px) + var(--spacing-lg));
+        padding: var(--mg-layout-page-padding-desktop, 24px);
+        padding-top: calc(var(--mg-layout-header-height, 64px) + var(--mg-layout-page-padding-desktop, 24px));
+    }
+}
+
+/* Full HD 이상 */
+@media (min-width: var(--mg-breakpoint-fhd, 1920px)) {
+    .simple-main {
+        padding: var(--mg-layout-page-padding-fhd, 28px);
+        padding-top: calc(var(--mg-layout-header-height, 64px) + var(--mg-layout-page-padding-fhd, 28px));
+    }
+}
+
+/* 2K / 4K */
+@media (min-width: var(--mg-breakpoint-2k, 2560px)) {
+    .simple-main {
+        padding: var(--mg-layout-page-padding-2k, 32px);
+        padding-top: calc(var(--mg-layout-header-height, 64px) + var(--mg-layout-page-padding-2k, 32px));
+    }
+}
+
+@media (min-width: var(--mg-breakpoint-4k, 3840px)) {
+    .simple-main {
+        padding: var(--mg-layout-page-padding-4k, 40px);
+        padding-top: calc(var(--mg-layout-header-height, 64px) + var(--mg-layout-page-padding-4k, 40px));
     }
 }
 
@@ -148,13 +147,12 @@
     justify-content: center;
     width: var(--header-avatar-size, 36px);
     height: var(--header-avatar-size, 36px);
-    border: none;
+    border: var(--border-width) solid var(--light-beige);
     border-radius: var(--radius-full);
     background: var(--light-cream);
     color: var(--cocoa);
     cursor: pointer;
     transition: all var(--transition-normal);
-    border: var(--border-width) solid var(--light-beige);
 }
 
 .notification-button:hover {
@@ -196,8 +194,8 @@
     }
 }
 
-/* 반응형: 모바일에서 알림 버튼 크기 조정 (표준화 원칙: CSS 변수 사용) */
-@media (max-width: calc(var(--breakpoint-tablet, 768px) - 1px)) {
+/* 반응형: 모바일에서 알림 버튼 크기 조정 */
+@media (max-width: calc(var(--mg-breakpoint-tablet, 768px) - 1px)) {
     .notification-button {
         width: var(--header-avatar-size-mobile, 32px);
         height: var(--header-avatar-size-mobile, 32px);

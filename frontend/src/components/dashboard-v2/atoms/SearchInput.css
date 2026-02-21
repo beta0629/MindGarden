@@ -1,0 +1,47 @@
+/**
+ * SearchInput - GNB 검색바 300px
+ * B0KlA, RESPONSIVE_LAYOUT_SPEC
+ *
+ * @author CoreSolution
+ * @since 2025-02-22
+ */
+
+.mg-v2-search-input {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 300px;
+  min-width: 200px;
+  padding: 12px 20px;
+  background: var(--ad-b0kla-card-bg, #ffffff);
+  border: 1px solid var(--ad-b0kla-border, #e2e8f0);
+  border-radius: 16px;
+  color: var(--ad-b0kla-title-color, #2d3748);
+}
+
+.mg-v2-search-input:focus-within {
+  border-color: var(--ad-b0kla-green, #4b745c);
+  outline: none;
+}
+
+.mg-v2-search-input__icon {
+  flex-shrink: 0;
+  color: var(--ad-b0kla-placeholder, #a0aec0);
+}
+
+.mg-v2-search-input__field {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  color: inherit;
+}
+
+.mg-v2-search-input__field::placeholder {
+  color: var(--ad-b0kla-placeholder, #a0aec0);
+}
+
+.mg-v2-search-input__field:focus {
+  outline: none;
+}

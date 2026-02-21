@@ -9,11 +9,13 @@
  * 네이밍: BEM 규칙 (mg-{component}-{element}--{modifier})
  */
 
-/* ===== 공통 대시보드 레이아웃 ===== */
+/* ===== 공통 대시보드 레이아웃 (RESPONSIVE_LAYOUT_SPEC) ===== */
 .mg-dashboard-layout {
     min-height: 100vh;
-    background: var(--mg-bg-dashboard);
-    padding: var(--mg-spacing-xl);
+    background: linear-gradient(to bottom, var(--mg-layout-main-bg-start), var(--mg-layout-main-bg-end));
+    padding: var(--mg-layout-section-padding);
+    max-width: var(--mg-container-max);
+    margin: 0 auto;
 }
 
 /* ===== 대시보드 헤더 ===== */
@@ -38,12 +40,26 @@
     margin: var(--mg-spacing-xs) 0 0 0;
 }
 
-/* ===== 통계 카드 그리드 ===== */
+/* ===== 통계 카드 그리드 (4K 반응형) ===== */
 .mg-dashboard-stats {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(var(--stat-card-min-width, 17.5rem), 1fr));
-    gap: var(--mg-spacing-lg);
-    margin-bottom: var(--mg-spacing-xl);
+    gap: var(--mg-layout-grid-gap);
+    margin-bottom: var(--mg-layout-gap);
+}
+
+/* mg-stats-grid: StatCard 그리드 (ContentSection 내부용) */
+.mg-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--mg-layout-grid-gap, var(--mg-spacing-lg, 1.5rem));
+    width: 100%;
+    min-width: 0;
+    margin: 0;
+}
+
+.mg-stats-grid .mg-dashboard-stat-card {
+    min-width: 0;
 }
 
 /* ===== 통계 카드 ===== */
@@ -157,11 +173,11 @@
     margin: var(--mg-spacing-xs) 0 0 0;
 }
 
-/* ===== 관리 기능 그리드 ===== */
+/* ===== 관리 기능 그리드 (4K 반응형) ===== */
 .mg-management-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(var(--management-card-min-width, 17.5rem), 1fr));
-    gap: var(--mg-spacing-lg);
+    gap: var(--mg-layout-grid-gap);
 }
 
 .mg-management-card {
@@ -281,22 +297,33 @@
     color: var(--mg-white);
 }
 
-/* ===== 반응형 ===== */
-/* 표준화 원칙: CSS 변수 사용, 모바일 우선 설계 */
-@media (max-width: calc(var(--breakpoint-tablet, 768px) - 1px)) {
-    .mg-dashboard-layout {
-        padding: var(--mg-spacing-md);
+/* ===== 반응형 (RESPONSIVE_LAYOUT_SPEC) ===== */
+/* 태블릿: mg-stats-grid 2열 */
+@media (max-width: calc(var(--mg-breakpoint-desktop, 1280px) - 1px)) {
+    .mg-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
     }
-    
+}
+
+/* 모바일: mg-stats-grid 1열 */
+@media (max-width: calc(var(--mg-breakpoint-tablet, 768px) - 1px)) {
+    .mg-dashboard-layout {
+        padding: var(--mg-layout-section-padding-mobile, 16px);
+    }
+
     .mg-dashboard-stats,
     .mg-management-grid {
         grid-template-columns: 1fr;
     }
-    
+
+    .mg-stats-grid {
+        grid-template-columns: 1fr;
+    }
+
     .mg-dashboard-title {
         font-size: var(--mg-font-xl);
     }
-    
+
     .mg-stat-card-value {
         font-size: var(--mg-font-xxl);
     }

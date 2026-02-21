@@ -254,8 +254,9 @@ const UnifiedLogin = () => {
         const decodedError = decodeURIComponent(error);
         console.log('🔤 디코딩된 OAuth 에러 메시지:', decodedError);
         
-        // 서브도메인 관련 오류인 경우 명확한 메시지 표시
-        if (decodedError.includes('테넌트 정보가 없습니다') || decodedError.includes('서브도메인')) {
+        // 서브도메인 관련 오류인 경우 명확한 메시지 표시 (로컬 환경에서는 원본 에러 표시)
+        const isLocalEnv = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        if (!isLocalEnv && (decodedError.includes('테넌트 정보가 없습니다') || decodedError.includes('서브도메인'))) {
           const host = window.location.hostname;
           const friendlyMessage = '서브도메인이 필요합니다.\n\n예: mindgarden.dev.core-solution.co.kr\n\n현재 도메인: ' + host + '\n\n올바른 서브도메인으로 접속 후 다시 시도해주세요.';
           showTooltip(friendlyMessage, 'error');
@@ -442,22 +443,25 @@ const UnifiedLogin = () => {
   // ID/PW 로그인 처리
   const handleSubmit = async (e) => {
     console.log('🚀 handleSubmit 함수 호출됨!', e);
-    
-    // 서브도메인 확인 (서브도메인이 없으면 명확한 안내)
-    const host = window.location.hostname;
-    const defaultSubdomains = ['dev', 'app', 'api', 'staging', 'www'];
-    const hostParts = host.split('.');
-    const firstLabel = hostParts[0];
-    const hasSubdomain = !defaultSubdomains.includes(firstLabel) && hostParts.length > 2;
-    
-    // 로컬 환경이 아닌 경우 서브도메인 체크
-    if (!hasSubdomain && !host.includes('localhost') && !host.includes('127.0.0.1')) {
-      const friendlyMessage = '서브도메인이 필요합니다.\n\n예: mindgarden.dev.core-solution.co.kr\n\n현재 도메인: ' + host + '\n\n올바른 서브도메인으로 접속 후 다시 시도해주세요.';
-      console.error('⚠️ 서브도메인 없음:', friendlyMessage);
-      showTooltip(friendlyMessage, 'error');
-      notificationManager.show(friendlyMessage, 'error');
-      setIsLoading(false);
-      return;
+
+    const isLocalEnv = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
+    // 서브도메인 확인 (로컬 환경에서는 스킵, 프로덕션에서는 서브도메인 필수)
+    if (!isLocalEnv) {
+      const host = window.location.hostname;
+      const defaultSubdomains = ['dev', 'app', 'api', 'staging', 'www'];
+      const hostParts = host.split('.');
+      const firstLabel = hostParts[0];
+      const hasSubdomain = !defaultSubdomains.includes(firstLabel) && hostParts.length > 2;
+
+      if (!hasSubdomain) {
+        const friendlyMessage = '서브도메인이 필요합니다.\n\n예: mindgarden.dev.core-solution.co.kr\n\n현재 도메인: ' + host + '\n\n올바른 서브도메인으로 접속 후 다시 시도해주세요.';
+        console.error('⚠️ 서브도메인 없음:', friendlyMessage);
+        showTooltip(friendlyMessage, 'error');
+        notificationManager.show(friendlyMessage, 'error');
+        setIsLoading(false);
+        return;
+      }
     }
     e.preventDefault();
 
@@ -616,11 +620,12 @@ const UnifiedLogin = () => {
         console.log('❌ 로그인 실패:', result.message);
         setIsLoading(false);
         
-        // 서브도메인 관련 오류인 경우 명확한 메시지 표시
+        // 서브도메인 관련 오류인 경우 명확한 메시지 표시 (로컬 환경에서는 원본 에러 표시)
         const errorMessage = result.message || '';
-        if (errorMessage.includes('테넌트 정보가 없습니다') || 
-            errorMessage.includes('서브도메인') || 
-            errorMessage.includes('TENANT_REQUIRED')) {
+        const isLocalEnv = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        if (!isLocalEnv && (errorMessage.includes('테넌트 정보가 없습니다') ||
+            errorMessage.includes('서브도메인') ||
+            errorMessage.includes('TENANT_REQUIRED'))) {
           const friendlyMessage = '서브도메인이 필요합니다.\n\n예: mindgarden.dev.core-solution.co.kr\n\n현재 도메인: ' + window.location.hostname + '\n\n올바른 서브도메인으로 접속 후 다시 시도해주세요.';
           showTooltip(friendlyMessage, 'error');
           notificationManager.show(friendlyMessage, 'error');
@@ -632,19 +637,21 @@ const UnifiedLogin = () => {
       console.error('❌ 로그인 오류:', error);
       setIsLoading(false);
       
-      // 서브도메인 관련 오류인 경우 명확한 메시지 표시
+      // 서브도메인 관련 오류인 경우 명확한 메시지 표시 (로컬 환경에서는 원본 에러 표시)
       const errorMessage = error.message || '';
-      if (error.isSubdomainError || 
-          errorMessage.includes('테넌트 정보가 없습니다') || 
-          errorMessage.includes('서브도메인') || 
-          errorMessage.includes('TENANT_REQUIRED')) {
-        const friendlyMessage = errorMessage.includes('서브도메인이 필요합니다') 
-          ? errorMessage 
+      const isLocalEnv = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      if (!isLocalEnv && (error.isSubdomainError ||
+          errorMessage.includes('테넌트 정보가 없습니다') ||
+          errorMessage.includes('서브도메인') ||
+          errorMessage.includes('TENANT_REQUIRED'))) {
+        const friendlyMessage = errorMessage.includes('서브도메인이 필요합니다')
+          ? errorMessage
           : '서브도메인이 필요합니다.\n\n예: mindgarden.dev.core-solution.co.kr\n\n현재 도메인: ' + window.location.hostname + '\n\n올바른 서브도메인으로 접속 후 다시 시도해주세요.';
         showTooltip(friendlyMessage, 'error');
         notificationManager.show(friendlyMessage, 'error');
       } else {
-        showTooltip('아이디 또는 비밀번호가 틀리니 다시 한번 확인 부탁해요', 'error');
+        const msg = isLocalEnv && error.message ? error.message : '아이디 또는 비밀번호가 틀리니 다시 한번 확인 부탁해요';
+        showTooltip(msg, 'error');
       }
     }
   };

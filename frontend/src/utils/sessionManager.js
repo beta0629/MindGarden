@@ -1,6 +1,7 @@
 import { API_BASE_URL } from '../constants/api';
 import {
-  SESSION_CHECK_INTERVAL
+  SESSION_CHECK_INTERVAL,
+  SESSION_CHECK_TIMEOUT
 } from '../constants/session';
 import { getDefaultApiHeaders } from './apiHeaders';
 
@@ -132,6 +133,12 @@ class SessionManager {
         this.lastCheckTime = now;
         this.notifyListeners();
 
+        const isLocalEnv = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        if (isLocalEnv) {
+          console.log('🔍 로컬 환경 - 401 리다이렉트 스킵');
+          return false;
+        }
+
         // 현재 페이지가 공개 페이지가 아닐 때만 리다이렉트
         const currentPath = window.location.pathname;
         const isPublicPage = currentPath === '/login' ||
@@ -231,6 +238,12 @@ class SessionManager {
         // 네트워크 오류 시 재시도하지 않고 바로 로그인 페이지로 리다이렉트
         this.user = null;
         this.sessionInfo = null;
+
+        const isLocalEnv = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        if (isLocalEnv) {
+          console.log('🔍 로컬 환경 - 네트워크 오류 리다이렉트 스킵');
+          return false;
+        }
 
         // 현재 페이지가 공개 페이지가 아닐 때만 리다이렉트
         const currentPath = window.location.pathname;

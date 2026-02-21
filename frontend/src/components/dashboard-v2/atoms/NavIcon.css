@@ -1,0 +1,33 @@
+/**
+ * NavIcon - 44×44px 아이콘 버튼
+ * B0KlA, RESPONSIVE_LAYOUT_SPEC
+ *
+ * @author CoreSolution
+ * @since 2025-02-22
+ */
+
+.mg-v2-nav-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  background: var(--ad-b0kla-card-bg, #ffffff);
+  border: 1px solid var(--ad-b0kla-border, #e2e8f0);
+  border-radius: 50%;
+  color: var(--ad-b0kla-icon-color, #4a5568);
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+
+.mg-v2-nav-icon:hover:not(:disabled) {
+  background: var(--ad-b0kla-bg, #fcfbfa);
+}
+
+.mg-v2-nav-icon:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

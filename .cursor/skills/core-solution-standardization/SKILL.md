@@ -20,6 +20,10 @@ Core Solution(MindGarden)의 모든 코드·UI는 **표준화 원칙**을 따릅
 - **컴포넌트**: `MGButton`, `FormInput`, `CustomSelect`, `MGModal` 등 공통 컴포넌트를 atoms/molecules 계층에 맞게 사용
 - **클래스명**: `mg-v2-*`, `cs-*` 등 디자인 시스템 규칙 준수
 
+### 버튼·UI 색상
+- **디자인 가이드에 정의된 색상만 사용**: `mindgarden-design-system.pen`, `unified-design-tokens.css`, `AdminDashboardB0KlA.css`에 정의된 토큰만 사용. 가이드에 없는 색상 사용 금지.
+- **예외**: 삭제·환불 등 위험 액션용 danger 색상이 B0KlA/가이드에 없으면, 먼저 디자인 가이드에 추가한 후 사용. 임시로 `unified-design-tokens.css`의 `--color-danger` 사용 가능.
+
 ### 참조 문서
 - `docs/standards/DESIGN_CENTRALIZATION_STANDARD.md`
 - `docs/design-system/ATOMIC_DESIGN_SYSTEM.md`

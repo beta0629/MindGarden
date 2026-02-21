@@ -153,8 +153,8 @@ const PartialRefundModal = ({ mapping, isOpen, onClose, onSuccess }) => {
   const withdrawalCheck = checkWithdrawalPeriod();
 
   return (
-    <div className="mg-v2-partial-refund-modal-overlay">
-      <div className="mg-v2-partial-refund-modal">
+    <div className="mg-v2-partial-refund-modal-overlay mg-v2-modal-overlay mg-v2-ad-b0kla">
+      <div className="mg-v2-partial-refund-modal mg-v2-modal mg-v2-modal-large">
         <div className="mg-v2-partial-refund-modal-header">
           <div className="mg-v2-modal-title-wrapper">
             <RefreshCcw size={28} className="mg-v2-modal-title-icon" />
@@ -285,25 +285,25 @@ const PartialRefundModal = ({ mapping, isOpen, onClose, onSuccess }) => {
           </div>
 
           {/* 버튼 */}
-          <div className="mg-v2-button-group">
+          <div className="mg-v2-modal-footer mg-v2-button-group">
             <button
               type="button"
               onClick={handleClose}
               disabled={loading}
-              className="mg-v2-button mg-v2-button--secondary"
+              className="mg-v2-button mg-v2-button-outline"
             >
+              <XCircle size={18} />
               취소
             </button>
             <button
               type="submit"
               disabled={loading || !reason.trim() || reason.trim().length < 5}
-              className={`mg-v2-button ${loading || !reason.trim() || reason.trim().length < 5 ? 'mg-v2-button--disabled' : 
-                             !withdrawalCheck.isValid ? 'mg-v2-button--warning' : 'mg-v2-button--danger'}`}
+              className={`mg-v2-button ${!withdrawalCheck.isValid ? 'mg-v2-button-danger' : 'mg-v2-button-primary'}`}
               title={!withdrawalCheck.isValid ? '청약 철회 기간 초과 - 특별 사유 시에만 처리' : ''}
             >
-              {loading ? '처리 중...' : 
-               !withdrawalCheck.isValid ? `⚠️ ${refundSessions}회기 특별 환불` : 
-               `${refundSessions}회기 환불 처리`}
+              {loading ? '처리 중...' :
+                !withdrawalCheck.isValid ? `${refundSessions}회기 특별 환불` :
+                  `${refundSessions}회기 환불 처리`}
             </button>
           </div>
         </form>

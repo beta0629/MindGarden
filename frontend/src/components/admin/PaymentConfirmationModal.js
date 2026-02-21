@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
-import { CreditCard, X, CheckCircle, XCircle } from 'lucide-react';
+import { CreditCard, CheckCircle, XCircle } from 'lucide-react';
 import { apiGet } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
-import MGButton from '../common/MGButton';
 import './PaymentConfirmationModal.css';
 
 /**
@@ -282,7 +281,7 @@ const PaymentConfirmationModal = ({
   if (!isOpen) return null;
 
   return ReactDOM.createPortal(
-    <div className="mg-v2-modal-overlay" onClick={onClose}>
+    <div className="mg-v2-modal-overlay mg-v2-ad-b0kla" onClick={onClose}>
       <div className="mg-v2-modal mg-v2-modal-large" onClick={(e) => e.stopPropagation()}>
         {/* 헤더 */}
         <div className="mg-v2-modal-header">
@@ -296,7 +295,7 @@ const PaymentConfirmationModal = ({
             disabled={loading}
             aria-label="닫기"
           >
-            <X size={24} />
+            <XCircle size={24} />
           </button>
         </div>
 
@@ -395,42 +394,36 @@ const PaymentConfirmationModal = ({
 
         {/* 푸터 */}
         <div className="mg-v2-modal-footer">
-          <MGButton
-            variant="secondary"
+          <button
+            type="button"
+            className="mg-v2-button mg-v2-button-outline"
             onClick={(e) => {
-              if (e) {
-                e.preventDefault();
-                e.stopPropagation();
-              }
+              e?.preventDefault();
+              e?.stopPropagation();
               onClose();
             }}
             disabled={loading}
-            preventDoubleClick={true}
           >
             취소
-          </MGButton>
-          <MGButton
-            variant="danger"
+          </button>
+          <button
+            type="button"
+            className="mg-v2-button mg-v2-button-danger"
             onClick={handleCancelPayment}
             disabled={loading || selectedMappings.length === 0}
-            loading={loading}
-            preventDoubleClick={true}
-            clickDelay={1000}
           >
             <XCircle size={18} />
             결제 취소
-          </MGButton>
-          <MGButton
-            variant="success"
+          </button>
+          <button
+            type="button"
+            className="mg-v2-button mg-v2-button-primary"
             onClick={handleConfirmPayment}
             disabled={loading || selectedMappings.length === 0}
-            loading={loading}
-            preventDoubleClick={true}
-            clickDelay={1000}
           >
             <CheckCircle size={18} />
             결제 확인
-          </MGButton>
+          </button>
         </div>
       </div>
     </div>,

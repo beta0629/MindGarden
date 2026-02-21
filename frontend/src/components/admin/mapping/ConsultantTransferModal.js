@@ -189,7 +189,7 @@ const ConsultantTransferModal = ({
   const portalTarget = document.body || document.createElement('div');
 
   return ReactDOM.createPortal(
-    <div className="mg-v2-modal-overlay" onClick={onClose}>
+        <div className="mg-v2-modal-overlay mg-v2-ad-b0kla" onClick={onClose}>
       <div className="mg-v2-modal mg-v2-modal-large" onClick={(e) => e.stopPropagation()}>
         <div className="mg-v2-modal-header">
           <div className="mg-v2-modal-title-wrapper">
@@ -379,21 +379,22 @@ const ConsultantTransferModal = ({
         </div>
         
         <div className="mg-v2-modal-footer">
-          <button className="mg-button"
+          <button
             type="button"
-            variant="secondary"
+            className="mg-v2-button mg-v2-button-outline"
             onClick={handleClose}
             disabled={loading}
           >
+            <XCircle size={18} />
             취소
           </button>
-          <button className="mg-button"
-            type="submit"
-            variant="primary"
+          <button
+            type="button"
+            className="mg-v2-button mg-v2-button-primary"
             onClick={handleSubmit}
             disabled={loading}
           >
-{loading ? '변경 중...' : '상담사 변경'}
+            {loading ? '변경 중...' : '상담사 변경'}
           </button>
         </div>
       </div>

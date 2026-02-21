@@ -2,10 +2,7 @@ import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { Edit3, XCircle, Package2, DollarSign, Calendar, AlertCircle } from 'lucide-react';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
-import MGButton from '../../components/common/MGButton';
-import { apiPost } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
-import { getCommonCodes } from '../../utils/commonCodeUtils';
 
 /**
  * 매칭 수정 모달 컴포넌트
@@ -231,7 +228,7 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
     const portalTarget = document.body || document.createElement('div');
 
     return ReactDOM.createPortal(
-        <div className="mg-v2-modal-overlay" onClick={onClose}>
+        <div className="mg-v2-modal-overlay mg-v2-ad-b0kla" onClick={onClose}>
             <div className="mg-v2-modal mg-v2-modal-large" onClick={(e) => e.stopPropagation()}>
                 <div className="mg-v2-modal-header">
                     <div className="mg-v2-modal-title-wrapper">
@@ -339,24 +336,24 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
                 </div>
 
                 <div className="mg-v2-modal-footer">
-                    <button className="mg-button"
+                    <button
                         type="button"
-                        variant="secondary"
-                        onClick={ handleClose }
-                        disabled={ loading }
+                        className="mg-v2-button mg-v2-button-outline"
+                        onClick={handleClose}
+                        disabled={loading}
                     >
-                        <XCircle size={20} className="mg-v2-icon-inline" />
+                        <XCircle size={18} />
                         취소
                     </button>
-                    <button className="mg-button"
-                        type="submit"
-                        variant="primary"
-                        onClick={ handleSubmit }
-                        disabled={ loading }
+                    <button
+                        type="button"
+                        className="mg-v2-button mg-v2-button-primary"
+                        onClick={handleSubmit}
+                        disabled={loading}
                     >
-                        { loading ? <UnifiedLoading type="inline" text="수정 중..." /> : (
+                        {loading ? <UnifiedLoading type="inline" text="수정 중..." /> : (
                             <>
-                                <Edit3 size={20} className="mg-v2-icon-inline" />
+                                <Edit3 size={18} />
                                 수정 완료
                             </>
                         )}

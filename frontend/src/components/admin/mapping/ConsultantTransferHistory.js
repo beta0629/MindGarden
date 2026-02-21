@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { XCircle } from 'lucide-react';
 import './ConsultantTransferHistory.css';
 
 /**
@@ -85,17 +86,17 @@ const ConsultantTransferHistory = ({ clientId, isOpen, onClose }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="transfer-history-overlay">
-      <div className="transfer-history-modal">
-        <div className="transfer-history-header">
-          <h2 className="transfer-history-title">상담사 변경 이력</h2>
-          <button 
-            type="button" 
-            className="transfer-history-close"
+    <div className="transfer-history-overlay mg-v2-modal-overlay mg-v2-ad-b0kla">
+      <div className="transfer-history-modal mg-v2-modal mg-v2-modal-large">
+        <div className="transfer-history-header mg-v2-modal-header">
+          <h2 className="transfer-history-title mg-v2-modal-title">상담사 변경 이력</h2>
+          <button
+            type="button"
+            className="transfer-history-close mg-v2-modal-close"
             onClick={onClose}
             aria-label="닫기"
           >
-            ✕
+            <XCircle size={24} />
           </button>
         </div>
         
@@ -179,12 +180,13 @@ const ConsultantTransferHistory = ({ clientId, isOpen, onClose }) => {
           )}
         </div>
         
-        <div className="transfer-history-footer">
+        <div className="transfer-history-footer mg-v2-modal-footer">
           <button
             type="button"
-            className="transfer-btn transfer-btn-secondary"
+            className="mg-v2-button mg-v2-button-outline"
             onClick={onClose}
           >
+            <XCircle size={18} />
             닫기
           </button>
         </div>

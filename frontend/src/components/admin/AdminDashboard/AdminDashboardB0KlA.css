@@ -25,6 +25,74 @@
   --ad-b0kla-blue: #6d9dc5;
   --ad-b0kla-blue-bg: #f0f5f9;
   --ad-b0kla-icon-color: #4a5568;
+
+  /* TODO: mindgarden-design-system.pen B0KlA 노드에 danger 색상 없음.
+   * 삭제·환불 등 위험 액션용 danger는 디자인 가이드에 추가 권장.
+   * 임시: unified-design-tokens의 --color-danger 사용 (--mg-error-500) */
+  --ad-b0kla-danger: var(--color-danger);
+}
+
+/* ===== mg-v2-button B0KlA 스코프 오버라이드 (B0KlA 토큰만 사용) ===== */
+.mg-v2-ad-b0kla .mg-v2-button-primary,
+.mg-v2-ad-b0kla .mg-v2-button--primary {
+  background: var(--ad-b0kla-green);
+  color: var(--ad-b0kla-card-bg);
+  border: none;
+}
+
+.mg-v2-ad-b0kla .mg-v2-button-primary:hover:not(:disabled),
+.mg-v2-ad-b0kla .mg-v2-button--primary:hover:not(:disabled) {
+  background: var(--ad-b0kla-green);
+  opacity: 0.9;
+}
+
+.mg-v2-ad-b0kla .mg-v2-button-outline {
+  background: transparent;
+  color: var(--ad-b0kla-green);
+  border: 2px solid var(--ad-b0kla-green);
+}
+
+.mg-v2-ad-b0kla .mg-v2-button-outline:hover:not(:disabled) {
+  background: var(--ad-b0kla-green-bg);
+  color: var(--ad-b0kla-green);
+  border-color: var(--ad-b0kla-green);
+}
+
+.mg-v2-ad-b0kla .mg-v2-button-success {
+  background: var(--ad-b0kla-green);
+  color: var(--ad-b0kla-card-bg);
+  border: none;
+}
+
+.mg-v2-ad-b0kla .mg-v2-button-success:hover:not(:disabled) {
+  background: var(--ad-b0kla-green);
+  opacity: 0.9;
+}
+
+.mg-v2-ad-b0kla .mg-v2-button-danger,
+.mg-v2-ad-b0kla .mg-v2-button--danger {
+  background: var(--ad-b0kla-danger);
+  color: var(--ad-b0kla-card-bg);
+  border: none;
+}
+
+.mg-v2-ad-b0kla .mg-v2-button-danger:hover:not(:disabled),
+.mg-v2-ad-b0kla .mg-v2-button--danger:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.mg-v2-ad-b0kla .mg-v2-button-secondary,
+.mg-v2-ad-b0kla .mg-v2-button--secondary {
+  background: transparent;
+  color: var(--ad-b0kla-text-secondary);
+  border: 2px solid var(--ad-b0kla-border);
+}
+
+.mg-v2-ad-b0kla .mg-v2-button-secondary:hover:not(:disabled),
+.mg-v2-ad-b0kla .mg-v2-button--secondary:hover:not(:disabled) {
+  background: var(--ad-b0kla-bg);
+  border-color: var(--ad-b0kla-border);
+  color: var(--ad-b0kla-text-secondary);
 }
 
 /* ===== 레이아웃 ===== */

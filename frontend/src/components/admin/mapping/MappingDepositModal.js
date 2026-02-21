@@ -3,7 +3,6 @@ import ReactDOM from 'react-dom';
 import { DollarSign, XCircle, CheckCircle } from 'lucide-react';
 import notificationManager from '../../../utils/notification';
 import { apiPost } from '../../../utils/ajax';
-import MGButton from '../../../components/common/MGButton';
 
 /**
  * 매칭 입금 확인 모달 컴포넌트
@@ -104,7 +103,7 @@ const MappingDepositModal = ({
     const portalTarget = document.body || document.createElement('div');
 
     return ReactDOM.createPortal(
-        <div className="mg-v2-modal-overlay" onClick={handleClose}>
+        <div className="mg-v2-modal-overlay mg-v2-ad-b0kla" onClick={handleClose}>
             <div className="mg-v2-modal" onClick={(e) => e.stopPropagation()}>
                 <div className="mg-v2-modal-header">
                     <h3 className="mg-v2-modal-title">
@@ -165,31 +164,27 @@ const MappingDepositModal = ({
                         </div>
 
                         <div className="mg-v2-modal-footer">
-                            <MGButton
-                                variant="secondary"
+                            <button
+                                type="button"
+                                className="mg-v2-button mg-v2-button-outline"
                                 onClick={(e) => {
-                                    if (e) {
-                                        e.preventDefault();
-                                        e.stopPropagation();
-                                    }
+                                    e?.preventDefault();
+                                    e?.stopPropagation();
                                     handleClose();
                                 }}
                                 disabled={isLoading}
-                                preventDoubleClick={true}
                             >
                                 취소
-                            </MGButton>
-                            <MGButton
-                                variant="success"
+                            </button>
+                            <button
+                                type="button"
+                                className="mg-v2-button mg-v2-button-primary"
                                 onClick={handleSubmit}
                                 disabled={isLoading}
-                                loading={isLoading}
-                                preventDoubleClick={true}
-                                clickDelay={1000}
                             >
                                 <CheckCircle size={18} />
                                 입금 확인
-                            </MGButton>
+                            </button>
                         </div>
                     </div>
                 </div>

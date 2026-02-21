@@ -3,7 +3,6 @@ import ReactDOM from 'react-dom';
 import { CreditCard, CheckCircle, XCircle, DollarSign } from 'lucide-react';
 import { apiPost } from '../../../utils/ajax';
 import notificationManager from '../../../utils/notification';
-import MGButton from '../../../components/common/MGButton';
 /**
  * 매칭 입금확인 모달 컴포넌트
 /**
@@ -114,7 +113,7 @@ const MappingPaymentModal = ({
     const portalTarget = document.body || document.createElement('div');
     
     return ReactDOM.createPortal(
-        <div className="mg-v2-modal-overlay" onClick={onClose}>
+        <div className="mg-v2-modal-overlay mg-v2-ad-b0kla" onClick={onClose}>
             <div className="mg-v2-modal mg-v2-modal-large" onClick={(e) => e.stopPropagation()}>
                 {/* 헤더 */}
                 <div className="mg-v2-modal-header">
@@ -209,31 +208,27 @@ const MappingPaymentModal = ({
 
                 {/* 푸터 */}
                 <div className="mg-v2-modal-footer">
-                    <MGButton
-                        variant="secondary"
+                    <button
+                        type="button"
+                        className="mg-v2-button mg-v2-button-outline"
                         onClick={(e) => {
-                            if (e) {
-                                e.preventDefault();
-                                e.stopPropagation();
-                            }
+                            e?.preventDefault();
+                            e?.stopPropagation();
                             onClose();
                         }}
                         disabled={loading}
-                        preventDoubleClick={true}
                     >
                         취소
-                    </MGButton>
-                    <MGButton
-                        variant="success"
+                    </button>
+                    <button
+                        type="button"
+                        className="mg-v2-button mg-v2-button-primary"
                         onClick={handleConfirmPayment}
                         disabled={loading}
-                        loading={loading}
-                        preventDoubleClick={true}
-                        clickDelay={1000}
                     >
                         <CheckCircle size={18} />
                         확인
-                    </MGButton>
+                    </button>
                 </div>
             </div>
         </div>,

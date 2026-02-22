@@ -115,9 +115,18 @@
 /* ===== Schedule Legend B0KlA ===== */
 .mg-v2-ad-b0kla .mg-v2-schedule-legend {
   flex-shrink: 0;
+  flex-grow: 0;
+  align-self: flex-start;
   width: 100%;
   max-width: 100%;
   min-width: 0;
+  height: auto;
+  min-height: 0;
+  margin-bottom: 1rem;
+  padding: 0.75rem 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
   background: var(--ad-b0kla-card-bg);
   border: 1px solid var(--ad-b0kla-border);
   border-radius: var(--ad-b0kla-radius-sm);

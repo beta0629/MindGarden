@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
 import ReactDOM from 'react-dom';
-import { RefreshCcw, XCircle, Package, Clock, AlertTriangle, DollarSign } from 'lucide-react';
+import { RefreshCcw, XCircle, Package, Clock, AlertTriangle, DollarSign, CreditCard } from 'lucide-react';
 import { apiPost } from '../../../utils/ajax';
 import notificationManager, { showNotification } from '../../../utils/notification';
 
 /**
  * 부분 환불 모달 컴포넌트
-/**
  * 지정된 회기수만 환불 처리
  */
 const PartialRefundModal = ({ mapping, isOpen, onClose, onSuccess }) => {
@@ -288,7 +287,6 @@ const PartialRefundModal = ({ mapping, isOpen, onClose, onSuccess }) => {
             </small>
           </div>
 
-          </div>
           {/* 버튼 */}
           <footer className="mg-v2-modal-footer">
             <button

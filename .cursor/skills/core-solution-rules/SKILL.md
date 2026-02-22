@@ -20,6 +20,7 @@ description: Core Solution(MindGarden) 프로젝트 전체 룰 인덱스. 백엔
 
 ## 필수 준수 사항
 
+- **서브에이전트·스킬스 활용**: 코드·디자인·테스트 **수정 시 반드시 서브에이전트와 스킬스를 사용**한다. `core-coder`(코드), `core-designer`(UI/UX·디자인), `core-tester`(테스트) 등 작업 유형에 맞는 서브에이전트를 호출하고, 해당 영역 스킬(`/core-solution-frontend`, `/core-solution-backend` 등)을 적용한다. 직접 수정보다 서브에이전트 위임을 우선한다.
 - **멀티테넌트**: tenantId 없는 데이터·API·쿼리는 절대 허용 안 됨. `/core-solution-multi-tenant` 참조.
 - **표준화**: 디자인·소스 코드는 docs/standards/ 문서 및 디자인 시스템을 반드시 따름. `/core-solution-standardization` 참조.
 - **디자인·개발 일관성**: core-designer와 core-coder 산출물은 **한 사람이 한 것처럼** 동일한 디자인·코드가 나와야 한다. 토큰·클래스명·구조를 통일하고, 단일 소스(`mindgarden-design-system.pen`, `unified-design-tokens.css`)만 사용한다.

@@ -32,6 +32,31 @@
   padding: var(--mg-spacing-lg, 1rem) var(--mg-spacing-xl, 1.5rem);
 }
 
+/* 아토믹 디자인·B0KlA 버튼 (모달 푸터) */
+.mg-v2-mapping-creation-modal-wrapper .mg-v2-modal-footer .mg-v2-button-primary,
+.mg-v2-mapping-creation-modal-wrapper .mg-v2-ad-b0kla-modal__footer .mg-v2-button-primary {
+  background: var(--ad-b0kla-green);
+  color: var(--ad-b0kla-card-bg);
+  border: none;
+}
+.mg-v2-mapping-creation-modal-wrapper .mg-v2-modal-footer .mg-v2-button-primary:hover:not(:disabled),
+.mg-v2-mapping-creation-modal-wrapper .mg-v2-ad-b0kla-modal__footer .mg-v2-button-primary:hover:not(:disabled) {
+  background: var(--ad-b0kla-green);
+  opacity: 0.9;
+}
+.mg-v2-mapping-creation-modal-wrapper .mg-v2-modal-footer .mg-v2-button-outline,
+.mg-v2-mapping-creation-modal-wrapper .mg-v2-ad-b0kla-modal__footer .mg-v2-button-outline {
+  background: transparent;
+  color: var(--ad-b0kla-green);
+  border: 2px solid var(--ad-b0kla-green);
+}
+.mg-v2-mapping-creation-modal-wrapper .mg-v2-modal-footer .mg-v2-button-outline:hover:not(:disabled),
+.mg-v2-mapping-creation-modal-wrapper .mg-v2-ad-b0kla-modal__footer .mg-v2-button-outline:hover:not(:disabled) {
+  background: var(--ad-b0kla-green-bg);
+  color: var(--ad-b0kla-green);
+  border-color: var(--ad-b0kla-green);
+}
+
 /* 모달 바디: 콘텐츠 양에 맞게 자동 조절 */
 .mg-v2-mapping-creation-modal-wrapper .mg-v2-modal-body,
 .mg-v2-mapping-creation-modal-wrapper .mg-v2-ad-b0kla-modal__body {

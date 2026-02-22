@@ -426,7 +426,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
       onClick={handleOverlayClick}
     >
       <div
-        className={`mg-v2-modal ${modalSizeClass} mg-v2-ad-b0kla-modal mg-v2-mapping-creation-modal-wrapper ${loading ? 'mg-v2-modal--loading' : ''}`}
+        className={`mg-v2-ad-b0kla mg-v2-modal ${modalSizeClass} mg-v2-ad-b0kla-modal mg-v2-mapping-creation-modal-wrapper ${loading ? 'mg-v2-modal--loading' : ''}`}
         onClick={(e) => e.stopPropagation()}
       >
         <header className="mg-v2-modal-header mg-v2-ad-b0kla-modal__header">

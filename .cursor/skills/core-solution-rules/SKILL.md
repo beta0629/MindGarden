@@ -40,6 +40,7 @@ description: Core Solution(MindGarden) 프로젝트 전체 룰 인덱스. 백엔
 | 코드 포맷·스타일 정리 | `/core-solution-code-style` |
 | 단위·통합·E2E·보안 테스트 | `/core-solution-testing` |
 | 핵심 비즈니스 흐름 및 UI 규칙 | `/core-solution-business-flow` |
+| **ERP 연동·거래 생성·트러블슈팅** | `/core-solution-erp` |
 
 - Agent 채팅에서 `/` 입력 후 스킬 이름 검색하여 수동 호출 가능
 - 관련 작업 시 Agent가 자동으로 위 스킬 중 적절한 것을 적용할 수 있음
@@ -62,5 +63,6 @@ description: Core Solution(MindGarden) 프로젝트 전체 룰 인덱스. 백엔
 - **API_INTEGRATION_STANDARD.md**, **API_DESIGN_STANDARD.md**
 - **DTO_NAMING_STANDARD.md**, **ERROR_HANDLING_STANDARD.md**, **LOGGING_STANDARD.md**
 - **TESTING_STANDARD.md** — 단위/통합/E2E/보안/성능 테스트 (테스트 에이전트: core-tester)
+- **ERP_TROUBLESHOOTING.md** — ERP 연동·거래 생성 트러블슈팅 (로그·API·체크리스트)
 
 작업 전 해당 영역 표준 문서를 참조하고, 위 스킬 규칙을 준수하세요.

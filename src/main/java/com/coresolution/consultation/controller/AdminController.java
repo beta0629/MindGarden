@@ -2149,18 +2149,8 @@ public class AdminController extends BaseApiController {
             log.error("❌ 입금 확인 후 실시간 통계 업데이트 실패 (입금 확인은 이미 완료됨): {}", e.getMessage(), e);
         }
 
-        try {
-            // 상담료 수입 거래 생성 (독립적인 트랜잭션)
-            // mapping 객체는 Lazy 프록시이므로, ID만 전달하여 재조회
-            ConsultantClientMapping mappingForTransaction = adminService.getMappingById(mappingId);
-            if (mappingForTransaction != null) {
-                adminService.createConsultationIncomeTransactionAsync(mappingForTransaction);
-                log.info("💚 매칭 입금 확인으로 인한 상담료 수입 거래 자동 생성: MappingID={}", mappingId);
-            }
-        } catch (Exception e) {
-            // 거래 생성 실패는 입금 확인 자체에 영향을 주지 않음
-            log.error("상담료 수입 거래 자동 생성 실패 (입금 확인은 이미 완료됨): {}", e.getMessage(), e);
-        }
+        // ERP 거래(INCOME) 생성은 AdminServiceImpl.confirmDeposit() 내부에서 처리
+        // (confirm-payment와 동일한 createConsultationIncomeTransaction / createAdditionalSessionIncomeTransaction 재사용)
 
         Map<String, Object> mappingData = new HashMap<>();
         mappingData.put("id", mapping.getId());

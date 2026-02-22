@@ -649,16 +649,31 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
      * 추가 회기 수입 거래 자동 생성 (추가 매칭용)
      */
     private void createAdditionalSessionIncomeTransaction(ConsultantClientMapping mapping, Long additionalPaymentAmount) {
-        log.info("💰 [중앙화] 추가 회기 수입 거래 생성 시작: MappingID={}, AdditionalAmount={}", 
+        log.info("💰 [중앙화] 추가 회기 수입 거래 생성 시작: MappingID={}, AdditionalAmount={}",
             mapping.getId(), additionalPaymentAmount);
-        
+
         Long transactionAmount = additionalPaymentAmount != null ? additionalPaymentAmount : 0L;
-        
+
         if (transactionAmount <= 0) {
             log.warn("❌ 유효한 추가 결제 금액이 없습니다: MappingID={}", mapping.getId());
             return;
         }
-        
+
+        try {
+            String tenantId = TenantContextHolder.getTenantId();
+            boolean exists = financialTransactionRepository
+                .existsByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndTransactionTypeAndIsDeletedFalse(
+                    tenantId, mapping.getId(), "CONSULTANT_CLIENT_MAPPING_ADDITIONAL",
+                    FinancialTransaction.TransactionType.INCOME);
+            if (exists) {
+                log.warn("🚫 중복 거래 방지: MappingID={}에 대한 추가 회기 수입 거래가 이미 존재합니다.", mapping.getId());
+                return;
+            }
+        } catch (Exception e) {
+            log.error("❌ 추가 회기 중복 거래 확인 중 오류: MappingID={}, Error={}", mapping.getId(), e.getMessage(), e);
+            return;
+        }
+
         int additionalSessions = extractAdditionalSessionsFromNotes(mapping.getNotes());
         
         FinancialTransactionRequest request = FinancialTransactionRequest.builder()
@@ -907,20 +922,52 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     
      /**
      * 입금 확인 처리 (현금 수입)
-     * 참고: createConsultationIncomeTransactionAsync는 Controller에서 트랜잭션 커밋 후 별도로 호출해야 함
+     * confirm-payment와 동일한 ERP 거래(INCOME) 생성 로직 적용.
+     * packagePrice/paymentAmount 유효성 검사, 중복 거래 방지 포함.
+     *
+     * @param mappingId 매핑 ID
+     * @param depositReference 입금 참조번호
+     * @return 저장된 ConsultantClientMapping
+     * @author MindGarden
+     * @since 2025-02-22
      */
     @Override
     public ConsultantClientMapping confirmDeposit(Long mappingId, String depositReference) {
         ConsultantClientMapping mapping = mappingRepository.findById(mappingId)
                 .orElseThrow(() -> new RuntimeException("Mapping not found"));
-        
+
         mapping.confirmDeposit(depositReference);
-        
+
+        // packagePrice/paymentAmount 유효성: ERP 거래용 금액 결정 (paymentAmount 우선, 없으면 packagePrice)
+        Long effectiveAmount = mapping.getPaymentAmount() != null && mapping.getPaymentAmount() > 0
+                ? mapping.getPaymentAmount()
+                : mapping.getPackagePrice();
+        if (effectiveAmount != null && effectiveAmount > 0) {
+            mapping.setPaymentAmount(effectiveAmount);
+        }
+
         ConsultantClientMapping savedMapping = mappingRepository.save(mapping);
-        
-        // 통계 업데이트는 Controller에서 트랜잭션 커밋 후 별도로 호출
-        // 이렇게 하면 통계 업데이트 실패가 입금 확인 트랜잭션에 영향을 주지 않음
-        
+
+        try {
+            boolean isAdditionalMapping = savedMapping.getNotes() != null
+                    && savedMapping.getNotes().contains("[추가 매칭]");
+
+            if (effectiveAmount == null || effectiveAmount <= 0) {
+                log.warn("⚠️ 입금 확인 ERP 거래 스킵: MappingID={}, packagePrice={}, paymentAmount={} (유효 금액 없음)",
+                        mappingId, mapping.getPackagePrice(), mapping.getPaymentAmount());
+            } else if (isAdditionalMapping) {
+                log.info("🔄 추가 매칭 입금 확인 - 추가 회기에 대한 ERP 거래 생성: MappingID={}", mappingId);
+                createAdditionalSessionIncomeTransaction(savedMapping, effectiveAmount);
+                log.info("💚 입금 확인 ERP 거래 생성 완료 (추가 매칭): MappingID={}, Amount={}", mappingId, effectiveAmount);
+            } else {
+                log.info("🆕 신규 매칭 입금 확인 - 전체 패키지에 대한 ERP 거래 생성: MappingID={}", mappingId);
+                createConsultationIncomeTransaction(savedMapping);
+                log.info("💚 입금 확인 ERP 거래 생성 완료 (신규 매칭): MappingID={}", mappingId);
+            }
+        } catch (Exception e) {
+            log.error("❌ 입금 확인 ERP 거래 생성 실패 (입금 확인은 완료됨): MappingID={}, Error={}", mappingId, e.getMessage(), e);
+        }
+
         return savedMapping;
     }
 

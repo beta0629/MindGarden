@@ -282,14 +282,14 @@ const PaymentConfirmationModal = ({
 
   return ReactDOM.createPortal(
     <div className="mg-v2-modal-overlay mg-v2-ad-b0kla" onClick={onClose}>
-      <div className="mg-v2-modal mg-v2-modal-large" onClick={(e) => e.stopPropagation()}>
-        {/* 헤더 */}
-        <div className="mg-v2-modal-header">
-          <h2 className="mg-v2-modal-title">
-            <CreditCard size={24} />
-            결제 확인
-          </h2>
-          <button 
+      <div className="mg-v2-modal mg-v2-modal-medium mg-v2-ad-b0kla" onClick={(e) => e.stopPropagation()}>
+        <header className="mg-v2-modal-header">
+          <div className="mg-v2-modal-title-section">
+            <CreditCard size={24} className="mg-v2-modal-title-icon" />
+            <h2 className="mg-v2-modal-title">결제 확인</h2>
+          </div>
+          <button
+            type="button"
             className="mg-v2-modal-close"
             onClick={onClose}
             disabled={loading}
@@ -297,13 +297,13 @@ const PaymentConfirmationModal = ({
           >
             <XCircle size={24} />
           </button>
-        </div>
+        </header>
 
         {/* 본문 */}
         <div className="mg-v2-modal-body">
           {/* 매핑 목록 */}
-          <div className="mg-v2-form-section">
-            <h3 className="mg-v2-section-title">결제 대기 중인 매핑</h3>
+          <div className="mg-v2-ad-b0kla__card mg-v2-form-section">
+            <h3 className="mg-v2-ad-b0kla__section-title">결제 대기 중인 매핑</h3>
             <div className="mg-v2-mapping-list">
               {mappings
                 // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
@@ -341,8 +341,8 @@ const PaymentConfirmationModal = ({
           </div>
 
           {/* 결제 정보 입력 */}
-          <div className="mg-v2-form-section">
-            <h3 className="mg-v2-section-title">결제 정보</h3>
+          <div className="mg-v2-ad-b0kla__card mg-v2-form-section">
+            <h3 className="mg-v2-ad-b0kla__section-title">결제 정보</h3>
             
             <div className="mg-v2-form-group">
               <label className="mg-v2-label">결제 방법</label>
@@ -392,11 +392,10 @@ const PaymentConfirmationModal = ({
           </div>
         </div>
 
-        {/* 푸터 */}
-        <div className="mg-v2-modal-footer">
+        <footer className="mg-v2-modal-footer">
           <button
             type="button"
-            className="mg-v2-button mg-v2-button-outline"
+            className="mg-v2-button mg-v2-button-secondary"
             onClick={(e) => {
               e?.preventDefault();
               e?.stopPropagation();
@@ -424,7 +423,7 @@ const PaymentConfirmationModal = ({
             <CheckCircle size={18} />
             결제 확인
           </button>
-        </div>
+        </footer>
       </div>
     </div>,
     document.body

@@ -114,16 +114,14 @@ const MappingPaymentModal = ({
     
     return ReactDOM.createPortal(
         <div className="mg-v2-modal-overlay mg-v2-ad-b0kla" onClick={onClose}>
-            <div className="mg-v2-modal mg-v2-modal-large" onClick={(e) => e.stopPropagation()}>
-                {/* 헤더 */}
-                <div className="mg-v2-modal-header">
-                    <div className="mg-v2-modal-title-wrapper">
-                        <CreditCard size={28} className="mg-v2-modal-title-icon" />
-                        <h2 className="mg-v2-modal-title">
-                            결제 확인
-                        </h2>
+            <div className="mg-v2-modal mg-v2-modal-medium mg-v2-ad-b0kla" onClick={(e) => e.stopPropagation()}>
+                <header className="mg-v2-modal-header">
+                    <div className="mg-v2-modal-title-section">
+                        <CreditCard size={24} className="mg-v2-modal-title-icon" />
+                        <h2 className="mg-v2-modal-title">결제 확인</h2>
                     </div>
-                    <button 
+                    <button
+                        type="button"
                         className="mg-v2-modal-close"
                         onClick={onClose}
                         disabled={loading}
@@ -131,12 +129,12 @@ const MappingPaymentModal = ({
                     >
                         <XCircle size={24} />
                     </button>
-                </div>
+                </header>
 
                 {/* 본문 */}
                 <div className="mg-v2-modal-body">
 
-                <div className="mg-v2-mapping-info-box">
+                <div className="mg-v2-ad-b0kla__card mg-v2-mapping-info-box">
                     <div className="mg-v2-mapping-info-content">
                         <div className="mg-v2-mapping-info-label">
                             매칭 정보
@@ -206,11 +204,10 @@ const MappingPaymentModal = ({
 
                 </div>
 
-                {/* 푸터 */}
-                <div className="mg-v2-modal-footer">
+                <footer className="mg-v2-modal-footer">
                     <button
                         type="button"
-                        className="mg-v2-button mg-v2-button-outline"
+                        className="mg-v2-button mg-v2-button-secondary"
                         onClick={(e) => {
                             e?.preventDefault();
                             e?.stopPropagation();
@@ -229,7 +226,7 @@ const MappingPaymentModal = ({
                         <CheckCircle size={18} />
                         확인
                     </button>
-                </div>
+                </footer>
             </div>
         </div>,
         portalTarget

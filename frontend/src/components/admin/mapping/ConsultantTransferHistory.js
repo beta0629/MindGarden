@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { XCircle } from 'lucide-react';
+import ReactDOM from 'react-dom';
+import { XCircle, Clock } from 'lucide-react';
 import './ConsultantTransferHistory.css';
 
 /**
@@ -59,18 +60,6 @@ const ConsultantTransferHistory = ({ clientId, isOpen, onClose }) => {
     });
   };
 
-  const getStatusBadgeClass = (status) => {
-    switch (status) {
-      case 'TERMINATED':
-        return 'transfer-status-badge transfer-status-terminated';
-      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-      case 'ACTIVE':
-        return 'transfer-status-badge transfer-status-active';
-      default:
-        return 'transfer-status-badge transfer-status-pending';
-    }
-  };
-
   const getStatusText = (status) => {
     switch (status) {
       case 'TERMINATED':
@@ -85,22 +74,26 @@ const ConsultantTransferHistory = ({ clientId, isOpen, onClose }) => {
 
   if (!isOpen) return null;
 
-  return (
-    <div className="transfer-history-overlay mg-v2-modal-overlay mg-v2-ad-b0kla">
-      <div className="transfer-history-modal mg-v2-modal mg-v2-modal-large">
-        <div className="transfer-history-header mg-v2-modal-header">
-          <h2 className="transfer-history-title mg-v2-modal-title">상담사 변경 이력</h2>
+  const portalTarget = document.body || document.createElement('div');
+
+  return ReactDOM.createPortal(
+    <div className="mg-v2-modal-overlay mg-v2-ad-b0kla" onClick={onClose}>
+      <div className="mg-v2-modal mg-v2-modal-medium mg-v2-ad-b0kla" onClick={(e) => e.stopPropagation()}>
+        <header className="mg-v2-modal-header">
+          <div className="mg-v2-modal-title-section">
+            <Clock size={24} className="mg-v2-modal-title-icon" />
+            <h2 className="mg-v2-modal-title">상담사 변경 이력</h2>
+          </div>
           <button
             type="button"
-            className="transfer-history-close mg-v2-modal-close"
+            className="mg-v2-modal-close"
             onClick={onClose}
             aria-label="닫기"
           >
             <XCircle size={24} />
           </button>
-        </div>
-        
-        <div className="transfer-history-content">
+        </header>
+        <div className="mg-v2-modal-body">
           {loading ? (
             <div className="transfer-history-loading">
               <div className="transfer-loading-spinner"></div>
@@ -109,8 +102,9 @@ const ConsultantTransferHistory = ({ clientId, isOpen, onClose }) => {
           ) : error ? (
             <div className="transfer-history-error">
               <p>❌ {error}</p>
-              <button 
-                className="transfer-btn transfer-btn-primary"
+              <button
+                type="button"
+                className="mg-v2-button mg-v2-button-primary"
                 onClick={loadTransferHistory}
               >
                 다시 시도
@@ -121,15 +115,15 @@ const ConsultantTransferHistory = ({ clientId, isOpen, onClose }) => {
               <p>📝 상담사 변경 이력이 없습니다.</p>
             </div>
           ) : (
-            <div className="transfer-history-list">
+            <div className="transfer-history-list mg-v2-ad-b0kla__counselor-list">
               {transferHistory.map((history, index) => (
-                <div key={history.id || index} className="transfer-history-item">
+                <div key={history.id || index} className="transfer-history-item mg-v2-ad-b0kla__card">
                   <div className="transfer-history-item-header">
                     <div className="transfer-history-item-info">
                       <h3 className="transfer-history-consultant-name">
                         {history.consultant?.name || '알 수 없음'}
                       </h3>
-                      <span className={getStatusBadgeClass(history.status)}>
+                      <span className={`mg-v2-ad-b0kla__kpi-badge ${history.status === 'ACTIVE' ? 'mg-v2-ad-b0kla__kpi-badge--green' : history.status === 'TERMINATED' ? 'mg-v2-ad-b0kla__kpi-badge--orange' : 'mg-v2-ad-b0kla__kpi-badge--blue'}`}>
                         {getStatusText(history.status)}
                       </span>
                     </div>
@@ -179,19 +173,20 @@ const ConsultantTransferHistory = ({ clientId, isOpen, onClose }) => {
             </div>
           )}
         </div>
-        
-        <div className="transfer-history-footer mg-v2-modal-footer">
+
+        <footer className="mg-v2-modal-footer">
           <button
             type="button"
-            className="mg-v2-button mg-v2-button-outline"
+            className="mg-v2-button mg-v2-button-secondary"
             onClick={onClose}
           >
             <XCircle size={18} />
             닫기
           </button>
-        </div>
+        </footer>
       </div>
-    </div>
+    </div>,
+    portalTarget
   );
 };
 

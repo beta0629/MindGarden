@@ -104,23 +104,24 @@ const MappingDepositModal = ({
 
     return ReactDOM.createPortal(
         <div className="mg-v2-modal-overlay mg-v2-ad-b0kla" onClick={handleClose}>
-            <div className="mg-v2-modal" onClick={(e) => e.stopPropagation()}>
-                <div className="mg-v2-modal-header">
-                    <h3 className="mg-v2-modal-title">
-                        <DollarSign size={24} />
-                        입금 확인
-                    </h3>
+            <div className="mg-v2-modal mg-v2-modal-medium mg-v2-ad-b0kla" onClick={(e) => e.stopPropagation()}>
+                <header className="mg-v2-modal-header">
+                    <div className="mg-v2-modal-title-section">
+                        <DollarSign size={24} className="mg-v2-modal-title-icon" />
+                        <h2 className="mg-v2-modal-title">입금 확인</h2>
+                    </div>
                     <button
+                        type="button"
                         onClick={handleClose}
                         className="mg-v2-modal-close"
                         aria-label="닫기"
                     >
                         <XCircle size={24} />
                     </button>
-                </div>
+                </header>
 
                 <div className="mg-v2-modal-body">
-                    <div className="mg-v2-info-box">
+                    <div className="mg-v2-ad-b0kla__card mg-v2-info-box">
                         <div className="mg-v2-info-row">
                             <span className="mg-v2-info-label">상담사:</span>
                             <span className="mg-v2-info-value">
@@ -163,7 +164,7 @@ const MappingDepositModal = ({
                             </small>
                         </div>
 
-                        <div className="mg-v2-modal-footer">
+                        <footer className="mg-v2-modal-footer">
                             <button
                                 type="button"
                                 className="mg-v2-button mg-v2-button-outline"
@@ -185,7 +186,7 @@ const MappingDepositModal = ({
                                 <CheckCircle size={18} />
                                 입금 확인
                             </button>
-                        </div>
+                        </footer>
                     </div>
                 </div>
             </div>

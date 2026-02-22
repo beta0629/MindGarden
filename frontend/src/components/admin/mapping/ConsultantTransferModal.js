@@ -190,26 +190,26 @@ const ConsultantTransferModal = ({
 
   return ReactDOM.createPortal(
         <div className="mg-v2-modal-overlay mg-v2-ad-b0kla" onClick={onClose}>
-      <div className="mg-v2-modal mg-v2-modal-large" onClick={(e) => e.stopPropagation()}>
-        <div className="mg-v2-modal-header">
-          <div className="mg-v2-modal-title-wrapper">
-            <UserCheck size={28} className="mg-v2-modal-title-icon" />
+      <div className="mg-v2-modal mg-v2-modal-large mg-v2-ad-b0kla" onClick={(e) => e.stopPropagation()}>
+        <header className="mg-v2-modal-header">
+          <div className="mg-v2-modal-title-section">
+            <UserCheck size={24} className="mg-v2-modal-title-icon" />
             <h2 className="mg-v2-modal-title">상담사 변경</h2>
           </div>
-          <button 
-            type="button" 
+          <button
+            type="button"
             className="mg-v2-modal-close"
             onClick={handleClose}
             aria-label="닫기"
           >
             <XCircle size={24} />
           </button>
-        </div>
+        </header>
         
         <div className="mg-v2-modal-body">
           {/* 현재 매핑 정보 */}
           {currentMapping && (
-            <div className="mg-v2-info-box">
+            <div className="mg-v2-ad-b0kla__card mg-v2-info-box">
               <h3 className="mg-v2-info-box-title">
                 <Users size={20} className="mg-v2-section-title-icon" />
                 현재 매핑 정보
@@ -378,10 +378,10 @@ const ConsultantTransferModal = ({
           </form>
         </div>
         
-        <div className="mg-v2-modal-footer">
+        <footer className="mg-v2-modal-footer">
           <button
             type="button"
-            className="mg-v2-button mg-v2-button-outline"
+            className="mg-v2-button mg-v2-button-secondary"
             onClick={handleClose}
             disabled={loading}
           >
@@ -396,7 +396,7 @@ const ConsultantTransferModal = ({
           >
             {loading ? '변경 중...' : '상담사 변경'}
           </button>
-        </div>
+        </footer>
       </div>
     </div>,
     portalTarget

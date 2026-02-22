@@ -30,6 +30,9 @@
    * 삭제·환불 등 위험 액션용 danger는 디자인 가이드에 추가 권장.
    * 임시: unified-design-tokens의 --color-danger 사용 (--mg-error-500) */
   --ad-b0kla-danger: var(--color-danger);
+
+  /* 모달 오버레이 */
+  --ad-b0kla-overlay-bg: rgba(0, 0, 0, 0.4);
 }
 
 /* ===== mg-v2-button B0KlA 스코프 오버라이드 (B0KlA 토큰만 사용) ===== */
@@ -816,6 +819,101 @@
 
 .mg-v2-content-section--card .system-status-display:hover {
   box-shadow: none;
+}
+
+/* ===== B0KlA 매칭 관리 모달 공통 스타일 ===== */
+/* mg-v2-modal-overlay.mg-v2-ad-b0kla: 매칭 관련 모달 오버레이 */
+.mg-v2-modal-overlay.mg-v2-ad-b0kla {
+  background: var(--ad-b0kla-overlay-bg);
+}
+
+.mg-v2-modal-overlay.mg-v2-ad-b0kla .mg-v2-modal {
+  background: var(--ad-b0kla-card-bg);
+  border: 1px solid var(--ad-b0kla-border);
+  border-radius: var(--ad-b0kla-radius);
+  box-shadow: var(--ad-b0kla-shadow);
+}
+
+.mg-v2-modal-overlay.mg-v2-ad-b0kla .mg-v2-modal-header {
+  border-bottom: 1px solid var(--ad-b0kla-border);
+  background: var(--ad-b0kla-card-bg);
+}
+
+.mg-v2-modal-overlay.mg-v2-ad-b0kla .mg-v2-modal-title {
+  color: var(--ad-b0kla-title-color);
+}
+
+.mg-v2-modal-overlay.mg-v2-ad-b0kla .mg-v2-modal-close {
+  color: var(--ad-b0kla-text-secondary);
+}
+
+.mg-v2-modal-overlay.mg-v2-ad-b0kla .mg-v2-modal-close:hover {
+  background: var(--ad-b0kla-bg);
+  color: var(--ad-b0kla-title-color);
+}
+
+.mg-v2-modal-overlay.mg-v2-ad-b0kla .mg-v2-modal-body {
+  background: var(--ad-b0kla-card-bg);
+}
+
+.mg-v2-modal-overlay.mg-v2-ad-b0kla .mg-v2-modal-footer {
+  border-top: 1px solid var(--ad-b0kla-border);
+  background: var(--ad-b0kla-bg);
+}
+
+/* B0KlA 카드 악센트 바 (좌측 4px) - 섹션 제목용 */
+.mg-v2-ad-b0kla__card-accent {
+  border-left: 4px solid var(--ad-b0kla-green);
+}
+
+.mg-v2-ad-b0kla__card-accent--orange {
+  border-left-color: var(--ad-b0kla-orange);
+}
+
+.mg-v2-ad-b0kla__card-accent--blue {
+  border-left-color: var(--ad-b0kla-blue);
+}
+
+/* 섹션 제목 (좌측 악센트 적용) */
+.mg-v2-ad-b0kla__section-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--ad-b0kla-title-color);
+  margin: 0 0 1rem 0;
+  padding-left: 12px;
+  border-left: 4px solid var(--ad-b0kla-green);
+}
+
+/* B0KlA 뱃지 스타일 */
+.mg-v2-ad-b0kla .mg-v2-badge.status-active,
+.mg-v2-ad-b0kla .mg-v2-badge.payment-approved {
+  background: var(--ad-b0kla-green-bg);
+  color: var(--ad-b0kla-green);
+}
+
+.mg-v2-ad-b0kla .mg-v2-badge.status-pending,
+.mg-v2-ad-b0kla .mg-v2-badge.payment-pending {
+  background: var(--ad-b0kla-orange-bg);
+  color: var(--ad-b0kla-orange);
+}
+
+.mg-v2-ad-b0kla .mg-v2-badge.status-terminated,
+.mg-v2-ad-b0kla .mg-v2-badge.payment-rejected {
+  background: var(--ad-b0kla-border);
+  color: var(--ad-b0kla-text-secondary);
+}
+
+/* 모달 크기 */
+.mg-v2-modal-overlay.mg-v2-ad-b0kla .mg-v2-modal-large {
+  max-width: 1000px;
+}
+
+.mg-v2-modal-overlay.mg-v2-ad-b0kla .mg-v2-modal-medium {
+  max-width: 600px;
+}
+
+.mg-v2-modal-overlay.mg-v2-ad-b0kla .mg-v2-modal-small {
+  max-width: 400px;
 }
 
 /* 검색바 반응형 */

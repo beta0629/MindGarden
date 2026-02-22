@@ -53,4 +53,7 @@ description: Core Solution(MindGarden) 테스트 표준 요약. 단위·통합·
 - [ ] 통합 테스트 인증·X-Tenant-ID 포함
 - [ ] 테스트 독립성·테넌트 격리 반영
 
-테스트 전용 에이전트는 `.cursor/agents/core-tester.md`를 사용하세요.
+## 서브에이전트 활용
+
+- **테스트 작성·실행·검토**: 반드시 `core-tester` 서브에이전트를 호출한다. 직접 테스트 코드 수정 금지.
+- 참조: `.cursor/agents/core-tester.md`, `docs/standards/SUBAGENT_USAGE.md`

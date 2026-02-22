@@ -20,11 +20,33 @@ description: Core Solution(MindGarden) 프로젝트 전체 룰 인덱스. 백엔
 
 ## 필수 준수 사항
 
-- **서브에이전트·스킬스 활용**: 코드·디자인·테스트 **수정 시 반드시 서브에이전트와 스킬스를 사용**한다. `core-coder`(코드), `core-designer`(UI/UX·디자인), `core-tester`(테스트) 등 작업 유형에 맞는 서브에이전트를 호출하고, 해당 영역 스킬(`/core-solution-frontend`, `/core-solution-backend` 등)을 적용한다. 직접 수정보다 서브에이전트 위임을 우선한다.
+- **서브에이전트·스킬스 활용**: 코드·디자인·테스트 **수정 시 반드시 서브에이전트와 스킬스를 사용**한다. 직접 수정보다 서브에이전트 위임을 우선한다. 작업 유형별 매핑은 아래 [서브에이전트 활용 매핑](#서브에이전트-활용-매핑)을 참조한다.
 - **멀티테넌트**: tenantId 없는 데이터·API·쿼리는 절대 허용 안 됨. `/core-solution-multi-tenant` 참조.
 - **표준화**: 디자인·소스 코드는 docs/standards/ 문서 및 디자인 시스템을 반드시 따름. `/core-solution-standardization` 참조.
 - **디자인·개발 일관성**: core-designer와 core-coder 산출물은 **한 사람이 한 것처럼** 동일한 디자인·코드가 나와야 한다. 토큰·클래스명·구조를 통일하고, 단일 소스(`mindgarden-design-system.pen`, `unified-design-tokens.css`)만 사용한다.
 - **페이지 수정 시 연관 요소 전체 수정**: 한 페이지를 수정할 때는 메인 화면뿐 아니라 모달·버튼·연관 컴포넌트 등 **연관된 모든 부수 요소**를 찾아 함께 수정한다. import·모달·라우트 검색으로 연관 파일을 파악한다.
+
+## 서브에이전트 활용 매핑
+
+**수정 작업 시 반드시 아래 매핑에 맞는 서브에이전트를 호출**한다. 매핑에 없는 작업 유형은 이 표에 추가한 뒤, 해당 서브에이전트를 사용하도록 한다.
+
+| 작업 유형 | 서브에이전트 | 적용 스킬 | 비고 |
+|----------|--------------|----------|------|
+| React/JS 컴포넌트 코드 작성·수정 | core-coder | /core-solution-frontend | 프론트엔드 소스 |
+| Java/Spring 백엔드 코드 | core-coder | /core-solution-backend | API, Service, Entity 등 |
+| UI/UX·레이아웃·비주얼 설계 | core-designer | /core-solution-standardization | 시안·토큰·스펙 정의 선행 |
+| 헤더·푸터·공통 레이아웃 수정 | core-coder | /core-solution-frontend, /core-solution-atomic-design | B0KlA·디자인 토큰 준수 |
+| 스케줄·캘린더·모달 UI 수정 | core-coder | /core-solution-frontend | core-designer 시안 있으면 참조 |
+| 매핑·ERP·비즈니스 로직 | core-coder | /core-solution-erp, /core-solution-business-flow | |
+| 단위·통합·E2E 테스트 | core-tester | /core-solution-testing | 코드 구현은 하지 않음 |
+| DB 스키마·Entity 설계 | core-coder | /core-solution-database-first | |
+| 리포트·차트·대시보드 UI | core-coder | /core-solution-frontend | core-designer 시안 있으면 참조 |
+| 설정·시스템 페이지 | core-coder | /core-solution-frontend, /core-solution-atomic-design | |
+| API 설계·연동 | core-coder | /core-solution-api, /core-solution-backend | |
+| 새 작업 유형 추가 시 | — | — | docs/standards/SUBAGENT_USAGE.md 절차 따름 |
+
+- **explore** 서브에이전트: 코드베이스 탐색·분석 시 사용 (수정 작업 아님)
+- **generalPurpose** 서브에이전트: 복합 연구·다단계 작업 시 사용
 
 ## 사용할 스킬
 
@@ -55,6 +77,7 @@ description: Core Solution(MindGarden) 프로젝트 전체 룰 인덱스. 백엔
 
 ## 표준 문서 위치 (docs/standards/)
 
+- **SUBAGENT_USAGE.md** — 서브에이전트 활용 매핑, 누락 영역 추가 절차
 - **CODE_STYLE_STANDARD.md** — 코드 스타일·포맷 (Java/JS)
 - **BACKEND_CODING_STANDARD.md** — Controller/Service/Repository/Entity/DTO
 - **FRONTEND_DEVELOPMENT_STANDARD.md** — 프론트 구조·상수화·디자인 시스템

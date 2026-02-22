@@ -32,7 +32,7 @@
   --ad-b0kla-danger: var(--color-danger);
 
   /* 모달 오버레이 */
-  --ad-b0kla-overlay-bg: rgba(0, 0, 0, 0.4);
+  --ad-b0kla-overlay-bg: var(--droplet-bg-dark);
 }
 
 /* ===== mg-v2-button B0KlA 스코프 오버라이드 (B0KlA 토큰만 사용) ===== */
@@ -824,11 +824,11 @@
 /* ===== B0KlA 매칭 관리 모달 공통 스타일 ===== */
 /* mg-v2-modal-overlay.mg-v2-ad-b0kla: 매칭 관련 모달 오버레이 */
 .mg-v2-modal-overlay.mg-v2-ad-b0kla {
-  background: var(--ad-b0kla-overlay-bg, rgba(0, 0, 0, 0.4));
+  background: var(--ad-b0kla-overlay-bg);
 }
 
 .mg-v2-modal-overlay.mg-v2-ad-b0kla .mg-v2-modal {
-  background: var(--ad-b0kla-card-bg, #fcfbfa);
+  background: var(--ad-b0kla-card-bg);
   border: 1px solid var(--ad-b0kla-border);
   border-radius: var(--ad-b0kla-radius);
   box-shadow: var(--ad-b0kla-shadow);
@@ -836,7 +836,7 @@
 
 .mg-v2-modal-overlay.mg-v2-ad-b0kla .mg-v2-modal-header {
   border-bottom: 1px solid var(--ad-b0kla-border);
-  background: var(--ad-b0kla-card-bg, #fcfbfa);
+  background: var(--ad-b0kla-card-bg);
 }
 
 .mg-v2-modal-overlay.mg-v2-ad-b0kla .mg-v2-modal-title {

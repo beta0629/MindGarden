@@ -508,16 +508,16 @@
 }
 
 /* ===== Auto-sizing B0KlA Modal Styles ===== */
-/* backdrop: --mg-white 순환 참조 시 폴백, B0KlA 스코프 없을 때 토큰 보장 */
+/* backdrop: 디자인 토큰 사용 */
 .mg-v2-ad-modal-backdrop {
-  --ad-b0kla-card-bg: var(--mg-white, #ffffff);
-  --ad-b0kla-overlay-bg: var(--ad-b0kla-overlay-bg, rgba(0, 0, 0, 0.4));
+  --ad-b0kla-card-bg: var(--mg-white);
+  --ad-b0kla-overlay-bg: var(--droplet-bg-dark);
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: var(--droplet-bg-dark, var(--ad-b0kla-overlay-bg));
+  background: var(--ad-b0kla-overlay-bg);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -531,7 +531,7 @@
 .mg-v2-ad-modal--full,
 .mg-v2-ad-modal--medium,
 .mg-v2-ad-modal--small {
-  background: var(--ad-b0kla-card-bg, var(--mg-white, #ffffff));
+  background: var(--ad-b0kla-card-bg);
   border-radius: 16px;
   box-shadow: var(--cs-shadow-soft);
   width: 100%;
@@ -545,7 +545,7 @@
 .mg-v2-ad-modal__header {
   padding: 20px 24px;
   border-bottom: 1px solid var(--mg-gray-200);
-  background: var(--ad-b0kla-card-bg, var(--mg-white, #ffffff));
+  background: var(--ad-b0kla-card-bg);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -586,18 +586,18 @@
   display: flex;
   flex-direction: column;
   flex: 1;
-  background: var(--ad-b0kla-card-bg, var(--mg-white, #ffffff));
+  background: var(--ad-b0kla-card-bg);
 }
 
 /* ===== UnifiedModal (mg-modal) B0KlA 호환 ===== */
 .mg-modal-overlay.mg-v2-ad-b0kla {
-  --ad-b0kla-card-bg: var(--mg-white, #ffffff);
-  --ad-b0kla-overlay-bg: var(--ad-b0kla-overlay-bg, rgba(0, 0, 0, 0.4));
-  background: var(--droplet-bg-dark, var(--ad-b0kla-overlay-bg));
+  --ad-b0kla-card-bg: var(--mg-white);
+  --ad-b0kla-overlay-bg: var(--droplet-bg-dark);
+  background: var(--ad-b0kla-overlay-bg);
 }
 
 .mg-modal.mg-v2-ad-b0kla {
-  background: var(--ad-b0kla-card-bg, var(--mg-white, #ffffff));
+  background: var(--ad-b0kla-card-bg);
   border-radius: 16px;
   box-shadow: var(--cs-shadow-soft);
 }
@@ -605,7 +605,7 @@
 .mg-modal.mg-v2-ad-b0kla .mg-modal__header {
   padding: 20px 24px;
   border-bottom: 1px solid var(--mg-gray-200);
-  background: var(--ad-b0kla-card-bg, var(--mg-white, #ffffff));
+  background: var(--ad-b0kla-card-bg);
 }
 
 .mg-modal.mg-v2-ad-b0kla .mg-modal__title {
@@ -623,13 +623,13 @@
 
 .mg-modal.mg-v2-ad-b0kla .mg-modal__body {
   padding: 24px;
-  background: var(--ad-b0kla-card-bg, var(--mg-white, #ffffff));
+  background: var(--ad-b0kla-card-bg);
 }
 
 .mg-modal.mg-v2-ad-b0kla .mg-modal__actions {
   padding: 16px 24px;
   border-top: 1px solid var(--mg-gray-200);
-  background: var(--ad-b0kla-card-bg, var(--mg-white, #ffffff));
+  background: var(--ad-b0kla-card-bg);
 }
 
 /* mg-modal__body 내부 폼·입력 B0KlA */
@@ -668,7 +668,7 @@
 .mg-v2-ad-modal__footer {
   padding: 16px 24px;
   border-top: 1px solid var(--mg-gray-200);
-  background: var(--ad-b0kla-card-bg, var(--mg-white, #ffffff));
+  background: var(--ad-b0kla-card-bg);
   display: flex;
   justify-content: flex-end;
   gap: 12px;

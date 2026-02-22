@@ -7,7 +7,7 @@
 
 /* ===== B0KlA 모달 오버레이 (MAPPING_MODALS_DESIGN_SPEC) ===== */
 .mg-v2-ad-b0kla-modal-overlay {
-  --ad-b0kla-overlay-bg: rgba(0, 0, 0, 0.4);
+  --ad-b0kla-overlay-bg: var(--droplet-bg-dark);
   background: var(--ad-b0kla-overlay-bg);
 }
 

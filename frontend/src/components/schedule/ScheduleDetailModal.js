@@ -595,7 +595,6 @@ const ScheduleDetailModal = ({
                     </div>
                             </div>
                         </div>
-                </div>
             </UnifiedModal>
 
             {showCancelConfirm && renderCancelConfirm()}

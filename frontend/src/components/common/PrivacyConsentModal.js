@@ -240,7 +240,6 @@ const PrivacyConsentModal = ({
               관련 법령에 따라 안전하게 보호됩니다. 동의하지 않으실 경우 서비스 이용이 제한될 수 있습니다.
             </p>
           </div>
-        </div>
     </UnifiedModal>
   );
 };

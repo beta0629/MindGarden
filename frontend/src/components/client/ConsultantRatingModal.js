@@ -232,7 +232,6 @@ const ConsultantRatingModal = ({ isOpen, onClose, schedule, onRatingComplete }) 
                             익명으로 평가하기
                         </label>
                     </div>
-                </div>
         </UnifiedModal>
     );
 };

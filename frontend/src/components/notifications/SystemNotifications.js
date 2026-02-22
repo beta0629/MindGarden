@@ -108,18 +108,13 @@ const SystemNotifications = () => {
     loadNotifications();
   }, [isLoggedIn]);
 
-  if (!isLoggedIn) {
-    return (
-      <AdminCommonLayout title="시스템 알림" menuItems={DEFAULT_MENU_ITEMS}>
+  return (
+    <AdminCommonLayout title="시스템 알림" menuItems={DEFAULT_MENU_ITEMS}>
+      {!isLoggedIn ? (
         <div className="mg-card mg-v2-text-center mg-p-xl">
           <h3>로그인이 필요합니다.</h3>
         </div>
-      </AdminCommonLayout>
-    );
-  }
-
-  return (
-    <AdminCommonLayout title="시스템 알림" menuItems={DEFAULT_MENU_ITEMS}>
+      ) : (
       <div className="system-notifications-container">
         {/* 헤더 */}
         <div className="mg-card mg-mb-lg">
@@ -268,6 +263,7 @@ const SystemNotifications = () => {
           </div>
         )}
       </div>
+      )}
     </AdminCommonLayout>
   );
 };

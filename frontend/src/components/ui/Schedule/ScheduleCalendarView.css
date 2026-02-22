@@ -47,6 +47,35 @@
     filter: grayscale(40%);
 }
 
+/* 월간 뷰 컴팩트 이벤트 (다중 이벤트 시 공간 절약) - core-designer 스펙 */
+.mg-v2-ad-calendar-event--compact {
+    min-height: 26px;
+    padding: 3px 6px;
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+}
+
+.mg-v2-ad-calendar-event--compact:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.mg-v2-ad-calendar-event--compact .mg-v2-ad-calendar-event__time {
+    flex-shrink: 0;
+    font-size: 10px;
+    font-weight: 500;
+}
+
+.mg-v2-ad-calendar-event--compact .mg-v2-ad-calendar-event__client {
+    font-size: 11px;
+    font-weight: 600;
+    color: #2C2C2C;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 .mg-v2-ad-calendar-event__header {
     display: flex;
     justify-content: space-between;

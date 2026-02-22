@@ -31,8 +31,9 @@ const ScheduleCalendarView = ({
     const renderEventContent = (eventInfo) => {
         const { event } = eventInfo;
         const { extendedProps } = event;
-        
-        // 휴가 이벤트 렌더링
+        const isMonthView = eventInfo.view?.type === 'dayGridMonth';
+
+        // 휴가 이벤트 렌더링 (월간/주간/일간 모두 기존 방식 유지)
         if (extendedProps.type === 'vacation') {
             return (
                 <div className="mg-v2-ad-calendar-event mg-v2-ad-calendar-event--vacation" title={event.title}>
@@ -46,13 +47,27 @@ const ScheduleCalendarView = ({
         const clientName = extendedProps.clientName || '이름 없음';
         const consultantName = extendedProps.consultantName || '';
         const statusKorean = extendedProps.statusKorean || '상태 없음';
-        
-        // 동적으로 상태 색상을 border-left-color에 적용할 수 있도록
-        const borderColor = event.backgroundColor || '#3D5246'; // 기본값
+        const borderColor = event.backgroundColor || '#3D5246';
 
+        // 월간 뷰: 컴팩트 렌더링 (시간 + 내담자명만)
+        if (isMonthView) {
+            const fullTooltip = `${clientName} · ${consultantName} · ${statusKorean}`;
+            return (
+                <div
+                    className="mg-v2-ad-calendar-event mg-v2-ad-calendar-event--compact"
+                    title={fullTooltip}
+                    style={{ borderLeftColor: borderColor }}
+                >
+                    <span className="mg-v2-ad-calendar-event__time">{eventInfo.timeText}</span>
+                    <span className="mg-v2-ad-calendar-event__client">{clientName}</span>
+                </div>
+            );
+        }
+
+        // 주간/일간 뷰: 풀 카드 유지
         return (
-            <div 
-                className="mg-v2-ad-calendar-event" 
+            <div
+                className="mg-v2-ad-calendar-event"
                 title={`${clientName} - ${statusKorean}`}
                 style={{ borderLeftColor: borderColor }}
             >
@@ -82,7 +97,8 @@ const ScheduleCalendarView = ({
                 locale="ko"
                 selectable={true}
                 selectMirror={true}
-                dayMaxEvents={true}
+                dayMaxEvents={4}
+                moreLinkClick="popover"
                 weekends={true}
                 events={events}
                 eventClassNames={eventClassNames}

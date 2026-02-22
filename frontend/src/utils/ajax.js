@@ -410,7 +410,24 @@ export const apiPut = async (endpoint, data = {}, options = {}) => {
       headers: { ...getDefaultHeaders(), ...options.headers }
     });
 
-    const jsonData = await response.json();
+    // 빈 응답(404, 204 등) 시 response.json()이 "Unexpected end of JSON input" 발생 방지
+    let jsonData;
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      const text = await response.text();
+      if (text && text.trim()) {
+        try {
+          jsonData = JSON.parse(text);
+        } catch (parseError) {
+          console.error('JSON 파싱 오류:', parseError, 'Response text:', text);
+          jsonData = {};
+        }
+      } else {
+        jsonData = {};
+      }
+    } else {
+      jsonData = {};
+    }
     
     if (!response.ok) {
       // 세션 체크 및 리다이렉트

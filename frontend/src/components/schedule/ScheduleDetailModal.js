@@ -85,10 +85,162 @@ const ScheduleDetailModal = ({
         }
     }, [isOpen, loadScheduleStatusCodes]);
 
+    /**
+     * 예약 취소 처리 (TDZ 방지: renderCancelConfirm에서 참조)
+     */
+    const handleCancelSchedule = async () => {
+        try {
+            setLoading(true);
+            console.log('❌ 스케줄 취소 요청:', scheduleData?.id);
+            const cancelledStatus = scheduleStatusOptions.find(opt =>
+                opt.value === 'CANCELLED' || opt.label?.includes('취소')
+            );
+            const response = await apiPut(`/api/v1/schedules/${scheduleData.id}`, {
+                status: cancelledStatus,
+                description: '사용자에 의해 취소됨'
+            });
+            if (response != null) {
+                notificationManager.success('예약이 취소되었습니다.');
+                onScheduleUpdated?.();
+                onClose();
+            } else {
+                throw new Error('예약 취소에 실패했습니다.');
+            }
+        } catch (error) {
+            console.error('❌ 예약 취소 실패:', error);
+            notificationManager.error('예약 취소에 실패했습니다: ' + error.message);
+        } finally {
+            setLoading(false);
+            setShowCancelConfirm(false);
+        }
+    };
+
+    /**
+     * 예약 확정 처리 (TDZ 방지: renderConfirmModal에서 참조)
+     */
+    const handleConfirmSchedule = async () => {
+        if (!scheduleData?.id) {
+            notificationManager.error('스케줄 정보가 올바르지 않습니다.');
+            return;
+        }
+        setLoading(true);
+        try {
+            console.log('✅ 예약 확정 요청:', scheduleData.id);
+            const response = await apiPut(`/api/v1/schedules/${scheduleData.id}/confirm?userRole=ADMIN`, {
+                adminNote: adminNote || '입금 확인 완료'
+            });
+            if (response != null) {
+                notificationManager.success('예약이 확정되었습니다.');
+                onScheduleUpdated?.();
+                onClose();
+            } else {
+                throw new Error('예약 확정에 실패했습니다.');
+            }
+        } catch (error) {
+            console.error('❌ 예약 확정 실패:', error);
+            notificationManager.error('예약 확정에 실패했습니다: ' + error.message);
+        } finally {
+            setLoading(false);
+            setShowConfirmModal(false);
+            setAdminNote('');
+        }
+    };
+
+    /**
+     * 취소 확인 모달 (TDZ 방지: loading early return 전에 정의)
+     */
+    const renderCancelConfirm = () => (
+        <div className="mg-v2-ad-modal-backdrop" style={{ zIndex: 1100 }}>
+            <div className="mg-v2-ad-modal" style={{ maxWidth: '400px' }}>
+                <div className="mg-v2-ad-modal__header">
+                    <h2 className="mg-v2-ad-modal__title">예약 취소 확인</h2>
+                    <button 
+                        className="mg-v2-ad-modal__close-btn" 
+                        onClick={() => setShowCancelConfirm(false)}
+                        aria-label="닫기"
+                    >
+                        X
+                    </button>
+                </div>
+                <div className="mg-v2-ad-modal__body">
+                    <p>정말로 이 예약을 취소하시겠습니까?</p>
+                </div>
+                <div className="mg-v2-ad-modal__footer">
+                    <button 
+                        className="mg-v2-btn--outline" 
+                        onClick={() => setShowCancelConfirm(false)}
+                        disabled={loading}
+                    >
+                        아니오
+                    </button>
+                    <button 
+                        className="mg-v2-btn--primary" 
+                        style={{ backgroundColor: 'var(--mg-error-500)' }}
+                        onClick={handleCancelSchedule}
+                        disabled={loading}
+                    >
+                        {loading ? '처리중...' : '예, 취소합니다'}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+
+    /**
+     * 예약 확정 확인 모달 (TDZ 방지: loading early return 전에 정의)
+     */
+    const renderConfirmModal = () => (
+        <div className="mg-v2-ad-modal-backdrop" style={{ zIndex: 1100 }}>
+            <div className="mg-v2-ad-modal" style={{ maxWidth: '400px' }}>
+                <div className="mg-v2-ad-modal__header">
+                    <h2 className="mg-v2-ad-modal__title">예약 확정</h2>
+                    <button 
+                        className="mg-v2-ad-modal__close-btn" 
+                        onClick={() => setShowConfirmModal(false)}
+                        aria-label="닫기"
+                    >
+                        X
+                    </button>
+                </div>
+                <div className="mg-v2-ad-modal__body">
+                    <p>내담자의 입금을 확인하셨습니까?</p>
+                    <div className="mg-form-group">
+                        <label className="mg-v2-label">
+                            관리자 메모 (선택사항):
+                        </label>
+                        <textarea
+                            value={adminNote}
+                            onChange={(e) => setAdminNote(e.target.value)}
+                            placeholder="입금 확인 완료"
+                            className="mg-v2-textarea"
+                            style={{ width: '100%', minHeight: '80px', marginTop: '8px', padding: '8px 12px', border: '1px solid var(--color-border)', borderRadius: '8px' }}
+                        />
+                    </div>
+                </div>
+                <div className="mg-v2-ad-modal__footer">
+                    <button 
+                        className="mg-v2-btn--outline" 
+                        onClick={() => setShowConfirmModal(false)}
+                        disabled={loading}
+                    >
+                        취소
+                    </button>
+                    <button 
+                        className="mg-v2-btn--primary" 
+                        onClick={handleConfirmSchedule}
+                        disabled={loading}
+                    >
+                        {loading ? '처리중...' : '확정'}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+
     if (!isOpen || !scheduleData) {
         return null;
     }
-    
+
     // 로딩 오버레이
     if (loading) {
         return (
@@ -182,40 +334,6 @@ const ScheduleDetailModal = ({
     };
 
 /**
-     * 예약 취소 처리
-     */
-    const handleCancelSchedule = async () => {
-        try {
-            setLoading(true);
-            console.log('❌ 스케줄 취소 요청:', scheduleData.id);
-            
-            const cancelledStatus = scheduleStatusOptions.find(opt => 
-                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-                opt.value === 'CANCELLED' || opt.label?.includes('취소')
-            );
-            
-            const response = await apiPut(`/api/v1/schedules/${scheduleData.id}`, {
-                status: cancelledStatus,
-                description: '사용자에 의해 취소됨'
-            });
-            
-            if (response != null) {
-                notificationManager.success('예약이 취소되었습니다.');
-                onScheduleUpdated?.();
-                onClose();
-            } else {
-                throw new Error(response.message || '예약 취소에 실패했습니다.');
-            }
-        } catch (error) {
-            console.error('❌ 예약 취소 실패:', error);
-            notificationManager.error('예약 취소에 실패했습니다: ' + error.message);
-        } finally {
-            setLoading(false);
-            setShowCancelConfirm(false);
-        }
-    };
-
-/**
      * 상태 변경 처리
      */
     const handleStatusChange = async (newStatus) => {
@@ -277,131 +395,6 @@ const ScheduleDetailModal = ({
         notificationManager.info('드래그 앤 드롭으로 예약을 변경할 수 있습니다.');
     };
 
-/**
-     * 예약 확정 처리
-     */
-    const handleConfirmSchedule = async () => {
-        if (!scheduleData?.id) {
-            notificationManager.error('스케줄 정보가 올바르지 않습니다.');
-            return;
-        }
-
-        setLoading(true);
-        try {
-            console.log('✅ 예약 확정 요청:', scheduleData.id);
-            
-            const response = await apiPut(`/api/v1/schedules/${scheduleData.id}/confirm?userRole=ADMIN`, {
-                adminNote: adminNote || '입금 확인 완료'
-            });
-            
-            if (response != null) {
-                notificationManager.success('예약이 확정되었습니다.');
-                onScheduleUpdated?.();
-                onClose();
-            } else {
-                throw new Error(response.message || '예약 확정에 실패했습니다.');
-            }
-        } catch (error) {
-            console.error('❌ 예약 확정 실패:', error);
-            notificationManager.error('예약 확정에 실패했습니다: ' + error.message);
-        } finally {
-            setLoading(false);
-            setShowConfirmModal(false);
-            setAdminNote('');
-        }
-    };
-
-/**
-     * 취소 확인 모달
-     */
-    const renderCancelConfirm = () => (
-        <div className="mg-v2-ad-modal-backdrop" style={{ zIndex: 1100 }}>
-            <div className="mg-v2-ad-modal" style={{ maxWidth: '400px' }}>
-                <div className="mg-v2-ad-modal__header">
-                    <h2 className="mg-v2-ad-modal__title">예약 취소 확인</h2>
-                    <button 
-                        className="mg-v2-ad-modal__close-btn" 
-                        onClick={() => setShowCancelConfirm(false)}
-                        aria-label="닫기"
-                    >
-                        X
-                    </button>
-                </div>
-                <div className="mg-v2-ad-modal__body">
-                    <p>정말로 이 예약을 취소하시겠습니까?</p>
-                </div>
-                <div className="mg-v2-ad-modal__footer">
-                    <button 
-                        className="mg-v2-btn--outline" 
-                        onClick={() => setShowCancelConfirm(false)}
-                        disabled={loading}
-                    >
-                        아니오
-                    </button>
-                    <button 
-                        className="mg-v2-btn--primary" 
-                        style={{ backgroundColor: 'var(--mg-error-500)' }}
-                        onClick={handleCancelSchedule}
-                        disabled={loading}
-                    >
-                        {loading ? '처리중...' : '예, 취소합니다'}
-                    </button>
-                </div>
-            </div>
-        </div>
-    );
-
-/**
-     * 예약 확정 확인 모달
-     */
-    const renderConfirmModal = () => (
-        <div className="mg-v2-ad-modal-backdrop" style={{ zIndex: 1100 }}>
-            <div className="mg-v2-ad-modal" style={{ maxWidth: '400px' }}>
-                <div className="mg-v2-ad-modal__header">
-                    <h2 className="mg-v2-ad-modal__title">예약 확정</h2>
-                    <button 
-                        className="mg-v2-ad-modal__close-btn" 
-                        onClick={() => setShowConfirmModal(false)}
-                        aria-label="닫기"
-                    >
-                        X
-                    </button>
-                </div>
-                <div className="mg-v2-ad-modal__body">
-                    <p>내담자의 입금을 확인하셨습니까?</p>
-                    <div className="mg-form-group">
-                        <label className="mg-v2-label">
-                            관리자 메모 (선택사항):
-                        </label>
-                        <textarea
-                            value={adminNote}
-                            onChange={(e) => setAdminNote(e.target.value)}
-                            placeholder="입금 확인 완료"
-                            className="mg-v2-textarea"
-                            style={{ width: '100%', minHeight: '80px', marginTop: '8px', padding: '8px 12px', border: '1px solid #D4CFC8', borderRadius: '8px' }}
-                        />
-                    </div>
-                </div>
-                <div className="mg-v2-ad-modal__footer">
-                    <button 
-                        className="mg-v2-btn--outline" 
-                        onClick={() => setShowConfirmModal(false)}
-                        disabled={loading}
-                    >
-                        취소
-                    </button>
-                    <button 
-                        className="mg-v2-btn--primary" 
-                        onClick={handleConfirmSchedule}
-                        disabled={loading}
-                    >
-                        {loading ? '처리중...' : '확정'}
-                    </button>
-                </div>
-            </div>
-        </div>
-    );
-
     if (!isOpen) return null;
 
     return (
@@ -424,8 +417,8 @@ const ScheduleDetailModal = ({
                             <div className="section-title">상담 정보</div>
                             <div className="section-content" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                    <span style={{ color: '#5C6B61', fontWeight: 500 }}>이벤트</span>
-                                    <span style={{ fontWeight: 600, color: '#2C2C2C' }}>{scheduleData.title}</span>
+                                    <span style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>이벤트</span>
+                                    <span style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>{scheduleData.title}</span>
                                 </div>
                     
                     {!isVacationEvent() && (() => {
@@ -446,12 +439,12 @@ const ScheduleDetailModal = ({
                         return (
                             <>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                    <span style={{ color: '#5C6B61', fontWeight: 500 }}>상담사</span>
-                                    <span style={{ fontWeight: 600, color: '#2C2C2C' }}>{parsedConsultantName || '상담사 정보 없음'}</span>
+                                    <span style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>상담사</span>
+                                    <span style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>{parsedConsultantName || '상담사 정보 없음'}</span>
                                 </div>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                    <span style={{ color: '#5C6B61', fontWeight: 500 }}>내담자</span>
-                                    <span style={{ fontWeight: 600, color: '#2C2C2C' }}>{parsedClientName || '내담자 정보 없음'}</span>
+                                    <span style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>내담자</span>
+                                    <span style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>{parsedClientName || '내담자 정보 없음'}</span>
                                 </div>
                             </>
                         );
@@ -460,31 +453,31 @@ const ScheduleDetailModal = ({
                     {isVacationEvent() ? (
                         <>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <span style={{ color: '#5C6B61', fontWeight: 500 }}>휴가 사유</span>
-                                <span style={{ fontWeight: 600, color: '#2C2C2C' }}>{scheduleData.description || scheduleData.reason || '사유 없음'}</span>
+                                <span style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>휴가 사유</span>
+                                <span style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>{scheduleData.description || scheduleData.reason || '사유 없음'}</span>
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <span style={{ color: '#5C6B61', fontWeight: 500 }}>휴가 유형</span>
-                                <span style={{ fontWeight: 600, color: '#2C2C2C' }}>{getVacationTypeDisplay(scheduleData.vacationType)}</span>
+                                <span style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>휴가 유형</span>
+                                <span style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>{getVacationTypeDisplay(scheduleData.vacationType)}</span>
                             </div>
                         </>
                     ) : (
                         <>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <span style={{ color: '#5C6B61', fontWeight: 500 }}>상담 유형</span>
-                                <span style={{ fontWeight: 600, color: '#2C2C2C' }}>{convertConsultationTypeToKorean(scheduleData.consultationType)}</span>
+                                <span style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>상담 유형</span>
+                                <span style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>{convertConsultationTypeToKorean(scheduleData.consultationType)}</span>
                             </div>
                         </>
                     )}
                     
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ color: '#5C6B61', fontWeight: 500 }}>시간</span>
-                        <span style={{ fontWeight: 600, color: '#2C2C2C' }}>
+                        <span style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>시간</span>
+                        <span style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>
                             {scheduleData.startTime} - {scheduleData.endTime}
                         </span>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '8px', borderTop: '1px solid #D4CFC8' }}>
-                        <span style={{ color: '#5C6B61', fontWeight: 500 }}>상태</span>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '8px', borderTop: '1px solid var(--color-border)' }}>
+                        <span style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>상태</span>
                         <span className={`mg-v2-badge mg-v2-badge-${getStatusColorClass(scheduleData.status)}`}>
                             {convertStatusToKorean(scheduleData.status)}
                         </span>
@@ -496,10 +489,10 @@ const ScheduleDetailModal = ({
                     <div className="mg-v2-ad-modal__footer">
                     {isVacationEvent() ? (
                         <div style={{ width: '100%', textAlign: 'center' }}>
-                            <p style={{ fontSize: '14px', color: '#3D5246', fontWeight: 600 }}>
+                            <p style={{ fontSize: '14px', color: 'var(--mg-primary-500)', fontWeight: 600 }}>
                                 🏖️ 이 이벤트는 상담사의 휴가입니다.
                             </p>
-                            <p style={{ fontSize: '13px', color: '#5C6B61', marginTop: '4px' }}>
+                            <p style={{ fontSize: '13px', color: 'var(--color-text-secondary)', marginTop: '4px' }}>
                                 해당 시간대에는 상담이 불가능합니다.
                             </p>
                         </div>
@@ -602,7 +595,7 @@ const ScheduleDetailModal = ({
                             })()}
                         </div>
                     ) : (
-                        <div style={{ width: '100%', textAlign: 'center', color: '#5C6B61' }}>
+                        <div style={{ width: '100%', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
                             <p style={{ fontSize: '14px', fontWeight: 500 }}>
                                 📅 예약 정보를 확인하실 수 있습니다.
                             </p>

@@ -7,11 +7,13 @@
  */
 
 import React, { useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   User,
   Package,
   CreditCard,
   Calendar,
+  CalendarClock,
   Eye,
   Edit,
   XCircle,
@@ -51,6 +53,7 @@ const MappingListRow = ({
   onConfirmDeposit,
   onApprove
 }) => {
+  const navigate = useNavigate();
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showDepositModal, setShowDepositModal] = useState(false);
   const [processing, setProcessing] = useState(false);
@@ -116,7 +119,17 @@ const MappingListRow = ({
           {formatAmount(mapping.packagePrice || mapping.paymentAmount)}
         </div>
         <div className="mg-v2-mapping-list-row__sessions">
-          {mapping.usedSessions ?? 0}/{mapping.totalSessions ?? 0}회
+          <span>{mapping.usedSessions ?? 0}/{mapping.totalSessions ?? 0}회</span>
+          {mapping.totalSessions > 0 && (
+            <button
+              type="button"
+              className="mg-v2-mapping-list-row__schedule-link"
+              onClick={() => navigate(`/admin/schedules?consultantId=${mapping.consultantId}&clientId=${mapping.clientId}`)}
+              title="스케줄 보기"
+            >
+              <CalendarClock size={14} />
+            </button>
+          )}
         </div>
         <div className="mg-v2-mapping-list-row__date">
           <Calendar size={14} />

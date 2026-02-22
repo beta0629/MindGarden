@@ -7,6 +7,8 @@ import TodayStats from './TodayStats';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import { useSession } from '../../contexts/SessionContext';
 import notificationManager from '../../utils/notification';
+import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
+import './ScheduleB0KlA.css';
 import './SchedulePage.css';
 
 /**
@@ -80,7 +82,7 @@ const SchedulePage = ({ user: propUser }) => {
     if (!displayUser) {
         return (
             <SimpleLayout>
-                <div className="schedule-page">
+                <div className="schedule-page mg-v2-ad-b0kla">
                     <div className="access-denied">
                         <div className="access-denied-icon">🔐</div>
                         <h2>로그인이 필요합니다</h2>
@@ -100,7 +102,7 @@ const SchedulePage = ({ user: propUser }) => {
     if (!hasSchedulePermission()) {
         return (
             <SimpleLayout>
-                <div className="schedule-page">
+                <div className="schedule-page mg-v2-ad-b0kla">
                     <div className="access-denied">
                         <div className="access-denied-icon">🚫</div>
                         <h2>접근 권한이 없습니다</h2>
@@ -116,8 +118,7 @@ const SchedulePage = ({ user: propUser }) => {
 
     return (
         <SimpleLayout>
-            <div className="schedule-page">
-
+            <div className="schedule-page mg-v2-ad-b0kla">
             <div className="schedule-content">
                 <div className="schedule-main">
                     <UnifiedScheduleComponent 

@@ -29,7 +29,7 @@ const ScheduleLegend = ({
     ) || [];
     
     return (
-        <div className="mg-v2-schedule-legend">
+        <div className="mg-v2-schedule-legend mg-v2-ad-b0kla">
             {/* 상담사가 있을 때만 표시 */}
             {activeConsultants.length > 0 && (
                 <div className="mg-v2-legend-section">

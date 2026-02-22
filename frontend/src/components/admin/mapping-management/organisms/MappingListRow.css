@@ -104,8 +104,29 @@
 }
 
 .mg-v2-mapping-list-row__sessions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font-size: 13px;
   color: var(--ad-b0kla-text-secondary, #64748b);
+}
+
+.mg-v2-mapping-list-row__schedule-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border: none;
+  background: transparent;
+  color: var(--ad-b0kla-green, #4b745c);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.mg-v2-mapping-list-row__schedule-link:hover {
+  background: rgba(75, 116, 92, 0.1);
+  color: var(--ad-b0kla-green, #4b745c);
 }
 
 .mg-v2-mapping-list-row__date {

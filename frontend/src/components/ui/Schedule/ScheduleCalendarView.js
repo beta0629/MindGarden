@@ -32,6 +32,7 @@ const ScheduleCalendarView = ({
     };
 
     return (
+        <div className="mg-v2-schedule-calendar-view mg-v2-ad-b0kla-fc-wrapper">
         <FullCalendar
             plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
             headerToolbar={{
@@ -71,6 +72,7 @@ const ScheduleCalendarView = ({
             displayEventTime={true}
             displayEventEnd={true}
         />
+        </div>
     );
 };
 

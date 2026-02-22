@@ -7,7 +7,8 @@
 
 import React, { useState, useCallback } from 'react';
 import PropTypes from 'prop-types';
-import { Eye, Edit, XCircle, CheckCircle, CreditCard, DollarSign, Database } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Eye, Edit, XCircle, CheckCircle, CreditCard, DollarSign, Database, Calendar } from 'lucide-react';
 import MappingPaymentModal from '../../mapping/MappingPaymentModal';
 import MappingDepositModal from '../../mapping/MappingDepositModal';
 import './MappingTableView.css';
@@ -43,6 +44,7 @@ const MappingTableView = ({
   onConfirmDeposit,
   onApprove
 }) => {
+  const navigate = useNavigate();
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showDepositModal, setShowDepositModal] = useState(false);
   const [selectedMapping, setSelectedMapping] = useState(null);
@@ -126,7 +128,17 @@ const MappingTableView = ({
                 <td>{mapping.packageName || 'N/A'}</td>
                 <td>{formatAmount(mapping.packagePrice || mapping.paymentAmount)}</td>
                 <td>
-                  {mapping.usedSessions ?? 0}/{mapping.totalSessions ?? 0}회
+                  <span>{mapping.usedSessions ?? 0}/{mapping.totalSessions ?? 0}회</span>
+                  {mapping.totalSessions > 0 && (
+                    <button
+                      type="button"
+                      className="mg-v2-mapping-table__schedule-link"
+                      onClick={() => navigate(`/admin/schedules?consultantId=${mapping.consultantId}&clientId=${mapping.clientId}`)}
+                      title="스케줄 보기"
+                    >
+                      <Calendar size={14} />
+                    </button>
+                  )}
                 </td>
                 <td>{formatDate(mapping.startDate || mapping.createdAt)}</td>
                 <td className="mg-v2-mapping-table__actions">

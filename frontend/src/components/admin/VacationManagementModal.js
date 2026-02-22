@@ -473,8 +473,8 @@ const VacationManagementModal = ({
     }
 
     return (
-        <div className="mg-v2-modal-overlay" onClick={onClose}>
-            <div className="mg-v2-modal mg-v2-modal-large" onClick={(e) => e.stopPropagation()}>
+        <div className="mg-v2-modal-overlay mg-v2-ad-b0kla" onClick={onClose}>
+            <div className="mg-v2-modal mg-v2-modal-large mg-v2-ad-b0kla" onClick={(e) => e.stopPropagation()}>
                 <div className="mg-v2-modal-header">
                     <div className="mg-v2-flex mg-gap-sm mg-align-center">
                         <Calendar size={24} />

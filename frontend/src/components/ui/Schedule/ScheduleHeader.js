@@ -16,7 +16,7 @@ const ScheduleHeader = ({
     onRefresh
 }) => {
     return (
-        <div className="mg-v2-schedule-header">
+        <div className="mg-v2-schedule-header mg-v2-ad-b0kla">
             <h2 className="mg-v2-schedule-title">📅 스케줄 관리</h2>
             <div className="mg-v2-schedule-actions">
                 {/* 상담사 선택 (어드민/수퍼어드민만) */}

@@ -5,6 +5,7 @@ import notificationManager from '../../utils/notification';
 import UnifiedModal from '../../components/common/modals/UnifiedModal'; // 임시 비활성화
 import { useSession } from '../../contexts/SessionContext';
 import { RoleUtils } from '../../constants/roles';
+import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import '../../styles/main.css';
 
 /**
@@ -93,8 +94,8 @@ const ScheduleDetailModal = ({
     if (loading) {
         return (
             <>
-                <div className="mg-v2-modal-overlay" onClick={onClose}>
-                    <div className="mg-v2-modal mg-v2-modal-large" onClick={(e) => e.stopPropagation()}>
+                <div className="mg-v2-modal-overlay mg-v2-ad-b0kla" onClick={onClose}>
+                    <div className="mg-v2-modal mg-v2-modal-large mg-v2-ad-b0kla" onClick={(e) => e.stopPropagation()}>
                         <div className="mg-v2-modal-body">
                             <div className="mg-v2-loading-container">
                                 <div className="mg-v2-spinner"></div>
@@ -391,8 +392,8 @@ const ScheduleDetailModal = ({
     return (
         <>
             {/* 메인 스케줄 상세 모달 */}
-            <div className="mg-v2-modal-overlay" onClick={onClose}>
-                <div className="mg-v2-modal mg-v2-modal-large" onClick={(e) => e.stopPropagation()}>
+            <div className="mg-v2-modal-overlay mg-v2-ad-b0kla" onClick={onClose}>
+                <div className="mg-v2-modal mg-v2-modal-large mg-v2-ad-b0kla" onClick={(e) => e.stopPropagation()}>
                     <div className="mg-v2-modal-header">
                         <h3 className="mg-v2-modal-title">📋 스케줄 상세 정보</h3>
                         <button

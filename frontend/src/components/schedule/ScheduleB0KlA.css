@@ -1,0 +1,192 @@
+/**
+ * 스케줄 페이지 B0KlA 디자인 시스템 적용
+ * FullCalendar, ScheduleHeader, ScheduleLegend, 모달 스타일 오버라이드
+ *
+ * @author MindGarden
+ * @since 2025-02-22
+ */
+
+/* ===== Schedule Header B0KlA ===== */
+.mg-v2-ad-b0kla .mg-v2-schedule-header {
+  background: var(--ad-b0kla-card-bg);
+  border: 1px solid var(--ad-b0kla-border);
+  border-radius: var(--ad-b0kla-radius-sm);
+  box-shadow: var(--ad-b0kla-shadow);
+}
+
+.mg-v2-ad-b0kla .mg-v2-schedule-title {
+  color: var(--ad-b0kla-title-color);
+}
+
+.mg-v2-ad-b0kla .mg-v2-consultant-filter,
+.mg-v2-ad-b0kla .mg-v2-select {
+  background: var(--ad-b0kla-card-bg);
+  border: 1px solid var(--ad-b0kla-border);
+  border-radius: var(--ad-b0kla-radius-sm);
+  color: var(--ad-b0kla-title-color);
+}
+
+/* ===== Schedule Legend B0KlA ===== */
+.mg-v2-ad-b0kla .mg-v2-schedule-legend {
+  background: var(--ad-b0kla-card-bg);
+  border: 1px solid var(--ad-b0kla-border);
+  border-radius: var(--ad-b0kla-radius-sm);
+  box-shadow: var(--ad-b0kla-shadow);
+}
+
+.mg-v2-ad-b0kla .mg-v2-legend-title {
+  color: var(--ad-b0kla-title-color);
+}
+
+.mg-v2-ad-b0kla .mg-v2-legend-item {
+  background: var(--ad-b0kla-bg);
+  border: 1px solid var(--ad-b0kla-border);
+  color: var(--ad-b0kla-text-secondary);
+}
+
+.mg-v2-ad-b0kla .mg-v2-legend-text {
+  color: var(--ad-b0kla-title-color);
+}
+
+.mg-v2-ad-b0kla .mg-v2-legend-more {
+  color: var(--ad-b0kla-text-secondary);
+}
+
+/* ===== FullCalendar B0KlA 오버라이드 ===== */
+.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view,
+.mg-v2-ad-b0kla-fc-wrapper {
+  background: var(--ad-b0kla-card-bg);
+  border: 1px solid var(--ad-b0kla-border);
+  border-radius: var(--ad-b0kla-radius-sm);
+  box-shadow: var(--ad-b0kla-shadow);
+  overflow: hidden;
+}
+
+.mg-v2-ad-b0kla .fc {
+  --fc-border-color: var(--ad-b0kla-border);
+  --fc-button-bg-color: var(--ad-b0kla-bg);
+  --fc-button-border-color: var(--ad-b0kla-border);
+  --fc-button-hover-bg-color: var(--ad-b0kla-card-bg);
+  --fc-button-hover-border-color: var(--ad-b0kla-border);
+  --fc-button-active-bg-color: var(--ad-b0kla-green);
+  --fc-today-bg-color: var(--ad-b0kla-green-bg);
+  --fc-page-bg-color: var(--ad-b0kla-card-bg);
+  --fc-neutral-bg-color: var(--ad-b0kla-bg);
+}
+
+.mg-v2-ad-b0kla .fc-toolbar-title {
+  color: var(--ad-b0kla-title-color);
+}
+
+.mg-v2-ad-b0kla .fc-button {
+  background: var(--ad-b0kla-bg);
+  border-color: var(--ad-b0kla-border);
+  color: var(--ad-b0kla-title-color);
+}
+
+.mg-v2-ad-b0kla .fc-button:hover {
+  background: var(--ad-b0kla-card-bg);
+  border-color: var(--ad-b0kla-border);
+}
+
+.mg-v2-ad-b0kla .fc-button-primary:not(:disabled).fc-button-active,
+.mg-v2-ad-b0kla .fc-button-primary:not(:disabled):active {
+  background: var(--ad-b0kla-green);
+  border-color: var(--ad-b0kla-green);
+  color: var(--ad-b0kla-card-bg);
+}
+
+.mg-v2-ad-b0kla .fc-col-header-cell {
+  background: var(--ad-b0kla-bg);
+  color: var(--ad-b0kla-title-color);
+  border-color: var(--ad-b0kla-border);
+}
+
+.mg-v2-ad-b0kla .fc-daygrid-day-number {
+  color: var(--ad-b0kla-text-secondary);
+}
+
+.mg-v2-ad-b0kla .fc-day-today .fc-daygrid-day-number {
+  color: var(--ad-b0kla-green);
+}
+
+.mg-v2-ad-b0kla .fc-daygrid-day {
+  background: var(--ad-b0kla-card-bg);
+}
+
+.mg-v2-ad-b0kla .fc-daygrid-day:hover {
+  background: var(--ad-b0kla-bg);
+}
+
+.mg-v2-ad-b0kla .fc-timegrid-slot-label {
+  color: var(--ad-b0kla-text-secondary);
+}
+
+.mg-v2-ad-b0kla .fc-event {
+  border-radius: var(--ad-b0kla-radius-sm);
+  border-color: transparent;
+}
+
+.mg-v2-ad-b0kla .fc-event:hover {
+  opacity: 0.9;
+}
+
+/* ===== TodayStats B0KlA (사이드바 위젯) ===== */
+.mg-v2-ad-b0kla .today-stats-container .stats-header {
+  color: var(--ad-b0kla-title-color);
+}
+
+.mg-v2-ad-b0kla .today-stats-container .refresh-btn:hover {
+  background: var(--ad-b0kla-bg);
+}
+
+.mg-v2-ad-b0kla .today-stats-container .stat-item {
+  background: var(--ad-b0kla-bg);
+  border: 1px solid var(--ad-b0kla-border);
+  border-radius: var(--ad-b0kla-radius-sm);
+}
+
+.mg-v2-ad-b0kla .today-stats-container .stat-value {
+  color: var(--ad-b0kla-title-color);
+}
+
+.mg-v2-ad-b0kla .today-stats-container .stat-label {
+  color: var(--ad-b0kla-text-secondary);
+}
+
+/* ===== ConsultantStatus B0KlA (사이드바 위젯) ===== */
+.mg-v2-ad-b0kla .consultant-status-card {
+  background: var(--ad-b0kla-card-bg);
+  border: 1px solid var(--ad-b0kla-border);
+  border-radius: var(--ad-b0kla-radius-sm);
+}
+
+.mg-v2-ad-b0kla .consultant-status-card:hover {
+  border-color: var(--ad-b0kla-green);
+  box-shadow: var(--ad-b0kla-shadow);
+}
+
+.mg-v2-ad-b0kla .consultant-status-name {
+  color: var(--ad-b0kla-title-color);
+}
+
+.mg-v2-ad-b0kla .consultant-status-email,
+.mg-v2-ad-b0kla .consultant-status-phone,
+.mg-v2-ad-b0kla .consultant-status-specialty {
+  color: var(--ad-b0kla-text-secondary);
+}
+
+.mg-v2-ad-b0kla .consultant-status-badge[data-status="available"] {
+  background: var(--ad-b0kla-green-bg);
+  color: var(--ad-b0kla-green);
+}
+
+.mg-v2-ad-b0kla .consultant-status-badge[data-status="busy"] {
+  background: var(--ad-b0kla-orange-bg);
+  color: var(--ad-b0kla-orange);
+}
+
+.mg-v2-ad-b0kla .consultant-status-badge[data-status="unavailable"] {
+  background: var(--ad-b0kla-border);
+  color: var(--ad-b0kla-text-secondary);
+}

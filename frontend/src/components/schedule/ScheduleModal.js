@@ -8,6 +8,7 @@ import notificationManager from '../../utils/notification';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet } from '../../utils/ajax';
 import csrfTokenManager from '../../utils/csrfTokenManager';
+import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import '../../styles/modules/schedule-modal.css';
 
 /**
@@ -369,10 +370,10 @@ const ScheduleModalNew = ({
     if (!isOpen) return null;
 
     return (
-        <div className="schedule-modal-overlay" onClick={handleClose}>
-            <div className="schedule-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="mg-v2-modal-overlay mg-v2-ad-b0kla schedule-modal-overlay" onClick={handleClose}>
+            <div className="mg-v2-modal mg-v2-ad-b0kla schedule-modal mg-v2-modal-large" onClick={(e) => e.stopPropagation()}>
                 {/* 모달 헤더 */}
-                <div className="schedule-modal-header">
+                <header className="mg-v2-modal-header schedule-modal-header">
                     <div className="schedule-modal-header-left">
                         <div className="schedule-modal-title">
                             📅 스케줄 생성
@@ -397,7 +398,7 @@ const ScheduleModalNew = ({
                             ✕
                         </button>
                     </div>
-                </div>
+                </header>
 
                 {/* 진행 단계 표시기 */}
                 <div className="mg-step-indicator-container">
@@ -414,7 +415,7 @@ const ScheduleModalNew = ({
                 </div>
 
                 {/* 모달 바디 */}
-                <div className="schedule-modal-content">
+                <div className="mg-v2-modal-body schedule-modal-content">
                     {/* 1단계: 상담사 선택 */}
                     {step === 1 && (
                         <div className="mg-flex mg-flex-col mg-w-full mg-h-full mg-gap-lg">
@@ -537,7 +538,7 @@ const ScheduleModalNew = ({
                 </div>
 
                 {/* 모달 푸터 */}
-                <div className="modal-footer">
+                <footer className="mg-v2-modal-footer modal-footer">
                     {step > 1 && (
                         <button 
                             className="mg-button mg-button-secondary" 
@@ -573,7 +574,7 @@ const ScheduleModalNew = ({
                             {loading ? '생성 중...' : '스케줄 생성'}
                         </button>
                     )}
-                </div>
+                </footer>
             </div>
         </div>
     );

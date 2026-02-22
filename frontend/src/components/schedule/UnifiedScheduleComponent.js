@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import ScheduleModal from './ScheduleModal';
 import ScheduleDetailModal from './ScheduleDetailModal';
@@ -13,7 +14,8 @@ import { apiGet, apiPut } from '../../utils/ajax';
 import { getStatusColor, getStatusIcon } from '../../utils/codeHelper';
 import { getCommonCodes } from '../../utils/commonCodeApi';
 import notificationManager from '../../utils/notification';
-// import './ScheduleCalendar.css'; // 제거: mindgarden-design-system.css 사용
+import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
+import './ScheduleB0KlA.css';
 
 /**
  * 스케줄 관리 컨테이너 컴포넌트
@@ -49,9 +51,15 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
     const [scheduleStatusOptions, setScheduleStatusOptions] = useState([]);
     const [loadingCodes, setLoadingCodes] = useState(false);
     
+    // URL 쿼리 파라미 (스케줄 페이지 직행 시 초기 필터)
+    const [searchParams] = useSearchParams();
+    const consultantIdFromUrl = searchParams.get('consultantId');
+    const clientIdFromUrl = searchParams.get('clientId');
+
     // 상담사 필터링 상태
     const [consultants, setConsultants] = useState([]);
-    const [selectedConsultantId, setSelectedConsultantId] = useState('');
+    const [selectedConsultantId, setSelectedConsultantId] = useState(consultantIdFromUrl || '');
+    const [clientIdFilter, setClientIdFilter] = useState(clientIdFromUrl || '');
     const [loadingConsultants, setLoadingConsultants] = useState(false);
 
     // ========== 유틸리티 함수 ==========
@@ -86,8 +94,9 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
 
     const getConsultantColor = (consultantId) => {
         const colors = [
-            'var(--mg-primary-500)', 'var(--mg-success-500)', 'var(--mg-warning-500)', 'var(--mg-error-500)', 'var(--mg-purple-500)',
-            'var(--mg-info-500)', 'var(--mg-success-500)', 'var(--mg-warning-500)', 'var(--mg-pink-500)', 'var(--mg-primary-600)'
+            'var(--ad-b0kla-green)', 'var(--ad-b0kla-blue)', 'var(--ad-b0kla-orange)',
+            'var(--ad-b0kla-green)', 'var(--ad-b0kla-blue)', 'var(--ad-b0kla-orange)',
+            '#5a7d6a', '#7a9dbb', '#d4987a', '#3d5a48'
         ];
         const colorIndex = consultantId % colors.length;
         return colors[colorIndex];
@@ -102,41 +111,41 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
             case 'MORNING':
                 endDate = new Date(date + 'T13:00:00+09:00');
                 title = '🌅 오전 휴무';
-                backgroundColor = 'var(--mg-warning-500)';
+                backgroundColor = 'var(--ad-b0kla-orange)';
                 allDay = false;
                 break;
             case 'AFTERNOON':
                 startDate.setHours(14, 0, 0);
                 endDate = new Date(date + 'T18:00:00+09:00');
                 title = '🌇 오후 휴무';
-                backgroundColor = 'var(--mg-error-700)';
+                backgroundColor = 'var(--ad-b0kla-danger)';
                 allDay = false;
                 break;
             case 'MORNING_HALF_1':
                 endDate = new Date(date + 'T11:00:00+09:00');
                 title = '🌄 오전 반반차 1';
-                backgroundColor = 'var(--mg-warning-500)';
+                backgroundColor = 'var(--ad-b0kla-orange)';
                 allDay = false;
                 break;
             case 'MORNING_HALF_2':
                 startDate.setHours(11, 0, 0);
                 endDate = new Date(date + 'T13:00:00+09:00');
                 title = '🌄 오전 반반차 2';
-                backgroundColor = 'var(--mg-warning-500)';
+                backgroundColor = 'var(--ad-b0kla-orange)';
                 allDay = false;
                 break;
             case 'AFTERNOON_HALF_1':
                 startDate.setHours(14, 0, 0);
                 endDate = new Date(date + 'T16:00:00+09:00');
                 title = '🌆 오후 반반차 1';
-                backgroundColor = 'var(--mg-error-600)';
+                backgroundColor = 'var(--ad-b0kla-danger)';
                 allDay = false;
                 break;
             case 'AFTERNOON_HALF_2':
                 startDate.setHours(16, 0, 0);
                 endDate = new Date(date + 'T18:00:00+09:00');
                 title = '🌆 오후 반반차 2';
-                backgroundColor = 'var(--mg-error-600)';
+                backgroundColor = 'var(--ad-b0kla-danger)';
                 allDay = false;
                 break;
             case 'CUSTOM_TIME':
@@ -144,19 +153,19 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
                     startDate.setHours(parseInt(startTime.split(':')[0]), parseInt(startTime.split(':')[1]), 0);
                     endDate = new Date(date + 'T' + endTime + '+09:00');
                     title = '⏰ 사용자 정의 휴무';
-                    backgroundColor = 'var(--mg-purple-700)';
+                    backgroundColor = 'var(--ad-b0kla-blue)';
                     allDay = false;
                 } else {
                     endDate = new Date(date + 'T23:59:59+09:00');
                     title = '⏰ 사용자 정의 휴무';
-                    backgroundColor = 'var(--mg-purple-700)';
+                    backgroundColor = 'var(--ad-b0kla-blue)';
                 }
                 break;
             case 'ALL_DAY':
             case 'FULL_DAY':
                 endDate = new Date(date + 'T23:59:59+09:00');
                 title = '🏖️ 하루 종일 휴무';
-                backgroundColor = 'var(--mg-error-500)';
+                backgroundColor = 'var(--ad-b0kla-danger)';
                 allDay = true;
                 break;
             default:
@@ -169,7 +178,7 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
                     allDay = true;
                 }
                 title = '🏖️ 휴무';
-                backgroundColor = 'var(--mg-error-500)';
+                backgroundColor = 'var(--ad-b0kla-danger)';
                 break;
         }
         
@@ -181,7 +190,7 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
             allDay: allDay,
             backgroundColor: backgroundColor,
             borderColor: backgroundColor,
-            textColor: 'var(--mg-white)',
+            textColor: '#ffffff',
             className: 'vacation-event',
             extendedProps: {
                 type: 'vacation',
@@ -317,6 +326,7 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
                 if (selectedConsultantId && selectedConsultantId !== '') {
                     url += `?consultantId=${selectedConsultantId}`;
                     console.log('🔍 상담사 필터링 적용:', selectedConsultantId);
+                    // TODO: API clientId 지원 시 url += `&clientId=${clientIdFilter}`;
                 } else {
                     console.log('🔍 전체 상담사 조회');
                 }
@@ -526,7 +536,19 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
         } finally {
             setLoading(false);
         }
-    }, [userId, userRole, selectedConsultantId]);
+    }, [userId, userRole, selectedConsultantId, clientIdFilter]);
+
+    // URL 쿼리 변경 시 selectedConsultantId, clientIdFilter 동기화
+    useEffect(() => {
+        const consultantId = searchParams.get('consultantId');
+        const clientId = searchParams.get('clientId');
+        if (consultantId) {
+            setSelectedConsultantId(consultantId);
+        }
+        if (clientId) {
+            setClientIdFilter(clientId);
+        }
+    }, [searchParams]);
 
     useEffect(() => {
         console.log('🔍 UnifiedScheduleComponent useEffect 실행:', { userId, userRole, selectedConsultantId });
@@ -754,7 +776,7 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
 
     // ========== 렌더링 (Presentational 컴포넌트 사용) ==========
     return (
-        <div className="mg-v2-schedule-calendar">
+        <div className="mg-v2-schedule-calendar mg-v2-ad-b0kla">
             <ScheduleHeader
                 userRole={userRole}
                 consultants={consultants}

@@ -1,5 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
+import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import { Calendar, XCircle, FileText, Umbrella, CheckCircle } from 'lucide-react';
 
 /**
@@ -43,8 +44,8 @@ const DateActionModal = ({
     const portalTarget = document.body || document.createElement('div');
 
     return ReactDOM.createPortal(
-        <div className="mg-v2-modal-overlay" onClick={onClose}>
-            <div className="mg-v2-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="mg-v2-modal-overlay mg-v2-ad-b0kla" onClick={onClose}>
+            <div className="mg-v2-modal mg-v2-ad-b0kla" onClick={(e) => e.stopPropagation()}>
                 <div className="mg-v2-modal-header">
                     <div className="mg-v2-modal-title-wrapper">
                         <Calendar size={28} className="mg-v2-modal-title-icon" />

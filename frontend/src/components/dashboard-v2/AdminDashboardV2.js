@@ -21,7 +21,6 @@ import {
   FaLink, FaUserCog, FaCog, FaBell, FaDatabase, FaShieldAlt, FaRocket, FaFileAlt, FaCompressAlt
 } from 'react-icons/fa';
 import UnifiedLoading from '../common/UnifiedLoading';
-import SystemStatus from '../admin/system/SystemStatus';
 import StatCard from '../ui/Card/StatCard';
 import {
   ContentArea,
@@ -62,7 +61,6 @@ import '../../styles/dashboard-common-v3.css';
 import '../../styles/themes/admin-theme.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import '../admin/AdminDashboard/AdminDashboardPipeline.css';
-import '../admin/system/SystemStatus.css';
 const AdminDashboardV2 = ({ user: propUser }) => {
   const navigate = useNavigate();
   const { user: sessionUser, isLoading: sessionLoading, logout } = useSession();
@@ -148,11 +146,6 @@ const AdminDashboardV2 = ({ user: propUser }) => {
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState('success');
   const [chartPeriod, setChartPeriod] = useState('monthly');
-  const [systemStatus, setSystemStatus] = useState({
-    server: 'unknown',
-    database: 'unknown',
-    lastChecked: null
-  });
   const [searchValue, setSearchValue] = useState('');
   const isInitialized = useRef(false);
 
@@ -490,38 +483,6 @@ const AdminDashboardV2 = ({ user: propUser }) => {
     loadPendingDepositStats();
     loadUnassignedClientsAndConsultants();
   }, [loadStats, loadRefundStats, loadPendingDepositStats, loadUnassignedClientsAndConsultants]);
-
-  const checkSystemStatus = async () => {
-    setLoading(true);
-    try {
-      const [serverRes, dbRes] = await Promise.all([
-        fetch('/api/v1/health/server'),
-        fetch('/api/v1/health/database')
-      ]);
-      const serverStatus = serverRes.ok ? 'healthy' : 'error';
-      const dbStatus = dbRes.ok ? 'healthy' : 'error';
-      setSystemStatus({
-        server: serverStatus,
-        database: dbStatus,
-        lastChecked: new Date().toLocaleTimeString('ko-KR')
-      });
-      if (serverStatus === 'healthy' && dbStatus === 'healthy') {
-        showToast('시스템 상태가 정상입니다.', 'success');
-      } else {
-        showToast('시스템 상태에 문제가 있습니다.', 'warning');
-      }
-    } catch (error) {
-      console.error('시스템 상태 체크 실패:', error);
-      setSystemStatus({
-        server: 'error',
-        database: 'error',
-        lastChecked: new Date().toLocaleTimeString('ko-KR')
-      });
-      showToast('시스템 상태 체크에 실패했습니다.', 'danger');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const topConsultantsData = (stats.consultantRatingStats?.topConsultants || [])
     .slice(0, 4)
@@ -1023,17 +984,6 @@ const AdminDashboardV2 = ({ user: propUser }) => {
             <span className="mg-v2-ad-b0kla__admin-desc">중복된 상담사-내담자 매칭을 통합합니다</span>
           </button>
         </div>
-      </ContentSection>
-
-      <ContentSection
-        title="시스템 상태"
-        subtitle="서버 및 데이터베이스 상태 모니터링"
-      >
-        <SystemStatus
-          systemStatus={systemStatus}
-          onStatusCheck={checkSystemStatus}
-          loading={loading}
-        />
       </ContentSection>
 
       {showToastState && (

@@ -121,69 +121,6 @@
   color: var(--ad-b0kla-green);
 }
 
-/* 플로우 파이프라인 */
-.mg-v2-mapping-creation-modal__pipeline {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 0.25rem;
-  margin-bottom: 1.5rem;
-  padding: 0.75rem;
-  background: var(--ad-b0kla-card-bg);
-  border: 1px solid var(--ad-b0kla-border);
-  border-radius: var(--ad-b0kla-radius-sm);
-}
-
-.mg-v2-mapping-creation-modal__pipeline-step {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0.75rem;
-  background: transparent;
-  border: 1px solid var(--ad-b0kla-border);
-  border-radius: var(--ad-b0kla-radius-sm);
-  color: var(--ad-b0kla-text-secondary);
-  font-size: 0.875rem;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.mg-v2-mapping-creation-modal__pipeline-step:disabled {
-  cursor: default;
-  opacity: 0.6;
-}
-
-.mg-v2-mapping-creation-modal__pipeline-step--active {
-  background: var(--ad-b0kla-green-bg);
-  border-color: var(--ad-b0kla-green);
-  color: var(--ad-b0kla-title-color);
-}
-
-.mg-v2-mapping-creation-modal__pipeline-step--current {
-  font-weight: 600;
-  box-shadow: 0 2px 8px rgba(75, 116, 92, 0.2);
-}
-
-.mg-v2-mapping-creation-modal__pipeline-step:not(:disabled):hover {
-  background: var(--ad-b0kla-green-bg);
-}
-
-.mg-v2-mapping-creation-modal__pipeline-icon {
-  display: flex;
-  align-items: center;
-}
-
-.mg-v2-mapping-creation-modal__pipeline-connector {
-  color: var(--ad-b0kla-border);
-  display: flex;
-  align-items: center;
-}
-
-.mg-v2-mapping-creation-modal__pipeline-step--active + .mg-v2-mapping-creation-modal__pipeline-connector {
-  color: var(--ad-b0kla-green);
-}
-
 /* 스텝 콘텐츠: 단계별 콘텐츠 양에 맞게 자연스럽게 높이 조절 */
 .mg-v2-mapping-creation-modal__step-content {
   min-height: 0;
@@ -501,14 +438,6 @@
   .mg-v2-mapping-creation-modal-wrapper.mg-v2-modal-medium {
     max-width: 95vw;
     width: 95vw;
-  }
-
-  .mg-v2-mapping-creation-modal__pipeline {
-    flex-direction: column;
-  }
-
-  .mg-v2-mapping-creation-modal__pipeline-connector {
-    transform: rotate(90deg);
   }
 
   .mg-v2-mapping-creation-modal__grid {

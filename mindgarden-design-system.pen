@@ -1432,6 +1432,239 @@
                   ]
                 }
               ]
+            },
+            {
+              "type": "frame",
+              "id": "stpWr",
+              "name": "stepperWrap",
+              "layout": "vertical",
+              "gap": 16,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "stpLb",
+                  "fill": "#4a5568",
+                  "content": "Stepper / Step Indicator",
+                  "fontFamily": "Inter",
+                  "fontSize": 16,
+                  "fontWeight": "500"
+                },
+                {
+                  "type": "frame",
+                  "id": "stpCn",
+                  "name": "stepper",
+                  "layout": "horizontal",
+                  "width": "fill_container",
+                  "fill": "#F5F3EF",
+                  "cornerRadius": 12,
+                  "padding": [16, 24],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "stp1",
+                      "name": "stepperItemCompleted",
+                      "layout": "vertical",
+                      "alignItems": "center",
+                      "gap": 8,
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "stp1i",
+                          "name": "stepperIconCompleted",
+                          "width": 36,
+                          "height": 36,
+                          "fill": "#4b745c",
+                          "cornerRadius": 18,
+                          "layout": "vertical",
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon_font",
+                              "id": "stp1c",
+                              "width": 18,
+                              "height": 18,
+                              "iconFontName": "check",
+                              "iconFontFamily": "lucide",
+                              "fill": "#ffffff"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "id": "stp1t",
+                          "fill": "#2d3748",
+                          "content": "상담사",
+                          "fontFamily": "Noto Sans KR",
+                          "fontSize": 13,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "ln1",
+                      "name": "stepperLineCompleted",
+                      "width": "fill_container",
+                      "height": 2,
+                      "fill": "#4b745c"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "stp2",
+                      "name": "stepperItemCompleted",
+                      "layout": "vertical",
+                      "alignItems": "center",
+                      "gap": 8,
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "stp2i",
+                          "name": "stepperIconCompleted",
+                          "width": 36,
+                          "height": 36,
+                          "fill": "#4b745c",
+                          "cornerRadius": 18,
+                          "layout": "vertical",
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon_font",
+                              "id": "stp2c",
+                              "width": 18,
+                              "height": 18,
+                              "iconFontName": "check",
+                              "iconFontFamily": "lucide",
+                              "fill": "#ffffff"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "id": "stp2t",
+                          "fill": "#2d3748",
+                          "content": "패키지",
+                          "fontFamily": "Noto Sans KR",
+                          "fontSize": 13,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "ln2",
+                      "name": "stepperLineCompleted",
+                      "width": "fill_container",
+                      "height": 2,
+                      "fill": "#4b745c"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "stp3",
+                      "name": "stepperItemCurrent",
+                      "layout": "vertical",
+                      "alignItems": "center",
+                      "gap": 8,
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "stp3i",
+                          "name": "stepperIconCurrent",
+                          "width": 36,
+                          "height": 36,
+                          "fill": "#f0f4f2",
+                          "cornerRadius": 18,
+                          "stroke": {
+                            "align": "inside",
+                            "thickness": 2,
+                            "fill": "#4b745c"
+                          },
+                          "layout": "vertical",
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "stp3n",
+                              "fill": "#4b745c",
+                              "content": "3",
+                              "fontFamily": "Inter",
+                              "fontSize": 14,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "id": "stp3t",
+                          "fill": "#2d3748",
+                          "content": "내담자",
+                          "fontFamily": "Noto Sans KR",
+                          "fontSize": 13,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "ln3",
+                      "name": "stepperLinePending",
+                      "width": "fill_container",
+                      "height": 2,
+                      "fill": "#e2e8f0"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "stp4",
+                      "name": "stepperItemPending",
+                      "layout": "vertical",
+                      "alignItems": "center",
+                      "gap": 8,
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "stp4i",
+                          "name": "stepperIconPending",
+                          "width": 36,
+                          "height": 36,
+                          "fill": "#ffffff",
+                          "cornerRadius": 18,
+                          "stroke": {
+                            "align": "inside",
+                            "thickness": 2,
+                            "fill": "#e2e8f0"
+                          },
+                          "layout": "vertical",
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "stp4n",
+                              "fill": "#718096",
+                              "content": "4",
+                              "fontFamily": "Inter",
+                              "fontSize": 14,
+                              "fontWeight": "500"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "id": "stp4t",
+                          "fill": "#718096",
+                          "content": "결제",
+                          "fontFamily": "Noto Sans KR",
+                          "fontSize": 13,
+                          "fontWeight": "500"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
             }
           ]
         },

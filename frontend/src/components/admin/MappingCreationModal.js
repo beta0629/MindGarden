@@ -9,7 +9,7 @@ import {
   Link2,
   CheckCircle,
   Search,
-  ChevronRight,
+  Check,
   AlertCircle,
   XCircle
 } from 'lucide-react';
@@ -18,6 +18,7 @@ import { getAllConsultantsWithStats } from '../../utils/consultantHelper';
 import notificationManager from '../../utils/notification';
 import SearchInput from '../dashboard-v2/atoms/SearchInput';
 import { DEFAULT_MAPPING_CONFIG } from '../../constants/mapping';
+import '../schedule/ScheduleB0KlA.css';
 import './MappingCreationModal.css';
 
 /**
@@ -447,29 +448,26 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
         <div className="mg-v2-modal-body mg-v2-ad-b0kla-modal__body">
           <div className="mg-v2-ad-b0kla mg-v2-mapping-creation-modal">
 
-        {/* 플로우 파이프라인 */}
-        <nav className="mg-v2-mapping-creation-modal__pipeline" aria-label="매칭 생성 단계">
-          {STEPS_CONFIG.map((s, i) => {
+        {/* 진행 단계 표시기 (mg-v2-ad-stepper - 스케줄 모달과 동일) */}
+        <nav className="mg-v2-ad-stepper" aria-label="매칭 생성 단계">
+          {STEPS_CONFIG.map((s, index) => {
             const Icon = s.icon;
-            const isActive = step >= s.key;
+            const isCompleted = step > s.key;
             const isCurrent = step === s.key;
+            let statusClass = 'pending';
+            if (isCompleted) statusClass = 'completed';
+            if (isCurrent) statusClass = 'current';
+
             return (
               <React.Fragment key={s.key}>
-                <button
-                  type="button"
-                  className={`mg-v2-mapping-creation-modal__pipeline-step ${isActive ? 'mg-v2-mapping-creation-modal__pipeline-step--active' : ''} ${isCurrent ? 'mg-v2-mapping-creation-modal__pipeline-step--current' : ''}`}
-                  onClick={() => step > s.key && setStep(s.key)}
-                  disabled={step < s.key}
-                >
-                  <span className="mg-v2-mapping-creation-modal__pipeline-icon">
-                    <Icon size={20} />
-                  </span>
-                  <span className="mg-v2-mapping-creation-modal__pipeline-label">{s.label}</span>
-                </button>
-                {i < STEPS_CONFIG.length - 1 && (
-                  <span className="mg-v2-mapping-creation-modal__pipeline-connector" aria-hidden>
-                    <ChevronRight size={16} />
-                  </span>
+                <div className={`mg-v2-ad-stepper__item ${statusClass}`}>
+                  <div className="mg-v2-ad-stepper__icon">
+                    {isCompleted ? <Check size={18} strokeWidth={2.5} /> : <Icon size={18} strokeWidth={isCurrent ? 2.5 : 2} />}
+                  </div>
+                  <span className="mg-v2-ad-stepper__title">{s.label}</span>
+                </div>
+                {index < STEPS_CONFIG.length - 1 && (
+                  <div className={`mg-v2-ad-stepper__line ${isCompleted ? 'completed' : ''}`} />
                 )}
               </React.Fragment>
             );

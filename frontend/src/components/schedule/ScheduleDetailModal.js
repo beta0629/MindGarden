@@ -194,12 +194,12 @@ const ScheduleDetailModal = ({
                 opt.value === 'CANCELLED' || opt.label?.includes('취소')
             );
             
-            const response = await apiPut(`/api/schedules/${scheduleData.id}`, {
+            const response = await apiPut(`/api/v1/schedules/${scheduleData.id}`, {
                 status: cancelledStatus,
                 description: '사용자에 의해 취소됨'
             });
             
-            if (response.success) {
+            if (response != null) {
                 notificationManager.success('예약이 취소되었습니다.');
                 onScheduleUpdated?.();
                 onClose();
@@ -223,11 +223,11 @@ const ScheduleDetailModal = ({
             setLoading(true);
             console.log('📝 스케줄 상태 변경:', scheduleData.id, newStatus);
             
-            const response = await apiPut(`/api/schedules/${scheduleData.id}`, {
+            const response = await apiPut(`/api/v1/schedules/${scheduleData.id}`, {
                 status: newStatus
             });
             
-            if (response.success) {
+            if (response != null) {
                 notificationManager.success('상태가 변경되었습니다.');
                 onScheduleUpdated?.();
                 onClose();
@@ -290,11 +290,11 @@ const ScheduleDetailModal = ({
         try {
             console.log('✅ 예약 확정 요청:', scheduleData.id);
             
-            const response = await apiPut(`/api/schedules/${scheduleData.id}/confirm?userRole=ADMIN`, {
+            const response = await apiPut(`/api/v1/schedules/${scheduleData.id}/confirm?userRole=ADMIN`, {
                 adminNote: adminNote || '입금 확인 완료'
             });
             
-            if (response.success) {
+            if (response != null) {
                 notificationManager.success('예약이 확정되었습니다.');
                 onScheduleUpdated?.();
                 onClose();

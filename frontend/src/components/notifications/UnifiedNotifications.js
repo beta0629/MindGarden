@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useSession } from '../../contexts/SessionContext';
-// import { useNotification } from '../../contexts/NotificationContext'; // 이벤트 기반으로 카운트 갱신
 import { apiGet } from '../../utils/ajax';
 import { Bell, MessageSquare, AlertCircle, Info, AlertTriangle } from 'lucide-react';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
+import UnifiedModal from '../common/modals/UnifiedModal';
 import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import '../../styles/unified-design-tokens.css';
@@ -377,59 +377,47 @@ const UnifiedNotifications = () => {
 
         {/* 상세 모달 */}
         {selectedItem && (
-          <div className="mg-modal-overlay" onClick={closeModal}>
-            <div className="mg-modal mg-modal-large" onClick={(e) => e.stopPropagation()}>
-              <div className="mg-modal__header">
-                <div>
-                  <div className="mg-flex mg-align-center mg-gap-sm mg-mb-sm">
-                    <h3 className="mg-h3 mg-mb-0">{selectedItem.data.title}</h3>
-                    {selectedItem.data.isUrgent && (
-                      <span className="mg-badge mg-badge-danger">긴급</span>
-                    )}
-                    {selectedItem.data.isImportant && (
-                      <span className="mg-badge mg-badge-warning">중요</span>
-                    )}
-                  </div>
-                  <div className="mg-flex mg-gap-sm mg-align-center">
-                    {selectedItem.type === 'system' && (
-                      <span className="mg-badge mg-badge-secondary">
-                        {selectedItem.data.targetType === 'ALL' ? '전체' :
-                         selectedItem.data.targetType === 'CONSULTANT' ? '상담사' : '내담자'}
-                      </span>
-                    )}
-                    {selectedItem.type === 'message' && (
-                      <span 
-                        className="mg-badge mg-badge-message-type"
-                        data-type={selectedItem.data.messageType}
-                      >
-                        {getMessageTypeLabel(selectedItem.data.messageType)}
-                      </span>
-                    )}
-                    <span className="mg-v2-text-sm mg-v2-color-text-secondary">
-                      {selectedItem.data.authorName || selectedItem.data.senderName || '관리자'} · 
-                      {formatDate(selectedItem.data.publishedAt || selectedItem.data.createdAt)}
-                    </span>
-                  </div>
-                </div>
-                <button onClick={closeModal} className="mg-modal__close">
-                  ×
-                </button>
-              </div>
-              <div className="mg-modal__body">
-                <div 
-                  className="notification-content"
-                  dangerouslySetInnerHTML={{
-                    __html: selectedItem.data.content || ''
-                  }}
-                />
-              </div>
-              <div className="mg-modal__actions">
-                <button onClick={closeModal} className="mg-button mg-button-primary">
-                  확인
-                </button>
-              </div>
+          <UnifiedModal
+            isOpen={!!selectedItem}
+            onClose={closeModal}
+            title={selectedItem.data.title}
+            subtitle={`${selectedItem.data.authorName || selectedItem.data.senderName || '관리자'} · ${formatDate(selectedItem.data.publishedAt || selectedItem.data.createdAt)}`}
+            size="large"
+            actions={
+              <button onClick={closeModal} className="mg-button mg-button-primary">
+                확인
+              </button>
+            }
+          >
+            <div className="mg-flex mg-align-center mg-gap-sm mg-mb-md">
+              {selectedItem.data.isUrgent && (
+                <span className="mg-badge mg-badge-danger">긴급</span>
+              )}
+              {selectedItem.data.isImportant && (
+                <span className="mg-badge mg-badge-warning">중요</span>
+              )}
+              {selectedItem.type === 'system' && (
+                <span className="mg-badge mg-badge-secondary">
+                  {selectedItem.data.targetType === 'ALL' ? '전체' :
+                   selectedItem.data.targetType === 'CONSULTANT' ? '상담사' : '내담자'}
+                </span>
+              )}
+              {selectedItem.type === 'message' && (
+                <span
+                  className="mg-badge mg-badge-message-type"
+                  data-type={selectedItem.data.messageType}
+                >
+                  {getMessageTypeLabel(selectedItem.data.messageType)}
+                </span>
+              )}
             </div>
-          </div>
+            <div
+              className="notification-content"
+              dangerouslySetInnerHTML={{
+                __html: selectedItem.data.content || ''
+              }}
+            />
+          </UnifiedModal>
         )}
       </div>
     </AdminCommonLayout>

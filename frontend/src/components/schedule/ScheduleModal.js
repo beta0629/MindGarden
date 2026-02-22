@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { X, UserSquare, Users, Clock, FileText, Check } from 'lucide-react';
+import { UserSquare, Users, Clock, FileText, Check } from 'lucide-react';
 import ConsultantSelectionStep from './steps/ConsultantSelectionStep';
 import ClientSelectionStep from './steps/ClientSelectionStep';
 import TimeSlotGrid from './TimeSlotGrid';
+import UnifiedModal from '../common/modals/UnifiedModal';
 import notificationManager from '../../utils/notification';
 import { useSession } from '../../contexts/SessionContext';
 import StandardizedApi from '../../utils/standardizedApi';
@@ -270,7 +271,55 @@ const ScheduleModalNew = ({
         onClose();
     };
 
-    if (!isOpen) return null;
+    const formatSubtitle = () => {
+      if (!selectedDate) return '';
+      const d = selectedDate instanceof Date ? selectedDate : new Date(selectedDate);
+      return d.toLocaleDateString('ko-KR', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        weekday: 'long'
+      });
+    };
+
+    const renderActions = () => (
+      <>
+        {step > 1 && (
+          <button
+            className="mg-v2-btn--outline"
+            onClick={handlePrevStep}
+            disabled={loading}
+          >
+            이전
+          </button>
+        )}
+        {step < 4 ? (
+          <button
+            className="mg-v2-btn--primary"
+            onClick={() => {
+              if (step === 1 && selectedConsultant) setStep(2);
+              else if (step === 2 && selectedClient) setStep(3);
+              else if (step === 3 && selectedTimeSlot) setStep(4);
+            }}
+            disabled={
+              (step === 1 && !selectedConsultant) ||
+              (step === 2 && !selectedClient) ||
+              (step === 3 && !selectedTimeSlot)
+            }
+          >
+            다음
+          </button>
+        ) : (
+          <button
+            className="mg-v2-btn--primary"
+            onClick={handleCreateSchedule}
+            disabled={loading}
+          >
+            {loading ? '생성 중...' : '스케줄 생성'}
+          </button>
+        )}
+      </>
+    );
 
     const renderStepper = () => {
         const steps = [
@@ -310,36 +359,22 @@ const ScheduleModalNew = ({
     };
 
     return (
-        <div className="mg-v2-ad-modal-backdrop" onClick={handleClose}>
-            <div className="mg-v2-ad-modal mg-v2-ad-b0kla" onClick={(e) => e.stopPropagation()}>
-                {/* 모달 헤더 */}
-                <div className="mg-v2-ad-modal__header">
-                    <h2 className="mg-v2-ad-modal__title">
-                        스케줄 생성
-                        <span className="mg-v2-text-sm mg-v2-ml-md mg-v2-ad-modal__date">
-                            {selectedDate && (selectedDate instanceof Date ? selectedDate : new Date(selectedDate)).toLocaleDateString('ko-KR', {
-                                year: 'numeric',
-                                month: 'long',
-                                day: 'numeric',
-                                weekday: 'long'
-                            })}
-                        </span>
-                    </h2>
-                    <button 
-                        className="mg-v2-ad-modal__close-btn" 
-                        onClick={handleClose}
-                        aria-label="모달 닫기"
-                    >
-                        <X size={24} />
-                    </button>
-                </div>
+        <UnifiedModal
+            isOpen={isOpen}
+            onClose={handleClose}
+            title="스케줄 생성"
+            subtitle={formatSubtitle()}
+            size="large"
+            backdropClick={true}
+            showCloseButton={true}
+            loading={loading}
+            className="mg-v2-ad-b0kla"
+            actions={renderActions()}
+        >
+            {/* 진행 단계 표시기 */}
+            {renderStepper()}
 
-                {/* 모달 바디 */}
-                <div className="mg-v2-ad-modal__body">
-                    {/* 진행 단계 표시기 */}
-                    {renderStepper()}
-
-                    {/* 1단계: 상담사 선택 */}
+            {/* 1단계: 상담사 선택 */}
                     {step === 1 && (
                         <div className="mg-v2-ad-section-block">
                             <div className="mg-v2-ad-section-block__header">
@@ -475,48 +510,7 @@ const ScheduleModalNew = ({
                             </div>
                         </div>
                     )}
-                </div>
-
-                {/* 모달 푸터 */}
-                <div className="mg-v2-ad-modal__footer">
-                    {step > 1 && (
-                        <button 
-                            className="mg-v2-btn--outline" 
-                            onClick={handlePrevStep}
-                            disabled={loading}
-                        >
-                            이전
-                        </button>
-                    )}
-                    
-                    {step < 4 ? (
-                        <button 
-                            className="mg-v2-btn--primary" 
-                            onClick={() => {
-                                if (step === 1 && selectedConsultant) setStep(2);
-                                else if (step === 2 && selectedClient) setStep(3);
-                                else if (step === 3 && selectedTimeSlot) setStep(4);
-                            }}
-                            disabled={
-                                (step === 1 && !selectedConsultant) ||
-                                (step === 2 && !selectedClient) ||
-                                (step === 3 && !selectedTimeSlot)
-                            }
-                        >
-                            다음
-                        </button>
-                    ) : (
-                        <button 
-                            className="mg-v2-btn--primary" 
-                            onClick={handleCreateSchedule}
-                            disabled={loading}
-                        >
-                            {loading ? '생성 중...' : '스케줄 생성'}
-                        </button>
-                    )}
-                </div>
-            </div>
-        </div>
+        </UnifiedModal>
     );
 };
 

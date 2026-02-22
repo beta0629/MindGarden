@@ -21,7 +21,7 @@
 
 /* ===== Base Modal ===== */
 .mg-v2-ad-modal {
-  background: var(--mg-bg-white, var(--mg-white));
+  background: var(--mg-bg-white, var(--mg-white, #ffffff));
   border-radius: 16px;
   box-shadow: 0 10px 25px rgba(44, 44, 44, 0.15);
   width: 100%;
@@ -56,7 +56,7 @@
 .mg-v2-ad-modal__header {
   padding: 20px 24px;
   border-bottom: 1px solid var(--mg-gray-200, #E8E6E1);
-  background: var(--mg-bg-white, var(--mg-white));
+  background: var(--mg-bg-white, var(--mg-white, #ffffff));
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -110,7 +110,7 @@
 .mg-v2-ad-modal__footer {
   padding: 16px 24px;
   border-top: 1px solid var(--mg-gray-200, #E8E6E1);
-  background: var(--mg-bg-white, var(--mg-white));
+  background: var(--mg-bg-white, var(--mg-white, #ffffff));
   display: flex;
   justify-content: flex-end;
   gap: 12px;

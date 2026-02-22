@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import ReactDOM from 'react-dom';
-import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { Heart, XCircle, CheckCircle, Calendar, User, Briefcase } from 'lucide-react';
+import UnifiedModal from '../common/modals/UnifiedModal';
 import { API_BASE_URL } from '../../constants/api';
 import { useSession } from '../../contexts/SessionContext';
 import csrfTokenManager from '../../utils/csrfTokenManager';
@@ -104,27 +103,43 @@ const ConsultantRatingModal = ({ isOpen, onClose, schedule, onRatingComplete }) 
     }
 
     const isSubmitDisabled = heartScore === 0 || isSubmitting;
-    
-    const portalTarget = document.body || document.createElement('div');
 
-    return ReactDOM.createPortal(
-        <div className="mg-v2-modal-overlay" onClick={onClose}>
-            <div className="mg-v2-modal mg-v2-modal-medium" onClick={(e) => e.stopPropagation()}>
-                {/* 헤더 */}
-                <div className="mg-v2-modal-header">
-                    <div className="mg-v2-modal-title-wrapper">
-                        <Heart size={28} className="mg-v2-modal-title-icon" />
-                        <div>
-                            <h2 className="mg-v2-modal-title">상담사 평가</h2>
-                            <p className="mg-v2-modal-subtitle">{schedule.consultantName}님과의 상담은 어떠셨나요?</p>
-                        </div>
-                    </div>
-                    <button className="mg-v2-modal-close" onClick={onClose} aria-label="닫기">
-                        <XCircle size={24} />
+    return (
+        <UnifiedModal
+            isOpen={isOpen}
+            onClose={onClose}
+            title="상담사 평가"
+            subtitle={`${schedule.consultantName}님과의 상담은 어떠셨나요?`}
+            size="medium"
+            backdropClick={true}
+            showCloseButton={true}
+            actions={
+                <>
+                    <button
+                        className="mg-v2-button mg-v2-button--secondary"
+                        onClick={onClose}
+                        disabled={isSubmitting}
+                    >
+                        <XCircle size={20} className="mg-v2-icon-inline" />
+                        취소
                     </button>
-                </div>
-
-                <div className="mg-v2-modal-body">
+                    <button
+                        className="mg-v2-button mg-v2-button--primary"
+                        onClick={handleSubmit}
+                        disabled={isSubmitDisabled}
+                    >
+                        {isSubmitting ? (
+                            <div className="mg-loading">로딩중...</div>
+                        ) : (
+                            <>
+                                <CheckCircle size={20} className="mg-v2-icon-inline" />
+                                평가 완료
+                            </>
+                        )}
+                    </button>
+                </>
+            }
+        >
                     {/* 상담 정보 */}
                     <div className="mg-v2-info-box mg-v2-mb-lg">
                         <div className="mg-v2-info-grid">
@@ -218,35 +233,7 @@ const ConsultantRatingModal = ({ isOpen, onClose, schedule, onRatingComplete }) 
                         </label>
                     </div>
                 </div>
-
-                {/* 푸터 */}
-                <div className="mg-v2-modal-footer">
-                    <button 
-                        className="mg-v2-button mg-v2-button--secondary" 
-                        onClick={onClose}
-                        disabled={isSubmitting}
-                    >
-                        <XCircle size={20} className="mg-v2-icon-inline" />
-                        취소
-                    </button>
-                    <button 
-                        className="mg-v2-button mg-v2-button--primary" 
-                        onClick={handleSubmit}
-                        disabled={isSubmitDisabled}
-                    >
-                        {isSubmitting ? (
-                            <div className="mg-loading">로딩중...</div>
-                        ) : (
-                            <>
-                                <CheckCircle size={20} className="mg-v2-icon-inline" />
-                                평가 완료
-                            </>
-                        )}
-                    </button>
-                </div>
-            </div>
-        </div>,
-        portalTarget
+        </UnifiedModal>
     );
 };
 

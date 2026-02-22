@@ -4,7 +4,9 @@ import { getCommonCodes } from '../../utils/commonCodeApi';
 import notificationManager from '../../utils/notification';
 import { useSession } from '../../contexts/SessionContext';
 import { RoleUtils } from '../../constants/roles';
+import UnifiedModal from '../common/modals/UnifiedModal';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
+import './ScheduleB0KlA.css';
 import '../../styles/main.css';
 
 /**
@@ -150,91 +152,87 @@ const ScheduleDetailModal = ({
      * 취소 확인 모달 (TDZ 방지: loading early return 전에 정의)
      */
     const renderCancelConfirm = () => (
-        <div className="mg-v2-ad-modal-backdrop" style={{ zIndex: 1100 }}>
-            <div className="mg-v2-ad-modal" style={{ maxWidth: '400px' }}>
-                <div className="mg-v2-ad-modal__header">
-                    <h2 className="mg-v2-ad-modal__title">예약 취소 확인</h2>
-                    <button 
-                        className="mg-v2-ad-modal__close-btn" 
-                        onClick={() => setShowCancelConfirm(false)}
-                        aria-label="닫기"
-                    >
-                        X
-                    </button>
-                </div>
-                <div className="mg-v2-ad-modal__body">
-                    <p>정말로 이 예약을 취소하시겠습니까?</p>
-                </div>
-                <div className="mg-v2-ad-modal__footer">
-                    <button 
-                        className="mg-v2-btn--outline" 
+        <UnifiedModal
+            isOpen={showCancelConfirm}
+            onClose={() => setShowCancelConfirm(false)}
+            title="예약 취소 확인"
+            size="small"
+            variant="confirm"
+            zIndex={1100}
+            backdropClick={!loading}
+            showCloseButton={!loading}
+            loading={loading}
+            className="mg-v2-ad-b0kla"
+            actions={
+                <>
+                    <button
+                        className="mg-v2-btn--outline"
                         onClick={() => setShowCancelConfirm(false)}
                         disabled={loading}
                     >
                         아니오
                     </button>
-                    <button 
-                        className="mg-v2-btn--primary" 
+                    <button
+                        className="mg-v2-btn--primary"
                         style={{ backgroundColor: 'var(--mg-error-500)' }}
                         onClick={handleCancelSchedule}
                         disabled={loading}
                     >
                         {loading ? '처리중...' : '예, 취소합니다'}
                     </button>
-                </div>
-            </div>
-        </div>
+                </>
+            }
+        >
+            <p>정말로 이 예약을 취소하시겠습니까?</p>
+        </UnifiedModal>
     );
 
     /**
      * 예약 확정 확인 모달 (TDZ 방지: loading early return 전에 정의)
      */
     const renderConfirmModal = () => (
-        <div className="mg-v2-ad-modal-backdrop" style={{ zIndex: 1100 }}>
-            <div className="mg-v2-ad-modal" style={{ maxWidth: '400px' }}>
-                <div className="mg-v2-ad-modal__header">
-                    <h2 className="mg-v2-ad-modal__title">예약 확정</h2>
-                    <button 
-                        className="mg-v2-ad-modal__close-btn" 
-                        onClick={() => setShowConfirmModal(false)}
-                        aria-label="닫기"
-                    >
-                        X
-                    </button>
-                </div>
-                <div className="mg-v2-ad-modal__body">
-                    <p>내담자의 입금을 확인하셨습니까?</p>
-                    <div className="mg-form-group">
-                        <label className="mg-v2-label">
-                            관리자 메모 (선택사항):
-                        </label>
-                        <textarea
-                            value={adminNote}
-                            onChange={(e) => setAdminNote(e.target.value)}
-                            placeholder="입금 확인 완료"
-                            className="mg-v2-textarea"
-                            style={{ width: '100%', minHeight: '80px', marginTop: '8px', padding: '8px 12px', border: '1px solid var(--color-border)', borderRadius: '8px' }}
-                        />
-                    </div>
-                </div>
-                <div className="mg-v2-ad-modal__footer">
-                    <button 
-                        className="mg-v2-btn--outline" 
+        <UnifiedModal
+            isOpen={showConfirmModal}
+            onClose={() => setShowConfirmModal(false)}
+            title="예약 확정"
+            size="small"
+            variant="confirm"
+            zIndex={1100}
+            backdropClick={!loading}
+            showCloseButton={!loading}
+            loading={loading}
+            className="mg-v2-ad-b0kla"
+            actions={
+                <>
+                    <button
+                        className="mg-v2-btn--outline"
                         onClick={() => setShowConfirmModal(false)}
                         disabled={loading}
                     >
                         취소
                     </button>
-                    <button 
-                        className="mg-v2-btn--primary" 
+                    <button
+                        className="mg-v2-btn--primary"
                         onClick={handleConfirmSchedule}
                         disabled={loading}
                     >
                         {loading ? '처리중...' : '확정'}
                     </button>
-                </div>
+                </>
+            }
+        >
+            <p>내담자의 입금을 확인하셨습니까?</p>
+            <div className="mg-form-group">
+                <label className="mg-v2-label">관리자 메모 (선택사항):</label>
+                <textarea
+                    value={adminNote}
+                    onChange={(e) => setAdminNote(e.target.value)}
+                    placeholder="입금 확인 완료"
+                    className="mg-v2-textarea mg-v2-input"
+                    style={{ width: '100%', minHeight: '80px', marginTop: '8px', padding: '8px 12px', border: '1px solid var(--color-border)', borderRadius: '8px', boxSizing: 'border-box' }}
+                />
             </div>
-        </div>
+        </UnifiedModal>
     );
 
     if (!isOpen || !scheduleData) {
@@ -245,16 +243,16 @@ const ScheduleDetailModal = ({
     if (loading) {
         return (
             <>
-                <div className="mg-v2-ad-modal-backdrop" onClick={onClose}>
-                    <div className="mg-v2-ad-modal" onClick={(e) => e.stopPropagation()}>
-                        <div className="mg-v2-ad-modal__body" style={{ alignItems: 'center', justifyContent: 'center', minHeight: '200px' }}>
-                            <div className="mg-v2-loading-container">
-                                <div className="mg-v2-spinner"></div>
-                                <p className="mg-v2-text-secondary">처리 중...</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <UnifiedModal
+                    isOpen={true}
+                    onClose={onClose}
+                    title="처리 중"
+                    size="small"
+                    loading={true}
+                    showCloseButton={false}
+                    backdropClick={false}
+                    className="mg-v2-ad-b0kla"
+                />
                 {showCancelConfirm && renderCancelConfirm()}
                 {showConfirmModal && renderConfirmModal()}
             </>
@@ -397,23 +395,136 @@ const ScheduleDetailModal = ({
 
     if (!isOpen) return null;
 
+    const renderMainActions = () => {
+        if (isVacationEvent()) {
+            return (
+                <div style={{ width: '100%', textAlign: 'center' }}>
+                    <p style={{ fontSize: '14px', color: 'var(--mg-primary-500)', fontWeight: 600 }}>
+                        🏖️ 이 이벤트는 상담사의 휴가입니다.
+                    </p>
+                    <p style={{ fontSize: '13px', color: 'var(--color-text-secondary)', marginTop: '4px' }}>
+                        해당 시간대에는 상담이 불가능합니다.
+                    </p>
+                </div>
+            );
+        }
+        if (isClient) {
+            return (
+                <div style={{ width: '100%', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
+                    <p style={{ fontSize: '14px', fontWeight: 500 }}>
+                        📅 예약 정보를 확인하실 수 있습니다.
+                    </p>
+                    <p style={{ fontSize: '13px', marginTop: '4px' }}>
+                        예약 변경이 필요하신 경우 상담사에게 문의해주세요.
+                    </p>
+                </div>
+            );
+        }
+        return (
+            <div style={{ display: 'flex', gap: '8px', width: '100%', justifyContent: 'flex-end' }}>
+                {isStatus(scheduleData.status, 'BOOKED') && (
+                    <>
+                        <button
+                            className="mg-v2-btn--outline"
+                            onClick={handleEditSchedule}
+                            disabled={loading}
+                        >
+                            예약 변경
+                        </button>
+                        <button
+                            className="mg-v2-btn--primary"
+                            onClick={() => setShowConfirmModal(true)}
+                            disabled={loading}
+                        >
+                            예약 확정
+                        </button>
+                        <button
+                            className="mg-v2-btn--primary"
+                            style={{ backgroundColor: 'var(--mg-error-500)' }}
+                            onClick={() => setShowCancelConfirm(true)}
+                            disabled={loading}
+                        >
+                            예약 취소
+                        </button>
+                    </>
+                )}
+                {isStatus(scheduleData.status, 'CONFIRMED') && (() => {
+                    const completedStatus = scheduleStatusOptions.find(opt =>
+                        opt.value === 'COMPLETED' || opt.label?.includes('완료')
+                    )?.value || 'COMPLETED';
+                    return (
+                        <>
+                            <button
+                                className="mg-v2-btn--outline"
+                                onClick={handleWriteConsultationLog}
+                                disabled={loading}
+                            >
+                                상담일지 작성
+                            </button>
+                            <button
+                                className="mg-v2-btn--primary"
+                                onClick={() => handleStatusChange(completedStatus)}
+                                disabled={loading}
+                            >
+                                완료 처리
+                            </button>
+                            <button
+                                className="mg-v2-btn--primary"
+                                style={{ backgroundColor: 'var(--mg-error-500)' }}
+                                onClick={() => setShowCancelConfirm(true)}
+                                disabled={loading}
+                            >
+                                예약 취소
+                            </button>
+                        </>
+                    );
+                })()}
+                {isStatus(scheduleData.status, 'COMPLETED') && (() => {
+                    const bookedStatus = scheduleStatusOptions.find(opt =>
+                        opt.value === 'BOOKED' || opt.label?.includes('예약')
+                    )?.value || 'BOOKED';
+                    return (
+                        <button
+                            className="mg-v2-btn--outline"
+                            onClick={() => handleStatusChange(bookedStatus)}
+                            disabled={loading}
+                        >
+                            다시 예약
+                        </button>
+                    );
+                })()}
+                {isStatus(scheduleData.status, 'CANCELLED') && (() => {
+                    const bookedStatus = scheduleStatusOptions.find(opt =>
+                        opt.value === 'BOOKED' || opt.label?.includes('예약')
+                    )?.value || 'BOOKED';
+                    return (
+                        <button
+                            className="mg-v2-btn--outline"
+                            onClick={() => handleStatusChange(bookedStatus)}
+                            disabled={loading}
+                        >
+                            다시 예약
+                        </button>
+                    );
+                })()}
+            </div>
+        );
+    };
+
     return (
         <>
             {/* 메인 스케줄 상세 모달 */}
-            <div className="mg-v2-ad-modal-backdrop" onClick={onClose}>
-                <div className="mg-v2-ad-modal" onClick={(e) => e.stopPropagation()}>
-                    <div className="mg-v2-ad-modal__header">
-                        <h2 className="mg-v2-ad-modal__title">일정 상세</h2>
-                        <button
-                            onClick={onClose}
-                            className="mg-v2-ad-modal__close-btn"
-                            aria-label="닫기"
-                        >
-                            X
-                        </button>
-                    </div>
-                    <div className="mg-v2-ad-modal__body">
-                        <div className="mg-v2-ad-modal__section">
+            <UnifiedModal
+                isOpen={isOpen}
+                onClose={onClose}
+                title="일정 상세"
+                size="medium"
+                backdropClick={true}
+                showCloseButton={true}
+                className="mg-v2-ad-b0kla"
+                actions={renderMainActions()}
+            >
+                <div className="mg-v2-ad-modal__section">
                             <div className="section-title">상담 정보</div>
                             <div className="section-content" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -484,129 +595,8 @@ const ScheduleDetailModal = ({
                     </div>
                             </div>
                         </div>
-                    </div>
-
-                    <div className="mg-v2-ad-modal__footer">
-                    {isVacationEvent() ? (
-                        <div style={{ width: '100%', textAlign: 'center' }}>
-                            <p style={{ fontSize: '14px', color: 'var(--mg-primary-500)', fontWeight: 600 }}>
-                                🏖️ 이 이벤트는 상담사의 휴가입니다.
-                            </p>
-                            <p style={{ fontSize: '13px', color: 'var(--color-text-secondary)', marginTop: '4px' }}>
-                                해당 시간대에는 상담이 불가능합니다.
-                            </p>
-                        </div>
-                    ) : !isClient ? (
-                        <div style={{ display: 'flex', gap: '8px', width: '100%', justifyContent: 'flex-end' }}>
-                            {/* ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용 */}
-                            {isStatus(scheduleData.status, 'BOOKED') && (
-                                <>
-                                    <button 
-                                        className="mg-v2-btn--outline"
-                                        onClick={handleEditSchedule}
-                                        disabled={loading}
-                                    >
-                                        예약 변경
-                                    </button>
-                                    <button 
-                                        className="mg-v2-btn--primary"
-                                        onClick={() => setShowConfirmModal(true)}
-                                        disabled={loading}
-                                    >
-                                        예약 확정
-                                    </button>
-                                    <button 
-                                        className="mg-v2-btn--primary"
-                                        style={{ backgroundColor: 'var(--mg-error-500)' }}
-                                        onClick={() => setShowCancelConfirm(true)}
-                                        disabled={loading}
-                                    >
-                                        예약 취소
-                                    </button>
-                                </>
-                            )}
-                            
-                            {/* ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용 */}
-                            {isStatus(scheduleData.status, 'CONFIRMED') && (() => {
-                                const completedStatus = scheduleStatusOptions.find(opt => 
-                                    opt.value === 'COMPLETED' || opt.label?.includes('완료')
-                                )?.value || 'COMPLETED';
-                                
-                                return (
-                                    <>
-                                        <button 
-                                            className="mg-v2-btn--outline"
-                                            onClick={handleWriteConsultationLog}
-                                            disabled={loading}
-                                        >
-                                            상담일지 작성
-                                        </button>
-                                        <button 
-                                            className="mg-v2-btn--primary"
-                                            onClick={() => handleStatusChange(completedStatus)}
-                                            disabled={loading}
-                                        >
-                                            완료 처리
-                                        </button>
-                                        <button 
-                                            className="mg-v2-btn--primary"
-                                            style={{ backgroundColor: 'var(--mg-error-500)' }}
-                                            onClick={() => setShowCancelConfirm(true)}
-                                            disabled={loading}
-                                        >
-                                            예약 취소
-                                        </button>
-                                    </>
-                                );
-                            })()}
-                            
-                            {/* ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용 */}
-                            {isStatus(scheduleData.status, 'COMPLETED') && (() => {
-                                const bookedStatus = scheduleStatusOptions.find(opt => 
-                                    opt.value === 'BOOKED' || opt.label?.includes('예약')
-                                )?.value || 'BOOKED';
-                                
-                                return (
-                                    <button 
-                                        className="mg-v2-btn--outline"
-                                        onClick={() => handleStatusChange(bookedStatus)}
-                                        disabled={loading}
-                                    >
-                                        다시 예약
-                                    </button>
-                                );
-                            })()}
-                            
-                            {/* ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용 */}
-                            {isStatus(scheduleData.status, 'CANCELLED') && (() => {
-                                const bookedStatus = scheduleStatusOptions.find(opt => 
-                                    opt.value === 'BOOKED' || opt.label?.includes('예약')
-                                )?.value || 'BOOKED';
-                                
-                                return (
-                                    <button 
-                                        className="mg-v2-btn--outline"
-                                        onClick={() => handleStatusChange(bookedStatus)}
-                                        disabled={loading}
-                                    >
-                                        다시 예약
-                                    </button>
-                                );
-                            })()}
-                        </div>
-                    ) : (
-                        <div style={{ width: '100%', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
-                            <p style={{ fontSize: '14px', fontWeight: 500 }}>
-                                📅 예약 정보를 확인하실 수 있습니다.
-                            </p>
-                            <p style={{ fontSize: '13px', marginTop: '4px' }}>
-                                예약 변경이 필요하신 경우 상담사에게 문의해주세요.
-                            </p>
-                        </div>
-                    )}
-                    </div>
                 </div>
-            </div>
+            </UnifiedModal>
 
             {showCancelConfirm && renderCancelConfirm()}
             {showConfirmModal && renderConfirmModal()}

@@ -1,7 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import ReactDOM from 'react-dom';
+import React, { useState, useEffect } from 'react';
 import { RefreshCw, XCircle, Plus, Edit2, Trash2, DollarSign, Calendar, FileText } from 'lucide-react';
-// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import UnifiedModal from '../common/modals/UnifiedModal';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 
@@ -246,23 +245,17 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
     if (!isOpen) {
         return null;
     }
-    
-    const portalTarget = document.body || document.createElement('div');
-    
-    return ReactDOM.createPortal(
-        <div className="mg-v2-modal-overlay" onClick={onClose}>
-            <div className="mg-v2-modal mg-v2-modal-large" onClick={(e) => e.stopPropagation()}>
-                <div className="mg-v2-modal-header">
-                    <div className="mg-v2-modal-title-wrapper">
-                        <RefreshCw size={28} className="mg-v2-modal-title-icon" />
-                        <h2 className="mg-v2-modal-title">반복 지출 관리</h2>
-                    </div>
-                    <button className="mg-v2-modal-close" onClick={handleClose} disabled={loading} aria-label="닫기">
-                        <XCircle size={24} />
-                    </button>
-                </div>
 
-                <div className="mg-v2-modal-body">
+    return (
+        <UnifiedModal
+            isOpen={isOpen}
+            onClose={handleClose}
+            title="반복 지출 관리"
+            size="large"
+            loading={loading}
+            backdropClick={!loading}
+            showCloseButton={true}
+        >
                     {/* 통계 정보 */}
                     {statistics && (
                         <div className="mg-v2-info-box mg-v2-mb-lg">
@@ -355,23 +348,42 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
                         )}
                     </div>
 
-                    {/* 반복 지출 폼 */}
+                    {/* 반복 지출 폼 - 중첩 모달 */}
                     {showForm && (
-                        <div className="mg-v2-modal-overlay mg-v2-modal-overlay--nested">
-                            <div className="mg-v2-modal mg-v2-modal-medium">
-                                <div className="mg-v2-modal-header">
-                                    <div className="mg-v2-modal-title-wrapper">
-                                        {editingExpense ? <Edit2 size={28} className="mg-v2-modal-title-icon" /> : <Plus size={28} className="mg-v2-modal-title-icon" />}
-                                        <h3 className="mg-v2-modal-title">
-                                            {editingExpense ? '반복 지출 수정' : '새 반복 지출 추가'}
-                                        </h3>
-                                    </div>
-                                    <button className="mg-v2-modal-close" onClick={() => setShowForm(false)} disabled={loading} aria-label="닫기">
-                                        <XCircle size={24} />
+                        <UnifiedModal
+                            isOpen={showForm}
+                            onClose={() => setShowForm(false)}
+                            title={editingExpense ? '반복 지출 수정' : '새 반복 지출 추가'}
+                            size="medium"
+                            loading={loading}
+                            zIndex={1050}
+                            actions={
+                                <>
+                                    <button
+                                        type="button"
+                                        className="mg-v2-button mg-v2-button--secondary"
+                                        onClick={() => setShowForm(false)}
+                                        disabled={loading}
+                                    >
+                                        <XCircle size={20} className="mg-v2-icon-inline" />
+                                        취소
                                     </button>
-                                </div>
-
-                                <div className="mg-v2-modal-body">
+                                    <button
+                                        type="button"
+                                        className="mg-v2-button mg-v2-button--primary"
+                                        onClick={handleSaveExpense}
+                                        disabled={loading}
+                                    >
+                                        {loading ? <div className="mg-loading">로딩중...</div> : (
+                                            <>
+                                                <Edit2 size={20} className="mg-v2-icon-inline" />
+                                                저장
+                                            </>
+                                        )}
+                                    </button>
+                                </>
+                            }
+                        >
                                     <div className="mg-v2-form-group">
                                         <label htmlFor="name" className="mg-v2-form-label">
                                             지출명 <span className="mg-v2-form-label-required">*</span>
@@ -488,39 +500,9 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
                                             className="mg-v2-form-textarea"
                                         />
                                     </div>
-
-                                    <div className="mg-v2-modal-footer">
-                                        <button 
-                                            type="button"
-                                            className="mg-v2-button mg-v2-button--secondary"
-                                            onClick={() => setShowForm(false)}
-                                            disabled={loading}
-                                        >
-                                            <XCircle size={20} className="mg-v2-icon-inline" />
-                                            취소
-                                        </button>
-                                        <button 
-                                            type="button"
-                                            className="mg-v2-button mg-v2-button--primary"
-                                            onClick={handleSaveExpense}
-                                            disabled={loading}
-                                        >
-                                            {loading ? <div className="mg-loading">로딩중...</div> : (
-                                                <>
-                                                    <Edit2 size={20} className="mg-v2-icon-inline" />
-                                                    저장
-                                                </>
-                                            )}
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        </UnifiedModal>
                     )}
-                </div>
-            </div>
-        </div>,
-        portalTarget
+        </UnifiedModal>
     );
 };
 

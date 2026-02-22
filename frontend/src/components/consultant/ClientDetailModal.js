@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import ReactDOM from 'react-dom';
 import { User, XCircle, Edit3, Save, Mail, Phone, Home, MapPin, MessageSquare, AlertCircle, FileText } from 'lucide-react';
+import UnifiedModal from '../common/modals/UnifiedModal';
 // import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 // 내담자 상세 정보 모달 컴포넌트
 const ClientDetailModal = ({ client, isOpen, onClose, onSave }) => {
@@ -57,22 +57,40 @@ const ClientDetailModal = ({ client, isOpen, onClose, onSave }) => {
 
   if (!isOpen) return null;
 
-  const portalTarget = document.body || document.createElement('div');
-
-  return ReactDOM.createPortal(
-    <div className="mg-v2-modal-overlay" onClick={onClose}>
-      <div className="mg-v2-modal mg-v2-modal-large" onClick={(e) => e.stopPropagation()}>
-        <div className="mg-v2-modal-header">
-          <div className="mg-v2-modal-title-wrapper">
-            <User size={28} className="mg-v2-modal-title-icon" />
-            <h2 className="mg-v2-modal-title">내담자 상세 정보</h2>
-          </div>
-          <button className="mg-v2-modal-close" onClick={onClose} aria-label="닫기">
-            <XCircle size={24} />
-          </button>
-        </div>
-        
-        <div className="mg-v2-modal-body">
+  return (
+    <UnifiedModal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="내담자 상세 정보"
+      size="large"
+      backdropClick={true}
+      showCloseButton={true}
+      actions={
+        isEditing ? (
+          <>
+            <button className="mg-v2-button mg-v2-button--secondary" onClick={handleCancel}>
+              <XCircle size={20} className="mg-v2-icon-inline" />
+              취소
+            </button>
+            <button className="mg-v2-button mg-v2-button--primary" onClick={handleSave}>
+              <Save size={20} className="mg-v2-icon-inline" />
+              저장
+            </button>
+          </>
+        ) : (
+          <>
+            <button className="mg-v2-button mg-v2-button--secondary" onClick={onClose}>
+              <XCircle size={20} className="mg-v2-icon-inline" />
+              닫기
+            </button>
+            <button className="mg-v2-button mg-v2-button--primary" onClick={handleEdit}>
+              <Edit3 size={20} className="mg-v2-icon-inline" />
+              수정
+            </button>
+          </>
+        )
+      }
+    >
           <div className="mg-v2-form-sections">
             {/* 기본 정보 */}
             <div className="mg-v2-form-section">
@@ -270,36 +288,7 @@ const ClientDetailModal = ({ client, isOpen, onClose, onSave }) => {
               </div>
             </div>
           </div>
-        </div>
-        
-        <div className="mg-v2-modal-footer">
-          {isEditing ? (
-            <>
-              <button className="mg-v2-button mg-v2-button--secondary" onClick={handleCancel}>
-                <XCircle size={20} className="mg-v2-icon-inline" />
-                취소
-              </button>
-              <button className="mg-v2-button mg-v2-button--primary" onClick={handleSave}>
-                <Save size={20} className="mg-v2-icon-inline" />
-                저장
-              </button>
-            </>
-          ) : (
-            <>
-              <button className="mg-v2-button mg-v2-button--secondary" onClick={onClose}>
-                <XCircle size={20} className="mg-v2-icon-inline" />
-                닫기
-              </button>
-              <button className="mg-v2-button mg-v2-button--primary" onClick={handleEdit}>
-                <Edit3 size={20} className="mg-v2-icon-inline" />
-                수정
-              </button>
-            </>
-          )}
-        </div>
-      </div>
-    </div>,
-    portalTarget
+    </UnifiedModal>
   );
 };
 

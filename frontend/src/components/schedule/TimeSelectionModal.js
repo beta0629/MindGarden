@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-// // import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
-import UnifiedModal from '../../components/common/modals/UnifiedModal'; // 임시 비활성화
+import UnifiedModal from '../../components/common/modals/UnifiedModal';
 import CustomSelect from '../common/CustomSelect';
 
 /**
@@ -119,11 +118,30 @@ const TimeSelectionModal = ({
     }
 
     return (
-        <div className="mg-modal"
+        <UnifiedModal
             isOpen={isOpen}
             onClose={onClose}
             title="시간을 선택하세요"
             size="medium"
+            backdropClick={true}
+            showCloseButton={true}
+            className="mg-v2-ad-b0kla"
+            actions={
+                <>
+                    <button
+                        className="mg-btn mg-btn--secondary"
+                        onClick={onClose}
+                    >
+                        취소
+                    </button>
+                    <button
+                        className="mg-btn mg-btn--primary"
+                        onClick={handleConfirm}
+                    >
+                        확인
+                    </button>
+                </>
+            }
         >
             {/* 상담 유형 선택 */}
             <div className="time-selection-field">
@@ -179,23 +197,7 @@ const TimeSelectionModal = ({
                     })}
                 </div>
             </div>
-
-            {/* 액션 버튼 */}
-            <div className="mg-modal__actions mg-modal__actions--horizontal">
-                <button
-                    className="mg-btn mg-btn--secondary"
-                    onClick={onClose}
-                >
-                    취소
-                </button>
-                <button
-                    className="mg-btn mg-btn--primary"
-                    onClick={handleConfirm}
-                >
-                    확인
-                </button>
-            </div>
-        </div>
+        </UnifiedModal>
     );
 };
 

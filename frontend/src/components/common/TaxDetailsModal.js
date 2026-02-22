@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import ReactDOM from 'react-dom';
-import { Receipt, XCircle, User, Calendar, AlertCircle, RefreshCw } from 'lucide-react';
+import { Receipt, User, Calendar, AlertCircle, RefreshCw } from 'lucide-react';
+import UnifiedModal from './modals/UnifiedModal';
 // import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { SALARY_CSS_CLASSES, SALARY_MESSAGES, TAX_TYPE_LABELS } from '../../constants/salaryConstants';
 import { apiGet } from '../../utils/ajax';
@@ -90,22 +90,23 @@ const TaxDetailsModal = ({
 
   if (!isOpen) return null;
 
-  const portalTarget = document.body || document.createElement('div');
-
-  return ReactDOM.createPortal(
-    <div className="mg-v2-modal-overlay" onClick={onClose}>
-      <div className="mg-v2-modal mg-v2-modal-large" onClick={(e) => e.stopPropagation()}>
-        <div className="mg-v2-modal-header">
-          <div className="mg-v2-modal-title-wrapper">
-            <Receipt size={28} className="mg-v2-modal-title-icon" />
-            <h2 className="mg-v2-modal-title">세금 내역 상세</h2>
-          </div>
-          <button className="mg-v2-modal-close" onClick={onClose} aria-label="닫기">
-            <XCircle size={24} />
-          </button>
-        </div>
-
-        <div className="mg-v2-modal-body">
+  return (
+    <UnifiedModal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="세금 내역 상세"
+      size="large"
+      backdropClick={true}
+      showCloseButton={true}
+      actions={
+        <button
+          className="mg-v2-button mg-v2-button--primary"
+          onClick={onClose}
+        >
+          닫기
+        </button>
+      }
+    >
           {/* 상담사 정보 */}
           <div className="mg-v2-info-grid mg-v2-mb-lg">
             <div className="mg-v2-info-item">
@@ -180,20 +181,7 @@ const TaxDetailsModal = ({
               </div>
             </div>
           )}
-        </div>
-
-        <div className="mg-v2-modal-footer">
-          <button 
-            className="mg-v2-button mg-v2-button--primary"
-            onClick={onClose}
-          >
-            <XCircle size={20} className="mg-v2-icon-inline" />
-            닫기
-          </button>
-        </div>
-      </div>
-    </div>,
-    portalTarget
+    </UnifiedModal>
   );
 };
 

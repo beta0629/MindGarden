@@ -15,8 +15,9 @@ React/JavaScript/TypeScript 코드를 작성·수정할 때 이 스킬을 적용
 
 ### 모달
 
-- **MgModal 사용**: 새 모달은 `frontend/src/components/ui/MgModal` 사용. `size` prop으로 full/medium/small 지정.
-- 참조: `docs/standards/MODAL_STANDARD.md`
+- **UnifiedModal 사용**: 새 모달은 `frontend/src/components/common/modals/UnifiedModal.js` 사용. `size` prop으로 small/medium/large/fullscreen 지정.
+- MgModal, mg-v2-ad-modal, BaseModal, ErpModal 등 사용 금지.
+- 참조: `/core-solution-unified-modal` 스킬, `docs/standards/MODAL_STANDARD.md`
 
 ## When to Use
 

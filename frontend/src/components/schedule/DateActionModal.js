@@ -1,7 +1,7 @@
 import React from 'react';
+import { XCircle, FileText, Umbrella } from 'lucide-react';
+import UnifiedModal from '../common/modals/UnifiedModal';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
-import MgModal from '../ui/MgModal';
-import { Calendar, XCircle, FileText, Umbrella } from 'lucide-react';
 
 /**
  * 날짜 액션 선택 모달 컴포넌트
@@ -33,33 +33,25 @@ const DateActionModal = ({
 
   const canManageSchedule = ['ADMIN', 'BRANCH_SUPER_ADMIN', 'HQ_MASTER', 'SUPER_HQ_ADMIN'].includes(userRole);
 
-  const header = (
-    <div className="mg-v2-modal-title-wrapper">
-      <Calendar size={28} className="mg-v2-modal-title-icon" />
-      <h2 className="mg-v2-ad-modal__title">{formatDate(selectedDate)}</h2>
-    </div>
-  );
-
-  const footer = (
-    <button
-      type="button"
-      onClick={onClose}
-      className="mg-v2-button mg-v2-button--ghost mg-v2-w-full"
-    >
-      <XCircle size={20} className="mg-v2-icon-inline" />
-      취소
-    </button>
-  );
-
   return (
-    <MgModal
+    <UnifiedModal
       isOpen={isOpen}
       onClose={onClose}
+      title={formatDate(selectedDate)}
       size="small"
-      header={header}
-      footer={footer}
-      showCloseButton
-      closeOnOverlayClick
+      backdropClick={true}
+      showCloseButton={true}
+      className="mg-v2-ad-b0kla"
+      actions={
+        <button
+          type="button"
+          onClick={onClose}
+          className="mg-v2-button mg-v2-button--ghost mg-v2-w-full"
+        >
+          <XCircle size={20} className="mg-v2-icon-inline" />
+          취소
+        </button>
+      }
     >
       <p className="mg-v2-text-secondary mg-v2-mb-lg">원하는 작업을 선택하세요</p>
 
@@ -90,7 +82,7 @@ const DateActionModal = ({
           </button>
         </div>
       )}
-    </MgModal>
+    </UnifiedModal>
   );
 };
 

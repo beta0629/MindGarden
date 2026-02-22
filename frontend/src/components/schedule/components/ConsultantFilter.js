@@ -40,10 +40,10 @@ const ConsultantFilterNew = ({
 
     // 가용성 필터 옵션
     const availabilityOptions = [
-        { value: 'all', label: '전체', color: 'var(--color-text-secondary, #424245)' },
-        { value: 'available', label: '여유', color: 'var(--color-success, var(--mg-success-500))' },
-        { value: 'busy', label: '바쁨', color: 'var(--color-warning, var(--mg-warning-500))' },
-        { value: 'unavailable', label: '휴무', color: 'var(--color-danger, var(--mg-error-500))' }
+        { value: 'all', label: '전체', color: 'var(--mg-text-secondary)' },
+        { value: 'available', label: '여유', color: 'var(--mg-success-500)' },
+        { value: 'busy', label: '바쁨', color: 'var(--mg-warning-500)' },
+        { value: 'unavailable', label: '휴무', color: 'var(--mg-error-500)' }
     ];
 /**
      * 검색 입력 변경 핸들러

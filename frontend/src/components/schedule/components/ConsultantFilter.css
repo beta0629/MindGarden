@@ -1,11 +1,11 @@
 /* ===== ConsultantFilter 스타일 - 새로운 디자인 시스템 적용 ===== */
 
 .consultant-filter {
-  background: var(--color-bg-secondary, #F5F5F7);
+  background: var(--mg-gray-100);
   border-radius: var(--border-radius-md, 12px);
   padding: var(--spacing-md, 1rem);
-  border: 1px solid var(--color-border-secondary, #E8E8ED);
-  box-shadow: var(--shadow-glass, 0 2px 8px rgba(0, 0, 0, 0.08));
+  border: 1px solid var(--mg-gray-200);
+  box-shadow: var(--cs-shadow-soft);
   backdrop-filter: var(--ios-backdrop-blur-sm);
   -webkit-backdrop-filter: var(--ios-backdrop-blur-sm);
 }
@@ -41,39 +41,39 @@
 .consultant-filter-label {
   font-size: var(--font-size-sm, 0.875rem);
   font-weight: var(--font-weight-medium, 500);
-  color: var(--color-text-secondary, #424245);
+  color: var(--mg-text-secondary);
   margin: 0;
 }
 
 .consultant-filter-input {
   padding: var(--spacing-sm, 0.75rem) var(--spacing-md, 1rem);
-  border: 1px solid var(--color-border-primary, #D1D1D6);
+  border: 1px solid var(--mg-gray-300);
   border-radius: var(--border-radius-md, 12px);
   font-size: var(--font-size-base, 1rem);
-  background: var(--color-bg-primary, #FAFAFA);
-  color: var(--color-text-primary, #1D1D1F);
+  background: var(--mg-white);
+  color: var(--mg-text-primary);
   transition: all 0.2s ease;
   width: 100%;
 }
 
 .consultant-filter-input:focus {
   outline: none;
-  border-color: var(--color-primary, var(--mg-primary-500));
-  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
-  background: var(--color-bg-primary, #FAFAFA);
+  border-color: var(--mg-primary-500);
+  box-shadow: 0 0 0 3px var(--mg-primary-100);
+  background: var(--mg-white);
 }
 
 .consultant-filter-input::placeholder {
-  color: var(--color-text-muted, #8E8E93);
+  color: var(--mg-gray-500);
 }
 
 .consultant-filter-select {
   padding: var(--spacing-sm, 0.75rem) var(--spacing-md, 1rem);
-  border: 1px solid var(--color-border-primary, #D1D1D6);
+  border: 1px solid var(--mg-gray-300);
   border-radius: var(--border-radius-md, 12px);
   font-size: var(--font-size-base, 1rem);
-  background: var(--color-bg-primary, #FAFAFA);
-  color: var(--color-text-primary, #1D1D1F);
+  background: var(--mg-white);
+  color: var(--mg-text-primary);
   cursor: pointer;
   transition: all 0.2s ease;
   width: 100%;
@@ -81,16 +81,16 @@
 
 .consultant-filter-select:focus {
   outline: none;
-  border-color: var(--color-primary, var(--mg-primary-500));
-  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+  border-color: var(--mg-primary-500);
+  box-shadow: 0 0 0 3px var(--mg-primary-100);
 }
 
 .consultant-filter-reset-button {
   padding: var(--spacing-sm, 0.75rem) var(--spacing-md, 1rem);
-  border: 1px solid var(--color-border-secondary, #E8E8ED);
+  border: 1px solid var(--mg-gray-200);
   border-radius: var(--border-radius-md, 12px);
-  background: var(--color-bg-primary, #FAFAFA);
-  color: var(--color-text-secondary, #424245);
+  background: var(--mg-white);
+  color: var(--mg-text-secondary);
   font-size: var(--font-size-sm, 0.875rem);
   cursor: pointer;
   transition: all 0.2s ease;
@@ -101,21 +101,21 @@
 }
 
 .consultant-filter-reset-button:hover {
-  background: var(--color-bg-accent, #E8E8ED);
-  color: var(--color-text-primary, #1D1D1F);
-  border-color: var(--color-border-primary, #D1D1D6);
+  background: var(--mg-gray-200);
+  color: var(--mg-text-primary);
+  border-color: var(--mg-gray-300);
 }
 
 .consultant-filter-count {
   font-size: var(--font-size-sm, 0.875rem);
-  color: var(--color-text-secondary, #424245);
+  color: var(--mg-text-secondary);
   font-weight: var(--font-weight-medium, 500);
   align-self: flex-end;
   margin-left: auto;
 }
 
 .consultant-filter-availability {
-  border-top: 1px solid var(--color-border-secondary, #E8E8ED);
+  border-top: 1px solid var(--mg-gray-200);
   padding-top: var(--spacing-md, 1rem);
 }
 
@@ -134,10 +134,10 @@
 
 .consultant-filter-availability-btn {
   padding: var(--spacing-xs, 0.5rem) var(--spacing-sm, 0.75rem);
-  border: 1px solid var(--color-border-primary, #D1D1D6);
+  border: 1px solid var(--mg-gray-300);
   border-radius: var(--border-radius-sm, 8px);
-  background: var(--color-bg-primary, #FAFAFA);
-  color: var(--color-text-secondary, #424245);
+  background: var(--mg-white);
+  color: var(--mg-text-secondary);
   font-size: var(--font-size-xs, 0.75rem);
   cursor: pointer;
   transition: all 0.2s ease;
@@ -148,14 +148,14 @@
 }
 
 .consultant-filter-availability-btn:hover {
-  background: var(--color-bg-accent, #E8E8ED);
-  border-color: var(--color-border-accent, #A1A1A6);
+  background: var(--mg-gray-200);
+  border-color: var(--mg-gray-500);
 }
 
 .consultant-filter-availability-btn.active {
-  background: var(--color-primary, var(--mg-primary-500));
-  color: var(--color-text-inverse, var(--mg-white));
-  border-color: var(--color-primary, var(--mg-primary-500));
+  background: var(--mg-primary-500);
+  color: var(--mg-white);
+  border-color: var(--mg-primary-500);
 }
 
 .consultant-filter-availability-dot {
@@ -168,7 +168,7 @@
 
 .consultant-filter-availability-btn.active .consultant-filter-availability-dot {
   opacity: 1;
-  background: var(--color-text-inverse, var(--mg-white));
+  background: var(--mg-white);
 }
 
 /* 반응형 디자인 */

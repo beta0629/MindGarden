@@ -14,7 +14,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 // import Card from '../ui/Card/Card'; // 임시 비활성화
 import MGButton from '../../components/common/MGButton'; // 임시 비활성화
 import { ACADEMY_API } from '../../constants/academy';
@@ -217,7 +218,7 @@ const AcademyRegister = () => {
   };
 
   return (
-    <SimpleLayout>
+    <AdminCommonLayout title="학원 등록" menuItems={DEFAULT_MENU_ITEMS}>
       <div className="academy-register">
         <div className="mg-card">
           <div className="mg-card__header">
@@ -447,7 +448,7 @@ const AcademyRegister = () => {
           </div>
         </div>
       </div>
-    </SimpleLayout>
+    </AdminCommonLayout>
   );
 };
 

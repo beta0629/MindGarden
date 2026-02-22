@@ -1,5 +1,6 @@
 import React from 'react';
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import '../../styles/main.css';
 import './ComingSoon.css';
 
@@ -18,7 +19,7 @@ import './ComingSoon.css';
  */
 const ComingSoon = ({ title = "준비중", description = "해당 기능은 현재 개발 중입니다." }) => {
   return (
-    <SimpleLayout>
+    <AdminCommonLayout title="준비 중" menuItems={DEFAULT_MENU_ITEMS}>
       <div className="coming-soon-container">
         <div className="coming-soon-content">
           <div className="coming-soon-icon">
@@ -49,7 +50,7 @@ const ComingSoon = ({ title = "준비중", description = "해당 기능은 현�
           </button>
         </div>
       </div>
-    </SimpleLayout>
+    </AdminCommonLayout>
   );
 };
 

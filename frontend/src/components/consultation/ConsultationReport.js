@@ -4,7 +4,8 @@ import 'bootstrap-icons/font/bootstrap-icons.css';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet } from '../../utils/ajax';
 import { DASHBOARD_API } from '../../constants/api';
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import './ConsultationReport.css';
 
 const ConsultationReport = () => {
@@ -311,30 +312,30 @@ const ConsultationReport = () => {
 
   if (sessionLoading) {
     return (
-      <SimpleLayout>
+      <AdminCommonLayout title="상담 리포트" menuItems={DEFAULT_MENU_ITEMS}>
         <div className="consultation-report-page">
           <div className="loading-container">
             <div className="mg-loading">로딩중...</div>
           </div>
         </div>
-      </SimpleLayout>
+      </AdminCommonLayout>
     );
   }
 
   if (loading) {
     return (
-      <SimpleLayout>
+      <AdminCommonLayout title="상담 리포트" menuItems={DEFAULT_MENU_ITEMS}>
         <div className="consultation-report-page">
           <div className="loading-container">
             <div className="mg-loading">로딩중...</div>
           </div>
         </div>
-      </SimpleLayout>
+      </AdminCommonLayout>
     );
   }
 
   return (
-    <SimpleLayout>
+    <AdminCommonLayout title="상담 리포트" menuItems={DEFAULT_MENU_ITEMS}>
       <div className="consultation-report-page">
         <div className="page-header">
           <div className="header-content">
@@ -528,7 +529,7 @@ const ConsultationReport = () => {
           )}
         </div>
       </div>
-    </SimpleLayout>
+    </AdminCommonLayout>
   );
 };
 

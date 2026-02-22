@@ -15,7 +15,8 @@ import '../../styles/dashboard-common-v3.css';
 import './CommonDashboard.css';
 import { DASHBOARD_DEFAULT_DATA, DASHBOARD_ERROR_MESSAGES } from '../../constants/dashboard';
 import { WIDGET_CONSTANTS } from '../../constants/widgetConstants';
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import WelcomeSection from './WelcomeSection';
 import WelcomeWidget from './widgets/WelcomeWidget';
 import SummaryPanels from './SummaryPanels';
@@ -736,7 +737,7 @@ const CommonDashboard = ({ user: propUser }) => {
   }
 
   return (
-    <SimpleLayout title="대시보드" loading={sessionLoading} loadingText="대시보드를 불러오는 중...">
+    <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="대시보드" loading={sessionLoading} loadingText="대시보드를 불러오는 중...">
       <div className={`mg-dashboard-layout dashboard-container ${user?.role?.toLowerCase() || ''}`}>
         
         {/* 웰컴 섹션 - 위젯으로 업그레이드 */}
@@ -1104,7 +1105,7 @@ const CommonDashboard = ({ user: propUser }) => {
           </div>
         )}
       </div>
-    </SimpleLayout>
+    </AdminCommonLayout>
   );
 };
 

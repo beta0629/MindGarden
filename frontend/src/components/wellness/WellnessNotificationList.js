@@ -4,7 +4,8 @@ import { Calendar, Heart, AlertCircle, TrendingUp, Bell } from 'lucide-react';
 import { apiGet } from '../../utils/ajax';
 import { useSession } from '../../contexts/SessionContext';
 import notificationManager from '../../utils/notification';
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { CLIENT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import './WellnessNotificationList.css';
 
@@ -84,15 +85,15 @@ const WellnessNotificationList = () => {
 
   if (loading) {
     return (
-      <SimpleLayout title="웰니스 알림">
+      <AdminCommonLayout title="웰니스 알림" menuItems={CLIENT_MENU_ITEMS}>
         <UnifiedLoading type="page" text="웰니스 알림을 불러오는 중..." />
-      </SimpleLayout>
+      </AdminCommonLayout>
     );
   }
 
   if (error) {
     return (
-      <SimpleLayout title="웰니스 알림">
+      <AdminCommonLayout title="웰니스 알림" menuItems={CLIENT_MENU_ITEMS}>
         <div className="wellness-notification-list">
           <div className="wellness-notification-empty">
             <div className="empty-icon">
@@ -105,12 +106,12 @@ const WellnessNotificationList = () => {
             </button>
           </div>
         </div>
-      </SimpleLayout>
+      </AdminCommonLayout>
     );
   }
 
   return (
-    <SimpleLayout title="웰니스 알림">
+    <AdminCommonLayout title="웰니스 알림" menuItems={CLIENT_MENU_ITEMS}>
       <div className="wellness-notification-list">
         {/* 헤더 */}
         <div className="wellness-list-header">
@@ -206,7 +207,7 @@ const WellnessNotificationList = () => {
           </div>
         )}
       </div>
-    </SimpleLayout>
+    </AdminCommonLayout>
   );
 };
 

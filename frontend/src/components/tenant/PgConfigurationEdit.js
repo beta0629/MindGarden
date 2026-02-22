@@ -3,7 +3,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
 import { getPgConfigurationDetail, updatePgConfiguration } from '../../utils/pgApi';
 import { showNotification } from '../../utils/notification';
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import PgConfigurationForm from './PgConfigurationForm';
 
@@ -66,19 +67,19 @@ const PgConfigurationEdit = () => {
   
   if (sessionLoading || loading) {
     return (
-      <SimpleLayout>
+      <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="PG 설정 수정">
         <UnifiedLoading type="page" text="PG 설정을 불러오는 중..." />
-      </SimpleLayout>
+      </AdminCommonLayout>
     );
   }
   
   if (!config) {
     return (
-      <SimpleLayout>
+      <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="PG 설정 수정">
         <div className="error-message">
           <p>PG 설정을 찾을 수 없습니다.</p>
         </div>
-      </SimpleLayout>
+      </AdminCommonLayout>
     );
   }
   
@@ -90,7 +91,7 @@ const PgConfigurationEdit = () => {
   }
   
   return (
-    <SimpleLayout>
+    <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="PG 설정 수정">
       <div className="pg-config-edit-page">
         <PgConfigurationForm
           tenantId={tenantId}
@@ -100,7 +101,7 @@ const PgConfigurationEdit = () => {
           mode="edit"
         />
       </div>
-    </SimpleLayout>
+    </AdminCommonLayout>
   );
 };
 

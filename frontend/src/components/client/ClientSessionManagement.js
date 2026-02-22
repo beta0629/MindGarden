@@ -4,7 +4,8 @@ import { apiGet } from '../../utils/ajax';
 import { redirectToDynamicDashboard } from '../../utils/dashboardUtils';
 import { sessionManager } from '../../utils/sessionManager';
 import { useSession } from '../../contexts/SessionContext';
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { CLIENT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import UnifiedLoading from '../common/UnifiedLoading';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import './ClientSessionManagement.css';
@@ -108,15 +109,15 @@ const ClientSessionManagement = () => {
 
   if (isLoading) {
     return (
-      <SimpleLayout title="회기 관리">
-        <UnifiedLoading type="page" text="회기 데이터를 불러오는 중..." />
-      </SimpleLayout>
+      <AdminCommonLayout menuItems={CLIENT_MENU_ITEMS} title="회기 관리" loading={true} loadingText="회기 데이터를 불러오는 중...">
+        <div />
+      </AdminCommonLayout>
     );
   }
 
   if (error) {
     return (
-      <SimpleLayout title="회기 관리">
+      <AdminCommonLayout menuItems={CLIENT_MENU_ITEMS} title="회기 관리">
         <div className="client-session-management">
           <div className="error-container">
             <div className="error-icon">
@@ -132,13 +133,13 @@ const ClientSessionManagement = () => {
             </button>
           </div>
         </div>
-      </SimpleLayout>
+      </AdminCommonLayout>
     );
   }
 
   if (!sessionData || sessionData.mappings.length === 0) {
     return (
-      <SimpleLayout title="회기 관리">
+      <AdminCommonLayout menuItems={CLIENT_MENU_ITEMS} title="회기 관리">
         <div className="client-session-management">
           <div className="no-data-container">
             <div className="no-data-icon">
@@ -154,12 +155,12 @@ const ClientSessionManagement = () => {
             </button>
           </div>
         </div>
-      </SimpleLayout>
+      </AdminCommonLayout>
     );
   }
 
   return (
-    <SimpleLayout title="회기 관리">
+    <AdminCommonLayout menuItems={CLIENT_MENU_ITEMS} title="회기 관리">
       <div className="client-session-management">
         {/* 페이지 헤드라인 */}
         <div className="client-session-management-header">
@@ -353,7 +354,7 @@ const ClientSessionManagement = () => {
           )}
         </div>
       </div>
-    </SimpleLayout>
+    </AdminCommonLayout>
   );
 };
 

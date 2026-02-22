@@ -3,7 +3,8 @@ import { useSession } from '../../contexts/SessionContext';
 import { apiGet } from '../../utils/ajax';
 import { useNavigate } from 'react-router-dom';
 import './ConsultantRecords.css';
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { CONSULTANT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 
 const ConsultantRecords = () => {
   const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
@@ -177,30 +178,28 @@ const ConsultantRecords = () => {
 
   if (sessionLoading) {
     return (
-      <SimpleLayout title="상담 기록">
-        <div className="consultant-records-loading">
+      <AdminCommonLayout menuItems={CONSULTANT_MENU_ITEMS} title="상담 기록" loading={true} loadingText="세션 정보를 불러오는 중...">
+        <div />
           <div className="spinner-border text-primary consultant-records-spinner" role="status">
             <span className="visually-hidden">로딩 중...</span>
           </div>
-          <p className="consultant-records-loading-text">세션 정보를 불러오는 중...</p>
-        </div>
-      </SimpleLayout>
+      </AdminCommonLayout>
     );
   }
 
   if (!isLoggedIn) {
     return (
-      <SimpleLayout title="상담 기록">
+      <AdminCommonLayout menuItems={CONSULTANT_MENU_ITEMS} title="상담 기록">
         <div className="consultant-records-login-required">
           <h3>로그인이 필요합니다.</h3>
           <p>상담 기록을 보려면 로그인해주세요.</p>
         </div>
-      </SimpleLayout>
+      </AdminCommonLayout>
     );
   }
 
   return (
-    <SimpleLayout title="상담 기록">
+    <AdminCommonLayout menuItems={CONSULTANT_MENU_ITEMS} title="상담 기록">
       <div className="consultant-records-container">
       {/* 헤더 */}
       <div className="records-header">
@@ -390,7 +389,7 @@ const ConsultantRecords = () => {
         </div>
       )}
       </div>
-    </SimpleLayout>
+    </AdminCommonLayout>
   );
 };
 

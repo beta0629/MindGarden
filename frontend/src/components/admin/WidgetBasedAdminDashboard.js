@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import UnifiedLoading from '../common/UnifiedLoading';
 import notificationManager from '../../utils/notification';
 import { useSession } from '../../contexts/SessionContext';
@@ -316,15 +317,15 @@ const WidgetBasedAdminDashboard = () => {
 
     if (sessionLoading || loading) {
         return (
-            <SimpleLayout title="위젯 기반 대시보드" loading={true} loadingText="대시보드를 불러오는 중...">
+            <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="위젯 기반 대시보드" loading={true} loadingText="대시보드를 불러오는 중...">
                 <UnifiedLoading type="page" text="대시보드를 불러오는 중..." />
-            </SimpleLayout>
+            </AdminCommonLayout>
         );
     }
 
     if (error) {
         return (
-            <SimpleLayout title="위젯 기반 대시보드">
+            <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="위젯 기반 대시보드">
                 <div className="error-container">
                     <h2>오류 발생</h2>
                     <p>{error}</p>
@@ -337,12 +338,12 @@ const WidgetBasedAdminDashboard = () => {
                         </button>
                     </div>
                 </div>
-            </SimpleLayout>
+            </AdminCommonLayout>
         );
     }
 
     return (
-        <SimpleLayout title="위젯 기반 대시보드" loading={false}>
+        <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="위젯 기반 대시보드" loading={false}>
             <div className="widget-based-dashboard">
                 {/* 헤더 */}
                 <div className="dashboard-header">
@@ -413,7 +414,7 @@ const WidgetBasedAdminDashboard = () => {
                     </div>
                 </div>
             </div>
-        </SimpleLayout>
+        </AdminCommonLayout>
     );
 };
 

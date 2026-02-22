@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 // import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { ERP_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import ErpCard from './common/ErpCard';
 import ErpButton from './common/ErpButton';
 import ErpHeader from './common/ErpHeader';
@@ -163,11 +164,15 @@ const PurchaseRequestForm = () => {
   };
 
   if (loading && items.length === 0) {
-    return <div className="mg-loading">로딩중...</div>;
+    return (
+      <AdminCommonLayout menuItems={ERP_MENU_ITEMS} title="구매 요청" loading={true} loadingText="로딩중...">
+        <div />
+      </AdminCommonLayout>
+    );
   }
 
   return (
-    <SimpleLayout>
+    <AdminCommonLayout menuItems={ERP_MENU_ITEMS} title="구매 요청">
       <div className="purchase-request-form-container">
         <ErpHeader
           title="구매 요청"
@@ -539,7 +544,7 @@ const PurchaseRequestForm = () => {
         </div>
       </ErpModal>
       </div>
-    </SimpleLayout>
+    </AdminCommonLayout>
   );
 };
 

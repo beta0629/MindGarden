@@ -16,7 +16,8 @@ import {
 import { apiGet } from '../../utils/ajax';
 import { getDashboardPath } from '../../utils/session';
 import { useSession } from '../../contexts/SessionContext';
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { CLIENT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import notificationManager from '../../utils/notification';
 import '../../styles/unified-design-tokens.css';
@@ -141,15 +142,15 @@ const ClientPaymentHistory = () => {
 
   if (isLoading) {
     return (
-      <SimpleLayout>
-        <UnifiedLoading type="page" text="결제 이력을 불러오는 중..." />
-      </SimpleLayout>
+      <AdminCommonLayout menuItems={CLIENT_MENU_ITEMS} title="결제 내역" loading={true} loadingText="결제 이력을 불러오는 중...">
+        <div />
+      </AdminCommonLayout>
     );
   }
 
   if (error) {
     return (
-      <SimpleLayout>
+      <AdminCommonLayout menuItems={CLIENT_MENU_ITEMS} title="결제 내역">
         <div className="client-payment-history">
           <div className="payment-error">
             <div className="payment-error__icon">
@@ -165,13 +166,13 @@ const ClientPaymentHistory = () => {
             </button>
           </div>
         </div>
-      </SimpleLayout>
+      </AdminCommonLayout>
     );
   }
 
   if (!paymentData || paymentData.mappings.length === 0) {
     return (
-      <SimpleLayout>
+      <AdminCommonLayout menuItems={CLIENT_MENU_ITEMS} title="결제 내역">
         <div className="client-payment-history">
           <div className="payment-empty">
             <div className="payment-empty__icon">
@@ -190,12 +191,12 @@ const ClientPaymentHistory = () => {
             </button>
           </div>
         </div>
-      </SimpleLayout>
+      </AdminCommonLayout>
     );
   }
 
   return (
-    <SimpleLayout>
+    <AdminCommonLayout menuItems={CLIENT_MENU_ITEMS} title="결제 내역">
       <div className="client-payment-history">
         {/* 페이지 헤더 */}
         <div className="payment-header">
@@ -362,7 +363,7 @@ const ClientPaymentHistory = () => {
           </div>
         </div>
       </div>
-    </SimpleLayout>
+    </AdminCommonLayout>
   );
 };
 

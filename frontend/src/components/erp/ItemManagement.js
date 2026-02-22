@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { ERP_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import ErpCard from './common/ErpCard';
 import ErpButton from './common/ErpButton';
 import './ItemManagement.css';
@@ -235,18 +236,14 @@ const ItemManagement = () => {
 
   if (loading && items.length === 0) {
     return (
-      <SimpleLayout title="아이템 관리">
-        <UnifiedLoading 
-          type="page"
-          text="데이터를 불러오는 중..."
-          variant="pulse"
-        />
-      </SimpleLayout>
+      <AdminCommonLayout menuItems={ERP_MENU_ITEMS} title="아이템 관리" loading={true} loadingText="데이터를 불러오는 중...">
+        <div />
+      </AdminCommonLayout>
     );
   }
 
   return (
-    <SimpleLayout>
+    <AdminCommonLayout menuItems={ERP_MENU_ITEMS} title="아이템 관리">
       <div className="item-management-container">
         <ErpHeader
           title="아이템 관리"
@@ -612,7 +609,7 @@ const ItemManagement = () => {
           </form>
         </ErpModal>
       </div>
-    </SimpleLayout>
+    </AdminCommonLayout>
   );
 };
 

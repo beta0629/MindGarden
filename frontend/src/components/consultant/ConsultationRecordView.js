@@ -3,7 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet } from '../../utils/ajax';
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { CONSULTANT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import '../../styles/unified-design-tokens.css';
 
 /**
@@ -54,15 +55,15 @@ const ConsultationRecordView = () => {
 
   if (loading) {
     return (
-      <SimpleLayout title="상담기록 조회">
-        <div className="mg-loading">로딩중...</div>
-      </SimpleLayout>
+      <AdminCommonLayout menuItems={CONSULTANT_MENU_ITEMS} title="상담기록 조회" loading={true} loadingText="로딩중...">
+        <div />
+      </AdminCommonLayout>
     );
   }
 
   if (error) {
     return (
-      <SimpleLayout title="상담기록 조회">
+      <AdminCommonLayout menuItems={CONSULTANT_MENU_ITEMS} title="상담기록 조회">
         <div className="mg-v2-empty-state">
           <div className="mg-v2-empty-state-icon">⚠️</div>
           <div className="mg-v2-empty-state-text">{error}</div>
@@ -74,13 +75,13 @@ const ConsultationRecordView = () => {
             목록으로 돌아가기
           </button>
         </div>
-      </SimpleLayout>
+      </AdminCommonLayout>
     );
   }
 
   if (!record) {
     return (
-      <SimpleLayout title="상담기록 조회">
+      <AdminCommonLayout menuItems={CONSULTANT_MENU_ITEMS} title="상담기록 조회">
         <div className="mg-v2-empty-state">
           <div className="mg-v2-empty-state-icon">📋</div>
           <div className="mg-v2-empty-state-text">상담기록을 찾을 수 없습니다.</div>
@@ -92,12 +93,12 @@ const ConsultationRecordView = () => {
             목록으로 돌아가기
           </button>
         </div>
-      </SimpleLayout>
+      </AdminCommonLayout>
     );
   }
 
   return (
-    <SimpleLayout title="상담기록 조회">
+    <AdminCommonLayout menuItems={CONSULTANT_MENU_ITEMS} title="상담기록 조회">
       <div className="mg-v2-record-view">
         {/* 기본 정보 카드 */}
         <div className="mg-v2-card">
@@ -163,7 +164,7 @@ const ConsultationRecordView = () => {
           </button>
         </div>
       </div>
-    </SimpleLayout>
+    </AdminCommonLayout>
   );
 };
 

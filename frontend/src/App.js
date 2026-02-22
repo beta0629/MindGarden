@@ -48,7 +48,8 @@ import MindGardenDesignSystemShowcase from './pages/MindGardenDesignSystemShowca
 import ComponentTestPage from './pages/ComponentTestPage';
 import FilterSearchShowcase from './components/ui/FilterSearch/FilterSearchShowcase';
 import AdminDashboardSample from './pages/AdminDashboardSample';
-import SimpleLayout from './components/layout/SimpleLayout';
+import AdminCommonLayout from './components/layout/AdminCommonLayout';
+import { DEFAULT_MENU_ITEMS } from './components/dashboard-v2/constants/menuItems';
 import AcademyDashboard from './components/academy/AcademyDashboard';
 import AcademyRegister from './components/academy/AcademyRegister';
 // 대시보드 컴포넌트 지연 로드 (로그인 직후 초기화 순서 오류 방지)
@@ -385,9 +386,9 @@ function AppContent() {
             
             {/* 권한 관리 */}
             <Route path="/admin/permissions" element={
-              <SimpleLayout>
+              <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="권한 관리">
                 <PermissionManagement />
-              </SimpleLayout>
+              </AdminCommonLayout>
             } />
             
             {/* 관리자 전용 메뉴 시스템 (관리자 역할 접근) */}
@@ -501,28 +502,28 @@ function AppContent() {
             <Route path="/hq/erp/reports" element={<FinancialReports />} />
             
             <Route path="/admin/schedules" element={
-              <SimpleLayout>
+              <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="스케줄">
                 <UnifiedScheduleComponent 
                   userRole={user?.role || 'ADMIN'}
                   userId={user?.id}
                 />
-              </SimpleLayout>
+              </AdminCommonLayout>
             } />
             <Route path="/admin/statistics" element={
-              <SimpleLayout>
+              <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="통계">
                 <StatisticsDashboard 
                   userRole={user?.role || 'ADMIN'}
                   userId={user?.id}
                 />
-              </SimpleLayout>
+              </AdminCommonLayout>
             } />
             <Route path="/admin/statistics-dashboard" element={
-              <SimpleLayout>
+              <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="통계 대시보드">
                 <StatisticsDashboard 
                   userRole={user?.role || 'ADMIN'}
                   userId={user?.id}
                 />
-              </SimpleLayout>
+              </AdminCommonLayout>
             } />
             
             
@@ -609,9 +610,9 @@ function AppContent() {
             
             {/* 지점 관리 라우트 (준비중 - 브랜치 코드 제거 정책에 따라 ComingSoon으로 처리) */}
             <Route path="/admin/branches" element={
-              <SimpleLayout>
+              <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="지점 관리">
                 <BranchManagement />
-              </SimpleLayout>
+              </AdminCommonLayout>
             } />
             <Route path="/admin/branch-create" element={
               <ComingSoon 

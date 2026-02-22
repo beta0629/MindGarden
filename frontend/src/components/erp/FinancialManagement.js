@@ -7,7 +7,8 @@ import { apiGet } from '../../utils/ajax';
 import { getCodeLabel } from '../../utils/commonCodeUtils';
 import notificationManager from '../../utils/notification';
 import ConfirmModal from '../common/ConfirmModal';
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { ERP_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import { getStatusLabel } from '../../utils/colorUtils';
 import FinancialCalendarView from './FinancialCalendarView';
 import './ErpCommon.css';
@@ -334,25 +335,25 @@ const FinancialManagement = () => {
 
   if (sessionLoading) {
     return (
-      <SimpleLayout title="재무 관리">
+      <AdminCommonLayout menuItems={ERP_MENU_ITEMS} title="재무 관리">
         <UnifiedLoading type="page" text="세션 정보를 불러오는 중..." />
-      </SimpleLayout>
+      </AdminCommonLayout>
     );
   }
 
   if (!isLoggedIn) {
     return (
-      <SimpleLayout title={`재무 관리${dashboardStats.branchName ? ' - ' + dashboardStats.branchName : ''}`}>
+      <AdminCommonLayout menuItems={ERP_MENU_ITEMS} title={`재무 관리${dashboardStats.branchName ? ' - ' + dashboardStats.branchName : ''}`}>
         <div className="erp-error">
           <h3>로그인이 필요합니다.</h3>
           <p>재무 관리 기능을 사용하려면 로그인해주세요.</p>
         </div>
-      </SimpleLayout>
+      </AdminCommonLayout>
     );
   }
 
   return (
-    <SimpleLayout title={`재무 관리${dashboardStats.branchName ? ' - ' + dashboardStats.branchName : ''}`}>
+    <AdminCommonLayout menuItems={ERP_MENU_ITEMS} title={`재무 관리${dashboardStats.branchName ? ' - ' + dashboardStats.branchName : ''}`}>
       <div className="erp-system">
         <div className="erp-container">
         {/* 헤더 */}
@@ -880,7 +881,7 @@ const FinancialManagement = () => {
         message={confirmModal.message}
         type={confirmModal.type}
       />
-    </SimpleLayout>
+    </AdminCommonLayout>
   );
 };
 

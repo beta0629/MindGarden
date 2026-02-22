@@ -4,7 +4,8 @@ import { useSession } from '../../contexts/SessionContext';
 import { apiGet, apiPost } from '../../utils/ajax';
 // import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import notificationManager from '../../utils/notification';
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { CONSULTANT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 
 /**
  * 상담사 메시지 전송 화면
@@ -409,29 +410,27 @@ const ConsultantMessageScreen = () => {
 
   if (loading) {
     return (
-      <SimpleLayout title="메시지 전송">
-        <div className="consultant-message-screen-loading">
-          <div className="mg-loading">로딩중...</div>
-        </div>
-      </SimpleLayout>
+      <AdminCommonLayout menuItems={CONSULTANT_MENU_ITEMS} title="메시지" loading={true} loadingText="로딩중...">
+        <div />
+      </AdminCommonLayout>
     );
   }
 
   if (!client || !consultation) {
     return (
-      <SimpleLayout title="메시지 전송">
+      <AdminCommonLayout menuItems={CONSULTANT_MENU_ITEMS} title="메시지">
         <div className="mg-dashboard-layout">
           <div className="mg-dashboard-header">
             <h1 className="mg-dashboard-title">메시지 전송</h1>
             <p className="mg-dashboard-subtitle">상담 정보를 불러올 수 없습니다.</p>
           </div>
         </div>
-      </SimpleLayout>
+      </AdminCommonLayout>
     );
   }
 
   return (
-    <SimpleLayout title="메시지 전송">
+    <AdminCommonLayout menuItems={CONSULTANT_MENU_ITEMS} title="메시지">
       <div className="mg-dashboard-layout">
       {/* 헤더 */}
       <div className="mg-dashboard-header">
@@ -585,7 +584,7 @@ const ConsultantMessageScreen = () => {
         </div>
       </div>
       </div>
-    </SimpleLayout>
+    </AdminCommonLayout>
   );
 };
 

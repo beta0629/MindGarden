@@ -3,7 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
 import notificationManager from '../../utils/notification';
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { CLIENT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import './MindfulnessGuide.css';
 
 const MindfulnessGuide = () => {
@@ -219,7 +220,7 @@ const MindfulnessGuide = () => {
   }
 
   return (
-    <SimpleLayout title="마음건강 가이드">
+    <AdminCommonLayout title="마음챙김 가이드" menuItems={CLIENT_MENU_ITEMS}>
       <div className="mindfulness-guide">
         <div className="mindfulness-guide-header mg-card">
           <div className="mindfulness-guide-header-content">
@@ -291,7 +292,7 @@ const MindfulnessGuide = () => {
           </div>
         </div>
       </div>
-    </SimpleLayout>
+    </AdminCommonLayout>
   );
 };
 

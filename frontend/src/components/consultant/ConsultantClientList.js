@@ -2,7 +2,8 @@ import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useSession } from '../../contexts/SessionContext';
 import { useParams, useNavigate } from 'react-router-dom';
 import { apiGet, apiPost } from '../../utils/ajax';
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { CONSULTANT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import ClientDetailModal from './ClientDetailModal';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import notificationManager from '../../utils/notification';
@@ -311,24 +312,24 @@ const ConsultantClientList = () => {
 
   if (sessionLoading) {
     return (
-      <SimpleLayout title="내담자 목록">
+      <AdminCommonLayout title="내담자 목록" menuItems={CONSULTANT_MENU_ITEMS}>
         <UnifiedLoading type="page" text="내담자 목록을 불러오는 중..." />
-      </SimpleLayout>
+      </AdminCommonLayout>
     );
   }
 
   if (!isLoggedIn) {
     return (
-      <SimpleLayout title="내담자 목록">
+      <AdminCommonLayout title="내담자 목록" menuItems={CONSULTANT_MENU_ITEMS}>
         <div className="consultant-client-list-login-required">
           <h3>로그인이 필요합니다.</h3>
         </div>
-      </SimpleLayout>
+      </AdminCommonLayout>
     );
   }
 
   return (
-    <SimpleLayout title="내담자 목록">
+    <AdminCommonLayout title="내담자 목록" menuItems={CONSULTANT_MENU_ITEMS}>
       <div className="consultant-client-list-container">
       {/* 헤더 */}
       <div className="client-list-header">
@@ -559,7 +560,7 @@ const ConsultantClientList = () => {
         />
       )}
       </div>
-    </SimpleLayout>
+    </AdminCommonLayout>
   );
 };
 

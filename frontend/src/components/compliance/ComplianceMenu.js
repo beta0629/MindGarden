@@ -1,7 +1,8 @@
 // import React from 'react';
 import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { Link } from 'react-router-dom';
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import './ComplianceMenu.css';
 
 /**
@@ -84,7 +85,7 @@ const ComplianceMenu = () => {
     ];
 
     return (
-        <SimpleLayout title="컴플라이언스 관리">
+        <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="컴플라이언스 관리">
             <div className="compliance-menu">
             <div className="menu-header">
                 <h1>⚖️ 컴플라이언스 관리</h1>
@@ -145,7 +146,7 @@ const ComplianceMenu = () => {
                 </div>
             </div>
             </div>
-        </SimpleLayout>
+        </AdminCommonLayout>
     );
 };
 

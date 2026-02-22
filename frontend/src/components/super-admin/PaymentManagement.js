@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import MGCard from '../common/MGCard';
 import Button from '../ui/Button/Button';
 import { API_BASE_URL } from '../../constants/api';
@@ -425,14 +426,14 @@ const PaymentManagement = () => {
 
   if (loading) {
     return (
-      <SimpleLayout title="결제 관리">
+      <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="결제 관리">
         <UnifiedLoading type="page" text="결제 내역을 불러오는 중..." />
-      </SimpleLayout>
+      </AdminCommonLayout>
     );
   }
 
   return (
-    <SimpleLayout title="결제 관리">
+    <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="결제 관리">
       <div className="payment-management">
         <div className="payment-header">
           <h1>결제 관리</h1>
@@ -742,7 +743,7 @@ const PaymentManagement = () => {
           </div>
         )}
       </div>
-    </SimpleLayout>
+    </AdminCommonLayout>
   );
 };
 

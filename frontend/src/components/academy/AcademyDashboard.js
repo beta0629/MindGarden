@@ -13,7 +13,8 @@
  */
 
 import React, { useState } from 'react';
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import CourseList from './CourseList';
 import CourseForm from './CourseForm';
 import ClassList from './ClassList';
@@ -102,7 +103,7 @@ const AcademyDashboard = () => {
   };
 
   return (
-    <SimpleLayout>
+    <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="학원">
       <div className="academy-dashboard">
         <div className="academy-header">
           <h1>학원 시스템 관리</h1>
@@ -211,7 +212,7 @@ const AcademyDashboard = () => {
           )}
         </div>
       </div>
-    </SimpleLayout>
+    </AdminCommonLayout>
   );
 };
 

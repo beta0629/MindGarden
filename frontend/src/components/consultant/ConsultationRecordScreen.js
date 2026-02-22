@@ -3,7 +3,8 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet, apiPost, apiPut } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { CONSULTANT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import { getUserStatusKoreanNameSync } from '../../utils/codeHelper';
 
 /**
@@ -503,29 +504,29 @@ const ConsultationRecordScreen = () => {
 
   if (loading) {
     return (
-      <SimpleLayout title="상담일지 작성">
+      <AdminCommonLayout title="상담일지 작성" menuItems={CONSULTANT_MENU_ITEMS}>
         <div className="consultation-record-screen-loading">
           <div className="mg-loading">로딩중...</div>
         </div>
-      </SimpleLayout>
+      </AdminCommonLayout>
     );
   }
 
   if (!consultation || !client) {
     return (
-      <SimpleLayout title="상담일지 작성">
+      <AdminCommonLayout title="상담일지 작성" menuItems={CONSULTANT_MENU_ITEMS}>
         <div className="mg-dashboard-layout">
           <div className="mg-dashboard-header">
             <h1 className="mg-dashboard-title">상담일지 작성</h1>
             <p className="mg-dashboard-subtitle">상담 정보를 불러올 수 없습니다.</p>
           </div>
         </div>
-      </SimpleLayout>
+      </AdminCommonLayout>
     );
   }
 
   return (
-    <SimpleLayout title="상담일지 작성">
+    <AdminCommonLayout title="상담일지 작성" menuItems={CONSULTANT_MENU_ITEMS}>
       <div className="mg-dashboard-layout">
 
       {/* 내담자 정보 카드 */}
@@ -991,7 +992,7 @@ const ConsultationRecordScreen = () => {
         </div>
       </div>
       </div>
-    </SimpleLayout>
+    </AdminCommonLayout>
   );
 };
 

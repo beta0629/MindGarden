@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
 import { createPgConfiguration } from '../../utils/pgApi';
 import { showNotification } from '../../utils/notification';
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import PgConfigurationForm from './PgConfigurationForm';
 
 /**
@@ -39,16 +40,16 @@ const PgConfigurationCreate = () => {
   
   if (!tenantId) {
     return (
-      <SimpleLayout>
+      <AdminCommonLayout title="PG 설정 생성" menuItems={DEFAULT_MENU_ITEMS}>
         <div className="error-message">
           <p>테넌트 정보를 찾을 수 없습니다.</p>
         </div>
-      </SimpleLayout>
+      </AdminCommonLayout>
     );
   }
   
   return (
-    <SimpleLayout>
+    <AdminCommonLayout title="PG 설정 생성" menuItems={DEFAULT_MENU_ITEMS}>
       <div className="pg-config-create-page">
         <PgConfigurationForm
           tenantId={tenantId}
@@ -57,7 +58,7 @@ const PgConfigurationCreate = () => {
           mode="create"
         />
       </div>
-    </SimpleLayout>
+    </AdminCommonLayout>
   );
 };
 

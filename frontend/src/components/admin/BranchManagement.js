@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import UnifiedLoading from '../common/UnifiedLoading';
 import MGCard from '../common/MGCard';
 import Button from '../ui/Button/Button';
@@ -56,9 +57,9 @@ const BranchManagement = () => {
     
     if (!user || (user.role !== 'HQ_ADMIN' && user.role !== 'SUPER_HQ_ADMIN')) {
         return (
-            <SimpleLayout title="지점 관리" loading={true} loadingText="권한을 확인하는 중...">
-                <UnifiedLoading type="page" text="권한을 확인하는 중..." />
-            </SimpleLayout>
+            <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="지점 관리" loading={true} loadingText="권한을 확인하는 중...">
+                <div />
+            </AdminCommonLayout>
         );
     }
     
@@ -306,6 +307,7 @@ const BranchManagement = () => {
 
 
     return (
+        <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="지점 관리" loading={loading && branches.length === 0} loadingText="데이터를 불러오는 중...">
         <div className="branch-management">
             <div className="branch-management-header">
                 <h2>지점 관리</h2>
@@ -514,7 +516,7 @@ const BranchManagement = () => {
                 />
             )}
             </div>
-        </SimpleLayout>
+        </AdminCommonLayout>
     );
 };
 

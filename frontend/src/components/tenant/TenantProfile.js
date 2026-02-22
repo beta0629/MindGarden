@@ -23,7 +23,8 @@ import PaymentMethodRegistration from '../billing/PaymentMethodRegistration';
 import SubscriptionManagement from '../billing/SubscriptionManagement';
 import notificationManager from '../../utils/notification';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import MGButton from '../../components/common/MGButton'; // 임시 비활성화
 import './TenantProfile.css';
 
@@ -198,44 +199,44 @@ const TenantProfile = () => {
 
   if (sessionLoading || !isLoggedIn || !user) {
     return (
-      <SimpleLayout>
+      <AdminCommonLayout title="테넌트 프로필" menuItems={DEFAULT_MENU_ITEMS}>
         <UnifiedLoading type="page" text="테넌트 정보를 불러오는 중..." />
-      </SimpleLayout>
+      </AdminCommonLayout>
     );
   }
 
   if (!tenantId) {
     return (
-      <SimpleLayout>
+      <AdminCommonLayout title="테넌트 프로필" menuItems={DEFAULT_MENU_ITEMS}>
         <div className="tenant-profile-error">
           <AlertCircle size={24} />
           <p>테넌트 정보를 찾을 수 없습니다.</p>
         </div>
-      </SimpleLayout>
+      </AdminCommonLayout>
     );
   }
 
   if (loading) {
     return (
-      <SimpleLayout>
+      <AdminCommonLayout title="테넌트 프로필" menuItems={DEFAULT_MENU_ITEMS}>
         <UnifiedLoading type="page" text="테넌트 프로필을 불러오는 중..." />
-      </SimpleLayout>
+      </AdminCommonLayout>
     );
   }
 
   if (!tenantInfo) {
     return (
-      <SimpleLayout>
+      <AdminCommonLayout title="테넌트 프로필" menuItems={DEFAULT_MENU_ITEMS}>
         <div className="tenant-profile-error">
           <AlertCircle size={24} />
           <p>테넌트 정보를 찾을 수 없습니다.</p>
         </div>
-      </SimpleLayout>
+      </AdminCommonLayout>
     );
   }
 
   return (
-    <SimpleLayout>
+    <AdminCommonLayout title="테넌트 프로필" menuItems={DEFAULT_MENU_ITEMS}>
       <div className="tenant-profile">
         {/* 헤더 */}
         <div className="tenant-profile-header">
@@ -437,7 +438,7 @@ const TenantProfile = () => {
           )}
         </div>
       </div>
-    </SimpleLayout>
+    </AdminCommonLayout>
   );
 };
 

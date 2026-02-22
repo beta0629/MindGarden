@@ -3,6 +3,7 @@ import UnifiedLoading from '../common/UnifiedLoading';
 import MGButton from '../../components/common/MGButton'; // 임시 비활성화
 import notificationManager from '../../utils/notification';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import './AccountManagement.css';
 import AccountForm from './components/AccountForm';
 import AccountTable from './components/AccountTable';
@@ -219,7 +220,7 @@ const AccountManagement = () => {
   };
 
   return (
-    <AdminCommonLayout title="계좌 관리" loading={loading && accounts.length === 0} loadingText="계좌 목록을 불러오는 중...">
+    <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="계좌 관리" loading={loading && accounts.length === 0} loadingText="계좌 목록을 불러오는 중...">
       <div className={ ACCOUNT_CSS_CLASSES.ACCOUNT_MANAGEMENT }>
         <div className={ ACCOUNT_CSS_CLASSES.ACCOUNT_HEADER }>
           <h2>{ ACCOUNT_PAGE_TITLES.MAIN }</h2>

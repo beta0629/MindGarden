@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import UnifiedLoading from '../common/UnifiedLoading';
 import { useNavigate } from 'react-router-dom';
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { ERP_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import ErpButton from './common/ErpButton';
 import ErpHeader from './common/ErpHeader';
 import RefundStatsCards from './refund/RefundStatsCards';
@@ -87,7 +88,7 @@ const RefundManagement = () => {
     };
 
     return (
-        <SimpleLayout>
+        <AdminCommonLayout title="환불 관리" menuItems={ERP_MENU_ITEMS}>
             {loading ? (
                 <UnifiedLoading type="page" text="환불 데이터를 불러오는 중..." />
             ) : (
@@ -148,7 +149,7 @@ const RefundManagement = () => {
                 />
             </div>
             )}
-        </SimpleLayout>
+        </AdminCommonLayout>
     );
 };
 

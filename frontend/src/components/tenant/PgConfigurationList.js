@@ -19,6 +19,8 @@ import {
 import { useSession } from '../../contexts/SessionContext';
 import { getPgConfigurations, deletePgConfiguration, testPgConnection } from '../../utils/pgApi';
 import { showNotification } from '../../utils/notification';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import MGButton from '../../components/common/MGButton'; // 임시 비활성화
 import './PgConfigurationList.css';
@@ -185,36 +187,36 @@ const PgConfigurationList = () => {
   
   if (sessionLoading || loading && configurations.length === 0) {
     return (
-      <SimpleLayout>
-        <UnifiedLoading type="page" text="PG 설정 목록을 불러오는 중..." />
-      </SimpleLayout>
+      <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="PG 설정 목록" loading={true} loadingText="PG 설정 목록을 불러오는 중...">
+        <div />
+      </AdminCommonLayout>
     );
   }
   
   if (!isLoggedIn || !user) {
     return (
-      <SimpleLayout>
+      <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="PG 설정 목록">
         <div className="error-message">
           <AlertCircle size={24} />
           <p>로그인이 필요합니다.</p>
         </div>
-      </SimpleLayout>
+      </AdminCommonLayout>
     );
   }
   
   if (!tenantId) {
     return (
-      <SimpleLayout>
+      <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="PG 설정 목록">
         <div className="error-message">
           <AlertCircle size={24} />
           <p>테넌트 정보를 찾을 수 없습니다.</p>
         </div>
-      </SimpleLayout>
+      </AdminCommonLayout>
     );
   }
   
   return (
-    <SimpleLayout>
+    <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="PG 설정 목록">
       <div className="pg-config-list">
         {/* 헤더 */}
         <div className="pg-config-list-header">
@@ -488,7 +490,7 @@ const PgConfigurationList = () => {
           </div>
         )}
       </div>
-    </SimpleLayout>
+    </AdminCommonLayout>
   );
 };
 

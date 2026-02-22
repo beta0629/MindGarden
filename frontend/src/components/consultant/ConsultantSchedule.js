@@ -1,6 +1,7 @@
 import React from 'react';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { CONSULTANT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import UnifiedScheduleComponent from '../schedule/UnifiedScheduleComponent';
 import { useSession } from '../../contexts/SessionContext';
 
@@ -28,30 +29,30 @@ const ConsultantSchedule = () => {
   if (sessionLoading) {
     console.log('⏳ ConsultantSchedule: 세션 로딩 중...');
     return (
-      <SimpleLayout title="상담사 스케줄 관리">
+      <AdminCommonLayout title="스케줄" menuItems={CONSULTANT_MENU_ITEMS}>
         <UnifiedLoading type="page" text="스케줄 정보를 불러오는 중..." />
-      </SimpleLayout>
+      </AdminCommonLayout>
     );
   }
 
   if (!user) {
     console.log('❌ ConsultantSchedule: 사용자 정보 없음');
     return (
-      <SimpleLayout title="상담사 스케줄 관리">
+      <AdminCommonLayout title="스케줄" menuItems={CONSULTANT_MENU_ITEMS}>
         <UnifiedLoading type="page" text="사용자 정보를 확인하는 중..." />
-      </SimpleLayout>
+      </AdminCommonLayout>
     );
   }
 
   console.log('✅ ConsultantSchedule: UnifiedScheduleComponent 렌더링 시작', { userRole: 'CONSULTANT', userId: user.id });
 
   return (
-    <SimpleLayout title="상담사 스케줄 관리">
+    <AdminCommonLayout title="스케줄" menuItems={CONSULTANT_MENU_ITEMS}>
       <UnifiedScheduleComponent 
         userRole="CONSULTANT"
         userId={user.id}
       />
-    </SimpleLayout>
+    </AdminCommonLayout>
   );
 };
 

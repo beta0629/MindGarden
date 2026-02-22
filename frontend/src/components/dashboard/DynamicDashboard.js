@@ -15,7 +15,8 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import UnifiedLoading from '../common/UnifiedLoading';
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import Button from '../ui/Button/Button';
 import { getCurrentUserDashboard, getDashboardComponentName } from '../../utils/dashboardUtils';
 import { useSession } from '../../contexts/SessionContext';
@@ -233,17 +234,17 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
 
   if (isLoading) {
     return (
-      <SimpleLayout>
+      <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="대시보드">
         <div className="mg-dashboard-loading">
           <div className="mg-loading">로딩중...</div>
         </div>
-      </SimpleLayout>
+      </AdminCommonLayout>
     );
   }
 
   if (error) {
     return (
-      <SimpleLayout>
+      <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="대시보드">
         <div className="mg-dashboard-error">
           <h2 className="mg-dashboard-error__title">대시보드 로드 실패</h2>
           <p className="mg-dashboard-error__message">{error}</p>
@@ -256,7 +257,7 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
             다시 시도
           </Button>
         </div>
-      </SimpleLayout>
+      </AdminCommonLayout>
     );
   }
 
@@ -910,7 +911,7 @@ const WidgetBasedDashboard = ({ dashboardConfig, dashboard, user, businessType: 
   }, [refresh]);
   
   return (
-    <SimpleLayout>
+    <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="대시보드">
       <div className="widget-based-dashboard" style={themeStyle}>
         <div className="dashboard-header">
           <h1>{dashboard?.dashboardName || '대시보드'}</h1>
@@ -922,7 +923,7 @@ const WidgetBasedDashboard = ({ dashboardConfig, dashboard, user, businessType: 
           {renderLayout()}
         </div>
       </div>
-    </SimpleLayout>
+    </AdminCommonLayout>
   );
 };
 

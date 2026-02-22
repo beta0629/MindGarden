@@ -12,7 +12,8 @@ import { sessionManager } from '../../utils/sessionManager';
 import { withFormSubmit } from '../../utils/formSubmitWrapper';
 import mypageApi from '../../utils/mypageApi';
 import notificationManager from '../../utils/notification';
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import ProfileSection from './components/ProfileSection';
 import SettingsSection from './components/SettingsSection';
@@ -438,14 +439,14 @@ const MyPage = () => {
   // displayUser가 null이면 로딩 상태로 처리
   if (!displayUser) {
     return (
-      <SimpleLayout>
+      <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="마이페이지">
         <UnifiedLoading type="page" text="사용자 정보를 불러오는 중..." />
-      </SimpleLayout>
+      </AdminCommonLayout>
     );
   }
 
   return (
-    <SimpleLayout>
+    <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="마이페이지">
       <div className={`mypage-container mypage ${isProfileEditing ? 'editing' : 'readonly'}`}>
         {/* 페이지 헤더 */}
         <div className="mypage-header">
@@ -686,7 +687,7 @@ const MyPage = () => {
         onClose={() => setShowPasswordChangeModal(false)}
         onSuccess={handlePasswordChangeSuccess}
       />
-    </SimpleLayout>
+    </AdminCommonLayout>
   );
 };
 

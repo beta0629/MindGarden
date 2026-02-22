@@ -25,6 +25,8 @@ import {
   decryptPgKeys
 } from '../../utils/pgApi';
 import { showNotification } from '../../utils/notification';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import MGButton from '../../components/common/MGButton'; // 임시 비활성화
 import './PgConfigurationDetail.css';
@@ -188,37 +190,37 @@ const PgConfigurationDetail = () => {
   
   if (sessionLoading || loading) {
     return (
-      <SimpleLayout>
-        <UnifiedLoading type="page" text="PG 설정 상세를 불러오는 중..." />
-      </SimpleLayout>
+      <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="PG 설정 상세" loading={true} loadingText="PG 설정 상세를 불러오는 중...">
+        <div />
+      </AdminCommonLayout>
     );
   }
   
   if (!isLoggedIn || !user) {
     return (
-      <SimpleLayout>
+      <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="PG 설정 상세">
         <div className="error-message">
           <AlertCircle size={24} />
           <p>로그인이 필요합니다.</p>
         </div>
-      </SimpleLayout>
+      </AdminCommonLayout>
     );
   }
   
   if (!tenantId) {
     return (
-      <SimpleLayout>
+      <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="PG 설정 상세">
         <div className="error-message">
           <AlertCircle size={24} />
           <p>테넌트 정보를 찾을 수 없습니다.</p>
         </div>
-      </SimpleLayout>
+      </AdminCommonLayout>
     );
   }
   
   if (error || !config) {
     return (
-      <SimpleLayout>
+      <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="PG 설정 상세">
         <div className="error-message">
           <AlertCircle size={24} />
           <p>{error || 'PG 설정을 찾을 수 없습니다.'}</p>
@@ -230,12 +232,12 @@ const PgConfigurationDetail = () => {
             목록으로
           </button>
         </div>
-      </SimpleLayout>
+      </AdminCommonLayout>
     );
   }
   
   return (
-    <SimpleLayout>
+    <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="PG 설정 상세">
         <div className="pg-config-detail" role="main" aria-label="PG 설정 상세 정보">
         {/* 헤더 */}
         <div className="pg-config-detail-header">
@@ -637,7 +639,7 @@ const PgConfigurationDetail = () => {
           </div>
         )}
       </div>
-    </SimpleLayout>
+    </AdminCommonLayout>
   );
 };
 

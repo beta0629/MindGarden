@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Calendar, AlertTriangle } from 'lucide-react';
 import { useSession } from '../../contexts/SessionContext';
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { CLIENT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import ScheduleCalendar from '../schedule/ScheduleCalendar';
 import '../../styles/unified-design-tokens.css';
@@ -32,17 +33,15 @@ const ClientSchedule = () => {
 
   if (sessionLoading || loading) {
     return (
-      <SimpleLayout>
-        <div className="client-schedule-loading">
-          <div className="mg-loading">로딩중...</div>
-        </div>
-      </SimpleLayout>
+      <AdminCommonLayout menuItems={CLIENT_MENU_ITEMS} title="스케줄" loading={true} loadingText="로딩중...">
+        <div className="client-schedule-loading" />
+      </AdminCommonLayout>
     );
   }
 
   if (error) {
     return (
-      <SimpleLayout>
+      <AdminCommonLayout menuItems={CLIENT_MENU_ITEMS} title="스케줄">
         <div className="client-schedule-error">
           <div className="client-schedule-error__icon">
             <AlertTriangle size={48} />
@@ -56,12 +55,12 @@ const ClientSchedule = () => {
             다시 시도
           </button>
         </div>
-      </SimpleLayout>
+      </AdminCommonLayout>
     );
   }
 
   return (
-    <SimpleLayout>
+    <AdminCommonLayout menuItems={CLIENT_MENU_ITEMS} title="스케줄">
       <div className="client-schedule-container">
         <div className="client-schedule-header">
           <div className="client-schedule-header__icon">
@@ -84,7 +83,7 @@ const ClientSchedule = () => {
           />
         </div>
       </div>
-    </SimpleLayout>
+    </AdminCommonLayout>
   );
 };
 

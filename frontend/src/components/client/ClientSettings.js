@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { CLIENT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet, apiPost } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
@@ -57,14 +58,14 @@ const ClientSettings = () => {
 
   if (loading) {
     return (
-      <SimpleLayout title="설정">
-        <div className="mg-loading">로딩중...</div>
-      </SimpleLayout>
+      <AdminCommonLayout menuItems={CLIENT_MENU_ITEMS} title="설정" loading={true} loadingText="로딩중...">
+        <div />
+      </AdminCommonLayout>
     );
   }
 
   return (
-    <SimpleLayout title="설정">
+    <AdminCommonLayout menuItems={CLIENT_MENU_ITEMS} title="설정">
       <div className="client-settings-container">
         <div className="client-settings-card">
           <div className="client-settings-header">
@@ -189,7 +190,7 @@ const ClientSettings = () => {
           </div>
         </div>
       </div>
-    </SimpleLayout>
+    </AdminCommonLayout>
   );
 };
 

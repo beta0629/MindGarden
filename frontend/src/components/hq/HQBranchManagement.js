@@ -4,7 +4,8 @@ import { Container, Row, Col, Tab, Tabs } from 'react-bootstrap';
 import { FaBuilding, FaCog } from 'react-icons/fa';
 import { useSession } from '../../contexts/SessionContext';
 import { useNavigate } from 'react-router-dom';
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { HQ_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import BranchList from './BranchList';
 import BranchForm from './BranchForm';
 import BranchDetail from './BranchDetail';
@@ -174,16 +175,16 @@ const HQBranchManagement = () => {
     // 로딩 상태
     if (sessionLoading || loading) {
         return (
-            <SimpleLayout>
+            <AdminCommonLayout menuItems={HQ_MENU_ITEMS} title="HQ 지점 관리">
                 <div className="hq-branch-management-loading">
                     <div className="mg-loading">로딩중...</div>
                 </div>
-            </SimpleLayout>
+            </AdminCommonLayout>
         );
     }
 
     return (
-        <SimpleLayout>
+        <AdminCommonLayout menuItems={HQ_MENU_ITEMS} title="HQ 지점 관리">
             <div className="hq-branch-management">
                 <Container fluid className="py-4">
                     {/* 헤더 */}
@@ -266,7 +267,7 @@ const HQBranchManagement = () => {
                     />
                 </Container>
             </div>
-        </SimpleLayout>
+        </AdminCommonLayout>
     );
 };
 

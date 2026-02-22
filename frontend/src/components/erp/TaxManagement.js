@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import UnifiedLoading from '../common/UnifiedLoading';
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { ERP_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import { apiGet, apiPost } from '../../utils/ajax';
 import { showNotification } from '../../utils/notification';
 import { Calculator, Receipt, Plus, TrendingUp, FileText, Settings } from 'lucide-react';
@@ -95,8 +96,7 @@ const TaxManagement = () => {
     ];
 
     return (
-        <SimpleLayout title="세금 관리">
-            {loading && <UnifiedLoading type="page" text="세금 데이터를 불러오는 중..." />}
+        <AdminCommonLayout menuItems={ERP_MENU_ITEMS} title="세금 관리" loading={loading} loadingText="세금 데이터를 불러오는 중...">
             <div className="mg-dashboard-layout">
                 {/* Dashboard Header */}
                 <div className="mg-dashboard-header">
@@ -376,7 +376,7 @@ const TaxManagement = () => {
                     </div>
                 </div>
             </div>
-        </SimpleLayout>
+        </AdminCommonLayout>
     );
 };
 

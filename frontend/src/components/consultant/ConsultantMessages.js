@@ -6,7 +6,8 @@ import { useSession } from '../../contexts/SessionContext';
 import { useNotification } from '../../contexts/NotificationContext';
 import { apiGet, apiPost } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { CONSULTANT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import './ConsultantMessages.css';
 
 /**
@@ -207,28 +208,28 @@ const ConsultantMessages = () => {
 
   if (sessionLoading) {
     return (
-      <SimpleLayout title="메시지 관리">
+      <AdminCommonLayout title="메시지" menuItems={CONSULTANT_MENU_ITEMS}>
         <UnifiedLoading 
           type="page"
           text="세션 정보를 불러오는 중..."
           variant="pulse"
         />
-      </SimpleLayout>
+      </AdminCommonLayout>
     );
   }
 
   if (!isLoggedIn) {
     return (
-      <SimpleLayout title="메시지 관리">
+      <AdminCommonLayout title="메시지" menuItems={CONSULTANT_MENU_ITEMS}>
         <div className="consultant-messages-login-required">
           <h3>로그인이 필요합니다.</h3>
         </div>
-      </SimpleLayout>
+      </AdminCommonLayout>
     );
   }
 
   return (
-    <SimpleLayout title="메시지 관리">
+    <AdminCommonLayout title="메시지" menuItems={CONSULTANT_MENU_ITEMS}>
       <div className="consultant-messages-container">
         {/* 헤더 */}
         <div className="consultant-messages-header">
@@ -468,7 +469,7 @@ const ConsultantMessages = () => {
           document.body
         )}
       </div>
-    </SimpleLayout>
+    </AdminCommonLayout>
   );
 };
 

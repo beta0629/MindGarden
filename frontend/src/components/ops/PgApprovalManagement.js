@@ -25,7 +25,8 @@ import {
   decryptPgKeysForOps
 } from '../../utils/pgOpsApi';
 import { showNotification } from '../../utils/notification';
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import MGButton from '../../components/common/MGButton'; // 임시 비활성화
 import './PgApprovalManagement.css';
@@ -314,25 +315,25 @@ const PgApprovalManagement = () => {
   
   if (sessionLoading || loading && pendingConfigs.length === 0) {
     return (
-      <SimpleLayout title="PG 설정 승인 관리">
+      <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="PG 설정 승인 관리">
         <UnifiedLoading type="page" text="PG 설정 목록을 불러오는 중..." />
-      </SimpleLayout>
+      </AdminCommonLayout>
     );
   }
   
   if (!isLoggedIn || !user) {
     return (
-      <SimpleLayout>
+      <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="PG 설정 승인 관리">
         <div className="error-message">
           <AlertCircle size={24} />
           <p>로그인이 필요합니다.</p>
         </div>
-      </SimpleLayout>
+      </AdminCommonLayout>
     );
   }
   
   return (
-    <SimpleLayout title="PG 설정 승인 관리">
+    <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="PG 설정 승인 관리">
       <div className="pg-approval-management">
         {/* 헤더 */}
         <div className="pg-approval-header">
@@ -914,7 +915,7 @@ const PgApprovalManagement = () => {
           </div>
         )}
       </div>
-    </SimpleLayout>
+    </AdminCommonLayout>
   );
 };
 

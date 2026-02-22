@@ -1,5 +1,6 @@
 import React from 'react';
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import './PrivacyPolicy.css';
 
 /**
@@ -15,7 +16,7 @@ import './PrivacyPolicy.css';
  */
 const PrivacyPolicy = () => {
   return (
-    <SimpleLayout>
+    <AdminCommonLayout title="개인정보처리방침" menuItems={DEFAULT_MENU_ITEMS}>
       <div className="privacy-policy-container">
         <h1 className="privacy-policy-title">
           개인정보 처리방침
@@ -203,7 +204,7 @@ const PrivacyPolicy = () => {
           </p>
         </div>
       </div>
-    </SimpleLayout>
+    </AdminCommonLayout>
   );
 };
 

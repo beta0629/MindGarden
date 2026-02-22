@@ -4,7 +4,8 @@ import { useSession } from '../../contexts/SessionContext';
 import { useNotification } from '../../contexts/NotificationContext';
 import { apiGet } from '../../utils/ajax';
 import { Bell, AlertCircle, Info, AlertTriangle, Settings, Calendar } from 'lucide-react';
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import './SystemNotifications.css';
 
 /**
@@ -109,16 +110,16 @@ const SystemNotifications = () => {
 
   if (!isLoggedIn) {
     return (
-      <SimpleLayout title="시스템 공지">
+      <AdminCommonLayout title="시스템 알림" menuItems={DEFAULT_MENU_ITEMS}>
         <div className="mg-card mg-v2-text-center mg-p-xl">
           <h3>로그인이 필요합니다.</h3>
         </div>
-      </SimpleLayout>
+      </AdminCommonLayout>
     );
   }
 
   return (
-    <SimpleLayout title="시스템 공지">
+    <AdminCommonLayout title="시스템 알림" menuItems={DEFAULT_MENU_ITEMS}>
       <div className="system-notifications-container">
         {/* 헤더 */}
         <div className="mg-card mg-mb-lg">
@@ -267,7 +268,7 @@ const SystemNotifications = () => {
           </div>
         )}
       </div>
-    </SimpleLayout>
+    </AdminCommonLayout>
   );
 };
 

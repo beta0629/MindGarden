@@ -19,7 +19,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSession } from '../../contexts/SessionContext';
 import { notificationManager } from '../../utils/notificationManager';
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import UnifiedLoading from '../common/UnifiedLoading';
 import { 
     FaBuilding, 
@@ -266,9 +267,9 @@ const TenantCodeManagement = () => {
 
         if (loading) {
             return (
-                <SimpleLayout title="테넌트 코드 관리" loading={true} loadingText={UI_TEXT.LOADING_CODES}>
+                <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="테넌트 코드 관리" loading={true} loadingText={UI_TEXT.LOADING_CODES}>
                     <UnifiedLoading type="page" text={UI_TEXT.LOADING_CODES} />
-                </SimpleLayout>
+                </AdminCommonLayout>
             );
         }
 
@@ -523,7 +524,7 @@ const TenantCodeManagement = () => {
     };
 
     return (
-        <SimpleLayout title="테넌트 코드 관리" loading={loading && codes.length === 0} loadingText="코드를 불러오는 중...">
+        <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="테넌트 코드 관리" loading={loading && codes.length === 0} loadingText="코드를 불러오는 중...">
             <div className="tenant-code-management">
                 <div className="page-header">
                     <h1>{UI_TEXT.PAGE_TITLE}</h1>
@@ -584,7 +585,7 @@ const TenantCodeManagement = () => {
 
                 {renderModal()}
             </div>
-        </SimpleLayout>
+        </AdminCommonLayout>
     );
 };
 

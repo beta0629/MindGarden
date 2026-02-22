@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { ERP_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import ErpCard from './common/ErpCard';
 import ErpButton from './common/ErpButton';
 import ErpHeader from './common/ErpHeader';
@@ -160,14 +161,14 @@ const AdminApprovalDashboard = () => {
 
   if (loading) {
     return (
-      <SimpleLayout title="관리자 승인 대시보드">
+      <AdminCommonLayout title="승인 관리" menuItems={ERP_MENU_ITEMS}>
         <UnifiedLoading type="page" text="승인 대기 요청을 불러오는 중..." />
-      </SimpleLayout>
+      </AdminCommonLayout>
     );
   }
 
   return (
-    <SimpleLayout title="관리자 승인 대시보드">
+    <AdminCommonLayout title="승인 관리" menuItems={ERP_MENU_ITEMS}>
       <div className="approval-dashboard-container">
         <ErpHeader
           title="관리자 승인 대시보드"
@@ -349,7 +350,7 @@ const AdminApprovalDashboard = () => {
         )}
       </ErpModal>
       </div>
-    </SimpleLayout>
+    </AdminCommonLayout>
   );
 };
 

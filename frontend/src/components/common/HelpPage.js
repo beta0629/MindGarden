@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import { useSession } from '../../contexts/SessionContext';
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import '../../styles/main.css';
 import './HelpPage.css';
 
@@ -154,7 +155,7 @@ const HelpPage = () => {
   ];
 
   return (
-    <SimpleLayout title="도움말">
+    <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="도움말">
       <div className="help-page">
         <div className="help-page__header">
           <h1 className="help-page__title">
@@ -211,7 +212,7 @@ const HelpPage = () => {
           </div>
         </div>
       </div>
-    </SimpleLayout>
+    </AdminCommonLayout>
   );
 };
 

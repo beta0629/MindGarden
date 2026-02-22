@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import UnifiedLoading from '../common/UnifiedLoading';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { ERP_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import './ErpCommon.css';
 import notificationManager from '../../utils/notification';
 
@@ -244,15 +245,15 @@ const BudgetManagement = () => {
 
   if (sessionLoading) {
     return (
-      <SimpleLayout title="예산 관리">
+      <AdminCommonLayout menuItems={ERP_MENU_ITEMS} title="예산 관리">
         <UnifiedLoading type="page" text="세션 정보를 불러오는 중..." />
-      </SimpleLayout>
+      </AdminCommonLayout>
     );
   }
 
   if (!isLoggedIn) {
     return (
-      <SimpleLayout title="예산 관리">
+      <AdminCommonLayout menuItems={ERP_MENU_ITEMS} title="예산 관리">
         <div className="erp-system">
           <div className="erp-container">
             <div className="erp-login-required">
@@ -281,12 +282,12 @@ const BudgetManagement = () => {
             </div>
           </div>
         </div>
-      </SimpleLayout>
+      </AdminCommonLayout>
     );
   }
 
   return (
-    <SimpleLayout title="예산 관리">
+    <AdminCommonLayout menuItems={ERP_MENU_ITEMS} title="예산 관리">
       <div className="erp-system">
         <div className="erp-container">
           {/* 헤더 */}
@@ -856,7 +857,7 @@ const BudgetManagement = () => {
           )}
         </div>
       </div>
-    </SimpleLayout>
+    </AdminCommonLayout>
   );
 };
 

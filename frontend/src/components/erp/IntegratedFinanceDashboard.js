@@ -9,7 +9,8 @@ import { fetchUserPermissions, PermissionChecks, PERMISSIONS } from '../../utils
 import { AUTH_API, ERP_API } from '../../constants/api';
 import { RoleUtils, USER_ROLES } from '../../constants/roles';
 import { COMMON_CSS_CLASSES } from '../../constants/css';
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { ERP_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import FinancialTransactionForm from './FinancialTransactionForm';
 import QuickExpenseForm from './QuickExpenseForm';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
@@ -377,9 +378,9 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
 
   if (loading) {
     return (
-      <SimpleLayout>
-        <UnifiedLoading type="page" text="데이터를 불러오는 중..." />
-      </SimpleLayout>
+      <AdminCommonLayout menuItems={ERP_MENU_ITEMS} title="통합 재무" loading={true} loadingText="데이터를 불러오는 중...">
+        <div />
+      </AdminCommonLayout>
     );
   }
 
@@ -392,7 +393,7 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
   }
 
   return (
-    <SimpleLayout>
+    <AdminCommonLayout menuItems={ERP_MENU_ITEMS} title="통합 재무">
       <div className="mg-dashboard-layout">
         {/* Dashboard Header */}
         <div className="mg-dashboard-header">
@@ -528,7 +529,7 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
         />
       )}
       </div>
-    </SimpleLayout>
+    </AdminCommonLayout>
   );
 };
 

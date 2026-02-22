@@ -4,7 +4,8 @@ import { useSession } from '../../contexts/SessionContext';
 import { sessionManager } from '../../utils/sessionManager';
 import { fetchUserPermissions, PermissionChecks, PERMISSIONS } from '../../utils/permissionUtils';
 import { RoleUtils } from '../../constants/roles';
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { ERP_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import StatCard from '../ui/Card/StatCard';
 import DashboardSection from '../layout/DashboardSection';
@@ -255,9 +256,9 @@ const ErpDashboard = ({ user: propUser }) => {
 
   if (loading) {
     return (
-      <SimpleLayout title="ERP 관리 시스템">
-        <UnifiedLoading type="page" text="대시보드를 불러오는 중..." />
-      </SimpleLayout>
+      <AdminCommonLayout menuItems={ERP_MENU_ITEMS} title="ERP 관리 시스템" loading={true} loadingText="대시보드를 불러오는 중...">
+        <div />
+      </AdminCommonLayout>
     );
   }
 
@@ -265,7 +266,7 @@ const ErpDashboard = ({ user: propUser }) => {
   const tenantId = currentUser?.tenantId || sessionManager.getSessionInfo()?.tenantId || '알 수 없음';
   
   return (
-    <SimpleLayout title="ERP 관리 시스템">
+    <AdminCommonLayout menuItems={ERP_MENU_ITEMS} title="ERP 관리 시스템">
       <div className="mg-dashboard-layout">
         {/* 대시보드 헤더 */}
         <div className="mg-dashboard-header">
@@ -499,7 +500,7 @@ const ErpDashboard = ({ user: propUser }) => {
           </DashboardSection>
         </div>
       </div>
-    </SimpleLayout>
+    </AdminCommonLayout>
   );
 };
 

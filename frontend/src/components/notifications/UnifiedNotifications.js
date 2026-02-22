@@ -3,7 +3,8 @@ import { useSession } from '../../contexts/SessionContext';
 // import { useNotification } from '../../contexts/NotificationContext'; // 이벤트 기반으로 카운트 갱신
 import { apiGet } from '../../utils/ajax';
 import { Bell, MessageSquare, AlertCircle, Info, AlertTriangle } from 'lucide-react';
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import '../../styles/unified-design-tokens.css';
 
@@ -207,16 +208,16 @@ const UnifiedNotifications = () => {
 
   if (!isLoggedIn) {
     return (
-      <SimpleLayout title="알림">
+      <AdminCommonLayout title="알림" menuItems={DEFAULT_MENU_ITEMS}>
         <div className="mg-card mg-v2-text-center mg-p-xl">
           <h3>로그인이 필요합니다.</h3>
         </div>
-      </SimpleLayout>
+      </AdminCommonLayout>
     );
   }
 
   return (
-    <SimpleLayout title="알림">
+    <AdminCommonLayout title="알림" menuItems={DEFAULT_MENU_ITEMS}>
       <div className="mg-dashboard-layout">
         {/* 헤더 */}
         <div className="mg-card mg-mb-lg">
@@ -431,7 +432,7 @@ const UnifiedNotifications = () => {
           </div>
         )}
       </div>
-    </SimpleLayout>
+    </AdminCommonLayout>
   );
 };
 

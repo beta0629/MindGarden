@@ -11,7 +11,8 @@ import {
     FaBuilding,
     FaChartBar
 } from 'react-icons/fa';
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { HQ_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import Chart from '../common/Chart';
 import './FinancialReports.css';
@@ -256,18 +257,18 @@ const FinancialReports = ({ user }) => {
 
     if (loading) {
         return (
-            <SimpleLayout title="재무 보고서">
+            <AdminCommonLayout menuItems={HQ_MENU_ITEMS} title="재무 보고서">
                 <div className="financial-reports-container">
                     <div className="mg-loading">로딩중...</div>
                 </div>
-            </SimpleLayout>
+            </AdminCommonLayout>
         );
     }
 
     const currentData = activeTab === 'monthly' ? reportData.monthly : reportData.yearly;
 
     return (
-        <SimpleLayout title="재무 보고서">
+        <AdminCommonLayout menuItems={HQ_MENU_ITEMS} title="재무 보고서">
             <div className="financial-reports-container">
                 {/* 헤더 */}
                 <div className="financial-reports-header">
@@ -700,7 +701,7 @@ const FinancialReports = ({ user }) => {
                     </div>
                 )}
             </div>
-        </SimpleLayout>
+        </AdminCommonLayout>
     );
 };
 

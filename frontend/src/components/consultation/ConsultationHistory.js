@@ -7,7 +7,8 @@ import { apiGet } from '../../utils/ajax';
 import { getCommonCodes } from '../../utils/commonCodeApi';
 import { DASHBOARD_API } from '../../constants/api';
 import { USER_ROLES } from '../../constants/roles';
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import notificationManager from '../../utils/notification';
 import './ConsultationHistory.css';
 
@@ -163,30 +164,22 @@ const ConsultationHistory = () => {
 
   if (sessionLoading) {
     return (
-      <SimpleLayout title="상담 내역">
-        <UnifiedLoading 
-          type="page"
-          text="세션 정보를 불러오는 중..."
-          variant="pulse"
-        />
-      </SimpleLayout>
+      <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="상담 내역" loading={true} loadingText="세션 정보를 불러오는 중...">
+        <div />
+      </AdminCommonLayout>
     );
   }
 
   if (loading) {
     return (
-      <SimpleLayout title="상담 내역">
-        <UnifiedLoading 
-          type="page"
-          text="상담 내역을 불러오는 중..."
-          variant="pulse"
-        />
-      </SimpleLayout>
+      <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="상담 내역" loading={true} loadingText="상담 내역을 불러오는 중...">
+        <div />
+      </AdminCommonLayout>
     );
   }
 
   return (
-    <SimpleLayout>
+    <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="상담 내역">
       <div className="consultation-history-page">
         <div className="page-header">
           <div className="header-content">
@@ -311,7 +304,7 @@ const ConsultationHistory = () => {
           </div>
         </div>
       </div>
-    </SimpleLayout>
+    </AdminCommonLayout>
   );
 };
 

@@ -5,7 +5,8 @@ import Button from '../ui/Button/Button.js';
 import { useSession } from '../../contexts/SessionContext';
 import { sessionManager } from '../../utils/sessionManager';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { ERP_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import './ErpCommon.css';
 import notificationManager from '../../utils/notification';
 
@@ -224,17 +225,17 @@ const ImprovedTaxManagement = () => {
 
   if (!sessionIsLoggedIn || !sessionUser) {
     return (
-      <SimpleLayout title="세무 관리">
+      <AdminCommonLayout menuItems={ERP_MENU_ITEMS} title="세무 관리">
         <div className="erp-error">
           <h3>로그인이 필요합니다.</h3>
           <p>세무 관리 기능을 사용하려면 로그인해주세요.</p>
         </div>
-      </SimpleLayout>
+      </AdminCommonLayout>
     );
   }
 
   return (
-    <SimpleLayout title="세무 관리">
+    <AdminCommonLayout menuItems={ERP_MENU_ITEMS} title="세무 관리">
       <div className="erp-system">
         <div className="erp-container">
           {/* 헤더 */}
@@ -661,7 +662,7 @@ const ImprovedTaxManagement = () => {
           )}
         </div>
       </div>
-    </SimpleLayout>
+    </AdminCommonLayout>
   );
 };
 

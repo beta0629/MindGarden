@@ -4,7 +4,8 @@ import MGCard from '../common/MGCard';
 import Button from '../ui/Button/Button';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet } from '../../utils/ajax';
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { ERP_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import './ErpCommon.css';
 
 /**
@@ -98,25 +99,25 @@ const PurchaseManagement = () => {
 
   if (sessionLoading) {
     return (
-      <SimpleLayout title="구매 관리">
-        <UnifiedLoading type="page" text="세션 정보를 불러오는 중..." />
-      </SimpleLayout>
+      <AdminCommonLayout menuItems={ERP_MENU_ITEMS} title="구매 관리" loading={true} loadingText="세션 정보를 불러오는 중...">
+        <div />
+      </AdminCommonLayout>
     );
   }
 
   if (!isLoggedIn) {
     return (
-      <SimpleLayout title="구매 관리">
+      <AdminCommonLayout menuItems={ERP_MENU_ITEMS} title="구매 관리">
         <div className="erp-error">
           <h3>로그인이 필요합니다.</h3>
           <p>구매 관리 기능을 사용하려면 로그인해주세요.</p>
         </div>
-      </SimpleLayout>
+      </AdminCommonLayout>
     );
   }
 
   return (
-    <SimpleLayout title="구매 관리">
+    <AdminCommonLayout menuItems={ERP_MENU_ITEMS} title="구매 관리">
       <div className="erp-system">
         <div className="erp-container">
         {/* 헤더 */}
@@ -327,7 +328,7 @@ const PurchaseManagement = () => {
         </div>
       </div>
       </div>
-    </SimpleLayout>
+    </AdminCommonLayout>
   );
 };
 

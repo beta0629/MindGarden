@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 // import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import notificationManager from '../../utils/notification';
 import { Button, Modal, Form, Badge } from 'react-bootstrap';
@@ -121,7 +123,7 @@ const ConsultantManagement = ({ onUpdate, showToast }) => {
     };
 
     return (
-        <SimpleLayout title="상담사 관리" loading={loading && consultants.length === 0} loadingText="상담사 목록을 불러오는 중...">
+        <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="상담사 관리" loading={loading && consultants.length === 0} loadingText="상담사 목록을 불러오는 중...">
             <div className="consultant-management">
                 <div className="panel-header">
                     <h3 className="panel-title">
@@ -277,7 +279,7 @@ const ConsultantManagement = ({ onUpdate, showToast }) => {
                 </Modal.Body>
             </Modal>
             </div>
-        </SimpleLayout>
+        </AdminCommonLayout>
     );
 };
 

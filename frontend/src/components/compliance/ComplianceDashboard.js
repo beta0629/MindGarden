@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import '../../styles/main.css';
 import './ComplianceDashboard.css';
 
@@ -96,15 +97,15 @@ const ComplianceDashboard = () => {
 
     if (loading) {
         return (
-            <SimpleLayout title="컴플라이언스 관리">
+            <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="컴플라이언스 관리">
                 <UnifiedLoading type="page" text="컴플라이언스 데이터를 불러오는 중..." />
-            </SimpleLayout>
+            </AdminCommonLayout>
         );
     }
 
     if (error) {
         return (
-            <SimpleLayout title="컴플라이언스 관리">
+            <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="컴플라이언스 관리">
                 <div className="error-container">
                     <h2>❌ 오류 발생</h2>
                     <p>{error}</p>
@@ -112,12 +113,12 @@ const ComplianceDashboard = () => {
                         다시 시도
                     </button>
                 </div>
-            </SimpleLayout>
+            </AdminCommonLayout>
         );
     }
 
     return (
-        <SimpleLayout title="컴플라이언스 관리">
+        <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="컴플라이언스 관리">
             <div className="compliance-dashboard">
             <div className="dashboard-header">
                 <h1>⚖️ 컴플라이언스 모니터링 대시보드</h1>
@@ -356,7 +357,7 @@ const ComplianceDashboard = () => {
                 </button>
             </div>
             </div>
-        </SimpleLayout>
+        </AdminCommonLayout>
     );
 };
 

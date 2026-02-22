@@ -4,7 +4,8 @@ import { useSession } from '../../contexts/SessionContext';
 import { apiGet, apiPut, apiPost } from '../../utils/ajax';
 // import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import notificationManager from '../../utils/notification';
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { CLIENT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import './ClientMessageScreen.css';
 
 /**
@@ -189,16 +190,14 @@ const ClientMessageScreen = () => {
 
   if (loading) {
     return (
-      <SimpleLayout title="상담사 메시지">
-        <div className="client-message-screen-loading">
-          <div className="mg-loading">로딩중...</div>
-        </div>
-      </SimpleLayout>
+      <AdminCommonLayout menuItems={CLIENT_MENU_ITEMS} title="메시지" loading={true} loadingText="로딩중...">
+        <div />
+      </AdminCommonLayout>
     );
   }
 
   return (
-    <SimpleLayout title="상담사 메시지">
+    <AdminCommonLayout menuItems={CLIENT_MENU_ITEMS} title="메시지">
       <div className="client-message-screen-container">
       {/* 헤더 */}
       <div className="client-message-screen-header">
@@ -339,7 +338,7 @@ const ClientMessageScreen = () => {
         </div>
       )}
       </div>
-    </SimpleLayout>
+    </AdminCommonLayout>
   );
 };
 

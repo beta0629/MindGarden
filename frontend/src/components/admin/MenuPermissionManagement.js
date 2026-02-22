@@ -23,7 +23,8 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import UnifiedLoading from '../common/UnifiedLoading';
 import notificationManager from '../../utils/notification';
 import {
@@ -202,7 +203,7 @@ const MenuPermissionManagement = () => {
     };
 
     return (
-        <SimpleLayout title="메뉴 권한 관리" loading={loading && !selectedRole} loadingText="데이터를 불러오는 중...">
+        <AdminCommonLayout title="메뉴 권한 관리" menuItems={DEFAULT_MENU_ITEMS} loading={loading && !selectedRole} loadingText="데이터를 불러오는 중...">
             <MenuPermissionManagementUI
                 roles={roles}
                 selectedRole={selectedRole}
@@ -213,7 +214,7 @@ const MenuPermissionManagement = () => {
                 onPermissionChange={handlePermissionChange}
                 onBatchSave={handleBatchSave}
             />
-        </SimpleLayout>
+        </AdminCommonLayout>
     );
 };
 

@@ -1,7 +1,7 @@
 /**
  * 브랜딩 관리 페이지
 /**
- * SimpleLayout으로 감싸진 브랜딩 관리 컴포넌트
+ * BrandingManagement가 AdminCommonLayout 사용
 /**
  * 
 /**
@@ -13,18 +13,10 @@
  */
 
 import React from 'react';
-import SimpleLayout from '../components/layout/SimpleLayout';
 import BrandingManagement from '../components/admin/BrandingManagement';
 
 const BrandingManagementPage = () => {
-  return (
-    <SimpleLayout 
-      title="브랜딩 관리"
-      loading={false}
-    >
-      <BrandingManagement />
-    </SimpleLayout>
-  );
+  return <BrandingManagement />;
 };
 
 export default BrandingManagementPage;

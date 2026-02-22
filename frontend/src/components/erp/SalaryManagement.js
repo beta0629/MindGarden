@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import UnifiedLoading from '../common/UnifiedLoading';
 import { DollarSign, Settings, FileText, Users, Calculator, Receipt } from 'lucide-react';
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { ERP_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import StatCard from '../ui/Card/StatCard';
 import DashboardSection from '../layout/DashboardSection';
 import MGButton from '../../components/common/MGButton'; // 임시 비활성화
@@ -340,7 +341,7 @@ const SalaryManagement = () => {
     };
 
     return (
-        <SimpleLayout title="급여 관리">
+        <AdminCommonLayout title="급여 관리" menuItems={ERP_MENU_ITEMS}>
             {loading && consultants.length === 0 ? (
                 <UnifiedLoading type="page" text="데이터를 불러오는 중..." />
             ) : (
@@ -868,7 +869,7 @@ const SalaryManagement = () => {
                 // 설정 저장 후 필요한 경우 데이터 새로고침
             }}
         />
-        </SimpleLayout>
+        </AdminCommonLayout>
     );
 };
 

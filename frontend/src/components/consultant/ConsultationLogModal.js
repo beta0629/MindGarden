@@ -427,14 +427,14 @@ const ConsultationLogModal = ({
           </button>
         </div>
 
-        <div className="mg-v2-modal-body">
+        <div className="mg-v2-modal-body" style={{ padding: '24px', backgroundColor: 'var(--mg-white)' }}>
           {/* 필수값 안내 */}
-          <div className="mg-v2-alert mg-v2-alert--warning mg-v2-mb-md">
-            <AlertTriangle size={20} className="mg-v2-section-title-icon" />
+          <div className="mg-v2-bg-yellow-50 mg-v2-p-md mg-v2-radius-md mg-v2-border mg-v2-border-yellow-200 mg-flex mg-v2-items-start mg-v2-gap-sm mg-v2-mb-lg">
+            <AlertTriangle size={20} className="mg-v2-text-warning mg-v2-mt-xs" />
             <div>
-              <strong>필수 입력 항목 안내</strong>
-              <p>
-                <span className="mg-v2-form-label-required">*</span> 표시된 항목은 반드시 입력해야 합니다.
+              <strong className="mg-v2-text-warning mg-v2-font-bold">필수 입력 항목 안내</strong>
+              <p className="mg-v2-text-sm mg-v2-text-secondary mg-v2-mt-xs">
+                <span className="mg-v2-text-danger">*</span> 표시된 항목은 반드시 입력해야 합니다.<br/>
                 필수 항목: 세션 시간, 내담자 상태, 주요 이슈, 개입 방법, 내담자 반응, 위험도 평가, 진행 평가
               </p>
             </div>
@@ -442,47 +442,33 @@ const ConsultationLogModal = ({
 
           {/* 내담자 정보 */}
           {client && (
-            <div className="mg-v2-info-box mg-v2-mb-lg">
-              <h3 className="mg-v2-info-box-title">
-                <User size={20} className="mg-v2-section-title-icon" />
+            <div className="mg-v2-bg-gray-50 mg-v2-p-lg mg-v2-radius-md mg-v2-border mg-v2-mb-xl">
+              <h3 className="mg-v2-text-lg mg-v2-font-bold mg-flex mg-v2-items-center mg-v2-gap-sm mg-v2-mb-md">
+                <User size={20} className="mg-v2-text-primary" />
                 내담자 정보
               </h3>
-              <div className="mg-v2-info-grid">
-                <div className="mg-v2-info-item">
-                  <span className="mg-v2-info-label">이름</span>
-                  <span className="mg-v2-info-value">{client.name}</span>
+              <div className="mg-flex mg-v2-flex-wrap mg-v2-gap-lg">
+                <div className="mg-v2-flex mg-v2-flex-col mg-v2-gap-xs" style={{ flex: '1 1 120px' }}>
+                  <span className="mg-v2-text-xs mg-v2-font-medium mg-v2-text-secondary">이름</span>
+                  <span className="mg-v2-text-sm mg-v2-font-bold">{client.name}</span>
                 </div>
-                <div className="mg-v2-info-item">
-                  <span className="mg-v2-info-label">나이</span>
-                  <span className="mg-v2-info-value">{client.age ? `${client.age}세` : '미입력'}</span>
-                </div>
-                <div className="mg-v2-info-item">
-                  <span className="mg-v2-info-label">성별</span>
-                  <span className="mg-v2-info-value">
-                    {client.gender === 'MALE' ? '남성' : 
-                     client.gender === 'FEMALE' ? '여성' : 
-                     client.gender || '미입력'}
+                <div className="mg-v2-flex mg-v2-flex-col mg-v2-gap-xs" style={{ flex: '1 1 120px' }}>
+                  <span className="mg-v2-text-xs mg-v2-font-medium mg-v2-text-secondary">나이/성별</span>
+                  <span className="mg-v2-text-sm mg-v2-font-bold">
+                    {client.age ? `${client.age}세` : '미입력'} / {client.gender === 'MALE' ? '남성' : client.gender === 'FEMALE' ? '여성' : '미입력'}
                   </span>
                 </div>
-                <div className="mg-v2-info-item">
-                  <span className="mg-v2-info-label">연락처</span>
-                  <span className="mg-v2-info-value">{client.phone || '미입력'}</span>
+                <div className="mg-v2-flex mg-v2-flex-col mg-v2-gap-xs" style={{ flex: '1 1 120px' }}>
+                  <span className="mg-v2-text-xs mg-v2-font-medium mg-v2-text-secondary">연락처</span>
+                  <span className="mg-v2-text-sm mg-v2-font-bold">{client.phone || '미입력'}</span>
                 </div>
-                <div className="mg-v2-info-item">
-                  <span className="mg-v2-info-label">주소</span>
-                  <span className="mg-v2-info-value">{client.address || '미입력'}</span>
+                <div className="mg-v2-flex mg-v2-flex-col mg-v2-gap-xs" style={{ flex: '1 1 120px' }}>
+                  <span className="mg-v2-text-xs mg-v2-font-medium mg-v2-text-secondary">상담 목적</span>
+                  <span className="mg-v2-text-sm mg-v2-font-bold">{client.consultationPurpose || '미입력'}</span>
                 </div>
-                <div className="mg-v2-info-item">
-                  <span className="mg-v2-info-label">이메일</span>
-                  <span className="mg-v2-info-value">{client.email || '미입력'}</span>
-                </div>
-                <div className="mg-v2-info-item">
-                  <span className="mg-v2-info-label">상담 목적</span>
-                  <span className="mg-v2-info-value">{client.consultationPurpose || '미입력'}</span>
-                </div>
-                <div className="mg-v2-info-item">
-                  <span className="mg-v2-info-label">상담 유형</span>
-                  <span className="mg-v2-info-value">
+                <div className="mg-v2-flex mg-v2-flex-col mg-v2-gap-xs" style={{ flex: '1 1 120px' }}>
+                  <span className="mg-v2-text-xs mg-v2-font-medium mg-v2-text-secondary">상담 유형</span>
+                  <span className="mg-v2-text-sm mg-v2-font-bold">
                     {scheduleData.consultationType === 'INDIVIDUAL' ? '개인상담' :
                      scheduleData.consultationType === 'GROUP' ? '그룹상담' :
                      scheduleData.consultationType === 'COUPLE' ? '부부상담' :
@@ -496,36 +482,29 @@ const ConsultationLogModal = ({
 
           {/* 상담일지 작성 폼 */}
           <div className="mg-v2-form-section">
-            <h3 className="mg-v2-section-title">
-              <FileText size={20} className="mg-v2-section-title-icon" />
+            <h3 className="mg-v2-text-lg mg-v2-font-bold mg-flex mg-v2-items-center mg-v2-gap-sm mg-v2-mb-lg mg-v2-border-b mg-v2-pb-sm">
+              <FileText size={20} className="mg-v2-text-primary" />
               상담일지 작성
             </h3>
             
-            <div className="mg-v2-form-grid">
+            <div className="mg-v2-form-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
               {/* 기본 정보 */}
               <div className="mg-v2-form-group">
-                <label className="mg-v2-form-label">세션 일자 *</label>
+                <label className="mg-v2-label">세션 일자 *</label>
                 <input
                   type="date"
                   name="sessionDate"
                   value={formData.sessionDate}
                   onChange={handleInputChange}
-                  className="mg-v2-form-input"
-                  style={{
-                    backgroundColor: 'var(--mg-gray-100)',
-                    color: 'var(--mg-secondary-500)',
-                    cursor: 'not-allowed'
-                  }}
+                  className="mg-v2-input mg-v2-w-full"
+                  style={{ backgroundColor: 'var(--mg-gray-100)', cursor: 'not-allowed' }}
                   required
                   disabled
                 />
-                <small className="mg-v2-text-xs mg-v2-text-secondary" style={{ marginTop: '4px', display: 'block' }}>
-                  스케줄에서 선택한 날짜로 고정됩니다
-                </small>
               </div>
               
               <div className="mg-v2-form-group">
-                <label className="mg-v2-form-label">세션 번호</label>
+                <label className="mg-v2-label">세션 번호</label>
                 <input
                   type="number"
                   name="sessionNumber"
@@ -533,22 +512,13 @@ const ConsultationLogModal = ({
                   onChange={handleInputChange}
                   min="1"
                   disabled={true}
-                  className="mg-v2-form-input"
-                  style={{
-                    backgroundColor: 'var(--mg-gray-100)',
-                    color: '#666',
-                    cursor: 'not-allowed'
-                  }}
+                  className="mg-v2-input mg-v2-w-full"
+                  style={{ backgroundColor: 'var(--mg-gray-100)', cursor: 'not-allowed' }}
                 />
-                <small className="mg-v2-text-xs mg-v2-text-secondary">
-                  스케줄에서 자동으로 설정됩니다
-                </small>
               </div>
 
               <div className="mg-v2-form-group">
-                <label className="mg-v2-form-label">
-                  세션 시간 (분) <span className="mg-form-required">*</span>
-                </label>
+                <label className="mg-v2-label">세션 시간 (분) *</label>
                 <input
                   type="number"
                   name="sessionDurationMinutes"
@@ -556,265 +526,137 @@ const ConsultationLogModal = ({
                   onChange={handleInputChange}
                   min="1"
                   max="180"
-                  className="mg-v2-form-input"
-                  style={{
-                    borderColor: validationErrors.sessionDurationMinutes ? 'var(--mg-error-500)' : '#ced4da'
-                  }}
+                  className="mg-v2-input mg-v2-w-full"
+                  style={{ borderColor: validationErrors.sessionDurationMinutes ? 'var(--mg-error-500)' : '' }}
                   required
                 />
-                {validationErrors.sessionDurationMinutes && (
-                  <small className="mg-v2-text-xs mg-v2-text-danger" style={{ marginTop: '4px', display: 'block' }}>
-                    {validationErrors.sessionDurationMinutes}
-                  </small>
-                )}
               </div>
 
               <div className="mg-v2-form-group">
-                <label className="mg-v2-form-label">세션 완료 여부</label>
+                <label className="mg-v2-label">세션 완료 여부</label>
                 <select
                   name="isSessionCompleted"
                   value={formData.isSessionCompleted}
                   onChange={handleInputChange}
                   disabled={true}
-                  style={{
-                    backgroundColor: 'var(--mg-gray-100)',
-                    color: '#666',
-                    cursor: 'not-allowed'
-                  }}
+                  className="mg-v2-input mg-v2-w-full"
+                  style={{ backgroundColor: 'var(--mg-gray-100)', cursor: 'not-allowed' }}
                 >
                   {completionStatusOptions.map(option => (
-                    <option key={option.value} value={option.value}>
-                      {option.icon} {option.label}
-                    </option>
+                    <option key={option.value} value={option.value}>{option.label}</option>
                   ))}
                 </select>
-                <small className="mg-v2-text-xs mg-v2-text-secondary">
-                  스케줄에서 자동으로 설정됩니다
-                </small>
               </div>
 
               {/* 내담자 상태 */}
-              <div className="mg-v2-form-group">
-                <label className="mg-v2-form-label">
-                  내담자 상태 <span className="mg-form-required">*</span>
-                </label>
+              <div className="mg-v2-form-group" style={{ gridColumn: '1 / -1' }}>
+                <label className="mg-v2-label">내담자 상태 *</label>
                 <textarea
                   name="clientCondition"
                   value={formData.clientCondition}
                   onChange={handleInputChange}
                   placeholder="내담자의 현재 상태를 기록해주세요."
-                  style={{
-                    borderColor: validationErrors.clientCondition ? 'var(--mg-error-500)' : '#ced4da'
-                  }}
+                  className="mg-v2-input mg-v2-w-full"
+                  style={{ minHeight: '80px', borderColor: validationErrors.clientCondition ? 'var(--mg-error-500)' : '' }}
                   required
                 />
-                {validationErrors.clientCondition && (
-                  <small className="mg-v2-text-xs mg-v2-text-danger" style={{ marginTop: '4px', display: 'block' }}>
-                    {validationErrors.clientCondition}
-                  </small>
-                )}
               </div>
 
               {/* 주요 이슈 */}
-              <div className="mg-v2-form-group">
-                <label className="mg-v2-form-label">
-                  주요 이슈 <span className="mg-form-required">*</span>
-                </label>
+              <div className="mg-v2-form-group" style={{ gridColumn: '1 / -1' }}>
+                <label className="mg-v2-label">주요 이슈 *</label>
                 <textarea
                   name="mainIssues"
                   value={formData.mainIssues}
                   onChange={handleInputChange}
                   placeholder="이번 세션에서 다룬 주요 이슈를 기록해주세요."
-                  style={{
-                    borderColor: validationErrors.mainIssues ? 'var(--mg-error-500)' : '#ced4da'
-                  }}
+                  className="mg-v2-input mg-v2-w-full"
+                  style={{ minHeight: '80px', borderColor: validationErrors.mainIssues ? 'var(--mg-error-500)' : '' }}
                   required
                 />
-                {validationErrors.mainIssues && (
-                  <small className="mg-v2-text-xs mg-v2-text-danger" style={{ marginTop: '4px', display: 'block' }}>
-                    {validationErrors.mainIssues}
-                  </small>
-                )}
               </div>
 
               {/* 개입 방법 */}
-              <div className="mg-v2-form-group">
-                <label className="mg-v2-form-label">
-                  개입 방법 <span className="mg-form-required">*</span>
-                </label>
+              <div className="mg-v2-form-group" style={{ gridColumn: '1 / -1' }}>
+                <label className="mg-v2-label">개입 방법 *</label>
                 <textarea
                   name="interventionMethods"
                   value={formData.interventionMethods}
                   onChange={handleInputChange}
                   placeholder="사용한 상담 기법이나 개입 방법을 기록해주세요."
-                  style={{
-                    borderColor: validationErrors.interventionMethods ? 'var(--mg-error-500)' : '#ced4da'
-                  }}
+                  className="mg-v2-input mg-v2-w-full"
+                  style={{ minHeight: '80px', borderColor: validationErrors.interventionMethods ? 'var(--mg-error-500)' : '' }}
                   required
                 />
-                {validationErrors.interventionMethods && (
-                  <small className="mg-v2-text-xs mg-v2-text-danger" style={{ marginTop: '4px', display: 'block' }}>
-                    {validationErrors.interventionMethods}
-                  </small>
-                )}
               </div>
 
               {/* 내담자 반응 */}
-              <div className="mg-v2-form-group">
-                <label className="mg-v2-form-label">
-                  내담자 반응 <span className="mg-form-required">*</span>
-                </label>
+              <div className="mg-v2-form-group" style={{ gridColumn: '1 / -1' }}>
+                <label className="mg-v2-label">내담자 반응 *</label>
                 <textarea
                   name="clientResponse"
                   value={formData.clientResponse}
                   onChange={handleInputChange}
                   placeholder="내담자의 반응이나 변화를 기록해주세요."
-                  style={{
-                    borderColor: validationErrors.clientResponse ? 'var(--mg-error-500)' : '#ced4da'
-                  }}
+                  className="mg-v2-input mg-v2-w-full"
+                  style={{ minHeight: '80px', borderColor: validationErrors.clientResponse ? 'var(--mg-error-500)' : '' }}
                   required
                 />
-                {validationErrors.clientResponse && (
-                  <small className="mg-v2-text-xs mg-v2-text-danger" style={{ marginTop: '4px', display: 'block' }}>
-                    {validationErrors.clientResponse}
-                  </small>
-                )}
               </div>
 
               {/* 다음 세션 계획 */}
-              <div className="mg-v2-form-group">
-                <label className="mg-v2-form-label">다음 세션 계획</label>
+              <div className="mg-v2-form-group" style={{ gridColumn: '1 / -1' }}>
+                <label className="mg-v2-label">다음 세션 계획</label>
                 <textarea
                   name="nextSessionPlan"
                   value={formData.nextSessionPlan}
                   onChange={handleInputChange}
                   placeholder="다음 세션에서 다룰 내용을 기록해주세요."
-                  className="mg-v2-form-textarea"
+                  className="mg-v2-input mg-v2-w-full"
+                  style={{ minHeight: '80px' }}
                 />
               </div>
 
               {/* 과제 부여 */}
               <div className="mg-v2-form-group">
-                <label className="mg-v2-form-label">과제 부여</label>
+                <label className="mg-v2-label">과제 부여</label>
                 <textarea
                   name="homeworkAssigned"
                   value={formData.homeworkAssigned}
                   onChange={handleInputChange}
                   placeholder="부여한 과제나 숙제를 기록해주세요."
-                  className="mg-v2-form-textarea"
+                  className="mg-v2-input mg-v2-w-full"
+                  style={{ minHeight: '80px' }}
                 />
               </div>
 
               <div className="mg-v2-form-group">
-                <label className="mg-v2-form-label">과제 제출 기한</label>
+                <label className="mg-v2-label">과제 제출 기한</label>
                 <input
                   type="date"
                   name="homeworkDueDate"
                   value={formData.homeworkDueDate}
                   onChange={handleInputChange}
-                  className="mg-v2-form-input"
+                  className="mg-v2-input mg-v2-w-full"
                 />
               </div>
 
               {/* 위험도 평가 */}
               <div className="mg-v2-form-group">
-                <label className="mg-v2-form-label">
-                  위험도 평가 <span className="mg-form-required">*</span>
-                </label>
+                <label className="mg-v2-label">위험도 평가 *</label>
                 <select
                   name="riskAssessment"
                   value={formData.riskAssessment}
                   onChange={handleInputChange}
                   onClick={(e) => e.stopPropagation()}
-                  style={{
-                    borderColor: validationErrors.riskAssessment ? 'var(--mg-error-500)' : '#ced4da'
-                  }}
+                  className="mg-v2-input mg-v2-w-full"
+                  style={{ borderColor: validationErrors.riskAssessment ? 'var(--mg-error-500)' : '' }}
                   disabled={loadingCodes}
                   required
                 >
                   <option value="">위험도를 선택하세요</option>
                   {riskLevels.map(level => (
                     <option key={level.value} value={level.value} style={{color: level.color}}>
-                      {level.icon} {level.label}
-                    </option>
-                  ))}
-                </select>
-                {validationErrors.riskAssessment && (
-                  <small className="mg-v2-text-xs mg-v2-text-danger" style={{ marginTop: '4px', display: 'block' }}>
-                    {validationErrors.riskAssessment}
-                  </small>
-                )}
-              </div>
-
-              <div className="mg-v2-form-group">
-                <label className="mg-v2-form-label">위험 요인</label>
-                <textarea
-                  name="riskFactors"
-                  value={formData.riskFactors}
-                  onChange={handleInputChange}
-                  placeholder="발견된 위험 요인을 기록해주세요."
-                  className="mg-v2-form-textarea"
-                />
-              </div>
-
-              <div className="mg-v2-form-group">
-                <label className="mg-v2-form-label">응급 대응 계획</label>
-                <textarea
-                  name="emergencyResponsePlan"
-                  value={formData.emergencyResponsePlan}
-                  onChange={handleInputChange}
-                  placeholder="응급 상황 시 대응 계획을 기록해주세요."
-                  className="mg-v2-form-textarea"
-                />
-              </div>
-
-              {/* 진행 평가 */}
-              <div className="mg-v2-form-group">
-                <label className="mg-v2-form-label">
-                  진행 평가 <span className="mg-form-required">*</span>
-                </label>
-                <textarea
-                  name="progressEvaluation"
-                  value={formData.progressEvaluation}
-                  onChange={handleInputChange}
-                  placeholder="전반적인 진행 상황을 평가해주세요."
-                  style={{
-                    borderColor: validationErrors.progressEvaluation ? 'var(--mg-error-500)' : '#ced4da'
-                  }}
-                  required
-                />
-                {validationErrors.progressEvaluation && (
-                  <small className="mg-v2-text-xs mg-v2-text-danger" style={{ marginTop: '4px', display: 'block' }}>
-                    {validationErrors.progressEvaluation}
-                  </small>
-                )}
-              </div>
-
-              <div className="mg-v2-form-group">
-                <label className="mg-v2-form-label">진행 점수 (0-100)</label>
-                <input
-                  type="range"
-                  name="progressScore"
-                  value={formData.progressScore}
-                  onChange={handleInputChange}
-                  min="0"
-                  max="100"
-                  className="mg-v2-form-input"
-                />
-                <span className="mg-v2-text-xs mg-v2-text-secondary">{formData.progressScore}점</span>
-              </div>
-
-              {/* 목표 달성도 */}
-              <div className="mg-v2-form-group">
-                <label className="mg-v2-form-label">목표 달성도</label>
-                <select
-                  name="goalAchievement"
-                  value={formData.goalAchievement}
-                  onChange={handleInputChange}
-                  className="mg-v2-form-select"
-                >
-                  {goalAchievementLevels.map(level => (
-                    <option key={level.value} value={level.value}>
                       {level.label}
                     </option>
                   ))}
@@ -822,196 +664,187 @@ const ConsultationLogModal = ({
               </div>
 
               <div className="mg-v2-form-group">
-                <label className="mg-v2-form-label">목표 달성 세부사항</label>
+                <label className="mg-v2-label">위험 요인</label>
+                <textarea
+                  name="riskFactors"
+                  value={formData.riskFactors}
+                  onChange={handleInputChange}
+                  placeholder="발견된 위험 요인을 기록해주세요."
+                  className="mg-v2-input mg-v2-w-full"
+                  style={{ minHeight: '80px' }}
+                />
+              </div>
+
+              <div className="mg-v2-form-group">
+                <label className="mg-v2-label">응급 대응 계획</label>
+                <textarea
+                  name="emergencyResponsePlan"
+                  value={formData.emergencyResponsePlan}
+                  onChange={handleInputChange}
+                  placeholder="응급 상황 시 대응 계획을 기록해주세요."
+                  className="mg-v2-input mg-v2-w-full"
+                  style={{ minHeight: '80px' }}
+                />
+              </div>
+
+              {/* 진행 평가 */}
+              <div className="mg-v2-form-group" style={{ gridColumn: '1 / -1' }}>
+                <label className="mg-v2-label">진행 평가 *</label>
+                <textarea
+                  name="progressEvaluation"
+                  value={formData.progressEvaluation}
+                  onChange={handleInputChange}
+                  placeholder="전반적인 진행 상황을 평가해주세요."
+                  className="mg-v2-input mg-v2-w-full"
+                  style={{ minHeight: '80px', borderColor: validationErrors.progressEvaluation ? 'var(--mg-error-500)' : '' }}
+                  required
+                />
+              </div>
+
+              <div className="mg-v2-form-group" style={{ gridColumn: '1 / -1' }}>
+                <label className="mg-v2-label">진행 점수 ({formData.progressScore}점)</label>
+                <input
+                  type="range"
+                  name="progressScore"
+                  value={formData.progressScore}
+                  onChange={handleInputChange}
+                  min="0"
+                  max="100"
+                  className="mg-v2-input mg-v2-w-full"
+                />
+              </div>
+
+              {/* 목표 달성도 */}
+              <div className="mg-v2-form-group">
+                <label className="mg-v2-label">목표 달성도</label>
+                <select
+                  name="goalAchievement"
+                  value={formData.goalAchievement}
+                  onChange={handleInputChange}
+                  className="mg-v2-input mg-v2-w-full"
+                >
+                  {goalAchievementLevels.map(level => (
+                    <option key={level.value} value={level.value}>{level.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="mg-v2-form-group" style={{ gridColumn: '1 / -1' }}>
+                <label className="mg-v2-label">목표 달성 세부사항</label>
                 <textarea
                   name="goalAchievementDetails"
                   value={formData.goalAchievementDetails}
                   onChange={handleInputChange}
                   placeholder="목표 달성에 대한 구체적인 내용을 기록해주세요."
-                  className="mg-v2-form-textarea"
+                  className="mg-v2-input mg-v2-w-full"
+                  style={{ minHeight: '80px' }}
                 />
               </div>
 
               {/* 상담사 관찰 */}
-              <div className="mg-v2-form-group">
-                <label className="mg-v2-form-label">상담사 관찰</label>
+              <div className="mg-v2-form-group" style={{ gridColumn: '1 / -1' }}>
+                <label className="mg-v2-label">상담사 관찰</label>
                 <textarea
                   name="consultantObservations"
                   value={formData.consultantObservations}
                   onChange={handleInputChange}
                   placeholder="내담자에 대한 관찰 내용을 기록해주세요."
-                  className="mg-v2-form-textarea"
+                  className="mg-v2-input mg-v2-w-full"
+                  style={{ minHeight: '80px' }}
                 />
               </div>
 
               {/* 상담사 평가 */}
-              <div className="mg-v2-form-group">
-                <label className="mg-v2-form-label">상담사 평가</label>
+              <div className="mg-v2-form-group" style={{ gridColumn: '1 / -1' }}>
+                <label className="mg-v2-label">상담사 평가</label>
                 <textarea
                   name="consultantAssessment"
                   value={formData.consultantAssessment}
                   onChange={handleInputChange}
                   placeholder="전문적인 관점에서의 평가를 기록해주세요."
-                  className="mg-v2-form-textarea"
+                  className="mg-v2-input mg-v2-w-full"
+                  style={{ minHeight: '80px' }}
                 />
               </div>
 
-              {/* 특별 고려사항 */}
+              {/* 환경/사회/가족 */}
               <div className="mg-v2-form-group">
-                <label className="mg-v2-form-label">특별 고려사항</label>
-                <textarea
-                  name="specialConsiderations"
-                  value={formData.specialConsiderations}
-                  onChange={handleInputChange}
-                  placeholder="특별히 고려해야 할 사항을 기록해주세요."
-                  className="mg-v2-form-textarea"
-                />
-              </div>
-
-              {/* 의료 정보 */}
-              <div className="mg-v2-form-group">
-                <label className="mg-v2-form-label">의료 정보</label>
-                <textarea
-                  name="medicalInformation"
-                  value={formData.medicalInformation}
-                  onChange={handleInputChange}
-                  placeholder="관련 의료 정보를 기록해주세요."
-                  className="mg-v2-form-textarea"
-                />
-              </div>
-
-              <div className="mg-v2-form-group">
-                <label className="mg-v2-form-label">복용 약물</label>
-                <textarea
-                  name="medicationInfo"
-                  value={formData.medicationInfo}
-                  onChange={handleInputChange}
-                  placeholder="복용 중인 약물 정보를 기록해주세요."
-                  className="mg-v2-form-textarea"
-                />
-              </div>
-
-              {/* 가족 관계 */}
-              <div className="mg-v2-form-group">
-                <label className="mg-v2-form-label">가족 관계</label>
+                <label className="mg-v2-label">가족 관계</label>
                 <textarea
                   name="familyRelationships"
                   value={formData.familyRelationships}
                   onChange={handleInputChange}
-                  placeholder="가족 관계에 대한 정보를 기록해주세요."
-                  className="mg-v2-form-textarea"
+                  className="mg-v2-input mg-v2-w-full"
+                  style={{ minHeight: '80px' }}
                 />
               </div>
 
-              {/* 사회적 지지 */}
               <div className="mg-v2-form-group">
-                <label className="mg-v2-form-label">사회적 지지</label>
+                <label className="mg-v2-label">사회적 지지</label>
                 <textarea
                   name="socialSupport"
                   value={formData.socialSupport}
                   onChange={handleInputChange}
-                  placeholder="사회적 지지 체계에 대한 정보를 기록해주세요."
-                  className="mg-v2-form-textarea"
+                  className="mg-v2-input mg-v2-w-full"
+                  style={{ minHeight: '80px' }}
                 />
               </div>
 
-              {/* 환경적 요인 */}
               <div className="mg-v2-form-group">
-                <label className="mg-v2-form-label">환경적 요인</label>
+                <label className="mg-v2-label">의료/복용 약물</label>
                 <textarea
-                  name="environmentalFactors"
-                  value={formData.environmentalFactors}
+                  name="medicalInformation"
+                  value={formData.medicalInformation}
                   onChange={handleInputChange}
-                  placeholder="환경적 요인에 대한 정보를 기록해주세요."
-                  className="mg-v2-form-textarea"
+                  className="mg-v2-input mg-v2-w-full"
+                  style={{ minHeight: '80px' }}
                 />
               </div>
 
               {/* 미완료 사유 */}
               {!formData.isSessionCompleted && (
-                <div className="mg-v2-form-group">
-                  <label className="mg-v2-form-label">미완료 사유</label>
+                <div className="mg-v2-form-group" style={{ gridColumn: '1 / -1' }}>
+                  <label className="mg-v2-label">미완료 사유</label>
                   <textarea
                     name="incompletionReason"
                     value={formData.incompletionReason}
                     onChange={handleInputChange}
                     placeholder="세션이 미완료된 사유를 기록해주세요."
-                    className="mg-v2-form-textarea"
+                    className="mg-v2-input mg-v2-w-full"
+                    style={{ minHeight: '80px' }}
                   />
                 </div>
               )}
-
-              {/* 다음 세션 일정 */}
-              <div className="mg-v2-form-group">
-                <label className="mg-v2-form-label">다음 세션 일정</label>
-                <input
-                  type="date"
-                  name="nextSessionDate"
-                  value={formData.nextSessionDate}
-                  onChange={handleInputChange}
-                  className="mg-v2-form-input"
-                  style={{
-                    backgroundColor: 'var(--mg-gray-100)',
-                    color: 'var(--mg-secondary-500)',
-                    cursor: 'not-allowed'
-                  }}
-                  disabled
-                />
-                <small className="mg-v2-text-xs mg-v2-text-secondary" style={{ marginTop: '4px', display: 'block' }}>
-                  관리자가 스케줄에서 지정합니다
-                </small>
-              </div>
-
-              {/* 후속 조치사항 */}
-              <div className="mg-v2-form-group">
-                <label className="mg-v2-form-label">후속 조치사항</label>
-                <textarea
-                  name="followUpActions"
-                  value={formData.followUpActions}
-                  onChange={handleInputChange}
-                  placeholder="후속 조치가 필요한 사항을 기록해주세요."
-                  className="mg-v2-form-textarea"
-                />
-              </div>
-
-              <div className="mg-v2-form-group">
-                <label className="mg-v2-form-label">후속 조치 기한</label>
-                <input
-                  type="date"
-                  name="followUpDueDate"
-                  value={formData.followUpDueDate}
-                  onChange={handleInputChange}
-                  className="mg-v2-form-input"
-                />
-              </div>
             </div>
 
             {/* 버튼 그룹 */}
-            <div className="mg-v2-modal-footer">
-              <button
-                type="button"
-                onClick={onClose}
-                className="mg-v2-button mg-v2-button--secondary"
-                disabled={saving}
-              >
-                취소
-              </button>
-              <button
-                type="button"
-                onClick={handleSave}
-                className="mg-v2-button mg-v2-button--primary"
-                disabled={saving}
-              >
-                {saving ? <div className="mg-loading">로딩중...</div> : '💾 저장'}
-              </button>
-              <button
-                type="button"
-                onClick={handleComplete}
-                className="mg-v2-button mg-v2-button--success"
-                disabled={saving}
-              >
-                {saving ? <div className="mg-loading">로딩중...</div> : '✅ 완료'}
-              </button>
+            <div className="mg-v2-modal-footer" style={{ borderTop: 'none', padding: '24px 0 0 0' }}>
+              <div className="mg-flex mg-v2-gap-sm mg-v2-w-full mg-justify-end">
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    className="mg-v2-btn mg-v2-btn-secondary"
+                    disabled={saving}
+                  >
+                    취소
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSave}
+                    className="mg-v2-btn mg-v2-btn-primary"
+                    disabled={saving}
+                  >
+                    {saving ? '저장중...' : '💾 저장'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleComplete}
+                    className="mg-v2-btn mg-v2-btn-success"
+                    disabled={saving}
+                  >
+                    {saving ? '완료중...' : '✅ 완료'}
+                  </button>
+              </div>
             </div>
           </div>
         </div>

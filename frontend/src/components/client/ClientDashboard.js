@@ -16,7 +16,8 @@ import {
   Sparkles,
   Sun
 } from 'lucide-react';
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { CLIENT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import ClientPersonalizedMessages from '../dashboard/ClientPersonalizedMessages';
 import ClientPaymentSessionsSection from '../dashboard/ClientPaymentSessionsSection';
@@ -250,9 +251,9 @@ const ClientDashboard = () => {
   
   if (isLoading || sessionLoading || !currentIsLoggedIn || !currentUser?.id) {
     return (
-      <SimpleLayout>
+      <AdminCommonLayout title="대시보드" menuItems={CLIENT_MENU_ITEMS}>
         <UnifiedLoading type="page" text="대시보드를 불러오는 중..." />
-      </SimpleLayout>
+      </AdminCommonLayout>
     );
   }
 
@@ -264,7 +265,7 @@ const ClientDashboard = () => {
   };
 
   return (
-    <SimpleLayout>
+    <AdminCommonLayout title="대시보드" menuItems={CLIENT_MENU_ITEMS}>
       <div className="mg-v2-dashboard-layout">
         
         {/* 웰컴 헤더 - 화사하고 밝은 느낌 */}
@@ -453,7 +454,7 @@ const ClientDashboard = () => {
         {/* 메시지 섹션 */}
         <ClientMessageSection userId={currentUser?.id} />
       </div>
-    </SimpleLayout>
+    </AdminCommonLayout>
   );
 };
 

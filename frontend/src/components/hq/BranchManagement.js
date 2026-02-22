@@ -16,7 +16,8 @@ import { apiGet, apiPost } from '../../utils/ajax';
 import { showNotification } from '../../utils/notification';
 // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
 import { normalizeBranchList, getBranchNameByCode } from '../../utils/branchUtils';
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { HQ_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import BranchRegistrationModal from './BranchRegistrationModal';
 import './BranchManagement.css';
 
@@ -210,7 +211,7 @@ const BranchManagement = () => {
     };
     
     return (
-        <SimpleLayout title="지점 관리">
+        <AdminCommonLayout menuItems={HQ_MENU_ITEMS} title="지점 관리">
             <div className="hq-branch-management">
                 <Container fluid className="py-4">
                     <Tabs
@@ -1136,7 +1137,7 @@ const BranchManagement = () => {
                 />
                 </Container>
             </div>
-        </SimpleLayout>
+        </AdminCommonLayout>
     );
 };
 

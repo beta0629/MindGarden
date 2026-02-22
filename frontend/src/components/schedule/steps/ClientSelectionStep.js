@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { UserPlus, Link2 } from 'lucide-react';
 import MappingCreationModal from '../../admin/MappingCreationModal';
 import UnifiedLoading from '../../../components/common/UnifiedLoading'; // 임시 비활성화
 import SpecialtyDisplay from '../../ui/SpecialtyDisplay';
@@ -224,7 +225,10 @@ const ClientSelectionStep = ({
     return (
         <div className="client-selection-step">
             <div className="step-header">
-                <h4>👤 내담자를 선택하세요</h4>
+                <h4>
+                    <UserPlus className="mg-v2-icon" size={24} />
+                    내담자를 선택하세요
+                </h4>
                 <p className="step-description">
                     결제가 승인되고 세션이 남은 내담자만 표시됩니다
                 </p>
@@ -244,7 +248,9 @@ const ClientSelectionStep = ({
 
             {clients.length === 0 ? (
                 <div className="no-clients-message">
-                    <div className="no-clients-icon">🔗</div>
+                    <div className="no-clients-icon">
+                        <Link2 size={48} strokeWidth={1.5} color="var(--mg-warning-500)" />
+                    </div>
                     <h4>매핑된 내담자가 없습니다</h4>
                     <p>
                         스케줄을 생성하려면 먼저 상담사와 내담자 간의 매핑을 생성해야 합니다.
@@ -252,10 +258,11 @@ const ClientSelectionStep = ({
                     </p>
                     <div className="mapping-actions">
                         <button 
-                            className="btn btn-primary"
+                            className="mg-v2-btn--primary"
                             onClick={() => setShowMappingModal(true)}
                         >
-                            🔗 매핑 생성하기
+                            <Link2 size={16} style={{ marginRight: '6px' }} />
+                            매핑 생성하기
                         </button>
                     </div>
                 </div>

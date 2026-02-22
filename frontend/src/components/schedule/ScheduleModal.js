@@ -6,9 +6,9 @@ import TimeSlotGrid from './TimeSlotGrid';
 import notificationManager from '../../utils/notification';
 import { useSession } from '../../contexts/SessionContext';
 import StandardizedApi from '../../utils/standardizedApi';
+import '../../styles/modules/schedule-modal.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ScheduleB0KlA.css';
-import '../../styles/modules/schedule-modal.css';
 
 /**
  * 새로운 디자인의 스케줄 생성 모달 컴포넌트
@@ -316,7 +316,7 @@ const ScheduleModalNew = ({
                 <div className="mg-v2-ad-modal__header">
                     <h2 className="mg-v2-ad-modal__title">
                         스케줄 생성
-                        <span className="mg-v2-text-sm mg-v2-ml-md" style={{ fontWeight: 600, color: 'var(--mg-text-secondary, #5C6B61)', marginLeft: '8px' }}>
+                        <span className="mg-v2-text-sm mg-v2-ml-md mg-v2-ad-modal__date">
                             {selectedDate && (selectedDate instanceof Date ? selectedDate : new Date(selectedDate)).toLocaleDateString('ko-KR', {
                                 year: 'numeric',
                                 month: 'long',
@@ -378,8 +378,8 @@ const ScheduleModalNew = ({
                                 <h3 className="mg-v2-ad-section-block__title">시간 선택</h3>
                             </div>
                             <div className="mg-v2-ad-section-block__content">
-                                <div style={{ display: 'flex', gap: '16px', marginBottom: '8px' }}>
-                                    <div style={{ flex: 1 }}>
+                                <div className="mg-v2-form-row">
+                                    <div className="mg-v2-form-group">
                                         <label className="mg-v2-label">상담 유형</label>
                                         <select 
                                             value={consultationType} 
@@ -395,7 +395,7 @@ const ScheduleModalNew = ({
                                         </select>
                                     </div>
 
-                                    <div style={{ flex: 1 }}>
+                                    <div className="mg-v2-form-group">
                                         <label className="mg-v2-label">상담 시간</label>
                                         <select 
                                             value={selectedDuration} 
@@ -430,28 +430,28 @@ const ScheduleModalNew = ({
                                 <h3 className="mg-v2-ad-section-block__title">스케줄 세부사항</h3>
                             </div>
                             <div className="mg-v2-ad-section-block__content">
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '16px', background: 'var(--mg-bg-white, #FFFFFF)', borderRadius: '8px', border: '1px solid var(--mg-gray-200, #E8E6E1)' }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                        <span style={{ color: 'var(--mg-text-secondary, #5C6B61)' }}>상담사:</span>
-                                        <span style={{ fontWeight: 600, color: 'var(--mg-text-primary, #2C2C2C)' }}>{selectedConsultant?.name}</span>
+                                <div className="mg-v2-schedule-details-card">
+                                    <div className="mg-v2-schedule-details-row">
+                                        <span className="mg-v2-schedule-details-label">상담사:</span>
+                                        <span className="mg-v2-schedule-details-value">{selectedConsultant?.name}</span>
                                     </div>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                        <span style={{ color: 'var(--mg-text-secondary, #5C6B61)' }}>내담자:</span>
-                                        <span style={{ fontWeight: 600, color: 'var(--mg-text-primary, #2C2C2C)' }}>{selectedClient?.name}</span>
+                                    <div className="mg-v2-schedule-details-row">
+                                        <span className="mg-v2-schedule-details-label">내담자:</span>
+                                        <span className="mg-v2-schedule-details-value">{selectedClient?.name}</span>
                                     </div>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                        <span style={{ color: 'var(--mg-text-secondary, #5C6B61)' }}>시간:</span>
-                                        <span style={{ fontWeight: 600, color: 'var(--mg-text-primary, #2C2C2C)' }}>
+                                    <div className="mg-v2-schedule-details-row">
+                                        <span className="mg-v2-schedule-details-label">시간:</span>
+                                        <span className="mg-v2-schedule-details-value">
                                             {selectedTimeSlot?.time} - {selectedTimeSlot?.endTime} ({getDurationFromCode(selectedDuration)}분)
                                         </span>
                                     </div>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '8px', borderTop: '1px solid var(--mg-gray-200, #E8E6E1)' }}>
-                                        <span style={{ color: 'var(--mg-primary-600, #2C3E34)', fontWeight: 600 }}>유형:</span>
-                                        <span style={{ color: 'var(--mg-primary-600, #2C3E34)', fontWeight: 600 }}>{convertConsultationTypeToKorean(consultationType)}</span>
+                                    <div className="mg-v2-schedule-details-row mg-v2-schedule-details-row--highlight">
+                                        <span className="mg-v2-schedule-details-label">유형:</span>
+                                        <span className="mg-v2-schedule-details-value">{convertConsultationTypeToKorean(consultationType)}</span>
                                     </div>
                                 </div>
                                 
-                                <div>
+                                <div className="mg-v2-form-group">
                                     <label className="mg-v2-label">제목</label>
                                     <input
                                         type="text"
@@ -462,15 +462,14 @@ const ScheduleModalNew = ({
                                     />
                                 </div>
                                 
-                                <div>
+                                <div className="mg-v2-form-group">
                                     <label className="mg-v2-label">설명</label>
                                     <textarea
                                         value={description}
                                         onChange={(e) => setDescription(e.target.value)}
                                         placeholder="추가 설명 (선택사항)"
                                         rows="3"
-                                        style={{ resize: 'vertical', minHeight: '80px' }}
-                                        className="mg-v2-input"
+                                        className="mg-v2-input mg-v2-textarea"
                                     />
                                 </div>
                             </div>

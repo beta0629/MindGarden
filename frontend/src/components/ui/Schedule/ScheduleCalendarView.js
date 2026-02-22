@@ -47,7 +47,7 @@ const ScheduleCalendarView = ({
         const clientName = extendedProps.clientName || '이름 없음';
         const consultantName = extendedProps.consultantName || '';
         const statusKorean = extendedProps.statusKorean || '상태 없음';
-        const borderColor = event.backgroundColor || '#3D5246';
+        const borderColor = event.backgroundColor || 'var(--mg-primary-500)';
 
         // 월간 뷰: 컴팩트 렌더링 (시간 + 내담자명만)
         if (isMonthView) {

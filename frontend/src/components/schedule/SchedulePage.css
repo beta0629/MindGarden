@@ -20,7 +20,7 @@
     align-items: center;
     margin-bottom: 24px;
     padding: 20px 24px;
-    background: #fff;
+    background: var(--mg-white);
     border-radius: 12px;
     box-shadow: 0 4px 6px var(--mg-shadow-light);
 }
@@ -45,8 +45,8 @@
 }
 
 .user-role {
-    background: linear-gradient(135deg, var(--mg-primary-500) 0%, #764ba2 100%);
-    color: white;
+    background: linear-gradient(135deg, var(--mg-primary-500) 0%, var(--mg-primary-700) 100%);
+    color: var(--mg-white);
     padding: 4px 12px;
     border-radius: 12px;
     font-size: var(--font-size-xs);
@@ -86,35 +86,35 @@
 
 .schedule-page-btn-primary {
     background-color: var(--color-primary);
-    color: white;
+    color: var(--mg-white);
 }
 
 .schedule-page-btn-primary:hover {
     background-color: var(--color-primary-dark);
     transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
+    box-shadow: var(--mg-shadow-primary, 0 4px 12px var(--mg-shadow-medium));
 }
 
 .schedule-page-btn-secondary {
     background-color: var(--color-secondary);
-    color: white;
+    color: var(--mg-white);
 }
 
 .schedule-page-btn-secondary:hover {
-    background-color: #545b62;
+    background-color: var(--mg-gray-600);
     transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(108, 117, 125, 0.3);
+    box-shadow: var(--mg-shadow-primary, 0 4px 12px var(--mg-shadow-medium));
 }
 
 .schedule-page-btn-warning {
     background-color: var(--status-warning);
-    color: #212529;
+    color: var(--mg-gray-900);
 }
 
 .schedule-page-btn-warning:hover {
-    background-color: #e0a800;
+    background-color: var(--mg-warning-500);
     transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(255, 193, 7, 0.3);
+    box-shadow: var(--mg-shadow-primary, 0 4px 12px var(--mg-shadow-medium));
 }
 
 .schedule-page-btn-warning:disabled {
@@ -133,7 +133,7 @@
 
 .schedule-page-btn-outline:hover {
     background-color: var(--color-primary);
-    color: white;
+    color: var(--mg-white);
     transform: translateY(-1px);
 }
 
@@ -184,7 +184,7 @@
 }
 
 .schedule-main {
-  background: #fff;
+  background: var(--mg-white);
   border-radius: 12px;
   box-shadow: 0 4px 6px var(--mg-shadow-light);
   overflow: hidden;
@@ -197,7 +197,7 @@
 }
 
 .sidebar-section {
-  background: #fff;
+  background: var(--mg-white);
   border-radius: 12px;
   padding: 20px;
   box-shadow: 0 4px 6px var(--mg-shadow-light);
@@ -355,7 +355,7 @@
   justify-content: center;
   min-height: 400px;
   text-align: center;
-  background: #fff;
+  background: var(--mg-white);
   border-radius: 12px;
   box-shadow: 0 4px 6px var(--mg-shadow-light);
   padding: 40px;

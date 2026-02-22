@@ -13,6 +13,7 @@
   width: 100%;
   max-width: 100%;
   min-width: 0;
+  height: 100%;
   min-height: calc(100vh - 220px); /* GNB, LNB, 패딩, 헤더·범례 여유 */
   overflow: hidden;
   box-sizing: border-box;
@@ -298,15 +299,19 @@
   border: 1px solid var(--ad-b0kla-border);
   border-radius: var(--ad-b0kla-radius-sm);
   box-shadow: var(--ad-b0kla-shadow);
-  overflow-x: auto;
-  overflow-y: auto;
+  overflow: hidden;
   min-width: 0;
   min-height: 480px; /* flex 자식 0 높이 방지, 꽉 채움 유지 */
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
   box-sizing: border-box;
 }
 
 .mg-v2-ad-b0kla .fc {
+  height: 100%;
+  flex: 1;
   --fc-border-color: var(--ad-b0kla-border);
   --fc-button-bg-color: var(--ad-b0kla-bg);
   --fc-button-border-color: var(--ad-b0kla-border);

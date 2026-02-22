@@ -127,15 +127,17 @@ const SchedulePage = ({ user: propUser }) => {
         </div>
       )}
 
-      <div className="mg-v2-schedule-grid" style={{ display: 'flex', gap: '24px', alignItems: 'flex-start' }}>
+      <div className="mg-v2-schedule-grid" style={{ display: 'flex', gap: '24px', alignItems: 'stretch' }}>
         {/* 좌측 캘린더 영역 (메인) */}
-        <div className="mg-v2-schedule-grid__main" style={{ flex: '1', minWidth: 0 }}>
-          <ContentSection noCard={true}>
-            <UnifiedScheduleComponent 
-              user={displayUser}
-              userRole={userRole}
-              userId={isAdmin() ? 0 : userId}
-            />
+        <div className="mg-v2-schedule-grid__main" style={{ flex: '1', minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+          <ContentSection noCard={true} className="mg-v2-schedule-content-section">
+            <div style={{ flex: '1', display: 'flex', flexDirection: 'column' }}>
+              <UnifiedScheduleComponent 
+                user={displayUser}
+                userRole={userRole}
+                userId={isAdmin() ? 0 : userId}
+              />
+            </div>
           </ContentSection>
         </div>
 

@@ -544,3 +544,16 @@
   margin-top: 1rem;
 }
 
+/* 캘린더가 전체를 꽉 채우도록 flex 속성 상속 */
+.mg-v2-schedule-content-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.mg-v2-schedule-content-section .mg-v2-content-section__body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+

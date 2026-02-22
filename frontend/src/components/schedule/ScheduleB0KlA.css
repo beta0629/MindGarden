@@ -6,21 +6,107 @@
  * @since 2025-02-22
  */
 
-/* ===== Schedule Header B0KlA ===== */
+/* ===== Schedule Calendar 컨테이너 (overflow 방지) ===== */
+.mg-v2-ad-b0kla.mg-v2-schedule-calendar {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* ===== Schedule Header B0KlA (매핑 리스트 헤더와 동일 패턴) ===== */
 .mg-v2-ad-b0kla .mg-v2-schedule-header {
-  background: var(--ad-b0kla-card-bg);
-  border: 1px solid var(--ad-b0kla-border);
-  border-radius: var(--ad-b0kla-radius-sm);
-  box-shadow: var(--ad-b0kla-shadow);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--ad-b0kla-border);
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+.mg-v2-ad-b0kla .mg-v2-schedule-header__title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.mg-v2-ad-b0kla .mg-v2-schedule-header__icon {
+  color: var(--ad-b0kla-green);
+  flex-shrink: 0;
 }
 
 .mg-v2-ad-b0kla .mg-v2-schedule-title {
+  font-size: 1.125rem;
+  font-weight: 700;
   color: var(--ad-b0kla-title-color);
+  margin: 0;
 }
 
+.mg-v2-ad-b0kla .mg-v2-schedule-header__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.mg-v2-ad-b0kla .mg-v2-schedule-header__select {
+  min-width: 120px;
+  max-width: 200px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  background: var(--ad-b0kla-bg);
+  border: 1px solid var(--ad-b0kla-border);
+  border-radius: var(--ad-b0kla-radius-sm);
+  color: var(--ad-b0kla-title-color);
+  cursor: pointer;
+}
+
+.mg-v2-ad-b0kla .mg-v2-schedule-header__select:focus {
+  outline: none;
+  border-color: var(--ad-b0kla-green);
+}
+
+.mg-v2-ad-b0kla .mg-v2-schedule-header__refresh {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  background: var(--ad-b0kla-bg);
+  border: 1px solid var(--ad-b0kla-border);
+  border-radius: var(--ad-b0kla-radius-sm);
+  color: var(--ad-b0kla-title-color);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.mg-v2-ad-b0kla .mg-v2-schedule-header__refresh:hover {
+  background: var(--ad-b0kla-card-bg);
+  border-color: var(--ad-b0kla-green);
+  color: var(--ad-b0kla-green);
+}
+
+/* 기존 클래스 호환 */
 .mg-v2-ad-b0kla .mg-v2-consultant-filter,
 .mg-v2-ad-b0kla .mg-v2-select {
-  background: var(--ad-b0kla-card-bg);
+  background: var(--ad-b0kla-bg);
   border: 1px solid var(--ad-b0kla-border);
   border-radius: var(--ad-b0kla-radius-sm);
   color: var(--ad-b0kla-title-color);
@@ -28,6 +114,10 @@
 
 /* ===== Schedule Legend B0KlA ===== */
 .mg-v2-ad-b0kla .mg-v2-schedule-legend {
+  flex-shrink: 0;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
   background: var(--ad-b0kla-card-bg);
   border: 1px solid var(--ad-b0kla-border);
   border-radius: var(--ad-b0kla-radius-sm);
@@ -59,7 +149,11 @@
   border: 1px solid var(--ad-b0kla-border);
   border-radius: var(--ad-b0kla-radius-sm);
   box-shadow: var(--ad-b0kla-shadow);
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: visible;
+  min-width: 0;
+  flex: 1;
+  box-sizing: border-box;
 }
 
 .mg-v2-ad-b0kla .fc {

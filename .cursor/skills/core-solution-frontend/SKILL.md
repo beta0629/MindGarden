@@ -13,6 +13,11 @@ React/JavaScript/TypeScript 코드를 작성·수정할 때 이 스킬을 적용
 - **UI/비주얼 변경이 큰 경우**: `core-designer`로 시안·스펙을 먼저 정의한 뒤, `core-coder`가 구현한다.
 - **레이아웃·헤더·스케줄·모달** 등 B0KlA 적용 수정 시에도 `core-coder` + 해당 스킬 적용.
 
+### 모달
+
+- **MgModal 사용**: 새 모달은 `frontend/src/components/ui/MgModal` 사용. `size` prop으로 full/medium/small 지정.
+- 참조: `docs/standards/MODAL_STANDARD.md`
+
 ## When to Use
 
 - `frontend/**`, `frontend-ops/**`, `frontend-trinity/**` 등 프론트엔드 소스 수정·추가

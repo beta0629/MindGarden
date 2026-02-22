@@ -83,6 +83,7 @@ description: Core Solution(MindGarden) 프로젝트 전체 룰 인덱스. 백엔
 - **FRONTEND_DEVELOPMENT_STANDARD.md** — 프론트 구조·상수화·디자인 시스템
 - **API_CALL_STANDARD.md** — StandardizedApi 필수 (프론트 API 호출)
 - **COMPONENT_STRUCTURE_STANDARD.md** — 컴포넌트 계층·시맨틱 태그
+- **MODAL_STANDARD.md** — MgModal 공통 모달, size(full/medium/small) 사용 가이드
 - **API_INTEGRATION_STANDARD.md**, **API_DESIGN_STANDARD.md**
 - **DTO_NAMING_STANDARD.md**, **ERROR_HANDLING_STANDARD.md**, **LOGGING_STANDARD.md**
 - **TESTING_STANDARD.md** — 단위/통합/E2E/보안/성능 테스트 (테스트 에이전트: core-tester)

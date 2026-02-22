@@ -824,11 +824,11 @@
 /* ===== B0KlA 매칭 관리 모달 공통 스타일 ===== */
 /* mg-v2-modal-overlay.mg-v2-ad-b0kla: 매칭 관련 모달 오버레이 */
 .mg-v2-modal-overlay.mg-v2-ad-b0kla {
-  background: var(--ad-b0kla-overlay-bg);
+  background: var(--ad-b0kla-overlay-bg, rgba(0, 0, 0, 0.4));
 }
 
 .mg-v2-modal-overlay.mg-v2-ad-b0kla .mg-v2-modal {
-  background: var(--ad-b0kla-card-bg);
+  background: var(--ad-b0kla-card-bg, #fcfbfa);
   border: 1px solid var(--ad-b0kla-border);
   border-radius: var(--ad-b0kla-radius);
   box-shadow: var(--ad-b0kla-shadow);
@@ -836,7 +836,7 @@
 
 .mg-v2-modal-overlay.mg-v2-ad-b0kla .mg-v2-modal-header {
   border-bottom: 1px solid var(--ad-b0kla-border);
-  background: var(--ad-b0kla-card-bg);
+  background: var(--ad-b0kla-card-bg, #fcfbfa);
 }
 
 .mg-v2-modal-overlay.mg-v2-ad-b0kla .mg-v2-modal-title {
@@ -853,12 +853,12 @@
 }
 
 .mg-v2-modal-overlay.mg-v2-ad-b0kla .mg-v2-modal-body {
-  background: var(--ad-b0kla-card-bg);
+  background: var(--ad-b0kla-card-bg, #fcfbfa);
 }
 
 .mg-v2-modal-overlay.mg-v2-ad-b0kla .mg-v2-modal-footer {
   border-top: 1px solid var(--ad-b0kla-border);
-  background: var(--ad-b0kla-bg);
+  background: var(--ad-b0kla-bg, #fcfbfa);
 }
 
 /* B0KlA 카드 악센트 바 (좌측 4px) - 섹션 제목용 */
@@ -914,6 +914,28 @@
 
 .mg-v2-modal-overlay.mg-v2-ad-b0kla .mg-v2-modal-small {
   max-width: 400px;
+}
+
+/* DateActionModal 전용: 날짜 헤더 + 2개 버튼(상담 일정 등록, 휴가 등록) + 취소 */
+.mg-v2-modal-overlay.mg-v2-ad-b0kla .mg-v2-modal.mg-v2-modal-date-action {
+  max-width: 480px;
+  width: 100%;
+  height: auto;
+  max-height: 90vh;
+  padding: 0;
+}
+
+.mg-v2-modal-overlay.mg-v2-ad-b0kla .mg-v2-modal.mg-v2-modal-date-action .mg-v2-modal-header {
+  padding: 1rem 1.25rem;
+}
+
+.mg-v2-modal-overlay.mg-v2-ad-b0kla .mg-v2-modal.mg-v2-modal-date-action .mg-v2-modal-body {
+  padding: 1rem 1.25rem;
+  max-height: none;
+}
+
+.mg-v2-modal-overlay.mg-v2-ad-b0kla .mg-v2-modal.mg-v2-modal-date-action .mg-v2-modal-footer {
+  padding: 0.75rem 1.25rem;
 }
 
 /* 검색바 반응형 */

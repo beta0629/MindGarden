@@ -190,7 +190,7 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
             allDay: allDay,
             backgroundColor: backgroundColor,
             borderColor: backgroundColor,
-            textColor: '#ffffff',
+            textColor: 'var(--mg-white)',
             className: 'vacation-event',
             extendedProps: {
                 type: 'vacation',

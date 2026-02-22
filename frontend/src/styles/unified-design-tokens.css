@@ -21,7 +21,7 @@
   --cs-primary-200: #bfdbfe;
   --cs-primary-300: #93c5fd;
   --cs-primary-400: #60a5fa;
-  --cs-primary-500: #3b82f6;
+  --cs-primary-500: var(--mg-primary-500);
   --cs-primary-600: #2563eb;
   --cs-primary-700: #1d4ed8;
   --cs-primary-800: #1e40af;
@@ -44,7 +44,7 @@
   --cs-success-200: #a7f3d0;
   --cs-success-300: #6ee7b7;
   --cs-success-400: #34d399;
-  --cs-success-500: #10b981;
+  --cs-success-500: var(--mg-success-500);
   --cs-success-600: #059669;
   --cs-success-700: #047857;
   --cs-success-800: #065f46;
@@ -56,7 +56,7 @@
   --cs-error-200: #fecaca;
   --cs-error-300: #fca5a5;
   --cs-error-400: #f87171;
-  --cs-error-500: #ef4444;
+  --cs-error-500: var(--mg-error-500);
   --cs-error-600: #dc2626;
   --cs-error-700: #b91c1c;
   --cs-error-800: #991b1b;
@@ -68,7 +68,7 @@
   --cs-warning-200: #fde68a;
   --cs-warning-300: #fcd34d;
   --cs-warning-400: #fbbf24;
-  --cs-warning-500: #f59e0b;
+  --cs-warning-500: var(--mg-warning-500);
   --cs-warning-600: #d97706;
   --cs-warning-700: #b45309;
   --cs-warning-800: #92400e;
@@ -92,7 +92,7 @@
   --cs-yellow-200: #fde68a;
   --cs-yellow-300: #fcd34d;
   --cs-yellow-400: #ffcc00;
-  --cs-yellow-500: #f59e0b;
+  --cs-yellow-500: var(--mg-warning-500);
   --cs-yellow-600: #d97706;
   --cs-yellow-700: #b45309;
   --cs-yellow-800: #92400e;
@@ -156,7 +156,7 @@
   --cs-blue-200: #bfdbfe;
   --cs-blue-300: #93c5fd;
   --cs-blue-400: #60a5fa;
-  --cs-blue-500: #3b82f6;
+  --cs-blue-500: var(--mg-primary-500);
   --cs-blue-600: #2563eb;
   --cs-blue-700: #0056CC;
   --cs-blue-800: #004499;
@@ -187,15 +187,15 @@
   --cs-purple-900: #581c87;
   
   /* 기본 색상 */
-  --cs-white: #ffffff;
-  --cs-black: #000000;
+  --cs-white: var(--mg-white);
+  --cs-black: var(--mg-black);
   --cs-transparent: transparent;
   
   /* 그림자 */
   --cs-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --cs-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  --cs-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-  --cs-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  --cs-shadow-md: 0 4px 6px -1px var(--mg-shadow-light);
+  --cs-shadow-lg: 0 10px 15px -3px var(--mg-shadow-light);
+  --cs-shadow-xl: 0 20px 25px -5px var(--mg-shadow-light);
   --cs-shadow-dark: 0 8px 16px 0 rgba(0, 0, 0, 0.2);
   --cs-shadow-primary: 0 8px 20px rgba(59, 130, 246, 0.12);
   --cs-shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.08);
@@ -214,7 +214,7 @@
   /* Glass 효과 */
   --cs-glass-light: rgba(255, 255, 255, 0.8);
   --cs-glass-strong: rgba(255, 255, 255, 0.95);
-  --cs-glass-dark: rgba(0, 0, 0, 0.1);
+  --cs-glass-dark: var(--mg-shadow-light);
   --cs-glass-medium: rgba(255, 255, 255, 0.6);
   --cs-glass-light-subtle: rgba(255, 255, 255, 0.1);
   --cs-glass-dark-subtle: rgba(0, 0, 0, 0.04);
@@ -379,7 +379,7 @@
   --mg-gray-900: var(--cs-secondary-900);
   
   --mg-consultant-dark: var(--cs-primary-800);
-  --mg-shadow-light: rgba(0, 0, 0, 0.1);
+  --mg-shadow-light: var(--mg-shadow-light);
   
   /* 색상 별칭 */
   --mint-green: var(--cs-success-500);
@@ -389,9 +389,9 @@
   --color-primary-hover: var(--cs-primary-600);
   --color-success-hover: var(--cs-success-600);
   --color-danger-hover: var(--cs-error-600);
-  --color-text-on-primary: #ffffff;
-  --color-text-on-success: #ffffff;
-  --color-text-on-danger: #ffffff;
+  --color-text-on-primary: var(--mg-white);
+  --color-text-on-success: var(--mg-white);
+  --color-text-on-danger: var(--mg-white);
   --color-primary-active: var(--cs-primary-700);
 
   /* ===== TENANT BRANDING VARIABLES ===== */
@@ -1097,7 +1097,7 @@
 
 /* MindGarden 테넌트 (예시) */
 [data-tenant-id="mindgarden"] {
-  --tenant-primary: #667eea;
+  --tenant-primary: var(--mg-primary-500);
   --tenant-secondary: #764ba2;
   --tenant-logo-url: '/logos/mindgarden-logo.png';
   --tenant-name: 'MindGarden';
@@ -1105,19 +1105,19 @@
 
 /* 기본 상담소 테넌트 (예시) */
 [data-tenant-id*="consultation"] {
-  --tenant-primary: #8b5cf6;
+  --tenant-primary: var(--mg-purple-500);
   --tenant-secondary: #6b46c1;
 }
 
 /* 학원 테넌트 (예시) */
 [data-tenant-id*="academy"] {
-  --tenant-primary: #10b981;
+  --tenant-primary: var(--mg-success-500);
   --tenant-secondary: #059669;
 }
 
 /* ERP 테넌트 (예시) */
 [data-tenant-id*="erp"] {
-  --tenant-primary: #f59e0b;
+  --tenant-primary: var(--mg-warning-500);
   --tenant-secondary: #d97706;
 }
 
@@ -11115,7 +11115,7 @@ body {
 }
 
 .mg-v2-button-danger {
-    background-color: var(--mg-error-500, #dc3545);
+    background-color: var(--mg-error-500, var(--mg-error-500));
     color: white;
     border: none;
 }
@@ -11154,7 +11154,7 @@ body {
 .mg-modal-content {
     background: white;
     border-radius: 8px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 20px var(--mg-shadow-medium);
     max-width: 500px;
     width: 90%;
     max-height: 90vh;
@@ -17772,13 +17772,13 @@ button span, .btn span, [class*="btn-"] span, [class*="mg-btn"] span, [class*="m
   
   /* ===== BUTTON HOVER VARIABLES ===== */
   /* 버튼 호버 효과 전용 변수들 */
-  --mg-button-hover-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  --mg-button-active-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  --mg-button-hover-shadow: 0 4px 12px var(--mg-shadow-medium);
+  --mg-button-active-shadow: 0 2px 6px var(--mg-shadow-medium);
   --mg-button-hover-transform: translateY(-1px);
   
   /* ===== CARD HOVER VARIABLES ===== */
   /* 카드 호버 효과 전용 변수들 */
-  --mg-card-hover-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  --mg-card-hover-shadow: 0 4px 12px var(--mg-shadow-medium);
   --mg-card-hover-transform: translateY(-2px);
   --mg-card-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   

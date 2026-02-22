@@ -13,7 +13,7 @@
   width: 300px;
   min-width: 200px;
   padding: 12px 20px;
-  background: var(--ad-b0kla-card-bg, #ffffff);
+  background: var(--ad-b0kla-card-bg, var(--mg-white));
   border: 1px solid var(--ad-b0kla-border, #e2e8f0);
   border-radius: 16px;
   color: var(--ad-b0kla-title-color, #2d3748);

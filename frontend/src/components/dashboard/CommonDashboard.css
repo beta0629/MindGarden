@@ -15,10 +15,10 @@
 /* ===== 공통 대시보드 레이아웃 ===== */
 .mg-dashboard-layout,
 .dashboard-container {
-    padding: var(--mg-spacing-lg);
-    max-width: var(--mg-layout-container-max, 1200px);
+    padding: var(--mg-layout-section-padding);
+    max-width: var(--mg-container-max);
     margin: 0 auto;
-    background: var(--mg-bg-dashboard);
+    background: linear-gradient(to bottom, var(--mg-layout-main-bg-start), var(--mg-layout-main-bg-end));
     min-height: 100vh;
 }
 

@@ -10,9 +10,9 @@ import './TreatmentOutcomeChart.css';
 const TreatmentOutcomeChart = ({ prediction }) => {
     const getOutcomeColor = (outcome) => {
         const colors = {
-            'EXCELLENT': '#10b981',
+            'EXCELLENT': 'var(--mg-success-500)',
             'GOOD': '#84cc16',
-            'MODERATE': '#f59e0b',
+            'MODERATE': 'var(--mg-warning-500)',
             'POOR': '#dc2626',
         };
         return colors[outcome] || '#6b7280';

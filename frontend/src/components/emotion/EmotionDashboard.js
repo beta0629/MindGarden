@@ -77,8 +77,8 @@ const EmotionDashboard = ({ consultationRecordId, clientId }) => {
         const colors = {
             'CRITICAL': '#dc2626',
             'HIGH': '#ea580c',
-            'MEDIUM': '#f59e0b',
-            'LOW': '#10b981',
+            'MEDIUM': 'var(--mg-warning-500)',
+            'LOW': 'var(--mg-success-500)',
         };
         return colors[riskLevel] || '#6b7280';
     };

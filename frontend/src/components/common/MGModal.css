@@ -9,7 +9,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: var(--mg-overlay);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -19,7 +19,7 @@
 }
 
 .mg-modal {
-  background: #ffffff;
+  background: var(--mg-white);
   border-radius: 16px;
   box-shadow: 0 8px 24px rgba(0,0,0,0.1);
   max-width: 90vw;

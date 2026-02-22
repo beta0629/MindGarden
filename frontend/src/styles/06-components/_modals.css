@@ -8,7 +8,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: var(--mg-overlay);
   z-index: var(--z-modal-backdrop);
   display: flex;
   align-items: center;
@@ -28,7 +28,7 @@
 .mg-modal {
   display: flex;
   flex-direction: column;
-  background: #ffffff;
+  background: var(--mg-white);
   border-radius: 16px;
   box-shadow: 0 8px 24px rgba(0,0,0,0.1);
   max-width: 90vw;
@@ -74,7 +74,7 @@
   justify-content: space-between;
   padding: 24px;
   border-bottom: 1px solid #e2e8f0;
-  background: #ffffff;
+  background: var(--mg-white);
   border-radius: 16px 16px 0 0;
   flex-shrink: 0; /* 헤더 영역이 줄어들지 않도록 고정 */
 }
@@ -113,7 +113,7 @@
   padding: 0 24px 24px 24px;
   flex: 1;
   overflow-y: auto;
-  background: #ffffff;
+  background: var(--mg-white);
 }
 
 /* 모달 액션 및 푸터 */

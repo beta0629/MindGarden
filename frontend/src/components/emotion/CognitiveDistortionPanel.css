@@ -56,8 +56,8 @@
 }
 
 .count-badge.risk-high { background: #dc2626; }
-.count-badge.risk-medium { background: #f59e0b; }
-.count-badge.risk-low { background: #10b981; }
+.count-badge.risk-medium { background: var(--mg-warning-500); }
+.count-badge.risk-low { background: var(--mg-success-500); }
 
 .distortions-list {
     display: flex;
@@ -68,7 +68,7 @@
 .distortion-item {
     padding: 16px;
     background: white;
-    border-left: 4px solid #3b82f6;
+    border-left: 4px solid var(--mg-primary-500);
     border-radius: 8px;
     box-shadow: 0 1px 2px rgba(0,0,0,0.05);
 }
@@ -109,7 +109,7 @@
 .no-distortions {
     padding: 32px;
     text-align: center;
-    color: #10b981;
+    color: var(--mg-success-500);
     font-size: 15px;
 }
 

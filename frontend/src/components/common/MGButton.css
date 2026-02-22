@@ -41,7 +41,7 @@
   &.mg-button--loading {
     cursor: wait;
     background-color: rgba(75, 116, 92, 0.6) !important;
-    color: #ffffff !important;
+    color: var(--mg-white) !important;
     border-color: transparent !important;
     pointer-events: none;
     box-shadow: none !important;
@@ -76,7 +76,7 @@
 /* 버튼 스타일 변형 */
 .mg-button--primary {
   background-color: #4b745c;
-  color: #ffffff;
+  color: var(--mg-white);
   
   &:hover:not(.mg-button--disabled):not(.mg-button--loading) {
     background-color: #3e604c;
@@ -92,7 +92,7 @@
 
 .mg-button--secondary {
   background-color: #6b7280;
-  color: #ffffff;
+  color: var(--mg-white);
   
   &:hover:not(.mg-button--disabled):not(.mg-button--loading) {
     background-color: #4b5563;
@@ -102,8 +102,8 @@
 }
 
 .mg-button--success {
-  background-color: #10b981;
-  color: #ffffff;
+  background-color: var(--mg-success-500);
+  color: var(--mg-white);
   
   &:hover:not(.mg-button--disabled):not(.mg-button--loading) {
     background-color: #059669;
@@ -113,8 +113,8 @@
 }
 
 .mg-button--danger {
-  background-color: #ef4444;
-  color: #ffffff;
+  background-color: var(--mg-error-500);
+  color: var(--mg-white);
   
   &:hover:not(.mg-button--disabled):not(.mg-button--loading) {
     background-color: #dc2626;
@@ -124,8 +124,8 @@
 }
 
 .mg-button--warning {
-  background-color: #f59e0b;
-  color: #ffffff;
+  background-color: var(--mg-warning-500);
+  color: var(--mg-white);
   
   &:hover:not(.mg-button--disabled):not(.mg-button--loading) {
     background-color: #d97706;
@@ -135,8 +135,8 @@
 }
 
 .mg-button--info {
-  background-color: #3b82f6;
-  color: #ffffff;
+  background-color: var(--mg-primary-500);
+  color: var(--mg-white);
   
   &:hover:not(.mg-button--disabled):not(.mg-button--loading) {
     background-color: #2563eb;
@@ -152,7 +152,7 @@
   
   &:hover:not(.mg-button--disabled):not(.mg-button--loading) {
     background-color: #4b745c;
-    color: #ffffff;
+    color: var(--mg-white);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     transform: translateY(-1px);
   }

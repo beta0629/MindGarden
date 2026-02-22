@@ -146,7 +146,7 @@
 
 .mg-card-hover:hover {
   transform: var(--mg-card-hover-transform, translateY(-2px));
-  box-shadow: var(--mg-card-hover-shadow, 0 4px 12px rgba(0, 0, 0, 0.15));
+  box-shadow: var(--mg-card-hover-shadow, 0 4px 12px var(--mg-shadow-medium));
 }
 
 /* 동적 스타일 (CSS 변수 사용) */

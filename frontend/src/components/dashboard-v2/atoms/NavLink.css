@@ -31,7 +31,7 @@
 
 .mg-v2-nav-link--active {
   background: var(--mg-layout-sidebar-active-bg, #3D5246);
-  color: #ffffff;
+  color: var(--mg-white);
 }
 
 .mg-v2-nav-link__icon {

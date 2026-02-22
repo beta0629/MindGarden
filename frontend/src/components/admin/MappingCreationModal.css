@@ -18,7 +18,7 @@
   background: var(--ad-b0kla-card-bg);
   border: 1px solid var(--ad-b0kla-border);
   border-radius: var(--ad-b0kla-radius);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 20px 40px var(--mg-shadow-light);
   height: fit-content;
   max-height: 90vh;
 }
@@ -88,7 +88,7 @@
 /* B0KlA 컨텍스트 (부모에 이미 있으면 상속) */
 .mg-v2-mapping-creation-modal-wrapper {
   --ad-b0kla-bg: #fcfbfa;
-  --ad-b0kla-card-bg: #ffffff;
+  --ad-b0kla-card-bg: var(--mg-white);
   --ad-b0kla-border: #e2e8f0;
   --ad-b0kla-radius: 24px;
   --ad-b0kla-radius-sm: 12px;

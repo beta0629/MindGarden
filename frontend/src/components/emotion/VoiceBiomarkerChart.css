@@ -30,7 +30,7 @@
 }
 
 .metric-value.normal-range {
-    color: #10b981;
+    color: var(--mg-success-500);
 }
 
 .metric-value.out-of-range {
@@ -80,7 +80,7 @@
     transition: width 0.5s ease;
 }
 
-.indicator-fill.anxiety { background: linear-gradient(90deg, #fbbf24, #f59e0b); }
+.indicator-fill.anxiety { background: linear-gradient(90deg, #fbbf24, var(--mg-warning-500)); }
 .indicator-fill.depression { background: linear-gradient(90deg, #6366f1, #4f46e5); }
 .indicator-fill.stress { background: linear-gradient(90deg, #f97316, #ea580c); }
 

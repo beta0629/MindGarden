@@ -7,7 +7,7 @@
 .mg-v2-mapping-table-wrapper {
   width: 100%;
   overflow-x: auto;
-  background: var(--ad-b0kla-card-bg, #ffffff);
+  background: var(--ad-b0kla-card-bg, var(--mg-white));
   border: 1px solid var(--ad-b0kla-border, #e2e8f0);
   border-radius: var(--ad-b0kla-radius-sm, 12px);
 }

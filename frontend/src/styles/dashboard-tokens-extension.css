@@ -142,7 +142,7 @@
   --mg-radius-full: 9999px;
   
   /* 기존 변수와의 호환성 */
-  --mg-white: #ffffff;
-  --mg-black: #000000;
+  --mg-white: var(--mg-white);
+  --mg-black: var(--mg-black);
 }
 

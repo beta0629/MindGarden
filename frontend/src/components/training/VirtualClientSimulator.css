@@ -98,7 +98,7 @@
 
 .chat-message.counselor {
     align-self: flex-end;
-    background: #3b82f6;
+    background: var(--mg-primary-500);
     color: white;
 }
 
@@ -170,7 +170,7 @@
 
 .chat-input:focus {
     outline: none;
-    border-color: #3b82f6;
+    border-color: var(--mg-primary-500);
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 

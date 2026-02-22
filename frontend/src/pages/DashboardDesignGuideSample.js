@@ -26,14 +26,14 @@ const counselorData = [
   { name: '김상담', rating: '4.9/5.0', initial: '김', bgColor: '#e0e7ff', barColor: '#6366f1' },
   { name: '이마음', rating: '4.8/5.0', initial: '이', bgColor: '#dcfce7', barColor: '#22c55e' },
   { name: '박치유', rating: '4.7/5.0', initial: '박', bgColor: '#ffedd5', barColor: '#f97316' },
-  { name: '최행복', rating: '4.6/5.0', initial: '최', bgColor: '#dbeafe', barColor: '#3b82f6' }
+  { name: '최행복', rating: '4.6/5.0', initial: '최', bgColor: '#dbeafe', barColor: 'var(--mg-primary-500)' }
 ];
 
 const metricData = [
-  { label: '이번 달 환불 건수', value: '12건', icon: '↩', iconBg: '#fee2e2', iconColor: '#ef4444' },
-  { label: '총 환불 금액', value: '₩840,000', icon: '₩', iconBg: '#fef3c7', iconColor: '#f59e0b' },
+  { label: '이번 달 환불 건수', value: '12건', icon: '↩', iconBg: '#fee2e2', iconColor: 'var(--mg-error-500)' },
+  { label: '총 환불 금액', value: '₩840,000', icon: '₩', iconBg: '#fef3c7', iconColor: 'var(--mg-warning-500)' },
   { label: '상담 정상 완료', value: '3,105 건', icon: '✓', iconBg: '#dcfce7', iconColor: '#22c55e' },
-  { label: '평균 상담 완료 시간', value: '52분', icon: '⏱', iconBg: '#dbeafe', iconColor: '#3b82f6' }
+  { label: '평균 상담 완료 시간', value: '52분', icon: '⏱', iconBg: '#dbeafe', iconColor: 'var(--mg-primary-500)' }
 ];
 
 const adminFeaturesData = [
@@ -51,7 +51,7 @@ const TrendBadge = ({ text, isDark }) => (
     className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold"
     style={{
       backgroundColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'var(--mg-grade-client-platinum-light, #dcfce7)',
-      color: isDark ? 'var(--mg-white, #ffffff)' : 'var(--mg-grade-client-platinum-dark, #16a34a)'
+      color: isDark ? 'var(--mg-white, var(--mg-white))' : 'var(--mg-grade-client-platinum-dark, #16a34a)'
     }}
   >
     {text}
@@ -73,9 +73,9 @@ const KpiCard = ({ label, value, badge, icon, iconBg, iconColor, isDark }) => (
   <div 
     className="p-6 rounded-2xl shadow-md flex items-center gap-5 border"
     style={{ 
-      backgroundColor: isDark ? 'var(--mg-text-primary, #1a1d24)' : 'var(--mg-bg-card, #ffffff)',
+      backgroundColor: isDark ? 'var(--mg-text-primary, #1a1d24)' : 'var(--mg-bg-card, var(--mg-white))',
       borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'var(--mg-border-light, #e2e8f0)',
-      color: isDark ? 'var(--mg-white, #ffffff)' : 'var(--mg-text-primary, #1e293b)'
+      color: isDark ? 'var(--mg-white, var(--mg-white))' : 'var(--mg-text-primary, #1e293b)'
     }}
   >
     <IconBox icon={icon} bgColor={iconBg} color={iconColor} />
@@ -108,7 +108,7 @@ const DashboardHeader = () => (
       <div className="flex gap-4 items-center">
         <div className="relative">
           <span className="text-2xl">📅</span>
-          <div className="absolute top-0 right-0 w-2 h-2 rounded-full" style={{ backgroundColor: 'var(--mg-grade-client-bronze-dark, #ef4444)' }}></div>
+          <div className="absolute top-0 right-0 w-2 h-2 rounded-full" style={{ backgroundColor: 'var(--mg-grade-client-bronze-dark, var(--mg-error-500))' }}></div>
         </div>
         <span className="text-2xl">🔔</span>
         <span className="text-xl">🌙</span>
@@ -123,7 +123,7 @@ const SystemGrowthSection = () => (
     {/* Left: System Growth Chart Placeholder */}
     <div 
       className="flex-1 p-6 rounded-2xl shadow-md border flex flex-col gap-6"
-      style={{ backgroundColor: 'var(--mg-bg-card, #ffffff)', borderColor: 'var(--mg-border-light, #e2e8f0)' }}
+      style={{ backgroundColor: 'var(--mg-bg-card, var(--mg-white))', borderColor: 'var(--mg-border-light, #e2e8f0)' }}
     >
       <div className="flex justify-between items-center">
         <div className="flex flex-col gap-1">
@@ -151,7 +151,7 @@ const SystemGrowthSection = () => (
     {/* Right: Counselors List */}
     <div 
       className="w-1/3 p-6 rounded-2xl shadow-md border flex flex-col gap-6"
-      style={{ backgroundColor: 'var(--mg-bg-card, #ffffff)', borderColor: 'var(--mg-border-light, #e2e8f0)' }}
+      style={{ backgroundColor: 'var(--mg-bg-card, var(--mg-white))', borderColor: 'var(--mg-border-light, #e2e8f0)' }}
     >
       <h3 className="text-lg font-bold" style={{ color: 'var(--mg-text-primary, #1e293b)' }}>우수 상담사 평점</h3>
       <div className="flex flex-col gap-4">
@@ -181,7 +181,7 @@ const SystemGrowthSection = () => (
 const MetricsSection = () => (
   <div 
     className="mt-6 p-6 rounded-2xl shadow-md border flex flex-col gap-6"
-    style={{ backgroundColor: 'var(--mg-bg-card, #ffffff)', borderColor: 'var(--mg-border-light, #e2e8f0)' }}
+    style={{ backgroundColor: 'var(--mg-bg-card, var(--mg-white))', borderColor: 'var(--mg-border-light, #e2e8f0)' }}
   >
     <div className="flex gap-8 border-b pb-2" style={{ borderColor: 'var(--mg-border-light, #e2e8f0)' }}>
       <div className="flex items-center gap-2 border-b-2 pb-2 -mb-2.5" style={{ borderColor: 'var(--mg-primary-600, #4f46e5)' }}>
@@ -212,7 +212,7 @@ const MetricsSection = () => (
 const AdminFeaturesSection = () => (
   <div 
     className="mt-6 p-6 rounded-2xl shadow-md border flex flex-col gap-6"
-    style={{ backgroundColor: 'var(--mg-bg-card, #ffffff)', borderColor: 'var(--mg-border-light, #e2e8f0)' }}
+    style={{ backgroundColor: 'var(--mg-bg-card, var(--mg-white))', borderColor: 'var(--mg-border-light, #e2e8f0)' }}
   >
     <h3 className="text-lg font-bold" style={{ color: 'var(--mg-text-primary, #1e293b)' }}>관리자 주요 기능</h3>
     <div className="flex gap-4">

@@ -36,8 +36,8 @@ const EmotionTrendChart = ({ trend }) => {
      */
     const getTrendColor = (trendType) => {
         const colors = {
-            'IMPROVING': '#10b981',
-            'STABLE': '#f59e0b',
+            'IMPROVING': 'var(--mg-success-500)',
+            'STABLE': 'var(--mg-warning-500)',
             'WORSENING': '#dc2626',
         };
         return colors[trendType] || '#6b7280';
@@ -93,7 +93,7 @@ const EmotionTrendChart = ({ trend }) => {
                         `${i * pointSpacing},${chartHeight - (point.emotionScore * chartHeight)}`
                     ).join(' ')}
                     fill="none"
-                    stroke="#3b82f6"
+                    stroke="var(--mg-primary-500)"
                     strokeWidth="3"
                 />
 
@@ -138,7 +138,7 @@ const EmotionTrendChart = ({ trend }) => {
                                 <td>{point.sessionNumber}회기</td>
                                 <td>{(point.emotionScore * 100).toFixed(0)}%</td>
                                 <td style={{
-                                    color: point.scoreChangeFromPrevious > 0 ? '#10b981' : '#dc2626'
+                                    color: point.scoreChangeFromPrevious > 0 ? 'var(--mg-success-500)' : '#dc2626'
                                 }}>
                                     {point.scoreChangeFromPrevious > 0 ? '+' : ''}
                                     {(point.scoreChangeFromPrevious * 100).toFixed(1)}%

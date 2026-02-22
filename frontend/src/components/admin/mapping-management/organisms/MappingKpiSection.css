@@ -19,7 +19,7 @@
   align-items: center;
   gap: 1rem;
   padding: 1rem 1.25rem;
-  background: var(--ad-b0kla-card-bg, #ffffff);
+  background: var(--ad-b0kla-card-bg, var(--mg-white));
   border: 1px solid var(--ad-b0kla-border, #e2e8f0);
   border-radius: var(--ad-b0kla-radius-sm, 12px);
   box-shadow: var(--ad-b0kla-shadow, 0 4px 12px rgba(0, 0, 0, 0.04));

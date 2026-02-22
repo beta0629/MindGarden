@@ -811,7 +811,7 @@ const UnifiedLogin = () => {
                   >
                     <path 
                       d="M9 0C4.03 0 0 2.69 0 6c0 1.92 1.21 3.61 3.04 4.61L1.5 14.85l4.49-1.24C6.64 13.95 7.81 14 9 14c4.97 0 9-2.69 9-6s-4.03-6-9-6z" 
-                      fill="#000000"
+                      fill="var(--mg-black)"
                     />
                   </svg>
                   카카오로 로그인
@@ -832,7 +832,7 @@ const UnifiedLogin = () => {
                   >
                     <path 
                       d="M0 0h9v9H0V0z" 
-                      fill="#FFFFFF"
+                      fill="var(--mg-white)"
                     />
                     <path 
                       d="M9 9h9v9H9V9z" 
@@ -844,7 +844,7 @@ const UnifiedLogin = () => {
                     />
                     <path 
                       d="M0 9h9v9H0V9z" 
-                      fill="#FFFFFF"
+                      fill="var(--mg-white)"
                     />
                     <text 
                       x="9" 
@@ -852,7 +852,7 @@ const UnifiedLogin = () => {
                       fontFamily="Arial, sans-serif" 
                       fontSize="10" 
                       fontWeight="bold" 
-                      fill="#FFFFFF" 
+                      fill="var(--mg-white)" 
                       textAnchor="middle"
                       dominantBaseline="middle"
                     >

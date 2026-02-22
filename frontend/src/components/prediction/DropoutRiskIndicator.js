@@ -12,8 +12,8 @@ const DropoutRiskIndicator = ({ risk }) => {
         const colors = {
             'CRITICAL': '#dc2626',
             'HIGH': '#ea580c',
-            'MEDIUM': '#f59e0b',
-            'LOW': '#10b981',
+            'MEDIUM': 'var(--mg-warning-500)',
+            'LOW': 'var(--mg-success-500)',
         };
         return colors[level] || '#6b7280';
     };
@@ -71,7 +71,7 @@ const DropoutRiskIndicator = ({ risk }) => {
                     <div className="metric-bar">
                         <div
                             className="metric-fill"
-                            style={{ width: `${risk.engagementScore * 100}%`, backgroundColor: '#3b82f6' }}
+                            style={{ width: `${risk.engagementScore * 100}%`, backgroundColor: 'var(--mg-primary-500)' }}
                         ></div>
                     </div>
                     <span>{(risk.engagementScore * 100).toFixed(0)}%</span>
@@ -82,7 +82,7 @@ const DropoutRiskIndicator = ({ risk }) => {
                     <div className="metric-bar">
                         <div
                             className="metric-fill"
-                            style={{ width: `${risk.attendanceRate * 100}%`, backgroundColor: '#10b981' }}
+                            style={{ width: `${risk.attendanceRate * 100}%`, backgroundColor: 'var(--mg-success-500)' }}
                         ></div>
                     </div>
                     <span>{(risk.attendanceRate * 100).toFixed(0)}%</span>

@@ -9,7 +9,7 @@
 /* ===== B0KlA 토큰 ===== */
 .mg-v2-ad-b0kla {
   --ad-b0kla-bg: #fcfbfa;
-  --ad-b0kla-card-bg: #ffffff;
+  --ad-b0kla-card-bg: var(--mg-white);
   --ad-b0kla-border: #e2e8f0;
   --ad-b0kla-radius: 24px;
   --ad-b0kla-radius-sm: 12px;

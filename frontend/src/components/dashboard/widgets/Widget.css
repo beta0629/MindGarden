@@ -89,7 +89,7 @@
 /* 개별 통계 카드 */
 .mg-stats-card,
 .widget-today-stats .mg-stats-card {
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  background: linear-gradient(135deg, var(--mg-white) 0%, #f8fafc 100%);
   border: 1px solid var(--cs-primary-200);
   border-radius: 16px;
   padding: 1.5rem;
@@ -467,7 +467,7 @@
   align-items: center;
   gap: 1rem;
   padding: 1.5rem;
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  background: linear-gradient(135deg, var(--mg-white) 0%, #f8fafc 100%);
   border-radius: 16px;
   border: 1px solid var(--cs-primary-200);
   transition: all 0.3s ease;

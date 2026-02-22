@@ -28,7 +28,7 @@ const MappingCalendarView = ({
         start: dateStr.split('T')[0], // YYYY-MM-DD 형식 추출
         backgroundColor: statusColor,
         borderColor: statusColor,
-        textColor: '#ffffff',
+        textColor: 'var(--mg-white)',
         extendedProps: {
           mapping
         }

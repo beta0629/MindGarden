@@ -13,13 +13,13 @@
   --dashboard-primary-light: #818cf8;  /* Indigo 400 */
   --dashboard-primary-dark: #312e81;   /* Indigo 800 */
   
-  --dashboard-secondary: #10b981;      /* Emerald 500 */
+  --dashboard-secondary: var(--mg-success-500);      /* Emerald 500 */
   --dashboard-secondary-hover: #059669; /* Emerald 600 */
   
   --dashboard-bg-light: #f8fafc;       /* Slate 50 */
   --dashboard-bg-dark: #0f172a;       /* Slate 900 */
   
-  --dashboard-surface-light: #ffffff;
+  --dashboard-surface-light: var(--mg-white);
   --dashboard-surface-dark: #1e293b;   /* Slate 800 */
   
   --dashboard-text-light: #1e293b;     /* Slate 800 */
@@ -34,13 +34,13 @@
   --card-shadow-soft: 0 2px 12px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.04);
   --card-shadow-soft-hover: 0 8px 24px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
   --card-radius: 20px;
-  --badge-green: #10b981;
+  --badge-green: var(--mg-success-500);
   --badge-green-bg: rgba(16, 185, 129, 0.12);
   --accent-purple-light: #ede9fe;
-  --accent-purple: #8b5cf6;
-  --accent-green: #10b981;
+  --accent-purple: var(--mg-purple-500);
+  --accent-green: var(--mg-success-500);
   --accent-orange: #f97316;
-  --accent-blue: #3b82f6;
+  --accent-blue: var(--mg-primary-500);
 
   /* 역할별 테마 (관리자) */
   --role-primary: var(--dashboard-primary);
@@ -240,7 +240,7 @@
   height: 40px;
   border-radius: 50%;
   border: 2px solid white;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px var(--mg-shadow-light);
   overflow: hidden;
 }
 
@@ -482,7 +482,7 @@
   right: 10px;
   width: 8px;
   height: 8px;
-  background: #ef4444;
+  background: var(--mg-error-500);
   border-radius: 50%;
   border: 2px solid var(--dashboard-surface-light);
 }
@@ -652,7 +652,7 @@
 }
 
 .kpi-card-bg-emerald {
-  background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+  background: linear-gradient(135deg, var(--mg-success-500) 0%, #34d399 100%);
 }
 
 .kpi-card-bg-dark {
@@ -697,7 +697,7 @@
 
 .kpi-icon-purple {
   background: rgba(139, 92, 246, 0.12);
-  color: #8b5cf6;
+  color: var(--mg-purple-500);
 }
 
 .dashboard-design-guide-sample.dark .kpi-icon-purple {
@@ -739,7 +739,7 @@
 
 .kpi-trend-down {
   background: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
+  color: var(--mg-error-500);
 }
 
 .kpi-trend-neutral {
@@ -963,7 +963,7 @@
 }
 
 .legend-dot-blue {
-  background: #3b82f6;
+  background: var(--mg-primary-500);
 }
 
 .legend-dot-purple {
@@ -1302,7 +1302,7 @@
 }
 
 .management-card.card-dark .management-icon-bg .material-symbols-outlined {
-  color: #10b981;
+  color: var(--mg-success-500);
 }
 
 /* 상담사 아바타를 아이콘 배경에 표시 */
@@ -1348,17 +1348,17 @@
 
 .management-badge.badge-auto {
   background: rgba(59, 130, 246, 0.15);
-  color: #3b82f6;
+  color: var(--mg-primary-500);
 }
 
 .management-badge.badge-beta {
   background: rgba(16, 185, 129, 0.2);
-  color: #10b981;
+  color: var(--mg-success-500);
 }
 
 .management-card.card-dark .management-badge {
   background: rgba(16, 185, 129, 0.2);
-  color: #10b981;
+  color: var(--mg-success-500);
 }
 
 .management-arrow {
@@ -1403,7 +1403,7 @@
 
 .progress-fill {
   height: 100%;
-  background: #10b981;
+  background: var(--mg-success-500);
   border-radius: 3px;
   transition: width 0.3s ease;
 }
@@ -1411,7 +1411,7 @@
 .progress-value {
   font-size: 12px;
   font-weight: 600;
-  color: #10b981;
+  color: var(--mg-success-500);
   min-width: 40px;
   text-align: right;
 }
@@ -1549,15 +1549,15 @@
 }
 
 .status-dot.status-healthy {
-  background: #10b981;
+  background: var(--mg-success-500);
 }
 
 .status-dot.status-warning {
-  background: #f59e0b;
+  background: var(--mg-warning-500);
 }
 
 .status-dot.status-error {
-  background: #ef4444;
+  background: var(--mg-error-500);
 }
 
 .status-info {
@@ -1722,7 +1722,7 @@
   padding: 4px 8px;
   font-size: 12px;
   font-weight: 600;
-  color: #10b981;
+  color: var(--mg-success-500);
   background: rgba(16, 185, 129, 0.1);
   border-radius: 6px;
 }
@@ -1880,7 +1880,7 @@
 
 .notice-icon .material-symbols-outlined {
   font-size: 24px;
-  color: #10b981;
+  color: var(--mg-success-500);
 }
 
 .notice-dot {
@@ -1889,7 +1889,7 @@
   right: 8px;
   width: 8px;
   height: 8px;
-  background: #10b981;
+  background: var(--mg-success-500);
   border-radius: 50%;
   border: 2px solid #1e293b;
 }
@@ -1920,7 +1920,7 @@
   padding: 8px 16px;
   font-size: 13px;
   font-weight: 600;
-  color: #10b981;
+  color: var(--mg-success-500);
   background: rgba(16, 185, 129, 0.15);
   border: none;
   border-radius: 8px;
@@ -2001,7 +2001,7 @@
     transform: translateX(-100%) !important;
     z-index: 1000 !important;
     transition: transform 0.3s ease !important;
-    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1) !important;
+    box-shadow: 2px 0 8px var(--mg-shadow-light) !important;
   }
   
   .dashboard-sidebar.open {
@@ -2020,7 +2020,7 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.5);
+    background: var(--mg-overlay);
     z-index: 999;
   }
 
@@ -2235,7 +2235,7 @@
   padding: 8px;
   background: var(--dashboard-surface-light);
   border-radius: 8px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 2px var(--mg-shadow-light);
 }
 
 .dashboard-design-guide-sample.dark .counselor-summary-icon {
@@ -2247,11 +2247,11 @@
 }
 
 .counselor-summary-icon.icon-emerald {
-  color: #10b981;
+  color: var(--mg-success-500);
 }
 
 .counselor-summary-icon.icon-blue {
-  color: #3b82f6;
+  color: var(--mg-primary-500);
 }
 
 .counselor-summary-icon.icon-purple {
@@ -2366,7 +2366,7 @@
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 2px var(--mg-shadow-light);
 }
 
 .dashboard-design-guide-sample.dark .counselor-filter-btn {
@@ -2487,7 +2487,7 @@
 
 .counselor-delete-btn-small {
   padding: 6px;
-  color: #ef4444;
+  color: var(--mg-error-500);
   background: transparent;
   border: none;
   border-radius: 4px;
@@ -2517,7 +2517,7 @@
   border: 1px solid var(--dashboard-border-light);
   border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 3px var(--mg-shadow-light);
   transition: box-shadow 0.2s;
 }
 
@@ -2527,7 +2527,7 @@
 }
 
 .counselor-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 12px var(--mg-shadow-medium);
 }
 
 .counselor-card-body {
@@ -2567,7 +2567,7 @@
 
 .counselor-avatar-emerald {
   background: rgba(16, 185, 129, 0.1);
-  color: #10b981;
+  color: var(--mg-success-500);
 }
 
 .counselor-avatar-orange {
@@ -2590,7 +2590,7 @@
 }
 
 .counselor-status-emerald {
-  background: #10b981;
+  background: var(--mg-success-500);
 }
 
 .counselor-status-slate {
@@ -2855,7 +2855,7 @@
 
 .counselor-delete-btn {
   padding: 6px;
-  color: #ef4444;
+  color: var(--mg-error-500);
   background: transparent;
   border: none;
   border-radius: 50%;

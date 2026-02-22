@@ -6,10 +6,10 @@
 .admin-dashboard-sample {
   --primary: #4f46e5;
   --primary-hover: #4338ca;
-  --secondary: #10b981;
+  --secondary: var(--mg-success-500);
   --background-light: #f8fafc;
   --background-dark: #0f172a;
-  --surface-light: #ffffff;
+  --surface-light: var(--mg-white);
   --surface-dark: #1e293b;
   --text-light: #1e293b;
   --text-dark: #f1f5f9;
@@ -51,7 +51,7 @@
     transform: translateX(-100%) !important;
     z-index: 1000 !important;
     transition: transform 0.3s ease !important;
-    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1) !important;
+    box-shadow: 2px 0 8px var(--mg-shadow-light) !important;
     display: flex !important;
   }
   
@@ -96,7 +96,7 @@
     height: 100vh !important;
     transform: translateX(-100%) !important;
     z-index: 1000 !important;
-    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1) !important;
+    box-shadow: 2px 0 8px var(--mg-shadow-light) !important;
   }
   
   /* 사이드바가 열려있을 때만 표시 */
@@ -301,7 +301,7 @@
   height: 40px;
   border-radius: 50%;
   border: 2px solid white;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px var(--mg-shadow-light);
   overflow: hidden;
 }
 
@@ -543,7 +543,7 @@
   right: 10px;
   width: 8px;
   height: 8px;
-  background: #ef4444;
+  background: var(--mg-error-500);
   border-radius: 50%;
   border: 2px solid var(--surface-light);
 }
@@ -578,7 +578,7 @@
   padding: 24px;
   overflow: hidden;
   transition: all 0.3s;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 3px var(--mg-shadow-light);
 }
 
 .admin-dashboard-sample.dark .kpi-card {
@@ -587,11 +587,11 @@
 }
 
 .kpi-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 12px var(--mg-shadow-medium);
 }
 
 .kpi-card-dark {
-  background: linear-gradient(to bottom right, #111827, #000000);
+  background: linear-gradient(to bottom right, #111827, var(--mg-black));
   border-color: #374151;
   color: white;
 }
@@ -677,7 +677,7 @@
 
 .kpi-icon-emerald {
   background: rgba(16, 185, 129, 0.1);
-  color: #10b981;
+  color: var(--mg-success-500);
   backdrop-filter: blur(4px);
 }
 
@@ -697,7 +697,7 @@
 
 .kpi-trend-up {
   background: rgba(16, 185, 129, 0.1);
-  color: #10b981;
+  color: var(--mg-success-500);
 }
 
 .admin-dashboard-sample.dark .kpi-trend-up {
@@ -769,7 +769,7 @@
 }
 
 .kpi-change-up {
-  color: #10b981;
+  color: var(--mg-success-500);
 }
 
 /* ==================== 차트 섹션 ==================== */
@@ -784,7 +784,7 @@
   border: 1px solid var(--border-light);
   border-radius: 16px;
   padding: 24px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 3px var(--mg-shadow-light);
 }
 
 .admin-dashboard-sample.dark .chart-card {
@@ -851,7 +851,7 @@
 .chart-tab.active {
   background: var(--surface-light);
   color: var(--text-light);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 2px var(--mg-shadow-light);
 }
 
 .admin-dashboard-sample.dark .chart-tab.active {
@@ -1002,7 +1002,7 @@
   padding: 24px;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 3px var(--mg-shadow-light);
 }
 
 .admin-dashboard-sample.dark .consultant-card {
@@ -1079,7 +1079,7 @@
 
 .consultant-avatar-blue {
   background: rgba(59, 130, 246, 0.1);
-  color: #3b82f6;
+  color: var(--mg-primary-500);
 }
 
 .admin-dashboard-sample.dark .consultant-avatar-blue {
@@ -1137,11 +1137,11 @@
 }
 
 .consultant-progress-teal {
-  background: linear-gradient(to right, #2dd4bf, #10b981);
+  background: linear-gradient(to right, #2dd4bf, var(--mg-success-500));
 }
 
 .consultant-progress-orange {
-  background: linear-gradient(to right, #fb923c, #ef4444);
+  background: linear-gradient(to right, #fb923c, var(--mg-error-500));
 }
 
 .consultant-progress-blue {
@@ -1182,7 +1182,7 @@
   border: 1px solid var(--border-light);
   border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 3px var(--mg-shadow-light);
 }
 
 .admin-dashboard-sample.dark .finance-card {
@@ -1277,7 +1277,7 @@
 
 .finance-icon-red {
   background: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
+  color: var(--mg-error-500);
 }
 
 .admin-dashboard-sample.dark .finance-icon-red {
@@ -1287,7 +1287,7 @@
 
 .finance-icon-emerald {
   background: rgba(16, 185, 129, 0.1);
-  color: #10b981;
+  color: var(--mg-success-500);
 }
 
 .admin-dashboard-sample.dark .finance-icon-emerald {
@@ -1358,7 +1358,7 @@
   text-align: center;
   cursor: pointer;
   transition: all 0.3s;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 3px var(--mg-shadow-light);
 }
 
 .admin-dashboard-sample.dark .function-card {
@@ -1368,7 +1368,7 @@
 
 .function-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 8px 24px var(--mg-shadow-medium);
   border-color: rgba(99, 102, 241, 0.3);
 }
 
@@ -1394,7 +1394,7 @@
 }
 
 .function-icon-teal {
-  background: linear-gradient(to bottom right, #2dd4bf, #10b981);
+  background: linear-gradient(to bottom right, #2dd4bf, var(--mg-success-500));
   box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
 }
 
@@ -1507,7 +1507,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
+    background: var(--mg-overlay);
     z-index: 999;
     animation: fadeIn 0.3s ease;
   }

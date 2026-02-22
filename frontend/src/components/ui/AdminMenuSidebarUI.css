@@ -14,8 +14,8 @@
 /* ==================== Sidebar Container ==================== */
 
 .mg-admin-sidebar {
-    width: var(--mg-sidebar-width, 280px);
-    background: var(--mg-gray-900);
+    width: var(--mg-layout-sidebar-width, 260px);
+    background: var(--mg-layout-sidebar-bg, #2C2C2C);
     color: var(--mg-white);
     overflow-y: auto;
     display: flex;
@@ -77,9 +77,9 @@
     gap: var(--mg-spacing-3);
     padding: var(--mg-spacing-3) var(--mg-spacing-4);
     cursor: pointer;
-    border-radius: var(--mg-border-radius-md);
+    border-radius: 10px;
     transition: background var(--mg-transition-base);
-    color: var(--cs-glass-white-70);
+    color: var(--mg-layout-sidebar-text, rgba(255, 255, 255, 0.7));
 }
 
 .mg-menu-header:hover {
@@ -109,7 +109,7 @@
     align-items: center;
     gap: var(--mg-spacing-3);
     padding: var(--mg-spacing-3) var(--mg-spacing-4);
-    color: var(--cs-glass-white-70);
+    color: var(--mg-layout-sidebar-text, rgba(255, 255, 255, 0.7));
     text-decoration: none;
     border-radius: var(--mg-border-radius-md);
     transition: all var(--mg-transition-base);
@@ -121,12 +121,13 @@
 }
 
 .mg-menu-link.mg-active {
-    background: var(--mg-primary-500);
+    background: var(--mg-layout-sidebar-active-bg, #3D5246);
     color: var(--mg-white);
 }
 
 .mg-menu-link.mg-active:hover {
-    background: var(--mg-primary-600);
+    background: var(--mg-layout-sidebar-active-bg);
+    filter: brightness(1.1);
 }
 
 /* ==================== Menu Icon ==================== */
@@ -166,11 +167,9 @@
 
 /* ==================== Responsive ==================== */
 
-@media (max-width: 768px) {
+@media (max-width: calc(var(--mg-breakpoint-tablet, 768px) - 1px)) {
     .mg-admin-sidebar {
-        width: 100%;
-        position: relative;
-        height: auto;
+        width: var(--mg-layout-sidebar-width-mobile, 280px);
     }
 
     .mg-sidebar-header {

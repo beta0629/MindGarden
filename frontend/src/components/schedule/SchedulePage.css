@@ -515,3 +515,32 @@
     outline-offset: 2px;
 }
 
+/* mg-v2-schedule-grid styles */
+.mg-v2-schedule-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-xl, 24px);
+  margin-top: var(--mg-spacing-xl, 24px);
+}
+
+@media (min-width: 1024px) {
+  .mg-v2-schedule-grid {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+  
+  .mg-v2-schedule-grid__main {
+    flex: 1;
+    min-width: 0;
+  }
+  
+  .mg-v2-schedule-grid__sidebar {
+    width: 320px;
+    flex-shrink: 0;
+  }
+}
+
+.mg-v2-mt-4 {
+  margin-top: 1rem;
+}
+

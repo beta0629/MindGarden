@@ -76,19 +76,19 @@
     right: -2px;
     border: 2px solid var(--admin-white);
     box-shadow: 0 0 0 1px var(--admin-border-color);
-    background: var(--mg-warning-500, #f59e0b);
+    background: var(--mg-warning-500, var(--mg-warning-500));
 }
 
 .status-dot[data-status='healthy'] {
-    background: var(--mg-success-500, #10b981);
+    background: var(--mg-success-500, var(--mg-success-500));
 }
 
 .status-dot[data-status='error'] {
-    background: var(--mg-error-500, #ef4444);
+    background: var(--mg-error-500, var(--mg-error-500));
 }
 
 .status-dot[data-status='warning'] {
-    background: var(--mg-warning-500, #f59e0b);
+    background: var(--mg-warning-500, var(--mg-warning-500));
 }
 
 .status-info {

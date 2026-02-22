@@ -26,8 +26,8 @@
   --widget-stats-grid-min-width: 200px;
   
   /* ===== 위젯 색상 상수 ===== */
-  --widget-background: #ffffff;
-  --widget-background-gradient: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  --widget-background: var(--mg-white);
+  --widget-background-gradient: linear-gradient(135deg, var(--mg-white) 0%, #f8fafc 100%);
   --widget-border-color: var(--cs-gray-200);
   --widget-border-color-hover: var(--cs-primary-200);
   --widget-accent-gradient: linear-gradient(90deg, var(--cs-primary-500), var(--cs-secondary-500));

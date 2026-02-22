@@ -1,0 +1,237 @@
+/* MindGarden 공통 버튼 컴포넌트 스타일 */
+
+.mg-button {
+  /* 기본 스타일 */
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: var(--border-radius-md, 8px);
+  font-family: var(--font-family-base, inherit);
+  font-weight: var(--font-weight-medium, 500);
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out, transform 0.1s ease-in-out, border-color 0.2s ease-in-out, color 0.2s ease-in-out;
+  user-select: none;
+  outline: none;
+  box-sizing: border-box;
+  min-width: fit-content;
+  overflow: hidden;
+  
+  /* 포커스 스타일 */
+  &:focus-visible {
+    outline: 2px solid #4b745c;
+    outline-offset: 2px;
+  }
+  
+  /* 비활성화 상태 */
+  &.mg-button--disabled {
+    cursor: not-allowed;
+    background-color: #edf2f7 !important;
+    color: #a0aec0 !important;
+    border: 1px solid #cbd5e0 !important;
+    opacity: 1.0;
+    pointer-events: none;
+    box-shadow: none !important;
+    transform: none !important;
+  }
+
+  /* 로딩 상태 */
+  &.mg-button--loading {
+    cursor: wait;
+    background-color: rgba(75, 116, 92, 0.6) !important;
+    color: #ffffff !important;
+    border-color: transparent !important;
+    pointer-events: none;
+    box-shadow: none !important;
+    transform: none !important;
+  }
+  
+  /* 전체 너비 */
+  &.mg-button--full-width {
+    width: 100%;
+  }
+}
+
+/* 버튼 크기 */
+.mg-button--small {
+  padding: 6px 12px;
+  font-size: 14px;
+  min-height: 32px;
+}
+
+.mg-button--medium {
+  padding: 8px 16px;
+  font-size: 16px;
+  min-height: 40px;
+}
+
+.mg-button--large {
+  padding: 12px 24px;
+  font-size: 18px;
+  min-height: 48px;
+}
+
+/* 버튼 스타일 변형 */
+.mg-button--primary {
+  background-color: #4b745c;
+  color: #ffffff;
+  
+  &:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+    background-color: #3e604c;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transform: translateY(-1px);
+  }
+  
+  &:active:not(.mg-button--disabled):not(.mg-button--loading) {
+    transform: translateY(0);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+  }
+}
+
+.mg-button--secondary {
+  background-color: #6b7280;
+  color: #ffffff;
+  
+  &:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+    background-color: #4b5563;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transform: translateY(-1px);
+  }
+}
+
+.mg-button--success {
+  background-color: #10b981;
+  color: #ffffff;
+  
+  &:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+    background-color: #059669;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transform: translateY(-1px);
+  }
+}
+
+.mg-button--danger {
+  background-color: #ef4444;
+  color: #ffffff;
+  
+  &:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+    background-color: #dc2626;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transform: translateY(-1px);
+  }
+}
+
+.mg-button--warning {
+  background-color: #f59e0b;
+  color: #ffffff;
+  
+  &:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+    background-color: #d97706;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transform: translateY(-1px);
+  }
+}
+
+.mg-button--info {
+  background-color: #3b82f6;
+  color: #ffffff;
+  
+  &:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+    background-color: #2563eb;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transform: translateY(-1px);
+  }
+}
+
+.mg-button--outline {
+  background-color: transparent;
+  color: #4b745c;
+  border: 1px solid #4b745c;
+  
+  &:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+    background-color: #4b745c;
+    color: #ffffff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transform: translateY(-1px);
+  }
+}
+
+/* 프로그레스 변형 추가 */
+.mg-button--progress {
+  background-color: rgba(75, 116, 92, 0.2);
+  color: #4b745c;
+  position: relative;
+  
+  &:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transform: translateY(-1px);
+  }
+}
+
+.mg-button__progress-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  background-color: rgba(75, 116, 92, 0.4);
+  transition: width 0.3s ease;
+  z-index: 0;
+}
+
+/* 버튼 내용 */
+.mg-button__content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  position: relative;
+}
+
+.mg-button__loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mg-button__spinner {
+  animation: mg-spin 1s linear infinite;
+}
+
+@keyframes mg-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.mg-button__text {
+  white-space: nowrap;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .mg-button--small {
+    padding: 4px 8px;
+    font-size: 12px;
+    min-height: 28px;
+  }
+  
+  .mg-button--medium {
+    padding: 6px 12px;
+    font-size: 14px;
+    min-height: 36px;
+  }
+  
+  .mg-button--large {
+    padding: 10px 20px;
+    font-size: 16px;
+    min-height: 44px;
+  }
+}

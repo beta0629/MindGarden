@@ -41,11 +41,11 @@
     transition: width 0.5s ease;
 }
 
-.emotion-joy .bar { background: linear-gradient(90deg, #fbbf24, #f59e0b); }
-.emotion-sorrow .bar { background: linear-gradient(90deg, #60a5fa, #3b82f6); }
+.emotion-joy .bar { background: linear-gradient(90deg, #fbbf24, var(--mg-warning-500)); }
+.emotion-sorrow .bar { background: linear-gradient(90deg, #60a5fa, var(--mg-primary-500)); }
 .emotion-anger .bar { background: linear-gradient(90deg, #f87171, #dc2626); }
-.emotion-fear .bar { background: linear-gradient(90deg, #a78bfa, #8b5cf6); }
-.emotion-surprise .bar { background: linear-gradient(90deg, #34d399, #10b981); }
+.emotion-fear .bar { background: linear-gradient(90deg, #a78bfa, var(--mg-purple-500)); }
+.emotion-surprise .bar { background: linear-gradient(90deg, #34d399, var(--mg-success-500)); }
 
 .emotion-bar-item > span:last-child {
     width: 50px;

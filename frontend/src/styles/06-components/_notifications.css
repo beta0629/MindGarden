@@ -37,8 +37,8 @@
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-radius: var(--notification-toast-border-radius, 0.5rem);
-  border: var(--notification-toast-border-width, 1px) solid var(--notification-toast-border-color, rgba(0, 0, 0, 0.1));
-  box-shadow: var(--notification-toast-shadow, 0 4px 12px rgba(0, 0, 0, 0.15));
+  border: var(--notification-toast-border-width, 1px) solid var(--notification-toast-border-color, var(--mg-shadow-light));
+  box-shadow: var(--notification-toast-shadow, 0 4px 12px var(--mg-shadow-medium));
   margin-bottom: var(--notification-toast-margin-bottom, 0.75rem);
   max-width: var(--notification-toast-max-width, 400px);
   min-width: var(--notification-toast-min-width, 300px);

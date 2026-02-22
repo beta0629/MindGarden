@@ -340,7 +340,7 @@ const ScheduleDetailModal = ({
                     </button>
                     <button 
                         className="mg-v2-btn--primary" 
-                        style={{ backgroundColor: '#ef4444' }}
+                        style={{ backgroundColor: 'var(--mg-error-500)' }}
                         onClick={handleCancelSchedule}
                         disabled={loading}
                     >
@@ -524,7 +524,7 @@ const ScheduleDetailModal = ({
                                     </button>
                                     <button 
                                         className="mg-v2-btn--primary"
-                                        style={{ backgroundColor: '#ef4444' }}
+                                        style={{ backgroundColor: 'var(--mg-error-500)' }}
                                         onClick={() => setShowCancelConfirm(true)}
                                         disabled={loading}
                                     >
@@ -557,7 +557,7 @@ const ScheduleDetailModal = ({
                                         </button>
                                         <button 
                                             className="mg-v2-btn--primary"
-                                            style={{ backgroundColor: '#ef4444' }}
+                                            style={{ backgroundColor: 'var(--mg-error-500)' }}
                                             onClick={() => setShowCancelConfirm(true)}
                                             disabled={loading}
                                         >

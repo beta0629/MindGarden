@@ -24,8 +24,8 @@
     font-size: 14px;
 }
 
-.trend-badge.trend-improving { color: #10b981; background: #d1fae5; }
-.trend-badge.trend-stable { color: #f59e0b; background: #fef3c7; }
+.trend-badge.trend-improving { color: var(--mg-success-500); background: #d1fae5; }
+.trend-badge.trend-stable { color: var(--mg-warning-500); background: #fef3c7; }
 .trend-badge.trend-worsening { color: #dc2626; background: #fee2e2; }
 
 .trend-chart-svg {

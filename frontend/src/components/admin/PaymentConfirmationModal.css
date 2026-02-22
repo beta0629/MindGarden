@@ -25,11 +25,11 @@
   font-size: var(--font-size-base, 14px);
   border-radius: var(--border-radius-md, 8px);
   transition: all 0.2s ease;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 3px var(--mg-shadow-light);
 }
 
 .mg-v2-modal-footer .mg-button:hover:not(:disabled) {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 12px var(--mg-shadow-medium);
 }
 
 .mg-v2-modal-footer .mg-button svg {
@@ -40,8 +40,8 @@
 
 /* 버튼 variant별 색상 강제 적용 (CSS 변수가 없을 경우 대비) */
 .mg-v2-modal-footer .mg-button--success {
-  background-color: #10b981 !important;
-  color: #ffffff !important;
+  background-color: var(--mg-success-500) !important;
+  color: var(--mg-white) !important;
 }
 
 .mg-v2-modal-footer .mg-button--success:hover:not(:disabled) {
@@ -49,8 +49,8 @@
 }
 
 .mg-v2-modal-footer .mg-button--danger {
-  background-color: #ef4444 !important;
-  color: #ffffff !important;
+  background-color: var(--mg-error-500) !important;
+  color: var(--mg-white) !important;
 }
 
 .mg-v2-modal-footer .mg-button--danger:hover:not(:disabled) {
@@ -59,7 +59,7 @@
 
 .mg-v2-modal-footer .mg-button--secondary {
   background-color: #6b7280 !important;
-  color: #ffffff !important;
+  color: var(--mg-white) !important;
   border: 1px solid #d1d5db !important;
 }
 

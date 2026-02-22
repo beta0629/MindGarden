@@ -7,7 +7,7 @@
   --mg-primary-200: #bfdbfe;
   --mg-primary-300: #93c5fd;
   --mg-primary-400: #60a5fa;
-  --mg-primary-500: #3b82f6;
+  --mg-primary-500: var(--mg-primary-500);
   --mg-primary-600: #2563eb;
   --mg-primary-700: #1d4ed8;
   --mg-primary-800: #1e40af;
@@ -18,7 +18,7 @@
   --mg-success-200: #a7f3d0;
   --mg-success-300: #6ee7b7;
   --mg-success-400: #34d399;
-  --mg-success-500: #10b981;
+  --mg-success-500: var(--mg-success-500);
   --mg-success-600: #059669;
   --mg-success-700: #047857;
 
@@ -27,7 +27,7 @@
   --mg-warning-200: #fde68a;
   --mg-warning-300: #fcd34d;
   --mg-warning-400: #fbbf24;
-  --mg-warning-500: #f59e0b;
+  --mg-warning-500: var(--mg-warning-500);
   --mg-warning-600: #d97706;
 
   --mg-error-50: #fef2f2;
@@ -35,7 +35,7 @@
   --mg-error-200: #fecaca;
   --mg-error-300: #fca5a5;
   --mg-error-400: #f87171;
-  --mg-error-500: #ef4444;
+  --mg-error-500: var(--mg-error-500);
   --mg-error-600: #dc2626;
 
   --mg-gray-50: #f9fafb;
@@ -68,8 +68,8 @@
   /* ===== 그림자 ===== */
   --mg-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
   --mg-shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
-  --mg-shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
-  --mg-shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.1);
+  --mg-shadow-lg: 0 10px 15px var(--mg-shadow-light);
+  --mg-shadow-xl: 0 20px 25px var(--mg-shadow-light);
 
   /* ===== 글래스모피즘 ===== */
   --glass-bg-light: rgba(255, 255, 255, 0.8);

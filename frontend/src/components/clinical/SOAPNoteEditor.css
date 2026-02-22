@@ -2,7 +2,7 @@
     background: white;
     border-radius: 8px;
     padding: 24px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 8px var(--mg-shadow-light);
 }
 
 .editor-header {
@@ -94,7 +94,7 @@
     justify-content: center;
     width: 36px;
     height: 36px;
-    background: linear-gradient(135deg, #2563eb, #3b82f6);
+    background: linear-gradient(135deg, #2563eb, var(--mg-primary-500));
     color: white;
     border-radius: 50%;
     font-size: 18px;
@@ -178,7 +178,7 @@
 
 .btn:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 12px var(--mg-shadow-medium);
 }
 
 .btn:active:not(:disabled) {
@@ -200,7 +200,7 @@
 }
 
 .btn-success {
-    background: #10b981;
+    background: var(--mg-success-500);
     color: white;
 }
 
@@ -216,15 +216,15 @@
 
 /* 섹션별 색상 구분 (선택적) */
 .soap-section:nth-child(2) .section-letter {
-    background: linear-gradient(135deg, #10b981, #34d399);
+    background: linear-gradient(135deg, var(--mg-success-500), #34d399);
 }
 
 .soap-section:nth-child(3) .section-letter {
-    background: linear-gradient(135deg, #f59e0b, #fbbf24);
+    background: linear-gradient(135deg, var(--mg-warning-500), #fbbf24);
 }
 
 .soap-section:nth-child(4) .section-letter {
-    background: linear-gradient(135deg, #8b5cf6, #a78bfa);
+    background: linear-gradient(135deg, var(--mg-purple-500), #a78bfa);
 }
 
 /* 반응형 디자인 */

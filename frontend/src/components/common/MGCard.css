@@ -103,7 +103,7 @@
 
 .mg-card--clickable:hover {
   transform: var(--mg-card-hover-transform, translateY(-2px));
-  box-shadow: var(--mg-card-hover-shadow, 0 4px 12px rgba(0, 0, 0, 0.15));
+  box-shadow: var(--mg-card-hover-shadow, 0 4px 12px var(--mg-shadow-medium));
 }
 
 .mg-card--clickable:focus-visible {

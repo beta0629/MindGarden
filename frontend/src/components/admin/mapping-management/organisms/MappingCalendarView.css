@@ -5,7 +5,7 @@
  */
 
 .mg-v2-mapping-calendar-wrapper {
-  background: var(--ad-b0kla-card-bg, #ffffff);
+  background: var(--ad-b0kla-card-bg, var(--mg-white));
   border: 1px solid var(--ad-b0kla-border, #e2e8f0);
   border-radius: var(--ad-b0kla-radius-sm, 12px);
   padding: 1.5rem;
@@ -58,7 +58,7 @@
 }
 
 .mg-v2-mapping-calendar-wrapper .fc-button-primary {
-  background: var(--ad-b0kla-card-bg, #ffffff) !important;
+  background: var(--ad-b0kla-card-bg, var(--mg-white)) !important;
   color: var(--ad-b0kla-text-secondary, #64748b) !important;
   border: 1px solid var(--ad-b0kla-border, #e2e8f0) !important;
   text-transform: capitalize;

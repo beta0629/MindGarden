@@ -18,12 +18,12 @@
 }
 
 .risk-alert-button:hover {
-    border-color: #f59e0b;
+    border-color: var(--mg-warning-500);
     box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
 }
 
 .risk-alert-button.has-alerts {
-    border-color: #ef4444;
+    border-color: var(--mg-error-500);
     animation: pulse-red 2s ease-in-out infinite;
 }
 
@@ -44,7 +44,7 @@
     position: absolute;
     top: -4px;
     right: -4px;
-    background: #ef4444;
+    background: var(--mg-error-500);
     color: white;
     font-size: 11px;
     font-weight: 700;

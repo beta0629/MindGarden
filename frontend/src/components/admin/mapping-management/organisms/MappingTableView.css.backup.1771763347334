@@ -1,0 +1,115 @@
+/**
+ * MappingTableView.css - B0KlA 스타일 테이블 뷰
+ * @author MindGarden
+ * @since 2025-02-22
+ */
+
+.mg-v2-mapping-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  background: var(--ad-b0kla-card-bg, #ffffff);
+  border: 1px solid var(--ad-b0kla-border, #e2e8f0);
+  border-radius: var(--ad-b0kla-radius-sm, 12px);
+}
+
+.mg-v2-mapping-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 14px;
+}
+
+.mg-v2-mapping-table th,
+.mg-v2-mapping-table td {
+  padding: 1rem;
+  border-bottom: 1px solid var(--ad-b0kla-border, #e2e8f0);
+  white-space: nowrap;
+}
+
+.mg-v2-mapping-table th {
+  background: var(--ad-b0kla-bg, #fcfbfa);
+  color: var(--ad-b0kla-text-secondary, #64748b);
+  font-weight: 600;
+}
+
+.mg-v2-mapping-table tbody tr:hover {
+  background: var(--ad-b0kla-bg, #fcfbfa);
+}
+
+.mg-v2-mapping-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.mg-v2-mapping-table td {
+  color: var(--ad-b0kla-title-color, #2d3748);
+  vertical-align: middle;
+}
+
+.mg-v2-mapping-table__status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+
+.mg-v2-mapping-table__status span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.mg-v2-mapping-table__erp {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 6px;
+  background: var(--ad-b0kla-blue-bg, #f0f5f9);
+  color: var(--ad-b0kla-blue, #6d9dc5);
+  border-radius: 4px;
+}
+
+.mg-v2-mapping-table__actions-head {
+  text-align: right;
+}
+
+.mg-v2-mapping-table__actions {
+  text-align: right;
+}
+
+.mg-v2-mapping-table__actions-inner {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.mg-v2-mapping-table__actions-inner .mg-v2-button-sm {
+  padding: 6px;
+  min-width: 32px;
+  border-radius: 8px;
+}
+
+.mg-v2-mapping-table td span + .mg-v2-mapping-table__schedule-link {
+  margin-left: 6px;
+}
+
+.mg-v2-mapping-table__schedule-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border: none;
+  background: transparent;
+  color: var(--ad-b0kla-green, #4b745c);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+  vertical-align: middle;
+}
+
+.mg-v2-mapping-table__schedule-link:hover {
+  background: rgba(75, 116, 92, 0.1);
+  color: var(--ad-b0kla-green, #4b745c);
+}

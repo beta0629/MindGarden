@@ -105,7 +105,7 @@
 .lessons-learned {
     padding: 12px;
     background: #f0fdf4;
-    border-left: 3px solid #10b981;
+    border-left: 3px solid var(--mg-success-500);
     border-radius: 6px;
     font-size: 13px;
 }

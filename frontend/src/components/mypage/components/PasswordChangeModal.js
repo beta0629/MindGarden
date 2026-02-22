@@ -225,7 +225,7 @@ const PasswordChangeModal = ({ isOpen, onClose, onSuccess, tempPassword }) => {
 
         <form onSubmit={handleSubmit} className="password-change-form">
           {tempPassword && (
-            <div className="alert alert-warning" style={{ marginBottom: '1rem', padding: '0.75rem', backgroundColor: '#fff3cd', borderRadius: '4px', border: '1px solid #ffc107' }}>
+            <div className="alert alert-warning" style={{ marginBottom: '1rem', padding: '0.75rem', backgroundColor: '#fff3cd', borderRadius: '4px', border: '1px solid var(--mg-warning-500)' }}>
               <strong>⚠️ 임시 비밀번호로 로그인하셨습니다.</strong>
               <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.9rem' }}>보안을 위해 비밀번호를 변경해주세요.</p>
             </div>

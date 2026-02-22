@@ -48,9 +48,9 @@ const CognitiveDistortionPanel = ({ emotionId }) => {
     if (!emotionData) return <div>로딩 중...</div>;
 
     const getSentimentColor = (score) => {
-        if (score > 0.5) return '#10b981';
+        if (score > 0.5) return 'var(--mg-success-500)';
         if (score > 0.2) return '#84cc16';
-        if (score > -0.2) return '#f59e0b';
+        if (score > -0.2) return 'var(--mg-warning-500)';
         if (score > -0.5) return '#f97316';
         return '#dc2626';
     };
@@ -58,8 +58,8 @@ const CognitiveDistortionPanel = ({ emotionId }) => {
     const getSeverityColor = (severity) => {
         const colors = {
             'HIGH': '#dc2626',
-            'MEDIUM': '#f59e0b',
-            'LOW': '#10b981',
+            'MEDIUM': 'var(--mg-warning-500)',
+            'LOW': 'var(--mg-success-500)',
         };
         return colors[severity] || '#6b7280';
     };

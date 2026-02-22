@@ -49,8 +49,8 @@ export const useTenantBranding = (options = {}) => {
     
     // 기본 CoreSolution 브랜딩 (Fallback)
     const defaultBranding = {
-      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #3b82f6 -> var(--mg-custom-3b82f6)
-      primaryColor: '#3b82f6',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-primary-500) -> var(--mg-custom-3b82f6)
+      primaryColor: 'var(--mg-primary-500)',
       // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6b7280 -> var(--mg-custom-6b7280)
       secondaryColor: '#6b7280', 
       logoUrl: '/images/core-solution-logo.png',
@@ -228,8 +228,8 @@ export const useTenantBranding = (options = {}) => {
     // 편의 속성
     tenantId: sessionManager.getUser()?.tenantId,
     companyName: brandingInfo?.companyName || 'CoreSolution',
-    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #3b82f6 -> var(--mg-custom-3b82f6)
-    primaryColor: brandingInfo?.primaryColor || '#3b82f6',
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-primary-500) -> var(--mg-custom-3b82f6)
+    primaryColor: brandingInfo?.primaryColor || 'var(--mg-primary-500)',
     logoUrl: brandingInfo?.logo?.url || '/images/core-solution-logo.png',
     
     // 상태 확인

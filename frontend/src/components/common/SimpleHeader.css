@@ -62,9 +62,9 @@
 }
 
 .simple-header__back-button:hover {
-  background: rgba(0, 0, 0, 0.1);
+  background: var(--mg-shadow-light);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px var(--mg-shadow-light);
 }
 
 .simple-header__back-button:active {
@@ -102,7 +102,7 @@
   color: white;
   margin: 0;
   line-height: var(--mg-line-height-tight, 1.2);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  text-shadow: 0 1px 2px var(--mg-shadow-light);
   letter-spacing: -0.025em;
 }
 
@@ -138,10 +138,10 @@
 }
 
 .simple-header__tenant-switch:hover {
-  background: rgba(255, 255, 255, 0.25);
+  background: var(--mg-glass-bg-light);
   border-color: rgba(255, 255, 255, 0.5);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 12px var(--mg-shadow-medium);
 }
 
 .simple-header__tenant-name {
@@ -180,7 +180,7 @@
 .simple-header__user-avatar--clickable:hover {
   transform: scale(1.05);
   border-color: rgba(255, 255, 255, 0.6);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 20px var(--mg-shadow-medium);
 }
 
 .simple-header__profile-image {
@@ -208,7 +208,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  text-shadow: 0 1px 2px var(--mg-shadow-light);
 }
 
 .simple-header__user-role {
@@ -237,9 +237,9 @@
 }
 
 .simple-header__hamburger:hover {
-  background: rgba(255, 255, 255, 0.25);
+  background: var(--mg-glass-bg-light);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 12px var(--mg-shadow-medium);
 }
 
 .simple-header__hamburger:active {
@@ -268,9 +268,9 @@
 }
 
 .notification-button:hover {
-  background: rgba(255, 255, 255, 0.25);
+  background: var(--mg-glass-bg-light);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 12px var(--mg-shadow-medium);
 }
 
 .notification-button:active {
@@ -281,7 +281,7 @@
   position: absolute;
   top: -2px;
   right: -2px;
-  background: linear-gradient(135deg, #ef4444, #dc2626);
+  background: linear-gradient(135deg, var(--mg-error-500), #dc2626);
   color: white;
   font-size: 10px;
   font-weight: 600;

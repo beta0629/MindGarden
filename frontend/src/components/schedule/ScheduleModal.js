@@ -7,6 +7,7 @@ import notificationManager from '../../utils/notification';
 import { useSession } from '../../contexts/SessionContext';
 import StandardizedApi from '../../utils/standardizedApi';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
+import './ScheduleB0KlA.css';
 import '../../styles/modules/schedule-modal.css';
 
 /**
@@ -310,7 +311,7 @@ const ScheduleModalNew = ({
 
     return (
         <div className="mg-v2-ad-modal-backdrop" onClick={handleClose}>
-            <div className="mg-v2-ad-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="mg-v2-ad-modal mg-v2-ad-b0kla" onClick={(e) => e.stopPropagation()}>
                 {/* 모달 헤더 */}
                 <div className="mg-v2-ad-modal__header">
                     <h2 className="mg-v2-ad-modal__title">

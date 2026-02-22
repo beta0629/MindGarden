@@ -108,7 +108,7 @@ const ScheduleCalendarView = ({
                 eventDrop={onEventDrop}
                 editable={userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN'}
                 droppable={userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN'}
-                height="auto"
+                height="100%"
                 slotMinTime="08:00:00"
                 slotMaxTime="20:00:00"
                 slotDuration="00:30:00"

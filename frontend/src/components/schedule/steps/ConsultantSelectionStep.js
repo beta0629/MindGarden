@@ -352,7 +352,7 @@ const ConsultantSelectionStepNew = ({
             </div>
 
             {/* 상담사 그리드 */}
-            <div className="mg-consultant-cards-grid mg-consultant-cards-grid--detailed">
+            <div className={`mg-consultant-cards-grid mg-consultant-cards-grid--${isMobile ? 'mobile' : 'schedule-select'}`}>
                 {filteredConsultants.length === 0 ? (
                     <div className="mg-empty-state">
                         <div className="mg-empty-state__icon">👨‍⚕️</div>
@@ -367,7 +367,7 @@ const ConsultantSelectionStepNew = ({
                             onClick={() => handleConsultantSelect(consultant)}
                             selected={selectedConsultant?.id === consultant.id}
                             draggable={false}
-                            variant={isMobile ? 'mobile-simple' : 'detailed'}
+                            variant={isMobile ? 'mobile-simple' : 'schedule-select'}
                         />
                     ))
                 )}

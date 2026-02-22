@@ -29,7 +29,7 @@ const ConsultantCard = ({
     onClick, 
     selected = false,
     draggable = false,
-    variant = 'detailed', // 'compact', 'detailed', 'mobile', 'mobile-simple'
+    variant = 'detailed', // 'compact', 'detailed', 'mobile', 'mobile-simple', 'schedule-select'
     showActions = true,
     className = ''
 }) => {
@@ -371,6 +371,76 @@ const ConsultantCard = ({
         </div>
     );
 
+    // 스케줄 선택용 카드 (B0KlA, 48px 아바타, 전문분야 1줄, 평점/경력 간략, 선택하기/상세보기)
+    const renderScheduleSelectCard = () => (
+        <div
+            className={`mg-consultant-card mg-consultant-card--schedule-select ${selected ? 'mg-consultant-card--selected' : ''} ${!consultant.available || (consultant.isOnVacation && (consultant.vacationType === 'FULL_DAY' || consultant.vacationType === 'ALL_DAY')) ? 'mg-consultant-card--unavailable' : ''} ${className}`}
+            onClick={handleClick}
+            draggable={draggable}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handleClick();
+                }
+            }}
+            aria-label={`${consultant.name} 상담사 선택`}
+        >
+            <div className="mg-consultant-card__status-badge" style={{ '--availability-color': getAvailabilityColor() }}>
+                <span>{getAvailabilityText()}</span>
+            </div>
+
+            <div className="mg-consultant-card__avatar mg-consultant-card__avatar--schedule-select">
+                {getInitial()}
+            </div>
+
+            <div className="mg-consultant-card__info mg-consultant-card__info--schedule-select">
+                <h4 className="mg-consultant-card__name mg-consultant-card__name--schedule-select">{consultant.name}</h4>
+
+                <div className="mg-consultant-card__specialty-inline">
+                    <SpecialtyDisplay
+                        consultant={consultant}
+                        variant="inline"
+                        showTitle={false}
+                        maxItems={5}
+                        debug={false}
+                    />
+                </div>
+
+                <div className="mg-consultant-card__meta-brief">
+                    <div className="mg-consultant-card__rating mg-consultant-card__rating--brief">
+                        <Star size={14} />
+                        <span>{ratingInfo.formattedRating}</span>
+                    </div>
+                    <span className="mg-consultant-card__experience-brief">{getFormattedExperience(consultant)} 경력</span>
+                </div>
+
+                <div className="mg-consultant-card__actions mg-consultant-card__actions--schedule-select">
+                    <button
+                        className="mg-button mg-button-primary mg-button-sm"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            handleClick();
+                        }}
+                        disabled={!consultant.available || (consultant.isOnVacation && (consultant.vacationType === 'FULL_DAY' || consultant.vacationType === 'ALL_DAY'))}
+                    >
+                        {selected ? '선택됨' : '선택하기'}
+                    </button>
+                    <button
+                        className="mg-button mg-button-outline mg-button-sm"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setShowDetailModal(true);
+                        }}
+                    >
+                        상세보기
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+
     // 모바일 간단 카드 렌더링 (스케줄 모달용)
     const renderMobileSimpleCard = () => (
         <div
@@ -430,6 +500,8 @@ const ConsultantCard = ({
                 return renderMobileCard();
             case 'mobile-simple':
                 return renderMobileSimpleCard();
+            case 'schedule-select':
+                return renderScheduleSelectCard();
             case 'detailed':
             default:
                 return renderDetailedCard();

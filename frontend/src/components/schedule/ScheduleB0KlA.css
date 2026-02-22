@@ -6,13 +6,14 @@
  * @since 2025-02-22
  */
 
-/* ===== Schedule Calendar 컨테이너 (overflow 방지) ===== */
+/* ===== Schedule Calendar 컨테이너 (메인 영역 꽉 채움) ===== */
 .mg-v2-ad-b0kla.mg-v2-schedule-calendar {
   display: flex;
   flex-direction: column;
   width: 100%;
   max-width: 100%;
   min-width: 0;
+  min-height: calc(100vh - 220px); /* GNB, LNB, 패딩, 헤더·범례 여유 */
   overflow: hidden;
   box-sizing: border-box;
 }
@@ -112,6 +113,145 @@
   color: var(--ad-b0kla-title-color);
 }
 
+/* ===== ConsultantFilter B0KlA (스케줄 모달 상담사 선택) ===== */
+.mg-v2-ad-b0kla .consultant-filter {
+  background: var(--ad-b0kla-card-bg);
+  border: 1px solid var(--ad-b0kla-border);
+  border-radius: var(--ad-b0kla-radius-sm);
+  box-shadow: var(--ad-b0kla-shadow);
+}
+
+.mg-v2-ad-b0kla .consultant-filter-input {
+  background: var(--ad-b0kla-bg);
+  border: 1px solid var(--ad-b0kla-border);
+  border-radius: var(--ad-b0kla-radius-sm);
+  color: var(--ad-b0kla-title-color);
+}
+
+.mg-v2-ad-b0kla .consultant-filter-input:focus {
+  border-color: var(--ad-b0kla-green);
+}
+
+.mg-v2-ad-b0kla .consultant-filter-input::placeholder {
+  color: var(--ad-b0kla-placeholder);
+}
+
+.mg-v2-ad-b0kla .consultant-filter-select {
+  background: var(--ad-b0kla-bg);
+  border: 1px solid var(--ad-b0kla-border);
+  border-radius: var(--ad-b0kla-radius-sm);
+  color: var(--ad-b0kla-title-color);
+}
+
+.mg-v2-ad-b0kla .consultant-filter-select:focus {
+  border-color: var(--ad-b0kla-green);
+}
+
+.mg-v2-ad-b0kla .consultant-filter-label {
+  color: var(--ad-b0kla-text-secondary);
+}
+
+.mg-v2-ad-b0kla .consultant-filter-count {
+  color: var(--ad-b0kla-text-secondary);
+}
+
+.mg-v2-ad-b0kla .consultant-filter-availability {
+  border-top-color: var(--ad-b0kla-border);
+}
+
+.mg-v2-ad-b0kla .consultant-filter-availability-btn {
+  background: var(--ad-b0kla-bg);
+  border: 1px solid var(--ad-b0kla-border);
+  color: var(--ad-b0kla-text-secondary);
+}
+
+.mg-v2-ad-b0kla .consultant-filter-availability-btn:hover {
+  border-color: var(--ad-b0kla-green);
+  color: var(--ad-b0kla-green);
+}
+
+.mg-v2-ad-b0kla .consultant-filter-availability-btn.active {
+  background: var(--ad-b0kla-green);
+  border-color: var(--ad-b0kla-green);
+  color: var(--ad-b0kla-card-bg);
+}
+
+.mg-v2-ad-b0kla .mg-btn--secondary,
+.mg-v2-ad-b0kla .consultant-filter .mg-btn--secondary {
+  background: var(--ad-b0kla-bg);
+  border: 1px solid var(--ad-b0kla-border);
+  color: var(--ad-b0kla-text-secondary);
+}
+
+.mg-v2-ad-b0kla .mg-btn--secondary:hover,
+.mg-v2-ad-b0kla .consultant-filter .mg-btn--secondary:hover {
+  border-color: var(--ad-b0kla-green);
+  color: var(--ad-b0kla-green);
+}
+
+/* consultant-selection-filter-section B0KlA 통일 */
+.mg-v2-ad-b0kla .consultant-selection-filter-section .consultant-filter {
+  background: var(--ad-b0kla-card-bg);
+  border: 1px solid var(--ad-b0kla-border);
+  border-radius: var(--ad-b0kla-radius-sm);
+}
+
+/* ===== ConsultantCard schedule-select B0KlA ===== */
+.mg-v2-ad-b0kla .mg-consultant-card--schedule-select {
+  background: var(--ad-b0kla-card-bg);
+  border: 1px solid var(--ad-b0kla-border);
+  border-radius: var(--ad-b0kla-radius-sm);
+  box-shadow: var(--ad-b0kla-shadow);
+}
+
+.mg-v2-ad-b0kla .mg-consultant-card--schedule-select:hover {
+  border-color: var(--ad-b0kla-green);
+  box-shadow: var(--ad-b0kla-shadow);
+}
+
+.mg-v2-ad-b0kla .mg-consultant-card--schedule-select.mg-consultant-card--selected {
+  background: var(--ad-b0kla-green-bg);
+  border-color: var(--ad-b0kla-green);
+}
+
+.mg-v2-ad-b0kla .mg-consultant-card__name--schedule-select {
+  color: var(--ad-b0kla-title-color);
+}
+
+.mg-v2-ad-b0kla .mg-consultant-card__specialty-inline,
+.mg-v2-ad-b0kla .mg-consultant-card__meta-brief,
+.mg-v2-ad-b0kla .mg-consultant-card__experience-brief {
+  color: var(--ad-b0kla-text-secondary);
+}
+
+.mg-v2-ad-b0kla .mg-consultant-card__avatar--schedule-select {
+  background: linear-gradient(135deg, var(--ad-b0kla-green), #6b8f71);
+  color: var(--ad-b0kla-card-bg);
+}
+
+/* schedule-select 카드 버튼 B0KlA (mg-button 클래스 호환) */
+.mg-v2-ad-b0kla .mg-consultant-card--schedule-select .mg-button-primary {
+  background: var(--ad-b0kla-green);
+  color: var(--ad-b0kla-card-bg);
+  border: none;
+}
+
+.mg-v2-ad-b0kla .mg-consultant-card--schedule-select .mg-button-primary:hover:not(:disabled) {
+  background: var(--ad-b0kla-green);
+  opacity: 0.9;
+}
+
+.mg-v2-ad-b0kla .mg-consultant-card--schedule-select .mg-button-outline {
+  background: transparent;
+  color: var(--ad-b0kla-green);
+  border: 1px solid var(--ad-b0kla-border);
+}
+
+.mg-v2-ad-b0kla .mg-consultant-card--schedule-select .mg-button-outline:hover {
+  background: var(--ad-b0kla-green-bg);
+  border-color: var(--ad-b0kla-green);
+}
+
 /* ===== Schedule Legend B0KlA ===== */
 .mg-v2-ad-b0kla .mg-v2-schedule-legend {
   flex-shrink: 0;
@@ -159,8 +299,9 @@
   border-radius: var(--ad-b0kla-radius-sm);
   box-shadow: var(--ad-b0kla-shadow);
   overflow-x: auto;
-  overflow-y: visible;
+  overflow-y: auto;
   min-width: 0;
+  min-height: 0;
   flex: 1;
   box-sizing: border-box;
 }

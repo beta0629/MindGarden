@@ -284,3 +284,181 @@
   background: var(--ad-b0kla-border);
   color: var(--ad-b0kla-text-secondary);
 }
+
+/* ===== Auto-sizing B0KlA Modal Styles ===== */
+.mg-v2-ad-modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(44, 44, 44, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 1000;
+}
+
+.mg-v2-ad-modal {
+  background: #FAF9F7;
+  border-radius: 16px;
+  box-shadow: 0 10px 25px rgba(44, 44, 44, 0.15);
+  width: 100%;
+  max-width: 520px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.mg-v2-ad-modal__header {
+  padding: 20px 24px;
+  border-bottom: 1px solid #D4CFC8;
+  background: #FAF9F7;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.mg-v2-ad-modal__title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #2C2C2C;
+  margin: 0;
+}
+
+.mg-v2-ad-modal__close-btn {
+  background: transparent;
+  border: none;
+  font-size: 1.25rem;
+  color: #5C6B61;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mg-v2-ad-modal__body {
+  padding: 24px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  flex: 1;
+}
+
+.mg-v2-ad-modal__section {
+  background: #F5F3EF;
+  border: 1px solid #D4CFC8;
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+}
+
+.mg-v2-ad-modal__section-title, .section-title {
+  border-left: 3px solid #3D5246;
+  padding-left: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #2C2C2C;
+  margin: 0 0 12px 0;
+}
+
+.mg-v2-ad-modal__footer {
+  padding: 16px 24px;
+  border-top: 1px solid #D4CFC8;
+  background: #FAF9F7;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+/* Modal Buttons */
+.mg-v2-btn--primary {
+  background: #3D5246;
+  color: #FAF9F7;
+  border: none;
+  border-radius: 10px;
+  padding: 0 20px;
+  height: 40px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.mg-v2-btn--primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.mg-v2-btn--outline {
+  background: transparent;
+  color: #2C2C2C;
+  border: 1px solid #D4CFC8;
+  border-radius: 10px;
+  padding: 0 20px;
+  height: 40px;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.mg-v2-btn--outline:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ===== Calendar Event Block (B0KlA) ===== */
+.mg-v2-ad-calendar-event {
+  background-color: #FAF9F7;
+  border: 1px solid #D4CFC8;
+  border-radius: 6px;
+  border-left: 4px solid #3D5246;
+  padding: 6px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  box-shadow: 0 1px 3px rgba(44,44,44,0.05);
+  overflow: hidden;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.mg-v2-ad-calendar-event__time {
+  font-size: 11px;
+  color: #5C6B61;
+}
+
+.mg-v2-ad-calendar-event__title {
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mg-v2-ad-calendar-event__title .client-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #2C2C2C;
+}
+
+.mg-v2-ad-calendar-event__title .counselor-name {
+  font-size: 11px;
+  color: #6B7F72;
+  margin-left: 4px;
+}
+
+.mg-v2-ad-calendar-event__status {
+  font-size: 10px;
+  font-weight: 500;
+  color: #8B7355;
+}
+

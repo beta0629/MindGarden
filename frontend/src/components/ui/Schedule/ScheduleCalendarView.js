@@ -2,17 +2,13 @@ import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
+import { Calendar as CalendarIcon } from 'lucide-react';
+import './ScheduleCalendarView.css';
 
 /**
  * 스케줄 캘린더 뷰 컴포넌트 (Presentational)
-/**
- * - 순수 UI 컴포넌트
-/**
- * - FullCalendar 렌더링만 담당
-/**
- * - 비즈니스 로직 없음
-/**
- * - props로 데이터와 핸들러를 받음
+ * - 아토믹 디자인 기반 이벤트 배지
+ * - 시각적 요소(그림자, 호버 효과) 강화
  */
 const ScheduleCalendarView = ({
     events,
@@ -31,50 +27,88 @@ const ScheduleCalendarView = ({
         return eventDate < today ? ['fc-event-past'] : [];
     };
 
+    // 이벤트 커스텀 렌더링 (카드 형태)
+    const renderEventContent = (eventInfo) => {
+        const { event } = eventInfo;
+        const { extendedProps } = event;
+        
+        // 휴가 이벤트 렌더링
+        if (extendedProps.type === 'vacation') {
+            return (
+                <div className="mg-v2-ad-calendar-event mg-v2-ad-calendar-event--vacation" title={event.title}>
+                    <CalendarIcon size={14} className="mg-v2-ad-calendar-event__icon" style={{ color: event.backgroundColor }} />
+                    <span className="mg-v2-ad-calendar-event__client">{event.title}</span>
+                </div>
+            );
+        }
+
+        // 일반 스케줄 이벤트 렌더링
+        const clientName = extendedProps.clientName || '이름 없음';
+        const consultantName = extendedProps.consultantName || '';
+        const statusKorean = extendedProps.statusKorean || '상태 없음';
+        
+        // 동적으로 상태 색상을 border-left-color에 적용할 수 있도록
+        const borderColor = event.backgroundColor || '#3D5246'; // 기본값
+
+        return (
+            <div 
+                className="mg-v2-ad-calendar-event" 
+                title={`${clientName} - ${statusKorean}`}
+                style={{ borderLeftColor: borderColor }}
+            >
+                <div className="mg-v2-ad-calendar-event__time">{eventInfo.timeText}</div>
+                <div className="mg-v2-ad-calendar-event__title">
+                    <span className="client-name">{clientName}</span>
+                    {consultantName && (
+                        <span className="counselor-name">{consultantName}</span>
+                    )}
+                </div>
+                <div className="mg-v2-ad-calendar-event__status">{statusKorean}</div>
+            </div>
+        );
+    };
+
     return (
         <div className="mg-v2-schedule-calendar-view mg-v2-ad-b0kla-fc-wrapper">
-        <FullCalendar
-            plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-            headerToolbar={{
-                left: 'prev,next today',
-                center: 'title',
-                right: 'dayGridMonth,timeGridWeek,timeGridDay'
-            }}
-            initialView="dayGridMonth"
-            defaultView="dayGridMonth"
-            locale="ko"
-            selectable={true}
-            selectMirror={true}
-            dayMaxEvents={true}
-            weekends={true}
-            events={events}
-            eventClassNames={eventClassNames}
-            dateClick={onDateClick}
-            eventClick={onEventClick}
-            eventDrop={onEventDrop}
-            editable={userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN'}
-            droppable={userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN'}
-            height="auto"
-            slotMinTime="08:00:00"
-            slotMaxTime="20:00:00"
-            slotDuration="00:30:00"
-            scrollTime="09:00:00"
-            scrollTimeReset={false}
-            allDaySlot={false}
-            businessHours={{
-                daysOfWeek: [1, 2, 3, 4, 5], // 월-금
-                startTime: '09:00',
-                endTime: '18:00'
-            }}
-            expandRows={true}
-            stickyHeaderDates={true}
-            eventDisplay="block"
-            displayEventTime={true}
-            displayEventEnd={true}
-        />
+            <FullCalendar
+                plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+                headerToolbar={{
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                }}
+                initialView="dayGridMonth"
+                defaultView="dayGridMonth"
+                locale="ko"
+                selectable={true}
+                selectMirror={true}
+                dayMaxEvents={true}
+                weekends={true}
+                events={events}
+                eventClassNames={eventClassNames}
+                eventContent={renderEventContent}
+                dateClick={onDateClick}
+                eventClick={onEventClick}
+                eventDrop={onEventDrop}
+                editable={userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN'}
+                droppable={userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN'}
+                height="auto"
+                slotMinTime="08:00:00"
+                slotMaxTime="20:00:00"
+                slotDuration="00:30:00"
+                scrollTime="09:00:00"
+                scrollTimeReset={false}
+                allDaySlot={false}
+                businessHours={{
+                    daysOfWeek: [1, 2, 3, 4, 5], // 월-금
+                    startTime: '09:00',
+                    endTime: '18:00'
+                }}
+                expandRows={true}
+                stickyHeaderDates={true}
+            />
         </div>
     );
 };
 
 export default ScheduleCalendarView;
-

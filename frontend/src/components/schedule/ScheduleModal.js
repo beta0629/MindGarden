@@ -1,9 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import StepIndicator from './components/StepIndicator';
 import ConsultantSelectionStep from './steps/ConsultantSelectionStep';
 import ClientSelectionStep from './steps/ClientSelectionStep';
 import TimeSlotGrid from './TimeSlotGrid';
-import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import notificationManager from '../../utils/notification';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet } from '../../utils/ajax';
@@ -178,21 +177,6 @@ const ScheduleModalNew = ({
 
         loadDurationCodes();
     }, []);
-
-/**
-     * 상담 유형별 기본 시간 반환
-     */
-    const getConsultationDuration = (type) => {
-        // 동적으로 로드된 상담 유형 옵션에서 찾기
-        const typeOption = consultationTypeOptions.find(option => option.value === type);
-        
-        if (typeOption) {
-            return typeOption.durationMinutes;
-        }
-        
-        // 기본값
-        return 50;
-    };
 
 /**
      * 상담 시간 옵션에서 시간 반환
@@ -370,178 +354,184 @@ const ScheduleModalNew = ({
     if (!isOpen) return null;
 
     return (
-        <div className="mg-v2-modal-overlay mg-v2-ad-b0kla schedule-modal-overlay" onClick={handleClose}>
-            <div className="mg-v2-modal mg-v2-ad-b0kla schedule-modal mg-v2-modal-large" onClick={(e) => e.stopPropagation()}>
+        <div className="mg-v2-ad-modal-backdrop" onClick={handleClose}>
+            <div className="mg-v2-ad-modal" onClick={(e) => e.stopPropagation()}>
                 {/* 모달 헤더 */}
-                <header className="mg-v2-modal-header schedule-modal-header">
-                    <div className="schedule-modal-header-left">
-                        <div className="schedule-modal-title">
-                            📅 스케줄 생성
-                        </div>
-                    </div>
-                    <div className="schedule-modal-header-center">
-                        <div className="selected-date">
+                <div className="mg-v2-ad-modal__header">
+                    <h2 className="mg-v2-ad-modal__title">
+                        스케줄 생성
+                        <span className="mg-v2-text-sm mg-v2-ml-md" style={{ fontWeight: 600, color: '#6B7F72', marginLeft: '8px' }}>
                             {selectedDate && (selectedDate instanceof Date ? selectedDate : new Date(selectedDate)).toLocaleDateString('ko-KR', {
                                 year: 'numeric',
                                 month: 'long',
                                 day: 'numeric',
                                 weekday: 'long'
                             })}
-                        </div>
-                    </div>
-                    <div className="schedule-modal-header-right">
-                        <button 
-                            className="schedule-modal-close-btn" 
-                            onClick={handleClose}
-                            aria-label="모달 닫기"
-                        >
-                            ✕
-                        </button>
-                    </div>
-                </header>
-
-                {/* 진행 단계 표시기 */}
-                <div className="mg-step-indicator-container">
-                    <StepIndicator 
-                        currentStep={step} 
-                        totalSteps={4}
-                        steps={[
-                            { id: 1, title: '상담사 선택', icon: '👨‍⚕️' },
-                            { id: 2, title: '내담자 선택', icon: '👤' },
-                            { id: 3, title: '시간 선택', icon: '⏰' },
-                            { id: 4, title: '세부사항', icon: '📝' }
-                        ]}
-                    />
+                        </span>
+                    </h2>
+                    <button 
+                        className="mg-v2-ad-modal__close-btn" 
+                        onClick={handleClose}
+                        aria-label="모달 닫기"
+                    >
+                        X
+                    </button>
                 </div>
 
                 {/* 모달 바디 */}
-                <div className="mg-v2-modal-body schedule-modal-content">
+                <div className="mg-v2-ad-modal__body">
+                    {/* 진행 단계 표시기 */}
+                    <div className="mg-step-indicator-container">
+                        <StepIndicator 
+                            currentStep={step} 
+                            totalSteps={4}
+                            steps={[
+                                { id: 1, title: '상담사 선택', icon: '👨‍⚕️' },
+                                { id: 2, title: '내담자 선택', icon: '👤' },
+                                { id: 3, title: '시간 선택', icon: '⏰' },
+                                { id: 4, title: '세부사항', icon: '📝' }
+                            ]}
+                        />
+                    </div>
+
                     {/* 1단계: 상담사 선택 */}
                     {step === 1 && (
-                        <div className="mg-flex mg-flex-col mg-w-full mg-h-full mg-gap-lg">
-                            <ConsultantSelectionStep
-                                onConsultantSelect={handleConsultantDrop}
-                                selectedConsultant={selectedConsultant}
-                                selectedDate={selectedDate}
-                            />
+                        <div className="mg-v2-ad-modal__section">
+                            <div className="section-title">상담사 선택</div>
+                            <div className="section-content">
+                                <ConsultantSelectionStep
+                                    onConsultantSelect={handleConsultantDrop}
+                                    selectedConsultant={selectedConsultant}
+                                    selectedDate={selectedDate}
+                                />
+                            </div>
                         </div>
                     )}
 
                     {/* 2단계: 내담자 선택 */}
                     {step === 2 && (
-                        <ClientSelectionStep
-                            onClientSelect={handleClientDrop}
-                            selectedClient={selectedClient}
-                            selectedConsultant={selectedConsultant}
-                        />
+                        <div className="mg-v2-ad-modal__section">
+                            <div className="section-title">내담자 선택</div>
+                            <div className="section-content">
+                                <ClientSelectionStep
+                                    onClientSelect={handleClientDrop}
+                                    selectedClient={selectedClient}
+                                    selectedConsultant={selectedConsultant}
+                                />
+                            </div>
+                        </div>
                     )}
 
                     {/* 3단계: 시간 선택 */}
                     {step === 3 && (
-                        <div className="mg-flex mg-flex-col mg-w-full mg-gap-lg">
-                            <h4 className="mg-h4 mg-mb-md mg-flex mg-align-center mg-gap-sm">
-                                ⏰ 시간을 선택하세요
-                            </h4>
+                        <div className="mg-v2-ad-modal__section">
+                            <div className="section-title">시간 선택</div>
                             
-                            <div className="mg-p-md mg-bg-light-gray mg-radius-md mg-border mg-flex mg-flex-col mg-gap-sm">
-                                <div className="mg-form-group">
-                                    <label className="mg-v2-label">상담 유형:</label>
-                                    <select 
-                                        value={consultationType} 
-                                        onChange={(e) => setConsultationType(e.target.value)}
-                                        disabled={loadingCodes}
-                                        className="mg-select"
-                                    >
-                                        {consultationTypeOptions.map(option => (
-                                            <option key={option.value} value={option.value}>
-                                                {option.label} ({option.value})
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
+                            <div className="section-content">
+                                <div className="mg-v2-flex mg-v2-gap-md mg-v2-mb-md" style={{ display: 'flex', gap: '16px', marginBottom: '16px' }}>
+                                    <div className="mg-v2-form-group" style={{ flex: 1 }}>
+                                        <label className="mg-v2-label" style={{ display: 'block', marginBottom: '8px', fontSize: '13px', color: '#5C6B61' }}>상담 유형</label>
+                                        <select 
+                                            value={consultationType} 
+                                            onChange={(e) => setConsultationType(e.target.value)}
+                                            disabled={loadingCodes}
+                                            className="mg-v2-input mg-v2-w-full"
+                                            style={{ width: '100%', padding: '8px 12px', border: '1px solid #D4CFC8', borderRadius: '8px', backgroundColor: '#FAF9F7' }}
+                                        >
+                                            {consultationTypeOptions.map(option => (
+                                                <option key={option.value} value={option.value}>
+                                                    {option.label} ({option.value})
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
 
-                                <div className="mg-form-group">
-                                    <label className="mg-v2-label">상담 시간:</label>
-                                    <select 
-                                        value={selectedDuration} 
-                                        onChange={(e) => setSelectedDuration(e.target.value)}
-                                        disabled={loadingCodes}
-                                        className="mg-select"
-                                    >
-                                        {durationOptions.map(option => (
-                                            <option key={option.value} value={option.value}>
-                                                {option.label} ({option.durationMinutes}분) ({option.value})
-                                            </option>
-                                        ))}
-                                    </select>
+                                    <div className="mg-v2-form-group" style={{ flex: 1 }}>
+                                        <label className="mg-v2-label" style={{ display: 'block', marginBottom: '8px', fontSize: '13px', color: '#5C6B61' }}>상담 시간</label>
+                                        <select 
+                                            value={selectedDuration} 
+                                            onChange={(e) => setSelectedDuration(e.target.value)}
+                                            disabled={loadingCodes}
+                                            className="mg-v2-input mg-v2-w-full"
+                                            style={{ width: '100%', padding: '8px 12px', border: '1px solid #D4CFC8', borderRadius: '8px', backgroundColor: '#FAF9F7' }}
+                                        >
+                                            {durationOptions.map(option => (
+                                                <option key={option.value} value={option.value}>
+                                                    {option.label} ({option.durationMinutes}분) ({option.value})
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
                                 </div>
+                                
+                                <TimeSlotGrid
+                                    date={selectedDate}
+                                    consultantId={selectedConsultant?.originalId || selectedConsultant?.id}
+                                    duration={getDurationFromCode(selectedDuration)}
+                                    onTimeSlotSelect={handleTimeSlotSelect}
+                                    selectedTimeSlot={selectedTimeSlot}
+                                />
                             </div>
-                            
-                            <TimeSlotGrid
-                                date={selectedDate}
-                                consultantId={selectedConsultant?.originalId || selectedConsultant?.id}
-                                duration={getDurationFromCode(selectedDuration)}
-                                onTimeSlotSelect={handleTimeSlotSelect}
-                                selectedTimeSlot={selectedTimeSlot}
-                            />
                         </div>
                     )}
 
                     {/* 4단계: 세부사항 */}
                     {step === 4 && (
-                        <div className="schedule-details">
-                            <h4>📝 스케줄 세부사항</h4>
-                            <div className="mg-info-box">
-                                <div className="mg-info-row">
-                                    <div className="mg-info-label">상담사:</div>
-                                    <div className="mg-info-value">{selectedConsultant?.name}</div>
-                                </div>
-                                <div className="mg-info-row">
-                                    <div className="mg-info-label">내담자:</div>
-                                    <div className="mg-info-value">{selectedClient?.name}</div>
-                                </div>
-                                <div className="mg-info-row">
-                                    <div className="mg-info-label">시간:</div>
-                                    <div className="mg-info-value">
-                                        {selectedTimeSlot?.time} - {selectedTimeSlot?.endTime} ({getDurationFromCode(selectedDuration)}분)
+                        <div className="mg-v2-ad-modal__section">
+                            <div className="section-title">스케줄 세부사항</div>
+                            <div className="section-content">
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                        <span style={{ color: '#5C6B61' }}>상담사:</span>
+                                        <span style={{ fontWeight: 600, color: '#2C2C2C' }}>{selectedConsultant?.name}</span>
+                                    </div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                        <span style={{ color: '#5C6B61' }}>내담자:</span>
+                                        <span style={{ fontWeight: 600, color: '#2C2C2C' }}>{selectedClient?.name}</span>
+                                    </div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                        <span style={{ color: '#5C6B61' }}>시간:</span>
+                                        <span style={{ fontWeight: 600, color: '#2C2C2C' }}>
+                                            {selectedTimeSlot?.time} - {selectedTimeSlot?.endTime} ({getDurationFromCode(selectedDuration)}분)
+                                        </span>
+                                    </div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '8px', borderTop: '1px solid #D4CFC8' }}>
+                                        <span style={{ color: '#3D5246', fontWeight: 600 }}>유형:</span>
+                                        <span style={{ color: '#3D5246', fontWeight: 600 }}>{convertConsultationTypeToKorean(consultationType)}</span>
                                     </div>
                                 </div>
-                                <div className="mg-info-row mg-info-row-highlight">
-                                    <div className="mg-info-label">유형:</div>
-                                    <div className="mg-info-value">{convertConsultationTypeToKorean(consultationType)}</div>
+                                
+                                <div style={{ marginBottom: '16px' }}>
+                                    <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', color: '#5C6B61' }}>제목</label>
+                                    <input
+                                        type="text"
+                                        value={title}
+                                        onChange={(e) => setTitle(e.target.value)}
+                                        placeholder="스케줄 제목 (선택사항)"
+                                        style={{ width: '100%', padding: '8px 12px', border: '1px solid #D4CFC8', borderRadius: '8px', backgroundColor: '#FAF9F7' }}
+                                    />
                                 </div>
-                            </div>
-                            
-                            <div className="mg-form-group">
-                                <label className="mg-v2-label">제목:</label>
-                                <input
-                                    type="text"
-                                    className="mg-input"
-                                    value={title}
-                                    onChange={(e) => setTitle(e.target.value)}
-                                    placeholder="스케줄 제목 (선택사항)"
-                                />
-                            </div>
-                            
-                            <div className="mg-form-group">
-                                <label className="mg-v2-label">설명:</label>
-                                <textarea
-                                    className="mg-v2-textarea"
-                                    value={description}
-                                    onChange={(e) => setDescription(e.target.value)}
-                                    placeholder="추가 설명 (선택사항)"
-                                    rows="3"
-                                />
+                                
+                                <div>
+                                    <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', color: '#5C6B61' }}>설명</label>
+                                    <textarea
+                                        value={description}
+                                        onChange={(e) => setDescription(e.target.value)}
+                                        placeholder="추가 설명 (선택사항)"
+                                        rows="3"
+                                        style={{ width: '100%', padding: '8px 12px', border: '1px solid #D4CFC8', borderRadius: '8px', backgroundColor: '#FAF9F7', resize: 'vertical', minHeight: '80px' }}
+                                    />
+                                </div>
                             </div>
                         </div>
                     )}
                 </div>
 
                 {/* 모달 푸터 */}
-                <footer className="mg-v2-modal-footer modal-footer">
+                <div className="mg-v2-ad-modal__footer">
                     {step > 1 && (
                         <button 
-                            className="mg-button mg-button-secondary" 
+                            className="mg-v2-btn--outline" 
                             onClick={handlePrevStep}
                             disabled={loading}
                         >
@@ -551,7 +541,7 @@ const ScheduleModalNew = ({
                     
                     {step < 4 ? (
                         <button 
-                            className="mg-button mg-button-primary" 
+                            className="mg-v2-btn--primary" 
                             onClick={() => {
                                 if (step === 1 && selectedConsultant) setStep(2);
                                 else if (step === 2 && selectedClient) setStep(3);
@@ -567,14 +557,14 @@ const ScheduleModalNew = ({
                         </button>
                     ) : (
                         <button 
-                            className="mg-button mg-button-primary" 
+                            className="mg-v2-btn--primary" 
                             onClick={handleCreateSchedule}
                             disabled={loading}
                         >
                             {loading ? '생성 중...' : '스케줄 생성'}
                         </button>
                     )}
-                </footer>
+                </div>
             </div>
         </div>
     );

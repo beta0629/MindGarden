@@ -375,6 +375,7 @@ const ConsultantCard = ({
     const renderScheduleSelectCard = () => (
         <div
             className={`mg-consultant-card mg-consultant-card--schedule-select ${selected ? 'mg-consultant-card--selected' : ''} ${!consultant.available || (consultant.isOnVacation && (consultant.vacationType === 'FULL_DAY' || consultant.vacationType === 'ALL_DAY')) ? 'mg-consultant-card--unavailable' : ''} ${className}`}
+            data-availability={getAvailabilityClass()}
             onClick={handleClick}
             draggable={draggable}
             role="button"

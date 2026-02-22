@@ -114,6 +114,42 @@
   color: var(--ad-b0kla-title-color);
 }
 
+/* ===== B0KlA 모달 내부 시맨틱 색상 (배지·상태 표시) ===== */
+.mg-v2-ad-b0kla.mg-v2-ad-modal .consultant-selection-step,
+.mg-v2-ad-b0kla .mg-v2-ad-modal__body {
+  --color-success: var(--ad-b0kla-green);
+  --color-warning: var(--ad-b0kla-orange);
+  --color-danger: var(--ad-b0kla-danger);
+}
+
+/* ===== B0KlA 모달 상담사 선택 step - 카드 그리드 영역 꽉 채우기 ===== */
+.mg-v2-ad-b0kla .consultant-selection-step {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.mg-v2-ad-b0kla .consultant-selection-filter-section {
+  flex-shrink: 0;
+}
+.mg-v2-ad-b0kla .mg-consultant-cards-grid.mg-consultant-cards-grid--schedule-select {
+  flex: 1;
+  min-height: 200px;
+  align-content: start;
+}
+.mg-v2-ad-b0kla .mg-v2-ad-section-block {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.mg-v2-ad-b0kla .mg-v2-ad-section-block__content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
 /* ===== ConsultantFilter B0KlA (스케줄 모달 상담사 선택) ===== */
 .mg-v2-ad-b0kla .consultant-filter {
   background: var(--ad-b0kla-card-bg);
@@ -251,6 +287,34 @@
 .mg-v2-ad-b0kla .mg-consultant-card--schedule-select .mg-button-outline:hover {
   background: var(--ad-b0kla-green-bg);
   border-color: var(--ad-b0kla-green);
+}
+
+/* schedule-select 카드 배지 B0KlA (상담 가능/바쁨/휴무) */
+.mg-v2-ad-b0kla .mg-consultant-card--schedule-select .mg-consultant-card__status-badge {
+  border-radius: var(--ad-b0kla-radius-sm);
+  padding: 4px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  border: none;
+}
+.mg-v2-ad-b0kla .mg-consultant-card--schedule-select[data-availability="available"] .mg-consultant-card__status-badge {
+  background: var(--ad-b0kla-green-bg);
+  color: var(--ad-b0kla-green);
+}
+.mg-v2-ad-b0kla .mg-consultant-card--schedule-select[data-availability="busy"] .mg-consultant-card__status-badge {
+  background: var(--ad-b0kla-orange-bg);
+  color: var(--ad-b0kla-orange);
+}
+.mg-v2-ad-b0kla .mg-consultant-card--schedule-select[data-availability="unavailable"] .mg-consultant-card__status-badge,
+.mg-v2-ad-b0kla .mg-consultant-card--schedule-select.mg-consultant-card--unavailable .mg-consultant-card__status-badge {
+  background: var(--ad-b0kla-border);
+  color: var(--ad-b0kla-text-secondary);
+}
+
+.mg-v2-ad-b0kla .mg-btn--secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 /* ===== Schedule Legend B0KlA ===== */
@@ -455,8 +519,10 @@
   z-index: 1000;
 }
 
+.mg-v2-ad-modal.mg-v2-ad-b0kla,
 .mg-v2-ad-modal {
-  background: var(--mg-white);
+  background-color: var(--ad-b0kla-card-bg, var(--mg-white));
+  background: var(--ad-b0kla-card-bg, var(--mg-white));
   border-radius: 16px;
   box-shadow: var(--cs-shadow-soft);
   width: 100%;

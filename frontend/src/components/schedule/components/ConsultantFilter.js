@@ -1,4 +1,5 @@
 import React from 'react';
+import { RotateCcw } from 'lucide-react';
 import './ConsultantFilter.css';
 
 /**
@@ -104,7 +105,8 @@ const ConsultantFilterNew = ({
                         className="mg-btn mg-btn--sm mg-btn--secondary"
                         onClick={onResetFilters}
                     >
-                        🔄 초기화
+                        <RotateCcw size={16} />
+                        초기화
                     </button>
                 </div>
 

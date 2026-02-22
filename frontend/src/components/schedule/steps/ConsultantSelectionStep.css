@@ -182,11 +182,11 @@
   gap: var(--spacing-md, 1rem);
   flex: 1;
   min-height: 0;
+  width: 100%;
 }
 
 /* mg-consultant-card--schedule-select (48px 아바타, 전문분야 1줄, 선택하기/상세보기) */
 .mg-consultant-card--schedule-select {
-  max-width: 280px;
   min-height: 200px;
   display: flex;
   flex-direction: column;

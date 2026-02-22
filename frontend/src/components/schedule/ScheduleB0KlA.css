@@ -293,7 +293,7 @@
 
 /* ===== FullCalendar B0KlA 오버라이드 ===== */
 .mg-v2-ad-b0kla .mg-v2-schedule-calendar-view,
-.mg-v2-ad-b0kla-fc-wrapper {
+.mg-v2-ad-b0kla .mg-v2-ad-b0kla-fc-wrapper {
   background: var(--ad-b0kla-card-bg);
   border: 1px solid var(--ad-b0kla-border);
   border-radius: var(--ad-b0kla-radius-sm);
@@ -301,7 +301,7 @@
   overflow-x: auto;
   overflow-y: auto;
   min-width: 0;
-  min-height: 0;
+  min-height: 480px; /* flex 자식 0 높이 방지, 꽉 채움 유지 */
   flex: 1;
   box-sizing: border-box;
 }

@@ -4,6 +4,7 @@
 
 /* 🎨 MindGarden 통합 디자인 토큰 (CI/BI 대응) */
 @import './styles/unified-design-tokens.css';
+@import './styles/dashboard-tokens-extension.css';
 
 body {
   margin: 0;

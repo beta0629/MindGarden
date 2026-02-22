@@ -13,10 +13,10 @@
 }
 
 .mg-v2-content-section--card {
-  background: var(--ad-b0kla-card-bg, var(--mg-white));
-  border: 1px solid var(--ad-b0kla-border, #e2e8f0);
-  border-radius: var(--ad-b0kla-radius, 24px);
-  box-shadow: var(--ad-b0kla-shadow, 0 8px 24px rgba(0, 0, 0, 0.05));
+  background: var(--ad-b0kla-card-bg);
+  border: 1px solid var(--ad-b0kla-border);
+  border-radius: var(--ad-b0kla-radius);
+  box-shadow: var(--ad-b0kla-shadow);
   padding: 1.5rem;
 }
 
@@ -32,7 +32,7 @@
   gap: var(--mg-layout-gap, 1rem);
   margin-bottom: var(--mg-layout-gap, 1rem);
   padding-bottom: var(--mg-spacing-md, 1rem);
-  border-bottom: 1px solid var(--ad-b0kla-border, #e2e8f0);
+  border-bottom: 1px solid var(--ad-b0kla-border);
 }
 
 .mg-v2-content-section__title-wrap {
@@ -43,13 +43,13 @@
 .mg-v2-content-section__title {
   font-size: 1.125rem;
   font-weight: 700;
-  color: var(--ad-b0kla-title-color, #2d3748);
+  color: var(--ad-b0kla-title-color);
   margin: 0;
 }
 
 .mg-v2-content-section__subtitle {
   font-size: 13px;
-  color: var(--ad-b0kla-text-secondary, #64748b);
+  color: var(--ad-b0kla-text-secondary);
   margin: 0.25rem 0 0 0;
 }
 

@@ -77,7 +77,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(255, 255, 255, 0.95);
+  background: var(--cs-glass-strong);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -85,23 +85,7 @@
   border-radius: inherit;
 }
 
-/* B0KlA 컨텍스트 (부모에 이미 있으면 상속) */
-.mg-v2-mapping-creation-modal-wrapper {
-  --ad-b0kla-bg: #fcfbfa;
-  --ad-b0kla-card-bg: var(--mg-white);
-  --ad-b0kla-border: #e2e8f0;
-  --ad-b0kla-radius: 24px;
-  --ad-b0kla-radius-sm: 12px;
-  --ad-b0kla-title-color: #2d3748;
-  --ad-b0kla-text-secondary: #64748b;
-  --ad-b0kla-placeholder: #a0aec0;
-  --ad-b0kla-green: #4b745c;
-  --ad-b0kla-green-bg: #ebf2ee;
-  --ad-b0kla-orange: #e8a87c;
-  --ad-b0kla-orange-bg: #fcf3ed;
-  --ad-b0kla-blue: #6d9dc5;
-  --ad-b0kla-blue-bg: #f0f5f9;
-}
+/* B0KlA 컨텍스트 - 토큰은 dashboard-tokens-extension.css에 정의됨 */
 
 .mg-v2-mapping-creation-modal {
   padding: 0;
@@ -193,7 +177,7 @@
 
 .mg-v2-mapping-creation-modal__card:hover {
   border-color: var(--ad-b0kla-green);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--mg-shadow-sm);
 }
 
 .mg-v2-mapping-creation-modal__card--selected {
@@ -206,7 +190,7 @@
   height: 2.5rem;
   border-radius: 50%;
   background: var(--ad-b0kla-green);
-  color: white;
+  color: var(--mg-white);
   display: flex;
   align-items: center;
   justify-content: center;

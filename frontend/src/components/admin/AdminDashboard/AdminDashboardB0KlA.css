@@ -7,33 +7,7 @@
  */
 
 /* ===== B0KlA 토큰 ===== */
-.mg-v2-ad-b0kla {
-  --ad-b0kla-bg: #fcfbfa;
-  --ad-b0kla-card-bg: var(--mg-white);
-  --ad-b0kla-border: #e2e8f0;
-  --ad-b0kla-radius: 24px;
-  --ad-b0kla-radius-sm: 12px;
-  --ad-b0kla-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
-  --ad-b0kla-title-color: #2d3748;
-  --ad-b0kla-subtitle-color: #718096;
-  --ad-b0kla-text-secondary: #64748b;
-  --ad-b0kla-placeholder: #a0aec0;
-  --ad-b0kla-green: #4b745c;
-  --ad-b0kla-green-bg: #ebf2ee;
-  --ad-b0kla-orange: #e8a87c;
-  --ad-b0kla-orange-bg: #fcf3ed;
-  --ad-b0kla-blue: #6d9dc5;
-  --ad-b0kla-blue-bg: #f0f5f9;
-  --ad-b0kla-icon-color: #4a5568;
-
-  /* TODO: mindgarden-design-system.pen B0KlA 노드에 danger 색상 없음.
-   * 삭제·환불 등 위험 액션용 danger는 디자인 가이드에 추가 권장.
-   * 임시: unified-design-tokens의 --color-danger 사용 (--mg-error-500) */
-  --ad-b0kla-danger: var(--color-danger);
-
-  /* 모달 오버레이 */
-  --ad-b0kla-overlay-bg: var(--droplet-bg-dark);
-}
+/* 토큰 정의: frontend/src/styles/dashboard-tokens-extension.css */
 
 /* ===== mg-v2-button B0KlA 스코프 오버라이드 (B0KlA 토큰만 사용) ===== */
 .mg-v2-ad-b0kla .mg-v2-button-primary,
@@ -211,7 +185,7 @@
 }
 
 .mg-v2-ad-b0kla__kpi-card:hover {
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--ad-b0kla-shadow-hover);
 }
 
 .mg-v2-ad-b0kla__kpi-icon {
@@ -354,7 +328,7 @@
 .mg-v2-ad-b0kla__pill--active {
   background: var(--ad-b0kla-card-bg);
   color: var(--ad-b0kla-title-color);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--ad-b0kla-shadow);
 }
 
 .mg-v2-ad-b0kla__chart-placeholder {
@@ -576,8 +550,8 @@
 }
 
 .mg-v2-ad-b0kla__admin-icon--gray {
-  background: #edf2f7 !important;
-  color: #4a5568 !important;
+  background: var(--mg-gray-100) !important;
+  color: var(--ad-b0kla-icon-color) !important;
 }
 
 /* mg-dashboard-layout 오버라이드 (B0KlA 배경) */
@@ -617,13 +591,13 @@
   padding: 1.5rem;
   background: var(--ad-b0kla-card-bg);
   border: 1px solid var(--ad-b0kla-border);
-  border-radius: var(--ad-b0kla-radius-sm, 12px);
+  border-radius: var(--ad-b0kla-radius-sm);
   box-shadow: var(--ad-b0kla-shadow);
   transition: all 0.2s;
 }
 
 .mg-v2-ad-b0kla .mg-stats-grid .mg-dashboard-stat-card:hover {
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--ad-b0kla-shadow-hover);
 }
 
 .mg-v2-ad-b0kla .mg-stats-grid .mg-dashboard-stat-icon {
@@ -682,7 +656,7 @@
 }
 
 .mg-v2-ad-b0kla .system-status-display:hover {
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--ad-b0kla-shadow-hover);
 }
 
 .mg-v2-ad-b0kla .system-status-header h4 {
@@ -735,7 +709,7 @@
 }
 
 .mg-v2-ad-b0kla .status-dot[data-status='error'] {
-  background: var(--mg-error-500, #dc2626);
+  background: var(--ad-b0kla-danger);
 }
 
 .mg-v2-ad-b0kla .status-dot[data-status='warning'],
@@ -853,12 +827,12 @@
 }
 
 .mg-v2-modal-overlay.mg-v2-ad-b0kla .mg-v2-modal-body {
-  background: var(--ad-b0kla-card-bg, #fcfbfa);
+  background: var(--ad-b0kla-card-bg);
 }
 
 .mg-v2-modal-overlay.mg-v2-ad-b0kla .mg-v2-modal-footer {
   border-top: 1px solid var(--ad-b0kla-border);
-  background: var(--ad-b0kla-bg, #fcfbfa);
+  background: var(--ad-b0kla-bg);
 }
 
 /* B0KlA 카드 악센트 바 (좌측 4px) - 섹션 제목용 */

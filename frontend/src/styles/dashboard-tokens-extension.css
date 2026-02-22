@@ -144,5 +144,28 @@
   /* 기존 변수와의 호환성 */
   --mg-white: var(--mg-white);
   --mg-black: var(--mg-black);
+
+  /* ===== B0KlA Admin Dashboard 토큰 (mindgarden-design-system.pen) ===== */
+  /* 기존 mg-*/cs-* 토큰 매핑으로 하드코딩 제거 */
+  --ad-b0kla-bg: var(--mg-gray-50);
+  --ad-b0kla-card-bg: var(--mg-white);
+  --ad-b0kla-border: var(--cs-slate-200);
+  --ad-b0kla-radius: 24px;
+  --ad-b0kla-radius-sm: 12px;
+  --ad-b0kla-shadow: var(--cs-shadow-xs);
+  --ad-b0kla-shadow-hover: var(--cs-shadow-soft);
+  --ad-b0kla-title-color: var(--mg-gray-800);
+  --ad-b0kla-subtitle-color: var(--mg-gray-500);
+  --ad-b0kla-text-secondary: var(--mg-gray-600);
+  --ad-b0kla-placeholder: var(--mg-gray-400);
+  --ad-b0kla-green: var(--mg-success-600);
+  --ad-b0kla-green-bg: var(--mg-success-50);
+  --ad-b0kla-orange: var(--cs-orange-400);
+  --ad-b0kla-orange-bg: var(--cs-orange-50);
+  --ad-b0kla-blue: var(--mg-primary-400);
+  --ad-b0kla-blue-bg: var(--mg-primary-50);
+  --ad-b0kla-icon-color: var(--mg-gray-600);
+  --ad-b0kla-danger: var(--mg-error-500);
+  --ad-b0kla-overlay-bg: var(--droplet-bg-dark);
 }
 

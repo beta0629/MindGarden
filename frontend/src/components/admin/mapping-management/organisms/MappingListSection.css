@@ -17,7 +17,7 @@
 .mg-v2-mapping-list-section .mg-v2-content-card.mg-v2-mapping-card {
   background: var(--ad-b0kla-card-bg);
   border: 1px solid var(--ad-b0kla-border);
-  border-radius: var(--ad-b0kla-radius-sm, 12px);
+  border-radius: var(--ad-b0kla-radius-sm);
   box-shadow: var(--ad-b0kla-shadow);
   transition: all 0.2s;
 }

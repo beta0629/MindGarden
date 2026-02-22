@@ -5,7 +5,7 @@ import { apiGet } from '../../utils/ajax';
 import { USER_ROLES } from '../../constants/roles';
 import notificationManager from '../../utils/notification';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
 import csrfTokenManager from '../../utils/csrfTokenManager';
 import './UserManagement.css';
 
@@ -204,7 +204,7 @@ const UserManagement = ({ onUpdate }) => {
     };
 
     return (
-        <SimpleLayout title="사용자 관리" loading={loading && filteredUsers.length === 0} loadingText="사용자 목록을 불러오는 중...">
+        <AdminCommonLayout title="사용자 관리" loading={loading && filteredUsers.length === 0} loadingText="사용자 목록을 불러오는 중...">
             <div className="mg-v2-dashboard-layout">
                 {/* Dashboard Header */}
                 <div className="mg-v2-dashboard-header">
@@ -437,7 +437,7 @@ const UserManagement = ({ onUpdate }) => {
                     </div>
                 </div>
             )}
-        </SimpleLayout>
+        </AdminCommonLayout>
     );
 };
 

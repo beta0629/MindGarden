@@ -7,7 +7,7 @@ import { MessageSquare, Search, Filter, Users, User } from 'lucide-react';
 import UnifiedLoading from '../common/UnifiedLoading';
 import notificationManager from '../../utils/notification';
 import { sessionManager } from '../../utils/sessionManager';
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
 import MGCard from '../common/MGCard';
 import '../../styles/unified-design-tokens.css';
 
@@ -169,11 +169,11 @@ const AdminMessages = () => {
   // 로딩 상태
   if (sessionLoading || loading) {
     return (
-      <SimpleLayout>
+      <AdminCommonLayout>
         <div className="mg-v2-dashboard-layout">
           <div className="mg-loading">로딩중...</div>
         </div>
-      </SimpleLayout>
+      </AdminCommonLayout>
     );
   }
 
@@ -182,21 +182,21 @@ const AdminMessages = () => {
   if (!sessionUser) {
     console.log('❌ 권한 체크 실패 - sessionUser 없음');
     return (
-      <SimpleLayout>
+      <AdminCommonLayout>
         <div className="mg-v2-dashboard-layout">
           <div className="mg-v2-card">
             <h3>로그인이 필요합니다</h3>
             <p>메시지를 확인하려면 로그인해주세요.</p>
           </div>
         </div>
-      </SimpleLayout>
+      </AdminCommonLayout>
     );
   }
   
   console.log('✅ 권한 체크 통과:', sessionUser.email);
 
   return (
-    <SimpleLayout>
+    <AdminCommonLayout>
       <div className="mg-v2-dashboard-layout">
         {/* 헤더 */}
         <div className="mg-v2-dashboard-header">
@@ -388,7 +388,7 @@ const AdminMessages = () => {
           </div>
         )}
       </div>
-    </SimpleLayout>
+    </AdminCommonLayout>
   );
 };
 

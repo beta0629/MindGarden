@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaArrowLeft, FaSync, FaDownload, FaShieldAlt, FaExclamationTriangle } from 'react-icons/fa';
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
 import SecurityMonitoringWidget from './widgets/SecurityMonitoringWidget';
 import PerformanceWidget from './widgets/PerformanceWidget';
 import MGButton from '../../components/common/MGButton';
@@ -104,7 +104,7 @@ const SecurityMonitoringDashboard = () => {
   };
 
   return (
-    <SimpleLayout title="보안 모니터링 대시보드" loading={false}>
+    <AdminCommonLayout title="보안 모니터링 대시보드" loading={false}>
       <div className="security-monitoring-dashboard">
         <div className={`page-header ${getHeaderStatusClass()}`}>
           <div className="header-left">
@@ -235,7 +235,7 @@ const SecurityMonitoringDashboard = () => {
           </div>
         </div>
       </div>
-    </SimpleLayout>
+    </AdminCommonLayout>
   );
 };
 

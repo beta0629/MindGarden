@@ -5,7 +5,7 @@ import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
 import { USER_ROLES } from '../../constants/roles';
 import { Bell, Plus, Edit, Trash2, Send, Archive } from 'lucide-react';
 import notificationManager from '../../utils/notification';
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
 import UnifiedModal from '../../components/common/modals/UnifiedModal'; // 임시 비활성화
 import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { fetchUserPermissions, hasPermission as checkPermission } from '../../utils/permissionUtils';
@@ -241,39 +241,39 @@ const SystemNotificationManagement = () => {
   // 로그인 체크
   if (!sessionIsLoggedIn || !sessionUser) {
     return (
-      <SimpleLayout title="시스템 공지 관리">
+      <AdminCommonLayout title="시스템 공지 관리">
         <div className="mg-v2-card mg-v2-text-center mg-p-xl">
           <h3>로그인이 필요합니다.</h3>
         </div>
-      </SimpleLayout>
+      </AdminCommonLayout>
     );
   }
 
   // 권한 로딩 중
   if (permissionsLoading) {
     return (
-      <SimpleLayout title="시스템 공지 관리" loading={true} loadingText="권한을 확인하는 중...">
+      <AdminCommonLayout title="시스템 공지 관리" loading={true} loadingText="권한을 확인하는 중...">
         <UnifiedLoading type="page" text="권한을 확인하는 중..." />
-      </SimpleLayout>
+      </AdminCommonLayout>
     );
   }
 
   // 권한 체크
   if (!hasManagePermission()) {
     return (
-      <SimpleLayout title="시스템 공지 관리">
+      <AdminCommonLayout title="시스템 공지 관리">
         <div className="mg-v2-card mg-v2-text-center mg-p-xl">
           <h3>접근 권한이 없습니다.</h3>
           <p className="mg-v2-text-sm mg-v2-color-text-secondary">
             시스템 공지 관리 권한이 필요합니다.
           </p>
         </div>
-      </SimpleLayout>
+      </AdminCommonLayout>
     );
   }
 
   return (
-    <SimpleLayout title="시스템 공지 관리">
+    <AdminCommonLayout title="시스템 공지 관리">
       <div className="mg-v2-dashboard-layout">
         {/* 헤더 */}
         <div className="mg-v2-card mg-mb-lg">
@@ -524,7 +524,7 @@ const SystemNotificationManagement = () => {
           </div>
         </div>
       </div>
-    </SimpleLayout>
+    </AdminCommonLayout>
   );
 };
 

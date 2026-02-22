@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
 import UnifiedLoading from '../common/UnifiedLoading';
 import { FaDatabase, FaChartLine, FaClock, FaMemory, FaSync } from 'react-icons/fa';
 import { DataTransformer, PerformanceUtils } from '../../utils/performanceUtils';
@@ -90,7 +90,7 @@ const CacheMonitoringDashboard = () => {
   };
 
   return (
-    <SimpleLayout title="캐시 성능 모니터링" loading={loading} loadingText="캐시 통계를 불러오는 중...">
+    <AdminCommonLayout title="캐시 성능 모니터링" loading={loading} loadingText="캐시 통계를 불러오는 중...">
       <div className="cache-monitoring-dashboard">
       <div className="dashboard-header">
         <h2>
@@ -203,7 +203,7 @@ const CacheMonitoringDashboard = () => {
         </div>
       )}
       </div>
-    </SimpleLayout>
+    </AdminCommonLayout>
   );
 };
 

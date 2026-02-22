@@ -22,7 +22,7 @@ import {
 import { useSession } from '../../contexts/SessionContext';
 import { RoleUtils, USER_ROLES } from '../../constants/roles';
 import { usePermissions } from '../../hooks/usePermissions';
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
 import './ImprovedCommonCodeManagement.css';
 
 /**
@@ -929,7 +929,7 @@ const CommonCodeManagement = () => {
     );
 
     return (
-        <SimpleLayout>
+        <AdminCommonLayout>
             <div className="improved-common-code-management">
             <div className="page-header">
             </div>
@@ -948,7 +948,7 @@ const CommonCodeManagement = () => {
 
                 { currentStep === 1 ? renderGroupSelection() : renderCodeManagement() }
             </div>
-        </SimpleLayout>
+        </AdminCommonLayout>
     );
 };
 

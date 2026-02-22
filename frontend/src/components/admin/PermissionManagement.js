@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import '../../styles/unified-design-tokens.css';
 import { USER_ROLES } from '../../constants/roles';
@@ -374,9 +374,9 @@ const PermissionManagement = () => {
 
     if (loading) {
         return (
-            <SimpleLayout title="권한 관리" loading={true} loadingText="권한 정보를 불러오는 중...">
+            <AdminCommonLayout title="권한 관리" loading={true} loadingText="권한 정보를 불러오는 중...">
                 <UnifiedLoading type="page" text="권한 정보를 불러오는 중..." />
-            </SimpleLayout>
+            </AdminCommonLayout>
         );
     }
 

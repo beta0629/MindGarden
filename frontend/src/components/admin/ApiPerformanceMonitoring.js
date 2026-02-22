@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaArrowLeft, FaSync, FaTrash, FaDownload } from 'react-icons/fa';
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
 import ApiPerformanceWidget from './widgets/ApiPerformanceWidget';
 import PerformanceWidget from './widgets/PerformanceWidget';
 import MGButton from '../../components/common/MGButton'; // 임시 비활성화
@@ -70,7 +70,7 @@ const ApiPerformanceMonitoring = () => {
   };
 
   return (
-    <SimpleLayout title="API 성능 모니터링" loading={false}>
+    <AdminCommonLayout title="API 성능 모니터링" loading={false}>
       <div className="api-performance-monitoring">
         <div className="page-header">
           <div className="header-left">
@@ -185,7 +185,7 @@ const ApiPerformanceMonitoring = () => {
           </div>
         </div>
       </div>
-    </SimpleLayout>
+    </AdminCommonLayout>
   );
 };
 

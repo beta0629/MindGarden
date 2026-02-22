@@ -23,7 +23,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
 import UnifiedLoading from '../common/UnifiedLoading';
 import {
     getAllPermissionGroups,
@@ -235,7 +235,7 @@ const PermissionGroupManagement = () => {
     };
 
     return (
-        <SimpleLayout title="권한 그룹 관리" loading={loading && !selectedRole} loadingText="데이터를 불러오는 중...">
+        <AdminCommonLayout title="권한 그룹 관리" loading={loading && !selectedRole} loadingText="데이터를 불러오는 중...">
             <PermissionGroupManagementUI
                 roles={roles}
                 selectedRole={selectedRole}
@@ -248,7 +248,7 @@ const PermissionGroupManagement = () => {
                 onRevokePermission={handleRevokePermission}
                 onBatchGrant={handleBatchGrant}
             />
-        </SimpleLayout>
+        </AdminCommonLayout>
     );
 };
 

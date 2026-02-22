@@ -7,7 +7,7 @@
  */
 
 import React from 'react';
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { useSession } from '../../contexts/SessionContext';
 import { RoleUtils } from '../../constants/roles';
 import ComingSoon from '../common/ComingSoon';
@@ -20,12 +20,12 @@ const PsychAssessmentManagement = ({ user: propUser }) => {
   // 권한 체크(관리자만)
   if (!RoleUtils.isAdmin(user) && !RoleUtils.hasRole(user, 'HQ_MASTER')) {
     return (
-      <SimpleLayout>
+      <AdminCommonLayout>
         <ComingSoon
           title="접근 권한이 없습니다"
           description="관리자 권한이 필요합니다."
         />
-      </SimpleLayout>
+      </AdminCommonLayout>
     );
   }
 
@@ -40,11 +40,11 @@ const PsychAssessmentManagement = ({ user: propUser }) => {
   };
 
   return (
-    <SimpleLayout>
+    <AdminCommonLayout>
       <div className="mg-container">
         <PsychAssessmentAdminWidget widget={widget} user={user} />
       </div>
-    </SimpleLayout>
+    </AdminCommonLayout>
   );
 };
 

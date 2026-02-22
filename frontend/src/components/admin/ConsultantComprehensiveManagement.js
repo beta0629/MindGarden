@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import Button from '../ui/Button/Button';
 import { FaUser, FaEdit, FaTrash, FaPlus, FaEye, FaUsers, FaLink, FaCalendarAlt, FaClipboardList } from 'react-icons/fa';
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import { getUserStatusColor, getStatusLabel } from '../../utils/colorUtils';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
@@ -940,7 +940,7 @@ const ConsultantComprehensiveManagement = () => {
     const stats = getOverallStats();
 
     return(
-        <SimpleLayout>
+        <AdminCommonLayout>
             <div className="mg-v2-session-management-redesign">
                 <div className="mg-v2-section-header">
                     <div className="mg-v2-section-header-content">
@@ -1502,7 +1502,7 @@ const ConsultantComprehensiveManagement = () => {
                     onConfirm={handlePasswordResetConfirm}
                 />
             )}
-        </SimpleLayout>
+        </AdminCommonLayout>
     );
 };
 

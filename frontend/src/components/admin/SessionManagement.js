@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Calendar, Link2, Plus, Users, CheckCircle, TrendingUp, Clock, Zap } from 'lucide-react';
 import { apiGet, apiPost, apiPut } from '../../utils/ajax';
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
 import UnifiedLoading from '../common/UnifiedLoading';
 import notificationManager from '../../utils/notification';
 import StatCard from '../ui/Card/StatCard';
@@ -274,14 +274,12 @@ const SessionManagement = () => {
 
     if (loading && mappings.length === 0) {
         return (
-            <SimpleLayout title="회기 관리" loading={true} loadingText="데이터를 불러오는 중...">
-                <UnifiedLoading type="page" text="데이터를 불러오는 중..." />
-            </SimpleLayout>
+            <AdminCommonLayout title="회기 관리" loading={true} loadingText="데이터를 불러오는 중..." />
         );
     }
 
     return (
-        <SimpleLayout title="회기 관리" loading={loading && clients.length === 0} loadingText="데이터를 불러오는 중...">
+        <AdminCommonLayout title="회기 관리" loading={loading && clients.length === 0} loadingText="데이터를 불러오는 중...">
             <div className="mg-dashboard-layout">
                 {/* Dashboard Header */}
                 <div className="mg-dashboard-header">
@@ -671,7 +669,7 @@ const SessionManagement = () => {
                     onSessionExtensionRequested={handleSessionExtensionRequested}
                 />
             </div>
-        </SimpleLayout>
+        </AdminCommonLayout>
     );
 };
 

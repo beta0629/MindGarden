@@ -12,7 +12,7 @@ import {
 import { showError, showSuccess } from '../../utils/notification';
 import { getCommonCodes } from '../../utils/commonCodeApi';
 import Button from '../ui/Button/Button';
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
 
 import ClientOverviewTab from './ClientComprehensiveManagement/ClientOverviewTab';
 import ClientConsultationTab from './ClientComprehensiveManagement/ClientConsultationTab';
@@ -362,18 +362,16 @@ const ClientComprehensiveManagement = () => {
 
     if (loading) {
         return (
-            <SimpleLayout title="내담자 종합관리">
-                <UnifiedLoading 
-                    type="page"
-                    text="데이터를 불러오는 중..."
-                    variant="pulse"
-                />
-            </SimpleLayout>
+            <AdminCommonLayout
+                title="내담자 종합관리"
+                loading={true}
+                loadingText="데이터를 불러오는 중..."
+            />
         );
     }
 
                             return (
-        <SimpleLayout>
+        <AdminCommonLayout title="내담자 종합관리">
             <div className="mg-v2-container">
                 {/* 헤더 */}
                 <div className="mg-v2-section">
@@ -555,7 +553,7 @@ const ClientComprehensiveManagement = () => {
                     />
                 )}
             </div>
-        </SimpleLayout>
+        </AdminCommonLayout>
     );
 };
 

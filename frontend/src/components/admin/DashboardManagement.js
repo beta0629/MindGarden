@@ -16,7 +16,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 // // import MGButton from '../../components/common/MGButton'; // 임시 비활성화
 import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
 import notificationManager from '../../utils/notification';
 import { apiGet } from '../../utils/ajax';
 import csrfTokenManager from '../../utils/csrfTokenManager';
@@ -281,7 +281,7 @@ const DashboardManagement = () => {
   };
 
   return (
-    <SimpleLayout>
+    <AdminCommonLayout>
       <div className="dashboard-management-container">
         {/* 헤더 */}
         <div className="dashboard-management-header">
@@ -523,7 +523,7 @@ const DashboardManagement = () => {
           </div>
         )}
       </div>
-    </SimpleLayout>
+    </AdminCommonLayout>
   );
 };
 

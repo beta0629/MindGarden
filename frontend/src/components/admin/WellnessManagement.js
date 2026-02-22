@@ -17,7 +17,7 @@ import { apiGet, apiPost } from '../../utils/ajax';
 import { useSession } from '../../contexts/SessionContext';
 import notificationManager from '../../utils/notification';
 import ConfirmModal from '../common/ConfirmModal';
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
 import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { sessionManager } from '../../utils/sessionManager';
 import './WellnessManagement.css';
@@ -304,14 +304,14 @@ const WellnessManagement = () => {
 
     if (loading) {
         return (
-            <SimpleLayout title="웰니스 알림 관리" loading={true} loadingText="데이터를 불러오는 중...">
+            <AdminCommonLayout title="웰니스 알림 관리" loading={true} loadingText="데이터를 불러오는 중...">
                 <UnifiedLoading type="page" text="데이터를 불러오는 중..." />
-            </SimpleLayout>
+            </AdminCommonLayout>
         );
     }
 
     return (
-        <SimpleLayout title="웰니스 알림 관리" loading={loading} loadingText="데이터를 불러오는 중...">
+        <AdminCommonLayout title="웰니스 알림 관리" loading={loading} loadingText="데이터를 불러오는 중...">
             <div className="mg-v2-container">
                 {/* 헤더 */}
                 <div className="mg-v2-section">
@@ -540,7 +540,7 @@ const WellnessManagement = () => {
                 message={confirmModal.message}
                 type={confirmModal.type}
             />
-        </SimpleLayout>
+        </AdminCommonLayout>
     );
 };
 

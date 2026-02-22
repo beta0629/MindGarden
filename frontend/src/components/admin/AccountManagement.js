@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import UnifiedLoading from '../common/UnifiedLoading';
 import MGButton from '../../components/common/MGButton'; // 임시 비활성화
 import notificationManager from '../../utils/notification';
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
 import './AccountManagement.css';
 import AccountForm from './components/AccountForm';
 import AccountTable from './components/AccountTable';
@@ -219,7 +219,7 @@ const AccountManagement = () => {
   };
 
   return (
-    <SimpleLayout title="계좌 관리" loading={loading && accounts.length === 0} loadingText="계좌 목록을 불러오는 중...">
+    <AdminCommonLayout title="계좌 관리" loading={loading && accounts.length === 0} loadingText="계좌 목록을 불러오는 중...">
       <div className={ ACCOUNT_CSS_CLASSES.ACCOUNT_MANAGEMENT }>
         <div className={ ACCOUNT_CSS_CLASSES.ACCOUNT_HEADER }>
           <h2>{ ACCOUNT_PAGE_TITLES.MAIN }</h2>
@@ -248,7 +248,7 @@ const AccountManagement = () => {
           onSetPrimary={ handleSetPrimary }
         />
       </div>
-    </SimpleLayout>
+    </AdminCommonLayout>
   );
 };
 

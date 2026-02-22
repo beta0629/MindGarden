@@ -7,7 +7,7 @@ import {
 } from 'react-icons/fa';
 import { apiGet } from '../../utils/ajax';
 import { showNotification } from '../../utils/notification';
-import SimpleLayout from '../layout/SimpleLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
 import UnifiedLoading from '../common/UnifiedLoading';
 import Chart from '../common/Chart';
 import './StatisticsDashboard.css';
@@ -178,15 +178,15 @@ const StatisticsDashboard = ({ userRole = 'ADMIN', userId }) => {
 
     if (loading) {
         return (
-            <SimpleLayout title="통계 대시보드" loading={true} loadingText="통계 데이터를 불러오는 중...">
+            <AdminCommonLayout title="통계 대시보드" loading={true} loadingText="통계 데이터를 불러오는 중...">
                 <UnifiedLoading type="page" text="통계 데이터를 불러오는 중..." />
-            </SimpleLayout>
+            </AdminCommonLayout>
         );
     }
 
     if (error) {
         return (
-            <SimpleLayout title="통계 대시보드">
+            <AdminCommonLayout title="통계 대시보드">
                 <div className="statistics-error-card">
                     <div className="statistics-error-content">
                         <FaChartBar className="statistics-error-icon" />
@@ -196,12 +196,12 @@ const StatisticsDashboard = ({ userRole = 'ADMIN', userId }) => {
                         </button>
                     </div>
                 </div>
-            </SimpleLayout>
+            </AdminCommonLayout>
         );
     }
 
     return (
-        <SimpleLayout title="통계 대시보드" loading={false}>
+        <AdminCommonLayout title="통계 대시보드" loading={false}>
             <div className="statistics-dashboard-container">
             {/* 헤더 */}
             <div className="statistics-header">
@@ -401,7 +401,7 @@ const StatisticsDashboard = ({ userRole = 'ADMIN', userId }) => {
                 </div>
             </div>
         </div>
-        </SimpleLayout>
+        </AdminCommonLayout>
     );
 };
 

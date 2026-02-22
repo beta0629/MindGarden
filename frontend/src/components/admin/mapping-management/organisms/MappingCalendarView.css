@@ -1,0 +1,89 @@
+/**
+ * MappingCalendarView.css - B0KlA 스타일 캘린더 뷰
+ * @author MindGarden
+ * @since 2025-02-22
+ */
+
+.mg-v2-mapping-calendar-wrapper {
+  background: var(--ad-b0kla-card-bg, #ffffff);
+  border: 1px solid var(--ad-b0kla-border, #e2e8f0);
+  border-radius: var(--ad-b0kla-radius-sm, 12px);
+  padding: 1.5rem;
+}
+
+/* FullCalendar B0KlA 커스텀 스타일 */
+.mg-v2-mapping-calendar-wrapper .fc {
+  font-family: inherit;
+  color: var(--ad-b0kla-title-color, #2d3748);
+}
+
+.mg-v2-mapping-calendar-wrapper .fc-theme-standard .fc-scrollgrid {
+  border-color: var(--ad-b0kla-border, #e2e8f0);
+}
+
+.mg-v2-mapping-calendar-wrapper .fc-theme-standard td, 
+.mg-v2-mapping-calendar-wrapper .fc-theme-standard th {
+  border-color: var(--ad-b0kla-border, #e2e8f0);
+}
+
+.mg-v2-mapping-calendar-wrapper .fc-col-header-cell {
+  background: var(--ad-b0kla-bg, #fcfbfa);
+  padding: 8px 0;
+  font-weight: 600;
+  color: var(--ad-b0kla-text-secondary, #64748b);
+}
+
+.mg-v2-mapping-calendar-wrapper .fc-daygrid-day-number {
+  color: var(--ad-b0kla-title-color, #2d3748);
+  font-weight: 500;
+  padding: 8px;
+}
+
+.mg-v2-mapping-calendar-wrapper .fc-day-today {
+  background: var(--ad-b0kla-green-bg, #ebf2ee) !important;
+}
+
+.mg-v2-mapping-calendar-wrapper .fc-event {
+  border-radius: 4px;
+  padding: 2px 4px;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  border: none;
+}
+
+.mg-v2-mapping-calendar-wrapper .fc-event:hover {
+  opacity: 0.8;
+}
+
+.mg-v2-mapping-calendar-wrapper .fc-button-primary {
+  background: var(--ad-b0kla-card-bg, #ffffff) !important;
+  color: var(--ad-b0kla-text-secondary, #64748b) !important;
+  border: 1px solid var(--ad-b0kla-border, #e2e8f0) !important;
+  text-transform: capitalize;
+  font-weight: 600;
+  border-radius: var(--ad-b0kla-radius-sm, 8px) !important;
+  box-shadow: none !important;
+  transition: all 0.2s;
+}
+
+.mg-v2-mapping-calendar-wrapper .fc-button-primary:hover {
+  background: var(--ad-b0kla-bg, #fcfbfa) !important;
+  color: var(--ad-b0kla-title-color, #2d3748) !important;
+}
+
+.mg-v2-mapping-calendar-wrapper .fc-button-primary:disabled {
+  opacity: 0.5;
+}
+
+.mg-v2-mapping-calendar-wrapper .fc-button-active {
+  background: var(--ad-b0kla-bg, #fcfbfa) !important;
+  color: var(--ad-b0kla-title-color, #2d3748) !important;
+}
+
+.mg-v2-mapping-calendar-wrapper .fc-toolbar-title {
+  font-size: 1.125rem !important;
+  font-weight: 700;
+  color: var(--ad-b0kla-title-color, #2d3748);
+}

@@ -17,7 +17,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { cn } from '../../../utils/classNames';
-import './styles.css';
+/* 스타일: main.css → _unified-modals.css 공통 모달 사용 */
 
 const UnifiedModal = ({ 
   isOpen = false,

@@ -39,3 +39,25 @@
   height: auto !important;
   max-height: calc(90vh - 140px) !important; /* 헤더, 푸터 높이 제외 */
 }
+
+/*
+ * small / medium / large 모달도 콘텐츠 높이에 맞춤 (위·아래 여백 최소화)
+ * 테마(.mg-v2-ad-b0kla)와 결합돼도 100vh로 늘어나지 않도록 동일 캡슐화 적용
+ */
+.mg-modal.mg-modal--small,
+.mg-modal.mg-modal--medium,
+.mg-modal.mg-modal--large {
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: 90vh !important;
+  align-self: center;
+}
+
+.mg-modal.mg-modal--small .mg-modal__body,
+.mg-modal.mg-modal--medium .mg-modal__body,
+.mg-modal.mg-modal--large .mg-modal__body {
+  flex: 0 0 auto !important;
+  min-height: 0 !important;
+  height: auto !important;
+  max-height: none;
+}

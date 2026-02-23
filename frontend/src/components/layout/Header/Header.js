@@ -17,7 +17,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { cn } from '../../../utils/classNames';
-import './styles.css';
+/* 스타일: main.css 공통 헤더 */
 import UnifiedHeader from '../common/UnifiedHeader';
 
 const UnifiedHeader = ({

@@ -17,7 +17,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { cn } from '../../../utils/classNames';
-import './styles.css';
+/* 스타일: main.css → mg-loading 공통 */
 
 const UnifiedLoading = ({ 
   text = "로딩 중...",

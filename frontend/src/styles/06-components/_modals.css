@@ -56,16 +56,18 @@
 /* 모달 크기 */
 /* auto: 콘텐츠에 따라 너비·높이 자동 (각 모달이 내용에 맞게 변함) */
 .mg-modal--auto {
-  width: fit-content;
+  width: fit-content !important;
   min-width: min(320px, 90vw);
-  max-width: 90vw;
-  height: auto;
+  max-width: 90vw !important;
+  height: auto !important;
   max-height: 90vh;
+  align-self: center; /* 오버레이 flex에서 늘어나지 않도록 */
 }
 
 .mg-modal--auto .mg-modal__body {
   flex: 0 1 auto;
   max-height: none;
+  width: auto; /* 부모가 100%로 채워지지 않도록 */
 }
 
 .mg-modal--small {
@@ -199,7 +201,16 @@
     margin-top: 80px; /* 모바일에서도 공통헤더 아래로 위치 조정 */
     border-radius: var(--border-radius-lg);
   }
-  
+  /* 콘텐츠 기준 모달은 반응형에서도 크기 유지 */
+  .mg-modal--auto {
+    width: fit-content !important;
+    max-width: 90vw !important;
+    min-width: min(280px, 90vw);
+  }
+  .mg-modal--small {
+    width: var(--modal-width-sm) !important;
+    max-width: 90vw !important;
+  }
   .mg-modal--fullscreen {
     width: 100vw;
     height: 100vh;
@@ -236,6 +247,14 @@
     width: 90vw;
     max-width: 700px;
     margin-top: 60px; /* 태블릿에서도 공통헤더 아래로 위치 조정 */
+  }
+  .mg-modal--auto {
+    width: fit-content !important;
+    max-width: 90vw !important;
+  }
+  .mg-modal--small {
+    width: var(--modal-width-sm) !important;
+    max-width: 90vw !important;
   }
 }
 

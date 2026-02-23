@@ -79,6 +79,12 @@
   padding: var(--mg-spacing-xl, 1.5rem);
 }
 
+/* 래퍼 클래스가 모달 컨테이너에 직접 붙었을 때, 전체 화면(100vh) 높이 및 불필요한 패딩이 들어가는 현상 방지 */
+.mg-modal.mg-v2-ad-b0kla {
+  min-height: 0 !important;
+  padding: 0 !important;
+}
+
 .mg-v2-ad-b0kla__container {
   max-width: var(--mg-container-max);
   margin: 0 auto;

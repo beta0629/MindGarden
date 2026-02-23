@@ -208,7 +208,7 @@ return (
         isOpen={show}
         onClose={handleClose}
         title="새 지점 등록"
-        size="large"
+        size="auto"
         backdropClick
         showCloseButton
         loading={loading}

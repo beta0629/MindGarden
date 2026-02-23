@@ -12,7 +12,7 @@ const FormModal = ({
   onSubmit,
   title,
   children,
-  size = 'medium',
+  size = 'auto',
   submitText = '저장',
   cancelText = '취소',
   loading = false,

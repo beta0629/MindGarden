@@ -151,7 +151,7 @@ const ConsultantVacationModal = ({
             onClose={onClose}
             title="휴가 등록"
             subtitle={selectedDate ? formatDate(selectedDate) : ''}
-            size="medium"
+            size="auto"
             className="mg-v2-ad-b0kla"
             backdropClick
             showCloseButton

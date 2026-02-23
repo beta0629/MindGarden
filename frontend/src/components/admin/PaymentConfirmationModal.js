@@ -285,7 +285,7 @@ const PaymentConfirmationModal = ({
       isOpen={isOpen}
       onClose={onClose}
       title="결제 확인"
-      size="medium"
+      size="auto"
       className="mg-v2-ad-b0kla"
       backdropClick
       showCloseButton

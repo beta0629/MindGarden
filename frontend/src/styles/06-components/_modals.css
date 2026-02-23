@@ -54,8 +54,29 @@
 }
 
 /* 모달 크기 */
+/* auto: 콘텐츠에 따라 너비·높이 자동 (각 모달이 내용에 맞게 변함) */
+.mg-modal--auto {
+  width: fit-content;
+  min-width: min(320px, 90vw);
+  max-width: 90vw;
+  height: auto;
+  max-height: 90vh;
+}
+
+.mg-modal--auto .mg-modal__body {
+  flex: 0 1 auto;
+  max-height: none;
+}
+
 .mg-modal--small {
   width: var(--modal-width-sm);
+  max-height: none;
+  height: auto;
+}
+
+.mg-modal--small .mg-modal__body {
+  flex: 0 1 auto;
+  max-height: none;
 }
 
 .mg-modal--medium {

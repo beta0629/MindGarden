@@ -367,7 +367,7 @@ const ConsultantMessages = () => {
           isOpen={showSendModal}
           onClose={() => setShowSendModal(false)}
           title="새 메시지 작성"
-          size="large"
+          size="auto"
           showCloseButton={true}
           backdropClick={true}
           actions={

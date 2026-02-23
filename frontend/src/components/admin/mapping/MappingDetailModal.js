@@ -106,7 +106,7 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
             isOpen={isOpen}
             onClose={onClose}
             title="매칭 상세 정보"
-            size="large"
+            size="auto"
             className="mg-v2-ad-b0kla"
             backdropClick
             showCloseButton

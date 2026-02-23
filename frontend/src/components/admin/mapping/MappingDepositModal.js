@@ -104,7 +104,7 @@ const MappingDepositModal = ({
             isOpen={isOpen}
             onClose={handleClose}
             title="입금 확인"
-            size="medium"
+            size="auto"
             className="mg-v2-ad-b0kla"
             backdropClick
             showCloseButton

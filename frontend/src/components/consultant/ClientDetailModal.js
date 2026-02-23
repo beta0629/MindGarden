@@ -62,7 +62,7 @@ const ClientDetailModal = ({ client, isOpen, onClose, onSave }) => {
       isOpen={isOpen}
       onClose={onClose}
       title="내담자 상세 정보"
-      size="large"
+      size="auto"
       backdropClick={true}
       showCloseButton={true}
       actions={

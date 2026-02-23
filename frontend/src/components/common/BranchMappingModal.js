@@ -138,7 +138,7 @@ const BranchMappingModal = ({ isOpen, onClose, onSuccess }) => {
       isOpen={isOpen}
       onClose={handleClose}
       title="지점 매핑 설정"
-      size="medium"
+      size="auto"
       backdropClick
       showCloseButton
       loading={isLoading}

@@ -79,7 +79,7 @@ const ConsultantTransferHistory = ({ clientId, isOpen, onClose }) => {
       isOpen={isOpen}
       onClose={onClose}
       title="상담사 변경 이력"
-      size="medium"
+      size="auto"
       className="mg-v2-ad-b0kla"
       backdropClick
       showCloseButton

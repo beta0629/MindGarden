@@ -157,7 +157,7 @@ const PartialRefundModal = ({ mapping, isOpen, onClose, onSuccess }) => {
       isOpen={isOpen}
       onClose={handleClose}
       title="부분 환불 처리"
-      size="medium"
+      size="auto"
       className="mg-v2-ad-b0kla"
       backdropClick
       showCloseButton

@@ -18,12 +18,12 @@ const ErpModal = ({
   onClose,
   title,
   children,
-  size = 'md',
+  size = 'auto',
   showCloseButton = true,
   className = ''
 }) => {
-  const sizeMap = { sm: 'small', md: 'medium', lg: 'large', xl: 'large' };
-  const unifiedSize = sizeMap[size] || 'medium';
+  const sizeMap = { sm: 'small', md: 'medium', lg: 'large', xl: 'large', auto: 'auto' };
+  const unifiedSize = sizeMap[size] || 'auto';
 
   return (
     <UnifiedModal

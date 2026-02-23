@@ -13,7 +13,7 @@ const ConsultantListModal = ({ isOpen, onClose, consultantList }) => {
       isOpen={isOpen}
       onClose={onClose}
       title="상담사 목록"
-      size="large"
+      size="auto"
       backdropClick={true}
       showCloseButton={true}
       actions={

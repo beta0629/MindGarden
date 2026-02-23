@@ -305,7 +305,7 @@ const ClientModal = ({
             isOpen={!!type}
             onClose={onClose}
             title={getTitle()}
-            size="medium"
+            size="auto"
             backdropClick
             showCloseButton
             actions={

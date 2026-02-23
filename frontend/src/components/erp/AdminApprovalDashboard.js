@@ -245,7 +245,7 @@ const AdminApprovalDashboard = () => {
         isOpen={showApprovalModal}
         onClose={() => setShowApprovalModal(false)}
         title="구매 요청 승인"
-        size="medium"
+        size="auto"
       >
         {selectedRequest && (
           <div>
@@ -299,7 +299,7 @@ const AdminApprovalDashboard = () => {
         isOpen={showRejectionModal}
         onClose={() => setShowRejectionModal(false)}
         title="구매 요청 거부"
-        size="medium"
+        size="auto"
       >
         {selectedRequest && (
           <div>

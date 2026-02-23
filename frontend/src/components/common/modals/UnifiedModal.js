@@ -11,7 +11,7 @@ import '../../../styles/main.css'; // Ensure main.css is imported for mg-modal s
  * @param {string} props.title - 모달 제목
  * @param {string} props.subtitle - 모달 부제목
  * @param {React.ReactNode} props.children - 모달 내용
- * @param {string} props.size - 모달 크기 (small, medium, large, fullscreen)
+ * @param {string} props.size - 모달 크기 (auto | small | medium | large | fullscreen). auto = 콘텐츠에 맞춤
  * @param {string} props.variant - 모달 타입 (default, confirm, form, detail, alert)
  * @param {boolean} props.backdropClick - 배경 클릭으로 닫기 여부
 /**
@@ -39,7 +39,7 @@ const UnifiedModal = ({
   title = '',
   subtitle = '',
   children,
-  size = 'medium',
+  size = 'auto',
   variant = 'default',
   backdropClick = true,
   showCloseButton = true,

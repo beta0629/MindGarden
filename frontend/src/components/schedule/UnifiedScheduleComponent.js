@@ -302,8 +302,11 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
     }, []);
 
     const loadSchedules = useCallback(async () => {
-        // userId가 없으면 로드하지 않음
-        if (!userId) {
+        // 관리자는 userId 없이도 전체 조회 가능
+        const isAdmin = userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN' || userRole === 'HQ_MASTER' || userRole === 'SUPER_HQ_ADMIN';
+        
+        // 관리자가 아니면서 userId가 없으면 로드하지 않음
+        if (!isAdmin && !userId) {
             console.warn('⚠️ userId가 없어 스케줄을 로드하지 않습니다');
             setLoading(false);
             return;
@@ -552,28 +555,30 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
 
     useEffect(() => {
         console.log('🔍 UnifiedScheduleComponent useEffect 실행:', { userId, userRole, selectedConsultantId });
-        
+
         // 표준화 2025-12-08: 성능 개선 - 병렬 로딩 적용
         const loadData = async () => {
             const promises = [];
-            
+            const isAdmin = userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN' || userRole === 'HQ_MASTER' || userRole === 'SUPER_HQ_ADMIN';
+
             // 스케줄 로드 (필수)
-            if (userId) {
+            // 관리자는 userId 없이도 로드 가능
+            if (isAdmin || userId) {
                 promises.push(loadSchedules());
             }
-            
+
             // 공통코드 로드 (필수)
             promises.push(loadScheduleStatusCodes());
-            
+
             // 상담사 목록 로드 (관리자만, 선택적)
-            if (userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN') {
+            if (isAdmin) {
                 promises.push(loadConsultants());
             }
-            
+
             // 모든 데이터를 병렬로 로드
             await Promise.all(promises);
         };
-        
+
         loadData();
     }, [userId, userRole, selectedConsultantId]);
 

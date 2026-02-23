@@ -389,6 +389,7 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
                         return null;
                     }
                     
+                    const isCompleted = schedule.status === 'COMPLETED' || schedule.status === '완료됨';
                     return {
                         id: schedule.id,
                         title: schedule.title || '상담',
@@ -397,6 +398,7 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
                         backgroundColor: getConsultantColor(schedule.consultantId),
                         borderColor: getConsultantColor(schedule.consultantId),
                         className: `schedule-event status-${schedule.status?.toLowerCase()}`,
+                        editable: !isCompleted,
                         extendedProps: {
                             id: schedule.id,
                             consultantId: schedule.consultantId,
@@ -495,6 +497,7 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
                             return null;
                         }
                         
+                        const isCompleted = schedule.status === 'COMPLETED' || schedule.status === '완료됨';
                         return {
                             id: schedule.id,
                             title: schedule.title || '상담',
@@ -503,6 +506,7 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
                             backgroundColor: getConsultantColor(schedule.consultantId),
                             borderColor: getConsultantColor(schedule.consultantId),
                             className: `schedule-event status-${schedule.status?.toLowerCase()}`,
+                            editable: !isCompleted,
                             extendedProps: {
                                 id: schedule.id,
                                 consultantId: schedule.consultantId,
@@ -705,6 +709,15 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
         console.log('🔄 이벤트 이동:', info.event.title);
         
         const event = info.event;
+        const status = event.extendedProps?.status;
+
+        // 완료된 스케줄은 드래그 이동 불가
+        if (status === 'COMPLETED' || status === '완료됨') {
+            info.revert();
+            notificationManager.warning('완료된 스케줄은 이동할 수 없습니다.');
+            return;
+        }
+
         const newStart = event.start;
         const newEnd = event.end;
 

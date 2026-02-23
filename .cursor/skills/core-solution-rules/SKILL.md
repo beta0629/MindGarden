@@ -49,6 +49,7 @@ description: Core Solution(MindGarden) 프로젝트 전체 룰 인덱스. 백엔
 
 - **explore** 서브에이전트: 코드베이스 탐색·분석, **작업 전 플랜·조사** 시 사용 (수정 작업 아님). 문서 작업 시 1단계로 사용.
 - **generalPurpose** 서브에이전트: 복합 연구·다단계 작업, **문서 작성·정리** 시 /core-solution-documentation 스킬과 함께 사용.
+- **UI/레이아웃·비주얼 작업**: 반드시 **core-designer(설계·시안 선행)** → **core-coder(구현)** 순서. `docs/standards/SUBAGENT_USAGE.md`의 [서브에이전트 검토 요약] 및 [UI/레이아웃·비주얼 작업 시 워크플로우] 참고.
 
 ## 사용할 스킬
 

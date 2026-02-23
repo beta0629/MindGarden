@@ -1,84 +1,96 @@
 /**
- * 대시보드 섹션 스타일
- * Phase 3: 공통 레이아웃 컴포넌트
- * 
- * 기존 CSS 변수만 사용
+ * 대시보드 섹션 스타일 (Organism)
+ * 스펙: ADMIN_DASHBOARD_MONITORING_DESIGN_SPEC 2.2~2.4, 4장 — 토큰 --ad-b0kla-*, --mg-* 만 사용
+ *
+ * @author CoreSolution
+ * @since 2025-02-24
  */
 
-.dashboard-section {
-  background: white;
-  border-radius: var(--border-radius-lg);
-  padding: var(--spacing-xl);
-  margin-bottom: var(--spacing-xl);
-  box-shadow: var(--shadow-sm);
-  border: var(--border-width-thin) solid #e9ecef;
+/* 2.4 카드/섹션 — 스펙 4.1 */
+.mg-dashboard-section--card {
+  background: var(--ad-b0kla-card-bg);
+  border: 1px solid var(--ad-b0kla-border);
+  border-radius: var(--ad-b0kla-radius);
+  box-shadow: var(--ad-b0kla-shadow);
+  padding: var(--mg-spacing-xl);
+  margin-bottom: var(--mg-spacing-xl);
 }
 
-.dashboard-section-header {
+/* 2.3 섹션 헤더 */
+.mg-dashboard-section-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: var(--spacing-lg);
-  padding-bottom: var(--spacing-md);
-  border-bottom: 2px solid #e9ecef;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: var(--mg-spacing-md);
+  margin-bottom: var(--mg-spacing-lg);
+  padding-bottom: var(--mg-spacing-md);
+  border-bottom: 1px solid var(--ad-b0kla-border);
 }
 
-.dashboard-section-title-wrapper {
+.mg-dashboard-section-title-wrap {
   display: flex;
   align-items: center;
-  gap: var(--spacing-md);
+  gap: var(--mg-spacing-md);
 }
 
-.dashboard-section-icon {
-  color: var(--role-admin);
+.mg-dashboard-section-icon {
+  color: var(--ad-b0kla-icon-color);
   font-size: var(--font-size-xl);
   display: flex;
   align-items: center;
+  flex-shrink: 0;
 }
 
-.dashboard-section-title {
+.mg-dashboard-section-title {
   font-size: var(--font-size-xl);
   font-weight: var(--font-weight-semibold);
-  color: #2c3e50;
+  color: var(--ad-b0kla-title-color);
   margin: 0;
 }
 
-.dashboard-section-collapse-btn {
+.mg-dashboard-section-subtitle {
+  font-size: var(--font-size-sm);
+  color: var(--ad-b0kla-text-secondary);
+  margin: 0.25rem 0 0 0;
+}
+
+.mg-dashboard-section-collapse-btn {
   background: none;
   border: none;
   color: var(--mg-secondary-500);
   cursor: pointer;
-  padding: var(--spacing-xs);
-  margin-left: var(--spacing-sm);
-  border-radius: var(--border-radius-sm);
-  transition: var(--transition-fast);
+  padding: var(--mg-spacing-xs);
+  margin-left: var(--mg-spacing-sm);
+  border-radius: var(--ad-b0kla-radius-sm);
+  transition: 0.2s ease;
   display: flex;
   align-items: center;
 }
 
-.dashboard-section-collapse-btn:hover {
+.mg-dashboard-section-collapse-btn:hover {
   background: var(--mg-gray-100);
-  color: #2c3e50;
+  color: var(--ad-b0kla-title-color);
 }
 
-.dashboard-section-actions {
+.mg-dashboard-section-actions {
   display: flex;
-  gap: var(--spacing-sm);
+  gap: var(--mg-spacing-sm);
   align-items: center;
 }
 
-.dashboard-section-content {
-  animation: fadeIn var(--transition-normal);
+.mg-dashboard-section-content {
+  animation: mg-dashboard-section-fadeIn 0.25s ease;
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
   overflow: hidden;
 }
 
-@keyframes fadeIn {
+@keyframes mg-dashboard-section-fadeIn {
   from {
     opacity: 0;
-    transform: translateY(-10px);
+    transform: translateY(-8px);
   }
   to {
     opacity: 1;
@@ -86,25 +98,51 @@
   }
 }
 
-/* 반응형 */
-@media (max-width: 768px) {
-  .dashboard-section {
-    padding: var(--spacing-md);
-  }
-  
-  .dashboard-section-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: var(--spacing-md);
-  }
-  
-  .dashboard-section-title {
-    font-size: var(--font-size-lg);
-  }
-  
-  .dashboard-section-actions {
-    width: 100%;
-    justify-content: flex-end;
+/* 2.2 그리드 배치 — 2열/3열 gap, 2.4 모니터링 그리드 보조 클래스 */
+.mg-dashboard-section-content .mg-grid.mg-monitoring-section-grid {
+  display: grid;
+}
+
+.mg-dashboard-section-content .mg-grid.mg-grid--cols-2.mg-monitoring-section-grid {
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--mg-grid-gap-md);
+}
+
+.mg-dashboard-section-content .mg-grid.mg-grid--cols-3.mg-monitoring-section-grid {
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--mg-grid-gap-lg);
+}
+
+/* 2.2 반응형: 1024px 이하 3열 → 2열 */
+@media (max-width: 1024px) {
+  .mg-dashboard-section-content .mg-grid.mg-grid--cols-3.mg-monitoring-section-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
+/* 2.2 반응형: 768px 이하 모든 섹션 1열 */
+@media (max-width: 768px) {
+  .mg-dashboard-section--card {
+    padding: var(--mg-spacing-md);
+  }
+
+  .mg-dashboard-section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--mg-spacing-md);
+  }
+
+  .mg-dashboard-section-title {
+    font-size: var(--font-size-lg);
+  }
+
+  .mg-dashboard-section-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .mg-dashboard-section-content .mg-grid.mg-grid--cols-2.mg-monitoring-section-grid,
+  .mg-dashboard-section-content .mg-grid.mg-grid--cols-3.mg-monitoring-section-grid {
+    grid-template-columns: 1fr;
+  }
+}

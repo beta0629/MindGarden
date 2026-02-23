@@ -121,11 +121,12 @@ const SystemMetricsWidget = ({ widget, user }) => {
               </span>
             </div>
             <div className="mg-progress-bar">
-              <div 
+              <div
                 className={WIDGET_CONSTANTS.UTILS.combineClasses(
                   'mg-progress-bar__fill',
                   getProgressBarClass(cpuUsage)
                 )}
+                style={{ '--progress-percentage': `${cpuUsage}%` }}
                 role="progressbar"
                 aria-valuenow={cpuUsage}
                 aria-valuemin="0"
@@ -166,11 +167,12 @@ const SystemMetricsWidget = ({ widget, user }) => {
               </span>
             </div>
             <div className="mg-progress-bar">
-              <div 
+              <div
                 className={WIDGET_CONSTANTS.UTILS.combineClasses(
                   'mg-progress-bar__fill',
                   getProgressBarClass(memoryUsage)
                 )}
+                style={{ '--progress-percentage': `${memoryUsage}%` }}
                 role="progressbar"
                 aria-valuenow={memoryUsage}
                 aria-valuemin="0"
@@ -221,11 +223,12 @@ const SystemMetricsWidget = ({ widget, user }) => {
               </span>
             </div>
             <div className="mg-progress-bar">
-              <div 
+              <div
                 className={WIDGET_CONSTANTS.UTILS.combineClasses(
                   'mg-progress-bar__fill',
                   getProgressBarClass(jvmMemoryUsage)
                 )}
+                style={{ '--progress-percentage': `${jvmMemoryUsage}%` }}
                 role="progressbar"
                 aria-valuenow={jvmMemoryUsage}
                 aria-valuemin="0"
@@ -274,11 +277,12 @@ const SystemMetricsWidget = ({ widget, user }) => {
                 </span>
               </div>
               <div className="mg-progress-bar">
-                <div 
+                <div
                   className={WIDGET_CONSTANTS.UTILS.combineClasses(
                     'mg-progress-bar__fill',
                     getProgressBarClass(diskUsage)
                   )}
+                  style={{ '--progress-percentage': `${diskUsage}%` }}
                   role="progressbar"
                   aria-valuenow={diskUsage}
                   aria-valuemin="0"

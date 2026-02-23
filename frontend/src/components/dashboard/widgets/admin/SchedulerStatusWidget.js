@@ -187,12 +187,13 @@ const SchedulerStatusWidget = ({ widget, user }) => {
               </span>
             </div>
             <div className="mg-progress-bar">
-              <div 
+              <div
                 className={WIDGET_CONSTANTS.UTILS.combineClasses(
                   'mg-progress-bar__fill',
-                  successRate >= 95 ? 'mg-progress-bar__fill--success' : 
+                  successRate >= 95 ? 'mg-progress-bar__fill--success' :
                   successRate >= 80 ? 'mg-progress-bar__fill--warning' : 'mg-progress-bar__fill--error'
                 )}
+                style={{ '--progress-percentage': `${successRate}%` }}
                 role="progressbar"
                 aria-valuenow={successRate}
                 aria-valuemin="0"

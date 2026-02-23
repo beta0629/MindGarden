@@ -3,6 +3,31 @@
 > 코드·디자인·테스트·문서 수정 시 서브에이전트 사용 규칙  
 > @author MindGarden | @since 2025-02-22
 
+## 서브에이전트 검토 요약 (사용 전 참고)
+
+작업 요청 시 **먼저 아래 표로 적합한 서브에이전트와 스킬을 선택**한 뒤 호출한다.
+
+| 서브에이전트 | 역할 | 적용 스킬 | 비고 |
+|--------------|------|-----------|------|
+| **core-designer** | UI/UX·레이아웃·비주얼 **설계만** (시안·토큰·스펙). **코드 작성 안 함** | /core-solution-standardization | 대시보드·리포트·새 화면 레이아웃 설계 시 **선행** |
+| **core-coder** | React/JS·Java/Spring **코드 구현**. designer 시안 있으면 그에 맞춤 | /core-solution-frontend, /core-solution-atomic-design 등 | 구현 단계에서 사용 |
+| **core-tester** | 단위·통합·E2E·보안 **테스트 작성·실행**. 코드 구현 안 함 | /core-solution-testing | |
+| **explore** | 코드베이스 탐색·**작업 전 플랜·조사** (수정 작업 안 함) | /core-solution-documentation (문서 시) | 넓은 범위 작업 전 1단계 |
+| **generalPurpose** | 복합·다단계, **문서 작성·정리** | /core-solution-documentation | |
+| **shell** | 터미널·git·빌드 명령 실행 | — | |
+
+### UI/레이아웃·비주얼 작업 시 워크플로우 (필수)
+
+레이아웃 변경, 대시보드/리포트 UI 개선, 새 화면 비주얼 설계 등은 **반드시 설계 선행 → 구현** 순서를 따른다.
+
+| 단계 | 서브에이전트 | 스킬 | 산출물 |
+|------|--------------|------|--------|
+| **1. 설계** | **core-designer** | /core-solution-standardization | 레이아웃·컴포넌트 구성·토큰 사용 스펙(또는 시안 설명) |
+| **2. 구현** | **core-coder** | /core-solution-frontend, /core-solution-atomic-design (필요 시 /core-solution-design-system-css) | designer 스펙대로 코드 반영 |
+
+- designer가 **코드를 수정하지 않음**. 코더가 designer 산출물을 참고해 구현한다.
+- 상세 매핑은 아래 [작업 유형별 서브에이전트 매핑](#작업-유형별-서브에이전트-매핑) 참고.
+
 ## 원칙
 
 - **직접 수정 금지**: Agent가 코드/디자인/테스트를 직접 수정하지 않고, 해당 영역 서브에이전트를 호출한다.

@@ -428,6 +428,10 @@ Molecules와 Atoms를 조합하여 만든 복잡한 UI 섹션입니다.
 </div>
 ```
 
+### 3.6 관리자 대시보드 모니터링
+
+**참조 예**: AI·보안 모니터링·시스템 모니터링 두 Organism — [ADMIN_DASHBOARD_MONITORING_DESIGN_SPEC.md](./ADMIN_DASHBOARD_MONITORING_DESIGN_SPEC.md), 구현: `AdminDashboardMonitoring.js`, `DashboardSection.js`, 위젯 5개(AIMonitoringWidget, SecurityAuditWidget, SchedulerStatusWidget, SystemMetricsWidget, AIUsageWidget).
+
 ---
 
 ## 4️⃣ Templates (템플릿)

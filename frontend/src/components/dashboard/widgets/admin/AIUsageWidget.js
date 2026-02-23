@@ -111,7 +111,7 @@ const AIUsageWidget = ({ widget, user }) => {
           
           <div className={WIDGET_CONSTANTS.UTILS.combineClasses(
             WIDGET_CONSTANTS.CSS_CLASSES.MG_STATS_CARD,
-            'mg-stats-card--primary'
+            'mg-stats-card--info'
           )}>
             <div className="mg-stats-card__icon">
               <Calendar size={20} />
@@ -158,11 +158,12 @@ const AIUsageWidget = ({ widget, user }) => {
               </span>
             </div>
             <div className="mg-progress-bar">
-              <div 
+              <div
                 className={WIDGET_CONSTANTS.UTILS.combineClasses(
                   'mg-progress-bar__fill',
                   getBudgetProgressBarClass(dailyUsage)
                 )}
+                style={{ '--progress-percentage': `${dailyUsage}%` }}
                 role="progressbar"
                 aria-valuenow={dailyUsage}
                 aria-valuemin="0"
@@ -203,11 +204,12 @@ const AIUsageWidget = ({ widget, user }) => {
               </span>
             </div>
             <div className="mg-progress-bar">
-              <div 
+              <div
                 className={WIDGET_CONSTANTS.UTILS.combineClasses(
                   'mg-progress-bar__fill',
                   getBudgetProgressBarClass(budgetUsage)
                 )}
+                style={{ '--progress-percentage': `${budgetUsage}%` }}
                 role="progressbar"
                 aria-valuenow={budgetUsage}
                 aria-valuemin="0"

@@ -61,6 +61,7 @@ frontend/src/components/
 - **단일 책임**: 각 컴포넌트는 하나의 역할만 수행.
 - **재사용**: 공통 UI는 atoms → molecules 순으로 추출 후 organisms에서 조합.
 - **네이밍**: `cs-*` 또는 `mg-*` 디자인 토큰 사용. 하드코딩 색상·여백 금지.
+- **CSS**: 아토믹 계층별 스타일만 사용. 레거시·불필요 CSS 사용 금지. 전체 디자인 정리·재구축 시 **core-solution-design-system-css** 스킬 + 서브에이전트(core-coder)로 진행.
 
 ## 참조 문서
 

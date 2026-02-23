@@ -532,9 +532,6 @@
   box-shadow: var(--cs-shadow-soft);
   width: 100%;
   max-width: 600px;
-  max-height: 85vh;
-  display: flex;
-  flex-direction: column;
   overflow: hidden;
 }
 
@@ -579,9 +576,6 @@
 .mg-v2-ad-modal__body {
   padding: 24px;
   overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  flex: 1;
   background: var(--ad-b0kla-card-bg);
 }
 

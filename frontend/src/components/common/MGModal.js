@@ -5,7 +5,7 @@
  */
 
 import React, { useEffect } from 'react';
-import './MGModal.css';
+/* 스타일: main.css → _unified-modals.css 공통 모달 사용 */
 
 const MGModal = ({
   isOpen = false,

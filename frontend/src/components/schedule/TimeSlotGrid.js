@@ -32,7 +32,8 @@ const TimeSlotGrid = ({
     consultantId, 
     duration = DEFAULT_CONSULTATION_DURATION, 
     onTimeSlotSelect, 
-    selectedTimeSlot 
+    selectedTimeSlot,
+    variant = 'default' // 'default' | 'b0kla' — B0KlA 모달용 아토믹 클래스
 }) => {
     // date prop을 selectedDate로 사용
     const selectedDate = date;
@@ -621,21 +622,6 @@ const TimeSlotGrid = ({
     };
 
 /**
-     * 슬롯 상태에 따른 CSS 클래스
-     */
-    const getSlotClassName = (slot) => {
-        const classes = ['time-slot'];
-        
-        if (slot.vacation) classes.push('vacation');
-        if (slot.past) classes.push('past');
-        if (slot.selected) classes.push('selected');
-        if (!slot.available) classes.push('unavailable');
-        if (slot.conflict) classes.push('conflict');
-        
-        return classes.join(' ');
-    };
-
-/**
      * 슬롯 상태 아이콘 (색상 원으로 대체)
      */
     const getSlotIcon = (slot) => {
@@ -662,9 +648,11 @@ const TimeSlotGrid = ({
         return grouped;
     };
 
+    const useB0kla = variant === 'b0kla';
+
     if (loading) {
         return (
-            <div className="time-slot-grid-container">
+            <div className={useB0kla ? 'mg-v2-ad-ts mg-v2-ad-ts--loading' : 'time-slot-grid-container'}>
                 <UnifiedLoading type="inline" text="시간 슬롯을 불러오는 중..." />
             </div>
         );
@@ -672,116 +660,115 @@ const TimeSlotGrid = ({
 
     const groupedSlots = groupSlotsByHour();
 
+    const getSlotModifierClass = (slot) => {
+        if (slot.vacation) return 'mg-v2-ad-ts-item--vacation';
+        if (slot.past) return 'mg-v2-ad-ts-item--past';
+        if (slot.selected) return 'mg-v2-ad-ts-item--selected';
+        if (slot.conflict) return 'mg-v2-ad-ts-item--conflict';
+        if (!slot.available) return 'mg-v2-ad-ts-item--unavailable';
+        return 'mg-v2-ad-ts-item--available';
+    };
+
+    const getSlotLegacyClass = (slot) => {
+        const classes = ['mg-v2-time-slot-item'];
+        if (slot.vacation) classes.push('mg-v2-time-slot-item--vacation');
+        else if (slot.past) classes.push('mg-v2-time-slot-item--past');
+        else if (slot.selected) classes.push('mg-v2-time-slot-item--selected');
+        else if (slot.conflict) classes.push('mg-v2-time-slot-item--conflict');
+        else if (!slot.available) classes.push('mg-v2-time-slot-item--unavailable');
+        return classes.join(' ');
+    };
+
     return (
-        <div className="time-slot-grid-container">
-            <div className="time-slot-grid-header">
-                <h5 className="time-slot-grid-title">시간 선택</h5>
-                <div className="time-slot-grid-duration-badge">
+        <div className={useB0kla ? 'mg-v2-ad-ts' : 'time-slot-grid-container'}>
+            <div className={useB0kla ? 'mg-v2-ad-ts__header' : 'time-slot-grid-header'}>
+                <h5 className={useB0kla ? 'mg-v2-ad-ts__title' : 'time-slot-grid-title'}>시간 선택</h5>
+                <div className={useB0kla ? 'mg-v2-ad-ts__duration-badge' : 'time-slot-grid-duration-badge'}>
                     상담 시간: {duration}분 (휴식 10분 포함)
                 </div>
             </div>
 
-            <div className="time-slot-grid-legend">
-                <div className="time-slot-legend-item">
-                    <span className="time-slot-legend-color time-slot-legend-color--available"></span>
+            <div className={useB0kla ? 'mg-v2-ad-ts__legend' : 'time-slot-grid-legend'}>
+                <div className={useB0kla ? 'mg-v2-ad-ts__legend-item' : 'time-slot-legend-item'}>
+                    <span className={useB0kla ? 'mg-v2-ad-ts__legend-dot mg-v2-ad-ts__legend-dot--available' : 'time-slot-legend-color time-slot-legend-color--available'} />
                     <span>사용 가능</span>
                 </div>
-                <div className="mg-v2-legend-item">
-                    <span className="mg-v2-legend-color mg-v2-legend-color--vacation"></span>
+                <div className={useB0kla ? 'mg-v2-ad-ts__legend-item' : 'mg-v2-legend-item'}>
+                    <span className={useB0kla ? 'mg-v2-ad-ts__legend-dot mg-v2-ad-ts__legend-dot--vacation' : 'mg-v2-legend-color mg-v2-legend-color--vacation'} />
                     <span>휴가 시간</span>
                 </div>
-                <div className="mg-v2-legend-item">
-                    <span className="mg-v2-legend-color mg-v2-legend-color--conflict"></span>
+                <div className={useB0kla ? 'mg-v2-ad-ts__legend-item' : 'mg-v2-legend-item'}>
+                    <span className={useB0kla ? 'mg-v2-ad-ts__legend-dot mg-v2-ad-ts__legend-dot--conflict' : 'mg-v2-legend-color mg-v2-legend-color--conflict'} />
                     <span>충돌</span>
                 </div>
-                <div className="mg-v2-legend-item">
-                    <span className="mg-v2-legend-color mg-v2-legend-color--unavailable"></span>
+                <div className={useB0kla ? 'mg-v2-ad-ts__legend-item' : 'mg-v2-legend-item'}>
+                    <span className={useB0kla ? 'mg-v2-ad-ts__legend-dot mg-v2-ad-ts__legend-dot--unavailable' : 'mg-v2-legend-color mg-v2-legend-color--unavailable'} />
                     <span>사용 불가</span>
                 </div>
-                <div className="mg-v2-legend-item">
-                    <span className="mg-v2-legend-color mg-v2-legend-color--selected"></span>
+                <div className={useB0kla ? 'mg-v2-ad-ts__legend-item' : 'mg-v2-legend-item'}>
+                    <span className={useB0kla ? 'mg-v2-ad-ts__legend-dot mg-v2-ad-ts__legend-dot--selected' : 'mg-v2-legend-color mg-v2-legend-color--selected'} />
                     <span>선택됨</span>
                 </div>
             </div>
 
-            <div className="mg-v2-time-slot-container">
+            <div className={useB0kla ? 'mg-v2-ad-ts__container' : 'mg-v2-time-slot-container'}>
                 {Object.keys(groupedSlots)
-                    .sort((a, b) => parseInt(a) - parseInt(b))
+                    .sort((a, b) => parseInt(a, 10) - parseInt(b, 10))
                     .map(hour => (
-                    <div key={hour} className="mg-v2-time-slot-row">
-                        <div className="mg-v2-time-slot-hour">{hour}:00</div>
-                        <div className="mg-v2-time-slot-grid">
-                            {groupedSlots[hour].map(slot => {
-                                // CSS 클래스 기반 스타일링 (표준화 원칙 준수)
-                                const getSlotClassName = (slot) => {
-                                    const classes = ['mg-v2-time-slot-item'];
-                                    
-                                    if (slot.vacation) {
-                                        classes.push('mg-v2-time-slot-item--vacation');
-                                    } else if (slot.past) {
-                                        classes.push('mg-v2-time-slot-item--past');
-                                    } else if (slot.selected) {
-                                        classes.push('mg-v2-time-slot-item--selected');
-                                    } else if (slot.conflict) {
-                                        classes.push('mg-v2-time-slot-item--conflict');
-                                    } else if (!slot.available) {
-                                        classes.push('mg-v2-time-slot-item--unavailable');
-                                    }
-                                    
-                                    return classes.join(' ');
-                                };
-
-                                return (
+                    <div key={hour} className={useB0kla ? 'mg-v2-ad-ts__row' : 'mg-v2-time-slot-row'}>
+                        <div className={useB0kla ? 'mg-v2-ad-ts__hour' : 'mg-v2-time-slot-hour'}>{hour}:00</div>
+                        <div className={useB0kla ? 'mg-v2-ad-ts__grid' : 'mg-v2-time-slot-grid'}>
+                            {groupedSlots[hour].map(slot => (
+                                <div
+                                    key={slot.id}
+                                    className={useB0kla ? `mg-v2-ad-ts-item ${getSlotModifierClass(slot)}` : getSlotLegacyClass(slot)}
+                                    onClick={() => handleSlotClick(slot)}
+                                    title={`${slot.time} - ${slot.endTime} (${duration}분)`}
+                                    role="button"
+                                    tabIndex={0}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter' || e.key === ' ') {
+                                            e.preventDefault();
+                                            handleSlotClick(slot);
+                                        }
+                                    }}
+                                >
                                     <div
-                                        key={slot.id}
-                                        className={getSlotClassName(slot)}
-                                        onClick={() => handleSlotClick(slot)}
-                                        title={`${slot.time} - ${slot.endTime} (${duration}분)`}
-                                        role="button"
-                                        tabIndex="0"
-                                        onKeyPress={(e) => {
-                                            if (e.key === 'Enter' || e.key === ' ') {
-                                                handleSlotClick(slot);
-                                            }
-                                        }}
+                                        className={useB0kla ? 'mg-v2-ad-ts-item__icon' : 'mg-v2-time-slot-icon'}
+                                        style={useB0kla ? undefined : { '--slot-icon-color': getSlotIcon(slot).color }}
                                     >
-                                        <div 
-                                            className="mg-v2-time-slot-icon"
-                                            style={{ '--slot-icon-color': getSlotIcon(slot).color }}
-                                        >
-                                            {getSlotIcon(slot).text}
-                                        </div>
-                                        <div className={`mg-v2-time-slot-time ${slot.selected ? 'mg-v2-time-slot-time--selected' : 'mg-v2-time-slot-time--available'}`}>
-                                            {slot.time}
-                                        </div>
-                                        <div className="mg-v2-time-slot-duration-text">
-                                            {duration}분
-                                        </div>
+                                        {getSlotIcon(slot).text}
                                     </div>
-                                );
-                            })}
+                                    <div className={useB0kla ? 'mg-v2-ad-ts-item__time' : `mg-v2-time-slot-time ${slot.selected ? 'mg-v2-time-slot-time--selected' : 'mg-v2-time-slot-time--available'}`}>
+                                        {slot.time}
+                                    </div>
+                                    <div className={useB0kla ? 'mg-v2-ad-ts-item__duration' : 'mg-v2-time-slot-duration-text'}>
+                                        {duration}분
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     </div>
                 ))}
             </div>
 
             {timeSlots.length === 0 && (
-                <div className="mg-v2-empty-state-centered">
-                    <p className="mg-v2-empty-state-text">사용 가능한 시간이 없습니다.</p>
-                    <small className="mg-v2-empty-state-subtext">상담 시간과 휴식 시간을 고려한 결과입니다.</small>
+                <div className={useB0kla ? 'mg-v2-ad-ts__empty' : 'mg-v2-empty-state-centered'}>
+                    <p className={useB0kla ? 'mg-v2-ad-ts__empty-text' : 'mg-v2-empty-state-text'}>사용 가능한 시간이 없습니다.</p>
+                    <small className={useB0kla ? 'mg-v2-ad-ts__empty-subtext' : 'mg-v2-empty-state-subtext'}>상담 시간과 휴식 시간을 고려한 결과입니다.</small>
                 </div>
             )}
 
             {existingSchedules.length > 0 && (
-                <div className="mg-v2-schedule-info-box">
-                    <h6 className="mg-v2-schedule-info-title">기존 스케줄</h6>
-                    <div className="mg-v2-schedule-list">
+                <div className={useB0kla ? 'mg-v2-ad-ts__existing' : 'mg-v2-schedule-info-box'}>
+                    <h6 className={useB0kla ? 'mg-v2-ad-ts__existing-title' : 'mg-v2-schedule-info-title'}>기존 스케줄</h6>
+                    <div className={useB0kla ? 'mg-v2-ad-ts__existing-list' : 'mg-v2-schedule-list'}>
                         {existingSchedules.map(schedule => (
-                            <div key={schedule.id} className="mg-v2-schedule-item">
-                                <span className="mg-v2-schedule-time">
+                            <div key={schedule.id} className={useB0kla ? 'mg-v2-ad-ts__existing-item' : 'mg-v2-schedule-item'}>
+                                <span className={useB0kla ? 'mg-v2-ad-ts__existing-time' : 'mg-v2-schedule-time'}>
                                     {schedule.startTime} - {schedule.endTime}
                                 </span>
-                                <span className="mg-v2-schedule-title">
+                                <span className={useB0kla ? 'mg-v2-ad-ts__existing-label' : 'mg-v2-schedule-title'}>
                                     {schedule.title || `${schedule.consultantName || '상담사 ID ' + (schedule.consultantId || '알 수 없음')} - ${schedule.clientName || '내담자 ID ' + (schedule.clientId || '알 수 없음')}`}
                                 </span>
                             </div>

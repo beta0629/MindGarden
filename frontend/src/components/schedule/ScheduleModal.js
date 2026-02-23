@@ -406,106 +406,115 @@ const ScheduleModalNew = ({
                         </div>
                     )}
 
-                    {/* 3단계: 시간 선택 */}
+                    {/* 3단계: 시간 선택 (B0KlA 아토믹) */}
                     {step === 3 && (
                         <div className="mg-v2-ad-section-block">
                             <div className="mg-v2-ad-section-block__header">
                                 <h3 className="mg-v2-ad-section-block__title">시간 선택</h3>
                             </div>
                             <div className="mg-v2-ad-section-block__content">
-                                <div className="mg-v2-form-row">
-                                    <div className="mg-v2-form-group">
-                                        <label className="mg-v2-label">상담 유형</label>
-                                        <select 
-                                            value={consultationType} 
-                                            onChange={(e) => setConsultationType(e.target.value)}
-                                            disabled={loadingCodes}
-                                            className="mg-v2-input"
-                                        >
-                                            {consultationTypeOptions.map(option => (
-                                                <option key={option.value} value={option.value}>
-                                                    {option.label} ({option.value})
-                                                </option>
-                                            ))}
-                                        </select>
+                                <div className="mg-v2-ad-time-step">
+                                    <div className="mg-v2-ad-time-step__intro">
+                                        <p className="mg-v2-ad-time-step__subtitle">상담 유형과 시간을 선택한 뒤 시간대를 골라주세요.</p>
+                                        <p className="mg-v2-ad-time-step__note">휴가·기존 일정과 겹치지 않는 시간만 표시됩니다.</p>
                                     </div>
-
-                                    <div className="mg-v2-form-group">
-                                        <label className="mg-v2-label">상담 시간</label>
-                                        <select 
-                                            value={selectedDuration} 
-                                            onChange={(e) => setSelectedDuration(e.target.value)}
-                                            disabled={loadingCodes}
-                                            className="mg-v2-input"
-                                        >
-                                            {durationOptions.map(option => (
-                                                <option key={option.value} value={option.value}>
-                                                    {option.label} ({option.durationMinutes}분)
-                                                </option>
-                                            ))}
-                                        </select>
+                                    <div className="mg-v2-ad-time-step__form-row">
+                                        <div className="mg-v2-ad-time-step__form-group">
+                                            <label className="mg-v2-ad-time-step__label" htmlFor="schedule-consultation-type">상담 유형</label>
+                                            <select
+                                                id="schedule-consultation-type"
+                                                value={consultationType}
+                                                onChange={(e) => setConsultationType(e.target.value)}
+                                                disabled={loadingCodes}
+                                                className="mg-v2-ad-time-step__select"
+                                            >
+                                                {consultationTypeOptions.map(option => (
+                                                    <option key={option.value} value={option.value}>
+                                                        {option.label} ({option.value})
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <div className="mg-v2-ad-time-step__form-group">
+                                            <label className="mg-v2-ad-time-step__label" htmlFor="schedule-duration">상담 시간</label>
+                                            <select
+                                                id="schedule-duration"
+                                                value={selectedDuration}
+                                                onChange={(e) => setSelectedDuration(e.target.value)}
+                                                disabled={loadingCodes}
+                                                className="mg-v2-ad-time-step__select"
+                                            >
+                                                {durationOptions.map(option => (
+                                                    <option key={option.value} value={option.value}>
+                                                        {option.label} ({option.durationMinutes}분)
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
                                     </div>
+                                    <TimeSlotGrid
+                                        date={selectedDate}
+                                        consultantId={selectedConsultant?.originalId || selectedConsultant?.id}
+                                        duration={getDurationFromCode(selectedDuration)}
+                                        onTimeSlotSelect={handleTimeSlotSelect}
+                                        selectedTimeSlot={selectedTimeSlot}
+                                        variant="b0kla"
+                                    />
                                 </div>
-                                
-                                <TimeSlotGrid
-                                    date={selectedDate}
-                                    consultantId={selectedConsultant?.originalId || selectedConsultant?.id}
-                                    duration={getDurationFromCode(selectedDuration)}
-                                    onTimeSlotSelect={handleTimeSlotSelect}
-                                    selectedTimeSlot={selectedTimeSlot}
-                                />
                             </div>
                         </div>
                     )}
 
-                    {/* 4단계: 세부사항 */}
+                    {/* 4단계: 스케줄 세부사항 (B0KlA 아토믹) */}
                     {step === 4 && (
                         <div className="mg-v2-ad-section-block">
                             <div className="mg-v2-ad-section-block__header">
                                 <h3 className="mg-v2-ad-section-block__title">스케줄 세부사항</h3>
                             </div>
                             <div className="mg-v2-ad-section-block__content">
-                                <div className="mg-v2-schedule-details-card">
-                                    <div className="mg-v2-schedule-details-row">
-                                        <span className="mg-v2-schedule-details-label">상담사:</span>
-                                        <span className="mg-v2-schedule-details-value">{selectedConsultant?.name}</span>
+                                <div className="mg-v2-ad-details-step">
+                                    <div className="mg-v2-ad-details-summary">
+                                        <div className="mg-v2-ad-details-summary__row">
+                                            <span className="mg-v2-ad-details-summary__label">상담사:</span>
+                                            <span className="mg-v2-ad-details-summary__value">{selectedConsultant?.name}</span>
+                                        </div>
+                                        <div className="mg-v2-ad-details-summary__row">
+                                            <span className="mg-v2-ad-details-summary__label">내담자:</span>
+                                            <span className="mg-v2-ad-details-summary__value">{selectedClient?.name}</span>
+                                        </div>
+                                        <div className="mg-v2-ad-details-summary__row">
+                                            <span className="mg-v2-ad-details-summary__label">시간:</span>
+                                            <span className="mg-v2-ad-details-summary__value">
+                                                {selectedTimeSlot?.time} - {selectedTimeSlot?.endTime} ({getDurationFromCode(selectedDuration)}분)
+                                            </span>
+                                        </div>
+                                        <div className="mg-v2-ad-details-summary__row mg-v2-ad-details-summary__row--highlight">
+                                            <span className="mg-v2-ad-details-summary__label">유형:</span>
+                                            <span className="mg-v2-ad-details-summary__value">{convertConsultationTypeToKorean(consultationType)}</span>
+                                        </div>
                                     </div>
-                                    <div className="mg-v2-schedule-details-row">
-                                        <span className="mg-v2-schedule-details-label">내담자:</span>
-                                        <span className="mg-v2-schedule-details-value">{selectedClient?.name}</span>
+                                    <div className="mg-v2-ad-details-step__form-group">
+                                        <label className="mg-v2-ad-details-step__label" htmlFor="schedule-title">제목</label>
+                                        <input
+                                            id="schedule-title"
+                                            type="text"
+                                            value={title}
+                                            onChange={(e) => setTitle(e.target.value)}
+                                            placeholder="스케줄 제목 (선택사항)"
+                                            className="mg-v2-ad-details-step__input"
+                                        />
                                     </div>
-                                    <div className="mg-v2-schedule-details-row">
-                                        <span className="mg-v2-schedule-details-label">시간:</span>
-                                        <span className="mg-v2-schedule-details-value">
-                                            {selectedTimeSlot?.time} - {selectedTimeSlot?.endTime} ({getDurationFromCode(selectedDuration)}분)
-                                        </span>
+                                    <div className="mg-v2-ad-details-step__form-group">
+                                        <label className="mg-v2-ad-details-step__label" htmlFor="schedule-description">설명</label>
+                                        <textarea
+                                            id="schedule-description"
+                                            value={description}
+                                            onChange={(e) => setDescription(e.target.value)}
+                                            placeholder="추가 설명 (선택사항)"
+                                            rows={3}
+                                            className="mg-v2-ad-details-step__textarea"
+                                        />
                                     </div>
-                                    <div className="mg-v2-schedule-details-row mg-v2-schedule-details-row--highlight">
-                                        <span className="mg-v2-schedule-details-label">유형:</span>
-                                        <span className="mg-v2-schedule-details-value">{convertConsultationTypeToKorean(consultationType)}</span>
-                                    </div>
-                                </div>
-                                
-                                <div className="mg-v2-form-group">
-                                    <label className="mg-v2-label">제목</label>
-                                    <input
-                                        type="text"
-                                        value={title}
-                                        onChange={(e) => setTitle(e.target.value)}
-                                        placeholder="스케줄 제목 (선택사항)"
-                                        className="mg-v2-input"
-                                    />
-                                </div>
-                                
-                                <div className="mg-v2-form-group">
-                                    <label className="mg-v2-label">설명</label>
-                                    <textarea
-                                        value={description}
-                                        onChange={(e) => setDescription(e.target.value)}
-                                        placeholder="추가 설명 (선택사항)"
-                                        rows="3"
-                                        className="mg-v2-input mg-v2-textarea"
-                                    />
                                 </div>
                             </div>
                         </div>

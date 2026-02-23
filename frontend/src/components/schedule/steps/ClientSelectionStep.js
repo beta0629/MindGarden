@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { UserPlus, Link2 } from 'lucide-react';
+import { Link2 } from 'lucide-react';
 import MappingCreationModal from '../../admin/MappingCreationModal';
 import UnifiedLoading from '../../../components/common/UnifiedLoading'; // 임시 비활성화
 import SpecialtyDisplay from '../../ui/SpecialtyDisplay';
@@ -216,53 +216,50 @@ const ClientSelectionStep = ({
 
     if (loading) {
         return (
-            <div className="client-selection-step">
+            <div className="client-selection-step mg-v2-ad-client-step">
                 <UnifiedLoading type="inline" text="내담자 목록을 불러오는 중..." />
             </div>
         );
     }
 
     return (
-        <div className="client-selection-step">
-            <div className="step-header">
-                <h4>
-                    <UserPlus className="mg-v2-icon" size={24} />
-                    내담자를 선택하세요
-                </h4>
-                <p className="step-description">
+        <div className="client-selection-step mg-v2-ad-client-step">
+            <div className="mg-v2-ad-client-step__intro">
+                <p className="mg-v2-ad-client-step__subtitle">내담자를 선택하세요</p>
+                <p className="mg-v2-ad-client-step__note">
                     결제가 승인되고 세션이 남은 내담자만 표시됩니다
                 </p>
             </div>
 
-            <div className="selected-consultant-info">
-                <div className="consultant-summary">
-                    <strong>선택된 상담사:</strong> {selectedConsultant?.name}
-                    <SpecialtyDisplay
-                        consultant={selectedConsultant}
-                        variant="inline"
-                        maxItems={10}
-                        debug={true}
-                    />
-                </div>
+            <div className="mg-v2-ad-client-step__consultant-chip">
+                <span className="mg-v2-ad-client-step__consultant-label">선택된 상담사:</span>
+                <span className="mg-v2-ad-client-step__consultant-name">{selectedConsultant?.name}</span>
+                <SpecialtyDisplay
+                    consultant={selectedConsultant}
+                    variant="inline"
+                    maxItems={10}
+                    debug={true}
+                />
             </div>
 
             {clients.length === 0 ? (
-                <div className="no-clients-message">
-                    <div className="no-clients-icon">
-                        <Link2 size={48} strokeWidth={1.5} color="var(--mg-warning-500)" />
+                <div className="mg-v2-ad-client-step__empty">
+                    <div className="mg-v2-ad-client-step__empty-icon">
+                        <Link2 size={48} strokeWidth={1.5} />
                     </div>
-                    <h4>매핑된 내담자가 없습니다</h4>
-                    <p>
+                    <h4 className="mg-v2-ad-client-step__empty-title">매핑된 내담자가 없습니다</h4>
+                    <p className="mg-v2-ad-client-step__empty-desc">
                         스케줄을 생성하려면 먼저 상담사와 내담자 간의 매핑을 생성해야 합니다.
                         매핑 생성 후 결제 승인을 받으면 스케줄을 등록할 수 있습니다.
                     </p>
-                    <div className="mapping-actions">
-                        <button 
-                            className="mg-v2-btn--primary"
+                    <div className="mg-v2-ad-client-step__empty-actions">
+                        <button
+                            type="button"
+                            className="mg-v2-btn--primary mg-v2-ad-client-step__cta"
                             onClick={() => setShowMappingModal(true)}
                         >
-                            <Link2 size={16} style={{ marginRight: '6px' }} />
-                            매핑 생성하기
+                            <Link2 size={16} aria-hidden />
+                            <span>매핑 생성하기</span>
                         </button>
                     </div>
                 </div>
@@ -273,18 +270,22 @@ const ClientSelectionStep = ({
                         selectedConsultant={selectedConsultant}
                         onClientSelect={handleClientSelect}
                         selectedClient={selectedClient}
+                        hideFooterCount
                     />
 
                     {selectedClient && (
-                        <div className="selected-client-info">
-                            <div className="selection-summary">
-                                <strong>선택된 내담자:</strong> {selectedClient.name}
-                                <span className="client-sessions">
-                                    (남은 세션: {selectedClient.remainingSessions}회)
-                                </span>
-                            </div>
+                        <div className="mg-v2-ad-client-step__selected-summary">
+                            <span className="mg-v2-ad-client-step__selected-label">선택된 내담자:</span>
+                            <span className="mg-v2-ad-client-step__selected-name">{selectedClient.name}</span>
+                            <span className="mg-v2-ad-client-step__selected-sessions">
+                                (남은 세션: {selectedClient.remainingSessions}회)
+                            </span>
                         </div>
                     )}
+
+                    <div className="mg-v2-ad-client-step__footer-count">
+                        총 {clients.length}명의 내담자
+                    </div>
                 </>
             )}
 

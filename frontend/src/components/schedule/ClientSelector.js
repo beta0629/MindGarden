@@ -26,7 +26,8 @@ const ClientSelector = ({
     clients, 
     selectedConsultant, 
     onClientSelect, 
-    selectedClient 
+    selectedClient,
+    hideFooterCount = false 
 }) => {
     const [clientHistory, setClientHistory] = useState({});
     const [loadingHistory, setLoadingHistory] = useState({});
@@ -390,7 +391,7 @@ const ClientSelector = ({
 
     return (
         <div className="client-selector">
-            <div className="mg-client-cards-grid mg-client-cards-grid--detailed">
+            <div className="mg-client-cards-grid mg-client-cards-grid--detailed mg-client-cards-grid--schedule-client">
                 {clients.map(client => {
                     const clientId = client.originalId || client.id;
                     const mappingInfo = clientMappings[clientId] || {
@@ -436,10 +437,11 @@ const ClientSelector = ({
                 })}
             </div>
 
-            {/* 필터링된 내담자 수 표시 */}
-            <div className="client-count">
-                총 {clients.length}명의 내담자
-            </div>
+            {!hideFooterCount && (
+                <div className="client-count">
+                    총 {clients.length}명의 내담자
+                </div>
+            )}
         </div>
     );
 };

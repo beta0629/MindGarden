@@ -141,9 +141,9 @@
   --mg-border-width-normal: 2px;
   --mg-radius-full: 9999px;
   
-  /* 기존 변수와의 호환성 */
-  --mg-white: var(--mg-white);
-  --mg-black: var(--mg-black);
+  /* 기존 변수와의 호환성 (순환 참조 방지: unified-design-tokens의 --mg-white↔--cs-white 순환) */
+  --mg-white: #ffffff;
+  --mg-black: #000000;
 
   /* ===== B0KlA Admin Dashboard 토큰 (mindgarden-design-system.pen) ===== */
   /* 기존 mg-*, cs-* 토큰 매핑으로 하드코딩 제거 */

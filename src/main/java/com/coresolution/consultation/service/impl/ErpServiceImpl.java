@@ -173,7 +173,6 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
         BigDecimal totalAmount = item.getUnitPrice().multiply(BigDecimal.valueOf(quantity));
         
         PurchaseRequest purchaseRequest = PurchaseRequest.builder()
-                .tenantId(tenantId)
                 .requester(requester)
                 .item(item)
                 .quantity(quantity)
@@ -183,7 +182,7 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
                 // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 .status(PurchaseRequest.PurchaseRequestStatus.PENDING)
                 .build();
-        
+        purchaseRequest.setTenantId(tenantId);
         return purchaseRequestRepository.save(purchaseRequest);
     }
     

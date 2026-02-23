@@ -40,16 +40,32 @@ const ScheduleDetailModal = ({
     const [adminNote, setAdminNote] = useState('');
     const [scheduleStatusOptions, setScheduleStatusOptions] = useState([]);
     const [loadingCodes, setLoadingCodes] = useState(false);
-    
+    /** 상태 변경 성공 시 API 응답으로 갱신한 데이터 (모달이 닫히지 않을 때 최신 상태 표시) */
+    const [localScheduleOverride, setLocalScheduleOverride] = useState(null);
+
     const isClient = RoleUtils.isClient(user);
-    
-    const getStatusCodeValue = (codeValue) => {
-        const statusOption = scheduleStatusOptions.find(option => option.value === codeValue);
-        return statusOption ? statusOption.value : codeValue;
+
+    /** 코드값/한글 라벨 모두 고려해 공통코드 value로 정규화 */
+    const getStatusCodeValue = (codeOrLabel) => {
+        if (codeOrLabel == null || codeOrLabel === '') return codeOrLabel;
+        const knownCodes = ['BOOKED', 'CONFIRMED', 'COMPLETED', 'CANCELLED', 'VACATION', 'AVAILABLE'];
+        if (knownCodes.includes(String(codeOrLabel).trim())) return String(codeOrLabel).trim();
+        const byValue = scheduleStatusOptions.find(opt => opt.value === codeOrLabel);
+        if (byValue) return byValue.value;
+        const byLabel = scheduleStatusOptions.find(opt => (opt.label && opt.label === codeOrLabel));
+        if (byLabel) return byLabel.value;
+        if (typeof codeOrLabel === 'string') {
+            if (/취소|취소됨/.test(codeOrLabel)) return 'CANCELLED';
+            if (/예약|예약됨/.test(codeOrLabel)) return 'BOOKED';
+            if (/완료|완료됨/.test(codeOrLabel)) return 'COMPLETED';
+            if (/확정|확정됨/.test(codeOrLabel)) return 'CONFIRMED';
+            if (/휴가/.test(codeOrLabel)) return 'VACATION';
+        }
+        return codeOrLabel;
     };
-    
+
     const isStatus = (currentStatus, targetStatus) => {
-        if (!currentStatus) return false;
+        if (currentStatus == null) return false;
         const currentCode = getStatusCodeValue(currentStatus);
         const targetCode = getStatusCodeValue(targetStatus);
         return currentCode === targetCode || currentStatus === targetStatus;
@@ -86,6 +102,13 @@ const ScheduleDetailModal = ({
             loadScheduleStatusCodes();
         }
     }, [isOpen, loadScheduleStatusCodes]);
+
+    /** 모달이 열릴 때 또는 다른 스케줄을 선택했을 때 로컬 오버라이드 초기화 */
+    useEffect(() => {
+        if (!isOpen || !scheduleData) {
+            setLocalScheduleOverride(null);
+        }
+    }, [isOpen, scheduleData?.id]);
 
     /**
      * 예약 취소 처리 (TDZ 방지: renderCancelConfirm에서 참조)
@@ -275,11 +298,17 @@ const ScheduleDetailModal = ({
     };
 
 /**
-     * 상태값을 한글로 변환 (동적 로드)
+     * 상태값을 한글로 변환 (코드값/한글 라벨 모두 처리, fallback 포함)
      */
     const convertStatusToKorean = (status) => {
-        const statusOption = scheduleStatusOptions.find(option => option.value === status);
-        return statusOption ? statusOption.label : status || "알 수 없음";
+        if (status == null || status === '') return '알 수 없음';
+        const byValue = scheduleStatusOptions.find(opt => opt.value === status);
+        if (byValue && byValue.label) return byValue.label;
+        const byLabel = scheduleStatusOptions.find(opt => opt.label === status);
+        if (byLabel && byLabel.label) return byLabel.label;
+        const code = getStatusCodeValue(status);
+        const fallbackMap = { CANCELLED: '취소됨', BOOKED: '예약됨', COMPLETED: '완료됨', CONFIRMED: '확정됨', VACATION: '휴가', AVAILABLE: '가능' };
+        return fallbackMap[code] || status || '알 수 없음';
     };
 
 /**
@@ -309,9 +338,9 @@ const ScheduleDetailModal = ({
             opt.value === 'VACATION' || opt.label?.includes('휴가')
         );
         
-        return isStatus(scheduleData.status, vacationStatus) || 
-               scheduleData.consultationType === 'VACATION' ||
-               scheduleData.scheduleType === 'VACATION';
+return isStatus(displayData.status, vacationStatus) ||
+               displayData.consultationType === 'VACATION' ||
+               displayData.scheduleType === 'VACATION';
     };
 
 /**
@@ -332,24 +361,30 @@ const ScheduleDetailModal = ({
         return typeMap[vacationType] || '🏖️ 휴가';
     };
 
-/**
+    /**
      * 상태 변경 처리
+     * 성공 시 응답으로 모달 표시 데이터를 갱신해, 부모가 목록만 갱신해도 버튼/상태가 올바르게 보이도록 함.
      */
     const handleStatusChange = async (newStatus) => {
         try {
             setLoading(true);
             console.log('📝 스케줄 상태 변경:', scheduleData.id, newStatus);
-            
+
             const response = await apiPut(`/api/v1/schedules/${scheduleData.id}`, {
                 status: newStatus
             });
-            
+
             if (response != null) {
                 notificationManager.success('상태가 변경되었습니다.');
                 onScheduleUpdated?.();
-                onClose();
+                const merged = {
+                    ...scheduleData,
+                    ...(typeof response === 'object' && response !== null ? response : {}),
+                    status: (response && response.status) || newStatus
+                };
+                setLocalScheduleOverride(merged);
             } else {
-                throw new Error(response.message || '상태 변경에 실패했습니다.');
+                throw new Error(response?.message || '상태 변경에 실패했습니다.');
             }
         } catch (error) {
             console.error('❌ 상태 변경 실패:', error);
@@ -396,6 +431,8 @@ const ScheduleDetailModal = ({
 
     if (!isOpen) return null;
 
+    const displayData = localScheduleOverride ?? scheduleData;
+
     const renderMainActions = () => {
         if (isVacationEvent()) {
             return (
@@ -423,7 +460,7 @@ const ScheduleDetailModal = ({
         }
         return (
             <div style={{ display: 'flex', gap: '8px', width: '100%', justifyContent: 'flex-end' }}>
-                {isStatus(scheduleData.status, 'BOOKED') && (
+                {isStatus(displayData.status, 'BOOKED') && (
                     <>
                         <button
                             className="mg-v2-btn--outline"
@@ -449,7 +486,7 @@ const ScheduleDetailModal = ({
                         </button>
                     </>
                 )}
-                {isStatus(scheduleData.status, 'CONFIRMED') && (() => {
+                {isStatus(displayData.status, 'CONFIRMED') && (() => {
                     const completedStatus = scheduleStatusOptions.find(opt =>
                         opt.value === 'COMPLETED' || opt.label?.includes('완료')
                     )?.value || 'COMPLETED';
@@ -480,7 +517,7 @@ const ScheduleDetailModal = ({
                         </>
                     );
                 })()}
-                {isStatus(scheduleData.status, 'COMPLETED') && (() => {
+                {isStatus(displayData.status, 'COMPLETED') && (() => {
                     const bookedStatus = scheduleStatusOptions.find(opt =>
                         opt.value === 'BOOKED' || opt.label?.includes('예약')
                     )?.value || 'BOOKED';
@@ -494,7 +531,7 @@ const ScheduleDetailModal = ({
                         </button>
                     );
                 })()}
-                {isStatus(scheduleData.status, 'CANCELLED') && (() => {
+                {isStatus(displayData.status, 'CANCELLED') && (() => {
                     const bookedStatus = scheduleStatusOptions.find(opt =>
                         opt.value === 'BOOKED' || opt.label?.includes('예약')
                     )?.value || 'BOOKED';
@@ -530,17 +567,17 @@ const ScheduleDetailModal = ({
                             <div className="section-content" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                     <span style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>이벤트</span>
-                                    <span style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>{scheduleData.title}</span>
+                                    <span style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>{displayData.title}</span>
                                 </div>
                     
                     {!isVacationEvent() && (() => {
-                        let parsedConsultantName = scheduleData.consultantName;
-                        let parsedClientName = scheduleData.clientName;
+                        let parsedConsultantName = displayData.consultantName;
+                        let parsedClientName = displayData.clientName;
                         
                         if ((!parsedConsultantName || parsedConsultantName === '상담사 정보 없음' || parsedConsultantName === 'undefined') &&
                             (!parsedClientName || parsedClientName === '내담자 정보 없음' || parsedClientName === 'undefined')) {
-                            if (scheduleData.title && scheduleData.title.includes(' - ')) {
-                                const names = scheduleData.title.split(' - ');
+                            if (displayData.title && displayData.title.includes(' - ')) {
+                                const names = displayData.title.split(' - ');
                                 if (names.length === 2) {
                                     parsedConsultantName = names[0].trim();
                                     parsedClientName = names[1].trim();
@@ -566,18 +603,18 @@ const ScheduleDetailModal = ({
                         <>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                 <span style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>휴가 사유</span>
-                                <span style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>{scheduleData.description || scheduleData.reason || '사유 없음'}</span>
+                                <span style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>{displayData.description || displayData.reason || '사유 없음'}</span>
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                 <span style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>휴가 유형</span>
-                                <span style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>{getVacationTypeDisplay(scheduleData.vacationType)}</span>
+                                <span style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>{getVacationTypeDisplay(displayData.vacationType)}</span>
                             </div>
                         </>
                     ) : (
                         <>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                 <span style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>상담 유형</span>
-                                <span style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>{convertConsultationTypeToKorean(scheduleData.consultationType)}</span>
+                                <span style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>{convertConsultationTypeToKorean(displayData.consultationType)}</span>
                             </div>
                         </>
                     )}
@@ -585,13 +622,13 @@ const ScheduleDetailModal = ({
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <span style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>시간</span>
                         <span style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>
-                            {scheduleData.startTime} - {scheduleData.endTime}
+                            {displayData.startTime} - {displayData.endTime}
                         </span>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '8px', borderTop: '1px solid var(--color-border)' }}>
                         <span style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>상태</span>
-                        <span className={`mg-v2-badge mg-v2-badge-${getStatusColorClass(scheduleData.status)}`}>
-                            {convertStatusToKorean(scheduleData.status)}
+                        <span className={`mg-v2-badge mg-v2-badge-${getStatusColorClass(getStatusCodeValue(displayData.status))}`}>
+                            {convertStatusToKorean(displayData.status)}
                         </span>
                     </div>
                             </div>

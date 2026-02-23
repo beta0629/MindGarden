@@ -27,16 +27,30 @@ const ScheduleCalendarView = ({
         return eventDate < today ? ['fc-event-past'] : [];
     };
 
+    // 과거 또는 완료된 예약 여부 (디저블 스타일 적용 대상)
+    const isEventPastOrCompleted = (ev) => {
+        const eventStart = new Date(ev.start);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        eventStart.setHours(0, 0, 0, 0);
+        const isPast = eventStart < today;
+        const status = ev.extendedProps?.status;
+        const isCompleted = status === 'COMPLETED' || status === 'CANCELLED';
+        return isPast || isCompleted;
+    };
+
     // 이벤트 커스텀 렌더링 (카드 형태)
     const renderEventContent = (eventInfo) => {
         const { event } = eventInfo;
         const { extendedProps } = event;
         const isMonthView = eventInfo.view?.type === 'dayGridMonth';
+        const isPastOrCompleted = isEventPastOrCompleted(event);
+        const pastClass = isPastOrCompleted ? ' mg-v2-ad-calendar-event--past' : '';
 
         // 휴가 이벤트 렌더링 (월간/주간/일간 모두 기존 방식 유지)
         if (extendedProps.type === 'vacation') {
             return (
-                <div className="mg-v2-ad-calendar-event mg-v2-ad-calendar-event--vacation" title={event.title}>
+                <div className={`mg-v2-ad-calendar-event mg-v2-ad-calendar-event--vacation${pastClass}`.trim()} title={event.title}>
                     <CalendarIcon size={14} className="mg-v2-ad-calendar-event__icon" style={{ color: event.backgroundColor }} />
                     <span className="mg-v2-ad-calendar-event__client">{event.title}</span>
                 </div>
@@ -54,7 +68,7 @@ const ScheduleCalendarView = ({
             const fullTooltip = `${clientName} · ${consultantName} · ${statusKorean}`;
             return (
                 <div
-                    className="mg-v2-ad-calendar-event mg-v2-ad-calendar-event--compact"
+                    className={`mg-v2-ad-calendar-event mg-v2-ad-calendar-event--compact${pastClass}`.trim()}
                     title={fullTooltip}
                     style={{ borderLeftColor: borderColor }}
                 >
@@ -67,7 +81,7 @@ const ScheduleCalendarView = ({
         // 주간/일간 뷰: 풀 카드 유지
         return (
             <div
-                className="mg-v2-ad-calendar-event"
+                className={`mg-v2-ad-calendar-event${pastClass}`.trim()}
                 title={`${clientName} - ${statusKorean}`}
                 style={{ borderLeftColor: borderColor }}
             >

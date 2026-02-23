@@ -42,9 +42,22 @@
     z-index: 10;
 }
 
+/* 과거/완료 예약: 디저블 효과 (일반 예약과 시각적 차별) */
 .mg-v2-ad-calendar-event--past {
-    opacity: 0.65;
-    filter: grayscale(40%);
+    opacity: 0.6;
+    filter: grayscale(55%);
+    pointer-events: auto;
+    cursor: pointer;
+}
+.mg-v2-ad-calendar-event--past:hover {
+    transform: none;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+    opacity: 0.75;
+    filter: grayscale(35%);
+}
+.mg-v2-ad-calendar-event--past.mg-v2-ad-calendar-event--compact:hover {
+    transform: none;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 }
 
 /* 월간 뷰 컴팩트 이벤트 (다중 이벤트 시 공간 절약) - core-designer 스펙 */

@@ -180,18 +180,6 @@
   visibility: visible;
 }
 
-/* 모달 컨테이너 */
-.mg-modal {
-  position: relative;
-  background: var(--color-white, var(--mg-white));
-  border-radius: var(--border-radius-lg, 0.75rem);
-  box-shadow: 0 20px 25px -5px var(--mg-shadow-light), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  max-height: 90vh;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-}
-
 /* 모달 사이즈 */
 .mg-modal--small {
   width: 90%;
@@ -248,12 +236,6 @@
 .mg-modal__close:hover {
   background-color: var(--cs-secondary-100, #f3f4f6);
   color: var(--cs-secondary-700, #374151);
-}
-
-.mg-modal__body {
-  padding: var(--spacing-lg, 1.5rem);
-  flex: 1;
-  overflow-y: auto;
 }
 
 .mg-modal__footer {

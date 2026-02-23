@@ -30,7 +30,7 @@
 /* ===== 5. 컴포넌트 스타일 ===== */
 @import './06-components/_cards.css';
 @import './06-components/_buttons.css';
-@import './06-components/_modals.css';
+@import './06-components/_unified-modals.css';
 @import './06-components/_loading.css';
 @import './06-components/_notifications.css';
 @import './06-components/_header.css';

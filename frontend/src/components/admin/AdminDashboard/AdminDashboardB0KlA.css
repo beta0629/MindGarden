@@ -79,12 +79,6 @@
   padding: var(--mg-spacing-xl, 1.5rem);
 }
 
-/* 래퍼 클래스가 모달 컨테이너에 직접 붙었을 때, 전체 화면(100vh) 높이 및 불필요한 패딩이 들어가는 현상 방지 */
-.mg-modal.mg-v2-ad-b0kla {
-  min-height: 0 !important;
-  padding: 0 !important;
-}
-
 .mg-v2-ad-b0kla__container {
   max-width: var(--mg-container-max);
   margin: 0 auto;
@@ -648,9 +642,6 @@
   padding: 0;
   min-height: 100vh;
 }
-
-
-/* ===== 시스템 상태 (SystemStatus) B0KlA 오버라이드 ===== */
 .mg-v2-ad-b0kla .system-status-display {
   background: var(--ad-b0kla-card-bg);
   border: 1px solid var(--ad-b0kla-border);
@@ -807,40 +798,6 @@
   background: var(--ad-b0kla-overlay-bg);
 }
 
-.mg-v2-modal-overlay.mg-v2-ad-b0kla .mg-v2-modal {
-  background: var(--ad-b0kla-card-bg);
-  border: 1px solid var(--ad-b0kla-border);
-  border-radius: var(--ad-b0kla-radius);
-  box-shadow: var(--ad-b0kla-shadow);
-}
-
-.mg-v2-modal-overlay.mg-v2-ad-b0kla .mg-v2-modal-header {
-  border-bottom: 1px solid var(--ad-b0kla-border);
-  background: var(--ad-b0kla-card-bg);
-}
-
-.mg-v2-modal-overlay.mg-v2-ad-b0kla .mg-v2-modal-title {
-  color: var(--ad-b0kla-title-color);
-}
-
-.mg-v2-modal-overlay.mg-v2-ad-b0kla .mg-v2-modal-close {
-  color: var(--ad-b0kla-text-secondary);
-}
-
-.mg-v2-modal-overlay.mg-v2-ad-b0kla .mg-v2-modal-close:hover {
-  background: var(--ad-b0kla-bg);
-  color: var(--ad-b0kla-title-color);
-}
-
-.mg-v2-modal-overlay.mg-v2-ad-b0kla .mg-v2-modal-body {
-  background: var(--ad-b0kla-card-bg);
-}
-
-.mg-v2-modal-overlay.mg-v2-ad-b0kla .mg-v2-modal-footer {
-  border-top: 1px solid var(--ad-b0kla-border);
-  background: var(--ad-b0kla-bg);
-}
-
 /* B0KlA 카드 악센트 바 (좌측 4px) - 섹션 제목용 */
 .mg-v2-ad-b0kla__card-accent {
   border-left: 4px solid var(--ad-b0kla-green);
@@ -869,53 +826,6 @@
 .mg-v2-ad-b0kla .mg-v2-badge.payment-approved {
   background: var(--ad-b0kla-green-bg);
   color: var(--ad-b0kla-green);
-}
-
-.mg-v2-ad-b0kla .mg-v2-badge.status-pending,
-.mg-v2-ad-b0kla .mg-v2-badge.payment-pending {
-  background: var(--ad-b0kla-orange-bg);
-  color: var(--ad-b0kla-orange);
-}
-
-.mg-v2-ad-b0kla .mg-v2-badge.status-terminated,
-.mg-v2-ad-b0kla .mg-v2-badge.payment-rejected {
-  background: var(--ad-b0kla-border);
-  color: var(--ad-b0kla-text-secondary);
-}
-
-/* 모달 크기 */
-.mg-v2-modal-overlay.mg-v2-ad-b0kla .mg-v2-modal-large {
-  max-width: 1000px;
-}
-
-.mg-v2-modal-overlay.mg-v2-ad-b0kla .mg-v2-modal-medium {
-  max-width: 600px;
-}
-
-.mg-v2-modal-overlay.mg-v2-ad-b0kla .mg-v2-modal-small {
-  max-width: 400px;
-}
-
-/* DateActionModal 전용: 날짜 헤더 + 2개 버튼(상담 일정 등록, 휴가 등록) + 취소 */
-.mg-v2-modal-overlay.mg-v2-ad-b0kla .mg-v2-modal.mg-v2-modal-date-action {
-  max-width: 480px;
-  width: 100%;
-  height: auto;
-  max-height: 90vh;
-  padding: 0;
-}
-
-.mg-v2-modal-overlay.mg-v2-ad-b0kla .mg-v2-modal.mg-v2-modal-date-action .mg-v2-modal-header {
-  padding: 1rem 1.25rem;
-}
-
-.mg-v2-modal-overlay.mg-v2-ad-b0kla .mg-v2-modal.mg-v2-modal-date-action .mg-v2-modal-body {
-  padding: 1rem 1.25rem;
-  max-height: none;
-}
-
-.mg-v2-modal-overlay.mg-v2-ad-b0kla .mg-v2-modal.mg-v2-modal-date-action .mg-v2-modal-footer {
-  padding: 0.75rem 1.25rem;
 }
 
 /* 검색바 반응형 */

@@ -1,0 +1,41 @@
+/* ===== Unified Modal Core CSS (_unified-modals.css) ===== */
+/* 
+ * Single Source of Truth for Modal Layouts
+ * 어떤 테마(.mg-v2-ad-b0kla 등)와 결합되더라도 모달의 레이아웃, 크기 조절 등을 중앙에서 강력하게 캡슐화합니다.
+ */
+
+.mg-modal {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-white, var(--mg-white));
+  border-radius: var(--border-radius-lg, 0.75rem);
+  box-shadow: 0 20px 25px -5px var(--mg-shadow-light), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  max-height: 90vh;
+  overflow: hidden;
+  width: 100%;
+}
+
+.mg-modal__body {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--spacing-lg, 1.5rem);
+}
+
+/* 
+ * Auto-sizing Modal (.mg-modal--auto)
+ * 내용물 높이만큼만 커지며, 100vh 등으로 강제 늘어나는 것을 절대 방지합니다.
+ */
+.mg-modal.mg-modal--auto {
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: 90vh !important;
+  flex: 0 0 auto !important;
+}
+
+.mg-modal.mg-modal--auto .mg-modal__body {
+  flex: 0 0 auto !important;
+  min-height: 0 !important;
+  height: auto !important;
+  max-height: calc(90vh - 140px) !important; /* 헤더, 푸터 높이 제외 */
+}

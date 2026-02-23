@@ -201,14 +201,28 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             accessControlService.validateTenantAccess(existingSchedule.getTenantId());
         }
         
+        ScheduleStatus previousStatus = existingSchedule.getStatus();
+        Long consultantId = existingSchedule.getConsultantId();
+        Long clientId = existingSchedule.getClientId();
+        
         copyScheduleFields(updateData, existingSchedule);
         
+        Schedule saved;
         String tenantId = TenantContextHolder.getTenantId();
         if (tenantId != null && existingSchedule.getTenantId() != null) {
-            return update(tenantId, existingSchedule);
+            saved = update(tenantId, existingSchedule);
         } else {
-            return scheduleRepository.save(existingSchedule);
+            saved = scheduleRepository.save(existingSchedule);
         }
+        
+        // 상태가 CANCELLED로 바뀐 경우 회기 1회 복원 (BOOKED/CONFIRMED였을 때만)
+        if (updateData.getStatus() == ScheduleStatus.CANCELLED
+                && (previousStatus == ScheduleStatus.BOOKED || previousStatus == ScheduleStatus.CONFIRMED)
+                && consultantId != null && clientId != null) {
+            restoreSessionForMapping(consultantId, clientId);
+        }
+        
+        return saved;
     }
     
      /**
@@ -467,10 +481,17 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     public Schedule cancelSchedule(Long scheduleId, String reason) {
         log.info("❌ 스케줄 취소: ID {}, 사유: {}", scheduleId, reason);
         Schedule schedule = findById(scheduleId);
+        ScheduleStatus previousStatus = schedule.getStatus();
         // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         schedule.setStatus(ScheduleStatus.CANCELLED);
         schedule.setDescription(reason);
-        return scheduleRepository.save(schedule);
+        Schedule saved = scheduleRepository.save(schedule);
+        // 예약 취소 시 회기 1회 복원 (BOOKED/CONFIRMED였을 때만, 분쟁 방지)
+        if ((previousStatus == ScheduleStatus.BOOKED || previousStatus == ScheduleStatus.CONFIRMED)
+                && schedule.getConsultantId() != null && schedule.getClientId() != null) {
+            restoreSessionForMapping(schedule.getConsultantId(), schedule.getClientId());
+        }
+        return saved;
     }
 
     @Override
@@ -1137,6 +1158,31 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         }
     }
 
+    /**
+     * 예약 취소 시 매핑 회기 1회 복원 (분쟁 방지)
+     */
+    private void restoreSessionForMapping(Long consultantId, Long clientId) {
+        if (consultantId == null || clientId == null) {
+            return;
+        }
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null) {
+            return;
+        }
+        Optional<ConsultantClientMapping> opt = mappingRepository.findActiveOrExhaustedByTenantIdAndConsultantIdAndClientId(tenantId, consultantId, clientId);
+        if (opt.isEmpty()) {
+            log.warn("⚠️ 회기 복원 대상 매핑 없음: consultantId={}, clientId={}", consultantId, clientId);
+            return;
+        }
+        ConsultantClientMapping mapping = opt.get();
+        try {
+            mapping.restoreSession();
+            mappingRepository.save(mapping);
+            log.info("✅ 예약 취소로 회기 1회 복원: mappingId={}, 남은 회기={}", mapping.getId(), mapping.getRemainingSessions());
+        } catch (Exception e) {
+            log.error("❌ 회기 복원 처리 실패: {}", e.getMessage(), e);
+        }
+    }
 
      /**
      * 관리자 역할 여부 확인

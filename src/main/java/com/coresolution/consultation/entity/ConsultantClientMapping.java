@@ -247,6 +247,21 @@ public class ConsultantClientMapping extends BaseEntity {
     }
 
      /**
+     * 회기 복원 (예약 취소 시 1회 복원)
+     */
+    public void restoreSession() {
+        if (this.usedSessions == null || this.usedSessions <= 0) {
+            return;
+        }
+        this.usedSessions--;
+        this.remainingSessions = (this.remainingSessions == null ? 0 : this.remainingSessions) + 1;
+        if (this.status == MappingStatus.SESSIONS_EXHAUSTED) {
+            this.status = MappingStatus.ACTIVE;
+            this.endDate = null;
+        }
+    }
+
+     /**
      * 회기 추가 (연장)
      */
     public void addSessions(Integer additionalSessions, String packageName, Long packagePrice) {

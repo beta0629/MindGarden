@@ -77,6 +77,11 @@ public interface ConsultantClientMappingRepository extends JpaRepository<Consult
     // 상담사 ID로 모든 매칭 조회 (tenantId 필터링)
     @Query("SELECT m FROM ConsultantClientMapping m WHERE m.tenantId = :tenantId AND m.consultant.id = :consultantId")
     List<ConsultantClientMapping> findByConsultantId(@Param("tenantId") String tenantId, @Param("consultantId") Long consultantId);
+
+    // 상담사·내담자·테넌트·상태로 매칭 1건 조회 (예약 취소 시 회기 복원용)
+    @Query("SELECT m FROM ConsultantClientMapping m WHERE m.tenantId = :tenantId AND m.consultant.id = :consultantId AND m.client.id = :clientId AND m.status IN ('ACTIVE', 'SESSIONS_EXHAUSTED')")
+    java.util.Optional<ConsultantClientMapping> findActiveOrExhaustedByTenantIdAndConsultantIdAndClientId(
+        @Param("tenantId") String tenantId, @Param("consultantId") Long consultantId, @Param("clientId") Long clientId);
     
     // 테넌트별 결제 상태별 매칭 수 조회 (tenantId 필터링 필수)
     @Query("SELECT COUNT(m) FROM ConsultantClientMapping m WHERE m.tenantId = :tenantId AND m.paymentStatus = :paymentStatus")

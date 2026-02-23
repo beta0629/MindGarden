@@ -60,6 +60,29 @@
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 }
 
+/* 취소된 예약: 별도 표기 (일반/완료와 시각적 구분) */
+.mg-v2-ad-calendar-event--cancelled {
+    border-left-color: var(--mg-error-500, #dc3545) !important;
+    background-color: var(--mg-gray-100, #f5f5f5);
+}
+.mg-v2-ad-calendar-event--cancelled .mg-v2-ad-calendar-event__client {
+    text-decoration: line-through;
+    color: var(--mg-gray-600, #6b7280);
+}
+.mg-v2-ad-calendar-event__badge--cancelled {
+    flex-shrink: 0;
+    font-size: 9px;
+    font-weight: 700;
+    padding: 1px 4px;
+    border-radius: 4px;
+    background-color: var(--mg-error-500, #dc3545);
+    color: var(--mg-white, #fff);
+    text-decoration: none;
+}
+.mg-v2-ad-calendar-event--compact .mg-v2-ad-calendar-event__badge--cancelled {
+    margin-left: auto;
+}
+
 /* 월간 뷰 컴팩트 이벤트 (다중 이벤트 시 공간 절약) - core-designer 스펙 */
 .mg-v2-ad-calendar-event--compact {
     min-height: 26px;

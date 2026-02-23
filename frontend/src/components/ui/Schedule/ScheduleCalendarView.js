@@ -46,6 +46,8 @@ const ScheduleCalendarView = ({
         const isMonthView = eventInfo.view?.type === 'dayGridMonth';
         const isPastOrCompleted = isEventPastOrCompleted(event);
         const pastClass = isPastOrCompleted ? ' mg-v2-ad-calendar-event--past' : '';
+        const isCancelled = extendedProps?.status === 'CANCELLED';
+        const cancelledClass = isCancelled ? ' mg-v2-ad-calendar-event--cancelled' : '';
 
         // 휴가 이벤트 렌더링 (월간/주간/일간 모두 기존 방식 유지)
         if (extendedProps.type === 'vacation') {
@@ -68,12 +70,15 @@ const ScheduleCalendarView = ({
             const fullTooltip = `${clientName} · ${consultantName} · ${statusKorean}`;
             return (
                 <div
-                    className={`mg-v2-ad-calendar-event mg-v2-ad-calendar-event--compact${pastClass}`.trim()}
+                    className={`mg-v2-ad-calendar-event mg-v2-ad-calendar-event--compact${pastClass}${cancelledClass}`.trim()}
                     title={fullTooltip}
                     style={{ borderLeftColor: borderColor }}
                 >
                     <span className="mg-v2-ad-calendar-event__time">{eventInfo.timeText}</span>
                     <span className="mg-v2-ad-calendar-event__client">{clientName}</span>
+                    {isCancelled && (
+                        <span className="mg-v2-ad-calendar-event__badge mg-v2-ad-calendar-event__badge--cancelled" aria-label="취소">취소</span>
+                    )}
                 </div>
             );
         }
@@ -81,7 +86,7 @@ const ScheduleCalendarView = ({
         // 주간/일간 뷰: 풀 카드 유지
         return (
             <div
-                className={`mg-v2-ad-calendar-event${pastClass}`.trim()}
+                className={`mg-v2-ad-calendar-event${pastClass}${cancelledClass}`.trim()}
                 title={`${clientName} - ${statusKorean}`}
                 style={{ borderLeftColor: borderColor }}
             >

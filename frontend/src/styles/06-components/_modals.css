@@ -26,8 +26,17 @@
 
 /* 모달 컨텐츠 - 강화된 글래스모피즘 */
 .mg-modal {
+  position: relative; /* unified-design-tokens.css의 position: fixed 오버라이드 */
+  top: auto;
+  left: auto;
+  width: fit-content; /* 기존 100%에서 컨텐츠에 맞게 변경 */
+  min-width: 320px; /* 너무 작아지는 것 방지 */
+  height: fit-content; /* 컨텐츠 높이에 맞춤 */
   display: flex;
   flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  margin: auto; /* Flex 정렬 외에도 중앙에 안정적으로 위치하도록 보조 */
   background: var(--mg-white);
   border-radius: 16px;
   box-shadow: 0 8px 24px rgba(0,0,0,0.1);
@@ -111,7 +120,7 @@
 /* 모달 바디 */
 .mg-modal__body {
   padding: 0 24px 24px 24px;
-  flex: 1;
+  flex: 1 1 auto; /* 내용 길이에 맞춰 늘어나되 최대 높이 도달시 스크롤 (flex: 1 오류 방지) */
   overflow-y: auto;
   background: var(--mg-white);
 }

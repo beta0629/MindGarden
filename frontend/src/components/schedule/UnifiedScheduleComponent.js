@@ -708,6 +708,39 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
         const newStart = event.start;
         const newEnd = event.end;
 
+        // 과거 날짜로 이동 불가: 날짜만 비교(자정 기준)
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const dropDate = new Date(newStart);
+        dropDate.setHours(0, 0, 0, 0);
+        if (dropDate.getTime() < today.getTime()) {
+            info.revert();
+            notificationManager.warning('과거 날짜로는 스케줄을 이동할 수 없습니다.');
+            return;
+        }
+
+        // 같은 시간대에 이미 예약/휴가가 있으면 이동 불가 (같은 상담사 기준)
+        const movedConsultantId = event.extendedProps?.consultantId;
+        if (movedConsultantId != null) {
+            const newStartMs = newStart.getTime();
+            const newEndMs = newEnd.getTime();
+            const hasConflict = events.some((e) => {
+                if (e.id === event.id) return false;
+                const otherConsultantId = e.extendedProps?.consultantId;
+                if (otherConsultantId == null || String(otherConsultantId) !== String(movedConsultantId)) return false;
+                const otherStart = e.start instanceof Date ? e.start : new Date(e.start);
+                const otherEnd = e.end instanceof Date ? e.end : new Date(e.end);
+                const otherStartMs = otherStart.getTime();
+                const otherEndMs = otherEnd.getTime();
+                return newStartMs < otherEndMs && newEndMs > otherStartMs;
+            });
+            if (hasConflict) {
+                info.revert();
+                notificationManager.warning('해당 시간대에 이미 예약 또는 휴가가 있어 이동할 수 없습니다.');
+                return;
+            }
+        }
+
         try {
             await apiPut(`/api/v1/schedules/${event.id}`, {
                 date: newStart.toISOString().split('T')[0],

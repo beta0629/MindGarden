@@ -145,8 +145,7 @@ const MappingPaymentModal = ({
                 </>
             }
         >
-                <div className="mg-v2-modal-body">
-
+            <div className="mg-v2-modal-body">
                 <div className="mg-v2-ad-b0kla__card mg-v2-mapping-info-box">
                     <div className="mg-v2-mapping-info-content">
                         <div className="mg-v2-mapping-info-label">
@@ -214,10 +213,7 @@ const MappingPaymentModal = ({
                         className="mg-v2-form-input"
                     />
                 </div>
-
-                </div>
-
-                </div>
+            </div>
         </UnifiedModal>
     );
 };

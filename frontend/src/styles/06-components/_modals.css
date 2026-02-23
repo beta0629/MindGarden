@@ -60,14 +60,16 @@
   min-width: min(320px, 90vw);
   max-width: 90vw !important;
   height: auto !important;
+  min-height: 0; /* flex 자식이 남은 공간을 채우지 않도록 */
   max-height: 90vh;
   align-self: center; /* 오버레이 flex에서 늘어나지 않도록 */
 }
 
 .mg-modal--auto .mg-modal__body {
-  flex: 0 1 auto;
+  flex: 0 0 auto !important; /* 1 1 auto / flex: 1 오버라이드: 늘어나지 않고 콘텐츠 높이만 */
   max-height: none;
-  width: auto; /* 부모가 100%로 채워지지 않도록 */
+  width: auto;
+  min-height: 0;
 }
 
 .mg-modal--small {
@@ -206,6 +208,12 @@
     width: fit-content !important;
     max-width: 90vw !important;
     min-width: min(280px, 90vw);
+    height: auto !important;
+    min-height: 0;
+  }
+  .mg-modal--auto .mg-modal__body {
+    flex: 0 0 auto !important;
+    min-height: 0;
   }
   .mg-modal--small {
     width: var(--modal-width-sm) !important;
@@ -251,6 +259,12 @@
   .mg-modal--auto {
     width: fit-content !important;
     max-width: 90vw !important;
+    height: auto !important;
+    min-height: 0;
+  }
+  .mg-modal--auto .mg-modal__body {
+    flex: 0 0 auto !important;
+    min-height: 0;
   }
   .mg-modal--small {
     width: var(--modal-width-sm) !important;

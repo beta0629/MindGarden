@@ -206,14 +206,14 @@ public class UserServiceImpl implements UserService {
     
     @Override
     public List<User> findAllActive() {
-        String tenantId = TenantContextHolder.getTenantId();
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         List<User> users = userRepository.findAllActiveByTenantId(tenantId);
         return decryptUserListPersonalData(users);
     }
     
     @Override
     public Optional<User> findActiveById(Long id) {
-        String tenantId = TenantContextHolder.getTenantId();
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         Optional<User> userOpt = userRepository.findByTenantIdAndUserId(tenantId, String.valueOf(id));
         if (userOpt.isPresent()) {
             return Optional.of(decryptUserPersonalData(userOpt.get()));
@@ -223,30 +223,34 @@ public class UserServiceImpl implements UserService {
     
     @Override
     public User findActiveByIdOrThrow(Long id) {
-        String tenantId = TenantContextHolder.getTenantId();
-        User user = userRepository.findById(id)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        User user = userRepository.findByTenantIdAndId(tenantId, id)
                 .orElseThrow(() -> new RuntimeException("활성 사용자를 찾을 수 없습니다: " + id));
         return decryptUserPersonalData(user);
     }
     
     @Override
     public long countActive() {
-        return userRepository.countActive();
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return userRepository.countByIsActiveTrueAndIsDeletedFalse(tenantId);
     }
     
     @Override
     public List<User> findAllDeleted() {
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         return userRepository.findAllDeleted();
     }
     
     @Override
     public long countDeleted() {
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         return userRepository.countDeleted();
     }
     
     @Override
     public boolean existsActiveById(Long id) {
-        return userRepository.existsActiveById(id);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return userRepository.findByTenantIdAndId(tenantId, id).isPresent();
     }
     
     @Override
@@ -261,37 +265,44 @@ public class UserServiceImpl implements UserService {
     
     @Override
     public Object[] getEntityStatistics() {
-        return userRepository.getEntityStatistics();
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return userRepository.getUserStatisticsByTenantId(tenantId);
     }
     
     @Override
     public void cleanupOldDeleted(LocalDateTime cutoffDate) {
-        userRepository.cleanupOldDeleted(cutoffDate);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        userRepository.cleanupOldDeletedByTenantId(tenantId, cutoffDate);
     }
     
     @Override
     public Page<User> findAllActive(Pageable pageable) {
-        return userRepository.findAllActive(pageable);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return userRepository.findAllByTenantId(tenantId, pageable);
     }
     
     @Override
     public List<User> findRecentActive(int limit) {
-        return userRepository.findRecentActive(limit);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return userRepository.findRecentActiveByTenantId(tenantId, Pageable.ofSize(limit));
     }
     
     @Override
     public List<User> findRecentlyUpdatedActive(int limit) {
-        return userRepository.findRecentlyUpdatedActive(limit);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return userRepository.findRecentlyUpdatedActiveByTenantId(tenantId, Pageable.ofSize(limit));
     }
     
     @Override
     public List<User> findByCreatedAtBetween(LocalDateTime startDate, LocalDateTime endDate) {
-        return userRepository.findByCreatedAtBetween(startDate, endDate);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return userRepository.findByCreatedAtBetween(tenantId, startDate, endDate);
     }
     
     @Override
     public List<User> findByUpdatedAtBetween(LocalDateTime startDate, LocalDateTime endDate) {
-        return userRepository.findByUpdatedAtBetween(startDate, endDate);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return userRepository.findByTenantIdAndUpdatedAtBetween(tenantId, startDate, endDate);
     }
     
     @Override

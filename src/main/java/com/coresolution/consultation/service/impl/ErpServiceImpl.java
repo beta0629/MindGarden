@@ -161,18 +161,19 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
     
     @Override
     public PurchaseRequest createPurchaseRequest(Long requesterId, Long itemId, Integer quantity, String reason) {
-        log.info("구매 요청 생성: requesterId={}, itemId={}, quantity={}", requesterId, itemId, quantity);
+        String tenantId = getTenantId();
+        log.info("구매 요청 생성: tenantId={}, requesterId={}, itemId={}, quantity={}", tenantId, requesterId, itemId, quantity);
         
         User requester = userService.findActiveById(requesterId)
                 .orElseThrow(() -> new RuntimeException("요청자를 찾을 수 없습니다: " + requesterId));
         
-        String tenantId = getTenantId();
         Item item = itemRepository.findByTenantIdAndIdAndActive(tenantId, itemId)
                 .orElseThrow(() -> new RuntimeException("아이템을 찾을 수 없습니다: " + itemId));
         
         BigDecimal totalAmount = item.getUnitPrice().multiply(BigDecimal.valueOf(quantity));
         
         PurchaseRequest purchaseRequest = PurchaseRequest.builder()
+                .tenantId(tenantId)
                 .requester(requester)
                 .item(item)
                 .quantity(quantity)
@@ -189,43 +190,49 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
     @Override
     @Transactional(readOnly = true)
     public Optional<PurchaseRequest> getPurchaseRequestById(Long id) {
-        log.info("구매 요청 조회: id={}", id);
-        return purchaseRequestRepository.findByIdWithDetails(id);
+        String tenantId = getTenantId();
+        log.info("구매 요청 조회: tenantId={}, id={}", tenantId, id);
+        return purchaseRequestRepository.findByTenantIdAndIdWithDetails(tenantId, id);
     }
     
     @Override
     @Transactional(readOnly = true)
     public List<PurchaseRequest> getAllActivePurchaseRequests() {
-        log.info("모든 활성화된 구매 요청 조회");
-        return purchaseRequestRepository.findAllActive();
+        String tenantId = getTenantId();
+        log.info("테넌트별 활성화된 구매 요청 조회: tenantId={}", tenantId);
+        return purchaseRequestRepository.findAllActiveByTenantId(tenantId);
     }
     
     @Override
     @Transactional(readOnly = true)
     public List<PurchaseRequest> getPurchaseRequestsByRequester(Long requesterId) {
-        log.info("요청자별 구매 요청 목록 조회: requesterId={}", requesterId);
-        return purchaseRequestRepository.findByRequesterId(requesterId);
+        String tenantId = getTenantId();
+        log.info("요청자별 구매 요청 목록 조회: tenantId={}, requesterId={}", tenantId, requesterId);
+        return purchaseRequestRepository.findByTenantIdAndRequesterId(tenantId, requesterId);
     }
     
     @Override
     @Transactional(readOnly = true)
     public List<PurchaseRequest> getPendingAdminApproval() {
-        log.info("관리자 승인 대기 목록 조회");
-        return purchaseRequestRepository.findPendingAdminApproval();
+        String tenantId = getTenantId();
+        log.info("관리자 승인 대기 목록 조회: tenantId={}", tenantId);
+        return purchaseRequestRepository.findPendingAdminApprovalByTenantId(tenantId);
     }
     
     @Override
     @Transactional(readOnly = true)
     public List<PurchaseRequest> getPendingSuperAdminApproval() {
-        log.info("수퍼 관리자 승인 대기 목록 조회");
-        return purchaseRequestRepository.findPendingSuperAdminApproval();
+        String tenantId = getTenantId();
+        log.info("수퍼 관리자 승인 대기 목록 조회: tenantId={}", tenantId);
+        return purchaseRequestRepository.findPendingSuperAdminApprovalByTenantId(tenantId);
     }
     
     @Override
     public boolean approveByAdmin(Long requestId, Long adminId, String comment) {
-        log.info("관리자 승인: requestId={}, adminId={}", requestId, adminId);
+        String tenantId = getTenantId();
+        log.info("관리자 승인: tenantId={}, requestId={}, adminId={}", tenantId, requestId, adminId);
         
-        PurchaseRequest request = purchaseRequestRepository.findById(requestId)
+        PurchaseRequest request = purchaseRequestRepository.findByTenantIdAndIdWithDetails(tenantId, requestId)
                 .orElseThrow(() -> new RuntimeException("구매 요청을 찾을 수 없습니다: " + requestId));
         
         User admin = userService.findActiveById(adminId)
@@ -248,9 +255,10 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
     
     @Override
     public boolean rejectByAdmin(Long requestId, Long adminId, String comment) {
-        log.info("관리자 거부: requestId={}, adminId={}", requestId, adminId);
+        String tenantId = getTenantId();
+        log.info("관리자 거부: tenantId={}, requestId={}, adminId={}", tenantId, requestId, adminId);
         
-        PurchaseRequest request = purchaseRequestRepository.findById(requestId)
+        PurchaseRequest request = purchaseRequestRepository.findByTenantIdAndIdWithDetails(tenantId, requestId)
                 .orElseThrow(() -> new RuntimeException("구매 요청을 찾을 수 없습니다: " + requestId));
         
         User admin = userService.findActiveById(adminId)
@@ -273,9 +281,10 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
     
     @Override
     public boolean approveBySuperAdmin(Long requestId, Long superAdminId, String comment) {
-        log.info("수퍼 관리자 승인: requestId={}, superAdminId={}", requestId, superAdminId);
+        String tenantId = getTenantId();
+        log.info("수퍼 관리자 승인: tenantId={}, requestId={}, superAdminId={}", tenantId, requestId, superAdminId);
         
-        PurchaseRequest request = purchaseRequestRepository.findById(requestId)
+        PurchaseRequest request = purchaseRequestRepository.findByTenantIdAndIdWithDetails(tenantId, requestId)
                 .orElseThrow(() -> new RuntimeException("구매 요청을 찾을 수 없습니다: " + requestId));
         
         User superAdmin = userService.findActiveById(superAdminId)
@@ -306,9 +315,10 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
     
     @Override
     public boolean rejectBySuperAdmin(Long requestId, Long superAdminId, String comment) {
-        log.info("수퍼 관리자 거부: requestId={}, superAdminId={}", requestId, superAdminId);
+        String tenantId = getTenantId();
+        log.info("수퍼 관리자 거부: tenantId={}, requestId={}, superAdminId={}", tenantId, requestId, superAdminId);
         
-        PurchaseRequest request = purchaseRequestRepository.findById(requestId)
+        PurchaseRequest request = purchaseRequestRepository.findByTenantIdAndIdWithDetails(tenantId, requestId)
                 .orElseThrow(() -> new RuntimeException("구매 요청을 찾을 수 없습니다: " + requestId));
         
         User superAdmin = userService.findActiveById(superAdminId)
@@ -331,9 +341,10 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
     
     @Override
     public boolean cancelPurchaseRequest(Long requestId, Long requesterId) {
-        log.info("구매 요청 취소: requestId={}, requesterId={}", requestId, requesterId);
+        String tenantId = getTenantId();
+        log.info("구매 요청 취소: tenantId={}, requestId={}, requesterId={}", tenantId, requestId, requesterId);
         
-        PurchaseRequest request = purchaseRequestRepository.findById(requestId)
+        PurchaseRequest request = purchaseRequestRepository.findByTenantIdAndIdWithDetails(tenantId, requestId)
                 .orElseThrow(() -> new RuntimeException("구매 요청을 찾을 수 없습니다: " + requestId));
         
         if (!request.getRequester().getId().equals(requesterId)) {
@@ -355,9 +366,10 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
     
     @Override
     public PurchaseOrder createPurchaseOrder(Long requestId, Long purchaserId, String supplier, String supplierContact, LocalDateTime expectedDeliveryDate, String notes) {
-        log.info("구매 주문 생성: requestId={}, purchaserId={}", requestId, purchaserId);
+        String tenantId = getTenantId();
+        log.info("구매 주문 생성: tenantId={}, requestId={}, purchaserId={}", tenantId, requestId, purchaserId);
         
-        PurchaseRequest request = purchaseRequestRepository.findById(requestId)
+        PurchaseRequest request = purchaseRequestRepository.findByTenantIdAndIdWithDetails(tenantId, requestId)
                 .orElseThrow(() -> new RuntimeException("구매 요청을 찾을 수 없습니다: " + requestId));
         
         User purchaser = userService.findActiveById(purchaserId)
@@ -369,6 +381,7 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
         }
         
         PurchaseOrder purchaseOrder = PurchaseOrder.builder()
+                .tenantId(tenantId)
                 .purchaseRequest(request)
                 .totalAmount(request.getTotalAmount())
                 // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
@@ -393,29 +406,33 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
     @Override
     @Transactional(readOnly = true)
     public Optional<PurchaseOrder> getPurchaseOrderById(Long id) {
-        log.info("구매 주문 조회: id={}", id);
-        return purchaseOrderRepository.findByIdWithDetails(id);
+        String tenantId = getTenantId();
+        log.info("구매 주문 조회: tenantId={}, id={}", tenantId, id);
+        return purchaseOrderRepository.findByTenantIdAndIdWithDetails(tenantId, id);
     }
     
     @Override
     @Transactional(readOnly = true)
     public List<PurchaseOrder> getAllActivePurchaseOrders() {
-        log.info("모든 활성화된 구매 주문 조회");
-        return purchaseOrderRepository.findAllActive();
+        String tenantId = getTenantId();
+        log.info("테넌트별 활성화된 구매 주문 조회: tenantId={}", tenantId);
+        return purchaseOrderRepository.findAllActiveByTenantId(tenantId);
     }
     
     @Override
     @Transactional(readOnly = true)
     public Optional<PurchaseOrder> getPurchaseOrderByOrderNumber(String orderNumber) {
-        log.info("주문 번호로 구매 주문 조회: orderNumber={}", orderNumber);
-        return purchaseOrderRepository.findByOrderNumber(orderNumber);
+        String tenantId = getTenantId();
+        log.info("주문 번호로 구매 주문 조회: tenantId={}, orderNumber={}", tenantId, orderNumber);
+        return purchaseOrderRepository.findByTenantIdAndOrderNumber(tenantId, orderNumber);
     }
     
     @Override
     @Transactional(readOnly = true)
     public List<PurchaseOrder> getPurchaseOrdersByPurchaser(Long purchaserId) {
-        log.info("구매자별 주문 목록 조회: purchaserId={}", purchaserId);
-        return purchaseOrderRepository.findByPurchaserId(purchaserId);
+        String tenantId = getTenantId();
+        log.info("구매자별 주문 목록 조회: tenantId={}, purchaserId={}", tenantId, purchaserId);
+        return purchaseOrderRepository.findByTenantIdAndPurchaserId(tenantId, purchaserId);
     }
     
     @Override
@@ -430,9 +447,10 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
     
     @Override
     public boolean updateOrderStatus(Long orderId, PurchaseOrder.PurchaseOrderStatus status) {
-        log.info("주문 상태 업데이트: orderId={}, status={}", orderId, status);
+        String tenantId = getTenantId();
+        log.info("주문 상태 업데이트: tenantId={}, orderId={}, status={}", tenantId, orderId, status);
         
-        PurchaseOrder order = purchaseOrderRepository.findById(orderId)
+        PurchaseOrder order = purchaseOrderRepository.findByTenantIdAndIdWithDetails(tenantId, orderId)
                 .orElseThrow(() -> new RuntimeException("구매 주문을 찾을 수 없습니다: " + orderId));
         
         order.setStatus(status);
@@ -443,9 +461,10 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
     
     @Override
     public boolean markAsDelivered(Long orderId) {
-        log.info("배송 완료 처리: orderId={}", orderId);
+        String tenantId = getTenantId();
+        log.info("배송 완료 처리: tenantId={}, orderId={}", tenantId, orderId);
         
-        PurchaseOrder order = purchaseOrderRepository.findById(orderId)
+        PurchaseOrder order = purchaseOrderRepository.findByTenantIdAndIdWithDetails(tenantId, orderId)
                 .orElseThrow(() -> new RuntimeException("구매 주문을 찾을 수 없습니다: " + orderId));
         
         order.setStatus(PurchaseOrder.PurchaseOrderStatus.DELIVERED);
@@ -459,48 +478,56 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
     @Override
     @Transactional(readOnly = true)
     public List<Budget> getAllActiveBudgets() {
-        log.info("모든 활성화된 예산 조회");
-        return budgetRepository.findAllActive();
+        String tenantId = getTenantId();
+        log.info("테넌트별 활성화된 예산 조회: tenantId={}", tenantId);
+        return budgetRepository.findAllActiveByTenantId(tenantId);
     }
     
     @Override
     @Transactional(readOnly = true)
     public Optional<Budget> getBudgetById(Long id) {
-        log.info("예산 조회: id={}", id);
-        return budgetRepository.findByIdWithManager(id);
+        String tenantId = getTenantId();
+        log.info("예산 조회: tenantId={}, id={}", tenantId, id);
+        return budgetRepository.findByTenantIdAndIdWithManager(tenantId, id);
     }
     
     @Override
     @Transactional(readOnly = true)
     public List<Budget> getBudgetsByYear(String year) {
-        log.info("연도별 예산 조회: year={}", year);
-        return budgetRepository.findByYearAndActive(year);
+        String tenantId = getTenantId();
+        log.info("연도별 예산 조회: tenantId={}, year={}", tenantId, year);
+        return budgetRepository.findByTenantIdAndYearAndActive(tenantId, year);
     }
     
     @Override
     @Transactional(readOnly = true)
     public List<Budget> getBudgetsByYearAndMonth(String year, String month) {
-        log.info("월별 예산 조회: year={}, month={}", year, month);
-        return budgetRepository.findByYearAndMonthAndActive(year, month);
+        String tenantId = getTenantId();
+        log.info("월별 예산 조회: tenantId={}, year={}, month={}", tenantId, year, month);
+        return budgetRepository.findByTenantIdAndYearAndMonthAndActive(tenantId, year, month);
     }
     
     @Override
     @Transactional(readOnly = true)
     public List<Budget> getBudgetsByCategory(String category) {
-        log.info("카테고리별 예산 조회: category={}", category);
-        return budgetRepository.findByCategoryAndActive(category);
+        String tenantId = getTenantId();
+        log.info("카테고리별 예산 조회: tenantId={}, category={}", tenantId, category);
+        return budgetRepository.findByTenantIdAndCategoryAndActive(tenantId, category);
     }
     
     @Override
     public Budget createBudget(Budget budget) {
-        log.info("예산 생성: name={}", budget.getName());
+        String tenantId = getTenantId();
+        log.info("예산 생성: tenantId={}, name={}", tenantId, budget.getName());
+        budget.setTenantId(tenantId);
         return budgetRepository.save(budget);
     }
     
     @Override
     public Budget updateBudget(Long id, Budget budget) {
-        log.info("예산 수정: id={}", id);
-        Budget existingBudget = budgetRepository.findById(id)
+        String tenantId = getTenantId();
+        log.info("예산 수정: tenantId={}, id={}", tenantId, id);
+        Budget existingBudget = budgetRepository.findByTenantIdAndIdWithManager(tenantId, id)
                 .orElseThrow(() -> new RuntimeException("예산을 찾을 수 없습니다: " + id));
         
         existingBudget.setName(budget.getName());
@@ -517,8 +544,9 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
     
     @Override
     public boolean deleteBudget(Long id) {
-        log.info("예산 삭제: id={}", id);
-        Budget budget = budgetRepository.findById(id)
+        String tenantId = getTenantId();
+        log.info("예산 삭제: tenantId={}, id={}", tenantId, id);
+        Budget budget = budgetRepository.findByTenantIdAndIdWithManager(tenantId, id)
                 .orElseThrow(() -> new RuntimeException("예산을 찾을 수 없습니다: " + id));
         
         // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
@@ -530,9 +558,10 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
     
     @Override
     public boolean useBudget(Long budgetId, BigDecimal amount) {
-        log.info("예산 사용: budgetId={}, amount={}", budgetId, amount);
+        String tenantId = getTenantId();
+        log.info("예산 사용: tenantId={}, budgetId={}, amount={}", tenantId, budgetId, amount);
         
-        Budget budget = budgetRepository.findById(budgetId)
+        Budget budget = budgetRepository.findByTenantIdAndIdWithManager(tenantId, budgetId)
                 .orElseThrow(() -> new RuntimeException("예산을 찾을 수 없습니다: " + budgetId));
         
         if (budget.getRemainingBudget().compareTo(amount) < 0) {
@@ -549,9 +578,10 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
     
     @Override
     public boolean refundBudget(Long budgetId, BigDecimal amount) {
-        log.info("예산 환불: budgetId={}, amount={}", budgetId, amount);
+        String tenantId = getTenantId();
+        log.info("예산 환불: tenantId={}, budgetId={}, amount={}", tenantId, budgetId, amount);
         
-        Budget budget = budgetRepository.findById(budgetId)
+        Budget budget = budgetRepository.findByTenantIdAndIdWithManager(tenantId, budgetId)
                 .orElseThrow(() -> new RuntimeException("예산을 찾을 수 없습니다: " + budgetId));
         
         budget.setUsedBudget(budget.getUsedBudget().subtract(amount));
@@ -736,15 +766,17 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
     @Override
     @Transactional(readOnly = true)
     public List<Budget> getHighUsageBudgets() {
-        log.info("예산 사용률이 높은 예산 목록 조회");
-        return budgetRepository.findHighUsageBudgets();
+        String tenantId = getTenantId();
+        log.info("예산 사용률이 높은 예산 목록 조회: tenantId={}", tenantId);
+        return budgetRepository.findHighUsageBudgetsByTenantId(tenantId);
     }
     
     @Override
     @Transactional(readOnly = true)
     public List<Budget> getOverBudgetBudgets() {
-        log.info("예산 부족 예산 목록 조회");
-        return budgetRepository.findOverBudgetBudgets();
+        String tenantId = getTenantId();
+        log.info("예산 부족 예산 목록 조회: tenantId={}", tenantId);
+        return budgetRepository.findOverBudgetBudgetsByTenantId(tenantId);
     }
     
     
@@ -758,11 +790,11 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
         String tenantId = getTenantId();
         Map<String, Object> erpStats = new HashMap<>();
         erpStats.put("totalItems", itemRepository.findAllActiveByTenantId(tenantId).size());
-        erpStats.put("pendingRequests", purchaseRequestRepository.findPendingAdminApproval().size());
-        erpStats.put("totalOrders", purchaseOrderRepository.findAllActive().size());
-        erpStats.put("totalBudgets", budgetRepository.findAllActive().size());
+        erpStats.put("pendingRequests", purchaseRequestRepository.findPendingAdminApprovalByTenantId(tenantId).size());
+        erpStats.put("totalOrders", purchaseOrderRepository.findAllActiveByTenantId(tenantId).size());
+        erpStats.put("totalBudgets", budgetRepository.findAllActiveByTenantId(tenantId).size());
         
-        List<Budget> allBudgets = budgetRepository.findAllActive();
+        List<Budget> allBudgets = budgetRepository.findAllActiveByTenantId(tenantId);
         BigDecimal totalBudget = allBudgets.stream()
                 .map(Budget::getTotalBudget)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -787,12 +819,12 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
         log.info("📊 통합 대시보드 - financialData 구조: {}", financialData);
         dashboardData.put("financialData", financialData);
         
-        List<PurchaseRequest> recentRequests = purchaseRequestRepository.findAllActive().stream()
+        List<PurchaseRequest> recentRequests = purchaseRequestRepository.findAllActiveByTenantId(tenantId).stream()
                 .limit(5)
                 .toList();
         dashboardData.put("recentRequests", recentRequests);
         
-        List<PurchaseOrder> recentOrders = purchaseOrderRepository.findAllActive().stream()
+        List<PurchaseOrder> recentOrders = purchaseOrderRepository.findAllActiveByTenantId(tenantId).stream()
                 .limit(5)
                 .toList();
         dashboardData.put("recentOrders", recentOrders);
@@ -1059,10 +1091,10 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
         try {
             
             erpStats.put("totalItems", itemRepository.findAllActiveByTenantId(tenantId).size());
-            erpStats.put("pendingRequests", purchaseRequestRepository.findPendingAdminApproval().size());
-            erpStats.put("totalOrders", purchaseOrderRepository.findAllActive().size());
+            erpStats.put("pendingRequests", purchaseRequestRepository.findPendingAdminApprovalByTenantId(tenantId).size());
+            erpStats.put("totalOrders", purchaseOrderRepository.findAllActiveByTenantId(tenantId).size());
             
-            List<Budget> allBudgets = budgetRepository.findAllActive();
+            List<Budget> allBudgets = budgetRepository.findAllActiveByTenantId(tenantId);
             BigDecimal totalBudget = allBudgets.stream()
                     .map(Budget::getTotalBudget)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -1103,27 +1135,29 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
     @Override
     @Transactional(readOnly = true)
     public Map<String, Object> getFinanceStatistics(String startDate, String endDate) {
-        log.info("수입/지출 통계 조회: {} ~ {}", startDate, endDate);
+        String tenantId = getTenantId();
+        log.info("수입/지출 통계 조회: tenantId={}, {} ~ {}", tenantId, startDate, endDate);
         
         Map<String, Object> statistics = new HashMap<>();
         
         Map<String, Object> purchaseExpenses = new HashMap<>();
         
-        BigDecimal totalPurchaseAmount = purchaseRequestRepository.findAllActive().stream()
+        List<PurchaseRequest> activeRequests = purchaseRequestRepository.findAllActiveByTenantId(tenantId);
+        BigDecimal totalPurchaseAmount = activeRequests.stream()
                 // 표준화 2025-12-05: HQ_MASTER_APPROVED → ADMIN_APPROVED로 통합
                 .filter(req -> req.getStatus() == PurchaseRequest.PurchaseRequestStatus.ADMIN_APPROVED)
                 .map(PurchaseRequest::getTotalAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         purchaseExpenses.put("totalAmount", totalPurchaseAmount);
         
-        Long approvedCount = purchaseRequestRepository.findAllActive().stream()
+        Long approvedCount = activeRequests.stream()
                 // 표준화 2025-12-05: HQ_MASTER_APPROVED → ADMIN_APPROVED로 통합
                 .filter(req -> req.getStatus() == PurchaseRequest.PurchaseRequestStatus.ADMIN_APPROVED)
                 .count();
         purchaseExpenses.put("count", approvedCount);
         
         Map<String, BigDecimal> categoryAmounts = new HashMap<>();
-        purchaseRequestRepository.findAllActive().stream()
+        activeRequests.stream()
                 // 표준화 2025-12-05: HQ_MASTER_APPROVED → ADMIN_APPROVED로 통합
                 .filter(req -> req.getStatus() == PurchaseRequest.PurchaseRequestStatus.ADMIN_APPROVED)
                 .forEach(req -> {
@@ -1137,7 +1171,7 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
         
         Map<String, Object> budgetStats = new HashMap<>();
         
-        List<Budget> budgets = budgetRepository.findAllActive();
+        List<Budget> budgets = budgetRepository.findAllActiveByTenantId(tenantId);
         BigDecimal totalBudgetAmount = budgets.stream()
                 .map(Budget::getTotalBudget)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -1165,9 +1199,9 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
             LocalDateTime monthEnd = monthStart.plusMonths(1).minusSeconds(1);
             
             String monthKey = monthStart.getYear() + "-" + String.format("%02d", monthStart.getMonthValue());
-            BigDecimal monthAmount = purchaseRequestRepository.findAllActive().stream()
+            BigDecimal monthAmount = activeRequests.stream()
                     // 표준화 2025-12-05: HQ_MASTER_APPROVED → ADMIN_APPROVED로 통합
-                .filter(req -> req.getStatus() == PurchaseRequest.PurchaseRequestStatus.ADMIN_APPROVED)
+                    .filter(req -> req.getStatus() == PurchaseRequest.PurchaseRequestStatus.ADMIN_APPROVED)
                     .filter(req -> req.getCreatedAt().isAfter(monthStart) && req.getCreatedAt().isBefore(monthEnd))
                     .map(PurchaseRequest::getTotalAmount)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -1183,7 +1217,8 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
     @Override
     @Transactional(readOnly = true)
     public Map<String, Object> getCategoryAnalysis(String startDate, String endDate) {
-        log.info("카테고리별 분석 조회: {} ~ {}", startDate, endDate);
+        String tenantId = getTenantId();
+        log.info("카테고리별 분석 조회: tenantId={}, {} ~ {}", tenantId, startDate, endDate);
         
         Map<String, Object> analysis = new HashMap<>();
         
@@ -1191,8 +1226,9 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
         Map<String, Long> categoryCounts = new HashMap<>();
         Map<String, BigDecimal> categoryAmounts = new HashMap<>();
         
+        List<PurchaseRequest> activeRequestsForCategory = purchaseRequestRepository.findAllActiveByTenantId(tenantId);
         BigDecimal totalAmount = BigDecimal.ZERO;
-        for (PurchaseRequest req : purchaseRequestRepository.findAllActive()) {
+        for (PurchaseRequest req : activeRequestsForCategory) {
             String category = req.getItem().getCategory();
             BigDecimal amount = req.getTotalAmount();
             
@@ -1252,7 +1288,7 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
         Map<Long, Long> requesterCounts = new HashMap<>();
         Map<Long, BigDecimal> requesterAmounts = new HashMap<>();
         
-        for (PurchaseRequest req : purchaseRequestRepository.findAllActive()) {
+        for (PurchaseRequest req : activeRequestsForCategory) {
             Long requesterId = req.getRequester().getId();
             BigDecimal amount = req.getTotalAmount();
             

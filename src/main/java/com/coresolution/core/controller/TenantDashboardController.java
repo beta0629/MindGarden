@@ -11,7 +11,6 @@ import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.exception.EntityNotFoundException;
 import com.coresolution.core.context.TenantContextHolder;
-import com.coresolution.core.context.TenantContext;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -59,7 +58,7 @@ public class TenantDashboardController extends BaseApiController {
                 User dbUser = userRepository.findById(currentUser.getId()).orElse(currentUser);
                 if (dbUser.getTenantId() != null) {
                     tenantId = dbUser.getTenantId();
-                    TenantContext.setTenantId(tenantId);
+                    TenantContextHolder.setTenantId(tenantId);
                     log.debug("Tenant ID set from user database: {}", tenantId);
                 } else {
                     throw new IllegalArgumentException("사용자의 테넌트 정보가 없습니다.");
@@ -94,7 +93,7 @@ public class TenantDashboardController extends BaseApiController {
                 User dbUser = userRepository.findById(currentUser.getId()).orElse(currentUser);
                 if (dbUser.getTenantId() != null) {
                     tenantId = dbUser.getTenantId();
-                    TenantContext.setTenantId(tenantId);
+                    TenantContextHolder.setTenantId(tenantId);
                     log.debug("Tenant ID set from user database: {}", tenantId);
                 } else {
                     throw new IllegalArgumentException("사용자의 테넌트 정보가 없습니다.");
@@ -132,7 +131,7 @@ public class TenantDashboardController extends BaseApiController {
                 User dbUser = userRepository.findById(currentUser.getId()).orElse(currentUser);
                 if (dbUser.getTenantId() != null) {
                     tenantId = dbUser.getTenantId();
-                    TenantContext.setTenantId(tenantId);
+                    TenantContextHolder.setTenantId(tenantId);
                     log.debug("Tenant ID set from user database: {}", tenantId);
                 } else {
                     throw new IllegalArgumentException("사용자의 테넌트 정보가 없습니다.");
@@ -174,7 +173,7 @@ public class TenantDashboardController extends BaseApiController {
                 User dbUser = userRepository.findById(currentUser.getId()).orElse(currentUser);
                 if (dbUser.getTenantId() != null) {
                     tenantId = dbUser.getTenantId();
-                    TenantContext.setTenantId(tenantId);
+                    TenantContextHolder.setTenantId(tenantId);
                     log.debug("Tenant ID set from user database: {}", tenantId);
                 } else {
                     throw new IllegalArgumentException("사용자의 테넌트 정보가 없습니다.");
@@ -214,7 +213,7 @@ public class TenantDashboardController extends BaseApiController {
                 User dbUser = userRepository.findById(currentUser.getId()).orElse(currentUser);
                 if (dbUser.getTenantId() != null) {
                     tenantId = dbUser.getTenantId();
-                    TenantContext.setTenantId(tenantId);
+                    TenantContextHolder.setTenantId(tenantId);
                     log.debug("Tenant ID set from user database: {}", tenantId);
                 } else {
                     throw new IllegalArgumentException("사용자의 테넌트 정보가 없습니다.");
@@ -279,7 +278,7 @@ public class TenantDashboardController extends BaseApiController {
                 User dbUser = userRepository.findById(currentUser.getId()).orElse(currentUser);
                 if (dbUser.getTenantId() != null) {
                     tenantId = dbUser.getTenantId();
-                    TenantContext.setTenantId(tenantId);
+                    TenantContextHolder.setTenantId(tenantId);
                     log.debug("Tenant ID set from user database: {}", tenantId);
                 } else {
                     throw new IllegalArgumentException("사용자의 테넌트 정보가 없습니다.");
@@ -319,7 +318,7 @@ public class TenantDashboardController extends BaseApiController {
                 User dbUser = userRepository.findById(currentUser.getId()).orElse(currentUser);
                 if (dbUser.getTenantId() != null) {
                     tenantId = dbUser.getTenantId();
-                    TenantContext.setTenantId(tenantId);
+                    TenantContextHolder.setTenantId(tenantId);
                     log.debug("Tenant ID set from user database: {}", tenantId);
                 } else {
                     throw new IllegalArgumentException("사용자의 테넌트 정보가 없습니다.");

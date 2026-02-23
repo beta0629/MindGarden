@@ -352,7 +352,7 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
     public Page<ConsultationRecord> searchConsultationRecords(Long userId, String userType, String keyword, Pageable pageable) {
         log.info("📝 상담일지 검색 - 사용자 ID: {}, 유형: {}, 키워드: {}", userId, userType, keyword);
         
-        String tenantId = com.coresolution.core.context.TenantContext.getTenantId();
+        String tenantId = com.coresolution.core.context.TenantContextHolder.getTenantId();
         if (tenantId == null) {
             log.error("❌ tenantId가 설정되지 않았습니다");
             return Page.empty(pageable);
@@ -404,7 +404,7 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
     public List<ConsultationRecord> getRecentConsultationRecords(Long userId, String userType, int limit) {
         log.info("📝 최근 상담일지 조회 - 사용자 ID: {}, 유형: {}, 제한: {}", userId, userType, limit);
         
-        String tenantId = com.coresolution.core.context.TenantContext.getTenantId();
+        String tenantId = com.coresolution.core.context.TenantContextHolder.getTenantId();
         if (tenantId == null) {
             log.error("❌ tenantId가 설정되지 않았습니다");
             return new ArrayList<>();
@@ -453,7 +453,7 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
     public List<ConsultationRecord> getConsultationRecordsByClientOrderBySession(Long clientId) {
         log.info("👤 내담자별 전체 상담일지 조회 (회기순) - 내담자ID: {}", clientId);
         
-        String tenantId = com.coresolution.core.context.TenantContext.getTenantId();
+        String tenantId = com.coresolution.core.context.TenantContextHolder.getTenantId();
         if (tenantId == null) {
             log.error("❌ tenantId가 설정되지 않았습니다");
             return new ArrayList<>();
@@ -471,7 +471,7 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
     public Map<Integer, List<ConsultationRecord>> getConsultationRecordsGroupedBySession(Long clientId) {
         log.info("👤 내담자별 상담일지 회기별 그룹화 조회 - 내담자ID: {}", clientId);
         
-        String tenantId = com.coresolution.core.context.TenantContext.getTenantId();
+        String tenantId = com.coresolution.core.context.TenantContextHolder.getTenantId();
         if (tenantId == null) {
             log.error("❌ tenantId가 설정되지 않았습니다");
             return new HashMap<>();

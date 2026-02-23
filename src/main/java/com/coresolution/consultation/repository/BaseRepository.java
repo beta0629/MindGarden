@@ -63,9 +63,29 @@ public interface BaseRepository<T extends BaseEntity, ID> extends JpaRepository<
     
     // ==================== 삭제된 엔티티 조회 ====================
     
+    /**
+     * 테넌트별 삭제된 엔티티 조회 (테넌트 필터링)
+     */
+    @Query("SELECT e FROM #{#entityName} e WHERE e.tenantId = :tenantId AND e.isDeleted = true")
+    List<T> findAllDeletedByTenantId(@Param("tenantId") String tenantId);
+    
+    /**
+     * 테넌트별 삭제된 엔티티 개수 조회 (테넌트 필터링)
+     */
+    @Query("SELECT COUNT(e) FROM #{#entityName} e WHERE e.tenantId = :tenantId AND e.isDeleted = true")
+    long countDeletedByTenantId(@Param("tenantId") String tenantId);
+    
+    /**
+     * @Deprecated - 🚨 위험: 테넌트 필터링 없음! findAllDeletedByTenantId() 사용 권장
+     */
+    @Deprecated
     @Query("SELECT e FROM #{#entityName} e WHERE e.isDeleted = true")
     List<T> findAllDeleted();
     
+    /**
+     * @Deprecated - 🚨 위험: 테넌트 필터링 없음! countDeletedByTenantId() 사용 권장
+     */
+    @Deprecated
     @Query("SELECT COUNT(e) FROM #{#entityName} e WHERE e.isDeleted = true")
     long countDeleted();
     
@@ -195,133 +215,109 @@ public interface BaseRepository<T extends BaseEntity, ID> extends JpaRepository<
     
     /**
      * 현재 테넌트 컨텍스트의 활성 엔티티 조회
-     * TenantContextHolder에서 tenantId를 자동으로 가져옴
-     * 
+     * TenantContextHolder에서 tenantId를 필수로 가져옴 (없으면 IllegalStateException)
+     *
      * @return 현재 테넌트의 활성 엔티티 목록
+     * @throws IllegalStateException tenantId가 설정되지 않은 경우
      */
     default List<T> findAllActiveByCurrentTenant() {
-        String tenantId = TenantContextHolder.getTenantId();
-        if (tenantId != null && !tenantId.isEmpty()) {
-            return findAllByTenantId(tenantId);
-        }
-        // 테넌트 컨텍스트가 없으면 전체 조회 (HQ 관리자용)
-        return findAllActive();
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return findAllByTenantId(tenantId);
     }
-    
+
     /**
      * 현재 테넌트 컨텍스트의 활성 엔티티 조회 (페이징)
-     * 
+     *
      * @param pageable 페이징 정보
      * @return 현재 테넌트의 활성 엔티티 페이지
+     * @throws IllegalStateException tenantId가 설정되지 않은 경우
      */
     default Page<T> findAllActiveByCurrentTenant(Pageable pageable) {
-        String tenantId = TenantContextHolder.getTenantId();
-        if (tenantId != null && !tenantId.isEmpty()) {
-            return findAllByTenantId(tenantId, pageable);
-        }
-        // 테넌트 컨텍스트가 없으면 전체 조회 (HQ 관리자용)
-        return findAllActive(pageable);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return findAllByTenantId(tenantId, pageable);
     }
-    
+
     /**
      * 현재 테넌트 컨텍스트의 엔티티 조회 (ID로)
-     * 
+     *
      * @param id 엔티티 ID
      * @return 엔티티 Optional
+     * @throws IllegalStateException tenantId가 설정되지 않은 경우
      */
     default Optional<T> findActiveByIdAndCurrentTenant(ID id) {
-        String tenantId = TenantContextHolder.getTenantId();
-        if (tenantId != null && !tenantId.isEmpty()) {
-            return findByTenantIdAndId(tenantId, id);
-        }
-        // 테넌트 컨텍스트가 없으면 일반 조회 (HQ 관리자용)
-        return findActiveById(id);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return findByTenantIdAndId(tenantId, id);
     }
-    
+
     /**
      * 현재 테넌트 컨텍스트의 활성 엔티티 개수 조회
-     * 
+     *
      * @return 현재 테넌트의 활성 엔티티 개수
+     * @throws IllegalStateException tenantId가 설정되지 않은 경우
      */
     default long countActiveByCurrentTenant() {
-        String tenantId = TenantContextHolder.getTenantId();
-        if (tenantId != null && !tenantId.isEmpty()) {
-            return countByTenantId(tenantId);
-        }
-        // 테넌트 컨텍스트가 없으면 전체 개수 (HQ 관리자용)
-        return countActive();
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return countByTenantId(tenantId);
     }
-    
+
     /**
      * 현재 테넌트 컨텍스트의 기간별 엔티티 조회 (생성일 기준)
-     * 
+     *
      * @param startDate 시작일
      * @param endDate 종료일
      * @return 현재 테넌트의 기간별 엔티티 목록
+     * @throws IllegalStateException tenantId가 설정되지 않은 경우
      */
     default List<T> findByCreatedAtBetweenByCurrentTenant(LocalDateTime startDate, LocalDateTime endDate) {
-        String tenantId = TenantContextHolder.getTenantId();
-        if (tenantId != null && !tenantId.isEmpty()) {
-            return findByTenantIdAndCreatedAtBetween(tenantId, startDate, endDate);
-        }
-        // 테넌트 컨텍스트가 없으면 전체 조회 (HQ 관리자용)
-        return findByCreatedAtBetween(startDate, endDate);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return findByTenantIdAndCreatedAtBetween(tenantId, startDate, endDate);
     }
-    
+
     /**
      * 현재 테넌트 컨텍스트의 기간별 엔티티 조회 (수정일 기준)
-     * 
+     *
      * @param startDate 시작일
      * @param endDate 종료일
      * @return 현재 테넌트의 기간별 엔티티 목록
+     * @throws IllegalStateException tenantId가 설정되지 않은 경우
      */
     default List<T> findByUpdatedAtBetweenByCurrentTenant(LocalDateTime startDate, LocalDateTime endDate) {
-        String tenantId = TenantContextHolder.getTenantId();
-        if (tenantId != null && !tenantId.isEmpty()) {
-            return findByTenantIdAndUpdatedAtBetween(tenantId, startDate, endDate);
-        }
-        // 테넌트 컨텍스트가 없으면 전체 조회 (HQ 관리자용)
-        return findByUpdatedAtBetween(startDate, endDate);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return findByTenantIdAndUpdatedAtBetween(tenantId, startDate, endDate);
     }
-    
+
     /**
      * 현재 테넌트 컨텍스트의 최근 활성 엔티티 조회
-     * 
+     *
      * @param pageable 페이징 정보
      * @return 현재 테넌트의 최근 활성 엔티티 목록
+     * @throws IllegalStateException tenantId가 설정되지 않은 경우
      */
     default List<T> findRecentActiveByCurrentTenant(Pageable pageable) {
-        String tenantId = TenantContextHolder.getTenantId();
-        if (tenantId != null && !tenantId.isEmpty()) {
-            return findRecentActiveByTenantId(tenantId, pageable);
-        }
-        // 테넌트 컨텍스트가 없으면 전체 조회 (HQ 관리자용)
-        return findRecentActive(pageable);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return findRecentActiveByTenantId(tenantId, pageable);
     }
-    
+
     /**
      * 현재 테넌트 컨텍스트의 최근 활성 엔티티 조회 (제한 개수)
-     * 
+     *
      * @param limit 제한 개수
      * @return 현재 테넌트의 최근 활성 엔티티 목록
      */
     default List<T> findRecentActiveByCurrentTenant(int limit) {
         return findRecentActiveByCurrentTenant(Pageable.ofSize(limit));
     }
-    
+
     /**
      * 현재 테넌트 컨텍스트의 최근 업데이트된 활성 엔티티 조회
-     * 
+     *
      * @param pageable 페이징 정보
      * @return 현재 테넌트의 최근 업데이트된 활성 엔티티 목록
+     * @throws IllegalStateException tenantId가 설정되지 않은 경우
      */
     default List<T> findRecentlyUpdatedActiveByCurrentTenant(Pageable pageable) {
-        String tenantId = TenantContextHolder.getTenantId();
-        if (tenantId != null && !tenantId.isEmpty()) {
-            return findRecentlyUpdatedActiveByTenantId(tenantId, pageable);
-        }
-        // 테넌트 컨텍스트가 없으면 전체 조회 (HQ 관리자용)
-        return findRecentlyUpdatedActive(pageable);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return findRecentlyUpdatedActiveByTenantId(tenantId, pageable);
     }
     
     /**
@@ -336,6 +332,17 @@ public interface BaseRepository<T extends BaseEntity, ID> extends JpaRepository<
     
     // ==================== 통계 ====================
     
+    /**
+     * 테넌트별 엔티티 통계 조회 (테넌트 필터링)
+     * @return [전체개수, 삭제개수, 활성개수]
+     */
+    @Query("SELECT COUNT(e), COUNT(CASE WHEN e.isDeleted = true THEN 1 END), COUNT(CASE WHEN e.isDeleted = false THEN 1 END) FROM #{#entityName} e WHERE e.tenantId = :tenantId")
+    Object[] getEntityStatisticsByTenantId(@Param("tenantId") String tenantId);
+    
+    /**
+     * @Deprecated - 🚨 위험: 테넌트 필터링 없음! getEntityStatisticsByTenantId() 사용 권장
+     */
+    @Deprecated
     @Query("SELECT COUNT(e), COUNT(CASE WHEN e.isDeleted = true THEN 1 END), COUNT(CASE WHEN e.isDeleted = false THEN 1 END) FROM #{#entityName} e")
     Object[] getEntityStatistics();
     

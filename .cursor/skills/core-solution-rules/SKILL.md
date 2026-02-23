@@ -43,10 +43,12 @@ description: Core Solution(MindGarden) 프로젝트 전체 룰 인덱스. 백엔
 | 리포트·차트·대시보드 UI | core-coder | /core-solution-frontend | core-designer 시안 있으면 참조 |
 | 설정·시스템 페이지 | core-coder | /core-solution-frontend, /core-solution-atomic-design | |
 | API 설계·연동 | core-coder | /core-solution-api, /core-solution-backend | |
+| **작업 전 플랜·조사·영역 분석** | **explore** | /core-solution-documentation | 넓은 범위 작업 전 현황·누락·우선순위 조사 (플랜 서브에이전트) |
+| **문서 작성·정리·체계화** | **generalPurpose** | /core-solution-documentation | 표준 문서·가이드 작성·수정·재구성 (문서 전용 서브에이전트). 플랜(explore) 후 진행 권장 |
 | 새 작업 유형 추가 시 | — | — | docs/standards/SUBAGENT_USAGE.md 절차 따름 |
 
-- **explore** 서브에이전트: 코드베이스 탐색·분석 시 사용 (수정 작업 아님)
-- **generalPurpose** 서브에이전트: 복합 연구·다단계 작업 시 사용
+- **explore** 서브에이전트: 코드베이스 탐색·분석, **작업 전 플랜·조사** 시 사용 (수정 작업 아님). 문서 작업 시 1단계로 사용.
+- **generalPurpose** 서브에이전트: 복합 연구·다단계 작업, **문서 작성·정리** 시 /core-solution-documentation 스킬과 함께 사용.
 
 ## 사용할 스킬
 
@@ -64,6 +66,7 @@ description: Core Solution(MindGarden) 프로젝트 전체 룰 인덱스. 백엔
 | 핵심 비즈니스 흐름 및 UI 규칙 | `/core-solution-business-flow` |
 | **ERP 연동·거래 생성·트러블슈팅** | `/core-solution-erp` |
 | **모달 추가·수정** | `/core-solution-unified-modal` |
+| **문서 작성·정리·체계화** | `/core-solution-documentation` |
 
 - Agent 채팅에서 `/` 입력 후 스킬 이름 검색하여 수동 호출 가능
 - 관련 작업 시 Agent가 자동으로 위 스킬 중 적절한 것을 적용할 수 있음
@@ -89,5 +92,7 @@ description: Core Solution(MindGarden) 프로젝트 전체 룰 인덱스. 백엔
 - **DTO_NAMING_STANDARD.md**, **ERROR_HANDLING_STANDARD.md**, **LOGGING_STANDARD.md**
 - **TESTING_STANDARD.md** — 단위/통합/E2E/보안/성능 테스트 (테스트 에이전트: core-tester)
 - **ERP_TROUBLESHOOTING.md** — ERP 연동·거래 생성 트러블슈팅 (로그·API·체크리스트)
+- **TENANT_CONTEXT_USAGE.md** — TenantContextHolder set/clear/getRequiredTenantId 사용 표준
+- **SUBAGENT_USAGE.md** — 서브에이전트 매핑·플랜+문서 워크플로우
 
 작업 전 해당 영역 표준 문서를 참조하고, 위 스킬 규칙을 준수하세요.

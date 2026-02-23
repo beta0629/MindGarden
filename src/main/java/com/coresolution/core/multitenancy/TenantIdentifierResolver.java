@@ -1,6 +1,6 @@
 package com.coresolution.core.multitenancy;
 
-import com.coresolution.core.context.TenantContext;
+import com.coresolution.core.context.TenantContextHolder;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.context.spi.CurrentTenantIdentifierResolver;
 import org.springframework.stereotype.Component;
@@ -33,7 +33,7 @@ public class TenantIdentifierResolver implements CurrentTenantIdentifierResolver
      */
     @Override
     public String resolveCurrentTenantIdentifier() {
-        String tenantId = TenantContext.getTenantId();
+        String tenantId = TenantContextHolder.getTenantId();
         
         if (tenantId == null || tenantId.isEmpty()) {
             // 테넌트 컨텍스트가 없는 경우

@@ -1366,7 +1366,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 consultantData.put("createdAt", consultant.getCreatedAt());
                 consultantData.put("updatedAt", consultant.getUpdatedAt());
                 
-                String tenantId2 = com.coresolution.core.context.TenantContext.getTenantId();
+                String tenantId2 = com.coresolution.core.context.TenantContextHolder.getTenantId();
                 
                 long actualCurrentClients = tenantId2 != null ? 
                     mappingRepository.countByConsultantIdAndStatusIn(
@@ -1971,7 +1971,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             throw new RuntimeException("상담사가 아닌 사용자는 삭제할 수 없습니다.");
         }
         
-        String tenantId = com.coresolution.core.context.TenantContext.getTenantId();
+        String tenantId = com.coresolution.core.context.TenantContextHolder.getTenantId();
         if (tenantId == null) {
             log.error("❌ tenantId가 설정되지 않았습니다");
             throw new RuntimeException("테넌트 정보를 확인할 수 없습니다.");
@@ -3710,7 +3710,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
 
     @Override
     public List<ConsultantClientMapping> getMappingsByConsultantId(Long consultantId) {
-        String tenantId = com.coresolution.core.context.TenantContext.getTenantId();
+        String tenantId = com.coresolution.core.context.TenantContextHolder.getTenantId();
         if (tenantId == null) {
             log.error("❌ tenantId가 설정되지 않았습니다");
             return new ArrayList<>();
@@ -3734,7 +3734,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     public List<ConsultantClientMapping> getMappingsByConsultantId(Long consultantId, String branchCode) {
         log.info("🔍 상담사별 매칭 조회 - 상담사 ID: {}", consultantId);
         
-        String tenantId = com.coresolution.core.context.TenantContext.getTenantId();
+        String tenantId = com.coresolution.core.context.TenantContextHolder.getTenantId();
         if (tenantId == null) {
             log.error("❌ tenantId가 설정되지 않았습니다");
             return new ArrayList<>();
@@ -3762,7 +3762,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         try {
             log.info("🔍 내담자별 매칭 조회 시작: clientId={}", clientId);
             
-            String tenantId = com.coresolution.core.context.TenantContext.getTenantId();
+            String tenantId = com.coresolution.core.context.TenantContextHolder.getTenantId();
             if (tenantId == null) {
                 log.error("❌ tenantId가 설정되지 않았습니다");
                 return new ArrayList<>();

@@ -24,6 +24,18 @@ public interface ConsultationMessageRepository extends BaseRepository<Consultati
     List<ConsultationMessage> findByTenantId(@Param("tenantId") String tenantId);
     
     /**
+     * 테넌트별 삭제된 메시지 조회 (tenantId 필수)
+     */
+    @Query("SELECT m FROM ConsultationMessage m WHERE m.tenantId = :tenantId AND m.isDeleted = true")
+    List<ConsultationMessage> findAllDeletedByTenantId(@Param("tenantId") String tenantId);
+    
+    /**
+     * 테넌트별 삭제된 메시지 수 (tenantId 필수)
+     */
+    @Query("SELECT COUNT(m) FROM ConsultationMessage m WHERE m.tenantId = :tenantId AND m.isDeleted = true")
+    long countDeletedByTenantId(@Param("tenantId") String tenantId);
+    
+    /**
      * 상담사 메시지 목록 조회 (tenantId 필수)
      */
     @Query("SELECT m FROM ConsultationMessage m WHERE m.tenantId = :tenantId AND m.consultantId = :consultantId " +

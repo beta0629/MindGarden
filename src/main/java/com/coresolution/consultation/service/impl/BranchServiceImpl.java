@@ -1052,29 +1052,20 @@ public class BranchServiceImpl extends BaseTenantEntityServiceImpl<Branch, Long>
     
     @Override
     public List<Branch> findAllActive() {
-        String tenantId = TenantContextHolder.getTenantId();
-        if (tenantId != null) {
-            return findAllByTenant(tenantId, null);
-        }
-        return branchRepository.findAllActiveByCurrentTenant();
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return findAllByTenant(tenantId, null);
     }
-    
+
     @Override
     public Page<Branch> findAllActive(Pageable pageable) {
-        String tenantId = TenantContextHolder.getTenantId();
-        if (tenantId != null) {
-            return branchRepository.findAllByTenantId(tenantId, pageable);
-        }
-        return branchRepository.findAllActive(pageable);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return branchRepository.findAllByTenantId(tenantId, pageable);
     }
-    
+
     @Override
     public Optional<Branch> findActiveById(Long id) {
-        String tenantId = TenantContextHolder.getTenantId();
-        if (tenantId != null) {
-            return findByIdAndTenant(tenantId, id).filter(b -> !b.getIsDeleted());
-        }
-        return branchRepository.findActiveById(id);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return findByIdAndTenant(tenantId, id).filter(b -> !b.getIsDeleted());
     }
     
     @Override
@@ -1105,22 +1096,26 @@ public class BranchServiceImpl extends BaseTenantEntityServiceImpl<Branch, Long>
     
     @Override
     public List<Branch> findByCreatedAtBetween(LocalDateTime startDate, LocalDateTime endDate) {
-        return branchRepository.findByCreatedAtBetween(startDate, endDate);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return branchRepository.findByTenantIdAndCreatedAtBetween(tenantId, startDate, endDate);
     }
-    
+
     @Override
     public List<Branch> findByUpdatedAtBetween(LocalDateTime startDate, LocalDateTime endDate) {
-        return branchRepository.findByUpdatedAtBetween(startDate, endDate);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return branchRepository.findByTenantIdAndUpdatedAtBetween(tenantId, startDate, endDate);
     }
-    
+
     @Override
     public List<Branch> findRecentActive(int limit) {
-        return branchRepository.findRecentActive(limit);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return branchRepository.findRecentActiveByTenantId(tenantId, Pageable.ofSize(limit));
     }
-    
+
     @Override
     public List<Branch> findRecentlyUpdatedActive(int limit) {
-        return branchRepository.findRecentlyUpdatedActive(limit);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return branchRepository.findRecentlyUpdatedActiveByTenantId(tenantId, Pageable.ofSize(limit));
     }
     
     @Override

@@ -187,20 +187,14 @@ public class AlertServiceImpl extends BaseTenantEntityServiceImpl<Alert, Long>
     
     @Override
     public List<Alert> findAllActive() {
-        String tenantId = TenantContextHolder.getTenantId();
-        if (tenantId != null) {
-            return findAllByTenant(tenantId, null);
-        }
-        return alertRepository.findAllActiveByCurrentTenant();
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return findAllByTenant(tenantId, null);
     }
-    
+
     @Override
     public Optional<Alert> findActiveById(Long id) {
-        String tenantId = TenantContextHolder.getTenantId();
-        if (tenantId != null) {
-            return findByIdAndTenant(tenantId, id).filter(a -> !a.getIsDeleted());
-        }
-        return alertRepository.findActiveById(id);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return findByIdAndTenant(tenantId, id).filter(a -> !a.getIsDeleted());
     }
     
     @Override
@@ -246,31 +240,32 @@ public class AlertServiceImpl extends BaseTenantEntityServiceImpl<Alert, Long>
     
     @Override
     public org.springframework.data.domain.Page<Alert> findAllActive(org.springframework.data.domain.Pageable pageable) {
-        String tenantId = TenantContextHolder.getTenantId();
-        if (tenantId != null) {
-            return alertRepository.findAllByTenantId(tenantId, pageable);
-        }
-        return alertRepository.findAllActive(pageable);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return alertRepository.findAllByTenantId(tenantId, pageable);
     }
     
     @Override
     public List<Alert> findRecentActive(int limit) {
-        return alertRepository.findRecentActive(limit);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return alertRepository.findRecentActiveByTenantId(tenantId, org.springframework.data.domain.Pageable.ofSize(limit));
     }
     
     @Override
     public List<Alert> findRecentlyUpdatedActive(int limit) {
-        return alertRepository.findRecentlyUpdatedActive(limit);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return alertRepository.findRecentlyUpdatedActiveByTenantId(tenantId, org.springframework.data.domain.Pageable.ofSize(limit));
     }
     
     @Override
     public List<Alert> findByCreatedAtBetween(java.time.LocalDateTime startDate, java.time.LocalDateTime endDate) {
-        return alertRepository.findByCreatedAtBetween(startDate, endDate);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return alertRepository.findByTenantIdAndCreatedAtBetween(tenantId, startDate, endDate);
     }
     
     @Override
     public List<Alert> findByUpdatedAtBetween(java.time.LocalDateTime startDate, java.time.LocalDateTime endDate) {
-        return alertRepository.findByUpdatedAtBetween(startDate, endDate);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return alertRepository.findByTenantIdAndUpdatedAtBetween(tenantId, startDate, endDate);
     }
     
     @Override

@@ -65,7 +65,7 @@ public class UserSessionServiceImpl implements UserSessionService {
             String tenantId = user.getTenantId();
             if (tenantId == null) {
                 // TenantContext에서 가져오기 (폴백)
-                tenantId = com.coresolution.core.context.TenantContext.getTenantId();
+                tenantId = com.coresolution.core.context.TenantContextHolder.getTenantId();
             }
             userSession.setTenantId(tenantId);
             

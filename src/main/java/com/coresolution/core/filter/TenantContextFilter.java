@@ -93,9 +93,14 @@ public class TenantContextFilter implements Filter {
         if (isPublicApi(requestURI)) {
             log.debug("공개 API 요청 감지 - tenantId 추출 시도 (검증은 건너뛰기): {}", requestURI);
             try {
-                String tenantId = extractTenantId(httpRequest, session);
-                String businessType = extractBusinessType(httpRequest, session);
-                
+                String tenantId = null;
+                String businessType = null;
+                try {
+                    tenantId = extractTenantId(httpRequest, session);
+                    businessType = extractBusinessType(httpRequest, session);
+                } catch (Exception e) {
+                    log.warn("⚠️ 공개 API에서 tenantId 추출 중 오류 (무시하고 계속 진행): URI={}, error={}", requestURI, e.getMessage());
+                }
                 // tenantId가 있으면 TenantContext에 설정 (비밀번호 찾기 등에서 사용)
                 if (tenantId != null && !tenantId.isEmpty()) {
                     TenantContextHolder.setTenantId(tenantId);
@@ -106,11 +111,10 @@ public class TenantContextFilter implements Filter {
                 } else {
                     log.debug("⚠️ 공개 API에서 tenantId를 찾을 수 없음 (정상일 수 있음): URI={}", requestURI);
                 }
-            } catch (Exception e) {
-                log.warn("⚠️ 공개 API에서 tenantId 추출 중 오류 (무시하고 계속 진행): URI={}, error={}", requestURI, e.getMessage());
+                chain.doFilter(request, response);
+            } finally {
+                TenantContextHolder.clear();
             }
-            // 공개 API는 tenantId가 없어도 통과 허용
-            chain.doFilter(request, response);
             return;
         }
 

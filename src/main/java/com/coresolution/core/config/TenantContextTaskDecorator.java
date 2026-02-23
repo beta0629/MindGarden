@@ -1,6 +1,7 @@
 package com.coresolution.core.config;
 
 import com.coresolution.core.context.TenantContext;
+import com.coresolution.core.context.TenantContextHolder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.task.TaskDecorator;
 
@@ -18,7 +19,7 @@ import org.springframework.core.task.TaskDecorator;
  * {@code
  * @Async
  * public void sendNotification(Long userId) {
- *     // 이 메서드 내에서도 TenantContext.getTenantId()가 정상 동작
+ *     // 이 메서드 내에서도 TenantContextHolder.getTenantId()가 정상 동작
  *     String tenantId = TenantContextHolder.getRequiredTenantId();
  *     // ... 알림 발송 로직
  * }
@@ -28,6 +29,7 @@ import org.springframework.core.task.TaskDecorator;
  * @author CoreSolution
  * @version 1.0.0
  * @since 2025-11-30
+ * @see TenantContextHolder
  * @see TenantContext
  * @see AsyncConfig
  */
@@ -43,7 +45,7 @@ public class TenantContextTaskDecorator implements TaskDecorator {
     @Override
     public Runnable decorate(Runnable runnable) {
         // 1. 현재 스레드(부모 스레드)의 Context 값을 복사
-        String tenantId = TenantContext.getTenantId();
+        String tenantId = TenantContextHolder.getTenantId();
         String branchId = TenantContext.getBranchId();
         String businessType = TenantContext.getBusinessType();
         boolean bypassFilter = TenantContext.shouldBypassTenantFilter();
@@ -58,7 +60,7 @@ public class TenantContextTaskDecorator implements TaskDecorator {
         return () -> {
             try {
                 // 3. 새 스레드에서 실행 시작 - 복사한 Context 설정
-                TenantContext.setTenantId(tenantId);
+                TenantContextHolder.setTenantId(tenantId);
                 TenantContext.setBranchId(branchId);
                 TenantContext.setBusinessType(businessType);
                 TenantContext.setBypassTenantFilter(bypassFilter);
@@ -77,7 +79,7 @@ public class TenantContextTaskDecorator implements TaskDecorator {
                 throw e;
             } finally {
                 // 5. 작업 완료 후 Context 정리 (메모리 누수 방지)
-                TenantContext.clear();
+                TenantContextHolder.clear();
                 
                 if (log.isDebugEnabled()) {
                     log.debug("🧹 [TaskDecorator] Context 정리 완료: thread={}", 

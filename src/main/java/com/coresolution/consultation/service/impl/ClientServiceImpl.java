@@ -169,21 +169,15 @@ public class ClientServiceImpl extends BaseTenantEntityServiceImpl<Client, Long>
     
     @Override
     public List<Client> findAllActive() {
-        String tenantId = TenantContextHolder.getTenantId();
-        if (tenantId != null) {
-            return findAllByTenant(tenantId, null);
-        }
-        return clientRepository.findAllActiveByCurrentTenant();
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return findAllByTenant(tenantId, null);
     }
-    
+
     @Override
     public Optional<Client> findActiveById(Long id) {
-        String tenantId = TenantContextHolder.getTenantId();
-        if (tenantId != null) {
-            return findByIdAndTenant(tenantId, id)
-                    .filter(c -> !c.getIsDeleted());
-        }
-        return clientRepository.findActiveById(id);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return findByIdAndTenant(tenantId, id)
+                .filter(c -> !c.getIsDeleted());
     }
     
     @Override
@@ -214,22 +208,26 @@ public class ClientServiceImpl extends BaseTenantEntityServiceImpl<Client, Long>
     
     @Override
     public java.util.List<Client> findByCreatedAtBetween(java.time.LocalDateTime startDate, java.time.LocalDateTime endDate) {
-        return clientRepository.findByCreatedAtBetween(startDate, endDate);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return clientRepository.findByTenantIdAndCreatedAtBetween(tenantId, startDate, endDate);
     }
     
     @Override
     public java.util.List<Client> findByUpdatedAtBetween(java.time.LocalDateTime startDate, java.time.LocalDateTime endDate) {
-        return clientRepository.findByUpdatedAtBetween(startDate, endDate);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return clientRepository.findByTenantIdAndUpdatedAtBetween(tenantId, startDate, endDate);
     }
     
     @Override
     public java.util.List<Client> findRecentActive(int limit) {
-        return clientRepository.findRecentActive(limit);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return clientRepository.findRecentActiveByTenantId(tenantId, org.springframework.data.domain.Pageable.ofSize(limit));
     }
     
     @Override
     public java.util.List<Client> findRecentlyUpdatedActive(int limit) {
-        return clientRepository.findRecentlyUpdatedActive(limit);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return clientRepository.findRecentlyUpdatedActiveByTenantId(tenantId, org.springframework.data.domain.Pageable.ofSize(limit));
     }
     
     @Override
@@ -254,12 +252,8 @@ public class ClientServiceImpl extends BaseTenantEntityServiceImpl<Client, Long>
     
     @Override
     public org.springframework.data.domain.Page<Client> findAllActive(org.springframework.data.domain.Pageable pageable) {
-        String tenantId = TenantContextHolder.getTenantId();
-        if (tenantId != null) {
-            // BaseRepository의 findAllByTenantId 메서드 사용
-            return clientRepository.findAllByTenantId(tenantId, pageable);
-        }
-        return clientRepository.findAllActive(pageable);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return clientRepository.findAllByTenantId(tenantId, pageable);
     }
     
     // ==================== ClientService 특화 메서드들 ====================

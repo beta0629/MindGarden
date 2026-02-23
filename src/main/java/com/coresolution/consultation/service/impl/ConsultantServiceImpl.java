@@ -202,12 +202,11 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
     @Override
     public Optional<Consultant> findActiveById(Long id) {
         String tenantId = TenantContextHolder.getTenantId();
-        if (tenantId != null) {
-            return findByIdAndTenant(tenantId, id)
-                    .filter(c -> !c.getIsDeleted());
+        if (tenantId == null) {
+            throw new IllegalStateException("tenantId는 필수입니다. 테넌트 정보가 없습니다.");
         }
-        Optional<Consultant> consultant = consultantRepository.findById(id);
-        return consultant.isPresent() && !consultant.get().getIsDeleted() ? consultant : Optional.empty();
+        return findByIdAndTenant(tenantId, id)
+                .filter(c -> !c.getIsDeleted());
     }
     
     @Override
@@ -240,14 +239,23 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
     
     @Override
     public boolean existsActiveById(Long id) {
-        Optional<Consultant> consultant = consultantRepository.findById(id);
-        return consultant.isPresent() && !consultant.get().getIsDeleted();
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null) {
+            throw new IllegalStateException("tenantId는 필수입니다. 테넌트 정보가 없습니다.");
+        }
+        return consultantRepository.findByTenantIdAndId(tenantId, id)
+                .filter(c -> !c.getIsDeleted())
+                .isPresent();
     }
     
     @Override
     public Optional<Consultant> findByIdAndVersion(Long id, Long version) {
-        Optional<Consultant> consultant = consultantRepository.findById(id);
-        return consultant.isPresent() && consultant.get().getVersion().equals(version) ? consultant : Optional.empty();
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null) {
+            throw new IllegalStateException("tenantId는 필수입니다. 테넌트 정보가 없습니다.");
+        }
+        return consultantRepository.findByTenantIdAndId(tenantId, id)
+                .filter(c -> c.getVersion().equals(version));
     }
     
     @Override
@@ -398,7 +406,7 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
         
         log.debug("상담사 정보 확인: consultantId={}, name={}", consultant.getId(), consultant.getName());
         
-        String tenantId = com.coresolution.core.context.TenantContext.getTenantId();
+        String tenantId = com.coresolution.core.context.TenantContextHolder.getTenantId();
         if (tenantId == null) {
             log.error("❌ tenantId가 설정되지 않았습니다");
             return new org.springframework.data.domain.PageImpl<>(new java.util.ArrayList<>(), pageable, 0);
@@ -449,7 +457,7 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
         
         log.debug("상담사 정보 확인: consultantId={}, name={}", consultant.getId(), consultant.getName());
         
-        String tenantId = com.coresolution.core.context.TenantContext.getTenantId();
+        String tenantId = com.coresolution.core.context.TenantContextHolder.getTenantId();
         if (tenantId == null) {
             log.error("❌ tenantId가 설정되지 않았습니다");
             return Optional.empty();

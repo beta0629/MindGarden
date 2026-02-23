@@ -28,24 +28,41 @@ public abstract class BaseServiceImpl<T extends BaseEntity, ID> implements BaseS
     @Override
     public abstract BaseRepository<T, ID> getRepository();
     
+    /**
+     * 현재 컨텍스트의 tenantId를 반환한다. null 또는 빈 문자열이면 예외를 던진다.
+     *
+     * @return tenantId (null이 아님)
+     * @throws IllegalStateException tenantId가 없을 때
+     */
+    private String ensureTenantId() {
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null || tenantId.isEmpty()) {
+            throw new IllegalStateException("tenantId는 필수입니다. 테넌트 정보가 없습니다.");
+        }
+        return tenantId;
+    }
+    
     // ==================== 기본 CRUD 메서드 ====================
     
     @Override
     @Transactional(readOnly = true)
     public List<T> findAllActive() {
-        return getRepository().findAllActive();
+        String tenantId = ensureTenantId();
+        return getRepository().findAllActiveByTenantId(tenantId);
     }
     
     @Override
     @Transactional(readOnly = true)
     public Page<T> findAllActive(Pageable pageable) {
-        return getRepository().findAllActive(pageable);
+        String tenantId = ensureTenantId();
+        return getRepository().findAllActiveByTenantId(tenantId, pageable);
     }
     
     @Override
     @Transactional(readOnly = true)
     public Optional<T> findActiveById(ID id) {
-        return getRepository().findActiveById(id);
+        String tenantId = ensureTenantId();
+        return getRepository().findByTenantIdAndId(tenantId, id);
     }
     
     @Override
@@ -58,13 +75,15 @@ public abstract class BaseServiceImpl<T extends BaseEntity, ID> implements BaseS
     @Override
     @Transactional(readOnly = true)
     public boolean existsActiveById(ID id) {
-        return getRepository().existsActiveById(id);
+        String tenantId = ensureTenantId();
+        return getRepository().findByTenantIdAndId(tenantId, id).isPresent();
     }
     
     @Override
     @Transactional(readOnly = true)
     public long countActive() {
-        return getRepository().countActive();
+        String tenantId = ensureTenantId();
+        return getRepository().countByTenantId(tenantId);
     }
     
     @Override
@@ -134,7 +153,8 @@ public abstract class BaseServiceImpl<T extends BaseEntity, ID> implements BaseS
         T entity = findActiveByIdOrThrow(id);
         beforeDelete(entity);
         
-        getRepository().softDeleteById(id, LocalDateTime.now());
+        String tenantId = ensureTenantId();
+        getRepository().softDeleteByIdAndTenantId(id, tenantId, LocalDateTime.now());
         
         afterDelete(entity);
     }
@@ -151,10 +171,11 @@ public abstract class BaseServiceImpl<T extends BaseEntity, ID> implements BaseS
     
     @Override
     public void restoreById(ID id) {
-        T entity = getRepository().findById(id)
+        String tenantId = ensureTenantId();
+        T entity = getRepository().findByTenantIdAndId(tenantId, id)
                 .orElseThrow(() -> new EntityNotFoundException("엔티티를 찾을 수 없습니다. ID: " + id));
         
-        getRepository().restoreById(id);
+        getRepository().restoreByIdAndTenantId(id, tenantId);
     }
     
     // ==================== 삭제된 엔티티 관련 메서드 ====================
@@ -162,13 +183,15 @@ public abstract class BaseServiceImpl<T extends BaseEntity, ID> implements BaseS
     @Override
     @Transactional(readOnly = true)
     public List<T> findAllDeleted() {
-        return getRepository().findAllDeleted();
+        String tenantId = ensureTenantId();
+        return getRepository().findAllDeletedByTenantId(tenantId);
     }
     
     @Override
     @Transactional(readOnly = true)
     public long countDeleted() {
-        return getRepository().countDeleted();
+        String tenantId = ensureTenantId();
+        return getRepository().countDeletedByTenantId(tenantId);
     }
     
     // ==================== 기간별 조회 메서드 ====================
@@ -176,13 +199,15 @@ public abstract class BaseServiceImpl<T extends BaseEntity, ID> implements BaseS
     @Override
     @Transactional(readOnly = true)
     public List<T> findByCreatedAtBetween(LocalDateTime startDate, LocalDateTime endDate) {
-        return getRepository().findByCreatedAtBetween(startDate, endDate);
+        String tenantId = ensureTenantId();
+        return getRepository().findByTenantIdAndCreatedAtBetween(tenantId, startDate, endDate);
     }
     
     @Override
     @Transactional(readOnly = true)
     public List<T> findByUpdatedAtBetween(LocalDateTime startDate, LocalDateTime endDate) {
-        return getRepository().findByUpdatedAtBetween(startDate, endDate);
+        String tenantId = ensureTenantId();
+        return getRepository().findByTenantIdAndUpdatedAtBetween(tenantId, startDate, endDate);
     }
     
     // ==================== 최근 데이터 조회 메서드 ====================
@@ -190,13 +215,15 @@ public abstract class BaseServiceImpl<T extends BaseEntity, ID> implements BaseS
     @Override
     @Transactional(readOnly = true)
     public List<T> findRecentActive(int limit) {
-        return getRepository().findRecentActive(limit);
+        String tenantId = ensureTenantId();
+        return getRepository().findRecentActiveByTenantId(tenantId, Pageable.ofSize(limit));
     }
     
     @Override
     @Transactional(readOnly = true)
     public List<T> findRecentlyUpdatedActive(int limit) {
-        return getRepository().findRecentlyUpdatedActive(limit);
+        String tenantId = ensureTenantId();
+        return getRepository().findRecentlyUpdatedActiveByTenantId(tenantId, Pageable.ofSize(limit));
     }
     
     // ==================== 사용자별 조회 메서드 ====================
@@ -210,14 +237,16 @@ public abstract class BaseServiceImpl<T extends BaseEntity, ID> implements BaseS
     @Override
     @Transactional(readOnly = true)
     public Object[] getEntityStatistics() {
-        return getRepository().getEntityStatistics();
+        String tenantId = ensureTenantId();
+        return getRepository().getEntityStatisticsByTenantId(tenantId);
     }
     
     // ==================== 정리 메서드 ====================
     
     @Override
     public void cleanupOldDeleted(LocalDateTime cutoffDate) {
-        getRepository().cleanupOldDeleted(cutoffDate);
+        String tenantId = ensureTenantId();
+        getRepository().cleanupOldDeletedByTenantId(tenantId, cutoffDate);
     }
     
     // ==================== 중복 검사 메서드 ====================

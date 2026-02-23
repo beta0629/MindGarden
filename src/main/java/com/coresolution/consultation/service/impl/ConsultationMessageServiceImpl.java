@@ -67,10 +67,7 @@ public class ConsultationMessageServiceImpl extends BaseTenantEntityServiceImpl<
         
         log.info("📨 상담사 메시지 목록 조회 - 상담사 ID: {}, 내담자 ID: {}", consultantId, clientId);
         
-        String tenantId = TenantContextHolder.getTenantId();
-        if (tenantId == null || tenantId.isEmpty()) {
-            throw new IllegalStateException("tenantId는 필수입니다. 테넌트 정보가 없습니다.");
-        }
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         return consultationMessageRepository.findByTenantIdAndConsultantIdAndClientIdAndStatusAndIsReadAndIsImportantAndIsUrgent(
             tenantId, consultantId, clientId, status, isRead, isImportant, isUrgent, pageable);
     }
@@ -82,10 +79,7 @@ public class ConsultationMessageServiceImpl extends BaseTenantEntityServiceImpl<
         
         log.info("📨 내담자 메시지 목록 조회 - 내담자 ID: {}, 상담사 ID: {}", clientId, consultantId);
         
-        String tenantId = TenantContextHolder.getTenantId();
-        if (tenantId == null || tenantId.isEmpty()) {
-            throw new IllegalStateException("tenantId는 필수입니다. 테넌트 정보가 없습니다.");
-        }
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         return consultationMessageRepository.findByTenantIdAndClientIdAndConsultantIdAndStatusAndIsReadAndIsImportantAndIsUrgent(
             tenantId, clientId, consultantId, status, isRead, isImportant, isUrgent, pageable);
     }
@@ -255,10 +249,7 @@ public class ConsultationMessageServiceImpl extends BaseTenantEntityServiceImpl<
     public Long getUnreadCount(Long userId, String userType) {
         log.info("📨 읽지 않은 메시지 수 조회 - 사용자 ID: {}, 유형: {}", userId, userType);
         
-        String tenantId = TenantContextHolder.getTenantId();
-        if (tenantId == null || tenantId.isEmpty()) {
-            throw new IllegalStateException("tenantId는 필수입니다. 테넌트 정보가 없습니다.");
-        }
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         // receiverId로 조회 (실제 수신자 기준)
         Long count = consultationMessageRepository.countByTenantIdAndReceiverIdAndIsReadFalse(tenantId, userId);
         
@@ -271,10 +262,7 @@ public class ConsultationMessageServiceImpl extends BaseTenantEntityServiceImpl<
     public List<ConsultationMessage> getConversation(Long consultantId, Long clientId) {
         log.info("📨 대화 목록 조회 - 상담사 ID: {}, 내담자 ID: {}", consultantId, clientId);
         
-        String tenantId = TenantContextHolder.getTenantId();
-        if (tenantId == null || tenantId.isEmpty()) {
-            throw new IllegalStateException("tenantId는 필수입니다. 테넌트 정보가 없습니다.");
-        }
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         return consultationMessageRepository.findByTenantIdAndConsultantIdAndClientIdOrderByCreatedAtAsc(tenantId, consultantId, clientId);
     }
 
@@ -285,10 +273,7 @@ public class ConsultationMessageServiceImpl extends BaseTenantEntityServiceImpl<
         
         log.info("📨 메시지 검색 - 사용자 ID: {}, 유형: {}, 키워드: {}", userId, userType, keyword);
         
-        String tenantId = TenantContextHolder.getTenantId();
-        if (tenantId == null || tenantId.isEmpty()) {
-            throw new IllegalStateException("tenantId는 필수입니다. 테넌트 정보가 없습니다.");
-        }
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         // 표준화 2025-12-05: enum 활용
         if (UserRole.CONSULTANT.name().equals(userType)) {
             return consultationMessageRepository.findByTenantIdAndConsultantIdAndTitleContainingOrContentContainingAndMessageTypeAndIsImportantAndIsUrgent(
@@ -371,29 +356,20 @@ public class ConsultationMessageServiceImpl extends BaseTenantEntityServiceImpl<
     
     @Override
     public List<ConsultationMessage> findAllActive() {
-        String tenantId = TenantContextHolder.getTenantId();
-        if (tenantId != null) {
-            return findAllByTenant(tenantId, null);
-        }
-        return consultationMessageRepository.findAllActiveByCurrentTenant();
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return findAllByTenant(tenantId, null);
     }
-    
+
     @Override
     public Page<ConsultationMessage> findAllActive(Pageable pageable) {
-        String tenantId = TenantContextHolder.getTenantId();
-        if (tenantId != null) {
-            return consultationMessageRepository.findAllByTenantId(tenantId, pageable);
-        }
-        return consultationMessageRepository.findAllActive(pageable);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return consultationMessageRepository.findAllByTenantId(tenantId, pageable);
     }
-    
+
     @Override
     public Optional<ConsultationMessage> findActiveById(Long id) {
-        String tenantId = TenantContextHolder.getTenantId();
-        if (tenantId != null) {
-            return findByIdAndTenant(tenantId, id).filter(m -> !m.getIsDeleted());
-        }
-        return consultationMessageRepository.findActiveById(id);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return findByIdAndTenant(tenantId, id).filter(m -> !m.getIsDeleted());
     }
     
     @Override
@@ -404,52 +380,75 @@ public class ConsultationMessageServiceImpl extends BaseTenantEntityServiceImpl<
     
     @Override
     public boolean existsActiveById(Long id) {
-        return consultationMessageRepository.existsActiveById(id);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return findByIdAndTenant(tenantId, id).filter(m -> !m.getIsDeleted()).isPresent();
     }
-    
+
     @Override
     public long countActive() {
-        return consultationMessageRepository.countActive();
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return consultationMessageRepository.countByTenantId(tenantId);
     }
     
     @Override
     public List<ConsultationMessage> findAllDeleted() {
-        return consultationMessageRepository.findAllDeleted();
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null || tenantId.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return consultationMessageRepository.findAllDeletedByTenantId(tenantId);
     }
     
     @Override
     public long countDeleted() {
-        return consultationMessageRepository.countDeleted();
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null || tenantId.isEmpty()) {
+            return 0L;
+        }
+        return consultationMessageRepository.countDeletedByTenantId(tenantId);
     }
     
     @Override
     public List<ConsultationMessage> findByCreatedAtBetween(LocalDateTime startDate, LocalDateTime endDate) {
-        return consultationMessageRepository.findByCreatedAtBetween(startDate, endDate);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return consultationMessageRepository.findByTenantIdAndCreatedAtBetween(tenantId, startDate, endDate);
     }
-    
+
     @Override
     public List<ConsultationMessage> findByUpdatedAtBetween(LocalDateTime startDate, LocalDateTime endDate) {
-        return consultationMessageRepository.findByUpdatedAtBetween(startDate, endDate);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return consultationMessageRepository.findByTenantIdAndUpdatedAtBetween(tenantId, startDate, endDate);
     }
-    
+
     @Override
     public List<ConsultationMessage> findRecentActive(int limit) {
-        return consultationMessageRepository.findRecentActive(limit);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return consultationMessageRepository.findRecentActiveByTenantId(tenantId, org.springframework.data.domain.Pageable.ofSize(limit));
     }
-    
+
     @Override
     public List<ConsultationMessage> findRecentlyUpdatedActive(int limit) {
-        return consultationMessageRepository.findRecentlyUpdatedActive(limit);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return consultationMessageRepository.findRecentlyUpdatedActiveByTenantId(tenantId, org.springframework.data.domain.Pageable.ofSize(limit));
     }
     
     @Override
     public Object[] getEntityStatistics() {
-        return consultationMessageRepository.getEntityStatistics();
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null || tenantId.isEmpty()) {
+            return new Object[]{0L, 0L, 0L};
+        }
+        long total = consultationMessageRepository.countByTenantId(tenantId);
+        List<ConsultationMessage> list = consultationMessageRepository.findAllByTenantId(tenantId);
+        long deleted = list.stream().filter(ConsultationMessage::getIsDeleted).count();
+        long active = total - deleted;
+        return new Object[]{total, deleted, active};
     }
     
     @Override
     public void cleanupOldDeleted(LocalDateTime cutoffDate) {
-        consultationMessageRepository.cleanupOldDeleted(cutoffDate);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        consultationMessageRepository.cleanupOldDeletedByTenantId(tenantId, cutoffDate);
     }
     
     @Override
@@ -469,11 +468,7 @@ public class ConsultationMessageServiceImpl extends BaseTenantEntityServiceImpl<
     
     @Override
     public List<ConsultationMessage> getAllMessages() {
-        String tenantId = TenantContextHolder.getTenantId();
-        if (tenantId == null || tenantId.isEmpty()) {
-            log.error("getAllMessages: tenantId는 필수입니다. 컨트롤러에서 세션 tenantId 검증 및 TenantContextHolder 설정 필요.");
-            throw new IllegalStateException("tenantId는 필수입니다. 테넌트 정보가 없습니다.");
-        }
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         return findAllByTenant(tenantId, null);
     }
 }

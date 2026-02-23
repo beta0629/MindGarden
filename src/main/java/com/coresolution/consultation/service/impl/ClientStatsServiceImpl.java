@@ -127,7 +127,7 @@ public class ClientStatsServiceImpl implements ClientStatsService {
 
     @Override
     public Long calculateCurrentConsultants(Long clientId) {
-        String tenantId = com.coresolution.core.context.TenantContext.getTenantId();
+        String tenantId = com.coresolution.core.context.TenantContextHolder.getTenantId();
         if (tenantId == null) {
             log.error("❌ tenantId가 설정되지 않았습니다");
             return 0L;

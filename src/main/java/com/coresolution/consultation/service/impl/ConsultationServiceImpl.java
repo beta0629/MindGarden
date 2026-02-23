@@ -304,11 +304,11 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
     @Override
     public Optional<Consultation> findActiveById(Long id) {
         String tenantId = TenantContextHolder.getTenantId();
-        if (tenantId != null) {
-            return findByIdAndTenant(tenantId, id)
-                    .filter(c -> !c.getIsDeleted());
+        if (tenantId == null) {
+            throw new IllegalStateException("tenantId는 필수입니다. 테넌트 정보가 없습니다.");
         }
-        return consultationRepository.findActiveById(id);
+        return findByIdAndTenant(tenantId, id)
+                .filter(c -> !c.getIsDeleted());
     }
     
     @Override

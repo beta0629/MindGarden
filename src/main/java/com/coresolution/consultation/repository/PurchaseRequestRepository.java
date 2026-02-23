@@ -101,14 +101,36 @@ public interface PurchaseRequestRepository extends JpaRepository<PurchaseRequest
     List<Object[]> getStatsByRequester();
     
     /**
-     * ID로 구매 요청 조회 (연관 엔티티 포함)
+     * 테넌트별 ID로 구매 요청 조회 (연관 엔티티 포함, 테넌트 필터링)
      */
+    @Query("SELECT pr FROM PurchaseRequest pr LEFT JOIN FETCH pr.requester LEFT JOIN FETCH pr.item LEFT JOIN FETCH pr.adminApprover LEFT JOIN FETCH pr.superAdminApprover WHERE pr.tenantId = :tenantId AND pr.id = :id")
+    Optional<PurchaseRequest> findByTenantIdAndIdWithDetails(@Param("tenantId") String tenantId, @Param("id") Long id);
+    
+    /**
+     * ID로 구매 요청 조회 (연관 엔티티 포함)
+     * @Deprecated 테넌트 필터링 없음! findByTenantIdAndIdWithDetails() 사용 권장
+     */
+    @Deprecated
     @Query("SELECT pr FROM PurchaseRequest pr LEFT JOIN FETCH pr.requester LEFT JOIN FETCH pr.item LEFT JOIN FETCH pr.adminApprover LEFT JOIN FETCH pr.superAdminApprover WHERE pr.id = :id")
     Optional<PurchaseRequest> findByIdWithDetails(@Param("id") Long id);
     
     /**
-     * 모든 활성화된 구매 요청 조회
+     * 테넌트별 활성화된 구매 요청 조회 (테넌트 필터링)
      */
+    @Query("SELECT pr FROM PurchaseRequest pr WHERE pr.tenantId = :tenantId AND pr.isActive = true ORDER BY pr.createdAt DESC")
+    List<PurchaseRequest> findAllActiveByTenantId(@Param("tenantId") String tenantId);
+    
+    /**
+     * 수퍼 관리자 승인 대기 목록 조회 (테넌트 필터링)
+     */
+    @Query("SELECT pr FROM PurchaseRequest pr WHERE pr.tenantId = :tenantId AND pr.status = 'ADMIN_APPROVED' ORDER BY pr.adminApprovedAt ASC")
+    List<PurchaseRequest> findPendingSuperAdminApprovalByTenantId(@Param("tenantId") String tenantId);
+    
+    /**
+     * 모든 활성화된 구매 요청 조회
+     * @Deprecated 테넌트 필터링 없음! findAllActiveByTenantId() 사용 권장
+     */
+    @Deprecated
     @Query("SELECT pr FROM PurchaseRequest pr WHERE pr.isActive = true ORDER BY pr.createdAt DESC")
     List<PurchaseRequest> findAllActive();
 }

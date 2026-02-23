@@ -45,14 +45,30 @@ public interface BudgetRepository extends JpaRepository<Budget, Long> {
     List<Budget> findByYearAndActive(@Param("year") String year);
     
     /**
-     * 월별 예산 목록 조회
+     * 테넌트별 연도·월별 예산 목록 조회 (테넌트 필터링)
      */
+    @Query("SELECT b FROM Budget b WHERE b.tenantId = :tenantId AND b.year = :year AND b.month = :month AND b.status = 'ACTIVE' ORDER BY b.name")
+    List<Budget> findByTenantIdAndYearAndMonthAndActive(@Param("tenantId") String tenantId, @Param("year") String year, @Param("month") String month);
+    
+    /**
+     * 월별 예산 목록 조회
+     * @Deprecated 테넌트 필터링 없음! findByTenantIdAndYearAndMonthAndActive() 사용 권장
+     */
+    @Deprecated
     @Query("SELECT b FROM Budget b WHERE b.year = :year AND b.month = :month AND b.status = 'ACTIVE' ORDER BY b.name")
     List<Budget> findByYearAndMonthAndActive(@Param("year") String year, @Param("month") String month);
     
     /**
-     * 카테고리별 예산 목록 조회
+     * 테넌트별 카테고리별 예산 목록 조회 (테넌트 필터링)
      */
+    @Query("SELECT b FROM Budget b WHERE b.tenantId = :tenantId AND b.category = :category AND b.status = 'ACTIVE' ORDER BY b.year DESC, b.month DESC")
+    List<Budget> findByTenantIdAndCategoryAndActive(@Param("tenantId") String tenantId, @Param("category") String category);
+    
+    /**
+     * 카테고리별 예산 목록 조회
+     * @Deprecated 테넌트 필터링 없음! findByTenantIdAndCategoryAndActive() 사용 권장
+     */
+    @Deprecated
     @Query("SELECT b FROM Budget b WHERE b.category = :category AND b.status = 'ACTIVE' ORDER BY b.year DESC, b.month DESC")
     List<Budget> findByCategoryAndActive(@Param("category") String category);
     
@@ -88,20 +104,44 @@ public interface BudgetRepository extends JpaRepository<Budget, Long> {
     List<Object[]> getStatsByCategory();
     
     /**
-     * 예산 사용률이 높은 예산 목록 조회 (80% 이상)
+     * 테넌트별 예산 사용률이 높은 예산 목록 조회 (80% 이상, 테넌트 필터링)
      */
+    @Query("SELECT b FROM Budget b WHERE b.tenantId = :tenantId AND b.status = 'ACTIVE' AND (b.usedBudget / b.totalBudget) >= 0.8 ORDER BY (b.usedBudget / b.totalBudget) DESC")
+    List<Budget> findHighUsageBudgetsByTenantId(@Param("tenantId") String tenantId);
+    
+    /**
+     * 예산 사용률이 높은 예산 목록 조회 (80% 이상)
+     * @Deprecated 테넌트 필터링 없음! findHighUsageBudgetsByTenantId() 사용 권장
+     */
+    @Deprecated
     @Query("SELECT b FROM Budget b WHERE b.status = 'ACTIVE' AND (b.usedBudget / b.totalBudget) >= 0.8 ORDER BY (b.usedBudget / b.totalBudget) DESC")
     List<Budget> findHighUsageBudgets();
     
     /**
-     * 예산 부족 예산 목록 조회 (사용 예산이 총 예산을 초과)
+     * 테넌트별 예산 부족 예산 목록 조회 (사용 예산이 총 예산을 초과, 테넌트 필터링)
      */
+    @Query("SELECT b FROM Budget b WHERE b.tenantId = :tenantId AND b.status = 'ACTIVE' AND b.usedBudget > b.totalBudget ORDER BY (b.usedBudget - b.totalBudget) DESC")
+    List<Budget> findOverBudgetBudgetsByTenantId(@Param("tenantId") String tenantId);
+    
+    /**
+     * 예산 부족 예산 목록 조회 (사용 예산이 총 예산을 초과)
+     * @Deprecated 테넌트 필터링 없음! findOverBudgetBudgetsByTenantId() 사용 권장
+     */
+    @Deprecated
     @Query("SELECT b FROM Budget b WHERE b.status = 'ACTIVE' AND b.usedBudget > b.totalBudget ORDER BY (b.usedBudget - b.totalBudget) DESC")
     List<Budget> findOverBudgetBudgets();
     
     /**
-     * ID로 예산 조회 (관리자 정보 포함)
+     * 테넌트별 ID로 예산 조회 (관리자 정보 포함, 테넌트 필터링)
      */
+    @Query("SELECT b FROM Budget b LEFT JOIN FETCH b.manager WHERE b.tenantId = :tenantId AND b.id = :id")
+    Optional<Budget> findByTenantIdAndIdWithManager(@Param("tenantId") String tenantId, @Param("id") Long id);
+    
+    /**
+     * ID로 예산 조회 (관리자 정보 포함)
+     * @Deprecated 테넌트 필터링 없음! findByTenantIdAndIdWithManager() 사용 권장
+     */
+    @Deprecated
     @Query("SELECT b FROM Budget b LEFT JOIN FETCH b.manager WHERE b.id = :id")
     Optional<Budget> findByIdWithManager(@Param("id") Long id);
     

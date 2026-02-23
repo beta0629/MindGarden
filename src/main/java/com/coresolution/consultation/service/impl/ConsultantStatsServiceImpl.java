@@ -51,7 +51,7 @@ public class ConsultantStatsServiceImpl implements ConsultantStatsService {
         Consultant consultant = consultantRepository.findById(consultantId)
                 .orElseThrow(() -> new RuntimeException("상담사를 찾을 수 없습니다: " + consultantId));
         
-        String tenantId = com.coresolution.core.context.TenantContext.getTenantId();
+        String tenantId = com.coresolution.core.context.TenantContextHolder.getTenantId();
         if (tenantId == null) {
             log.error("❌ tenantId가 설정되지 않았습니다");
             return new HashMap<>();
@@ -141,7 +141,7 @@ public class ConsultantStatsServiceImpl implements ConsultantStatsService {
     @Override
     @Cacheable(value = "consultantCurrentClients", key = "'consultant:' + #consultantId")
     public Long calculateCurrentClients(Long consultantId) {
-        String tenantId = com.coresolution.core.context.TenantContext.getTenantId();
+        String tenantId = com.coresolution.core.context.TenantContextHolder.getTenantId();
         if (tenantId == null) {
             log.error("❌ tenantId가 설정되지 않았습니다");
             return 0L;

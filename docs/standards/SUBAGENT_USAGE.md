@@ -1,6 +1,6 @@
 # 서브에이전트 활용 표준
 
-> 코드·디자인·테스트 수정 시 서브에이전트 사용 규칙  
+> 코드·디자인·테스트·문서 수정 시 서브에이전트 사용 규칙  
 > @author MindGarden | @since 2025-02-22
 
 ## 원칙
@@ -23,7 +23,21 @@
 | 리포트·차트·대시보드 UI | core-coder | /core-solution-frontend |
 | 설정·시스템 페이지 | core-coder | /core-solution-frontend, /core-solution-atomic-design |
 | API 설계·연동 | core-coder | /core-solution-api, /core-solution-backend |
+| **작업 전 플랜·조사·영역 분석** | **explore** | /core-solution-documentation |
+| **문서 작성·정리·체계화** | **generalPurpose** | /core-solution-documentation |
 | 코드베이스 탐색·분석 | explore | — |
+
+## 플랜 서브에이전트 + 문서 전용 서브에이전트 워크플로우
+
+문서를 바탕으로 체계화된 프로젝트를 유지하려면 **작업 전 플랜**과 **문서 전용** 흐름을 함께 사용한다.
+
+| 단계 | 서브에이전트 | 용도 |
+|------|--------------|------|
+| **1. 플랜·조사** | **explore** | 문서화할 영역·기존 docs·누락 항목·우선순위 조사. "어디를 문서로 남길지" 목록 산출. |
+| **2. 문서 작성·정리** | **generalPurpose** | 조사 결과를 바탕으로 docs/ 작성·수정·재구성. **/core-solution-documentation** 스킬 적용. |
+
+- **문서 정리해줘**, **표준 문서 만들어줘** 등 요청 시: 먼저 **explore**로 현재 docs 구조·관련 코드·표준 목록을 파악한 뒤, **generalPurpose**로 실제 문서를 작성·수정한다.
+- **스킬**: `.cursor/skills/core-solution-documentation/SKILL.md` — 문서 위치 체계, 품질 체크리스트, 플랜+문서 연계 규칙.
 
 ## 누락 영역 추가 절차
 
@@ -34,4 +48,5 @@
 ## 참조
 
 - 메인 룰: `.cursor/skills/core-solution-rules/SKILL.md`
+- **문서 작성·체계화**: `.cursor/skills/core-solution-documentation/SKILL.md`
 - 레이아웃 관련: `docs/layout/README.md` → 서브에이전트 활용

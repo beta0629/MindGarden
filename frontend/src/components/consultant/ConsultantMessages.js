@@ -12,7 +12,6 @@ import './ConsultantMessages.css';
 
 /**
  * 상담사 메시지 관리 페이지
-/**
  * 내담자들과의 메시지 목록을 확인하고 새 메시지를 전송할 수 있는 화면
  */
 const ConsultantMessages = () => {
@@ -48,21 +47,19 @@ const ConsultantMessages = () => {
   ];
 
   const loadMessages = useCallback(async () => {
+    if (!user?.id) return;
     try {
       setLoading(true);
-      console.log('📨 상담사 메시지 목록 로드:', user.id);
-      
       const response = await apiGet(`/api/v1/consultation-messages/consultant/${user.id}`);
-      
-      if (response.success) {
-        console.log('✅ 메시지 목록 로드 성공:', response.data);
-        setMessages(response.data || []);
+      if (response && response.success) {
+        const raw = response.data;
+        const list = Array.isArray(raw) ? raw : (raw?.messages ?? []);
+        setMessages(list);
       } else {
-        console.error('❌ 메시지 목록 로드 실패:', response.message);
-        notificationManager.show(response.message || '메시지 목록을 불러오는데 실패했습니다.', 'error');
+        notificationManager.show(response?.message || '메시지 목록을 불러오는데 실패했습니다.', 'error');
       }
     } catch (err) {
-      console.error('❌ 메시지 로드 중 오류:', err);
+      console.error('메시지 로드 중 오류:', err);
       notificationManager.show('메시지를 불러오는 중 오류가 발생했습니다.', 'error');
     } finally {
       setLoading(false);
@@ -70,22 +67,16 @@ const ConsultantMessages = () => {
   }, [user?.id]);
 
   const loadClients = useCallback(async () => {
+    if (!user?.id) return;
     try {
-      console.log('👥 연계된 내담자 목록 로드:', user.id);
-      
-      // 표준화 2025-12-08: /api/v1/admin 경로로 통일
       const response = await apiGet(`/api/v1/admin/mappings/consultant/${user.id}/clients`);
-      
-      if (response.success) {
-        console.log('✅ 내담자 목록 로드 성공:', response.data);
+      if (response && response.success) {
         const clientData = response.data || [];
-        const clients = clientData.map(item => item.client).filter(client => client);
-        setClients(clients);
-      } else {
-        console.error('❌ 내담자 목록 로드 실패:', response.message);
+        const list = clientData.map(item => item.client).filter(Boolean);
+        setClients(list);
       }
     } catch (err) {
-      console.error('❌ 내담자 로드 중 오류:', err);
+      console.error('내담자 목록 로드 오류:', err);
     }
   }, [user?.id]);
 
@@ -148,7 +139,7 @@ const ConsultantMessages = () => {
 
       const response = await apiPost('/api/v1/consultation-messages', {
         ...newMessage,
-        consultantId: user.id
+        consultantId: user?.id
       });
 
       if (response.success) {
@@ -175,16 +166,15 @@ const ConsultantMessages = () => {
   // 메시지 상세 보기
   const handleMessageClick = async (message) => {
     setSelectedMessage(message);
-    
-    // 읽지 않은 메시지인 경우 읽음 처리
-    if (!message.isRead) {
-      await markMessageAsRead(message.id);
-      // 로컬 메시지 목록 업데이트
-      setMessages(prevMessages =>
-        prevMessages.map(msg =>
-          msg.id === message.id ? { ...msg, isRead: true } : msg
-        )
-      );
+    if (!message.isRead && markMessageAsRead) {
+      try {
+        await markMessageAsRead(message.id);
+        setMessages(prev =>
+          prev.map(msg => (msg.id === message.id ? { ...msg, isRead: true } : msg))
+        );
+      } catch (e) {
+        console.error('읽음 처리 오류:', e);
+      }
     }
   };
 
@@ -343,7 +333,7 @@ const ConsultantMessages = () => {
                       </h4>
                       
                       <p className="mg-v2-text-sm mg-v2-color-text-secondary mg-mb-md">
-                        {message.content.substring(0, 100)}{message.content.length > 100 && '...'}
+                        {(message.content || '').substring(0, 100)}{(message.content || '').length > 100 ? '...' : ''}
                       </p>
                       
                       <div className="mg-flex mg-justify-between mg-align-center mg-pt-md mg-border-top">

@@ -14,13 +14,12 @@ import '../../styles/unified-design-tokens.css';
 
 /**
  * 관리자 메시지 관리 페이지
-/**
  * 모든 상담사-내담자 메시지를 조회하고 관리할 수 있는 화면
  */
 const AdminMessages = () => {
   const navigate = useNavigate();
   const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
-  const { unreadCount } = useNotification(); // loadUnreadMessageCount는 이벤트 기반으로 처리
+  const { unreadCount = 0 } = useNotification();
   
   const [loading, setLoading] = useState(true);
   const [messages, setMessages] = useState([]);
@@ -28,11 +27,6 @@ const AdminMessages = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('ALL');
   const [filterStatus, setFilterStatus] = useState('ALL');
-
-  // selectedMessage 상태 추적
-  useEffect(() => {
-    console.log('🔄 selectedMessage 상태 변경:', selectedMessage ? `ID: ${selectedMessage.id}` : 'null');
-  }, [selectedMessage]);
 
   // 메시지 유형 옵션
   const MESSAGE_TYPES = {
@@ -44,70 +38,30 @@ const AdminMessages = () => {
     URGENT: { label: '긴급', color: 'var(--color-danger)' }
   };
 
-  const loadMessages = useCallback(async() => {
+  const loadMessages = useCallback(async () => {
     try {
       setLoading(true);
-      console.log('📨 관리자 메시지 목록 로드');
-      console.log('👤 현재 사용자:', { email: user?.email, role: user?.role, id: user?.id });
-      
-      // 관리자는 모든 메시지 조회
-      console.log('🌐 API 호출: /api/v1/consultation-messages/all');
       const response = await apiGet('/api/v1/consultation-messages/all');
-      console.log('📨 API 응답:', response);
-      
       if (response && response.success) {
-        console.log('✅ 메시지 목록 로드 성공:', response.data);
-        setMessages(response.data || []);
-        console.log('✅ setLoading(false) 호출 예정');
+        setMessages(Array.isArray(response.data) ? response.data : []);
       } else {
-        console.error('❌ 메시지 목록 로드 실패:', response?.message);
-        console.error('❌ 전체 응답:', response);
-        notificationManager.error(response?.message || '메시지 목록을 불러오는데 실패했습니다.');
+        notificationManager.show(response?.message || '메시지 목록을 불러오는데 실패했습니다.', 'error');
       }
     } catch (err) {
-      console.error('❌ 메시지 로드 중 오류:', err);
-      console.error('❌ 오류 상세:', err.message, err.stack);
-      notificationManager.error('메시지를 불러오는 중 오류가 발생했습니다.');
+      console.error('메시지 로드 중 오류:', err);
+      notificationManager.show('메시지를 불러오는 중 오류가 발생했습니다.', 'error');
     } finally {
-      console.log('✅ finally 블록 실행 - setLoading(false)');
       setLoading(false);
     }
   }, []);
 
   // 데이터 로드
   useEffect(() => {
-    console.log('🔍 메시지 관리 useEffect 실행:', { 
-      isLoggedIn, 
-      userId: user?.id, 
-      sessionLoading,
-      userEmail: user?.email 
-    });
-    
-    const loadData = async () => {
-      // sessionLoading 중이면 대기
-      if (sessionLoading) {
-        console.log('⏳ 세션 로딩 중...');
-        return;
-      }
-      
-      // user 정보가 있으면 로그인된 것으로 간주
-      if (user?.id) {
-        console.log('✅ 사용자 정보 확인됨, loadMessages 호출');
-        await loadMessages();
-      } else {
-        console.log('❌ 사용자 정보 없음 - sessionManager에서 직접 확인');
-        // SessionManager에서 직접 사용자 확인
-        const sessionUser = sessionManager.getUser();
-        if (sessionUser?.id) {
-          console.log('✅ sessionManager에서 사용자 확인됨:', sessionUser.email);
-          await loadMessages();
-        } else {
-          console.log('❌ sessionManager에도 사용자 정보 없음');
-        }
-      }
-    };
-    
-    loadData();
+    if (sessionLoading) return;
+    const sessionUser = sessionManager.getUser();
+    if (user?.id || sessionUser?.id) {
+      loadMessages();
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id, sessionLoading]);
 
@@ -127,39 +81,25 @@ const AdminMessages = () => {
   });
 
   // 메시지 상세 보기
-  const handleMessageClick = async(message) => {
-    console.log('🖱️ 메시지 클릭:', message.id, message.title, message.isRead);
+  const handleMessageClick = async (message) => {
     try {
-      // 상세 조회 API 호출 (자동 읽음 처리)
-      console.log('📞 API 호출:', `/api/v1/consultation-messages/${message.id}`);
       const response = await apiGet(`/api/v1/consultation-messages/${message.id}`);
-      console.log('✅ API 응답:', response);
-      
-      if (response.success) {
-        console.log('✅ 메시지 상세 데이터:', response.data);
+      if (response && response.success) {
         setSelectedMessage(response.data);
       } else {
-        console.warn('⚠️ API 응답 실패:', response);
-        // 실패 시 기존 데이터 사용
         setSelectedMessage(message);
       }
     } catch (error) {
-      console.error('❌ 메시지 상세 조회 오류:', error);
-      // 오류 시 기존 데이터 사용
+      console.error('메시지 상세 조회 오류:', error);
       setSelectedMessage(message);
     }
   };
 
   // 모달 닫기
-  const closeModal = async() => {
-    console.log('🔒 모달 닫기 시작');
+  const closeModal = async () => {
     setSelectedMessage(null);
-    
-    // 목록 새로고침 (읽음 상태 반영)
     await loadMessages();
-    // 메시지 읽음 이벤트 발생 (NotificationContext가 카운트 갱신)
     window.dispatchEvent(new Event('message-read'));
-    console.log('✅ 모달 닫기 완료');
   };
 
   // 메시지 유형별 색상
@@ -181,7 +121,6 @@ const AdminMessages = () => {
   // 권한 체크 (sessionManager에서 직접 확인)
   const sessionUser = sessionManager.getUser();
   if (!sessionUser) {
-    console.log('❌ 권한 체크 실패 - sessionUser 없음');
     return (
       <AdminCommonLayout>
         <div className="mg-v2-dashboard-layout">
@@ -193,8 +132,6 @@ const AdminMessages = () => {
       </AdminCommonLayout>
     );
   }
-  
-  console.log('✅ 권한 체크 통과:', sessionUser.email);
 
   return (
     <AdminCommonLayout>
@@ -274,7 +211,6 @@ const AdminMessages = () => {
                     variant="default"
                     className={`mg-v2-message-card ${!message.isRead ? 'mg-v2-message-card-unread' : ''}`}
                     onClick={(e) => {
-                      console.log('🖱️ 카드 클릭 이벤트:', message.id);
                       e.stopPropagation();
                       handleMessageClick(message);
                     }}

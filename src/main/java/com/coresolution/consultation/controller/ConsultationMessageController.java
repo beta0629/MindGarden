@@ -157,7 +157,7 @@ public class ConsultationMessageController extends BaseApiController {
         Page<ConsultationMessage> messages = consultationMessageService.getConsultantMessages(
             consultantId, clientId, status, isRead, isImportant, isUrgent, pageable);
         
-        // 안전한 데이터 추출
+        // 안전한 데이터 추출 (상담사 화면에서 내담자명 표시용 clientId, clientName 포함)
         List<Map<String, Object>> messageData = messages.getContent().stream()
             .map(message -> {
                 Map<String, Object> data = new HashMap<>();
@@ -167,6 +167,8 @@ public class ConsultationMessageController extends BaseApiController {
                 data.put("senderType", message.getSenderType());
                 data.put("senderId", message.getSenderId());
                 data.put("receiverId", message.getReceiverId());
+                data.put("clientId", message.getClientId());
+                data.put("clientName", getUserName(message.getClientId(), "CLIENT"));
                 data.put("messageType", message.getMessageType());
                 data.put("status", message.getStatus());
                 data.put("isImportant", message.getIsImportant());

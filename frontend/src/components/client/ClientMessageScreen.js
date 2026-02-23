@@ -10,7 +10,6 @@ import './ClientMessageScreen.css';
 
 /**
  * 내담자 메시지 확인 화면
-/**
  * 상담사로부터 받은 메시지를 확인하고 답장할 수 있는 화면
  */
 const ClientMessageScreen = () => {
@@ -268,9 +267,9 @@ const ClientMessageScreen = () => {
                   </div>
                 </div>
                 <div className="client-message-screen-message-content">
-                  {message.content.length > 100 
-                    ? `${message.content.substring(0, 100)}...` 
-                    : message.content}
+                  {(message.content || '').length > 100
+                    ? `${(message.content || '').substring(0, 100)}...`
+                    : (message.content || '')}
                 </div>
                 <div className="client-message-screen-message-footer">
                   <span>상담사</span>
@@ -307,7 +306,7 @@ const ClientMessageScreen = () => {
             </div>
             
             <div className="client-message-screen-message-detail-content">
-              {selectedMessage.content}
+              {selectedMessage.content ?? ''}
             </div>
             
             <div className="client-message-screen-reply-section">

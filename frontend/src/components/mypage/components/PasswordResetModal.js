@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { API_BASE_URL } from '../../../constants/api';
+import UnifiedModal from '../../common/modals/UnifiedModal';
 import './PasswordResetModal.css';
 
 /**
@@ -108,22 +109,15 @@ const PasswordResetModal = ({ isOpen, onClose, onSuccess }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="password-reset-modal-overlay">
-      <div className="password-reset-modal">
-        <div className="password-reset-modal-header">
-          <h3>
-            <i className="bi bi-key"></i>
-            비밀번호 찾기
-          </h3>
-          <button 
-            className="close-btn" 
-            onClick={onClose}
-            disabled={isLoading}
-          >
-            <i className="bi bi-x"></i>
-          </button>
-        </div>
-
+    <UnifiedModal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="비밀번호 찾기"
+      size="medium"
+      backdropClick
+      showCloseButton
+      loading={isLoading}
+    >
         <div className="password-reset-modal-content">
           {!isEmailSent ? (
             <form onSubmit={handleSubmit} className="password-reset-form">
@@ -226,8 +220,7 @@ const PasswordResetModal = ({ isOpen, onClose, onSuccess }) => {
             </div>
           )}
         </div>
-      </div>
-    </div>
+    </UnifiedModal>
   );
 };
 

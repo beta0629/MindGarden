@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import ReactDOM from 'react-dom';
 import { FileBarChart, XCircle, Download, Calendar, Building, DollarSign, TrendingUp } from 'lucide-react';
-// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { apiGet } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
+import UnifiedModal from '../common/modals/UnifiedModal';
 
 /**
  * ERP 보고서 모달 컴포넌트
@@ -142,21 +141,16 @@ const ErpReportModal = ({ isOpen, onClose }) => {
 
     if (!isOpen) return null;
 
-    const portalTarget = document.body || document.createElement('div');
-
-    return ReactDOM.createPortal(
-        <div className="mg-v2-modal-overlay" onClick={onClose}>
-            <div className="mg-v2-modal mg-v2-modal-large" onClick={(e) => e.stopPropagation()}>
-                <div className="mg-v2-modal-header">
-                    <div className="mg-v2-modal-title-wrapper">
-                        <FileBarChart size={28} className="mg-v2-modal-title-icon" />
-                        <h2 className="mg-v2-modal-title">ERP 보고서</h2>
-                    </div>
-                    <button className="mg-v2-modal-close" onClick={handleClose} disabled={loading} aria-label="닫기">
-                        <XCircle size={24} />
-                    </button>
-                </div>
-
+    return (
+        <UnifiedModal
+            isOpen={isOpen}
+            onClose={handleClose}
+            title="ERP 보고서"
+            size="large"
+            backdropClick
+            showCloseButton
+            loading={loading}
+        >
                 <div className="mg-v2-modal-body">
                     {/* 보고서 설정 */}
                     <div className="mg-v2-form-section">
@@ -359,9 +353,7 @@ const ErpReportModal = ({ isOpen, onClose }) => {
                         </div>
                     )}
                 </div>
-            </div>
-        </div>,
-        portalTarget
+        </UnifiedModal>
     );
 };
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import ReactDOM from 'react-dom';
 import { useNavigate } from 'react-router-dom';
+import UnifiedModal from '../common/modals/UnifiedModal';
 import {
   User,
   Package,
@@ -10,8 +10,7 @@ import {
   CheckCircle,
   Search,
   Check,
-  AlertCircle,
-  XCircle
+  AlertCircle
 } from 'lucide-react';
 import { apiGet, apiPost } from '../../utils/ajax';
 import { getAllConsultantsWithStats } from '../../utils/consultantHelper';
@@ -83,22 +82,6 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
-
-  useEffect(() => {
-    const handleEscape = (e) => {
-      if (e.key === 'Escape' && isOpen) {
-        handleClose();
-      }
-    };
-    if (isOpen) {
-      document.addEventListener('keydown', handleEscape);
-      document.body.style.overflow = 'hidden';
-    }
-    return () => {
-      document.removeEventListener('keydown', handleEscape);
-      document.body.style.overflow = '';
-    };
-  }, [isOpen]);
 
   const loadPackageCodes = useCallback(async () => {
     try {
@@ -412,42 +395,9 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
     </div>
   );
 
-  if (!isOpen) return null;
-
-  const modalSizeClass = windowWidth <= 768 ? 'mg-v2-modal-medium' : 'mg-v2-modal-large';
-  const handleOverlayClick = (e) => {
-    if (e.target === e.currentTarget) {
-      /* backdropClick: false - 클릭 시 닫지 않음 */
-    }
-  };
-
-  return ReactDOM.createPortal(
-    <div
-      className="mg-v2-modal-overlay mg-v2-ad-b0kla-modal-overlay"
-      onClick={handleOverlayClick}
-    >
-      <div
-        className={`mg-v2-ad-b0kla mg-v2-modal ${modalSizeClass} mg-v2-ad-b0kla-modal mg-v2-mapping-creation-modal-wrapper ${loading ? 'mg-v2-modal--loading' : ''}`}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <header className="mg-v2-modal-header mg-v2-ad-b0kla-modal__header">
-          <div className="mg-v2-modal-title-wrapper">
-            <Link2 size={24} className="mg-v2-modal-title-icon mg-v2-ad-b0kla-modal__icon" />
-            <h2 className="mg-v2-modal-title mg-v2-ad-b0kla-modal__title">새 매칭 생성</h2>
-          </div>
-          <button
-            type="button"
-            className="mg-v2-modal-close mg-v2-ad-b0kla-modal__close"
-            onClick={handleClose}
-            aria-label="닫기"
-            disabled={loading}
-          >
-            <XCircle size={24} />
-          </button>
-        </header>
-        <div className="mg-v2-modal-body mg-v2-ad-b0kla-modal__body">
-          <div className="mg-v2-ad-b0kla mg-v2-mapping-creation-modal">
-
+  const modalContent = (
+    <div className="mg-v2-mapping-creation-modal-wrapper">
+      <div className="mg-v2-ad-b0kla mg-v2-mapping-creation-modal">
         {/* 진행 단계 표시기 (mg-v2-ad-stepper - 스케줄 모달과 동일) */}
         <nav className="mg-v2-ad-stepper" aria-label="매칭 생성 단계">
           {STEPS_CONFIG.map((s, index) => {
@@ -722,26 +672,24 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
             </div>
           </section>
         )}
-          </div>
-        </div>
-        <footer className="mg-v2-modal-footer mg-v2-ad-b0kla-modal__footer">
-          {renderActions()}
-        </footer>
-        {loading && (
-          <div className="mg-v2-modal__loading-overlay">
-            <div className="mg-loading-container mg-loading-container--centered">
-              <div className="mg-loading mg-loading--medium mg-loading--spinner">
-                <div className="mg-loading-spinner">
-                  <div className="mg-loading-spinner-icon"></div>
-                </div>
-              </div>
-              <div className="mg-loading-text">처리 중...</div>
-            </div>
-          </div>
-        )}
       </div>
-    </div>,
-    document.body
+    </div>
+  );
+
+  return (
+    <UnifiedModal
+      isOpen={isOpen}
+      onClose={handleClose}
+      title="새 매칭 생성"
+      size={windowWidth <= 768 ? 'medium' : 'large'}
+      className="mg-v2-ad-b0kla"
+      backdropClick={false}
+      showCloseButton={true}
+      loading={loading}
+      actions={renderActions()}
+    >
+      {modalContent}
+    </UnifiedModal>
   );
 };
 

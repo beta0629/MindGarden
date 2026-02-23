@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import notificationManager from '../../utils/notification';
-import { X, Calendar, Clock, User, AlertTriangle } from 'lucide-react';
+import { X, Calendar, User } from 'lucide-react';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet } from '../../utils/ajax';
 import { getAllConsultantsWithStats } from '../../utils/consultantHelper';
 import { API_BASE_URL } from '../../constants/api';
 import csrfTokenManager from '../../utils/csrfTokenManager';
+import UnifiedModal from '../common/modals/UnifiedModal';
 
 /**
  * 관리자용 휴가 관리 모달 컴포넌트
@@ -473,22 +473,16 @@ const VacationManagementModal = ({
     }
 
     return (
-        <div className="mg-v2-modal-overlay mg-v2-ad-b0kla" onClick={onClose}>
-            <div className="mg-v2-modal mg-v2-modal-large mg-v2-ad-b0kla" onClick={(e) => e.stopPropagation()}>
-                <div className="mg-v2-modal-header">
-                    <div className="mg-v2-flex mg-gap-sm mg-align-center">
-                        <Calendar size={24} />
-                        <h3 className="mg-v2-modal-title">휴가 관리</h3>
-                    </div>
-                    <button 
-                        className="mg-v2-modal-close" 
-                        onClick={onClose}
-                        disabled={loading}
-                    >
-                        <X size={20} />
-                    </button>
-                </div>
-
+        <UnifiedModal
+            isOpen={isOpen}
+            onClose={onClose}
+            title="휴가 관리"
+            size="large"
+            className="mg-v2-ad-b0kla"
+            backdropClick
+            showCloseButton
+            loading={loading}
+        >
                 <div className="mg-v2-modal-body">
                     {/* 상담사 선택 (관리자만) */}
                     {userRole !== 'CONSULTANT' && (
@@ -663,8 +657,7 @@ const VacationManagementModal = ({
                         </div>
                     )}
                 </div>
-            </div>
-        </div>
+        </UnifiedModal>
     );
 };
 

@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import ReactDOM from 'react-dom';
-import { Calendar, XCircle, AlertCircle } from 'lucide-react';
-// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import { Calendar, XCircle } from 'lucide-react';
 import notificationManager from '../../utils/notification';
 import { apiGet } from '../../utils/ajax';
 import { API_BASE_URL } from '../../constants/api';
 import csrfTokenManager from '../../utils/csrfTokenManager';
+import UnifiedModal from '../common/modals/UnifiedModal';
 
 /**
  * 상담사용 휴가 등록 모달
@@ -146,33 +145,36 @@ const ConsultantVacationModal = ({
 
     if (!isOpen) return null;
 
-    const portalTarget = document.body || document.createElement('div');
-
-    return ReactDOM.createPortal(
-        <div className="mg-v2-modal-overlay mg-v2-ad-b0kla" onClick={onClose}>
-            <div className="mg-v2-modal mg-v2-modal-medium mg-v2-ad-b0kla" onClick={(e) => e.stopPropagation()}>
-                {/* 헤더 */}
-                <div className="mg-v2-modal-header">
-                    <div className="mg-v2-modal-title-wrapper">
-                        <Calendar size={28} className="mg-v2-modal-title-icon" />
-                        <div>
-                            <h2 className="mg-v2-modal-title">휴가 등록</h2>
-                            {selectedDate && (
-                                <p className="mg-v2-modal-subtitle">{formatDate(selectedDate)}</p>
-                            )}
-                        </div>
-                    </div>
-                    <button 
-                        className="mg-v2-modal-close" 
+    return (
+        <UnifiedModal
+            isOpen={isOpen}
+            onClose={onClose}
+            title="휴가 등록"
+            subtitle={selectedDate ? formatDate(selectedDate) : ''}
+            size="medium"
+            className="mg-v2-ad-b0kla"
+            backdropClick
+            showCloseButton
+            loading={loading}
+            actions={
+                <>
+                    <button
+                        className="mg-v2-button mg-v2-button--secondary"
                         onClick={onClose}
                         disabled={loading}
-                        aria-label="닫기"
                     >
-                        <XCircle size={24} />
+                        취소
                     </button>
-                </div>
-
-                {/* 본문 */}
+                    <button
+                        className="mg-v2-button mg-v2-button--primary"
+                        onClick={handleSubmit}
+                        disabled={loading}
+                    >
+                        {loading ? '등록 중...' : '휴가 등록'}
+                    </button>
+                </>
+            }
+        >
                 <div className="mg-v2-modal-body">
                     <div className="mg-v2-form-group">
                         <label className="mg-v2-form-label">
@@ -209,27 +211,7 @@ const ConsultantVacationModal = ({
                         />
                     </div>
                 </div>
-
-                {/* 푸터 */}
-                <div className="mg-v2-modal-footer">
-                    <button 
-                        className="mg-v2-button mg-v2-button--secondary" 
-                        onClick={onClose}
-                        disabled={loading}
-                    >
-                        취소
-                    </button>
-                    <button 
-                        className="mg-v2-button mg-v2-button--primary" 
-                        onClick={handleSubmit}
-                        disabled={loading}
-                    >
-                        {loading ? '등록 중...' : '휴가 등록'}
-                    </button>
-                </div>
-            </div>
-        </div>,
-        portalTarget
+        </UnifiedModal>
     );
 };
 

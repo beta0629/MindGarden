@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import ReactDOM from 'react-dom';
 import { Building, XCircle, MapPin, Check } from 'lucide-react';
-// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
-import { API_ENDPOINTS } from '../../constants/api';
 import notificationManager from '../../utils/notification';
 import { apiPost } from '../../utils/ajax';
+import UnifiedModal from './modals/UnifiedModal';
 
 /**
  * 지점 매핑 모달 컴포넌트
@@ -135,21 +133,42 @@ const BranchMappingModal = ({ isOpen, onClose, onSuccess }) => {
     return null;
   }
 
-  const portalTarget = document.body || document.createElement('div');
-
-  return ReactDOM.createPortal(
-    <div className="mg-v2-modal-overlay" onClick={onClose}>
-      <div className="mg-v2-modal" onClick={(e) => e.stopPropagation()}>
-        <div className="mg-v2-modal-header">
-          <div className="mg-v2-modal-title-wrapper">
-            <Building size={28} className="mg-v2-modal-title-icon" />
-            <h2 className="mg-v2-modal-title">지점 매핑 설정</h2>
-          </div>
-          <button className="mg-v2-modal-close" onClick={handleClose} disabled={isLoading} aria-label="닫기">
-            <XCircle size={24} />
+  return (
+    <UnifiedModal
+      isOpen={isOpen}
+      onClose={handleClose}
+      title="지점 매핑 설정"
+      size="medium"
+      backdropClick
+      showCloseButton
+      loading={isLoading}
+      actions={
+        <>
+          <button
+            type="button"
+            className="mg-v2-button mg-v2-button--secondary"
+            onClick={handleClose}
+            disabled={isLoading}
+          >
+            <XCircle size={20} className="mg-v2-icon-inline" />
+            취소
           </button>
-        </div>
-        
+          <button
+            type="submit"
+            form="branch-mapping-form"
+            className="mg-v2-button mg-v2-button--primary"
+            disabled={isLoading || !selectedBranchCode || isLoadingBranches}
+          >
+            {isLoading ? <div className="mg-loading">로딩중...</div> : (
+              <>
+                <Check size={20} className="mg-v2-icon-inline" />
+                지점 매핑
+              </>
+            )}
+          </button>
+        </>
+      }
+    >
         <div className="mg-v2-modal-body">
           <div className="mg-v2-info-box mg-v2-mb-lg">
             <MapPin size={20} className="mg-v2-section-title-icon" />
@@ -159,7 +178,7 @@ const BranchMappingModal = ({ isOpen, onClose, onSuccess }) => {
             </div>
           </div>
           
-          <form onSubmit={handleBranchMapping}>
+          <form id="branch-mapping-form" onSubmit={handleBranchMapping}>
             <div className="mg-v2-form-group">
               <label htmlFor="branchSelect" className="mg-v2-form-label">
                 <Building size={16} className="mg-v2-form-label-icon" />
@@ -193,35 +212,9 @@ const BranchMappingModal = ({ isOpen, onClose, onSuccess }) => {
                 {error}
               </div>
             )}
-            
-            <div className="mg-v2-modal-footer">
-              <button
-                type="button"
-                className="mg-v2-button mg-v2-button--secondary"
-                onClick={handleClose}
-                disabled={isLoading}
-              >
-                <XCircle size={20} className="mg-v2-icon-inline" />
-                취소
-              </button>
-              <button
-                type="submit"
-                className="mg-v2-button mg-v2-button--primary"
-                disabled={isLoading || !selectedBranchCode || isLoadingBranches}
-              >
-                {isLoading ? <div className="mg-loading">로딩중...</div> : (
-                  <>
-                    <Check size={20} className="mg-v2-icon-inline" />
-                    지점 매핑
-                  </>
-                )}
-              </button>
-            </div>
           </form>
         </div>
-      </div>
-    </div>,
-    portalTarget
+    </UnifiedModal>
   );
 };
 

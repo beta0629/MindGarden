@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import ReactDOM from 'react-dom';
 import { MessageSquare, XCircle, Send, User, Bell, AlertTriangle } from 'lucide-react';
-// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { useSession } from '../../contexts/SessionContext';
 import { apiPost, apiGet } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
+import UnifiedModal from '../common/modals/UnifiedModal';
 
 /**
  * 내담자 메시지 전송 모달 컴포넌트
@@ -153,22 +152,42 @@ const MessageSendModal = ({
 
   if (!isOpen) return null;
 
-  const portalTarget = document.body || document.createElement('div');
-
-  return ReactDOM.createPortal(
-    <div className="mg-v2-modal-overlay" onClick={onClose}>
-      <div className="mg-v2-modal mg-v2-modal-medium" onClick={(e) => e.stopPropagation()}>
-        {/* 헤더 */}
-        <div className="mg-v2-modal-header">
-          <div className="mg-v2-modal-title-wrapper">
-            <MessageSquare size={28} className="mg-v2-modal-title-icon" />
-            <h2 className="mg-v2-modal-title">내담자에게 메시지 보내기</h2>
-          </div>
-          <button className="mg-v2-modal-close" onClick={onClose} aria-label="닫기">
-            <XCircle size={24} />
+  return (
+    <UnifiedModal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="내담자에게 메시지 보내기"
+      size="medium"
+      backdropClick
+      showCloseButton
+      loading={sending}
+      actions={
+        <>
+          <button
+            type="button"
+            onClick={onClose}
+            className="mg-v2-button mg-v2-button--secondary"
+            disabled={sending}
+          >
+            <XCircle size={20} className="mg-v2-icon-inline" />
+            취소
           </button>
-        </div>
-
+          <button
+            type="button"
+            onClick={handleSend}
+            className="mg-v2-button mg-v2-button--primary"
+            disabled={sending}
+          >
+            {sending ? <div className="mg-loading">로딩중...</div> : (
+              <>
+                <Send size={20} className="mg-v2-icon-inline" />
+                메시지 전송
+              </>
+            )}
+          </button>
+        </>
+      }
+    >
         <div className="mg-v2-modal-body">
           {/* 내담자 정보 */}
           {clientData && (
@@ -251,42 +270,7 @@ const MessageSendModal = ({
             </div>
           </div>
         </div>
-
-        {/* 푸터 */}
-        <div className="mg-v2-modal-footer">
-          <button
-            type="button"
-            onClick={onClose}
-            className="mg-v2-button mg-v2-button--secondary"
-            disabled={sending}
-          >
-            <XCircle size={20} className="mg-v2-icon-inline" />
-            취소
-          </button>
-          <button
-            type="button"
-            onClick={handleSend}
-            className="mg-v2-button mg-v2-button--primary"
-            disabled={sending}
-          >
-            {sending ? <div className="mg-loading">로딩중...</div> : (
-              <>
-                <Send size={20} className="mg-v2-icon-inline" />
-                메시지 전송
-              </>
-            )}
-          </button>
-        </div>
-
-        {/* 로딩 오버레이 */}
-        {sending && (
-          <div className="mg-v2-loading-overlay">
-            <div className="mg-loading">로딩중...</div>
-          </div>
-        )}
-      </div>
-    </div>,
-    portalTarget
+    </UnifiedModal>
   );
 };
 

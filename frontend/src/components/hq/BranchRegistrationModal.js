@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
-import ReactDOM from 'react-dom';
-import { Building, XCircle, Search, MapPin, Phone, Mail, Clock, Users, FileText, Save, Plus } from 'lucide-react';
-// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import { Building, XCircle, Search, MapPin, Phone, Mail, Clock, Users, FileText, Plus } from 'lucide-react';
 import { apiPost } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
+import UnifiedModal from '../common/modals/UnifiedModal';
 
 /**
  * 지점 등록 모달 컴포넌트
@@ -204,22 +203,43 @@ const handleClose = () => {
 
 if (!show) return null;
 
-const portalTarget = document.body || document.createElement('div');
-
-return ReactDOM.createPortal(
-    <div className="mg-v2-modal-overlay" onClick={onHide}>
-        <div className="mg-v2-modal mg-v2-modal-large" onClick={(e) => e.stopPropagation()}>
-            <div className="mg-v2-modal-header">
-                <div className="mg-v2-modal-title-wrapper">
-                    <Building size={28} className="mg-v2-modal-title-icon" />
-                    <h2 className="mg-v2-modal-title">새 지점 등록</h2>
-                </div>
-                <button className="mg-v2-modal-close" onClick={handleClose} disabled={loading} aria-label="닫기">
-                    <XCircle size={24} />
+return (
+    <UnifiedModal
+        isOpen={show}
+        onClose={handleClose}
+        title="새 지점 등록"
+        size="large"
+        backdropClick
+        showCloseButton
+        loading={loading}
+        actions={
+            <>
+                <button
+                    type="button"
+                    className="mg-v2-button mg-v2-button--secondary"
+                    onClick={handleClose}
+                    disabled={loading}
+                >
+                    <XCircle size={20} className="mg-v2-icon-inline" />
+                    취소
                 </button>
-            </div>
-
-            <form onSubmit={handleSubmit}>
+                <button
+                    type="submit"
+                    form="branch-registration-form"
+                    className="mg-v2-button mg-v2-button--primary"
+                    disabled={loading}
+                >
+                    {loading ? <div className="mg-loading">로딩중...</div> : (
+                        <>
+                            <Plus size={20} className="mg-v2-icon-inline" />
+                            지점 등록
+                        </>
+                    )}
+                </button>
+            </>
+        }
+    >
+            <form id="branch-registration-form" onSubmit={handleSubmit}>
                 <div className="mg-v2-modal-body">
                     <div className="mg-v2-info-box mg-v2-mb-lg">
                         <Building size={20} className="mg-v2-section-title-icon" />
@@ -499,34 +519,8 @@ return ReactDOM.createPortal(
                         </div>
                     </div>
                 </div>
-
-                <div className="mg-v2-modal-footer">
-                    <button 
-                        type="button"
-                        className="mg-v2-button mg-v2-button--secondary"
-                        onClick={handleClose}
-                        disabled={loading}
-                    >
-                        <XCircle size={20} className="mg-v2-icon-inline" />
-                        취소
-                    </button>
-                    <button 
-                        type="submit"
-                        className="mg-v2-button mg-v2-button--primary"
-                        disabled={loading}
-                    >
-                        {loading ? <div className="mg-loading">로딩중...</div> : (
-                            <>
-                                <Plus size={20} className="mg-v2-icon-inline" />
-                                지점 등록
-                            </>
-                        )}
-                    </button>
-                </div>
             </form>
-        </div>
-    </div>,
-    portalTarget
+    </UnifiedModal>
 );
 };
 

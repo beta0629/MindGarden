@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import ReactDOM from 'react-dom';
 import { XCircle, Lock, AlertTriangle } from 'lucide-react';
 import MGButton from '../common/MGButton';
+import UnifiedModal from '../common/modals/UnifiedModal';
 
 /**
  * 비밀번호 초기화 모달 컴포넌트
@@ -49,23 +49,35 @@ const PasswordResetModal = ({
     const userTypeLabel = userType === 'client' ? '내담자' : '상담사';
     const userName = user?.name || user?.email || '사용자';
 
-    return ReactDOM.createPortal(
-        <div className="mg-modal-overlay" onClick={onClose}>
-            <div className="mg-modal-content mg-modal-content--password-reset" onClick={(e) => e.stopPropagation()}>
-                <div className="mg-modal-header">
-                    <div className="mg-modal-header-content">
-                        <Lock className="mg-modal-icon" size={24} />
-                        <h2 className="mg-modal-title">비밀번호 초기화</h2>
-                    </div>
-                    <button
-                        className="mg-modal-close"
+    return (
+        <UnifiedModal
+            isOpen={!!user}
+            onClose={onClose}
+            title="비밀번호 초기화"
+            size="medium"
+            backdropClick
+            showCloseButton
+            actions={
+                <>
+                    <MGButton
+                        type="button"
+                        variant="secondary"
                         onClick={onClose}
-                        aria-label="닫기"
+                        preventDoubleClick={true}
                     >
-                        <XCircle size={24} />
-                    </button>
-                </div>
-
+                        취소
+                    </MGButton>
+                    <MGButton
+                        type="submit"
+                        form="admin-password-reset-form"
+                        variant="primary"
+                        preventDoubleClick={true}
+                    >
+                        비밀번호 초기화
+                    </MGButton>
+                </>
+            }
+        >
                 <div className="mg-modal-body">
                     <div className="mg-password-reset-info">
                         <AlertTriangle className="mg-info-icon" size={20} />
@@ -77,7 +89,7 @@ const PasswordResetModal = ({
                         </p>
                     </div>
 
-                    <form onSubmit={handleSubmit} className="mg-password-reset-form">
+                    <form id="admin-password-reset-form" onSubmit={handleSubmit} className="mg-password-reset-form">
                         <div className="mg-form-group">
                             <label htmlFor="newPassword" className="mg-form-label">
                                 새 비밀번호
@@ -136,28 +148,9 @@ const PasswordResetModal = ({
                             )}
                         </div>
 
-                        <div className="mg-modal-footer">
-                            <MGButton
-                                type="button"
-                                variant="secondary"
-                                onClick={onClose}
-                                preventDoubleClick={true}
-                            >
-                                취소
-                            </MGButton>
-                            <MGButton
-                                type="submit"
-                                variant="primary"
-                                preventDoubleClick={true}
-                            >
-                                비밀번호 초기화
-                            </MGButton>
-                        </div>
                     </form>
                 </div>
-            </div>
-        </div>,
-        document.body
+        </UnifiedModal>
     );
 };
 

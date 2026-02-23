@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import ReactDOM from 'react-dom';
 import { DollarSign, XCircle, CheckCircle } from 'lucide-react';
 import notificationManager from '../../../utils/notification';
 import { apiPost } from '../../../utils/ajax';
+import UnifiedModal from '../../common/modals/UnifiedModal';
 
 /**
  * 매칭 입금 확인 모달 컴포넌트
@@ -99,27 +99,42 @@ const MappingDepositModal = ({
 
     if (!isOpen) return null;
 
-    // document.body가 준비되지 않았을 때를 대비한 안전한 처리
-    const portalTarget = document.body || document.createElement('div');
-
-    return ReactDOM.createPortal(
-        <div className="mg-v2-modal-overlay mg-v2-ad-b0kla" onClick={handleClose}>
-            <div className="mg-v2-modal mg-v2-modal-medium mg-v2-ad-b0kla" onClick={(e) => e.stopPropagation()}>
-                <header className="mg-v2-modal-header">
-                    <div className="mg-v2-modal-title-section">
-                        <DollarSign size={24} className="mg-v2-modal-title-icon" />
-                        <h2 className="mg-v2-modal-title">입금 확인</h2>
-                    </div>
+    return (
+        <UnifiedModal
+            isOpen={isOpen}
+            onClose={handleClose}
+            title="입금 확인"
+            size="medium"
+            className="mg-v2-ad-b0kla"
+            backdropClick
+            showCloseButton
+            loading={isLoading}
+            actions={
+                <>
                     <button
                         type="button"
-                        onClick={handleClose}
-                        className="mg-v2-modal-close"
-                        aria-label="닫기"
+                        className="mg-v2-button mg-v2-button-outline"
+                        onClick={(e) => {
+                            e?.preventDefault();
+                            e?.stopPropagation();
+                            handleClose();
+                        }}
+                        disabled={isLoading}
                     >
-                        <XCircle size={24} />
+                        취소
                     </button>
-                </header>
-
+                    <button
+                        type="button"
+                        className="mg-v2-button mg-v2-button-primary"
+                        onClick={handleSubmit}
+                        disabled={isLoading}
+                    >
+                        <CheckCircle size={18} />
+                        입금 확인
+                    </button>
+                </>
+            }
+        >
                 <div className="mg-v2-modal-body">
                     <div className="mg-v2-ad-b0kla__card mg-v2-info-box">
                         <div className="mg-v2-info-row">
@@ -163,35 +178,9 @@ const MappingDepositModal = ({
                                 자동으로 입금 참조번호가 생성됩니다. 필요시 수정할 수 있습니다.
                             </small>
                         </div>
-
-                        <footer className="mg-v2-modal-footer">
-                            <button
-                                type="button"
-                                className="mg-v2-button mg-v2-button-outline"
-                                onClick={(e) => {
-                                    e?.preventDefault();
-                                    e?.stopPropagation();
-                                    handleClose();
-                                }}
-                                disabled={isLoading}
-                            >
-                                취소
-                            </button>
-                            <button
-                                type="button"
-                                className="mg-v2-button mg-v2-button-primary"
-                                onClick={handleSubmit}
-                                disabled={isLoading}
-                            >
-                                <CheckCircle size={18} />
-                                입금 확인
-                            </button>
-                        </footer>
                     </div>
                 </div>
-            </div>
-        </div>,
-        portalTarget
+        </UnifiedModal>
     );
 };
 

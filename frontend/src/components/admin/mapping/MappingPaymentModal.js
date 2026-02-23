@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import ReactDOM from 'react-dom';
 import { CreditCard, CheckCircle, XCircle, DollarSign } from 'lucide-react';
 import { apiPost } from '../../../utils/ajax';
 import notificationManager from '../../../utils/notification';
+import UnifiedModal from '../../common/modals/UnifiedModal';
 /**
  * 매칭 입금확인 모달 컴포넌트
 /**
@@ -109,29 +109,42 @@ const MappingPaymentModal = ({
     // 모달이 열릴 때마다 참조번호 강제 생성
     const currentReference = paymentData.paymentReference || generateReferenceNumber(paymentData.paymentMethod);
 
-    // document.body가 준비되지 않았을 때를 대비한 안전한 처리
-    const portalTarget = document.body || document.createElement('div');
-    
-    return ReactDOM.createPortal(
-        <div className="mg-v2-modal-overlay mg-v2-ad-b0kla" onClick={onClose}>
-            <div className="mg-v2-modal mg-v2-modal-medium mg-v2-ad-b0kla" onClick={(e) => e.stopPropagation()}>
-                <header className="mg-v2-modal-header">
-                    <div className="mg-v2-modal-title-section">
-                        <CreditCard size={24} className="mg-v2-modal-title-icon" />
-                        <h2 className="mg-v2-modal-title">결제 확인</h2>
-                    </div>
+    return (
+        <UnifiedModal
+            isOpen={isOpen}
+            onClose={onClose}
+            title="결제 확인"
+            size="medium"
+            className="mg-v2-ad-b0kla"
+            backdropClick
+            showCloseButton
+            loading={loading}
+            actions={
+                <>
                     <button
                         type="button"
-                        className="mg-v2-modal-close"
-                        onClick={onClose}
+                        className="mg-v2-button mg-v2-button-secondary"
+                        onClick={(e) => {
+                            e?.preventDefault();
+                            e?.stopPropagation();
+                            onClose();
+                        }}
                         disabled={loading}
-                        aria-label="닫기"
                     >
-                        <XCircle size={24} />
+                        취소
                     </button>
-                </header>
-
-                {/* 본문 */}
+                    <button
+                        type="button"
+                        className="mg-v2-button mg-v2-button-primary"
+                        onClick={handleConfirmPayment}
+                        disabled={loading}
+                    >
+                        <CheckCircle size={18} />
+                        입금 확인
+                    </button>
+                </>
+            }
+        >
                 <div className="mg-v2-modal-body">
 
                 <div className="mg-v2-ad-b0kla__card mg-v2-mapping-info-box">
@@ -204,32 +217,8 @@ const MappingPaymentModal = ({
 
                 </div>
 
-                <footer className="mg-v2-modal-footer">
-                    <button
-                        type="button"
-                        className="mg-v2-button mg-v2-button-secondary"
-                        onClick={(e) => {
-                            e?.preventDefault();
-                            e?.stopPropagation();
-                            onClose();
-                        }}
-                        disabled={loading}
-                    >
-                        취소
-                    </button>
-                    <button
-                        type="button"
-                        className="mg-v2-button mg-v2-button-primary"
-                        onClick={handleConfirmPayment}
-                        disabled={loading}
-                    >
-                        <CheckCircle size={18} />
-                        확인
-                    </button>
-                </footer>
-            </div>
-        </div>,
-        portalTarget
+                </div>
+        </UnifiedModal>
     );
 };
 

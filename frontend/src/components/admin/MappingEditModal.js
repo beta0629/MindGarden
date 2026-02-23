@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import ReactDOM from 'react-dom';
 import { Edit3, XCircle, Package2, DollarSign, Calendar, AlertCircle, User, CalendarDays } from 'lucide-react';
-import UnifiedLoading from '../common/UnifiedLoading';
 import notificationManager from '../../utils/notification';
 import { getMappingStatusKoreanNameSync } from '../../utils/codeHelper';
+import UnifiedModal from '../common/modals/UnifiedModal';
 import './MappingEditModal.css';
 
 /**
@@ -214,28 +213,47 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
     return null;
   }
 
-  const portalTarget = document.body || document.createElement('div');
   const statusLabel = getMappingStatusKoreanNameSync(mapping.status);
 
-  return ReactDOM.createPortal(
-    <div className="mg-v2-modal-overlay mg-v2-ad-b0kla" onClick={handleClose}>
-      <div className="mg-v2-modal mg-v2-modal-medium mg-v2-ad-b0kla" onClick={(e) => e.stopPropagation()}>
-        <header className="mg-v2-modal-header">
-          <div className="mg-v2-modal-title-section">
-            <Edit3 size={24} className="mg-v2-modal-title-icon" />
-            <h2 className="mg-v2-modal-title">매칭 정보 수정</h2>
-          </div>
+  return (
+    <UnifiedModal
+      isOpen={isOpen}
+      onClose={handleClose}
+      title="매칭 정보 수정"
+      size="medium"
+      className="mg-v2-ad-b0kla"
+      backdropClick
+      showCloseButton
+      loading={loading}
+      actions={
+        <>
           <button
             type="button"
-            className="mg-v2-modal-close"
+            className="mg-v2-button mg-v2-button-secondary"
             onClick={handleClose}
             disabled={loading}
-            aria-label="닫기"
           >
-            <XCircle size={24} />
+            <XCircle size={18} />
+            취소
           </button>
-        </header>
-
+          <button
+            type="button"
+            className="mg-v2-button mg-v2-button-primary"
+            onClick={handleSubmit}
+            disabled={loading}
+          >
+            {loading ? (
+              <span>수정 중...</span>
+            ) : (
+              <>
+                <Edit3 size={18} />
+                수정 완료
+              </>
+            )}
+          </button>
+        </>
+      }
+    >
         <div className="mg-v2-modal-body">
           {/* 현재 매칭 정보 섹션 - B0KlA 카드, 섹션 제목, 악센트 바 */}
           <section className="mg-v2-ad-b0kla__card mg-v2-mapping-edit-modal__section">
@@ -351,34 +369,7 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
             </div>
           </form>
         </div>
-
-        <footer className="mg-v2-modal-footer">
-          <button
-            type="button"
-            className="mg-v2-button mg-v2-button-secondary"
-            onClick={handleClose}
-            disabled={loading}
-          >
-            <XCircle size={18} />
-            취소
-          </button>
-          <button
-            type="button"
-            className="mg-v2-button mg-v2-button-primary"
-            onClick={handleSubmit}
-            disabled={loading}
-          >
-            {loading ? <UnifiedLoading type="inline" text="수정 중..." /> : (
-              <>
-                <Edit3 size={18} />
-                수정 완료
-              </>
-            )}
-          </button>
-        </footer>
-      </div>
-    </div>,
-    portalTarget
+    </UnifiedModal>
   );
 };
 

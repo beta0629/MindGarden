@@ -8,6 +8,7 @@ import UnifiedLoading from '../../components/common/UnifiedLoading';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import csrfTokenManager from '../../utils/csrfTokenManager';
+import UnifiedModal from '../common/modals/UnifiedModal';
 import './UserManagement.css';
 
 const UserManagement = ({ onUpdate }) => {
@@ -354,90 +355,76 @@ const UserManagement = ({ onUpdate }) => {
             </div>
 
             {/* 역할 변경 모달 */}
-            {showRoleModal && (
-                <div className="mg-v2-modal-overlay" onClick={() => setShowRoleModal(false)}>
-                    <div className="mg-v2-modal mg-v2-modal-large" onClick={(e) => e.stopPropagation()}>
-                        <div className="mg-v2-modal-header">
-                            <h3 className="mg-v2-modal-title">
-                                <FaEdit className="mg-v2-modal-title-icon" />
-                                사용자 역할 변경
-                            </h3>
-                            <button 
-                                className="mg-v2-modal-close"
-                                onClick={() => setShowRoleModal(false)}
+            <UnifiedModal
+                isOpen={showRoleModal}
+                onClose={() => setShowRoleModal(false)}
+                title="역할 설정"
+                size="large"
+                showCloseButton={true}
+                backdropClick={true}
+            >
+                {selectedUser && (
+                    <form onSubmit={handleRoleChange}>
+                        <div className="mg-v2-form-group">
+                            <strong>사용자:</strong> {selectedUser.name} ({selectedUser.email})
+                        </div>
+                        <div className="mg-v2-form-group">
+                            <strong>현재 역할:</strong>
+                            <span className={`mg-v2-badge mg-v2-badge-${getRoleBadgeVariant(selectedUser.role)} mg-ml-sm`}>
+                                {getRoleDisplayName(selectedUser.role)}
+                            </span>
+                        </div>
+
+                        {selectedUser.role === USER_ROLES.CLIENT && form.newRole === USER_ROLES.CONSULTANT && (
+                            <div className="user-mgmt-info-box">
+                                <h6 className="user-mgmt-info-title">상담사 역할 변경 안내</h6>
+                                <ul className="user-mgmt-info-list">
+                                    <li>사용자가 상담사 역할로 변경됩니다.</li>
+                                    <li>상담사 메뉴와 기능에 접근할 수 있게 됩니다.</li>
+                                    <li>내담자 관리, 스케줄 관리 등의 권한이 부여됩니다.</li>
+                                    <li>변경 후에는 다시 내담자로 되돌릴 수 있습니다.</li>
+                                </ul>
+                            </div>
+                        )}
+
+                        <div className="mg-v2-form-group">
+                            <label className="mg-v2-label">새로운 역할</label>
+                            <select
+                                className="mg-v2-select"
+                                value={form.newRole}
+                                onChange={(e) => setForm({ ...form, newRole: e.target.value })}
+                                required
                             >
-                                <FaTimes />
+                                <option value="">역할을 선택하세요</option>
+                                {roleOptions.map(role => (
+                                    <option key={role.value} value={role.value}>
+                                        {role.icon} {role.label} ({role.value})
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div className="mg-v2-modal-footer">
+                            <button
+                                type="button"
+                                onClick={() => setShowRoleModal(false)}
+                                className="mg-v2-button mg-v2-button-secondary"
+                            >
+                                취소
+                            </button>
+                            <button
+                                type="submit"
+                                disabled={form.newRole === selectedUser.role}
+                                className="mg-v2-button mg-v2-button-primary"
+                            >
+                                {selectedUser.role === USER_ROLES.CLIENT && form.newRole === USER_ROLES.CONSULTANT
+                                    ? '상담사로 변경'
+                                    : '역할 변경'}
                             </button>
                         </div>
-                        <div className="mg-v2-modal-body">
-                            {selectedUser && (
-                                <form onSubmit={handleRoleChange}>
-                                    <div className="mg-v2-form-group">
-                                        <strong>사용자:</strong> {selectedUser.name} ({selectedUser.email})
-                                    </div>
-                                    <div className="mg-v2-form-group">
-                                        <strong>현재 역할:</strong> 
-                                        <span className={`mg-v2-badge mg-v2-badge-${getRoleBadgeVariant(selectedUser.role)} mg-ml-sm`}>
-                                            {getRoleDisplayName(selectedUser.role)}
-                                        </span>
-                                    </div>
-                                    
-                                    {/* 내담자→상담사 변경 시 특별 안내 */}
-                                    {selectedUser.role === USER_ROLES.CLIENT && form.newRole === USER_ROLES.CONSULTANT && (
-                                        <div className="user-mgmt-info-box">
-                                            <h6 className="user-mgmt-info-title">상담사 역할 변경 안내</h6>
-                                            <ul className="user-mgmt-info-list">
-                                                <li>사용자가 상담사 역할로 변경됩니다.</li>
-                                                <li>상담사 메뉴와 기능에 접근할 수 있게 됩니다.</li>
-                                                <li>내담자 관리, 스케줄 관리 등의 권한이 부여됩니다.</li>
-                                                <li>변경 후에는 다시 내담자로 되돌릴 수 있습니다.</li>
-                                            </ul>
-                                        </div>
-                                    )}
-                                    
-                                    <div className="mg-v2-form-group">
-                                        <label className="mg-v2-label">
-                                            새로운 역할
-                                        </label>
-                                        <select
-                                            className="mg-v2-select"
-                                            value={form.newRole}
-                                            onChange={(e) => setForm({...form, newRole: e.target.value})}
-                                            required
-                                        >
-                                            <option value="">역할을 선택하세요</option>
-                                            {roleOptions.map(role => (
-                                                <option key={role.value} value={role.value}>
-                                                    {role.icon} {role.label} ({role.value})
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                    
-                                    <div className="mg-v2-modal-footer">
-                                        <button
-                                            type="button"
-                                            onClick={() => setShowRoleModal(false)}
-                                            className="mg-v2-button mg-v2-button-secondary"
-                                        >
-                                            취소
-                                        </button>
-                                        <button
-                                            type="submit"
-                                            disabled={form.newRole === selectedUser.role}
-                                            className="mg-v2-button mg-v2-button-primary"
-                                        >
-                                            {selectedUser.role === USER_ROLES.CLIENT && form.newRole === USER_ROLES.CONSULTANT 
-                                                ? '상담사로 변경' 
-                                                : '역할 변경'}
-                                        </button>
-                                    </div>
-                                </form>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            )}
+                    </form>
+                )}
+            </UnifiedModal>
         </AdminCommonLayout>
     );
 };

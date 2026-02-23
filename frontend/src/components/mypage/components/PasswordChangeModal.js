@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { API_BASE_URL } from '../../../constants/api';
+import UnifiedModal from '../../common/modals/UnifiedModal';
 import './PasswordChangeModal.css';
 import notificationManager from '../../../utils/notification';
 
@@ -205,24 +206,15 @@ const PasswordChangeModal = ({ isOpen, onClose, onSuccess, tempPassword }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="password-change-modal-overlay">
-      <div className="password-change-modal">
-        <div className="password-change-modal-header">
-          <h3>
-            <i className="bi bi-shield-lock"></i>
-            {tempPassword ? '임시 비밀번호 변경' : '비밀번호 변경'}
-          </h3>
-          {!tempPassword && ( // 임시 비밀번호인 경우 닫기 버튼 숨김
-            <button 
-              className="close-btn" 
-              onClick={onClose}
-              disabled={isLoading}
-            >
-              <i className="bi bi-x"></i>
-            </button>
-          )}
-        </div>
-
+    <UnifiedModal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={tempPassword ? '임시 비밀번호 변경' : '비밀번호 변경'}
+      size="medium"
+      backdropClick={!tempPassword}
+      showCloseButton={!tempPassword}
+      loading={isLoading}
+    >
         <form onSubmit={handleSubmit} className="password-change-form">
           {tempPassword && (
             <div className="alert alert-warning" style={{ marginBottom: '1rem', padding: '0.75rem', backgroundColor: '#fff3cd', borderRadius: '4px', border: '1px solid var(--mg-warning-500)' }}>
@@ -366,8 +358,7 @@ const PasswordChangeModal = ({ isOpen, onClose, onSuccess, tempPassword }) => {
             </button>
           </div>
         </form>
-      </div>
-    </div>
+    </UnifiedModal>
   );
 };
 

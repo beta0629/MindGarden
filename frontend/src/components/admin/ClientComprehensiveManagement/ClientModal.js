@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import ReactDOM from 'react-dom';
-import { XCircle, User, CheckCircle, AlertTriangle, Search } from 'lucide-react';
+import { XCircle, User, CheckCircle, AlertTriangle } from 'lucide-react';
 import MGButton from '../../common/MGButton';
 import { apiGet } from '../../../utils/ajax';
+import UnifiedModal from '../../common/modals/UnifiedModal';
 
 /**
  * 내담자 모달 컴포넌트
@@ -300,30 +300,16 @@ const ClientModal = ({
 
     if (!type) return null;
 
-    const portalTarget = document.body || document.createElement('div');
-
-    return ReactDOM.createPortal(
-        <div className="mg-v2-modal-overlay" onClick={onClose}>
-            <div className="mg-v2-modal" onClick={(e) => e.stopPropagation()}>
-                <div className="mg-v2-modal-header">
-                    <h3 className="mg-v2-modal-title">
-                        <User size={24} />
-                        {getTitle()}
-                    </h3>
-                    <button
-                        onClick={onClose}
-                        className="mg-v2-modal-close"
-                        aria-label="닫기"
-                    >
-                        <XCircle size={24} />
-                    </button>
-                </div>
-
-                <div className="mg-v2-modal-body">
-                    {type === 'delete' ? renderDeleteContent() : renderFormContent()}
-                </div>
-
-                <div className="mg-v2-modal-footer">
+    return (
+        <UnifiedModal
+            isOpen={!!type}
+            onClose={onClose}
+            title={getTitle()}
+            size="medium"
+            backdropClick
+            showCloseButton
+            actions={
+                <>
                     <MGButton
                         variant="secondary"
                         onClick={onClose}
@@ -352,10 +338,13 @@ const ClientModal = ({
                         )}
                         {getSubmitText()}
                     </MGButton>
-                </div>
+                </>
+            }
+        >
+            <div className="mg-v2-modal-body">
+                {type === 'delete' ? renderDeleteContent() : renderFormContent()}
             </div>
-        </div>,
-        portalTarget
+        </UnifiedModal>
     );
 };
 

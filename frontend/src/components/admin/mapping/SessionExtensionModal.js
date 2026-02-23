@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import ReactDOM from 'react-dom';
 import { Plus, XCircle, Calendar } from 'lucide-react';
 import notificationManager from '../../../utils/notification';
 import csrfTokenManager from '../../../utils/csrfTokenManager';
 import PackageSelector from '../../common/PackageSelector';
+import UnifiedModal from '../../common/modals/UnifiedModal';
 
 /**
  * 회기 추가 요청 모달 컴포넌트
@@ -151,36 +151,47 @@ const SessionExtensionModal = ({
 
     if (!isOpen || !mapping) return null;
 
-    // document.body가 준비되지 않았을 때를 대비한 안전한 처리
-    const portalTarget = document.body || document.createElement('div');
-
-    return ReactDOM.createPortal(
-        <div className="mg-v2-modal-overlay" onClick={handleClose}>
-            <div className="mg-v2-modal mg-v2-modal-lg mg-v2-modal--scrollable" onClick={(e) => e.stopPropagation()}>
-                <div className="mg-v2-modal-header">
-                    <div className="mg-v2-modal-header-content">
-                        <div className="mg-v2-modal-icon">
-                            <Plus size={28} />
-                        </div>
-                        <div className="mg-v2-modal-title-area">
-                            <h3 className="mg-v2-modal-title">
-                                회기 추가 요청
-                            </h3>
-                            <p className="mg-v2-modal-subtitle">
-                                새로운 패키지를 선택하고 회기를 추가하세요
-                            </p>
-                        </div>
-                    </div>
-                    <button 
+    return (
+        <UnifiedModal
+            isOpen={isOpen}
+            onClose={handleClose}
+            title="회기 추가 요청"
+            subtitle="새로운 패키지를 선택하고 회기를 추가하세요"
+            size="large"
+            backdropClick
+            showCloseButton
+            loading={isLoading}
+            actions={
+                <>
+                    <button
                         type="button"
-                        className="mg-v2-modal-close"
+                        className="mg-v2-button mg-v2-button-secondary"
                         onClick={handleClose}
                         disabled={isLoading}
                     >
-                        <XCircle size={24} />
+                        취소
                     </button>
-                </div>
-                
+                    <button
+                        type="button"
+                        className="mg-v2-button mg-v2-button-primary"
+                        onClick={handleSubmit}
+                        disabled={isLoading || additionalSessions <= 0}
+                    >
+                        {isLoading ? (
+                            <>
+                                <div className="loading-spinner"></div>
+                                요청 중...
+                            </>
+                        ) : (
+                            <>
+                                <Plus size={16} />
+                                {additionalSessions}회기 추가 요청
+                            </>
+                        )}
+                    </button>
+                </>
+            }
+        >
                 <div className="mg-v2-modal-content mg-v2-modal-content--scrollable">
                     {/* 매칭 정보 표시 */}
                     <div className="mg-v2-card mg-v2-card--outlined">
@@ -296,39 +307,7 @@ const SessionExtensionModal = ({
                         </form>
                     </div>
                 </div>
-                
-                {/* 모달 액션 버튼 */}
-                <div className="mg-v2-modal-footer">
-                    <button 
-                        type="button"
-                        className="mg-v2-button mg-v2-button-secondary"
-                        onClick={handleClose}
-                        disabled={isLoading}
-                    >
-                        취소
-                    </button>
-                    <button 
-                        type="submit"
-                        className="mg-v2-button mg-v2-button-primary"
-                        onClick={handleSubmit}
-                        disabled={isLoading || additionalSessions <= 0}
-                    >
-                        {isLoading ? (
-                            <>
-                                <div className="loading-spinner"></div>
-                                요청 중...
-                            </>
-                        ) : (
-                            <>
-                                <Plus size={16} />
-                                {additionalSessions}회기 추가 요청
-                            </>
-                        )}
-                    </button>
-                </div>
-            </div>
-        </div>,
-        portalTarget
+        </UnifiedModal>
     );
 };
 

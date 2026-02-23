@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import ReactDOM from 'react-dom';
-import { CreditCard, X, Tag, CheckCircle, XCircle } from 'lucide-react';
+import { CreditCard, Tag, CheckCircle, XCircle } from 'lucide-react';
 import { apiGet, apiPost } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
+import UnifiedModal from '../common/modals/UnifiedModal';
 
 /**
  * 할인 적용 결제 확인 모달 컴포넌트
@@ -212,24 +212,41 @@ const DiscountPaymentConfirmationModal = ({
 
   if (!isOpen) return null;
 
-  return ReactDOM.createPortal(
-    <div className="mg-v2-modal-overlay" onClick={onClose}>
-      <div className="mg-v2-modal mg-v2-modal-large" onClick={(e) => e.stopPropagation()}>
-        <div className="mg-v2-modal-header">
-          <h2 className="mg-v2-modal-title">
-            <Tag size={24} />
-            할인 적용 결제 확인
-          </h2>
-          <button 
-            className="mg-v2-modal-close"
+  return (
+    <UnifiedModal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="할인 적용 결제 확인"
+      size="large"
+      backdropClick
+      showCloseButton
+      loading={loading}
+      actions={
+        <>
+          <button
+            className="mg-v2-button mg-v2-button-secondary"
             onClick={onClose}
-            aria-label="닫기"
           >
-            <X size={24} />
+            취소
           </button>
-        </div>
-        
-        <div className="mg-v2-modal-body">
+          <button
+            className="mg-v2-button mg-v2-button-success"
+            onClick={handleConfirmPayment}
+            disabled={loading || selectedMappings.length === 0}
+          >
+            {loading ? (
+              <span>처리 중...</span>
+            ) : (
+              <>
+                <CheckCircle size={18} />
+                결제 확인
+              </>
+            )}
+          </button>
+        </>
+      }
+    >
+      <div className="mg-v2-modal-body">
           {/* 선택된 매핑 정보 */}
           <div className="mg-v2-form-section">
             <h3 className="mg-v2-section-title">선택된 매핑</h3>
@@ -376,32 +393,7 @@ const DiscountPaymentConfirmationModal = ({
             </div>
           </div>
         </div>
-        
-        <div className="mg-v2-modal-footer">
-          <button
-            className="mg-v2-button mg-v2-button-secondary"
-            onClick={onClose}
-          >
-            취소
-          </button>
-          <button
-            className="mg-v2-button mg-v2-button-success"
-            onClick={handleConfirmPayment}
-            disabled={loading || selectedMappings.length === 0}
-          >
-            {loading ? (
-              <UnifiedLoading type="inline" text="처리 중..." />
-            ) : (
-              <>
-                <CheckCircle size={18} />
-                결제 확인
-              </>
-            )}
-          </button>
-        </div>
-      </div>
-    </div>,
-    document.body
+    </UnifiedModal>
   );
 };
 

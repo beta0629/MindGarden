@@ -9,6 +9,7 @@ import notificationManager from '../../utils/notification';
 import { sessionManager } from '../../utils/sessionManager';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import MGCard from '../common/MGCard';
+import UnifiedModal from '../common/modals/UnifiedModal';
 import '../../styles/unified-design-tokens.css';
 
 /**
@@ -331,62 +332,46 @@ const AdminMessages = () => {
         </div>
 
         {/* 메시지 상세 모달 */}
-        {selectedMessage && (
-          <div className="mg-v2-modal-overlay" onClick={closeModal}>
-            <div className="mg-v2-modal mg-v2-modal--medium" onClick={(e) => e.stopPropagation()}>
-              <div className="mg-v2-modal__header">
-                <h2 className="mg-v2-modal__title">{selectedMessage.title}</h2>
-                <button className="mg-button" 
-                  variant="outline"
-                  size="small"
-                  onClick={closeModal}
-                  aria-label="닫기"
-                >
-                  ×
-                </button>
-              </div>
-              <div className="mg-v2-modal__body">
-                <div className="mg-v2-message-modal-content">
-                  <div className="mg-v2-message-modal-header">
-                    <span 
-                      className="mg-v2-badge mg-v2-message-badge"
-                    >
-                      {MESSAGE_TYPES[selectedMessage.messageType]?.label || '일반'}
-                    </span>
-                    {selectedMessage.isImportant && (
-                      <span className="mg-v2-badge mg-v2-badge-warning">중요</span>
-                    )}
-                    {selectedMessage.isUrgent && (
-                      <span className="mg-v2-badge mg-v2-badge-danger">긴급</span>
-                    )}
+        <UnifiedModal
+          isOpen={!!selectedMessage}
+          onClose={closeModal}
+          title={selectedMessage?.title || '메시지 상세'}
+          size="medium"
+          showCloseButton={true}
+          backdropClick={true}
+        >
+          {selectedMessage && (
+            <>
+              <div className="mg-v2-message-modal-content">
+                <div className="mg-v2-message-modal-header">
+                  <span className="mg-v2-badge mg-v2-message-badge">
+                    {MESSAGE_TYPES[selectedMessage.messageType]?.label || '일반'}
+                  </span>
+                  {selectedMessage.isImportant && (
+                    <span className="mg-v2-badge mg-v2-badge-warning">중요</span>
+                  )}
+                  {selectedMessage.isUrgent && (
+                    <span className="mg-v2-badge mg-v2-badge-danger">긴급</span>
+                  )}
+                </div>
+                <div className="mg-v2-message-modal-info-grid">
+                  <div>
+                    <strong>발신자:</strong> {selectedMessage.senderName}
                   </div>
-                  <div className="mg-v2-message-modal-info-grid">
-                    <div>
-                      <strong>발신자:</strong> {selectedMessage.senderName}
-                    </div>
-                    <div>
-                      <strong>수신자:</strong> {selectedMessage.receiverName}
-                    </div>
-                    <div>
-                      <strong>발송일:</strong> {new Date(selectedMessage.createdAt).toLocaleString('ko-KR')}
-                    </div>
+                  <div>
+                    <strong>수신자:</strong> {selectedMessage.receiverName}
+                  </div>
+                  <div>
+                    <strong>발송일:</strong> {new Date(selectedMessage.createdAt).toLocaleString('ko-KR')}
                   </div>
                 </div>
-                <div className="mg-v2-message-modal-body">
-                  {selectedMessage.content}
-                </div>
               </div>
-              <div className="mg-v2-modal__actions">
-                <button className="mg-button" 
-                  variant="outline"
-                  onClick={closeModal}
-                >
-                  닫기
-                </button>
+              <div className="mg-v2-message-modal-body">
+                {selectedMessage.content}
               </div>
-            </div>
-          </div>
-        )}
+            </>
+          )}
+        </UnifiedModal>
       </div>
     </AdminCommonLayout>
   );

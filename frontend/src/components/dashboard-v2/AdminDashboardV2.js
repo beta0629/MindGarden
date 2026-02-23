@@ -8,12 +8,11 @@
  */
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import ReactDOM from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import notificationManager from '../../utils/notification';
 import { RoleUtils } from '../../constants/roles';
 import {
-  Settings, Check, BarChart, LayoutDashboard, Activity, MessageSquare, Sparkles, XCircle,
+  Settings, Check, LayoutDashboard, Activity, MessageSquare, Sparkles,
   ShieldCheck, Megaphone, DollarSign, Receipt, TrendingUp
 } from 'lucide-react';
 import {
@@ -37,6 +36,7 @@ import RecurringExpenseModal from '../finance/RecurringExpenseModal';
 import ErpReportModal from '../erp/ErpReportModal';
 import MappingDepositModal from '../admin/mapping/MappingDepositModal';
 import AdminDashboardMonitoring from '../admin/AdminDashboard/AdminDashboardMonitoring';
+import UnifiedModal from '../common/modals/UnifiedModal';
 import StandardizedApi from '../../utils/standardizedApi';
 import Chart from '../common/Chart';
 import { CHART_TYPES } from '../../constants/charts';
@@ -1015,39 +1015,21 @@ const AdminDashboardV2 = ({ user: propUser }) => {
           onClose={() => setShowRecurringExpense(false)}
         />
       )}
-      {showStatisticsModal &&
-        ReactDOM.createPortal(
-          <div
-            className="mg-v2-modal-overlay mg-v2-modal-overlay--high-z"
-            onClick={() => setShowStatisticsModal(false)}
-          >
-            <div
-              className="mg-v2-modal mg-v2-modal-large mg-v2-modal--scrollable"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="mg-v2-modal-header">
-                <div className="mg-v2-modal-title-wrapper">
-                  <BarChart size={28} className="mg-v2-modal-title-icon" />
-                  <h2 className="mg-v2-modal-title">통계 대시보드</h2>
-                </div>
-                <button
-                  className="mg-v2-modal-close"
-                  onClick={() => setShowStatisticsModal(false)}
-                  aria-label="닫기"
-                >
-                  <XCircle size={24} />
-                </button>
-              </div>
-              <div className="mg-v2-modal-body">
-                <StatisticsDashboard
-                  userRole={(propUser || sessionUser)?.role || 'ADMIN'}
-                  userId={(propUser || sessionUser)?.id}
-                />
-              </div>
-            </div>
-          </div>,
-          document.body
-        )}
+      <UnifiedModal
+        isOpen={showStatisticsModal}
+        onClose={() => setShowStatisticsModal(false)}
+        title="통계 대시보드"
+        size="large"
+        showCloseButton={true}
+        backdropClick={true}
+        zIndex={10001}
+        className="mg-v2-ad-b0kla"
+      >
+        <StatisticsDashboard
+          userRole={(propUser || sessionUser)?.role || 'ADMIN'}
+          userId={(propUser || sessionUser)?.id}
+        />
+      </UnifiedModal>
       {showErpReport && (
         <ErpReportModal isOpen={showErpReport} onClose={() => setShowErpReport(false)} />
       )}

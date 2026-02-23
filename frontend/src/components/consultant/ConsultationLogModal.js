@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import ReactDOM from 'react-dom';
 import { FileText, XCircle, Save, CheckCircle, User, AlertTriangle, Clock, Target } from 'lucide-react';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet, apiPost, apiPut } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
+import UnifiedModal from '../common/modals/UnifiedModal';
 
 /**
  * 상담일지 작성 모달 컴포넌트
@@ -393,40 +393,47 @@ const ConsultationLogModal = ({
 
   if (!isOpen) return null;
 
-  const portalTarget = document.body || document.createElement('div');
+  const modalTitle = `상담일지 작성${isEditMode ? ' (수정 모드)' : ''}`;
 
-  if (loading) {
-    return ReactDOM.createPortal(
-      <div className="mg-v2-modal-overlay">
-        <div className="mg-v2-modal mg-v2-modal-large">
-          <div className="mg-v2-modal-body">
-            <div className="mg-v2-loading-overlay">
-              <div className="mg-loading">로딩중...</div>
-            </div>
-          </div>
-        </div>
-      </div>,
-      portalTarget
-    );
-  }
-
-  return ReactDOM.createPortal(
-    <div className="mg-v2-modal-overlay mg-v2-ad-b0kla" onClick={onClose}>
-      <div className="mg-v2-modal mg-v2-modal-large mg-v2-ad-b0kla" onClick={(e) => e.stopPropagation()}>
-        {/* 헤더 */}
-        <div className="mg-v2-modal-header">
-          <div className="mg-v2-modal-title-wrapper">
-            <FileText size={28} className="mg-v2-modal-title-icon" />
-            <h2 className="mg-v2-modal-title">
-              상담일지 작성
-              {isEditMode && <span className="mg-v2-badge mg-v2-badge--info">수정 모드</span>}
-            </h2>
-          </div>
-          <button className="mg-v2-modal-close" onClick={onClose} aria-label="닫기">
-            <XCircle size={24} />
+  return (
+    <UnifiedModal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={modalTitle}
+      size="large"
+      className="mg-v2-ad-b0kla"
+      backdropClick
+      showCloseButton
+      loading={loading}
+      actions={
+        <div className="mg-v2-modal-footer-inline" style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+          <button
+            type="button"
+            onClick={onClose}
+            className="mg-v2-btn mg-v2-btn-secondary"
+            disabled={saving}
+          >
+            취소
+          </button>
+          <button
+            type="button"
+            onClick={handleSave}
+            className="mg-v2-btn mg-v2-btn-primary"
+            disabled={saving}
+          >
+            {saving ? '저장중...' : '💾 저장'}
+          </button>
+          <button
+            type="button"
+            onClick={handleComplete}
+            className="mg-v2-btn mg-v2-btn-success"
+            disabled={saving}
+          >
+            {saving ? '완료중...' : '✅ 완료'}
           </button>
         </div>
-
+      }
+    >
         <div className="mg-v2-modal-body" style={{ padding: '24px', backgroundColor: 'var(--mg-white)' }}>
           {/* 필수값 안내 */}
           <div className="mg-v2-bg-yellow-50 mg-v2-p-md mg-v2-radius-md mg-v2-border mg-v2-border-yellow-200 mg-flex mg-v2-items-start mg-v2-gap-sm mg-v2-mb-lg">
@@ -816,41 +823,9 @@ const ConsultationLogModal = ({
                 </div>
               )}
             </div>
-
-            {/* 버튼 그룹 */}
-            <div className="mg-v2-modal-footer" style={{ borderTop: 'none', padding: '24px 0 0 0' }}>
-              <div className="mg-flex mg-v2-gap-sm mg-v2-w-full mg-justify-end">
-                  <button
-                    type="button"
-                    onClick={onClose}
-                    className="mg-v2-btn mg-v2-btn-secondary"
-                    disabled={saving}
-                  >
-                    취소
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleSave}
-                    className="mg-v2-btn mg-v2-btn-primary"
-                    disabled={saving}
-                  >
-                    {saving ? '저장중...' : '💾 저장'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleComplete}
-                    className="mg-v2-btn mg-v2-btn-success"
-                    disabled={saving}
-                  >
-                    {saving ? '완료중...' : '✅ 완료'}
-                  </button>
-              </div>
-            </div>
           </div>
         </div>
-      </div>
-    </div>,
-    portalTarget
+    </UnifiedModal>
   );
 };
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import ReactDOM from 'react-dom';
 import { XCircle, Clock } from 'lucide-react';
+import UnifiedModal from '../../common/modals/UnifiedModal';
 import './ConsultantTransferHistory.css';
 
 /**
@@ -74,25 +74,27 @@ const ConsultantTransferHistory = ({ clientId, isOpen, onClose }) => {
 
   if (!isOpen) return null;
 
-  const portalTarget = document.body || document.createElement('div');
-
-  return ReactDOM.createPortal(
-    <div className="mg-v2-modal-overlay mg-v2-ad-b0kla" onClick={onClose}>
-      <div className="mg-v2-modal mg-v2-modal-medium mg-v2-ad-b0kla" onClick={(e) => e.stopPropagation()}>
-        <header className="mg-v2-modal-header">
-          <div className="mg-v2-modal-title-section">
-            <Clock size={24} className="mg-v2-modal-title-icon" />
-            <h2 className="mg-v2-modal-title">상담사 변경 이력</h2>
-          </div>
-          <button
-            type="button"
-            className="mg-v2-modal-close"
-            onClick={onClose}
-            aria-label="닫기"
-          >
-            <XCircle size={24} />
-          </button>
-        </header>
+  return (
+    <UnifiedModal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="상담사 변경 이력"
+      size="medium"
+      className="mg-v2-ad-b0kla"
+      backdropClick
+      showCloseButton
+      loading={loading}
+      actions={
+        <button
+          type="button"
+          className="mg-v2-button mg-v2-button-secondary"
+          onClick={onClose}
+        >
+          <XCircle size={18} />
+          닫기
+        </button>
+      }
+    >
         <div className="mg-v2-modal-body">
           {loading ? (
             <div className="transfer-history-loading">
@@ -173,20 +175,7 @@ const ConsultantTransferHistory = ({ clientId, isOpen, onClose }) => {
             </div>
           )}
         </div>
-
-        <footer className="mg-v2-modal-footer">
-          <button
-            type="button"
-            className="mg-v2-button mg-v2-button-secondary"
-            onClick={onClose}
-          >
-            <XCircle size={18} />
-            닫기
-          </button>
-        </footer>
-      </div>
-    </div>,
-    portalTarget
+    </UnifiedModal>
   );
 };
 

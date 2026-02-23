@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import ReactDOM from 'react-dom';
 import { UserCheck, XCircle, Users, Package, Calendar } from 'lucide-react';
 import notificationManager from '../../../utils/notification';
 import MGButton from '../../../components/common/MGButton';
+import UnifiedModal from '../../common/modals/UnifiedModal';
 /**
  * 상담사 변경 모달 컴포넌트
 /**
@@ -186,25 +186,38 @@ const ConsultantTransferModal = ({
 
   if (!isOpen) return null;
 
-  const portalTarget = document.body || document.createElement('div');
-
-  return ReactDOM.createPortal(
-        <div className="mg-v2-modal-overlay mg-v2-ad-b0kla" onClick={onClose}>
-      <div className="mg-v2-modal mg-v2-modal-large mg-v2-ad-b0kla" onClick={(e) => e.stopPropagation()}>
-        <header className="mg-v2-modal-header">
-          <div className="mg-v2-modal-title-section">
-            <UserCheck size={24} className="mg-v2-modal-title-icon" />
-            <h2 className="mg-v2-modal-title">상담사 변경</h2>
-          </div>
-          <button
-            type="button"
-            className="mg-v2-modal-close"
-            onClick={handleClose}
-            aria-label="닫기"
-          >
-            <XCircle size={24} />
-          </button>
-        </header>
+  return (
+        <UnifiedModal
+          isOpen={isOpen}
+          onClose={handleClose}
+          title="상담사 변경"
+          size="large"
+          className="mg-v2-ad-b0kla"
+          backdropClick
+          showCloseButton
+          loading={loading}
+          actions={
+            <>
+              <button
+                type="button"
+                className="mg-v2-button mg-v2-button-secondary"
+                onClick={handleClose}
+                disabled={loading}
+              >
+                <XCircle size={18} />
+                취소
+              </button>
+              <button
+                type="button"
+                className="mg-v2-button mg-v2-button-primary"
+                onClick={handleSubmit}
+                disabled={loading}
+              >
+                {loading ? '변경 중...' : '상담사 변경'}
+              </button>
+            </>
+          }
+        >
         
         <div className="mg-v2-modal-body">
           {/* 현재 매핑 정보 */}
@@ -377,29 +390,7 @@ const ConsultantTransferModal = ({
             </div>
           </form>
         </div>
-        
-        <footer className="mg-v2-modal-footer">
-          <button
-            type="button"
-            className="mg-v2-button mg-v2-button-secondary"
-            onClick={handleClose}
-            disabled={loading}
-          >
-            <XCircle size={18} />
-            취소
-          </button>
-          <button
-            type="button"
-            className="mg-v2-button mg-v2-button-primary"
-            onClick={handleSubmit}
-            disabled={loading}
-          >
-            {loading ? '변경 중...' : '상담사 변경'}
-          </button>
-        </footer>
-      </div>
-    </div>,
-    portalTarget
+        </UnifiedModal>
   );
 };
 

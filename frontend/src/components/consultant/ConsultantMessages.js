@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
-import ReactDOM from 'react-dom';
+import UnifiedModal from '../common/modals/UnifiedModal';
 import { useNavigate } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
 import { useNotification } from '../../contexts/NotificationContext';
@@ -363,111 +363,98 @@ const ConsultantMessages = () => {
         )}
 
         {/* 새 메시지 작성 모달 */}
-        {showSendModal && ReactDOM.createPortal(
-          <div className="mg-v2-modal-overlay" onClick={() => setShowSendModal(false)}>
-            <div className="mg-v2-modal mg-v2-modal-large" onClick={(e) => e.stopPropagation()}>
-              <div className="mg-v2-modal-header">
-                <h3 className="mg-h3 mg-mb-0">새 메시지 작성</h3>
-                <button
-                  className="mg-v2-modal-close"
-                  onClick={() => setShowSendModal(false)}
-                >
-                  ×
-                </button>
-              </div>
-              
-              <div className="mg-v2-modal-body">
-                <div className="mg-v2-form-group">
-                  <label className="mg-v2-label">받는 사람 *</label>
-                  <select
-                    className="mg-v2-select"
-                    value={newMessage.clientId}
-                    onChange={(e) => setNewMessage({ ...newMessage, clientId: e.target.value })}
-                  >
-                    <option key="default-client" value="">내담자를 선택하세요</option>
-                    {clients.map((client, index) => (
-                      <option key={`client-${client.id}-${index}`} value={client.id}>
-                        {client.name} ({client.email})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                
-                <div className="mg-v2-form-group">
-                  <label className="mg-v2-label">메시지 유형</label>
-                  <select
-                    className="mg-v2-select"
-                    value={newMessage.messageType}
-                    onChange={(e) => setNewMessage({ ...newMessage, messageType: e.target.value })}
-                  >
-                    {messageTypes.map((type, index) => (
-                      <option key={`message-type-${type.value}-${index}`} value={type.value}>
-                        {type.icon} {type.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                
-                <div className="mg-v2-form-group">
-                  <label className="mg-v2-label">제목 *</label>
-                  <input
-                    type="text"
-                    className="mg-v2-input"
-                    value={newMessage.title}
-                    onChange={(e) => setNewMessage({ ...newMessage, title: e.target.value })}
-                    placeholder="메시지 제목을 입력하세요"
-                  />
-                </div>
-                
-                <div className="mg-v2-form-group">
-                  <label className="mg-v2-label">내용 *</label>
-                  <textarea
-                    className="mg-v2-textarea"
-                    value={newMessage.content}
-                    onChange={(e) => setNewMessage({ ...newMessage, content: e.target.value })}
-                    placeholder="메시지 내용을 입력하세요"
-                    rows={6}
-                  />
-                </div>
-                
-                <div className="mg-flex mg-gap-md">
-                  <label className="mg-checkbox">
-                    <input
-                      type="checkbox"
-                      checked={newMessage.isImportant}
-                      onChange={(e) => setNewMessage({ ...newMessage, isImportant: e.target.checked })}
-                    />
-                    <span>중요</span>
-                  </label>
-                  <label className="mg-checkbox">
-                    <input
-                      type="checkbox"
-                      checked={newMessage.isUrgent}
-                      onChange={(e) => setNewMessage({ ...newMessage, isUrgent: e.target.checked })}
-                    />
-                    <span>긴급</span>
-                  </label>
-                </div>
-              </div>
-              
-              <div className="mg-v2-modal-footer">
-                <button
-                  className="mg-v2-button mg-v2-button-secondary"
-                  onClick={() => setShowSendModal(false)}
-                >
-                  취소
-                </button>
-                <button
-                  className="mg-v2-button mg-v2-button-primary"
-                  onClick={handleSendMessage}
-                >
-                  전송
-                </button>
-              </div>
-            </div>
-          </div>,
-          document.body
-        )}
+        <UnifiedModal
+          isOpen={showSendModal}
+          onClose={() => setShowSendModal(false)}
+          title="새 메시지 작성"
+          size="large"
+          showCloseButton={true}
+          backdropClick={true}
+          actions={
+            <>
+              <button
+                className="mg-v2-button mg-v2-button-secondary"
+                onClick={() => setShowSendModal(false)}
+              >
+                취소
+              </button>
+              <button
+                className="mg-v2-button mg-v2-button-primary"
+                onClick={handleSendMessage}
+              >
+                전송
+              </button>
+            </>
+          }
+        >
+          <div className="mg-v2-form-group">
+            <label className="mg-v2-label">받는 사람 *</label>
+            <select
+              className="mg-v2-select"
+              value={newMessage.clientId}
+              onChange={(e) => setNewMessage({ ...newMessage, clientId: e.target.value })}
+            >
+              <option key="default-client" value="">내담자를 선택하세요</option>
+              {clients.map((client, index) => (
+                <option key={`client-${client.id}-${index}`} value={client.id}>
+                  {client.name} ({client.email})
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="mg-v2-form-group">
+            <label className="mg-v2-label">메시지 유형</label>
+            <select
+              className="mg-v2-select"
+              value={newMessage.messageType}
+              onChange={(e) => setNewMessage({ ...newMessage, messageType: e.target.value })}
+            >
+              {messageTypes.map((type, index) => (
+                <option key={`message-type-${type.value}-${index}`} value={type.value}>
+                  {type.icon} {type.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="mg-v2-form-group">
+            <label className="mg-v2-label">제목 *</label>
+            <input
+              type="text"
+              className="mg-v2-input"
+              value={newMessage.title}
+              onChange={(e) => setNewMessage({ ...newMessage, title: e.target.value })}
+              placeholder="메시지 제목을 입력하세요"
+            />
+          </div>
+          <div className="mg-v2-form-group">
+            <label className="mg-v2-label">내용 *</label>
+            <textarea
+              className="mg-v2-textarea"
+              value={newMessage.content}
+              onChange={(e) => setNewMessage({ ...newMessage, content: e.target.value })}
+              placeholder="메시지 내용을 입력하세요"
+              rows={6}
+            />
+          </div>
+          <div className="mg-flex mg-gap-md">
+            <label className="mg-checkbox">
+              <input
+                type="checkbox"
+                checked={newMessage.isImportant}
+                onChange={(e) => setNewMessage({ ...newMessage, isImportant: e.target.checked })}
+              />
+              <span>중요</span>
+            </label>
+            <label className="mg-checkbox">
+              <input
+                type="checkbox"
+                checked={newMessage.isUrgent}
+                onChange={(e) => setNewMessage({ ...newMessage, isUrgent: e.target.checked })}
+              />
+              <span>긴급</span>
+            </label>
+          </div>
+        </UnifiedModal>
       </div>
     </AdminCommonLayout>
   );

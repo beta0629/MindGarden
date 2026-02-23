@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import ReactDOM from 'react-dom';
 import { CreditCard, CheckCircle, XCircle } from 'lucide-react';
 import { apiGet } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
+import UnifiedModal from '../common/modals/UnifiedModal';
 import './PaymentConfirmationModal.css';
 
 /**
@@ -280,27 +280,52 @@ const PaymentConfirmationModal = ({
 
   if (!isOpen) return null;
 
-  return ReactDOM.createPortal(
-    <div className="mg-v2-modal-overlay mg-v2-ad-b0kla" onClick={onClose}>
-      <div className="mg-v2-modal mg-v2-modal-medium mg-v2-ad-b0kla" onClick={(e) => e.stopPropagation()}>
-        <header className="mg-v2-modal-header">
-          <div className="mg-v2-modal-title-section">
-            <CreditCard size={24} className="mg-v2-modal-title-icon" />
-            <h2 className="mg-v2-modal-title">결제 확인</h2>
-          </div>
+  return (
+    <UnifiedModal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="결제 확인"
+      size="medium"
+      className="mg-v2-ad-b0kla"
+      backdropClick
+      showCloseButton
+      loading={loading}
+      actions={
+        <>
           <button
             type="button"
-            className="mg-v2-modal-close"
-            onClick={onClose}
+            className="mg-v2-button mg-v2-button-secondary"
+            onClick={(e) => {
+              e?.preventDefault();
+              e?.stopPropagation();
+              onClose();
+            }}
             disabled={loading}
-            aria-label="닫기"
           >
-            <XCircle size={24} />
+            취소
           </button>
-        </header>
-
-        {/* 본문 */}
-        <div className="mg-v2-modal-body">
+          <button
+            type="button"
+            className="mg-v2-button mg-v2-button-danger"
+            onClick={handleCancelPayment}
+            disabled={loading || selectedMappings.length === 0}
+          >
+            <XCircle size={18} />
+            결제 취소
+          </button>
+          <button
+            type="button"
+            className="mg-v2-button mg-v2-button-primary"
+            onClick={handleConfirmPayment}
+            disabled={loading || selectedMappings.length === 0}
+          >
+            <CheckCircle size={18} />
+            결제 확인
+          </button>
+        </>
+      }
+    >
+      <div className="mg-v2-modal-body">
           {/* 매핑 목록 */}
           <div className="mg-v2-ad-b0kla__card mg-v2-form-section">
             <h3 className="mg-v2-ad-b0kla__section-title">결제 대기 중인 매핑</h3>
@@ -391,42 +416,7 @@ const PaymentConfirmationModal = ({
             </div>
           </div>
         </div>
-
-        <footer className="mg-v2-modal-footer">
-          <button
-            type="button"
-            className="mg-v2-button mg-v2-button-secondary"
-            onClick={(e) => {
-              e?.preventDefault();
-              e?.stopPropagation();
-              onClose();
-            }}
-            disabled={loading}
-          >
-            취소
-          </button>
-          <button
-            type="button"
-            className="mg-v2-button mg-v2-button-danger"
-            onClick={handleCancelPayment}
-            disabled={loading || selectedMappings.length === 0}
-          >
-            <XCircle size={18} />
-            결제 취소
-          </button>
-          <button
-            type="button"
-            className="mg-v2-button mg-v2-button-primary"
-            onClick={handleConfirmPayment}
-            disabled={loading || selectedMappings.length === 0}
-          >
-            <CheckCircle size={18} />
-            결제 확인
-          </button>
-        </footer>
-      </div>
-    </div>,
-    document.body
+    </UnifiedModal>
   );
 };
 

@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import ReactDOM from 'react-dom';
 import { Briefcase, XCircle, Edit2, Save, Plus, Users, Target } from 'lucide-react';
-// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { apiGet, apiPost, apiPut } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 import { getAllConsultantsWithStats } from '../../utils/consultantHelper';
 import { useSession } from '../../contexts/SessionContext';
 import { getSpecialtyKoreanName } from '../../utils/codeHelper';
+import UnifiedModal from '../common/modals/UnifiedModal';
 
 /**
  * 상담사 전문분야 관리 모달 컴포넌트
@@ -306,21 +305,16 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
 
     if (!isOpen) return null;
 
-    const portalTarget = document.body || document.createElement('div');
-
-    return ReactDOM.createPortal(
-        <div className="mg-v2-modal-overlay" onClick={handleClose}>
-            <div className="mg-v2-modal mg-v2-modal-large" onClick={(e) => e.stopPropagation()}>
-                <div className="mg-v2-modal-header">
-                    <div className="mg-v2-modal-title-wrapper">
-                        <Target size={28} className="mg-v2-modal-title-icon" />
-                        <h2 className="mg-v2-modal-title">상담사 전문분야 관리</h2>
-                    </div>
-                    <button className="mg-v2-modal-close" onClick={handleClose} disabled={loading} aria-label="닫기">
-                        <XCircle size={24} />
-                    </button>
-                </div>
-
+    return (
+        <UnifiedModal
+            isOpen={isOpen}
+            onClose={handleClose}
+            title="상담사 전문분야 관리"
+            size="large"
+            backdropClick
+            showCloseButton
+            loading={loading}
+        >
                 <div className="mg-v2-modal-body">
                     {/* 통계 정보 */}
                     {statistics && (
@@ -479,9 +473,7 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>,
-        portalTarget
+        </UnifiedModal>
     );
 };
 

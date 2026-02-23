@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import ReactDOM from 'react-dom';
-import { TrendingUp, XCircle, RefreshCw, Calendar, Building, BarChart, Target, DollarSign } from 'lucide-react';
-// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import { TrendingUp, RefreshCw, Calendar, Building, BarChart, Target, DollarSign } from 'lucide-react';
 import { apiGet, apiPost } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
+import UnifiedModal from '../common/modals/UnifiedModal';
 
 /**
  * 성과 지표 대시보드 모달 컴포넌트
@@ -142,21 +141,16 @@ const PerformanceMetricsModal = ({ isOpen, onClose }) => {
 
     if (!isOpen) return null;
 
-    const portalTarget = document.body || document.createElement('div');
-
-    return ReactDOM.createPortal(
-        <div className="mg-v2-modal-overlay" onClick={onClose}>
-            <div className="mg-v2-modal mg-v2-modal-large" onClick={(e) => e.stopPropagation()}>
-                <div className="mg-v2-modal-header">
-                    <div className="mg-v2-modal-title-wrapper">
-                        <TrendingUp size={28} className="mg-v2-modal-title-icon" />
-                        <h2 className="mg-v2-modal-title">성과 지표 대시보드</h2>
-                    </div>
-                    <button className="mg-v2-modal-close" onClick={handleClose} disabled={loading || recalculating} aria-label="닫기">
-                        <XCircle size={24} />
-                    </button>
-                </div>
-
+    return (
+        <UnifiedModal
+            isOpen={isOpen}
+            onClose={handleClose}
+            title="성과 지표 대시보드"
+            size="large"
+            backdropClick
+            showCloseButton
+            loading={loading}
+        >
                 <div className="mg-v2-modal-body">
                     {/* 필터 설정 */}
                     <div className="mg-v2-form-section">
@@ -317,9 +311,7 @@ const PerformanceMetricsModal = ({ isOpen, onClose }) => {
                         </div>
                     )}
                 </div>
-            </div>
-        </div>,
-        portalTarget
+        </UnifiedModal>
     );
 };
 

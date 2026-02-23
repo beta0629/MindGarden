@@ -1,12 +1,11 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import ReactDOM from 'react-dom';
 import Button from '../ui/Button/Button';
 import notificationManager from '../../utils/notification';
 import { useNavigate } from 'react-router-dom';
 import { RoleUtils, USER_ROLES } from '../../constants/roles';
 import { WIDGET_CONSTANTS } from '../../constants/widgetConstants';
 import { FaUsers, FaUserTie, FaLink, FaCalendarAlt, FaCalendarCheck, FaCog, FaDollarSign, FaChartLine, FaCogs, FaBox, FaShoppingCart, FaCheckCircle, FaWallet, FaTruck, FaSyncAlt, FaExclamationTriangle, FaBuilding, FaMapMarkerAlt, FaUserCog, FaToggleOn, FaCompressAlt, FaChartBar, FaUserGraduate, FaRedo, FaFileExport, FaBell, FaDatabase, FaRocket, FaShieldAlt, FaFileAlt } from 'react-icons/fa';
-import { Calendar, CheckCircle, Check, TrendingUp, AlertTriangle, BarChart, Settings, LayoutDashboard, Heart, Trophy, Users, CalendarDays, User, Clock, PieChart, Target, Shield, Activity, Link2, DollarSign, RotateCcw, Receipt, MessageSquare, Sparkles, XCircle, Search, Bell, Moon, Building, ShieldCheck, Megaphone } from 'lucide-react';
+import { Calendar, CheckCircle, Check, TrendingUp, AlertTriangle, BarChart, Settings, LayoutDashboard, Heart, Trophy, Users, CalendarDays, User, Clock, PieChart, Target, Shield, Activity, Link2, DollarSign, RotateCcw, Receipt, MessageSquare, Sparkles, Search, Bell, Moon, Building, ShieldCheck, Megaphone } from 'lucide-react';
 import SimpleLayout from '../layout/SimpleLayout';
 import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import SystemStatus from './system/SystemStatus';
@@ -25,6 +24,7 @@ import RecurringExpenseModal from '../finance/RecurringExpenseModal';
 import ErpReportModal from '../erp/ErpReportModal';
 import MappingDepositModal from './mapping/MappingDepositModal';
 import AdminDashboardMonitoring from './AdminDashboard/AdminDashboardMonitoring';
+import UnifiedModal from '../common/modals/UnifiedModal';
 import StandardizedApi from '../../utils/standardizedApi';
 import {
   CoreFlowPipeline,
@@ -1718,32 +1718,21 @@ const AdminDashboard = ({ user: propUser }) => {
             )}
 
             {/* 통계 모달 */}
-            {showStatisticsModal && ReactDOM.createPortal(
-                <div className="mg-v2-modal-overlay mg-v2-modal-overlay--high-z" onClick={() => setShowStatisticsModal(false)}>
-                    <div className="mg-v2-modal mg-v2-modal-large mg-v2-modal--scrollable" onClick={(e) => e.stopPropagation()}>
-                        <div className="mg-v2-modal-header">
-                            <div className="mg-v2-modal-title-wrapper">
-                                <BarChart size={28} className="mg-v2-modal-title-icon" />
-                                <h2 className="mg-v2-modal-title">통계 대시보드</h2>
-                            </div>
-                            <button 
-                                className="mg-v2-modal-close" 
-                                onClick={() => setShowStatisticsModal(false)}
-                                aria-label="닫기"
-                            >
-                                <XCircle size={24} />
-                            </button>
-                        </div>
-                        <div className="mg-v2-modal-body">
-                            <StatisticsDashboard
-                                userRole={(propUser || sessionUser)?.role || 'ADMIN'}
-                                userId={(propUser || sessionUser)?.id}
-                            />
-                        </div>
-                    </div>
-                </div>,
-                document.body
-            )}
+            <UnifiedModal
+                isOpen={showStatisticsModal}
+                onClose={() => setShowStatisticsModal(false)}
+                title="통계 대시보드"
+                size="large"
+                showCloseButton={true}
+                backdropClick={true}
+                zIndex={10001}
+                className="mg-v2-ad-b0kla"
+            >
+                <StatisticsDashboard
+                    userRole={(propUser || sessionUser)?.role || 'ADMIN'}
+                    userId={(propUser || sessionUser)?.id}
+                />
+            </UnifiedModal>
 
             {/* ERP 보고서 모달 */}
             {showErpReport && (

@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import ReactDOM from 'react-dom';
 import { Info, XCircle, User, CreditCard, Calendar, TrendingUp, Clock, CheckCircle, AlertTriangle } from 'lucide-react';
 import { apiGet } from '../../../utils/ajax';
 import { getMappingStatusKoreanNameSync, getUserStatusKoreanNameSync } from '../../../utils/codeHelper';
+import UnifiedModal from '../../common/modals/UnifiedModal';
 import './MappingDetailModal.css';
 
 /**
@@ -101,24 +101,27 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
 
     if (!isOpen) return null;
 
-    return ReactDOM.createPortal(
-        <div className="mg-v2-modal-overlay mg-v2-ad-b0kla" onClick={onClose}>
-            <div className="mg-v2-modal mg-v2-modal-large mg-v2-ad-b0kla" onClick={(e) => e.stopPropagation()}>
-                <header className="mg-v2-modal-header">
-                    <div className="mg-v2-modal-title-section">
-                        <Info size={24} className="mg-v2-modal-title-icon" />
-                        <h2 className="mg-v2-modal-title">매칭 상세 정보</h2>
-                    </div>
-                    <button
-                        type="button"
-                        className="mg-v2-modal-close"
-                        onClick={onClose}
-                        aria-label="닫기"
-                    >
-                        <XCircle size={24} />
-                    </button>
-                </header>
-
+    return (
+        <UnifiedModal
+            isOpen={isOpen}
+            onClose={onClose}
+            title="매칭 상세 정보"
+            size="large"
+            className="mg-v2-ad-b0kla"
+            backdropClick
+            showCloseButton
+            loading={loading}
+            actions={
+                <button
+                    type="button"
+                    className="mg-v2-button mg-v2-button-secondary"
+                    onClick={onClose}
+                >
+                    <XCircle size={18} />
+                    닫기
+                </button>
+            }
+        >
                 {loading ? (
                     <div className="mg-v2-modal-body">
                         <div className="mg-v2-loading-container">
@@ -428,20 +431,7 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
                         </div>
                     </>
                 )}
-
-                <footer className="mg-v2-modal-footer">
-                    <button
-                        type="button"
-                        className="mg-v2-button mg-v2-button-secondary"
-                        onClick={onClose}
-                    >
-                        <XCircle size={18} />
-                        닫기
-                    </button>
-                </footer>
-            </div>
-        </div>,
-        document.body
+        </UnifiedModal>
     );
 };
 

@@ -12,11 +12,12 @@
 
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { X, RefreshCw, BarChart, Calendar } from 'lucide-react';
+import { RefreshCw, BarChart, Calendar } from 'lucide-react';
 import { apiGet } from '../../utils/ajax';
 import { SCHEDULE_API, API_BASE_URL } from '../../constants/api';
 import { STATS_LOADING_STATES, STATS_ERROR_MESSAGES } from '../../constants/stats';
 import StatisticsGrid from './StatisticsGrid';
+import UnifiedModal from './modals/UnifiedModal';
 
 const StatisticsModal = ({ isOpen, onClose, userRole = 'ADMIN' }) => {
   const [statistics, setStatistics] = useState(null);
@@ -161,21 +162,33 @@ const StatisticsModal = ({ isOpen, onClose, userRole = 'ADMIN' }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="mg-modal-overlay" onClick={onClose}>
-      <div className="mg-modal mg-modal-large" onClick={(e) => e.stopPropagation()}>
-        <div className="mg-modal-header">
-          <div className="mg-flex mg-gap-sm mg-align-center">
-            <BarChart size={24} />
-            <h3 className="mg-modal-title">통계 보기</h3>
-          </div>
-          <button 
-            className="mg-modal-close"
+    <UnifiedModal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="통계 보기"
+      size="large"
+      backdropClick
+      showCloseButton
+      loading={loading}
+      actions={
+        <>
+          <button
+            className="mg-button mg-button-outline"
+            onClick={handleRefresh}
+            disabled={loading}
+          >
+            <RefreshCw size={16} />
+            새로고침
+          </button>
+          <button
+            className="mg-button mg-button-primary"
             onClick={onClose}
           >
-            <X size={20} />
+            닫기
           </button>
-        </div>
-        
+        </>
+      }
+    >
         <div className="mg-modal-body">
           <div className="mg-tabs">
             <button 
@@ -205,25 +218,7 @@ const StatisticsModal = ({ isOpen, onClose, userRole = 'ADMIN' }) => {
             />
           </div>
         </div>
-        
-        <div className="mg-modal-footer">
-          <button 
-            className="mg-button mg-button-outline"
-            onClick={handleRefresh}
-            disabled={loading}
-          >
-            <RefreshCw size={16} />
-            새로고침
-          </button>
-          <button 
-            className="mg-button mg-button-primary"
-            onClick={onClose}
-          >
-            닫기
-          </button>
-        </div>
-      </div>
-    </div>
+    </UnifiedModal>
   );
 };
 

@@ -1,18 +1,18 @@
 /**
  * MappingCreationModal - B0KlA 토큰 기반 플로우형 UI
- * mg-v2-modal-overlay, mg-v2-modal, mg-v2-ad-b0kla 디자인 시스템 적용
+ * UnifiedModal 사용, .mg-modal.mg-v2-ad-b0kla 컨테이너
  * @author MindGarden
  * @since 2025-02-22
  */
 
-/* ===== B0KlA 모달 오버레이 (MAPPING_MODALS_DESIGN_SPEC) ===== */
-.mg-v2-ad-b0kla-modal-overlay {
+/* ===== B0KlA 모달 오버레이 (UnifiedModal에 className 적용) ===== */
+.mg-modal-overlay.mg-v2-ad-b0kla {
   --ad-b0kla-overlay-bg: var(--droplet-bg-dark);
   background: var(--ad-b0kla-overlay-bg);
 }
 
-/* ===== B0KlA 모달 (mg-v2-modal + mg-v2-ad-b0kla-modal) ===== */
-.mg-v2-mapping-creation-modal-wrapper.mg-v2-ad-b0kla-modal {
+/* ===== B0KlA 모달 컨테이너 (UnifiedModal .mg-modal.mg-v2-ad-b0kla) ===== */
+.mg-modal.mg-v2-ad-b0kla {
   display: flex;
   flex-direction: column;
   background: var(--ad-b0kla-card-bg);
@@ -23,45 +23,38 @@
   max-height: 90vh;
 }
 
-.mg-v2-mapping-creation-modal-wrapper .mg-v2-modal-header,
-.mg-v2-mapping-creation-modal-wrapper .mg-v2-ad-b0kla-modal__header {
+.mg-modal.mg-v2-ad-b0kla .mg-modal__header {
   border-bottom: 1px solid var(--ad-b0kla-border);
 }
 
-.mg-v2-mapping-creation-modal-wrapper .mg-v2-modal-footer,
-.mg-v2-mapping-creation-modal-wrapper .mg-v2-ad-b0kla-modal__footer {
+.mg-modal.mg-v2-ad-b0kla .mg-modal__actions {
   border-top: 1px solid var(--ad-b0kla-border);
   padding: var(--mg-spacing-lg, 1rem) var(--mg-spacing-xl, 1.5rem);
 }
 
 /* 아토믹 디자인·B0KlA 버튼 (모달 푸터) */
-.mg-v2-mapping-creation-modal-wrapper .mg-v2-modal-footer .mg-v2-button-primary,
-.mg-v2-mapping-creation-modal-wrapper .mg-v2-ad-b0kla-modal__footer .mg-v2-button-primary {
+.mg-modal.mg-v2-ad-b0kla .mg-modal__actions .mg-v2-button-primary {
   background: var(--ad-b0kla-green);
   color: var(--ad-b0kla-card-bg);
   border: none;
 }
-.mg-v2-mapping-creation-modal-wrapper .mg-v2-modal-footer .mg-v2-button-primary:hover:not(:disabled),
-.mg-v2-mapping-creation-modal-wrapper .mg-v2-ad-b0kla-modal__footer .mg-v2-button-primary:hover:not(:disabled) {
+.mg-modal.mg-v2-ad-b0kla .mg-modal__actions .mg-v2-button-primary:hover:not(:disabled) {
   background: var(--ad-b0kla-green);
   opacity: 0.9;
 }
-.mg-v2-mapping-creation-modal-wrapper .mg-v2-modal-footer .mg-v2-button-outline,
-.mg-v2-mapping-creation-modal-wrapper .mg-v2-ad-b0kla-modal__footer .mg-v2-button-outline {
+.mg-modal.mg-v2-ad-b0kla .mg-modal__actions .mg-v2-button-outline {
   background: transparent;
   color: var(--ad-b0kla-green);
   border: 2px solid var(--ad-b0kla-green);
 }
-.mg-v2-mapping-creation-modal-wrapper .mg-v2-modal-footer .mg-v2-button-outline:hover:not(:disabled),
-.mg-v2-mapping-creation-modal-wrapper .mg-v2-ad-b0kla-modal__footer .mg-v2-button-outline:hover:not(:disabled) {
+.mg-modal.mg-v2-ad-b0kla .mg-modal__actions .mg-v2-button-outline:hover:not(:disabled) {
   background: var(--ad-b0kla-green-bg);
   color: var(--ad-b0kla-green);
   border-color: var(--ad-b0kla-green);
 }
 
 /* 모달 바디: 콘텐츠 양에 맞게 자동 조절, 내용 많을 때만 스크롤 */
-.mg-v2-mapping-creation-modal-wrapper .mg-v2-modal-body,
-.mg-v2-mapping-creation-modal-wrapper .mg-v2-ad-b0kla-modal__body {
+.mg-modal.mg-v2-ad-b0kla .mg-modal__body {
   min-height: 0; /* flexbox에서 스크롤 시 축소 허용 */
   max-height: min(70vh, 600px);
   overflow-y: auto;
@@ -71,7 +64,7 @@
 }
 
 /* 로딩 오버레이 */
-.mg-v2-mapping-creation-modal-wrapper .mg-v2-modal__loading-overlay {
+.mg-modal.mg-v2-ad-b0kla .mg-modal__loading-overlay {
   position: absolute;
   top: 0;
   left: 0;
@@ -419,7 +412,7 @@
 
 /* 모바일: medium 크기 (데이터 양에 맞게) */
 @media (max-width: 768px) {
-  .mg-v2-mapping-creation-modal-wrapper.mg-v2-modal-medium {
+  .mg-modal.mg-v2-ad-b0kla.mg-modal--medium {
     max-width: 95vw;
     width: 95vw;
   }

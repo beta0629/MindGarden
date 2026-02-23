@@ -751,6 +751,18 @@
 }
 
 /* mg-modal__body 내부 폼·입력 B0KlA */
+.mg-modal.mg-modal--auto.mg-v2-ad-b0kla {
+  height: auto !important;
+  min-height: 0 !important;
+  flex: 0 0 auto !important;
+}
+
+.mg-modal.mg-modal--auto.mg-v2-ad-b0kla .mg-modal__body {
+  flex: 0 0 auto !important;
+  min-height: 0 !important;
+  height: auto !important;
+}
+
 .mg-modal.mg-v2-ad-b0kla .mg-modal__body .mg-v2-input,
 .mg-modal.mg-v2-ad-b0kla .mg-modal__body select,
 .mg-modal.mg-v2-ad-b0kla .mg-modal__body input[type="text"],

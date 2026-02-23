@@ -1,6 +1,7 @@
 package com.coresolution.consultation.service.impl;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import com.coresolution.consultation.constant.UserRole;
@@ -66,8 +67,12 @@ public class ConsultationMessageServiceImpl extends BaseTenantEntityServiceImpl<
         
         log.info("📨 상담사 메시지 목록 조회 - 상담사 ID: {}, 내담자 ID: {}", consultantId, clientId);
         
-        return consultationMessageRepository.findByConsultantIdAndClientIdAndStatusAndIsReadAndIsImportantAndIsUrgent(
-            consultantId, clientId, status, isRead, isImportant, isUrgent, pageable);
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null || tenantId.isEmpty()) {
+            throw new IllegalStateException("tenantId는 필수입니다. 테넌트 정보가 없습니다.");
+        }
+        return consultationMessageRepository.findByTenantIdAndConsultantIdAndClientIdAndStatusAndIsReadAndIsImportantAndIsUrgent(
+            tenantId, consultantId, clientId, status, isRead, isImportant, isUrgent, pageable);
     }
 
     @Override
@@ -77,8 +82,12 @@ public class ConsultationMessageServiceImpl extends BaseTenantEntityServiceImpl<
         
         log.info("📨 내담자 메시지 목록 조회 - 내담자 ID: {}, 상담사 ID: {}", clientId, consultantId);
         
-        return consultationMessageRepository.findByClientIdAndConsultantIdAndStatusAndIsReadAndIsImportantAndIsUrgent(
-            clientId, consultantId, status, isRead, isImportant, isUrgent, pageable);
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null || tenantId.isEmpty()) {
+            throw new IllegalStateException("tenantId는 필수입니다. 테넌트 정보가 없습니다.");
+        }
+        return consultationMessageRepository.findByTenantIdAndClientIdAndConsultantIdAndStatusAndIsReadAndIsImportantAndIsUrgent(
+            tenantId, clientId, consultantId, status, isRead, isImportant, isUrgent, pageable);
     }
 
     @Override
@@ -246,8 +255,12 @@ public class ConsultationMessageServiceImpl extends BaseTenantEntityServiceImpl<
     public Long getUnreadCount(Long userId, String userType) {
         log.info("📨 읽지 않은 메시지 수 조회 - 사용자 ID: {}, 유형: {}", userId, userType);
         
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null || tenantId.isEmpty()) {
+            throw new IllegalStateException("tenantId는 필수입니다. 테넌트 정보가 없습니다.");
+        }
         // receiverId로 조회 (실제 수신자 기준)
-        Long count = consultationMessageRepository.countByReceiverIdAndIsReadFalse(userId);
+        Long count = consultationMessageRepository.countByTenantIdAndReceiverIdAndIsReadFalse(tenantId, userId);
         
         log.info("📊 읽지 않은 메시지 수: {} (수신자 ID: {})", count, userId);
         
@@ -258,7 +271,11 @@ public class ConsultationMessageServiceImpl extends BaseTenantEntityServiceImpl<
     public List<ConsultationMessage> getConversation(Long consultantId, Long clientId) {
         log.info("📨 대화 목록 조회 - 상담사 ID: {}, 내담자 ID: {}", consultantId, clientId);
         
-        return consultationMessageRepository.findByConsultantIdAndClientIdOrderByCreatedAtAsc(consultantId, clientId);
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null || tenantId.isEmpty()) {
+            throw new IllegalStateException("tenantId는 필수입니다. 테넌트 정보가 없습니다.");
+        }
+        return consultationMessageRepository.findByTenantIdAndConsultantIdAndClientIdOrderByCreatedAtAsc(tenantId, consultantId, clientId);
     }
 
     @Override
@@ -268,13 +285,17 @@ public class ConsultationMessageServiceImpl extends BaseTenantEntityServiceImpl<
         
         log.info("📨 메시지 검색 - 사용자 ID: {}, 유형: {}, 키워드: {}", userId, userType, keyword);
         
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null || tenantId.isEmpty()) {
+            throw new IllegalStateException("tenantId는 필수입니다. 테넌트 정보가 없습니다.");
+        }
         // 표준화 2025-12-05: enum 활용
         if (UserRole.CONSULTANT.name().equals(userType)) {
-            return consultationMessageRepository.findByConsultantIdAndTitleContainingOrContentContainingAndMessageTypeAndIsImportantAndIsUrgent(
-                userId, keyword, keyword, isImportant, isUrgent, pageable);
+            return consultationMessageRepository.findByTenantIdAndConsultantIdAndTitleContainingOrContentContainingAndMessageTypeAndIsImportantAndIsUrgent(
+                tenantId, userId, keyword, messageType, isImportant, isUrgent, pageable);
         } else {
-            return consultationMessageRepository.findByClientIdAndTitleContainingOrContentContainingAndMessageTypeAndIsImportantAndIsUrgent(
-                userId, keyword, keyword, isImportant, isUrgent, pageable);
+            return consultationMessageRepository.findByTenantIdAndClientIdAndTitleContainingOrContentContainingAndMessageTypeAndIsImportantAndIsUrgent(
+                tenantId, userId, keyword, messageType, isImportant, isUrgent, pageable);
         }
     }
 
@@ -448,12 +469,11 @@ public class ConsultationMessageServiceImpl extends BaseTenantEntityServiceImpl<
     
     @Override
     public List<ConsultationMessage> getAllMessages() {
-        // 테넌트 컨텍스트에서 tenantId 가져오기
         String tenantId = TenantContextHolder.getTenantId();
-        if (tenantId != null) {
-            return findAllByTenant(tenantId, null);
+        if (tenantId == null || tenantId.isEmpty()) {
+            log.error("getAllMessages: tenantId는 필수입니다. 컨트롤러에서 세션 tenantId 검증 및 TenantContextHolder 설정 필요.");
+            throw new IllegalStateException("tenantId는 필수입니다. 테넌트 정보가 없습니다.");
         }
-        // 테넌트 컨텍스트가 없으면 기존 방식 사용 (하위 호환성)
-        return consultationMessageRepository.findByTenantId(tenantId);
+        return findAllByTenant(tenantId, null);
     }
 }

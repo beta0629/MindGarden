@@ -9,8 +9,10 @@ import com.coresolution.consultation.entity.ConsultationMessage;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.service.ConsultationMessageService;
 import com.coresolution.consultation.utils.SessionUtils;
+import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.controller.BaseApiController;
 import com.coresolution.core.dto.ApiResponse;
+import org.springframework.http.HttpStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -79,29 +81,37 @@ public class ConsultationMessageController extends BaseApiController {
 
     /**
      * 모든 메시지 조회 (관리자 전용)
-     * GET /api/consultation-messages/all
+     * GET /api/v1/consultation-messages/all
      */
     @GetMapping("/all")
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getAllMessages(HttpSession session) {
         log.info("📨 전체 메시지 목록 조회 (관리자)");
         
-        // 세션에서 사용자 정보 가져오기
         User currentUser = SessionUtils.getCurrentUser(session);
         if (currentUser == null) {
             log.warn("⚠️ 인증되지 않은 사용자");
-            throw new RuntimeException("로그인이 필요합니다.");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(ApiResponse.error("로그인이 필요합니다."));
         }
         
-        // 동적 권한 체크 (하드코딩된 역할 체크 제거)
         boolean hasPermission = dynamicPermissionService.hasPermission(currentUser, "MESSAGE_MANAGE");
         if (!hasPermission) {
-            log.warn("⚠️ 권한 없음 - 사용자 ID: {}, 역할: {}, 권한: MESSAGE_MANAGE", 
+            log.warn("⚠️ 권한 없음 - 사용자 ID: {}, 역할: {}, 권한: MESSAGE_MANAGE",
                 currentUser.getId(), currentUser.getRole());
-            throw new RuntimeException("메시지 관리 권한이 필요합니다.");
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(ApiResponse.error("메시지 관리 권한이 필요합니다."));
         }
         
-        // 모든 메시지 조회
-        List<ConsultationMessage> messages = consultationMessageService.getAllMessages();
+        String tenantId = currentUser.getTenantId();
+        if (tenantId == null || tenantId.isEmpty()) {
+            log.warn("⚠️ 테넌트 정보 없음 - 사용자 ID: {}", currentUser.getId());
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(ApiResponse.error("테넌트 정보가 없습니다."));
+        }
+        
+        try {
+            TenantContextHolder.setTenantId(tenantId);
+            List<ConsultationMessage> messages = consultationMessageService.getAllMessages();
         
         // 데이터 변환 (senderName, receiverName 추가)
         List<Map<String, Object>> messageData = messages.stream()
@@ -134,9 +144,15 @@ public class ConsultationMessageController extends BaseApiController {
             })
             .collect(Collectors.toList());
         
-        log.info("✅ 전체 메시지 조회 성공 - 총 {}개", messageData.size());
-        
-        return success("메시지 목록을 성공적으로 조회했습니다.", messageData);
+            log.info("✅ 전체 메시지 조회 성공 - 총 {}개", messageData.size());
+            return success("메시지 목록을 성공적으로 조회했습니다.", messageData);
+        } catch (Exception e) {
+            log.error("전체 메시지 조회 실패 - 사용자 ID: {}, error: {}", currentUser.getId(), e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(ApiResponse.error("메시지 목록을 조회할 수 없습니다. " + (e.getMessage() != null ? e.getMessage() : "")));
+        } finally {
+            TenantContextHolder.clear();
+        }
     }
 
     /**
@@ -151,11 +167,22 @@ public class ConsultationMessageController extends BaseApiController {
             @RequestParam(required = false) Boolean isRead,
             @RequestParam(required = false) Boolean isImportant,
             @RequestParam(required = false) Boolean isUrgent,
-            Pageable pageable) {
+            Pageable pageable,
+            HttpSession session) {
         log.info("📨 상담사 메시지 목록 조회 - 상담사 ID: {}, 내담자 ID: {}", consultantId, clientId);
         
-        Page<ConsultationMessage> messages = consultationMessageService.getConsultantMessages(
-            consultantId, clientId, status, isRead, isImportant, isUrgent, pageable);
+        User currentUser = SessionUtils.getCurrentUser(session);
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("로그인이 필요합니다."));
+        }
+        String tenantId = currentUser.getTenantId();
+        if (tenantId == null || tenantId.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("테넌트 정보가 없습니다."));
+        }
+        try {
+            TenantContextHolder.setTenantId(tenantId);
+            Page<ConsultationMessage> messages = consultationMessageService.getConsultantMessages(
+                consultantId, clientId, status, isRead, isImportant, isUrgent, pageable);
         
         // 안전한 데이터 추출 (상담사 화면에서 내담자명 표시용 clientId, clientName 포함)
         List<Map<String, Object>> messageData = messages.getContent().stream()
@@ -190,6 +217,9 @@ public class ConsultationMessageController extends BaseApiController {
         data.put("size", messages.getSize());
         
         return success(data);
+        } finally {
+            TenantContextHolder.clear();
+        }
     }
 
     /**
@@ -241,11 +271,18 @@ public class ConsultationMessageController extends BaseApiController {
             throw new RuntimeException("접근 권한이 없습니다.");
         }
         
+        String tenantId = currentUser.getTenantId();
+        if (tenantId == null || tenantId.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("테넌트 정보가 없습니다."));
+        }
+        
         log.info("✅ 권한 확인 완료 - 사용자 ID: {}, 역할: {}, 요청한 내담자 ID: {}, 자신의 메시지: {}, 관리자: {}, API 권한: {}", 
             currentUser.getId(), currentUser.getRole(), clientId, isOwnMessage, isAdmin, hasApiAccess);
         
-        Page<ConsultationMessage> messages = consultationMessageService.getClientMessages(
-            clientId, consultantId, status, isRead, isImportant, isUrgent, pageable);
+        try {
+            TenantContextHolder.setTenantId(tenantId);
+            Page<ConsultationMessage> messages = consultationMessageService.getClientMessages(
+                clientId, consultantId, status, isRead, isImportant, isUrgent, pageable);
         
         // 안전한 데이터 추출
         List<Map<String, Object>> messageData = messages.getContent().stream()
@@ -278,6 +315,9 @@ public class ConsultationMessageController extends BaseApiController {
         data.put("size", messages.getSize());
         
         return success(data);
+        } finally {
+            TenantContextHolder.clear();
+        }
     }
 
     /**
@@ -472,14 +512,26 @@ public class ConsultationMessageController extends BaseApiController {
     @GetMapping("/unread-count")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getUnreadCount(
             @RequestParam Long userId,
-            @RequestParam String userType) {
+            @RequestParam String userType,
+            HttpSession session) {
         log.info("📨 읽지 않은 메시지 수 조회 - 사용자 ID: {}, 유형: {}", userId, userType);
         
-        Long unreadCount = consultationMessageService.getUnreadCount(userId, userType);
-        
-        Map<String, Object> data = new HashMap<>();
-        data.put("unreadCount", unreadCount);
-        
-        return success(data);
+        User currentUser = SessionUtils.getCurrentUser(session);
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("로그인이 필요합니다."));
+        }
+        String tenantId = currentUser.getTenantId();
+        if (tenantId == null || tenantId.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("테넌트 정보가 없습니다."));
+        }
+        try {
+            TenantContextHolder.setTenantId(tenantId);
+            Long unreadCount = consultationMessageService.getUnreadCount(userId, userType);
+            Map<String, Object> data = new HashMap<>();
+            data.put("unreadCount", unreadCount);
+            return success(data);
+        } finally {
+            TenantContextHolder.clear();
+        }
     }
 }

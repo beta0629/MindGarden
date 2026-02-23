@@ -94,11 +94,12 @@ const ScheduleDetailModal = ({
         try {
             setLoading(true);
             console.log('❌ 스케줄 취소 요청:', scheduleData?.id);
-            const cancelledStatus = scheduleStatusOptions.find(opt =>
+            const cancelledStatusOption = scheduleStatusOptions.find(opt =>
                 opt.value === 'CANCELLED' || opt.label?.includes('취소')
             );
+            const statusCode = cancelledStatusOption?.value ?? 'CANCELLED';
             const response = await apiPut(`/api/v1/schedules/${scheduleData.id}`, {
-                status: cancelledStatus,
+                status: statusCode,
                 description: '사용자에 의해 취소됨'
             });
             if (response != null) {

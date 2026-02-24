@@ -24,6 +24,7 @@ import {
     generateTimeSlots,
     isTimeSlotBooked
 } from './ScheduleCalendar/ScheduleCalendarUtils';
+import './ScheduleCalendar.css';
 
 /**
  * FullCalendar 기반 스케줄 관리 컴포넌트 (리팩토링됨)

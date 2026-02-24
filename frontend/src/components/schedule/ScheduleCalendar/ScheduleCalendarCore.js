@@ -41,7 +41,7 @@ const ScheduleCalendarCore = ({
             droppable: !readOnly,
             selectable: !readOnly,
             selectMirror: !readOnly,
-            dayMaxEvents: true,
+            dayMaxEvents: isMobile ? 4 : 8,
             weekends: true,
             locale: 'ko',
             height: 'auto',
@@ -82,7 +82,7 @@ const ScheduleCalendarCore = ({
 
         // 모바일 환경에서 추가 설정
         if (isMobile) {
-            baseConfig.dayMaxEvents = 3;
+            baseConfig.dayMaxEvents = 4;
             baseConfig.moreLinkClick = 'popover';
             baseConfig.eventDisplay = 'block';
         }

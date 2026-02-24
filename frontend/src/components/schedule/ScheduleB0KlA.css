@@ -430,6 +430,27 @@
   background: var(--ad-b0kla-bg);
 }
 
+/* 일 8개 이벤트 표시용 셀 높이·스크롤 */
+.mg-v2-ad-b0kla .fc-daygrid-day-frame {
+  min-height: calc(var(--spacing-xl, 2rem) * 4);
+}
+.mg-v2-ad-b0kla .fc-daygrid-day-events {
+  max-height: calc(var(--spacing-xl, 2rem) * 6);
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+.mg-v2-ad-b0kla .fc-daygrid-day-events::-webkit-scrollbar {
+  width: 4px;
+}
+.mg-v2-ad-b0kla .fc-daygrid-day-events::-webkit-scrollbar-track {
+  background: var(--ad-b0kla-bg);
+  border-radius: 2px;
+}
+.mg-v2-ad-b0kla .fc-daygrid-day-events::-webkit-scrollbar-thumb {
+  background: var(--ad-b0kla-border);
+  border-radius: 2px;
+}
+
 .mg-v2-ad-b0kla .fc-timegrid-slot-label {
   color: var(--ad-b0kla-text-secondary);
 }

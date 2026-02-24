@@ -459,6 +459,27 @@
     font-weight: 700;
 }
 
+/* 일 8개 이벤트 표시용 셀 높이·스크롤 */
+.fc-daygrid-day-frame {
+    min-height: calc(var(--spacing-xl, 2rem) * 4);
+}
+.fc-daygrid-day-events {
+    max-height: calc(var(--spacing-xl, 2rem) * 6);
+    overflow-y: auto;
+    scrollbar-width: thin;
+}
+.fc-daygrid-day-events::-webkit-scrollbar {
+    width: 4px;
+}
+.fc-daygrid-day-events::-webkit-scrollbar-track {
+    background: var(--mg-color-surface);
+    border-radius: 2px;
+}
+.fc-daygrid-day-events::-webkit-scrollbar-thumb {
+    background: var(--mg-color-border);
+    border-radius: 2px;
+}
+
 .fc-event {
     border-radius: 4px;
     border: none;

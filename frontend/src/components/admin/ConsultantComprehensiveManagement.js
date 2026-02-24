@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { Plus, Users, Link2, Calendar, ClipboardList, X } from 'lucide-react';
+import { Plus, Users, Link2, Calendar, ClipboardList, X, Edit, Trash2, Key, Mail, Phone, User, Eye } from 'lucide-react';
 import Button from '../ui/Button/Button';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
@@ -23,6 +23,7 @@ import './mapping-management/organisms/MappingSearchSection.css';
 import './mapping-management/organisms/MappingListBlock.css';
 import './mapping-management/MappingManagementPage.css';
 import './ConsultantManagementPage.css';
+import './ProfileCard.css';
 
 const ConsultantComprehensiveManagement = () => {
     const [consultants, setConsultants] = useState([]);
@@ -1074,40 +1075,53 @@ const ConsultantComprehensiveManagement = () => {
                                                 {getFilteredConsultants.map((consultant) => (
                                                     <div
                                                         key={consultant.id}
-                                                        className="mg-v2-consultant-card mg-consultant-card--detailed"
+                                                        className="mg-v2-profile-card"
                                                         onClick={() => handleConsultantSelect(consultant)}
                                                     >
-                                                        <div className={`mg-v2-consultant-card__status-badge mg-v2-consultant-card__status-badge--${consultant.status?.toLowerCase() || 'unknown'}`}>
-                                                            <span>{getStatusLabel(consultant.status)}</span>
-                                                        </div>
-                                                        <div className="mg-v2-consultant-card__avatar mg-consultant-card__avatar--large">
-                                                            {consultant.name ? consultant.name.charAt(0) : '?'}
-                                                        </div>
-                                                        <div className="mg-v2-consultant-card__info">
-                                                            <h4 className="mg-v2-consultant-card__name mg-consultant-card__name--large">{consultant.name || '이름 없음'}</h4>
-                                                            <div className="mg-v2-consultant-card__rating-section">
-                                                                <div className="mg-v2-consultant-card__rating">
-                                                                    <span className="mg-v2-consultant-card__rating-value">📧</span>
-                                                                    <span className="mg-v2-consultant-card__rating-text">{consultant.email}</span>
-                                                                </div>
-                                                                <div className="mg-v2-consultant-card__experience">
-                                                                    <span>📞 {consultant.phone || '전화번호 없음'}</span>
+                                                        <div className="mg-v2-profile-card__header">
+                                                            <div className="mg-v2-profile-card__avatar">
+                                                                {consultant.name ? consultant.name.charAt(0) : '?'}
+                                                            </div>
+                                                            <div className="mg-v2-profile-card__info">
+                                                                <h3 className="mg-v2-profile-card__name">{consultant.name || '이름 없음'}</h3>
+                                                                <div className="mg-v2-profile-card__contact">
+                                                                    <span className="mg-v2-profile-card__email">
+                                                                        <Mail size={12} /> {consultant.email}
+                                                                    </span>
+                                                                    <span className="mg-v2-profile-card__phone">
+                                                                        <Phone size={12} /> {consultant.phone || '전화번호 없음'}
+                                                                    </span>
                                                                 </div>
                                                             </div>
-                                                            <div className="mg-v2-consultant-card__details">
-                                                                <div className="mg-v2-consultant-card__detail-item">
-                                                                    <span>📅 가입일: {consultant.createdAt ? new Date(consultant.createdAt).toLocaleDateString() : '알 수 없음'}</span>
-                                                                </div>
-                                                                <div className="mg-v2-consultant-card__detail-item">
-                                                                    <span>👥 총 클라이언트: {consultant.currentClients || 0}명</span>
-                                                                </div>
-                                                                {consultant.specialty && (
-                                                                    <div className="mg-v2-consultant-card__detail-item">
-                                                                        <span>🎯 전문분야: {consultant.specialty}</span>
-                                                                    </div>
-                                                                )}
+                                                            <div className="mg-v2-profile-card__badges">
+                                                                <span className={`mg-v2-status-badge mg-v2-status-badge--${consultant.status?.toLowerCase() || 'unknown'}`}>
+                                                                    {getStatusLabel(consultant.status)}
+                                                                </span>
                                                             </div>
-                                                            <div className="mg-v2-consultant-card__actions">
+                                                        </div>
+                                                        <div className="mg-v2-profile-card__body">
+                                                            <div className="mg-v2-profile-card__stats-grid">
+                                                                <div className="mg-v2-profile-card__stat-item">
+                                                                    <span className="mg-v2-profile-card__stat-label">가입일</span>
+                                                                    <span className="mg-v2-profile-card__stat-value">{consultant.createdAt ? new Date(consultant.createdAt).toLocaleDateString() : '-'}</span>
+                                                                </div>
+                                                                <div className="mg-v2-profile-card__stat-item">
+                                                                    <span className="mg-v2-profile-card__stat-label">총 클라이언트</span>
+                                                                    <span className="mg-v2-profile-card__stat-value">{consultant.currentClients || 0}명</span>
+                                                                </div>
+                                                                <div className="mg-v2-profile-card__stat-item">
+                                                                    {/* 3단 그리드 여백용 */}
+                                                                </div>
+                                                            </div>
+                                                            {consultant.specialty && (
+                                                                <div className="mg-v2-profile-card__extra-info">
+                                                                    <span className="mg-v2-profile-card__extra-label">전문분야:</span>
+                                                                    <span className="mg-v2-profile-card__extra-value">{consultant.specialty}</span>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        <div className="mg-v2-profile-card__footer">
+                                                            <div className="mg-v2-profile-card__actions">
                                                                 <Button
                                                                     variant="primary"
                                                                     size="small"
@@ -1117,7 +1131,7 @@ const ConsultantComprehensiveManagement = () => {
                                                                     }}
                                                                     preventDoubleClick={true}
                                                                 >
-                                                                    수정
+                                                                    <Edit size={14} /> 수정
                                                                 </Button>
                                                                 <Button
                                                                     variant="secondary"
@@ -1130,7 +1144,7 @@ const ConsultantComprehensiveManagement = () => {
                                                                     preventDoubleClick={true}
                                                                     title="비밀번호 초기화"
                                                                 >
-                                                                    🔑 비밀번호 초기화
+                                                                    <Key size={14} /> 비밀번호 초기화
                                                                 </Button>
                                                                 <Button
                                                                     variant="danger"
@@ -1142,7 +1156,7 @@ const ConsultantComprehensiveManagement = () => {
                                                                     }}
                                                                     preventDoubleClick={true}
                                                                 >
-                                                                    삭제
+                                                                    <Trash2 size={14} /> 삭제
                                                                 </Button>
                                                             </div>
                                                         </div>
@@ -1223,39 +1237,53 @@ const ConsultantComprehensiveManagement = () => {
                                                 {getFilteredConsultants.map((consultant) => (
                                                     <div
                                                         key={consultant.id}
-                                                        className="mg-v2-consultant-card mg-consultant-card--detailed"
+                                                        className="mg-v2-profile-card"
+                                                        onClick={() => handleConsultantSelect(consultant)}
                                                     >
-                                                        <div className={`mg-v2-consultant-card__status-badge mg-v2-consultant-card__status-badge--${consultant.status?.toLowerCase() || 'unknown'}`}>
-                                                            <span>{getStatusLabel(consultant.status)}</span>
-                                                        </div>
-                                                        <div className="mg-v2-consultant-card__avatar mg-consultant-card__avatar--large">
-                                                            {consultant.name ? consultant.name.charAt(0) : '?'}
-                                                        </div>
-                                                        <div className="mg-v2-consultant-card__info">
-                                                            <h4 className="mg-v2-consultant-card__name mg-consultant-card__name--large">{consultant.name || '이름 없음'}</h4>
-                                                            <div className="mg-v2-consultant-card__rating-section">
-                                                                <div className="mg-v2-consultant-card__rating">
-                                                                    <span className="mg-v2-consultant-card__rating-value">📧</span>
-                                                                    <span className="mg-v2-consultant-card__rating-text">{consultant.email}</span>
-                                                                </div>
-                                                                <div className="mg-v2-consultant-card__experience">
-                                                                    <span>📞 {consultant.phone || '전화번호 없음'}</span>
+                                                        <div className="mg-v2-profile-card__header">
+                                                            <div className="mg-v2-profile-card__avatar">
+                                                                {consultant.name ? consultant.name.charAt(0) : '?'}
+                                                            </div>
+                                                            <div className="mg-v2-profile-card__info">
+                                                                <h3 className="mg-v2-profile-card__name">{consultant.name || '이름 없음'}</h3>
+                                                                <div className="mg-v2-profile-card__contact">
+                                                                    <span className="mg-v2-profile-card__email">
+                                                                        <Mail size={12} /> {consultant.email}
+                                                                    </span>
+                                                                    <span className="mg-v2-profile-card__phone">
+                                                                        <Phone size={12} /> {consultant.phone || '전화번호 없음'}
+                                                                    </span>
                                                                 </div>
                                                             </div>
-                                                            <div className="mg-v2-consultant-card__details">
-                                                                <div className="mg-v2-consultant-card__detail-item">
-                                                                    <span>📅 가입일: {consultant.createdAt ? new Date(consultant.createdAt).toLocaleDateString() : '알 수 없음'}</span>
-                                                                </div>
-                                                                <div className="mg-v2-consultant-card__detail-item">
-                                                                    <span>👥 총 클라이언트: {consultant.currentClients || 0}명</span>
-                                                                </div>
-                                                                {consultant.specialty && (
-                                                                    <div className="mg-v2-consultant-card__detail-item">
-                                                                        <span>🎯 전문분야: {consultant.specialty}</span>
-                                                                    </div>
-                                                                )}
+                                                            <div className="mg-v2-profile-card__badges">
+                                                                <span className={`mg-v2-status-badge mg-v2-status-badge--${consultant.status?.toLowerCase() || 'unknown'}`}>
+                                                                    {getStatusLabel(consultant.status)}
+                                                                </span>
                                                             </div>
-                                                            <div className="mg-v2-consultant-card__actions">
+                                                        </div>
+                                                        <div className="mg-v2-profile-card__body">
+                                                            <div className="mg-v2-profile-card__stats-grid">
+                                                                <div className="mg-v2-profile-card__stat-item">
+                                                                    <span className="mg-v2-profile-card__stat-label">가입일</span>
+                                                                    <span className="mg-v2-profile-card__stat-value">{consultant.createdAt ? new Date(consultant.createdAt).toLocaleDateString() : '-'}</span>
+                                                                </div>
+                                                                <div className="mg-v2-profile-card__stat-item">
+                                                                    <span className="mg-v2-profile-card__stat-label">총 클라이언트</span>
+                                                                    <span className="mg-v2-profile-card__stat-value">{consultant.currentClients || 0}명</span>
+                                                                </div>
+                                                                <div className="mg-v2-profile-card__stat-item">
+                                                                    {/* 3단 그리드 여백용 */}
+                                                                </div>
+                                                            </div>
+                                                            {consultant.specialty && (
+                                                                <div className="mg-v2-profile-card__extra-info">
+                                                                    <span className="mg-v2-profile-card__extra-label">전문분야:</span>
+                                                                    <span className="mg-v2-profile-card__extra-value">{consultant.specialty}</span>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        <div className="mg-v2-profile-card__footer">
+                                                            <div className="mg-v2-profile-card__actions">
                                                                 <Button
                                                                     variant="primary"
                                                                     size="small"
@@ -1265,7 +1293,20 @@ const ConsultantComprehensiveManagement = () => {
                                                                     }}
                                                                     preventDoubleClick={true}
                                                                 >
-                                                                    수정
+                                                                    <Edit size={14} /> 수정
+                                                                </Button>
+                                                                <Button
+                                                                    variant="secondary"
+                                                                    size="small"
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        setPasswordResetConsultant(consultant);
+                                                                        setShowPasswordResetModal(true);
+                                                                    }}
+                                                                    preventDoubleClick={true}
+                                                                    title="비밀번호 초기화"
+                                                                >
+                                                                    <Key size={14} /> 비밀번호 초기화
                                                                 </Button>
                                                                 <Button
                                                                     variant="danger"
@@ -1277,7 +1318,7 @@ const ConsultantComprehensiveManagement = () => {
                                                                     }}
                                                                     preventDoubleClick={true}
                                                                 >
-                                                                    삭제
+                                                                    <Trash2 size={14} /> 삭제
                                                                 </Button>
                                                             </div>
                                                         </div>

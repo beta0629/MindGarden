@@ -326,9 +326,16 @@
 }
 
 .mg-v2-ad-b0kla__pill--active {
-  background: var(--ad-b0kla-card-bg);
-  color: var(--ad-b0kla-title-color);
+  background: var(--ad-b0kla-green);
+  color: #fff;
   box-shadow: var(--ad-b0kla-shadow);
+  font-weight: 600;
+}
+
+.mg-v2-ad-b0kla__pill--active:hover {
+  background: var(--ad-b0kla-green);
+  color: #fff;
+  filter: brightness(1.05);
 }
 
 .mg-v2-ad-b0kla__chart-placeholder {

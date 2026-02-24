@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import { Plus, Users, UserCheck, Clock, Link2 } from 'lucide-react';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
+import StandardizedApi from '../../utils/standardizedApi';
 import { getAllClientsWithStats } from '../../utils/consultantHelper';
 import { showError, showSuccess } from '../../utils/notification';
 import { getCommonCodes } from '../../utils/commonCodeApi';
@@ -312,7 +313,7 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
             console.log('🔑 내담자 비밀번호 초기화 시작:', passwordResetClient.id);
             
             const endpoint = `/api/v1/admin/user-management/${passwordResetClient.id}/reset-password?newPassword=${encodeURIComponent(newPassword)}`;
-            const response = await apiPut(endpoint, {});
+            const response = await StandardizedApi.put(endpoint, {});
             
             console.log('✅ 비밀번호 초기화 응답:', response);
             

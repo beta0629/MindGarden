@@ -6,6 +6,7 @@ import AdminCommonLayout from '../layout/AdminCommonLayout';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import { getStatusLabel } from '../../utils/colorUtils';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
+import StandardizedApi from '../../utils/standardizedApi';
 import { getAllConsultantsWithStats } from '../../utils/consultantHelper';
 import SpecialtyDisplay from '../ui/SpecialtyDisplay';
 import { MGConfirmModal } from '../common/MGModal';
@@ -875,7 +876,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
             console.log('🔑 상담사 비밀번호 초기화 시작:', passwordResetConsultant.id);
             
             const endpoint = `/api/v1/admin/user-management/${passwordResetConsultant.id}/reset-password?newPassword=${encodeURIComponent(newPassword)}`;
-            const response = await apiPut(endpoint, {});
+            const response = await StandardizedApi.put(endpoint, {});
             
             console.log('✅ 비밀번호 초기화 응답:', response);
             

@@ -115,7 +115,7 @@ class CsrfTokenManager {
         }
         
         // tenantId 헤더 추가 (모든 API 호출에 적용)
-        const tenantId = getTenantId();
+        const tenantId = await getTenantId();
         if (tenantId) {
             headers['X-Tenant-Id'] = tenantId;
         }

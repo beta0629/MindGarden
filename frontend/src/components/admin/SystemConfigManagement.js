@@ -16,6 +16,7 @@ import { useSession } from '../../contexts/SessionContext';
 import notificationManager from '../../utils/notification';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import Button from '../ui/Button';
 import '../../styles/unified-design-tokens.css';
 import './SystemConfigManagement.css';
 
@@ -239,13 +240,15 @@ const SystemConfigManagement = () => {
                                     placeholder="sk-..."
                                     className="mg-v2-input"
                                 />
-                                <button
+                                <Button
                                     type="button"
+                                    variant="secondary"
+                                    size="medium"
                                     onClick={() => setShowApiKey(!showApiKey)}
-                                    className="mg-v2-button mg-v2-button--secondary"
+                                    preventDoubleClick={false}
                                 >
                                     {showApiKey ? <EyeOff size={16} /> : <Eye size={16} />}
-                                </button>
+                                </Button>
                             </div>
                             <small className="help-text">
                                 <Shield size={14} />
@@ -280,14 +283,18 @@ const SystemConfigManagement = () => {
                     </div>
                     
                     <div className="section-actions">
-                        <button
+                        <Button
+                            variant="secondary"
+                            size="medium"
                             onClick={handleTest}
                             disabled={testing || !configs.openaiApiKey}
-                            className="mg-v2-button mg-v2-button--secondary"
+                            loading={testing}
+                            loadingText="테스트 중..."
+                            preventDoubleClick={false}
                         >
                             {testing ? <RefreshCw size={16} className="spinning" /> : <CheckCircle size={16} />}
                             API 테스트
-                        </button>
+                        </Button>
                     </div>
                     
                     {testResult && (
@@ -360,14 +367,18 @@ const SystemConfigManagement = () => {
                 
                 {/* 저장 버튼 */}
                 <div className="mg-v2-card save-section">
-                    <button
+                    <Button
+                        variant="primary"
+                        size="medium"
                         onClick={handleSave}
                         disabled={saving}
-                        className="mg-v2-button mg-v2-button--primary mg-v2-button--large"
+                        loading={saving}
+                        loadingText="저장 중..."
+                        preventDoubleClick={false}
                     >
                         {saving ? <RefreshCw size={20} className="spinning" /> : <Save size={20} />}
                         {saving ? '저장 중...' : '설정 저장'}
-                    </button>
+                    </Button>
                 </div>
                 
             </div>

@@ -147,25 +147,25 @@
   color: var(--ad-b0kla-card-bg);
 }
 
-/* schedule-select 카드 버튼 B0KlA (mg-button 클래스 호환) */
-.mg-v2-ad-b0kla .mg-consultant-card--schedule-select .mg-button-primary {
+/* schedule-select 카드 버튼 B0KlA (Button 컴포넌트 mg-button--primary / mg-button--outline 호환) */
+.mg-v2-ad-b0kla .mg-consultant-card--schedule-select .mg-button--primary {
   background: var(--ad-b0kla-green);
   color: var(--ad-b0kla-card-bg);
   border: none;
 }
 
-.mg-v2-ad-b0kla .mg-consultant-card--schedule-select .mg-button-primary:hover:not(:disabled) {
+.mg-v2-ad-b0kla .mg-consultant-card--schedule-select .mg-button--primary:hover:not(:disabled):not(.mg-button--disabled) {
   background: var(--ad-b0kla-green);
   opacity: 0.9;
 }
 
-.mg-v2-ad-b0kla .mg-consultant-card--schedule-select .mg-button-outline {
+.mg-v2-ad-b0kla .mg-consultant-card--schedule-select .mg-button--outline {
   background: transparent;
   color: var(--ad-b0kla-green);
   border: 1px solid var(--ad-b0kla-border);
 }
 
-.mg-v2-ad-b0kla .mg-consultant-card--schedule-select .mg-button-outline:hover {
+.mg-v2-ad-b0kla .mg-consultant-card--schedule-select .mg-button--outline:hover:not(.mg-button--disabled) {
   background: var(--ad-b0kla-green-bg);
   border-color: var(--ad-b0kla-green);
 }
@@ -638,6 +638,10 @@
 }
 
 .mg-modal.mg-v2-ad-b0kla .mg-modal__actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: var(--spacing-md);
   padding: 16px 24px;
   border-top: 1px solid var(--mg-gray-200);
   background: var(--ad-b0kla-card-bg, #ffffff);

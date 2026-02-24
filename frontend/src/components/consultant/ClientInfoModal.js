@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { User, XCircle, Edit3, Save, Home, MessageSquare, AlertCircle, FileText, Mail, Phone, UserPlus, MapPin, Clock } from 'lucide-react';
 import UnifiedModal from '../common/modals/UnifiedModal';
+import Button from '../ui/Button';
 
 const ClientInfoModal = ({ client, isOpen, onClose, onSave, mode = 'view' }) => {
   const [formData, setFormData] = useState({
@@ -91,40 +92,32 @@ const ClientInfoModal = ({ client, isOpen, onClose, onSave, mode = 'view' }) => 
       backdropClick
       showCloseButton
       actions={
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+        <>
           {mode === 'view' && !isEditing && (
-            <button
-              type="button"
-              className="mg-v2-button mg-v2-button--primary"
-              onClick={handleEdit}
-            >
+            <Button type="button" variant="primary" size="medium" onClick={handleEdit} preventDoubleClick={false}>
               <Edit3 size={20} className="mg-v2-icon-inline" />
               수정
-            </button>
+            </Button>
           )}
           {(mode === 'add' || isEditing) && (
             <>
-              <button type="submit" form="client-info-modal-form" className="mg-v2-button mg-v2-button--primary">
+              <Button type="submit" form="client-info-modal-form" variant="primary" size="medium" preventDoubleClick={false}>
                 <Save size={20} className="mg-v2-icon-inline" />
                 {mode === 'add' ? '등록' : '저장'}
-              </button>
+              </Button>
               {isEditing && (
-                <button 
-                  type="button" 
-                  className="mg-v2-button mg-v2-button--secondary"
-                  onClick={handleCancel}
-                >
+                <Button type="button" variant="outline" size="medium" onClick={handleCancel} preventDoubleClick={false}>
                   <XCircle size={20} className="mg-v2-icon-inline" />
                   취소
-                </button>
+                </Button>
               )}
             </>
           )}
-          <button type="button" className="mg-v2-button mg-v2-button--secondary" onClick={onClose}>
+          <Button type="button" variant="outline" size="medium" onClick={onClose} preventDoubleClick={false}>
             <Clock size={20} className="mg-v2-icon-inline" />
             닫기
-          </button>
-        </div>
+          </Button>
+        </>
       }
     >
         <form id="client-info-modal-form" onSubmit={handleSubmit} className="mg-v2-modal-body">

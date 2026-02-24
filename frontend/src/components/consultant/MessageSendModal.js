@@ -4,6 +4,7 @@ import { useSession } from '../../contexts/SessionContext';
 import { apiPost, apiGet } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 import UnifiedModal from '../common/modals/UnifiedModal';
+import Button from '../ui/Button';
 
 /**
  * 내담자 메시지 전송 모달 컴포넌트
@@ -163,28 +164,30 @@ const MessageSendModal = ({
       loading={sending}
       actions={
         <>
-          <button
+          <Button
             type="button"
+            variant="outline"
+            size="medium"
             onClick={onClose}
-            className="mg-v2-button mg-v2-button--secondary"
             disabled={sending}
+            preventDoubleClick={false}
           >
             <XCircle size={20} className="mg-v2-icon-inline" />
             취소
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
+            variant="primary"
+            size="medium"
             onClick={handleSend}
-            className="mg-v2-button mg-v2-button--primary"
             disabled={sending}
+            loading={sending}
+            loadingText="로딩중..."
+            preventDoubleClick={false}
           >
-            {sending ? <div className="mg-loading">로딩중...</div> : (
-              <>
-                <Send size={20} className="mg-v2-icon-inline" />
-                메시지 전송
-              </>
-            )}
-          </button>
+            <Send size={20} className="mg-v2-icon-inline" />
+            메시지 전송
+          </Button>
         </>
       }
     >

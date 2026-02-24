@@ -237,7 +237,7 @@
 
 .mg-consultant-card__actions--schedule-select {
   display: flex;
-  gap: var(--spacing-xs, 0.5rem);
+  gap: var(--spacing-sm, 0.75rem);
   margin-top: auto;
 }
 

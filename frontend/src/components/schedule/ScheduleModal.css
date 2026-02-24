@@ -613,12 +613,12 @@
 /* 모달 푸터 */
 .mg-modal__footer {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
   padding: var(--spacing-lg) var(--schedule-modal-padding);
   border-top: 1px solid var(--schedule-modal-border);
   background-color: var(--schedule-modal-light-gray);
-  gap: 12px;
+  gap: var(--spacing-md);
 }
 
 /* 버튼 스타일 */

@@ -222,6 +222,10 @@
   }
 
 .dashboard-form-modal .mg-modal__footer {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: var(--spacing-md);
   border-top: var(--mg-border-width, 1px) solid var(--mg-border-color, #e5e7eb);
   background: var(--mg-bg-secondary, var(--mg-gray-100));
 }
@@ -314,7 +318,7 @@
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  gap: var(--mg-spacing-md, 1rem);
+  gap: var(--spacing-md);
   padding: var(--mg-spacing-lg, 1.5rem);
   border-top: var(--mg-border-width, 1px) solid var(--mg-border-color, #e5e7eb);
   background: var(--mg-bg-secondary, var(--mg-gray-100));

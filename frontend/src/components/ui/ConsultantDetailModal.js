@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { X, User, Star, Award, Mail, Phone, Calendar, Clock, MessageCircle, TrendingUp } from 'lucide-react';
 import SpecialtyDisplay from './SpecialtyDisplay';
+import Button from './Button';
 import { getConsultantRatingInfo } from '../../utils/ratingHelper';
 import { 
     getFormattedExperience, 
@@ -228,22 +229,20 @@ const ConsultantDetailModal = ({
                 </div>
 
                 {/* 푸터 */}
-                <div className="mg-modal-footer">
-                    <button 
-                        className="mg-button mg-button-secondary"
-                        onClick={onClose}
-                    >
+                <div className="mg-modal__footer mg-modal-footer">
+                    <Button variant="outline" size="medium" onClick={onClose} preventDoubleClick={false}>
                         닫기
-                    </button>
-                    <button 
-                        className="mg-button mg-button-primary"
+                    </Button>
+                    <Button
+                        variant="primary"
+                        size="medium"
                         onClick={() => {
-                            // 상담사 선택 기능 (부모 컴포넌트에서 처리)
                             onClose();
                         }}
+                        preventDoubleClick={false}
                     >
                         이 상담사 선택
-                    </button>
+                    </Button>
                 </div>
             </div>
         </div>,

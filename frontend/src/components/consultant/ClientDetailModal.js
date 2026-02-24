@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { User, XCircle, Edit3, Save, Mail, Phone, Home, MapPin, MessageSquare, AlertCircle, FileText } from 'lucide-react';
 import UnifiedModal from '../common/modals/UnifiedModal';
+import Button from '../ui/Button';
 // import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 // 내담자 상세 정보 모달 컴포넌트
 const ClientDetailModal = ({ client, isOpen, onClose, onSave }) => {
@@ -68,25 +69,25 @@ const ClientDetailModal = ({ client, isOpen, onClose, onSave }) => {
       actions={
         isEditing ? (
           <>
-            <button className="mg-v2-button mg-v2-button--secondary" onClick={handleCancel}>
+            <Button variant="outline" size="medium" onClick={handleCancel} preventDoubleClick={false}>
               <XCircle size={20} className="mg-v2-icon-inline" />
               취소
-            </button>
-            <button className="mg-v2-button mg-v2-button--primary" onClick={handleSave}>
+            </Button>
+            <Button variant="primary" size="medium" onClick={handleSave} preventDoubleClick={false}>
               <Save size={20} className="mg-v2-icon-inline" />
               저장
-            </button>
+            </Button>
           </>
         ) : (
           <>
-            <button className="mg-v2-button mg-v2-button--secondary" onClick={onClose}>
+            <Button variant="outline" size="medium" onClick={onClose} preventDoubleClick={false}>
               <XCircle size={20} className="mg-v2-icon-inline" />
               닫기
-            </button>
-            <button className="mg-v2-button mg-v2-button--primary" onClick={handleEdit}>
+            </Button>
+            <Button variant="primary" size="medium" onClick={handleEdit} preventDoubleClick={false}>
               <Edit3 size={20} className="mg-v2-icon-inline" />
               수정
-            </button>
+            </Button>
           </>
         )
       }

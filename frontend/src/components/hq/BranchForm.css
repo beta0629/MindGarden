@@ -33,6 +33,10 @@
 }
 
 .branch-form-modal .mg-modal__footer {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: var(--spacing-md);
     background: var(--mg-gray-100);
     border-top: 1px solid #e9ecef;
     padding: 1.5rem 2rem;
@@ -227,7 +231,7 @@
     .branch-form-modal .mg-modal__footer {
         padding: 1rem 1.5rem;
         flex-direction: column;
-        gap: 0.5rem;
+        gap: var(--spacing-md);
     }
     
     .branch-form-modal .mg-modal__footer .btn {

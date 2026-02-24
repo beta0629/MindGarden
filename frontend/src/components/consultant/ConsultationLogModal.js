@@ -4,6 +4,7 @@ import { useSession } from '../../contexts/SessionContext';
 import { apiGet, apiPost, apiPut } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 import UnifiedModal from '../common/modals/UnifiedModal';
+import Button from '../ui/Button';
 
 /**
  * 상담일지 작성 모달 컴포넌트
@@ -406,31 +407,41 @@ const ConsultationLogModal = ({
       showCloseButton
       loading={loading}
       actions={
-        <div className="mg-v2-modal-footer-inline" style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-          <button
+        <div className="mg-modal__actions mg-v2-modal-footer-inline">
+          <Button
             type="button"
+            variant="outline"
+            size="medium"
             onClick={onClose}
-            className="mg-v2-btn mg-v2-btn-secondary"
             disabled={saving}
+            preventDoubleClick={false}
           >
             취소
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
+            variant="primary"
+            size="medium"
             onClick={handleSave}
-            className="mg-v2-btn mg-v2-btn-primary"
             disabled={saving}
+            loading={saving}
+            loadingText="저장중..."
+            preventDoubleClick={false}
           >
             {saving ? '저장중...' : '💾 저장'}
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
+            variant="success"
+            size="medium"
             onClick={handleComplete}
-            className="mg-v2-btn mg-v2-btn-success"
             disabled={saving}
+            loading={saving}
+            loadingText="완료중..."
+            preventDoubleClick={false}
           >
             {saving ? '완료중...' : '✅ 완료'}
-          </button>
+          </Button>
         </div>
       }
     >

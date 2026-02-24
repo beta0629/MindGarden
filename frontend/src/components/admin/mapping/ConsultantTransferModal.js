@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { UserCheck, XCircle, Users, Package, Calendar } from 'lucide-react';
 import notificationManager from '../../../utils/notification';
-import MGButton from '../../../components/common/MGButton';
 import UnifiedModal from '../../common/modals/UnifiedModal';
+import Button from '../../ui/Button';
 /**
  * 상담사 변경 모달 컴포넌트
 /**
@@ -198,23 +198,29 @@ const ConsultantTransferModal = ({
           loading={loading}
           actions={
             <>
-              <button
+              <Button
                 type="button"
-                className="mg-v2-button mg-v2-button-secondary"
+                variant="outline"
+                size="medium"
                 onClick={handleClose}
                 disabled={loading}
+                preventDoubleClick={false}
               >
                 <XCircle size={18} />
                 취소
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
-                className="mg-v2-button mg-v2-button-primary"
+                variant="primary"
+                size="medium"
                 onClick={handleSubmit}
                 disabled={loading}
+                loading={loading}
+                loadingText="변경 중..."
+                preventDoubleClick={false}
               >
                 {loading ? '변경 중...' : '상담사 변경'}
-              </button>
+              </Button>
             </>
           }
         >

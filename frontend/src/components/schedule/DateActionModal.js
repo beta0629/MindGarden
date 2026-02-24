@@ -1,6 +1,7 @@
 import React from 'react';
 import { XCircle, FileText, Umbrella } from 'lucide-react';
 import UnifiedModal from '../common/modals/UnifiedModal';
+import Button from '../ui/Button';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 
 /**
@@ -43,43 +44,45 @@ const DateActionModal = ({
       showCloseButton={true}
       className="mg-v2-ad-b0kla"
       actions={
-        <button
-          type="button"
-          onClick={onClose}
-          className="mg-v2-button mg-v2-button--ghost mg-v2-w-full"
-        >
+        <Button type="button" variant="outline" size="medium" onClick={onClose} preventDoubleClick={false}>
           <XCircle size={20} className="mg-v2-icon-inline" />
           취소
-        </button>
+        </Button>
       }
     >
       <p className="mg-v2-text-secondary mg-v2-mb-lg">원하는 작업을 선택하세요</p>
 
       {canManageSchedule && (
         <div className="mg-v2-form-section">
-          <button
+          <Button
             type="button"
+            variant="primary"
+            size="medium"
             onClick={onScheduleClick}
-            className="mg-v2-button mg-v2-button--primary mg-v2-button--large mg-v2-w-full"
+            preventDoubleClick={false}
+            className="mg-v2-w-full"
           >
             <FileText size={24} className="mg-v2-icon-inline--lg" />
             <div className="mg-v2-text-left mg-v2-flex-1">
               <div className="mg-v2-text-lg mg-v2-font-semibold">상담 일정 등록</div>
               <div className="mg-v2-text-sm mg-v2-text-secondary">상담사와 내담자의 상담 일정을 등록합니다</div>
             </div>
-          </button>
+          </Button>
 
-          <button
+          <Button
             type="button"
+            variant="secondary"
+            size="medium"
             onClick={onVacationClick}
-            className="mg-v2-button mg-v2-button--secondary mg-v2-button--large mg-v2-w-full mg-v2-mt-md"
+            preventDoubleClick={false}
+            className="mg-v2-w-full mg-v2-mt-md"
           >
             <Umbrella size={24} className="mg-v2-icon-inline--lg" />
             <div className="mg-v2-text-left mg-v2-flex-1">
               <div className="mg-v2-text-lg mg-v2-font-semibold">휴가 등록</div>
               <div className="mg-v2-text-sm mg-v2-text-secondary">상담사의 휴가를 등록합니다</div>
             </div>
-          </button>
+          </Button>
         </div>
       )}
     </UnifiedModal>

@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { useSession } from '../../contexts/SessionContext';
 import UnifiedModal from './modals/UnifiedModal';
+import Button from '../ui/Button';
 
 /**
  * 컴팩트 확인 모달 컴포넌트
@@ -53,12 +54,6 @@ const CompactConfirmModal = ({
     onClose();
   };
 
-  const getConfirmButtonClass = () => {
-    return type === 'danger'
-      ? 'mg-v2-button mg-v2-button--danger'
-      : 'mg-v2-button mg-v2-button--primary';
-  };
-
   return (
     <UnifiedModal
       isOpen={isOpen}
@@ -69,20 +64,17 @@ const CompactConfirmModal = ({
       showCloseButton
       actions={
         <>
-          <button
-            className="mg-v2-button mg-v2-button--secondary"
-            onClick={onClose}
-            style={{ padding: '8px 16px', fontSize: '14px' }}
-          >
+          <Button variant="outline" size="medium" onClick={onClose} preventDoubleClick={false}>
             {cancelText}
-          </button>
-          <button
-            className={getConfirmButtonClass()}
+          </Button>
+          <Button
+            variant={type === 'danger' ? 'danger' : 'primary'}
+            size="medium"
             onClick={handleConfirm}
-            style={{ padding: '8px 16px', fontSize: '14px' }}
+            preventDoubleClick={false}
           >
             {confirmText}
-          </button>
+          </Button>
         </>
       }
     >

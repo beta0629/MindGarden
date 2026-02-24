@@ -3,6 +3,7 @@ import { RefreshCcw, XCircle, Package, Clock, AlertTriangle, DollarSign, CreditC
 import { apiPost } from '../../../utils/ajax';
 import notificationManager, { showNotification } from '../../../utils/notification';
 import UnifiedModal from '../../common/modals/UnifiedModal';
+import Button from '../../ui/Button';
 
 /**
  * 부분 환불 모달 컴포넌트
@@ -164,26 +165,32 @@ const PartialRefundModal = ({ mapping, isOpen, onClose, onSuccess }) => {
       loading={loading}
       actions={
         <>
-          <button
+          <Button
             type="button"
+            variant="outline"
+            size="medium"
             onClick={handleClose}
             disabled={loading}
-            className="mg-v2-button mg-v2-button-secondary"
+            preventDoubleClick={false}
           >
             <XCircle size={18} />
             취소
-          </button>
-          <button
+          </Button>
+          <Button
             type="submit"
             form="partial-refund-form"
+            variant={!withdrawalCheck.isValid ? 'danger' : 'primary'}
+            size="medium"
             disabled={loading || !reason.trim() || reason.trim().length < 5}
-            className={`mg-v2-button ${!withdrawalCheck.isValid ? 'mg-v2-button-danger' : 'mg-v2-button-primary'}`}
+            loading={loading}
+            loadingText="처리 중..."
             title={!withdrawalCheck.isValid ? '청약 철회 기간 초과 - 특별 사유 시에만 처리' : ''}
+            preventDoubleClick={false}
           >
             {loading ? '처리 중...' :
               !withdrawalCheck.isValid ? `${refundSessions}회기 특별 환불` :
                 `${refundSessions}회기 환불 처리`}
-          </button>
+          </Button>
         </>
       }
     >

@@ -1575,10 +1575,11 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
                 </>
               )}
 
-              <div className="dashboard-form-modal-actions mg-add-role-modal-actions">
-                <button className="mg-button"
+              <div className="mg-modal__footer dashboard-form-modal-actions mg-add-role-modal-actions">
+                <Button
                   type="button"
-                  variant="secondary"
+                  variant="outline"
+                  size="medium"
                   onClick={() => {
                     setShowAddRoleModal(false);
                     setSelectedTemplateId('');
@@ -1587,17 +1588,22 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
                     setNewRoleDescription('');
                   }}
                   disabled={loading}
+                  preventDoubleClick={false}
                 >
                   취소
-                </button>
-                <button className="mg-button"
+                </Button>
+                <Button
                   type="button"
                   variant="primary"
+                  size="medium"
                   onClick={handleAddRole}
                   disabled={loading || !selectedTemplateId || !newRoleName || loadingTemplates}
+                  loading={loading}
+                  loadingText="추가 중..."
+                  preventDoubleClick={false}
                 >
                   {loading ? '추가 중...' : '역할 추가'}
-                </button>
+                </Button>
               </div>
             </div>
           </div>

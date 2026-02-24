@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { User, Star, Clock, Phone, Mail, MessageCircle, Calendar, Award, TrendingUp } from 'lucide-react';
 import SpecialtyDisplay from '../SpecialtyDisplay';
 import ConsultantDetailModal from '../ConsultantDetailModal';
+import Button from '../Button';
 import { getConsultantRatingInfo } from '../../../utils/ratingHelper';
 import { getFormattedCurrentClients, getFormattedExperience } from '../../../utils/codeHelper';
 
@@ -418,25 +419,29 @@ const ConsultantCard = ({
                 </div>
 
                 <div className="mg-consultant-card__actions mg-consultant-card__actions--schedule-select">
-                    <button
-                        className="mg-button mg-button-primary mg-button-sm"
+                    <Button
+                        variant="primary"
+                        size="small"
                         onClick={(e) => {
                             e.stopPropagation();
                             handleClick();
                         }}
                         disabled={!consultant.available || (consultant.isOnVacation && (consultant.vacationType === 'FULL_DAY' || consultant.vacationType === 'ALL_DAY'))}
+                        preventDoubleClick={false}
                     >
                         {selected ? '선택됨' : '선택하기'}
-                    </button>
-                    <button
-                        className="mg-button mg-button-outline mg-button-sm"
+                    </Button>
+                    <Button
+                        variant="outline"
+                        size="small"
                         onClick={(e) => {
                             e.stopPropagation();
                             setShowDetailModal(true);
                         }}
+                        preventDoubleClick={false}
                     >
                         상세보기
-                    </button>
+                    </Button>
                 </div>
             </div>
         </div>

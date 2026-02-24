@@ -5,6 +5,7 @@ import { sessionManager } from '../../utils/sessionManager';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { CONSULTANT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
+import Button from '../ui/Button';
 import './ConsultantAvailability.css';
 
 const ConsultantAvailability = () => {
@@ -600,15 +601,15 @@ const AvailabilityModal = ({ isOpen, onClose, onSubmit, initialData, timeSlots, 
           </div>
         </form>
         
-        <div className="modal-footer">
-          <button type="button" className="btn btn-secondary" onClick={onClose}>
+        <div className="mg-modal__footer modal-footer">
+          <Button type="button" variant="outline" size="medium" onClick={onClose} preventDoubleClick={false}>
             <i className="bi bi-x-circle"></i>
             취소
-          </button>
-          <button type="submit" className="btn btn-primary" onClick={handleSubmit}>
+          </Button>
+          <Button type="button" variant="primary" size="medium" onClick={handleSubmit} preventDoubleClick={false}>
             <i className="bi bi-check-circle"></i>
             {initialData ? '수정' : '추가'}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

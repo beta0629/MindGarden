@@ -3,6 +3,7 @@ import { Building, XCircle, Search, MapPin, Phone, Mail, Clock, Users, FileText,
 import { apiPost } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 import UnifiedModal from '../common/modals/UnifiedModal';
+import Button from '../ui/Button';
 
 /**
  * 지점 등록 모달 컴포넌트
@@ -214,28 +215,30 @@ return (
         loading={loading}
         actions={
             <>
-                <button
+                <Button
                     type="button"
-                    className="mg-v2-button mg-v2-button--secondary"
+                    variant="outline"
+                    size="medium"
                     onClick={handleClose}
                     disabled={loading}
+                    preventDoubleClick={false}
                 >
                     <XCircle size={20} className="mg-v2-icon-inline" />
                     취소
-                </button>
-                <button
+                </Button>
+                <Button
                     type="submit"
                     form="branch-registration-form"
-                    className="mg-v2-button mg-v2-button--primary"
+                    variant="primary"
+                    size="medium"
                     disabled={loading}
+                    loading={loading}
+                    loadingText="로딩중..."
+                    preventDoubleClick={false}
                 >
-                    {loading ? <div className="mg-loading">로딩중...</div> : (
-                        <>
-                            <Plus size={20} className="mg-v2-icon-inline" />
-                            지점 등록
-                        </>
-                    )}
-                </button>
+                    {loading ? null : <Plus size={20} className="mg-v2-icon-inline" />}
+                    {loading ? '로딩중...' : '지점 등록'}
+                </Button>
             </>
         }
     >
@@ -324,13 +327,15 @@ return (
                                         placeholder="예: 서울시 강남구 테헤란로 123"
                                         className={`mg-v2-form-input mg-v2-form-input--flex-1 ${errors.address ? 'mg-v2-form-input--error' : ''}`}
                                     />
-                                    <button
+                                    <Button
                                         type="button"
-                                        className="mg-v2-button mg-v2-button--icon"
+                                        variant="outline"
+                                        size="medium"
                                         onClick={openAddressSearch}
+                                        preventDoubleClick={false}
                                     >
                                         <Search size={18} />
-                                    </button>
+                                    </Button>
                                 </div>
                                 {errors.address && <span className="mg-v2-form-error">{errors.address}</span>}
                             </div>

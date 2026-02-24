@@ -406,8 +406,9 @@
 /* 액션 버튼 영역 */
 .mg-v2-mapping-creation-modal__actions {
   display: flex;
-  gap: 0.75rem;
+  gap: var(--spacing-md);
   justify-content: flex-end;
+  align-items: center;
 }
 
 /* 모바일: medium 크기 (데이터 양에 맞게) */

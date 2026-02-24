@@ -4,6 +4,7 @@ import ConfirmModal from '../common/ConfirmModal';
 import MessageSendModal from './MessageSendModal';
 import { apiGet } from '../../utils/ajax';
 import UnifiedModal from '../common/modals/UnifiedModal';
+import Button from '../ui/Button';
 
 // 일정 모달 컴포넌트
 const EventModal = ({ event, mode, onSave, onDelete, onClose, userRole = 'CONSULTANT', onWriteConsultationLog, onConsultationLogSaved }) => {
@@ -147,30 +148,30 @@ const EventModal = ({ event, mode, onSave, onDelete, onClose, userRole = 'CONSUL
       backdropClick
       showCloseButton
       actions={
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+        <>
           {isReadOnly && event?.extendedProps?.clientId && (
-            <button className="mg-button" type="button" variant="info" onClick={handleSendMessage}>
+            <Button type="button" variant="outline" size="medium" onClick={handleSendMessage} preventDoubleClick={false}>
               <MessageSquare size={20} className="mg-v2-icon-inline" />
               메시지 보내기
-            </button>
+            </Button>
           )}
           {!isReadOnly && mode === 'edit' && (
-            <button className="mg-button" type="button" variant="danger" onClick={handleDelete}>
+            <Button type="button" variant="danger" size="medium" onClick={handleDelete} preventDoubleClick={false}>
               <Trash2 size={20} className="mg-v2-icon-inline" />
               삭제
-            </button>
+            </Button>
           )}
           {!isReadOnly && (
-            <button className="mg-button" type="submit" form="event-modal-form" variant="success">
+            <Button type="submit" form="event-modal-form" variant="primary" size="medium" preventDoubleClick={false}>
               <Save size={20} className="mg-v2-icon-inline" />
               {mode === 'add' ? '추가' : '수정'}
-            </button>
+            </Button>
           )}
-          <button className="mg-button" type="button" variant="secondary" onClick={onClose}>
+          <Button type="button" variant="outline" size="medium" onClick={onClose} preventDoubleClick={false}>
             <XCircle size={20} className="mg-v2-icon-inline" />
             취소
-          </button>
-        </div>
+          </Button>
+        </>
       }
     >
         <form id="event-modal-form" onSubmit={handleSubmit} className="mg-v2-modal-body">
@@ -276,17 +277,17 @@ const EventModal = ({ event, mode, onSave, onDelete, onClose, userRole = 'CONSUL
           <div className="mg-v2-modal-footer">
             {/* 상담사일 때 상담일지 작성 버튼 표시 */}
             {isReadOnly && (
-              <button className="mg-button" 
-                type="button" 
-                variant="info"
+              <Button
+                type="button"
+                variant="outline"
+                size="medium"
                 onClick={handleWriteConsultationLog}
+                preventDoubleClick={false}
               >
                 <FileText size={20} className="mg-v2-icon-inline" />
                 {consultationLogStatus.hasRecord ? '상담일지 수정' : '상담일지 작성'}
-              </button>
+              </Button>
             )}
-
-            {/* 상담사일 때 메시지 전송 버튼 표시 */}
           </div>
         </form>
 

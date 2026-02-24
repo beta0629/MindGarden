@@ -543,7 +543,8 @@
 .mg-modal__footer {
   display: flex;
   justify-content: flex-end;
-  gap: 15px;
+  align-items: center;
+  gap: var(--spacing-md);
   padding: var(--spacing-lg) var(--spacing-xxl) var(--spacing-xxl);
   border-top: 1px solid #e9ecef;
   background: var(--mg-gray-100);

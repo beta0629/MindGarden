@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import Button from '../ui/Button';
 // import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import './SalaryConfigModal.css';
 
@@ -238,21 +239,27 @@ const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
           </div>
         </div>
 
-        <div className="salary-config-modal-footer">
-          <button 
-            className="cancel-button" 
+        <div className="mg-modal__footer salary-config-modal-footer">
+          <Button
+            variant="outline"
+            size="medium"
             onClick={onClose}
             disabled={loading}
+            preventDoubleClick={false}
           >
             취소
-          </button>
-          <button 
-            className="save-button" 
+          </Button>
+          <Button
+            variant="primary"
+            size="medium"
             onClick={handleSave}
             disabled={loading}
+            loading={loading}
+            loadingText="저장 중..."
+            preventDoubleClick={false}
           >
             {loading ? '저장 중...' : '저장'}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

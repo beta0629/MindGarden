@@ -241,7 +241,8 @@
 .mg-modal__footer {
   display: flex;
   justify-content: flex-end;
-  gap: var(--spacing-sm, 0.5rem);
+  align-items: center;
+  gap: var(--spacing-md);
   padding: var(--spacing-lg, 1.5rem);
   border-top: 1px solid var(--cs-secondary-200, #e5e7eb);
 }

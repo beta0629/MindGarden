@@ -73,7 +73,35 @@
   top: 0;
   right: 0;
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   gap: var(--spacing-xs, 4px);
+}
+
+/* 상담사 레벨 배지 (주니어/매니어/시니어) - 경력 연차 기반 */
+.mg-v2-consultant-level-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 9999px;
+  white-space: nowrap;
+}
+
+.mg-v2-consultant-level-badge--junior {
+  background: var(--ad-b0kla-blue-bg, var(--mg-info-100));
+  color: var(--ad-b0kla-blue, var(--mg-info-600));
+}
+
+.mg-v2-consultant-level-badge--manier {
+  background: var(--ad-b0kla-orange-bg, var(--mg-warning-100));
+  color: var(--ad-b0kla-orange, var(--mg-warning-600));
+}
+
+.mg-v2-consultant-level-badge--senior {
+  background: var(--ad-b0kla-green-bg, var(--mg-success-100));
+  color: var(--ad-b0kla-green, var(--mg-success-600));
 }
 
 .mg-v2-profile-card__body {

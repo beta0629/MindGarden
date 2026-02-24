@@ -5,6 +5,15 @@ import Button from '../ui/Button/Button';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import { getStatusLabel } from '../../utils/colorUtils';
+
+/** 상담사 경력 연차에 따른 레벨 라벨 (카드 배지용) */
+const getConsultantLevel = (consultant) => {
+    const years = consultant?.yearsOfExperience ?? 0;
+    const num = Number(years);
+    if (num >= 6) return { label: '시니어 상담사', level: 'senior' };
+    if (num >= 3) return { label: '매니어 상담사', level: 'manier' };
+    return { label: '주니어 상담사', level: 'junior' };
+};
 import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
 import StandardizedApi from '../../utils/standardizedApi';
 import { getAllConsultantsWithStats } from '../../utils/consultantHelper';
@@ -1096,8 +1105,16 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                                 </div>
                                                             </div>
                                                             <div className="mg-v2-profile-card__badges">
-                                                                <span className={`mg-v2-status-badge mg-v2-status-badge--${consultant.status?.toLowerCase() || 'unknown'}`}>
-                                                                    {getStatusLabel(consultant.status)}
+                                                                {(() => {
+                                                                    const { label, level } = getConsultantLevel(consultant);
+                                                                    return (
+                                                                        <span className={`mg-v2-consultant-level-badge mg-v2-consultant-level-badge--${level}`}>
+                                                                            {label}
+                                                                        </span>
+                                                                    );
+                                                                })()}
+                                                                <span className={`mg-v2-status-badge mg-v2-status-badge--${consultant.status?.toLowerCase() || 'active'}`}>
+                                                                    {getStatusLabel(consultant.status || 'ACTIVE')}
                                                                 </span>
                                                             </div>
                                                         </div>
@@ -1258,8 +1275,16 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                                 </div>
                                                             </div>
                                                             <div className="mg-v2-profile-card__badges">
-                                                                <span className={`mg-v2-status-badge mg-v2-status-badge--${consultant.status?.toLowerCase() || 'unknown'}`}>
-                                                                    {getStatusLabel(consultant.status)}
+                                                                {(() => {
+                                                                    const { label, level } = getConsultantLevel(consultant);
+                                                                    return (
+                                                                        <span className={`mg-v2-consultant-level-badge mg-v2-consultant-level-badge--${level}`}>
+                                                                            {label}
+                                                                        </span>
+                                                                    );
+                                                                })()}
+                                                                <span className={`mg-v2-status-badge mg-v2-status-badge--${consultant.status?.toLowerCase() || 'active'}`}>
+                                                                    {getStatusLabel(consultant.status || 'ACTIVE')}
                                                                 </span>
                                                             </div>
                                                         </div>

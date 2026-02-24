@@ -19,16 +19,16 @@
  */
 
 import axios from 'axios';
+import { getApiBaseUrl } from '../constants/api';
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8080';
-const MENU_PERMISSION_API = `${API_BASE_URL}/api/v1/admin/menu-permissions`;
+const getMenuPermissionApi = () => `${getApiBaseUrl()}/api/v1/admin/menu-permissions`;
 
 /**
  * 역할별 메뉴 권한 목록 조회
  */
 export const getRoleMenuPermissions = async (roleId) => {
     try {
-        const response = await axios.get(`${MENU_PERMISSION_API}/roles/${roleId}`, {
+        const response = await axios.get(`${getMenuPermissionApi()}/roles/${roleId}`, {
             withCredentials: true
         });
         return response.data;
@@ -43,7 +43,7 @@ export const getRoleMenuPermissions = async (roleId) => {
  */
 export const grantMenuPermission = async (request) => {
     try {
-        const response = await axios.post(`${MENU_PERMISSION_API}/grant`, request, {
+        const response = await axios.post(`${getMenuPermissionApi()}/grant`, request, {
             withCredentials: true
         });
         return response.data;
@@ -58,7 +58,7 @@ export const grantMenuPermission = async (request) => {
  */
 export const revokeMenuPermission = async (roleId, menuId) => {
     try {
-        const response = await axios.delete(`${MENU_PERMISSION_API}/revoke`, {
+        const response = await axios.delete(`${getMenuPermissionApi()}/revoke`, {
             params: { roleId, menuId },
             withCredentials: true
         });
@@ -75,7 +75,7 @@ export const revokeMenuPermission = async (roleId, menuId) => {
 export const batchUpdateMenuPermissions = async (roleId, requests) => {
     try {
         const response = await axios.post(
-            `${MENU_PERMISSION_API}/batch?roleId=${roleId}`,
+            `${getMenuPermissionApi()}/batch?roleId=${roleId}`,
             requests,
             { withCredentials: true }
         );
@@ -91,7 +91,7 @@ export const batchUpdateMenuPermissions = async (roleId, requests) => {
  */
 export const getUserAccessibleMenus = async () => {
     try {
-        const response = await axios.get(`${MENU_PERMISSION_API}/user/accessible`, {
+        const response = await axios.get(`${getMenuPermissionApi()}/user/accessible`, {
             withCredentials: true
         });
         return response.data;

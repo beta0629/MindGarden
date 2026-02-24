@@ -19,16 +19,16 @@
  */
 
 import axios from 'axios';
+import { getApiBaseUrl } from '../constants/api';
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8080';
-const MENU_API = `${API_BASE_URL}/api/v1/menus`;
+const getMenuApi = () => `${getApiBaseUrl()}/api/v1/menus`;
 
 /**
  * 사용자 메뉴 조회 (역할별)
  */
 export const getUserMenus = async () => {
     try {
-        const response = await axios.get(`${MENU_API}/user`, {
+        const response = await axios.get(`${getMenuApi()}/user`, {
             withCredentials: true
         });
         return response.data;
@@ -43,7 +43,7 @@ export const getUserMenus = async () => {
  */
 export const getAdminMenus = async () => {
     try {
-        const response = await axios.get(`${MENU_API}/admin`, {
+        const response = await axios.get(`${getMenuApi()}/admin`, {
             withCredentials: true
         });
         return response.data;
@@ -58,7 +58,7 @@ export const getAdminMenus = async () => {
  */
 export const getAllMenus = async () => {
     try {
-        const response = await axios.get(`${MENU_API}/all`, {
+        const response = await axios.get(`${getMenuApi()}/all`, {
             withCredentials: true
         });
         return response.data;
@@ -73,7 +73,7 @@ export const getAllMenus = async () => {
  */
 export const getMenuByCode = async (menuCode) => {
     try {
-        const response = await axios.get(`${MENU_API}/code/${menuCode}`, {
+        const response = await axios.get(`${getMenuApi()}/code/${menuCode}`, {
             withCredentials: true
         });
         return response.data;
@@ -90,7 +90,7 @@ export const getMenuByCode = async (menuCode) => {
  */
 export const getLnbMenus = async () => {
     try {
-        const response = await axios.get(`${MENU_API}/lnb`, {
+        const response = await axios.get(`${getMenuApi()}/lnb`, {
             withCredentials: true
         });
         return response.data;
@@ -110,7 +110,7 @@ export const getLnbMenus = async () => {
  */
 export const getMenuByPath = async (menuPath) => {
     try {
-        const response = await axios.get(`${MENU_API}/path`, {
+        const response = await axios.get(`${getMenuApi()}/path`, {
             params: { path: menuPath },
             withCredentials: true
         });

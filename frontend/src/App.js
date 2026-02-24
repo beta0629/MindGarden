@@ -31,8 +31,7 @@ import UnifiedScheduleComponent from './components/schedule/UnifiedScheduleCompo
 import UnifiedModalTest from './components/test/UnifiedModalTest';
 import UnifiedLoadingTest from './components/test/UnifiedLoadingTest';
 import UnifiedHeaderTest from './components/test/UnifiedHeaderTest';
-import ConsultantComprehensiveManagement from './components/admin/ConsultantComprehensiveManagement';
-import ClientComprehensiveManagement from './components/admin/ClientComprehensiveManagement';
+import UserManagementPage from './components/admin/UserManagementPage';
 import SessionManagement from './components/admin/SessionManagement';
 import MappingManagement from './components/admin/MappingManagement';
 import CommonCodeManagement from './components/admin/CommonCodeManagement';
@@ -65,7 +64,6 @@ import NotificationTest from './components/test/NotificationTest';
 import PaymentTest from './components/test/PaymentTest';
 // IntegrationTest는 현재 사용되지 않음
 import AccountManagement from './components/admin/AccountManagement';
-import UserManagement from './components/admin/UserManagement';
 import PermissionManagement from './components/admin/PermissionManagement';
 import BranchManagement from './components/hq/BranchManagement';
 import BranchFinancialManagement from './components/hq/BranchFinancialManagement';
@@ -473,13 +471,13 @@ function AppContent() {
             <Route path="/super_admin/schedule" element={<SchedulePage user={user} />} />
             
             {/* 관리자 전용 라우트 */}
-            <Route path="/admin/consultant-comprehensive" element={<ConsultantComprehensiveManagement />} />
-            <Route path="/admin/client-comprehensive" element={<ClientComprehensiveManagement />} />
+            <Route path="/admin/consultant-comprehensive" element={<Navigate to="/admin/user-management?type=consultant" replace />} />
+            <Route path="/admin/client-comprehensive" element={<Navigate to="/admin/user-management?type=client" replace />} />
             <Route path="/admin/mapping-management" element={<MappingManagement />} />
             <Route path="/admin/common-codes" element={<CommonCodeManagement />} />
             <Route path="/admin/sessions" element={<SessionManagement />} />
             <Route path="/admin/accounts" element={<AccountManagement />} />
-            <Route path="/admin/user-management" element={<UserManagement />} />
+            <Route path="/admin/user-management" element={<UserManagementPage />} />
             <Route path="/admin/dashboards" element={<DashboardManagement />} />
                 <Route path="/admin/cache-monitoring" element={<CacheMonitoringDashboard />} />
                 <Route path="/admin/security-monitoring" element={<SecurityMonitoringDashboard />} />

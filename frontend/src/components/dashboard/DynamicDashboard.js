@@ -321,8 +321,8 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
           config: {
             title: '⚡ 관리자 빠른 작업',
             actions: [
-              { id: 'manage-consultants', label: '상담사 관리', icon: 'users', url: '/admin/consultant-comprehensive' },
-              { id: 'manage-clients', label: '내담자 관리', icon: 'user', url: '/admin/client-comprehensive' },
+              { id: 'manage-consultants', label: '상담사 관리', icon: 'users', url: '/admin/user-management?type=consultant' },
+              { id: 'manage-clients', label: '내담자 관리', icon: 'user', url: '/admin/user-management?type=client' },
               { id: 'view-mappings', label: '매칭 관리', icon: 'link', url: '/admin/mapping-management' },
               { id: 'view-schedules', label: '스케줄 관리', icon: 'calendar', url: '/admin/schedule' },
               { id: 'system-settings', label: '시스템 설정', icon: 'settings', url: '/admin/system-config' },
@@ -527,8 +527,8 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
               subtitle: '자주 사용하는 관리 기능',
               columns: 3,
               actions: [
-                { id: 'manage-consultants', label: '상담사 관리', icon: 'users', url: '/admin/consultant-comprehensive' },
-                { id: 'manage-clients', label: '내담자 관리', icon: 'user', url: '/admin/client-comprehensive' },
+                { id: 'manage-consultants', label: '상담사 관리', icon: 'users', url: '/admin/user-management?type=consultant' },
+                { id: 'manage-clients', label: '내담자 관리', icon: 'user', url: '/admin/user-management?type=client' },
                 { id: 'view-mappings', label: '매칭 관리', icon: 'link', url: '/admin/mapping-management' },
                 { id: 'view-schedules', label: '스케줄 관리', icon: 'calendar', url: '/admin/schedule' },
                 { id: 'system-settings', label: '시스템 설정', icon: 'settings', url: '/admin/system-config' },
@@ -1067,8 +1067,8 @@ const createDefaultAdminDashboardConfig = (allAdminRoles) => {
       config: {
         title: '⚡ 빠른 작업',
         actions: [
-          { id: 'manage-consultants', label: '상담사 관리', icon: 'users', url: '/admin/consultant-comprehensive' },
-          { id: 'manage-clients', label: '내담자 관리', icon: 'user', url: '/admin/client-comprehensive' },
+          { id: 'manage-consultants', label: '상담사 관리', icon: 'users', url: '/admin/user-management?type=consultant' },
+          { id: 'manage-clients', label: '내담자 관리', icon: 'user', url: '/admin/user-management?type=client' },
           { id: 'view-schedules', label: '스케줄 관리', icon: 'calendar', url: '/admin/schedule' },
           { id: 'system-settings', label: '시스템 설정', icon: 'settings', url: '/admin/system-config' }
         ]

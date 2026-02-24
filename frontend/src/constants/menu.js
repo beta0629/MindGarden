@@ -60,8 +60,6 @@ export const ADMIN_MENU_ITEMS = {
       { id: 'admin-settings', label: '관리자 설정', path: '/admin/settings', icon: 'bi-gear-fill' }
     ],
     users: [
-      { id: 'admin-consultants', label: '상담사 관리', path: '/admin/consultant-comprehensive', icon: 'bi-person-badge' },
-      { id: 'admin-clients', label: '내담자 관리', path: '/admin/client-comprehensive', icon: 'bi-person-check' },
       { id: 'admin-user-management', label: '사용자 관리', path: '/admin/user-management', icon: 'bi-people' },
       { id: 'admin-accounts', label: '계좌 관리', path: '/admin/accounts', icon: 'bi-bank' },
       { id: 'admin-mapping', label: '매핑 관리', path: '/admin/mapping-management', icon: 'bi-link' }
@@ -109,8 +107,6 @@ export const BRANCH_SUPER_ADMIN_MENU_ITEMS = {
       { id: 'admin-settings', label: '관리자 설정', path: '/admin/settings', icon: 'bi-gear-fill' }
     ],
     users: [
-      { id: 'admin-consultants', label: '상담사 관리', path: '/admin/consultant-comprehensive', icon: 'bi-person-badge' },
-      { id: 'admin-clients', label: '내담자 관리', path: '/admin/client-comprehensive', icon: 'bi-person-check' },
       { id: 'admin-user-management', label: '사용자 관리', path: '/admin/user-management', icon: 'bi-people' },
       { id: 'admin-accounts', label: '계좌 관리', path: '/admin/accounts', icon: 'bi-bank' },
       { id: 'admin-mapping', label: '매핑 관리', path: '/admin/mapping-management', icon: 'bi-link' }
@@ -192,8 +188,6 @@ export const HQ_ADMIN_MENU_ITEMS = {
       { id: 'hq-schedules', label: '전체 스케줄', path: '/admin/schedules', icon: 'bi-calendar-check' }
     ],
     users: [
-      { id: 'hq-consultants', label: '상담사 관리', path: '/admin/consultant-comprehensive', icon: 'bi-person-badge' },
-      { id: 'hq-clients', label: '내담자 관리', path: '/admin/client-comprehensive', icon: 'bi-person-check' },
       { id: 'hq-user-management', label: '사용자 관리', path: '/admin/user-management', icon: 'bi-people' },
       { id: 'hq-accounts', label: '계좌 관리', path: '/admin/accounts', icon: 'bi-bank' }
     ],
@@ -253,8 +247,6 @@ export const SUPER_HQ_ADMIN_MENU_ITEMS = {
       { id: 'super-hq-schedules', label: '전체 스케줄', path: '/admin/schedules', icon: 'bi-calendar-check' }
     ],
     users: [
-      { id: 'super-hq-consultants', label: '상담사 관리', path: '/admin/consultant-comprehensive', icon: 'bi-person-badge' },
-      { id: 'super-hq-clients', label: '내담자 관리', path: '/admin/client-comprehensive', icon: 'bi-person-check' },
       { id: 'super-hq-user-management', label: '사용자 관리', path: '/admin/user-management', icon: 'bi-people' },
       { id: 'super-hq-accounts', label: '계좌 관리', path: '/admin/accounts', icon: 'bi-bank' },
       { id: 'super-hq-admins', label: '관리자 관리', path: '/super_admin/admin-management', icon: 'bi-shield-check' }
@@ -311,8 +303,7 @@ export const BRANCH_BRANCH_SUPER_ADMIN_MENU_ITEMS = {
       { id: 'branch-schedules', label: '전체 스케줄', path: '/admin/schedules', icon: 'bi-calendar-check' }
     ],
     users: [
-      { id: 'branch-consultants', label: '상담사 관리', path: '/admin/consultant-comprehensive', icon: 'bi-person-badge' },
-      { id: 'branch-clients', label: '내담자 관리', path: '/admin/client-comprehensive', icon: 'bi-person-check' },
+      { id: 'branch-user-management', label: '사용자 관리', path: '/admin/user-management', icon: 'bi-people' },
       { id: 'branch-accounts', label: '계좌 관리', path: '/admin/accounts', icon: 'bi-bank' }
     ],
     // finance 메뉴는 ERP로 통합되어 제거됨
@@ -346,8 +337,7 @@ export const BRANCH_MANAGER_MENU_ITEMS = {
       { id: 'manager-schedules', label: '전체 스케줄', path: '/admin/schedules', icon: 'bi-calendar-check' }
     ],
     users: [
-      { id: 'manager-consultants', label: '상담사 관리', path: '/admin/consultant-comprehensive', icon: 'bi-person-badge' },
-      { id: 'manager-clients', label: '내담자 관리', path: '/admin/client-comprehensive', icon: 'bi-person-check' }
+      { id: 'manager-user-management', label: '사용자 관리', path: '/admin/user-management', icon: 'bi-people' }
     ]
   }
 };

@@ -256,12 +256,12 @@ export const WIDGET_SPECIFIC_CONSTANTS = {
       MANAGE_CONSULTANTS: {
         ICON: '👨‍⚕️',
         LABEL: '상담사 관리',
-        URL: '/admin/consultant-comprehensive'
+        URL: '/admin/user-management?type=consultant'
       },
       MANAGE_CLIENTS: {
         ICON: '👥',
-        LABEL: '내담자 관리', 
-        URL: '/admin/client-comprehensive'
+        LABEL: '내담자 관리',
+        URL: '/admin/user-management?type=client'
       },
       VIEW_MAPPINGS: {
         ICON: '🔗',

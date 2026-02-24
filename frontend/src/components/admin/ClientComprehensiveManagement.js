@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import PropTypes from 'prop-types';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import { Plus, Users, UserCheck, Clock, Link2 } from 'lucide-react';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
@@ -45,7 +46,7 @@ import './ClientManagementPage.css';
 /**
  * @since 2024-12-19
  */
-const ClientComprehensiveManagement = () => {
+const ClientComprehensiveManagement = ({ embedded = false }) => {
     const [loading, setLoading] = useState(false);
     const [clients, setClients] = useState([]);
     const [consultants, setConsultants] = useState([]);
@@ -359,6 +360,9 @@ const ClientComprehensiveManagement = () => {
     }, []);
     
     if (loading) {
+        if (embedded) {
+            return <UnifiedLoading type="page" text="데이터를 불러오는 중..." variant="pulse" />;
+        }
         return (
             <AdminCommonLayout title="내담자 종합관리">
                 <div className="mg-v2-ad-b0kla mg-v2-client-management">
@@ -370,12 +374,9 @@ const ClientComprehensiveManagement = () => {
         );
     }
 
-    return (
-        <AdminCommonLayout title="내담자 종합관리">
-            <div className="mg-v2-ad-b0kla mg-v2-client-management">
-                <div className="mg-v2-ad-b0kla__container">
-                    <ContentArea>
-                        <ContentHeader
+    const contentBlock = (
+        <>
+            <ContentHeader
                             title="내담자 관리"
                             subtitle="내담자 정보·상담 이력·매칭·통계를 종합 관리합니다"
                             actions={
@@ -525,10 +526,11 @@ const ClientComprehensiveManagement = () => {
                                 />
                             )}
                         </div>
-                    </ContentArea>
-                </div>
-            </div>
+        </>
+    );
 
+    const modalsBlock = (
+        <>
             {/* 모달 */}
                 {showModal && (
                     <ClientModal
@@ -597,8 +599,29 @@ const ClientComprehensiveManagement = () => {
                     onConfirm={handlePasswordResetConfirm}
                 />
             )}
+        </>
+    );
+
+    if (embedded) {
+        return <>{contentBlock}{modalsBlock}</>;
+    }
+
+    return (
+        <AdminCommonLayout title="내담자 종합관리">
+            <div className="mg-v2-ad-b0kla mg-v2-client-management">
+                <div className="mg-v2-ad-b0kla__container">
+                    <ContentArea>
+                        {contentBlock}
+                    </ContentArea>
+                    {modalsBlock}
+                </div>
+            </div>
         </AdminCommonLayout>
     );
+};
+
+ClientComprehensiveManagement.propTypes = {
+  embedded: PropTypes.bool
 };
 
 export default ClientComprehensiveManagement;

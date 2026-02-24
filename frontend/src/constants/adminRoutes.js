@@ -15,8 +15,10 @@ export const ADMIN_ROUTES = {
     USERS: '/admin/users',
     USER_MANAGEMENT: '/admin/user-management',
     CONSULTANTS: '/admin/consultants',
+    /** @deprecated redirect to /admin/user-management?type=consultant */
     CONSULTANT_COMPREHENSIVE: '/admin/consultant-comprehensive',
     CLIENTS: '/admin/clients',
+    /** @deprecated redirect to /admin/user-management?type=client */
     CLIENT_COMPREHENSIVE: '/admin/client-comprehensive',
     MAPPINGS: '/admin/mappings',
     MAPPING_MANAGEMENT: '/admin/mapping-management',

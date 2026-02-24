@@ -775,6 +775,17 @@ const AdminDashboardV2 = ({ user: propUser }) => {
           <button
             type="button"
             className="mg-v2-ad-b0kla__admin-card"
+            onClick={() => navigate(ADMIN_ROUTES.USER_MANAGEMENT)}
+          >
+            <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--green">
+              <FaUsers size={28} />
+            </div>
+            <span className="mg-v2-ad-b0kla__admin-label">사용자 관리</span>
+            <span className="mg-v2-ad-b0kla__admin-desc">상담사·내담자 통합 관리</span>
+          </button>
+          <button
+            type="button"
+            className="mg-v2-ad-b0kla__admin-card"
             onClick={() => navigate(ADMIN_ROUTES.SCHEDULES)}
           >
             <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--green">

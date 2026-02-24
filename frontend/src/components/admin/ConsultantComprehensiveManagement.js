@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import PropTypes from 'prop-types';
 import { Plus, Users, Link2, Calendar, ClipboardList, X, Edit, Trash2, Key, Mail, Phone, User, Eye } from 'lucide-react';
 import Button from '../ui/Button/Button';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
@@ -25,7 +26,7 @@ import './mapping-management/MappingManagementPage.css';
 import './ConsultantManagementPage.css';
 import './ProfileCard.css';
 
-const ConsultantComprehensiveManagement = () => {
+const ConsultantComprehensiveManagement = ({ embedded = false }) => {
     const [consultants, setConsultants] = useState([]);
     const [selectedConsultant, setSelectedConsultant] = useState(null);
     const [mappings, setMappings] = useState([]);
@@ -934,6 +935,9 @@ const ConsultantComprehensiveManagement = () => {
     const chipFilterStatus = activeFilters.status === 'all' || !activeFilters.status ? 'all' : activeFilters.status;
 
     if (loading) {
+        if (embedded) {
+            return <UnifiedLoading type="page" text="데이터를 불러오는 중..." variant="pulse" />;
+        }
         return (
             <AdminCommonLayout>
                 <div className="mg-v2-ad-b0kla mg-v2-consultant-management">
@@ -945,12 +949,9 @@ const ConsultantComprehensiveManagement = () => {
         );
     }
 
-    return (
-        <AdminCommonLayout>
-            <div className="mg-v2-ad-b0kla mg-v2-consultant-management">
-                <div className="mg-v2-ad-b0kla__container">
-                    <ContentArea>
-                        <ContentHeader
+    const contentBlock = (
+        <>
+            <ContentHeader
                             title="상담사 관리"
                             subtitle="상담사의 모든 정보를 종합적으로 관리하고 분석할 수 있습니다"
                             actions={
@@ -1330,10 +1331,11 @@ const ConsultantComprehensiveManagement = () => {
                                 </ContentSection>
                             </>
                         )}
-                    </ContentArea>
-                </div>
-            </div>
+        </>
+    );
 
+    const modalsBlock = (
+        <>
             { /* 모달 */ }
             {showModal && (
                 <div className="mg-v2-modal-overlay">
@@ -1569,8 +1571,29 @@ const ConsultantComprehensiveManagement = () => {
                     onConfirm={handlePasswordResetConfirm}
                 />
             )}
+        </>
+    );
+
+    if (embedded) {
+        return <>{contentBlock}{modalsBlock}</>;
+    }
+
+    return (
+        <AdminCommonLayout>
+            <div className="mg-v2-ad-b0kla mg-v2-consultant-management">
+                <div className="mg-v2-ad-b0kla__container">
+                    <ContentArea>
+                        {contentBlock}
+                    </ContentArea>
+                    {modalsBlock}
+                </div>
+            </div>
         </AdminCommonLayout>
     );
+};
+
+ConsultantComprehensiveManagement.propTypes = {
+  embedded: PropTypes.bool
 };
 
 export default ConsultantComprehensiveManagement;

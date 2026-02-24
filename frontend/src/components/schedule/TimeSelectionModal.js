@@ -122,7 +122,7 @@ const TimeSelectionModal = ({
             isOpen={isOpen}
             onClose={onClose}
             title="시간을 선택하세요"
-            size="medium"
+            size="large"
             backdropClick={true}
             showCloseButton={true}
             className="mg-v2-ad-b0kla"
@@ -180,8 +180,8 @@ const TimeSelectionModal = ({
                                 onClick={() => handleTimeSlotSelect(timeSlot)}
                             >
                                 <div className="time-slot-card__header">
-                                    <div className={`time-slot-indicator ${isBooked ? 'time-slot-indicator--booked' : ''}`}>
-                                        <span className="time-slot-indicator__text">
+                                    <div className={`mg-time-slot-indicator ${isBooked ? 'mg-time-slot-indicator--booked' : 'mg-time-slot-indicator--available'}`}>
+                                        <span className="mg-time-slot-indicator__text">
                                             {isBooked ? '×' : '가'}
                                         </span>
                                     </div>

@@ -3,11 +3,11 @@ import { FaServer, FaDatabase, FaSync } from 'react-icons/fa';
 import Button from '../../ui/Button/Button';
 
 const SystemStatus = ({ onStatusCheck, systemStatus, loading }) => {
-    const getStatusColor = (status) => {
+    const getStatusModifier = (status) => {
         switch (status) {
-            case 'healthy': return 'var(--mg-success-500)';
-            case 'error': return 'var(--mg-error-500)';
-            default: return 'var(--mg-warning-500)';
+            case 'healthy': return 'mg-status-dot--success';
+            case 'error': return 'mg-status-dot--error';
+            default: return 'mg-status-dot--warning';
         }
     };
 
@@ -41,8 +41,8 @@ const SystemStatus = ({ onStatusCheck, systemStatus, loading }) => {
                         <span className="status-icon-wrap">
                             <FaServer />
                         </span>
-                        <span 
-                            className="status-dot"
+                        <span
+                            className={`mg-status-dot ${getStatusModifier(systemStatus.server)}`}
                             data-status={systemStatus.server}
                         />
                     </div>
@@ -57,8 +57,8 @@ const SystemStatus = ({ onStatusCheck, systemStatus, loading }) => {
                         <span className="status-icon-wrap">
                             <FaDatabase />
                         </span>
-                        <span 
-                            className="status-dot"
+                        <span
+                            className={`mg-status-dot ${getStatusModifier(systemStatus.database)}`}
                             data-status={systemStatus.database}
                         />
                     </div>

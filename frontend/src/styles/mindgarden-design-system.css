@@ -757,6 +757,183 @@
   color: var(--cs-error-700, #b91c1c);
 }
 
+/* 상태 도트 (8px 통일) */
+.mg-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--border-radius-full, 50%);
+  flex-shrink: 0;
+}
+
+.mg-status-dot--success {
+  background-color: var(--mg-success-500, var(--cs-success-500));
+}
+
+.mg-status-dot--warning {
+  background-color: var(--mg-warning-500, var(--cs-warning-500));
+}
+
+.mg-status-dot--error {
+  background-color: var(--mg-error-500, var(--cs-error-500));
+}
+
+.mg-status-dot--neutral {
+  background-color: var(--cs-secondary-500, #6b7280);
+}
+
+/* Step Indicator (단계 인디케이터) */
+.mg-step-indicator {
+  background: var(--color-bg-primary, #FAF9F7);
+  border: 1px solid var(--color-border-secondary, var(--cs-border-secondary));
+  border-radius: var(--border-radius-md, 0.375rem);
+  padding: var(--spacing-lg, 1.5rem);
+  margin-bottom: var(--spacing-lg, 1.5rem);
+}
+
+.mg-step-indicator__steps {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  margin-bottom: var(--spacing-md, 1rem);
+}
+
+.mg-step-indicator__step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  position: relative;
+}
+
+.mg-step-indicator__step-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--border-radius-full, 50%);
+  border: 2px solid;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--spacing-sm, 0.5rem);
+  font-size: var(--font-size-base, 1rem);
+  transition: all 0.3s ease;
+  z-index: 2;
+  position: relative;
+}
+
+.mg-step-indicator__step-icon--active {
+  background-color: var(--mg-primary-500, var(--cs-primary-500));
+  color: var(--mg-white, var(--color-text-inverse));
+  border-color: var(--mg-primary-500, var(--cs-primary-500));
+}
+
+.mg-step-indicator__step-icon--inactive {
+  background-color: var(--color-bg-accent, var(--cs-secondary-200));
+  color: var(--color-text-muted, var(--cs-secondary-500));
+  border-color: var(--color-border-secondary, var(--cs-secondary-200));
+}
+
+.mg-step-indicator__title {
+  font-size: var(--font-size-xs, 0.75rem);
+  font-weight: var(--font-weight-medium, 500);
+  text-align: center;
+}
+
+.mg-step-indicator__title--active {
+  color: var(--mg-primary-500, var(--cs-primary-500));
+  font-weight: var(--font-weight-semibold, 600);
+}
+
+.mg-step-indicator__title--inactive {
+  color: var(--color-text-muted, var(--cs-secondary-500));
+}
+
+.mg-step-indicator__line {
+  position: absolute;
+  top: 20px;
+  left: calc(50% + 20px);
+  right: calc(-50% + 20px);
+  height: 2px;
+  z-index: 1;
+  transition: all 0.3s ease;
+}
+
+.mg-step-indicator__line--active {
+  background-color: var(--mg-primary-500, var(--cs-primary-500));
+}
+
+.mg-step-indicator__line--inactive {
+  background-color: var(--color-border-secondary, var(--cs-secondary-200));
+}
+
+.mg-step-indicator__progress {
+  height: 4px;
+  background-color: var(--color-bg-accent, var(--cs-secondary-200));
+  border-radius: var(--border-radius-sm, 0.25rem);
+  overflow: hidden;
+}
+
+.mg-step-indicator__progress-fill {
+  height: 100%;
+  background-color: var(--mg-primary-500, var(--cs-primary-500));
+  border-radius: var(--border-radius-sm, 0.25rem);
+  transition: width 0.3s ease;
+}
+
+/* Time-slot Indicator (24px) */
+.mg-time-slot-indicator {
+  width: 24px;
+  height: 24px;
+  border-radius: var(--border-radius-full, 50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-right: var(--spacing-sm, 0.5rem);
+}
+
+.mg-time-slot-indicator--available {
+  background-color: var(--mg-success-500, var(--cs-success-500));
+}
+
+.mg-time-slot-indicator--booked {
+  background-color: var(--cs-secondary-200, #e5e7eb);
+}
+
+.mg-time-slot-indicator__text {
+  color: white;
+  font-size: var(--font-size-xs, 0.75rem);
+  font-weight: var(--font-weight-semibold, 600);
+}
+
+/* Selection / Availability */
+.mg-selection-indicator {
+  width: 24px;
+  height: 24px;
+  border-radius: var(--border-radius-full, 50%);
+  background-color: var(--mg-success-500, var(--cs-success-500));
+  color: var(--mg-white, white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-sm, 0.875rem);
+  font-weight: var(--font-weight-semibold, 600);
+}
+
+.mg-availability-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--border-radius-full, 50%);
+  flex-shrink: 0;
+  background: currentColor;
+}
+
+/* 로딩 텍스트 (위드젯 등) */
+.mg-loading-text {
+  font-size: var(--font-size-sm, 0.875rem);
+  color: var(--color-text-muted, var(--cs-secondary-500));
+}
+
 /* 애니메이션 */
 @keyframes mg-spin {
   0% { transform: rotate(0deg); }

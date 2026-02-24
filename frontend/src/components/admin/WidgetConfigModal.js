@@ -172,7 +172,7 @@ const WidgetConfigModal = ({ isOpen, onClose, widget, onSave }) => {
 
   return ReactDOM.createPortal(
     <div className="widget-config-modal-overlay" onClick={onClose}>
-      <div className="widget-config-modal" onClick={(e) => e.stopPropagation()}>
+      <div className="widget-config-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 'min(90vw, 900px)' }}>
         {/* 헤더 */}
         <div className="widget-config-modal-header">
           <h2>위젯 설정</h2>

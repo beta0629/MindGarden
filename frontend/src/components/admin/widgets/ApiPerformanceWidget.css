@@ -272,29 +272,6 @@
   align-items: center;
 }
 
-.loading-indicator {
-  color: var(--color-primary);
-  font-size: var(--font-size-sm);
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-}
-
-.loading-indicator::before {
-  content: '';
-  width: 12px;
-  height: 12px;
-  border: 2px solid var(--color-border-default);
-  border-top: 2px solid var(--color-primary);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
 .last-updated {
   color: var(--color-text-muted);
   font-size: var(--font-size-xs);

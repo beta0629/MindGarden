@@ -43,22 +43,22 @@
 }
 
 .emotion-indicators {
-    padding: 16px;
-    background: #f9fafb;
-    border-radius: 8px;
+    padding: var(--spacing-md, 1rem);
+    background: var(--cs-secondary-50, #f9fafb);
+    border-radius: var(--border-radius-md, 0.5rem);
 }
 
 .emotion-indicators h4 {
-    margin: 0 0 16px 0;
-    font-size: 16px;
-    color: #374151;
+    margin: 0 0 var(--spacing-md, 1rem) 0;
+    font-size: var(--font-size-base, 1rem);
+    color: var(--cs-secondary-700, #374151);
 }
 
 .indicator-item {
     display: flex;
     align-items: center;
-    gap: 12px;
-    margin-bottom: 12px;
+    gap: var(--spacing-sm, 0.75rem);
+    margin-bottom: var(--spacing-sm, 0.75rem);
 }
 
 .indicator-item span:first-child {

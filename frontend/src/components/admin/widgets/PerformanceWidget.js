@@ -160,8 +160,11 @@ const PerformanceWidget = ({
 
       <div className="widget-footer">
         {loading && (
-          <div className="loading-indicator">
-            {WIDGET_CONSTANTS.CACHE_MONITORING_WIDGET.MESSAGES.LOADING}
+          <div className="mg-loading-container mg-loading-container--centered">
+            <div className="mg-loading-content">
+              <div className="mg-loading-spinner" />
+              <span className="mg-loading-text">{WIDGET_CONSTANTS.CACHE_MONITORING_WIDGET.MESSAGES.LOADING}</span>
+            </div>
           </div>
         )}
         {lastUpdated && !loading && (

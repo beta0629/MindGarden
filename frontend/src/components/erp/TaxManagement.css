@@ -23,7 +23,7 @@
 .tax-type-indicator {
     width: 12px;
     height: 12px;
-    border-radius: 50%;
+    border-radius: var(--border-radius-full, 50%);
     flex-shrink: 0;
 }
 

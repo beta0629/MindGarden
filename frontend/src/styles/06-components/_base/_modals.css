@@ -463,27 +463,7 @@
   margin-bottom: var(--spacing-sm);
 }
 
-.time-slot-indicator {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: var(--color-success);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-right: var(--spacing-sm);
-  flex-shrink: 0;
-}
-
-.time-slot-indicator--booked {
-  background: var(--color-neutral-light);
-}
-
-.time-slot-indicator__text {
-  color: white;
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-semibold);
-}
+/* 시간 슬롯: 전역 mg-time-slot-indicator 사용 (mindgarden-design-system.css) */
 
 .time-slot-time {
   font-size: var(--font-size-base);

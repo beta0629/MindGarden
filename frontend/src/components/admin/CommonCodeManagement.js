@@ -925,7 +925,7 @@ const CommonCodeManagement = () => {
             <div className="page-header">
             </div>
 
-                <div className="step-indicator">
+                <div className="mg-step-indicator improved-common-code-step-wrapper">
                     <div className={ `step ${currentStep === 1 ? 'active' : 'completed' }`}>
                         <div className="step-number">1</div>
                         <div className="step-label">그룹 선택</div>

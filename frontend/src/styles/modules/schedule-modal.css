@@ -1,7 +1,7 @@
 /* ===== ScheduleModal 모듈 - 모듈화된 스타일 관리 ===== */
 
 /* 단계 인디케이터 배경 라인 제거 */
-.schedule-modal .step-indicator::before {
+.schedule-modal .mg-step-indicator::before {
     display: none !important;
 }
 

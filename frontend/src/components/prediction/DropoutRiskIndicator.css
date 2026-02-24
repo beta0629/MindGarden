@@ -1,23 +1,23 @@
 .dropout-risk-indicator h3 {
-    margin: 0 0 20px 0;
-    font-size: 18px;
-    color: #1f2937;
+    margin: 0 0 var(--spacing-lg, 1.25rem) 0;
+    font-size: var(--font-size-lg, 1.125rem);
+    color: var(--cs-secondary-800, #1f2937);
 }
 
 .risk-display {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 24px;
-    margin-bottom: 24px;
+    gap: var(--spacing-lg, 1.5rem);
+    margin-bottom: var(--spacing-lg, 1.5rem);
 }
 
 .risk-level-badge {
-    padding: 12px 32px;
-    border-radius: 24px;
-    color: white;
-    font-weight: 700;
-    font-size: 18px;
+    padding: var(--spacing-sm, 0.5rem) var(--spacing-lg, 2rem);
+    border-radius: var(--border-radius-full, 9999px);
+    color: var(--mg-white, white);
+    font-weight: var(--font-weight-bold, 700);
+    font-size: var(--font-size-lg, 1.125rem);
 }
 
 .risk-probability {
@@ -30,9 +30,9 @@
 }
 
 .engagement-metrics h4 {
-    margin: 0 0 16px 0;
-    font-size: 15px;
-    color: #374151;
+    margin: 0 0 var(--spacing-md, 1rem) 0;
+    font-size: var(--font-size-base, 1rem);
+    color: var(--cs-secondary-700, #374151);
 }
 
 .metric-item {

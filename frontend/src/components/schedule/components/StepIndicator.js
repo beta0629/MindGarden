@@ -33,38 +33,30 @@ const StepIndicator = ({
     console.log('StepIndicator 렌더링:', { currentStep, totalSteps, steps });
 
     return (
-        <div className="step-indicator-container">
-            {/* 간단한 진행 표시기 */}
-            <div className="step-indicator-steps">
+        <div className="mg-step-indicator">
+            <div className="mg-step-indicator__steps">
                 {steps.map((step, index) => {
                     const isActive = currentStep >= step.id;
                     const isCompleted = currentStep > step.id;
-                    
                     return (
-                        <div key={step.id} className="step-indicator-step">
-                            {/* 단계 아이콘 */}
-                            <div className={`step-indicator-icon ${isActive ? 'active' : 'inactive'}`}>
+                        <div key={step.id} className="mg-step-indicator__step">
+                            <div className={`mg-step-indicator__step-icon ${isActive ? 'mg-step-indicator__step-icon--active' : 'mg-step-indicator__step-icon--inactive'}`}>
                                 {isCompleted ? '✓' : step.icon}
                             </div>
-                            
-                            {/* 단계 제목 */}
-                            <div className={`step-indicator-title ${isActive ? 'active' : 'inactive'}`}>
+                            <div className={`mg-step-indicator__title ${isActive ? 'mg-step-indicator__title--active' : 'mg-step-indicator__title--inactive'}`}>
                                 {step.title}
                             </div>
-                            
-                            {/* 연결선 */}
                             {index < steps.length - 1 && (
-                                <div className={`step-indicator-line ${isActive ? 'active' : 'inactive'}`} />
+                                <div className={`mg-step-indicator__line ${isActive ? 'mg-step-indicator__line--active' : 'mg-step-indicator__line--inactive'}`} />
                             )}
                         </div>
                     );
                 })}
             </div>
-            
-            {/* 진행률 바 */}
-            <div className="step-indicator-progress-bar">
-                <div 
-                    className="step-indicator-progress-fill"
+            <div className="mg-step-indicator__progress">
+                <div
+                    className="mg-step-indicator__progress-fill"
+                    style={{ width: `${progressPercentage}%` }}
                     data-width={progressPercentage}
                 />
             </div>

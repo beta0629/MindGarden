@@ -379,7 +379,7 @@ const modalContentStyle = {
   backgroundColor: 'white',
   borderRadius: '8px',
   width: '90%',
-  maxWidth: '600px',
+  maxWidth: 'min(90vw, 800px)',
   maxHeight: '90vh',
   overflow: 'hidden',
   boxShadow: '0 4px 20px var(--mg-shadow-medium)'

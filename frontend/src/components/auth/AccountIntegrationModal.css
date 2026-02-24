@@ -16,7 +16,7 @@
     background: white;
     border-radius: 12px;
     box-shadow: 0 20px 40px var(--mg-shadow-medium);
-    max-width: 500px;
+    max-width: min(90vw, 800px);
     width: 90%;
     max-height: 90vh;
     overflow-y: auto;

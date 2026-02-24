@@ -927,7 +927,7 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
 
   return (
     <div className="mg-v2-modal-overlay--high-z">
-      <div className="mg-v2-modal mg-v2-modal-lg mg-v2-modal--scrollable">
+      <div className="mg-v2-modal mg-v2-modal-large mg-v2-modal--scrollable" style={{ maxWidth: 'min(95vw, 1100px)', width: '90vw' }}>
         {/* 헤더 */}
         <div className="mg-v2-modal-header">
           <h2 className="mg-v2-modal-title">

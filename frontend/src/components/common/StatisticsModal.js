@@ -166,7 +166,7 @@ const StatisticsModal = ({ isOpen, onClose, userRole = 'ADMIN' }) => {
       isOpen={isOpen}
       onClose={onClose}
       title="통계 보기"
-      size="auto"
+      size="large"
       backdropClick
       showCloseButton
       loading={loading}

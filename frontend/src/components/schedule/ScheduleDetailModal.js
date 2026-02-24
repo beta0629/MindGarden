@@ -180,7 +180,7 @@ const ScheduleDetailModal = ({
             isOpen={showCancelConfirm}
             onClose={() => setShowCancelConfirm(false)}
             title="예약 취소 확인"
-            size="auto"
+            size="large"
             variant="confirm"
             zIndex={1100}
             backdropClick={!loading}
@@ -219,7 +219,7 @@ const ScheduleDetailModal = ({
             isOpen={showConfirmModal}
             onClose={() => setShowConfirmModal(false)}
             title="예약 확정"
-            size="auto"
+            size="large"
             variant="confirm"
             zIndex={1100}
             backdropClick={!loading}
@@ -271,7 +271,7 @@ const ScheduleDetailModal = ({
                     isOpen={true}
                     onClose={onClose}
                     title="처리 중"
-                    size="auto"
+                    size="large"
                     loading={true}
                     showCloseButton={false}
                     backdropClick={false}
@@ -556,7 +556,7 @@ return isStatus(displayData.status, vacationStatus) ||
                 isOpen={isOpen}
                 onClose={onClose}
                 title="일정 상세"
-                size="auto"
+                size="large"
                 backdropClick={true}
                 showCloseButton={true}
                 className="mg-v2-ad-b0kla"

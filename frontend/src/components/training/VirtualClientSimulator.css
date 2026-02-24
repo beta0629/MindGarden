@@ -131,15 +131,15 @@
 
 .typing-indicator {
     display: flex;
-    gap: 4px;
-    padding: 12px;
+    gap: var(--spacing-xs, 0.25rem);
+    padding: var(--spacing-sm, 0.5rem);
 }
 
 .typing-indicator span {
     width: 8px;
     height: 8px;
-    background: #9ca3af;
-    border-radius: 50%;
+    background: var(--cs-secondary-400, #9ca3af);
+    border-radius: var(--border-radius-full, 50%);
     animation: bounce 1.4s infinite ease-in-out;
 }
 

@@ -169,29 +169,6 @@
   align-items: center;
 }
 
-.loading-indicator {
-  color: var(--primary-color);
-  font-size: 0.85em;
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-}
-
-.loading-indicator::before {
-  content: '';
-  width: 12px;
-  height: 12px;
-  border: 2px solid var(--border-color);
-  border-top: 2px solid var(--primary-color);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
 .last-updated {
   color: var(--text-muted);
   font-size: 0.8em;

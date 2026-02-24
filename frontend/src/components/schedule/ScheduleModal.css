@@ -20,7 +20,7 @@
   --schedule-modal-shadow-hover: var(--shadow-lg, 0 8px 25px rgba(0, 0, 0, 0.2));
   
   /* 스케줄 모달 크기 변수 - 새로운 디자인 시스템 변수 사용 */
-  --schedule-modal-width: 450px;
+  --schedule-modal-width: min(90vw, 900px);
   --schedule-modal-max-height: 60vh;
   --schedule-modal-min-height: 300px;
   --schedule-modal-border-radius: var(--border-radius-lg, 16px);
@@ -321,10 +321,11 @@
   border-color: var(--schedule-modal-danger);
 }
 
+/* 가용 도트: 전역 mg-availability-dot 또는 mg-status-dot 사용 (mindgarden-design-system.css) */
 .availability-indicator {
   width: 8px;
   height: 8px;
-  border-radius: 50%;
+  border-radius: var(--border-radius-full, 50%);
   background: currentColor;
 }
 
@@ -555,7 +556,7 @@
 .availability-dot {
   width: 8px;
   height: 8px;
-  border-radius: 50%;
+  border-radius: var(--border-radius-full, 50%);
   background: currentColor;
   box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
 }
@@ -679,21 +680,22 @@
   box-shadow: 0 8px 25px rgba(40, 167, 69, 0.3);
 }
 
-/* 선택 표시 */
-.selection-indicator {
+/* 선택 표시: 전역 mg-selection-indicator 사용 (mindgarden-design-system.css). 레이아웃만 유지 */
+.selection-indicator,
+.mg-selection-indicator {
   position: absolute;
   top: 8px;
   right: 8px;
   width: 24px;
   height: 24px;
-  background: var(--schedule-modal-success);
-  color: var(--schedule-modal-white);
-  border-radius: 50%;
+  background-color: var(--mg-success-500, var(--schedule-modal-success));
+  color: var(--mg-white, var(--schedule-modal-white));
+  border-radius: var(--border-radius-full, 50%);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: var(--font-size-sm);
-  font-weight: 700;
+  font-weight: var(--font-weight-semibold, 700);
   animation: selectionPulse 0.3s ease;
 }
 

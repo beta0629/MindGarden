@@ -56,7 +56,6 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
   const [paymentMethodOptions, setPaymentMethodOptions] = useState([]);
   const [responsibilityOptions, setResponsibilityOptions] = useState([]);
   const [loadingPackageCodes, setLoadingPackageCodes] = useState(false);
-  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
   const [paymentInfo, setPaymentInfo] = useState({
     totalSessions: DEFAULT_MAPPING_CONFIG.TOTAL_SESSIONS,
@@ -77,12 +76,6 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
     if (method === 'BANK_TRANSFER') return `BANK_${timestamp}`;
     return `${method}_${timestamp}`;
   };
-
-  useEffect(() => {
-    const handleResize = () => setWindowWidth(window.innerWidth);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
 
   const loadPackageCodes = useCallback(async () => {
     try {
@@ -694,7 +687,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
       isOpen={isOpen}
       onClose={handleClose}
       title="새 매칭 생성"
-      size={windowWidth <= 768 ? 'medium' : 'large'}
+      size="large"
       className="mg-v2-ad-b0kla"
       backdropClick={false}
       showCloseButton={true}

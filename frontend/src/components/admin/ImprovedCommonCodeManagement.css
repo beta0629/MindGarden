@@ -26,15 +26,16 @@
   margin: 0;
 }
 
-/* 단계 표시기 */
+/* 단계 표시기: 컨테이너 mg-step-indicator 통일, 내부 레이아웃만 유지 */
+.mg-step-indicator.improved-common-code-step-wrapper,
 .step-indicator {
   display: flex;
   align-items: center;
   justify-content: center;
   margin-bottom: 40px;
   padding: var(--spacing-lg);
-  background: white;
-  border-radius: 12px;
+  background: var(--color-bg-primary, white);
+  border-radius: var(--border-radius-md, 12px);
   box-shadow: 0 2px 8px var(--mg-shadow-light);
 }
 
@@ -577,9 +578,10 @@
     padding: var(--spacing-md);
   }
   
+  .mg-step-indicator.improved-common-code-step-wrapper,
   .step-indicator {
     flex-direction: column;
-    gap: 16px;
+    gap: var(--spacing-md, 16px);
   }
   
   .step-line {

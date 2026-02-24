@@ -2258,7 +2258,7 @@ const JournalEntryDetailModal = ({ entry, onClose, onRefresh }) => {
 
   return ReactDOM.createPortal(
     <div className="mg-v2-modal-overlay" onClick={onClose}>
-      <div className="mg-v2-modal-content" onClick={(e) => e.stopPropagation()}>
+      <div className="mg-v2-modal-content" style={{ maxWidth: 'min(95vw, 1000px)' }} onClick={(e) => e.stopPropagation()}>
         <div className="mg-v2-modal-header">
           <h3 className="mg-v2-modal-title">분개 상세</h3>
           <button className="mg-v2-modal-close" onClick={onClose}>×</button>
@@ -2470,7 +2470,7 @@ const JournalEntryCreateModal = ({ onClose, onRefresh }) => {
 
   return ReactDOM.createPortal(
     <div className="mg-v2-modal-overlay" onClick={onClose}>
-      <div className="mg-v2-modal-content" style={{ maxWidth: '800px' }} onClick={(e) => e.stopPropagation()}>
+      <div className="mg-v2-modal-content" style={{ maxWidth: 'min(95vw, 1000px)' }} onClick={(e) => e.stopPropagation()}>
         <div className="mg-v2-modal-header">
           <h3 className="mg-v2-modal-title">분개 생성</h3>
           <button className="mg-v2-modal-close" onClick={onClose}>×</button>
@@ -2892,7 +2892,7 @@ const LedgerDetailModal = ({ ledger, onClose }) => {
 
   return ReactDOM.createPortal(
     <div className="mg-v2-modal-overlay" onClick={onClose}>
-      <div className="mg-v2-modal-content" style={{ maxWidth: '900px' }} onClick={(e) => e.stopPropagation()}>
+      <div className="mg-v2-modal-content" style={{ maxWidth: 'min(95vw, 1100px)' }} onClick={(e) => e.stopPropagation()}>
         <div className="mg-v2-modal-header">
           <h3 className="mg-v2-modal-title">원장 상세</h3>
           <button className="mg-v2-modal-close" onClick={onClose}>×</button>

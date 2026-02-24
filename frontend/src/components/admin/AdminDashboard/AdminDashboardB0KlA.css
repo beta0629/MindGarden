@@ -699,7 +699,7 @@
   color: var(--ad-b0kla-blue);
 }
 
-.mg-v2-ad-b0kla .status-dot {
+.mg-v2-ad-b0kla .status-indicator .mg-status-dot {
   width: 10px;
   height: 10px;
   top: -4px;
@@ -708,16 +708,16 @@
   box-shadow: 0 0 0 1px var(--ad-b0kla-border);
 }
 
-.mg-v2-ad-b0kla .status-dot[data-status='healthy'] {
+.mg-v2-ad-b0kla .mg-status-dot[data-status='healthy'] {
   background: var(--ad-b0kla-green);
 }
 
-.mg-v2-ad-b0kla .status-dot[data-status='error'] {
+.mg-v2-ad-b0kla .mg-status-dot[data-status='error'] {
   background: var(--ad-b0kla-danger);
 }
 
-.mg-v2-ad-b0kla .status-dot[data-status='warning'],
-.mg-v2-ad-b0kla .status-dot:not([data-status='healthy']):not([data-status='error']) {
+.mg-v2-ad-b0kla .mg-status-dot[data-status='warning'],
+.mg-v2-ad-b0kla .mg-status-dot:not([data-status='healthy']):not([data-status='error']) {
   background: var(--ad-b0kla-orange);
 }
 

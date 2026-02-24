@@ -8,6 +8,7 @@
 
 import React, { useEffect } from 'react';
 import { LogOut } from 'lucide-react';
+import { NavLinkWithRouter } from '../atoms';
 import { LnbMenuItem } from '../molecules';
 import './MobileLnbDrawer.css';
 
@@ -46,9 +47,16 @@ const MobileLnbDrawer = ({ isOpen, onClose, menuItems = [], headerTitle = 'ì‹œìŠ
             {menuItems.map((item) =>
               hasChildren(item) ? (
                 <li key={item.to} className="mg-v2-mobile-lnb-drawer__group">
-                  <LnbMenuItem to={item.to} icon={item.icon} end={item.end} onItemClick={onClose}>
-                    {item.label}
-                  </LnbMenuItem>
+                  <div className="mg-v2-mobile-lnb-drawer__group-head">
+                    <NavLinkWithRouter
+                      to={item.to}
+                      icon={item.icon}
+                      end={item.end}
+                      onClick={onClose}
+                    >
+                      {item.label}
+                    </NavLinkWithRouter>
+                  </div>
                   <ul className="mg-v2-mobile-lnb-drawer__sublist">
                     {item.children.map((sub) => (
                       <LnbMenuItem

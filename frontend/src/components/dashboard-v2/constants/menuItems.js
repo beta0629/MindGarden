@@ -23,12 +23,57 @@ import {
 
 const BREAKPOINT_DESKTOP = 768;
 
+/** 어드민 LNB 폴백: 메인+서브 트리 (LNB_MENU_STRUCTURE_AND_PERMISSION_SPEC §2) */
 const DEFAULT_MENU_ITEMS = [
   { to: '/admin/dashboard-v2', icon: LayoutDashboard, label: '대시보드', end: true },
   { to: '/admin/mapping-management', icon: Link, label: '매칭 관리', end: true },
-  { to: '/admin/dashboard-v2/settings', icon: Settings, label: '설정', end: false },
-  { to: '/admin/dashboard-v2/users', icon: Users, label: '사용자', end: false },
-  { to: '/admin/dashboard-v2/reports', icon: FileText, label: '보고서', end: false }
+  {
+    to: '/admin/user-management',
+    icon: Users,
+    label: '사용자/권한',
+    end: false,
+    children: [
+      { to: '/admin/user-management', icon: Users, label: '사용자 관리', end: true },
+      { to: '/admin/permissions', icon: FileText, label: '권한 관리', end: true },
+      { to: '/admin/accounts', icon: CreditCard, label: '계좌 관리', end: true }
+    ]
+  },
+  {
+    to: '/erp/dashboard',
+    icon: LayoutDashboard,
+    label: 'ERP 관리',
+    end: false,
+    children: [
+      { to: '/erp/dashboard', icon: LayoutDashboard, label: 'ERP 대시보드', end: true },
+      { to: '/erp/purchase', icon: ShoppingCart, label: '구매 관리', end: true },
+      { to: '/erp/financial', icon: DollarSign, label: '재무 관리', end: true },
+      { to: '/erp/budget', icon: PieChart, label: '예산 관리', end: true },
+      { to: '/erp/tax', icon: Receipt, label: '세무 관리', end: true }
+    ]
+  },
+  {
+    to: '/tenant/profile',
+    icon: Settings,
+    label: '설정',
+    end: false,
+    children: [
+      { to: '/tenant/profile', icon: Settings, label: '테넌트 프로필', end: true },
+      { to: '/admin/system-config', icon: Settings, label: '시스템 설정', end: true },
+      { to: '/admin/common-codes', icon: FileText, label: '공통코드', end: true },
+      { to: '/tenant/pg-configuration', icon: CreditCard, label: 'PG 설정', end: true }
+    ]
+  },
+  {
+    to: '/admin/statistics',
+    icon: FileText,
+    label: '보고서',
+    end: false,
+    children: [
+      { to: '/admin/statistics', icon: FileText, label: '통계', end: true },
+      { to: '/admin/compliance', icon: FileText, label: '컴플라이언스', end: true }
+    ]
+  },
+  { to: '/admin/system-notifications', icon: MessageCircle, label: '알림', end: true }
 ];
 
 const CLIENT_MENU_ITEMS = [

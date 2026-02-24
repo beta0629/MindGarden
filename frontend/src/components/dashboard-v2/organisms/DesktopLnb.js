@@ -1,12 +1,14 @@
 /**
  * DesktopLnb - LNB 260px: 다크(#2C2C2C), 메뉴 리스트 (메인/서브 트리 지원)
  * RESPONSIVE_LAYOUT_SPEC: 사이드바 260px, 배경 #2C2C2C
+ * HTML 유효: ul 직계는 li만. 그룹 시 메인 행은 div+NavLink, 서브만 ul > li(LnbMenuItem).
  *
  * @author CoreSolution
  * @since 2025-02-22
  */
 
 import React from 'react';
+import { NavLinkWithRouter } from '../atoms';
 import { LnbMenuItem } from '../molecules';
 import './DesktopLnb.css';
 
@@ -23,9 +25,15 @@ const DesktopLnb = ({ menuItems = [], headerTitle = '시스템 관리' }) => {
           {menuItems.map((item) =>
             hasChildren(item) ? (
               <li key={item.to} className="mg-v2-desktop-lnb__group">
-                <LnbMenuItem to={item.to} icon={item.icon} end={item.end}>
-                  {item.label}
-                </LnbMenuItem>
+                <div className="mg-v2-desktop-lnb__group-head">
+                  <NavLinkWithRouter
+                    to={item.to}
+                    icon={item.icon}
+                    end={item.end}
+                  >
+                    {item.label}
+                  </NavLinkWithRouter>
+                </div>
                 <ul className="mg-v2-desktop-lnb__sublist">
                   {item.children.map((sub) => (
                     <LnbMenuItem

@@ -47,7 +47,13 @@
   padding: 0;
 }
 
-.mg-v2-desktop-lnb__group .mg-v2-lnb-menu-item:first-child {
+/* 그룹 메인 행: div + NavLink (li 아님, HTML 유효성 준수) */
+.mg-v2-desktop-lnb__group-head {
+  margin: 0;
+  padding: 0;
+}
+
+.mg-v2-desktop-lnb__group-head .mg-v2-nav-link {
   font-weight: 600;
   font-size: 13px;
 }

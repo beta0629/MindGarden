@@ -73,7 +73,12 @@
   padding: 0;
 }
 
-.mg-v2-mobile-lnb-drawer__group .mg-v2-lnb-menu-item:first-child {
+.mg-v2-mobile-lnb-drawer__group-head {
+  margin: 0;
+  padding: 0;
+}
+
+.mg-v2-mobile-lnb-drawer__group-head .mg-v2-nav-link {
   font-weight: 600;
   font-size: 13px;
 }

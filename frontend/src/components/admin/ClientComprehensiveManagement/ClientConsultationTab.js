@@ -8,7 +8,6 @@ import { FaUser, FaCalendarAlt, FaClock } from 'react-icons/fa';
 const ClientConsultationTab = ({
     clients,
     consultations,
-    selectedClient,
     onClientSelect
 }) => {
     // 내담자별 상담 이력 그룹화
@@ -66,9 +65,11 @@ const ClientConsultationTab = ({
                 </div>
                 
                 {clientConsultations.length === 0 ? (
-                    <div className="mg-v2-empty-state">
-                        <FaCalendarAlt size={32} />
-                        <p>상담 이력이 없습니다.</p>
+                    <div className="mg-v2-mapping-list-block__empty">
+                        <div className="mg-v2-mapping-list-block__empty-icon">
+                            <FaCalendarAlt size={32} />
+                        </div>
+                        <p className="mg-v2-mapping-list-block__empty-desc">상담 이력이 없습니다.</p>
                     </div>
                 ) : (
                     <div className="mg-mobile-card-stack">
@@ -109,10 +110,12 @@ const ClientConsultationTab = ({
             </div>
             
             {clients.length === 0 && (
-                <div className="mg-v2-empty-state">
-                    <FaUser size={48} />
-                    <h3>등록된 내담자가 없습니다</h3>
-                    <p>내담자를 등록한 후 상담 이력을 확인할 수 있습니다.</p>
+                <div className="mg-v2-mapping-list-block__empty">
+                    <div className="mg-v2-mapping-list-block__empty-icon">
+                        <FaUser size={48} />
+                    </div>
+                    <h3 className="mg-v2-mapping-list-block__empty-title">등록된 내담자가 없습니다</h3>
+                    <p className="mg-v2-mapping-list-block__empty-desc">내담자를 등록한 후 상담 이력을 확인할 수 있습니다.</p>
                 </div>
             )}
         </div>

@@ -1,5 +1,4 @@
-// import React from 'react';
-import MGButton from '../../../components/common/MGButton'; // 임시 비활성화
+import Button from '../../ui/Button/Button';
 import { FaUser, FaEdit, FaTrash, FaEye, FaKey } from 'react-icons/fa';
 import { getUserStatusKoreanNameSync, getUserGradeKoreanNameSync, getUserGradeIconSync, getStatusColorSync } from '../../../utils/codeHelper';
 
@@ -31,8 +30,8 @@ const ClientOverviewTab = ({
         const clientConsultations = consultations.filter(consultation => consultation.clientId === client.id);
         
         return (
-            <div key={client.id} className="mg-v2-card mg-v2-client-card">
-                <div className="mg-v2-card-header">
+            <div key={client.id} className="mg-v2-client-card mg-v2-card">
+                <div className="mg-v2-card-header mg-v2-client-card__header">
                     <div className="mg-v2-client-info">
                         <div className="mg-v2-client-avatar">
                             <FaUser />
@@ -82,57 +81,37 @@ const ClientOverviewTab = ({
                 </div>
                 
                 <div className="mg-v2-card-footer">
-                    <button className="mg-button"
-                        variant="secondary"
-                        size="small"
-                        onClick={() => onClientSelect(client)}
-                    >
+                    <Button variant="secondary" size="small" onClick={() => onClientSelect(client)} preventDoubleClick>
                         <FaEye /> 상세보기
-                    </button>
-                    <button className="mg-button"
-                        variant="primary"
-                        size="small"
-                        onClick={() => onEditClient(client)}
-                    >
+                    </Button>
+                    <Button variant="primary" size="small" onClick={() => onEditClient(client)} preventDoubleClick>
                         <FaEdit /> 수정
-                    </button>
+                    </Button>
                     {onResetPassword && (
-                        <button className="mg-button"
-                            variant="secondary"
-                            size="small"
-                            onClick={() => onResetPassword(client)}
-                            title="비밀번호 초기화"
-                        >
+                        <Button variant="secondary" size="small" onClick={() => onResetPassword(client)} title="비밀번호 초기화" preventDoubleClick>
                             <FaKey /> 비밀번호 초기화
-                        </button>
+                        </Button>
                     )}
-                    <button className="mg-button"
-                        variant="secondary"
-                        size="small"
-                        onClick={() => onDeleteClient(client)}
-                    >
+                    <Button variant="secondary" size="small" onClick={() => onDeleteClient(client)} preventDoubleClick>
                         <FaTrash /> 삭제
-                    </button>
+                    </Button>
                 </div>
             </div>
         );
     };
 
     return (
-        <div className="mg-v2-client-overview">
-            <div className="mg-v2-section-header">
-                <h2>내담자 목록</h2>
-                <p>총 {clients.length}명의 내담자가 등록되어 있습니다.</p>
-            </div>
-            
+        <div className="mg-v2-client-list-block">
             {clients.length === 0 ? (
-                <div className="mg-v2-empty-state">
-                    <FaUser size={48} />
-                    <h3>등록된 내담자가 없습니다</h3>
-                    <p>새로운 내담자를 등록해보세요.</p>
+                <div className="mg-v2-mapping-list-block__empty">
+                    <div className="mg-v2-mapping-list-block__empty-icon">
+                        <FaUser size={48} />
+                    </div>
+                    <h3 className="mg-v2-mapping-list-block__empty-title">등록된 내담자가 없습니다</h3>
+                    <p className="mg-v2-mapping-list-block__empty-desc">새로운 내담자를 등록해보세요.</p>
                 </div>
             ) : (
-                <div className="mg-v2-client-grid">
+                <div className="mg-v2-mapping-list-block__grid">
                     {clients.map(renderClientCard)}
                 </div>
             )}

@@ -1,5 +1,5 @@
 import React from 'react';
-import { FaChartBar, FaUsers, FaHandshake, FaCalendarAlt } from 'react-icons/fa';
+import { FaUsers, FaHandshake, FaCalendarAlt } from 'react-icons/fa';
 import { getUserStatusKoreanNameSync, getUserGradeKoreanNameSync } from '../../../utils/codeHelper';
 
 /**
@@ -36,19 +36,19 @@ const ClientStatisticsTab = ({
         return acc;
     }, {});
 
-    const renderStatCard = (title, value, icon, color = 'var(--mg-primary-500)') => (
-        <div className="mg-v2-card mg-v2-stat-card">
-            <div className="mg-v2-stat-icon" style={{ '--icon-color': color }}>
+    const renderStatCard = (title, value, icon, iconVariant = 'blue') => (
+        <div className="mg-v2-mapping-kpi-section__card">
+            <div className={`mg-v2-mapping-kpi-section__icon mg-v2-mapping-kpi-section__icon--${iconVariant}`}>
                 {icon}
             </div>
-            <div className="mg-v2-stat-content">
-                <h3>{value}</h3>
-                <p>{title}</p>
+            <div className="mg-v2-mapping-kpi-section__info">
+                <span className="mg-v2-mapping-kpi-section__label">{title}</span>
+                <span className="mg-v2-mapping-kpi-section__value">{value}</span>
             </div>
         </div>
     );
 
-    const renderChartData = (title, data, color = 'var(--mg-primary-500)') => {
+    const renderChartData = (title, data, color = 'var(--ad-b0kla-green)') => {
         if (!data || Object.keys(data).length === 0) {
             return (
                 <div className="mg-v2-card mg-v2-chart-card">
@@ -110,20 +110,20 @@ const ClientStatisticsTab = ({
             </div>
             
             {/* 주요 통계 */}
-            <div className="mg-v2-stats-grid">
-                {renderStatCard('총 내담자 수', totalClients, <FaUsers />, 'var(--mg-success-500)')}
-                {renderStatCard('활성 내담자', activeClients, <FaUsers />, 'var(--mg-primary-500)')}
-                {renderStatCard('총 상담 수', totalConsultations, <FaCalendarAlt />, 'var(--mg-warning-500)')}
-                {renderStatCard('총 매칭 수', totalMappings, <FaHandshake />, 'var(--mg-error-500)')}
+            <div className="mg-v2-mapping-kpi-section__grid">
+                {renderStatCard('총 내담자 수', totalClients, <FaUsers size={24} />, 'blue')}
+                {renderStatCard('활성 내담자', activeClients, <FaUsers size={24} />, 'green')}
+                {renderStatCard('총 상담 수', totalConsultations, <FaCalendarAlt size={24} />, 'orange')}
+                {renderStatCard('총 매칭 수', totalMappings, <FaHandshake size={24} />, 'gray')}
             </div>
             
             {/* 상세 통계 */}
             <div className="mg-v2-detailed-stats">
                 <div className="mg-mobile-card-stack">
-                    {renderChartData('등급별 내담자 분포', clientsByGrade, 'var(--mg-purple-500)')}
-                    {renderChartData('상태별 내담자 분포', clientsByStatus, 'var(--mg-info-500)')}
-                    {Object.keys(consultationsByMonth).length > 0 && 
-                        renderChartData('월별 상담 수', consultationsByMonth, 'var(--mg-warning-500)')
+                    {renderChartData('등급별 내담자 분포', clientsByGrade, 'var(--ad-b0kla-blue)')}
+                    {renderChartData('상태별 내담자 분포', clientsByStatus, 'var(--ad-b0kla-green)')}
+                    {Object.keys(consultationsByMonth).length > 0 &&
+                        renderChartData('월별 상담 수', consultationsByMonth, 'var(--ad-b0kla-orange)')
                     }
                 </div>
             </div>

@@ -1,28 +1,28 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
-import { FaUser } from 'react-icons/fa';
+import { Plus, Users, UserCheck, Clock, Link2 } from 'lucide-react';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
 import { getAllClientsWithStats } from '../../utils/consultantHelper';
-import { 
-    getUserStatusKoreanName,
-    getUserGradeKoreanName,
-    getUserGradeIcon,
-    getStatusColor
-} from '../../utils/codeHelper';
 import { showError, showSuccess } from '../../utils/notification';
 import { getCommonCodes } from '../../utils/commonCodeApi';
-import Button from '../ui/Button/Button';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
-
+import ContentArea from '../dashboard-v2/content/ContentArea';
+import ContentHeader from '../dashboard-v2/content/ContentHeader';
+import ContentSection from '../dashboard-v2/content/ContentSection';
+import { SearchInput } from '../dashboard-v2/atoms';
 import ClientOverviewTab from './ClientComprehensiveManagement/ClientOverviewTab';
 import ClientConsultationTab from './ClientComprehensiveManagement/ClientConsultationTab';
 import ClientMappingTab from './ClientComprehensiveManagement/ClientMappingTab';
 import ClientStatisticsTab from './ClientComprehensiveManagement/ClientStatisticsTab';
 import ClientModal from './ClientComprehensiveManagement/ClientModal';
-import UnifiedFilterSearch from '../ui/FilterSearch/UnifiedFilterSearch';
-import MGButton from '../common/MGButton';
 import PasswordResetModal from './PasswordResetModal';
-import { Plus } from 'lucide-react';
+import '../../styles/unified-design-tokens.css';
+import './AdminDashboard/AdminDashboardB0KlA.css';
+import './mapping-management/organisms/MappingKpiSection.css';
+import './mapping-management/organisms/MappingSearchSection.css';
+import './mapping-management/organisms/MappingListBlock.css';
+import './mapping-management/MappingManagementPage.css';
+import './ClientManagementPage.css';
 
 /**
  * 내담자 종합관리 메인 컴포넌트
@@ -51,11 +51,8 @@ const ClientComprehensiveManagement = () => {
     const [consultants, setConsultants] = useState([]);
     const [mappings, setMappings] = useState([]);
     const [consultations, setConsultations] = useState([]);
-    const [selectedClient, setSelectedClient] = useState(null);
-    const [activeTab, setActiveTab] = useState('overview');
-    const [mainTab, setMainTab] = useState('comprehensive');
+    const [mainTab, setMainTab] = useState('overview');
     const [searchTerm, setSearchTerm] = useState('');
-    const [filterStatus, setFilterStatus] = useState('all');
     const [userStatusOptions, setUserStatusOptions] = useState([]);
     const [loadingCodes, setLoadingCodes] = useState(false);
     const [activeFilters, setActiveFilters] = useState({});
@@ -241,13 +238,29 @@ const ClientComprehensiveManagement = () => {
         setShowModal(true);
     }, []);
 
-    const handleTabChange = useCallback((tab) => {
-        setActiveTab(tab);
-    }, []);
-
     const handleMainTabChange = useCallback((tab) => {
         setMainTab(tab);
     }, []);
+
+    const clientFilterOptions = useMemo(() => {
+        const opts = [{ value: 'all', label: '전체' }];
+        if (userStatusOptions && userStatusOptions.length > 0) {
+            opts.push(...userStatusOptions.map(opt => ({
+                value: opt.codeValue,
+                label: opt.codeLabel || opt.codeName
+            })));
+        }
+        return opts;
+    }, [userStatusOptions]);
+    const chipFilterStatus = activeFilters.status === 'all' || !activeFilters.status ? 'all' : activeFilters.status;
+
+    const clientKpiStats = useMemo(() => {
+        const total = clients.length;
+        const active = clients.filter(c => c.status === 'ACTIVE').length;
+        const pending = clients.filter(c => c.status === 'PENDING').length;
+        const totalMappings = mappings.length;
+        return { total, active, pending, totalMappings };
+    }, [clients, mappings]);
 
     const handleCreateClient = useCallback(() => {
         setModalType('create');
@@ -343,148 +356,180 @@ const ClientComprehensiveManagement = () => {
     
     const handleFilterChange = useCallback((filters) => {
         setActiveFilters(filters);
-        setFilterStatus(filters.status || 'all');
     }, []);
     
-    // 빠른 필터 옵션 생성
-    const quickFilterOptions = useMemo(() => {
-        const options = [
-            { value: 'all', label: '전체' }
-        ];
-        if (userStatusOptions && userStatusOptions.length > 0) {
-            options.push(...userStatusOptions.map(opt => ({
-                value: opt.codeValue,
-                label: opt.codeLabel || opt.codeName
-            })));
-        }
-        return options;
-    }, [userStatusOptions]);
-
     if (loading) {
         return (
-            <AdminCommonLayout
-                title="내담자 종합관리"
-                loading={true}
-                loadingText="데이터를 불러오는 중..."
-            />
+            <AdminCommonLayout title="내담자 종합관리">
+                <div className="mg-v2-ad-b0kla mg-v2-client-management">
+                    <div className="mg-v2-ad-b0kla__container">
+                        <UnifiedLoading type="page" text="데이터를 불러오는 중..." variant="pulse" />
+                    </div>
+                </div>
+            </AdminCommonLayout>
         );
     }
 
-                            return (
+    return (
         <AdminCommonLayout title="내담자 종합관리">
-            <div className="mg-v2-container">
-                {/* 헤더 */}
-                <div className="mg-v2-section">
-                    <h1 className="mg-v2-h1">내담자 종합관리</h1>
-                </div>
+            <div className="mg-v2-ad-b0kla mg-v2-client-management">
+                <div className="mg-v2-ad-b0kla__container">
+                    <ContentArea>
+                        <ContentHeader
+                            title="내담자 관리"
+                            subtitle="내담자 정보·상담 이력·매칭·통계를 종합 관리합니다"
+                            actions={
+                                <button
+                                    type="button"
+                                    className="mg-v2-mapping-header-btn mg-v2-mapping-header-btn--primary"
+                                    onClick={handleCreateClient}
+                                >
+                                    <Plus size={20} />
+                                    새 내담자 등록
+                                </button>
+                            }
+                        />
 
-                {/* 메인 탭 네비게이션 */}
-                <div className="mg-v2-section">
-                    <div className="mg-v2-tabs">
-                        <Button
-                            variant={mainTab === 'comprehensive' ? 'primary' : 'outline'}
-                            onClick={() => handleMainTabChange('comprehensive')}
-                            className="mg-v2-tab"
-                            preventDoubleClick={true}
-                        >
-                            📊 내담자 종합관리
-                        </Button>
-                        <Button
-                            variant={mainTab === 'consultation' ? 'primary' : 'outline'}
-                            onClick={() => handleMainTabChange('consultation')}
-                            className="mg-v2-tab"
-                            preventDoubleClick={true}
-                        >
-                            💬 상담 이력관리
-                        </Button>
-                        <Button
-                            variant={mainTab === 'mapping' ? 'primary' : 'outline'}
-                            onClick={() => handleMainTabChange('mapping')}
-                            className="mg-v2-tab"
-                            preventDoubleClick={true}
-                        >
-                            🤝 매칭 관리
-                        </Button>
-                        <Button
-                            variant={mainTab === 'statistics' ? 'primary' : 'outline'}
-                            onClick={() => handleMainTabChange('statistics')}
-                            className="mg-v2-tab"
-                            preventDoubleClick={true}
-                        >
-                            📈 통계 분석
-                        </Button>
-                    </div>
-                </div>
-
-                {/* 필터 섹션 */}
-                <div className="mg-v2-section">
-                    <div style={{ display: 'flex', gap: 'var(--spacing-md)', alignItems: 'flex-start', marginBottom: 'var(--spacing-md)' }}>
-                        <div style={{ flex: 1 }}>
-                            <UnifiedFilterSearch
-                                onSearch={handleSearch}
-                                onFilterChange={handleFilterChange}
-                                searchPlaceholder="이름, 이메일, 전화번호 또는 #태그로 검색..."
-                                compact={true}
-                                showQuickFilters={true}
-                                quickFilterOptions={quickFilterOptions}
-                            />
-                        </div>
-                        <MGButton
-                            variant="primary"
-                            size="medium"
-                            onClick={handleCreateClient}
-                            preventDoubleClick={true}
-                        >
-                            <Plus size={16} />
-                            새 내담자 등록
-                        </MGButton>
-                    </div>
-                </div>
-
-                {/* 메인 콘텐츠 */}
-                <div className="mg-v2-section">
-                    {mainTab === 'comprehensive' && (
-                        <ClientOverviewTab
-                            clients={filteredClients}
-                            onClientSelect={handleClientSelect}
-                            onEditClient={handleEditClient}
-                            onDeleteClient={handleDeleteClient}
-                            onResetPassword={handleResetPassword}
-                            consultants={consultants}
-                            mappings={mappings}
-                            consultations={consultations}
-                        />
-                    )}
-                    
-                    {mainTab === 'consultation' && (
-                        <ClientConsultationTab
-                            clients={filteredClients}
-                            consultations={consultations}
-                            selectedClient={selectedClient}
-                            onClientSelect={handleClientSelect}
-                        />
-                    )}
-                    
-                    {mainTab === 'mapping' && (
-                        <ClientMappingTab
-                            clients={filteredClients}
-                            consultants={consultants}
-                            mappings={mappings}
-                            selectedClient={selectedClient}
-                            onClientSelect={handleClientSelect}
-                        />
-                    )}
-                    
-                    {mainTab === 'statistics' && (
-                        <ClientStatisticsTab
-                            clients={filteredClients}
-                            consultations={consultations}
-                            mappings={mappings}
-                        />
-                    )}
+                        <div className="mg-v2-ad-b0kla__pill-toggle">
+                            <button
+                                type="button"
+                                className={`mg-v2-ad-b0kla__pill ${mainTab === 'overview' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+                                onClick={() => handleMainTabChange('overview')}
+                            >
+                                개요
+                            </button>
+                            <button
+                                type="button"
+                                className={`mg-v2-ad-b0kla__pill ${mainTab === 'consultation' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+                                onClick={() => handleMainTabChange('consultation')}
+                            >
+                                상담이력
+                            </button>
+                            <button
+                                type="button"
+                                className={`mg-v2-ad-b0kla__pill ${mainTab === 'mapping' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+                                onClick={() => handleMainTabChange('mapping')}
+                            >
+                                매칭
+                            </button>
+                            <button
+                                type="button"
+                                className={`mg-v2-ad-b0kla__pill ${mainTab === 'statistics' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+                                onClick={() => handleMainTabChange('statistics')}
+                            >
+                                통계
+                            </button>
                         </div>
 
-                {/* 모달 */}
+                        <ContentSection noCard className="mg-v2-mapping-kpi-section">
+                            <div className="mg-v2-mapping-kpi-section__grid">
+                                <div className="mg-v2-mapping-kpi-section__card">
+                                    <div className="mg-v2-mapping-kpi-section__icon mg-v2-mapping-kpi-section__icon--blue">
+                                        <Users size={24} />
+                                    </div>
+                                    <div className="mg-v2-mapping-kpi-section__info">
+                                        <span className="mg-v2-mapping-kpi-section__label">총 내담자</span>
+                                        <span className="mg-v2-mapping-kpi-section__value">{clientKpiStats.total}명</span>
+                                    </div>
+                                </div>
+                                <div className="mg-v2-mapping-kpi-section__card">
+                                    <div className="mg-v2-mapping-kpi-section__icon mg-v2-mapping-kpi-section__icon--green">
+                                        <UserCheck size={24} />
+                                    </div>
+                                    <div className="mg-v2-mapping-kpi-section__info">
+                                        <span className="mg-v2-mapping-kpi-section__label">활성</span>
+                                        <span className="mg-v2-mapping-kpi-section__value">{clientKpiStats.active}명</span>
+                                    </div>
+                                </div>
+                                <div className="mg-v2-mapping-kpi-section__card">
+                                    <div className="mg-v2-mapping-kpi-section__icon mg-v2-mapping-kpi-section__icon--orange">
+                                        <Clock size={24} />
+                                    </div>
+                                    <div className="mg-v2-mapping-kpi-section__info">
+                                        <span className="mg-v2-mapping-kpi-section__label">대기</span>
+                                        <span className="mg-v2-mapping-kpi-section__value">{clientKpiStats.pending}명</span>
+                                    </div>
+                                </div>
+                                <div className="mg-v2-mapping-kpi-section__card">
+                                    <div className="mg-v2-mapping-kpi-section__icon mg-v2-mapping-kpi-section__icon--gray">
+                                        <Link2 size={24} />
+                                    </div>
+                                    <div className="mg-v2-mapping-kpi-section__info">
+                                        <span className="mg-v2-mapping-kpi-section__label">총 매칭</span>
+                                        <span className="mg-v2-mapping-kpi-section__value">{clientKpiStats.totalMappings}건</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </ContentSection>
+
+                        <ContentSection noCard className="mg-v2-mapping-search-section">
+                            <div className="mg-v2-mapping-search-section__row">
+                                <div className="mg-v2-mapping-search-section__input-wrap">
+                                    <SearchInput
+                                        value={searchTerm}
+                                        onChange={handleSearch}
+                                        placeholder="이름, 이메일, 전화번호 또는 #태그로 검색..."
+                                    />
+                                </div>
+                                <div className="mg-v2-mapping-search-section__chips">
+                                    {clientFilterOptions.map((opt) => (
+                                        <button
+                                            key={opt.value}
+                                            type="button"
+                                            className={`mg-v2-mapping-search-section__chip ${chipFilterStatus === opt.value ? 'mg-v2-mapping-search-section__chip--active' : ''}`}
+                                            onClick={() => handleFilterChange({ ...activeFilters, status: opt.value })}
+                                        >
+                                            {opt.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </ContentSection>
+
+                        <div className="mg-v2-tab-content">
+                            {mainTab === 'overview' && (
+                                <ClientOverviewTab
+                                    clients={filteredClients}
+                                    onClientSelect={handleClientSelect}
+                                    onEditClient={handleEditClient}
+                                    onDeleteClient={handleDeleteClient}
+                                    onResetPassword={handleResetPassword}
+                                    consultants={consultants}
+                                    mappings={mappings}
+                                    consultations={consultations}
+                                />
+                            )}
+
+                            {mainTab === 'consultation' && (
+                                <ClientConsultationTab
+                                    clients={filteredClients}
+                                    consultations={consultations}
+                                    onClientSelect={handleClientSelect}
+                                />
+                            )}
+
+                            {mainTab === 'mapping' && (
+                                <ClientMappingTab
+                                    clients={filteredClients}
+                                    consultants={consultants}
+                                    mappings={mappings}
+                                    onClientSelect={handleClientSelect}
+                                />
+                            )}
+
+                            {mainTab === 'statistics' && (
+                                <ClientStatisticsTab
+                                    clients={filteredClients}
+                                    consultations={consultations}
+                                    mappings={mappings}
+                                />
+                            )}
+                        </div>
+                    </ContentArea>
+                </div>
+            </div>
+
+            {/* 모달 */}
                 {showModal && (
                     <ClientModal
                         type={modalType}
@@ -540,19 +585,18 @@ const ClientComprehensiveManagement = () => {
                     />
             )}
 
-                {/* 비밀번호 초기화 모달 */}
-                {showPasswordResetModal && passwordResetClient && (
-                    <PasswordResetModal
-                        user={passwordResetClient}
-                        userType="client"
-                        onClose={() => {
-                            setShowPasswordResetModal(false);
-                            setPasswordResetClient(null);
-                        }}
-                        onConfirm={handlePasswordResetConfirm}
-                    />
-                )}
-            </div>
+            {/* 비밀번호 초기화 모달 */}
+            {showPasswordResetModal && passwordResetClient && (
+                <PasswordResetModal
+                    user={passwordResetClient}
+                    userType="client"
+                    onClose={() => {
+                        setShowPasswordResetModal(false);
+                        setPasswordResetClient(null);
+                    }}
+                    onConfirm={handlePasswordResetConfirm}
+                />
+            )}
         </AdminCommonLayout>
     );
 };

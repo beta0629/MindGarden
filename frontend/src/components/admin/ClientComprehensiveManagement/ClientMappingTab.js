@@ -10,7 +10,6 @@ const ClientMappingTab = ({
     clients,
     consultants,
     mappings,
-    selectedClient,
     onClientSelect
 }) => {
     // 내담자별 매칭 정보 그룹화
@@ -85,9 +84,11 @@ const ClientMappingTab = ({
                 </div>
                 
                 {clientMappings.length === 0 ? (
-                    <div className="mg-v2-empty-state">
-                        <FaHandshake size={32} />
-                        <p>매칭 정보가 없습니다.</p>
+                    <div className="mg-v2-mapping-list-block__empty">
+                        <div className="mg-v2-mapping-list-block__empty-icon">
+                            <FaHandshake size={32} />
+                        </div>
+                        <p className="mg-v2-mapping-list-block__empty-desc">매칭 정보가 없습니다.</p>
                     </div>
                 ) : (
                     <div className="mg-mobile-card-stack">
@@ -128,10 +129,12 @@ const ClientMappingTab = ({
             </div>
             
             {clients.length === 0 && (
-                <div className="mg-v2-empty-state">
-                    <FaUser size={48} />
-                    <h3>등록된 내담자가 없습니다</h3>
-                    <p>내담자를 등록한 후 매칭 정보를 확인할 수 있습니다.</p>
+                <div className="mg-v2-mapping-list-block__empty">
+                    <div className="mg-v2-mapping-list-block__empty-icon">
+                        <FaUser size={48} />
+                    </div>
+                    <h3 className="mg-v2-mapping-list-block__empty-title">등록된 내담자가 없습니다</h3>
+                    <p className="mg-v2-mapping-list-block__empty-desc">내담자를 등록한 후 매칭 정보를 확인할 수 있습니다.</p>
                 </div>
             )}
         </div>

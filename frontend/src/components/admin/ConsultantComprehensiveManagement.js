@@ -1,18 +1,28 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { Plus, Users, Link2, Calendar, ClipboardList, X } from 'lucide-react';
 import Button from '../ui/Button/Button';
-import { FaUser, FaEdit, FaTrash, FaPlus, FaEye, FaUsers, FaLink, FaCalendarAlt, FaClipboardList } from 'react-icons/fa';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
-import { getUserStatusColor, getStatusLabel } from '../../utils/colorUtils';
+import { getStatusLabel } from '../../utils/colorUtils';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
-import { getCurrentUser } from '../../utils/session';
 import { getAllConsultantsWithStats } from '../../utils/consultantHelper';
 import SpecialtyDisplay from '../ui/SpecialtyDisplay';
 import { MGConfirmModal } from '../common/MGModal';
-import UnifiedFilterSearch from '../ui/FilterSearch/UnifiedFilterSearch';
 import { getCommonCodes } from '../../utils/commonCodeApi';
 import { sessionManager } from '../../utils/sessionManager';
 import PasswordResetModal from './PasswordResetModal';
+import ContentArea from '../dashboard-v2/content/ContentArea';
+import ContentHeader from '../dashboard-v2/content/ContentHeader';
+import ContentSection from '../dashboard-v2/content/ContentSection';
+import ContentCard from '../dashboard-v2/content/ContentCard';
+import { SearchInput } from '../dashboard-v2/atoms';
+import '../../styles/unified-design-tokens.css';
+import './AdminDashboard/AdminDashboardB0KlA.css';
+import './mapping-management/organisms/MappingKpiSection.css';
+import './mapping-management/organisms/MappingSearchSection.css';
+import './mapping-management/organisms/MappingListBlock.css';
+import './mapping-management/MappingManagementPage.css';
+import './ConsultantManagementPage.css';
 
 const ConsultantComprehensiveManagement = () => {
     const [consultants, setConsultants] = useState([]);
@@ -20,10 +30,8 @@ const ConsultantComprehensiveManagement = () => {
     const [mappings, setMappings] = useState([]);
     const [schedules, setSchedules] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [isMobile, setIsMobile] = useState(false);
     const [mainTab, setMainTab] = useState('comprehensive');
     const [searchTerm, setSearchTerm] = useState('');
-    const [filterStatus, setFilterStatus] = useState('all');
     const [activeFilters, setActiveFilters] = useState({});
     const [userStatusOptions, setUserStatusOptions] = useState([]);
     const [showModal, setShowModal] = useState(false);
@@ -411,16 +419,6 @@ const ConsultantComprehensiveManagement = () => {
         return() => window.removeEventListener('forceRefresh', handleForceRefresh);
     }, [loadAllData]);
 
-    useEffect(() => {
-        const checkMobile = () => {
-            setIsMobile(window.innerWidth <= 768);
-        };
-        
-        checkMobile();
-        window.addEventListener('resize', checkMobile);
-        return () => window.removeEventListener('resize', checkMobile);
-    }, []);
-
     // 공통코드 로드 (상태 옵션)
     useEffect(() => {
         const loadStatusCodes = async () => {
@@ -462,30 +460,14 @@ const ConsultantComprehensiveManagement = () => {
         return filtered;
     }, [consultants, searchTerm, activeFilters]);
     
-    // UnifiedFilterSearch 핸들러
     const handleSearch = useCallback((term) => {
         setSearchTerm(term);
     }, []);
     
     const handleFilterChange = useCallback((filters) => {
         setActiveFilters(filters);
-        setFilterStatus(filters.status || 'all');
     }, []);
     
-    // 빠른 필터 옵션 생성
-    const quickFilterOptions = useMemo(() => {
-        const options = [
-            { value: 'all', label: '전체' }
-        ];
-        if (userStatusOptions && userStatusOptions.length > 0) {
-            options.push(...userStatusOptions.map(opt => ({
-                value: opt.codeValue,
-                label: opt.codeLabel || opt.codeName
-            })));
-        }
-        return options;
-    }, [userStatusOptions]);
-
     const getOverallStats = useCallback(() => {
         const totalConsultants = consultants.length;
         // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
@@ -938,324 +920,376 @@ const ConsultantComprehensiveManagement = () => {
     }, [modalType, formData, selectedConsultant, createConsultant, updateConsultant, deleteConsultant, handleCloseModal]);
 
     const stats = getOverallStats();
+    const consultantFilterOptions = useMemo(() => {
+        const opts = [{ value: 'all', label: '전체' }];
+        if (userStatusOptions && userStatusOptions.length > 0) {
+            opts.push(...userStatusOptions.map(opt => ({
+                value: opt.codeValue,
+                label: opt.codeLabel || opt.codeName
+            })));
+        }
+        return opts;
+    }, [userStatusOptions]);
+    const chipFilterStatus = activeFilters.status === 'all' || !activeFilters.status ? 'all' : activeFilters.status;
 
-    return(
-        <AdminCommonLayout>
-            <div className="mg-v2-session-management-redesign">
-                <div className="mg-v2-section-header">
-                    <div className="mg-v2-section-header-content">
-                        <div className="mg-v2-section-header-left">
-                            <FaUser className="mg-v2-section-icon" />
-                            <div>
-                                <h2 className="mg-v2-section-title">상담사 관리</h2>
-                                <p className="mg-v2-section-subtitle">상담사의 모든 정보를 종합적으로 관리하고 분석할 수 있습니다</p>
-                            </div>
-                        </div>
+    if (loading) {
+        return (
+            <AdminCommonLayout>
+                <div className="mg-v2-ad-b0kla mg-v2-consultant-management">
+                    <div className="mg-v2-ad-b0kla__container">
+                        <UnifiedLoading type="page" text="데이터를 불러오는 중..." variant="pulse" />
                     </div>
                 </div>
-                
-                { /* 메인 탭 메뉴 */ }
-                <div className="mg-v2-session-tabs">
-                    <button
-                        className={ `mg-v2-tab ${mainTab === 'comprehensive' ? 'mg-v2-tab-active' : '' }`}
-                        onClick={ () => setMainTab('comprehensive') }
-                    >
-                        📊 상담사 종합관리
-                    </button>
-                    <button
-                        className={ `mg-v2-tab ${mainTab === 'basic' ? 'mg-v2-tab-active' : '' }`}
-                        onClick={ () => setMainTab('basic') }
-                    >
-                        👤 상담사 기본관리
-                    </button>
-            </div>
+            </AdminCommonLayout>
+        );
+    }
 
-            { /* 메인 탭 내용 */ }
-                <div className="mg-v2-session-main-content">
-            {mainTab === 'comprehensive' ? (
-                        <div className="mg-v2-session-section">
-                    {/* 전체 통계 */}
-                            <div className="mg-v2-stats-grid">
-                                <div className="mg-v2-stat-card">
-                                    <div className="mg-v2-stat-icon">
-                                        <FaUsers />
-                            </div>
-                                    <div className="mg-v2-stat-value">{ stats.totalConsultants }</div>
-                                    <div className="mg-v2-stat-label">총 상담사</div>
-                        </div>
-                                <div className="mg-v2-stat-card">
-                                    <div className="mg-v2-stat-icon">
-                                        <FaLink />
-                            </div>
-                                    <div className="mg-v2-stat-value">{ stats.activeMappings }</div>
-                                    <div className="mg-v2-stat-label">활성 매칭</div>
-                        </div>
-                                <div className="mg-v2-stat-card">
-                                    <div className="mg-v2-stat-icon">
-                                        <FaCalendarAlt />
-                            </div>
-                                    <div className="mg-v2-stat-value">{ stats.totalSchedules }</div>
-                                    <div className="mg-v2-stat-label">총 스케줄</div>
-                        </div>
-                                <div className="mg-v2-stat-card">
-                                    <div className="mg-v2-stat-icon">
-                                        <FaClipboardList />
-                            </div>
-                                    <div className="mg-v2-stat-value">{ stats.todaySchedules }</div>
-                                    <div className="mg-v2-stat-label">오늘 스케줄</div>
-                        </div>
-                    </div>
+    return (
+        <AdminCommonLayout>
+            <div className="mg-v2-ad-b0kla mg-v2-consultant-management">
+                <div className="mg-v2-ad-b0kla__container">
+                    <ContentArea>
+                        <ContentHeader
+                            title="상담사 관리"
+                            subtitle="상담사의 모든 정보를 종합적으로 관리하고 분석할 수 있습니다"
+                            actions={
+                                <button
+                                    type="button"
+                                    className="mg-v2-mapping-header-btn mg-v2-mapping-header-btn--primary"
+                                    onClick={() => handleOpenModal('create')}
+                                >
+                                    <Plus size={20} />
+                                    새 상담사 등록
+                                </button>
+                            }
+                        />
 
-                            <div className="mg-v2-section-header">
-                                <div className="mg-v2-section-header-content">
-                                    <div className="mg-v2-section-header-left">
-                                        <h3 className="mg-v2-section-title">상담사 목록</h3>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div className="mg-v2-section" style={{ marginBottom: 'var(--spacing-md)' }}>
-                                <UnifiedFilterSearch
-                                    onSearch={handleSearch}
-                                    onFilterChange={handleFilterChange}
-                                    searchPlaceholder="이름, 이메일, 전화번호 또는 #태그로 검색..."
-                                    compact={true}
-                                    showQuickFilters={true}
-                                    quickFilterOptions={quickFilterOptions}
-                                />
-                            </div>
-
-                            <div className={isMobile ? "mg-v2-consultant-cards-grid--mobile" : "mg-v2-consultant-cards-grid mg-consultant-cards-grid--detailed"}>
-                                {getFilteredConsultants.map(consultant => (
-                                    <div
-                                        key={consultant.id}
-                                        className={isMobile ? "mg-v2-consultant-card-mobile" : "mg-v2-consultant-card mg-consultant-card--detailed"}
-                                        onClick={ () => handleConsultantSelect(consultant) }
-                                    >
-                                        <div className={`mg-v2-consultant-card__status-badge mg-v2-consultant-card__status-badge--${consultant.status?.toLowerCase() || 'unknown'}`}>
-                                            <span>{ getStatusLabel(consultant.status) }</span>
+                        <div className="mg-v2-ad-b0kla__pill-toggle">
+                            <button
+                                type="button"
+                                className={`mg-v2-ad-b0kla__pill ${mainTab === 'comprehensive' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+                                onClick={() => setMainTab('comprehensive')}
+                            >
+                                종합관리
+                            </button>
+                            <button
+                                type="button"
+                                className={`mg-v2-ad-b0kla__pill ${mainTab === 'basic' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+                                onClick={() => setMainTab('basic')}
+                            >
+                                기본관리
+                            </button>
                         </div>
 
-                                        <div className="mg-v2-consultant-card__avatar mg-consultant-card__avatar--large">
-                                            { consultant.name ? consultant.name.charAt(0) : '?' }
-                                </div>
-
-                                        <div className="mg-v2-consultant-card__info">
-                                            <h4 className="mg-v2-consultant-card__name mg-consultant-card__name--large">{ consultant.name || '이름 없음' }</h4>
-                                            
-                                            <div className="mg-v2-consultant-card__rating-section">
-                                                <div className="mg-v2-consultant-card__rating">
-                                                    <span className="mg-v2-consultant-card__rating-value">📧</span>
-                                                    <span className="mg-v2-consultant-card__rating-text">{ consultant.email }</span>
-                                                        </div>
-                                                <div className="mg-v2-consultant-card__experience">
-                                                    <span>📞 { consultant.phone || '전화번호 없음' }</span>
-                                                    </div>
-                                                </div>
-
-                                            <div className="mg-v2-consultant-card__details">
-                                                <div className="mg-v2-consultant-card__detail-item">
-                                                    <span>📅 가입일: { consultant.createdAt ? new Date(consultant.createdAt).toLocaleDateString() : '알 수 없음' }</span>
-                                                        </div>
-                                                
-                                                <div className="mg-v2-consultant-card__detail-item">
-                                                    {/* 지점 정보 제거됨 - 브랜치 코드 제거 정책 */}
-                                                            </div>
-                                                
-                                                <div className="mg-v2-consultant-card__detail-item">
-                                                    <span>👥 총 클라이언트: { consultant.currentClients || 0 }명</span>
-                                                </div>
-                                                
-                                                {consultant.specialty && (
-                                                    <div className="mg-v2-consultant-card__detail-item">
-                                                        <span>🎯 전문분야: { consultant.specialty }</span>
-                                                    </div>
-                                                )}
+                        {mainTab === 'comprehensive' ? (
+                            <>
+                                <ContentSection noCard className="mg-v2-mapping-kpi-section">
+                                    <div className="mg-v2-mapping-kpi-section__grid">
+                                        <div className="mg-v2-mapping-kpi-section__card">
+                                            <div className="mg-v2-mapping-kpi-section__icon mg-v2-mapping-kpi-section__icon--blue">
+                                                <Users size={24} />
                                             </div>
-                                            
-                                            <div className="mg-v2-consultant-card__actions">
-                                                <Button 
-                                                    variant="primary"
-                                                    size="small"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handleOpenModal('edit', consultant);
-                                                    }}
-                                                    preventDoubleClick={true}
+                                            <div className="mg-v2-mapping-kpi-section__info">
+                                                <span className="mg-v2-mapping-kpi-section__label">총 상담사</span>
+                                                <span className="mg-v2-mapping-kpi-section__value">{stats.totalConsultants}명</span>
+                                            </div>
+                                        </div>
+                                        <div className="mg-v2-mapping-kpi-section__card">
+                                            <div className="mg-v2-mapping-kpi-section__icon mg-v2-mapping-kpi-section__icon--green">
+                                                <Link2 size={24} />
+                                            </div>
+                                            <div className="mg-v2-mapping-kpi-section__info">
+                                                <span className="mg-v2-mapping-kpi-section__label">활성 매칭</span>
+                                                <span className="mg-v2-mapping-kpi-section__value">{stats.activeMappings}건</span>
+                                            </div>
+                                        </div>
+                                        <div className="mg-v2-mapping-kpi-section__card">
+                                            <div className="mg-v2-mapping-kpi-section__icon mg-v2-mapping-kpi-section__icon--gray">
+                                                <Calendar size={24} />
+                                            </div>
+                                            <div className="mg-v2-mapping-kpi-section__info">
+                                                <span className="mg-v2-mapping-kpi-section__label">총 스케줄</span>
+                                                <span className="mg-v2-mapping-kpi-section__value">{stats.totalSchedules}건</span>
+                                            </div>
+                                        </div>
+                                        <div className="mg-v2-mapping-kpi-section__card">
+                                            <div className="mg-v2-mapping-kpi-section__icon mg-v2-mapping-kpi-section__icon--orange">
+                                                <ClipboardList size={24} />
+                                            </div>
+                                            <div className="mg-v2-mapping-kpi-section__info">
+                                                <span className="mg-v2-mapping-kpi-section__label">오늘 스케줄</span>
+                                                <span className="mg-v2-mapping-kpi-section__value">{stats.todaySchedules}건</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </ContentSection>
+
+                                <ContentSection noCard className="mg-v2-mapping-search-section">
+                                    <div className="mg-v2-mapping-search-section__row">
+                                        <div className="mg-v2-mapping-search-section__input-wrap">
+                                            <SearchInput
+                                                value={searchTerm}
+                                                onChange={handleSearch}
+                                                placeholder="이름, 이메일, 전화번호 또는 #태그로 검색..."
+                                            />
+                                        </div>
+                                        <div className="mg-v2-mapping-search-section__chips">
+                                            {consultantFilterOptions.map((opt) => (
+                                                <button
+                                                    key={opt.value}
+                                                    type="button"
+                                                    className={`mg-v2-mapping-search-section__chip ${chipFilterStatus === opt.value ? 'mg-v2-mapping-search-section__chip--active' : ''}`}
+                                                    onClick={() => handleFilterChange({ ...activeFilters, status: opt.value })}
                                                 >
-                                                    수정
-                                                </Button>
-                                                <Button 
-                                                    variant="secondary"
-                                                    size="small"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        setPasswordResetConsultant(consultant);
-                                                        setShowPasswordResetModal(true);
-                                                    }}
-                                                    preventDoubleClick={true}
-                                                    title="비밀번호 초기화"
+                                                    {opt.label}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </ContentSection>
+
+                                <ContentSection noCard className="mg-v2-mapping-list-block">
+                                    <ContentCard className="mg-v2-mapping-list-block__card">
+                                        <div className="mg-v2-mapping-list-block__header">
+                                            <div className="mg-v2-mapping-list-block__title">상담사 목록</div>
+                                        </div>
+                                        {getFilteredConsultants.length === 0 ? (
+                                            <div className="mg-v2-mapping-list-block__empty">
+                                                <div className="mg-v2-mapping-list-block__empty-icon">
+                                                    <Users size={48} />
+                                                </div>
+                                                <h3 className="mg-v2-mapping-list-block__empty-title">상담사가 없습니다</h3>
+                                                <p className="mg-v2-mapping-list-block__empty-desc">새 상담사를 등록해보세요.</p>
+                                                <button
+                                                    type="button"
+                                                    className="mg-v2-button mg-v2-button-primary mg-v2-mapping-list-block__empty-btn"
+                                                    onClick={() => handleOpenModal('create')}
                                                 >
-                                                    🔑 비밀번호 초기화
-                                                </Button>
-                                                <Button 
-                                                    variant="danger"
-                                                    size="small"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        setSelectedConsultant(consultant);
-                                                        setShowDeleteConfirm(true);
-                                                    }}
-                                                    preventDoubleClick={true}
-                                                >
-                                                    삭제
-                                                </Button>
-                                                            </div>
+                                                    <Plus size={20} />
+                                                    새 상담사 등록
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <div className="mg-v2-mapping-list-block__grid">
+                                                {getFilteredConsultants.map((consultant) => (
+                                                    <div
+                                                        key={consultant.id}
+                                                        className="mg-v2-consultant-card mg-consultant-card--detailed"
+                                                        onClick={() => handleConsultantSelect(consultant)}
+                                                    >
+                                                        <div className={`mg-v2-consultant-card__status-badge mg-v2-consultant-card__status-badge--${consultant.status?.toLowerCase() || 'unknown'}`}>
+                                                            <span>{getStatusLabel(consultant.status)}</span>
+                                                        </div>
+                                                        <div className="mg-v2-consultant-card__avatar mg-consultant-card__avatar--large">
+                                                            {consultant.name ? consultant.name.charAt(0) : '?'}
+                                                        </div>
+                                                        <div className="mg-v2-consultant-card__info">
+                                                            <h4 className="mg-v2-consultant-card__name mg-consultant-card__name--large">{consultant.name || '이름 없음'}</h4>
+                                                            <div className="mg-v2-consultant-card__rating-section">
+                                                                <div className="mg-v2-consultant-card__rating">
+                                                                    <span className="mg-v2-consultant-card__rating-value">📧</span>
+                                                                    <span className="mg-v2-consultant-card__rating-text">{consultant.email}</span>
+                                                                </div>
+                                                                <div className="mg-v2-consultant-card__experience">
+                                                                    <span>📞 {consultant.phone || '전화번호 없음'}</span>
                                                                 </div>
                                                             </div>
-                                ))}
+                                                            <div className="mg-v2-consultant-card__details">
+                                                                <div className="mg-v2-consultant-card__detail-item">
+                                                                    <span>📅 가입일: {consultant.createdAt ? new Date(consultant.createdAt).toLocaleDateString() : '알 수 없음'}</span>
+                                                                </div>
+                                                                <div className="mg-v2-consultant-card__detail-item">
+                                                                    <span>👥 총 클라이언트: {consultant.currentClients || 0}명</span>
+                                                                </div>
+                                                                {consultant.specialty && (
+                                                                    <div className="mg-v2-consultant-card__detail-item">
+                                                                        <span>🎯 전문분야: {consultant.specialty}</span>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                            <div className="mg-v2-consultant-card__actions">
+                                                                <Button
+                                                                    variant="primary"
+                                                                    size="small"
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        handleOpenModal('edit', consultant);
+                                                                    }}
+                                                                    preventDoubleClick={true}
+                                                                >
+                                                                    수정
+                                                                </Button>
+                                                                <Button
+                                                                    variant="secondary"
+                                                                    size="small"
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        setPasswordResetConsultant(consultant);
+                                                                        setShowPasswordResetModal(true);
+                                                                    }}
+                                                                    preventDoubleClick={true}
+                                                                    title="비밀번호 초기화"
+                                                                >
+                                                                    🔑 비밀번호 초기화
+                                                                </Button>
+                                                                <Button
+                                                                    variant="danger"
+                                                                    size="small"
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        setSelectedConsultant(consultant);
+                                                                        setShowDeleteConfirm(true);
+                                                                    }}
+                                                                    preventDoubleClick={true}
+                                                                >
+                                                                    삭제
+                                                                </Button>
                                                             </div>
                                                         </div>
-                    ) : (
-                        <div className="mg-v2-session-section">
-                            <div className="mg-v2-section-header">
-                                <div className="mg-v2-section-header-content">
-                                    <div className="mg-v2-section-header-left">
-                                        <h2 className="mg-v2-section-title">상담사 기본 정보 관리</h2>
-                                        <p className="mg-v2-section-subtitle">상담사의 기본 정보를 등록, 수정, 삭제할 수 있습니다.</p>
                                                     </div>
+                                                ))}
                                             </div>
+                                        )}
+                                    </ContentCard>
+                                </ContentSection>
+                            </>
+                        ) : (
+                            <>
+                                <ContentSection noCard className="mg-v2-mapping-search-section">
+                                    <div className="mg-v2-mapping-search-section__row">
+                                        <div className="mg-v2-mapping-search-section__input-wrap">
+                                            <SearchInput
+                                                value={searchTerm}
+                                                onChange={handleSearch}
+                                                placeholder="이름, 이메일, 전화번호 또는 #태그로 검색..."
+                                            />
                                         </div>
-                        
-                        { /* 기본관리 기능들 */ }
-                            <div className="mg-v2-form-actions">
-                            <Button 
-                                variant="primary" 
-                                className="mg-v2-button mg-v2-button-primary" 
-                                onClick={() => handleOpenModal('create')}
-                                preventDoubleClick={true}
-                            >
-                                ➕ 새 상담사 등록
-                            </Button>
-                            <Button 
-                                variant="secondary" 
-                                className="mg-v2-button mg-v2-button-secondary" 
-                                onClick={loadConsultants}
-                                preventDoubleClick={true}
-                            >
-                                🔄 새로고침
-                            </Button>
-                    </div>
+                                        <div className="mg-v2-mapping-search-section__chips">
+                                            {consultantFilterOptions.map((opt) => (
+                                                <button
+                                                    key={opt.value}
+                                                    type="button"
+                                                    className={`mg-v2-mapping-search-section__chip ${chipFilterStatus === opt.value ? 'mg-v2-mapping-search-section__chip--active' : ''}`}
+                                                    onClick={() => handleFilterChange({ ...activeFilters, status: opt.value })}
+                                                >
+                                                    {opt.label}
+                                                </button>
+                                            ))}
+                                        </div>
+                                        <div className="mg-v2-consultant-search-actions">
+                                            <Button
+                                                variant="primary"
+                                                size="small"
+                                                onClick={() => handleOpenModal('create')}
+                                                preventDoubleClick={true}
+                                            >
+                                                <Plus size={16} /> 새 상담사 등록
+                                            </Button>
+                                            <Button
+                                                variant="secondary"
+                                                size="small"
+                                                onClick={loadConsultants}
+                                                preventDoubleClick={true}
+                                            >
+                                                새로고침
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </ContentSection>
 
-                    { /* 상담사 목록 - 상담사 종합관리와 동일한 디자인 */ }
-                            <div className="mg-v2-section-header">
-                                <div className="mg-v2-section-header-content">
-                                    <div className="mg-v2-section-header-left">
-                                        <h3 className="mg-v2-section-title">상담사 목록</h3>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="mg-v2-search-filter-section">
-                                <input
-                                    type="text"
-                                    placeholder="상담사 검색..."
-                                    value={ searchTerm }
-                                    onChange={ (e) => setSearchTerm(e.target.value) }
-                                    className="mg-v2-form-input"
-                                />
-                                <select
-                                    value={ filterStatus }
-                                    onChange={ (e) => setFilterStatus(e.target.value) }
-                                    className="mg-v2-form-select"
-                                >
-                                    <option value="all">전체</option>
-                                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-                                    <option value="ACTIVE">활성</option>
-                                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-                                    <option value="INACTIVE">비활성</option>
-                                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-                                    <option value="SUSPENDED">일시정지</option>
-                                </select>
-                        </div>
-
-                            <div className="mg-v2-consultant-cards-grid mg-consultant-cards-grid--detailed">
-                                {getFilteredConsultants.map(consultant => (
-                                <div
-                                    key={consultant.id}
-                                        className="mg-v2-consultant-card mg-consultant-card--detailed"
-                                    >
-                                        <div className={`mg-v2-consultant-card__status-badge mg-v2-consultant-card__status-badge--${consultant.status?.toLowerCase() || 'unknown'}`}>
-                                            <span>{ getStatusLabel(consultant.status) }</span>
+                                <ContentSection noCard className="mg-v2-mapping-list-block">
+                                    <ContentCard className="mg-v2-mapping-list-block__card">
+                                        <div className="mg-v2-mapping-list-block__header">
+                                            <div className="mg-v2-mapping-list-block__title">상담사 목록</div>
                                         </div>
-                                        
-                                        <div className="mg-v2-consultant-card__avatar mg-consultant-card__avatar--large">
-                                        { consultant.name ? consultant.name.charAt(0) : '?' }
-                                    </div>
-                                        
-                                        <div className="mg-v2-consultant-card__info">
-                                            <h4 className="mg-v2-consultant-card__name mg-consultant-card__name--large">{ consultant.name || '이름 없음' }</h4>
-                                            
-                                            <div className="mg-v2-consultant-card__rating-section">
-                                                <div className="mg-v2-consultant-card__rating">
-                                                    <span className="mg-v2-consultant-card__rating-value">📧</span>
-                                                    <span className="mg-v2-consultant-card__rating-text">{ consultant.email }</span>
-                                        </div>
-                                                <div className="mg-v2-consultant-card__experience">
-                                                    <span>📞 { consultant.phone || '전화번호 없음' }</span>
-                                        </div>
-                                    </div>
-                                    
-                                            <div className="mg-v2-consultant-card__details">
-                                                <div className="mg-v2-consultant-card__detail-item">
-                                                    <span>📅 가입일: { consultant.createdAt ? new Date(consultant.createdAt).toLocaleDateString() : '알 수 없음' }</span>
+                                        {getFilteredConsultants.length === 0 ? (
+                                            <div className="mg-v2-mapping-list-block__empty">
+                                                <div className="mg-v2-mapping-list-block__empty-icon">
+                                                    <Users size={48} />
                                                 </div>
-                                                
-                                                <div className="mg-v2-consultant-card__detail-item">
-                                                    {/* 지점 정보 제거됨 - 브랜치 코드 제거 정책 */}
-                                                </div>
-                                                
-                                                <div className="mg-v2-consultant-card__detail-item">
-                                                    <span>👥 총 클라이언트: { consultant.currentClients || 0 }명</span>
-                                                </div>
-                                                
-                                                {consultant.specialty && (
-                                                    <div className="mg-v2-consultant-card__detail-item">
-                                                        <span>🎯 전문분야: { consultant.specialty }</span>
+                                                <h3 className="mg-v2-mapping-list-block__empty-title">상담사가 없습니다</h3>
+                                                <p className="mg-v2-mapping-list-block__empty-desc">새 상담사를 등록해보세요.</p>
+                                                <button
+                                                    type="button"
+                                                    className="mg-v2-button mg-v2-button-primary mg-v2-mapping-list-block__empty-btn"
+                                                    onClick={() => handleOpenModal('create')}
+                                                >
+                                                    <Plus size={20} />
+                                                    새 상담사 등록
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <div className="mg-v2-mapping-list-block__grid">
+                                                {getFilteredConsultants.map((consultant) => (
+                                                    <div
+                                                        key={consultant.id}
+                                                        className="mg-v2-consultant-card mg-consultant-card--detailed"
+                                                    >
+                                                        <div className={`mg-v2-consultant-card__status-badge mg-v2-consultant-card__status-badge--${consultant.status?.toLowerCase() || 'unknown'}`}>
+                                                            <span>{getStatusLabel(consultant.status)}</span>
+                                                        </div>
+                                                        <div className="mg-v2-consultant-card__avatar mg-consultant-card__avatar--large">
+                                                            {consultant.name ? consultant.name.charAt(0) : '?'}
+                                                        </div>
+                                                        <div className="mg-v2-consultant-card__info">
+                                                            <h4 className="mg-v2-consultant-card__name mg-consultant-card__name--large">{consultant.name || '이름 없음'}</h4>
+                                                            <div className="mg-v2-consultant-card__rating-section">
+                                                                <div className="mg-v2-consultant-card__rating">
+                                                                    <span className="mg-v2-consultant-card__rating-value">📧</span>
+                                                                    <span className="mg-v2-consultant-card__rating-text">{consultant.email}</span>
+                                                                </div>
+                                                                <div className="mg-v2-consultant-card__experience">
+                                                                    <span>📞 {consultant.phone || '전화번호 없음'}</span>
+                                                                </div>
+                                                            </div>
+                                                            <div className="mg-v2-consultant-card__details">
+                                                                <div className="mg-v2-consultant-card__detail-item">
+                                                                    <span>📅 가입일: {consultant.createdAt ? new Date(consultant.createdAt).toLocaleDateString() : '알 수 없음'}</span>
+                                                                </div>
+                                                                <div className="mg-v2-consultant-card__detail-item">
+                                                                    <span>👥 총 클라이언트: {consultant.currentClients || 0}명</span>
+                                                                </div>
+                                                                {consultant.specialty && (
+                                                                    <div className="mg-v2-consultant-card__detail-item">
+                                                                        <span>🎯 전문분야: {consultant.specialty}</span>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                            <div className="mg-v2-consultant-card__actions">
+                                                                <Button
+                                                                    variant="primary"
+                                                                    size="small"
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        handleOpenModal('edit', consultant);
+                                                                    }}
+                                                                    preventDoubleClick={true}
+                                                                >
+                                                                    수정
+                                                                </Button>
+                                                                <Button
+                                                                    variant="danger"
+                                                                    size="small"
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        setSelectedConsultant(consultant);
+                                                                        setShowDeleteConfirm(true);
+                                                                    }}
+                                                                    preventDoubleClick={true}
+                                                                >
+                                                                    삭제
+                                                                </Button>
+                                                            </div>
+                                                        </div>
                                                     </div>
-                                                )}
+                                                ))}
                                             </div>
-                                            
-                                            <div className="mg-v2-consultant-card__actions">
-                                        <Button 
-                                                    variant="primary"
-                                                    size="small"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleOpenModal('edit', consultant);
-                                            }}
-                                            preventDoubleClick={true}
-                                        >
-                                            수정
-                                        </Button>
-                                        <Button 
-                                                    variant="danger"
-                                                    size="small"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                        setSelectedConsultant(consultant);
-                                                        setShowDeleteConfirm(true);
-                                            }}
-                                            preventDoubleClick={true}
-                                        >
-                                            삭제
-                                        </Button>
-                                            </div>
-                                    </div>
-                                </div>
-                            ))}
-                    </div>
-                </div>
-            )}
+                                        )}
+                                    </ContentCard>
+                                </ContentSection>
+                            </>
+                        )}
+                    </ContentArea>
                 </div>
             </div>
 
@@ -1270,8 +1304,8 @@ const ConsultantComprehensiveManagement = () => {
                                 { modalType === 'delete' && '상담사 삭제 확인' }
                                 { modalType === 'view' && '상담사 상세 정보' }
                             </h3>
-                            <button className="mg-v2-modal-close" onClick={ handleCloseModal }>
-                                <FaEdit />
+                            <button className="mg-v2-modal-close" onClick={handleCloseModal} type="button" aria-label="닫기">
+                                <X size={20} />
                             </button>
                         </div>
                         
@@ -1463,14 +1497,6 @@ const ConsultantComprehensiveManagement = () => {
             </div>
             )}
 
-            { loading && (
-                <UnifiedLoading 
-                    type="page"
-                    text="데이터를 불러오는 중..."
-                    variant="pulse"
-                />
-            ) }
-            
             { /* 삭제 확인 모달 */ }
             <MGConfirmModal
                 isOpen={ showDeleteConfirm }

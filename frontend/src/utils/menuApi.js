@@ -85,6 +85,7 @@ export const getMenuByCode = async (menuCode) => {
 
 /**
  * LNB 메뉴 트리 조회 (역할·권한 필터, 메인/서브)
+ * 백엔드 미기동(ERR_NETWORK) 시 콘솔 에러 대신 경고만 출력, 호출부에서 폴백 메뉴 사용.
  * @returns {Promise<{ data?: Array }>} ApiResponse 형태. data가 메뉴 트리(children 포함)
  */
 export const getLnbMenus = async () => {
@@ -94,7 +95,12 @@ export const getLnbMenus = async () => {
         });
         return response.data;
     } catch (error) {
-        console.error('LNB 메뉴 조회 실패:', error);
+        const isNetworkError = error?.code === 'ERR_NETWORK' || (error?.message && String(error.message).includes('Network Error'));
+        if (isNetworkError) {
+            console.warn('LNB: 백엔드 연결 불가, 기본 메뉴를 사용합니다.');
+        } else {
+            console.error('LNB 메뉴 조회 실패:', error);
+        }
         throw error;
     }
 };

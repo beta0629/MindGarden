@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * 메뉴 Repository
@@ -82,5 +83,11 @@ public interface MenuRepository extends JpaRepository<Menu, Long> {
      */
     @Query("SELECT COUNT(m) FROM Menu m WHERE m.isAdminOnly = true AND m.isActive = true")
     long countAdminOnlyMenus();
+
+    /**
+     * LNB용: menu_location 및 required_role 조건으로 조회 (역할별 노출)
+     */
+    @Query("SELECT m FROM Menu m WHERE m.menuLocation = :location AND m.requiredRole IN :roles AND m.isActive = true ORDER BY m.depth ASC, m.sortOrder ASC")
+    List<Menu> findByMenuLocationAndRequiredRoleIn(@Param("location") String location, @Param("roles") Set<String> roles);
 }
 

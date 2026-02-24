@@ -3,16 +3,21 @@ package com.coresolution.core.controller;
 import com.coresolution.core.dto.ApiResponse;
 import com.coresolution.core.dto.MenuDTO;
 import com.coresolution.core.service.MenuService;
+import com.coresolution.consultation.entity.User;
+import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.utils.SessionUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * 메뉴 API
@@ -32,7 +37,37 @@ import java.util.List;
 @org.springframework.context.annotation.Primary
 public class MenuController {
 
+    private static final String MSG_MENU_ERROR = "메뉴 조회 중 오류가 발생했습니다.";
+
     private final MenuService menuService;
+
+    @Autowired(required = false)
+    private DynamicPermissionService dynamicPermissionService;
+
+    @GetMapping("/lnb")
+    @Operation(summary = "LNB 메뉴 트리 조회", description = "현재 사용자 역할·권한에 맞는 LNB 메뉴 트리(메인/서브)를 반환합니다.")
+    public ResponseEntity<ApiResponse<List<MenuDTO>>> getLnbMenus(HttpSession session) {
+        try {
+            String role = SessionUtils.getRoleName(session);
+            if (role == null) {
+                role = "CLIENT";
+            }
+            Set<String> permissionCodes = Set.of();
+            if ("STAFF".equalsIgnoreCase(role) && dynamicPermissionService != null) {
+                User user = SessionUtils.getCurrentUser(session);
+                if (user != null) {
+                    List<String> list = dynamicPermissionService.getUserPermissionsAsStringList(user);
+                    permissionCodes = list != null ? list.stream().collect(Collectors.toSet()) : Set.of();
+                }
+            }
+            List<MenuDTO> menus = menuService.getLnbMenus(role, permissionCodes);
+            return ResponseEntity.ok(ApiResponse.success(menus));
+        } catch (Exception e) {
+            log.error("LNB 메뉴 조회 실패", e);
+            return ResponseEntity.internalServerError()
+                .body(ApiResponse.error(MSG_MENU_ERROR));
+        }
+    }
 
     @GetMapping("/user")
     @Operation(summary = "사용자 메뉴 조회", description = "현재 로그인한 사용자의 역할에 따른 메뉴를 조회합니다.")
@@ -53,7 +88,7 @@ public class MenuController {
         } catch (Exception e) {
             log.error("사용자 메뉴 조회 실패", e);
             return ResponseEntity.internalServerError()
-                .body(ApiResponse.error("메뉴 조회 중 오류가 발생했습니다."));
+                .body(ApiResponse.error(MSG_MENU_ERROR));
         }
     }
 
@@ -76,7 +111,7 @@ public class MenuController {
         } catch (Exception e) {
             log.error("관리자 메뉴 조회 실패", e);
             return ResponseEntity.internalServerError()
-                .body(ApiResponse.error("메뉴 조회 중 오류가 발생했습니다."));
+                .body(ApiResponse.error(MSG_MENU_ERROR));
         }
     }
 
@@ -91,7 +126,7 @@ public class MenuController {
         } catch (Exception e) {
             log.error("전체 메뉴 조회 실패", e);
             return ResponseEntity.internalServerError()
-                .body(ApiResponse.error("메뉴 조회 중 오류가 발생했습니다."));
+                .body(ApiResponse.error(MSG_MENU_ERROR));
         }
     }
 
@@ -109,7 +144,7 @@ public class MenuController {
         } catch (Exception e) {
             log.error("메뉴 조회 실패", e);
             return ResponseEntity.internalServerError()
-                .body(ApiResponse.error("메뉴 조회 중 오류가 발생했습니다."));
+                .body(ApiResponse.error(MSG_MENU_ERROR));
         }
     }
 
@@ -127,7 +162,7 @@ public class MenuController {
         } catch (Exception e) {
             log.error("메뉴 조회 실패", e);
             return ResponseEntity.internalServerError()
-                .body(ApiResponse.error("메뉴 조회 중 오류가 발생했습니다."));
+                .body(ApiResponse.error(MSG_MENU_ERROR));
         }
     }
 }

@@ -345,10 +345,9 @@ const getAllowedMenusFromConfig = (businessType, userRole, features, userPermiss
         allowedMenus.push(menuId);
       }
     } else if (config.category === MENU_CATEGORIES.ERP) {
-      // ERP 메뉴 (기능 활성화 확인) - 표준화 2025-12-08: 권한 기반 체크
-      if (features.erpEnabled && checkMenuPermission(config, userRole, userPermissions)) {
-        allowedMenus.push(menuId);
-      }
+      // ERP 메뉴: 어드민(최고 권한)은 항상 노출, 그 외는 기능 활성화 + 권한 체크
+      const erpAllowed = isAdminRole(userRole) || (features.erpEnabled && checkMenuPermission(config, userRole, userPermissions));
+      if (erpAllowed) allowedMenus.push(menuId);
     } else if (config.category === MENU_CATEGORIES.ADMIN) {
       // 관리자 메뉴
       if (checkMenuPermission(config, userRole, userPermissions)) {
@@ -385,6 +384,8 @@ const checkMenuPermission = (menuConfig, userRole, userPermissions = []) => {
       // 하드코딩된 역할 체크 (권장하지 않음, 레거시 지원용)
       return menuConfig.allowedRoles?.includes(userRole) || false;
     case MENU_PERMISSION_LEVELS.PERMISSION_BASED:
+      // 최고 권한(ADMIN)은 모든 메뉴(ERP 포함) 접근 가능
+      if (isAdminRole(userRole)) return true;
       // 표준화 2025-12-08: 동적 권한 시스템 사용 (권장)
       if (!userPermissions || userPermissions.length === 0) {
         console.warn('⚠️ 권한 기반 메뉴 체크를 위해 userPermissions가 필요합니다:', menuConfig.label);
@@ -397,7 +398,6 @@ const checkMenuPermission = (menuConfig, userRole, userPermissions = []) => {
       if (menuConfig.menuGroup) {
         // menuGroup은 menuPermissionValidator의 hasMenuAccess로 체크해야 하지만,
         // 여기서는 간단히 ERP_ACCESS 권한으로 체크
-        // 실제 구현에서는 menuPermissionValidator.hasMenuAccess를 사용해야 함
         const erpPermissions = ['ERP_ACCESS', 'FINANCIAL_VIEW', 'INTEGRATED_FINANCE_VIEW'];
         return erpPermissions.some(perm => userPermissions.includes(perm));
       }

@@ -1,13 +1,13 @@
 /**
  * 공통 어드민 레이아웃 컴포넌트
  * - DesktopLayout, MobileLayout 분기 처리 추상화
- * - 검색, 알림, 로그아웃 등 공통 기능 제공
+ * - LNB 메뉴는 DB 기반 API(/api/v1/menus/lnb) 1회 호출, 실패 시 상수 폴백
  *
  * @author MindGarden
  * @since 2025-02-22
  */
 
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
 import { useResponsive } from '../../hooks/useResponsive';
@@ -15,11 +15,13 @@ import { DesktopLayout, MobileLayout } from '../dashboard-v2/templates';
 import { DEFAULT_MENU_ITEMS, BREAKPOINT_DESKTOP } from '../dashboard-v2/constants/menuItems';
 import { ADMIN_ROUTES } from '../../constants/adminRoutes';
 import UnifiedLoading from '../common/UnifiedLoading';
+import { getLnbMenus } from '../../utils/menuApi';
+import { getLnbTreeFromResponse, normalizeLnbTree } from '../../utils/lnbMenuUtils';
 
 const AdminCommonLayout = ({
   children,
   title,
-  menuItems = DEFAULT_MENU_ITEMS,
+  menuItems: menuItemsProp, // 폴백용 (API 실패 시에만 사용, 호출부에서 넘기지 않음)
   searchValue,
   onSearchChange,
   onBellClick,
@@ -32,6 +34,30 @@ const AdminCommonLayout = ({
   const { logout } = useSession();
   const { windowSize } = useResponsive();
   const isDesktop = windowSize.width >= BREAKPOINT_DESKTOP;
+
+  const [lnbMenuItems, setLnbMenuItems] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    getLnbMenus()
+      .then((res) => {
+        if (cancelled) return;
+        const tree = getLnbTreeFromResponse(res);
+        if (tree && tree.length > 0) {
+          setLnbMenuItems(normalizeLnbTree(tree));
+        } else {
+          setLnbMenuItems(menuItemsProp !== undefined ? menuItemsProp : DEFAULT_MENU_ITEMS);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setLnbMenuItems(menuItemsProp ?? DEFAULT_MENU_ITEMS);
+        }
+      });
+    return () => { cancelled = true; };
+  }, []);
+
+  const menuItems = lnbMenuItems !== null ? lnbMenuItems : (menuItemsProp ?? DEFAULT_MENU_ITEMS);
 
   const handleLogout = useCallback(async () => {
     try {

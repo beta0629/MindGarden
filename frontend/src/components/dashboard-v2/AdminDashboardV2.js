@@ -8,6 +8,8 @@
  */
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { getLnbMenus } from '../../utils/menuApi';
+import { getLnbTreeFromResponse, normalizeLnbTree } from '../../utils/lnbMenuUtils';
 import { useNavigate } from 'react-router-dom';
 import notificationManager from '../../utils/notification';
 import { RoleUtils } from '../../constants/roles';
@@ -66,6 +68,19 @@ const AdminDashboardV2 = ({ user: propUser }) => {
   const { user: sessionUser, isLoading: sessionLoading, logout } = useSession();
   const { windowSize } = useResponsive();
   const isDesktop = windowSize.width >= BREAKPOINT_DESKTOP;
+
+  const [lnbMenuItems, setLnbMenuItems] = useState(DEFAULT_MENU_ITEMS);
+  useEffect(() => {
+    let cancelled = false;
+    getLnbMenus()
+      .then((res) => {
+        if (cancelled) return;
+        const tree = getLnbTreeFromResponse(res);
+        if (tree && tree.length > 0) setLnbMenuItems(normalizeLnbTree(tree));
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
 
   const getAvatarInitial = (name) => {
     if (!name) return '?';
@@ -503,7 +518,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
   }, [logout]);
 
   const layoutProps = {
-    menuItems: DEFAULT_MENU_ITEMS,
+    menuItems: lnbMenuItems,
     headerTitle: '시스템 관리',
     searchValue,
     onSearchChange: setSearchValue,

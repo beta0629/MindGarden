@@ -84,6 +84,22 @@ export const getMenuByCode = async (menuCode) => {
 };
 
 /**
+ * LNB 메뉴 트리 조회 (역할·권한 필터, 메인/서브)
+ * @returns {Promise<{ data?: Array }>} ApiResponse 형태. data가 메뉴 트리(children 포함)
+ */
+export const getLnbMenus = async () => {
+    try {
+        const response = await axios.get(`${MENU_API}/lnb`, {
+            withCredentials: true
+        });
+        return response.data;
+    } catch (error) {
+        console.error('LNB 메뉴 조회 실패:', error);
+        throw error;
+    }
+};
+
+/**
  * 메뉴 경로로 조회
  */
 export const getMenuByPath = async (menuPath) => {

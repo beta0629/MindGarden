@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 메뉴 서비스 구현체
@@ -78,6 +79,44 @@ public class MenuServiceImpl implements MenuService {
         Menu menu = menuRepository.findByMenuPath(menuPath)
             .orElseThrow(() -> new IllegalArgumentException("메뉴를 찾을 수 없습니다: " + menuPath));
         return toDTO(menu);
+    }
+
+    @Override
+    public List<MenuDTO> getLnbMenus(String role, Set<String> permissionCodes) {
+        log.debug("LNB 메뉴 조회: role={}", role);
+        if (role == null || role.isEmpty()) {
+            return new ArrayList<>();
+        }
+        String location;
+        Set<String> visibleRoles;
+        switch (role.toUpperCase()) {
+            case "ADMIN":
+                location = "ADMIN_ONLY";
+                visibleRoles = Set.of("ADMIN", "STAFF", "CONSULTANT", "CLIENT");
+                break;
+            case "STAFF":
+                location = "ADMIN_ONLY";
+                visibleRoles = Set.of("ADMIN", "STAFF", "CONSULTANT", "CLIENT");
+                break;
+            case "CONSULTANT":
+                location = "CONSULTANT";
+                visibleRoles = Set.of("CONSULTANT", "CLIENT");
+                break;
+            case "CLIENT":
+                location = "CLIENT";
+                visibleRoles = Set.of("CLIENT");
+                break;
+            default:
+                return new ArrayList<>();
+        }
+        List<Menu> menus = menuRepository.findByMenuLocationAndRequiredRoleIn(location, visibleRoles);
+        List<MenuDTO> tree = buildMenuTree(menus);
+        if ("STAFF".equalsIgnoreCase(role) && (permissionCodes == null || !permissionCodes.contains("ERP_ACCESS"))) {
+            tree = tree.stream()
+                .filter(m -> !"ADM_ERP".equals(m.getMenuCode()))
+                .collect(Collectors.toList());
+        }
+        return tree;
     }
 
     /**

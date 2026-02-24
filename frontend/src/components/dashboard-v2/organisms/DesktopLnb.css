@@ -40,3 +40,18 @@
   padding: 0;
   list-style: none;
 }
+
+.mg-v2-desktop-lnb__group {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.mg-v2-desktop-lnb__sublist {
+  margin: 4px 0 0 12px;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}

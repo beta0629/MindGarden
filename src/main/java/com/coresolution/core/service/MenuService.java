@@ -3,6 +3,7 @@ package com.coresolution.core.service;
 import com.coresolution.core.dto.MenuDTO;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * 메뉴 서비스 인터페이스
@@ -57,5 +58,15 @@ public interface MenuService {
      * @return 메뉴 DTO
      */
     MenuDTO getMenuByPath(String menuPath);
+
+    /**
+     * LNB용 메뉴 트리 조회 (역할·권한 필터)
+     * ADMIN: ADMIN_ONLY 전체, STAFF: ADMIN_ONLY 중 ERP는 ERP_ACCESS 있을 때만, CONSULTANT/CLIENT: 해당 location
+     *
+     * @param role 사용자 역할 (ADMIN, STAFF, CONSULTANT, CLIENT)
+     * @param permissionCodes 사용자 권한 코드 목록 (STAFF일 때 ERP_ACCESS 등)
+     * @return 계층형 메뉴 트리
+     */
+    List<MenuDTO> getLnbMenus(String role, Set<String> permissionCodes);
 }
 

@@ -260,10 +260,10 @@ const ROLE_DASHBOARD_MAP = {
   'ADMIN': '/admin/dashboard',
   'BRANCH_SUPER_ADMIN': '/super_admin/dashboard',
   'BRANCH_MANAGER': '/admin/dashboard',
-  'HQ_ADMIN': '/hq/dashboard',
-  'SUPER_HQ_ADMIN': '/hq/dashboard',
-  'HQ_MASTER': '/hq_master/dashboard',
-  'HQ_SUPER_ADMIN': '/hq/dashboard'
+  'HQ_ADMIN': '/admin/dashboard',
+  'SUPER_HQ_ADMIN': '/admin/dashboard',
+  'HQ_MASTER': '/admin/dashboard',
+  'HQ_SUPER_ADMIN': '/admin/dashboard'
 };
 
 /**

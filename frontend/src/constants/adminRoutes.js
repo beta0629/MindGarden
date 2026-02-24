@@ -12,7 +12,7 @@
 export const ADMIN_ROUTES = {
     SCHEDULES: '/admin/schedules',
     SESSIONS: '/admin/sessions',
-    USERS: '/admin/users',
+    USERS: '/admin/user-management',
     USER_MANAGEMENT: '/admin/user-management',
     CONSULTANTS: '/admin/consultants',
     /** @deprecated redirect to /admin/user-management?type=consultant */

@@ -16,16 +16,14 @@ import {
   ShoppingCart,
   DollarSign,
   PieChart,
-  Receipt,
-  Building2,
-  BarChart3
+  Receipt
 } from 'lucide-react';
 
 const BREAKPOINT_DESKTOP = 768;
 
 /** 어드민 LNB 폴백: 메인+서브 트리 (LNB_MENU_STRUCTURE_AND_PERMISSION_SPEC §2) */
 const DEFAULT_MENU_ITEMS = [
-  { to: '/admin/dashboard-v2', icon: LayoutDashboard, label: '대시보드', end: true },
+  { to: '/admin/dashboard', icon: LayoutDashboard, label: '대시보드', end: true },
   { to: '/admin/mapping-management', icon: Link, label: '매칭 관리', end: true },
   {
     to: '/admin/user-management',
@@ -60,7 +58,7 @@ const DEFAULT_MENU_ITEMS = [
       { to: '/tenant/profile', icon: Settings, label: '테넌트 프로필', end: true },
       { to: '/admin/system-config', icon: Settings, label: '시스템 설정', end: true },
       { to: '/admin/common-codes', icon: FileText, label: '공통코드', end: true },
-      { to: '/tenant/pg-configuration', icon: CreditCard, label: 'PG 설정', end: true }
+      { to: '/tenant/profile', icon: CreditCard, label: 'PG 설정', end: true }
     ]
   },
   {
@@ -100,19 +98,10 @@ const ERP_MENU_ITEMS = [
   { to: '/erp/tax', icon: Receipt, label: '세무 관리', end: true }
 ];
 
-const HQ_MENU_ITEMS = [
-  { to: '/hq/dashboard', icon: LayoutDashboard, label: '대시보드', end: true },
-  { to: '/hq/branch-management', icon: Building2, label: '지점 관리', end: true },
-  { to: '/hq/erp/branch-financial', icon: DollarSign, label: '지점별 재무', end: true },
-  { to: '/hq/erp/consolidated', icon: BarChart3, label: '통합 재무', end: true },
-  { to: '/hq/erp/reports', icon: FileText, label: '재무 보고서', end: true }
-];
-
 export {
   BREAKPOINT_DESKTOP,
   DEFAULT_MENU_ITEMS,
   CLIENT_MENU_ITEMS,
   CONSULTANT_MENU_ITEMS,
-  ERP_MENU_ITEMS,
-  HQ_MENU_ITEMS
+  ERP_MENU_ITEMS
 };

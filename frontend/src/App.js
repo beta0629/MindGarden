@@ -66,9 +66,6 @@ import PaymentTest from './components/test/PaymentTest';
 import AccountManagement from './components/admin/AccountManagement';
 import PermissionManagement from './components/admin/PermissionManagement';
 import BranchManagement from './components/hq/BranchManagement';
-import BranchFinancialManagement from './components/hq/BranchFinancialManagement';
-import ConsolidatedFinancial from './components/hq/ConsolidatedFinancial';
-import FinancialReports from './components/hq/FinancialReports';
 import ConsultationHistory from './components/consultation/ConsultationHistory';
 import ConsultationReport from './components/consultation/ConsultationReport';
 import ComplianceMenu from './components/compliance/ComplianceMenu';
@@ -362,18 +359,12 @@ function AppContent() {
             <Route path="/admin/dashboard-widget" element={<WidgetBasedAdminDashboard />} />
             <Route path="/admin/dashboard-old" element={<DynamicDashboard user={user} />} />
             <Route path="/super_admin/dashboard" element={<DynamicDashboard user={user} />} />
-            <Route path="/hq_admin/dashboard" element={<DynamicDashboard user={user} />} />
-            <Route path="/super_hq_admin/dashboard" element={<DynamicDashboard user={user} />} />
-            <Route path="/hq_master/dashboard" element={<DynamicDashboard user={user} />} />
             <Route path="/branch_super_admin/dashboard" element={<DynamicDashboard user={user} />} />
             <Route path="/branch_manager/dashboard" element={<DynamicDashboard user={user} />} />
             <Route path="/client/mypage" element={<MyPage />} />
             <Route path="/consultant/mypage" element={<MyPage />} />
             <Route path="/admin/mypage" element={<MyPage />} />
             <Route path="/super_admin/mypage" element={<MyPage />} />
-            <Route path="/hq_admin/mypage" element={<MyPage />} />
-            <Route path="/super_hq_admin/mypage" element={<MyPage />} />
-            <Route path="/hq_master/mypage" element={<MyPage />} />
             <Route path="/branch_super_admin/mypage" element={<Navigate to="/super_admin/mypage" replace />} />
             <Route path="/branch_manager/mypage" element={<MyPage />} />
             
@@ -492,13 +483,6 @@ function AppContent() {
             <Route path="/academy" element={<AcademyDashboard />} />
             <Route path="/admin/academy" element={<AcademyDashboard />} />
             <Route path="/academy/register" element={<AcademyRegister />} />
-            <Route path="/hq/branch-management" element={<BranchManagement />} />
-            <Route path="/hq/branches" element={<BranchManagement />} />
-            <Route path="/hq/dashboard" element={<DynamicDashboard user={user} />} />
-            <Route path="/hq/erp/branch-financial" element={<BranchFinancialManagement />} />
-            <Route path="/hq/erp/consolidated" element={<ConsolidatedFinancial />} />
-            <Route path="/hq/erp/reports" element={<FinancialReports />} />
-            
             <Route path="/admin/schedules" element={
               <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="스케줄">
                 <UnifiedScheduleComponent 

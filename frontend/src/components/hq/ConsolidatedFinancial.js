@@ -11,7 +11,7 @@ import { apiGet } from '../../utils/ajax';
 import { getCodeLabel } from '../../utils/commonCodeUtils';
 import { showNotification } from '../../utils/notification';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
-import { HQ_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
+import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import Chart from '../common/Chart';
 import './ConsolidatedFinancial.css';
 
@@ -246,7 +246,7 @@ const ConsolidatedFinancial = () => {
 
     if (loading) {
         return (
-            <AdminCommonLayout menuItems={HQ_MENU_ITEMS} title="통합 재무현황">
+            <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="통합 재무현황">
                 <Container fluid className="py-4">
                     <div className="mg-loading">로딩중...</div>
                 </Container>
@@ -255,7 +255,7 @@ const ConsolidatedFinancial = () => {
     }
 
     return (
-        <AdminCommonLayout menuItems={HQ_MENU_ITEMS} title="통합 재무현황">
+        <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="통합 재무현황">
             <Container fluid className="consolidated-financial py-4">
                 {/* 헤더 */}
                 <Row className="mb-4">

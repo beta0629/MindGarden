@@ -10,7 +10,7 @@ import { useSession } from '../../contexts/SessionContext';
 import { apiGet } from '../../utils/ajax';
 import { showNotification } from '../../utils/notification';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
-import { HQ_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
+import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import './BranchFinancialManagement.css';
 
 /**
@@ -319,7 +319,7 @@ const BranchFinancialManagement = () => {
 
     if (!isLoggedIn || !user) {
         return (
-            <AdminCommonLayout menuItems={HQ_MENU_ITEMS} title="지점별 재무관리">
+            <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="지점별 재무관리">
                 <div className="mg-empty-state">
                     <div className="mg-empty-state__icon">
                         <Building2 className="mg-icon mg-icon--empty" />
@@ -331,7 +331,7 @@ const BranchFinancialManagement = () => {
     }
 
     return (
-        <AdminCommonLayout menuItems={HQ_MENU_ITEMS} title="지점별 재무관리">
+        <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="지점별 재무관리">
             <div className="branch-financial-management">
                 {/* 필터 카드 */}
                 <BranchFilterCard

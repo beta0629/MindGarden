@@ -1,3 +1,5 @@
+문서 위치: docs/architecture/PROJECT_STRUCTURE.md
+
 # 📁 MindGarden 프로젝트 구조 (재구성 완료)
 
 > **재구성 완료일**: $(date +%Y-%m-%d)  
@@ -29,7 +31,7 @@
 │   ├── migrations/                   # 마이그레이션 파일들
 │   ├── procedures/                   # 저장 프로시저들
 │   ├── test-data/                    # 테스트 데이터
-│   └── backups/                      # 백업 파일들
+│   └── backups/                     # 백업 파일들
 │
 ├── 📁 docs/                          # 문서 통합 관리 ⭐ 재구성됨
 │   ├── guides/                       # 가이드 문서들

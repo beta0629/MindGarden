@@ -52,6 +52,8 @@
 | **문서 작성·정리·체계화** | **generalPurpose** | /core-solution-documentation |
 | 코드베이스 탐색·분석 | explore | — |
 
+**문서 전담**: 새 문서 작성, 기존 문서 이동·이름 변경·삭제, docs 구조 정리, 인덱스(docs/README.md, standards/README.md) 갱신은 **반드시 문서관리 서브에이전트(generalPurpose + core-solution-documentation)** 로 수행한다. 문서를 분산 배치하거나 예전 문서를 그대로 참조하면 개발 혼선이 커지므로, 문서 작업은 전담 흐름으로만 진행한다. 진입점: [docs/README.md](../README.md).
+
 ## 플랜 서브에이전트 + 문서 전용 서브에이전트 워크플로우
 
 문서를 바탕으로 체계화된 프로젝트를 유지하려면 **작업 전 플랜**과 **문서 전용** 흐름을 함께 사용한다.
@@ -62,7 +64,8 @@
 | **2. 문서 작성·정리** | **generalPurpose** | 조사 결과를 바탕으로 docs/ 작성·수정·재구성. **/core-solution-documentation** 스킬 적용. |
 
 - **문서 정리해줘**, **표준 문서 만들어줘** 등 요청 시: 먼저 **explore**로 현재 docs 구조·관련 코드·표준 목록을 파악한 뒤, **generalPurpose**로 실제 문서를 작성·수정한다.
-- **스킬**: `.cursor/skills/core-solution-documentation/SKILL.md` — 문서 위치 체계, 품질 체크리스트, 플랜+문서 연계 규칙.
+- **문서 전담**: 문서 추가/이동/삭제/구조 변경은 **문서관리 서브에이전트 전담**이다. 다른 에이전트는 코드 수정만 하고, 문서 쪽은 "문서는 docs/standards/XXX 반영" 등 위치를 명시해 문서 전담 흐름으로 넘긴다.
+- **스킬**: `.cursor/skills/core-solution-documentation/SKILL.md` — 문서 위치 체계, 품질 체크리스트, 플랜+문서 연계 규칙, **문서 전담 원칙**.
 
 ## 누락 영역 추가 절차
 

@@ -1,3 +1,5 @@
+문서 위치: docs/guides/development/KOREAN_ENCODING_SETUP.md
+
 # 한글 인코딩 설정 가이드
 
 ## 🎯 PL/SQL 재무 시스템 한글 인코딩 설정

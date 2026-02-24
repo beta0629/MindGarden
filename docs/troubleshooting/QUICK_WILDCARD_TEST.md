@@ -1,3 +1,5 @@
+문서 위치: docs/troubleshooting/QUICK_WILDCARD_TEST.md
+
 # 와일드카드 도메인 빠른 테스트
 
 ## 1. 서버에서 SSL 인증서 확인

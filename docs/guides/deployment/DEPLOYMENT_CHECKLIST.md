@@ -1,3 +1,5 @@
+문서 위치: docs/guides/deployment/DEPLOYMENT_CHECKLIST.md
+
 # 🚀 운영 환경 배포 체크리스트
 
 ## 📋 **배포 전 체크리스트**

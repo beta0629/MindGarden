@@ -1,7 +1,26 @@
-# GNB / LNB 메뉴 링크 점검 보고서
+# GNB / LNB 메뉴 링크 점검 가이드
 
+**문서 위치**: `docs/standards/GNB_LNB_LINK_AUDIT_GUIDE.md`  
 **작성일**: 2026-02-25  
-**목적**: 상단(GNB)·좌측(LNB) 메뉴 링크가 실제 프론트엔드 라우트와 일치하는지 점검하고, 불일치·오류를 정리한 문서.
+**적용**: 프론트엔드 메뉴·네비게이션 수정 시 참조
+
+---
+
+## 개요
+
+본 문서는 **상단(GNB)·좌측(LNB) 메뉴 링크**가 실제 프론트엔드 라우트(`App.js`)와 일치하는지 점검한 결과와, 수정 시 참고할 **권장 사항·우선순위**를 정리한 표준 가이드입니다. 메뉴/탭 경로 추가·변경 시 이 문서의 라우트 목록과 불일치 목록을 참고하여 404 및 잘못된 링크를 방지합니다. 문서 작성·갱신은 `.cursor/skills/core-solution-documentation` 스킬에 따릅니다.
+
+---
+
+## 목차
+
+1. [현재 프론트엔드 라우트 목록](#1-현재-프론트엔드-라우트-목록)
+2. [GNB 링크 현황](#2-gnb-링크-현황)
+3. [LNB 링크 현황](#3-lnb-링크-현황)
+4. [불일치/오류 목록](#4-불일치오류-목록)
+5. [수정 권장 사항 (우선순위별)](#5-수정-권장-사항-우선순위별)
+6. [참고 파일 목록](#6-참고-파일-목록)
+7. [수정 이력](#7-수정-이력)
 
 ---
 
@@ -304,13 +323,13 @@ LNB 메뉴 소스: `frontend/src/components/dashboard-v2/constants/menuItems.js`
 
 | path | 사용처 | 조치 |
 |------|--------|------|
-| `/tenant/pg-configurations` | PgConfigurationList, LNB “PG 설정” 기대 경로 | App.js에 Route 추가 또는 LNB를 기존 tenant 라우트에 맞춤 |
+| `/tenant/pg-configurations` | PgConfigurationList, LNB "PG 설정" 기대 경로 | App.js에 Route 추가 또는 LNB를 기존 tenant 라우트에 맞춤 |
 | `/tenant/pg-configurations/new` | PgConfigurationCreate | 동일 |
 | `/tenant/pg-configurations/:id` | PgConfigurationDetail | 동일 |
 | `/tenant/pg-configurations/:id/edit` | PgConfigurationEdit | 동일 |
 | `/client/consultations` | TabletBottomNavigation (CLIENT 상담) | 라우트 추가 또는 탭에서 다른 경로로 변경 |
 | `/client/tasks` | TabletBottomNavigation (CLIENT 과제) | 라우트 추가 또는 탭에서 제거/대체 |
-| `/admin/dashboard-v2` | DEFAULT_MENU_ITEMS “대시보드” | 라우트는 `/admin/dashboard` 하나만 있음 → 메뉴 path 수정 권장 |
+| `/admin/dashboard-v2` | DEFAULT_MENU_ITEMS "대시보드" | 라우트는 `/admin/dashboard` 하나만 있음 → 메뉴 path 수정 권장 |
 
 ### 4.2 path 오타/불일치
 
@@ -331,7 +350,7 @@ LNB 메뉴 소스: `frontend/src/components/dashboard-v2/constants/menuItems.js`
 
 - **LNB**: `getLnbMenus()` → `/api/v1/menus/lnb` 에서 메뉴 트리 조회. 실패 시 프론트 `DEFAULT_MENU_ITEMS` 사용.
 - **햄버거 메뉴**: `loadMenuStructure()` → `/api/v1/menu/structure` 에서 메뉴 구조 로드. 표시되는 path는 백엔드 메뉴 데이터에 따름.
-- 백엔드 메뉴의 `menuPath`가 위 “실제 라우트 목록”과 다르면 동일한 불일치가 발생할 수 있음. **백엔드 메뉴 마스터/시드 데이터의 path도 위 표와 맞추는 것이 좋음.**
+- 백엔드 메뉴의 `menuPath`가 위 "실제 라우트 목록"과 다르면 동일한 불일치가 발생할 수 있음. **백엔드 메뉴 마스터/시드 데이터의 path도 위 표와 맞추는 것이 좋음.**
 
 ---
 
@@ -342,45 +361,45 @@ LNB 메뉴 소스: `frontend/src/components/dashboard-v2/constants/menuItems.js`
 1. **LNB 대시보드 링크**
    - **파일**: `frontend/src/components/dashboard-v2/constants/menuItems.js`
    - **변경**: `DEFAULT_MENU_ITEMS` 첫 번째 항목 `to: '/admin/dashboard-v2'` → `to: '/admin/dashboard'`
-   - **이유**: 어드민 LNB “대시보드” 클릭 시 404 방지.
+   - **이유**: 어드민 LNB "대시보드" 클릭 시 404 방지.
 
 2. **TabletBottomNavigation 관리자 탭**
    - **파일**: `frontend/src/components/layout/TabletBottomNavigation.js`
    - **변경**:  
-     - “사용자” `/admin/users` → `/admin/user-management`  
-     - “프로필” `/admin/profile` → `/admin/mypage`
+     - "사용자" `/admin/users` → `/admin/user-management`  
+     - "프로필" `/admin/profile` → `/admin/mypage`
    - **이유**: 실제 라우트와 일치시켜 404 및 빈 페이지 방지.
 
 3. **TabletBottomNavigation 프로필 경로 통일**
    - **파일**: 동일
    - **변경**:  
-     - CLIENT “프로필” `/client/profile` → `/client/mypage`  
-     - CONSULTANT “프로필” `/consultant/profile` → `/consultant/mypage`
+     - CLIENT "프로필" `/client/profile` → `/client/mypage`  
+     - CONSULTANT "프로필" `/consultant/profile` → `/consultant/mypage`
    - **이유**: 마이페이지 라우트는 역할별 `/mypage` 로만 정의되어 있음.
 
 ### 우선순위 2 (라우트 추가 또는 메뉴 정리)
 
 4. **PG 설정 라우트 및 LNB**
-   - **선택 A**: `App.js`에 `/tenant/pg-configurations`, `/tenant/pg-configurations/new`, `/tenant/pg-configurations/:id`, `/tenant/pg-configurations/:id/edit` 추가 후, LNB의 “PG 설정”을 `to: '/tenant/pg-configurations'` 로 변경.
-   - **선택 B**: PG 설정을 테넌트 프로필/설정 내 탭으로만 제공한다면 LNB에서 “PG 설정” 항목을 제거하거나 `to: '/tenant/profile'` 등으로 연결.
+   - **선택 A**: `App.js`에 `/tenant/pg-configurations`, `/tenant/pg-configurations/new`, `/tenant/pg-configurations/:id`, `/tenant/pg-configurations/:id/edit` 추가 후, LNB의 "PG 설정"을 `to: '/tenant/pg-configurations'` 로 변경.
+   - **선택 B**: PG 설정을 테넌트 프로필/설정 내 탭으로만 제공한다면 LNB에서 "PG 설정" 항목을 제거하거나 `to: '/tenant/profile'` 등으로 연결.
    - **현재**: LNB는 `/tenant/pg-configuration` (단수), 컴포넌트는 `/tenant/pg-configurations` (복수) 사용, App.js에는 해당 라우트 없음.
 
-5. **TabletBottomNavigation CLIENT “상담”·“과제”**
+5. **TabletBottomNavigation CLIENT "상담"·"과제"**
    - `/client/consultations`, `/client/tasks` 에 해당하는 페이지/라우트가 없으면:
      - 해당 기능이 있으면: `App.js`에 라우트 추가 후 연결.
-     - 없으면: 탭에서 제거하거나 “준비 중” 등으로 대체.
+     - 없으면: 탭에서 제거하거나 "준비 중" 등으로 대체.
 
 ### 우선순위 3 (일관성·유지보수)
 
 6. **adminRoutes.js**
    - **파일**: `frontend/src/constants/adminRoutes.js`
-   - **내용**: `ADMIN_ROUTES.USERS` 가 `/admin/users` 로 되어 있음. 실제 사용처가 “사용자 관리” 페이지라면 `/admin/user-management` 로 맞추는 것이 좋음. (다른 코드에서 `ADMIN_ROUTES.USERS`를 “사용자 관리” 페이지로만 사용하는지 확인 후 변경.)
+   - **내용**: `ADMIN_ROUTES.USERS` 가 `/admin/users` 로 되어 있음. 실제 사용처가 "사용자 관리" 페이지라면 `/admin/user-management` 로 맞추는 것이 좋음. (다른 코드에서 `ADMIN_ROUTES.USERS`를 "사용자 관리" 페이지로만 사용하는지 확인 후 변경.)
 
 7. **중첩 라우트 정리**
    - `/admin/common-codes` 를 중첩만 사용할지, 단독만 사용할지 정한 뒤 한쪽 정의 제거하여 혼동 방지.
 
 8. **백엔드 메뉴 path 검증**
-   - `/api/v1/menus/lnb`, `/api/v1/menu/structure` 응답의 `menuPath` 값을 위 “1. 현재 프론트엔드 라우트 목록”과 대조해 불일치 항목 수정. (DB/시드 또는 관리 화면에서 path 수정.)
+   - `/api/v1/menus/lnb`, `/api/v1/menu/structure` 응답의 `menuPath` 값을 위 "1. 현재 프론트엔드 라우트 목록"과 대조해 불일치 항목 수정. (DB/시드 또는 관리 화면에서 path 수정.)
 
 ---
 
@@ -402,7 +421,10 @@ LNB 메뉴 소스: `frontend/src/components/dashboard-v2/constants/menuItems.js`
 
 ---
 
-*이 문서는 코드 수정 없이 점검 결과만 반영한 감사 문서입니다. 실제 수정 시 위 권장 사항과 우선순위를 참고해 적용하면 됩니다.*
+## 참조 (문서관리)
+
+- **문서 위치 체계**: `.cursor/skills/core-solution-documentation/SKILL.md` — 표준·가이드는 `docs/standards/`, 파일명은 `*_GUIDE.md` 또는 `*_STANDARD.md`.
+- **표준 문서 목록**: [docs/standards/README.md](./README.md).
 
 ---
 
@@ -412,3 +434,4 @@ LNB 메뉴 소스: `frontend/src/components/dashboard-v2/constants/menuItems.js`
 |------|-----------|
 | 2026-02-25 | **우선순위 1** 반영: LNB `dashboard-v2` → `dashboard`, LNB PG 설정 `pg-configuration` → `pg-configurations`, TabletBottomNavigation ADMIN/CLIENT/CONSULTANT profile→mypage, users→user-management, CLIENT 상담/과제 → schedule/session-management, adminRoutes.js USERS → user-management |
 | 2026-02-25 | HQ 메뉴 전면 삭제(LNB·라우트·리다이렉트), PG 설정 링크를 `/tenant/profile` 로 변경 |
+| 2026-02-25 | 문서관리 규칙 적용: `docs/standards/GNB_LNB_LINK_AUDIT_GUIDE.md` 로 이동, 개요·목차·참조 추가 |

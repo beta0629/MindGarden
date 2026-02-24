@@ -76,11 +76,41 @@
 .mg-v2-mobile-lnb-drawer__group-head {
   margin: 0;
   padding: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.mg-v2-mobile-lnb-drawer__group-chevron {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.85);
+  cursor: pointer;
+  transition: color 0.2s, background 0.2s;
+}
+
+.mg-v2-mobile-lnb-drawer__group-chevron:hover {
+  color: rgba(255, 255, 255, 1);
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .mg-v2-mobile-lnb-drawer__group-head .mg-v2-nav-link {
+  flex: 1;
   font-weight: 600;
   font-size: 13px;
+}
+
+/* 아코디언: 접힌 상태에서는 서브리스트 비노출 */
+.mg-v2-mobile-lnb-drawer__group:not(.mg-v2-mobile-lnb-drawer__group--expanded) .mg-v2-mobile-lnb-drawer__sublist {
+  display: none;
 }
 
 .mg-v2-mobile-lnb-drawer__sublist {

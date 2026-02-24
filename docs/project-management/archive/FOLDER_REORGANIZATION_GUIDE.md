@@ -1,3 +1,5 @@
+문서 위치: docs/project-management/archive/FOLDER_REORGANIZATION_GUIDE.md
+
 # 🗂️ 폴더 재구성 실행 가이드
 
 > **목적**: 중구난방인 프로젝트 구조를 깔끔하게 정리  

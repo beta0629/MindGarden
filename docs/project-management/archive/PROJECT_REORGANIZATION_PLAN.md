@@ -1,3 +1,5 @@
+문서 위치: docs/project-management/archive/PROJECT_REORGANIZATION_PLAN.md
+
 # 🗂️ MindGarden 프로젝트 폴더 재구성 계획
 
 > **목적**: 중구난방인 프로젝트 구조를 체계적으로 정리  

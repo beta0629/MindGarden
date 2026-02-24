@@ -1,3 +1,5 @@
+문서 위치: docs/guides/quick-start/QUICK_START.md
+
 # 🚀 빠른 시작 가이드
 
 ## 📋 필수 설정 (최초 1회)
@@ -65,4 +67,3 @@ mvn spring-boot:run
 - `.env.local` 파일은 Git에 커밋되지 않습니다 (보안)
 - 모든 개발자는 개발 서버의 데이터베이스를 사용합니다
 - 로컬 PC에 MySQL 설치가 필요 없습니다
-

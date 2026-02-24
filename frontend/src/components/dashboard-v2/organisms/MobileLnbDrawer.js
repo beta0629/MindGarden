@@ -1,19 +1,46 @@
 /**
  * MobileLnbDrawer - 280px 슬라이드 드로어, 오버레이 (메인/서브 트리 지원)
  * RESPONSIVE_LAYOUT_SPEC: 모바일 LNB 280px
+ * 그룹은 아코디언: 기본 접힘, 헤더 클릭 시 해당 그룹만 펼침.
  *
  * @author CoreSolution
  * @since 2025-02-22
  */
 
-import React, { useEffect } from 'react';
-import { LogOut } from 'lucide-react';
+import React, { useEffect, useState, useMemo } from 'react';
+import { useLocation } from 'react-router-dom';
+import { LogOut, ChevronRight, ChevronDown } from 'lucide-react';
 import { NavLinkWithRouter } from '../atoms';
 import { LnbMenuItem } from '../molecules';
 import './MobileLnbDrawer.css';
 
+const hasChildren = (item) => item.children && item.children.length > 0;
+
+/** 현재 경로가 속한 그룹의 key(item.to) 반환, 없으면 null */
+const getInitialExpandedKey = (items, pathname) => {
+  const group = items.find(
+    (item) =>
+      hasChildren(item) &&
+      (pathname === item.to ||
+        item.children.some(
+          (sub) => pathname === sub.to || pathname.startsWith(sub.to + '/')
+        ))
+  );
+  return group ? group.to : null;
+};
+
+const sublistId = (prefix, itemTo) =>
+  `${prefix}-sublist-${itemTo.replaceAll('/', '-').replace(/^-/, '')}`;
+
 const MobileLnbDrawer = ({ isOpen, onClose, menuItems = [], headerTitle = '시스템 관리', onLogout }) => {
-  const hasChildren = (item) => item.children && item.children.length > 0;
+  const location = useLocation();
+  const pathname = location.pathname;
+
+  const initialExpanded = useMemo(
+    () => getInitialExpandedKey(menuItems, pathname),
+    [menuItems, pathname]
+  );
+  const [expandedGroupKey, setExpandedGroupKey] = useState(initialExpanded);
 
   useEffect(() => {
     if (isOpen) {
@@ -23,6 +50,12 @@ const MobileLnbDrawer = ({ isOpen, onClose, menuItems = [], headerTitle = '시�
       document.body.style.overflow = '';
     };
   }, [isOpen]);
+
+  const handleGroupToggle = (e, groupKey) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setExpandedGroupKey((prev) => (prev === groupKey ? null : groupKey));
+  };
 
   return (
     <>
@@ -46,8 +79,25 @@ const MobileLnbDrawer = ({ isOpen, onClose, menuItems = [], headerTitle = '시�
           <ul className="mg-v2-mobile-lnb-drawer__list">
             {menuItems.map((item) =>
               hasChildren(item) ? (
-                <li key={item.to} className="mg-v2-mobile-lnb-drawer__group">
+                <li
+                  key={item.to}
+                  className={`mg-v2-mobile-lnb-drawer__group ${expandedGroupKey === item.to ? 'mg-v2-mobile-lnb-drawer__group--expanded' : ''}`}
+                >
                   <div className="mg-v2-mobile-lnb-drawer__group-head">
+                    <button
+                      type="button"
+                      className="mg-v2-mobile-lnb-drawer__group-chevron"
+                      onClick={(e) => handleGroupToggle(e, item.to)}
+                      aria-expanded={expandedGroupKey === item.to}
+                      aria-controls={sublistId('mg-v2-mobile-lnb', item.to)}
+                      aria-label={`${item.label} 메뉴 ${expandedGroupKey === item.to ? '접기' : '펼치기'}`}
+                    >
+                      {expandedGroupKey === item.to ? (
+                        <ChevronDown size={18} aria-hidden />
+                      ) : (
+                        <ChevronRight size={18} aria-hidden />
+                      )}
+                    </button>
                     <NavLinkWithRouter
                       to={item.to}
                       icon={item.icon}
@@ -57,7 +107,12 @@ const MobileLnbDrawer = ({ isOpen, onClose, menuItems = [], headerTitle = '시�
                       {item.label}
                     </NavLinkWithRouter>
                   </div>
-                  <ul className="mg-v2-mobile-lnb-drawer__sublist">
+                  <ul
+                    id={sublistId('mg-v2-mobile-lnb', item.to)}
+                    className="mg-v2-mobile-lnb-drawer__sublist"
+                    role="group"
+                    aria-label={item.label}
+                  >
                     {item.children.map((sub) => (
                       <LnbMenuItem
                         key={sub.to}

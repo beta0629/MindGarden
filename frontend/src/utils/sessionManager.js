@@ -177,10 +177,17 @@ class SessionManager {
           ? userResponseData.data
           : userResponseData;
 
-        // 기존 사용자 정보가 있으면 role 정보 보존
-        if (this.user && this.user.role && !newUser.role) {
-          console.log('🔄 sessionManager에서 기존 role 정보 보존:', this.user.role);
-          newUser.role = this.user.role;
+        // 기존 사용자 정보가 있으면 role/permissionGroupCodes 보존 (서버 미반환 시)
+        if (this.user) {
+          if (this.user.role && !newUser.role) {
+            newUser.role = this.user.role;
+          }
+          if (Array.isArray(this.user.permissionGroupCodes) && !Array.isArray(newUser.permissionGroupCodes)) {
+            newUser.permissionGroupCodes = this.user.permissionGroupCodes;
+          }
+        }
+        if (!Array.isArray(newUser.permissionGroupCodes)) {
+          newUser.permissionGroupCodes = [];
         }
 
         this.user = newUser;

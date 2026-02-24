@@ -80,15 +80,7 @@ public class ErpController extends BaseApiController {
         if (environment != null && (environment
                 .acceptsProfiles(org.springframework.core.env.Profiles.of("local"))
                 || environment.acceptsProfiles(org.springframework.core.env.Profiles.of("dev")))) {
-            if (currentUser.getRole() != null && (currentUser.getRole().isAdmin()
-                    || currentUser
-                            .getRole() == com.coresolution.consultation.constant.UserRole.ADMIN
-                    || currentUser
-                            .getRole() == com.coresolution.consultation.constant.UserRole.TENANT_ADMIN
-                    || currentUser
-                            .getRole() == com.coresolution.consultation.constant.UserRole.PRINCIPAL
-                    || currentUser
-                            .getRole() == com.coresolution.consultation.constant.UserRole.OWNER)) {
+            if (currentUser.getRole() != null && currentUser.getRole().isAdmin()) {
                 log.debug("로컬 개발 모드: 관리자 역할로 ERP 접근 허용, 사용자={}, 역할={}", currentUser.getEmail(),
                         currentUser.getRole());
                 return null; // 권한 있음
@@ -1406,15 +1398,7 @@ public class ErpController extends BaseApiController {
             currentUser = fullUser;
 
             // 통합재무관리 접근 권한 확인 (관리자 역할이면 허용)
-            boolean isAdmin = currentUser.getRole() != null && (currentUser.getRole().isAdmin()
-                    || currentUser
-                            .getRole() == com.coresolution.consultation.constant.UserRole.ADMIN
-                    || currentUser
-                            .getRole() == com.coresolution.consultation.constant.UserRole.TENANT_ADMIN
-                    || currentUser
-                            .getRole() == com.coresolution.consultation.constant.UserRole.PRINCIPAL
-                    || currentUser
-                            .getRole() == com.coresolution.consultation.constant.UserRole.OWNER);
+            boolean isAdmin = currentUser.getRole() != null && currentUser.getRole().isAdmin();
 
             if (!isAdmin && !dynamicPermissionService.hasPermission(currentUser,
                     "INTEGRATED_FINANCE_VIEW")) {

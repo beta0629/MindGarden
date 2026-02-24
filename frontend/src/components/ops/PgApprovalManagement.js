@@ -123,7 +123,7 @@ const PgApprovalManagement = () => {
   useEffect(() => {
     if (!sessionLoading && isLoggedIn && user) {
       // 권한 확인 (ADMIN 또는 OPS 역할)
-      const allowedRoles = ['ADMIN', 'OPS', 'HQ_ADMIN', 'SUPER_HQ_ADMIN', 'HQ_MASTER'];
+      const allowedRoles = ['ADMIN', 'STAFF'];
       if (!allowedRoles.includes(user.role)) {
         showNotification('접근 권한이 없습니다.', 'error');
         navigate('/');

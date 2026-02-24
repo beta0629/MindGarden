@@ -130,7 +130,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
             
             console.log('🔍 조건 확인:', {
                 currentUserRole,
-                isBranchSuperAdmin: currentUserRole === 'BRANCH_SUPER_ADMIN',
+                isAdmin: currentUserRole === 'ADMIN',
                 hasBranchId: !!currentUser?.branchId,
                 branchId: currentUser?.branchId
             });
@@ -142,7 +142,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
             // } else {
                 console.log('🏢 전체 상담사 조회 - 이유:', {
                     role: currentUserRole,
-                    isBranchSuperAdmin: currentUserRole === 'BRANCH_SUPER_ADMIN',
+                    isAdmin: currentUserRole === 'ADMIN',
                     hasBranchId: !!currentUser?.branchId,
                     branchId: currentUser?.branchId
                 });
@@ -174,7 +174,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
             
             let url = `/api/schedules?userId=${currentUserId}&userRole=${currentUserRole}`;
             
-            if (currentUserRole === 'ADMIN' || currentUserRole === 'BRANCH_SUPER_ADMIN' || currentUserRole === 'HQ_MASTER' || currentUserRole === 'SUPER_HQ_ADMIN') {
+            if (currentUserRole === 'ADMIN') {
                 url = '/api/v1/schedules/admin';
                 if (selectedConsultantId && selectedConsultantId !== '') {
                     url += `?consultantId=${selectedConsultantId}`;
@@ -237,7 +237,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
             }
 
             const vacationEvents = [];
-            if (currentUserRole === 'ADMIN' || currentUserRole === 'BRANCH_SUPER_ADMIN') {
+            if (currentUserRole === 'ADMIN') {
                 try {
                     const today = new Date();
                     const startDate = new Date(today.getFullYear(), today.getMonth() - 1, 1).toISOString().split('T')[0];
@@ -357,7 +357,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
             
             openMobileZoom(info.dateStr, dayEvents);
         } else {
-            if (currentUserRole === 'ADMIN' || currentUserRole === 'BRANCH_SUPER_ADMIN') {
+            if (currentUserRole === 'ADMIN') {
                 const clickedDate = new Date(info.date);
                 const today = new Date();
                 

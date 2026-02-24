@@ -281,7 +281,7 @@ public class SecurityUtils implements ApplicationContextAware {
     @Deprecated
     public static ResponseEntity<Map<String, Object>> checkAdminPermission(HttpSession session) {
         // 표준화 2025-12-05: 표준 관리자 역할만 체크
-        return checkPermission(session, UserRole.ADMIN, UserRole.TENANT_ADMIN, UserRole.PRINCIPAL, UserRole.OWNER);
+        return checkPermission(session, UserRole.ADMIN);
     }
     
     /**

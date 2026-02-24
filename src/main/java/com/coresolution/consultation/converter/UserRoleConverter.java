@@ -26,42 +26,8 @@ public class UserRoleConverter implements AttributeConverter<UserRole, String> {
     @Override
     public UserRole convertToEntityAttribute(String dbData) {
         if (dbData == null || dbData.trim().isEmpty()) {
-            return UserRole.CLIENT; // 기본값
+            return UserRole.CLIENT;
         }
-        
-        // 기존 스프링 시큐리티 역할 형식 처리
-        String normalizedRole = dbData.trim().toUpperCase();
-        
-        // ROLE_ 접두사 제거
-        if (normalizedRole.startsWith("ROLE_")) {
-            normalizedRole = normalizedRole.substring(5);
-        }
-        
-        try {
-            return UserRole.valueOf(normalizedRole);
-        } catch (IllegalArgumentException e) {
-            // 기존 데이터 호환성을 위한 매핑
-            switch (normalizedRole) {
-                case "USER":
-                case "CUSTOMER":
-                case "CLIENT":
-                    return UserRole.CLIENT;
-                case "CONSULTANT":
-                case "COUNSELOR":
-                    return UserRole.CONSULTANT;
-                case "ADMIN":
-                case "ADMINISTRATOR":
-                    return UserRole.ADMIN;
-                case "HQ_MASTER":
-                case "SUPERADMIN":
-                case "ROOT":
-                    // 표준화 2025-12-05: HQ_MASTER → ADMIN으로 통합 (하위 호환성 유지)
-                    return UserRole.ADMIN;
-                default:
-                    // 알 수 없는 역할은 기본값으로
-                    System.err.println("알 수 없는 역할: " + dbData + " -> CLIENT로 변환");
-                    return UserRole.CLIENT;
-            }
-        }
+        return UserRole.fromString(dbData);
     }
 }

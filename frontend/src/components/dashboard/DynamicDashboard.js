@@ -263,7 +263,7 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
 
   // 🚨 임시 수정: 관리자 계정은 바로 AdminDashboard로 이동 (무한로딩 방지)
   const userRole = currentUser?.role;
-  const adminRoles = ['ADMIN', 'BRANCH_MANAGER', 'BRANCH_SUPER_ADMIN', 'HQ_ADMIN', 'SUPER_HQ_ADMIN', 'HQ_MASTER', 'TENANT_ADMIN', 'OWNER', 'MANAGER'];
+  const adminRoles = ['ADMIN'];
   const isAdmin = userRole && adminRoles.includes(userRole);
   
   console.log('🔍 관리자 체크:', { userRole, isAdmin, adminRoles });
@@ -360,8 +360,8 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
   });
 
   // 관리자 역할 확인 (확장된 역할 목록)
-  const tenantAdminRoles = ['ADMIN', 'BRANCH_MANAGER', 'BRANCH_SUPER_ADMIN', 'TENANT_ADMIN', 'OWNER', 'MANAGER']; // 테넌트별 관리자(원장)
-  const superAdminRoles = ['HQ_ADMIN', 'SUPER_HQ_ADMIN', 'HQ_MASTER', 'SUPER_ADMIN', 'SYSTEM_ADMIN']; // 슈퍼 관리자
+  const tenantAdminRoles = ['ADMIN'];
+  const superAdminRoles = ['ADMIN'];
   const allAdminRoles = [...tenantAdminRoles, ...superAdminRoles];
 
   const isTenantAdmin = userRole && tenantAdminRoles.includes(userRole); // 테넌트별 관리자(원장)

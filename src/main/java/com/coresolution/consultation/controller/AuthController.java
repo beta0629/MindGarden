@@ -4,6 +4,7 @@ package com.coresolution.consultation.controller;
 import com.coresolution.consultation.entity.CommonCode;
 
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,6 +35,7 @@ import com.coresolution.core.controller.BaseApiController;
 import com.coresolution.core.domain.Tenant;
 import com.coresolution.core.dto.ApiResponse;
 import com.coresolution.core.repository.TenantRepository;
+import com.coresolution.core.service.PermissionGroupService;
 import com.coresolution.core.service.UserRoleQueryService;
 import com.coresolution.core.domain.UserRoleAssignment;
 import com.coresolution.core.repository.TenantRoleRepository;
@@ -74,6 +76,7 @@ public class AuthController extends BaseApiController {
     private final UserRoleQueryService userRoleQueryService;
     private final TenantRoleRepository tenantRoleRepository;
     private final UserPersonalDataCacheService userPersonalDataCacheService;
+    private final PermissionGroupService permissionGroupService;
     private final org.springframework.core.env.Environment environment;
     
     // 로컬 개발 환경용 기본 테넌트 ID (서브도메인이 없을 때 사용)
@@ -232,6 +235,22 @@ public class AuthController extends BaseApiController {
         userInfo.put("profileImageUrl", profileImageUrl);
         userInfo.put("socialProfileImage", socialProfileImage);
         userInfo.put("socialProvider", socialProvider);
+        
+        // 동적 권한 그룹 코드 목록 (DB/테넌트 역할 기반, 프론트 권한 비교용)
+        String tenantIdForGroups = SessionUtils.getTenantId(session);
+        String roleId = SessionUtils.getRoleId(session);
+        if (tenantIdForGroups != null && roleId != null) {
+            try {
+                List<String> permissionGroupCodes = permissionGroupService.getUserPermissionGroupCodes(tenantIdForGroups, roleId);
+                userInfo.put("permissionGroupCodes", permissionGroupCodes);
+                log.debug("current-user 권한 그룹 코드 수: {}", permissionGroupCodes.size());
+            } catch (Exception e) {
+                log.warn("권한 그룹 조회 실패 (빈 목록 반환): {}", e.getMessage());
+                userInfo.put("permissionGroupCodes", Collections.emptyList());
+            }
+        } else {
+            userInfo.put("permissionGroupCodes", Collections.emptyList());
+        }
         
         log.info("✅ current-user API 응답 완료: userId={}", user.getId());
         return success(userInfo);
@@ -1602,8 +1621,7 @@ public class AuthController extends BaseApiController {
         
         // 표준 관리자 역할 -> Director (원장) (표준화 2025-12-05: enum 활용)
         UserRole role = UserRole.fromString(userRoleName);
-        if (role == UserRole.ADMIN || role == UserRole.TENANT_ADMIN || 
-            role == UserRole.PRINCIPAL || role == UserRole.OWNER) {
+        if (role != null && role.isAdmin()) {
             return "Director"; // 실제 TenantRole name_en
         }
         
@@ -1662,9 +1680,7 @@ public class AuthController extends BaseApiController {
             if (roleCodes == null || roleCodes.isEmpty()) {
                 // 폴백: 표준 관리자 역할만 체크 (브랜치/HQ 개념 제거)
                 return role == UserRole.ADMIN || 
-                       role == UserRole.TENANT_ADMIN || 
-                       role == UserRole.PRINCIPAL || 
-                       role == UserRole.OWNER;
+                       role.isAdmin();
             }
             // 공통코드에서 관리자 역할인지 확인
             String roleName = role.name();
@@ -1677,9 +1693,7 @@ public class AuthController extends BaseApiController {
             log.warn("공통코드에서 관리자 역할 조회 실패, 폴백 사용: {}", role, e);
             // 폴백: 표준 관리자 역할만 체크
             return role == UserRole.ADMIN || 
-                   role == UserRole.TENANT_ADMIN || 
-                   role == UserRole.PRINCIPAL || 
-                   role == UserRole.OWNER;
+                       role.isAdmin();
         }
     }
     

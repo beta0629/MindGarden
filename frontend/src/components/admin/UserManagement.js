@@ -42,32 +42,34 @@ const UserManagement = ({ onUpdate }) => {
             const { getCommonCodes } = await import('../../utils/commonCodeApi');
             const codes = await getCommonCodes('ROLE');
             
+            const ALLOWED = ['ADMIN', 'STAFF', 'CONSULTANT', 'CLIENT'];
+            const defaultOptions = [
+                { value: USER_ROLES.CLIENT, label: '내담자', icon: '👤', color: 'var(--mg-primary-500)', description: '상담을 받는 내담자' },
+                { value: USER_ROLES.CONSULTANT, label: '상담사', icon: '👨‍⚕️', color: 'var(--mg-success-500)', description: '상담을 제공하는 상담사' },
+                { value: USER_ROLES.STAFF, label: '사무원', icon: '👨‍💼', color: 'var(--mg-info-500)', description: '사무/행정 담당' },
+                { value: USER_ROLES.ADMIN, label: '관리자', icon: '👑', color: 'var(--mg-warning-500)', description: '시스템 관리자' }
+            ];
             if (codes && Array.isArray(codes) && codes.length > 0) {
-                const options = codes.map(code => ({
-                    value: code.codeValue,
-                    label: code.codeLabel || code.koreanName,
-                    icon: code.icon,
-                    color: code.colorCode,
-                    description: code.codeDescription
-                }));
-                setRoleOptions(options);
+                const options = codes
+                    .filter(code => code && ALLOWED.includes(code.codeValue))
+                    .map(code => ({
+                        value: code.codeValue,
+                        label: code.codeLabel || code.koreanName,
+                        icon: code.icon,
+                        color: code.colorCode,
+                        description: code.codeDescription
+                    }));
+                setRoleOptions(options.length ? options : defaultOptions);
             } else {
-                // 실패 시 기본값 설정
-                setRoleOptions([
-                    { value: 'CLIENT', label: '내담자', icon: '👤', color: 'var(--mg-primary-500)', description: '상담을 받는 내담자' },
-                    { value: 'CONSULTANT', label: '상담사', icon: '👨‍⚕️', color: 'var(--mg-success-500)', description: '상담을 제공하는 상담사' },
-                    { value: 'ADMIN', label: '관리자', icon: '👨‍💼', color: 'var(--mg-warning-500)', description: '시스템 관리자' },
-                    { value: 'BRANCH_SUPER_ADMIN', label: '수퍼관리자', icon: '👑', color: 'var(--mg-error-500)', description: '최고 관리자' }
-                ]);
+                setRoleOptions(defaultOptions);
             }
         } catch (error) {
             console.error('역할 코드 로드 실패:', error);
-            // 실패 시 기본값 설정
             setRoleOptions([
-                { value: 'CLIENT', label: '내담자', icon: '👤', color: 'var(--mg-primary-500)', description: '상담을 받는 내담자' },
-                { value: 'CONSULTANT', label: '상담사', icon: '👨‍⚕️', color: 'var(--mg-success-500)', description: '상담을 제공하는 상담사' },
-                { value: 'ADMIN', label: '관리자', icon: '👨‍💼', color: 'var(--mg-warning-500)', description: '시스템 관리자' },
-                { value: 'BRANCH_SUPER_ADMIN', label: '수퍼관리자', icon: '👑', color: 'var(--mg-error-500)', description: '최고 관리자' }
+                { value: USER_ROLES.CLIENT, label: '내담자', icon: '👤' },
+                { value: USER_ROLES.CONSULTANT, label: '상담사', icon: '👨‍⚕️' },
+                { value: USER_ROLES.STAFF, label: '사무원', icon: '👨‍💼' },
+                { value: USER_ROLES.ADMIN, label: '관리자', icon: '👑' }
             ]);
         } finally {
             setLoadingCodes(false);
@@ -177,30 +179,30 @@ const UserManagement = ({ onUpdate }) => {
 
     const getRoleBadgeVariant = (role) => {
         switch (role) {
-            case 'CLIENT': return 'primary';
-            case 'CONSULTANT': return 'success';
-            case 'ADMIN': return 'warning';
-            case 'BRANCH_SUPER_ADMIN': return 'danger';
+            case USER_ROLES.CLIENT: return 'primary';
+            case USER_ROLES.CONSULTANT: return 'success';
+            case USER_ROLES.STAFF: return 'info';
+            case USER_ROLES.ADMIN: return 'warning';
             default: return 'secondary';
         }
     };
 
     const getRoleDisplayName = (role) => {
         switch (role) {
-            case 'CLIENT': return '내담자';
-            case 'CONSULTANT': return '상담사';
-            case 'ADMIN': return '관리자';
-            case 'BRANCH_SUPER_ADMIN': return '최고관리자';
+            case USER_ROLES.CLIENT: return '내담자';
+            case USER_ROLES.CONSULTANT: return '상담사';
+            case USER_ROLES.STAFF: return '사무원';
+            case USER_ROLES.ADMIN: return '관리자';
             default: return role;
         }
     };
 
     const getRoleIcon = (role) => {
         switch (role) {
-            case 'CLIENT': return <FaUser />;
-            case 'CONSULTANT': return <FaUserTie />;
-            case 'ADMIN': return <FaBuilding />;
-            case 'BRANCH_SUPER_ADMIN': return <FaCrown />;
+            case USER_ROLES.CLIENT: return <FaUser />;
+            case USER_ROLES.CONSULTANT: return <FaUserTie />;
+            case USER_ROLES.STAFF: return <FaBuilding />;
+            case USER_ROLES.ADMIN: return <FaCrown />;
             default: return <FaUsers />;
         }
     };
@@ -249,8 +251,8 @@ const UserManagement = ({ onUpdate }) => {
                                 <option value="">모든 역할</option>
                                 <option value={USER_ROLES.CLIENT}>내담자</option>
                                 <option value={USER_ROLES.CONSULTANT}>상담사</option>
+                                <option value={USER_ROLES.STAFF}>사무원</option>
                                 <option value={USER_ROLES.ADMIN}>관리자</option>
-                                <option value={USER_ROLES.BRANCH_SUPER_ADMIN}>최고관리자</option>
                             </select>
                             <label className="user-mgmt-checkbox-label">
                                 <input

@@ -175,10 +175,6 @@ public class PermissionCheckUtils {
         
         switch (user.getRole()) {
             case ADMIN:
-            case TENANT_ADMIN:
-            case PRINCIPAL:
-            case OWNER:
-                // 표준 관리자 역할
                 authorities.add(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_ADMIN"));
                 break;
             case STAFF:

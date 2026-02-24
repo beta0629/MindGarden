@@ -392,9 +392,6 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
         // 추가 권한 설정 (표준화 2025-12-05: 표준 역할만 사용)
         switch (user.getRole()) {
             case ADMIN:
-            case TENANT_ADMIN:
-            case PRINCIPAL:
-            case OWNER:
                 authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
                 break;
             case CONSULTANT:
@@ -405,9 +402,6 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
                 break;
             case STAFF:
                 authorities.add(new SimpleGrantedAuthority("ROLE_STAFF"));
-                break;
-            case PARENT:
-                authorities.add(new SimpleGrantedAuthority("ROLE_PARENT"));
                 break;
             default:
                 log.warn("⚠️ 알 수 없는 사용자 역할: {}", user.getRole());

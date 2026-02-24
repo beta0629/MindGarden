@@ -142,8 +142,7 @@ const ScheduleList = ({
         userRole: userRole
       };
       
-      if (userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN' || userRole === 'BRANCH_BRANCH_SUPER_ADMIN' || 
-          userRole === 'BRANCH_MANAGER' || userRole === 'HQ_ADMIN' || userRole === 'SUPER_HQ_ADMIN') {
+      if (userRole === 'ADMIN' || userRole === 'STAFF') {
         url = '/api/v1/admin/schedules';
         params = {};
         
@@ -173,15 +172,13 @@ const ScheduleList = ({
     loadFilterOptions();
     loadSortOptions();
     
-    if (userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN' || userRole === 'BRANCH_BRANCH_SUPER_ADMIN' || 
-        userRole === 'BRANCH_MANAGER' || userRole === 'HQ_ADMIN' || userRole === 'SUPER_HQ_ADMIN') {
+    if (userRole === 'ADMIN' || userRole === 'STAFF') {
       loadConsultants();
     }
   }, [userId, userRole, loadFilterOptions, loadSortOptions, loadConsultants]);
 
   useEffect(() => {
-    if (userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN' || userRole === 'BRANCH_BRANCH_SUPER_ADMIN' || 
-        userRole === 'BRANCH_MANAGER' || userRole === 'HQ_ADMIN' || userRole === 'SUPER_HQ_ADMIN') {
+    if (userRole === 'ADMIN' || userRole === 'STAFF') {
       loadSchedules();
     }
   }, [selectedConsultantId]);

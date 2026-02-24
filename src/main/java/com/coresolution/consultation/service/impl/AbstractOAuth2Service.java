@@ -310,18 +310,13 @@ public abstract class AbstractOAuth2Service implements OAuth2Service {
         
         switch (role) {
             case CLIENT:
-                return 1; // 가장 높은 우선순위
+                return 1;
             case CONSULTANT:
                 return 2;
             case ADMIN:
-            case TENANT_ADMIN:
-            case PRINCIPAL:
-            case OWNER:
                 return 3;
             case STAFF:
                 return 4;
-            case PARENT:
-                return 5;
             default:
                 return 999;
         }

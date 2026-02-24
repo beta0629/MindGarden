@@ -86,7 +86,7 @@ const DEFAULT_MENU_CONFIG = {
   sessions: {
     category: MENU_CATEGORIES.CONSULTATION,
     permission: MENU_PERMISSION_LEVELS.ROLE_BASED,
-    allowedRoles: ['CONSULTATION_COUNSELOR', 'CONSULTATION_DIRECTOR'],
+    allowedRoles: ['CONSULTANT', 'ADMIN'],
     label: '세션 관리',
     path: '/sessions',
     icon: 'psychology',
@@ -95,7 +95,7 @@ const DEFAULT_MENU_CONFIG = {
   consultations: {
     category: MENU_CATEGORIES.CONSULTATION,
     permission: MENU_PERMISSION_LEVELS.ROLE_BASED,
-    allowedRoles: ['CONSULTATION_COUNSELOR', 'CONSULTATION_DIRECTOR'],
+    allowedRoles: ['CONSULTANT', 'ADMIN'],
     label: '상담 관리',
     path: '/consultations',
     icon: 'chat',
@@ -104,7 +104,7 @@ const DEFAULT_MENU_CONFIG = {
   clients: {
     category: MENU_CATEGORIES.CONSULTATION,
     permission: MENU_PERMISSION_LEVELS.ROLE_BASED,
-    allowedRoles: ['CONSULTATION_COUNSELOR', 'CONSULTATION_DIRECTOR'],
+    allowedRoles: ['CONSULTANT', 'ADMIN'],
     label: '내담자 관리',
     path: '/clients',
     icon: 'people',
@@ -113,7 +113,7 @@ const DEFAULT_MENU_CONFIG = {
   consultants: {
     category: MENU_CATEGORIES.CONSULTATION,
     permission: MENU_PERMISSION_LEVELS.ROLE_BASED,
-    allowedRoles: ['CONSULTATION_DIRECTOR'],
+    allowedRoles: ['ADMIN'],
     label: '상담사 관리',
     path: '/consultants',
     icon: 'supervisor_account',
@@ -122,7 +122,7 @@ const DEFAULT_MENU_CONFIG = {
   mappings: {
     category: MENU_CATEGORIES.CONSULTATION,
     permission: MENU_PERMISSION_LEVELS.ROLE_BASED,
-    allowedRoles: ['CONSULTATION_DIRECTOR'],
+    allowedRoles: ['ADMIN'],
     label: '매칭 관리',
     path: '/mappings',
     icon: 'link',
@@ -133,7 +133,7 @@ const DEFAULT_MENU_CONFIG = {
   courses: {
     category: MENU_CATEGORIES.ACADEMY,
     permission: MENU_PERMISSION_LEVELS.ROLE_BASED,
-    allowedRoles: ['ACADEMY_TEACHER', 'ACADEMY_DIRECTOR'],
+    allowedRoles: ['CONSULTANT', 'ADMIN'],
     label: '강좌 관리',
     path: '/courses',
     icon: 'school',
@@ -142,7 +142,7 @@ const DEFAULT_MENU_CONFIG = {
   classes: {
     category: MENU_CATEGORIES.ACADEMY,
     permission: MENU_PERMISSION_LEVELS.ROLE_BASED,
-    allowedRoles: ['ACADEMY_TEACHER', 'ACADEMY_DIRECTOR'],
+    allowedRoles: ['CONSULTANT', 'ADMIN'],
     label: '반 관리',
     path: '/classes',
     icon: 'class',
@@ -151,7 +151,7 @@ const DEFAULT_MENU_CONFIG = {
   enrollments: {
     category: MENU_CATEGORIES.ACADEMY,
     permission: MENU_PERMISSION_LEVELS.ROLE_BASED,
-    allowedRoles: ['ACADEMY_STAFF', 'ACADEMY_DIRECTOR'],
+    allowedRoles: ['STAFF', 'ADMIN'],
     label: '수강 관리',
     path: '/enrollments',
     icon: 'assignment',
@@ -160,7 +160,7 @@ const DEFAULT_MENU_CONFIG = {
   attendance: {
     category: MENU_CATEGORIES.ACADEMY,
     permission: MENU_PERMISSION_LEVELS.ROLE_BASED,
-    allowedRoles: ['ACADEMY_TEACHER', 'ACADEMY_DIRECTOR'],
+    allowedRoles: ['CONSULTANT', 'ADMIN'],
     label: '출석 관리',
     path: '/attendance',
     icon: 'fact_check',
@@ -169,7 +169,7 @@ const DEFAULT_MENU_CONFIG = {
   tuition: {
     category: MENU_CATEGORIES.ACADEMY,
     permission: MENU_PERMISSION_LEVELS.ROLE_BASED,
-    allowedRoles: ['ACADEMY_STAFF', 'ACADEMY_DIRECTOR'],
+    allowedRoles: ['STAFF', 'ADMIN'],
     label: '수강료 관리',
     path: '/tuition',
     icon: 'payment',
@@ -416,13 +416,7 @@ const checkMenuPermission = (menuConfig, userRole, userPermissions = []) => {
 /**
  * @returns {boolean} 관리자 역할 여부
  */
-const isAdminRole = (userRole) => {
-  // 관리자 패턴 확인 (임시)
-  const adminPatterns = ['ADMIN', 'DIRECTOR', 'MASTER'];
-  return adminPatterns.some(pattern => 
-    userRole?.toUpperCase().includes(pattern)
-  );
-};
+const isAdminRole = (userRole) => userRole === 'ADMIN';
 
 // ============ 캐시 관리 함수들 ============
 

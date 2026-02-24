@@ -15,16 +15,13 @@
 import { sessionManager } from './sessionManager';
 import { fetchUserPermissions } from './permissionUtils';
 
-/**
- * 사용자 역할별 메뉴 접근 권한 매트릭스
- */
+/** 역할 4개만: ADMIN, STAFF, CONSULTANT, CLIENT */
 const MENU_PERMISSIONS = {
-    // CLIENT (내담자)
     CLIENT: {
         menuGroups: ['COMMON_MENU', 'CLIENT_MENU'],
         features: [
             'VIEW_OWN_PROFILE',
-            'EDIT_OWN_PROFILE', 
+            'EDIT_OWN_PROFILE',
             'VIEW_OWN_CONSULTATIONS',
             'CREATE_CONSULTATION_REQUEST',
             'SEND_MESSAGE',
@@ -32,8 +29,6 @@ const MENU_PERMISSIONS = {
             'VIEW_MOTIVATION'
         ]
     },
-    
-    // CONSULTANT (상담사)
     CONSULTANT: {
         menuGroups: ['COMMON_MENU', 'CONSULTANT_MENU'],
         features: [
@@ -47,27 +42,8 @@ const MENU_PERMISSIONS = {
             'MANAGE_SCHEDULE'
         ]
     },
-    
-    // ADMIN (지점 관리자)
     ADMIN: {
         menuGroups: ['COMMON_MENU', 'ADMIN_MENU'],
-        features: [
-            'VIEW_OWN_PROFILE',
-            'EDIT_OWN_PROFILE',
-            'VIEW_ALL_CONSULTATIONS',
-            'MANAGE_USERS',
-            'MANAGE_CONSULTANTS',
-            'MANAGE_CLIENTS',
-            'VIEW_STATISTICS',
-            'MANAGE_SCHEDULES',
-            'VIEW_RATINGS',
-            'MANAGE_BRANCH_SETTINGS'
-        ]
-    },
-    
-    // BRANCH_SUPER_ADMIN (지점 수퍼 관리자)
-    BRANCH_SUPER_ADMIN: {
-        menuGroups: ['COMMON_MENU', 'ADMIN_MENU', 'BRANCH_SUPER_ADMIN_MENU'],
         features: [
             'VIEW_OWN_PROFILE',
             'EDIT_OWN_PROFILE',
@@ -85,52 +61,7 @@ const MENU_PERMISSIONS = {
             'APPROVE_PURCHASE_REQUESTS'
         ]
     },
-    
-    // HQ_ADMIN (본사 관리자)
-    HQ_ADMIN: {
-        menuGroups: ['COMMON_MENU', 'HQ_ADMIN_MENU'],
-        features: [
-            'VIEW_OWN_PROFILE',
-            'EDIT_OWN_PROFILE',
-            'VIEW_ALL_CONSULTATIONS',
-            'MANAGE_ALL_USERS',
-            'MANAGE_ALL_CONSULTANTS',
-            'MANAGE_ALL_CLIENTS',
-            'VIEW_ALL_STATISTICS',
-            'MANAGE_ALL_SCHEDULES',
-            'VIEW_ALL_RATINGS',
-            'MANAGE_ALL_BRANCHES',
-            'MANAGE_SYSTEM_SETTINGS'
-        ]
-    },
-    
-    // SUPER_HQ_ADMIN (본사 고급 관리자)
-    SUPER_HQ_ADMIN: {
-        menuGroups: ['COMMON_MENU', 'HQ_ADMIN_MENU'],
-        features: [
-            'VIEW_OWN_PROFILE',
-            'EDIT_OWN_PROFILE',
-            'VIEW_ALL_CONSULTATIONS',
-            'MANAGE_ALL_USERS',
-            'MANAGE_ALL_CONSULTANTS',
-            'MANAGE_ALL_CLIENTS',
-            'VIEW_ALL_STATISTICS',
-            'MANAGE_ALL_SCHEDULES',
-            'VIEW_ALL_RATINGS',
-            'MANAGE_ALL_BRANCHES',
-            'MANAGE_SYSTEM_SETTINGS',
-            'MANAGE_ADMIN_USERS'
-        ]
-    },
-    
-    // HQ_MASTER (본사 총관리자) - 모든 권한
-    HQ_MASTER: {
-        menuGroups: ['COMMON_MENU', 'ADMIN_MENU', 'HQ_ADMIN_MENU', 'BRANCH_SUPER_ADMIN_MENU', 'CONSULTANT_MENU', 'CLIENT_MENU'],
-        features: ['ALL_FEATURES']
-    },
-    
-    // BRANCH_MANAGER (지점장) - 기존 호환성
-    BRANCH_MANAGER: {
+    STAFF: {
         menuGroups: ['COMMON_MENU', 'ADMIN_MENU'],
         features: [
             'VIEW_OWN_PROFILE',
@@ -143,24 +74,6 @@ const MENU_PERMISSIONS = {
             'MANAGE_SCHEDULES',
             'VIEW_RATINGS',
             'MANAGE_BRANCH_SETTINGS'
-        ]
-    },
-    
-    // HQ_SUPER_ADMIN (본사 최고관리자) - 기존 호환성
-    HQ_SUPER_ADMIN: {
-        menuGroups: ['COMMON_MENU', 'HQ_ADMIN_MENU'],
-        features: [
-            'VIEW_OWN_PROFILE',
-            'EDIT_OWN_PROFILE',
-            'VIEW_ALL_CONSULTATIONS',
-            'MANAGE_ALL_USERS',
-            'MANAGE_ALL_CONSULTANTS',
-            'MANAGE_ALL_CLIENTS',
-            'VIEW_ALL_STATISTICS',
-            'MANAGE_ALL_SCHEDULES',
-            'VIEW_ALL_RATINGS',
-            'MANAGE_ALL_BRANCHES',
-            'MANAGE_SYSTEM_SETTINGS'
         ]
     }
 };
@@ -205,11 +118,6 @@ export const hasMenuAccess = async (menuGroup) => {
             return false;
         }
         
-        // HQ_MASTER는 모든 메뉴 접근 가능
-        if (user.role === 'HQ_MASTER') {
-            return true;
-        }
-        
         // 필요한 권한 중 하나라도 있으면 접근 가능
         const hasRequiredPermission = requiredPermissions.some(permission => 
             userPermissions.includes(permission)
@@ -244,11 +152,6 @@ export const hasFeature = (feature) => {
     if (!permissions) {
         console.warn(`⚠️ 지원되지 않는 역할: ${user.role}`);
         return false;
-    }
-    
-    // HQ_MASTER는 모든 기능 접근 가능
-    if (permissions.features.includes('ALL_FEATURES')) {
-        return true;
     }
     
     return permissions.features.includes(feature);
@@ -340,12 +243,6 @@ export const validateMenuPath = (path) => {
         /^\/consultation-report$/,
         /^\/admin\/.*$/,
         /^\/super_admin\/.*$/,
-        /^\/hq_admin\/.*$/,
-        /^\/super_hq_admin\/.*$/,
-        /^\/hq_master\/.*$/,  // 본사 총관리자 경로 추가
-        /^\/hq\/.*$/,         // 본사 관리자 경로 추가
-        /^\/branch_super_admin\/.*$/,
-        /^\/branch_manager\/.*$/,
         /^\/consultant\/.*$/,
         /^\/client\/.*$/,
         /^\/erp\/.*$/,

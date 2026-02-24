@@ -86,7 +86,7 @@ const ConsultationHistory = () => {
           userId: user.id,
           userRole: USER_ROLES.CONSULTANT
         });
-      } else if (user.role === USER_ROLES.ADMIN || user.role === USER_ROLES.BRANCH_SUPER_ADMIN) {
+      } else if (user.role === USER_ROLES.ADMIN || user.role === USER_ROLES.STAFF) {
         response = await apiGet(DASHBOARD_API.ADMIN_STATS, {
           userRole: USER_ROLES.ADMIN
         });

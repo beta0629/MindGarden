@@ -25,44 +25,35 @@ const CACHE_DURATION = 10 * 60 * 1000; // 10분 캐시
 /**
  * @returns {Promise<Array>} 역할 코드 목록
  */
+const ALLOWED_ROLES = ['ADMIN', 'STAFF', 'CONSULTANT', 'CLIENT'];
+
+const filterToAllowedRoles = (list) => (list || []).filter(
+    code => code && code.codeValue && ALLOWED_ROLES.includes(code.codeValue)
+);
+
 export const getRoleCodesFromCommonCode = async (useCache = true) => {
     try {
-        // 캐시 확인
         if (useCache && roleCodeCache.has('roles')) {
             const cached = roleCodeCache.get('roles');
             if (Date.now() - cached.timestamp < CACHE_DURATION) {
-                return cached.data;
+                return filterToAllowedRoles(cached.data);
             }
         }
-
-        // 공통코드에서 역할 조회 (USER_ROLE 또는 ROLE 그룹)
         let roleCodes = [];
-        
-        // USER_ROLE 그룹 시도
+
         try {
-            roleCodes = await getCommonCodes('USER_ROLE');
+            roleCodes = await getCommonCodes('ROLE');
         } catch (e) {
-            console.warn('USER_ROLE 그룹 조회 실패, ROLE 그룹 시도:', e);
+            console.warn('ROLE 그룹 조회 실패:', e);
         }
 
-        // ROLE 그룹 시도 (USER_ROLE이 없을 경우)
-        if (!roleCodes || roleCodes.length === 0) {
-            try {
-                roleCodes = await getCommonCodes('ROLE');
-            } catch (e) {
-                console.warn('ROLE 그룹 조회 실패:', e);
-            }
+        const filtered = filterToAllowedRoles(roleCodes);
+
+        if (useCache && filtered.length > 0) {
+            roleCodeCache.set('roles', { data: filtered, timestamp: Date.now() });
         }
 
-        // 캐시에 저장
-        if (useCache && roleCodes && roleCodes.length > 0) {
-            roleCodeCache.set('roles', {
-                data: roleCodes,
-                timestamp: Date.now()
-            });
-        }
-
-        return roleCodes || [];
+        return filtered;
     } catch (error) {
         console.error('역할 코드 조회 실패:', error);
         return [];
@@ -115,33 +106,16 @@ export const getRoleKoreanName = async (roleCode) => {
 /**
  * @returns {Promise<Array<string>>} 관리자 역할 코드 목록
  */
+/** 관리자 역할은 ADMIN만 (4역할 단순화) */
 export const getAdminRoleCodes = async () => {
     try {
         const roleCodes = await getRoleCodesFromCommonCode();
-        // extraData에서 권한 레벨 확인하거나, 코드명으로 판단
         return roleCodes
-            .filter(code => {
-                const codeValue = code.codeValue || '';
-                const extraData = code.extraData ? 
-                    (typeof code.extraData === 'string' ? JSON.parse(code.extraData) : code.extraData) : 
-                    {};
-                
-                // extraData에 권한 레벨이 있으면 사용
-                if (extraData.permissionLevel) {
-                    return extraData.permissionLevel >= 3; // 관리자 레벨
-                }
-                
-                // 코드명으로 판단 (하위 호환성)
-                return codeValue.includes('ADMIN') || 
-                       codeValue.includes('HQ') || 
-                       codeValue.includes('MANAGER') ||
-                       codeValue === 'ADMIN';
-            })
+            .filter(code => (code.codeValue || '') === 'ADMIN')
             .map(code => code.codeValue);
     } catch (error) {
         console.error('관리자 역할 코드 조회 실패:', error);
-        // 폴백: 기본 관리자 역할
-        return ['ADMIN', 'BRANCH_ADMIN', 'BRANCH_SUPER_ADMIN', 'HQ_ADMIN', 'SUPER_HQ_ADMIN', 'HQ_MASTER'];
+        return ['ADMIN'];
     }
 };
 

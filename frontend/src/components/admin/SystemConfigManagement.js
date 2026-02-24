@@ -59,7 +59,7 @@ const SystemConfigManagement = () => {
             return;
         }
         
-        const allowedRoles = ['ADMIN', 'BRANCH_ADMIN', 'BRANCH_MANAGER', 'BRANCH_SUPER_ADMIN', 'HQ_ADMIN', 'SUPER_HQ_ADMIN', 'HQ_MASTER'];
+        const allowedRoles = ['ADMIN', 'STAFF'];
         if (!allowedRoles.includes(user.role)) {
             notificationManager.show('접근 권한이 없습니다.', 'error');
             return;

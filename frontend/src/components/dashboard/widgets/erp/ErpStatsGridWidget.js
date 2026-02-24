@@ -92,17 +92,17 @@ const ErpStatsGridWidget = ({ widget, user }) => {
     isEmpty,
     refresh
   } = useWidget(widgetWithDataSource, user, {
-    immediate: RoleUtils.isAdmin(user) || RoleUtils.isConsultant(user) || RoleUtils.hasRole(user, USER_ROLES.HQ_MASTER),
+    immediate: RoleUtils.isAdmin(user) || RoleUtils.isConsultant(user) || RoleUtils.isAdmin(user),
     cache: true,
     retryCount: 3
   });
 
   // ERP 접근 권한 체크 (상담사 이상)
-  if (!RoleUtils.isConsultant(user) && !RoleUtils.isAdmin(user) && !RoleUtils.hasRole(user, USER_ROLES.HQ_MASTER)) {
+  if (!RoleUtils.isConsultant(user) && !RoleUtils.isAdmin(user) && !RoleUtils.isAdmin(user)) {
     return null;
   }
 
-  if (!RoleUtils.isAdmin(user) && !RoleUtils.isConsultant(user) && !RoleUtils.hasRole(user, USER_ROLES.HQ_MASTER)) {
+  if (!RoleUtils.isAdmin(user) && !RoleUtils.isConsultant(user) && !RoleUtils.isAdmin(user)) {
     return null;
   }
 

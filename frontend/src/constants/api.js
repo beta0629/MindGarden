@@ -56,6 +56,7 @@ export const AUTH_API = {
 // 권한 관련 API (표준 경로: /api/v1/permissions)
 export const PERMISSIONS_API = {
   MY_PERMISSIONS: '/api/v1/permissions/my-permissions',
+  MY_GROUPS: '/api/v1/permissions/groups/my',
   CHECK_PERMISSION: '/api/v1/permissions/check-permission',
   ROLE_PERMISSIONS: '/api/v1/permissions/role',
   PERMISSION_ROLES: '/api/v1/permissions/permission',

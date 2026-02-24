@@ -305,9 +305,9 @@ public class DynamicPermissionServiceImpl implements DynamicPermissionService {
         log.info("권한 캐시 새로고침");
         clearPermissionCache();
 
-        // 주요 권한들을 미리 캐시에 로드 (표준화 2025-12-05: 표준 관리자 역할만 사용)
-        List<String> commonRoles = List.of(UserRole.ADMIN.name(), UserRole.TENANT_ADMIN.name(),
-                UserRole.PRINCIPAL.name(), UserRole.OWNER.name());
+        // 주요 권한들을 미리 캐시에 로드 (ADMIN, STAFF, CONSULTANT, CLIENT)
+        List<String> commonRoles = List.of(UserRole.ADMIN.name(), UserRole.STAFF.name(),
+                UserRole.CONSULTANT.name(), UserRole.CLIENT.name());
         List<String> commonPermissions =
                 List.of("ACCESS_ERP_DASHBOARD", "ACCESS_INTEGRATED_FINANCE",
                         "ACCESS_ADMIN_DASHBOARD", "MANAGE_USERS", "VIEW_ALL_BRANCHES");
@@ -438,9 +438,7 @@ public class DynamicPermissionServiceImpl implements DynamicPermissionService {
     public boolean canRegisterScheduler(UserRole userRole) {
         try {
             // 관리자 및 사무원만 스케줄 등록 가능
-            if (userRole == UserRole.ADMIN || userRole == UserRole.TENANT_ADMIN
-                    || userRole == UserRole.PRINCIPAL || userRole == UserRole.OWNER
-                    || userRole == UserRole.STAFF) {
+            if (userRole != null && (userRole.isAdmin() || userRole.isStaff())) {
                 log.debug("관리자/사무원 역할: 스케줄러 등록 권한 허용, 역할={}", userRole);
                 return true;
             }

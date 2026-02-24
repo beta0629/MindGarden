@@ -198,9 +198,7 @@ const HQBranchManagement = () => {
                         </p>
                         <div className="user-info">
                             <span className="user-role">
-                                {RoleUtils.hasRole(user, USER_ROLES.HQ_MASTER) ? 'HQ 마스터' : 
-                                 RoleUtils.hasRole(user, USER_ROLES.SUPER_HQ_ADMIN) ? '수퍼 본사 관리자' : 
-                                 '본사 관리자'}
+                                {RoleUtils.isAdmin(user) ? '관리자' : RoleUtils.hasRole(user, USER_ROLES.STAFF) ? '사무원' : user?.role || '-'}
                             </span>
                         </div>
                     </div>

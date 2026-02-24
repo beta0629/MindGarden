@@ -5207,14 +5207,13 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         
         switch (userRole) {
             case ADMIN:
-            case TENANT_ADMIN:
-            case PRINCIPAL:
-            case OWNER:
-                return "Director"; // 원장 (실제 TenantRole name_en)
+                return "Director";
             case CONSULTANT:
-                return "Counselor"; // 상담사 (실제 TenantRole name_en)
+                return "Counselor";
             case CLIENT:
-                return "Client"; // 내담자
+                return "Client";
+            case STAFF:
+                return "Staff";
             default:
                 return "Client";
         }

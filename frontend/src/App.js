@@ -393,7 +393,7 @@ function AppContent() {
             <Route
               path="/admin"
               element={
-                <ProtectedRoute requiredRoles={[USER_ROLES.ADMIN, USER_ROLES.HQ_MASTER, USER_ROLES.BRANCH_SUPER_ADMIN, USER_ROLES.HQ_ADMIN, USER_ROLES.SUPER_HQ_ADMIN]}>
+                <ProtectedRoute requiredRoles={[USER_ROLES.ADMIN]}>
                   <AdminLayout />
                 </ProtectedRoute>
               }

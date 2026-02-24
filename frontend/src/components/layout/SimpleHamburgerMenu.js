@@ -61,12 +61,8 @@ const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
           'CONSULTANT_MENU': ['CONSULTATION_RECORD_VIEW', 'SCHEDULE_MANAGE']
         };
         
-        // 관리자 역할 체크 (ADMIN, BRANCH_SUPER_ADMIN, HQ_ADMIN, HQ_MASTER 등)
-        const isAdmin = user?.role === 'ADMIN' || 
-                       user?.role === 'BRANCH_SUPER_ADMIN' || 
-                       user?.role === 'HQ_ADMIN' || 
-                       user?.role === 'HQ_MASTER' ||
-                       user?.role === 'SUPER_ADMIN';
+        // 관리자 여부: 서버에서 받은 role 기준 (동적 권한)
+        const isAdmin = user?.role === 'ADMIN';
         
         console.log('🔍 사용자 역할 및 권한 체크:', {
           role: user?.role,

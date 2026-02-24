@@ -39,32 +39,23 @@ const CommonCodeManagement = () => {
     const { canManageCodeGroup } = usePermissions();
     
     const hasErpCodePermission = () => {
-        return RoleUtils.hasRole(user, USER_ROLES.BRANCH_SUPER_ADMIN) ||
-               RoleUtils.hasRole(user, USER_ROLES.HQ_MASTER);
+        return RoleUtils.isAdmin(user);
     };
     
     const hasFinancialCodePermission = () => {
-        return RoleUtils.hasRole(user, USER_ROLES.BRANCH_SUPER_ADMIN) ||
-               RoleUtils.hasRole(user, USER_ROLES.HQ_MASTER);
+        return RoleUtils.isAdmin(user);
     };
     
     const hasHqCodePermission = () => {
-        return RoleUtils.hasRole(user, USER_ROLES.HQ_MASTER) ||
-               RoleUtils.hasRole(user, USER_ROLES.SUPER_HQ_ADMIN) ||
-               RoleUtils.hasRole(user, USER_ROLES.HQ_ADMIN);
+        return RoleUtils.isAdmin(user);
     };
     
     const hasBranchCodePermission = () => {
-        return RoleUtils.hasRole(user, USER_ROLES.BRANCH_SUPER_ADMIN) ||
-               RoleUtils.hasRole(user, USER_ROLES.HQ_MASTER);
+        return RoleUtils.isAdmin(user);
     };
     
     const hasGeneralCodePermission = () => {
-        return RoleUtils.hasRole(user, USER_ROLES.ADMIN) ||
-               RoleUtils.hasRole(user, USER_ROLES.BRANCH_SUPER_ADMIN) ||
-               RoleUtils.hasRole(user, USER_ROLES.HQ_MASTER) ||
-               RoleUtils.hasRole(user, USER_ROLES.SUPER_HQ_ADMIN) ||
-               RoleUtils.hasRole(user, USER_ROLES.HQ_ADMIN);
+        return RoleUtils.isAdmin(user) || RoleUtils.hasRole(user, USER_ROLES.STAFF);
     };
     
     const isErpCodeGroup = (codeGroup) => {

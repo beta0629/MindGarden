@@ -48,11 +48,7 @@ public class AccountingController extends BaseApiController {
         }
 
         // 관리자 역할이면 항상 허용 (모든 환경)
-        if (currentUser.getRole() != null
-                && (currentUser.getRole().isAdmin() || currentUser.getRole() == UserRole.ADMIN
-                        || currentUser.getRole() == UserRole.TENANT_ADMIN
-                        || currentUser.getRole() == UserRole.PRINCIPAL
-                        || currentUser.getRole() == UserRole.OWNER)) {
+        if (currentUser.getRole() != null && currentUser.getRole().isAdmin()) {
             log.debug("관리자 역할로 ERP 접근 허용, 사용자={}, 역할={}", currentUser.getEmail(),
                     currentUser.getRole());
             return null; // 권한 있음

@@ -3392,8 +3392,7 @@ public class AdminController extends BaseApiController {
             List<CommonCode> roleCodes = commonCodeService.getActiveCommonCodesByGroup("ROLE");
             if (roleCodes == null || roleCodes.isEmpty()) {
                 // 폴백: 표준 관리자 역할만 체크 (브랜치/HQ 개념 제거)
-                return role == UserRole.ADMIN || role == UserRole.TENANT_ADMIN
-                        || role == UserRole.PRINCIPAL || role == UserRole.OWNER;
+                return role != null && role.isAdmin();
             }
             // 공통코드에서 관리자 역할인지 확인
             String roleName = role.name();
@@ -3404,8 +3403,7 @@ public class AdminController extends BaseApiController {
         } catch (Exception e) {
             log.warn("공통코드에서 관리자 역할 조회 실패, 폴백 사용: {}", role, e);
             // 폴백: 표준 관리자 역할만 체크
-            return role == UserRole.ADMIN || role == UserRole.TENANT_ADMIN
-                    || role == UserRole.PRINCIPAL || role == UserRole.OWNER;
+            return role != null && role.isAdmin();
         }
     }
 

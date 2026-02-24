@@ -52,19 +52,12 @@ const loadRoleData = async () => {
 /**
  * Fallback 역할 데이터 (API 실패 시 사용)
  */
-const getFallbackRoleData = () => {
-    return {
-        'CLIENT': { displayName: '내담자', displayNameEn: 'Client' },
-        'CONSULTANT': { displayName: '상담사', displayNameEn: 'Consultant' },
-        'ADMIN': { displayName: '지점관리자', displayNameEn: 'Admin' },
-        'BRANCH_SUPER_ADMIN': { displayName: '본점수퍼어드민', displayNameEn: 'Branch Super Admin' },
-        'BRANCH_MANAGER': { displayName: '지점장', displayNameEn: 'Branch Manager' },
-        'HQ_ADMIN': { displayName: '헤드쿼터어드민', displayNameEn: 'HQ Admin' },
-        'SUPER_HQ_ADMIN': { displayName: '본사고급관리자', displayNameEn: 'Super HQ Admin' },
-        'HQ_MASTER': { displayName: '본사총관리자', displayNameEn: 'HQ Master' },
-        'HQ_SUPER_ADMIN': { displayName: '본사최고관리자', displayNameEn: 'HQ Super Admin' }
-    };
-};
+const getFallbackRoleData = () => ({
+    CLIENT: { displayName: '내담자', displayNameEn: 'Client' },
+    CONSULTANT: { displayName: '상담사', displayNameEn: 'Consultant' },
+    ADMIN: { displayName: '관리자', displayNameEn: 'Admin' },
+    STAFF: { displayName: '사무원', displayNameEn: 'Staff' }
+});
 
 /**
  * 역할의 한국어 표시명 가져오기
@@ -75,8 +68,7 @@ export const getRoleDisplayName = async (role, branchName = null) => {
         const roleInfo = roleData[role];
         
         if (roleInfo && roleInfo.displayName) {
-            // 지점 정보가 있는 경우 추가 (표준화 2025-12-05: 상수 활용)
-            if (branchName && (role === USER_ROLES.ADMIN || role === USER_ROLES.BRANCH_MANAGER || role === USER_ROLES.BRANCH_SUPER_ADMIN)) {
+            if (branchName && role === USER_ROLES.ADMIN) {
                 return `${roleInfo.displayName} (${branchName})`;
             }
             return roleInfo.displayName;
@@ -98,8 +90,7 @@ export const getRoleDisplayNameEn = async (role, branchName = null) => {
         const roleInfo = roleData[role];
         
         if (roleInfo && roleInfo.displayNameEn) {
-            // 지점 정보가 있는 경우 추가 (표준화 2025-12-05: 상수 활용)
-            if (branchName && (role === USER_ROLES.ADMIN || role === USER_ROLES.BRANCH_MANAGER || role === USER_ROLES.BRANCH_SUPER_ADMIN)) {
+            if (branchName && role === USER_ROLES.ADMIN) {
                 return `${roleInfo.displayNameEn} (${branchName})`;
             }
             return roleInfo.displayNameEn;

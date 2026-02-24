@@ -59,8 +59,6 @@ public class DashboardRedirectUtil {
                 return "/consultant/dashboard";
             case STAFF:
                 return "/staff/dashboard";
-            case PARENT:
-                return "/parent/dashboard";
             default:
                 return "/client/dashboard";
         }
@@ -94,8 +92,6 @@ public class DashboardRedirectUtil {
                 return "상담사 대시보드";
             case STAFF:
                 return "사무원 대시보드";
-            case PARENT:
-                return "학부모 대시보드";
             default:
                 return "기본 대시보드";
         }

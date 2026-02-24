@@ -601,7 +601,7 @@ const CommonDashboard = ({ user: propUser }) => {
         } else if (RoleUtils.isConsultant(dashboardUser)) {
           console.log('📊 상담사 상담 데이터 로드 시작');
           await loadConsultantConsultationData(dashboardUser.id);
-        } else if (RoleUtils.isAdmin(dashboardUser) || RoleUtils.hasRole(dashboardUser, USER_ROLES.HQ_MASTER)) {
+        } else if (RoleUtils.isAdmin(dashboardUser) || RoleUtils.isAdmin(dashboardUser)) {
           console.log('📊 관리자 시스템 데이터 로드 시작');
           await loadAdminSystemData();
         }
@@ -966,7 +966,7 @@ const CommonDashboard = ({ user: propUser }) => {
         )}
         
         {/* 요약 패널 섹션 (상담사/관리자 전용) - 위젯으로 업그레이드 */}
-        {(RoleUtils.isConsultant(user) || RoleUtils.isAdmin(user) || RoleUtils.hasRole(user, USER_ROLES.HQ_MASTER)) && (
+        {(RoleUtils.isConsultant(user) || RoleUtils.isAdmin(user) || RoleUtils.isAdmin(user)) && (
           <SummaryPanelsWidget 
             widget={{ 
               id: 'summary-panels-widget',
@@ -983,7 +983,7 @@ const CommonDashboard = ({ user: propUser }) => {
         )}
 
         {/* 기존 SummaryPanels (비교용 - 개발 후 제거) */}
-        {process.env.NODE_ENV === 'development' && (RoleUtils.isConsultant(user) || RoleUtils.isAdmin(user) || RoleUtils.hasRole(user, USER_ROLES.HQ_MASTER)) && (
+        {process.env.NODE_ENV === 'development' && (RoleUtils.isConsultant(user) || RoleUtils.isAdmin(user) || RoleUtils.isAdmin(user)) && (
           <div className="dev-placeholder">
             <small>기존 SummaryPanels (비교용)</small>
             <SummaryPanels 

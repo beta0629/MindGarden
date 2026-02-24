@@ -48,7 +48,7 @@ const SummaryPanelsWidget = ({ widget, user }) => {
         url: '/api/v1/schedules',
         params: { ...baseConfig.params, userRole: 'CONSULTANT' }
       };
-    } else if (RoleUtils.isAdmin(user) || RoleUtils.hasRole(user, USER_ROLES.HQ_MASTER)) {
+    } else if (RoleUtils.isAdmin(user) || RoleUtils.isAdmin(user)) {
       return {
         ...baseConfig,
         url: '/api/v1/schedules/admin/statistics',
@@ -77,13 +77,13 @@ const SummaryPanelsWidget = ({ widget, user }) => {
     isEmpty,
     refresh
   } = useWidget(widgetWithDataSource, user, {
-    immediate: RoleUtils.isConsultant(user) || RoleUtils.isAdmin(user) || RoleUtils.hasRole(user, USER_ROLES.HQ_MASTER),
+    immediate: RoleUtils.isConsultant(user) || RoleUtils.isAdmin(user) || RoleUtils.isAdmin(user),
     cache: true,
     retryCount: 3
   });
 
   // 상담사, 관리자, HQ_MASTER만 표시
-  if (!RoleUtils.isConsultant(user) && !RoleUtils.isAdmin(user) && !RoleUtils.hasRole(user, USER_ROLES.HQ_MASTER)) {
+  if (!RoleUtils.isConsultant(user) && !RoleUtils.isAdmin(user) && !RoleUtils.isAdmin(user)) {
     return null;
   }
 

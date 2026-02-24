@@ -221,10 +221,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         switch (user.getRole()) {
             case ADMIN:
-            case TENANT_ADMIN:
-            case PRINCIPAL:
-            case OWNER:
-                // 표준 관리자 역할
                 authorities.add(new SimpleGrantedAuthority(SecurityRoleConstants.ROLE_ADMIN));
                 break;
             case STAFF:

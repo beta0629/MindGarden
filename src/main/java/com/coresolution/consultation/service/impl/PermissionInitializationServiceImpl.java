@@ -195,29 +195,17 @@ public class PermissionInitializationServiceImpl implements PermissionInitializa
             log.error("❌ ADMIN 권한 매핑 실패 (계속 진행): {}", e.getMessage(), e);
         }
         
+        // STAFF: 관리 메뉴 접근, ERP 제외 (원장이 권한 그룹으로 추가 부여 가능)
+        List<String> staffPermissions = List.of(
+            "MENU_GROUP_COMMON", "MENU_GROUP_ADMIN",
+            "API_ACCESS_AUTH", "API_ACCESS_MENU", "API_ACCESS_USER", "VIEW_OWN_PROFILE"
+        );
         try {
-            createRolePermissions(UserRole.TENANT_ADMIN.name(), adminPermissions); // 테넌트 관리자는 ADMIN과 동일 권한
+            createRolePermissions(UserRole.STAFF.name(), staffPermissions);
         } catch (Exception e) {
-            log.error("❌ TENANT_ADMIN 권한 매핑 실패 (계속 진행): {}", e.getMessage(), e);
+            log.error("❌ STAFF 권한 매핑 실패 (계속 진행): {}", e.getMessage(), e);
         }
         
-        try {
-            createRolePermissions(UserRole.PRINCIPAL.name(), adminPermissions); // 원장은 ADMIN과 동일 권한
-        } catch (Exception e) {
-            log.error("❌ PRINCIPAL 권한 매핑 실패 (계속 진행): {}", e.getMessage(), e);
-        }
-        
-        try {
-            createRolePermissions(UserRole.OWNER.name(), hqMasterPermissions); // 사장은 모든 권한
-        } catch (Exception e) {
-            log.error("❌ OWNER 권한 매핑 실패 (계속 진행): {}", e.getMessage(), e);
-        }
-        
-        // 표준화 2025-12-05: 레거시 역할 제거
-        // 레거시 역할은 더 이상 사용하지 않으므로 권한 설정도 제거
-        // 하위 호환성이 필요한 경우 ADMIN 역할에 통합된 권한이 적용됨
-        
-        // 일반 역할 권한 설정 (각각 독립적으로 실행하여 타임아웃 방지)
         try {
             createRolePermissions(UserRole.CONSULTANT.name(), consultantPermissions);
         } catch (Exception e) {

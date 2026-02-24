@@ -111,7 +111,7 @@ const QuickActions = ({ user }) => {
           </button>
           
           {/* 관리자 전용 액션 */}
-          {(RoleUtils.isAdmin(user) || RoleUtils.hasRole(user, USER_ROLES.HQ_MASTER) || RoleUtils.hasRole(user, USER_ROLES.BRANCH_SUPER_ADMIN)) && (
+          {RoleUtils.isAdmin(user) && (
             <>
               <button className="quick-action-btn" onClick={goToMappingManagement}>
                 <Link2 size={24} />

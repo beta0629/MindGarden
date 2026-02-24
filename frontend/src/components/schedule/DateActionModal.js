@@ -31,7 +31,7 @@ const DateActionModal = ({
     });
   };
 
-  const canManageSchedule = ['ADMIN', 'BRANCH_SUPER_ADMIN', 'HQ_MASTER', 'SUPER_HQ_ADMIN'].includes(userRole);
+  const canManageSchedule = userRole === 'ADMIN';
 
   return (
     <UnifiedModal

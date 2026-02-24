@@ -265,10 +265,6 @@ public class ConsultationMenuServiceImpl implements com.coresolution.consultatio
         
         switch (userRole) {
             case ADMIN:
-            case TENANT_ADMIN:
-            case PRINCIPAL:
-            case OWNER:
-                // 표준 관리자 역할
                 menuGroups.add("ADMIN_MENU");
                 break;
             case CONSULTANT:
@@ -279,9 +275,6 @@ public class ConsultationMenuServiceImpl implements com.coresolution.consultatio
                 break;
             case STAFF:
                 menuGroups.add("STAFF_MENU");
-                break;
-            case PARENT:
-                menuGroups.add("PARENT_MENU");
                 break;
             default:
                 log.warn("⚠️ 지원되지 않는 역할: {}", userRole);

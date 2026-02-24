@@ -303,7 +303,7 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
 
     const loadSchedules = useCallback(async () => {
         // 관리자는 userId 없이도 전체 조회 가능
-        const isAdmin = userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN' || userRole === 'HQ_MASTER' || userRole === 'SUPER_HQ_ADMIN';
+        const isAdmin = userRole === 'ADMIN';
         
         // 관리자가 아니면서 userId가 없으면 로드하지 않음
         if (!isAdmin && !userId) {
@@ -324,7 +324,7 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
                 console.log('🔍 상담사 자신의 스케줄만 조회:', userId);
             }
             // 관리자는 관리자 API 사용
-            else if (userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN' || userRole === 'HQ_MASTER' || userRole === 'SUPER_HQ_ADMIN') {
+            else if (userRole === 'ADMIN') {
                 url = '/api/v1/schedules/admin';
                 if (selectedConsultantId && selectedConsultantId !== '') {
                     url += `?consultantId=${selectedConsultantId}`;
@@ -563,7 +563,7 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
         // 표준화 2025-12-08: 성능 개선 - 병렬 로딩 적용
         const loadData = async () => {
             const promises = [];
-            const isAdmin = userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN' || userRole === 'HQ_MASTER' || userRole === 'SUPER_HQ_ADMIN';
+            const isAdmin = userRole === 'ADMIN';
 
             // 스케줄 로드 (필수)
             // 관리자는 userId 없이도 로드 가능
@@ -612,7 +612,7 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
         }
         
         // 관리자는 스케줄/휴가 선택 모달 표시
-        if (userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN' || userRole === 'HQ_MASTER' || userRole === 'SUPER_HQ_ADMIN') {
+        if (userRole === 'ADMIN') {
             if (isPastDate) {
                 notificationManager.warning('과거 날짜에는 새로운 스케줄을 등록할 수 없습니다. 기존 스케줄을 클릭하여 조회하실 수 있습니다.');
                 return;

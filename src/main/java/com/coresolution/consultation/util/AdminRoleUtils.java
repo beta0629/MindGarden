@@ -25,12 +25,7 @@ public class AdminRoleUtils {
      * @deprecated UserRole.isAdmin() 메서드를 직접 사용하세요.
      */
     @Deprecated
-    public static final Set<UserRole> ADMIN_ROLES = Set.of(
-        UserRole.ADMIN,
-        UserRole.TENANT_ADMIN,
-        UserRole.PRINCIPAL,
-        UserRole.OWNER
-    );
+    public static final Set<UserRole> ADMIN_ROLES = Set.of(UserRole.ADMIN);
     
     /**
      * 사용자가 관리자 역할인지 확인

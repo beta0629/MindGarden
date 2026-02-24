@@ -3,7 +3,6 @@ import { CONSTANTS } from '../constants/magicNumbers';
 import { sessionManager } from '../utils/sessionManager';
 import { authAPI } from '../utils/ajax';
 import { SESSION_CHECK_INTERVAL } from '../constants/session';
-import { RoleUtils, USER_ROLES } from '../constants/roles';
 
 // 세션 상태 타입 정의
 const SessionState = {
@@ -444,16 +443,19 @@ export const SessionProvider = ({ children }) => {
     setDuplicateLoginModal,
     // setBranchMappingModal, handleBranchMappingSuccess 제거됨 - 브랜치 코드 제거 정책
     
-    // 유틸리티
+    // 유틸리티 (서버에서 받은 role, permissionGroupCodes 기준)
     hasRole: (role) => state.user?.role === role,
-    hasAnyRole: (roles) => roles.includes(state.user?.role),
-    isAdmin: () => RoleUtils.isAdmin(state.user),
-    isSuperAdmin: () => state.user?.role === USER_ROLES.BRANCH_SUPER_ADMIN || 
-                        state.user?.role === USER_ROLES.SUPER_HQ_ADMIN,
-    isConsultant: () => RoleUtils.isConsultant(state.user),
-    isClient: () => RoleUtils.isClient(state.user),
-    
-    // 동적 권한 체크 (백엔드 API 호출)
+    hasAnyRole: (roles) => Array.isArray(roles) && roles.includes(state.user?.role),
+    isAdmin: () => state.user?.role === 'ADMIN',
+    isConsultant: () => state.user?.role === 'CONSULTANT',
+    isClient: () => state.user?.role === 'CLIENT',
+    isStaff: () => state.user?.role === 'STAFF',
+    /** 서버에서 받은 권한 그룹 코드 목록으로 그룹 코드 보유 여부 확인 (동적 권한) */
+    hasPermissionGroup: (groupCode) => Array.isArray(state.user?.permissionGroupCodes) &&
+      state.user.permissionGroupCodes.includes(groupCode),
+    /** 권한 그룹 코드 목록 (API current-user에서 내려준 값) */
+    permissionGroupCodes: state.user?.permissionGroupCodes ?? [],
+    /** 단일 권한 코드 체크는 백엔드 API 호출 (기존 호환) */
     hasPermission: async (permission) => {
       try {
         const { apiPost } = await import('../utils/ajax');

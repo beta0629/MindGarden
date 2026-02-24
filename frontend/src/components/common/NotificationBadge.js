@@ -63,22 +63,13 @@ const NotificationBadge = ({variant = 'default',
     if (!user?.role) {console.warn('사용자 역할이 없습니다.');
       return;}
     
-    const routes = {'BRANCH_SUPER_ADMIN': {'message': '/admin/messages',
-        'system': '/notifications'},
-      'HQ_MASTER': {'message': '/admin/messages',
-        'system': '/notifications'},
-      'CONSULTANT': {'message': '/consultant/messages',
-        'system': '/notifications'},
-      'CLIENT': {'message': '/client/messages',
-        'system': '/notifications'},
-      'ADMIN': {'message': '/admin/messages',
-        'system': '/notifications'},
-      'BRANCH_ADMIN': {'message': '/admin/messages',
-        'system': '/notifications'},
-      'SUPER_ADMIN': {'message': '/admin/messages',
-        'system': '/notifications'}};
-    
-    const userRoutes = routes[user.role];
+    const routes = {
+      ADMIN: { message: '/admin/messages', system: '/notifications' },
+      STAFF: { message: '/admin/messages', system: '/notifications' },
+      CONSULTANT: { message: '/consultant/messages', system: '/notifications' },
+      CLIENT: { message: '/client/messages', system: '/notifications' }
+    };
+    const userRoutes = routes[user.role] || routes.CLIENT;
     console.log(`🔔 사용자 역할: ${user.role}, 타입: ${type}`);
     console.log(`🔔 사용 가능한 라우트:`, userRoutes);
     

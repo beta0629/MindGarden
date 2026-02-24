@@ -214,25 +214,10 @@ public class SessionUtils implements ApplicationContextAware {
      * 
      * 표준 관리자 역할만 확인 (브랜치/본사 개념 제거)
      * 
-     * 표준 역할 (TENANT_ROLE_SYSTEM_STANDARD.md 참조):
-     * - ADMIN: 기본 관리자
-     * - TENANT_ADMIN: 테넌트 관리자
-     * - PRINCIPAL: 원장
-     * - OWNER: 사장
-     * 
-     * 제거된 레거시 역할:
-     * - BRANCH_ADMIN, BRANCH_SUPER_ADMIN, BRANCH_MANAGER (브랜치 개념 제거)
-     * - HQ_ADMIN, SUPER_HQ_ADMIN, HQ_MASTER, HQ_SUPER_ADMIN (본사 개념 제거)
+     * 역할: ADMIN, STAFF, CONSULTANT, CLIENT (ADMIN만 관리자)
      */
     public static boolean isAdmin(HttpSession session) {
         UserRole role = getRole(session);
-        if (role == null) {
-            return false;
-        }
-        // 표준 관리자 역할만 (브랜치/본사 레거시 역할 제외) (표준화 2025-12-05: enum 활용)
-        return role == UserRole.ADMIN || 
-               role == UserRole.TENANT_ADMIN ||
-               role == UserRole.PRINCIPAL ||
-               role == UserRole.OWNER;
+        return role != null && role.isAdmin();
     }
 }

@@ -115,20 +115,15 @@ public class UserRoleQueryService {
         
         switch (userRole) {
             case ADMIN:
-            case TENANT_ADMIN:
-            case PRINCIPAL:
-            case OWNER:
                 return "관리자";
             case CONSULTANT:
                 return "상담사";
             case STAFF:
                 return "사무원";
-            case PARENT:
-                return "학부모";
             case CLIENT:
                 return "내담자";
             default:
-                return "관리자"; // 기본값
+                return "관리자";
         }
     }
     

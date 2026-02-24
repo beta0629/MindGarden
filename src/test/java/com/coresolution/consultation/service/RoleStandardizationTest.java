@@ -2,18 +2,15 @@ package com.coresolution.consultation.service;
 
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.CommonCode;
-import com.coresolution.consultation.service.CommonCodeService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.when;
 
 /**
  * 역할 시스템 표준화 테스트
@@ -22,9 +19,6 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 @DisplayName("역할 시스템 표준화 테스트")
 class RoleStandardizationTest {
-
-    @Mock
-    private CommonCodeService commonCodeService;
 
     @Test
     @DisplayName("관리자 역할 체크 - 공통코드에서 ADMIN 역할 조회")
@@ -38,9 +32,7 @@ class RoleStandardizationTest {
             .build();
         roleCodes.add(adminCode);
 
-        when(commonCodeService.getActiveCommonCodesByGroup("ROLE")).thenReturn(roleCodes);
-
-        // When: ADMIN 역할 체크
+        // When: ADMIN 역할 체크 (roleCodes 직접 전달)
         boolean isAdmin = isAdminRoleFromCommonCode(UserRole.ADMIN, roleCodes);
 
         // Then: 관리자로 인식되어야 함
@@ -48,24 +40,13 @@ class RoleStandardizationTest {
     }
 
     @Test
-    @DisplayName("관리자 역할 체크 - 공통코드에서 PRINCIPAL 역할 조회")
-    void testIsAdminRoleFromCommonCode_Principal() {
-        // Given: 공통코드에 PRINCIPAL 역할이 있고 isAdmin=true인 경우
-        List<CommonCode> roleCodes = new ArrayList<>();
-        CommonCode principalCode = CommonCode.builder()
-            .codeGroup("ROLE")
-            .codeValue("PRINCIPAL")
-            .extraData("{\"isAdmin\": true, \"roleType\": \"ADMIN\", \"isDefault\": true}")
-            .build();
-        roleCodes.add(principalCode);
-
-        when(commonCodeService.getActiveCommonCodesByGroup("ROLE")).thenReturn(roleCodes);
-
-        // When: PRINCIPAL 역할 체크
-        boolean isAdmin = isAdminRoleFromCommonCode(UserRole.PRINCIPAL, roleCodes);
-
-        // Then: 관리자로 인식되어야 함
-        assertThat(isAdmin).isTrue();
+    @DisplayName("레거시 역할 문자열 PRINCIPAL은 fromString으로 ADMIN으로 매핑됨")
+    void testFromString_PrincipalMapsToAdmin() {
+        // Given/When: 레거시 역할명 PRINCIPAL은 ADMIN으로 매핑
+        UserRole mapped = UserRole.fromString("PRINCIPAL");
+        // Then: ADMIN으로 인식되고 isAdmin true
+        assertThat(mapped).isEqualTo(UserRole.ADMIN);
+        assertThat(mapped.isAdmin()).isTrue();
     }
 
     @Test
@@ -80,8 +61,6 @@ class RoleStandardizationTest {
             .build();
         roleCodes.add(consultantCode);
 
-        when(commonCodeService.getActiveCommonCodesByGroup("ROLE")).thenReturn(roleCodes);
-
         // When: CONSULTANT 역할 체크
         boolean isAdmin = isAdminRoleFromCommonCode(UserRole.CONSULTANT, roleCodes);
 
@@ -92,9 +71,6 @@ class RoleStandardizationTest {
     @Test
     @DisplayName("관리자 역할 체크 - 공통코드가 없을 때 폴백 로직 사용")
     void testIsAdminRoleFromCommonCode_Fallback() {
-        // Given: 공통코드가 없는 경우
-        when(commonCodeService.getActiveCommonCodesByGroup("ROLE")).thenReturn(null);
-
         // When: ADMIN 역할 체크 (폴백 로직 사용)
         boolean isAdmin = isAdminRoleFromCommonCodeFallback(UserRole.ADMIN);
 
@@ -124,8 +100,6 @@ class RoleStandardizationTest {
             .build();
         roleCodes.add(staffCode);
 
-        when(commonCodeService.getActiveCommonCodesByGroup("ROLE")).thenReturn(roleCodes);
-
         // When: STAFF 역할 체크
         boolean isStaff = isStaffRoleFromCommonCode(UserRole.STAFF, roleCodes);
 
@@ -145,8 +119,6 @@ class RoleStandardizationTest {
             .build();
         roleCodes.add(consultantCode);
 
-        when(commonCodeService.getActiveCommonCodesByGroup("ROLE")).thenReturn(roleCodes);
-
         // When: CONSULTANT 역할 체크
         boolean isStaff = isStaffRoleFromCommonCode(UserRole.CONSULTANT, roleCodes);
 
@@ -161,11 +133,7 @@ class RoleStandardizationTest {
         }
         try {
             if (roleCodes == null || roleCodes.isEmpty()) {
-                // 폴백: 표준 관리자 역할만 체크
-                return role == UserRole.ADMIN ||
-                       role == UserRole.TENANT_ADMIN ||
-                       role == UserRole.PRINCIPAL ||
-                       role == UserRole.OWNER;
+                return role.isAdmin();
             }
             // 공통코드에서 관리자 역할인지 확인
             String roleName = role.name();
@@ -173,22 +141,15 @@ class RoleStandardizationTest {
                 .anyMatch(code -> code.getCodeValue().equals(roleName) &&
                               (code.getExtraData() != null &&
                                (code.getExtraData().contains("\"isAdmin\":true") ||
+                                code.getExtraData().contains("\"isAdmin\": true") ||
                                 code.getExtraData().contains("\"roleType\":\"ADMIN\""))));
         } catch (Exception e) {
-            // 폴백: 표준 관리자 역할만 체크
-            return role == UserRole.ADMIN ||
-                   role == UserRole.TENANT_ADMIN ||
-                   role == UserRole.PRINCIPAL ||
-                   role == UserRole.OWNER;
+            return role.isAdmin();
         }
     }
 
     private boolean isAdminRoleFromCommonCodeFallback(UserRole role) {
-        // 폴백 로직: 표준 관리자 역할만 체크
-        return role == UserRole.ADMIN ||
-               role == UserRole.TENANT_ADMIN ||
-               role == UserRole.PRINCIPAL ||
-               role == UserRole.OWNER;
+        return role != null && role.isAdmin();
     }
 
     private boolean isStaffRoleFromCommonCode(UserRole role, List<CommonCode> roleCodes) {
@@ -206,6 +167,7 @@ class RoleStandardizationTest {
                 .anyMatch(code -> code.getCodeValue().equals(roleName) &&
                               (code.getExtraData() != null &&
                                (code.getExtraData().contains("\"isStaff\":true") ||
+                                code.getExtraData().contains("\"isStaff\": true") ||
                                 code.getExtraData().contains("\"roleType\":\"STAFF\""))));
         } catch (Exception e) {
             // 폴백: STAFF 역할만 체크

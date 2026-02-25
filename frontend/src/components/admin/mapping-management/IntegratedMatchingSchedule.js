@@ -7,7 +7,8 @@
  * @since 2025-02-25
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { Draggable } from '@fullcalendar/interaction';
 import { CalendarPlus, UserPlus } from 'lucide-react';
 import StandardizedApi from '../../../utils/standardizedApi';
 import notificationManager from '../../../utils/notification';
@@ -31,14 +32,20 @@ const STATUS_KO = {
 
 const getStatusKoreanName = (status) => STATUS_KO[status] || status;
 
+/** 좌측 목록 필터: 회기 남은 매칭만(기본) | 전체 */
+const SESSION_FILTER_REMAINING = 'remaining';
+const SESSION_FILTER_ALL = 'all';
+
 const IntegratedMatchingSchedule = () => {
   const [mappings, setMappings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
   const [preFilledMapping, setPreFilledMapping] = useState(null);
-  const [selectedDateForModal] = useState(() => new Date());
+  const [selectedDateForModal, setSelectedDateForModal] = useState(() => new Date());
   const [refetchTrigger, setRefetchTrigger] = useState(0);
   const [createMappingModalOpen, setCreateMappingModalOpen] = useState(false);
+  const [sessionFilter, setSessionFilter] = useState(SESSION_FILTER_REMAINING);
+  const sidebarListRef = useRef(null);
 
   const loadMappings = useCallback(async () => {
     setLoading(true);
@@ -64,6 +71,19 @@ const IntegratedMatchingSchedule = () => {
     loadMappings();
   }, [loadMappings]);
 
+  const filteredMappings =
+    sessionFilter === SESSION_FILTER_REMAINING
+      ? mappings.filter((m) => (m.remainingSessions ?? 0) > 0)
+      : mappings;
+
+  useEffect(() => {
+    if (!sidebarListRef.current || filteredMappings.length === 0) return;
+    const draggable = new Draggable(sidebarListRef.current, {
+      itemSelector: '.integrated-schedule__card.fc-event'
+    });
+    return () => draggable.destroy();
+  }, [sessionFilter, filteredMappings.length]);
+
   const handleScheduleRegister = (mapping) => {
     if (!mapping.consultantId || !mapping.clientId) {
       notificationManager.error('상담사·내담자 정보가 없는 매칭입니다.');
@@ -75,6 +95,22 @@ const IntegratedMatchingSchedule = () => {
       consultantName: mapping.consultantName || '상담사',
       clientName: mapping.clientName || '내담자'
     });
+    setSelectedDateForModal(new Date());
+    setScheduleModalOpen(true);
+  };
+
+  const handleDropFromExternal = (date, mappingPayload) => {
+    if (!mappingPayload || !mappingPayload.consultantId || !mappingPayload.clientId) {
+      notificationManager.error('매칭 정보가 올바르지 않습니다.');
+      return;
+    }
+    setPreFilledMapping({
+      consultantId: mappingPayload.consultantId,
+      clientId: mappingPayload.clientId,
+      consultantName: mappingPayload.consultantName || '상담사',
+      clientName: mappingPayload.clientName || '내담자'
+    });
+    setSelectedDateForModal(date instanceof Date ? date : new Date(date));
     setScheduleModalOpen(true);
   };
 
@@ -113,43 +149,100 @@ const IntegratedMatchingSchedule = () => {
       <div className="integrated-schedule__content">
         <aside className="integrated-schedule__sidebar">
           <h2 className="integrated-schedule__sidebar-title">매칭 목록</h2>
+          <div className="integrated-schedule__filter">
+            <label className="integrated-schedule__filter-label">
+              <input
+                type="radio"
+                name="sessionFilter"
+                value={SESSION_FILTER_REMAINING}
+                checked={sessionFilter === SESSION_FILTER_REMAINING}
+                onChange={() => setSessionFilter(SESSION_FILTER_REMAINING)}
+                aria-label="회기 남은 매칭만"
+              />
+              <span>회기 남은 매칭만</span>
+            </label>
+            <label className="integrated-schedule__filter-label">
+              <input
+                type="radio"
+                name="sessionFilter"
+                value={SESSION_FILTER_ALL}
+                checked={sessionFilter === SESSION_FILTER_ALL}
+                onChange={() => setSessionFilter(SESSION_FILTER_ALL)}
+                aria-label="전체"
+              />
+              <span>전체</span>
+            </label>
+          </div>
           {loading ? (
             <UnifiedLoading type="inline" text="매칭 목록 불러오는 중..." />
           ) : (
-            <ul className="integrated-schedule__list" aria-label="매칭 목록">
-              {mappings.length === 0 ? (
-                <li className="integrated-schedule__empty">매칭이 없습니다.</li>
-              ) : (
-                mappings.map((mapping) => (
-                  <li key={mapping.id} className="integrated-schedule__card">
-                    <div className="integrated-schedule__card-body">
-                      <div className="integrated-schedule__card-parties">
-                        <span className="integrated-schedule__card-consultant">
-                          {mapping.consultantName || 'N/A'}
-                        </span>
-                        <span className="integrated-schedule__card-arrow">→</span>
-                        <span className="integrated-schedule__card-client">
-                          {mapping.clientName || 'N/A'}
-                        </span>
-                      </div>
-                      <div className="integrated-schedule__card-meta">
-                        <span className="integrated-schedule__card-status">
-                          {getStatusKoreanName(mapping.status)}
-                        </span>
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      className="integrated-schedule__btn-schedule"
-                      onClick={() => handleScheduleRegister(mapping)}
-                      aria-label={`${mapping.clientName} 스케줄 등록`}
+            <ul
+              ref={sidebarListRef}
+              className="integrated-schedule__list"
+              aria-label="매칭 목록"
+            >
+              {(() => {
+                if (filteredMappings.length === 0) {
+                  return (
+                    <li className="integrated-schedule__empty">
+                      {sessionFilter === SESSION_FILTER_REMAINING
+                        ? '회기 남은 매칭이 없습니다.'
+                        : '매칭이 없습니다.'}
+                    </li>
+                  );
+                }
+                return filteredMappings.map((mapping) => {
+                  const eventData = {
+                    id: `mapping-${mapping.id}`,
+                    title: mapping.clientName || '내담자',
+                    extendedProps: {
+                      mappingId: mapping.id,
+                      consultantId: mapping.consultantId,
+                      clientId: mapping.clientId,
+                      consultantName: mapping.consultantName || '상담사',
+                      clientName: mapping.clientName || '내담자'
+                    }
+                  };
+                  return (
+                    <li
+                      key={mapping.id}
+                      className="integrated-schedule__card fc-event"
+                      data-event={JSON.stringify(eventData)}
                     >
-                      <CalendarPlus size={14} />
-                      스케줄 등록
-                    </button>
-                  </li>
-                ))
-              )}
+                      <div className="integrated-schedule__card-body">
+                        <div className="integrated-schedule__card-parties">
+                          <span className="integrated-schedule__card-consultant">
+                            {mapping.consultantName || 'N/A'}
+                          </span>
+                          <span className="integrated-schedule__card-arrow">→</span>
+                          <span className="integrated-schedule__card-client">
+                            {mapping.clientName || 'N/A'}
+                          </span>
+                        </div>
+                        <div className="integrated-schedule__card-meta">
+                          <span className="integrated-schedule__card-status">
+                            {getStatusKoreanName(mapping.status)}
+                          </span>
+                          <span className="integrated-schedule__card-remaining">
+                            {mapping.remainingSessions != null && mapping.remainingSessions >= 0
+                              ? `남은 회기 ${mapping.remainingSessions}회`
+                              : '—'}
+                          </span>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        className="integrated-schedule__btn-schedule"
+                        onClick={() => handleScheduleRegister(mapping)}
+                        aria-label={`${mapping.clientName} 스케줄 등록`}
+                      >
+                        <CalendarPlus size={14} />
+                        스케줄 등록
+                      </button>
+                    </li>
+                  );
+                });
+              })()}
             </ul>
           )}
         </aside>
@@ -158,6 +251,7 @@ const IntegratedMatchingSchedule = () => {
           <UnifiedScheduleComponent
             userRole="ADMIN"
             refetchTrigger={refetchTrigger}
+            onDropFromExternal={handleDropFromExternal}
           />
         </main>
       </div>

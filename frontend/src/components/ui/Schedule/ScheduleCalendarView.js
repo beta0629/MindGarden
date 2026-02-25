@@ -15,7 +15,8 @@ const ScheduleCalendarView = ({
     userRole,
     onDateClick,
     onEventClick,
-    onEventDrop
+    onEventDrop,
+    onExternalEventReceive
 }) => {
     // 지난 일정 판별 함수
     const eventClassNames = (arg) => {
@@ -37,6 +38,15 @@ const ScheduleCalendarView = ({
         const status = ev.extendedProps?.status;
         const isCompleted = status === 'COMPLETED' || status === 'CANCELLED';
         return isPast || isCompleted;
+    };
+
+    const handleEventReceive = (info) => {
+        if (onExternalEventReceive && info.event) {
+            const date = info.event.start;
+            const payload = info.event.extendedProps || {};
+            onExternalEventReceive(date, payload);
+            info.event.remove();
+        }
     };
 
     // 이벤트 커스텀 렌더링 (카드 형태)
@@ -125,6 +135,7 @@ const ScheduleCalendarView = ({
                 dateClick={onDateClick}
                 eventClick={onEventClick}
                 eventDrop={onEventDrop}
+                eventReceive={handleEventReceive}
                 editable={userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN'}
                 droppable={userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN'}
                 height="100%"

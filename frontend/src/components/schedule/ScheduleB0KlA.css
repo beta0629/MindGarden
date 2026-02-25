@@ -330,12 +330,18 @@
   padding: 0.75rem 1rem;
   display: flex;
   flex-wrap: wrap;
+  justify-content: space-between;
   gap: 1rem;
   background: var(--ad-b0kla-card-bg);
   border: 1px solid var(--ad-b0kla-border);
   border-radius: var(--ad-b0kla-radius-sm);
   box-shadow: var(--ad-b0kla-shadow);
 }
+
+.mg-v2-ad-b0kla .mg-v2-legend-section-right {
+  margin-left: auto;
+}
+
 
 .mg-v2-ad-b0kla .mg-v2-legend-title {
   color: var(--ad-b0kla-title-color);
@@ -428,6 +434,12 @@
 
 .mg-v2-ad-b0kla .fc-daygrid-day:hover {
   background: var(--ad-b0kla-bg);
+}
+
+/* 월간 뷰(dayGrid) 비영업 영역(.fc-non-business) 분할 버그 방지: 셀과 동일 배경으로 한 덩어리로 표시 */
+.mg-v2-ad-b0kla .mg-v2-ad-b0kla-fc-wrapper .fc-daygrid-day-bg .fc-non-business,
+.mg-v2-ad-b0kla .mg-v2-ad-b0kla-fc-wrapper .fc-daygrid-bg-harness .fc-non-business {
+  background: var(--ad-b0kla-card-bg) !important;
 }
 
 /* 일 8개 이벤트 표시용 셀 높이·스크롤 */

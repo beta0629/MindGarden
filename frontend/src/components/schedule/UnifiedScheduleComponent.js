@@ -35,7 +35,8 @@ import './ScheduleB0KlA.css';
  * @since 2024-12-19
  */
 /** refetchTrigger: 부모에서 변경 시 캘린더 데이터 재로드(통합 스케줄 화면 등) */
-const UnifiedScheduleComponent = ({ userRole, userId, refetchTrigger }) => {
+/** onDropFromExternal: (date, mappingPayload) => void — 외부 매칭 카드 드롭 시 호출(통합 스케줄 화면) */
+const UnifiedScheduleComponent = ({ userRole, userId, refetchTrigger, onDropFromExternal }) => {
     console.log('📅 UnifiedScheduleComponent 렌더링:', { userRole, userId });
     
     // ========== 상태 관리 ==========
@@ -862,6 +863,7 @@ const UnifiedScheduleComponent = ({ userRole, userId, refetchTrigger }) => {
                 onDateClick={handleDateClick}
                 onEventClick={handleEventClick}
                 onEventDrop={handleEventDrop}
+                onExternalEventReceive={onDropFromExternal}
             />
 
             {/* 모달들 */}

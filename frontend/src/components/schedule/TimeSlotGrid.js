@@ -79,13 +79,13 @@ const TimeSlotGrid = ({
                 credentials: 'include'
             });
 
-            if (response.ok) {
-                const result = await response.json();
-                if (result.success && result.data) {
-                    setConsultantInfo(result.data);
-                } else {
-                    setDefaultConsultantInfo();
-                }
+            if (!response.ok) {
+                setDefaultConsultantInfo();
+                return;
+            }
+            const result = await response.json();
+            if (result.success && result.data) {
+                setConsultantInfo(result.data);
             } else {
                 setDefaultConsultantInfo();
             }
@@ -386,27 +386,27 @@ const TimeSlotGrid = ({
             const day = String(date.getDate()).padStart(2, '0');
             const dateStr = `${year}-${month}-${day}`;
             
+            const scheduleUrl = `${API_BASE_URL}/api/v1/schedules/consultant/${consultantId}/date?date=${dateStr}`;
             console.log('🔍 TimeSlotGrid: 스케줄 로드 요청:', {
                 consultantId,
                 dateStr,
-                url: `/api/schedules/consultant/${consultantId}/date?date=${dateStr}`
+                url: scheduleUrl
             });
-            
-            const response = await fetch(
-                `/api/schedules/consultant/${consultantId}/date?date=${dateStr}`,
-                {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    credentials: 'include'
-                }
-            );
+
+            const response = await fetch(scheduleUrl, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'include'
+            });
 
             console.log('📥 TimeSlotGrid: 응답 상태:', response.status, response.statusText);
 
             if (response.ok) {
-                const schedules = await response.json();
+                const body = await response.json();
+                const list = body.data ?? body;
+                const schedules = Array.isArray(list) ? list : [];
                 console.log('✅ TimeSlotGrid: 스케줄 로드 성공:', schedules);
                 setExistingSchedules(schedules);
                 updateSlotAvailability(schedules);

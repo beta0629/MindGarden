@@ -48,7 +48,12 @@ public class ConsultantRegistrationRequest {
     private String qualifications;
     
     private String notes;
-    
+
+    /**
+     * 프로필 사진 URL. base64 data URL 저장 가능 (data:image/...;base64,...)
+     */
+    private String profileImageUrl;
+
     /**
      * @Deprecated - 표준화 2025-12-07: 브랜치 개념 제거됨
      */

@@ -173,7 +173,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             consultant.setIsPasswordChanged(!isTempPassword); // 임시 비밀번호인 경우 false, 사용자 입력 비밀번호인 경우 true
             consultant.setSpecialization(request.getSpecialization());
             consultant.setTenantId(tenantId); // 테넌트 ID 설정
-            
+            if (request.getProfileImageUrl() != null && !request.getProfileImageUrl().trim().isEmpty()) {
+                consultant.setProfileImageUrl(request.getProfileImageUrl());
+            }
             if (consultant instanceof Consultant) {
                 ((Consultant) consultant).setCertification(request.getQualifications());
             }
@@ -245,7 +247,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             
             consultant.setSpecialty(request.getSpecialization());
             consultant.setCertification(request.getQualifications());
-            
+            if (request.getProfileImageUrl() != null && !request.getProfileImageUrl().trim().isEmpty()) {
+                consultant.setProfileImageUrl(request.getProfileImageUrl());
+            }
             log.info("🔧 상담사 엔티티 생성 완료: userId={}, tenantId={}, specialization={}", 
                     consultant.getUserId(), consultant.getTenantId(), consultant.getSpecialty());
             
@@ -1801,6 +1805,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         
         if (request.getSpecialization() != null) {
             consultant.setSpecialization(request.getSpecialization());
+        }
+        if (request.getProfileImageUrl() != null && !request.getProfileImageUrl().trim().isEmpty()) {
+            consultant.setProfileImageUrl(request.getProfileImageUrl());
         }
 
         if (request.getPassword() != null && !request.getPassword().trim().isEmpty()) {

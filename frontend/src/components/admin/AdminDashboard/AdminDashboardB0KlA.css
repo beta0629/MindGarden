@@ -968,6 +968,58 @@
   color: var(--ad-b0kla-green);
 }
 
+/* 프로필 사진 (등록/수정 모달) */
+.mg-v2-ad-b0kla .mg-v2-profile-photo-group {
+  margin-bottom: 1rem;
+}
+.mg-v2-ad-b0kla .mg-v2-profile-photo-preview-wrap {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.mg-v2-ad-b0kla .mg-v2-profile-photo-preview {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--ad-b0kla-bg-secondary, #f0f0f0);
+  border: 2px solid var(--ad-b0kla-border, #e0e0e0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.mg-v2-ad-b0kla .mg-v2-profile-photo-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.mg-v2-ad-b0kla .mg-v2-profile-photo-placeholder {
+  color: var(--ad-b0kla-text-secondary, #888);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.mg-v2-ad-b0kla .mg-v2-profile-photo-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.mg-v2-ad-b0kla .mg-v2-profile-photo-label {
+  cursor: pointer;
+  margin: 0;
+}
+.mg-v2-ad-b0kla .mg-v2-profile-photo-input {
+  position: absolute;
+  width: 0.1px;
+  height: 0.1px;
+  opacity: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+}
+
 /* 검색바 반응형 */
 @media (max-width: 768px) {
   .mg-v2-ad-b0kla__search {

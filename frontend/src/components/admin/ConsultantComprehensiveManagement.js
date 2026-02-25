@@ -1,10 +1,13 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import PropTypes from 'prop-types';
-import { Plus, Users, Link2, Calendar, ClipboardList, Edit, Trash2, Key, Mail, Phone } from 'lucide-react';
+import { Plus, Users, Link2, Calendar, ClipboardList, Edit, Trash2, Key, Mail, Phone, User } from 'lucide-react';
 import Button from '../ui/Button/Button';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import { getStatusLabel } from '../../utils/colorUtils';
+
+/** 프로필 사진 최대 용량 (2MB) */
+const PROFILE_IMAGE_MAX_BYTES = 2 * 1024 * 1024;
 
 /** 상담사 경력 연차에 따른 레벨 라벨 (카드 배지용) */
 const getConsultantLevel = (consultant) => {
@@ -57,7 +60,8 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
         phone: '',
         // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         status: 'ACTIVE',
-        specialty: []
+        specialty: [],
+        profileImageUrl: '' // base64 data URL (data:image/...;base64,...)
     });
     const [specialtyCodes, setSpecialtyCodes] = useState([]);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -133,6 +137,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                         phone: consultantEntity.phone,
                         role: consultantEntity.role,
                         isActive: consultantEntity.isActive,
+                        profileImageUrl: consultantEntity.profileImageUrl,
                         specialty: consultantEntity.specialty, // Consultant 엔티티의 specialty
                         specialtyDetails: consultantEntity.specialtyDetails, // Consultant 엔티티의 specialtyDetails
                         specialization: consultantEntity.specialization, // User 엔티티의 specialization
@@ -528,7 +533,8 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                     phone: consultant.phone || '',
                     // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                     status: consultant.status || 'ACTIVE',
-                    specialty: specialties
+                    specialty: specialties,
+                    profileImageUrl: consultant.profileImageUrl || ''
                 });
             }
         } else if (type === 'create') {
@@ -539,7 +545,8 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                 phone: '',
                 // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                 status: 'ACTIVE',
-                specialty: []
+                specialty: [],
+                profileImageUrl: ''
             });
         }
         setShowModal(true);
@@ -556,7 +563,8 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
             phone: '',
             // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
             status: 'ACTIVE',
-            specialty: []
+            specialty: [],
+            profileImageUrl: ''
         });
     }, []);
 
@@ -637,6 +645,36 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
         });
     }, []);
 
+    const handleProfilePhotoChange = useCallback((e) => {
+        const file = e.target?.files?.[0];
+        if (!file) return;
+        if (!file.type.startsWith('image/')) {
+            window.dispatchEvent(new CustomEvent('showNotification', {
+                detail: { message: '이미지 파일만 선택할 수 있습니다.', type: 'warning' }
+            }));
+            e.target.value = '';
+            return;
+        }
+        if (file.size > PROFILE_IMAGE_MAX_BYTES) {
+            window.dispatchEvent(new CustomEvent('showNotification', {
+                detail: { message: '이미지 용량은 2MB 이하여야 합니다.', type: 'warning' }
+            }));
+            e.target.value = '';
+            return;
+        }
+        const reader = new FileReader();
+        reader.onload = () => {
+            const dataUrl = reader.result;
+            setFormData(prev => ({ ...prev, profileImageUrl: dataUrl }));
+        };
+        reader.readAsDataURL(file);
+        e.target.value = '';
+    }, []);
+
+    const handleProfilePhotoRemove = useCallback(() => {
+        setFormData(prev => ({ ...prev, profileImageUrl: '' }));
+    }, []);
+
     const createConsultant = useCallback(async (data) => {
         try {
             // tenantId 확인 및 세션 갱신
@@ -702,7 +740,8 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
             
             const requestData = {
                 ...data,
-                userId: userId
+                userId: userId,
+                profileImageUrl: data.profileImageUrl || undefined
             };
             
             // specialization 필드 처리: specialty 배열을 문자열로 변환
@@ -713,7 +752,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                 requestData.specialization = data.specialization;
             }
             
-            console.log('📤 상담사 등록 요청 데이터:', { ...requestData, password: '***' });
+            console.log('📤 상담사 등록 요청 데이터:', { ...requestData, password: '***', profileImageUrl: requestData.profileImageUrl ? '(base64)' : undefined });
             
             const response = await apiPost('/api/v1/admin/consultants', requestData, options);
             console.log('📥 상담사 등록 응답:', response);
@@ -756,7 +795,8 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                 name: nameVal === '' ? (existing?.name ?? '') : nameVal,
                 email: emailVal === '' ? (existing?.email ?? '') : emailVal,
                 phone: phoneVal === '' ? (existing?.phone ?? '') : phoneVal,
-                specialization
+                specialization,
+                profileImageUrl: (data.profileImageUrl != null && data.profileImageUrl !== '') ? data.profileImageUrl : (existing?.profileImageUrl ?? undefined)
             };
             const response = await apiPut(`/api/v1/admin/consultants/${id}`, requestPayload);
             // 검증: 상담사 등록 → 정보 수정(이름/이메일/전화/전문분야 변경) → 저장 시 200 응답 및 목록 반영 확인
@@ -1384,6 +1424,41 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                             </p>
                         </div>
                     )}
+                    <div className="mg-v2-form-group mg-v2-profile-photo-group">
+                        <label className="mg-v2-form-label">프로필 사진</label>
+                        <div className="mg-v2-profile-photo-preview-wrap">
+                            <div className="mg-v2-profile-photo-preview">
+                                {formData.profileImageUrl ? (
+                                    <img src={formData.profileImageUrl} alt="프로필 미리보기" />
+                                ) : (
+                                    <span className="mg-v2-profile-photo-placeholder" aria-hidden="true">
+                                        <User size={40} />
+                                    </span>
+                                )}
+                            </div>
+                            <div className="mg-v2-profile-photo-actions">
+                                <label className="mg-v2-button mg-v2-button-secondary mg-v2-profile-photo-label">
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={handleProfilePhotoChange}
+                                        className="mg-v2-profile-photo-input"
+                                    />
+                                    사진 선택
+                                </label>
+                                {formData.profileImageUrl && (
+                                    <button
+                                        type="button"
+                                        className="mg-v2-button mg-v2-button-outline"
+                                        onClick={handleProfilePhotoRemove}
+                                    >
+                                        제거
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                        <small className="mg-v2-form-help">이미지 파일만 가능, 최대 2MB</small>
+                    </div>
                     <div className="mg-v2-form-group">
                         <label className="mg-v2-form-label">이름 *</label>
                         <input

@@ -13847,6 +13847,9 @@ body {
 }
 
 .mg-v2-modal-body {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
     padding: var(--spacing-lg);
     flex: 1;
     overflow-y: auto;

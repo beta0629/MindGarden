@@ -401,6 +401,10 @@
 
 /* 모달 바디 */
 .mg-v2-modal-body {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
   padding: var(--mg-spacing-xl);
   max-height: 60vh;
   overflow-y: auto;

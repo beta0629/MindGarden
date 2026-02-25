@@ -29,6 +29,17 @@
   flex: 1;
   overflow-y: auto;
   padding: var(--spacing-lg, 1.5rem);
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+/* UnifiedModal children(.mg-v2-modal-body)가 본문 영역 전체 폭 사용 (어드민/상담사/내담자/매핑/ERP 등 공통) */
+.mg-modal__body .mg-v2-modal-body {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .mg-modal__actions {

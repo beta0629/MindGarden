@@ -22,6 +22,7 @@ export const ADMIN_ROUTES = {
     CLIENT_COMPREHENSIVE: '/admin/client-comprehensive',
     MAPPINGS: '/admin/mappings',
     MAPPING_MANAGEMENT: '/admin/mapping-management',
+    INTEGRATED_SCHEDULE: '/admin/integrated-schedule',
     BRANCHES: '/admin/branches',
     BRANCH_CREATE: '/admin/branch-create',
     BRANCH_HIERARCHY: '/admin/branch-hierarchy',

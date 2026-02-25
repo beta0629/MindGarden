@@ -875,6 +875,17 @@ const AdminDashboardV2 = ({ user: propUser }) => {
             <span className="mg-v2-ad-b0kla__admin-label">매칭 시스템</span>
             <span className="mg-v2-ad-b0kla__admin-desc">상담사와 내담자 매칭을 관리합니다</span>
           </button>
+          <button
+            type="button"
+            className="mg-v2-ad-b0kla__admin-card"
+            onClick={() => navigate(ADMIN_ROUTES.INTEGRATED_SCHEDULE)}
+          >
+            <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--green">
+              <FaCalendarCheck size={28} />
+            </div>
+            <span className="mg-v2-ad-b0kla__admin-label">통합 스케줄링</span>
+            <span className="mg-v2-ad-b0kla__admin-desc">매칭 대기자와 캘린더를 한 화면에서 스케줄 등록</span>
+          </button>
           {PermissionChecks.canManageUsers(userPermissions) && (
             <button
               type="button"

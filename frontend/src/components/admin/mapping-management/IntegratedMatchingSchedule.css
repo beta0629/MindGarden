@@ -1,0 +1,211 @@
+.integrated-schedule {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 120px);
+  padding: var(--mg-spacing-24);
+  gap: var(--mg-spacing-24);
+  background-color: var(--mg-color-background-main);
+}
+
+.integrated-schedule__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: var(--mg-spacing-16);
+  border-bottom: 1px solid var(--mg-color-border-main);
+}
+
+.integrated-schedule__title {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--mg-color-text-main);
+  margin: 0;
+}
+
+.integrated-schedule__content {
+  display: flex;
+  flex: 1;
+  gap: var(--mg-spacing-24);
+  overflow: hidden;
+}
+
+/* 좌측 대기자 목록 영역 */
+.integrated-schedule__sidebar {
+  width: 320px;
+  background-color: var(--mg-color-surface-main);
+  border: 1px solid var(--mg-color-border-main);
+  border-radius: 16px;
+  padding: var(--mg-spacing-24);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.integrated-schedule__sidebar-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--mg-color-text-main);
+  margin-bottom: var(--mg-spacing-16);
+}
+
+.integrated-schedule__sidebar-title::before {
+  content: '';
+  display: inline-block;
+  width: 4px;
+  height: 16px;
+  background-color: var(--mg-color-primary-main);
+  border-radius: 2px;
+}
+
+.integrated-schedule__list {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-right: 4px;
+}
+
+/* 대기자 카드 */
+.integrated-schedule__item {
+  background-color: #FFFFFF;
+  border: 1px solid var(--mg-color-border-main);
+  border-radius: 12px;
+  padding: 16px;
+  cursor: grab;
+  position: relative;
+  overflow: hidden;
+  transition: box-shadow 0.2s ease;
+}
+
+.integrated-schedule__item:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.integrated-schedule__item:active {
+  cursor: grabbing;
+}
+
+.integrated-schedule__item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background-color: var(--mg-color-primary-main);
+}
+
+.integrated-schedule__item[data-type="부부상담"]::before {
+  background-color: var(--mg-color-secondary-main, #6B7F72);
+}
+
+.integrated-schedule__item[data-type="가족상담"]::before {
+  background-color: var(--mg-color-point-main, #D18D7F);
+}
+
+.integrated-schedule__item-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--mg-color-text-main);
+  margin-bottom: 4px;
+}
+
+.integrated-schedule__item-type {
+  font-size: 12px;
+  color: var(--mg-color-text-sub);
+  margin-bottom: 8px;
+}
+
+.integrated-schedule__item-badge {
+  display: inline-block;
+  font-size: 12px;
+  background-color: #E8EBE9;
+  color: #3D5246;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+/* 우측 캘린더 영역 */
+.integrated-schedule__calendar-container {
+  flex: 1;
+  background-color: var(--mg-color-background-main);
+  border: 1px solid var(--mg-color-border-main);
+  border-radius: 16px;
+  padding: var(--mg-spacing-24);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* FullCalendar 커스텀 스타일 오버라이딩 */
+.integrated-schedule__calendar-container .fc {
+  flex: 1;
+  height: 100%;
+}
+
+.integrated-schedule__calendar-container .fc-theme-standard td, 
+.integrated-schedule__calendar-container .fc-theme-standard th {
+  border-color: #EBE9E4;
+}
+
+.integrated-schedule__calendar-container .fc-col-header-cell {
+  background-color: var(--mg-color-surface-main);
+  padding: 8px 0;
+}
+
+.integrated-schedule__calendar-container .fc-timegrid-slot-lane {
+  background-color: #FFFFFF;
+}
+
+/* Drop Zone Highlight */
+.integrated-schedule__calendar-container .fc-highlight {
+  background-color: rgba(61, 82, 70, 0.1) !important;
+  border: 2px dashed var(--mg-color-primary-main) !important;
+}
+
+/* 이벤트 블록 스타일 */
+.integrated-schedule__calendar-container .fc-event {
+  background-color: var(--mg-color-primary-light, #4A6354);
+  border: none;
+  border-radius: 6px;
+  padding: 2px 4px;
+  color: #FAF9F7;
+  font-size: 12px;
+}
+
+/* 모달 커스텀 */
+.modal-form-group {
+  margin-bottom: 16px;
+}
+
+.modal-form-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--mg-color-text-main);
+}
+
+.modal-form-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--mg-color-border-main);
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.modal-form-input[readonly] {
+  background-color: var(--mg-color-surface-main);
+  color: var(--mg-color-text-sub);
+}
+
+/* 모바일 대응 (간단한 TODO 적용) */
+@media (max-width: 1024px) {
+  .integrated-schedule__sidebar {
+    display: none; /* TODO: 모바일에서는 하단 드로어(Bottom Sheet)로 우회하도록 구현 필요 */
+  }
+}

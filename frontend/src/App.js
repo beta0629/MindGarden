@@ -34,6 +34,7 @@ import UnifiedHeaderTest from './components/test/UnifiedHeaderTest';
 import UserManagementPage from './components/admin/UserManagementPage';
 import SessionManagement from './components/admin/SessionManagement';
 import MappingManagement from './components/admin/MappingManagement';
+import IntegratedMatchingSchedule from './components/admin/mapping-management/IntegratedMatchingSchedule';
 import CommonCodeManagement from './components/admin/CommonCodeManagement';
 import StatisticsModal from './components/common/StatisticsModal';
 import StatisticsDashboard from './components/admin/StatisticsDashboard';
@@ -465,6 +466,7 @@ function AppContent() {
             <Route path="/admin/consultant-comprehensive" element={<Navigate to="/admin/user-management?type=consultant" replace />} />
             <Route path="/admin/client-comprehensive" element={<Navigate to="/admin/user-management?type=client" replace />} />
             <Route path="/admin/mapping-management" element={<MappingManagement />} />
+            <Route path="/admin/integrated-schedule" element={<IntegratedMatchingSchedule />} />
             <Route path="/admin/common-codes" element={<CommonCodeManagement />} />
             <Route path="/admin/sessions" element={<SessionManagement />} />
             <Route path="/admin/accounts" element={<AccountManagement />} />

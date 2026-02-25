@@ -25,6 +25,7 @@ const BREAKPOINT_DESKTOP = 768;
 const DEFAULT_MENU_ITEMS = [
   { to: '/admin/dashboard', icon: LayoutDashboard, label: '대시보드', end: true },
   { to: '/admin/mapping-management', icon: Link, label: '매칭 관리', end: true },
+  { to: '/admin/integrated-schedule', icon: Calendar, label: '통합 스케줄링', end: true },
   {
     to: '/admin/user-management',
     icon: Users,

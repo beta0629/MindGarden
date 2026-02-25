@@ -248,7 +248,8 @@
 }
 
 .integrated-schedule__card-status--active,
-.integrated-schedule__card-status--payment_confirmed {
+.integrated-schedule__card-status--payment_confirmed,
+.integrated-schedule__card-status--deposit_pending {
   background-color: var(--mg-success-100, var(--mg-success-50));
   color: var(--mg-success-700, var(--mg-success-600));
 }
@@ -313,6 +314,66 @@
 .integrated-schedule__btn-schedule--disabled:hover,
 .integrated-schedule__btn-schedule:disabled:hover {
   background-color: var(--mg-color-border-main);
+}
+
+/* 카드 액션 영역: 결제 확인 / 입금 확인 / 승인 + 스케줄 등록 */
+.integrated-schedule__card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mg-spacing-8, 8px);
+  margin-top: var(--mg-spacing-4, 4px);
+}
+
+.integrated-schedule__btn-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.integrated-schedule__btn-action:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.integrated-schedule__btn-action--payment {
+  color: var(--mg-color-white);
+  background-color: var(--mg-success-600, var(--mg-success-500));
+}
+
+.integrated-schedule__btn-action--payment:hover:not(:disabled) {
+  background-color: var(--mg-success-700, var(--mg-success-600));
+}
+
+.integrated-schedule__btn-action--deposit {
+  color: var(--mg-color-primary-inverse);
+  background-color: var(--mg-color-primary-main);
+}
+
+.integrated-schedule__btn-action--deposit:hover:not(:disabled) {
+  background-color: var(--mg-color-primary-dark);
+}
+
+.integrated-schedule__btn-action--approve {
+  color: var(--mg-color-white);
+  background-color: var(--mg-success-600, var(--mg-success-500));
+}
+
+.integrated-schedule__btn-action--approve:hover:not(:disabled) {
+  background-color: var(--mg-success-700, var(--mg-success-600));
+}
+
+.integrated-schedule__btn-action:focus-visible {
+  outline: 2px solid var(--mg-color-primary-main);
+  outline-offset: 2px;
 }
 
 /* 우측 캘린더 */

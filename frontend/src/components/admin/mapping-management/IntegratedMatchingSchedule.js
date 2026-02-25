@@ -9,13 +9,16 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Draggable } from '@fullcalendar/interaction';
-import { CalendarPlus, UserPlus } from 'lucide-react';
+import { CalendarPlus, UserPlus, CreditCard, DollarSign, CheckCircle } from 'lucide-react';
 import StandardizedApi from '../../../utils/standardizedApi';
 import notificationManager from '../../../utils/notification';
+import { useSession } from '../../../contexts/SessionContext';
 import UnifiedLoading from '../../common/UnifiedLoading';
 import UnifiedScheduleComponent from '../../schedule/UnifiedScheduleComponent';
 import ScheduleModal from '../../schedule/ScheduleModal';
 import MappingCreationModal from '../MappingCreationModal';
+import MappingPaymentModal from '../mapping/MappingPaymentModal';
+import MappingDepositModal from '../mapping/MappingDepositModal';
 import '../../../styles/unified-design-tokens.css';
 import '../AdminDashboard/AdminDashboardB0KlA.css';
 import './IntegratedMatchingSchedule.css';
@@ -25,6 +28,7 @@ const STATUS_KO = {
   INACTIVE: '비활성',
   PENDING_PAYMENT: '결제 대기',
   PAYMENT_CONFIRMED: '결제 확인',
+  DEPOSIT_PENDING: '승인 대기',
   TERMINATED: '종료됨',
   SESSIONS_EXHAUSTED: '회기 소진',
   SUSPENDED: '일시정지'
@@ -32,16 +36,17 @@ const STATUS_KO = {
 
 const getStatusKoreanName = (status) => STATUS_KO[status] || status;
 
-/** 스케줄 등록 가능한 매칭 상태 (결제 완료 후에만 스케줄 가능) */
-const SCHEDULABLE_STATUSES = ['PAYMENT_CONFIRMED', 'ACTIVE'];
+/** 스케줄 등록 가능한 매칭 상태 (입금 확인 후 스케줄 등록·드래그 허용) */
+const SCHEDULABLE_STATUSES = new Set(['PAYMENT_CONFIRMED', 'DEPOSIT_PENDING', 'ACTIVE']);
 const canScheduleForMapping = (mapping) =>
-  mapping?.status && SCHEDULABLE_STATUSES.includes(mapping.status);
+  mapping?.status && SCHEDULABLE_STATUSES.has(mapping.status);
 
 /** 좌측 목록 필터: 회기 남은 매칭만(기본) | 전체 */
 const SESSION_FILTER_REMAINING = 'remaining';
 const SESSION_FILTER_ALL = 'all';
 
 const IntegratedMatchingSchedule = () => {
+  const { user } = useSession();
   const [mappings, setMappings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
@@ -50,6 +55,9 @@ const IntegratedMatchingSchedule = () => {
   const [refetchTrigger, setRefetchTrigger] = useState(0);
   const [createMappingModalOpen, setCreateMappingModalOpen] = useState(false);
   const [sessionFilter, setSessionFilter] = useState(SESSION_FILTER_REMAINING);
+  const [paymentModalMapping, setPaymentModalMapping] = useState(null);
+  const [depositModalMapping, setDepositModalMapping] = useState(null);
+  const [approveProcessing, setApproveProcessing] = useState(false);
   const sidebarListRef = useRef(null);
 
   const loadMappings = useCallback(async () => {
@@ -130,6 +138,33 @@ const IntegratedMatchingSchedule = () => {
   const handleMappingCreated = () => {
     setCreateMappingModalOpen(false);
     loadMappings();
+  };
+
+  const handlePaymentConfirmed = () => {
+    setPaymentModalMapping(null);
+    loadMappings();
+  };
+
+  const handleDepositConfirmed = () => {
+    setDepositModalMapping(null);
+    loadMappings();
+  };
+
+  const handleApprove = async (mappingId) => {
+    if (approveProcessing) return;
+    setApproveProcessing(true);
+    try {
+      await StandardizedApi.post(`/api/v1/admin/mappings/${mappingId}/approve`, {
+        adminName: user?.name || user?.userId || '관리자'
+      });
+      notificationManager.success('매칭이 승인되었습니다.');
+      loadMappings();
+    } catch (error) {
+      console.error('매칭 승인 실패:', error);
+      notificationManager.error(error?.message || '매칭 승인에 실패했습니다.');
+    } finally {
+      setApproveProcessing(false);
+    }
   };
 
   const handleScheduleModalClose = () => {
@@ -244,17 +279,53 @@ const IntegratedMatchingSchedule = () => {
                           )}
                         </div>
                       </div>
-                    <button
-                      type="button"
-                      className={`integrated-schedule__btn-schedule ${!canScheduleForMapping(mapping) ? 'integrated-schedule__btn-schedule--disabled' : ''}`}
-                      onClick={() => handleScheduleRegister(mapping)}
-                      disabled={!canScheduleForMapping(mapping)}
-                      aria-label={canScheduleForMapping(mapping) ? `${mapping.clientName} 스케줄 등록` : '결제 완료 후 스케줄 등록 가능'}
-                      title={!canScheduleForMapping(mapping) ? '결제가 완료된 매칭만 스케줄 등록이 가능합니다.' : undefined}
-                    >
-                      <CalendarPlus size={14} />
-                      스케줄 등록
-                    </button>
+                      <div className="integrated-schedule__card-actions">
+                        {mapping.status === 'PENDING_PAYMENT' && (
+                          <button
+                            type="button"
+                            className="integrated-schedule__btn-action integrated-schedule__btn-action--payment"
+                            onClick={() => setPaymentModalMapping(mapping)}
+                            aria-label="결제 확인"
+                          >
+                            <CreditCard size={14} />
+                            결제 확인
+                          </button>
+                        )}
+                        {mapping.status === 'PAYMENT_CONFIRMED' && (
+                          <button
+                            type="button"
+                            className="integrated-schedule__btn-action integrated-schedule__btn-action--deposit"
+                            onClick={() => setDepositModalMapping(mapping)}
+                            aria-label="입금 확인"
+                          >
+                            <DollarSign size={14} />
+                            입금 확인
+                          </button>
+                        )}
+                        {mapping.status === 'DEPOSIT_PENDING' && (
+                          <button
+                            type="button"
+                            className="integrated-schedule__btn-action integrated-schedule__btn-action--approve"
+                            onClick={() => handleApprove(mapping.id)}
+                            disabled={approveProcessing}
+                            aria-label="승인"
+                          >
+                            <CheckCircle size={14} />
+                            승인
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          className={`integrated-schedule__btn-schedule ${canScheduleForMapping(mapping) ? '' : 'integrated-schedule__btn-schedule--disabled'}`}
+                          onClick={() => handleScheduleRegister(mapping)}
+                          disabled={!canScheduleForMapping(mapping)}
+                          aria-label={canScheduleForMapping(mapping) ? `${mapping.clientName} 스케줄 등록` : '결제 완료 후 스케줄 등록 가능'}
+                          title={canScheduleForMapping(mapping) ? undefined : '결제가 완료된 매칭만 스케줄 등록이 가능합니다.'}
+                        >
+                          <CalendarPlus size={14} />
+                          스케줄 등록
+                        </button>
+                      </div>
                     </li>
                   );
                 });
@@ -290,6 +361,23 @@ const IntegratedMatchingSchedule = () => {
         onClose={() => setCreateMappingModalOpen(false)}
         onMappingCreated={handleMappingCreated}
       />
+
+      {paymentModalMapping && (
+        <MappingPaymentModal
+          isOpen={!!paymentModalMapping}
+          onClose={() => setPaymentModalMapping(null)}
+          mapping={paymentModalMapping}
+          onPaymentConfirmed={handlePaymentConfirmed}
+        />
+      )}
+      {depositModalMapping && (
+        <MappingDepositModal
+          isOpen={!!depositModalMapping}
+          onClose={() => setDepositModalMapping(null)}
+          mapping={depositModalMapping}
+          onDepositConfirmed={handleDepositConfirmed}
+        />
+      )}
     </div>
   );
 };

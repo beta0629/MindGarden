@@ -489,7 +489,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             mapping.setPaymentStatus(ConsultantClientMapping.PaymentStatus.valueOf(defaultPaymentStatus));
         }
         mapping.setTotalSessions(dto.getTotalSessions() != null ? dto.getTotalSessions() : 10);
-        mapping.setRemainingSessions(dto.getRemainingSessions() != null ? dto.getRemainingSessions() : (dto.getTotalSessions() != null ? dto.getTotalSessions() : 10));
+        // 신규 매칭: 입금 확인 전까지 사용 가능 회기는 0 (입금 확인 시 confirmDeposit에서 채움)
+        mapping.setRemainingSessions(0);
         mapping.setUsedSessions(0);
         mapping.setPackageName(dto.getPackageName() != null ? dto.getPackageName() : "기본 패키지");
         mapping.setPackagePrice(dto.getPackagePrice() != null ? dto.getPackagePrice() : 0L);
@@ -937,6 +938,14 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 .orElseThrow(() -> new RuntimeException("Mapping not found"));
 
         mapping.confirmDeposit(depositReference);
+
+        // 입금 확인 시 회기 채우기: remainingSessions가 0이고 totalSessions > 0이면 사용 가능 회기 설정
+        Integer total = mapping.getTotalSessions();
+        Integer remaining = mapping.getRemainingSessions();
+        int used = mapping.getUsedSessions() != null ? mapping.getUsedSessions() : 0;
+        if (total != null && total > 0 && remaining != null && remaining == 0) {
+            mapping.setRemainingSessions(Math.max(0, total - used));
+        }
 
         // packagePrice/paymentAmount 유효성: ERP 거래용 금액 결정 (paymentAmount 우선, 없으면 packagePrice)
         Long effectiveAmount = mapping.getPaymentAmount() != null && mapping.getPaymentAmount() > 0

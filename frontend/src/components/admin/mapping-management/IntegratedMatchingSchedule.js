@@ -89,13 +89,16 @@ const IntegratedMatchingSchedule = () => {
       ? mappings.filter((m) => (m.remainingSessions ?? 0) > 0)
       : mappings;
 
+  /** 스케줄 가능(드래그 가능) 카드 수 — 결제/입금/승인 후 목록 갱신 시 Draggable 재바인딩 */
+  const scheduleableCount = filteredMappings.filter((m) => canScheduleForMapping(m)).length;
+
   useEffect(() => {
     if (!sidebarListRef.current || filteredMappings.length === 0) return;
     const draggable = new Draggable(sidebarListRef.current, {
       itemSelector: '.integrated-schedule__card.fc-event'
     });
     return () => draggable.destroy();
-  }, [sessionFilter, filteredMappings.length]);
+  }, [sessionFilter, filteredMappings.length, scheduleableCount]);
 
   const handleScheduleRegister = (mapping) => {
     if (!canScheduleForMapping(mapping)) {

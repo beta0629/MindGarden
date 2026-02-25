@@ -27,14 +27,17 @@
 | **[troubleshooting/](./troubleshooting/)** | 장애 대응·모니터링 체크리스트 | |
 | **[database/](./database/)** | DB 관련 가이드 | |
 | **[testing/](./testing/)** | 테스트 계획·가이드 | |
+| **[api/](./api/)** | API 레퍼런스·설계 문서 | guides·architecture에서 참조 |
+| **[issues/](./issues/)** | 이슈·결정 사항·트러블슈팅 기록 | |
+| **[planning/](./planning/)** | 기능·역할·메뉴 등 기획·설계 문서 | |
 | **2026-prestartup/, 2026-startup-plan/, plans/** | 기획·사업 계획 등 | 필요 시 project-management로 통합 가능 |
 
 ---
 
 ## 빠른 링크
 
-- **루트에서 이동한 문서**: [QUICK_START](./guides/quick-start/QUICK_START.md), [DEPLOYMENT_CHECKLIST](./guides/deployment/DEPLOYMENT_CHECKLIST.md), [PROJECT_STRUCTURE](./architecture/PROJECT_STRUCTURE.md), [KOREAN_ENCODING_SETUP](./guides/development/KOREAN_ENCODING_SETUP.md), [QUICK_WILDCARD_TEST](./troubleshooting/QUICK_WILDCARD_TEST.md), 과거 계획은 [project-management/archive/](./project-management/archive/) (PROJECT_REORGANIZATION_PLAN, FOLDER_REORGANIZATION_GUIDE)
-- **표준 문서 전체 목록**: [docs/standards/README.md](./standards/README.md) (46개 표준)
+- **루트에서 이동한 문서**: [QUICK_START](./guides/quick-start/QUICK_START.md), [DEPLOYMENT_CHECKLIST](./guides/deployment/DEPLOYMENT_CHECKLIST.md), [PROJECT_STRUCTURE](./architecture/PROJECT_STRUCTURE.md), [KOREAN_ENCODING_SETUP](./guides/development/KOREAN_ENCODING_SETUP.md), [QUICK_WILDCARD_TEST](./troubleshooting/QUICK_WILDCARD_TEST.md), [매칭·스케줄 통합 요구사항](./testing/MATCHING_SCHEDULE_INTEGRATION_REQUIREMENTS.md), 과거 계획은 [project-management/archive/](./project-management/archive/) (PROJECT_REORGANIZATION_PLAN, FOLDER_REORGANIZATION_GUIDE)
+- **표준 문서 전체 목록**: [docs/standards/README.md](./standards/README.md) (45개 표준)
 - **문서 작성·정리 규칙**: [.cursor/skills/core-solution-documentation/SKILL.md](../.cursor/skills/core-solution-documentation/SKILL.md)
 - **서브에이전트 활용(문서 전담 포함)**: [docs/standards/SUBAGENT_USAGE.md](./standards/SUBAGENT_USAGE.md)
 - **간단 표준 요약**: [docs/STANDARDS.md](./STANDARDS.md) (핵심 4개 등 요약)

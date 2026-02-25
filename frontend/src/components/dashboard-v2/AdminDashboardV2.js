@@ -64,6 +64,21 @@ import '../../styles/dashboard-common-v3.css';
 import '../../styles/themes/admin-theme.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import '../admin/AdminDashboard/AdminDashboardPipeline.css';
+
+/** 차트용 최근 N개월 빈 데이터 (데이터 없을 때 0으로 표시) */
+function getEmptyMonthlyChartData(months = 6) {
+  const result = [];
+  const now = new Date();
+  for (let i = months - 1; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    result.push({
+      period: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`,
+      completedCount: 0
+    });
+  }
+  return result;
+}
+
 const AdminDashboardV2 = ({ user: propUser }) => {
   const navigate = useNavigate();
   const { user: sessionUser, isLoading: sessionLoading, logout } = useSession();
@@ -539,6 +554,12 @@ const AdminDashboardV2 = ({ user: propUser }) => {
     loadUnassignedClientsAndConsultants();
   }, [loadStats, loadRefundStats, loadPendingDepositStats, loadUnassignedClientsAndConsultants]);
 
+  // 세션 사용자(role) 준비 시 예약된 상담 KPI 로드 (첫 로드에서 바로 표시)
+  useEffect(() => {
+    const user = propUser || sessionUser;
+    if (user?.role) loadTodayStats();
+  }, [sessionUser, propUser, loadTodayStats]);
+
   const topConsultantsData = (stats.consultantRatingStats?.topConsultants || [])
     .slice(0, 4)
     .map((c) => ({
@@ -639,55 +660,53 @@ const AdminDashboardV2 = ({ user: propUser }) => {
             </div>
           </div>
           <div className="mg-v2-ad-b0kla__chart-placeholder mg-v2-ad-b0kla__chart-wrapper">
-            {stats.consultationStats?.monthlyData?.length > 0 ? (
-              <Chart
-                type={CHART_TYPES.BAR}
-                data={{
-                  labels: stats.consultationStats.monthlyData.slice(0, 6).map((d) => d.period),
-                  datasets: [
-                    {
-                      label: '완료 상담',
-                      data: stats.consultationStats.monthlyData
-                        .slice(0, 6)
-                        .map((d) => d.completedCount || 0),
-                      backgroundColor: 'var(--ad-b0kla-blue)',
-                      borderColor: 'var(--ad-b0kla-green)',
-                      borderWidth: 1,
-                      borderRadius: 6
-                    }
-                  ]
-                }}
-                height="200px"
-                options={{
-                  maintainAspectRatio: false,
-                  plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                      callbacks: {
-                        label: (ctx) => `완료: ${ctx.parsed.y}건`
+            {(() => {
+              const monthlyData =
+                stats.consultationStats?.monthlyData?.length > 0
+                  ? stats.consultationStats.monthlyData.slice(0, 6)
+                  : getEmptyMonthlyChartData(6);
+              return (
+                <Chart
+                  type={CHART_TYPES.BAR}
+                  data={{
+                    labels: monthlyData.map((d) => d.period),
+                    datasets: [
+                      {
+                        label: '완료 상담',
+                        data: monthlyData.map((d) => d.completedCount || 0),
+                        backgroundColor: 'var(--ad-b0kla-blue)',
+                        borderColor: 'var(--ad-b0kla-green)',
+                        borderWidth: 1,
+                        borderRadius: 6
+                      }
+                    ]
+                  }}
+                  height="200px"
+                  options={{
+                    maintainAspectRatio: false,
+                    plugins: {
+                      legend: { display: false },
+                      tooltip: {
+                        callbacks: {
+                          label: (ctx) => `완료: ${ctx.parsed.y}건`
+                        }
+                      }
+                    },
+                    scales: {
+                      x: {
+                        grid: { display: false },
+                        ticks: { maxRotation: 0, font: { size: 11 } }
+                      },
+                      y: {
+                        beginAtZero: true,
+                        ticks: { stepSize: 1 },
+                        grid: { color: 'var(--mg-shadow-light)' }
                       }
                     }
-                  },
-                  scales: {
-                    x: {
-                      grid: { display: false },
-                      ticks: { maxRotation: 0, font: { size: 11 } }
-                    },
-                    y: {
-                      beginAtZero: true,
-                      ticks: { stepSize: 1 },
-                      grid: { color: 'var(--mg-shadow-light)' }
-                    }
-                  }
-                }}
-              />
-            ) : (
-              <>
-                <Activity size={48} className="mg-v2-ad-b0kla__chart-placeholder-icon" />
-                <span>차트 영역</span>
-                <span className="mg-v2-ad-b0kla__chart-empty-desc">데이터가 없습니다.</span>
-              </>
-            )}
+                  }}
+                />
+              );
+            })()}
           </div>
         </div>
         <div className="mg-v2-ad-b0kla__card">

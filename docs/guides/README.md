@@ -8,23 +8,23 @@
 
 ### 필수 가이드 ⭐ **CI/BI 작업 전 필수 완료**
 
-1. **[⚡ 빠른 시작 가이드](QUICK_START_GUIDE.md)** 🚀 **실무진 필수**
+1. **[⚡ 빠른 시작 가이드](../design-system/ci-bi/QUICK_START_GUIDE.md)** 🚀 **실무진 필수**
    - 3단계로 끝내는 하드코딩 제거
    - 30분 현황 파악 + 3시간 자동 변환
    - CI/BI 적용 방법 및 문제 해결
 
-2. **[🎨 완전 가이드](CI_BI_DESIGN_STANDARDIZATION_GUIDE.md)** ⭐ **상세 매뉴얼**
+2. **[🎨 완전 가이드](../design-system/ci-bi/CI_BI_DESIGN_STANDARDIZATION_GUIDE.md)** ⭐ **상세 매뉴얼**
    - 현황 분석 및 문제점 정리
    - 단계별 실행 가이드 (Phase 1-3)
    - 자동화 도구 사용법 및 검증 방법
    - CI/BI 적용 프로세스 및 문제 해결
 
-3. **[📊 하드코딩 현황 분석](CI_BI_PREPARATION_HARDCODED_VALUES.md)** 📋 **분석 리포트**
+3. **[📊 하드코딩 현황 분석](../design-system/ci-bi/CI_BI_PREPARATION_HARDCODED_VALUES.md)** 📋 **분석 리포트**
    - 50개 파일, 400+ 하드코딩 색상 발견
    - 브랜딩 관련 위험 파일 목록
    - Phase별 작업 체크리스트
 
-4. **[🔧 디자인 표준화 분석](DESIGN_STANDARDIZATION_ANALYSIS.md)** 📈 **기술 분석**
+4. **[🔧 디자인 표준화 분석](../design-system/ci-bi/DESIGN_STANDARDIZATION_ANALYSIS.md)** 📈 **기술 분석**
    - 5개 CSS 변수 파일 중복 문제
    - 자동화 도구 및 예상 효과
    - 단계별 구현 계획
@@ -52,32 +52,32 @@ MindGarden 프로젝트의 모든 문서는 목적에 따라 카테고리별로 
 
 ### 필수 문서 ⭐
 
-모든 디자인 시스템 문서는 `design-system-v2/` 폴더에 있습니다.
+모든 디자인 시스템 문서는 `design-system/v2/` 폴더에 있습니다.
 
-1. **[실전 적용 플랜](design-system-v2/IMPLEMENTATION_PLAN.md)** 🚀 **구현 시 필수**
+1. **[실전 적용 플랜](../design-system/v2/IMPLEMENTATION_PLAN.md)** 🚀 **구현 시 필수**
    - Phase 1-5 상세 실행 계획
    - 공통 컴포넌트 라이브러리 구축
    - 페이지 마이그레이션 전략
    - 체크리스트 및 일정
 
-2. **[디자인 시스템 가이드](design-system-v2/MINDGARDEN_DESIGN_SYSTEM_GUIDE.md)** ⭐ **최우선 참고**
+2. **[디자인 시스템 가이드](../design-system/v2/MINDGARDEN_DESIGN_SYSTEM_GUIDE.md)** ⭐ **최우선 참고**
    - 18개 컴포넌트 사용법
    - 색상, 타이포그래피, 레이아웃
    - 대시보드 레이아웃 가이드
    - 코드 예시 포함
 
-3. **[디자인 시스템 아키텍처](design-system-v2/DESIGN_SYSTEM_ARCHITECTURE.md)** ⭐ **개발자 필독**
+3. **[디자인 시스템 아키텍처](../design-system/v2/DESIGN_SYSTEM_ARCHITECTURE.md)** ⭐ **개발자 필독**
    - CSS 아키텍처
    - 컴포넌트 패턴
    - 테마 시스템
    - 마이그레이션 가이드
 
-4. **[문서 구조 가이드](design-system-v2/DOCUMENT_STRUCTURE_GUIDE.md)**
+4. **[문서 구조 가이드](../design-system/v2/DOCUMENT_STRUCTURE_GUIDE.md)**
    - 문서 관리 및 구조
    - 역할별 필수 문서
    - 백업 정책
 
-5. **[문서 재구조화 리포트](design-system-v2/2025-10-14-DOCUMENTATION_RESTRUCTURE_REPORT.md)**
+5. **[문서 재구조화 리포트](../design-system/v2/2025-10-14-DOCUMENTATION_RESTRUCTURE_REPORT.md)**
    - 작업 완료 사항
    - 백업 내역
    - 다음 단계
@@ -236,12 +236,12 @@ npm start
 
 | 목적 | 문서 |
 |------|------|
-| **🔥 CI/BI 작업 전 필수** | **[⚡ 빠른 시작 가이드](QUICK_START_GUIDE.md)** |
-| **🎨 디자인 표준화 상세** | **[🎨 완전 가이드](CI_BI_DESIGN_STANDARDIZATION_GUIDE.md)** |
-| 디자인 시스템 구현 | [실전 적용 플랜](design-system-v2/IMPLEMENTATION_PLAN.md) |
-| 디자인 작업 시작 | [디자인 시스템 가이드](design-system-v2/MINDGARDEN_DESIGN_SYSTEM_GUIDE.md) |
-| 새 컴포넌트 생성 | [디자인 시스템 아키텍처](design-system-v2/DESIGN_SYSTEM_ARCHITECTURE.md) |
-| 문서 구조 이해 | [문서 구조 가이드](design-system-v2/DOCUMENT_STRUCTURE_GUIDE.md) |
+| **🔥 CI/BI 작업 전 필수** | **[⚡ 빠른 시작 가이드](../design-system/ci-bi/QUICK_START_GUIDE.md)** |
+| **🎨 디자인 표준화 상세** | **[🎨 완전 가이드](../design-system/ci-bi/CI_BI_DESIGN_STANDARDIZATION_GUIDE.md)** |
+| 디자인 시스템 구현 | [실전 적용 플랜](../design-system/v2/IMPLEMENTATION_PLAN.md) |
+| 디자인 작업 시작 | [디자인 시스템 가이드](../design-system/v2/MINDGARDEN_DESIGN_SYSTEM_GUIDE.md) |
+| 새 컴포넌트 생성 | [디자인 시스템 아키텍처](../design-system/v2/DESIGN_SYSTEM_ARCHITECTURE.md) |
+| 문서 구조 이해 | [문서 구조 가이드](../design-system/v2/DOCUMENT_STRUCTURE_GUIDE.md) |
 | API 개발 | [API 설계](api/API_DESIGN.md) |
 | 배포 | [배포 가이드](deployment/DEPLOYMENT_GUIDE.md) |
 | 문제 해결 | [문제 해결 가이드](troubleshooting/TROUBLESHOOTING.md) |
@@ -284,14 +284,14 @@ node scripts/detect-hardcoded-colors.js
 ```
 
 **📚 필수 가이드:**
-- [⚡ 빠른 시작 가이드](QUICK_START_GUIDE.md) - 실무진 필수
-- [🎨 완전 가이드](CI_BI_DESIGN_STANDARDIZATION_GUIDE.md) - 상세 매뉴얼
+- [⚡ 빠른 시작 가이드](../design-system/ci-bi/QUICK_START_GUIDE.md) - 실무진 필수
+- [🎨 완전 가이드](../design-system/ci-bi/CI_BI_DESIGN_STANDARDIZATION_GUIDE.md) - 상세 매뉴얼
 
 ### 2025년 10월 14일
 
 **디자인 시스템 2.0 출시**
 
-- 모든 디자인 작업은 [디자인 시스템 가이드](MINDGARDEN_DESIGN_SYSTEM_GUIDE.md) 참고
+- 모든 디자인 작업은 [디자인 시스템 가이드](../design-system/v2/MINDGARDEN_DESIGN_SYSTEM_GUIDE.md) 참고
 - 기존 디자인 문서는 `archive/` 폴더로 이동
 - 18개 컴포넌트 완성 및 통일된 대시보드 레이아웃 제공
 - 모바일 반응형 완벽 지원

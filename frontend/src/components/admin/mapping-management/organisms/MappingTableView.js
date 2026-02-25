@@ -37,6 +37,7 @@ const MappingTableView = ({
   getStatusKoreanName,
   getStatusColor,
   getStatusIcon,
+  getStatusVariant,
   onView,
   onEdit,
   onRefund,
@@ -90,10 +91,13 @@ const MappingTableView = ({
         </thead>
         <tbody>
           {mappings.map((mapping) => {
-            const statusInfo = mappingStatusInfo[mapping.status] || {
-              label: getStatusKoreanName(mapping.status),
-              color: getStatusColor(mapping.status),
-              icon: getStatusIcon(mapping.status)
+            const statusInfo = {
+              ...(mappingStatusInfo[mapping.status] || {
+                label: getStatusKoreanName(mapping.status),
+                color: getStatusColor(mapping.status),
+                icon: getStatusIcon(mapping.status)
+              }),
+              variant: getStatusVariant ? getStatusVariant(mapping.status) : 'secondary'
             };
 
             const isErpIntegrated =
@@ -106,13 +110,13 @@ const MappingTableView = ({
               mapping.paymentConfirmed === true;
 
             const statusLabel = statusInfo.label || mapping.status || 'N/A';
-            const statusColor = statusInfo.color || 'var(--ad-b0kla-text-secondary)';
+            const badgeVariant = statusInfo.variant || 'secondary';
 
             return (
               <tr key={mapping.id}>
                 <td>
                   <div className="mg-v2-mapping-table__status">
-                    <span style={{ color: statusColor }}>
+                    <span className={`mg-v2-badge ${badgeVariant}`} role="status" aria-label={statusLabel}>
                       {statusInfo.icon || null} {statusLabel}
                     </span>
                     {isErpIntegrated && (
@@ -245,6 +249,7 @@ MappingTableView.propTypes = {
   getStatusKoreanName: PropTypes.func,
   getStatusColor: PropTypes.func,
   getStatusIcon: PropTypes.func,
+  getStatusVariant: PropTypes.func,
   onView: PropTypes.func,
   onEdit: PropTypes.func,
   onRefund: PropTypes.func,

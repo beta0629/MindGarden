@@ -303,6 +303,16 @@
   animation: spin 1s linear infinite;
 }
 
+/* 모달 로딩 오버레이 내 공통 스피너 - 폴백으로 항상 표시 (B0KlA/테마 변수 미적용 시) */
+.mg-modal__loading-overlay .mg-loading-spinner-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 3px solid var(--color-border-light, #e5e7eb);
+  border-top-color: var(--color-primary, var(--ad-b0kla-green, #0d9488));
+  animation: mg-spin 1s linear infinite;
+}
+
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }

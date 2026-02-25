@@ -44,15 +44,13 @@
   gap: 0.5rem;
 }
 
-.mg-v2-mapping-list-row__status {
-  font-size: 12px;
-  font-weight: 600;
-  padding: 4px 10px;
-  border-radius: 9999px;
-  border: 1px solid;
+/* 아토믹 디자인: mg-v2-badge + variant(success/warning/info/error/secondary) 적용 */
+.mg-v2-mapping-list-row__status.mg-v2-badge {
   display: inline-flex;
   align-items: center;
   gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
 }
 
 .mg-v2-mapping-list-row__erp {

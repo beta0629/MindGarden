@@ -10,6 +10,8 @@
  */
 
 export const ADMIN_ROUTES = {
+    /** 어드민 메인 대시보드 (B0KlA) */
+    DASHBOARD: '/admin/dashboard',
     SCHEDULES: '/admin/schedules',
     SESSIONS: '/admin/sessions',
     USERS: '/admin/user-management',

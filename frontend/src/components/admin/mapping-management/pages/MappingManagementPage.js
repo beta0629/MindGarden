@@ -106,11 +106,27 @@ const MappingManagementPage = () => {
       INACTIVE: 'var(--mg-secondary-500)',
       PENDING_PAYMENT: 'var(--mg-warning-500)',
       PAYMENT_CONFIRMED: 'var(--mg-info-500)',
+      DEPOSIT_PENDING: 'var(--mg-info-500)',
       TERMINATED: 'var(--mg-error-500)',
       SESSIONS_EXHAUSTED: 'var(--mg-purple-500)',
       SUSPENDED: 'var(--mg-warning-500)'
     };
     return colorMap[status] || 'var(--mg-secondary-500)';
+  };
+
+  /** 아토믹 디자인 배지 variant (mg-v2-badge.xxx) */
+  const getStatusVariant = (status) => {
+    const variantMap = {
+      ACTIVE: 'success',
+      INACTIVE: 'secondary',
+      PENDING_PAYMENT: 'warning',
+      PAYMENT_CONFIRMED: 'info',
+      DEPOSIT_PENDING: 'info',
+      TERMINATED: 'error',
+      SESSIONS_EXHAUSTED: 'secondary',
+      SUSPENDED: 'warning'
+    };
+    return variantMap[status] || 'secondary';
   };
 
   const getStatusIcon = (status) => {
@@ -415,6 +431,7 @@ const MappingManagementPage = () => {
             getStatusKoreanName={getStatusKoreanName}
             getStatusColor={getStatusColor}
             getStatusIcon={getStatusIcon}
+            getStatusVariant={getStatusVariant}
             onView={handleViewMapping}
             onEdit={handleEditMapping}
             onRefund={handleRefundMapping}

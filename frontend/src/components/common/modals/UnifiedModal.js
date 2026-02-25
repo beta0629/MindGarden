@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import UnifiedLoading from '../UnifiedLoading';
 import '../../../styles/main.css'; // Ensure main.css is imported for mg-modal styles
 
 /**
@@ -143,17 +144,17 @@ const UnifiedModal = ({
           </div>
         )}
         
-        {/* 로딩 오버레이 - 표준화 2025-12-08: 공통 로딩 컴포넌트 사용 */}
+        {/* 로딩 오버레이 - 공통 스피너(UnifiedLoading) 사용 */}
         {loading && (
           <div className="mg-modal__loading-overlay">
-            <div className="mg-loading-container mg-loading-container--centered">
-              <div className="mg-loading mg-loading--medium mg-loading--spinner">
-                <div className="mg-loading-spinner">
-                  <div className="mg-loading-spinner-icon"></div>
-                </div>
-              </div>
-              <div className="mg-loading-text">처리 중...</div>
-            </div>
+            <UnifiedLoading
+              type="inline"
+              text="처리 중..."
+              variant="spinner"
+              size="medium"
+              centered
+              showText
+            />
           </div>
         )}
       </div>

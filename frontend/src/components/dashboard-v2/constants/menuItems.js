@@ -6,7 +6,6 @@
 
 import {
   LayoutDashboard,
-  Link,
   Settings,
   Users,
   FileText,
@@ -18,14 +17,15 @@ import {
   PieChart,
   Receipt
 } from 'lucide-react';
+import { ADMIN_ROUTES } from '../../../constants/adminRoutes';
 
 const BREAKPOINT_DESKTOP = 768;
 
 /** 어드민 LNB 폴백: 메인+서브 트리 (LNB_MENU_STRUCTURE_AND_PERMISSION_SPEC §2) */
 const DEFAULT_MENU_ITEMS = [
-  { to: '/admin/dashboard', icon: LayoutDashboard, label: '대시보드', end: true },
-  { to: '/admin/mapping-management', icon: Link, label: '매칭 관리', end: true },
-  { to: '/admin/integrated-schedule', icon: Calendar, label: '통합 스케줄링', end: true },
+  { to: ADMIN_ROUTES.DASHBOARD, icon: LayoutDashboard, label: '대시보드', end: true },
+  { to: ADMIN_ROUTES.INTEGRATED_SCHEDULE, icon: Calendar, label: '통합 스케줄 센터', end: true },
+  { to: ADMIN_ROUTES.SYSTEM_NOTIFICATIONS, icon: MessageCircle, label: '알림', end: true },
   {
     to: '/admin/user-management',
     icon: Users,
@@ -71,8 +71,7 @@ const DEFAULT_MENU_ITEMS = [
       { to: '/admin/statistics', icon: FileText, label: '통계', end: true },
       { to: '/admin/compliance', icon: FileText, label: '컴플라이언스', end: true }
     ]
-  },
-  { to: '/admin/system-notifications', icon: MessageCircle, label: '알림', end: true }
+  }
 ];
 
 const CLIENT_MENU_ITEMS = [

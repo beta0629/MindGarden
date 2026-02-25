@@ -81,15 +81,16 @@ const MappingListRow = ({
     mapping.paymentConfirmed === true;
 
   const statusLabel = statusInfo.label || mapping.status || 'N/A';
-  const statusColor = statusInfo.color || 'var(--ad-b0kla-text-secondary)';
+  const badgeVariant = statusInfo.variant || 'secondary';
 
   return (
     <div className="mg-v2-mapping-list-row">
       <div className="mg-v2-mapping-list-row__main">
         <div className="mg-v2-mapping-list-row__status-col">
           <span
-            className="mg-v2-mapping-list-row__status"
-            style={{ borderColor: statusColor, color: statusColor }}
+            className={`mg-v2-mapping-list-row__status mg-v2-badge ${badgeVariant}`}
+            role="status"
+            aria-label={statusLabel}
           >
             {statusInfo.icon || null} {statusLabel}
           </span>

@@ -88,3 +88,43 @@ export function cropImageToSquare(dataUrl, size = 400) {
     img.src = dataUrl;
   });
 }
+
+const DEFAULT_PROFILE_OPTIONS = {
+  maxSize: 512,
+  cropSize: 400,
+  quality: 0.85,
+  maxBytes: 2 * 1024 * 1024
+};
+
+/**
+ * 프로필용 이미지 처리: 검증 → 리사이즈 → 정사각 크롭 → 용량 검사 후 data URL 반환
+ * @param {File} file - 선택된 파일
+ * @param {Object} options - { maxSize, cropSize, quality, maxBytes } (기본값 적용)
+ * @returns {Promise<string>} 처리된 data URL
+ */
+export function processProfileImage(file, options = {}) {
+  if (!file || !file.type || !file.type.startsWith('image/')) {
+    return Promise.reject(new Error('이미지 파일만 선택할 수 있습니다.'));
+  }
+  const opts = { ...DEFAULT_PROFILE_OPTIONS, ...options };
+  const { maxSize, cropSize, quality, maxBytes } = opts;
+
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('이미지 읽기에 실패했습니다.'));
+    reader.onload = () => {
+      const dataUrl = reader.result;
+      resizeImage(dataUrl, { maxWidth: maxSize, maxHeight: maxSize, quality })
+        .then((resizedUrl) => cropImageToSquare(resizedUrl, cropSize))
+        .then((finalUrl) => {
+          if (getDataUrlByteSize(finalUrl) > maxBytes) {
+            reject(new Error('처리 후에도 용량이 2MB를 초과합니다. 다른 이미지를 선택해 주세요.'));
+            return;
+          }
+          resolve(finalUrl);
+        })
+        .catch(reject);
+    };
+    reader.readAsDataURL(file);
+  });
+}

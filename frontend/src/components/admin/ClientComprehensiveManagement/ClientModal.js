@@ -1,11 +1,9 @@
-import React, { useState, useCallback } from 'react';
-import { User, CheckCircle, AlertTriangle } from 'lucide-react';
+import React, { useState } from 'react';
+import { CheckCircle, AlertTriangle } from 'lucide-react';
 import MGButton from '../../common/MGButton';
+import ProfileImageInput from '../../common/ProfileImageInput';
 import { apiGet } from '../../../utils/ajax';
 import UnifiedModal from '../../common/modals/UnifiedModal';
-import { resizeImage, cropImageToSquare, getDataUrlByteSize } from '../../../utils/imageResizeCrop';
-
-const PROFILE_IMAGE_MAX_BYTES = 2 * 1024 * 1024;
 
 /**
  * 내담자 모달 컴포넌트
@@ -89,54 +87,6 @@ const ClientModal = ({
         }
     };
 
-    const handleProfilePhotoChange = useCallback((e) => {
-        const file = e.target?.files?.[0];
-        if (!file) return;
-        if (!file.type.startsWith('image/')) {
-            window.dispatchEvent(new CustomEvent('showNotification', {
-                detail: { message: '이미지 파일만 선택할 수 있습니다.', type: 'warning' }
-            }));
-            e.target.value = '';
-            return;
-        }
-        e.target.value = '';
-        const reader = new FileReader();
-        reader.onerror = () => {
-            window.dispatchEvent(new CustomEvent('showNotification', {
-                detail: { message: '이미지 읽기에 실패했습니다.', type: 'error' }
-            }));
-        };
-        reader.onload = () => {
-            const dataUrl = reader.result;
-            const maxSize = 512;
-            const cropSize = 400;
-            const quality = 0.85;
-            resizeImage(dataUrl, { maxWidth: maxSize, maxHeight: maxSize, quality })
-                .then((resizedUrl) => cropImageToSquare(resizedUrl, cropSize))
-                .then((finalUrl) => {
-                    const bytes = getDataUrlByteSize(finalUrl);
-                    if (bytes > PROFILE_IMAGE_MAX_BYTES) {
-                        window.dispatchEvent(new CustomEvent('showNotification', {
-                            detail: { message: '처리 후에도 용량이 2MB를 초과합니다. 다른 이미지를 선택해 주세요.', type: 'warning' }
-                        }));
-                        return;
-                    }
-                    setFormData(prev => ({ ...prev, profileImageUrl: finalUrl }));
-                })
-                .catch((err) => {
-                    const msg = err?.message || '이미지 처리 중 오류가 발생했습니다.';
-                    window.dispatchEvent(new CustomEvent('showNotification', {
-                        detail: { message: msg, type: 'error' }
-                    }));
-                });
-        };
-        reader.readAsDataURL(file);
-    }, [setFormData]);
-
-    const handleProfilePhotoRemove = useCallback(() => {
-        setFormData(prev => ({ ...prev, profileImageUrl: '' }));
-    }, [setFormData]);
-
     const handleSubmit = (e) => {
         e.preventDefault();
         onSave(formData);
@@ -198,41 +148,10 @@ const ClientModal = ({
                         </p>
                     </div>
                 )}
-                <div className="mg-v2-form-group mg-v2-profile-photo-group">
-                    <label className="mg-v2-form-label">프로필 사진</label>
-                    <div className="mg-v2-profile-photo-preview-wrap">
-                        <div className="mg-v2-profile-photo-preview">
-                            {safeFormData.profileImageUrl ? (
-                                <img src={safeFormData.profileImageUrl} alt="프로필 미리보기" />
-                            ) : (
-                                <span className="mg-v2-profile-photo-placeholder" aria-hidden="true">
-                                    <User size={40} />
-                                </span>
-                            )}
-                        </div>
-                        <div className="mg-v2-profile-photo-actions">
-                            <label className="mg-v2-button mg-v2-button-secondary mg-v2-profile-photo-label">
-                                <input
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={handleProfilePhotoChange}
-                                    className="mg-v2-profile-photo-input"
-                                />
-                                사진 선택
-                            </label>
-                            {safeFormData.profileImageUrl && (
-                                <button
-                                    type="button"
-                                    className="mg-v2-button mg-v2-button-outline"
-                                    onClick={handleProfilePhotoRemove}
-                                >
-                                    제거
-                                </button>
-                            )}
-                        </div>
-                    </div>
-                    <small className="mg-v2-form-help">이미지 파일만 가능, 최대 2MB</small>
-                </div>
+                <ProfileImageInput
+                    value={formData.profileImageUrl || ''}
+                    onChange={(url) => setFormData(prev => ({ ...prev, profileImageUrl: url || '' }))}
+                />
                 <div className="mg-v2-form-group">
                     <label htmlFor="name" className="mg-v2-form-label">이름 {type === 'create' && '*'}</label>
                     <input

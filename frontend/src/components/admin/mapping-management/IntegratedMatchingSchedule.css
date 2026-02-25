@@ -24,6 +24,7 @@
   margin: 0;
 }
 
+/* 신규 매칭 버튼: 아토믹 디자인(B0KlA) primary 버튼 색상 적용 */
 .integrated-schedule__btn-new-mapping {
   display: inline-flex;
   align-items: center;
@@ -33,23 +34,24 @@
   font-size: 16px;
   font-weight: 700;
   color: var(--mg-color-white);
-  background-color: var(--mg-color-primary-main);
+  background-color: var(--ad-b0kla-green);
   border: none;
   border-radius: var(--mg-radius-md, 10px);
   cursor: pointer;
-  transition: background-color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
-  box-shadow: var(--cs-shadow-md, 0 4px 6px -1px rgba(0, 0, 0, 0.1));
+  transition: background-color 0.2s ease, opacity 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+  box-shadow: var(--cs-shadow-md);
 }
 
 .integrated-schedule__btn-new-mapping:hover {
-  background-color: var(--mg-color-primary-dark);
+  background-color: var(--ad-b0kla-green);
   color: var(--mg-color-white);
+  opacity: 0.9;
   transform: translateY(-1px);
-  box-shadow: var(--cs-shadow-lg, 0 10px 15px -3px rgba(0, 0, 0, 0.1));
+  box-shadow: var(--cs-shadow-lg);
 }
 
 .integrated-schedule__btn-new-mapping:focus-visible {
-  outline: 2px solid var(--mg-color-primary-main);
+  outline: 2px solid var(--ad-b0kla-green);
   outline-offset: 2px;
 }
 

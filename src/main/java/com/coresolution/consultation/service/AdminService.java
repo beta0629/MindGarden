@@ -310,6 +310,14 @@ public interface AdminService {
     List<Map<String, Object>> getConsultationCompletionStatistics(String period);
 
     /**
+     * 최근 N개월 월별 상담 완료 건수 추이 (전체 상담사 합계, tenantId 기준)
+     *
+     * @param lastMonths 최근 개월 수 (예: 6)
+     * @return period("YYYY-MM"), completedCount 포함 Map 리스트 (과거→현재 순)
+     */
+    List<Map<String, Object>> getConsultationMonthlyTrend(int lastMonths);
+
+    /**
      * 모든 스케줄 조회
      */
     List<Map<String, Object>> getAllSchedules();

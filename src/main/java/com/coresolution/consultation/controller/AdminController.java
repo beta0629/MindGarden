@@ -2305,11 +2305,13 @@ public class AdminController extends BaseApiController {
         // 표준화 2025-12-08: branchCode 제거, tenantId 기반으로만 조회
         List<Map<String, Object>> statistics =
                 adminService.getConsultationCompletionStatistics(period);
+        List<Map<String, Object>> monthlyData = adminService.getConsultationMonthlyTrend(6);
 
         Map<String, Object> data = new HashMap<>();
         data.put("statistics", statistics);
         data.put("count", statistics.size());
         data.put("period", period != null ? period : "전체");
+        data.put("monthlyData", monthlyData);
 
         return success(data);
     }

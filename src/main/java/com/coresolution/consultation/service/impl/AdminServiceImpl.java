@@ -4046,6 +4046,35 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             return new ArrayList<>();
         }
     }
+
+    @Override
+    public List<Map<String, Object>> getConsultationMonthlyTrend(int lastMonths) {
+        try {
+            String tenantId = getTenantId();
+            if (tenantId == null || tenantId.isEmpty()) {
+                log.warn("⚠️ getConsultationMonthlyTrend: tenantId 없음");
+                return new ArrayList<>();
+            }
+            List<Map<String, Object>> monthlyData = new ArrayList<>();
+            LocalDate now = LocalDate.now();
+            // 과거 → 현재 순으로 추가 (예: 6개월이면 5개월 전, 4개월 전, ..., 이번 달)
+            for (int i = lastMonths - 1; i >= 0; i--) {
+                LocalDate monthStart = now.minusMonths(i).withDayOfMonth(1);
+                LocalDate monthEnd = monthStart.withDayOfMonth(monthStart.lengthOfMonth());
+                long count = scheduleRepository.countByStatusAndDateBetween(
+                    tenantId, ScheduleStatus.COMPLETED.name(), monthStart, monthEnd);
+                Map<String, Object> row = new HashMap<>();
+                row.put("period", monthStart.format(DateTimeFormatter.ofPattern("yyyy-MM")));
+                row.put("completedCount", (int) count);
+                monthlyData.add(row);
+            }
+            log.info("✅ 월별 상담 완료 추이 조회 완료: {}개월", monthlyData.size());
+            return monthlyData;
+        } catch (Exception e) {
+            log.error("❌ 월별 상담 완료 추이 조회 실패", e);
+            return new ArrayList<>();
+        }
+    }
     
     @Override
     public List<Map<String, Object>> getConsultationCompletionStatisticsByBranch(String period, String branchCode) {

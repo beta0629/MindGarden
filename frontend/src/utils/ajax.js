@@ -435,8 +435,11 @@ export const apiPut = async (endpoint, data = {}, options = {}) => {
       if (redirected) {
         return null; // 리다이렉트됨
       }
-      
-      handleError(new Error('PUT 요청 실패'), response.status);
+      // 서버 응답 body의 message가 있으면 사용, 없으면 status 기반 메시지
+      const serverMessage = (jsonData && typeof jsonData === 'object' && jsonData.message)
+        ? String(jsonData.message)
+        : getErrorMessage(response.status);
+      throw new Error(serverMessage);
     }
 
     // ApiResponse 래퍼 처리: { success: true, data: T } 형태면 data 추출

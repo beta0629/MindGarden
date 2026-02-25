@@ -220,4 +220,14 @@ export const showInfo = (message, duration = 3000) => {
     return notificationManager.info(message, duration);
 };
 
+// CustomEvent 'showNotification' 구독 → 토스트 표시 (비밀번호 초기화 등 전역 알림 연동)
+if (typeof globalThis.window !== 'undefined') {
+  globalThis.window.addEventListener('showNotification', (e) => {
+    const d = e.detail;
+    if (d && d.message) {
+      notificationManager.show(d.message, d.type || 'info', d.duration);
+    }
+  });
+}
+
 export default notificationManager;

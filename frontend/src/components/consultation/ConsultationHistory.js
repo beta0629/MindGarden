@@ -164,7 +164,7 @@ const ConsultationHistory = () => {
 
   if (sessionLoading) {
     return (
-      <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="상담 내역" loading={true} loadingText="세션 정보를 불러오는 중...">
+      <AdminCommonLayout title="상담 내역" loading={true} loadingText="세션 정보를 불러오는 중...">
         <div />
       </AdminCommonLayout>
     );
@@ -172,14 +172,14 @@ const ConsultationHistory = () => {
 
   if (loading) {
     return (
-      <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="상담 내역" loading={true} loadingText="상담 내역을 불러오는 중...">
+      <AdminCommonLayout title="상담 내역" loading={true} loadingText="상담 내역을 불러오는 중...">
         <div />
       </AdminCommonLayout>
     );
   }
 
   return (
-    <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="상담 내역">
+    <AdminCommonLayout title="상담 내역">
       <div className="consultation-history-page">
         <div className="page-header">
           <div className="header-content">

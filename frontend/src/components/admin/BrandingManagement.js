@@ -291,7 +291,7 @@ const BrandingManagement = ({ onClose }) => {
   };
 
   return (
-    <AdminCommonLayout title="브랜딩 관리" menuItems={DEFAULT_MENU_ITEMS} loading={isLoading} loadingText="브랜딩 정보를 불러오는 중...">
+    <AdminCommonLayout title="브랜딩 관리" loading={isLoading} loadingText="브랜딩 정보를 불러오는 중...">
       <div className="branding-management">
       <div className="branding-management__header">
         <h2 className="branding-management__title">브랜딩 관리</h2>

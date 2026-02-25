@@ -16,7 +16,7 @@ import './PrivacyPolicy.css';
  */
 const PrivacyPolicy = () => {
   return (
-    <AdminCommonLayout title="개인정보처리방침" menuItems={DEFAULT_MENU_ITEMS}>
+    <AdminCommonLayout title="개인정보처리방침">
       <div className="privacy-policy-container">
         <h1 className="privacy-policy-title">
           개인정보 처리방침

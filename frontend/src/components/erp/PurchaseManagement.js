@@ -99,7 +99,7 @@ const PurchaseManagement = () => {
 
   if (sessionLoading) {
     return (
-      <AdminCommonLayout menuItems={ERP_MENU_ITEMS} title="구매 관리" loading={true} loadingText="세션 정보를 불러오는 중...">
+      <AdminCommonLayout title="구매 관리" loading={true} loadingText="세션 정보를 불러오는 중...">
         <div />
       </AdminCommonLayout>
     );
@@ -107,7 +107,7 @@ const PurchaseManagement = () => {
 
   if (!isLoggedIn) {
     return (
-      <AdminCommonLayout menuItems={ERP_MENU_ITEMS} title="구매 관리">
+      <AdminCommonLayout title="구매 관리">
         <div className="erp-error">
           <h3>로그인이 필요합니다.</h3>
           <p>구매 관리 기능을 사용하려면 로그인해주세요.</p>
@@ -117,7 +117,7 @@ const PurchaseManagement = () => {
   }
 
   return (
-    <AdminCommonLayout menuItems={ERP_MENU_ITEMS} title="구매 관리">
+    <AdminCommonLayout title="구매 관리">
       <div className="erp-system">
         <div className="erp-container">
         {/* 헤더 */}

@@ -178,7 +178,7 @@ const ConsultantRecords = () => {
 
   if (sessionLoading) {
     return (
-      <AdminCommonLayout menuItems={CONSULTANT_MENU_ITEMS} title="상담 기록" loading={true} loadingText="세션 정보를 불러오는 중...">
+      <AdminCommonLayout title="상담 기록" loading={true} loadingText="세션 정보를 불러오는 중...">
         <div />
           <div className="spinner-border text-primary consultant-records-spinner" role="status">
             <span className="visually-hidden">로딩 중...</span>
@@ -189,7 +189,7 @@ const ConsultantRecords = () => {
 
   if (!isLoggedIn) {
     return (
-      <AdminCommonLayout menuItems={CONSULTANT_MENU_ITEMS} title="상담 기록">
+      <AdminCommonLayout title="상담 기록">
         <div className="consultant-records-login-required">
           <h3>로그인이 필요합니다.</h3>
           <p>상담 기록을 보려면 로그인해주세요.</p>
@@ -199,7 +199,7 @@ const ConsultantRecords = () => {
   }
 
   return (
-    <AdminCommonLayout menuItems={CONSULTANT_MENU_ITEMS} title="상담 기록">
+    <AdminCommonLayout title="상담 기록">
       <div className="consultant-records-container">
       {/* 헤더 */}
       <div className="records-header">

@@ -220,7 +220,7 @@ const MindfulnessGuide = () => {
   }
 
   return (
-    <AdminCommonLayout title="마음챙김 가이드" menuItems={CLIENT_MENU_ITEMS}>
+    <AdminCommonLayout title="마음챙김 가이드">
       <div className="mindfulness-guide">
         <div className="mindfulness-guide-header mg-card">
           <div className="mindfulness-guide-header-content">

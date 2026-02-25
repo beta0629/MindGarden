@@ -245,7 +245,7 @@ const BudgetManagement = () => {
 
   if (sessionLoading) {
     return (
-      <AdminCommonLayout menuItems={ERP_MENU_ITEMS} title="예산 관리">
+      <AdminCommonLayout title="예산 관리">
         <UnifiedLoading type="page" text="세션 정보를 불러오는 중..." />
       </AdminCommonLayout>
     );
@@ -253,7 +253,7 @@ const BudgetManagement = () => {
 
   if (!isLoggedIn) {
     return (
-      <AdminCommonLayout menuItems={ERP_MENU_ITEMS} title="예산 관리">
+      <AdminCommonLayout title="예산 관리">
         <div className="erp-system">
           <div className="erp-container">
             <div className="erp-login-required">
@@ -287,7 +287,7 @@ const BudgetManagement = () => {
   }
 
   return (
-    <AdminCommonLayout menuItems={ERP_MENU_ITEMS} title="예산 관리">
+    <AdminCommonLayout title="예산 관리">
       <div className="erp-system">
         <div className="erp-container">
           {/* 헤더 */}

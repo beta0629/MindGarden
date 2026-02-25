@@ -267,7 +267,7 @@ const TenantCodeManagement = () => {
 
         if (loading) {
             return (
-                <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="테넌트 코드 관리" loading={true} loadingText={UI_TEXT.LOADING_CODES}>
+                <AdminCommonLayout title="테넌트 코드 관리" loading={true} loadingText={UI_TEXT.LOADING_CODES}>
                     <UnifiedLoading type="page" text={UI_TEXT.LOADING_CODES} />
                 </AdminCommonLayout>
             );
@@ -524,7 +524,7 @@ const TenantCodeManagement = () => {
     };
 
     return (
-        <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="테넌트 코드 관리" loading={loading && codes.length === 0} loadingText="코드를 불러오는 중...">
+        <AdminCommonLayout title="테넌트 코드 관리" loading={loading && codes.length === 0} loadingText="코드를 불러오는 중...">
             <div className="tenant-code-management">
                 <div className="page-header">
                     <h1>{UI_TEXT.PAGE_TITLE}</h1>

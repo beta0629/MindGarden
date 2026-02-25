@@ -236,14 +236,14 @@ const ItemManagement = () => {
 
   if (loading && items.length === 0) {
     return (
-      <AdminCommonLayout menuItems={ERP_MENU_ITEMS} title="아이템 관리" loading={true} loadingText="데이터를 불러오는 중...">
+      <AdminCommonLayout title="아이템 관리" loading={true} loadingText="데이터를 불러오는 중...">
         <div />
       </AdminCommonLayout>
     );
   }
 
   return (
-    <AdminCommonLayout menuItems={ERP_MENU_ITEMS} title="아이템 관리">
+    <AdminCommonLayout title="아이템 관리">
       <div className="item-management-container">
         <ErpHeader
           title="아이템 관리"

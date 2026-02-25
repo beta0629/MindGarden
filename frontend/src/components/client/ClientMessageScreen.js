@@ -189,14 +189,14 @@ const ClientMessageScreen = () => {
 
   if (loading) {
     return (
-      <AdminCommonLayout menuItems={CLIENT_MENU_ITEMS} title="메시지" loading={true} loadingText="로딩중...">
+      <AdminCommonLayout title="메시지" loading={true} loadingText="로딩중...">
         <div />
       </AdminCommonLayout>
     );
   }
 
   return (
-    <AdminCommonLayout menuItems={CLIENT_MENU_ITEMS} title="메시지">
+    <AdminCommonLayout title="메시지">
       <div className="client-message-screen-container">
       {/* 헤더 */}
       <div className="client-message-screen-header">

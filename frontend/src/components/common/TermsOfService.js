@@ -16,7 +16,7 @@ import './PrivacyPolicy.css';
  */
 const TermsOfService = () => {
   return (
-    <AdminCommonLayout title="이용약관" menuItems={DEFAULT_MENU_ITEMS}>
+    <AdminCommonLayout title="이용약관">
       <div className="privacy-policy-container">
         <h1 className="privacy-policy-title">
           이용약관

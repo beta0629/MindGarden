@@ -165,14 +165,14 @@ const PurchaseRequestForm = () => {
 
   if (loading && items.length === 0) {
     return (
-      <AdminCommonLayout menuItems={ERP_MENU_ITEMS} title="구매 요청" loading={true} loadingText="로딩중...">
+      <AdminCommonLayout title="구매 요청" loading={true} loadingText="로딩중...">
         <div />
       </AdminCommonLayout>
     );
   }
 
   return (
-    <AdminCommonLayout menuItems={ERP_MENU_ITEMS} title="구매 요청">
+    <AdminCommonLayout title="구매 요청">
       <div className="purchase-request-form-container">
         <ErpHeader
           title="구매 요청"

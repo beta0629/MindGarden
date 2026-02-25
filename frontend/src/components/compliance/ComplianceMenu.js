@@ -85,7 +85,7 @@ const ComplianceMenu = () => {
     ];
 
     return (
-        <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="컴플라이언스 관리">
+        <AdminCommonLayout title="컴플라이언스 관리">
             <div className="compliance-menu">
             <div className="menu-header">
                 <h1>⚖️ 컴플라이언스 관리</h1>

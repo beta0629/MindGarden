@@ -220,7 +220,7 @@ const ConsultantAvailability = () => {
   // 세션 로딩 중
   if (sessionLoading) {
     return (
-      <AdminCommonLayout menuItems={CONSULTANT_MENU_ITEMS} title="가능 시간" loading={true} loadingText="가용성을 불러오는 중...">
+      <AdminCommonLayout title="가능 시간" loading={true} loadingText="가용성을 불러오는 중...">
         <div />
       </AdminCommonLayout>
     );
@@ -242,7 +242,7 @@ const ConsultantAvailability = () => {
     // 로그인되지 않은 경우 (세션 매니저 기준으로 확인)
     if (!sessionManagerIsLoggedIn || !sessionManagerUser) {
       return (
-        <AdminCommonLayout menuItems={CONSULTANT_MENU_ITEMS} title="가능 시간">
+        <AdminCommonLayout title="가능 시간">
           <div className="consultant-availability-error-container">
             <div className="consultant-availability-error-box consultant-availability-error-box--login">
               <i className="bi bi-exclamation-triangle consultant-availability-error-icon"></i>
@@ -267,7 +267,7 @@ const ConsultantAvailability = () => {
     
     if (!hasPermission) {
       return (
-        <AdminCommonLayout menuItems={CONSULTANT_MENU_ITEMS} title="가능 시간">
+        <AdminCommonLayout title="가능 시간">
           <div className="consultant-availability-error-container">
             <div className="consultant-availability-error-box consultant-availability-error-box--permission">
               <i className="bi bi-shield-exclamation consultant-availability-error-icon"></i>
@@ -291,7 +291,7 @@ const ConsultantAvailability = () => {
   }
 
   return (
-    <AdminCommonLayout menuItems={CONSULTANT_MENU_ITEMS} title="가능 시간">
+    <AdminCommonLayout title="가능 시간">
       <div className="consultant-availability-container">
       {/* 헤더 */}
       <div className="availability-header">

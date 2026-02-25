@@ -256,7 +256,7 @@ const ErpDashboard = ({ user: propUser }) => {
 
   if (loading) {
     return (
-      <AdminCommonLayout menuItems={ERP_MENU_ITEMS} title="ERP 관리 시스템" loading={true} loadingText="대시보드를 불러오는 중...">
+      <AdminCommonLayout title="ERP 관리 시스템" loading={true} loadingText="대시보드를 불러오는 중...">
         <div />
       </AdminCommonLayout>
     );
@@ -266,7 +266,7 @@ const ErpDashboard = ({ user: propUser }) => {
   const tenantId = currentUser?.tenantId || sessionManager.getSessionInfo()?.tenantId || '알 수 없음';
   
   return (
-    <AdminCommonLayout menuItems={ERP_MENU_ITEMS} title="ERP 관리 시스템">
+    <AdminCommonLayout title="ERP 관리 시스템">
       <div className="mg-dashboard-layout">
         {/* 대시보드 헤더 */}
         <div className="mg-dashboard-header">

@@ -1,10 +1,13 @@
 /**
  * LNB 메뉴 트리 정규화 (API MenuDTO → LNB 렌더용)
+ * 어드민 LNB에서만 사용되므로 '대시보드'는 /admin/dashboard로 통일
  * @author MindGarden
  * @since 2026-02-25
  */
 
 import { getLnbIcon } from '../components/dashboard-v2/constants/lnbIconMap';
+
+const ADMIN_DASHBOARD_PATH = '/admin/dashboard';
 
 /**
  * API 메뉴 노드 → LNB 아이템 형태로 변환 (재귀)
@@ -20,9 +23,14 @@ export function normalizeLnbTree(apiMenus) {
     if (to === '#' || !to) {
       to = hasChildren ? children[0].to : '#';
     }
+    // 어드민 LNB: 대시보드 메뉴는 /admin/dashboard로 통일 (API가 /dashboard 등으로 올 수 있음)
+    const label = m.menuName || '';
+    if ((label === '대시보드' || to === '/dashboard') && to !== ADMIN_DASHBOARD_PATH) {
+      to = ADMIN_DASHBOARD_PATH;
+    }
     return {
       to,
-      label: m.menuName || '',
+      label,
       icon: getLnbIcon(m.icon),
       end: !hasChildren,
       children: hasChildren ? children : undefined

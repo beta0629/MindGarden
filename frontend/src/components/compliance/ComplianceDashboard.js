@@ -97,7 +97,7 @@ const ComplianceDashboard = () => {
 
     if (loading) {
         return (
-            <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="컴플라이언스 관리">
+            <AdminCommonLayout title="컴플라이언스 관리">
                 <UnifiedLoading type="page" text="컴플라이언스 데이터를 불러오는 중..." />
             </AdminCommonLayout>
         );
@@ -105,7 +105,7 @@ const ComplianceDashboard = () => {
 
     if (error) {
         return (
-            <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="컴플라이언스 관리">
+            <AdminCommonLayout title="컴플라이언스 관리">
                 <div className="error-container">
                     <h2>❌ 오류 발생</h2>
                     <p>{error}</p>
@@ -118,7 +118,7 @@ const ComplianceDashboard = () => {
     }
 
     return (
-        <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="컴플라이언스 관리">
+        <AdminCommonLayout title="컴플라이언스 관리">
             <div className="compliance-dashboard">
             <div className="dashboard-header">
                 <h1>⚖️ 컴플라이언스 모니터링 대시보드</h1>

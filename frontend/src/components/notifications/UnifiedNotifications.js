@@ -208,7 +208,7 @@ const UnifiedNotifications = () => {
 
   if (!isLoggedIn) {
     return (
-      <AdminCommonLayout title="알림" menuItems={DEFAULT_MENU_ITEMS}>
+      <AdminCommonLayout title="알림">
         <div className="mg-card mg-v2-text-center mg-p-xl">
           <h3>로그인이 필요합니다.</h3>
         </div>
@@ -217,7 +217,7 @@ const UnifiedNotifications = () => {
   }
 
   return (
-    <AdminCommonLayout title="알림" menuItems={DEFAULT_MENU_ITEMS}>
+    <AdminCommonLayout title="알림">
       <div className="mg-dashboard-layout">
         {/* 헤더 */}
         <div className="mg-card mg-mb-lg">

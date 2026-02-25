@@ -317,7 +317,7 @@ const WidgetBasedAdminDashboard = () => {
 
     if (sessionLoading || loading) {
         return (
-            <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="위젯 기반 대시보드" loading={true} loadingText="대시보드를 불러오는 중...">
+            <AdminCommonLayout title="위젯 기반 대시보드" loading={true} loadingText="대시보드를 불러오는 중...">
                 <UnifiedLoading type="page" text="대시보드를 불러오는 중..." />
             </AdminCommonLayout>
         );
@@ -325,7 +325,7 @@ const WidgetBasedAdminDashboard = () => {
 
     if (error) {
         return (
-            <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="위젯 기반 대시보드">
+            <AdminCommonLayout title="위젯 기반 대시보드">
                 <div className="error-container">
                     <h2>오류 발생</h2>
                     <p>{error}</p>
@@ -343,7 +343,7 @@ const WidgetBasedAdminDashboard = () => {
     }
 
     return (
-        <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="위젯 기반 대시보드" loading={false}>
+        <AdminCommonLayout title="위젯 기반 대시보드" loading={false}>
             <div className="widget-based-dashboard">
                 {/* 헤더 */}
                 <div className="dashboard-header">

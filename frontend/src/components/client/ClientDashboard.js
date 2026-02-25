@@ -251,7 +251,7 @@ const ClientDashboard = () => {
   
   if (isLoading || sessionLoading || !currentIsLoggedIn || !currentUser?.id) {
     return (
-      <AdminCommonLayout title="대시보드" menuItems={CLIENT_MENU_ITEMS}>
+      <AdminCommonLayout title="대시보드">
         <UnifiedLoading type="page" text="대시보드를 불러오는 중..." />
       </AdminCommonLayout>
     );
@@ -265,7 +265,7 @@ const ClientDashboard = () => {
   };
 
   return (
-    <AdminCommonLayout title="대시보드" menuItems={CLIENT_MENU_ITEMS}>
+    <AdminCommonLayout title="대시보드">
       <div className="mg-v2-dashboard-layout">
         
         {/* 웰컴 헤더 - 화사하고 밝은 느낌 */}

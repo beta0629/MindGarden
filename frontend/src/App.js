@@ -376,7 +376,7 @@ function AppContent() {
             
             {/* 권한 관리 */}
             <Route path="/admin/permissions" element={
-              <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="권한 관리">
+              <AdminCommonLayout title="권한 관리">
                 <PermissionManagement />
               </AdminCommonLayout>
             } />
@@ -469,7 +469,7 @@ function AppContent() {
             <Route
               path="/admin/integrated-schedule"
               element={
-                <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="통합 스케줄링">
+                <AdminCommonLayout title="통합 스케줄링">
                   <IntegratedMatchingSchedule />
                 </AdminCommonLayout>
               }
@@ -493,7 +493,7 @@ function AppContent() {
             <Route path="/admin/academy" element={<AcademyDashboard />} />
             <Route path="/academy/register" element={<AcademyRegister />} />
             <Route path="/admin/schedules" element={
-              <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="스케줄">
+              <AdminCommonLayout title="스케줄">
                 <UnifiedScheduleComponent 
                   userRole={user?.role || 'ADMIN'}
                   userId={user?.id}
@@ -501,7 +501,7 @@ function AppContent() {
               </AdminCommonLayout>
             } />
             <Route path="/admin/statistics" element={
-              <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="통계">
+              <AdminCommonLayout title="통계">
                 <StatisticsDashboard 
                   userRole={user?.role || 'ADMIN'}
                   userId={user?.id}
@@ -509,7 +509,7 @@ function AppContent() {
               </AdminCommonLayout>
             } />
             <Route path="/admin/statistics-dashboard" element={
-              <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="통계 대시보드">
+              <AdminCommonLayout title="통계 대시보드">
                 <StatisticsDashboard 
                   userRole={user?.role || 'ADMIN'}
                   userId={user?.id}
@@ -601,7 +601,7 @@ function AppContent() {
             
             {/* 지점 관리 라우트 (준비중 - 브랜치 코드 제거 정책에 따라 ComingSoon으로 처리) */}
             <Route path="/admin/branches" element={
-              <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="지점 관리">
+              <AdminCommonLayout title="지점 관리">
                 <BranchManagement />
               </AdminCommonLayout>
             } />

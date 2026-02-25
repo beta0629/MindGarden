@@ -40,7 +40,7 @@ const PgConfigurationCreate = () => {
   
   if (!tenantId) {
     return (
-      <AdminCommonLayout title="PG 설정 생성" menuItems={DEFAULT_MENU_ITEMS}>
+      <AdminCommonLayout title="PG 설정 생성">
         <div className="error-message">
           <p>테넌트 정보를 찾을 수 없습니다.</p>
         </div>
@@ -49,7 +49,7 @@ const PgConfigurationCreate = () => {
   }
   
   return (
-    <AdminCommonLayout title="PG 설정 생성" menuItems={DEFAULT_MENU_ITEMS}>
+    <AdminCommonLayout title="PG 설정 생성">
       <div className="pg-config-create-page">
         <PgConfigurationForm
           tenantId={tenantId}

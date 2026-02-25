@@ -220,7 +220,7 @@ const AccountManagement = () => {
   };
 
   return (
-    <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="계좌 관리" loading={loading && accounts.length === 0} loadingText="계좌 목록을 불러오는 중...">
+    <AdminCommonLayout title="계좌 관리" loading={loading && accounts.length === 0} loadingText="계좌 목록을 불러오는 중...">
       <div className={ ACCOUNT_CSS_CLASSES.ACCOUNT_MANAGEMENT }>
         <div className={ ACCOUNT_CSS_CLASSES.ACCOUNT_HEADER }>
           <h2>{ ACCOUNT_PAGE_TITLES.MAIN }</h2>

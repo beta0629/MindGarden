@@ -737,7 +737,7 @@ const CommonDashboard = ({ user: propUser }) => {
   }
 
   return (
-    <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="대시보드" loading={sessionLoading} loadingText="대시보드를 불러오는 중...">
+    <AdminCommonLayout title="대시보드" loading={sessionLoading} loadingText="대시보드를 불러오는 중...">
       <div className={`mg-dashboard-layout dashboard-container ${user?.role?.toLowerCase() || ''}`}>
         
         {/* 웰컴 섹션 - 위젯으로 업그레이드 */}

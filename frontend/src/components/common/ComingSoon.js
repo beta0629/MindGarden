@@ -19,7 +19,7 @@ import './ComingSoon.css';
  */
 const ComingSoon = ({ title = "준비중", description = "해당 기능은 현재 개발 중입니다." }) => {
   return (
-    <AdminCommonLayout title="준비 중" menuItems={DEFAULT_MENU_ITEMS}>
+    <AdminCommonLayout title="준비 중">
       <div className="coming-soon-container">
         <div className="coming-soon-content">
           <div className="coming-soon-icon">

@@ -70,7 +70,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
   const { windowSize } = useResponsive();
   const isDesktop = windowSize.width >= BREAKPOINT_DESKTOP;
 
-  const [lnbMenuItems, setLnbMenuItems] = useState(DEFAULT_MENU_ITEMS);
+  const [lnbMenuItems, setLnbMenuItems] = useState(null);
 
   /** API LNB 메뉴 후처리: 매칭관리→통합 스케줄 센터 치환, 알림을 세 번째 위치로 정렬 */
   const normalizeLnbMenuItemsForDashboard = useCallback((items) => {
@@ -110,7 +110,9 @@ const AdminDashboardV2 = ({ user: propUser }) => {
           setLnbMenuItems(normalizeLnbMenuItemsForDashboard(normalizeLnbTree(tree)));
         }
       })
-      .catch(() => {});
+      .catch(() => {
+        if (!cancelled) setLnbMenuItems(DEFAULT_MENU_ITEMS);
+      });
     return () => { cancelled = true; };
   }, [normalizeLnbMenuItemsForDashboard]);
 
@@ -556,7 +558,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
   }, [logout]);
 
   const layoutProps = {
-    menuItems: lnbMenuItems,
+    menuItems: lnbMenuItems ?? DEFAULT_MENU_ITEMS,
     headerTitle: '시스템 관리',
     logoLabel: '코어솔류션',
     searchValue,

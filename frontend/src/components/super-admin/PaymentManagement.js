@@ -426,14 +426,14 @@ const PaymentManagement = () => {
 
   if (loading) {
     return (
-      <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="결제 관리">
+      <AdminCommonLayout title="결제 관리">
         <UnifiedLoading type="page" text="결제 내역을 불러오는 중..." />
       </AdminCommonLayout>
     );
   }
 
   return (
-    <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="결제 관리">
+    <AdminCommonLayout title="결제 관리">
       <div className="payment-management">
         <div className="payment-header">
           <h1>결제 관리</h1>

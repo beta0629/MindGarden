@@ -117,7 +117,7 @@ const WellnessNotificationDetail = () => {
 
   if (loading) {
     return (
-      <AdminCommonLayout title="알림 상세" menuItems={CLIENT_MENU_ITEMS}>
+      <AdminCommonLayout title="알림 상세">
         <UnifiedLoading type="page" text="웰니스 알림을 불러오는 중..." />
       </AdminCommonLayout>
     );
@@ -125,7 +125,7 @@ const WellnessNotificationDetail = () => {
 
   if (error || !notification) {
     return (
-      <AdminCommonLayout title="알림 상세" menuItems={CLIENT_MENU_ITEMS}>
+      <AdminCommonLayout title="알림 상세">
         <div className="wellness-notification-detail">
           <div className="wellness-notification-error">
             <div className="error-icon">
@@ -144,7 +144,7 @@ const WellnessNotificationDetail = () => {
   }
 
   return (
-    <AdminCommonLayout title="알림 상세" menuItems={CLIENT_MENU_ITEMS}>
+    <AdminCommonLayout title="알림 상세">
       <div className="wellness-notification-detail">
         {/* 헤더 */}
         <div className="wellness-notification-header">

@@ -199,7 +199,7 @@ const TenantProfile = () => {
 
   if (sessionLoading || !isLoggedIn || !user) {
     return (
-      <AdminCommonLayout title="테넌트 프로필" menuItems={DEFAULT_MENU_ITEMS}>
+      <AdminCommonLayout title="테넌트 프로필">
         <UnifiedLoading type="page" text="테넌트 정보를 불러오는 중..." />
       </AdminCommonLayout>
     );
@@ -207,7 +207,7 @@ const TenantProfile = () => {
 
   if (!tenantId) {
     return (
-      <AdminCommonLayout title="테넌트 프로필" menuItems={DEFAULT_MENU_ITEMS}>
+      <AdminCommonLayout title="테넌트 프로필">
         <div className="tenant-profile-error">
           <AlertCircle size={24} />
           <p>테넌트 정보를 찾을 수 없습니다.</p>
@@ -218,7 +218,7 @@ const TenantProfile = () => {
 
   if (loading) {
     return (
-      <AdminCommonLayout title="테넌트 프로필" menuItems={DEFAULT_MENU_ITEMS}>
+      <AdminCommonLayout title="테넌트 프로필">
         <UnifiedLoading type="page" text="테넌트 프로필을 불러오는 중..." />
       </AdminCommonLayout>
     );
@@ -226,7 +226,7 @@ const TenantProfile = () => {
 
   if (!tenantInfo) {
     return (
-      <AdminCommonLayout title="테넌트 프로필" menuItems={DEFAULT_MENU_ITEMS}>
+      <AdminCommonLayout title="테넌트 프로필">
         <div className="tenant-profile-error">
           <AlertCircle size={24} />
           <p>테넌트 정보를 찾을 수 없습니다.</p>
@@ -236,7 +236,7 @@ const TenantProfile = () => {
   }
 
   return (
-    <AdminCommonLayout title="테넌트 프로필" menuItems={DEFAULT_MENU_ITEMS}>
+    <AdminCommonLayout title="테넌트 프로필">
       <div className="tenant-profile">
         {/* 헤더 */}
         <div className="tenant-profile-header">

@@ -257,7 +257,7 @@ const FinancialReports = ({ user }) => {
 
     if (loading) {
         return (
-            <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="재무 보고서">
+            <AdminCommonLayout title="재무 보고서">
                 <div className="financial-reports-container">
                     <div className="mg-loading">로딩중...</div>
                 </div>
@@ -268,7 +268,7 @@ const FinancialReports = ({ user }) => {
     const currentData = activeTab === 'monthly' ? reportData.monthly : reportData.yearly;
 
     return (
-        <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="재무 보고서">
+        <AdminCommonLayout title="재무 보고서">
             <div className="financial-reports-container">
                 {/* 헤더 */}
                 <div className="financial-reports-header">

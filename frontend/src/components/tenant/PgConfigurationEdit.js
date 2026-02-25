@@ -67,7 +67,7 @@ const PgConfigurationEdit = () => {
   
   if (sessionLoading || loading) {
     return (
-      <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="PG 설정 수정">
+      <AdminCommonLayout title="PG 설정 수정">
         <UnifiedLoading type="page" text="PG 설정을 불러오는 중..." />
       </AdminCommonLayout>
     );
@@ -75,7 +75,7 @@ const PgConfigurationEdit = () => {
   
   if (!config) {
     return (
-      <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="PG 설정 수정">
+      <AdminCommonLayout title="PG 설정 수정">
         <div className="error-message">
           <p>PG 설정을 찾을 수 없습니다.</p>
         </div>
@@ -91,7 +91,7 @@ const PgConfigurationEdit = () => {
   }
   
   return (
-    <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="PG 설정 수정">
+    <AdminCommonLayout title="PG 설정 수정">
       <div className="pg-config-edit-page">
         <PgConfigurationForm
           tenantId={tenantId}

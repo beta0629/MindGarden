@@ -225,7 +225,7 @@ const ImprovedTaxManagement = () => {
 
   if (!sessionIsLoggedIn || !sessionUser) {
     return (
-      <AdminCommonLayout menuItems={ERP_MENU_ITEMS} title="세무 관리">
+      <AdminCommonLayout title="세무 관리">
         <div className="erp-error">
           <h3>로그인이 필요합니다.</h3>
           <p>세무 관리 기능을 사용하려면 로그인해주세요.</p>
@@ -235,7 +235,7 @@ const ImprovedTaxManagement = () => {
   }
 
   return (
-    <AdminCommonLayout menuItems={ERP_MENU_ITEMS} title="세무 관리">
+    <AdminCommonLayout title="세무 관리">
       <div className="erp-system">
         <div className="erp-container">
           {/* 헤더 */}

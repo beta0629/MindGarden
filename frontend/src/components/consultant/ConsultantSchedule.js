@@ -29,7 +29,7 @@ const ConsultantSchedule = () => {
   if (sessionLoading) {
     console.log('⏳ ConsultantSchedule: 세션 로딩 중...');
     return (
-      <AdminCommonLayout title="스케줄" menuItems={CONSULTANT_MENU_ITEMS}>
+      <AdminCommonLayout title="스케줄">
         <UnifiedLoading type="page" text="스케줄 정보를 불러오는 중..." />
       </AdminCommonLayout>
     );
@@ -38,7 +38,7 @@ const ConsultantSchedule = () => {
   if (!user) {
     console.log('❌ ConsultantSchedule: 사용자 정보 없음');
     return (
-      <AdminCommonLayout title="스케줄" menuItems={CONSULTANT_MENU_ITEMS}>
+      <AdminCommonLayout title="스케줄">
         <UnifiedLoading type="page" text="사용자 정보를 확인하는 중..." />
       </AdminCommonLayout>
     );
@@ -47,7 +47,7 @@ const ConsultantSchedule = () => {
   console.log('✅ ConsultantSchedule: UnifiedScheduleComponent 렌더링 시작', { userRole: 'CONSULTANT', userId: user.id });
 
   return (
-    <AdminCommonLayout title="스케줄" menuItems={CONSULTANT_MENU_ITEMS}>
+    <AdminCommonLayout title="스케줄">
       <UnifiedScheduleComponent 
         userRole="CONSULTANT"
         userId={user.id}

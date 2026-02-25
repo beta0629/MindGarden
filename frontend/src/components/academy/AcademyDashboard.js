@@ -103,7 +103,7 @@ const AcademyDashboard = () => {
   };
 
   return (
-    <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="학원">
+    <AdminCommonLayout title="학원">
       <div className="academy-dashboard">
         <div className="academy-header">
           <h1>학원 시스템 관리</h1>

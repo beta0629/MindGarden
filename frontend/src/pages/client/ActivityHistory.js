@@ -128,14 +128,14 @@ const ActivityHistory = () => {
 
   if (loading) {
     return (
-      <AdminCommonLayout menuItems={CLIENT_MENU_ITEMS} title="활동 내역" loading={true} loadingText="활동 내역을 불러오는 중...">
+      <AdminCommonLayout title="활동 내역" loading={true} loadingText="활동 내역을 불러오는 중...">
         <div />
       </AdminCommonLayout>
     );
   }
 
   return (
-    <AdminCommonLayout menuItems={CLIENT_MENU_ITEMS} title="활동 내역">
+    <AdminCommonLayout title="활동 내역">
       <div className="activity-history-container">
         {/* 헤더 */}
         <div className="activity-history-header">

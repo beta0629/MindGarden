@@ -246,7 +246,7 @@ const ConsolidatedFinancial = () => {
 
     if (loading) {
         return (
-            <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="통합 재무현황">
+            <AdminCommonLayout title="통합 재무현황">
                 <Container fluid className="py-4">
                     <div className="mg-loading">로딩중...</div>
                 </Container>
@@ -255,7 +255,7 @@ const ConsolidatedFinancial = () => {
     }
 
     return (
-        <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="통합 재무현황">
+        <AdminCommonLayout title="통합 재무현황">
             <Container fluid className="consolidated-financial py-4">
                 {/* 헤더 */}
                 <Row className="mb-4">

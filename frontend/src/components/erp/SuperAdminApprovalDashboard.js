@@ -161,14 +161,14 @@ const SuperAdminApprovalDashboard = () => {
 
   if (loading) {
     return (
-      <AdminCommonLayout title="슈퍼 승인" menuItems={ERP_MENU_ITEMS}>
+      <AdminCommonLayout title="슈퍼 승인">
         <UnifiedLoading type="page" text="수퍼 관리자 승인 대기 요청을 불러오는 중..." />
       </AdminCommonLayout>
     );
   }
 
   return (
-    <AdminCommonLayout title="슈퍼 승인" menuItems={ERP_MENU_ITEMS}>
+    <AdminCommonLayout title="슈퍼 승인">
       <div className="approval-dashboard-container">
         <ErpHeader
           title="수퍼 관리자 승인 대시보드"

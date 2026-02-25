@@ -57,7 +57,7 @@ const BranchManagement = () => {
     
     if (!user || (user.role !== 'HQ_ADMIN' && user.role !== 'SUPER_HQ_ADMIN')) {
         return (
-            <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="지점 관리" loading={true} loadingText="권한을 확인하는 중...">
+            <AdminCommonLayout title="지점 관리" loading={true} loadingText="권한을 확인하는 중...">
                 <div />
             </AdminCommonLayout>
         );
@@ -307,7 +307,7 @@ const BranchManagement = () => {
 
 
     return (
-        <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="지점 관리" loading={loading && branches.length === 0} loadingText="데이터를 불러오는 중...">
+        <AdminCommonLayout title="지점 관리" loading={loading && branches.length === 0} loadingText="데이터를 불러오는 중...">
         <div className="branch-management">
             <div className="branch-management-header">
                 <h2>지점 관리</h2>

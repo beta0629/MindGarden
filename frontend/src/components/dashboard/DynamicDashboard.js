@@ -234,7 +234,7 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
 
   if (isLoading) {
     return (
-      <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="대시보드">
+      <AdminCommonLayout title="대시보드">
         <div className="mg-dashboard-loading">
           <div className="mg-loading">로딩중...</div>
         </div>
@@ -244,7 +244,7 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
 
   if (error) {
     return (
-      <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="대시보드">
+      <AdminCommonLayout title="대시보드">
         <div className="mg-dashboard-error">
           <h2 className="mg-dashboard-error__title">대시보드 로드 실패</h2>
           <p className="mg-dashboard-error__message">{error}</p>
@@ -911,7 +911,7 @@ const WidgetBasedDashboard = ({ dashboardConfig, dashboard, user, businessType: 
   }, [refresh]);
   
   return (
-    <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="대시보드">
+    <AdminCommonLayout title="대시보드">
       <div className="widget-based-dashboard" style={themeStyle}>
         <div className="dashboard-header">
           <h1>{dashboard?.dashboardName || '대시보드'}</h1>

@@ -315,7 +315,7 @@ const PgApprovalManagement = () => {
   
   if (sessionLoading || loading && pendingConfigs.length === 0) {
     return (
-      <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="PG 설정 승인 관리">
+      <AdminCommonLayout title="PG 설정 승인 관리">
         <UnifiedLoading type="page" text="PG 설정 목록을 불러오는 중..." />
       </AdminCommonLayout>
     );
@@ -323,7 +323,7 @@ const PgApprovalManagement = () => {
   
   if (!isLoggedIn || !user) {
     return (
-      <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="PG 설정 승인 관리">
+      <AdminCommonLayout title="PG 설정 승인 관리">
         <div className="error-message">
           <AlertCircle size={24} />
           <p>로그인이 필요합니다.</p>
@@ -333,7 +333,7 @@ const PgApprovalManagement = () => {
   }
   
   return (
-    <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="PG 설정 승인 관리">
+    <AdminCommonLayout title="PG 설정 승인 관리">
       <div className="pg-approval-management">
         {/* 헤더 */}
         <div className="pg-approval-header">

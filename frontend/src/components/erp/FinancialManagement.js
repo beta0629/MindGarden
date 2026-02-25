@@ -335,7 +335,7 @@ const FinancialManagement = () => {
 
   if (sessionLoading) {
     return (
-      <AdminCommonLayout menuItems={ERP_MENU_ITEMS} title="재무 관리">
+      <AdminCommonLayout title="재무 관리">
         <UnifiedLoading type="page" text="세션 정보를 불러오는 중..." />
       </AdminCommonLayout>
     );
@@ -343,7 +343,7 @@ const FinancialManagement = () => {
 
   if (!isLoggedIn) {
     return (
-      <AdminCommonLayout menuItems={ERP_MENU_ITEMS} title={`재무 관리${dashboardStats.branchName ? ' - ' + dashboardStats.branchName : ''}`}>
+      <AdminCommonLayout title={`재무 관리${dashboardStats.branchName ? ' - ' + dashboardStats.branchName : ''}`}>
         <div className="erp-error">
           <h3>로그인이 필요합니다.</h3>
           <p>재무 관리 기능을 사용하려면 로그인해주세요.</p>
@@ -353,7 +353,7 @@ const FinancialManagement = () => {
   }
 
   return (
-    <AdminCommonLayout menuItems={ERP_MENU_ITEMS} title={`재무 관리${dashboardStats.branchName ? ' - ' + dashboardStats.branchName : ''}`}>
+    <AdminCommonLayout title={`재무 관리${dashboardStats.branchName ? ' - ' + dashboardStats.branchName : ''}`}>
       <div className="erp-system">
         <div className="erp-container">
         {/* 헤더 */}

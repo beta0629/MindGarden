@@ -161,14 +161,14 @@ const AdminApprovalDashboard = () => {
 
   if (loading) {
     return (
-      <AdminCommonLayout title="승인 관리" menuItems={ERP_MENU_ITEMS}>
+      <AdminCommonLayout title="승인 관리">
         <UnifiedLoading type="page" text="승인 대기 요청을 불러오는 중..." />
       </AdminCommonLayout>
     );
   }
 
   return (
-    <AdminCommonLayout title="승인 관리" menuItems={ERP_MENU_ITEMS}>
+    <AdminCommonLayout title="승인 관리">
       <div className="approval-dashboard-container">
         <ErpHeader
           title="관리자 승인 대시보드"

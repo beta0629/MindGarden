@@ -175,7 +175,7 @@ const HQBranchManagement = () => {
     // 로딩 상태
     if (sessionLoading || loading) {
         return (
-            <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="HQ 지점 관리">
+            <AdminCommonLayout title="HQ 지점 관리">
                 <div className="hq-branch-management-loading">
                     <div className="mg-loading">로딩중...</div>
                 </div>
@@ -184,7 +184,7 @@ const HQBranchManagement = () => {
     }
 
     return (
-        <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="HQ 지점 관리">
+        <AdminCommonLayout title="HQ 지점 관리">
             <div className="hq-branch-management">
                 <Container fluid className="py-4">
                     {/* 헤더 */}

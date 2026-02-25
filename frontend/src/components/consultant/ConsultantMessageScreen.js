@@ -410,7 +410,7 @@ const ConsultantMessageScreen = () => {
 
   if (loading) {
     return (
-      <AdminCommonLayout menuItems={CONSULTANT_MENU_ITEMS} title="메시지" loading={true} loadingText="로딩중...">
+      <AdminCommonLayout title="메시지" loading={true} loadingText="로딩중...">
         <div />
       </AdminCommonLayout>
     );
@@ -418,7 +418,7 @@ const ConsultantMessageScreen = () => {
 
   if (!client || !consultation) {
     return (
-      <AdminCommonLayout menuItems={CONSULTANT_MENU_ITEMS} title="메시지">
+      <AdminCommonLayout title="메시지">
         <div className="mg-dashboard-layout">
           <div className="mg-dashboard-header">
             <h1 className="mg-dashboard-title">메시지 전송</h1>
@@ -430,7 +430,7 @@ const ConsultantMessageScreen = () => {
   }
 
   return (
-    <AdminCommonLayout menuItems={CONSULTANT_MENU_ITEMS} title="메시지">
+    <AdminCommonLayout title="메시지">
       <div className="mg-dashboard-layout">
       {/* 헤더 */}
       <div className="mg-dashboard-header">

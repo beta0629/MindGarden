@@ -208,7 +208,7 @@ const UserManagement = ({ onUpdate }) => {
     };
 
     return (
-        <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="사용자 관리" loading={loading && filteredUsers.length === 0} loadingText="사용자 목록을 불러오는 중...">
+        <AdminCommonLayout title="사용자 관리" loading={loading && filteredUsers.length === 0} loadingText="사용자 목록을 불러오는 중...">
             <div className="mg-v2-dashboard-layout">
                 {/* Dashboard Header */}
                 <div className="mg-v2-dashboard-header">

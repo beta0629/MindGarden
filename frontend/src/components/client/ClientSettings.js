@@ -58,14 +58,14 @@ const ClientSettings = () => {
 
   if (loading) {
     return (
-      <AdminCommonLayout menuItems={CLIENT_MENU_ITEMS} title="설정" loading={true} loadingText="로딩중...">
+      <AdminCommonLayout title="설정" loading={true} loadingText="로딩중...">
         <div />
       </AdminCommonLayout>
     );
   }
 
   return (
-    <AdminCommonLayout menuItems={CLIENT_MENU_ITEMS} title="설정">
+    <AdminCommonLayout title="설정">
       <div className="client-settings-container">
         <div className="client-settings-card">
           <div className="client-settings-header">

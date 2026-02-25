@@ -439,14 +439,14 @@ const MyPage = () => {
   // displayUser가 null이면 로딩 상태로 처리
   if (!displayUser) {
     return (
-      <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="마이페이지">
+      <AdminCommonLayout title="마이페이지">
         <UnifiedLoading type="page" text="사용자 정보를 불러오는 중..." />
       </AdminCommonLayout>
     );
   }
 
   return (
-    <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="마이페이지">
+    <AdminCommonLayout title="마이페이지">
       <div className={`mypage-container mypage ${isProfileEditing ? 'editing' : 'readonly'}`}>
         {/* 페이지 헤더 */}
         <div className="mypage-header">

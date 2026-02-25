@@ -123,7 +123,7 @@ const ConsultantManagement = ({ onUpdate, showToast }) => {
     };
 
     return (
-        <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="상담사 관리" loading={loading && consultants.length === 0} loadingText="상담사 목록을 불러오는 중...">
+        <AdminCommonLayout title="상담사 관리" loading={loading && consultants.length === 0} loadingText="상담사 목록을 불러오는 중...">
             <div className="consultant-management">
                 <div className="panel-header">
                     <h3 className="panel-title">

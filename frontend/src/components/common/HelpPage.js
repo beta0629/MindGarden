@@ -155,7 +155,7 @@ const HelpPage = () => {
   ];
 
   return (
-    <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="도움말">
+    <AdminCommonLayout title="도움말">
       <div className="help-page">
         <div className="help-page__header">
           <h1 className="help-page__title">

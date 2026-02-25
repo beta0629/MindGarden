@@ -21,7 +21,7 @@ import { ADMIN_ROUTES } from '../../../constants/adminRoutes';
 
 const BREAKPOINT_DESKTOP = 768;
 
-/** 어드민 LNB 폴백: 메인+서브 트리 (LNB_MENU_STRUCTURE_AND_PERMISSION_SPEC §2) */
+/** 어드민 LNB 폴백: API(/api/v1/menus/lnb) 실패 시에만 사용 (평상시는 DB 메뉴 사용) */
 const DEFAULT_MENU_ITEMS = [
   { to: ADMIN_ROUTES.DASHBOARD, icon: LayoutDashboard, label: '대시보드', end: true },
   { to: ADMIN_ROUTES.INTEGRATED_SCHEDULE, icon: Calendar, label: '통합 스케줄 센터', end: true },

@@ -190,7 +190,7 @@ const PgConfigurationDetail = () => {
   
   if (sessionLoading || loading) {
     return (
-      <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="PG 설정 상세" loading={true} loadingText="PG 설정 상세를 불러오는 중...">
+      <AdminCommonLayout title="PG 설정 상세" loading={true} loadingText="PG 설정 상세를 불러오는 중...">
         <div />
       </AdminCommonLayout>
     );
@@ -198,7 +198,7 @@ const PgConfigurationDetail = () => {
   
   if (!isLoggedIn || !user) {
     return (
-      <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="PG 설정 상세">
+      <AdminCommonLayout title="PG 설정 상세">
         <div className="error-message">
           <AlertCircle size={24} />
           <p>로그인이 필요합니다.</p>
@@ -209,7 +209,7 @@ const PgConfigurationDetail = () => {
   
   if (!tenantId) {
     return (
-      <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="PG 설정 상세">
+      <AdminCommonLayout title="PG 설정 상세">
         <div className="error-message">
           <AlertCircle size={24} />
           <p>테넌트 정보를 찾을 수 없습니다.</p>
@@ -220,7 +220,7 @@ const PgConfigurationDetail = () => {
   
   if (error || !config) {
     return (
-      <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="PG 설정 상세">
+      <AdminCommonLayout title="PG 설정 상세">
         <div className="error-message">
           <AlertCircle size={24} />
           <p>{error || 'PG 설정을 찾을 수 없습니다.'}</p>
@@ -237,7 +237,7 @@ const PgConfigurationDetail = () => {
   }
   
   return (
-    <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="PG 설정 상세">
+    <AdminCommonLayout title="PG 설정 상세">
         <div className="pg-config-detail" role="main" aria-label="PG 설정 상세 정보">
         {/* 헤더 */}
         <div className="pg-config-detail-header">

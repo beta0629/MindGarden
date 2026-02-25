@@ -504,7 +504,7 @@ const ConsultationRecordScreen = () => {
 
   if (loading) {
     return (
-      <AdminCommonLayout title="상담일지 작성" menuItems={CONSULTANT_MENU_ITEMS}>
+      <AdminCommonLayout title="상담일지 작성">
         <div className="consultation-record-screen-loading">
           <div className="mg-loading">로딩중...</div>
         </div>
@@ -514,7 +514,7 @@ const ConsultationRecordScreen = () => {
 
   if (!consultation || !client) {
     return (
-      <AdminCommonLayout title="상담일지 작성" menuItems={CONSULTANT_MENU_ITEMS}>
+      <AdminCommonLayout title="상담일지 작성">
         <div className="mg-dashboard-layout">
           <div className="mg-dashboard-header">
             <h1 className="mg-dashboard-title">상담일지 작성</h1>
@@ -526,7 +526,7 @@ const ConsultationRecordScreen = () => {
   }
 
   return (
-    <AdminCommonLayout title="상담일지 작성" menuItems={CONSULTANT_MENU_ITEMS}>
+    <AdminCommonLayout title="상담일지 작성">
       <div className="mg-dashboard-layout">
 
       {/* 내담자 정보 카드 */}

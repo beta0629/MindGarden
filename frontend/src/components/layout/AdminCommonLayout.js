@@ -1,7 +1,7 @@
 /**
  * 공통 어드민 레이아웃 컴포넌트
  * - DesktopLayout, MobileLayout 분기 처리 추상화
- * - LNB 메뉴는 DB 기반 API(/api/v1/menus/lnb) 1회 호출, 실패 시 상수 폴백
+ * - LNB 메뉴는 DB 기반 API(/api/v1/menus/lnb) 전용, 실패 시에만 내부 폴백 상수 사용
  *
  * @author MindGarden
  * @since 2025-02-22
@@ -21,7 +21,6 @@ import { getLnbTreeFromResponse, normalizeLnbTree } from '../../utils/lnbMenuUti
 const AdminCommonLayout = ({
   children,
   title,
-  menuItems: menuItemsProp, // 폴백용 (API 실패 시에만 사용, 호출부에서 넘기지 않음)
   searchValue,
   onSearchChange,
   onBellClick,
@@ -46,18 +45,18 @@ const AdminCommonLayout = ({
         if (tree && tree.length > 0) {
           setLnbMenuItems(normalizeLnbTree(tree));
         } else {
-          setLnbMenuItems(menuItemsProp !== undefined ? menuItemsProp : DEFAULT_MENU_ITEMS);
+          setLnbMenuItems(DEFAULT_MENU_ITEMS);
         }
       })
       .catch(() => {
         if (!cancelled) {
-          setLnbMenuItems(menuItemsProp ?? DEFAULT_MENU_ITEMS);
+          setLnbMenuItems(DEFAULT_MENU_ITEMS);
         }
       });
     return () => { cancelled = true; };
   }, []);
 
-  const menuItems = lnbMenuItems !== null ? lnbMenuItems : (menuItemsProp ?? DEFAULT_MENU_ITEMS);
+  const menuItems = lnbMenuItems !== null ? lnbMenuItems : DEFAULT_MENU_ITEMS;
 
   const handleLogout = useCallback(async () => {
     try {

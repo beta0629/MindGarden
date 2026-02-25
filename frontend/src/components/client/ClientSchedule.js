@@ -33,7 +33,7 @@ const ClientSchedule = () => {
 
   if (sessionLoading || loading) {
     return (
-      <AdminCommonLayout menuItems={CLIENT_MENU_ITEMS} title="스케줄" loading={true} loadingText="로딩중...">
+      <AdminCommonLayout title="스케줄" loading={true} loadingText="로딩중...">
         <div className="client-schedule-loading" />
       </AdminCommonLayout>
     );
@@ -41,7 +41,7 @@ const ClientSchedule = () => {
 
   if (error) {
     return (
-      <AdminCommonLayout menuItems={CLIENT_MENU_ITEMS} title="스케줄">
+      <AdminCommonLayout title="스케줄">
         <div className="client-schedule-error">
           <div className="client-schedule-error__icon">
             <AlertTriangle size={48} />
@@ -60,7 +60,7 @@ const ClientSchedule = () => {
   }
 
   return (
-    <AdminCommonLayout menuItems={CLIENT_MENU_ITEMS} title="스케줄">
+    <AdminCommonLayout title="스케줄">
       <div className="client-schedule-container">
         <div className="client-schedule-header">
           <div className="client-schedule-header__icon">

@@ -341,7 +341,7 @@ const SalaryManagement = () => {
     };
 
     return (
-        <AdminCommonLayout title="급여 관리" menuItems={ERP_MENU_ITEMS}>
+        <AdminCommonLayout title="급여 관리">
             {loading && consultants.length === 0 ? (
                 <UnifiedLoading type="page" text="데이터를 불러오는 중..." />
             ) : (

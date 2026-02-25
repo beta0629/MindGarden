@@ -109,7 +109,7 @@ const SystemNotifications = () => {
   }, [isLoggedIn]);
 
   return (
-    <AdminCommonLayout title="시스템 알림" menuItems={DEFAULT_MENU_ITEMS}>
+    <AdminCommonLayout title="시스템 알림">
       {!isLoggedIn ? (
         <div className="mg-card mg-v2-text-center mg-p-xl">
           <h3>로그인이 필요합니다.</h3>

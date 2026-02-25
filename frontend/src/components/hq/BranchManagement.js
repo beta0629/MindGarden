@@ -211,7 +211,7 @@ const BranchManagement = () => {
     };
     
     return (
-        <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="지점 관리">
+        <AdminCommonLayout title="지점 관리">
             <div className="hq-branch-management">
                 <Container fluid className="py-4">
                     <Tabs

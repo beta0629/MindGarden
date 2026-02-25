@@ -203,7 +203,7 @@ const MenuPermissionManagement = () => {
     };
 
     return (
-        <AdminCommonLayout title="메뉴 권한 관리" menuItems={DEFAULT_MENU_ITEMS} loading={loading && !selectedRole} loadingText="데이터를 불러오는 중...">
+        <AdminCommonLayout title="메뉴 권한 관리" loading={loading && !selectedRole} loadingText="데이터를 불러오는 중...">
             <MenuPermissionManagementUI
                 roles={roles}
                 selectedRole={selectedRole}

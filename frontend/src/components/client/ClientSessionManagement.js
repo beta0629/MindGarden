@@ -109,7 +109,7 @@ const ClientSessionManagement = () => {
 
   if (isLoading) {
     return (
-      <AdminCommonLayout menuItems={CLIENT_MENU_ITEMS} title="회기 관리" loading={true} loadingText="회기 데이터를 불러오는 중...">
+      <AdminCommonLayout title="회기 관리" loading={true} loadingText="회기 데이터를 불러오는 중...">
         <div />
       </AdminCommonLayout>
     );
@@ -117,7 +117,7 @@ const ClientSessionManagement = () => {
 
   if (error) {
     return (
-      <AdminCommonLayout menuItems={CLIENT_MENU_ITEMS} title="회기 관리">
+      <AdminCommonLayout title="회기 관리">
         <div className="client-session-management">
           <div className="error-container">
             <div className="error-icon">
@@ -139,7 +139,7 @@ const ClientSessionManagement = () => {
 
   if (!sessionData || sessionData.mappings.length === 0) {
     return (
-      <AdminCommonLayout menuItems={CLIENT_MENU_ITEMS} title="회기 관리">
+      <AdminCommonLayout title="회기 관리">
         <div className="client-session-management">
           <div className="no-data-container">
             <div className="no-data-icon">
@@ -160,7 +160,7 @@ const ClientSessionManagement = () => {
   }
 
   return (
-    <AdminCommonLayout menuItems={CLIENT_MENU_ITEMS} title="회기 관리">
+    <AdminCommonLayout title="회기 관리">
       <div className="client-session-management">
         {/* 페이지 헤드라인 */}
         <div className="client-session-management-header">

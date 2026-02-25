@@ -198,7 +198,7 @@ const ConsultantMessages = () => {
 
   if (sessionLoading) {
     return (
-      <AdminCommonLayout title="메시지" menuItems={CONSULTANT_MENU_ITEMS}>
+      <AdminCommonLayout title="메시지">
         <UnifiedLoading 
           type="page"
           text="세션 정보를 불러오는 중..."
@@ -210,7 +210,7 @@ const ConsultantMessages = () => {
 
   if (!isLoggedIn) {
     return (
-      <AdminCommonLayout title="메시지" menuItems={CONSULTANT_MENU_ITEMS}>
+      <AdminCommonLayout title="메시지">
         <div className="consultant-messages-login-required">
           <h3>로그인이 필요합니다.</h3>
         </div>
@@ -219,7 +219,7 @@ const ConsultantMessages = () => {
   }
 
   return (
-    <AdminCommonLayout title="메시지" menuItems={CONSULTANT_MENU_ITEMS}>
+    <AdminCommonLayout title="메시지">
       <div className="consultant-messages-container">
         {/* 헤더 */}
         <div className="consultant-messages-header">

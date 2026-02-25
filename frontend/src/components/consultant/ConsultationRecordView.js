@@ -55,7 +55,7 @@ const ConsultationRecordView = () => {
 
   if (loading) {
     return (
-      <AdminCommonLayout menuItems={CONSULTANT_MENU_ITEMS} title="상담기록 조회" loading={true} loadingText="로딩중...">
+      <AdminCommonLayout title="상담기록 조회" loading={true} loadingText="로딩중...">
         <div />
       </AdminCommonLayout>
     );
@@ -63,7 +63,7 @@ const ConsultationRecordView = () => {
 
   if (error) {
     return (
-      <AdminCommonLayout menuItems={CONSULTANT_MENU_ITEMS} title="상담기록 조회">
+      <AdminCommonLayout title="상담기록 조회">
         <div className="mg-v2-empty-state">
           <div className="mg-v2-empty-state-icon">⚠️</div>
           <div className="mg-v2-empty-state-text">{error}</div>
@@ -81,7 +81,7 @@ const ConsultationRecordView = () => {
 
   if (!record) {
     return (
-      <AdminCommonLayout menuItems={CONSULTANT_MENU_ITEMS} title="상담기록 조회">
+      <AdminCommonLayout title="상담기록 조회">
         <div className="mg-v2-empty-state">
           <div className="mg-v2-empty-state-icon">📋</div>
           <div className="mg-v2-empty-state-text">상담기록을 찾을 수 없습니다.</div>
@@ -98,7 +98,7 @@ const ConsultationRecordView = () => {
   }
 
   return (
-    <AdminCommonLayout menuItems={CONSULTANT_MENU_ITEMS} title="상담기록 조회">
+    <AdminCommonLayout title="상담기록 조회">
       <div className="mg-v2-record-view">
         {/* 기본 정보 카드 */}
         <div className="mg-v2-card">

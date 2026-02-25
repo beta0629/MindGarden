@@ -88,7 +88,7 @@ const RefundManagement = () => {
     };
 
     return (
-        <AdminCommonLayout title="환불 관리" menuItems={ERP_MENU_ITEMS}>
+        <AdminCommonLayout title="환불 관리">
             {loading ? (
                 <UnifiedLoading type="page" text="환불 데이터를 불러오는 중..." />
             ) : (

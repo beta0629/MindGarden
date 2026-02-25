@@ -142,7 +142,7 @@ const ClientPaymentHistory = () => {
 
   if (isLoading) {
     return (
-      <AdminCommonLayout menuItems={CLIENT_MENU_ITEMS} title="결제 내역" loading={true} loadingText="결제 이력을 불러오는 중...">
+      <AdminCommonLayout title="결제 내역" loading={true} loadingText="결제 이력을 불러오는 중...">
         <div />
       </AdminCommonLayout>
     );
@@ -150,7 +150,7 @@ const ClientPaymentHistory = () => {
 
   if (error) {
     return (
-      <AdminCommonLayout menuItems={CLIENT_MENU_ITEMS} title="결제 내역">
+      <AdminCommonLayout title="결제 내역">
         <div className="client-payment-history">
           <div className="payment-error">
             <div className="payment-error__icon">
@@ -172,7 +172,7 @@ const ClientPaymentHistory = () => {
 
   if (!paymentData || paymentData.mappings.length === 0) {
     return (
-      <AdminCommonLayout menuItems={CLIENT_MENU_ITEMS} title="결제 내역">
+      <AdminCommonLayout title="결제 내역">
         <div className="client-payment-history">
           <div className="payment-empty">
             <div className="payment-empty__icon">
@@ -196,7 +196,7 @@ const ClientPaymentHistory = () => {
   }
 
   return (
-    <AdminCommonLayout menuItems={CLIENT_MENU_ITEMS} title="결제 내역">
+    <AdminCommonLayout title="결제 내역">
       <div className="client-payment-history">
         {/* 페이지 헤더 */}
         <div className="payment-header">

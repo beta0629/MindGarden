@@ -218,7 +218,7 @@ const AcademyRegister = () => {
   };
 
   return (
-    <AdminCommonLayout title="학원 등록" menuItems={DEFAULT_MENU_ITEMS}>
+    <AdminCommonLayout title="학원 등록">
       <div className="academy-register">
         <div className="mg-card">
           <div className="mg-card__header">

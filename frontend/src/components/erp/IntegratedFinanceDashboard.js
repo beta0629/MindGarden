@@ -378,7 +378,7 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
 
   if (loading) {
     return (
-      <AdminCommonLayout menuItems={ERP_MENU_ITEMS} title="통합 재무" loading={true} loadingText="데이터를 불러오는 중...">
+      <AdminCommonLayout title="통합 재무" loading={true} loadingText="데이터를 불러오는 중...">
         <div />
       </AdminCommonLayout>
     );
@@ -393,7 +393,7 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
   }
 
   return (
-    <AdminCommonLayout menuItems={ERP_MENU_ITEMS} title="통합 재무">
+    <AdminCommonLayout title="통합 재무">
       <div className="mg-dashboard-layout">
         {/* Dashboard Header */}
         <div className="mg-dashboard-header">

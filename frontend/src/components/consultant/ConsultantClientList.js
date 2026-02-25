@@ -312,7 +312,7 @@ const ConsultantClientList = () => {
 
   if (sessionLoading) {
     return (
-      <AdminCommonLayout title="내담자 목록" menuItems={CONSULTANT_MENU_ITEMS}>
+      <AdminCommonLayout title="내담자 목록">
         <UnifiedLoading type="page" text="내담자 목록을 불러오는 중..." />
       </AdminCommonLayout>
     );
@@ -320,7 +320,7 @@ const ConsultantClientList = () => {
 
   if (!isLoggedIn) {
     return (
-      <AdminCommonLayout title="내담자 목록" menuItems={CONSULTANT_MENU_ITEMS}>
+      <AdminCommonLayout title="내담자 목록">
         <div className="consultant-client-list-login-required">
           <h3>로그인이 필요합니다.</h3>
         </div>
@@ -329,7 +329,7 @@ const ConsultantClientList = () => {
   }
 
   return (
-    <AdminCommonLayout title="내담자 목록" menuItems={CONSULTANT_MENU_ITEMS}>
+    <AdminCommonLayout title="내담자 목록">
       <div className="consultant-client-list-container">
       {/* 헤더 */}
       <div className="client-list-header">

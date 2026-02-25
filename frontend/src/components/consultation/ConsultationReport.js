@@ -312,7 +312,7 @@ const ConsultationReport = () => {
 
   if (sessionLoading) {
     return (
-      <AdminCommonLayout title="상담 리포트" menuItems={DEFAULT_MENU_ITEMS}>
+      <AdminCommonLayout title="상담 리포트">
         <div className="consultation-report-page">
           <div className="loading-container">
             <div className="mg-loading">로딩중...</div>
@@ -324,7 +324,7 @@ const ConsultationReport = () => {
 
   if (loading) {
     return (
-      <AdminCommonLayout title="상담 리포트" menuItems={DEFAULT_MENU_ITEMS}>
+      <AdminCommonLayout title="상담 리포트">
         <div className="consultation-report-page">
           <div className="loading-container">
             <div className="mg-loading">로딩중...</div>
@@ -335,7 +335,7 @@ const ConsultationReport = () => {
   }
 
   return (
-    <AdminCommonLayout title="상담 리포트" menuItems={DEFAULT_MENU_ITEMS}>
+    <AdminCommonLayout title="상담 리포트">
       <div className="consultation-report-page">
         <div className="page-header">
           <div className="header-content">

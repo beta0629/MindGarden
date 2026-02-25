@@ -317,7 +317,8 @@ public class ConsultantStatsServiceImpl implements ConsultantStatsService {
         
         consultantMap.put("createdAt", consultant.getCreatedAt());
         consultantMap.put("updatedAt", consultant.getUpdatedAt());
-        
+        consultantMap.put("profileImageUrl", consultant.getProfileImageUrl());
+
         return consultantMap;
     }
     

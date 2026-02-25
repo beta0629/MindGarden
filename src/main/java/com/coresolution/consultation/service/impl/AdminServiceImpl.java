@@ -367,6 +367,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 .build();
         
         clientUser.setTenantId(tenantId);
+        if (request.getProfileImageUrl() != null && !request.getProfileImageUrl().trim().isEmpty()) {
+            clientUser.setProfileImageUrl(request.getProfileImageUrl().trim());
+        }
         
         log.info("🔧 내담자 등록 - User 엔티티 정보: userId={}, email={}, tenantId={}, isActive={}, role={}", 
                 clientUser.getUserId(), email, tenantId, clientUser.getIsActive(), clientUser.getRole());
@@ -1818,15 +1821,18 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         }
         
         User savedConsultant = userRepository.save(consultant);
-        
+
         // 표준화 2025-12-08: 사용자 정보 업데이트 시 캐시 무효화
         if (savedConsultant.getTenantId() != null) {
             userPersonalDataCacheService.evictUserPersonalDataCache(
-                savedConsultant.getTenantId(), 
+                savedConsultant.getTenantId(),
                 savedConsultant.getId()
             );
         }
-        
+
+        // 상담사 목록 캐시 무효화 (프로필 사진 등 수정 후 목록에서 즉시 반영)
+        consultantStatsService.evictAllConsultantStatsCache();
+
         return savedConsultant;
     }
 
@@ -1852,6 +1858,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         clientUser.setEmail(encryptionUtil.safeEncrypt(request.getEmail()));
         if (request.getPhone() != null && !request.getPhone().trim().isEmpty()) {
             clientUser.setPhone(encryptionUtil.safeEncrypt(request.getPhone()));
+        }
+        if (request.getProfileImageUrl() != null && !request.getProfileImageUrl().trim().isEmpty()) {
+            clientUser.setProfileImageUrl(request.getProfileImageUrl().trim());
         }
         
         User savedUser = userRepository.save(clientUser);

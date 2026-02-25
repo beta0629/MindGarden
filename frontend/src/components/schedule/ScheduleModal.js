@@ -66,6 +66,11 @@ const ScheduleModalNew = ({
         };
     }, [isOpen, setModalOpen]);
 
+    // 통합 화면에서 열 때 날짜 미전달 방지: 항상 유효한 Date 사용
+    const effectiveSelectedDate = selectedDate instanceof Date
+        ? selectedDate
+        : (selectedDate ? new Date(selectedDate) : new Date());
+
     // 매칭 통합 화면에서 열 때 상담사/내담자 Pre-filled, 3단계(시간 선택)부터 표시
     useEffect(() => {
         if (!isOpen) return;
@@ -241,9 +246,9 @@ const ScheduleModalNew = ({
             const finalMinute = endMinute % 60;
             const endTime = `${endHour.toString().padStart(2, '0')}:${finalMinute.toString().padStart(2, '0')}`;
             
-            const year = selectedDate.getFullYear();
-            const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
-            const day = String(selectedDate.getDate()).padStart(2, '0');
+            const year = effectiveSelectedDate.getFullYear();
+            const month = String(effectiveSelectedDate.getMonth() + 1).padStart(2, '0');
+            const day = String(effectiveSelectedDate.getDate()).padStart(2, '0');
             const dateString = `${year}-${month}-${day}`;
             
             const scheduleData = {
@@ -296,8 +301,7 @@ const ScheduleModalNew = ({
     };
 
     const formatSubtitle = () => {
-      if (!selectedDate) return '';
-      const d = selectedDate instanceof Date ? selectedDate : new Date(selectedDate);
+      const d = effectiveSelectedDate;
       return d.toLocaleDateString('ko-KR', {
         year: 'numeric',
         month: 'long',
@@ -408,7 +412,7 @@ const ScheduleModalNew = ({
                                 <ConsultantSelectionStep
                                     onConsultantSelect={handleConsultantDrop}
                                     selectedConsultant={selectedConsultant}
-                                    selectedDate={selectedDate}
+                                    selectedDate={effectiveSelectedDate}
                                 />
                             </div>
                         </div>
@@ -477,7 +481,7 @@ const ScheduleModalNew = ({
                                         </div>
                                     </div>
                                     <TimeSlotGrid
-                                        date={selectedDate}
+                                        date={effectiveSelectedDate}
                                         consultantId={selectedConsultant?.originalId || selectedConsultant?.id}
                                         duration={getDurationFromCode(selectedDuration)}
                                         onTimeSlotSelect={handleTimeSlotSelect}

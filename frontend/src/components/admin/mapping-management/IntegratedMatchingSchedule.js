@@ -8,12 +8,13 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { CalendarPlus } from 'lucide-react';
+import { CalendarPlus, UserPlus } from 'lucide-react';
 import StandardizedApi from '../../../utils/standardizedApi';
 import notificationManager from '../../../utils/notification';
 import UnifiedLoading from '../../common/UnifiedLoading';
 import UnifiedScheduleComponent from '../../schedule/UnifiedScheduleComponent';
 import ScheduleModal from '../../schedule/ScheduleModal';
+import MappingCreationModal from '../MappingCreationModal';
 import '../../../styles/unified-design-tokens.css';
 import '../AdminDashboard/AdminDashboardB0KlA.css';
 import './IntegratedMatchingSchedule.css';
@@ -35,8 +36,9 @@ const IntegratedMatchingSchedule = () => {
   const [loading, setLoading] = useState(true);
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
   const [preFilledMapping, setPreFilledMapping] = useState(null);
-  const [selectedDateForModal, setSelectedDateForModal] = useState(() => new Date());
+  const [selectedDateForModal] = useState(() => new Date());
   const [refetchTrigger, setRefetchTrigger] = useState(0);
+  const [createMappingModalOpen, setCreateMappingModalOpen] = useState(false);
 
   const loadMappings = useCallback(async () => {
     setLoading(true);
@@ -73,8 +75,12 @@ const IntegratedMatchingSchedule = () => {
       consultantName: mapping.consultantName || '상담사',
       clientName: mapping.clientName || '내담자'
     });
-    setSelectedDateForModal(new Date());
     setScheduleModalOpen(true);
+  };
+
+  const handleMappingCreated = () => {
+    setCreateMappingModalOpen(false);
+    loadMappings();
   };
 
   const handleScheduleModalClose = () => {
@@ -93,6 +99,15 @@ const IntegratedMatchingSchedule = () => {
     <div className="integrated-schedule">
       <header className="integrated-schedule__header">
         <h1 className="integrated-schedule__title">통합 스케줄링 센터</h1>
+        <button
+          type="button"
+          className="integrated-schedule__btn-new-mapping"
+          onClick={() => setCreateMappingModalOpen(true)}
+          aria-label="신규 매칭 생성"
+        >
+          <UserPlus size={18} />
+          신규 매칭
+        </button>
       </header>
 
       <div className="integrated-schedule__content">
@@ -159,6 +174,12 @@ const IntegratedMatchingSchedule = () => {
           preFilledMapping={preFilledMapping}
         />
       )}
+
+      <MappingCreationModal
+        isOpen={createMappingModalOpen}
+        onClose={() => setCreateMappingModalOpen(false)}
+        onMappingCreated={handleMappingCreated}
+      />
     </div>
   );
 };

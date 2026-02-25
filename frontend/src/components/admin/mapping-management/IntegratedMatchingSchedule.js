@@ -15,7 +15,7 @@ import UnifiedLoading from '../../common/UnifiedLoading';
 import UnifiedScheduleComponent from '../../schedule/UnifiedScheduleComponent';
 import ScheduleModal from '../../schedule/ScheduleModal';
 import '../../../styles/unified-design-tokens.css';
-import '../../AdminDashboard/AdminDashboardB0KlA.css';
+import '../AdminDashboard/AdminDashboardB0KlA.css';
 import './IntegratedMatchingSchedule.css';
 
 const STATUS_KO = {

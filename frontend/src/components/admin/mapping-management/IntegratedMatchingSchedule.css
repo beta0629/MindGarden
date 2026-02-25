@@ -91,27 +91,69 @@
   border-radius: 2px;
 }
 
+/* 필터: 세그먼트 컨트롤(pill) 형태 */
 .integrated-schedule__filter {
+  border: none;
+  margin: 0;
+  padding: 0;
+  min-inline-size: unset;
   display: flex;
-  align-items: center;
-  gap: var(--mg-spacing-16);
-  margin-bottom: var(--mg-spacing-12);
+  align-items: stretch;
+  gap: 0;
+  margin-bottom: var(--mg-spacing-20, 20px);
   flex-shrink: 0;
+  background-color: var(--mg-color-surface-sub, var(--mg-gray-100));
+  border: 1px solid var(--mg-color-border-main, var(--mg-gray-200));
+  border-radius: var(--mg-radius-md, 10px);
+  padding: var(--mg-spacing-2, 2px);
+  width: fit-content;
 }
 
 .integrated-schedule__filter-label {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  justify-content: center;
+  gap: var(--mg-spacing-6, 6px);
+  padding: var(--mg-spacing-8, 8px) var(--mg-spacing-14, 14px);
+  min-height: 40px;
   font-size: 14px;
-  color: var(--mg-color-text-main);
+  font-weight: 500;
+  color: var(--mg-color-text-secondary, var(--mg-gray-600));
   cursor: pointer;
   user-select: none;
+  border-radius: var(--mg-radius-sm, 8px);
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.integrated-schedule__filter-label:hover {
+  color: var(--mg-color-text-main, var(--mg-gray-900));
 }
 
 .integrated-schedule__filter-label input {
-  margin: 0;
-  accent-color: var(--mg-color-primary-main);
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+.integrated-schedule__filter-label:has(input:checked),
+.integrated-schedule__filter-label.integrated-schedule__filter-label--selected {
+  background-color: var(--mg-color-primary-main, var(--mg-primary-500));
+  color: var(--mg-color-primary-inverse, var(--mg-white));
+}
+
+.integrated-schedule__filter-label:has(input:checked):hover,
+.integrated-schedule__filter-label.integrated-schedule__filter-label--selected:hover {
+  background-color: var(--mg-color-primary-dark, var(--mg-primary-600));
+  color: var(--mg-color-primary-inverse, var(--mg-white));
+}
+
+.integrated-schedule__filter-text {
+  pointer-events: none;
 }
 
 .integrated-schedule__list {
@@ -122,8 +164,8 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding-right: 4px;
+  gap: var(--mg-spacing-12, 12px);
+  padding-right: var(--mg-spacing-4, 4px);
 }
 
 .integrated-schedule__empty {
@@ -136,14 +178,15 @@
 /* 매칭 카드 */
 .integrated-schedule__card {
   position: relative;
-  background-color: #FFFFFF;
-  border: 1px solid var(--mg-color-border-main);
-  border-radius: 12px;
-  padding: 16px;
+  background-color: var(--mg-bg-card, var(--mg-color-surface-main, var(--mg-white)));
+  border: 1px solid var(--mg-color-border-main, var(--mg-gray-200));
+  border-radius: var(--mg-radius-lg, 12px);
+  padding: var(--mg-spacing-16, 16px);
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  transition: box-shadow 0.2s ease;
+  gap: var(--mg-spacing-12, 12px);
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+  box-shadow: var(--mg-shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.05));
 }
 
 .integrated-schedule__card::before {
@@ -153,23 +196,23 @@
   top: 0;
   bottom: 0;
   width: 4px;
-  background-color: var(--mg-color-primary-main);
-  border-radius: 12px 0 0 12px;
+  background-color: var(--mg-color-primary-main, var(--mg-primary-500));
+  border-radius: var(--mg-radius-lg, 12px) 0 0 var(--mg-radius-lg, 12px);
 }
 
 .integrated-schedule__card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--mg-card-hover-shadow, 0 4px 12px rgba(0, 0, 0, 0.08));
 }
 
 .integrated-schedule__card-body {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--mg-spacing-4, 4px);
 }
 
 .integrated-schedule__card-parties {
   font-size: 14px;
-  color: var(--mg-color-text-main);
+  color: var(--mg-color-text-main, var(--mg-gray-900));
 }
 
 .integrated-schedule__card-consultant,
@@ -178,30 +221,58 @@
 }
 
 .integrated-schedule__card-arrow {
-  margin: 0 4px;
-  color: var(--mg-color-text-secondary);
+  margin: 0 var(--mg-spacing-4, 4px);
+  color: var(--mg-color-text-secondary, var(--mg-gray-600));
 }
 
 .integrated-schedule__card-meta {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
-  font-size: 12px;
-  color: var(--mg-color-text-secondary);
+  gap: var(--mg-spacing-8, 8px);
 }
 
+/* 상태 배지 (상태별 색상) */
 .integrated-schedule__card-status {
-  display: inline-block;
-  padding: 2px 8px;
-  border-radius: 4px;
-  background-color: var(--mg-color-surface-sub);
-  color: var(--mg-color-text-main);
+  display: inline-flex;
+  align-items: center;
+  padding: var(--mg-spacing-2, 2px) var(--mg-spacing-8, 8px);
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: var(--mg-radius-full, 9999px);
+  background-color: var(--mg-color-surface-sub, var(--mg-gray-100));
+  color: var(--mg-color-text-main, var(--mg-gray-700));
 }
 
-.integrated-schedule__card-remaining {
-  font-size: 12px;
-  color: var(--mg-color-text-secondary);
+.integrated-schedule__card-status--active,
+.integrated-schedule__card-status--payment_confirmed {
+  background-color: var(--mg-success-100, var(--mg-success-50));
+  color: var(--mg-success-700, var(--mg-success-600));
+}
+
+.integrated-schedule__card-status--pending_payment {
+  background-color: var(--mg-warning-100, var(--mg-warning-50));
+  color: var(--mg-warning-700, var(--mg-warning-600));
+}
+
+.integrated-schedule__card-status--inactive,
+.integrated-schedule__card-status--terminated,
+.integrated-schedule__card-status--sessions_exhausted,
+.integrated-schedule__card-status--suspended {
+  background-color: var(--mg-gray-100);
+  color: var(--mg-gray-600);
+}
+
+/* 남은 회기 칩/배지 */
+.integrated-schedule__card-remaining-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--mg-spacing-2, 2px) var(--mg-spacing-6, 6px);
+  font-size: 11px;
+  font-weight: 500;
+  border-radius: var(--mg-radius-sm, 6px);
+  background-color: var(--mg-primary-100, var(--mg-primary-50));
+  color: var(--mg-primary-700, var(--mg-primary-600));
 }
 
 .integrated-schedule__btn-schedule {

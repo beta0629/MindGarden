@@ -162,8 +162,8 @@ const IntegratedMatchingSchedule = () => {
       <div className="integrated-schedule__content">
         <aside className="integrated-schedule__sidebar">
           <h2 className="integrated-schedule__sidebar-title">매칭 목록</h2>
-          <div className="integrated-schedule__filter">
-            <label className="integrated-schedule__filter-label">
+          <fieldset className="integrated-schedule__filter" aria-label="매칭 목록 필터">
+            <label className={`integrated-schedule__filter-label ${sessionFilter === SESSION_FILTER_REMAINING ? 'integrated-schedule__filter-label--selected' : ''}`}>
               <input
                 type="radio"
                 name="sessionFilter"
@@ -172,9 +172,9 @@ const IntegratedMatchingSchedule = () => {
                 onChange={() => setSessionFilter(SESSION_FILTER_REMAINING)}
                 aria-label="회기 남은 매칭만"
               />
-              <span>회기 남은 매칭만</span>
+              <span className="integrated-schedule__filter-text">회기 남은 매칭만</span>
             </label>
-            <label className="integrated-schedule__filter-label">
+            <label className={`integrated-schedule__filter-label ${sessionFilter === SESSION_FILTER_ALL ? 'integrated-schedule__filter-label--selected' : ''}`}>
               <input
                 type="radio"
                 name="sessionFilter"
@@ -183,9 +183,9 @@ const IntegratedMatchingSchedule = () => {
                 onChange={() => setSessionFilter(SESSION_FILTER_ALL)}
                 aria-label="전체"
               />
-              <span>전체</span>
+              <span className="integrated-schedule__filter-text">전체</span>
             </label>
-          </div>
+          </fieldset>
           {loading ? (
             <UnifiedLoading type="inline" text="매칭 목록 불러오는 중..." />
           ) : (
@@ -234,14 +234,14 @@ const IntegratedMatchingSchedule = () => {
                           </span>
                         </div>
                         <div className="integrated-schedule__card-meta">
-                          <span className="integrated-schedule__card-status">
+                          <span className={`integrated-schedule__card-status integrated-schedule__card-status--${(mapping.status || '').toLowerCase()}`}>
                             {getStatusKoreanName(mapping.status)}
                           </span>
-                          <span className="integrated-schedule__card-remaining">
-                            {mapping.remainingSessions != null && mapping.remainingSessions >= 0
-                              ? `남은 회기 ${mapping.remainingSessions}회`
-                              : '—'}
-                          </span>
+                          {mapping.remainingSessions != null && mapping.remainingSessions >= 0 && (
+                            <span className="integrated-schedule__card-remaining integrated-schedule__card-remaining-badge">
+                              {mapping.remainingSessions}회 남음
+                            </span>
+                          )}
                         </div>
                       </div>
                     <button

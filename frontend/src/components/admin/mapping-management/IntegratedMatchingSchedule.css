@@ -98,20 +98,60 @@
 
 /* 필터: 세그먼트 컨트롤(pill) 형태 */
 .integrated-schedule__filter {
-  border: none;
-  margin: 0;
-  padding: 0;
+  margin: 0 0 var(--mg-spacing-20, 20px);
+  padding: var(--mg-spacing-2, 2px);
   min-inline-size: unset;
   display: flex;
   align-items: stretch;
   gap: 0;
-  margin-bottom: var(--mg-spacing-20, 20px);
   flex-shrink: 0;
   background-color: var(--mg-color-surface-sub, var(--mg-gray-100));
   border: 1px solid var(--mg-color-border-main, var(--mg-gray-200));
   border-radius: var(--mg-radius-md, 10px);
-  padding: var(--mg-spacing-2, 2px);
   width: fit-content;
+}
+
+.integrated-schedule__filter-legend {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+.integrated-schedule__filter--status {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  max-width: 280px;
+}
+
+.integrated-schedule__filter-select {
+  width: 100%;
+  min-height: 40px;
+  padding: var(--mg-spacing-8, 8px) var(--mg-spacing-14, 14px);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--mg-color-text-main, var(--mg-gray-900));
+  background-color: var(--mg-color-surface-main, var(--mg-white));
+  border: 1px solid var(--mg-color-border-main, var(--mg-gray-200));
+  border-radius: var(--mg-radius-sm, 8px);
+  cursor: pointer;
+  appearance: auto;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.integrated-schedule__filter-select:hover {
+  border-color: var(--mg-color-primary-main, var(--mg-primary-500));
+}
+
+.integrated-schedule__filter-select:focus {
+  outline: none;
+  border-color: var(--mg-color-primary-main, var(--mg-primary-500));
+  box-shadow: 0 0 0 2px var(--mg-color-primary-main);
 }
 
 .integrated-schedule__filter-label {

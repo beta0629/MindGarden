@@ -45,6 +45,19 @@ const canScheduleForMapping = (mapping) =>
 const SESSION_FILTER_REMAINING = 'remaining';
 const SESSION_FILTER_ALL = 'all';
 
+/** 상태별 필터 옵션 (value: '' = 전체) */
+const STATUS_FILTER_OPTIONS = [
+  { value: '', label: '전체' },
+  { value: 'PENDING_PAYMENT', label: '결제 대기' },
+  { value: 'PAYMENT_CONFIRMED', label: '결제 확인' },
+  { value: 'DEPOSIT_PENDING', label: '승인 대기' },
+  { value: 'ACTIVE', label: '활성' },
+  { value: 'INACTIVE', label: '비활성' },
+  { value: 'TERMINATED', label: '종료됨' },
+  { value: 'SESSIONS_EXHAUSTED', label: '회기 소진' },
+  { value: 'SUSPENDED', label: '일시정지' }
+];
+
 const IntegratedMatchingSchedule = () => {
   const { user } = useSession();
   const [mappings, setMappings] = useState([]);
@@ -55,6 +68,7 @@ const IntegratedMatchingSchedule = () => {
   const [refetchTrigger, setRefetchTrigger] = useState(0);
   const [createMappingModalOpen, setCreateMappingModalOpen] = useState(false);
   const [sessionFilter, setSessionFilter] = useState(SESSION_FILTER_REMAINING);
+  const [statusFilter, setStatusFilter] = useState('');
   const [paymentModalMapping, setPaymentModalMapping] = useState(null);
   const [depositModalMapping, setDepositModalMapping] = useState(null);
   const [approveProcessing, setApproveProcessing] = useState(false);
@@ -84,10 +98,14 @@ const IntegratedMatchingSchedule = () => {
     loadMappings();
   }, [loadMappings]);
 
-  const filteredMappings =
-    sessionFilter === SESSION_FILTER_REMAINING
-      ? mappings.filter((m) => (m.remainingSessions ?? 0) > 0)
-      : mappings;
+  const filteredMappings = (() => {
+    const bySession =
+      sessionFilter === SESSION_FILTER_REMAINING
+        ? mappings.filter((m) => (m.remainingSessions ?? 0) > 0)
+        : mappings;
+    if (!statusFilter) return bySession;
+    return bySession.filter((m) => m.status === statusFilter);
+  })();
 
   /** 스케줄 가능(드래그 가능) 카드 수 — 결제/입금/승인 후 목록 갱신 시 Draggable 재바인딩 */
   const scheduleableCount = filteredMappings.filter((m) => canScheduleForMapping(m)).length;
@@ -201,6 +219,7 @@ const IntegratedMatchingSchedule = () => {
         <aside className="integrated-schedule__sidebar">
           <h2 className="integrated-schedule__sidebar-title">매칭 목록</h2>
           <fieldset className="integrated-schedule__filter" aria-label="매칭 목록 필터">
+            <legend className="integrated-schedule__filter-legend">회기</legend>
             <label className={`integrated-schedule__filter-label ${sessionFilter === SESSION_FILTER_REMAINING ? 'integrated-schedule__filter-label--selected' : ''}`}>
               <input
                 type="radio"
@@ -224,6 +243,21 @@ const IntegratedMatchingSchedule = () => {
               <span className="integrated-schedule__filter-text">전체</span>
             </label>
           </fieldset>
+          <fieldset className="integrated-schedule__filter integrated-schedule__filter--status" aria-label="상태별 필터">
+            <legend className="integrated-schedule__filter-legend">상태</legend>
+            <select
+              className="integrated-schedule__filter-select"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              aria-label="상태별 필터 선택"
+            >
+              {STATUS_FILTER_OPTIONS.map((opt) => (
+                <option key={opt.value || 'all'} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </fieldset>
           {loading ? (
             <UnifiedLoading type="inline" text="매칭 목록 불러오는 중..." />
           ) : (
@@ -234,11 +268,15 @@ const IntegratedMatchingSchedule = () => {
             >
               {(() => {
                 if (filteredMappings.length === 0) {
+                  let emptyMessage = '매칭이 없습니다.';
+                  if (statusFilter) {
+                    emptyMessage = '선택한 조건에 맞는 매칭이 없습니다.';
+                  } else if (sessionFilter === SESSION_FILTER_REMAINING) {
+                    emptyMessage = '회기 남은 매칭이 없습니다.';
+                  }
                   return (
                     <li className="integrated-schedule__empty">
-                      {sessionFilter === SESSION_FILTER_REMAINING
-                        ? '회기 남은 매칭이 없습니다.'
-                        : '매칭이 없습니다.'}
+                      {emptyMessage}
                     </li>
                   );
                 }

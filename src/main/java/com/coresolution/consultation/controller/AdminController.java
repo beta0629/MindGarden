@@ -2318,11 +2318,26 @@ public class AdminController extends BaseApiController {
                 adminService.getConsultationCompletionStatistics(period);
         List<Map<String, Object>> monthlyData = adminService.getConsultationMonthlyTrend(6);
 
+        // 대시보드 KPI용: 전체 완료 건수·완료율 집계 (프론트 완료율 0% 방지)
+        int totalCompleted = 0;
+        long totalScheduled = 0;
+        for (Map<String, Object> row : statistics) {
+            Object completed = row.get("completedCount");
+            Object total = row.get("totalCount");
+            totalCompleted += completed instanceof Number ? ((Number) completed).intValue() : 0;
+            totalScheduled += total instanceof Number ? ((Number) total).longValue() : 0;
+        }
+        double completionRate = totalScheduled > 0
+                ? Math.round((double) totalCompleted / totalScheduled * 100.0 * 10.0) / 10.0
+                : 0.0;
+
         Map<String, Object> data = new HashMap<>();
         data.put("statistics", statistics);
         data.put("count", statistics.size());
         data.put("period", period != null ? period : "전체");
         data.put("monthlyData", monthlyData);
+        data.put("totalCompleted", totalCompleted);
+        data.put("completionRate", completionRate);
 
         return success(data);
     }

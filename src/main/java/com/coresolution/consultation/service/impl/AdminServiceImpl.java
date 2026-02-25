@@ -1381,6 +1381,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 consultantData.put("branchCode", null); // 표준화 2025-12-06: 브랜치 코드 사용 금지
                 consultantData.put("createdAt", consultant.getCreatedAt());
                 consultantData.put("updatedAt", consultant.getUpdatedAt());
+                consultantData.put("profileImageUrl", consultant.getProfileImageUrl());
                 
                 String tenantId2 = com.coresolution.core.context.TenantContextHolder.getTenantId();
                 

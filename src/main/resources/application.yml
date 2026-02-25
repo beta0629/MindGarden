@@ -170,6 +170,9 @@ server:
   port: ${SERVER_PORT:8080}
   # ⚠️ 포트 충돌 방지: Graceful shutdown 설정
   shutdown: graceful  # Graceful shutdown 활성화 (자동 재시작 시 포트 충돌 방지)
+  # base64 프로필 사진 등 대용량 JSON body 수용 (기본 2MB 초과 시 400 방지)
+  tomcat:
+    max-http-post-size: 10MB
   servlet:
     context-path: /
     encoding:

@@ -24,6 +24,7 @@ import SpecialtyDisplay from '../ui/SpecialtyDisplay';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import { getCommonCodes } from '../../utils/commonCodeApi';
 import { sessionManager } from '../../utils/sessionManager';
+import { resizeImage, cropImageToSquare, getDataUrlByteSize } from '../../utils/imageResizeCrop';
 import PasswordResetModal from './PasswordResetModal';
 import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
@@ -655,20 +656,40 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
             e.target.value = '';
             return;
         }
-        if (file.size > PROFILE_IMAGE_MAX_BYTES) {
-            window.dispatchEvent(new CustomEvent('showNotification', {
-                detail: { message: '이미지 용량은 2MB 이하여야 합니다.', type: 'warning' }
-            }));
-            e.target.value = '';
-            return;
-        }
+        e.target.value = '';
+
         const reader = new FileReader();
+        reader.onerror = () => {
+            window.dispatchEvent(new CustomEvent('showNotification', {
+                detail: { message: '이미지 읽기에 실패했습니다.', type: 'error' }
+            }));
+        };
         reader.onload = () => {
             const dataUrl = reader.result;
-            setFormData(prev => ({ ...prev, profileImageUrl: dataUrl }));
+            const maxSize = 512;
+            const cropSize = 400;
+            const quality = 0.85;
+
+            resizeImage(dataUrl, { maxWidth: maxSize, maxHeight: maxSize, quality })
+                .then((resizedUrl) => cropImageToSquare(resizedUrl, cropSize))
+                .then((finalUrl) => {
+                    const bytes = getDataUrlByteSize(finalUrl);
+                    if (bytes > PROFILE_IMAGE_MAX_BYTES) {
+                        window.dispatchEvent(new CustomEvent('showNotification', {
+                            detail: { message: '처리 후에도 용량이 2MB를 초과합니다. 다른 이미지를 선택해 주세요.', type: 'warning' }
+                        }));
+                        return;
+                    }
+                    setFormData(prev => ({ ...prev, profileImageUrl: finalUrl }));
+                })
+                .catch((err) => {
+                    const msg = err?.message || '이미지 처리 중 오류가 발생했습니다.';
+                    window.dispatchEvent(new CustomEvent('showNotification', {
+                        detail: { message: msg, type: 'error' }
+                    }));
+                });
         };
         reader.readAsDataURL(file);
-        e.target.value = '';
     }, []);
 
     const handleProfilePhotoRemove = useCallback(() => {

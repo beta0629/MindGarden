@@ -32,6 +32,11 @@ const STATUS_KO = {
 
 const getStatusKoreanName = (status) => STATUS_KO[status] || status;
 
+/** 스케줄 등록 가능한 매칭 상태 (결제 완료 후에만 스케줄 가능) */
+const SCHEDULABLE_STATUSES = ['PAYMENT_CONFIRMED', 'ACTIVE'];
+const canScheduleForMapping = (mapping) =>
+  mapping?.status && SCHEDULABLE_STATUSES.includes(mapping.status);
+
 /** 좌측 목록 필터: 회기 남은 매칭만(기본) | 전체 */
 const SESSION_FILTER_REMAINING = 'remaining';
 const SESSION_FILTER_ALL = 'all';
@@ -85,6 +90,10 @@ const IntegratedMatchingSchedule = () => {
   }, [sessionFilter, filteredMappings.length]);
 
   const handleScheduleRegister = (mapping) => {
+    if (!canScheduleForMapping(mapping)) {
+      notificationManager.warning('결제가 완료된 매칭만 스케줄 등록이 가능합니다.');
+      return;
+    }
     if (!mapping.consultantId || !mapping.clientId) {
       notificationManager.error('상담사·내담자 정보가 없는 매칭입니다.');
       return;
@@ -102,6 +111,10 @@ const IntegratedMatchingSchedule = () => {
   const handleDropFromExternal = (date, mappingPayload) => {
     if (!mappingPayload || !mappingPayload.consultantId || !mappingPayload.clientId) {
       notificationManager.error('매칭 정보가 올바르지 않습니다.');
+      return;
+    }
+    if (!canScheduleForMapping(mappingPayload)) {
+      notificationManager.warning('결제가 완료된 매칭만 스케줄 등록이 가능합니다.');
       return;
     }
     setPreFilledMapping({
@@ -200,14 +213,15 @@ const IntegratedMatchingSchedule = () => {
                       consultantId: mapping.consultantId,
                       clientId: mapping.clientId,
                       consultantName: mapping.consultantName || '상담사',
-                      clientName: mapping.clientName || '내담자'
+                      clientName: mapping.clientName || '내담자',
+                      status: mapping.status
                     }
                   };
                   return (
                     <li
                       key={mapping.id}
-                      className="integrated-schedule__card fc-event"
-                      data-event={JSON.stringify(eventData)}
+                      className={`integrated-schedule__card ${canScheduleForMapping(mapping) ? 'fc-event' : ''}`}
+                      data-event={canScheduleForMapping(mapping) ? JSON.stringify(eventData) : undefined}
                     >
                       <div className="integrated-schedule__card-body">
                         <div className="integrated-schedule__card-parties">
@@ -230,15 +244,17 @@ const IntegratedMatchingSchedule = () => {
                           </span>
                         </div>
                       </div>
-                      <button
-                        type="button"
-                        className="integrated-schedule__btn-schedule"
-                        onClick={() => handleScheduleRegister(mapping)}
-                        aria-label={`${mapping.clientName} 스케줄 등록`}
-                      >
-                        <CalendarPlus size={14} />
-                        스케줄 등록
-                      </button>
+                    <button
+                      type="button"
+                      className={`integrated-schedule__btn-schedule ${!canScheduleForMapping(mapping) ? 'integrated-schedule__btn-schedule--disabled' : ''}`}
+                      onClick={() => handleScheduleRegister(mapping)}
+                      disabled={!canScheduleForMapping(mapping)}
+                      aria-label={canScheduleForMapping(mapping) ? `${mapping.clientName} 스케줄 등록` : '결제 완료 후 스케줄 등록 가능'}
+                      title={!canScheduleForMapping(mapping) ? '결제가 완료된 매칭만 스케줄 등록이 가능합니다.' : undefined}
+                    >
+                      <CalendarPlus size={14} />
+                      스케줄 등록
+                    </button>
                     </li>
                   );
                 });

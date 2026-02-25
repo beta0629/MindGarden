@@ -32,7 +32,7 @@
   font-size: 15px;
   font-weight: 600;
   color: var(--mg-color-white);
-  background-color: var(--mg-color-primary-dark, #2d3d34);
+  background-color: var(--mg-color-primary-main);
   border: none;
   border-radius: 8px;
   cursor: pointer;
@@ -40,7 +40,8 @@
 }
 
 .integrated-schedule__btn-new-mapping:hover {
-  background-color: var(--mg-color-primary-main);
+  background-color: var(--mg-color-primary-dark);
+  color: var(--mg-color-white);
   opacity: 0.95;
 }
 
@@ -226,6 +227,18 @@
 .integrated-schedule__btn-schedule:focus-visible {
   outline: 2px solid var(--mg-color-primary-main);
   outline-offset: 2px;
+}
+
+.integrated-schedule__btn-schedule--disabled,
+.integrated-schedule__btn-schedule:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background-color: var(--mg-color-border-main);
+}
+
+.integrated-schedule__btn-schedule--disabled:hover,
+.integrated-schedule__btn-schedule:disabled:hover {
+  background-color: var(--mg-color-border-main);
 }
 
 /* 우측 캘린더 */

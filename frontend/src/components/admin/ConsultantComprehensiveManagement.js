@@ -820,8 +820,9 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                 profileImageUrl: (data.profileImageUrl != null && data.profileImageUrl !== '') ? data.profileImageUrl : (existing?.profileImageUrl ?? undefined)
             };
             const response = await apiPut(`/api/v1/admin/consultants/${id}`, requestPayload);
-            // 검증: 상담사 등록 → 정보 수정(이름/이메일/전화/전문분야 변경) → 저장 시 200 응답 및 목록 반영 확인
-            if (response.success) {
+            // apiPut은 ApiResponse의 data만 반환하므로 success는 response.success가 아닌 반환값 유무/형식으로 판단
+            const isSuccess = response != null && (response.success === true || response.id != null);
+            if (isSuccess) {
                 await loadConsultants();
                 window.dispatchEvent(new CustomEvent('showNotification', {
                     detail: { message: '상담사 정보가 성공적으로 수정되었습니다.', type: 'success' }
@@ -829,7 +830,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                 return { success: true };
             } else {
                 window.dispatchEvent(new CustomEvent('showNotification', {
-                    detail: { message: response.message || '상담사 수정에 실패했습니다.', type: 'error' }
+                    detail: { message: (response && response.message) || '상담사 수정에 실패했습니다.', type: 'error' }
                 }));
                 return { success: false };
             }

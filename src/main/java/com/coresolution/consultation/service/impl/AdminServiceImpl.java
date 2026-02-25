@@ -1787,9 +1787,14 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     public User updateConsultant(Long id, ConsultantRegistrationRequest request) {
         User consultant = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Consultant not found"));
-        
-        consultant.setName(encryptionUtil.safeEncrypt(request.getName()));
-        consultant.setEmail(encryptionUtil.safeEncrypt(request.getEmail()));
+
+        // null/blank 시 기존 값 유지 (빈 문자열 저장으로 인한 NOT NULL 등 제약 500 방지)
+        if (request.getName() != null && !request.getName().trim().isEmpty()) {
+            consultant.setName(encryptionUtil.safeEncrypt(request.getName()));
+        }
+        if (request.getEmail() != null && !request.getEmail().trim().isEmpty()) {
+            consultant.setEmail(encryptionUtil.safeEncrypt(request.getEmail()));
+        }
         if (request.getPhone() != null && !request.getPhone().trim().isEmpty()) {
             consultant.setPhone(encryptionUtil.safeEncrypt(request.getPhone()));
         }
@@ -1797,7 +1802,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         if (request.getSpecialization() != null) {
             consultant.setSpecialization(request.getSpecialization());
         }
-        
+
         if (request.getPassword() != null && !request.getPassword().trim().isEmpty()) {
             log.info("🔧 상담사 비밀번호 변경: ID={}", id);
             consultant.setPassword(passwordEncoder.encode(request.getPassword()));

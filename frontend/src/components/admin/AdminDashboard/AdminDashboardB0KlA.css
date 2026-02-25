@@ -899,6 +899,45 @@
   flex: 1;
 }
 
+/* 전문분야 태그 선택 (상담사 등록/수정 모달) */
+.mg-v2-ad-b0kla .mg-v2-specialty-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 0.5rem 0;
+}
+
+.mg-v2-ad-b0kla .mg-v2-specialty-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 9999px;
+  border: 2px solid var(--ad-b0kla-border);
+  background: var(--ad-b0kla-card-bg);
+  color: var(--ad-b0kla-text-secondary);
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+
+.mg-v2-ad-b0kla .mg-v2-specialty-tag:hover {
+  border-color: var(--ad-b0kla-green);
+  color: var(--ad-b0kla-green);
+}
+
+.mg-v2-ad-b0kla .mg-v2-specialty-tag--selected {
+  background: var(--ad-b0kla-green);
+  border-color: var(--ad-b0kla-green);
+  color: #fff;
+}
+
+.mg-v2-ad-b0kla .mg-v2-specialty-tag--selected:hover {
+  opacity: 0.9;
+}
+
 /* B0KlA 카드 악센트 바 (좌측 4px) - 섹션 제목용 */
 .mg-v2-ad-b0kla__card-accent {
   border-left: 4px solid var(--ad-b0kla-green);

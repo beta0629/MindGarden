@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import { Plus, Users, Link2, Calendar, ClipboardList, Edit, Trash2, Key, Mail, Phone } from 'lucide-react';
 import Button from '../ui/Button/Button';
@@ -627,102 +627,15 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
         }
     }, [formData.email]);
 
-    const handleSpecialtyChange = useCallback((selectedValues) => {
-            setFormData(prev => ({
-                ...prev,
-            specialty: selectedValues
-        }));
+    const handleSpecialtyTagClick = useCallback((codeValue) => {
+        setFormData(prev => {
+            const current = prev.specialty || [];
+            const next = current.includes(codeValue)
+                ? current.filter(v => v !== codeValue)
+                : [...current, codeValue];
+            return { ...prev, specialty: next };
+        });
     }, []);
-
-    const CustomMultiSelect = ({ options, value, onChange, placeholder }) => {
-        const [isOpen, setIsOpen] = useState(false);
-        const [searchTerm, setSearchTerm] = useState('');
-        const dropdownRef = useRef(null);
-
-        useEffect(() => {
-            const handleClickOutside = (event) => {
-                if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-                    setIsOpen(false);
-                }
-            };
-
-            if (isOpen) {
-                document.addEventListener('mousedown', handleClickOutside);
-            }
-
-            return() => {
-                document.removeEventListener('mousedown', handleClickOutside);
-            };
-        }, [isOpen]);
-
-        const filteredOptions = options.filter(option =>
-            (option.codeName || option.codeLabel || '').toLowerCase().includes(searchTerm.toLowerCase())
-        );
-
-        const handleToggle = (optionValue, event) => {
-            event.preventDefault();
-            event.stopPropagation();
-            
-            const newValue = value.includes(optionValue)
-                ? value.filter(v => v !== optionValue)
-                : [...value, optionValue];
-            onChange(newValue);
-            setIsOpen(true);
-        };
-
-        const selectedLabels = value.map(val => 
-            options.find(opt => opt.codeValue === val)?.codeName || 
-            options.find(opt => opt.codeValue === val)?.codeLabel || 
-            val
-        ).join(', ');
-
-        return(
-            <div className="mg-v2-custom-multi-select" ref={ dropdownRef }>
-                <div 
-                    className="mg-v2-custom-multi-select__trigger"
-                    onClick={ () => setIsOpen(true) }
-                >
-                    <span className={ selectedLabels ? 'mg-custom-multi-select__value' : 'mg-custom-multi-select__placeholder' }>
-                        { selectedLabels || placeholder }
-                    </span>
-                    <span className="mg-v2-custom-multi-select__arrow">▼</span>
-                </div>
-                
-                {isOpen && (
-                    <div className="mg-v2-custom-multi-select__dropdown">
-                        <div className="mg-v2-custom-multi-select__search">
-                            <input
-                                type="text"
-                                placeholder="검색..."
-                                value={searchTerm}
-                                onChange={ (e) => setSearchTerm(e.target.value) }
-                                className="mg-v2-custom-multi-select__search-input"
-                            />
-                        </div>
-                        <div className="mg-v2-custom-multi-select__options">
-                            {filteredOptions.map(option => (
-                                <div
-                                    key={option.codeValue}
-                                    className={`mg-custom-multi-select__option ${
-                                        value.includes(option.codeValue) ? 'mg-custom-multi-select__option--selected' : ''
-                                    }`}
-                                    onClick={ (e) => handleToggle(option.codeValue, e) }
-                                >
-                                    <span className="mg-v2-custom-multi-select__checkbox">
-                                        { value.includes(option.codeValue) ? '✓' : '' }
-                                    </span>
-                                    <span className="mg-v2-custom-multi-select__label">
-                                        { option.icon ? `${option.icon } ` : ''}{ option.codeName || option.codeLabel }
-                                    </span>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                )}
-            </div>
-        );
-    };
-
 
     const createConsultant = useCallback(async (data) => {
         try {
@@ -830,9 +743,23 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
         }
     }, [loadConsultants]);
 
-    const updateConsultant = useCallback(async (id, data) => {
+    const updateConsultant = useCallback(async (id, data, existing) => {
         try {
-            const response = await apiPut(`/api/v1/admin/consultants/${id}`, data);
+            // 백엔드 DTO(ConsultantRegistrationRequest)에 맞는 payload 구성 (등록과 동일한 specialization 변환)
+            const specialization = Array.isArray(data.specialty) && data.specialty.length > 0
+                ? data.specialty.join(',')
+                : (data.specialization != null ? String(data.specialization) : '');
+            const nameVal = data.name != null ? String(data.name).trim() : '';
+            const emailVal = data.email != null ? String(data.email).trim() : '';
+            const phoneVal = data.phone != null ? String(data.phone).trim() : '';
+            const requestPayload = {
+                name: nameVal === '' ? (existing?.name ?? '') : nameVal,
+                email: emailVal === '' ? (existing?.email ?? '') : emailVal,
+                phone: phoneVal === '' ? (existing?.phone ?? '') : phoneVal,
+                specialization
+            };
+            const response = await apiPut(`/api/v1/admin/consultants/${id}`, requestPayload);
+            // 검증: 상담사 등록 → 정보 수정(이름/이메일/전화/전문분야 변경) → 저장 시 200 응답 및 목록 반영 확인
             if (response.success) {
                 await loadConsultants();
                 window.dispatchEvent(new CustomEvent('showNotification', {
@@ -915,7 +842,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
             if (modalType === 'create') {
                 result = await createConsultant(formData);
             } else if (modalType === 'edit') {
-                result = await updateConsultant(selectedConsultant.id, formData);
+                result = await updateConsultant(selectedConsultant.id, formData, selectedConsultant);
             } else if (modalType === 'delete') {
                 result = await deleteConsultant(selectedConsultant.id);
             }
@@ -1529,20 +1456,26 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                         />
                     </div>
                     <div className="mg-v2-form-group">
-                        <label className="mg-v2-form-label">전문분야</label>
+                        <label id="consultant-specialty-label" className="mg-v2-form-label">전문분야</label>
                         <div className="mg-v2-form-help">
                             <span>💡</span>
                             <span>여러 개의 전문분야를 선택할 수 있습니다.</span>
                         </div>
-                        <CustomMultiSelect
-                            options={specialtyCodes}
-                            value={formData.specialty}
-                            onChange={handleSpecialtyChange}
-                            placeholder="전문분야를 선택하세요"
-                        />
-                        <small className="mg-v2-form-help">
-                            💡 Ctrl(Windows) 또는 Cmd(Mac)를 누르고 클릭하여 여러 개 선택할 수 있습니다.
-                        </small>
+                        <div className="mg-v2-specialty-tags" role="group" aria-labelledby="consultant-specialty-label">
+                            {specialtyCodes.map((opt) => {
+                                const isSelected = (formData.specialty || []).includes(opt.codeValue);
+                                return (
+                                    <button
+                                        key={opt.codeValue}
+                                        type="button"
+                                        className={`mg-v2-specialty-tag ${isSelected ? 'mg-v2-specialty-tag--selected' : ''}`}
+                                        onClick={() => handleSpecialtyTagClick(opt.codeValue)}
+                                    >
+                                        {opt.codeName || opt.codeLabel || opt.codeValue}
+                                    </button>
+                                );
+                            })}
+                        </div>
                     </div>
                 </form>
             </div>

@@ -33,7 +33,7 @@ export function resizeImage(dataUrl, options = {}) {
     img.onerror = () => reject(new Error('이미지 로드에 실패했습니다.'));
     img.onload = () => {
       try {
-        let { width, height } = img;
+        const { width, height } = img;
         if (width <= maxWidth && height <= maxHeight) {
           const canvas = document.createElement('canvas');
           canvas.width = width;

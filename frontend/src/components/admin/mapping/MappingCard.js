@@ -159,7 +159,27 @@ const MappingCard = ({
                     </div>
                     
                     <div className="mg-v2-mapping-package-item">
-                        <User size={16} className="mg-v2-mapping-icon" />
+                        <div className="mg-v2-mapping-participant-avatar">
+                            {(mapping.clientProfileImageUrl || mapping.client?.profileImageUrl) ? (
+                                <>
+                                    <img
+                                        src={mapping.clientProfileImageUrl || mapping.client?.profileImageUrl}
+                                        alt=""
+                                        className="mg-v2-avatar-img"
+                                        onError={(e) => {
+                                            e.target.style.display = 'none';
+                                            const fallback = e.target.nextElementSibling;
+                                            if (fallback) fallback.classList.remove('mg-v2-avatar-fallback--hidden');
+                                        }}
+                                    />
+                                    <span className="mg-v2-avatar-fallback mg-v2-avatar-fallback--hidden" aria-hidden="true">
+                                        {mapping.clientName ? mapping.clientName.charAt(0) : '?'}
+                                    </span>
+                                </>
+                            ) : (
+                                <span className="mg-v2-avatar-fallback">{mapping.clientName ? mapping.clientName.charAt(0) : '?'}</span>
+                            )}
+                        </div>
                         <div className="mg-v2-mapping-participant-info">
                             <div className="mg-v2-mapping-participant-label">내담자</div>
                             <div className="mg-v2-mapping-participant-name">

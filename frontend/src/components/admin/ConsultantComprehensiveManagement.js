@@ -1080,7 +1080,25 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                     >
                                                         <div className="mg-v2-profile-card__header">
                                                             <div className="mg-v2-profile-card__avatar">
-                                                                {consultant.name ? consultant.name.charAt(0) : '?'}
+                                                                {consultant.profileImageUrl ? (
+                                                                    <>
+                                                                        <img
+                                                                            src={consultant.profileImageUrl}
+                                                                            alt=""
+                                                                            className="mg-v2-avatar-img"
+                                                                            onError={(e) => {
+                                                                                e.target.style.display = 'none';
+                                                                                const fallback = e.target.nextElementSibling;
+                                                                                if (fallback) fallback.classList.remove('mg-v2-avatar-fallback--hidden');
+                                                                            }}
+                                                                        />
+                                                                        <span className="mg-v2-avatar-fallback mg-v2-avatar-fallback--hidden" aria-hidden="true">
+                                                                            {consultant.name ? consultant.name.charAt(0) : '?'}
+                                                                        </span>
+                                                                    </>
+                                                                ) : (
+                                                                    <span className="mg-v2-avatar-fallback">{consultant.name ? consultant.name.charAt(0) : '?'}</span>
+                                                                )}
                                                             </div>
                                                             <div className="mg-v2-profile-card__info">
                                                                 <h3 className="mg-v2-profile-card__name">{consultant.name || '이름 없음'}</h3>
@@ -1250,7 +1268,25 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                     >
                                                         <div className="mg-v2-profile-card__header">
                                                             <div className="mg-v2-profile-card__avatar">
-                                                                {consultant.name ? consultant.name.charAt(0) : '?'}
+                                                                {consultant.profileImageUrl ? (
+                                                                    <>
+                                                                        <img
+                                                                            src={consultant.profileImageUrl}
+                                                                            alt=""
+                                                                            className="mg-v2-avatar-img"
+                                                                            onError={(e) => {
+                                                                                e.target.style.display = 'none';
+                                                                                const fallback = e.target.nextElementSibling;
+                                                                                if (fallback) fallback.classList.remove('mg-v2-avatar-fallback--hidden');
+                                                                            }}
+                                                                        />
+                                                                        <span className="mg-v2-avatar-fallback mg-v2-avatar-fallback--hidden" aria-hidden="true">
+                                                                            {consultant.name ? consultant.name.charAt(0) : '?'}
+                                                                        </span>
+                                                                    </>
+                                                                ) : (
+                                                                    <span className="mg-v2-avatar-fallback">{consultant.name ? consultant.name.charAt(0) : '?'}</span>
+                                                                )}
                                                             </div>
                                                             <div className="mg-v2-profile-card__info">
                                                                 <h3 className="mg-v2-profile-card__name">{consultant.name || '이름 없음'}</h3>
@@ -1365,7 +1401,25 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                         <div className="mg-v2-consultant-detail">
                             <div className="mg-v2-consultant-detail-header">
                                 <div className="mg-v2-consultant-detail-avatar">
-                                    {selectedConsultant.name ? selectedConsultant.name.charAt(0) : '?'}
+                                    {selectedConsultant.profileImageUrl ? (
+                                        <>
+                                            <img
+                                                src={selectedConsultant.profileImageUrl}
+                                                alt=""
+                                                className="mg-v2-avatar-img"
+                                                onError={(e) => {
+                                                    e.target.style.display = 'none';
+                                                    const fallback = e.target.nextElementSibling;
+                                                    if (fallback) fallback.classList.remove('mg-v2-avatar-fallback--hidden');
+                                                }}
+                                            />
+                                            <span className="mg-v2-avatar-fallback mg-v2-avatar-fallback--hidden" aria-hidden="true">
+                                                {selectedConsultant.name ? selectedConsultant.name.charAt(0) : '?'}
+                                            </span>
+                                        </>
+                                    ) : (
+                                        <span className="mg-v2-avatar-fallback">{selectedConsultant.name ? selectedConsultant.name.charAt(0) : '?'}</span>
+                                    )}
                                 </div>
                                 <div className="mg-v2-consultant-detail-info">
                                     <h4 className="mg-v2-consultant-detail-name">{selectedConsultant.name || '이름 없음'}</h4>

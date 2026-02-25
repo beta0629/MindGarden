@@ -219,6 +219,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
             email: c.email,
             phone: c.phone,
             role: c.role,
+            profileImageUrl: c.profileImageUrl ?? null,
             currentClients: item.currentClients || 0,
             totalClients: item.totalClients || 0
           };
@@ -451,7 +452,27 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                     className={`mg-v2-mapping-creation-modal__card ${selectedConsultant?.id === c.id ? 'mg-v2-mapping-creation-modal__card--selected' : ''}`}
                     onClick={() => setSelectedConsultant(c)}
                   >
-                    <span className="mg-v2-mapping-creation-modal__avatar">{c.name?.charAt(0) || '?'}</span>
+                    <span className="mg-v2-mapping-creation-modal__avatar">
+                      {c.profileImageUrl ? (
+                        <>
+                          <img
+                            src={c.profileImageUrl}
+                            alt=""
+                            className="mg-v2-avatar-img"
+                            onError={(e) => {
+                              e.target.style.display = 'none';
+                              const fallback = e.target.nextElementSibling;
+                              if (fallback) fallback.classList.remove('mg-v2-avatar-fallback--hidden');
+                            }}
+                          />
+                          <span className="mg-v2-avatar-fallback mg-v2-avatar-fallback--hidden" aria-hidden="true">
+                            {c.name?.charAt(0) || '?'}
+                          </span>
+                        </>
+                      ) : (
+                        <span className="mg-v2-avatar-fallback">{c.name?.charAt(0) || '?'}</span>
+                      )}
+                    </span>
                     <div className="mg-v2-mapping-creation-modal__card-info">
                       <strong>{c.name}</strong>
                       <span>{c.email}</span>
@@ -556,7 +577,27 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                     className={`mg-v2-mapping-creation-modal__card ${selectedClient?.id === c.id ? 'mg-v2-mapping-creation-modal__card--selected' : ''}`}
                     onClick={() => setSelectedClient(c)}
                   >
-                    <span className="mg-v2-mapping-creation-modal__avatar">{c.name?.charAt(0) || '?'}</span>
+                    <span className="mg-v2-mapping-creation-modal__avatar">
+                      {c.profileImageUrl ? (
+                        <>
+                          <img
+                            src={c.profileImageUrl}
+                            alt=""
+                            className="mg-v2-avatar-img"
+                            onError={(e) => {
+                              e.target.style.display = 'none';
+                              const fallback = e.target.nextElementSibling;
+                              if (fallback) fallback.classList.remove('mg-v2-avatar-fallback--hidden');
+                            }}
+                          />
+                          <span className="mg-v2-avatar-fallback mg-v2-avatar-fallback--hidden" aria-hidden="true">
+                            {c.name?.charAt(0) || '?'}
+                          </span>
+                        </>
+                      ) : (
+                        <span className="mg-v2-avatar-fallback">{c.name?.charAt(0) || '?'}</span>
+                      )}
+                    </span>
                     <div className="mg-v2-mapping-creation-modal__card-info">
                       <strong>{c.name}</strong>
                       <span>{c.email}</span>

@@ -83,6 +83,33 @@ const ClientCard = ({
         return '?';
     };
 
+    /**
+     * 아바타 렌더 (이미지 있으면 img + 폴백, 없으면 이니셜만)
+     */
+    const renderAvatar = (avatarClassName) => {
+        const initial = getInitial();
+        if (client.profileImageUrl) {
+            return (
+                <>
+                    <img
+                        src={client.profileImageUrl}
+                        alt=""
+                        className="mg-v2-avatar-img"
+                        onError={(e) => {
+                            e.target.style.display = 'none';
+                            const fallback = e.target.nextElementSibling;
+                            if (fallback) fallback.classList.remove('mg-v2-avatar-fallback--hidden');
+                        }}
+                    />
+                    <span className="mg-v2-avatar-fallback mg-v2-avatar-fallback--hidden" aria-hidden="true">
+                        {initial}
+                    </span>
+                </>
+            );
+        }
+        return <span className="mg-v2-avatar-fallback" aria-hidden="true">{initial}</span>;
+    };
+
 /**
      * 클릭 핸들러
      */
@@ -130,7 +157,7 @@ const ClientCard = ({
             aria-label={`${client.name} 내담자 선택`}
         >
             <div className="mg-client-card__avatar">
-                {getInitial()}
+                {renderAvatar()}
             </div>
             <div className="mg-client-card__info">
                 <div className="mg-client-card__header">
@@ -177,7 +204,7 @@ const ClientCard = ({
 
             {/* 내담자 아바타 */}
             <div className="mg-client-card__avatar mg-client-card__avatar--large">
-                {getInitial()}
+                {renderAvatar()}
             </div>
 
             {/* 내담자 정보 */}
@@ -277,7 +304,7 @@ const ClientCard = ({
         >
             <div className="mg-client-card__header-mobile">
                 <div className="mg-client-card__avatar mg-client-card__avatar--mobile">
-                    {getInitial()}
+                    {renderAvatar()}
                 </div>
                 <div className={`mg-client-card__status mg-client-card__status--${getStatusClass()}`}>
                     {getStatusIcon()}
@@ -359,7 +386,7 @@ const ClientCard = ({
             aria-label={`${client.name} 내담자 선택`}
         >
             <div className="mg-client-card__avatar mg-client-card__avatar--mobile-simple">
-                {getInitial()}
+                {renderAvatar()}
             </div>
             
             <div className="mg-client-card__info mg-client-card__info--mobile-simple">

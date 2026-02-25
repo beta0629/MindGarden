@@ -158,17 +158,10 @@ const ConsultantStatus = () => {
     };
 
 /**
-     * 상담사 프로필 이미지 URL 생성
+     * 상담사 이니셜 (이미지 없을 때 사용)
      */
-    const getProfileImageUrl = (consultant) => {
-        // 실제 프로필 이미지가 있다면 사용
-        if (consultant.profileImageUrl || consultant.profileImage || consultant.socialProfileImage) {
-            return consultant.profileImageUrl || consultant.profileImage || consultant.socialProfileImage;
-        }
-        
-        // 기본 아바타 생성 (이름의 첫 글자 사용)
-        const firstChar = consultant.name ? consultant.name.charAt(0) : '?';
-        return `https://ui-avatars.com/api/?name=${encodeURIComponent(firstChar)}&background=3b82f6&color=ffffff&size=64&font-size=0.6&bold=true`;
+    const getConsultantInitial = (consultant) => {
+        return consultant.name ? consultant.name.charAt(0) : '?';
     };
 
     useEffect(() => {
@@ -206,17 +199,25 @@ const ConsultantStatus = () => {
                         return (
                             <div key={consultant.id} className="consultant-status-card">
                                 <div className="consultant-status-avatar">
-                                    <img 
-                                        src={getProfileImageUrl(consultant)} 
-                                        alt={consultant.name}
-                                        className="consultant-status-profile-image"
-                                        onError={(e) => {
-                                            // 이미지 로드 실패 시 기본 아이콘으로 대체
-                                            e.target.style.display = 'none';
-                                            e.target.nextSibling.style.display = 'flex';
-                                        }}
-                                    />
-                                    <div className="consultant-status-default-icon consultant-status-hidden">👨‍⚕️</div>
+                                    {(consultant.profileImageUrl || consultant.profileImage || consultant.socialProfileImage) ? (
+                                        <>
+                                            <img
+                                                src={consultant.profileImageUrl || consultant.profileImage || consultant.socialProfileImage}
+                                                alt=""
+                                                className="mg-v2-avatar-img consultant-status-profile-image"
+                                                onError={(e) => {
+                                                    e.target.style.display = 'none';
+                                                    const fallback = e.target.nextElementSibling;
+                                                    if (fallback) fallback.classList.remove('consultant-status-hidden');
+                                                }}
+                                            />
+                                            <span className="mg-v2-avatar-fallback consultant-status-hidden" aria-hidden="true">
+                                                {getConsultantInitial(consultant)}
+                                            </span>
+                                        </>
+                                    ) : (
+                                        <span className="mg-v2-avatar-fallback">{getConsultantInitial(consultant)}</span>
+                                    )}
                                 </div>
                                 <div className="consultant-status-info">
                                     <div className="consultant-status-name">{consultant.name}</div>

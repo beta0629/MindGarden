@@ -861,3 +861,179 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ===== 아바타 이미지/이니셜 공통 (AVATAR_IMAGE_OR_INITIAL_SPEC) ===== */
+.mg-v2-avatar-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+}
+
+.mg-v2-avatar-fallback--hidden {
+  display: none !important;
+}
+
+/* 아바타 컨테이너 overflow + 자식 img/폴백 */
+.mg-consultant-card__avatar,
+.mg-client-card__avatar {
+  overflow: hidden;
+  position: relative;
+}
+
+.mg-consultant-card__avatar .mg-v2-avatar-img,
+.mg-client-card__avatar .mg-v2-avatar-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+}
+
+.mg-consultant-card__avatar .mg-v2-avatar-fallback,
+.mg-client-card__avatar .mg-v2-avatar-fallback {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: inherit;
+  color: inherit;
+  font-weight: 600;
+}
+
+.mg-consultant-card__avatar .mg-v2-avatar-fallback:only-child,
+.mg-client-card__avatar .mg-v2-avatar-fallback:only-child {
+  position: static;
+}
+
+.mg-v2-profile-card__avatar,
+.mg-v2-consultant-detail-avatar {
+  overflow: hidden;
+  position: relative;
+}
+
+.mg-v2-profile-card__avatar .mg-v2-avatar-img,
+.mg-v2-consultant-detail-avatar .mg-v2-avatar-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+}
+
+.mg-v2-profile-card__avatar .mg-v2-avatar-fallback,
+.mg-v2-consultant-detail-avatar .mg-v2-avatar-fallback {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: inherit;
+  color: inherit;
+  font-weight: 600;
+}
+
+.mg-v2-profile-card__avatar .mg-v2-avatar-fallback:only-child,
+.mg-v2-consultant-detail-avatar .mg-v2-avatar-fallback:only-child {
+  position: static;
+}
+
+.mg-v2-client-card-avatar {
+  overflow: hidden;
+  position: relative;
+}
+
+.mg-v2-client-card-avatar .mg-v2-avatar-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+}
+
+.mg-v2-client-card-avatar .mg-v2-avatar-fallback {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: inherit;
+  color: inherit;
+  font-weight: 600;
+}
+
+.mg-v2-client-card-avatar .mg-v2-avatar-fallback:only-child {
+  position: static;
+}
+
+.mg-v2-quick-mapping-avatar,
+.mg-v2-client-avatar {
+  overflow: hidden;
+  position: relative;
+}
+
+.mg-v2-quick-mapping-avatar .mg-v2-avatar-img,
+.mg-v2-client-avatar .mg-v2-avatar-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+}
+
+.mg-v2-quick-mapping-avatar .mg-v2-avatar-fallback,
+.mg-v2-client-avatar .mg-v2-avatar-fallback {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: inherit;
+  color: inherit;
+  font-weight: 600;
+}
+
+.mg-v2-quick-mapping-avatar .mg-v2-avatar-fallback:only-child,
+.mg-v2-client-avatar .mg-v2-avatar-fallback:only-child {
+  position: static;
+}
+
+.mg-v2-mapping-participant-avatar {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--mg-mint-green-gradient, linear-gradient(135deg, #a8e6a3, #7dd87a));
+  color: var(--mg-white);
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.mg-v2-mapping-participant-avatar .mg-v2-avatar-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+}
+
+.mg-v2-mapping-participant-avatar .mg-v2-avatar-fallback {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: inherit;
+  color: inherit;
+}
+
+.mg-v2-mapping-participant-avatar .mg-v2-avatar-fallback:only-child {
+  position: static;
+}

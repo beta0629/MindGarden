@@ -36,6 +36,7 @@ const ConsultantClientSection = ({ userId }) => {
             id: clientId,
             name: mapping.client?.name || mapping.clientName,
             email: mapping.client?.email || '',
+            profileImageUrl: mapping.client?.profileImageUrl ?? null,
             mappingStatus: clientStatus,
             totalSessions: 0,
             usedSessions: 0,
@@ -201,7 +202,25 @@ const ConsultantClientSection = ({ userId }) => {
               >
                 <div className="mg-v2-client-card-header">
                   <div className="mg-v2-client-card-avatar">
-                    {client.name ? client.name.charAt(0) : '?'}
+                    {client.profileImageUrl ? (
+                      <>
+                        <img
+                          src={client.profileImageUrl}
+                          alt=""
+                          className="mg-v2-avatar-img"
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                            const fallback = e.target.nextElementSibling;
+                            if (fallback) fallback.classList.remove('mg-v2-avatar-fallback--hidden');
+                          }}
+                        />
+                        <span className="mg-v2-avatar-fallback mg-v2-avatar-fallback--hidden" aria-hidden="true">
+                          {client.name ? client.name.charAt(0) : '?'}
+                        </span>
+                      </>
+                    ) : (
+                      <span className="mg-v2-avatar-fallback">{client.name ? client.name.charAt(0) : '?'}</span>
+                    )}
                   </div>
                   <div className="mg-v2-client-card-info">
                     <h4 className="mg-v2-h4">{client.name || '이름 없음'}</h4>

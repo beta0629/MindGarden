@@ -89,6 +89,33 @@ const ConsultantCard = ({
         return '?';
     };
 
+    /**
+     * 아바타 렌더 (이미지 있으면 img + 폴백, 없으면 이니셜만)
+     */
+    const renderAvatar = (avatarClassName) => {
+        const initial = getInitial();
+        if (consultant.profileImageUrl) {
+            return (
+                <>
+                    <img
+                        src={consultant.profileImageUrl}
+                        alt=""
+                        className="mg-v2-avatar-img"
+                        onError={(e) => {
+                            e.target.style.display = 'none';
+                            const fallback = e.target.nextElementSibling;
+                            if (fallback) fallback.classList.remove('mg-v2-avatar-fallback--hidden');
+                        }}
+                    />
+                    <span className="mg-v2-avatar-fallback mg-v2-avatar-fallback--hidden" aria-hidden="true">
+                        {initial}
+                    </span>
+                </>
+            );
+        }
+        return <span className="mg-v2-avatar-fallback" aria-hidden="true">{initial}</span>;
+    };
+
 /**
      * 클릭 핸들러
      */
@@ -125,7 +152,7 @@ const ConsultantCard = ({
             aria-label={`${consultant.name} 상담사 선택`}
         >
             <div className="mg-consultant-card__avatar">
-                {getInitial()}
+                {renderAvatar()}
             </div>
             <div className="mg-consultant-card__info">
                 <div className="mg-consultant-card__header">
@@ -170,7 +197,7 @@ const ConsultantCard = ({
 
             {/* 상담사 아바타 */}
             <div className="mg-consultant-card__avatar mg-consultant-card__avatar--large">
-                {getInitial()}
+                {renderAvatar()}
             </div>
 
             {/* 상담사 정보 */}
@@ -289,7 +316,7 @@ const ConsultantCard = ({
         >
             <div className="mg-consultant-card__header-mobile">
                 <div className="mg-consultant-card__avatar mg-consultant-card__avatar--mobile">
-                    {getInitial()}
+                    {renderAvatar()}
                 </div>
                 <div className="mg-consultant-card__status" style={{ '--availability-color': getAvailabilityColor() }}>
                     <span>{getAvailabilityText()}</span>
@@ -394,7 +421,7 @@ const ConsultantCard = ({
             </div>
 
             <div className="mg-consultant-card__avatar mg-consultant-card__avatar--schedule-select">
-                {getInitial()}
+                {renderAvatar()}
             </div>
 
             <div className="mg-consultant-card__info mg-consultant-card__info--schedule-select">
@@ -464,7 +491,7 @@ const ConsultantCard = ({
             aria-label={`${consultant.name} 상담사 선택`}
         >
             <div className="mg-consultant-card__avatar mg-consultant-card__avatar--mobile-simple">
-                {getInitial()}
+                {renderAvatar()}
             </div>
             
             <div className="mg-consultant-card__info mg-consultant-card__info--mobile-simple">

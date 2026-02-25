@@ -1712,6 +1712,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 clientData.put("createdAt", user.getCreatedAt());
                 clientData.put("updatedAt", user.getUpdatedAt());
                 clientData.put("branchCode", null); // 표준화 2025-12-06: 브랜치 코드 사용 금지
+                clientData.put("profileImageUrl", user.getProfileImageUrl());
                 
                 log.info("👤 통합 내담자 데이터 - ID: {}, 이름: '{}', 전화번호: '{}'", 
                     user.getId(), clientName, phone);

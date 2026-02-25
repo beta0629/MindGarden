@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import PropTypes from 'prop-types';
-import { Plus, Users, Link2, Calendar, ClipboardList, X, Edit, Trash2, Key, Mail, Phone, User, Eye } from 'lucide-react';
+import { Plus, Users, Link2, Calendar, ClipboardList, Edit, Trash2, Key, Mail, Phone } from 'lucide-react';
 import Button from '../ui/Button/Button';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
@@ -18,7 +18,7 @@ import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
 import StandardizedApi from '../../utils/standardizedApi';
 import { getAllConsultantsWithStats } from '../../utils/consultantHelper';
 import SpecialtyDisplay from '../ui/SpecialtyDisplay';
-import { MGConfirmModal } from '../common/MGModal';
+import UnifiedModal from '../common/modals/UnifiedModal';
 import { getCommonCodes } from '../../utils/commonCodeApi';
 import { sessionManager } from '../../utils/sessionManager';
 import PasswordResetModal from './PasswordResetModal';
@@ -1360,230 +1360,282 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
         </>
     );
 
+    const getModalTitle = () => {
+        if (modalType === 'create') return '새 상담사 등록';
+        if (modalType === 'edit') return '상담사 정보 수정';
+        if (modalType === 'delete') return '상담사 삭제 확인';
+        if (modalType === 'view') return '상담사 상세 정보';
+        return '';
+    };
+
+    const renderModalBody = () => {
+        if (modalType === 'view') {
+            return (
+                <div className="mg-v2-modal-body">
+                    {selectedConsultant && (
+                        <div className="mg-v2-consultant-detail">
+                            <div className="mg-v2-consultant-detail-header">
+                                <div className="mg-v2-consultant-detail-avatar">
+                                    {selectedConsultant.name ? selectedConsultant.name.charAt(0) : '?'}
+                                </div>
+                                <div className="mg-v2-consultant-detail-info">
+                                    <h4 className="mg-v2-consultant-detail-name">{selectedConsultant.name || '이름 없음'}</h4>
+                                    <p className="mg-v2-consultant-detail-email">{selectedConsultant.email}</p>
+                                    <span className="mg-status-badge">
+                                        {getStatusLabel(selectedConsultant.status)}
+                                    </span>
+                                </div>
+                            </div>
+                            <div className="mg-v2-consultant-detail-content">
+                                <div className="mg-v2-detail-section">
+                                    <h5>기본 정보</h5>
+                                    <div className="mg-v2-detail-grid">
+                                        <div className="mg-v2-detail-item">
+                                            <span className="mg-v2-detail-label">전화번호:</span>
+                                            <span className="mg-v2-detail-value">{selectedConsultant.phone || '전화번호 없음'}</span>
+                                        </div>
+                                        <div className="mg-v2-detail-item">
+                                            <span className="mg-v2-detail-label">가입일:</span>
+                                            <span className="mg-v2-detail-value">
+                                                {selectedConsultant.createdAt ? new Date(selectedConsultant.createdAt).toLocaleDateString('ko-KR') : '-'}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="mg-v2-detail-section">
+                                    <h5>전문분야</h5>
+                                    <div className="mg-v2-specialty-list">
+                                        {(selectedConsultant.specialty || selectedConsultant.specialization) ? (
+                                            <SpecialtyDisplay
+                                                consultant={selectedConsultant}
+                                                variant="tag"
+                                                showTitle={false}
+                                                maxItems={10}
+                                            />
+                                        ) : (
+                                            <span className="mg-v2-no-data">전문분야 정보가 없습니다.</span>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+        if (modalType === 'delete') {
+            return (
+                <div className="mg-v2-modal-body">
+                    <div className="mg-v2-delete-confirmation">
+                        <p>{selectedConsultant?.name || '이 상담사'}를 정말 삭제하시겠습니까?</p>
+                        {selectedConsultant && (
+                            <div className="mg-v2-detail-grid" style={{ marginTop: '0.75rem' }}>
+                                <div className="mg-v2-detail-item">
+                                    <span className="mg-v2-detail-label">이름:</span>
+                                    <span className="mg-v2-detail-value">{selectedConsultant.name || '-'}</span>
+                                </div>
+                                <div className="mg-v2-detail-item">
+                                    <span className="mg-v2-detail-label">이메일:</span>
+                                    <span className="mg-v2-detail-value">{selectedConsultant.email || '-'}</span>
+                                </div>
+                            </div>
+                        )}
+                        <p className="mg-v2-warning-text" style={{ marginTop: '1rem', color: 'var(--ad-b0kla-danger, var(--color-danger))' }}>
+                            ⚠️ 이 작업은 되돌릴 수 없습니다.
+                        </p>
+                    </div>
+                </div>
+            );
+        }
+        return (
+            <div className="mg-v2-modal-body">
+                <form className="mg-v2-form" onSubmit={(e) => { e.preventDefault(); handleModalSubmit(e); }}>
+                    {(modalType === 'create') && (
+                        <div className="mg-v2-info-box mg-v2-ad-b0kla-info-box">
+                            <p className="mg-v2-info-text">
+                                💡 비밀번호를 입력하지 않으면 임시 비밀번호가 자동으로 생성됩니다.
+                            </p>
+                        </div>
+                    )}
+                    <div className="mg-v2-form-group">
+                        <label className="mg-v2-form-label">이름 *</label>
+                        <input
+                            type="text"
+                            name="name"
+                            value={formData.name || ''}
+                            onChange={handleFormChange}
+                            placeholder="이름을 입력하세요"
+                            className="mg-v2-form-input"
+                            required
+                        />
+                    </div>
+                    <div className="mg-v2-form-group">
+                        <label className="mg-v2-form-label">이메일 *</label>
+                        <div className="mg-v2-form-email-row">
+                            <input
+                                type="email"
+                                name="email"
+                                value={formData.email || ''}
+                                onChange={handleFormChange}
+                                placeholder="example@email.com"
+                                className="mg-v2-form-input"
+                                required
+                                disabled={modalType === 'edit'}
+                            />
+                            {modalType === 'create' && (
+                                <button
+                                    type="button"
+                                    onClick={handleEmailDuplicateCheck}
+                                    disabled={isCheckingEmail || !formData.email?.trim()}
+                                    className="mg-v2-button mg-v2-button-secondary"
+                                >
+                                    {isCheckingEmail ? '확인 중...' : '중복확인'}
+                                </button>
+                            )}
+                        </div>
+                        {modalType === 'edit' && (
+                            <small className="mg-v2-form-help">이메일은 변경할 수 없습니다.</small>
+                        )}
+                        {modalType === 'create' && emailCheckStatus === 'duplicate' && (
+                            <small className="mg-v2-form-help mg-v2-form-help--error">⚠️ 이미 사용 중인 이메일입니다.</small>
+                        )}
+                        {modalType === 'create' && emailCheckStatus === 'available' && (
+                            <small className="mg-v2-form-help mg-v2-form-help--success">✅ 사용 가능한 이메일입니다.</small>
+                        )}
+                    </div>
+                    {modalType === 'create' && (
+                        <div className="mg-v2-form-group">
+                            <label className="mg-v2-form-label">비밀번호</label>
+                            <input
+                                type="password"
+                                name="password"
+                                value={formData.password || ''}
+                                onChange={handleFormChange}
+                                placeholder="비밀번호를 입력하지 않으면 자동 생성됩니다"
+                                className="mg-v2-form-input"
+                            />
+                            <small className="mg-v2-form-help">비밀번호를 입력하지 않으면 임시 비밀번호가 자동으로 생성됩니다.</small>
+                        </div>
+                    )}
+                    <div className="mg-v2-form-group">
+                        <label className="mg-v2-form-label">전화번호</label>
+                        <input
+                            type="tel"
+                            name="phone"
+                            value={formData.phone || ''}
+                            onChange={handleFormChange}
+                            placeholder="전화번호를 입력하세요 (선택사항)"
+                            className="mg-v2-form-input"
+                        />
+                    </div>
+                    <div className="mg-v2-form-group">
+                        <label className="mg-v2-form-label">전문분야</label>
+                        <div className="mg-v2-form-help">
+                            <span>💡</span>
+                            <span>여러 개의 전문분야를 선택할 수 있습니다.</span>
+                        </div>
+                        <CustomMultiSelect
+                            options={specialtyCodes}
+                            value={formData.specialty}
+                            onChange={handleSpecialtyChange}
+                            placeholder="전문분야를 선택하세요"
+                        />
+                        <small className="mg-v2-form-help">
+                            💡 Ctrl(Windows) 또는 Cmd(Mac)를 누르고 클릭하여 여러 개 선택할 수 있습니다.
+                        </small>
+                    </div>
+                </form>
+            </div>
+        );
+    };
+
+    const getModalActions = () => {
+        if (modalType === 'view') {
+            return (
+                <>
+                    <button type="button" className="mg-v2-button mg-v2-button-secondary" onClick={handleCloseModal}>
+                        닫기
+                    </button>
+                    <button
+                        type="button"
+                        className="mg-v2-button mg-v2-button-primary"
+                        onClick={() => handleOpenModal('edit', selectedConsultant)}
+                    >
+                        <Edit size={16} /> 수정
+                    </button>
+                </>
+            );
+        }
+        return (
+            <>
+                <button type="button" className="mg-v2-button mg-v2-button-secondary" onClick={handleCloseModal}>
+                    취소
+                </button>
+                <button
+                    type="button"
+                    className={modalType === 'delete' ? 'mg-v2-button mg-v2-button-danger' : 'mg-v2-button mg-v2-button-primary'}
+                    onClick={handleModalSubmit}
+                >
+                    {modalType === 'create' && '등록'}
+                    {modalType === 'edit' && '수정'}
+                    {modalType === 'delete' && '삭제'}
+                </button>
+            </>
+        );
+    };
+
     const modalsBlock = (
         <>
-            { /* 모달 */ }
-            {showModal && (
-                <div className="mg-v2-modal-overlay">
-                    <div className={`mg-v2-modal ${modalType === 'delete' ? 'mg-confirm-modal mg-confirm-delete' : 'mg-v2-modal-large'}`}>
-                        <div className="mg-v2-modal-header">
-                            <h3 className="mg-v2-modal-title">
-                                { modalType === 'create' && '새 상담사 등록' }
-                                { modalType === 'edit' && '상담사 정보 수정' }
-                                { modalType === 'delete' && '상담사 삭제 확인' }
-                                { modalType === 'view' && '상담사 상세 정보' }
-                            </h3>
-                            <button className="mg-v2-modal-close" onClick={handleCloseModal} type="button" aria-label="닫기">
-                                <X size={20} />
-                            </button>
-                        </div>
-                        
-                        {modalType === 'view' ? (
-                            <div className="mg-v2-modal-body">
-                                {selectedConsultant && (
-                                    <div className="mg-v2-consultant-detail">
-                                        <div className="mg-v2-consultant-detail-header">
-                                            <div className="mg-v2-consultant-detail-avatar">
-                                                {selectedConsultant.name ? selectedConsultant.name.charAt(0) : '?'}
-                                    </div>
-                                            <div className="mg-v2-consultant-detail-info">
-                                                <h4 className="mg-v2-consultant-detail-name">{ selectedConsultant.name || '이름 없음' }</h4>
-                                                <p className="mg-v2-consultant-detail-email">{ selectedConsultant.email }</p>
-                                                <span className={ `mg-status-badge` }>
-                                                    { getStatusLabel(selectedConsultant.status) }
-                                                </span>
-                                                </div>
-                                            </div>
-                                            
-                                        <div className="mg-v2-consultant-detail-content">
-                                            <div className="mg-v2-detail-section">
-                                                <h5>기본 정보</h5>
-                                                <div className="mg-v2-detail-grid">
-                                                    <div className="mg-v2-detail-item">
-                                                        <span className="mg-v2-detail-label">전화번호:</span>
-                                                        <span className="mg-v2-detail-value">{ selectedConsultant.phone || '전화번호 없음' }</span>
-                                                </div>
-                                                    <div className="mg-v2-detail-item">
-                                                        <span className="mg-v2-detail-label">가입일:</span>
-                                                        <span className="mg-v2-detail-value">
-                                                            { selectedConsultant.createdAt ? new Date(selectedConsultant.createdAt).toLocaleDateString('ko-KR') : '-' }
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            
-                                            <div className="mg-v2-detail-section">
-                                                <h5>전문분야</h5>
-                                                <div className="mg-v2-specialty-list">
-                                                    {(selectedConsultant.specialty || selectedConsultant.specialization) ? (
-                                                        <SpecialtyDisplay 
-                                                            consultant={selectedConsultant} 
-                                                            variant="tag" 
-                                                            showTitle={false}
-                                                            maxItems={10}
-                                                        />
-                                                    ) : (
-                                                        <span className="mg-v2-no-data">전문분야 정보가 없습니다.</span>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </div>
-                                        </div>
-                                    )}
-                                </div>
-                            ) : (
-                            <div className="mg-v2-modal-body">
-                                <form className="mg-v2-form">
-                                    {modalType === 'create' && (
-                                        <div className="mg-v2-info-box" style={{ marginBottom: '1rem', padding: '0.75rem', backgroundColor: 'var(--color-background-light)', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border-light)' }}>
-                                            <p className="mg-v2-info-text" style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', margin: 0 }}>
-                                                💡 비밀번호를 입력하지 않으면 임시 비밀번호가 자동으로 생성됩니다.
-                                            </p>
-                                        </div>
-                                    )}
-                                    
-                                    <div className="mg-v2-form-group">
-                                        <label className="mg-v2-form-label">이름 *</label>
-                                        <input
-                                            type="text"
-                                            name="name"
-                                            value={ formData.name || '' }
-                                            onChange={ handleFormChange }
-                                            placeholder="이름을 입력하세요"
-                                            className="mg-v2-form-input"
-                                            required
-                                        />
-                                    </div>
-                                    
-                                    <div className="mg-v2-form-group">
-                                        <label className="mg-v2-form-label">이메일 *</label>
-                                        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
-                                            <input
-                                                type="email"
-                                                name="email"
-                                                value={ formData.email || '' }
-                                                onChange={ handleFormChange }
-                                                placeholder="example@email.com"
-                                                className="mg-v2-form-input"
-                                                style={{ flex: 1 }}
-                                                required
-                                                disabled={ modalType === 'edit' } // 수정 시에는 이메일 변경 불가
-                                            />
-                                            {modalType === 'create' && (
-                                                <button
-                                                    type="button"
-                                                    onClick={handleEmailDuplicateCheck}
-                                                    disabled={isCheckingEmail || !formData.email?.trim()}
-                                                    className="mg-v2-button mg-v2-button-secondary"
-                                                    style={{ 
-                                                        whiteSpace: 'nowrap',
-                                                        minWidth: '100px',
-                                                        opacity: (isCheckingEmail || !formData.email?.trim()) ? 0.6 : 1,
-                                                        cursor: (isCheckingEmail || !formData.email?.trim()) ? 'not-allowed' : 'pointer'
-                                                    }}
-                                                >
-                                                    {isCheckingEmail ? '확인 중...' : '중복확인'}
-                                                </button>
-                                            )}
-                                        </div>
-                                        {modalType === 'edit' && (
-                                            <small className="mg-v2-form-help">이메일은 변경할 수 없습니다.</small>
-                                        )}
-                                        {modalType === 'create' && emailCheckStatus === 'duplicate' && (
-                                            <small className="mg-v2-form-help" style={{ color: 'var(--color-error)' }}>
-                                                ⚠️ 이미 사용 중인 이메일입니다.
-                                            </small>
-                                        )}
-                                        {modalType === 'create' && emailCheckStatus === 'available' && (
-                                            <small className="mg-v2-form-help" style={{ color: 'var(--color-success)' }}>
-                                                ✅ 사용 가능한 이메일입니다.
-                                            </small>
-                                        )}
-                                    </div>
-                                    
-                                    {modalType === 'create' && (
-                                        <div className="mg-v2-form-group">
-                                            <label className="mg-v2-form-label">비밀번호</label>
-                                            <input
-                                                type="password"
-                                                name="password"
-                                                value={ formData.password || '' }
-                                                onChange={ handleFormChange }
-                                                placeholder="비밀번호를 입력하지 않으면 자동 생성됩니다"
-                                                className="mg-v2-form-input"
-                                            />
-                                            <small className="mg-v2-form-help">비밀번호를 입력하지 않으면 임시 비밀번호가 자동으로 생성됩니다.</small>
-                                        </div>
-                                    )}
-                                    
-                                    <div className="mg-v2-form-group">
-                                        <label className="mg-v2-form-label">전화번호</label>
-                                        <input
-                                            type="tel"
-                                            name="phone"
-                                            value={ formData.phone || '' }
-                                            onChange={ handleFormChange }
-                                            placeholder="전화번호를 입력하세요 (선택사항)"
-                                            className="mg-v2-form-input"
-                                        />
-                                    </div>
-                                    
-                                    <div className="mg-v2-form-group">
-                                        <label className="mg-v2-form-label">전문분야</label>
-                                        <div className="mg-v2-form-help">
-                                            <span>💡</span>
-                                            <span>여러 개의 전문분야를 선택할 수 있습니다.</span>
-                                        </div>
-                                        <CustomMultiSelect
-                                            options={ specialtyCodes }
-                                            value={ formData.specialty }
-                                            onChange={ handleSpecialtyChange }
-                                            placeholder="전문분야를 선택하세요"
-                                        />
-                                        <small className="mg-v2-form-help">
-                                            💡 Ctrl(Windows) 또는 Cmd(Mac)를 누르고 클릭하여 여러 개 선택할 수 있습니다.
-                                        </small>
-                                    </div>
-                        
-                                    <div className="mg-v2-form-actions">
-                                        <button type="button" className="mg-v2-button mg-v2-button-secondary" onClick={ handleCloseModal }>
-                                취소
-                            </button>
-                            <button 
-                                            type="submit"
-                                            className={ `mg-v2-button ${modalType === 'delete' ? 'mg-v2-button-danger' : 'mg-v2-button-primary' }`}
-                                onClick={ handleModalSubmit }
-                            >
-                                { modalType === 'create' && '등록' }
-                                { modalType === 'edit' && '수정' }
-                                { modalType === 'delete' && '삭제' }
-                            </button>
-                        </div>
-                                </form>
-                </div>
-            )}
-                </div>
-            </div>
-            )}
+            <UnifiedModal
+                isOpen={showModal}
+                onClose={handleCloseModal}
+                title={getModalTitle()}
+                size="large"
+                className="mg-v2-ad-b0kla"
+                backdropClick
+                showCloseButton
+                actions={getModalActions()}
+            >
+                {renderModalBody()}
+            </UnifiedModal>
 
-            { /* 삭제 확인 모달 */ }
-            <MGConfirmModal
-                isOpen={ showDeleteConfirm }
-                onClose={ () => setShowDeleteConfirm(false) }
-                onConfirm={() => {
-                    const handleDelete = async () => {
-                        if (selectedConsultant) {
-                            await deleteConsultant(selectedConsultant.id);
-                        }
-                    };
-                    handleDelete();
-                }}
+            <UnifiedModal
+                isOpen={showDeleteConfirm}
+                onClose={() => setShowDeleteConfirm(false)}
                 title="상담사 삭제 확인"
-                message={ `${selectedConsultant?.name || '이 상담사' }를 정말 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.`}
-                confirmText="삭제"
-                cancelText="취소"
-                confirmVariant="danger"
-            />
+                size="medium"
+                variant="confirm"
+                className="mg-v2-ad-b0kla"
+                backdropClick
+                showCloseButton
+                actions={
+                    <>
+                        <button
+                            type="button"
+                            className="mg-v2-button mg-v2-button-secondary"
+                            onClick={() => setShowDeleteConfirm(false)}
+                        >
+                            취소
+                        </button>
+                        <button
+                            type="button"
+                            className="mg-v2-button mg-v2-button-danger"
+                            onClick={async () => {
+                                if (selectedConsultant) {
+                                    const result = await deleteConsultant(selectedConsultant.id);
+                                    if (result?.success) setShowDeleteConfirm(false);
+                                }
+                            }}
+                        >
+                            삭제
+                        </button>
+                    </>
+                }
+            >
+                <div className="mg-v2-modal-body">
+                    <p>{selectedConsultant?.name || '이 상담사'}를 정말 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.</p>
+                </div>
+            </UnifiedModal>
 
             {/* 비밀번호 초기화 모달 */}
             {showPasswordResetModal && passwordResetConsultant && (

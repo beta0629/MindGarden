@@ -7,10 +7,12 @@
  */
 
 import React from 'react';
+import { NavLink } from 'react-router-dom';
 import { GnbRight } from '../molecules';
+import { ADMIN_ROUTES } from '../../../constants/adminRoutes';
 import './DesktopGnb.css';
 
-const DEFAULT_LOGO_LABEL = 'MindGarden';
+const DEFAULT_LOGO_LABEL = '코어솔류션';
 
 const DesktopGnb = ({
   logoLabel = DEFAULT_LOGO_LABEL,
@@ -24,13 +26,13 @@ const DesktopGnb = ({
 }) => {
   return (
     <header className="mg-v2-desktop-gnb" role="banner">
-      <div className="mg-v2-desktop-gnb__logo">
+      <NavLink to={ADMIN_ROUTES.DASHBOARD} className="mg-v2-desktop-gnb__logo">
         {logoUrl ? (
           <img src={logoUrl} alt={logoLabel} className="mg-v2-desktop-gnb__logo-img" />
         ) : (
           <span className="mg-v2-desktop-gnb__logo-text">{logoLabel}</span>
         )}
-      </div>
+      </NavLink>
       <div className="mg-v2-desktop-gnb__center">
         <GnbRight
           searchValue={searchValue}

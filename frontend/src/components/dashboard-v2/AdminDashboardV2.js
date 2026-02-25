@@ -70,17 +70,48 @@ const AdminDashboardV2 = ({ user: propUser }) => {
   const isDesktop = windowSize.width >= BREAKPOINT_DESKTOP;
 
   const [lnbMenuItems, setLnbMenuItems] = useState(DEFAULT_MENU_ITEMS);
+
+  /** API LNB 메뉴 후처리: 매칭관리→통합 스케줄 센터 치환, 알림을 세 번째 위치로 정렬 */
+  const normalizeLnbMenuItemsForDashboard = useCallback((items) => {
+    if (!Array.isArray(items) || items.length === 0) return items;
+    const replaced = items.map((item) => {
+      const isMappingManagement =
+        item.to === '/admin/mapping-management' || item.label === '매칭 관리';
+      if (isMappingManagement) {
+        return { ...item, to: ADMIN_ROUTES.INTEGRATED_SCHEDULE, label: '통합 스케줄 센터' };
+      }
+      return item;
+    });
+    const dashboard = replaced.find(
+      (i) => i.to === ADMIN_ROUTES.DASHBOARD || i.label === '대시보드'
+    );
+    const integrated = replaced.find(
+      (i) =>
+        i.to === ADMIN_ROUTES.INTEGRATED_SCHEDULE || i.label === '통합 스케줄 센터'
+    );
+    const alarm = replaced.find(
+      (i) =>
+        i.to === ADMIN_ROUTES.SYSTEM_NOTIFICATIONS || i.label === '알림'
+    );
+    const rest = replaced.filter(
+      (i) => i !== dashboard && i !== integrated && i !== alarm
+    );
+    return [dashboard, integrated, alarm].filter(Boolean).concat(rest);
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
     getLnbMenus()
       .then((res) => {
         if (cancelled) return;
         const tree = getLnbTreeFromResponse(res);
-        if (tree && tree.length > 0) setLnbMenuItems(normalizeLnbTree(tree));
+        if (tree && tree.length > 0) {
+          setLnbMenuItems(normalizeLnbMenuItemsForDashboard(normalizeLnbTree(tree)));
+        }
       })
       .catch(() => {});
     return () => { cancelled = true; };
-  }, []);
+  }, [normalizeLnbMenuItemsForDashboard]);
 
   const getAvatarInitial = (name) => {
     if (!name) return '?';
@@ -520,6 +551,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
   const layoutProps = {
     menuItems: lnbMenuItems,
     headerTitle: '시스템 관리',
+    logoLabel: '코어솔류션',
     searchValue,
     onSearchChange: setSearchValue,
     onBellClick: () => navigate(ADMIN_ROUTES.MESSAGES),

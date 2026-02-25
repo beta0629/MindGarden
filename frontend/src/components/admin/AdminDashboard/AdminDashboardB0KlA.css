@@ -13,7 +13,7 @@
 .mg-v2-ad-b0kla .mg-v2-button-primary,
 .mg-v2-ad-b0kla .mg-v2-button--primary {
   background: var(--ad-b0kla-green);
-  color: var(--ad-b0kla-card-bg);
+  color: #fff;
   border: none;
 }
 
@@ -37,7 +37,7 @@
 
 .mg-v2-ad-b0kla .mg-v2-button-success {
   background: var(--ad-b0kla-green);
-  color: var(--ad-b0kla-card-bg);
+  color: #fff;
   border: none;
 }
 
@@ -54,29 +54,29 @@
 }
 .mg-v2-ad-b0kla .mg-v2-badge.success {
   background: var(--ad-b0kla-green);
-  color: var(--ad-b0kla-card-bg);
+  color: #fff;
 }
 .mg-v2-ad-b0kla .mg-v2-badge.warning {
   background: var(--ad-b0kla-orange);
-  color: var(--ad-b0kla-card-bg);
+  color: #fff;
 }
 .mg-v2-ad-b0kla .mg-v2-badge.info {
   background: var(--ad-b0kla-blue);
-  color: var(--ad-b0kla-card-bg);
+  color: #fff;
 }
 .mg-v2-ad-b0kla .mg-v2-badge.error {
   background: var(--ad-b0kla-red, #dc3545);
-  color: var(--ad-b0kla-card-bg);
+  color: #fff;
 }
 .mg-v2-ad-b0kla .mg-v2-badge.secondary {
   background: var(--ad-b0kla-text-secondary);
-  color: var(--ad-b0kla-card-bg);
+  color: #fff;
 }
 
 .mg-v2-ad-b0kla .mg-v2-button-danger,
 .mg-v2-ad-b0kla .mg-v2-button--danger {
   background: var(--ad-b0kla-danger);
-  color: var(--ad-b0kla-card-bg);
+  color: #fff;
   border: none;
 }
 
@@ -826,10 +826,77 @@
   box-shadow: none;
 }
 
-/* ===== B0KlA 매칭 관리 모달 공통 스타일 ===== */
-/* mg-v2-modal-overlay.mg-v2-ad-b0kla: 매칭 관련 모달 오버레이 */
+/* ===== B0KlA 모달 공통 스타일 (UnifiedModal + className="mg-v2-ad-b0kla") ===== */
+/* 오버레이: 상담사/내담자/매칭 등 어드민 모달에서 반투명 배경 */
+.mg-modal-overlay.mg-v2-ad-b0kla {
+  --ad-b0kla-overlay-bg: var(--droplet-bg-dark, rgba(0, 0, 0, 0.4));
+  background: var(--ad-b0kla-overlay-bg);
+}
+
 .mg-v2-modal-overlay.mg-v2-ad-b0kla {
   background: var(--ad-b0kla-overlay-bg);
+}
+
+/* 모달 본체 */
+.mg-modal.mg-v2-ad-b0kla {
+  display: flex;
+  flex-direction: column;
+  background: var(--ad-b0kla-card-bg);
+  border: 1px solid var(--ad-b0kla-border);
+  border-radius: var(--ad-b0kla-radius);
+  box-shadow: 0 20px 40px var(--mg-shadow-light);
+  height: fit-content;
+  max-height: 90vh;
+}
+
+.mg-modal.mg-v2-ad-b0kla .mg-modal__header {
+  border-bottom: 1px solid var(--ad-b0kla-border);
+  color: var(--ad-b0kla-title-color);
+}
+
+.mg-modal.mg-v2-ad-b0kla .mg-modal__title {
+  color: var(--ad-b0kla-title-color);
+}
+
+.mg-modal.mg-v2-ad-b0kla .mg-modal__body {
+  min-height: 0;
+  max-height: min(70vh, 600px);
+  overflow-y: auto;
+  padding: var(--mg-spacing-xl, 1.5rem);
+  flex: 0 1 auto;
+}
+
+.mg-modal.mg-v2-ad-b0kla .mg-modal__actions {
+  border-top: 1px solid var(--ad-b0kla-border);
+  padding: var(--mg-spacing-lg, 1rem) var(--mg-spacing-xl, 1.5rem);
+}
+
+/* 안내 박스 (💡 비밀번호 미입력 시 임시 비밀번호 등) */
+.mg-v2-ad-b0kla-info-box,
+.mg-modal.mg-v2-ad-b0kla .mg-v2-info-box.mg-v2-ad-b0kla-info-box {
+  margin-bottom: 1rem;
+  padding: 0.75rem 1rem;
+  background: var(--ad-b0kla-green-bg);
+  border-radius: var(--ad-b0kla-radius-sm);
+  border: 1px solid var(--ad-b0kla-green);
+}
+
+.mg-v2-ad-b0kla-info-box .mg-v2-info-text,
+.mg-modal.mg-v2-ad-b0kla .mg-v2-info-box .mg-v2-info-text {
+  font-size: var(--font-size-sm);
+  color: var(--ad-b0kla-text-secondary);
+  margin: 0;
+}
+
+/* 폼 행 (이메일 + 중복확인 버튼) */
+.mg-modal.mg-v2-ad-b0kla .mg-v2-form-email-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+}
+
+.mg-modal.mg-v2-ad-b0kla .mg-v2-form-email-row .mg-v2-form-input {
+  flex: 1;
 }
 
 /* B0KlA 카드 악센트 바 (좌측 4px) - 섹션 제목용 */

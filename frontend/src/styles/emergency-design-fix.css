@@ -875,11 +875,27 @@
   display: none !important;
 }
 
+/* 이미지 있을 때 이니셜(폴백)이 겹쳐 보이지 않도록 구체적 셀렉터로 강제 숨김 */
+.mg-consultant-card__avatar .mg-v2-avatar-fallback.mg-v2-avatar-fallback--hidden,
+.mg-client-card__avatar .mg-v2-avatar-fallback.mg-v2-avatar-fallback--hidden,
+.mg-v2-profile-card__avatar .mg-v2-avatar-fallback.mg-v2-avatar-fallback--hidden,
+.mg-v2-consultant-detail-avatar .mg-v2-avatar-fallback.mg-v2-avatar-fallback--hidden,
+.mg-v2-client-card-avatar .mg-v2-avatar-fallback.mg-v2-avatar-fallback--hidden,
+.mg-v2-quick-mapping-avatar .mg-v2-avatar-fallback.mg-v2-avatar-fallback--hidden,
+.mg-v2-client-avatar .mg-v2-avatar-fallback.mg-v2-avatar-fallback--hidden,
+.mg-v2-mapping-participant-avatar .mg-v2-avatar-fallback.mg-v2-avatar-fallback--hidden {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0;
+  pointer-events: none;
+}
+
 /* 아바타 컨테이너 overflow + 자식 img/폴백 */
 .mg-consultant-card__avatar,
 .mg-client-card__avatar {
   overflow: hidden;
   position: relative;
+  border-radius: 50%;
 }
 
 .mg-consultant-card__avatar .mg-v2-avatar-img,
@@ -912,6 +928,7 @@
 .mg-v2-consultant-detail-avatar {
   overflow: hidden;
   position: relative;
+  border-radius: 50%;
 }
 
 .mg-v2-profile-card__avatar .mg-v2-avatar-img,
@@ -943,6 +960,7 @@
 .mg-v2-client-card-avatar {
   overflow: hidden;
   position: relative;
+  border-radius: 50%;
 }
 
 .mg-v2-client-card-avatar .mg-v2-avatar-img {
@@ -972,6 +990,7 @@
 .mg-v2-client-avatar {
   overflow: hidden;
   position: relative;
+  border-radius: 50%;
 }
 
 .mg-v2-quick-mapping-avatar .mg-v2-avatar-img,

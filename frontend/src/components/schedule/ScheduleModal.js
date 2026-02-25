@@ -22,14 +22,18 @@ import './ScheduleB0KlA.css';
  * @version 2.0.0
  * @since 2025-01-05
  */
-const ScheduleModalNew = ({ 
-    isOpen, 
-    onClose, 
-    selectedDate, 
-    selectedInfo, 
-    userRole, 
-    userId, 
-    onScheduleCreated 
+/**
+ * @param {Object} [preFilledMapping] - 매칭 통합 화면에서 전달 시 상담사/내담자 자동 채움. { consultantId, clientId, consultantName?, clientName? }
+ */
+const ScheduleModalNew = ({
+    isOpen,
+    onClose,
+    selectedDate,
+    selectedInfo,
+    userRole,
+    userId,
+    onScheduleCreated,
+    preFilledMapping
 }) => {
     const [selectedConsultant, setSelectedConsultant] = useState(null);
     const [selectedClient, setSelectedClient] = useState(null);
@@ -61,6 +65,26 @@ const ScheduleModalNew = ({
             console.log('📱 스케줄 모달 언마운트 - 세션 체크 재개');
         };
     }, [isOpen, setModalOpen]);
+
+    // 매칭 통합 화면에서 열 때 상담사/내담자 Pre-filled, 3단계(시간 선택)부터 표시
+    useEffect(() => {
+        if (!isOpen) return;
+        if (preFilledMapping && preFilledMapping.consultantId && preFilledMapping.clientId) {
+            setSelectedConsultant({
+                id: preFilledMapping.consultantId,
+                originalId: preFilledMapping.consultantId,
+                name: preFilledMapping.consultantName || '상담사'
+            });
+            setSelectedClient({
+                id: preFilledMapping.clientId,
+                originalId: preFilledMapping.clientId,
+                name: preFilledMapping.clientName || '내담자'
+            });
+            setStep(3);
+        } else {
+            setStep(1);
+        }
+    }, [isOpen, preFilledMapping?.consultantId, preFilledMapping?.clientId]);
 
     // 상담 유형 코드 로드
     useEffect(() => {

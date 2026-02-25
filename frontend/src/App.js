@@ -466,7 +466,14 @@ function AppContent() {
             <Route path="/admin/consultant-comprehensive" element={<Navigate to="/admin/user-management?type=consultant" replace />} />
             <Route path="/admin/client-comprehensive" element={<Navigate to="/admin/user-management?type=client" replace />} />
             <Route path="/admin/mapping-management" element={<MappingManagement />} />
-            <Route path="/admin/integrated-schedule" element={<IntegratedMatchingSchedule />} />
+            <Route
+              path="/admin/integrated-schedule"
+              element={
+                <AdminCommonLayout menuItems={DEFAULT_MENU_ITEMS} title="통합 스케줄링">
+                  <IntegratedMatchingSchedule />
+                </AdminCommonLayout>
+              }
+            />
             <Route path="/admin/common-codes" element={<CommonCodeManagement />} />
             <Route path="/admin/sessions" element={<SessionManagement />} />
             <Route path="/admin/accounts" element={<AccountManagement />} />

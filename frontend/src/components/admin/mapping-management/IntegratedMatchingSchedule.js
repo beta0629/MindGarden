@@ -1,218 +1,164 @@
-import React, { useEffect, useState, useRef, useMemo } from 'react';
-import FullCalendar from '@fullcalendar/react';
-import timeGridPlugin from '@fullcalendar/timegrid';
-import interactionPlugin, { Draggable } from '@fullcalendar/interaction';
-import { useMatchingScheduleStore } from '../../../store/useMatchingScheduleStore';
-import UnifiedModal from '../../common/modals/UnifiedModal';
+/**
+ * IntegratedMatchingSchedule - 매칭·스케줄 통합 원스톱 화면
+ * 좌: 매칭 목록(실 API /api/v1/admin/mappings), 우: 스케줄 캘린더(실 API)
+ * "스케줄 등록" 클릭 시 ScheduleModal을 상담사·내담자 Pre-filled로 오픈
+ *
+ * @author MindGarden
+ * @since 2025-02-25
+ */
+
+import React, { useState, useEffect, useCallback } from 'react';
+import { CalendarPlus } from 'lucide-react';
+import StandardizedApi from '../../../utils/standardizedApi';
+import notificationManager from '../../../utils/notification';
+import UnifiedLoading from '../../common/UnifiedLoading';
+import UnifiedScheduleComponent from '../../schedule/UnifiedScheduleComponent';
+import ScheduleModal from '../../schedule/ScheduleModal';
+import '../../../styles/unified-design-tokens.css';
+import '../../AdminDashboard/AdminDashboardB0KlA.css';
 import './IntegratedMatchingSchedule.css';
 
+const STATUS_KO = {
+  ACTIVE: '활성',
+  INACTIVE: '비활성',
+  PENDING_PAYMENT: '결제 대기',
+  PAYMENT_CONFIRMED: '결제 확인',
+  TERMINATED: '종료됨',
+  SESSIONS_EXHAUSTED: '회기 소진',
+  SUSPENDED: '일시정지'
+};
+
+const getStatusKoreanName = (status) => STATUS_KO[status] || status;
+
 const IntegratedMatchingSchedule = () => {
-  const { waitingList, calendarEvents, fetchInitialData, moveToCalendar, confirmEvent, rollbackEvent } = useMatchingScheduleStore();
-  const waitingListRef = useRef(null);
-  const draggableRef = useRef(null);
-  
-  const [modalOpen, setModalOpen] = useState(false);
-  const [selectedEvent, setSelectedEvent] = useState(null);
+  const [mappings, setMappings] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
+  const [preFilledMapping, setPreFilledMapping] = useState(null);
+  const [selectedDateForModal, setSelectedDateForModal] = useState(() => new Date());
+  const [refetchTrigger, setRefetchTrigger] = useState(0);
 
-  useEffect(() => {
-    // 초기 Mock 데이터 로드
-    fetchInitialData();
-  }, [fetchInitialData]);
-
-  useEffect(() => {
-    // FullCalendar 외부 요소 드래그 설정
-    if (waitingListRef.current) {
-      draggableRef.current = new Draggable(waitingListRef.current, {
-        itemSelector: '.integrated-schedule__item',
-        eventData: function(eventEl) {
-          return {
-            id: 'temp-' + Date.now(),
-            title: eventEl.dataset.name + ' - ' + eventEl.dataset.type,
-            extendedProps: {
-              waitingId: eventEl.dataset.id,
-              name: eventEl.dataset.name,
-              type: eventEl.dataset.type
-            },
-            create: true // Allows eventReceive to fire
-          };
-        }
-      });
-    }
-
-    return () => {
-      if (draggableRef.current) {
-        draggableRef.current.destroy();
+  const loadMappings = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await StandardizedApi.get('/api/v1/admin/mappings');
+      if (response && response.mappings) {
+        setMappings(response.mappings);
+      } else if (response && Array.isArray(response)) {
+        setMappings(response);
+      } else {
+        setMappings([]);
       }
-    };
-  }, [waitingList]);
+    } catch (error) {
+      console.error('매칭 목록 로드 실패:', error);
+      setMappings([]);
+      notificationManager.error('매칭 목록을 불러오는데 실패했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-  // 드롭 이벤트 수신 시 (외부 리스트 -> 캘린더)
-  const handleEventReceive = (info) => {
-    const { event } = info;
-    const { waitingId, name, type } = event.extendedProps;
-    
-    const tempEvent = {
-      id: event.id,
-      title: event.title,
-      start: event.startStr,
-      end: event.endStr,
-      extendedProps: { waitingId, name, type }
-    };
+  useEffect(() => {
+    loadMappings();
+  }, [loadMappings]);
 
-    // 1. 낙관적 업데이트로 Zustand Store에 이벤트 추가 및 대기자 목록에서 제거
-    moveToCalendar(waitingId, tempEvent);
-
-    // 2. 모달에 띄울 정보 세팅
-    setSelectedEvent(tempEvent);
-    setModalOpen(true);
-    
-    // 이벤트 자체는 상태 관리를 통해 렌더링되므로 FullCalendar에서 임시로 생성된 이벤트 제거
-    event.remove();
+  const handleScheduleRegister = (mapping) => {
+    if (!mapping.consultantId || !mapping.clientId) {
+      notificationManager.error('상담사·내담자 정보가 없는 매칭입니다.');
+      return;
+    }
+    setPreFilledMapping({
+      consultantId: mapping.consultantId,
+      clientId: mapping.clientId,
+      consultantName: mapping.consultantName || '상담사',
+      clientName: mapping.clientName || '내담자'
+    });
+    setSelectedDateForModal(new Date());
+    setScheduleModalOpen(true);
   };
 
-  const handleModalSave = () => {
-    if (!selectedEvent) return;
-    
-    // API 호출을 가정 (Mocking)
-    const confirmedEvent = {
-      ...selectedEvent,
-      id: 'confirmed-' + Date.now(), // 실제 DB ID로 교체됨
-    };
-    
-    confirmEvent(selectedEvent.id, confirmedEvent);
-    setModalOpen(false);
-    setSelectedEvent(null);
+  const handleScheduleModalClose = () => {
+    setScheduleModalOpen(false);
+    setPreFilledMapping(null);
   };
 
-  const handleModalCancel = () => {
-    if (!selectedEvent) return;
-    
-    // 취소 시 롤백 처리
-    const originalItem = {
-      id: selectedEvent.extendedProps.waitingId,
-      name: selectedEvent.extendedProps.name,
-      type: selectedEvent.extendedProps.type,
-      preferredTime: '드롭 취소됨',
-      status: 'WAITING'
-    };
-    
-    rollbackEvent(selectedEvent.id, originalItem);
-    setModalOpen(false);
-    setSelectedEvent(null);
+  const handleScheduleCreated = () => {
+    setRefetchTrigger((t) => t + 1);
+    loadMappings();
+    setScheduleModalOpen(false);
+    setPreFilledMapping(null);
   };
-
-  // 성능 최적화: 캘린더에 주입할 이벤트를 useMemo로 캐싱
-  const memoizedEvents = useMemo(() => calendarEvents, [calendarEvents]);
 
   return (
     <div className="integrated-schedule">
-      <div className="integrated-schedule__header">
+      <header className="integrated-schedule__header">
         <h1 className="integrated-schedule__title">통합 스케줄링 센터</h1>
-        <button className="mg-btn mg-btn--primary mg-btn--medium">
-          + 신규 내담자 등록
-        </button>
-      </div>
+      </header>
 
       <div className="integrated-schedule__content">
-        {/* 좌측 대기자 목록 */}
-        <div className="integrated-schedule__sidebar">
-          <div className="integrated-schedule__sidebar-title">스케줄 대기 목록</div>
-          <div className="integrated-schedule__list" ref={waitingListRef}>
-            {waitingList.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '20px', color: 'var(--mg-color-text-sub)' }}>
-                대기자가 없습니다.
-              </div>
-            ) : (
-              waitingList.map(item => (
-                <div 
-                  key={item.id} 
-                  className="integrated-schedule__item"
-                  data-id={item.id}
-                  data-name={item.name}
-                  data-type={item.type}
-                >
-                  <div className="integrated-schedule__item-name">{item.name}</div>
-                  <div className="integrated-schedule__item-type">{item.type}</div>
-                  <div className="integrated-schedule__item-badge">{item.preferredTime}</div>
-                </div>
-              ))
-            )}
-          </div>
-          {/* TODO: 1024px 이하 해상도 모바일/태블릿에서는 이 sidebar를 숨기고 하단 드로어로 우회하는 UI 추가 구현 필요 */}
-        </div>
+        <aside className="integrated-schedule__sidebar">
+          <h2 className="integrated-schedule__sidebar-title">매칭 목록</h2>
+          {loading ? (
+            <UnifiedLoading type="inline" text="매칭 목록 불러오는 중..." />
+          ) : (
+            <ul className="integrated-schedule__list" aria-label="매칭 목록">
+              {mappings.length === 0 ? (
+                <li className="integrated-schedule__empty">매칭이 없습니다.</li>
+              ) : (
+                mappings.map((mapping) => (
+                  <li key={mapping.id} className="integrated-schedule__card">
+                    <div className="integrated-schedule__card-body">
+                      <div className="integrated-schedule__card-parties">
+                        <span className="integrated-schedule__card-consultant">
+                          {mapping.consultantName || 'N/A'}
+                        </span>
+                        <span className="integrated-schedule__card-arrow">→</span>
+                        <span className="integrated-schedule__card-client">
+                          {mapping.clientName || 'N/A'}
+                        </span>
+                      </div>
+                      <div className="integrated-schedule__card-meta">
+                        <span className="integrated-schedule__card-status">
+                          {getStatusKoreanName(mapping.status)}
+                        </span>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      className="integrated-schedule__btn-schedule"
+                      onClick={() => handleScheduleRegister(mapping)}
+                      aria-label={`${mapping.clientName} 스케줄 등록`}
+                    >
+                      <CalendarPlus size={14} />
+                      스케줄 등록
+                    </button>
+                  </li>
+                ))
+              )}
+            </ul>
+          )}
+        </aside>
 
-        {/* 우측 캘린더 */}
-        <div className="integrated-schedule__calendar-container">
-          <FullCalendar
-            plugins={[timeGridPlugin, interactionPlugin]}
-            initialView="timeGridWeek"
-            headerToolbar={{
-              left: 'prev,next today',
-              center: 'title',
-              right: 'timeGridDay,timeGridWeek'
-            }}
-            slotMinTime="09:00:00"
-            slotMaxTime="21:00:00"
-            allDaySlot={false}
-            droppable={true}
-            editable={true}
-            events={memoizedEvents}
-            eventReceive={handleEventReceive}
-            height="100%"
+        <main className="integrated-schedule__calendar-wrapper">
+          <UnifiedScheduleComponent
+            userRole="ADMIN"
+            refetchTrigger={refetchTrigger}
           />
-        </div>
+        </main>
       </div>
 
-      {/* 스케줄 확인/저장 모달 */}
-      <UnifiedModal
-        isOpen={modalOpen}
-        onClose={handleModalCancel}
-        title="스케줄 배정 확인"
-        subtitle="선택한 빈 시간에 대기자를 배정합니다."
-        size="medium"
-        actions={
-          <>
-            <button className="mg-btn mg-btn--secondary mg-btn--medium" onClick={handleModalCancel}>
-              취소
-            </button>
-            <button className="mg-btn mg-btn--primary mg-btn--medium" onClick={handleModalSave}>
-              배정 저장
-            </button>
-          </>
-        }
-      >
-        {selectedEvent && (
-          <div className="modal-form">
-            <div className="modal-form-group">
-              <label className="modal-form-label" htmlFor="schedule-client-name">내담자</label>
-              <input 
-                id="schedule-client-name"
-                className="modal-form-input" 
-                value={selectedEvent.extendedProps.name} 
-                readOnly 
-              />
-            </div>
-            <div className="modal-form-group">
-              <label className="modal-form-label" htmlFor="schedule-client-type">상담 종류</label>
-              <input 
-                id="schedule-client-type"
-                className="modal-form-input" 
-                value={selectedEvent.extendedProps.type} 
-                readOnly 
-              />
-            </div>
-            <div className="modal-form-group">
-              <label className="modal-form-label" htmlFor="schedule-start-time">시작 시간</label>
-              <input 
-                id="schedule-start-time"
-                className="modal-form-input" 
-                value={new Date(selectedEvent.start).toLocaleString()} 
-                readOnly 
-              />
-            </div>
-          </div>
-        )}
-      </UnifiedModal>
+      {scheduleModalOpen && (
+        <ScheduleModal
+          isOpen={scheduleModalOpen}
+          onClose={handleScheduleModalClose}
+          selectedDate={selectedDateForModal}
+          selectedInfo={null}
+          userRole="ADMIN"
+          userId={null}
+          onScheduleCreated={handleScheduleCreated}
+          preFilledMapping={preFilledMapping}
+        />
+      )}
     </div>
   );
 };

@@ -34,7 +34,8 @@ import './ScheduleB0KlA.css';
 /**
  * @since 2024-12-19
  */
-const UnifiedScheduleComponent = ({ userRole, userId }) => {
+/** refetchTrigger: 부모에서 변경 시 캘린더 데이터 재로드(통합 스케줄 화면 등) */
+const UnifiedScheduleComponent = ({ userRole, userId, refetchTrigger }) => {
     console.log('📅 UnifiedScheduleComponent 렌더링:', { userRole, userId });
     
     // ========== 상태 관리 ==========
@@ -556,6 +557,13 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
             setClientIdFilter(clientId);
         }
     }, [searchParams]);
+
+    // 부모에서 refetchTrigger 변경 시 스케줄만 재로드 (통합 스케줄 화면에서 저장 후 캘린더 갱신)
+    useEffect(() => {
+        if (refetchTrigger != null && refetchTrigger > 0 && (userRole === 'ADMIN' || userId)) {
+            loadSchedules();
+        }
+    }, [refetchTrigger, userRole, userId, loadSchedules]);
 
     useEffect(() => {
         console.log('🔍 UnifiedScheduleComponent useEffect 실행:', { userId, userRole, selectedConsultantId });

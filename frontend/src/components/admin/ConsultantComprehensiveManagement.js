@@ -1216,24 +1216,6 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                 </button>
                                             ))}
                                         </div>
-                                        <div className="mg-v2-consultant-search-actions">
-                                            <Button
-                                                variant="primary"
-                                                size="small"
-                                                onClick={() => handleOpenModal('create')}
-                                                preventDoubleClick={true}
-                                            >
-                                                <Plus size={16} /> 새 상담사 등록
-                                            </Button>
-                                            <Button
-                                                variant="secondary"
-                                                size="small"
-                                                onClick={loadConsultants}
-                                                preventDoubleClick={true}
-                                            >
-                                                새로고침
-                                            </Button>
-                                        </div>
                                     </div>
                                 </ContentSection>
 

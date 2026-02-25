@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import jakarta.validation.Valid;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.dto.ClientRegistrationRequest;
 import com.coresolution.consultation.dto.ConsultantClientMappingCreateRequest;
@@ -1732,8 +1733,13 @@ public class AdminController extends BaseApiController {
      */
     @PutMapping("/consultants/{id}")
     public ResponseEntity<ApiResponse<Map<String, Object>>> updateConsultant(@PathVariable Long id,
-            @RequestBody ConsultantRegistrationRequest request, HttpSession session) {
+            @RequestBody @Valid ConsultantRegistrationRequest request, HttpSession session) {
         log.info("🔧 상담사 정보 수정: ID={}", id);
+
+        if (request == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error("요청 본문이 없습니다."));
+        }
 
         User currentUser = SessionUtils.getCurrentUser(session);
         if (currentUser != null) {
@@ -1776,8 +1782,13 @@ public class AdminController extends BaseApiController {
      */
     @PutMapping("/clients/{id}")
     public ResponseEntity<ApiResponse<Map<String, Object>>> updateClient(@PathVariable Long id,
-            @RequestBody ClientRegistrationRequest request, HttpSession session) {
+            @RequestBody @Valid ClientRegistrationRequest request, HttpSession session) {
         log.info("🔧 내담자 정보 수정: ID={}", id);
+
+        if (request == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error("요청 본문이 없습니다."));
+        }
 
         User currentUser = SessionUtils.getCurrentUser(session);
         if (currentUser != null) {

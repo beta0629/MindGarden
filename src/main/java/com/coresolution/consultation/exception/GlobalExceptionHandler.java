@@ -13,6 +13,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
@@ -181,6 +182,29 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
     }
     
+    /**
+     * DataIntegrityViolationException 처리 (DB 제약 위반)
+     * unique/duplicate 시 이메일 중복 메시지, 그 외 데이터 제약 위반 → HTTP 400 Bad Request
+     */
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ErrorResponse> handleDataIntegrityViolation(
+            DataIntegrityViolationException e, HttpServletRequest request) {
+        String message = e.getMessage() != null ? e.getMessage().toLowerCase() : "";
+        String clientMessage = (message.contains("unique") || message.contains("duplicate"))
+                ? "이메일이 이미 사용 중입니다."
+                : "데이터 제약 위반입니다.";
+        log.warn("Data integrity violation: {}", e.getMessage());
+
+        ErrorResponse error = ErrorResponse.of(
+            clientMessage,
+            "DATA_INTEGRITY_VIOLATION",
+            HttpStatus.BAD_REQUEST.value(),
+            request.getRequestURI(),
+            request.getMethod()
+        );
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
     /**
      * RuntimeException 처리
      * HTTP 500 Internal Server Error 응답

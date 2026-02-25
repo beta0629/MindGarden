@@ -11,7 +11,7 @@
 |--------------|------|-----------|------|
 | **core-designer** | UI/UX·레이아웃·비주얼 **설계만** (시안·토큰·스펙). **코드 작성 안 함** | /core-solution-standardization | 대시보드·리포트·새 화면 레이아웃 설계 시 **선행** |
 | **core-coder** | React/JS·Java/Spring **코드 구현**. designer 시안 있으면 그에 맞춤 | /core-solution-frontend, /core-solution-atomic-design 등 | 구현 단계에서 사용 |
-| **core-debugger** | **디버그 전용**. 에러·500 원인 분석, 로그·스택트레이스 해석, 재현 절차·수정 제안. **코드 수정은 core-coder 위임** | /core-solution-debug | 오류 원인 파악·수정 제안 시 사용 |
+| **core-debugger** | **디버그 전용**. 에러·500 원인 분석, 로그·스택트레이스 해석, 재현 절차·수정 제안. **코드 수정은 core-coder 위임**. 필요 시 **shell**과 연계해 서버 로그·DB 확인 | /core-solution-debug | 오류 원인 파악·수정 제안 시 사용 |
 | **core-tester** | 단위·통합·E2E·보안 **테스트 작성·실행**. 코드 구현 안 함 | /core-solution-testing | |
 | **explore** | 코드베이스 탐색·**작업 전 플랜·조사** (수정 작업 안 함) | /core-solution-documentation (문서 시) | 넓은 범위 작업 전 1단계 |
 | **generalPurpose** | 복합·다단계, **문서 작성·정리** | /core-solution-documentation | |
@@ -54,7 +54,7 @@
 | **문서 작성·정리·체계화** | **generalPurpose** | /core-solution-documentation |
 | 코드베이스 탐색·분석 | explore | — |
 
-- **디버그 전용**: 500·API 오류 등 원인 분석·수정 제안은 **core-debugger** + **/core-solution-debug** 사용. 에이전트 정의: `.cursor/agents/core-debugger.md`, 스킬: `.cursor/skills/core-solution-debug/SKILL.md`. (제품에서 core-debugger 타입이 지원되지 않으면 **generalPurpose**로 호출 시 프롬프트에 "core-debugger 역할로 .cursor/agents/core-debugger.md 및 core-solution-debug 스킬을 참고하여 디버깅만 수행해주세요"를 명시한다.)
+- **디버그 전용**: 500·API 오류 등 원인 분석·수정 제안은 **core-debugger** + **/core-solution-debug** 사용. 에이전트 정의: `.cursor/agents/core-debugger.md`, 스킬: `.cursor/skills/core-solution-debug/SKILL.md`. 디버거는 필요 시 **shell** 서브에이전트와 연계해 서버 로그(tail, journalctl 등)·DB(읽기 전용 쿼리) 확인을 요청할 수 있다. (제품에서 core-debugger 타입이 지원되지 않으면 **generalPurpose**로 호출 시 프롬프트에 "core-debugger 역할로 .cursor/agents/core-debugger.md 및 core-solution-debug 스킬을 참고하여 디버깅만 수행해주세요"를 명시한다.)
 
 **문서 전담**: 새 문서 작성, 기존 문서 이동·이름 변경·삭제, docs 구조 정리, 인덱스(docs/README.md, standards/README.md) 갱신은 **반드시 문서관리 서브에이전트(generalPurpose + core-solution-documentation)** 로 수행한다. 문서를 분산 배치하거나 예전 문서를 그대로 참조하면 개발 혼선이 커지므로, 문서 작업은 전담 흐름으로만 진행한다. 진입점: [docs/README.md](../README.md).
 

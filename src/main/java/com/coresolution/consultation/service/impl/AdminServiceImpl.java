@@ -29,6 +29,7 @@ import com.coresolution.consultation.entity.Schedule;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.entity.erp.financial.FinancialTransaction;
 import com.coresolution.consultation.repository.CommonCodeRepository;
+import com.coresolution.consultation.exception.EntityNotFoundException;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.repository.ConsultantRatingRepository;
 import com.coresolution.consultation.repository.ConsultantRepository;
@@ -1794,8 +1795,16 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
 
     @Override
     public User updateConsultant(Long id, ConsultantRegistrationRequest request) {
+        if (request == null) {
+            throw new IllegalArgumentException("요청 본문이 없습니다.");
+        }
+
         User consultant = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Consultant not found"));
+                .orElseThrow(() -> new EntityNotFoundException("상담사", id));
+
+        if (consultant.getRole() != UserRole.CONSULTANT) {
+            throw new IllegalArgumentException("해당 사용자는 상담사가 아닙니다.");
+        }
 
         // null/blank 시 기존 값 유지 (빈 문자열 저장으로 인한 NOT NULL 등 제약 500 방지)
         if (request.getName() != null && !request.getName().trim().isEmpty()) {
@@ -1853,11 +1862,23 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
 
     @Override
     public Client updateClient(Long id, ClientRegistrationRequest request) {
+        if (request == null) {
+            throw new IllegalArgumentException("요청 본문이 없습니다.");
+        }
+
         User clientUser = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Client not found"));
-        
-        clientUser.setName(encryptionUtil.safeEncrypt(request.getName()));
-        clientUser.setEmail(encryptionUtil.safeEncrypt(request.getEmail()));
+                .orElseThrow(() -> new EntityNotFoundException("내담자", id));
+
+        if (clientUser.getRole() != UserRole.CLIENT) {
+            throw new IllegalArgumentException("해당 사용자는 내담자가 아닙니다.");
+        }
+
+        if (request.getName() != null && !request.getName().trim().isEmpty()) {
+            clientUser.setName(encryptionUtil.safeEncrypt(request.getName()));
+        }
+        if (request.getEmail() != null && !request.getEmail().trim().isEmpty()) {
+            clientUser.setEmail(encryptionUtil.safeEncrypt(request.getEmail()));
+        }
         if (request.getPhone() != null && !request.getPhone().trim().isEmpty()) {
             clientUser.setPhone(encryptionUtil.safeEncrypt(request.getPhone()));
         }

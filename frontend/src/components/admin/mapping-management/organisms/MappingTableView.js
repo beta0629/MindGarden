@@ -37,6 +37,7 @@ const MappingTableView = ({
   getStatusKoreanName,
   getStatusColor,
   getStatusIcon,
+  getStatusIconComponent,
   getStatusVariant,
   onView,
   onEdit,
@@ -95,10 +96,11 @@ const MappingTableView = ({
               ...(mappingStatusInfo[mapping.status] || {
                 label: getStatusKoreanName(mapping.status),
                 color: getStatusColor(mapping.status),
-                icon: getStatusIcon(mapping.status)
+                icon: null
               }),
               variant: getStatusVariant ? getStatusVariant(mapping.status) : 'secondary'
             };
+            const StatusIcon = getStatusIconComponent && mapping.status ? getStatusIconComponent(mapping.status) : null;
 
             const isErpIntegrated =
               mapping.status === 'ACTIVE' ||
@@ -117,7 +119,8 @@ const MappingTableView = ({
                 <td>
                   <div className="mg-v2-mapping-table__status">
                     <span className={`mg-v2-badge ${badgeVariant}`} role="status" aria-label={statusLabel}>
-                      {statusInfo.icon || null} {statusLabel}
+                      {StatusIcon ? <StatusIcon size={12} className="mg-v2-mapping-table__status-icon" aria-hidden /> : null}
+                      {statusLabel}
                     </span>
                     {isErpIntegrated && (
                       <span className="mg-v2-mapping-table__erp" title="ERP 연동됨">
@@ -249,6 +252,7 @@ MappingTableView.propTypes = {
   getStatusKoreanName: PropTypes.func,
   getStatusColor: PropTypes.func,
   getStatusIcon: PropTypes.func,
+  getStatusIconComponent: PropTypes.func,
   getStatusVariant: PropTypes.func,
   onView: PropTypes.func,
   onEdit: PropTypes.func,

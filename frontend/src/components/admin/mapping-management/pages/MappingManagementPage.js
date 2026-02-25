@@ -8,7 +8,18 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Plus, RotateCcw } from 'lucide-react';
+import {
+  Plus,
+  RotateCcw,
+  CheckCircle,
+  Pause,
+  Clock,
+  DollarSign,
+  XCircle,
+  CircleDot,
+  Ban,
+  FileText
+} from 'lucide-react';
 import Button from '../../../ui/Button/Button';
 import StandardizedApi from '../../../../utils/standardizedApi';
 import notificationManager from '../../../../utils/notification';
@@ -129,17 +140,22 @@ const MappingManagementPage = () => {
     return variantMap[status] || 'secondary';
   };
 
-  const getStatusIcon = (status) => {
+  /** 상태 아이콘: 이모지 미사용. 행/테이블에서 Lucide 아이콘 컴포넌트로 표시 */
+  const getStatusIcon = () => null;
+
+  /** 매칭 상태별 Lucide 아이콘 컴포넌트 (아토믹 디자인·텍스트 보조용) */
+  const getStatusIconComponent = (status) => {
     const iconMap = {
-      ACTIVE: '✅',
-      INACTIVE: '⏸️',
-      PENDING_PAYMENT: '⏳',
-      PAYMENT_CONFIRMED: '💰',
-      TERMINATED: '❌',
-      SESSIONS_EXHAUSTED: '🔚',
-      SUSPENDED: '⏸️'
+      ACTIVE: CheckCircle,
+      INACTIVE: Pause,
+      PENDING_PAYMENT: Clock,
+      PAYMENT_CONFIRMED: DollarSign,
+      TERMINATED: XCircle,
+      SESSIONS_EXHAUSTED: CircleDot,
+      SUSPENDED: Pause,
+      CANCELLED: Ban
     };
-    return iconMap[status] || '📋';
+    return iconMap[status] || FileText;
   };
 
   const loadMappingStatusInfo = async () => {
@@ -151,7 +167,7 @@ const MappingManagementPage = () => {
           statusInfoMap[code.codeValue] = {
             label: code.koreanName || code.codeLabel,
             color: code.colorCode || 'var(--mg-secondary-500)',
-            icon: code.icon || '📋'
+            icon: null
           };
         });
         const statusMapping = {
@@ -168,27 +184,27 @@ const MappingManagementPage = () => {
         setMappingStatusInfo(statusInfoMap);
       } else {
         setMappingStatusInfo({
-          PENDING_PAYMENT: { label: '입금대기', color: 'var(--mg-warning-500)', icon: '⏳' },
-          PAYMENT_CONFIRMED: { label: '입금확인', color: 'var(--mg-info-500)', icon: '💰' },
-          ACTIVE: { label: '활성', color: 'var(--mg-success-500)', icon: '✅' },
-          TERMINATED: { label: '종료', color: 'var(--mg-error-500)', icon: '❌' },
-          SESSIONS_EXHAUSTED: { label: '회기소진', color: 'var(--mg-purple-500)', icon: '🔚' },
-          INACTIVE: { label: '비활성', color: 'var(--mg-secondary-500)', icon: '⚪' },
-          SUSPENDED: { label: '일시정지', color: 'var(--mg-warning-500)', icon: '⏸️' },
-          CANCELLED: { label: '취소', color: 'var(--mg-error-500)', icon: '🚫' }
+          PENDING_PAYMENT: { label: '입금대기', color: 'var(--mg-warning-500)', icon: null },
+          PAYMENT_CONFIRMED: { label: '입금확인', color: 'var(--mg-info-500)', icon: null },
+          ACTIVE: { label: '활성', color: 'var(--mg-success-500)', icon: null },
+          TERMINATED: { label: '종료', color: 'var(--mg-error-500)', icon: null },
+          SESSIONS_EXHAUSTED: { label: '회기소진', color: 'var(--mg-purple-500)', icon: null },
+          INACTIVE: { label: '비활성', color: 'var(--mg-secondary-500)', icon: null },
+          SUSPENDED: { label: '일시정지', color: 'var(--mg-warning-500)', icon: null },
+          CANCELLED: { label: '취소', color: 'var(--mg-error-500)', icon: null }
         });
       }
     } catch (error) {
       console.error('매칭 상태 정보 로드 오류:', error);
       setMappingStatusInfo({
-        PENDING_PAYMENT: { label: '입금대기', color: 'var(--mg-warning-500)', icon: '⏳' },
-        PAYMENT_CONFIRMED: { label: '입금확인', color: 'var(--mg-info-500)', icon: '💰' },
-        ACTIVE: { label: '활성', color: 'var(--mg-success-500)', icon: '✅' },
-        TERMINATED: { label: '종료', color: 'var(--mg-error-500)', icon: '❌' },
-        SESSIONS_EXHAUSTED: { label: '회기소진', color: 'var(--mg-purple-500)', icon: '🔚' },
-        INACTIVE: { label: '비활성', color: 'var(--mg-secondary-500)', icon: '⚪' },
-        SUSPENDED: { label: '일시정지', color: 'var(--mg-warning-500)', icon: '⏸️' },
-        CANCELLED: { label: '취소', color: 'var(--mg-error-500)', icon: '🚫' }
+        PENDING_PAYMENT: { label: '입금대기', color: 'var(--mg-warning-500)', icon: null },
+        PAYMENT_CONFIRMED: { label: '입금확인', color: 'var(--mg-info-500)', icon: null },
+        ACTIVE: { label: '활성', color: 'var(--mg-success-500)', icon: null },
+        TERMINATED: { label: '종료', color: 'var(--mg-error-500)', icon: null },
+        SESSIONS_EXHAUSTED: { label: '회기소진', color: 'var(--mg-purple-500)', icon: null },
+        INACTIVE: { label: '비활성', color: 'var(--mg-secondary-500)', icon: null },
+        SUSPENDED: { label: '일시정지', color: 'var(--mg-warning-500)', icon: null },
+        CANCELLED: { label: '취소', color: 'var(--mg-error-500)', icon: null }
       });
     }
   };
@@ -431,6 +447,7 @@ const MappingManagementPage = () => {
             getStatusKoreanName={getStatusKoreanName}
             getStatusColor={getStatusColor}
             getStatusIcon={getStatusIcon}
+            getStatusIconComponent={getStatusIconComponent}
             getStatusVariant={getStatusVariant}
             onView={handleViewMapping}
             onEdit={handleEditMapping}

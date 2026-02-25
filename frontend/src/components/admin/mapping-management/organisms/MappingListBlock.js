@@ -22,6 +22,7 @@ const MappingListBlock = ({
   getStatusKoreanName,
   getStatusColor,
   getStatusIcon,
+  getStatusIconComponent,
   getStatusVariant,
   onView,
   onEdit,
@@ -65,6 +66,7 @@ const MappingListBlock = ({
           getStatusKoreanName={getStatusKoreanName}
           getStatusColor={getStatusColor}
           getStatusIcon={getStatusIcon}
+          getStatusIconComponent={getStatusIconComponent}
           getStatusVariant={getStatusVariant}
           onView={onView}
           onEdit={onEdit}
@@ -96,10 +98,11 @@ const MappingListBlock = ({
               ...(mappingStatusInfo[mapping.status] || {
                 label: getStatusKoreanName(mapping.status),
                 color: getStatusColor(mapping.status),
-                icon: getStatusIcon(mapping.status)
+                icon: null
               }),
               variant: getStatusVariant ? getStatusVariant(mapping.status) : 'secondary'
             }}
+            getStatusIconComponent={getStatusIconComponent}
             onView={onView}
             onEdit={onEdit}
             onRefund={onRefund}
@@ -156,6 +159,7 @@ MappingListBlock.propTypes = {
   getStatusKoreanName: PropTypes.func,
   getStatusColor: PropTypes.func,
   getStatusIcon: PropTypes.func,
+  getStatusIconComponent: PropTypes.func,
   getStatusVariant: PropTypes.func,
   onView: PropTypes.func,
   onEdit: PropTypes.func,

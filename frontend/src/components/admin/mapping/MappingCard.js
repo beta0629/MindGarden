@@ -1,8 +1,55 @@
 import React, { useState } from 'react';
-import { User, Calendar, Package, CreditCard, Clock, CheckCircle, Database, Eye, Edit, XCircle, DollarSign } from 'lucide-react';
+import {
+  User,
+  Calendar,
+  Package,
+  CreditCard,
+  Clock,
+  CheckCircle,
+  Database,
+  Eye,
+  Edit,
+  XCircle,
+  DollarSign,
+  Pause,
+  CircleDot,
+  Ban,
+  FileText
+} from 'lucide-react';
 import MappingPaymentModal from './MappingPaymentModal';
 import MappingDepositModal from './MappingDepositModal';
 import MGButton from '../../common/MGButton';
+
+/** 매칭 상태별 배지 variant (mg-v2-badge + B0KlA 토큰) */
+const getStatusVariant = (status) => {
+  const variantMap = {
+    ACTIVE: 'success',
+    INACTIVE: 'secondary',
+    PENDING_PAYMENT: 'warning',
+    PAYMENT_CONFIRMED: 'info',
+    DEPOSIT_PENDING: 'info',
+    TERMINATED: 'error',
+    SESSIONS_EXHAUSTED: 'secondary',
+    SUSPENDED: 'warning',
+    CANCELLED: 'error'
+  };
+  return variantMap[status] || 'secondary';
+};
+
+/** 매칭 상태별 Lucide 아이콘 (이모지 미사용) */
+const getStatusIconComponent = (status) => {
+  const iconMap = {
+    ACTIVE: CheckCircle,
+    INACTIVE: Pause,
+    PENDING_PAYMENT: Clock,
+    PAYMENT_CONFIRMED: DollarSign,
+    TERMINATED: XCircle,
+    SESSIONS_EXHAUSTED: CircleDot,
+    SUSPENDED: Pause,
+    CANCELLED: Ban
+  };
+  return iconMap[status] || FileText;
+};
 
 /**
  * 매칭 카드 컴포넌트
@@ -10,16 +57,16 @@ import MGButton from '../../common/MGButton';
  *
  * @author MindGarden
  * @since 2024-12-19
- * @updated 2025-02-22 - B0KlA 어드민 대시보드 스타일 적용
+ * @updated 2025-02-22 - B0KlA 어드민 대시보드 스타일 적용, 상태 배지 아토믹 디자인·Lucide 아이콘
  */
-const MappingCard = ({ 
-    mapping, 
-    statusInfo = {
-        label: mapping?.status || 'UNKNOWN',
-        color: 'var(--medium-gray)',
-        icon: '📋'
-    },
-    onView,
+const MappingCard = ({
+  mapping,
+  statusInfo = {
+    label: mapping?.status || 'UNKNOWN',
+    color: 'var(--mg-secondary-500)',
+    icon: null
+  },
+  onView,
     onEdit, 
     onConfirmPayment,
     onConfirmDeposit,
@@ -58,37 +105,46 @@ const MappingCard = ({
                mapping.paymentConfirmed === true;
     };
 
-    return (
-        <div className="mg-v2-content-card mg-v2-mapping-card">
-            {/* Header */}
-            <div className="mg-v2-card-header">
-                <div className="mg-v2-mapping-card-header-left">
-                    <span className={`mg-v2-badge ${statusInfo.color === 'var(--color-danger)' ? 'mg-v2-badge-danger' : 'mg-v2-badge-success'}`}>
-                        {statusInfo.icon} {statusInfo.label}
-                    </span>
-                    
-                    {isErpIntegrated() && (
-                        <span className="mg-v2-badge mg-v2-badge-info">
-                            <Database size={12} />
-                            ERP 연동
-                        </span>
-                    )}
-                </div>
-                
-                {onView && (
-                    <MGButton
-                        variant="primary"
-                        size="sm"
-                        onClick={() => onView(mapping)}
-                        preventDoubleClick={true}
-                    >
-                        <Eye size={16} />
-                        상세보기
-                    </MGButton>
-                )}
-            </div>
+  const badgeVariant = statusInfo.variant ?? getStatusVariant(mapping?.status);
+  const StatusIcon = mapping?.status ? getStatusIconComponent(mapping.status) : null;
+  const statusLabel = statusInfo.label || mapping?.status || 'N/A';
 
-            {/* Body */}
+  return (
+    <div className="mg-v2-content-card mg-v2-mapping-card">
+      {/* Header */}
+      <div className="mg-v2-card-header">
+        <div className="mg-v2-mapping-card-header-left">
+          <span
+            className={`mg-v2-badge ${badgeVariant}`}
+            role="status"
+            aria-label={statusLabel}
+          >
+            {StatusIcon ? <StatusIcon size={12} className="mg-v2-mapping-card__status-icon" aria-hidden /> : null}
+            {statusLabel}
+          </span>
+
+          {isErpIntegrated() && (
+            <span className="mg-v2-badge info">
+              <Database size={12} />
+              ERP 연동
+            </span>
+          )}
+        </div>
+
+        {onView && (
+          <MGButton
+            variant="primary"
+            size="sm"
+            onClick={() => onView(mapping)}
+            preventDoubleClick={true}
+          >
+            <Eye size={16} />
+            상세보기
+          </MGButton>
+        )}
+      </div>
+
+      {/* Body */}
             <div className="mg-v2-mapping-card-body">
                 {/* Participants */}
                 <div className="mg-v2-mapping-participants">

@@ -46,6 +46,7 @@ const formatAmount = (amount) => {
 const MappingListRow = ({
   mapping,
   statusInfo = {},
+  getStatusIconComponent,
   onView,
   onEdit,
   onRefund,
@@ -82,6 +83,7 @@ const MappingListRow = ({
 
   const statusLabel = statusInfo.label || mapping.status || 'N/A';
   const badgeVariant = statusInfo.variant || 'secondary';
+  const StatusIcon = getStatusIconComponent && mapping.status ? getStatusIconComponent(mapping.status) : null;
 
   return (
     <div className="mg-v2-mapping-list-row">
@@ -92,7 +94,8 @@ const MappingListRow = ({
             role="status"
             aria-label={statusLabel}
           >
-            {statusInfo.icon || null} {statusLabel}
+            {StatusIcon ? <StatusIcon size={12} className="mg-v2-mapping-list-row__status-icon" aria-hidden /> : null}
+            {statusLabel}
           </span>
           {isErpIntegrated && (
             <span className="mg-v2-mapping-list-row__erp">

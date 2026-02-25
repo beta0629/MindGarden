@@ -47,6 +47,11 @@
 }
 
 /* ===== 아토믹 배지 (매칭 목록 상태 등) B0KlA 토큰 ===== */
+.mg-v2-ad-b0kla .mg-v2-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
 .mg-v2-ad-b0kla .mg-v2-badge.success {
   background: var(--ad-b0kla-green);
   color: var(--ad-b0kla-card-bg);

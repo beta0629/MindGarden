@@ -334,34 +334,39 @@
 
 .mg-v2-ad-b0kla__pill-toggle {
   display: flex;
-  background: var(--ad-b0kla-bg);
-  padding: 4px;
+  padding: 6px;
+  gap: 6px;
   border-radius: 9999px;
   border: 1px solid var(--ad-b0kla-border);
+  background: var(--ad-b0kla-bg);
 }
 
 .mg-v2-ad-b0kla__pill {
-  padding: 8px 16px;
-  font-size: 13px;
+  padding: 12px 20px;
+  min-height: 44px;
+  font-size: 14px;
   font-weight: 600;
-  border: none;
   border-radius: 9999px;
+  border: none;
   background: transparent;
   color: var(--ad-b0kla-text-secondary);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
+}
+
+.mg-v2-ad-b0kla__pill:hover {
+  color: var(--ad-b0kla-title-color);
 }
 
 .mg-v2-ad-b0kla__pill--active {
   background: var(--ad-b0kla-green);
-  color: #fff;
+  color: #ffffff;
   box-shadow: var(--ad-b0kla-shadow);
-  font-weight: 600;
 }
 
 .mg-v2-ad-b0kla__pill--active:hover {
   background: var(--ad-b0kla-green);
-  color: #fff;
+  color: #ffffff;
   filter: brightness(1.05);
 }
 

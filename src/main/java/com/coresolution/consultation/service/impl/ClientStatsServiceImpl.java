@@ -111,6 +111,9 @@ public class ClientStatsServiceImpl implements ClientStatsService {
                     Client client = convertToClient(user);
                     
                     Map<String, Object> clientMap = convertClientToMap(client);
+                    if (user.getProfileImageUrl() != null) {
+                        clientMap.put("profileImageUrl", user.getProfileImageUrl());
+                    }
                     
                     long currentConsultants = calculateCurrentConsultants(client.getId());
                     Map<String, Object> stats = calculateClientStats(client.getId());

@@ -1,8 +1,11 @@
-import React, { useState } from 'react';
-import { XCircle, User, CheckCircle, AlertTriangle } from 'lucide-react';
+import React, { useState, useCallback } from 'react';
+import { User, CheckCircle, AlertTriangle } from 'lucide-react';
 import MGButton from '../../common/MGButton';
 import { apiGet } from '../../../utils/ajax';
 import UnifiedModal from '../../common/modals/UnifiedModal';
+import { resizeImage, cropImageToSquare, getDataUrlByteSize } from '../../../utils/imageResizeCrop';
+
+const PROFILE_IMAGE_MAX_BYTES = 2 * 1024 * 1024;
 
 /**
  * 내담자 모달 컴포넌트
@@ -86,6 +89,54 @@ const ClientModal = ({
         }
     };
 
+    const handleProfilePhotoChange = useCallback((e) => {
+        const file = e.target?.files?.[0];
+        if (!file) return;
+        if (!file.type.startsWith('image/')) {
+            window.dispatchEvent(new CustomEvent('showNotification', {
+                detail: { message: '이미지 파일만 선택할 수 있습니다.', type: 'warning' }
+            }));
+            e.target.value = '';
+            return;
+        }
+        e.target.value = '';
+        const reader = new FileReader();
+        reader.onerror = () => {
+            window.dispatchEvent(new CustomEvent('showNotification', {
+                detail: { message: '이미지 읽기에 실패했습니다.', type: 'error' }
+            }));
+        };
+        reader.onload = () => {
+            const dataUrl = reader.result;
+            const maxSize = 512;
+            const cropSize = 400;
+            const quality = 0.85;
+            resizeImage(dataUrl, { maxWidth: maxSize, maxHeight: maxSize, quality })
+                .then((resizedUrl) => cropImageToSquare(resizedUrl, cropSize))
+                .then((finalUrl) => {
+                    const bytes = getDataUrlByteSize(finalUrl);
+                    if (bytes > PROFILE_IMAGE_MAX_BYTES) {
+                        window.dispatchEvent(new CustomEvent('showNotification', {
+                            detail: { message: '처리 후에도 용량이 2MB를 초과합니다. 다른 이미지를 선택해 주세요.', type: 'warning' }
+                        }));
+                        return;
+                    }
+                    setFormData(prev => ({ ...prev, profileImageUrl: finalUrl }));
+                })
+                .catch((err) => {
+                    const msg = err?.message || '이미지 처리 중 오류가 발생했습니다.';
+                    window.dispatchEvent(new CustomEvent('showNotification', {
+                        detail: { message: msg, type: 'error' }
+                    }));
+                });
+        };
+        reader.readAsDataURL(file);
+    }, [setFormData]);
+
+    const handleProfilePhotoRemove = useCallback(() => {
+        setFormData(prev => ({ ...prev, profileImageUrl: '' }));
+    }, [setFormData]);
+
     const handleSubmit = (e) => {
         e.preventDefault();
         onSave(formData);
@@ -132,22 +183,56 @@ const ClientModal = ({
             email: formData.email || '',
             password: formData.password || '',
             phone: formData.phone || '',
-            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
             status: formData.status || 'ACTIVE',
             grade: formData.grade || 'BRONZE',
-            notes: formData.notes || ''
+            notes: formData.notes || '',
+            profileImageUrl: formData.profileImageUrl || ''
         };
 
         return (
             <form onSubmit={handleSubmit} className="mg-v2-form">
                 {type === 'create' && (
-                    <div className="mg-v2-info-box" style={{ marginBottom: '1rem', padding: '0.75rem', backgroundColor: 'var(--color-background-light)', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border-light)' }}>
-                        <p className="mg-v2-info-text" style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', margin: 0 }}>
+                    <div className="mg-v2-info-box mg-v2-ad-b0kla-info-box">
+                        <p className="mg-v2-info-text">
                             💡 비밀번호를 입력하지 않으면 임시 비밀번호가 자동으로 생성됩니다.
                         </p>
                     </div>
                 )}
-                
+                <div className="mg-v2-form-group mg-v2-profile-photo-group">
+                    <label className="mg-v2-form-label">프로필 사진</label>
+                    <div className="mg-v2-profile-photo-preview-wrap">
+                        <div className="mg-v2-profile-photo-preview">
+                            {safeFormData.profileImageUrl ? (
+                                <img src={safeFormData.profileImageUrl} alt="프로필 미리보기" />
+                            ) : (
+                                <span className="mg-v2-profile-photo-placeholder" aria-hidden="true">
+                                    <User size={40} />
+                                </span>
+                            )}
+                        </div>
+                        <div className="mg-v2-profile-photo-actions">
+                            <label className="mg-v2-button mg-v2-button-secondary mg-v2-profile-photo-label">
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleProfilePhotoChange}
+                                    className="mg-v2-profile-photo-input"
+                                />
+                                사진 선택
+                            </label>
+                            {safeFormData.profileImageUrl && (
+                                <button
+                                    type="button"
+                                    className="mg-v2-button mg-v2-button-outline"
+                                    onClick={handleProfilePhotoRemove}
+                                >
+                                    제거
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                    <small className="mg-v2-form-help">이미지 파일만 가능, 최대 2MB</small>
+                </div>
                 <div className="mg-v2-form-group">
                     <label htmlFor="name" className="mg-v2-form-label">이름 {type === 'create' && '*'}</label>
                     <input
@@ -161,10 +246,9 @@ const ClientModal = ({
                         className="mg-v2-form-input"
                     />
                 </div>
-                
                 <div className="mg-v2-form-group">
                     <label htmlFor="email" className="mg-v2-form-label">이메일 *</label>
-                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
+                    <div className="mg-v2-form-email-row">
                         <input
                             type="email"
                             id="email"
@@ -174,8 +258,7 @@ const ClientModal = ({
                             required
                             placeholder="example@email.com"
                             className="mg-v2-form-input"
-                            style={{ flex: 1 }}
-                            disabled={type === 'edit'} // 수정 시에는 이메일 변경 불가
+                            disabled={type === 'edit'}
                         />
                         {type === 'create' && (
                             <button
@@ -183,12 +266,6 @@ const ClientModal = ({
                                 onClick={handleEmailDuplicateCheck}
                                 disabled={isCheckingEmail || !safeFormData.email?.trim()}
                                 className="mg-v2-button mg-v2-button-secondary"
-                                style={{ 
-                                    whiteSpace: 'nowrap',
-                                    minWidth: '100px',
-                                    opacity: (isCheckingEmail || !safeFormData.email?.trim()) ? 0.6 : 1,
-                                    cursor: (isCheckingEmail || !safeFormData.email?.trim()) ? 'not-allowed' : 'pointer'
-                                }}
                             >
                                 {isCheckingEmail ? '확인 중...' : '중복확인'}
                             </button>
@@ -198,17 +275,12 @@ const ClientModal = ({
                         <small className="mg-v2-form-help">이메일은 변경할 수 없습니다.</small>
                     )}
                     {type === 'create' && emailCheckStatus === 'duplicate' && (
-                        <small className="mg-v2-form-help" style={{ color: 'var(--color-error)' }}>
-                            ⚠️ 이미 사용 중인 이메일입니다.
-                        </small>
+                        <small className="mg-v2-form-help mg-v2-form-help--error">⚠️ 이미 사용 중인 이메일입니다.</small>
                     )}
                     {type === 'create' && emailCheckStatus === 'available' && (
-                        <small className="mg-v2-form-help" style={{ color: 'var(--color-success)' }}>
-                            ✅ 사용 가능한 이메일입니다.
-                        </small>
+                        <small className="mg-v2-form-help mg-v2-form-help--success">✅ 사용 가능한 이메일입니다.</small>
                     )}
                 </div>
-                
                 {type === 'create' && (
                     <div className="mg-v2-form-group">
                         <label htmlFor="password" className="mg-v2-form-label">비밀번호</label>
@@ -224,7 +296,6 @@ const ClientModal = ({
                         <small className="mg-v2-form-help">비밀번호를 입력하지 않으면 임시 비밀번호가 자동으로 생성됩니다.</small>
                     </div>
                 )}
-                
                 <div className="mg-v2-form-group">
                     <label htmlFor="phone" className="mg-v2-form-label">전화번호</label>
                     <input
@@ -237,7 +308,6 @@ const ClientModal = ({
                         className="mg-v2-form-input"
                     />
                 </div>
-                
                 <div className="mg-v2-form-group">
                     <label htmlFor="status" className="mg-v2-form-label">상태</label>
                     <select
@@ -262,7 +332,6 @@ const ClientModal = ({
                         )}
                     </select>
                 </div>
-                
                 <div className="mg-v2-form-group">
                     <label htmlFor="grade" className="mg-v2-form-label">등급</label>
                     <select
@@ -279,7 +348,6 @@ const ClientModal = ({
                         <option value="DIAMOND">다이아몬드</option>
                     </select>
                 </div>
-                
                 <div className="mg-v2-form-group">
                     <label htmlFor="notes" className="mg-v2-form-label">메모</label>
                     <textarea

@@ -56,6 +56,9 @@ public class ClientRegistrationRequest {
     
     private String registeredBy;
     
+    /** 프로필 사진 (base64 data URL, 최대 2MB) */
+    private String profileImageUrl;
+    
     /**
      * @Deprecated - 표준화 2025-12-07: 브랜치 개념 제거됨
      */

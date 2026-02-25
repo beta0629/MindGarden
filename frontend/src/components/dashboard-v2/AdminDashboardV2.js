@@ -31,6 +31,7 @@ import {
   ContentCard
 } from './content';
 import { API_BASE_URL } from '../../constants/api';
+import { getDefaultApiHeaders } from '../../utils/apiHeaders';
 import StatisticsDashboard from '../admin/StatisticsDashboard';
 import SpecialtyManagementModal from '../consultant/SpecialtyManagementModal';
 import PerformanceMetricsModal from '../statistics/PerformanceMetricsModal';
@@ -199,17 +200,19 @@ const AdminDashboardV2 = ({ user: propUser }) => {
     const user = propUser || sessionUser;
     if (!user?.role) return;
     try {
+      const headers = { 'Content-Type': 'application/json', ...getDefaultApiHeaders() };
       const response = await fetch(
         `${API_BASE_URL}/api/v1/schedules/today/statistics?userRole=${user.role}`,
-        { method: 'GET', headers: { 'Content-Type': 'application/json' }, credentials: 'include' }
+        { method: 'GET', headers, credentials: 'include' }
       );
       if (response.ok) {
         const data = await response.json();
+        const payload = data?.data != null ? data.data : data;
         setTodayStats({
-          totalToday: data.totalToday || 0,
-          completedToday: data.completedToday || 0,
-          inProgressToday: data.inProgressToday || 0,
-          cancelledToday: data.cancelledToday || 0
+          totalToday: payload.totalToday ?? 0,
+          completedToday: payload.completedToday ?? 0,
+          inProgressToday: payload.inProgressToday ?? 0,
+          cancelledToday: payload.cancelledToday ?? 0
         });
       }
     } catch (error) {
@@ -264,14 +267,15 @@ const AdminDashboardV2 = ({ user: propUser }) => {
   const loadStats = useCallback(async () => {
     setLoading(true);
     try {
+      const headers = { 'Content-Type': 'application/json', ...getDefaultApiHeaders() };
       const [consultantsRes, clientsRes, mappingsRes, ratingRes, vacationRes, consultationRes] =
         await Promise.all([
-          fetch('/api/v1/admin/consultants/with-vacation?date=' + new Date().toISOString().split('T')[0]),
-          fetch('/api/v1/admin/clients/with-mapping-info'),
-          fetch('/api/v1/admin/mappings'),
-          fetch('/api/v1/admin/consultant-rating-stats'),
-          fetch('/api/v1/admin/vacation-statistics?period=month'),
-          fetch('/api/v1/admin/statistics/consultation-completion')
+          fetch('/api/v1/admin/consultants/with-vacation?date=' + new Date().toISOString().split('T')[0], { headers, credentials: 'include' }),
+          fetch('/api/v1/admin/clients/with-mapping-info', { headers, credentials: 'include' }),
+          fetch('/api/v1/admin/mappings', { headers, credentials: 'include' }),
+          fetch('/api/v1/admin/consultant-rating-stats', { headers, credentials: 'include' }),
+          fetch('/api/v1/admin/vacation-statistics?period=month', { headers, credentials: 'include' }),
+          fetch('/api/v1/admin/statistics/consultation-completion', { headers, credentials: 'include' })
         ]);
 
       let totalConsultants = 0;
@@ -300,15 +304,15 @@ const AdminDashboardV2 = ({ user: propUser }) => {
       }
       if (mappingsRes.ok) {
         const mappingsData = await mappingsRes.json();
-        const mappings = mappingsData?.data ?? mappingsData;
-        totalMappings = mappingsData?.data?.count || mappingsData?.count || mappings?.count || 0;
-        const mappingsList = Array.isArray(mappings?.mappings)
-          ? mappings.mappings
-          : Array.isArray(mappings?.data)
-            ? mappings.data
-            : Array.isArray(mappings)
-              ? mappings
+        const mappingsPayload = mappingsData?.data != null ? mappingsData.data : mappingsData;
+        const mappingsList = Array.isArray(mappingsPayload?.mappings)
+          ? mappingsPayload.mappings
+          : Array.isArray(mappingsPayload?.data)
+            ? mappingsPayload.data
+            : Array.isArray(mappingsPayload)
+              ? mappingsPayload
               : [];
+        totalMappings = mappingsPayload?.count ?? mappingsData?.data?.count ?? mappingsData?.count ?? mappingsList.length;
         activeMappings = mappingsList.filter((m) => m.status === 'ACTIVE').length;
       }
       if (ratingRes.ok) {
@@ -332,12 +336,13 @@ const AdminDashboardV2 = ({ user: propUser }) => {
       }
       if (consultationRes.ok) {
         const d = await consultationRes.json();
-        if (d.success && d.data) {
+        const payload = d?.data != null ? d.data : d;
+        if (payload != null) {
           consultationStats = {
-            totalCompleted: d.data?.totalCompleted || 0,
-            completionRate: d.data?.completionRate || 0,
-            averageCompletionTime: d.data?.averageCompletionTime || 0,
-            monthlyData: d.data?.monthlyData || []
+            totalCompleted: payload.totalCompleted ?? 0,
+            completionRate: payload.completionRate ?? 0,
+            averageCompletionTime: payload.averageCompletionTime ?? 0,
+            monthlyData: Array.isArray(payload.monthlyData) ? payload.monthlyData : []
           };
         }
       }
@@ -361,15 +366,17 @@ const AdminDashboardV2 = ({ user: propUser }) => {
 
   const loadRefundStats = useCallback(async () => {
     try {
-      const response = await fetch('/api/v1/admin/refund-statistics?period=month');
+      const headers = { 'Content-Type': 'application/json', ...getDefaultApiHeaders() };
+      const response = await fetch('/api/v1/admin/refund-statistics?period=month', { headers, credentials: 'include' });
       if (response.ok) {
         const data = await response.json();
-        if (data.success && data.data?.summary) {
+        const summary = data?.data?.summary ?? data?.summary;
+        if (summary) {
           setRefundStats({
-            totalRefundCount: data.data.summary.totalRefundCount || 0,
-            totalRefundedSessions: data.data.summary.totalRefundedSessions || 0,
-            totalRefundAmount: data.data.summary.totalRefundAmount || 0,
-            averageRefundPerCase: data.data.summary.averageRefundPerCase || 0
+            totalRefundCount: summary.totalRefundCount ?? 0,
+            totalRefundedSessions: summary.totalRefundedSessions ?? 0,
+            totalRefundAmount: summary.totalRefundAmount ?? 0,
+            averageRefundPerCase: summary.averageRefundPerCase ?? 0
           });
         }
       }

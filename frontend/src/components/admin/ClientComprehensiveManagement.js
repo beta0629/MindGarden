@@ -72,7 +72,8 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
         // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         status: 'ACTIVE',
         grade: 'BRONZE',
-        notes: ''
+        notes: '',
+        profileImageUrl: ''
     });
 
     const loadCommonCodes = useCallback(async () => {
@@ -134,6 +135,7 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                         status: clientEntity.status,
                         isActive: clientEntity.isActive,
                         branchCode: clientEntity.branchCode,
+                        profileImageUrl: clientEntity.profileImageUrl,
                         createdAt: clientEntity.createdAt,
                         updatedAt: clientEntity.updatedAt,
                         currentConsultants: item.currentConsultants || 0,
@@ -235,7 +237,8 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
             // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
             status: client.status || 'ACTIVE',
             grade: client.grade || 'BRONZE',
-            notes: client.notes || ''
+            notes: client.notes || '',
+            profileImageUrl: client.profileImageUrl || ''
         });
         setShowModal(true);
     }, []);
@@ -268,14 +271,14 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
         setModalType('create');
         setEditingClient(null);
         setFormData({
-            name: '', // 이름 입력
-            email: '', // 이메일 입력
-            password: '', // 비밀번호 입력 (선택사항, 없으면 자동 생성)
-            phone: '', // 전화번호 입력 (선택사항)
-            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
+            name: '',
+            email: '',
+            password: '',
+            phone: '',
             status: 'ACTIVE',
             grade: 'BRONZE',
-            notes: ''
+            notes: '',
+            profileImageUrl: ''
         });
         setShowModal(true);
     }, []);
@@ -334,6 +337,16 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
         setShowModal(false);
         setModalType('');
         setEditingClient(null);
+        setFormData({
+            name: '',
+            email: '',
+            password: '',
+            phone: '',
+            status: 'ACTIVE',
+            grade: 'BRONZE',
+            notes: '',
+            profileImageUrl: ''
+        });
     }, []);
 
     // 필터링된 내담자 목록
@@ -543,34 +556,42 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                         onSave={(data) => {
                             const handleSave = async () => {
                                 try {
+                                    const payload = {
+                                        name: data.name,
+                                        email: data.email,
+                                        phone: data.phone ?? '',
+                                        status: data.status,
+                                        grade: data.grade,
+                                        notes: data.notes ?? ''
+                                    };
+                                    if (modalType === 'create') {
+                                        payload.password = data.password ?? '';
+                                    }
+                                    if (data.profileImageUrl && data.profileImageUrl.trim() !== '') {
+                                        payload.profileImageUrl = data.profileImageUrl;
+                                    }
                                     let response;
                                     if (modalType === 'create') {
-                                        console.log('🔧 내담자 등록 시작:', data);
-                                        response = await apiPost('/api/v1/admin/clients', data);
+                                        console.log('🔧 내담자 등록 시작:', { ...payload, profileImageUrl: payload.profileImageUrl ? '(base64)' : undefined });
+                                        response = await apiPost('/api/v1/admin/clients', payload);
                                         console.log('✅ 내담자 등록 응답:', response);
-                                        
                                         if (!response) {
                                             throw new Error('등록 응답이 없습니다.');
                                         }
-                                        
                                         showSuccess('내담자가 성공적으로 등록되었습니다.');
-                                        
-                                        // 모달 닫기 전에 목록 새로고침 (DB 커밋 대기)
-                                        console.log('🔄 내담자 목록 새로고침 시작 (등록 후)...');
                                         await loadClients();
-                                        console.log('✅ 내담자 목록 새로고침 완료');
-                                        
-                                        // 목록 새로고침 완료 후 모달 닫기
                                         handleCloseModal();
                                     } else if (modalType === 'edit') {
-                                        response = await apiPut(`/api/v1/admin/clients/${editingClient.id}`, data);
+                                        response = await apiPut(`/api/v1/admin/clients/${editingClient.id}`, payload);
+                                        const success = response != null && (response.success === true || response.id != null);
+                                        if (!success) {
+                                            throw new Error(response?.message || '수정에 실패했습니다.');
+                                        }
                                         showSuccess('내담자 정보가 성공적으로 수정되었습니다.');
-                                        
-                                        // 목록 새로고침
                                         await loadClients();
                                         handleCloseModal();
                                     } else if (modalType === 'delete') {
-                                        response = await apiDelete(`/api/v1/admin/clients/${editingClient.id}`);
+                                        await apiDelete(`/api/v1/admin/clients/${editingClient.id}`);
                                         showSuccess('내담자가 성공적으로 삭제되었습니다.');
                                         
                                         // 목록 새로고침

@@ -1772,28 +1772,26 @@ public class AdminController extends BaseApiController {
 
     /**
      * 내담자 정보 수정
+     * LazyInitializationException 방지: Client 엔티티 대신 Map(id) 반환 (상담사 updateConsultant와 동일)
      */
     @PutMapping("/clients/{id}")
-    public ResponseEntity<ApiResponse<Client>> updateClient(@PathVariable Long id,
+    public ResponseEntity<ApiResponse<Map<String, Object>>> updateClient(@PathVariable Long id,
             @RequestBody ClientRegistrationRequest request, HttpSession session) {
         log.info("🔧 내담자 정보 수정: ID={}", id);
 
         User currentUser = SessionUtils.getCurrentUser(session);
         if (currentUser != null) {
-            // 표준화 2025-12-07: 브랜치 개념 제거됨, 로그 제거
-            // log.info("🔧 현재 사용자 지점 정보: branchCode={}", currentUser.getBranchCode());
-
             if (currentUser.getBranchCode() != null && !currentUser.getBranchCode().trim().isEmpty()
                     && (request.getBranchCode() == null
                             || request.getBranchCode().trim().isEmpty())) {
                 request.setBranchCode(currentUser.getBranchCode());
-                // 표준화 2025-12-07: 브랜치 개념 제거됨, 로그 제거
-                // log.info("🔧 세션에서 지점코드 자동 설정: branchCode={}", request.getBranchCode());
             }
         }
 
         Client client = adminService.updateClient(id, request);
-        return updated("내담자 정보가 성공적으로 수정되었습니다", client);
+        Map<String, Object> data = new HashMap<>();
+        data.put("id", client.getId());
+        return updated("내담자 정보가 성공적으로 수정되었습니다", data);
     }
 
     /**

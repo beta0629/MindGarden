@@ -1731,26 +1731,24 @@ public class AdminController extends BaseApiController {
      * 상담사 정보 수정
      */
     @PutMapping("/consultants/{id}")
-    public ResponseEntity<ApiResponse<User>> updateConsultant(@PathVariable Long id,
+    public ResponseEntity<ApiResponse<Map<String, Object>>> updateConsultant(@PathVariable Long id,
             @RequestBody ConsultantRegistrationRequest request, HttpSession session) {
         log.info("🔧 상담사 정보 수정: ID={}", id);
 
         User currentUser = SessionUtils.getCurrentUser(session);
         if (currentUser != null) {
-            // 표준화 2025-12-07: 브랜치 개념 제거됨, 로그 제거
-            // log.info("🔧 현재 사용자 지점 정보: branchCode={}", currentUser.getBranchCode());
-
+            String reqBranch = request.getBranchCode();
             if (currentUser.getBranchCode() != null && !currentUser.getBranchCode().trim().isEmpty()
-                    && (request.getBranchCode() == null
-                            || request.getBranchCode().trim().isEmpty())) {
+                    && (reqBranch == null || reqBranch.trim().isEmpty())) {
                 request.setBranchCode(currentUser.getBranchCode());
-                // 표준화 2025-12-07: 브랜치 개념 제거됨, 로그 제거
-                // log.info("🔧 세션에서 지점코드 자동 설정: branchCode={}", request.getBranchCode());
             }
         }
 
         User consultant = adminService.updateConsultant(id, request);
-        return updated("상담사 정보가 성공적으로 수정되었습니다", consultant);
+        // LazyInitializationException 방지: User 엔티티 대신 id만 반환 (LAZY 연관 미직렬화)
+        Map<String, Object> data = new HashMap<>();
+        data.put("id", consultant.getId());
+        return updated("상담사 정보가 성공적으로 수정되었습니다", data);
     }
 
     /**

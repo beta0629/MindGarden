@@ -124,34 +124,76 @@
 
 .integrated-schedule__filter--status {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: stretch;
   width: 100%;
-  max-width: 280px;
 }
 
-.integrated-schedule__filter-select {
-  width: 100%;
-  min-height: 40px;
-  padding: var(--mg-spacing-8, 8px) var(--mg-spacing-14, 14px);
-  font-size: 14px;
+.integrated-schedule__status-btns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mg-spacing-6, 6px);
+}
+
+.integrated-schedule__status-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mg-spacing-6, 6px);
+  padding: var(--mg-spacing-6, 6px) var(--mg-spacing-10, 10px);
+  min-height: 36px;
+  font-size: 13px;
   font-weight: 500;
-  color: var(--mg-color-text-main, var(--mg-gray-900));
+  color: var(--mg-color-text-secondary, var(--mg-gray-600));
   background-color: var(--mg-color-surface-main, var(--mg-white));
   border: 1px solid var(--mg-color-border-main, var(--mg-gray-200));
   border-radius: var(--mg-radius-sm, 8px);
   cursor: pointer;
-  appearance: auto;
-  transition: border-color 0.2s ease, background-color 0.2s ease;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 }
 
-.integrated-schedule__filter-select:hover {
+.integrated-schedule__status-btn:hover {
+  color: var(--mg-color-text-main, var(--mg-gray-900));
   border-color: var(--mg-color-primary-main, var(--mg-primary-500));
 }
 
-.integrated-schedule__filter-select:focus {
+.integrated-schedule__status-btn:focus-visible {
   outline: none;
   border-color: var(--mg-color-primary-main, var(--mg-primary-500));
   box-shadow: 0 0 0 2px var(--mg-color-primary-main);
+}
+
+.integrated-schedule__status-btn--selected {
+  background-color: var(--mg-color-primary-main, var(--mg-primary-500));
+  color: var(--mg-color-primary-inverse, var(--mg-white));
+  border-color: var(--mg-color-primary-main, var(--mg-primary-500));
+}
+
+.integrated-schedule__status-btn--selected:hover {
+  background-color: var(--mg-color-primary-dark, var(--mg-primary-600));
+  color: var(--mg-color-primary-inverse, var(--mg-white));
+  border-color: var(--mg-color-primary-dark, var(--mg-primary-600));
+}
+
+.integrated-schedule__status-btn-text {
+  white-space: nowrap;
+}
+
+.integrated-schedule__status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  padding: 2px 6px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: var(--mg-radius-full, 9999px);
+  background-color: var(--mg-color-surface-sub, var(--mg-gray-200));
+  color: var(--mg-color-text-secondary, var(--mg-gray-600));
+}
+
+.integrated-schedule__status-btn--selected .integrated-schedule__status-badge {
+  background-color: rgba(255, 255, 255, 0.25);
+  color: var(--mg-color-primary-inverse, var(--mg-white));
 }
 
 .integrated-schedule__filter-label {

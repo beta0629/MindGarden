@@ -98,14 +98,17 @@ const IntegratedMatchingSchedule = () => {
     loadMappings();
   }, [loadMappings]);
 
-  const filteredMappings = (() => {
-    const bySession =
-      sessionFilter === SESSION_FILTER_REMAINING
-        ? mappings.filter((m) => (m.remainingSessions ?? 0) > 0)
-        : mappings;
-    if (!statusFilter) return bySession;
-    return bySession.filter((m) => m.status === statusFilter);
-  })();
+  const bySession =
+    sessionFilter === SESSION_FILTER_REMAINING
+      ? mappings.filter((m) => (m.remainingSessions ?? 0) > 0)
+      : mappings;
+
+  const filteredMappings = statusFilter
+    ? bySession.filter((m) => m.status === statusFilter)
+    : bySession;
+
+  const getStatusCount = (value) =>
+    value === '' ? bySession.length : bySession.filter((m) => m.status === value).length;
 
   /** 스케줄 가능(드래그 가능) 카드 수 — 결제/입금/승인 후 목록 갱신 시 Draggable 재바인딩 */
   const scheduleableCount = filteredMappings.filter((m) => canScheduleForMapping(m)).length;
@@ -245,18 +248,27 @@ const IntegratedMatchingSchedule = () => {
           </fieldset>
           <fieldset className="integrated-schedule__filter integrated-schedule__filter--status" aria-label="상태별 필터">
             <legend className="integrated-schedule__filter-legend">상태</legend>
-            <select
-              className="integrated-schedule__filter-select"
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              aria-label="상태별 필터 선택"
-            >
-              {STATUS_FILTER_OPTIONS.map((opt) => (
-                <option key={opt.value || 'all'} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
+            <div className="integrated-schedule__status-btns">
+              {STATUS_FILTER_OPTIONS.map((opt) => {
+                const count = getStatusCount(opt.value);
+                const isSelected = statusFilter === opt.value;
+                return (
+                  <button
+                    key={opt.value || 'all'}
+                    type="button"
+                    className={`integrated-schedule__status-btn ${isSelected ? 'integrated-schedule__status-btn--selected' : ''}`}
+                    onClick={() => setStatusFilter(opt.value)}
+                    aria-pressed={isSelected}
+                    aria-label={`${opt.label} (${count}건)`}
+                  >
+                    <span className="integrated-schedule__status-btn-text">{opt.label}</span>
+                    <span className="integrated-schedule__status-badge" aria-hidden="true">
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
           </fieldset>
           {loading ? (
             <UnifiedLoading type="inline" text="매칭 목록 불러오는 중..." />

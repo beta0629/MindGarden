@@ -555,8 +555,11 @@ public class AuthController extends BaseApiController {
             log.error("❌ 로그인 요청 실패: password가 없습니다.");
             throw new IllegalArgumentException("비밀번호를 입력해주세요.");
         }
-        
-        log.info("🔐 로그인 시도: email={}, password={}", email, password != null ? "***" : "null");
+        // reset 시 저장된 값과 동일 규격으로 비교 (trim, email 소문자 통일)
+        email = email.trim().toLowerCase();
+        password = password.trim();
+
+        log.info("🔐 로그인 시도: email={}, password={}", email, "***");
         
         // 로컬 프로파일에서만 기본 테넌트 ID 설정 (로그인 API는 공개 API이므로 필터를 건너뛰므로 여기서 설정)
         // 개발/운영 환경에서는 서브도메인 기반으로 정상 동작

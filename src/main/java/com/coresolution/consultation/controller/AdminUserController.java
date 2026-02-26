@@ -328,7 +328,7 @@ public class AdminUserController {
                 return ResponseEntity.badRequest().body(err);
             }
             newPassword = newPassword.trim();
-            log.info("🔑 관리자 권한으로 사용자 비밀번호 초기화: userId={}", userId);
+            log.info("🔑 관리자 권한으로 사용자 비밀번호 초기화: userId={}, newPasswordLength={}", userId, newPassword.length());
             
             // 비밀번호 정책 검증
             Map<String, Object> validationResult = passwordValidationService.validatePassword(newPassword);

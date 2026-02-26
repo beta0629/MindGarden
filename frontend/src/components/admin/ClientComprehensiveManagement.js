@@ -181,12 +181,11 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
         try {
             const response = await apiGet('/api/v1/admin/mappings');
             console.log('📊 매칭 정보 응답:', response);
-            
-            if (response && response.success) {
-                setMappings(response.data || []);
-            } else {
-                console.warn('매칭 정보 응답 실패:', response);
-                setMappings([]);
+            // apiGet이 이미 { success, data }를 풀어 data만 반환 → response = { mappings, count }
+            const list = Array.isArray(response?.mappings) ? response.mappings : [];
+            setMappings(list);
+            if (list.length > 0) {
+                console.log('✅ 매칭 정보 설정:', list.length, '건');
             }
         } catch (error) {
             console.error('매칭 정보 로드 실패:', error);

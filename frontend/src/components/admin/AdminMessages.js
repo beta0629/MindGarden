@@ -49,7 +49,8 @@ const AdminMessages = () => {
       }
     } catch (err) {
       console.error('메시지 로드 중 오류:', err);
-      notificationManager.show('메시지를 불러오는 중 오류가 발생했습니다.', 'error');
+      const message = (err && err.message) ? err.message : '메시지를 불러오는 중 오류가 발생했습니다.';
+      notificationManager.show(message, 'error');
     } finally {
       setLoading(false);
     }

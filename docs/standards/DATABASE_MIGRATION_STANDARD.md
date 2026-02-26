@@ -407,6 +407,10 @@ spring:
 - **out-of-order**: 순서대로만 실행 (false 권장)
 - **clean-disabled**: 운영 환경에서 clean 명령어 비활성화
 
+### 마이그레이션 실행 시점
+- **기본**: Spring Boot 애플리케이션 기동 시 Flyway가 자동으로 미적용 마이그레이션을 실행합니다. 별도 명령 없이 서버를 재시작하면 최신 마이그레이션(V20260213 등)이 적용됩니다.
+- **수동 실행**(선택): Maven 사용 시 `./mvnw flyway:migrate -Dspring.profiles.active=로컬프로필` 로 DB 연결 정보를 적용해 수동 마이그레이션 가능. 상태 확인은 `./mvnw flyway:info` 사용.
+
 ---
 
 ## 📖 예시

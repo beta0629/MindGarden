@@ -97,7 +97,8 @@ const SystemNotificationManagement = () => {
       }
     } catch (error) {
       console.error('공지 목록 로드 오류:', error);
-      notificationManager.show('공지 목록을 불러오는 중 오류가 발생했습니다.', 'error');
+      const message = (error && error.message) ? error.message : '공지 목록을 불러오는 중 오류가 발생했습니다.';
+      notificationManager.show(message, 'error');
     } finally {
       setLoading(false);
     }

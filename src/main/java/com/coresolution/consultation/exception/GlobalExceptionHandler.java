@@ -165,20 +165,24 @@ public class GlobalExceptionHandler {
     /**
      * AccessDeniedException 처리 (권한 없음)
      * HTTP 403 Forbidden 응답
-     * 공통 알림 시스템 사용: "접근 권한이 없습니다."
+     * 예외 메시지가 있으면 그대로 전달, 없으면 "접근 권한이 없습니다."
      */
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ErrorResponse> handleAccessDenied(AccessDeniedException e, HttpServletRequest request) {
         log.warn("Access denied: path={}, message={}", request.getRequestURI(), e.getMessage());
-        
+
+        String message = (e.getMessage() != null && !e.getMessage().isBlank())
+            ? e.getMessage().trim()
+            : "접근 권한이 없습니다.";
+
         ErrorResponse error = ErrorResponse.of(
-            "접근 권한이 없습니다.",
+            message,
             "ACCESS_DENIED",
             HttpStatus.FORBIDDEN.value(),
             request.getRequestURI(),
             request.getMethod()
         );
-        
+
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
     }
     

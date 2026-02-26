@@ -212,11 +212,15 @@ export const apiGet = async (endpoint, params = {}, options = {}) => {
       if (response.status === 401) {
         return null;
       }
-      // 403 오류는 권한 문제이므로 조용히 처리 (에러 throw 안 함)
+      // 403 오류: 응답 body의 message가 있으면 그대로 전달, 없으면 기본 문구
       if (response.status === 403) {
-        const error = new Error('접근 권한이 없습니다.');
+        const serverMessage = (jsonData && typeof jsonData === 'object' && jsonData.message)
+          ? String(jsonData.message)
+          : '접근 권한이 없습니다.';
+        const error = new Error(serverMessage);
         error.status = 403;
-        throw error; // catch 블록에서 처리할 수 있도록 throw
+        error.response = { data: jsonData };
+        throw error;
       }
       // 404 오류는 리소스가 없을 수 있으므로 조용히 null 반환 (에러 throw 안 함)
       if (response.status === 404) {

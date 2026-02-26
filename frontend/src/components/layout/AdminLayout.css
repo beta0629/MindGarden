@@ -14,16 +14,14 @@
 
 .mg-admin-layout__main {
   flex: 1;
-  margin-left: var(--mg-layout-sidebar-width);
+  margin-left: 0;
   overflow-y: auto;
   min-height: 100vh;
   padding: var(--mg-layout-page-padding);
 }
 
-/* 태블릿: 사이드바 오버레이/드로어 모드 - main이 전체 너비 */
 @media (max-width: calc(var(--mg-breakpoint-desktop) - 1px)) {
   .mg-admin-layout__main {
-    margin-left: 0;
     padding: var(--mg-layout-page-padding-mobile);
   }
 }

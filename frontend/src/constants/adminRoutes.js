@@ -32,6 +32,8 @@ export const ADMIN_ROUTES = {
     BRANCH_STATUS: '/admin/branch-status',
     BRANCH_CONSULTANTS: '/admin/branch-consultants',
     COMMON_CODES: '/admin/common-codes',
+    /** 패키지 요금(가격) 관리 */
+    PACKAGE_PRICING: '/admin/package-pricing',
     SYSTEM_NOTIFICATIONS: '/admin/system-notifications',
     SYSTEM_CONFIG: '/admin/system-config',
     MESSAGES: '/admin/messages',

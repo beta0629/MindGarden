@@ -15,7 +15,7 @@ import notificationManager from '../../utils/notification';
 import { RoleUtils } from '../../constants/roles';
 import {
   Settings, Check, LayoutDashboard, Activity, MessageSquare, Sparkles,
-  ShieldCheck, Megaphone, DollarSign, Receipt, TrendingUp
+  ShieldCheck, Megaphone, DollarSign, Receipt, TrendingUp, Package
 } from 'lucide-react';
 import {
   FaCalendarAlt, FaCalendarCheck, FaSyncAlt, FaExclamationTriangle, FaUserTie, FaUsers,
@@ -1068,6 +1068,17 @@ const AdminDashboardV2 = ({ user: propUser }) => {
             </div>
             <span className="mg-v2-ad-b0kla__admin-label">공통코드</span>
             <span className="mg-v2-ad-b0kla__admin-desc">시스템 공통코드를 관리합니다</span>
+          </button>
+          <button
+            type="button"
+            className="mg-v2-ad-b0kla__admin-card"
+            onClick={() => navigate(ADMIN_ROUTES.PACKAGE_PRICING)}
+          >
+            <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--gray">
+              <Package size={28} />
+            </div>
+            <span className="mg-v2-ad-b0kla__admin-label">패키지 요금 관리</span>
+            <span className="mg-v2-ad-b0kla__admin-desc">상담 패키지별 가격·회기 수 관리</span>
           </button>
           <button
             type="button"

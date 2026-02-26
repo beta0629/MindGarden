@@ -15,7 +15,8 @@ import {
   ShoppingCart,
   DollarSign,
   PieChart,
-  Receipt
+  Receipt,
+  Package
 } from 'lucide-react';
 import { ADMIN_ROUTES } from '../../../constants/adminRoutes';
 
@@ -59,6 +60,7 @@ const DEFAULT_MENU_ITEMS = [
       { to: '/tenant/profile', icon: Settings, label: '테넌트 프로필', end: true },
       { to: '/admin/system-config', icon: Settings, label: '시스템 설정', end: true },
       { to: '/admin/common-codes', icon: FileText, label: '공통코드', end: true },
+      { to: ADMIN_ROUTES.PACKAGE_PRICING, icon: Package, label: '패키지 요금 관리', end: true },
       { to: '/tenant/profile', icon: CreditCard, label: 'PG 설정', end: true }
     ]
   },

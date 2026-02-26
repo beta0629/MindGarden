@@ -326,6 +326,16 @@ public interface AdminService {
     List<Map<String, Object>> getConsultationWeeklyTrend(int lastWeeks);
 
     /**
+     * 해당 월의 테넌트 전체 완료율 조회 (해당 월 스케줄 중 완료 건수 / 해당 월 전체 스케줄)
+     * TenantContextHolder의 tenantId 사용.
+     *
+     * @param year  연도
+     * @param month 월 (1–12)
+     * @return 완료율 (0–100, 소수 첫째자리)
+     */
+    double getCompletionRateForMonth(int year, int month);
+
+    /**
      * 모든 스케줄 조회
      */
     List<Map<String, Object>> getAllSchedules();

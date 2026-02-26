@@ -31,6 +31,9 @@ const ContentKpiRow = ({ items = [] }) => {
                 )}
               </div>
               <span className="mg-v2-content-kpi-card__value">{item.value}</span>
+              {item.subtitle != null && item.subtitle !== '' && (
+                <span className="mg-v2-content-kpi-card__subtitle">{item.subtitle}</span>
+              )}
             </div>
           </div>
         );

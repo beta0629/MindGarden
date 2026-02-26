@@ -1,5 +1,6 @@
 package com.coresolution.consultation.controller;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -2332,6 +2333,13 @@ public class AdminController extends BaseApiController {
                 ? Math.round((double) totalCompleted / totalScheduled * 100.0 * 10.0) / 10.0
                 : 0.0;
 
+        // 이번 달·지난달 완료율로 증감 계산 (KPI 배지용)
+        LocalDate now = LocalDate.now();
+        double thisMonthRate = adminService.getCompletionRateForMonth(now.getYear(), now.getMonthValue());
+        LocalDate lastMonth = now.minusMonths(1);
+        double lastMonthRate = adminService.getCompletionRateForMonth(lastMonth.getYear(), lastMonth.getMonthValue());
+        double completionRateChange = Math.round((thisMonthRate - lastMonthRate) * 10.0) / 10.0;
+
         Map<String, Object> data = new HashMap<>();
         data.put("statistics", statistics);
         data.put("count", statistics.size());
@@ -2340,6 +2348,7 @@ public class AdminController extends BaseApiController {
         data.put("weeklyData", weeklyData);
         data.put("totalCompleted", totalCompleted);
         data.put("completionRate", completionRate);
+        data.put("completionRateChange", completionRateChange);
 
         return success(data);
     }

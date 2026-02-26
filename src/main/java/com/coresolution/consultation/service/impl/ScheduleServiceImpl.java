@@ -1005,9 +1005,17 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         long confirmedToday = scheduleRepository.countByDateAndStatus(tenantId, today, ScheduleStatus.CONFIRMED);
         statistics.put("confirmedToday", confirmedToday);
+
+        // 전주 동일 요일 대비 예약 건수 증감 (KPI 배지용)
+        LocalDate lastWeekSameDay = today.minusWeeks(1);
+        long lastWeekBooked = scheduleRepository.countByDateAndStatus(tenantId, lastWeekSameDay, ScheduleStatus.BOOKED);
+        double bookedGrowthRate = lastWeekBooked > 0
+                ? Math.round(((double) (bookedToday - lastWeekBooked) / lastWeekBooked * 100.0) * 10.0) / 10.0
+                : (bookedToday > 0 ? 100.0 : 0.0);
+        statistics.put("bookedGrowthRate", bookedGrowthRate);
         
-        log.info("✅ 오늘의 스케줄 통계 조회 완료: 총 {}개, 완료 {}개, 진행중 {}개, 취소 {}개, 예약 {}개, 확인 {}개", 
-                totalToday, completedToday, inProgressToday, cancelledToday, bookedToday, confirmedToday);
+        log.info("✅ 오늘의 스케줄 통계 조회 완료: 총 {}개, 완료 {}개, 진행중 {}개, 취소 {}개, 예약 {}개, 확인 {}개, 예약증감 {}%", 
+                totalToday, completedToday, inProgressToday, cancelledToday, bookedToday, confirmedToday, bookedGrowthRate);
         
         return statistics;
     }
@@ -1043,9 +1051,16 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         long confirmedToday = scheduleRepository.countByTenantIdAndDateAndStatus(tenantId, today, ScheduleStatus.CONFIRMED);
         statistics.put("confirmedToday", confirmedToday);
+
+        LocalDate lastWeekSameDay = today.minusWeeks(1);
+        long lastWeekBooked = scheduleRepository.countByTenantIdAndDateAndStatus(tenantId, lastWeekSameDay, ScheduleStatus.BOOKED);
+        double bookedGrowthRate = lastWeekBooked > 0
+                ? Math.round(((double) (bookedToday - lastWeekBooked) / lastWeekBooked * 100.0) * 10.0) / 10.0
+                : (bookedToday > 0 ? 100.0 : 0.0);
+        statistics.put("bookedGrowthRate", bookedGrowthRate);
         
-        log.info("📊 테넌트별 오늘의 통계 - 테넌트: {}, 총: {}, 완료: {}, 진행중: {}, 취소: {}, 예약: {}, 확인: {}", 
-                tenantId, totalToday, completedToday, inProgressToday, cancelledToday, bookedToday, confirmedToday);
+        log.info("📊 테넌트별 오늘의 통계 - 테넌트: {}, 총: {}, 완료: {}, 진행중: {}, 취소: {}, 예약: {}, 확인: {}, 예약증감: {}%", 
+                tenantId, totalToday, completedToday, inProgressToday, cancelledToday, bookedToday, confirmedToday, bookedGrowthRate);
         
         return statistics;
     }

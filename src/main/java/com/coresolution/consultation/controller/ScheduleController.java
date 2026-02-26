@@ -499,6 +499,14 @@ public class ScheduleController extends BaseApiController {
                 statistics = scheduleService.getTodayScheduleStatistics();
                 log.info("✅ 전체 오늘의 스케줄 통계 조회 완료");
             }
+            // 총 사용자 증감(KPI 배지용): 전주/전월 스냅샷 없으면 0. 추후 실데이터 반영 시 계산 로직 추가
+            if (!statistics.containsKey("totalUsersGrowthRate")) {
+                try {
+                    statistics.put("totalUsersGrowthRate", 0.0);
+                } catch (Exception e) {
+                    log.warn("총 사용자 증감 계산 스킵: {}", e.getMessage());
+                }
+            }
         }
         
         return success(statistics);

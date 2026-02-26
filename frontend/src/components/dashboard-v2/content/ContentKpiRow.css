@@ -103,6 +103,13 @@
   display: block;
 }
 
+.mg-v2-content-kpi-card__subtitle {
+  font-size: var(--mg-font-sm, 0.875rem);
+  color: var(--ad-b0kla-text-secondary, #64748b);
+  margin-top: var(--mg-spacing-xs, 0.25rem);
+  display: block;
+}
+
 @media (max-width: 768px) {
   .mg-v2-content-kpi-card__value {
     font-size: 1.5rem;

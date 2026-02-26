@@ -197,6 +197,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
     consultationStats: {
       totalCompleted: 0,
       completionRate: 0,
+      completionRateChange: null,
       averageCompletionTime: 0,
       monthlyData: [],
       weeklyData: []
@@ -227,7 +228,9 @@ const AdminDashboardV2 = ({ user: propUser }) => {
     totalToday: 0,
     completedToday: 0,
     inProgressToday: 0,
-    cancelledToday: 0
+    cancelledToday: 0,
+    bookedGrowthRate: null,
+    totalUsersGrowthRate: null
   });
   const [loading, setLoading] = useState(false);
   const [showToastState, setShowToastState] = useState(false);
@@ -272,7 +275,9 @@ const AdminDashboardV2 = ({ user: propUser }) => {
           totalToday: payload.totalToday ?? 0,
           completedToday: payload.completedToday ?? 0,
           inProgressToday: payload.inProgressToday ?? 0,
-          cancelledToday: payload.cancelledToday ?? 0
+          cancelledToday: payload.cancelledToday ?? 0,
+          bookedGrowthRate: payload.bookedGrowthRate != null ? payload.bookedGrowthRate : null,
+          totalUsersGrowthRate: payload.totalUsersGrowthRate != null ? payload.totalUsersGrowthRate : null
         });
       }
     } catch (error) {
@@ -402,6 +407,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
           consultationStats = {
             totalCompleted: payload.totalCompleted ?? 0,
             completionRate: payload.completionRate ?? 0,
+            completionRateChange: payload.completionRateChange != null ? payload.completionRateChange : null,
             averageCompletionTime: payload.averageCompletionTime ?? 0,
             monthlyData: Array.isArray(payload.monthlyData) ? payload.monthlyData : [],
             weeklyData: Array.isArray(payload.weeklyData) ? payload.weeklyData : []
@@ -642,6 +648,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
       icon: <FaUsers size={28} />,
       label: '총 사용자',
       value: (stats.totalConsultants + stats.totalClients).toLocaleString(),
+      subtitle: `상담사 ${stats.totalConsultants} · 내담자 ${stats.totalClients}`,
       badge: todayStats.totalUsersGrowthRate != null ? `${todayStats.totalUsersGrowthRate > 0 ? '+' : ''}${todayStats.totalUsersGrowthRate}%` : undefined,
       badgeVariant: 'green',
       iconVariant: 'green'
@@ -660,7 +667,9 @@ const AdminDashboardV2 = ({ user: propUser }) => {
       icon: <Check size={28} />,
       label: '완료율',
       value: stats.consultationStats?.completionRate != null ? `${stats.consultationStats.completionRate}%` : todayStats.completedToday,
-      badge: stats.consultationStats?.completionRate != null ? `${stats.consultationStats.completionRate}%` : undefined,
+      badge: stats.consultationStats?.completionRateChange != null
+        ? `${stats.consultationStats.completionRateChange > 0 ? '+' : ''}${stats.consultationStats.completionRateChange}%`
+        : undefined,
       badgeVariant: 'blue',
       iconVariant: 'blue'
     }

@@ -4134,6 +4134,28 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             return new ArrayList<>();
         }
     }
+
+    @Override
+    public double getCompletionRateForMonth(int year, int month) {
+        try {
+            String tenantId = getTenantId();
+            if (tenantId == null || tenantId.isEmpty()) {
+                return 0.0;
+            }
+            LocalDate monthStart = LocalDate.of(year, month, 1);
+            LocalDate monthEnd = monthStart.withDayOfMonth(monthStart.lengthOfMonth());
+            long totalScheduled = scheduleRepository.countByDateBetween(tenantId, monthStart, monthEnd);
+            if (totalScheduled == 0) {
+                return 0.0;
+            }
+            long totalCompleted = scheduleRepository.countByStatusAndDateBetween(
+                    tenantId, ScheduleStatus.COMPLETED.name(), monthStart, monthEnd);
+            return Math.round((double) totalCompleted / totalScheduled * 100.0 * 10.0) / 10.0;
+        } catch (Exception e) {
+            log.warn("월별 완료율 조회 실패: year={}, month={}, error={}", year, month, e.getMessage());
+            return 0.0;
+        }
+    }
     
     @Override
     public List<Map<String, Object>> getConsultationCompletionStatisticsByBranch(String period, String branchCode) {

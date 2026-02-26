@@ -16,6 +16,7 @@ const PasswordResetModal = ({
     const [confirmPassword, setConfirmPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [errors, setErrors] = useState({});
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const validatePassword = () => {
         const newErrors = {};
@@ -38,11 +39,16 @@ const PasswordResetModal = ({
         return Object.keys(newErrors).length === 0;
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        
-        if (validatePassword()) {
-            onConfirm(newPassword);
+
+        if (!validatePassword()) return;
+
+        setIsSubmitting(true);
+        try {
+            await onConfirm(newPassword);
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -72,6 +78,9 @@ const PasswordResetModal = ({
                         form="admin-password-reset-form"
                         variant="primary"
                         preventDoubleClick={true}
+                        loading={isSubmitting}
+                        loadingText="처리 중..."
+                        disabled={isSubmitting}
                     >
                         비밀번호 초기화
                     </MGButton>

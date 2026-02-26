@@ -23,6 +23,7 @@ import { getCommonCodes } from '../../utils/commonCodeApi';
 import { sessionManager } from '../../utils/sessionManager';
 import ProfileImageInput from '../common/ProfileImageInput';
 import PasswordResetModal from './PasswordResetModal';
+import { showSuccess, showError } from '../../utils/notification';
 import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import ContentSection from '../dashboard-v2/content/ContentSection';
@@ -819,16 +820,14 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
 
         try {
             console.log('🔑 상담사 비밀번호 초기화 시작:', passwordResetConsultant.id);
-            
+
             const endpoint = `/api/v1/admin/user-management/${passwordResetConsultant.id}/reset-password?newPassword=${encodeURIComponent(newPassword)}`;
             const response = await StandardizedApi.put(endpoint, {});
-            
+
             console.log('✅ 비밀번호 초기화 응답:', response);
-            
+
             if (response && (response.success !== false)) {
-                window.dispatchEvent(new CustomEvent('showNotification', {
-                    detail: { message: '비밀번호가 성공적으로 초기화되었습니다.', type: 'success' }
-                }));
+                showSuccess('비밀번호가 성공적으로 초기화되었습니다.');
                 setShowPasswordResetModal(false);
                 setPasswordResetConsultant(null);
             } else {
@@ -836,9 +835,8 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
             }
         } catch (error) {
             console.error('❌ 비밀번호 초기화 실패:', error);
-            window.dispatchEvent(new CustomEvent('showNotification', {
-                detail: { message: '비밀번호 초기화 중 오류가 발생했습니다: ' + (error.message || '알 수 없는 오류'), type: 'error' }
-            }));
+            showError('비밀번호 초기화 중 오류가 발생했습니다: ' + (error.message || '알 수 없는 오류'));
+            throw error;
         }
     }, [passwordResetConsultant]);
 

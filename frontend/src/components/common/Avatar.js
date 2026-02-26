@@ -38,7 +38,6 @@ const Avatar = ({
   const sizeStyle = size != null
     ? { '--avatar-size': typeof size === 'number' ? `${size}px` : String(size) }
     : undefined;
-  /* eslint-disable-next-line sonarjs/no-negated-condition -- a11y는 이미지 미표시 시에만 필요 */
   const a11yProps = showImage
     ? {}
     : { role: 'img', 'aria-label': `${displayName || '사용자'} 이니셜` };

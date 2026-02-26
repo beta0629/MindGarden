@@ -1748,6 +1748,7 @@ const AdminDashboard = ({ user: propUser }) => {
                 mapping={depositModalMapping || {}}
                 onDepositConfirmed={() => {
                     setDepositModalMapping(null);
+                    loadStats();
                     loadPendingDepositStats();
                 }}
             />

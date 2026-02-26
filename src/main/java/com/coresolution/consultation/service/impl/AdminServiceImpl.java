@@ -4079,10 +4079,14 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             }
             List<Map<String, Object>> monthlyData = new ArrayList<>();
             LocalDate now = LocalDate.now();
-            // 과거 → 현재 순으로 추가 (예: 6개월이면 5개월 전, 4개월 전, ..., 이번 달)
-            for (int i = lastMonths - 1; i >= 0; i--) {
-                LocalDate monthStart = now.minusMonths(i).withDayOfMonth(1);
+            // completion 통계(올해 1~12월)와 동일한 기간: 올해 1월 ~ 현재월 전체 반환
+            LocalDate yearStart = LocalDate.of(now.getYear(), 1, 1);
+            int monthsCount = (int) java.time.temporal.ChronoUnit.MONTHS.between(yearStart, now) + 1;
+            if (monthsCount <= 0) monthsCount = 1;
+            for (int i = 0; i < monthsCount; i++) {
+                LocalDate monthStart = yearStart.plusMonths(i);
                 LocalDate monthEnd = monthStart.withDayOfMonth(monthStart.lengthOfMonth());
+                if (monthEnd.isAfter(now)) monthEnd = now;
                 long count = scheduleRepository.countByStatusAndDateBetween(
                     tenantId, ScheduleStatus.COMPLETED.name(), monthStart, monthEnd);
                 Map<String, Object> row = new HashMap<>();
@@ -4090,7 +4094,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 row.put("completedCount", (int) count);
                 monthlyData.add(row);
             }
-            log.info("✅ 월별 상담 완료 추이 조회 완료: {}개월", monthlyData.size());
+            log.info("✅ 월별 상담 완료 추이 조회 완료: {}개월 (올해 기준)", monthlyData.size());
             return monthlyData;
         } catch (Exception e) {
             log.error("❌ 월별 상담 완료 추이 조회 실패", e);

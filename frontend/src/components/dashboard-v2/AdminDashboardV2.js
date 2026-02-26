@@ -556,9 +556,10 @@ const AdminDashboardV2 = ({ user: propUser }) => {
 
   // 세션 사용자(role) 준비 시 예약된 상담 KPI 로드 (첫 로드에서 바로 표시)
   useEffect(() => {
+    if (sessionLoading) return;
     const user = propUser || sessionUser;
     if (user?.role) loadTodayStats();
-  }, [sessionUser, propUser, loadTodayStats]);
+  }, [sessionLoading, sessionUser, propUser, loadTodayStats]);
 
   const topConsultantsData = (stats.consultantRatingStats?.topConsultants || [])
     .slice(0, 4)
@@ -665,6 +666,8 @@ const AdminDashboardV2 = ({ user: propUser }) => {
                 stats.consultationStats?.monthlyData?.length > 0
                   ? stats.consultationStats.monthlyData.slice(0, 6)
                   : getEmptyMonthlyChartData(6);
+              const values = monthlyData.map((d) => d.completedCount || 0);
+              const maxVal = Math.max(...values, 1);
               return (
                 <Chart
                   type={CHART_TYPES.BAR}
@@ -673,7 +676,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
                     datasets: [
                       {
                         label: '완료 상담',
-                        data: monthlyData.map((d) => d.completedCount || 0),
+                        data: values,
                         backgroundColor: 'var(--ad-b0kla-blue)',
                         borderColor: 'var(--ad-b0kla-green)',
                         borderWidth: 1,
@@ -699,6 +702,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
                       },
                       y: {
                         beginAtZero: true,
+                        suggestedMax: Math.max(maxVal + 1, 2),
                         ticks: { stepSize: 1 },
                         grid: { color: 'var(--mg-shadow-light)' }
                       }
@@ -1136,6 +1140,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
         mapping={depositModalMapping || {}}
         onDepositConfirmed={() => {
           setDepositModalMapping(null);
+          loadStats();
           loadPendingDepositStats();
         }}
       />

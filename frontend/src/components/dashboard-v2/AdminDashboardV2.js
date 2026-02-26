@@ -883,7 +883,6 @@ const AdminDashboardV2 = ({ user: propUser }) => {
         />
       </div>
 
-      {!HIDE_DASHBOARD_MENUS && (
       <ContentSection
         title="관리 기능"
         subtitle="시스템 관리 및 설정 기능"
@@ -1159,7 +1158,6 @@ const AdminDashboardV2 = ({ user: propUser }) => {
           </button>
         </div>
       </ContentSection>
-      )}
 
       {showToastState && (
         <div className={`mg-toast mg-toast-${toastType}`}>

@@ -9,7 +9,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Edit3, Ban, CheckCircle } from 'lucide-react';
-import UnifiedLoading from '../../../common/UnifiedLoading';
+import AdminCommonLayout from '../../../layout/AdminCommonLayout';
 import StandardizedApi from '../../../../utils/standardizedApi';
 import notificationManager from '../../../../utils/notification';
 import ContentArea from '../../../dashboard-v2/content/ContentArea';
@@ -90,19 +90,13 @@ function PackagePricingListPage() {
     return Number.isNaN(n) ? '-' : `${n.toLocaleString()}원`;
   };
 
-  if (loading) {
-    return (
-      <div className="mg-v2-ad-b0kla mg-v2-package-pricing">
-        <div className="mg-v2-ad-b0kla__container">
-          <UnifiedLoading type="page" text="데이터를 불러오는 중..." variant="pulse" />
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="mg-v2-ad-b0kla mg-v2-package-pricing">
-      <div className="mg-v2-ad-b0kla__container">
+    <AdminCommonLayout
+      title={LABELS.PAGE_TITLE}
+      loading={loading}
+      loadingText="데이터를 불러오는 중..."
+    >
+      <div className="mg-v2-ad-b0kla__container mg-v2-package-pricing">
         <ContentArea>
           <ContentHeader
             title={LABELS.PAGE_TITLE}
@@ -195,7 +189,7 @@ function PackagePricingListPage() {
           </section>
         </ContentArea>
       </div>
-    </div>
+    </AdminCommonLayout>
   );
 }
 

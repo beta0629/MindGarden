@@ -10,7 +10,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
-import UnifiedLoading from '../../../common/UnifiedLoading';
+import AdminCommonLayout from '../../../layout/AdminCommonLayout';
 import StandardizedApi from '../../../../utils/standardizedApi';
 import notificationManager from '../../../../utils/notification';
 import ContentArea from '../../../dashboard-v2/content/ContentArea';
@@ -183,21 +183,15 @@ function PackagePricingDetailPage({ isNew: isNewProp }) {
 
   const goToList = () => navigate('/admin/package-pricing');
 
-  if (loading) {
-    return (
-      <div className="mg-v2-ad-b0kla mg-v2-package-pricing">
-        <div className="mg-v2-ad-b0kla__container">
-          <UnifiedLoading type="page" text="데이터를 불러오는 중..." variant="pulse" />
-        </div>
-      </div>
-    );
-  }
-
   const pageTitle = isNew ? LABELS.NEW_PAGE_TITLE : LABELS.DETAIL_PAGE_TITLE;
 
   return (
-    <div className="mg-v2-ad-b0kla mg-v2-package-pricing">
-      <div className="mg-v2-ad-b0kla__container">
+    <AdminCommonLayout
+      title={pageTitle}
+      loading={loading}
+      loadingText="데이터를 불러오는 중..."
+    >
+      <div className="mg-v2-ad-b0kla__container mg-v2-package-pricing">
         <ContentArea>
           <ContentHeader
             title={pageTitle}
@@ -325,7 +319,7 @@ function PackagePricingDetailPage({ isNew: isNewProp }) {
           </section>
         </ContentArea>
       </div>
-    </div>
+    </AdminCommonLayout>
   );
 }
 

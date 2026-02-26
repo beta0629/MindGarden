@@ -14,7 +14,8 @@ description: 전반 기획 절차·산출물·서브에이전트 가동 계획. 
 ### 0.0 프로젝트 기본
 
 - **프로젝트**: MindGarden(마인드가든), Core Solution 표준. 도메인: 상담 매칭·스케줄·회기·결제·멀티테넌트. 역할: ADMIN, CONSULTANT, CLIENT, STAFF 등.
-- **참조**: `docs/standards/`, `docs/project-management/`, `docs/layout/README.md`.
+- **반응형은 기본**: 모든 신규·개선 화면은 **반응형(모바일·태블릿·데스크톱)** 을 전제로 기획·설계·구현한다. 목록은 테이블보다 **카드형** 등 반응형에 유리한 형태를 우선 검토한다.
+- **참조**: `docs/standards/`, `docs/project-management/`, `docs/layout/README.md`, `docs/design-system/RESPONSIVE_LAYOUT_SPEC.md`.
 
 ### 0.1 펜슬·아토믹 디자인
 

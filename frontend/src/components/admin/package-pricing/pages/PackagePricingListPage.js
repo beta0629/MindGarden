@@ -1,6 +1,6 @@
 /**
  * 패키지 요금 관리 - 목록 페이지
- * MappingManagementPage와 동일 레이아웃: mg-v2-ad-b0kla + ContentArea + ContentHeader + 테이블
+ * 반응형 카드 그리드: 모바일 1열, 태블릿 2열, 데스크톱 2~3열
  *
  * @author Core Solution
  * @since 2026-02-26
@@ -115,77 +115,66 @@ function PackagePricingListPage() {
 
           <section className="mg-v2-ad-b0kla__card">
             <h2 className="mg-v2-ad-b0kla__section-title">{LABELS.SECTION_LIST}</h2>
-            <div className="mg-v2-ad-b0kla__table-wrap" style={{ overflowX: 'auto' }}>
-              <table className="mg-v2-ad-b0kla__table" style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead>
-                  <tr style={{ borderBottom: '1px solid var(--ad-b0kla-border)' }}>
-                    <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 600 }}>{LABELS.COL_CODE}</th>
-                    <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 600 }}>{LABELS.COL_NAME}</th>
-                    <th style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 600 }}>{LABELS.COL_SESSIONS}</th>
-                    <th style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 600 }}>{LABELS.COL_PRICE}</th>
-                    <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 600 }}>{LABELS.COL_REMARK}</th>
-                    <th style={{ padding: '12px 16px', textAlign: 'center', fontWeight: 600 }}>{LABELS.COL_ACTIVE}</th>
-                    <th style={{ padding: '12px 16px', textAlign: 'center', fontWeight: 600 }}>{LABELS.COL_ACTIONS}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {list.length === 0 ? (
-                    <tr>
-                      <td colSpan={7} style={{ padding: 24, textAlign: 'center', color: 'var(--ad-b0kla-text-secondary)' }}>
-                        등록된 패키지가 없습니다. 새 패키지를 추가해 주세요.
-                      </td>
-                    </tr>
-                  ) : (
-                    list.map((row) => {
-                      const extra = parseExtraData(row.extraData);
-                      return (
-                        <tr key={row.id} style={{ borderBottom: '1px solid var(--ad-b0kla-border)' }}>
-                          <td style={{ padding: '12px 16px' }}>{row.codeValue || '-'}</td>
-                          <td style={{ padding: '12px 16px' }}>{row.koreanName || row.codeLabel || '-'}</td>
-                          <td style={{ padding: '12px 16px', textAlign: 'right' }}>
-                            {extra.sessions !== null && extra.sessions !== undefined ? extra.sessions : '-'}
-                          </td>
-                          <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 600 }}>
-                            {formatPrice(extra.price)}
-                          </td>
-                          <td style={{ padding: '12px 16px', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                            {extra.remark || '-'}
-                          </td>
-                          <td style={{ padding: '12px 16px', textAlign: 'center' }}>
-                            <span className={`mg-v2-badge ${row.isActive === true || row.isActive === undefined ? 'success' : 'secondary'}`}>
-                              {row.isActive === true || row.isActive === undefined ? LABELS.ACTIVE_YES : LABELS.ACTIVE_NO}
-                            </span>
-                          </td>
-                          <td style={{ padding: '12px 16px', textAlign: 'center' }}>
-                            <button
-                              type="button"
-                              className="mg-v2-button mg-v2-button-secondary"
-                              style={{ marginRight: 8, padding: '6px 12px' }}
-                              onClick={() => navigate(`/admin/package-pricing/${row.id}`)}
-                            >
-                              <Edit3 size={14} />
-                              {LABELS.EDIT}
-                            </button>
-                            <button
-                              type="button"
-                              className={(row.isActive === true || row.isActive === undefined) ? 'mg-v2-button mg-v2-button-danger' : 'mg-v2-button mg-v2-button-success'}
-                              style={{ padding: '6px 12px' }}
-                              onClick={() => handleToggleActive(row)}
-                            >
-                              {(row.isActive === true || row.isActive === undefined) ? (
-                                <><Ban size={14} /> {LABELS.DEACTIVATE}</>
-                              ) : (
-                                <><CheckCircle size={14} /> {LABELS.ACTIVATE}</>
-                              )}
-                            </button>
-                          </td>
-                        </tr>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
-            </div>
+            {list.length === 0 ? (
+              <p className="mg-v2-package-pricing-cards-empty">
+                등록된 패키지가 없습니다. 새 패키지를 추가해 주세요.
+              </p>
+            ) : (
+              <div className="mg-v2-package-pricing-cards-grid">
+                {list.map((row) => {
+                  const extra = parseExtraData(row.extraData);
+                  return (
+                    <article
+                      key={row.id}
+                      className="mg-v2-package-pricing-card mg-v2-ad-b0kla__card"
+                    >
+                      <div className="mg-v2-package-pricing-card__header">
+                        <span className="mg-v2-package-pricing-card__code">{row.codeValue || '-'}</span>
+                        <span className={`mg-v2-badge ${row.isActive === true || row.isActive === undefined ? 'success' : 'secondary'}`}>
+                          {row.isActive === true || row.isActive === undefined ? LABELS.ACTIVE_YES : LABELS.ACTIVE_NO}
+                        </span>
+                      </div>
+                      <h3 className="mg-v2-package-pricing-card__title">{row.koreanName || row.codeLabel || '-'}</h3>
+                      <dl className="mg-v2-package-pricing-card__meta">
+                        <div className="mg-v2-package-pricing-card__row">
+                          <dt>{LABELS.COL_SESSIONS}</dt>
+                          <dd>{extra.sessions !== null && extra.sessions !== undefined ? extra.sessions : '-'}</dd>
+                        </div>
+                        <div className="mg-v2-package-pricing-card__row">
+                          <dt>{LABELS.COL_PRICE}</dt>
+                          <dd className="mg-v2-package-pricing-card__price">{formatPrice(extra.price)}</dd>
+                        </div>
+                        <div className="mg-v2-package-pricing-card__row">
+                          <dt>{LABELS.COL_REMARK}</dt>
+                          <dd className="mg-v2-package-pricing-card__remark">{extra.remark || '-'}</dd>
+                        </div>
+                      </dl>
+                      <div className="mg-v2-package-pricing-card__actions">
+                        <button
+                          type="button"
+                          className="mg-v2-button mg-v2-button-secondary"
+                          onClick={() => navigate(`/admin/package-pricing/${row.id}`)}
+                        >
+                          <Edit3 size={14} />
+                          {LABELS.EDIT}
+                        </button>
+                        <button
+                          type="button"
+                          className={(row.isActive === true || row.isActive === undefined) ? 'mg-v2-button mg-v2-button-danger' : 'mg-v2-button mg-v2-button-success'}
+                          onClick={() => handleToggleActive(row)}
+                        >
+                          {(row.isActive === true || row.isActive === undefined) ? (
+                            <><Ban size={14} /> {LABELS.DEACTIVATE}</>
+                          ) : (
+                            <><CheckCircle size={14} /> {LABELS.ACTIVATE}</>
+                          )}
+                        </button>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            )}
           </section>
         </ContentArea>
       </div>

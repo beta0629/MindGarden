@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { AlertTriangle, Eye, EyeOff } from 'lucide-react';
 import UnifiedModal from '../common/modals/UnifiedModal';
+import './PasswordResetModal.css';
 
 /**
  * 비밀번호 초기화 모달 컴포넌트
@@ -29,9 +30,9 @@ const PasswordResetModal = ({
         }
 
         if (!confirmPassword || confirmPassword.trim().length === 0) {
-            newErrors.confirmPassword = '비밀번호 확인을 입력해주세요.';
+            newErrors.confirmPassword = '비밀번호 확인란에 위와 동일한 비밀번호를 입력해주세요.';
         } else if (newPassword !== confirmPassword) {
-            newErrors.confirmPassword = '비밀번호가 일치하지 않습니다.';
+            newErrors.confirmPassword = '위 비밀번호와 일치하지 않습니다. 다시 입력해주세요.';
         }
 
         setErrors(newErrors);
@@ -95,7 +96,7 @@ const PasswordResetModal = ({
 
             <form
                 id="admin-password-reset-form"
-                className="mg-v2-form"
+                className="mg-v2-form admin-password-reset-form"
                 onSubmit={handleSubmit}
             >
                 <div className="mg-v2-form-group">
@@ -131,7 +132,10 @@ const PasswordResetModal = ({
                         </button>
                     </div>
                     {errors.newPassword && (
-                        <span className="mg-v2-form-error">{errors.newPassword}</span>
+                        <span className="mg-v2-form-error" role="alert">
+                            <AlertTriangle size={16} aria-hidden />
+                            {errors.newPassword}
+                        </span>
                     )}
                 </div>
 
@@ -168,7 +172,10 @@ const PasswordResetModal = ({
                         </button>
                     </div>
                     {errors.confirmPassword && (
-                        <span className="mg-v2-form-error">{errors.confirmPassword}</span>
+                        <span className="mg-v2-form-error" role="alert">
+                            <AlertTriangle size={16} aria-hidden />
+                            {errors.confirmPassword}
+                        </span>
                     )}
                 </div>
             </form>

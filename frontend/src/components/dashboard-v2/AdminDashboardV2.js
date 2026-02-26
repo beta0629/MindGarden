@@ -43,6 +43,12 @@ import UnifiedModal from '../common/modals/UnifiedModal';
 import StandardizedApi from '../../utils/standardizedApi';
 import Chart from '../common/Chart';
 import { CHART_TYPES } from '../../constants/charts';
+
+/** 상담 현황 추이 막대 차트 B0KlA 색상 fallback (Canvas가 CSS 변수 미해석 시) */
+const CHART_BAR_FALLBACK = {
+  FILL: '#059669',
+  BORDER: '#2563eb'
+};
 import {
   CoreFlowPipeline,
   ManualMatchingQueue,
@@ -229,7 +235,26 @@ const AdminDashboardV2 = ({ user: propUser }) => {
   const [toastType, setToastType] = useState('success');
   const [chartPeriod, setChartPeriod] = useState('monthly');
   const [searchValue, setSearchValue] = useState('');
+  /** 상담 현황 추이 막대 차트 색상 (CSS 변수 resolved, Canvas용) */
+  const [chartBarColors, setChartBarColors] = useState({
+    fill: CHART_BAR_FALLBACK.FILL,
+    border: CHART_BAR_FALLBACK.BORDER
+  });
+  const chartBarWrapperRef = useRef(null);
   const isInitialized = useRef(false);
+
+  /** B0KlA 차트 막대 색상: CSS 변수를 resolved 값(hex/rgb)으로 읽어 Canvas에 전달 */
+  useEffect(() => {
+    const el = chartBarWrapperRef.current || document.documentElement;
+    const style = el && typeof getComputedStyle !== 'undefined' ? getComputedStyle(el) : null;
+    if (!style) return;
+    const fill = style.getPropertyValue('--ad-b0kla-green').trim();
+    const border = style.getPropertyValue('--ad-b0kla-blue').trim();
+    setChartBarColors({
+      fill: fill || CHART_BAR_FALLBACK.FILL,
+      border: border || CHART_BAR_FALLBACK.BORDER
+    });
+  }, [chartPeriod]);
 
   const loadTodayStats = useCallback(async () => {
     const user = propUser || sessionUser;
@@ -393,13 +418,15 @@ const AdminDashboardV2 = ({ user: propUser }) => {
         vacationStats,
         consultationStats
       });
+      const user = propUser || sessionUser;
+      if (user?.role) loadTodayStats();
     } catch (error) {
       console.error('통계 데이터 로드 실패:', error);
       showToast('통계 데이터 로드에 실패했습니다.', 'danger');
     } finally {
       setLoading(false);
     }
-  }, [showToast]);
+  }, [showToast, propUser, sessionUser, loadTodayStats]);
 
   const loadRefundStats = useCallback(async () => {
     try {
@@ -682,7 +709,10 @@ const AdminDashboardV2 = ({ user: propUser }) => {
               </button>
             </div>
           </div>
-          <div className="mg-v2-ad-b0kla__chart-placeholder mg-v2-ad-b0kla__chart-wrapper">
+          <div
+            className="mg-v2-ad-b0kla__chart-placeholder mg-v2-ad-b0kla__chart-wrapper"
+            ref={chartBarWrapperRef}
+          >
             {(() => {
               const isWeekly = chartPeriod === 'weekly';
               const rawData = isWeekly
@@ -709,8 +739,8 @@ const AdminDashboardV2 = ({ user: propUser }) => {
                       {
                         label: '완료 상담',
                         data: values,
-                        backgroundColor: 'var(--ad-b0kla-blue)',
-                        borderColor: 'var(--ad-b0kla-green)',
+                        backgroundColor: chartBarColors.fill,
+                        borderColor: chartBarColors.border,
                         borderWidth: 1,
                         borderRadius: 6
                       }

@@ -115,7 +115,9 @@ const TabletLogin = () => {
               accessToken: result.accessToken || 'existing_session_token',
               refreshToken: result.refreshToken || 'existing_session_refresh_token'
             });
-            
+            // SessionContext 동기화 (로그인 직후 공통코드 등에서 user 사용 가능하도록)
+            await checkSession(true);
+
             // 동적 대시보드 라우팅
             const authResponse = {
               user: result.user,
@@ -182,7 +184,9 @@ const TabletLogin = () => {
           accessToken: result.accessToken,
           refreshToken: result.refreshToken
         });
-        
+        // SessionContext 동기화 (로그인 직후 공통코드 등에서 user 사용 가능하도록)
+        await checkSession(true);
+
         // 로그인 성공 알림
         showTooltip('로그인에 성공했습니다.', 'success');
         

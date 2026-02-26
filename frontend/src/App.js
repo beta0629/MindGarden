@@ -162,17 +162,16 @@ function AppContent() {
   });
   
   // 공개 경로 정의 (인증 없이 접근 가능)
-  // eslint-disable-next-line no-unused-vars
   const publicPaths = [
     '/login',
-    '/register', 
+    '/register',
     '/forgot-password',
     '/reset-password',
     '/oauth2/callback',
     '/design-system',
     '/design-system-v2',
     '/test/notifications',
-    '/test/payment', 
+    '/test/payment',
     '/test/integration',
     '/test/ios-cards',
     '/test/design-sample',
@@ -180,16 +179,15 @@ function AppContent() {
     '/test/advanced-sample',
     '/test/components'
   ];
-  
-  // 세션 체크를 useEffect에서 완전히 제거하고 다른 방식으로 처리
-  // const isPublicPath = publicPaths.includes(window.location.pathname);
-  // if (!isPublicPath) {
-  //   console.log('🔍 세션 확인 시작...');
-  //   checkSession();
-  // } else {
-  //   console.log('🔓 공개 경로 - 세션 체크 건너뛰기:', window.location.pathname);
-  // }
-  
+
+  const location = useLocation();
+  useEffect(() => {
+    const isPublicPath = publicPaths.includes(location.pathname);
+    if (!isPublicPath) {
+      checkSession();
+    }
+  }, [location.pathname, checkSession]);
+
   // 통계 모달 상태
   const [showStatisticsModal, setShowStatisticsModal] = React.useState(false);
   

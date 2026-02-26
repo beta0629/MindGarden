@@ -8,7 +8,7 @@ import UnifiedModal from './modals/UnifiedModal';
 import Button from '../ui/Button';
 
 const DuplicateLoginModal = () => {
-  const { duplicateLoginModal, setDuplicateLoginModal } = useSession();
+  const { duplicateLoginModal, setDuplicateLoginModal, checkSession } = useSession();
 
   const handleConfirm = async () => {
     if (!duplicateLoginModal.loginData) {
@@ -38,6 +38,8 @@ const DuplicateLoginModal = () => {
         sessionManager.setUser(response.user, {
           sessionId: response.sessionId || null
         });
+        // SessionContext 동기화 (로그인 직후 공통코드 등에서 user 사용 가능하도록)
+        await checkSession(true);
         console.log('✅ 세션 설정 완료 - 사용자 정보 저장됨');
 
         notificationManager.show('로그인에 성공했습니다.', 'success');
@@ -50,7 +52,6 @@ const DuplicateLoginModal = () => {
 
         setTimeout(async () => {
           try {
-            await sessionManager.checkSession(true);
 
             const { getCurrentUserDashboard, getDynamicDashboardPath } = await import('../../utils/dashboardUtils');
             const dashboard = await getCurrentUserDashboard(

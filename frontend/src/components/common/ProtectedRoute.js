@@ -13,9 +13,13 @@ import { useSession } from '../../contexts/SessionContext';
 import UnifiedLoading from './UnifiedLoading';
 
 const ProtectedRoute = ({ children, requiredRole, requiredRoles, requiredPermissionGroups }) => {
-  const { user, isLoading, hasRole, hasPermissionGroup, isAdmin } = useSession();
+  const { user, isLoading, hasCheckedSession, hasRole, hasPermissionGroup, isAdmin } = useSession();
 
   if (isLoading) {
+    return <UnifiedLoading />;
+  }
+
+  if (!hasCheckedSession) {
     return <UnifiedLoading />;
   }
 

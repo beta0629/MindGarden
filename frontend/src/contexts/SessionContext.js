@@ -19,6 +19,8 @@ const SessionState = {
     loginData: null
   }, // 중복 로그인 확인 모달 상태 추가
   // branchMappingModal 제거됨 - 브랜치 코드 제거 정책
+  /** 한 번이라도 세션 확인(동기 복원 또는 checkSession 완료)을 했는지 */
+  hasCheckedSession: false
 };
 
 // 액션 타입 정의
@@ -32,7 +34,8 @@ const SessionActionTypes = {
   SET_MODAL_OPEN: 'SET_MODAL_OPEN', // 모달 상태 액션 추가
   SET_DUPLICATE_LOGIN_MODAL: 'SET_DUPLICATE_LOGIN_MODAL', // 중복 로그인 모달 액션 추가
   // SET_BRANCH_MAPPING_MODAL 제거됨 - 브랜치 코드 제거 정책
-  SET_LOGGED_IN: 'SET_LOGGED_IN' // 로그인 상태 액션 추가
+  SET_LOGGED_IN: 'SET_LOGGED_IN', // 로그인 상태 액션 추가
+  SET_HAS_CHECKED_SESSION: 'SET_HAS_CHECKED_SESSION'
 };
 
 // 리듀서 함수
@@ -100,7 +103,13 @@ const sessionReducer = (state, action) => {
         ...state,
         isLoggedIn: action.payload
       };
-    
+
+    case SessionActionTypes.SET_HAS_CHECKED_SESSION:
+      return {
+        ...state,
+        hasCheckedSession: action.payload
+      };
+
     default:
       return state;
   }
@@ -119,13 +128,13 @@ export const SessionProvider = ({ children }) => {
     stateRef.current = state;
   }, [state]);
 
-  // 초기 마운트 시 sessionManager에서 사용자 정보 복원
+  // 초기 마운트 시 sessionManager에서 사용자 정보 복원 후 세션 확인 완료 플래그 설정
   useEffect(() => {
     console.log('🔄 SessionProvider 마운트: sessionManager에서 사용자 정보 복원');
     const user = sessionManager.getUser();
     const sessionInfo = sessionManager.getSessionInfo();
     const isLoggedIn = sessionManager.isLoggedIn();
-    
+
     if (user && isLoggedIn) {
       console.log('✅ SessionProvider: sessionManager에서 사용자 정보 발견:', user);
       dispatch({ type: SessionActionTypes.SET_USER, payload: user });
@@ -136,6 +145,7 @@ export const SessionProvider = ({ children }) => {
     } else {
       console.log('❌ SessionProvider: sessionManager에 사용자 정보 없음');
     }
+    dispatch({ type: SessionActionTypes.SET_HAS_CHECKED_SESSION, payload: true });
   }, []); // 빈 배열: 마운트 시 한 번만 실행
 
   // 세션 체크 함수 (useCallback으로 메모이제이션)
@@ -205,6 +215,7 @@ export const SessionProvider = ({ children }) => {
       return false;
     } finally {
       dispatch({ type: SessionActionTypes.SET_LOADING, payload: false });
+      dispatch({ type: SessionActionTypes.SET_HAS_CHECKED_SESSION, payload: true });
     }
   }, []); // 의존성 배열을 빈 배열로 설정 (stateRef 사용으로 무한루프 방지)
 
@@ -429,6 +440,7 @@ export const SessionProvider = ({ children }) => {
     sessionInfo: state.sessionInfo,
     isLoading: state.isLoading,
     isLoggedIn: state.isLoggedIn,
+    hasCheckedSession: state.hasCheckedSession,
     error: state.error,
     isModalOpen: state.isModalOpen,
     duplicateLoginModal: state.duplicateLoginModal,

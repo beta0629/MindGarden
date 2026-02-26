@@ -22,6 +22,7 @@ import { useNavigate } from 'react-router-dom';
 import CommonPageTemplate from '../common/CommonPageTemplate';
 import SimpleLayout from '../layout/SimpleLayout';
 import { API_BASE_URL } from '../../constants/api';
+import { useSession } from '../../contexts/SessionContext';
 import { sessionManager } from '../../utils/sessionManager';
 import { redirectToDynamicDashboard } from '../../utils/dashboardUtils';
 import notificationManager from '../../utils/notification';
@@ -29,6 +30,7 @@ import '../../styles/auth/TenantSelection.css';
 
 const TenantSelection = ({ tenants, onSelect, onCancel }) => {
   const navigate = useNavigate();
+  const { checkSession } = useSession();
   const [selectedTenantId, setSelectedTenantId] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -72,7 +74,9 @@ const TenantSelection = ({ tenants, onSelect, onCancel }) => {
             }
             
             sessionManager.setUser(user, sessionManager.getSessionInfo());
-            
+            // SessionContext 동기화 (테넌트 선택 직후 공통코드 등에서 user 사용 가능하도록)
+            await checkSession(true);
+
             // 잠시 대기 후 동적 대시보드로 리다이렉트
             await new Promise(resolve => setTimeout(resolve, 300));
             

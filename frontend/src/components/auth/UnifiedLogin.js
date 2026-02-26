@@ -342,6 +342,8 @@ const UnifiedLogin = () => {
         if (userData && userData.id) {
           // 사용자 정보가 있으면 sessionManager에 설정
           sessionManager.setUser(userData);
+          // SessionContext 동기화 (로그인 직후 공통코드 등에서 user 사용 가능하도록)
+          await checkSession(true);
 
           // 멀티 테넌트 사용자 확인
           await checkMultiTenantAndRedirect(userData);
@@ -520,6 +522,8 @@ const UnifiedLogin = () => {
                 sessionManager.setUser(confirmData.user, {
                   sessionId: confirmData.sessionId
                 });
+                // SessionContext 동기화 (로그인 직후 공통코드 등에서 user 사용 가능하도록)
+                await checkSession(true);
 
                 // 백엔드에서 반환한 멀티 테넌트 정보 확인
                 if (confirmData.isMultiTenant && confirmData.requiresTenantSelection && confirmData.accessibleTenants) {
@@ -576,6 +580,8 @@ const UnifiedLogin = () => {
         sessionManager.setUser(loginData.user, {
           sessionId: loginData.sessionId
         });
+        // SessionContext 동기화 (로그인 직후 공통코드 등에서 user 사용 가능하도록)
+        await checkSession(true);
 
         // 로그인 직후 플래그 설정 (세션 체크 시 리다이렉트 방지)
         sessionStorage.setItem('justLoggedIn', 'true');

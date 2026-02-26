@@ -74,6 +74,7 @@ export const useWidget = (config = {}, user = null, options = {}) => {
   const intervalRef = useRef(null);
   const retryTimeoutRef = useRef(null);
   const cacheRef = useRef(new Map());
+  const loadDataRef = useRef(null);
 
   // 데이터 소스 설정 추출
   const dataSource = config.dataSource || {};
@@ -295,13 +296,17 @@ export const useWidget = (config = {}, user = null, options = {}) => {
     }
   }, [refreshInterval, loadData]);
 
-/**
-   * 초기 데이터 로드 (api / single-api / multi-api 모두 최초 마운트 시 로드)
+  // loadData 변경 시 ref에 반영 (초기 로드 effect가 loadData에 의존하지 않도록)
+  loadDataRef.current = loadData;
+
+  /**
+   * 초기 데이터 로드 (api / single-api / multi-api 모두 최초 마운트 시 1회만 실행)
+   * loadData를 deps에 넣지 않아, 500 재시도 시 loadData 변경으로 effect가 반복 실행되는 것을 방지
    */
   useEffect(() => {
     if (immediate) {
       if (type === 'api' || type === 'single-api' || type === 'multi-api') {
-        loadData(true);
+        loadDataRef.current?.(true);
       } else if (type === 'static' && config.defaultValue !== undefined) {
         setData(config.defaultValue);
         setLoading(false);
@@ -309,7 +314,7 @@ export const useWidget = (config = {}, user = null, options = {}) => {
         setLoading(false);
       }
     }
-  }, [immediate, type, config.defaultValue, loadData]);
+  }, [immediate, type, config.defaultValue]);
 
 /**
    * 컴포넌트 언마운트 시 정리

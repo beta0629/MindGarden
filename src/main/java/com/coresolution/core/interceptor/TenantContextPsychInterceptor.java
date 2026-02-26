@@ -33,12 +33,23 @@ public class TenantContextPsychInterceptor implements HandlerInterceptor {
         if (auth == null || !auth.isAuthenticated()) {
             return true;
         }
+        // SessionUtils와 동일: details 먼저, 없으면 principal에서 User 조회
+        User user = null;
         Object details = auth.getDetails();
-        if (details instanceof User user) {
+        if (details instanceof User u) {
+            user = u;
+        }
+        if (user == null) {
+            Object principal = auth.getPrincipal();
+            if (principal instanceof User u) {
+                user = u;
+            }
+        }
+        if (user != null) {
             String tenantId = user.getTenantId();
             if (tenantId != null && !tenantId.isEmpty()) {
                 TenantContextHolder.setTenantId(tenantId);
-                log.debug("TenantContext set from Psych interceptor (principal): {}", tenantId);
+                log.debug("TenantContext set from Psych interceptor: {}", tenantId);
             }
         }
         return true;

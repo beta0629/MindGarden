@@ -29,6 +29,24 @@ const getDefaultHeaders = () => {
   return getDefaultApiHeaders();
 };
 
+/** 401/403 등으로 로그인 리다이렉트가 이미 예약되었는지 여부. 동시 다발 401 시 한 번만 리다이렉트. */
+let redirectScheduled = false;
+
+/**
+ * 로그인 페이지로 한 번만 리다이렉트. 이미 예약된 경우 스킵.
+ * @returns {boolean} 리다이렉트를 수행했으면 true, 스킵했으면 false
+ */
+const redirectToLoginOnce = () => {
+  if (redirectScheduled) {
+    return false;
+  }
+  redirectScheduled = true;
+  localStorage.removeItem('accessToken');
+  localStorage.removeItem('refreshToken');
+  window.location.href = `${window.location.origin}/login`;
+  return true;
+};
+
 // 에러 메시지 생성
 const getErrorMessage = (status) => {
   switch (status) {
@@ -71,13 +89,11 @@ const checkSessionAndRedirect = async (response) => {
         method: 'GET'
       });
       
-      // 세션이 없으면 로그인 페이지로 리다이렉트 (서브도메인 유지)
+      // 세션이 없으면 로그인 페이지로 리다이렉트 (서브도메인 유지, 한 번만)
       if (!sessionResponse.ok) {
         console.log('🔐 세션 없음 - 로그인 페이지로 리다이렉트 (서브도메인 유지)');
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-        window.location.href = `${window.location.origin}/login`;
-        return true; // 리다이렉트됨
+        redirectToLoginOnce();
+        return true;
       }
       
       // 세션이 있으면 리다이렉트하지 않음 (권한 문제일 수 있음)
@@ -85,10 +101,8 @@ const checkSessionAndRedirect = async (response) => {
       return false;
     } catch (sessionError) {
       console.log('🔐 세션 체크 실패 - 로그인 페이지로 리다이렉트 (서브도메인 유지)');
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
-      window.location.href = `${window.location.origin}/login`;
-      return true; // 리다이렉트됨
+      redirectToLoginOnce();
+      return true;
     }
   }
   
@@ -105,9 +119,7 @@ const checkSessionAndRedirect = async (response) => {
 const handleError = (error, status) => {
   const isLocalEnv = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
   if (status === API_STATUS.UNAUTHORIZED && !isLocalEnv) {
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
-    window.location.href = `${window.location.origin}/login`;
+    redirectToLoginOnce();
   }
   throw new Error(getErrorMessage(status));
 };
@@ -190,9 +202,7 @@ export const apiGet = async (endpoint, params = {}, options = {}) => {
 
             if (!isPublicPage) {
               console.log('🔐 400 오류 (Tenant ID 부족) - 로그인 페이지로 리다이렉트 (서브도메인 유지)');
-              localStorage.removeItem('accessToken');
-              localStorage.removeItem('refreshToken');
-              window.location.href = `${window.location.origin}/login`;
+              redirectToLoginOnce();
               return null;
             }
           }
@@ -275,9 +285,7 @@ export const apiGet = async (endpoint, params = {}, options = {}) => {
 
         if (!isPublicPage) {
           console.log('🔐 400 오류 (Tenant ID 부족) - 로그인 페이지로 리다이렉트 (서브도메인 유지)');
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('refreshToken');
-          window.location.href = `${window.location.origin}/login`;
+          redirectToLoginOnce();
           return null;
         }
       }
@@ -307,9 +315,7 @@ export const apiGet = async (endpoint, params = {}, options = {}) => {
 
       if (!isPublicPage) {
         console.log('🔐 401 오류 - 로그인 페이지로 리다이렉트 (서브도메인 유지)');
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-        window.location.href = `${window.location.origin}/login`;
+        redirectToLoginOnce();
         return null;
       }
     }
@@ -343,9 +349,7 @@ export const apiGet = async (endpoint, params = {}, options = {}) => {
       
       // 네트워크 오류 시 재시도 없이 바로 로그인 페이지로 리다이렉트 (서브도메인 유지)
       console.log('🔐 네트워크 오류 시 로그인 페이지로 리다이렉트 (재시도 없음, 서브도메인 유지)');
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
-      window.location.href = `${window.location.origin}/login`;
+      redirectToLoginOnce();
       return null;
     }
     

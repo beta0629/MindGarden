@@ -25,6 +25,8 @@ const SessionGuard = ({ children }) => {
     const { user, checkSession } = useSession();
     const lastPathRef = useRef(null);
     const checkingRef = useRef(false);
+    /** 같은 path에서 checkSession(true) 후 401로 나갔던 경로. 해당 path에서는 강제 갱신 재시도 안 함. */
+    const lastSessionCheckFailedPathRef = useRef(null);
     
     // 공개 경로 정의 (인증 없이 접근 가능)
     const publicPaths = [
@@ -66,7 +68,11 @@ const SessionGuard = ({ children }) => {
         if (lastPathRef.current === currentPath) {
             return;
         }
-        
+
+        // 경로가 바뀌면 이전 경로의 “세션 갱신 실패” 기록 초기화 (새 경로에서는 한 번 시도 가능)
+        if (lastPathRef.current != null) {
+            lastSessionCheckFailedPathRef.current = null;
+        }
         lastPathRef.current = currentPath;
         
         // 이미 체크 중이면 스킵
@@ -95,16 +101,23 @@ const SessionGuard = ({ children }) => {
                         tenantIdTrimmed === 'tenant-unknown' || tenantIdTrimmed === 'tenant-default';
                     
                     if (isInvalidDefault) {
+                        // 같은 path에서 이미 checkSession(true) 후 실패(401 리다이렉트)한 적 있으면 재시도 안 함
+                        if (lastSessionCheckFailedPathRef.current === currentPath) {
+                            console.warn('⚠️ [SessionGuard] 이 경로에서 이미 세션 갱신 시도함 - 재시도 스킵:', currentPath);
+                            return;
+                        }
+                        lastSessionCheckFailedPathRef.current = currentPath;
+
                         console.warn('⚠️ [SessionGuard] tenantId 없음 - 강제 세션 갱신:', {
                             userId: user.id,
                             email: user.email,
                             role: user.role,
                             tenantId: tenantId || 'null'
                         });
-                        
+
                         // tenantId가 없으면 강제 갱신 (단, 체크 중 플래그를 유지하여 무한 루프 방지)
                         await checkSession(true);
-                        
+
                         // 갱신 후 다시 확인 (user는 SessionContext에서 자동 업데이트됨)
                         // 다음 렌더링 사이클에서 user가 업데이트될 것임
                         console.log('✅ [SessionGuard] 세션 강제 갱신 완료');

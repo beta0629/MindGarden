@@ -106,6 +106,35 @@ public class GlobalExceptionHandler {
     }
     
     /**
+     * IllegalStateException 처리 (Tenant ID 미설정 등)
+     * "Tenant ID is not set"인 경우 HTTP 401로 응답하여 프론트의 로그인 리다이렉트와 일치시킴.
+     */
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<ErrorResponse> handleIllegalState(IllegalStateException e, HttpServletRequest request) {
+        String msg = e.getMessage() != null ? e.getMessage() : "";
+        if (msg.contains("Tenant ID is not set")) {
+            log.warn("Tenant context not set (401): path={}, message={}", request.getRequestURI(), msg);
+            ErrorResponse error = ErrorResponse.of(
+                "세션 또는 테넌트 정보가 없습니다. 다시 로그인해 주세요.",
+                "TENANT_ID_NOT_SET",
+                HttpStatus.UNAUTHORIZED.value(),
+                request.getRequestURI(),
+                request.getMethod()
+            );
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
+        }
+        log.warn("Illegal state: {}", e.getMessage());
+        ErrorResponse error = ErrorResponse.of(
+            e.getMessage(),
+            "ILLEGAL_STATE",
+            HttpStatus.BAD_REQUEST.value(),
+            request.getRequestURI(),
+            request.getMethod()
+        );
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    /**
      * IllegalArgumentException 처리
      * HTTP 400 Bad Request 응답
      */

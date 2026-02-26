@@ -1,5 +1,6 @@
 import Button from '../../ui/Button/Button';
 import { User, Calendar, Clock, Eye } from 'lucide-react';
+import './ClientConsultationTab.css';
 
 /**
  * 내담자 상담 이력 탭 컴포넌트 (아토믹 디자인: mg-v2-client-list-block / mg-v2-mapping-list-block / mg-v2-card)
@@ -49,23 +50,25 @@ const ClientConsultationTab = ({
         </div>
     );
 
-    // 내담자별 블록 (mg-v2-mapping-list-block 패턴)
+    // 내담자별 블록 (스펙: mg-v2-consultation-client-block, __header / __count 별도 행)
     const renderClientBlock = (client) => {
         const clientConsultations = consultationsByClient[client.id] || [];
         return (
-            <div key={client.id} className="mg-v2-mapping-list-block">
-                <div className="mg-v2-section-header mg-v2-mapping-list-block__header">
-                    <div className="mg-v2-profile-card__info">
-                        <h3 className="mg-v2-profile-card__name">{client.name}</h3>
-                        <p className="mg-v2-profile-card__email"><span className="mg-v2-client-email">{client.email}</span></p>
+            <div key={client.id} className="mg-v2-consultation-client-block">
+                <div className="mg-v2-consultation-client-block__header">
+                    <div className="mg-v2-consultation-client-block__info">
+                        <h3 className="mg-v2-consultation-client-block__name">{client.name}</h3>
+                        <p className="mg-v2-consultation-client-block__email">
+                            <span className="mg-v2-client-email">{client.email}</span>
+                        </p>
                     </div>
-                    <div className="mg-v2-profile-card__actions">
+                    <div className="mg-v2-consultation-client-block__actions">
                         <Button variant="secondary" size="small" onClick={() => onClientSelect(client)} preventDoubleClick={true}>
                             <Eye size={14} /> 상세보기
                         </Button>
                     </div>
-                    <p className="mg-v2-mapping-list-block__count">총 {clientConsultations.length}건의 상담 이력</p>
                 </div>
+                <p className="mg-v2-consultation-client-block__count">총 {clientConsultations.length}건의 상담 이력</p>
                 {clientConsultations.length === 0 ? (
                     <div className="mg-v2-mapping-list-block__empty">
                         <div className="mg-v2-mapping-list-block__empty-icon">
@@ -84,10 +87,10 @@ const ClientConsultationTab = ({
 
     return (
         <div className="mg-v2-client-consultation mg-v2-client-list-block">
-            <div className="mg-v2-section-header">
-                <h2 className="mg-v2-h2">상담 이력 관리</h2>
-                <p className="mg-v2-section-desc">내담자별 상담 이력을 확인하고 관리할 수 있습니다.</p>
-            </div>
+            <header className="mg-v2-consultation-page-header">
+                <h2 className="mg-v2-consultation-page-header__title mg-v2-h2">상담 이력 관리</h2>
+                <p className="mg-v2-consultation-page-header__desc">내담자별 상담 이력을 확인하고 관리할 수 있습니다.</p>
+            </header>
             {clients.length === 0 ? (
                 <div className="mg-v2-mapping-list-block__empty">
                     <div className="mg-v2-mapping-list-block__empty-icon">

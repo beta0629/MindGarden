@@ -45,20 +45,24 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
     @Override
     public Page<ConsultationRecord> getConsultationRecords(Long consultantId, Long clientId, Pageable pageable) {
         log.info("📝 상담일지 목록 조회 - 상담사 ID: {}, 내담자 ID: {}", consultantId, clientId);
-        
+
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null || tenantId.isEmpty()) {
+            log.error("❌ 상담일지 목록 조회 실패: tenantId는 필수입니다.");
+            throw new IllegalArgumentException("tenantId is required for consultation record list");
+        }
+
         if (consultantId != null && clientId != null) {
-            return consultationRecordRepository.findByConsultantIdAndClientIdAndIsDeletedFalseOrderBySessionDateDesc(
-                consultantId, clientId, pageable);
+            return consultationRecordRepository.findByTenantIdAndConsultantIdAndClientIdAndIsDeletedFalseOrderBySessionDateDesc(
+                tenantId, consultantId, clientId, pageable);
         } else if (consultantId != null) {
-            return consultationRecordRepository.findByConsultantIdAndIsDeletedFalseOrderBySessionDateDesc(consultantId, pageable);
+            return consultationRecordRepository.findByTenantIdAndConsultantIdAndIsDeletedFalseOrderBySessionDateDesc(
+                tenantId, consultantId, pageable);
         } else if (clientId != null) {
-            return consultationRecordRepository.findByClientIdAndIsDeletedFalseOrderBySessionDateDesc(clientId, pageable);
+            return consultationRecordRepository.findByTenantIdAndClientIdAndIsDeletedFalseOrderBySessionDateDesc(
+                tenantId, clientId, pageable);
         } else {
-            String tenantId = TenantContextHolder.getTenantId();
-            if (tenantId != null && !tenantId.isEmpty()) {
-                return consultationRecordRepository.findByTenantIdAndIsDeletedFalseOrderBySessionDateDesc(tenantId, pageable);
-            }
-            return Page.empty();
+            return consultationRecordRepository.findByTenantIdAndIsDeletedFalseOrderBySessionDateDesc(tenantId, pageable);
         }
     }
 

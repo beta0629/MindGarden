@@ -3370,6 +3370,16 @@ public class AdminController extends BaseApiController {
                         .body(Map.of("success", false, "message", "상담 이력 조회 권한이 없습니다."));
             }
 
+            // 테넌트 필수: getAllClientsWithStats()와 동일하게 Controller에서 명시 설정 (상담 이력 0건 버그 방지)
+            String tenantId = SessionUtils.getTenantId(session);
+            if (tenantId == null || tenantId.isEmpty()) {
+                log.error("❌ 상담 이력 조회 실패: tenantId가 필수입니다. 사용자 ID: {}, 이메일: {}", currentUser.getId(),
+                        currentUser.getEmail());
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(Map.of("success", false, "message", "테넌트 정보가 없습니다. 관리자에게 문의하세요."));
+            }
+            com.coresolution.core.context.TenantContextHolder.setTenantId(tenantId);
+
             Pageable pageable = Pageable.ofSize(100); // 최대 100개
             Page<ConsultationRecord> consultationRecords = consultationRecordService
                     .getConsultationRecords(consultantId, clientId, pageable);

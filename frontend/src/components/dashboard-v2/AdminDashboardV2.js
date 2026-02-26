@@ -86,8 +86,21 @@ function getEmptyMonthlyChartData(months = 6) {
   return result;
 }
 
-/** 대시보드 메뉴(관리 기능 카드, 시스템 모니터링, 권한 관리) 숨김 여부 */
+/** 대시보드 메뉴(시스템 모니터링, 권한 관리, 환불 현황 등) 숨김 여부 */
 const HIDE_DASHBOARD_MENUS = true;
+
+/** 관리 기능 카드 중 숨길 항목 (통합/중복으로 대체된 메뉴) */
+const HIDE_ADMIN_CARD_IDS = new Set([
+  'sessions',           // 회기 관리
+  'schedule-auto-complete',   // 스케줄 자동 완료
+  'schedule-complete-reminder', // 스케줄 완료 + 알림
+  'consultant-comprehensive',  // 상담사 관리
+  'client-comprehensive',     // 내담자 관리
+  'dashboards',         // 대시보드 관리
+  'cache-monitoring',   // 캐시 모니터링
+  'security-monitoring', // 보안 모니터링
+  'merge-duplicate-mappings'  // 중복 매칭 통합
+]);
 
 /** 차트용 최근 N주 빈 데이터 (데이터 없을 때 0으로 표시) */
 function getEmptyWeeklyChartData(weeks = 6) {
@@ -945,6 +958,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
             <span className="mg-v2-ad-b0kla__admin-label">스케줄 관리</span>
             <span className="mg-v2-ad-b0kla__admin-desc">상담 일정을 관리하고 조정합니다</span>
           </button>
+          {!HIDE_ADMIN_CARD_IDS.has('sessions') && (
           <button
             type="button"
             className="mg-v2-ad-b0kla__admin-card"
@@ -956,6 +970,8 @@ const AdminDashboardV2 = ({ user: propUser }) => {
             <span className="mg-v2-ad-b0kla__admin-label">회기 관리</span>
             <span className="mg-v2-ad-b0kla__admin-desc">상담 회기를 등록하고 관리합니다</span>
           </button>
+          )}
+          {!HIDE_ADMIN_CARD_IDS.has('schedule-auto-complete') && (
           <button
             type="button"
             className="mg-v2-ad-b0kla__admin-card"
@@ -967,6 +983,8 @@ const AdminDashboardV2 = ({ user: propUser }) => {
             <span className="mg-v2-ad-b0kla__admin-label">스케줄 자동 완료</span>
             <span className="mg-v2-ad-b0kla__admin-desc">지난 스케줄을 자동으로 완료 처리합니다</span>
           </button>
+          )}
+          {!HIDE_ADMIN_CARD_IDS.has('schedule-complete-reminder') && (
           <button
             type="button"
             className="mg-v2-ad-b0kla__admin-card"
@@ -978,6 +996,8 @@ const AdminDashboardV2 = ({ user: propUser }) => {
             <span className="mg-v2-ad-b0kla__admin-label">스케줄 완료 + 알림</span>
             <span className="mg-v2-ad-b0kla__admin-desc">지난 스케줄 완료 처리 및 상담일지 미작성 알림</span>
           </button>
+          )}
+          {!HIDE_ADMIN_CARD_IDS.has('consultant-comprehensive') && (
           <button
             type="button"
             className="mg-v2-ad-b0kla__admin-card"
@@ -989,6 +1009,8 @@ const AdminDashboardV2 = ({ user: propUser }) => {
             <span className="mg-v2-ad-b0kla__admin-label">상담사 관리</span>
             <span className="mg-v2-ad-b0kla__admin-desc">상담사 정보를 관리합니다</span>
           </button>
+          )}
+          {!HIDE_ADMIN_CARD_IDS.has('client-comprehensive') && (
           <button
             type="button"
             className="mg-v2-ad-b0kla__admin-card"
@@ -1000,6 +1022,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
             <span className="mg-v2-ad-b0kla__admin-label">내담자 관리</span>
             <span className="mg-v2-ad-b0kla__admin-desc">내담자 정보를 관리합니다</span>
           </button>
+          )}
           <button
             type="button"
             className="mg-v2-ad-b0kla__admin-card"
@@ -1057,6 +1080,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
             <span className="mg-v2-ad-b0kla__admin-label">시스템 공지 관리</span>
             <span className="mg-v2-ad-b0kla__admin-desc">전체/상담사/내담자 공지를 관리합니다</span>
           </button>
+          {!HIDE_ADMIN_CARD_IDS.has('dashboards') && (
           <button
             type="button"
             className="mg-v2-ad-b0kla__admin-card"
@@ -1068,6 +1092,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
             <span className="mg-v2-ad-b0kla__admin-label">대시보드 관리</span>
             <span className="mg-v2-ad-b0kla__admin-desc">역할별 대시보드를 관리합니다</span>
           </button>
+          )}
           <button
             type="button"
             className="mg-v2-ad-b0kla__admin-card"
@@ -1079,6 +1104,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
             <span className="mg-v2-ad-b0kla__admin-label">시스템 설정</span>
             <span className="mg-v2-ad-b0kla__admin-desc">OpenAI API 키 및 시스템 설정을 관리합니다</span>
           </button>
+          {!HIDE_ADMIN_CARD_IDS.has('cache-monitoring') && (
           <button
             type="button"
             className="mg-v2-ad-b0kla__admin-card"
@@ -1090,6 +1116,8 @@ const AdminDashboardV2 = ({ user: propUser }) => {
             <span className="mg-v2-ad-b0kla__admin-label">캐시 모니터링</span>
             <span className="mg-v2-ad-b0kla__admin-desc">시스템 캐시 성능을 실시간으로 모니터링합니다</span>
           </button>
+          )}
+          {!HIDE_ADMIN_CARD_IDS.has('security-monitoring') && (
           <button
             type="button"
             className="mg-v2-ad-b0kla__admin-card"
@@ -1101,6 +1129,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
             <span className="mg-v2-ad-b0kla__admin-label">보안 모니터링</span>
             <span className="mg-v2-ad-b0kla__admin-desc">실시간 보안 위협 탐지 및 시스템 보안 관리</span>
           </button>
+          )}
           <button
             type="button"
             className="mg-v2-ad-b0kla__admin-card"
@@ -1145,6 +1174,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
             <span className="mg-v2-ad-b0kla__admin-label">웰니스 알림 관리</span>
             <span className="mg-v2-ad-b0kla__admin-desc">AI 기반 웰니스 컨텐츠 생성 및 비용 관리</span>
           </button>
+          {!HIDE_ADMIN_CARD_IDS.has('merge-duplicate-mappings') && (
           <button
             type="button"
             className="mg-v2-ad-b0kla__admin-card"
@@ -1156,6 +1186,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
             <span className="mg-v2-ad-b0kla__admin-label">중복 매칭 통합</span>
             <span className="mg-v2-ad-b0kla__admin-desc">중복된 상담사-내담자 매칭을 통합합니다</span>
           </button>
+          )}
         </div>
       </ContentSection>
 

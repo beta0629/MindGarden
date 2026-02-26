@@ -57,29 +57,6 @@ public class DynamicPermissionServiceImpl implements DynamicPermissionService {
                     .findByRoleNameAndPermissionCodeAndIsActiveTrue(roleName, permissionCode);
             boolean hasPermission = directCheck.isPresent();
 
-            // 표준화 2025-12-08: 관리자/사무원 역할에 대해 기본 권한 체크 (데이터베이스에 없을 경우)
-            if (!hasPermission) {
-                try {
-                    UserRole userRole = UserRole.fromString(roleName);
-                    if (userRole != null && (userRole.isAdmin() || userRole.isStaff())) {
-                        // 관리자/사무원 기본 권한 (ERP + 시스템 공지·메시지)
-                        List<String> defaultAdminPermissions = List.of("ERP_ACCESS",
-                                "ERP_DASHBOARD_VIEW", "INTEGRATED_FINANCE_VIEW",
-                                "PURCHASE_REQUEST_VIEW", "PURCHASE_REQUEST_MANAGE",
-                                "APPROVAL_MANAGE", "ITEM_MANAGE", "BUDGET_MANAGE", "SALARY_MANAGE",
-                                "TAX_MANAGE", "REFUND_MANAGE",
-                                "SYSTEM_NOTIFICATION_MANAGE", "MESSAGE_MANAGE", "MESSAGE_VIEW");
-
-                        if (defaultAdminPermissions.contains(permissionCode)) {
-                            log.info("✅ 관리자/사무원 기본 권한 허용: 역할={}, 권한={}", roleName, permissionCode);
-                            return true;
-                        }
-                    }
-                } catch (Exception e) {
-                    log.debug("역할 파싱 실패 (무시): 역할={}, 오류={}", roleName, e.getMessage());
-                }
-            }
-
             log.info("✅ 권한 체크 결과: 역할={}, 권한={}, 결과={}", roleName, permissionCode, hasPermission);
 
             // 디버깅을 위해 실제 데이터 확인

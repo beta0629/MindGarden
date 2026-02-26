@@ -109,12 +109,100 @@
   color: var(--color-text-secondary, var(--ad-b0kla-text-secondary));
 }
 
-/* ===== 4.7 매칭 카드 그리드 (블록 내부) ===== */
+/* ===== 4.7 매칭 카드 그리드 (블록 내부) — MAPPING_CARD_COMPACT_SPEC 3.1 ===== */
 .mg-v2-mapping-client-block .mg-v2-mapping-list-block__grid {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
   gap: var(--mg-spacing-md, 1rem);
   margin-top: 0;
+}
+
+@media (max-width: 768px) {
+  .mg-v2-mapping-client-block .mg-v2-mapping-list-block__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ===== 매칭 카드 컴팩트 (MAPPING_CARD_COMPACT_SPEC 3절) ===== */
+.mg-v2-mapping-client-block .mg-v2-card.mg-v2-mapping-card {
+  max-width: min(100%, 520px);
+  min-width: 280px;
+  padding: 0;
+  background: var(--ad-b0kla-card-bg);
+  border: 1px solid var(--ad-b0kla-border);
+  border-radius: var(--ad-b0kla-radius-sm, 12px);
+}
+
+.mg-v2-mapping-client-block .mg-v2-card.mg-v2-mapping-card .mg-v2-card-header {
+  padding: var(--spacing-xs, 8px) var(--spacing-md, 16px);
+  border-bottom: 1px solid var(--ad-b0kla-border);
+}
+
+.mg-v2-mapping-client-block .mg-v2-card.mg-v2-mapping-card .mg-v2-card-content {
+  padding: var(--spacing-sm, 12px) var(--spacing-md, 16px);
+}
+
+.mg-v2-mapping-client-block .mg-v2-card.mg-v2-mapping-card .mg-v2-card-footer {
+  padding: var(--spacing-xs, 8px) var(--spacing-md, 16px);
+  border-top: 1px solid var(--ad-b0kla-border);
+}
+
+/* 제목·날짜·상태 타이포 (스펙 3.3) */
+.mg-v2-mapping-client-block .mg-v2-mapping-card__title,
+.mg-v2-mapping-client-block .mg-v2-mapping-card__title.mg-v2-h4 {
+  font-size: var(--font-size-sm, 13px);
+  font-weight: 600;
+  color: var(--ad-b0kla-title-color);
+  margin: 0;
+}
+
+.mg-v2-mapping-client-block .mg-v2-mapping-date {
+  font-size: var(--font-size-xs, 12px);
+  font-weight: 400;
+  color: var(--ad-b0kla-text-secondary);
+  margin: 0;
+}
+
+.mg-v2-mapping-client-block .mg-v2-status-badge {
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* 본문 라벨-값 그리드 (스펙 2.3, 3.2) */
+.mg-v2-mapping-client-block .mg-v2-mapping-details {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--spacing-xs, 6px) var(--spacing-sm, 12px);
+}
+
+.mg-v2-mapping-client-block .mg-v2-mapping-card__row {
+  display: contents;
+}
+
+.mg-v2-mapping-client-block .mg-v2-mapping-card__row .mg-v2-mapping-card__label {
+  font-size: var(--font-size-xs, 12px);
+  font-weight: 500;
+  color: var(--ad-b0kla-text-secondary);
+}
+
+.mg-v2-mapping-client-block .mg-v2-mapping-card__row .mg-v2-mapping-card__value {
+  font-size: var(--font-size-sm, 13px);
+  font-weight: 400;
+  color: var(--ad-b0kla-title-color);
+}
+
+.mg-v2-mapping-client-block .mg-v2-mapping-card__value--emphasis {
+  font-weight: 600;
+}
+
+.mg-v2-mapping-client-block .mg-v2-mapping-card__memo {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: var(--font-size-xs, 12px);
+  font-weight: 400;
+  color: var(--ad-b0kla-title-color);
 }
 
 /* ===== 4.8 빈 상태 (블록 내부) ===== */

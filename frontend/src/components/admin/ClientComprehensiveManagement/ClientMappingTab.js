@@ -40,13 +40,16 @@ const ClientMappingTab = ({
 
   const renderMappingCard = (mapping) => {
     const consultant = consultants.find((c) => c.id === mapping.consultantId);
+    const startDateStr = mapping.startDate ? new Date(mapping.startDate).toLocaleDateString('ko-KR') : 'N/A';
+    const endDateStr = mapping.endDate ? new Date(mapping.endDate).toLocaleDateString('ko-KR') : null;
+    const createdStr = mapping.createdAt ? new Date(mapping.createdAt).toLocaleDateString('ko-KR') : '날짜 없음';
     return (
-      <div key={mapping.id} className="mg-v2-card mg-v2-mapping-card">
+      <div key={mapping.id} className="mg-v2-card mg-v2-mapping-card mg-v2-mapping-card__compact">
         <div className="mg-v2-card-header">
           <div className="mg-v2-mapping-info">
-            <h4 className="mg-v2-h4">매칭 #{mapping.id}</h4>
+            <h4 className="mg-v2-mapping-card__title mg-v2-h4">매칭 #{mapping.id}</h4>
             <p className="mg-v2-mapping-date">
-              <Calendar size={14} /> {mapping.createdAt ? new Date(mapping.createdAt).toLocaleDateString('ko-KR') : '날짜 없음'}
+              <Calendar size={14} /> {createdStr}
             </p>
           </div>
           <div className="mg-v2-mapping-status">
@@ -60,22 +63,41 @@ const ClientMappingTab = ({
         </div>
         <div className="mg-v2-card-content">
           <div className="mg-v2-mapping-details">
-            <p><span className="mg-v2-form-label">상담사</span> {consultant?.name || '알 수 없음'}</p>
+            <div className="mg-v2-mapping-card__row">
+              <span className="mg-v2-mapping-card__label">상담사</span>
+              <span className="mg-v2-mapping-card__value">{consultant?.name || '알 수 없음'}</span>
+            </div>
             {mapping.packageName && (
-              <p><span className="mg-v2-form-label">패키지</span> {mapping.packageName}</p>
+              <div className="mg-v2-mapping-card__row">
+                <span className="mg-v2-mapping-card__label">패키지</span>
+                <span className="mg-v2-mapping-card__value">{mapping.packageName}</span>
+              </div>
             )}
             {(mapping.totalSessions != null || mapping.remainingSessions !== undefined) && (
-              <p>
-                <span className="mg-v2-form-label">회기</span> {mapping.usedSessions ?? 0}/{mapping.totalSessions ?? 0}
-                (남은: {mapping.remainingSessions ?? 0})
-              </p>
+              <div className="mg-v2-mapping-card__row">
+                <span className="mg-v2-mapping-card__label">회기</span>
+                <span className="mg-v2-mapping-card__value mg-v2-mapping-card__value--emphasis">
+                  {mapping.usedSessions ?? 0}/{mapping.totalSessions ?? 0} (남은: {mapping.remainingSessions ?? 0})
+                </span>
+              </div>
             )}
-            <p><span className="mg-v2-form-label">시작일</span> {mapping.startDate ? new Date(mapping.startDate).toLocaleDateString('ko-KR') : 'N/A'}</p>
-            {mapping.endDate && (
-              <p><span className="mg-v2-form-label">종료일</span> {new Date(mapping.endDate).toLocaleDateString('ko-KR')}</p>
+            <div className="mg-v2-mapping-card__row">
+              <span className="mg-v2-mapping-card__label">시작일</span>
+              <span className="mg-v2-mapping-card__value mg-v2-mapping-card__value--emphasis">{startDateStr}</span>
+            </div>
+            {endDateStr && (
+              <div className="mg-v2-mapping-card__row">
+                <span className="mg-v2-mapping-card__label">종료일</span>
+                <span className="mg-v2-mapping-card__value mg-v2-mapping-card__value--emphasis">{endDateStr}</span>
+              </div>
             )}
             {mapping.notes && (
-              <p><span className="mg-v2-form-label">메모</span> {mapping.notes}</p>
+              <div className="mg-v2-mapping-card__row">
+                <span className="mg-v2-mapping-card__label">메모</span>
+                <span className="mg-v2-mapping-card__value mg-v2-mapping-card__memo" title={mapping.notes}>
+                  {mapping.notes}
+                </span>
+              </div>
             )}
           </div>
         </div>

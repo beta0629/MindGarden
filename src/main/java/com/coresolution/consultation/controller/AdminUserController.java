@@ -24,7 +24,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import com.coresolution.consultation.dto.AdminPasswordResetRequest;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -311,14 +310,24 @@ public class AdminUserController {
     /**
      * 사용자 비밀번호 초기화 (관리자 전용)
      * 기존 비밀번호 없이 관리자가 직접 비밀번호를 초기화할 수 있습니다.
-     * newPassword는 body로만 전달 (쿼리 파라미터 시 + 등 특수문자 변형 방지)
+     * newPassword: body(권장) 또는 쿼리 파라미터. body가 있으면 body 우선 (특수문자 안전).
      */
     @PutMapping("/{userId}/reset-password")
     public ResponseEntity<Map<String, Object>> resetUserPassword(
             @PathVariable Long userId,
-            @RequestBody @Valid AdminPasswordResetRequest request) {
+            @RequestBody(required = false) AdminPasswordResetRequest requestBody,
+            @RequestParam(required = false) String newPasswordParam) {
         try {
-            String newPassword = request.getNewPassword();
+            String newPassword = (requestBody != null && requestBody.getNewPassword() != null && !requestBody.getNewPassword().isEmpty())
+                    ? requestBody.getNewPassword()
+                    : newPasswordParam;
+            if (newPassword == null || newPassword.trim().isEmpty()) {
+                Map<String, Object> err = new HashMap<>();
+                err.put("success", false);
+                err.put("message", "새 비밀번호는 필수입니다. (request body의 newPassword 또는 쿼리 파라미터 newPassword)");
+                return ResponseEntity.badRequest().body(err);
+            }
+            newPassword = newPassword.trim();
             log.info("🔑 관리자 권한으로 사용자 비밀번호 초기화: userId={}", userId);
             
             // 비밀번호 정책 검증

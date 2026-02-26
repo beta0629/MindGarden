@@ -728,10 +728,15 @@ public class AuthController extends BaseApiController {
             log.warn("❌ 로그인 실패: message={}, requiresConfirmation={}", 
                 authResponse.getMessage(), authResponse.isRequiresConfirmation());
             
-            // 중복 로그인 확인 요청은 별도 처리하지 않고, 그 외의 경우만 예외 발생
+            // 중복 로그인 확인 요청은 별도 처리하지 않고, 그 외의 경우 401 반환 (인증 실패)
             if (!authResponse.isRequiresConfirmation()) {
-                throw new IllegalArgumentException(authResponse.getMessage() != null ? 
-                    authResponse.getMessage() : "로그인에 실패했습니다.");
+                String msg = authResponse.getMessage() != null ? authResponse.getMessage() : "아이디 또는 비밀번호가 올바르지 않습니다.";
+                return ResponseEntity.status(org.springframework.http.HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.<Map<String, Object>>builder()
+                        .success(false)
+                        .message(msg)
+                        .data(null)
+                        .build());
             }
             
             // 중복 로그인 확인 요청은 데이터 반환 (위에서 이미 처리됨)

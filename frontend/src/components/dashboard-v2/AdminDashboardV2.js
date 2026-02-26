@@ -816,6 +816,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
         </div>
       </div>
 
+      {!HIDE_DASHBOARD_MENUS && (
       <ContentSection
         title="환불 현황"
         subtitle="최근 1개월 환불 통계"
@@ -847,6 +848,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
           />
         </div>
       </ContentSection>
+      )}
 
       <ManualMatchingQueue
         items={unassignedClients.map((client) => ({

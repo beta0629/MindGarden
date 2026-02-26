@@ -4077,9 +4077,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 log.warn("⚠️ getConsultationMonthlyTrend: tenantId 없음");
                 return new ArrayList<>();
             }
+            List<Consultant> consultants = consultantRepository.findByTenantIdAndIsDeletedFalse(tenantId);
             List<Map<String, Object>> monthlyData = new ArrayList<>();
             LocalDate now = LocalDate.now();
-            // completion 통계(올해 1~12월)와 동일한 기간: 올해 1월 ~ 현재월 전체 반환
             LocalDate yearStart = LocalDate.of(now.getYear(), 1, 1);
             int monthsCount = (int) java.time.temporal.ChronoUnit.MONTHS.between(yearStart, now) + 1;
             if (monthsCount <= 0) monthsCount = 1;
@@ -4087,14 +4087,16 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 LocalDate monthStart = yearStart.plusMonths(i);
                 LocalDate monthEnd = monthStart.withDayOfMonth(monthStart.lengthOfMonth());
                 if (monthEnd.isAfter(now)) monthEnd = now;
-                long count = scheduleRepository.countByStatusAndDateBetween(
-                    tenantId, ScheduleStatus.COMPLETED.name(), monthStart, monthEnd);
+                int sum = 0;
+                for (Consultant consultant : consultants) {
+                    sum += getCompletedScheduleCount(consultant.getId(), monthStart, monthEnd);
+                }
                 Map<String, Object> row = new HashMap<>();
                 row.put("period", monthStart.format(DateTimeFormatter.ofPattern("yyyy-MM")));
-                row.put("completedCount", (int) count);
+                row.put("completedCount", sum);
                 monthlyData.add(row);
             }
-            log.info("✅ 월별 상담 완료 추이 조회 완료: {}개월 (올해 기준)", monthlyData.size());
+            log.info("✅ 월별 상담 완료 추이 조회 완료: {}개월 (KPI와 동일 집계)", monthlyData.size());
             return monthlyData;
         } catch (Exception e) {
             log.error("❌ 월별 상담 완료 추이 조회 실패", e);
@@ -4110,19 +4112,22 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 log.warn("⚠️ getConsultationWeeklyTrend: tenantId 없음");
                 return new ArrayList<>();
             }
+            List<Consultant> consultants = consultantRepository.findByTenantIdAndIsDeletedFalse(tenantId);
             List<Map<String, Object>> weeklyData = new ArrayList<>();
             LocalDate now = LocalDate.now();
             for (int i = lastWeeks - 1; i >= 0; i--) {
                 LocalDate weekEnd = now.minusWeeks(i);
                 LocalDate weekStart = weekEnd.minusDays(6);
-                long count = scheduleRepository.countByStatusAndDateBetween(
-                    tenantId, ScheduleStatus.COMPLETED.name(), weekStart, weekEnd);
+                int sum = 0;
+                for (Consultant consultant : consultants) {
+                    sum += getCompletedScheduleCount(consultant.getId(), weekStart, weekEnd);
+                }
                 Map<String, Object> row = new HashMap<>();
                 row.put("period", weekEnd.format(DateTimeFormatter.ofPattern("MM/dd")));
-                row.put("completedCount", (int) count);
+                row.put("completedCount", sum);
                 weeklyData.add(row);
             }
-            log.info("✅ 주간 상담 완료 추이 조회 완료: {}주", weeklyData.size());
+            log.info("✅ 주간 상담 완료 추이 조회 완료: {}주 (KPI와 동일 집계)", weeklyData.size());
             return weeklyData;
         } catch (Exception e) {
             log.error("❌ 주간 상담 완료 추이 조회 실패", e);

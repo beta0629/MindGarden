@@ -402,6 +402,14 @@
   opacity: 0.8;
 }
 
+.mg-v2-ad-b0kla__chart-empty {
+  font-size: 14px;
+  color: var(--ad-b0kla-text-secondary);
+  margin: 0;
+  padding: 2rem;
+  text-align: center;
+}
+
 .mg-v2-ad-b0kla__chart-placeholder-icon {
   opacity: 0.5;
 }

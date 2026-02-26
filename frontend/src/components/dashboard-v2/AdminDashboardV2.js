@@ -693,6 +693,12 @@ const AdminDashboardV2 = ({ user: propUser }) => {
                     ? stats.consultationStats.monthlyData.slice(0, 6)
                     : getEmptyMonthlyChartData(6));
               const values = rawData.map((d) => d.completedCount || 0);
+              const allZero = values.length > 0 && values.every((v) => v === 0);
+              if (allZero) {
+                return (
+                  <p className="mg-v2-ad-b0kla__chart-empty">기간 내 완료된 상담이 없습니다.</p>
+                );
+              }
               const maxVal = Math.max(...values, 1);
               return (
                 <Chart

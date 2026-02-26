@@ -781,9 +781,19 @@ const AdminDashboard = ({ user: propUser }) => {
                     </div>
                     <div className="mg-v2-ad-b0kla__chart-placeholder">
                         {stats.consultationStats?.monthlyData?.length > 0 ? (
+                            (() => {
+                                const chartData = stats.consultationStats.monthlyData.slice(0, 6);
+                                const values = chartData.map((d) => d.completedCount || 0);
+                                const allZero = values.length > 0 && values.every((v) => v === 0);
+                                if (allZero) {
+                                    return (
+                                        <p className="mg-v2-ad-b0kla__chart-empty">기간 내 완료된 상담이 없습니다.</p>
+                                    );
+                                }
+                                return (
                             <div className="mg-v2-ad-b0kla__chart-bars">
-                                {stats.consultationStats.monthlyData.slice(0, 6).map((data) => {
-                                    const maxCount = Math.max(...stats.consultationStats.monthlyData.map((d) => d.completedCount || 0), 1);
+                                {chartData.map((data) => {
+                                    const maxCount = Math.max(...chartData.map((d) => d.completedCount || 0), 1);
                                     const heightPercent = Math.max(10, ((data.completedCount || 0) / maxCount) * 100);
                                     return (
                                         <div key={data.period} className="mg-v2-ad-b0kla__chart-bar-item">
@@ -797,6 +807,8 @@ const AdminDashboard = ({ user: propUser }) => {
                                     );
                                 })}
                             </div>
+                                );
+                            })()
                         ) : (
                             <>
                                 <Activity size={48} className="mg-v2-ad-b0kla__chart-placeholder-icon" />

@@ -314,16 +314,43 @@ public class UserServiceImpl implements UserService {
     
     @Override
     public Optional<User> findByEmail(String email) {
-        // 테넌트 컨텍스트가 있으면 테넌트 필터링 적용
-        String tenantId = TenantContextHolder.getTenantId();
-        if (tenantId != null && !tenantId.isEmpty()) {
-            return userRepository.findByTenantIdAndEmail(tenantId, email);
+        if (email == null || email.trim().isEmpty()) {
+            return Optional.empty();
         }
-        // 테넌트 컨텍스트가 없는 경우 (인증 등 특수 케이스) - 멀티 테넌트 사용자 고려
-        // 멀티 테넌트 사용자 지원을 위해 findAllByEmail() 사용하고 첫 번째 결과 반환
-        log.warn("⚠️ 테넌트 컨텍스트 없이 findByEmail() 호출됨: {} (멀티 테넌트 사용자 고려하여 첫 번째 결과 반환)", email);
-        List<User> users = userRepository.findAllByEmail(email);
-        return users.isEmpty() ? Optional.empty() : Optional.of(users.get(0));
+        String normalizedEmail = email.trim().toLowerCase();
+        String tenantId = TenantContextHolder.getTenantId();
+
+        // 1) 평문 이메일로 조회 (평문 저장 사용자 또는 레거시)
+        if (tenantId != null && !tenantId.isEmpty()) {
+            Optional<User> byPlain = userRepository.findByTenantIdAndEmail(tenantId, normalizedEmail);
+            if (byPlain.isPresent()) {
+                return byPlain;
+            }
+        } else {
+            log.warn("⚠️ 테넌트 컨텍스트 없이 findByEmail() 호출됨: {} (멀티 테넌트 사용자 고려하여 첫 번째 결과 반환)", normalizedEmail);
+            List<User> users = userRepository.findAllByEmail(normalizedEmail);
+            if (!users.isEmpty()) {
+                return Optional.of(users.get(0));
+            }
+        }
+
+        // 2) 조회 실패 시: 관리자 생성 사용자 등 이메일 암호화 저장된 경우 복호화 비교
+        if (tenantId != null && !tenantId.isEmpty()) {
+            List<User> tenantUsers = userRepository.findByTenantId(tenantId);
+            for (User u : tenantUsers) {
+                try {
+                    String decrypted = encryptionUtil.decrypt(u.getEmail());
+                    if (decrypted != null && decrypted.trim().toLowerCase().equals(normalizedEmail)) {
+                        log.debug("findByEmail: 암호화 저장 이메일로 사용자 조회 성공 (복호화 비교)");
+                        return Optional.of(u);
+                    }
+                } catch (Exception e) {
+                    log.trace("findByEmail: 이메일 복호화 스킵 userId={}", u.getId());
+                }
+            }
+        }
+
+        return Optional.empty();
     }
     
     @Override

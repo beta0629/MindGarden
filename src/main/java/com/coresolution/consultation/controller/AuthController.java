@@ -559,7 +559,7 @@ public class AuthController extends BaseApiController {
         email = email.trim().toLowerCase();
         password = password.trim();
 
-        log.info("🔐 로그인 시도: email={}, password={}", email, "***");
+        log.info("🔐 로그인 시도: email={}, passwordLength={}", email, password != null ? password.length() : 0);
         
         // 로컬 프로파일에서만 기본 테넌트 ID 설정 (로그인 API는 공개 API이므로 필터를 건너뛰므로 여기서 설정)
         // 개발/운영 환경에서는 서브도메인 기반으로 정상 동작

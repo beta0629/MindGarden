@@ -87,7 +87,7 @@ const PasswordResetModal = ({
                 </>
             }
         >
-                <div className="mg-modal-body">
+                <div className="mg-password-reset-form-wrapper">
                     <div className="mg-password-reset-info">
                         <AlertTriangle className="mg-info-icon" size={20} />
                         <p>

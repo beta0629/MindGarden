@@ -78,9 +78,6 @@ class NotificationManager {
      * 알림 표시
      */
     show(message, type = 'success', duration = 1000) { // 기본 duration을 3초에서 1초로 단축
-        console.log('notificationManager.show 호출됨:', { message, type, duration });
-        console.log('현재 리스너 수:', this.listeners.length);
-        
         const notification = {
             id: ++this.notificationId,
             message,
@@ -89,12 +86,13 @@ class NotificationManager {
             timestamp: Date.now()
         };
 
-        this.listeners.forEach((listener, index) => {
+        this.listeners.forEach((listener) => {
             try {
-                console.log(`리스너 ${index} 호출 중:`, notification);
                 listener(notification);
             } catch (error) {
-                console.error('알림 리스너 오류:', error);
+                if (process.env.NODE_ENV === 'development') {
+                    console.error('알림 리스너 오류:', error);
+                }
             }
         });
 

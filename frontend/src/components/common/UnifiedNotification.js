@@ -62,40 +62,44 @@ const UnifiedNotification = ({
   const [countdowns, setCountdowns] = useState({});
 
   useEffect(() => {
-    console.log('UnifiedNotification 컴포넌트 마운트됨 - 리스너 등록');
     const unsubscribe = notificationManager.addListener((notification) => {
-      console.log('UnifiedNotification 렌더링:', notification);
-      
-      setNotifications(prev => {
-        const newNotifications = [...prev, notification];
-        console.log('UnifiedNotification - 알림 추가 후 상태:', newNotifications);
-        return newNotifications;
-      });
+      const payload = notification.message && typeof notification.message === 'object'
+        ? notification.message
+        : notification;
+      const isModalOnly = Boolean(
+        notification.modalOnly ||
+        notification.showCountdown ||
+        payload.modalOnly ||
+        payload.showCountdown
+      );
+      if (type === 'modal' && !isModalOnly) return;
+      if (type === 'toast' && isModalOnly) return;
 
-      // 카운트다운이 있는 경우 설정 (중복 로그인 알림 등)
-      if (notification.showCountdown && notification.countdown) {
+      const normalized = { ...notification };
+      if (notification.message && typeof notification.message === 'object') {
+        normalized.message = payload.message ?? payload.title ?? '알림';
+        Object.assign(normalized, payload);
+        normalized.id = notification.id;
+      }
+      setNotifications(prev => [...prev, normalized]);
+
+      if (normalized.showCountdown && normalized.countdown) {
         setCountdowns(prev => ({
           ...prev,
-          [notification.id]: notification.countdown
+          [normalized.id]: normalized.countdown
         }));
       }
 
-      // 자동 제거
       if (autoClose) {
-        const autoCloseTime = notification.showCountdown 
-          ? (notification.countdown * 1000) 
-          : (notification.duration || duration);
-          
+        const autoCloseTime = normalized.showCountdown
+          ? (normalized.countdown * 1000)
+          : (normalized.duration || duration);
+
         setTimeout(() => {
-          console.log('UnifiedNotification - 알림 자동 제거:', notification.id);
-          setNotifications(prev => {
-            const filtered = prev.filter(n => n.id !== notification.id);
-            console.log('UnifiedNotification - 알림 제거 후 상태:', filtered);
-            return filtered;
-          });
+          setNotifications(prev => prev.filter(n => n.id !== normalized.id));
           setCountdowns(prev => {
             const newCountdowns = { ...prev };
-            delete newCountdowns[notification.id];
+            delete newCountdowns[normalized.id];
             return newCountdowns;
           });
         }, autoCloseTime);
@@ -103,7 +107,7 @@ const UnifiedNotification = ({
     });
 
     return unsubscribe;
-  }, [duration, autoClose]);
+  }, [type, duration, autoClose]);
 
   // 카운트다운 타이머
   useEffect(() => {

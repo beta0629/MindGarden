@@ -1,6 +1,7 @@
 import React from 'react';
 import { FaUsers, FaHandshake, FaCalendarAlt } from 'react-icons/fa';
 import { getUserStatusKoreanNameSync, getUserGradeKoreanNameSync } from '../../../utils/codeHelper';
+import './ClientStatisticsTab.css';
 
 /**
  * 내담자 통계 분석 탭 컴포넌트

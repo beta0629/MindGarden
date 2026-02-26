@@ -1,0 +1,48 @@
+/**
+ * 내담자 통계 분석 탭 레이아웃·여백
+ * KPI 그리드 ↔ 상세 통계·카드 스택 간 여백으로 답답함 완화
+ *
+ * @author MindGarden
+ * @since 2025-02-27
+ */
+
+/* 통계 탭 전체: 세로 간격으로 섹션 구분 */
+.mg-v2-client-statistics {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-xl, 2rem);
+  padding: var(--mg-spacing-lg, 1.5rem);
+}
+
+.mg-v2-client-statistics .mg-v2-section-header {
+  margin-bottom: 0;
+}
+
+/* KPI 그리드 아래 여백 */
+.mg-v2-client-statistics .mg-v2-mapping-kpi-section__grid {
+  gap: var(--mg-spacing-md, 1rem);
+  margin-bottom: 0; /* 부모 gap으로 대체 */
+}
+
+/* 상세 통계(등급/상태 분포) 영역: 위쪽 여백 확보 */
+.mg-v2-client-statistics .mg-v2-detailed-stats {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+/* 카드 스택 내부 여백: 카드 간격 넓혀서 안 답답하게 */
+.mg-v2-client-statistics .mg-mobile-card-stack {
+  gap: var(--mg-spacing-xl, 2rem);
+}
+
+@media (min-width: 769px) {
+  .mg-v2-client-statistics .mg-mobile-card-stack {
+    gap: var(--mg-spacing-xl, 2rem);
+  }
+}
+
+/* 차트 카드 내부 여유 */
+.mg-v2-client-statistics .mg-v2-chart-card {
+  padding: var(--mg-spacing-lg, 1.5rem);
+  margin-bottom: 0;
+}

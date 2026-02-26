@@ -325,9 +325,8 @@ function AppContent() {
   }
 
   return (
-    <Router>
-      <QueryParamHandler onLoginSuccess={handleLoginSuccess}>
-        <SessionGuard>
+    <QueryParamHandler onLoginSuccess={handleLoginSuccess}>
+      <SessionGuard>
         <div className="App">
           <UnifiedNotification type="toast" position="top-right" />
           <Suspense fallback={<div className="mg-loading" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '200px' }}>로딩 중...</div>}>
@@ -682,8 +681,7 @@ function AppContent() {
           <DuplicateLoginModal />
         </div>
         </SessionGuard>
-      </QueryParamHandler>
-    </Router>
+    </QueryParamHandler>
   );
 }
 
@@ -693,7 +691,9 @@ function App() {
     <ThemeProvider>
       <SessionProvider>
         <NotificationProvider>
-          <AppContent />
+          <Router>
+            <AppContent />
+          </Router>
         </NotificationProvider>
       </SessionProvider>
     </ThemeProvider>

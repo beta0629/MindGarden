@@ -149,6 +149,7 @@ const ClientModal = ({
                     </div>
                 )}
                 <ProfileImageInput
+                    key={formData.profileImageUrl ? 'profile-has-image' : 'profile-no-image'}
                     value={formData.profileImageUrl || ''}
                     onChange={(url) => setFormData(prev => ({ ...prev, profileImageUrl: url || '' }))}
                     maxBytes={2 * 1024 * 1024}

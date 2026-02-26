@@ -620,6 +620,13 @@ const AdminDashboardV2 = ({ user: propUser }) => {
     loadTodayStats
   ]);
 
+  /** 세션 준비 시 오늘 통계 로드 보장 (첫 로딩에 sessionUser 지연으로 loadTodayStats 미호출 방지) */
+  useEffect(() => {
+    if (sessionLoading) return;
+    const user = propUser || sessionUser;
+    if (user?.role) loadTodayStats();
+  }, [sessionLoading, propUser, sessionUser, loadTodayStats]);
+
   const topConsultantsData = (stats.consultantRatingStats?.topConsultants || [])
     .slice(0, 4)
     .map((c) => ({

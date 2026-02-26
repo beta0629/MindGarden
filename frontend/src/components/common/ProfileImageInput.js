@@ -64,9 +64,14 @@ const ProfileImageInput = ({
     <div className="mg-v2-form-group mg-v2-profile-photo-group">
       <label htmlFor={inputId} className="mg-v2-form-label">프로필 사진</label>
       <div className="mg-v2-profile-photo-preview-wrap">
-        <div className="mg-v2-profile-photo-preview">
+        <div className="mg-v2-profile-photo-preview" key={value ? 'has-image' : 'no-image'}>
           {value ? (
-            <img src={value} alt="프로필 미리보기" />
+            <img
+              src={value}
+              alt="프로필 미리보기"
+              decoding="async"
+              style={{ display: 'block', width: '100%', height: '100%', objectFit: 'cover' }}
+            />
           ) : (
             <span className="mg-v2-profile-photo-placeholder" aria-hidden="true">
               <User size={40} />

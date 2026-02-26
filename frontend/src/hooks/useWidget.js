@@ -166,8 +166,8 @@ export const useWidget = (config = {}, user = null, options = {}) => {
         return;
       }
 
-      // 단일 API
-      if (type === 'api') {
+      // 단일 API (api | single-api 동일 처리)
+      if (type === 'api' || type === 'single-api') {
         if (!url) {
           if (showLoading) setLoading(false);
           return;
@@ -296,11 +296,11 @@ export const useWidget = (config = {}, user = null, options = {}) => {
   }, [refreshInterval, loadData]);
 
 /**
-   * 초기 데이터 로드
+   * 초기 데이터 로드 (api / single-api / multi-api 모두 최초 마운트 시 로드)
    */
   useEffect(() => {
     if (immediate) {
-      if (type === 'api') {
+      if (type === 'api' || type === 'single-api' || type === 'multi-api') {
         loadData(true);
       } else if (type === 'static' && config.defaultValue !== undefined) {
         setData(config.defaultValue);

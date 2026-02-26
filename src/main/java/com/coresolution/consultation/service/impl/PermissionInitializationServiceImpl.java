@@ -195,10 +195,11 @@ public class PermissionInitializationServiceImpl implements PermissionInitializa
             log.error("❌ ADMIN 권한 매핑 실패 (계속 진행): {}", e.getMessage(), e);
         }
         
-        // STAFF: 관리 메뉴 접근, ERP 제외 (원장이 권한 그룹으로 추가 부여 가능)
+        // STAFF: 관리 메뉴 접근, 시스템 공지·메시지 관리/조회, ERP 제외 (원장이 권한 그룹으로 추가 부여 가능)
         List<String> staffPermissions = List.of(
             "MENU_GROUP_COMMON", "MENU_GROUP_ADMIN",
-            "API_ACCESS_AUTH", "API_ACCESS_MENU", "API_ACCESS_USER", "VIEW_OWN_PROFILE"
+            "API_ACCESS_AUTH", "API_ACCESS_MENU", "API_ACCESS_USER", "VIEW_OWN_PROFILE",
+            "SYSTEM_NOTIFICATION_MANAGE", "MESSAGE_MANAGE", "MESSAGE_VIEW"
         );
         try {
             createRolePermissions(UserRole.STAFF.name(), staffPermissions);
@@ -278,16 +279,19 @@ public class PermissionInitializationServiceImpl implements PermissionInitializa
     /**
      * 최소 필수 ADMIN 권한 (공통코드 실패 시 폴백)
      * 표준화 2025-12-08: ERP_ACCESS 권한 추가 (관리자는 ERP 접근 가능해야 함)
+     * 시스템 공지·메시지 관리 접근 가능하도록 SYSTEM_NOTIFICATION_MANAGE, MESSAGE_MANAGE 포함
      */
     private List<String> getMinimalAdminPermissions() {
         return List.of(
             "DASHBOARD_VIEW",
-            "USER_MANAGE", 
+            "USER_MANAGE",
             "CLIENT_MANAGE",
             "CONSULTANT_MANAGE",
             "MAPPING_VIEW",
             "STATISTICS_VIEW",
-            "ERP_ACCESS" // 표준화 2025-12-08: 관리자 ERP 접근 권한
+            "ERP_ACCESS",
+            "SYSTEM_NOTIFICATION_MANAGE",
+            "MESSAGE_MANAGE"
         );
     }
     

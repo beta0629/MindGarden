@@ -466,6 +466,7 @@ public class ConsultationMessageServiceImpl extends BaseTenantEntityServiceImpl<
         return consultationMessageRepository.findById(id).orElse(null);
     }
     
+    /** tenant_id 필수: 본 API는 tenantId 기준으로만 목록을 조회함. */
     @Override
     public List<ConsultationMessage> getAllMessages() {
         String tenantId = TenantContextHolder.getRequiredTenantId();

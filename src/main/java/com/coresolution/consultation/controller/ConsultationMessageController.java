@@ -101,14 +101,14 @@ public class ConsultationMessageController extends BaseApiController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                 .body(ApiResponse.error("메시지 관리 권한이 필요합니다."));
         }
-        
+        // tenant_id 필수: 조회 쿼리는 tenantId 기준으로만 수행됨. 없으면 403 반환.
         String tenantId = currentUser.getTenantId();
-        if (tenantId == null || tenantId.isEmpty()) {
+        if (tenantId == null || tenantId.trim().isEmpty()) {
             log.warn("⚠️ 테넌트 정보 없음 - 사용자 ID: {}", currentUser.getId());
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                 .body(ApiResponse.error("테넌트 정보가 없습니다."));
         }
-        
+        tenantId = tenantId.trim();
         try {
             TenantContextHolder.setTenantId(tenantId);
             List<ConsultationMessage> messages = consultationMessageService.getAllMessages();

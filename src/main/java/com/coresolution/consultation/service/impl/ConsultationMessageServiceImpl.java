@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Optional;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.ConsultationMessage;
+import com.coresolution.consultation.exception.EntityNotFoundException;
 import com.coresolution.consultation.repository.ConsultationMessageRepository;
 import com.coresolution.consultation.service.ConsultationMessageService;
 import com.coresolution.core.context.TenantContextHolder;
@@ -187,27 +188,15 @@ public class ConsultationMessageServiceImpl extends BaseTenantEntityServiceImpl<
     @Transactional
     public ConsultationMessage markAsRead(Long messageId) {
         log.info("📨 메시지 읽음 처리 - 메시지 ID: {}", messageId);
-        
-        Optional<ConsultationMessage> messageOpt = consultationMessageRepository.findById(messageId);
-        if (messageOpt.isEmpty()) {
-            throw new RuntimeException("메시지를 찾을 수 없습니다: " + messageId);
-        }
-        
-        ConsultationMessage message = messageOpt.get();
+
+        ConsultationMessage message = findActiveById(messageId)
+            .orElseThrow(() -> new EntityNotFoundException("메시지를 찾을 수 없습니다."));
         message.markAsRead();
-        
-        // BaseTenantEntityService의 update 메서드 사용
-        String tenantId = TenantContextHolder.getTenantId();
-        ConsultationMessage savedMessage;
-        if (tenantId != null && message.getTenantId() != null) {
-            savedMessage = update(tenantId, message);
-        } else {
-            // 테넌트 컨텍스트가 없으면 기존 방식 사용 (하위 호환성)
-            savedMessage = consultationMessageRepository.save(message);
-        }
-        
+
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        ConsultationMessage savedMessage = update(tenantId, message);
+
         log.info("✅ 메시지 읽음 처리 완료 - 메시지 ID: {}, isRead: {}", messageId, savedMessage.getIsRead());
-        
         return savedMessage;
     }
 

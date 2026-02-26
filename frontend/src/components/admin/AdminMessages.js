@@ -42,11 +42,14 @@ const AdminMessages = () => {
     try {
       setLoading(true);
       const response = await apiGet('/api/v1/consultation-messages/all');
-      if (response && response.success) {
-        setMessages(Array.isArray(response.data) ? response.data : []);
-      } else {
-        notificationManager.show(response?.message || '메시지 목록을 불러오는데 실패했습니다.', 'error');
+      // apiGet 성공 시 배열(data) 또는 객체만 반환함. response.success / response.data 의존 제거.
+      let list = [];
+      if (Array.isArray(response)) {
+        list = response;
+      } else if (response && Array.isArray(response.data)) {
+        list = response.data;
       }
+      setMessages(list);
     } catch (err) {
       console.error('메시지 로드 중 오류:', err);
       const message = (err && err.message) ? err.message : '메시지를 불러오는 중 오류가 발생했습니다.';
@@ -81,15 +84,12 @@ const AdminMessages = () => {
     return matchesSearch && matchesType && matchesStatus;
   });
 
-  // 메시지 상세 보기
+  // 메시지 상세 보기 (apiGet 성공 시 data 객체만 반환하므로 그대로 상세로 사용)
   const handleMessageClick = async (message) => {
     try {
       const response = await apiGet(`/api/v1/consultation-messages/${message.id}`);
-      if (response && response.success) {
-        setSelectedMessage(response.data);
-      } else {
-        setSelectedMessage(message);
-      }
+      const detail = response && typeof response === 'object' && !Array.isArray(response) ? response : message;
+      setSelectedMessage(detail);
     } catch (error) {
       console.error('메시지 상세 조회 오류:', error);
       setSelectedMessage(message);

@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.ConsultationMessage;
 import com.coresolution.consultation.entity.User;
+import com.coresolution.consultation.exception.EntityNotFoundException;
 import com.coresolution.consultation.service.ConsultationMessageService;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.context.TenantContextHolder;
@@ -321,84 +322,135 @@ public class ConsultationMessageController extends BaseApiController {
     }
 
     /**
-     * 메시지 상세 조회
-     * GET /api/consultation-messages/{messageId}
+     * 메시지 상세 조회 (tenant_id 기준 조회, 세션·권한·tenantId 검사)
+     * GET /api/v1/consultation-messages/{messageId}
      */
     @GetMapping("/{messageId}")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> getMessage(@PathVariable Long messageId) {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getMessage(
+            @PathVariable Long messageId,
+            HttpSession session) {
         log.info("📨 메시지 상세 조회 시작 - 메시지 ID: {}", messageId);
-        
-        ConsultationMessage message = consultationMessageService.getById(messageId);
-        if (message == null) {
-            log.error("❌ 메시지를 찾을 수 없음 - 메시지 ID: {}", messageId);
-            throw new RuntimeException("메시지를 찾을 수 없습니다.");
+
+        User currentUser = SessionUtils.getCurrentUser(session);
+        if (currentUser == null) {
+            log.warn("⚠️ 인증되지 않은 사용자");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(ApiResponse.error("로그인이 필요합니다."));
         }
-        
-        log.info("📨 메시지 조회 성공 - ID: {}, 읽음 상태: {}", messageId, message.getIsRead());
-        
-        // 자동 읽음 처리 (읽지 않은 메시지만)
-        if (!message.getIsRead()) {
-            try {
-                log.info("🔄 읽음 처리 시작 - 메시지 ID: {}", messageId);
-                consultationMessageService.markAsRead(messageId);
-                log.info("✅ 메시지 자동 읽음 처리 완료 - 메시지 ID: {}", messageId);
-                // 최신 메시지 정보 다시 조회
-                message = consultationMessageService.getById(messageId);
-                log.info("✅ 최신 메시지 정보 조회 완료 - 읽음 상태: {}", message.getIsRead());
-            } catch (Exception e) {
-                log.error("⚠️ 메시지 자동 읽음 처리 실패:", e);
+        boolean hasPermission = dynamicPermissionService.hasPermission(currentUser, "MESSAGE_MANAGE");
+        if (!hasPermission) {
+            log.warn("⚠️ 권한 없음 - 사용자 ID: {}, 권한: MESSAGE_MANAGE", currentUser.getId());
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(ApiResponse.error("메시지 관리 권한이 필요합니다."));
+        }
+        String tenantId = currentUser.getTenantId();
+        if (tenantId == null || tenantId.trim().isEmpty()) {
+            log.warn("⚠️ 테넌트 정보 없음 - 사용자 ID: {}", currentUser.getId());
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(ApiResponse.error("테넌트 정보가 없습니다."));
+        }
+        tenantId = tenantId.trim();
+
+        try {
+            TenantContextHolder.setTenantId(tenantId);
+            ConsultationMessage message = consultationMessageService.findActiveById(messageId)
+                .orElseThrow(() -> new EntityNotFoundException("메시지를 찾을 수 없습니다."));
+
+            log.info("📨 메시지 조회 성공 - ID: {}, 읽음 상태: {}", messageId, message.getIsRead());
+
+            if (!message.getIsRead()) {
+                try {
+                    log.info("🔄 읽음 처리 시작 - 메시지 ID: {}", messageId);
+                    consultationMessageService.markAsRead(messageId);
+                    log.info("✅ 메시지 자동 읽음 처리 완료 - 메시지 ID: {}", messageId);
+                    message = consultationMessageService.findActiveById(messageId)
+                        .orElseThrow(() -> new EntityNotFoundException("메시지를 찾을 수 없습니다."));
+                } catch (EntityNotFoundException e) {
+                    throw e;
+                } catch (Exception e) {
+                    log.error("⚠️ 메시지 자동 읽음 처리 실패:", e);
+                }
             }
-        } else {
-            log.info("ℹ️ 이미 읽은 메시지 - 메시지 ID: {}", messageId);
+
+            String receiverType = UserRole.CONSULTANT.name().equals(message.getSenderType())
+                ? UserRole.CLIENT.name() : UserRole.CONSULTANT.name();
+            Map<String, Object> messageData = new HashMap<>();
+            messageData.put("id", message.getId());
+            messageData.put("consultantId", message.getConsultantId());
+            messageData.put("clientId", message.getClientId());
+            messageData.put("consultationId", message.getConsultationId());
+            messageData.put("senderType", message.getSenderType());
+            messageData.put("senderId", message.getSenderId());
+            messageData.put("senderName", getUserName(message.getSenderId(), message.getSenderType()));
+            messageData.put("receiverId", message.getReceiverId());
+            messageData.put("receiverName", getUserName(message.getReceiverId(), receiverType));
+            messageData.put("title", message.getTitle());
+            messageData.put("content", message.getContent());
+            messageData.put("messageType", message.getMessageType());
+            messageData.put("status", message.getStatus());
+            messageData.put("isImportant", message.getIsImportant());
+            messageData.put("isUrgent", message.getIsUrgent());
+            messageData.put("isRead", message.getIsRead());
+            messageData.put("readAt", message.getReadAt());
+            messageData.put("repliedAt", message.getRepliedAt());
+            messageData.put("replyToMessageId", message.getReplyToMessageId());
+            messageData.put("attachments", message.getAttachments());
+            messageData.put("metadata", message.getMetadata());
+            messageData.put("scheduledSendAt", message.getScheduledSendAt());
+            messageData.put("sentAt", message.getSentAt());
+            messageData.put("deliveryChannel", message.getDeliveryChannel());
+            messageData.put("isDelivered", message.getIsDelivered());
+            messageData.put("deliveredAt", message.getDeliveredAt());
+            messageData.put("createdAt", message.getCreatedAt());
+            messageData.put("updatedAt", message.getUpdatedAt());
+
+            return success(messageData);
+        } finally {
+            TenantContextHolder.clear();
         }
-        
-        Map<String, Object> messageData = new HashMap<>();
-        messageData.put("id", message.getId());
-        messageData.put("consultantId", message.getConsultantId());
-        messageData.put("clientId", message.getClientId());
-        messageData.put("consultationId", message.getConsultationId());
-        messageData.put("senderType", message.getSenderType());
-        messageData.put("senderId", message.getSenderId());
-        messageData.put("receiverId", message.getReceiverId());
-        messageData.put("title", message.getTitle());
-        messageData.put("content", message.getContent());
-        messageData.put("messageType", message.getMessageType());
-        messageData.put("status", message.getStatus());
-        messageData.put("isImportant", message.getIsImportant());
-        messageData.put("isUrgent", message.getIsUrgent());
-        messageData.put("isRead", message.getIsRead());
-        messageData.put("readAt", message.getReadAt());
-        messageData.put("repliedAt", message.getRepliedAt());
-        messageData.put("replyToMessageId", message.getReplyToMessageId());
-        messageData.put("attachments", message.getAttachments());
-        messageData.put("metadata", message.getMetadata());
-        messageData.put("scheduledSendAt", message.getScheduledSendAt());
-        messageData.put("sentAt", message.getSentAt());
-        messageData.put("deliveryChannel", message.getDeliveryChannel());
-        messageData.put("isDelivered", message.getIsDelivered());
-        messageData.put("deliveredAt", message.getDeliveredAt());
-        messageData.put("createdAt", message.getCreatedAt());
-        messageData.put("updatedAt", message.getUpdatedAt());
-        
-        return success(messageData);
     }
 
     /**
-     * 메시지 읽음 처리
-     * GET /api/consultation-messages/{messageId}/read
+     * 메시지 읽음 처리 (세션·권한·tenantId 검사 후 tenant 컨텍스트 설정)
+     * GET /api/v1/consultation-messages/{messageId}/read
      */
     @GetMapping("/{messageId}/read")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> markAsRead(@PathVariable Long messageId) {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> markAsRead(
+            @PathVariable Long messageId,
+            HttpSession session) {
         log.info("📨 메시지 읽음 처리 - 메시지 ID: {}", messageId);
-        
-        ConsultationMessage message = consultationMessageService.markAsRead(messageId);
-        
-        Map<String, Object> messageData = new HashMap<>();
-        messageData.put("id", message.getId());
-        messageData.put("isRead", message.getIsRead());
-        messageData.put("readAt", message.getReadAt());
-        
-        return success("메시지가 읽음 처리되었습니다.", messageData);
+
+        User currentUser = SessionUtils.getCurrentUser(session);
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(ApiResponse.error("로그인이 필요합니다."));
+        }
+        boolean hasPermission = dynamicPermissionService.hasPermission(currentUser, "MESSAGE_MANAGE");
+        if (!hasPermission) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(ApiResponse.error("메시지 관리 권한이 필요합니다."));
+        }
+        String tenantId = currentUser.getTenantId();
+        if (tenantId == null || tenantId.trim().isEmpty()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(ApiResponse.error("테넌트 정보가 없습니다."));
+        }
+        tenantId = tenantId.trim();
+
+        try {
+            TenantContextHolder.setTenantId(tenantId);
+            ConsultationMessage message = consultationMessageService.markAsRead(messageId);
+            Map<String, Object> messageData = new HashMap<>();
+            messageData.put("id", message.getId());
+            messageData.put("isRead", message.getIsRead());
+            messageData.put("readAt", message.getReadAt());
+            return success("메시지가 읽음 처리되었습니다.", messageData);
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse.error(e.getMessage()));
+        } finally {
+            TenantContextHolder.clear();
+        }
     }
 
     /**

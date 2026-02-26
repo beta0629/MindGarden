@@ -20,6 +20,23 @@ const MAPPING_STATUS_COLOR_MAP = {
 const getMappingStatusColorToken = (status) =>
   (status && MAPPING_STATUS_COLOR_MAP[status]) || 'var(--mg-gray-500)';
 
+/** B0KlA 아토믹 디자인용 배지 변형: success | warning | neutral */
+const MAPPING_STATUS_VARIANT = {
+  ACTIVE: 'success',
+  PAYMENT_CONFIRMED: 'success',
+  COMPLETED: 'success',
+  PENDING_PAYMENT: 'warning',
+  PENDING: 'warning',
+  DEPOSIT_PENDING: 'warning',
+  SUSPENDED: 'warning',
+  INACTIVE: 'neutral',
+  TERMINATED: 'neutral',
+  SESSIONS_EXHAUSTED: 'neutral'
+};
+
+const getMappingStatusVariant = (status) =>
+  (status && MAPPING_STATUS_VARIANT[status]) || 'neutral';
+
 /**
  * 내담자 매칭 관리 탭 컴포넌트 (아토믹 디자인: mg-v2-client-mapping / mg-v2-mapping-client-block / mg-v2-card)
  * CLIENT_MAPPING_TAB_LAYOUT_SPEC 5절 DOM 구조 준수
@@ -54,7 +71,7 @@ const ClientMappingTab = ({
           </div>
           <div className="mg-v2-mapping-status">
             <span
-              className="mg-v2-status-badge"
+              className={`mg-v2-status-badge mg-v2-status-badge--${getMappingStatusVariant(mapping.status)}`}
               style={{ '--status-bg-color': getMappingStatusColorToken(mapping.status) }}
             >
               {getMappingStatusKoreanNameSync(mapping.status)}

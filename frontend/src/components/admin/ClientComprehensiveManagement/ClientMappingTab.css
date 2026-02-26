@@ -59,7 +59,7 @@
   min-width: 0;
 }
 
-/* ===== 4.4 내담자별 블록 (mg-v2-mapping-client-block) ===== */
+/* ===== 4.4 내담자별 블록 (mg-v2-mapping-client-block) — 그룹 구분용 두꺼운 보더 (B0KlA 일관) ===== */
 .mg-v2-mapping-client-block {
   display: flex;
   flex-direction: column;
@@ -67,7 +67,7 @@
   padding: var(--mg-layout-section-padding, 1.5rem);
   margin-bottom: 0;
   background: var(--ad-b0kla-card-bg);
-  border: 1px solid var(--ad-b0kla-border);
+  border: 2px solid var(--ad-b0kla-border);
   border-radius: var(--ad-b0kla-radius, 16px);
 }
 
@@ -109,15 +109,15 @@
   color: var(--color-text-secondary, var(--ad-b0kla-text-secondary));
 }
 
-/* ===== 4.7 매칭 카드 그리드 (블록 내부) — MAPPING_CARD_COMPACT_SPEC 3.1 ===== */
+/* ===== 4.7 매칭 카드 그리드 (블록 내부) — 해상도에 맞게 가로 배열, 여러 개 노출 ===== */
 .mg-v2-mapping-client-block .mg-v2-mapping-list-block__grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: var(--mg-spacing-md, 1rem);
   margin-top: 0;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 640px) {
   .mg-v2-mapping-client-block .mg-v2-mapping-list-block__grid {
     grid-template-columns: 1fr;
   }
@@ -125,8 +125,8 @@
 
 /* ===== 매칭 카드 컴팩트 (MAPPING_CARD_COMPACT_SPEC 3절) ===== */
 .mg-v2-mapping-client-block .mg-v2-card.mg-v2-mapping-card {
-  max-width: min(100%, 520px);
-  min-width: 280px;
+  min-width: 0; /* 그리드 셀 오버플로우 방지 */
+  max-width: 100%;
   padding: 0;
   background: var(--ad-b0kla-card-bg);
   border: 1px solid var(--ad-b0kla-border);

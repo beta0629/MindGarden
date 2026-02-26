@@ -54,6 +54,10 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
         } else if (clientId != null) {
             return consultationRecordRepository.findByClientIdAndIsDeletedFalseOrderBySessionDateDesc(clientId, pageable);
         } else {
+            String tenantId = TenantContextHolder.getTenantId();
+            if (tenantId != null && !tenantId.isEmpty()) {
+                return consultationRecordRepository.findByTenantIdAndIsDeletedFalseOrderBySessionDateDesc(tenantId, pageable);
+            }
             return Page.empty();
         }
     }

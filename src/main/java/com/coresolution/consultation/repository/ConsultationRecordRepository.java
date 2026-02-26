@@ -62,6 +62,11 @@ public interface ConsultationRecordRepository extends JpaRepository<Consultation
         String tenantId, Long consultantId, Long clientId, Pageable pageable);
     
     /**
+     * 테넌트 전체 상담일지 목록 조회 (관리자 상담 이력 전체 조회용)
+     */
+    Page<ConsultationRecord> findByTenantIdAndIsDeletedFalseOrderBySessionDateDesc(String tenantId, Pageable pageable);
+    
+    /**
      * @Deprecated - 🚨 극도로 위험: tenantId 필터링 없이 상담 기록 노출!
      */
     @Deprecated

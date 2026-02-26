@@ -49,34 +49,12 @@ import './AdminDashboard/AdminDashboardB0KlA.css';
 import './system/SystemStatus.css';
 import './system/SystemTools.css';
 import { ADMIN_ROUTES } from '../../constants/adminRoutes';
+import Avatar from '../common/Avatar';
 
 const AdminDashboard = ({ user: propUser }) => {
     const navigate = useNavigate();
     const { user: sessionUser, isLoggedIn, isLoading: sessionLoading, hasPermission } = useSession();
 
-    const getAvatarInitial = (name) => {
-        if (!name) return '?';
-        
-        if (/[가-힣]/.test(name)) {
-            const parts = name.trim().split(/\s+/);
-            if (parts.length > 1) {
-                return parts[0].charAt(0) + parts[1].charAt(0);
-            } else {
-                const chars = name.split('');
-                let result = chars[0];
-                for (let i = 1; i < chars.length; i++) {
-                    if (chars[i] === chars[0]) {
-                        result += chars[i];
-                    } else {
-                        break;
-                    }
-                }
-                return result;
-            }
-        }
-        
-        return name.charAt(0).toUpperCase();
-    };
     const [userPermissions, setUserPermissions] = useState([]);
     const [stats, setStats] = useState({
         totalConsultants: 0,
@@ -631,7 +609,7 @@ const AdminDashboard = ({ user: propUser }) => {
 
     const topConsultantsData = (stats.consultantRatingStats?.topConsultants || []).slice(0, 4).map((c) => ({
       name: c.consultantName || '-',
-      initial: getAvatarInitial(c.consultantName),
+      profileImageUrl: c.profileImageUrl || c.consultantProfileImageUrl || null,
       rating: c.averageScore ? c.averageScore.toFixed(1) : '-',
       barWidth: c.averageScore ? Math.min(100, (c.averageScore / 5) * 100) : 0,
       barColor: '#4b745c'
@@ -823,9 +801,11 @@ const AdminDashboard = ({ user: propUser }) => {
                         {topConsultantsData.length > 0 ? (
                             topConsultantsData.map((c, i) => (
                                 <div key={i} className="mg-v2-ad-b0kla__counselor-item">
-                                    <div className="mg-v2-ad-b0kla__counselor-avatar mg-v2-ad-b0kla__counselor-avatar--green">
-                                        {c.initial}
-                                    </div>
+                                    <Avatar
+                                        profileImageUrl={c.profileImageUrl}
+                                        displayName={c.name}
+                                        className="mg-v2-ad-b0kla__counselor-avatar mg-v2-ad-b0kla__counselor-avatar--green"
+                                    />
                                     <div className="mg-v2-ad-b0kla__counselor-data">
                                         <span className="mg-v2-ad-b0kla__counselor-name">{c.name}</span>
                                         <div className="mg-v2-ad-b0kla__counselor-rating-row">
@@ -1013,9 +993,11 @@ const AdminDashboard = ({ user: propUser }) => {
                                 >
                                     <div className="mg-vacation-card__header">
                                         <div className="mg-flex mg-v2-items-center mg-gap-2">
-                                            <div className="mg-avatar mg-avatar-sm mg-avatar-primary">
-                                                {getAvatarInitial(consultant.consultantName)}
-                                            </div>
+                                            <Avatar
+                                                profileImageUrl={consultant.profileImageUrl}
+                                                displayName={consultant.consultantName}
+                                                className="mg-avatar mg-avatar-sm mg-avatar-primary mg-v2-consultant-detail-avatar"
+                                            />
                                             <div>
                                                 <div className="mg-vacation-card__name">{consultant.consultantName}</div>
                                                 <div className="mg-vacation-card__email">{consultant.consultantEmail}</div>

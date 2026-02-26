@@ -8,6 +8,7 @@ import { useSession } from '../../contexts/SessionContext';
 import { redirectToDynamicDashboard } from '../../utils/dashboardUtils';
 import { sessionManager } from '../../utils/sessionManager';
 import notificationManager from '../../utils/notification';
+import Avatar from '../common/Avatar';
 import '../../styles/main.css';
 import './Homepage.css';
 
@@ -229,13 +230,11 @@ const TabletHomepage = () => {
             <div className="profile-menu" onClick={(e) => e.stopPropagation()}>
               <div className="profile-menu-header">
                 <div className="profile-menu-user">
-                  <div className="profile-menu-avatar">
-                    {user.profileImageUrl ? (
-                      <img src={user.profileImageUrl} alt={user.name} />
-                    ) : (
-                      <i className="bi bi-person-circle"></i>
-                    )}
-                  </div>
+                  <Avatar
+                    profileImageUrl={user.profileImageUrl || user.avatar}
+                    displayName={user.name}
+                    className="profile-menu-avatar"
+                  />
                   <div className="profile-menu-info">
                     <h4>{user.name}</h4>
                     <p>{user.email}</p>

@@ -2,6 +2,7 @@
 import MGButton from '../../../components/common/MGButton'; // 임시 비활성화
 import { FaBell, FaCog, FaUserCog } from 'react-icons/fa';
 import { Bell, Settings, User } from 'lucide-react';
+import Avatar from '../../common/Avatar';
 
 /**
  * AdminDashboard 헤더 컴포넌트
@@ -17,8 +18,7 @@ import { Bell, Settings, User } from 'lucide-react';
 const AdminDashboardHeader = ({
     currentUser,
     userPermissions,
-    onNavigate,
-    getAvatarInitial
+    onNavigate
 }) => {
     const hasNotificationPermission = userPermissions.includes('NOTIFICATION_MANAGEMENT');
     const hasSystemConfigPermission = userPermissions.includes('SYSTEM_CONFIG');
@@ -28,9 +28,11 @@ const AdminDashboardHeader = ({
         <div className="mg-v2-admin-dashboard-header">
             <div className="mg-v2-admin-dashboard-header-left">
                 <div className="mg-v2-admin-dashboard-user-info">
-                    <div className="mg-v2-admin-dashboard-avatar">
-                        {getAvatarInitial(currentUser?.name)}
-                    </div>
+                    <Avatar
+                        profileImageUrl={currentUser?.avatar || currentUser?.profileImageUrl}
+                        displayName={currentUser?.name}
+                        className="mg-v2-admin-dashboard-avatar"
+                    />
                     <div className="mg-v2-admin-dashboard-user-details">
                         <h2 className="mg-v2-admin-dashboard-welcome">
                             안녕하세요, {currentUser?.name || '관리자'}님

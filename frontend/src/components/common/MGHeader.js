@@ -5,6 +5,7 @@
  */
 
 import React, { useState } from 'react';
+import Avatar from './Avatar';
 // 헤더 스타일은 main.css를 통해 _header.css에서 중앙화되어 로드됨
 
 const MGHeader = ({
@@ -104,13 +105,11 @@ const MGHeader = ({
               className="mg-header__user-button"
               onClick={handleUserMenuToggle}
             >
-              <div className="mg-header__user-avatar">
-                {user?.avatar ? (
-                  <img src={user.avatar} alt={user.name} />
-                ) : (
-                  <span>{user?.name?.charAt(0) || 'U'}</span>
-                )}
-              </div>
+              <Avatar
+                profileImageUrl={user?.avatar || user?.profileImageUrl}
+                displayName={user?.name || '사용자'}
+                className="mg-header__user-avatar"
+              />
               <span className="mg-header__user-name">
                 {user?.name || '사용자'}
               </span>
@@ -121,13 +120,11 @@ const MGHeader = ({
             {isUserMenuOpen && (
               <div className="mg-header__user-dropdown">
                 <div className="mg-header__user-info">
-                  <div className="mg-header__user-avatar-large">
-                    {user?.avatar ? (
-                      <img src={user.avatar} alt={user.name} />
-                    ) : (
-                      <span>{user?.name?.charAt(0) || 'U'}</span>
-                    )}
-                  </div>
+                  <Avatar
+                    profileImageUrl={user?.avatar || user?.profileImageUrl}
+                    displayName={user?.name || '사용자'}
+                    className="mg-header__user-avatar-large"
+                  />
                   <div className="mg-header__user-details">
                     <div className="mg-header__user-name-large">
                       {user?.name || '사용자'}
@@ -232,13 +229,11 @@ const MGHeader = ({
         {/* 모바일 사용자 정보 */}
         {user && (
           <div className="mg-header__mobile-user">
-            <div className="mg-header__user-avatar">
-              {user?.avatar ? (
-                <img src={user.avatar} alt={user.name} />
-              ) : (
-                <span>{user?.name?.charAt(0) || 'U'}</span>
-              )}
-            </div>
+            <Avatar
+              profileImageUrl={user?.avatar || user?.profileImageUrl}
+              displayName={user?.name || '사용자'}
+              className="mg-header__user-avatar"
+            />
             <div className="mg-header__user-info">
               <div className="mg-header__user-name">{user?.name || '사용자'}</div>
               <div className="mg-header__user-email">{user?.email || 'user@mindgarden.com'}</div>

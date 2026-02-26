@@ -4,6 +4,7 @@ import { sessionManager } from '../../utils/sessionManager';
 import { redirectToDynamicDashboard } from '../../utils/dashboardUtils';
 // import UnifiedModal from './modals/UnifiedModal'; // 임시 비활성화
 import SimpleHamburgerMenu from '../layout/SimpleHamburgerMenu';
+import Avatar from './Avatar';
 import { API_BASE_URL } from '../../constants/api';
 import notificationManager from '../../utils/notification';
 import { useBranding } from '../../hooks/useBranding';
@@ -373,25 +374,19 @@ const UnifiedHeader = ({
         
         <div className="mg-header__user-info">
           {/* 프로필 사진 - 클릭 가능 */}
-          <div 
+          <div
             className="mg-header__user-avatar mg-header__user-avatar--clickable"
             onClick={handleProfileClick}
             title="마이페이지로 이동"
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleProfileClick(); } }}
           >
-            {profileImageUrl ? (
-              <img 
-                src={profileImageUrl} 
-                alt="프로필" 
-                className="mg-header__profile-image"
-                onError={(e) => {
-                  e.target.style.display = 'none';
-                  e.target.nextSibling.style.display = 'block';
-                }}
-              />
-            ) : null}
-            <i 
-              className={`bi bi-person-circle mg-header__profile-icon ${profileImageUrl ? 'mg-hidden' : 'mg-visible'}`}
-            ></i>
+            <Avatar
+              profileImageUrl={profileImageUrl}
+              displayName={user?.name || user?.nickname || user?.userId || '사용자'}
+              className="mg-header__profile-image"
+            />
           </div>
           
           {/* 사용자 정보 */}

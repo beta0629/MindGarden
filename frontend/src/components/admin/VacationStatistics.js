@@ -4,6 +4,7 @@ import MGButton from '../../components/common/MGButton'; // 임시 비활성화
 import StatCard from '../ui/Card/StatCard';
 import DashboardSection from '../layout/DashboardSection';
 import { Calendar, User, BarChart3, Clock } from 'lucide-react';
+import Avatar from '../common/Avatar';
 import './VacationStatistics.css';
 
 /**
@@ -26,39 +27,6 @@ const getConsultantColor = (consultantId) => {
     // 상담사 ID를 기반으로 일관된 색상 할당
     const colorIndex = consultantId % colorClasses.length;
     return colorClasses[colorIndex];
-};
-
-/**
- * 이름에서 아바타용 초성을 추출하는 함수
- */
-const getAvatarInitial = (name) => {
-    if (!name) return '?';
-    
-    // 한글인 경우 초성 추출
-    if (/[가-힣]/.test(name)) {
-        // 이름을 공백으로 분리하여 각 부분의 첫 글자를 가져옴
-        const parts = name.trim().split(/\s+/);
-        if (parts.length > 1) {
-            // 성과 이름이 분리된 경우 (예: "김 선희")
-            return parts[0].charAt(0) + parts[1].charAt(0);
-        } else {
-            // 성명이 붙어있는 경우 (예: "김선희", "김김선희")
-            const chars = name.split('');
-            // 첫 글자가 성인지 확인하고, 연속된 같은 글자가 있는지 확인
-            let result = chars[0];
-            for (let i = 1; i < chars.length; i++) {
-                if (chars[i] === chars[0]) {
-                    result += chars[i];
-                } else {
-                    break;
-                }
-            }
-            return result;
-        }
-    }
-    
-    // 영문인 경우 첫 글자
-    return name.charAt(0).toUpperCase();
 };
 
 /**
@@ -326,9 +294,11 @@ const VacationStatistics = ({ className = "" }) => {
                                     className="consultant-card" 
                                 >
                                     <div className="consultant-info">
-                                        <div className={`consultant-avatar ${consultantColor}`}>
-                                            {getAvatarInitial(consultant.consultantName)}
-                                        </div>
+                                        <Avatar
+                                            profileImageUrl={consultant.profileImageUrl}
+                                            displayName={consultant.consultantName}
+                                            className={`consultant-avatar ${consultantColor} mg-v2-consultant-detail-avatar`}
+                                        />
                                         <div className="consultant-name">{consultant.consultantName}</div>
                                         <div className="consultant-vacation-info">{consultant.consultantEmail}</div>
                                     </div>

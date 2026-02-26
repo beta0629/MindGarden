@@ -21,6 +21,7 @@ import { getRoleDisplayName, getRoleDisplayNameEn } from '../../../../utils/role
 import { redirectToDynamicDashboard } from '../../../../utils/dashboardUtils';
 import { sessionManager } from '../../../../utils/sessionManager';
 import ConfirmModal from '../../../common/ConfirmModal';
+import Avatar from '../../../common/Avatar';
 import '../Widget.css';
 import './HeaderWidget.css';
 
@@ -170,18 +171,11 @@ const HeaderWidget = ({ widget, user }) => {
               <>
                 {showUserInfo && (
                   <div className="widget-header-user-info" onClick={handleProfileClick}>
-                    <div className="widget-header-user-avatar">
-                      {getProfileImageUrl() ? (
-                        <img 
-                          src={getProfileImageUrl()} 
-                          alt="프로필" 
-                          className="widget-header-profile-image"
-                          onError={handleImageError}
-                        />
-                      ) : (
-                        <i className="bi bi-person-circle"></i>
-                      )}
-                    </div>
+                    <Avatar
+                      profileImageUrl={getProfileImageUrl() || currentUser?.avatar}
+                      displayName={currentUser?.name || currentUser?.nickname || currentUser?.userId || '사용자'}
+                      className="widget-header-user-avatar"
+                    />
                     <div className="widget-header-user-details">
                       <div className="widget-header-user-name">
                         {currentUser.name || currentUser.nickname || currentUser.userId || '사용자'}

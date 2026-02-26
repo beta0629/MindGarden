@@ -311,18 +311,6 @@ const ClientSelector = ({
     };
 
 /**
-     * 프로필 이미지 URL 생성
-     */
-    const getClientProfileImage = (client) => {
-        if (client.profileImage) {
-            return client.profileImage;
-        }
-        
-        const firstChar = client.name ? client.name.charAt(0) : '?';
-        return `https://ui-avatars.com/api/?name=${encodeURIComponent(firstChar)}&background=28a745&color=fff&size=60&font-size=0.5`;
-    };
-
-/**
      * 세션 상태 배지 색상
      */
     const getSessionBadgeColor = (remainingSessions) => {

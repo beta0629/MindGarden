@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSession } from '../../../contexts/SessionContext';
 import Button from '../../ui/Button/Button';
+import Avatar from '../../common/Avatar';
 import './WelcomeWidget.css';
 
 /**
@@ -58,9 +59,11 @@ const WelcomeWidget = ({ config }) => {
                     <p className="date-text">{getFormattedDate()}</p>
                 </div>
                 <div className="user-avatar">
-                    <div className="avatar-circle">
-                        {user?.name?.charAt(0) || 'U'}
-                    </div>
+                    <Avatar
+                        profileImageUrl={user?.profileImageUrl || user?.avatar}
+                        displayName={user?.name || '사용자'}
+                        className="avatar-circle"
+                    />
                 </div>
             </div>
 

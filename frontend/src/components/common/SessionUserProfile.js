@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './SessionUserProfile.css';
+import Avatar from './Avatar';
 import { useSession } from '../../hooks/useSession';
 import { getRoleDisplayName, getRoleDisplayNameEn } from '../../utils/roleHelper';
 
@@ -109,18 +110,11 @@ const SessionUserProfile = ({ onProfileClick, showRole = true }) => {
         className="user-info-clickable"
       >
         <div className="user-avatar">
-          {profileImageUrl ? (
-            <img 
-              src={profileImageUrl} 
-              alt="프로필 이미지" 
-              className="profile-image"
-              onError={handleImageError}
-              onLoad={handleImageLoad}
-              className="profile-image-loaded"
-            />
-          ) : (
-            <i className="bi bi-person-circle profile-icon"></i>
-          )}
+          <Avatar
+            profileImageUrl={sessionUser?.profileImageUrl || sessionUser?.socialProfileImage}
+            displayName={getUserDisplayName()}
+            className="profile-image"
+          />
           {/* 이미지 타입 배지 */}
           <div className="image-type-badge">
             {getProfileImageTypeText()}

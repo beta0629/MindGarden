@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { apiGet } from '../../utils/ajax';
 import { Users, Calendar, TrendingUp } from 'lucide-react';
 import UnifiedLoading from '../common/UnifiedLoading';
+import Avatar from '../common/Avatar';
 import '../../styles/unified-design-tokens.css';
 
 /**
@@ -201,27 +202,11 @@ const ConsultantClientSection = ({ userId }) => {
                 onClick={() => handleClientClick(client.id)}
               >
                 <div className="mg-v2-client-card-header">
-                  <div className="mg-v2-client-card-avatar">
-                    {client.profileImageUrl ? (
-                      <>
-                        <img
-                          src={client.profileImageUrl}
-                          alt=""
-                          className="mg-v2-avatar-img"
-                          onError={(e) => {
-                            e.target.style.display = 'none';
-                            const fallback = e.target.nextElementSibling;
-                            if (fallback) fallback.classList.remove('mg-v2-avatar-fallback--hidden');
-                          }}
-                        />
-                        <span className="mg-v2-avatar-fallback mg-v2-avatar-fallback--hidden" aria-hidden="true">
-                          {client.name ? client.name.charAt(0) : '?'}
-                        </span>
-                      </>
-                    ) : (
-                      <span className="mg-v2-avatar-fallback">{client.name ? client.name.charAt(0) : '?'}</span>
-                    )}
-                  </div>
+                  <Avatar
+                    profileImageUrl={client.profileImageUrl}
+                    displayName={client.name}
+                    className="mg-v2-client-card-avatar"
+                  />
                   <div className="mg-v2-client-card-info">
                     <h4 className="mg-v2-h4">{client.name || '이름 없음'}</h4>
                     <p className="mg-v2-text-sm mg-v2-color-text-secondary">

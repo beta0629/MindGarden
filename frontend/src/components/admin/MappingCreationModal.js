@@ -17,6 +17,7 @@ import { getAllConsultantsWithStats } from '../../utils/consultantHelper';
 import notificationManager from '../../utils/notification';
 import SearchInput from '../dashboard-v2/atoms/SearchInput';
 import Button from '../ui/Button';
+import Avatar from '../common/Avatar';
 import { DEFAULT_MAPPING_CONFIG } from '../../constants/mapping';
 import '../schedule/ScheduleB0KlA.css';
 import './MappingCreationModal.css';
@@ -452,27 +453,11 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                     className={`mg-v2-mapping-creation-modal__card ${selectedConsultant?.id === c.id ? 'mg-v2-mapping-creation-modal__card--selected' : ''}`}
                     onClick={() => setSelectedConsultant(c)}
                   >
-                    <span className="mg-v2-mapping-creation-modal__avatar">
-                      {c.profileImageUrl ? (
-                        <>
-                          <img
-                            src={c.profileImageUrl}
-                            alt=""
-                            className="mg-v2-avatar-img"
-                            onError={(e) => {
-                              e.target.style.display = 'none';
-                              const fallback = e.target.nextElementSibling;
-                              if (fallback) fallback.classList.remove('mg-v2-avatar-fallback--hidden');
-                            }}
-                          />
-                          <span className="mg-v2-avatar-fallback mg-v2-avatar-fallback--hidden" aria-hidden="true">
-                            {c.name?.charAt(0) || '?'}
-                          </span>
-                        </>
-                      ) : (
-                        <span className="mg-v2-avatar-fallback">{c.name?.charAt(0) || '?'}</span>
-                      )}
-                    </span>
+                    <Avatar
+                      profileImageUrl={c.profileImageUrl}
+                      displayName={c.name}
+                      className="mg-v2-mapping-creation-modal__avatar"
+                    />
                     <div className="mg-v2-mapping-creation-modal__card-info">
                       <strong>{c.name}</strong>
                       <span>{c.email}</span>
@@ -577,27 +562,11 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                     className={`mg-v2-mapping-creation-modal__card ${selectedClient?.id === c.id ? 'mg-v2-mapping-creation-modal__card--selected' : ''}`}
                     onClick={() => setSelectedClient(c)}
                   >
-                    <span className="mg-v2-mapping-creation-modal__avatar">
-                      {c.profileImageUrl ? (
-                        <>
-                          <img
-                            src={c.profileImageUrl}
-                            alt=""
-                            className="mg-v2-avatar-img"
-                            onError={(e) => {
-                              e.target.style.display = 'none';
-                              const fallback = e.target.nextElementSibling;
-                              if (fallback) fallback.classList.remove('mg-v2-avatar-fallback--hidden');
-                            }}
-                          />
-                          <span className="mg-v2-avatar-fallback mg-v2-avatar-fallback--hidden" aria-hidden="true">
-                            {c.name?.charAt(0) || '?'}
-                          </span>
-                        </>
-                      ) : (
-                        <span className="mg-v2-avatar-fallback">{c.name?.charAt(0) || '?'}</span>
-                      )}
-                    </span>
+                    <Avatar
+                      profileImageUrl={c.profileImageUrl}
+                      displayName={c.name}
+                      className="mg-v2-mapping-creation-modal__avatar"
+                    />
                     <div className="mg-v2-mapping-creation-modal__card-info">
                       <strong>{c.name}</strong>
                       <span>{c.email}</span>

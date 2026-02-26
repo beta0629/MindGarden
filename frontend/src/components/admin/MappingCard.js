@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import MGButton from '../../components/common/MGButton'; // 임시 비활성화
 import { User, Package, Plus, PauseCircle, CheckCircle } from 'lucide-react';
 import { getStatusColor, getStatusIcon, getMappingStatusKoreanName } from '../../utils/codeHelper';
+import Avatar from '../common/Avatar';
 
 const MappingCard = ({ 
     mapping, 
@@ -49,9 +50,11 @@ const MappingCard = ({
         >
             <div className="mg-v2-mapping-card-header">
                 <div className="mg-v2-mapping-card-title-section">
-                    <div className="mg-v2-client-avatar">
-                        { mapping.clientName?.charAt(0) || '?' }
-                    </div>
+                    <Avatar
+                        profileImageUrl={mapping.clientProfileImageUrl || mapping.client?.profileImageUrl}
+                        displayName={mapping.clientName}
+                        className="mg-v2-client-avatar"
+                    />
                     <div className="mg-v2-mapping-client-info">
                         <h5 className="mg-v2-client-name">
                             { mapping.clientName || '알 수 없음' }

@@ -18,6 +18,7 @@ import { Users, Eye, MessageCircle, Calendar, UserCheck, UserPlus } from 'lucide
 import { useWidget } from '../../../../hooks/useWidget';
 import BaseWidget from '../BaseWidget';
 import { RoleUtils, USER_ROLES } from '../../../../constants/roles';
+import Avatar from '../../../common/Avatar';
 import './ConsultantClientWidget.css';
 
 const ConsultantClientWidget = ({ widget, user }) => {
@@ -95,29 +96,11 @@ const ConsultantClientWidget = ({ widget, user }) => {
         <div className="client-list">
           {clients.map((client) => (
             <div key={client.id} className="client-item">
-              <div className="client-avatar">
-                {client.profileImageUrl ? (
-                  <>
-                    <img
-                      src={client.profileImageUrl}
-                      alt=""
-                      className="mg-v2-avatar-img"
-                      onError={(e) => {
-                        e.target.style.display = 'none';
-                        const fallback = e.target.nextElementSibling;
-                        if (fallback) fallback.classList.remove('mg-v2-avatar-fallback--hidden');
-                      }}
-                    />
-                    <span className="mg-v2-avatar-fallback mg-v2-avatar-fallback--hidden" aria-hidden="true">
-                      {client.name ? client.name.charAt(0) : '?'}
-                    </span>
-                  </>
-                ) : (
-                  <span className="mg-v2-avatar-fallback" aria-hidden="true">
-                    {client.name ? client.name.charAt(0) : '?'}
-                  </span>
-                )}
-              </div>
+              <Avatar
+                profileImageUrl={client.profileImageUrl}
+                displayName={client.name}
+                className="client-avatar"
+              />
               <div className="client-info">
                 <div className="client-name">{client.name}</div>
                 <div className="client-details">

@@ -7,24 +7,12 @@ import { DASHBOARD_MESSAGES } from '../../constants/dashboard';
 import { RoleUtils } from '../../constants/roles';
 import WeatherCard from './WeatherCard';
 import { getStatusLabel } from '../../utils/colorUtils';
+import Avatar from '../common/Avatar';
 import '../../styles/main.css';
 import './WelcomeSection.css';
 
 const WelcomeSection = ({ user, currentTime, consultationData }) => {
-  const [imageLoadError, setImageLoadError] = useState(false);
   const navigate = useNavigate();
-
-  // 프로필 이미지 URL 가져오기
-  const getProfileImageUrl = () => {
-    if (user?.profileImageUrl && !imageLoadError) {
-      return user.profileImageUrl;
-    }
-    if (user?.socialProfileImage && !imageLoadError) {
-      return user.socialProfileImage;
-    }
-    // 기본 아바타 사용
-    return '/default-avatar.svg';
-  };
 
   // 사용자 이름 가져오기
   const getUserDisplayName = () => {
@@ -60,7 +48,7 @@ const WelcomeSection = ({ user, currentTime, consultationData }) => {
     }
   };
 
-  const profileImageUrl = getProfileImageUrl();
+  const profileImageUrl = user?.profileImageUrl || user?.socialProfileImage;
   const displayName = getUserDisplayName();
 
   // 오늘 날짜의 상담만 필터링
@@ -102,14 +90,11 @@ const WelcomeSection = ({ user, currentTime, consultationData }) => {
     <div className={WELCOME_SECTION_CSS.CONTAINER}>
       <div className="welcome-card">
         <div className="welcome-profile">
-          <div className="profile-avatar">
-            <img 
-              src={profileImageUrl} 
-              alt="프로필 이미지" 
-              className="profile-image"
-              onError={() => setImageLoadError(true)}
-            />
-          </div>
+          <Avatar
+            profileImageUrl={profileImageUrl}
+            displayName={displayName}
+            className="profile-avatar"
+          />
           <div className="welcome-content">
             <h2 className="welcome-title">{getWelcomeTitle()}</h2>
             <p className="welcome-message">

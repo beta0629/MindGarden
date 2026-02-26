@@ -12,6 +12,7 @@ import {
     getFormattedCurrentClients, 
     getFormattedAvailability 
 } from '../../utils/codeHelper';
+import Avatar from '../common/Avatar';
 
 /**
  * 상담사 상세 정보 모달
@@ -35,16 +36,6 @@ const ConsultantDetailModal = ({
     onClose, 
     consultant 
 }) => {
-/**
-     * 이니셜 반환
-     */
-    const getInitial = () => {
-        if (consultant?.name) {
-            return consultant.name.charAt(0);
-        }
-        return '?';
-    };
-
     // 공통 함수로 데이터 포맷팅
     const availability = getFormattedAvailability(consultant);
     const contact = getFormattedContact(consultant);
@@ -84,10 +75,12 @@ const ConsultantDetailModal = ({
                     <div className="mg-consultant-detail-container">
                         {/* 상담사 기본 정보 */}
                         <div className="mg-consultant-detail-header">
-                            <div className="mg-consultant-detail-avatar">
-                                <div className="mg-consultant-detail-avatar-circle">
-                                    {getInitial()}
-                                </div>
+                            <div className="mg-consultant-detail-avatar mg-v2-consultant-detail-avatar">
+                                <Avatar
+                                    profileImageUrl={consultant.profileImageUrl}
+                                    displayName={consultant.name}
+                                    className="mg-consultant-detail-avatar-circle"
+                                />
                                 <div 
                                     className="mg-consultant-detail-status-badge"
                                     style={{ '--availability-color': availability.color }}

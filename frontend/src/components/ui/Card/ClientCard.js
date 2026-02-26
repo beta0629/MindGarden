@@ -1,25 +1,13 @@
 import React from 'react';
 import { User, Calendar, Clock, TrendingUp, MessageCircle, Phone, CheckCircle, AlertCircle } from 'lucide-react';
+import Avatar from '../../common/Avatar';
 
 /**
  * 공통 내담자 카드 컴포넌트
-/**
- * - 디자인 시스템 v2.0 적용
-/**
- * - 글라스모피즘 효과
-/**
- * - 반응형 지원
-/**
- * - 선택 상태 관리
-/**
- * - 진행률 표시
-/**
- * 
-/**
+ * - 디자인 시스템 v2.0 적용, 글라스모피즘, 반응형, 선택 상태 관리, 진행률 표시
+ *
  * @author MindGarden
-/**
  * @version 2.0.0
-/**
  * @since 2025-10-15
  */
 const ClientCard = ({ 
@@ -74,43 +62,6 @@ const ClientCard = ({
     };
 
 /**
-     * 이니셜 반환
-     */
-    const getInitial = () => {
-        if (client.name) {
-            return client.name.charAt(0);
-        }
-        return '?';
-    };
-
-    /**
-     * 아바타 렌더 (이미지 있으면 img + 폴백, 없으면 이니셜만)
-     */
-    const renderAvatar = (avatarClassName) => {
-        const initial = getInitial();
-        if (client.profileImageUrl) {
-            return (
-                <>
-                    <img
-                        src={client.profileImageUrl}
-                        alt=""
-                        className="mg-v2-avatar-img"
-                        onError={(e) => {
-                            e.target.style.display = 'none';
-                            const fallback = e.target.nextElementSibling;
-                            if (fallback) fallback.classList.remove('mg-v2-avatar-fallback--hidden');
-                        }}
-                    />
-                    <span className="mg-v2-avatar-fallback mg-v2-avatar-fallback--hidden" aria-hidden="true">
-                        {initial}
-                    </span>
-                </>
-            );
-        }
-        return <span className="mg-v2-avatar-fallback" aria-hidden="true">{initial}</span>;
-    };
-
-/**
      * 클릭 핸들러
      */
     const handleClick = () => {
@@ -156,9 +107,11 @@ const ClientCard = ({
             }}
             aria-label={`${client.name} 내담자 선택`}
         >
-            <div className="mg-client-card__avatar">
-                {renderAvatar()}
-            </div>
+            <Avatar
+                profileImageUrl={client.profileImageUrl}
+                displayName={client.name}
+                className="mg-client-card__avatar"
+            />
             <div className="mg-client-card__info">
                 <div className="mg-client-card__header">
                     <h4 className="mg-client-card__name">{client.name}</h4>
@@ -203,9 +156,11 @@ const ClientCard = ({
             </div>
 
             {/* 내담자 아바타 */}
-            <div className="mg-client-card__avatar mg-client-card__avatar--large">
-                {renderAvatar()}
-            </div>
+            <Avatar
+                profileImageUrl={client.profileImageUrl}
+                displayName={client.name}
+                className="mg-client-card__avatar mg-client-card__avatar--large"
+            />
 
             {/* 내담자 정보 */}
             <div className="mg-client-card__info">
@@ -303,9 +258,11 @@ const ClientCard = ({
             aria-label={`${client.name} 내담자 선택`}
         >
             <div className="mg-client-card__header-mobile">
-                <div className="mg-client-card__avatar mg-client-card__avatar--mobile">
-                    {renderAvatar()}
-                </div>
+                <Avatar
+                    profileImageUrl={client.profileImageUrl}
+                    displayName={client.name}
+                    className="mg-client-card__avatar mg-client-card__avatar--mobile"
+                />
                 <div className={`mg-client-card__status mg-client-card__status--${getStatusClass()}`}>
                     {getStatusIcon()}
                     <span>{getStatusText()}</span>
@@ -385,9 +342,11 @@ const ClientCard = ({
             }}
             aria-label={`${client.name} 내담자 선택`}
         >
-            <div className="mg-client-card__avatar mg-client-card__avatar--mobile-simple">
-                {renderAvatar()}
-            </div>
+            <Avatar
+                profileImageUrl={client.profileImageUrl}
+                displayName={client.name}
+                className="mg-client-card__avatar mg-client-card__avatar--mobile-simple"
+            />
             
             <div className="mg-client-card__info mg-client-card__info--mobile-simple">
                 <h4 className="mg-client-card__name mg-client-card__name--mobile-simple">{client.name}</h4>

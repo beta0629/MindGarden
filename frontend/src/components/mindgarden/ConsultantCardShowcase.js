@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 // import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { User, Star, Clock, Phone, Mail, MessageCircle, Calendar, Award, TrendingUp } from 'lucide-react';
+import Avatar from '../common/Avatar';
 
 const ConsultantCardShowcase = () => {
   const [viewMode, setViewMode] = useState('detailed'); // 'compact', 'detailed', 'mobile', 'mobile-simple'
@@ -78,9 +79,11 @@ const ConsultantCardShowcase = () => {
   // 컴팩트 카드 (목록용)
   const renderCompactCard = (consultant) => (
     <div key={consultant.id} className="mg-consultant-card mg-consultant-card--compact">
-      <div className="mg-consultant-card__avatar">
-        {consultant.name.charAt(0)}
-      </div>
+      <Avatar
+        profileImageUrl={consultant.profileImageUrl}
+        displayName={consultant.name}
+        className="mg-consultant-card__avatar"
+      />
       <div className="mg-consultant-card__info">
         <div className="mg-consultant-card__header">
           <h4 className="mg-consultant-card__name">{consultant.name}</h4>
@@ -109,9 +112,11 @@ const ConsultantCardShowcase = () => {
         <span>{getStatusText(consultant.status)}</span>
       </div>
       
-      <div className="mg-consultant-card__avatar mg-consultant-card__avatar--large">
-        {consultant.name.charAt(0)}
-      </div>
+      <Avatar
+        profileImageUrl={consultant.profileImageUrl}
+        displayName={consultant.name}
+        className="mg-consultant-card__avatar mg-consultant-card__avatar--large"
+      />
       
       <div className="mg-consultant-card__info">
         <h4 className="mg-consultant-card__name mg-consultant-card__name--large">{consultant.name}</h4>
@@ -175,9 +180,11 @@ const ConsultantCardShowcase = () => {
   const renderMobileCard = (consultant) => (
     <div key={consultant.id} className="mg-consultant-card mg-consultant-card--mobile">
       <div className="mg-consultant-card__header-mobile">
-        <div className="mg-consultant-card__avatar mg-consultant-card__avatar--mobile">
-          {consultant.name.charAt(0)}
-        </div>
+        <Avatar
+          profileImageUrl={consultant.profileImageUrl}
+          displayName={consultant.name}
+          className="mg-consultant-card__avatar mg-consultant-card__avatar--mobile"
+        />
         <div className="mg-consultant-card__status" style={{ backgroundColor: getStatusColor(consultant.status) }}>
           {getStatusIcon(consultant.status)}
           <span>{getStatusText(consultant.status)}</span>
@@ -250,9 +257,11 @@ const ConsultantCardShowcase = () => {
   // 모바일 간단 카드 (스케줄 모달용)
   const renderMobileSimpleCard = (consultant) => (
     <div key={consultant.id} className="mg-consultant-card mg-consultant-card--mobile-simple">
-      <div className="mg-consultant-card__avatar mg-consultant-card__avatar--mobile-simple">
-        {consultant.name.charAt(0)}
-      </div>
+      <Avatar
+        profileImageUrl={consultant.profileImageUrl}
+        displayName={consultant.name}
+        className="mg-consultant-card__avatar mg-consultant-card__avatar--mobile-simple"
+      />
       
       <div className="mg-consultant-card__info mg-consultant-card__info--mobile-simple">
         <h4 className="mg-consultant-card__name mg-consultant-card__name--mobile-simple">{consultant.name}</h4>

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 // import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { User, MessageCircle, Calendar, TrendingUp, Phone, Mail, Clock, CheckCircle } from 'lucide-react';
+import Avatar from '../common/Avatar';
 
 const ClientCardShowcase = () => {
   const [viewMode, setViewMode] = useState('detailed'); // 'compact', 'detailed', 'mobile', 'mobile-simple'
@@ -64,9 +65,11 @@ const ClientCardShowcase = () => {
   // 컴팩트 카드 (목록용)
   const renderCompactCard = (client) => (
     <div key={client.id} className="mg-client-card mg-client-card--compact">
-      <div className="mg-client-card__avatar">
-        {client.name.charAt(0)}
-      </div>
+      <Avatar
+        profileImageUrl={client.profileImageUrl}
+        displayName={client.name}
+        className="mg-client-card__avatar"
+      />
       <div className="mg-client-card__info">
         <div className="mg-client-card__header">
           <h4 className="mg-client-card__name">{client.name}</h4>
@@ -91,9 +94,11 @@ const ClientCardShowcase = () => {
         <span>{client.status}</span>
       </div>
       
-      <div className="mg-client-card__avatar mg-client-card__avatar--large">
-        {client.name.charAt(0)}
-      </div>
+      <Avatar
+        profileImageUrl={client.profileImageUrl}
+        displayName={client.name}
+        className="mg-client-card__avatar mg-client-card__avatar--large"
+      />
       
       <div className="mg-client-card__info">
         <h4 className="mg-client-card__name mg-client-card__name--large">{client.name}</h4>
@@ -146,9 +151,11 @@ const ClientCardShowcase = () => {
   const renderMobileCard = (client) => (
     <div key={client.id} className="mg-client-card mg-client-card--mobile">
       <div className="mg-client-card__header-mobile">
-        <div className="mg-client-card__avatar mg-client-card__avatar--mobile">
-          {client.name.charAt(0)}
-        </div>
+        <Avatar
+          profileImageUrl={client.profileImageUrl}
+          displayName={client.name}
+          className="mg-client-card__avatar mg-client-card__avatar--mobile"
+        />
         <div className="mg-client-card__status" style={{ backgroundColor: getStatusColor(client.status) }}>
           {getStatusIcon(client.status)}
           <span>{client.status}</span>
@@ -199,9 +206,11 @@ const ClientCardShowcase = () => {
   // 모바일 간단 카드 (스케줄 모달용)
   const renderMobileSimpleCard = (client) => (
     <div key={client.id} className="mg-client-card mg-client-card--mobile-simple">
-      <div className="mg-client-card__avatar mg-client-card__avatar--mobile-simple">
-        {client.name.charAt(0)}
-      </div>
+      <Avatar
+        profileImageUrl={client.profileImageUrl}
+        displayName={client.name}
+        className="mg-client-card__avatar mg-client-card__avatar--mobile-simple"
+      />
       
       <div className="mg-client-card__info mg-client-card__info--mobile-simple">
         <h4 className="mg-client-card__name mg-client-card__name--mobile-simple">{client.name}</h4>

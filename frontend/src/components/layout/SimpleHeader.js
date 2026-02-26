@@ -7,6 +7,7 @@ import { redirectToDynamicDashboard } from '../../utils/dashboardUtils';
 import { sessionManager } from '../../utils/sessionManager';
 import SimpleHamburgerMenu from './SimpleHamburgerMenu';
 import ConfirmModal from '../common/ConfirmModal';
+import Avatar from '../common/Avatar';
 import { 
   HEADER_CSS_CLASSES, 
   HEADER_TEXTS, 
@@ -31,17 +32,11 @@ const SimpleHeader = () => {
   const location = useLocation();
   const [isHamburgerOpen, setIsHamburgerOpen] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
-  const [imageLoadError, setImageLoadError] = useState(false);
   const [roleDisplayName, setRoleDisplayName] = useState('');
   const [roleDisplayNameEn, setRoleDisplayNameEn] = useState('');
   
   // 중앙 세션 훅 사용 (헤더는 단순히 상태만 표시)
   const { user, isLoggedIn, isLoading, logout } = useSession();
-
-  // 사용자가 변경될 때 이미지 로드 에러 상태 초기화
-  useEffect(() => {
-    setImageLoadError(false);
-  }, [user?.id, user?.profileImageUrl, user?.socialProfileImage]);
 
   // 사용자 역할 표시명 동적 로드
   useEffect(() => {
@@ -132,26 +127,7 @@ const SimpleHeader = () => {
   };
 
 
-  // 프로필 이미지 우선순위: 사용자 업로드 > 소셜 > 기본 아이콘
-  const getProfileImageUrl = () => {
-    if (user?.profileImageUrl && !imageLoadError) {
-      return user.profileImageUrl;
-    }
-    if (user?.socialProfileImage && !imageLoadError) {
-      return user.socialProfileImage;
-    }
-    return null;
-  };
-
-  // 이미지 로드 실패 처리
-  const handleImageError = () => {
-    console.log('🖼️ SimpleHeader - 프로필 이미지 로드 실패, 기본 아이콘으로 대체');
-    setImageLoadError(true);
-  };
-
-  const handleImageLoad = () => {
-    console.log('🖼️ SimpleHeader - 프로필 이미지 로드 성공');
-  };
+  const profileImageUrl = user?.profileImageUrl || user?.socialProfileImage;
 
   return (
     <>
@@ -196,19 +172,11 @@ const SimpleHeader = () => {
             <>
               {/* 사용자 정보 */}
               <div className={HEADER_CSS_CLASSES.USER_INFO} onClick={handleProfileClick}>
-                <div className={HEADER_CSS_CLASSES.USER_AVATAR}>
-                  {getProfileImageUrl() ? (
-                    <img 
-                      src={getProfileImageUrl()} 
-                      alt="프로필" 
-                      className={HEADER_CSS_CLASSES.PROFILE_IMAGE}
-                      onError={handleImageError}
-                      onLoad={handleImageLoad}
-                    />
-                  ) : (
-                    <i className={`bi ${HEADER_ICONS.USER_DEFAULT}`}></i>
-                  )}
-                </div>
+                <Avatar
+                  profileImageUrl={profileImageUrl}
+                  displayName={user?.name || user?.nickname || user?.userId || HEADER_TEXTS.DEFAULT_USER}
+                  className={HEADER_CSS_CLASSES.USER_AVATAR}
+                />
                 <div className={HEADER_CSS_CLASSES.USER_DETAILS}>
                   <div className={HEADER_CSS_CLASSES.USER_NAME}>
                     {user.name || user.nickname || user.userId || HEADER_TEXTS.DEFAULT_USER}

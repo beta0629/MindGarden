@@ -4,6 +4,7 @@ import { Users, Calendar } from 'lucide-react';
 import { RoleUtils } from '../../../constants/roles';
 import { useWidget } from '../../../hooks/useWidget';
 import BaseWidget from './BaseWidget';
+import Avatar from '../../common/Avatar';
 import './ConsultantClientWidget.css';
 
 const ConsultantClientWidget = ({ widget, user }) => {
@@ -195,9 +196,11 @@ const ConsultantClientWidget = ({ widget, user }) => {
             onClick={() => handleClientClick(client.id)}
           >
             <div className="consultant-client-card-header">
-              <div className="consultant-client-avatar">
-                {client.name ? client.name.charAt(0) : '?'}
-              </div>
+              <Avatar
+                profileImageUrl={client.profileImageUrl}
+                displayName={client.name}
+                className="consultant-client-avatar mg-v2-client-card-avatar"
+              />
               <div className="consultant-client-info">
                 <h4 className="consultant-client-name">
                   {client.name || '이름 없음'}

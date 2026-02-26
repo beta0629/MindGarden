@@ -16,29 +16,13 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import Avatar from '../../../common/Avatar';
 import './Widget.css';
 import '../WelcomeSection.css';
 
 const WelcomeWidget = ({ widget, user }) => {
   const navigate = useNavigate();
-  const [imageLoadError, setImageLoadError] = useState(false);
-  
   const config = widget.config || {};
-  
-  // 프로필 이미지 URL 가져오기
-  const getProfileImageUrl = () => {
-    if (config.profileImageUrl && !imageLoadError) {
-      return config.profileImageUrl;
-    }
-    if (user?.profileImageUrl && !imageLoadError) {
-      return user.profileImageUrl;
-    }
-    if (user?.socialProfileImage && !imageLoadError) {
-      return user.socialProfileImage;
-    }
-    // 기본 아바타 사용
-    return config.defaultAvatar || '/default-avatar.svg';
-  };
   
   // 사용자 이름 가져오기
   const getUserDisplayName = () => {
@@ -87,7 +71,7 @@ const WelcomeWidget = ({ widget, user }) => {
     return null;
   };
   
-  const profileImageUrl = getProfileImageUrl();
+  const profileImageUrl = config.profileImageUrl || user?.profileImageUrl || user?.socialProfileImage;
   const displayName = getUserDisplayName();
   const welcomeMessage = getWelcomeMessage();
   const currentTime = getCurrentTime();
@@ -105,14 +89,11 @@ const WelcomeWidget = ({ widget, user }) => {
       <div className="widget-header">
         <div className="welcome-section-container">
           <div className="welcome-section-profile">
-            <div className="welcome-profile-image-wrapper">
-              <img
-                src={profileImageUrl}
-                alt={displayName}
-                className="welcome-profile-image"
-                onError={() => setImageLoadError(true)}
-              />
-            </div>
+            <Avatar
+              profileImageUrl={profileImageUrl}
+              displayName={displayName}
+              className="welcome-profile-image-wrapper"
+            />
             <div className="welcome-profile-info">
               <h2 className="welcome-title">
                 {welcomeMessage.replace('{name}', displayName)}

@@ -1,6 +1,7 @@
 // import React from 'react';
 import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { LayoutDashboard, Users, Calendar, TrendingUp, Bell, Settings } from 'lucide-react';
+import Avatar from '../common/Avatar';
 
 const DashboardLayoutShowcase = () => {
   const stats = [
@@ -10,10 +11,10 @@ const DashboardLayoutShowcase = () => {
   ];
 
   const recentActivities = [
-    { user: '김민지', action: '새 상담 예약', time: '5분 전' },
-    { user: '이서연', action: '상담 완료', time: '10분 전' },
-    { user: '박지훈', action: '프로필 업데이트', time: '15분 전' },
-    { user: '최유진', action: '새 메시지', time: '20분 전' }
+    { user: '김민지', action: '새 상담 예약', time: '5분 전', profileImageUrl: null },
+    { user: '이서연', action: '상담 완료', time: '10분 전', profileImageUrl: null },
+    { user: '박지훈', action: '프로필 업데이트', time: '15분 전', profileImageUrl: null },
+    { user: '최유진', action: '새 메시지', time: '20분 전', profileImageUrl: null }
   ];
 
   return (
@@ -80,9 +81,11 @@ const DashboardLayoutShowcase = () => {
               <div className="mg-dashboard-section-content">
                 {recentActivities.map((activity, index) => (
                   <div key={index} className="mg-dashboard-activity-item">
-                    <div className="mg-dashboard-activity-avatar">
-                      {activity.user.charAt(0)}
-                    </div>
+                    <Avatar
+                      profileImageUrl={activity.profileImageUrl}
+                      displayName={activity.user}
+                      className="mg-dashboard-activity-avatar mg-v2-consultant-detail-avatar"
+                    />
                     <div className="mg-dashboard-activity-content">
                       <div className="mg-dashboard-activity-text">
                         <strong>{activity.user}</strong>님이 <span>{activity.action}</span>

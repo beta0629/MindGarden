@@ -12,6 +12,7 @@ import SectionHeader from './SectionHeader';
 import ClientCard from '../ui/Card/ClientCard';
 import MappingCard from './MappingCard';
 import SessionExtensionModal from './mapping/SessionExtensionModal';
+import Avatar from '../common/Avatar';
 import { getFormattedContact, getFormattedConsultationCount, getFormattedRegistrationDate, getMappingStatusKoreanNameSync } from '../../utils/codeHelper';
 import '../../styles/unified-design-tokens.css';
 
@@ -361,7 +362,6 @@ const SessionManagement = () => {
                                     const totalSessions = mapping.totalSessions || mapping.package?.sessions || 0;
                                     const usedSessions = mapping.usedSessions || 0;
                                     const clientProfileImageUrl = mapping.client?.profileImageUrl ?? null;
-                                    const clientInitial = clientName.charAt(0);
                                     return (
                                         <div 
                                             key={mapping.id} 
@@ -369,25 +369,11 @@ const SessionManagement = () => {
                                             onClick={() => handleQuickAdd(mapping)}
                                         >
                                             <div className="mg-v2-quick-mapping-info">
-                                                <div className="mg-v2-quick-mapping-avatar">
-                                                    {clientProfileImageUrl ? (
-                                                        <>
-                                                            <img
-                                                                src={clientProfileImageUrl}
-                                                                alt=""
-                                                                className="mg-v2-avatar-img"
-                                                                onError={(e) => {
-                                                                    e.target.style.display = 'none';
-                                                                    const fallback = e.target.nextElementSibling;
-                                                                    if (fallback) fallback.classList.remove('mg-v2-avatar-fallback--hidden');
-                                                                }}
-                                                            />
-                                                            <span className="mg-v2-avatar-fallback mg-v2-avatar-fallback--hidden" aria-hidden="true">{clientInitial}</span>
-                                                        </>
-                                                    ) : (
-                                                        <span className="mg-v2-avatar-fallback">{clientInitial}</span>
-                                                    )}
-                                                </div>
+                                                <Avatar
+                                                    profileImageUrl={clientProfileImageUrl}
+                                                    displayName={clientName}
+                                                    className="mg-v2-quick-mapping-avatar"
+                                                />
                                                 <div className="mg-v2-quick-mapping-details">
                                                     <div className="mg-v2-quick-mapping-client">{clientName}</div>
                                                     <div className="mg-v2-quick-mapping-consultant">{consultantName}</div>
@@ -464,25 +450,11 @@ const SessionManagement = () => {
                                         return (
                                             <div key={client.id} className="mg-v2-client-mapping-card">
                                                 <div className="mg-v2-client-info">
-                                                    <div className="mg-v2-client-avatar">
-                                                        {client.profileImageUrl ? (
-                                                            <>
-                                                                <img
-                                                                    src={client.profileImageUrl}
-                                                                    alt=""
-                                                                    className="mg-v2-avatar-img"
-                                                                    onError={(e) => {
-                                                                        e.target.style.display = 'none';
-                                                                        const fallback = e.target.nextElementSibling;
-                                                                        if (fallback) fallback.classList.remove('mg-v2-avatar-fallback--hidden');
-                                                                    }}
-                                                                />
-                                                                <span className="mg-v2-avatar-fallback mg-v2-avatar-fallback--hidden" aria-hidden="true">{client.name ? client.name.charAt(0) : '?'}</span>
-                                                            </>
-                                                        ) : (
-                                                            <span className="mg-v2-avatar-fallback">{client.name ? client.name.charAt(0) : '?'}</span>
-                                                        )}
-                                                    </div>
+                                                    <Avatar
+                                                        profileImageUrl={client.profileImageUrl}
+                                                        displayName={client.name}
+                                                        className="mg-v2-client-avatar"
+                                                    />
                                                     <div className="mg-v2-client-details">
                                                         <div className="mg-v2-client-name">{client.name}</div>
                                                         <div className="mg-v2-client-mappings">

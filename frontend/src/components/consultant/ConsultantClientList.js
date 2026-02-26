@@ -6,6 +6,7 @@ import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { CONSULTANT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import ClientDetailModal from './ClientDetailModal';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
+import Avatar from '../common/Avatar';
 import notificationManager from '../../utils/notification';
 
 const ConsultantClientList = () => {
@@ -447,16 +448,11 @@ const ConsultantClientList = () => {
                   >
                     {/* 카드 헤더 - 아바타 + 상태 */}
                     <div className="mg-v2-client-card-header">
-                      <div className="mg-v2-client-avatar-container">
-                        <img
-                          src={client.profileImage || '/default-avatar.svg'}
-                          alt={client.name}
-                          className="mg-v2-client-avatar-img"
-                          onError={(e) => {
-                            e.target.src = '/default-avatar.svg';
-                          }}
-                        />
-                      </div>
+                      <Avatar
+                        profileImageUrl={client.profileImage || client.profileImageUrl}
+                        displayName={client.name}
+                        className="mg-v2-client-avatar-container"
+                      />
                       // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                       <span className={`mg-v2-status-badge mg-v2-status-badge--${client.status === 'ACTIVE' ? 'active' : 
                                                           // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용

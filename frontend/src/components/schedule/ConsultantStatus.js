@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import UnifiedLoading from '../common/UnifiedLoading';
+import Avatar from '../common/Avatar';
 import { apiGet } from '../../utils/ajax';
 import './ConsultantStatus.css';
 
@@ -157,13 +158,6 @@ const ConsultantStatus = () => {
         }
     };
 
-/**
-     * 상담사 이니셜 (이미지 없을 때 사용)
-     */
-    const getConsultantInitial = (consultant) => {
-        return consultant.name ? consultant.name.charAt(0) : '?';
-    };
-
     useEffect(() => {
         loadConsultants();
     }, []);
@@ -198,27 +192,11 @@ const ConsultantStatus = () => {
                         const status = consultant.status;
                         return (
                             <div key={consultant.id} className="consultant-status-card">
-                                <div className="consultant-status-avatar">
-                                    {(consultant.profileImageUrl || consultant.profileImage || consultant.socialProfileImage) ? (
-                                        <>
-                                            <img
-                                                src={consultant.profileImageUrl || consultant.profileImage || consultant.socialProfileImage}
-                                                alt=""
-                                                className="mg-v2-avatar-img consultant-status-profile-image"
-                                                onError={(e) => {
-                                                    e.target.style.display = 'none';
-                                                    const fallback = e.target.nextElementSibling;
-                                                    if (fallback) fallback.classList.remove('consultant-status-hidden');
-                                                }}
-                                            />
-                                            <span className="mg-v2-avatar-fallback consultant-status-hidden" aria-hidden="true">
-                                                {getConsultantInitial(consultant)}
-                                            </span>
-                                        </>
-                                    ) : (
-                                        <span className="mg-v2-avatar-fallback">{getConsultantInitial(consultant)}</span>
-                                    )}
-                                </div>
+                                <Avatar
+                                    profileImageUrl={consultant.profileImageUrl || consultant.profileImage || consultant.socialProfileImage}
+                                    displayName={consultant.name}
+                                    className="consultant-status-avatar"
+                                />
                                 <div className="consultant-status-info">
                                     <div className="consultant-status-name">{consultant.name}</div>
                                     <div className="consultant-status-email">{consultant.email}</div>

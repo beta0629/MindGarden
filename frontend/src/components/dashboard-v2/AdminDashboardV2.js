@@ -63,6 +63,7 @@ import { useResponsive } from '../../hooks/useResponsive';
 import { DesktopLayout, MobileLayout } from './templates';
 import { DEFAULT_MENU_ITEMS, BREAKPOINT_DESKTOP } from './constants/menuItems';
 import { ADMIN_ROUTES } from '../../constants/adminRoutes';
+import Avatar from '../common/Avatar';
 import '../../styles/main.css';
 import '../../styles/unified-design-tokens.css';
 import '../../styles/responsive-layout-tokens.css';
@@ -153,27 +154,6 @@ const AdminDashboardV2 = ({ user: propUser }) => {
       });
     return () => { cancelled = true; };
   }, [normalizeLnbMenuItemsForDashboard]);
-
-  const getAvatarInitial = (name) => {
-    if (!name) return '?';
-    if (/[가-힣]/.test(name)) {
-      const parts = name.trim().split(/\s+/);
-      if (parts.length > 1) {
-        return parts[0].charAt(0) + parts[1].charAt(0);
-      }
-      const chars = name.split('');
-      let result = chars[0];
-      for (let i = 1; i < chars.length; i++) {
-        if (chars[i] === chars[0]) {
-          result += chars[i];
-        } else {
-          break;
-        }
-      }
-      return result;
-    }
-    return name.charAt(0).toUpperCase();
-  };
 
   const [userPermissions, setUserPermissions] = useState([]);
   const [stats, setStats] = useState({
@@ -631,7 +611,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
     .slice(0, 4)
     .map((c) => ({
       name: c.consultantName || '-',
-      initial: getAvatarInitial(c.consultantName),
+      profileImageUrl: c.profileImageUrl || c.consultantProfileImageUrl || null,
       rating: c.averageScore ? c.averageScore.toFixed(1) : '-',
       barWidth: c.averageScore ? Math.min(100, (c.averageScore / 5) * 100) : 0,
       barColor: 'var(--mg-success-600)'
@@ -807,9 +787,11 @@ const AdminDashboardV2 = ({ user: propUser }) => {
                   key={`${c.name}-${c.rating}`}
                   className="mg-v2-ad-b0kla__counselor-item"
                 >
-                  <div className="mg-v2-ad-b0kla__counselor-avatar mg-v2-ad-b0kla__counselor-avatar--green">
-                    {c.initial}
-                  </div>
+                  <Avatar
+                    profileImageUrl={c.profileImageUrl}
+                    displayName={c.name}
+                    className="mg-v2-ad-b0kla__counselor-avatar mg-v2-ad-b0kla__counselor-avatar--green mg-v2-consultant-detail-avatar"
+                  />
                   <div className="mg-v2-ad-b0kla__counselor-data">
                     <span className="mg-v2-ad-b0kla__counselor-name">{c.name}</span>
                     <div className="mg-v2-ad-b0kla__counselor-rating-row">

@@ -25,6 +25,7 @@
 | **[architecture/](./architecture/)** | 시스템 아키텍처·설계 문서 | design 등 하위 |
 | **[layout/](./layout/)** | 레이아웃·메뉴 구조 관련 | |
 | **[troubleshooting/](./troubleshooting/)** | 장애 대응·모니터링 체크리스트 | |
+| **[debug/](./debug/)** | **디버깅·원인 분석 문서** (core-debugger 산출물 등) | 목차: [debug/README.md](./debug/README.md) |
 | **[database/](./database/)** | DB 관련 가이드 | |
 | **[testing/](./testing/)** | 테스트 계획·가이드 | |
 | **[api/](./api/)** | API 레퍼런스·설계 문서 | guides·architecture에서 참조 |
@@ -40,6 +41,7 @@
 - **표준 문서 전체 목록**: [docs/standards/README.md](./standards/README.md) (45개 표준)
 - **문서 작성·정리 규칙**: [.cursor/skills/core-solution-documentation/SKILL.md](../.cursor/skills/core-solution-documentation/SKILL.md)
 - **서브에이전트 활용(문서 전담 포함)**: [docs/standards/SUBAGENT_USAGE.md](./standards/SUBAGENT_USAGE.md)
+- **디버깅·원인 분석 문서 목록**: [docs/debug/README.md](./debug/README.md)
 - **간단 표준 요약**: [docs/STANDARDS.md](./STANDARDS.md) (핵심 4개 등 요약)
 
 ---

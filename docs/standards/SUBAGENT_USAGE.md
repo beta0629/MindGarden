@@ -81,4 +81,5 @@
 
 - 메인 룰: `.cursor/skills/core-solution-rules/SKILL.md`
 - **문서 작성·체계화**: `.cursor/skills/core-solution-documentation/SKILL.md`
+- **디버깅·원인 분석 문서**: `docs/debug/` — core-debugger 산출물·재현 절차·수정 제안 문서 목차는 [docs/debug/README.md](../debug/README.md)
 - 레이아웃 관련: `docs/layout/README.md` → 서브에이전트 활용

@@ -86,6 +86,9 @@ function getEmptyMonthlyChartData(months = 6) {
   return result;
 }
 
+/** 대시보드 메뉴(관리 기능 카드, 시스템 모니터링, 권한 관리) 숨김 여부 */
+const HIDE_DASHBOARD_MENUS = true;
+
 /** 차트용 최근 N주 빈 데이터 (데이터 없을 때 0으로 표시) */
 function getEmptyWeeklyChartData(weeks = 6) {
   const result = [];
@@ -878,6 +881,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
         />
       </div>
 
+      {!HIDE_DASHBOARD_MENUS && (
       <ContentSection
         title="관리 기능"
         subtitle="시스템 관리 및 설정 기능"
@@ -1153,6 +1157,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
           </button>
         </div>
       </ContentSection>
+      )}
 
       {showToastState && (
         <div className={`mg-toast mg-toast-${toastType}`}>
@@ -1212,13 +1217,13 @@ const AdminDashboardV2 = ({ user: propUser }) => {
         }}
       />
 
-      {/* AI 모니터링 */}
-      {RoleUtils.isAdmin(propUser || sessionUser) && (
+      {/* AI 모니터링(시스템 모니터링) */}
+      {!HIDE_DASHBOARD_MENUS && RoleUtils.isAdmin(propUser || sessionUser) && (
         <AdminDashboardMonitoring user={propUser || sessionUser} />
       )}
 
       {/* 권한 관리 */}
-      {RoleUtils.isAdmin(propUser || sessionUser) && (
+      {!HIDE_DASHBOARD_MENUS && RoleUtils.isAdmin(propUser || sessionUser) && (
         <div className="mg-v2-card mg-mb-lg">
           <div className="mg-flex mg-align-center mg-justify-between">
             <div className="mg-flex mg-align-center mg-gap-sm">

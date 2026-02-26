@@ -1033,6 +1033,29 @@
   clip: rect(0, 0, 0, 0);
 }
 
+/* 비밀번호 필드 래퍼·토글 (PasswordResetModal 등) */
+.mg-v2-ad-b0kla .mg-v2-form-input-wrapper {
+  display: flex;
+  align-items: center;
+}
+
+.mg-v2-ad-b0kla .mg-v2-form-input-wrapper .mg-v2-form-input {
+  flex: 1;
+  border-right: 0;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.mg-v2-ad-b0kla .mg-v2-form-input-toggle {
+  padding: var(--spacing-sm, 0.5rem) var(--spacing-md, 0.75rem);
+  border: 1px solid var(--ad-b0kla-border);
+  border-left: 0;
+  border-radius: 0 var(--ad-b0kla-radius-sm) var(--ad-b0kla-radius-sm) 0;
+  background: var(--ad-b0kla-card-bg);
+  color: var(--ad-b0kla-text-secondary);
+  cursor: pointer;
+}
+
 /* 검색바 반응형 */
 @media (max-width: 768px) {
   .mg-v2-ad-b0kla__search {

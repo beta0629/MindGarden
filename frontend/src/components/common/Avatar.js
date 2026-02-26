@@ -4,7 +4,7 @@
  * - 이미지 로드 실패 시: 이니셜로 전환
  * - profileImageUrl 없음: 이니셜만 표시
  *
- * @author MindGarden
+ * @author Core Solution
  * @since 2025-02-28
  */
 

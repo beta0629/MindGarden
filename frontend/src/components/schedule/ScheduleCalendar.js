@@ -29,7 +29,7 @@ import './ScheduleCalendar.css';
 /**
  * FullCalendar 기반 스케줄 관리 컴포넌트 (리팩토링됨)
  * 
- * @author MindGarden
+ * @author Core Solution
  * @version 2.0.0
 /**
  * @since 2024-12-19

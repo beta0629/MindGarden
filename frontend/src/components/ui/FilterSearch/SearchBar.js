@@ -6,7 +6,7 @@
  * - CSS 변수 사용 (하드코딩 금지)
  * - Presentational 패턴 (UI만 담당)
  * 
- * @author MindGarden
+ * @author Core Solution
  * @version 1.0.0
  * @since 2025-12-09
  */

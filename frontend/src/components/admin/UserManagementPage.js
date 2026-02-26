@@ -3,7 +3,7 @@
  * - URL 쿼리 type=consultant | type=client 로 타입 전환
  * - 기본값: client (?type 없으면 내담자)
  *
- * @author MindGarden
+ * @author Core Solution
  * @since 2026-02-24
  */
 

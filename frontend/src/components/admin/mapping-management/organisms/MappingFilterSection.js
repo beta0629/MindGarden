@@ -2,7 +2,7 @@
  * MappingFilterSection - 필터/검색 영역
  * ContentSection + UnifiedFilterSearch
  *
- * @author MindGarden
+ * @author Core Solution
  * @since 2025-02-22
  */
 

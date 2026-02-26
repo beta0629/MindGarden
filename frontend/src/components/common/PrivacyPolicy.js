@@ -8,7 +8,7 @@ import './PrivacyPolicy.css';
 /**
  * 
 /**
- * @author MindGarden
+ * @author Core Solution
 /**
  * @version 1.0.0
 /**
@@ -34,7 +34,7 @@ const PrivacyPolicy = () => {
             1. 개인정보의 처리목적
           </h2>
           <p className="privacy-policy-section-content">
-            마인드가든(이하 "회사")은 다음의 목적을 위하여 개인정보를 처리합니다. 처리하고 있는 개인정보는 다음의 목적 이외의 용도로는 이용되지 않으며, 이용 목적이 변경되는 경우에는 개인정보보호법 제18조에 따라 별도의 동의를 받는 등 필요한 조치를 이행할 예정입니다.
+            Core Solution(이하 "회사")은 다음의 목적을 위하여 개인정보를 처리합니다. 처리하고 있는 개인정보는 다음의 목적 이외의 용도로는 이용되지 않으며, 이용 목적이 변경되는 경우에는 개인정보보호법 제18조에 따라 별도의 동의를 받는 등 필요한 조치를 이행할 예정입니다.
           </p>
           <ul className="privacy-policy-list">
             <li>회원 가입 및 관리: 회원 식별, 가입의사 확인, 본인확인, 회원자격 유지·관리</li>
@@ -170,7 +170,7 @@ const PrivacyPolicy = () => {
           </h2>
           <div className="mg-v2-terms-box">
             <p className="mg-v2-mb-md">
-              <strong>개인정보 보호책임자:</strong> 마인드가든 개인정보보호팀
+              <strong>개인정보 보호책임자:</strong> Core Solution 개인정보보호팀
             </p>
             <p className="mg-v2-mb-md">
               <strong>연락처:</strong> privacy@mindgarden.co.kr

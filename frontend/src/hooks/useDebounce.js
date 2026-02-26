@@ -3,7 +3,7 @@
  * 
  * 입력값의 변경을 지연시켜 불필요한 API 호출을 방지
  * 
- * @author MindGarden
+ * @author Core Solution
  * @version 1.0.0
  * @since 2025-12-09
  */

@@ -18,7 +18,7 @@ const UnifiedHeaderTest = () => {
         </linearGradient>
       </defs>
       <text x="60" y="25" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="14" font-weight="bold">
-        MindGarden
+        Core Solution
       </text>
     </svg>
   `;
@@ -87,10 +87,10 @@ const UnifiedHeaderTest = () => {
 
       {/* 헤더 테스트 */}
       <UnifiedHeader
-        title="MindGarden"
+        title="Core Solution"
         logoType={logoType}
         logoImage={logoType === 'custom' ? customLogoSVG : '/logo.png'}
-        logoAlt="MindGarden 로고"
+        logoAlt="Core Solution"
         variant={variant}
         sticky={sticky}
         showUserMenu={true}

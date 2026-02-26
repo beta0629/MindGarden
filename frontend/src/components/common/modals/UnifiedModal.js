@@ -28,7 +28,7 @@ import '../../../styles/main.css'; // Ensure main.css is imported for mg-modal s
 /**
  * 
 /**
- * @author MindGarden
+ * @author Core Solution
 /**
  * @version 1.0.0
 /**

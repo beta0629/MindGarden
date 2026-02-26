@@ -8,7 +8,7 @@ import './CustomSelect.css';
  * - 완전한 CSS 제어 가능
  * - 접근성 지원
  * 
- * @author MindGarden
+ * @author Core Solution
  * @version 1.0.0
  * @since 2025-01-11
  */

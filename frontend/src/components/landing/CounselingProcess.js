@@ -17,7 +17,7 @@ const CounselingProcess = () => {
       <div className="counseling-process__container">
         <h2 className="counseling-process__title">상담 과정</h2>
         <p className="counseling-process__subtitle">
-          MindGarden과 함께하는 치유의 여정
+          Core Solution과 함께하는 치유의 여정
         </p>
         
         <div className="counseling-process__steps">

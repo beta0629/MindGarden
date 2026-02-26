@@ -11,7 +11,7 @@ local:
 # WebAuthn/Passkey 설정
 webauthn:
   rp:
-    name: MindGarden
+    name: Core Solution
     id: localhost  # 로컬 환경에서는 localhost 사용
   challenge:
     timeout: 60000  # 60초

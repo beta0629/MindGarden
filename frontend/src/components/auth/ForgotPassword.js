@@ -59,8 +59,8 @@ const ForgotPassword = () => {
 
   return (
     <CommonPageTemplate 
-      title="비밀번호 찾기 - 마인드가든"
-      description="마인드가든 비밀번호를 재설정하세요"
+      title="비밀번호 찾기 - Core Solution"
+      description="Core Solution 비밀번호를 재설정하세요"
       bodyClass="tablet-page"
     >
       <div className="mg-auth-page">

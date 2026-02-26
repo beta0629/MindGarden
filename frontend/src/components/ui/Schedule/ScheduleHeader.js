@@ -2,7 +2,7 @@
  * 스케줄 헤더 컴포넌트 (Presentational)
  * B0KlA 스타일, 매핑 리스트 헤더와 동일한 레이아웃 패턴
  *
- * @author MindGarden
+ * @author Core Solution
  * @since 2025-02-22
  */
 import PropTypes from 'prop-types';

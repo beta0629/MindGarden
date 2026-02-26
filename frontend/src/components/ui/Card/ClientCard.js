@@ -6,7 +6,7 @@ import Avatar from '../../common/Avatar';
  * 공통 내담자 카드 컴포넌트
  * - 디자인 시스템 v2.0 적용, 글라스모피즘, 반응형, 선택 상태 관리, 진행률 표시
  *
- * @author MindGarden
+ * @author Core Solution
  * @version 2.0.0
  * @since 2025-10-15
  */

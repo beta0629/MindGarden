@@ -18,7 +18,7 @@ import './ScheduleB0KlA.css';
  * - 컴포넌트화 적용
  * - 현대적인 디자인
  * 
- * @author MindGarden
+ * @author Core Solution
  * @version 2.0.0
  * @since 2025-01-05
  */

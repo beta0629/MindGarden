@@ -1,16 +1,16 @@
 /**
- * MindGarden 기본 테마
+ * Core Solution 기본 테마
 /**
  * 
 /**
- * 이 파일은 MindGarden의 기본 테마 토큰을 정의합니다.
+ * 이 파일은 Core Solution의 기본 테마 토큰을 정의합니다.
 /**
  * CSS Variables와 매핑되어 동적 테마 전환을 지원합니다.
  */
 
 export const defaultTheme = {
   name: 'default',
-  displayName: 'MindGarden 기본 테마',
+  displayName: 'Core Solution 기본 테마',
   
   colors: {
     // Primary Colors

@@ -2,7 +2,7 @@
  * MappingKpiSection - 매칭 KPI 카드 영역
  * ContentKpiRow + lucide-react 아이콘
  *
- * @author MindGarden
+ * @author Core Solution
  * @since 2025-02-22
  */
 

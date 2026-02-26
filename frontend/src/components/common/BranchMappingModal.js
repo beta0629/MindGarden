@@ -11,7 +11,7 @@ import UnifiedModal from './modals/UnifiedModal';
 /**
  * 
 /**
- * @author MindGarden
+ * @author Core Solution
 /**
  * @version 1.0.0
 /**

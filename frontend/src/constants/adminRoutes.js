@@ -4,7 +4,7 @@
  * 표준화된 관리자 페이지 경로를 중앙에서 관리
  * 모든 관리자 관련 컴포넌트에서 이 상수를 사용해야 함
  * 
- * @author MindGarden
+ * @author Core Solution
  * @version 1.0.0
  * @since 2025-01-20
  */

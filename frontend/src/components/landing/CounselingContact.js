@@ -31,7 +31,7 @@ const CounselingContact = () => {
       <div className="counseling-contact__container">
         <h2 className="counseling-contact__title">지금 시작해보세요</h2>
         <p className="counseling-contact__subtitle">
-          MindGarden의 모든 서비스를 무료로 체험하고, 더 나은 상담 서비스를 경험해보세요
+          Core Solution의 모든 서비스를 무료로 체험하고, 더 나은 상담 서비스를 경험해보세요
         </p>
         
         <div className="counseling-contact__content">

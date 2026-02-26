@@ -53,7 +53,7 @@
   --color-info-light: #E5F7FE;
   --color-info-dark: #4BB5E6;
 
-  /* MindGarden 브랜드 색상 (표준화) */
+  /* Core Solution 브랜드 색상 (표준화) */
   --color-mindgarden: var(--mg-primary-500);
   --color-mindgarden-light: var(--mg-primary-300);
   --color-mindgarden-dark: var(--mg-primary-700);
@@ -171,7 +171,7 @@
   --bg-secondary: #F5F5F7 !important;
   --bg-tertiary: var(--mg-gray-100) !important;
 
-  /* MindGarden 브랜드 색상 유지 (표준화) */
+  /* Core Solution 브랜드 색상 유지 (표준화) */
   --color-mindgarden: var(--mg-primary-500) !important;
   --color-mindgarden-light: var(--mg-primary-300) !important;
   --color-mindgarden-dark: var(--mg-primary-700) !important;

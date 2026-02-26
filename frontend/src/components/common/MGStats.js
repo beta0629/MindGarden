@@ -1,5 +1,5 @@
 /**
- * MindGarden 통계 카드 컴포넌트
+ * Core Solution 통계 카드 컴포넌트
 /**
  * v0.dev 디자인 시스템 기반의 고급 통계 카드
  */

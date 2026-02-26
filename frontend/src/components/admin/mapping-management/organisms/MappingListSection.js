@@ -2,7 +2,7 @@
  * MappingListSection - 매칭 목록 또는 빈 상태
  * ContentSection + MappingCard 그리드 또는 EmptyState
  *
- * @author MindGarden
+ * @author Core Solution
  * @since 2025-02-22
  */
 

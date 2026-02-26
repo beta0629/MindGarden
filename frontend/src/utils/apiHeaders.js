@@ -2,7 +2,7 @@
  * API 헤더 유틸리티
  * 모든 API 호출에 공통으로 적용되는 헤더를 생성
  * 
- * @author MindGarden
+ * @author Core Solution
  * @version 1.0.0
  * @since 2025-12-06
  */

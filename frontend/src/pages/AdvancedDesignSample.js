@@ -1,5 +1,5 @@
 /**
- * MindGarden 고급 디자인 시스템 샘플
+ * Core Solution 고급 디자인 시스템 샘플
 /**
  * 최신 디자인 트렌드와 정교한 레이아웃을 적용한 프리미엄 샘플
  */
@@ -320,7 +320,7 @@ const AdvancedDesignSample = () => {
         <div className="sample-header__container">
           <div className="sample-header__logo">
             <span className="sample-header__logo-icon">🌱</span>
-            <span className="sample-header__logo-text">MindGarden 샘플</span>
+            <span className="sample-header__logo-text">Core Solution 샘플</span>
           </div>
           
           {/* 샘플 전용 탭 네비게이션 */}
@@ -431,7 +431,7 @@ const AdvancedDesignSample = () => {
           <div className="hero-content">
             <div className="hero-header">
               <div className="hero-icon">✨</div>
-              <h1 className="hero-title">MindGarden 고급 디자인 시스템</h1>
+              <h1 className="hero-title">Core Solution 고급 디자인 시스템</h1>
               <h2 className="hero-subtitle">차세대 상담 플랫폼을 위한 정교한 UI/UX</h2>
               <p className="hero-description">
                 최신 디자인 트렌드와 사용자 중심의 인터페이스를 적용한 프리미엄 디자인 시스템
@@ -524,7 +524,7 @@ const AdvancedDesignSample = () => {
             <MGFlex direction="column" align="center" gap="medium">
               <h2 className="section-title">핵심 기능</h2>
               <p className="section-description">
-                MindGarden의 혁신적인 기능들을 만나보세요
+                Core Solution의 혁신적인 기능들을 만나보세요
               </p>
             </MGFlex>
             
@@ -966,7 +966,7 @@ const AdvancedDesignSample = () => {
               <MGFlex direction="column" align="center" gap="medium">
                 <h2 className="cta-title">지금 시작해보세요</h2>
                 <p className="cta-description">
-                  MindGarden의 모든 기능을 무료로 체험하고, 더 나은 상담 서비스를 경험해보세요
+                  Core Solution의 모든 기능을 무료로 체험하고, 더 나은 상담 서비스를 경험해보세요
                 </p>
               </MGFlex>
               

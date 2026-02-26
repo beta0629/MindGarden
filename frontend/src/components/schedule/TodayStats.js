@@ -8,7 +8,7 @@ import './TodayStats.css';
 /**
  * 오늘의 통계 컴포넌트 (아토믹 디자인 적용)
  *
- * @author MindGarden
+ * @author Core Solution
  * @version 2.0.0
  * @since 2024-12-19
  */

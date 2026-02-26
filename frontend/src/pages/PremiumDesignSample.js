@@ -1,5 +1,5 @@
 /**
- * MindGarden 프리미엄 디자인 시스템 샘플
+ * Core Solution 프리미엄 디자인 시스템 샘플
 /**
  * 디테일하고 세련된 UI 컴포넌트들을 보여주는 고급 샘플
  */
@@ -73,7 +73,7 @@ const PremiumDesignSample = () => {
         
         <div className="hero-content">
           <MGPageHeader
-            title="MindGarden 프리미엄 디자인"
+            title="Core Solution 프리미엄 디자인"
             subtitle="차세대 상담 플랫폼을 위한 세련된 UI/UX"
             description="디테일하고 직관적인 사용자 경험을 제공하는 디자인 시스템"
             icon="✨"
@@ -128,7 +128,7 @@ const PremiumDesignSample = () => {
       <div className="features-section">
         <div className="section-header">
           <h2>주요 기능</h2>
-          <p>MindGarden의 핵심 기능들을 만나보세요</p>
+          <p>Core Solution의 핵심 기능들을 만나보세요</p>
         </div>
         
         <div className="features-grid">
@@ -259,7 +259,7 @@ const PremiumDesignSample = () => {
         <div className="mg-card" variant="glass" padding="large" className="cta-card">
           <div className="cta-content">
             <h2>지금 시작해보세요</h2>
-            <p>MindGarden의 모든 기능을 무료로 체험해보세요</p>
+            <p>Core Solution의 모든 기능을 무료로 체험해보세요</p>
             <div className="cta-actions">
               <button className="mg-button" variant="primary" size="large" icon="🚀">
                 무료 체험 시작

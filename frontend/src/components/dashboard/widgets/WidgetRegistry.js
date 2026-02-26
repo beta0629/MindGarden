@@ -25,7 +25,7 @@ import CustomWidget from './CustomWidget';
 // 테스트 위젯
 import SimpleTestWidget from './SimpleTestWidget';
 
-// 범용 위젯 (MindGarden 컴포넌트 기반, 모든 업종에서 사용 가능)
+// 범용 위젯 (Core Solution 컴포넌트 기반, 모든 업종에서 사용 가능)
 import SummaryStatisticsWidget from './SummaryStatisticsWidget';
 import ActivityListWidget from './ActivityListWidget';
 import WelcomeWidget from './WelcomeWidget';
@@ -112,7 +112,7 @@ const COMMON_WIDGETS = {
   'permission': PermissionWidget,
   'statistics-grid': StatisticsGridWidget,
   'management-grid': ManagementGridWidget,
-  // 관리자 전용 위젯 (마인드가든 AdminDashboard 기능)
+  // 관리자 전용 위젯 (Core Solution AdminDashboard 기능)
   'system-overview': SystemOverviewWidget, // 새로 구현한 시스템 개요 위젯
   'today-stats': TodayStatsWidget, // 새로 구현한 오늘의 통계 위젯
   'admin-stats': StatisticsGridWidget,

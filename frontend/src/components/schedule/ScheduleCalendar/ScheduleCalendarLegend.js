@@ -6,7 +6,7 @@ import { Users, Calendar, Clock } from 'lucide-react';
 /**
  * 
 /**
- * @author MindGarden
+ * @author Core Solution
 /**
  * @version 1.0.0
 /**

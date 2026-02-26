@@ -3,7 +3,7 @@
  * ContentArea + ContentHeader + MappingKpiSection + MappingSearchSection + MappingListBlock
  * 비즈니스 로직 유지, 화면·구조 완전 신규
  *
- * @author MindGarden
+ * @author Core Solution
  * @since 2025-02-22
  */
 

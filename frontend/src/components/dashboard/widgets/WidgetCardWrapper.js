@@ -18,7 +18,7 @@ import './WidgetCardWrapper.css';
 /**
  * 카드 스타일 타입
 /**
- * - v2: MindGarden v2 디자인 시스템 카드
+ * - v2: Core Solution v2 디자인 시스템 카드
 /**
  * - glass: 글래스모피즘 효과 카드
 /**

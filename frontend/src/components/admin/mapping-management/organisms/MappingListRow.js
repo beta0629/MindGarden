@@ -2,7 +2,7 @@
  * MappingListRow - 매칭 목록 행 (테이블 스타일)
  * lucide-react 아이콘, 기존 MappingCard와 동일 액션 지원
  *
- * @author MindGarden
+ * @author Core Solution
  * @since 2025-02-22
  */
 

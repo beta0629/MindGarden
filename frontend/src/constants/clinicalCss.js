@@ -1,7 +1,7 @@
 /**
  * 임상 문서 자동화 CSS 클래스명 상수
  *
- * @author MindGarden
+ * @author Core Solution
  * @version 1.0.0
  * @since 2026-01-21
  */

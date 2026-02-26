@@ -3,7 +3,7 @@
  * 좌: 매칭 목록(실 API /api/v1/admin/mappings), 우: 스케줄 캘린더(실 API)
  * "스케줄 등록" 클릭 시 ScheduleModal을 상담사·내담자 Pre-filled로 오픈
  *
- * @author MindGarden
+ * @author Core Solution
  * @since 2025-02-25
  */
 

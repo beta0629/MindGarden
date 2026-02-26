@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "description": "MindGarden 색상 토큰",
+  "description": "Core Solution 색상 토큰",
   "tokens": {
     "main": {
       "cream": {

@@ -1,5 +1,5 @@
 /**
- * MindGarden Magic Numbers 상수 정의
+ * Core Solution Magic Numbers 상수 정의
 /**
  * 하드코딩된 숫자들을 의미있는 상수로 변환
  */

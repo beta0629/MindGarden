@@ -3,7 +3,7 @@
 /**
  * @description SimpleHeader 관련 모든 CSS 클래스명과 스타일 상수들을 관리
 /**
- * @author MindGarden Team
+ * @author Core Solution Team
 /**
  * @version 1.0.0
  */
@@ -153,7 +153,7 @@ export const HEADER_TEXTS = {
   MENU_TITLE: '메뉴',
   DEFAULT_USER: '사용자',
   TEST_BUTTON: '테스트',
-  BRAND_NAME: '마인드가든',
+  BRAND_NAME: 'Core Solution',
 };
 
 export const HEADER_DEFAULTS = {

@@ -11,7 +11,7 @@
   box-sizing: border-box;
 }
 
-/* MindGarden v2 카드 스타일 */
+/* Core Solution v2 카드 스타일 */
 .mg-v2-card {
   background: white;
   border: 1px solid var(--mg-gray-300);

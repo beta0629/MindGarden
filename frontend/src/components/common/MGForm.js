@@ -1,7 +1,7 @@
 import React from 'react';
 
 /**
- * MindGarden 폼 컴포넌트
+ * Core Solution 폼 컴포넌트
 /**
  * 통합 폼 입력 컴포넌트
  */

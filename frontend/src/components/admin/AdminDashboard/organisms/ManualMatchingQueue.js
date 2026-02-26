@@ -9,7 +9,7 @@ import './ManualMatchingQueue.css';
  * @param {Array<{id:string,clientName:string,clientMeta?:string,consultantOptions:Array}>} props.items - 대기열 항목
  * @param {Function} props.onConfirmMatch - 매칭 확인 핸들러 (clientId, consultantId) => void
  * @param {boolean} [props.loading] - 로딩 상태
- * @author MindGarden
+ * @author Core Solution
  * @since 2025-02-21
  */
 const ManualMatchingQueue = ({ items = [], onConfirmMatch, loading = false }) => {

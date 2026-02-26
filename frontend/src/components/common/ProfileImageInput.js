@@ -1,6 +1,6 @@
 /**
  * 공통 프로필 이미지 입력 컴포넌트 (리사이즈·크롭·용량 검사 포함)
- * @author MindGarden
+ * @author Core Solution
  * @since 2025-02-26
  */
 

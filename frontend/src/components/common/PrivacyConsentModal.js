@@ -8,7 +8,7 @@ import notificationManager from '../../utils/notification';
 /**
  * 
 /**
- * @author MindGarden
+ * @author Core Solution
 /**
  * @version 1.0.0
 /**
@@ -85,7 +85,7 @@ const PrivacyConsentModal = ({
     >
           <div className="mg-v2-info-box mg-v2-mb-lg">
             <p className="mg-v2-text-sm">
-              마인드가든 서비스 이용을 위해 아래 개인정보 수집 및 이용에 동의해주세요.
+              Core Solution 서비스 이용을 위해 아래 개인정보 수집 및 이용에 동의해주세요.
             </p>
           </div>
 

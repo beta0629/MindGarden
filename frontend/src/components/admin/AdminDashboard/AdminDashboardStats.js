@@ -8,7 +8,7 @@ import { Users, User, Link2, Calendar, CalendarCheck, DollarSign, TrendingUp, Ch
 /**
  * 
 /**
- * @author MindGarden
+ * @author Core Solution
 /**
  * @version 1.0.0
 /**

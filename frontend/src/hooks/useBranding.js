@@ -37,8 +37,8 @@ export const useBranding = (options = {}) => {
   const [error, setError] = useState(null);
   const [headerProps, setHeaderProps] = useState({
     logoType: 'text',
-    title: 'MindGarden',
-    logoAlt: 'MindGarden'
+    title: 'Core Solution',
+    logoAlt: 'Core Solution'
   });
 
 /**
@@ -164,7 +164,7 @@ export const useBranding = (options = {}) => {
     hasCustomLogo: headerProps.logoType === 'image' && 
                    headerProps.logoImage && 
                    !headerProps.logoImage.includes('core-solution-logo.png'),
-    hasCustomName: headerProps.title !== 'MindGarden' && 
-                   headerProps.title !== 'CoreSolution'
+    hasCustomName: headerProps.title !== 'Core Solution' &&
+                   headerProps.title !== 'coreSolution'
   };
 };

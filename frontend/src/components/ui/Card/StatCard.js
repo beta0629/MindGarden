@@ -1,5 +1,5 @@
 /**
- * MindGarden 디자인 시스템 v2.0 - Stat Card Component
+ * Core Solution 디자인 시스템 v2.0 - Stat Card Component
 /**
  * 
 /**

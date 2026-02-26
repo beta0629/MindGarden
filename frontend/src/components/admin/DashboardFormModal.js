@@ -1369,7 +1369,7 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
                   </p>
                 </div>
 
-                {/* 마인드가든 표준 위젯 편집기 */}
+                {/* Core Solution 표준 위젯 편집기 */}
                 <div className="mg-v2-editor-container">
                     {parsedConfig ? (
                         <div className="mg-v2-editor-complete">

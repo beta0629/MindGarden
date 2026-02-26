@@ -7,7 +7,7 @@ import './AdminDashboardSample.css';
  * B0KlA (Sample Dashboard - Counseling Center) 디자인 시스템 반영
  * 로그인 없이 접근 가능한 반응형 데모
  *
- * @author MindGarden
+ * @author Core Solution
  * @version 2.0.0
  * @since 2025-02
  */

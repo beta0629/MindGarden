@@ -1,7 +1,7 @@
 /**
  * AdminDashboard Atomic Design 컴포넌트 export
  *
- * @author MindGarden
+ * @author Core Solution
  * @since 2025-02-21
  */
 

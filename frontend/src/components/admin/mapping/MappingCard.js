@@ -56,7 +56,7 @@ const getStatusIconComponent = (status) => {
  * 매칭 카드 컴포넌트
  * B0KlA ContentCard 스타일 (mg-v2-content-card)
  *
- * @author MindGarden
+ * @author Core Solution
  * @since 2024-12-19
  * @updated 2025-02-22 - B0KlA 어드민 대시보드 스타일 적용, 상태 배지 아토믹 디자인·Lucide 아이콘
  */

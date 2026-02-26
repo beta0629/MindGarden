@@ -3,7 +3,7 @@
 /**
  * @description 동적 스타일 적용과 성능 최적화를 위한 커스텀 훅
 /**
- * @author MindGarden Team
+ * @author Core Solution Team
 /**
  * @version 1.0.0
  */

@@ -19,7 +19,7 @@ const NavigationShowcase = () => {
           <div className="mg-card mg-card-no-padding">
             <div className="mg-header-nav">
               <div className="mg-header-brand">
-                <div className="mg-header-logo">MindGarden</div>
+                <div className="mg-header-logo">Core Solution</div>
               </div>
               <nav className="mg-header-menu">
                 <a href="#" className="mg-header-link">홈</a>

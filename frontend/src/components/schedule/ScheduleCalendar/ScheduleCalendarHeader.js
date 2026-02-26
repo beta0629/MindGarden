@@ -8,7 +8,7 @@ import { Calendar, Users, RefreshCw, Smartphone, Monitor } from 'lucide-react';
 /**
  * 
 /**
- * @author MindGarden
+ * @author Core Solution
 /**
  * @version 1.0.0
 /**

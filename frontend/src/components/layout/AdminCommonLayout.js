@@ -3,7 +3,7 @@
  * - DesktopLayout, MobileLayout 분기 처리 추상화
  * - LNB 메뉴는 DB 기반 API(/api/v1/menus/lnb) 전용, 실패 시에만 내부 폴백 상수 사용
  *
- * @author MindGarden
+ * @author Core Solution
  * @since 2025-02-22
  */
 

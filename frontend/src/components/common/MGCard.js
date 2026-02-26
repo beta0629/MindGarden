@@ -1,11 +1,11 @@
 /**
- * MindGarden 공통 카드 컴포넌트
+ * Core Solution 공통 카드 컴포넌트
 /**
  * v0.dev 디자인 시스템 기반의 새로운 카드 디자인
  */
 
 /**
- * MindGarden 공통 카드 컴포넌트
+ * Core Solution 공통 카드 컴포넌트
 /**
  * 표준화 원칙 준수: CSS 클래스 사용, 인라인 스타일 금지
  */

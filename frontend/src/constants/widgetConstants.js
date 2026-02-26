@@ -1,5 +1,5 @@
 /**
- * MindGarden 위젯 상수 정의
+ * Core Solution 위젯 상수 정의
 /**
  * 
 /**
@@ -9,14 +9,14 @@
 /**
  * 
 /**
- * @author MindGarden
+ * @author Core Solution
 /**
  * @version 1.0.0
 /**
  * @since 2025-11-28
  */
 
-// 🎨 CSS 클래스 상수 (MindGarden 디자인 시스템 기반)
+// 🎨 CSS 클래스 상수 (Core Solution 디자인 시스템 기반)
 export const WIDGET_CONSTANTS = {
   // CSS 클래스명 (mg- 접두사 사용)
   CSS_CLASSES: {
@@ -31,7 +31,7 @@ export const WIDGET_CONSTANTS = {
     WIDGET_SUBTITLE: 'mg-widget__subtitle mg-text-muted mg-text-sm',
     WIDGET_CONTENT: 'mg-widget__content',
     
-    // MindGarden 카드 시스템
+    // Core Solution 카드 시스템
     MG_CARD: 'mg-card',
     MG_CARD_HEADER: 'mg-card__header mg-flex mg-align-center mg-gap-sm',
     MG_CARD_BODY: 'mg-card__body',

@@ -55,12 +55,12 @@ const MindGardenDesignSystemShowcase = () => {
         {/* Footer */}
         <footer className="mg-section mg-text-center">
           <div className="mg-glass-card">
-            <h3 className="mg-h3 mg-gradient-text">MindGarden Design System</h3>
+            <h3 className="mg-h3 mg-gradient-text">Core Solution Design System</h3>
             <p className="mg-body-medium" style={{ color: 'var(--medium-gray)' }}>
               순수 CSS + JavaScript로 만든 디자인 시스템 - 18개 컴포넌트
             </p>
             <p className="mg-body-small mg-mt-sm" style={{ color: 'var(--medium-gray)' }}>
-              © 2025 MindGarden. All rights reserved.
+              © 2025 Core Solution. All rights reserved.
             </p>
           </div>
         </footer>

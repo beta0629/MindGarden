@@ -1,7 +1,7 @@
 /**
  * 감정 분석 컴포넌트 통합 export
  *
- * @author MindGarden
+ * @author Core Solution
  * @since 2026-01-21
  */
 

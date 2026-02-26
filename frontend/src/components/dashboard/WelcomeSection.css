@@ -1,10 +1,10 @@
-/* WelcomeSection 스타일 - MindGarden 디자인 시스템 */
+/* WelcomeSection 스타일 - Core Solution 디자인 시스템 */
 
 .welcome-section {
   margin-bottom: var(--spacing-xxl);
 }
 
-/* 웰컴 카드 - MindGarden 색상 사용 */
+/* 웰컴 카드 - Core Solution 색상 사용 */
 .welcome-card {
   background: linear-gradient(135deg, var(--light-beige) 0%, var(--cream) 100%);
   border-radius: var(--radius-lg);

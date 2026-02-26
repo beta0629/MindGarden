@@ -2,7 +2,7 @@
  * MappingStatsSection - 통계 카드 영역
  * ContentSection + MappingStats
  *
- * @author MindGarden
+ * @author Core Solution
  * @since 2025-02-22
  */
 

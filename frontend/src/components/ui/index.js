@@ -1,5 +1,5 @@
 /**
- * MindGarden 디자인 시스템 v2.0 - UI Components Library
+ * Core Solution 디자인 시스템 v2.0 - UI Components Library
 /**
  * 
 /**
@@ -13,7 +13,7 @@
 /**
  * 
 /**
- * @author MindGarden Team
+ * @author Core Solution Team
 /**
  * @version 2.0.0
 /**

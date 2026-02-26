@@ -32,7 +32,7 @@ import '../../styles/main.css'; // Ensure main.css is imported for mg-loading st
 /**
  * 
 /**
- * @author MindGarden
+ * @author Core Solution
 /**
  * @version 1.1.0
 /**
@@ -48,7 +48,7 @@ const UnifiedLoading = ({
   centered = true,
   logoType = "text", // text, image, custom
   logoImage = "",
-  logoAlt = "MindGarden",
+  logoAlt = "Core Solution",
   logoRotate = true,
   ...props 
 }) => {
@@ -82,7 +82,7 @@ const UnifiedLoading = ({
         return (
           <div className={logoClasses}>
             <span className="mg-loading-logo-text">
-              MindGarden
+              Core Solution
             </span>
           </div>
         );

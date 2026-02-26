@@ -1,9 +1,9 @@
 /**
  * 대시보드 폼 모달 스타일
- * 마인드가든 디자인 시스템 v2.0 준수
+ * Core Solution 디자인 시스템 v2.0 준수
  */
 
-/* ===== 마인드가든 모달 구조 (기존 시스템 확장) ===== */
+/* ===== Core Solution 모달 구조 (기존 시스템 확장) ===== */
 .mg-v2-modal-overlay--dashboard {
   z-index: var(--mg-z-index-modal-high, 10000) !important;
   background: var(--mg-modal-overlay-dark, rgba(0, 0, 0, 0.7)) !important;
@@ -17,7 +17,7 @@
   z-index: var(--mg-z-index-modal-content, 10001) !important;
 }
 
-/* ===== 마인드가든 모달 헤더 ===== */
+/* ===== Core Solution 모달 헤더 ===== */
 .mg-dashboard-modal-header {
   padding: var(--mg-spacing-lg);
   background: var(--mg-gradient-primary);
@@ -42,7 +42,7 @@
   background: var(--mg-hover-overlay-light);
 }
 
-/* ===== 마인드가든 모달 본문 ===== */
+/* ===== Core Solution 모달 본문 ===== */
 .mg-dashboard-modal-body {
   flex: 1;
   overflow-y: auto;
@@ -50,7 +50,7 @@
   background: var(--mg-bg-primary);
 }
 
-/* ===== 마인드가든 모달 푸터 ===== */
+/* ===== Core Solution 모달 푸터 ===== */
 .mg-dashboard-modal-footer {
   padding: var(--mg-spacing-lg);
   border-top: var(--mg-border-width) solid var(--mg-border-color);
@@ -60,7 +60,7 @@
   gap: var(--mg-spacing-sm);
 }
 
-/* ===== 마인드가든 v2 편집 헤더 ===== */
+/* ===== Core Solution v2 편집 헤더 ===== */
 .mg-v2-edit-header {
   padding: var(--mg-spacing-md);
   background: var(--mg-gradient-primary);
@@ -168,7 +168,7 @@
   flex: 0 0 auto;
 }
 
-/* ===== 마인드가든 편집 모드 헤더 ===== */
+/* ===== Core Solution 편집 모드 헤더 ===== */
 .mg-edit-mode-header {
   padding: var(--mg-spacing-md);
   background: var(--mg-gradient-success);
@@ -192,7 +192,7 @@
   opacity: var(--mg-opacity-medium);
 }
 
-/* ===== 마인드가든 시각적 편집 컨테이너 ===== */
+/* ===== Core Solution 시각적 편집 컨테이너 ===== */
 .mg-visual-editor-container {
   border: var(--mg-border-width) solid var(--mg-border-color);
   border-radius: var(--mg-border-radius-md);

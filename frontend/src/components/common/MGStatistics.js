@@ -2,7 +2,7 @@ import React from 'react';
 import './MGStatistics.css';
 
 /**
- * MindGarden 통계 컴포넌트
+ * Core Solution 통계 컴포넌트
 /**
  * 다양한 통계 표시를 위한 컴포넌트
  */

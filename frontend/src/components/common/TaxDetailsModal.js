@@ -21,7 +21,7 @@ import { apiGet } from '../../utils/ajax';
 /**
  * @param {string} props.period - 계산 기간
 /**
- * @author MindGarden
+ * @author Core Solution
 /**
  * @version 1.0.0
 /**

@@ -37,7 +37,7 @@ import '../../styles/main.css'; // Ensure main.css is imported for mg-notificati
 /**
  * 
 /**
- * @author MindGarden
+ * @author Core Solution
 /**
  * @version 1.1.0
 /**

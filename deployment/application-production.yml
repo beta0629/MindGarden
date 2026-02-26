@@ -1,4 +1,4 @@
-# MindGarden 운영 환경 설정
+# Core Solution 운영 환경 설정
 # 서버: beta74.cafe24.com (211.37.179.204)
 # 도메인: https://m-garden.co.kr
 
@@ -200,7 +200,7 @@ file:
 # 상담 시스템 운영 설정
 consultation:
   system:
-    name: "MindGarden 상담관리 시스템"
+    name: "Core Solution 상담관리 시스템"
     version: "1.0.0"
     max-clients-per-consultant: 50  # 운영에서는 더 많이
     session-timeout: 30

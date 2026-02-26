@@ -1,5 +1,5 @@
 /**
- * MindGarden 디자인 시스템 v2.0 - Checkbox Component
+ * Core Solution 디자인 시스템 v2.0 - Checkbox Component
  */
 
 import React from 'react';

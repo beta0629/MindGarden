@@ -2,7 +2,7 @@
  * LNB 아이콘 매핑 (DB icon 문자열 → lucide-react 컴포넌트)
  * 스펙: docs/design-system/LNB_MENU_STRUCTURE_AND_PERMISSION_SPEC.md §3
  *
- * @author MindGarden
+ * @author Core Solution
  * @since 2026-02-25
  */
 

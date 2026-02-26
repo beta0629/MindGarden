@@ -1,5 +1,5 @@
 /**
- * MindGarden 통합 디자인 토큰 (JavaScript)
+ * Core Solution 통합 디자인 토큰 (JavaScript)
 /**
  * 
 /**

@@ -52,7 +52,7 @@ const setDefaultPermissionsForRole = (user, setUserPermissions) => {
 };
 
 /**
- * ERP 메인 대시보드 컴포넌트 - MindGarden 디자인 시스템 적용
+ * ERP 메인 대시보드 컴포넌트 - Core Solution 디자인 시스템 적용
  */
 const ErpDashboard = ({ user: propUser }) => {
   const navigate = useNavigate();

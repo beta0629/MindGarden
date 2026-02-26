@@ -1,7 +1,7 @@
 import React from 'react';
 
 /**
- * ERP 공통 헤더 컴포넌트 - MindGarden 디자인 시스템 mg-dashboard-header 활용
+ * ERP 공통 헤더 컴포넌트 - Core Solution 디자인 시스템 mg-dashboard-header 활용
 /**
  * 
 /**

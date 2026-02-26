@@ -2,7 +2,7 @@
  * 보호된 라우트 컴포넌트
  * 권한 확인: 서버에서 받은 role, permissionGroupCodes 기준 (하드코딩 역할명 사용 금지)
  *
- * @author MindGarden
+ * @author Core Solution
  * @version 2.0.0
  * @since 2025-12-03
  */

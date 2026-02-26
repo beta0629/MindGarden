@@ -1,5 +1,5 @@
 /**
- * MindGarden 디자인 토큰
+ * Core Solution 디자인 토큰
 /**
  * 
 /**
@@ -9,7 +9,7 @@
 /**
  * 
 /**
- * @author MindGarden
+ * @author Core Solution
 /**
  * @version 1.0.0
 /**

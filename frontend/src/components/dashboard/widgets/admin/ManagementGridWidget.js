@@ -1,7 +1,7 @@
 /**
  * Management Grid Widget
 /**
- * 실제 마인드가든 관리 기능들을 표시하는 위젯
+ * 실제 Core Solution 관리 기능들을 표시하는 위젯
 /**
  * AdminDashboard의 관리 기능 카드들을 위젯화
 /**
@@ -31,7 +31,7 @@ const ManagementGridWidget = ({ widget, user }) => {
   const title = config.title || '관리 기능';
   const columns = config.columns || 3;
   
-  // 실제 마인드가든 관리 기능들 정의 (표준화된 ADMIN_ROUTES 사용)
+  // 실제 Core Solution 관리 기능들 정의 (표준화된 ADMIN_ROUTES 사용)
   const managementItems = config.items || [
     {
       id: 'user-management',
@@ -172,7 +172,7 @@ const ManagementGridWidget = ({ widget, user }) => {
           <Settings className="mg-v2-icon" />
           {title}
         </div>
-        <div className="widget-subtitle">마인드가든 관리 기능</div>
+        <div className="widget-subtitle">Core Solution 관리 기능</div>
       </div>
       <div className="widget-body">
         <div className={`mg-management-grid mg-management-grid-${columns}`}>

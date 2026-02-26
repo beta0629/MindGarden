@@ -1,5 +1,5 @@
 /**
- * MindGarden 위젯 표준 커스텀 훅
+ * Core Solution 위젯 표준 커스텀 훅
  * 
 /**
  * 모든 위젯에서 공통으로 사용되는 로직을 표준화
@@ -14,7 +14,7 @@
 /**
  * 
 /**
- * @author MindGarden
+ * @author Core Solution
 /**
  * @version 1.0.0
 /**

@@ -2,7 +2,7 @@
  * MgModal - B0KlA 스타일 공통 모달 컴포넌트
  * size: full | medium | small
  *
- * @author MindGarden
+ * @author Core Solution
  * @since 2025-02-22
  */
 

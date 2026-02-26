@@ -11,7 +11,7 @@ import './MappingEditModal.css';
  * - ERP 연동을 통한 자동 업데이트
  * - B0KlA 카드, 섹션 구분, 악센트 바, 금액·회기 강조 적용
  *
- * @author MindGarden
+ * @author Core Solution
  * @version 1.0.0
  * @since 2024-12-19
  * @updated 2025-02-22 - B0KlA 디자인 시스템 적용, 누락 정보 추가

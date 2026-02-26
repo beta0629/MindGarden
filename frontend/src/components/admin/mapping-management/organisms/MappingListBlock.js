@@ -1,7 +1,7 @@
 /**
  * MappingListBlock - 매칭 목록 그리드 (MappingListRow 사용)
  *
- * @author MindGarden
+ * @author Core Solution
  * @since 2025-02-22
  */
 

@@ -19,7 +19,7 @@ import './PrintComponent.css';
 /**
  * @param {string} props.pageStyle - 페이지 스타일
 /**
- * @author MindGarden
+ * @author Core Solution
 /**
  * @version 1.0.0
 /**
@@ -170,7 +170,7 @@ const PrintComponent = forwardRef(({
         </div>
         
         <div className="print-footer">
-          <div>마인드가든 통합 상담관리 시스템</div>
+          <div>Core Solution 통합 상담관리 시스템</div>
           <div>출력일: {new Date().toLocaleString('ko-KR')}</div>
         </div>
       </div>

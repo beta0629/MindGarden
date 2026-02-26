@@ -125,8 +125,8 @@ const ResetPassword = () => {
   if (isValidating) {
     return (
       <CommonPageTemplate 
-        title="비밀번호 재설정 - 마인드가든"
-        description="마인드가든 비밀번호를 재설정하세요"
+        title="비밀번호 재설정 - Core Solution"
+        description="Core Solution 비밀번호를 재설정하세요"
         bodyClass="tablet-page"
       >
         <div className="tablet-page">
@@ -155,8 +155,8 @@ const ResetPassword = () => {
 
   return (
     <CommonPageTemplate 
-      title="비밀번호 재설정 - 마인드가든"
-      description="마인드가든 비밀번호를 재설정하세요"
+      title="비밀번호 재설정 - Core Solution"
+      description="Core Solution 비밀번호를 재설정하세요"
       bodyClass="tablet-page"
     >
       <div className="tablet-page">

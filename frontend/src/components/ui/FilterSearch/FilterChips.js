@@ -3,7 +3,7 @@
  * 
  * 선택된 필터를 칩 형태로 표시하고 제거 가능
  * 
- * @author MindGarden
+ * @author Core Solution
  * @version 1.0.0
  * @since 2025-12-09
  */

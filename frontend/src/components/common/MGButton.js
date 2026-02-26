@@ -3,7 +3,7 @@ import { Loader } from 'lucide-react';
 import './MGButton.css';
 
 /**
- * MindGarden 공통 버튼 컴포넌트
+ * Core Solution 공통 버튼 컴포넌트
  * - 중복 클릭 방지
  * - 로딩 상태 표시
  * - 다양한 스타일 지원
@@ -26,7 +26,7 @@ import './MGButton.css';
  * @param {boolean} props.fullWidth - 전체 너비 사용 여부
  * @param {number} props.progress - 진행률 (0-100), variant="progress"일 때 사용
  * 
- * @author MindGarden
+ * @author Core Solution
  * @version 1.1.0
  * @since 2025-01-22
  */

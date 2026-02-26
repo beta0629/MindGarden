@@ -20,7 +20,7 @@ import notificationManager from '../../utils/notification';
 /**
  * 
 /**
- * @author MindGarden
+ * @author Core Solution
 /**
  * @version 1.0.0
 /**

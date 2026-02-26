@@ -11,7 +11,7 @@ const CounselingAbout = () => {
     <section className="counseling-about">
       <div className="counseling-about__container">
         <div className="counseling-about__content">
-          <h2 className="counseling-about__title">MindGarden 상담센터 소개</h2>
+          <h2 className="counseling-about__title">Core Solution 상담센터 소개</h2>
           <p className="counseling-about__description">
             라이선스를 보유한 전문 상담사들이 증거 기반 치료법을 통해 
             안전하고 기밀성이 보장되는 환경에서 여러분의 마음 치유를 돕습니다.

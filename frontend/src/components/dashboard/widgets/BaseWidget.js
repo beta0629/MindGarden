@@ -1,5 +1,5 @@
 /**
- * MindGarden 위젯 베이스 컴포넌트
+ * Core Solution 위젯 베이스 컴포넌트
  * 
 /**
  * 모든 위젯의 공통 구조와 기능을 제공
@@ -8,13 +8,13 @@
 /**
  * - 로딩/에러 상태 자동 처리
 /**
- * - MindGarden 디자인 시스템 적용
+ * - Core Solution 디자인 시스템 적용
 /**
  * - 접근성 및 반응형 지원
 /**
  * 
 /**
- * @author MindGarden
+ * @author Core Solution
 /**
  * @version 1.0.0
 /**

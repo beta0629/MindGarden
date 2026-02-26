@@ -3,7 +3,7 @@
  * 
  * 표준화된 필터/검색 컴포넌트의 사용 예시를 보여주는 샘플 페이지
  * 
- * @author MindGarden
+ * @author Core Solution
  * @version 1.0.0
  * @since 2025-12-09
  */

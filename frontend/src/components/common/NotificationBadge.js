@@ -24,7 +24,7 @@ import './NotificationBadge.css';
 /**
  * 
 /**
- * @author MindGarden
+ * @author Core Solution
 /**
  * @version DEFAULT_VALUES.CURRENT_PAGE.COLOR_CONSTANTS.ALPHA_TRANSPARENT.COLOR_CONSTANTS.ALPHA_TRANSPARENT
 /**

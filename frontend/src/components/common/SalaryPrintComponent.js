@@ -17,7 +17,7 @@ import PrintComponent from './PrintComponent';
 /**
  * @param {boolean} props.includeCalculationDetails - 계산 상세 포함 여부
 /**
- * @author MindGarden
+ * @author Core Solution
 /**
  * @version 1.0.0
 /**
@@ -186,7 +186,7 @@ const SalaryPrintComponent = ({
 
       <div className="salary-footer">
         <div className="salary-footer-text">
-          본 급여 계산서는 마인드가든 통합 상담관리 시스템에서 자동 생성되었습니다.
+          본 급여 계산서는 Core Solution 통합 상담관리 시스템에서 자동 생성되었습니다.
         </div>
         <div className="salary-footer-text">
           문의사항이 있으시면 관리자에게 연락해주세요.

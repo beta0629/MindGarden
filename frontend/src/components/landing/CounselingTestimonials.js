@@ -10,7 +10,7 @@ const CounselingTestimonials = () => {
       <div className="counseling-testimonials__container">
         <h2 className="counseling-testimonials__title">고객 후기</h2>
         <p className="counseling-testimonials__subtitle">
-          MindGarden과 함께한 치유의 여정을 경험한 분들의 이야기
+          Core Solution과 함께한 치유의 여정을 경험한 분들의 이야기
         </p>
         
         <div className="counseling-testimonials__grid">

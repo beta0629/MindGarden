@@ -17,7 +17,7 @@ import './BranchLogin.css';
 /**
  * 
 /**
- * @author MindGarden
+ * @author Core Solution
 /**
  * @version 1.0.0
 /**
@@ -169,7 +169,7 @@ const BranchLogin = () => {
       <div className="branch-login-container">
         <div className="login-card">
           <div className="login-header">
-            <h2>마인드가든 로그인</h2>
+            <h2>Core Solution 로그인</h2>
             <p>본사 또는 지점별로 로그인하세요</p>
           </div>
 

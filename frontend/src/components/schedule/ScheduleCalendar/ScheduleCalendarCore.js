@@ -9,7 +9,7 @@ import interactionPlugin from '@fullcalendar/interaction';
 /**
  * 
 /**
- * @author MindGarden
+ * @author Core Solution
 /**
  * @version 1.0.0
 /**

@@ -1,7 +1,7 @@
 /**
  * MappingTableView - 매칭 목록 테이블 뷰 (B0KlA 스타일)
  *
- * @author MindGarden
+ * @author Core Solution
  * @since 2025-02-22
  */
 

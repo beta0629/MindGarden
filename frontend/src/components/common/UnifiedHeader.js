@@ -288,8 +288,8 @@ const UnifiedHeader = ({
           className="mg-header__logo mg-header__logo--text mg-header__logo--loading"
           onClick={handleLogoClick}
         >
-          <span className="mg-header__logo-text">MindGarden</span>
-          <span className="mg-header__logo-subtitle">마인드가든</span>
+          <span className="mg-header__logo-text">Core Solution</span>
+          <span className="mg-header__logo-subtitle">Core Solution</span>
         </div>
       );
     }
@@ -317,7 +317,7 @@ const UnifiedHeader = ({
               style={{ display: 'none' }}
             >
               <span className="mg-header__logo-text">{actualTitle}</span>
-              <span className="mg-header__logo-subtitle">마인드가든</span>
+              <span className="mg-header__logo-subtitle">Core Solution</span>
             </div>
           </div>
         );
@@ -340,7 +340,7 @@ const UnifiedHeader = ({
               {actualTitle}
             </span>
             <span className="mg-header__logo-subtitle">
-              마인드가든
+              Core Solution
             </span>
           </div>
         );

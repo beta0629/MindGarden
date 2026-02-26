@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "description": "MindGarden 간격 토큰",
+  "description": "Core Solution 간격 토큰",
   "tokens": {
     "xs": {
       "value": "0.5rem",

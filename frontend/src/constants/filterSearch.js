@@ -1,7 +1,7 @@
 /**
  * 필터 및 검색 관련 상수 정의
  * 
- * @author MindGarden
+ * @author Core Solution
  * @version 1.0.0
  * @since 2025-12-09
  */

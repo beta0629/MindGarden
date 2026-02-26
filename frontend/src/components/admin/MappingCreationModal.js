@@ -26,7 +26,7 @@ import './MappingCreationModal.css';
  * 매칭 생성 모달 - 플로우형 UI (상담사 → 패키지 → 내담자 → 결제)
  * B0KlA 토큰, mg-v2-* 클래스, lucide-react 아이콘 적용
  *
- * @author MindGarden
+ * @author Core Solution
  * @since 2024-12-19
  * @updated 2025-02-22 - 전면 재구성 (플로우형)
  */

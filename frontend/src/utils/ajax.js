@@ -17,7 +17,7 @@ import { getDefaultApiHeaders } from './apiHeaders';
 /**
  * 
 /**
- * @author MindGarden
+ * @author Core Solution
 /**
  * @version 1.0.0
 /**

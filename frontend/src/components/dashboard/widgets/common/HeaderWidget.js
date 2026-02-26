@@ -38,7 +38,7 @@ const HeaderWidget = ({ widget, user }) => {
   const showLogo = config.showLogo !== false;
   const showUserInfo = config.showUserInfo !== false;
   const showLogoutButton = config.showLogoutButton !== false;
-  const brandName = config.brandName || 'MindGarden';
+  const brandName = config.brandName || 'Core Solution';
   const logoIcon = config.logoIcon || 'bi-flower1';
   
   // 중앙 세션 훅 사용

@@ -8,7 +8,7 @@ import './DepositPendingList.css';
  * @param {Object} props
  * @param {Array<{id:string,clientName?:string,amount?:number,mappingId?:string}>} props.items - 대기 항목
  * @param {Function} props.onDepositConfirm - 입금 확인 핸들러 (itemId) => void
- * @author MindGarden
+ * @author Core Solution
  * @since 2025-02-21
  */
 const DepositPendingList = ({ items = [], onDepositConfirm }) => {

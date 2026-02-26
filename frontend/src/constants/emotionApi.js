@@ -1,7 +1,7 @@
 /**
  * 멀티모달 감정 분석 API 엔드포인트 상수
  *
- * @author MindGarden
+ * @author Core Solution
  * @version 1.0.0
  * @since 2026-01-21
  */

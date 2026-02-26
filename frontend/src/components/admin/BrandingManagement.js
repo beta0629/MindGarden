@@ -375,7 +375,7 @@ const BrandingManagement = ({ onClose }) => {
                 className={`branding-management__input ${errors.companyName ? 'error' : ''}`}
                 value={formData.companyName}
                 onChange={(e) => handleInputChange('companyName', e.target.value)}
-                placeholder="예: 마인드가든 상담센터"
+                placeholder="예: Core Solution 상담센터"
                 maxLength={255}
               />
               {errors.companyName && (
@@ -395,7 +395,7 @@ const BrandingManagement = ({ onClose }) => {
                 className={`branding-management__input ${errors.companyNameEn ? 'error' : ''}`}
                 value={formData.companyNameEn}
                 onChange={(e) => handleInputChange('companyNameEn', e.target.value)}
-                placeholder="예: MindGarden Counseling Center"
+                placeholder="예: Core Solution Counseling Center"
                 maxLength={255}
               />
               {errors.companyNameEn && (
@@ -661,9 +661,9 @@ const BrandingPreviewModal = ({ brandingData, onClose }) => {
               ) : (
                 <div className="branding-preview__logo-text">
                   <span className="branding-preview__company-name">
-                    {brandingData.companyName || 'MindGarden'}
+                    {brandingData.companyName || 'Core Solution'}
                   </span>
-                  <span className="branding-preview__subtitle">마인드가든</span>
+                  <span className="branding-preview__subtitle">Core Solution</span>
                 </div>
               )}
             </div>

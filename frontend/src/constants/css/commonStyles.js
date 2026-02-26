@@ -3,7 +3,7 @@
 /**
  * @description 프로젝트 전반에서 사용되는 공통 CSS 스타일 상수들
 /**
- * @author MindGarden Team
+ * @author Core Solution Team
 /**
  * @version 1.0.0
  */

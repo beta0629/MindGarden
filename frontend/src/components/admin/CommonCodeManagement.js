@@ -30,7 +30,7 @@ import './ImprovedCommonCodeManagement.css';
  * - 직관적인 UI/UX 제공
  * - 관리자 친화적 인터페이스
  * 
- * @author MindGarden
+ * @author Core Solution
  * @version 2.0.0
  * @since 2025-09-13
  */

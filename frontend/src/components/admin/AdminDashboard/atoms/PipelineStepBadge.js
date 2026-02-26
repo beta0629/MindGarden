@@ -9,7 +9,7 @@ import './PipelineStepBadge.css';
  * @param {string} props.label - 배지 라벨
  * @param {string|number} props.value - 표시 값
  * @param {'neutral'|'warning'|'success'|'info'|'auto'} props.variant - 배지 스타일
- * @author MindGarden
+ * @author Core Solution
  * @since 2025-02-21
  */
 const PipelineStepBadge = ({ label, value, variant = 'neutral' }) => {

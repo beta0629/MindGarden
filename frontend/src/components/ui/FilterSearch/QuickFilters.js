@@ -6,7 +6,7 @@
  * - mg-v2-* CSS 클래스 사용
  * - 상수 사용
  * 
- * @author MindGarden
+ * @author Core Solution
  * @version 1.0.0
  * @since 2025-12-09
  */

@@ -8,7 +8,7 @@ import './SchedulePendingList.css';
  * @param {Object} props
  * @param {Array<{id:string,clientName?:string,consultantName?:string,mappingId?:string}>} props.items - 대기 항목
  * @param {Function} props.onScheduleRegister - 스케줄 등록 핸들러 (itemId) => void
- * @author MindGarden
+ * @author Core Solution
  * @since 2025-02-21
  */
 const SchedulePendingList = ({ items = [], onScheduleRegister }) => {

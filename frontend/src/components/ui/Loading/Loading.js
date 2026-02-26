@@ -3,11 +3,11 @@
 /**
  * 
 /**
- * MindGarden 디자인 시스템 표준 컴포넌트
+ * Core Solution 디자인 시스템 표준 컴포넌트
 /**
  * 
 /**
- * @author MindGarden Team
+ * @author Core Solution Team
 /**
  * @version 2.0.0
 /**
@@ -29,7 +29,7 @@ const UnifiedLoading = ({
   centered = true,
   logoType = "text", // text, image, custom
   logoImage = "",
-  logoAlt = "MindGarden",
+  logoAlt = "Core Solution",
   logoRotate = true,
   ...props 
 }) => {
@@ -63,7 +63,7 @@ const UnifiedLoading = ({
         return (
           <div className={logoClasses}>
             <span className="mg-loading-logo-text">
-              MindGarden
+              Core Solution
             </span>
           </div>
         );

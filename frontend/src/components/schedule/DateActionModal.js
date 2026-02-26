@@ -9,7 +9,7 @@ import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
  * - 스케줄 등록
  * - 휴가 등록
  *
- * @author MindGarden
+ * @author Core Solution
  * @version 1.0.0
  * @since 2025-01-02
  */

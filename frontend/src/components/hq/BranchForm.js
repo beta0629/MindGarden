@@ -24,7 +24,7 @@ import './BranchForm.css';
 /**
  * 
 /**
- * @author MindGarden
+ * @author Core Solution
 /**
  * @version 1.0.0
 /**

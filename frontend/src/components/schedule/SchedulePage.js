@@ -2,7 +2,7 @@
  * 스케줄 관리 메인 페이지 - 아토믹 구조 래퍼
  * AdminDashboardV2와 동일한 레이아웃(GNB+LNB) 사용
  *
- * @author MindGarden
+ * @author Core Solution
  * @since 2024-12-19
  * @updated 2025-02-22 - AdminDashboardV2 레이아웃 및 아토믹 디자인 적용
  */

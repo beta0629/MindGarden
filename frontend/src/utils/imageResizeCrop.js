@@ -1,6 +1,6 @@
 /**
  * 이미지 리사이즈·크롭 유틸 (Canvas API, data URL 입출력)
- * @author MindGarden
+ * @author Core Solution
  * @since 2025-02-25
  */
 

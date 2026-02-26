@@ -12,7 +12,7 @@ import './StepIndicator.css';
 /**
  * 
 /**
- * @author MindGarden
+ * @author Core Solution
 /**
  * @version 2.0.0
 /**

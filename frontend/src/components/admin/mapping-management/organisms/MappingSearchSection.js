@@ -2,7 +2,7 @@
  * MappingSearchSection - 검색 + 상태 필터 영역
  * SearchInput(dashboard-v2) + 상태 필터 칩
  *
- * @author MindGarden
+ * @author Core Solution
  * @since 2025-02-22
  */
 

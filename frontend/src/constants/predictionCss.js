@@ -1,7 +1,7 @@
 /**
  * 예측 모니터링 CSS 클래스명 상수
  *
- * @author MindGarden
+ * @author Core Solution
  * @version 1.0.0
  * @since 2026-01-21
  */

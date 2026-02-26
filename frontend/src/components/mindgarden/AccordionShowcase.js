@@ -7,8 +7,8 @@ const AccordionShowcase = () => {
 
   const accordionData = [
     {
-      title: 'MindGarden이란 무엇인가요?',
-      content: 'MindGarden은 정신 건강 지원을 위한 통합 플랫폼입니다. 전문 상담사와 클라이언트를 연결하고, 체계적인 상담 관리를 제공합니다.'
+      title: 'Core Solution이란 무엇인가요?',
+      content: 'Core Solution은 정신 건강 지원을 위한 통합 플랫폼입니다. 전문 상담사와 클라이언트를 연결하고, 체계적인 상담 관리를 제공합니다.'
     },
     {
       title: '상담은 어떻게 진행되나요?',

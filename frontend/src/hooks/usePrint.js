@@ -17,7 +17,7 @@ import { useReactToPrint } from 'react-to-print';
 /**
  * @returns {Object} 프린트 관련 함수와 ref
 /**
- * @author MindGarden
+ * @author Core Solution
 /**
  * @version 1.0.0
 /**

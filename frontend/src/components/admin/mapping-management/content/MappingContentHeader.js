@@ -2,7 +2,7 @@
  * MappingContentHeader - 매칭 관리 페이지 헤더 (B0KlA 스타일)
  * 타이틀, 설명, 액션 버튼
  *
- * @author MindGarden
+ * @author Core Solution
  * @since 2025-02-22
  */
 

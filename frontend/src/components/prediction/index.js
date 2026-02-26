@@ -1,7 +1,7 @@
 /**
  * 예측 모니터링 컴포넌트 통합 export
  *
- * @author MindGarden
+ * @author Core Solution
  * @since 2026-01-21
  */
 

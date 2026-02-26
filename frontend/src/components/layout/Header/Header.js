@@ -3,11 +3,11 @@
 /**
  * 
 /**
- * MindGarden 디자인 시스템 표준 컴포넌트
+ * Core Solution 디자인 시스템 표준 컴포넌트
 /**
  * 
 /**
- * @author MindGarden Team
+ * @author Core Solution
 /**
  * @version 2.0.0
 /**
@@ -53,10 +53,10 @@ const UnifiedHeader = ({
   });
 
   // 실제 사용할 props 결정 (전달받은 props 우선, 없으면 브랜딩 정보 사용)
-  const actualTitle = title || (useBrandingInfo ? headerProps.title : 'MindGarden');
+  const actualTitle = title || (useBrandingInfo ? headerProps.title : 'Core Solution');
   const actualLogoType = logoType || (useBrandingInfo ? headerProps.logoType : 'text');
   const actualLogoImage = logoImage || (useBrandingInfo ? headerProps.logoImage : '');
-  const actualLogoAlt = logoAlt || (useBrandingInfo ? headerProps.logoAlt : 'MindGarden');
+  const actualLogoAlt = logoAlt || (useBrandingInfo ? headerProps.logoAlt : 'Core Solution');
 
   // 로고 클릭 핸들러
   const handleLogoClick = () => {

@@ -7,7 +7,7 @@
  * - 상수 사용
  * - 입력 최소화 (컴팩트 모드)
  * 
- * @author MindGarden
+ * @author Core Solution
  * @version 1.0.0
  * @since 2025-12-09
  */

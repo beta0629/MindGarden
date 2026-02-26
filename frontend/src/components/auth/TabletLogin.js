@@ -654,8 +654,8 @@ const TabletLogin = () => {
     <div className={TABLET_LOGIN_CSS.CONTAINER}>
       <div className={TABLET_LOGIN_CSS.CONTENT}>
           <div className={TABLET_LOGIN_CSS.HEADER}>
-            <h1 className={TABLET_LOGIN_CSS.TITLE}>마인드가든 로그인</h1>
-            <p className={TABLET_LOGIN_CSS.SUBTITLE}>마인드가든에 오신 것을 환영합니다</p>
+            <h1 className={TABLET_LOGIN_CSS.TITLE}>Core Solution 로그인</h1>
+            <p className={TABLET_LOGIN_CSS.SUBTITLE}>Core Solution에 오신 것을 환영합니다</p>
           </div>
 
           <div className={TABLET_LOGIN_CSS.MODE_SWITCH}>

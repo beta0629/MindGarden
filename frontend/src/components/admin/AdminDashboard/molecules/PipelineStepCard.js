@@ -11,7 +11,7 @@ import './PipelineStepCard.css';
  * @param {string|number} props.value - 배지 표시값
  * @param {'neutral'|'warning'|'success'|'info'|'auto'} props.variant - 스타일 변형
  * @param {React.ReactNode} props.icon - Lucide 아이콘 컴포넌트
- * @author MindGarden
+ * @author Core Solution
  * @since 2025-02-21
  */
 const PipelineStepCard = ({ title, badgeValue, badgeLabel, variant = 'neutral', icon: Icon }) => {

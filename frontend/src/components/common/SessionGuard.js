@@ -5,7 +5,7 @@
  * 기존 SessionContext와 sessionManager를 활용합니다.
  * tenantId가 없으면 세션을 강제로 갱신하여 최신 정보를 확보합니다.
  * 
- * @author MindGarden
+ * @author Core Solution
  * @version 1.0.0
  * @since 2025-12-08
  */

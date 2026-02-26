@@ -1,5 +1,5 @@
 /**
- * MindGarden 디자인 시스템 샘플 페이지
+ * Core Solution 디자인 시스템 샘플 페이지
 /**
  * 모든 공통 컴포넌트의 일관성을 확인하는 테스트 페이지
  */
@@ -25,7 +25,7 @@ const MindGardenDesignSample = () => {
     <div style={{ padding: 'var(--spacing-lg)', maxWidth: '1200px', margin: '0 auto' }}>
       {/* 페이지 헤더 */}
       <MGPageHeader
-        title="MindGarden 디자인 시스템"
+        title="Core Solution 디자인 시스템"
         subtitle="일관성 있는 UI 컴포넌트 샘플"
         description="모든 컴포넌트가 동일한 디자인 언어를 사용하는지 확인합니다"
         icon="🎨"

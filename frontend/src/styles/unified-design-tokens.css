@@ -274,7 +274,7 @@
   --cs-gray-800: var(--cs-secondary-800);
   --cs-gray-900: var(--cs-secondary-900);
   
-  /* MindGarden 호환 변수 (CoreSolution 색상 매핑) */
+  /* coreSolution 호환 변수 (Core Solution 색상 매핑) */
   --mg-primary-50: var(--cs-primary-50);
   --mg-primary-100: var(--cs-primary-100);
   --mg-primary-200: var(--cs-primary-200);
@@ -1095,12 +1095,12 @@
 /* ===== 테넌트별 브랜딩 오버라이드 ===== */
 /* 특정 테넌트에 대한 브랜딩 커스터마이징 */
 
-/* MindGarden 테넌트 (예시) */
+/* coreSolution 테넌트 (예시) */
 [data-tenant-id="mindgarden"] {
   --tenant-primary: var(--mg-primary-500);
   --tenant-secondary: #764ba2;
   --tenant-logo-url: '/logos/mindgarden-logo.png';
-  --tenant-name: 'MindGarden';
+  --tenant-name: 'Core Solution';
 }
 
 /* 기본 상담소 테넌트 (예시) */
@@ -1173,7 +1173,7 @@
 /* ===== mindgarden-design-system.css에서 통합됨 ===== */
 /* 통합 일시: 2025-11-28T06:38:22.871Z */
 
-/* MindGarden Design System - Pure CSS */
+/* Core Solution Design System - Pure CSS */
 /* 작성일: 2025-10-13 */
 /* 버전: 1.0 */
 
@@ -1433,7 +1433,7 @@
   --color-warning: var(--mg-warning-500);
   --color-danger: var(--mg-error-500);
   
-  /* MindGarden Design System Colors */
+  /* Core Solution Design System Colors */
   --cream: var(--mg-cream);
   --light-beige: var(--mg-light-beige);
   --cocoa: var(--mg-cocoa);

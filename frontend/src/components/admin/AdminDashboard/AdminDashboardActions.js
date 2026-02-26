@@ -8,7 +8,7 @@ import { RotateCcw, Settings, Package, ShoppingCart, CheckCircle, FileText, Refr
 /**
  * 
 /**
- * @author MindGarden
+ * @author Core Solution
 /**
  * @version 1.0.0
 /**

@@ -25,7 +25,7 @@ const ErpCardWidget = ({ widget, user }) => {
   const className = config.className || '';
   const children = config.content || config.children || null;
   
-  // MindGarden 디자인 시스템의 mg-v2-card 또는 mg-glass-card 활용
+  // Core Solution 디자인 시스템의 mg-v2-card 또는 mg-glass-card 활용
   const cardClasses = [
     'widget',
     'widget-erp-card',

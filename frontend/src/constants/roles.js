@@ -1,7 +1,7 @@
 /**
  * 사용자 역할 상수 정의 (ADMIN, STAFF, CONSULTANT, CLIENT 4개만 사용)
  *
- * @author MindGarden
+ * @author Core Solution
  * @version 2.0.0
  * @since 2025-01-28
  * @updated 2026-02 - 4역할만 사용 (BRANCH_*, HQ_*, TENANT_ADMIN 등 제거)

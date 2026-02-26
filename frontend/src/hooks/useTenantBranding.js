@@ -139,7 +139,7 @@ export const useTenantBranding = (options = {}) => {
     if (typeof document === 'undefined') return;
     
     const currentTitle = document.title;
-    const baseTitles = ['MindGarden', 'CoreSolution'];
+    const baseTitles = ['Core Solution', 'coreSolution'];
     
     // 기존 타이틀에서 기본 브랜드명을 테넌트명으로 교체
     let newTitle = currentTitle;

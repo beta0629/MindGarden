@@ -10,7 +10,7 @@ import SystemNotificationSection from '../../dashboard/SystemNotificationSection
 /**
  * 
 /**
- * @author MindGarden
+ * @author Core Solution
 /**
  * @version 1.0.0
 /**

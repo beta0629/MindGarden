@@ -4,7 +4,7 @@
  * 모든 API 호출은 이 유틸리티를 통해 수행되어야 합니다.
  * 표준화 문서: docs/standards/API_DESIGN_STANDARD.md
  * 
- * @author MindGarden
+ * @author Core Solution
  * @version 1.0.0
  * @since 2025-12-06
  */

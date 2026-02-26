@@ -1,7 +1,7 @@
 /**
  * LNB 메뉴 트리 정규화 (API MenuDTO → LNB 렌더용)
  * 어드민 LNB에서만 사용되므로 '대시보드'는 /admin/dashboard로 통일
- * @author MindGarden
+ * @author Core Solution
  * @since 2026-02-25
  */
 

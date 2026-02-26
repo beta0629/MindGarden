@@ -282,7 +282,7 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
           type: 'message',
           position: { row: 1, col: 1, colspan: 2, rowspan: 1 },
           config: {
-            title: '🏥 마인드가든 상담소 관리자',
+            title: '🏥 Core Solution 상담소 관리자',
             message: '테스트 상담소에 오신 것을 환영합니다. 오늘도 좋은 하루 되세요!',
             color: 'primary',
             icon: 'welcome'
@@ -483,7 +483,7 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
             type: 'message',
             position: { row: 1, col: 1, colspan: 2, rowspan: 1 },
             config: {
-              title: '🏥 마인드가든 관리자 대시보드',
+              title: '🏥 Core Solution 관리자 대시보드',
               message: '환영합니다! 효율적인 상담소 운영을 위한 통합 관리 시스템입니다.',
               variant: 'primary'
             }
@@ -514,7 +514,7 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
             position: { row: 4, col: 1, colspan: 2, rowspan: 2 },
             config: {
               title: '⚙️ 관리 기능',
-              subtitle: '마인드가든 관리 도구',
+              subtitle: 'Core Solution 관리 도구',
               columns: 3
             }
           },
@@ -540,7 +540,7 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
         ]
       };
       
-      console.log('🎯 관리자 역할 → 기본 마인드가든 위젯 대시보드 사용 (위젯 없음)');
+      console.log('🎯 관리자 역할 → 기본 Core Solution 위젯 대시보드 사용 (위젯 없음)');
       return <WidgetBasedDashboard 
         dashboardConfig={defaultAdminDashboardConfig} 
         dashboard={dashboard} 

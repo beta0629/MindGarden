@@ -644,7 +644,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
   const layoutProps = {
     menuItems: lnbMenuItems ?? DEFAULT_MENU_ITEMS,
     headerTitle: '시스템 관리',
-    logoLabel: '코어솔류션',
+    logoLabel: 'Core Solution',
     searchValue,
     onSearchChange: setSearchValue,
     onBellClick: () => navigate(ADMIN_ROUTES.MESSAGES),

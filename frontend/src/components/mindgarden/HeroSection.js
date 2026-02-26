@@ -9,7 +9,7 @@ const HeroSection = () => {
         <div className="mg-welcome-badge mg-flex-center mg-gap-sm mg-mb-md">
           <Sparkles size={24} color="var(--mg-olive-green)" />
           <span className="mg-body-medium" style={{ color: 'var(--olive-green)' }}>
-            MindGarden에 오신 것을 환영합니다
+            Core Solution에 오신 것을 환영합니다
           </span>
         </div>
         

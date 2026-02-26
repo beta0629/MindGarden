@@ -13,7 +13,7 @@ import { NavIcon } from '../atoms';
 import { ADMIN_ROUTES } from '../../../constants/adminRoutes';
 import './MobileGnb.css';
 
-const DEFAULT_LOGO_LABEL = '코어솔류션';
+const DEFAULT_LOGO_LABEL = 'Core Solution';
 
 const MobileGnb = ({
   logoLabel = DEFAULT_LOGO_LABEL,

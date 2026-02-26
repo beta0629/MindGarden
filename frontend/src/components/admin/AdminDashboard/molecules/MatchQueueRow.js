@@ -16,7 +16,7 @@ import './MatchQueueRow.css';
  * @param {Function} props.onSelectConsultant - 상담사 선택 핸들러
  * @param {Function} props.onConfirm - 확인 버튼 핸들러
  * @param {boolean} [props.loading] - 로딩 상태
- * @author MindGarden
+ * @author Core Solution
  * @since 2025-02-21
  */
 const MatchQueueRow = ({

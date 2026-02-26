@@ -12,7 +12,7 @@ import { GnbRight } from '../molecules';
 import { ADMIN_ROUTES } from '../../../constants/adminRoutes';
 import './DesktopGnb.css';
 
-const DEFAULT_LOGO_LABEL = '코어솔류션';
+const DEFAULT_LOGO_LABEL = 'Core Solution';
 
 const DesktopGnb = ({
   logoLabel = DEFAULT_LOGO_LABEL,

@@ -1,5 +1,5 @@
 /**
- * MindGarden Theme Provider
+ * Core Solution Theme Provider
 /**
  * 
 /**

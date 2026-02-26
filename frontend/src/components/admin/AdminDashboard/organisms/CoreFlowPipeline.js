@@ -48,7 +48,7 @@ const buildDefaultSteps = (stats = {}) => [
  * @param {Object} props
  * @param {Array<{title:string,badgeValue:string,badgeLabel?:string,variant?:string,icon?:React.Component}>} [props.steps] - 단계 배열 (미전달 시 stats로 기본 5단계 생성)
  * @param {Object} [props.stats] - 통계 객체 (totalMappings, pendingDepositCount, activeMappings, schedulePendingCount)
- * @author MindGarden
+ * @author Core Solution
  * @since 2025-02-21
  */
 const CoreFlowPipeline = ({ steps, stats = {} }) => {

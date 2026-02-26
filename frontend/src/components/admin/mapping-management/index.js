@@ -1,7 +1,7 @@
 /**
  * mapping-management - 매칭 관리 아토믹 컴포넌트
  *
- * @author MindGarden
+ * @author Core Solution
  * @since 2025-02-22
  */
 

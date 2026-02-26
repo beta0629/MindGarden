@@ -173,7 +173,7 @@ const ClientPersonalizedMessages = ({ user, consultationData, clientStatus }) =>
         id: 'welcome',
         icon: 'heart',
         title: '환영합니다!',
-        subtitle: '마인드가든에 오신 것을 환영합니다. 첫 상담을 시작해보세요',
+        subtitle: 'Core Solution에 오신 것을 환영합니다. 첫 상담을 시작해보세요',
         colorClass: 'primary',
         action: 'welcome'
       });

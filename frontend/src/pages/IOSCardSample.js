@@ -87,7 +87,7 @@ const IOSCardSample = () => {
   return (
     <div className="ios-sample-container">
       <div className="ios-sample-header">
-        <h1 className="ios-sample-title">MindGarden 관리 시스템</h1>
+        <h1 className="ios-sample-title">Core Solution 관리 시스템</h1>
         <p className="ios-sample-subtitle">아이폰 스타일 카드 디자인 샘플</p>
       </div>
 

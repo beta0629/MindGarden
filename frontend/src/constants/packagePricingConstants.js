@@ -37,5 +37,8 @@ export const LABELS = {
   SAVE: '저장',
   CANCEL: '취소',
   ACTIVE_YES: '사용',
-  ACTIVE_NO: '미사용'
+  ACTIVE_NO: '미사용',
+  LIST_BACK: '목록으로',
+  NEW_PAGE_TITLE: '새 패키지 등록',
+  DETAIL_PAGE_TITLE: '패키지 요금 상세'
 };

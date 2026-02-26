@@ -124,7 +124,8 @@ import CacheMonitoringDashboard from './components/admin/CacheMonitoringDashboar
 import UnifiedHeader from './components/common/UnifiedHeader';
 import SecurityMonitoringDashboard from './components/admin/SecurityMonitoringDashboard';
 import ApiPerformanceMonitoring from './components/admin/ApiPerformanceMonitoring';
-import PackagePricingManagement from './components/admin/PackagePricingManagement';
+import PackagePricingListPage from './components/admin/package-pricing/pages/PackagePricingListPage';
+import PackagePricingDetailPage from './components/admin/package-pricing/pages/PackagePricingDetailPage';
 
 // URL 쿼리 파라미터 처리 컴포넌트
 function QueryParamHandler({ children, onLoginSuccess }) {
@@ -390,7 +391,9 @@ function AppContent() {
             >
               <Route index element={<Navigate to="/admin/common-codes" replace />} />
               <Route path="common-codes" element={<TenantCommonCodeManager />} />
-              <Route path="package-pricing" element={<PackagePricingManagement />} />
+              <Route path="package-pricing/new" element={<PackagePricingDetailPage isNew />} />
+              <Route path="package-pricing/:id" element={<PackagePricingDetailPage />} />
+              <Route path="package-pricing" element={<PackagePricingListPage />} />
               <Route path="menu-permissions" element={<MenuPermissionManagement />} />
               <Route path="permission-groups" element={<PermissionGroupManagement />} />
               {/* 추후 추가될 관리자 페이지들 */}

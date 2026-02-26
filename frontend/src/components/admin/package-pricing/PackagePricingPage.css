@@ -1,0 +1,58 @@
+/**
+ * 패키지 요금 관리 페이지 - B0KlA 스타일
+ * @author Core Solution
+ * @since 2026-02-26
+ */
+
+.mg-v2-package-pricing.mg-v2-ad-b0kla {
+  min-height: 100%;
+  background: transparent;
+  padding: 0;
+}
+
+.mg-v2-package-pricing .mg-v2-ad-b0kla__container {
+  max-width: var(--mg-container-max, 1400px);
+  margin: 0 auto;
+}
+
+.mg-v2-package-pricing .mg-v2-mapping-header-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0.75rem 1.25rem;
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  border-radius: var(--ad-b0kla-radius-sm, 12px);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.mg-v2-package-pricing .mg-v2-mapping-header-btn--primary {
+  background: var(--ad-b0kla-green, #4b745c);
+  color: #fff;
+}
+
+.mg-v2-package-pricing .mg-v2-mapping-header-btn--primary:hover {
+  background: #3d5f4c;
+  transform: translateY(-1px);
+}
+
+.mg-v2-package-pricing .mg-v2-package-header-btn--secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0.75rem 1.25rem;
+  font-size: 14px;
+  font-weight: 600;
+  border: 1px solid var(--ad-b0kla-border);
+  border-radius: var(--ad-b0kla-radius-sm, 12px);
+  cursor: pointer;
+  background: var(--ad-b0kla-bg);
+  color: var(--ad-b0kla-text-primary);
+  transition: all 0.2s;
+}
+
+.mg-v2-package-pricing .mg-v2-package-header-btn--secondary:hover {
+  background: var(--ad-b0kla-border);
+}

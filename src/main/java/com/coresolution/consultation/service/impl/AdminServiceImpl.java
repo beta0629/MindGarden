@@ -322,6 +322,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         // 2. 비밀번호 처리: 사용자가 입력한 비밀번호가 있으면 사용, 없으면 임시 비밀번호 자동 생성
         String password;
         boolean isTempPassword = false;
+        log.debug("registerClient password received: present={}, nonEmpty={}",
+                request.getPassword() != null,
+                request.getPassword() != null && !request.getPassword().trim().isEmpty());
         if (request.getPassword() != null && !request.getPassword().trim().isEmpty()) {
             password = request.getPassword().trim();
             log.info("✅ 사용자 입력 비밀번호 사용: email={}", email);

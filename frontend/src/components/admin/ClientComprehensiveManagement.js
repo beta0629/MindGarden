@@ -315,8 +315,8 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
         try {
             console.log('🔑 내담자 비밀번호 초기화 시작:', passwordResetClient.id);
             
-            const endpoint = `/api/v1/admin/user-management/${passwordResetClient.id}/reset-password?newPassword=${encodeURIComponent(newPassword)}`;
-            const response = await StandardizedApi.put(endpoint, {});
+            const endpoint = `/api/v1/admin/user-management/${passwordResetClient.id}/reset-password`;
+            const response = await StandardizedApi.put(endpoint, { newPassword });
             
             console.log('✅ 비밀번호 초기화 응답:', response);
             

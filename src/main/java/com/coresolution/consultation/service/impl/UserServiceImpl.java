@@ -1061,8 +1061,8 @@ public class UserServiceImpl implements UserService {
             return false;
         }
         
-        // BCrypt 해시 패턴 확인: $2a$, $2b$, $2y$ 등으로 시작하고 길이가 60자
-        return password.startsWith("$2a$") || password.startsWith("$2b$") || password.startsWith("$2y$") 
+        // BCrypt 해시 패턴 확인: $2a$, $2b$, $2y$ 등으로 시작하고 길이가 60자 (괄호로 length 조건을 모든 접두어에 적용)
+        return (password.startsWith("$2a$") || password.startsWith("$2b$") || password.startsWith("$2y$"))
                && password.length() == 60;
     }
     

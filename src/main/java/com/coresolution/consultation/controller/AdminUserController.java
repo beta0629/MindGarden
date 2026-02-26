@@ -19,9 +19,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import com.coresolution.consultation.dto.AdminPasswordResetRequest;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -308,12 +311,14 @@ public class AdminUserController {
     /**
      * 사용자 비밀번호 초기화 (관리자 전용)
      * 기존 비밀번호 없이 관리자가 직접 비밀번호를 초기화할 수 있습니다.
+     * newPassword는 body로만 전달 (쿼리 파라미터 시 + 등 특수문자 변형 방지)
      */
     @PutMapping("/{userId}/reset-password")
     public ResponseEntity<Map<String, Object>> resetUserPassword(
             @PathVariable Long userId,
-            @RequestParam String newPassword) {
+            @RequestBody @Valid AdminPasswordResetRequest request) {
         try {
+            String newPassword = request.getNewPassword();
             log.info("🔑 관리자 권한으로 사용자 비밀번호 초기화: userId={}", userId);
             
             // 비밀번호 정책 검증

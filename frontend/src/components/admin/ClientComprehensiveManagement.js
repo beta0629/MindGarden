@@ -181,8 +181,17 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
         try {
             const response = await apiGet('/api/v1/admin/mappings');
             console.log('📊 매칭 정보 응답:', response);
+            // apiGet이 401/404 시 null 반환 → 총 매칭 0건으로 표시됨. 원인 추적용 로그.
+            if (response == null) {
+                console.warn('⚠️ 매칭 API 응답 없음 (401/404 또는 리다이렉트). 총 매칭 KPI가 0으로 표시됩니다.');
+                setMappings([]);
+                return;
+            }
             // apiGet이 이미 { success, data }를 풀어 data만 반환 → response = { mappings, count }
             const list = Array.isArray(response?.mappings) ? response.mappings : [];
+            if (list.length === 0 && typeof response?.count === 'number' && response.count > 0) {
+                console.warn('⚠️ 매칭 API: count는', response.count, '건이나 mappings 배열 없음. 응답 구조 확인 필요.');
+            }
             setMappings(list);
             if (list.length > 0) {
                 console.log('✅ 매칭 정보 설정:', list.length, '건');

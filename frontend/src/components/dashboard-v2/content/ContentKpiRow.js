@@ -31,9 +31,18 @@ const ContentKpiRow = ({ items = [] }) => {
                 )}
               </div>
               <span className="mg-v2-content-kpi-card__value">{item.value}</span>
-              {item.subtitle != null && item.subtitle !== '' && (
-                <span className="mg-v2-content-kpi-card__subtitle">{item.subtitle}</span>
-              )}
+              {(item.subtitle != null && item.subtitle !== '') || item.subtitleBadge != null ? (
+                <div className="mg-v2-content-kpi-card__subtitle-row">
+                  {item.subtitle != null && item.subtitle !== '' && (
+                    <span className="mg-v2-content-kpi-card__subtitle">{item.subtitle}</span>
+                  )}
+                  {item.subtitleBadge != null && (
+                    <span className={`mg-v2-content-kpi-card__subtitle-badge mg-v2-content-kpi-card__subtitle-badge--${item.badgeVariant || 'green'}`}>
+                      {item.subtitleBadge}
+                    </span>
+                  )}
+                </div>
+              ) : null}
             </div>
           </div>
         );

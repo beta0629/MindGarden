@@ -605,14 +605,20 @@ const AdminDashboardV2 = ({ user: propUser }) => {
     loadRefundStats();
     loadPendingDepositStats();
     loadUnassignedClientsAndConsultants();
-  }, [loadStats, loadRefundStats, loadPendingDepositStats, loadUnassignedClientsAndConsultants]);
-
-  // 세션 사용자(role) 준비 시 예약된 상담 KPI 로드 (첫 로드에서 바로 표시)
-  useEffect(() => {
-    if (sessionLoading) return;
-    const user = propUser || sessionUser;
-    if (user?.role) loadTodayStats();
-  }, [sessionLoading, sessionUser, propUser, loadTodayStats]);
+    if (!sessionLoading) {
+      const user = propUser || sessionUser;
+      if (user?.role) loadTodayStats();
+    }
+  }, [
+    loadStats,
+    loadRefundStats,
+    loadPendingDepositStats,
+    loadUnassignedClientsAndConsultants,
+    sessionLoading,
+    sessionUser,
+    propUser,
+    loadTodayStats
+  ]);
 
   const topConsultantsData = (stats.consultantRatingStats?.topConsultants || [])
     .slice(0, 4)
@@ -649,6 +655,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
       label: '총 사용자',
       value: (stats.totalConsultants + stats.totalClients).toLocaleString(),
       subtitle: `상담사 ${stats.totalConsultants} · 내담자 ${stats.totalClients}`,
+      subtitleBadge: todayStats.totalUsersGrowthRate != null ? `${todayStats.totalUsersGrowthRate > 0 ? '+' : ''}${todayStats.totalUsersGrowthRate}%` : '-',
       badge: todayStats.totalUsersGrowthRate != null ? `${todayStats.totalUsersGrowthRate > 0 ? '+' : ''}${todayStats.totalUsersGrowthRate}%` : '-',
       badgeVariant: 'green',
       iconVariant: 'green'

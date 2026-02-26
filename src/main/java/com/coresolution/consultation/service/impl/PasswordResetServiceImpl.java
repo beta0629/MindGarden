@@ -75,13 +75,15 @@ public class PasswordResetServiceImpl implements PasswordResetService {
             }
             
             // 기존 사용되지 않은 토큰들을 모두 사용됨으로 표시
-            tokenRepository.markAllTokensAsUsedByUserId(user.getId(), LocalDateTime.now());
+            tokenRepository.markAllTokensAsUsedByTenantIdAndUserId(tenantId, user.getId(), LocalDateTime.now());
             
             // 새 토큰 생성
             String token = UUID.randomUUID().toString();
             LocalDateTime expiresAt = LocalDateTime.now().plusHours(tokenExpiryHours);
+            String tokenTenantId = tenantId != null ? tenantId : user.getTenantId();
             
             PasswordResetToken resetToken = PasswordResetToken.builder()
+                .tenantId(tokenTenantId)
                 .token(token)
                 .email(email)
                 .userId(user.getId())
@@ -137,7 +139,13 @@ public class PasswordResetServiceImpl implements PasswordResetService {
         try {
             log.info("🔑 비밀번호 재설정 토큰 검증: {}", token.substring(0, 8) + "...");
             
-            Optional<PasswordResetToken> tokenOpt = tokenRepository.findByToken(token);
+            String tenantId = TenantContextHolder.getTenantId();
+            if (tenantId == null || tenantId.isEmpty()) {
+                log.warn("❌ 토큰 검증 실패: tenantId가 없습니다.");
+                return false;
+            }
+            
+            Optional<PasswordResetToken> tokenOpt = tokenRepository.findByTenantIdAndToken(tenantId, token);
             if (tokenOpt.isEmpty()) {
                 log.warn("❌ 존재하지 않는 토큰: {}", token.substring(0, 8) + "...");
                 return false;
@@ -166,8 +174,14 @@ public class PasswordResetServiceImpl implements PasswordResetService {
         try {
             log.info("🔑 비밀번호 재설정 실행: {}", token.substring(0, 8) + "...");
             
+            String tenantId = TenantContextHolder.getTenantId();
+            if (tenantId == null || tenantId.isEmpty()) {
+                log.warn("❌ 비밀번호 재설정 실패: tenantId가 없습니다.");
+                return false;
+            }
+            
             // 토큰 검증
-            Optional<PasswordResetToken> tokenOpt = tokenRepository.findByToken(token);
+            Optional<PasswordResetToken> tokenOpt = tokenRepository.findByTenantIdAndToken(tenantId, token);
             if (tokenOpt.isEmpty()) {
                 log.warn("❌ 존재하지 않는 토큰으로 비밀번호 재설정 시도");
                 return false;
@@ -199,7 +213,7 @@ public class PasswordResetServiceImpl implements PasswordResetService {
             tokenRepository.save(resetToken);
             
             // 해당 사용자의 다른 모든 토큰도 사용됨으로 표시
-            tokenRepository.markAllTokensAsUsedByUserId(user.getId(), LocalDateTime.now());
+            tokenRepository.markAllTokensAsUsedByTenantIdAndUserId(tenantId, user.getId(), LocalDateTime.now());
             
             log.info("✅ 비밀번호 재설정 완료: {}", user.getEmail());
             

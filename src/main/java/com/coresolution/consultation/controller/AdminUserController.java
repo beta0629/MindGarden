@@ -12,6 +12,7 @@ import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.service.EmailService;
 import com.coresolution.core.util.EmailUtil;
 import com.coresolution.consultation.service.UserAddressService;
+import com.coresolution.consultation.service.PasswordValidationService;
 import com.coresolution.consultation.service.UserProfileService;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import org.springframework.http.ResponseEntity;
@@ -44,6 +45,7 @@ public class AdminUserController {
     private final UserAddressService userAddressService;
     private final BranchService branchService;
     private final DynamicPermissionService dynamicPermissionService;
+    private final PasswordValidationService passwordValidationService;
     
     /**
      * 전체 사용자 목록 조회 (관리자 전용)
@@ -313,6 +315,16 @@ public class AdminUserController {
             @RequestParam String newPassword) {
         try {
             log.info("🔑 관리자 권한으로 사용자 비밀번호 초기화: userId={}", userId);
+            
+            // 비밀번호 정책 검증
+            Map<String, Object> validationResult = passwordValidationService.validatePassword(newPassword);
+            if (!Boolean.TRUE.equals(validationResult.get("isValid"))) {
+                Map<String, Object> errorResponse = new HashMap<>();
+                errorResponse.put("success", false);
+                errorResponse.put("message", "비밀번호가 정책을 만족하지 않습니다.");
+                errorResponse.put("errors", validationResult.get("errors"));
+                return ResponseEntity.badRequest().body(errorResponse);
+            }
             
             // 사용자 조회
             User user = userService.findActiveByIdOrThrow(userId);

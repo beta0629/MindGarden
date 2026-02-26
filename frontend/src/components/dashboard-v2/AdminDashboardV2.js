@@ -79,6 +79,23 @@ function getEmptyMonthlyChartData(months = 6) {
   return result;
 }
 
+/** 차트용 최근 N주 빈 데이터 (데이터 없을 때 0으로 표시) */
+function getEmptyWeeklyChartData(weeks = 6) {
+  const result = [];
+  const now = new Date();
+  for (let i = weeks - 1; i >= 0; i--) {
+    const d = new Date(now);
+    d.setDate(d.getDate() - i * 7);
+    const m = d.getMonth() + 1;
+    const day = d.getDate();
+    result.push({
+      period: `${String(m).padStart(2, '0')}/${String(day).padStart(2, '0')}`,
+      completedCount: 0
+    });
+  }
+  return result;
+}
+
 const AdminDashboardV2 = ({ user: propUser }) => {
   const navigate = useNavigate();
   const { user: sessionUser, isLoading: sessionLoading, logout } = useSession();
@@ -175,7 +192,8 @@ const AdminDashboardV2 = ({ user: propUser }) => {
       totalCompleted: 0,
       completionRate: 0,
       averageCompletionTime: 0,
-      monthlyData: []
+      monthlyData: [],
+      weeklyData: []
     }
   });
   const [refundStats, setRefundStats] = useState({
@@ -308,7 +326,8 @@ const AdminDashboardV2 = ({ user: propUser }) => {
         totalCompleted: 0,
         completionRate: 0,
         averageCompletionTime: 0,
-        monthlyData: []
+        monthlyData: [],
+        weeklyData: []
       };
 
       if (consultantsRes.ok) {
@@ -359,7 +378,8 @@ const AdminDashboardV2 = ({ user: propUser }) => {
             totalCompleted: payload.totalCompleted ?? 0,
             completionRate: payload.completionRate ?? 0,
             averageCompletionTime: payload.averageCompletionTime ?? 0,
-            monthlyData: Array.isArray(payload.monthlyData) ? payload.monthlyData : []
+            monthlyData: Array.isArray(payload.monthlyData) ? payload.monthlyData : [],
+            weeklyData: Array.isArray(payload.weeklyData) ? payload.weeklyData : []
           };
         }
       }
@@ -641,7 +661,9 @@ const AdminDashboardV2 = ({ user: propUser }) => {
           <div className="mg-v2-ad-b0kla__chart-header">
             <div>
               <h3 className="mg-v2-ad-b0kla__chart-title">상담 현황 추이</h3>
-              <p className="mg-v2-ad-b0kla__chart-desc">최근 6개월 간의 예약 및 완료 추이</p>
+              <p className="mg-v2-ad-b0kla__chart-desc">
+                {chartPeriod === 'weekly' ? '최근 6주 간의 완료 추이' : '최근 6개월 간의 예약 및 완료 추이'}
+              </p>
             </div>
             <div className="mg-v2-ad-b0kla__pill-toggle">
               <button
@@ -662,17 +684,21 @@ const AdminDashboardV2 = ({ user: propUser }) => {
           </div>
           <div className="mg-v2-ad-b0kla__chart-placeholder mg-v2-ad-b0kla__chart-wrapper">
             {(() => {
-              const monthlyData =
-                stats.consultationStats?.monthlyData?.length > 0
-                  ? stats.consultationStats.monthlyData.slice(0, 6)
-                  : getEmptyMonthlyChartData(6);
-              const values = monthlyData.map((d) => d.completedCount || 0);
+              const isWeekly = chartPeriod === 'weekly';
+              const rawData = isWeekly
+                ? (stats.consultationStats?.weeklyData?.length > 0
+                    ? stats.consultationStats.weeklyData.slice(0, 6)
+                    : getEmptyWeeklyChartData(6))
+                : (stats.consultationStats?.monthlyData?.length > 0
+                    ? stats.consultationStats.monthlyData.slice(0, 6)
+                    : getEmptyMonthlyChartData(6));
+              const values = rawData.map((d) => d.completedCount || 0);
               const maxVal = Math.max(...values, 1);
               return (
                 <Chart
                   type={CHART_TYPES.BAR}
                   data={{
-                    labels: monthlyData.map((d) => d.period),
+                    labels: rawData.map((d) => d.period),
                     datasets: [
                       {
                         label: '완료 상담',

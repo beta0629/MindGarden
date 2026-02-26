@@ -318,6 +318,14 @@ public interface AdminService {
     List<Map<String, Object>> getConsultationMonthlyTrend(int lastMonths);
 
     /**
+     * 최근 N주 주간 상담 완료 건수 추이 (전체 상담사 합계, tenantId 기준)
+     *
+     * @param lastWeeks 최근 주 수 (예: 6)
+     * @return period("MM/dd"), completedCount 포함 Map 리스트 (과거→현재 순)
+     */
+    List<Map<String, Object>> getConsultationWeeklyTrend(int lastWeeks);
+
+    /**
      * 모든 스케줄 조회
      */
     List<Map<String, Object>> getAllSchedules();

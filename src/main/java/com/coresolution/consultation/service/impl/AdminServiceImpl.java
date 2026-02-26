@@ -4101,6 +4101,34 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             return new ArrayList<>();
         }
     }
+
+    @Override
+    public List<Map<String, Object>> getConsultationWeeklyTrend(int lastWeeks) {
+        try {
+            String tenantId = getTenantId();
+            if (tenantId == null || tenantId.isEmpty()) {
+                log.warn("⚠️ getConsultationWeeklyTrend: tenantId 없음");
+                return new ArrayList<>();
+            }
+            List<Map<String, Object>> weeklyData = new ArrayList<>();
+            LocalDate now = LocalDate.now();
+            for (int i = lastWeeks - 1; i >= 0; i--) {
+                LocalDate weekEnd = now.minusWeeks(i);
+                LocalDate weekStart = weekEnd.minusDays(6);
+                long count = scheduleRepository.countByStatusAndDateBetween(
+                    tenantId, ScheduleStatus.COMPLETED.name(), weekStart, weekEnd);
+                Map<String, Object> row = new HashMap<>();
+                row.put("period", weekEnd.format(DateTimeFormatter.ofPattern("MM/dd")));
+                row.put("completedCount", (int) count);
+                weeklyData.add(row);
+            }
+            log.info("✅ 주간 상담 완료 추이 조회 완료: {}주", weeklyData.size());
+            return weeklyData;
+        } catch (Exception e) {
+            log.error("❌ 주간 상담 완료 추이 조회 실패", e);
+            return new ArrayList<>();
+        }
+    }
     
     @Override
     public List<Map<String, Object>> getConsultationCompletionStatisticsByBranch(String period, String branchCode) {

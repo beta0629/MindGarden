@@ -301,7 +301,8 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
             // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
             status: client.status || 'ACTIVE',
             grade: client.grade || 'BRONZE',
-            notes: client.notes || ''
+            notes: client.notes || '',
+            profileImageUrl: client.profileImageUrl || '' // base64 유지·표시용 (상담사와 동일)
         });
         setShowModal(true);
     }, []);

@@ -56,7 +56,7 @@ public class ClientRegistrationRequest {
     
     private String registeredBy;
     
-    /** 프로필 사진 (base64 data URL, 최대 2MB) */
+    /** 프로필 사진 (base64 data URL, 최대 2MB, 리사이즈·크롭 적용) */
     private String profileImageUrl;
 
     public String getProfileImageUrl() {

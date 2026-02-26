@@ -1430,6 +1430,11 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                     <ProfileImageInput
                         value={formData.profileImageUrl || ''}
                         onChange={(url) => setFormData(prev => ({ ...prev, profileImageUrl: url || '' }))}
+                        maxBytes={2 * 1024 * 1024}
+                        cropSize={400}
+                        maxSize={512}
+                        quality={0.85}
+                        helpText="이미지 파일만 가능, 최대 2MB (리사이즈·크롭 적용)"
                     />
                     <div className="mg-v2-form-group">
                         <label className="mg-v2-form-label">이름 *</label>

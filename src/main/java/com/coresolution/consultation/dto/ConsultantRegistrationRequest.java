@@ -49,9 +49,7 @@ public class ConsultantRegistrationRequest {
     
     private String notes;
 
-    /**
-     * 프로필 사진 URL. base64 data URL 저장 가능 (data:image/...;base64,...)
-     */
+    /** 프로필 사진 (base64 data URL, 최대 2MB, 리사이즈·크롭 적용) */
     private String profileImageUrl;
 
     /**

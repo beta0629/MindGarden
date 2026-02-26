@@ -160,7 +160,7 @@ public class User extends BaseEntity {
     @Builder.Default
     private Boolean isPasswordChanged = true; // 기본값은 true (기존 사용자는 이미 비밀번호 변경 완료)
     
-    @Column(name = "profile_image_url", columnDefinition = "TEXT")
+    @Column(name = "profile_image_url", columnDefinition = "LONGTEXT")
     private String profileImageUrl;
     
     @Column(name = "memo", columnDefinition = "TEXT")

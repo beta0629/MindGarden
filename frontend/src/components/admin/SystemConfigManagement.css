@@ -169,8 +169,46 @@
     padding: var(--spacing-lg);
 }
 
-.spinning {
+.spinning,
+.mg-spinning {
     animation: spin 1s linear infinite;
+}
+
+/* ContentArea 레이아웃 + B0KlA 섹션 */
+.mg-v2-system-config-management .mg-v2-content-area {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg, 24px);
+}
+
+.mg-v2-system-config__section {
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.mg-v2-system-config__section-desc {
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--ad-b0kla-text-secondary, var(--medium-gray));
+    margin: 0;
+}
+
+.mg-v2-system-config__provider-card {
+    padding: 20px;
+    margin-bottom: 16px;
+}
+
+.mg-v2-system-config__provider-card:last-child {
+    margin-bottom: 0;
+}
+
+.mg-v2-system-config__provider-title {
+    font-size: 14px;
+    font-weight: var(--mg-font-weight-bold, 700);
+    color: var(--ad-b0kla-title-color, var(--dark-gray));
+    margin: 0 0 12px 0;
 }
 
 @keyframes spin {

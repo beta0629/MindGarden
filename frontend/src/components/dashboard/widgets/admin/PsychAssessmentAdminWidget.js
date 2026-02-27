@@ -8,7 +8,7 @@
  * @since 2026-02-27
  */
 
-import React, { forwardRef, useImperativeHandle, useMemo, useState } from 'react';
+import React, { forwardRef, useImperativeHandle, useMemo, useState, useEffect } from 'react';
 import { useWidget } from '../../../../hooks/useWidget';
 import { RoleUtils } from '../../../../constants/roles';
 import notificationManager from '../../../../utils/notification';
@@ -25,6 +25,7 @@ const PsychAssessmentAdminWidget = forwardRef(({ widget, user }, ref) => {
   const [uploadFile, setUploadFile] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
+  const [optimisticDocuments, setOptimisticDocuments] = useState([]);
 
   const isAdminUser = RoleUtils.isAdmin(user) || RoleUtils.hasRole(user, 'HQ_MASTER');
 
@@ -82,13 +83,25 @@ const PsychAssessmentAdminWidget = forwardRef(({ widget, user }, ref) => {
 
   useImperativeHandle(ref, () => ({ refresh }), [refresh]);
 
-  if (!isAdminUser) {
-    return null;
-  }
-
   const stats = data?.stats || {};
   const recent = data?.recent || [];
   const recentLoadError = !!data?._loadErrors?.recent;
+
+  useEffect(() => {
+    if (!recent?.length) return;
+    const serverIds = new Set(recent.map((d) => String(d.documentId)));
+    setOptimisticDocuments((prev) => prev.filter((d) => !serverIds.has(String(d.documentId))));
+  }, [recent]);
+
+  const displayDocuments = (() => {
+    const serverIds = new Set((recent || []).map((d) => String(d.documentId)));
+    const pending = (optimisticDocuments || []).filter((d) => !serverIds.has(String(d.documentId)));
+    return [...pending, ...(recent || [])];
+  })();
+
+  if (!isAdminUser) {
+    return null;
+  }
 
   const handlePickFile = (file) => {
     if (!file) return;
@@ -135,6 +148,19 @@ const PsychAssessmentAdminWidget = forwardRef(({ widget, user }, ref) => {
         throw new Error(res?.message || '업로드에 실패했습니다.');
       }
       notificationManager.show('업로드가 완료되었습니다. 추출 작업이 진행됩니다.', 'success');
+      const payload = res?.data ?? res;
+      if (payload?.documentId != null) {
+        setOptimisticDocuments((prev) => [
+          {
+            documentId: payload.documentId,
+            assessmentType: payload.assessmentType ?? uploadType,
+            status: payload.status ?? 'OCR_PENDING',
+            originalFilename: uploadFile?.name ?? '업로드된 파일',
+            createdAt: new Date().toISOString()
+          },
+          ...prev
+        ]);
+      }
       setUploadFile(null);
       refresh();
     } catch (e) {
@@ -198,7 +224,7 @@ const PsychAssessmentAdminWidget = forwardRef(({ widget, user }, ref) => {
         fileInputId="psych-assessment-widget-file-input"
       />
       <PsychDocumentListBlock
-        documents={recent}
+        documents={displayDocuments}
         onGenerateReport={handleGenerateReport}
         listLoadError={recentLoadError}
       />

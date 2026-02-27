@@ -658,8 +658,12 @@ const AdminDashboardV2 = ({ user: propUser }) => {
       label: '총 사용자',
       value: (stats.totalConsultants + stats.totalClients).toLocaleString(),
       subtitle: `상담사 ${stats.totalConsultants} · 내담자 ${stats.totalClients}`,
-      subtitleBadge: todayStats.totalUsersGrowthRate != null ? `${todayStats.totalUsersGrowthRate > 0 ? '+' : ''}${todayStats.totalUsersGrowthRate}%` : '-',
-      badge: todayStats.totalUsersGrowthRate != null ? `${todayStats.totalUsersGrowthRate > 0 ? '+' : ''}${todayStats.totalUsersGrowthRate}%` : '-',
+      subtitleBadge: todayStats.totalUsersGrowthRate != null
+        ? (todayStats.totalUsersGrowthRate === 0 ? '변동 없음' : `${todayStats.totalUsersGrowthRate > 0 ? '+' : ''}${todayStats.totalUsersGrowthRate}%`)
+        : '-',
+      badge: todayStats.totalUsersGrowthRate != null
+        ? (todayStats.totalUsersGrowthRate === 0 ? '변동 없음' : `${todayStats.totalUsersGrowthRate > 0 ? '+' : ''}${todayStats.totalUsersGrowthRate}%`)
+        : '-',
       badgeVariant: 'green',
       iconVariant: 'green'
     },
@@ -668,7 +672,9 @@ const AdminDashboardV2 = ({ user: propUser }) => {
       icon: <FaCalendarAlt size={28} />,
       label: '예약된 상담',
       value: todayStats.totalToday,
-      badge: todayStats.bookedGrowthRate != null ? `${todayStats.bookedGrowthRate > 0 ? '+' : ''}${todayStats.bookedGrowthRate}%` : '-',
+      badge: todayStats.bookedGrowthRate != null
+        ? (todayStats.bookedGrowthRate === 0 ? '변동 없음' : `${todayStats.bookedGrowthRate > 0 ? '+' : ''}${todayStats.bookedGrowthRate}%`)
+        : '-',
       badgeVariant: 'orange',
       iconVariant: 'orange'
     },

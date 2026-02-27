@@ -39,6 +39,8 @@ const PsychAssessmentManagement = ({ user: propUser }) => {
   const [clientId, setClientId] = useState(null);
   const [clients, setClients] = useState([]);
   const [clientsLoading, setClientsLoading] = useState(false);
+  /** 업로드 직후 서버 목록 갱신 전까지 보여줄 낙관적 문서 (documentId 기준 서버 데이터로 대체됨) */
+  const [optimisticDocuments, setOptimisticDocuments] = useState([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -116,6 +118,20 @@ const PsychAssessmentManagement = ({ user: propUser }) => {
   const recent = data?.recent || [];
   const recentLoadError = !!data?._loadErrors?.recent;
 
+  // 서버 목록에 반영된 문서는 낙관적 목록에서 제거 (documentId 기준)
+  useEffect(() => {
+    if (!recent?.length) return;
+    const serverIds = new Set(recent.map((d) => String(d.documentId)));
+    setOptimisticDocuments((prev) => prev.filter((d) => !serverIds.has(String(d.documentId))));
+  }, [recent]);
+
+  // 표시 목록: 아직 서버에 없는 낙관적 문서 + 서버 목록 (최신순 유지)
+  const displayDocuments = (() => {
+    const serverIds = new Set((recent || []).map((d) => String(d.documentId)));
+    const pending = (optimisticDocuments || []).filter((d) => !serverIds.has(String(d.documentId)));
+    return [...pending, ...(recent || [])];
+  })();
+
   const handlePickFile = (file) => {
     if (!file) return;
     if (file.type !== 'application/pdf') {
@@ -164,6 +180,19 @@ const PsychAssessmentManagement = ({ user: propUser }) => {
         throw new Error(res?.message || '업로드에 실패했습니다.');
       }
       notificationManager.show('업로드가 완료되었습니다. 추출 작업이 진행됩니다.', 'success');
+      const payload = res?.data ?? res;
+      if (payload?.documentId != null) {
+        setOptimisticDocuments((prev) => [
+          {
+            documentId: payload.documentId,
+            assessmentType: payload.assessmentType ?? uploadType,
+            status: payload.status ?? 'OCR_PENDING',
+            originalFilename: uploadFile?.name ?? '업로드된 파일',
+            createdAt: new Date().toISOString()
+          },
+          ...prev
+        ]);
+      }
       setUploadFile(null);
       refresh();
     } catch (e) {
@@ -251,7 +280,7 @@ const PsychAssessmentManagement = ({ user: propUser }) => {
             />
 
             <PsychDocumentListBlock
-              documents={recent}
+              documents={displayDocuments}
               onGenerateReport={handleGenerateReport}
               listLoadError={recentLoadError}
             />

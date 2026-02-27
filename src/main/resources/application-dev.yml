@@ -1,0 +1,31 @@
+# 개발 서버(dev 프로파일) 전용 설정
+# 배포: mindgarden-dev.service, /var/www/mindgarden-dev
+# OAuth2 redirect 등 기본값으로 기동 보장 (환경 변수 미설정 시에도 기동)
+
+# 서버 기준 URL (OAuth2 callback 등에 사용, 환경 변수로 오버라이드)
+server:
+  base-url: ${OAUTH2_BASE_URL:https://mindgarden.dev.core-solution.co.kr}
+
+# JWT/암호화 키: dev에서 미설정 시 기본값으로 기동 가능 (검증기는 dev 한정 완화)
+jwt:
+  secret: ${JWT_SECRET:dev-jwt-secret-key-for-development-server-only-32chars}
+
+encryption:
+  personal-data:
+    key: ${PERSONAL_DATA_ENCRYPTION_KEY:dev-encryption-key-32-bytes-long!!!!}
+    iv: ${PERSONAL_DATA_ENCRYPTION_IV:dev-iv-16-bytes!!}
+
+# OAuth2 클라이언트 등록 (Google/Apple redirect-uri 기본값)
+spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID:dummy}
+            client-secret: ${GOOGLE_CLIENT_SECRET:dummy}
+            redirect-uri: "${server.base-url}/api/auth/google/callback"
+          apple:
+            client-id: ${APPLE_CLIENT_ID:dummy}
+            client-secret: ${APPLE_CLIENT_SECRET:dummy}
+            redirect-uri: "${server.base-url}/api/auth/apple/callback"

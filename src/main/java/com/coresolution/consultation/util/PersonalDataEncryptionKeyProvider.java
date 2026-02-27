@@ -16,8 +16,11 @@ import javax.crypto.spec.SecretKeySpec;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
+
+import java.util.Arrays;
 
 /**
  * 개인정보 암호화 키/IV 관리 컴포넌트
@@ -47,6 +50,9 @@ public class PersonalDataEncryptionKeyProvider {
     private static final String DEFAULT_LEGACY_KEY_ID = "legacy";
     private static final String DEFAULT_DELIMITER = ",";
     private static final String KEY_VALUE_DELIMITER = ":";
+    /** dev/local 프로파일에서 키/IV 미설정 시 사용하는 폴백 값 (기동용) */
+    private static final String DEV_FALLBACK_IV = "dev-iv-16-bytes!!";
+    private static final String DEV_FALLBACK_KEY = "dev-encryption-key-32-bytes-long!!!!";
 
     @Value("${encryption.personal-data.active-key-id:}")
     private String activeKeyId;
@@ -66,27 +72,42 @@ public class PersonalDataEncryptionKeyProvider {
     @Value("${encryption.personal-data.iv:}")
     private String legacyIv;
 
+    private final Environment environment;
     private final Map<String, KeyMaterial> keyMaterialById = new ConcurrentHashMap<>();
     private final List<String> keyPriorityOrder = new ArrayList<>();
+
+    public PersonalDataEncryptionKeyProvider(Environment environment) {
+        this.environment = environment;
+    }
 
     @PostConstruct
     public void initialize() {
         Map<String, String> parsedKeys = parseConfigMap(keyVersions, "key");
         Map<String, String> parsedIvs = parseConfigMap(ivVersions, "iv");
+        boolean devOrLocal = isDevOrLocalProfile();
 
         if (parsedKeys.isEmpty()) {
             if (!StringUtils.hasText(legacyKey)) {
-                throw new IllegalStateException(
-                    "암호화 키가 설정되지 않았습니다. 환경변수 PERSONAL_DATA_ENCRYPTION_KEY 또는 PERSONAL_DATA_ENCRYPTION_KEYS를 확인하세요."
-                );
-            }
-            log.warn("🔐 다중 키 설정이 비어 있습니다. legacy 키를 사용합니다.");
-            parsedKeys = new LinkedHashMap<>();
-            parsedKeys.put(DEFAULT_LEGACY_KEY_ID, legacyKey);
+                if (devOrLocal) {
+                    log.warn("⚠️ [dev/local] 암호화 키가 설정되지 않았습니다. 개발용 폴백 키로 기동합니다.");
+                    parsedKeys = new LinkedHashMap<>();
+                    parsedKeys.put(DEFAULT_LEGACY_KEY_ID, DEV_FALLBACK_KEY);
+                    parsedIvs = new LinkedHashMap<>();
+                    parsedIvs.put(DEFAULT_LEGACY_KEY_ID, DEV_FALLBACK_IV);
+                } else {
+                    throw new IllegalStateException(
+                        "암호화 키가 설정되지 않았습니다. 환경변수 PERSONAL_DATA_ENCRYPTION_KEY 또는 PERSONAL_DATA_ENCRYPTION_KEYS를 확인하세요."
+                    );
+                }
+            } else {
+                log.warn("🔐 다중 키 설정이 비어 있습니다. legacy 키를 사용합니다.");
+                parsedKeys = new LinkedHashMap<>();
+                parsedKeys.put(DEFAULT_LEGACY_KEY_ID, legacyKey);
 
-            if (StringUtils.hasText(legacyIv)) {
-                parsedIvs = new LinkedHashMap<>();
-                parsedIvs.put(DEFAULT_LEGACY_KEY_ID, legacyIv);
+                if (StringUtils.hasText(legacyIv)) {
+                    parsedIvs = new LinkedHashMap<>();
+                    parsedIvs.put(DEFAULT_LEGACY_KEY_ID, legacyIv);
+                }
             }
         }
 
@@ -96,7 +117,12 @@ public class PersonalDataEncryptionKeyProvider {
             String ivValue = parsedIvs.getOrDefault(keyId, legacyIv);
 
             if (!StringUtils.hasText(ivValue)) {
-                throw new IllegalStateException(String.format("IV가 설정되지 않았습니다. keyId=%s", keyId));
+                if (devOrLocal) {
+                    ivValue = DEV_FALLBACK_IV;
+                    log.warn("⚠️ [dev/local] IV가 비어 있어 keyId={} 에 개발용 IV를 사용합니다.", keyId);
+                } else {
+                    throw new IllegalStateException(String.format("IV가 설정되지 않았습니다. keyId=%s", keyId));
+                }
             }
 
             KeyMaterial keyMaterial = buildKeyMaterial(keyId, keyValue, ivValue);
@@ -111,7 +137,13 @@ public class PersonalDataEncryptionKeyProvider {
         }
 
         if (keyMaterialById.isEmpty()) {
-            throw new IllegalStateException("유효한 암호화 키를 초기화할 수 없습니다.");
+            if (devOrLocal) {
+                log.warn("⚠️ [dev/local] 유효한 암호화 키가 없습니다. 개발용 폴백 키로 기동합니다.");
+                KeyMaterial fallback = buildKeyMaterial(DEFAULT_LEGACY_KEY_ID, DEV_FALLBACK_KEY, DEV_FALLBACK_IV);
+                keyMaterialById.put(DEFAULT_LEGACY_KEY_ID, fallback);
+            } else {
+                throw new IllegalStateException("유효한 암호화 키를 초기화할 수 없습니다.");
+            }
         }
 
         if (!StringUtils.hasText(activeKeyId) || !keyMaterialById.containsKey(activeKeyId)) {
@@ -258,6 +290,18 @@ public class PersonalDataEncryptionKeyProvider {
             this.secretKey = secretKey;
             this.iv = iv;
         }
+    }
+
+    private boolean isDevOrLocalProfile() {
+        if (environment == null) {
+            return false;
+        }
+        String[] actives = environment.getActiveProfiles();
+        if (actives.length == 0) {
+            return false;
+        }
+        return Arrays.stream(actives)
+                .anyMatch(p -> "dev".equalsIgnoreCase(p) || "local".equalsIgnoreCase(p));
     }
 }
 

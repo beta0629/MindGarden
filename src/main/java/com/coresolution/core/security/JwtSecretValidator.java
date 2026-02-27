@@ -2,9 +2,11 @@ package com.coresolution.core.security;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
 import jakarta.annotation.PostConstruct;
+import java.util.Arrays;
 
 /**
  * JWT 비밀키 검증 컴포넌트
@@ -16,22 +18,34 @@ import jakarta.annotation.PostConstruct;
 @Slf4j
 @Component
 public class JwtSecretValidator {
+
+    private final Environment environment;
     
-    @Value("${jwt.secret}")
+    @Value("${jwt.secret:}")
     private String jwtSecret;
     
     private static final int JWT_SECRET_MIN_LENGTH = 32;
     private static final int JWT_SECRET_MAX_LENGTH = 512;
     
+    public JwtSecretValidator(Environment environment) {
+        this.environment = environment;
+    }
+    
     /**
      * 애플리케이션 시작 시 JWT 비밀키 검증
+     * dev/local 프로파일에서는 미설정·짧은 키여도 경고만 하고 기동 허용.
      */
     @PostConstruct
     public void validateJwtSecret() {
         log.info("🔐 JWT 비밀키 검증 시작...");
+        boolean devOrLocal = isDevOrLocalProfile();
         
         // 1. NULL 체크
         if (jwtSecret == null || jwtSecret.trim().isEmpty()) {
+            if (devOrLocal) {
+                log.warn("⚠️ [dev/local] JWT 비밀키가 설정되지 않았습니다. 개발용 기본값 사용 중.");
+                return;
+            }
             String errorMsg = "JWT 비밀키가 설정되지 않았습니다. JWT_SECRET 환경 변수를 설정하세요.";
             log.error("❌ {}", errorMsg);
             throw new SecurityException(errorMsg);
@@ -39,6 +53,10 @@ public class JwtSecretValidator {
         
         // 2. 최소 길이 체크
         if (jwtSecret.length() < JWT_SECRET_MIN_LENGTH) {
+            if (devOrLocal) {
+                log.warn("⚠️ [dev/local] JWT 비밀키가 {}자 미만입니다. 개발용으로만 사용하세요.", JWT_SECRET_MIN_LENGTH);
+                return;
+            }
             String errorMsg = String.format(
                 "JWT 비밀키는 최소 %d자 이상이어야 합니다. 현재: %d자",
                 JWT_SECRET_MIN_LENGTH,
@@ -50,6 +68,10 @@ public class JwtSecretValidator {
         
         // 3. 최대 길이 체크
         if (jwtSecret.length() > JWT_SECRET_MAX_LENGTH) {
+            if (devOrLocal) {
+                log.warn("⚠️ [dev/local] JWT 비밀키가 {}자 초과입니다. 잘라서 사용할 수 있습니다.", JWT_SECRET_MAX_LENGTH);
+                return;
+            }
             String errorMsg = String.format(
                 "JWT 비밀키는 최대 %d자 이하여야 합니다. 현재: %d자",
                 JWT_SECRET_MAX_LENGTH,
@@ -159,6 +181,18 @@ public class JwtSecretValidator {
         }
         
         return "STRONG";
+    }
+    
+    private boolean isDevOrLocalProfile() {
+        if (environment == null) {
+            return false;
+        }
+        String[] actives = environment.getActiveProfiles();
+        if (actives.length == 0) {
+            return false;
+        }
+        return Arrays.stream(actives)
+                .anyMatch(p -> "dev".equalsIgnoreCase(p) || "local".equalsIgnoreCase(p));
     }
 }
 

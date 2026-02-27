@@ -9,8 +9,9 @@
  * @since 2025-12-06
  */
 
-import { apiGet, apiPost, apiPut, apiDelete } from './ajax';
+import { apiGet, apiPost, apiPostFormData, apiPut, apiDelete } from './ajax';
 import { getDefaultApiHeadersAsync } from './apiHeaders';
+import { getApiBaseUrl } from '../constants/api';
 
 /**
  * 표준화된 API 호출 래퍼
@@ -106,6 +107,40 @@ class StandardizedApi {
         } catch (error) {
             console.error(`❌ [표준화 API] PUT ${endpoint} 실패:`, error);
             throw this.handleError(error, endpoint, 'PUT');
+        }
+    }
+    
+    /**
+     * POST FormData 요청 (표준화) - 파일 업로드 등
+     * @param {string} endpoint API 엔드포인트
+     * @param {FormData} formData FormData 객체
+     * @param {Object} options 추가 옵션
+     * @returns {Promise<any>} API 응답 데이터
+     */
+    static async postFormData(endpoint, formData, options = {}) {
+        try {
+            this.validateEndpoint(endpoint);
+            
+            const headers = await getDefaultApiHeadersAsync({}, true);
+            delete headers['Content-Type']; // multipart/form-data 자동 설정
+            const finalOptions = {
+                ...options,
+                headers: { ...headers, ...(options.headers || {}) }
+            };
+            
+            const url = endpoint.startsWith('http://') || endpoint.startsWith('https://')
+                ? endpoint
+                : `${getApiBaseUrl()}${endpoint}`;
+            
+            console.log(`📤 [표준화 API] POST FormData ${endpoint}`, { tenantId: headers['X-Tenant-Id'] });
+            
+            const response = await apiPostFormData(url, formData, finalOptions);
+            
+            console.log(`✅ [표준화 API] POST FormData ${endpoint} 성공`);
+            return response;
+        } catch (error) {
+            console.error(`❌ [표준화 API] POST FormData ${endpoint} 실패:`, error);
+            throw this.handleError(error, endpoint, 'POST');
         }
     }
     

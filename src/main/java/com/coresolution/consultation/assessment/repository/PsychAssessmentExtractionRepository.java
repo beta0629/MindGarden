@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Optional;
 
 public interface PsychAssessmentExtractionRepository extends JpaRepository<PsychAssessmentExtraction, Long> {
+    long countByTenantId(String tenantId);
+
     Optional<PsychAssessmentExtraction> findTopByTenantIdAndDocumentIdOrderByCreatedAtDesc(String tenantId, Long documentId);
 
     List<PsychAssessmentExtraction> findByTenantIdAndStatus(String tenantId, PsychAssessmentExtractionStatus status);

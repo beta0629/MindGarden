@@ -6,6 +6,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 
 public interface PsychAssessmentReportRepository extends JpaRepository<PsychAssessmentReport, Long> {
+    long countByTenantId(String tenantId);
+
     Optional<PsychAssessmentReport> findTopByTenantIdAndDocumentIdOrderByCreatedAtDesc(String tenantId, Long documentId);
 }
 

@@ -15,7 +15,7 @@ import BaseWidget from '../BaseWidget';
 import { useWidget } from '../../../../hooks/useWidget';
 import { RoleUtils } from '../../../../constants/roles';
 import notificationManager from '../../../../utils/notification';
-import { apiPost } from '../../../../utils/ajax';
+import StandardizedApi from '../../../../utils/standardizedApi';
 
 const PsychAssessmentAdminWidget = ({ widget, user }) => {
   const [uploadType, setUploadType] = useState('TCI');
@@ -30,6 +30,7 @@ const PsychAssessmentAdminWidget = ({ widget, user }) => {
       type: 'multi-api',
       cache: false,
       refreshInterval: 60000,
+      fetcher: StandardizedApi.get,
       endpoints: [
         {
           url: '/api/v1/assessments/psych/stats',
@@ -122,14 +123,9 @@ const PsychAssessmentAdminWidget = ({ widget, user }) => {
       form.append('type', uploadType);
       form.append('file', uploadFile);
 
-      const res = await fetch('/api/v1/assessments/psych/documents', {
-        method: 'POST',
-        body: form,
-        credentials: 'include'
-      });
-      const json = await res.json();
-      if (!res.ok || json?.success === false) {
-        throw new Error(json?.message || '업로드에 실패했습니다.');
+      const res = await StandardizedApi.postFormData('/api/v1/assessments/psych/documents', form);
+      if (res?.success === false) {
+        throw new Error(res?.message || '업로드에 실패했습니다.');
       }
       notificationManager.show('업로드가 완료되었습니다. 추출 작업이 진행됩니다.', 'success');
       setUploadFile(null);
@@ -144,7 +140,7 @@ const PsychAssessmentAdminWidget = ({ widget, user }) => {
   const handleGenerateReport = async (documentId) => {
     if (!documentId) return;
     try {
-      const res = await apiPost(`/api/v1/assessments/psych/documents/${documentId}/report`, {});
+      const res = await StandardizedApi.post(`/api/v1/assessments/psych/documents/${documentId}/report`, {});
       if (res?.success === false) {
         throw new Error(res?.message || '리포트 생성에 실패했습니다.');
       }

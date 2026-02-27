@@ -24,11 +24,9 @@ public class PsychAssessmentStatsServiceImpl implements PsychAssessmentStatsServ
     public Map<String, Object> getTenantStats() {
         String tenantId = TenantContextHolder.getRequiredTenantId();
 
-        long docs = documentRepository.count();
-        long extractions = extractionRepository.count();
-        long reports = reportRepository.count();
-
-        // MVP: 테넌트 스코프 count는 repository에 tenant 조건 메서드가 추가되면 교체
+        long docs = documentRepository.countByTenantId(tenantId);
+        long extractions = extractionRepository.countByTenantId(tenantId);
+        long reports = reportRepository.countByTenantId(tenantId);
         Map<String, Object> data = new HashMap<>();
         data.put("tenantId", tenantId);
         data.put("documentsTotal", docs);

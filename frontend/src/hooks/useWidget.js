@@ -84,7 +84,8 @@ export const useWidget = (config = {}, user = null, options = {}) => {
     params = {},
     refreshInterval,
     transform,
-    endpoints = [] // multi-api 전용
+    endpoints = [], // multi-api 전용
+    fetcher // 옵션: StandardizedApi.get 등. 없으면 apiGet 사용
   } = dataSource;
 
 /**
@@ -175,7 +176,8 @@ export const useWidget = (config = {}, user = null, options = {}) => {
         }
         console.debug(`🔄 위젯 데이터 로드: ${url}`, params);
 
-        const response = await apiGet(url, params);
+        const getter = fetcher || apiGet;
+        const response = await getter(url, params);
         if (response !== null && response !== undefined) {
           const transformedData = transformData(response);
           setData(transformedData);
@@ -198,6 +200,7 @@ export const useWidget = (config = {}, user = null, options = {}) => {
           return;
         }
 
+        const getter = fetcher || apiGet;
         const responses = await Promise.all(
           safeEndpoints.map(async (ep) => {
             const epUrl = ep?.url;
@@ -205,7 +208,7 @@ export const useWidget = (config = {}, user = null, options = {}) => {
             const fallback = ep?.fallback;
             if (!epUrl) return fallback;
             try {
-              const r = await apiGet(epUrl, epParams);
+              const r = await getter(epUrl, epParams);
               return r !== null && r !== undefined ? transformData(r) : fallback;
             } catch (e) {
               return fallback;
@@ -259,7 +262,7 @@ export const useWidget = (config = {}, user = null, options = {}) => {
       }
     }
   }, [
-    type, url, params, endpoints, transform, getCachedData, setCachedData, transformData, 
+    type, url, params, endpoints, transform, fetcher, getCachedData, setCachedData, transformData, 
     config.defaultValue, retryAttempt, retryCount, retryDelay
   ]);
 

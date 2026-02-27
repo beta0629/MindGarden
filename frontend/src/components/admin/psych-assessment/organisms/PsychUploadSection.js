@@ -88,44 +88,55 @@ const PsychUploadSection = ({
           <div className="mg-v2-psych-upload-section__client-card">
             <div className="mg-v2-psych-upload-section__client-card-inner">
               <span className="mg-v2-psych-upload-section__client-card-title">내담자 선택</span>
+              {/* 선택 시 해시태그처럼 표시되는 영역 */}
               <div className="mg-v2-psych-upload-section__client-filter-row">
+                <div className="mg-v2-psych-upload-section__client-hashtag-row">
+                  {selectedClient ? (
+                    <div className="mg-v2-psych-upload-section__client-selected-tag">
+                      <span className="mg-v2-psych-upload-section__client-selected-tag-hash" aria-hidden>#</span>
+                      <span className="mg-v2-psych-upload-section__client-selected-tag-label">
+                        {getClientLabel(selectedClient)}
+                      </span>
+                      <button
+                        type="button"
+                        className="mg-v2-psych-upload-section__client-selected-tag-remove"
+                        onClick={() => onClientIdChange(null)}
+                        aria-label="내담자 선택 해제"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="mg-v2-psych-upload-section__client-selected-tag mg-v2-psych-upload-section__client-selected-tag--none">
+                      <span className="mg-v2-psych-upload-section__client-selected-tag-hash" aria-hidden>#</span>
+                      <span className="mg-v2-psych-upload-section__client-selected-tag-label">선택 안 함</span>
+                    </div>
+                  )}
+                </div>
                 <div className="mg-v2-psych-upload-section__client-search">
                   <Search className="mg-v2-psych-upload-section__client-search-icon" size={16} aria-hidden />
                   <input
                     type="text"
                     className="mg-v2-psych-upload-section__client-search-input"
-                    placeholder="이름·이메일로 검색"
+                    placeholder="# 이름·이메일로 검색 후 아래에서 선택"
                     value={clientFilter}
                     onChange={(e) => setClientFilter(e.target.value)}
                     disabled={clientsLoading}
                     aria-label="내담자 검색"
                   />
                 </div>
-                {selectedClient && (
-                  <div className="mg-v2-psych-upload-section__client-selected-tag">
-                    <span className="mg-v2-psych-upload-section__client-selected-tag-label">
-                      {getClientLabel(selectedClient)}
-                    </span>
-                    <button
-                      type="button"
-                      className="mg-v2-psych-upload-section__client-selected-tag-remove"
-                      onClick={() => onClientIdChange(null)}
-                      aria-label="내담자 선택 해제"
-                    >
-                      <X size={14} />
-                    </button>
-                  </div>
-                )}
               </div>
-              <ul className="mg-v2-psych-upload-section__client-tags" aria-label="내담자 태그 필터">
+              <ul className="mg-v2-psych-upload-section__client-tags" aria-label="내담자 해시태그 필터">
                 <li>
                   <button
                     type="button"
                     className={`mg-v2-psych-upload-section__client-tag mg-v2-psych-upload-section__client-tag--none ${selectedClient ? '' : 'mg-v2-psych-upload-section__client-tag--selected'}`}
                     onClick={() => onClientIdChange(null)}
-                    aria-pressed={selectedClient === null}
+                    aria-pressed={!selectedClient}
                     disabled={clientsLoading}
                   >
+                    <span className="mg-v2-psych-upload-section__tag-hash">#</span>
+                    {' '}
                     선택 안 함
                   </button>
                 </li>
@@ -140,6 +151,7 @@ const PsychUploadSection = ({
                         aria-pressed={isSelected}
                         disabled={clientsLoading}
                       >
+                        <span className="mg-v2-psych-upload-section__tag-hash">#</span>
                         {getClientLabel(c)}
                       </button>
                     </li>

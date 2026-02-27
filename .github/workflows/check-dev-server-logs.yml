@@ -24,6 +24,27 @@ jobs:
           echo "=========================================="
           echo ""
           
+          # 헬스 체크 및 디스크/로그 용량 (로그 가득 찼는지 확인)
+          echo "🩺 헬스 체크 및 디스크/로그 용량:"
+          echo "=========================================="
+          echo "--- 디스크 사용량 (df -h) ---"
+          df -h
+          echo ""
+          echo "--- systemd 저널 용량 (로그 가득 여부) ---"
+          journalctl --disk-usage
+          echo ""
+          echo "--- /var/log 용량 ---"
+          du -sh /var/log 2>/dev/null || true
+          du -sh /var/log/mindgarden 2>/dev/null || true
+          echo ""
+          echo "--- /var/www/mindgarden-dev 로그/캐시 용량 ---"
+          du -sh /var/www/mindgarden-dev 2>/dev/null || true
+          ls -la /var/www/mindgarden-dev/*.log 2>/dev/null || echo "앱 로그 파일 없음"
+          echo ""
+          echo "--- 로컬 헬스 체크 (actuator/health) ---"
+          curl -sf -m 10 http://localhost:8080/actuator/health && echo "" || echo "❌ 헬스 체크 실패 또는 타임아웃"
+          echo ""
+          
           # 서비스 상태 확인
           echo "🔍 서비스 상태:"
           echo "=========================================="

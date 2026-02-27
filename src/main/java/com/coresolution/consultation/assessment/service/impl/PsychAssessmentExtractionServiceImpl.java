@@ -8,6 +8,7 @@ import com.coresolution.consultation.assessment.repository.PsychAssessmentDocume
 import com.coresolution.consultation.assessment.repository.PsychAssessmentExtractionRepository;
 import com.coresolution.consultation.assessment.service.PsychAssessmentExtractionService;
 import com.coresolution.core.context.TenantContextHolder;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
@@ -19,12 +20,23 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class PsychAssessmentExtractionServiceImpl implements PsychAssessmentExtractionService {
 
     private final PsychAssessmentDocumentRepository documentRepository;
     private final PsychAssessmentExtractionRepository extractionRepository;
     private final com.coresolution.consultation.assessment.service.PsychAssessmentValidationService validationService;
+    private final PsychAssessmentExtractionRunner runner;
+
+    public PsychAssessmentExtractionServiceImpl(
+            PsychAssessmentDocumentRepository documentRepository,
+            PsychAssessmentExtractionRepository extractionRepository,
+            com.coresolution.consultation.assessment.service.PsychAssessmentValidationService validationService,
+            @Lazy PsychAssessmentExtractionRunner runner) {
+        this.documentRepository = documentRepository;
+        this.extractionRepository = extractionRepository;
+        this.validationService = validationService;
+        this.runner = runner;
+    }
 
     @Override
     public void enqueueExtraction(Long documentId) {
@@ -73,8 +85,6 @@ public class PsychAssessmentExtractionServiceImpl implements PsychAssessmentExtr
         log.info("Psych extraction created (MVP): tenantId={}, documentId={}, status={}",
                 tenantId, documentId, savedExtraction.getStatus());
     }
-
-    private final PsychAssessmentExtractionRunner runner;
 
     @Service
     @RequiredArgsConstructor

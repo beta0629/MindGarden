@@ -28,7 +28,7 @@ import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import UnifiedLoading from '../common/UnifiedLoading';
 import Button from '../ui/Button';
 import '../../styles/unified-design-tokens.css';
-import '../AdminDashboard/AdminDashboardB0KlA.css';
+import './AdminDashboard/AdminDashboardB0KlA.css';
 import './SystemConfigManagement.css';
 
 const AI_PROVIDERS = [
@@ -59,6 +59,8 @@ const SystemConfigManagement = () => {
   const [showApiKey, setShowApiKey] = useState({});
   const [testResult, setTestResult] = useState(null);
 
+  const [aiDefaultProvider, setAiDefaultProvider] = useState('openai');
+
   const [wellness, setWellness] = useState({
     wellnessAutoSendEnabled: true,
     wellnessSendTime: '09:00',
@@ -88,6 +90,19 @@ const SystemConfigManagement = () => {
     }
     loadConfigs();
   }, [isLoggedIn, user]);
+
+  // 저장된 기본 프로바이더에 API 키가 없으면, 키가 있는 첫 프로바이더로 보정
+  useEffect(() => {
+    if (!loading) {
+      const hasKey = (id) => (providers[id]?.apiKey || '').trim() !== '';
+      if (!hasKey(aiDefaultProvider)) {
+        const firstWithKey = AI_PROVIDERS.find((p) => hasKey(p.id));
+        if (firstWithKey) {
+          setAiDefaultProvider(firstWithKey.id);
+        }
+      }
+    }
+  }, [loading, providers]);
 
   const loadConfigs = useCallback(async () => {
     try {
@@ -137,6 +152,11 @@ const SystemConfigManagement = () => {
         }
       }));
 
+      const defaultProviderRes = await apiGet('/api/v1/admin/system-config/ai-default-provider');
+      if (defaultProviderRes?.success && defaultProviderRes.providerId) {
+        setAiDefaultProvider(defaultProviderRes.providerId);
+      }
+
       const [wEnabled, wTime, wRoles] = await Promise.all([
         apiGet('/api/v1/admin/system-config/WELLNESS_AUTO_SEND_ENABLED'),
         apiGet('/api/v1/admin/system-config/WELLNESS_SEND_TIME'),
@@ -170,6 +190,7 @@ const SystemConfigManagement = () => {
       });
 
       posts.push(
+        apiPost('/api/v1/admin/system-config/AI_DEFAULT_PROVIDER', { configValue: aiDefaultProvider, description: '기본 AI 프로바이더 (openai|gemini|claude|replicate)', category: 'AI' }),
         apiPost('/api/v1/admin/system-config/WELLNESS_AUTO_SEND_ENABLED', { configValue: String(wellness.wellnessAutoSendEnabled), description: '웰니스 자동 발송', category: 'WELLNESS' }),
         apiPost('/api/v1/admin/system-config/WELLNESS_SEND_TIME', { configValue: wellness.wellnessSendTime, description: '웰니스 발송 시간', category: 'WELLNESS' }),
         apiPost('/api/v1/admin/system-config/WELLNESS_TARGET_ROLES', { configValue: wellness.wellnessTargetRoles, description: '웰니스 대상 역할', category: 'WELLNESS' })
@@ -250,6 +271,31 @@ const SystemConfigManagement = () => {
               <p className="mg-v2-system-config__section-desc">
                 심리검사 AI 리포트·웰니스 등에 사용됩니다. 프로바이더별 API 키·URL·모델을 입력하고 테스트할 수 있습니다.
               </p>
+
+              <div className="mg-v2-ad-b0kla__card mg-v2-system-config__provider-card">
+                <h3 className="mg-v2-system-config__provider-title">사용할 AI 프로바이더</h3>
+                <p className="mg-v2-system-config__section-desc">
+                  API 키가 등록된 프로바이더만 선택할 수 있습니다. 심리검사 AI 리포트 등에 선택한 프로바이더가 사용됩니다.
+                </p>
+                <div className="mg-v2-system-config__radio-group">
+                  {AI_PROVIDERS.filter((p) => (providers[p.id]?.apiKey || '').trim() !== '').map((p) => (
+                    <label key={p.id} className="mg-v2-system-config__radio-label">
+                      <input
+                        type="radio"
+                        name="aiDefaultProvider"
+                        value={p.id}
+                        checked={aiDefaultProvider === p.id}
+                        onChange={() => setAiDefaultProvider(p.id)}
+                        className="mg-v2-radio"
+                      />
+                      <span>{p.label}</span>
+                    </label>
+                  ))}
+                  {AI_PROVIDERS.every((p) => !(providers[p.id]?.apiKey || '').trim()) && (
+                    <p className="mg-v2-system-config__radio-empty">API 키가 등록된 프로바이더가 없습니다. 아래에서 한 개 이상 등록 후 선택할 수 있습니다.</p>
+                  )}
+                </div>
+              </div>
 
               {AI_PROVIDERS.map(({ id, label, keyPrefix, defaultUrl }) => (
                 <div key={id} className="mg-v2-ad-b0kla__card mg-v2-system-config__provider-card">

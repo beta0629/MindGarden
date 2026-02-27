@@ -12,6 +12,7 @@
 import React, { useMemo, useState } from 'react';
 import { FileText, Upload, RefreshCw, PlayCircle } from 'lucide-react';
 import BaseWidget from '../BaseWidget';
+import './PsychAssessmentAdminWidget.css';
 import { useWidget } from '../../../../hooks/useWidget';
 import { RoleUtils } from '../../../../constants/roles';
 import notificationManager from '../../../../utils/notification';
@@ -112,6 +113,13 @@ const PsychAssessmentAdminWidget = ({ widget, user }) => {
     setIsDragOver(false);
   };
 
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      document.getElementById('psych-assessment-file-input')?.click();
+    }
+  };
+
   const handleUpload = async () => {
     if (!uploadFile) {
       notificationManager.show('업로드할 PDF 파일을 선택해주세요.', 'warning');
@@ -195,25 +203,20 @@ const PsychAssessmentAdminWidget = ({ widget, user }) => {
         </div>
 
         <div className="mg-card mg-mt-md">
-          <div className="mg-card__header">
+          <div className="mg-card__header mg-card__header--accent">
             <Upload size={16} />
             <h4 className="mg-h5 mg-mb-0">PDF 업로드</h4>
           </div>
           <div className="mg-card__body">
             <div
-              className="mg-card mg-mb-sm"
+              className={`mg-upload-area mg-mb-sm ${isDragOver ? 'mg-upload-area--drag-over' : ''}`}
               onDrop={handleDrop}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
+              onKeyDown={handleKeyDown}
               role="button"
               tabIndex={0}
-              onKeyDown={() => {}}
-              style={{
-                borderStyle: 'dashed',
-                borderWidth: '2px',
-                borderColor: isDragOver ? 'var(--cs-primary-400)' : 'var(--cs-gray-300)',
-                background: isDragOver ? 'var(--cs-primary-50)' : 'var(--cs-slate-50)'
-              }}
+              aria-label="파일을 드래그하여 놓거나 클릭하여 선택"
             >
               <div className="mg-card__body mg-flex mg-flex-col mg-align-center mg-justify-center mg-gap-sm">
                 <p className="mg-text-muted mg-mb-0">
@@ -235,6 +238,7 @@ const PsychAssessmentAdminWidget = ({ widget, user }) => {
                 <option value="MMPI">MMPI</option>
               </select>
               <input
+                id="psych-assessment-file-input"
                 className="mg-input"
                 type="file"
                 accept="application/pdf"
@@ -256,7 +260,7 @@ const PsychAssessmentAdminWidget = ({ widget, user }) => {
         </div>
 
         <div className="mg-card mg-mt-md">
-          <div className="mg-card__header">
+          <div className="mg-card__header mg-card__header--accent">
             <FileText size={16} />
             <h4 className="mg-h5 mg-mb-0">최근 업로드(최대 20개)</h4>
           </div>

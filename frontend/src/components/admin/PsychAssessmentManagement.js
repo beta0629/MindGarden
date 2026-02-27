@@ -41,7 +41,7 @@ const PsychAssessmentManagement = ({ user: propUser }) => {
 
   return (
     <AdminCommonLayout>
-      <div className="mg-container">
+      <div className="mg-v2-ad-b0kla__container">
         <PsychAssessmentAdminWidget widget={widget} user={user} />
       </div>
     </AdminCommonLayout>

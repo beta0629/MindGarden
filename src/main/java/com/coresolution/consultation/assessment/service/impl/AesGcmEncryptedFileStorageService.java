@@ -3,6 +3,7 @@ package com.coresolution.consultation.assessment.service.impl;
 import com.coresolution.consultation.assessment.service.EncryptedFileStorageService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
@@ -12,11 +13,13 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
+import java.util.Arrays;
 import java.util.Base64;
 
 @Slf4j
@@ -27,9 +30,17 @@ public class AesGcmEncryptedFileStorageService implements EncryptedFileStorageSe
     private static final String KEY_B64_ENV = "PSYCH_DOC_KEY_B64";
     private static final int GCM_TAG_BITS = 128;
     private static final int IV_BYTES = 12;
+    /** 개발/로컬 전용 폴백 키(32바이트). 운영에서는 반드시 PSYCH_DOC_KEY_B64 환경 변수 설정 필요. */
+    private static final byte[] DEV_FALLBACK_KEY_BYTES = "MindGardenPsychAssessmentDevKey32B".getBytes(StandardCharsets.UTF_8);
+
+    private final Environment environment;
 
     @Value("${psych.assessment.storage.base-dir:./uploads/psych-assessments}")
     private String baseDir;
+
+    public AesGcmEncryptedFileStorageService(Environment environment) {
+        this.environment = environment;
+    }
 
     @Override
     public StoredEncryptedFile storePdf(String tenantId, MultipartFile file) {
@@ -92,14 +103,32 @@ public class AesGcmEncryptedFileStorageService implements EncryptedFileStorageSe
 
     private SecretKey loadKeyFromEnv() {
         String b64 = System.getenv(KEY_B64_ENV);
-        if (!StringUtils.hasText(b64)) {
-            throw new IllegalStateException("암호화 키가 필요합니다: " + KEY_B64_ENV);
+        if (StringUtils.hasText(b64)) {
+            byte[] keyBytes = Base64.getDecoder().decode(b64);
+            if (keyBytes.length != 16 && keyBytes.length != 24 && keyBytes.length != 32) {
+                throw new IllegalStateException("AES 키 길이가 올바르지 않습니다(16/24/32 bytes): " + keyBytes.length);
+            }
+            return new SecretKeySpec(keyBytes, "AES");
         }
-        byte[] keyBytes = Base64.getDecoder().decode(b64);
-        if (keyBytes.length != 16 && keyBytes.length != 24 && keyBytes.length != 32) {
-            throw new IllegalStateException("AES 키 길이가 올바르지 않습니다(16/24/32 bytes): " + keyBytes.length);
+        // 개발/로컬 프로파일에서만 미설정 시 폴백 키 사용 (운영에서는 PSYCH_DOC_KEY_B64 필수)
+        if (isDevOrLocalProfile()) {
+            log.warn("PSYCH_DOC_KEY_B64 미설정 — 개발/로컬 전용 폴백 키 사용. 운영 환경에서는 반드시 환경 변수를 설정하세요.");
+            return new SecretKeySpec(Arrays.copyOf(DEV_FALLBACK_KEY_BYTES, 32), "AES");
         }
-        return new SecretKeySpec(keyBytes, "AES");
+        throw new IllegalStateException("암호화 키가 필요합니다: " + KEY_B64_ENV + " 환경 변수를 설정하거나, 운영 이외 환경에서는 spring.profiles.active=dev 또는 local을 사용하세요.");
+    }
+
+    private boolean isDevOrLocalProfile() {
+        if (environment == null) {
+            return false;
+        }
+        String[] actives = environment.getActiveProfiles();
+        for (String profile : actives) {
+            if ("dev".equalsIgnoreCase(profile) || "local".equalsIgnoreCase(profile)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static String bytesToHex(byte[] bytes) {

@@ -20,12 +20,16 @@ public class PsychAssessmentIngestServiceImpl implements PsychAssessmentIngestSe
     private final PsychAssessmentDocumentRepository documentRepository;
     private final EncryptedFileStorageService encryptedFileStorageService;
     private final com.coresolution.consultation.assessment.service.PsychAssessmentExtractionService extractionService;
+    private final PsychAssessmentFileValidator fileValidator;
 
     @Override
     @Transactional
     public PsychAssessmentUploadResponse uploadScannedPdf(PsychAssessmentType type, MultipartFile file, Long clientId,
             Long createdBy) {
         String tenantId = TenantContextHolder.getRequiredTenantId();
+
+        // 파일 검열: PDF 전용, 크기·확장자·Content-Type·매직 바이트 검증 (해킹/위장 파일 방지)
+        fileValidator.validatePdfUpload(file);
 
         EncryptedFileStorageService.StoredEncryptedFile stored =
                 encryptedFileStorageService.storePdf(tenantId, file);

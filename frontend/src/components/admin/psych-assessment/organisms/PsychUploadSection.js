@@ -166,14 +166,24 @@ const PsychUploadSection = ({
             </div>
           </div>
           <div className="mg-v2-psych-upload-section__form-row">
-            <select
-              className="mg-select"
-              value={uploadType}
-              onChange={(e) => onUploadTypeChange(e.target.value)}
-            >
-              <option value="TCI">TCI</option>
-              <option value="MMPI">MMPI</option>
-            </select>
+            <fieldset className="mg-v2-psych-upload-section__type-options" aria-label="검사 유형">
+              <legend className="mg-v2-psych-upload-section__type-legend">검사 유형</legend>
+              {['TCI', 'MMPI'].map((type) => {
+                const isSelected = uploadType === type;
+                return (
+                  <button
+                    key={type}
+                    type="button"
+                    className={`mg-v2-psych-upload-section__type-option ${isSelected ? 'mg-v2-psych-upload-section__type-option--selected' : ''}`}
+                    onClick={() => onUploadTypeChange(type)}
+                    aria-pressed={isSelected}
+                    aria-label={`검사 유형 ${type}${isSelected ? ' 선택됨' : ''}`}
+                  >
+                    {type}
+                  </button>
+                );
+              })}
+            </fieldset>
             <input
               ref={fileInputRef}
               id={fileInputId}

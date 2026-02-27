@@ -479,12 +479,33 @@ export const apiPostFormData = async (endpoint, formData, options = {}) => {
     });
 
     if (!response.ok) {
-      // 세션 체크 및 리다이렉트
+      let errorBody = {};
+      try {
+        const text = await response.text();
+        if (text) {
+          errorBody = JSON.parse(text);
+        }
+      } catch (_) {
+        // ignore parse error
+      }
+      const serverMessage = errorBody.message || errorBody.error;
+      const errorCode = errorBody.errorCode || errorBody.error;
+
+      // 세션 체크 및 리다이렉트 (400에서 tenantId 관련이면 리다이렉트할 수 있음)
       const redirected = await checkSessionAndRedirect(response);
       if (redirected) {
-        return null; // 리다이렉트됨
+        return null;
       }
-      
+
+      // 400 Bad Request: 서버 메시지가 있으면 그대로 전달 (원인 파악용)
+      if (response.status === 400) {
+        const msg = serverMessage || (errorCode ? `오류: ${errorCode}` : '요청이 잘못되었습니다. (400)');
+        const err = new Error(msg);
+        err.status = 400;
+        err.response = { data: errorBody };
+        throw err;
+      }
+
       handleError(new Error('POST FormData 요청 실패'), response.status);
     }
 

@@ -262,6 +262,53 @@
   margin: 0;
 }
 
+/* 검사 유형 선택 (TCI / MMPI) - 버튼/태그 형태 */
+.mg-v2-psych-upload-section__type-options {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  border: none;
+  margin: 0;
+  padding: 0;
+}
+
+.mg-v2-psych-upload-section__type-legend {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.mg-v2-psych-upload-section__type-option {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.9375rem;
+  border-radius: var(--ad-b0kla-radius-sm, 12px);
+  border: 1px solid var(--ad-b0kla-border, var(--mg-gray-300));
+  background: var(--ad-b0kla-card-bg);
+  color: var(--ad-b0kla-text-secondary, var(--mg-gray-600));
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+
+.mg-v2-psych-upload-section__type-option:hover {
+  border-color: var(--ad-b0kla-green, var(--mg-success-500));
+  color: var(--ad-b0kla-title-color);
+}
+
+.mg-v2-psych-upload-section__type-option--selected {
+  border-color: var(--ad-b0kla-green, var(--mg-success-500));
+  background: var(--ad-b0kla-green-bg, var(--mg-success-50));
+  color: var(--ad-b0kla-title-color);
+}
+
 .mg-v2-psych-upload-section__form-row .mg-input[type="file"] {
   max-width: 100%;
 }

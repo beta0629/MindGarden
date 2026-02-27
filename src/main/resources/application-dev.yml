@@ -16,6 +16,7 @@ encryption:
     iv: ${PERSONAL_DATA_ENCRYPTION_IV:dev-iv-16-bytes!!}
 
 # OAuth2 클라이언트 등록 (Google/Apple redirect-uri 기본값)
+# Apple은 CommonOAuth2Provider에 없어 provider 수동 정의 필요 (provider-id 미지정 시 기동 실패)
 spring:
   security:
     oauth2:
@@ -28,4 +29,12 @@ spring:
           apple:
             client-id: ${APPLE_CLIENT_ID:dummy}
             client-secret: ${APPLE_CLIENT_SECRET:dummy}
+            scope: name,email
             redirect-uri: "${server.base-url}/api/auth/apple/callback"
+            client-name: Apple
+        provider:
+          apple:
+            authorization-uri: https://appleid.apple.com/auth/authorize
+            token-uri: https://appleid.apple.com/auth/token
+            user-info-uri: https://appleid.apple.com/auth/userinfo
+            user-name-attribute: sub

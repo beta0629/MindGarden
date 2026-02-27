@@ -13,6 +13,9 @@ on:
       - 'src/main/java/com/coresolution/core/controller/dto/Onboarding*.java'
       # 온보딩 관련 마이그레이션
       - 'src/main/resources/db/migration/V*__*.sql'
+      # dev 프로파일 설정 (기동 오류 방지)
+      - 'src/main/resources/application-dev.yml'
+      - 'src/main/resources/application.yml'
       # 온보딩 관련 테스트
       - 'src/test/java/com/coresolution/core/integration/MvpOnboardingFlowIntegrationTest.java'
       - 'src/test/java/com/coresolution/core/service/OnboardingServiceTest.java'
@@ -61,7 +64,26 @@ jobs:
           ls -la target/ 2>/dev/null || echo "target 디렉토리 없음"
           exit 1
         fi
-        
+
+    - name: 🔒 dev 프로파일 설정 검증 (배포 전 기동 오류 방지)
+      run: |
+        echo "🔒 JAR 내 dev 설정 검증..."
+        JAR=target/consultation-management-system-1.0.0.jar
+        if ! jar tf "$JAR" | grep -q "BOOT-INF/classes/application-dev.yml"; then
+          echo "❌ application-dev.yml이 JAR에 없습니다."
+          exit 1
+        fi
+        unzip -p "$JAR" BOOT-INF/classes/application-dev.yml > /tmp/app-dev.yml 2>/dev/null || true
+        if [ -f /tmp/app-dev.yml ]; then
+          if ! grep -q "provider:" /tmp/app-dev.yml || ! grep -q "apple:" /tmp/app-dev.yml; then
+            echo "❌ application-dev.yml에 OAuth2 provider.apple 정의가 없습니다. 기동 시 오류가 발생합니다."
+            exit 1
+          fi
+          echo "✅ application-dev.yml 및 OAuth2 provider.apple 확인됨"
+        else
+          echo "⚠️ application-dev.yml 추출 실패, 검증 스킵"
+        fi
+
     - name: 🔍 개발 서버 SSH 연결 테스트
       uses: appleboy/ssh-action@v1.2.4
       with:
@@ -255,7 +277,17 @@ jobs:
           if sudo systemctl is-active --quiet mindgarden-dev.service; then
             echo "✅ 개발 서버 서비스 정상 시작됨"
           else
-            echo "❌ 서비스 시작 실패 - 상세 로그 확인..."
+            echo "❌ 서비스 시작 실패 - 롤백 후 상세 로그 확인..."
+            LATEST_BACKUP=$(ls -t /var/www/mindgarden-dev/backups/app.jar.backup.* 2>/dev/null | head -1)
+            if [ -n "$LATEST_BACKUP" ] && [ -f "$LATEST_BACKUP" ]; then
+              echo "🔄 이전 JAR로 롤백 중: $LATEST_BACKUP"
+              cp "$LATEST_BACKUP" /var/www/mindgarden-dev/app.jar
+              sudo systemctl restart mindgarden-dev.service
+              sleep 15
+              if curl -f -s http://localhost:8080/actuator/health > /dev/null 2>&1; then
+                echo "✅ 롤백 후 서비스 정상 기동됨"
+              fi
+            fi
             echo "=========================================="
             echo "📋 서비스 상태:"
             echo "=========================================="

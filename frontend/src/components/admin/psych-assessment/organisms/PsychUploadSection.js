@@ -6,12 +6,14 @@
  * @since 2026-02-27
  */
 
-import React, { useRef } from 'react';
+import React, { useRef, useState, useMemo } from 'react';
 import PropTypes from 'prop-types';
-import { Upload } from 'lucide-react';
+import { Upload, Search, X } from 'lucide-react';
 import ContentSection from '../../../dashboard-v2/content/ContentSection';
 import ContentCard from '../../../dashboard-v2/content/ContentCard';
 import './PsychUploadSection.css';
+
+const getClientLabel = (c) => c.name || c.email || `내담자 #${c.id}`;
 
 const PsychUploadSection = ({
   uploadType,
@@ -31,6 +33,7 @@ const PsychUploadSection = ({
   clientsLoading = false
 }) => {
   const fileInputRef = useRef(null);
+  const [clientFilter, setClientFilter] = useState('');
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' || e.key === ' ') {
@@ -43,7 +46,22 @@ const PsychUploadSection = ({
     fileInputRef.current?.click();
   };
 
-  const currentClientId = clientId === null || clientId === undefined ? '' : String(clientId);
+  const filteredClients = useMemo(() => {
+    const trimmed = clientFilter.trim();
+    if (trimmed === '') return clients;
+    const q = trimmed.toLowerCase();
+    return clients.filter(
+      (c) =>
+        (c.name && c.name.toLowerCase().includes(q)) ||
+        (c.email && c.email.toLowerCase().includes(q)) ||
+        String(c.id).toLowerCase().includes(q)
+    );
+  }, [clients, clientFilter]);
+
+  const selectedClient = useMemo(() => {
+    if (clientId == null) return null;
+    return clients.find((c) => Number(c.id) === Number(clientId)) ?? null;
+  }, [clients, clientId]);
 
   return (
     <ContentSection noCard className="mg-v2-psych-upload-section">
@@ -67,28 +85,73 @@ const PsychUploadSection = ({
             <p>파일을 여기로 드래그&드롭 하거나 아래에서 선택하세요.</p>
             <p>{uploadFile ? `선택됨: ${uploadFile.name}` : '선택된 파일 없음'}</p>
           </div>
-          <div className="mg-v2-psych-upload-section__form-row mg-v2-psych-upload-section__form-row--client">
-            <label className="mg-v2-psych-upload-section__label" htmlFor="psych-upload-client-select">
-              내담자 선택
-            </label>
-            <select
-              id="psych-upload-client-select"
-              className="mg-select mg-v2-psych-upload-section__client-select"
-              value={currentClientId}
-              onChange={(e) => {
-                const v = e.target.value;
-                onClientIdChange(v === '' ? null : Number(v));
-              }}
-              disabled={clientsLoading}
-              aria-label="내담자 선택 (선택 사항)"
-            >
-              <option value="">선택 안 함</option>
-              {clients.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name || c.email || `내담자 #${c.id}`}
-                </option>
-              ))}
-            </select>
+          <div className="mg-v2-psych-upload-section__client-card">
+            <div className="mg-v2-psych-upload-section__client-card-inner">
+              <span className="mg-v2-psych-upload-section__client-card-title">내담자 선택</span>
+              <div className="mg-v2-psych-upload-section__client-filter-row">
+                <div className="mg-v2-psych-upload-section__client-search">
+                  <Search className="mg-v2-psych-upload-section__client-search-icon" size={16} aria-hidden />
+                  <input
+                    type="text"
+                    className="mg-v2-psych-upload-section__client-search-input"
+                    placeholder="이름·이메일로 검색"
+                    value={clientFilter}
+                    onChange={(e) => setClientFilter(e.target.value)}
+                    disabled={clientsLoading}
+                    aria-label="내담자 검색"
+                  />
+                </div>
+                {selectedClient && (
+                  <div className="mg-v2-psych-upload-section__client-selected-tag">
+                    <span className="mg-v2-psych-upload-section__client-selected-tag-label">
+                      {getClientLabel(selectedClient)}
+                    </span>
+                    <button
+                      type="button"
+                      className="mg-v2-psych-upload-section__client-selected-tag-remove"
+                      onClick={() => onClientIdChange(null)}
+                      aria-label="내담자 선택 해제"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                )}
+              </div>
+              <ul className="mg-v2-psych-upload-section__client-tags" aria-label="내담자 태그 필터">
+                <li>
+                  <button
+                    type="button"
+                    className={`mg-v2-psych-upload-section__client-tag mg-v2-psych-upload-section__client-tag--none ${selectedClient ? '' : 'mg-v2-psych-upload-section__client-tag--selected'}`}
+                    onClick={() => onClientIdChange(null)}
+                    aria-pressed={selectedClient === null}
+                    disabled={clientsLoading}
+                  >
+                    선택 안 함
+                  </button>
+                </li>
+                {filteredClients.map((c) => {
+                  const isSelected = selectedClient && Number(c.id) === Number(clientId);
+                  return (
+                    <li key={c.id}>
+                      <button
+                        type="button"
+                        className={`mg-v2-psych-upload-section__client-tag ${isSelected ? 'mg-v2-psych-upload-section__client-tag--selected' : ''}`}
+                        onClick={() => onClientIdChange(Number(c.id))}
+                        aria-pressed={isSelected}
+                        disabled={clientsLoading}
+                      >
+                        {getClientLabel(c)}
+                      </button>
+                    </li>
+                  );
+                })}
+                {filteredClients.length === 0 && !clientsLoading && (
+                  <li className="mg-v2-psych-upload-section__client-tags-empty-wrap">
+                    <span className="mg-v2-psych-upload-section__client-tags-empty">검색 결과 없음</span>
+                  </li>
+                )}
+              </ul>
+            </div>
           </div>
           <div className="mg-v2-psych-upload-section__form-row">
             <select

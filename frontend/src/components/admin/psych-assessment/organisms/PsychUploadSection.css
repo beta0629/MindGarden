@@ -69,6 +69,154 @@
   align-items: center;
 }
 
+/* 내담자 선택 - 작은 카드 + 태그 필터 */
+.mg-v2-psych-upload-section__client-card {
+  background: var(--ad-b0kla-card-bg, var(--mg-gray-50));
+  border: 1px solid var(--ad-b0kla-border, var(--mg-gray-200));
+  border-radius: var(--ad-b0kla-radius-sm, 12px);
+  padding: 0.875rem 1rem;
+  max-width: 480px;
+}
+
+.mg-v2-psych-upload-section__client-card-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.mg-v2-psych-upload-section__client-card-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ad-b0kla-title-color, var(--mg-gray-800));
+  display: block;
+}
+
+.mg-v2-psych-upload-section__client-filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.mg-v2-psych-upload-section__client-search {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 140px;
+  background: var(--ad-b0kla-card-bg);
+  border: 1px solid var(--ad-b0kla-border, var(--mg-gray-300));
+  border-radius: 8px;
+  padding: 0.375rem 0.5rem 0.375rem 0.5rem;
+}
+
+.mg-v2-psych-upload-section__client-search-icon {
+  color: var(--ad-b0kla-text-secondary, var(--mg-gray-500));
+  flex-shrink: 0;
+  margin-right: 0.375rem;
+}
+
+.mg-v2-psych-upload-section__client-search-input {
+  border: none;
+  background: transparent;
+  font-size: 13px;
+  color: var(--ad-b0kla-title-color);
+  width: 100%;
+  min-width: 0;
+  outline: none;
+}
+
+.mg-v2-psych-upload-section__client-search-input::placeholder {
+  color: var(--ad-b0kla-text-secondary, var(--mg-gray-500));
+}
+
+.mg-v2-psych-upload-section__client-selected-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  background: var(--ad-b0kla-green-bg, var(--mg-success-50));
+  border: 1px solid var(--ad-b0kla-green, var(--mg-success-500));
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--ad-b0kla-title-color);
+}
+
+.mg-v2-psych-upload-section__client-selected-tag-label {
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mg-v2-psych-upload-section__client-selected-tag-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--ad-b0kla-text-secondary);
+  cursor: pointer;
+  border-radius: 4px;
+  line-height: 1;
+}
+
+.mg-v2-psych-upload-section__client-selected-tag-remove:hover {
+  color: var(--ad-b0kla-title-color);
+}
+
+.mg-v2-psych-upload-section__client-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  align-items: center;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.mg-v2-psych-upload-section__client-tags li {
+  display: inline-flex;
+}
+
+.mg-v2-psych-upload-section__client-tags-empty-wrap {
+  display: inline-flex;
+  align-items: center;
+}
+
+.mg-v2-psych-upload-section__client-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.5rem;
+  font-size: 12px;
+  border-radius: 6px;
+  border: 1px solid var(--ad-b0kla-border, var(--mg-gray-300));
+  background: var(--ad-b0kla-card-bg);
+  color: var(--ad-b0kla-text-secondary, var(--mg-gray-600));
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+
+.mg-v2-psych-upload-section__client-tag:hover:not(:disabled) {
+  border-color: var(--ad-b0kla-green, var(--mg-success-500));
+  color: var(--ad-b0kla-title-color);
+}
+
+.mg-v2-psych-upload-section__client-tag--selected {
+  border-color: var(--ad-b0kla-green, var(--mg-success-500));
+  background: var(--ad-b0kla-green-bg, var(--mg-success-50));
+  color: var(--ad-b0kla-title-color);
+}
+
+.mg-v2-psych-upload-section__client-tag--none.mg-v2-psych-upload-section__client-tag--selected {
+  font-style: italic;
+}
+
+.mg-v2-psych-upload-section__client-tags-empty {
+  font-size: 12px;
+  color: var(--ad-b0kla-text-secondary, var(--mg-gray-500));
+}
+
 .mg-v2-psych-upload-section__form-row--client {
   align-items: center;
 }
@@ -78,10 +226,6 @@
   font-weight: 500;
   color: var(--ad-b0kla-title-color, var(--mg-gray-800));
   margin: 0;
-}
-
-.mg-v2-psych-upload-section__client-select {
-  min-width: 200px;
 }
 
 .mg-v2-psych-upload-section__form-row .mg-input[type="file"] {

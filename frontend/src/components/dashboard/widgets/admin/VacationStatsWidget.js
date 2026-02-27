@@ -31,7 +31,7 @@ const VacationStatsWidget = ({ widget, user }) => {
     refresh,
     formatValue
   } = useWidget(widget, user, {
-    immediate: true,
+    immediate: !!(user && user.id),
     cache: true,
     retryCount: 3
   });

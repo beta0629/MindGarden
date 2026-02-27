@@ -66,7 +66,7 @@ const ActivityListWidget = ({ widget, user }) => {
     refresh,
     formatValue
   } = useWidget(widgetWithLimit, user, {
-    immediate: true,
+    immediate: !!(user && user.id),
     cache: true,
     retryCount: 3
   });

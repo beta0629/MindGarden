@@ -33,7 +33,7 @@ const SummaryStatisticsWidget = ({ widget, user }) => {
     isEmpty,
     refresh
   } = useWidget(widget, user, {
-    immediate: true,
+    immediate: !!(user && user.id),
     cache: true,
     retryCount: 3
   });

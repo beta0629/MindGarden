@@ -79,7 +79,7 @@ const AdminSystemOverviewWidget = ({ widget, user }) => {
     isEmpty,
     refresh
   } = useWidget(widgetWithDataSource, user, {
-    immediate: true,
+    immediate: !!(user && user.id),
     cache: true,
     retryCount: 3
   });

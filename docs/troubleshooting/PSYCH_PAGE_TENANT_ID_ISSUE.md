@@ -51,7 +51,16 @@
 
 ---
 
-## 4. 백엔드 보완 (기존 적용 사항)
+## 4. 위젯 전체 적용 (2026-02 기준)
+
+`immediate: true` 로 user 준비 전에 API를 호출하던 **모든 위젯**을 `immediate: !!(user && user.id)` 로 통일했습니다.
+
+- **수정된 위젯**: SystemOverviewWidget, AdminSystemOverviewWidget, NotificationWidget, RatingWidget, TodayStatsWidget, CalendarWidget, TableWidget, StatisticsWidget, SummaryStatisticsWidget, RecentActivitiesWidget, ActivityListWidget, PaymentWidget, ChartWidget, VacationStatsWidget, ErpPurchaseRequestWidget, PsychAssessmentManagement, PsychAssessmentAdminWidget
+- **RoleUtils 조건만 있는 위젯** (예: `immediate: RoleUtils.isAdmin(user)`): user가 null이면 이미 false가 되어 호출되지 않으므로 별도 수정 없음.
+
+---
+
+## 5. 백엔드 보완 (기존 적용 사항)
 
 - **TenantContextFilter**: 세션 User에 tenantId가 없으면 `UserRepository`로 DB 조회 후 세션 보완.  
 - **AuthController**: 로그인·중복 로그인 확인 성공 시 세션 User에 tenantId 설정.  

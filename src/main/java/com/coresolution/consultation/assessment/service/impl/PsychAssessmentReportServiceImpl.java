@@ -8,9 +8,11 @@ import com.coresolution.consultation.assessment.repository.PsychAssessmentExtrac
 import com.coresolution.consultation.assessment.repository.PsychAssessmentMetricRepository;
 import com.coresolution.consultation.assessment.repository.PsychAssessmentReportRepository;
 import com.coresolution.consultation.assessment.service.PsychAiService;
+import com.coresolution.consultation.assessment.service.PsychAssessmentExtractionService;
 import com.coresolution.consultation.assessment.service.PsychAssessmentReportService;
 import com.coresolution.core.context.TenantContextHolder;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,6 +29,8 @@ public class PsychAssessmentReportServiceImpl implements PsychAssessmentReportSe
     private final PsychAssessmentMetricRepository metricRepository;
     private final PsychAssessmentReportRepository reportRepository;
     private final PsychAiService psychAiService;
+    @Lazy
+    private final PsychAssessmentExtractionService extractionService;
 
     @Override
     @Transactional
@@ -36,7 +40,13 @@ public class PsychAssessmentReportServiceImpl implements PsychAssessmentReportSe
                 .orElseThrow(() -> new IllegalArgumentException("문서를 찾을 수 없습니다."));
         PsychAssessmentExtraction extraction = extractionRepository
                 .findTopByTenantIdAndDocumentIdOrderByCreatedAtDesc(tenantId, documentId)
-                .orElseThrow(() -> new IllegalArgumentException("추출 결과가 없습니다."));
+                .orElse(null);
+        if (extraction == null) {
+            extractionService.ensureExtractionSync(tenantId, documentId);
+            extraction = extractionRepository
+                    .findTopByTenantIdAndDocumentIdOrderByCreatedAtDesc(tenantId, documentId)
+                    .orElseThrow(() -> new IllegalArgumentException("추출 결과가 없습니다."));
+        }
 
         List<PsychAssessmentMetric> metrics = metricRepository.findByTenantIdAndDocumentId(tenantId, documentId);
 

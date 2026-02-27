@@ -28,9 +28,50 @@ public class PsychAssessmentExtractionServiceImpl implements PsychAssessmentExtr
 
     @Override
     public void enqueueExtraction(Long documentId) {
-        // tenant 컨텍스트는 호출자에서 이미 설정되어 있어야 함
-        // @Async 적용을 위해 프록시를 통해 호출되도록 별도 Runner 사용
-        runner.processAsync(documentId);
+        // @Async 스레드에는 TenantContext가 없으므로 호출 스레드에서 tenantId를 넘겨 비동기에서 설정
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        runner.processAsync(tenantId, documentId);
+    }
+
+    @Override
+    public void ensureExtractionSync(String tenantId, Long documentId) {
+        if (extractionRepository.findTopByTenantIdAndDocumentIdOrderByCreatedAtDesc(tenantId, documentId).isPresent()) {
+            return;
+        }
+        runExtractionLogic(tenantId, documentId);
+    }
+
+    /** 동기 추출 전용: 추출 레코드만 생성 (리포트 생성은 호출자가 수행) */
+    private void runExtractionLogic(String tenantId, Long documentId) {
+        PsychAssessmentDocument doc =
+                documentRepository.findByTenantIdAndId(tenantId, documentId)
+                        .orElseThrow(() -> new IllegalArgumentException("문서를 찾을 수 없습니다."));
+
+        String templateId = null;
+        String extractionMode = "GENERIC";
+        String ocrEngine = "UNCONFIGURED";
+
+        PsychAssessmentExtraction extraction = PsychAssessmentExtraction.builder()
+                .tenantId(tenantId).documentId(doc.getId()).templateId(templateId)
+                .extractionMode(extractionMode).ocrEngine(ocrEngine).ocrConfidence(null)
+                .extractedJson(null)
+                .validationJson("{\"warnings\":[\"OCR/템플릿 추출이 아직 구성되지 않았습니다.\"],\"errors\":[]}")
+                .status(PsychAssessmentExtractionStatus.NEEDS_REVIEW).build();
+
+        PsychAssessmentExtraction savedExtraction = extractionRepository.save(extraction);
+
+        var validation = validationService.validate(savedExtraction, java.util.List.of());
+        savedExtraction.setValidationJson(validation.validationJson());
+        savedExtraction.setStatus(
+                validation.needsReview() ? PsychAssessmentExtractionStatus.NEEDS_REVIEW
+                        : PsychAssessmentExtractionStatus.DONE);
+        extractionRepository.save(savedExtraction);
+
+        doc.setStatus(PsychAssessmentDocumentStatus.OCR_DONE);
+        documentRepository.save(doc);
+
+        log.info("Psych extraction created (MVP): tenantId={}, documentId={}, status={}",
+                tenantId, documentId, savedExtraction.getStatus());
     }
 
     private final PsychAssessmentExtractionRunner runner;
@@ -44,45 +85,48 @@ public class PsychAssessmentExtractionServiceImpl implements PsychAssessmentExtr
         private final com.coresolution.consultation.assessment.service.PsychAssessmentReportService reportService;
 
         @Async
-        public void processAsync(Long documentId) {
-            String tenantId = TenantContextHolder.getRequiredTenantId();
-            PsychAssessmentDocument doc =
-                    documentRepository.findByTenantIdAndId(tenantId, documentId)
-                            .orElseThrow(() -> new IllegalArgumentException("문서를 찾을 수 없습니다."));
-
-            String templateId = null;
-            String extractionMode = "GENERIC";
-            String ocrEngine = "UNCONFIGURED";
-
-            PsychAssessmentExtraction extraction = PsychAssessmentExtraction.builder()
-                    .tenantId(tenantId).documentId(doc.getId()).templateId(templateId)
-                    .extractionMode(extractionMode).ocrEngine(ocrEngine).ocrConfidence(null)
-                    .extractedJson(null)
-                    .validationJson("{\"warnings\":[\"OCR/템플릿 추출이 아직 구성되지 않았습니다.\"],\"errors\":[]}")
-                    .status(PsychAssessmentExtractionStatus.NEEDS_REVIEW).build();
-
-            PsychAssessmentExtraction savedExtraction = extractionRepository.save(extraction);
-
-            var validation = validationService.validate(savedExtraction, java.util.List.of());
-            savedExtraction.setValidationJson(validation.validationJson());
-            savedExtraction.setStatus(
-                    validation.needsReview() ? PsychAssessmentExtractionStatus.NEEDS_REVIEW
-                            : PsychAssessmentExtractionStatus.DONE);
-            extractionRepository.save(savedExtraction);
-
-            doc.setStatus(PsychAssessmentDocumentStatus.OCR_DONE);
-            documentRepository.save(doc);
-
-            log.info("Psych extraction created (MVP): tenantId={}, documentId={}, status={}",
-                    tenantId, documentId, savedExtraction.getStatus());
-
-            // 추출 완료 후 AI 리포트 자동 생성 (업로드 → 추출 → 분석 결과까지 한 번에)
+        public void processAsync(String tenantId, Long documentId) {
             try {
-                Long reportId = reportService.generateLatestReport(documentId);
-                log.info("Psych auto report generated: documentId={}, reportId={}", documentId, reportId);
-            } catch (Exception e) {
-                log.warn("Psych auto report generation failed for documentId={} (user can trigger manually): {}",
-                        documentId, e.getMessage());
+                TenantContextHolder.setTenantId(tenantId);
+                PsychAssessmentDocument doc =
+                        documentRepository.findByTenantIdAndId(tenantId, documentId)
+                                .orElseThrow(() -> new IllegalArgumentException("문서를 찾을 수 없습니다."));
+
+                String templateId = null;
+                String extractionMode = "GENERIC";
+                String ocrEngine = "UNCONFIGURED";
+
+                PsychAssessmentExtraction extraction = PsychAssessmentExtraction.builder()
+                        .tenantId(tenantId).documentId(doc.getId()).templateId(templateId)
+                        .extractionMode(extractionMode).ocrEngine(ocrEngine).ocrConfidence(null)
+                        .extractedJson(null)
+                        .validationJson("{\"warnings\":[\"OCR/템플릿 추출이 아직 구성되지 않았습니다.\"],\"errors\":[]}")
+                        .status(PsychAssessmentExtractionStatus.NEEDS_REVIEW).build();
+
+                PsychAssessmentExtraction savedExtraction = extractionRepository.save(extraction);
+
+                var validation = validationService.validate(savedExtraction, java.util.List.of());
+                savedExtraction.setValidationJson(validation.validationJson());
+                savedExtraction.setStatus(
+                        validation.needsReview() ? PsychAssessmentExtractionStatus.NEEDS_REVIEW
+                                : PsychAssessmentExtractionStatus.DONE);
+                extractionRepository.save(savedExtraction);
+
+                doc.setStatus(PsychAssessmentDocumentStatus.OCR_DONE);
+                documentRepository.save(doc);
+
+                log.info("Psych extraction created (MVP): tenantId={}, documentId={}, status={}",
+                        tenantId, documentId, savedExtraction.getStatus());
+
+                try {
+                    Long reportId = reportService.generateLatestReport(documentId);
+                    log.info("Psych auto report generated: documentId={}, reportId={}", documentId, reportId);
+                } catch (Exception e) {
+                    log.warn("Psych auto report generation failed for documentId={} (user can trigger manually): {}",
+                            documentId, e.getMessage());
+                }
+            } finally {
+                TenantContextHolder.clear();
             }
         }
     }

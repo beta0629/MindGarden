@@ -1,17 +1,22 @@
 /**
  * PsychUploadSection - PDF 업로드 섹션
- * ContentSection noCard + ContentCard, mg-upload-area
+ * ContentSection noCard + ContentCard, mg-upload-area (react-dropzone)
  *
  * @author Core Solution
  * @since 2026-02-27
  */
 
-import React, { useRef, useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import PropTypes from 'prop-types';
+import { useDropzone } from 'react-dropzone';
 import { Upload, Search, X } from 'lucide-react';
 import ContentSection from '../../../dashboard-v2/content/ContentSection';
 import ContentCard from '../../../dashboard-v2/content/ContentCard';
+import notificationManager from '../../../../utils/notification';
 import './PsychUploadSection.css';
+
+const PDF_ACCEPT = { 'application/pdf': ['.pdf'] };
+const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB, 서버 검열과 동일
 
 const getClientLabel = (c) => c.name || c.email || `내담자 #${c.id}`;
 
@@ -20,31 +25,37 @@ const PsychUploadSection = ({
   onUploadTypeChange,
   uploadFile,
   onFilePick,
-  onDrop,
-  onDragOver,
-  onDragLeave,
   onUpload,
   uploading,
-  isDragOver,
   fileInputId = 'psych-assessment-file-input',
   clientId,
   onClientIdChange,
   clients = [],
   clientsLoading = false
 }) => {
-  const fileInputRef = useRef(null);
   const [clientFilter, setClientFilter] = useState('');
 
-  const handleKeyDown = (e) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      fileInputRef.current?.click();
+  const onDropRejectedHandler = useCallback((fileRejections) => {
+    const first = fileRejections[0];
+    if (!first?.errors?.length) {
+      notificationManager.warning('파일을 선택할 수 없습니다. PDF 파일(50MB 이하)만 가능합니다.');
+      return;
     }
-  };
+    const message = first.errors.map((e) => e.message).join('. ') || '파일 형식 또는 크기가 올바르지 않습니다.';
+    notificationManager.warning(message);
+  }, []);
 
-  const handleAreaClick = () => {
-    fileInputRef.current?.click();
-  };
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    accept: PDF_ACCEPT,
+    maxSize: MAX_FILE_SIZE,
+    multiple: false,
+    onDrop: (acceptedFiles) => {
+      if (acceptedFiles.length > 0) {
+        onFilePick(acceptedFiles[0]);
+      }
+    },
+    onDropRejected: onDropRejectedHandler
+  });
 
   const filteredClients = useMemo(() => {
     const trimmed = clientFilter.trim();
@@ -72,17 +83,19 @@ const PsychUploadSection = ({
         </div>
         <div className="mg-v2-psych-upload-section__body">
           <div
-            className={`mg-upload-area ${isDragOver ? 'mg-upload-area--drag-over' : ''}`}
-            onDrop={onDrop}
-            onDragOver={onDragOver}
-            onDragLeave={onDragLeave}
-            onKeyDown={handleKeyDown}
-            onClick={handleAreaClick}
-            role="button"
-            tabIndex={0}
-            aria-label="파일을 드래그하여 놓거나 클릭하여 선택"
+            {...getRootProps({
+              className: `mg-upload-area ${isDragActive ? 'mg-upload-area--drag-over' : ''}`,
+              'aria-label': '파일을 드래그하여 놓거나 클릭하여 선택'
+            })}
           >
-            <p>파일을 여기로 드래그&드롭 하거나 아래에서 선택하세요.</p>
+            <input
+              {...getInputProps({
+                id: fileInputId,
+                accept: 'application/pdf',
+                'aria-label': 'PDF 파일 선택'
+              })}
+            />
+            <p>파일을 여기로 드래그&드롭 하거나 클릭하여 선택하세요.</p>
             <p>{uploadFile ? `선택됨: ${uploadFile.name}` : '선택된 파일 없음'}</p>
           </div>
           <div className="mg-v2-psych-upload-section__client-card">
@@ -184,14 +197,6 @@ const PsychUploadSection = ({
                 );
               })}
             </fieldset>
-            <input
-              ref={fileInputRef}
-              id={fileInputId}
-              type="file"
-              accept="application/pdf"
-              className="mg-input"
-              onChange={(e) => onFilePick(e.target.files?.[0] || null)}
-            />
             <button
               type="button"
               className="mg-v2-button mg-v2-button-primary"
@@ -215,12 +220,8 @@ PsychUploadSection.propTypes = {
   onUploadTypeChange: PropTypes.func.isRequired,
   uploadFile: PropTypes.object,
   onFilePick: PropTypes.func.isRequired,
-  onDrop: PropTypes.func.isRequired,
-  onDragOver: PropTypes.func.isRequired,
-  onDragLeave: PropTypes.func.isRequired,
   onUpload: PropTypes.func.isRequired,
   uploading: PropTypes.bool,
-  isDragOver: PropTypes.bool,
   fileInputId: PropTypes.string,
   clientId: PropTypes.number,
   onClientIdChange: PropTypes.func.isRequired,
@@ -231,7 +232,12 @@ PsychUploadSection.propTypes = {
       email: PropTypes.string
     })
   ),
-  clientsLoading: PropTypes.bool
+  clientsLoading: PropTypes.bool,
+  // 하위 호환용 (dropzone 내부 처리로 미사용)
+  onDrop: PropTypes.func,
+  onDragOver: PropTypes.func,
+  onDragLeave: PropTypes.func,
+  isDragOver: PropTypes.bool
 };
 
 export default PsychUploadSection;

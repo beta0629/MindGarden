@@ -1,6 +1,10 @@
 # Core Solution 운영 환경 설정
 # 서버: beta74.cafe24.com (211.37.179.204)
 # 도메인: https://m-garden.co.kr
+#
+# 운영 필수 환경 변수 (미설정 시 기동 실패):
+#   - DB_PASSWORD, JWT_SECRET, PERSONAL_DATA_ENCRYPTION_KEY, PERSONAL_DATA_ENCRYPTION_IV
+#   - PSYCH_DOC_KEY_B64  # 심리검사 PDF 암호화용 AES 키 (32바이트 Base64)
 
 spring:
   profiles:
@@ -196,6 +200,11 @@ file:
     max-size: 10MB
     allowed-types: jpg,jpeg,png,gif,pdf,doc,docx
     upload-dir: /var/mindgarden/uploads
+
+# 운영 환경 변수 검증 (필수 변수 미설정 시 기동 거부)
+environment:
+  validation:
+    enabled: true
 
 # 상담 시스템 운영 설정
 consultation:

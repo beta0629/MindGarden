@@ -75,13 +75,20 @@ public class EnvironmentValidationConfig {
             hasErrors = true;
         }
         
-        // 5. 암호화 키 길이 검증
+        // 5. 심리검사 문서 암호화 키 검증 (AES 32바이트 Base64)
+        String psychDocKeyB64 = System.getenv("PSYCH_DOC_KEY_B64");
+        if (psychDocKeyB64 == null || psychDocKeyB64.trim().isEmpty()) {
+            log.error("❌ 필수 환경 변수 누락: PSYCH_DOC_KEY_B64 (심리검사 PDF 암호화용)");
+            hasErrors = true;
+        }
+        
+        // 6. 암호화 키 길이 검증
         if (encryptionKey != null && encryptionKey.length() < 32) {
             log.error("❌ 암호화 키 길이 부족: PERSONAL_DATA_ENCRYPTION_KEY (최소 32자 필요, 현재: {}자)", encryptionKey.length());
             hasErrors = true;
         }
         
-        // 6. JWT Secret 길이 검증
+        // 7. JWT Secret 길이 검증
         if (jwtSecret != null && jwtSecret.length() < 32) {
             log.error("❌ JWT Secret 길이 부족: JWT_SECRET (최소 32자 필요, 현재: {}자)", jwtSecret.length());
             hasErrors = true;

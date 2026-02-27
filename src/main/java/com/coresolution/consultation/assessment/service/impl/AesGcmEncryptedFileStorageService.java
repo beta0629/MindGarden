@@ -12,6 +12,7 @@ import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+import jakarta.annotation.PostConstruct;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -40,6 +41,21 @@ public class AesGcmEncryptedFileStorageService implements EncryptedFileStorageSe
 
     public AesGcmEncryptedFileStorageService(Environment environment) {
         this.environment = environment;
+    }
+
+    /**
+     * 운영(또는 dev/local이 아닌) 프로파일에서는 PSYCH_DOC_KEY_B64 미설정 시 기동 실패.
+     * 배포 전에 운영 세팅을 해두지 않으면 서버가 올라오지 않도록 함.
+     */
+    @PostConstruct
+    public void requireEncryptionKeyInNonDevProfiles() {
+        if (isDevOrLocalProfile()) {
+            return;
+        }
+        if (!StringUtils.hasText(System.getenv(KEY_B64_ENV))) {
+            throw new IllegalStateException(
+                "운영 환경에서는 암호화 키가 필요합니다. 환경 변수 " + KEY_B64_ENV + " 를 설정한 뒤 서버를 시작하세요.");
+        }
     }
 
     @Override

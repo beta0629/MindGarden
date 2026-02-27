@@ -133,7 +133,7 @@ jobs:
         username: ${{ secrets.DEV_SERVER_USER }}
         key: ${{ secrets.DEV_SERVER_SSH_KEY }}
         port: 22
-        timeout: 60s
+        timeout: 120s
         command_timeout: 5m
         script: |
           cd /var/www/mindgarden-dev
@@ -220,7 +220,7 @@ jobs:
               sleep 1
             done
             # 추가 안정화 대기
-            sleep 3
+            sleep 5
           else
             echo "ℹ️ 서비스가 이미 중지되어 있음"
           fi
@@ -229,10 +229,10 @@ jobs:
           echo "🚀 서비스 시작 중..."
           sudo systemctl start mindgarden-dev.service
           
-          # 서비스가 완전히 시작될 때까지 대기 (최대 60초)
+          # 서비스가 완전히 시작될 때까지 대기 (최대 90초, deploy-backend-dev와 동일)
           echo "⏳ 서비스 시작 대기 중..."
           SERVICE_STARTED=false
-          for i in {1..60}; do
+          for i in {1..90}; do
             if sudo systemctl is-active --quiet mindgarden-dev.service; then
               # 서비스가 활성화되었지만, 애플리케이션이 완전히 시작되었는지 확인
               if curl -f -s http://localhost:8080/actuator/health > /dev/null 2>&1; then

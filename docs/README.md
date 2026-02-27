@@ -37,12 +37,13 @@
 
 ## 빠른 링크
 
-- **루트에서 이동한 문서**: [QUICK_START](./guides/quick-start/QUICK_START.md), [DEPLOYMENT_CHECKLIST](./guides/deployment/DEPLOYMENT_CHECKLIST.md), [PROJECT_STRUCTURE](./architecture/PROJECT_STRUCTURE.md), [KOREAN_ENCODING_SETUP](./guides/development/KOREAN_ENCODING_SETUP.md), [QUICK_WILDCARD_TEST](./troubleshooting/QUICK_WILDCARD_TEST.md), [매칭·스케줄 통합 요구사항](./testing/MATCHING_SCHEDULE_INTEGRATION_REQUIREMENTS.md), 과거 계획은 [project-management/archive/](./project-management/archive/) (PROJECT_REORGANIZATION_PLAN, FOLDER_REORGANIZATION_GUIDE)
+- **루트에서 이동한 문서**: [QUICK_START](./guides/quick-start/QUICK_START.md), [DEPLOYMENT_CHECKLIST](./guides/deployment/DEPLOYMENT_CHECKLIST.md), [PROJECT_STRUCTURE](./architecture/PROJECT_STRUCTURE.md), [KOREAN_ENCODING_SETUP](./guides/development/KOREAN_ENCODING_SETUP.md), [QUICK_WILDCARD_TEST](./troubleshooting/QUICK_WILDCARD_TEST.md), [매칭·스케줄 통합 요구사항](./testing/MATCHING_SCHEDULE_INTEGRATION_REQUIREMENTS.md), [오늘문서_정리_20260212](./project-management/2026-02/오늘문서_정리_20260212.md), 과거 계획은 [project-management/archive/](./project-management/archive/) (PROJECT_REORGANIZATION_PLAN, FOLDER_REORGANIZATION_GUIDE)
 - **표준 문서 전체 목록**: [docs/standards/README.md](./standards/README.md) (45개 표준)
 - **문서 작성·정리 규칙**: [.cursor/skills/core-solution-documentation/SKILL.md](../.cursor/skills/core-solution-documentation/SKILL.md)
 - **서브에이전트 활용(문서 전담 포함)**: [docs/standards/SUBAGENT_USAGE.md](./standards/SUBAGENT_USAGE.md)
 - **디버깅·원인 분석 문서 목록**: [docs/debug/README.md](./debug/README.md)
-- **간단 표준 요약**: [docs/STANDARDS.md](./STANDARDS.md) (핵심 4개 등 요약)
+- **간단 표준 요약**: [docs/standards/STANDARDS_SUMMARY.md](./standards/STANDARDS_SUMMARY.md) (핵심 4개 등 요약)
+- **최근 트러블슈팅**: [개발 서버 기동 실패 분석](./troubleshooting/DEV_SERVER_STARTUP_FAILURE_ANALYSIS.md), [심리검사 tenantId 이슈](./troubleshooting/PSYCH_PAGE_TENANT_ID_ISSUE.md)
 
 ---
 
@@ -53,4 +54,4 @@
 
 ---
 
-*최종 업데이트: 문서 전담 규칙 및 진입점 정리 반영*
+*최종 업데이트: 문서 위치 체계 정리(오늘문서→project-management/2026-02, STANDARDS→standards/STANDARDS_SUMMARY), debug·standards 인덱스 갱신*

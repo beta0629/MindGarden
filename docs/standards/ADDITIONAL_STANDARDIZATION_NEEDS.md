@@ -588,7 +588,7 @@ public class TestDataBuilder {
 
 4. **표준 문서 인덱스 업데이트**
    - `docs/standards/README.md` 업데이트
-   - `docs/STANDARDS.md` 업데이트
+   - `docs/standards/STANDARDS_SUMMARY.md` 업데이트
 
 ---
 

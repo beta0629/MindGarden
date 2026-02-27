@@ -9,6 +9,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -22,7 +23,9 @@ import lombok.NoArgsConstructor;
  * @since 2025-01-21
  */
 @Entity
-@Table(name = "system_config")
+@Table(name = "system_config", uniqueConstraints = {
+    @UniqueConstraint(columnNames = { "tenantId", "configKey" })
+})
 @Data
 @Builder
 @NoArgsConstructor
@@ -36,7 +39,7 @@ public class SystemConfig {
     @Column(name = "tenant_id", length = 100)
     private String tenantId;
     
-    @Column(name = "config_key", nullable = false, unique = true, length = 100)
+    @Column(name = "config_key", nullable = false, length = 100)
     private String configKey;
     
     @Column(name = "config_value", columnDefinition = "TEXT")

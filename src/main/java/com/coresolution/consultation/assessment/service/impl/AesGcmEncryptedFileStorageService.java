@@ -140,9 +140,12 @@ public class AesGcmEncryptedFileStorageService implements EncryptedFileStorageSe
 
     private boolean isDevOrLocalProfile() {
         if (environment == null) {
-            return false;
+            return true; // 프로파일 정보 없음 시 기동 실패 방지를 위해 dev로 간주
         }
         String[] actives = environment.getActiveProfiles();
+        if (actives == null || actives.length == 0) {
+            return true; // 프로파일 미설정 시 dev로 간주 (개발 서버 기동 실패 방지)
+        }
         for (String profile : actives) {
             if ("dev".equalsIgnoreCase(profile) || "local".equalsIgnoreCase(profile)) {
                 return true;

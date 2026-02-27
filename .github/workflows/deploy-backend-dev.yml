@@ -367,8 +367,14 @@ jobs:
           done
           
           echo "⚠️ 헬스체크 실패 - 서비스 로그 확인 필요"
-          sudo journalctl -u mindgarden-dev.service --no-pager -n 100
-          echo "--- dev-error.log (stderr) ---"
-          sudo tail -80 /var/log/mindgarden/dev-error.log 2>/dev/null || true
+          echo "=== journalctl (최근 400줄, 기동 직후 예외 확인용) ==="
+          sudo journalctl -u mindgarden-dev.service --no-pager -n 400
+          echo "=== /var/log/mindgarden/dev-error.log (stderr) ==="
+          sudo tail -200 /var/log/mindgarden/dev-error.log 2>/dev/null || echo "(파일 없음 또는 비어있음)"
+          echo "=== 서비스 WorkingDirectory 로그 디렉터리 ==="
+          ls -la /var/www/mindgarden-dev/logs/ 2>/dev/null || true
+          for f in /var/www/mindgarden-dev/logs/*.log 2>/dev/null; do
+            [ -f "$f" ] && echo "--- $f ---" && sudo tail -50 "$f" 2>/dev/null || true
+          done
           exit 1
 

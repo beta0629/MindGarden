@@ -55,9 +55,10 @@ import { WIDGET_CONSTANTS } from '../constants/widgetConstants';
  * @returns {Object} 위젯 상태 및 메서드
  */
 export const useWidget = (config = {}, user = null, options = {}) => {
-  // 기본 옵션 설정
+  // 기본 옵션 설정 (initialLoadKey: user 준비 후 로드 보장용, deps에 넣어 effect 재실행 유도)
   const {
     immediate = true,
+    initialLoadKey = undefined,
     cache = false,
     retryCount = 3,
     retryDelay = 1000
@@ -325,7 +326,7 @@ export const useWidget = (config = {}, user = null, options = {}) => {
         setLoading(false);
       }
     }
-  }, [immediate, type, config.defaultValue]);
+  }, [immediate, type, config.defaultValue, initialLoadKey]);
 
 /**
    * 컴포넌트 언마운트 시 정리

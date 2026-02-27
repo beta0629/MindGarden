@@ -8,7 +8,7 @@
  * @since 2026-02-27
  */
 
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { RefreshCw } from 'lucide-react';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import ContentArea from '../dashboard-v2/content/ContentArea';
@@ -109,13 +109,14 @@ const PsychAssessmentManagement = ({ user: propUser }) => {
     };
   }, []);
 
-  // user 준비 후에만 API 호출 (다른 페이지는 user 있을 때만 로드하는 반면, useWidget은 기본이 마운트 즉시 호출 → tenantId 미설정 400 방지)
+  // user 준비 후에만 API 호출 + initialLoadKey로 user 채워질 때 effect 재실행 보장 (tenantId 400·목록 미표시 방지)
   const {
     data,
     loading,
     refresh
   } = useWidget(widgetConfig.config, user, {
     immediate: !!(user && user.id),
+    initialLoadKey: user?.id ?? null,
     cache: false,
     retryCount: 2
   });
@@ -123,6 +124,15 @@ const PsychAssessmentManagement = ({ user: propUser }) => {
   const stats = data?.stats || {};
   const recent = data?.recent || [];
   const recentLoadError = !!data?._loadErrors?.recent;
+
+  // user가 비동기로 채워질 때 한 번 로드 보장 (initialLoadKey만으로 누락될 수 있는 타이밍 보완)
+  const prevUserIdRef = useRef(user?.id);
+  useEffect(() => {
+    if (user?.id && prevUserIdRef.current !== user.id) {
+      prevUserIdRef.current = user.id;
+      refresh();
+    }
+  }, [user?.id, refresh]);
 
   // 서버 목록에 반영된 문서는 낙관적 목록에서 제거 (documentId 기준)
   useEffect(() => {

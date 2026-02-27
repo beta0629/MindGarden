@@ -49,10 +49,14 @@ public class AesGcmEncryptedFileStorageService implements EncryptedFileStorageSe
      */
     @PostConstruct
     public void requireEncryptionKeyInNonDevProfiles() {
-        if (isDevOrLocalProfile()) {
+        boolean devOrLocal = isDevOrLocalProfile();
+        log.info("심리검사 암호화 키 검증 시작: devOrLocal={}, activeProfiles={}",
+                devOrLocal, environment != null ? Arrays.toString(environment.getActiveProfiles()) : "null");
+        if (devOrLocal) {
             return;
         }
         if (!StringUtils.hasText(System.getenv(KEY_B64_ENV))) {
+            log.error("운영 환경에서 PSYCH_DOC_KEY_B64 미설정. 환경 변수 설정 후 재기동 필요.");
             throw new IllegalStateException(
                 "운영 환경에서는 암호화 키가 필요합니다. 환경 변수 " + KEY_B64_ENV + " 를 설정한 뒤 서버를 시작하세요.");
         }

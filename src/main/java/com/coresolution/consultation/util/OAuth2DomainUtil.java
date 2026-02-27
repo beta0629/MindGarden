@@ -5,9 +5,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import jakarta.annotation.PostConstruct;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 /**
  * OAuth2 도메인 변환 유틸리티
@@ -35,16 +37,27 @@ public class OAuth2DomainUtil {
 
     @PostConstruct
     public void init() {
+        log.info("OAuth2 도메인 변환 설정 초기화 시작: mainDomainsConfig={}, subdomainPatternsConfig={}",
+                mainDomainsConfig, subdomainPatternsConfig);
         // 메인 도메인 목록 초기화
         mainDomains = Arrays.asList(mainDomainsConfig.split(","));
-        
-        // 서브도메인 패턴 초기화
-        subdomainPatterns = Arrays.stream(subdomainPatternsConfig.split(","))
-                .map(String::trim)
-                .map(Pattern::compile)
-                .toList();
-        
-        log.info("OAuth2 도메인 변환 설정 로드: mainDomains={}, subdomainPatterns={}, removeRegexPattern={}", 
+        // 서브도메인 패턴 초기화 (잘못된 정규식 시 로그 후 예외)
+        List<Pattern> patterns = new ArrayList<>();
+        for (String part : subdomainPatternsConfig.split(",")) {
+            String trimmed = part.trim();
+            if (trimmed.isEmpty()) {
+                continue;
+            }
+            try {
+                patterns.add(Pattern.compile(trimmed));
+            } catch (PatternSyntaxException e) {
+                log.error("OAuth2 subdomain 패턴 오류: property=spring.security.oauth2.domain.subdomain-patterns, value={}, error={}",
+                        subdomainPatternsConfig, e.getMessage(), e);
+                throw new IllegalStateException("OAuth2 subdomain 패턴 설정 오류: " + e.getMessage(), e);
+            }
+        }
+        subdomainPatterns = patterns;
+        log.info("OAuth2 도메인 변환 설정 로드: mainDomains={}, subdomainPatterns={}, removeRegexPattern={}",
                 mainDomains, subdomainPatternsConfig, removeRegexPattern);
     }
 

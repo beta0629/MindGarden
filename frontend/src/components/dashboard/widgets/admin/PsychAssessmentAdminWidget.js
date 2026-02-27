@@ -16,6 +16,7 @@ import StandardizedApi from '../../../../utils/standardizedApi';
 import PsychKpiSection from '../../../admin/psych-assessment/organisms/PsychKpiSection';
 import PsychUploadSection from '../../../admin/psych-assessment/organisms/PsychUploadSection';
 import PsychDocumentListBlock from '../../../admin/psych-assessment/organisms/PsychDocumentListBlock';
+import MGModal from '../../../common/MGModal';
 import UnifiedLoading from '../../../common/UnifiedLoading';
 import '../../../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './PsychAssessmentAdminWidget.css';
@@ -26,6 +27,9 @@ const PsychAssessmentAdminWidget = forwardRef(({ widget, user }, ref) => {
   const [uploading, setUploading] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
   const [optimisticDocuments, setOptimisticDocuments] = useState([]);
+  const [reportModalOpen, setReportModalOpen] = useState(false);
+  const [reportContent, setReportContent] = useState(null);
+  const [reportLoading, setReportLoading] = useState(false);
 
   const isAdminUser = RoleUtils.isAdmin(user) || RoleUtils.hasRole(user, 'HQ_MASTER');
 
@@ -184,6 +188,32 @@ const PsychAssessmentAdminWidget = forwardRef(({ widget, user }, ref) => {
     }
   };
 
+  const handleViewReport = async (documentId) => {
+    if (!documentId) return;
+    setReportLoading(true);
+    setReportContent(null);
+    setReportModalOpen(true);
+    try {
+      const res = await StandardizedApi.get(`/api/v1/assessments/psych/documents/${documentId}/report`);
+      const data = res?.data ?? res;
+      if (data?.reportMarkdown != null) {
+        setReportContent(data);
+      } else {
+        setReportContent({ reportMarkdown: '(내용 없음)', modelName: '', createdAt: '' });
+      }
+    } catch (e) {
+      if (e?.status === 404 || e?.response?.status === 404) {
+        setReportContent(null);
+        notificationManager.show('아직 생성된 리포트가 없습니다. "리포트 생성" 버튼을 눌러 주세요.', 'info');
+      } else {
+        notificationManager.show(e?.message || '리포트를 불러오지 못했습니다.', 'error');
+      }
+      setReportModalOpen(false);
+    } finally {
+      setReportLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="psych-assessment-admin-widget psych-assessment-admin-widget--loading">
@@ -226,8 +256,31 @@ const PsychAssessmentAdminWidget = forwardRef(({ widget, user }, ref) => {
       <PsychDocumentListBlock
         documents={displayDocuments}
         onGenerateReport={handleGenerateReport}
+        onViewReport={handleViewReport}
         listLoadError={recentLoadError}
       />
+
+      <MGModal
+        isOpen={reportModalOpen}
+        onClose={() => setReportModalOpen(false)}
+        title="AI 분석 결과"
+        size="large"
+        showCloseButton
+      >
+        {reportLoading ? (
+          <UnifiedLoading type="inline" text="리포트를 불러오는 중..." />
+        ) : reportContent?.reportMarkdown ? (
+          <div className="mg-v2-psych-report-modal-body">
+            {reportContent.modelName && (
+              <p className="mg-v2-psych-report-modal-meta">
+                모델: {reportContent.modelName}
+                {reportContent.createdAt && ` · 생성: ${reportContent.createdAt}`}
+              </p>
+            )}
+            <pre className="mg-v2-psych-report-modal-markdown">{reportContent.reportMarkdown}</pre>
+          </div>
+        ) : null}
+      </MGModal>
     </div>
   );
 });

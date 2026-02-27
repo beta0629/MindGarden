@@ -8,7 +8,7 @@
 
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import { FileText, LayoutGrid, List, PlayCircle } from 'lucide-react';
+import { FileText, LayoutGrid, List, PlayCircle, FileSearch } from 'lucide-react';
 import ContentSection from '../../../dashboard-v2/content/ContentSection';
 import ContentCard from '../../../dashboard-v2/content/ContentCard';
 import './PsychDocumentListBlock.css';
@@ -25,6 +25,7 @@ const getStatusVariant = (status) => {
 const PsychDocumentListBlock = ({
   documents = [],
   onGenerateReport,
+  onViewReport,
   listLoadError = false
 }) => {
   const [viewMode, setViewMode] = useState('table');
@@ -68,6 +69,16 @@ const PsychDocumentListBlock = ({
               <td data-label="파일">{d.originalFilename || '파일명 없음'}</td>
               <td data-label="생성">{d.createdAt || '-'}</td>
               <td data-label="액션">
+                {onViewReport && (
+                  <button
+                    type="button"
+                    className="mg-v2-button mg-v2-button-outline mg-v2-button-sm mg-v2-psych-document-list-block__action"
+                    onClick={() => onViewReport(d.documentId)}
+                    title="AI 분석 결과 보기"
+                  >
+                    <FileSearch size={16} /> 리포트 보기
+                  </button>
+                )}
                 <button
                   type="button"
                   className="mg-v2-button mg-v2-button-outline mg-v2-button-sm"
@@ -96,14 +107,26 @@ const PsychDocumentListBlock = ({
           </div>
           <p className="mg-v2-psych-document-list-block__card-filename">{d.originalFilename || '파일명 없음'}</p>
           <p className="mg-v2-psych-document-list-block__card-date">{d.createdAt || '-'}</p>
-          <button
-            type="button"
-            className="mg-v2-button mg-v2-button-outline mg-v2-button-sm"
-            onClick={() => onGenerateReport?.(d.documentId)}
-            title="리포트 생성"
-          >
-            <PlayCircle size={16} /> 리포트 생성
-          </button>
+          <div className="mg-v2-psych-document-list-block__card-actions">
+            {onViewReport && (
+              <button
+                type="button"
+                className="mg-v2-button mg-v2-button-outline mg-v2-button-sm"
+                onClick={() => onViewReport(d.documentId)}
+                title="AI 분석 결과 보기"
+              >
+                <FileSearch size={16} /> 리포트 보기
+              </button>
+            )}
+            <button
+              type="button"
+              className="mg-v2-button mg-v2-button-outline mg-v2-button-sm"
+              onClick={() => onGenerateReport?.(d.documentId)}
+              title="리포트 생성"
+            >
+              <PlayCircle size={16} /> 리포트 생성
+            </button>
+          </div>
         </div>
       ))}
     </div>
@@ -158,6 +181,7 @@ PsychDocumentListBlock.propTypes = {
     })
   ),
   onGenerateReport: PropTypes.func,
+  onViewReport: PropTypes.func,
   listLoadError: PropTypes.bool
 };
 

@@ -41,6 +41,7 @@ public class PsychAssessmentExtractionServiceImpl implements PsychAssessmentExtr
         private final PsychAssessmentDocumentRepository documentRepository;
         private final PsychAssessmentExtractionRepository extractionRepository;
         private final com.coresolution.consultation.assessment.service.PsychAssessmentValidationService validationService;
+        private final com.coresolution.consultation.assessment.service.PsychAssessmentReportService reportService;
 
         @Async
         public void processAsync(Long documentId) {
@@ -74,6 +75,15 @@ public class PsychAssessmentExtractionServiceImpl implements PsychAssessmentExtr
 
             log.info("Psych extraction created (MVP): tenantId={}, documentId={}, status={}",
                     tenantId, documentId, savedExtraction.getStatus());
+
+            // 추출 완료 후 AI 리포트 자동 생성 (업로드 → 추출 → 분석 결과까지 한 번에)
+            try {
+                Long reportId = reportService.generateLatestReport(documentId);
+                log.info("Psych auto report generated: documentId={}, reportId={}", documentId, reportId);
+            } catch (Exception e) {
+                log.warn("Psych auto report generation failed for documentId={} (user can trigger manually): {}",
+                        documentId, e.getMessage());
+            }
         }
     }
 

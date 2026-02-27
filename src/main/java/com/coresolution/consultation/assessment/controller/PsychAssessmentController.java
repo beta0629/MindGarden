@@ -2,6 +2,8 @@ package com.coresolution.consultation.assessment.controller;
 
 import com.coresolution.consultation.assessment.dto.PsychAssessmentUploadResponse;
 import com.coresolution.consultation.assessment.dto.PsychAssessmentDocumentListItem;
+import com.coresolution.consultation.assessment.dto.PsychAssessmentReportViewDto;
+import com.coresolution.consultation.assessment.repository.PsychAssessmentReportRepository;
 import com.coresolution.consultation.assessment.model.PsychAssessmentDocumentStatus;
 import com.coresolution.consultation.assessment.model.PsychAssessmentType;
 import com.coresolution.consultation.assessment.service.PsychAssessmentIngestService;
@@ -15,6 +17,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -32,6 +35,7 @@ public class PsychAssessmentController extends BaseApiController {
     private final com.coresolution.consultation.assessment.service.PsychAssessmentReportService reportService;
     private final com.coresolution.consultation.assessment.service.PsychAssessmentStatsService statsService;
     private final PsychAssessmentDocumentRepository documentRepository;
+    private final PsychAssessmentReportRepository reportRepository;
 
     @PostMapping(value = "/documents", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("isAuthenticated()")
@@ -56,6 +60,28 @@ public class PsychAssessmentController extends BaseApiController {
             @PathVariable Long documentId) {
         Long reportId = reportService.generateLatestReport(documentId);
         return success(java.util.Map.of("reportId", reportId));
+    }
+
+    @GetMapping("/documents/{documentId}/report")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "최신 리포트 조회", description = "문서에 대한 최신 AI 분석 리포트를 조회합니다.")
+    public ResponseEntity<?> getLatestReport(
+            @PathVariable Long documentId) {
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        var report = reportRepository.findTopByTenantIdAndDocumentIdOrderByCreatedAtDesc(tenantId, documentId)
+                .orElse(null);
+        if (report == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+        PsychAssessmentReportViewDto dto = PsychAssessmentReportViewDto.builder()
+                .reportId(report.getId())
+                .documentId(report.getDocumentId())
+                .reportMarkdown(report.getReportMarkdown())
+                .modelName(report.getModelName())
+                .promptVersion(report.getPromptVersion())
+                .createdAt(report.getCreatedAt())
+                .build();
+        return success(dto);
     }
 
     @GetMapping("/stats")

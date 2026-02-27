@@ -1,0 +1,80 @@
+/**
+ * PsychUploadSection - B0KlA 토큰 기반
+ * 섹션 헤더 악센트 바, form-row
+ *
+ * @author Core Solution
+ * @since 2026-02-27
+ */
+
+/* 업로드 드롭 영역 (페이지·위젯 공통) */
+.mg-upload-area {
+  border: 2px dashed var(--ad-b0kla-border, var(--mg-gray-300));
+  background: var(--ad-b0kla-card-bg, var(--mg-gray-50));
+  border-radius: var(--ad-b0kla-radius-sm, 12px);
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.mg-upload-area--drag-over {
+  border-color: var(--ad-b0kla-green, var(--mg-success-500));
+  background: var(--ad-b0kla-green-bg, var(--mg-success-50));
+}
+
+.mg-v2-psych-upload-section {
+  margin-bottom: var(--mg-layout-gap, 1.5rem);
+}
+
+.mg-v2-psych-upload-section__header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding-left: 16px;
+  border-left: 4px solid var(--ad-b0kla-green);
+  margin-bottom: 1.25rem;
+}
+
+.mg-v2-psych-upload-section__header .mg-v2-content-section__title {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--ad-b0kla-title-color);
+}
+
+.mg-v2-psych-upload-section__body {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.mg-v2-psych-upload-section .mg-upload-area {
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  text-align: center;
+  cursor: pointer;
+}
+
+.mg-v2-psych-upload-section .mg-upload-area p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--ad-b0kla-text-secondary);
+}
+
+.mg-v2-psych-upload-section__form-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.mg-v2-psych-upload-section__form-row .mg-input[type="file"] {
+  max-width: 100%;
+}
+
+.mg-v2-psych-upload-section__hint {
+  margin: 0;
+  font-size: 14px;
+  color: var(--ad-b0kla-text-secondary);
+}

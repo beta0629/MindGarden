@@ -1,61 +1,25 @@
 /**
  * Psych Assessment Admin Widget - B0KlA 아토믹 디자인
- * docs/project-management/PSYCH_ASSESSMENT_UI_ATOMIC_DESIGN_REVIEW.md
+ * BaseWidget 제거, Organism 조합 전용
+ * mg-upload-area: PsychUploadSection.css에 정의
  *
  * @author Core Solution
  * @since 2026-02-27
  */
 
-/* ===== 업로드 드롭 영역 (인라인 스타일 제거) ===== */
-.mg-upload-area {
-  border: 2px dashed var(--ad-b0kla-border, var(--mg-gray-300));
-  background: var(--ad-b0kla-card-bg, var(--mg-gray-50));
-  border-radius: var(--ad-b0kla-radius-sm, 12px);
-  transition: border-color 0.2s, background 0.2s;
-}
-
-.mg-upload-area--drag-over {
-  border-color: var(--ad-b0kla-green, var(--mg-success-500));
-  background: var(--ad-b0kla-green-bg, var(--mg-success-50));
-}
-
-/* ===== B0KlA 스코프: 통계 카드 KPI 스타일 ===== */
-.mg-v2-ad-b0kla .psych-assessment-admin-widget .mg-stats-grid .mg-stats-card {
+/* 위젯 컨테이너 */
+.psych-assessment-admin-widget {
   display: flex;
+  flex-direction: column;
+  gap: var(--mg-layout-gap, 1.5rem);
+}
+
+.psych-assessment-admin-widget--loading,
+.psych-assessment-admin-widget--error {
+  min-height: 120px;
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 1.25rem;
-  padding: 1.5rem;
-  background: var(--ad-b0kla-card-bg);
-  border: 1px solid var(--ad-b0kla-border);
-  border-radius: var(--ad-b0kla-radius-sm);
-  box-shadow: var(--ad-b0kla-shadow);
-  transition: all 0.2s;
-}
-
-.mg-v2-ad-b0kla .psych-assessment-admin-widget .mg-stats-grid .mg-stats-card:hover {
-  box-shadow: var(--ad-b0kla-shadow-hover);
-}
-
-.mg-v2-ad-b0kla .psych-assessment-admin-widget .mg-stats-grid .mg-stats-card__content {
-  flex: 1;
-  min-width: 0;
-  text-align: left;
-}
-
-.mg-v2-ad-b0kla .psych-assessment-admin-widget .mg-stats-grid .mg-stats-card__value {
-  font-size: 1.75rem;
-  font-weight: 700;
-  color: var(--ad-b0kla-title-color);
-  margin-top: 0.25rem;
-}
-
-.mg-v2-ad-b0kla .psych-assessment-admin-widget .mg-stats-grid .mg-stats-card__label {
-  font-size: 14px;
-  color: var(--ad-b0kla-text-secondary);
-}
-
-/* ===== 섹션 헤더 악센트 바 ===== */
-.mg-v2-ad-b0kla .psych-assessment-admin-widget .mg-card__header.mg-card__header--accent {
-  padding-left: 16px;
-  border-left: 4px solid var(--ad-b0kla-green);
+  justify-content: center;
+  gap: 0.75rem;
 }

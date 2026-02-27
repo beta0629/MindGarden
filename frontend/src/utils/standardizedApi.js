@@ -30,8 +30,8 @@ class StandardizedApi {
      */
     static async get(endpoint, params = {}, options = {}) {
         try {
-            // 엔드포인트 검증
-            this.validateEndpoint(endpoint);
+            // 엔드포인트 검증 (콜백으로 전달 시 this 상실 방지)
+            StandardizedApi.validateEndpoint(endpoint);
             
             // 세션 갱신 및 헤더 준비
             const headers = await getDefaultApiHeadersAsync({}, true);
@@ -48,7 +48,7 @@ class StandardizedApi {
             return response;
         } catch (error) {
             console.error(`❌ [표준화 API] GET ${endpoint} 실패:`, error);
-            throw this.handleError(error, endpoint, 'GET');
+            throw StandardizedApi.handleError(error, endpoint, 'GET');
         }
     }
     
@@ -61,7 +61,7 @@ class StandardizedApi {
      */
     static async post(endpoint, data = {}, options = {}) {
         try {
-            this.validateEndpoint(endpoint);
+            StandardizedApi.validateEndpoint(endpoint);
             
             const headers = await getDefaultApiHeadersAsync({}, true);
             const finalOptions = {
@@ -77,7 +77,7 @@ class StandardizedApi {
             return response;
         } catch (error) {
             console.error(`❌ [표준화 API] POST ${endpoint} 실패:`, error);
-            throw this.handleError(error, endpoint, 'POST');
+            throw StandardizedApi.handleError(error, endpoint, 'POST');
         }
     }
     
@@ -90,7 +90,7 @@ class StandardizedApi {
      */
     static async put(endpoint, data = {}, options = {}) {
         try {
-            this.validateEndpoint(endpoint);
+            StandardizedApi.validateEndpoint(endpoint);
             
             const headers = await getDefaultApiHeadersAsync({}, true);
             const finalOptions = {
@@ -106,7 +106,7 @@ class StandardizedApi {
             return response;
         } catch (error) {
             console.error(`❌ [표준화 API] PUT ${endpoint} 실패:`, error);
-            throw this.handleError(error, endpoint, 'PUT');
+            throw StandardizedApi.handleError(error, endpoint, 'PUT');
         }
     }
     
@@ -119,7 +119,7 @@ class StandardizedApi {
      */
     static async postFormData(endpoint, formData, options = {}) {
         try {
-            this.validateEndpoint(endpoint);
+            StandardizedApi.validateEndpoint(endpoint);
             
             const headers = await getDefaultApiHeadersAsync({}, true);
             delete headers['Content-Type']; // multipart/form-data 자동 설정
@@ -140,7 +140,7 @@ class StandardizedApi {
             return response;
         } catch (error) {
             console.error(`❌ [표준화 API] POST FormData ${endpoint} 실패:`, error);
-            throw this.handleError(error, endpoint, 'POST');
+            throw StandardizedApi.handleError(error, endpoint, 'POST');
         }
     }
     
@@ -152,7 +152,7 @@ class StandardizedApi {
      */
     static async delete(endpoint, options = {}) {
         try {
-            this.validateEndpoint(endpoint);
+            StandardizedApi.validateEndpoint(endpoint);
             
             const headers = await getDefaultApiHeadersAsync({}, true);
             const finalOptions = {
@@ -168,7 +168,7 @@ class StandardizedApi {
             return response;
         } catch (error) {
             console.error(`❌ [표준화 API] DELETE ${endpoint} 실패:`, error);
-            throw this.handleError(error, endpoint, 'DELETE');
+            throw StandardizedApi.handleError(error, endpoint, 'DELETE');
         }
     }
     

@@ -1,23 +1,160 @@
 /**
  * 심리검사 리포트 관리 (관리자 페이지)
  *
- * 요구사항:
- * - 위젯이 아니라 관리자 대시보드에서 접근 가능한 "페이지"로 제공
- * - 표준화 원칙 준수(토큰 CSS, 공통 컴포넌트 재사용)
+ * MappingManagementPage와 동일한 디자인·레이아웃 적용
+ * ContentArea + ContentHeader + PsychKpiSection + PsychUploadSection + PsychDocumentListBlock
+ *
+ * @author Core Solution
+ * @since 2026-02-27
  */
 
-import React from 'react';
+import React, { useMemo, useState } from 'react';
+import { RefreshCw } from 'lucide-react';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
+import ContentArea from '../dashboard-v2/content/ContentArea';
+import ContentHeader from '../dashboard-v2/content/ContentHeader';
+import UnifiedLoading from './common/UnifiedLoading';
+import PsychKpiSection from './psych-assessment/organisms/PsychKpiSection';
+import PsychUploadSection from './psych-assessment/organisms/PsychUploadSection';
+import PsychDocumentListBlock from './psych-assessment/organisms/PsychDocumentListBlock';
+import ComingSoon from './common/ComingSoon';
 import { useSession } from '../../contexts/SessionContext';
 import { RoleUtils } from '../../constants/roles';
-import ComingSoon from '../common/ComingSoon';
-import PsychAssessmentAdminWidget from '../dashboard/widgets/admin/PsychAssessmentAdminWidget';
+import { useWidget } from '../../hooks/useWidget';
+import notificationManager from '../../utils/notification';
+import StandardizedApi from '../../utils/standardizedApi';
+import './AdminDashboard/AdminDashboardB0KlA.css';
+import './PsychAssessmentManagementPage.css';
 
 const PsychAssessmentManagement = ({ user: propUser }) => {
   const { user: sessionUser } = useSession();
   const user = propUser || sessionUser;
 
-  // 권한 체크(관리자만)
+  const [uploadType, setUploadType] = useState('TCI');
+  const [uploadFile, setUploadFile] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
+
+  const widgetConfig = useMemo(() => {
+    const dataSource = {
+      type: 'multi-api',
+      cache: false,
+      refreshInterval: 60000,
+      fetcher: StandardizedApi.get,
+      endpoints: [
+        {
+          url: '/api/v1/assessments/psych/stats',
+          key: 'stats',
+          fallback: {}
+        },
+        {
+          url: '/api/v1/assessments/psych/documents/recent',
+          key: 'recent',
+          fallback: []
+        }
+      ],
+      transform: (input) => {
+        if (!Array.isArray(input)) return input;
+        const [statsRes, recentRes] = input;
+        const stats = statsRes?.data ?? statsRes ?? {};
+        const recentRaw = recentRes?.data ?? recentRes;
+        return {
+          stats: stats && typeof stats === 'object' && !Array.isArray(stats) ? stats : {},
+          recent: Array.isArray(recentRaw) ? recentRaw : []
+        };
+      }
+    };
+
+    return {
+      config: {
+        title: '심리검사 리포트(AI)',
+        subtitle: 'TCI/MMPI 업로드 · 처리상태 · 리포트 생성',
+        dataSource
+      }
+    };
+  }, []);
+
+  const {
+    data,
+    loading,
+    refresh
+  } = useWidget(widgetConfig.config, user, {
+    immediate: true,
+    cache: false,
+    retryCount: 2
+  });
+
+  const stats = data?.stats || {};
+  const recent = data?.recent || [];
+
+  const handlePickFile = (file) => {
+    if (!file) return;
+    if (file.type !== 'application/pdf') {
+      notificationManager.show('PDF 파일만 업로드할 수 있습니다.', 'warning');
+      return;
+    }
+    setUploadFile(file);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+    const file = e.dataTransfer?.files?.[0];
+    handlePickFile(file);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isDragOver) setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+  };
+
+  const handleUpload = async () => {
+    if (!uploadFile) {
+      notificationManager.show('업로드할 PDF 파일을 선택해주세요.', 'warning');
+      return;
+    }
+    setUploading(true);
+    try {
+      const form = new FormData();
+      form.append('type', uploadType);
+      form.append('file', uploadFile);
+
+      const res = await StandardizedApi.postFormData('/api/v1/assessments/psych/documents', form);
+      if (res?.success === false) {
+        throw new Error(res?.message || '업로드에 실패했습니다.');
+      }
+      notificationManager.show('업로드가 완료되었습니다. 추출 작업이 진행됩니다.', 'success');
+      setUploadFile(null);
+      refresh();
+    } catch (e) {
+      notificationManager.show(e?.message || '업로드에 실패했습니다.', 'error');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleGenerateReport = async (documentId) => {
+    if (!documentId) return;
+    try {
+      const res = await StandardizedApi.post(`/api/v1/assessments/psych/documents/${documentId}/report`, {});
+      if (res?.success === false) {
+        throw new Error(res?.message || '리포트 생성에 실패했습니다.');
+      }
+      notificationManager.show('리포트 생성 요청이 완료되었습니다.', 'success');
+      refresh();
+    } catch (e) {
+      notificationManager.show(e?.message || '리포트 생성에 실패했습니다.', 'error');
+    }
+  };
+
   if (!RoleUtils.isAdmin(user) && !RoleUtils.hasRole(user, 'HQ_MASTER')) {
     return (
       <AdminCommonLayout>
@@ -29,25 +166,63 @@ const PsychAssessmentManagement = ({ user: propUser }) => {
     );
   }
 
-  // 현재는 위젯 컴포넌트를 페이지에 재사용(중복 구현 방지)
-  // 추후 페이지 전용 레이아웃/필터/상세 화면을 추가 가능
-  const widget = {
-    type: 'psych-assessment-admin',
-    config: {
-      title: '심리검사 리포트(AI)',
-      subtitle: 'TCI/MMPI 업로드 · 처리상태 · 리포트 생성'
-    }
-  };
+  if (loading) {
+    return (
+      <AdminCommonLayout>
+        <div className="mg-v2-ad-b0kla mg-v2-psych-assessment-management">
+          <div className="mg-v2-ad-b0kla__container">
+            <UnifiedLoading type="page" text="데이터를 불러오는 중..." variant="pulse" />
+          </div>
+        </div>
+      </AdminCommonLayout>
+    );
+  }
 
   return (
     <AdminCommonLayout>
-      <div className="mg-v2-ad-b0kla__container">
-        <PsychAssessmentAdminWidget widget={widget} user={user} />
+      <div className="mg-v2-ad-b0kla mg-v2-psych-assessment-management">
+        <div className="mg-v2-ad-b0kla__container">
+          <ContentArea>
+            <ContentHeader
+              title="심리검사 리포트(AI)"
+              subtitle="TCI/MMPI 업로드 · 처리상태 · 리포트 생성"
+              actions={
+                <button
+                  type="button"
+                  className="mg-v2-mapping-header-btn mg-v2-mapping-header-btn--primary"
+                  onClick={() => refresh()}
+                  title="새로고침"
+                >
+                  <RefreshCw size={20} />
+                  새로고침
+                </button>
+              }
+            />
+
+            <PsychKpiSection stats={stats} />
+
+            <PsychUploadSection
+              uploadType={uploadType}
+              onUploadTypeChange={setUploadType}
+              uploadFile={uploadFile}
+              onFilePick={handlePickFile}
+              onDrop={handleDrop}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onUpload={handleUpload}
+              uploading={uploading}
+              isDragOver={isDragOver}
+            />
+
+            <PsychDocumentListBlock
+              documents={recent}
+              onGenerateReport={handleGenerateReport}
+            />
+          </ContentArea>
+        </div>
       </div>
     </AdminCommonLayout>
   );
 };
 
 export default PsychAssessmentManagement;
-
-

@@ -74,13 +74,14 @@ const PsychAssessmentAdminWidget = forwardRef(({ widget, user }, ref) => {
     };
   }, [widget]);
 
+  // user 준비 후에만 API 호출 (tenantId 필요 API가 너무 이르게 호출되어 400 방지)
   const {
     data,
     loading,
     error,
     refresh
   } = useWidget(widgetWithDataSource.config, user, {
-    immediate: true,
+    immediate: !!(user && user.id),
     cache: false,
     retryCount: 2
   });

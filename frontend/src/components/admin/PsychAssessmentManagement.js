@@ -109,12 +109,13 @@ const PsychAssessmentManagement = ({ user: propUser }) => {
     };
   }, []);
 
+  // user 준비 후에만 API 호출 (다른 페이지는 user 있을 때만 로드하는 반면, useWidget은 기본이 마운트 즉시 호출 → tenantId 미설정 400 방지)
   const {
     data,
     loading,
     refresh
   } = useWidget(widgetConfig.config, user, {
-    immediate: true,
+    immediate: !!(user && user.id),
     cache: false,
     retryCount: 2
   });

@@ -186,9 +186,12 @@ export const apiGet = async (endpoint, params = {}, options = {}) => {
                                    errorMessage.includes('로그인이 필요');
 
           if (isTenantIdError) {
+            const err = new Error(errorMessage || 'Tenant ID is required. Please log in again.');
+            err.status = 400;
+            err.response = { data: errorData };
             const isLocalEnv = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
             if (isLocalEnv) {
-              return null;
+              throw err; // 로컬에서는 빈 목록으로 오인하지 않도록 throw
             }
             const currentPath = window.location.pathname;
             const isPublicPage = currentPath === '/login' ||
@@ -203,7 +206,7 @@ export const apiGet = async (endpoint, params = {}, options = {}) => {
             if (!isPublicPage) {
               console.log('🔐 400 오류 (Tenant ID 부족) - 로그인 페이지로 리다이렉트 (서브도메인 유지)');
               redirectToLoginOnce();
-              return null;
+              throw err; // 위젯이 실패로 인식해 "목록을 불러오지 못했습니다" 표시 (return null 시 빈 목록으로 오인됨)
             }
           }
         } catch (e) {
@@ -286,7 +289,7 @@ export const apiGet = async (endpoint, params = {}, options = {}) => {
         if (!isPublicPage) {
           console.log('🔐 400 오류 (Tenant ID 부족) - 로그인 페이지로 리다이렉트 (서브도메인 유지)');
           redirectToLoginOnce();
-          return null;
+          throw error; // 위젯이 실패로 인식하도록 throw (return null 시 빈 목록으로 오인됨)
         }
       }
     }

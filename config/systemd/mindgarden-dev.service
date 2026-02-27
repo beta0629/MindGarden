@@ -9,11 +9,9 @@ WorkingDirectory=/var/www/mindgarden-dev
 ExecStart=/opt/mindgarden/start.sh
 Restart=always
 RestartSec=10
-StandardOutput=journal
-StandardError=journal
+TimeoutStartSec=120
 SyslogIdentifier=mindgarden-dev
-
-# 로그 설정
+# stdout/stderr 모두 journal + 파일에 남기기 (journalctl과 dev-error.log에서 예외 확인 가능)
 StandardOutput=append:/var/log/mindgarden/dev.log
 StandardError=append:/var/log/mindgarden/dev-error.log
 

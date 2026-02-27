@@ -487,12 +487,15 @@ public class AuthController extends BaseApiController {
         );
         
         if (authResponse.isSuccess()) {
-            // 사용자 정보 세션에 저장
+            // 사용자 정보 세션에 저장 (tenantId 포함 — 재로그인 후 심리검사 등 테넌트 기준 조회에 필요)
             User sessionUser = new User();
             sessionUser.setId(authResponse.getUser().getId());
             sessionUser.setEmail(authResponse.getUser().getEmail());
             sessionUser.setName(authResponse.getUser().getName());
             sessionUser.setRole(UserRole.fromString(authResponse.getUser().getRole()));
+            if (authResponse.getUser().getTenantId() != null) {
+                sessionUser.setTenantId(authResponse.getUser().getTenantId());
+            }
             
             SessionUtils.setCurrentUser(session, sessionUser);
             

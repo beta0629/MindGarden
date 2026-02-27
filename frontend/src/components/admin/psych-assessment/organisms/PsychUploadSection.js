@@ -24,7 +24,11 @@ const PsychUploadSection = ({
   onUpload,
   uploading,
   isDragOver,
-  fileInputId = 'psych-assessment-file-input'
+  fileInputId = 'psych-assessment-file-input',
+  clientId,
+  onClientIdChange,
+  clients = [],
+  clientsLoading = false
 }) => {
   const fileInputRef = useRef(null);
 
@@ -38,6 +42,8 @@ const PsychUploadSection = ({
   const handleAreaClick = () => {
     fileInputRef.current?.click();
   };
+
+  const currentClientId = clientId === null || clientId === undefined ? '' : String(clientId);
 
   return (
     <ContentSection noCard className="mg-v2-psych-upload-section">
@@ -60,6 +66,29 @@ const PsychUploadSection = ({
           >
             <p>파일을 여기로 드래그&드롭 하거나 아래에서 선택하세요.</p>
             <p>{uploadFile ? `선택됨: ${uploadFile.name}` : '선택된 파일 없음'}</p>
+          </div>
+          <div className="mg-v2-psych-upload-section__form-row mg-v2-psych-upload-section__form-row--client">
+            <label className="mg-v2-psych-upload-section__label" htmlFor="psych-upload-client-select">
+              내담자 선택
+            </label>
+            <select
+              id="psych-upload-client-select"
+              className="mg-select mg-v2-psych-upload-section__client-select"
+              value={currentClientId}
+              onChange={(e) => {
+                const v = e.target.value;
+                onClientIdChange(v === '' ? null : Number(v));
+              }}
+              disabled={clientsLoading}
+              aria-label="내담자 선택 (선택 사항)"
+            >
+              <option value="">선택 안 함</option>
+              {clients.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name || c.email || `내담자 #${c.id}`}
+                </option>
+              ))}
+            </select>
           </div>
           <div className="mg-v2-psych-upload-section__form-row">
             <select
@@ -107,7 +136,17 @@ PsychUploadSection.propTypes = {
   onUpload: PropTypes.func.isRequired,
   uploading: PropTypes.bool,
   isDragOver: PropTypes.bool,
-  fileInputId: PropTypes.string
+  fileInputId: PropTypes.string,
+  clientId: PropTypes.number,
+  onClientIdChange: PropTypes.func.isRequired,
+  clients: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
+      name: PropTypes.string,
+      email: PropTypes.string
+    })
+  ),
+  clientsLoading: PropTypes.bool
 };
 
 export default PsychUploadSection;

@@ -69,6 +69,21 @@
   align-items: center;
 }
 
+.mg-v2-psych-upload-section__form-row--client {
+  align-items: center;
+}
+
+.mg-v2-psych-upload-section__label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ad-b0kla-title-color, var(--mg-gray-800));
+  margin: 0;
+}
+
+.mg-v2-psych-upload-section__client-select {
+  min-width: 200px;
+}
+
 .mg-v2-psych-upload-section__form-row .mg-input[type="file"] {
   max-width: 100%;
 }

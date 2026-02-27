@@ -8,7 +8,7 @@
  * @since 2026-02-27
  */
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { RefreshCw } from 'lucide-react';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import ContentArea from '../dashboard-v2/content/ContentArea';
@@ -26,6 +26,8 @@ import StandardizedApi from '../../utils/standardizedApi';
 import './AdminDashboard/AdminDashboardB0KlA.css';
 import './PsychAssessmentManagementPage.css';
 
+const CLIENTS_WITH_MAPPING_URL = '/api/v1/admin/clients/with-mapping-info';
+
 const PsychAssessmentManagement = ({ user: propUser }) => {
   const { user: sessionUser } = useSession();
   const user = propUser || sessionUser;
@@ -34,6 +36,32 @@ const PsychAssessmentManagement = ({ user: propUser }) => {
   const [uploadFile, setUploadFile] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
+  const [clientId, setClientId] = useState(null);
+  const [clients, setClients] = useState([]);
+  const [clientsLoading, setClientsLoading] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadClients = async () => {
+      setClientsLoading(true);
+      try {
+        const res = await StandardizedApi.get(CLIENTS_WITH_MAPPING_URL);
+        if (cancelled) return;
+        const raw = res?.data ?? res;
+        const list = raw?.clients ?? (Array.isArray(raw) ? raw : []);
+        setClients(Array.isArray(list) ? list : []);
+      } catch (e) {
+        if (!cancelled) {
+          console.error('내담자 목록 로드 실패:', e);
+          setClients([]);
+        }
+      } finally {
+        if (!cancelled) setClientsLoading(false);
+      }
+    };
+    loadClients();
+    return () => { cancelled = true; };
+  }, []);
 
   const widgetConfig = useMemo(() => {
     const dataSource = {
@@ -126,6 +154,9 @@ const PsychAssessmentManagement = ({ user: propUser }) => {
       const form = new FormData();
       form.append('type', uploadType);
       form.append('file', uploadFile);
+      if (clientId != null && clientId !== '') {
+        form.append('clientId', String(clientId));
+      }
 
       const res = await StandardizedApi.postFormData('/api/v1/assessments/psych/documents', form);
       if (res?.success === false) {
@@ -212,6 +243,10 @@ const PsychAssessmentManagement = ({ user: propUser }) => {
               onUpload={handleUpload}
               uploading={uploading}
               isDragOver={isDragOver}
+              clientId={clientId}
+              onClientIdChange={setClientId}
+              clients={clients}
+              clientsLoading={clientsLoading}
             />
 
             <PsychDocumentListBlock

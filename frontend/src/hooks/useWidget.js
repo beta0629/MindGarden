@@ -201,24 +201,32 @@ export const useWidget = (config = {}, user = null, options = {}) => {
         }
 
         const getter = fetcher || apiGet;
-        const responses = await Promise.all(
+        const results = await Promise.all(
           safeEndpoints.map(async (ep) => {
             const epUrl = ep?.url;
             const epParams = ep?.params || {};
             const fallback = ep?.fallback;
-            if (!epUrl) return fallback;
+            const key = ep?.key;
+            if (!epUrl) return { value: fallback, failed: false };
             try {
               const r = await getter(epUrl, epParams);
-              return r !== null && r !== undefined ? transformData(r) : fallback;
+              const value = r !== null && r !== undefined ? transformData(r) : fallback;
+              return { value, failed: false };
             } catch (e) {
-              return fallback;
+              console.error(`[useWidget] multi-api 엔드포인트 실패: ${key || epUrl}`, e);
+              return { value: fallback, failed: true, key };
             }
           })
         );
 
-        const multiTransformed = transform && typeof transform === 'function'
-          ? transform(responses)
-          : responses;
+        const values = results.map((r) => r.value);
+        const failedKeys = results.filter((r) => r.failed && r.key).map((r) => r.key);
+        let multiTransformed = transform && typeof transform === 'function'
+          ? transform(values)
+          : values;
+        if (failedKeys.length > 0 && multiTransformed && typeof multiTransformed === 'object' && !Array.isArray(multiTransformed)) {
+          multiTransformed = { ...multiTransformed, _loadErrors: Object.fromEntries(failedKeys.map((k) => [k, true])) };
+        }
 
         setData(multiTransformed);
         setLastUpdated(new Date());

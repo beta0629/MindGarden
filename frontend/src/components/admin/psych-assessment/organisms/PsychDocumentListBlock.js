@@ -24,7 +24,8 @@ const getStatusVariant = (status) => {
 
 const PsychDocumentListBlock = ({
   documents = [],
-  onGenerateReport
+  onGenerateReport,
+  listLoadError = false
 }) => {
   const [viewMode, setViewMode] = useState('table');
   const isEmpty = !documents || documents.length === 0;
@@ -34,8 +35,12 @@ const PsychDocumentListBlock = ({
       <div className="mg-v2-psych-document-list-block__empty-icon">
         <FileText size={48} />
       </div>
-      <h3 className="mg-v2-psych-document-list-block__empty-title">최근 업로드된 문서가 없습니다</h3>
-      <p className="mg-v2-psych-document-list-block__empty-desc">PDF를 업로드하면 여기에 표시됩니다.</p>
+      <h3 className="mg-v2-psych-document-list-block__empty-title">
+        {listLoadError ? '목록을 불러오지 못했습니다' : '최근 업로드된 문서가 없습니다'}
+      </h3>
+      <p className="mg-v2-psych-document-list-block__empty-desc">
+        {listLoadError ? '잠시 후 다시 시도해 주세요.' : 'PDF를 업로드하면 여기에 표시됩니다.'}
+      </p>
     </div>
   );
 
@@ -152,7 +157,8 @@ PsychDocumentListBlock.propTypes = {
       createdAt: PropTypes.string
     })
   ),
-  onGenerateReport: PropTypes.func
+  onGenerateReport: PropTypes.func,
+  listLoadError: PropTypes.bool
 };
 
 export default PsychDocumentListBlock;

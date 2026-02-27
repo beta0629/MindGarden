@@ -88,6 +88,7 @@ const PsychAssessmentAdminWidget = forwardRef(({ widget, user }, ref) => {
 
   const stats = data?.stats || {};
   const recent = data?.recent || [];
+  const recentLoadError = !!data?._loadErrors?.recent;
 
   const handlePickFile = (file) => {
     if (!file) return;
@@ -199,6 +200,7 @@ const PsychAssessmentAdminWidget = forwardRef(({ widget, user }, ref) => {
       <PsychDocumentListBlock
         documents={recent}
         onGenerateReport={handleGenerateReport}
+        listLoadError={recentLoadError}
       />
     </div>
   );

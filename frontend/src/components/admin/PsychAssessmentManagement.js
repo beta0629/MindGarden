@@ -114,6 +114,7 @@ const PsychAssessmentManagement = ({ user: propUser }) => {
 
   const stats = data?.stats || {};
   const recent = data?.recent || [];
+  const recentLoadError = !!data?._loadErrors?.recent;
 
   const handlePickFile = (file) => {
     if (!file) return;
@@ -252,6 +253,7 @@ const PsychAssessmentManagement = ({ user: propUser }) => {
             <PsychDocumentListBlock
               documents={recent}
               onGenerateReport={handleGenerateReport}
+              listLoadError={recentLoadError}
             />
           </ContentArea>
         </div>

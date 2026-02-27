@@ -176,4 +176,65 @@ public class SystemConfigController {
             return ResponseEntity.badRequest().body(response);
         }
     }
+    
+    /**
+     * 기본 AI 프로바이더 조회
+     */
+    @GetMapping("/ai-default-provider")
+    public ResponseEntity<Map<String, Object>> getAiDefaultProvider(HttpSession session) {
+        if (!hasAdminPermission(session)) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "접근 권한이 없습니다.");
+            return ResponseEntity.status(403).body(response);
+        }
+        try {
+            String providerId = systemConfigService.getAiDefaultProvider();
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("providerId", providerId);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("기본 AI 프로바이더 조회 실패", e);
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "기본 AI 프로바이더 조회 실패: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+    
+    /**
+     * 기본 AI 프로바이더 저장
+     */
+    @PostMapping("/ai-default-provider")
+    public ResponseEntity<Map<String, Object>> setAiDefaultProvider(
+            @RequestBody Map<String, String> request,
+            HttpSession session) {
+        if (!hasAdminPermission(session)) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "접근 권한이 없습니다.");
+            return ResponseEntity.status(403).body(response);
+        }
+        try {
+            String providerId = request.get("providerId");
+            if (providerId == null || providerId.isBlank()) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", false);
+                response.put("message", "providerId는 필수입니다.");
+                return ResponseEntity.badRequest().body(response);
+            }
+            systemConfigService.setAiDefaultProvider(providerId.trim());
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "기본 AI 프로바이더가 저장되었습니다.");
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("기본 AI 프로바이더 저장 실패", e);
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "기본 AI 프로바이더 저장 실패: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
 }

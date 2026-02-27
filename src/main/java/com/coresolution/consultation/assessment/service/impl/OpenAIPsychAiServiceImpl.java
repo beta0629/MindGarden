@@ -57,13 +57,14 @@ public class OpenAIPsychAiServiceImpl implements PsychAiService {
     public AiResult generateKoreanReport(PsychAssessmentType assessmentType, List<MetricInput> metrics, String baseMarkdown) {
         String tenantId = TenantContextHolder.getTenantId();
 
-        String apiKey = systemConfigService.getOpenAIApiKey();
-        String apiUrl = systemConfigService.getOpenAIApiUrl();
-        String model = systemConfigService.getOpenAIModel();
+        String providerId = systemConfigService.getAiDefaultProvider();
+        String apiKey = systemConfigService.getApiKeyForProvider(providerId);
+        String apiUrl = systemConfigService.getApiUrlForProvider(providerId);
+        String model = systemConfigService.getModelForProvider(providerId);
 
         if (!StringUtils.hasText(apiKey)) {
             // 키가 없으면 규칙 기반 결과만 반환 (안전 폴백)
-            return new AiResult(baseMarkdown, "{\"ai\":\"disabled\",\"reason\":\"OPENAI_API_KEY 미설정\"}", "disabled", PROMPT_VERSION);
+            return new AiResult(baseMarkdown, "{\"ai\":\"disabled\",\"reason\":\"" + providerId.toUpperCase() + "_API_KEY 미설정\"}", "disabled", PROMPT_VERSION);
         }
 
         try {

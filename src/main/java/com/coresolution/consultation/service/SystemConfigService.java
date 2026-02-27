@@ -48,6 +48,32 @@ public interface SystemConfigService {
     String getOpenAIModel();
     
     /**
+     * 기본 AI 프로바이더 ID 조회 (openai | gemini | claude | replicate).
+     * 없거나 빈 값이면 "openai" 반환.
+     */
+    String getAiDefaultProvider();
+    
+    /**
+     * 기본 AI 프로바이더 저장
+     */
+    void setAiDefaultProvider(String providerId);
+    
+    /**
+     * 지정 프로바이더의 API 키 조회
+     */
+    String getApiKeyForProvider(String providerId);
+    
+    /**
+     * 지정 프로바이더의 API URL 조회
+     */
+    String getApiUrlForProvider(String providerId);
+    
+    /**
+     * 지정 프로바이더의 모델명 조회
+     */
+    String getModelForProvider(String providerId);
+    
+    /**
      * USD-KRW 환율 조회
      */
     Double getUsdToKrwRate();

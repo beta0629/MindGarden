@@ -2,6 +2,7 @@ package com.coresolution.consultation.service.impl;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Map;
 import com.coresolution.consultation.entity.SystemConfig;
 import com.coresolution.consultation.repository.SystemConfigRepository;
 import com.coresolution.consultation.service.SystemConfigService;
@@ -119,6 +120,77 @@ public class SystemConfigServiceImpl implements SystemConfigService {
     @Override
     public String getOpenAIModel() {
         return getConfigValue("OPENAI_MODEL", "gpt-3.5-turbo");
+    }
+    
+    private static final String DEFAULT_AI_PROVIDER = "openai";
+    private static final Map<String, String> PROVIDER_PREFIX = Map.of(
+            "openai", "OPENAI",
+            "gemini", "GEMINI",
+            "claude", "CLAUDE",
+            "replicate", "REPLICATE"
+    );
+    private static final Map<String, String> DEFAULT_API_URL = Map.of(
+            "openai", "https://api.openai.com/v1/chat/completions",
+            "gemini", "",
+            "claude", "",
+            "replicate", ""
+    );
+    private static final Map<String, String> DEFAULT_MODEL = Map.of(
+            "openai", "gpt-3.5-turbo",
+            "gemini", "",
+            "claude", "claude-3-5-sonnet-20241022",
+            "replicate", ""
+    );
+    
+    @Override
+    public String getAiDefaultProvider() {
+        String value = getConfigValue("AI_DEFAULT_PROVIDER", "").trim().toLowerCase();
+        if (value.isEmpty() || !PROVIDER_PREFIX.containsKey(value)) {
+            return DEFAULT_AI_PROVIDER;
+        }
+        return value;
+    }
+    
+    @Override
+    @Transactional
+    public void setAiDefaultProvider(String providerId) {
+        String normalized = providerId != null ? providerId.trim().toLowerCase() : "";
+        if (normalized.isEmpty() || !PROVIDER_PREFIX.containsKey(normalized)) {
+            normalized = DEFAULT_AI_PROVIDER;
+        }
+        setConfigValue("AI_DEFAULT_PROVIDER", normalized, "기본 AI 프로바이더 (openai|gemini|claude|replicate)", "AI");
+    }
+    
+    @Override
+    public String getApiKeyForProvider(String providerId) {
+        String key = providerId != null ? providerId.trim().toLowerCase() : "";
+        String prefix = PROVIDER_PREFIX.get(key);
+        if (prefix == null) {
+            return "";
+        }
+        return getConfigValue(prefix + "_API_KEY", "");
+    }
+    
+    @Override
+    public String getApiUrlForProvider(String providerId) {
+        String key = providerId != null ? providerId.trim().toLowerCase() : "";
+        String prefix = PROVIDER_PREFIX.get(key);
+        if (prefix == null) {
+            return "";
+        }
+        String defaultUrl = DEFAULT_API_URL.getOrDefault(key, "");
+        return getConfigValue(prefix + "_API_URL", defaultUrl);
+    }
+    
+    @Override
+    public String getModelForProvider(String providerId) {
+        String key = providerId != null ? providerId.trim().toLowerCase() : "";
+        String prefix = PROVIDER_PREFIX.get(key);
+        if (prefix == null) {
+            return "";
+        }
+        String defaultModel = DEFAULT_MODEL.getOrDefault(key, "");
+        return getConfigValue(prefix + "_MODEL", defaultModel);
     }
     
     @Override

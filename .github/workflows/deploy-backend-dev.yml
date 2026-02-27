@@ -406,8 +406,10 @@ jobs:
           sudo tail -200 /var/log/mindgarden/dev-error.log 2>/dev/null || echo "(파일 없음 또는 비어있음)"
           echo "=== 서비스 WorkingDirectory 로그 디렉터리 ==="
           ls -la /var/www/mindgarden-dev/logs/ 2>/dev/null || true
-          for f in /var/www/mindgarden-dev/logs/*.log 2>/dev/null; do
-            [ -f "$f" ] && echo "--- $f ---" && sudo tail -50 "$f" 2>/dev/null || true
-          done
+          echo "=== logs/error.log (기동 직후 예외 확인, 최근 150줄) ==="
+          sudo tail -150 /var/www/mindgarden-dev/logs/error.log 2>/dev/null || echo "(파일 없음)"
+          for f in /var/www/mindgarden-dev/logs/*.log; do
+            [ -f "$f" ] && echo "--- $f (tail 30) ---" && sudo tail -30 "$f" 2>/dev/null || true
+          done 2>/dev/null
           exit 1
 

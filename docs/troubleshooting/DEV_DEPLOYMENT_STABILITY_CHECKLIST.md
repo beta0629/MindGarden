@@ -49,10 +49,15 @@
 2. **서버 로그 (SSH 접속 후)**  
    - `sudo journalctl -u mindgarden-dev.service --no-pager -n 400`  
    - `sudo tail -200 /var/log/mindgarden/dev-error.log`  
-   - `/var/www/mindgarden-dev/logs/error.log`  
+   - **기동 직후 예외는 주로 여기:** `sudo tail -200 /var/www/mindgarden-dev/logs/error.log`  
    → Flyway, Hibernate, OAuth2, NPE 등 **기동 직후 예외** 메시지 확인.
 
-3. **롤백**  
+3. **기동이 "Second-level cache disabled" / MySQL8Dialect 경고 직후에 멈출 때**  
+   - journalctl에는 예외가 안 보이고 로그가 끊기면, **애플리케이션 로그 파일**에 스택이 있을 수 있음.  
+   - 서버에서: `sudo tail -300 /var/www/mindgarden-dev/logs/error.log`  
+   - 그 다음 단계(세션팩토리 생성, Security, OAuth2, 스프링doc 등)에서 예외가 나는지 확인.
+
+4. **롤백**  
    - `/var/www/mindgarden-dev/backups/` 에 이전 JAR 백업이 있음.  
    - 필요 시 이전 백업으로 복원 후 `sudo systemctl restart mindgarden-dev.service`.
 

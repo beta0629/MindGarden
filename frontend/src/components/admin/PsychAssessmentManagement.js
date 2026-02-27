@@ -8,7 +8,7 @@
  * @since 2026-02-27
  */
 
-import React, { useMemo, useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { RefreshCw } from 'lucide-react';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import ContentArea from '../dashboard-v2/content/ContentArea';
@@ -21,7 +21,6 @@ import MGModal from '../common/MGModal';
 import ComingSoon from '../common/ComingSoon';
 import { useSession } from '../../contexts/SessionContext';
 import { RoleUtils } from '../../constants/roles';
-import { useWidget } from '../../hooks/useWidget';
 import notificationManager from '../../utils/notification';
 import StandardizedApi from '../../utils/standardizedApi';
 import './AdminDashboard/AdminDashboardB0KlA.css';
@@ -47,6 +46,34 @@ const PsychAssessmentManagement = ({ user: propUser }) => {
   const [reportContent, setReportContent] = useState(null);
   const [reportLoading, setReportLoading] = useState(false);
 
+  /** 일반 페이지 방식: stats/recent 직접 로드 (useWidget 미사용 — tenantId·호출 시점 이슈 회피) */
+  const [stats, setStats] = useState({});
+  const [recent, setRecent] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [recentLoadError, setRecentLoadError] = useState(false);
+
+  const loadStatsAndRecent = useCallback(async () => {
+    if (!user?.id) return;
+    setLoading(true);
+    setRecentLoadError(false);
+    try {
+      const [statsRes, recentRes] = await Promise.all([
+        StandardizedApi.get('/api/v1/assessments/psych/stats'),
+        StandardizedApi.get('/api/v1/assessments/psych/documents/recent')
+      ]);
+      const statsData = statsRes?.data ?? statsRes;
+      const recentData = recentRes?.data ?? recentRes;
+      setStats(statsData && typeof statsData === 'object' && !Array.isArray(statsData) ? statsData : {});
+      setRecent(Array.isArray(recentData) ? recentData : []);
+    } catch (e) {
+      console.error('심리검사 목록 로드 실패:', e);
+      setRecentLoadError(true);
+      setRecent([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [user?.id]);
+
   useEffect(() => {
     let cancelled = false;
     const loadClients = async () => {
@@ -70,69 +97,13 @@ const PsychAssessmentManagement = ({ user: propUser }) => {
     return () => { cancelled = true; };
   }, []);
 
-  const widgetConfig = useMemo(() => {
-    const dataSource = {
-      type: 'multi-api',
-      cache: false,
-      refreshInterval: 60000,
-      fetcher: StandardizedApi.get,
-      endpoints: [
-        {
-          url: '/api/v1/assessments/psych/stats',
-          key: 'stats',
-          fallback: {}
-        },
-        {
-          url: '/api/v1/assessments/psych/documents/recent',
-          key: 'recent',
-          fallback: []
-        }
-      ],
-      transform: (input) => {
-        if (!Array.isArray(input)) return input;
-        const [statsRes, recentRes] = input;
-        const stats = statsRes?.data ?? statsRes ?? {};
-        const recentRaw = recentRes?.data ?? recentRes;
-        return {
-          stats: stats && typeof stats === 'object' && !Array.isArray(stats) ? stats : {},
-          recent: Array.isArray(recentRaw) ? recentRaw : []
-        };
-      }
-    };
-
-    return {
-      config: {
-        title: '심리검사 리포트(AI)',
-        subtitle: 'TCI/MMPI 업로드 · 처리상태 · 리포트 생성',
-        dataSource
-      }
-    };
-  }, []);
-
-  // user 준비 후에만 API 호출 + initialLoadKey로 user 채워질 때 effect 재실행 보장 (tenantId 400·목록 미표시 방지)
-  const {
-    data,
-    loading,
-    refresh
-  } = useWidget(widgetConfig.config, user, {
-    immediate: !!(user && user.id),
-    initialLoadKey: user?.id ?? null,
-    cache: false,
-    retryCount: 2
-  });
-
-  const stats = data?.stats || {};
-  const recent = data?.recent || [];
-  const recentLoadError = !!data?._loadErrors?.recent;
-
-  // user가 비동기로 채워질 때 한 번 로드 보장 (initialLoadKey만으로 누락될 수 있는 타이밍 보완)
-  const prevUserIdRef = useRef(user?.id);
   useEffect(() => {
-    if (user?.id && prevUserIdRef.current !== user.id) {
-      prevUserIdRef.current = user.id;
-      refresh();
+    if (user?.id) {
+      loadStatsAndRecent();
+    } else {
+      setLoading(false);
     }
-  }, [user?.id, refresh]);
+  }, [user?.id, loadStatsAndRecent]);
 
   // 서버 목록에 반영된 문서는 낙관적 목록에서 제거 (documentId 기준)
   useEffect(() => {
@@ -210,7 +181,7 @@ const PsychAssessmentManagement = ({ user: propUser }) => {
         ]);
       }
       setUploadFile(null);
-      refresh();
+      loadStatsAndRecent();
     } catch (e) {
       notificationManager.show(e?.message || '업로드에 실패했습니다.', 'error');
     } finally {
@@ -226,7 +197,7 @@ const PsychAssessmentManagement = ({ user: propUser }) => {
         throw new Error(res?.message || '리포트 생성에 실패했습니다.');
       }
       notificationManager.show('리포트 생성 요청이 완료되었습니다.', 'success');
-      refresh();
+      loadStatsAndRecent();
     } catch (e) {
       notificationManager.show(e?.message || '리포트 생성에 실패했습니다.', 'error');
     }
@@ -293,7 +264,7 @@ const PsychAssessmentManagement = ({ user: propUser }) => {
                 <button
                   type="button"
                   className="mg-v2-mapping-header-btn mg-v2-mapping-header-btn--primary"
-                  onClick={() => refresh()}
+                  onClick={() => loadStatsAndRecent()}
                   title="새로고침"
                 >
                   <RefreshCw size={20} />

@@ -216,18 +216,21 @@ const SystemConfigManagement = () => {
                         </div>
                         <div className="header-text">
                             <h1>시스템 설정 관리</h1>
-                            <p>OpenAI API 키 및 웰니스 시스템 설정을 관리합니다.</p>
+                            <p>AI API 키(심리검사 리포트 등)·모델·웰니스 시스템 설정을 관리합니다.</p>
                         </div>
                     </div>
                 </div>
                 
-                {/* OpenAI 설정 */}
+                {/* AI API 설정 (OpenAI 호환: 심리검사 리포트, 웰니스 등) */}
                 <div className="mg-v2-card config-section">
                     <div className="section-header">
                         <Key size={24} />
-                        <h2>OpenAI API 설정</h2>
+                        <h2>AI API 설정</h2>
                     </div>
-                    
+                    <p className="config-section-desc">
+                        심리검사 AI 리포트·웰니스 등에 사용됩니다. OpenAI 외에 <strong>재미나이·클로드·Replicate</strong> 등
+                        OpenAI Chat Completions 호환 URL을 쓰면 해당 모델을 사용할 수 있습니다.
+                    </p>
                     <div className="config-grid">
                         <div className="config-item">
                             <label htmlFor="apiKey">API 키</label>
@@ -237,7 +240,7 @@ const SystemConfigManagement = () => {
                                     type={showApiKey ? 'text' : 'password'}
                                     value={configs.openaiApiKey}
                                     onChange={(e) => setConfigs(prev => ({ ...prev, openaiApiKey: e.target.value }))}
-                                    placeholder="sk-..."
+                                    placeholder="sk-... (OpenAI) 또는 해당 서비스 API 키"
                                     className="mg-v2-input"
                                 />
                                 <Button
@@ -252,7 +255,7 @@ const SystemConfigManagement = () => {
                             </div>
                             <small className="help-text">
                                 <Shield size={14} />
-                                API 키는 암호화되어 저장됩니다.
+                                API 키는 암호화되어 저장됩니다. 미등록 시 심리검사 리포트는 규칙 기반만 적용됩니다.
                             </small>
                         </div>
                         
@@ -260,25 +263,39 @@ const SystemConfigManagement = () => {
                             <label htmlFor="apiUrl">API URL</label>
                             <input
                                 id="apiUrl"
-                                type="url"
+                                type="text"
                                 value={configs.openaiApiUrl}
                                 onChange={(e) => setConfigs(prev => ({ ...prev, openaiApiUrl: e.target.value }))}
+                                placeholder="https://api.openai.com/v1/chat/completions"
                                 className="mg-v2-input"
                             />
+                            <small className="help-text">
+                                OpenAI 기본값 또는 재미나이·Replicate 등 호환 엔드포인트 URL을 입력하세요.
+                            </small>
                         </div>
                         
                         <div className="config-item">
                             <label htmlFor="model">모델</label>
-                            <select
+                            <input
                                 id="model"
+                                type="text"
                                 value={configs.openaiModel}
                                 onChange={(e) => setConfigs(prev => ({ ...prev, openaiModel: e.target.value }))}
-                                className="mg-v2-select"
-                            >
-                                <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
-                                <option value="gpt-4">GPT-4</option>
-                                <option value="gpt-4-turbo">GPT-4 Turbo</option>
-                            </select>
+                                placeholder="gpt-3.5-turbo"
+                                className="mg-v2-input"
+                                list="model-presets"
+                            />
+                            <datalist id="model-presets">
+                                <option value="gpt-3.5-turbo" />
+                                <option value="gpt-4" />
+                                <option value="gpt-4-turbo" />
+                                <option value="gpt-4o" />
+                                <option value="claude-3-5-sonnet-20241022" />
+                                <option value="claude-3-opus-20240229" />
+                            </datalist>
+                            <small className="help-text">
+                                사용할 모델 ID (예: gpt-4, claude-3-5-sonnet, 재미나이·Replicate 모델명 등).
+                            </small>
                         </div>
                     </div>
                     

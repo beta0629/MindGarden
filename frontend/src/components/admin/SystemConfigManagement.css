@@ -63,6 +63,13 @@
     color: var(--dark-gray);
 }
 
+.config-section-desc {
+    font-size: var(--mg-body-size);
+    color: var(--medium-gray);
+    margin: 0 0 var(--spacing-md) 0;
+    line-height: 1.5;
+}
+
 .config-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));

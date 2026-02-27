@@ -10,7 +10,8 @@
     "test:report": "playwright show-report",
     "test:admin": "playwright test tests/admin",
     "test:consultant": "playwright test tests/consultant",
-    "test:client": "playwright test tests/client"
+    "test:client": "playwright test tests/client",
+    "test:dev": "BASE_URL=https://mindgarden.dev.core-solution.co.kr playwright test tests/admin/psych-assessments-after-login.spec.ts --config=playwright.manual.config.ts --project=chromium"
   },
   "devDependencies": {
     "@playwright/test": "^1.41.2",
@@ -18,4 +19,3 @@
     "typescript": "^5.3.3"
   }
 }
-

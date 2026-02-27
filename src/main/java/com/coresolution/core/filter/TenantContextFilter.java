@@ -3,6 +3,7 @@ package com.coresolution.core.filter;
 import java.io.IOException;
 import com.coresolution.consultation.constant.SessionConstants;
 import com.coresolution.consultation.entity.User;
+import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.core.annotation.Order;
@@ -34,7 +35,9 @@ public class TenantContextFilter implements Filter {
     // 브랜치 개념 제거: BranchRepository 의존성 제거됨 (표준화 2025-12-05)
     private final com.coresolution.core.repository.TenantRepository tenantRepository;
     private final org.springframework.core.env.Environment environment;
-    
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private UserRepository userRepository;
+
     // 로컬 개발 환경용 기본 테넌트 ID (서브도메인이 없을 때 사용)
     @org.springframework.beans.factory.annotation.Value("${local.default-tenant-id:${LOCAL_DEFAULT_TENANT_ID:}}")
     private String localDefaultTenantId;
@@ -314,15 +317,28 @@ public class TenantContextFilter implements Filter {
                     session.setAttribute(SESSION_TENANT_ID, user.getTenantId());
                     log.info("✅ Tenant ID extracted from user entity: {}", user.getTenantId());
                     return user.getTenantId();
-                } else {
-                    log.warn("⚠️ User 엔티티에 tenantId가 없습니다: userId={}, role={}, email={}",
-                            user.getId(), user.getRole(), user.getEmail());
-
-                    // ⚠️ 중요: User 엔티티에 tenantId가 없을 때는 데이터베이스에서 조회 시도
-                    // (레거시 데이터 또는 마이그레이션 이슈일 수 있음)
-                    // 하지만 보안상 필수이므로 일단 경고만 하고 계속 진행
-                    // 실제 tenantId는 헤더나 다른 소스에서 올 수 있음
                 }
+                // 1-1-1. 세션 User에 tenantId가 없을 때 DB에서 조회 후 세션 보완 (재로그인/직렬화 이슈 대응)
+                if (user.getId() != null && userRepository != null) {
+                    try {
+                        java.util.Optional<User> dbUserOpt = userRepository.findById(user.getId());
+                        if (dbUserOpt.isPresent()) {
+                            User dbUser = dbUserOpt.get();
+                            if (dbUser.getTenantId() != null && !dbUser.getTenantId().isEmpty()) {
+                                user.setTenantId(dbUser.getTenantId());
+                                SessionUtils.setCurrentUser(session, user);
+                                session.setAttribute(SESSION_TENANT_ID, dbUser.getTenantId());
+                                session.setAttribute(SessionConstants.TENANT_ID, dbUser.getTenantId());
+                                log.info("✅ Tenant ID 복구(DB): userId={}, tenantId={}", user.getId(), dbUser.getTenantId());
+                                return dbUser.getTenantId();
+                            }
+                        }
+                    } catch (Exception e) {
+                        log.warn("⚠️ User tenantId DB 조회 실패 (무시): userId={}, error={}", user.getId(), e.getMessage());
+                    }
+                }
+                log.warn("⚠️ User 엔티티에 tenantId가 없습니다: userId={}, role={}, email={}",
+                        user.getId(), user.getRole(), user.getEmail());
             } else {
                 log.debug("세션에 User 정보가 없습니다.");
             }

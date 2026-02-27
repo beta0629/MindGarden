@@ -12,9 +12,10 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 /**
- * 심리검사 API(/api/v1/assessments/psych/*) 요청 시 TenantContext가 비어 있으면
- * SecurityContext의 인증 사용자(User)에서 tenantId를 설정합니다.
- * 필터 체인에서 tenantId가 설정되지 않은 edge case를 보완합니다.
+ * 심리검사 API(/api/v1/assessments/psych/*) 요청 시 인증된 사용자의 tenantId를
+ * TenantContext에 설정합니다. 재로그인·세션 갱신 후에도 목록이 비어 보이는 문제를
+ * 방지하기 위해, 필터에서 헤더 등으로 설정된 값이 있어도 인증 principal의 tenantId를
+ * 우선 사용합니다.
  *
  * @author Core Solution
  * @since 2026-02-27
@@ -26,14 +27,11 @@ public class TenantContextPsychInterceptor implements HandlerInterceptor {
     @Override
     public boolean preHandle(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response,
             @NonNull Object handler) {
-        if (TenantContextHolder.getTenantId() != null && !TenantContextHolder.getTenantId().isEmpty()) {
-            return true;
-        }
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated()) {
             return true;
         }
-        // SessionUtils와 동일: details 먼저, 없으면 principal에서 User 조회
+        // 인증된 User에서 tenantId 확보 (재로그인 후에도 동일 사용자·동일 테넌트로 조회되도록)
         User user = null;
         Object details = auth.getDetails();
         if (details instanceof User u) {
@@ -48,8 +46,11 @@ public class TenantContextPsychInterceptor implements HandlerInterceptor {
         if (user != null) {
             String tenantId = user.getTenantId();
             if (tenantId != null && !tenantId.isEmpty()) {
+                String current = TenantContextHolder.getTenantId();
+                if (!tenantId.equals(current)) {
+                    log.debug("Psych API: TenantContext를 인증 사용자 기준으로 설정 (기존={}, 사용자={})", current, tenantId);
+                }
                 TenantContextHolder.setTenantId(tenantId);
-                log.debug("TenantContext set from Psych interceptor: {}", tenantId);
             }
         }
         return true;

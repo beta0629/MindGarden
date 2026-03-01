@@ -270,11 +270,9 @@ public class SystemConfigController {
             response.put("message", "Gemini API 키를 입력하거나 저장 후 테스트해 주세요.");
             return ResponseEntity.badRequest().body(response);
         }
-        String model = systemConfigService.getConfigValue("GEMINI_MODEL", "gemini-1.5-flash");
-        if (model == null || model.isBlank()) {
-            model = "gemini-1.5-flash";
-        }
-        String url = "https://generativelanguage.googleapis.com/v1beta/models/" + model.trim() + ":generateContent";
+        // 키 테스트는 연결 확인만 하므로, v1beta에서 안정 지원되는 모델 고정 (gemini-1.5-flash 등은 환경에 따라 404 발생)
+        final String testModel = "gemini-pro";
+        String url = "https://generativelanguage.googleapis.com/v1beta/models/" + testModel + ":generateContent";
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.set("x-goog-api-key", apiKey);

@@ -71,39 +71,106 @@ public class OpenAIPsychAiServiceImpl implements PsychAiService {
             String systemPrompt = buildSystemPrompt();
             String userPrompt = buildUserPrompt(assessmentType, metrics, baseMarkdown);
 
-            Map<String, Object> msg1 = new HashMap<>();
-            msg1.put("role", "system");
-            msg1.put("content", systemPrompt);
+            String rawContent;
+            if ("gemini".equalsIgnoreCase(providerId)) {
+                rawContent = callGeminiApi(apiKey, apiUrl, model, systemPrompt, userPrompt);
+            } else {
+                rawContent = callOpenAiFormatApi(apiKey, apiUrl, model, systemPrompt, userPrompt);
+            }
 
-            Map<String, Object> msg2 = new HashMap<>();
-            msg2.put("role", "user");
-            msg2.put("content", userPrompt);
-
-            Map<String, Object> requestBody = new HashMap<>();
-            requestBody.put("model", model);
-            requestBody.put("messages", List.of(msg1, msg2));
-            requestBody.put("max_tokens", MAX_TOKENS);
-            requestBody.put("temperature", TEMPERATURE);
-
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            headers.setBearerAuth(apiKey);
-
-            HttpEntity<Map<String, Object>> req = new HttpEntity<>(requestBody, headers);
-            @SuppressWarnings("rawtypes")
-            ResponseEntity<Map> res = restTemplate.exchange(apiUrl, HttpMethod.POST, req, Map.class);
-
-            JsonNode root = objectMapper.valueToTree(res.getBody());
-            String content = root.path("choices").path(0).path("message").path("content").asText("");
+            String content = rawContent != null ? rawContent : "";
 
             if (!StringUtils.hasText(content)) {
                 return new AiResult(baseMarkdown, "{\"ai\":\"failed\",\"reason\":\"empty_response\"}", model, PROMPT_VERSION);
             }
 
-            // 모델 출력은 JSON 문자열로 고정(리포트 + evidence)
-            // 파싱/검증 실패 시에는 규칙 기반(baseMarkdown)으로 폴백 + needsReview=true 처리
-            try {
-                JsonNode out = objectMapper.readTree(content.trim());
+            return parseAndValidateAiOutput(content, baseMarkdown, model, metrics);
+
+        } catch (Exception e) {
+            log.error("Psych AI report generation failed: tenantId={}, type={}, error={}",
+                    tenantId, assessmentType, e.getMessage(), e);
+            return new AiResult(baseMarkdown, "{\"ai\":\"failed\"}", model, PROMPT_VERSION);
+        }
+    }
+
+    private String callGeminiApi(String apiKey, String baseUrl, String model, String systemPrompt, String userPrompt) {
+        String url = (baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl)
+                + "/models/" + model + ":generateContent";
+        String fullPrompt = systemPrompt + "\n\n" + userPrompt;
+
+        Map<String, Object> contents = new HashMap<>();
+        contents.put("parts", List.of(Map.of("text", fullPrompt)));
+
+        Map<String, Object> generationConfig = new HashMap<>();
+        generationConfig.put("maxOutputTokens", MAX_TOKENS);
+        generationConfig.put("temperature", TEMPERATURE);
+        generationConfig.put("responseMimeType", "application/json");
+
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("contents", List.of(contents));
+        requestBody.put("generationConfig", generationConfig);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("x-goog-api-key", apiKey);
+
+        HttpEntity<Map<String, Object>> req = new HttpEntity<>(requestBody, headers);
+        @SuppressWarnings("rawtypes")
+        ResponseEntity<Map> res = restTemplate.exchange(url, HttpMethod.POST, req, Map.class);
+        JsonNode root = objectMapper.valueToTree(res.getBody());
+        JsonNode candidates = root.path("candidates");
+        if (!candidates.isArray() || candidates.isEmpty()) {
+            return null;
+        }
+        JsonNode content = candidates.path(0).path("content").path("parts");
+        if (!content.isArray() || content.isEmpty()) {
+            return null;
+        }
+        return content.path(0).path("text").asText(null);
+    }
+
+    private String callOpenAiFormatApi(String apiKey, String apiUrl, String model, String systemPrompt, String userPrompt) {
+        Map<String, Object> msg1 = new HashMap<>();
+        msg1.put("role", "system");
+        msg1.put("content", systemPrompt);
+
+        Map<String, Object> msg2 = new HashMap<>();
+        msg2.put("role", "user");
+        msg2.put("content", userPrompt);
+
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("model", model);
+        requestBody.put("messages", List.of(msg1, msg2));
+        requestBody.put("max_tokens", MAX_TOKENS);
+        requestBody.put("temperature", TEMPERATURE);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setBearerAuth(apiKey);
+
+        HttpEntity<Map<String, Object>> req = new HttpEntity<>(requestBody, headers);
+        @SuppressWarnings("rawtypes")
+        ResponseEntity<Map> res = restTemplate.exchange(apiUrl, HttpMethod.POST, req, Map.class);
+        JsonNode root = objectMapper.valueToTree(res.getBody());
+        return root.path("choices").path(0).path("message").path("content").asText(null);
+    }
+
+    private AiResult parseAndValidateAiOutput(String content, String baseMarkdown, String model, List<MetricInput> metrics) {
+        // 모델 출력은 JSON 문자열로 고정(리포트 + evidence)
+        // Gemini가 ```json ... ``` 형태로 감싸는 경우 제거
+        String trimmed = content.trim();
+        if (trimmed.startsWith("```json")) {
+            trimmed = trimmed.substring(7);
+        } else if (trimmed.startsWith("```")) {
+            trimmed = trimmed.substring(3);
+        }
+        if (trimmed.endsWith("```")) {
+            trimmed = trimmed.substring(0, trimmed.length() - 3);
+        }
+        trimmed = trimmed.trim();
+
+        try {
+                JsonNode out = objectMapper.readTree(trimmed);
                 Validation validation = validateModelOutput(out, metrics);
                 if (!validation.ok) {
                     return new AiResult(
@@ -146,12 +213,6 @@ public class OpenAIPsychAiServiceImpl implements PsychAiService {
                         PROMPT_VERSION
                 );
             }
-
-        } catch (Exception e) {
-            log.error("Psych AI report generation failed: tenantId={}, type={}, error={}",
-                    tenantId, assessmentType, e.getMessage(), e);
-            return new AiResult(baseMarkdown, "{\"ai\":\"failed\"}", model, PROMPT_VERSION);
-        }
     }
 
     private record Validation(boolean ok, String reason) {}

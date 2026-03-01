@@ -130,9 +130,10 @@ public class SystemConfigServiceImpl implements SystemConfigService {
             "claude", "CLAUDE",
             "replicate", "REPLICATE"
     );
+    private static final String DEFAULT_GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta";
     private static final Map<String, String> DEFAULT_API_URL = Map.of(
             "openai", "https://api.openai.com/v1/chat/completions",
-            "gemini", "",
+            "gemini", DEFAULT_GEMINI_API_URL,
             "claude", "",
             "replicate", ""
     );

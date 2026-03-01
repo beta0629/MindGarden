@@ -51,7 +51,8 @@ public class PsychAssessmentReportServiceImpl implements PsychAssessmentReportSe
         PsychAssessmentExtraction extraction = extractionRepository
                 .findTopByTenantIdAndDocumentIdOrderByCreatedAtDesc(tenantId, documentId)
                 .orElse(null);
-        if (extraction == null) {
+        // extraction 없음 또는 extracted_json 비어 있음 → 재추출 (지표 없음 문제 해결)
+        if (extraction == null || !StringUtils.hasText(extraction.getExtractedJson())) {
             extractionService.ensureExtractionSync(tenantId, documentId);
             extraction = extractionRepository
                     .findTopByTenantIdAndDocumentIdOrderByCreatedAtDesc(tenantId, documentId)

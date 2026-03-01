@@ -62,9 +62,12 @@ public class PsychAssessmentExtractionServiceImpl implements PsychAssessmentExtr
 
     @Override
     public void ensureExtractionSync(String tenantId, Long documentId) {
-        if (extractionRepository.findTopByTenantIdAndDocumentIdOrderByCreatedAtDesc(tenantId, documentId).isPresent()) {
+        var existing = extractionRepository.findTopByTenantIdAndDocumentIdOrderByCreatedAtDesc(tenantId, documentId);
+        // extraction이 있고 extracted_json이 있으면 스킵
+        if (existing.isPresent() && StringUtils.hasText(existing.get().getExtractedJson())) {
             return;
         }
+        // extraction 없음 또는 extracted_json 비어 있음 → 재추출 (리포트 생성 시 지표 없음 해결)
         runExtractionLogic(tenantId, documentId);
     }
 
@@ -90,7 +93,18 @@ public class PsychAssessmentExtractionServiceImpl implements PsychAssessmentExtr
             try (PDDocument pdDoc = Loader.loadPDF(bytes)) {
                 PDFTextStripper stripper = new PDFTextStripper();
                 String text = stripper.getText(pdDoc);
-                return Mmpi2ExtractionParser.parse(text);
+                int textLen = text != null ? text.length() : 0;
+                log.debug("MMPI-2 PDF 텍스트 추출: tenantId={}, documentId={}, textLen={}, sample={}",
+                        doc.getTenantId(), doc.getId(), textLen,
+                        text != null ? text.substring(0, Math.min(1000, textLen)) : "");
+
+                String parsed = Mmpi2ExtractionParser.parse(text);
+                if (parsed == null) {
+                    log.info("MMPI-2 PDF 파싱 결과 null: tenantId={}, documentId={}, textLen={}, textHead={}",
+                            doc.getTenantId(), doc.getId(), textLen,
+                            text != null ? text.substring(0, Math.min(500, textLen)) : "");
+                }
+                return parsed;
             }
         } catch (Exception e) {
             log.warn("MMPI-2 PDF 추출/파싱 실패: tenantId={}, documentId={}, error={}",

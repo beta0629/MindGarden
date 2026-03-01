@@ -2,6 +2,8 @@ package com.coresolution.consultation.assessment.parser;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
@@ -20,6 +22,7 @@ import java.util.regex.Pattern;
  */
 public class Mmpi2ExtractionParser {
 
+    private static final Logger log = LoggerFactory.getLogger(Mmpi2ExtractionParser.class);
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     private Mmpi2ExtractionParser() {
@@ -39,10 +42,12 @@ public class Mmpi2ExtractionParser {
      */
     public static String parse(String pdfText) {
         if (!StringUtils.hasText(pdfText)) {
+            log.debug("Mmpi2ExtractionParser: pdfText 빈 문자열");
             return null;
         }
         List<Map<String, Object>> metrics = parseMetrics(pdfText);
         if (metrics.isEmpty()) {
+            log.debug("Mmpi2ExtractionParser: parseMetrics 빈 리스트 반환");
             return null;
         }
         try {
@@ -55,7 +60,25 @@ public class Mmpi2ExtractionParser {
     }
 
     /**
-     * "원점수" / "전체규준 T" 라인에서 숫자 시퀀스 추출 후 척도별 rawScore, tScore 매칭.
+     * 원점수 라인 패턴: "원점수", "Raw Score", "Raw", "RawScore", "원 점수"
+     */
+    private static boolean isRawScoreLine(String line) {
+        return line.contains("원점수") || line.contains("원 점수")
+                || line.contains("Raw Score") || line.contains("RawScore") || line.contains("Raw");
+    }
+
+    /**
+     * 전체규준 T 라인 패턴: "전체규준", "전체 규준", "T점수", "T 점수", "전체규준T", "전체규준 T", "T-점수"
+     */
+    private static boolean isTScoreLine(String line) {
+        return line.contains("전체규준") || line.contains("전체 규준")
+                || line.contains("T점수") || line.contains("T 점수")
+                || line.contains("전체규준T") || line.contains("전체규준 T")
+                || line.contains("T-점수");
+    }
+
+    /**
+     * 원점수 / 전체규준 T 라인에서 숫자 시퀀스 추출 후 척도별 rawScore, tScore 매칭.
      */
     private static List<Map<String, Object>> parseMetrics(String pdfText) {
         List<Map<String, Object>> result = new ArrayList<>();
@@ -65,12 +88,12 @@ public class Mmpi2ExtractionParser {
 
         for (int i = 0; i < lines.length; i++) {
             String line = lines[i].trim();
-            if (line.contains("원점수")) {
+            if (isRawScoreLine(line)) {
                 rawScores = extractNumberSequence(line);
                 if (rawScores.isEmpty() && i + 1 < lines.length) {
                     rawScores = extractNumberSequence(lines[i + 1].trim());
                 }
-            } else if (line.contains("전체규준") && (line.contains("T") || line.contains("t"))) {
+            } else if (isTScoreLine(line)) {
                 tScores = extractNumberSequence(line);
                 if (tScores.isEmpty() && i + 1 < lines.length) {
                     tScores = extractNumberSequence(lines[i + 1].trim());
@@ -79,6 +102,8 @@ public class Mmpi2ExtractionParser {
         }
 
         if (rawScores == null || tScores == null) {
+            log.debug("원점수/전체규준 패턴 미발견: rawScores={}, tScores={}",
+                    rawScores == null ? "null" : "found", tScores == null ? "null" : "found");
             return result;
         }
 

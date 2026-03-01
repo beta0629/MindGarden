@@ -15,6 +15,10 @@ public interface PsychAssessmentDocumentRepository extends JpaRepository<PsychAs
     List<PsychAssessmentDocument> findTop20ByTenantIdAndStatusOrderByCreatedAtDesc(String tenantId, PsychAssessmentDocumentStatus status);
 
     List<PsychAssessmentDocument> findTop20ByTenantIdOrderByCreatedAtDesc(String tenantId);
+
+    /** tenant + original_filename 포함 패턴 기준 최신 문서 조회 (MMPI 리포트 테스트 등) */
+    Optional<PsychAssessmentDocument> findFirstByTenantIdAndOriginalFilenameContainingOrderByCreatedAtDesc(
+            String tenantId, String filenamePattern);
 }
 
 

@@ -79,6 +79,7 @@ public class Mmpi2ExtractionParser {
 
     /**
      * 원점수 / 전체규준 T 라인에서 숫자 시퀀스 추출 후 척도별 rawScore, tScore 매칭.
+     * "원점수"와 "전체규준 T"가 한 줄에 함께 있을 수 있음 (PDFBox 테이블 추출).
      */
     private static List<Map<String, Object>> parseMetrics(String pdfText) {
         List<Map<String, Object>> result = new ArrayList<>();
@@ -88,12 +89,21 @@ public class Mmpi2ExtractionParser {
 
         for (int i = 0; i < lines.length; i++) {
             String line = lines[i].trim();
-            if (isRawScoreLine(line)) {
+            // 한 줄에 "원점수"와 "전체규준"이 둘 다 있으면 분리 추출 (첫 번째 타당도/임상 척도 기준)
+            if (isRawScoreLine(line) && isTScoreLine(line)) {
+                String[] parts = splitRawAndTScoreLine(line);
+                if (parts[0] != null && rawScores == null) {
+                    rawScores = extractNumberSequence(parts[0]);
+                }
+                if (parts[1] != null && tScores == null) {
+                    tScores = extractNumberSequence(parts[1]);
+                }
+            } else if (isRawScoreLine(line) && rawScores == null) {
                 rawScores = extractNumberSequence(line);
                 if (rawScores.isEmpty() && i + 1 < lines.length) {
                     rawScores = extractNumberSequence(lines[i + 1].trim());
                 }
-            } else if (isTScoreLine(line)) {
+            } else if (isTScoreLine(line) && tScores == null) {
                 tScores = extractNumberSequence(line);
                 if (tScores.isEmpty() && i + 1 < lines.length) {
                     tScores = extractNumberSequence(lines[i + 1].trim());
@@ -118,6 +128,31 @@ public class Mmpi2ExtractionParser {
             result.add(m);
         }
         return result;
+    }
+
+    /**
+     * "원점수 13 8 ... 전체규준 T 60 53 ..." 형태의 한 줄을 [원점수부분, 전체규준부분]으로 분리.
+     */
+    private static String[] splitRawAndTScoreLine(String line) {
+        int rawIdx = -1;
+        if (line.contains("원점수")) rawIdx = line.indexOf("원점수");
+        else if (line.contains("Raw Score")) rawIdx = line.indexOf("Raw Score");
+        else if (line.contains("RawScore")) rawIdx = line.indexOf("RawScore");
+        else if (line.contains("Raw ")) rawIdx = line.indexOf("Raw ");
+
+        int tIdx = -1;
+        if (line.contains("전체규준 T")) tIdx = line.indexOf("전체규준 T");
+        else if (line.contains("전체규준T")) tIdx = line.indexOf("전체규준T");
+        else if (line.contains("전체규준")) tIdx = line.indexOf("전체규준");
+        else if (line.contains("T점수")) tIdx = line.indexOf("T점수");
+
+        if (rawIdx >= 0 && tIdx > rawIdx) {
+            return new String[]{line.substring(rawIdx, tIdx).trim(), line.substring(tIdx).trim()};
+        }
+        if (rawIdx >= 0 && tIdx < rawIdx && tIdx >= 0) {
+            return new String[]{line.substring(rawIdx).trim(), line.substring(tIdx, rawIdx).trim()};
+        }
+        return new String[]{line, null};
     }
 
     /**

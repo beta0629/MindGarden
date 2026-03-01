@@ -58,6 +58,8 @@ const SystemConfigManagement = () => {
   );
   const [showApiKey, setShowApiKey] = useState({});
   const [testResult, setTestResult] = useState(null);
+  const [testingGemini, setTestingGemini] = useState(false);
+  const [testResultGemini, setTestResultGemini] = useState(null);
 
   const [aiDefaultProvider, setAiDefaultProvider] = useState('openai');
 
@@ -228,6 +230,29 @@ const SystemConfigManagement = () => {
     }
   };
 
+  const handleTestGemini = async () => {
+    const key = (providers.gemini?.apiKey || '').trim();
+    if (!key) {
+      notificationManager.show('Gemini API 키를 입력한 뒤 테스트해 주세요.', 'warning');
+      return;
+    }
+    try {
+      setTestingGemini(true);
+      setTestResultGemini(null);
+      const response = await apiPost('/api/v1/admin/system-config/test-gemini', { apiKey: key });
+      if (response.success) {
+        setTestResultGemini({ success: true, message: response.message || 'Gemini API 키가 정상 동작합니다.' });
+      } else {
+        setTestResultGemini({ success: false, message: response.message || '연결 실패' });
+      }
+    } catch (error) {
+      console.error('Gemini 키 테스트 실패:', error);
+      setTestResultGemini({ success: false, message: error?.message || '테스트 중 오류가 발생했습니다.' });
+    } finally {
+      setTestingGemini(false);
+    }
+  };
+
   if (loading) {
     return (
       <AdminCommonLayout title="시스템 설정 관리">
@@ -378,6 +403,37 @@ const SystemConfigManagement = () => {
                                 <div dangerouslySetInnerHTML={{ __html: testResult.content.content }} />
                               </div>
                             )}
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  )}
+                  {id === 'gemini' && (
+                    <>
+                      <div className="section-actions">
+                        <Button
+                          variant="secondary"
+                          size="medium"
+                          onClick={handleTestGemini}
+                          disabled={testingGemini || !(providers.gemini?.apiKey || '').trim()}
+                          loading={testingGemini}
+                          loadingText="테스트 중..."
+                          preventDoubleClick={false}
+                        >
+                          {testingGemini ? <RefreshCw size={16} className="mg-spinning" /> : <CheckCircle size={16} />}
+                          키 테스트
+                        </Button>
+                      </div>
+                      <p className="mg-v2-system-config__section-desc" style={{ marginTop: 8 }}>
+                        Google AI Studio에서 발급한 API 키는 키만 입력하면 됩니다. 프로젝트 이름/번호는 입력할 필요 없습니다.
+                      </p>
+                      {testResultGemini && (
+                        <div className={`test-result ${testResultGemini.success ? 'success' : 'error'}`} style={{ marginTop: 8 }}>
+                          <div className="result-icon">
+                            {testResultGemini.success ? <CheckCircle size={20} /> : <AlertCircle size={20} />}
+                          </div>
+                          <div className="result-content">
+                            <strong>{testResultGemini.message}</strong>
                           </div>
                         </div>
                       )}

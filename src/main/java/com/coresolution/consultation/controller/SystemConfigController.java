@@ -6,6 +6,10 @@ import java.util.Map;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.service.SystemConfigService;
 import com.coresolution.consultation.utils.SessionUtils;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -13,6 +17,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.web.client.RestTemplate;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -236,5 +242,74 @@ public class SystemConfigController {
             response.put("message", "기본 AI 프로바이더 저장 실패: " + e.getMessage());
             return ResponseEntity.badRequest().body(response);
         }
+    }
+
+    /**
+     * Gemini API 키 테스트 (Google AI Generative Language API — 키만 사용)
+     * 저장된 키 또는 요청 본문의 apiKey로 간단한 generateContent 호출 후 성공/실패 반환
+     */
+    @PostMapping("/test-gemini")
+    public ResponseEntity<Map<String, Object>> testGeminiKey(
+            @RequestBody(required = false) Map<String, String> body,
+            HttpSession session) {
+        if (!hasAdminPermission(session)) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "접근 권한이 없습니다.");
+            return ResponseEntity.status(403).body(response);
+        }
+        String apiKey = (body != null && body.containsKey("apiKey")) ? body.get("apiKey") : null;
+        if (apiKey == null || apiKey.isBlank()) {
+            apiKey = systemConfigService.getConfigValue("GEMINI_API_KEY", "");
+        } else {
+            apiKey = apiKey.trim();
+        }
+        if (apiKey.isEmpty()) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "Gemini API 키를 입력하거나 저장 후 테스트해 주세요.");
+            return ResponseEntity.badRequest().body(response);
+        }
+        String model = systemConfigService.getConfigValue("GEMINI_MODEL", "gemini-1.5-flash");
+        if (model == null || model.isBlank()) {
+            model = "gemini-1.5-flash";
+        }
+        String url = "https://generativelanguage.googleapis.com/v1beta/models/" + model.trim() + ":generateContent";
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("x-goog-api-key", apiKey);
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("contents", List.of(
+                Map.of("parts", List.of(Map.of("text", "Say OK in one word.")))
+        ));
+        HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, headers);
+        try {
+            ResponseEntity<Map<String, Object>> resp = new RestTemplate().exchange(
+                    url,
+                    HttpMethod.POST,
+                    request,
+                    new ParameterizedTypeReference<Map<String, Object>>() {}
+            );
+            if (resp.getStatusCode().is2xxSuccessful() && resp.getBody() != null) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", true);
+                response.put("message", "Gemini API 키가 정상적으로 동작합니다.");
+                return ResponseEntity.ok(response);
+            }
+        } catch (Exception e) {
+            log.warn("Gemini API 키 테스트 실패: {}", e.getMessage());
+            String msg = e.getMessage();
+            if (msg != null && msg.length() > 200) {
+                msg = msg.substring(0, 200) + "...";
+            }
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "연결 실패: " + msg);
+            return ResponseEntity.ok(response);
+        }
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", false);
+        response.put("message", "Gemini API 응답을 확인할 수 없습니다.");
+        return ResponseEntity.ok(response);
     }
 }

@@ -33,7 +33,7 @@ import './SystemConfigManagement.css';
 
 const AI_PROVIDERS = [
   { id: 'openai', label: 'OpenAI', keyPrefix: 'OPENAI', defaultUrl: 'https://api.openai.com/v1/chat/completions', defaultModel: 'gpt-3.5-turbo' },
-  { id: 'gemini', label: 'Gemini', keyPrefix: 'GEMINI', defaultUrl: '', defaultModel: '' },
+  { id: 'gemini', label: 'Gemini', keyPrefix: 'GEMINI', defaultUrl: '', defaultModel: 'gemini-3.1-pro' },
   { id: 'claude', label: 'Claude', keyPrefix: 'CLAUDE', defaultUrl: '', defaultModel: 'claude-3-5-sonnet-20241022' },
   { id: 'replicate', label: 'Replicate', keyPrefix: 'REPLICATE', defaultUrl: '', defaultModel: '' }
 ];
@@ -60,6 +60,8 @@ const SystemConfigManagement = () => {
   const [testResult, setTestResult] = useState(null);
   const [testingGemini, setTestingGemini] = useState(false);
   const [testResultGemini, setTestResultGemini] = useState(null);
+  const [geminiModels, setGeminiModels] = useState([]);
+  const [loadingGeminiModels, setLoadingGeminiModels] = useState(false);
 
   const [aiDefaultProvider, setAiDefaultProvider] = useState('openai');
 
@@ -253,6 +255,29 @@ const SystemConfigManagement = () => {
     }
   };
 
+  const loadGeminiModels = async () => {
+    const key = (providers.gemini?.apiKey || '').trim();
+    if (!key) {
+      notificationManager.show('Gemini API 키를 입력한 뒤 목록을 불러오세요.', 'warning');
+      return;
+    }
+    try {
+      setLoadingGeminiModels(true);
+      const response = await apiPost('/api/v1/admin/system-config/gemini-models', { apiKey: key });
+      if (response.success && Array.isArray(response.models)) {
+        setGeminiModels(response.models);
+        notificationManager.show(`모델 ${response.models.length}개를 불러왔습니다.`, 'success');
+      } else {
+        notificationManager.show(response.message || '모델 목록을 불러오지 못했습니다.', 'error');
+      }
+    } catch (error) {
+      console.error('Gemini 모델 목록 로드 실패:', error);
+      notificationManager.show(error?.message || '모델 목록 조회 중 오류가 발생했습니다.', 'error');
+    } finally {
+      setLoadingGeminiModels(false);
+    }
+  };
+
   if (loading) {
     return (
       <AdminCommonLayout title="시스템 설정 관리">
@@ -356,22 +381,74 @@ const SystemConfigManagement = () => {
                     </div>
                     <div className="config-item">
                       <label htmlFor={`model-${id}`}>모델</label>
-                      <input
-                        id={`model-${id}`}
-                        type="text"
-                        value={providers[id]?.model || ''}
-                        onChange={(e) => setProvider(id, 'model', e.target.value)}
-                        placeholder="모델 ID"
-                        className="mg-v2-input"
-                        list={`model-presets-${id}`}
-                      />
-                      <datalist id={`model-presets-${id}`}>
-                        <option value="gpt-3.5-turbo" />
-                        <option value="gpt-4" />
-                        <option value="gpt-4o" />
-                        <option value="claude-3-5-sonnet-20241022" />
-                        <option value="gemini-1.5-pro" />
-                      </datalist>
+                      {id === 'gemini' ? (
+                        <>
+                          <div className="section-actions" style={{ marginBottom: 8 }}>
+                            <Button
+                              type="button"
+                              variant="secondary"
+                              size="medium"
+                              onClick={loadGeminiModels}
+                              disabled={loadingGeminiModels || !(providers.gemini?.apiKey || '').trim()}
+                              loading={loadingGeminiModels}
+                              loadingText="불러오는 중..."
+                              preventDoubleClick={false}
+                            >
+                              {loadingGeminiModels ? <RefreshCw size={16} className="mg-spinning" /> : <RefreshCw size={16} />}
+                              최신 모델 목록 불러오기
+                            </Button>
+                          </div>
+                          {geminiModels.length > 0 && (
+                            <select
+                              id={`model-select-${id}`}
+                              value={geminiModels.some((m) => m.id === (providers.gemini?.model || '')) ? (providers.gemini?.model || '') : '__custom__'}
+                              onChange={(e) => setProvider('gemini', 'model', e.target.value === '__custom__' ? (providers.gemini?.model || '') : e.target.value)}
+                              className="mg-v2-input"
+                              style={{ marginBottom: 8, width: '100%', maxWidth: 360 }}
+                            >
+                              <option value="__custom__">직접 입력 (아래 입력란)</option>
+                              {geminiModels.map((m) => (
+                                <option key={m.id} value={m.id}>{m.id}</option>
+                              ))}
+                            </select>
+                          )}
+                          <input
+                            id={`model-${id}`}
+                            type="text"
+                            value={providers[id]?.model || ''}
+                            onChange={(e) => setProvider(id, 'model', e.target.value)}
+                            placeholder="모델 ID (예: gemini-3.1-pro)"
+                            className="mg-v2-input"
+                            list={geminiModels.length > 0 ? undefined : `model-presets-${id}`}
+                          />
+                          {geminiModels.length === 0 && (
+                            <datalist id={`model-presets-${id}`}>
+                              <option value="gemini-3.1-pro" />
+                              <option value="gemini-2.5-flash" />
+                              <option value="gemini-1.5-pro" />
+                            </datalist>
+                          )}
+                        </>
+                      ) : (
+                        <>
+                          <input
+                            id={`model-${id}`}
+                            type="text"
+                            value={providers[id]?.model || ''}
+                            onChange={(e) => setProvider(id, 'model', e.target.value)}
+                            placeholder="모델 ID"
+                            className="mg-v2-input"
+                            list={`model-presets-${id}`}
+                          />
+                          <datalist id={`model-presets-${id}`}>
+                            <option value="gpt-3.5-turbo" />
+                            <option value="gpt-4" />
+                            <option value="gpt-4o" />
+                            <option value="claude-3-5-sonnet-20241022" />
+                            <option value="gemini-3.1-pro" />
+                          </datalist>
+                        </>
+                      )}
                     </div>
                   </div>
                   {id === 'openai' && (

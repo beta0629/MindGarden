@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.web.client.RestTemplate;
+import java.util.ArrayList;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -245,6 +246,72 @@ public class SystemConfigController {
     }
 
     /**
+     * Gemini 사용 가능 모델 목록 조회 (ListModels API, generateContent 지원 모델만)
+     * API 키는 요청 본문 apiKey 또는 저장된 GEMINI_API_KEY 사용
+     */
+    @PostMapping("/gemini-models")
+    public ResponseEntity<Map<String, Object>> getGeminiModels(
+            @RequestBody(required = false) Map<String, String> body,
+            HttpSession session) {
+        if (!hasAdminPermission(session)) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "접근 권한이 없습니다.");
+            return ResponseEntity.status(403).body(response);
+        }
+        String apiKey = (body != null && body.containsKey("apiKey")) ? body.get("apiKey") : null;
+        if (apiKey == null || apiKey.isBlank()) {
+            apiKey = systemConfigService.getConfigValue("GEMINI_API_KEY", "");
+        } else {
+            apiKey = apiKey.trim();
+        }
+        if (apiKey.isEmpty()) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "Gemini API 키를 입력하거나 저장 후 목록을 불러오세요.");
+            return ResponseEntity.badRequest().body(response);
+        }
+        RestTemplate rest = new RestTemplate();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("x-goog-api-key", apiKey);
+        List<Map<String, String>> list = new ArrayList<>();
+        try {
+            ResponseEntity<Map<String, Object>> listResp = rest.exchange(
+                    "https://generativelanguage.googleapis.com/v1beta/models",
+                    HttpMethod.GET,
+                    new HttpEntity<>(headers),
+                    new ParameterizedTypeReference<Map<String, Object>>() {}
+            );
+            if (listResp.getStatusCode().is2xxSuccessful() && listResp.getBody() != null) {
+                @SuppressWarnings("unchecked")
+                List<Map<String, Object>> models = (List<Map<String, Object>>) listResp.getBody().get("models");
+                if (models != null) {
+                    for (Map<String, Object> m : models) {
+                        String name = (String) m.get("name");
+                        @SuppressWarnings("unchecked")
+                        List<String> methods = (List<String>) m.get("supportedGenerationMethods");
+                        if (name != null && methods != null && methods.contains("generateContent")) {
+                            String id = name.startsWith("models/") ? name.substring(7) : name;
+                            list.add(Map.of("id", id, "name", name));
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Gemini ListModels 실패: {}", e.getMessage());
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "모델 목록 조회 실패: " + (e.getMessage() != null ? e.getMessage() : "알 수 없음"));
+            return ResponseEntity.ok(response);
+        }
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("models", list);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
      * Gemini API 키 테스트 (Google AI Generative Language API — 키만 사용)
      * 저장된 키 또는 요청 본문의 apiKey로 간단한 generateContent 호출 후 성공/실패 반환
      */
@@ -270,19 +337,48 @@ public class SystemConfigController {
             response.put("message", "Gemini API 키를 입력하거나 저장 후 테스트해 주세요.");
             return ResponseEntity.badRequest().body(response);
         }
-        // 키 테스트는 연결 확인만 하므로, v1beta에서 안정 지원되는 모델 고정 (gemini-1.5-flash 등은 환경에 따라 404 발생)
-        final String testModel = "gemini-pro";
-        String url = "https://generativelanguage.googleapis.com/v1beta/models/" + testModel + ":generateContent";
+        RestTemplate rest = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.set("x-goog-api-key", apiKey);
+        String baseUrl = "https://generativelanguage.googleapis.com/v1beta";
+        String modelId = null;
+        try {
+            ResponseEntity<Map<String, Object>> listResp = rest.exchange(
+                    baseUrl + "/models",
+                    HttpMethod.GET,
+                    new HttpEntity<>(headers),
+                    new ParameterizedTypeReference<Map<String, Object>>() {}
+            );
+            if (listResp.getStatusCode().is2xxSuccessful() && listResp.getBody() != null) {
+                @SuppressWarnings("unchecked")
+                List<Map<String, Object>> models = (List<Map<String, Object>>) listResp.getBody().get("models");
+                if (models != null) {
+                    for (Map<String, Object> m : models) {
+                        String name = (String) m.get("name");
+                        @SuppressWarnings("unchecked")
+                        List<String> methods = (List<String>) m.get("supportedGenerationMethods");
+                        if (name != null && methods != null && methods.contains("generateContent")) {
+                            modelId = name.startsWith("models/") ? name.substring(7) : name;
+                            break;
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.debug("ListModels 실패, fallback 모델 사용: {}", e.getMessage());
+        }
+        if (modelId == null || modelId.isBlank()) {
+            modelId = "gemini-3.1-pro";
+        }
+        String url = baseUrl + "/models/" + modelId + ":generateContent";
         Map<String, Object> requestBody = new HashMap<>();
         requestBody.put("contents", List.of(
                 Map.of("parts", List.of(Map.of("text", "Say OK in one word.")))
         ));
         HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, headers);
         try {
-            ResponseEntity<Map<String, Object>> resp = new RestTemplate().exchange(
+            ResponseEntity<Map<String, Object>> resp = rest.exchange(
                     url,
                     HttpMethod.POST,
                     request,

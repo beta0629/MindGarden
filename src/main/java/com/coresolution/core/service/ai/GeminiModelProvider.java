@@ -24,7 +24,7 @@ public class GeminiModelProvider implements AIModelProvider {
 
     @Override
     public String getModelName() {
-        return systemConfigService.getConfigValue("GEMINI_MODEL", "gemini-pro");
+        return systemConfigService.getConfigValue("GEMINI_MODEL", "gemini-3.1-pro");
     }
 
     @Override

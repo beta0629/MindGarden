@@ -138,7 +138,7 @@ public class SystemConfigServiceImpl implements SystemConfigService {
     );
     private static final Map<String, String> DEFAULT_MODEL = Map.of(
             "openai", "gpt-3.5-turbo",
-            "gemini", "",
+            "gemini", "gemini-3.1-pro",
             "claude", "claude-3-5-sonnet-20241022",
             "replicate", ""
     );

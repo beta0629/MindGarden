@@ -84,6 +84,7 @@ public class SystemConfigServiceImpl implements SystemConfigService {
         } else {
             // 새 설정 생성
             SystemConfig config = SystemConfig.builder()
+                    .tenantId(tenantId)
                     .configKey(configKey)
                     .configValue(finalValue)
                     .description(description)

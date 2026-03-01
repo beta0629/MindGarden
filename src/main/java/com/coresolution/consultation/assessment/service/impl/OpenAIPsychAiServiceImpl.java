@@ -36,7 +36,7 @@ public class OpenAIPsychAiServiceImpl implements PsychAiService {
     private static final String PROMPT_VERSION = "psych-prompt-v1";
     private static final int MAX_TOKENS = 1200;
     private static final double TEMPERATURE = 0.3;
-    private static final int MIN_EVIDENCE_HIGHLIGHTS = 3;
+    private static final int MIN_EVIDENCE_HIGHLIGHTS = 1;
 
     // “확정 진단/법적 결론” 방지(오판 리스크 방어): 발견 시 폴백 + 사람 검수 필요 처리
     private static final List<Pattern> FORBIDDEN_PATTERNS = List.of(
@@ -71,9 +71,12 @@ public class OpenAIPsychAiServiceImpl implements PsychAiService {
             String systemPrompt = buildSystemPrompt();
             String userPrompt = buildUserPrompt(assessmentType, metrics, baseMarkdown);
 
+            log.info("Psych AI report generation start: provider={}, model={}, metricsCount={}",
+                    providerId, model, metrics != null ? metrics.size() : 0);
+
             String rawContent;
             if ("gemini".equalsIgnoreCase(providerId)) {
-                rawContent = callGeminiApi(apiKey, apiUrl, model, systemPrompt, userPrompt);
+                rawContent = callGeminiApiWithFallback(apiKey, apiUrl, model, systemPrompt, userPrompt);
             } else {
                 rawContent = callOpenAiFormatApi(apiKey, apiUrl, model, systemPrompt, userPrompt);
             }
@@ -81,52 +84,76 @@ public class OpenAIPsychAiServiceImpl implements PsychAiService {
             String content = rawContent != null ? rawContent : "";
 
             if (!StringUtils.hasText(content)) {
+                log.warn("Psych AI empty response: provider={}, model={}", providerId, model);
                 return new AiResult(baseMarkdown, "{\"ai\":\"failed\",\"reason\":\"empty_response\"}", model, PROMPT_VERSION);
             }
 
             return parseAndValidateAiOutput(content, baseMarkdown, model, metrics);
 
         } catch (Exception e) {
-            log.error("Psych AI report generation failed: tenantId={}, type={}, error={}",
-                    tenantId, assessmentType, e.getMessage(), e);
+            log.error("Psych AI report generation failed: tenantId={}, type={}, provider={}, model={}, error={}",
+                    tenantId, assessmentType, providerId, model, e.getMessage(), e);
             return new AiResult(baseMarkdown, "{\"ai\":\"failed\"}", model, PROMPT_VERSION);
         }
     }
 
+    private String callGeminiApiWithFallback(String apiKey, String baseUrl, String model, String systemPrompt, String userPrompt) {
+        try {
+            return callGeminiApi(apiKey, baseUrl, model, systemPrompt, userPrompt);
+        } catch (Exception e) {
+            if (model != null && model.contains("3.1") && e.getMessage() != null && e.getMessage().contains("404")) {
+                log.info("Psych AI Gemini model {} 404, retrying with gemini-1.5-pro", model);
+                return callGeminiApi(apiKey, baseUrl, "gemini-1.5-pro", systemPrompt, userPrompt);
+            }
+            throw e;
+        }
+    }
+
     private String callGeminiApi(String apiKey, String baseUrl, String model, String systemPrompt, String userPrompt) {
-        String url = (baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl)
-                + "/models/" + model + ":generateContent";
-        String fullPrompt = systemPrompt + "\n\n" + userPrompt;
+        try {
+            String url = (baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl)
+                    + "/models/" + model + ":generateContent";
+            log.debug("Psych AI Gemini call: url={}", url);
 
-        Map<String, Object> contents = new HashMap<>();
-        contents.put("parts", List.of(Map.of("text", fullPrompt)));
+            String fullPrompt = systemPrompt + "\n\n" + userPrompt;
 
-        Map<String, Object> generationConfig = new HashMap<>();
-        generationConfig.put("maxOutputTokens", MAX_TOKENS);
-        generationConfig.put("temperature", TEMPERATURE);
-        generationConfig.put("responseMimeType", "application/json");
+            Map<String, Object> contents = new HashMap<>();
+            contents.put("parts", List.of(Map.of("text", fullPrompt)));
 
-        Map<String, Object> requestBody = new HashMap<>();
-        requestBody.put("contents", List.of(contents));
-        requestBody.put("generationConfig", generationConfig);
+            Map<String, Object> generationConfig = new HashMap<>();
+            generationConfig.put("maxOutputTokens", MAX_TOKENS);
+            generationConfig.put("temperature", TEMPERATURE);
+            generationConfig.put("responseMimeType", "application/json");
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.set("x-goog-api-key", apiKey);
+            Map<String, Object> requestBody = new HashMap<>();
+            requestBody.put("contents", List.of(contents));
+            requestBody.put("generationConfig", generationConfig);
 
-        HttpEntity<Map<String, Object>> req = new HttpEntity<>(requestBody, headers);
-        @SuppressWarnings("rawtypes")
-        ResponseEntity<Map> res = restTemplate.exchange(url, HttpMethod.POST, req, Map.class);
-        JsonNode root = objectMapper.valueToTree(res.getBody());
-        JsonNode candidates = root.path("candidates");
-        if (!candidates.isArray() || candidates.isEmpty()) {
-            return null;
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.set("x-goog-api-key", apiKey);
+
+            HttpEntity<Map<String, Object>> req = new HttpEntity<>(requestBody, headers);
+            @SuppressWarnings("rawtypes")
+            ResponseEntity<Map> res = restTemplate.exchange(url, HttpMethod.POST, req, Map.class);
+            JsonNode root = objectMapper.valueToTree(res.getBody());
+            JsonNode candidates = root.path("candidates");
+            if (!candidates.isArray() || candidates.isEmpty()) {
+                log.warn("Psych AI Gemini: candidates empty");
+                return null;
+            }
+            JsonNode content = candidates.path(0).path("content").path("parts");
+            if (!content.isArray() || content.isEmpty()) {
+                log.warn("Psych AI Gemini: parts empty");
+                return null;
+            }
+            String text = content.path(0).path("text").asText(null);
+            log.info("Psych AI Gemini success: model={}, responseLen={}", model, text != null ? text.length() : 0);
+            return text;
+        } catch (Exception e) {
+            log.warn("Psych AI Gemini API call failed: model={}, error={}", model, e.getMessage());
+            throw e;
         }
-        JsonNode content = candidates.path(0).path("content").path("parts");
-        if (!content.isArray() || content.isEmpty()) {
-            return null;
-        }
-        return content.path(0).path("text").asText(null);
     }
 
     private String callOpenAiFormatApi(String apiKey, String apiUrl, String model, String systemPrompt, String userPrompt) {
@@ -173,6 +200,7 @@ public class OpenAIPsychAiServiceImpl implements PsychAiService {
                 JsonNode out = objectMapper.readTree(trimmed);
                 Validation validation = validateModelOutput(out, metrics);
                 if (!validation.ok) {
+                    log.warn("Psych AI validation failed: reason={}", validation.reason);
                     return new AiResult(
                             baseMarkdownWithDisclaimer(baseMarkdown, validation.reason),
                             buildEvidenceJson("rejected", validation.reason, true),
@@ -234,8 +262,11 @@ public class OpenAIPsychAiServiceImpl implements PsychAiService {
 
         JsonNode evidence = out.path("evidence");
         JsonNode highlights = evidence.path("highlights");
-        if (!highlights.isArray() || highlights.size() < MIN_EVIDENCE_HIGHLIGHTS) {
-            return new Validation(false, "insufficient_evidence");
+        if (!highlights.isArray()) {
+            return new Validation(false, "invalid_evidence_structure");
+        }
+        if (highlights.size() < MIN_EVIDENCE_HIGHLIGHTS) {
+            return new Validation(false, "insufficient_evidence:" + highlights.size());
         }
 
         // 근거 매칭: evidence에 등장한 scaleCode는 입력 metrics에 존재해야 함(환각 방지)

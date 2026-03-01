@@ -245,7 +245,7 @@ public class OpenAIPsychAiServiceImpl implements PsychAiService {
 
     private String buildSystemPrompt() {
         return """
-너는 임상심리 평가 보조 AI이다. 반드시 한국어로만 작성한다.
+너는 임상심리 평가 보조 AI이다. 목적은 상담에 도움이 되도록 검사 결과를 해석하고, 상담자가 면담에서 참고할 소견과 질문을 제안하는 것이다. 반드시 한국어로만 작성한다.
 원칙:
 - 확정 진단/법적 결론을 내리지 않는다.
 - 수치/척도명은 입력으로 주어진 값만 사용한다(추측 금지).
@@ -269,7 +269,7 @@ public class OpenAIPsychAiServiceImpl implements PsychAiService {
     private String buildUserPrompt(PsychAssessmentType type, List<MetricInput> metrics, String baseMarkdown) {
         StringBuilder sb = new StringBuilder();
         sb.append("검사 종류: ").append(type.name()).append("\n");
-        sb.append("아래는 규칙 기반 요약(초안)이다. 내용을 유지하되 더 명확하고 임상적으로 조심스러운 표현으로 다듬어라.\n\n");
+        sb.append("아래는 규칙 기반 요약(초안)이다. 이걸 바탕으로 상담에 도움이 되도록 해석을 보강하라.\n\n");
         sb.append(baseMarkdown).append("\n\n");
         sb.append("추출된 지표 목록(JSON):\n");
         try {
@@ -279,8 +279,12 @@ public class OpenAIPsychAiServiceImpl implements PsychAiService {
         }
         sb.append("\n\n");
         sb.append("요구사항:\n");
-        sb.append("- reportMarkdown: 섹션은 '요약/주요 소견/주의(타당도)/권고/추적 질문' 포함\n");
-        sb.append("- evidence: reportMarkdown의 핵심 문장(최소 3개)에 근거 지표(scaleCode/tScore/percentile)를 연결\n");
+        sb.append("- ## 요약: 전체 요약(2~3문장)\n");
+        sb.append("- ## 주요 소견: T점수 상승 척도별로 임상적 의미를 해석하라. 상담 시 주목할 점을 구체적으로 작성.\n");
+        sb.append("- ## 주의(타당도): VRIN, TRIN, F 등 타당도 척도 해석. 검사 신뢰도 평가.\n");
+        sb.append("- ## 권고: 면담/추적 평가/전문가 의뢰 등 권고\n");
+        sb.append("- ## 추적 질문: 상담자가 면담에서 탐색할 수 있는 구체적 질문 3~5개 제안\n");
+        sb.append("- evidence: reportMarkdown 핵심 문장(최소 3개)에 근거 지표(scaleCode/tScore) 연결\n");
         sb.append("- 한국어만\n");
         return sb.toString();
     }

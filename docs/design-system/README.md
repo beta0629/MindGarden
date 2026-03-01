@@ -17,11 +17,18 @@
 
 ---
 
+## 디자이너 필수 — 펜슬 가이드
+
+| 문서 | 설명 |
+|------|------|
+| [펜슬(Pencil) 디자인 가이드](./PENCIL_DESIGN_GUIDE.md) | **core-designer 필수 숙지**. .pen 단일 소스, B0KlA 팔레트·레이아웃·타이포·반응형·체크리스트. 일관된 디자인·레이아웃을 위해 설계 전 참조. |
+
 ## 아토믹 디자인·가이드
 
 | 문서 | 설명 |
 |------|------|
 | [아토믹 디자인 시스템](./ATOMIC_DESIGN_SYSTEM.md) | Atoms → Molecules → Organisms → Templates → Pages 계층 및 컴포넌트 규칙. |
+| [반응형 레이아웃 스펙](./RESPONSIVE_LAYOUT_SPEC.md) | 브레이크포인트·컨테이너·Pencil 레이아웃 프레임. |
 | [v2 마스터 가이드](./v2/MASTER_GUIDE.md) | MindGarden 디자인 시스템 v2.0 개요 및 Phase별 실행 계획. |
 
 ---

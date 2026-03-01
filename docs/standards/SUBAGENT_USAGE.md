@@ -9,7 +9,7 @@
 
 | 서브에이전트 | 역할 | 적용 스킬 | 비고 |
 |--------------|------|-----------|------|
-| **core-designer** | UI/UX·레이아웃·비주얼 **설계만** (시안·토큰·스펙). **코드 작성 안 함** | /core-solution-standardization | 대시보드·리포트·새 화면 레이아웃 설계 시 **선행** |
+| **core-designer** | UI/UX·레이아웃·비주얼 **설계만** (시안·토큰·스펙). **코드 작성 안 함** | /core-solution-standardization, /core-solution-design-handoff | **펜슬 가이드 숙지 필수**(docs/design-system/PENCIL_DESIGN_GUIDE.md). 대시보드·리포트·새 화면 설계 시 선행, 산출물은 design-handoff 형식 |
 | **core-coder** | React/JS·Java/Spring **코드 구현**. designer 시안 있으면 그에 맞춤 | /core-solution-frontend, /core-solution-atomic-design 등 | 구현 단계에서 사용 |
 | **core-debugger** | **디버그 전용**. 에러·500 원인 분석, 로그·스택트레이스 해석, 재현 절차·수정 제안. **코드 수정은 core-coder 위임**. 필요 시 **shell**과 연계해 서버 로그·DB 확인 | /core-solution-debug | 오류 원인 파악·수정 제안 시 사용 |
 | **core-tester** | 단위·통합·E2E·보안 **테스트 작성·실행**. 코드 구현 안 함 | /core-solution-testing | |
@@ -23,7 +23,7 @@
 
 | 단계 | 서브에이전트 | 스킬 | 산출물 |
 |------|--------------|------|--------|
-| **1. 설계** | **core-designer** | /core-solution-standardization | 레이아웃·컴포넌트 구성·토큰 사용 스펙(또는 시안 설명) |
+| **1. 설계** | **core-designer** | /core-solution-standardization, /core-solution-design-handoff | 레이아웃·컴포넌트 구성·토큰 사용 스펙(또는 시안 설명). 코더 전달 시 handoff 형식 준수 |
 | **2. 구현** | **core-coder** | /core-solution-frontend, /core-solution-atomic-design (필요 시 /core-solution-design-system-css) | designer 스펙대로 코드 반영 |
 
 - designer가 **코드를 수정하지 않음**. 코더가 designer 산출물을 참고해 구현한다.
@@ -40,7 +40,7 @@
 |----------|--------------|----------|
 | React/JS 컴포넌트 코드 | core-coder | /core-solution-frontend |
 | Java/Spring 백엔드 | core-coder | /core-solution-backend |
-| UI/UX·레이아웃·비주얼 설계 | core-designer | /core-solution-standardization |
+| UI/UX·레이아웃·비주얼 설계 | core-designer | /core-solution-standardization, /core-solution-design-handoff |
 | 헤더·푸터·공통 레이아웃 | core-coder | /core-solution-frontend, /core-solution-atomic-design |
 | 스케줄·캘린더·모달 UI | core-coder | /core-solution-frontend |
 | 매핑·ERP·비즈니스 로직 | core-coder | /core-solution-erp, /core-solution-business-flow |
@@ -50,11 +50,15 @@
 | 설정·시스템 페이지 | core-coder | /core-solution-frontend, /core-solution-atomic-design |
 | API 설계·연동 | core-coder | /core-solution-api, /core-solution-backend |
 | **에러·500 원인 분석·수정 제안** | **core-debugger** | /core-solution-debug |
+| **서버 상태·에러 로그 확인·긴급 복구** | **shell** → **core-debugger** → **core-coder** | /core-solution-server-status |
+| **배포·CI 워크플로 수정** | **core-coder** | /core-solution-deployment |
 | **작업 전 플랜·조사·영역 분석** | **explore** | /core-solution-documentation |
 | **문서 작성·정리·체계화** | **generalPurpose** | /core-solution-documentation |
 | 코드베이스 탐색·분석 | explore | — |
 
 - **디버그 전용**: 500·API 오류 등 원인 분석·수정 제안은 **core-debugger** + **/core-solution-debug** 사용. 에이전트 정의: `.cursor/agents/core-debugger.md`, 스킬: `.cursor/skills/core-solution-debug/SKILL.md`. 디버거는 필요 시 **shell** 서브에이전트와 연계해 서버 로그(tail, journalctl 등)·DB(읽기 전용 쿼리) 확인을 요청할 수 있다. (제품에서 core-debugger 타입이 지원되지 않으면 **generalPurpose**로 호출 시 프롬프트에 "core-debugger 역할로 .cursor/agents/core-debugger.md 및 core-solution-debug 스킬을 참고하여 디버깅만 수행해주세요"를 명시한다.)
+
+- **서버 상태·긴급 복구 전용**: 개발·운영 서버 상태 확인, 에러 로그 수집, 긴급 복구(백업 복원·재시작), 원인 분석 후 core-coder 즉시 조치는 **/core-solution-server-status** 스킬 적용. 순서: **shell**(SSH·상태·로그·복구 실행) → **core-debugger**(로그 해석·원인·core-coder용 태스크 작성) → **core-coder**(수정 적용). 스킬: `.cursor/skills/core-solution-server-status/SKILL.md`.
 
 **문서 전담**: 새 문서 작성, 기존 문서 이동·이름 변경·삭제, docs 구조 정리, 인덱스(docs/README.md, standards/README.md) 갱신은 **반드시 문서관리 서브에이전트(generalPurpose + core-solution-documentation)** 로 수행한다. 문서를 분산 배치하거나 예전 문서를 그대로 참조하면 개발 혼선이 커지므로, 문서 작업은 전담 흐름으로만 진행한다. 진입점: [docs/README.md](../README.md).
 

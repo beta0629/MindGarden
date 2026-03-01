@@ -4,15 +4,27 @@ import com.coresolution.consultation.assessment.entity.PsychAssessmentDocument;
 import com.coresolution.consultation.assessment.entity.PsychAssessmentExtraction;
 import com.coresolution.consultation.assessment.model.PsychAssessmentDocumentStatus;
 import com.coresolution.consultation.assessment.model.PsychAssessmentExtractionStatus;
+import com.coresolution.consultation.assessment.model.PsychAssessmentType;
+import com.coresolution.consultation.assessment.parser.Mmpi2ExtractionParser;
 import com.coresolution.consultation.assessment.repository.PsychAssessmentDocumentRepository;
 import com.coresolution.consultation.assessment.repository.PsychAssessmentExtractionRepository;
+import com.coresolution.consultation.assessment.service.EncryptedFileStorageService;
 import com.coresolution.consultation.assessment.service.PsychAssessmentExtractionService;
 import com.coresolution.core.context.TenantContextHolder;
+
+import org.apache.pdfbox.Loader;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.text.PDFTextStripper;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import java.io.InputStream;
 
 /**
  * 템플릿 감지/필드 추출 MVP 구현. - 실제 OCR/템플릿별 좌표 추출은 확장 포인트로 남김 - 현재는 "업로드된 문서에 대해 추출 레코드 생성 +
@@ -25,16 +37,19 @@ public class PsychAssessmentExtractionServiceImpl implements PsychAssessmentExtr
     private final PsychAssessmentDocumentRepository documentRepository;
     private final PsychAssessmentExtractionRepository extractionRepository;
     private final com.coresolution.consultation.assessment.service.PsychAssessmentValidationService validationService;
+    private final EncryptedFileStorageService encryptedFileStorageService;
     private final PsychAssessmentExtractionRunner runner;
 
     public PsychAssessmentExtractionServiceImpl(
             PsychAssessmentDocumentRepository documentRepository,
             PsychAssessmentExtractionRepository extractionRepository,
             com.coresolution.consultation.assessment.service.PsychAssessmentValidationService validationService,
+            EncryptedFileStorageService encryptedFileStorageService,
             @Lazy PsychAssessmentExtractionRunner runner) {
         this.documentRepository = documentRepository;
         this.extractionRepository = extractionRepository;
         this.validationService = validationService;
+        this.encryptedFileStorageService = encryptedFileStorageService;
         this.runner = runner;
     }
 
@@ -53,20 +68,53 @@ public class PsychAssessmentExtractionServiceImpl implements PsychAssessmentExtr
         runExtractionLogic(tenantId, documentId);
     }
 
+    /**
+     * MMPI 타입 문서의 저장된 PDF에서 텍스트 추출 후 Mmpi2ExtractionParser로 파싱.
+     *
+     * @param storage EncryptedFileStorageService
+     * @param doc     문서 (assessmentType, storagePath)
+     * @return JSON 문자열 또는 null
+     */
+    private static String tryExtractMmpi2FromPdf(EncryptedFileStorageService storage,
+            PsychAssessmentDocument doc) {
+        if (doc.getAssessmentType() != PsychAssessmentType.MMPI
+                || !StringUtils.hasText(doc.getStoragePath())) {
+            return null;
+        }
+        InputStream is = storage.readDecryptedPdfAsInputStream(doc.getStoragePath());
+        if (is == null) {
+            return null;
+        }
+        try (is) {
+            byte[] bytes = is.readAllBytes();
+            try (PDDocument pdDoc = Loader.loadPDF(bytes)) {
+                PDFTextStripper stripper = new PDFTextStripper();
+                String text = stripper.getText(pdDoc);
+                return Mmpi2ExtractionParser.parse(text);
+            }
+        } catch (Exception e) {
+            log.warn("MMPI-2 PDF 추출/파싱 실패: tenantId={}, documentId={}, error={}",
+                    doc.getTenantId(), doc.getId(), e.getMessage());
+            return null;
+        }
+    }
+
     /** 동기 추출 전용: 추출 레코드만 생성 (리포트 생성은 호출자가 수행) */
     private void runExtractionLogic(String tenantId, Long documentId) {
         PsychAssessmentDocument doc =
                 documentRepository.findByTenantIdAndId(tenantId, documentId)
                         .orElseThrow(() -> new IllegalArgumentException("문서를 찾을 수 없습니다."));
 
+        String extractedJson = tryExtractMmpi2FromPdf(encryptedFileStorageService, doc);
+
         String templateId = null;
         String extractionMode = "GENERIC";
-        String ocrEngine = "UNCONFIGURED";
+        String ocrEngine = extractedJson != null ? "PDFBOX_MMPI2" : "UNCONFIGURED";
 
         PsychAssessmentExtraction extraction = PsychAssessmentExtraction.builder()
                 .tenantId(tenantId).documentId(doc.getId()).templateId(templateId)
                 .extractionMode(extractionMode).ocrEngine(ocrEngine).ocrConfidence(null)
-                .extractedJson(null)
+                .extractedJson(extractedJson)
                 .validationJson("{\"warnings\":[\"OCR/템플릿 추출이 아직 구성되지 않았습니다.\"],\"errors\":[]}")
                 .status(PsychAssessmentExtractionStatus.NEEDS_REVIEW).build();
 
@@ -93,6 +141,7 @@ public class PsychAssessmentExtractionServiceImpl implements PsychAssessmentExtr
         private final PsychAssessmentExtractionRepository extractionRepository;
         private final com.coresolution.consultation.assessment.service.PsychAssessmentValidationService validationService;
         private final com.coresolution.consultation.assessment.service.PsychAssessmentReportService reportService;
+        private final EncryptedFileStorageService encryptedFileStorageService;
 
         @Async
         public void processAsync(String tenantId, Long documentId) {
@@ -102,14 +151,16 @@ public class PsychAssessmentExtractionServiceImpl implements PsychAssessmentExtr
                         documentRepository.findByTenantIdAndId(tenantId, documentId)
                                 .orElseThrow(() -> new IllegalArgumentException("문서를 찾을 수 없습니다."));
 
+                String extractedJson = tryExtractMmpi2FromPdf(encryptedFileStorageService, doc);
+
                 String templateId = null;
                 String extractionMode = "GENERIC";
-                String ocrEngine = "UNCONFIGURED";
+                String ocrEngine = extractedJson != null ? "PDFBOX_MMPI2" : "UNCONFIGURED";
 
                 PsychAssessmentExtraction extraction = PsychAssessmentExtraction.builder()
                         .tenantId(tenantId).documentId(doc.getId()).templateId(templateId)
                         .extractionMode(extractionMode).ocrEngine(ocrEngine).ocrConfidence(null)
-                        .extractedJson(null)
+                        .extractedJson(extractedJson)
                         .validationJson("{\"warnings\":[\"OCR/템플릿 추출이 아직 구성되지 않았습니다.\"],\"errors\":[]}")
                         .status(PsychAssessmentExtractionStatus.NEEDS_REVIEW).build();
 

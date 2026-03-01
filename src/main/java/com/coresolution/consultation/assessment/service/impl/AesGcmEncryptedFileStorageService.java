@@ -13,6 +13,8 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import jakarta.annotation.PostConstruct;
+
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -136,6 +138,35 @@ public class AesGcmEncryptedFileStorageService implements EncryptedFileStorageSe
             return new SecretKeySpec(Arrays.copyOf(DEV_FALLBACK_KEY_BYTES, 32), "AES");
         }
         throw new IllegalStateException("암호화 키가 필요합니다: " + KEY_B64_ENV + " 환경 변수를 설정하거나, 운영 이외 환경에서는 spring.profiles.active=dev 또는 local을 사용하세요.");
+    }
+
+    @Override
+    public InputStream readDecryptedPdfAsInputStream(String storagePath) {
+        if (!StringUtils.hasText(storagePath)) {
+            return null;
+        }
+        Path path = Path.of(storagePath);
+        if (!Files.isRegularFile(path)) {
+            return null;
+        }
+        try {
+            byte[] raw = Files.readAllBytes(path);
+            if (raw.length <= IV_BYTES) {
+                log.warn("암호화 파일 크기 부족: storagePath={}, size={}", storagePath, raw.length);
+                return null;
+            }
+            byte[] iv = Arrays.copyOfRange(raw, 0, IV_BYTES);
+            byte[] ciphertext = Arrays.copyOfRange(raw, IV_BYTES, raw.length);
+
+            SecretKey key = loadKeyFromEnv();
+            Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+            cipher.init(Cipher.DECRYPT_MODE, key, new GCMParameterSpec(GCM_TAG_BITS, iv));
+            byte[] plain = cipher.doFinal(ciphertext);
+            return new ByteArrayInputStream(plain);
+        } catch (Exception e) {
+            log.warn("PDF 복호화 실패: storagePath={}, error={}", storagePath, e.getMessage());
+            return null;
+        }
     }
 
     private boolean isDevOrLocalProfile() {

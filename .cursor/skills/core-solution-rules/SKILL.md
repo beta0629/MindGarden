@@ -35,7 +35,7 @@ description: Core Solution(MindGarden) 프로젝트 전체 룰 인덱스. 백엔
 |----------|--------------|----------|------|
 | React/JS 컴포넌트 코드 작성·수정 | core-coder | /core-solution-frontend | 프론트엔드 소스 |
 | Java/Spring 백엔드 코드 | core-coder | /core-solution-backend | API, Service, Entity 등 |
-| UI/UX·레이아웃·비주얼 설계 | core-designer | /core-solution-standardization | 시안·토큰·스펙 정의 선행 |
+| UI/UX·레이아웃·비주얼 설계 | core-designer | /core-solution-standardization, /core-solution-design-handoff | 시안·토큰·스펙 정의 선행. 산출물·코더 전달 형식은 design-handoff |
 | 헤더·푸터·공통 레이아웃 수정 | core-coder | /core-solution-frontend, /core-solution-atomic-design | B0KlA·디자인 토큰 준수 |
 | 스케줄·캘린더·모달 UI 수정 | core-coder | /core-solution-frontend | core-designer 시안 있으면 참조 |
 | 매핑·ERP·비즈니스 로직 | core-coder | /core-solution-erp, /core-solution-business-flow | |
@@ -44,6 +44,8 @@ description: Core Solution(MindGarden) 프로젝트 전체 룰 인덱스. 백엔
 | 리포트·차트·대시보드 UI | core-coder | /core-solution-frontend | core-designer 시안 있으면 참조 |
 | 설정·시스템 페이지 | core-coder | /core-solution-frontend, /core-solution-atomic-design | |
 | API 설계·연동 | core-coder | /core-solution-api, /core-solution-backend | |
+| **서버 상태·에러 로그·긴급 복구** | **shell** → **core-debugger** → **core-coder** | /core-solution-server-status | 개발·운영 서버 상태/로그/복구 후 원인 분석·core-coder 조치 |
+| **배포·CI 워크플로 수정** | **core-coder** | /core-solution-deployment | GitHub Actions·systemd·배포 체크리스트·롤백 |
 | **전반 기획·단계 설계·실행 계획** | **core-planner** | /core-solution-planning | 범위·Phase·산출물 정리, 디자이너·코더·디버거·탐색·테스터 가동 계획 및 태스크 설명 작성. 실행은 해당 서브에이전트 호출로 진행 |
 | **작업 전 플랜·조사·영역 분석** | **explore** | /core-solution-documentation | 넓은 범위 작업 전 현황·누락·우선순위 조사 |
 | **문서 작성·정리·체계화** | **generalPurpose** | /core-solution-documentation | 표준 문서·가이드 작성·수정·재구성. 기획(explore/core-planner) 후 진행 권장 |
@@ -52,6 +54,7 @@ description: Core Solution(MindGarden) 프로젝트 전체 룰 인덱스. 백엔
 - **core-planner** 에이전트: **전반 기획 전용**. 요구 정리, 범위·Phase·의존성·리스크·산출물 정의 후, **core-designer → core-coder → core-debugger / explore / core-tester** 호출용 태스크 설명을 작성. 기획만 수행하며 실제 구현·설계·디버깅은 해당 서브에이전트에 위임. `/core-solution-planning` 스킬 적용.
 - **explore** 서브에이전트: 코드베이스 탐색·분석, **작업 전 조사** 시 사용 (수정 작업 아님). 문서·기획 시 1단계로 사용.
 - **generalPurpose** 서브에이전트: 복합 연구·다단계 작업, **문서 작성·정리** 시 /core-solution-documentation 스킬과 함께 사용.
+- **서버 상태·긴급 복구**: 개발·운영 서버 상태·에러 로그 확인, 긴급 복구(백업 복원·재시작), 원인 분석 후 core-coder 즉시 조치는 **shell** → **core-debugger** → **core-coder** 순서로 진행. `/core-solution-server-status` 스킬 적용.
 - **UI/레이아웃·비주얼 작업**: 반드시 **core-designer(설계·시안 선행)** → **core-coder(구현)** 순서. `docs/standards/SUBAGENT_USAGE.md`의 [서브에이전트 검토 요약] 및 [UI/레이아웃·비주얼 작업 시 워크플로우] 참고.
 
 ## 사용할 스킬
@@ -61,6 +64,7 @@ description: Core Solution(MindGarden) 프로젝트 전체 룰 인덱스. 백엔
 | **DB 설계·테이블·쿼리·프로시저** | `/core-solution-database-first` |
 | **멀티테넌트 (tenantId 필수)** | `/core-solution-multi-tenant` |
 | **디자인·소스 표준화** | `/core-solution-standardization` |
+| **디자이너 산출물·코더 전달 형식** | `/core-solution-design-handoff` (core-designer 전용) |
 | Java/Spring 백엔드 코드 | `/core-solution-backend` |
 | React/JS/TS 프론트엔드 코드 | `/core-solution-frontend` |
 | **아토믹 디자인** (Atoms/Molecules/Organisms) | `/core-solution-atomic-design` |
@@ -71,6 +75,8 @@ description: Core Solution(MindGarden) 프로젝트 전체 룰 인덱스. 백엔
 | **ERP 연동·거래 생성·트러블슈팅** | `/core-solution-erp` |
 | **모달 추가·수정** | `/core-solution-unified-modal` |
 | **전반 기획·Phase·서브에이전트 가동 계획** | `/core-solution-planning` |
+| **서버 상태·에러 로그·긴급 복구** | `/core-solution-server-status` |
+| **배포·CI 워크플로 수정** | `/core-solution-deployment` |
 | **문서 작성·정리·체계화** | `/core-solution-documentation` |
 
 - Agent 채팅에서 `/` 입력 후 스킬 이름 검색하여 수동 호출 가능

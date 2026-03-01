@@ -221,6 +221,13 @@
 			<version>2.5.0</version>
 		</dependency>
 
+        <!-- Apache PDFBox (MMPI-2 PDF 텍스트 추출) -->
+        <dependency>
+            <groupId>org.apache.pdfbox</groupId>
+            <artifactId>pdfbox</artifactId>
+            <version>3.0.3</version>
+        </dependency>
+
         <!-- Development Tools -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

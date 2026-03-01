@@ -15,6 +15,7 @@ Core Solution(MindGarden)에서 **데이터베이스 관련 기능**을 추가·
 
 - **DB 설계 우선**: 백엔드·프론트엔드 코드를 작성하기 **전에** 먼저 DB를 조회하고 설계합니다.
 - **추가·수정 필요 시**: 테이블/칼럼/인덱스 생성 또는 변경을 먼저 수행한 뒤, 그 결과를 기준으로 백엔드·프론트엔드를 개발합니다.
+- **Flyway 마이그레이션**: 스키마·데이터 변경은 `src/main/resources/db/migration/` 에 마이그레이션 파일로 작성. 반드시 `docs/standards/DATABASE_MIGRATION_STANDARD.md` 를 참조하여 버전·이름·테넌트 격리(tenant_id) 규칙을 준수합니다.
 
 ## 2. DB 조회 및 설계 단계
 

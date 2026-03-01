@@ -15,6 +15,18 @@ Core Solution(MindGarden)의 모든 코드·UI는 **표준화 원칙**을 따릅
 
 ## 1. 디자인 표준화
 
+### 1.1 디자이너 필수 숙지 — 펜슬(Pencil) 디자인 가이드
+
+**core-designer**는 일관된 디자인·레이아웃을 위해 **펜슬 가이드를 반드시 이해·숙지**해야 합니다.
+
+- **필수 문서**: `docs/design-system/PENCIL_DESIGN_GUIDE.md`
+  - 펜슬(.pen) 단일 소스 설명: `mindgarden-design-system.pen`(B0KlA·레이아웃), `pencil-new.pen`(아토믹 컴포넌트)
+  - B0KlA 색상 팔레트·레이아웃 구조·섹션 블록·타이포·반응형 브레이크포인트
+  - **디자이너 숙지 체크리스트**: 설계 전·설계 시 해당 문서의 체크리스트를 적용
+- **적용**: 새 화면·컴포넌트 설계 시 위 가이드와 두 .pen 파일에 정의된 시각 언어만 사용. 가이드에 없는 색·간격·컴포넌트 사용 금지.
+
+### 1.2 아토믹·토큰·클래스
+
 - **기준: 아토믹 디자인**: 디자인 표준은 아토믹 디자인(Atoms → Molecules → Organisms → Templates → Pages)을 기준으로 합니다. `/core-solution-atomic-design` 스킬 준수.
 - **디자인 토큰**: 색상·간격·폰트는 `var(--mg-*)` CSS 변수만 사용. 하드코딩 금지
 - **컴포넌트**: `MGButton`, `FormInput`, `CustomSelect`, `MGModal` 등 공통 컴포넌트를 atoms/molecules 계층에 맞게 사용
@@ -25,8 +37,10 @@ Core Solution(MindGarden)의 모든 코드·UI는 **표준화 원칙**을 따릅
 - **예외**: 삭제·환불 등 위험 액션용 danger 색상이 B0KlA/가이드에 없으면, 먼저 디자인 가이드에 추가한 후 사용. 임시로 `unified-design-tokens.css`의 `--color-danger` 사용 가능.
 
 ### 참조 문서
+- **디자이너 필수**: `docs/design-system/PENCIL_DESIGN_GUIDE.md` — 펜슬 가이드 숙지 후 설계
 - `docs/standards/DESIGN_CENTRALIZATION_STANDARD.md`
 - `docs/design-system/ATOMIC_DESIGN_SYSTEM.md`
+- `docs/design-system/RESPONSIVE_LAYOUT_SPEC.md` — 반응형·Pencil 레이아웃 프레임
 - `frontend/src/styles/unified-design-tokens.css`
 
 ## 2. 소스 코드 표준화

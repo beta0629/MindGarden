@@ -2915,6 +2915,17 @@ public class AdminController extends BaseApiController {
                         .body(Map.of("success", false, "message", "관리자 권한이 필요합니다."));
             }
 
+            String tenantId = com.coresolution.core.context.TenantContextHolder.getTenantId();
+            if (tenantId == null || tenantId.isEmpty()) {
+                tenantId = SessionUtils.getTenantId(session);
+            }
+            if (tenantId == null && currentUser.getTenantId() != null) {
+                tenantId = currentUser.getTenantId();
+            }
+            if (tenantId != null && !tenantId.isEmpty()) {
+                com.coresolution.core.context.TenantContextHolder.setTenantId(tenantId);
+            }
+
             org.springframework.data.domain.Pageable pageable =
                     PaginationUtils.createPageable(page, size);
 

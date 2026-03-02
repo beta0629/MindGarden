@@ -55,7 +55,11 @@ const ConsultationLogViewPage = () => {
     if (!isAdmin) return;
     try {
       const list = await getAllConsultantsWithStats();
-      setConsultants(Array.isArray(list) ? list : []);
+      const arr = Array.isArray(list) ? list : [];
+      setConsultants(arr.map((item) => {
+        const c = item.consultant || item;
+        return { ...item, id: c.id, name: c.name ?? c.userName, userName: c.userName ?? c.name };
+      }));
     } catch (e) {
       console.error('상담사 목록 로드 실패:', e);
       setConsultants([]);
@@ -65,7 +69,11 @@ const ConsultationLogViewPage = () => {
   const loadClients = useCallback(async () => {
     try {
       const list = await getAllClientsWithStats();
-      setClients(Array.isArray(list) ? list : []);
+      const arr = Array.isArray(list) ? list : [];
+      setClients(arr.map((item) => {
+        const c = item.client || item;
+        return { ...item, id: c.id, name: c.name ?? c.userName, userName: c.userName ?? c.name };
+      }));
     } catch (e) {
       console.error('내담자 목록 로드 실패:', e);
       setClients([]);
@@ -147,12 +155,14 @@ const ConsultationLogViewPage = () => {
   const clientNameMap = {};
   const consultantNameMap = {};
   (clients || []).forEach((c) => {
-    const id = Number(c.id);
-    if (!Number.isNaN(id)) clientNameMap[id] = c.name || c.userName || '';
+    const id = Number((c.client || c).id ?? c.id);
+    const name = (c.client || c).name ?? (c.client || c).userName ?? c.name ?? c.userName ?? '';
+    if (!Number.isNaN(id)) clientNameMap[id] = name;
   });
   (consultants || []).forEach((c) => {
-    const id = Number(c.id);
-    if (!Number.isNaN(id)) consultantNameMap[id] = c.name || c.userName || '';
+    const id = Number((c.consultant || c).id ?? c.id);
+    const name = (c.consultant || c).name ?? (c.consultant || c).userName ?? c.name ?? c.userName ?? '';
+    if (!Number.isNaN(id)) consultantNameMap[id] = name;
   });
 
   let filteredRecords = records;

@@ -90,3 +90,19 @@
   height: auto !important;
   max-height: none;
 }
+
+/* fullscreen: 500px 등 기본 max-width 덮어서 전체 화면 사용 (상담일지 등 참고 자료용) */
+.mg-modal.mg-modal--fullscreen {
+  width: 100vw !important;
+  height: 100vh !important;
+  max-width: none !important;
+  max-height: none !important;
+  border-radius: 0;
+  margin: 0;
+  align-self: stretch;
+}
+
+.mg-modal.mg-modal--fullscreen .mg-modal__body {
+  max-height: none;
+  flex: 1 1 auto;
+}

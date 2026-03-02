@@ -50,7 +50,20 @@ const CustomSelect = ({
     };
   }, [isOpen]);
 
-  // 드롭다운 위치 조정 + 스크롤/리사이즈 시 갱신 (모달 스크롤 시 옵션 패널이 따라 움직이지 않도록)
+  // 스크롤 가능한 조상 요소 찾기 (scroll 이벤트는 버블링되지 않아 해당 요소에 직접 리스너 필요)
+  const getScrollParent = (el) => {
+    if (!el) return null;
+    let parent = el.parentElement;
+    while (parent && parent !== document.body) {
+      const { overflowY } = window.getComputedStyle(parent);
+      const scrollable = overflowY === 'auto' || overflowY === 'scroll' || overflowY === 'overlay';
+      if (scrollable && parent.scrollHeight > parent.clientHeight) return parent;
+      parent = parent.parentElement;
+    }
+    return null;
+  };
+
+  // 드롭다운 위치 조정 + 스크롤/리사이즈 시 갱신 (모달 내부 스크롤 포함)
   useEffect(() => {
     if (!isOpen) return;
 
@@ -86,12 +99,22 @@ const CustomSelect = ({
     const onScrollOrResize = () => {
       requestAnimationFrame(updatePosition);
     };
+
     document.addEventListener('scroll', onScrollOrResize, true);
     window.addEventListener('resize', onScrollOrResize);
+
+    const scrollParent = getScrollParent(selectRef.current);
+    if (scrollParent) {
+      scrollParent.addEventListener('scroll', onScrollOrResize, true);
+    }
+
     return () => {
       cancelAnimationFrame(t);
       document.removeEventListener('scroll', onScrollOrResize, true);
       window.removeEventListener('resize', onScrollOrResize);
+      if (scrollParent) {
+        scrollParent.removeEventListener('scroll', onScrollOrResize, true);
+      }
     };
   }, [isOpen]);
 

@@ -632,6 +632,19 @@
   max-width: 1000px;
 }
 
+/* 상담일지 모달 전용: 스크롤 시 레이어 겹침/투명 현상 방지 — 불투명 배경 명시 (특이도 높임) */
+.mg-modal.mg-modal--large.mg-modal--consultation-log.mg-v2-ad-b0kla .mg-modal__body {
+  background: var(--mg-layout-main-bg-start, var(--ad-b0kla-card-bg, #FAF9F7));
+}
+
+.mg-modal.mg-modal--large.mg-modal--consultation-log.mg-v2-ad-b0kla .mg-modal__body .mg-v2-modal-body {
+  background: var(--mg-layout-main-bg-start, var(--ad-b0kla-card-bg, #FAF9F7));
+}
+
+.mg-modal.mg-modal--large.mg-modal--consultation-log.mg-v2-ad-b0kla .mg-modal__body .mg-v2-consultation-log-sticky {
+  background: var(--mg-layout-main-bg-start, var(--ad-b0kla-card-bg, #FAF9F7));
+}
+
 .mg-modal.mg-v2-ad-b0kla .mg-modal__header {
   padding: 20px 24px;
   border-bottom: 1px solid var(--mg-gray-200);

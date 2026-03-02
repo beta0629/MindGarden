@@ -525,20 +525,17 @@ const ConsultationLogModal = ({
           className="mg-v2-modal-body"
           style={{
             padding: 'var(--mg-spacing-lg, 24px)',
-            background: 'var(--mg-color-background-main, #FAF9F7)',
-            backgroundColor: '#FAF9F7',
             maxHeight: '85vh',
             overflowY: 'auto'
           }}
         >
           {/* 상단 고정(Sticky) 영역: 내담자 프로필 → 중요 코멘트 → 심리검사 */}
           <div
+            className="mg-v2-consultation-log-sticky"
             style={{
               position: 'sticky',
               top: 0,
               zIndex: 1,
-              background: 'var(--mg-color-background-main, #FAF9F7)',
-              backgroundColor: '#FAF9F7',
               paddingBottom: 'var(--mg-spacing-lg, 24px)'
             }}
           >

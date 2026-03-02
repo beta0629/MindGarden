@@ -168,6 +168,17 @@ const ConsultationLogModal = ({
     }
   }, []);
 
+  /** scheduleData에서 세션 일자(YYYY-MM-DD) 추출 — 클릭한 일정 날짜 우선 */
+  const getSessionDateFromSchedule = (data) => {
+    if (!data) return new Date().toISOString().split('T')[0];
+    if (data.sessionDate && typeof data.sessionDate === 'string') return data.sessionDate.split('T')[0];
+    if (data.date && typeof data.date === 'string') return data.date.split('T')[0];
+    const st = data.startTime;
+    if (typeof st === 'string' && st.includes('T')) return st.split('T')[0];
+    if (st instanceof Date) return st.toISOString().split('T')[0];
+    return new Date().toISOString().split('T')[0];
+  };
+
   useEffect(() => {
     if (isOpen && scheduleData) {
       loadData();
@@ -175,29 +186,12 @@ const ConsultationLogModal = ({
       loadCompletionStatusCodes();
       setFormData(prev => ({
         ...prev,
-        sessionNumber: scheduleData.sessionNumber || 1, // 스케줄에서 세션 번호 가져오기
-        isSessionCompleted: scheduleData.isSessionCompleted || false, // 스케줄에서 완료 여부 가져오기
-        sessionDate: safeDateToString(scheduleData.startTime) // 스케줄 날짜로 설정
+        sessionNumber: scheduleData.sessionNumber || 1,
+        isSessionCompleted: scheduleData.isSessionCompleted || false,
+        sessionDate: getSessionDateFromSchedule(scheduleData)
       }));
     }
   }, [isOpen, scheduleData]);
-
-  const safeDateToString = (dateValue) => {
-    if (!dateValue) return new Date().toISOString().split('T')[0];
-    
-    try {
-      if (typeof dateValue === 'string') {
-        return dateValue.split('T')[0];
-      } else if (dateValue instanceof Date) {
-        return dateValue.toISOString().split('T')[0];
-      } else {
-        return new Date(dateValue).toISOString().split('T')[0];
-      }
-    } catch (error) {
-      console.warn('날짜 변환 오류:', error);
-      return new Date().toISOString().split('T')[0];
-    }
-  };
 
   const loadData = async () => {
     try {
@@ -255,7 +249,7 @@ const ConsultationLogModal = ({
           setConsultationRecord(record);
           setIsEditMode(true);
           setFormData({
-            sessionDate: record.sessionDate || safeDateToString(scheduleData.startTime),
+            sessionDate: record.sessionDate || getSessionDateFromSchedule(scheduleData),
             sessionNumber: record.sessionNumber || 1,
             clientCondition: record.clientCondition || '',
             mainIssues: record.mainIssues || '',
@@ -289,7 +283,7 @@ const ConsultationLogModal = ({
         } else {
           setFormData(prev => ({
             ...prev,
-            sessionDate: safeDateToString(scheduleData.startTime),
+            sessionDate: getSessionDateFromSchedule(scheduleData),
             sessionDurationMinutes: 60,
             isSessionCompleted: true
           }));
@@ -297,7 +291,7 @@ const ConsultationLogModal = ({
       } catch (error) {
         setFormData(prev => ({
           ...prev,
-          sessionDate: safeDateToString(scheduleData.startTime),
+          sessionDate: getSessionDateFromSchedule(scheduleData),
           sessionDurationMinutes: 60,
           isSessionCompleted: true
         }));
@@ -482,7 +476,7 @@ const ConsultationLogModal = ({
       onClose={onClose}
       title={modalTitle}
       size="large"
-      className="mg-v2-ad-b0kla"
+      className="mg-v2-ad-b0kla mg-modal--consultation-log"
       backdropClick
       showCloseButton
       loading={loading}
@@ -544,8 +538,53 @@ const ConsultationLogModal = ({
               paddingBottom: 'var(--mg-spacing-lg, 24px)'
             }}
           >
-            {/* (1) 내담자 프로필 요약 블록 */}
-            {client && (
+            {/* (1) 내담자 프로필 요약 블록 — clientId 없으면 안내, 로딩 중이면 로딩 문구 */}
+            {scheduleData?.clientId == null || scheduleData?.clientId === '' ? (
+              <div
+                style={{
+                  background: 'var(--mg-color-surface-main)',
+                  border: '1px solid var(--mg-color-border-main)',
+                  borderRadius: 16,
+                  padding: 24,
+                  marginBottom: 16,
+                  borderLeft: '4px solid var(--mg-color-border-main)'
+                }}
+              >
+                <p style={{ fontSize: 14, color: 'var(--mg-color-text-secondary)', margin: 0 }}>
+                  내담자 정보를 불러올 수 없습니다 (일정에 내담자가 연결되지 않았습니다).
+                </p>
+              </div>
+            ) : loading && !client ? (
+              <div
+                style={{
+                  background: 'var(--mg-color-surface-main)',
+                  border: '1px solid var(--mg-color-border-main)',
+                  borderRadius: 16,
+                  padding: 24,
+                  marginBottom: 16,
+                  borderLeft: '4px solid var(--mg-color-primary-main)'
+                }}
+              >
+                <p style={{ fontSize: 14, color: 'var(--mg-color-text-secondary)', margin: 0 }}>
+                  내담자 정보 로딩 중...
+                </p>
+              </div>
+            ) : scheduleData?.clientId != null && scheduleData?.clientId !== '' && !client ? (
+              <div
+                style={{
+                  background: 'var(--mg-color-surface-main)',
+                  border: '1px solid var(--mg-color-border-main)',
+                  borderRadius: 16,
+                  padding: 24,
+                  marginBottom: 16,
+                  borderLeft: '4px solid var(--mg-color-border-main)'
+                }}
+              >
+                <p style={{ fontSize: 14, color: 'var(--mg-color-text-secondary)', margin: 0 }}>
+                  내담자 정보를 불러올 수 없습니다.
+                </p>
+              </div>
+            ) : client ? (
               <div
                 style={{
                   background: 'var(--mg-color-surface-main, var(--mg-gray-50))',
@@ -614,7 +653,7 @@ const ConsultationLogModal = ({
                   )}
                 </div>
               </div>
-            )}
+            ) : null}
 
             {/* (2) 중요 코멘트 블록 */}
             <div

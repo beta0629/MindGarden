@@ -699,6 +699,21 @@ const UnifiedScheduleComponent = ({ userRole, userId, refetchTrigger, onDropFrom
         const consultantName = event.extendedProps.consultantName || '상담사 정보 없음';
         const clientName = event.extendedProps.clientName || '내담자 정보 없음';
 
+        const startDate = event.start;
+        const sessionDateStr = (() => {
+            if (!startDate) return '';
+            if (startDate instanceof Date) {
+                const y = startDate.getFullYear();
+                const m = String(startDate.getMonth() + 1).padStart(2, '0');
+                const d = String(startDate.getDate()).padStart(2, '0');
+                return `${y}-${m}-${d}`;
+            }
+            if (typeof startDate === 'string' && startDate.includes('T')) {
+                return startDate.split('T')[0];
+            }
+            return '';
+        })();
+
         const scheduleData = {
             id: event.extendedProps.id,
             title: event.title,
@@ -707,7 +722,11 @@ const UnifiedScheduleComponent = ({ userRole, userId, refetchTrigger, onDropFrom
             consultationType: koreanConsultationType,
             startTime: formatTime(event.start),
             endTime: formatTime(event.end),
-            status: koreanStatus
+            status: koreanStatus,
+            clientId: event.extendedProps.clientId ?? undefined,
+            consultantId: event.extendedProps.consultantId ?? undefined,
+            sessionDate: sessionDateStr || undefined,
+            date: sessionDateStr || undefined
         };
 
         setSelectedSchedule(scheduleData);

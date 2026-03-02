@@ -625,6 +625,13 @@
   box-shadow: var(--cs-shadow-soft);
 }
 
+/* 상담일지 모달: 큰 모달(Large) 확실 적용 — 스펙 min-width 800px, max-width 1000px */
+.mg-modal.mg-modal--large.mg-modal--consultation-log {
+  min-width: 800px;
+  width: 90%;
+  max-width: 1000px;
+}
+
 .mg-modal.mg-v2-ad-b0kla .mg-modal__header {
   padding: 20px 24px;
   border-bottom: 1px solid var(--mg-gray-200);

@@ -25,6 +25,8 @@ export const ADMIN_ROUTES = {
     MAPPINGS: '/admin/mappings',
     MAPPING_MANAGEMENT: '/admin/mapping-management',
     INTEGRATED_SCHEDULE: '/admin/integrated-schedule',
+    /** 상담일지 조회 */
+    CONSULTATION_LOGS: '/admin/consultation-logs',
     BRANCHES: '/admin/branches',
     BRANCH_CREATE: '/admin/branch-create',
     BRANCH_HIERARCHY: '/admin/branch-hierarchy',

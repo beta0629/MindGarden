@@ -34,6 +34,7 @@ import UnifiedHeaderTest from './components/test/UnifiedHeaderTest';
 import UserManagementPage from './components/admin/UserManagementPage';
 import SessionManagement from './components/admin/SessionManagement';
 import MappingManagement from './components/admin/MappingManagement';
+import ConsultationLogView from './components/admin/ConsultationLogView';
 import IntegratedMatchingSchedule from './components/admin/mapping-management/IntegratedMatchingSchedule';
 import CommonCodeManagement from './components/admin/CommonCodeManagement';
 import StatisticsModal from './components/common/StatisticsModal';
@@ -409,6 +410,7 @@ function AppContent() {
             <Route path="/consultant/client/:id" element={<ConsultantClientList />} />
             <Route path="/consultant/availability" element={<ConsultantAvailability />} />
             <Route path="/consultant/consultation-records" element={<ConsultantRecords />} />
+            <Route path="/consultant/consultation-logs" element={<ConsultationLogView />} />
             <Route path="/consultant/reports" element={<ConsultantRecords />} />
             <Route path="/consultant/messages" element={<ConsultantMessages />} />
             
@@ -468,6 +470,7 @@ function AppContent() {
             <Route path="/admin/consultant-comprehensive" element={<Navigate to="/admin/user-management?type=consultant" replace />} />
             <Route path="/admin/client-comprehensive" element={<Navigate to="/admin/user-management?type=client" replace />} />
             <Route path="/admin/mapping-management" element={<MappingManagement />} />
+            <Route path="/admin/consultation-logs" element={<ConsultationLogView />} />
             <Route
               path="/admin/integrated-schedule"
               element={

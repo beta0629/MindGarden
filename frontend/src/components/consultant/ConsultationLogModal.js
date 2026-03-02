@@ -34,7 +34,9 @@ const ConsultationLogModal = ({
   isOpen,
   onClose,
   scheduleData,
-  onSave
+  onSave,
+  recordId,
+  isAdmin = false
 }) => {
   const { user } = useSession();
 
@@ -180,7 +182,15 @@ const ConsultationLogModal = ({
   };
 
   useEffect(() => {
-    if (isOpen && scheduleData) {
+    if (isOpen && recordId) {
+      loadDataByRecordId();
+      loadPriorityCodes();
+      loadCompletionStatusCodes();
+    }
+  }, [isOpen, recordId]);
+
+  useEffect(() => {
+    if (isOpen && scheduleData && !recordId) {
       loadData();
       loadPriorityCodes();
       loadCompletionStatusCodes();
@@ -191,7 +201,107 @@ const ConsultationLogModal = ({
         sessionDate: getSessionDateFromSchedule(scheduleData)
       }));
     }
-  }, [isOpen, scheduleData]);
+  }, [isOpen, scheduleData, recordId]);
+
+  const loadDataByRecordId = async () => {
+    if (!recordId || !user?.id) return;
+    try {
+      setLoading(true);
+      setClientWithStats(null);
+      setClient(null);
+      setConsultationRecord(null);
+      setImportantComments([]);
+      setPsychDocuments([]);
+
+      let record = null;
+      if (isAdmin) {
+        const res = await apiGet(`/api/v1/admin/consultation-records/${recordId}`);
+        record = res?.data ?? res;
+      } else {
+        const res = await apiGet(`/api/v1/admin/consultant-records/${user.id}/consultation-records/${recordId}`);
+        record = res?.data ?? res;
+      }
+
+      if (!record) {
+        notificationManager.show('상담일지를 찾을 수 없습니다.', 'error');
+        return;
+      }
+
+      const cId = record.clientId != null ? Number(record.clientId) : null;
+      if (cId) {
+        try {
+          const withStatsRes = await apiGet(`/api/v1/admin/clients/with-stats/${cId}`);
+          const payload = withStatsRes?.data != null ? withStatsRes.data : withStatsRes;
+          const clientData = payload?.client ?? withStatsRes?.client;
+          if (clientData) {
+            setClientWithStats(payload);
+            setClient(clientData);
+          }
+        } catch (err) {
+          setClient({ id: cId, name: record.clientName || `내담자 #${cId}` });
+        }
+        setLoadingPsych(true);
+        try {
+          const psychRes = await apiGet(`/api/v1/assessments/psych/documents/by-client/${cId}`);
+          const list = Array.isArray(psychRes) ? psychRes : (psychRes?.data && Array.isArray(psychRes.data) ? psychRes.data : []);
+          setPsychDocuments(list);
+        } catch (e) {
+          setPsychDocuments([]);
+        } finally {
+          setLoadingPsych(false);
+        }
+      }
+
+      const sessionDateStr = record.sessionDate || record.consultationDate;
+      const sessionDate = typeof sessionDateStr === 'string' ? sessionDateStr.split('T')[0] : sessionDateStr;
+
+      setConsultationRecord(record);
+      setIsEditMode(true);
+      setFormData({
+        sessionDate: sessionDate || '',
+        sessionNumber: record.sessionNumber ?? 1,
+        clientCondition: record.clientCondition || '',
+        mainIssues: record.mainIssues || '',
+        interventionMethods: record.interventionMethods || '',
+        clientResponse: record.clientResponse || '',
+        nextSessionPlan: record.nextSessionPlan || '',
+        homeworkAssigned: record.homeworkAssigned || '',
+        homeworkDueDate: record.homeworkDueDate || '',
+        riskAssessment: record.riskAssessment || 'LOW',
+        riskFactors: record.riskFactors || '',
+        emergencyResponsePlan: record.emergencyResponsePlan || '',
+        progressEvaluation: record.progressEvaluation || '',
+        progressScore: record.progressScore ?? 50,
+        goalAchievement: record.goalAchievement || 'MEDIUM',
+        goalAchievementDetails: record.goalAchievementDetails || '',
+        consultantObservations: record.consultantObservations || '',
+        consultantAssessment: record.consultantAssessment || '',
+        specialConsiderations: record.specialConsiderations || '',
+        medicalInformation: record.medicalInformation || '',
+        medicationInfo: record.medicationInfo || '',
+        familyRelationships: record.familyRelationships || '',
+        socialSupport: record.socialSupport || '',
+        environmentalFactors: record.environmentalFactors || '',
+        sessionDurationMinutes: record.sessionDurationMinutes ?? 60,
+        isSessionCompleted: record.isSessionCompleted ?? false,
+        incompletionReason: record.incompletionReason || '',
+        nextSessionDate: record.nextSessionDate || '',
+        followUpActions: record.followUpActions || '',
+        followUpDueDate: record.followUpDueDate || ''
+      });
+
+      const comments = [];
+      if (record.specialConsiderations && String(record.specialConsiderations).trim()) {
+        comments.push({ source: '이전 상담일지 특이사항', text: record.specialConsiderations });
+      }
+      setImportantComments(comments);
+    } catch (error) {
+      console.error('상담일지 단건 로드 오류:', error);
+      notificationManager.show('데이터를 불러오는 중 오류가 발생했습니다.', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const loadData = async () => {
     try {
@@ -375,42 +485,45 @@ const ConsultationLogModal = ({
       notificationManager.error('필수 항목을 모두 입력해주세요.');
       return;
     }
-    
+
     try {
       setSaving(true);
-      
-      const consultationId = scheduleData.id ? 
-        (typeof scheduleData.id === 'string' && scheduleData.id.startsWith('schedule-') ? 
-          parseInt(scheduleData.id.replace('schedule-', '')) : 
-          parseInt(scheduleData.id)) : 
-        null;
+
+      const consultationId = scheduleData?.id
+        ? (typeof scheduleData.id === 'string' && scheduleData.id.startsWith('schedule-')
+            ? parseInt(scheduleData.id.replace('schedule-', ''), 10)
+            : parseInt(scheduleData.id, 10))
+        : (consultationRecord?.consultationId != null ? Number(consultationRecord.consultationId) : null);
 
       const recordData = {
         ...formData,
         consultationId: consultationId,
-        clientId: client?.id,
+        clientId: client?.id ?? consultationRecord?.clientId,
         consultantId: user.id,
-        isSessionCompleted: false
+        isSessionCompleted: formData.isSessionCompleted ?? false
       };
-
-      console.log('📝 상담일지 저장 데이터:', recordData);
 
       let response;
       if (isEditMode && consultationRecord) {
-        response = await apiPut(`/api/v1/schedules/consultation-records/${consultationRecord.id}`, recordData);
+        if (isAdmin) {
+          response = await apiPut(`/api/v1/admin/consultation-records/${consultationRecord.id}`, recordData);
+        } else {
+          response = await apiPut(`/api/v1/schedules/consultation-records/${consultationRecord.id}`, recordData);
+        }
       } else {
-        response = await apiPost(`/api/v1/schedules/consultation-records`, recordData);
+        response = await apiPost('/api/v1/schedules/consultation-records', recordData);
       }
 
-      if (response.success) {
+      if (response?.success) {
         notificationManager.show(
           isEditMode ? '상담일지가 수정되었습니다.' : '상담일지가 저장되었습니다.',
           'success'
         );
         setConsultationRecord(response.data);
         onSave && onSave(response.data);
+        if (recordId) onClose && onClose();
       } else {
-        throw new Error(response.message || '저장에 실패했습니다.');
+        throw new Error(response?.message || '저장에 실패했습니다.');
       }
     } catch (error) {
       console.error('저장 오류:', error);
@@ -425,40 +538,42 @@ const ConsultationLogModal = ({
       notificationManager.error('필수 항목을 모두 입력해주세요.');
       return;
     }
-    
+
     try {
       setSaving(true);
-      
-      const consultationId = scheduleData.id ? 
-        (typeof scheduleData.id === 'string' && scheduleData.id.startsWith('schedule-') ? 
-          parseInt(scheduleData.id.replace('schedule-', '')) : 
-          parseInt(scheduleData.id)) : 
-        null;
+
+      const consultationId = scheduleData?.id
+        ? (typeof scheduleData.id === 'string' && scheduleData.id.startsWith('schedule-')
+            ? parseInt(scheduleData.id.replace('schedule-', ''), 10)
+            : parseInt(scheduleData.id, 10))
+        : (consultationRecord?.consultationId != null ? Number(consultationRecord.consultationId) : null);
 
       const recordData = {
         ...formData,
         consultationId: consultationId,
-        clientId: client?.id,
+        clientId: client?.id ?? consultationRecord?.clientId,
         consultantId: user.id,
         isSessionCompleted: true,
         completionTime: new Date().toISOString()
       };
 
-      console.log('📝 상담일지 완료 데이터:', recordData);
-
       let response;
       if (isEditMode && consultationRecord) {
-        response = await apiPut(`/api/v1/schedules/consultation-records/${consultationRecord.id}`, recordData);
+        if (isAdmin) {
+          response = await apiPut(`/api/v1/admin/consultation-records/${consultationRecord.id}`, recordData);
+        } else {
+          response = await apiPut(`/api/v1/schedules/consultation-records/${consultationRecord.id}`, recordData);
+        }
       } else {
-        response = await apiPost(`/api/v1/schedules/consultation-records`, recordData);
+        response = await apiPost('/api/v1/schedules/consultation-records', recordData);
       }
 
-      if (response.success) {
+      if (response?.success) {
         notificationManager.show('상담일지가 완료되었습니다.', 'success');
         onSave && onSave(response.data);
         onClose();
       } else {
-        throw new Error(response.message || '완료 처리에 실패했습니다.');
+        throw new Error(response?.message || '완료 처리에 실패했습니다.');
       }
     } catch (error) {
       console.error('완료 처리 오류:', error);

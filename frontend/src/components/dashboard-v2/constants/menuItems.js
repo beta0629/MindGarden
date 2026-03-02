@@ -10,6 +10,7 @@ import {
   Users,
   FileText,
   Calendar,
+  CalendarDays,
   MessageCircle,
   CreditCard,
   ShoppingCart,
@@ -26,6 +27,7 @@ const BREAKPOINT_DESKTOP = 768;
 const DEFAULT_MENU_ITEMS = [
   { to: ADMIN_ROUTES.DASHBOARD, icon: LayoutDashboard, label: '대시보드', end: true },
   { to: ADMIN_ROUTES.INTEGRATED_SCHEDULE, icon: Calendar, label: '통합 스케줄 센터', end: true },
+  { to: ADMIN_ROUTES.CONSULTATION_LOGS, icon: CalendarDays, label: '상담일지 조회', end: true },
   { to: ADMIN_ROUTES.SYSTEM_NOTIFICATIONS, icon: MessageCircle, label: '알림', end: true },
   {
     to: '/admin/user-management',
@@ -88,6 +90,7 @@ const CONSULTANT_MENU_ITEMS = [
   { to: '/consultant/dashboard', icon: LayoutDashboard, label: '대시보드', end: true },
   { to: '/consultant/schedule', icon: Calendar, label: '스케줄', end: true },
   { to: '/consultant/consultation-records', icon: FileText, label: '상담 기록', end: true },
+  { to: '/consultant/consultation-logs', icon: FileText, label: '상담일지 조회', end: true },
   { to: '/consultant/availability', icon: Users, label: '가능 시간', end: true },
   { to: '/consultant/messages', icon: MessageCircle, label: '메시지', end: true }
 ];

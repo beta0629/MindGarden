@@ -3441,10 +3441,11 @@ public class AdminController extends BaseApiController {
             }
             // 공통코드에서 관리자 역할인지 확인
             String roleName = role.name();
-            return roleCodes.stream().anyMatch(
+            boolean fromCommonCode = roleCodes.stream().anyMatch(
                     code -> code.getCodeValue().equals(roleName) && (code.getExtraData() != null
                             && (code.getExtraData().contains("\"isAdmin\":true")
                                     || code.getExtraData().contains("\"roleType\":\"ADMIN\""))));
+            return fromCommonCode || role.isAdmin();
         } catch (Exception e) {
             log.warn("공통코드에서 관리자 역할 조회 실패, 폴백 사용: {}", role, e);
             // 폴백: 표준 관리자 역할만 체크

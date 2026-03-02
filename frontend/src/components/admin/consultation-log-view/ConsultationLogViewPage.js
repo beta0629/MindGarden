@@ -95,18 +95,28 @@ const ConsultationLogViewPage = () => {
     setLoading(true);
     try {
       if (isAdmin) {
-        // 관리자: 전체 상담일지 목록만 조회 (admin API 전용)
-        const params = {
-          page: DEFAULT_PAGE,
-          size: DEFAULT_SIZE
-        };
-        if (consultantId != null) params.consultantId = consultantId;
-        if (clientId != null) params.clientId = clientId;
-        const response = await StandardizedApi.get('/api/v1/admin/consultation-records', params);
-        const list = response?.data ?? [];
-        setRecords(Array.isArray(list) ? list : []);
+        try {
+          const params = {
+            page: DEFAULT_PAGE,
+            size: DEFAULT_SIZE
+          };
+          if (consultantId != null) params.consultantId = consultantId;
+          if (clientId != null) params.clientId = clientId;
+          const response = await StandardizedApi.get('/api/v1/admin/consultation-records', params);
+          const list = response?.data ?? [];
+          setRecords(Array.isArray(list) ? list : []);
+        } catch (adminErr) {
+          if (adminErr?.status === 403 || (adminErr?.message && adminErr.message.includes('관리자 권한'))) {
+            const consultantResponse = await StandardizedApi.get(
+              `/api/v1/admin/consultant-records/${user.id}/consultation-records`
+            );
+            const list = consultantResponse?.data ?? [];
+            setRecords(normalizeConsultantRecords(list, user?.name));
+          } else {
+            throw adminErr;
+          }
+        }
       } else {
-        // 상담사: 본인 상담일지만 조회 (consultant-records API 전용)
         const response = await StandardizedApi.get(
           `/api/v1/admin/consultant-records/${user.id}/consultation-records`
         );

@@ -3,7 +3,7 @@ import { FileText, AlertTriangle } from 'lucide-react';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet, apiPost, apiPut } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
-import UnifiedModal from '../common/modals/UnifiedModal';
+import MgModal from '../ui/MgModal/MgModal';
 import Button from '../ui/Button/Button';
 import { getUserStatusKoreanNameSync } from '../../utils/codeHelper';
 
@@ -598,55 +598,61 @@ const ConsultationLogModal = ({
 
   const modalTitle = `상담일지 작성${isEditMode ? ' (수정 모드)' : ''}`;
 
+  const modalFooter = (
+    <div className="mg-modal__actions mg-v2-modal-footer-inline">
+      <Button
+        type="button"
+        variant="outline"
+        size="medium"
+        onClick={onClose}
+        disabled={saving}
+        preventDoubleClick={false}
+      >
+        취소
+      </Button>
+      <Button
+        type="button"
+        variant="primary"
+        size="medium"
+        onClick={handleSave}
+        disabled={saving}
+        loading={saving}
+        loadingText="저장중..."
+        preventDoubleClick={false}
+      >
+        {saving ? '저장중...' : '💾 저장'}
+      </Button>
+      <Button
+        type="button"
+        variant="success"
+        size="medium"
+        onClick={handleComplete}
+        disabled={saving}
+        loading={saving}
+        loadingText="완료중..."
+        preventDoubleClick={false}
+      >
+        {saving ? '완료중...' : '✅ 완료'}
+      </Button>
+    </div>
+  );
+
   return (
-    <UnifiedModal
+    <MgModal
       isOpen={isOpen}
       onClose={onClose}
       title={modalTitle}
-      size="large"
-      className="mg-v2-ad-b0kla mg-modal--consultation-log"
-      backdropClick
-      showCloseButton
-      loading={loading}
-      actions={
-        <div className="mg-modal__actions mg-v2-modal-footer-inline">
-          <Button
-            type="button"
-            variant="outline"
-            size="medium"
-            onClick={onClose}
-            disabled={saving}
-            preventDoubleClick={false}
-          >
-            취소
-          </Button>
-          <Button
-            type="button"
-            variant="primary"
-            size="medium"
-            onClick={handleSave}
-            disabled={saving}
-            loading={saving}
-            loadingText="저장중..."
-            preventDoubleClick={false}
-          >
-            {saving ? '저장중...' : '💾 저장'}
-          </Button>
-          <Button
-            type="button"
-            variant="success"
-            size="medium"
-            onClick={handleComplete}
-            disabled={saving}
-            loading={saving}
-            loadingText="완료중..."
-            preventDoubleClick={false}
-          >
-            {saving ? '완료중...' : '✅ 완료'}
-          </Button>
-        </div>
-      }
+      size="full"
+      showCloseButton={true}
+      closeOnOverlayClick={true}
+      footer={modalFooter}
     >
+      <div className="mg-v2-consultation-log-modal">
+        {saving && (
+          <p className="mg-v2-text-sm mg-v2-text-secondary mg-v2-mb-md" role="status" aria-live="polite">
+            저장 중...
+          </p>
+        )}
         <div
           className="mg-v2-modal-body"
           style={{
@@ -1278,7 +1284,8 @@ const ConsultationLogModal = ({
             </div>
           </div>
         </div>
-    </UnifiedModal>
+      </div>
+    </MgModal>
   );
 };
 

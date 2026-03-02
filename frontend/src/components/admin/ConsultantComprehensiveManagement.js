@@ -1349,6 +1349,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                     profileImageUrl={selectedConsultant.profileImageUrl}
                                     displayName={selectedConsultant.name}
                                     className="mg-v2-consultant-detail-avatar"
+                                    size={64}
                                 />
                                 <div className="mg-v2-consultant-detail-info">
                                     <h4 className="mg-v2-consultant-detail-name">{selectedConsultant.name || '이름 없음'}</h4>
@@ -1362,6 +1363,12 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                 <div className="mg-v2-detail-section">
                                     <h5>기본 정보</h5>
                                     <div className="mg-v2-detail-grid">
+                                        <div className="mg-v2-detail-item">
+                                            <span className="mg-v2-detail-label">성별:</span>
+                                            <span className="mg-v2-detail-value">
+                                                {selectedConsultant.gender === 'MALE' ? '남성' : selectedConsultant.gender === 'FEMALE' ? '여성' : selectedConsultant.gender || '-'}
+                                            </span>
+                                        </div>
                                         <div className="mg-v2-detail-item">
                                             <span className="mg-v2-detail-label">전화번호:</span>
                                             <span className="mg-v2-detail-value">{selectedConsultant.phone || '전화번호 없음'}</span>

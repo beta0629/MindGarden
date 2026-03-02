@@ -63,6 +63,12 @@ const ClientOverviewTab = ({
                 <div className="mg-v2-profile-card__body">
                     <div className="mg-v2-profile-card__stats-grid">
                         <div className="mg-v2-profile-card__stat-item">
+                            <span className="mg-v2-profile-card__stat-label">성별</span>
+                            <span className="mg-v2-profile-card__stat-value">
+                                {client.gender === 'MALE' ? '남성' : client.gender === 'FEMALE' ? '여성' : client.gender || '-'}
+                            </span>
+                        </div>
+                        <div className="mg-v2-profile-card__stat-item">
                             <span className="mg-v2-profile-card__stat-label">등록일</span>
                             <span className="mg-v2-profile-card__stat-value">
                                 {client.createdAt ? new Date(client.createdAt).toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' }) : '-'}

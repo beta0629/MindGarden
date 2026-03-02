@@ -136,9 +136,14 @@ public class PlSqlScheduleValidationServiceImpl implements PlSqlScheduleValidati
             params.put("p_processed_by", processedBy);
             
             Map<String, Object> result = jdbcCall.execute(params);
-            
+            // 표준화 프로시저는 p_success만 반환할 수 있음. p_completed가 있으면 우선 사용, 없으면 p_success를 completed 의미로 매핑
+            Object completedRaw = result.get("p_completed");
+            if (completedRaw == null) {
+                completedRaw = result.get("p_success");
+            }
+            Boolean completed = toBoolean(completedRaw);
             Map<String, Object> response = new HashMap<>();
-            response.put("completed", result.get("p_completed"));
+            response.put("completed", completed);
             response.put("message", result.get("p_message"));
             response.put("success", true);
             
@@ -200,5 +205,21 @@ public class PlSqlScheduleValidationServiceImpl implements PlSqlScheduleValidati
             errorResponse.put("success", false);
             return errorResponse;
         }
+    }
+
+    /**
+     * 프로시저 OUT 파라미터(Boolean/Number 1|0)를 Boolean으로 변환
+     */
+    private static Boolean toBoolean(Object value) {
+        if (value == null) {
+            return false;
+        }
+        if (value instanceof Boolean) {
+            return (Boolean) value;
+        }
+        if (value instanceof Number) {
+            return ((Number) value).intValue() != 0;
+        }
+        return false;
     }
 }

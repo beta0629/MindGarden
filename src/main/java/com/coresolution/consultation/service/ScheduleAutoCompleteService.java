@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.entity.Schedule;
+import com.coresolution.consultation.repository.ConsultationRecordRepository;
 import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.service.TenantService;
@@ -30,6 +31,7 @@ public class ScheduleAutoCompleteService {
     
     private final ScheduleService scheduleService;
     private final ScheduleRepository scheduleRepository;
+    private final ConsultationRecordRepository consultationRecordRepository;
     private final RealTimeStatisticsService realTimeStatisticsService;
     private final PlSqlScheduleValidationService plSqlScheduleValidationService;
     private final TenantService tenantService;
@@ -129,37 +131,29 @@ public class ScheduleAutoCompleteService {
                         try {
                             // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                             if (ScheduleStatus.BOOKED.equals(schedule.getStatus()) || ScheduleStatus.CONFIRMED.equals(schedule.getStatus())) {
-                                var result = plSqlScheduleValidationService.processScheduleAutoCompletion(
-                                    schedule.getId(), 
-                                    schedule.getConsultantId(), 
-                                    schedule.getDate(), 
-                                    false // 강제 완료 아님
-                                );
-                                
-                                if ((Boolean) result.get("completed")) {
-                                    tenantCompletedCount++;
-                                    
-                                    realTimeStatisticsService.updateStatisticsOnScheduleCompletion(schedule);
-                                    
-                                    log.info("✅ PL/SQL 지난 스케줄 자동 완료 및 통계 업데이트: tenantId={}, ID={}, 제목={}, 날짜={}", 
-                                        tenantId, schedule.getId(), schedule.getTitle(), schedule.getDate());
-                                } else {
-                                    log.warn("⚠️ PL/SQL 지난 스케줄 상담일지 미작성으로 완료 처리 건너뜀: tenantId={}, ID={}, 제목={}, 날짜={}, 메시지={}", 
-                                        tenantId, schedule.getId(), schedule.getTitle(), schedule.getDate(), result.get("message"));
-                                    
+                                // 지난 스케줄: 상담일지 여부와 관계없이 Java에서 COMPLETED 전환 후, 상담일지 없으면 리마인더만 생성
+                                schedule.setStatus(ScheduleStatus.COMPLETED);
+                                scheduleRepository.save(schedule);
+                                tenantCompletedCount++;
+
+                                boolean hasRecord = consultationRecordRepository.existsByTenantIdAndConsultationIdAndIsDeletedFalse(tenantId, schedule.getId());
+                                if (!hasRecord) {
                                     var reminderResult = plSqlScheduleValidationService.createConsultationRecordReminder(
-                                        schedule.getId(), 
-                                        schedule.getConsultantId(), 
-                                        schedule.getClientId(), 
-                                        schedule.getDate(), 
+                                        schedule.getId(),
+                                        schedule.getConsultantId(),
+                                        schedule.getClientId(),
+                                        schedule.getDate(),
                                         schedule.getTitle()
                                     );
-                                    
-                                    if ((Boolean) reminderResult.get("success")) {
+                                    if (Boolean.TRUE.equals(reminderResult.get("success"))) {
                                         tenantReminderSentCount++;
-                                        log.info("📤 PL/SQL 지난 스케줄 상담일지 미작성 알림 생성 완료: tenantId={}, ID={}", tenantId, reminderResult.get("reminderId"));
+                                        log.info("📤 지난 스케줄 상담일지 미작성 알림 생성 완료: tenantId={}, ID={}", tenantId, reminderResult.get("reminderId"));
                                     }
                                 }
+
+                                realTimeStatisticsService.updateStatisticsOnScheduleCompletion(schedule);
+                                log.info("✅ 지난 스케줄 COMPLETED 전환 및 통계 업데이트: tenantId={}, ID={}, 제목={}, 날짜={}",
+                                    tenantId, schedule.getId(), schedule.getTitle(), schedule.getDate());
                             }
                         } catch (Exception e) {
                             log.error("❌ 지난 스케줄 자동 완료 실패: tenantId={}, ID={}, 오류={}", tenantId, schedule.getId(), e.getMessage());
@@ -189,12 +183,27 @@ public class ScheduleAutoCompleteService {
     
     /**
      * 매일 자정에 하루 종료된 스케줄들을 정리
+     * 테넌트 컨텍스트가 없어 early return되지 않도록 각 활성 테넌트별로 컨텍스트 설정 후 처리
      */
     @Scheduled(cron = "0 0 0 * * *")
     public void cleanupDailySchedules() {
         try {
             log.info("🧹 일일 스케줄 정리 시작");
-            scheduleService.autoCompleteExpiredSchedules();
+            List<String> activeTenantIds = tenantService.getAllActiveTenantIds();
+            if (activeTenantIds.isEmpty()) {
+                log.warn("⚠️ 활성 테넌트가 없습니다. 일일 스케줄 정리를 건너뜁니다.");
+                return;
+            }
+            for (String tenantId : activeTenantIds) {
+                try {
+                    TenantContextHolder.setTenantId(tenantId);
+                    scheduleService.autoCompleteExpiredSchedules();
+                } catch (Exception e) {
+                    log.error("❌ 일일 스케줄 정리 실패: tenantId={}, 오류={}", tenantId, e.getMessage(), e);
+                } finally {
+                    TenantContextHolder.clear();
+                }
+            }
             log.info("✅ 일일 스케줄 정리 완료");
         } catch (Exception e) {
             log.error("❌ 일일 스케줄 정리 실패: {}", e.getMessage(), e);

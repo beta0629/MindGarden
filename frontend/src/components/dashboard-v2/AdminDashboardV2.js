@@ -964,6 +964,17 @@ const AdminDashboardV2 = ({ user: propUser }) => {
             <span className="mg-v2-ad-b0kla__admin-label">스케줄 관리</span>
             <span className="mg-v2-ad-b0kla__admin-desc">상담 일정을 관리하고 조정합니다</span>
           </button>
+          <button
+            type="button"
+            className="mg-v2-ad-b0kla__admin-card"
+            onClick={() => navigate(ADMIN_ROUTES.CONSULTATION_LOGS)}
+          >
+            <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--green">
+              <FaFileAlt size={28} />
+            </div>
+            <span className="mg-v2-ad-b0kla__admin-label">상담일지 조회</span>
+            <span className="mg-v2-ad-b0kla__admin-desc">상담일지를 검색하고 목록에서 클릭해 수정할 수 있습니다</span>
+          </button>
           {!HIDE_ADMIN_CARD_IDS.has('sessions') && (
           <button
             type="button"

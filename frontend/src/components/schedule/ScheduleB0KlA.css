@@ -615,12 +615,18 @@
 /* ===== UnifiedModal (mg-modal) B0KlA 호환 ===== */
 .mg-modal-overlay.mg-v2-ad-b0kla {
   --ad-b0kla-card-bg: var(--mg-white, #ffffff);
-  --ad-b0kla-overlay-bg: var(--droplet-bg-dark, rgba(0,0,0,0.4));
+  --ad-b0kla-overlay-bg: var(--droplet-bg-dark, rgba(0,0,0,0.5));
   background: var(--ad-b0kla-overlay-bg);
+  /* 스크롤 시에도 오버레이 불투명 유지 */
+  background-color: rgba(0, 0, 0, 0.5);
+  /* 스크롤 시 배경 블러로 겹쳐 보이는 현상 방지 */
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 .mg-modal.mg-v2-ad-b0kla {
   background: var(--ad-b0kla-card-bg, #ffffff);
+  background-color: #ffffff;
   border-radius: 16px;
   box-shadow: var(--cs-shadow-soft);
 }
@@ -633,16 +639,20 @@
 }
 
 /* 상담일지 모달 전용: 스크롤 시 레이어 겹침/투명 현상 방지 — 불투명 배경 명시 (특이도 높임) */
+.mg-modal.mg-modal--large.mg-modal--consultation-log.mg-v2-ad-b0kla,
 .mg-modal.mg-modal--large.mg-modal--consultation-log.mg-v2-ad-b0kla .mg-modal__body {
   background: var(--mg-layout-main-bg-start, var(--ad-b0kla-card-bg, #FAF9F7));
+  background-color: #FAF9F7;
 }
 
 .mg-modal.mg-modal--large.mg-modal--consultation-log.mg-v2-ad-b0kla .mg-modal__body .mg-v2-modal-body {
   background: var(--mg-layout-main-bg-start, var(--ad-b0kla-card-bg, #FAF9F7));
+  background-color: #FAF9F7;
 }
 
 .mg-modal.mg-modal--large.mg-modal--consultation-log.mg-v2-ad-b0kla .mg-modal__body .mg-v2-consultation-log-sticky {
   background: var(--mg-layout-main-bg-start, var(--ad-b0kla-card-bg, #FAF9F7));
+  background-color: #FAF9F7;
 }
 
 .mg-modal.mg-v2-ad-b0kla .mg-modal__header {

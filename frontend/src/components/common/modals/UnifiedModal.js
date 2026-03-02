@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import UnifiedLoading from '../UnifiedLoading';
 import '../../../styles/main.css'; // Ensure main.css is imported for mg-modal styles
 
@@ -99,8 +100,8 @@ const UnifiedModal = ({
   // 표준화 2025-12-08: DOM에 전달되면 안 되는 props 필터링
   const { isOpen: _isOpen, backdropClick: _backdropClick, loading: _loading, ...domProps } = props;
 
-  return (
-    <div 
+  const modalContent = (
+    <div
       className={overlayClasses}
       onClick={handleBackdropClick}
       style={overlayStyle}
@@ -120,7 +121,7 @@ const UnifiedModal = ({
               )}
             </div>
             {showCloseButton && (
-              <button 
+              <button
                 className="mg-modal__close"
                 onClick={onClose}
                 aria-label="닫기"
@@ -131,19 +132,19 @@ const UnifiedModal = ({
             )}
           </div>
         )}
-        
+
         {/* 바디 */}
         <div className="mg-modal__body">
           {children}
         </div>
-        
+
         {/* 액션 버튼들 */}
         {actions && (
           <div className="mg-modal__actions">
             {actions}
           </div>
         )}
-        
+
         {/* 로딩 오버레이 - 공통 스피너(UnifiedLoading) 사용 */}
         {loading && (
           <div className="mg-modal__loading-overlay">
@@ -160,6 +161,8 @@ const UnifiedModal = ({
       </div>
     </div>
   );
+
+  return ReactDOM.createPortal(modalContent, document.body);
 };
 
 export default UnifiedModal;

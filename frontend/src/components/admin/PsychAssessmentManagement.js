@@ -17,6 +17,7 @@ import UnifiedLoading from '../common/UnifiedLoading';
 import PsychKpiSection from './psych-assessment/organisms/PsychKpiSection';
 import PsychUploadSection from './psych-assessment/organisms/PsychUploadSection';
 import PsychDocumentListBlock from './psych-assessment/organisms/PsychDocumentListBlock';
+import PsychAiReportModalContent from './psych-assessment/organisms/PsychAiReportModalContent';
 import MGModal from '../common/MGModal';
 import ComingSoon from '../common/ComingSoon';
 import { useSession } from '../../contexts/SessionContext';
@@ -309,19 +310,7 @@ const PsychAssessmentManagement = ({ user: propUser }) => {
         size="large"
         showCloseButton
       >
-        {reportLoading ? (
-          <UnifiedLoading type="inline" text="리포트를 불러오는 중..." />
-        ) : reportContent?.reportMarkdown ? (
-          <div className="mg-v2-psych-report-modal-body">
-            {reportContent.modelName && (
-              <p className="mg-v2-psych-report-modal-meta">
-                모델: {reportContent.modelName}
-                {reportContent.createdAt && ` · 생성: ${reportContent.createdAt}`}
-              </p>
-            )}
-            <pre className="mg-v2-psych-report-modal-markdown">{reportContent.reportMarkdown}</pre>
-          </div>
-        ) : null}
+        <PsychAiReportModalContent loading={reportLoading} reportContent={reportContent} />
       </MGModal>
     </AdminCommonLayout>
   );

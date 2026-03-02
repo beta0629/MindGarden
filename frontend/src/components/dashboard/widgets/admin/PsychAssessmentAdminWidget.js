@@ -16,8 +16,8 @@ import StandardizedApi from '../../../../utils/standardizedApi';
 import PsychKpiSection from '../../../admin/psych-assessment/organisms/PsychKpiSection';
 import PsychUploadSection from '../../../admin/psych-assessment/organisms/PsychUploadSection';
 import PsychDocumentListBlock from '../../../admin/psych-assessment/organisms/PsychDocumentListBlock';
+import PsychAiReportModalContent from '../../../admin/psych-assessment/organisms/PsychAiReportModalContent';
 import MGModal from '../../../common/MGModal';
-import UnifiedLoading from '../../../common/UnifiedLoading';
 import '../../../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './PsychAssessmentAdminWidget.css';
 
@@ -269,19 +269,7 @@ const PsychAssessmentAdminWidget = forwardRef(({ widget, user }, ref) => {
         size="large"
         showCloseButton
       >
-        {reportLoading ? (
-          <UnifiedLoading type="inline" text="리포트를 불러오는 중..." />
-        ) : reportContent?.reportMarkdown ? (
-          <div className="mg-v2-psych-report-modal-body">
-            {reportContent.modelName && (
-              <p className="mg-v2-psych-report-modal-meta">
-                모델: {reportContent.modelName}
-                {reportContent.createdAt && ` · 생성: ${reportContent.createdAt}`}
-              </p>
-            )}
-            <pre className="mg-v2-psych-report-modal-markdown">{reportContent.reportMarkdown}</pre>
-          </div>
-        ) : null}
+        <PsychAiReportModalContent loading={reportLoading} reportContent={reportContent} />
       </MGModal>
     </div>
   );

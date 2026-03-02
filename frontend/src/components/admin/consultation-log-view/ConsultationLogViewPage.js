@@ -111,14 +111,14 @@ const ConsultationLogViewPage = () => {
           if (consultantId != null) params.consultantId = consultantId;
           if (clientId != null) params.clientId = clientId;
           const response = await StandardizedApi.get('/api/v1/admin/consultation-records', params);
-          const list = response?.data ?? [];
+          const list = Array.isArray(response) ? response : (response?.data ?? []);
           setRecords(Array.isArray(list) ? list : []);
         } catch (adminErr) {
           if (adminErr?.status === 403 || (adminErr?.message && adminErr.message.includes('관리자 권한'))) {
             const consultantResponse = await StandardizedApi.get(
               `/api/v1/admin/consultant-records/${user.id}/consultation-records`
             );
-            const list = consultantResponse?.data ?? [];
+            const list = Array.isArray(consultantResponse) ? consultantResponse : (consultantResponse?.data ?? []);
             setRecords(normalizeConsultantRecords(list, user?.name));
           } else {
             throw adminErr;
@@ -128,7 +128,7 @@ const ConsultationLogViewPage = () => {
         const response = await StandardizedApi.get(
           `/api/v1/admin/consultant-records/${user.id}/consultation-records`
         );
-        const list = response?.data ?? [];
+        const list = Array.isArray(response) ? response : (response?.data ?? []);
         setRecords(normalizeConsultantRecords(list, user?.name));
       }
     } catch (e) {

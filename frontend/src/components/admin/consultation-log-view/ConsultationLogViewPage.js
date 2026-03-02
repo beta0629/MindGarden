@@ -72,11 +72,30 @@ const ConsultationLogViewPage = () => {
     }
   }, []);
 
+  /** 상담사 본인 목록 응답을 목록 뷰 형식으로 정규화 */
+  const normalizeConsultantRecords = useCallback((list, consultantDisplayName) => {
+    const arr = Array.isArray(list) ? list : [];
+    return arr.map((r) => ({
+      id: r.id,
+      sessionDate: r.consultationDate ?? r.sessionDate,
+      consultationDate: r.consultationDate,
+      sessionNumber: r.sessionNumber,
+      clientName: r.clientName,
+      consultantName: consultantDisplayName ?? '본인',
+      isSessionCompleted: r.isSessionCompleted,
+      createdAt: r.createdAt,
+      updatedAt: r.updatedAt,
+      clientId: r.clientId,
+      consultantId: r.consultantId
+    }));
+  }, []);
+
   const loadRecords = useCallback(async () => {
     if (!user?.id) return;
     setLoading(true);
     try {
       if (isAdmin) {
+        // 관리자: 전체 상담일지 목록만 조회 (admin API 전용)
         const params = {
           page: DEFAULT_PAGE,
           size: DEFAULT_SIZE
@@ -87,33 +106,24 @@ const ConsultationLogViewPage = () => {
         const list = response?.data ?? [];
         setRecords(Array.isArray(list) ? list : []);
       } else {
+        // 상담사: 본인 상담일지만 조회 (consultant-records API 전용)
         const response = await StandardizedApi.get(
           `/api/v1/admin/consultant-records/${user.id}/consultation-records`
         );
         const list = response?.data ?? [];
-        const arr = Array.isArray(list) ? list : [];
-        setRecords(arr.map((r) => ({
-          id: r.id,
-          sessionDate: r.consultationDate ?? r.sessionDate,
-          consultationDate: r.consultationDate,
-          sessionNumber: r.sessionNumber,
-          clientName: r.clientName,
-          consultantName: user?.name ?? '본인',
-          isSessionCompleted: r.isSessionCompleted,
-          createdAt: r.createdAt,
-          updatedAt: r.updatedAt,
-          clientId: r.clientId,
-          consultantId: r.consultantId
-        })));
+        setRecords(normalizeConsultantRecords(list, user?.name));
       }
     } catch (e) {
       console.error('상담일지 목록 로드 실패:', e);
       setRecords([]);
-      notificationManager.error('상담일지 목록을 불러오는데 실패했습니다.');
+      const message = e?.status === 403
+        ? '관리자 권한이 필요합니다. 권한을 확인해주세요.'
+        : '상담일지 목록을 불러오는데 실패했습니다.';
+      notificationManager.error(message);
     } finally {
       setLoading(false);
     }
-  }, [user?.id, user?.name, isAdmin, consultantId, clientId]);
+  }, [user?.id, user?.name, isAdmin, consultantId, clientId, normalizeConsultantRecords]);
 
   useEffect(() => {
     loadConsultants();

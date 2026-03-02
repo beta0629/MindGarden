@@ -5,6 +5,7 @@ import { apiGet, apiPost, apiPut } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 import MgModal from '../ui/MgModal/MgModal';
 import Button from '../ui/Button/Button';
+import CustomSelect from '../common/CustomSelect';
 import { getUserStatusKoreanNameSync } from '../../utils/codeHelper';
 
 /** 심리검사 요약/권고 문장에서 "위험"·"주의"·"권고" 키워드를 굵은 텍스트+색상으로 강조 */
@@ -1000,18 +1001,14 @@ const ConsultationLogModal = ({
 
               <div className="mg-v2-form-group">
                 <label className="mg-v2-label">세션 완료 여부</label>
-                <select
-                  name="isSessionCompleted"
+                <CustomSelect
+                  options={completionStatusOptions.map(o => ({ value: o.value, label: o.label }))}
                   value={formData.isSessionCompleted === true ? 'COMPLETED' : 'PENDING'}
-                  onChange={handleInputChange}
+                  onChange={(v) => setFormData(prev => ({ ...prev, isSessionCompleted: v === 'COMPLETED' }))}
+                  placeholder="선택하세요"
+                  className="mg-v2-w-full"
                   disabled={true}
-                  className="mg-v2-input mg-v2-w-full"
-                  style={{ backgroundColor: 'var(--mg-gray-100)', cursor: 'not-allowed' }}
-                >
-                  {completionStatusOptions.map(option => (
-                    <option key={option.value} value={option.value}>{option.label}</option>
-                  ))}
-                </select>
+                />
               </div>
 
               {/* 내담자 상태 */}
@@ -1110,23 +1107,15 @@ const ConsultationLogModal = ({
               {/* 위험도 평가 */}
               <div className="mg-v2-form-group">
                 <label className="mg-v2-label">위험도 평가 *</label>
-                <select
-                  name="riskAssessment"
+                <CustomSelect
+                  options={[{ value: '', label: '위험도를 선택하세요' }, ...riskLevels.map(l => ({ value: l.value, label: l.label }))]}
                   value={formData.riskAssessment}
-                  onChange={handleInputChange}
-                  onClick={(e) => e.stopPropagation()}
-                  className="mg-v2-input mg-v2-w-full"
-                  style={{ borderColor: validationErrors.riskAssessment ? 'var(--mg-error-500)' : '' }}
+                  onChange={(v) => handleInputChange({ target: { name: 'riskAssessment', value: v } })}
+                  placeholder="위험도를 선택하세요"
+                  className="mg-v2-w-full"
                   disabled={loadingCodes}
-                  required
-                >
-                  <option value="">위험도를 선택하세요</option>
-                  {riskLevels.map(level => (
-                    <option key={level.value} value={level.value} style={{color: level.color}}>
-                      {level.label}
-                    </option>
-                  ))}
-                </select>
+                  error={!!validationErrors.riskAssessment}
+                />
               </div>
 
               <div className="mg-v2-form-group">
@@ -1183,16 +1172,13 @@ const ConsultationLogModal = ({
               {/* 목표 달성도 */}
               <div className="mg-v2-form-group">
                 <label className="mg-v2-label">목표 달성도</label>
-                <select
-                  name="goalAchievement"
+                <CustomSelect
+                  options={goalAchievementLevels.map(l => ({ value: l.value, label: l.label }))}
                   value={formData.goalAchievement}
-                  onChange={handleInputChange}
-                  className="mg-v2-input mg-v2-w-full"
-                >
-                  {goalAchievementLevels.map(level => (
-                    <option key={level.value} value={level.value}>{level.label}</option>
-                  ))}
-                </select>
+                  onChange={(v) => handleInputChange({ target: { name: 'goalAchievement', value: v } })}
+                  placeholder="선택하세요"
+                  className="mg-v2-w-full"
+                />
               </div>
 
               <div className="mg-v2-form-group" style={{ gridColumn: '1 / -1' }}>

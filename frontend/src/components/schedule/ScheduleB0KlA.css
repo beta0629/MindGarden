@@ -609,7 +609,9 @@
 .mg-v2-ad-modal__body {
   padding: 24px;
   overflow-y: auto;
-  background: var(--ad-b0kla-card-bg);
+  background: var(--ad-b0kla-card-bg, #ffffff);
+  background-color: #ffffff;
+  border: 1px solid var(--mg-gray-200, #e5e7eb);
 }
 
 /* ===== UnifiedModal (mg-modal) B0KlA 호환 ===== */

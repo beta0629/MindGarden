@@ -198,20 +198,22 @@ class StandardizedApi {
      * @returns {Error} 처리된 에러
      */
     static handleError(error, endpoint, method) {
-        // 에러 타입별 처리
+        let err;
         if (error.status === 400) {
-            return new Error(`잘못된 요청입니다: ${endpoint}`);
+            err = new Error(`잘못된 요청입니다: ${endpoint}`);
         } else if (error.status === 401) {
-            return new Error('인증이 필요합니다. 다시 로그인해주세요.');
+            err = new Error('인증이 필요합니다. 다시 로그인해주세요.');
         } else if (error.status === 403) {
-            return new Error('접근 권한이 없습니다.');
+            err = new Error(error.message || '접근 권한이 없습니다.');
         } else if (error.status === 404) {
-            return new Error(`요청한 리소스를 찾을 수 없습니다: ${endpoint}`);
+            err = new Error(`요청한 리소스를 찾을 수 없습니다: ${endpoint}`);
         } else if (error.status >= 500) {
-            return new Error('서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+            err = new Error('서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+        } else {
+            return error;
         }
-        
-        return error;
+        if (error.status != null) err.status = error.status;
+        return err;
     }
 }
 

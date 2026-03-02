@@ -104,6 +104,10 @@
   display: flex;
   flex-direction: column;
   flex: 1;
+  background: var(--mg-white, #ffffff);
+  background-color: #ffffff;
+  border: 1px solid transparent;
+  border-color: var(--mg-gray-200, #e5e7eb);
 }
 
 /* ===== Footer ===== */

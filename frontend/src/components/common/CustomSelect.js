@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import { ChevronDown } from 'lucide-react';
 import './CustomSelect.css';
 
@@ -49,22 +50,21 @@ const CustomSelect = ({
     };
   }, [isOpen]);
 
-  // 드롭다운 위치 조정 및 포커스 관리
+  // 드롭다운 위치 조정 + 스크롤/리사이즈 시 갱신 (모달 스크롤 시 옵션 패널이 따라 움직이지 않도록)
   useEffect(() => {
-    if (isOpen && dropdownRef.current && selectRef.current) {
+    if (!isOpen) return;
+
+    const updatePosition = () => {
+      if (!dropdownRef.current || !selectRef.current) return;
       const rect = selectRef.current.getBoundingClientRect();
       const dropdown = dropdownRef.current;
       const viewportHeight = window.innerHeight;
       const viewportWidth = window.innerWidth;
-      const dropdownHeight = 200; // 예상 드롭다운 높이
-
-      // CustomSelect는 자체 위치 계산을 사용 (dropdownPositionHelper와 충돌 방지)
+      const dropdownHeight = 200;
       dropdown.style.position = 'fixed';
-      dropdown.style.zIndex = '1000';
+      dropdown.style.zIndex = '9999';
       dropdown.style.left = `${rect.left}px`;
-      dropdown.style.width = `${rect.width}px`;
-
-      // 화면 하단에 공간이 부족하면 위쪽으로 표시
+      dropdown.style.width = `${Math.max(rect.width, 120)}px`;
       if (rect.bottom + dropdownHeight > viewportHeight) {
         dropdown.style.top = 'auto';
         dropdown.style.bottom = `${viewportHeight - rect.top}px`;
@@ -74,15 +74,22 @@ const CustomSelect = ({
         dropdown.style.bottom = 'auto';
         dropdown.style.marginTop = '4px';
       }
-
-      // 화면 오른쪽으로 벗어나지 않도록 조정
       if (rect.left + rect.width > viewportWidth) {
         dropdown.style.left = `${viewportWidth - rect.width - 16}px`;
       }
+    };
 
-      // 드롭다운이 열릴 때 포커스 설정
-      selectRef.current.focus();
-    }
+    const t = requestAnimationFrame(() => {
+      updatePosition();
+      if (selectRef.current) selectRef.current.focus();
+    });
+    document.addEventListener('scroll', updatePosition, true);
+    window.addEventListener('resize', updatePosition);
+    return () => {
+      cancelAnimationFrame(t);
+      document.removeEventListener('scroll', updatePosition, true);
+      window.removeEventListener('resize', updatePosition);
+    };
   }, [isOpen]);
 
   // 필터링된 옵션
@@ -164,10 +171,9 @@ const CustomSelect = ({
         </span>
       </div>
 
-      {/* 드롭다운 메뉴 */}
-      {isOpen && (
+      {/* 드롭다운 메뉴: 포탈로 body에 렌더해 스크롤 시 옵션 패널이 모달과 함께 움직이지 않도록 함 */}
+      {isOpen && ReactDOM.createPortal(
         <div ref={dropdownRef} className="custom-select__dropdown">
-          {/* 검색 입력 (옵션이 많을 때) */}
           {options.length > 5 && (
             <div className="custom-select__search">
               <input
@@ -181,8 +187,6 @@ const CustomSelect = ({
               />
             </div>
           )}
-
-          {/* 옵션 목록 */}
           <div className="custom-select__options">
             {filteredOptions.length === 0 ? (
               <div className="custom-select__no-options">
@@ -203,7 +207,8 @@ const CustomSelect = ({
               ))
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

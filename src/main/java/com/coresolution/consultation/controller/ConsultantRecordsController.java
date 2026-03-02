@@ -13,6 +13,7 @@ import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.service.ScheduleService;
 import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.util.PermissionCheckUtils;
+import com.coresolution.consultation.utils.SessionUtils;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -46,13 +47,26 @@ public class ConsultantRecordsController {
     
     /**
      * 상담사별 상담 기록 목록 조회
-     * GET /api/consultant/{consultantId}/consultation-records
+     * - 관리자: 모든 상담사의 기록 조회 가능
+     * - 상담사: 본인(consultantId = 로그인 사용자 ID) 기록만 조회 가능
+     * GET /api/v1/admin/consultant-records/{consultantId}/consultation-records
      */
     @GetMapping("/{consultantId}/consultation-records")
     public ResponseEntity<Map<String, Object>> getConsultationRecords(
-            @PathVariable Long consultantId) {
+            @PathVariable Long consultantId,
+            HttpSession session) {
         
         log.info("상담사 상담 기록 조회: consultantId={}", consultantId);
+        
+        User currentUser = SessionUtils.getCurrentUser(session);
+        if (currentUser == null) {
+            return ResponseEntity.status(401)
+                    .body(Map.of("success", false, "message", "로그인이 필요합니다."));
+        }
+        if (!SessionUtils.isAdmin(session) && !consultantId.equals(currentUser.getId())) {
+            return ResponseEntity.status(403)
+                    .body(Map.of("success", false, "message", "본인의 상담일지만 조회할 수 있습니다."));
+        }
         
         try {
             // 실제 상담일지 데이터 조회 (최근 20개)

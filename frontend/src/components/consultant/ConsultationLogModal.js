@@ -526,13 +526,15 @@ const ConsultationLogModal = ({
         response = await apiPost('/api/v1/schedules/consultation-records', recordData);
       }
 
-      if (response?.success) {
+      const record = response?.data ?? response;
+      const isSuccess = response && (response.success === true || (record && record.id != null));
+      if (isSuccess && record) {
         notificationManager.show(
           isEditMode ? '상담일지가 수정되었습니다.' : '상담일지가 저장되었습니다.',
           'success'
         );
-        setConsultationRecord(response.data);
-        onSave && onSave(response.data);
+        setConsultationRecord(record);
+        onSave && onSave(record);
         if (recordId) onClose && onClose();
       } else {
         throw new Error(response?.message || '저장에 실패했습니다.');
@@ -580,9 +582,11 @@ const ConsultationLogModal = ({
         response = await apiPost('/api/v1/schedules/consultation-records', recordData);
       }
 
-      if (response?.success) {
+      const record = response?.data ?? response;
+      const isSuccess = response && (response.success === true || (record && record.id != null));
+      if (isSuccess && record) {
         notificationManager.show('상담일지가 완료되었습니다.', 'success');
-        onSave && onSave(response.data);
+        onSave && onSave(record);
         onClose();
       } else {
         throw new Error(response?.message || '완료 처리에 실패했습니다.');

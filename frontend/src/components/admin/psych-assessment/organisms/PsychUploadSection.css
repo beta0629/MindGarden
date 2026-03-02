@@ -318,3 +318,21 @@
   font-size: 14px;
   color: var(--ad-b0kla-text-secondary);
 }
+
+.mg-v2-psych-upload-section__format-hint {
+  margin: 0;
+  font-size: 12px;
+  color: var(--ad-b0kla-text-secondary, var(--mg-color-text-secondary));
+}
+
+.mg-v2-psych-upload-section__selection-feedback {
+  margin: 0;
+  font-size: 14px;
+  color: var(--ad-b0kla-title-color, var(--mg-color-text-main));
+}
+
+.mg-v2-psych-upload-section__error {
+  margin: 0;
+  font-size: 14px;
+  color: var(--mg-error-500, var(--cs-error-500, #dc2626));
+}

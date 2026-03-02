@@ -44,3 +44,11 @@ spring:
             token-uri: https://appleid.apple.com/auth/token
             user-info-uri: https://appleid.apple.com/auth/userinfo
             user-name-attribute: sub
+
+# 심리검사 이미지 OCR (Tesseract) — dev 로컬 예시
+# tessdata 디렉터리 경로. 미설정 시 application.yml의 TESSDATA_PREFIX 환경 변수 사용.
+# 예: macOS Homebrew → /opt/homebrew/share/tessdata 또는 /usr/local/share/tessdata
+# psych:
+#   assessment:
+#     tesseract:
+#       datapath: /opt/homebrew/share/tessdata

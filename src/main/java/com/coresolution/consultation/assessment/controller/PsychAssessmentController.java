@@ -24,6 +24,9 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Arrays;
+import java.util.List;
+
 @Slf4j
 @RestController
 @RequestMapping("/api/v1/assessments/psych")
@@ -39,15 +42,32 @@ public class PsychAssessmentController extends BaseApiController {
 
     @PostMapping(value = "/documents", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("isAuthenticated()")
-    @Operation(summary = "심리검사 리포트 업로드(스캔 PDF)", description = "TCI/MMPI 스캔 PDF를 업로드하고 OCR/추출 파이프라인을 시작합니다.")
+    @Operation(summary = "심리검사 리포트 업로드", description = "TCI/MMPI 스캔 PDF 1개 또는 이미지(JPG, PNG) 여러 장을 업로드하고 OCR/추출 파이프라인을 시작합니다.")
     public ResponseEntity<ApiResponse<PsychAssessmentUploadResponse>> upload(
             @RequestParam("type") @NotNull PsychAssessmentType type,
-            @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "file", required = false) MultipartFile file,
+            @RequestParam(value = "files", required = false) MultipartFile[] files,
             @RequestParam(value = "clientId", required = false) Long clientId) {
 
         String tenantId = TenantContextHolder.getRequiredTenantId();
-        // createdBy는 기존 세션 유저에서 가져오는 것이 표준이나, 본 MVP에서는 null 허용
-        PsychAssessmentUploadResponse response = ingestService.uploadScannedPdf(type, file, clientId, null);
+        PsychAssessmentUploadResponse response;
+
+        if (file != null && !file.isEmpty()) {
+            // 단일 PDF 업로드
+            response = ingestService.uploadScannedPdf(type, file, clientId, null);
+        } else if (files != null && files.length > 0) {
+            // 다중 이미지 업로드
+            List<MultipartFile> fileList = Arrays.stream(files)
+                    .filter(f -> f != null && !f.isEmpty())
+                    .toList();
+            if (fileList.isEmpty()) {
+                throw new IllegalArgumentException("업로드할 이미지 파일을 선택해 주세요.");
+            }
+            response = ingestService.uploadScannedImages(type, fileList, clientId, null);
+        } else {
+            throw new IllegalArgumentException("업로드할 파일을 선택해 주세요.");
+        }
+
         log.info("Psych assessment uploaded: tenantId={}, type={}, documentId={}", tenantId, type,
                 response.getDocumentId());
         return success(response);

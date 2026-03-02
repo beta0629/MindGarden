@@ -15,15 +15,26 @@ import ContentCard from '../../../dashboard-v2/content/ContentCard';
 import notificationManager from '../../../../utils/notification';
 import './PsychUploadSection.css';
 
-const PDF_ACCEPT = { 'application/pdf': ['.pdf'] };
+const ACCEPT = {
+  'application/pdf': ['.pdf'],
+  'image/jpeg': ['.jpg', '.jpeg'],
+  'image/png': ['.png']
+};
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB, 서버 검열과 동일
+
+const CONTENT_TYPE_PDF = 'application/pdf';
+const CONTENT_TYPE_JPEG = 'image/jpeg';
+const CONTENT_TYPE_PNG = 'image/png';
+const isPdf = (f) => f?.type === CONTENT_TYPE_PDF;
+const isImage = (f) =>
+  f?.type === CONTENT_TYPE_JPEG || f?.type === CONTENT_TYPE_PNG;
 
 const getClientLabel = (c) => c.name || c.email || `내담자 #${c.id}`;
 
 const PsychUploadSection = ({
   uploadType,
   onUploadTypeChange,
-  uploadFile,
+  uploadFiles,
   onFilePick,
   onUpload,
   uploading,
@@ -34,24 +45,51 @@ const PsychUploadSection = ({
   clientsLoading = false
 }) => {
   const [clientFilter, setClientFilter] = useState('');
+  const [uploadError, setUploadError] = useState('');
+
+  const validateAndPick = useCallback(
+    (files) => {
+      setUploadError('');
+      if (!files?.length) return;
+      const hasPdf = files.some(isPdf);
+      const hasImage = files.some(isImage);
+      if (hasPdf && hasImage) {
+        setUploadError('한 건에는 PDF만 또는 이미지만 올릴 수 있습니다. PDF와 이미지를 함께 선택하지 마세요.');
+        notificationManager.warning('한 건에는 PDF만 또는 이미지만 올릴 수 있습니다.');
+        return;
+      }
+      if (hasPdf && files.length > 1) {
+        setUploadError('PDF는 1개만 선택할 수 있습니다.');
+        notificationManager.warning('PDF는 1개만 선택할 수 있습니다.');
+        return;
+      }
+      onFilePick(files);
+    },
+    [onFilePick]
+  );
 
   const onDropRejectedHandler = useCallback((fileRejections) => {
+    setUploadError('');
     const first = fileRejections[0];
     if (!first?.errors?.length) {
-      notificationManager.warning('파일을 선택할 수 없습니다. PDF 파일(50MB 이하)만 가능합니다.');
+      notificationManager.warning('PDF 또는 이미지 파일(JPG, PNG)만 업로드할 수 있습니다. 파일당 최대 50MB.');
+      setUploadError('PDF 또는 이미지 파일(JPG, PNG)만 업로드할 수 있습니다.');
       return;
     }
-    const message = first.errors.map((e) => e.message).join('. ') || '파일 형식 또는 크기가 올바르지 않습니다.';
+    const message =
+      first.errors.map((e) => e.message).join('. ') ||
+      '파일 형식 또는 크기가 올바르지 않습니다. PDF, JPG, PNG만 가능하며 파일당 최대 50MB입니다.';
     notificationManager.warning(message);
+    setUploadError(message);
   }, []);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    accept: PDF_ACCEPT,
+    accept: ACCEPT,
     maxSize: MAX_FILE_SIZE,
-    multiple: false,
+    multiple: true,
     onDrop: (acceptedFiles) => {
       if (acceptedFiles.length > 0) {
-        onFilePick(acceptedFiles[0]);
+        validateAndPick(acceptedFiles);
       }
     },
     onDropRejected: onDropRejectedHandler
@@ -79,7 +117,7 @@ const PsychUploadSection = ({
       <ContentCard className="mg-v2-psych-upload-section__card">
         <div className="mg-v2-psych-upload-section__header">
           <Upload size={16} />
-          <h2 className="mg-v2-content-section__title">PDF 업로드</h2>
+          <h2 className="mg-v2-content-section__title">파일 업로드</h2>
         </div>
         <div className="mg-v2-psych-upload-section__body">
           <div
@@ -91,12 +129,29 @@ const PsychUploadSection = ({
             <input
               {...getInputProps({
                 id: fileInputId,
-                accept: 'application/pdf',
-                'aria-label': 'PDF 파일 선택'
+                accept: 'application/pdf,image/jpeg,image/png',
+                'aria-label': 'PDF 또는 이미지 파일 선택'
               })}
             />
-            <p>파일을 여기로 드래그&드롭 하거나 클릭하여 선택하세요.</p>
-            <p>{uploadFile ? `선택됨: ${uploadFile.name}` : '선택된 파일 없음'}</p>
+            <p>PDF 1개 또는 이미지(JPG, PNG) 여러 장을 올려주세요.</p>
+            <p>여러 장 선택 시 선택한 순서대로 처리됩니다.</p>
+            <p className="mg-v2-psych-upload-section__format-hint">
+              지원 형식: PDF, JPG, PNG / 파일당 최대 50MB
+            </p>
+            <p className="mg-v2-psych-upload-section__selection-feedback">
+              {uploadFiles?.length
+                ? uploadFiles.length === 1 && isPdf(uploadFiles[0])
+                  ? 'PDF 1개가 선택되었습니다.'
+                  : uploadFiles.length === 1
+                    ? '이미지 1장이 선택되었습니다.'
+                    : `이미지 ${uploadFiles.length}장이 선택되었습니다. 선택한 순서대로 처리됩니다.`
+                : '선택된 파일 없음'}
+            </p>
+            {uploadError && (
+              <p className="mg-v2-psych-upload-section__error" role="alert">
+                {uploadError}
+              </p>
+            )}
           </div>
           <div className="mg-v2-psych-upload-section__client-card">
             <div className="mg-v2-psych-upload-section__client-card-inner">
@@ -207,7 +262,7 @@ const PsychUploadSection = ({
             </button>
           </div>
           <p className="mg-v2-psych-upload-section__hint">
-            스캔 PDF 업로드 후 자동으로 추출 작업이 진행됩니다.
+            PDF 또는 이미지 업로드 후 자동으로 추출 작업이 진행됩니다.
           </p>
         </div>
       </ContentCard>
@@ -218,7 +273,7 @@ const PsychUploadSection = ({
 PsychUploadSection.propTypes = {
   uploadType: PropTypes.oneOf(['TCI', 'MMPI']).isRequired,
   onUploadTypeChange: PropTypes.func.isRequired,
-  uploadFile: PropTypes.object,
+  uploadFiles: PropTypes.arrayOf(PropTypes.object),
   onFilePick: PropTypes.func.isRequired,
   onUpload: PropTypes.func.isRequired,
   uploading: PropTypes.bool,

@@ -34,7 +34,7 @@ const PsychAssessmentManagement = ({ user: propUser }) => {
   const user = propUser || sessionUser;
 
   const [uploadType, setUploadType] = useState('TCI');
-  const [uploadFile, setUploadFile] = useState(null);
+  const [uploadFiles, setUploadFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
   const [clientId, setClientId] = useState(null);
@@ -120,21 +120,33 @@ const PsychAssessmentManagement = ({ user: propUser }) => {
     return [...pending, ...(recent || [])];
   })();
 
-  const handlePickFile = (file) => {
-    if (!file) return;
-    if (file.type !== 'application/pdf') {
-      notificationManager.show('PDF 파일만 업로드할 수 있습니다.', 'warning');
+  const isPdf = (f) => f?.type === 'application/pdf';
+  const isImage = (f) =>
+    f?.type === 'image/jpeg' || f?.type === 'image/png';
+
+  const handlePickFile = (files) => {
+    if (!files?.length) return;
+    const hasPdf = files.some(isPdf);
+    const hasImage = files.some(isImage);
+    if (hasPdf && hasImage) {
+      notificationManager.show('한 건에는 PDF만 또는 이미지만 올릴 수 있습니다.', 'warning');
       return;
     }
-    setUploadFile(file);
+    if (hasPdf && files.length > 1) {
+      notificationManager.show('PDF는 1개만 선택할 수 있습니다.', 'warning');
+      return;
+    }
+    setUploadFiles(files);
   };
 
   const handleDrop = (e) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragOver(false);
-    const file = e.dataTransfer?.files?.[0];
-    handlePickFile(file);
+    const fileList = e.dataTransfer?.files;
+    if (fileList?.length) {
+      handlePickFile(Array.from(fileList));
+    }
   };
 
   const handleDragOver = (e) => {
@@ -150,15 +162,20 @@ const PsychAssessmentManagement = ({ user: propUser }) => {
   };
 
   const handleUpload = async () => {
-    if (!uploadFile) {
-      notificationManager.show('업로드할 PDF 파일을 선택해주세요.', 'warning');
+    if (!uploadFiles?.length) {
+      notificationManager.show('업로드할 파일을 선택해 주세요.', 'warning');
       return;
     }
     setUploading(true);
     try {
       const form = new FormData();
       form.append('type', uploadType);
-      form.append('file', uploadFile);
+      const singlePdf = uploadFiles.length === 1 && isPdf(uploadFiles[0]);
+      if (singlePdf) {
+        form.append('file', uploadFiles[0]);
+      } else {
+        uploadFiles.forEach((f) => form.append('files', f));
+      }
       if (clientId != null && clientId !== '') {
         form.append('clientId', String(clientId));
       }
@@ -170,18 +187,24 @@ const PsychAssessmentManagement = ({ user: propUser }) => {
       notificationManager.show('업로드가 완료되었습니다. 추출 작업이 진행됩니다.', 'success');
       const payload = res?.data ?? res;
       if (payload?.documentId != null) {
+        const displayName =
+          uploadFiles.length === 1
+            ? uploadFiles[0]?.name ?? '업로드된 파일'
+            : uploadFiles[0]?.name
+              ? `${uploadFiles[0].name} 외 ${uploadFiles.length - 1}장`
+              : `이미지 ${uploadFiles.length}장`;
         setOptimisticDocuments((prev) => [
           {
             documentId: payload.documentId,
             assessmentType: payload.assessmentType ?? uploadType,
             status: payload.status ?? 'OCR_PENDING',
-            originalFilename: uploadFile?.name ?? '업로드된 파일',
+            originalFilename: displayName,
             createdAt: new Date().toISOString()
           },
           ...prev
         ]);
       }
-      setUploadFile(null);
+      setUploadFiles([]);
       loadStatsAndRecent();
     } catch (e) {
       notificationManager.show(e?.message || '업로드에 실패했습니다.', 'error');
@@ -279,7 +302,7 @@ const PsychAssessmentManagement = ({ user: propUser }) => {
             <PsychUploadSection
               uploadType={uploadType}
               onUploadTypeChange={setUploadType}
-              uploadFile={uploadFile}
+              uploadFiles={uploadFiles}
               onFilePick={handlePickFile}
               onDrop={handleDrop}
               onDragOver={handleDragOver}

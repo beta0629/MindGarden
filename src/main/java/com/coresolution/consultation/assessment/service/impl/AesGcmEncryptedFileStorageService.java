@@ -66,6 +66,11 @@ public class AesGcmEncryptedFileStorageService implements EncryptedFileStorageSe
 
     @Override
     public StoredEncryptedFile storePdf(String tenantId, MultipartFile file) {
+        return storeFile(tenantId, file);
+    }
+
+    @Override
+    public StoredEncryptedFile storeFile(String tenantId, MultipartFile file) {
         if (file == null || file.isEmpty()) {
             throw new IllegalArgumentException("파일이 비어있습니다.");
         }
@@ -108,7 +113,7 @@ public class AesGcmEncryptedFileStorageService implements EncryptedFileStorageSe
             }
 
             String shaHex = bytesToHex(sha256.digest());
-            log.info("Encrypted PDF stored: tenantId={}, path={}, sha256={}", tenantId, outPath, shaHex);
+            log.info("Encrypted file stored: tenantId={}, path={}, sha256={}", tenantId, outPath, shaHex);
 
             return new StoredEncryptedFile(
                     outPath.toString(),
@@ -141,7 +146,7 @@ public class AesGcmEncryptedFileStorageService implements EncryptedFileStorageSe
     }
 
     @Override
-    public InputStream readDecryptedPdfAsInputStream(String storagePath) {
+    public InputStream readDecryptedFileAsInputStream(String storagePath) {
         if (!StringUtils.hasText(storagePath)) {
             return null;
         }
@@ -178,7 +183,8 @@ public class AesGcmEncryptedFileStorageService implements EncryptedFileStorageSe
             return true; // 프로파일 미설정 시 dev로 간주 (개발 서버 기동 실패 방지)
         }
         for (String profile : actives) {
-            if ("dev".equalsIgnoreCase(profile) || "local".equalsIgnoreCase(profile)) {
+            if ("dev".equalsIgnoreCase(profile) || "local".equalsIgnoreCase(profile)
+                    || "test".equalsIgnoreCase(profile)) {
                 return true;
             }
         }

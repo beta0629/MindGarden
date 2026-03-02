@@ -1,5 +1,8 @@
 package com.coresolution.consultation.assessment.service.impl;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import com.coresolution.consultation.assessment.entity.PsychAssessmentDocument;
 import com.coresolution.consultation.assessment.entity.PsychAssessmentExtraction;
 import com.coresolution.consultation.assessment.model.PsychAssessmentDocumentStatus;
@@ -25,6 +28,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.InputStream;
+import java.util.List;
 
 /**
  * 템플릿 감지/필드 추출 MVP 구현. - 실제 OCR/템플릿별 좌표 추출은 확장 포인트로 남김 - 현재는 "업로드된 문서에 대해 추출 레코드 생성 +
@@ -34,10 +38,15 @@ import java.io.InputStream;
 @Service
 public class PsychAssessmentExtractionServiceImpl implements PsychAssessmentExtractionService {
 
+    private static final String SOURCE_TYPE_SCANNED_PDF = "SCANNED_PDF";
+    private static final String SOURCE_TYPE_SCANNED_IMAGE = "SCANNED_IMAGE";
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+
     private final PsychAssessmentDocumentRepository documentRepository;
     private final PsychAssessmentExtractionRepository extractionRepository;
     private final com.coresolution.consultation.assessment.service.PsychAssessmentValidationService validationService;
     private final EncryptedFileStorageService encryptedFileStorageService;
+    private final TesseractOcrService tesseractOcrService;
     private final PsychAssessmentExtractionRunner runner;
 
     public PsychAssessmentExtractionServiceImpl(
@@ -45,11 +54,13 @@ public class PsychAssessmentExtractionServiceImpl implements PsychAssessmentExtr
             PsychAssessmentExtractionRepository extractionRepository,
             com.coresolution.consultation.assessment.service.PsychAssessmentValidationService validationService,
             EncryptedFileStorageService encryptedFileStorageService,
+            TesseractOcrService tesseractOcrService,
             @Lazy PsychAssessmentExtractionRunner runner) {
         this.documentRepository = documentRepository;
         this.extractionRepository = extractionRepository;
         this.validationService = validationService;
         this.encryptedFileStorageService = encryptedFileStorageService;
+        this.tesseractOcrService = tesseractOcrService;
         this.runner = runner;
     }
 
@@ -84,7 +95,7 @@ public class PsychAssessmentExtractionServiceImpl implements PsychAssessmentExtr
                 || !StringUtils.hasText(doc.getStoragePath())) {
             return null;
         }
-        InputStream is = storage.readDecryptedPdfAsInputStream(doc.getStoragePath());
+        InputStream is = storage.readDecryptedFileAsInputStream(doc.getStoragePath());
         if (is == null) {
             return null;
         }
@@ -113,17 +124,76 @@ public class PsychAssessmentExtractionServiceImpl implements PsychAssessmentExtr
         }
     }
 
+    /**
+     * SCANNED_IMAGE 문서의 저장된 이미지들에서 OCR로 텍스트 추출 후 Mmpi2ExtractionParser로 파싱.
+     * storagePath는 JSON 배열 ["path1","path2",...] 형태.
+     *
+     * @param storage EncryptedFileStorageService
+     * @param ocr     TesseractOcrService
+     * @param doc     문서 (assessmentType, storagePath JSON)
+     * @return JSON 문자열 또는 null
+     */
+    private static String tryExtractMmpi2FromImages(EncryptedFileStorageService storage,
+            TesseractOcrService ocr, PsychAssessmentDocument doc) {
+        if (doc.getAssessmentType() != PsychAssessmentType.MMPI
+                || !StringUtils.hasText(doc.getStoragePath())) {
+            return null;
+        }
+        List<String> paths;
+        try {
+            paths = OBJECT_MAPPER.readValue(doc.getStoragePath(), new TypeReference<List<String>>() {});
+        } catch (Exception e) {
+            // 단일 경로(기존 PDF 형식)로 해석 불가 시 스킵
+            log.debug("storagePath JSON 파싱 실패, 단일 경로로 시도: documentId={}", doc.getId());
+            return null;
+        }
+        if (paths == null || paths.isEmpty()) {
+            return null;
+        }
+        StringBuilder combined = new StringBuilder();
+        for (String path : paths) {
+            InputStream is = storage.readDecryptedFileAsInputStream(path);
+            if (is == null) {
+                continue;
+            }
+            try (is) {
+                String text = ocr.extractText(is);
+                if (StringUtils.hasText(text)) {
+                    if (combined.length() > 0) {
+                        combined.append("\n");
+                    }
+                    combined.append(text);
+                }
+            } catch (Exception e) {
+                log.warn("이미지 OCR 실패: documentId={}, path={}, error={}",
+                        doc.getId(), path, e.getMessage());
+            }
+        }
+        if (combined.isEmpty()) {
+            log.info("이미지 인식에 실패했습니다. Tesseract가 설치되어 있는지 확인해 주세요. documentId={}", doc.getId());
+            return null;
+        }
+        String parsed = Mmpi2ExtractionParser.parse(combined.toString());
+        if (parsed == null) {
+            log.info("MMPI-2 이미지 OCR 파싱 결과 null: tenantId={}, documentId={}, textLen={}",
+                    doc.getTenantId(), doc.getId(), combined.length());
+        }
+        return parsed;
+    }
+
     /** 동기 추출 전용: 추출 레코드만 생성 (리포트 생성은 호출자가 수행) */
     private void runExtractionLogic(String tenantId, Long documentId) {
         PsychAssessmentDocument doc =
                 documentRepository.findByTenantIdAndId(tenantId, documentId)
                         .orElseThrow(() -> new IllegalArgumentException("문서를 찾을 수 없습니다."));
 
-        String extractedJson = tryExtractMmpi2FromPdf(encryptedFileStorageService, doc);
+        String extractedJson = extractMmpi2Json(doc);
 
         String templateId = null;
         String extractionMode = "GENERIC";
-        String ocrEngine = extractedJson != null ? "PDFBOX_MMPI2" : "UNCONFIGURED";
+        String ocrEngine = extractedJson != null
+                ? (SOURCE_TYPE_SCANNED_IMAGE.equals(doc.getSourceType()) ? "TESS4J_MMPI2" : "PDFBOX_MMPI2")
+                : "UNCONFIGURED";
 
         PsychAssessmentExtraction extraction = PsychAssessmentExtraction.builder()
                 .tenantId(tenantId).documentId(doc.getId()).templateId(templateId)
@@ -148,6 +218,13 @@ public class PsychAssessmentExtractionServiceImpl implements PsychAssessmentExtr
                 tenantId, documentId, savedExtraction.getStatus());
     }
 
+    private String extractMmpi2Json(PsychAssessmentDocument doc) {
+        if (SOURCE_TYPE_SCANNED_IMAGE.equals(doc.getSourceType())) {
+            return tryExtractMmpi2FromImages(encryptedFileStorageService, tesseractOcrService, doc);
+        }
+        return tryExtractMmpi2FromPdf(encryptedFileStorageService, doc);
+    }
+
     @Service
     @RequiredArgsConstructor
     static class PsychAssessmentExtractionRunner {
@@ -156,6 +233,7 @@ public class PsychAssessmentExtractionServiceImpl implements PsychAssessmentExtr
         private final com.coresolution.consultation.assessment.service.PsychAssessmentValidationService validationService;
         private final com.coresolution.consultation.assessment.service.PsychAssessmentReportService reportService;
         private final EncryptedFileStorageService encryptedFileStorageService;
+        private final TesseractOcrService tesseractOcrService;
 
         @Async
         public void processAsync(String tenantId, Long documentId) {
@@ -165,11 +243,15 @@ public class PsychAssessmentExtractionServiceImpl implements PsychAssessmentExtr
                         documentRepository.findByTenantIdAndId(tenantId, documentId)
                                 .orElseThrow(() -> new IllegalArgumentException("문서를 찾을 수 없습니다."));
 
-                String extractedJson = tryExtractMmpi2FromPdf(encryptedFileStorageService, doc);
+                String extractedJson = SOURCE_TYPE_SCANNED_IMAGE.equals(doc.getSourceType())
+                        ? tryExtractMmpi2FromImages(encryptedFileStorageService, tesseractOcrService, doc)
+                        : tryExtractMmpi2FromPdf(encryptedFileStorageService, doc);
 
                 String templateId = null;
                 String extractionMode = "GENERIC";
-                String ocrEngine = extractedJson != null ? "PDFBOX_MMPI2" : "UNCONFIGURED";
+                String ocrEngine = extractedJson != null
+                        ? (SOURCE_TYPE_SCANNED_IMAGE.equals(doc.getSourceType()) ? "TESS4J_MMPI2" : "PDFBOX_MMPI2")
+                        : "UNCONFIGURED";
 
                 PsychAssessmentExtraction extraction = PsychAssessmentExtraction.builder()
                         .tenantId(tenantId).documentId(doc.getId()).templateId(templateId)

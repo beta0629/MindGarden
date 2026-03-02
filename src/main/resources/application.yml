@@ -252,11 +252,16 @@ file:
     allowed-types: jpg,jpeg,png,gif,pdf,doc,docx
     upload-dir: ./uploads
 
-# 심리검사 PDF 업로드 검열 (보안)
+# 심리검사 PDF/이미지 업로드 검열 (보안)
 psych:
   assessment:
     upload:
-      max-file-size: 52428800  # 50MB (바이트). PDF만 허용, 매직 바이트·확장자·Content-Type 검증
+      max-file-size: 52428800  # 50MB (바이트). PDF·이미지(JPG, PNG) 허용, 매직 바이트 검증
+    tesseract:
+      # tessdata 디렉터리 경로. TESSDATA_PREFIX 환경 변수 또는 tessdata 상위 경로.
+      # macOS Homebrew: /opt/homebrew/share/tessdata 또는 /usr/local/share/tessdata
+      # Linux apt: /usr/share/tesseract-ocr/4.00/tessdata
+      datapath: ${TESSDATA_PREFIX:}
 
 # 상담 시스템 설정
 consultation:

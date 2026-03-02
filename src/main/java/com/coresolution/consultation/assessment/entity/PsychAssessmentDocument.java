@@ -52,7 +52,7 @@ public class PsychAssessmentDocument extends BaseEntity {
     private String sha256;
 
     @NotBlank
-    @Column(name = "storage_path", nullable = false, length = 512)
+    @Column(name = "storage_path", nullable = false, columnDefinition = "TEXT")
     private String storagePath;
 
     @NotBlank

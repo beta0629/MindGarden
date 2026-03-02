@@ -228,6 +228,13 @@
             <version>3.0.3</version>
         </dependency>
 
+        <!-- Tess4J (이미지 OCR - Tesseract for Java) -->
+        <dependency>
+            <groupId>net.sourceforge.tess4j</groupId>
+            <artifactId>tess4j</artifactId>
+            <version>5.13.0</version>
+        </dependency>
+
         <!-- Development Tools -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

@@ -17,6 +17,7 @@ import com.coresolution.consultation.repository.ConsultationRecordRepository;
 import com.coresolution.consultation.repository.CounselorFeedbackRepository;
 import com.coresolution.consultation.repository.VirtualClientSessionRepository;
 import com.coresolution.consultation.service.CounselorTrainingService;
+import com.coresolution.core.context.TenantContextHolder;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -43,7 +44,8 @@ public class CounselorTrainingServiceImpl implements CounselorTrainingService {
     @Override
     public CounselorFeedback analyzeSession(Long consultationRecordId, Long consultantId) {
         try {
-            ConsultationRecord recordEntity = recordRepository.findById(consultationRecordId)
+            String tenantId = TenantContextHolder.getRequiredTenantId();
+            ConsultationRecord recordEntity = recordRepository.findByTenantIdAndId(tenantId, consultationRecordId)
                     .orElseThrow(() -> new IllegalArgumentException("상담 기록을 찾을 수 없습니다"));
 
             log.info("상담 세션 분석 시작: recordId={}, consultantId={}", consultationRecordId,

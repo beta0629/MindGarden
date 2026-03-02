@@ -2,6 +2,7 @@ package com.coresolution.consultation.repository;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import com.coresolution.consultation.entity.ConsultationRecord;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -21,6 +22,11 @@ import org.springframework.stereotype.Repository;
 public interface ConsultationRecordRepository extends JpaRepository<ConsultationRecord, Long> {
     
     // ==================== 🔒 tenantId 필터링 메서드 (보안) ====================
+    
+    /**
+     * tenantId + ID로 상담일지 단건 조회 (수정/삭제/상세 시 테넌트 검증용)
+     */
+    Optional<ConsultationRecord> findByTenantIdAndId(String tenantId, Long id);
     
     /**
      * 상담 ID로 상담일지 조회 (tenantId 필터링)

@@ -1,7 +1,6 @@
 package com.coresolution.consultation.service.impl;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -46,11 +45,7 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
     public Page<ConsultationRecord> getConsultationRecords(Long consultantId, Long clientId, Pageable pageable) {
         log.info("📝 상담일지 목록 조회 - 상담사 ID: {}, 내담자 ID: {}", consultantId, clientId);
 
-        String tenantId = TenantContextHolder.getTenantId();
-        if (tenantId == null || tenantId.isEmpty()) {
-            log.error("❌ 상담일지 목록 조회 실패: tenantId는 필수입니다.");
-            throw new IllegalArgumentException("tenantId is required for consultation record list");
-        }
+        String tenantId = TenantContextHolder.getRequiredTenantId();
 
         if (consultantId != null && clientId != null) {
             return consultationRecordRepository.findByTenantIdAndConsultantIdAndClientIdAndIsDeletedFalseOrderBySessionDateDesc(
@@ -69,8 +64,8 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
     @Override
     public ConsultationRecord getConsultationRecordById(Long recordId) {
         log.info("📝 상담일지 상세 조회 - 기록 ID: {}", recordId);
-        
-        Optional<ConsultationRecord> record = consultationRecordRepository.findById(recordId);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        Optional<ConsultationRecord> record = consultationRecordRepository.findByTenantIdAndId(tenantId, recordId);
         if (record.isPresent() && !record.get().getIsDeleted()) {
             return record.get();
         }
@@ -80,9 +75,10 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
     @Override
     public ConsultationRecord createConsultationRecord(Map<String, Object> recordData) {
         log.info("📝 상담일지 작성 - 데이터: {}", recordData);
-        
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         try {
             ConsultationRecord record = new ConsultationRecord();
+            record.setTenantId(tenantId);
             
             // 필수 정보 설정 (null 체크 강화)
             Long consultationId = recordData.get("consultationId") != null ? 
@@ -219,12 +215,11 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
     @Override
     public ConsultationRecord updateConsultationRecord(Long recordId, Map<String, Object> recordData) {
         log.info("📝 상담일지 수정 - 기록 ID: {}, 데이터: {}", recordId, recordData);
-        
-        Optional<ConsultationRecord> recordOpt = consultationRecordRepository.findById(recordId);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        Optional<ConsultationRecord> recordOpt = consultationRecordRepository.findByTenantIdAndId(tenantId, recordId);
         if (recordOpt.isEmpty() || recordOpt.get().getIsDeleted()) {
             throw new RuntimeException("상담일지를 찾을 수 없습니다: " + recordId);
         }
-        
         ConsultationRecord record = recordOpt.get();
         
         try {
@@ -301,8 +296,8 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
     @Override
     public void deleteConsultationRecord(Long recordId) {
         log.info("📝 상담일지 삭제 - 기록 ID: {}", recordId);
-        
-        Optional<ConsultationRecord> record = consultationRecordRepository.findById(recordId);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        Optional<ConsultationRecord> record = consultationRecordRepository.findByTenantIdAndId(tenantId, recordId);
         if (record.isPresent() && !record.get().getIsDeleted()) {
             record.get().setIsDeleted(true);
             consultationRecordRepository.save(record.get());
@@ -314,26 +309,29 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
     @Override
     public List<ConsultationRecord> getConsultationRecordsByConsultationId(Long consultationId) {
         log.info("📝 상담 ID로 상담일지 조회 - 상담 ID: {}", consultationId);
-        return consultationRecordRepository.findByConsultationIdAndIsDeletedFalse(consultationId);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return consultationRecordRepository.findByTenantIdAndConsultationIdAndIsDeletedFalse(tenantId, consultationId);
     }
 
     @Override
     public Page<ConsultationRecord> getConsultationRecordsByConsultantId(Long consultantId, Pageable pageable) {
         log.info("📝 상담사별 상담일지 목록 조회 - 상담사 ID: {}", consultantId);
-        return consultationRecordRepository.findByConsultantIdAndIsDeletedFalseOrderBySessionDateDesc(consultantId, pageable);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return consultationRecordRepository.findByTenantIdAndConsultantIdAndIsDeletedFalseOrderBySessionDateDesc(tenantId, consultantId, pageable);
     }
 
     @Override
     public Page<ConsultationRecord> getConsultationRecordsByClientId(Long clientId, Pageable pageable) {
         log.info("📝 내담자별 상담일지 목록 조회 - 내담자 ID: {}", clientId);
-        return consultationRecordRepository.findByClientIdAndIsDeletedFalseOrderBySessionDateDesc(clientId, pageable);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return consultationRecordRepository.findByTenantIdAndClientIdAndIsDeletedFalseOrderBySessionDateDesc(tenantId, clientId, pageable);
     }
 
     @Override
     public ConsultationRecord completeSession(Long recordId) {
         log.info("📝 세션 완료 처리 - 기록 ID: {}", recordId);
-        
-        Optional<ConsultationRecord> record = consultationRecordRepository.findById(recordId);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        Optional<ConsultationRecord> record = consultationRecordRepository.findByTenantIdAndId(tenantId, recordId);
         if (record.isPresent() && !record.get().getIsDeleted()) {
             record.get().completeSession();
             return consultationRecordRepository.save(record.get());
@@ -345,8 +343,8 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
     @Override
     public ConsultationRecord incompleteSession(Long recordId, String reason) {
         log.info("📝 세션 미완료 처리 - 기록 ID: {}, 사유: {}", recordId, reason);
-        
-        Optional<ConsultationRecord> record = consultationRecordRepository.findById(recordId);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        Optional<ConsultationRecord> record = consultationRecordRepository.findByTenantIdAndId(tenantId, recordId);
         if (record.isPresent() && !record.get().getIsDeleted()) {
             record.get().setIsSessionCompleted(false);
             record.get().setIncompletionReason(reason);
@@ -359,13 +357,7 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
     @Override
     public Page<ConsultationRecord> searchConsultationRecords(Long userId, String userType, String keyword, Pageable pageable) {
         log.info("📝 상담일지 검색 - 사용자 ID: {}, 유형: {}, 키워드: {}", userId, userType, keyword);
-        
-        String tenantId = com.coresolution.core.context.TenantContextHolder.getTenantId();
-        if (tenantId == null) {
-            log.error("❌ tenantId가 설정되지 않았습니다");
-            return Page.empty(pageable);
-        }
-        
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         // 표준화 2025-12-05: enum 활용
         if (UserRole.CONSULTANT.name().equals(userType)) {
             return consultationRecordRepository.searchByKeywordAndConsultantId(tenantId, keyword, userId, pageable);
@@ -377,47 +369,41 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
     @Override
     public List<ConsultationRecord> getConsultationRecordsByRiskAssessment(String riskAssessment) {
         log.info("📝 위험도별 상담일지 조회 - 위험도: {}", riskAssessment);
-        return consultationRecordRepository.findByRiskAssessmentAndIsDeletedFalseOrderBySessionDateDesc(riskAssessment);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return consultationRecordRepository.findByTenantIdAndRiskAssessmentAndIsDeletedFalseOrderBySessionDateDesc(tenantId, riskAssessment);
     }
 
     @Override
     public List<ConsultationRecord> getConsultationRecordsByProgressScoreRange(Integer minScore, Integer maxScore) {
         log.info("📝 진행도 점수 범위별 상담일지 조회 - 최소: {}, 최대: {}", minScore, maxScore);
-        return consultationRecordRepository.findByProgressScoreBetweenAndIsDeletedFalseOrderBySessionDateDesc(minScore, maxScore);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return consultationRecordRepository.findByTenantIdAndProgressScoreBetweenAndIsDeletedFalseOrderBySessionDateDesc(tenantId, minScore, maxScore);
     }
 
     @Override
     public Map<String, Object> getConsultationStatistics(Long consultantId) {
         log.info("📝 상담사별 통계 조회 - 상담사 ID: {}", consultantId);
-        
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         Map<String, Object> stats = new HashMap<>();
-        stats.put("totalRecords", consultationRecordRepository.countByConsultantIdAndIsDeletedFalse(consultantId));
-        stats.put("completedSessions", consultationRecordRepository.countByConsultantIdAndIsSessionCompletedTrueAndIsDeletedFalse(consultantId));
-        stats.put("incompleteSessions", consultationRecordRepository.countByConsultantIdAndIsSessionCompletedFalseAndIsDeletedFalse(consultantId));
-        
+        stats.put("totalRecords", consultationRecordRepository.countByTenantIdAndConsultantIdAndIsDeletedFalse(tenantId, consultantId));
+        stats.put("completedSessions", consultationRecordRepository.countByTenantIdAndConsultantIdAndIsSessionCompletedTrueAndIsDeletedFalse(tenantId, consultantId));
+        stats.put("incompleteSessions", consultationRecordRepository.countByTenantIdAndConsultantIdAndIsSessionCompletedFalseAndIsDeletedFalse(tenantId, consultantId));
         return stats;
     }
 
     @Override
     public Map<String, Object> getClientStatistics(Long clientId) {
         log.info("📝 내담자별 통계 조회 - 내담자 ID: {}", clientId);
-        
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         Map<String, Object> stats = new HashMap<>();
-        stats.put("totalRecords", consultationRecordRepository.countByClientIdAndIsDeletedFalse(clientId));
-        
+        stats.put("totalRecords", consultationRecordRepository.countByTenantIdAndClientIdAndIsDeletedFalse(tenantId, clientId));
         return stats;
     }
 
     @Override
     public List<ConsultationRecord> getRecentConsultationRecords(Long userId, String userType, int limit) {
         log.info("📝 최근 상담일지 조회 - 사용자 ID: {}, 유형: {}, 제한: {}", userId, userType, limit);
-        
-        String tenantId = com.coresolution.core.context.TenantContextHolder.getTenantId();
-        if (tenantId == null) {
-            log.error("❌ tenantId가 설정되지 않았습니다");
-            return new ArrayList<>();
-        }
-        
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         Pageable pageable = Pageable.ofSize(limit);
         // 표준화 2025-12-05: enum 활용
         if (UserRole.CONSULTANT.name().equals(userType)) {
@@ -430,27 +416,27 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
     @Override
     public boolean existsByConsultationId(Long consultationId) {
         log.info("📝 상담일지 존재 여부 확인 - 상담 ID: {}", consultationId);
-        return consultationRecordRepository.existsByConsultationIdAndIsDeletedFalse(consultationId);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return consultationRecordRepository.existsByTenantIdAndConsultationIdAndIsDeletedFalse(tenantId, consultationId);
     }
 
     @Override
     public List<ConsultationRecord> getConsultationRecordsByDate(Long userId, String userType, LocalDate sessionDate) {
         log.info("📝 특정 날짜의 상담일지 조회 - 사용자 ID: {}, 유형: {}, 날짜: {}", userId, userType, sessionDate);
-        
-        // 표준화 2025-12-05: enum 활용
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         if (UserRole.CONSULTANT.name().equals(userType)) {
-            return consultationRecordRepository.findByConsultantIdAndSessionDateAndIsDeletedFalse(userId, sessionDate);
+            return consultationRecordRepository.findByTenantIdAndConsultantIdAndSessionDateAndIsDeletedFalse(tenantId, userId, sessionDate);
         } else {
-            return consultationRecordRepository.findByClientIdAndSessionDateAndIsDeletedFalse(userId, sessionDate);
+            return consultationRecordRepository.findByTenantIdAndClientIdAndSessionDateAndIsDeletedFalse(tenantId, userId, sessionDate);
         }
     }
 
     @Override
     public Page<ConsultationRecord> getConsultationRecordsByClientAndSession(Long clientId, Integer sessionNumber, Pageable pageable) {
         log.info("👤 내담자별 특정 회기 상담일지 조회 - 내담자ID: {}, 회기: {}", clientId, sessionNumber);
-        
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         try {
-            return consultationRecordRepository.findByClientIdAndSessionNumberAndIsDeletedFalseOrderBySessionDateDesc(clientId, sessionNumber, pageable);
+            return consultationRecordRepository.findByTenantIdAndClientIdAndSessionNumberAndIsDeletedFalseOrderBySessionDateDesc(tenantId, clientId, sessionNumber, pageable);
         } catch (Exception e) {
             log.error("❌ 내담자별 특정 회기 상담일지 조회 실패", e);
             throw new RuntimeException("내담자별 특정 회기 상담일지 조회 중 오류가 발생했습니다: " + e.getMessage());
@@ -460,13 +446,7 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
     @Override
     public List<ConsultationRecord> getConsultationRecordsByClientOrderBySession(Long clientId) {
         log.info("👤 내담자별 전체 상담일지 조회 (회기순) - 내담자ID: {}", clientId);
-        
-        String tenantId = com.coresolution.core.context.TenantContextHolder.getTenantId();
-        if (tenantId == null) {
-            log.error("❌ tenantId가 설정되지 않았습니다");
-            return new ArrayList<>();
-        }
-        
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         try {
             return consultationRecordRepository.findByClientIdOrderBySession(tenantId, clientId);
         } catch (Exception e) {
@@ -478,13 +458,7 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
     @Override
     public Map<Integer, List<ConsultationRecord>> getConsultationRecordsGroupedBySession(Long clientId) {
         log.info("👤 내담자별 상담일지 회기별 그룹화 조회 - 내담자ID: {}", clientId);
-        
-        String tenantId = com.coresolution.core.context.TenantContextHolder.getTenantId();
-        if (tenantId == null) {
-            log.error("❌ tenantId가 설정되지 않았습니다");
-            return new HashMap<>();
-        }
-        
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         try {
             List<ConsultationRecord> records = consultationRecordRepository.findByClientIdOrderBySession(tenantId, clientId);
             return records.stream()
@@ -535,11 +509,9 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
         try {
             log.info("🔍 상담일지 작성 여부 확인: 스케줄 ID={}, 상담사 ID={}, 날짜={}", 
                     scheduleId, consultantId, sessionDate);
-            
-            // 해당 스케줄에 대한 상담일지가 작성되었는지 확인
-            long count = consultationRecordRepository.countByConsultantIdAndSessionDateAndIsDeletedFalse(
-                consultantId, sessionDate);
-            
+            String tenantId = TenantContextHolder.getRequiredTenantId();
+            long count = consultationRecordRepository.countByTenantIdAndConsultantIdAndSessionDateAndIsDeletedFalse(
+                tenantId, consultantId, sessionDate);
             boolean hasRecord = count > 0;
             log.info("📝 상담일지 작성 여부: {}", hasRecord ? "작성됨" : "미작성");
             

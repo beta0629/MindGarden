@@ -6,6 +6,7 @@ import com.coresolution.consultation.entity.ConsultationRecord;
 import com.coresolution.consultation.repository.ClinicalReportRepository;
 import com.coresolution.consultation.repository.ConsultationRecordRepository;
 import com.coresolution.consultation.service.ClinicalDocumentService;
+import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.service.ai.AIModelProvider;
 import com.coresolution.core.service.ai.AIModelProvider.AIResponse;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -152,8 +153,8 @@ public class ClinicalDocumentServiceImpl implements ClinicalDocumentService {
 
         try {
             log.info("📋 진단 보고서 생성 시작: recordId={}", consultationRecordId);
-
-            ConsultationRecord record = consultationRecordRepository.findById(consultationRecordId)
+            String tenantId = TenantContextHolder.getRequiredTenantId();
+            ConsultationRecord record = consultationRecordRepository.findByTenantIdAndId(tenantId, consultationRecordId)
                 .orElseThrow(() -> new IllegalArgumentException("상담 기록을 찾을 수 없습니다."));
 
             String systemPrompt = getDiagnosticExpertSystemPrompt();

@@ -15,6 +15,7 @@ import com.coresolution.consultation.repository.TextEmotionAnalysisRepository;
 import com.coresolution.consultation.repository.VideoEmotionAnalysisRepository;
 import com.coresolution.consultation.repository.VoiceBiomarkerRepository;
 import com.coresolution.consultation.service.EmotionAnalysisService;
+import com.coresolution.core.context.TenantContextHolder;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -113,7 +114,8 @@ public class EmotionAnalysisServiceImpl implements EmotionAnalysisService {
         long startTime = System.currentTimeMillis();
 
         try {
-            ConsultationRecord recordEntity = consultationRecordRepository.findById(consultationRecordId)
+            String tenantId = TenantContextHolder.getRequiredTenantId();
+            ConsultationRecord recordEntity = consultationRecordRepository.findByTenantIdAndId(tenantId, consultationRecordId)
                 .orElseThrow(() -> new IllegalArgumentException("상담 기록을 찾을 수 없습니다: " + consultationRecordId));
 
             log.info("비디오 감정 분석 시작: consultationRecordId={}, videoPath={}",
@@ -164,7 +166,8 @@ public class EmotionAnalysisServiceImpl implements EmotionAnalysisService {
         long startTime = System.currentTimeMillis();
 
         try {
-            ConsultationRecord recordEntity = consultationRecordRepository.findById(consultationRecordId)
+            String tenantId = TenantContextHolder.getRequiredTenantId();
+            ConsultationRecord recordEntity = consultationRecordRepository.findByTenantIdAndId(tenantId, consultationRecordId)
                 .orElseThrow(() -> new IllegalArgumentException("상담 기록을 찾을 수 없습니다: " + consultationRecordId));
 
             log.info("텍스트 감정 분석 시작: recordId={}, sourceType={}, textLength={}",
@@ -217,7 +220,8 @@ public class EmotionAnalysisServiceImpl implements EmotionAnalysisService {
     @Override
     public MultimodalEmotionReport generateMultimodalReport(Long consultationRecordId) {
         try {
-            ConsultationRecord recordEntity = consultationRecordRepository.findById(consultationRecordId)
+            String tenantId = TenantContextHolder.getRequiredTenantId();
+            ConsultationRecord recordEntity = consultationRecordRepository.findByTenantIdAndId(tenantId, consultationRecordId)
                 .orElseThrow(() -> new IllegalArgumentException("상담 기록을 찾을 수 없습니다: " + consultationRecordId));
 
             log.info("멀티모달 통합 리포트 생성: recordId={}", consultationRecordId);
@@ -514,8 +518,9 @@ public class EmotionAnalysisServiceImpl implements EmotionAnalysisService {
             .measuredAt(LocalDateTime.now())
             .build();
 
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         ConsultationRecord recordEntity = consultationRecordRepository
-            .findById(consultationRecordId).orElse(null);
+            .findByTenantIdAndId(tenantId, consultationRecordId).orElse(null);
         if (recordEntity != null) {
             history.setTenantId(recordEntity.getTenantId());
         }

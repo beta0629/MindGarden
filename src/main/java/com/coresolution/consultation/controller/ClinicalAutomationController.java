@@ -184,8 +184,8 @@ public class ClinicalAutomationController {
         log.info("📝 SOAP 노트 생성 요청: consultationRecordId={}", id);
 
         try {
-            // 상담 기록 조회
-            ConsultationRecord record = consultationRecordRepository.findById(id)
+            String tenantId = TenantContextHolder.getRequiredTenantId();
+            ConsultationRecord record = consultationRecordRepository.findByTenantIdAndId(tenantId, id)
                     .orElseThrow(() -> new IllegalArgumentException("상담 기록을 찾을 수 없습니다."));
 
             // 음성 전사 결과 조회
@@ -224,7 +224,8 @@ public class ClinicalAutomationController {
         log.info("📝 DAP 노트 생성 요청: consultationRecordId={}", id);
 
         try {
-            ConsultationRecord record = consultationRecordRepository.findById(id)
+            String tenantId = TenantContextHolder.getRequiredTenantId();
+            ConsultationRecord record = consultationRecordRepository.findByTenantIdAndId(tenantId, id)
                     .orElseThrow(() -> new IllegalArgumentException("상담 기록을 찾을 수 없습니다."));
 
             ConsultationAudioFile audioFile = audioFileRepository

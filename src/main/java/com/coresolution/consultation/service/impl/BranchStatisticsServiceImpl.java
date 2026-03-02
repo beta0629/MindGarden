@@ -17,6 +17,7 @@ import com.coresolution.consultation.service.BranchStatisticsService;
 import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -43,14 +44,11 @@ public class BranchStatisticsServiceImpl implements BranchStatisticsService {
     @Override
     public Map<String, Object> getConsultationStatistics(Long branchId, LocalDate startDate, LocalDate endDate) {
         log.info("지점별 상담 건수 통계 조회: 지점 ID={}, 기간={} ~ {}", branchId, startDate, endDate);
-        
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         Branch branch = branchRepository.findById(branchId)
             .orElseThrow(() -> new IllegalArgumentException("지점을 찾을 수 없습니다: " + branchId));
-        
-        
-        // 상담 기록 통계 (기존 구현 방식 사용)
         List<ConsultationRecord> records = consultationRecordRepository
-            .findAll(); // TODO: 기간별 필터링 구현
+            .findByTenantIdAndIsDeletedFalseOrderBySessionDateDesc(tenantId, Pageable.unpaged()).getContent();
         
         Map<String, Object> statistics = new HashMap<>();
         statistics.put("branchId", branchId);
@@ -86,14 +84,11 @@ public class BranchStatisticsServiceImpl implements BranchStatisticsService {
     @Override
     public Map<String, Object> getRevenueStatistics(Long branchId, LocalDate startDate, LocalDate endDate) {
         log.info("지점별 매출 통계 조회: 지점 ID={}, 기간={} ~ {}", branchId, startDate, endDate);
-        
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         Branch branch = branchRepository.findById(branchId)
             .orElseThrow(() -> new IllegalArgumentException("지점을 찾을 수 없습니다: " + branchId));
-        
-        
-        // 상담 기록에서 결제 정보 조회 (기존 구현 방식 사용)
         List<ConsultationRecord> records = consultationRecordRepository
-            .findAll(); // TODO: 기간별 필터링 구현
+            .findByTenantIdAndIsDeletedFalseOrderBySessionDateDesc(tenantId, Pageable.unpaged()).getContent();
         
         Map<String, Object> statistics = new HashMap<>();
         statistics.put("branchId", branchId);
@@ -131,13 +126,7 @@ public class BranchStatisticsServiceImpl implements BranchStatisticsService {
     @Override
     public Map<String, Object> getConsultantPerformanceStatistics(Long branchId, LocalDate startDate, LocalDate endDate) {
         log.info("지점별 상담사 성과 통계 조회: 지점 ID={}, 기간={} ~ {}", branchId, startDate, endDate);
-        
-        String tenantId = TenantContextHolder.getTenantId();
-        if (tenantId == null) {
-            log.error("❌ tenantId가 설정되지 않았습니다");
-            return new HashMap<>();
-        }
-        
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         Branch branch = branchRepository.findById(branchId)
             .orElseThrow(() -> new IllegalArgumentException("지점을 찾을 수 없습니다: " + branchId));
         
@@ -156,9 +145,8 @@ public class BranchStatisticsServiceImpl implements BranchStatisticsService {
         List<Map<String, Object>> consultantPerformance = new ArrayList<>();
         
         for (User consultant : consultants) {
-            // TODO: 상담사별 상담 기록 조회 구현
             Page<ConsultationRecord> consultantRecordsPage = consultationRecordRepository
-                .findByConsultantIdAndIsDeletedFalseOrderBySessionDateDesc(consultant.getId(), null);
+                .findByTenantIdAndConsultantIdAndIsDeletedFalseOrderBySessionDateDesc(tenantId, consultant.getId(), Pageable.unpaged());
             List<ConsultationRecord> consultantRecords = consultantRecordsPage.getContent();
             
             Map<String, Object> performance = new HashMap<>();
@@ -301,13 +289,11 @@ public class BranchStatisticsServiceImpl implements BranchStatisticsService {
     public Map<String, Object> getConsultantDetailPerformance(Long branchId, Long consultantId, LocalDate startDate, LocalDate endDate) {
         log.info("상담사 상세 성과 조회: 지점 ID={}, 상담사 ID={}, 기간={} ~ {}", branchId, consultantId, startDate, endDate);
         
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         User consultant = userRepository.findById(consultantId)
             .orElseThrow(() -> new IllegalArgumentException("상담사를 찾을 수 없습니다: " + consultantId));
-        
-        
-        // TODO: 상담사별 상담 기록 조회 구현
         Page<ConsultationRecord> recordsPage = consultationRecordRepository
-            .findByConsultantIdAndIsDeletedFalseOrderBySessionDateDesc(consultantId, null);
+            .findByTenantIdAndConsultantIdAndIsDeletedFalseOrderBySessionDateDesc(tenantId, consultantId, Pageable.unpaged());
         List<ConsultationRecord> records = recordsPage.getContent();
         
         Map<String, Object> performance = new HashMap<>();

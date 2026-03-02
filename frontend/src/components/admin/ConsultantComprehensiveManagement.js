@@ -1438,6 +1438,42 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                         quality={0.85}
                         helpText="이미지 파일만 가능, 최대 2MB (리사이즈·크롭 적용)"
                     />
+                    {/* 공통 순서: 1. 주민번호 2. 이름 3. 전화번호 4. 주소 → 나머지 */}
+                    <div className="mg-v2-form-group">
+                        {modalType === 'edit' && (
+                            <small className="mg-v2-form-help">수정 시 기존 값은 표시하지 않습니다. 변경할 때만 입력해 주세요.</small>
+                        )}
+                        <div className="mg-v2-form-row mg-v2-form-row--two">
+                            <div className="mg-v2-form-group">
+                                <label htmlFor="consultant-rrnFirst6" className="mg-v2-form-label">주민번호 앞 6자리 (선택)</label>
+                                <input
+                                    type="text"
+                                    id="consultant-rrnFirst6"
+                                    name="rrnFirst6"
+                                    value={formData.rrnFirst6 || ''}
+                                    onChange={handleFormChange}
+                                    placeholder="900101"
+                                    maxLength={6}
+                                    inputMode="numeric"
+                                    className="mg-v2-form-input"
+                                />
+                            </div>
+                            <div className="mg-v2-form-group">
+                                <label htmlFor="consultant-rrnLast1" className="mg-v2-form-label">주민번호 뒤 1자리 (선택)</label>
+                                <input
+                                    type="text"
+                                    id="consultant-rrnLast1"
+                                    name="rrnLast1"
+                                    value={formData.rrnLast1 || ''}
+                                    onChange={handleFormChange}
+                                    placeholder="1"
+                                    maxLength={1}
+                                    inputMode="numeric"
+                                    className="mg-v2-form-input"
+                                />
+                            </div>
+                        </div>
+                    </div>
                     <div className="mg-v2-form-group">
                         <label className="mg-v2-form-label">이름 *</label>
                         <input
@@ -1448,6 +1484,77 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                             placeholder="이름을 입력하세요"
                             className="mg-v2-form-input"
                             required
+                        />
+                    </div>
+                    <div className="mg-v2-form-group">
+                        <label className="mg-v2-form-label">전화번호</label>
+                        <input
+                            type="tel"
+                            name="phone"
+                            value={formData.phone || ''}
+                            onChange={handleFormChange}
+                            placeholder="전화번호를 입력하세요 (선택사항)"
+                            className="mg-v2-form-input"
+                        />
+                    </div>
+                    <div className="mg-v2-form-group">
+                        <label className="mg-v2-form-label">주소 검색</label>
+                        <div className="mg-v2-address-search-row">
+                            <button
+                                type="button"
+                                className="mg-v2-button mg-v2-button-secondary"
+                                onClick={() => {
+                                    if (typeof window !== 'undefined' && window.daum && window.daum.Postcode) {
+                                        new window.daum.Postcode({
+                                            oncomplete: function (data) {
+                                                setFormData(prev => ({
+                                                    ...prev,
+                                                    postalCode: data.zonecode || '',
+                                                    address: data.address || ''
+                                                }));
+                                            }
+                                        }).open();
+                                    } else {
+                                        window.dispatchEvent(new CustomEvent('showNotification', {
+                                            detail: { message: '주소 검색 서비스를 불러올 수 없습니다.', type: 'info' }
+                                        }));
+                                    }
+                                }}
+                            >
+                                주소 검색
+                            </button>
+                            <input
+                                type="text"
+                                readOnly
+                                className="mg-v2-form-input mg-v2-form-input--readonly"
+                                value={formData.address || ''}
+                                placeholder="주소 검색 버튼을 눌러 주소를 입력하세요."
+                            />
+                        </div>
+                    </div>
+                    <div className="mg-v2-form-group">
+                        <label htmlFor="consultant-addressDetail" className="mg-v2-form-label">상세 주소</label>
+                        <input
+                            type="text"
+                            id="consultant-addressDetail"
+                            name="addressDetail"
+                            value={formData.addressDetail || ''}
+                            onChange={handleFormChange}
+                            placeholder="동, 호수, 상세 주소를 입력하세요."
+                            className="mg-v2-form-input"
+                        />
+                    </div>
+                    <div className="mg-v2-form-group">
+                        <label htmlFor="consultant-postalCode" className="mg-v2-form-label">우편번호</label>
+                        <input
+                            type="text"
+                            id="consultant-postalCode"
+                            name="postalCode"
+                            value={formData.postalCode || ''}
+                            onChange={handleFormChange}
+                            placeholder="00000"
+                            maxLength={5}
+                            className="mg-v2-form-input"
                         />
                     </div>
                     <div className="mg-v2-form-group">
@@ -1499,17 +1606,6 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                         </div>
                     )}
                     <div className="mg-v2-form-group">
-                        <label className="mg-v2-form-label">전화번호</label>
-                        <input
-                            type="tel"
-                            name="phone"
-                            value={formData.phone || ''}
-                            onChange={handleFormChange}
-                            placeholder="전화번호를 입력하세요 (선택사항)"
-                            className="mg-v2-form-input"
-                        />
-                    </div>
-                    <div className="mg-v2-form-group">
                         <label id="consultant-specialty-label" className="mg-v2-form-label">전문분야</label>
                         <div className="mg-v2-form-help">
                             <span>💡</span>
@@ -1531,101 +1627,8 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                             })}
                         </div>
                     </div>
-                    {modalType === 'edit' && (
+                    {(modalType === 'create' || modalType === 'edit') && (
                         <>
-                            <div className="mg-v2-form-group">
-                                <small className="mg-v2-form-help">수정 시 기존 값은 표시하지 않습니다. 변경할 때만 입력해 주세요.</small>
-                                <div className="mg-v2-form-row mg-v2-form-row--two">
-                                    <div className="mg-v2-form-group">
-                                        <label htmlFor="consultant-rrnFirst6" className="mg-v2-form-label">주민번호 앞 6자리 (선택)</label>
-                                        <input
-                                            type="text"
-                                            id="consultant-rrnFirst6"
-                                            name="rrnFirst6"
-                                            value={formData.rrnFirst6 || ''}
-                                            onChange={handleFormChange}
-                                            placeholder="900101"
-                                            maxLength={6}
-                                            inputMode="numeric"
-                                            className="mg-v2-form-input"
-                                        />
-                                    </div>
-                                    <div className="mg-v2-form-group">
-                                        <label htmlFor="consultant-rrnLast1" className="mg-v2-form-label">주민번호 뒤 1자리 (선택)</label>
-                                        <input
-                                            type="text"
-                                            id="consultant-rrnLast1"
-                                            name="rrnLast1"
-                                            value={formData.rrnLast1 || ''}
-                                            onChange={handleFormChange}
-                                            placeholder="1"
-                                            maxLength={1}
-                                            inputMode="numeric"
-                                            className="mg-v2-form-input"
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="mg-v2-form-group">
-                                <label className="mg-v2-form-label">주소 검색</label>
-                                <div className="mg-v2-address-search-row">
-                                    <button
-                                        type="button"
-                                        className="mg-v2-button mg-v2-button-secondary"
-                                        onClick={() => {
-                                            if (typeof window !== 'undefined' && window.daum && window.daum.Postcode) {
-                                                new window.daum.Postcode({
-                                                    oncomplete: function (data) {
-                                                        setFormData(prev => ({
-                                                            ...prev,
-                                                            postalCode: data.zonecode || '',
-                                                            address: data.address || ''
-                                                        }));
-                                                    }
-                                                }).open();
-                                            } else {
-                                                window.dispatchEvent(new CustomEvent('showNotification', {
-                                                    detail: { message: '주소 검색 서비스를 불러올 수 없습니다.', type: 'info' }
-                                                }));
-                                            }
-                                        }}
-                                    >
-                                        주소 검색
-                                    </button>
-                                    <input
-                                        type="text"
-                                        readOnly
-                                        className="mg-v2-form-input mg-v2-form-input--readonly"
-                                        value={formData.address || ''}
-                                        placeholder="주소 검색 버튼을 눌러 주소를 입력하세요."
-                                    />
-                                </div>
-                            </div>
-                            <div className="mg-v2-form-group">
-                                <label htmlFor="consultant-addressDetail" className="mg-v2-form-label">상세 주소</label>
-                                <input
-                                    type="text"
-                                    id="consultant-addressDetail"
-                                    name="addressDetail"
-                                    value={formData.addressDetail || ''}
-                                    onChange={handleFormChange}
-                                    placeholder="동, 호수, 상세 주소를 입력하세요."
-                                    className="mg-v2-form-input"
-                                />
-                            </div>
-                            <div className="mg-v2-form-group">
-                                <label htmlFor="consultant-postalCode" className="mg-v2-form-label">우편번호</label>
-                                <input
-                                    type="text"
-                                    id="consultant-postalCode"
-                                    name="postalCode"
-                                    value={formData.postalCode || ''}
-                                    onChange={handleFormChange}
-                                    placeholder="00000"
-                                    maxLength={5}
-                                    className="mg-v2-form-input"
-                                />
-                            </div>
                             <div className="mg-v2-section-heading mg-v2-section-heading--accent">
                                 <span className="mg-v2-section-heading__bar" />
                                 <h3 className="mg-v2-section-heading__title">자격·경력</h3>

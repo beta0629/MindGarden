@@ -1977,6 +1977,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             clientRepository.save(client);
         });
 
+        // 내담자 목록 캐시 무효화 (수정 후 목록/재진입 시 주소 등 즉시 반영)
+        clientStatsService.evictAllClientStatsCache();
+
         Client client = new Client();
         client.setId(savedUser.getId());
         client.setName(savedUser.getName());

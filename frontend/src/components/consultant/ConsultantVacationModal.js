@@ -5,7 +5,7 @@ import { apiGet } from '../../utils/ajax';
 import { API_BASE_URL } from '../../constants/api';
 import csrfTokenManager from '../../utils/csrfTokenManager';
 import UnifiedModal from '../common/modals/UnifiedModal';
-import Button from '../ui/Button';
+import Button from '../ui/Button/Button';
 
 /**
  * 상담사용 휴가 등록 모달

@@ -4,7 +4,7 @@ import { useSession } from '../../contexts/SessionContext';
 import { apiPost, apiGet } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 import UnifiedModal from '../common/modals/UnifiedModal';
-import Button from '../ui/Button';
+import Button from '../ui/Button/Button';
 
 /**
  * 내담자 메시지 전송 모달 컴포넌트

@@ -5,7 +5,7 @@ import { authAPI } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 import { sessionManager } from '../../utils/sessionManager';
 import UnifiedModal from './modals/UnifiedModal';
-import Button from '../ui/Button';
+import Button from '../ui/Button/Button';
 
 const DuplicateLoginModal = () => {
   const { duplicateLoginModal, setDuplicateLoginModal, checkSession } = useSession();

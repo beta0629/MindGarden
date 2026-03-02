@@ -16,7 +16,7 @@ import { apiGet, apiPost } from '../../utils/ajax';
 import { getAllConsultantsWithStats } from '../../utils/consultantHelper';
 import notificationManager from '../../utils/notification';
 import SearchInput from '../dashboard-v2/atoms/SearchInput';
-import Button from '../ui/Button';
+import Button from '../ui/Button/Button';
 import Avatar from '../common/Avatar';
 import { DEFAULT_MAPPING_CONFIG } from '../../constants/mapping';
 import '../schedule/ScheduleB0KlA.css';

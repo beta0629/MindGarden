@@ -3,7 +3,7 @@ import { RefreshCcw, XCircle, Package, Clock, AlertTriangle, DollarSign, CreditC
 import { apiPost } from '../../../utils/ajax';
 import notificationManager, { showNotification } from '../../../utils/notification';
 import UnifiedModal from '../../common/modals/UnifiedModal';
-import Button from '../../ui/Button';
+import Button from '../../ui/Button/Button';
 
 /**
  * 부분 환불 모달 컴포넌트

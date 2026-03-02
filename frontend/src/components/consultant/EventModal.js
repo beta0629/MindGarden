@@ -4,7 +4,7 @@ import ConfirmModal from '../common/ConfirmModal';
 import MessageSendModal from './MessageSendModal';
 import { apiGet } from '../../utils/ajax';
 import UnifiedModal from '../common/modals/UnifiedModal';
-import Button from '../ui/Button';
+import Button from '../ui/Button/Button';
 
 // 일정 모달 컴포넌트
 const EventModal = ({ event, mode, onSave, onDelete, onClose, userRole = 'CONSULTANT', onWriteConsultationLog, onConsultationLogSaved }) => {

@@ -2,7 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { X, User, Star, Award, Mail, Phone, Calendar, Clock, MessageCircle, TrendingUp } from 'lucide-react';
 import SpecialtyDisplay from './SpecialtyDisplay';
-import Button from './Button';
+import Button from './Button/Button';
 import { getConsultantRatingInfo } from '../../utils/ratingHelper';
 import { 
     getFormattedExperience, 

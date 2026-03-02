@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { User, XCircle, Edit3, Save, Mail, Phone, Home, MapPin, MessageSquare, AlertCircle, FileText } from 'lucide-react';
 import UnifiedModal from '../common/modals/UnifiedModal';
-import Button from '../ui/Button';
+import Button from '../ui/Button/Button';
 // import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 // 내담자 상세 정보 모달 컴포넌트
 const ClientDetailModal = ({ client, isOpen, onClose, onSave }) => {

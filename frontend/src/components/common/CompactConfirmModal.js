@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { useSession } from '../../contexts/SessionContext';
 import UnifiedModal from './modals/UnifiedModal';
-import Button from '../ui/Button';
+import Button from '../ui/Button/Button';
 
 /**
  * 컴팩트 확인 모달 컴포넌트

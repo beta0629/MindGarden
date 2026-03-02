@@ -5,7 +5,7 @@ import { sessionManager } from '../../utils/sessionManager';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { CONSULTANT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
-import Button from '../ui/Button';
+import Button from '../ui/Button/Button';
 import './ConsultantAvailability.css';
 
 const ConsultantAvailability = () => {

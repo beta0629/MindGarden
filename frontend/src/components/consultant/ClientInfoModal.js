@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { User, XCircle, Edit3, Save, Home, MessageSquare, AlertCircle, FileText, Mail, Phone, UserPlus, MapPin, Clock } from 'lucide-react';
 import UnifiedModal from '../common/modals/UnifiedModal';
-import Button from '../ui/Button';
+import Button from '../ui/Button/Button';
 
 const ClientInfoModal = ({ client, isOpen, onClose, onSave, mode = 'view' }) => {
   const [formData, setFormData] = useState({

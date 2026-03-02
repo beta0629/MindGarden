@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { UserCheck, XCircle, Users, Package, Calendar } from 'lucide-react';
 import notificationManager from '../../../utils/notification';
 import UnifiedModal from '../../common/modals/UnifiedModal';
-import Button from '../../ui/Button';
+import Button from '../../ui/Button/Button';
 /**
  * 상담사 변경 모달 컴포넌트
 /**

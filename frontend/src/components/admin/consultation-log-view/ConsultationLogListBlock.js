@@ -45,8 +45,8 @@ const ConsultationLogListBlock = ({ records, clientNameMap, consultantNameMap, o
         {records.map((record) => {
           const sessionDate = record.sessionDate ?? record.consultationDate;
           const sessionNumber = record.sessionNumber ?? 0;
-          const clientName = record.clientName ?? (record.clientId && clientNameMap ? clientNameMap[Number(record.clientId)] : null) || `내담자 #${record.clientId}`;
-          const consultantName = record.consultantName ?? (record.consultantId && consultantNameMap ? consultantNameMap[Number(record.consultantId)] : null) || `상담사 #${record.consultantId}`;
+          const clientName = (record.clientName ?? (record.clientId && clientNameMap ? clientNameMap[Number(record.clientId)] : null)) || `내담자 #${record.clientId}`;
+          const consultantName = (record.consultantName ?? (record.consultantId && consultantNameMap ? consultantNameMap[Number(record.consultantId)] : null)) || `상담사 #${record.consultantId}`;
           const isCompleted = record.isSessionCompleted === true;
           const updatedAt = record.updatedAt ?? record.createdAt;
 

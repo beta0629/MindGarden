@@ -1,7 +1,7 @@
 import React from 'react';
 import { XCircle, FileText, Umbrella } from 'lucide-react';
 import UnifiedModal from '../common/modals/UnifiedModal';
-import Button from '../ui/Button';
+import Button from '../ui/Button/Button';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 
 /**

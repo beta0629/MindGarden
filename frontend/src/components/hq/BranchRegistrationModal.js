@@ -3,7 +3,7 @@ import { Building, XCircle, Search, MapPin, Phone, Mail, Clock, Users, FileText,
 import { apiPost } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 import UnifiedModal from '../common/modals/UnifiedModal';
-import Button from '../ui/Button';
+import Button from '../ui/Button/Button';
 
 /**
  * 지점 등록 모달 컴포넌트

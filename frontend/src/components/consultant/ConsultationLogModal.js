@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { FileText, AlertTriangle } from 'lucide-react';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet, apiPost, apiPut } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 import UnifiedModal from '../common/modals/UnifiedModal';
-import Button from '../ui/Button';
+import Button from '../ui/Button/Button';
 import { getUserStatusKoreanNameSync } from '../../utils/codeHelper';
 
 /** 심리검사 요약/권고 문장에서 "위험"·"주의"·"권고" 키워드를 굵은 텍스트+색상으로 강조 */
@@ -120,6 +120,14 @@ const ConsultationLogModal = ({
     followUpDueDate: ''
   });
 
+  /** 일정에 유효한 내담자 ID가 있는지 (빈 문자열/NaN 제외) */
+  const hasValidScheduleClientId = useMemo(() => {
+    const raw = scheduleData?.clientId;
+    if (raw == null || raw === '') return false;
+    const n = typeof raw === 'number' ? raw : parseInt(raw, 10);
+    return !Number.isNaN(n);
+  }, [scheduleData?.clientId]);
+
   const riskLevels = priorityOptions;
 
   const goalAchievementLevels = [
@@ -232,9 +240,10 @@ const ConsultationLogModal = ({
         try {
           const withStatsRes = await apiGet(`/api/v1/admin/clients/with-stats/${cId}`);
           const payload = withStatsRes?.data != null ? withStatsRes.data : withStatsRes;
-          const clientData = payload?.client ?? withStatsRes?.client;
+          const rawClient = payload?.client ?? payload ?? withStatsRes?.client ?? withStatsRes;
+          const clientData = rawClient && typeof rawClient === 'object' && !Array.isArray(rawClient) ? rawClient : null;
           if (clientData) {
-            setClientWithStats(payload);
+            setClientWithStats(payload && typeof payload === 'object' ? payload : { client: clientData });
             setClient(clientData);
           }
         } catch (err) {
@@ -311,16 +320,18 @@ const ConsultationLogModal = ({
       setImportantComments([]);
       setPsychDocuments([]);
 
-      const clientId = scheduleData?.clientId ? (typeof scheduleData.clientId === 'number' ? scheduleData.clientId : parseInt(scheduleData.clientId, 10)) : null;
+      const rawClientId = scheduleData?.clientId;
+      const clientId = (rawClientId != null && rawClientId !== '') ? (typeof rawClientId === 'number' ? (Number.isNaN(rawClientId) ? null : rawClientId) : (() => { const n = parseInt(rawClientId, 10); return Number.isNaN(n) ? null : n; })()) : null;
       let withStatsData = null;
       if (clientId) {
         try {
           const withStatsRes = await apiGet(`/api/v1/admin/clients/with-stats/${clientId}`);
           const payload = withStatsRes?.data != null ? withStatsRes.data : withStatsRes;
-          const clientData = payload?.client ?? withStatsRes?.client;
-          if (payload && clientData) {
-            withStatsData = payload;
-            setClientWithStats(payload);
+          const rawClient = payload?.client ?? payload ?? withStatsRes?.client ?? withStatsRes;
+          const clientData = rawClient && typeof rawClient === 'object' && !Array.isArray(rawClient) ? rawClient : null;
+          if (clientData) {
+            withStatsData = payload && typeof payload === 'object' ? payload : { client: clientData };
+            setClientWithStats(withStatsData);
             setClient(clientData);
           }
         } catch (err) {
@@ -651,11 +662,13 @@ const ConsultationLogModal = ({
               position: 'sticky',
               top: 0,
               zIndex: 1,
-              paddingBottom: 'var(--mg-spacing-lg, 24px)'
+              paddingBottom: 'var(--mg-spacing-lg, 24px)',
+              background: 'var(--mg-layout-main-bg-start, var(--ad-b0kla-card-bg, #FAF9F7))',
+              backgroundColor: '#FAF9F7'
             }}
           >
             {/* (1) 내담자 프로필 요약 블록 — clientId 없으면 안내, 로딩 중이면 로딩 문구 */}
-            {scheduleData?.clientId == null || scheduleData?.clientId === '' ? (
+            {!hasValidScheduleClientId ? (
               <div
                 style={{
                   background: 'var(--mg-color-surface-main)',
@@ -685,7 +698,7 @@ const ConsultationLogModal = ({
                   내담자 정보 로딩 중...
                 </p>
               </div>
-            ) : scheduleData?.clientId != null && scheduleData?.clientId !== '' && !client ? (
+            ) : hasValidScheduleClientId && !client ? (
               <div
                 style={{
                   background: 'var(--mg-color-surface-main)',
@@ -983,7 +996,7 @@ const ConsultationLogModal = ({
                 <label className="mg-v2-label">세션 완료 여부</label>
                 <select
                   name="isSessionCompleted"
-                  value={formData.isSessionCompleted}
+                  value={formData.isSessionCompleted === true ? 'COMPLETED' : 'PENDING'}
                   onChange={handleInputChange}
                   disabled={true}
                   className="mg-v2-input mg-v2-w-full"

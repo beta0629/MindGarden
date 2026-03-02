@@ -8,7 +8,7 @@
 
 import React, { useState } from 'react';
 import { ConsultationLogViewPage } from './consultation-log-view/ConsultationLogViewPage';
-import AdminCommonLayout from './layout/AdminCommonLayout';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
 import '../../styles/main.css';
 import '../../styles/unified-design-tokens.css';
 import '../../styles/responsive-layout-tokens.css';

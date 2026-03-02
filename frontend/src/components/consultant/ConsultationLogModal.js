@@ -511,7 +511,7 @@ const ConsultationLogModal = ({
         ...formData,
         consultationId: consultationId,
         clientId: client?.id ?? consultationRecord?.clientId,
-        consultantId: user.id,
+        consultantId: scheduleData?.consultantId != null ? Number(scheduleData.consultantId) : (consultationRecord?.consultantId ?? user.id),
         isSessionCompleted: formData.isSessionCompleted ?? false
       };
 
@@ -564,7 +564,7 @@ const ConsultationLogModal = ({
         ...formData,
         consultationId: consultationId,
         clientId: client?.id ?? consultationRecord?.clientId,
-        consultantId: user.id,
+        consultantId: scheduleData?.consultantId != null ? Number(scheduleData.consultantId) : (consultationRecord?.consultantId ?? user.id),
         isSessionCompleted: true,
         completionTime: new Date().toISOString()
       };

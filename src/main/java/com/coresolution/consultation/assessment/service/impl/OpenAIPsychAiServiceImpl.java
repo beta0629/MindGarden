@@ -97,13 +97,16 @@ public class OpenAIPsychAiServiceImpl implements PsychAiService {
         }
     }
 
+    private static final String GEMINI_FALLBACK_MODEL = "gemini-1.5-pro";
+
     private String callGeminiApiWithFallback(String apiKey, String baseUrl, String model, String systemPrompt, String userPrompt) {
         try {
             return callGeminiApi(apiKey, baseUrl, model, systemPrompt, userPrompt);
         } catch (Exception e) {
-            if (model != null && model.contains("3.1") && e.getMessage() != null && e.getMessage().contains("404")) {
-                log.info("Psych AI Gemini model {} 404, retrying with gemini-1.5-pro", model);
-                return callGeminiApi(apiKey, baseUrl, "gemini-1.5-pro", systemPrompt, userPrompt);
+            String msg = e.getMessage() != null ? e.getMessage() : "";
+            if (msg.contains("404") && !GEMINI_FALLBACK_MODEL.equals(model)) {
+                log.info("Psych AI Gemini 404 (model={}), retrying with {}", model, GEMINI_FALLBACK_MODEL);
+                return callGeminiApi(apiKey, baseUrl, GEMINI_FALLBACK_MODEL, systemPrompt, userPrompt);
             }
             throw e;
         }

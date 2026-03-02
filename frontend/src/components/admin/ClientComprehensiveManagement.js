@@ -69,11 +69,15 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
         email: '',
         password: '',
         phone: '',
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         status: 'ACTIVE',
         grade: 'BRONZE',
         notes: '',
-        profileImageUrl: ''
+        profileImageUrl: '',
+        rrnFirst6: '',
+        rrnLast1: '',
+        address: '',
+        addressDetail: '',
+        postalCode: ''
     });
 
     const loadCommonCodes = useCallback(async () => {
@@ -136,6 +140,14 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                         isActive: clientEntity.isActive,
                         branchCode: clientEntity.branchCode,
                         profileImageUrl: clientEntity.profileImageUrl,
+                        address: clientEntity.address,
+                        addressDetail: clientEntity.addressDetail,
+                        postalCode: clientEntity.postalCode,
+                        birthDate: clientEntity.birthDate,
+                        gender: clientEntity.gender,
+                        age: clientEntity.age,
+                        grade: clientEntity.grade,
+                        notes: clientEntity.notes,
                         createdAt: clientEntity.createdAt,
                         updatedAt: clientEntity.updatedAt,
                         currentConsultants: item.currentConsultants || 0,
@@ -286,7 +298,12 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
             status: 'ACTIVE',
             grade: 'BRONZE',
             notes: '',
-            profileImageUrl: ''
+            profileImageUrl: '',
+            rrnFirst6: '',
+            rrnLast1: '',
+            address: '',
+            addressDetail: '',
+            postalCode: ''
         });
         setShowModal(true);
     }, []);
@@ -298,11 +315,15 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
             name: client.name || '',
             email: client.email || '',
             phone: client.phone || '',
-            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
             status: client.status || 'ACTIVE',
             grade: client.grade || 'BRONZE',
             notes: client.notes || '',
-            profileImageUrl: client.profileImageUrl || '' // base64 유지·표시용 (상담사와 동일)
+            profileImageUrl: client.profileImageUrl || '',
+            rrnFirst6: '',
+            rrnLast1: '',
+            address: client.address || '',
+            addressDetail: client.addressDetail || '',
+            postalCode: client.postalCode || ''
         });
         setShowModal(true);
     }, []);
@@ -355,7 +376,12 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
             status: 'ACTIVE',
             grade: 'BRONZE',
             notes: '',
-            profileImageUrl: ''
+            profileImageUrl: '',
+            rrnFirst6: '',
+            rrnLast1: '',
+            address: '',
+            addressDetail: '',
+            postalCode: ''
         });
     }, []);
 
@@ -566,6 +592,14 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                         onSave={(data) => {
                             const handleSave = async () => {
                                 try {
+                                    if (modalType === 'edit' && (data.rrnFirst6?.trim() || data.rrnLast1?.trim())) {
+                                        const f = (data.rrnFirst6 || '').trim();
+                                        const l = (data.rrnLast1 || '').trim();
+                                        if (f.length !== 6 || !/^[0-9]{6}$/.test(f) || l.length !== 1 || !/^[1-4]$/.test(l)) {
+                                            showError('주민번호 앞 6자리는 6자리 숫자, 뒤 1자리는 1자리 숫자(1~4)로 입력해 주세요.');
+                                            return;
+                                        }
+                                    }
                                     const payload = {
                                         name: data.name,
                                         email: data.email,
@@ -579,6 +613,13 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                                     }
                                     if (data.profileImageUrl && data.profileImageUrl.trim() !== '') {
                                         payload.profileImageUrl = data.profileImageUrl;
+                                    }
+                                    if (modalType === 'edit') {
+                                        if (data.address != null) payload.address = data.address.trim();
+                                        if (data.addressDetail != null) payload.addressDetail = data.addressDetail.trim();
+                                        if (data.postalCode != null) payload.postalCode = data.postalCode.trim();
+                                        if (data.rrnFirst6?.trim()) payload.rrnFirst6 = data.rrnFirst6.trim();
+                                        if (data.rrnLast1?.trim()) payload.rrnLast1 = data.rrnLast1.trim();
                                     }
                                     let response;
                                     if (modalType === 'create') {

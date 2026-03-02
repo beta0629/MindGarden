@@ -30,6 +30,7 @@ import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.entity.erp.financial.FinancialTransaction;
 import com.coresolution.consultation.repository.CommonCodeRepository;
 import com.coresolution.consultation.exception.EntityNotFoundException;
+import com.coresolution.consultation.repository.ClientRepository;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.repository.ConsultantRatingRepository;
 import com.coresolution.consultation.repository.ConsultantRepository;
@@ -78,6 +79,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
 
     private final UserRepository userRepository;
     private final ConsultantRepository consultantRepository;
+    private final ClientRepository clientRepository;
     private final ConsultantClientMappingRepository mappingRepository;
     private final ConsultantRatingRepository consultantRatingRepository;
     private final ConsultantRatingService consultantRatingService;
@@ -1820,7 +1822,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             throw new IllegalArgumentException("요청 본문이 없습니다.");
         }
 
-        User consultant = userRepository.findById(id)
+        Consultant consultant = consultantRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("상담사", id));
 
         if (consultant.getRole() != UserRole.CONSULTANT) {
@@ -1837,7 +1839,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         if (request.getPhone() != null && !request.getPhone().trim().isEmpty()) {
             consultant.setPhone(encryptionUtil.safeEncrypt(request.getPhone()));
         }
-        
+
         if (request.getSpecialization() != null) {
             consultant.setSpecialization(request.getSpecialization());
         }
@@ -1851,8 +1853,33 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             consultant.setUpdatedAt(LocalDateTime.now());
             consultant.setVersion(consultant.getVersion() + 1);
         }
-        
-        User savedConsultant = userRepository.save(consultant);
+
+        // 주민번호: 입력한 경우에만 RrnValidationUtil 검증 후 나이/성별 계산·암호화 저장
+        if (request.getRrnFirst6() != null && !request.getRrnFirst6().trim().isEmpty()
+                && request.getRrnLast1() != null && !request.getRrnLast1().trim().isEmpty()) {
+            applyRrnAndAddressToUser(consultant, request.getRrnFirst6(), request.getRrnLast1(),
+                    null, null, null);
+        }
+        // 주소: request 값 반영 (빈 문자열이면 null로 두지 않고 요청대로 저장 가능)
+        if (request.getAddress() != null) {
+            consultant.setAddress(request.getAddress().trim().isEmpty() ? null : request.getAddress().trim());
+        }
+        if (request.getAddressDetail() != null) {
+            consultant.setAddressDetail(request.getAddressDetail().trim().isEmpty() ? null : request.getAddressDetail().trim());
+        }
+        if (request.getPostalCode() != null) {
+            consultant.setPostalCode(request.getPostalCode().trim().isEmpty() ? null : request.getPostalCode().trim());
+        }
+
+        // 자격·경력 (Consultant 전용)
+        if (request.getQualifications() != null) {
+            consultant.setCertification(request.getQualifications().trim().isEmpty() ? null : request.getQualifications().trim());
+        }
+        if (request.getWorkHistory() != null) {
+            consultant.setWorkHistory(request.getWorkHistory().trim().isEmpty() ? null : request.getWorkHistory().trim());
+        }
+
+        User savedConsultant = consultantRepository.save(consultant);
 
         // 표준화 2025-12-08: 사용자 정보 업데이트 시 캐시 무효화
         if (savedConsultant.getTenantId() != null) {
@@ -1906,17 +1933,50 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         if (request.getProfileImageUrl() != null && !request.getProfileImageUrl().trim().isEmpty()) {
             clientUser.setProfileImageUrl(request.getProfileImageUrl().trim());
         }
-        
+        if (request.getNotes() != null) {
+            clientUser.setNotes(request.getNotes().trim().isEmpty() ? null : request.getNotes().trim());
+        }
+        if (request.getGrade() != null) {
+            clientUser.setGrade(request.getGrade().trim().isEmpty() ? null : request.getGrade().trim());
+        }
+
+        // 주민번호: 입력한 경우에만 검증 후 나이/성별 계산·암호화 저장
+        if (request.getRrnFirst6() != null && !request.getRrnFirst6().trim().isEmpty()
+                && request.getRrnLast1() != null && !request.getRrnLast1().trim().isEmpty()) {
+            applyRrnAndAddressToUser(clientUser, request.getRrnFirst6(), request.getRrnLast1(),
+                    null, null, null);
+        }
+        // 주소: User에 반영
+        if (request.getAddress() != null) {
+            clientUser.setAddress(request.getAddress().trim().isEmpty() ? null : request.getAddress().trim());
+        }
+        if (request.getAddressDetail() != null) {
+            clientUser.setAddressDetail(request.getAddressDetail().trim().isEmpty() ? null : request.getAddressDetail().trim());
+        }
+        if (request.getPostalCode() != null) {
+            clientUser.setPostalCode(request.getPostalCode().trim().isEmpty() ? null : request.getPostalCode().trim());
+        }
+
         User savedUser = userRepository.save(clientUser);
-        
+
         // 표준화 2025-12-08: 사용자 정보 업데이트 시 캐시 무효화
         if (savedUser.getTenantId() != null) {
             userPersonalDataCacheService.evictUserPersonalDataCache(
-                savedUser.getTenantId(), 
+                savedUser.getTenantId(),
                 savedUser.getId()
             );
         }
-        
+
+        // Client 테이블에 레코드가 있으면 address, addressDetail, postalCode, birthDate, gender 동기화
+        clientRepository.findById(id).ifPresent(client -> {
+            client.setAddress(savedUser.getAddress());
+            client.setAddressDetail(savedUser.getAddressDetail());
+            client.setPostalCode(savedUser.getPostalCode());
+            client.setBirthDate(savedUser.getBirthDate());
+            client.setGender(savedUser.getGender());
+            clientRepository.save(client);
+        });
+
         Client client = new Client();
         client.setId(savedUser.getId());
         client.setName(savedUser.getName());
@@ -1924,10 +1984,13 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         client.setPhone(savedUser.getPhone());
         client.setBirthDate(savedUser.getBirthDate());
         client.setGender(savedUser.getGender());
-        client.setIsDeleted(!savedUser.getIsActive());
+        client.setAddress(savedUser.getAddress());
+        client.setAddressDetail(savedUser.getAddressDetail());
+        client.setPostalCode(savedUser.getPostalCode());
+        client.setIsDeleted(Boolean.FALSE.equals(savedUser.getIsActive()));
         client.setCreatedAt(savedUser.getCreatedAt());
         client.setUpdatedAt(savedUser.getUpdatedAt());
-        
+
         return client;
     }
 

@@ -57,7 +57,9 @@ public class ClientStatsServiceImpl implements ClientStatsService {
         Client client = convertToClient(user);
         
         Map<String, Object> clientMap = convertClientToMap(client);
-        
+        clientMap.put("grade", user.getGrade());
+        clientMap.put("notes", user.getNotes());
+
         long currentConsultants = calculateCurrentConsultants(clientId);
         
         Map<String, Object> stats = calculateClientStats(clientId);
@@ -111,6 +113,8 @@ public class ClientStatsServiceImpl implements ClientStatsService {
                     Client client = convertToClient(user);
                     
                     Map<String, Object> clientMap = convertClientToMap(client);
+                    clientMap.put("grade", user.getGrade());
+                    clientMap.put("notes", user.getNotes());
                     if (user.getProfileImageUrl() != null) {
                         clientMap.put("profileImageUrl", user.getProfileImageUrl());
                     }

@@ -136,7 +136,12 @@ const ClientModal = ({
             status: formData.status || 'ACTIVE',
             grade: formData.grade || 'BRONZE',
             notes: formData.notes || '',
-            profileImageUrl: formData.profileImageUrl || ''
+            profileImageUrl: formData.profileImageUrl || '',
+            rrnFirst6: formData.rrnFirst6 || '',
+            rrnLast1: formData.rrnLast1 || '',
+            address: formData.address || '',
+            addressDetail: formData.addressDetail || '',
+            postalCode: formData.postalCode || ''
         };
 
         return (
@@ -284,6 +289,104 @@ const ClientModal = ({
                         className="mg-v2-form-textarea"
                     />
                 </div>
+                {type === 'edit' && (
+                    <>
+                        <div className="mg-v2-form-group">
+                            <small className="mg-v2-form-help">수정 시 기존 값은 표시하지 않습니다. 변경할 때만 입력해 주세요.</small>
+                            <div className="mg-v2-form-row mg-v2-form-row--two" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px', marginTop: '8px' }}>
+                                <div className="mg-v2-form-group">
+                                    <label htmlFor="client-rrnFirst6" className="mg-v2-form-label">주민번호 앞 6자리 (선택)</label>
+                                    <input
+                                        type="text"
+                                        id="client-rrnFirst6"
+                                        name="rrnFirst6"
+                                        value={safeFormData.rrnFirst6}
+                                        onChange={handleInputChange}
+                                        placeholder="900101"
+                                        maxLength={6}
+                                        inputMode="numeric"
+                                        className="mg-v2-form-input"
+                                    />
+                                </div>
+                                <div className="mg-v2-form-group">
+                                    <label htmlFor="client-rrnLast1" className="mg-v2-form-label">주민번호 뒤 1자리 (선택)</label>
+                                    <input
+                                        type="text"
+                                        id="client-rrnLast1"
+                                        name="rrnLast1"
+                                        value={safeFormData.rrnLast1}
+                                        onChange={handleInputChange}
+                                        placeholder="1"
+                                        maxLength={1}
+                                        inputMode="numeric"
+                                        className="mg-v2-form-input"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                        <div className="mg-v2-form-group">
+                            <label className="mg-v2-form-label">주소 검색</label>
+                            <div className="mg-v2-address-search-row" style={{ display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
+                                <button
+                                    type="button"
+                                    className="mg-v2-button mg-v2-button-secondary"
+                                    onClick={() => {
+                                        if (typeof window !== 'undefined' && window.daum && window.daum.Postcode) {
+                                            new window.daum.Postcode({
+                                                oncomplete: function (data) {
+                                                    setFormData(prev => ({
+                                                        ...prev,
+                                                        postalCode: data.zonecode || '',
+                                                        address: data.address || ''
+                                                    }));
+                                                }
+                                            }).open();
+                                        } else {
+                                            window.dispatchEvent(new CustomEvent('showNotification', {
+                                                detail: { message: '주소 검색 서비스를 불러올 수 없습니다.', type: 'info' }
+                                            }));
+                                        }
+                                    }}
+                                >
+                                    주소 검색
+                                </button>
+                                <input
+                                    type="text"
+                                    readOnly
+                                    className="mg-v2-form-input"
+                                    style={{ flex: 1, minWidth: '200px' }}
+                                    value={safeFormData.address}
+                                    placeholder="주소 검색 버튼을 눌러 주소를 입력하세요."
+                                />
+                            </div>
+                        </div>
+                        <div className="mg-v2-form-group">
+                            <label htmlFor="client-addressDetail" className="mg-v2-form-label">상세 주소</label>
+                            <input
+                                type="text"
+                                id="client-addressDetail"
+                                name="addressDetail"
+                                value={safeFormData.addressDetail}
+                                onChange={handleInputChange}
+                                placeholder="동, 호수, 상세 주소를 입력하세요."
+                                className="mg-v2-form-input"
+                            />
+                        </div>
+                        <div className="mg-v2-form-group">
+                            <label htmlFor="client-postalCode" className="mg-v2-form-label">우편번호</label>
+                            <input
+                                type="text"
+                                id="client-postalCode"
+                                name="postalCode"
+                                value={safeFormData.postalCode}
+                                onChange={handleInputChange}
+                                placeholder="00000"
+                                maxLength={5}
+                                className="mg-v2-form-input"
+                            />
+                        </div>
+                    </>
+                )}
             </form>
         );
     };

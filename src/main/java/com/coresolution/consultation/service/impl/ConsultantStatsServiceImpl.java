@@ -310,11 +310,19 @@ public class ConsultantStatsServiceImpl implements ConsultantStatsService {
         
         consultantMap.put("specialty", consultant.getSpecialty());
         consultantMap.put("specialtyDetails", consultant.getSpecialtyDetails());
-        
+
         String specialization = consultant.getSpecialization();
         consultantMap.put("specialization", specialization);
         consultantMap.put("specializationDetails", getSpecializationDetailsFromDB(specialization));
-        
+
+        consultantMap.put("address", consultant.getAddress());
+        consultantMap.put("addressDetail", consultant.getAddressDetail());
+        consultantMap.put("postalCode", consultant.getPostalCode());
+        consultantMap.put("birthDate", consultant.getBirthDate());
+        consultantMap.put("gender", consultant.getGender());
+        consultantMap.put("certification", consultant.getCertification());
+        consultantMap.put("workHistory", consultant.getWorkHistory());
+
         consultantMap.put("createdAt", consultant.getCreatedAt());
         consultantMap.put("updatedAt", consultant.getUpdatedAt());
         consultantMap.put("profileImageUrl", consultant.getProfileImageUrl());

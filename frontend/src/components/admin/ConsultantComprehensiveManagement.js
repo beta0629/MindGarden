@@ -54,14 +54,20 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
     const [showPasswordResetModal, setShowPasswordResetModal] = useState(false);
     const [passwordResetConsultant, setPasswordResetConsultant] = useState(null);
     const [formData, setFormData] = useState({
-        name: '', // 이름 (선택사항, 없으면 이메일 로컬 파트에서 자동 생성)
-        email: '', // 표준화 2025-12-08: 이메일만 입력받음 (userId 자동 생성)
-        password: '', // 비밀번호 (선택사항, 없으면 자동 생성)
+        name: '',
+        email: '',
+        password: '',
         phone: '',
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         status: 'ACTIVE',
         specialty: [],
-        profileImageUrl: '' // base64 data URL (data:image/...;base64,...)
+        profileImageUrl: '',
+        rrnFirst6: '',
+        rrnLast1: '',
+        address: '',
+        addressDetail: '',
+        postalCode: '',
+        qualifications: '',
+        workHistory: ''
     });
     const [specialtyCodes, setSpecialtyCodes] = useState([]);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -129,7 +135,6 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                 
                 const consultants = consultantsList.map(item => {
                     const consultantEntity = item.consultant || {};
-                    
                     return {
                         id: consultantEntity.id,
                         name: consultantEntity.name,
@@ -138,10 +143,15 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                         role: consultantEntity.role,
                         isActive: consultantEntity.isActive,
                         profileImageUrl: consultantEntity.profileImageUrl,
-                        specialty: consultantEntity.specialty, // Consultant 엔티티의 specialty
-                        specialtyDetails: consultantEntity.specialtyDetails, // Consultant 엔티티의 specialtyDetails
-                        specialization: consultantEntity.specialization, // User 엔티티의 specialization
-                        specializationDetails: consultantEntity.specializationDetails, // User 엔티티의 specializationDetails
+                        specialty: consultantEntity.specialty,
+                        specialtyDetails: consultantEntity.specialtyDetails,
+                        specialization: consultantEntity.specialization,
+                        specializationDetails: consultantEntity.specializationDetails,
+                        address: consultantEntity.address,
+                        addressDetail: consultantEntity.addressDetail,
+                        postalCode: consultantEntity.postalCode,
+                        certification: consultantEntity.certification,
+                        workHistory: consultantEntity.workHistory,
                         yearsOfExperience: consultantEntity.yearsOfExperience,
                         maxClients: consultantEntity.maxClients,
                         totalConsultations: consultantEntity.totalConsultations,
@@ -526,27 +536,38 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                 } else if (consultant.specialty) {
                     specialties = [consultant.specialty];
                 }
-                
                 setFormData({
                     name: consultant.name || '',
                     email: consultant.email || '',
                     phone: consultant.phone || '',
-                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                     status: consultant.status || 'ACTIVE',
                     specialty: specialties,
-                    profileImageUrl: consultant.profileImageUrl || ''
+                    profileImageUrl: consultant.profileImageUrl || '',
+                    rrnFirst6: '',
+                    rrnLast1: '',
+                    address: consultant.address || '',
+                    addressDetail: consultant.addressDetail || '',
+                    postalCode: consultant.postalCode || '',
+                    qualifications: consultant.certification || '',
+                    workHistory: consultant.workHistory || ''
                 });
             }
         } else if (type === 'create') {
             setFormData({
-                name: '', // 이름 (선택사항)
-                email: '', // 표준화 2025-12-08: 이메일만 입력받음
-                password: '', // 비밀번호 (선택사항, 없으면 자동 생성)
+                name: '',
+                email: '',
+                password: '',
                 phone: '',
-                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                 status: 'ACTIVE',
                 specialty: [],
-                profileImageUrl: ''
+                profileImageUrl: '',
+                rrnFirst6: '',
+                rrnLast1: '',
+                address: '',
+                addressDetail: '',
+                postalCode: '',
+                qualifications: '',
+                workHistory: ''
             });
         }
         setShowModal(true);
@@ -557,14 +578,20 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
         setModalType('view');
         setSelectedConsultant(null);
         setFormData({
-            name: '', // 이름 (선택사항)
-            email: '', // 표준화 2025-12-08: 이메일만 입력받음
-            password: '', // 비밀번호 (선택사항, 없으면 자동 생성)
+            name: '',
+            email: '',
+            password: '',
             phone: '',
-            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
             status: 'ACTIVE',
             specialty: [],
-            profileImageUrl: ''
+            profileImageUrl: '',
+            rrnFirst6: '',
+            rrnLast1: '',
+            address: '',
+            addressDetail: '',
+            postalCode: '',
+            qualifications: '',
+            workHistory: ''
         });
     }, []);
 
@@ -754,20 +781,42 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
 
     const updateConsultant = useCallback(async (id, data, existing) => {
         try {
-            // 백엔드 DTO(ConsultantRegistrationRequest)에 맞는 payload 구성 (등록과 동일한 specialization 변환)
             const specialization = Array.isArray(data.specialty) && data.specialty.length > 0
                 ? data.specialty.join(',')
                 : (data.specialization != null ? String(data.specialization) : '');
             const nameVal = data.name != null ? String(data.name).trim() : '';
             const emailVal = data.email != null ? String(data.email).trim() : '';
             const phoneVal = data.phone != null ? String(data.phone).trim() : '';
+            const rrnFirst6 = data.rrnFirst6 != null ? String(data.rrnFirst6).trim() : '';
+            const rrnLast1 = data.rrnLast1 != null ? String(data.rrnLast1).trim() : '';
+            if (rrnFirst6 || rrnLast1) {
+                if (rrnFirst6.length !== 6 || !/^[0-9]{6}$/.test(rrnFirst6)) {
+                    window.dispatchEvent(new CustomEvent('showNotification', {
+                        detail: { message: '주민번호 앞 6자리는 6자리 숫자, 뒤 1자리는 1자리 숫자로 입력해 주세요.', type: 'error' }
+                    }));
+                    return { success: false };
+                }
+                if (rrnLast1.length !== 1 || !/^[1-4]$/.test(rrnLast1)) {
+                    window.dispatchEvent(new CustomEvent('showNotification', {
+                        detail: { message: '주민번호 앞 6자리는 6자리 숫자, 뒤 1자리는 1자리 숫자로 입력해 주세요.', type: 'error' }
+                    }));
+                    return { success: false };
+                }
+            }
             const requestPayload = {
                 name: nameVal === '' ? (existing?.name ?? '') : nameVal,
                 email: emailVal === '' ? (existing?.email ?? '') : emailVal,
                 phone: phoneVal === '' ? (existing?.phone ?? '') : phoneVal,
                 specialization,
-                profileImageUrl: (data.profileImageUrl != null && data.profileImageUrl !== '') ? data.profileImageUrl : (existing?.profileImageUrl ?? undefined)
+                profileImageUrl: (data.profileImageUrl != null && data.profileImageUrl !== '') ? data.profileImageUrl : (existing?.profileImageUrl ?? undefined),
+                address: data.address != null ? data.address.trim() : undefined,
+                addressDetail: data.addressDetail != null ? data.addressDetail.trim() : undefined,
+                postalCode: data.postalCode != null ? data.postalCode.trim() : undefined,
+                qualifications: data.qualifications != null ? data.qualifications.trim() : undefined,
+                workHistory: data.workHistory != null ? data.workHistory.trim() : undefined
             };
+            if (rrnFirst6) requestPayload.rrnFirst6 = rrnFirst6;
+            if (rrnLast1) requestPayload.rrnLast1 = rrnLast1;
             const response = await apiPut(`/api/v1/admin/consultants/${id}`, requestPayload);
             // apiPut은 ApiResponse의 data만 반환하므로 success는 response.success가 아닌 반환값 유무/형식으로 판단
             const isSuccess = response != null && (response.success === true || response.id != null);
@@ -1482,6 +1531,131 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                             })}
                         </div>
                     </div>
+                    {modalType === 'edit' && (
+                        <>
+                            <div className="mg-v2-form-group">
+                                <small className="mg-v2-form-help">수정 시 기존 값은 표시하지 않습니다. 변경할 때만 입력해 주세요.</small>
+                                <div className="mg-v2-form-row mg-v2-form-row--two">
+                                    <div className="mg-v2-form-group">
+                                        <label htmlFor="consultant-rrnFirst6" className="mg-v2-form-label">주민번호 앞 6자리 (선택)</label>
+                                        <input
+                                            type="text"
+                                            id="consultant-rrnFirst6"
+                                            name="rrnFirst6"
+                                            value={formData.rrnFirst6 || ''}
+                                            onChange={handleFormChange}
+                                            placeholder="900101"
+                                            maxLength={6}
+                                            inputMode="numeric"
+                                            className="mg-v2-form-input"
+                                        />
+                                    </div>
+                                    <div className="mg-v2-form-group">
+                                        <label htmlFor="consultant-rrnLast1" className="mg-v2-form-label">주민번호 뒤 1자리 (선택)</label>
+                                        <input
+                                            type="text"
+                                            id="consultant-rrnLast1"
+                                            name="rrnLast1"
+                                            value={formData.rrnLast1 || ''}
+                                            onChange={handleFormChange}
+                                            placeholder="1"
+                                            maxLength={1}
+                                            inputMode="numeric"
+                                            className="mg-v2-form-input"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="mg-v2-form-group">
+                                <label className="mg-v2-form-label">주소 검색</label>
+                                <div className="mg-v2-address-search-row">
+                                    <button
+                                        type="button"
+                                        className="mg-v2-button mg-v2-button-secondary"
+                                        onClick={() => {
+                                            if (typeof window !== 'undefined' && window.daum && window.daum.Postcode) {
+                                                new window.daum.Postcode({
+                                                    oncomplete: function (data) {
+                                                        setFormData(prev => ({
+                                                            ...prev,
+                                                            postalCode: data.zonecode || '',
+                                                            address: data.address || ''
+                                                        }));
+                                                    }
+                                                }).open();
+                                            } else {
+                                                window.dispatchEvent(new CustomEvent('showNotification', {
+                                                    detail: { message: '주소 검색 서비스를 불러올 수 없습니다.', type: 'info' }
+                                                }));
+                                            }
+                                        }}
+                                    >
+                                        주소 검색
+                                    </button>
+                                    <input
+                                        type="text"
+                                        readOnly
+                                        className="mg-v2-form-input mg-v2-form-input--readonly"
+                                        value={formData.address || ''}
+                                        placeholder="주소 검색 버튼을 눌러 주소를 입력하세요."
+                                    />
+                                </div>
+                            </div>
+                            <div className="mg-v2-form-group">
+                                <label htmlFor="consultant-addressDetail" className="mg-v2-form-label">상세 주소</label>
+                                <input
+                                    type="text"
+                                    id="consultant-addressDetail"
+                                    name="addressDetail"
+                                    value={formData.addressDetail || ''}
+                                    onChange={handleFormChange}
+                                    placeholder="동, 호수, 상세 주소를 입력하세요."
+                                    className="mg-v2-form-input"
+                                />
+                            </div>
+                            <div className="mg-v2-form-group">
+                                <label htmlFor="consultant-postalCode" className="mg-v2-form-label">우편번호</label>
+                                <input
+                                    type="text"
+                                    id="consultant-postalCode"
+                                    name="postalCode"
+                                    value={formData.postalCode || ''}
+                                    onChange={handleFormChange}
+                                    placeholder="00000"
+                                    maxLength={5}
+                                    className="mg-v2-form-input"
+                                />
+                            </div>
+                            <div className="mg-v2-section-heading mg-v2-section-heading--accent">
+                                <span className="mg-v2-section-heading__bar" />
+                                <h3 className="mg-v2-section-heading__title">자격·경력</h3>
+                            </div>
+                            <div className="mg-v2-form-group">
+                                <label htmlFor="consultant-qualifications" className="mg-v2-form-label">자격증 (선택)</label>
+                                <input
+                                    type="text"
+                                    id="consultant-qualifications"
+                                    name="qualifications"
+                                    value={formData.qualifications || ''}
+                                    onChange={handleFormChange}
+                                    placeholder="보유 자격증을 입력하세요. 예) 정신건강임상심리사 1급, 상담심리사 1급"
+                                    className="mg-v2-form-input"
+                                />
+                            </div>
+                            <div className="mg-v2-form-group">
+                                <label htmlFor="consultant-workHistory" className="mg-v2-form-label">경력사항 (선택)</label>
+                                <textarea
+                                    id="consultant-workHistory"
+                                    name="workHistory"
+                                    value={formData.workHistory || ''}
+                                    onChange={handleFormChange}
+                                    placeholder="관련 경력 및 근무 이력을 입력하세요."
+                                    className="mg-v2-form-textarea"
+                                    rows={3}
+                                />
+                            </div>
+                        </>
+                    )}
                 </form>
             </div>
         );

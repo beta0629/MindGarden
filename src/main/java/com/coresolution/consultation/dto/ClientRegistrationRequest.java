@@ -59,6 +59,8 @@ public class ClientRegistrationRequest {
     private String emergencyPhone;
     
     private String notes;
+
+    private String grade;
     
     private String registeredBy;
     

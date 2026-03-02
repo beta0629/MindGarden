@@ -3,7 +3,7 @@ import { FileText, AlertTriangle } from 'lucide-react';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet, apiPost, apiPut } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
-import MgModal from '../ui/MgModal/MgModal';
+import UnifiedModal from '../common/modals/UnifiedModal';
 import Button from '../ui/Button/Button';
 import CustomSelect from '../common/CustomSelect';
 import { getUserStatusKoreanNameSync } from '../../utils/codeHelper';
@@ -600,7 +600,7 @@ const ConsultationLogModal = ({
   const modalTitle = `상담일지 작성${isEditMode ? ' (수정 모드)' : ''}`;
 
   const modalFooter = (
-    <div className="mg-modal__actions mg-v2-modal-footer-inline">
+    <>
       <Button
         type="button"
         variant="outline"
@@ -635,18 +635,18 @@ const ConsultationLogModal = ({
       >
         {saving ? '완료중...' : '✅ 완료'}
       </Button>
-    </div>
+    </>
   );
 
   return (
-    <MgModal
+    <UnifiedModal
       isOpen={isOpen}
       onClose={onClose}
       title={modalTitle}
-      size="full"
+      size="fullscreen"
       showCloseButton={true}
-      closeOnOverlayClick={true}
-      footer={modalFooter}
+      backdropClick={true}
+      actions={modalFooter}
     >
       <div className="mg-v2-consultation-log-modal">
         {saving && (
@@ -1271,7 +1271,7 @@ const ConsultationLogModal = ({
           </div>
         </div>
       </div>
-    </MgModal>
+    </UnifiedModal>
   );
 };
 

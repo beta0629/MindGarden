@@ -120,3 +120,23 @@
   gap: 12px;
   flex-shrink: 0;
 }
+
+/* Footer 버튼 테두리 명시 (투명/미적용 방지) */
+.mg-v2-ad-modal__footer .mg-v2-button,
+.mg-v2-ad-modal__footer button {
+  border-width: 1px;
+  border-style: solid;
+  box-sizing: border-box;
+}
+.mg-v2-ad-modal__footer .mg-v2-button--outline,
+.mg-v2-ad-modal__footer .mg-v2-button--ghost {
+  border-color: var(--mg-gray-300, #d1d5db);
+}
+.mg-v2-ad-modal__footer .mg-v2-button--primary {
+  border-color: var(--mg-v2-primary, #4f46e5);
+  background-color: var(--mg-v2-primary, #4f46e5);
+}
+.mg-v2-ad-modal__footer .mg-v2-button--success {
+  border-color: var(--mg-v2-status-success, #059669);
+  background-color: var(--mg-v2-status-success, #059669);
+}

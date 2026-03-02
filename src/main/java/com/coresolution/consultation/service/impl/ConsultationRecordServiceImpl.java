@@ -10,6 +10,9 @@ import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.ConsultationRecord;
 import com.coresolution.consultation.repository.ConsultationRecordRepository;
 import com.coresolution.consultation.repository.ConsultationRepository;
+import com.coresolution.consultation.repository.ScheduleRepository;
+import com.coresolution.consultation.constant.ScheduleStatus;
+import com.coresolution.consultation.entity.Schedule;
 import com.coresolution.consultation.service.ConsultationRecordService;
 import com.coresolution.consultation.service.PlSqlConsultationRecordAlertService;
 import com.coresolution.core.context.TenantContextHolder;
@@ -40,6 +43,9 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
     
     @Autowired
     private PlSqlConsultationRecordAlertService consultationRecordAlertService;
+
+    @Autowired
+    private ScheduleRepository scheduleRepository;
 
     @Override
     public Page<ConsultationRecord> getConsultationRecords(Long consultantId, Long clientId, Pageable pageable) {
@@ -471,37 +477,51 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
     
     /**
      * 상담 예약 존재 여부 검증
+     * - consultations 테이블에 있으면 Consultation 기준 검증
+     * - 없으면 schedules 테이블(Schedule) 기준 검증 (통합 스케줄에서 schedule id로 저장하는 경우)
      */
     private void validateConsultationExists(Long consultationId, Long clientId, Long consultantId) {
-        log.info("🔍 상담 예약 검증: consultationId={}, clientId={}, consultantId={}", 
+        log.info("🔍 상담 예약 검증: consultationId={}, clientId={}, consultantId={}",
                 consultationId, clientId, consultantId);
-        
-        Optional<com.coresolution.consultation.entity.Consultation> consultation = 
-            consultationRepository.findById(consultationId);
-        
-        if (consultation.isEmpty()) {
+
+        Optional<com.coresolution.consultation.entity.Consultation> consultationOpt =
+                consultationRepository.findById(consultationId);
+
+        if (consultationOpt.isPresent()) {
+            com.coresolution.consultation.entity.Consultation consult = consultationOpt.get();
+            if (!consult.getConsultantId().equals(consultantId)) {
+                throw new RuntimeException("상담사 ID가 일치하지 않습니다. 예상: " + consultantId +
+                        ", 실제: " + consult.getConsultantId());
+            }
+            if (!consult.getClientId().equals(clientId)) {
+                throw new RuntimeException("내담자 ID가 일치하지 않습니다. 예상: " + clientId +
+                        ", 실제: " + consult.getClientId());
+            }
+            if ("CANCELLED".equals(consult.getStatus())) {
+                throw new RuntimeException("취소된 상담은 상담일지를 작성할 수 없습니다.");
+            }
+            log.info("✅ 상담 예약 검증 완료(Consultation): {}", consultationId);
+            return;
+        }
+
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        Optional<Schedule> scheduleOpt = scheduleRepository.findByTenantIdAndId(tenantId, consultationId);
+        if (scheduleOpt.isEmpty()) {
             throw new RuntimeException("상담 예약을 찾을 수 없습니다: " + consultationId);
         }
-        
-        com.coresolution.consultation.entity.Consultation consult = consultation.get();
-        
-        // 상담사와 내담자 ID 일치 확인
-        if (!consult.getConsultantId().equals(consultantId)) {
-            throw new RuntimeException("상담사 ID가 일치하지 않습니다. 예상: " + consultantId + 
-                    ", 실제: " + consult.getConsultantId());
+        Schedule schedule = scheduleOpt.get();
+        if (!schedule.getConsultantId().equals(consultantId)) {
+            throw new RuntimeException("상담사 ID가 일치하지 않습니다. 예상: " + consultantId +
+                    ", 실제: " + schedule.getConsultantId());
         }
-        
-        if (!consult.getClientId().equals(clientId)) {
-            throw new RuntimeException("내담자 ID가 일치하지 않습니다. 예상: " + clientId + 
-                    ", 실제: " + consult.getClientId());
+        if (clientId != null && schedule.getClientId() != null && !schedule.getClientId().equals(clientId)) {
+            throw new RuntimeException("내담자 ID가 일치하지 않습니다. 예상: " + clientId +
+                    ", 실제: " + schedule.getClientId());
         }
-        
-        // 상담 상태 확인 (취소된 상담은 상담일지 작성 불가)
-        if ("CANCELLED".equals(consult.getStatus())) {
-            throw new RuntimeException("취소된 상담은 상담일지를 작성할 수 없습니다.");
+        if (schedule.getStatus() == ScheduleStatus.CANCELLED) {
+            throw new RuntimeException("취소된 일정은 상담일지를 작성할 수 없습니다.");
         }
-        
-        log.info("✅ 상담 예약 검증 완료: {}", consultationId);
+        log.info("✅ 상담 예약 검증 완료(Schedule): {}", consultationId);
     }
     
     @Override

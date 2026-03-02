@@ -1,5 +1,6 @@
 /**
- * MgModal - B0KlA 스타일 공통 모달 컴포넌트
+ * MgModal - B0KlA 스타일 모달 컴포넌트
+ * (프로젝트 공통 모달은 common/modals/UnifiedModal. 본 컴포넌트는 B0KlA 디자인 적용 구간용)
  * size: full | medium | small
  *
  * @author Core Solution

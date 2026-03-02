@@ -83,12 +83,15 @@ const CustomSelect = ({
       updatePosition();
       if (selectRef.current) selectRef.current.focus();
     });
-    document.addEventListener('scroll', updatePosition, true);
-    window.addEventListener('resize', updatePosition);
+    const onScrollOrResize = () => {
+      requestAnimationFrame(updatePosition);
+    };
+    document.addEventListener('scroll', onScrollOrResize, true);
+    window.addEventListener('resize', onScrollOrResize);
     return () => {
       cancelAnimationFrame(t);
-      document.removeEventListener('scroll', updatePosition, true);
-      window.removeEventListener('resize', updatePosition);
+      document.removeEventListener('scroll', onScrollOrResize, true);
+      window.removeEventListener('resize', onScrollOrResize);
     };
   }, [isOpen]);
 

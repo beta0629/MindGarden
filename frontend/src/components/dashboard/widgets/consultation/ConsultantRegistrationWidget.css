@@ -148,6 +148,29 @@
   grid-column: 1 / -1;
 }
 
+.form-row.two-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--cs-spacing-md);
+}
+
+.address-search-row {
+  display: flex;
+  gap: var(--cs-spacing-sm);
+  align-items: stretch;
+}
+
+.address-search-btn {
+  flex-shrink: 0;
+  height: 40px;
+  border-radius: 10px;
+}
+
+.address-search-row .address-display {
+  flex: 1;
+  min-width: 0;
+}
+
 /* 라벨 */
 .form-label {
   color: var(--cs-text-primary);

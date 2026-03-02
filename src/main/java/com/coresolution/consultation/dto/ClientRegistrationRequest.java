@@ -37,11 +37,17 @@ public class ClientRegistrationRequest {
     private String phone;
     
     private Integer age;
-    
+
+    /** 주민번호 앞 6자리 (YYMMDD) */
+    private String rrnFirst6;
+
+    /** 주민번호 뒤 1자리 (성별·세대 구분) */
+    private String rrnLast1;
+
     private String address;
-    
+
     private String addressDetail;
-    
+
     private String postalCode;
     
     private String consultationPurpose;

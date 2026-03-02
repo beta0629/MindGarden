@@ -36,17 +36,27 @@ public class ConsultantRegistrationRequest {
     private String phone;
     
     private String address;
-    
+
     private String addressDetail;
-    
+
     private String postalCode;
-    
+
+    /** 주민번호 앞 6자리 (YYMMDD) */
+    private String rrnFirst6;
+
+    /** 주민번호 뒤 1자리 (성별·세대 구분) */
+    private String rrnLast1;
+
     private String role;
-    
+
     private String specialization;
-    
+
+    /** 자격증 — consultants.certification 매핑 */
     private String qualifications;
-    
+
+    /** 경력사항 — consultants.work_history 매핑 */
+    private String workHistory;
+
     private String notes;
 
     /** 프로필 사진 (base64 data URL, 최대 2MB, 리사이즈·크롭 적용) */
@@ -83,9 +93,10 @@ public class ConsultantRegistrationRequest {
             .address(dto.getAddress())
             .addressDetail(dto.getAddressDetail())
             .postalCode(dto.getPostalCode())
+            .qualifications(dto.getQualifications())
+            .workHistory(null)
             .role(dto.getRole())
             .specialization(dto.getSpecialization())
-            .qualifications(dto.getQualifications())
             .notes(dto.getNotes())
             .branchCode(null) // 표준화 2025-12-07: 브랜치 개념 제거됨
             .build();

@@ -218,11 +218,14 @@ public class ClientStatsServiceImpl implements ClientStatsService {
         
         client.setBirthDate(user.getBirthDate());
         client.setGender(user.getGender());
+        client.setAddress(user.getAddress());
+        client.setAddressDetail(user.getAddressDetail());
+        client.setPostalCode(user.getPostalCode());
         client.setBranchCode(user.getBranchCode());
         client.setIsDeleted(user.getIsDeleted());
         client.setCreatedAt(user.getCreatedAt());
         client.setUpdatedAt(user.getUpdatedAt());
-        
+
         return client;
     }
     
@@ -237,6 +240,10 @@ public class ClientStatsServiceImpl implements ClientStatsService {
         clientMap.put("phone", client.getPhone());
         clientMap.put("birthDate", client.getBirthDate());
         clientMap.put("gender", client.getGender());
+        clientMap.put("age", client.getAge());
+        clientMap.put("address", client.getAddress());
+        clientMap.put("addressDetail", client.getAddressDetail());
+        clientMap.put("postalCode", client.getPostalCode());
         clientMap.put("role", UserRole.CLIENT.name());
         clientMap.put("status", "ACTIVE");
         clientMap.put("isActive", true);

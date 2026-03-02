@@ -28,6 +28,8 @@ const ConsultationRecordScreen = () => {
   const [loadingCodes, setLoadingCodes] = useState(false);
   const [completionStatusOptions, setCompletionStatusOptions] = useState([]);
   const [loadingCompletionCodes, setLoadingCompletionCodes] = useState(false);
+  const [psychReports, setPsychReports] = useState([]);
+  const [loadingPsychReports, setLoadingPsychReports] = useState(false);
 
   const loadPriorityCodes = useCallback(async () => {
     try {
@@ -349,12 +351,30 @@ const ConsultationRecordScreen = () => {
         setConsultation(consultationData);
         
         if (consultationData.clientId) {
-          const clientResponse = await apiGet(`/api/admin/users`);
-          if (clientResponse.success) {
-            const clientData = clientResponse.data.find(u => u.id === consultationData.clientId);
-            if (clientData) {
-              setClient(clientData);
+          try {
+            const clientResponse = await apiGet(`/api/v1/admin/clients/with-stats/${consultationData.clientId}`);
+            if (clientResponse && clientResponse.data && clientResponse.data.client) {
+              setClient(clientResponse.data.client);
             }
+          } catch (err) {
+            const fallback = await apiGet(`/api/admin/users`);
+            if (fallback && fallback.success && fallback.data) {
+              const clientData = fallback.data.find(u => u.id === consultationData.clientId);
+              if (clientData) setClient(clientData);
+            }
+          }
+          try {
+            setLoadingPsychReports(true);
+            const psychRes = await apiGet(`/api/v1/assessments/psych/documents/by-client/${consultationData.clientId}`);
+            if (psychRes && psychRes.data && Array.isArray(psychRes.data)) {
+              setPsychReports(psychRes.data);
+            } else {
+              setPsychReports([]);
+            }
+          } catch (e) {
+            setPsychReports([]);
+          } finally {
+            setLoadingPsychReports(false);
           }
         }
         
@@ -540,6 +560,16 @@ const ConsultationRecordScreen = () => {
             <span className="mg-v2-text-base mg-font-medium">{client.name}</span>
           </div>
           <div style={styles.clientInfoItem}>
+            <span style={styles.clientInfoLabel}>나이</span>
+            <span style={styles.clientInfoValue}>{client.age != null ? `${client.age}세` : '—'}</span>
+          </div>
+          <div style={styles.clientInfoItem}>
+            <span style={styles.clientInfoLabel}>성별</span>
+            <span style={styles.clientInfoValue}>
+              {client.gender === 'MALE' ? '남' : client.gender === 'FEMALE' ? '여' : client.gender || '—'}
+            </span>
+          </div>
+          <div style={styles.clientInfoItem}>
             <span style={styles.clientInfoLabel}>이메일</span>
             <span style={styles.clientInfoValue}>{client.email || '정보 없음'}</span>
           </div>
@@ -549,7 +579,9 @@ const ConsultationRecordScreen = () => {
           </div>
           <div style={styles.clientInfoItem}>
             <span style={styles.clientInfoLabel}>주소</span>
-            <span style={styles.clientInfoValue}>{client.address || '정보 없음'}</span>
+            <span style={styles.clientInfoValue}>
+              {[client.postalCode, client.address, client.addressDetail].filter(Boolean).join(' ') || '정보 없음'}
+            </span>
           </div>
           <div style={styles.clientInfoItem}>
             <span style={styles.clientInfoLabel}>상태</span>
@@ -579,6 +611,38 @@ const ConsultationRecordScreen = () => {
             <span style={styles.clientInfoValue}>{client.createdAt?.split('T')[0] || '정보 없음'}</span>
           </div>
         </div>
+      </div>
+
+      {/* 심리검사 리포트 영역 */}
+      <div className="mg-v2-card mg-mb-lg" style={{ borderLeft: '4px solid var(--mg-color-secondary-main, #5C6B61)' }}>
+        <h2 className="mg-h3 mg-mb-md mg-flex mg-align-center mg-gap-sm">
+          📋 심리검사 리포트
+        </h2>
+        {loadingPsychReports ? (
+          <p className="mg-v2-text-sm mg-v2-color-text-secondary">로딩 중...</p>
+        ) : psychReports.length === 0 ? (
+          <p className="mg-v2-text-sm mg-v2-color-text-secondary">등록된 심리검사 리포트가 없습니다.</p>
+        ) : (
+          <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {psychReports.map((doc) => (
+              <li key={doc.documentId}>
+                <a
+                  href={`/admin/psych-assessment?documentId=${doc.documentId}`}
+                  style={{ color: 'var(--mg-color-primary-main)', fontWeight: 600, textDecoration: 'none' }}
+                  onMouseOver={(e) => { e.target.style.textDecoration = 'underline'; }}
+                  onMouseOut={(e) => { e.target.style.textDecoration = 'none'; }}
+                >
+                  {doc.originalFilename || `심리검사 문서 #${doc.documentId}`}
+                </a>
+                {doc.reportSummary && (
+                  <p style={{ fontSize: '14px', color: 'var(--mg-color-text-secondary)', margin: '4px 0 0', lineHeight: 1.4 }}>
+                    {doc.reportSummary}
+                  </p>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
       {/* 상담일지 작성 폼 */}

@@ -11,12 +11,15 @@ import java.time.LocalDateTime;
 @Builder
 public class PsychAssessmentDocumentListItem {
     private Long documentId;
+    private Long clientId;
     private PsychAssessmentType assessmentType;
     private PsychAssessmentDocumentStatus status;
     private String originalFilename;
     private Long fileSize;
     private String sha256;
     private LocalDateTime createdAt;
+    /** 리포트 요약 1줄 (상담일지 표시용, 있을 경우만) */
+    private String reportSummary;
 }
 
 

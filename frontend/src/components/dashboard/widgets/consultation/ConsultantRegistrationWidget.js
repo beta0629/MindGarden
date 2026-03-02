@@ -33,12 +33,14 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
     password: '',
     name: '',
     phone: '',
+    rrnFirst6: '',
+    rrnLast1: '',
     address: '',
     addressDetail: '',
     postalCode: '',
     specialization: '',
     qualifications: '',
-    experience: '',
+    workHistory: '',
     notes: ''
   });
   const [validationErrors, setValidationErrors] = useState({});
@@ -110,6 +112,20 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
           delete newErrors[name];
         }
         break;
+      case 'rrnFirst6':
+        if (value && !/^[0-9]{0,6}$/.test(value)) {
+          newErrors[name] = '주민번호 앞 6자리는 6자리 숫자로 입력해 주세요.';
+        } else {
+          delete newErrors[name];
+        }
+        break;
+      case 'rrnLast1':
+        if (value && !/^[1-4]?$/.test(value)) {
+          newErrors[name] = '주민번호 뒤 1자리는 1~4 중 한 자리 숫자로 입력해 주세요.';
+        } else {
+          delete newErrors[name];
+        }
+        break;
       default:
         // 필수 필드 검사
         if (['userId', 'name', 'email', 'password', 'phone'].includes(name) && !value.trim()) {
@@ -169,6 +185,20 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
       return;
     }
     
+    // 주민번호 형식 검증 (앞 6자리 + 뒤 1자리)
+    if (formData.rrnFirst6?.trim() || formData.rrnLast1?.trim()) {
+      const f = formData.rrnFirst6?.trim() || '';
+      const l = formData.rrnLast1?.trim() || '';
+      if (f.length !== 6 || !/^[0-9]{6}$/.test(f)) {
+        showNotification('주민번호 앞 6자리는 6자리 숫자로 입력해 주세요.', 'warning');
+        return;
+      }
+      if (l.length !== 1 || !/^[1-4]$/.test(l)) {
+        showNotification('주민번호 뒤 1자리는 1~4 중 한 자리 숫자로 입력해 주세요.', 'warning');
+        return;
+      }
+    }
+
     // 제출 데이터 준비
     const requestData = {
       userId: formData.userId?.trim(),
@@ -176,13 +206,15 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
       password: formData.password,
       name: formData.name?.trim(),
       phone: formData.phone?.trim(),
-      role: 'CONSULTANT', // 상담사로 고정
+      role: 'CONSULTANT',
+      ...(formData.rrnFirst6?.trim() && { rrnFirst6: formData.rrnFirst6.trim() }),
+      ...(formData.rrnLast1?.trim() && { rrnLast1: formData.rrnLast1.trim() }),
       ...(formData.address && { address: formData.address.trim() }),
       ...(formData.addressDetail && { addressDetail: formData.addressDetail.trim() }),
       ...(formData.postalCode && { postalCode: formData.postalCode.trim() }),
       ...(formData.specialization && { specialization: formData.specialization.trim() }),
       ...(formData.qualifications && { qualifications: formData.qualifications.trim() }),
-      ...(formData.experience && { experience: formData.experience.trim() }),
+      ...(formData.workHistory && { workHistory: formData.workHistory.trim() }),
       ...(formData.notes && { notes: formData.notes.trim() })
     };
     
@@ -205,12 +237,14 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
       password: '',
       name: '',
       phone: '',
+      rrnFirst6: '',
+      rrnLast1: '',
       address: '',
       addressDetail: '',
       postalCode: '',
       specialization: '',
       qualifications: '',
-      experience: '',
+      workHistory: '',
       notes: ''
     });
     setValidationErrors({});
@@ -399,6 +433,45 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
                       </div>
                     )}
                   </div>
+
+                  <div className="form-row two-cols">
+                    <div className="form-group">
+                      <label htmlFor="rrnFirst6" className="form-label">주민번호 앞 6자리 (선택)</label>
+                      <input
+                        type="text"
+                        id="rrnFirst6"
+                        name="rrnFirst6"
+                        value={formData.rrnFirst6}
+                        onChange={handleInputChange}
+                        maxLength={6}
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        className={`form-control ${getFieldError('rrnFirst6') ? 'error' : ''}`}
+                        placeholder="900101"
+                      />
+                      {getFieldError('rrnFirst6') && (
+                        <div className="field-error">{getFieldError('rrnFirst6')}</div>
+                      )}
+                    </div>
+                    <div className="form-group">
+                      <label htmlFor="rrnLast1" className="form-label">주민번호 뒤 1자리 (선택)</label>
+                      <input
+                        type="text"
+                        id="rrnLast1"
+                        name="rrnLast1"
+                        value={formData.rrnLast1}
+                        onChange={handleInputChange}
+                        maxLength={1}
+                        inputMode="numeric"
+                        pattern="[1-4]"
+                        className={`form-control ${getFieldError('rrnLast1') ? 'error' : ''}`}
+                        placeholder="1"
+                      />
+                      {getFieldError('rrnLast1') && (
+                        <div className="field-error">{getFieldError('rrnLast1')}</div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -432,28 +505,28 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
                     </div>
 
                     <div className="form-group full-width">
-                      <label htmlFor="qualifications" className="form-label">자격증</label>
-                      <textarea
+                      <label htmlFor="qualifications" className="form-label">자격증 (선택)</label>
+                      <input
+                        type="text"
                         id="qualifications"
                         name="qualifications"
                         value={formData.qualifications}
                         onChange={handleInputChange}
                         className="form-control"
-                        rows={3}
-                        placeholder="보유 자격증 및 학력사항을 입력해주세요"
+                        placeholder="보유 자격증을 입력하세요. 예) 정신건강임상심리사 1급, 상담심리사 1급"
                       />
                     </div>
 
                     <div className="form-group full-width">
-                      <label htmlFor="experience" className="form-label">경력사항</label>
+                      <label htmlFor="workHistory" className="form-label">경력사항 (선택)</label>
                       <textarea
-                        id="experience"
-                        name="experience"
-                        value={formData.experience}
+                        id="workHistory"
+                        name="workHistory"
+                        value={formData.workHistory}
                         onChange={handleInputChange}
                         className="form-control"
                         rows={3}
-                        placeholder="상담 경력 및 주요 경험을 입력해주세요"
+                        placeholder="관련 경력 및 근무 이력을 입력하세요."
                       />
                     </div>
                   </div>
@@ -466,19 +539,40 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
                   <h4 className="section-title">추가 정보</h4>
                   <div className="form-grid">
                     <div className="form-group full-width">
-                      <label htmlFor="address" className="form-label">주소</label>
-                      <input
-                        type="text"
-                        id="address"
-                        name="address"
-                        value={formData.address}
-                        onChange={handleInputChange}
-                        className="form-control"
-                        placeholder="기본 주소"
-                      />
+                      <label className="form-label">주소 검색</label>
+                      <div className="address-search-row">
+                        <button
+                          type="button"
+                          className="mg-btn mg-btn-outline address-search-btn"
+                          onClick={() => {
+                            if (window.daum && window.daum.Postcode) {
+                              new window.daum.Postcode({
+                                oncomplete: function (data) {
+                                  setFormData(prev => ({
+                                    ...prev,
+                                    postalCode: data.zonecode || '',
+                                    address: data.address || ''
+                                  }));
+                                }
+                              }).open();
+                            } else {
+                              showNotification('주소 검색 서비스를 불러올 수 없습니다.', 'info');
+                            }
+                          }}
+                        >
+                          주소 검색
+                        </button>
+                        <input
+                          type="text"
+                          readOnly
+                          className="form-control address-display"
+                          value={formData.address || ''}
+                          placeholder="주소 검색 버튼을 눌러 주소를 입력하세요."
+                        />
+                      </div>
                     </div>
 
-                    <div className="form-group">
+                    <div className="form-group full-width">
                       <label htmlFor="addressDetail" className="form-label">상세 주소</label>
                       <input
                         type="text"
@@ -487,7 +581,7 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
                         value={formData.addressDetail}
                         onChange={handleInputChange}
                         className="form-control"
-                        placeholder="상세 주소"
+                        placeholder="동, 호수, 상세 주소를 입력하세요."
                       />
                     </div>
 
@@ -500,7 +594,7 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
                         value={formData.postalCode}
                         onChange={handleInputChange}
                         className="form-control"
-                        placeholder="12345"
+                        placeholder="00000"
                         maxLength={5}
                       />
                     </div>

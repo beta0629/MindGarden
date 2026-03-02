@@ -125,6 +125,7 @@ public class PsychAssessmentController extends BaseApiController {
         java.util.List<PsychAssessmentDocumentListItem> items = docs.stream()
                 .map(d -> PsychAssessmentDocumentListItem.builder()
                         .documentId(d.getId())
+                        .clientId(d.getClientId())
                         .assessmentType(d.getAssessmentType())
                         .status(d.getStatus())
                         .originalFilename(d.getOriginalFilename())
@@ -132,6 +133,42 @@ public class PsychAssessmentController extends BaseApiController {
                         .sha256(d.getSha256())
                         .createdAt(d.getCreatedAt())
                         .build())
+                .toList();
+        return success(items);
+    }
+
+    /**
+     * 상담일지용: clientId 기준 심리검사 문서·리포트 목록 (링크+요약 1줄)
+     */
+    @GetMapping("/documents/by-client/{clientId}")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "내담자별 심리검사 문서 목록", description = "상담일지에서 해당 내담자의 심리검사 문서/리포트 목록을 조회합니다.")
+    public ResponseEntity<ApiResponse<java.util.List<PsychAssessmentDocumentListItem>>> documentsByClient(
+            @PathVariable Long clientId) {
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        java.util.List<PsychAssessmentDocument> docs =
+                documentRepository.findByTenantIdAndClientIdOrderByCreatedAtDesc(tenantId, clientId);
+
+        java.util.List<PsychAssessmentDocumentListItem> items = docs.stream()
+                .map(d -> {
+                    String summary = null;
+                    var reportOpt = reportRepository.findTopByTenantIdAndDocumentIdOrderByCreatedAtDesc(tenantId, d.getId());
+                    if (reportOpt.isPresent() && reportOpt.get().getReportMarkdown() != null) {
+                        String md = reportOpt.get().getReportMarkdown();
+                        summary = md.length() > 100 ? md.substring(0, 100).trim() + "…" : md.trim();
+                    }
+                    return PsychAssessmentDocumentListItem.builder()
+                            .documentId(d.getId())
+                            .clientId(d.getClientId())
+                            .assessmentType(d.getAssessmentType())
+                            .status(d.getStatus())
+                            .originalFilename(d.getOriginalFilename())
+                            .fileSize(d.getFileSize())
+                            .sha256(d.getSha256())
+                            .createdAt(d.getCreatedAt())
+                            .reportSummary(summary)
+                            .build();
+                })
                 .toList();
         return success(items);
     }

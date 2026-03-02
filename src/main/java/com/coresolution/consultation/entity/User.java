@@ -166,9 +166,13 @@ public class User extends BaseEntity {
     @Column(name = "memo", columnDefinition = "TEXT")
     private String memo;
     
+    /** 주민번호 암호화값 (앞 6자리+뒤 1자리만 저장, 상담일지·API에는 노출하지 않음) */
+    @Column(name = "rrn_encrypted", length = 500)
+    private String rrnEncrypted;
+
     @Column(name = "address", length = 500)
     private String address;
-    
+
     @Column(name = "address_detail", length = 500)
     private String addressDetail;
     
@@ -536,11 +540,19 @@ public class User extends BaseEntity {
     public String getMemo() {
         return memo;
     }
-    
+
     public void setMemo(String memo) {
         this.memo = memo;
     }
-    
+
+    public String getRrnEncrypted() {
+        return rrnEncrypted;
+    }
+
+    public void setRrnEncrypted(String rrnEncrypted) {
+        this.rrnEncrypted = rrnEncrypted;
+    }
+
     public String getAddress() {
         return address;
     }

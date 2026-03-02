@@ -19,6 +19,9 @@ public interface PsychAssessmentDocumentRepository extends JpaRepository<PsychAs
     /** tenant + original_filename 포함 패턴 기준 최신 문서 조회 (MMPI 리포트 테스트 등) */
     Optional<PsychAssessmentDocument> findFirstByTenantIdAndOriginalFilenameContainingOrderByCreatedAtDesc(
             String tenantId, String filenamePattern);
+
+    /** 상담일지용: clientId 기준 심리검사 문서 목록 (최신순) */
+    List<PsychAssessmentDocument> findByTenantIdAndClientIdOrderByCreatedAtDesc(String tenantId, Long clientId);
 }
 
 

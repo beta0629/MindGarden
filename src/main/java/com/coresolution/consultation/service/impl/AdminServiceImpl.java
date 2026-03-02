@@ -52,6 +52,7 @@ import com.coresolution.consultation.service.PasswordResetService;
 import com.coresolution.consultation.service.RealTimeStatisticsService;
 import com.coresolution.consultation.service.StoredProcedureService;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.consultation.util.RrnValidationUtil;
 import com.coresolution.core.service.impl.BaseTenantAwareService;
 import com.coresolution.core.domain.UserRoleAssignment;
 import com.coresolution.core.context.TenantContextHolder;
@@ -178,9 +179,15 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 consultant.setProfileImageUrl(request.getProfileImageUrl().trim());
             }
             if (consultant instanceof Consultant) {
-                ((Consultant) consultant).setCertification(request.getQualifications());
+                Consultant c = (Consultant) consultant;
+                c.setCertification(request.getQualifications());
+                if (request.getWorkHistory() != null && !request.getWorkHistory().trim().isEmpty()) {
+                    c.setWorkHistory(request.getWorkHistory().trim());
+                }
             }
-            
+            applyRrnAndAddressToUser(consultant, request.getRrnFirst6(), request.getRrnLast1(),
+                    request.getAddress(), request.getAddressDetail(), request.getPostalCode());
+
             User savedConsultant = userRepository.save(consultant);
             
             createUserRoleAssignment(savedConsultant, tenantId, UserRole.CONSULTANT);
@@ -248,12 +255,17 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             
             consultant.setSpecialty(request.getSpecialization());
             consultant.setCertification(request.getQualifications());
+            if (request.getWorkHistory() != null && !request.getWorkHistory().trim().isEmpty()) {
+                consultant.setWorkHistory(request.getWorkHistory().trim());
+            }
             if (request.getProfileImageUrl() != null && !request.getProfileImageUrl().trim().isEmpty()) {
                 consultant.setProfileImageUrl(request.getProfileImageUrl().trim());
             }
-            log.info("🔧 상담사 엔티티 생성 완료: userId={}, tenantId={}, specialization={}", 
+            applyRrnAndAddressToUser(consultant, request.getRrnFirst6(), request.getRrnLast1(),
+                    request.getAddress(), request.getAddressDetail(), request.getPostalCode());
+            log.info("🔧 상담사 엔티티 생성 완료: userId={}, tenantId={}, specialization={}",
                     consultant.getUserId(), consultant.getTenantId(), consultant.getSpecialty());
-            
+
             User savedConsultant = userRepository.save(consultant);
             
             log.info("✅ 상담사 등록 성공: id={}, userId={}, tenantId={}", 
@@ -358,26 +370,28 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         
         // User 엔티티 생성
         User clientUser = User.builder()
-                .userId(userId) // 자동 생성된 userId 사용
+                .userId(userId)
                 .email(encryptedEmail)
-                .password(passwordEncoder.encode(password)) // 사용자 입력 또는 자동 생성된 비밀번호 사용
-                .name(encryptedName) // 자동 생성된 이름 사용
+                .password(passwordEncoder.encode(password))
+                .name(encryptedName)
                 .phone(encryptedPhone)
                 .role(UserRole.CLIENT)
                 .isActive(true)
-                .isPasswordChanged(!isTempPassword) // 임시 비밀번호인 경우 false, 사용자 입력 비밀번호인 경우 true
-                .branch(null) // 브랜치 개념 제거됨 (표준화 2025-12-05)
-                .branchCode(null) // 표준화 2025-12-06: 브랜치 코드 사용 금지
+                .isPasswordChanged(!isTempPassword)
+                .branch(null)
+                .branchCode(null)
                 .build();
-        
+
         clientUser.setTenantId(tenantId);
         if (request.getProfileImageUrl() != null && !request.getProfileImageUrl().trim().isEmpty()) {
             clientUser.setProfileImageUrl(request.getProfileImageUrl().trim());
         }
-        
-        log.info("🔧 내담자 등록 - User 엔티티 정보: userId={}, email={}, tenantId={}, isActive={}, role={}", 
+        applyRrnAndAddressToUser(clientUser, request.getRrnFirst6(), request.getRrnLast1(),
+                request.getAddress(), request.getAddressDetail(), request.getPostalCode());
+
+        log.info("🔧 내담자 등록 - User 엔티티 정보: userId={}, email={}, tenantId={}, isActive={}, role={}",
                 clientUser.getUserId(), email, tenantId, clientUser.getIsActive(), clientUser.getRole());
-        
+
         User savedUser = userRepository.save(clientUser);
         
         log.info("✅ 내담자 등록 완료 - 저장된 User 정보: id={}, userId={}, tenantId={}, isActive={}, role={}", 
@@ -405,15 +419,19 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         
         Client client = new Client();
         client.setId(savedUser.getId());
+        client.setTenantId(tenantId);
         client.setName(savedUser.getName());
         client.setEmail(savedUser.getEmail());
         client.setPhone(savedUser.getPhone());
         client.setBirthDate(savedUser.getBirthDate());
         client.setGender(savedUser.getGender());
-        client.setIsDeleted(false); // 등록 시에는 삭제되지 않음
+        client.setAddress(savedUser.getAddress());
+        client.setAddressDetail(savedUser.getAddressDetail());
+        client.setPostalCode(savedUser.getPostalCode());
+        client.setIsDeleted(false);
         client.setCreatedAt(savedUser.getCreatedAt());
         client.setUpdatedAt(savedUser.getUpdatedAt());
-        client.setBranchCode(null); // 표준화 2025-12-06: 브랜치 코드 사용 금지
+        client.setBranchCode(null);
         
         log.info("✅ Client 엔티티 생성 완료: id={}, userId={}, isDeleted={}, isActive={}, tenantId={}", 
                 client.getId(), savedUser.getUserId(), client.getIsDeleted(), savedUser.getIsActive(), tenantId);
@@ -5484,12 +5502,56 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     }
     
     // ==================== 표준화 2025-12-08: 유틸리티 메서드 ====================
-    
+
+    /**
+     * 주민번호(앞6+뒤1) 검증·나이/성별 계산·암호화 저장 및 주소 필드 설정.
+     * 상담일지·API에는 주민번호 노출하지 않음.
+     *
+     * @param user          설정 대상 User 엔티티
+     * @param rrnFirst6     주민번호 앞 6자리 (null/빈값이면 RRN 처리 생략)
+     * @param rrnLast1      주민번호 뒤 1자리
+     * @param address       기본 주소
+     * @param addressDetail 상세 주소
+     * @param postalCode    우편번호
+     * @throws IllegalArgumentException 주민번호 형식 오류 시
+     */
+    private void applyRrnAndAddressToUser(User user, String rrnFirst6, String rrnLast1,
+            String address, String addressDetail, String postalCode) {
+        if (user == null) {
+            return;
+        }
+        if (rrnFirst6 != null && !rrnFirst6.trim().isEmpty() && rrnLast1 != null && !rrnLast1.trim().isEmpty()) {
+            if (!RrnValidationUtil.validateFormat(rrnFirst6, rrnLast1)) {
+                throw new IllegalArgumentException(
+                        "주민번호 앞 6자리는 6자리 숫자, 뒤 1자리는 1자리 숫자(1~4)로 입력해 주세요.");
+            }
+            LocalDate birthDate = RrnValidationUtil.toBirthDate(rrnFirst6, rrnLast1);
+            Integer age = RrnValidationUtil.toAge(birthDate);
+            String gender = RrnValidationUtil.toGender(rrnLast1);
+            String plainRrn = RrnValidationUtil.toPlainRrnForStorage(rrnFirst6, rrnLast1);
+            if (plainRrn != null) {
+                user.setRrnEncrypted(encryptionUtil.safeEncrypt(plainRrn));
+            }
+            user.setBirthDate(birthDate);
+            user.setAge(age);
+            user.setGender(gender);
+        }
+        if (address != null && !address.trim().isEmpty()) {
+            user.setAddress(address.trim());
+        }
+        if (addressDetail != null && !addressDetail.trim().isEmpty()) {
+            user.setAddressDetail(addressDetail.trim());
+        }
+        if (postalCode != null && !postalCode.trim().isEmpty()) {
+            user.setPostalCode(postalCode.trim());
+        }
+    }
+
     /**
      * 임시 비밀번호 생성
      * 표준화 2025-12-08: 내담자 등록 시 자동 생성된 임시 비밀번호
      * 형식: CLIENT_{timestamp}_{random}
-     * 
+     *
      * @return 생성된 임시 비밀번호
      */
     private String generateTempPassword() {

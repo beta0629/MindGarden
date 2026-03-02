@@ -45,7 +45,13 @@ public class Client extends BaseEntity {
     
     @Column(name = "address")
     private String address;
-    
+
+    @Column(name = "address_detail", length = 500)
+    private String addressDetail;
+
+    @Column(name = "postal_code", length = 20)
+    private String postalCode;
+
     @Column(name = "emergency_contact")
     private String emergencyContact;
     

@@ -33,6 +33,8 @@ const ClientRegistrationWidget = ({ widget, user }) => {
     password: '',
     name: '',
     phone: '',
+    rrnFirst6: '',
+    rrnLast1: '',
     age: '',
     address: '',
     addressDetail: '',
@@ -121,6 +123,20 @@ const ClientRegistrationWidget = ({ widget, user }) => {
           delete newErrors[name];
         }
         break;
+      case 'rrnFirst6':
+        if (value && !/^[0-9]{0,6}$/.test(value)) {
+          newErrors[name] = '주민번호 앞 6자리는 6자리 숫자로 입력해 주세요.';
+        } else {
+          delete newErrors[name];
+        }
+        break;
+      case 'rrnLast1':
+        if (value && !/^[1-4]?$/.test(value)) {
+          newErrors[name] = '주민번호 뒤 1자리는 1~4 중 한 자리 숫자로 입력해 주세요.';
+        } else {
+          delete newErrors[name];
+        }
+        break;
       default:
         // 필수 필드 검사
         if (['userId', 'name', 'email', 'password', 'phone'].includes(name) && !value.trim()) {
@@ -180,6 +196,20 @@ const ClientRegistrationWidget = ({ widget, user }) => {
       return;
     }
     
+    // 주민번호 형식 검증
+    if (formData.rrnFirst6?.trim() || formData.rrnLast1?.trim()) {
+      const f = formData.rrnFirst6?.trim() || '';
+      const l = formData.rrnLast1?.trim() || '';
+      if (f.length !== 6 || !/^[0-9]{6}$/.test(f)) {
+        showNotification('주민번호 앞 6자리는 6자리 숫자로 입력해 주세요.', 'warning');
+        return;
+      }
+      if (l.length !== 1 || !/^[1-4]$/.test(l)) {
+        showNotification('주민번호 뒤 1자리는 1~4 중 한 자리 숫자로 입력해 주세요.', 'warning');
+        return;
+      }
+    }
+
     // 제출 데이터 준비
     const requestData = {
       userId: formData.userId?.trim(),
@@ -187,7 +217,9 @@ const ClientRegistrationWidget = ({ widget, user }) => {
       password: formData.password,
       name: formData.name?.trim(),
       phone: formData.phone?.trim(),
-      role: 'CLIENT', // 내담자로 고정
+      role: 'CLIENT',
+      ...(formData.rrnFirst6?.trim() && { rrnFirst6: formData.rrnFirst6.trim() }),
+      ...(formData.rrnLast1?.trim() && { rrnLast1: formData.rrnLast1.trim() }),
       ...(formData.age && { age: parseInt(formData.age) }),
       ...(formData.address && { address: formData.address.trim() }),
       ...(formData.addressDetail && { addressDetail: formData.addressDetail.trim() }),
@@ -218,6 +250,8 @@ const ClientRegistrationWidget = ({ widget, user }) => {
       password: '',
       name: '',
       phone: '',
+      rrnFirst6: '',
+      rrnLast1: '',
       age: '',
       address: '',
       addressDetail: '',
@@ -413,6 +447,43 @@ const ClientRegistrationWidget = ({ widget, user }) => {
                       </div>
                     )}
                   </div>
+
+                  <div className="form-row two-cols">
+                    <div className="form-group">
+                      <label htmlFor="rrnFirst6" className="form-label">주민번호 앞 6자리 (선택)</label>
+                      <input
+                        type="text"
+                        id="rrnFirst6"
+                        name="rrnFirst6"
+                        value={formData.rrnFirst6}
+                        onChange={handleInputChange}
+                        maxLength={6}
+                        inputMode="numeric"
+                        className={`form-control ${getFieldError('rrnFirst6') ? 'error' : ''}`}
+                        placeholder="900101"
+                      />
+                      {getFieldError('rrnFirst6') && (
+                        <div className="field-error">{getFieldError('rrnFirst6')}</div>
+                      )}
+                    </div>
+                    <div className="form-group">
+                      <label htmlFor="rrnLast1" className="form-label">주민번호 뒤 1자리 (선택)</label>
+                      <input
+                        type="text"
+                        id="rrnLast1"
+                        name="rrnLast1"
+                        value={formData.rrnLast1}
+                        onChange={handleInputChange}
+                        maxLength={1}
+                        inputMode="numeric"
+                        className={`form-control ${getFieldError('rrnLast1') ? 'error' : ''}`}
+                        placeholder="1"
+                      />
+                      {getFieldError('rrnLast1') && (
+                        <div className="field-error">{getFieldError('rrnLast1')}</div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -443,19 +514,40 @@ const ClientRegistrationWidget = ({ widget, user }) => {
                     </div>
 
                     <div className="form-group full-width">
-                      <label htmlFor="address" className="form-label">주소</label>
-                      <input
-                        type="text"
-                        id="address"
-                        name="address"
-                        value={formData.address}
-                        onChange={handleInputChange}
-                        className="form-control"
-                        placeholder="기본 주소"
-                      />
+                      <label className="form-label">주소 검색</label>
+                      <div className="address-search-row">
+                        <button
+                          type="button"
+                          className="mg-btn mg-btn-outline address-search-btn"
+                          onClick={() => {
+                            if (window.daum && window.daum.Postcode) {
+                              new window.daum.Postcode({
+                                oncomplete: function (data) {
+                                  setFormData(prev => ({
+                                    ...prev,
+                                    postalCode: data.zonecode || '',
+                                    address: data.address || ''
+                                  }));
+                                }
+                              }).open();
+                            } else {
+                              showNotification('주소 검색 서비스를 불러올 수 없습니다.', 'info');
+                            }
+                          }}
+                        >
+                          주소 검색
+                        </button>
+                        <input
+                          type="text"
+                          readOnly
+                          className="form-control address-display"
+                          value={formData.address || ''}
+                          placeholder="주소 검색 버튼을 눌러 주소를 입력하세요."
+                        />
+                      </div>
                     </div>
 
-                    <div className="form-group">
+                    <div className="form-group full-width">
                       <label htmlFor="addressDetail" className="form-label">상세 주소</label>
                       <input
                         type="text"
@@ -464,7 +556,7 @@ const ClientRegistrationWidget = ({ widget, user }) => {
                         value={formData.addressDetail}
                         onChange={handleInputChange}
                         className="form-control"
-                        placeholder="상세 주소"
+                        placeholder="동, 호수, 상세 주소를 입력하세요."
                       />
                     </div>
 

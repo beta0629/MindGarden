@@ -59,9 +59,10 @@ const ConsultationLogModal = ({
   const loadPriorityCodes = useCallback(async () => {
     try {
       setLoadingCodes(true);
-      const response = await apiGet('/api/v1/common-codes/PRIORITY');
-      if (response && response.length > 0) {
-        const options = response.map(code => ({
+      const response = await apiGet('/api/v1/common-codes?codeGroup=PRIORITY');
+      const list = response?.codes ?? [];
+      if (list.length > 0) {
+        const options = list.map(code => ({
           value: code.codeValue,
           label: code.codeLabel,
           icon: code.icon,
@@ -128,9 +129,10 @@ const ConsultationLogModal = ({
   const loadCompletionStatusCodes = useCallback(async () => {
     try {
       setLoadingCompletionCodes(true);
-      const response = await apiGet('/api/v1/common-codes/COMPLETION_STATUS');
-      if (response && response.length > 0) {
-        setCompletionStatusOptions(response.map((code, index) => ({
+      const response = await apiGet('/api/v1/common-codes?codeGroup=COMPLETION_STATUS');
+      const list = response?.codes ?? [];
+      if (list.length > 0) {
+        setCompletionStatusOptions(list.map((code, index) => ({
           value: code.codeValue,
           label: code.codeLabel,
           icon: code.icon || '📋',
@@ -244,8 +246,8 @@ const ConsultationLogModal = ({
 
       let loadedRecord = null;
       try {
-        const recordResponse = await apiGet(`/api/schedules/consultation-records?consultantId=${user.id}&consultationId=${scheduleData.id}`);
-        const recordList = recordResponse?.data ?? (Array.isArray(recordResponse) ? recordResponse : []);
+        const recordResponse = await apiGet(`/api/v1/schedules/consultation-records?consultantId=${user.id}&consultationId=${scheduleData.id}`);
+        const recordList = recordResponse?.records ?? recordResponse?.data?.records ?? (Array.isArray(recordResponse?.data) ? recordResponse.data : Array.isArray(recordResponse) ? recordResponse : []);
         const hasRecord = recordList.length > 0 && (recordResponse?.success !== false);
         if (hasRecord && recordList[0]) {
           const record = recordList[0];
@@ -399,9 +401,9 @@ const ConsultationLogModal = ({
 
       let response;
       if (isEditMode && consultationRecord) {
-        response = await apiPut(`/api/schedules/consultation-records/${consultationRecord.id}`, recordData);
+        response = await apiPut(`/api/v1/schedules/consultation-records/${consultationRecord.id}`, recordData);
       } else {
-        response = await apiPost(`/api/schedules/consultation-records`, recordData);
+        response = await apiPost(`/api/v1/schedules/consultation-records`, recordData);
       }
 
       if (response.success) {
@@ -450,9 +452,9 @@ const ConsultationLogModal = ({
 
       let response;
       if (isEditMode && consultationRecord) {
-        response = await apiPut(`/api/schedules/consultation-records/${consultationRecord.id}`, recordData);
+        response = await apiPut(`/api/v1/schedules/consultation-records/${consultationRecord.id}`, recordData);
       } else {
-        response = await apiPost(`/api/schedules/consultation-records`, recordData);
+        response = await apiPost(`/api/v1/schedules/consultation-records`, recordData);
       }
 
       if (response.success) {

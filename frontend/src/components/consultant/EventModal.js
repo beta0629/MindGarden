@@ -58,12 +58,13 @@ const EventModal = ({ event, mode, onSave, onDelete, onClose, userRole = 'CONSUL
         null;
 
       if (consultationId) {
-        const response = await apiGet(`/api/schedules/consultation-records?consultationId=${consultationId}`);
-        if (response.success && response.data && response.data.length > 0) {
+        const response = await apiGet(`/api/v1/schedules/consultation-records?consultationId=${consultationId}`);
+        const records = response?.records ?? response?.data?.records ?? (Array.isArray(response?.data) ? response.data : []);
+        if (records && records.length > 0) {
           setConsultationLogStatus({
             hasRecord: true,
             loading: false,
-            recordId: response.data[0].id
+            recordId: records[0].id
           });
         } else {
           setConsultationLogStatus({

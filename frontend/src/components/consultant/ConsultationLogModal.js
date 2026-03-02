@@ -1,27 +1,48 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { FileText, XCircle, Save, CheckCircle, User, AlertTriangle, Clock, Target } from 'lucide-react';
+import { FileText, AlertTriangle } from 'lucide-react';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet, apiPost, apiPut } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import Button from '../ui/Button';
+import { getUserStatusKoreanNameSync } from '../../utils/codeHelper';
+
+/** 심리검사 요약/권고 문장에서 "위험"·"주의"·"권고" 키워드를 굵은 텍스트+색상으로 강조 */
+function renderTextWithKeywordHighlight(text) {
+  if (!text || typeof text !== 'string') return null;
+  const parts = text.split(/(위험|주의|권고)/g);
+  return parts.map((part, i) => {
+    if (part === '위험') {
+      return <strong key={i} style={{ color: 'var(--mg-error-500)', fontWeight: 600 }}>위험</strong>;
+    }
+    if (part === '주의') {
+      return <strong key={i} style={{ color: 'var(--mg-warning-500)', fontWeight: 600 }}>주의</strong>;
+    }
+    if (part === '권고') {
+      return <strong key={i} style={{ color: 'var(--mg-color-primary-main)', fontWeight: 600 }}>권고</strong>;
+    }
+    return part;
+  });
+}
 
 /**
  * 상담일지 작성 모달 컴포넌트
-/**
- * 스케줄 시간에 상담사가 내담자 정보를 보면서 상담일지를 작성할 수 있는 모달
+ * 스케줄 시간에 상담사가 내담자 정보를 보면서 상담일지를 작성할 수 있는 큰 모달(Large).
+ * 상단 고정: 내담자 프로필 요약 → 중요 코멘트 → 심리검사(있을 때) → 상담일지 폼.
  */
-const ConsultationLogModal = ({ 
-  isOpen, 
-  onClose, 
-  scheduleData, 
-  onSave 
+const ConsultationLogModal = ({
+  isOpen,
+  onClose,
+  scheduleData,
+  onSave
 }) => {
   const { user } = useSession();
-  
+
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [client, setClient] = useState(null);
+  /** with-stats 전체 응답(client, statistics, currentConsultants 등) — 권한 있을 때만 채워짐 */
+  const [clientWithStats, setClientWithStats] = useState(null);
   const [consultationRecord, setConsultationRecord] = useState(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [priorityOptions, setPriorityOptions] = useState([]);
@@ -29,6 +50,11 @@ const ConsultationLogModal = ({
   const [completionStatusOptions, setCompletionStatusOptions] = useState([]);
   const [loadingCompletionCodes, setLoadingCompletionCodes] = useState(false);
   const [validationErrors, setValidationErrors] = useState({});
+  /** 심리검사 문서 목록 — clientId 있을 때만 로드 */
+  const [psychDocuments, setPsychDocuments] = useState([]);
+  const [loadingPsych, setLoadingPsych] = useState(false);
+  /** 중요 코멘트 수집: 내담자 notes, 일정 notes, 이전 일지 특이사항 등 */
+  const [importantComments, setImportantComments] = useState([]);
 
   const loadPriorityCodes = useCallback(async () => {
     try {
@@ -174,24 +200,58 @@ const ConsultationLogModal = ({
   const loadData = async () => {
     try {
       setLoading(true);
-      
-      if (scheduleData.clientId) {
-        const clientResponse = await apiGet(`/api/admin/users`);
-        if (clientResponse.success) {
-          const clientData = clientResponse.data.find(u => u.id === scheduleData.clientId);
-          if (clientData) {
-            setClient(clientData);
+      setClientWithStats(null);
+      setClient(null);
+      setImportantComments([]);
+      setPsychDocuments([]);
+
+      const clientId = scheduleData?.clientId ? (typeof scheduleData.clientId === 'number' ? scheduleData.clientId : parseInt(scheduleData.clientId, 10)) : null;
+      let withStatsData = null;
+      if (clientId) {
+        try {
+          const withStatsRes = await apiGet(`/api/v1/admin/clients/with-stats/${clientId}`);
+          if (withStatsRes && withStatsRes.client) {
+            withStatsData = withStatsRes;
+            setClientWithStats(withStatsRes);
+            setClient(withStatsRes.client);
+          }
+        } catch (err) {
+          if (err?.status === 403 || err?.message?.includes('권한')) {
+            try {
+              const usersRes = await apiGet('/api/admin/users');
+              const userList = Array.isArray(usersRes) ? usersRes : (usersRes?.data ?? []);
+              const fallback = userList.find(u => Number(u.id) === Number(clientId));
+              if (fallback) {
+                setClient({ id: fallback.id, name: fallback.name, phone: fallback.phone, email: fallback.email, gender: fallback.gender });
+              }
+            } catch (e) {
+              console.warn('내담자 fallback 조회 실패:', e);
+            }
           }
         }
+
+        setLoadingPsych(true);
+        try {
+          const psychRes = await apiGet(`/api/v1/assessments/psych/documents/by-client/${clientId}`);
+          const list = Array.isArray(psychRes) ? psychRes : (psychRes?.data && Array.isArray(psychRes.data) ? psychRes.data : []);
+          setPsychDocuments(list);
+        } catch (e) {
+          setPsychDocuments([]);
+        } finally {
+          setLoadingPsych(false);
+        }
       }
-      
+
+      let loadedRecord = null;
       try {
         const recordResponse = await apiGet(`/api/schedules/consultation-records?consultantId=${user.id}&consultationId=${scheduleData.id}`);
-        if (recordResponse.success && recordResponse.data.length > 0) {
-          const record = recordResponse.data[0];
+        const recordList = recordResponse?.data ?? (Array.isArray(recordResponse) ? recordResponse : []);
+        const hasRecord = recordList.length > 0 && (recordResponse?.success !== false);
+        if (hasRecord && recordList[0]) {
+          const record = recordList[0];
+          loadedRecord = record;
           setConsultationRecord(record);
           setIsEditMode(true);
-          
           setFormData({
             sessionDate: record.sessionDate || safeDateToString(scheduleData.startTime),
             sessionNumber: record.sessionNumber || 1,
@@ -206,7 +266,7 @@ const ConsultationLogModal = ({
             riskFactors: record.riskFactors || '',
             emergencyResponsePlan: record.emergencyResponsePlan || '',
             progressEvaluation: record.progressEvaluation || '',
-            progressScore: record.progressScore || 50,
+            progressScore: record.progressScore ?? 50,
             goalAchievement: record.goalAchievement || 'MEDIUM',
             goalAchievementDetails: record.goalAchievementDetails || '',
             consultantObservations: record.consultantObservations || '',
@@ -217,8 +277,8 @@ const ConsultationLogModal = ({
             familyRelationships: record.familyRelationships || '',
             socialSupport: record.socialSupport || '',
             environmentalFactors: record.environmentalFactors || '',
-            sessionDurationMinutes: record.sessionDurationMinutes || 60,
-            isSessionCompleted: record.isSessionCompleted || false,
+            sessionDurationMinutes: record.sessionDurationMinutes ?? 60,
+            isSessionCompleted: record.isSessionCompleted ?? false,
             incompletionReason: record.incompletionReason || '',
             nextSessionDate: record.nextSessionDate || '',
             followUpActions: record.followUpActions || '',
@@ -233,8 +293,26 @@ const ConsultationLogModal = ({
           }));
         }
       } catch (error) {
-        console.log('기존 상담일지 없음, 새로 작성');
+        setFormData(prev => ({
+          ...prev,
+          sessionDate: safeDateToString(scheduleData.startTime),
+          sessionDurationMinutes: 60,
+          isSessionCompleted: true
+        }));
       }
+
+      const comments = [];
+      const clientForNotes = withStatsData?.client || null;
+      if (clientForNotes?.notes && String(clientForNotes.notes).trim()) {
+        comments.push({ source: '내담자 메모', text: clientForNotes.notes });
+      }
+      if (scheduleData?.notes && String(scheduleData.notes).trim()) {
+        comments.push({ source: '일정 메모', text: scheduleData.notes });
+      }
+      if (loadedRecord?.specialConsiderations && String(loadedRecord.specialConsiderations).trim()) {
+        comments.push({ source: '이전 상담일지 특이사항', text: loadedRecord.specialConsiderations });
+      }
+      setImportantComments(comments);
     } catch (error) {
       console.error('데이터 로드 오류:', error);
       notificationManager.show('데이터를 불러오는 중 오류가 발생했습니다.', 'error');
@@ -445,7 +523,239 @@ const ConsultationLogModal = ({
         </div>
       }
     >
-        <div className="mg-v2-modal-body" style={{ padding: '24px', backgroundColor: 'var(--mg-white)' }}>
+        <div
+          className="mg-v2-modal-body"
+          style={{
+            padding: 'var(--mg-spacing-lg, 24px)',
+            backgroundColor: 'var(--mg-color-background-main, var(--mg-gray-50, #FAF9F7))',
+            maxHeight: '85vh',
+            overflowY: 'auto'
+          }}
+        >
+          {/* 상단 고정(Sticky) 영역: 내담자 프로필 → 중요 코멘트 → 심리검사 */}
+          <div
+            style={{
+              position: 'sticky',
+              top: 0,
+              zIndex: 1,
+              backgroundColor: 'var(--mg-color-background-main, var(--mg-gray-50, #FAF9F7))',
+              paddingBottom: 'var(--mg-spacing-lg, 24px)'
+            }}
+          >
+            {/* (1) 내담자 프로필 요약 블록 */}
+            {client && (
+              <div
+                style={{
+                  background: 'var(--mg-color-surface-main, var(--mg-gray-50))',
+                  border: '1px solid var(--mg-color-border-main, var(--mg-gray-200))',
+                  borderRadius: 16,
+                  padding: 24,
+                  marginBottom: 16,
+                  borderLeft: '4px solid var(--mg-color-primary-main, var(--mg-primary-500))'
+                }}
+              >
+                <h3 style={{ fontSize: 16, fontWeight: 600, color: 'var(--mg-color-text-main, var(--mg-gray-800))', marginBottom: 16 }}>
+                  내담자 프로필
+                </h3>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
+                  <div>
+                    <span style={{ fontSize: 12, color: 'var(--mg-color-text-secondary, var(--mg-gray-600))' }}>이름</span>
+                    <div style={{ fontSize: 14, color: 'var(--mg-color-text-main, var(--mg-gray-800))' }}>{client.name || '—'}</div>
+                  </div>
+                  <div>
+                    <span style={{ fontSize: 12, color: 'var(--mg-color-text-secondary, var(--mg-gray-600))' }}>연락처(전화)</span>
+                    <div style={{ fontSize: 14, color: 'var(--mg-color-text-main, var(--mg-gray-800))' }}>{client.phone || '—'}</div>
+                  </div>
+                  <div>
+                    <span style={{ fontSize: 12, color: 'var(--mg-color-text-secondary, var(--mg-gray-600))' }}>이메일</span>
+                    <div style={{ fontSize: 14, color: 'var(--mg-color-text-main, var(--mg-gray-800))' }}>{client.email || '—'}</div>
+                  </div>
+                  <div>
+                    <span style={{ fontSize: 12, color: 'var(--mg-color-text-secondary, var(--mg-gray-600))' }}>성별</span>
+                    <div style={{ fontSize: 14, color: 'var(--mg-color-text-main, var(--mg-gray-800))' }}>
+                      {client.gender === 'MALE' ? '남성' : client.gender === 'FEMALE' ? '여성' : client.gender || '—'}
+                    </div>
+                  </div>
+                  <div>
+                    <span style={{ fontSize: 12, color: 'var(--mg-color-text-secondary, var(--mg-gray-600))' }}>등급/상태</span>
+                    <div style={{ fontSize: 14, color: 'var(--mg-color-text-main, var(--mg-gray-800))' }}>
+                      {(() => {
+                        const gradeLabel = client.grade === 'BRONZE' ? '브론즈' : client.grade === 'SILVER' ? '실버' : client.grade === 'GOLD' ? '골드' : client.grade === 'PLATINUM' ? '플래티넘' : client.grade || '';
+                        const statusLabel = client.status ? getUserStatusKoreanNameSync(client.status) : '';
+                        if (gradeLabel && statusLabel) return `${gradeLabel} / ${statusLabel}`;
+                        if (gradeLabel) return gradeLabel;
+                        if (statusLabel) return statusLabel;
+                        return '—';
+                      })()}
+                    </div>
+                  </div>
+                  <div style={{ gridColumn: '1 / -1' }}>
+                    <span style={{ fontSize: 12, color: 'var(--mg-color-text-secondary, var(--mg-gray-600))' }}>메모 요약</span>
+                    <div style={{ fontSize: 14, color: 'var(--mg-color-text-main, var(--mg-gray-800))', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%' }}>
+                      {client.notes ? (client.notes.length > 80 ? client.notes.slice(0, 80) + '…' : client.notes) : '—'}
+                    </div>
+                  </div>
+                  <div style={{ gridColumn: '1 / -1' }}>
+                    <span style={{ fontSize: 12, color: 'var(--mg-color-text-secondary, var(--mg-gray-600))' }}>주소 요약</span>
+                    <div style={{ fontSize: 14, color: 'var(--mg-color-text-main, var(--mg-gray-800))' }}>
+                      {[client.postalCode, client.address, client.addressDetail].filter(Boolean).join(' ') || '—'}
+                    </div>
+                  </div>
+                  {clientWithStats && (
+                    <div>
+                      <span style={{ fontSize: 12, color: 'var(--mg-color-text-secondary, var(--mg-gray-600))' }}>매칭·패키지 요약</span>
+                      <div style={{ fontSize: 14, color: 'var(--mg-color-text-main, var(--mg-gray-800))' }}>
+                        연결 상담사 {clientWithStats.currentConsultants ?? 0}명
+                        {clientWithStats.statistics?.totalSessions != null && ` / 총 세션 ${clientWithStats.statistics.totalSessions}회`}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* (2) 중요 코멘트 블록 */}
+            <div
+              style={{
+                background: 'var(--mg-warning-50, var(--cs-warning-50))',
+                border: '1px solid var(--mg-color-border-main, var(--mg-gray-200))',
+                borderLeft: '4px solid var(--mg-color-accent-main, var(--mg-warning-500))',
+                borderRadius: 16,
+                padding: 24,
+                marginBottom: 16
+              }}
+            >
+              <h3 style={{ fontSize: 16, fontWeight: 600, color: 'var(--mg-color-text-main, var(--mg-gray-800))', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <AlertTriangle size={20} style={{ color: 'var(--mg-color-accent-main, var(--mg-warning-500))', flexShrink: 0 }} />
+                상담 시 주의사항
+              </h3>
+              {importantComments.length === 0 ? (
+                <p style={{ fontSize: 14, color: 'var(--mg-color-text-secondary, var(--mg-gray-600))', margin: 0 }}>주의사항 없음</p>
+              ) : (
+                <ul style={{ margin: 0, paddingLeft: 20, fontSize: 14, color: 'var(--mg-color-text-main, var(--mg-gray-800))' }}>
+                  {importantComments.map((item, idx) => (
+                    <li key={`${item.source}-${idx}`} style={{ marginBottom: 8 }}>
+                      <span style={{ fontSize: 12, color: 'var(--mg-color-text-secondary, var(--mg-gray-600))' }}>[{item.source}]</span> {item.text}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
+            {/* (3) 심리검사 블록 — 있을 때만. 요약·위험도·핵심 해석 우선 노출, 뱃지·굵은 텍스트 강조 */}
+            {psychDocuments.length > 0 && (
+              <div
+                style={{
+                  background: 'var(--mg-color-surface-main)',
+                  border: '1px solid var(--mg-color-border-main)',
+                  borderRadius: 16,
+                  padding: 24,
+                  marginBottom: 16,
+                  borderLeft: '4px solid var(--mg-color-secondary-main)'
+                }}
+              >
+                <h3 style={{ fontSize: 16, fontWeight: 600, color: 'var(--mg-color-text-main)', marginBottom: 16 }}>
+                  심리검사
+                </h3>
+                {loadingPsych ? (
+                  <p style={{ fontSize: 14, color: 'var(--mg-color-text-secondary)' }}>로딩 중...</p>
+                ) : (
+                  <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 16 }}>
+                    {psychDocuments.map((doc, idx) => {
+                      const summaryText = doc.summarySection || doc.reportSummary || null;
+                      const hasRisk = [summaryText, doc.keyFindings, doc.recommendationSection]
+                        .filter(Boolean).some(t => String(t).includes('위험'));
+                      const hasCaution = [summaryText, doc.keyFindings, doc.recommendationSection]
+                        .filter(Boolean).some(t => String(t).includes('주의'));
+                      const isLast = idx === psychDocuments.length - 1;
+                      return (
+                        <li
+                          key={doc.documentId}
+                          style={{
+                            padding: '12px 0',
+                            borderBottom: isLast ? 'none' : '1px solid var(--mg-color-border-main)'
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
+                            <a
+                              href={`/admin/psych-assessment?documentId=${doc.documentId}`}
+                              style={{ fontSize: 14, color: 'var(--mg-color-primary-main)', fontWeight: 600, textDecoration: 'none' }}
+                              onMouseOver={(e) => { e.target.style.textDecoration = 'underline'; }}
+                              onMouseOut={(e) => { e.target.style.textDecoration = 'none'; }}
+                              onFocus={(e) => { e.target.style.textDecoration = 'underline'; }}
+                              onBlur={(e) => { e.target.style.textDecoration = 'none'; }}
+                            >
+                              {doc.originalFilename || `심리검사 문서 #${doc.documentId}`}
+                            </a>
+                            {hasRisk && (
+                              <span
+                                style={{
+                                  fontSize: 12,
+                                  fontWeight: 600,
+                                  color: 'var(--mg-error-500)',
+                                  background: 'var(--cs-error-50)',
+                                  padding: '2px 8px',
+                                  borderRadius: 6
+                                }}
+                              >
+                                위험
+                              </span>
+                            )}
+                            {hasCaution && !hasRisk && (
+                              <span
+                                style={{
+                                  fontSize: 12,
+                                  fontWeight: 600,
+                                  color: 'var(--mg-warning-500)',
+                                  background: 'var(--cs-warning-50)',
+                                  padding: '2px 8px',
+                                  borderRadius: 6
+                                }}
+                              >
+                                주의
+                              </span>
+                            )}
+                          </div>
+                          {summaryText && (
+                            <p style={{ fontSize: 14, color: 'var(--mg-color-text-secondary)', margin: '0 0 8px', lineHeight: 1.5 }}>
+                              {renderTextWithKeywordHighlight(summaryText)}
+                            </p>
+                          )}
+                          {doc.keyFindings && (
+                            <div style={{ marginBottom: 8 }}>
+                              <span style={{ fontSize: 12, color: 'var(--mg-color-text-secondary)', fontWeight: 600 }}>핵심 해석</span>
+                              <p style={{ fontSize: 14, color: 'var(--mg-color-text-main)', fontWeight: 600, margin: '4px 0 0', lineHeight: 1.5 }}>
+                                {renderTextWithKeywordHighlight(doc.keyFindings)}
+                              </p>
+                            </div>
+                          )}
+                          {doc.recommendationSection && (
+                            <div style={{ marginBottom: 8 }}>
+                              <span style={{ fontSize: 12, color: 'var(--mg-color-text-secondary)', fontWeight: 600 }}>권고</span>
+                              <p style={{ fontSize: 14, color: 'var(--mg-color-text-main)', margin: '4px 0 0', lineHeight: 1.5 }}>
+                                {renderTextWithKeywordHighlight(doc.recommendationSection)}
+                              </p>
+                            </div>
+                          )}
+                          <a
+                            href={`/admin/psych-assessment?documentId=${doc.documentId}`}
+                            style={{ fontSize: 13, color: 'var(--mg-color-primary-main)', textDecoration: 'none' }}
+                            onMouseOver={(e) => { e.target.style.textDecoration = 'underline'; }}
+                            onMouseOut={(e) => { e.target.style.textDecoration = 'none'; }}
+                            onFocus={(e) => { e.target.style.textDecoration = 'underline'; }}
+                            onBlur={(e) => { e.target.style.textDecoration = 'none'; }}
+                          >
+                            상세 보기 →
+                          </a>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </div>
+            )}
+          </div>
+
           {/* 필수값 안내 */}
           <div className="mg-v2-bg-yellow-50 mg-v2-p-md mg-v2-radius-md mg-v2-border mg-v2-border-yellow-200 mg-flex mg-v2-items-start mg-v2-gap-sm mg-v2-mb-lg">
             <AlertTriangle size={20} className="mg-v2-text-warning mg-v2-mt-xs" />
@@ -457,46 +767,6 @@ const ConsultationLogModal = ({
               </p>
             </div>
           </div>
-
-          {/* 내담자 정보 */}
-          {client && (
-            <div className="mg-v2-bg-gray-50 mg-v2-p-lg mg-v2-radius-md mg-v2-border mg-v2-mb-xl">
-              <h3 className="mg-v2-text-lg mg-v2-font-bold mg-flex mg-v2-items-center mg-v2-gap-sm mg-v2-mb-md">
-                <User size={20} className="mg-v2-text-primary" />
-                내담자 정보
-              </h3>
-              <div className="mg-flex mg-v2-flex-wrap mg-v2-gap-lg">
-                <div className="mg-v2-flex mg-v2-flex-col mg-v2-gap-xs" style={{ flex: '1 1 120px' }}>
-                  <span className="mg-v2-text-xs mg-v2-font-medium mg-v2-text-secondary">이름</span>
-                  <span className="mg-v2-text-sm mg-v2-font-bold">{client.name}</span>
-                </div>
-                <div className="mg-v2-flex mg-v2-flex-col mg-v2-gap-xs" style={{ flex: '1 1 120px' }}>
-                  <span className="mg-v2-text-xs mg-v2-font-medium mg-v2-text-secondary">나이/성별</span>
-                  <span className="mg-v2-text-sm mg-v2-font-bold">
-                    {client.age ? `${client.age}세` : '미입력'} / {client.gender === 'MALE' ? '남성' : client.gender === 'FEMALE' ? '여성' : '미입력'}
-                  </span>
-                </div>
-                <div className="mg-v2-flex mg-v2-flex-col mg-v2-gap-xs" style={{ flex: '1 1 120px' }}>
-                  <span className="mg-v2-text-xs mg-v2-font-medium mg-v2-text-secondary">연락처</span>
-                  <span className="mg-v2-text-sm mg-v2-font-bold">{client.phone || '미입력'}</span>
-                </div>
-                <div className="mg-v2-flex mg-v2-flex-col mg-v2-gap-xs" style={{ flex: '1 1 120px' }}>
-                  <span className="mg-v2-text-xs mg-v2-font-medium mg-v2-text-secondary">상담 목적</span>
-                  <span className="mg-v2-text-sm mg-v2-font-bold">{client.consultationPurpose || '미입력'}</span>
-                </div>
-                <div className="mg-v2-flex mg-v2-flex-col mg-v2-gap-xs" style={{ flex: '1 1 120px' }}>
-                  <span className="mg-v2-text-xs mg-v2-font-medium mg-v2-text-secondary">상담 유형</span>
-                  <span className="mg-v2-text-sm mg-v2-font-bold">
-                    {scheduleData.consultationType === 'INDIVIDUAL' ? '개인상담' :
-                     scheduleData.consultationType === 'GROUP' ? '그룹상담' :
-                     scheduleData.consultationType === 'COUPLE' ? '부부상담' :
-                     scheduleData.consultationType === 'FAMILY' ? '가족상담' :
-                     scheduleData.consultationType || '미입력'}
-                  </span>
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* 상담일지 작성 폼 */}
           <div className="mg-v2-form-section">

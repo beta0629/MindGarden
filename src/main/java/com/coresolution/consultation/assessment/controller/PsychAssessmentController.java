@@ -149,13 +149,20 @@ public class PsychAssessmentController extends BaseApiController {
         java.util.List<PsychAssessmentDocument> docs =
                 documentRepository.findByTenantIdAndClientIdOrderByCreatedAtDesc(tenantId, clientId);
 
+        int summaryMaxLen = 300;
         java.util.List<PsychAssessmentDocumentListItem> items = docs.stream()
                 .map(d -> {
-                    String summary = null;
+                    String reportSummary = null;
+                    String summarySection = null;
+                    String recommendationSection = null;
+                    String keyFindings = null;
                     var reportOpt = reportRepository.findTopByTenantIdAndDocumentIdOrderByCreatedAtDesc(tenantId, d.getId());
                     if (reportOpt.isPresent() && reportOpt.get().getReportMarkdown() != null) {
                         String md = reportOpt.get().getReportMarkdown();
-                        summary = md.length() > 100 ? md.substring(0, 100).trim() + "…" : md.trim();
+                        reportSummary = md.length() > summaryMaxLen ? md.substring(0, summaryMaxLen).trim() + "…" : md.trim();
+                        summarySection = extractMarkdownSection(md, "## 요약");
+                        recommendationSection = extractMarkdownSection(md, "## 권고");
+                        keyFindings = extractMarkdownSection(md, "## 주요 소견");
                     }
                     return PsychAssessmentDocumentListItem.builder()
                             .documentId(d.getId())
@@ -166,11 +173,43 @@ public class PsychAssessmentController extends BaseApiController {
                             .fileSize(d.getFileSize())
                             .sha256(d.getSha256())
                             .createdAt(d.getCreatedAt())
-                            .reportSummary(summary)
+                            .reportSummary(reportSummary)
+                            .summarySection(summarySection)
+                            .recommendationSection(recommendationSection)
+                            .keyFindings(keyFindings)
                             .build();
                 })
                 .toList();
         return success(items);
+    }
+
+    /**
+     * 마크다운에서 지정한 헤더(예: "## 요약") 다음 본문을 추출한다.
+     * 헤더 줄 다음부터 다음 "## "로 시작하는 줄 직전 또는 문자열 끝까지 반환.
+     *
+     * @param markdown 전체 리포트 마크다운
+     * @param sectionHeader "## 요약", "## 권고" 등
+     * @return 해당 섹션 본문(trim), 없으면 null
+     */
+    private static String extractMarkdownSection(String markdown, String sectionHeader) {
+        if (markdown == null || sectionHeader == null) {
+            return null;
+        }
+        int start = markdown.indexOf(sectionHeader);
+        if (start < 0) {
+            return null;
+        }
+        int contentStart = markdown.indexOf('\n', start);
+        if (contentStart < 0) {
+            return null;
+        }
+        contentStart++;
+        int nextSection = markdown.indexOf("\n## ", contentStart);
+        String content = nextSection < 0
+                ? markdown.substring(contentStart)
+                : markdown.substring(contentStart, nextSection);
+        String trimmed = content.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 }
 

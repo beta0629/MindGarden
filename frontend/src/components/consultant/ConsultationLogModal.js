@@ -206,10 +206,12 @@ const ConsultationLogModal = ({
       if (clientId) {
         try {
           const withStatsRes = await apiGet(`/api/v1/admin/clients/with-stats/${clientId}`);
-          if (withStatsRes && withStatsRes.client) {
-            withStatsData = withStatsRes;
-            setClientWithStats(withStatsRes);
-            setClient(withStatsRes.client);
+          const payload = withStatsRes?.data != null ? withStatsRes.data : withStatsRes;
+          const clientData = payload?.client ?? withStatsRes?.client;
+          if (payload && clientData) {
+            withStatsData = payload;
+            setClientWithStats(payload);
+            setClient(clientData);
           }
         } catch (err) {
           if (err?.status === 403 || err?.message?.includes('권한')) {
@@ -523,7 +525,8 @@ const ConsultationLogModal = ({
           className="mg-v2-modal-body"
           style={{
             padding: 'var(--mg-spacing-lg, 24px)',
-            backgroundColor: 'var(--mg-color-background-main, var(--mg-gray-50, #FAF9F7))',
+            background: 'var(--mg-color-background-main, #FAF9F7)',
+            backgroundColor: '#FAF9F7',
             maxHeight: '85vh',
             overflowY: 'auto'
           }}
@@ -534,7 +537,8 @@ const ConsultationLogModal = ({
               position: 'sticky',
               top: 0,
               zIndex: 1,
-              backgroundColor: 'var(--mg-color-background-main, var(--mg-gray-50, #FAF9F7))',
+              background: 'var(--mg-color-background-main, #FAF9F7)',
+              backgroundColor: '#FAF9F7',
               paddingBottom: 'var(--mg-spacing-lg, 24px)'
             }}
           >
@@ -605,7 +609,9 @@ const ConsultationLogModal = ({
                   </div>
                   <div>
                     <span style={{ fontSize: 12, color: 'var(--mg-color-text-secondary, var(--mg-gray-600))' }}>연락처(전화)</span>
-                    <div style={{ fontSize: 14, color: 'var(--mg-color-text-main, var(--mg-gray-800))' }}>{client.phone || '—'}</div>
+                    <div style={{ fontSize: 14, color: 'var(--mg-color-text-main, var(--mg-gray-800))' }}>
+                      {(client.phone || client.phoneNumber || client.mobile || '').toString().trim() || '—'}
+                    </div>
                   </div>
                   <div>
                     <span style={{ fontSize: 12, color: 'var(--mg-color-text-secondary, var(--mg-gray-600))' }}>이메일</span>

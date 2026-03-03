@@ -41,11 +41,11 @@ const PsychAiReportModalContent = ({ loading, reportContent }) => {
           style={{
             padding: '12px 16px',
             marginBottom: 16,
-            background: 'var(--mg-warning-50, #fffbeb)',
-            border: '1px solid var(--mg-warning-300, #fcd34d)',
+            background: 'var(--mg-warning-50)',
+            border: '1px solid var(--mg-warning-300)',
             borderRadius: 8,
             fontSize: 14,
-            color: 'var(--mg-warning-800, #92400e)'
+            color: 'var(--mg-warning-800)'
           }}
         >
           AI 분석이 완료되지 않았습니다. API 설정 또는 네트워크를 확인해 주세요.

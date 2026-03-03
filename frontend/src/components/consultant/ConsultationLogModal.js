@@ -1223,6 +1223,19 @@ const ConsultationLogModal = ({
                 />
               </div>
 
+              {/* 특별 고려사항 (다음 상담 시 주의사항으로 표시됨) */}
+              <div className="mg-v2-form-group" style={{ gridColumn: '1 / -1' }}>
+                <label className="mg-v2-label">특별 고려사항 (다음 상담 시 주의사항)</label>
+                <textarea
+                  name="specialConsiderations"
+                  value={formData.specialConsiderations}
+                  onChange={handleInputChange}
+                  placeholder="다음 상담 시 참고할 특이사항, 주의사항을 기록해주세요. (내담자 메모·일정 메모와 함께 상단에 표시됩니다)"
+                  className="mg-v2-input mg-v2-w-full"
+                  style={{ minHeight: '80px' }}
+                />
+              </div>
+
               {/* 환경/사회/가족 */}
               <div className="mg-v2-form-group">
                 <label className="mg-v2-label">가족 관계</label>

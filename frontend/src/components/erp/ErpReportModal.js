@@ -69,7 +69,7 @@ const ErpReportModal = ({ isOpen, onClose }) => {
                 branchCode: branchCode || ''
             });
 
-            const response = await apiGet(`/api/erp/reports?${params}`);
+            const response = await apiGet(`/api/v1/erp/reports?${params}`);
             
             if (response && response.success !== false) {
                 setReportData(response.data);
@@ -104,7 +104,7 @@ const ErpReportModal = ({ isOpen, onClose }) => {
                 format: 'excel'
             });
 
-            const response = await fetch(`/api/erp/reports/download?${params}`, {
+            const response = await fetch(`/api/v1/erp/reports/download?${params}`, {
                 method: 'GET',
                 credentials: 'include'
             });

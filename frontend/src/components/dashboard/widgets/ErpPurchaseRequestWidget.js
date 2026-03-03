@@ -21,7 +21,7 @@ const ErpPurchaseRequestWidget = ({ widget, user }) => {
     type: 'api',
     cache: true,
     refreshInterval: 300000, // 5분마다 새로고침 (구매 요청 상태 변경)
-    url: `/api/erp/purchase-requests/requester/${user.id}`,
+    url: `/api/v1/erp/purchase-requests/requester/${user.id}`,
     params: {
       includeStatus: true
     }

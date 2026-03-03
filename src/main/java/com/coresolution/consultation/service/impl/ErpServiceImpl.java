@@ -1874,9 +1874,11 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
         Map<String, Object> yearlyReport = new HashMap<>();
         yearlyReport.put("year", year);
         yearlyReport.put("reportType", "년간");
-        
+
+        String tenantId = getTenantId();
+        yearlyReport.put("tenantId", tenantId);
         List<FinancialTransaction> yearlyTransactions = financialTransactionRepository
-            .findByTransactionDateBetweenAndIsDeletedFalse(startDate, endDate);
+            .findByTenantIdAndTransactionDateBetweenAndIsDeletedFalse(tenantId, startDate, endDate);
         
         Map<String, Object> yearlyIncome = new HashMap<>();
         BigDecimal consultationRevenue = yearlyTransactions.stream()

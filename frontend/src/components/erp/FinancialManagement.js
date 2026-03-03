@@ -275,7 +275,7 @@ const FinancialManagement = () => {
       type: 'danger',
       onConfirm: async () => {
         try {
-          const response = await fetch(`/api/erp/finance/transactions/${transaction.id}`, {
+          const response = await fetch(`/api/v1/erp/finance/transactions/${transaction.id}`, {
             method: 'DELETE',
             credentials: 'include'
           });

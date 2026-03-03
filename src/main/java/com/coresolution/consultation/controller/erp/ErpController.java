@@ -125,8 +125,11 @@ public class ErpController extends BaseApiController {
 
             User currentUser = SessionUtils.getCurrentUser(session);
 
-            // 표준화 2025-12-06: branchCode 필터링 제거, tenantId 기반으로만 조회
             String tenantId = TenantContextHolder.getTenantId();
+            if (tenantId == null || tenantId.isEmpty()) {
+                return ResponseEntity.status(403).body(
+                        Map.of("success", false, "message", "테넌트 정보를 찾을 수 없습니다."));
+            }
             log.info("🔍 현재 사용자 tenantId: {}", tenantId);
 
             List<Item> allItems = erpService.getAllActiveItems();
@@ -1336,8 +1339,12 @@ public class ErpController extends BaseApiController {
         try {
             log.info("🔍 데이터 확인 API 호출: branchCode={} (무시됨)", branchCode);
 
-            // 표준화 2025-12-06: branchCode 무시, tenantId 기반으로만 조회
-            String tenantId = com.coresolution.core.context.TenantContextHolder.getTenantId();
+            // 표준화 2025-12-06: tenantId 없으면 400 반환 후 서비스 호출 금지
+            String tenantId = TenantContextHolder.getTenantId();
+            if (tenantId == null || tenantId.isEmpty()) {
+                return ResponseEntity.status(400).body(
+                        Map.of("error", "테넌트 정보를 찾을 수 없습니다."));
+            }
 
             // 모든 거래 조회 (tenantId 기반)
             List<com.coresolution.consultation.dto.FinancialTransactionResponse> allTransactions =
@@ -1418,7 +1425,7 @@ public class ErpController extends BaseApiController {
                 if (tenantId == null || tenantId.isEmpty()) {
                     log.error("❌ 테넌트 정보를 찾을 수 없습니다: 사용자={}, userId={}", currentUser.getEmail(),
                             currentUser.getId());
-                    return ResponseEntity.status(500).body(
+                    return ResponseEntity.status(400).body(
                             Map.of("success", false, "message", "테넌트 정보를 찾을 수 없습니다. 관리자에게 문의하세요."));
                 }
 
@@ -1429,7 +1436,7 @@ public class ErpController extends BaseApiController {
 
             log.info("재무 대시보드 데이터 조회 요청: 사용자={}, 테넌트={}", currentUser.getEmail(), tenantId);
 
-            // 테넌트 컨텍스트 설정
+            // 테넌트 컨텍스트 설정 (서비스에서 getRequiredTenantId() 사용)
             TenantContextHolder.setTenantId(tenantId);
             try {
                 // 테넌트별 데이터 조회 (날짜 파라미터 전달)
@@ -1437,8 +1444,6 @@ public class ErpController extends BaseApiController {
                 if (startDate != null && endDate != null) {
                     LocalDate start = LocalDate.parse(startDate);
                     LocalDate end = LocalDate.parse(endDate);
-                    // 레거시 호환: getBranchFinanceDashboard는 내부적으로 tenantId 사용하도록 변경 필요
-                    // 임시로 null 전달 (Service에서 tenantId 사용하도록 수정 필요)
                     financeData = erpService.getBranchFinanceDashboard(null, start, end);
                     log.info("✅ 테넌트별 재무 대시보드 데이터 조회 완료: 테넌트={}, 기간={}~{}", tenantId, startDate,
                             endDate);
@@ -1483,8 +1488,9 @@ public class ErpController extends BaseApiController {
 
             // 표준화 원칙: 테넌트 ID 기반 데이터 조회
             String tenantId = SessionUtils.getTenantId(session);
-            if (tenantId == null) {
-                throw new RuntimeException("테넌트 정보를 찾을 수 없습니다.");
+            if (tenantId == null || tenantId.isEmpty()) {
+                return ResponseEntity.status(400).body(
+                        Map.of("success", false, "message", "테넌트 정보를 찾을 수 없습니다."));
             }
 
             // 테넌트 컨텍스트 설정
@@ -1492,8 +1498,6 @@ public class ErpController extends BaseApiController {
             try {
                 log.info("수입/지출 통계 조회 요청: {} ~ {}, 테넌트={}", startDate, endDate, tenantId);
 
-                // 레거시 호환: getBranchFinanceStatistics는 내부적으로 tenantId 사용하도록 변경 필요
-                // 임시로 null 전달 (Service에서 tenantId 사용하도록 수정 필요)
                 Map<String, Object> statistics =
                         erpService.getBranchFinanceStatistics(null, startDate, endDate);
 
@@ -1533,8 +1537,9 @@ public class ErpController extends BaseApiController {
 
             // 표준화 원칙: 테넌트 ID 기반 데이터 조회
             String tenantId = SessionUtils.getTenantId(session);
-            if (tenantId == null) {
-                throw new RuntimeException("테넌트 정보를 찾을 수 없습니다.");
+            if (tenantId == null || tenantId.isEmpty()) {
+                return ResponseEntity.status(400).body(
+                        Map.of("success", false, "message", "테넌트 정보를 찾을 수 없습니다."));
             }
 
             // 테넌트 컨텍스트 설정
@@ -1579,8 +1584,9 @@ public class ErpController extends BaseApiController {
 
             // 표준화 원칙: 테넌트 ID 기반 데이터 조회
             String tenantId = SessionUtils.getTenantId(session);
-            if (tenantId == null) {
-                throw new RuntimeException("테넌트 정보를 찾을 수 없습니다.");
+            if (tenantId == null || tenantId.isEmpty()) {
+                return ResponseEntity.status(400).body(
+                        Map.of("success", false, "message", "테넌트 정보를 찾을 수 없습니다."));
             }
 
             // 기본값으로 오늘 날짜 사용
@@ -1593,8 +1599,6 @@ public class ErpController extends BaseApiController {
             try {
                 log.info("일간 재무 리포트 조회 요청: {}, 테넌트={}", reportDate, tenantId);
 
-                // 레거시 호환: getDailyFinanceReport는 내부적으로 tenantId 사용하도록 변경 필요
-                // 임시로 null 전달 (Service에서 tenantId 사용하도록 수정 필요)
                 Map<String, Object> dailyReport =
                         erpService.getDailyFinanceReport(reportDate, null);
 
@@ -1634,8 +1638,9 @@ public class ErpController extends BaseApiController {
 
             // 표준화 원칙: 테넌트 ID 기반 데이터 조회
             String tenantId = SessionUtils.getTenantId(session);
-            if (tenantId == null) {
-                throw new RuntimeException("테넌트 정보를 찾을 수 없습니다.");
+            if (tenantId == null || tenantId.isEmpty()) {
+                return ResponseEntity.status(400).body(
+                        Map.of("success", false, "message", "테넌트 정보를 찾을 수 없습니다."));
             }
 
             // 테넌트 컨텍스트 설정
@@ -1651,8 +1656,6 @@ public class ErpController extends BaseApiController {
                     month = String.valueOf(java.time.LocalDate.now().getMonthValue());
                 }
 
-                // 레거시 호환: getMonthlyFinanceReport는 내부적으로 tenantId 사용하도록 변경 필요
-                // 임시로 null 전달 (Service에서 tenantId 사용하도록 수정 필요)
                 Map<String, Object> monthlyReport =
                         erpService.getMonthlyFinanceReport(year, month, null);
 
@@ -1691,8 +1694,9 @@ public class ErpController extends BaseApiController {
 
             // 표준화 원칙: 테넌트 ID 기반 데이터 조회
             String tenantId = SessionUtils.getTenantId(session);
-            if (tenantId == null) {
-                throw new RuntimeException("테넌트 정보를 찾을 수 없습니다.");
+            if (tenantId == null || tenantId.isEmpty()) {
+                return ResponseEntity.status(400).body(
+                        Map.of("success", false, "message", "테넌트 정보를 찾을 수 없습니다."));
             }
 
             // 기본값으로 현재 년도 사용
@@ -1740,20 +1744,31 @@ public class ErpController extends BaseApiController {
                         .body(Map.of("success", false, "message", "관리자 권한이 필요합니다."));
             }
 
-            // 브랜치 코드 결정 (표준화 2025-12-05: 브랜치 개념 제거, tenantId만 사용)
-            String targetBranchCode = branchCode; // 레거시 호환용 (사용하지 않음)
+            String tenantId = SessionUtils.getTenantId(session);
+            if (tenantId == null || tenantId.isEmpty()) {
+                tenantId = currentUser.getTenantId();
+            }
+            if (tenantId == null || tenantId.isEmpty()) {
+                return ResponseEntity.status(400).body(
+                        Map.of("success", false, "message", "테넌트 정보를 찾을 수 없습니다."));
+            }
 
-            log.info("대차대조표 조회 요청: {}, 브랜치: {}", reportDate, targetBranchCode);
+            TenantContextHolder.setTenantId(tenantId);
+            try {
+                log.info("대차대조표 조회 요청: {}, 테넌트: {}", reportDate, tenantId);
 
-            Map<String, Object> balanceSheet =
-                    erpService.getBalanceSheet(reportDate, targetBranchCode);
+                Map<String, Object> balanceSheet =
+                        erpService.getBalanceSheet(reportDate, branchCode);
 
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("message", "대차대조표를 성공적으로 조회했습니다.");
-            response.put("data", balanceSheet);
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", true);
+                response.put("message", "대차대조표를 성공적으로 조회했습니다.");
+                response.put("data", balanceSheet);
 
-            return ResponseEntity.ok(response);
+                return ResponseEntity.ok(response);
+            } finally {
+                TenantContextHolder.clear();
+            }
 
         } catch (Exception e) {
             log.error("대차대조표 조회 실패", e);
@@ -1780,8 +1795,9 @@ public class ErpController extends BaseApiController {
 
             // 표준화 원칙: 테넌트 ID 기반 데이터 조회
             String tenantId = SessionUtils.getTenantId(session);
-            if (tenantId == null) {
-                throw new RuntimeException("테넌트 정보를 찾을 수 없습니다.");
+            if (tenantId == null || tenantId.isEmpty()) {
+                return ResponseEntity.status(400).body(
+                        Map.of("success", false, "message", "테넌트 정보를 찾을 수 없습니다."));
             }
 
             // 테넌트 컨텍스트 설정
@@ -1789,8 +1805,6 @@ public class ErpController extends BaseApiController {
             try {
                 log.info("손익계산서 조회 요청: {} ~ {}, 테넌트={}", startDate, endDate, tenantId);
 
-                // 레거시 호환: getIncomeStatement는 내부적으로 tenantId 사용하도록 변경 필요
-                // 임시로 null 전달 (Service에서 tenantId 사용하도록 수정 필요)
                 Map<String, Object> incomeStatement =
                         erpService.getIncomeStatement(startDate, endDate, null);
 
@@ -1830,8 +1844,12 @@ public class ErpController extends BaseApiController {
                         .body(Map.of("success", false, "message", "비용처리는 관리자 권한이 필요합니다."));
             }
 
-            // 표준화 2025-12-06: branchCode는 더 이상 사용하지 않음
+            // 표준화 2025-12-06: tenantId 없으면 서비스 호출 금지
             String tenantId = TenantContextHolder.getTenantId();
+            if (tenantId == null || tenantId.isEmpty()) {
+                return ResponseEntity.status(400).body(
+                        Map.of("success", false, "message", "테넌트 정보를 찾을 수 없습니다."));
+            }
             if (request.getBranchCode() != null) {
                 request.setBranchCode(null); // branchCode 무시
             }
@@ -1877,13 +1895,16 @@ public class ErpController extends BaseApiController {
                         .body(Map.of("success", false, "message", "비용처리는 관리자 권한이 필요합니다."));
             }
 
-            // 표준화 2025-12-06: branchCode 무시, tenantId 기반으로만 조회
+            // 표준화 2025-12-06: tenantId 없으면 서비스 호출 금지
             String tenantId = TenantContextHolder.getTenantId();
+            if (tenantId == null || tenantId.isEmpty()) {
+                return ResponseEntity.status(400).body(
+                        Map.of("success", false, "message", "테넌트 정보를 찾을 수 없습니다."));
+            }
 
             log.info("수입/지출 거래 목록 조회 요청: tenantId={}, branchCode={} (무시됨)", tenantId, branchCode);
 
             // 표준화 원칙: 페이지 크기 최대 20개로 제한
-            // 표준화 2025-12-06: branchCode를 null로 전달 (Service에서 tenantId 사용)
             Page<FinancialTransactionResponse> transactionPage = financialTransactionService
                     .getTransactionsByBranch(null, transactionType, category, startDate, endDate,
                             PaginationUtils.createPageable(page, size));
@@ -1922,8 +1943,12 @@ public class ErpController extends BaseApiController {
                         .body(Map.of("success", false, "message", "비용처리는 관리자 권한이 필요합니다."));
             }
 
-            // 표준화 2025-12-06: branchCode는 더 이상 사용하지 않음
+            // 표준화 2025-12-06: tenantId 없으면 서비스 호출 금지
             String tenantId = TenantContextHolder.getTenantId();
+            if (tenantId == null || tenantId.isEmpty()) {
+                return ResponseEntity.status(400).body(
+                        Map.of("success", false, "message", "테넌트 정보를 찾을 수 없습니다."));
+            }
             log.info("빠른 지출 등록 요청: category={}, amount={}, tenantId={}", category, amount,
                     tenantId);
 
@@ -1990,8 +2015,12 @@ public class ErpController extends BaseApiController {
                         .body(Map.of("success", false, "message", "비용처리는 관리자 권한이 필요합니다."));
             }
 
-            // 표준화 2025-12-06: branchCode는 더 이상 사용하지 않음
+            // 표준화 2025-12-06: tenantId 없으면 서비스 호출 금지
             String tenantId = TenantContextHolder.getTenantId();
+            if (tenantId == null || tenantId.isEmpty()) {
+                return ResponseEntity.status(400).body(
+                        Map.of("success", false, "message", "테넌트 정보를 찾을 수 없습니다."));
+            }
             log.info("빠른 수입 등록 요청: category={}, amount={}, tenantId={}", category, amount,
                     tenantId);
 

@@ -56,7 +56,7 @@ const PurchaseRequestWidget = ({ widget, user }) => {
     try {
       setLoading(true);
       
-      const url = dataSource.url || `/api/erp/purchase-requests/requester/${userId}`;
+      const url = dataSource.url || `/api/v1/erp/purchase-requests/requester/${userId}`;
       const response = await apiGet(url);
       
       if (response && response.data) {

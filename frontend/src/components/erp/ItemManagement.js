@@ -168,7 +168,7 @@ const ItemManagement = () => {
       setLoading(true);
       setError('');
       
-      const response = await apiPut(`/api/erp/items/${editingItem.id}`, {
+      const response = await apiPut(`/api/v1/erp/items/${editingItem.id}`, {
         name: formData.name,
         description: formData.description,
         category: formData.category,
@@ -206,7 +206,7 @@ const ItemManagement = () => {
       setLoading(true);
       setError('');
       
-      const response = await apiDelete(`/api/erp/items/${item.id}`);
+      const response = await apiDelete(`/api/v1/erp/items/${item.id}`);
 
       if (response?.success) {
         setSuccess('아이템이 성공적으로 삭제되었습니다.');

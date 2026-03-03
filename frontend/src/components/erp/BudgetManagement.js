@@ -180,7 +180,7 @@ const BudgetManagement = () => {
   const handleEditBudget = async (budget) => {
     try {
       setLoading(true);
-      const response = await apiPut(`/api/erp/budgets/${budget.id}`, budget);
+      const response = await apiPut(`/api/v1/erp/budgets/${budget.id}`, budget);
       if (response.success) {
         setEditingBudget(null);
         await loadBudgets();
@@ -205,7 +205,7 @@ const BudgetManagement = () => {
 
     try {
       setLoading(true);
-      const response = await apiDelete(`/api/erp/budgets/${budgetId}`);
+      const response = await apiDelete(`/api/v1/erp/budgets/${budgetId}`);
       if (response.success) {
         await loadBudgets();
       } else {

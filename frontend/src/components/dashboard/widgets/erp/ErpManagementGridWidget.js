@@ -124,7 +124,7 @@ const ErpManagementGridWidget = ({ widget, user }) => {
       title: '재무 관리',
       description: '수입, 지출, 예산 관리',
       icon: DollarSign,
-      url: '/erp/financial-management',
+      url: '/erp/financial',
       permission: 'ERP_FINANCIAL_READ',
       category: 'finance',
       roles: ['CONSULTANT', 'ADMIN', 'HQ_MASTER']
@@ -134,7 +134,7 @@ const ErpManagementGridWidget = ({ widget, user }) => {
       title: '구매 관리',
       description: '구매 요청 및 승인 관리',
       icon: ShoppingCart,
-      url: '/erp/purchase-management',
+      url: '/erp/purchase',
       permission: 'ERP_PURCHASE_READ',
       category: 'purchase',
       roles: ['CONSULTANT', 'ADMIN', 'HQ_MASTER']
@@ -144,7 +144,7 @@ const ErpManagementGridWidget = ({ widget, user }) => {
       title: '예산 관리',
       description: '예산 계획 및 모니터링',
       icon: Target,
-      url: '/erp/budget-management',
+      url: '/erp/budget',
       permission: 'ERP_BUDGET_READ',
       category: 'budget',
       roles: ['ADMIN', 'HQ_MASTER']
@@ -154,7 +154,7 @@ const ErpManagementGridWidget = ({ widget, user }) => {
       title: '비용 등록',
       description: '빠른 비용 입력',
       icon: Calculator,
-      url: '/erp/quick-expense-form',
+      url: '/erp/financial',
       permission: 'ERP_EXPENSE_CREATE',
       category: 'expense',
       roles: ['CONSULTANT', 'ADMIN', 'HQ_MASTER']
@@ -164,7 +164,7 @@ const ErpManagementGridWidget = ({ widget, user }) => {
       title: '리포트',
       description: '재무 및 비용 리포트',
       icon: BarChart3,
-      url: '/erp/reports',
+      url: '/erp/dashboard',
       permission: 'ERP_REPORT_READ',
       category: 'report',
       roles: ['CONSULTANT', 'ADMIN', 'HQ_MASTER']
@@ -174,7 +174,7 @@ const ErpManagementGridWidget = ({ widget, user }) => {
       title: '세무 관리',
       description: '세금계산 및 신고',
       icon: FileText,
-      url: '/erp/tax-management',
+      url: '/erp/tax',
       permission: 'ERP_TAX_READ',
       category: 'tax',
       roles: ['ADMIN', 'HQ_MASTER']
@@ -184,7 +184,7 @@ const ErpManagementGridWidget = ({ widget, user }) => {
       title: '데이터 분석',
       description: '재무 데이터 분석',
       icon: TrendingUp,
-      url: '/erp/analytics',
+      url: '/erp/dashboard',
       permission: 'ERP_ANALYTICS_READ',
       category: 'analytics',
       roles: ['ADMIN', 'HQ_MASTER']
@@ -194,7 +194,7 @@ const ErpManagementGridWidget = ({ widget, user }) => {
       title: 'ERP 설정',
       description: '시스템 및 계정 설정',
       icon: Settings,
-      url: '/erp/settings',
+      url: '/erp/dashboard',
       permission: 'ERP_SETTINGS_READ',
       category: 'settings',
       roles: ['ADMIN', 'HQ_MASTER']

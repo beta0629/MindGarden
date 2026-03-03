@@ -19,7 +19,7 @@ const ErpPurchaseRequestPanel = ({ user }) => {
         setIsLoading(true);
         console.log('🛒 ERP 구매 요청 데이터 로드 시작 - 사용자 ID:', user.id);
         
-        const response = await apiGet(`/api/erp/purchase-requests/requester/${user.id}`);
+        const response = await apiGet(`/api/v1/erp/purchase-requests/requester/${user.id}`);
         
         console.log('🛒 구매 요청 응답:', response);
         

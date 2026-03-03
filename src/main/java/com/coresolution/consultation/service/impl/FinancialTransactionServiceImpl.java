@@ -1071,10 +1071,10 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
             log.warn("⚠️ Deprecated 파라미터: branchCode는 더 이상 사용하지 않음. branchCode={}", branchCode);
         }
         try {
-            String tenantId = getTenantIdOrNull();
-            log.info("🏢 재무 데이터 조회 (테넌트 전체): tenantId={}, 시작일={}, 종료일={}, 카테고리={}, 유형={}", 
+            String tenantId = TenantContextHolder.getRequiredTenantId();
+            log.info("🏢 재무 데이터 조회 (테넌트 전체): tenantId={}, 시작일={}, 종료일={}, 카테고리={}, 유형={}",
                     tenantId, startDate, endDate, category, transactionType);
-            
+
             List<FinancialTransaction> allTransactions = financialTransactionRepository.findByTenantIdAndIsDeletedFalse(tenantId);
             log.info("🔍 전체 거래 내역 수: {}", allTransactions.size());
             

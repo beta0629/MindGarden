@@ -572,12 +572,7 @@ function AppContent() {
             <Route path="/erp/approvals" element={<AdminApprovalDashboard />} />
             <Route path="/erp/super-approvals" element={<SuperAdminApprovalDashboard />} />
             <Route path="/erp/items" element={<ItemManagement />} />
-            <Route path="/erp/budgets" element={
-              <ComingSoon 
-                title="예산 관리"
-                description="예산 관리 기능은 현재 개발 중입니다. 곧 출시될 예정입니다."
-              />
-            } />
+            <Route path="/erp/budgets" element={<BudgetManagement />} />
             <Route path="/erp/salary" element={<SalaryManagement />} />
             <Route path="/erp/tax" element={<TaxManagement />} />
             <Route path="/erp/orders" element={
@@ -587,16 +582,11 @@ function AppContent() {
               />
             } />
             
-            {/* Admin ERP 라우트 (메뉴 연동용) */}
-            <Route path="/admin/erp/dashboard" element={<ErpDashboard />} />
-            <Route path="/admin/erp/purchase" element={<PurchaseRequestForm />} />
+            {/* Admin ERP 라우트: 어드민 전용(IntegratedFinanceDashboard)만 /admin/erp/ 유지, 나머지는 /erp/로 리다이렉트 */}
+            <Route path="/admin/erp/dashboard" element={<Navigate to="/erp/dashboard" replace />} />
+            <Route path="/admin/erp/purchase" element={<Navigate to="/erp/purchase-requests" replace />} />
             <Route path="/admin/erp/financial" element={<IntegratedFinanceDashboard />} />
-            <Route path="/admin/erp/budget" element={
-              <ComingSoon 
-                title="예산 관리"
-                description="예산 관리 기능은 현재 개발 중입니다. 곧 출시될 예정입니다."
-              />
-            } />
+            <Route path="/admin/erp/budget" element={<Navigate to="/erp/budget" replace />} />
             <Route path="/admin/erp/reports" element={
               <ComingSoon 
                 title="ERP 보고서"

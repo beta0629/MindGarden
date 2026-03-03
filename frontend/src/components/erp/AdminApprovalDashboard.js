@@ -73,7 +73,7 @@ const AdminApprovalDashboard = () => {
         return;
       }
 
-      const response = await fetch(`/api/erp/purchase-requests/${selectedRequest.id}/approve-admin`, {
+      const response = await fetch(`/api/v1/erp/purchase-requests/${selectedRequest.id}/approve-admin`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
@@ -115,7 +115,7 @@ const AdminApprovalDashboard = () => {
         return;
       }
 
-      const response = await fetch(`/api/erp/purchase-requests/${selectedRequest.id}/reject-admin`, {
+      const response = await fetch(`/api/v1/erp/purchase-requests/${selectedRequest.id}/reject-admin`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',

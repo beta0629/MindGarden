@@ -73,7 +73,7 @@ const SuperAdminApprovalDashboard = () => {
         return;
       }
 
-      const response = await fetch(`/api/erp/purchase-requests/${selectedRequest.id}/approve-super-admin`, {
+      const response = await fetch(`/api/v1/erp/purchase-requests/${selectedRequest.id}/approve-super-admin`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
@@ -115,7 +115,7 @@ const SuperAdminApprovalDashboard = () => {
         return;
       }
 
-      const response = await fetch(`/api/erp/purchase-requests/${selectedRequest.id}/reject-super-admin`, {
+      const response = await fetch(`/api/v1/erp/purchase-requests/${selectedRequest.id}/reject-super-admin`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',

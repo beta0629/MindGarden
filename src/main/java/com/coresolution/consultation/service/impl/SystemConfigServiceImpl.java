@@ -181,7 +181,8 @@ public class SystemConfigServiceImpl implements SystemConfigService {
             return "";
         }
         String defaultUrl = DEFAULT_API_URL.getOrDefault(key, "");
-        return getConfigValue(prefix + "_API_URL", defaultUrl);
+        String value = getConfigValue(prefix + "_API_URL", defaultUrl);
+        return (value != null && !value.isBlank()) ? value : defaultUrl;
     }
     
     @Override
@@ -192,7 +193,8 @@ public class SystemConfigServiceImpl implements SystemConfigService {
             return "";
         }
         String defaultModel = DEFAULT_MODEL.getOrDefault(key, "");
-        return getConfigValue(prefix + "_MODEL", defaultModel);
+        String value = getConfigValue(prefix + "_MODEL", defaultModel);
+        return (value != null && !value.isBlank()) ? value : defaultModel;
     }
     
     @Override

@@ -76,7 +76,10 @@ public class OpenAIPsychAiServiceImpl implements PsychAiService {
 
             String rawContent;
             if ("gemini".equalsIgnoreCase(providerId)) {
-                rawContent = callGeminiApiWithFallback(apiKey, apiUrl, model, systemPrompt, userPrompt);
+                String effectiveUrl = StringUtils.hasText(apiUrl)
+                        ? apiUrl
+                        : GEMINI_DEFAULT_URL;
+                rawContent = callGeminiApiWithFallback(apiKey, effectiveUrl, model, systemPrompt, userPrompt);
             } else {
                 rawContent = callOpenAiFormatApi(apiKey, apiUrl, model, systemPrompt, userPrompt);
             }
@@ -98,15 +101,23 @@ public class OpenAIPsychAiServiceImpl implements PsychAiService {
     }
 
     private static final String GEMINI_FALLBACK_MODEL = "gemini-1.5-pro";
+    private static final String GEMINI_DEFAULT_URL = "https://generativelanguage.googleapis.com/v1beta";
 
     private String callGeminiApiWithFallback(String apiKey, String baseUrl, String model, String systemPrompt, String userPrompt) {
         try {
             return callGeminiApi(apiKey, baseUrl, model, systemPrompt, userPrompt);
         } catch (Exception e) {
             String msg = e.getMessage() != null ? e.getMessage() : "";
-            if (msg.contains("404") && !GEMINI_FALLBACK_MODEL.equals(model)) {
+            if (!msg.contains("404")) {
+                throw e;
+            }
+            if (!GEMINI_FALLBACK_MODEL.equals(model)) {
                 log.info("Psych AI Gemini 404 (model={}), retrying with {}", model, GEMINI_FALLBACK_MODEL);
                 return callGeminiApi(apiKey, baseUrl, GEMINI_FALLBACK_MODEL, systemPrompt, userPrompt);
+            }
+            if (!GEMINI_DEFAULT_URL.equals(baseUrl)) {
+                log.info("Psych AI Gemini 404 with fallback model, retrying with default URL");
+                return callGeminiApi(apiKey, GEMINI_DEFAULT_URL, GEMINI_FALLBACK_MODEL, systemPrompt, userPrompt);
             }
             throw e;
         }

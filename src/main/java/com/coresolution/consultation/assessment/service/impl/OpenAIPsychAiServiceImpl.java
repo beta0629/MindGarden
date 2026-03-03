@@ -313,12 +313,14 @@ public class OpenAIPsychAiServiceImpl implements PsychAiService {
                 || reason.startsWith("hallucinated_scaleCode");
     }
 
-    /** ##/### 요약, ##/### 권고 등 마크다운 헤딩 변형 허용 */
+    /** ##/### 요약, ##/### 권고 등 마크다운 헤딩 변형 허용. BOM·공백 누락(##요약)·전각 # 대응 */
     private boolean hasRequiredSections(String reportMarkdown) {
         if (!StringUtils.hasText(reportMarkdown)) return false;
-        Pattern summaryPattern = Pattern.compile("^#+\\s+.*요약", Pattern.MULTILINE | Pattern.UNICODE_CASE);
-        Pattern recommendationPattern = Pattern.compile("^#+\\s+.*권고", Pattern.MULTILINE | Pattern.UNICODE_CASE);
-        return summaryPattern.matcher(reportMarkdown).find() && recommendationPattern.matcher(reportMarkdown).find();
+        String normalized = reportMarkdown.replace("\uFEFF", "").replace("\r", "");
+        // # 뒤 공백 0개 허용(\s*), 전각 ＃(U+FF03) 허용
+        Pattern summaryPattern = Pattern.compile("^[#＃]+\\s*.*요약", Pattern.MULTILINE | Pattern.UNICODE_CASE);
+        Pattern recommendationPattern = Pattern.compile("^[#＃]+\\s*.*권고", Pattern.MULTILINE | Pattern.UNICODE_CASE);
+        return summaryPattern.matcher(normalized).find() && recommendationPattern.matcher(normalized).find();
     }
 
     private Validation validateModelOutput(JsonNode out, List<MetricInput> metrics) {
@@ -333,6 +335,8 @@ public class OpenAIPsychAiServiceImpl implements PsychAiService {
 
         // 섹션 최소 요건(오판 방어: ##/### 요약, ##/### 권고 등 변형 허용)
         if (!hasRequiredSections(reportMarkdown)) {
+            String preview = reportMarkdown.length() > 500 ? reportMarkdown.substring(0, 500) + "..." : reportMarkdown;
+            log.warn("Psych AI missing_required_sections: reportMarkdown preview (len={}): {}", reportMarkdown.length(), preview);
             return new Validation(false, "missing_required_sections");
         }
 

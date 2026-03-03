@@ -24,8 +24,23 @@ const COLOR_WARNING = 'var(--mg-warning-500)';
 
 const toDateStr = (val) => {
   if (!val) return '';
-  if (typeof val === 'string') return val.split('T')[0];
-  return val;
+  if (typeof val === 'string') return val.split('T')[0].trim();
+  if (val instanceof Date) return val.toISOString().split('T')[0];
+  if (Array.isArray(val) && val.length >= 3) {
+    const [y, m, d] = val;
+    return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+  }
+  if (typeof val === 'object') {
+    const y = val.year ?? val.Year;
+    const m = val.month ?? val.monthValue ?? val.Month ?? 1;
+    const d = val.day ?? val.dayOfMonth ?? val.Day ?? 1;
+    if (y != null) {
+      const ms = String(m).padStart(2, '0');
+      const ds = String(d).padStart(2, '0');
+      return `${y}-${ms}-${ds}`;
+    }
+  }
+  return '';
 };
 
 const ConsultationLogCalendarBlock = ({
@@ -53,6 +68,7 @@ const ConsultationLogCalendarBlock = ({
         id: String(record.id),
         title: clientName,
         start: sessionDate,
+        end: sessionDate,
         allDay: true,
         backgroundColor: isCompleted ? COLOR_SUCCESS : COLOR_WARNING,
         borderColor: isCompleted ? COLOR_SUCCESS : COLOR_WARNING,

@@ -82,7 +82,9 @@ public class ConsultantRecordsController {
                         // 실제 내담자 이름 조회
                         String clientName = getClientName(record.getClientId());
                         recordMap.put("clientName", clientName);
-                        recordMap.put("consultationDate", record.getSessionDate().toString()); // ISO 날짜 문자열로 변환
+                        String sessionDateStr = record.getSessionDate().toString();
+                        recordMap.put("sessionDate", sessionDateStr);
+                        recordMap.put("consultationDate", sessionDateStr);
                         
                         // 상담 시간 설정 (완료 시간이 있으면 사용, 없으면 기본 상담 시간 사용)
                         int sessionDuration = record.getSessionDurationMinutes() != null ? record.getSessionDurationMinutes() : 60; // 기본 60분

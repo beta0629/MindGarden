@@ -15,33 +15,13 @@ import interactionPlugin from '@fullcalendar/interaction';
 import ContentSection from '../../dashboard-v2/content/ContentSection';
 import ContentCard from '../../dashboard-v2/content/ContentCard';
 import { FileText } from 'lucide-react';
+import { toDateStr } from '../../../utils/dateUtils';
 import './ConsultationLogCalendarBlock.css';
 
 const EMPTY_TITLE = '등록된 상담일지가 없습니다.';
 const EMPTY_DESC = '다른 필터를 적용해 보시거나, 스케줄에서 상담일지를 작성해 주세요.';
 const COLOR_SUCCESS = 'var(--mg-success-500)';
 const COLOR_WARNING = 'var(--mg-warning-500)';
-
-const toDateStr = (val) => {
-  if (!val) return '';
-  if (typeof val === 'string') return val.split('T')[0].trim();
-  if (val instanceof Date) return val.toISOString().split('T')[0];
-  if (Array.isArray(val) && val.length >= 3) {
-    const [y, m, d] = val;
-    return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-  }
-  if (typeof val === 'object') {
-    const y = val.year ?? val.Year;
-    const m = val.month ?? val.monthValue ?? val.Month ?? 1;
-    const d = val.day ?? val.dayOfMonth ?? val.Day ?? 1;
-    if (y != null) {
-      const ms = String(m).padStart(2, '0');
-      const ds = String(d).padStart(2, '0');
-      return `${y}-${ms}-${ds}`;
-    }
-  }
-  return '';
-};
 
 const ConsultationLogCalendarBlock = ({
   records,

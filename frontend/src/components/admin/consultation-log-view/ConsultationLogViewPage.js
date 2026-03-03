@@ -15,6 +15,7 @@ import UnifiedLoading from '../../common/UnifiedLoading';
 import ContentArea from '../../dashboard-v2/content/ContentArea';
 import ContentHeader from '../../dashboard-v2/content/ContentHeader';
 import ConsultationLogFilterSection from './ConsultationLogFilterSection';
+import { toDateStr } from '../../../utils/dateUtils';
 import ConsultationLogListBlock from './ConsultationLogListBlock';
 import ConsultationLogCalendarBlock from './ConsultationLogCalendarBlock';
 import ConsultationLogTableBlock from './ConsultationLogTableBlock';
@@ -169,8 +170,8 @@ const ConsultationLogViewPage = () => {
   if (startDate || endDate) {
     filteredRecords = records.filter((r) => {
       const sd = r.sessionDate ?? r.consultationDate;
-      if (!sd) return false;
-      const d = typeof sd === 'string' ? sd.split('T')[0] : String(sd);
+      const d = toDateStr(sd);
+      if (!d) return false;
       if (startDate && d < startDate) return false;
       if (endDate && d > endDate) return false;
       return true;

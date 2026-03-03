@@ -411,6 +411,73 @@ public class SystemConfigController {
     }
 
     /**
+     * OpenAI 사용 가능 모델 목록 조회 (GET /v1/models, chat completions용 gpt-* 모델만)
+     * API 키는 요청 본문 apiKey 또는 저장된 OPENAI_API_KEY 사용
+     */
+    @PostMapping("/openai-models")
+    public ResponseEntity<Map<String, Object>> getOpenAIModels(
+            @RequestBody(required = false) Map<String, String> body,
+            HttpSession session) {
+        if (!hasAdminPermission(session)) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "접근 권한이 없습니다.");
+            return ResponseEntity.status(403).body(response);
+        }
+        String apiKey = (body != null && body.containsKey("apiKey")) ? body.get("apiKey") : null;
+        if (apiKey == null || apiKey.isBlank()) {
+            apiKey = systemConfigService.getOpenAIApiKey();
+        } else {
+            apiKey = apiKey.trim();
+        }
+        if (apiKey == null || apiKey.isEmpty()) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "OpenAI API 키를 입력하거나 저장 후 목록을 불러오세요.");
+            return ResponseEntity.badRequest().body(response);
+        }
+        String baseUrl = systemConfigService.getOpenAIApiUrl();
+        String modelsUrl = (baseUrl != null && !baseUrl.isBlank())
+                ? baseUrl.replaceAll("/chat/completions$", "") + "/models"
+                : "https://api.openai.com/v1/models";
+        RestTemplate rest = new RestTemplate();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setBearerAuth(apiKey);
+        List<Map<String, String>> list = new ArrayList<>();
+        try {
+            ResponseEntity<Map<String, Object>> listResp = rest.exchange(
+                    modelsUrl,
+                    HttpMethod.GET,
+                    new HttpEntity<>(headers),
+                    new ParameterizedTypeReference<Map<String, Object>>() {}
+            );
+            if (listResp.getStatusCode().is2xxSuccessful() && listResp.getBody() != null) {
+                @SuppressWarnings("unchecked")
+                List<Map<String, Object>> data = (List<Map<String, Object>>) listResp.getBody().get("data");
+                if (data != null) {
+                    for (Map<String, Object> m : data) {
+                        String id = (String) m.get("id");
+                        if (id != null && (id.startsWith("gpt-") || id.startsWith("o1-"))) {
+                            list.add(Map.of("id", id, "name", id));
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.warn("OpenAI ListModels 실패: {}", e.getMessage());
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "모델 목록 조회 실패: " + (e.getMessage() != null ? e.getMessage() : "알 수 없음"));
+            return ResponseEntity.ok(response);
+        }
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("models", list);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
      * Gemini API 키 테스트 (Google AI Generative Language API — 키만 사용)
      * 저장된 키 또는 요청 본문의 apiKey로 간단한 generateContent 호출 후 성공/실패 반환
      */

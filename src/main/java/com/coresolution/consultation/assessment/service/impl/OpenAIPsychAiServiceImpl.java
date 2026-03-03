@@ -369,24 +369,32 @@ public class OpenAIPsychAiServiceImpl implements PsychAiService {
                 || reason.startsWith("hallucinated_scaleCode");
     }
 
-    /** ##/### 요약, ##/### 권고 등 마크다운 헤딩 변형 허용. BOM·공백 누락·전각#·들여쓰기·한 줄·키워드 fallback 대응 */
+    /** ##/### 요약, ##/### 권고 등 마크다운 헤딩 변형 허용. BOM·공백·전각·줄바꿈·영문 헤더 fallback 대응 */
     private boolean hasRequiredSections(String reportMarkdown) {
         if (!StringUtils.hasText(reportMarkdown)) return false;
-        String normalized = reportMarkdown.replace("\uFEFF", "").replace("\r", "");
-        // 1) 줄 시작 공백 허용(들여쓰기): ^\s*[#＃]+\s*.*요약/권고
-        Pattern summaryLineStart = Pattern.compile("^\\s*[#＃]+\\s*.*요약", Pattern.MULTILINE | Pattern.UNICODE_CASE);
-        Pattern recommendationLineStart = Pattern.compile("^\\s*[#＃]+\\s*.*권고", Pattern.MULTILINE | Pattern.UNICODE_CASE);
+        String normalized = reportMarkdown
+                .replace("\uFEFF", "")
+                .replace("\r", "")
+                .replace("\u00A0", " ")
+                .replace("\u3000", " ");
+        // 1) 줄 시작 + #(들) + (공백/줄바꿈 포함) + 요약/권고 (DOTALL로 줄바꿈 허용)
+        Pattern summaryLineStart = Pattern.compile("^\\s*[#＃]+[\\s\\S]*?요약", Pattern.MULTILINE | Pattern.UNICODE_CASE);
+        Pattern recommendationLineStart = Pattern.compile("^\\s*[#＃]+[\\s\\S]*?권고", Pattern.MULTILINE | Pattern.UNICODE_CASE);
         if (summaryLineStart.matcher(normalized).find() && recommendationLineStart.matcher(normalized).find()) {
             return true;
         }
-        // 2) 한 줄 reportMarkdown fallback: 줄 시작 없이 [#＃]+ ... 요약/권고 존재 여부
-        Pattern summaryAnywhere = Pattern.compile(".*[#＃]+\\s*.*요약", Pattern.UNICODE_CASE);
-        Pattern recommendationAnywhere = Pattern.compile(".*[#＃]+\\s*.*권고", Pattern.UNICODE_CASE);
+        // 2) 한 줄/중간: [#＃]+ ... 요약/권고
+        Pattern summaryAnywhere = Pattern.compile("[#＃]+[\\s\\S]*?요약", Pattern.UNICODE_CASE);
+        Pattern recommendationAnywhere = Pattern.compile("[#＃]+[\\s\\S]*?권고", Pattern.UNICODE_CASE);
         if (summaryAnywhere.matcher(normalized).find() && recommendationAnywhere.matcher(normalized).find()) {
             return true;
         }
-        // 3) 키워드 fallback: 요약·권고(권고사항 등)가 본문 어디든 있으면 통과 (모델 변형 대응)
+        // 3) 키워드 fallback: 요약·권고(권고사항) 또는 영문 Summary·Recommendation
         if (normalized.contains("요약") && (normalized.contains("권고") || normalized.contains("권고사항"))) {
+            return true;
+        }
+        String lower = normalized.toLowerCase(java.util.Locale.ROOT);
+        if (lower.contains("summary") && (lower.contains("recommendation") || lower.contains("recommendations"))) {
             return true;
         }
         return false;

@@ -196,19 +196,54 @@ public class OpenAIPsychAiServiceImpl implements PsychAiService {
         return root.path("choices").path(0).path("message").path("content").asText(null);
     }
 
-    private AiResult parseAndValidateAiOutput(String content, String baseMarkdown, String model, List<MetricInput> metrics) {
-        // 모델 출력은 JSON 문자열로 고정(리포트 + evidence)
-        // Gemini가 ```json ... ``` 형태로 감싸는 경우 제거
+    /**
+     * AI 응답에서 JSON 객체 추출 (GPT가 설명문 + ```json ... ``` 형태로 반환하는 경우 대응)
+     */
+    private String extractJsonFromContent(String content) {
+        if (content == null) return "";
         String trimmed = content.trim();
-        if (trimmed.startsWith("```json")) {
-            trimmed = trimmed.substring(7);
-        } else if (trimmed.startsWith("```")) {
-            trimmed = trimmed.substring(3);
+        // ```json ... ``` 또는 ``` ... ``` 블록 추출
+        int jsonStart = trimmed.indexOf("```json");
+        if (jsonStart >= 0) {
+            trimmed = trimmed.substring(jsonStart + 7);
+        } else {
+            int codeStart = trimmed.indexOf("```");
+            if (codeStart >= 0) {
+                trimmed = trimmed.substring(codeStart + 3);
+            }
         }
-        if (trimmed.endsWith("```")) {
-            trimmed = trimmed.substring(0, trimmed.length() - 3);
+        int codeEnd = trimmed.indexOf("```");
+        if (codeEnd >= 0) {
+            trimmed = trimmed.substring(0, codeEnd);
         }
         trimmed = trimmed.trim();
+        // 순수 JSON이 아닌 경우(앞에 설명 등): 첫 번째 { 부터 추출
+        int braceStart = trimmed.indexOf('{');
+        if (braceStart > 0) {
+            int depth = 0;
+            int end = -1;
+            for (int i = braceStart; i < trimmed.length(); i++) {
+                char c = trimmed.charAt(i);
+                if (c == '{') depth++;
+                else if (c == '}') {
+                    depth--;
+                    if (depth == 0) {
+                        end = i + 1;
+                        break;
+                    }
+                }
+            }
+            if (end > braceStart) {
+                trimmed = trimmed.substring(braceStart, end);
+            }
+        }
+        return trimmed;
+    }
+
+    private AiResult parseAndValidateAiOutput(String content, String baseMarkdown, String model, List<MetricInput> metrics) {
+        // 모델 출력은 JSON 문자열로 고정(리포트 + evidence)
+        // GPT/Gemini가 ```json ... ``` 형태로 감싸거나 앞뒤에 설명을 붙이는 경우 추출
+        String trimmed = extractJsonFromContent(content);
 
         try {
                 JsonNode out = objectMapper.readTree(trimmed);

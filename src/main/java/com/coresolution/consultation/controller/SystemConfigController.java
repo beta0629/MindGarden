@@ -246,6 +246,86 @@ public class SystemConfigController {
     }
 
     /**
+     * OpenAI API 키 테스트 (간단한 chat completions 호출)
+     * 저장된 설정 또는 요청 본문의 apiKey/apiUrl/model 사용
+     */
+    @PostMapping("/test-openai")
+    public ResponseEntity<Map<String, Object>> testOpenAIKey(
+            @RequestBody(required = false) Map<String, String> body,
+            HttpSession session) {
+        if (!hasAdminPermission(session)) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "접근 권한이 없습니다.");
+            return ResponseEntity.status(403).body(response);
+        }
+        String apiKey = (body != null && body.containsKey("apiKey")) ? body.get("apiKey") : null;
+        if (apiKey == null || apiKey.isBlank()) {
+            apiKey = systemConfigService.getOpenAIApiKey();
+        } else {
+            apiKey = apiKey.trim();
+        }
+        if (apiKey == null || apiKey.isEmpty()) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "OpenAI API 키를 입력하거나 저장 후 테스트해 주세요.");
+            return ResponseEntity.badRequest().body(response);
+        }
+        String apiUrl = (body != null && body.containsKey("apiUrl") && !body.get("apiUrl").isBlank())
+                ? body.get("apiUrl").trim()
+                : systemConfigService.getOpenAIApiUrl();
+        if (apiUrl == null || apiUrl.isBlank()) {
+            apiUrl = "https://api.openai.com/v1/chat/completions";
+        }
+        String model = (body != null && body.containsKey("model") && !body.get("model").isBlank())
+                ? body.get("model").trim()
+                : systemConfigService.getOpenAIModel();
+        if (model == null || model.isBlank()) {
+            model = "gpt-3.5-turbo";
+        }
+        RestTemplate rest = new RestTemplate();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setBearerAuth(apiKey);
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("model", model);
+        requestBody.put("messages", List.of(
+                Map.of("role", "user", "content", "Say OK in one word.")
+        ));
+        requestBody.put("max_tokens", 10);
+        HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, headers);
+        try {
+            @SuppressWarnings("unchecked")
+            ResponseEntity<Map<String, Object>> resp = rest.exchange(
+                    apiUrl,
+                    HttpMethod.POST,
+                    request,
+                    new ParameterizedTypeReference<Map<String, Object>>() {}
+            );
+            if (resp.getStatusCode().is2xxSuccessful() && resp.getBody() != null) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", true);
+                response.put("message", "OpenAI API 키가 정상적으로 동작합니다.");
+                return ResponseEntity.ok(response);
+            }
+        } catch (Exception e) {
+            log.warn("OpenAI API 키 테스트 실패: {}", e.getMessage());
+            String msg = e.getMessage();
+            if (msg != null && msg.length() > 300) {
+                msg = msg.substring(0, 300) + "...";
+            }
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "연결 실패: " + (msg != null ? msg : "알 수 없음"));
+            return ResponseEntity.ok(response);
+        }
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", false);
+        response.put("message", "OpenAI API 응답을 확인할 수 없습니다.");
+        return ResponseEntity.ok(response);
+    }
+
+    /**
      * Gemini 사용 가능 모델 목록 조회 (ListModels API, generateContent 지원 모델만)
      * API 키는 요청 본문 apiKey 또는 저장된 GEMINI_API_KEY 사용
      */

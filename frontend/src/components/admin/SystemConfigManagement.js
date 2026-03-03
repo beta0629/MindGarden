@@ -210,23 +210,29 @@ const SystemConfigManagement = () => {
     }
   };
 
-  const handleTest = async () => {
+  const handleTestOpenAI = async () => {
+    const key = (providers.openai?.apiKey || '').trim();
+    if (!key) {
+      notificationManager.show('OpenAI API 키를 입력한 뒤 테스트해 주세요.', 'warning');
+      return;
+    }
     try {
       setTesting(true);
       setTestResult(null);
-      const response = await apiPost('/api/v1/admin/wellness/test', {
-        dayOfWeek: 1,
-        season: 'SPRING',
-        category: 'MENTAL'
+      const response = await apiPost('/api/v1/admin/system-config/test-openai', {
+        apiKey: key,
+        apiUrl: providers.openai?.apiUrl || '',
+        model: providers.openai?.model || ''
       });
       if (response.success) {
-        setTestResult({ success: true, message: 'API 테스트 성공!', content: response.data });
+        setTestResult({ success: true, message: response.message || 'OpenAI API 키가 정상 동작합니다.' });
       } else {
         setTestResult({ success: false, message: response.message || 'API 테스트 실패' });
       }
     } catch (error) {
-      console.error('API 테스트 실패:', error);
-      setTestResult({ success: false, message: 'API 테스트 중 오류가 발생했습니다.' });
+      console.error('OpenAI API 테스트 실패:', error);
+      const errMsg = error?.response?.data?.message || error?.message || 'API 테스트 중 오류가 발생했습니다.';
+      setTestResult({ success: false, message: errMsg });
     } finally {
       setTesting(false);
     }
@@ -457,7 +463,7 @@ const SystemConfigManagement = () => {
                         <Button
                           variant="secondary"
                           size="medium"
-                          onClick={handleTest}
+                          onClick={handleTestOpenAI}
                           disabled={testing || !(providers.openai?.apiKey)}
                           loading={testing}
                           loadingText="테스트 중..."
@@ -474,12 +480,6 @@ const SystemConfigManagement = () => {
                           </div>
                           <div className="result-content">
                             <strong>{testResult.message}</strong>
-                            {testResult.content?.content && (
-                              <div className="result-preview">
-                                <strong>생성된 컨텐츠:</strong>
-                                <div dangerouslySetInnerHTML={{ __html: testResult.content.content }} />
-                              </div>
-                            )}
                           </div>
                         </div>
                       )}

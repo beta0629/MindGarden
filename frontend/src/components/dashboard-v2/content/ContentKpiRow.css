@@ -26,6 +26,21 @@
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
 }
 
+/* 클릭 가능 카드 (button reset + cursor) */
+button.mg-v2-content-kpi-card.mg-v2-content-kpi-card--clickable {
+  appearance: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  width: 100%;
+  border: 1px solid var(--ad-b0kla-border, #e2e8f0);
+  margin: 0;
+}
+
+button.mg-v2-content-kpi-card.mg-v2-content-kpi-card--clickable:hover {
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
+}
+
 .mg-v2-content-kpi-card__icon {
   width: 56px;
   height: 56px;

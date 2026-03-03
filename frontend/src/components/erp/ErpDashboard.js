@@ -5,16 +5,16 @@ import { sessionManager } from '../../utils/sessionManager';
 import { fetchUserPermissions, PermissionChecks, PERMISSIONS } from '../../utils/permissionUtils';
 import { RoleUtils } from '../../constants/roles';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
-import { ERP_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
-import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
-import StatCard from '../ui/Card/StatCard';
-import DashboardSection from '../layout/DashboardSection';
-import { LayoutDashboard, Package, Clock, ShoppingCart, TrendingUp, DollarSign, Receipt, BookOpen, Calculator, FileText } from 'lucide-react';
-import { WIDGET_CONSTANTS } from '../../constants/widgetConstants';
+import {
+  ContentArea,
+  ContentHeader,
+  ContentKpiRow
+} from '../dashboard-v2/content';
+import { Package, Clock, ShoppingCart, TrendingUp, DollarSign, Receipt, BookOpen, Calculator, FileText, LayoutDashboard } from 'lucide-react';
 import Button from '../ui/Button/Button';
-// import MGButton from '../../components/common/MGButton'; // 임시 비활성화
 import '../../styles/main.css';
 import '../../styles/unified-design-tokens.css';
+import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ErpDashboard.css';
 
 /**
@@ -256,7 +256,7 @@ const ErpDashboard = ({ user: propUser }) => {
 
   if (loading) {
     return (
-      <AdminCommonLayout title="ERP 관리 시스템" loading={true} loadingText="대시보드를 불러오는 중...">
+      <AdminCommonLayout title="ERP 대시보드" loading={true} loadingText="대시보드를 불러오는 중...">
         <div />
       </AdminCommonLayout>
     );
@@ -264,242 +264,203 @@ const ErpDashboard = ({ user: propUser }) => {
 
   const currentUser = propUser || sessionUser;
   const tenantId = currentUser?.tenantId || sessionManager.getSessionInfo()?.tenantId || '알 수 없음';
-  
+  const subtitleWithTenant =
+    tenantId && tenantId !== '알 수 없음'
+      ? `통합 자원 관리 및 회계 시스템 (터넌트: ${tenantId})`
+      : '통합 자원 관리 및 회계 시스템';
+
+  const kpiItems = [
+    {
+      id: 'totalItems',
+      icon: <Package size={28} />,
+      label: '총 아이템 수',
+      value: stats.totalItems.toLocaleString(),
+      subtitle: '등록된 비품 수',
+      iconVariant: 'green',
+      onClick: () => navigate('/erp/items')
+    },
+    {
+      id: 'pendingRequests',
+      icon: <Clock size={28} />,
+      label: '승인 대기 요청',
+      value: stats.pendingRequests.toLocaleString(),
+      subtitle: '관리자 승인 대기',
+      iconVariant: 'orange',
+      onClick: () => navigate('/erp/approvals')
+    },
+    {
+      id: 'totalOrders',
+      icon: <ShoppingCart size={28} />,
+      label: '총 주문 수',
+      value: stats.totalOrders.toLocaleString(),
+      subtitle: '완료된 구매 주문',
+      iconVariant: 'blue',
+      onClick: () => navigate('/erp/purchase-orders')
+    },
+    {
+      id: 'budgetUsage',
+      icon: <TrendingUp size={28} />,
+      label: '예산 사용률',
+      value: `${getBudgetUsagePercentage()}%`,
+      subtitle: `${formatCurrency(stats.usedBudget)} / ${formatCurrency(stats.totalBudget)}`,
+      iconVariant: 'gray',
+      onClick: () => navigate('/erp/budget')
+    }
+  ];
+
+  const isAdmin = currentUser && RoleUtils.isAdmin(currentUser);
+  const hasPurchaseRequestView =
+    (permissionChecks[PERMISSIONS.PURCHASE_REQUEST_VIEW] ??
+      permissionChecks[PERMISSIONS.PURCHASE_REQUEST_MANAGE] ??
+      PermissionChecks.canViewPurchaseRequests(userPermissions, currentUser) ||
+      PermissionChecks.canManagePurchaseRequests(userPermissions, currentUser)) || isAdmin;
+  const hasApprovalManage =
+    (permissionChecks[PERMISSIONS.APPROVAL_MANAGE] ?? PermissionChecks.canManageApprovals(userPermissions, currentUser)) || isAdmin;
+  const hasItemManage =
+    (permissionChecks[PERMISSIONS.ITEM_MANAGE] ?? PermissionChecks.canManageItems(userPermissions, currentUser)) || isAdmin;
+  const hasBudgetManage =
+    (permissionChecks[PERMISSIONS.BUDGET_MANAGE] ?? PermissionChecks.canManageBudget(userPermissions, currentUser)) || isAdmin;
+  const hasSalaryManage =
+    (permissionChecks[PERMISSIONS.SALARY_MANAGE] ?? PermissionChecks.canManageSalary(userPermissions, currentUser)) || isAdmin;
+  const hasTaxManage =
+    (permissionChecks[PERMISSIONS.TAX_MANAGE] ?? PermissionChecks.canManageTax(userPermissions, currentUser)) || isAdmin;
+  const hasIntegratedFinanceView =
+    (permissionChecks[PERMISSIONS.INTEGRATED_FINANCE_VIEW] ?? PermissionChecks.canViewIntegratedFinance(userPermissions, currentUser)) || isAdmin;
+  const hasRefundManage =
+    (permissionChecks[PERMISSIONS.REFUND_MANAGE] ?? PermissionChecks.canManageRefund(userPermissions, currentUser)) || isAdmin;
+
   return (
-    <AdminCommonLayout title="ERP 관리 시스템">
-      <div className="mg-dashboard-layout">
-        {/* 대시보드 헤더 */}
-        <div className="mg-dashboard-header">
-          <div className="mg-dashboard-header-content">
-            <div className="mg-dashboard-header-left">
-              <LayoutDashboard />
-              <div>
-                <h1 className="mg-dashboard-title">ERP 관리 시스템</h1>
-                <p className="mg-dashboard-subtitle">
-                  통합 자원 관리 및 회계 시스템
-                  {tenantId && tenantId !== '알 수 없음' && (
-                    <span className="mg-dashboard-tenant-info">
-                      (터넌트: {tenantId})
-                    </span>
-                  )}
-                </p>
-              </div>
-            </div>
-            <div className="mg-dashboard-header-right">
-              <Button
-                variant="outline"
-                size="small"
-                onClick={loadDashboardData}
-                preventDoubleClick={true}
-              >
-                새로고침
-              </Button>
-            </div>
+    <AdminCommonLayout title="ERP 대시보드">
+      <ContentArea className="erp-dashboard__content" ariaLabel="ERP 대시보드">
+        <ContentHeader
+          subtitle={subtitleWithTenant}
+          actions={
+            <Button variant="outline" size="small" onClick={loadDashboardData} preventDoubleClick={true}>
+              새로고침
+            </Button>
+          }
+        />
+        <ContentKpiRow items={kpiItems} />
+
+        {/* 빠른 액션 섹션 */}
+        <div className="mg-v2-ad-b0kla__card">
+          <h2 className="mg-v2-ad-b0kla__section-title">빠른 액션</h2>
+          <div className="mg-v2-ad-b0kla__admin-grid">
+            {hasPurchaseRequestView && (
+              <button type="button" className="mg-v2-ad-b0kla__admin-card" onClick={() => navigate('/erp/purchase-requests')}>
+                <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--green">
+                  <ShoppingCart size={28} />
+                </div>
+                <span className="mg-v2-ad-b0kla__admin-label">구매 요청하기</span>
+                <span className="mg-v2-ad-b0kla__admin-desc">상품 및 비품 구매 요청을 제출합니다</span>
+              </button>
+            )}
+            {hasApprovalManage && (
+              <button type="button" className="mg-v2-ad-b0kla__admin-card" onClick={() => navigate('/erp/approvals')}>
+                <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--orange">
+                  <Clock size={28} />
+                </div>
+                <span className="mg-v2-ad-b0kla__admin-label">승인 관리</span>
+                <span className="mg-v2-ad-b0kla__admin-desc">구매 요청 승인 및 거부를 관리합니다</span>
+              </button>
+            )}
+            {hasItemManage && (
+              <button type="button" className="mg-v2-ad-b0kla__admin-card" onClick={() => navigate('/erp/items')}>
+                <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--blue">
+                  <Package size={28} />
+                </div>
+                <span className="mg-v2-ad-b0kla__admin-label">아이템 관리</span>
+                <span className="mg-v2-ad-b0kla__admin-desc">등록된 비품 및 상품을 관리합니다</span>
+              </button>
+            )}
+            {hasBudgetManage && (
+              <button type="button" className="mg-v2-ad-b0kla__admin-card" onClick={() => navigate('/erp/budget')}>
+                <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--blue">
+                  <TrendingUp size={28} />
+                </div>
+                <span className="mg-v2-ad-b0kla__admin-label">예산 관리</span>
+                <span className="mg-v2-ad-b0kla__admin-desc">지점별 예산을 설정하고 관리합니다</span>
+              </button>
+            )}
+            {hasSalaryManage && (
+              <button type="button" className="mg-v2-ad-b0kla__admin-card" onClick={() => navigate('/erp/salary')}>
+                <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--gray">
+                  <DollarSign size={28} />
+                </div>
+                <span className="mg-v2-ad-b0kla__admin-label">급여 관리</span>
+                <span className="mg-v2-ad-b0kla__admin-desc">상담사 급여 계산 및 지급을 관리합니다</span>
+              </button>
+            )}
+            {hasTaxManage && (
+              <button type="button" className="mg-v2-ad-b0kla__admin-card" onClick={() => navigate('/erp/tax')}>
+                <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--gray">
+                  <LayoutDashboard size={28} />
+                </div>
+                <span className="mg-v2-ad-b0kla__admin-label">세금 관리</span>
+                <span className="mg-v2-ad-b0kla__admin-desc">원천징수 및 세금 관련 업무를 관리합니다</span>
+              </button>
+            )}
+            {hasIntegratedFinanceView && (
+              <button type="button" className="mg-v2-ad-b0kla__admin-card" onClick={() => navigate('/admin/erp/financial')}>
+                <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--blue">
+                  <TrendingUp size={28} />
+                </div>
+                <span className="mg-v2-ad-b0kla__admin-label">통합 회계 시스템</span>
+                <span className="mg-v2-ad-b0kla__admin-desc">전체 재무 데이터 및 통계를 확인합니다</span>
+              </button>
+            )}
+            {hasRefundManage && (
+              <button type="button" className="mg-v2-ad-b0kla__admin-card" onClick={() => navigate('/erp/refund-management')}>
+                <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--orange">
+                  <Clock size={28} />
+                </div>
+                <span className="mg-v2-ad-b0kla__admin-label">환불 관리 시스템</span>
+                <span className="mg-v2-ad-b0kla__admin-desc">환불 요청 및 처리 내역을 관리합니다</span>
+              </button>
+            )}
+            {hasIntegratedFinanceView && (
+              <>
+                <button type="button" className="mg-v2-ad-b0kla__admin-card" onClick={() => navigate('/admin/erp/financial?tab=journal-entries')}>
+                  <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--gray">
+                    <Receipt size={28} />
+                  </div>
+                  <span className="mg-v2-ad-b0kla__admin-label">분개 관리</span>
+                  <span className="mg-v2-ad-b0kla__admin-desc">회계 분개를 생성, 승인, 전기합니다</span>
+                </button>
+                <button type="button" className="mg-v2-ad-b0kla__admin-card" onClick={() => navigate('/admin/erp/financial?tab=ledgers')}>
+                  <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--gray">
+                    <BookOpen size={28} />
+                  </div>
+                  <span className="mg-v2-ad-b0kla__admin-label">원장 조회</span>
+                  <span className="mg-v2-ad-b0kla__admin-desc">계정별 원장을 조회하고 상세 내역을 확인합니다</span>
+                </button>
+                <button type="button" className="mg-v2-ad-b0kla__admin-card" onClick={() => navigate('/admin/erp/financial?tab=settlement')}>
+                  <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--gray">
+                    <Calculator size={28} />
+                  </div>
+                  <span className="mg-v2-ad-b0kla__admin-label">정산 관리</span>
+                  <span className="mg-v2-ad-b0kla__admin-desc">정산 규칙을 설정하고 정산을 계산 및 승인합니다</span>
+                </button>
+                <button type="button" className="mg-v2-ad-b0kla__admin-card" onClick={() => navigate('/admin/erp/financial?tab=cash-flow')}>
+                  <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--gray">
+                    <FileText size={28} />
+                  </div>
+                  <span className="mg-v2-ad-b0kla__admin-label">현금흐름표</span>
+                  <span className="mg-v2-ad-b0kla__admin-desc">영업, 투자, 재무 활동의 현금흐름을 확인합니다</span>
+                </button>
+              </>
+            )}
           </div>
         </div>
 
-        {/* 통계 카드 그리드 (표준화 원칙: 모든 카드에 링크 필수) */}
-        <div className="mg-dashboard-stats">
-          <StatCard
-            icon={<Package />}
-            value={stats.totalItems.toLocaleString()}
-            label="총 아이템 수"
-            change="등록된 비품 수"
-            onClick={() => navigate('/erp/items')}
-          />
-          <StatCard
-            icon={<Clock />}
-            value={stats.pendingRequests.toLocaleString()}
-            label="승인 대기 요청"
-            change="관리자 승인 대기"
-            changeType="negative"
-            onClick={() => navigate('/erp/approvals')}
-          />
-          <StatCard
-            icon={<ShoppingCart />}
-            value={stats.totalOrders.toLocaleString()}
-            label="총 주문 수"
-            change="완료된 구매 주문"
-            changeType="positive"
-            onClick={() => navigate('/erp/purchase-orders')}
-          />
-          <StatCard
-            icon={<TrendingUp />}
-            value={`${getBudgetUsagePercentage()}%`}
-            label="예산 사용률"
-            change={`${formatCurrency(stats.usedBudget)} / ${formatCurrency(stats.totalBudget)}`}
-            onClick={() => navigate('/erp/budget')}
-          />
+        {/* 최근 활동 섹션 */}
+        <div className="mg-v2-ad-b0kla__card">
+          <h2 className="mg-v2-ad-b0kla__section-title">최근 활동</h2>
+          <div className="mg-empty-state">
+            <div className="mg-empty-state__text">최근 활동 내역이 없습니다.</div>
+          </div>
         </div>
-
-        {/* 콘텐츠 영역 */}
-        <div className="mg-dashboard-content">
-          {/* 빠른 액션 섹션 */}
-          <DashboardSection
-            title="빠른 액션"
-            icon={<LayoutDashboard />}
-          >
-            <div className="mg-management-grid">
-              {(() => {
-                const currentUser = propUser || sessionUser;
-                const isAdmin = currentUser && RoleUtils.isAdmin(currentUser);
-                
-                // 동적 권한 체크 우선, 없으면 정적 권한 체크, 관리자는 항상 허용
-                // PermissionChecks 함수들이 이제 user를 받아서 관리자 권한을 자동으로 허용
-                const hasPurchaseRequestView = ((permissionChecks[PERMISSIONS.PURCHASE_REQUEST_VIEW] ?? 
-                  permissionChecks[PERMISSIONS.PURCHASE_REQUEST_MANAGE] ??
-                  (PermissionChecks.canViewPurchaseRequests(userPermissions, currentUser) || 
-                   PermissionChecks.canManagePurchaseRequests(userPermissions, currentUser))) || isAdmin);
-                const hasApprovalManage = (permissionChecks[PERMISSIONS.APPROVAL_MANAGE] ?? 
-                  PermissionChecks.canManageApprovals(userPermissions, currentUser)) || isAdmin;
-                const hasItemManage = (permissionChecks[PERMISSIONS.ITEM_MANAGE] ?? 
-                  PermissionChecks.canManageItems(userPermissions, currentUser)) || isAdmin;
-                const hasBudgetManage = (permissionChecks[PERMISSIONS.BUDGET_MANAGE] ?? 
-                  PermissionChecks.canManageBudget(userPermissions, currentUser)) || isAdmin;
-                const hasSalaryManage = (permissionChecks[PERMISSIONS.SALARY_MANAGE] ?? 
-                  PermissionChecks.canManageSalary(userPermissions, currentUser)) || isAdmin;
-                const hasTaxManage = (permissionChecks[PERMISSIONS.TAX_MANAGE] ?? 
-                  PermissionChecks.canManageTax(userPermissions, currentUser)) || isAdmin;
-                const hasIntegratedFinanceView = (permissionChecks[PERMISSIONS.INTEGRATED_FINANCE_VIEW] ?? 
-                  PermissionChecks.canViewIntegratedFinance(userPermissions, currentUser)) || isAdmin;
-                const hasRefundManage = (permissionChecks[PERMISSIONS.REFUND_MANAGE] ?? 
-                  PermissionChecks.canManageRefund(userPermissions, currentUser)) || isAdmin;
-                
-                return (
-                  <>
-                    {hasPurchaseRequestView && (
-                      <div className="mg-management-card" onClick={() => navigate('/erp/purchase-requests')}>
-                        <div className="mg-management-icon">
-                          <ShoppingCart />
-                        </div>
-                        <h3>구매 요청하기</h3>
-                        <p className="mg-management-description">상품 및 비품 구매 요청을 제출합니다</p>
-                      </div>
-                    )}
-                    
-                    {hasApprovalManage && (
-                      <div className="mg-management-card" onClick={() => navigate('/erp/approvals')}>
-                        <div className="mg-management-icon">
-                          <Clock />
-                        </div>
-                        <h3>승인 관리</h3>
-                        <p className="mg-management-description">구매 요청 승인 및 거부를 관리합니다</p>
-                      </div>
-                    )}
-                    
-                    {hasItemManage && (
-                      <div className="mg-management-card" onClick={() => navigate('/erp/items')}>
-                        <div className="mg-management-icon">
-                          <Package />
-                        </div>
-                        <h3>아이템 관리</h3>
-                        <p className="mg-management-description">등록된 비품 및 상품을 관리합니다</p>
-                      </div>
-                    )}
-                    
-                    {hasBudgetManage && (
-                      <div className="mg-management-card" onClick={() => navigate('/erp/budget')}>
-                        <div className="mg-management-icon">
-                          <TrendingUp />
-                        </div>
-                        <h3>예산 관리</h3>
-                        <p className="mg-management-description">지점별 예산을 설정하고 관리합니다</p>
-                      </div>
-                    )}
-                    
-                    {hasSalaryManage && (
-                      <div className="mg-management-card" onClick={() => navigate('/erp/salary')}>
-                        <div className="mg-management-icon">
-                          <DollarSign />
-                        </div>
-                        <h3>급여 관리</h3>
-                        <p className="mg-management-description">상담사 급여 계산 및 지급을 관리합니다</p>
-                      </div>
-                    )}
-                    
-                    {hasTaxManage && (
-                      <div className="mg-management-card" onClick={() => navigate('/erp/tax')}>
-                        <div className="mg-management-icon">
-                          <LayoutDashboard />
-                        </div>
-                        <h3>세금 관리</h3>
-                        <p className="mg-management-description">원천징수 및 세금 관련 업무를 관리합니다</p>
-                      </div>
-                    )}
-                    
-                    {hasIntegratedFinanceView && (
-                      <div className="mg-management-card" onClick={() => navigate('/admin/erp/financial')}>
-                        <div className="mg-management-icon">
-                          <TrendingUp />
-                        </div>
-                        <h3>통합 회계 시스템</h3>
-                        <p className="mg-management-description">전체 재무 데이터 및 통계를 확인합니다</p>
-                      </div>
-                    )}
-                    
-                    {hasRefundManage && (
-                      <div className="mg-management-card" onClick={() => navigate('/erp/refund-management')}>
-                        <div className="mg-management-icon">
-                          <Clock />
-                        </div>
-                        <h3>환불 관리 시스템</h3>
-                        <p className="mg-management-description">환불 요청 및 처리 내역을 관리합니다</p>
-                      </div>
-                    )}
-                    
-                    {/* ERP 고도화 메뉴 (관리자는 항상 접근 가능) */}
-                    {hasIntegratedFinanceView && (
-                      <>
-                        <div className="mg-management-card" onClick={() => navigate('/admin/erp/financial?tab=journal-entries')}>
-                          <div className="mg-management-icon">
-                            <Receipt />
-                          </div>
-                          <h3>분개 관리</h3>
-                          <p className="mg-management-description">회계 분개를 생성, 승인, 전기합니다</p>
-                        </div>
-                        
-                        <div className="mg-management-card" onClick={() => navigate('/admin/erp/financial?tab=ledgers')}>
-                          <div className="mg-management-icon">
-                            <BookOpen />
-                          </div>
-                          <h3>원장 조회</h3>
-                          <p className="mg-management-description">계정별 원장을 조회하고 상세 내역을 확인합니다</p>
-                        </div>
-                        
-                        <div className="mg-management-card" onClick={() => navigate('/admin/erp/financial?tab=settlement')}>
-                          <div className="mg-management-icon">
-                            <Calculator />
-                          </div>
-                          <h3>정산 관리</h3>
-                          <p className="mg-management-description">정산 규칙을 설정하고 정산을 계산 및 승인합니다</p>
-                        </div>
-                        
-                        <div className="mg-management-card" onClick={() => navigate('/admin/erp/financial?tab=cash-flow')}>
-                          <div className="mg-management-icon">
-                            <FileText />
-                          </div>
-                          <h3>현금흐름표</h3>
-                          <p className="mg-management-description">영업, 투자, 재무 활동의 현금흐름을 확인합니다</p>
-                        </div>
-                      </>
-                    )}
-                  </>
-                );
-              })()}
-            </div>
-          </DashboardSection>
-
-          {/* 최근 활동 섹션 */}
-          <DashboardSection
-            title="최근 활동"
-            icon={<Clock />}
-          >
-            <div className="mg-empty-state">
-              <div className="mg-empty-state__text">최근 활동 내역이 없습니다.</div>
-            </div>
-          </DashboardSection>
-        </div>
-      </div>
+      </ContentArea>
     </AdminCommonLayout>
   );
 };

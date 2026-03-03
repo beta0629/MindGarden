@@ -16,8 +16,8 @@ const ContentKpiRow = ({ items = [] }) => {
     <div className="mg-v2-content-kpi-row">
       {items.map((item, idx) => {
         const iconVariant = item.iconVariant || ICON_VARIANTS[idx % ICON_VARIANTS.length];
-        return (
-          <div key={item.id || idx} className="mg-v2-content-kpi-card">
+        const cardContent = (
+          <>
             <div className={`mg-v2-content-kpi-card__icon mg-v2-content-kpi-card__icon--${iconVariant}`}>
               {item.icon}
             </div>
@@ -44,6 +44,24 @@ const ContentKpiRow = ({ items = [] }) => {
                 </div>
               ) : null}
             </div>
+          </>
+        );
+        const hasClick = typeof item.onClick === 'function';
+        if (hasClick) {
+          return (
+            <button
+              key={item.id || idx}
+              type="button"
+              className="mg-v2-content-kpi-card mg-v2-content-kpi-card--clickable"
+              onClick={item.onClick}
+            >
+              {cardContent}
+            </button>
+          );
+        }
+        return (
+          <div key={item.id || idx} className="mg-v2-content-kpi-card">
+            {cardContent}
           </div>
         );
       })}

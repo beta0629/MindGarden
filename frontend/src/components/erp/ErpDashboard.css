@@ -1,6 +1,38 @@
-/* ErpDashboard 전용 스타일 - 완전히 새로운 클래스 사용 */
+/**
+ * ErpDashboard 전용 스타일
+ * 본문 구조는 ContentArea / ContentHeader / ContentKpiRow 및 B0KlA(AdminDashboardB0KlA.css) 사용.
+ * 아래 레거시 클래스(erp-*, mg-dashboard-tenant-info 등)는 리팩터링 후 미사용으로 주석 처리.
+ * dashboard-common-v3.css 등 공통의 mg-dashboard-layout, mg-dashboard-stats 등은 그대로 유지.
+ */
 
-/* 컨테이너 */
+/* 터넌트 정보 (subtitle 내 터넌트 텍스트 스타일, 필요 시 사용) */
+.mg-dashboard-tenant-info {
+  margin-left: var(--spacing-md, 12px);
+  font-size: 0.85em;
+  color: var(--ad-b0kla-text-secondary, var(--mg-color-text-secondary));
+}
+
+/* ========== 반응형: 768px·1024px 레이아웃 보완 ========== */
+@media (max-width: 1024px) {
+  .erp-dashboard__content .mg-v2-ad-b0kla__admin-grid {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .erp-dashboard__content .mg-v2-ad-b0kla__admin-grid {
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 0.75rem;
+  }
+}
+
+/* 접근성: 빠른 액션 카드 키보드 포커스 링 */
+.erp-dashboard__content button.mg-v2-ad-b0kla__admin-card:focus-visible {
+  outline: 2px solid var(--ad-b0kla-green);
+  outline-offset: 2px;
+}
+
+/* ========== 레거시: 본문 구조 변경으로 미사용 (주석 처리) ==========
 .erp-dashboard-container {
   width: 100%;
   max-width: 1400px;
@@ -8,14 +40,6 @@
   padding: var(--spacing-lg);
 }
 
-/* 터넌트 정보 스타일 */
-.mg-dashboard-tenant-info {
-  margin-left: var(--spacing-md, 12px);
-  font-size: 0.85em;
-  color: var(--mg-color-text-secondary, var(--medium-gray, #6b7280));
-}
-
-/* 통계 카드 그리드 */
 .erp-stats-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -42,250 +66,20 @@
   box-shadow: 0 12px 40px var(--mg-shadow-medium);
 }
 
-.erp-stat-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: var(--radius-md);
-  background: linear-gradient(135deg, var(--mint-green), var(--soft-mint));
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--dark-gray);
-  flex-shrink: 0;
-}
-
-.erp-stat-icon-success {
-  background: linear-gradient(135deg, var(--status-active), var(--mint-green));
-}
-
-.erp-stat-icon-warning {
-  background: linear-gradient(135deg, var(--status-warning), #fbbf24);
-}
-
-.erp-stat-icon-danger {
-  background: linear-gradient(135deg, var(--color-danger), #f87171);
-}
-
-.erp-stat-content {
-  flex: 1;
-}
-
-.erp-stat-value {
-  font-size: 1.75rem;
-  font-weight: 700;
-  color: var(--dark-gray);
-  line-height: 1;
-  margin-bottom: 0.25rem;
-}
-
-.erp-stat-label {
-  font-size: 0.875rem;
-  color: var(--medium-gray);
-  margin-bottom: 0.25rem;
-}
-
-.erp-stat-description {
-  font-size: 0.75rem;
-  color: var(--medium-gray);
-  line-height: 1.4;
-}
-
-/* 콘텐츠 래퍼 - 세로 스택 */
-.erp-content-wrapper {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-lg);
-}
-
-/* 섹션 */
-.erp-section {
-  background: rgba(255, 255, 255, 0.5);
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-}
-
-.erp-section-header {
-  padding: var(--spacing-lg);
-  background: rgba(255, 255, 255, 0.7);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-.erp-section-title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: var(--dark-gray);
-  margin: 0;
-}
-
-.erp-section-content {
-  padding: var(--spacing-lg);
-}
-
-/* 액션 버튼 그리드 */
-.erp-action-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: var(--spacing-md);
-}
-
-/* 빈 상태 */
-.erp-empty-state {
-  color: var(--medium-gray);
-  font-style: italic;
-  text-align: center;
-  padding: var(--spacing-xl);
-}
-
-/* 데스크탑 (1025px - 1200px) */
-@media (min-width: 1025px) and (max-width: 1200px) {
-  .erp-action-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-/* 태블릿 (769px - 1024px) */
-@media (min-width: 769px) and (max-width: 1024px) {
-  .erp-dashboard-container {
-    padding: var(--spacing-md);
-  }
-  
-  .erp-stats-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: var(--spacing-md);
-  }
-  
-  .erp-action-grid {
-    grid-template-columns: repeat(3, 1fr);
-    gap: var(--spacing-sm);
-  }
-}
-
-/* 모바일 (481px - 768px) */
-@media (min-width: 481px) and (max-width: 768px) {
-  .erp-dashboard-container {
-    padding: var(--spacing-md);
-  }
-  
-  .erp-stats-grid {
-    grid-template-columns: 1fr;
-    gap: var(--spacing-sm);
-  }
-  
-  .erp-stat-card {
-    flex-direction: row;
-    padding: var(--spacing-md);
-  }
-  
-  .erp-stat-icon {
-    width: 48px;
-    height: 48px;
-  }
-  
-  .erp-action-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: var(--spacing-sm);
-  }
-  
-  .erp-section-header {
-    padding: var(--spacing-md);
-  }
-  
-  .erp-section-content {
-    padding: var(--spacing-md);
-  }
-}
-
-/* 작은 모바일 (< 480px) */
-@media (max-width: 480px) {
-  .erp-dashboard-container {
-    padding: var(--spacing-sm);
-  }
-  
-  .erp-stats-grid {
-    grid-template-columns: 1fr;
-    gap: var(--spacing-sm);
-    margin-bottom: var(--spacing-lg);
-  }
-  
-  .erp-stat-card {
-    flex-direction: column;
-    text-align: center;
-    padding: var(--spacing-md);
-  }
-  
-  .erp-stat-icon {
-    width: 40px;
-    height: 40px;
-    margin-bottom: var(--spacing-sm);
-  }
-  
-  .erp-stat-content {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-  
-  .erp-stat-value {
-    font-size: 1.5rem;
-  }
-  
-  .erp-stat-label {
-    font-size: 0.75rem;
-  }
-  
-  .erp-stat-description {
-    font-size: 0.625rem;
-  }
-  
-  .erp-content-wrapper {
-    gap: var(--spacing-sm);
-  }
-  
-  .erp-section-header {
-    padding: var(--spacing-sm) var(--spacing-md);
-  }
-  
-  .erp-section-title {
-    font-size: 0.9rem;
-  }
-  
-  .erp-section-content {
-    padding: var(--spacing-sm);
-  }
-  
-  /* 액션 버튼 - 완전히 세로 스택 */
-  .erp-action-grid {
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-xs);
-  }
-  
-  .erp-empty-state {
-    padding: var(--spacing-md);
-    font-size: 0.8rem;
-  }
-}
-
-/* 아주 작은 모바일 (< 360px) */
-@media (max-width: 359px) {
-  .erp-dashboard-container {
-    padding: var(--spacing-xs);
-  }
-  
-  .erp-section-header {
-    padding: var(--spacing-xs) var(--spacing-sm);
-  }
-  
-  .erp-section-title {
-    font-size: 0.85rem;
-  }
-  
-  .erp-section-content {
-    padding: var(--spacing-xs);
-  }
-  
-  .erp-empty-state {
-    padding: var(--spacing-sm);
-    font-size: 0.75rem;
-  }
-}
+.erp-stat-icon { ... }
+.erp-stat-icon-success { ... }
+.erp-stat-icon-warning { ... }
+.erp-stat-icon-danger { ... }
+.erp-stat-content { ... }
+.erp-stat-value { ... }
+.erp-stat-label { ... }
+.erp-stat-description { ... }
+.erp-content-wrapper { ... }
+.erp-section { ... }
+.erp-section-header { ... }
+.erp-section-title { ... }
+.erp-section-content { ... }
+.erp-action-grid { ... }
+.erp-empty-state { ... }
+및 관련 미디어쿼리 블록 전부 미사용.
+========== */

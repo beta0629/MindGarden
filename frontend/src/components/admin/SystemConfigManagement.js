@@ -39,8 +39,11 @@ const AI_PROVIDERS = [
   { id: 'replicate', label: 'Replicate', keyPrefix: 'REPLICATE', defaultUrl: '', defaultModel: '' }
 ];
 
-/** OpenAI 목록 미불러온 경우 드롭다운에 쓸 최소 프리셋 (사용 가능한 모델만 보려면 '목록 불러오기' 권장) */
+/** OpenAI 목록 미불러온 경우 입력란 datalist용 최소 프리셋 (사용 가능한 모델만 보려면 '목록 불러오기' 권장) */
 const OPENAI_MODEL_PRESETS_FALLBACK = ['gpt-4o-mini', 'gpt-4o', 'gpt-3.5-turbo'];
+
+/** Gemini 목록 미불러온 경우 입력란 datalist용 최소 프리셋 (사용 가능한 모델만 보려면 '목록 불러오기' 권장) */
+const GEMINI_MODEL_PRESETS_FALLBACK = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-pro'];
 
 const initialProviderState = (defaultUrl, defaultModel) => ({
   apiKey: '',
@@ -477,8 +480,9 @@ const SystemConfigManagement = () => {
                           />
                           {geminiModels.length === 0 && (
                             <datalist id={`model-presets-${id}`}>
-                              <option value="gemini-2.5-flash" />
-                              <option value="gemini-1.5-pro" />
+                              {GEMINI_MODEL_PRESETS_FALLBACK.map((mid) => (
+                                <option key={mid} value={mid} />
+                              ))}
                             </datalist>
                           )}
                           <div className="mg-v2-system-config__pricing-notice" style={{ marginTop: 8 }}>

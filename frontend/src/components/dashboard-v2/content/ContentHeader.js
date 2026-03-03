@@ -18,7 +18,7 @@ const ContentHeader = ({
   return (
     <header className="mg-v2-content-header">
       <div className="mg-v2-content-header__left">
-        <h1 className="mg-v2-content-header__title">{title}</h1>
+        {title ? <h1 className="mg-v2-content-header__title">{title}</h1> : null}
         {subtitle && <p className="mg-v2-content-header__subtitle">{subtitle}</p>}
       </div>
       {actions && <div className="mg-v2-content-header__right">{actions}</div>}

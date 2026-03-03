@@ -577,6 +577,11 @@
   box-shadow: var(--ad-b0kla-shadow);
 }
 
+.mg-v2-ad-b0kla__admin-card:focus-visible {
+  outline: 2px solid var(--ad-b0kla-green);
+  outline-offset: 2px;
+}
+
 .mg-v2-ad-b0kla__admin-icon {
   width: 56px;
   height: 56px;

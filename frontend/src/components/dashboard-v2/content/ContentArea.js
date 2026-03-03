@@ -9,9 +9,13 @@
 import React from 'react';
 import './ContentArea.css';
 
-const ContentArea = ({ children, className = '' }) => {
+const ContentArea = ({ children, className = '', ariaLabel }) => {
   return (
-    <div className={`mg-v2-content-area ${className}`.trim()} role="region" aria-label="대시보드 콘텐츠">
+    <div
+      className={`mg-v2-content-area ${className}`.trim()}
+      role="region"
+      aria-label={ariaLabel != null && ariaLabel !== '' ? ariaLabel : '대시보드 콘텐츠'}
+    >
       {children}
     </div>
   );

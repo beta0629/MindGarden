@@ -197,7 +197,8 @@ public class OpenAIPsychAiServiceImpl implements PsychAiService {
     }
 
     /**
-     * AI 응답에서 JSON 객체 추출 (GPT가 설명문 + ```json ... ``` 형태로 반환하는 경우 대응)
+     * AI 응답에서 JSON 객체 추출 (GPT가 설명문 + ```json ... ``` 형태로 반환하는 경우 대응).
+     * 문자열 값 안의 {, }는 depth 계산에서 제외해 reportMarkdown 내부 '}'로 잘리는 문제 방지.
      */
     private String extractJsonFromContent(String content) {
         if (content == null) return "";
@@ -217,25 +218,44 @@ public class OpenAIPsychAiServiceImpl implements PsychAiService {
             trimmed = trimmed.substring(0, codeEnd);
         }
         trimmed = trimmed.trim();
-        // 순수 JSON이 아닌 경우(앞에 설명 등): 첫 번째 { 부터 추출
         int braceStart = trimmed.indexOf('{');
-        if (braceStart > 0) {
-            int depth = 0;
-            int end = -1;
-            for (int i = braceStart; i < trimmed.length(); i++) {
-                char c = trimmed.charAt(i);
-                if (c == '{') depth++;
-                else if (c == '}') {
-                    depth--;
-                    if (depth == 0) {
-                        end = i + 1;
-                        break;
-                    }
+        if (braceStart < 0) {
+            return "";
+        }
+        // 문자열 내부의 {, }는 무시하고 짝 맞는 } 찾기
+        int depth = 0;
+        boolean inString = false;
+        boolean escapeNext = false;
+        int end = -1;
+        for (int i = braceStart; i < trimmed.length(); i++) {
+            char c = trimmed.charAt(i);
+            if (escapeNext) {
+                escapeNext = false;
+                continue;
+            }
+            if (inString) {
+                if (c == '\\') escapeNext = true;
+                else if (c == '"') inString = false;
+                continue;
+            }
+            if (c == '"') {
+                inString = true;
+                continue;
+            }
+            if (c == '{') {
+                depth++;
+                continue;
+            }
+            if (c == '}') {
+                depth--;
+                if (depth == 0) {
+                    end = i + 1;
+                    break;
                 }
             }
-            if (end > braceStart) {
-                trimmed = trimmed.substring(braceStart, end);
-            }
+        }
+        if (end > braceStart) {
+            trimmed = trimmed.substring(braceStart, end);
         }
         return trimmed;
     }
@@ -244,6 +264,16 @@ public class OpenAIPsychAiServiceImpl implements PsychAiService {
         // 모델 출력은 JSON 문자열로 고정(리포트 + evidence)
         // GPT/Gemini가 ```json ... ``` 형태로 감싸거나 앞뒤에 설명을 붙이는 경우 추출
         String trimmed = extractJsonFromContent(content);
+        if (!StringUtils.hasText(trimmed)) {
+            log.warn("Psych AI parse failed (no JSON): model={}, contentLen={}, trimmedEmpty=true, hasBrace=false",
+                    model, content != null ? content.length() : 0);
+            return new AiResult(
+                    baseMarkdownWithDisclaimer(baseMarkdown, "AI 출력 파싱 실패"),
+                    buildEvidenceJson("rejected", "unparsed", true),
+                    model,
+                    PROMPT_VERSION
+            );
+        }
 
         try {
                 JsonNode out = objectMapper.readTree(trimmed);
@@ -291,8 +321,10 @@ public class OpenAIPsychAiServiceImpl implements PsychAiService {
 
                 return new AiResult(reportMarkdown, evidenceJson, model, PROMPT_VERSION);
             } catch (Exception parseError) {
-                log.warn("Psych AI parse failed: model={}, error={}, contentPreview={}", model, parseError.getMessage(),
-                        trimmed.length() > 300 ? trimmed.substring(0, 300) + "..." : trimmed);
+                String preview = trimmed.length() > 300 ? trimmed.substring(0, 300) + "..." : trimmed;
+                log.warn("Psych AI parse failed: model={}, exception={}, message={}, trimmedLen={}, trimmedEmpty={}, hasBrace={}, contentPreview={}",
+                        model, parseError.getClass().getSimpleName(), parseError.getMessage(),
+                        trimmed.length(), trimmed.isEmpty(), trimmed.indexOf('{') >= 0, preview);
                 return new AiResult(
                         baseMarkdownWithDisclaimer(baseMarkdown, "AI 출력 파싱 실패"),
                         buildEvidenceJson("rejected", "unparsed", true),

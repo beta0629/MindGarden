@@ -251,9 +251,8 @@ public class OpenAIPsychAiServiceImpl implements PsychAiService {
                 if (!validation.ok) {
                     log.warn("Psych AI validation failed: reason={}, contentLen={}", validation.reason, trimmed.length());
                     String reportMd = out.path("reportMarkdown").asText("");
-                    boolean hasRequiredSections = StringUtils.hasText(reportMd)
-                            && reportMd.contains("## 요약") && reportMd.contains("## 권고");
-                    if (hasRequiredSections && isEvidenceOnlyFailure(validation.reason)) {
+                    boolean sectionsOk = StringUtils.hasText(reportMd) && hasRequiredSections(reportMd);
+                    if (sectionsOk && isEvidenceOnlyFailure(validation.reason)) {
                         log.info("Psych AI: evidence validation failed but reportMarkdown accepted (reason={})", validation.reason);
                         JsonNode evNode = out.path("evidence");
                         String ev = evNode.isMissingNode() ? buildEvidenceJson("ok", "evidence_skipped", true) : evNode.toString();
@@ -314,6 +313,14 @@ public class OpenAIPsychAiServiceImpl implements PsychAiService {
                 || reason.startsWith("hallucinated_scaleCode");
     }
 
+    /** ##/### 요약, ##/### 권고 등 마크다운 헤딩 변형 허용 */
+    private boolean hasRequiredSections(String reportMarkdown) {
+        if (!StringUtils.hasText(reportMarkdown)) return false;
+        Pattern summaryPattern = Pattern.compile("^#+\\s+.*요약", Pattern.MULTILINE | Pattern.UNICODE_CASE);
+        Pattern recommendationPattern = Pattern.compile("^#+\\s+.*권고", Pattern.MULTILINE | Pattern.UNICODE_CASE);
+        return summaryPattern.matcher(reportMarkdown).find() && recommendationPattern.matcher(reportMarkdown).find();
+    }
+
     private Validation validateModelOutput(JsonNode out, List<MetricInput> metrics) {
         if (out == null || out.isMissingNode() || !out.isObject()) {
             return new Validation(false, "invalid_json_root");
@@ -324,8 +331,8 @@ public class OpenAIPsychAiServiceImpl implements PsychAiService {
             return new Validation(false, "missing_report_markdown");
         }
 
-        // 섹션 최소 요건(오판 방어: 구조가 깨지면 즉시 폴백)
-        if (!reportMarkdown.contains("## 요약") || !reportMarkdown.contains("## 권고")) {
+        // 섹션 최소 요건(오판 방어: ##/### 요약, ##/### 권고 등 변형 허용)
+        if (!hasRequiredSections(reportMarkdown)) {
             return new Validation(false, "missing_required_sections");
         }
 

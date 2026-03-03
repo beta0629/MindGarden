@@ -482,12 +482,15 @@ const SystemConfigManagement = () => {
                             </datalist>
                           )}
                           <div className="mg-v2-system-config__pricing-notice" style={{ marginTop: 8 }}>
-                            {getModelPricingLabel('gemini', providers.gemini?.model || '') ? (
-                              <><strong>요금 참고:</strong> {getModelPricingLabel('gemini', providers.gemini?.model || '')} (1M tokens 기준, USD). </></>
-                            ) : (
-                              <><strong>요금 참고:</strong> 선택한 모델의 요금은 공식 문서를 참고하세요. </></>
-                            )}
-                            <a href={PRICING_URLS.gemini} target="_blank" rel="noopener noreferrer">Gemini 공식 요금</a>
+                            <>
+                              {getModelPricingLabel('gemini', providers.gemini?.model || '') ? (
+                                <span><strong>요금 참고:</strong> {getModelPricingLabel('gemini', providers.gemini?.model || '')} (1M tokens 기준, USD). </span>
+                              ) : (
+                                <span><strong>요금 참고:</strong> 선택한 모델의 요금은 공식 문서를 참고하세요. </span>
+                              )}
+                              {' '}
+                              <a href={PRICING_URLS.gemini} target="_blank" rel="noopener noreferrer">Gemini 공식 요금</a>
+                            </>
                           </div>
                         </>
                       ) : id === 'openai' ? (
@@ -545,12 +548,15 @@ const SystemConfigManagement = () => {
                             </datalist>
                           )}
                           <div className="mg-v2-system-config__pricing-notice" style={{ marginTop: 8 }}>
-                            {getModelPricingLabel('openai', providers.openai?.model || '') ? (
-                              <><strong>요금 참고:</strong> {getModelPricingLabel('openai', providers.openai?.model || '')} (1M tokens 기준, USD). </></>
-                            ) : (
-                              <><strong>요금 참고:</strong> 선택한 모델의 요금은 공식 문서를 참고하세요. </></>
-                            )}
-                            <a href={PRICING_URLS.openai} target="_blank" rel="noopener noreferrer">OpenAI 공식 요금</a>
+                            <>
+                              {getModelPricingLabel('openai', providers.openai?.model || '') ? (
+                                <span><strong>요금 참고:</strong> {getModelPricingLabel('openai', providers.openai?.model || '')} (1M tokens 기준, USD). </span>
+                              ) : (
+                                <span><strong>요금 참고:</strong> 선택한 모델의 요금은 공식 문서를 참고하세요. </span>
+                              )}
+                              {' '}
+                              <a href={PRICING_URLS.openai} target="_blank" rel="noopener noreferrer">OpenAI 공식 요금</a>
+                            </>
                           </div>
                         </>
                       ) : (

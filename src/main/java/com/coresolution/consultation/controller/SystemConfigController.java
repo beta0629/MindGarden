@@ -369,7 +369,7 @@ public class SystemConfigController {
             log.debug("ListModels 실패, fallback 모델 사용: {}", e.getMessage());
         }
         if (modelId == null || modelId.isBlank()) {
-            modelId = "gemini-3.1-pro";
+            modelId = "gemini-2.0-flash";
         }
         String url = baseUrl + "/models/" + modelId + ":generateContent";
         Map<String, Object> requestBody = new HashMap<>();

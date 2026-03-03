@@ -100,7 +100,7 @@ public class OpenAIPsychAiServiceImpl implements PsychAiService {
         }
     }
 
-    private static final String GEMINI_FALLBACK_MODEL = "gemini-1.5-pro";
+    private static final String GEMINI_FALLBACK_MODEL = "gemini-2.0-flash";
     private static final String GEMINI_DEFAULT_URL = "https://generativelanguage.googleapis.com/v1beta";
 
     private String callGeminiApiWithFallback(String apiKey, String baseUrl, String model, String systemPrompt, String userPrompt) {

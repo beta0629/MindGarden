@@ -345,14 +345,20 @@ public class OpenAIPsychAiServiceImpl implements PsychAiService {
                 || reason.startsWith("hallucinated_scaleCode");
     }
 
-    /** ##/### 요약, ##/### 권고 등 마크다운 헤딩 변형 허용. BOM·공백 누락(##요약)·전각 # 대응 */
+    /** ##/### 요약, ##/### 권고 등 마크다운 헤딩 변형 허용. BOM·공백 누락·전각#·들여쓰기·한 줄 대응 */
     private boolean hasRequiredSections(String reportMarkdown) {
         if (!StringUtils.hasText(reportMarkdown)) return false;
         String normalized = reportMarkdown.replace("\uFEFF", "").replace("\r", "");
-        // # 뒤 공백 0개 허용(\s*), 전각 ＃(U+FF03) 허용
-        Pattern summaryPattern = Pattern.compile("^[#＃]+\\s*.*요약", Pattern.MULTILINE | Pattern.UNICODE_CASE);
-        Pattern recommendationPattern = Pattern.compile("^[#＃]+\\s*.*권고", Pattern.MULTILINE | Pattern.UNICODE_CASE);
-        return summaryPattern.matcher(normalized).find() && recommendationPattern.matcher(normalized).find();
+        // 1) 줄 시작 공백 허용(들여쓰기): ^\s*[#＃]+\s*.*요약/권고
+        Pattern summaryLineStart = Pattern.compile("^\\s*[#＃]+\\s*.*요약", Pattern.MULTILINE | Pattern.UNICODE_CASE);
+        Pattern recommendationLineStart = Pattern.compile("^\\s*[#＃]+\\s*.*권고", Pattern.MULTILINE | Pattern.UNICODE_CASE);
+        if (summaryLineStart.matcher(normalized).find() && recommendationLineStart.matcher(normalized).find()) {
+            return true;
+        }
+        // 2) 한 줄 reportMarkdown fallback: 줄 시작 없이 [#＃]+ ... 요약/권고 존재 여부
+        Pattern summaryAnywhere = Pattern.compile(".*[#＃]+\\s*.*요약", Pattern.UNICODE_CASE);
+        Pattern recommendationAnywhere = Pattern.compile(".*[#＃]+\\s*.*권고", Pattern.UNICODE_CASE);
+        return summaryAnywhere.matcher(normalized).find() && recommendationAnywhere.matcher(normalized).find();
     }
 
     private Validation validateModelOutput(JsonNode out, List<MetricInput> metrics) {

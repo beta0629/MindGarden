@@ -4,6 +4,7 @@ import ConsultantSelectionStep from './steps/ConsultantSelectionStep';
 import ClientSelectionStep from './steps/ClientSelectionStep';
 import TimeSlotGrid from './TimeSlotGrid';
 import UnifiedModal from '../common/modals/UnifiedModal';
+import MGButton from '../common/MGButton';
 import notificationManager from '../../utils/notification';
 import { useSession } from '../../contexts/SessionContext';
 import StandardizedApi from '../../utils/standardizedApi';
@@ -338,13 +339,17 @@ const ScheduleModalNew = ({
             다음
           </button>
         ) : (
-          <button
+          <MGButton
+            type="button"
+            variant="primary"
             className="mg-v2-btn--primary"
             onClick={handleCreateSchedule}
-            disabled={loading}
+            loading={loading}
+            preventDoubleClick={true}
+            loadingText="생성 중..."
           >
-            {loading ? '생성 중...' : '스케줄 생성'}
-          </button>
+            스케줄 생성
+          </MGButton>
         )}
       </>
     );

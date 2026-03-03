@@ -3,6 +3,7 @@ import { CreditCard, CheckCircle, XCircle } from 'lucide-react';
 import { apiGet } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 import UnifiedModal from '../common/modals/UnifiedModal';
+import MGButton from '../common/MGButton';
 import './PaymentConfirmationModal.css';
 
 /**
@@ -304,24 +305,30 @@ const PaymentConfirmationModal = ({
           >
             취소
           </button>
-          <button
+          <MGButton
             type="button"
-            className="mg-v2-button mg-v2-button-danger"
+            variant="danger"
             onClick={handleCancelPayment}
-            disabled={loading || selectedMappings.length === 0}
+            loading={loading}
+            loadingText="취소 처리 중..."
+            disabled={selectedMappings.length === 0}
+            preventDoubleClick
           >
             <XCircle size={18} />
             결제 취소
-          </button>
-          <button
+          </MGButton>
+          <MGButton
             type="button"
-            className="mg-v2-button mg-v2-button-primary"
+            variant="primary"
             onClick={handleConfirmPayment}
-            disabled={loading || selectedMappings.length === 0}
+            loading={loading}
+            loadingText="확인 처리 중..."
+            disabled={selectedMappings.length === 0}
+            preventDoubleClick
           >
             <CheckCircle size={18} />
             결제 확인
-          </button>
+          </MGButton>
         </>
       }
     >

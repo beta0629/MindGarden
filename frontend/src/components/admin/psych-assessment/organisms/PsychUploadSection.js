@@ -12,6 +12,7 @@ import { useDropzone } from 'react-dropzone';
 import { Upload, Search, X } from 'lucide-react';
 import ContentSection from '../../../dashboard-v2/content/ContentSection';
 import ContentCard from '../../../dashboard-v2/content/ContentCard';
+import MGButton from '../../../common/MGButton';
 import notificationManager from '../../../../utils/notification';
 import './PsychUploadSection.css';
 
@@ -252,14 +253,18 @@ const PsychUploadSection = ({
                 );
               })}
             </fieldset>
-            <button
+            <MGButton
               type="button"
+              variant="primary"
               className="mg-v2-button mg-v2-button-primary"
               onClick={onUpload}
-              disabled={uploading}
+              loading={uploading}
+              disabled={!uploadFiles?.length}
+              preventDoubleClick={true}
+              loadingText="업로드 중..."
             >
               업로드
-            </button>
+            </MGButton>
           </div>
           <p className="mg-v2-psych-upload-section__hint">
             PDF 또는 이미지 업로드 후 자동으로 추출 작업이 진행됩니다.

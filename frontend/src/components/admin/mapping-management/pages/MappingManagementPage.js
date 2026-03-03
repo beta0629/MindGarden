@@ -21,6 +21,7 @@ import {
   FileText
 } from 'lucide-react';
 import Button from '../../../ui/Button/Button';
+import MGButton from '../../../common/MGButton';
 import StandardizedApi from '../../../../utils/standardizedApi';
 import notificationManager from '../../../../utils/notification';
 import { useSession } from '../../../../contexts/SessionContext';
@@ -572,16 +573,16 @@ const MappingManagementPage = () => {
               >
                 취소
               </Button>
-              <Button
+              <MGButton
                 variant="danger"
                 onClick={handleRefundProcess}
-                disabled={loading || !refundReason.trim()}
-                preventDoubleClick
+                disabled={!refundReason.trim()}
                 loading={loading}
+                preventDoubleClick={true}
                 loadingText="처리 중..."
               >
                 환불 처리
-              </Button>
+              </MGButton>
             </div>
           </div>
         </div>

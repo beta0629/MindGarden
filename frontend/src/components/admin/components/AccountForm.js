@@ -8,6 +8,7 @@ import {
   ACCOUNT_BUTTON_TEXT,
   ACCOUNT_PAGE_TITLES
 } from '../../../constants/account';
+import MGButton from '../../common/MGButton';
 
 const AccountForm = ({
   showForm,
@@ -149,9 +150,15 @@ const AccountForm = ({
           </div>
 
           <div className="form-actions">
-            <button type="submit" className="btn btn-primary" disabled={loading}>
-              {loading ? ACCOUNT_BUTTON_TEXT.PROCESSING : (editingAccount ? ACCOUNT_BUTTON_TEXT.EDIT : ACCOUNT_BUTTON_TEXT.SUBMIT)}
-            </button>
+            <MGButton
+              type="submit"
+              variant="primary"
+              loading={loading}
+              loadingText={ACCOUNT_BUTTON_TEXT.PROCESSING}
+              preventDoubleClick
+            >
+              {editingAccount ? ACCOUNT_BUTTON_TEXT.EDIT : ACCOUNT_BUTTON_TEXT.SUBMIT}
+            </MGButton>
             <button type="button" className="btn btn-secondary" onClick={onClose}>
               {ACCOUNT_BUTTON_TEXT.CANCEL}
             </button>

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { AlertTriangle, Eye, EyeOff } from 'lucide-react';
 import UnifiedModal from '../common/modals/UnifiedModal';
+import MGButton from '../common/MGButton';
 import './PasswordResetModal.css';
 
 /**
@@ -73,14 +74,16 @@ const PasswordResetModal = ({
                     >
                         취소
                     </button>
-                    <button
+                    <MGButton
                         type="submit"
                         form="admin-password-reset-form"
-                        className="mg-v2-button mg-v2-button-primary"
-                        disabled={isSubmitting}
+                        variant="primary"
+                        loading={isSubmitting}
+                        loadingText="처리 중..."
+                        preventDoubleClick
                     >
-                        {isSubmitting ? '처리 중...' : '비밀번호 초기화'}
-                    </button>
+                        비밀번호 초기화
+                    </MGButton>
                 </>
             }
         >

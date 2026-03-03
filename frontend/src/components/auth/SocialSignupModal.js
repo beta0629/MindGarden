@@ -5,6 +5,7 @@ import { formatPhoneNumber, isValidEmail, isValidPassword } from '../../utils/co
 import { userAPI } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 import PrivacyConsentModal from '../common/PrivacyConsentModal';
+import MGButton from '../common/MGButton';
 import '../../styles/auth/social-signup-modal.css';
 
 const SocialSignupModal = ({ 
@@ -626,12 +627,15 @@ const SocialSignupModal = ({
               }}>
                 취소
               </button>
-              <button type="submit" className="btn btn-primary" disabled={isLoading}>
-                {isLoading 
-                  ? (socialUser?.needsBranchMapping ? '매핑 중...' : '가입 중...') 
-                  : (socialUser?.needsBranchMapping ? '지점 매핑 완료' : '회원가입 완료')
-                }
-              </button>
+              <MGButton
+                type="submit"
+                variant="primary"
+                loading={isLoading}
+                loadingText={socialUser?.needsBranchMapping ? '매핑 중...' : '가입 중...'}
+                preventDoubleClick
+              >
+                {socialUser?.needsBranchMapping ? '지점 매핑 완료' : '회원가입 완료'}
+              </MGButton>
             </div>
           </form>
         </div>

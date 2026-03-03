@@ -50,6 +50,7 @@ import './system/SystemStatus.css';
 import './system/SystemTools.css';
 import { ADMIN_ROUTES } from '../../constants/adminRoutes';
 import Avatar from '../common/Avatar';
+import MGButton from '../common/MGButton';
 
 const AdminDashboard = ({ user: propUser }) => {
     const navigate = useNavigate();
@@ -119,6 +120,8 @@ const AdminDashboard = ({ user: propUser }) => {
     const [showToastState, setShowToastState] = useState(false);
     const [toastMessage, setToastMessage] = useState('');
     const [toastType, setToastType] = useState('success');
+    const [autoCompleteLoading, setAutoCompleteLoading] = useState(false);
+    const [autoCompleteWithReminderLoading, setAutoCompleteWithReminderLoading] = useState(false);
     const [isPermissionSectionExpanded, setIsPermissionSectionExpanded] = useState(false);
     const [chartPeriod, setChartPeriod] = useState('monthly');
     const [systemStatus, setSystemStatus] = useState({
@@ -417,6 +420,7 @@ const AdminDashboard = ({ user: propUser }) => {
     }, [loadUnassignedClientsAndConsultants, loadStats, loadPendingDepositStats]);
 
     const handleAutoCompleteSchedules = async () => {
+        setAutoCompleteLoading(true);
         try {
             const response = await csrfTokenManager.post('/api/v1/admin/schedules/auto-complete');
 
@@ -431,10 +435,13 @@ const AdminDashboard = ({ user: propUser }) => {
         } catch (error) {
             console.error('스케줄 자동 완료 처리 실패:', error);
             showToast('스케줄 자동 완료 처리에 실패했습니다.', 'danger');
+        } finally {
+            setAutoCompleteLoading(false);
         }
     };
 
     const handleAutoCompleteWithReminder = async () => {
+        setAutoCompleteWithReminderLoading(true);
         try {
             const response = await csrfTokenManager.post('/api/v1/admin/schedules/auto-complete-with-reminder');
 
@@ -449,6 +456,8 @@ const AdminDashboard = ({ user: propUser }) => {
         } catch (error) {
             console.error('스케줄 자동 완료 처리 및 알림 실패:', error);
             showToast('스케줄 자동 완료 처리 및 알림에 실패했습니다.', 'danger');
+        } finally {
+            setAutoCompleteWithReminderLoading(false);
         }
     };
 
@@ -1240,21 +1249,35 @@ const AdminDashboard = ({ user: propUser }) => {
                         <p className="mg-management-description">상담 회기를 등록하고 관리합니다</p>
                     </div>
                     
-                    <div className="mg-management-card" onClick={handleAutoCompleteSchedules}>
+                    <MGButton
+                        type="button"
+                        className="mg-management-card"
+                        onClick={handleAutoCompleteSchedules}
+                        loading={autoCompleteLoading}
+                        preventDoubleClick={true}
+                        loadingText="처리 중..."
+                    >
                         <div className="mg-management-icon">
                             <FaSyncAlt />
                         </div>
                         <h3>스케줄 자동 완료</h3>
                         <p className="mg-management-description">지난 스케줄을 자동으로 완료 처리합니다</p>
-                    </div>
+                    </MGButton>
                     
-                    <div className="mg-management-card" onClick={handleAutoCompleteWithReminder}>
+                    <MGButton
+                        type="button"
+                        className="mg-management-card"
+                        onClick={handleAutoCompleteWithReminder}
+                        loading={autoCompleteWithReminderLoading}
+                        preventDoubleClick={true}
+                        loadingText="처리 중..."
+                    >
                         <div className="mg-management-icon">
                             <FaExclamationTriangle />
                         </div>
                         <h3>스케줄 완료 + 알림</h3>
                         <p className="mg-management-description">지난 스케줄 완료 처리 및 상담일지 미작성 알림</p>
-                    </div>
+                    </MGButton>
                     
                     
                     <div className="mg-management-card" onClick={() => navigate(ADMIN_ROUTES.CONSULTANT_COMPREHENSIVE)}>

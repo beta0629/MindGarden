@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import MappingPaymentModal from '../../mapping/MappingPaymentModal';
 import MappingDepositModal from '../../mapping/MappingDepositModal';
+import MGButton from '../../../common/MGButton';
 import './MappingListRow.css';
 
 const formatDate = (dateString) => {
@@ -172,15 +173,18 @@ const MappingListRow = ({
           </button>
         )}
         {mapping.status === 'DEPOSIT_PENDING' && onApprove && (
-          <button
+          <MGButton
             type="button"
-            className="mg-v2-button mg-v2-button-success mg-v2-button-sm"
+            variant="success"
+            size="small"
             onClick={() => handleCriticalAction(() => onApprove(mapping.id))}
-            disabled={processing}
+            loading={processing}
+            loadingText="승인 중..."
+            preventDoubleClick
           >
             <CheckCircle size={14} />
             승인
-          </button>
+          </MGButton>
         )}
         {onEdit && (
           <button

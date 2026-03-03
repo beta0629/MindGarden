@@ -11,6 +11,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { RefreshCw } from 'lucide-react';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
+import MGButton from '../common/MGButton';
 import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import UnifiedLoading from '../common/UnifiedLoading';
@@ -46,6 +47,7 @@ const PsychAssessmentManagement = ({ user: propUser }) => {
   const [reportModalOpen, setReportModalOpen] = useState(false);
   const [reportContent, setReportContent] = useState(null);
   const [reportLoading, setReportLoading] = useState(false);
+  const [generatingReportDocumentId, setGeneratingReportDocumentId] = useState(null);
 
   /** 일반 페이지 방식: stats/recent 직접 로드 (useWidget 미사용 — tenantId·호출 시점 이슈 회피) */
   const [stats, setStats] = useState({});
@@ -215,6 +217,7 @@ const PsychAssessmentManagement = ({ user: propUser }) => {
 
   const handleGenerateReport = async (documentId) => {
     if (!documentId) return;
+    setGeneratingReportDocumentId(documentId);
     try {
       const res = await StandardizedApi.post(`/api/v1/assessments/psych/documents/${documentId}/report`, {});
       if (res?.success === false) {
@@ -224,6 +227,8 @@ const PsychAssessmentManagement = ({ user: propUser }) => {
       loadStatsAndRecent();
     } catch (e) {
       notificationManager.show(e?.message || '리포트 생성에 실패했습니다.', 'error');
+    } finally {
+      setGeneratingReportDocumentId(null);
     }
   };
 
@@ -285,15 +290,19 @@ const PsychAssessmentManagement = ({ user: propUser }) => {
               title="심리검사 리포트(AI)"
               subtitle="TCI/MMPI 업로드 · 처리상태 · 리포트 생성"
               actions={
-                <button
+                <MGButton
                   type="button"
+                  variant="primary"
                   className="mg-v2-mapping-header-btn mg-v2-mapping-header-btn--primary"
                   onClick={() => loadStatsAndRecent()}
                   title="새로고침"
+                  loading={loading}
+                  preventDoubleClick={true}
+                  loadingText="새로고침 중..."
                 >
                   <RefreshCw size={20} />
                   새로고침
-                </button>
+                </MGButton>
               }
             />
 
@@ -320,7 +329,9 @@ const PsychAssessmentManagement = ({ user: propUser }) => {
               documents={displayDocuments}
               onGenerateReport={handleGenerateReport}
               onViewReport={handleViewReport}
+              viewReportLoading={reportLoading}
               listLoadError={recentLoadError}
+              generatingReportDocumentId={generatingReportDocumentId}
             />
           </ContentArea>
         </div>

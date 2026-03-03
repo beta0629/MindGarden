@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import UnifiedLoading from '../common/UnifiedLoading';
+import MGButton from '../common/MGButton';
 import notificationManager from '../../utils/notification';
 import { useSession } from '../../contexts/SessionContext';
 import axios from 'axios';
@@ -30,6 +31,7 @@ const WidgetBasedAdminDashboard = () => {
     const [isManageMode, setIsManageMode] = useState(false); // 관리 모드
     const [availableWidgets, setAvailableWidgets] = useState([]); // 추가 가능한 위젯
     const [showAddWidgetModal, setShowAddWidgetModal] = useState(false); // 위젯 추가 모달
+    const [deletingWidgetId, setDeletingWidgetId] = useState(null); // 삭제 중인 위젯 ID
     const MAX_FETCH_ATTEMPTS = 3; // 최대 3회 시도
 
     // 대시보드 목록 조회
@@ -157,7 +159,8 @@ const WidgetBasedAdminDashboard = () => {
             notificationManager.confirm('이 위젯을 삭제하시겠습니까?', resolve);
         });
         if (!confirmed) return;
-        
+
+        setDeletingWidgetId(widgetId);
         try {
             const response = await axios.delete(
                 `${API_BASE_URL}/api/v1/widgets/${widgetId}`,
@@ -179,6 +182,8 @@ const WidgetBasedAdminDashboard = () => {
         } catch (err) {
             console.error('위젯 삭제 실패:', err);
             notificationManager.error('위젯 삭제 실패', err.message);
+        } finally {
+            setDeletingWidgetId(null);
         }
     };
 
@@ -241,12 +246,17 @@ const WidgetBasedAdminDashboard = () => {
                 {isManageMode && (
                     <div className="widget-actions">
                         {widget.isDeletable ? (
-                            <button 
-                                className="btn-delete" 
+                            <MGButton
+                                variant="danger"
+                                size="small"
+                                className="btn-delete"
                                 onClick={() => handleDeleteWidget(widget.widgetId, groupId)}
+                                loading={deletingWidgetId === widget.widgetId}
+                                loadingText="삭제 중..."
+                                preventDoubleClick
                             >
                                 삭제
-                            </button>
+                            </MGButton>
                         ) : (
                             <span className="no-delete-msg">
                                 {widget.isSystemManaged ? '시스템 위젯은 삭제할 수 없습니다' : '필수 위젯은 삭제할 수 없습니다'}

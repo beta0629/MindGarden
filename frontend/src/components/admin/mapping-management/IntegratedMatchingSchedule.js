@@ -19,6 +19,7 @@ import ScheduleModal from '../../schedule/ScheduleModal';
 import MappingCreationModal from '../MappingCreationModal';
 import MappingPaymentModal from '../mapping/MappingPaymentModal';
 import MappingDepositModal from '../mapping/MappingDepositModal';
+import MGButton from '../../common/MGButton';
 import '../../../styles/unified-design-tokens.css';
 import '../AdminDashboard/AdminDashboardB0KlA.css';
 import './IntegratedMatchingSchedule.css';
@@ -356,16 +357,20 @@ const IntegratedMatchingSchedule = () => {
                           </button>
                         )}
                         {mapping.status === 'DEPOSIT_PENDING' && (
-                          <button
+                          <MGButton
                             type="button"
+                            variant="success"
+                            size="small"
                             className="integrated-schedule__btn-action integrated-schedule__btn-action--approve"
                             onClick={() => handleApprove(mapping.id)}
-                            disabled={approveProcessing}
+                            loading={approveProcessing}
+                            loadingText="승인 중..."
+                            preventDoubleClick
                             aria-label="승인"
                           >
                             <CheckCircle size={14} />
                             승인
-                          </button>
+                          </MGButton>
                         )}
                         <button
                           type="button"

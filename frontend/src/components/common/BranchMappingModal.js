@@ -3,6 +3,7 @@ import { Building, XCircle, MapPin, Check } from 'lucide-react';
 import notificationManager from '../../utils/notification';
 import { apiPost } from '../../utils/ajax';
 import UnifiedModal from './modals/UnifiedModal';
+import MGButton from './MGButton';
 
 /**
  * 지점 매핑 모달 컴포넌트
@@ -153,19 +154,18 @@ const BranchMappingModal = ({ isOpen, onClose, onSuccess }) => {
             <XCircle size={20} className="mg-v2-icon-inline" />
             취소
           </button>
-          <button
+          <MGButton
             type="submit"
             form="branch-mapping-form"
-            className="mg-v2-button mg-v2-button--primary"
-            disabled={isLoading || !selectedBranchCode || isLoadingBranches}
+            variant="primary"
+            loading={isLoading}
+            loadingText="매핑 중..."
+            disabled={!selectedBranchCode || isLoadingBranches}
+            preventDoubleClick
           >
-            {isLoading ? <div className="mg-loading">로딩중...</div> : (
-              <>
-                <Check size={20} className="mg-v2-icon-inline" />
-                지점 매핑
-              </>
-            )}
-          </button>
+            <Check size={20} className="mg-v2-icon-inline" />
+            지점 매핑
+          </MGButton>
         </>
       }
     >

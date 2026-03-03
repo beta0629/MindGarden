@@ -10,6 +10,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Edit3, Ban, CheckCircle } from 'lucide-react';
 import AdminCommonLayout from '../../../layout/AdminCommonLayout';
+import MGButton from '../../../common/MGButton';
 import StandardizedApi from '../../../../utils/standardizedApi';
 import notificationManager from '../../../../utils/notification';
 import ContentArea from '../../../dashboard-v2/content/ContentArea';
@@ -43,6 +44,7 @@ function PackagePricingListPage() {
   const navigate = useNavigate();
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [togglingRowId, setTogglingRowId] = useState(null);
 
   const fetchList = useCallback(async () => {
     setLoading(true);
@@ -69,6 +71,7 @@ function PackagePricingListPage() {
 
   const handleToggleActive = async (row) => {
     const nextActive = !row.isActive;
+    setTogglingRowId(row.id);
     try {
       await StandardizedApi.put(`${API.TENANT_COMMON_CODES}/${row.id}`, {
         codeLabel: row.codeLabel,
@@ -81,6 +84,8 @@ function PackagePricingListPage() {
       fetchList();
     } catch (err) {
       notificationManager.show(err.message || '상태 변경에 실패했습니다.', 'error');
+    } finally {
+      setTogglingRowId(null);
     }
   };
 
@@ -158,17 +163,23 @@ function PackagePricingListPage() {
                           <Edit3 size={14} />
                           {LABELS.EDIT}
                         </button>
-                        <button
+                        <MGButton
                           type="button"
+                          variant={row.isActive === true || row.isActive === undefined ? 'danger' : 'success'}
+                          size="small"
                           className={(row.isActive === true || row.isActive === undefined) ? 'mg-v2-button mg-v2-button-danger' : 'mg-v2-button mg-v2-button-success'}
                           onClick={() => handleToggleActive(row)}
+                          loading={togglingRowId === row.id}
+                          disabled={!!togglingRowId}
+                          preventDoubleClick={true}
+                          loadingText="처리 중..."
                         >
                           {(row.isActive === true || row.isActive === undefined) ? (
                             <><Ban size={14} /> {LABELS.DEACTIVATE}</>
                           ) : (
                             <><CheckCircle size={14} /> {LABELS.ACTIVATE}</>
                           )}
-                        </button>
+                        </MGButton>
                       </div>
                     </article>
                   );

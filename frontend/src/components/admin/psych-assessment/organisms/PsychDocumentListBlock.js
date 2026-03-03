@@ -11,6 +11,7 @@ import PropTypes from 'prop-types';
 import { FileText, LayoutGrid, List, PlayCircle, FileSearch } from 'lucide-react';
 import ContentSection from '../../../dashboard-v2/content/ContentSection';
 import ContentCard from '../../../dashboard-v2/content/ContentCard';
+import MGButton from '../../../common/MGButton';
 import './PsychDocumentListBlock.css';
 
 const getStatusVariant = (status) => {
@@ -26,7 +27,9 @@ const PsychDocumentListBlock = ({
   documents = [],
   onGenerateReport,
   onViewReport,
-  listLoadError = false
+  viewReportLoading = false,
+  listLoadError = false,
+  generatingReportDocumentId = null
 }) => {
   const [viewMode, setViewMode] = useState('table');
   const isEmpty = !documents || documents.length === 0;
@@ -70,23 +73,33 @@ const PsychDocumentListBlock = ({
               <td data-label="생성">{d.createdAt || '-'}</td>
               <td data-label="액션">
                 {onViewReport && (
-                  <button
+                  <MGButton
                     type="button"
-                    className="mg-v2-button mg-v2-button-outline mg-v2-button-sm mg-v2-psych-document-list-block__action"
+                    variant="outline"
+                    size="small"
+                    className="mg-v2-psych-document-list-block__action"
                     onClick={() => onViewReport(d.documentId)}
                     title="AI 분석 결과 보기"
+                    loading={viewReportLoading}
+                    preventDoubleClick={true}
+                    loadingText="불러오는 중..."
                   >
                     <FileSearch size={16} /> 리포트 보기
-                  </button>
+                  </MGButton>
                 )}
-                <button
-                  type="button"
-                  className="mg-v2-button mg-v2-button-outline mg-v2-button-sm"
-                  onClick={() => onGenerateReport?.(d.documentId)}
+                <MGButton
+                  variant="outline"
+                  size="small"
+                  loading={generatingReportDocumentId === d.documentId}
+                  disabled={!!generatingReportDocumentId}
+                  loadingText="생성 중..."
+                  preventDoubleClick={true}
                   title="리포트 생성"
+                  className="mg-v2-psych-document-list-block__action"
+                  onClick={() => onGenerateReport?.(d.documentId)}
                 >
                   <PlayCircle size={16} /> 리포트 생성
-                </button>
+                </MGButton>
               </td>
             </tr>
           ))}
@@ -109,23 +122,31 @@ const PsychDocumentListBlock = ({
           <p className="mg-v2-psych-document-list-block__card-date">{d.createdAt || '-'}</p>
           <div className="mg-v2-psych-document-list-block__card-actions">
             {onViewReport && (
-              <button
+              <MGButton
                 type="button"
-                className="mg-v2-button mg-v2-button-outline mg-v2-button-sm"
+                variant="outline"
+                size="small"
                 onClick={() => onViewReport(d.documentId)}
                 title="AI 분석 결과 보기"
+                loading={viewReportLoading}
+                preventDoubleClick={true}
+                loadingText="불러오는 중..."
               >
                 <FileSearch size={16} /> 리포트 보기
-              </button>
+              </MGButton>
             )}
-            <button
-              type="button"
-              className="mg-v2-button mg-v2-button-outline mg-v2-button-sm"
-              onClick={() => onGenerateReport?.(d.documentId)}
+            <MGButton
+              variant="outline"
+              size="small"
+              loading={generatingReportDocumentId === d.documentId}
+              disabled={!!generatingReportDocumentId}
+              loadingText="생성 중..."
+              preventDoubleClick={true}
               title="리포트 생성"
+              onClick={() => onGenerateReport?.(d.documentId)}
             >
               <PlayCircle size={16} /> 리포트 생성
-            </button>
+            </MGButton>
           </div>
         </div>
       ))}
@@ -182,7 +203,9 @@ PsychDocumentListBlock.propTypes = {
   ),
   onGenerateReport: PropTypes.func,
   onViewReport: PropTypes.func,
-  listLoadError: PropTypes.bool
+  viewReportLoading: PropTypes.bool,
+  listLoadError: PropTypes.bool,
+  generatingReportDocumentId: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
 };
 
 export default PsychDocumentListBlock;

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import UnifiedLoading from '../common/UnifiedLoading';
+import MGButton from '../common/MGButton';
 import { FaDatabase, FaChartLine, FaClock, FaMemory, FaSync } from 'react-icons/fa';
 import { DataTransformer, PerformanceUtils } from '../../utils/performanceUtils';
 import { WIDGET_CONSTANTS } from '../../constants/widgetConstants';
@@ -10,6 +11,8 @@ import './CacheMonitoringDashboard.css';
 const CacheMonitoringDashboard = () => {
   const [cacheStats, setCacheStats] = useState({});
   const [loading, setLoading] = useState(false);
+  const [clearLoading, setClearLoading] = useState(false);
+  const [retryLoading, setRetryLoading] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(null);
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [refreshInterval, setRefreshInterval] = useState(WIDGET_CONSTANTS.CACHE_MONITORING_WIDGET.DEFAULT_REFRESH_INTERVAL);
@@ -40,7 +43,8 @@ const CacheMonitoringDashboard = () => {
       notificationManager.confirm(WIDGET_CONSTANTS.CACHE_MONITORING_WIDGET.MESSAGES.CLEAR_CONFIRM, resolve);
     });
     if (!confirmed) return;
-    
+
+    setClearLoading(true);
     try {
       const response = await fetch(WIDGET_CONSTANTS.CACHE_MONITORING_WIDGET.API_ENDPOINTS.CLEAR_ALL, { method: 'DELETE' });
       if (response.ok) {
@@ -52,6 +56,8 @@ const CacheMonitoringDashboard = () => {
     } catch (error) {
       console.error('캐시 삭제 오류:', error);
       notificationManager.error(WIDGET_CONSTANTS.CACHE_MONITORING_WIDGET.MESSAGES.CLEAR_ERROR);
+    } finally {
+      setClearLoading(false);
     }
   };
 
@@ -117,20 +123,31 @@ const CacheMonitoringDashboard = () => {
             <option value={WIDGET_CONSTANTS.REFRESH_INTERVALS.NORMAL}>10초</option>
             <option value={WIDGET_CONSTANTS.REFRESH_INTERVALS.SLOW}>30초</option>
           </select>
-          <button
+          <MGButton
+            type="button"
+            variant="outline"
+            size="small"
             onClick={fetchCacheStats}
-            disabled={loading}
+            loading={loading}
+            loadingText="새로고침 중..."
+            preventDoubleClick
             className="refresh-button"
           >
-            <FaSync className={loading ? 'spinning' : ''} />
+            <FaSync size={14} />
             새로고침
-          </button>
-          <button
+          </MGButton>
+          <MGButton
+            type="button"
+            variant="danger"
+            size="small"
             onClick={clearAllCaches}
+            loading={clearLoading}
+            loadingText="삭제 중..."
+            preventDoubleClick
             className="clear-cache-button"
           >
             캐시 삭제
-          </button>
+          </MGButton>
         </div>
       </div>
 
@@ -197,9 +214,25 @@ const CacheMonitoringDashboard = () => {
         <div className="no-cache-data">
           <FaDatabase size={48} />
           <p>캐시 데이터가 없습니다.</p>
-          <button onClick={fetchCacheStats} className="retry-button">
+          <MGButton
+            type="button"
+            variant="outline"
+            size="small"
+            onClick={async () => {
+              setRetryLoading(true);
+              try {
+                await fetchCacheStats();
+              } finally {
+                setRetryLoading(false);
+              }
+            }}
+            loading={retryLoading}
+            loadingText="다시 시도 중..."
+            preventDoubleClick
+            className="retry-button"
+          >
             다시 시도
-          </button>
+          </MGButton>
         </div>
       )}
       </div>

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 // import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import axios from 'axios';
 import ErpModal from './common/ErpModal';
+import MGButton from '../common/MGButton';
 import './FinancialTransactionForm.css';
 import notificationManager from '../../utils/notification';
 
@@ -283,13 +284,15 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
             >
               취소
             </button>
-            <button
+            <MGButton
               type="submit"
-              disabled={loading}
-              className="mg-v2-button mg-v2-button--primary"
+              variant="primary"
+              loading={loading}
+              loadingText="등록 중..."
+              preventDoubleClick
             >
-              {loading ? '등록 중...' : '등록하기'}
-            </button>
+              등록하기
+            </MGButton>
           </div>
         </form>
     </ErpModal>

@@ -1,7 +1,7 @@
 import React from 'react';
 import UnifiedLoading from '../../common/UnifiedLoading';
 import MGCard from '../../common/MGCard';
-import Button from '../../ui/Button/Button';
+import MGButton from '../../common/MGButton';
 import { 
   ACCOUNT_CSS_CLASSES 
 } from '../../../constants/css';
@@ -103,40 +103,40 @@ const AccountTable = ({
             
             {/* 카드 액션 (버튼 가로 배치) */}
             <div className="account-card__actions">
-              <Button 
+              <MGButton
                 variant="secondary"
                 size="small"
                 onClick={() => onEdit(account)}
-                preventDoubleClick={true}
+                preventDoubleClick
               >
                 {ACCOUNT_BUTTON_TEXT.EDIT}
-              </Button>
-              <Button 
+              </MGButton>
+              <MGButton
                 variant="warning"
                 size="small"
                 onClick={() => onToggleStatus(account.id)}
-                preventDoubleClick={true}
+                preventDoubleClick
               >
                 {account.isActive ? ACCOUNT_BUTTON_TEXT.DEACTIVATE : ACCOUNT_BUTTON_TEXT.ACTIVATE}
-              </Button>
+              </MGButton>
               {!account.isPrimary && (
-                <Button 
+                <MGButton
                   variant="info"
                   size="small"
                   onClick={() => onSetPrimary(account.id)}
-                  preventDoubleClick={true}
+                  preventDoubleClick
                 >
                   {ACCOUNT_BUTTON_TEXT.SET_PRIMARY}
-                </Button>
+                </MGButton>
               )}
-              <Button 
+              <MGButton
                 variant="danger"
                 size="small"
                 onClick={() => onDelete(account.id)}
-                preventDoubleClick={true}
+                preventDoubleClick
               >
                 {ACCOUNT_BUTTON_TEXT.DELETE}
-              </Button>
+              </MGButton>
             </div>
           </MGCard>
         ))}

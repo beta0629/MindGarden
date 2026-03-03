@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import Button from '../ui/Button/Button';
+import MGButton from '../common/MGButton';
 // import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import './SalaryConfigModal.css';
 
@@ -240,7 +240,7 @@ const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
         </div>
 
         <div className="mg-modal__footer salary-config-modal-footer">
-          <Button
+          <MGButton
             variant="outline"
             size="medium"
             onClick={onClose}
@@ -248,18 +248,17 @@ const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
             preventDoubleClick={false}
           >
             취소
-          </Button>
-          <Button
+          </MGButton>
+          <MGButton
             variant="primary"
             size="medium"
             onClick={handleSave}
-            disabled={loading}
             loading={loading}
             loadingText="저장 중..."
-            preventDoubleClick={false}
+            preventDoubleClick
           >
-            {loading ? '저장 중...' : '저장'}
-          </Button>
+            저장
+          </MGButton>
         </div>
       </div>
     </div>

@@ -11,6 +11,7 @@ import PropTypes from 'prop-types';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import AdminCommonLayout from '../../../layout/AdminCommonLayout';
+import MGButton from '../../../common/MGButton';
 import StandardizedApi from '../../../../utils/standardizedApi';
 import notificationManager from '../../../../utils/notification';
 import ContentArea from '../../../dashboard-v2/content/ContentArea';
@@ -306,14 +307,17 @@ function PackagePricingDetailPage({ isNew: isNewProp }) {
                 >
                   {LABELS.LIST_BACK}
                 </button>
-                <button
+                <MGButton
                   type="button"
+                  variant="primary"
                   className="mg-v2-mapping-header-btn mg-v2-mapping-header-btn--primary"
                   onClick={handleSubmit}
-                  disabled={submitLoading}
+                  loading={submitLoading}
+                  preventDoubleClick={true}
+                  loadingText="저장 중..."
                 >
-                  {submitLoading ? '저장 중...' : LABELS.SAVE}
-                </button>
+                  {LABELS.SAVE}
+                </MGButton>
               </div>
             </div>
           </section>

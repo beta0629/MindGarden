@@ -3,6 +3,7 @@ import { Edit3, XCircle, Package2, DollarSign, Calendar, AlertCircle, User, Cale
 import notificationManager from '../../utils/notification';
 import { getMappingStatusKoreanNameSync } from '../../utils/codeHelper';
 import UnifiedModal from '../common/modals/UnifiedModal';
+import MGButton from '../common/MGButton';
 import './MappingEditModal.css';
 
 /**
@@ -236,21 +237,18 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
             <XCircle size={18} />
             취소
           </button>
-          <button
+          <MGButton
             type="button"
+            variant="primary"
             className="mg-v2-button mg-v2-button-primary"
             onClick={handleSubmit}
-            disabled={loading}
+            loading={loading}
+            preventDoubleClick={true}
+            loadingText="수정 중..."
           >
-            {loading ? (
-              <span>수정 중...</span>
-            ) : (
-              <>
-                <Edit3 size={18} />
-                수정 완료
-              </>
-            )}
-          </button>
+            <Edit3 size={18} />
+            수정 완료
+          </MGButton>
         </>
       }
     >

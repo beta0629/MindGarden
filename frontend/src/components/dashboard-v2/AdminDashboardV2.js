@@ -64,6 +64,7 @@ import { DesktopLayout, MobileLayout } from './templates';
 import { DEFAULT_MENU_ITEMS, BREAKPOINT_DESKTOP } from './constants/menuItems';
 import { ADMIN_ROUTES } from '../../constants/adminRoutes';
 import Avatar from '../common/Avatar';
+import MGButton from '../common/MGButton';
 import '../../styles/main.css';
 import '../../styles/unified-design-tokens.css';
 import '../../styles/responsive-layout-tokens.css';
@@ -232,6 +233,9 @@ const AdminDashboardV2 = ({ user: propUser }) => {
   const [showToastState, setShowToastState] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState('success');
+  const [autoCompleteLoading, setAutoCompleteLoading] = useState(false);
+  const [autoCompleteWithReminderLoading, setAutoCompleteWithReminderLoading] = useState(false);
+  const [mergeDuplicateLoading, setMergeDuplicateLoading] = useState(false);
   const [chartPeriod, setChartPeriod] = useState('monthly');
   const [searchValue, setSearchValue] = useState('');
   /** 상담 현황 추이 막대 차트 색상 (CSS 변수 resolved, Canvas용) */
@@ -526,6 +530,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
   );
 
   const handleAutoCompleteSchedules = async () => {
+    setAutoCompleteLoading(true);
     try {
       const response = await csrfTokenManager.post('/api/v1/admin/schedules/auto-complete');
       if (response.ok) {
@@ -539,10 +544,13 @@ const AdminDashboardV2 = ({ user: propUser }) => {
     } catch (error) {
       console.error('스케줄 자동 완료 처리 실패:', error);
       showToast('스케줄 자동 완료 처리에 실패했습니다.', 'danger');
+    } finally {
+      setAutoCompleteLoading(false);
     }
   };
 
   const handleAutoCompleteWithReminder = async () => {
+    setAutoCompleteWithReminderLoading(true);
     try {
       const response = await csrfTokenManager.post(
         '/api/v1/admin/schedules/auto-complete-with-reminder'
@@ -558,10 +566,13 @@ const AdminDashboardV2 = ({ user: propUser }) => {
     } catch (error) {
       console.error('스케줄 자동 완료 처리 및 알림 실패:', error);
       showToast('스케줄 자동 완료 처리 및 알림에 실패했습니다.', 'danger');
+    } finally {
+      setAutoCompleteWithReminderLoading(false);
     }
   };
 
   const handleMergeDuplicateMappings = async () => {
+    setMergeDuplicateLoading(true);
     try {
       const checkResponse = await fetch('/api/v1/admin/duplicate-mappings');
       if (!checkResponse.ok) {
@@ -593,6 +604,8 @@ const AdminDashboardV2 = ({ user: propUser }) => {
     } catch (error) {
       console.error('중복 매칭 통합 실패:', error);
       showToast('중복 매칭 통합에 실패했습니다.', 'danger');
+    } finally {
+      setMergeDuplicateLoading(false);
     }
   };
 
@@ -989,30 +1002,36 @@ const AdminDashboardV2 = ({ user: propUser }) => {
           </button>
           )}
           {!HIDE_ADMIN_CARD_IDS.has('schedule-auto-complete') && (
-          <button
+          <MGButton
             type="button"
             className="mg-v2-ad-b0kla__admin-card"
             onClick={handleAutoCompleteSchedules}
+            loading={autoCompleteLoading}
+            preventDoubleClick={true}
+            loadingText="처리 중..."
           >
             <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--blue">
               <FaSyncAlt size={28} />
             </div>
             <span className="mg-v2-ad-b0kla__admin-label">스케줄 자동 완료</span>
             <span className="mg-v2-ad-b0kla__admin-desc">지난 스케줄을 자동으로 완료 처리합니다</span>
-          </button>
+          </MGButton>
           )}
           {!HIDE_ADMIN_CARD_IDS.has('schedule-complete-reminder') && (
-          <button
+          <MGButton
             type="button"
             className="mg-v2-ad-b0kla__admin-card"
             onClick={handleAutoCompleteWithReminder}
+            loading={autoCompleteWithReminderLoading}
+            preventDoubleClick={true}
+            loadingText="처리 중..."
           >
             <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--orange">
               <FaExclamationTriangle size={28} />
             </div>
             <span className="mg-v2-ad-b0kla__admin-label">스케줄 완료 + 알림</span>
             <span className="mg-v2-ad-b0kla__admin-desc">지난 스케줄 완료 처리 및 상담일지 미작성 알림</span>
-          </button>
+          </MGButton>
           )}
           {!HIDE_ADMIN_CARD_IDS.has('consultant-comprehensive') && (
           <button
@@ -1203,17 +1222,20 @@ const AdminDashboardV2 = ({ user: propUser }) => {
             <span className="mg-v2-ad-b0kla__admin-desc">AI 기반 웰니스 컨텐츠 생성 및 비용 관리</span>
           </button>
           {!HIDE_ADMIN_CARD_IDS.has('merge-duplicate-mappings') && (
-          <button
+          <MGButton
             type="button"
             className="mg-v2-ad-b0kla__admin-card"
             onClick={handleMergeDuplicateMappings}
+            loading={mergeDuplicateLoading}
+            preventDoubleClick={true}
+            loadingText="처리 중..."
           >
             <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--gray">
               <FaCompressAlt size={28} />
             </div>
             <span className="mg-v2-ad-b0kla__admin-label">중복 매칭 통합</span>
             <span className="mg-v2-ad-b0kla__admin-desc">중복된 상담사-내담자 매칭을 통합합니다</span>
-          </button>
+          </MGButton>
           )}
         </div>
       </ContentSection>

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 // import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import ReactDOM from 'react-dom';
 import axios from 'axios';
+import MGButton from '../common/MGButton';
 import './QuickExpenseForm.css';
 import notificationManager from '../../utils/notification';
 
@@ -172,25 +173,15 @@ const QuickExpenseForm = ({ onClose, onSuccess }) => {
             {getQuickExpenses().map((expense, index) => {
               
               return (
-                <button
+                <MGButton
                   key={index}
+                  type="button"
+                  variant="secondary"
                   onClick={() => handleQuickExpense(expense.categoryCode, expense.subcategoryCode)}
-                  disabled={loading}
+                  loading={loading}
+                  loadingText="등록 중..."
+                  preventDoubleClick
                   className="quick-expense-category-btn"
-                  onMouseOver={(e) => {
-                    if (!loading) {
-                      e.target.style.transform = 'translateY(-2px)';
-                      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0,0,0,0.2) -> var(--mg-custom-color)
-                      e.target.style.boxShadow = '0 4px 15px rgba(0,0,0,0.2)';
-                    }
-                  }}
-                  onMouseOut={(e) => {
-                    if (!loading) {
-                      e.target.style.transform = 'translateY(0)';
-                      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0,0,0,0.1) -> var(--mg-custom-color)
-                      e.target.style.boxShadow = '0 2px 10px rgba(0,0,0,0.1)';
-                    }
-                  }}
                 >
                   <div className="quick-expense-category-icon">
                     {expense.icon}
@@ -201,7 +192,7 @@ const QuickExpenseForm = ({ onClose, onSuccess }) => {
                   <div className="quick-expense-category-subname">
                     {expense.subDisplayName}
                   </div>
-                </button>
+                </MGButton>
               );
             })}
           </div>

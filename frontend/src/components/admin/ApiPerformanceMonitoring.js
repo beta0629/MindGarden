@@ -18,6 +18,8 @@ import './ApiPerformanceMonitoring.css';
 const ApiPerformanceMonitoring = () => {
   const navigate = useNavigate();
   const [refreshing, setRefreshing] = useState(false);
+  const [downloadLoading, setDownloadLoading] = useState(false);
+  const [clearLoading, setClearLoading] = useState(false);
 
   // 전체 새로고침
   const handleRefresh = async () => {
@@ -38,6 +40,7 @@ const ApiPerformanceMonitoring = () => {
     });
     if (!confirmed) return;
     
+    setClearLoading(true);
     try {
       const response = await fetch(WIDGET_CONSTANTS.API_PERFORMANCE_WIDGET.API_ENDPOINTS.CLEAR_STATS, { 
         method: 'DELETE' 
@@ -51,11 +54,14 @@ const ApiPerformanceMonitoring = () => {
     } catch (error) {
       console.error('통계 초기화 오류:', error);
       notificationManager.error(messages.CLEAR_ERROR);
+    } finally {
+      setClearLoading(false);
     }
   };
 
   // 성능 보고서 다운로드
   const handleDownloadReport = async () => {
+    setDownloadLoading(true);
     try {
       const response = await fetch(WIDGET_CONSTANTS.API_PERFORMANCE_WIDGET.API_ENDPOINTS.STATS);
       if (response.ok) {
@@ -66,6 +72,8 @@ const ApiPerformanceMonitoring = () => {
     } catch (error) {
       console.error('보고서 다운로드 오류:', error);
       notificationManager.error(WIDGET_CONSTANTS.API_PERFORMANCE_WIDGET.MESSAGES.DOWNLOAD_ERROR);
+    } finally {
+      setDownloadLoading(false);
     }
   };
 
@@ -90,26 +98,32 @@ const ApiPerformanceMonitoring = () => {
           </div>
           
           <div className="header-actions">
-            <button className="mg-button"
+            <MGButton
               variant="outline"
               size="small"
               onClick={handleDownloadReport}
+              loading={downloadLoading}
+              loadingText="다운로드 중..."
               disabled={refreshing}
+              preventDoubleClick
             >
               <FaDownload />
               보고서 다운로드
-            </button>
+            </MGButton>
             
-            <button className="mg-button"
+            <MGButton
               variant="outline"
               size="small"
               onClick={handleClearStats}
+              loading={clearLoading}
+              loadingText="초기화 중..."
               disabled={refreshing}
+              preventDoubleClick
               className="danger-button"
             >
               <FaTrash />
               통계 초기화
-            </button>
+            </MGButton>
             
             <button className="mg-button"
               variant="primary"

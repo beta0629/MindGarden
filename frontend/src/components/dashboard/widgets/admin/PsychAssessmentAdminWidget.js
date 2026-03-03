@@ -18,6 +18,7 @@ import PsychUploadSection from '../../../admin/psych-assessment/organisms/PsychU
 import PsychDocumentListBlock from '../../../admin/psych-assessment/organisms/PsychDocumentListBlock';
 import PsychAiReportModalContent from '../../../admin/psych-assessment/organisms/PsychAiReportModalContent';
 import MGModal from '../../../common/MGModal';
+import MGButton from '../../../common/MGButton';
 import UnifiedLoading from '../../../common/UnifiedLoading';
 import '../../../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './PsychAssessmentAdminWidget.css';
@@ -31,6 +32,8 @@ const PsychAssessmentAdminWidget = forwardRef(({ widget, user }, ref) => {
   const [reportModalOpen, setReportModalOpen] = useState(false);
   const [reportContent, setReportContent] = useState(null);
   const [reportLoading, setReportLoading] = useState(false);
+  const [generatingReportDocumentId, setGeneratingReportDocumentId] = useState(null);
+  const [retryLoading, setRetryLoading] = useState(false);
 
   const isAdminUser = RoleUtils.isAdmin(user) || RoleUtils.hasRole(user, 'HQ_MASTER');
 
@@ -202,6 +205,7 @@ const PsychAssessmentAdminWidget = forwardRef(({ widget, user }, ref) => {
 
   const handleGenerateReport = async (documentId) => {
     if (!documentId) return;
+    setGeneratingReportDocumentId(documentId);
     try {
       const res = await StandardizedApi.post(`/api/v1/assessments/psych/documents/${documentId}/report`, {});
       if (res?.success === false) {
@@ -211,6 +215,8 @@ const PsychAssessmentAdminWidget = forwardRef(({ widget, user }, ref) => {
       refresh();
     } catch (e) {
       notificationManager.show(e?.message || '리포트 생성에 실패했습니다.', 'error');
+    } finally {
+      setGeneratingReportDocumentId(null);
     }
   };
 
@@ -252,13 +258,24 @@ const PsychAssessmentAdminWidget = forwardRef(({ widget, user }, ref) => {
     return (
       <div className="psych-assessment-admin-widget psych-assessment-admin-widget--error">
         <p className="mg-text-muted">{error}</p>
-        <button
+        <MGButton
           type="button"
-          className="mg-v2-button mg-v2-button-outline mg-v2-button-sm"
-          onClick={() => refresh()}
+          variant="outline"
+          size="small"
+          onClick={async () => {
+            setRetryLoading(true);
+            try {
+              await refresh();
+            } finally {
+              setRetryLoading(false);
+            }
+          }}
+          loading={retryLoading}
+          loadingText="다시 시도 중..."
+          preventDoubleClick
         >
           다시 시도
-        </button>
+        </MGButton>
       </div>
     );
   }
@@ -284,6 +301,8 @@ const PsychAssessmentAdminWidget = forwardRef(({ widget, user }, ref) => {
         onGenerateReport={handleGenerateReport}
         onViewReport={handleViewReport}
         listLoadError={recentLoadError}
+        generatingReportDocumentId={generatingReportDocumentId}
+        viewReportLoading={reportLoading}
       />
 
       <MGModal

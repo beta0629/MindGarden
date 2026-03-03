@@ -469,10 +469,18 @@ public class OpenAIPsychAiServiceImpl implements PsychAiService {
 - 위험 신호(자/타해 등)는 ‘가능성’ 수준으로 표기하고 즉시 전문가 평가/안전계획을 권고한다.
 - 문장마다 근거를 남길 수 있도록 evidence를 구조화한다.
 
-출력은 반드시 JSON 단일 객체로만 반환한다. (마크다운 코드펜스 금지)
+출력은 반드시 JSON 단일 객체로만 반환한다. (마크다운 코드펜스 금지, 설명문 없이 JSON만)
+
+형식 통일(필수):
+- reportMarkdown 필드에는 반드시 다음 두 개의 마크다운 헤딩을 정확히 포함한다.
+  1) 줄 맨 앞에 "## 요약" (공백 없이 ## 다음 한 칸 띄고 요약)
+  2) 줄 맨 앞에 "## 권고" (공백 없이 ## 다음 한 칸 띄고 권고)
+- "권고사항", "Recommendations" 등 다른 표현 사용 금지. 반드시 "## 요약", "## 권고"만 사용한다.
+- JSON은 한 줄이어도 되고 줄바꿈 있어도 되나, 문자열 값 안의 따옴표·중괄호는 이스케이프해야 한다.
+
 스키마:
 {
-  "reportMarkdown": "## 요약 ...",
+  "reportMarkdown": "## 요약\\n\\n...(내용)\\n\\n## 권고\\n\\n...(내용)",
   "evidence": {
     "highlights": [
       {"text":"...", "basedOn":[{"scaleCode":"...", "tScore":.., "percentile":..}], "notes":"..."}
@@ -496,13 +504,14 @@ public class OpenAIPsychAiServiceImpl implements PsychAiService {
         }
         sb.append("\n\n");
         sb.append("요구사항:\n");
+        sb.append("- reportMarkdown에는 반드시 헤딩 \"## 요약\", \"## 권고\"를 정확히 포함한다(다른 표기 금지).\n");
         sb.append("- ## 요약: 전체 요약(2~3문장)\n");
-        sb.append("- ## 주요 소견: T점수 상승 척도별로 임상적 의미를 해석하라. 상담 시 주목할 점을 구체적으로 작성.\n");
+        sb.append("- ## 주요 소견: T점수 상승 척도별로 임상적 의미를 해석. 상담 시 주목할 점 구체 작성.\n");
         sb.append("- ## 주의(타당도): VRIN, TRIN, F 등 타당도 척도 해석. 검사 신뢰도 평가.\n");
-        sb.append("- ## 권고: 면담/추적 평가/전문가 의뢰 등 권고\n");
-        sb.append("- ## 추적 질문: 상담자가 면담에서 탐색할 수 있는 구체적 질문 3~5개 제안\n");
+        sb.append("- ## 권고: 면담/추적 평가/전문가 의뢰 등 권고(헤딩은 반드시 \"## 권고\"로만)\n");
+        sb.append("- ## 추적 질문: 상담자가 면담에서 탐색할 구체적 질문 3~5개 제안\n");
         sb.append("- evidence: reportMarkdown 핵심 문장(최소 3개)에 근거 지표(scaleCode/tScore) 연결\n");
-        sb.append("- 한국어만\n");
+        sb.append("- 한국어만, 출력은 JSON만(코드블록 없이)\n");
         return sb.toString();
     }
 }

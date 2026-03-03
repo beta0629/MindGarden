@@ -283,6 +283,7 @@ public class SystemConfigController {
         if (model == null || model.isBlank()) {
             model = "gpt-3.5-turbo";
         }
+        String defaultOpenAiUrl = "https://api.openai.com/v1/chat/completions";
         RestTemplate rest = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -295,18 +296,36 @@ public class SystemConfigController {
         requestBody.put("max_tokens", 10);
         HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, headers);
         try {
-            @SuppressWarnings("unchecked")
-            ResponseEntity<Map<String, Object>> resp = rest.exchange(
-                    apiUrl,
-                    HttpMethod.POST,
-                    request,
-                    new ParameterizedTypeReference<Map<String, Object>>() {}
-            );
-            if (resp.getStatusCode().is2xxSuccessful() && resp.getBody() != null) {
-                Map<String, Object> response = new HashMap<>();
-                response.put("success", true);
-                response.put("message", "OpenAI API 키가 정상적으로 동작합니다.");
-                return ResponseEntity.ok(response);
+            String urlToUse = apiUrl;
+            Exception lastError = null;
+            for (int attempt = 0; attempt < 2; attempt++) {
+                try {
+                    @SuppressWarnings("unchecked")
+                    ResponseEntity<Map<String, Object>> resp = rest.exchange(
+                            urlToUse,
+                            HttpMethod.POST,
+                            request,
+                            new ParameterizedTypeReference<Map<String, Object>>() {}
+                    );
+                    if (resp.getStatusCode().is2xxSuccessful() && resp.getBody() != null) {
+                        Map<String, Object> response = new HashMap<>();
+                        response.put("success", true);
+                        response.put("message", "OpenAI API 키가 정상적으로 동작합니다.");
+                        return ResponseEntity.ok(response);
+                    }
+                } catch (Exception e) {
+                    lastError = e;
+                    if (e.getMessage() != null && e.getMessage().contains("404")
+                            && !defaultOpenAiUrl.equals(urlToUse)) {
+                        log.info("OpenAI 테스트 404 (url={}), 기본 URL로 재시도", urlToUse);
+                        urlToUse = defaultOpenAiUrl;
+                    } else {
+                        throw e;
+                    }
+                }
+            }
+            if (lastError != null) {
+                throw lastError;
             }
         } catch (Exception e) {
             log.warn("OpenAI API 키 테스트 실패: {}", e.getMessage());

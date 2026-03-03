@@ -115,12 +115,16 @@ public class SystemConfigServiceImpl implements SystemConfigService {
     
     @Override
     public String getOpenAIApiUrl() {
-        return getConfigValue("OPENAI_API_URL", "https://api.openai.com/v1/chat/completions");
+        String defaultUrl = "https://api.openai.com/v1/chat/completions";
+        String value = getConfigValue("OPENAI_API_URL", defaultUrl);
+        return (value != null && !value.isBlank()) ? value : defaultUrl;
     }
     
     @Override
     public String getOpenAIModel() {
-        return getConfigValue("OPENAI_MODEL", "gpt-3.5-turbo");
+        String defaultModel = "gpt-3.5-turbo";
+        String value = getConfigValue("OPENAI_MODEL", defaultModel);
+        return (value != null && !value.isBlank()) ? value : defaultModel;
     }
     
     private static final String DEFAULT_AI_PROVIDER = "openai";

@@ -665,6 +665,11 @@
   background: var(--ad-b0kla-card-bg, #ffffff);
 }
 
+/* 상담일지 fullscreen 모달: 전체 화면 사용 (B0KlA body max-height 오버라이드) */
+.mg-modal.mg-modal--fullscreen.mg-v2-ad-b0kla .mg-modal__body {
+  max-height: none !important;
+}
+
 .mg-modal.mg-v2-ad-b0kla .mg-modal__actions {
   display: flex;
   justify-content: flex-end;

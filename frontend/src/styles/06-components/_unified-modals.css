@@ -12,6 +12,13 @@
   padding: var(--spacing-lg, 1rem);
 }
 
+/* fullscreen 모달: 오버레이 패딩 제거하여 전체 화면 사용 */
+.mg-modal-overlay:has(.mg-modal--fullscreen) {
+  padding: 0 !important;
+  align-items: stretch !important;
+  justify-content: stretch !important;
+}
+
 .mg-modal {
   margin: auto; /* flex 보조: 중앙 고정 */
   position: relative;
@@ -103,6 +110,6 @@
 }
 
 .mg-modal.mg-modal--fullscreen .mg-modal__body {
-  max-height: none;
+  max-height: none !important;
   flex: 1 1 auto;
 }

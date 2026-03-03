@@ -27,6 +27,7 @@ import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import UnifiedLoading from '../common/UnifiedLoading';
 import Button from '../ui/Button/Button';
+import { getModelPricingLabel, getModelOptionSuffix, PRICING_URLS } from './modelPricing';
 import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
 import './SystemConfigManagement.css';
@@ -38,10 +39,8 @@ const AI_PROVIDERS = [
   { id: 'replicate', label: 'Replicate', keyPrefix: 'REPLICATE', defaultUrl: '', defaultModel: '' }
 ];
 
-/** OpenAI 선택 가능 모델(목록 미불러온 경우 사용) — 최신 순 */
-const OPENAI_MODEL_PRESETS = [
-  'gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-4-turbo-preview', 'gpt-4', 'gpt-4-1106-preview', 'gpt-3.5-turbo'
-];
+/** OpenAI 목록 미불러온 경우 드롭다운에 쓸 최소 프리셋 (사용 가능한 모델만 보려면 '목록 불러오기' 권장) */
+const OPENAI_MODEL_PRESETS_FALLBACK = ['gpt-4o-mini', 'gpt-4o', 'gpt-3.5-turbo'];
 
 const initialProviderState = (defaultUrl, defaultModel) => ({
   apiKey: '',
@@ -178,6 +177,20 @@ const SystemConfigManagement = () => {
         wellnessSendTime: wTime?.success ? wTime.configValue : '09:00',
         wellnessTargetRoles: wRoles?.success ? wRoles.configValue : 'CLIENT,ROLE_CLIENT'
       });
+
+      // API 키가 있으면 사용 가능한 모델만 조회해 드롭다운에 표시
+      if (openaiRes?.success && (openaiRes.apiKey || '').trim()) {
+        try {
+          const res = await apiPost('/api/v1/admin/system-config/openai-models', { apiKey: (openaiRes.apiKey || '').trim() });
+          if (res.success && Array.isArray(res.models)) setOpenaiModels(res.models);
+        } catch (_) { /* 무시 */ }
+      }
+      if ((getVal(geminiKey) || '').trim()) {
+        try {
+          const res = await apiPost('/api/v1/admin/system-config/gemini-models', { apiKey: getVal(geminiKey).trim() });
+          if (res.success && Array.isArray(res.models)) setGeminiModels(res.models);
+        } catch (_) { /* 무시 */ }
+      }
     } catch (error) {
       console.error('설정 로드 실패:', error);
       notificationManager.show('설정을 불러오는데 실패했습니다.', 'error');
@@ -356,6 +369,7 @@ const SystemConfigManagement = () => {
               </h2>
               <p className="mg-v2-system-config__section-desc">
                 심리검사 AI 리포트·웰니스 등에 사용됩니다. 프로바이더별 API 키·URL·모델을 입력하고 테스트할 수 있습니다.
+                고급 모델일수록 비용이 높을 수 있으므로, 아래 요금 참고를 보고 부담 없이 선택하세요.
               </p>
 
               <div className="mg-v2-ad-b0kla__card mg-v2-system-config__provider-card">
@@ -431,10 +445,10 @@ const SystemConfigManagement = () => {
                               preventDoubleClick={false}
                             >
                               {loadingGeminiModels ? <RefreshCw size={16} className="mg-spinning" /> : <RefreshCw size={16} />}
-                              최신 모델 목록 불러오기
+                              {geminiModels.length > 0 ? '모델 목록 다시 불러오기' : '사용 가능한 모델만 불러오기'}
                             </Button>
                           </div>
-                          {geminiModels.length > 0 && (
+                          {geminiModels.length > 0 ? (
                             <select
                               id={`model-select-${id}`}
                               value={geminiModels.some((m) => m.id === (providers.gemini?.model || '')) ? (providers.gemini?.model || '') : '__custom__'}
@@ -444,26 +458,37 @@ const SystemConfigManagement = () => {
                             >
                               <option value="__custom__">직접 입력 (아래 입력란)</option>
                               {geminiModels.map((m) => (
-                                <option key={m.id} value={m.id}>{m.id}</option>
+                                <option key={m.id} value={m.id}>{m.id}{getModelOptionSuffix('gemini', m.id)}</option>
                               ))}
                             </select>
+                          ) : (
+                            <p className="mg-v2-system-config__pricing-notice" style={{ marginBottom: 8 }}>
+                              위 버튼을 누르면 이 계정에서 사용 가능한 모델만 목록에 표시됩니다.
+                            </p>
                           )}
                           <input
                             id={`model-${id}`}
                             type="text"
                             value={providers[id]?.model || ''}
                             onChange={(e) => setProvider(id, 'model', e.target.value)}
-                            placeholder="모델 ID (예: gemini-3.1-pro)"
+                            placeholder={geminiModels.length > 0 ? '모델 ID (예: gemini-3.1-pro)' : '모델 ID (사용 가능한 모델만 보려면 위 버튼 클릭)'}
                             className="mg-v2-input"
-                            list={geminiModels.length > 0 ? undefined : `model-presets-${id}`}
+                            list={geminiModels.length === 0 ? `model-presets-${id}` : undefined}
                           />
                           {geminiModels.length === 0 && (
                             <datalist id={`model-presets-${id}`}>
-                              <option value="gemini-3.1-pro" />
                               <option value="gemini-2.5-flash" />
                               <option value="gemini-1.5-pro" />
                             </datalist>
                           )}
+                          <div className="mg-v2-system-config__pricing-notice" style={{ marginTop: 8 }}>
+                            {getModelPricingLabel('gemini', providers.gemini?.model || '') ? (
+                              <><strong>요금 참고:</strong> {getModelPricingLabel('gemini', providers.gemini?.model || '')} (1M tokens 기준, USD). </></>
+                            ) : (
+                              <><strong>요금 참고:</strong> 선택한 모델의 요금은 공식 문서를 참고하세요. </></>
+                            )}
+                            <a href={PRICING_URLS.gemini} target="_blank" rel="noopener noreferrer">Gemini 공식 요금</a>
+                          </div>
                         </>
                       ) : id === 'openai' ? (
                         <>
@@ -478,33 +503,55 @@ const SystemConfigManagement = () => {
                               preventDoubleClick={false}
                             >
                               {loadingOpenaiModels ? <RefreshCw size={16} className="mg-spinning" /> : <RefreshCw size={16} />}
-                              최신 모델 목록 불러오기
+                              {openaiModels.length > 0 ? '모델 목록 다시 불러오기' : '사용 가능한 모델만 불러오기'}
                             </Button>
                           </div>
-                          <select
-                            id={`model-select-${id}`}
-                            value={
-                              (openaiModels.length > 0 ? openaiModels.some((m) => m.id === (providers.openai?.model || '')) : OPENAI_MODEL_PRESETS.includes(providers.openai?.model || ''))
-                                ? (providers.openai?.model || '')
-                                : '__custom__'
-                            }
-                            onChange={(e) => setProvider('openai', 'model', e.target.value === '__custom__' ? (providers.openai?.model || '') : e.target.value)}
-                            className="mg-v2-input"
-                            style={{ marginBottom: 8, width: '100%', maxWidth: 360 }}
-                          >
-                            <option value="__custom__">직접 입력 (아래 입력란)</option>
-                            {(openaiModels.length > 0 ? openaiModels : OPENAI_MODEL_PRESETS.map((mid) => ({ id: mid, name: mid }))).map((m) => (
-                              <option key={m.id} value={m.id}>{m.id}</option>
-                            ))}
-                          </select>
+                          {openaiModels.length > 0 ? (
+                            <select
+                              id={`model-select-${id}`}
+                              value={
+                                openaiModels.some((m) => m.id === (providers.openai?.model || ''))
+                                  ? (providers.openai?.model || '')
+                                  : '__custom__'
+                              }
+                              onChange={(e) => setProvider('openai', 'model', e.target.value === '__custom__' ? (providers.openai?.model || '') : e.target.value)}
+                              className="mg-v2-input"
+                              style={{ marginBottom: 8, width: '100%', maxWidth: 360 }}
+                            >
+                              <option value="__custom__">직접 입력 (아래 입력란)</option>
+                              {openaiModels.map((m) => (
+                                <option key={m.id} value={m.id}>{m.id}{getModelOptionSuffix('openai', m.id)}</option>
+                              ))}
+                            </select>
+                          ) : (
+                            <p className="mg-v2-system-config__pricing-notice" style={{ marginBottom: 8 }}>
+                              위 버튼을 누르면 이 계정에서 사용 가능한 모델만 목록에 표시됩니다.
+                            </p>
+                          )}
                           <input
                             id={`model-${id}`}
                             type="text"
                             value={providers[id]?.model || ''}
                             onChange={(e) => setProvider(id, 'model', e.target.value)}
-                            placeholder="모델 ID (예: gpt-4o, gpt-3.5-turbo)"
+                            placeholder={openaiModels.length > 0 ? '모델 ID (또는 위에서 선택)' : '모델 ID (사용 가능한 모델만 보려면 위 버튼 클릭)'}
                             className="mg-v2-input"
+                            list={openaiModels.length === 0 ? 'openai-model-presets-fallback' : undefined}
                           />
+                          {openaiModels.length === 0 && (
+                            <datalist id="openai-model-presets-fallback">
+                              {OPENAI_MODEL_PRESETS_FALLBACK.map((mid) => (
+                                <option key={mid} value={mid} />
+                              ))}
+                            </datalist>
+                          )}
+                          <div className="mg-v2-system-config__pricing-notice" style={{ marginTop: 8 }}>
+                            {getModelPricingLabel('openai', providers.openai?.model || '') ? (
+                              <><strong>요금 참고:</strong> {getModelPricingLabel('openai', providers.openai?.model || '')} (1M tokens 기준, USD). </></>
+                            ) : (
+                              <><strong>요금 참고:</strong> 선택한 모델의 요금은 공식 문서를 참고하세요. </></>
+                            )}
+                            <a href={PRICING_URLS.openai} target="_blank" rel="noopener noreferrer">OpenAI 공식 요금</a>
+                          </div>
                         </>
                       ) : (
                         <>

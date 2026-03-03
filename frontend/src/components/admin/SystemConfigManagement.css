@@ -239,6 +239,21 @@
     margin: 0;
 }
 
+.mg-v2-system-config__pricing-notice {
+    font-size: 13px;
+    color: var(--ad-b0kla-text-secondary, var(--medium-gray));
+    line-height: 1.5;
+}
+
+.mg-v2-system-config__pricing-notice a {
+    color: var(--mg-color-primary-main, #2563eb);
+    text-decoration: none;
+}
+
+.mg-v2-system-config__pricing-notice a:hover {
+    text-decoration: underline;
+}
+
 @keyframes spin {
     from { transform: rotate(0deg); }
     to { transform: rotate(360deg); }

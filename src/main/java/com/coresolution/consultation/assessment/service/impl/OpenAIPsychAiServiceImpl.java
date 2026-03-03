@@ -16,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.HttpClientErrorException;
 
 import java.util.HashMap;
 import java.util.List;
@@ -81,7 +82,7 @@ public class OpenAIPsychAiServiceImpl implements PsychAiService {
                         : GEMINI_DEFAULT_URL;
                 rawContent = callGeminiApiWithFallback(apiKey, effectiveUrl, model, systemPrompt, userPrompt);
             } else {
-                rawContent = callOpenAiFormatApi(apiKey, apiUrl, model, systemPrompt, userPrompt);
+                rawContent = callOpenAiWithFallback(apiKey, apiUrl, model, systemPrompt, userPrompt);
             }
 
             String content = rawContent != null ? rawContent : "";
@@ -96,12 +97,17 @@ public class OpenAIPsychAiServiceImpl implements PsychAiService {
         } catch (Exception e) {
             log.error("Psych AI report generation failed: tenantId={}, type={}, provider={}, model={}, error={}",
                     tenantId, assessmentType, providerId, model, e.getMessage(), e);
-            return new AiResult(baseMarkdown, "{\"ai\":\"failed\"}", model, PROMPT_VERSION);
+            String reason = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
+            if (reason.length() > 400) {
+                reason = reason.substring(0, 400) + "...";
+            }
+            return new AiResult(baseMarkdown, buildEvidenceJson("failed", reason, true), model, PROMPT_VERSION);
         }
     }
 
     private static final String GEMINI_FALLBACK_MODEL = "gemini-2.0-flash";
     private static final String GEMINI_DEFAULT_URL = "https://generativelanguage.googleapis.com/v1beta";
+    private static final String OPENAI_FALLBACK_MODEL = "gpt-4o-mini";
 
     private String callGeminiApiWithFallback(String apiKey, String baseUrl, String model, String systemPrompt, String userPrompt) {
         try {
@@ -166,6 +172,24 @@ public class OpenAIPsychAiServiceImpl implements PsychAiService {
             return text;
         } catch (Exception e) {
             log.warn("Psych AI Gemini API call failed: model={}, error={}", model, e.getMessage());
+            throw e;
+        }
+    }
+
+    /**
+     * OpenAI 호출: 지정 모델 실패 시(404/모델 미지원) 폴백 모델로 1회 재시도
+     */
+    private String callOpenAiWithFallback(String apiKey, String apiUrl, String model, String systemPrompt, String userPrompt) {
+        try {
+            return callOpenAiFormatApi(apiKey, apiUrl, model, systemPrompt, userPrompt);
+        } catch (Exception e) {
+            String msg = e.getMessage() != null ? e.getMessage() : "";
+            boolean modelError = e instanceof HttpClientErrorException
+                    || msg.contains("404") || msg.contains("model") && (msg.contains("not found") || msg.contains("invalid") || msg.contains("does not exist"));
+            if (modelError && !OPENAI_FALLBACK_MODEL.equals(model)) {
+                log.info("Psych AI OpenAI model error (model={}), retrying with {}", model, OPENAI_FALLBACK_MODEL);
+                return callOpenAiFormatApi(apiKey, apiUrl, OPENAI_FALLBACK_MODEL, systemPrompt, userPrompt);
+            }
             throw e;
         }
     }

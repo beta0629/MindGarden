@@ -13,37 +13,55 @@
 
 ---
 
-## 문서 위치 체계 (docs/)
+## 문서 위치 체계 (docs/ 직하위)
 
-| 경로 | 용도 | 비고 |
-|------|------|------|
-| **[standards/](./standards/)** | **표준·가이드** (API, 코드스타일, 테넌트, 테스트, 배포 등) | 최신 표준만 참조. 목차: [standards/README.md](./standards/README.md) |
-| **[design-system/](./design-system/)** | 디자인 시스템·토큰·컴포넌트 스펙 | v2, ci-bi 등 하위 폴더 있음 |
+| 경로 | 용도 | 대표·요약 |
+|------|------|-----------|
+| **[standards/](./standards/)** | **표준·가이드** (API, 코드스타일, 테넌트, 테스트, 배포 등) | 최신 표준만 참조. 목차: [standards/README.md](./standards/README.md), 요약: [STANDARDS_SUMMARY.md](./standards/STANDARDS_SUMMARY.md) |
+| **[planning/](./planning/)** | **기획·설계** (기능, 역할, 메뉴, ERP 섹션 점검·테스트 시나리오 등) | ERP 전방위 점검·레이아웃·테넌트 격리·테스트 시나리오 등. 목차: [planning/README.md](./planning/README.md) |
+| **[troubleshooting/](./troubleshooting/)** | **장애 대응·원인 분석** (개발 서버, OAuth, 심리검사 AI, 스케줄 등) | [DEV_SERVER_STARTUP_FAILURE_ANALYSIS.md](./troubleshooting/DEV_SERVER_STARTUP_FAILURE_ANALYSIS.md), [PSYCH_AI_*](./troubleshooting/) 시리즈, [QUICK_WILDCARD_TEST](./troubleshooting/QUICK_WILDCARD_TEST.md) |
+| **[design-system/](./design-system/)** | 디자인 시스템·토큰·컴포넌트 스펙 | v2, B0KlA 등. [design-system/README.md](./design-system/README.md) |
 | **[project-management/](./project-management/)** | 프로젝트 관리·리포트·결정 사항·일별 체크리스트 | 연도·월별 또는 archive 하위 |
 | **[archive/](./archive/)** | 과거 버전·폐기 표준·레거시 백업 | **현재 설계 참조 시 사용 금지** |
-| **[guides/](./guides/)** | 환경 설정·개발·빠른 시작·트러블슈팅 가이드 | quick-start, development, deployment 등 |
-| **[architecture/](./architecture/)** | 시스템 아키텍처·설계 문서 | design 등 하위 |
-| **[layout/](./layout/)** | 레이아웃·메뉴 구조 관련 | |
-| **[troubleshooting/](./troubleshooting/)** | 장애 대응·모니터링 체크리스트 | |
+| **[guides/](./guides/)** | 환경 설정·개발·빠른 시작·배포·트러블슈팅 가이드 | quick-start, development, deployment 등 |
+| **[architecture/](./architecture/)** | 시스템 아키텍처·설계 문서 | [PROJECT_STRUCTURE](./architecture/PROJECT_STRUCTURE.md), design 등 하위 |
+| **[layout/](./layout/)** | 레이아웃·메뉴 구조 관련 | [ADMIN_COMMON_LAYOUT](./layout/ADMIN_COMMON_LAYOUT.md) |
 | **[debug/](./debug/)** | **디버깅·원인 분석 문서** (core-debugger 산출물 등) | 목차: [debug/README.md](./debug/README.md) |
 | **[database/](./database/)** | DB 관련 가이드 | |
-| **[testing/](./testing/)** | 테스트 계획·가이드 | |
+| **[testing/](./testing/)** | 테스트 계획·가이드 | [MATCHING_SCHEDULE_INTEGRATION_REQUIREMENTS](./testing/MATCHING_SCHEDULE_INTEGRATION_REQUIREMENTS.md) 등 |
 | **[api/](./api/)** | API 레퍼런스·설계 문서 | guides·architecture에서 참조 |
 | **[issues/](./issues/)** | 이슈·결정 사항·트러블슈팅 기록 | |
-| **[planning/](./planning/)** | 기능·역할·메뉴 등 기획·설계 문서 | |
+| **[consultation/](./consultation/)** | 상담·UI 스펙 | CONSULTATION_LOG_VIEW, CONSULTANT_CLIENT_REGISTRATION 등 |
+| **[psych-assessment/](./psych-assessment/)** | 심리검사 관련 기획·플랜 | [PSYCH_PDF_AND_IMAGE_UPLOAD_PLAN](./psych-assessment/PSYCH_PDF_AND_IMAGE_UPLOAD_PLAN.md) 등 |
+| **[temp/](./temp/)** | 임시·작업용 문서 (정리 후 이동·삭제 대상) | |
 | **2026-prestartup/, 2026-startup-plan/, plans/** | 기획·사업 계획 등 | 필요 시 project-management로 통합 가능 |
 
 ---
 
-## 빠른 링크
+## 빠른 링크 (최근 정리 위주)
 
-- **루트에서 이동한 문서**: [QUICK_START](./guides/quick-start/QUICK_START.md), [DEPLOYMENT_CHECKLIST](./guides/deployment/DEPLOYMENT_CHECKLIST.md), [PROJECT_STRUCTURE](./architecture/PROJECT_STRUCTURE.md), [KOREAN_ENCODING_SETUP](./guides/development/KOREAN_ENCODING_SETUP.md), [QUICK_WILDCARD_TEST](./troubleshooting/QUICK_WILDCARD_TEST.md), [매칭·스케줄 통합 요구사항](./testing/MATCHING_SCHEDULE_INTEGRATION_REQUIREMENTS.md), [오늘문서_정리_20260212](./project-management/2026-02/오늘문서_정리_20260212.md), 과거 계획은 [project-management/archive/](./project-management/archive/) (PROJECT_REORGANIZATION_PLAN, FOLDER_REORGANIZATION_GUIDE)
-- **표준 문서 전체 목록**: [docs/standards/README.md](./standards/README.md) (45개 표준)
+### Planning (ERP·기획)
+- [ERP 섹션 전방위 점검 및 기획](./planning/ERP_SECTION_AUDIT_AND_PLANNING.md) — tenant 점검, 메뉴·라우트, 수정 우선순위
+- [ERP 레이아웃·UI 검토](./planning/ERP_LAYOUT_DESIGN_REVIEW.md) — AdminCommonLayout·본문 구조
+- [ERP 테넌트 격리 시나리오](./planning/ERP_TENANT_ISOLATION_SCENARIOS.md) — Phase 4 검증용 A/B 격리·400/403 시나리오
+- [ERP E2E·통합 테스트 시나리오](./planning/ERP_TEST_SCENARIOS.md) — API 통합·E2E 제안
+- **전체 목차**: [planning/README.md](./planning/README.md)
+
+### Standards (표준)
+- **표준 문서 전체 목록**: [docs/standards/README.md](./standards/README.md)
+- **간단 표준 요약**: [STANDARDS_SUMMARY.md](./standards/STANDARDS_SUMMARY.md) (핵심 4개 등)
+- **서브에이전트 활용**: [SUBAGENT_USAGE.md](./standards/SUBAGENT_USAGE.md)
+
+### Troubleshooting (장애·분석)
+- [개발 서버 기동 실패 분석](./troubleshooting/DEV_SERVER_STARTUP_FAILURE_ANALYSIS.md)
+- [심리검사 tenantId 이슈](./troubleshooting/PSYCH_PAGE_TENANT_ID_ISSUE.md)
+- [심리검사 AI 필수 섹션 누락·파싱 분석](./troubleshooting/PSYCH_AI_MISSING_REQUIRED_SECTIONS_PRECISE_ANALYSIS.md), [서버 로그 분석](./troubleshooting/PSYCH_AI_MISSING_REQUIRED_SECTIONS_SERVER_LOG_ANALYSIS.md)
+- [QUICK_WILDCARD_TEST](./troubleshooting/QUICK_WILDCARD_TEST.md)
+
+### 기타
+- **루트에서 이동한 문서**: [QUICK_START](./guides/quick-start/QUICK_START.md), [DEPLOYMENT_CHECKLIST](./guides/deployment/DEPLOYMENT_CHECKLIST.md), [PROJECT_STRUCTURE](./architecture/PROJECT_STRUCTURE.md), [KOREAN_ENCODING_SETUP](./guides/development/KOREAN_ENCODING_SETUP.md)
 - **문서 작성·정리 규칙**: [.cursor/skills/core-solution-documentation/SKILL.md](../.cursor/skills/core-solution-documentation/SKILL.md)
-- **서브에이전트 활용(문서 전담 포함)**: [docs/standards/SUBAGENT_USAGE.md](./standards/SUBAGENT_USAGE.md)
 - **디버깅·원인 분석 문서 목록**: [docs/debug/README.md](./debug/README.md)
-- **간단 표준 요약**: [docs/standards/STANDARDS_SUMMARY.md](./standards/STANDARDS_SUMMARY.md) (핵심 4개 등 요약)
-- **최근 트러블슈팅**: [개발 서버 기동 실패 분석](./troubleshooting/DEV_SERVER_STARTUP_FAILURE_ANALYSIS.md), [심리검사 tenantId 이슈](./troubleshooting/PSYCH_PAGE_TENANT_ID_ISSUE.md)
 
 ---
 
@@ -54,4 +72,4 @@
 
 ---
 
-*최종 업데이트: 문서 위치 체계 정리(오늘문서→project-management/2026-02, STANDARDS→standards/STANDARDS_SUMMARY), debug·standards 인덱스 갱신*
+*최종 업데이트: docs 직하위 구조·planning/troubleshooting/standards 요약 반영, planning/README.md 링크 추가*

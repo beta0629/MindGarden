@@ -5,6 +5,7 @@ import { apiGet, apiPost, apiPut } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import Button from '../ui/Button/Button';
+import '../schedule/ScheduleB0KlA.css';
 import CustomSelect from '../common/CustomSelect';
 import { getUserStatusKoreanNameSync } from '../../utils/codeHelper';
 
@@ -642,12 +643,18 @@ const ConsultationLogModal = ({
     </>
   );
 
+  const modalSubtitle = scheduleData
+    ? [scheduleData.clientName, scheduleData.sessionDate || scheduleData.date].filter(Boolean).join(' · ')
+    : undefined;
+
   return (
     <UnifiedModal
       isOpen={isOpen}
       onClose={onClose}
       title={modalTitle}
+      subtitle={modalSubtitle}
       size="fullscreen"
+      className="mg-v2-ad-b0kla"
       showCloseButton={true}
       backdropClick={true}
       actions={modalFooter}

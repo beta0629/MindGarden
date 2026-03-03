@@ -17,4 +17,6 @@ public class PsychAssessmentReportViewDto {
     private String modelName;
     private String promptVersion;
     private LocalDateTime createdAt;
+    /** AI 상태(ok/failed/rejected/disabled) - 실패 시 프론트 안내용 */
+    private String evidenceJson;
 }

@@ -100,6 +100,7 @@ public class PsychAssessmentController extends BaseApiController {
                 .modelName(report.getModelName())
                 .promptVersion(report.getPromptVersion())
                 .createdAt(report.getCreatedAt())
+                .evidenceJson(report.getEvidenceJson())
                 .build();
         return success(dto);
     }

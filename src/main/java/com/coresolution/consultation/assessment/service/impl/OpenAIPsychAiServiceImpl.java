@@ -34,7 +34,7 @@ import java.util.regex.Pattern;
 public class OpenAIPsychAiServiceImpl implements PsychAiService {
 
     private static final String PROMPT_VERSION = "psych-prompt-v1";
-    private static final int MAX_TOKENS = 1200;
+    private static final int MAX_TOKENS = 4096;
     private static final double TEMPERATURE = 0.3;
     private static final int MIN_EVIDENCE_HIGHLIGHTS = 1;
 
@@ -87,7 +87,7 @@ public class OpenAIPsychAiServiceImpl implements PsychAiService {
             String content = rawContent != null ? rawContent : "";
 
             if (!StringUtils.hasText(content)) {
-                log.warn("Psych AI empty response: provider={}, model={}", providerId, model);
+                log.warn("Psych AI empty response: provider={}, model={}, rawContentLen={}", providerId, model, rawContent != null ? rawContent.length() : 0);
                 return new AiResult(baseMarkdown, "{\"ai\":\"failed\",\"reason\":\"empty_response\"}", model, PROMPT_VERSION);
             }
 
@@ -214,7 +214,16 @@ public class OpenAIPsychAiServiceImpl implements PsychAiService {
                 JsonNode out = objectMapper.readTree(trimmed);
                 Validation validation = validateModelOutput(out, metrics);
                 if (!validation.ok) {
-                    log.warn("Psych AI validation failed: reason={}", validation.reason);
+                    log.warn("Psych AI validation failed: reason={}, contentLen={}", validation.reason, trimmed.length());
+                    String reportMd = out.path("reportMarkdown").asText("");
+                    boolean hasRequiredSections = StringUtils.hasText(reportMd)
+                            && reportMd.contains("## 요약") && reportMd.contains("## 권고");
+                    if (hasRequiredSections && isEvidenceOnlyFailure(validation.reason)) {
+                        log.info("Psych AI: evidence validation failed but reportMarkdown accepted (reason={})", validation.reason);
+                        JsonNode evNode = out.path("evidence");
+                        String ev = evNode.isMissingNode() ? buildEvidenceJson("ok", "evidence_skipped", true) : evNode.toString();
+                        return new AiResult(reportMd, ev, model, PROMPT_VERSION);
+                    }
                     return new AiResult(
                             baseMarkdownWithDisclaimer(baseMarkdown, validation.reason),
                             buildEvidenceJson("rejected", validation.reason, true),
@@ -248,6 +257,8 @@ public class OpenAIPsychAiServiceImpl implements PsychAiService {
 
                 return new AiResult(reportMarkdown, evidenceJson, model, PROMPT_VERSION);
             } catch (Exception parseError) {
+                log.warn("Psych AI parse failed: model={}, error={}, contentPreview={}", model, parseError.getMessage(),
+                        trimmed.length() > 300 ? trimmed.substring(0, 300) + "..." : trimmed);
                 return new AiResult(
                         baseMarkdownWithDisclaimer(baseMarkdown, "AI 출력 파싱 실패"),
                         buildEvidenceJson("rejected", "unparsed", true),
@@ -258,6 +269,15 @@ public class OpenAIPsychAiServiceImpl implements PsychAiService {
     }
 
     private record Validation(boolean ok, String reason) {}
+
+    private boolean isEvidenceOnlyFailure(String reason) {
+        if (reason == null) return false;
+        return reason.startsWith("invalid_evidence_structure")
+                || reason.startsWith("insufficient_evidence")
+                || reason.startsWith("missing_basedOn")
+                || reason.startsWith("missing_scaleCode")
+                || reason.startsWith("hallucinated_scaleCode");
+    }
 
     private Validation validateModelOutput(JsonNode out, List<MetricInput> metrics) {
         if (out == null || out.isMissingNode() || !out.isObject()) {

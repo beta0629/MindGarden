@@ -685,53 +685,8 @@ const ConsultationLogModal = ({
               backgroundColor: '#FAF9F7'
             }}
           >
-            {/* (1) 내담자 프로필 요약 블록 — clientId 없으면 안내, 로딩 중이면 로딩 문구 */}
-            {!hasValidScheduleClientId ? (
-              <div
-                style={{
-                  background: 'var(--mg-color-surface-main)',
-                  border: '1px solid var(--mg-color-border-main)',
-                  borderRadius: 16,
-                  padding: 24,
-                  marginBottom: 16,
-                  borderLeft: '4px solid var(--mg-color-border-main)'
-                }}
-              >
-                <p style={{ fontSize: 14, color: 'var(--mg-color-text-secondary)', margin: 0 }}>
-                  내담자 정보를 불러올 수 없습니다 (일정에 내담자가 연결되지 않았습니다).
-                </p>
-              </div>
-            ) : loading && !client ? (
-              <div
-                style={{
-                  background: 'var(--mg-color-surface-main)',
-                  border: '1px solid var(--mg-color-border-main)',
-                  borderRadius: 16,
-                  padding: 24,
-                  marginBottom: 16,
-                  borderLeft: '4px solid var(--mg-color-primary-main)'
-                }}
-              >
-                <p style={{ fontSize: 14, color: 'var(--mg-color-text-secondary)', margin: 0 }}>
-                  내담자 정보 로딩 중...
-                </p>
-              </div>
-            ) : hasValidScheduleClientId && !client ? (
-              <div
-                style={{
-                  background: 'var(--mg-color-surface-main)',
-                  border: '1px solid var(--mg-color-border-main)',
-                  borderRadius: 16,
-                  padding: 24,
-                  marginBottom: 16,
-                  borderLeft: '4px solid var(--mg-color-border-main)'
-                }}
-              >
-                <p style={{ fontSize: 14, color: 'var(--mg-color-text-secondary)', margin: 0 }}>
-                  내담자 정보를 불러올 수 없습니다.
-                </p>
-              </div>
-            ) : client ? (
+            {/* (1) 내담자 프로필 요약 블록 — client 있으면 표시, 없으면 안내/로딩 */}
+            {client ? (
               <div
                 style={{
                   background: 'var(--mg-color-surface-main, var(--mg-gray-50))',
@@ -801,6 +756,51 @@ const ConsultationLogModal = ({
                     </div>
                   )}
                 </div>
+              </div>
+            ) : loading && !client ? (
+              <div
+                style={{
+                  background: 'var(--mg-color-surface-main)',
+                  border: '1px solid var(--mg-color-border-main)',
+                  borderRadius: 16,
+                  padding: 24,
+                  marginBottom: 16,
+                  borderLeft: '4px solid var(--mg-color-primary-main)'
+                }}
+              >
+                <p style={{ fontSize: 14, color: 'var(--mg-color-text-secondary)', margin: 0 }}>
+                  내담자 정보 로딩 중...
+                </p>
+              </div>
+            ) : !hasValidScheduleClientId ? (
+              <div
+                style={{
+                  background: 'var(--mg-color-surface-main)',
+                  border: '1px solid var(--mg-color-border-main)',
+                  borderRadius: 16,
+                  padding: 24,
+                  marginBottom: 16,
+                  borderLeft: '4px solid var(--mg-color-border-main)'
+                }}
+              >
+                <p style={{ fontSize: 14, color: 'var(--mg-color-text-secondary)', margin: 0 }}>
+                  내담자 정보를 불러올 수 없습니다 (일정에 내담자가 연결되지 않았습니다).
+                </p>
+              </div>
+            ) : hasValidScheduleClientId && !client ? (
+              <div
+                style={{
+                  background: 'var(--mg-color-surface-main)',
+                  border: '1px solid var(--mg-color-border-main)',
+                  borderRadius: 16,
+                  padding: 24,
+                  marginBottom: 16,
+                  borderLeft: '4px solid var(--mg-color-border-main)'
+                }}
+              >
+                <p style={{ fontSize: 14, color: 'var(--mg-color-text-secondary)', margin: 0 }}>
+                  내담자 정보를 불러올 수 없습니다.
+                </p>
               </div>
             ) : null}
 

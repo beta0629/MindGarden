@@ -16,6 +16,7 @@ import ContentSection from '../../dashboard-v2/content/ContentSection';
 import ContentCard from '../../dashboard-v2/content/ContentCard';
 import { FileText } from 'lucide-react';
 import { toDateStr } from '../../../utils/dateUtils';
+import { getConsultantColor } from '../../schedule/ScheduleCalendar/ScheduleCalendarUtils';
 import './ConsultationLogCalendarBlock.css';
 
 const EMPTY_TITLE = '등록된 상담일지가 없습니다.';
@@ -41,18 +42,19 @@ const ConsultationLogCalendarBlock = ({
           ? clientNameMap[Number(record.clientId)]
           : null) ??
         `내담자 #${record.clientId}`;
-      const isCompleted = record.isSessionCompleted === true;
+      const consultantColor = getConsultantColor(record.consultantId);
       return {
         id: String(record.id),
         title: clientName,
         start: sessionDate,
         end: sessionDate,
         allDay: true,
-        className: isCompleted ? 'fc-event-completed' : 'fc-event-warning',
+        backgroundColor: consultantColor,
+        borderColor: consultantColor,
         extendedProps: {
           recordId: record.id,
           clientName,
-          isSessionCompleted: isCompleted,
+          isSessionCompleted: record.isSessionCompleted === true,
           record
         }
       };

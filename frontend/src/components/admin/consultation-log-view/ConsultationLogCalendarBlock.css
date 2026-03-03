@@ -46,19 +46,35 @@
   background: var(--ad-b0kla-green-bg) !important;
 }
 
+/* FullCalendar 이벤트 - B0KlA 라이트 배경 패턴 (고대비, 배경과 구분) */
 .mg-v2-consultation-log-calendar-wrapper .fc-event {
-  border-radius: 4px;
-  padding: 2px 6px;
+  background-color: var(--mg-success-50) !important;
+  border: 1px solid var(--mg-success-300) !important;
+  border-radius: var(--ad-b0kla-radius-sm);
+  color: var(--mg-success-700);
+  padding: 4px 8px;
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
+  font-family: inherit;
+  box-shadow: var(--ad-b0kla-shadow);
   cursor: pointer;
-  transition: opacity 0.2s;
-  border: none;
-  color: #fff;
+  transition: box-shadow 0.2s, background-color 0.2s;
 }
 
 .mg-v2-consultation-log-calendar-wrapper .fc-event:hover {
-  opacity: 0.9;
+  box-shadow: var(--ad-b0kla-shadow-hover);
+  background-color: var(--mg-success-100) !important;
+}
+
+/* 미완료 이벤트 */
+.mg-v2-consultation-log-calendar-wrapper .fc-event.fc-event-warning {
+  background-color: var(--mg-warning-50) !important;
+  border-color: var(--mg-warning-300) !important;
+  color: var(--mg-warning-700);
+}
+
+.mg-v2-consultation-log-calendar-wrapper .fc-event.fc-event-warning:hover {
+  background-color: var(--mg-warning-100) !important;
 }
 
 .mg-v2-consultation-log-calendar-wrapper .fc-button-primary {

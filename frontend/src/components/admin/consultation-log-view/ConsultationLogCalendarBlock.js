@@ -20,8 +20,6 @@ import './ConsultationLogCalendarBlock.css';
 
 const EMPTY_TITLE = '등록된 상담일지가 없습니다.';
 const EMPTY_DESC = '다른 필터를 적용해 보시거나, 스케줄에서 상담일지를 작성해 주세요.';
-const COLOR_SUCCESS = 'var(--mg-success-500)';
-const COLOR_WARNING = 'var(--mg-warning-500)';
 
 const ConsultationLogCalendarBlock = ({
   records,
@@ -50,8 +48,7 @@ const ConsultationLogCalendarBlock = ({
         start: sessionDate,
         end: sessionDate,
         allDay: true,
-        backgroundColor: isCompleted ? COLOR_SUCCESS : COLOR_WARNING,
-        borderColor: isCompleted ? COLOR_SUCCESS : COLOR_WARNING,
+        className: isCompleted ? 'fc-event-completed' : 'fc-event-warning',
         extendedProps: {
           recordId: record.id,
           clientName,

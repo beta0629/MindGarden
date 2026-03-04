@@ -46,6 +46,7 @@
 - [ERP 테넌트 격리 시나리오](./planning/ERP_TENANT_ISOLATION_SCENARIOS.md) — Phase 4 검증용 A/B 격리·400/403 시나리오
 - [ERP E2E·통합 테스트 시나리오](./planning/ERP_TEST_SCENARIOS.md) — API 통합·E2E 제안
 - **전체 목차**: [planning/README.md](./planning/README.md)
+- 리디자인·기획 문서는 [planning/README.md](./planning/README.md) 리디자인·기획 섹션 참조.
 
 ### Standards (표준)
 - **표준 문서 전체 목록**: [docs/standards/README.md](./standards/README.md)

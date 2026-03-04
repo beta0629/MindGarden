@@ -2,6 +2,8 @@
 
 기능·역할·메뉴·권한·ERP 섹션 점검·테스트 시나리오 등 **기획·설계 문서**가 모여 있는 폴더입니다.
 
+**최종 업데이트**: 리디자인·기획 섹션 추가
+
 ---
 
 ## ERP 관련 (최근 추가)
@@ -29,6 +31,24 @@
 | 문서 | 설명 |
 |------|------|
 | [CONSULTANT_CLIENT_UNIFIED_MANAGEMENT_REVIEW.md](./CONSULTANT_CLIENT_UNIFIED_MANAGEMENT_REVIEW.md) | 상담사·내담자 관리 통합 검토 — 라우트·메뉴·컴포넌트·API·UI 차이, 통합 vs 분리 검토, 통합 시 Phase 1~4 실행 계획 |
+
+---
+
+## 리디자인·기획
+
+| 문서 | 설명 |
+|------|------|
+| [API_PERFORMANCE_VISUALIZATION_PLAN.md](./API_PERFORMANCE_VISUALIZATION_PLAN.md) | API 성능 시각화 기획 |
+| [API_PERFORMANCE_MONITORING_REDESIGN_PLAN.md](./API_PERFORMANCE_MONITORING_REDESIGN_PLAN.md) | API 성능 모니터링 리디자인 기획 |
+| [AUTH_PAGES_REDESIGN_PLAN.md](./AUTH_PAGES_REDESIGN_PLAN.md) | Auth 페이지 리디자인 기획 |
+| [COMMON_CODE_REDESIGN_PLAN.md](./COMMON_CODE_REDESIGN_PLAN.md) | 공통코드 리디자인 기획 |
+| [ERP_DASHBOARD_IMPROVEMENT_PLAN.md](./ERP_DASHBOARD_IMPROVEMENT_PLAN.md) | ERP 대시보드 개선 기획 |
+| [ERP_DASHBOARD_DESIGN_PROPOSAL.md](./ERP_DASHBOARD_DESIGN_PROPOSAL.md) | ERP 대시보드 설계 제안 |
+| [ERP_FINANCIAL_MANAGEMENT_IMPROVEMENT_PLAN.md](./ERP_FINANCIAL_MANAGEMENT_IMPROVEMENT_PLAN.md) | ERP 재무 관리 개선 기획 |
+| [ERP_FINANCIAL_MANAGEMENT_RENEWAL_PLAN.md](./ERP_FINANCIAL_MANAGEMENT_RENEWAL_PLAN.md) | ERP 재무 관리 갱신 기획 |
+| [ERP_STATEMENTS_VS_OTHER_REPORTS_LINKAGE_PLAN.md](./ERP_STATEMENTS_VS_OTHER_REPORTS_LINKAGE_PLAN.md) | ERP 재무제표·기타 리포트 연동 기획 |
+| [HOMEPAGE_REDESIGN_PLAN.md](./HOMEPAGE_REDESIGN_PLAN.md) | 홈페이지 리디자인 기획 |
+| [UNIFIED_LOGIN_REDESIGN_PLAN.md](./UNIFIED_LOGIN_REDESIGN_PLAN.md) | 통합 로그인 리디자인 기획 |
 
 ---
 

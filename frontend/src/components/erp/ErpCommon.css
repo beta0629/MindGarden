@@ -1,4 +1,19 @@
 /* ERP 공통 스타일 - 격리된 네임스페이스 */
+
+/* 재무 관리 페이지 - 매핑 시스템과 동일한 공통 레이아웃 (mg-v2-ad-b0kla__container) */
+.mg-v2-erp-financial.mg-v2-ad-b0kla {
+  min-height: 100%;
+  background: transparent;
+  padding: 0;
+}
+
+.mg-v2-erp-financial .mg-v2-ad-b0kla__container {
+  max-width: none;
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* 기타 ERP 페이지용 컨테이너 (재무 관리는 mg-v2-ad-b0kla__container 사용) */
 .erp-system .erp-container {
   max-width: 1200px;
   margin: 0 auto;

@@ -362,7 +362,11 @@ const FinancialManagement = () => {
   if (sessionLoading) {
     return (
       <AdminCommonLayout title="재무 관리">
-        <UnifiedLoading type="page" text="세션 정보를 불러오는 중..." />
+        <div className="mg-v2-ad-b0kla mg-v2-erp-financial erp-system">
+          <div className="mg-v2-ad-b0kla__container">
+            <UnifiedLoading type="page" text="세션 정보를 불러오는 중..." />
+          </div>
+        </div>
       </AdminCommonLayout>
     );
   }
@@ -370,9 +374,13 @@ const FinancialManagement = () => {
   if (!isLoggedIn) {
     return (
       <AdminCommonLayout title={`재무 관리${dashboardStats.branchName ? ' - ' + dashboardStats.branchName : ''}`}>
-        <div className="erp-error">
-          <h3>로그인이 필요합니다.</h3>
-          <p>재무 관리 기능을 사용하려면 로그인해주세요.</p>
+        <div className="mg-v2-ad-b0kla mg-v2-erp-financial erp-system">
+          <div className="mg-v2-ad-b0kla__container">
+            <div className="erp-error">
+              <h3>로그인이 필요합니다.</h3>
+              <p>재무 관리 기능을 사용하려면 로그인해주세요.</p>
+            </div>
+          </div>
         </div>
       </AdminCommonLayout>
     );
@@ -380,13 +388,14 @@ const FinancialManagement = () => {
 
   return (
     <AdminCommonLayout title={`재무 관리${dashboardStats.branchName ? ' - ' + dashboardStats.branchName : ''}`}>
-      <ContentArea className="erp-system mg-v2-content-area">
-        <ContentHeader
-          title="재무 관리"
-          subtitle="재무 거래 및 회계를 관리할 수 있습니다."
-        />
-        <div className="erp-container">
-          <div className="mg-v2-ad-b0kla__pill-toggle" role="tablist">
+      <div className="mg-v2-ad-b0kla mg-v2-erp-financial erp-system">
+        <div className="mg-v2-ad-b0kla__container">
+          <ContentArea className="mg-v2-content-area">
+            <ContentHeader
+              title="재무 관리"
+              subtitle="재무 거래 및 회계를 관리할 수 있습니다."
+            />
+            <div className="mg-v2-ad-b0kla__pill-toggle" role="tablist">
             <button
               type="button"
               role="tab"
@@ -899,8 +908,9 @@ const FinancialManagement = () => {
             </>
           )}
           </div>
+          </ContentArea>
         </div>
-      </ContentArea>
+      </div>
 
       {/* 거래 상세 정보 모달 */}
       {showDetailModal && selectedTransaction && (

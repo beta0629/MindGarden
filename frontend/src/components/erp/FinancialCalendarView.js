@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import UnifiedLoading from '../common/UnifiedLoading';
 import StandardizedApi from '../../utils/standardizedApi';
 import {
+  DollarSign,
   TrendingDown,
   Link2,
   BarChart3,

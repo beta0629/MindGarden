@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { ContentArea, ContentHeader } from '../dashboard-v2/content';
 import ApiPerformanceWidget from './widgets/ApiPerformanceWidget';
 import { ResponseTimeLineChart, StatusCodeDoughnutChart, CacheHitBarChart } from './widgets/ApiPerformanceChart';
 import MGButton from '../../components/common/MGButton';
@@ -110,47 +111,49 @@ const ApiPerformanceMonitoring = () => {
   };
 
   return (
-    <AdminCommonLayout 
-      title="API 성능 및 트래픽 모니터링" 
-      loading={false}
-      headerActions={
-        <div className="mg-v2-ad-b0kla__flex" style={{ gap: 'var(--mg-spacing-8)' }}>
-          <MGButton
-            variant="outline"
-            size="small"
-            onClick={handleDownloadReport}
-            loading={downloadLoading}
-            loadingText="다운로드 중..."
-            disabled={refreshing}
-            preventDoubleClick
-          >
-            보고서 다운로드
-          </MGButton>
-          
-          <MGButton
-            variant="danger"
-            size="small"
-            onClick={handleClearStats}
-            loading={clearLoading}
-            loadingText="초기화 중..."
-            disabled={refreshing}
-            preventDoubleClick
-          >
-            통계 초기화
-          </MGButton>
-          
-          <MGButton
-            variant="primary"
-            size="small"
-            onClick={fetchDashboardData}
-            disabled={refreshing}
-          >
-            {refreshing ? '새로고침 중...' : '새로고침'}
-          </MGButton>
-        </div>
-      }
-    >
-      <div className="mg-v2-ad-b0kla__container" style={{ padding: 'var(--mg-spacing-24) var(--mg-spacing-32)' }}>
+    <AdminCommonLayout title="API 성능 모니터링" loading={false}>
+      <ContentArea>
+        <ContentHeader 
+          title="API 성능 및 트래픽 모니터링" 
+          subtitle="실시간 API 응답 시간, 상태 코드 비율 및 서버 성능 지표를 모니터링합니다."
+          actions={
+            <div className="mg-v2-ad-b0kla__flex" style={{ gap: 'var(--mg-spacing-8)' }}>
+              <MGButton
+                variant="outline"
+                size="small"
+                onClick={handleDownloadReport}
+                loading={downloadLoading}
+                loadingText="다운로드 중..."
+                disabled={refreshing}
+                preventDoubleClick
+              >
+                보고서 다운로드
+              </MGButton>
+              
+              <MGButton
+                variant="danger"
+                size="small"
+                onClick={handleClearStats}
+                loading={clearLoading}
+                loadingText="초기화 중..."
+                disabled={refreshing}
+                preventDoubleClick
+              >
+                통계 초기화
+              </MGButton>
+              
+              <MGButton
+                variant="primary"
+                size="small"
+                onClick={fetchDashboardData}
+                disabled={refreshing}
+              >
+                {refreshing ? '새로고침 중...' : '새로고침'}
+              </MGButton>
+            </div>
+          }
+        />
+        <div className="mg-v2-ad-b0kla__container" style={{ padding: 'var(--mg-spacing-24) var(--mg-spacing-32)' }}>
         
         {/* Top Section: 요약 지표 카드 4종 */}
         <ApiPerformanceWidget summary={dashboardData.summary} />
@@ -247,6 +250,7 @@ const ApiPerformanceMonitoring = () => {
         </div>
 
       </div>
+      </ContentArea>
     </AdminCommonLayout>
   );
 };

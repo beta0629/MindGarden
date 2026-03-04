@@ -1825,7 +1825,7 @@ const JournalEntriesTab = () => {
 // 원장 조회 탭 컴포넌트
 const LedgersTab = () => {
   const [ledgers, setLedgers] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [selectedAccountId, setSelectedAccountId] = useState(null);
   const [periodStart, setPeriodStart] = useState('');
   const [periodEnd, setPeriodEnd] = useState('');
@@ -1861,16 +1861,6 @@ const LedgersTab = () => {
       setLoading(false);
     }
   };
-
-  if (loading && !selectedAccountId) {
-    return (
-      <div>
-        <DashboardSection title="원장 조회" icon={<BookOpen size={20} />}>
-          <p>계정을 선택해주세요.</p>
-        </DashboardSection>
-      </div>
-    );
-  }
 
   return (
     <section className="mg-v2-section">

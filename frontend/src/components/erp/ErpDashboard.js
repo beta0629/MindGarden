@@ -312,8 +312,8 @@ const ErpDashboard = ({ user: propUser }) => {
   const hasPurchaseRequestView =
     (permissionChecks[PERMISSIONS.PURCHASE_REQUEST_VIEW] ??
       permissionChecks[PERMISSIONS.PURCHASE_REQUEST_MANAGE] ??
-      PermissionChecks.canViewPurchaseRequests(userPermissions, currentUser) ||
-      PermissionChecks.canManagePurchaseRequests(userPermissions, currentUser)) || isAdmin;
+      (PermissionChecks.canViewPurchaseRequests(userPermissions, currentUser) ||
+        PermissionChecks.canManagePurchaseRequests(userPermissions, currentUser))) || isAdmin;
   const hasApprovalManage =
     (permissionChecks[PERMISSIONS.APPROVAL_MANAGE] ?? PermissionChecks.canManageApprovals(userPermissions, currentUser)) || isAdmin;
   const hasItemManage =

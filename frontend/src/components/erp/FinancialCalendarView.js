@@ -1,10 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import UnifiedLoading from '../common/UnifiedLoading';
 import { apiGet } from '../../utils/ajax';
+import {
+  Calendar,
+  DollarSign,
+  TrendingDown,
+  Link2,
+  BarChart3,
+  X,
+  Gem,
+  ClipboardList,
+  ChevronLeft,
+  ChevronRight
+} from 'lucide-react';
 
 /**
  * 재무 거래 달력 뷰 컴포넌트
-/**
  * 수입/지출을 달력 형태로 한눈에 표시
  */
 const FinancialCalendarView = () => {
@@ -134,26 +145,26 @@ const FinancialCalendarView = () => {
       {/* 헤더 */}
       <div className="financial-calendar-view-header">
         <h2 className="financial-calendar-view-title">
-          📅 재무 달력
+          <Calendar size={24} aria-hidden /> 재무 달력
         </h2>
-        
-        <div className="mg-v2-form-group" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+
+        <div className="mg-v2-form-group mg-financial-calendar-nav">
           <button
+            type="button"
             onClick={() => navigateMonth(-1)}
             className="mg-v2-button mg-v2-button-secondary"
           >
-            ◀ 이전
+            <ChevronLeft size={18} aria-hidden /> 이전
           </button>
-          
-          <h3 className="mg-v2-text-lg mg-v2-text-center" style={{ margin: 0, minWidth: '120px' }}>
+          <h3 className="mg-v2-text-lg mg-v2-text-center mg-financial-calendar-nav__title">
             {currentDate.getFullYear()}년 {currentDate.getMonth() + 1}월
           </h3>
-          
           <button
+            type="button"
             onClick={() => navigateMonth(1)}
             className="mg-v2-button mg-v2-button-secondary"
           >
-            다음 ▶
+            다음 <ChevronRight size={18} aria-hidden />
           </button>
         </div>
       </div>
@@ -161,18 +172,16 @@ const FinancialCalendarView = () => {
       {/* 범례 */}
       <div className="mg-v2-legend-container">
         <div className="mg-v2-legend-item">
-          <div className="mg-v2-legend-color mg-v2-legend-color--success"></div>
-          <span>💰 수입</span>
+          <div className="mg-v2-legend-color mg-v2-legend-color--success" />
+          <span><DollarSign size={14} aria-hidden /> 수입</span>
         </div>
-        
         <div className="mg-v2-legend-item">
-          <div className="mg-v2-legend-color mg-v2-legend-color--danger"></div>
-          <span>💸 지출</span>
+          <div className="mg-v2-legend-color mg-v2-legend-color--danger" />
+          <span><TrendingDown size={14} aria-hidden /> 지출</span>
         </div>
-        
         <div className="mg-v2-legend-item">
-          <div className="mg-v2-legend-color mg-v2-legend-color--info"></div>
-          <span>🔗 매핑연동</span>
+          <div className="mg-v2-legend-color mg-v2-legend-color--info" />
+          <span><Link2 size={14} aria-hidden /> 매핑연동</span>
         </div>
       </div>
 
@@ -194,10 +203,7 @@ const FinancialCalendarView = () => {
             return (
               <div
                 key={`empty-${index}`}
-                style={{
-                  backgroundColor: 'var(--mg-gray-100)',
-                  minHeight: '100px'
-                }}
+                className="mg-financial-calendar-cell-empty"
               />
             );
           }
@@ -211,90 +217,41 @@ const FinancialCalendarView = () => {
           return (
             <div
               key={day}
+              role="button"
+              tabIndex={hasTransactions ? 0 : -1}
               onClick={() => handleDateClick(day)}
-              style={{
-                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff3cd -> var(--mg-custom-fff3cd)
-                backgroundColor: isToday ? '#fff3cd' : 'white',
-                minHeight: '100px',
-                padding: '8px',
-                cursor: hasTransactions ? 'pointer' : 'default',
-                border: isToday ? '2px solid var(--mg-warning-500)' : 'none',
-                position: 'relative',
-                display: 'flex',
-                flexDirection: 'column'
+              onKeyDown={(e) => {
+                if (hasTransactions && (e.key === 'Enter' || e.key === ' ')) {
+                  e.preventDefault();
+                  handleDateClick(day);
+                }
               }}
+              className={`mg-financial-calendar-cell-day ${isToday ? 'mg-financial-calendar-cell-day--today' : ''} ${hasTransactions ? 'mg-financial-calendar-cell-day--clickable' : ''}`}
             >
-              {/* 날짜 */}
-              <div style={{
-                fontSize: 'var(--font-size-sm)',
-                fontWeight: isToday ? 'bold' : 'normal',
-                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #333 -> var(--mg-custom-333)
-                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #856404 -> var(--mg-custom-856404)
-                color: isToday ? '#856404' : '#333',
-                marginBottom: '4px'
-              }}>
+              <div className={`mg-financial-calendar-cell-day-num ${isToday ? 'mg-financial-calendar-cell-day-num--today' : ''}`}>
                 {day}
               </div>
 
-              {/* 거래 요약 */}
               {hasTransactions && (
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                  {/* 수입 */}
+                <div className="mg-financial-calendar-cell-summary">
                   {dayData.income > 0 && (
-                    <div style={{
-                      fontSize: 'var(--font-size-xs)',
-                      padding: '2px 4px',
-                      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #d4edda -> var(--mg-custom-d4edda)
-                      backgroundColor: '#d4edda',
-                      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #155724 -> var(--mg-custom-155724)
-                      color: '#155724',
-                      borderRadius: '4px',
-                      textAlign: 'center'
-                    }}>
-                      💰 {formatCurrency(dayData.income)}
+                    <div className="mg-financial-calendar-cell-income">
+                      <DollarSign size={12} aria-hidden /> {formatCurrency(dayData.income)}
                     </div>
                   )}
-                  
-                  {/* 지출 */}
                   {dayData.expense > 0 && (
-                    <div style={{
-                      fontSize: 'var(--font-size-xs)',
-                      padding: '2px 4px',
-                      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #f8d7da -> var(--mg-custom-f8d7da)
-                      backgroundColor: '#f8d7da',
-                      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #721c24 -> var(--mg-custom-721c24)
-                      color: '#721c24',
-                      borderRadius: '4px',
-                      textAlign: 'center'
-                    }}>
-                      💸 {formatCurrency(dayData.expense)}
+                    <div className="mg-financial-calendar-cell-expense">
+                      <TrendingDown size={12} aria-hidden /> {formatCurrency(dayData.expense)}
                     </div>
                   )}
-                  
-                  {/* 거래 건수 */}
-                  <div style={{
-                    fontSize: 'var(--font-size-xs)',
-                    color: 'var(--mg-secondary-500)',
-                    textAlign: 'center',
-                    marginTop: 'auto'
-                  }}>
+                  <div className="mg-financial-calendar-cell-count">
                     {dayData.transactions.length}건
                   </div>
-                  
-                  {/* 매핑연동 표시 */}
-                  {dayData.transactions.some(t => 
-                    t.relatedEntityType === 'CONSULTANT_CLIENT_MAPPING' || 
+                  {dayData.transactions.some(t =>
+                    t.relatedEntityType === 'CONSULTANT_CLIENT_MAPPING' ||
                     t.description?.includes('상담료 입금 확인')
                   ) && (
-                    <div style={{
-                      position: 'absolute',
-                      top: '4px',
-                      right: '4px',
-                      width: '8px',
-                      height: '8px',
-                      backgroundColor: 'var(--mg-primary-500)',
-                      borderRadius: '50%'
-                    }}></div>
+                    <div className="mg-financial-calendar-cell-mapping-dot" aria-hidden />
                   )}
                 </div>
               )}
@@ -305,153 +262,68 @@ const FinancialCalendarView = () => {
 
       {/* 선택된 날짜 상세 정보 */}
       {selectedDate && dayDetail && (
-        <div style={{
-          marginTop: '20px',
-          padding: '20px',
-          backgroundColor: 'white',
-          borderRadius: '8px',
-          border: '2px solid var(--mg-primary-500)',
-          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0,0,0,0.1) -> var(--mg-custom-color)
-          boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
-        }}>
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: '15px'
-          }}>
-            <h3 style={{ margin: 0, color: 'var(--mg-primary-500)' }}>
-              📊 {selectedDate} 거래 상세
+        <div className="mg-financial-calendar-detail-panel">
+          <div className="mg-financial-calendar-detail-header">
+            <h3 className="mg-financial-calendar-detail-title">
+              <BarChart3 size={20} aria-hidden /> {selectedDate} 거래 상세
             </h3>
             <button
+              type="button"
               onClick={() => setSelectedDate(null)}
-              style={{
-                background: 'none',
-                border: 'none',
-                fontSize: 'var(--font-size-xl)',
-                cursor: 'pointer',
-                color: 'var(--mg-secondary-500)'
-              }}
+              className="mg-financial-calendar-detail-close"
+              aria-label="닫기"
             >
-              ✕
+              <X size={20} aria-hidden />
             </button>
           </div>
 
-          {/* 일일 요약 */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr 1fr',
-            gap: '15px',
-            marginBottom: '20px'
-          }}>
-            <div style={{
-              padding: '12px',
-              // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #d4edda -> var(--mg-custom-d4edda)
-              backgroundColor: '#d4edda',
-              borderRadius: '8px',
-              textAlign: 'center'
-            }}>
-              <div style={{ fontSize: 'var(--font-size-lg)', fontWeight: 'bold', color: '#155724' }}>
-                +{formatCurrency(dayDetail.income)}원
-              </div>
-              <div style={{ fontSize: 'var(--font-size-xs)', color: '#155724' }}>💰 총 수입</div>
+          <div className="mg-financial-calendar-detail-summary-grid">
+            <div className="mg-financial-calendar-detail-summary mg-financial-calendar-detail-summary--income">
+              <div className="mg-financial-calendar-detail-summary-value">+{formatCurrency(dayDetail.income)}원</div>
+              <div className="mg-financial-calendar-detail-summary-label"><DollarSign size={12} aria-hidden /> 총 수입</div>
             </div>
-            
-            <div style={{
-              padding: '12px',
-              // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #f8d7da -> var(--mg-custom-f8d7da)
-              backgroundColor: '#f8d7da',
-              borderRadius: '8px',
-              textAlign: 'center'
-            }}>
-              <div style={{ fontSize: 'var(--font-size-lg)', fontWeight: 'bold', color: '#721c24' }}>
-                -{formatCurrency(dayDetail.expense)}원
-              </div>
-              <div style={{ fontSize: 'var(--font-size-xs)', color: '#721c24' }}>💸 총 지출</div>
+            <div className="mg-financial-calendar-detail-summary mg-financial-calendar-detail-summary--expense">
+              <div className="mg-financial-calendar-detail-summary-value">-{formatCurrency(dayDetail.expense)}원</div>
+              <div className="mg-financial-calendar-detail-summary-label"><TrendingDown size={12} aria-hidden /> 총 지출</div>
             </div>
-            
-            <div style={{
-              padding: '12px',
-              // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #cce7ff -> var(--mg-custom-cce7ff)
-              backgroundColor: '#cce7ff',
-              borderRadius: '8px',
-              textAlign: 'center'
-            }}>
-              <div style={{ fontSize: 'var(--font-size-lg)', fontWeight: 'bold', color: '#004085' }}>
-                {formatCurrency(dayDetail.income - dayDetail.expense)}원
-              </div>
-              <div style={{ fontSize: 'var(--font-size-xs)', color: '#004085' }}>💎 순이익</div>
+            <div className="mg-financial-calendar-detail-summary mg-financial-calendar-detail-summary--profit">
+              <div className="mg-financial-calendar-detail-summary-value">{formatCurrency(dayDetail.income - dayDetail.expense)}원</div>
+              <div className="mg-financial-calendar-detail-summary-label"><Gem size={12} aria-hidden /> 순이익</div>
             </div>
           </div>
 
-          {/* 거래 목록 */}
           <div>
-            {/* ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #495057 -> var(--mg-custom-495057) */}
-            <h4 style={{ marginBottom: '12px', color: '#495057' }}>
-              📋 거래 내역 ({dayDetail.transactions.length}건)
+            <h4 className="mg-financial-calendar-detail-list-title">
+              <ClipboardList size={16} aria-hidden /> 거래 내역 ({dayDetail.transactions.length}건)
             </h4>
-            
+
             {dayDetail.transactions.length > 0 ? (
-              <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+              <div className="mg-financial-calendar-detail-list">
                 {dayDetail.transactions.map((transaction, index) => (
                   <div
                     key={transaction.id}
-                    style={{
-                      padding: '12px',
-                      backgroundColor: index % 2 === 0 ? 'var(--mg-gray-100)' : 'white',
-                      borderRadius: '4px',
-                      marginBottom: '4px',
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center'
-                    }}
+                    className={`mg-financial-calendar-detail-item ${index % 2 === 0 ? 'mg-financial-calendar-detail-item--even' : 'mg-financial-calendar-detail-item--odd'}`}
                   >
                     <div style={{ flex: 1 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span style={{
-                          fontSize: 'var(--font-size-xs)',
-                          padding: '2px 6px',
-                          borderRadius: '10px',
-                          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #f8d7da -> var(--mg-custom-f8d7da)
-                          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #d4edda -> var(--mg-custom-d4edda)
-                          backgroundColor: transaction.transactionType === 'INCOME' ? '#d4edda' : '#f8d7da',
-                          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #721c24 -> var(--mg-custom-721c24)
-                          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #155724 -> var(--mg-custom-155724)
-                          color: transaction.transactionType === 'INCOME' ? '#155724' : '#721c24'
-                        }}>
+                      <div className="mg-financial-calendar-detail-item-top">
+                        <span className={`mg-financial-calendar-detail-type-badge ${transaction.transactionType === 'INCOME' ? 'mg-financial-calendar-detail-type-badge--income' : 'mg-financial-calendar-detail-type-badge--expense'}`}>
                           #{transaction.id}
                         </span>
-                        
-                        {(transaction.relatedEntityType === 'CONSULTANT_CLIENT_MAPPING' || 
+                        {(transaction.relatedEntityType === 'CONSULTANT_CLIENT_MAPPING' ||
                           transaction.description?.includes('상담료 입금 확인')) && (
-                          <span style={{
-                            fontSize: 'var(--font-size-xs)',
-                            padding: '2px 6px',
-                            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e3f2fd -> var(--mg-custom-e3f2fd)
-                            backgroundColor: '#e3f2fd',
-                            color: 'var(--mg-secondary-600)',
-                            borderRadius: '10px',
-                            fontWeight: '600'
-                          }}>
-                            🔗 매핑연동
+                          <span className="mg-financial-calendar-detail-item-mapping">
+                            <Link2 size={12} aria-hidden /> 매핑연동
                           </span>
                         )}
                       </div>
-                      
-                      <div style={{ fontSize: 'var(--font-size-sm)', fontWeight: '500', marginTop: '4px' }}>
+                      <div className="mg-financial-calendar-detail-item-category">
                         {transaction.category} - {transaction.subcategory || ''}
                       </div>
-                      
-                      <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--mg-secondary-500)', marginTop: '2px' }}>
+                      <div className="mg-financial-calendar-detail-item-desc">
                         {transaction.description || '-'}
                       </div>
                     </div>
-                    
-                    <div style={{
-                      fontSize: 'var(--font-size-base)',
-                      fontWeight: 'bold',
-                      color: transaction.transactionType === 'INCOME' ? 'var(--mg-success-500)' : 'var(--mg-error-500)'
-                    }}>
+                    <div className={`mg-financial-calendar-detail-item-amount ${transaction.transactionType === 'INCOME' ? 'mg-financial-calendar-detail-item-amount--income' : 'mg-financial-calendar-detail-item-amount--expense'}`}>
                       {transaction.transactionType === 'INCOME' ? '+' : '-'}
                       {formatCurrency(transaction.amount)}원
                     </div>
@@ -459,13 +331,7 @@ const FinancialCalendarView = () => {
                 ))}
               </div>
             ) : (
-              <div style={{
-                textAlign: 'center',
-                padding: '40px',
-                color: 'var(--mg-secondary-500)',
-                backgroundColor: 'var(--mg-gray-100)',
-                borderRadius: '8px'
-              }}>
+              <div className="mg-financial-calendar-detail-empty">
                 이 날짜에는 거래가 없습니다.
               </div>
             )}
@@ -474,93 +340,34 @@ const FinancialCalendarView = () => {
       )}
 
       {/* 월간 통계 */}
-      <div style={{
-        marginTop: '20px',
-        padding: '20px',
-        backgroundColor: 'var(--mg-gray-100)',
-        borderRadius: '8px'
-      }}>
-        {/* ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #495057 -> var(--mg-custom-495057) */}
-        <h3 style={{ marginBottom: '15px', color: '#495057' }}>
-          📊 {currentDate.getFullYear()}년 {currentDate.getMonth() + 1}월 통계
+      <div className="mg-financial-calendar-monthly-stats">
+        <h3 className="mg-financial-calendar-monthly-stats-title">
+          <BarChart3 size={20} aria-hidden /> {currentDate.getFullYear()}년 {currentDate.getMonth() + 1}월 통계
         </h3>
-        
+
         {(() => {
           const monthlyIncome = Object.values(calendarData).reduce((sum, day) => sum + day.income, 0);
           const monthlyExpense = Object.values(calendarData).reduce((sum, day) => sum + day.expense, 0);
           const monthlyProfit = monthlyIncome - monthlyExpense;
           const totalTransactions = Object.values(calendarData).reduce((sum, day) => sum + day.transactions.length, 0);
-          
+
           return (
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-              gap: '15px'
-            }}>
-              <div style={{
-                padding: '15px',
-                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #d4edda -> var(--mg-custom-d4edda)
-                backgroundColor: '#d4edda',
-                borderRadius: '8px',
-                textAlign: 'center'
-              }}>
-                <div style={{ fontSize: 'var(--font-size-xl)', fontWeight: 'bold', color: '#155724' }}>
-                  +{formatCurrency(monthlyIncome)}원
-                </div>
-                <div style={{ fontSize: 'var(--font-size-sm)', color: '#155724' }}>💰 월 총 수입</div>
+            <div className="mg-financial-calendar-monthly-grid">
+              <div className="mg-financial-calendar-monthly-card mg-financial-calendar-monthly-card--income">
+                <div className="mg-financial-calendar-monthly-value">+{formatCurrency(monthlyIncome)}원</div>
+                <div className="mg-financial-calendar-monthly-label"><DollarSign size={14} aria-hidden /> 월 총 수입</div>
               </div>
-              
-              <div style={{
-                padding: '15px',
-                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #f8d7da -> var(--mg-custom-f8d7da)
-                backgroundColor: '#f8d7da',
-                borderRadius: '8px',
-                textAlign: 'center'
-              }}>
-                <div style={{ fontSize: 'var(--font-size-xl)', fontWeight: 'bold', color: '#721c24' }}>
-                  -{formatCurrency(monthlyExpense)}원
-                </div>
-                <div style={{ fontSize: 'var(--font-size-sm)', color: '#721c24' }}>💸 월 총 지출</div>
+              <div className="mg-financial-calendar-monthly-card mg-financial-calendar-monthly-card--expense">
+                <div className="mg-financial-calendar-monthly-value">-{formatCurrency(monthlyExpense)}원</div>
+                <div className="mg-financial-calendar-monthly-label"><TrendingDown size={14} aria-hidden /> 월 총 지출</div>
               </div>
-              
-              <div style={{
-                padding: '15px',
-                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #ffe6e6 -> var(--mg-custom-ffe6e6)
-                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #cce7ff -> var(--mg-custom-cce7ff)
-                backgroundColor: monthlyProfit >= 0 ? '#cce7ff' : '#ffe6e6',
-                borderRadius: '8px',
-                textAlign: 'center'
-              }}>
-                <div style={{
-                  fontSize: 'var(--font-size-xl)',
-                  fontWeight: 'bold',
-                  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #721c24 -> var(--mg-custom-721c24)
-                  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #004085 -> var(--mg-custom-004085)
-                  color: monthlyProfit >= 0 ? '#004085' : '#721c24'
-                }}>
-                  {formatCurrency(monthlyProfit)}원
-                </div>
-                <div style={{
-                  fontSize: 'var(--font-size-sm)',
-                  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #721c24 -> var(--mg-custom-721c24)
-                  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #004085 -> var(--mg-custom-004085)
-                  color: monthlyProfit >= 0 ? '#004085' : '#721c24'
-                }}>
-                  💎 월 순이익
-                </div>
+              <div className={`mg-financial-calendar-monthly-card ${monthlyProfit >= 0 ? 'mg-financial-calendar-monthly-card--profit' : 'mg-financial-calendar-monthly-card--profit-negative'}`}>
+                <div className="mg-financial-calendar-monthly-value">{formatCurrency(monthlyProfit)}원</div>
+                <div className="mg-financial-calendar-monthly-label"><Gem size={14} aria-hidden /> 월 순이익</div>
               </div>
-              
-              <div style={{
-                padding: '15px',
-                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e2e3e5 -> var(--mg-custom-e2e3e5)
-                backgroundColor: '#e2e3e5',
-                borderRadius: '8px',
-                textAlign: 'center'
-              }}>
-                <div style={{ fontSize: 'var(--font-size-xl)', fontWeight: 'bold', color: '#383d41' }}>
-                  {totalTransactions}건
-                </div>
-                <div style={{ fontSize: 'var(--font-size-sm)', color: '#383d41' }}>📊 총 거래</div>
+              <div className="mg-financial-calendar-monthly-card mg-financial-calendar-monthly-card--total">
+                <div className="mg-financial-calendar-monthly-value">{totalTransactions}건</div>
+                <div className="mg-financial-calendar-monthly-label"><BarChart3 size={14} aria-hidden /> 총 거래</div>
               </div>
             </div>
           );
@@ -568,7 +375,7 @@ const FinancialCalendarView = () => {
       </div>
 
       {loading && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1000 }}>
+        <div className="mg-financial-calendar-loading-overlay">
           <UnifiedLoading type="page" text="달력 데이터를 불러오는 중..." />
         </div>
       )}

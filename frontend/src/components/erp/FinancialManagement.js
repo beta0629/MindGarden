@@ -7,12 +7,36 @@ import { apiGet } from '../../utils/ajax';
 import { getCodeLabel } from '../../utils/commonCodeUtils';
 import notificationManager from '../../utils/notification';
 import ConfirmModal from '../common/ConfirmModal';
+import UnifiedModal from '../common/modals/UnifiedModal';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentArea, ContentHeader } from '../dashboard-v2/content';
-import { DollarSign, Wallet, RefreshCw, Search, Link2, User, Users, BarChart3, FileText, Calendar, Building2, ClipboardList, X } from 'lucide-react';
-import { ERP_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
+import {
+  DollarSign,
+  Wallet,
+  RefreshCw,
+  Search,
+  Link2,
+  User,
+  Users,
+  BarChart3,
+  Calendar,
+  Building2,
+  ClipboardList,
+  LayoutDashboard,
+  Plus,
+  Download,
+  Eye,
+  Pencil,
+  Trash2,
+  AlertTriangle,
+  Inbox,
+  TrendingUp,
+  TrendingDown,
+  Undo2
+} from 'lucide-react';
 import { getStatusLabel } from '../../utils/colorUtils';
 import FinancialCalendarView from './FinancialCalendarView';
+import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ErpCommon.css';
 
 /**
@@ -362,28 +386,34 @@ const FinancialManagement = () => {
           subtitle="재무 거래 및 회계를 관리할 수 있습니다."
         />
         <div className="erp-container">
-          <div className="erp-tabs">
-          <button
-            className={`erp-tab ${activeTab === 'transactions' ? 'active' : ''}`}
-            onClick={() => setActiveTab('transactions')}
-          >
-            <i className="bi bi-list-ul"></i>
-            거래 내역
-          </button>
-          <button
-            className={`erp-tab ${activeTab === 'calendar' ? 'active' : ''}`}
-            onClick={() => setActiveTab('calendar')}
-          >
-            <i className="bi bi-calendar3"></i>
-            달력 뷰
-          </button>
-          <button
-            className={`erp-tab ${activeTab === 'dashboard' ? 'active' : ''}`}
-            onClick={() => setActiveTab('dashboard')}
-          >
-            <i className="bi bi-speedometer2"></i>
-            대시보드
-          </button>
+          <div className="mg-v2-ad-b0kla__pill-toggle" role="tablist">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeTab === 'transactions'}
+              className={`mg-v2-ad-b0kla__pill ${activeTab === 'transactions' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+              onClick={() => setActiveTab('transactions')}
+            >
+              <ClipboardList size={18} aria-hidden /> 거래 내역
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeTab === 'calendar'}
+              className={`mg-v2-ad-b0kla__pill ${activeTab === 'calendar' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+              onClick={() => setActiveTab('calendar')}
+            >
+              <Calendar size={18} aria-hidden /> 달력 뷰
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeTab === 'dashboard'}
+              className={`mg-v2-ad-b0kla__pill ${activeTab === 'dashboard' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+              onClick={() => setActiveTab('dashboard')}
+            >
+              <LayoutDashboard size={18} aria-hidden /> 대시보드
+            </button>
           </div>
 
           {/* 콘텐츠 영역 */}
@@ -397,12 +427,10 @@ const FinancialManagement = () => {
             {error && (
               <div className="erp-error">
                 <div className="alert alert-danger" role="alert">
-                  <i className="bi bi-exclamation-triangle-fill"></i>
-                  {error}
+                  <AlertTriangle size={20} aria-hidden /> {error}
                 </div>
-                <button className="mg-btn mg-btn--outline mg-btn--primary" onClick={loadData}>
-                  <i className="bi bi-arrow-clockwise"></i>
-                  다시 시도
+                <button type="button" className="mg-btn mg-btn--outline mg-btn--primary" onClick={loadData}>
+                  <RefreshCw size={16} aria-hidden /> 다시 시도
                 </button>
               </div>
             )}
@@ -410,94 +438,119 @@ const FinancialManagement = () => {
             {!loading && !error && (
               <>
                 {activeTab === 'calendar' && (
-                <div className="erp-section">
+                <section
+                  className="erp-section mg-v2-erp-section-block"
+                  style={{
+                    background: 'var(--mg-layout-section-bg, var(--mg-color-surface-main))',
+                    border: '1px solid var(--mg-layout-section-border, var(--mg-color-border-main))',
+                    borderRadius: '16px',
+                    padding: 'var(--mg-layout-section-padding, 1.5rem)'
+                  }}
+                >
                   <FinancialCalendarView />
-                </div>
+                </section>
               )}
 
               {activeTab === 'transactions' && (
-                <div className="erp-section">
+                <section
+                  className="erp-section mg-v2-erp-section-block"
+                  style={{
+                    background: 'var(--mg-layout-section-bg, var(--mg-color-surface-main))',
+                    border: '1px solid var(--mg-layout-section-border, var(--mg-color-border-main))',
+                    borderRadius: '16px',
+                    padding: 'var(--mg-layout-section-padding, 1.5rem)'
+                  }}
+                >
                   <div className="d-flex justify-content-between align-items-center mb-3">
                     <h2>재무 거래 내역</h2>
                     <div className="d-flex gap-2">
-                      <button className="mg-btn mg-btn--primary">
-                        <i className="bi bi-plus"></i>
-                        거래 추가
+                      <button type="button" className="mg-btn mg-btn--primary">
+                        <Plus size={16} aria-hidden /> 거래 추가
                       </button>
-                      <button className="mg-btn mg-btn--outline mg-btn--secondary">
-                        <i className="bi bi-download"></i>
-                        내보내기
+                      <button type="button" className="mg-btn mg-btn--outline mg-btn--secondary">
+                        <Download size={16} aria-hidden /> 내보내기
                       </button>
                     </div>
                   </div>
 
-                  {/* 필터 섹션 */}
+                  {/* 필터 섹션: 태그 그룹 */}
                   <div className="mg-v2-filter-section">
-                    <h3 className="mg-v2-filter-title">
-                      필터 및 검색
-                    </h3>
-                    
+                    <h3 className="mg-v2-filter-title">필터 및 검색</h3>
+
                     <div className="mg-v2-filter-grid">
-                      {/* 거래 유형 필터 */}
-                      <div>
-                        <label className="mg-v2-form-label">
-                          거래 유형
-                        </label>
-                        <select
-                          value={filters.transactionType}
-                          onChange={(e) => setFilters(prev => ({ ...prev, transactionType: e.target.value }))}
-                          className="mg-v2-form-select"
-                        >
-                          <option value="ALL">전체</option>
-                          <option value="INCOME">수입</option>
-                          <option value="EXPENSE">지출</option>
-                        </select>
+                      {/* 거래 유형: 태그 */}
+                      <div className="mg-v2-form-group">
+                        <label className="mg-v2-form-label">거래 유형</label>
+                        <div className="mg-v2-tag-group">
+                          {[
+                            { value: 'ALL', label: '전체' },
+                            { value: 'INCOME', label: '수입' },
+                            { value: 'EXPENSE', label: '지출' }
+                          ].map((opt) => (
+                            <button
+                              key={opt.value}
+                              type="button"
+                              className={`mg-v2-tag ${filters.transactionType === opt.value ? 'mg-v2-tag--selected' : ''}`}
+                              onClick={() => setFilters(prev => ({ ...prev, transactionType: opt.value }))}
+                            >
+                              {opt.label}
+                            </button>
+                          ))}
+                        </div>
                       </div>
-                      
-                      {/* 카테고리 필터 */}
-                      <div>
-                        <label className="mg-v2-form-label">
-                          카테고리
-                        </label>
-                        <select
-                          value={filters.category}
-                          onChange={(e) => setFilters(prev => ({ ...prev, category: e.target.value }))}
-                          className="mg-v2-form-select"
-                        >
-                          <option value="ALL">전체</option>
-                          <option value="CONSULTATION">상담료</option>
-                          <option value="SALARY">급여</option>
-                          <option value="RENT">임대료</option>
-                          <option value="UTILITY">관리비</option>
-                          <option value="OFFICE_SUPPLIES">사무용품</option>
-                          <option value="OTHER">기타</option>
-                        </select>
+
+                      {/* 카테고리: 태그 */}
+                      <div className="mg-v2-form-group">
+                        <label className="mg-v2-form-label">카테고리</label>
+                        <div className="mg-v2-tag-group">
+                          {[
+                            { value: 'ALL', label: '전체' },
+                            { value: 'CONSULTATION', label: '상담료' },
+                            { value: 'SALARY', label: '급여' },
+                            { value: 'RENT', label: '임대료' },
+                            { value: 'UTILITY', label: '관리비' },
+                            { value: 'OFFICE_SUPPLIES', label: '사무용품' },
+                            { value: 'OTHER', label: '기타' }
+                          ].map((opt) => (
+                            <button
+                              key={opt.value}
+                              type="button"
+                              className={`mg-v2-tag ${filters.category === opt.value ? 'mg-v2-tag--selected' : ''}`}
+                              onClick={() => setFilters(prev => ({ ...prev, category: opt.value }))}
+                            >
+                              {opt.label}
+                            </button>
+                          ))}
+                        </div>
                       </div>
-                      
-                      {/* 연동 유형 필터 */}
-                      <div>
-                        <label className="mg-v2-form-label">
-                          연동 유형
-                        </label>
-                        <select
-                          value={filters.relatedEntityType}
-                          onChange={(e) => setFilters(prev => ({ ...prev, relatedEntityType: e.target.value }))}
-                          className="mg-v2-form-select"
-                        >
-                          <option value="ALL">전체</option>
-                          <option value="CONSULTANT_CLIENT_MAPPING">매핑연동</option>
-                          <option value="CONSULTANT_CLIENT_MAPPING_REFUND">환불처리</option>
-                          <option value="PAYMENT">결제</option>
-                          <option value="SALARY_CALCULATION">급여</option>
-                          <option value="PURCHASE_REQUEST">구매</option>
-                        </select>
+
+                      {/* 연동 유형: 태그 */}
+                      <div className="mg-v2-form-group">
+                        <label className="mg-v2-form-label">연동 유형</label>
+                        <div className="mg-v2-tag-group">
+                          {[
+                            { value: 'ALL', label: '전체' },
+                            { value: 'CONSULTANT_CLIENT_MAPPING', label: '매핑연동' },
+                            { value: 'CONSULTANT_CLIENT_MAPPING_REFUND', label: '환불처리' },
+                            { value: 'PAYMENT', label: '결제' },
+                            { value: 'SALARY_CALCULATION', label: '급여' },
+                            { value: 'PURCHASE_REQUEST', label: '구매' }
+                          ].map((opt) => (
+                            <button
+                              key={opt.value}
+                              type="button"
+                              className={`mg-v2-tag ${filters.relatedEntityType === opt.value ? 'mg-v2-tag--selected' : ''}`}
+                              onClick={() => setFilters(prev => ({ ...prev, relatedEntityType: opt.value }))}
+                            >
+                              {opt.label}
+                            </button>
+                          ))}
+                        </div>
                       </div>
-                      
+
                       {/* 검색 */}
-                      <div>
-                        <label className="mg-v2-form-label">
-                          검색
-                        </label>
+                      <div className="mg-v2-form-group">
+                        <label className="mg-v2-form-label">검색</label>
                         <input
                           type="text"
                           placeholder="상담사명, 내담자명, 설명 검색..."
@@ -507,9 +560,10 @@ const FinancialManagement = () => {
                         />
                       </div>
                     </div>
-                    
-                    <div className="mg-v2-form-group" style={{ display: 'flex', gap: '10px', marginTop: '15px' }}>
+
+                    <div className="mg-v2-form-group mg-financial-filter-actions">
                       <button
+                        type="button"
                         onClick={() => setFilters({
                           transactionType: 'ALL',
                           category: 'ALL',
@@ -523,8 +577,8 @@ const FinancialManagement = () => {
                       >
                         <RefreshCw size={16} aria-hidden /> 필터 초기화
                       </button>
-                      
                       <button
+                        type="button"
                         onClick={() => loadData()}
                         className="mg-v2-button mg-v2-button-primary"
                       >
@@ -638,7 +692,7 @@ const FinancialManagement = () => {
                                 onClick={() => handleViewTransaction(transaction)}
                                 preventDoubleClick={true}
                               >
-                                <i className="bi bi-eye"></i> 보기
+                                <Eye size={14} aria-hidden /> 보기
                               </Button>
                               <Button
                                 variant="outline"
@@ -646,7 +700,7 @@ const FinancialManagement = () => {
                                 onClick={() => handleEditTransaction(transaction)}
                                 preventDoubleClick={true}
                               >
-                                <i className="bi bi-pencil"></i> 수정
+                                <Pencil size={14} aria-hidden /> 수정
                               </Button>
                               <Button
                                 variant="outline"
@@ -654,7 +708,7 @@ const FinancialManagement = () => {
                                 onClick={() => handleDeleteTransaction(transaction)}
                                 preventDoubleClick={true}
                               >
-                                <i className="bi bi-trash"></i> 삭제
+                                <Trash2 size={14} aria-hidden /> 삭제
                               </Button>
                             </div>
                           </div>
@@ -662,7 +716,7 @@ const FinancialManagement = () => {
                       ))
                     ) : (
                       <div className="mg-financial-transaction-empty">
-                        <i className="bi bi-inbox mg-financial-transaction-empty__icon"></i>
+                        <Inbox size={48} className="mg-financial-transaction-empty__icon" aria-hidden />
                         <p className="mg-financial-transaction-empty__text">거래 내역이 없습니다.</p>
                       </div>
                     )}
@@ -710,144 +764,137 @@ const FinancialManagement = () => {
                       </nav>
                     </div>
                   )}
-                </div>
+                </section>
               )}
 
               {activeTab === 'dashboard' && (
-                <div className="erp-section">
-                  <h2>재무 대시보드</h2>
-                  <div className="row">
-                    <div className="col-md-3 mb-3">
-                      <div className="erp-card">
-                        <div className="erp-card-header">
-                          <h3>총 수입</h3>
-                          <i className="bi bi-arrow-up-circle text-success"></i>
-                        </div>
-                        <div className="erp-card-body">
-                          <div className="h4 text-success">{formatCurrency(dashboardStats.totalIncome)}</div>
-                          <small className="text-muted">이번 달</small>
-                        </div>
+                <section
+                  className="erp-section mg-v2-erp-section-block"
+                  style={{
+                    background: 'var(--mg-layout-section-bg, var(--mg-color-surface-main))',
+                    border: '1px solid var(--mg-layout-section-border, var(--mg-color-border-main))',
+                    borderRadius: '16px',
+                    padding: 'var(--mg-layout-section-padding, 1.5rem)'
+                  }}
+                >
+                  <h2 className="mg-v2-ad-b0kla__section-title">재무 대시보드</h2>
+                  <div className="mg-v2-erp-dashboard-kpi-grid">
+                    <div className="mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card-accent">
+                      <div className="mg-v2-ad-b0kla__chart-header">
+                        <h3 className="mg-v2-ad-b0kla__chart-title">총 수입</h3>
+                        <TrendingUp size={24} aria-hidden className="mg-v2-ad-b0kla__kpi-value--success" />
+                      </div>
+                      <div className="mg-v2-ad-b0kla__chart-body">
+                        <div className="mg-v2-ad-b0kla__kpi-value mg-v2-ad-b0kla__kpi-value--success">{formatCurrency(dashboardStats.totalIncome)}</div>
+                        <span className="mg-v2-ad-b0kla__kpi-label">이번 달</span>
                       </div>
                     </div>
-                    <div className="col-md-3 mb-3">
-                      <div className="erp-card">
-                        <div className="erp-card-header">
-                          <h3>총 지출</h3>
-                          <i className="bi bi-arrow-down-circle text-danger"></i>
-                        </div>
-                        <div className="erp-card-body">
-                          <div className="h4 text-danger">{formatCurrency(dashboardStats.totalExpense)}</div>
-                          <small className="text-muted">이번 달</small>
-                        </div>
+                    <div className="mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card-accent--orange">
+                      <div className="mg-v2-ad-b0kla__chart-header">
+                        <h3 className="mg-v2-ad-b0kla__chart-title">총 지출</h3>
+                        <TrendingDown size={24} aria-hidden className="mg-v2-ad-b0kla__kpi-value--danger" />
+                      </div>
+                      <div className="mg-v2-ad-b0kla__chart-body">
+                        <div className="mg-v2-ad-b0kla__kpi-value mg-v2-ad-b0kla__kpi-value--danger">{formatCurrency(dashboardStats.totalExpense)}</div>
+                        <span className="mg-v2-ad-b0kla__kpi-label">이번 달</span>
                       </div>
                     </div>
-                    <div className="col-md-3 mb-3">
-                      <div className="erp-card">
-                        <div className="erp-card-header">
-                          <h3>순이익</h3>
-                          <i className="bi bi-graph-up text-primary"></i>
+                    <div className="mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card-accent--blue">
+                      <div className="mg-v2-ad-b0kla__chart-header">
+                        <h3 className="mg-v2-ad-b0kla__chart-title">순이익</h3>
+                        <BarChart3 size={24} aria-hidden className={dashboardStats.netProfit >= 0 ? 'mg-v2-ad-b0kla__kpi-value--primary' : 'mg-v2-ad-b0kla__kpi-value--danger'} />
+                      </div>
+                      <div className="mg-v2-ad-b0kla__chart-body">
+                        <div className={`mg-v2-ad-b0kla__kpi-value ${dashboardStats.netProfit >= 0 ? 'mg-v2-ad-b0kla__kpi-value--primary' : 'mg-v2-ad-b0kla__kpi-value--danger'}`}>
+                          {formatCurrency(Math.abs(dashboardStats.netProfit))}
                         </div>
-                        <div className="erp-card-body">
-                          <div className={`h4 ${dashboardStats.netProfit >= 0 ? 'text-primary' : 'text-danger'}`}>
-{formatCurrency(Math.abs(dashboardStats.netProfit))}
-                          </div>
-                          <small className="text-muted">이번 달</small>
-                        </div>
+                        <span className="mg-v2-ad-b0kla__kpi-label">이번 달</span>
                       </div>
                     </div>
-                    <div className="col-md-3 mb-3">
-                      <div className="erp-card">
-                        <div className="erp-card-header">
-                          <h3>거래 건수</h3>
-                          <i className="bi bi-list-ul text-info"></i>
-                        </div>
-                        <div className="erp-card-body">
-                          <div className="h4 text-info">{dashboardStats.transactionCount}건</div>
-                          <small className="text-muted">이번 달</small>
-                        </div>
+                    <div className="mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card-accent--blue">
+                      <div className="mg-v2-ad-b0kla__chart-header">
+                        <h3 className="mg-v2-ad-b0kla__chart-title">거래 건수</h3>
+                        <ClipboardList size={24} aria-hidden className="mg-v2-ad-b0kla__kpi-value--info" />
                       </div>
-                    </div>
-                  </div>
-                  
-                  {/* 매핑 연동 현황 */}
-                  <div className="mt-4">
-                    <h3><BarChart3 size={20} aria-hidden /> 매핑 연동 현황</h3>
-                    <div className="row">
-                      <div className="col-md-6 mb-3">
-                        <div className="erp-card">
-                          <div className="erp-card-header">
-                            <h4>매핑 연동 수입</h4>
-                            <i className="bi bi-link-45deg text-success"></i>
-                          </div>
-                          <div className="erp-card-body">
-                            <div className="h5 text-success">
-{formatCurrency(
-                                transactions
-                                  .filter(t => t.transactionType === 'INCOME' && 
-                                          (t.relatedEntityType === 'CONSULTANT_CLIENT_MAPPING' || 
-                                           t.description?.includes('상담료 입금 확인')))
-                                  .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0)
-                              )}
-                            </div>
-                            <small className="text-muted">자동 생성된 상담료 수입</small>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div className="col-md-6 mb-3">
-                        <div className="erp-card">
-                          <div className="erp-card-header">
-                            <h4>매핑 연동 환불</h4>
-                            <i className="bi bi-arrow-left-circle text-warning"></i>
-                          </div>
-                          <div className="erp-card-body">
-                            <div className="h5 text-warning">
-{formatCurrency(
-                                transactions
-                                  .filter(t => t.transactionType === 'EXPENSE' && 
-                                          (t.relatedEntityType === 'CONSULTANT_CLIENT_MAPPING_REFUND' || 
-                                           t.description?.includes('상담료 환불')))
-                                  .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0)
-                              )}
-                            </div>
-                            <small className="text-muted">자동 생성된 환불 지출</small>
-                          </div>
-                        </div>
+                      <div className="mg-v2-ad-b0kla__chart-body">
+                        <div className="mg-v2-ad-b0kla__kpi-value mg-v2-ad-b0kla__kpi-value--info">{dashboardStats.transactionCount}건</div>
+                        <span className="mg-v2-ad-b0kla__kpi-label">이번 달</span>
                       </div>
                     </div>
                   </div>
-                  
-                  {/* 빠른 액션 */}
-                  <div className="mt-4">
-                    <h3>빠른 액션</h3>
-                    <div className="d-flex gap-2 flex-wrap">
-                      <button 
-                        className="mg-btn mg-btn--primary"
-                        onClick={() => setActiveTab('transactions')}
-                      >
-                        <ClipboardList size={16} aria-hidden /> 거래 내역 보기
-                      </button>
-                      <button 
-                        className="mg-btn mg-btn--success"
-                        onClick={() => setActiveTab('calendar')}
-                      >
-                        <Calendar size={16} aria-hidden /> 달력 뷰 보기
-                      </button>
-                      <button 
-                        className="mg-btn mg-btn--info"
-                        onClick={() => window.location.href = '/branch_super_admin/mapping-management'}
-                      >
-                        <Link2 size={16} aria-hidden /> 매핑 시스템 확인
-                      </button>
-                      <button 
-                        className="mg-btn mg-btn--secondary"
-                        onClick={() => window.location.href = '/erp/finance-dashboard'}
-                      >
-                        <Building2 size={16} aria-hidden /> 통합 재무 대시보드
-                      </button>
+
+                  <h3 className="mg-v2-ad-b0kla__section-title"><BarChart3 size={20} aria-hidden /> 매핑 연동 현황</h3>
+                  <div className="mg-v2-erp-dashboard-kpi-grid mg-v2-erp-dashboard-kpi-grid--half">
+                    <div className="mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card-accent">
+                      <div className="mg-v2-ad-b0kla__chart-header">
+                        <h4 className="mg-v2-ad-b0kla__chart-title">매핑 연동 수입</h4>
+                        <Link2 size={22} aria-hidden className="mg-v2-ad-b0kla__kpi-value--success" />
+                      </div>
+                      <div className="mg-v2-ad-b0kla__chart-body">
+                        <div className="mg-v2-ad-b0kla__kpi-value mg-v2-ad-b0kla__kpi-value--success">
+                          {formatCurrency(
+                            transactions
+                              .filter(t => t.transactionType === 'INCOME' &&
+                                (t.relatedEntityType === 'CONSULTANT_CLIENT_MAPPING' ||
+                                  t.description?.includes('상담료 입금 확인')))
+                              .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0)
+                          )}
+                        </div>
+                        <span className="mg-v2-ad-b0kla__kpi-label">자동 생성된 상담료 수입</span>
+                      </div>
+                    </div>
+                    <div className="mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card-accent--orange">
+                      <div className="mg-v2-ad-b0kla__chart-header">
+                        <h4 className="mg-v2-ad-b0kla__chart-title">매핑 연동 환불</h4>
+                        <Undo2 size={22} aria-hidden className="mg-v2-ad-b0kla__kpi-value--warning" />
+                      </div>
+                      <div className="mg-v2-ad-b0kla__chart-body">
+                        <div className="mg-v2-ad-b0kla__kpi-value mg-v2-ad-b0kla__kpi-value--warning">
+                          {formatCurrency(
+                            transactions
+                              .filter(t => t.transactionType === 'EXPENSE' &&
+                                (t.relatedEntityType === 'CONSULTANT_CLIENT_MAPPING_REFUND' ||
+                                  t.description?.includes('상담료 환불')))
+                              .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0)
+                          )}
+                        </div>
+                        <span className="mg-v2-ad-b0kla__kpi-label">자동 생성된 환불 지출</span>
+                      </div>
                     </div>
                   </div>
-                </div>
+
+                  <h3 className="mg-v2-ad-b0kla__section-title">빠른 액션</h3>
+                  <div className="mg-v2-erp-dashboard-actions">
+                    <button
+                      type="button"
+                      className="mg-v2-button mg-v2-button-primary"
+                      onClick={() => setActiveTab('transactions')}
+                    >
+                      <ClipboardList size={16} aria-hidden /> 거래 내역 보기
+                    </button>
+                    <button
+                      type="button"
+                      className="mg-v2-button mg-v2-button-success"
+                      onClick={() => setActiveTab('calendar')}
+                    >
+                      <Calendar size={16} aria-hidden /> 달력 뷰 보기
+                    </button>
+                    <button
+                      type="button"
+                      className="mg-v2-button mg-v2-button-secondary"
+                      onClick={() => window.location.href = '/branch_super_admin/mapping-management'}
+                    >
+                      <Link2 size={16} aria-hidden /> 매핑 시스템 확인
+                    </button>
+                    <button
+                      type="button"
+                      className="mg-v2-button mg-v2-button-secondary"
+                      onClick={() => window.location.href = '/erp/finance-dashboard'}
+                    >
+                      <Building2 size={16} aria-hidden /> 통합 재무 대시보드
+                    </button>
+                  </div>
+                </section>
               )}
             </>
           )}
@@ -919,244 +966,149 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
     });
   };
 
+  const modalTitle = (
+    <>
+      <DollarSign size={20} aria-hidden /> 거래 상세 정보 #{transaction.id}
+    </>
+  );
+
+  const modalActions = (
+    <>
+      <button type="button" onClick={onClose} className="mg-v2-transaction-detail-btn mg-v2-transaction-detail-btn--secondary">
+        닫기
+      </button>
+      {transaction.relatedEntityType === 'CONSULTANT_CLIENT_MAPPING' && (
+        <button
+          type="button"
+          onClick={() => window.open(`/branch_super_admin/mapping-management?mappingId=${transaction.relatedEntityId}`, '_blank')}
+          className="mg-v2-transaction-detail-btn mg-v2-transaction-detail-btn--primary"
+        >
+          매핑 보기
+        </button>
+      )}
+    </>
+  );
+
   return (
-    <div className="mg-v2-modal-overlay--high-z">
-      <div className="mg-v2-modal mg-v2-modal-large mg-v2-modal--scrollable" style={{ maxWidth: 'min(95vw, 1100px)', width: '90vw' }}>
-        {/* 헤더 */}
-        <div className="mg-v2-modal-header">
-          <h2 className="mg-v2-modal-title">
-            <DollarSign size={20} aria-hidden /> 거래 상세 정보 #{transaction.id}
-          </h2>
-          <button
-            onClick={onClose}
-            className="mg-v2-modal-close"
-            aria-label="닫기"
-          >
-            <X size={20} aria-hidden />
-          </button>
-        </div>
-
-        {/* 기본 거래 정보 */}
-        <div className="mg-v2-card mg-v2-card--outlined">
-          <h3 className="mg-v2-section-header">
-            <BarChart3 size={18} aria-hidden /> 기본 정보
-          </h3>
-          
-          <div className="mg-v2-form-grid">
-            <div>
-              <strong>거래 유형:</strong>
-              <span style={{
-                marginLeft: '8px',
-                padding: '2px 8px',
-                borderRadius: '12px',
-                fontSize: 'var(--font-size-xs)',
-                backgroundColor: transaction.transactionType === 'INCOME' ? 'var(--mg-success-100, rgba(40, 167, 69, 0.1))' : 'var(--mg-error-100, rgba(220, 53, 69, 0.1))',
-                color: transaction.transactionType === 'INCOME' ? 'var(--mg-success-700, #155724)' : 'var(--mg-error-700, #721c24)'
-              }}>
-                {transaction.transactionType === 'INCOME' ? '수입' : '지출'}
-              </span>
-            </div>
-            
-            <div>
-              <strong>카테고리:</strong> {transaction.category}
-            </div>
-            
-            <div>
-              <strong>금액:</strong>
-              <span style={{
-                marginLeft: '8px',
-                fontSize: 'var(--font-size-base)',
-                fontWeight: 'bold',
-                color: transaction.transactionType === 'INCOME' ? 'var(--mg-success-500)' : 'var(--mg-error-500)'
-              }}>
-                {formatCurrency(transaction.amount)}
-              </span>
-            </div>
-            
-            <div>
-              <strong>거래일:</strong> {formatDate(transaction.transactionDate)}
-            </div>
-            
-            <div style={{ gridColumn: 'span 2' }}>
-              <strong>설명:</strong> {transaction.description || '-'}
-            </div>
+    <UnifiedModal
+      isOpen
+      onClose={onClose}
+      title={modalTitle}
+      size="large"
+      showCloseButton
+      actions={modalActions}
+    >
+      <div className="mg-v2-transaction-detail-card mg-v2-card mg-v2-card--outlined">
+        <h3 className="mg-v2-section-header">
+          <BarChart3 size={18} aria-hidden /> 기본 정보
+        </h3>
+        <div className="mg-v2-transaction-detail-form-grid mg-v2-form-grid">
+          <div>
+            <strong>거래 유형:</strong>
+            <span className={`mg-v2-transaction-detail-badge ${transaction.transactionType === 'INCOME' ? 'mg-v2-transaction-detail-badge--income' : 'mg-v2-transaction-detail-badge--expense'}`}>
+              {transaction.transactionType === 'INCOME' ? '수입' : '지출'}
+            </span>
           </div>
-        </div>
-
-        {/* 매핑 연동 정보 */}
-        {transaction.relatedEntityType === 'CONSULTANT_CLIENT_MAPPING' && (
-          <div style={{
-            backgroundColor: 'var(--mg-info-100, rgba(23, 162, 184, 0.1))',
-            padding: '16px',
-            borderRadius: '8px',
-            marginBottom: '20px',
-            border: '2px solid var(--mg-secondary-600)'
-          }}>
-            <h3 style={{ marginBottom: '12px', fontSize: 'var(--font-size-base)', color: 'var(--mg-secondary-600)' }}>
-              <Link2 size={18} aria-hidden /> 매핑 연동 정보
-            </h3>
-            
-            {loading ? (
-              <div style={{ textAlign: 'center', padding: '20px' }}>
-                <UnifiedLoading type="inline" text="매핑 정보를 불러오는 중..." />
-              </div>
-            ) : mappingDetail ? (
-              <div className="mg-v2-form-grid">
-                <div>
-                  <strong>매핑 ID:</strong> #{mappingDetail.mappingId}
-                </div>
-                
-                <div>
-                  <strong>패키지명:</strong> {mappingDetail.packageName || '-'}
-                </div>
-                
-                <div>
-                  <strong>총 회기수:</strong> {mappingDetail.totalSessions}회
-                </div>
-                
-                <div>
-                  <strong>회기당 단가:</strong> {formatCurrency(mappingDetail.pricePerSession)}
-                </div>
-                
-                <div style={{ gridColumn: 'span 2' }}>
-                  <strong>패키지 가격:</strong>
-                  <span style={{ marginLeft: '8px', fontSize: 'var(--font-size-base)', fontWeight: 'bold', color: 'var(--mg-success-500)' }}>
-                    {formatCurrency(mappingDetail.packagePrice)}
-                  </span>
-                </div>
-                
-                <div style={{ gridColumn: 'span 2' }}>
-                  <strong>결제 금액:</strong>
-                  <span style={{ 
-                    marginLeft: '8px', 
-                    fontSize: 'var(--font-size-sm)', 
-                    color: mappingDetail.packagePrice === mappingDetail.paymentAmount ? 'var(--mg-success-500)' : 'var(--mg-error-500)'
-                  }}>
-                    {formatCurrency(mappingDetail.paymentAmount)}
-                    {mappingDetail.packagePrice !== mappingDetail.paymentAmount && (
-                      <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--mg-error-500)', marginLeft: '4px' }}>
-                        (패키지 가격과 다름)
-                      </span>
-                    )}
-                  </span>
-                </div>
-                
-                {mappingDetail.isConsistent !== undefined && (
-                  <div style={{ gridColumn: 'span 2' }}>
-                    <strong>일관성 검사:</strong>
-                    <span style={{
-                      marginLeft: '8px',
-                      padding: '2px 8px',
-                      borderRadius: '12px',
-                      fontSize: 'var(--font-size-xs)',
-                      backgroundColor: mappingDetail.isConsistent ? 'var(--mg-success-100, rgba(40, 167, 69, 0.1))' : 'var(--mg-error-100, rgba(220, 53, 69, 0.1))',
-                      color: mappingDetail.isConsistent ? 'var(--mg-success-700, #155724)' : 'var(--mg-error-700, #721c24)'
-                    }}>
-                      {mappingDetail.isConsistent ? '정상' : '불일치'}
-                    </span>
-                    {!mappingDetail.isConsistent && (
-                      <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--mg-error-500)', marginTop: '4px' }}>
-                        {mappingDetail.consistencyMessage}
-                      </div>
-                    )}
-                  </div>
-                )}
-                
-                {mappingDetail.relatedTransactions && mappingDetail.relatedTransactions.length > 0 && (
-                  <div style={{ gridColumn: 'span 2' }}>
-                    <strong>관련 거래:</strong>
-                    <div style={{ marginTop: '8px' }}>
-                      {mappingDetail.relatedTransactions.map((relatedTx, index) => (
-                        <div key={index} style={{
-                          fontSize: 'var(--font-size-xs)',
-                          padding: '4px 8px',
-                          backgroundColor: 'var(--mg-gray-100, #f1f3f4)',
-                          borderRadius: '4px',
-                          marginBottom: '4px'
-                        }}>
-                          #{relatedTx.id} - {relatedTx.type} - {formatCurrency(relatedTx.amount)} 
-                          ({formatDate(relatedTx.createdAt)})
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div style={{ textAlign: 'center', color: 'var(--mg-gray-500, #666)' }}>
-                매핑 정보를 불러올 수 없습니다.
-              </div>
-            )}
+          <div>
+            <strong>카테고리:</strong> {transaction.category}
           </div>
-        )}
-
-        {/* 기타 연동 정보 */}
-        {transaction.relatedEntityType && transaction.relatedEntityType !== 'CONSULTANT_CLIENT_MAPPING' && (
-          <div style={{
-            backgroundColor: 'var(--mg-warning-100, rgba(255, 193, 7, 0.1))',
-            padding: '16px',
-            borderRadius: '8px',
-            marginBottom: '20px',
-            border: '2px solid var(--mg-warning-500)'
-          }}>
-            <h3 style={{ marginBottom: '12px', fontSize: 'var(--font-size-base)', color: 'var(--mg-warning-700, #856404)' }}>
-              <Link2 size={18} aria-hidden /> 연동 정보
-            </h3>
-            
-            <div className="mg-v2-form-grid">
-              <div>
-                <strong>연동 유형:</strong> {transaction.relatedEntityType}
-              </div>
-              
-              <div>
-                <strong>연동 ID:</strong> #{transaction.relatedEntityId}
-              </div>
-            </div>
+          <div>
+            <strong>금액:</strong>
+            <span className={`mg-v2-transaction-detail-amount ${transaction.transactionType === 'INCOME' ? 'mg-v2-transaction-detail-amount--income' : 'mg-v2-transaction-detail-amount--expense'}`}>
+              {formatCurrency(transaction.amount)}
+            </span>
           </div>
-        )}
-
-        {/* 액션 버튼 */}
-        <div style={{
-          display: 'flex',
-          justifyContent: 'flex-end',
-          gap: '10px',
-          paddingTop: '15px',
-          borderTop: '1px solid #dee2e6'
-        }}>
-          <button
-            onClick={onClose}
-            style={{
-              padding: '8px 16px',
-              backgroundColor: 'var(--mg-secondary-500)',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer'
-            }}
-          >
-            닫기
-          </button>
-          
-          {transaction.relatedEntityType === 'CONSULTANT_CLIENT_MAPPING' && (
-            <button
-              onClick={() => {
-                window.open(`/branch_super_admin/mapping-management?mappingId=${transaction.relatedEntityId}`, '_blank');
-              }}
-              style={{
-                padding: '8px 16px',
-                backgroundColor: 'var(--mg-primary-500)',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer'
-              }}
-            >
-              매핑 보기
-            </button>
-          )}
+          <div>
+            <strong>거래일:</strong> {formatDate(transaction.transactionDate)}
+          </div>
+          <div className="mg-v2-transaction-detail-form-grid__item--span2">
+            <strong>설명:</strong> {transaction.description || '-'}
+          </div>
         </div>
       </div>
-    </div>
+
+      {transaction.relatedEntityType === 'CONSULTANT_CLIENT_MAPPING' && (
+        <div className="mg-v2-transaction-detail-mapping-box">
+          <h3 className="mg-v2-transaction-detail-mapping-title">
+            <Link2 size={18} aria-hidden /> 매핑 연동 정보
+          </h3>
+          {loading ? (
+            <div className="mg-v2-transaction-detail-loading-wrap">
+              <UnifiedLoading type="inline" text="매핑 정보를 불러오는 중..." />
+            </div>
+          ) : mappingDetail ? (
+            <div className="mg-v2-transaction-detail-form-grid mg-v2-form-grid">
+              <div>
+                <strong>매핑 ID:</strong> #{mappingDetail.mappingId}
+              </div>
+              <div>
+                <strong>패키지명:</strong> {mappingDetail.packageName || '-'}
+              </div>
+              <div>
+                <strong>총 회기수:</strong> {mappingDetail.totalSessions}회
+              </div>
+              <div>
+                <strong>회기당 단가:</strong> {formatCurrency(mappingDetail.pricePerSession)}
+              </div>
+              <div className="mg-v2-transaction-detail-form-grid__item--span2">
+                <strong>패키지 가격:</strong>
+                <span className="mg-v2-transaction-detail-package-price">{formatCurrency(mappingDetail.packagePrice)}</span>
+              </div>
+              <div className="mg-v2-transaction-detail-form-grid__item--span2">
+                <strong>결제 금액:</strong>
+                <span className={`mg-v2-transaction-detail-payment-amount ${mappingDetail.packagePrice === mappingDetail.paymentAmount ? 'mg-v2-transaction-detail-payment-amount--match' : 'mg-v2-transaction-detail-payment-amount--mismatch'}`}>
+                  {formatCurrency(mappingDetail.paymentAmount)}
+                  {mappingDetail.packagePrice !== mappingDetail.paymentAmount && (
+                    <span className="mg-v2-transaction-detail-message-mismatch">(패키지 가격과 다름)</span>
+                  )}
+                </span>
+              </div>
+              {mappingDetail.isConsistent !== undefined && (
+                <div className="mg-v2-transaction-detail-form-grid__item--span2">
+                  <strong>일관성 검사:</strong>
+                  <span className={`mg-v2-transaction-detail-consistent-badge ${mappingDetail.isConsistent ? 'mg-v2-transaction-detail-consistent-badge--ok' : 'mg-v2-transaction-detail-consistent-badge--error'}`}>
+                    {mappingDetail.isConsistent ? '정상' : '불일치'}
+                  </span>
+                  {!mappingDetail.isConsistent && (
+                    <div className="mg-v2-transaction-detail-consistency-msg">{mappingDetail.consistencyMessage}</div>
+                  )}
+                </div>
+              )}
+              {mappingDetail.relatedTransactions && mappingDetail.relatedTransactions.length > 0 && (
+                <div className="mg-v2-transaction-detail-form-grid__item--span2">
+                  <strong>관련 거래:</strong>
+                  <div className="mg-v2-transaction-detail-related-list">
+                    {mappingDetail.relatedTransactions.map((relatedTx, index) => (
+                      <div key={index} className="mg-v2-transaction-detail-related-item">
+                        #{relatedTx.id} - {relatedTx.type} - {formatCurrency(relatedTx.amount)} ({formatDate(relatedTx.createdAt)})
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="mg-v2-transaction-detail-message-empty">매핑 정보를 불러올 수 없습니다.</div>
+          )}
+        </div>
+      )}
+
+      {transaction.relatedEntityType && transaction.relatedEntityType !== 'CONSULTANT_CLIENT_MAPPING' && (
+        <div className="mg-v2-transaction-detail-other-box">
+          <h3 className="mg-v2-transaction-detail-other-title">
+            <Link2 size={18} aria-hidden /> 연동 정보
+          </h3>
+          <div className="mg-v2-transaction-detail-form-grid mg-v2-form-grid">
+            <div>
+              <strong>연동 유형:</strong> {transaction.relatedEntityType}
+            </div>
+            <div>
+              <strong>연동 ID:</strong> #{transaction.relatedEntityId}
+            </div>
+          </div>
+        </div>
+      )}
+    </UnifiedModal>
   );
 };
 

@@ -8,7 +8,6 @@ import MGButton from '../../components/common/MGButton';
 import { ApiPerformanceReportGenerator } from '../../utils/apiPerformanceUtils';
 import { WIDGET_CONSTANTS, API_PERFORMANCE_WIDGET } from '../../constants/widgetConstants';
 import notificationManager from '../../utils/notification';
-import './ApiPerformanceMonitoring.css';
 
 /**
  * API 성능 모니터링 페이지
@@ -77,121 +76,103 @@ const ApiPerformanceMonitoring = () => {
   };
 
   return (
-    <AdminCommonLayout title="API 성능 모니터링" loading={false}>
-      <div className="api-performance-monitoring">
-        <div className="page-header">
-          <div className="header-left">
-            <MGButton
-              className="mg-button back-button"
-              variant="outline"
-              size="small"
-              onClick={() => navigate('/admin')}
-            >
-              <FaArrowLeft />
-              관리자 대시보드
-            </MGButton>
-            <div className="page-title">
-              <h1>API 성능 모니터링</h1>
-              <p>실시간 API 응답 시간 및 성능 지표 분석</p>
-            </div>
-          </div>
+    <AdminCommonLayout 
+      title="API 성능 모니터링" 
+      loading={false}
+      headerActions={
+        <div className="mg-v2-ad-b0kla__flex" style={{ gap: 'var(--mg-spacing-8)' }}>
+          <MGButton
+            variant="outline"
+            size="small"
+            onClick={handleDownloadReport}
+            loading={downloadLoading}
+            loadingText="다운로드 중..."
+            disabled={refreshing}
+            preventDoubleClick
+          >
+            <FaDownload className="mg-v2-ad-b0kla__icon" style={{ marginRight: 'var(--mg-spacing-4)' }} />
+            보고서 다운로드
+          </MGButton>
           
-          <div className="header-actions">
-            <MGButton
-              variant="outline"
-              size="small"
-              onClick={handleDownloadReport}
-              loading={downloadLoading}
-              loadingText="다운로드 중..."
-              disabled={refreshing}
-              preventDoubleClick
-            >
-              <FaDownload />
-              보고서 다운로드
-            </MGButton>
-            
-            <MGButton
-              variant="outline"
-              size="small"
-              onClick={handleClearStats}
-              loading={clearLoading}
-              loadingText="초기화 중..."
-              disabled={refreshing}
-              preventDoubleClick
-              className="danger-button"
-            >
-              <FaTrash />
-              통계 초기화
-            </MGButton>
-            
-            <MGButton
-              className="mg-button"
-              variant="primary"
-              size="small"
-              onClick={handleRefresh}
-              disabled={refreshing}
-            >
-              <FaSync className={refreshing ? 'spinning' : ''} />
-              새로고침
-            </MGButton>
-          </div>
+          <MGButton
+            variant="danger"
+            size="small"
+            onClick={handleClearStats}
+            loading={clearLoading}
+            loadingText="초기화 중..."
+            disabled={refreshing}
+            preventDoubleClick
+          >
+            <FaTrash className="mg-v2-ad-b0kla__icon" style={{ marginRight: 'var(--mg-spacing-4)' }} />
+            통계 초기화
+          </MGButton>
+          
+          <MGButton
+            variant="primary"
+            size="small"
+            onClick={handleRefresh}
+            disabled={refreshing}
+          >
+            <FaSync className={`mg-v2-ad-b0kla__icon ${refreshing ? 'spinning' : ''}`} style={{ marginRight: 'var(--mg-spacing-4)' }} />
+            새로고침
+          </MGButton>
         </div>
+      }
+    >
+      <div className="mg-v2-ad-b0kla__container">
+        <div className="mg-v2-ad-b0kla__grid" style={{ gridTemplateColumns: 'repeat(12, 1fr)', gap: 'var(--mg-spacing-24)' }}>
+          {/* 시스템 성능 위젯 */}
+          <div style={{ gridColumn: 'span 12' }}>
+            <PerformanceWidget 
+              title="시스템 성능 개요"
+              refreshInterval={10000}
+            />
+          </div>
 
-        <div className="performance-dashboard">
-          <div className="dashboard-grid">
-            {/* 시스템 성능 위젯 */}
-            <div className="widget-container">
-              <PerformanceWidget 
-                title="시스템 성능 개요"
-                refreshInterval={10000}
-                className="system-performance-widget"
-              />
-            </div>
+          {/* API 성능 위젯 */}
+          <div style={{ gridColumn: 'span 12' }}>
+            <ApiPerformanceWidget 
+              title="API 성능 분석"
+              refreshInterval={15000}
+            />
+          </div>
 
-            {/* API 성능 위젯 */}
-            <div className="widget-container wide">
-              <ApiPerformanceWidget 
-                title="API 성능 분석"
-                refreshInterval={15000}
-                className="api-performance-widget"
-              />
-            </div>
-
-            {/* 추가 성능 지표 위젯들 */}
-            <div className="widget-container">
-              <div className="performance-tips">
-                <h3>성능 최적화 팁</h3>
-                <div className="tips-list">
-                  <div className="tip-item">
-                    <div className="tip-icon">🚀</div>
-                    <div className="tip-content">
-                      <h4>캐시 활용</h4>
-                      <p>자주 사용되는 데이터는 캐시를 통해 응답 속도를 향상시키세요.</p>
-                    </div>
+          {/* 추가 성능 지표 위젯들 */}
+          <div style={{ gridColumn: 'span 12' }}>
+            <div className="mg-v2-ad-b0kla__card">
+              <div className="mg-v2-ad-b0kla__card-header">
+                <h3 className="mg-v2-ad-b0kla__text--lg mg-v2-ad-b0kla__text--bold">성능 최적화 팁</h3>
+              </div>
+              <div className="mg-v2-ad-b0kla__card-body mg-v2-ad-b0kla__flex mg-v2-ad-b0kla__flex-col" style={{ gap: 'var(--mg-spacing-16)' }}>
+                <div className="mg-v2-ad-b0kla__flex" style={{ alignItems: 'flex-start' }}>
+                  <div className="mg-v2-ad-b0kla__icon" style={{ fontSize: '1.5rem', marginRight: 'var(--mg-spacing-16)' }}>🚀</div>
+                  <div>
+                    <h4 className="mg-v2-ad-b0kla__text--bold mg-v2-ad-b0kla__text--md">캐시 활용</h4>
+                    <p className="mg-v2-ad-b0kla__text--sm" style={{ color: 'var(--mg-gray-600)', marginTop: 'var(--mg-spacing-4)' }}>자주 사용되는 데이터는 캐시를 통해 응답 속도를 향상시키세요.</p>
                   </div>
-                  
-                  <div className="tip-item">
-                    <div className="tip-icon">📊</div>
-                    <div className="tip-content">
-                      <h4>쿼리 최적화</h4>
-                      <p>데이터베이스 쿼리를 최적화하여 응답 시간을 단축하세요.</p>
-                    </div>
+                </div>
+                
+                <div className="mg-v2-ad-b0kla__flex" style={{ alignItems: 'flex-start' }}>
+                  <div className="mg-v2-ad-b0kla__icon" style={{ fontSize: '1.5rem', marginRight: 'var(--mg-spacing-16)' }}>📊</div>
+                  <div>
+                    <h4 className="mg-v2-ad-b0kla__text--bold mg-v2-ad-b0kla__text--md">쿼리 최적화</h4>
+                    <p className="mg-v2-ad-b0kla__text--sm" style={{ color: 'var(--mg-gray-600)', marginTop: 'var(--mg-spacing-4)' }}>데이터베이스 쿼리를 최적화하여 응답 시간을 단축하세요.</p>
                   </div>
-                  
-                  <div className="tip-item">
-                    <div className="tip-icon">⚡</div>
-                    <div className="tip-content">
-                      <h4>비동기 처리</h4>
-                      <p>무거운 작업은 비동기로 처리하여 사용자 경험을 개선하세요.</p>
-                    </div>
+                </div>
+                
+                <div className="mg-v2-ad-b0kla__flex" style={{ alignItems: 'flex-start' }}>
+                  <div className="mg-v2-ad-b0kla__icon" style={{ fontSize: '1.5rem', marginRight: 'var(--mg-spacing-16)' }}>⚡</div>
+                  <div>
+                    <h4 className="mg-v2-ad-b0kla__text--bold mg-v2-ad-b0kla__text--md">비동기 처리</h4>
+                    <p className="mg-v2-ad-b0kla__text--sm" style={{ color: 'var(--mg-gray-600)', marginTop: 'var(--mg-spacing-4)' }}>무거운 작업은 비동기로 처리하여 사용자 경험을 개선하세요.</p>
                   </div>
-                  
-                  <div className="tip-item">
-                    <div className="tip-icon">🔍</div>
-                    <div className="tip-content">
-                      <h4>모니터링</h4>
-                      <p>지속적인 모니터링을 통해 성능 이슈를 조기에 발견하세요.</p>
-                    </div>
+                </div>
+                
+                <div className="mg-v2-ad-b0kla__flex" style={{ alignItems: 'flex-start' }}>
+                  <div className="mg-v2-ad-b0kla__icon" style={{ fontSize: '1.5rem', marginRight: 'var(--mg-spacing-16)' }}>🔍</div>
+                  <div>
+                    <h4 className="mg-v2-ad-b0kla__text--bold mg-v2-ad-b0kla__text--md">모니터링</h4>
+                    <p className="mg-v2-ad-b0kla__text--sm" style={{ color: 'var(--mg-gray-600)', marginTop: 'var(--mg-spacing-4)' }}>지속적인 모니터링을 통해 성능 이슈를 조기에 발견하세요.</p>
                   </div>
                 </div>
               </div>

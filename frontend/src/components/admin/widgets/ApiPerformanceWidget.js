@@ -4,7 +4,6 @@ import { PerformanceUtils } from '../../../utils/performanceUtils';
 import { ApiPerformanceProcessor, ApiPerformanceAnalyzer } from '../../../utils/apiPerformanceUtils';
 import { WIDGET_CONSTANTS, API_PERFORMANCE_WIDGET } from '../../../constants/widgetConstants';
 import { MG_DESIGN_TOKENS } from '../../../constants/designTokens';
-import '../../dashboard/widgets/Widget.css';
 import '../../../styles/unified-design-tokens.css';
 
 /**
@@ -88,65 +87,56 @@ const ApiPerformanceWidget = ({
     return ApiPerformanceAnalyzer.calculateErrorRateGrade(errorRate);
   };
 
+  // 성능 상태 등급 색상 결정
+  const getGradeColor = (grade) => {
+    if (grade === 'excellent') return 'var(--mg-success-500)';
+    if (grade === 'poor') return 'var(--mg-error-500)';
+    return 'var(--mg-info-500)';
+  };
+
   // 요약 뷰 렌더링
   const renderSummaryView = () => (
-    <div className={WIDGET_CONSTANTS.CSS_CLASSES.MG_STATS_GRID}>
-      <div className={`mg-stats-card mg-stats-card--${getPerformanceGrade(performanceData.summary.averageResponseTime)}`}>
-        <div className="mg-stats-card__icon">
-          <FaTachometerAlt />
-        </div>
-        <div className="mg-stats-card__content">
-          <div className="mg-stats-card__label">
-            {API_PERFORMANCE_WIDGET.METRIC_LABELS.AVERAGE_RESPONSE_TIME}
-          </div>
-          <div className="mg-stats-card__value">
-            {PerformanceUtils.formatDuration(performanceData.summary.averageResponseTime)}
-          </div>
-        </div>
+    <div className="mg-v2-ad-b0kla__grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
+      <div className="mg-v2-ad-b0kla__stat-item mg-v2-ad-b0kla__flex-col">
+        <span className="mg-v2-ad-b0kla__text--sm mg-v2-ad-b0kla__flex" style={{ color: 'var(--mg-gray-600)', alignItems: 'center' }}>
+          <FaTachometerAlt style={{ marginRight: 'var(--mg-spacing-4)' }} />
+          {API_PERFORMANCE_WIDGET.METRIC_LABELS.AVERAGE_RESPONSE_TIME}
+        </span>
+        <span className="mg-v2-ad-b0kla__text--xl mg-v2-ad-b0kla__text--bold" style={{ color: getGradeColor(getPerformanceGrade(performanceData.summary.averageResponseTime)), marginTop: 'var(--mg-spacing-4)' }}>
+          {PerformanceUtils.formatDuration(performanceData.summary.averageResponseTime)}
+        </span>
       </div>
 
-      <div className="mg-stats-card">
-        <div className="mg-stats-card__icon">
-          <FaRocket />
-        </div>
-        <div className="mg-stats-card__content">
-          <div className="mg-stats-card__label">
-            {API_PERFORMANCE_WIDGET.METRIC_LABELS.TOTAL_REQUESTS}
-          </div>
-          <div className="mg-stats-card__value">
-            {PerformanceUtils.formatNumber(performanceData.summary.totalRequests)}
-          </div>
-        </div>
+      <div className="mg-v2-ad-b0kla__stat-item mg-v2-ad-b0kla__flex-col">
+        <span className="mg-v2-ad-b0kla__text--sm mg-v2-ad-b0kla__flex" style={{ color: 'var(--mg-gray-600)', alignItems: 'center' }}>
+          <FaRocket style={{ marginRight: 'var(--mg-spacing-4)' }} />
+          {API_PERFORMANCE_WIDGET.METRIC_LABELS.TOTAL_REQUESTS}
+        </span>
+        <span className="mg-v2-ad-b0kla__text--xl mg-v2-ad-b0kla__text--bold" style={{ marginTop: 'var(--mg-spacing-4)' }}>
+          {PerformanceUtils.formatNumber(performanceData.summary.totalRequests)}
+        </span>
       </div>
 
-      <div className={`mg-stats-card mg-stats-card--${getErrorRateGrade(performanceData.summary.overallErrorRate)}`}>
-        <div className="mg-stats-card__icon">
-          <FaExclamationTriangle />
-        </div>
-        <div className="mg-stats-card__content">
-          <div className="mg-stats-card__label">
-            {API_PERFORMANCE_WIDGET.METRIC_LABELS.OVERALL_ERROR_RATE}
-          </div>
-          <div className="mg-stats-card__value">
-            {PerformanceUtils.formatPercentage(performanceData.summary.overallErrorRate)}
-          </div>
-        </div>
+      <div className="mg-v2-ad-b0kla__stat-item mg-v2-ad-b0kla__flex-col">
+        <span className="mg-v2-ad-b0kla__text--sm mg-v2-ad-b0kla__flex" style={{ color: 'var(--mg-gray-600)', alignItems: 'center' }}>
+          <FaExclamationTriangle style={{ marginRight: 'var(--mg-spacing-4)' }} />
+          {API_PERFORMANCE_WIDGET.METRIC_LABELS.OVERALL_ERROR_RATE}
+        </span>
+        <span className="mg-v2-ad-b0kla__text--xl mg-v2-ad-b0kla__text--bold" style={{ color: getGradeColor(getErrorRateGrade(performanceData.summary.overallErrorRate)), marginTop: 'var(--mg-spacing-4)' }}>
+          {PerformanceUtils.formatPercentage(performanceData.summary.overallErrorRate)}
+        </span>
       </div>
 
-      <div className="mg-stats-card">
-        <div className="mg-stats-card__icon">
-          <FaClock />
-        </div>
-        <div className="mg-stats-card__content">
-          <div className="mg-stats-card__label">
-            {API_PERFORMANCE_WIDGET.METRIC_LABELS.SLOWEST_REQUEST}
-          </div>
-          <div className="mg-stats-card__value">
-            {PerformanceUtils.formatDuration(performanceData.summary.slowestRequest)}
-          </div>
-          <div className="mg-stats-card__detail">
-            {performanceData.summary.slowestEndpoint}
-          </div>
+      <div className="mg-v2-ad-b0kla__stat-item mg-v2-ad-b0kla__flex-col">
+        <span className="mg-v2-ad-b0kla__text--sm mg-v2-ad-b0kla__flex" style={{ color: 'var(--mg-gray-600)', alignItems: 'center' }}>
+          <FaClock style={{ marginRight: 'var(--mg-spacing-4)' }} />
+          {API_PERFORMANCE_WIDGET.METRIC_LABELS.SLOWEST_REQUEST}
+        </span>
+        <span className="mg-v2-ad-b0kla__text--xl mg-v2-ad-b0kla__text--bold" style={{ marginTop: 'var(--mg-spacing-4)' }}>
+          {PerformanceUtils.formatDuration(performanceData.summary.slowestRequest)}
+        </span>
+        <div className="mg-v2-ad-b0kla__text--xs" style={{ color: 'var(--mg-gray-500)', marginTop: '2px', wordBreak: 'break-all' }}>
+          {performanceData.summary.slowestEndpoint}
         </div>
       </div>
     </div>
@@ -154,26 +144,26 @@ const ApiPerformanceWidget = ({
 
   // 느린 API 뷰 렌더링
   const renderSlowApisView = () => (
-    <div className="mg-api-list">
+    <div className="mg-v2-ad-b0kla__flex-col">
       {Object.keys(performanceData.slowApis).length === 0 ? (
-        <div className={WIDGET_CONSTANTS.CSS_CLASSES.MG_FLEX + ' ' + WIDGET_CONSTANTS.CSS_CLASSES.MG_FLEX_COL + ' ' + WIDGET_CONSTANTS.CSS_CLASSES.MG_ALIGN_CENTER + ' ' + WIDGET_CONSTANTS.CSS_CLASSES.MG_PY_XL}>
-          <FaRocket size={48} className={WIDGET_CONSTANTS.CSS_CLASSES.MG_TEXT_MUTED} />
-          <p className={WIDGET_CONSTANTS.CSS_CLASSES.MG_TEXT_MUTED}>
+        <div className="mg-v2-ad-b0kla__flex mg-v2-ad-b0kla__flex-col mg-v2-ad-b0kla__align-center" style={{ padding: 'var(--mg-spacing-32) 0' }}>
+          <FaRocket size={48} style={{ color: 'var(--mg-gray-300)' }} />
+          <p className="mg-v2-ad-b0kla__text--sm" style={{ color: 'var(--mg-gray-500)', marginTop: 'var(--mg-spacing-16)' }}>
             {API_PERFORMANCE_WIDGET.MESSAGES.NO_SLOW_APIS}
           </p>
         </div>
       ) : (
         Object.entries(performanceData.slowApis).slice(0, 5).map(([endpoint, stats]) => (
-          <div key={endpoint} className="mg-api-item mg-api-item--warning">
-            <div className="mg-api-item__endpoint">{endpoint}</div>
-            <div className="mg-api-item__stats">
-              <span className="mg-stat-badge">
+          <div key={endpoint} className="mg-v2-ad-b0kla__flex-between" style={{ padding: '12px', borderBottom: '1px solid var(--mg-gray-200)' }}>
+            <span className="mg-v2-ad-b0kla__text--bold mg-v2-ad-b0kla__text--sm" style={{ wordBreak: 'break-all', flex: 1, paddingRight: '16px' }}>{endpoint}</span>
+            <div className="mg-v2-ad-b0kla__flex" style={{ gap: 'var(--mg-spacing-8)', flexShrink: 0 }}>
+              <span className="mg-v2-tag mg-v2-tag--warning">
                 평균: {PerformanceUtils.formatDuration(stats.averageDuration)}
               </span>
-              <span className="mg-stat-badge">
+              <span className="mg-v2-tag mg-v2-tag--warning">
                 최대: {PerformanceUtils.formatDuration(stats.maxDuration)}
               </span>
-              <span className="mg-stat-badge">
+              <span className="mg-v2-tag">
                 요청: {PerformanceUtils.formatNumber(stats.totalRequests)}
               </span>
             </div>
@@ -185,27 +175,27 @@ const ApiPerformanceWidget = ({
 
   // 에러 많은 API 뷰 렌더링
   const renderErrorProneApisView = () => (
-    <div className="mg-api-list">
+    <div className="mg-v2-ad-b0kla__flex-col">
       {Object.keys(performanceData.errorProneApis).length === 0 ? (
-        <div className={WIDGET_CONSTANTS.CSS_CLASSES.MG_FLEX + ' ' + WIDGET_CONSTANTS.CSS_CLASSES.MG_FLEX_COL + ' ' + WIDGET_CONSTANTS.CSS_CLASSES.MG_ALIGN_CENTER + ' ' + WIDGET_CONSTANTS.CSS_CLASSES.MG_PY_XL}>
-          <FaExclamationTriangle size={48} className={WIDGET_CONSTANTS.CSS_CLASSES.MG_TEXT_MUTED} />
-          <p className={WIDGET_CONSTANTS.CSS_CLASSES.MG_TEXT_MUTED}>
+        <div className="mg-v2-ad-b0kla__flex mg-v2-ad-b0kla__flex-col mg-v2-ad-b0kla__align-center" style={{ padding: 'var(--mg-spacing-32) 0' }}>
+          <FaExclamationTriangle size={48} style={{ color: 'var(--mg-gray-300)' }} />
+          <p className="mg-v2-ad-b0kla__text--sm" style={{ color: 'var(--mg-gray-500)', marginTop: 'var(--mg-spacing-16)' }}>
             {API_PERFORMANCE_WIDGET.MESSAGES.NO_ERROR_APIS}
           </p>
         </div>
       ) : (
         Object.entries(performanceData.errorProneApis).slice(0, 5).map(([endpoint, stats]) => (
-          <div key={endpoint} className="mg-api-item mg-api-item--error">
-            <div className="mg-api-item__endpoint">{endpoint}</div>
-            <div className="mg-api-item__stats">
-              <span className="mg-stat-badge mg-stat-badge--error">
+          <div key={endpoint} className="mg-v2-ad-b0kla__flex-between" style={{ padding: '12px', borderBottom: '1px solid var(--mg-gray-200)' }}>
+            <span className="mg-v2-ad-b0kla__text--bold mg-v2-ad-b0kla__text--sm" style={{ wordBreak: 'break-all', flex: 1, paddingRight: '16px' }}>{endpoint}</span>
+            <div className="mg-v2-ad-b0kla__flex" style={{ gap: 'var(--mg-spacing-8)', flexShrink: 0 }}>
+              <span className="mg-v2-tag mg-v2-tag--error">
                 에러율: {PerformanceUtils.formatPercentage(stats.errorRate)}
               </span>
-              <span className="mg-stat-badge">
+              <span className="mg-v2-tag mg-v2-tag--error">
                 에러: {PerformanceUtils.formatNumber(stats.errorCount)}
               </span>
-              <span className="mg-stat-badge">
-                총 요청: {PerformanceUtils.formatNumber(stats.totalRequests)}
+              <span className="mg-v2-tag">
+                요청: {PerformanceUtils.formatNumber(stats.totalRequests)}
               </span>
             </div>
           </div>
@@ -215,13 +205,14 @@ const ApiPerformanceWidget = ({
   );
 
   return (
-    <div className={WIDGET_CONSTANTS.CSS_CLASSES.WIDGET_CONTAINER('api-performance')}>
-      <div className={WIDGET_CONSTANTS.CSS_CLASSES.WIDGET_HEADER}>
-        <div className={WIDGET_CONSTANTS.CSS_CLASSES.MG_CARD_HEADER}>
-          <FaChartArea className="mg-icon" />
-          <h3 className={WIDGET_CONSTANTS.CSS_CLASSES.WIDGET_TITLE}>{title}</h3>
+    <div className={`mg-v2-ad-b0kla__card ${className}`} {...props}>
+      {/* Header */}
+      <div className="mg-v2-ad-b0kla__card-header mg-v2-ad-b0kla__flex-between">
+        <div className="mg-v2-ad-b0kla__flex">
+          <FaChartArea className="mg-v2-ad-b0kla__icon" style={{ marginRight: 'var(--mg-spacing-8)' }} />
+          <span className="mg-v2-ad-b0kla__text--bold mg-v2-ad-b0kla__text--lg">{title}</span>
         </div>
-        <div className="mg-button-group">
+        <div className="mg-v2-ad-b0kla__flex" style={{ gap: 'var(--mg-spacing-8)' }}>
           <button 
             className={`mg-button mg-button--sm ${selectedView === API_PERFORMANCE_WIDGET.VIEW_TYPES.SUMMARY ? 'mg-button--primary' : 'mg-button--outline'}`}
             onClick={() => setSelectedView(API_PERFORMANCE_WIDGET.VIEW_TYPES.SUMMARY)}
@@ -243,26 +234,25 @@ const ApiPerformanceWidget = ({
         </div>
       </div>
 
-      <div className={WIDGET_CONSTANTS.CSS_CLASSES.WIDGET_BODY}>
-        <div className={WIDGET_CONSTANTS.CSS_CLASSES.MG_CARD_BODY}>
-          {selectedView === API_PERFORMANCE_WIDGET.VIEW_TYPES.SUMMARY && renderSummaryView()}
-          {selectedView === API_PERFORMANCE_WIDGET.VIEW_TYPES.SLOW && renderSlowApisView()}
-          {selectedView === API_PERFORMANCE_WIDGET.VIEW_TYPES.ERRORS && renderErrorProneApisView()}
-        </div>
+      {/* Body */}
+      <div className="mg-v2-ad-b0kla__card-body">
+        {selectedView === API_PERFORMANCE_WIDGET.VIEW_TYPES.SUMMARY && renderSummaryView()}
+        {selectedView === API_PERFORMANCE_WIDGET.VIEW_TYPES.SLOW && renderSlowApisView()}
+        {selectedView === API_PERFORMANCE_WIDGET.VIEW_TYPES.ERRORS && renderErrorProneApisView()}
       </div>
 
+      {/* Footer */}
       {(loading || lastUpdated) && (
-        <div className={WIDGET_CONSTANTS.CSS_CLASSES.WIDGET_FOOTER}>
+        <div className="mg-v2-ad-b0kla__card-footer" style={{ borderTop: '1px solid var(--mg-gray-200)', paddingTop: 'var(--mg-spacing-12)', marginTop: 'var(--mg-spacing-16)' }}>
           {loading && (
-            <div className={WIDGET_CONSTANTS.CSS_CLASSES.LOADING_CONTAINER}>
-              <div className={WIDGET_CONSTANTS.CSS_CLASSES.MG_LOADING_SPINNER}></div>
-              <span className={WIDGET_CONSTANTS.CSS_CLASSES.MG_TEXT_MUTED}>
+            <div className="mg-v2-ad-b0kla__flex" style={{ justifyContent: 'center' }}>
+              <span className="mg-v2-ad-b0kla__text--sm" style={{ color: 'var(--mg-gray-500)' }}>
                 {API_PERFORMANCE_WIDGET.MESSAGES.LOADING}
               </span>
             </div>
           )}
           {lastUpdated && !loading && (
-            <div className={WIDGET_CONSTANTS.CSS_CLASSES.MG_TEXT_MUTED}>
+            <div className="mg-v2-ad-b0kla__text--xs mg-v2-text-muted" style={{ textAlign: 'right' }}>
               마지막 업데이트: {lastUpdated.toLocaleTimeString()}
             </div>
           )}

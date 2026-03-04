@@ -697,6 +697,28 @@
   color: var(--ad-b0kla-text-secondary);
 }
 
+/* DashboardSection 내 mg-dashboard-stats: 매핑시스템 연동 상태 등 동일 B0KlA 카드/글자색 적용 */
+.mg-v2-ad-b0kla .mg-dashboard-section .mg-dashboard-stats .mg-dashboard-stat-card {
+  background: var(--ad-b0kla-card-bg);
+  color: var(--ad-b0kla-title-color);
+  border: 1px solid var(--ad-b0kla-border);
+  border-radius: var(--ad-b0kla-radius-sm);
+}
+
+.mg-v2-ad-b0kla .mg-dashboard-section .mg-dashboard-stats .mg-dashboard-stat-value {
+  color: var(--ad-b0kla-title-color);
+}
+
+.mg-v2-ad-b0kla .mg-dashboard-section .mg-dashboard-stats .mg-dashboard-stat-label {
+  color: var(--ad-b0kla-text-secondary);
+}
+
+.mg-v2-ad-b0kla .mg-dashboard-section .mg-dashboard-stats .mg-v2-card {
+  background: var(--ad-b0kla-card-bg);
+  color: var(--ad-b0kla-title-color);
+  border: 1px solid var(--ad-b0kla-border);
+}
+
 /* mg-management-grid: B0KlA admin-grid 스타일 적용 (mg-v2-ad-b0kla__admin-card 사용 시) */
 .mg-v2-ad-b0kla .mg-management-grid.mg-v2-ad-b0kla__admin-grid {
   display: grid;

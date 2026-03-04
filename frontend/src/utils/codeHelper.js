@@ -58,7 +58,7 @@ export const loadCodeGroupMetadata = async () => {
 export const getCodeGroupKoreanName = async (groupName) => {
     try {
         if (groupMetadataCache) {
-            const metadata = groupMetadataCache.find(item => item.groupName === groupName);
+            const metadata = groupMetadataCache.find(item => item.codeGroup === groupName || item.groupName === groupName);
             if (metadata) {
                 return metadata.koreanName;
             }
@@ -82,7 +82,7 @@ export const getCodeGroupKoreanName = async (groupName) => {
 export const getCodeGroupIcon = async (groupName) => {
     try {
         if (groupMetadataCache) {
-            const metadata = groupMetadataCache.find(item => item.groupName === groupName);
+            const metadata = groupMetadataCache.find(item => item.codeGroup === groupName || item.groupName === groupName);
             if (metadata && metadata.icon) {
                 return metadata.icon;
             }
@@ -106,7 +106,7 @@ export const getCodeGroupIcon = async (groupName) => {
 export const getCodeGroupColor = async (groupName) => {
     try {
         if (groupMetadataCache) {
-            const metadata = groupMetadataCache.find(item => item.groupName === groupName);
+            const metadata = groupMetadataCache.find(item => item.codeGroup === groupName || item.groupName === groupName);
             if (metadata && metadata.colorCode) {
                 return metadata.colorCode;
             }

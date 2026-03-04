@@ -199,17 +199,15 @@ const CommonCodeManagement = () => {
 
         if (searchTerm) {
             filtered = filtered.filter(group => {
-                const koreanName = getCodeGroupKoreanNameSync(group);
-                const convertedKorean = convertGroupNameToKorean(group);
+                const rawKoreanName = getCodeGroupKoreanNameSync(group);
+                const finalKoreanName = rawKoreanName !== group ? rawKoreanName : convertGroupNameToKorean(group);
                 const searchLower = searchTerm.toLowerCase();
                 
                 const groupMatch = group.toLowerCase().includes(searchLower);
                 
-                const koreanMatch = koreanName.toLowerCase().includes(searchLower);
+                const koreanMatch = finalKoreanName.toLowerCase().includes(searchLower);
                 
-                const convertedMatch = convertedKorean.toLowerCase().includes(searchLower);
-                
-                return groupMatch || koreanMatch || convertedMatch;
+                return groupMatch || koreanMatch;
             });
         }
 
@@ -575,7 +573,9 @@ const CommonCodeManagement = () => {
                                 >
                                     <div className="mg-v2-ad-b0kla__group-card-header">
                                         <div className="mg-v2-ad-b0kla__group-icon">{ getGroupIcon(group) }</div>
-                                        <h3 className="mg-v2-ad-b0kla__group-title">{ getGroupKoreanName(group) || convertGroupNameToKorean(group) }</h3>
+                                        <h3 className="mg-v2-ad-b0kla__group-title">
+                                            { getGroupKoreanName(group) !== group ? getGroupKoreanName(group) : convertGroupNameToKorean(group) }
+                                        </h3>
                                     </div>
                                     <span className="mg-v2-ad-b0kla__group-code">{ group }</span>
                                 </button>
@@ -595,7 +595,7 @@ const CommonCodeManagement = () => {
                             <>
                                 <div className="mg-v2-ad-b0kla__section-header">
                                     <span>
-                                        { getGroupKoreanName(selectedGroup) || convertGroupNameToKorean(selectedGroup) } 
+                                        { getGroupKoreanName(selectedGroup) !== selectedGroup ? getGroupKoreanName(selectedGroup) : convertGroupNameToKorean(selectedGroup) } 
                                         ({ selectedGroup }) 세부 코드
                                     </span>
                                     <div className="mg-v2-ad-b0kla__action-buttons">

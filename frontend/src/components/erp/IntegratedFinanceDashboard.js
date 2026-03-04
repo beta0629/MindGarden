@@ -1006,18 +1006,49 @@ const CashFlowStatementTab = () => {
   }, [startDate, endDate]);
 
   const fetchCashFlowStatement = async () => {
+    setLoading(true);
     try {
-      const url = `${ERP_API.FINANCIAL_STATEMENT_CASHFLOW}?startDate=${startDate}&endDate=${endDate}`;
-      
-      const response = await axios.get(url, {
-        withCredentials: true
+      const response = await StandardizedApi.get(ERP_API.FINANCIAL_STATEMENT_CASHFLOW, {
+        startDate,
+        endDate
       });
-      if (response.data.success) {
-        setCashFlowData(response.data.data);
-      }
+      // StandardizedApi(apiGet)는 { success, data } 래퍼 시 data만 반환함. 일관성 위해 둘 다 처리.
+      const raw = (response && typeof response === 'object' && 'data' in response && response.data != null)
+        ? response.data
+        : response;
+      const d = raw && typeof raw === 'object' ? raw : {};
+      const operatingCash = d.operatingActivities?.cashFlow ?? 0;
+      const investingCash = d.investingActivities?.cashFlow ?? 0;
+      const financingCash = d.financingActivities?.cashFlow ?? 0;
+      const netCash = d.netCashIncrease ?? 0;
+      const toNum = (v) => (v == null ? 0 : Number(v));
+      const mapped = {
+        operating: {
+          netIncome: toNum(d.operating?.netIncome),
+          nonCashAdjustments: toNum(d.operating?.nonCashAdjustments),
+          workingCapitalChange: toNum(d.operating?.workingCapitalChange),
+          total: toNum(operatingCash)
+        },
+        investing: {
+          assetPurchases: toNum(d.investing?.assetPurchases),
+          assetSales: toNum(d.investing?.assetSales),
+          investmentIncome: toNum(d.investing?.investmentIncome),
+          total: toNum(investingCash)
+        },
+        financing: {
+          borrowingIncrease: toNum(d.financing?.borrowingIncrease),
+          borrowingRepayment: toNum(d.financing?.borrowingRepayment),
+          capitalIncrease: toNum(d.financing?.capitalIncrease),
+          dividendPayment: toNum(d.financing?.dividendPayment),
+          total: toNum(financingCash)
+        },
+        netCashIncrease: toNum(netCash)
+      };
+      setCashFlowData(mapped);
     } catch (err) {
       console.error('Cash flow statement fetch error:', err);
       notificationManager.show('현금흐름표를 불러오는데 실패했습니다.', 'error');
+      setCashFlowData(null);
     } finally {
       setLoading(false);
     }

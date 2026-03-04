@@ -1,13 +1,40 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaArrowLeft, FaSync, FaTrash, FaDownload } from 'react-icons/fa';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import ApiPerformanceWidget from './widgets/ApiPerformanceWidget';
-import PerformanceWidget from './widgets/PerformanceWidget';
+import { ResponseTimeLineChart, StatusCodeDoughnutChart, CacheHitBarChart } from './widgets/ApiPerformanceChart';
 import MGButton from '../../components/common/MGButton';
 import { ApiPerformanceReportGenerator } from '../../utils/apiPerformanceUtils';
-import { WIDGET_CONSTANTS, API_PERFORMANCE_WIDGET } from '../../constants/widgetConstants';
+import { API_PERFORMANCE_WIDGET } from '../../constants/widgetConstants';
 import notificationManager from '../../utils/notification';
+
+// Mock Data
+const MOCK_CHART_DATA = {
+  lineChart: {
+    labels: ['00:00', '02:00', '04:00', '06:00', '08:00', '10:00', '12:00', '14:00', '16:00', '18:00', '20:00', '22:00'],
+    values: [120, 110, 105, 95, 140, 210, 250, 230, 190, 180, 150, 130]
+  },
+  doughnutChart: {
+    success: 85,
+    clientError: 10,
+    serverError: 5
+  },
+  cacheHit: {
+    hitRate: 78
+  },
+  summary: {
+    averageResponseTime: 145,
+    overallErrorRate: 2.5,
+    totalRequests: 154200,
+    slowestRequest: 1250,
+    slowestEndpoint: '/api/v1/reports/financial'
+  },
+  slowApis: {
+    '/api/v1/reports/financial': { averageDuration: 850, maxDuration: 1250, totalRequests: 320 },
+    '/api/v1/users/export': { averageDuration: 720, maxDuration: 980, totalRequests: 150 },
+    '/api/v1/dashboard/summary': { averageDuration: 640, maxDuration: 890, totalRequests: 5400 }
+  }
+};
 
 /**
  * API 성능 모니터링 페이지
@@ -18,17 +45,29 @@ const ApiPerformanceMonitoring = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [downloadLoading, setDownloadLoading] = useState(false);
   const [clearLoading, setClearLoading] = useState(false);
+  
+  // 상태 관리
+  const [dashboardData, setDashboardData] = useState(MOCK_CHART_DATA);
 
-  // 전체 새로고침
-  const handleRefresh = async () => {
+  const fetchDashboardData = useCallback(async () => {
     setRefreshing(true);
-    // 모든 위젯이 새로고침되도록 이벤트 발생
-    window.dispatchEvent(new CustomEvent('refreshPerformanceWidgets'));
-    
+    // 실제 환경에서는 API 호출을 통해 데이터를 가져옵니다.
+    // 현재는 Mock 데이터로 시뮬레이션합니다.
     setTimeout(() => {
+      setDashboardData({
+        ...MOCK_CHART_DATA,
+        summary: {
+          ...MOCK_CHART_DATA.summary,
+          totalRequests: MOCK_CHART_DATA.summary.totalRequests + Math.floor(Math.random() * 1000)
+        }
+      });
       setRefreshing(false);
-    }, 1000);
-  };
+    }, 800);
+  }, []);
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, [fetchDashboardData]);
 
   // 통계 초기화
   const handleClearStats = async () => {
@@ -40,19 +79,15 @@ const ApiPerformanceMonitoring = () => {
     
     setClearLoading(true);
     try {
-      const response = await fetch(API_PERFORMANCE_WIDGET.API_ENDPOINTS.CLEAR_STATS, { 
-        method: 'DELETE' 
-      });
-      if (response.ok) {
+      // Mock 동작
+      setTimeout(() => {
         notificationManager.success(messages.CLEAR_SUCCESS);
-        handleRefresh();
-      } else {
-        notificationManager.error(messages.CLEAR_ERROR);
-      }
+        fetchDashboardData();
+        setClearLoading(false);
+      }, 800);
     } catch (error) {
       console.error('통계 초기화 오류:', error);
       notificationManager.error(messages.CLEAR_ERROR);
-    } finally {
       setClearLoading(false);
     }
   };
@@ -61,23 +96,22 @@ const ApiPerformanceMonitoring = () => {
   const handleDownloadReport = async () => {
     setDownloadLoading(true);
     try {
-      const response = await fetch(API_PERFORMANCE_WIDGET.API_ENDPOINTS.STATS);
-      if (response.ok) {
-        const data = await response.json();
-        const reportData = ApiPerformanceReportGenerator.generateReportData(data.data || {});
+      // Mock 동작
+      setTimeout(() => {
+        const reportData = ApiPerformanceReportGenerator.generateReportData(dashboardData || {});
         ApiPerformanceReportGenerator.downloadJsonReport(reportData);
-      }
+        setDownloadLoading(false);
+      }, 800);
     } catch (error) {
       console.error('보고서 다운로드 오류:', error);
       notificationManager.error(API_PERFORMANCE_WIDGET.MESSAGES.DOWNLOAD_ERROR);
-    } finally {
       setDownloadLoading(false);
     }
   };
 
   return (
     <AdminCommonLayout 
-      title="API 성능 모니터링" 
+      title="API 성능 및 트래픽 모니터링" 
       loading={false}
       headerActions={
         <div className="mg-v2-ad-b0kla__flex" style={{ gap: 'var(--mg-spacing-8)' }}>
@@ -90,7 +124,6 @@ const ApiPerformanceMonitoring = () => {
             disabled={refreshing}
             preventDoubleClick
           >
-            <FaDownload className="mg-v2-ad-b0kla__icon" style={{ marginRight: 'var(--mg-spacing-4)' }} />
             보고서 다운로드
           </MGButton>
           
@@ -103,82 +136,116 @@ const ApiPerformanceMonitoring = () => {
             disabled={refreshing}
             preventDoubleClick
           >
-            <FaTrash className="mg-v2-ad-b0kla__icon" style={{ marginRight: 'var(--mg-spacing-4)' }} />
             통계 초기화
           </MGButton>
           
           <MGButton
             variant="primary"
             size="small"
-            onClick={handleRefresh}
+            onClick={fetchDashboardData}
             disabled={refreshing}
           >
-            <FaSync className={`mg-v2-ad-b0kla__icon ${refreshing ? 'spinning' : ''}`} style={{ marginRight: 'var(--mg-spacing-4)' }} />
-            새로고침
+            {refreshing ? '새로고침 중...' : '새로고침'}
           </MGButton>
         </div>
       }
     >
-      <div className="mg-v2-ad-b0kla__container">
-        <div className="mg-v2-ad-b0kla__grid" style={{ gridTemplateColumns: 'repeat(12, 1fr)', gap: 'var(--mg-spacing-24)' }}>
-          {/* 시스템 성능 위젯 */}
-          <div style={{ gridColumn: 'span 12' }}>
-            <PerformanceWidget 
-              title="시스템 성능 개요"
-              refreshInterval={10000}
-            />
+      <div className="mg-v2-ad-b0kla__container" style={{ padding: 'var(--mg-spacing-24) var(--mg-spacing-32)' }}>
+        
+        {/* Top Section: 요약 지표 카드 4종 */}
+        <ApiPerformanceWidget summary={dashboardData.summary} />
+
+        {/* Middle Section: 메인 차트 2종 */}
+        <div className="mg-v2-ad-b0kla__grid-container" style={{ 
+          display: 'grid', 
+          gridTemplateColumns: '7fr 3fr', 
+          gap: 'var(--mg-spacing-16)', 
+          marginTop: 'var(--mg-spacing-24)' 
+        }}>
+          {/* 응답 시간 트렌드 */}
+          <div className="mg-v2-ad-b0kla__chart-section" style={{
+            backgroundColor: 'var(--mg-color-surface-main)',
+            border: '1px solid var(--mg-color-border-main)',
+            borderRadius: '16px',
+            padding: '24px'
+          }}>
+            <div className="mg-v2-ad-b0kla__section-header" style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
+              <span className="mg-v2-ad-b0kla__accent-bar" style={{ width: '4px', height: '16px', backgroundColor: 'var(--mg-color-primary-main)', borderRadius: '2px', marginRight: '8px' }}></span>
+              <h3 style={{ fontSize: '16px', fontWeight: '600', color: 'var(--mg-color-text-main)', margin: 0 }}>응답 시간 트렌드</h3>
+            </div>
+            <div className="mg-v2-ad-b0kla__canvas-wrapper" style={{ position: 'relative', height: '300px', width: '100%' }}>
+              <ResponseTimeLineChart data={dashboardData.lineChart} />
+            </div>
           </div>
 
-          {/* API 성능 위젯 */}
-          <div style={{ gridColumn: 'span 12' }}>
-            <ApiPerformanceWidget 
-              title="API 성능 분석"
-              refreshInterval={15000}
-            />
-          </div>
-
-          {/* 추가 성능 지표 위젯들 */}
-          <div style={{ gridColumn: 'span 12' }}>
-            <div className="mg-v2-ad-b0kla__card">
-              <div className="mg-v2-ad-b0kla__card-header">
-                <h3 className="mg-v2-ad-b0kla__text--lg mg-v2-ad-b0kla__text--bold">성능 최적화 팁</h3>
-              </div>
-              <div className="mg-v2-ad-b0kla__card-body mg-v2-ad-b0kla__flex mg-v2-ad-b0kla__flex-col" style={{ gap: 'var(--mg-spacing-16)' }}>
-                <div className="mg-v2-ad-b0kla__flex" style={{ alignItems: 'flex-start' }}>
-                  <div className="mg-v2-ad-b0kla__icon" style={{ fontSize: '1.5rem', marginRight: 'var(--mg-spacing-16)' }}>🚀</div>
-                  <div>
-                    <h4 className="mg-v2-ad-b0kla__text--bold mg-v2-ad-b0kla__text--md">캐시 활용</h4>
-                    <p className="mg-v2-ad-b0kla__text--sm" style={{ color: 'var(--mg-gray-600)', marginTop: 'var(--mg-spacing-4)' }}>자주 사용되는 데이터는 캐시를 통해 응답 속도를 향상시키세요.</p>
-                  </div>
-                </div>
-                
-                <div className="mg-v2-ad-b0kla__flex" style={{ alignItems: 'flex-start' }}>
-                  <div className="mg-v2-ad-b0kla__icon" style={{ fontSize: '1.5rem', marginRight: 'var(--mg-spacing-16)' }}>📊</div>
-                  <div>
-                    <h4 className="mg-v2-ad-b0kla__text--bold mg-v2-ad-b0kla__text--md">쿼리 최적화</h4>
-                    <p className="mg-v2-ad-b0kla__text--sm" style={{ color: 'var(--mg-gray-600)', marginTop: 'var(--mg-spacing-4)' }}>데이터베이스 쿼리를 최적화하여 응답 시간을 단축하세요.</p>
-                  </div>
-                </div>
-                
-                <div className="mg-v2-ad-b0kla__flex" style={{ alignItems: 'flex-start' }}>
-                  <div className="mg-v2-ad-b0kla__icon" style={{ fontSize: '1.5rem', marginRight: 'var(--mg-spacing-16)' }}>⚡</div>
-                  <div>
-                    <h4 className="mg-v2-ad-b0kla__text--bold mg-v2-ad-b0kla__text--md">비동기 처리</h4>
-                    <p className="mg-v2-ad-b0kla__text--sm" style={{ color: 'var(--mg-gray-600)', marginTop: 'var(--mg-spacing-4)' }}>무거운 작업은 비동기로 처리하여 사용자 경험을 개선하세요.</p>
-                  </div>
-                </div>
-                
-                <div className="mg-v2-ad-b0kla__flex" style={{ alignItems: 'flex-start' }}>
-                  <div className="mg-v2-ad-b0kla__icon" style={{ fontSize: '1.5rem', marginRight: 'var(--mg-spacing-16)' }}>🔍</div>
-                  <div>
-                    <h4 className="mg-v2-ad-b0kla__text--bold mg-v2-ad-b0kla__text--md">모니터링</h4>
-                    <p className="mg-v2-ad-b0kla__text--sm" style={{ color: 'var(--mg-gray-600)', marginTop: 'var(--mg-spacing-4)' }}>지속적인 모니터링을 통해 성능 이슈를 조기에 발견하세요.</p>
-                  </div>
-                </div>
-              </div>
+          {/* 상태 코드 비율 */}
+          <div className="mg-v2-ad-b0kla__chart-section" style={{
+            backgroundColor: 'var(--mg-color-surface-main)',
+            border: '1px solid var(--mg-color-border-main)',
+            borderRadius: '16px',
+            padding: '24px'
+          }}>
+            <div className="mg-v2-ad-b0kla__section-header" style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
+              <span className="mg-v2-ad-b0kla__accent-bar" style={{ width: '4px', height: '16px', backgroundColor: 'var(--mg-color-primary-main)', borderRadius: '2px', marginRight: '8px' }}></span>
+              <h3 style={{ fontSize: '16px', fontWeight: '600', color: 'var(--mg-color-text-main)', margin: 0 }}>상태 코드 비율</h3>
+            </div>
+            <div className="mg-v2-ad-b0kla__canvas-wrapper" style={{ position: 'relative', height: '300px', width: '100%' }}>
+              <StatusCodeDoughnutChart data={dashboardData.doughnutChart} />
             </div>
           </div>
         </div>
+
+        {/* Bottom Section: 상세 지표 및 리스트 */}
+        <div className="mg-v2-ad-b0kla__grid-container" style={{ 
+          display: 'grid', 
+          gridTemplateColumns: '1fr 1fr', 
+          gap: 'var(--mg-spacing-16)', 
+          marginTop: 'var(--mg-spacing-24)' 
+        }}>
+          {/* 가장 느린 API 리스트 */}
+          <div className="mg-v2-ad-b0kla__chart-section" style={{
+            backgroundColor: 'var(--mg-color-surface-main)',
+            border: '1px solid var(--mg-color-border-main)',
+            borderRadius: '16px',
+            padding: '24px'
+          }}>
+            <div className="mg-v2-ad-b0kla__section-header" style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
+              <span className="mg-v2-ad-b0kla__accent-bar" style={{ width: '4px', height: '16px', backgroundColor: 'var(--mg-color-primary-main)', borderRadius: '2px', marginRight: '8px' }}></span>
+              <h3 style={{ fontSize: '16px', fontWeight: '600', color: 'var(--mg-color-text-main)', margin: 0 }}>가장 느린 API Top 5</h3>
+            </div>
+            <div className="mg-v2-ad-b0kla__list-wrapper" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {Object.entries(dashboardData.slowApis).map(([endpoint, stats]) => (
+                <div key={endpoint} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '12px', borderBottom: '1px solid var(--mg-color-border-main)' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <span style={{ fontSize: '14px', fontWeight: '600', color: 'var(--mg-color-text-main)' }}>{endpoint}</span>
+                    <span style={{ fontSize: '12px', color: 'var(--mg-color-text-secondary)', marginTop: '4px' }}>요청 수: {stats.totalRequests.toLocaleString()}건</span>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontSize: '14px', fontWeight: '600', color: 'var(--mg-color-error-main, #ef4444)' }}>{stats.averageDuration}ms</div>
+                    <div style={{ fontSize: '12px', color: 'var(--mg-color-text-secondary)', marginTop: '4px' }}>최대 {stats.maxDuration}ms</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* 캐시 히트율 상세 */}
+          <div className="mg-v2-ad-b0kla__chart-section" style={{
+            backgroundColor: 'var(--mg-color-surface-main)',
+            border: '1px solid var(--mg-color-border-main)',
+            borderRadius: '16px',
+            padding: '24px'
+          }}>
+            <div className="mg-v2-ad-b0kla__section-header" style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
+              <span className="mg-v2-ad-b0kla__accent-bar" style={{ width: '4px', height: '16px', backgroundColor: 'var(--mg-color-primary-main)', borderRadius: '2px', marginRight: '8px' }}></span>
+              <h3 style={{ fontSize: '16px', fontWeight: '600', color: 'var(--mg-color-text-main)', margin: 0 }}>캐시 히트 상태</h3>
+            </div>
+            <div className="mg-v2-ad-b0kla__canvas-wrapper" style={{ position: 'relative', height: '100px', width: '100%', display: 'flex', alignItems: 'center' }}>
+              <CacheHitBarChart data={dashboardData.cacheHit} />
+            </div>
+          </div>
+        </div>
+
       </div>
     </AdminCommonLayout>
   );

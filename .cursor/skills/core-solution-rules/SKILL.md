@@ -46,12 +46,12 @@ description: Core Solution(MindGarden) 프로젝트 전체 룰 인덱스. 백엔
 | API 설계·연동 | core-coder | /core-solution-api, /core-solution-backend | |
 | **서버 상태·에러 로그·긴급 복구** | **shell** → **core-debugger** → **core-coder** | /core-solution-server-status | 개발·운영 서버 상태/로그/복구 후 원인 분석·core-coder 조치 |
 | **배포·CI 워크플로 수정** | **core-coder** | /core-solution-deployment | GitHub Actions·systemd·배포 체크리스트·롤백 |
-| **전반 기획·단계 설계·실행 계획** | **core-planner** | /core-solution-planning | 범위·Phase·산출물 정리, 디자이너·코더·디버거·탐색·테스터 가동 계획 및 태스크 설명 작성. 실행은 해당 서브에이전트 호출로 진행 |
+| **전반 기획·단계 설계·실행 계획** | **core-planner** | /core-solution-planning | 범위·Phase·산출물 정리, **분배실행(역할별 실행 분배)** 표 작성 — 디자인(core-designer)·코더(core-coder)·디버그(core-debugger)·쉘(shell)·문서정리(generalPurpose)·탐색(explore)·테스터(core-tester)에 맞춰 분배. 실행은 해당 서브에이전트 호출로 진행 |
 | **작업 전 플랜·조사·영역 분석** | **explore** | /core-solution-documentation | 넓은 범위 작업 전 현황·누락·우선순위 조사 |
 | **문서 작성·정리·체계화** | **generalPurpose** | /core-solution-documentation | 표준 문서·가이드 작성·수정·재구성. 기획(explore/core-planner) 후 진행 권장 |
 | 새 작업 유형 추가 시 | — | — | docs/standards/SUBAGENT_USAGE.md 절차 따름 |
 
-- **core-planner** 에이전트: **전반 기획 전용**. 요구 정리, 범위·Phase·의존성·리스크·산출물 정의 후, **core-designer → core-coder → core-debugger / explore / core-tester** 호출용 태스크 설명을 작성. 기획만 수행하며 실제 구현·설계·디버깅은 해당 서브에이전트에 위임. `/core-solution-planning` 스킬 적용.
+- **core-planner** 에이전트: **기획 오케스트레이터**. 사용자 명령 → 기획이 담당 배정(분배실행 표) → 서브에이전트 실행(병렬 가능) → **결과를 기획에게 보고** → 기획이 취합해 **사용자에게 최종 보고**. 역할별(디자인·코더·디버그·쉘·문서정리·탐색·테스터) 담당·전달 프롬프트 명시. `/core-solution-planning` 스킬 적용.
 - **explore** 서브에이전트: 코드베이스 탐색·분석, **작업 전 조사** 시 사용 (수정 작업 아님). 문서·기획 시 1단계로 사용.
 - **generalPurpose** 서브에이전트: 복합 연구·다단계 작업, **문서 작성·정리** 시 /core-solution-documentation 스킬과 함께 사용.
 - **서버 상태·긴급 복구**: 개발·운영 서버 상태·에러 로그 확인, 긴급 복구(백업 복원·재시작), 원인 분석 후 core-coder 즉시 조치는 **shell** → **core-debugger** → **core-coder** 순서로 진행. `/core-solution-server-status` 스킬 적용.

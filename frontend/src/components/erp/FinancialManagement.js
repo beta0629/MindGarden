@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import UnifiedLoading from '../common/UnifiedLoading';
-import MGCard from '../common/MGCard';
-import Button from '../ui/Button/Button';
 import { useSession } from '../../contexts/SessionContext';
-import { apiGet } from '../../utils/ajax';
+import StandardizedApi from '../../utils/standardizedApi';
 import { getCodeLabel } from '../../utils/commonCodeUtils';
 import notificationManager from '../../utils/notification';
 import ConfirmModal from '../common/ConfirmModal';
@@ -12,12 +10,9 @@ import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentArea, ContentHeader } from '../dashboard-v2/content';
 import {
   DollarSign,
-  Wallet,
   RefreshCw,
   Search,
   Link2,
-  User,
-  Users,
   BarChart3,
   Calendar,
   Building2,
@@ -60,7 +55,7 @@ const FinancialManagement = () => {
     transactionType: 'ALL', // ALL, INCOME, EXPENSE
     category: 'ALL', // ALL, CONSULTATION, SALARY, etc.
     relatedEntityType: 'ALL', // ALL, CONSULTANT_CLIENT_MAPPING, PAYMENT, etc.
-    dateRange: 'ALL', // ALL, TODAY, WEEK, MONTH, CUSTOM
+    dateRange: 'MONTH', // ALL, TODAY, WEEK, MONTH, CUSTOM
     startDate: '',
     endDate: '',
     searchText: '' // 상담사명, 내담자명, 설명 검색
@@ -68,6 +63,7 @@ const FinancialManagement = () => {
   
   const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [showAdvancedFilter, setShowAdvancedFilter] = useState(false);
   
   const [confirmModal, setConfirmModal] = useState({
     isOpen: false,
@@ -126,37 +122,48 @@ const FinancialManagement = () => {
     }
   };
 
+  const getDateRangeForFilter = () => {
+    const now = new Date();
+    const toStr = (d) => d.toISOString().split('T')[0];
+    switch (filters.dateRange) {
+      case 'TODAY':
+        return { startDate: toStr(now), endDate: toStr(now) };
+      case 'WEEK': {
+        const start = new Date(now);
+        start.setDate(start.getDate() - 7);
+        return { startDate: toStr(start), endDate: toStr(now) };
+      }
+      case 'MONTH': {
+        const start = new Date(now.getFullYear(), now.getMonth(), 1);
+        return { startDate: toStr(start), endDate: toStr(now) };
+      }
+      case 'CUSTOM':
+        return {
+          startDate: filters.startDate || toStr(now),
+          endDate: filters.endDate || toStr(now)
+        };
+      default:
+        return { startDate: '', endDate: '' };
+    }
+  };
+
   const loadTransactions = async () => {
     try {
-      const params = new URLSearchParams({
+      const { startDate, endDate } = getDateRangeForFilter();
+      const params = {
         page: pagination.currentPage,
         size: pagination.size
-      });
-      
-      if (filters.transactionType !== 'ALL') {
-        params.append('transactionType', filters.transactionType);
-      }
-      if (filters.category !== 'ALL') {
-        params.append('category', filters.category);
-      }
-      if (filters.relatedEntityType !== 'ALL') {
-        params.append('relatedEntityType', filters.relatedEntityType);
-      }
-      if (filters.searchText) {
-        params.append('search', filters.searchText);
-      }
-      
-      if (user?.branchCode) {
-        params.append('branchCode', user.branchCode);
-        console.log('📍 지점 관리자 - 자기 지점 데이터 조회:', user.branchCode);
-      } else {
-        console.log('📍 ERP 중앙화 - 전체 회사 데이터 조회');
-        console.log('📍 사용자 정보:', user);
-      }
-      
-      const response = await apiGet(`/api/v1/admin/financial-transactions?${params.toString()}`);
+      };
+      if (startDate) params.startDate = startDate;
+      if (endDate) params.endDate = endDate;
+      if (filters.transactionType !== 'ALL') params.transactionType = filters.transactionType;
+      if (filters.category !== 'ALL') params.category = filters.category;
+      if (filters.relatedEntityType !== 'ALL') params.relatedEntityType = filters.relatedEntityType;
+      if (filters.searchText) params.search = filters.searchText;
+      if (user?.branchCode) params.branchCode = user.branchCode;
+
+      const response = await StandardizedApi.get('/api/v1/admin/financial-transactions', params);
       console.log('📡 API 응답:', response);
-      console.log('📡 API URL:', `/api/v1/admin/financial-transactions?${params.toString()}`);
       
       // apiGet이 {success, data} 형태면 data만 반환하므로, 배열인지 객체인지 확인
       if (Array.isArray(response)) {
@@ -438,7 +445,7 @@ const FinancialManagement = () => {
                 <div className="alert alert-danger" role="alert">
                   <AlertTriangle size={20} aria-hidden /> {error}
                 </div>
-                <button type="button" className="mg-btn mg-btn--outline mg-btn--primary" onClick={loadData}>
+                <button type="button" className="mg-v2-button mg-v2-button-primary" onClick={loadData}>
                   <RefreshCw size={16} aria-hidden /> 다시 시도
                 </button>
               </div>
@@ -482,12 +489,49 @@ const FinancialManagement = () => {
                     </div>
                   </div>
 
-                  {/* 필터 섹션: 태그 그룹 */}
+                  {/* 필터: 기간(필수) + 거래 유형 + 카테고리 + 검색. 연동 유형은 고급 필터 접기 */}
                   <div className="mg-v2-filter-section">
-                    <h3 className="mg-v2-filter-title">필터 및 검색</h3>
-
-                    <div className="mg-v2-filter-grid">
-                      {/* 거래 유형: 태그 */}
+                    <div className="mg-v2-filter-grid mg-v2-filter-grid--row1">
+                      <div className="mg-v2-form-group">
+                        <label className="mg-v2-form-label">기간</label>
+                        <select
+                          value={filters.dateRange}
+                          onChange={(e) =>
+                            setFilters((prev) => ({ ...prev, dateRange: e.target.value }))
+                          }
+                          className="mg-v2-form-select"
+                          style={{ minWidth: '140px' }}
+                        >
+                          <option value="ALL">전체</option>
+                          <option value="TODAY">오늘</option>
+                          <option value="WEEK">이번 주</option>
+                          <option value="MONTH">이번 달</option>
+                          <option value="CUSTOM">직접 입력</option>
+                        </select>
+                        {filters.dateRange === 'CUSTOM' && (
+                          <div className="mg-v2-form-group mg-v2-form-group--inline" style={{ marginTop: 8 }}>
+                            <input
+                              type="date"
+                              value={filters.startDate}
+                              onChange={(e) =>
+                                setFilters((prev) => ({ ...prev, startDate: e.target.value }))
+                              }
+                              className="mg-v2-form-select"
+                              style={{ marginRight: 8 }}
+                            />
+                            <span style={{ color: 'var(--mg-color-text-secondary)' }}>~</span>
+                            <input
+                              type="date"
+                              value={filters.endDate}
+                              onChange={(e) =>
+                                setFilters((prev) => ({ ...prev, endDate: e.target.value }))
+                              }
+                              className="mg-v2-form-select"
+                              style={{ marginLeft: 8 }}
+                            />
+                          </div>
+                        )}
+                      </div>
                       <div className="mg-v2-form-group">
                         <label className="mg-v2-form-label">거래 유형</label>
                         <div className="mg-v2-tag-group">
@@ -500,15 +544,15 @@ const FinancialManagement = () => {
                               key={opt.value}
                               type="button"
                               className={`mg-v2-tag ${filters.transactionType === opt.value ? 'mg-v2-tag--selected' : ''}`}
-                              onClick={() => setFilters(prev => ({ ...prev, transactionType: opt.value }))}
+                              onClick={() =>
+                                setFilters((prev) => ({ ...prev, transactionType: opt.value }))
+                              }
                             >
                               {opt.label}
                             </button>
                           ))}
                         </div>
                       </div>
-
-                      {/* 카테고리: 태그 */}
                       <div className="mg-v2-form-group">
                         <label className="mg-v2-form-label">카테고리</label>
                         <div className="mg-v2-tag-group">
@@ -525,16 +569,65 @@ const FinancialManagement = () => {
                               key={opt.value}
                               type="button"
                               className={`mg-v2-tag ${filters.category === opt.value ? 'mg-v2-tag--selected' : ''}`}
-                              onClick={() => setFilters(prev => ({ ...prev, category: opt.value }))}
+                              onClick={() =>
+                                setFilters((prev) => ({ ...prev, category: opt.value }))
+                              }
                             >
                               {opt.label}
                             </button>
                           ))}
                         </div>
                       </div>
-
-                      {/* 연동 유형: 태그 */}
+                    </div>
+                    <div className="mg-v2-filter-grid mg-v2-filter-grid--row2">
                       <div className="mg-v2-form-group">
+                        <label className="mg-v2-form-label">검색</label>
+                        <input
+                          type="text"
+                          placeholder="상담사명, 내담자명, 설명 검색..."
+                          value={filters.searchText}
+                          onChange={(e) =>
+                            setFilters((prev) => ({ ...prev, searchText: e.target.value }))
+                          }
+                          className="mg-v2-form-select"
+                        />
+                      </div>
+                      <div className="mg-v2-form-group mg-financial-filter-actions">
+                        <button
+                          type="button"
+                          onClick={() => setShowAdvancedFilter((v) => !v)}
+                          className="mg-v2-button mg-v2-button-secondary"
+                        >
+                          고급 필터 {showAdvancedFilter ? '접기' : '펼치기'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setFilters({
+                              transactionType: 'ALL',
+                              category: 'ALL',
+                              relatedEntityType: 'ALL',
+                              dateRange: 'MONTH',
+                              startDate: '',
+                              endDate: '',
+                              searchText: ''
+                            })
+                          }
+                          className="mg-v2-button mg-v2-button-secondary"
+                        >
+                          <RefreshCw size={16} aria-hidden /> 필터 초기화
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => loadData()}
+                          className="mg-v2-button mg-v2-button-primary"
+                        >
+                          <Search size={16} aria-hidden /> 검색
+                        </button>
+                      </div>
+                    </div>
+                    {showAdvancedFilter && (
+                      <div className="mg-v2-form-group" style={{ marginTop: 12 }}>
                         <label className="mg-v2-form-label">연동 유형</label>
                         <div className="mg-v2-tag-group">
                           {[
@@ -549,83 +642,44 @@ const FinancialManagement = () => {
                               key={opt.value}
                               type="button"
                               className={`mg-v2-tag ${filters.relatedEntityType === opt.value ? 'mg-v2-tag--selected' : ''}`}
-                              onClick={() => setFilters(prev => ({ ...prev, relatedEntityType: opt.value }))}
+                              onClick={() =>
+                                setFilters((prev) => ({ ...prev, relatedEntityType: opt.value }))
+                              }
                             >
                               {opt.label}
                             </button>
                           ))}
                         </div>
                       </div>
-
-                      {/* 검색 */}
-                      <div className="mg-v2-form-group">
-                        <label className="mg-v2-form-label">검색</label>
-                        <input
-                          type="text"
-                          placeholder="상담사명, 내담자명, 설명 검색..."
-                          value={filters.searchText}
-                          onChange={(e) => setFilters(prev => ({ ...prev, searchText: e.target.value }))}
-                          className="mg-v2-form-select"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="mg-v2-form-group mg-financial-filter-actions">
-                      <button
-                        type="button"
-                        onClick={() => setFilters({
-                          transactionType: 'ALL',
-                          category: 'ALL',
-                          relatedEntityType: 'ALL',
-                          dateRange: 'ALL',
-                          startDate: '',
-                          endDate: '',
-                          searchText: ''
-                        })}
-                        className="mg-v2-button mg-v2-button-secondary"
-                      >
-                        <RefreshCw size={16} aria-hidden /> 필터 초기화
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => loadData()}
-                        className="mg-v2-button mg-v2-button-primary"
-                      >
-                        <Search size={16} aria-hidden /> 검색
-                      </button>
-                    </div>
+                    )}
                   </div>
                   
-                  {/* 거래 내역 카드 그리드 (표준화 원칙: 테이블 → 카드 전환, 인라인 스타일 제거) */}
+                  {/* 거래 목록 카드: 필수만 노출(일자, 유형, 카테고리, 금액, 상태, 매핑). 상세는 모달 */}
                   <div className="mg-financial-transaction-cards-grid">
                     {transactions.length > 0 ? (
                       transactions.map((transaction) => (
-                        <MGCard 
+                        <div
                           key={transaction.id}
-                          variant="default"
-                          className="mg-financial-transaction-card"
+                          className="mg-v2-ad-b0kla__card mg-financial-transaction-card"
                         >
                           <div className="mg-financial-transaction-card__header">
                             <div className="mg-financial-transaction-card__id-section">
-                              <Button
-                                variant="link"
-                                size="small"
+                              <button
+                                type="button"
                                 onClick={() => {
                                   setSelectedTransaction(transaction);
                                   setShowDetailModal(true);
                                 }}
-                                preventDoubleClick={true}
                                 className="mg-financial-transaction-card__id-button"
                               >
                                 #{transaction.id}
-                              </Button>
-                              {/* 매핑 연동 거래 표시 */}
-                              {(transaction.relatedEntityType === 'CONSULTANT_CLIENT_MAPPING' || 
+                              </button>
+                              {(transaction.relatedEntityType === 'CONSULTANT_CLIENT_MAPPING' ||
                                 transaction.relatedEntityType === 'CONSULTANT_CLIENT_MAPPING_REFUND' ||
                                 transaction.description?.includes('상담료 입금 확인') ||
                                 transaction.description?.includes('상담료 환불')) && (
                                 <span className="mg-v2-badge mg-v2-badge--primary">
-                                  <Link2 size={12} aria-hidden /> 매핑연동
+                                  <Link2 size={12} aria-hidden /> 매핑
                                 </span>
                               )}
                             </div>
@@ -633,58 +687,36 @@ const FinancialManagement = () => {
                               {formatDate(transaction.transactionDate)}
                             </div>
                           </div>
-                          
                           <div className="mg-financial-transaction-card__body">
                             <div className="mg-financial-transaction-card__field">
-                              <span className="mg-financial-transaction-card__label">거래 유형</span>
-                              <span className="erp-badge">
-                                {transaction.transactionType}
+                              <span className="mg-financial-transaction-card__label">유형</span>
+                              <span
+                                className={
+                                  transaction.transactionType === 'INCOME'
+                                    ? 'mg-financial-transaction-card__type-badge mg-financial-transaction-card__type-badge--income'
+                                    : 'mg-financial-transaction-card__type-badge mg-financial-transaction-card__type-badge--expense'
+                                }
+                              >
+                                {transaction.transactionType === 'INCOME' ? '수입' : '지출'}
                               </span>
                             </div>
-                            
                             <div className="mg-financial-transaction-card__field">
                               <span className="mg-financial-transaction-card__label">카테고리</span>
-                              <div className="mg-financial-transaction-card__category">
-                                <span>{transaction.category}</span>
-                                {/* 매핑 연동 거래 세부 정보 */}
-                                {transaction.relatedEntityType === 'CONSULTANT_CLIENT_MAPPING' && (
-                                  <div className="mg-financial-transaction-card__auto-generated mg-financial-transaction-card__auto-generated--success">
-                                    <DollarSign size={12} aria-hidden /> 입금확인 자동생성
-                                  </div>
-                                )}
-                                {transaction.relatedEntityType === 'CONSULTANT_CLIENT_MAPPING_REFUND' && (
-                                  <div className="mg-financial-transaction-card__auto-generated mg-financial-transaction-card__auto-generated--danger">
-                                    <Wallet size={12} aria-hidden /> 환불처리 자동생성
-                                  </div>
-                                )}
-                              </div>
+                              <span>{transaction.category || '-'}</span>
                             </div>
-                            
-                            <div className="mg-financial-transaction-card__field">
-                              <span className="mg-financial-transaction-card__label">매칭 정보</span>
-                              <div className="mg-financial-transaction-card__matching-info">
-                                {transaction.consultantName || transaction.clientName ? (
-                                  <>
-                                    <div className="mg-financial-transaction-card__consultant">
-                                      <User size={14} aria-hidden /> {transaction.consultantName || '상담사 정보 없음'}
-                                    </div>
-                                    <div className="mg-financial-transaction-card__client">
-                                      <Users size={14} aria-hidden /> {transaction.clientName || '내담자 정보 없음'}
-                                    </div>
-                                  </>
-                                ) : (
-                                  <span className="mg-financial-transaction-card__no-info">-</span>
-                                )}
-                              </div>
-                            </div>
-                            
                             <div className="mg-financial-transaction-card__field">
                               <span className="mg-financial-transaction-card__label">금액</span>
-                              <span className={`mg-financial-transaction-card__amount ${transaction.amount >= 0 ? 'mg-financial-transaction-card__amount--success' : 'mg-financial-transaction-card__amount--danger'}`}>
-                                {transaction.amount >= 0 ? '+' : ''}{formatCurrency(transaction.amount)}
+                              <span
+                                className={
+                                  transaction.amount >= 0
+                                    ? 'mg-financial-transaction-card__amount mg-financial-transaction-card__amount--success'
+                                    : 'mg-financial-transaction-card__amount mg-financial-transaction-card__amount--danger'
+                                }
+                              >
+                                {transaction.amount >= 0 ? '+' : ''}
+                                {formatCurrency(transaction.amount)}
                               </span>
                             </div>
-                            
                             <div className="mg-financial-transaction-card__field">
                               <span className="mg-financial-transaction-card__label">상태</span>
                               <span className={`erp-status ${transaction.status?.toLowerCase()}`}>
@@ -692,36 +724,32 @@ const FinancialManagement = () => {
                               </span>
                             </div>
                           </div>
-                          
                           <div className="mg-financial-transaction-card__footer">
                             <div className="mg-financial-transaction-card__actions">
-                              <Button
-                                variant="outline"
-                                size="small"
+                              <button
+                                type="button"
+                                className="mg-v2-button mg-v2-button-secondary"
                                 onClick={() => handleViewTransaction(transaction)}
-                                preventDoubleClick={true}
                               >
                                 <Eye size={14} aria-hidden /> 보기
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="small"
+                              </button>
+                              <button
+                                type="button"
+                                className="mg-v2-button mg-v2-button-secondary"
                                 onClick={() => handleEditTransaction(transaction)}
-                                preventDoubleClick={true}
                               >
                                 <Pencil size={14} aria-hidden /> 수정
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="small"
+                              </button>
+                              <button
+                                type="button"
+                                className="mg-v2-button mg-v2-button-secondary"
                                 onClick={() => handleDeleteTransaction(transaction)}
-                                preventDoubleClick={true}
                               >
                                 <Trash2 size={14} aria-hidden /> 삭제
-                              </Button>
+                              </button>
                             </div>
                           </div>
-                        </MGCard>
+                        </div>
                       ))
                     ) : (
                       <div className="mg-financial-transaction-empty">
@@ -954,7 +982,9 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
   const loadMappingDetail = async () => {
     try {
       setLoading(true);
-      const response = await apiGet(`/api/admin/amount-management/mappings/${transaction.relatedEntityId}/amount-info`);
+      const response = await StandardizedApi.get(
+        `/api/v1/admin/amount-management/mappings/${transaction.relatedEntityId}/amount-info`
+      );
       if (response.success) {
         setMappingDetail(response.data);
       }
@@ -1007,6 +1037,7 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
       size="large"
       showCloseButton
       actions={modalActions}
+      className="mg-v2-ad-b0kla"
     >
       <div className="mg-v2-transaction-detail-card mg-v2-card mg-v2-card--outlined">
         <h3 className="mg-v2-section-header">

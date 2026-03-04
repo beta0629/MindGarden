@@ -4,7 +4,8 @@ import { useSession } from '../../contexts/SessionContext';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentArea, ContentHeader } from '../dashboard-v2/content';
-import { PiggyBank, List, Tag, TrendingUp, AlertTriangle, RefreshCw } from 'lucide-react';
+import { PiggyBank, List, Tag, TrendingUp, AlertTriangle, RefreshCw, Wallet, Percent, DollarSign } from 'lucide-react';
+import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ErpCommon.css';
 import notificationManager from '../../utils/notification';
 
@@ -289,7 +290,7 @@ const BudgetManagement = () => {
 
   return (
     <AdminCommonLayout title="예산 관리">
-      <ContentArea className="erp-system mg-v2-content-area">
+      <ContentArea className="erp-system mg-v2-content-area mg-v2-ad-b0kla">
         <ContentHeader
           title="예산 관리"
           subtitle="예산 계획 및 관리를 할 수 있습니다."
@@ -344,48 +345,52 @@ const BudgetManagement = () => {
               <>
                 {activeTab === 'budgets' && (
                   <div className="erp-section">
-                    {/* 예산 통계 카드 */}
-                    <div className="erp-stats-grid mb-4">
-                      <div className="erp-stat-card">
-                        <div className="erp-stat-icon">
-                          <PiggyBank size={24} aria-hidden />
+                    {/* 예산 통계 카드: B0KlA 카드·토큰 */}
+                    <div className="erp-stats-grid mb-4 mg-v2-erp-dashboard-kpi-grid">
+                      <div className="mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card-accent erp-stat-card">
+                        <div className="mg-v2-ad-b0kla__chart-header">
+                          <h3 className="mg-v2-ad-b0kla__chart-title">총 예산</h3>
+                          <PiggyBank size={24} aria-hidden className="mg-v2-ad-b0kla__kpi-value--primary" />
                         </div>
-                        <div className="erp-stat-content">
-                          <h3>총 예산</h3>
-                          <div className="erp-stat-value">
+                        <div className="mg-v2-ad-b0kla__chart-body">
+                          <div className="mg-v2-ad-b0kla__kpi-value mg-v2-ad-b0kla__kpi-value--primary">
                             {formatCurrency(budgets.reduce((sum, budget) => sum + (budget.totalBudget || 0), 0))}
                           </div>
+                          <span className="mg-v2-ad-b0kla__kpi-label">전체 예산 합계</span>
                         </div>
                       </div>
-                      <div className="erp-stat-card">
-                        <div className="erp-stat-icon">
-                          <i className="bi bi-graph-up"></i>
+                      <div className="mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card-accent--orange erp-stat-card">
+                        <div className="mg-v2-ad-b0kla__chart-header">
+                          <h3 className="mg-v2-ad-b0kla__chart-title">사용 금액</h3>
+                          <TrendingUp size={24} aria-hidden className="mg-v2-ad-b0kla__kpi-value--warning" />
                         </div>
-                        <div className="erp-stat-content">
-                          <h3>사용 금액</h3>
-                          <div className="erp-stat-value">
+                        <div className="mg-v2-ad-b0kla__chart-body">
+                          <div className="mg-v2-ad-b0kla__kpi-value mg-v2-ad-b0kla__kpi-value--warning">
                             {formatCurrency(budgets.reduce((sum, budget) => sum + (budget.usedBudget || 0), 0))}
                           </div>
+                          <span className="mg-v2-ad-b0kla__kpi-label">사용된 금액</span>
                         </div>
                       </div>
-                      <div className="erp-stat-card">
-                        <div className="erp-stat-icon">
-                          <i className="bi bi-wallet2"></i>
+                      <div className="mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card-accent erp-stat-card">
+                        <div className="mg-v2-ad-b0kla__chart-header">
+                          <h3 className="mg-v2-ad-b0kla__chart-title">잔여 금액</h3>
+                          <Wallet size={24} aria-hidden className="mg-v2-ad-b0kla__kpi-value--success" />
                         </div>
-                        <div className="erp-stat-content">
-                          <h3>잔여 금액</h3>
-                          <div className="erp-stat-value">
+                        <div className="mg-v2-ad-b0kla__chart-body">
+                          <div className="mg-v2-ad-b0kla__kpi-value mg-v2-ad-b0kla__kpi-value--success">
                             {formatCurrency(budgets.reduce((sum, budget) => sum + (budget.remainingBudget || 0), 0))}
                           </div>
+                          <span className="mg-v2-ad-b0kla__kpi-label">잔액</span>
                         </div>
                       </div>
-                      <div className="erp-stat-card">
-                        <div className="erp-stat-icon">
-                          <i className="bi bi-list-check"></i>
+                      <div className="mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card-accent--blue erp-stat-card">
+                        <div className="mg-v2-ad-b0kla__chart-header">
+                          <h3 className="mg-v2-ad-b0kla__chart-title">예산 개수</h3>
+                          <List size={24} aria-hidden className="mg-v2-ad-b0kla__kpi-value--info" />
                         </div>
-                        <div className="erp-stat-content">
-                          <h3>예산 개수</h3>
-                          <div className="erp-stat-value">{budgets.length}개</div>
+                        <div className="mg-v2-ad-b0kla__chart-body">
+                          <div className="mg-v2-ad-b0kla__kpi-value mg-v2-ad-b0kla__kpi-value--info">{budgets.length}개</div>
+                          <span className="mg-v2-ad-b0kla__kpi-label">등록된 예산</span>
                         </div>
                       </div>
                     </div>
@@ -419,7 +424,7 @@ const BudgetManagement = () => {
                             const isOverBudget = (budget.usedBudget || 0) > budget.totalBudget;
                             
                             return (
-                              <div key={budget.id} className="erp-budget-card">
+                              <div key={budget.id} className="mg-v2-ad-b0kla__card erp-budget-card">
                                 <div className="erp-budget-header">
                                   <div className="erp-budget-title">
                                     <h3>{budget.name}</h3>
@@ -531,7 +536,7 @@ const BudgetManagement = () => {
                     {budgetCategories.length > 0 ? (
                       <div className="erp-grid">
                         {budgetCategories.map((category) => (
-                          <div key={category.id} className="erp-card">
+                          <div key={category.id} className="mg-v2-ad-b0kla__card erp-card">
                             <div className="erp-card-header">
                               <h3>{category.codeLabel}</h3>
                               <span className="erp-status success">활성</span>
@@ -582,54 +587,51 @@ const BudgetManagement = () => {
                       </div>
                     </div>
                     
-                    {/* 통계 카드 */}
-                    <div className="erp-stats-grid">
-                      <div className="erp-stat-card">
-                        <div className="erp-stat-icon">
-                          <i className="bi bi-currency-dollar"></i>
+                    {/* 통계 카드: B0KlA */}
+                    <div className="erp-stats-grid mg-v2-erp-dashboard-kpi-grid">
+                      <div className="mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card-accent erp-stat-card">
+                        <div className="mg-v2-ad-b0kla__chart-header">
+                          <h3 className="mg-v2-ad-b0kla__chart-title">총 예산</h3>
+                          <DollarSign size={24} aria-hidden className="mg-v2-ad-b0kla__kpi-value--primary" />
                         </div>
-                        <div className="erp-stat-content">
-                          <h3>총 예산</h3>
-                          <div className="erp-stat-value text-primary">
+                        <div className="mg-v2-ad-b0kla__chart-body">
+                          <div className="mg-v2-ad-b0kla__kpi-value mg-v2-ad-b0kla__kpi-value--primary">
                             {formatCurrency(budgets.reduce((sum, budget) => sum + (budget.totalBudget || 0), 0))}
                           </div>
-                          <small className="text-muted">전체 예산</small>
+                          <span className="mg-v2-ad-b0kla__kpi-label">전체 예산</span>
                         </div>
                       </div>
-                      
-                      <div className="erp-stat-card">
-                        <div className="erp-stat-icon">
-                          <i className="bi bi-graph-up"></i>
+                      <div className="mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card-accent--orange erp-stat-card">
+                        <div className="mg-v2-ad-b0kla__chart-header">
+                          <h3 className="mg-v2-ad-b0kla__chart-title">사용된 예산</h3>
+                          <TrendingUp size={24} aria-hidden className="mg-v2-ad-b0kla__kpi-value--warning" />
                         </div>
-                        <div className="erp-stat-content">
-                          <h3>사용된 예산</h3>
-                          <div className="erp-stat-value text-warning">
+                        <div className="mg-v2-ad-b0kla__chart-body">
+                          <div className="mg-v2-ad-b0kla__kpi-value mg-v2-ad-b0kla__kpi-value--warning">
                             {formatCurrency(budgets.reduce((sum, budget) => sum + (budget.usedBudget || 0), 0))}
                           </div>
-                          <small className="text-muted">사용 금액</small>
+                          <span className="mg-v2-ad-b0kla__kpi-label">사용 금액</span>
                         </div>
                       </div>
-                      
-                      <div className="erp-stat-card">
-                        <div className="erp-stat-icon">
-                          <PiggyBank size={24} aria-hidden />
+                      <div className="mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card-accent erp-stat-card">
+                        <div className="mg-v2-ad-b0kla__chart-header">
+                          <h3 className="mg-v2-ad-b0kla__chart-title">잔여 예산</h3>
+                          <PiggyBank size={24} aria-hidden className="mg-v2-ad-b0kla__kpi-value--success" />
                         </div>
-                        <div className="erp-stat-content">
-                          <h3>잔여 예산</h3>
-                          <div className="erp-stat-value text-success">
+                        <div className="mg-v2-ad-b0kla__chart-body">
+                          <div className="mg-v2-ad-b0kla__kpi-value mg-v2-ad-b0kla__kpi-value--success">
                             {formatCurrency(budgets.reduce((sum, budget) => sum + (budget.remainingBudget || 0), 0))}
                           </div>
-                          <small className="text-muted">잔액</small>
+                          <span className="mg-v2-ad-b0kla__kpi-label">잔액</span>
                         </div>
                       </div>
-                      
-                      <div className="erp-stat-card">
-                        <div className="erp-stat-icon">
-                          <i className="bi bi-percent"></i>
+                      <div className="mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card-accent--blue erp-stat-card">
+                        <div className="mg-v2-ad-b0kla__chart-header">
+                          <h3 className="mg-v2-ad-b0kla__chart-title">평균 사용률</h3>
+                          <Percent size={24} aria-hidden className="mg-v2-ad-b0kla__kpi-value--info" />
                         </div>
-                        <div className="erp-stat-content">
-                          <h3>평균 사용률</h3>
-                          <div className="erp-stat-value text-info">
+                        <div className="mg-v2-ad-b0kla__chart-body">
+                          <div className="mg-v2-ad-b0kla__kpi-value mg-v2-ad-b0kla__kpi-value--info">
                             {(() => {
                               const totalBudget = budgets.reduce((sum, budget) => sum + (budget.totalBudget || 0), 0);
                               const totalUsed = budgets.reduce((sum, budget) => sum + (budget.usedBudget || 0), 0);
@@ -637,7 +639,7 @@ const BudgetManagement = () => {
                               return `${usageRate.toFixed(1)}%`;
                             })()}
                           </div>
-                          <small className="text-muted">전체 사용률</small>
+                          <span className="mg-v2-ad-b0kla__kpi-label">전체 사용률</span>
                         </div>
                       </div>
                     </div>
@@ -679,7 +681,7 @@ const BudgetManagement = () => {
                               const isOverBudget = stats.usedBudget > stats.totalBudget;
                               
                               return (
-                                <div key={category} className="erp-card">
+                                <div key={category} className="mg-v2-ad-b0kla__card erp-card">
                                   <div className="erp-card-header">
                                     <h4>{category}</h4>
                                     <span className={`erp-status ${isOverBudget ? 'danger' : 'success'}`}>

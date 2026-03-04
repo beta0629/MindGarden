@@ -39,8 +39,8 @@
 }
 
 .erp-system .erp-login-header {
-  background: linear-gradient(135deg, var(--mg-primary-500) 0%, #764ba2 100%);
-  color: white;
+  background: linear-gradient(135deg, var(--mg-primary-500) 0%, var(--mg-primary-700) 100%);
+  color: var(--mg-color-surface-main);
   padding: 30px;
   display: flex;
   justify-content: space-between;
@@ -70,7 +70,7 @@
 }
 
 .erp-system .erp-login-content h3 {
-  color: #2c3e50;
+  color: var(--mg-color-text-main);
   margin-bottom: 15px;
   font-size: 1.5rem;
 }
@@ -90,11 +90,11 @@
 }
 
 .erp-system .erp-stat-card {
-  background: white;
+  background: var(--mg-color-surface-main);
   border-radius: 12px;
   padding: 24px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  border: 1px solid #e9ecef;
+  box-shadow: var(--mg-shadow-sm);
+  border: 1px solid var(--mg-color-border-main);
   display: flex;
   align-items: center;
   gap: 16px;
@@ -114,8 +114,8 @@
   align-items: center;
   justify-content: center;
   font-size: 1.5rem;
-  color: white;
-  background: linear-gradient(135deg, var(--mg-primary-500) 0%, #764ba2 100%);
+  color: var(--mg-color-surface-main);
+  background: linear-gradient(135deg, var(--mg-primary-500) 0%, var(--mg-primary-700) 100%);
 }
 
 .erp-system .erp-stat-content h3 {
@@ -130,7 +130,7 @@
 .erp-system .erp-stat-value {
   font-size: 1.8rem;
   font-weight: 700;
-  color: #2c3e50;
+  color: var(--mg-color-text-main);
   margin: 0;
 }
 
@@ -140,13 +140,13 @@
   align-items: flex-start;
   margin-bottom: 30px;
   padding-bottom: 20px;
-  border-bottom: 2px solid #e9ecef;
+  border-bottom: 2px solid var(--mg-color-border-main);
 }
 
 .erp-system .erp-section-title h2 {
   font-size: 1.8rem;
   font-weight: 600;
-  color: #2c3e50;
+  color: var(--mg-color-text-main);
   margin: 0 0 8px 0;
   display: flex;
   align-items: center;
@@ -160,7 +160,7 @@
 }
 
 .erp-system .erp-btn-primary {
-  background: linear-gradient(135deg, var(--mg-primary-500) 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--mg-primary-500) 0%, var(--mg-primary-700) 100%);
   border: none;
   border-radius: 8px;
   padding: 12px 24px;
@@ -173,7 +173,7 @@
 
 .erp-system .erp-btn-primary:hover {
   transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+  box-shadow: var(--mg-shadow-lg);
 }
 
 .erp-system .erp-budget-grid {
@@ -183,10 +183,10 @@
 }
 
 .erp-system .erp-budget-card {
-  background: white;
+  background: var(--mg-color-surface-main);
   border-radius: 16px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  border: 1px solid #e9ecef;
+  box-shadow: var(--mg-shadow-sm);
+  border: 1px solid var(--mg-color-border-main);
   overflow: hidden;
   transition: all 0.3s ease;
 }
@@ -207,7 +207,7 @@
 .erp-system .erp-budget-title h3 {
   font-size: 1.2rem;
   font-weight: 600;
-  color: #2c3e50;
+  color: var(--mg-color-text-main);
   margin: 0 0 8px 0;
 }
 
@@ -221,18 +221,18 @@
 }
 
 .erp-system .erp-budget-status.success {
-  background: #d4edda;
-  color: #155724;
+  background: var(--mg-success-100);
+  color: var(--mg-success-700);
 }
 
 .erp-system .erp-budget-status.warning {
-  background: #fff3cd;
-  color: #856404;
+  background: var(--mg-warning-100);
+  color: var(--mg-warning-700);
 }
 
 .erp-system .erp-budget-status.danger {
-  background: #f8d7da;
-  color: #721c24;
+  background: var(--mg-error-100);
+  color: var(--mg-error-700);
 }
 
 .erp-system .erp-budget-actions {
@@ -283,7 +283,7 @@
   display: block;
   font-size: 1.1rem;
   font-weight: 600;
-  color: #2c3e50;
+  color: var(--mg-color-text-main);
 }
 
 .erp-system .erp-budget-progress {
@@ -300,20 +300,20 @@
 
 .erp-system .erp-progress-bar {
   height: 8px;
-  background: #e9ecef;
+  background: var(--mg-color-border-main);
   border-radius: 4px;
   overflow: hidden;
 }
 
 .erp-system .erp-progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, var(--mg-primary-500) 0%, #764ba2 100%);
+  background: linear-gradient(90deg, var(--mg-primary-500) 0%, var(--mg-primary-700) 100%);
   border-radius: 4px;
   transition: width 0.3s ease;
 }
 
 .erp-system .erp-progress-fill.over-budget {
-  background: linear-gradient(90deg, var(--mg-error-500) 0%, #ee5a52 100%);
+  background: linear-gradient(90deg, var(--mg-error-500) 0%, var(--mg-error-700) 100%);
 }
 
 .erp-system .erp-budget-period {
@@ -328,14 +328,14 @@
 .erp-system .erp-empty-state {
   text-align: center;
   padding: 60px 20px;
-  background: white;
+  background: var(--mg-color-surface-main);
   border-radius: 16px;
-  border: 2px dashed #e9ecef;
+  border: 2px dashed var(--mg-color-border-main);
 }
 
 .erp-system .erp-empty-icon {
   font-size: 4rem;
-  color: #dee2e6;
+  color: var(--mg-color-text-secondary);
   margin-bottom: 20px;
 }
 
@@ -346,7 +346,7 @@
 }
 
 .erp-system .erp-empty-state p {
-  color: #adb5bd;
+  color: var(--mg-color-text-secondary);
   margin-bottom: 24px;
   font-size: 1.1rem;
 }
@@ -360,7 +360,7 @@
 .erp-system .erp-title {
   font-size: 2rem;
   font-weight: 600;
-  color: #2c3e50;
+  color: var(--mg-color-text-main);
   margin-bottom: 10px;
   display: flex;
   align-items: center;
@@ -379,7 +379,7 @@
   display: flex;
   gap: 10px;
   margin-bottom: 30px;
-  border-bottom: 2px solid #e9ecef;
+  border-bottom: 2px solid var(--mg-color-border-main);
 }
 
 .erp-system .erp-tab {
@@ -398,7 +398,7 @@
 }
 
 .erp-system .erp-tab:hover {
-  color: #495057;
+  color: var(--mg-color-text-main);
   background-color: var(--mg-gray-100);
 }
 
@@ -420,10 +420,10 @@
 .erp-system .erp-section h2 {
   font-size: 1.5rem;
   font-weight: 600;
-  color: #2c3e50;
+  color: var(--mg-color-text-main);
   margin-bottom: 20px;
   padding-bottom: 10px;
-  border-bottom: 2px solid #e9ecef;
+  border-bottom: 2px solid var(--mg-color-border-main);
 }
 
 /* 그리드 레이아웃 */
@@ -436,17 +436,17 @@
 
 /* 카드 */
 .erp-system .erp-card {
-  background: white;
-  border: 1px solid #e9ecef;
+  background: var(--mg-color-surface-main);
+  border: 1px solid var(--mg-color-border-main);
   border-radius: 10px;
   padding: 20px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  box-shadow: var(--mg-shadow-sm);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .erp-system .erp-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  box-shadow: var(--mg-shadow-lg);
 }
 
 .erp-system .erp-card-header {
@@ -459,7 +459,7 @@
 .erp-system .erp-card-header h3 {
   font-size: 1.2rem;
   font-weight: 600;
-  color: #2c3e50;
+  color: var(--mg-color-text-main);
   margin: 0;
 }
 
@@ -489,12 +489,12 @@
 
 .erp-system .erp-label {
   font-weight: 500;
-  color: #495057;
+  color: var(--mg-color-text-secondary);
   font-size: 0.9rem;
 }
 
 .erp-system .erp-value {
-  color: #2c3e50;
+  color: var(--mg-color-text-main);
   font-weight: 600;
   font-size: 0.9rem;
 }
@@ -626,6 +626,23 @@
   color: var(--mg-error-600);
 }
 
+.mg-financial-transaction-card__type-badge {
+  font-size: var(--mg-font-xs);
+  padding: 2px var(--mg-spacing-sm, 8px);
+  border-radius: var(--mg-radius-sm, 4px);
+  font-weight: 600;
+}
+
+.mg-financial-transaction-card__type-badge--income {
+  background-color: var(--mg-success-100);
+  color: var(--mg-success-700);
+}
+
+.mg-financial-transaction-card__type-badge--expense {
+  background-color: var(--mg-error-100);
+  color: var(--mg-error-700);
+}
+
 .mg-financial-transaction-card__footer {
   padding-top: var(--mg-spacing-md);
   border-top: var(--border-width-normal) solid var(--mg-border-light);
@@ -656,11 +673,164 @@
   font-size: var(--mg-font-base);
 }
 
-/* 필터 버튼 행 (태그 필터와 검색 버튼) */
+/* 필터: 1~2줄 레이아웃 */
+.mg-v2-filter-grid--row1 {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mg-spacing-lg, 1rem);
+  align-items: flex-end;
+}
+
+.mg-v2-filter-grid--row2 {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mg-spacing-md, 1rem);
+  align-items: flex-end;
+  margin-top: var(--mg-spacing-md, 1rem);
+}
+
 .mg-financial-filter-actions {
   display: flex;
-  gap: var(--mg-spacing-md, 10px);
-  margin-top: var(--mg-spacing-md, 15px);
+  gap: var(--mg-spacing-sm, 8px);
+  flex-wrap: wrap;
+}
+
+/* 재무 달력: mg-calendar 확장 (공통 달력 구조 + 일별 수입/지출 요약) */
+.financial-calendar-view-container .mg-calendar {
+  background: var(--mg-color-surface-main);
+  border-radius: var(--mg-radius-lg, var(--radius-lg));
+  padding: var(--mg-layout-section-padding-desktop, var(--spacing-lg));
+  box-shadow: var(--mg-shadow-md, var(--shadow-md));
+}
+
+.financial-calendar-view-container .mg-calendar-header {
+  margin-bottom: var(--mg-spacing-lg, var(--spacing-lg));
+}
+
+.financial-calendar-view-container .mg-calendar-title {
+  color: var(--mg-color-text-main);
+}
+
+.financial-calendar-view-container .mg-calendar-day-header {
+  color: var(--mg-color-text-secondary);
+}
+
+.financial-calendar-view-container .mg-calendar-day {
+  aspect-ratio: auto;
+  min-height: 5.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  padding: var(--mg-spacing-xs, 4px);
+  cursor: pointer;
+}
+
+.financial-calendar-view-container .mg-calendar-day--empty {
+  cursor: default;
+  opacity: 0.4;
+}
+
+.financial-calendar-view-container .mg-calendar-day.today {
+  background: var(--mg-success-100);
+  color: var(--mg-color-text-main);
+}
+
+.financial-calendar-view-container .mg-calendar-day.selected {
+  background: var(--mg-primary-500);
+  color: var(--mg-color-surface-main);
+}
+
+.financial-calendar-view-container .mg-calendar-day.selected .mg-calendar-day-income,
+.financial-calendar-view-container .mg-calendar-day.selected .mg-calendar-day-expense,
+.financial-calendar-view-container .mg-calendar-day.selected .mg-calendar-day-count {
+  color: var(--mg-color-surface-main);
+  opacity: 0.95;
+}
+
+.mg-calendar-day-num {
+  font-size: var(--mg-font-sm, 0.875rem);
+  font-weight: 600;
+  color: var(--mg-color-text-main);
+  margin-bottom: 2px;
+}
+
+.mg-calendar-day-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: var(--mg-font-xs, 0.75rem);
+  width: 100%;
+}
+
+.mg-calendar-day-income {
+  color: var(--mg-success-600);
+  font-weight: 500;
+}
+
+.mg-calendar-day-expense {
+  color: var(--mg-error-600);
+  font-weight: 500;
+}
+
+.mg-calendar-day-count {
+  color: var(--mg-color-text-secondary);
+  font-size: 0.65rem;
+}
+
+.mg-calendar-day-mapping-dot {
+  position: absolute;
+  top: var(--mg-spacing-xs, 4px);
+  right: var(--mg-spacing-xs, 4px);
+  width: 6px;
+  height: 6px;
+  background-color: var(--mg-primary-500);
+  border-radius: 50%;
+}
+
+.mg-financial-calendar-legend {
+  display: flex;
+  gap: var(--mg-spacing-xl, var(--spacing-xl));
+  margin-bottom: var(--mg-spacing-lg, var(--spacing-lg));
+  flex-wrap: wrap;
+}
+
+.mg-financial-calendar-legend-item {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-spacing-sm, var(--spacing-sm));
+  font-size: var(--mg-font-sm);
+  color: var(--mg-color-text-secondary);
+}
+
+.mg-financial-calendar-legend-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: var(--mg-radius-sm, 4px);
+}
+
+.mg-financial-calendar-legend-dot--income {
+  background-color: var(--mg-success-500);
+}
+
+.mg-financial-calendar-legend-dot--expense {
+  background-color: var(--mg-error-500);
+}
+
+.mg-financial-calendar-legend-dot--mapping {
+  background-color: var(--mg-primary-500);
+}
+
+/* 재무 달력: 월 통계 카드 내 숫자/라벨 (B0KlA 카드와 함께 사용) */
+.mg-financial-calendar-monthly-stats .mg-financial-calendar-monthly-value {
+  font-size: var(--mg-font-xl, 1.25rem);
+  font-weight: 600;
+  color: var(--mg-color-text-main);
+}
+
+.mg-financial-calendar-monthly-stats .mg-financial-calendar-monthly-label {
+  font-size: var(--mg-font-sm);
+  color: var(--mg-color-text-secondary);
 }
 
 /* 재무 달력: 네비게이션 */
@@ -692,94 +862,14 @@
   color: var(--mg-color-text-main);
 }
 
-/* ===== 재무 달력: 셀·상세 패널·월 통계 (Phase 2 - 인라인 제거, 토큰만 사용) ===== */
-.mg-financial-calendar-cell-empty {
-  background-color: var(--mg-gray-100);
-  min-height: 100px;
-}
-
-.mg-financial-calendar-cell-day {
-  min-height: 100px;
-  padding: var(--mg-spacing-sm, 8px);
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  cursor: default;
-  background-color: var(--mg-color-surface-main, #fff);
-  border: none;
-}
-
-.mg-financial-calendar-cell-day--clickable {
-  cursor: pointer;
-}
-
-.mg-financial-calendar-cell-day--today {
-  background-color: var(--mg-warning-100, #fff3cd);
-  border: 2px solid var(--mg-warning-500);
-}
-
-.mg-financial-calendar-cell-day-num {
-  font-size: var(--mg-font-sm, var(--font-size-sm));
-  font-weight: normal;
-  color: var(--mg-color-text-main, #333);
-  margin-bottom: var(--mg-spacing-xs, 4px);
-}
-
-.mg-financial-calendar-cell-day-num--today {
-  font-weight: bold;
-  color: var(--mg-warning-700, #856404);
-}
-
-.mg-financial-calendar-cell-summary {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.mg-financial-calendar-cell-income,
-.mg-financial-calendar-cell-expense {
-  font-size: var(--mg-font-xs, var(--font-size-xs));
-  padding: 2px var(--mg-spacing-xs, 4px);
-  border-radius: var(--mg-radius-sm, 4px);
-  text-align: center;
-}
-
-.mg-financial-calendar-cell-income {
-  background-color: var(--mg-success-100, #d4edda);
-  color: var(--mg-success-700, #155724);
-}
-
-.mg-financial-calendar-cell-expense {
-  background-color: var(--mg-error-100, #f8d7da);
-  color: var(--mg-error-700, #721c24);
-}
-
-.mg-financial-calendar-cell-count {
-  font-size: var(--mg-font-xs, var(--font-size-xs));
-  color: var(--mg-secondary-500);
-  text-align: center;
-  margin-top: auto;
-}
-
-.mg-financial-calendar-cell-mapping-dot {
-  position: absolute;
-  top: var(--mg-spacing-xs, 4px);
-  right: var(--mg-spacing-xs, 4px);
-  width: 8px;
-  height: 8px;
-  background-color: var(--mg-primary-500);
-  border-radius: 50%;
-}
-
 /* 상세 패널 */
 .mg-financial-calendar-detail-panel {
   margin-top: var(--mg-spacing-xl, 20px);
   padding: var(--mg-spacing-xl, 20px);
-  background-color: var(--mg-color-surface-main, #fff);
+  background-color: var(--mg-color-surface-main);
   border-radius: var(--mg-radius-md, 8px);
-  border: 2px solid var(--mg-primary-500);
-  box-shadow: 0 4px 12px var(--mg-shadow-light, rgba(0, 0, 0, 0.1));
+  border: 2px solid var(--mg-color-primary-main);
+  box-shadow: var(--mg-shadow-md);
 }
 
 .mg-financial-calendar-detail-header {
@@ -810,15 +900,15 @@
 }
 
 .mg-financial-calendar-detail-summary--income {
-  background-color: var(--mg-success-100, #d4edda);
+  background-color: var(--mg-success-100);
 }
 
 .mg-financial-calendar-detail-summary--expense {
-  background-color: var(--mg-error-100, #f8d7da);
+  background-color: var(--mg-error-100);
 }
 
 .mg-financial-calendar-detail-summary--profit {
-  background-color: var(--mg-info-100, #cce7ff);
+  background-color: var(--mg-primary-100);
 }
 
 .mg-financial-calendar-detail-summary-value {
@@ -827,15 +917,15 @@
 }
 
 .mg-financial-calendar-detail-summary--income .mg-financial-calendar-detail-summary-value {
-  color: var(--mg-success-700, #155724);
+  color: var(--mg-success-700);
 }
 
 .mg-financial-calendar-detail-summary--expense .mg-financial-calendar-detail-summary-value {
-  color: var(--mg-error-700, #721c24);
+  color: var(--mg-error-700);
 }
 
 .mg-financial-calendar-detail-summary--profit .mg-financial-calendar-detail-summary-value {
-  color: var(--mg-info-700, #004085);
+  color: var(--mg-primary-700);
 }
 
 .mg-financial-calendar-detail-summary-label {
@@ -843,20 +933,20 @@
 }
 
 .mg-financial-calendar-detail-summary--income .mg-financial-calendar-detail-summary-label {
-  color: var(--mg-success-700, #155724);
+  color: var(--mg-success-700);
 }
 
 .mg-financial-calendar-detail-summary--expense .mg-financial-calendar-detail-summary-label {
-  color: var(--mg-error-700, #721c24);
+  color: var(--mg-error-700);
 }
 
 .mg-financial-calendar-detail-summary--profit .mg-financial-calendar-detail-summary-label {
-  color: var(--mg-info-700, #004085);
+  color: var(--mg-primary-700);
 }
 
 .mg-financial-calendar-detail-list-title {
   margin-bottom: var(--mg-spacing-md, 12px);
-  color: var(--mg-color-text-secondary, #495057);
+  color: var(--mg-color-text-secondary);
   font-size: var(--mg-font-base);
 }
 
@@ -879,7 +969,7 @@
 }
 
 .mg-financial-calendar-detail-item--odd {
-  background-color: var(--mg-color-surface-main, #fff);
+  background-color: var(--mg-color-surface-main);
 }
 
 .mg-financial-calendar-detail-type-badge {
@@ -889,20 +979,20 @@
 }
 
 .mg-financial-calendar-detail-type-badge--income {
-  background-color: var(--mg-success-100, #d4edda);
-  color: var(--mg-success-700, #155724);
+  background-color: var(--mg-success-100);
+  color: var(--mg-success-700);
 }
 
 .mg-financial-calendar-detail-type-badge--expense {
-  background-color: var(--mg-error-100, #f8d7da);
-  color: var(--mg-error-700, #721c24);
+  background-color: var(--mg-error-100);
+  color: var(--mg-error-700);
 }
 
 .mg-financial-calendar-detail-item-mapping {
   font-size: var(--mg-font-xs);
   padding: 2px var(--mg-spacing-sm, 6px);
-  background-color: var(--mg-info-100, #e3f2fd);
-  color: var(--mg-secondary-600);
+  background-color: var(--mg-primary-100);
+  color: var(--mg-primary-700);
   border-radius: 10px;
   font-weight: 600;
 }
@@ -956,7 +1046,7 @@
 
 .mg-financial-calendar-monthly-stats-title {
   margin-bottom: var(--mg-spacing-md, 15px);
-  color: var(--mg-color-text-secondary, #495057);
+  color: var(--mg-color-text-secondary);
   font-size: var(--mg-font-base);
 }
 
@@ -973,23 +1063,23 @@
 }
 
 .mg-financial-calendar-monthly-card--income {
-  background-color: var(--mg-success-100, #d4edda);
+  background-color: var(--mg-success-100);
 }
 
 .mg-financial-calendar-monthly-card--expense {
-  background-color: var(--mg-error-100, #f8d7da);
+  background-color: var(--mg-error-100);
 }
 
 .mg-financial-calendar-monthly-card--profit {
-  background-color: var(--mg-info-100, #cce7ff);
+  background-color: var(--mg-primary-100);
 }
 
 .mg-financial-calendar-monthly-card--profit-negative {
-  background-color: var(--mg-error-100, #ffe6e6);
+  background-color: var(--mg-error-100);
 }
 
 .mg-financial-calendar-monthly-card--total {
-  background-color: var(--mg-gray-100, #e2e3e5);
+  background-color: var(--mg-gray-100);
 }
 
 .mg-financial-calendar-monthly-value {
@@ -998,24 +1088,24 @@
 }
 
 .mg-financial-calendar-monthly-card--income .mg-financial-calendar-monthly-value {
-  color: var(--mg-success-700, #155724);
+  color: var(--mg-success-700);
 }
 
 .mg-financial-calendar-monthly-card--expense .mg-financial-calendar-monthly-value {
-  color: var(--mg-error-700, #721c24);
+  color: var(--mg-error-700);
 }
 
 .mg-financial-calendar-monthly-card--profit .mg-financial-calendar-monthly-value,
 .mg-financial-calendar-monthly-card--profit-negative .mg-financial-calendar-monthly-value {
-  color: var(--mg-info-700, #004085);
+  color: var(--mg-primary-700);
 }
 
 .mg-financial-calendar-monthly-card--profit-negative .mg-financial-calendar-monthly-value {
-  color: var(--mg-error-700, #721c24);
+  color: var(--mg-error-700);
 }
 
 .mg-financial-calendar-monthly-card--total .mg-financial-calendar-monthly-value {
-  color: var(--mg-color-text-secondary, #383d41);
+  color: var(--mg-color-text-secondary);
 }
 
 .mg-financial-calendar-monthly-label {
@@ -1023,23 +1113,23 @@
 }
 
 .mg-financial-calendar-monthly-card--income .mg-financial-calendar-monthly-label {
-  color: var(--mg-success-700, #155724);
+  color: var(--mg-success-700);
 }
 
 .mg-financial-calendar-monthly-card--expense .mg-financial-calendar-monthly-label {
-  color: var(--mg-error-700, #721c24);
+  color: var(--mg-error-700);
 }
 
 .mg-financial-calendar-monthly-card--profit .mg-financial-calendar-monthly-label {
-  color: var(--mg-info-700, #004085);
+  color: var(--mg-primary-700);
 }
 
 .mg-financial-calendar-monthly-card--profit-negative .mg-financial-calendar-monthly-label {
-  color: var(--mg-error-700, #721c24);
+  color: var(--mg-error-700);
 }
 
 .mg-financial-calendar-monthly-card--total .mg-financial-calendar-monthly-label {
-  color: var(--mg-color-text-secondary, #383d41);
+  color: var(--mg-color-text-secondary);
 }
 
 .mg-financial-calendar-loading-overlay {
@@ -1130,6 +1220,13 @@
   margin-bottom: var(--mg-spacing-xl, 20px);
 }
 
+.mg-v2-section-header {
+  margin-bottom: var(--mg-spacing-md, 12px);
+  font-size: var(--mg-font-base);
+  font-weight: 600;
+  color: var(--mg-color-text-main);
+}
+
 .mg-v2-transaction-detail-form-grid {
   display: grid;
   gap: var(--mg-spacing-sm);
@@ -1147,13 +1244,13 @@
 }
 
 .mg-v2-transaction-detail-badge--income {
-  background-color: var(--mg-success-100, rgba(40, 167, 69, 0.1));
-  color: var(--mg-success-700, #155724);
+  background-color: var(--mg-success-100);
+  color: var(--mg-success-700);
 }
 
 .mg-v2-transaction-detail-badge--expense {
-  background-color: var(--mg-error-100, rgba(220, 53, 69, 0.1));
-  color: var(--mg-error-700, #721c24);
+  background-color: var(--mg-error-100);
+  color: var(--mg-error-700);
 }
 
 .mg-v2-transaction-detail-amount {
@@ -1171,7 +1268,7 @@
 }
 
 .mg-v2-transaction-detail-mapping-box {
-  background-color: var(--mg-info-100, rgba(23, 162, 184, 0.1));
+  background-color: var(--mg-info-100);
   padding: var(--mg-spacing-md, 16px);
   border-radius: var(--mg-radius-md, 8px);
   margin-bottom: var(--mg-spacing-xl, 20px);
@@ -1185,7 +1282,7 @@
 }
 
 .mg-v2-transaction-detail-other-box {
-  background-color: var(--mg-warning-100, rgba(255, 193, 7, 0.1));
+  background-color: var(--mg-warning-100);
   padding: var(--mg-spacing-md, 16px);
   border-radius: var(--mg-radius-md, 8px);
   margin-bottom: var(--mg-spacing-xl, 20px);
@@ -1195,7 +1292,7 @@
 .mg-v2-transaction-detail-other-title {
   margin-bottom: var(--mg-spacing-md, 12px);
   font-size: var(--mg-font-base);
-  color: var(--mg-warning-700, #856404);
+  color: var(--mg-warning-700);
 }
 
 .mg-v2-transaction-detail-loading-wrap {
@@ -1208,7 +1305,7 @@
   justify-content: flex-end;
   gap: var(--mg-spacing-md, 10px);
   padding-top: var(--mg-spacing-md, 15px);
-  border-top: 1px solid var(--mg-color-border-main, #dee2e6);
+  border-top: 1px solid var(--mg-color-border-main);
 }
 
 .mg-v2-transaction-detail-btn {
@@ -1221,12 +1318,12 @@
 
 .mg-v2-transaction-detail-btn--secondary {
   background-color: var(--mg-secondary-500);
-  color: var(--mg-color-surface-main, #fff);
+  color: var(--mg-color-surface-main);
 }
 
 .mg-v2-transaction-detail-btn--primary {
   background-color: var(--mg-primary-500);
-  color: var(--mg-color-surface-main, #fff);
+  color: var(--mg-color-surface-main);
 }
 
 .mg-v2-transaction-detail-consistent-badge {
@@ -1237,19 +1334,19 @@
 }
 
 .mg-v2-transaction-detail-consistent-badge--ok {
-  background-color: var(--mg-success-100, rgba(40, 167, 69, 0.1));
-  color: var(--mg-success-700, #155724);
+  background-color: var(--mg-success-100);
+  color: var(--mg-success-700);
 }
 
 .mg-v2-transaction-detail-consistent-badge--error {
-  background-color: var(--mg-error-100, rgba(220, 53, 69, 0.1));
-  color: var(--mg-error-700, #721c24);
+  background-color: var(--mg-error-100);
+  color: var(--mg-error-700);
 }
 
 .mg-v2-transaction-detail-related-item {
   font-size: var(--mg-font-xs);
   padding: var(--mg-spacing-xs, 4px) var(--mg-spacing-sm, 8px);
-  background-color: var(--mg-gray-100, #f1f3f4);
+  background-color: var(--mg-gray-100);
   border-radius: var(--mg-radius-sm, 4px);
   margin-bottom: var(--mg-spacing-xs, 4px);
 }
@@ -1276,7 +1373,7 @@
 
 .mg-v2-transaction-detail-message-empty {
   text-align: center;
-  color: var(--mg-gray-500, #666);
+  color: var(--mg-gray-500);
 }
 
 .mg-v2-transaction-detail-message-mismatch {
@@ -1548,10 +1645,10 @@
 
 /* 레거시 테이블 스타일 (호환성 유지) */
 .erp-system .erp-table-container {
-  background: white;
+  background: var(--mg-color-surface-main);
   border-radius: 10px;
   overflow: hidden;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  box-shadow: var(--mg-shadow-sm);
 }
 
 .erp-system .erp-table {
@@ -1562,16 +1659,16 @@
 
 .erp-system .erp-table th {
   background-color: var(--mg-gray-100);
-  color: #495057;
+  color: var(--mg-color-text-main);
   font-weight: 600;
   padding: 15px;
   text-align: left;
-  border-bottom: 2px solid #e9ecef;
+  border-bottom: 2px solid var(--mg-color-border-main);
 }
 
 .erp-system .erp-table td {
   padding: 15px;
-  border-bottom: 1px solid #e9ecef;
+  border-bottom: 1px solid var(--mg-color-border-main);
   vertical-align: middle;
 }
 
@@ -1590,48 +1687,48 @@
 }
 
 .erp-system .erp-status.success {
-  background-color: #d4edda;
-  color: #155724;
+  background-color: var(--mg-success-100);
+  color: var(--mg-success-700);
 }
 
 .erp-system .erp-status.warning {
-  background-color: #fff3cd;
-  color: #856404;
+  background-color: var(--mg-warning-100);
+  color: var(--mg-warning-700);
 }
 
 .erp-system .erp-status.danger {
-  background-color: #f8d7da;
-  color: #721c24;
+  background-color: var(--mg-error-100);
+  color: var(--mg-error-700);
 }
 
 .erp-system .erp-status.info {
-  background-color: #d1ecf1;
-  color: #0c5460;
+  background-color: var(--mg-primary-100);
+  color: var(--mg-primary-700);
 }
 
 .erp-system .erp-status.pending {
-  background-color: #fff3cd;
-  color: #856404;
+  background-color: var(--mg-warning-100);
+  color: var(--mg-warning-700);
 }
 
 .erp-system .erp-status.approved {
-  background-color: #d4edda;
-  color: #155724;
+  background-color: var(--mg-success-100);
+  color: var(--mg-success-700);
 }
 
 .erp-system .erp-status.rejected {
-  background-color: #f8d7da;
-  color: #721c24;
+  background-color: var(--mg-error-100);
+  color: var(--mg-error-700);
 }
 
 .erp-system .erp-status.processing {
-  background-color: #d1ecf1;
-  color: #0c5460;
+  background-color: var(--mg-primary-100);
+  color: var(--mg-primary-700);
 }
 
 .erp-system .erp-status.completed {
-  background-color: #d4edda;
-  color: #155724;
+  background-color: var(--mg-success-100);
+  color: var(--mg-success-700);
 }
 
 /* 로딩 및 오류 상태 */

@@ -30,7 +30,7 @@
 }
 
 .finance-value-info {
-  color: var(--olive-green);
+  color: var(--ad-b0kla-green, var(--mg-primary-500));
 }
 
 .finance-value-warning {
@@ -53,9 +53,9 @@
 }
 
 .finance-badge--info {
-  background: rgba(128, 128, 0, 0.1);
-  color: var(--olive-green);
-  border-color: var(--olive-green);
+  background: var(--ad-b0kla-green-bg, var(--mg-primary-100));
+  color: var(--ad-b0kla-green, var(--mg-primary-600));
+  border-color: var(--ad-b0kla-green, var(--mg-primary-500));
 }
 
 .finance-icon-inline {
@@ -86,7 +86,7 @@
 /* 대시보드 아이콘 */
 .mg-dashboard-icon {
   font-size: 2rem;
-  color: var(--mint-green);
+  color: var(--ad-b0kla-green, var(--mg-success-500));
 }
 
 /* 에러 상태 */
@@ -96,52 +96,62 @@
   align-items: center;
   min-height: 400px;
   font-size: var(--font-size-lg);
-  color: var(--color-danger);
-  background: var(--light-cream);
-  border-radius: var(--radius-lg);
-  padding: var(--spacing-xl);
+  color: var(--mg-error-500);
+  background: var(--ad-b0kla-bg, var(--mg-color-surface-main));
+  border-radius: var(--ad-b0kla-radius, 16px);
+  padding: var(--mg-spacing-xl, 1.5rem);
   text-align: center;
 }
 
-/* 탭 네비게이션 */
-.finance-tab-navigation,
+/* 탭 네비게이션: B0KlA pill 사용 시 integrated-finance-tabs는 레이아웃만 */
 .integrated-finance-tabs {
   display: flex;
-  gap: var(--spacing-xs);
-  margin-bottom: var(--spacing-xl);
-  background: var(--light-cream);
-  border-radius: var(--radius-md);
-  padding: var(--spacing-xs);
+  gap: var(--mg-spacing-xs, 6px);
+  margin-bottom: var(--mg-spacing-xl, 1.5rem);
   flex-wrap: wrap;
 }
 
-.finance-tab-button,
-.integrated-finance-tab-btn {
+.integrated-finance-tabs.mg-v2-ad-b0kla__pill-toggle {
+  background: var(--ad-b0kla-bg);
+  border-radius: 9999px;
+  padding: 6px;
+  border: 1px solid var(--ad-b0kla-border);
+}
+
+.finance-tab-navigation {
+  display: flex;
+  gap: var(--mg-spacing-xs, 6px);
+  margin-bottom: var(--mg-spacing-xl, 1.5rem);
+  background: var(--ad-b0kla-bg);
+  border-radius: var(--ad-b0kla-radius);
+  padding: 6px;
+  flex-wrap: wrap;
+}
+
+.finance-tab-button {
   flex: 1;
   min-width: 120px;
-  padding: var(--spacing-sm) var(--spacing-md);
+  padding: var(--mg-spacing-sm, 8px) var(--mg-spacing-md, 16px);
   border: none;
   background: transparent;
-  color: var(--medium-gray);
-  font-size: var(--font-size-sm);
+  color: var(--ad-b0kla-text-secondary);
+  font-size: var(--mg-font-sm, 14px);
   font-weight: 600;
-  border-radius: var(--radius-sm);
+  border-radius: 9999px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
   text-align: center;
 }
 
-.finance-tab-button:hover,
-.integrated-finance-tab-btn:hover {
-  background: white;
-  color: var(--dark-gray);
+.finance-tab-button:hover {
+  background: var(--ad-b0kla-card-bg);
+  color: var(--ad-b0kla-title-color);
 }
 
-.finance-tab-button.active,
-.integrated-finance-tab-btn.active {
-  background: var(--mint-green);
-  color: white;
-  box-shadow: var(--shadow-sm);
+.finance-tab-button.active {
+  background: var(--ad-b0kla-green);
+  color: var(--mg-color-surface-main);
+  box-shadow: var(--ad-b0kla-shadow);
 }
 
 /* 콘텐츠 영역 */
@@ -153,8 +163,8 @@
 .finance-section-title {
   font-size: 1.5rem;
   font-weight: 600;
-  color: var(--dark-gray);
-  margin: 0 0 var(--spacing-lg) 0;
+  color: var(--ad-b0kla-title-color, var(--mg-color-text-main));
+  margin: 0 0 var(--mg-spacing-lg, 1.5rem) 0;
 }
 
 /* KPI 그리드 */
@@ -167,16 +177,17 @@
 
 /* KPI 카드 */
 .finance-kpi-card {
-  background: white;
-  border-radius: var(--radius-lg);
-  padding: var(--spacing-xl);
-  transition: all 0.3s ease;
-  box-shadow: var(--shadow-md);
+  background: var(--ad-b0kla-card-bg);
+  border-radius: var(--ad-b0kla-radius);
+  padding: var(--mg-spacing-xl, 1.5rem);
+  transition: all 0.2s ease;
+  box-shadow: var(--ad-b0kla-shadow);
+  border: 1px solid var(--ad-b0kla-border);
 }
 
 .finance-kpi-card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-xl);
+  transform: translateY(-2px);
+  box-shadow: var(--ad-b0kla-shadow-hover);
 }
 
 /* 대차대조표 그리드 */
@@ -204,17 +215,17 @@
 }
 
 .balance-sheet-card-title {
-  color: var(--dark-gray);
-  margin-bottom: var(--spacing-lg);
-  font-size: var(--font-size-xl);
+  color: var(--ad-b0kla-title-color, var(--mg-color-text-main));
+  margin-bottom: var(--mg-spacing-lg, 1.5rem);
+  font-size: var(--mg-font-xl, 1.25rem);
   font-weight: 600;
   display: flex;
   align-items: center;
-  gap: var(--spacing-sm);
+  gap: var(--mg-spacing-sm, 8px);
 }
 
 .balance-sheet-card-icon {
-  color: var(--olive-green);
+  color: var(--ad-b0kla-green, var(--mg-primary-500));
 }
 
 .balance-sheet-section {
@@ -222,9 +233,9 @@
 }
 
 .balance-sheet-section-title {
-  font-size: var(--font-size-md);
-  color: var(--medium-gray);
-  margin: 0 0 var(--spacing-sm) 0;
+  font-size: var(--mg-font-base, 1rem);
+  color: var(--ad-b0kla-text-secondary, var(--mg-color-text-secondary));
+  margin: 0 0 var(--mg-spacing-sm, 8px) 0;
   font-weight: 500;
 }
 
@@ -240,18 +251,18 @@
 
 .balance-sheet-total {
   font-weight: bold;
-  border-top: 1px solid var(--light-beige);
-  padding-top: var(--spacing-sm);
-  margin-top: var(--spacing-sm);
-  font-size: var(--font-size-sm);
+  border-top: 1px solid var(--ad-b0kla-border, var(--mg-color-border-main));
+  padding-top: var(--mg-spacing-sm, 8px);
+  margin-top: var(--mg-spacing-sm, 8px);
+  font-size: var(--mg-font-sm, 0.875rem);
 }
 
 .balance-sheet-grand-total {
   font-weight: bold;
-  font-size: var(--font-size-lg);
-  border-top: 2px solid var(--light-beige);
-  padding-top: var(--spacing-md);
-  margin-top: var(--spacing-md);
+  font-size: var(--mg-font-lg, 1.125rem);
+  border-top: 2px solid var(--ad-b0kla-border, var(--mg-color-border-main));
+  padding-top: var(--mg-spacing-md, 16px);
+  margin-top: var(--mg-spacing-md, 16px);
 }
 
 /* 손익계산서 그리드 */
@@ -264,11 +275,12 @@
 
 /* 손익계산서 카드 */
 .income-statement-card {
-  padding: var(--spacing-xl);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-md);
-  background: white;
-  color: var(--dark-gray);
+  padding: var(--mg-spacing-xl, 1.5rem);
+  border-radius: var(--ad-b0kla-radius);
+  box-shadow: var(--ad-b0kla-shadow);
+  background: var(--ad-b0kla-card-bg);
+  color: var(--ad-b0kla-title-color, var(--mg-color-text-main));
+  border: 1px solid var(--ad-b0kla-border);
 }
 
 .income-statement-card--revenue {
@@ -280,17 +292,17 @@
 }
 
 .income-statement-card-title {
-  color: var(--dark-gray);
-  margin-bottom: var(--spacing-lg);
-  font-size: var(--font-size-xl);
+  color: var(--ad-b0kla-title-color, var(--mg-color-text-main));
+  margin-bottom: var(--mg-spacing-lg, 1.5rem);
+  font-size: var(--mg-font-xl, 1.25rem);
   font-weight: 600;
   display: flex;
   align-items: center;
-  gap: var(--spacing-sm);
+  gap: var(--mg-spacing-sm, 8px);
 }
 
 .income-statement-card-icon {
-  color: var(--olive-green);
+  color: var(--ad-b0kla-green, var(--mg-primary-500));
 }
 
 .income-statement-items {
@@ -310,9 +322,9 @@
 }
 
 .income-statement-total {
-  border-top: 1px solid var(--mg-shadow-light);
-  padding-top: var(--spacing-md);
-  margin-top: var(--spacing-md);
+  border-top: 1px solid var(--ad-b0kla-border, var(--mg-color-border-main));
+  padding-top: var(--mg-spacing-md, 16px);
+  margin-top: var(--mg-spacing-md, 16px);
 }
 
 .income-statement-total-row {
@@ -472,70 +484,76 @@
   }
 }
 
-/* 순이익 카드 */
+/* 순이익 카드 (B0KlA 카드로 대체됨, 레거시 클래스 유지) */
+.integrated-finance-net-income-card {
+  margin-top: var(--mg-spacing-xl, 1.5rem);
+}
+
 .net-income-card {
-  margin-top: var(--spacing-xl);
-  padding: var(--spacing-xxl);
-  background: rgba(255, 255, 255, 0.6);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  border-radius: var(--radius-xl);
-  box-shadow: 0 12px 40px var(--mg-shadow-light);
+  margin-top: var(--mg-spacing-xl, 1.5rem);
+  padding: var(--mg-spacing-xl, 1.5rem);
+  background: var(--ad-b0kla-card-bg);
+  border: 1px solid var(--ad-b0kla-border);
+  border-radius: var(--ad-b0kla-radius);
+  box-shadow: var(--ad-b0kla-shadow);
   text-align: center;
-  color: var(--dark-gray);
+  color: var(--ad-b0kla-title-color);
   position: relative;
   overflow: hidden;
 }
 
-.net-income-decoration-1 {
+.net-income-decoration-1,
+.net-income-decoration-2 {
   position: absolute;
+  background: var(--ad-b0kla-border);
+  border-radius: 50%;
+  opacity: 0.1;
+}
+
+.net-income-decoration-1 {
   top: -40px;
   right: -40px;
   width: 120px;
   height: 120px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 50%;
 }
 
 .net-income-decoration-2 {
-  position: absolute;
   bottom: -20px;
   left: -20px;
   width: 80px;
   height: 80px;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 50%;
 }
 
 .net-income-title {
-  margin: 0 0 var(--spacing-md) 0;
-  font-size: var(--font-size-xxl);
+  margin: 0 0 var(--mg-spacing-md, 16px) 0;
+  font-size: var(--mg-font-2xl, 1.5rem);
   font-weight: 600;
   position: relative;
   z-index: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--spacing-sm);
+  gap: var(--mg-spacing-sm, 8px);
 }
 
 .net-income-icon {
-  color: var(--olive-green);
+  color: var(--ad-b0kla-green);
 }
 
 .net-income-value {
-  font-size: var(--font-size-xxxl);
+  font-size: var(--mg-font-2xl, 1.5rem);
   font-weight: bold;
-  margin-bottom: var(--spacing-sm);
+  margin-bottom: var(--mg-spacing-sm, 8px);
   position: relative;
   z-index: 1;
 }
 
 .net-income-subtitle {
-  font-size: var(--font-size-base);
+  font-size: var(--mg-font-base);
   opacity: 0.9;
   position: relative;
   z-index: 1;
+  color: var(--ad-b0kla-text-secondary);
 }
 
 /* 대차대조표 검증 카드 - 추가 스타일 */
@@ -555,13 +573,13 @@
 }
 
 .finance-mapping-title {
-  font-size: var(--font-size-lg);
+  font-size: var(--mg-font-lg, 1.125rem);
   font-weight: 600;
-  color: var(--dark-gray);
-  margin-bottom: var(--spacing-md);
+  color: var(--ad-b0kla-title-color, var(--mg-color-text-main));
+  margin-bottom: var(--mg-spacing-md, 16px);
   display: flex;
   align-items: center;
-  gap: var(--spacing-sm);
+  gap: var(--mg-spacing-sm, 8px);
 }
 
 .finance-mapping-icon {
@@ -570,29 +588,29 @@
 
 /* 매핑 상태 카드 */
 .finance-mapping-card {
-  padding: var(--spacing-md);
-  background: white;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--mg-shadow-light);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  padding: var(--mg-spacing-md, 16px);
+  background: var(--ad-b0kla-card-bg);
+  border-radius: var(--ad-b0kla-radius);
+  border: 1px solid var(--ad-b0kla-border);
+  box-shadow: var(--ad-b0kla-shadow);
 }
 
 .finance-mapping-card-title {
-  font-size: var(--font-size-sm);
-  color: var(--medium-gray);
-  margin-bottom: var(--spacing-xs);
+  font-size: var(--mg-font-sm);
+  color: var(--ad-b0kla-text-secondary);
+  margin-bottom: var(--mg-spacing-xs, 4px);
 }
 
 .finance-mapping-card-value {
-  font-size: var(--font-size-xxl);
+  font-size: var(--mg-font-xl, 1.25rem);
   font-weight: bold;
-  color: var(--dark-gray);
-  margin-bottom: var(--spacing-xs);
+  color: var(--ad-b0kla-title-color);
+  margin-bottom: var(--mg-spacing-xs, 4px);
 }
 
 .finance-mapping-card-subtitle {
-  font-size: var(--font-size-xs);
-  color: var(--medium-gray);
+  font-size: var(--mg-font-xs);
+  color: var(--ad-b0kla-text-secondary);
 }
 
 .finance-mapping-badge {
@@ -604,9 +622,9 @@
 }
 
 .finance-mapping-badge--info {
-  border: 1px solid var(--olive-green);
-  color: var(--olive-green);
-  background: rgba(128, 128, 0, 0.1);
+  border: 1px solid var(--ad-b0kla-green);
+  color: var(--ad-b0kla-green);
+  background: var(--ad-b0kla-green-bg);
 }
 
 /* 에러 컨테이너 */
@@ -620,38 +638,25 @@
 .finance-overview-title {
   font-size: 1.5rem;
   font-weight: 600;
-  color: var(--dark-gray);
-  margin: 0 0 var(--spacing-lg) 0;
+  color: var(--ad-b0kla-title-color, var(--mg-color-text-main));
+  margin: 0 0 var(--mg-spacing-lg, 1.5rem) 0;
 }
 
-/* 재무 개요 카드 - 수입/지출/순이익 */
+/* 재무 개요 카드 (B0KlA 카드로 대체됨, 레거시 유지) */
 .finance-summary-card {
-  padding: var(--spacing-sm) var(--spacing-md);
-  border-radius: var(--radius-lg);
-  box-shadow: 0 8px 32px var(--mg-shadow-light);
-  background: rgba(255, 255, 255, 0.6);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  color: var(--dark-gray);
-  min-height: var(--card-height-sm);
-}
-
-.finance-summary-card--income {
-  /* 아이콘으로 구분 */
-}
-
-.finance-summary-card--expense {
-  /* 아이콘으로 구분 */
-}
-
-.finance-summary-card--profit {
-  /* 아이콘으로 구분 */
+  padding: var(--mg-spacing-md, 16px);
+  border-radius: var(--ad-b0kla-radius);
+  box-shadow: var(--ad-b0kla-shadow);
+  background: var(--ad-b0kla-card-bg);
+  border: 1px solid var(--ad-b0kla-border);
+  color: var(--ad-b0kla-title-color);
+  min-height: 120px;
 }
 
 .finance-summary-card-title {
-  color: var(--dark-gray);
-  margin-bottom: var(--spacing-lg);
-  font-size: var(--font-size-xl);
+  color: var(--ad-b0kla-title-color);
+  margin-bottom: var(--mg-spacing-lg, 1.5rem);
+  font-size: var(--mg-font-xl, 1.25rem);
   font-weight: 600;
 }
 
@@ -674,56 +679,50 @@
 
 /* 거래 건수 섹션 */
 .finance-transactions-section {
-  padding: var(--spacing-xl);
-  background: rgba(255, 255, 255, 0.5);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  border-radius: var(--radius-lg);
-  box-shadow: 0 4px 16px var(--mg-shadow-light);
+  padding: var(--mg-spacing-xl, 1.5rem);
+  background: var(--ad-b0kla-card-bg);
+  border: 1px solid var(--ad-b0kla-border);
+  border-radius: var(--ad-b0kla-radius);
+  box-shadow: var(--ad-b0kla-shadow);
 }
 
 .finance-transactions-title {
-  margin-bottom: var(--spacing-lg);
-  font-size: var(--font-size-xl);
+  margin-bottom: var(--mg-spacing-lg, 1.5rem);
+  font-size: var(--mg-font-xl, 1.25rem);
   font-weight: 600;
-  color: var(--dark-gray);
+  color: var(--ad-b0kla-title-color);
 }
 
 .finance-transactions-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: var(--spacing-md);
+  gap: var(--mg-spacing-md, 16px);
 }
 
 .finance-transaction-card {
   text-align: center;
-  padding: var(--spacing-md);
-  background: white;
-  border-radius: var(--radius-md);
-  box-shadow: 0 2px 8px var(--mg-shadow-light);
+  padding: var(--mg-spacing-md, 16px);
+  background: var(--ad-b0kla-card-bg);
+  border-radius: var(--ad-b0kla-radius);
+  box-shadow: var(--ad-b0kla-shadow);
+  border: 1px solid var(--ad-b0kla-border);
 }
 
 .finance-transaction-value {
-  font-size: var(--font-size-xxl);
+  font-size: var(--mg-font-xl, 1.25rem);
   font-weight: bold;
-  margin-bottom: var(--spacing-sm);
+  margin-bottom: var(--mg-spacing-sm, 8px);
 }
 
-.finance-transaction-value--primary {
-  color: var(--dark-gray);
-}
-
-.finance-transaction-value--success {
-  color: var(--dark-gray);
-}
-
+.finance-transaction-value--primary,
+.finance-transaction-value--success,
 .finance-transaction-value--warning {
-  color: var(--dark-gray);
+  color: var(--ad-b0kla-title-color);
 }
 
 .finance-transaction-label {
-  font-size: var(--font-size-sm);
-  color: var(--medium-gray);
+  font-size: var(--mg-font-sm);
+  color: var(--ad-b0kla-text-secondary);
 }
 
 /* 반응형 디자인 */
@@ -821,46 +820,43 @@
   }
 }
 
-/* 다크 테마 지원 */
+/* 다크 테마: ad-b0kla 토큰이 대응되면 자동 적용 */
 @media (prefers-color-scheme: dark) {
   .finance-card,
   .finance-kpi-card {
-    background: var(--color-background-dark);
-    border-color: var(--color-border-dark);
+    background: var(--ad-b0kla-card-bg);
+    border-color: var(--ad-b0kla-border);
   }
   
   .finance-summary-card {
-    background: rgba(0, 0, 0, 0.3);
-    border-color: var(--color-border-dark);
+    background: var(--ad-b0kla-card-bg);
+    border-color: var(--ad-b0kla-border);
   }
   
   .net-income-card {
-    background: linear-gradient(135deg, var(--mint-green-dark), var(--soft-mint-dark));
-  }
-  
-  .finance-empty-state {
-    color: var(--status-error);
+    background: var(--ad-b0kla-card-bg);
+    border-color: var(--ad-b0kla-border);
   }
   
   .finance-value-success {
-    color: var(--status-active);
+    color: var(--mg-success-500);
   }
   
   .finance-value-danger {
-    color: var(--status-error);
+    color: var(--mg-error-500);
   }
   
   .finance-value-info {
-    color: var(--olive-green);
+    color: var(--ad-b0kla-green);
   }
   
   .finance-value-warning {
-    color: var(--status-pending);
+    color: var(--mg-warning-500);
   }
   
   .finance-badge--info {
-    background: rgba(128, 128, 0, 0.2);
-    color: var(--olive-green);
-    border-color: var(--olive-green);
+    background: var(--ad-b0kla-green-bg);
+    color: var(--ad-b0kla-green);
+    border-color: var(--ad-b0kla-green);
   }
 }

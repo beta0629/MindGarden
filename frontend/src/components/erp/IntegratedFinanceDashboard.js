@@ -42,6 +42,7 @@ import {
   ChevronRight
 } from 'lucide-react';
 import '../../styles/main.css';
+import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './IntegratedFinanceDashboard.css';
 
 // 공통 유틸리티 함수들
@@ -333,7 +334,7 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
 
   return (
     <AdminCommonLayout title="통합 재무">
-      <div className="mg-dashboard-layout">
+      <div className="mg-dashboard-layout mg-v2-ad-b0kla">
         {/* Dashboard Header */}
         <div className="mg-dashboard-header">
           <div className="mg-dashboard-header-content">
@@ -383,9 +384,9 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
 
         {/* Main Content */}
         <div className="mg-dashboard-content">
-          <div className="mg-v2-card">
-            {/* 탭 메뉴 */}
-            <div className="integrated-finance-tabs">
+          <div className="mg-v2-ad-b0kla__container">
+            {/* 탭 메뉴: B0KlA Pill 토큰 */}
+            <div className="mg-v2-ad-b0kla__pill-toggle integrated-finance-tabs">
               {[
                 { key: 'overview', label: '개요' },
                 { key: 'journal-entries', label: '분개 관리' },
@@ -400,14 +401,14 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
               ].map(tab => (
                 <button
                   key={tab.key}
+                  type="button"
                   onClick={() => {
                     setActiveTab(tab.key);
-                    // URL 파라미터 업데이트
                     const newSearchParams = new URLSearchParams(searchParams);
                     newSearchParams.set('tab', tab.key);
                     setSearchParams(newSearchParams);
                   }}
-                  className={`integrated-finance-tab-btn ${activeTab === tab.key ? 'active' : ''}`}
+                  className={`mg-v2-ad-b0kla__pill ${activeTab === tab.key ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
                 >
                   {tab.label}
                 </button>
@@ -541,11 +542,11 @@ const OverviewTab = ({ data }) => {
             value={(financialData.transactionCount || 0).toLocaleString()}
             label="총 연동 거래 건수"
           />
-          <div className="mg-v2-card mg-v2-card--outlined mg-v2-text-center">
-            <div className="mg-v2-text-info mg-v2-font-weight-bold">
+          <div className="mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card-accent--blue" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
+            <div className="mg-v2-ad-b0kla__chart-title" style={{ marginBottom: '0.25rem' }}>
               실시간 연동
             </div>
-            <div className="mg-v2-text-xs mg-v2-text-secondary mg-v2-mt-xs">
+            <div className="mg-v2-ad-b0kla__chart-desc">
               매핑 ↔ ERP 자동 동기화
             </div>
             <MGButton
@@ -560,53 +561,45 @@ const OverviewTab = ({ data }) => {
         </div>
       </DashboardSection>
 
-      {/* 수입/지출 요약 */}
+      {/* 수입/지출 요약: B0KlA 카드·토큰 */}
       <DashboardSection
         title="수입/지출 요약"
         icon={<BarChart3 size={24} />}
       >
-        <div className="mg-dashboard-stats">
-          <div className="finance-summary-card finance-summary-card--income">
-            <div className="net-income-decoration-1"></div>
-            <h3 className="finance-summary-card-title">
-              <TrendingUp size={24} className="finance-icon-inline" />
-              수입
-            </h3>
-            <div className="net-income-value">
-              {formatCurrency(totalIncome)}
+        <div className="mg-v2-erp-dashboard-kpi-grid">
+          <div className="mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card-accent">
+            <div className="mg-v2-ad-b0kla__chart-header">
+              <h3 className="mg-v2-ad-b0kla__chart-title">수입</h3>
+              <TrendingUp size={24} aria-hidden className="mg-v2-ad-b0kla__kpi-value--success" />
             </div>
-            <div className="net-income-subtitle">
-              {getIncomeDescription()}
+            <div className="mg-v2-ad-b0kla__chart-body">
+              <div className="mg-v2-ad-b0kla__kpi-value mg-v2-ad-b0kla__kpi-value--success">{formatCurrency(totalIncome)}</div>
+              <span className="mg-v2-ad-b0kla__kpi-label">{getIncomeDescription()}</span>
             </div>
           </div>
-          <div className="finance-summary-card finance-summary-card--expense">
-            <div className="net-income-decoration-1"></div>
-            <h3 className="finance-summary-card-title">
-              <TrendingDown size={24} className="finance-icon-inline" />
-              지출
-            </h3>
-            <div className="net-income-value">
-              {formatCurrency(totalExpense)}
+          <div className="mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card-accent--orange">
+            <div className="mg-v2-ad-b0kla__chart-header">
+              <h3 className="mg-v2-ad-b0kla__chart-title">지출</h3>
+              <TrendingDown size={24} aria-hidden className="mg-v2-ad-b0kla__kpi-value--danger" />
             </div>
-            <div className="net-income-subtitle">
-              {getExpenseDescription()}
+            <div className="mg-v2-ad-b0kla__chart-body">
+              <div className="mg-v2-ad-b0kla__kpi-value mg-v2-ad-b0kla__kpi-value--danger">{formatCurrency(totalExpense)}</div>
+              <span className="mg-v2-ad-b0kla__kpi-label">{getExpenseDescription()}</span>
             </div>
           </div>
         </div>
 
-        {/* 순이익 */}
-        <div className="net-income-card">
-          <div className="net-income-decoration-1"></div>
-          <div className="net-income-decoration-2"></div>
-          <h3 className="net-income-title">
-            <DollarSign className="net-income-icon" size={32} />
-            순이익
-          </h3>
-          <div className="net-income-value">
-            {formatCurrency(netProfit)}
+        {/* 순이익: B0KlA 카드 */}
+        <div className="mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card-accent--blue integrated-finance-net-income-card">
+          <div className="mg-v2-ad-b0kla__chart-header">
+            <h3 className="mg-v2-ad-b0kla__chart-title">순이익</h3>
+            <DollarSign size={24} aria-hidden className="mg-v2-ad-b0kla__kpi-value--primary" />
           </div>
-          <div className="net-income-subtitle">
-            수입 - 지출
+          <div className="mg-v2-ad-b0kla__chart-body">
+            <div className={`mg-v2-ad-b0kla__kpi-value ${netProfit >= 0 ? 'mg-v2-ad-b0kla__kpi-value--primary' : 'mg-v2-ad-b0kla__kpi-value--danger'}`}>
+              {formatCurrency(netProfit)}
+            </div>
+            <span className="mg-v2-ad-b0kla__kpi-label">수입 - 지출</span>
           </div>
         </div>
       </DashboardSection>
@@ -724,7 +717,7 @@ const BalanceSheetTab = () => {
           </p>
         )}
         <div className="balance-sheet-grid">
-          <div className="balance-sheet-card balance-sheet-card--assets">
+          <div className="mg-v2-ad-b0kla__card balance-sheet-card balance-sheet-card--assets mg-v2-ad-b0kla__card-accent">
             <h3 className="balance-sheet-card-title">
               <TrendingUp className="balance-sheet-card-icon" size={24} />
               자산
@@ -740,7 +733,7 @@ const BalanceSheetTab = () => {
               <div className="balance-sheet-grand-total">자산 합계: {formatCurrency(assetsTotal)}</div>
             </div>
           </div>
-          <div className="balance-sheet-card balance-sheet-card--liabilities">
+          <div className="mg-v2-ad-b0kla__card balance-sheet-card balance-sheet-card--liabilities mg-v2-ad-b0kla__card-accent--orange">
             <h3 className="balance-sheet-card-title">
               <TrendingDown className="balance-sheet-card-icon" size={24} />
               부채
@@ -756,7 +749,7 @@ const BalanceSheetTab = () => {
               <div className="balance-sheet-grand-total">부채 합계: {formatCurrency(liabilitiesTotal)}</div>
             </div>
           </div>
-          <div className="balance-sheet-card balance-sheet-card--equity">
+          <div className="mg-v2-ad-b0kla__card balance-sheet-card balance-sheet-card--equity mg-v2-ad-b0kla__card-accent--blue">
             <h3 className="balance-sheet-card-title">
               <PieChart className="balance-sheet-card-icon" size={24} />
               자본
@@ -773,7 +766,7 @@ const BalanceSheetTab = () => {
             </div>
           </div>
         </div>
-        <div className={`balance-sheet-card balance-verification-card ${isBalanced ? 'balance-sheet-card--assets' : 'balance-sheet-card--liabilities'}`}>
+        <div className={`mg-v2-ad-b0kla__card balance-sheet-card balance-verification-card ${isBalanced ? 'mg-v2-ad-b0kla__card-accent' : 'mg-v2-ad-b0kla__card-accent--orange'}`}>
           <h4 className="balance-sheet-card-title">{isBalanced ? '대차대조표 균형' : '대차대조표 불균형'}</h4>
           <div className="balance-sheet-items balance-verification-content">
             자산 총계: <strong>{formatCurrency(balanceCheck.assets ?? assetsTotal)}</strong> = 부채 + 자본: <strong>{formatCurrency(balanceCheck.liabilitiesPlusEquity ?? (liabilitiesTotal + equityTotal))}</strong>
@@ -931,7 +924,7 @@ const IncomeStatementTab = () => {
           </p>
         )}
         <div className="income-statement-grid">
-          <div className="income-statement-card income-statement-card--revenue">
+          <div className="mg-v2-ad-b0kla__card income-statement-card income-statement-card--revenue mg-v2-ad-b0kla__card-accent">
             <h3 className="income-statement-card-title">
               <TrendingUp className="income-statement-card-icon" size={24} />
               수익
@@ -951,7 +944,7 @@ const IncomeStatementTab = () => {
               </div>
             </div>
           </div>
-          <div className="income-statement-card income-statement-card--expenses">
+          <div className="mg-v2-ad-b0kla__card income-statement-card income-statement-card--expenses mg-v2-ad-b0kla__card-accent--orange">
             <h3 className="income-statement-card-title">
               <TrendingDown className="income-statement-card-icon" size={24} />
               비용
@@ -1278,19 +1271,19 @@ const DailyReportTab = ({ period }) => {
           일간 거래 건수
         </h3>
         <div className="finance-transactions-grid">
-          <div className="finance-transaction-card">
+          <div className="mg-v2-ad-b0kla__card finance-transaction-card">
             <div className="finance-transaction-value">
               {reportData?.transactionCount?.consultations || 0}
             </div>
             <div className="finance-transaction-label">상담 건수</div>
           </div>
-          <div className="finance-transaction-card">
+          <div className="mg-v2-ad-b0kla__card finance-transaction-card">
             <div className="finance-transaction-value">
               {reportData?.transactionCount?.purchases || 0}
             </div>
             <div className="finance-transaction-label">구매 건수</div>
           </div>
-          <div className="finance-transaction-card">
+          <div className="mg-v2-ad-b0kla__card finance-transaction-card">
             <div className="finance-transaction-value">
               {reportData?.transactionCount?.payments || 0}
             </div>
@@ -1461,19 +1454,19 @@ const MonthlyReportTab = ({ period }) => {
           월간 거래 건수
         </h3>
         <div className="finance-transactions-grid">
-          <div className="finance-transaction-card">
+          <div className="mg-v2-ad-b0kla__card finance-transaction-card">
             <div className="finance-transaction-value">
               {reportData?.transactionCount?.consultations || 0}
             </div>
             <div className="finance-transaction-label">상담 건수</div>
           </div>
-          <div className="finance-transaction-card">
+          <div className="mg-v2-ad-b0kla__card finance-transaction-card">
             <div className="finance-transaction-value">
               {reportData?.transactionCount?.purchases || 0}
             </div>
             <div className="finance-transaction-label">구매 건수</div>
           </div>
-          <div className="finance-transaction-card">
+          <div className="mg-v2-ad-b0kla__card finance-transaction-card">
             <div className="finance-transaction-value">
               {reportData?.transactionCount?.payments || 0}
             </div>

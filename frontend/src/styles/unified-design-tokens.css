@@ -17244,7 +17244,7 @@ button span, .btn span, [class*="btn-"] span, [class*="mg-btn"] span, [class*="m
     color: #2c3e50;
 }
 
-/* Financial Calendar Classes */
+/* Financial Calendar Classes (재무 달력: mg-calendar 확장, 토큰만 사용) */
 .mg-v2-legend-container {
     display: flex;
     gap: var(--spacing-xl);
@@ -17279,15 +17279,15 @@ button span, .btn span, [class*="btn-"] span, [class*="mg-btn"] span, [class*="m
     display: grid;
     grid-template-columns: repeat(7, 1fr);
     gap: 1px;
-    background-color: #dee2e6;
+    background-color: var(--mg-color-border-main);
     border-radius: var(--radius-md);
     overflow: hidden;
 }
 
 .mg-v2-calendar-header {
     padding: var(--spacing-md);
-    background-color: #495057;
-    color: white;
+    background-color: var(--mg-color-text-main);
+    color: var(--mg-color-surface-main);
     text-align: center;
     font-weight: 600;
     font-size: var(--font-size-sm);
@@ -17300,18 +17300,18 @@ button span, .btn span, [class*="btn-"] span, [class*="mg-btn"] span, [class*="m
 }
 
 .mg-v2-calendar-cell--today {
-    background-color: #e3f2fd;
+    background-color: var(--mg-success-100);
     border: 2px solid var(--mg-primary-500);
 }
 
 .mg-v2-calendar-cell--selected {
-    background-color: #fff3cd;
+    background-color: var(--mg-warning-100);
     border: 2px solid var(--mg-warning-500);
 }
 
 .mg-v2-calendar-transactions {
     font-size: var(--font-size-xs);
-    color: var(--text-secondary);
+    color: var(--mg-color-text-secondary);
 }
 
 .mg-v2-calendar-day-number {

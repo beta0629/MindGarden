@@ -309,7 +309,7 @@ const CommonCodeManagement = () => {
             
             'MENU': '메뉴',
             'MENU_CATEGORY': '메뉴카테고리',
-            'ADMIN_MENU': '관리자메뉴',
+            'ADMIN_MENU': '어드민메뉴',
             'CLIENT_MENU': '내담자메뉴',
             'CONSULTANT_MENU': '상담사메뉴',
             'HQ_ADMIN_MENU': '관리자메뉴',
@@ -328,7 +328,10 @@ const CommonCodeManagement = () => {
             'NOTIFICATION_CHANNEL': '알림채널',
             'DURATION': '기간',
             'SORT_OPTION': '정렬옵션',
-            'PRIORITY_LEVEL': '우선순위레벨'
+            'PRIORITY_LEVEL': '우선순위레벨',
+            'ADMIN_PERMISSIONS': '어드민권한',
+            'AGE_GROUP': '연령대',
+            'ALIMTALK_TEMPLATE': '알림톡템플릿'
         };
         
         return koreanMappings[groupName] || groupName;

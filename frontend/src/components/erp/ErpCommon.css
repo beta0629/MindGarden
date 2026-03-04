@@ -695,6 +695,48 @@
   flex-wrap: wrap;
 }
 
+/* 재무 필터: 거래 유형·카테고리 배지(pill) 스타일 */
+.mg-erp-filter-badge-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mg-spacing-sm, 8px);
+  align-items: center;
+}
+
+.mg-erp-filter-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--mg-spacing-xs, 6px) var(--mg-spacing-md, 14px);
+  border-radius: var(--badge-border-radius, 9999px);
+  font-size: var(--badge-font-size, var(--mg-font-sm, 0.875rem));
+  font-weight: var(--badge-font-weight, var(--mg-font-medium, 500));
+  line-height: 1;
+  border: 1px solid var(--mg-color-border-main);
+  background: var(--mg-color-surface-main);
+  color: var(--mg-color-text-secondary);
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.mg-erp-filter-badge:hover {
+  background: var(--mg-gray-100);
+  color: var(--mg-color-text-main);
+  border-color: var(--mg-color-border-strong, var(--mg-gray-300));
+}
+
+.mg-erp-filter-badge--selected {
+  background: var(--mg-primary-500);
+  color: var(--mg-color-surface-main);
+  border-color: var(--mg-primary-500);
+}
+
+.mg-erp-filter-badge--selected:hover {
+  background: var(--mg-primary-600);
+  border-color: var(--mg-primary-600);
+  color: var(--mg-color-surface-main);
+}
+
 /* 재무 달력: mg-calendar 확장 (공통 달력 구조 + 일별 수입/지출 요약) */
 .financial-calendar-view-container .mg-calendar {
   background: var(--mg-color-surface-main);

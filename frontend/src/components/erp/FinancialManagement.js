@@ -18,7 +18,6 @@ import {
   Building2,
   ClipboardList,
   LayoutDashboard,
-  Plus,
   Download,
   Eye,
   Pencil,
@@ -480,9 +479,6 @@ const FinancialManagement = () => {
                   <div className="d-flex justify-content-between align-items-center mb-3">
                     <h2>재무 거래 내역</h2>
                     <div className="d-flex gap-2">
-                      <button type="button" className="mg-btn mg-btn--primary">
-                        <Plus size={16} aria-hidden /> 거래 추가
-                      </button>
                       <button type="button" className="mg-btn mg-btn--outline mg-btn--secondary">
                         <Download size={16} aria-hidden /> 내보내기
                       </button>
@@ -495,9 +491,9 @@ const FinancialManagement = () => {
                       <div className="mg-v2-form-group">
                         <label className="mg-v2-form-label">기간</label>
                         <select
-                          value={filters.dateRange}
+                          value={String(filters.dateRange || 'MONTH')}
                           onChange={(e) =>
-                            setFilters((prev) => ({ ...prev, dateRange: e.target.value }))
+                            setFilters((prev) => ({ ...prev, dateRange: String(e.target.value) }))
                           }
                           className="mg-v2-form-select"
                           style={{ minWidth: '140px' }}
@@ -534,7 +530,7 @@ const FinancialManagement = () => {
                       </div>
                       <div className="mg-v2-form-group">
                         <label className="mg-v2-form-label">거래 유형</label>
-                        <div className="mg-v2-tag-group">
+                        <div className="mg-erp-filter-badge-group">
                           {[
                             { value: 'ALL', label: '전체' },
                             { value: 'INCOME', label: '수입' },
@@ -543,7 +539,7 @@ const FinancialManagement = () => {
                             <button
                               key={opt.value}
                               type="button"
-                              className={`mg-v2-tag ${filters.transactionType === opt.value ? 'mg-v2-tag--selected' : ''}`}
+                              className={`mg-erp-filter-badge ${filters.transactionType === opt.value ? 'mg-erp-filter-badge--selected' : ''}`}
                               onClick={() =>
                                 setFilters((prev) => ({ ...prev, transactionType: opt.value }))
                               }
@@ -555,7 +551,7 @@ const FinancialManagement = () => {
                       </div>
                       <div className="mg-v2-form-group">
                         <label className="mg-v2-form-label">카테고리</label>
-                        <div className="mg-v2-tag-group">
+                        <div className="mg-erp-filter-badge-group">
                           {[
                             { value: 'ALL', label: '전체' },
                             { value: 'CONSULTATION', label: '상담료' },
@@ -568,7 +564,7 @@ const FinancialManagement = () => {
                             <button
                               key={opt.value}
                               type="button"
-                              className={`mg-v2-tag ${filters.category === opt.value ? 'mg-v2-tag--selected' : ''}`}
+                              className={`mg-erp-filter-badge ${filters.category === opt.value ? 'mg-erp-filter-badge--selected' : ''}`}
                               onClick={() =>
                                 setFilters((prev) => ({ ...prev, category: opt.value }))
                               }

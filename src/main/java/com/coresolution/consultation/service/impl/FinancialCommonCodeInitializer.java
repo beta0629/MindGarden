@@ -63,7 +63,55 @@ public class FinancialCommonCodeInitializer {
         // 6. 부가세 적용 여부
         initializeVatCategories();
 
+        // 7. ERP 계정 타입 (재무제표·분개 연동용, 테넌트별 extraData.accountId 설정 시 분개 생성)
+        initializeErpAccountTypes();
+
         log.info("✅ 재무 거래 관련 공통 코드 초기화 완료");
+    }
+
+    /**
+     * ERP 계정 타입 코드 초기화 (코어)
+     * 테넌트별로 동일 그룹/값으로 오버라이드 시 extraData에 {"accountId": 계정ID} 설정 필요.
+     * 표준: docs/planning/ERP_STATEMENTS_VS_OTHER_REPORTS_LINKAGE_PLAN.md
+     */
+    private void initializeErpAccountTypes() {
+        String codeGroup = "ERP_ACCOUNT_TYPE";
+        if (!commonCodeRepository.findCoreCodesByGroup(codeGroup).isEmpty()) {
+            log.info("ERP_ACCOUNT_TYPE 코어 코드가 이미 존재합니다.");
+            return;
+        }
+
+        commonCodeRepository.save(CommonCode.builder()
+                .codeGroup(codeGroup)
+                .codeValue("REVENUE")
+                .codeLabel("수익")
+                .koreanName("수익")
+                .codeDescription("수익 계정 (손익계산서)")
+                .sortOrder(1)
+                .isActive(true)
+                .build());
+
+        commonCodeRepository.save(CommonCode.builder()
+                .codeGroup(codeGroup)
+                .codeValue("EXPENSE")
+                .codeLabel("비용")
+                .koreanName("비용")
+                .codeDescription("비용 계정 (손익계산서)")
+                .sortOrder(2)
+                .isActive(true)
+                .build());
+
+        commonCodeRepository.save(CommonCode.builder()
+                .codeGroup(codeGroup)
+                .codeValue("CASH")
+                .codeLabel("현금")
+                .koreanName("현금")
+                .codeDescription("현금/자산 계정 (대차대조표·현금흐름)")
+                .sortOrder(3)
+                .isActive(true)
+                .build());
+
+        log.info("ERP_ACCOUNT_TYPE 코어 코드 초기화 완료");
     }
 
     /**

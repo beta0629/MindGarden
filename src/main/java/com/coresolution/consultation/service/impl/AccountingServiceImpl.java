@@ -4,10 +4,13 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import com.coresolution.consultation.entity.Account;
 import com.coresolution.consultation.entity.CommonCode;
 import com.coresolution.consultation.entity.erp.accounting.AccountingEntry;
 import com.coresolution.consultation.entity.erp.accounting.JournalEntryLine;
 import com.coresolution.consultation.entity.erp.financial.FinancialTransaction;
+import com.coresolution.consultation.repository.CommonCodeRepository;
+import com.coresolution.consultation.repository.AccountRepository;
 import com.coresolution.consultation.repository.erp.accounting.AccountingEntryRepository;
 import com.coresolution.consultation.repository.erp.accounting.JournalEntryLineRepository;
 import com.coresolution.consultation.service.CommonCodeService;
@@ -27,10 +30,17 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class AccountingServiceImpl implements AccountingService {
 
+    private static final String ERP_ACCOUNT_TYPE_GROUP = "ERP_ACCOUNT_TYPE";
+    /** ERP 가상 계정용 은행 코드 (accounts.bank_code 필수값) */
+    private static final String ERP_VIRTUAL_BANK_CODE = "001";
+    private static final String ERP_VIRTUAL_BANK_NAME = "ERP";
+
     private final AccountingEntryRepository accountingEntryRepository;
     private final JournalEntryLineRepository journalEntryLineRepository;
     private final LedgerService ledgerService;
     private final CommonCodeService commonCodeService;
+    private final AccountRepository accountRepository;
+    private final CommonCodeRepository commonCodeRepository;
 
     @Override
     @Transactional
@@ -223,6 +233,13 @@ public class AccountingServiceImpl implements AccountingService {
             Long cashAccountId = getDefaultAccountId(tenantId, "CASH"); // 현금 계정
 
             if (revenueAccountId == null || expenseAccountId == null || cashAccountId == null) {
+                ensureErpAccountMappingForTenant(tenantId);
+                revenueAccountId = getDefaultAccountId(tenantId, "REVENUE");
+                expenseAccountId = getDefaultAccountId(tenantId, "EXPENSE");
+                cashAccountId = getDefaultAccountId(tenantId, "CASH");
+            }
+
+            if (revenueAccountId == null || expenseAccountId == null || cashAccountId == null) {
                 log.warn(
                         "기본 계정을 찾을 수 없어 분개를 생성할 수 없습니다: tenantId={}, "
                                 + "ERP_ACCOUNT_TYPE(REVENUE, EXPENSE, CASH) 계정 ID 설정 필요. "
@@ -273,9 +290,12 @@ public class AccountingServiceImpl implements AccountingService {
                 postJournalEntry(tenantId, saved.getId());
             } catch (Exception e) {
                 log.error(
-                        "분개 전기 실패: 원장 미반영. entryId={}, entryNumber={}, transactionId={}. "
-                                + "분개는 APPROVED 상태로 남음. 수동 전기 또는 재처리 필요. error={}",
-                        saved.getId(), saved.getEntryNumber(), transaction.getId(), e.getMessage(), e);
+                        "분개 전기 실패: 원장 미반영. entryId={}, entryNumber={}, transactionId={}, tenantId={}. "
+                                + "분개는 APPROVED 상태로 남음. 수동 전기 또는 재처리 필요. "
+                                + "원인 후보: (1) 계정(accounts) 테넌트 불일치 (2) 원장 기간/계정 조회 예외. "
+                                + "exception={}, message={}",
+                        saved.getId(), saved.getEntryNumber(), transaction.getId(), tenantId,
+                        e.getClass().getSimpleName(), e.getMessage(), e);
                 return saved;
             }
 
@@ -349,6 +369,104 @@ public class AccountingServiceImpl implements AccountingService {
             log.error("기본 계정 ID 조회 실패: tenantId={}, accountType={}, error={}", tenantId,
                     accountType, e.getMessage(), e);
             return null;
+        }
+    }
+
+    /**
+     * 테넌트별 ERP_ACCOUNT_TYPE(REVENUE, EXPENSE, CASH) 계정 매핑이 없으면 기본 계정 생성 후 공통코드 시딩.
+     * 표준: docs/planning/ERP_STATEMENTS_VS_OTHER_REPORTS_LINKAGE_PLAN.md
+     *
+     * @param tenantId 테넌트 ID (필수)
+     */
+    @Transactional
+    public void ensureErpAccountMappingForTenant(String tenantId) {
+        if (tenantId == null || tenantId.isEmpty()) {
+            return;
+        }
+        if (getDefaultAccountId(tenantId, "REVENUE") != null
+                && getDefaultAccountId(tenantId, "EXPENSE") != null
+                && getDefaultAccountId(tenantId, "CASH") != null) {
+            return;
+        }
+        try {
+            // 1. ERP 가상 계정 찾기 또는 생성 (수익/비용/현금)
+            Account revenueAccount = accountRepository
+                    .findByTenantIdAndAccountNumberAndIsDeletedFalse(tenantId, "ERP-REVENUE")
+                    .orElseGet(() -> {
+                        Account a = Account.builder()
+                                .tenantId(tenantId)
+                                .bankCode(ERP_VIRTUAL_BANK_CODE)
+                                .bankName(ERP_VIRTUAL_BANK_NAME)
+                                .accountNumber("ERP-REVENUE")
+                                .accountHolder("ERP")
+                                .description("수익 계정")
+                                .isActive(true)
+                                .isDeleted(false)
+                                .build();
+                        return accountRepository.save(a);
+                    });
+            Account expenseAccount = accountRepository
+                    .findByTenantIdAndAccountNumberAndIsDeletedFalse(tenantId, "ERP-EXPENSE")
+                    .orElseGet(() -> {
+                        Account a = Account.builder()
+                                .tenantId(tenantId)
+                                .bankCode(ERP_VIRTUAL_BANK_CODE)
+                                .bankName(ERP_VIRTUAL_BANK_NAME)
+                                .accountNumber("ERP-EXPENSE")
+                                .accountHolder("ERP")
+                                .description("비용 계정")
+                                .isActive(true)
+                                .isDeleted(false)
+                                .build();
+                        return accountRepository.save(a);
+                    });
+            Account cashAccount = accountRepository
+                    .findByTenantIdAndAccountNumberAndIsDeletedFalse(tenantId, "ERP-CASH")
+                    .orElseGet(() -> {
+                        Account a = Account.builder()
+                                .tenantId(tenantId)
+                                .bankCode(ERP_VIRTUAL_BANK_CODE)
+                                .bankName(ERP_VIRTUAL_BANK_NAME)
+                                .accountNumber("ERP-CASH")
+                                .accountHolder("ERP")
+                                .description("현금 계정")
+                                .isActive(true)
+                                .isDeleted(false)
+                                .build();
+                        return accountRepository.save(a);
+                    });
+
+            // 2. 테넌트 공통코드 ERP_ACCOUNT_TYPE 생성 또는 extraData 갱신
+            String[] types = {"REVENUE", "EXPENSE", "CASH"};
+            Account[] accounts = {revenueAccount, expenseAccount, cashAccount};
+            String[] labels = {"수익", "비용", "현금"};
+            for (int i = 0; i < types.length; i++) {
+                String extraData = "{\"accountId\":" + accounts[i].getId() + "}";
+                Optional<CommonCode> existing = commonCodeRepository.findByTenantIdAndCodeGroupAndCodeValue(
+                        tenantId, ERP_ACCOUNT_TYPE_GROUP, types[i]);
+                if (existing.isPresent()) {
+                    CommonCode code = existing.get();
+                    code.setExtraData(extraData);
+                    commonCodeRepository.save(code);
+                } else {
+                    CommonCode code = CommonCode.builder()
+                            .codeGroup(ERP_ACCOUNT_TYPE_GROUP)
+                            .codeValue(types[i])
+                            .codeLabel(labels[i])
+                            .koreanName(labels[i])
+                            .codeDescription(labels[i] + " 계정 (재무제표·분개 연동)")
+                            .sortOrder(i + 1)
+                            .isActive(true)
+                            .extraData(extraData)
+                            .build();
+                    code.setTenantId(tenantId);
+                    commonCodeRepository.save(code);
+                }
+            }
+            log.info("테넌트 ERP 계정 매핑 시딩 완료: tenantId={}, revenueId={}, expenseId={}, cashId={}",
+                    tenantId, revenueAccount.getId(), expenseAccount.getId(), cashAccount.getId());
+        } catch (Exception e) {
+            log.error("테넌트 ERP 계정 매핑 시딩 실패: tenantId={}, error={}", tenantId, e.getMessage(), e);
         }
     }
 

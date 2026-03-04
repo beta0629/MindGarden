@@ -315,31 +315,51 @@ const FinancialCalendarView = () => {
             0
           );
           return (
-            <div className="mg-financial-calendar-monthly-grid">
+            <div className="mg-v2-erp-dashboard-kpi-grid">
               <div className="mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card-accent">
-                <div className="mg-financial-calendar-monthly-value">+{formatCurrency(monthlyIncome)}원</div>
-                <div className="mg-financial-calendar-monthly-label">
-                  <DollarSign size={14} aria-hidden /> 월 총 수입
+                <div className="mg-v2-ad-b0kla__chart-header">
+                  <h3 className="mg-v2-ad-b0kla__chart-title">월 총 수입</h3>
+                  <DollarSign size={24} aria-hidden className="mg-v2-ad-b0kla__kpi-value--success" />
+                </div>
+                <div className="mg-v2-ad-b0kla__chart-body">
+                  <div className="mg-v2-ad-b0kla__kpi-value mg-v2-ad-b0kla__kpi-value--success">
+                    +{formatCurrency(monthlyIncome)}원
+                  </div>
+                  <span className="mg-v2-ad-b0kla__kpi-label">이번 달</span>
                 </div>
               </div>
               <div className="mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card-accent--orange">
-                <div className="mg-financial-calendar-monthly-value">-{formatCurrency(monthlyExpense)}원</div>
-                <div className="mg-financial-calendar-monthly-label">
-                  <TrendingDown size={14} aria-hidden /> 월 총 지출
+                <div className="mg-v2-ad-b0kla__chart-header">
+                  <h3 className="mg-v2-ad-b0kla__chart-title">월 총 지출</h3>
+                  <TrendingDown size={24} aria-hidden className="mg-v2-ad-b0kla__kpi-value--danger" />
+                </div>
+                <div className="mg-v2-ad-b0kla__chart-body">
+                  <div className="mg-v2-ad-b0kla__kpi-value mg-v2-ad-b0kla__kpi-value--danger">
+                    -{formatCurrency(monthlyExpense)}원
+                  </div>
+                  <span className="mg-v2-ad-b0kla__kpi-label">이번 달</span>
                 </div>
               </div>
-              <div
-                className={`mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card-accent--blue ${monthlyProfit < 0 ? 'mg-v2-ad-b0kla__card-accent--orange' : ''}`}
-              >
-                <div className="mg-financial-calendar-monthly-value">{formatCurrency(monthlyProfit)}원</div>
-                <div className="mg-financial-calendar-monthly-label">
-                  <CircleDollarSign size={14} aria-hidden /> 월 순이익
+              <div className={`mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card-accent--blue ${monthlyProfit < 0 ? 'mg-v2-ad-b0kla__card-accent--orange' : ''}`}>
+                <div className="mg-v2-ad-b0kla__chart-header">
+                  <h3 className="mg-v2-ad-b0kla__chart-title">월 순이익</h3>
+                  <CircleDollarSign size={24} aria-hidden className={monthlyProfit >= 0 ? 'mg-v2-ad-b0kla__kpi-value--primary' : 'mg-v2-ad-b0kla__kpi-value--danger'} />
+                </div>
+                <div className="mg-v2-ad-b0kla__chart-body">
+                  <div className={`mg-v2-ad-b0kla__kpi-value ${monthlyProfit >= 0 ? 'mg-v2-ad-b0kla__kpi-value--primary' : 'mg-v2-ad-b0kla__kpi-value--danger'}`}>
+                    {formatCurrency(monthlyProfit)}원
+                  </div>
+                  <span className="mg-v2-ad-b0kla__kpi-label">이번 달</span>
                 </div>
               </div>
               <div className="mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card-accent--blue">
-                <div className="mg-financial-calendar-monthly-value">{totalTransactions}건</div>
-                <div className="mg-financial-calendar-monthly-label">
-                  <BarChart3 size={14} aria-hidden /> 총 거래
+                <div className="mg-v2-ad-b0kla__chart-header">
+                  <h3 className="mg-v2-ad-b0kla__chart-title">총 거래</h3>
+                  <BarChart3 size={24} aria-hidden className="mg-v2-ad-b0kla__kpi-value--info" />
+                </div>
+                <div className="mg-v2-ad-b0kla__chart-body">
+                  <div className="mg-v2-ad-b0kla__kpi-value mg-v2-ad-b0kla__kpi-value--info">{totalTransactions}건</div>
+                  <span className="mg-v2-ad-b0kla__kpi-label">이번 달</span>
                 </div>
               </div>
             </div>

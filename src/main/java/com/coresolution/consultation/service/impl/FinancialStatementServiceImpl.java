@@ -1,6 +1,8 @@
 package com.coresolution.consultation.service.impl;
 
+import com.coresolution.consultation.entity.CommonCode;
 import com.coresolution.consultation.entity.erp.accounting.Ledger;
+import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.consultation.service.erp.accounting.FinancialStatementService;
 import com.coresolution.consultation.service.erp.accounting.LedgerService;
 import com.coresolution.core.context.TenantContextHolder;
@@ -14,6 +16,7 @@ import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -24,8 +27,11 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class FinancialStatementServiceImpl implements FinancialStatementService {
-    
+
+    private static final String ERP_ACCOUNT_TYPE_GROUP = "ERP_ACCOUNT_TYPE";
+
     private final LedgerService ledgerService;
+    private final CommonCodeService commonCodeService;
     
     @Override
     @Transactional(readOnly = true)
@@ -207,9 +213,9 @@ public class FinancialStatementServiceImpl implements FinancialStatementService 
     }
     
     // ========== 계정 타입 판별 메서드 (회계 계정 기준) ==========
-    // 분류 우선순위: (1) Account.description 키워드 (2) accountNumber 문자열 키워드 (은행 계좌번호와 구분용)
-    // 추후 회계 계정 마스터(공통코드 또는 계정과목 마스터) 연동 권장.
-    
+    // 분류 우선순위: (1) ERP_ACCOUNT_TYPE 공통코드에 연결된 계정 ID (2) Account description/accountNumber 키워드
+    // 표준: docs/standards/ERP_ADVANCEMENT_STANDARD.md, docs/planning/ERP_STATEMENTS_VS_OTHER_REPORTS_LINKAGE_PLAN.md
+
     private static boolean matchesKeyword(String text, String... keywords) {
         if (text == null || text.isEmpty()) {
             return false;
@@ -222,26 +228,78 @@ public class FinancialStatementServiceImpl implements FinancialStatementService 
         }
         return false;
     }
-    
+
+    /**
+     * 테넌트별 ERP_ACCOUNT_TYPE(REVENUE, EXPENSE, CASH) 공통코드 extraData에서 계정 ID 조회
+     */
+    private Long getErpAccountIdByType(String tenantId, String accountType) {
+        if (tenantId == null || tenantId.isEmpty()) {
+            return null;
+        }
+        try {
+            Optional<CommonCode> code = commonCodeService.getTenantCodeByGroupAndValue(
+                    tenantId, ERP_ACCOUNT_TYPE_GROUP, accountType);
+            if (code.isEmpty()) {
+                return null;
+            }
+            String extraData = code.get().getExtraData();
+            if (extraData == null || !extraData.trim().startsWith("{")) {
+                return null;
+            }
+            if (extraData.contains("\"accountId\"")) {
+                String accountIdStr = extraData.replaceAll(".*\"accountId\"\\s*:\\s*(\\d+).*", "$1");
+                if (!accountIdStr.equals(extraData)) {
+                    return Long.parseLong(accountIdStr);
+                }
+            }
+            return null;
+        } catch (Exception e) {
+            log.debug("ERP 계정 타입 ID 조회 실패: tenantId={}, accountType={}, error={}",
+                    tenantId, accountType, e.getMessage());
+            return null;
+        }
+    }
+
     private boolean isRevenueAccount(Ledger ledger) {
+        String tenantId = ledger.getAccount() != null ? ledger.getAccount().getTenantId() : null;
+        if (tenantId != null) {
+            Long revenueAccountId = getErpAccountIdByType(tenantId, "REVENUE");
+            if (revenueAccountId != null && ledger.getAccount().getId().equals(revenueAccountId)) {
+                return true;
+            }
+        }
         String desc = ledger.getAccount().getDescription();
         String num = ledger.getAccount().getAccountNumber();
         return matchesKeyword(desc, "수익", "revenue", "income")
             || matchesKeyword(num, "revenue", "수익");
     }
-    
+
     private boolean isExpenseAccount(Ledger ledger) {
+        String tenantId = ledger.getAccount() != null ? ledger.getAccount().getTenantId() : null;
+        if (tenantId != null) {
+            Long expenseAccountId = getErpAccountIdByType(tenantId, "EXPENSE");
+            if (expenseAccountId != null && ledger.getAccount().getId().equals(expenseAccountId)) {
+                return true;
+            }
+        }
         String desc = ledger.getAccount().getDescription();
         String num = ledger.getAccount().getAccountNumber();
         return matchesKeyword(desc, "비용", "expense", "cost")
             || matchesKeyword(num, "expense", "비용");
     }
-    
+
     private boolean isAssetAccount(Ledger ledger) {
+        String tenantId = ledger.getAccount() != null ? ledger.getAccount().getTenantId() : null;
+        if (tenantId != null) {
+            Long cashAccountId = getErpAccountIdByType(tenantId, "CASH");
+            if (cashAccountId != null && ledger.getAccount().getId().equals(cashAccountId)) {
+                return true;
+            }
+        }
         String desc = ledger.getAccount().getDescription();
         String num = ledger.getAccount().getAccountNumber();
-        return matchesKeyword(desc, "자산", "asset", "유동", "고정", "current", "fixed")
-            || matchesKeyword(num, "asset", "자산");
+        return matchesKeyword(desc, "자산", "asset", "유동", "고정", "current", "fixed", "현금", "cash")
+            || matchesKeyword(num, "asset", "자산", "cash", "현금");
     }
     
     private boolean isLiabilityAccount(Ledger ledger) {

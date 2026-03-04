@@ -525,14 +525,12 @@ const OverviewTab = ({ data }) => {
         <div className="mg-dashboard-stats">
           <StatCard
             icon={<TrendingUp />}
-            value={financialData.incomeByCategory?.CONSULTATION ? 
-              formatCurrency(financialData.incomeByCategory.CONSULTATION) : formatCurrency(0)}
+            value={formatCurrency(financialData.incomeByCategory?.CONSULTATION ?? financialData.incomeByCategory?.['상담료'] ?? 0)}
             label="매핑 입금확인 수입"
           />
           <StatCard
             icon={<TrendingDown />}
-            value={financialData.expenseByCategory?.CONSULTATION ? 
-              formatCurrency(financialData.expenseByCategory.CONSULTATION) : formatCurrency(0)}
+            value={formatCurrency(financialData.expenseByCategory?.CONSULTATION ?? financialData.expenseByCategory?.['기타'] ?? 0)}
             label="매핑 환불처리 지출"
             changeType="negative"
           />

@@ -637,7 +637,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         
         FinancialTransactionRequest request = FinancialTransactionRequest.builder()
                 .transactionType("INCOME")
-                .category("상담료") // 필수 필드: 상담료 수입 거래
+                .category("CONSULTATION") // 필수 필드: 상담료 수입 거래
                 .subcategory("CONSULTATION_FEE") // 상세 분류
                 .amount(java.math.BigDecimal.valueOf(accurateAmount))
                 .description(String.format("상담료 입금 확인 - %s (%s) [정확한금액: %,d원]", 
@@ -710,7 +710,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         
         FinancialTransactionRequest request = FinancialTransactionRequest.builder()
                 .transactionType("INCOME")
-                .category("상담료") // 필수 필드: 상담료 수입 거래
+                .category("CONSULTATION") // 필수 필드: 상담료 수입 거래
                 .subcategory("ADDITIONAL_CONSULTATION") // 추가 회기 세부카테고리
                 .amount(java.math.BigDecimal.valueOf(transactionAmount))
                 .description(String.format("추가 회기 상담료 입금 확인 - %s (%d회 추가, %s) [추가금액: %,d원]", 
@@ -784,6 +784,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         
         FinancialTransactionRequest request = FinancialTransactionRequest.builder()
                 .transactionType("EXPENSE") // 환불은 지출
+                .category("CONSULTATION")
                 .subcategory("CONSULTATION_REFUND") // 환불 세부카테고리
                 .amount(java.math.BigDecimal.valueOf(refundAmount))
                 .description(String.format("상담료 환불 - %s (%d회기 환불, 사유: %s)", 
@@ -825,6 +826,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         
         FinancialTransactionRequest request = FinancialTransactionRequest.builder()
                 .transactionType("EXPENSE") // 환불은 지출
+                .category("CONSULTATION")
                 .subcategory("CONSULTATION_PARTIAL_REFUND") // 부분 환불 세부카테고리
                 .amount(java.math.BigDecimal.valueOf(refundAmount))
                 .description(String.format("상담료 부분 환불 - %s (%d회기 부분 환불, 사유: %s) [남은회기: %d회]", 

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import MGButton from '../common/MGButton';
+import CustomSelect from '../common/CustomSelect';
 // import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import './SalaryConfigModal.css';
 
@@ -141,44 +142,32 @@ const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
             
             <div className="config-item">
               <label>월급여 기산일</label>
-              <select 
-                value={configs.monthlyBaseDay} 
-                onChange={(e) => handleInputChange('monthlyBaseDay', e.target.value)}
-              >
-                {options.monthlyBaseDays.map(option => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+              <CustomSelect
+                value={configs.monthlyBaseDay}
+                onChange={(val) => handleInputChange('monthlyBaseDay', val)}
+                options={options.monthlyBaseDays.map(option => ({ value: option.value, label: option.label }))}
+                placeholder="선택하세요"
+              />
             </div>
 
             <div className="config-item">
               <label>급여 지급일</label>
-              <select 
-                value={configs.paymentDay} 
-                onChange={(e) => handleInputChange('paymentDay', parseInt(e.target.value))}
-              >
-                {options.paymentDays.map(option => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+              <CustomSelect
+                value={configs.paymentDay}
+                onChange={(val) => handleInputChange('paymentDay', Number(val))}
+                options={options.paymentDays.map(option => ({ value: option.value, label: option.label }))}
+                placeholder="선택하세요"
+              />
             </div>
 
             <div className="config-item">
               <label>급여 마감일</label>
-              <select 
-                value={configs.cutoffDay} 
-                onChange={(e) => handleInputChange('cutoffDay', e.target.value)}
-              >
-                {options.cutoffDays.map(option => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+              <CustomSelect
+                value={configs.cutoffDay}
+                onChange={(val) => handleInputChange('cutoffDay', val)}
+                options={options.cutoffDays.map(option => ({ value: option.value, label: option.label }))}
+                placeholder="선택하세요"
+              />
             </div>
           </div>
 
@@ -187,16 +176,12 @@ const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
             
             <div className="config-item">
               <label>배치 실행 주기</label>
-              <select 
-                value={configs.batchCycle} 
-                onChange={(e) => handleInputChange('batchCycle', e.target.value)}
-              >
-                {options.batchCycles.map(option => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+              <CustomSelect
+                value={configs.batchCycle}
+                onChange={(val) => handleInputChange('batchCycle', val)}
+                options={options.batchCycles.map(option => ({ value: option.value, label: option.label }))}
+                placeholder="선택하세요"
+              />
             </div>
           </div>
 
@@ -205,16 +190,12 @@ const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
             
             <div className="config-item">
               <label>계산 방식</label>
-              <select 
-                value={configs.calculationMethod} 
-                onChange={(e) => handleInputChange('calculationMethod', e.target.value)}
-              >
-                {options.calculationMethods.map(option => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+              <CustomSelect
+                value={configs.calculationMethod}
+                onChange={(val) => handleInputChange('calculationMethod', val)}
+                options={options.calculationMethods.map(option => ({ value: option.value, label: option.label }))}
+                placeholder="선택하세요"
+              />
             </div>
           </div>
 

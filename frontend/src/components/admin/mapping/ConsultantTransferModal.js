@@ -3,6 +3,7 @@ import { XCircle, Users, Package, Calendar } from 'lucide-react';
 import notificationManager from '../../../utils/notification';
 import UnifiedModal from '../../common/modals/UnifiedModal';
 import MGButton from '../../common/MGButton';
+import CustomSelect from '../../common/CustomSelect';
 /**
  * 상담사 변경 모달 컴포넌트
 /**
@@ -263,21 +264,25 @@ const ConsultantTransferModal = ({
               <label htmlFor="newConsultantId" className="mg-v2-form-label">
                 새 상담사 <span className="mg-v2-form-label-required">*</span>
               </label>
-              <select
-                id="newConsultantId"
-                name="newConsultantId"
-                value={formData.newConsultantId}
-                onChange={handleInputChange}
+              <CustomSelect
+                value={formData.newConsultantId ?? ''}
+                onChange={(val) => {
+                  setFormData(prev => ({ ...prev, newConsultantId: val }));
+                  if (errors.newConsultantId) {
+                    setErrors(prev => ({ ...prev, newConsultantId: '' }));
+                  }
+                }}
+                options={[
+                  { value: '', label: '상담사를 선택해주세요' },
+                  ...consultants.map(consultant => ({
+                    value: consultant.id,
+                    label: `${consultant.name} (${consultant.email})`
+                  }))
+                ]}
+                placeholder="상담사를 선택해주세요"
                 className={`mg-v2-form-select ${errors.newConsultantId ? 'mg-v2-form-input-error' : ''}`}
-                required
-              >
-                <option value="">상담사를 선택해주세요</option>
-                {consultants.map(consultant => (
-                  <option key={consultant.id} value={consultant.id}>
-                    {consultant.name} ({consultant.email})
-                  </option>
-                ))}
-              </select>
+                error={!!errors.newConsultantId}
+              />
               {errors.newConsultantId && (
                 <span className="mg-v2-form-error">{errors.newConsultantId}</span>
               )}

@@ -6,6 +6,7 @@ import { getAllConsultantsWithStats } from '../../utils/consultantHelper';
 import { useSession } from '../../contexts/SessionContext';
 import { getSpecialtyKoreanName } from '../../utils/codeHelper';
 import UnifiedModal from '../common/modals/UnifiedModal';
+import CustomSelect from '../common/CustomSelect';
 
 /**
  * 상담사 전문분야 관리 모달 컴포넌트
@@ -348,19 +349,20 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
                             </h3>
                             <div className="mg-v2-form-group">
                                 <label className="mg-v2-form-label">필터</label>
-                                <select
+                                <CustomSelect
                                     value={filterSpecialty}
-                                    onChange={(e) => setFilterSpecialty(e.target.value)}
+                                    onChange={(val) => setFilterSpecialty(val)}
+                                    options={[
+                                        { value: '', label: '전체 전문분야' },
+                                        ...specialties.map(specialty => ({
+                                            value: specialty.codeLabel,
+                                            label: getSpecialtyKoreanName(specialty.codeValue) || specialty.codeLabel
+                                        }))
+                                    ]}
+                                    placeholder="전체 전문분야"
                                     disabled={loading}
                                     className="mg-v2-form-select"
-                                >
-                                    <option value="">전체 전문분야</option>
-                                    {specialties.map(specialty => (
-                                        <option key={specialty.codeValue} value={specialty.codeLabel}>
-                                            {getSpecialtyKoreanName(specialty.codeValue) || specialty.codeLabel}
-                                        </option>
-                                    ))}
-                                </select>
+                                />
                             </div>
 
                             <div className="mg-v2-list-container">
@@ -411,20 +413,20 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
                                     <div className="mg-v2-form-group">
                                         <label className="mg-v2-form-label" htmlFor="specialty">전문분야</label>
                                         <div className="mg-v2-form-row">
-                                            <select
-                                                id="specialty"
+                                            <CustomSelect
                                                 value={newSpecialty}
-                                                onChange={(e) => setNewSpecialty(e.target.value)}
+                                                onChange={(val) => setNewSpecialty(val)}
+                                                options={[
+                                                    { value: '', label: '전문분야를 선택하세요' },
+                                                    ...specialties.map(specialty => ({
+                                                        value: specialty.codeLabel,
+                                                        label: getSpecialtyKoreanName(specialty.codeValue) || specialty.codeLabel
+                                                    }))
+                                                ]}
+                                                placeholder="전문분야를 선택하세요"
                                                 disabled={loading}
                                                 className="mg-v2-form-select mg-v2-form-select--flex-1"
-                                            >
-                                                <option value="">전문분야를 선택하세요</option>
-                                                {specialties.map(specialty => (
-                                                    <option key={specialty.codeValue} value={specialty.codeLabel}>
-                                                        {getSpecialtyKoreanName(specialty.codeValue) || specialty.codeLabel}
-                                                    </option>
-                                                ))}
-                                            </select>
+                                            />
                                             <button 
                                                 className="mg-v2-button mg-v2-button--primary"
                                                 onClick={handleSaveSpecialty}

@@ -4,6 +4,7 @@ import notificationManager from '../../../utils/notification';
 import csrfTokenManager from '../../../utils/csrfTokenManager';
 import PackageSelector from '../../common/PackageSelector';
 import UnifiedModal from '../../common/modals/UnifiedModal';
+import CustomSelect from '../../common/CustomSelect';
 
 /**
  * 회기 추가 요청 모달 컴포넌트
@@ -267,16 +268,18 @@ const SessionExtensionModal = ({
                         {/* 결제 방법 선택 */}
                         <div className="mg-v2-form-group">
                             <label className="mg-v2-label">결제 방법</label>
-                            <select
+                            <CustomSelect
                                 className="mg-v2-select"
                                 value={paymentMethod}
-                                onChange={(e) => handlePaymentMethodChange(e.target.value)}
+                                onChange={(val) => handlePaymentMethodChange(val)}
+                                options={[
+                                    { value: '신용카드', label: '신용카드' },
+                                    { value: '계좌이체', label: '계좌이체' },
+                                    { value: '현금', label: '현금' }
+                                ]}
+                                placeholder="선택하세요"
                                 disabled={isLoading}
-                            >
-                                <option value="신용카드">신용카드</option>
-                                <option value="계좌이체">계좌이체</option>
-                                <option value="현금">현금</option>
-                            </select>
+                            />
                         </div>
                         
                         {/* 결제 참조번호 */}

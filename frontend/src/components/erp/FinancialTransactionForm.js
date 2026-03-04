@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import ErpModal from './common/ErpModal';
 import MGButton from '../common/MGButton';
+import CustomSelect from '../common/CustomSelect';
 import './FinancialTransactionForm.css';
 import notificationManager from '../../utils/notification';
 
@@ -157,21 +158,24 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
             <label className="mg-v2-form-label">
               카테고리
             </label>
-            <select
-              name="category"
+            <CustomSelect
               value={formData.category}
-              onChange={handleInputChange}
-              required
+              onChange={(val) => setFormData(prev => ({
+                ...prev,
+                category: val,
+                subcategory: ''
+              }))}
+              options={[
+                { value: '', label: '카테고리를 선택하세요' },
+                ...currentCategories.map(category => ({
+                  value: category.codeValue,
+                  label: category.codeLabel
+                }))
+              ]}
+              placeholder="카테고리를 선택하세요"
               disabled={loadingCodes}
               className="mg-v2-form-select"
-            >
-              <option key="category-default" value="">카테고리를 선택하세요</option>
-              {currentCategories.map(category => (
-                <option key={category.codeValue} value={category.codeValue}>
-                  {category.codeLabel}
-                </option>
-              ))}
-            </select>
+            />
             {loadingCodes && (
               <div className="mg-v2-text-xs mg-v2-text-secondary" style={{ marginTop: 'var(--spacing-xs)' }}>
                 공통 코드 로딩 중...
@@ -184,21 +188,20 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
             <label className="mg-v2-form-label">
               세부 카테고리
             </label>
-            <select
-              name="subcategory"
+            <CustomSelect
               value={formData.subcategory}
-              onChange={handleInputChange}
-              required
+              onChange={(val) => setFormData(prev => ({ ...prev, subcategory: val }))}
+              options={[
+                { value: '', label: '세부 카테고리를 선택하세요' },
+                ...filteredSubcategories.map(subcategory => ({
+                  value: subcategory.codeValue,
+                  label: subcategory.codeLabel
+                }))
+              ]}
+              placeholder="세부 카테고리를 선택하세요"
               disabled={!formData.category || loadingCodes}
               className="mg-v2-form-select"
-            >
-              <option key="subcategory-default" value="">세부 카테고리를 선택하세요</option>
-              {filteredSubcategories.map(subcategory => (
-                <option key={subcategory.codeValue} value={subcategory.codeValue}>
-                  {subcategory.codeLabel}
-                </option>
-              ))}
-            </select>
+            />
             {!formData.category && (
               <div className="mg-v2-text-xs mg-v2-text-secondary" style={{ marginTop: 'var(--spacing-xs)' }}>
                 먼저 카테고리를 선택해주세요

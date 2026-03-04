@@ -5,6 +5,7 @@ import ClientSelectionStep from './steps/ClientSelectionStep';
 import TimeSlotGrid from './TimeSlotGrid';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import MGButton from '../common/MGButton';
+import CustomSelect from '../common/CustomSelect';
 import notificationManager from '../../utils/notification';
 import { useSession } from '../../contexts/SessionContext';
 import StandardizedApi from '../../utils/standardizedApi';
@@ -454,35 +455,31 @@ const ScheduleModalNew = ({
                                     <div className="mg-v2-ad-time-step__form-row">
                                         <div className="mg-v2-ad-time-step__form-group">
                                             <label className="mg-v2-ad-time-step__label" htmlFor="schedule-consultation-type">상담 유형</label>
-                                            <select
-                                                id="schedule-consultation-type"
+                                            <CustomSelect
                                                 value={consultationType}
-                                                onChange={(e) => setConsultationType(e.target.value)}
+                                                onChange={(val) => setConsultationType(val)}
+                                                options={consultationTypeOptions.map(option => ({
+                                                    value: option.value,
+                                                    label: `${option.label} (${option.value})`
+                                                }))}
+                                                placeholder="선택하세요"
                                                 disabled={loadingCodes}
                                                 className="mg-v2-ad-time-step__select"
-                                            >
-                                                {consultationTypeOptions.map(option => (
-                                                    <option key={option.value} value={option.value}>
-                                                        {option.label} ({option.value})
-                                                    </option>
-                                                ))}
-                                            </select>
+                                            />
                                         </div>
                                         <div className="mg-v2-ad-time-step__form-group">
                                             <label className="mg-v2-ad-time-step__label" htmlFor="schedule-duration">상담 시간</label>
-                                            <select
-                                                id="schedule-duration"
+                                            <CustomSelect
                                                 value={selectedDuration}
-                                                onChange={(e) => setSelectedDuration(e.target.value)}
+                                                onChange={(val) => setSelectedDuration(val)}
+                                                options={durationOptions.map(option => ({
+                                                    value: option.value,
+                                                    label: `${option.label} (${option.durationMinutes}분)`
+                                                }))}
+                                                placeholder="선택하세요"
                                                 disabled={loadingCodes}
                                                 className="mg-v2-ad-time-step__select"
-                                            >
-                                                {durationOptions.map(option => (
-                                                    <option key={option.value} value={option.value}>
-                                                        {option.label} ({option.durationMinutes}분)
-                                                    </option>
-                                                ))}
-                                            </select>
+                                            />
                                         </div>
                                     </div>
                                     <TimeSlotGrid

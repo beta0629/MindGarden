@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import UnifiedModal from '../common/modals/UnifiedModal';
+import CustomSelect from '../common/CustomSelect';
 import { useNavigate } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
 import { useNotification } from '../../contexts/NotificationContext';
@@ -247,18 +248,19 @@ const ConsultantMessages = () => {
           </div>
           
           <div className="consultant-messages-filter-container">
-            <select
+            <CustomSelect
               value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
+              onChange={(val) => setFilterStatus(val)}
+              options={[
+                { value: 'ALL', label: '전체 유형' },
+                ...messageTypes.map(type => ({
+                  value: type.value,
+                  label: `${type.icon} ${type.label}`
+                }))
+              ]}
+              placeholder="선택하세요"
               className="consultant-messages-filter-select"
-            >
-              <option value="ALL">전체 유형</option>
-              {messageTypes.map(type => (
-                <option key={type.value} value={type.value}>
-                  {type.icon} {type.label}
-                </option>
-              ))}
-            </select>
+            />
           </div>
 
           <button
@@ -378,32 +380,32 @@ const ConsultantMessages = () => {
         >
           <div className="mg-v2-form-group">
             <label className="mg-v2-label">받는 사람 *</label>
-            <select
+            <CustomSelect
               className="mg-v2-select"
-              value={newMessage.clientId}
-              onChange={(e) => setNewMessage({ ...newMessage, clientId: e.target.value })}
-            >
-              <option key="default-client" value="">내담자를 선택하세요</option>
-              {clients.map((client, index) => (
-                <option key={`client-${client.id}-${index}`} value={client.id}>
-                  {client.name} ({client.email})
-                </option>
-              ))}
-            </select>
+              value={newMessage.clientId ?? ''}
+              onChange={(val) => setNewMessage({ ...newMessage, clientId: val })}
+              options={[
+                { value: '', label: '내담자를 선택하세요' },
+                ...clients.map(client => ({
+                  value: client.id,
+                  label: `${client.name} (${client.email})`
+                }))
+              ]}
+              placeholder="내담자를 선택하세요"
+            />
           </div>
           <div className="mg-v2-form-group">
             <label className="mg-v2-label">메시지 유형</label>
-            <select
+            <CustomSelect
               className="mg-v2-select"
               value={newMessage.messageType}
-              onChange={(e) => setNewMessage({ ...newMessage, messageType: e.target.value })}
-            >
-              {messageTypes.map((type, index) => (
-                <option key={`message-type-${type.value}-${index}`} value={type.value}>
-                  {type.icon} {type.label}
-                </option>
-              ))}
-            </select>
+              onChange={(val) => setNewMessage({ ...newMessage, messageType: val })}
+              options={messageTypes.map(type => ({
+                value: type.value,
+                label: `${type.icon} ${type.label}`
+              }))}
+              placeholder="선택하세요"
+            />
           </div>
           <div className="mg-v2-form-group">
             <label className="mg-v2-label">제목 *</label>

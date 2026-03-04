@@ -4,6 +4,7 @@ import { apiGet, apiPost, apiPut } from '../../utils/ajax';
 import { showNotification } from '../../utils/notification';
 import { getGradeSalaryMap, getGradeKoreanName } from '../../utils/commonCodeUtils';
 import ErpModal from './common/ErpModal';
+import CustomSelect from '../common/CustomSelect';
 import './SalaryProfileFormModal.css';
 
 const SalaryProfileFormModal = ({ 
@@ -344,18 +345,19 @@ const SalaryProfileFormModal = ({
                     {/* 상담사 등급 선택 */}
                     <div className="consultant-profile-form-item">
                         <label className="consultant-profile-form-label">상담사 등급</label>
-                        <select 
+                        <CustomSelect
                             className="consultant-profile-form-select"
                             value={formData.grade}
-                            onChange={(e) => handleGradeChange(e.target.value)}
-                        >
-                            <option key="grade-default" value="">상담사 등급 선택</option>
-                            {gradeTableData.map(grade => (
-                                <option key={grade.code} value={grade.code}>
-                                    {grade.name} ({grade.baseSalary.toLocaleString()}원)
-                                </option>
-                            ))}
-                        </select>
+                            onChange={(val) => handleGradeChange(val)}
+                            options={[
+                                { value: '', label: '상담사 등급 선택' },
+                                ...gradeTableData.map(grade => ({
+                                    value: grade.code,
+                                    label: `${grade.name} (${grade.baseSalary.toLocaleString()}원)`
+                                }))
+                            ]}
+                            placeholder="상담사 등급 선택"
+                        />
                         <p className="consultant-profile-form-help">
                             등급을 변경하면 기본 급여와 옵션 금액이 자동으로 업데이트됩니다.
                         </p>
@@ -411,18 +413,19 @@ const SalaryProfileFormModal = ({
                     {/* 급여 유형 */}
                     <div className="consultant-profile-form-item">
                         <label className="consultant-profile-form-label">급여 유형</label>
-                        <select 
+                        <CustomSelect
                             className="consultant-profile-form-select"
                             value={formData.salaryType}
-                            onChange={(e) => handleInputChange('salaryType', e.target.value)}
-                        >
-                            <option key="salary-type-default" value="">급여 유형 선택</option>
-                            {salaryTypes.map(type => (
-                                <option key={type.codeValue} value={type.codeValue}>
-                                    {type.codeLabel || type.codeValue}
-                                </option>
-                            ))}
-                        </select>
+                            onChange={(val) => handleInputChange('salaryType', val)}
+                            options={[
+                                { value: '', label: '급여 유형 선택' },
+                                ...salaryTypes.map(type => ({
+                                    value: type.codeValue,
+                                    label: type.codeLabel || type.codeValue
+                                }))
+                            ]}
+                            placeholder="급여 유형 선택"
+                        />
                     </div>
 
                     {/* 기본 급여 */}
@@ -441,14 +444,16 @@ const SalaryProfileFormModal = ({
                     {formData.salaryType === 'FREELANCE' && (
                         <div className="consultant-profile-form-item">
                             <label className="consultant-profile-form-label">사업자 등록 여부</label>
-                            <select 
+                            <CustomSelect
                                 className="consultant-profile-form-select"
                                 value={formData.isBusinessRegistered ? 'true' : 'false'}
-                                onChange={(e) => handleInputChange('isBusinessRegistered', e.target.value === 'true')}
-                            >
-                                <option key="business-false" value="false">일반 프리랜서 (3.3% 원천징수만)</option>
-                                <option key="business-true" value="true">사업자 등록 프리랜서 (3.3% 원천징수 + 10% 부가세)</option>
-                            </select>
+                                onChange={(val) => handleInputChange('isBusinessRegistered', val === 'true')}
+                                options={[
+                                    { value: 'false', label: '일반 프리랜서 (3.3% 원천징수만)' },
+                                    { value: 'true', label: '사업자 등록 프리랜서 (3.3% 원천징수 + 10% 부가세)' }
+                                ]}
+                                placeholder="선택하세요"
+                            />
                             <div className="tax-info-text">
                                 • 일반 프리랜서: 원천징수 3.3%만 적용<br/>
                                 • 사업자 등록: 원천징수 3.3% + 부가세 10% 적용
@@ -515,18 +520,19 @@ const SalaryProfileFormModal = ({
                         {selectedOptions.map((option, index) => (
                             <div key={index} className="option-item">
                                 <div className="option-item-field">
-                                    <select
+                                    <CustomSelect
                                         className="consultant-profile-form-select"
                                         value={option.type}
-                                        onChange={(e) => handleOptionChange(index, 'type', e.target.value)}
-                                    >
-                                        <option key="option-type-default" value="">옵션 유형 선택</option>
-                                        {optionTypes.map(opt => (
-                                            <option key={opt.codeValue} value={opt.codeValue}>
-                                                {opt.codeLabel || opt.codeValue}
-                                            </option>
-                                        ))}
-                                    </select>
+                                        onChange={(val) => handleOptionChange(index, 'type', val)}
+                                        options={[
+                                            { value: '', label: '옵션 유형 선택' },
+                                            ...optionTypes.map(opt => ({
+                                                value: opt.codeValue,
+                                                label: opt.codeLabel || opt.codeValue
+                                            }))
+                                        ]}
+                                        placeholder="옵션 유형 선택"
+                                    />
                                 </div>
                                 <div className="option-item-field">
                                     <input

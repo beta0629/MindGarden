@@ -3,6 +3,7 @@ import { TrendingUp, RefreshCw, Calendar, Building, BarChart, Target, DollarSign
 import { apiGet, apiPost } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 import UnifiedModal from '../common/modals/UnifiedModal';
+import CustomSelect from '../common/CustomSelect';
 
 /**
  * 성과 지표 대시보드 모달 컴포넌트
@@ -190,19 +191,20 @@ const PerformanceMetricsModal = ({ isOpen, onClose }) => {
                                     <Building size={16} className="mg-v2-form-label-icon" />
                                     지점
                                 </label>
-                                <select
+                                <CustomSelect
                                     value={branchCode}
-                                    onChange={(e) => setBranchCode(e.target.value)}
+                                    onChange={(val) => setBranchCode(val)}
+                                    options={[
+                                        { value: '', label: '전체 지점' },
+                                        ...branches.map(branch => ({
+                                            value: branch.code,
+                                            label: branch.name
+                                        }))
+                                    ]}
+                                    placeholder="전체 지점"
                                     disabled={loading || recalculating}
                                     className="mg-v2-form-select"
-                                >
-                                    <option value="">전체 지점</option>
-                                    {branches.map(branch => (
-                                        <option key={branch.code} value={branch.code}>
-                                            {branch.name}
-                                        </option>
-                                    ))}
-                                </select>
+                                />
                             </div>
                         </div>
                         <div className="mg-v2-modal-footer">

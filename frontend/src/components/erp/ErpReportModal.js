@@ -3,6 +3,7 @@ import { FileBarChart, XCircle, Download, Calendar, Building, DollarSign, Trendi
 import { apiGet } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 import UnifiedModal from '../common/modals/UnifiedModal';
+import CustomSelect from '../common/CustomSelect';
 
 /**
  * ERP 보고서 모달 컴포넌트
@@ -208,33 +209,35 @@ const ErpReportModal = ({ isOpen, onClose }) => {
                                 />
                             )}
                             {reportType === 'quarterly' && (
-                                <select
-                                    id="period"
+                                <CustomSelect
                                     value={period}
-                                    onChange={(e) => setPeriod(e.target.value)}
+                                    onChange={(val) => setPeriod(val)}
+                                    options={[
+                                        { value: '', label: '분기를 선택하세요' },
+                                        { value: '2025-Q1', label: '2025년 1분기' },
+                                        { value: '2025-Q2', label: '2025년 2분기' },
+                                        { value: '2025-Q3', label: '2025년 3분기' },
+                                        { value: '2025-Q4', label: '2025년 4분기' }
+                                    ]}
+                                    placeholder="분기를 선택하세요"
                                     disabled={loading}
                                     className="mg-v2-form-select"
-                                >
-                                    <option key="quarter-default" value="">분기를 선택하세요</option>
-                                    <option key="2025-Q1" value="2025-Q1">2025년 1분기</option>
-                                    <option key="2025-Q2" value="2025-Q2">2025년 2분기</option>
-                                    <option key="2025-Q3" value="2025-Q3">2025년 3분기</option>
-                                    <option key="2025-Q4" value="2025-Q4">2025년 4분기</option>
-                                </select>
+                                />
                             )}
                             {reportType === 'yearly' && (
-                                <select
-                                    id="period"
+                                <CustomSelect
                                     value={period}
-                                    onChange={(e) => setPeriod(e.target.value)}
+                                    onChange={(val) => setPeriod(val)}
+                                    options={[
+                                        { value: '', label: '연도를 선택하세요' },
+                                        { value: '2025', label: '2025년' },
+                                        { value: '2024', label: '2024년' },
+                                        { value: '2023', label: '2023년' }
+                                    ]}
+                                    placeholder="연도를 선택하세요"
                                     disabled={loading}
                                     className="mg-v2-form-select"
-                                >
-                                    <option key="year-default" value="">연도를 선택하세요</option>
-                                    <option key="2025" value="2025">2025년</option>
-                                    <option key="2024" value="2024">2024년</option>
-                                    <option key="2023" value="2023">2023년</option>
-                                </select>
+                                />
                             )}
                         </div>
 
@@ -243,20 +246,20 @@ const ErpReportModal = ({ isOpen, onClose }) => {
                                 <Building size={20} className="mg-v2-form-label-icon" />
                                 지점 선택
                             </label>
-                            <select
-                                id="branch"
+                            <CustomSelect
                                 value={branchCode}
-                                onChange={(e) => setBranchCode(e.target.value)}
+                                onChange={(val) => setBranchCode(val)}
+                                options={[
+                                    { value: '', label: '전체 지점' },
+                                    ...branches.map(branch => ({
+                                        value: branch.code,
+                                        label: branch.name
+                                    }))
+                                ]}
+                                placeholder="전체 지점"
                                 disabled={loading}
                                 className="mg-v2-form-select"
-                            >
-                                <option key="branch-default" value="">전체 지점</option>
-                                {branches.map(branch => (
-                                    <option key={branch.code} value={branch.code}>
-                                        {branch.name}
-                                    </option>
-                                ))}
-                            </select>
+                            />
                         </div>
 
                         <div className="mg-v2-modal-footer">

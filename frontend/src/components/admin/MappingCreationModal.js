@@ -18,6 +18,7 @@ import notificationManager from '../../utils/notification';
 import SearchInput from '../dashboard-v2/atoms/SearchInput';
 import Button from '../ui/Button/Button';
 import Avatar from '../common/Avatar';
+import CustomSelect from '../common/CustomSelect';
 import { DEFAULT_MAPPING_CONFIG } from '../../constants/mapping';
 import '../schedule/ScheduleB0KlA.css';
 import './MappingCreationModal.css';
@@ -530,26 +531,30 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                 placeholder="내담자 이름 또는 이메일로 검색..."
               />
               <div className="mg-v2-mapping-creation-modal__filter-row">
-                <select
+                <CustomSelect
                   value={clientFilterStatus}
-                  onChange={e => setClientFilterStatus(e.target.value)}
+                  onChange={(val) => setClientFilterStatus(val)}
+                  options={[
+                    { value: 'ALL', label: '전체' },
+                    { value: 'NO_MAPPING', label: '매칭 없음' },
+                    { value: 'ACTIVE', label: '활성' },
+                    { value: 'INACTIVE', label: '비활성' },
+                    { value: 'TERMINATED', label: '종료됨' }
+                  ]}
+                  placeholder="선택하세요"
                   className="mg-v2-mapping-creation-modal__select"
-                >
-                  <option value="ALL">전체</option>
-                  <option value="NO_MAPPING">매칭 없음</option>
-                  <option value="ACTIVE">활성</option>
-                  <option value="INACTIVE">비활성</option>
-                  <option value="TERMINATED">종료됨</option>
-                </select>
-                <select
+                />
+                <CustomSelect
                   value={clientSortBy}
-                  onChange={e => setClientSortBy(e.target.value)}
+                  onChange={(val) => setClientSortBy(val)}
+                  options={[
+                    { value: 'name', label: '이름순' },
+                    { value: 'email', label: '이메일순' },
+                    { value: 'createdAt', label: '등록일순' }
+                  ]}
+                  placeholder="선택하세요"
                   className="mg-v2-mapping-creation-modal__select"
-                >
-                  <option value="name">이름순</option>
-                  <option value="email">이메일순</option>
-                  <option value="createdAt">등록일순</option>
-                </select>
+                />
               </div>
               <span className="mg-v2-mapping-creation-modal__count">{filteredClients.length}명</span>
             </div>
@@ -608,24 +613,21 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
               </div>
               <div className="mg-v2-mapping-creation-modal__form-group">
                 <label>결제 방법</label>
-                <select
+                <CustomSelect
                   value={paymentInfo.paymentMethod}
-                  onChange={e => {
-                    const m = e.target.value;
+                  onChange={(m) => {
                     setPaymentInfo(prev => ({ ...prev, paymentMethod: m, paymentReference: generateReferenceNumber(m) }));
                   }}
+                  options={paymentMethodOptions.length
+                    ? paymentMethodOptions.map(m => ({ value: m.value, label: m.label }))
+                    : [
+                        { value: 'BANK_TRANSFER', label: '계좌이체' },
+                        { value: 'CARD', label: '신용카드' },
+                        { value: 'CASH', label: '현금' }
+                      ]}
+                  placeholder="선택하세요"
                   className="mg-v2-mapping-creation-modal__input"
-                >
-                  {paymentMethodOptions.length ? paymentMethodOptions.map(m => (
-                    <option key={m.value} value={m.value}>{m.label}</option>
-                  )) : (
-                    <>
-                      <option value="BANK_TRANSFER">계좌이체</option>
-                      <option value="CARD">신용카드</option>
-                      <option value="CASH">현금</option>
-                    </>
-                  )}
-                </select>
+                />
               </div>
               <div className="mg-v2-mapping-creation-modal__form-group">
                 <label>결제 참조번호</label>
@@ -639,15 +641,13 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
               </div>
               <div className="mg-v2-mapping-creation-modal__form-group">
                 <label>담당 업무</label>
-                <select
+                <CustomSelect
                   value={paymentInfo.responsibility}
-                  onChange={e => setPaymentInfo(prev => ({ ...prev, responsibility: e.target.value }))}
+                  onChange={(val) => setPaymentInfo(prev => ({ ...prev, responsibility: val }))}
+                  options={responsibilityOptions.map(r => ({ value: r.label, label: r.label }))}
+                  placeholder="선택하세요"
                   className="mg-v2-mapping-creation-modal__input"
-                >
-                  {responsibilityOptions.map(r => (
-                    <option key={r.value} value={r.label}>{r.label}</option>
-                  ))}
-                </select>
+                />
               </div>
               <div className="mg-v2-mapping-creation-modal__form-group">
                 <label>특별 고려사항</label>

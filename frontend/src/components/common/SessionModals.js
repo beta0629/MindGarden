@@ -12,6 +12,7 @@
   Z_INDEX,
   PACKAGE_TYPES
 } from '../../constants/sessionManagement';
+import CustomSelect from './CustomSelect';
 
 // 모달 스타일
 const modalStyles = {
@@ -249,19 +250,19 @@ export const AddSessionModal = ({
           <form onSubmit={handleSubmit}>
             <div style={modalStyles.formGroup}>
               <label style={modalStyles.label}>패키지 선택</label>
-              <select
-                style={modalStyles.select}
-                value={packageOptions.find(pkg => pkg.name === formData.packageName)?.value || ''}
-                onChange={(e) => handlePackageChange(e.target.value)}
-                required
-              >
-                <option value="">패키지를 선택해주세요</option>
-                {packageOptions.map((pkg) => (
-                  <option key={pkg.id} value={pkg.value}>
-                    {pkg.name} - {pkg.price.toLocaleString()}원
-                  </option>
-                ))}
-              </select>
+              <CustomSelect
+                value={packageOptions.find(pkg => pkg.name === formData.packageName)?.value ?? ''}
+                onChange={(val) => handlePackageChange(val)}
+                options={[
+                  { value: '', label: '패키지를 선택해주세요' },
+                  ...packageOptions.map((pkg) => ({
+                    value: pkg.value,
+                    label: `${pkg.name} - ${pkg.price.toLocaleString()}원`
+                  }))
+                ]}
+                placeholder="패키지를 선택해주세요"
+                className=""
+              />
             </div>
 
             <div style={modalStyles.formGroup}>

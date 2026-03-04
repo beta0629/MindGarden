@@ -10,6 +10,7 @@ import { sessionManager } from '../../utils/sessionManager';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import MGCard from '../common/MGCard';
 import UnifiedModal from '../common/modals/UnifiedModal';
+import CustomSelect from '../common/CustomSelect';
 import '../../styles/unified-design-tokens.css';
 
 /**
@@ -172,26 +173,26 @@ const AdminMessages = () => {
             </div>
 
             {/* 유형 필터 */}
-            <select
+            <CustomSelect
               className="mg-v2-select mg-v2-message-type-filter"
               value={filterType}
-              onChange={(e) => setFilterType(e.target.value)}
-            >
-              {Object.entries(MESSAGE_TYPES).map(([value, { label }]) => (
-                <option key={value} value={value}>{label}</option>
-              ))}
-            </select>
+              onChange={(val) => setFilterType(val)}
+              options={Object.entries(MESSAGE_TYPES).map(([value, { label }]) => ({ value, label }))}
+              placeholder="선택하세요"
+            />
 
             {/* 상태 필터 */}
-            <select
+            <CustomSelect
               className="mg-v2-select mg-v2-message-status-filter"
               value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-            >
-              <option value="ALL">전체 상태</option>
-              <option value="UNREAD">읽지 않음</option>
-              <option value="READ">읽음</option>
-            </select>
+              onChange={(val) => setFilterStatus(val)}
+              options={[
+                { value: 'ALL', label: '전체 상태' },
+                { value: 'UNREAD', label: '읽지 않음' },
+                { value: 'READ', label: '읽음' }
+              ]}
+              placeholder="선택하세요"
+            />
           </div>
         </div>
 

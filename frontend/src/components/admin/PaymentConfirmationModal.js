@@ -4,6 +4,7 @@ import { apiGet } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import MGButton from '../common/MGButton';
+import CustomSelect from '../common/CustomSelect';
 import './PaymentConfirmationModal.css';
 
 /**
@@ -378,18 +379,17 @@ const PaymentConfirmationModal = ({
             
             <div className="mg-v2-form-group">
               <label className="mg-v2-label">결제 방법</label>
-              <select 
-                value={paymentData.method} 
-                onChange={(e) => handlePaymentDataChange('method', e.target.value)}
+              <CustomSelect
+                value={paymentData.method}
+                onChange={(val) => handlePaymentDataChange('method', val)}
+                options={paymentMethodOptions.map(option => ({
+                  value: option.value,
+                  label: `${option.icon} ${option.label}`
+                }))}
+                placeholder="선택하세요"
                 className="mg-v2-select"
                 disabled={loadingCodes}
-              >
-                {paymentMethodOptions.map(option => (
-                  <option key={option.value} value={option.value}>
-                    {option.icon} {option.label}
-                  </option>
-                ))}
-              </select>
+              />
             </div>
 
             <div className="mg-v2-form-group">

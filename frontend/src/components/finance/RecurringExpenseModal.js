@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { RefreshCw, XCircle, Plus, Edit2, Trash2, DollarSign, Calendar, FileText } from 'lucide-react';
 import UnifiedModal from '../common/modals/UnifiedModal';
+import CustomSelect from '../common/CustomSelect';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 
@@ -419,17 +420,18 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
                                             <label htmlFor="frequency" className="mg-v2-form-label">
                                                 주기 <span className="mg-v2-form-label-required">*</span>
                                             </label>
-                                            <select
-                                                id="frequency"
+                                            <CustomSelect
                                                 value={formData.frequency}
-                                                onChange={(e) => handleInputChange('frequency', e.target.value)}
+                                                onChange={(val) => handleInputChange('frequency', val)}
+                                                options={[
+                                                    { value: 'monthly', label: '월간' },
+                                                    { value: 'quarterly', label: '분기별' },
+                                                    { value: 'yearly', label: '연간' }
+                                                ]}
+                                                placeholder="선택하세요"
                                                 disabled={loading}
                                                 className="mg-v2-form-select"
-                                            >
-                                                <option value="monthly">월간</option>
-                                                <option value="quarterly">분기별</option>
-                                                <option value="yearly">연간</option>
-                                            </select>
+                                            />
                                         </div>
                                     </div>
 
@@ -437,20 +439,20 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
                                         <label htmlFor="category" className="mg-v2-form-label">
                                             카테고리 <span className="mg-v2-form-label-required">*</span>
                                         </label>
-                                        <select
-                                            id="category"
+                                        <CustomSelect
                                             value={formData.category}
-                                            onChange={(e) => handleInputChange('category', e.target.value)}
+                                            onChange={(val) => handleInputChange('category', val)}
+                                            options={[
+                                                { value: '', label: '카테고리를 선택하세요' },
+                                                ...categories.map(category => ({
+                                                    value: category.codeLabel,
+                                                    label: category.codeLabel
+                                                }))
+                                            ]}
+                                            placeholder="카테고리를 선택하세요"
                                             disabled={loading}
                                             className="mg-v2-form-select"
-                                        >
-                                            <option value="">카테고리를 선택하세요</option>
-                                            {categories.map(category => (
-                                                <option key={category.codeValue} value={category.codeLabel}>
-                                                    {category.codeLabel}
-                                                </option>
-                                            ))}
-                                        </select>
+                                        />
                                     </div>
 
                                     <div className="mg-v2-form-row">

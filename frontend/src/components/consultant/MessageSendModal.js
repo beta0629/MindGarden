@@ -5,6 +5,7 @@ import { apiPost, apiGet } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import Button from '../ui/Button/Button';
+import CustomSelect from '../common/CustomSelect';
 
 /**
  * 내담자 메시지 전송 모달 컴포넌트
@@ -221,18 +222,17 @@ const MessageSendModal = ({
 
           <div className="mg-v2-form-group">
             <label className="mg-v2-form-label">메시지 타입</label>
-            <select
-              name="messageType"
+            <CustomSelect
               value={formData.messageType}
-              onChange={handleInputChange}
+              onChange={(val) => setFormData(prev => ({ ...prev, messageType: val }))}
+              options={messageTypeOptions.map(type => ({
+                value: type.value,
+                label: `${type.icon} ${type.label} (${type.value})`
+              }))}
+              placeholder="선택하세요"
               className="mg-v2-form-select"
-            >
-              {messageTypeOptions.map(type => (
-                <option key={type.value} value={type.value}>
-                  {type.icon} {type.label} ({type.value})
-                </option>
-              ))}
-            </select>
+              disabled={loadingCodes}
+            />
           </div>
 
           <div className="mg-v2-form-group">

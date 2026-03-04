@@ -4,6 +4,7 @@ import MGButton from '../../common/MGButton';
 import ProfileImageInput from '../../common/ProfileImageInput';
 import { apiGet } from '../../../utils/ajax';
 import UnifiedModal from '../../common/modals/UnifiedModal';
+import CustomSelect from '../../common/CustomSelect';
 
 /**
  * 내담자 모달 컴포넌트
@@ -337,43 +338,38 @@ const ClientModal = ({
                 )}
                 <div className="mg-v2-form-group">
                     <label htmlFor="status" className="mg-v2-form-label">상태</label>
-                    <select
-                        id="status"
-                        name="status"
+                    <CustomSelect
                         value={safeFormData.status}
-                        onChange={handleInputChange}
+                        onChange={(val) => setFormData(prev => ({ ...prev, status: val }))}
+                        options={userStatusOptions && userStatusOptions.length > 0
+                            ? userStatusOptions.map(option => ({
+                                value: option.codeValue || option.code,
+                                label: option.codeLabel || option.name || option.codeValue || option.code
+                              }))
+                            : [
+                                { value: 'ACTIVE', label: '활성' },
+                                { value: 'INACTIVE', label: '비활성' },
+                                { value: 'PENDING', label: '대기' }
+                              ]}
+                        placeholder="선택하세요"
                         className="mg-v2-form-select"
-                    >
-                        {userStatusOptions && userStatusOptions.length > 0 ? (
-                            userStatusOptions.map(option => (
-                                <option key={option.codeValue || option.code} value={option.codeValue || option.code}>
-                                    {option.codeLabel || option.name || option.codeValue || option.code}
-                                </option>
-                            ))
-                        ) : (
-                            <>
-                                <option value="ACTIVE">활성</option>
-                                <option value="INACTIVE">비활성</option>
-                                <option value="PENDING">대기</option>
-                            </>
-                        )}
-                    </select>
+                    />
                 </div>
                 <div className="mg-v2-form-group">
                     <label htmlFor="grade" className="mg-v2-form-label">등급</label>
-                    <select
-                        id="grade"
-                        name="grade"
+                    <CustomSelect
                         value={safeFormData.grade}
-                        onChange={handleInputChange}
+                        onChange={(val) => setFormData(prev => ({ ...prev, grade: val }))}
+                        options={[
+                            { value: 'BRONZE', label: '브론즈' },
+                            { value: 'SILVER', label: '실버' },
+                            { value: 'GOLD', label: '골드' },
+                            { value: 'PLATINUM', label: '플래티넘' },
+                            { value: 'DIAMOND', label: '다이아몬드' }
+                        ]}
+                        placeholder="선택하세요"
                         className="mg-v2-form-select"
-                    >
-                        <option value="BRONZE">브론즈</option>
-                        <option value="SILVER">실버</option>
-                        <option value="GOLD">골드</option>
-                        <option value="PLATINUM">플래티넘</option>
-                        <option value="DIAMOND">다이아몬드</option>
-                    </select>
+                    />
                 </div>
                 <div className="mg-v2-form-group">
                     <label htmlFor="notes" className="mg-v2-form-label">메모</label>

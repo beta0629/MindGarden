@@ -15,6 +15,7 @@ import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ERP_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import FinancialTransactionForm from './FinancialTransactionForm';
 import QuickExpenseForm from './QuickExpenseForm';
+import ErpModal from './common/ErpModal';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import StatCard from '../ui/Card/StatCard';
 import DashboardSection from '../layout/DashboardSection';
@@ -2284,68 +2285,62 @@ const JournalEntryDetailModal = ({ entry, onClose, onRefresh }) => {
     }
   };
 
-  return ReactDOM.createPortal(
-    <div className="mg-v2-modal-overlay" onClick={onClose}>
-      <div className="mg-v2-modal-content" style={{ maxWidth: 'min(95vw, 1000px)' }} onClick={(e) => e.stopPropagation()}>
-        <div className="mg-v2-modal-header">
-          <h3 className="mg-v2-modal-title">분개 상세</h3>
-          <button className="mg-v2-modal-close" onClick={onClose}>×</button>
-        </div>
-        <div className="mg-v2-modal-body">
-          {loading ? (
-            <UnifiedLoading text="분개 상세를 불러오는 중..." size="medium" type="inline" />
-          ) : entryDetail ? (
-            <div className="mg-v2-form-group">
-              <div className="mg-v2-mb-md">
-                <label className="mg-v2-label">분개번호</label>
-                <div className="mg-v2-text">{entryDetail.entryNumber}</div>
-              </div>
-              <div className="mg-v2-mb-md">
-                <label className="mg-v2-label">분개일자</label>
-                <div className="mg-v2-text">{entryDetail.entryDate}</div>
-              </div>
-              <div className="mg-v2-mb-md">
-                <label className="mg-v2-label">상태</label>
-                <div className="mg-v2-text">
-                  <span className={`mg-v2-badge mg-v2-badge--${entryDetail.entryStatus?.toLowerCase() || 'default'}`}>
-                    {entryDetail.entryStatus === 'DRAFT' ? '초안' : 
-                     entryDetail.entryStatus === 'APPROVED' ? '승인됨' : 
-                     entryDetail.entryStatus === 'POSTED' ? '전기됨' : entryDetail.entryStatus}
-                  </span>
-                </div>
-              </div>
-              {entryDetail.lines && entryDetail.lines.length > 0 && (
-                <div className="mg-v2-mb-md">
-                  <label className="mg-v2-label">분개 라인</label>
-                  <div className="mg-v2-table-container">
-                    <table className="mg-table" data-label="분개 라인 목록">
-                      <thead>
-                        <tr>
-                          <th>계정</th>
-                          <th>차변</th>
-                          <th>대변</th>
-                          <th>설명</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {entryDetail.lines.map((line, idx) => (
-                          <tr key={idx}>
-                            <td data-label="계정">{line.accountName || line.accountId}</td>
-                            <td data-label="차변">{formatCurrency(line.debitAmount || 0)}</td>
-                            <td data-label="대변">{formatCurrency(line.creditAmount || 0)}</td>
-                            <td data-label="설명">{line.description || '-'}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
+  return (
+    <>
+      <ErpModal isOpen={true} onClose={onClose} title="분개 상세" size="xl">
+        {loading ? (
+          <UnifiedLoading text="분개 상세를 불러오는 중..." size="medium" type="inline" />
+        ) : entryDetail ? (
+          <div className="mg-v2-form-group">
+            <div className="mg-v2-mb-md">
+              <label className="mg-v2-label">분개번호</label>
+              <div className="mg-v2-text">{entryDetail.entryNumber}</div>
             </div>
-          ) : (
-            <p className="mg-v2-text-center mg-v2-text-secondary">분개 상세를 불러올 수 없습니다.</p>
-          )}
-        </div>
+            <div className="mg-v2-mb-md">
+              <label className="mg-v2-label">분개일자</label>
+              <div className="mg-v2-text">{entryDetail.entryDate}</div>
+            </div>
+            <div className="mg-v2-mb-md">
+              <label className="mg-v2-label">상태</label>
+              <div className="mg-v2-text">
+                <span className={`mg-v2-badge mg-v2-badge--${entryDetail.entryStatus?.toLowerCase() || 'default'}`}>
+                  {entryDetail.entryStatus === 'DRAFT' ? '초안' :
+                   entryDetail.entryStatus === 'APPROVED' ? '승인됨' :
+                   entryDetail.entryStatus === 'POSTED' ? '전기됨' : entryDetail.entryStatus}
+                </span>
+              </div>
+            </div>
+            {entryDetail.lines && entryDetail.lines.length > 0 && (
+              <div className="mg-v2-mb-md">
+                <label className="mg-v2-label">분개 라인</label>
+                <div className="mg-v2-table-container">
+                  <table className="mg-table" data-label="분개 라인 목록">
+                    <thead>
+                      <tr>
+                        <th>계정</th>
+                        <th>차변</th>
+                        <th>대변</th>
+                        <th>설명</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {entryDetail.lines.map((line, idx) => (
+                        <tr key={idx}>
+                          <td data-label="계정">{line.accountName || line.accountId}</td>
+                          <td data-label="차변">{formatCurrency(line.debitAmount || 0)}</td>
+                          <td data-label="대변">{formatCurrency(line.creditAmount || 0)}</td>
+                          <td data-label="설명">{line.description || '-'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          <p className="mg-v2-text-center mg-v2-text-secondary">분개 상세를 불러올 수 없습니다.</p>
+        )}
         <div className="mg-v2-modal-footer">
           <MGButton variant="secondary" onClick={onClose}>닫기</MGButton>
           {entryDetail && entryDetail.entryStatus === 'DRAFT' && (
@@ -2357,9 +2352,7 @@ const JournalEntryDetailModal = ({ entry, onClose, onRefresh }) => {
             </MGButton>
           )}
         </div>
-      </div>
-
-      {/* 분개 수정 모달 */}
+      </ErpModal>
       {showEditModal && entryDetail && (
         <JournalEntryEditModal
           entry={entryDetail}
@@ -2367,8 +2360,7 @@ const JournalEntryDetailModal = ({ entry, onClose, onRefresh }) => {
           onRefresh={() => { onRefresh(); onClose(); }}
         />
       )}
-    </div>,
-    document.body
+    </>
   );
 };
 
@@ -2496,180 +2488,171 @@ const JournalEntryCreateModal = ({ onClose, onRefresh }) => {
   const { totalDebit, totalCredit } = calculateTotals();
   const isBalanced = totalDebit === totalCredit;
 
-  return ReactDOM.createPortal(
-    <div className="mg-v2-modal-overlay" onClick={onClose}>
-      <div className="mg-v2-modal-content" style={{ maxWidth: 'min(95vw, 1000px)' }} onClick={(e) => e.stopPropagation()}>
-        <div className="mg-v2-modal-header">
-          <h3 className="mg-v2-modal-title">분개 생성</h3>
-          <button className="mg-v2-modal-close" onClick={onClose}>×</button>
-        </div>
-        <div className="mg-v2-modal-body">
-          {/* 분개 작성 가이드 */}
-          <div style={{
-            backgroundColor: 'var(--color-info-light)',
-            borderRadius: 'var(--border-radius-sm)',
-            padding: 'var(--spacing-sm)',
-            marginBottom: 'var(--spacing-md)',
-            fontSize: 'var(--font-size-sm)',
-            color: 'var(--color-text-secondary)',
-            lineHeight: 1.5
-          }}>
-            <div style={{ display: 'flex', alignItems: 'start', gap: 'var(--spacing-xs)' }}>
-              <Info size={16} style={{ marginTop: '2px', flexShrink: 0 }} />
-              <div>
-                <strong style={{ color: 'var(--color-text-primary)' }}>분개 작성 가이드:</strong>
-                <ul style={{ margin: 'var(--spacing-xs) 0 0 0', paddingLeft: 'var(--spacing-md)' }}>
-                  <li>차변과 대변은 한 라인에 동시에 입력할 수 없습니다.</li>
-                  <li>차변 합계와 대변 합계가 반드시 일치해야 합니다.</li>
-                  <li>최소 2개 이상의 라인이 필요합니다.</li>
-                </ul>
-              </div>
-            </div>
+  return (
+    <ErpModal isOpen={true} onClose={onClose} title="분개 생성" size="xl">
+      {/* 분개 작성 가이드 */}
+      <div style={{
+        backgroundColor: 'var(--color-info-light)',
+        borderRadius: 'var(--border-radius-sm)',
+        padding: 'var(--spacing-sm)',
+        marginBottom: 'var(--spacing-md)',
+        fontSize: 'var(--font-size-sm)',
+        color: 'var(--color-text-secondary)',
+        lineHeight: 1.5
+      }}>
+        <div style={{ display: 'flex', alignItems: 'start', gap: 'var(--spacing-xs)' }}>
+          <Info size={16} style={{ marginTop: '2px', flexShrink: 0 }} />
+          <div>
+            <strong style={{ color: 'var(--color-text-primary)' }}>분개 작성 가이드:</strong>
+            <ul style={{ margin: 'var(--spacing-xs) 0 0 0', paddingLeft: 'var(--spacing-md)' }}>
+              <li>차변과 대변은 한 라인에 동시에 입력할 수 없습니다.</li>
+              <li>차변 합계와 대변 합계가 반드시 일치해야 합니다.</li>
+              <li>최소 2개 이상의 라인이 필요합니다.</li>
+            </ul>
           </div>
-
-          <div className="mg-v2-form-group">
-            <div className="mg-v2-mb-md">
-              <label className="mg-v2-label">
-                분개일자 <span className="mg-v2-text-danger">*</span>
-              </label>
-              <input
-                type="date"
-                className={`mg-v2-input ${errors.entryDate ? 'mg-v2-input-error' : ''}`}
-                value={formData.entryDate}
-                onChange={(e) => setFormData({ ...formData, entryDate: e.target.value })}
-              />
-              {errors.entryDate && <div className="mg-v2-text-danger mg-v2-text-xs">{errors.entryDate}</div>}
-            </div>
-
-            <div className="mg-v2-mb-md">
-              <label className="mg-v2-label">설명</label>
-              <input
-                type="text"
-                className="mg-v2-input"
-                placeholder="분개 설명을 입력하세요"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              />
-            </div>
-
-            <div className="mg-v2-mb-md">
-              <div className="mg-v2-flex mg-v2-justify-between mg-v2-mb-sm">
-                <label className="mg-v2-label">분개 라인</label>
-                <MGButton variant="outline" size="small" onClick={handleAddLine}>
-                  라인 추가
-                </MGButton>
-              </div>
-              
-              <div className="mg-v2-table-container">
-                <table className="mg-table" data-label="분개 라인 입력">
-                  <thead>
-                    <tr>
-                      <th>계정 ID</th>
-                      <th>차변</th>
-                      <th>대변</th>
-                      <th>설명</th>
-                      <th>작업</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {lines.map((line, index) => (
-                      <tr key={index}>
-                        <td data-label="계정 ID">
-                          <input
-                            type="number"
-                            className={`mg-v2-input mg-v2-input-sm ${errors[`line_${index}_accountId`] ? 'mg-v2-input-error' : ''}`}
-                            placeholder="계정 ID"
-                            value={line.accountId}
-                            onChange={(e) => handleLineChange(index, 'accountId', e.target.value)}
-                          />
-                          {errors[`line_${index}_accountId`] && (
-                            <div className="mg-v2-text-danger mg-v2-text-xs">{errors[`line_${index}_accountId`]}</div>
-                          )}
-                        </td>
-                        <td data-label="차변">
-                          <input
-                            type="number"
-                            className={`mg-v2-input mg-v2-input-sm ${errors[`line_${index}_amount`] ? 'mg-v2-input-error' : ''}`}
-                            placeholder="0"
-                            value={line.debitAmount}
-                            onChange={(e) => handleLineChange(index, 'debitAmount', e.target.value)}
-                          />
-                        </td>
-                        <td data-label="대변">
-                          <input
-                            type="number"
-                            className={`mg-v2-input mg-v2-input-sm ${errors[`line_${index}_amount`] ? 'mg-v2-input-error' : ''}`}
-                            placeholder="0"
-                            value={line.creditAmount}
-                            onChange={(e) => handleLineChange(index, 'creditAmount', e.target.value)}
-                          />
-                          {errors[`line_${index}_amount`] && (
-                            <div className="mg-v2-text-danger mg-v2-text-xs">{errors[`line_${index}_amount`]}</div>
-                          )}
-                        </td>
-                        <td data-label="설명">
-                          <input
-                            type="text"
-                            className="mg-v2-input mg-v2-input-sm"
-                            placeholder="설명"
-                            value={line.description}
-                            onChange={(e) => handleLineChange(index, 'description', e.target.value)}
-                          />
-                        </td>
-                        <td data-label="작업">
-                          {lines.length > 2 && (
-                            <MGButton
-                              variant="danger"
-                              size="small"
-                              onClick={() => handleRemoveLine(index)}
-                            >
-                              삭제
-                            </MGButton>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                  <tfoot>
-                    <tr>
-                      <td className="mg-v2-font-weight-bold">합계</td>
-                      <td className={`mg-v2-font-weight-bold ${isBalanced ? 'mg-v2-text-success' : 'mg-v2-text-danger'}`}>
-                        {formatCurrency(totalDebit)}
-                      </td>
-                      <td className={`mg-v2-font-weight-bold ${isBalanced ? 'mg-v2-text-success' : 'mg-v2-text-danger'}`}>
-                        {formatCurrency(totalCredit)}
-                      </td>
-                      <td colSpan="2">
-                        {errors.balance && (
-                          <div className="mg-v2-text-danger mg-v2-text-xs">{errors.balance}</div>
-                        )}
-                        {isBalanced && !errors.balance && (
-                          <div className="mg-v2-text-success mg-v2-text-xs">✓ 차변/대변 균형</div>
-                        )}
-                      </td>
-                    </tr>
-                  </tfoot>
-                </table>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="mg-v2-modal-footer">
-          <MGButton variant="secondary" onClick={onClose} disabled={loading}>
-            취소
-          </MGButton>
-          <MGButton 
-            variant="primary" 
-            onClick={handleSubmit} 
-            disabled={loading || !isBalanced}
-            loading={loading}
-          >
-            저장
-          </MGButton>
         </div>
       </div>
-    </div>,
-    document.body
+
+      <div className="mg-v2-form-group">
+        <div className="mg-v2-mb-md">
+          <label className="mg-v2-label">
+            분개일자 <span className="mg-v2-text-danger">*</span>
+          </label>
+          <input
+            type="date"
+            className={`mg-v2-input ${errors.entryDate ? 'mg-v2-input-error' : ''}`}
+            value={formData.entryDate}
+            onChange={(e) => setFormData({ ...formData, entryDate: e.target.value })}
+          />
+          {errors.entryDate && <div className="mg-v2-text-danger mg-v2-text-xs">{errors.entryDate}</div>}
+        </div>
+
+        <div className="mg-v2-mb-md">
+          <label className="mg-v2-label">설명</label>
+          <input
+            type="text"
+            className="mg-v2-input"
+            placeholder="분개 설명을 입력하세요"
+            value={formData.description}
+            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+          />
+        </div>
+
+        <div className="mg-v2-mb-md">
+          <div className="mg-v2-flex mg-v2-justify-between mg-v2-mb-sm">
+            <label className="mg-v2-label">분개 라인</label>
+            <MGButton variant="outline" size="small" onClick={handleAddLine}>
+              라인 추가
+            </MGButton>
+          </div>
+          
+          <div className="mg-v2-table-container">
+            <table className="mg-table" data-label="분개 라인 입력">
+              <thead>
+                <tr>
+                  <th>계정 ID</th>
+                  <th>차변</th>
+                  <th>대변</th>
+                  <th>설명</th>
+                  <th>작업</th>
+                </tr>
+              </thead>
+              <tbody>
+                {lines.map((line, index) => (
+                  <tr key={index}>
+                    <td data-label="계정 ID">
+                      <input
+                        type="number"
+                        className={`mg-v2-input mg-v2-input-sm ${errors[`line_${index}_accountId`] ? 'mg-v2-input-error' : ''}`}
+                        placeholder="계정 ID"
+                        value={line.accountId}
+                        onChange={(e) => handleLineChange(index, 'accountId', e.target.value)}
+                      />
+                      {errors[`line_${index}_accountId`] && (
+                        <div className="mg-v2-text-danger mg-v2-text-xs">{errors[`line_${index}_accountId`]}</div>
+                      )}
+                    </td>
+                    <td data-label="차변">
+                      <input
+                        type="number"
+                        className={`mg-v2-input mg-v2-input-sm ${errors[`line_${index}_amount`] ? 'mg-v2-input-error' : ''}`}
+                        placeholder="0"
+                        value={line.debitAmount}
+                        onChange={(e) => handleLineChange(index, 'debitAmount', e.target.value)}
+                      />
+                    </td>
+                    <td data-label="대변">
+                      <input
+                        type="number"
+                        className={`mg-v2-input mg-v2-input-sm ${errors[`line_${index}_amount`] ? 'mg-v2-input-error' : ''}`}
+                        placeholder="0"
+                        value={line.creditAmount}
+                        onChange={(e) => handleLineChange(index, 'creditAmount', e.target.value)}
+                      />
+                      {errors[`line_${index}_amount`] && (
+                        <div className="mg-v2-text-danger mg-v2-text-xs">{errors[`line_${index}_amount`]}</div>
+                      )}
+                    </td>
+                    <td data-label="설명">
+                      <input
+                        type="text"
+                        className="mg-v2-input mg-v2-input-sm"
+                        placeholder="설명"
+                        value={line.description}
+                        onChange={(e) => handleLineChange(index, 'description', e.target.value)}
+                      />
+                    </td>
+                    <td data-label="작업">
+                      {lines.length > 2 && (
+                        <MGButton
+                          variant="danger"
+                          size="small"
+                          onClick={() => handleRemoveLine(index)}
+                        >
+                          삭제
+                        </MGButton>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td className="mg-v2-font-weight-bold">합계</td>
+                  <td className={`mg-v2-font-weight-bold ${isBalanced ? 'mg-v2-text-success' : 'mg-v2-text-danger'}`}>
+                    {formatCurrency(totalDebit)}
+                  </td>
+                  <td className={`mg-v2-font-weight-bold ${isBalanced ? 'mg-v2-text-success' : 'mg-v2-text-danger'}`}>
+                    {formatCurrency(totalCredit)}
+                  </td>
+                  <td colSpan="2">
+                    {errors.balance && (
+                      <div className="mg-v2-text-danger mg-v2-text-xs">{errors.balance}</div>
+                    )}
+                    {isBalanced && !errors.balance && (
+                      <div className="mg-v2-text-success mg-v2-text-xs">✓ 차변/대변 균형</div>
+                    )}
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div className="mg-v2-modal-footer">
+        <MGButton variant="secondary" onClick={onClose} disabled={loading}>
+          취소
+        </MGButton>
+        <MGButton 
+          variant="primary" 
+          onClick={handleSubmit} 
+          disabled={loading || !isBalanced}
+          loading={loading}
+        >
+          저장
+        </MGButton>
+      </div>
+    </ErpModal>
   );
 };
 
@@ -3131,163 +3114,154 @@ const JournalEntryEditModal = ({ entry, onClose, onRefresh }) => {
   const { totalDebit, totalCredit } = calculateTotals();
   const isBalanced = totalDebit === totalCredit;
 
-  return ReactDOM.createPortal(
-    <div className="mg-v2-modal-overlay" onClick={onClose}>
-      <div className="mg-v2-modal-content" style={{ maxWidth: '800px' }} onClick={(e) => e.stopPropagation()}>
-        <div className="mg-v2-modal-header">
-          <h3 className="mg-v2-modal-title">분개 수정</h3>
-          <button className="mg-v2-modal-close" onClick={onClose}>×</button>
+  return (
+    <ErpModal isOpen={true} onClose={onClose} title="분개 수정" size="xl">
+      <div className="mg-v2-form-group">
+        <div className="mg-v2-mb-md">
+          <label className="mg-v2-label">
+            분개번호
+          </label>
+          <div className="mg-v2-text">{entry.entryNumber}</div>
         </div>
-        <div className="mg-v2-modal-body">
-          <div className="mg-v2-form-group">
-            <div className="mg-v2-mb-md">
-              <label className="mg-v2-label">
-                분개번호
-              </label>
-              <div className="mg-v2-text">{entry.entryNumber}</div>
-            </div>
-            <div className="mg-v2-mb-md">
-              <label className="mg-v2-label">
-                분개일자 <span className="mg-v2-text-danger">*</span>
-              </label>
-              <input
-                type="date"
-                className={`mg-v2-input ${errors.entryDate ? 'mg-v2-input-error' : ''}`}
-                value={formData.entryDate}
-                onChange={(e) => setFormData({ ...formData, entryDate: e.target.value })}
-              />
-              {errors.entryDate && <div className="mg-v2-text-danger mg-v2-text-xs">{errors.entryDate}</div>}
-            </div>
+        <div className="mg-v2-mb-md">
+          <label className="mg-v2-label">
+            분개일자 <span className="mg-v2-text-danger">*</span>
+          </label>
+          <input
+            type="date"
+            className={`mg-v2-input ${errors.entryDate ? 'mg-v2-input-error' : ''}`}
+            value={formData.entryDate}
+            onChange={(e) => setFormData({ ...formData, entryDate: e.target.value })}
+          />
+          {errors.entryDate && <div className="mg-v2-text-danger mg-v2-text-xs">{errors.entryDate}</div>}
+        </div>
 
-            <div className="mg-v2-mb-md">
-              <label className="mg-v2-label">설명</label>
-              <input
-                type="text"
-                className="mg-v2-input"
-                placeholder="분개 설명을 입력하세요"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              />
-            </div>
+        <div className="mg-v2-mb-md">
+          <label className="mg-v2-label">설명</label>
+          <input
+            type="text"
+            className="mg-v2-input"
+            placeholder="분개 설명을 입력하세요"
+            value={formData.description}
+            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+          />
+        </div>
 
-            <div className="mg-v2-mb-md">
-              <div className="mg-v2-flex mg-v2-justify-between mg-v2-mb-sm">
-                <label className="mg-v2-label">분개 라인</label>
-                <MGButton variant="outline" size="small" onClick={handleAddLine}>
-                  라인 추가
-                </MGButton>
-              </div>
-              
-              <div className="mg-v2-table-container">
-                <table className="mg-table" data-label="분개 라인 입력">
-                  <thead>
-                    <tr>
-                      <th>계정 ID</th>
-                      <th>차변</th>
-                      <th>대변</th>
-                      <th>설명</th>
-                      <th>작업</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {lines.map((line, index) => (
-                      <tr key={index}>
-                        <td data-label="계정 ID">
-                          <input
-                            type="number"
-                            className={`mg-v2-input mg-v2-input-sm ${errors[`line_${index}_accountId`] ? 'mg-v2-input-error' : ''}`}
-                            placeholder="계정 ID"
-                            value={line.accountId}
-                            onChange={(e) => handleLineChange(index, 'accountId', e.target.value)}
-                          />
-                          {errors[`line_${index}_accountId`] && (
-                            <div className="mg-v2-text-danger mg-v2-text-xs">{errors[`line_${index}_accountId`]}</div>
-                          )}
-                        </td>
-                        <td data-label="차변">
-                          <input
-                            type="number"
-                            className={`mg-v2-input mg-v2-input-sm ${errors[`line_${index}_amount`] ? 'mg-v2-input-error' : ''}`}
-                            placeholder="0"
-                            value={line.debitAmount}
-                            onChange={(e) => handleLineChange(index, 'debitAmount', e.target.value)}
-                          />
-                        </td>
-                        <td data-label="대변">
-                          <input
-                            type="number"
-                            className={`mg-v2-input mg-v2-input-sm ${errors[`line_${index}_amount`] ? 'mg-v2-input-error' : ''}`}
-                            placeholder="0"
-                            value={line.creditAmount}
-                            onChange={(e) => handleLineChange(index, 'creditAmount', e.target.value)}
-                          />
-                          {errors[`line_${index}_amount`] && (
-                            <div className="mg-v2-text-danger mg-v2-text-xs">{errors[`line_${index}_amount`]}</div>
-                          )}
-                        </td>
-                        <td data-label="설명">
-                          <input
-                            type="text"
-                            className="mg-v2-input mg-v2-input-sm"
-                            placeholder="설명"
-                            value={line.description}
-                            onChange={(e) => handleLineChange(index, 'description', e.target.value)}
-                          />
-                        </td>
-                        <td data-label="작업">
-                          {lines.length > 2 && (
-                            <MGButton
-                              variant="danger"
-                              size="small"
-                              onClick={() => handleRemoveLine(index)}
-                            >
-                              삭제
-                            </MGButton>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                  <tfoot>
-                    <tr>
-                      <td className="mg-v2-font-weight-bold">합계</td>
-                      <td className={`mg-v2-font-weight-bold ${isBalanced ? 'mg-v2-text-success' : 'mg-v2-text-danger'}`}>
-                        {formatCurrency(totalDebit)}
-                      </td>
-                      <td className={`mg-v2-font-weight-bold ${isBalanced ? 'mg-v2-text-success' : 'mg-v2-text-danger'}`}>
-                        {formatCurrency(totalCredit)}
-                      </td>
-                      <td colSpan="2">
-                        {errors.balance && (
-                          <div className="mg-v2-text-danger mg-v2-text-xs">{errors.balance}</div>
-                        )}
-                        {isBalanced && !errors.balance && (
-                          <div className="mg-v2-text-success mg-v2-text-xs">✓ 차변/대변 균형</div>
-                        )}
-                      </td>
-                    </tr>
-                  </tfoot>
-                </table>
-              </div>
-            </div>
+        <div className="mg-v2-mb-md">
+          <div className="mg-v2-flex mg-v2-justify-between mg-v2-mb-sm">
+            <label className="mg-v2-label">분개 라인</label>
+            <MGButton variant="outline" size="small" onClick={handleAddLine}>
+              라인 추가
+            </MGButton>
+          </div>
+          
+          <div className="mg-v2-table-container">
+            <table className="mg-table" data-label="분개 라인 입력">
+              <thead>
+                <tr>
+                  <th>계정 ID</th>
+                  <th>차변</th>
+                  <th>대변</th>
+                  <th>설명</th>
+                  <th>작업</th>
+                </tr>
+              </thead>
+              <tbody>
+                {lines.map((line, index) => (
+                  <tr key={index}>
+                    <td data-label="계정 ID">
+                      <input
+                        type="number"
+                        className={`mg-v2-input mg-v2-input-sm ${errors[`line_${index}_accountId`] ? 'mg-v2-input-error' : ''}`}
+                        placeholder="계정 ID"
+                        value={line.accountId}
+                        onChange={(e) => handleLineChange(index, 'accountId', e.target.value)}
+                      />
+                      {errors[`line_${index}_accountId`] && (
+                        <div className="mg-v2-text-danger mg-v2-text-xs">{errors[`line_${index}_accountId`]}</div>
+                      )}
+                    </td>
+                    <td data-label="차변">
+                      <input
+                        type="number"
+                        className={`mg-v2-input mg-v2-input-sm ${errors[`line_${index}_amount`] ? 'mg-v2-input-error' : ''}`}
+                        placeholder="0"
+                        value={line.debitAmount}
+                        onChange={(e) => handleLineChange(index, 'debitAmount', e.target.value)}
+                      />
+                    </td>
+                    <td data-label="대변">
+                      <input
+                        type="number"
+                        className={`mg-v2-input mg-v2-input-sm ${errors[`line_${index}_amount`] ? 'mg-v2-input-error' : ''}`}
+                        placeholder="0"
+                        value={line.creditAmount}
+                        onChange={(e) => handleLineChange(index, 'creditAmount', e.target.value)}
+                      />
+                      {errors[`line_${index}_amount`] && (
+                        <div className="mg-v2-text-danger mg-v2-text-xs">{errors[`line_${index}_amount`]}</div>
+                      )}
+                    </td>
+                    <td data-label="설명">
+                      <input
+                        type="text"
+                        className="mg-v2-input mg-v2-input-sm"
+                        placeholder="설명"
+                        value={line.description}
+                        onChange={(e) => handleLineChange(index, 'description', e.target.value)}
+                      />
+                    </td>
+                    <td data-label="작업">
+                      {lines.length > 2 && (
+                        <MGButton
+                          variant="danger"
+                          size="small"
+                          onClick={() => handleRemoveLine(index)}
+                        >
+                          삭제
+                        </MGButton>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td className="mg-v2-font-weight-bold">합계</td>
+                  <td className={`mg-v2-font-weight-bold ${isBalanced ? 'mg-v2-text-success' : 'mg-v2-text-danger'}`}>
+                    {formatCurrency(totalDebit)}
+                  </td>
+                  <td className={`mg-v2-font-weight-bold ${isBalanced ? 'mg-v2-text-success' : 'mg-v2-text-danger'}`}>
+                    {formatCurrency(totalCredit)}
+                  </td>
+                  <td colSpan="2">
+                    {errors.balance && (
+                      <div className="mg-v2-text-danger mg-v2-text-xs">{errors.balance}</div>
+                    )}
+                    {isBalanced && !errors.balance && (
+                      <div className="mg-v2-text-success mg-v2-text-xs">✓ 차변/대변 균형</div>
+                    )}
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
           </div>
         </div>
-        <div className="mg-v2-modal-footer">
-          <MGButton variant="secondary" onClick={onClose} disabled={loading}>
-            취소
-          </MGButton>
-          <MGButton 
-            variant="primary" 
-            onClick={handleSubmit} 
-            disabled={loading || !isBalanced}
-            loading={loading}
-          >
-            저장
-          </MGButton>
-        </div>
       </div>
-    </div>,
-    document.body
+      <div className="mg-v2-modal-footer">
+        <MGButton variant="secondary" onClick={onClose} disabled={loading}>
+          취소
+        </MGButton>
+        <MGButton 
+          variant="primary" 
+          onClick={handleSubmit} 
+          disabled={loading || !isBalanced}
+          loading={loading}
+        >
+          저장
+        </MGButton>
+      </div>
+    </ErpModal>
   );
 };
 

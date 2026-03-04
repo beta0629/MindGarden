@@ -6,6 +6,7 @@ import ErpCard from './common/ErpCard';
 import ErpButton from './common/ErpButton';
 import './ItemManagement.css';
 import ErpModal from './common/ErpModal';
+import CustomSelect from '../common/CustomSelect';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
@@ -369,20 +370,19 @@ const ItemManagement = () => {
               <label className="mg-v2-form-label">
                 카테고리 *
               </label>
-              <select
-                name="category"
+              <CustomSelect
                 value={formData.category}
-                onChange={handleInputChange}
-                required
+                onChange={(val) => setFormData(prev => ({ ...prev, category: val }))}
+                options={[
+                  { value: '', label: '카테고리를 선택하세요' },
+                  ...categoryOptions.map(option => ({
+                    value: option.value,
+                    label: `${option.label} (${option.value})`
+                  }))
+                ]}
+                placeholder="카테고리를 선택하세요"
                 className="mg-v2-form-input"
-              >
-                <option key="item-category-default" value="">카테고리를 선택하세요</option>
-                {categoryOptions.map(option => (
-                  <option key={option.value} value={option.value}>
-                    {option.label} ({option.value})
-                  </option>
-                ))}
-              </select>
+              />
             </div>
 
             <div className="mg-v2-form-grid">
@@ -496,19 +496,16 @@ const ItemManagement = () => {
               <label className="mg-v2-form-label">
                 카테고리 *
               </label>
-              <select
-                name="category"
+              <CustomSelect
                 value={formData.category}
-                onChange={handleInputChange}
-                required
+                onChange={(val) => setFormData(prev => ({ ...prev, category: val }))}
+                options={categoryOptions.map(option => ({
+                  value: option.value,
+                  label: `${option.label} (${option.value})`
+                }))}
+                placeholder="카테고리를 선택하세요"
                 className="mg-v2-form-input"
-              >
-                {categoryOptions.map(option => (
-                  <option key={option.value} value={option.value}>
-                    {option.label} ({option.value})
-                  </option>
-                ))}
-              </select>
+              />
             </div>
 
             <div className="mg-v2-form-grid">

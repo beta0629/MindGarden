@@ -6,6 +6,7 @@ import { API_BASE_URL } from '../../constants/api';
 import csrfTokenManager from '../../utils/csrfTokenManager';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import Button from '../ui/Button/Button';
+import CustomSelect from '../common/CustomSelect';
 
 /**
  * 상담사용 휴가 등록 모달
@@ -181,19 +182,17 @@ const ConsultantVacationModal = ({
                         <label className="mg-v2-form-label">
                             휴가 유형 <span className="mg-v2-form-label-required">*</span>
                         </label>
-                        <select
+                        <CustomSelect
                             className="mg-v2-form-select"
-                            name="type"
                             value={vacationData.type}
-                            onChange={handleInputChange}
+                            onChange={(val) => setVacationData(prev => ({ ...prev, type: val }))}
+                            options={vacationTypeOptions.map(option => ({
+                                value: option.value,
+                                label: option.label
+                            }))}
+                            placeholder="선택하세요"
                             disabled={loading}
-                        >
-                            {vacationTypeOptions.map(option => (
-                                <option key={option.value} value={option.value}>
-                                    {option.label}
-                                </option>
-                            ))}
-                        </select>
+                        />
                     </div>
 
                     <div className="mg-v2-form-group">

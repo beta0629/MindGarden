@@ -7,6 +7,7 @@ import { getAllConsultantsWithStats } from '../../utils/consultantHelper';
 import { API_BASE_URL } from '../../constants/api';
 import csrfTokenManager from '../../utils/csrfTokenManager';
 import UnifiedModal from '../common/modals/UnifiedModal';
+import CustomSelect from '../common/CustomSelect';
 
 /**
  * 관리자용 휴가 관리 모달 컴포넌트
@@ -488,19 +489,20 @@ const VacationManagementModal = ({
                     {userRole !== 'CONSULTANT' && (
                         <div className="mg-v2-form-group">
                             <label className="mg-v2-label">상담사 선택</label>
-                            <select
+                            <CustomSelect
                                 className="mg-v2-select"
-                                value={selectedConsultantId || ''}
-                                onChange={(e) => setSelectedConsultantId(Number(e.target.value))}
+                                value={selectedConsultantId != null ? selectedConsultantId : ''}
+                                onChange={(val) => setSelectedConsultantId(val === '' ? null : Number(val))}
+                                options={[
+                                    { value: '', label: '상담사를 선택하세요' },
+                                    ...consultants.map(consultant => ({
+                                        value: consultant.id,
+                                        label: `${consultant.name} (${consultant.email})`
+                                    }))
+                                ]}
+                                placeholder="상담사를 선택하세요"
                                 disabled={loading}
-                            >
-                                <option value="">상담사를 선택하세요</option>
-                                {consultants.map(consultant => (
-                                    <option key={consultant.id} value={consultant.id}>
-                                        {consultant.name} ({consultant.email})
-                                    </option>
-                                ))}
-                            </select>
+                            />
                         </div>
                     )}
                     
@@ -550,17 +552,16 @@ const VacationManagementModal = ({
 
                                     <div className="form-group">
                                         <label>휴가 유형</label>
-                                        <select 
-                                            value={vacationData.type} 
-                                            onChange={(e) => handleVacationTypeChange(e.target.value)}
+                                        <CustomSelect
+                                            value={vacationData.type}
+                                            onChange={(val) => handleVacationTypeChange(val)}
+                                            options={vacationTypeOptions.map(option => ({
+                                                value: option.value,
+                                                label: `${option.icon} ${option.label} (${option.value})`
+                                            }))}
+                                            placeholder="선택하세요"
                                             disabled={loading || loadingCodes}
-                                        >
-                                            {vacationTypeOptions.map(option => (
-                                                <option key={option.value} value={option.value}>
-                                                    {option.icon} {option.label} ({option.value})
-                                                </option>
-                                            ))}
-                                        </select>
+                                        />
                                     </div>
                                 </div>
 

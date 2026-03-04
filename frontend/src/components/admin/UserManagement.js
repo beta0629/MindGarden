@@ -7,6 +7,7 @@ import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import csrfTokenManager from '../../utils/csrfTokenManager';
 import UnifiedModal from '../common/modals/UnifiedModal';
+import CustomSelect from '../common/CustomSelect';
 import './UserManagement.css';
 
 const UserManagement = ({ onUpdate }) => {
@@ -241,17 +242,19 @@ const UserManagement = ({ onUpdate }) => {
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                 />
                             </div>
-                            <select
+                            <CustomSelect
                                 className="mg-v2-select user-mgmt-role-select"
                                 value={selectedRole}
-                                onChange={(e) => setSelectedRole(e.target.value)}
-                            >
-                                <option value="">모든 역할</option>
-                                <option value={USER_ROLES.CLIENT}>내담자</option>
-                                <option value={USER_ROLES.CONSULTANT}>상담사</option>
-                                <option value={USER_ROLES.STAFF}>사무원</option>
-                                <option value={USER_ROLES.ADMIN}>관리자</option>
-                            </select>
+                                onChange={(val) => setSelectedRole(val)}
+                                options={[
+                                    { value: '', label: '모든 역할' },
+                                    { value: USER_ROLES.CLIENT, label: '내담자' },
+                                    { value: USER_ROLES.CONSULTANT, label: '상담사' },
+                                    { value: USER_ROLES.STAFF, label: '사무원' },
+                                    { value: USER_ROLES.ADMIN, label: '관리자' }
+                                ]}
+                                placeholder="모든 역할"
+                            />
                             <label className="user-mgmt-checkbox-label">
                                 <input
                                     type="checkbox"
@@ -389,19 +392,19 @@ const UserManagement = ({ onUpdate }) => {
 
                         <div className="mg-v2-form-group">
                             <label className="mg-v2-label">새로운 역할</label>
-                            <select
+                            <CustomSelect
                                 className="mg-v2-select"
                                 value={form.newRole}
-                                onChange={(e) => setForm({ ...form, newRole: e.target.value })}
-                                required
-                            >
-                                <option value="">역할을 선택하세요</option>
-                                {roleOptions.map(role => (
-                                    <option key={role.value} value={role.value}>
-                                        {role.label} ({role.value})
-                                    </option>
-                                ))}
-                            </select>
+                                onChange={(val) => setForm({ ...form, newRole: val })}
+                                options={[
+                                    { value: '', label: '역할을 선택하세요' },
+                                    ...roleOptions.map(role => ({
+                                        value: role.value,
+                                        label: `${role.label} (${role.value})`
+                                    }))
+                                ]}
+                                placeholder="역할을 선택하세요"
+                            />
                         </div>
 
                         <div className="mg-v2-modal-footer">

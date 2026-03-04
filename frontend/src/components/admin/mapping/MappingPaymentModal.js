@@ -3,6 +3,7 @@ import { CreditCard, CheckCircle, XCircle, DollarSign } from 'lucide-react';
 import { apiPost } from '../../../utils/ajax';
 import notificationManager from '../../../utils/notification';
 import UnifiedModal from '../../common/modals/UnifiedModal';
+import CustomSelect from '../../common/CustomSelect';
 /**
  * 매칭 입금확인 모달 컴포넌트
 /**
@@ -164,15 +165,16 @@ const MappingPaymentModal = ({
                     <label className="mg-v2-form-label">
                         결제 방법
                     </label>
-                    <select
+                    <CustomSelect
                         value={paymentData.paymentMethod}
-                        onChange={(e) => handlePaymentMethodChange(e.target.value)}
+                        onChange={(val) => handlePaymentMethodChange(val)}
+                        options={[
+                            { value: 'BANK_TRANSFER', label: '계좌이체' },
+                            { value: 'CARD', label: '신용카드' },
+                            { value: 'CASH', label: '현금' }
+                        ]}
                         className="mg-v2-form-select"
-                    >
-                        <option value="BANK_TRANSFER">계좌이체</option>
-                        <option value="CARD">신용카드</option>
-                        <option value="CASH">현금</option>
-                    </select>
+                    />
                 </div>
 
                 {paymentData.paymentMethod !== 'CASH' && (

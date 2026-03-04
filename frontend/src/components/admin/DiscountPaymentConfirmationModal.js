@@ -3,6 +3,7 @@ import { CreditCard, Tag, CheckCircle, XCircle } from 'lucide-react';
 import { apiGet, apiPost } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 import UnifiedModal from '../common/modals/UnifiedModal';
+import CustomSelect from '../common/CustomSelect';
 
 /**
  * 할인 적용 결제 확인 모달 컴포넌트
@@ -366,16 +367,18 @@ const DiscountPaymentConfirmationModal = ({
               결제 방법
             </h3>
             <div className="mg-v2-form-group">
-              <select
+              <CustomSelect
                 value={paymentData.method}
-                onChange={(e) => setPaymentData(prev => ({ ...prev, method: e.target.value }))}
+                onChange={(val) => setPaymentData(prev => ({ ...prev, method: val }))}
+                options={[
+                  { value: 'CARD', label: '카드' },
+                  { value: 'BANK_TRANSFER', label: '계좌이체' },
+                  { value: 'CASH', label: '현금' },
+                  { value: 'OTHER', label: '기타' }
+                ]}
+                placeholder="선택하세요"
                 className="mg-v2-select"
-              >
-                <option value="CARD">카드</option>
-                <option value="BANK_TRANSFER">계좌이체</option>
-                <option value="CASH">현금</option>
-                <option value="OTHER">기타</option>
-              </select>
+              />
             </div>
           </div>
           

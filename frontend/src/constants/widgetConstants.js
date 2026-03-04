@@ -182,12 +182,15 @@ export const API_PERFORMANCE_WIDGET = {
   API_ENDPOINTS: {
     STATS: '/api/v1/admin/performance/stats',
     SLOW_APIS: '/api/v1/admin/performance/slow-apis',
-    ERROR_PRONE_APIS: '/api/v1/admin/performance/error-prone-apis'
+    ERROR_PRONE_APIS: '/api/v1/admin/performance/error-prone-apis',
+    CLEAR_STATS: '/api/v1/admin/performance/stats'
   },
   
   THRESHOLDS: {
     SLOW_API_MS: 1000,
-    ERROR_RATE_PERCENT: 5
+    ERROR_RATE_PERCENT: 5,
+    RESPONSE_TIME: { EXCELLENT: 100, GOOD: 300, AVERAGE: 1000 },
+    ERROR_RATE: { EXCELLENT: 1, GOOD: 5, AVERAGE: 10 }
   },
   
   METRIC_LABELS: {
@@ -200,7 +203,11 @@ export const API_PERFORMANCE_WIDGET = {
   MESSAGES: {
     LOADING: '성능 데이터 로딩 중...',
     NO_SLOW_APIS: '느린 API가 없습니다',
-    NO_ERROR_APIS: '에러가 많은 API가 없습니다'
+    NO_ERROR_APIS: '에러가 많은 API가 없습니다',
+    CLEAR_CONFIRM: '모든 성능 통계를 초기화하시겠습니까?',
+    CLEAR_SUCCESS: '성능 통계가 초기화되었습니다.',
+    CLEAR_ERROR: '통계 초기화에 실패했습니다.',
+    DOWNLOAD_ERROR: '보고서 다운로드 중 오류가 발생했습니다.'
   }
 };
 
@@ -321,5 +328,62 @@ export const WIDGET_UTILS = {
     return context ? `${baseMessage} (${context}): ${error}` : `${baseMessage}: ${error}`;
   }
 };
+
+export const PERFORMANCE_WIDGET = {
+  DEFAULT_TITLE: '시스템 성능',
+  DEFAULT_REFRESH_INTERVAL: 30000,
+  METRIC_TYPES: {
+    API_RESPONSE_TIME: 'apiResponseTime',
+    CACHE_HIT_RATE: 'cacheHitRate',
+    ACTIVE_USERS: 'activeUsers',
+    SYSTEM_LOAD: 'systemLoad'
+  },
+  THRESHOLDS: {
+    RESPONSE_TIME: { EXCELLENT: 100, GOOD: 200, POOR: 500 },
+    CACHE_HIT_RATE: { EXCELLENT: 80, GOOD: 60, POOR: 40 },
+    SYSTEM_LOAD: { EXCELLENT: 50, GOOD: 70, POOR: 90 }
+  },
+  TREND_TYPES: { UP: 'up', DOWN: 'down', STABLE: 'stable' },
+  METRIC_LABELS: {
+    API_RESPONSE_TIME: 'API 응답시간',
+    CACHE_HIT_RATE: '캐시 히트율',
+    ACTIVE_USERS: '활성 사용자',
+    SYSTEM_LOAD: '시스템 부하'
+  },
+  METRIC_UNITS: {
+    API_RESPONSE_TIME: 'ms',
+    CACHE_HIT_RATE: '%',
+    ACTIVE_USERS: '명',
+    SYSTEM_LOAD: '%'
+  },
+  MOCK_DATA_RANGES: {
+    API_RESPONSE_TIME: { MIN: 50, MAX: 250 },
+    ACTIVE_USERS: { MIN: 20, MAX: 120 },
+    SYSTEM_LOAD: { MIN: 10, MAX: 90 }
+  }
+};
+
+export const CACHE_MONITORING_WIDGET = {
+  DEFAULT_TITLE: '캐시 모니터링',
+  DEFAULT_REFRESH_INTERVAL: 5000,
+  API_ENDPOINTS: {
+    STATS: '/api/v1/admin/cache/stats',
+    CLEAR_ALL: '/api/v1/admin/cache/all'
+  },
+  EFFICIENCY_THRESHOLDS: { EXCELLENT: 80, GOOD: 60, POOR: 40 },
+  MESSAGES: {
+    NO_DATA: '캐시 데이터가 없습니다.',
+    LOADING: '업데이트 중...',
+    ERROR: '캐시 통계 조회에 실패했습니다.',
+    CLEAR_CONFIRM: '모든 캐시를 삭제하시겠습니까?',
+    CLEAR_SUCCESS: '모든 캐시가 삭제되었습니다.',
+    CLEAR_ERROR: '캐시 삭제에 실패했습니다.'
+  }
+};
+
+// 위젯 상수들을 하나로 묶어서 하위 호환성 유지
+WIDGET_CONSTANTS.API_PERFORMANCE_WIDGET = API_PERFORMANCE_WIDGET;
+WIDGET_CONSTANTS.PERFORMANCE_WIDGET = PERFORMANCE_WIDGET;
+WIDGET_CONSTANTS.CACHE_MONITORING_WIDGET = CACHE_MONITORING_WIDGET;
 
 export default WIDGET_CONSTANTS;

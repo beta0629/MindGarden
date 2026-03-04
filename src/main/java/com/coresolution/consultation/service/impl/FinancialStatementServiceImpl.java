@@ -206,54 +206,70 @@ public class FinancialStatementServiceImpl implements FinancialStatementService 
         return result;
     }
     
-    // ========== 계정 타입 판별 메서드 ==========
-    // TODO: 실제 계정 타입은 Account 엔티티나 공통코드에서 조회해야 함
-    // 현재는 간단한 구현으로 진행 (표준 문서에 따라 확장 필요)
+    // ========== 계정 타입 판별 메서드 (회계 계정 기준) ==========
+    // 분류 우선순위: (1) Account.description 키워드 (2) accountNumber 문자열 키워드 (은행 계좌번호와 구분용)
+    // 추후 회계 계정 마스터(공통코드 또는 계정과목 마스터) 연동 권장.
+    
+    private static boolean matchesKeyword(String text, String... keywords) {
+        if (text == null || text.isEmpty()) {
+            return false;
+        }
+        String lower = text.toLowerCase();
+        for (String k : keywords) {
+            if (k != null && lower.contains(k.toLowerCase())) {
+                return true;
+            }
+        }
+        return false;
+    }
     
     private boolean isRevenueAccount(Ledger ledger) {
-        // 수익 계정 판별 로직
-        // 실제로는 Account.accountType 또는 공통코드에서 조회
-        return ledger.getAccount().getAccountNumber().contains("REVENUE") 
-            || ledger.getAccount().getAccountNumber().contains("수익");
+        String desc = ledger.getAccount().getDescription();
+        String num = ledger.getAccount().getAccountNumber();
+        return matchesKeyword(desc, "수익", "revenue", "income")
+            || matchesKeyword(num, "revenue", "수익");
     }
     
     private boolean isExpenseAccount(Ledger ledger) {
-        // 비용 계정 판별 로직
-        return ledger.getAccount().getAccountNumber().contains("EXPENSE")
-            || ledger.getAccount().getAccountNumber().contains("비용");
+        String desc = ledger.getAccount().getDescription();
+        String num = ledger.getAccount().getAccountNumber();
+        return matchesKeyword(desc, "비용", "expense", "cost")
+            || matchesKeyword(num, "expense", "비용");
     }
     
     private boolean isAssetAccount(Ledger ledger) {
-        // 자산 계정 판별 로직
-        return ledger.getAccount().getAccountNumber().contains("ASSET")
-            || ledger.getAccount().getAccountNumber().contains("자산");
+        String desc = ledger.getAccount().getDescription();
+        String num = ledger.getAccount().getAccountNumber();
+        return matchesKeyword(desc, "자산", "asset", "유동", "고정", "current", "fixed")
+            || matchesKeyword(num, "asset", "자산");
     }
     
     private boolean isLiabilityAccount(Ledger ledger) {
-        // 부채 계정 판별 로직
-        return ledger.getAccount().getAccountNumber().contains("LIABILITY")
-            || ledger.getAccount().getAccountNumber().contains("부채");
+        String desc = ledger.getAccount().getDescription();
+        String num = ledger.getAccount().getAccountNumber();
+        return matchesKeyword(desc, "부채", "liability", "유동부채", "비유동부채")
+            || matchesKeyword(num, "liability", "부채");
     }
     
     private boolean isEquityAccount(Ledger ledger) {
-        // 자본 계정 판별 로직
-        return ledger.getAccount().getAccountNumber().contains("EQUITY")
-            || ledger.getAccount().getAccountNumber().contains("자본");
+        String desc = ledger.getAccount().getDescription();
+        String num = ledger.getAccount().getAccountNumber();
+        return matchesKeyword(desc, "자본", "equity", "자본금", "이익잉여금")
+            || matchesKeyword(num, "equity", "자본");
     }
     
     private boolean isOperatingAccount(Ledger ledger) {
-        // 영업 활동 계정 판별 로직
         return isRevenueAccount(ledger) || isExpenseAccount(ledger);
     }
     
     private boolean isInvestingAccount(Ledger ledger) {
-        // 투자 활동 계정 판별 로직 (고정자산)
-        return ledger.getAccount().getAccountNumber().contains("FIXED")
-            || ledger.getAccount().getAccountNumber().contains("고정");
+        String desc = ledger.getAccount().getDescription();
+        String num = ledger.getAccount().getAccountNumber();
+        return matchesKeyword(desc, "고정자산", "fixed", "투자")
+            || matchesKeyword(num, "fixed", "고정");
     }
     
     private boolean isFinancingAccount(Ledger ledger) {
-        // 재무 활동 계정 판별 로직 (부채/자본)
         return isLiabilityAccount(ledger) || isEquityAccount(ledger);
     }
     

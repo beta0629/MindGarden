@@ -7,6 +7,7 @@ import { sessionManager } from '../../utils/sessionManager';
 import { getCodeLabel } from '../../utils/commonCodeUtils';
 import { fetchUserPermissions, PermissionChecks, PERMISSIONS } from '../../utils/permissionUtils';
 import { AUTH_API, ERP_API } from '../../constants/api';
+import StandardizedApi from '../../utils/standardizedApi';
 import { RoleUtils, USER_ROLES } from '../../constants/roles';
 import { COMMON_CSS_CLASSES } from '../../constants/css';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
@@ -613,311 +614,378 @@ const OverviewTab = ({ data }) => {
   );
 };
 
-// 대차대조표 탭 컴포넌트
+// 대차대조표 탭: API 응답 구조 assets/liabilities/equity { total, items[] }, isBalanced, balanceCheck
 const BalanceSheetTab = () => {
   const [balanceSheetData, setBalanceSheetData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [asOfDate, setAsOfDate] = useState(new Date().toISOString().split('T')[0]);
 
-  useEffect(() => {
-    fetchBalanceSheet();
-  }, [asOfDate]);
-
   const fetchBalanceSheet = async () => {
+    setError(null);
+    setLoading(true);
     try {
-      const url = `${ERP_API.FINANCIAL_STATEMENT_BALANCE}?asOfDate=${asOfDate}`;
-      
-      const response = await axios.get(url, {
-        withCredentials: true
-      });
-      if (response.data.success) {
-        setBalanceSheetData(response.data.data);
+      const response = await StandardizedApi.get(ERP_API.FINANCIAL_STATEMENT_BALANCE, { asOfDate });
+      if (response && response.success) {
+        setBalanceSheetData(response.data ?? null);
+      } else {
+        setBalanceSheetData(null);
       }
     } catch (err) {
       console.error('Balance sheet fetch error:', err);
+      setError(err);
       notificationManager.show('대차대조표를 불러오는데 실패했습니다.', 'error');
     } finally {
       setLoading(false);
     }
   };
 
+  useEffect(() => {
+    fetchBalanceSheet();
+  }, [asOfDate]);
+
+  const hasData = balanceSheetData && (
+    (balanceSheetData.assets?.total != null && Number(balanceSheetData.assets.total) !== 0) ||
+    (balanceSheetData.liabilities?.total != null && Number(balanceSheetData.liabilities.total) !== 0) ||
+    (balanceSheetData.equity?.total != null && Number(balanceSheetData.equity.total) !== 0)
+  );
+  const allZero = balanceSheetData && !hasData &&
+    (balanceSheetData.assets?.total != null || balanceSheetData.liabilities?.total != null || balanceSheetData.equity?.total != null);
+  const emptyState = !loading && !error && balanceSheetData == null;
+
   if (loading) {
-    return <UnifiedLoading text="대차대조표를 불러오는 중..." size="medium" type="inline" />;
+    return (
+      <div>
+        <DashboardSection title="대차대조표" icon={<PieChart size={24} />}>
+          <div className="mg-v2-mb-md">
+            <label className="mg-v2-label">기준일자</label>
+            <input type="date" value={asOfDate} onChange={(e) => setAsOfDate(e.target.value)} className="mg-v2-input" />
+          </div>
+          <div className="finance-statement-block" style={{ background: 'var(--mg-color-surface-main)', border: '1px solid var(--mg-color-border-main)', borderRadius: '16px', padding: 'var(--mg-spacing-24)' }}>
+            <UnifiedLoading text="데이터를 불러오는 중…" size="medium" type="inline" />
+          </div>
+        </DashboardSection>
+      </div>
+    );
   }
+
+  if (error) {
+    return (
+      <div>
+        <DashboardSection title="대차대조표" icon={<PieChart size={24} />}>
+          <div className="mg-v2-mb-md">
+            <label className="mg-v2-label">기준일자</label>
+            <input type="date" value={asOfDate} onChange={(e) => setAsOfDate(e.target.value)} className="mg-v2-input" />
+          </div>
+          <div className="finance-statement-block mg-v2-empty-state" style={{ background: 'var(--mg-color-surface-main)', border: '1px solid var(--mg-color-border-main)', borderRadius: '16px', padding: 'var(--mg-spacing-24)', textAlign: 'center' }}>
+            <h4 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--mg-color-text-main)' }}>데이터를 불러오지 못했습니다</h4>
+            <p style={{ fontSize: '14px', color: 'var(--mg-color-text-secondary)' }}>일시적인 오류일 수 있습니다. 아래 버튼으로 다시 시도해 주세요.</p>
+            <MGButton variant="primary" onClick={fetchBalanceSheet} className="mg-v2-button-primary" style={{ marginTop: 16 }}>다시 불러오기</MGButton>
+          </div>
+        </DashboardSection>
+      </div>
+    );
+  }
+
+  if (emptyState) {
+    return (
+      <div>
+        <DashboardSection title="대차대조표" icon={<PieChart size={24} />}>
+          <div className="mg-v2-mb-md">
+            <label className="mg-v2-label">기준일자</label>
+            <input type="date" value={asOfDate} onChange={(e) => setAsOfDate(e.target.value)} className="mg-v2-input" />
+          </div>
+          <div className="finance-statement-block mg-v2-empty-state" style={{ background: 'var(--mg-color-surface-main)', border: '1px solid var(--mg-color-border-main)', borderRadius: '16px', padding: 'var(--mg-spacing-24)', textAlign: 'center' }}>
+            <h4 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--mg-color-text-main)' }}>해당 기간 데이터가 없습니다</h4>
+            <p style={{ fontSize: '14px', color: 'var(--mg-color-text-secondary)' }}>선택한 기준일자에 등록된 원장 데이터가 없습니다.</p>
+          </div>
+        </DashboardSection>
+      </div>
+    );
+  }
+
+  const assetsTotal = balanceSheetData?.assets?.total ?? 0;
+  const assetsItems = Array.isArray(balanceSheetData?.assets?.items) ? balanceSheetData.assets.items : [];
+  const liabilitiesTotal = balanceSheetData?.liabilities?.total ?? 0;
+  const liabilitiesItems = Array.isArray(balanceSheetData?.liabilities?.items) ? balanceSheetData.liabilities.items : [];
+  const equityTotal = balanceSheetData?.equity?.total ?? 0;
+  const equityItems = Array.isArray(balanceSheetData?.equity?.items) ? balanceSheetData.equity.items : [];
+  const isBalanced = balanceSheetData?.isBalanced === true;
+  const balanceCheck = balanceSheetData?.balanceCheck || {};
 
   return (
     <div>
-      <DashboardSection
-        title="대차대조표"
-        icon={<PieChart size={24} />}
-      >
-      <div className="mg-v2-mb-md">
-        <label className="mg-v2-label">기준일자</label>
-        <input
-          type="date"
-          value={asOfDate}
-          onChange={(e) => setAsOfDate(e.target.value)}
-          className="mg-v2-input"
-        />
-      </div>
-      
-      <div className="balance-sheet-grid">
-        {/* 자산 */}
-        <div className="balance-sheet-card balance-sheet-card--assets">
-          <h3 className="balance-sheet-card-title">
-            <TrendingUp className="balance-sheet-card-icon" size={24} />
-            자산
-          </h3>
-          
-          <div className="balance-sheet-section">
-            <h4 className="balance-sheet-section-title">유동자산</h4>
-            <div className="balance-sheet-items">
-              <div className="balance-sheet-item">현금: {formatCurrency(balanceSheetData?.assets?.currentAssets?.cash || 0)}</div>
-              <div className="balance-sheet-item">예금: {formatCurrency(balanceSheetData?.assets?.currentAssets?.bankDeposits || 0)}</div>
-              <div className="balance-sheet-item">매출채권: {formatCurrency(balanceSheetData?.assets?.currentAssets?.accountsReceivable || 0)}</div>
-              <div className="balance-sheet-item">재고자산: {formatCurrency(balanceSheetData?.assets?.currentAssets?.inventory || 0)}</div>
-            </div>
-            <div className="balance-sheet-total">
-              유동자산 합계: {formatCurrency(balanceSheetData?.assets?.currentAssets?.total || 0)}
+      <DashboardSection title="대차대조표" icon={<PieChart size={24} />}>
+        <div className="mg-v2-mb-md">
+          <label className="mg-v2-label">기준일자</label>
+          <input type="date" value={asOfDate} onChange={(e) => setAsOfDate(e.target.value)} className="mg-v2-input" />
+        </div>
+        {allZero && (
+          <p className="mg-v2-caption" style={{ fontSize: 12, color: 'var(--mg-color-text-secondary)', marginBottom: 12, padding: '12px 16px', background: 'var(--mg-color-surface-main)', borderRadius: 10, border: '1px solid var(--mg-color-border-main)' }}>
+            기준일자까지 등록된 거래가 없어 금액이 0으로 표시됩니다.
+          </p>
+        )}
+        <div className="balance-sheet-grid">
+          <div className="balance-sheet-card balance-sheet-card--assets">
+            <h3 className="balance-sheet-card-title">
+              <TrendingUp className="balance-sheet-card-icon" size={24} />
+              자산
+            </h3>
+            <div className="balance-sheet-section">
+              <div className="balance-sheet-items">
+                {assetsItems.length > 0 ? assetsItems.map((item, idx) => (
+                  <div key={item.accountId ?? idx} className="balance-sheet-item">
+                    {item.accountName || '계정'}: {formatCurrency(item.balance ?? 0)}
+                  </div>
+                )) : <div className="balance-sheet-item">자산 항목 없음</div>}
+              </div>
+              <div className="balance-sheet-grand-total">자산 합계: {formatCurrency(assetsTotal)}</div>
             </div>
           </div>
-
-          <div className="balance-sheet-section">
-            <h4 className="balance-sheet-section-title">고정자산</h4>
-            <div className="balance-sheet-items">
-              <div className="balance-sheet-item">사무용품: {formatCurrency(balanceSheetData?.assets?.fixedAssets?.officeEquipment || 0)}</div>
-              <div className="balance-sheet-item">컴퓨터 장비: {formatCurrency(balanceSheetData?.assets?.fixedAssets?.computerEquipment || 0)}</div>
-              <div className="balance-sheet-item">임대료지불보증금: {formatCurrency(balanceSheetData?.assets?.fixedAssets?.leaseDeposits || 0)}</div>
-            </div>
-            <div className="balance-sheet-total">
-              고정자산 합계: {formatCurrency(balanceSheetData?.assets?.fixedAssets?.netAmount || 0)}
+          <div className="balance-sheet-card balance-sheet-card--liabilities">
+            <h3 className="balance-sheet-card-title">
+              <TrendingDown className="balance-sheet-card-icon" size={24} />
+              부채
+            </h3>
+            <div className="balance-sheet-section">
+              <div className="balance-sheet-items">
+                {liabilitiesItems.length > 0 ? liabilitiesItems.map((item, idx) => (
+                  <div key={item.accountId ?? idx} className="balance-sheet-item">
+                    {item.accountName || '계정'}: {formatCurrency(item.balance ?? 0)}
+                  </div>
+                )) : <div className="balance-sheet-item">부채 항목 없음</div>}
+              </div>
+              <div className="balance-sheet-grand-total">부채 합계: {formatCurrency(liabilitiesTotal)}</div>
             </div>
           </div>
-
-          <div className="balance-sheet-grand-total">
-            자산 총계: {formatCurrency(balanceSheetData?.assets?.total || 0)}
+          <div className="balance-sheet-card balance-sheet-card--equity">
+            <h3 className="balance-sheet-card-title">
+              <PieChart className="balance-sheet-card-icon" size={24} />
+              자본
+            </h3>
+            <div className="balance-sheet-section">
+              <div className="balance-sheet-items">
+                {equityItems.length > 0 ? equityItems.map((item, idx) => (
+                  <div key={item.accountId ?? idx} className="balance-sheet-item">
+                    {item.accountName || '계정'}: {formatCurrency(item.balance ?? 0)}
+                  </div>
+                )) : <div className="balance-sheet-item">자본 항목 없음</div>}
+              </div>
+              <div className="balance-sheet-grand-total">자본 합계: {formatCurrency(equityTotal)}</div>
+            </div>
           </div>
         </div>
-
-        {/* 부채 */}
-        <div className="balance-sheet-card balance-sheet-card--liabilities">
-          <h3 className="balance-sheet-card-title">
-            <TrendingDown className="balance-sheet-card-icon" size={24} />
-            부채
-          </h3>
-          
-          <div className="balance-sheet-section">
-            <h4 className="balance-sheet-section-title">유동부채</h4>
-            <div className="balance-sheet-items">
-              <div className="balance-sheet-item">매입채무: {formatCurrency(balanceSheetData?.liabilities?.currentLiabilities?.accountsPayable || 0)}</div>
-              <div className="balance-sheet-item">단기차입금: {formatCurrency(balanceSheetData?.liabilities?.currentLiabilities?.shortTermLoans || 0)}</div>
-              <div className="balance-sheet-item">미지급비용: {formatCurrency(balanceSheetData?.liabilities?.currentLiabilities?.accruedExpenses || 0)}</div>
-            </div>
-            <div className="balance-sheet-total">
-              유동부채 합계: {formatCurrency(balanceSheetData?.liabilities?.currentLiabilities?.total || 0)}
-            </div>
-          </div>
-
-          <div className="balance-sheet-section">
-            <h4 className="balance-sheet-section-title">비유동부채</h4>
-            <div className="balance-sheet-items">
-              <div className="balance-sheet-item">장기차입금: {formatCurrency(balanceSheetData?.liabilities?.longTermLiabilities?.longTermLoans || 0)}</div>
-            </div>
-            <div className="balance-sheet-total">
-              비유동부채 합계: {formatCurrency(balanceSheetData?.liabilities?.longTermLiabilities?.total || 0)}
-            </div>
-          </div>
-
-          <div className="balance-sheet-grand-total">
-            부채 총계: {formatCurrency(balanceSheetData?.liabilities?.total || 0)}
+        <div className={`balance-sheet-card balance-verification-card ${isBalanced ? 'balance-sheet-card--assets' : 'balance-sheet-card--liabilities'}`}>
+          <h4 className="balance-sheet-card-title">{isBalanced ? '✅ 대차대조표 균형' : '❌ 대차대조표 불균형'}</h4>
+          <div className="balance-sheet-items balance-verification-content">
+            자산 총계: <strong>{formatCurrency(balanceCheck.assets ?? assetsTotal)}</strong> = 부채 + 자본: <strong>{formatCurrency(balanceCheck.liabilitiesPlusEquity ?? (liabilitiesTotal + equityTotal))}</strong>
+            {!isBalanced && balanceCheck.difference != null && (
+              <div className="balance-sheet-total">⚠️ 차이: {formatCurrency(balanceCheck.difference)}</div>
+            )}
           </div>
         </div>
-
-        {/* 자본 */}
-        <div className="balance-sheet-card balance-sheet-card--equity">
-          <h3 className="balance-sheet-card-title">
-            <PieChart className="balance-sheet-card-icon" size={24} />
-            자본
-          </h3>
-          
-          <div className="balance-sheet-items">
-            <div className="balance-sheet-item">자본금: {formatCurrency(balanceSheetData?.equity?.capital?.total || 0)}</div>
-            <div className="balance-sheet-item">이익잉여금: {formatCurrency(balanceSheetData?.equity?.retainedEarnings?.total || 0)}</div>
-            <div className="balance-sheet-item">당기순이익: {formatCurrency(balanceSheetData?.equity?.retainedEarnings?.netIncome || 0)}</div>
-          </div>
-
-          <div className="balance-sheet-grand-total">
-            자본 총계: {formatCurrency(balanceSheetData?.equity?.total || 0)}
-          </div>
-        </div>
-      </div>
-
-      {/* 대차대조표 검증 */}
-      <div className={`balance-sheet-card balance-verification-card ${balanceSheetData?.summary?.isBalanced ? 'balance-sheet-card--assets' : 'balance-sheet-card--liabilities'}`}>
-        <h4 className="balance-sheet-card-title">
-          {balanceSheetData?.summary?.isBalanced ? '✅ 대차대조표 균형' : '❌ 대차대조표 불균형'}
-        </h4>
-        <div className="balance-sheet-items balance-verification-content">
-          자산 총계: <strong>{formatCurrency(balanceSheetData?.summary?.totalAssets || 0)}</strong> = 부채 + 자본: <strong>{formatCurrency(balanceSheetData?.summary?.totalLiabilitiesAndEquity || 0)}</strong>
-          {!balanceSheetData?.summary?.isBalanced && (
-            <div className="balance-sheet-total">
-              ⚠️ 차이: {formatCurrency(balanceSheetData?.summary?.difference || 0)}
-            </div>
-          )}
-        </div>
-      </div>
       </DashboardSection>
     </div>
   );
 };
 
-// 손익계산서 탭 컴포넌트
+// 손익계산서 탭: API 응답 구조 revenue/expenses { total, items[] }, netIncome
 const IncomeStatementTab = () => {
   const [incomeStatementData, setIncomeStatementData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [startDate, setStartDate] = useState(() => {
     const date = new Date();
-    date.setDate(1); // 이번 달 1일
+    date.setDate(1);
     return date.toISOString().split('T')[0];
   });
   const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
 
-  useEffect(() => {
-    fetchIncomeStatement();
-  }, [startDate, endDate]);
-
   const fetchIncomeStatement = async () => {
+    setError(null);
+    setLoading(true);
     try {
-      const url = `${ERP_API.FINANCIAL_STATEMENT_INCOME}?startDate=${startDate}&endDate=${endDate}`;
-      
-      const response = await axios.get(url, {
-        withCredentials: true
-      });
-      if (response.data.success) {
-        setIncomeStatementData(response.data.data);
+      const response = await StandardizedApi.get(ERP_API.FINANCIAL_STATEMENT_INCOME, { startDate, endDate });
+      if (response && response.success) {
+        setIncomeStatementData(response.data ?? null);
+      } else {
+        setIncomeStatementData(null);
       }
     } catch (err) {
       console.error('Income statement fetch error:', err);
+      setError(err);
       notificationManager.show('손익계산서를 불러오는데 실패했습니다.', 'error');
     } finally {
       setLoading(false);
     }
   };
 
+  useEffect(() => {
+    fetchIncomeStatement();
+  }, [startDate, endDate]);
+
+  const hasData = incomeStatementData && (
+    (incomeStatementData.revenue?.total != null && Number(incomeStatementData.revenue.total) !== 0) ||
+    (incomeStatementData.expenses?.total != null && Number(incomeStatementData.expenses.total) !== 0) ||
+    (incomeStatementData.netIncome != null && Number(incomeStatementData.netIncome) !== 0)
+  );
+  const allZero = incomeStatementData && !hasData &&
+    (incomeStatementData.revenue?.total != null || incomeStatementData.expenses?.total != null || incomeStatementData.netIncome != null);
+  const emptyState = !loading && !error && incomeStatementData == null;
+
   if (loading) {
-    return <UnifiedLoading text="손익계산서를 불러오는 중..." size="medium" type="inline" />;
+    return (
+      <div>
+        <DashboardSection title="손익계산서" icon={<BarChart3 size={24} />}>
+          <div className="mg-v2-mb-md">
+            <div className="mg-v2-form-row">
+              <div className="mg-v2-form-group">
+                <label className="mg-v2-label">시작일</label>
+                <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="mg-v2-input" />
+              </div>
+              <div className="mg-v2-form-group">
+                <label className="mg-v2-label">종료일</label>
+                <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="mg-v2-input" />
+              </div>
+            </div>
+          </div>
+          <div className="finance-statement-block" style={{ background: 'var(--mg-color-surface-main)', border: '1px solid var(--mg-color-border-main)', borderRadius: '16px', padding: 'var(--mg-spacing-24)' }}>
+            <UnifiedLoading text="데이터를 불러오는 중…" size="medium" type="inline" />
+          </div>
+        </DashboardSection>
+      </div>
+    );
   }
+
+  if (error) {
+    return (
+      <div>
+        <DashboardSection title="손익계산서" icon={<BarChart3 size={24} />}>
+          <div className="mg-v2-mb-md">
+            <div className="mg-v2-form-row">
+              <div className="mg-v2-form-group">
+                <label className="mg-v2-label">시작일</label>
+                <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="mg-v2-input" />
+              </div>
+              <div className="mg-v2-form-group">
+                <label className="mg-v2-label">종료일</label>
+                <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="mg-v2-input" />
+              </div>
+            </div>
+          </div>
+          <div className="finance-statement-block mg-v2-empty-state" style={{ background: 'var(--mg-color-surface-main)', border: '1px solid var(--mg-color-border-main)', borderRadius: '16px', padding: 'var(--mg-spacing-24)', textAlign: 'center' }}>
+            <h4 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--mg-color-text-main)' }}>데이터를 불러오지 못했습니다</h4>
+            <p style={{ fontSize: '14px', color: 'var(--mg-color-text-secondary)' }}>일시적인 오류일 수 있습니다. 아래 버튼으로 다시 시도해 주세요.</p>
+            <MGButton variant="primary" onClick={fetchIncomeStatement} className="mg-v2-button-primary" style={{ marginTop: 16 }}>다시 불러오기</MGButton>
+          </div>
+        </DashboardSection>
+      </div>
+    );
+  }
+
+  if (emptyState) {
+    return (
+      <div>
+        <DashboardSection title="손익계산서" icon={<BarChart3 size={24} />}>
+          <div className="mg-v2-mb-md">
+            <div className="mg-v2-form-row">
+              <div className="mg-v2-form-group">
+                <label className="mg-v2-label">시작일</label>
+                <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="mg-v2-input" />
+              </div>
+              <div className="mg-v2-form-group">
+                <label className="mg-v2-label">종료일</label>
+                <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="mg-v2-input" />
+              </div>
+            </div>
+          </div>
+          <div className="finance-statement-block mg-v2-empty-state" style={{ background: 'var(--mg-color-surface-main)', border: '1px solid var(--mg-color-border-main)', borderRadius: '16px', padding: 'var(--mg-spacing-24)', textAlign: 'center' }}>
+            <h4 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--mg-color-text-main)' }}>해당 기간 데이터가 없습니다</h4>
+            <p style={{ fontSize: '14px', color: 'var(--mg-color-text-secondary)' }}>선택한 기간에 등록된 원장 데이터가 없습니다.</p>
+          </div>
+        </DashboardSection>
+      </div>
+    );
+  }
+
+  const revenueTotal = incomeStatementData?.revenue?.total ?? 0;
+  const revenueItems = Array.isArray(incomeStatementData?.revenue?.items) ? incomeStatementData.revenue.items : [];
+  const expensesTotal = incomeStatementData?.expenses?.total ?? 0;
+  const expensesItems = Array.isArray(incomeStatementData?.expenses?.items) ? incomeStatementData.expenses.items : [];
+  const netIncome = incomeStatementData?.netIncome ?? 0;
 
   return (
     <div>
-      <DashboardSection
-        title="손익계산서"
-        icon={<BarChart3 size={24} />}
-      >
-      <div className="mg-v2-mb-md">
-        <div className="mg-v2-form-row">
-          <div className="mg-v2-form-group">
-            <label className="mg-v2-label">시작일</label>
-            <input
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              className="mg-v2-input"
-            />
-          </div>
-          <div className="mg-v2-form-group">
-            <label className="mg-v2-label">종료일</label>
-            <input
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              className="mg-v2-input"
-            />
+      <DashboardSection title="손익계산서" icon={<BarChart3 size={24} />}>
+        <div className="mg-v2-mb-md">
+          <div className="mg-v2-form-row">
+            <div className="mg-v2-form-group">
+              <label className="mg-v2-label">시작일</label>
+              <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="mg-v2-input" />
+            </div>
+            <div className="mg-v2-form-group">
+              <label className="mg-v2-label">종료일</label>
+              <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="mg-v2-input" />
+            </div>
           </div>
         </div>
-      </div>
-      
-      <div className="income-statement-grid">
-        {/* 수익 */}
-        <div className="income-statement-card income-statement-card--revenue">
-          <h3 className="income-statement-card-title">
-            <TrendingUp className="income-statement-card-icon" size={24} />
-            수익
-          </h3>
-          <div className="income-statement-items">
-            <div className="income-statement-item">
-              <span>상담 수익:</span>
-              <span className="income-statement-item-value">{formatCurrency(incomeStatementData?.revenue?.consultationRevenue || 0)}</span>
+        {allZero && (
+          <p className="mg-v2-caption" style={{ fontSize: 12, color: 'var(--mg-color-text-secondary)', marginBottom: 12, padding: '12px 16px', background: 'var(--mg-color-surface-main)', borderRadius: 10, border: '1px solid var(--mg-color-border-main)' }}>
+            선택한 기간에 등록된 거래가 없어 금액이 0으로 표시됩니다.
+          </p>
+        )}
+        <div className="income-statement-grid">
+          <div className="income-statement-card income-statement-card--revenue">
+            <h3 className="income-statement-card-title">
+              <TrendingUp className="income-statement-card-icon" size={24} />
+              수익
+            </h3>
+            <div className="income-statement-items">
+              {revenueItems.length > 0 ? revenueItems.map((item, idx) => (
+                <div key={item.accountId ?? idx} className="income-statement-item">
+                  <span>{item.accountName || '계정'}:</span>
+                  <span className="income-statement-item-value">{formatCurrency(item.amount ?? 0)}</span>
+                </div>
+              )) : <div className="income-statement-item">수익 항목 없음</div>}
+              <div className="income-statement-total">
+                <div className="income-statement-total-row">
+                  <span>수익 총계:</span>
+                  <span>{formatCurrency(revenueTotal)}</span>
+                </div>
+              </div>
             </div>
-            <div className="income-statement-item">
-              <span>기타 수익:</span>
-              <span className="income-statement-item-value">{formatCurrency(incomeStatementData?.revenue?.otherRevenue || 0)}</span>
-            </div>
-            <div className="income-statement-total">
-              <div className="income-statement-total-row">
-                <span>수익 총계:</span>
-                <span>{formatCurrency(incomeStatementData?.revenue?.total || 0)}</span>
+          </div>
+          <div className="income-statement-card income-statement-card--expenses">
+            <h3 className="income-statement-card-title">
+              <TrendingDown className="income-statement-card-icon" size={24} />
+              비용
+            </h3>
+            <div className="income-statement-items">
+              {expensesItems.length > 0 ? expensesItems.map((item, idx) => (
+                <div key={item.accountId ?? idx} className="income-statement-item">
+                  <span>{item.accountName || '계정'}:</span>
+                  <span className="income-statement-item-value">{formatCurrency(item.amount ?? 0)}</span>
+                </div>
+              )) : <div className="income-statement-item">비용 항목 없음</div>}
+              <div className="income-statement-total">
+                <div className="income-statement-total-row">
+                  <span>비용 총계:</span>
+                  <span>{formatCurrency(expensesTotal)}</span>
+                </div>
               </div>
             </div>
           </div>
         </div>
-
-        {/* 비용 */}
-        <div className="income-statement-card income-statement-card--expenses">
-          <h3 className="income-statement-card-title">
-            <TrendingDown className="income-statement-card-icon" size={24} />
-            비용
+        <div className="net-income-card">
+          <div className="net-income-decoration-1"></div>
+          <div className="net-income-decoration-2"></div>
+          <h3 className="net-income-title">
+            <DollarSign className="net-income-icon" size={32} />
+            당기순이익
           </h3>
-          <div className="income-statement-items">
-            <div className="income-statement-item">
-              <span>급여비용:</span>
-              <span className="income-statement-item-value">{formatCurrency(incomeStatementData?.expenses?.salaryExpense || 0)}</span>
-            </div>
-            <div className="income-statement-item">
-              <span>임대료:</span>
-              <span className="income-statement-item-value">{formatCurrency(incomeStatementData?.expenses?.rentExpense || 0)}</span>
-            </div>
-            <div className="income-statement-item">
-              <span>관리비:</span>
-              <span className="income-statement-item-value">{formatCurrency(incomeStatementData?.expenses?.utilityExpense || 0)}</span>
-            </div>
-            <div className="income-statement-item">
-              <span>사무용품비:</span>
-              <span className="income-statement-item-value">{formatCurrency(incomeStatementData?.expenses?.officeExpense || 0)}</span>
-            </div>
-            <div className="income-statement-item">
-              <span>세금:</span>
-              <span className="income-statement-item-value">{formatCurrency(incomeStatementData?.expenses?.taxExpense || 0)}</span>
-            </div>
-            <div className="income-statement-item">
-              <span>기타비용:</span>
-              <span className="income-statement-item-value">{formatCurrency(incomeStatementData?.expenses?.otherExpense || 0)}</span>
-            </div>
-            <div className="income-statement-total">
-              <div className="income-statement-total-row">
-                <span>비용 총계:</span>
-                <span>{formatCurrency(incomeStatementData?.expenses?.total || 0)}</span>
-              </div>
-            </div>
-          </div>
+          <div className="net-income-value">{formatCurrency(netIncome)}</div>
+          <div className="net-income-subtitle">수익 총계 - 비용 총계</div>
         </div>
-      </div>
-
-      {/* 순이익 */}
-      <div className="net-income-card">
-        <div className="net-income-decoration-1"></div>
-        <div className="net-income-decoration-2"></div>
-        <h3 className="net-income-title">
-          <DollarSign className="net-income-icon" size={32} />
-          당기순이익
-        </h3>
-        <div className="net-income-value">
-          {formatCurrency(incomeStatementData?.netIncome || 0)}
-        </div>
-        <div className="net-income-subtitle">
-          수익 총계 - 비용 총계
-        </div>
-      </div>
       </DashboardSection>
     </div>
   );

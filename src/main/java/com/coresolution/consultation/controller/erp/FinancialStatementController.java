@@ -62,6 +62,8 @@ public class FinancialStatementController extends BaseApiController {
 
     /**
      * 손익계산서 생성 GET /api/v1/erp/accounting/statements/income?startDate=2025-01-01&endDate=2025-12-31
+     * 응답 스키마: success, data{ tenantId, startDate, endDate, revenue{ total, items[{ accountId, accountName, amount }] },
+     *   expenses{ total, items[{ accountId, accountName, amount }] }, netIncome }
      * 표준 문서: docs/standards/ERP_ADVANCEMENT_STANDARD.md
      */
     @GetMapping("/income")
@@ -83,8 +85,10 @@ public class FinancialStatementController extends BaseApiController {
     }
 
     /**
-     * 재무상태표 생성 GET /api/v1/erp/accounting/statements/balance?asOfDate=2025-12-31 표준 문서:
-     * docs/standards/ERP_ADVANCEMENT_STANDARD.md
+     * 재무상태표 생성 GET /api/v1/erp/accounting/statements/balance?asOfDate=2025-12-31
+     * 응답 스키마: success, data{ tenantId, asOfDate, assets{ total, items[{ accountId, accountName, balance }] },
+     *   liabilities{ total, items[] }, equity{ total, items[] }, isBalanced, balanceCheck{ assets, liabilitiesPlusEquity, difference } }
+     * 표준 문서: docs/standards/ERP_ADVANCEMENT_STANDARD.md
      */
     @GetMapping("/balance")
     public ResponseEntity<?> getBalanceSheet(@RequestParam(required = false) @DateTimeFormat(

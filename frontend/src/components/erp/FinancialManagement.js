@@ -801,97 +801,92 @@ const FinancialManagement = () => {
               )}
 
               {activeTab === 'dashboard' && (
-                <section
-                  className="erp-section mg-v2-erp-section-block"
-                  style={{
-                    background: 'var(--mg-layout-section-bg, var(--mg-color-surface-main))',
-                    border: '1px solid var(--mg-layout-section-border, var(--mg-color-border-main))',
-                    borderRadius: '16px',
-                    padding: 'var(--mg-layout-section-padding, 1.5rem)'
-                  }}
-                >
+                <section className="erp-section mg-v2-erp-section-block mg-v2-erp-dashboard-block" aria-label="재무 대시보드">
                   <h2 className="mg-v2-ad-b0kla__section-title">재무 대시보드</h2>
-                  <div className="mg-v2-erp-dashboard-kpi-grid">
-                    <div className="mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card-accent">
-                      <div className="mg-v2-ad-b0kla__chart-header">
-                        <h3 className="mg-v2-ad-b0kla__chart-title">총 수입</h3>
-                        <TrendingUp size={24} aria-hidden className="mg-v2-ad-b0kla__kpi-value--success" />
-                      </div>
-                      <div className="mg-v2-ad-b0kla__chart-body">
-                        <div className="mg-v2-ad-b0kla__kpi-value mg-v2-ad-b0kla__kpi-value--success">{formatCurrency(dashboardStats.totalIncome)}</div>
-                        <span className="mg-v2-ad-b0kla__kpi-label">이번 달</span>
-                      </div>
-                    </div>
-                    <div className="mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card-accent--orange">
-                      <div className="mg-v2-ad-b0kla__chart-header">
-                        <h3 className="mg-v2-ad-b0kla__chart-title">총 지출</h3>
-                        <TrendingDown size={24} aria-hidden className="mg-v2-ad-b0kla__kpi-value--danger" />
-                      </div>
-                      <div className="mg-v2-ad-b0kla__chart-body">
-                        <div className="mg-v2-ad-b0kla__kpi-value mg-v2-ad-b0kla__kpi-value--danger">{formatCurrency(dashboardStats.totalExpense)}</div>
-                        <span className="mg-v2-ad-b0kla__kpi-label">이번 달</span>
-                      </div>
-                    </div>
-                    <div className="mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card-accent--blue">
-                      <div className="mg-v2-ad-b0kla__chart-header">
-                        <h3 className="mg-v2-ad-b0kla__chart-title">순이익</h3>
-                        <BarChart3 size={24} aria-hidden className={dashboardStats.netProfit >= 0 ? 'mg-v2-ad-b0kla__kpi-value--primary' : 'mg-v2-ad-b0kla__kpi-value--danger'} />
-                      </div>
-                      <div className="mg-v2-ad-b0kla__chart-body">
-                        <div className={`mg-v2-ad-b0kla__kpi-value ${dashboardStats.netProfit >= 0 ? 'mg-v2-ad-b0kla__kpi-value--primary' : 'mg-v2-ad-b0kla__kpi-value--danger'}`}>
-                          {formatCurrency(Math.abs(dashboardStats.netProfit))}
+
+                  <div className="mg-v2-erp-dashboard-kpi-area">
+                    <div className="mg-v2-erp-dashboard-kpi-grid">
+                      <div className="mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card--accent-success">
+                        <div className="mg-v2-ad-b0kla__chart-header">
+                          <span className="mg-v2-erp-dashboard-kpi-label">수입 합계</span>
+                          <TrendingUp size={24} aria-hidden className="mg-v2-erp-dashboard-kpi-icon mg-v2-erp-dashboard-kpi-icon--success" />
                         </div>
-                        <span className="mg-v2-ad-b0kla__kpi-label">이번 달</span>
+                        <div className="mg-v2-ad-b0kla__chart-body">
+                          <div className="mg-v2-erp-dashboard-kpi-value">{formatCurrency(dashboardStats.totalIncome)}</div>
+                          <span className="mg-v2-erp-dashboard-kpi-label">이번 달</span>
+                        </div>
                       </div>
-                    </div>
-                    <div className="mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card-accent--blue">
-                      <div className="mg-v2-ad-b0kla__chart-header">
-                        <h3 className="mg-v2-ad-b0kla__chart-title">거래 건수</h3>
-                        <ClipboardList size={24} aria-hidden className="mg-v2-ad-b0kla__kpi-value--info" />
+                      <div className="mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card--accent-error">
+                        <div className="mg-v2-ad-b0kla__chart-header">
+                          <span className="mg-v2-erp-dashboard-kpi-label">지출 합계</span>
+                          <TrendingDown size={24} aria-hidden className="mg-v2-erp-dashboard-kpi-icon mg-v2-erp-dashboard-kpi-icon--error" />
+                        </div>
+                        <div className="mg-v2-ad-b0kla__chart-body">
+                          <div className="mg-v2-erp-dashboard-kpi-value">{formatCurrency(dashboardStats.totalExpense)}</div>
+                          <span className="mg-v2-erp-dashboard-kpi-label">이번 달</span>
+                        </div>
                       </div>
-                      <div className="mg-v2-ad-b0kla__chart-body">
-                        <div className="mg-v2-ad-b0kla__kpi-value mg-v2-ad-b0kla__kpi-value--info">{dashboardStats.transactionCount}건</div>
-                        <span className="mg-v2-ad-b0kla__kpi-label">이번 달</span>
+                      <div className={`mg-v2-ad-b0kla__card ${dashboardStats.netProfit >= 0 ? 'mg-v2-ad-b0kla__card--accent-primary' : 'mg-v2-ad-b0kla__card--accent-error'}`}>
+                        <div className="mg-v2-ad-b0kla__chart-header">
+                          <span className="mg-v2-erp-dashboard-kpi-label">순이익</span>
+                          <BarChart3 size={24} aria-hidden className={`mg-v2-erp-dashboard-kpi-icon ${dashboardStats.netProfit >= 0 ? 'mg-v2-erp-dashboard-kpi-icon--primary' : 'mg-v2-erp-dashboard-kpi-icon--error'}`} />
+                        </div>
+                        <div className="mg-v2-ad-b0kla__chart-body">
+                          <div className="mg-v2-erp-dashboard-kpi-value">{formatCurrency(Math.abs(dashboardStats.netProfit))}</div>
+                          <span className="mg-v2-erp-dashboard-kpi-label">이번 달</span>
+                        </div>
+                      </div>
+                      <div className="mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card--accent-secondary">
+                        <div className="mg-v2-ad-b0kla__chart-header">
+                          <span className="mg-v2-erp-dashboard-kpi-label">거래 건수</span>
+                          <ClipboardList size={24} aria-hidden className="mg-v2-erp-dashboard-kpi-icon mg-v2-erp-dashboard-kpi-icon--secondary" />
+                        </div>
+                        <div className="mg-v2-ad-b0kla__chart-body">
+                          <div className="mg-v2-erp-dashboard-kpi-value">{dashboardStats.transactionCount}건</div>
+                          <span className="mg-v2-erp-dashboard-kpi-label">이번 달</span>
+                        </div>
                       </div>
                     </div>
                   </div>
 
-                  <h3 className="mg-v2-ad-b0kla__section-title"><BarChart3 size={20} aria-hidden /> 매핑 연동 현황</h3>
-                  <div className="mg-v2-erp-dashboard-kpi-grid mg-v2-erp-dashboard-kpi-grid--half">
-                    <div className="mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card-accent">
-                      <div className="mg-v2-ad-b0kla__chart-header">
-                        <h4 className="mg-v2-ad-b0kla__chart-title">매핑 연동 수입</h4>
-                        <Link2 size={22} aria-hidden className="mg-v2-ad-b0kla__kpi-value--success" />
-                      </div>
-                      <div className="mg-v2-ad-b0kla__chart-body">
-                        <div className="mg-v2-ad-b0kla__kpi-value mg-v2-ad-b0kla__kpi-value--success">
-                          {formatCurrency(
-                            transactions
-                              .filter(t => t.transactionType === 'INCOME' &&
-                                (t.relatedEntityType === 'CONSULTANT_CLIENT_MAPPING' ||
-                                  t.description?.includes('상담료 입금 확인')))
-                              .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0)
-                          )}
+                  <h3 className="mg-v2-ad-b0kla__section-title">매핑 연동 현황</h3>
+                  <div className="mg-v2-erp-dashboard-mapping-area">
+                    <div className="mg-v2-erp-dashboard-kpi-grid mg-v2-erp-dashboard-kpi-grid--half">
+                      <div className="mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card--accent-success">
+                        <div className="mg-v2-ad-b0kla__chart-header">
+                          <span className="mg-v2-erp-dashboard-kpi-label">매핑 연동 수입</span>
+                          <Link2 size={22} aria-hidden className="mg-v2-erp-dashboard-kpi-icon mg-v2-erp-dashboard-kpi-icon--success" />
                         </div>
-                        <span className="mg-v2-ad-b0kla__kpi-label">자동 생성된 상담료 수입</span>
-                      </div>
-                    </div>
-                    <div className="mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card-accent--orange">
-                      <div className="mg-v2-ad-b0kla__chart-header">
-                        <h4 className="mg-v2-ad-b0kla__chart-title">매핑 연동 환불</h4>
-                        <Undo2 size={22} aria-hidden className="mg-v2-ad-b0kla__kpi-value--warning" />
-                      </div>
-                      <div className="mg-v2-ad-b0kla__chart-body">
-                        <div className="mg-v2-ad-b0kla__kpi-value mg-v2-ad-b0kla__kpi-value--warning">
-                          {formatCurrency(
-                            transactions
-                              .filter(t => t.transactionType === 'EXPENSE' &&
-                                (t.relatedEntityType === 'CONSULTANT_CLIENT_MAPPING_REFUND' ||
-                                  t.description?.includes('상담료 환불')))
-                              .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0)
-                          )}
+                        <div className="mg-v2-ad-b0kla__chart-body">
+                          <div className="mg-v2-erp-dashboard-kpi-value">
+                            {formatCurrency(
+                              transactions
+                                .filter(t => t.transactionType === 'INCOME' &&
+                                  (t.relatedEntityType === 'CONSULTANT_CLIENT_MAPPING' ||
+                                    t.description?.includes('상담료 입금 확인')))
+                                .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0)
+                            )}
+                          </div>
+                          <span className="mg-v2-erp-dashboard-kpi-label">자동 생성된 상담료 수입</span>
                         </div>
-                        <span className="mg-v2-ad-b0kla__kpi-label">자동 생성된 환불 지출</span>
+                      </div>
+                      <div className="mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card--accent-warning">
+                        <div className="mg-v2-ad-b0kla__chart-header">
+                          <span className="mg-v2-erp-dashboard-kpi-label">매핑 연동 환불</span>
+                          <Undo2 size={22} aria-hidden className="mg-v2-erp-dashboard-kpi-icon mg-v2-erp-dashboard-kpi-icon--warning" />
+                        </div>
+                        <div className="mg-v2-ad-b0kla__chart-body">
+                          <div className="mg-v2-erp-dashboard-kpi-value">
+                            {formatCurrency(
+                              transactions
+                                .filter(t => t.transactionType === 'EXPENSE' &&
+                                  (t.relatedEntityType === 'CONSULTANT_CLIENT_MAPPING_REFUND' ||
+                                    t.description?.includes('상담료 환불')))
+                                .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0)
+                            )}
+                          </div>
+                          <span className="mg-v2-erp-dashboard-kpi-label">자동 생성된 환불 지출</span>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -900,29 +895,29 @@ const FinancialManagement = () => {
                   <div className="mg-v2-erp-dashboard-actions">
                     <button
                       type="button"
-                      className="mg-v2-button mg-v2-button-primary"
+                      className="mg-v2-button-primary"
                       onClick={() => setActiveTab('transactions')}
                     >
                       <ClipboardList size={16} aria-hidden /> 거래 내역 보기
                     </button>
                     <button
                       type="button"
-                      className="mg-v2-button mg-v2-button-success"
+                      className="mg-v2-button-secondary"
                       onClick={() => setActiveTab('calendar')}
                     >
                       <Calendar size={16} aria-hidden /> 달력 뷰 보기
                     </button>
                     <button
                       type="button"
-                      className="mg-v2-button mg-v2-button-secondary"
-                      onClick={() => window.location.href = '/branch_super_admin/mapping-management'}
+                      className="mg-v2-button-secondary"
+                      onClick={() => { window.location.href = '/branch_super_admin/mapping-management'; }}
                     >
                       <Link2 size={16} aria-hidden /> 매핑 시스템 확인
                     </button>
                     <button
                       type="button"
-                      className="mg-v2-button mg-v2-button-secondary"
-                      onClick={() => window.location.href = '/erp/finance-dashboard'}
+                      className="mg-v2-button-secondary"
+                      onClick={() => { window.location.href = '/erp/finance-dashboard'; }}
                     >
                       <Building2 size={16} aria-hidden /> 통합 재무 대시보드
                     </button>

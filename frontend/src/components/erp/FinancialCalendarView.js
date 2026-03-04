@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import UnifiedLoading from '../common/UnifiedLoading';
 import StandardizedApi from '../../utils/standardizedApi';
 import {
-  DollarSign,
   TrendingDown,
   Link2,
   BarChart3,
@@ -306,7 +305,7 @@ const FinancialCalendarView = () => {
         </div>
       )}
 
-      <div className="mg-financial-calendar-monthly-stats">
+      <section className="mg-financial-calendar-monthly-stats" aria-label="월 통계">
         <h3 className="mg-financial-calendar-monthly-stats-title">
           <BarChart3 size={20} aria-hidden /> {currentDate.getFullYear()}년 {currentDate.getMonth() + 1}월 통계
         </h3>
@@ -319,57 +318,53 @@ const FinancialCalendarView = () => {
             0
           );
           return (
-            <div className="mg-v2-erp-dashboard-kpi-grid">
-              <div className="mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card-accent">
+            <div className="mg-financial-calendar-monthly-stats__grid mg-v2-erp-dashboard-kpi-grid">
+              <div className="mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card--accent-success">
                 <div className="mg-v2-ad-b0kla__chart-header">
-                  <h3 className="mg-v2-ad-b0kla__chart-title">월 총 수입</h3>
-                  <DollarSign size={24} aria-hidden className="mg-v2-ad-b0kla__kpi-value--success" />
+                  <span className="mg-v2-ad-b0kla__chart-title">수입 합계</span>
+                  <TrendingUp size={24} aria-hidden className="mg-financial-calendar-monthly-stats__icon" />
                 </div>
                 <div className="mg-v2-ad-b0kla__chart-body">
-                  <div className="mg-v2-ad-b0kla__kpi-value mg-v2-ad-b0kla__kpi-value--success">
-                    +{formatCurrency(monthlyIncome)}원
-                  </div>
+                  <div className="mg-v2-ad-b0kla__kpi-value">+{formatCurrency(monthlyIncome)}원</div>
                   <span className="mg-v2-ad-b0kla__kpi-label">이번 달</span>
                 </div>
               </div>
-              <div className="mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card-accent--orange">
+              <div className="mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card--accent-error">
                 <div className="mg-v2-ad-b0kla__chart-header">
-                  <h3 className="mg-v2-ad-b0kla__chart-title">월 총 지출</h3>
-                  <TrendingDown size={24} aria-hidden className="mg-v2-ad-b0kla__kpi-value--danger" />
+                  <span className="mg-v2-ad-b0kla__chart-title">지출 합계</span>
+                  <TrendingDown size={24} aria-hidden className="mg-financial-calendar-monthly-stats__icon" />
                 </div>
                 <div className="mg-v2-ad-b0kla__chart-body">
-                  <div className="mg-v2-ad-b0kla__kpi-value mg-v2-ad-b0kla__kpi-value--danger">
-                    -{formatCurrency(monthlyExpense)}원
-                  </div>
+                  <div className="mg-v2-ad-b0kla__kpi-value">-{formatCurrency(monthlyExpense)}원</div>
                   <span className="mg-v2-ad-b0kla__kpi-label">이번 달</span>
                 </div>
               </div>
-              <div className={`mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card-accent--blue ${monthlyProfit < 0 ? 'mg-v2-ad-b0kla__card-accent--orange' : ''}`}>
+              <div
+                className={`mg-v2-ad-b0kla__card ${monthlyProfit >= 0 ? 'mg-v2-ad-b0kla__card--accent-primary' : 'mg-v2-ad-b0kla__card--accent-error'}`}
+              >
                 <div className="mg-v2-ad-b0kla__chart-header">
-                  <h3 className="mg-v2-ad-b0kla__chart-title">월 순이익</h3>
-                  <CircleDollarSign size={24} aria-hidden className={monthlyProfit >= 0 ? 'mg-v2-ad-b0kla__kpi-value--primary' : 'mg-v2-ad-b0kla__kpi-value--danger'} />
+                  <span className="mg-v2-ad-b0kla__chart-title">순이익</span>
+                  <CircleDollarSign size={24} aria-hidden className="mg-financial-calendar-monthly-stats__icon" />
                 </div>
                 <div className="mg-v2-ad-b0kla__chart-body">
-                  <div className={`mg-v2-ad-b0kla__kpi-value ${monthlyProfit >= 0 ? 'mg-v2-ad-b0kla__kpi-value--primary' : 'mg-v2-ad-b0kla__kpi-value--danger'}`}>
-                    {formatCurrency(monthlyProfit)}원
-                  </div>
+                  <div className="mg-v2-ad-b0kla__kpi-value">{formatCurrency(monthlyProfit)}원</div>
                   <span className="mg-v2-ad-b0kla__kpi-label">이번 달</span>
                 </div>
               </div>
-              <div className="mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card-accent--blue">
+              <div className="mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card--accent-secondary">
                 <div className="mg-v2-ad-b0kla__chart-header">
-                  <h3 className="mg-v2-ad-b0kla__chart-title">총 거래</h3>
-                  <BarChart3 size={24} aria-hidden className="mg-v2-ad-b0kla__kpi-value--info" />
+                  <span className="mg-v2-ad-b0kla__chart-title">거래 건수</span>
+                  <BarChart3 size={24} aria-hidden className="mg-financial-calendar-monthly-stats__icon" />
                 </div>
                 <div className="mg-v2-ad-b0kla__chart-body">
-                  <div className="mg-v2-ad-b0kla__kpi-value mg-v2-ad-b0kla__kpi-value--info">{totalTransactions}건</div>
+                  <div className="mg-v2-ad-b0kla__kpi-value">{totalTransactions}건</div>
                   <span className="mg-v2-ad-b0kla__kpi-label">이번 달</span>
                 </div>
               </div>
             </div>
           );
         })()}
-      </div>
+      </section>
 
       {loading && (
         <div className="mg-financial-calendar-loading-overlay">

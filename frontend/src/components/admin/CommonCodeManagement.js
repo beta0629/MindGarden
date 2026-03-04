@@ -1,9 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import Button from '../ui/Button/Button';
-import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
+import { apiGet } from '../../utils/ajax';
 import {
     getCommonCodes,
-    getCommonCodeById,
     createCommonCode,
     updateCommonCode,
     deleteCommonCode,
@@ -13,31 +11,26 @@ import {
 import notificationManager from '../../utils/notification';
 import { 
     loadCodeGroupMetadata, 
-    getCodeGroupKoreanName, 
-    getCodeGroupIcon,
     getCodeGroupKoreanNameSync,
     getCodeGroupIconSync,
     clearCodeGroupCache
 } from '../../utils/codeHelper';
 import { useSession } from '../../contexts/SessionContext';
 import { RoleUtils, USER_ROLES } from '../../constants/roles';
-import { usePermissions } from '../../hooks/usePermissions';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentArea, ContentHeader } from '../dashboard-v2/content';
-import './ImprovedCommonCodeManagement.css';
+import './CommonCodeManagementB0KlA.css';
 
 /**
- * - 2단계 구조: 코드그룹 선택 → 코드 목록 관리
- * - 직관적인 UI/UX 제공
- * - 관리자 친화적 인터페이스
+ * - 2단 분할 구조 (마스터-디테일): 코드그룹 목록(좌) / 코드 관리(우)
+ * - 아토믹 디자인 및 B0KlA 어드민 디자인 토큰 적용
  * 
  * @author Core Solution
- * @version 2.0.0
+ * @version 2.1.0
  * @since 2025-09-13
  */
 const CommonCodeManagement = () => {
     const { user } = useSession();
-    const { canManageCodeGroup } = usePermissions();
     
     const hasErpCodePermission = () => {
         return RoleUtils.isAdmin(user);
@@ -84,7 +77,6 @@ const CommonCodeManagement = () => {
         return hasGeneralCodePermission();
     };
     
-    const [currentStep, setCurrentStep] = useState(1); // 1: 그룹 선택, 2: 코드 관리
     const [selectedGroup, setSelectedGroup] = useState(null);
     const [codeGroups, setCodeGroups] = useState([]);
     const [groupCodes, setGroupCodes] = useState([]);
@@ -93,7 +85,6 @@ const CommonCodeManagement = () => {
     const [editingCode, setEditingCode] = useState(null);
 
     const [groupMetadata, setGroupMetadata] = useState([]);
-    const [metadataLoaded, setMetadataLoaded] = useState(false);
     
     const [searchTerm, setSearchTerm] = useState('');
     const [categoryFilter, setCategoryFilter] = useState('all');
@@ -103,11 +94,9 @@ const CommonCodeManagement = () => {
             clearCodeGroupCache();
             const metadata = await loadCodeGroupMetadata();
             setGroupMetadata(metadata);
-            setMetadataLoaded(true);
             console.log('코드그룹 메타데이터 로드 완료:', metadata.length, '개');
         } catch (error) {
             console.error('코드그룹 메타데이터 로드 실패:', error);
-            setMetadataLoaded(true); // 실패해도 로딩 상태는 해제
         }
     }, []);
 
@@ -200,16 +189,9 @@ const CommonCodeManagement = () => {
         }
         
         setSelectedGroup(group);
-        setCurrentStep(2);
-        loadGroupCodes(group);
-    };
-
-    const handleBackToGroups = () => {
-        setCurrentStep(1);
-        setSelectedGroup(null);
-        setGroupCodes([]);
         setShowAddForm(false);
         setEditingCode(null);
+        loadGroupCodes(group);
     };
 
     const getFilteredCodeGroups = () => {
@@ -352,18 +334,6 @@ const CommonCodeManagement = () => {
         return koreanMappings[groupName] || groupName;
     };
 
-    const getCategoryName = (category) => {
-        const categoryNames = {
-            'all': '전체',
-            'user': '사용자 관련',
-            'system': '시스템 관련',
-            'payment': '결제/급여',
-            'consultation': '상담 관련',
-            'erp': 'ERP 관련'
-        };
-        return categoryNames[category] || category;
-    };
-
     const handleAddCode = async (e) => {
         e.preventDefault();
         
@@ -426,11 +396,11 @@ const CommonCodeManagement = () => {
 
     const handleDeleteCode = async (codeId) => {
         const confirmed = await new Promise((resolve) => {
-      notificationManager.confirm('정말로 이 코드를 삭제하시겠습니까?', resolve);
-    });
-    if (!confirmed) {
-        return;
-    }
+            notificationManager.confirm('정말로 이 코드를 삭제하시겠습니까?', resolve);
+        });
+        if (!confirmed) {
+            return;
+        }
 
         try {
             setLoading(true);
@@ -555,377 +525,241 @@ const CommonCodeManagement = () => {
         loadCodeGroups();
     }, [loadMetadata, loadCodeGroups]);
 
-    const renderGroupSelection = () => (
-        <div className="group-selection">
-            <div className="step-header">
-                <h2>📋 코드그룹 선택</h2>
-                <p>관리하고자 하는 코드그룹을 선택하세요.</p>
-            </div>
-
-            { /* 필터 UI */ }
-            <div className="common-code-management-filter">
-                <div className="mg-v2-flex mg-gap-md mg-align-center mg-mb-md" className="mg-v2-filter-container">
-                    { /* 검색 입력 */ }
-                    <div className="mg-v2-form-group" className="mg-v2-search-group">
-                        <input
-                            type="text"
-                            placeholder="코드그룹명, 한글명, 영문명으로 검색..."
-                            value={ searchTerm }
-                            onChange={ (e) => setSearchTerm(e.target.value) }
-                            className="mg-v2-input"
-                            onFocus={ (e) => e.target.style.borderColor = 'var(--mg-primary-500)' }
-                            onBlur={ (e) => e.target.style.borderColor = 'var(--mg-gray-300)' }
-                        />
-                        <i className="bi bi-search mg-search-icon"></i>
-                    </div>
-                    
-                    { /* 카테고리 필터 */ }
-                    <select
-                        value={ categoryFilter }
-                        onChange={ (e) => setCategoryFilter(e.target.value) }
-                        className="mg-v2-filter-select"
-                    >
-                        <option value="all">전체 카테고리</option>
-                        <option value="user">사용자 관련</option>
-                        <option value="system">시스템 관련</option>
-                        <option value="payment">결제/급여</option>
-                        <option value="consultation">상담 관련</option>
-                        <option value="erp">ERP 관련</option>
-                    </select>
-                    
-                    { /* 필터 초기화 */ }
-                    {(searchTerm || categoryFilter !== 'all') && (
-                        <Button
-                            variant="secondary"
-                            size="small"
-                            onClick={() => {
-                                setSearchTerm('');
-                                setCategoryFilter('all');
-                            }}
-                            className="mg-v2-filter-reset-btn"
-                            preventDoubleClick={true}
-                        >
-                            <i className="bi bi-x-circle"></i>
-                            초기화
-                        </Button>
-                    )}
-                </div>
-                
-                { /* 필터 상태 표시 */ }
-                <div className="mg-filter-status">
-                    <i className="bi bi-info-circle"></i>
-                    {searchTerm || categoryFilter !== 'all' ? (
-                        <span>
-                            검색 결과: <strong>{getFilteredCodeGroups().length}개</strong>
-                            { searchTerm && ` (검색어: "${searchTerm }")`}
-                            { categoryFilter !== 'all' && ` (카테고리: ${getCategoryName(categoryFilter) })`}
-                        </span>
-                    ) : (
-                        <span>
-                            전체 <strong>{ codeGroups.length }개</strong> 코드그룹
-                        </span>
-                    )}
-                </div>
-            </div>
-
-            {loading ? (
-                <div className="mg-loading">로딩중...</div>
-            ) : (
-                <div className="group-cards">
-                    {getFilteredCodeGroups().map((group, index) => (
-                        <div 
-                            key={group} 
-                            className="group-card"
-                            onClick={ () => handleGroupSelect(group) }
-                        >
-                            <div className="group-card-header">
-                                <div className="group-icon">{ getGroupIcon(group) }</div>
-                                <h3>{ getGroupKoreanName(group) || convertGroupNameToKorean(group) }</h3>
-                                <span className="group-code">{ group }</span>
-                            </div>
-                            <div className="group-card-body">
-                                <p>코드 그룹 관리</p>
-                                <div className="group-actions">
-                                    <span className="action-text">클릭하여 관리</span>
-                                    <i className="bi bi-arrow-right"></i>
-                                </div>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            )}
-        </div>
-    );
-
-    const renderCodeManagement = () => (
-        <div className="code-management">
-            <div className="mg-v2-header-bar">
-                <button 
-                    className="mg-v2-button mg-v2-button-outline"
-                    onClick={ handleBackToGroups }
-                >
-                    ← 그룹 선택으로 돌아가기
-                </button>
-                <div className="mg-v2-group-info">
-                    <h2 className="mg-v2-group-title">
-                        📁 { getGroupKoreanName(selectedGroup) || convertGroupNameToKorean(selectedGroup) } 그룹 관리
-                    </h2>
-                    <p className="mg-v2-group-description">
-                        { selectedGroup } - 코드를 추가, 수정, 삭제할 수 있습니다.
-                    </p>
-                </div>
-                <Button 
-                    variant="primary"
-                    onClick={() => setShowAddForm(true)}
-                    disabled={loading}
-                    className="mg-v2-add-code-btn"
-                    preventDoubleClick={true}
-                >
-                    + 새 코드 추가
-                </Button>
-            </div>
-
-            {showAddForm && (
-                <div className="add-code-form">
-                    <div className="form-header">
-                        <h3>{editingCode ? '코드 수정' : '새 코드 추가'}</h3>
-                        <Button 
-                            variant="secondary"
-                            size="small"
-                            onClick={handleCancelForm}
-                            preventDoubleClick={true}
-                        >
-                            <i className="bi bi-x"></i>
-                        </Button>
-                    </div>
-                    <form onSubmit={ editingCode ? handleUpdateCode : handleAddCode }>
-                        <div className="form-row">
-                            <div className="form-group">
-                                <label htmlFor="codeValue">코드 값 *</label>
-                                <input
-                                    type="text"
-                                    id="codeValue"
-                                    value={ newCodeData.codeValue }
-                                    onChange={ (e) => setNewCodeData({...newCodeData, codeValue: e.target.value })}
-                                    className="form-control"
-                                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-                                    placeholder="예: ACTIVE, INACTIVE"
-                                    required
-                                    className="mg-v2-form-input"
-                                />
-                            </div>
-                            <div className="form-group">
-                                <label htmlFor="codeLabel">코드 라벨 *</label>
-                                <input
-                                    type="text"
-                                    id="codeLabel"
-                                    value={ newCodeData.codeLabel }
-                                    onChange={ (e) => setNewCodeData({...newCodeData, codeLabel: e.target.value })}
-                                    className="form-control"
-                                    placeholder="예: 활성, 비활성"
-                                    required
-                                    className="form-control mg-form-input--legacy"
-                                />
-                            </div>
-                        </div>
-                        <div className="form-group">
-                            <label htmlFor="codeDescription">설명</label>
-                            <textarea
-                                id="codeDescription"
-                                value={ newCodeData.codeDescription }
-                                onChange={ (e) => setNewCodeData({...newCodeData, codeDescription: e.target.value })}
-                                className="form-control"
-                                rows="3"
-                                placeholder="코드에 대한 설명을 입력하세요."
-                                className="form-control mg-form-input"
-                            />
-                        </div>
-                        <div className="form-row">
-                            <div className="form-group">
-                                <label htmlFor="sortOrder">정렬 순서</label>
-                                <input
-                                    type="number"
-                                    id="sortOrder"
-                                    value={ newCodeData.sortOrder }
-                                    onChange={ (e) => setNewCodeData({...newCodeData, sortOrder: parseInt(e.target.value) || 0 })}
-                                    className="form-control"
-                                    min="0"
-                                    className="form-control mg-form-input--legacy"
-                                />
-                            </div>
-                            <div className="form-group">
-                                <label className="checkbox-label">
-                                    <input
-                                        type="checkbox"
-                                        checked={ newCodeData.isActive }
-                                        onChange={ (e) => setNewCodeData({...newCodeData, isActive: e.target.checked })}
-                                    />
-                                    <span>활성 상태</span>
-                                </label>
-                            </div>
-                        </div>
-                        <div className="form-actions">
-                            <Button 
-                                type="button" 
-                                variant="secondary"
-                                onClick={handleCancelForm}
-                                preventDoubleClick={true}
-                            >
-                                취소
-                            </Button>
-                            <Button 
-                                type="submit" 
-                                variant="primary"
-                                disabled={loading}
-                                preventDoubleClick={true}
-                                loading={loading}
-                            >
-                                {editingCode ? '수정' : '추가'}
-                            </Button>
-                        </div>
-                    </form>
-                </div>
-            )}
-
-            <div className="codes-list">
-                {loading ? (
-                    <div className="mg-loading">로딩중...</div>
-                ) : groupCodes.length === 0 ? (
-                    <div className="empty-state">
-                        <div className="empty-icon">📝</div>
-                        <h3>코드가 없습니다</h3>
-                        <p>새로운 코드를 추가해보세요.</p>
-                    </div>
-                ) : (
-                    <div className="mg-v2-code-grid">
-                        {groupCodes.map((code) => (
-                            <div 
-                                key={code.id} 
-                                style={{
-                                    backgroundColor: 'var(--mg-gray-100)',
-                                    borderRadius: '12px',
-                                    padding: '20px',
-                                    border: '2px solid var(--mg-gray-200)',
-                                    transition: 'all 0.3s ease',
-                                    opacity: !code.isActive ? 0.6 : 1
-                                }}
-                            >
-                                <div className="mg-v2-code-card-header">
-                                    <div>
-                                        <h4 className="mg-v2-code-label">
-                                            { code.codeLabel }
-                                        </h4>
-                                        <span style={{
-                                            color: 'var(--mg-secondary-500)',
-                                            fontSize: 'var(--font-size-xs)',
-                                            background: 'var(--mg-gray-200)',
-                                            padding: '2px 6px',
-                                            borderRadius: '4px',
-                                            fontFamily: 'monospace'
-                                        }}>
-                                            { code.codeValue }
-                                        </span>
-                                    </div>
-                                    <span style={{
-                                        padding: '4px 12px',
-                                        borderRadius: '20px',
-                                        fontSize: 'var(--font-size-xs)',
-                                        fontWeight: '500',
-                                        backgroundColor: code.isActive ? 'var(--mg-success-100)' : 'var(--mg-error-100)',
-                                        color: code.isActive ? 'var(--mg-success-700)' : 'var(--mg-error-700)'
-                                    }}>
-                                        { code.isActive ? '활성' : '비활성' }
-                                    </span>
-                                </div>
-                                {code.codeDescription && (
-                                    <div className="mg-v2-code-description-container">
-                                        <p className="mg-v2-code-description">
-                                            { code.codeDescription }
-                                        </p>
-                                    </div>
-                                )}
-                                <div className="mg-v2-code-card-footer">
-                                    <span className="mg-v2-sort-order">
-                                        정렬: { code.sortOrder }
-                                    </span>
-                                    <div className="mg-v2-code-actions">
-                                        <button 
-                                            style={{
-                                                padding: '6px 10px',
-                                                border: '2px solid var(--mg-primary-500)',
-                                                borderRadius: '6px',
-                                                backgroundColor: 'transparent',
-                                                color: 'var(--mg-primary-500)',
-                                                fontSize: 'var(--font-size-xs)',
-                                                cursor: 'pointer',
-                                                transition: 'all 0.3s ease'
-                                            }}
-                                            onClick={ () => handleEditCode(code) }
-                                            title="수정"
-                                        >
-                                            ✏️
-                                        </button>
-                                        <button 
-                                            style={{
-                                                padding: '6px 10px',
-                                                border: `2px solid ${code.isActive ? 'var(--mg-warning-500)' : 'var(--mg-success-500)'}`,
-                                                borderRadius: '6px',
-                                                backgroundColor: 'transparent',
-                                                color: code.isActive ? 'var(--mg-warning-500)' : 'var(--mg-success-500)',
-                                                fontSize: 'var(--font-size-xs)',
-                                                cursor: 'pointer',
-                                                transition: 'all 0.3s ease'
-                                            }}
-                                            onClick={ () => handleToggleStatus(code.id, code.isActive) }
-                                            title={ code.isActive ? '비활성화' : '활성화' }
-                                        >
-                                            { code.isActive ? '⏸️' : '▶️' }
-                                        </button>
-                                        <button 
-                                            style={{
-                                                padding: '6px 10px',
-                                                border: '2px solid var(--mg-error-500)',
-                                                borderRadius: '6px',
-                                                backgroundColor: 'transparent',
-                                                color: 'var(--mg-error-500)',
-                                                fontSize: 'var(--font-size-xs)',
-                                                cursor: 'pointer',
-                                                transition: 'all 0.3s ease'
-                                            }}
-                                            onClick={ () => handleDeleteCode(code.id) }
-                                            title="삭제"
-                                        >
-                                            🗑️
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
-            </div>
-        </div>
-    );
-
     return (
         <AdminCommonLayout title="공통코드 관리">
             <ContentArea>
-                <ContentHeader title="공통코드 관리" subtitle="코드 그룹을 선택한 뒤 코드 값을 관리합니다." />
-            <div className="improved-common-code-management">
-                <div className="mg-step-indicator improved-common-code-step-wrapper">
-                    <div className={ `step ${currentStep === 1 ? 'active' : 'completed' }`}>
-                        <div className="step-number">1</div>
-                        <div className="step-label">그룹 선택</div>
+                <ContentHeader title="공통코드 관리" subtitle="코드그룹을 선택한 뒤 해당 그룹의 세부 코드를 관리합니다." />
+                
+                <div className="mg-v2-ad-b0kla__common-code-container">
+                    {/* 좌측: GroupListSection */}
+                    <div className="mg-v2-ad-b0kla__group-list-section">
+                        <div className="mg-v2-ad-b0kla__section-header">
+                            코드그룹 목록
+                        </div>
+
+                        <div className="mg-v2-ad-b0kla__search-bar">
+                            <div className="mg-v2-ad-b0kla__search-input-wrapper">
+                                <input
+                                    type="text"
+                                    placeholder="코드그룹 검색..."
+                                    value={ searchTerm }
+                                    onChange={ (e) => setSearchTerm(e.target.value) }
+                                    className="mg-v2-ad-b0kla__search-input"
+                                />
+                                <i className="bi bi-search mg-v2-ad-b0kla__search-icon"></i>
+                            </div>
+                            <select
+                                value={ categoryFilter }
+                                onChange={ (e) => setCategoryFilter(e.target.value) }
+                                className="mg-v2-ad-b0kla__filter-select"
+                            >
+                                <option value="all">전체 카테고리</option>
+                                <option value="user">사용자 관련</option>
+                                <option value="system">시스템 관련</option>
+                                <option value="payment">결제/급여</option>
+                                <option value="consultation">상담 관련</option>
+                                <option value="erp">ERP 관련</option>
+                            </select>
+                        </div>
+
+                        <div className="mg-v2-ad-b0kla__group-list">
+                            {getFilteredCodeGroups().map((group) => (
+                                <button 
+                                    key={group} 
+                                    className={`mg-v2-ad-b0kla__group-card ${selectedGroup === group ? 'mg-v2-ad-b0kla__group-card--selected' : ''}`}
+                                    onClick={ () => handleGroupSelect(group) }
+                                    style={{ textAlign: 'left', width: '100%', border: 'none', borderBottom: '1px solid var(--ad-b0kla-border)', outline: 'none' }}
+                                >
+                                    <div className="mg-v2-ad-b0kla__group-card-header">
+                                        <div className="mg-v2-ad-b0kla__group-icon">{ getGroupIcon(group) }</div>
+                                        <h3 className="mg-v2-ad-b0kla__group-title">{ getGroupKoreanName(group) || convertGroupNameToKorean(group) }</h3>
+                                    </div>
+                                    <span className="mg-v2-ad-b0kla__group-code">{ group }</span>
+                                </button>
+                            ))}
+                        </div>
                     </div>
-                    <div className="step-line"></div>
-                    <div className={ `step ${currentStep === 2 ? 'active' : '' }`}>
-                        <div className="step-number">2</div>
-                        <div className="step-label">코드 관리</div>
+
+                    {/* 우측: CodeDetailSection */}
+                    <div className="mg-v2-ad-b0kla__detail-section">
+                        {!selectedGroup ? (
+                            <div className="mg-v2-ad-b0kla__detail-empty">
+                                <i className="bi bi-folder-symlink"></i>
+                                <h3>코드그룹을 선택하세요</h3>
+                                <p>좌측 목록에서 코드그룹을 선택하여 상세 코드를 관리할 수 있습니다.</p>
+                            </div>
+                        ) : (
+                            <>
+                                <div className="mg-v2-ad-b0kla__section-header">
+                                    <span>
+                                        { getGroupKoreanName(selectedGroup) || convertGroupNameToKorean(selectedGroup) } 
+                                        ({ selectedGroup }) 세부 코드
+                                    </span>
+                                    <div className="mg-v2-ad-b0kla__action-buttons">
+                                        {!showAddForm && (
+                                            <button 
+                                                className="mg-v2-btn mg-v2-btn--primary"
+                                                onClick={() => setShowAddForm(true)}
+                                                disabled={loading}
+                                            >
+                                                <i className="bi bi-plus-lg"></i> 신규 추가
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {showAddForm && (
+                                    <div className="mg-v2-ad-b0kla__form-container">
+                                        <div className="mg-v2-ad-b0kla__form-header">
+                                            <h3 className="mg-v2-ad-b0kla__form-title">{editingCode ? '코드 수정' : '새 코드 추가'}</h3>
+                                            <button 
+                                                className="mg-v2-btn mg-v2-btn--secondary"
+                                                onClick={handleCancelForm}
+                                                style={{ padding: '4px 8px' }}
+                                            >
+                                                <i className="bi bi-x-lg"></i>
+                                            </button>
+                                        </div>
+                                        <form onSubmit={ editingCode ? handleUpdateCode : handleAddCode }>
+                                            <div className="mg-v2-ad-b0kla__form-row">
+                                                <div className="mg-v2-ad-b0kla__form-group">
+                                                    <label htmlFor="codeValue" className="mg-v2-ad-b0kla__form-label">코드 값 *</label>
+                                                    <input
+                                                        id="codeValue"
+                                                        type="text"
+                                                        value={ newCodeData.codeValue }
+                                                        onChange={ (e) => setNewCodeData({...newCodeData, codeValue: e.target.value })}
+                                                        placeholder="예: ACTIVE, INACTIVE"
+                                                        required
+                                                        disabled={!!editingCode}
+                                                        className="mg-v2-ad-b0kla__form-input"
+                                                    />
+                                                </div>
+                                                <div className="mg-v2-ad-b0kla__form-group">
+                                                    <label htmlFor="codeLabel" className="mg-v2-ad-b0kla__form-label">코드 라벨 *</label>
+                                                    <input
+                                                        id="codeLabel"
+                                                        type="text"
+                                                        value={ newCodeData.codeLabel }
+                                                        onChange={ (e) => setNewCodeData({...newCodeData, codeLabel: e.target.value })}
+                                                        placeholder="예: 활성, 비활성"
+                                                        required
+                                                        className="mg-v2-ad-b0kla__form-input"
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div className="mg-v2-ad-b0kla__form-row">
+                                                <div className="mg-v2-ad-b0kla__form-group">
+                                                    <label htmlFor="codeDescription" className="mg-v2-ad-b0kla__form-label">설명</label>
+                                                    <textarea
+                                                        id="codeDescription"
+                                                        value={ newCodeData.codeDescription }
+                                                        onChange={ (e) => setNewCodeData({...newCodeData, codeDescription: e.target.value })}
+                                                        placeholder="코드에 대한 설명을 입력하세요."
+                                                        className="mg-v2-ad-b0kla__form-textarea"
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div className="mg-v2-ad-b0kla__form-row">
+                                                <div className="mg-v2-ad-b0kla__form-group">
+                                                    <label htmlFor="sortOrder" className="mg-v2-ad-b0kla__form-label">정렬 순서</label>
+                                                    <input
+                                                        id="sortOrder"
+                                                        type="number"
+                                                        value={ newCodeData.sortOrder }
+                                                        onChange={ (e) => setNewCodeData({...newCodeData, sortOrder: Number.parseInt(e.target.value) || 0 })}
+                                                        min="0"
+                                                        className="mg-v2-ad-b0kla__form-input"
+                                                    />
+                                                </div>
+                                                <div className="mg-v2-ad-b0kla__form-group" style={{ flexDirection: 'row', alignItems: 'center', gap: '8px', paddingTop: '24px' }}>
+                                                    <input
+                                                        type="checkbox"
+                                                        id="isActiveCheckbox"
+                                                        checked={ newCodeData.isActive }
+                                                        onChange={ (e) => setNewCodeData({...newCodeData, isActive: e.target.checked })}
+                                                    />
+                                                    <label htmlFor="isActiveCheckbox" className="mg-v2-ad-b0kla__form-label" style={{ cursor: 'pointer' }}>활성 상태</label>
+                                                </div>
+                                            </div>
+                                            <div className="mg-v2-ad-b0kla__form-actions">
+                                                <button 
+                                                    type="button" 
+                                                    className="mg-v2-btn mg-v2-btn--secondary"
+                                                    onClick={handleCancelForm}
+                                                >
+                                                    취소
+                                                </button>
+                                                <button 
+                                                    type="submit" 
+                                                    className="mg-v2-btn mg-v2-btn--primary"
+                                                    disabled={loading}
+                                                >
+                                                    {editingCode ? '수정' : '추가'}
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                )}
+
+                                {loading && groupCodes.length === 0 ? (
+                                    <div style={{ textAlign: 'center', padding: 'var(--mg-spacing-xl)', color: 'var(--ad-b0kla-text-secondary)' }}>로딩중...</div>
+                                ) : (
+                                    <table className="mg-v2-ad-b0kla__data-table">
+                                        <thead>
+                                            <tr>
+                                                <th>코드 라벨</th>
+                                                <th>코드 값</th>
+                                                <th>상태</th>
+                                                <th>정렬</th>
+                                                <th>설명</th>
+                                                <th style={{ width: '120px', textAlign: 'center' }}>관리</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {groupCodes.length === 0 ? (
+                                                <tr>
+                                                    <td colSpan="6" style={{ textAlign: 'center', color: 'var(--ad-b0kla-text-secondary)', padding: 'var(--mg-spacing-xl)' }}>
+                                                        등록된 세부 코드가 없습니다.
+                                                    </td>
+                                                </tr>
+                                            ) : (
+                                                groupCodes.map(code => (
+                                                    <tr key={code.id} style={{ opacity: code.isActive ? 1 : 0.6 }}>
+                                                        <td style={{ fontWeight: 500 }}>{code.codeLabel}</td>
+                                                        <td><code style={{ fontSize: '12px', background: 'var(--mg-gray-100)', padding: '2px 4px', borderRadius: '4px' }}>{code.codeValue}</code></td>
+                                                        <td>
+                                                            <span className={`mg-v2-badge ${code.isActive ? 'mg-v2-badge--active' : 'mg-v2-badge--inactive'}`}>
+                                                                {code.isActive ? '활성' : '비활성'}
+                                                            </span>
+                                                        </td>
+                                                        <td>{code.sortOrder}</td>
+                                                        <td style={{ color: 'var(--ad-b0kla-text-secondary)' }}>
+                                                            {code.codeDescription || '-'}
+                                                        </td>
+                                                        <td style={{ textAlign: 'center' }}>
+                                                            <div className="mg-v2-ad-b0kla__code-actions" style={{ justifyContent: 'center' }}>
+                                                                <button onClick={() => handleEditCode(code)} title="수정" style={{ color: 'var(--ad-b0kla-green)' }}>
+                                                                    <i className="bi bi-pencil-square"></i>
+                                                                </button>
+                                                                <button onClick={() => handleToggleStatus(code.id, code.isActive)} title={code.isActive ? '비활성화' : '활성화'} style={{ color: code.isActive ? 'var(--mg-warning-500)' : 'var(--ad-b0kla-green)' }}>
+                                                                    <i className={`bi ${code.isActive ? 'bi-pause-circle' : 'bi-play-circle'}`}></i>
+                                                                </button>
+                                                                <button onClick={() => handleDeleteCode(code.id)} title="삭제" style={{ color: 'var(--mg-error-500, #dc2626)' }}>
+                                                                    <i className="bi bi-trash"></i>
+                                                                </button>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                ))
+                                            )}
+                                        </tbody>
+                                    </table>
+                                )}
+                            </>
+                        )}
                     </div>
                 </div>
-
-                { currentStep === 1 ? renderGroupSelection() : renderCodeManagement() }
-            </div>
             </ContentArea>
         </AdminCommonLayout>
     );

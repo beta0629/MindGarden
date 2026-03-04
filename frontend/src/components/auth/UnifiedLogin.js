@@ -31,7 +31,6 @@ import { authAPI } from '../../utils/ajax';
 import { sessionManager } from '../../utils/sessionManager';
 import { googleLogin, kakaoLogin, naverLogin } from '../../utils/socialLogin';
 import CommonPageTemplate from '../common/CommonPageTemplate';
-import SimpleLayout from '../layout/SimpleLayout';
 import SocialSignupModal from './SocialSignupModal';
 import TenantSelection from './TenantSelection';
 import PasswordChangeModal from '../mypage/components/PasswordChangeModal';
@@ -45,12 +44,11 @@ const UnifiedLogin = () => {
   console.log('🚀 UnifiedLogin 컴포넌트 렌더링 시작');
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, checkSession, setDuplicateLoginModal, user } = useSession();
+  const { checkSession, setDuplicateLoginModal, user } = useSession();
 
-  // URL 파라미터에서 email과 redirect 가져오기
+  // URL 파라미터에서 email 가져오기
   const searchParams = new URLSearchParams(location.search);
   const emailFromUrl = searchParams.get('email');
-  const redirectFromUrl = searchParams.get('redirect');
 
   const [formData, setFormData] = useState({
     email: emailFromUrl || '',
@@ -72,7 +70,6 @@ const UnifiedLogin = () => {
   const [socialUserInfo, setSocialUserInfo] = useState(null);
   const [showTenantSelection, setShowTenantSelection] = useState(false);
   const [accessibleTenants, setAccessibleTenants] = useState([]);
-  const [isMultiTenant, setIsMultiTenant] = useState(false);
   const [showPasswordChangeModal, setShowPasswordChangeModal] = useState(false);
   const [tempPassword, setTempPassword] = useState(''); // 임시 비밀번호 저장 (비밀번호 변경 모달에 전달)
   const sessionCheckedRef = useRef(false); // 세션 체크 완료 여부 (ref 사용으로 리렌더링 방지)
@@ -310,7 +307,8 @@ const UnifiedLogin = () => {
     }
   };
 
-  // 기존 세션 확인 (한 번만 실행, 직접 API 호출로 SessionContext 우회)
+  // 기존 세션 확인 (한 번만 실행, 직접 API 호출로 SessionContext 우회) - 미사용으로 주석 처리
+  /*
   const checkExistingSession = async () => {
     // 이미 체크했거나 로딩 중이면 스킵
     if (sessionCheckedRef.current || isLoading || tooltip.show) {
@@ -361,6 +359,7 @@ const UnifiedLogin = () => {
       sessionCheckedRef.current = true;
     }
   };
+  */
 
   // 멀티 테넌트 사용자 확인 및 리다이렉트
   const checkMultiTenantAndRedirect = async (user) => {
@@ -434,7 +433,6 @@ const UnifiedLogin = () => {
         const data = await response.json();
         if (data.success) {
           setAccessibleTenants(data.tenants || []);
-          setIsMultiTenant(data.isMultiTenant || false);
         }
       }
     } catch (error) {
@@ -530,7 +528,6 @@ const UnifiedLogin = () => {
                   // 멀티 테넌트 사용자: 테넌트 선택 화면 표시
                   console.log('🔄 멀티 테넌트 사용자 감지:', confirmData.accessibleTenants);
                   setAccessibleTenants(confirmData.accessibleTenants);
-                  setIsMultiTenant(true);
                   setShowTenantSelection(true);
                   setIsLoading(false);
                   return;
@@ -603,7 +600,6 @@ const UnifiedLogin = () => {
           // 멀티 테넌트 사용자: 테넌트 선택 화면 표시
           console.log('🔄 멀티 테넌트 사용자 감지:', loginData.accessibleTenants);
           setAccessibleTenants(loginData.accessibleTenants);
-          setIsMultiTenant(true);
           setShowTenantSelection(true);
           setIsLoading(false);
           return;
@@ -690,11 +686,13 @@ const UnifiedLogin = () => {
     }
   };
 
-  // 테넌트 선택 완료 핸들러 (TenantSelection에서 직접 처리하도록 변경)
+  // 테넌트 선택 완료 핸들러 (TenantSelection에서 직접 처리하도록 변경) - 미사용
+  /*
   const handleTenantSelected = async (tenantId) => {
     // TenantSelection 컴포넌트에서 직접 처리하므로 여기서는 호출만
     console.log('🔄 테넌트 선택 요청:', tenantId);
   };
+  */
 
   // 입력 핸들러
   const handleInputChange = (e) => {
@@ -730,50 +728,61 @@ const UnifiedLogin = () => {
   }
 
   return (
-    <CommonPageTemplate>
-      <SimpleLayout>
-        <div className="unified-login">
-          <div className="unified-login__container">
-            <div className="unified-login__header">
-              <h1 className="unified-login__title">통합 로그인</h1>
-              <p className="unified-login__subtitle">CoreSolution에 오신 것을 환영합니다</p>
+    <CommonPageTemplate bodyClass="login-page">
+      <div className="mg-v2-login-container">
+        {/* 좌측: 브랜딩 이미지 영역 */}
+        <div className="mg-v2-login-hero">
+          <div className="mg-v2-login-hero-content">
+            <h1 className="mg-v2-login-hero-logo">MindGarden</h1>
+            <p className="mg-v2-login-hero-slogan">마음의 평화를 가꾸는 공간</p>
+          </div>
+        </div>
+
+        {/* 우측: 로그인 폼 영역 */}
+        <div className="mg-v2-login-content">
+          <div className="mg-v2-login-form-wrapper">
+            <div className="mg-v2-login-header">
+              <h1 className="mg-v2-login-title">환영합니다</h1>
+              <p className="mg-v2-login-subtitle">마인드가든 서비스에 로그인하세요.</p>
             </div>
 
             {/* ID/PW 로그인 폼 */}
-            <form onSubmit={handleSubmit} className="unified-login__form">
-              <div className="unified-login__field">
-                <label className="unified-login__label">이메일</label>
+            <form onSubmit={handleSubmit} className="mg-v2-login-form">
+              <div className="mg-v2-field">
+                <label htmlFor="email" className="mg-v2-label">이메일</label>
                 <input
+                  id="email"
                   type="email"
                   name="email"
                   defaultValue={formData.email}
                   onChange={handleInputChange}
                   onFocus={() => console.log('📧 이메일 필드 포커스됨')}
                   onBlur={() => console.log('📧 이메일 필드 포커스 해제됨')}
-                  className="unified-login__input"
+                  className="mg-v2-input"
                   placeholder="이메일을 입력하세요"
                   required
                 />
               </div>
 
-              <div className="unified-login__field">
-                <label className="unified-login__label">비밀번호</label>
-                <div className="unified-login__password-wrapper">
+              <div className="mg-v2-field">
+                <label htmlFor="password" className="mg-v2-label">비밀번호</label>
+                <div className="mg-v2-password-wrapper">
                   <input
+                    id="password"
                     type={showPassword ? 'text' : 'password'}
                     name="password"
                     defaultValue={formData.password}
                     onChange={handleInputChange}
                     onFocus={() => console.log('🔒 비밀번호 필드 포커스됨')}
                     onBlur={() => console.log('🔒 비밀번호 필드 포커스 해제됨')}
-                    className="unified-login__input"
+                    className="mg-v2-input"
                     placeholder="비밀번호를 입력하세요"
                     required
                   />
                   <button
                     type="button"
                     onClick={togglePassword}
-                    className="unified-login__password-toggle"
+                    className="mg-v2-password-toggle"
                   >
                     {showPassword ? '👁️' : '👁️‍🗨️'}
                   </button>
@@ -781,7 +790,7 @@ const UnifiedLogin = () => {
               </div>
 
               {tooltip.show && (
-                <div className={`unified-login__tooltip unified-login__tooltip--${tooltip.type}`}>
+                <div className={`mg-v2-tooltip mg-v2-tooltip--${tooltip.type}`}>
                   {tooltip.message}
                 </div>
               )}
@@ -789,26 +798,25 @@ const UnifiedLogin = () => {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="unified-login__submit-button"
+                className="mg-v2-button-primary"
               >
                 {isLoading ? <div className="mg-loading">로딩중...</div> : '로그인'}
               </button>
             </form>
 
             {/* 소셜 로그인 버튼 */}
-            <div className="unified-login__social">
-              <div className="unified-login__social-divider">
-                <span>또는</span>
+            <div className="mg-v2-login-social">
+              <div className="mg-v2-divider">
+                <span>또는 다음으로 로그인</span>
               </div>
 
-              <div className="unified-login__social-buttons">
+              <div className="mg-v2-social-buttons">
                 <button
                   type="button"
                   onClick={handleKakaoLogin}
-                  className="unified-login__social-button unified-login__social-button--kakao"
+                  className="mg-v2-button-social mg-v2-button-kakao"
                 >
                   <svg 
-                    className="unified-login__social-logo" 
                     width="18" 
                     height="18" 
                     viewBox="0 0 18 18" 
@@ -817,19 +825,18 @@ const UnifiedLogin = () => {
                   >
                     <path 
                       d="M9 0C4.03 0 0 2.69 0 6c0 1.92 1.21 3.61 3.04 4.61L1.5 14.85l4.49-1.24C6.64 13.95 7.81 14 9 14c4.97 0 9-2.69 9-6s-4.03-6-9-6z" 
-                      fill="var(--mg-black)"
+                      fill="var(--mg-black, #000000)"
                     />
                   </svg>
-                  카카오로 로그인
+                  카카오 로그인
                 </button>
 
                 <button
                   type="button"
                   onClick={handleNaverLogin}
-                  className="unified-login__social-button unified-login__social-button--naver"
+                  className="mg-v2-button-social mg-v2-button-naver"
                 >
                   <svg 
-                    className="unified-login__social-logo" 
                     width="18" 
                     height="18" 
                     viewBox="0 0 18 18" 
@@ -838,7 +845,7 @@ const UnifiedLogin = () => {
                   >
                     <path 
                       d="M0 0h9v9H0V0z" 
-                      fill="var(--mg-white)"
+                      fill="var(--mg-white, #FFFFFF)"
                     />
                     <path 
                       d="M9 9h9v9H9V9z" 
@@ -850,7 +857,7 @@ const UnifiedLogin = () => {
                     />
                     <path 
                       d="M0 9h9v9H0V9z" 
-                      fill="var(--mg-white)"
+                      fill="var(--mg-white, #FFFFFF)"
                     />
                     <text 
                       x="9" 
@@ -858,90 +865,101 @@ const UnifiedLogin = () => {
                       fontFamily="Arial, sans-serif" 
                       fontSize="10" 
                       fontWeight="bold" 
-                      fill="var(--mg-white)" 
+                      fill="var(--mg-white, #FFFFFF)" 
                       textAnchor="middle"
                       dominantBaseline="middle"
                     >
                       N
                     </text>
                   </svg>
-                  네이버로 로그인
+                  네이버 로그인
                 </button>
 
                 {oauth2Config?.google && (
                   <button
                     type="button"
                     onClick={handleGoogleLogin}
-                    className="unified-login__social-button unified-login__social-button--google"
+                    className="mg-v2-button-social mg-v2-button-google"
                   >
-                    <span className="unified-login__social-icon">구글</span>
-                    구글로 로그인
+                    <svg 
+                      width="18" 
+                      height="18" 
+                      viewBox="0 0 18 18" 
+                      fill="none" 
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z" fill="#4285F4"/>
+                      <path d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z" fill="#34A853"/>
+                      <path d="M3.964 10.707c-.18-.54-.282-1.117-.282-1.707s.102-1.167.282-1.707V4.961H.957C.347 6.175 0 7.55 0 9s.348 2.825.957 4.039l3.007-2.332z" fill="#FBBC05"/>
+                      <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.961L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
+                    </svg>
+                    구글 로그인
                   </button>
                 )}
               </div>
             </div>
 
             {/* 추가 링크 */}
-            <div className="unified-login__links">
-              <a href="/register" className="unified-login__link">
+            <div className="mg-v2-login-links">
+              <a href="/register" className="mg-v2-link">
                 회원가입
               </a>
-              <span className="unified-login__link-separator">|</span>
-              <a href="/forgot-password" className="unified-login__link">
+              <span className="mg-v2-link-separator"></span>
+              <a href="/forgot-password" className="mg-v2-link">
                 비밀번호 찾기
               </a>
             </div>
           </div>
         </div>
+      </div>
 
-        {/* 비밀번호 변경 모달 (임시 비밀번호로 로그인한 경우) */}
-        {showPasswordChangeModal && (
-          <PasswordChangeModal
-            isOpen={showPasswordChangeModal}
-            tempPassword={tempPassword} // 임시 비밀번호 전달 (현재 비밀번호로 자동 입력)
-            onClose={() => {
-              // 비밀번호 변경 모달을 닫을 수 없도록 설정 (임시 비밀번호인 경우 필수)
-              notificationManager.show('임시 비밀번호를 변경해야 합니다.', 'warning');
-            }}
-            onSuccess={async () => {
-              // 비밀번호 변경 성공 시 대시보드로 리다이렉트
-              console.log('✅ 비밀번호 변경 완료 - 대시보드로 리다이렉트');
-              setShowPasswordChangeModal(false);
-              setTempPassword(''); // 임시 비밀번호 초기화
-              
-              // 세션 정보 다시 확인 후 대시보드로 이동
-              try {
-                const checkResult = await checkSession(true);
-                if (checkResult && user) {
-                  const { redirectToDynamicDashboard } = await import('../../utils/dashboardUtils');
-                  await redirectToDynamicDashboard({ user }, navigate);
-                } else {
-                  // 세션 확인 실패 시 로그인 페이지로 이동
-                  navigate('/login');
-                }
-              } catch (error) {
-                console.error('❌ 세션 확인 실패:', error);
+      {/* 비밀번호 변경 모달 (임시 비밀번호로 로그인한 경우) */}
+      {showPasswordChangeModal && (
+        <PasswordChangeModal
+          isOpen={showPasswordChangeModal}
+          tempPassword={tempPassword} // 임시 비밀번호 전달 (현재 비밀번호로 자동 입력)
+          onClose={() => {
+            // 비밀번호 변경 모달을 닫을 수 없도록 설정 (임시 비밀번호인 경우 필수)
+            notificationManager.show('임시 비밀번호를 변경해야 합니다.', 'warning');
+          }}
+          onSuccess={async () => {
+            // 비밀번호 변경 성공 시 대시보드로 리다이렉트
+            console.log('✅ 비밀번호 변경 완료 - 대시보드로 리다이렉트');
+            setShowPasswordChangeModal(false);
+            setTempPassword(''); // 임시 비밀번호 초기화
+            
+            // 세션 정보 다시 확인 후 대시보드로 이동
+            try {
+              const checkResult = await checkSession(true);
+              if (checkResult && user) {
+                const { redirectToDynamicDashboard } = await import('../../utils/dashboardUtils');
+                await redirectToDynamicDashboard({ user }, navigate);
+              } else {
+                // 세션 확인 실패 시 로그인 페이지로 이동
                 navigate('/login');
               }
-            }}
-          />
-        )}
-
-        {/* 소셜 회원가입 모달 */}
-        {showSocialSignupModal && (
-          <SocialSignupModal
-            isOpen={showSocialSignupModal}
-            onClose={() => setShowSocialSignupModal(false)}
-            socialUser={socialUserInfo}
-            onSignupSuccess={(response) => {
-              console.log('✅ 소셜 회원가입 성공:', response);
-              notificationManager.show('회원가입이 완료되었습니다. 로그인해주세요.', 'success');
-              setShowSocialSignupModal(false);
+            } catch (error) {
+              console.error('❌ 세션 확인 실패:', error);
               navigate('/login');
-            }}
-          />
-        )}
-      </SimpleLayout>
+            }
+          }}
+        />
+      )}
+
+      {/* 소셜 회원가입 모달 */}
+      {showSocialSignupModal && (
+        <SocialSignupModal
+          isOpen={showSocialSignupModal}
+          onClose={() => setShowSocialSignupModal(false)}
+          socialUser={socialUserInfo}
+          onSignupSuccess={(response) => {
+            console.log('✅ 소셜 회원가입 성공:', response);
+            notificationManager.show('회원가입이 완료되었습니다. 로그인해주세요.', 'success');
+            setShowSocialSignupModal(false);
+            navigate('/login');
+          }}
+        />
+      )}
     </CommonPageTemplate>
   );
 };

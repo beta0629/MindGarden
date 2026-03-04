@@ -25,6 +25,7 @@ const TenantCommonCodeManagerUI = ({
     // 데이터
     codeGroups,
     selectedGroup,
+    searchTerm,
     codes,
     loading,
     error,
@@ -33,6 +34,7 @@ const TenantCommonCodeManagerUI = ({
     formData,
     
     // 이벤트 핸들러
+    onSearchChange,
     onGroupSelect,
     onCreateCode,
     onEditCode,
@@ -77,24 +79,40 @@ const TenantCommonCodeManagerUI = ({
             <div className="mg-manager-content">
                 {/* 좌측: 코드 그룹 목록 */}
                 <div className="mg-code-groups-panel">
-                    <h3>코드 그룹</h3>
+                    <div className="mg-panel-header" style={{ marginBottom: '16px' }}>
+                        <h3 style={{ marginBottom: '12px' }}>코드 그룹</h3>
+                        <div className="mg-search-container">
+                            <input
+                                type="text"
+                                placeholder="코드 그룹 검색..."
+                                value={searchTerm || ''}
+                                onChange={(e) => onSearchChange && onSearchChange(e.target.value)}
+                                className="mg-form-control"
+                                style={{ width: '100%' }}
+                            />
+                        </div>
+                    </div>
                     {loading && !selectedGroup ? (
                         <div className="mg-loading">로딩 중...</div>
                     ) : (
                         <ul className="mg-code-groups-list">
-                            {codeGroups.map(group => (
+                            {codeGroups.map(group => {
+                                const groupName = group.groupName || group;
+                                const isSelected = selectedGroup && (selectedGroup.groupName || selectedGroup) === groupName;
+                                return (
                                 <li
-                                    key={group.groupName}
-                                    className={selectedGroup?.groupName === group.groupName ? 'mg-active' : ''}
+                                    key={groupName}
+                                    className={isSelected ? 'mg-active' : ''}
                                     onClick={() => onGroupSelect(group)}
                                 >
                                     <span className="mg-group-icon">{group.icon || '📁'}</span>
                                     <div className="mg-group-info">
-                                        <div className="mg-group-name">{group.koreanName}</div>
-                                        <div className="mg-group-code">{group.groupName}</div>
+                                        <div className="mg-group-name">{group.displayKoreanName || group.koreanName || groupName}</div>
+                                        <div className="mg-group-code">{groupName}</div>
                                     </div>
                                 </li>
-                            ))}
+                                );
+                            })}
                         </ul>
                     )}
                 </div>
@@ -105,7 +123,7 @@ const TenantCommonCodeManagerUI = ({
                         <>
                             <div className="mg-codes-header">
                                 <div>
-                                    <h3>{selectedGroup.koreanName}</h3>
+                                    <h3>{selectedGroup.displayKoreanName || selectedGroup.koreanName || selectedGroup.groupName || selectedGroup}</h3>
                                     <p className="mg-codes-description">{selectedGroup.description}</p>
                                 </div>
                                 <div className="mg-codes-actions">

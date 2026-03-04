@@ -45,10 +45,10 @@ export const getConsultantGradeStyles = async () => {
     } catch (error) {
         console.warn('상담사 등급 스타일 조회 실패, 기본값 사용:', error);
         return {
-            'CONSULTANT_JUNIOR': { color: 'var(--mg-warning-500)', icon: '⭐', label: '주니어 상담사' },
-            'CONSULTANT_SENIOR': { color: 'var(--mg-warning-500)', icon: '⭐⭐', label: '시니어 상담사' },
-            'CONSULTANT_EXPERT': { color: 'var(--mg-warning-500)', icon: '⭐⭐⭐', label: '엑스퍼트 상담사' },
-            'CONSULTANT_MASTER': { color: 'var(--mg-error-600)', icon: '👑', label: '마스터 상담사' }
+            'CONSULTANT_JUNIOR': { color: 'var(--mg-warning-500)', icon: 'Star', label: '주니어 상담사' },
+            'CONSULTANT_SENIOR': { color: 'var(--mg-warning-500)', icon: 'Star', label: '시니어 상담사' },
+            'CONSULTANT_EXPERT': { color: 'var(--mg-warning-500)', icon: 'Star', label: '엑스퍼트 상담사' },
+            'CONSULTANT_MASTER': { color: 'var(--mg-error-600)', icon: 'Crown', label: '마스터 상담사' }
         };
     }
 };

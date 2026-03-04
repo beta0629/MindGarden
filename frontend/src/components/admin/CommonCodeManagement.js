@@ -23,6 +23,7 @@ import { useSession } from '../../contexts/SessionContext';
 import { RoleUtils, USER_ROLES } from '../../constants/roles';
 import { usePermissions } from '../../hooks/usePermissions';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { ContentArea, ContentHeader } from '../dashboard-v2/content';
 import './ImprovedCommonCodeManagement.css';
 
 /**
@@ -907,11 +908,10 @@ const CommonCodeManagement = () => {
     );
 
     return (
-        <AdminCommonLayout>
+        <AdminCommonLayout title="공통코드 관리">
+            <ContentArea>
+                <ContentHeader title="공통코드 관리" subtitle="코드 그룹을 선택한 뒤 코드 값을 관리합니다." />
             <div className="improved-common-code-management">
-            <div className="page-header">
-            </div>
-
                 <div className="mg-step-indicator improved-common-code-step-wrapper">
                     <div className={ `step ${currentStep === 1 ? 'active' : 'completed' }`}>
                         <div className="step-number">1</div>
@@ -926,6 +926,7 @@ const CommonCodeManagement = () => {
 
                 { currentStep === 1 ? renderGroupSelection() : renderCodeManagement() }
             </div>
+            </ContentArea>
         </AdminCommonLayout>
     );
 };

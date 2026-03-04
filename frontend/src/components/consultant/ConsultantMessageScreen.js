@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet, apiPost } from '../../utils/ajax';
+import { getLucideIcon } from '../../utils/iconUtils';
 // import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import notificationManager from '../../utils/notification';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
@@ -33,13 +34,12 @@ const ConsultantMessageScreen = () => {
     isUrgent: false
   });
 
-  // 메시지 유형 옵션
   const messageTypes = [
-    { value: 'GENERAL', label: '일반', icon: '💬', color: 'var(--mg-secondary-500)' },
-    { value: 'FOLLOW_UP', label: '후속 조치', icon: '📋', color: 'var(--mg-primary-500)' },
-    { value: 'HOMEWORK', label: '과제 안내', icon: '📝', color: 'var(--mg-success-500)' },
-    { value: 'REMINDER', label: '알림', icon: '🔔', color: 'var(--mg-warning-500)' },
-    { value: 'URGENT', label: '긴급', icon: '⚠️', color: 'var(--mg-error-500)' }
+    { value: 'GENERAL', label: '일반', icon: 'MessageCircle', color: 'var(--mg-secondary-500)' },
+    { value: 'FOLLOW_UP', label: '후속 조치', icon: 'ClipboardList', color: 'var(--mg-primary-500)' },
+    { value: 'HOMEWORK', label: '과제 안내', icon: 'FileText', color: 'var(--mg-success-500)' },
+    { value: 'REMINDER', label: '알림', icon: 'Bell', color: 'var(--mg-warning-500)' },
+    { value: 'URGENT', label: '긴급', icon: 'AlertTriangle', color: 'var(--mg-error-500)' }
   ];
 
   // 컴포넌트 스타일
@@ -501,7 +501,7 @@ const ConsultantMessageScreen = () => {
                   }}
                   onClick={() => handleMessageTypeSelect(type.value)}
                 >
-                  <div style={styles.messageTypeIcon}>{type.icon}</div>
+                  <div style={styles.messageTypeIcon}>{getLucideIcon(type.icon, { size: 24 })}</div>
                   <div style={styles.messageTypeLabel}>{type.label}</div>
                 </div>
               ))}

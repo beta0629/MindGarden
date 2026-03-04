@@ -343,7 +343,7 @@ const PermissionManagement = () => {
         return (
             <div className="mg-v2-permission-management">
                 <div className="mg-v2-error-state">
-                    <h3>🚫 접근 권한 없음</h3>
+                    <h3>접근 권한 없음</h3>
                     <p>권한 관리를 위해서는 관리자(ADMIN) 권한이 필요합니다.</p>
                     <p>현재 역할: {currentUserRole || '알 수 없음'}</p>
                 </div>

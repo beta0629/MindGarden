@@ -37,13 +37,12 @@ const ConsultantMessages = () => {
     isUrgent: false
   });
 
-  // 메시지 유형 옵션
   const messageTypes = [
-    { value: 'GENERAL', label: '일반', icon: '💬', color: 'var(--mg-secondary-500)' },
-    { value: 'FOLLOW_UP', label: '후속 조치', icon: '📋', color: 'var(--mg-primary-500)' },
-    { value: 'HOMEWORK', label: '과제 안내', icon: '📝', color: 'var(--mg-success-500)' },
-    { value: 'REMINDER', label: '알림', icon: '🔔', color: 'var(--mg-warning-500)' },
-    { value: 'URGENT', label: '긴급', icon: '⚠️', color: 'var(--mg-error-500)' }
+    { value: 'GENERAL', label: '일반', icon: 'MessageCircle', color: 'var(--mg-secondary-500)' },
+    { value: 'FOLLOW_UP', label: '후속 조치', icon: 'ClipboardList', color: 'var(--mg-primary-500)' },
+    { value: 'HOMEWORK', label: '과제 안내', icon: 'FileText', color: 'var(--mg-success-500)' },
+    { value: 'REMINDER', label: '알림', icon: 'Bell', color: 'var(--mg-warning-500)' },
+    { value: 'URGENT', label: '긴급', icon: 'AlertTriangle', color: 'var(--mg-error-500)' }
   ];
 
   const loadMessages = useCallback(async () => {

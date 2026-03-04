@@ -104,7 +104,7 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
     <ErpModal
       isOpen={true}
       onClose={onClose}
-      title="💰 수입/지출 등록"
+      title="수입/지출 등록"
       size="medium"
     >
 
@@ -136,7 +136,7 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
                   onChange={handleInputChange}
                   style={{ cursor: 'pointer' }}
                 />
-                <span>💚 수입</span>
+                <span>수입</span>
               </label>
               <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)', cursor: 'pointer' }}>
                 <input
@@ -147,7 +147,7 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
                   onChange={handleInputChange}
                   style={{ cursor: 'pointer' }}
                 />
-                <span>❤️ 지출</span>
+                <span>지출</span>
               </label>
             </div>
           </div>

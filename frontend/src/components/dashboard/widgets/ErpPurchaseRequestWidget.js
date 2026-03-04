@@ -91,7 +91,8 @@ const ErpPurchaseRequestWidget = ({ widget, user }) => {
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <div className="erp-purchase-title-content">
-          🛒 비품 구매 요청
+          <ShoppingCart size={18} className="erp-purchase-title-icon" aria-hidden />
+          비품 구매 요청
           {purchaseData.pendingRequests > 0 && (
             <span className="erp-purchase-pending-badge">
               {purchaseData.pendingRequests}

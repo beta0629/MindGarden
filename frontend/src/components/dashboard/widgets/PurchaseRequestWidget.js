@@ -16,6 +16,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ShoppingCart, ChevronDown, ChevronUp, ShoppingBag, Plus, ChevronRight } from 'lucide-react';
 import { apiGet } from '../../../utils/ajax';
 import './Widget.css';
 
@@ -122,25 +123,25 @@ const PurchaseRequestWidget = ({ widget, user }) => {
   }
   
   return (
-    <div className="widget widget-purchase-request">
+    <div className="widget widget-purchase-request mg-card">
       <div 
-        className="widget-header widget-header-clickable"
+        className="widget-header widget-header-clickable mg-card-header mg-cursor-pointer"
         onClick={() => setIsExpanded(!isExpanded)}
       >
-        <div className="widget-title">
-          <i className="bi bi-cart"></i>
+        <div className="widget-title mg-flex mg-align-center mg-gap-sm">
+          <ShoppingCart size={18} aria-hidden />
           {config.title || '구매 요청'}
           {purchaseData.pendingRequests > 0 && (
-            <span className="widget-badge widget-badge-warning">
+            <span className="widget-badge widget-badge-warning mg-badge mg-badge-warning">
               {purchaseData.pendingRequests}
             </span>
           )}
         </div>
-        <i className={`bi ${isExpanded ? 'bi-chevron-up' : 'bi-chevron-down'}`}></i>
+        {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
       </div>
       
       {isExpanded && (
-        <div className="widget-body">
+        <div className="widget-body mg-card-body">
           <div className="purchase-request-summary">
             <div className="purchase-summary-item">
               <div className="purchase-summary-label">대기</div>
@@ -184,18 +185,20 @@ const PurchaseRequestWidget = ({ widget, user }) => {
             </div>
           ) : (
             <div className="widget-empty">
-              <i className="bi bi-cart-x"></i>
+              <ShoppingBag size={32} className="widget-empty-icon" aria-hidden />
               <p>{config.emptyMessage || '구매 요청이 없습니다'}</p>
             </div>
           )}
           
           <div className="purchase-request-actions">
-            <button className="widget-btn widget-btn-primary" onClick={handleCreateRequest}>
-              <i className="bi bi-plus-circle"></i> 새 요청
+            <button className="widget-btn widget-btn-primary mg-btn mg-btn-primary" onClick={handleCreateRequest}>
+              <Plus size={16} aria-hidden />
+              새 요청
             </button>
             {config.viewAllUrl && (
-              <button className="widget-btn" onClick={handleViewAll}>
-                전체보기 →
+              <button className="widget-btn mg-btn mg-btn-ghost" onClick={handleViewAll}>
+                전체보기
+                <ChevronRight size={16} aria-hidden />
               </button>
             )}
           </div>

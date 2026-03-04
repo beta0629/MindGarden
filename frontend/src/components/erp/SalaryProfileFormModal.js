@@ -399,7 +399,7 @@ const SalaryProfileFormModal = ({
                             ))}
                             
                             <div className="grade-table-notice">
-                                <strong>💡 등급별 급여 체계:</strong><br/>
+                                <strong>등급별 급여 체계:</strong><br/>
                                 • 기본 급여: 등급별 차등 지급<br/>
                                 • 옵션 금액: 등급이 올라갈수록 2,000원씩 추가<br/>
                                 • 주니어: 기본 옵션 금액<br/>

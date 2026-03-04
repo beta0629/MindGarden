@@ -91,13 +91,13 @@ export const getCodeGroupIcon = async (groupName) => {
         // 표준화 2025-12-08: 올바른 API 경로 사용
         const response = await apiGet(`/api/v1/common-codes/groups/${groupName}`);
         if (response && response.length > 0) {
-            return response[0].icon || '📋';
+            return response[0].icon || 'ClipboardList';
         }
     } catch (error) {
         console.error('코드그룹 아이콘 조회 실패:', error);
     }
     
-    return '📁';
+    return 'Folder';
 };
 
 /**
@@ -147,31 +147,25 @@ export const getStatusColorSync = (codeValue) => {
  */
 export const getStatusIcon = async (codeValue, groupName = 'STATUS') => {
     if (!codeValue) {
-        return '📋';
+        return 'ClipboardList';
     }
-    
+
     try {
-        // 표준화 2025-12-08: 올바른 API 경로 사용
         const response = await apiGet(`/api/v1/common-codes/groups/${groupName}`);
         if (response && response.length > 0) {
             let code = response.find(c => c.codeValue === codeValue);
-            
             if (!code && groupName === 'MAPPING_STATUS') {
                 const statusMapping = {
-                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                     'ACTIVE': 'ACTIVE_MAPPING',
-                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                     'INACTIVE': 'INACTIVE_MAPPING',
                     'TERMINATED': 'TERMINATED_MAPPING',
                     'SESSIONS_EXHAUSTED': 'SESSIONS_EXHAUSTED_MAPPING'
                 };
-                
                 const mappedStatus = statusMapping[codeValue];
                 if (mappedStatus) {
                     code = response.find(c => c.codeValue === mappedStatus);
                 }
             }
-            
             if (code && code.icon) {
                 return code.icon;
             }
@@ -179,50 +173,35 @@ export const getStatusIcon = async (codeValue, groupName = 'STATUS') => {
     } catch (error) {
         console.error('아이콘 조회 실패, fallback 사용:', error);
     }
-    
+
     const defaultIconMap = {
-        'AVAILABLE': '⚪',
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-        'BOOKED': '📅',
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-        'CONFIRMED': '✅',
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-        'IN_PROGRESS': '🔄',
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-        'COMPLETED': '🎉',
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-        'CANCELLED': '❌',
-        'BLOCKED': '🚫',
-        'UNDER_REVIEW': '🔍',
-        'VACATION': '🏖️',
-        'NO_SHOW': '👻',
-        'MAINTENANCE': '🔧',
-        
-        'PENDING_PAYMENT': '⏳',
-        'PAYMENT_CONFIRMED': '💰',
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-        'ACTIVE': '✅',
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-        'INACTIVE': '⏸️',
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-        'SUSPENDED': '⏸️',
-        'TERMINATED': '❌',
-        'SESSIONS_EXHAUSTED': '🔚',
-        
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-        'PENDING': '⏳',
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-        'APPROVED': '✅',
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-        'REJECTED': '❌',
-        'PAYMENT_PENDING': '⏳',
-        'PAYMENT_REJECTED': '❌',
-        
-        'true': '✅',
-        'false': '❌'
+        'AVAILABLE': 'Circle',
+        'BOOKED': 'Calendar',
+        'CONFIRMED': 'Check',
+        'IN_PROGRESS': 'RefreshCw',
+        'COMPLETED': 'PartyPopper',
+        'CANCELLED': 'X',
+        'BLOCKED': 'Ban',
+        'UNDER_REVIEW': 'Search',
+        'VACATION': 'Palmtree',
+        'NO_SHOW': 'Ghost',
+        'MAINTENANCE': 'Wrench',
+        'PENDING_PAYMENT': 'Loader2',
+        'PAYMENT_CONFIRMED': 'DollarSign',
+        'ACTIVE': 'Check',
+        'INACTIVE': 'Pause',
+        'SUSPENDED': 'Pause',
+        'TERMINATED': 'X',
+        'SESSIONS_EXHAUSTED': 'CircleDot',
+        'PENDING': 'Loader2',
+        'APPROVED': 'Check',
+        'REJECTED': 'X',
+        'PAYMENT_PENDING': 'Loader2',
+        'PAYMENT_REJECTED': 'X',
+        'true': 'Check',
+        'false': 'X'
     };
-    
-    return defaultIconMap[codeValue] || '📋';
+    return defaultIconMap[codeValue] || 'ClipboardList';
 };
 
 /**
@@ -230,28 +209,25 @@ export const getStatusIcon = async (codeValue, groupName = 'STATUS') => {
  */
 export const getStatusStyle = async (codeValue, groupName = 'STATUS') => {
     if (!codeValue) {
-        return { color: '#6b7280', icon: '📋' };
+        return { color: 'var(--mg-color-text-secondary)', icon: 'ClipboardList' };
     }
-    
     try {
-        // 표준화 2025-12-08: 올바른 API 경로 사용
         const response = await apiGet(`/api/v1/common-codes/groups/${groupName}`);
         if (response && Array.isArray(response)) {
             const code = response.find(c => c.codeValue === codeValue);
             if (code) {
                 return {
-                    color: code.colorCode || '#6b7280',
-                    icon: code.icon || '📋'
+                    color: code.colorCode || 'var(--mg-color-text-secondary)',
+                    icon: code.icon || 'ClipboardList'
                 };
             }
         }
     } catch (error) {
         console.warn('상태 스타일 조회 실패, fallback 사용:', error);
     }
-    
     return {
         color: getStatusColorSync(codeValue),
-        icon: '📋'
+        icon: 'ClipboardList'
     };
 };
 
@@ -382,7 +358,7 @@ export const getCodeGroupIconSync = (groupName) => {
             return metadata.icon;
         }
     }
-    return '📁';
+    return 'Folder';
 };
 
 /**

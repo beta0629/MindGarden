@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp, ShoppingCart, Clock, Check, ClipboardList } from 'lucide-react';
 import { apiGet } from '../../utils/ajax';
 
 const ErpPurchaseRequestPanel = ({ user }) => {
@@ -17,11 +17,7 @@ const ErpPurchaseRequestPanel = ({ user }) => {
       
       try {
         setIsLoading(true);
-        console.log('🛒 ERP 구매 요청 데이터 로드 시작 - 사용자 ID:', user.id);
-        
         const response = await apiGet(`/api/v1/erp/purchase-requests/requester/${user.id}`);
-        
-        console.log('🛒 구매 요청 응답:', response);
         
         if (response?.success && response?.data) {
           const requests = response.data;
@@ -42,13 +38,8 @@ const ErpPurchaseRequestPanel = ({ user }) => {
             totalRequests: requests.length
           });
           
-          console.log('✅ ERP 구매 요청 데이터 로드 완료:', {
-            pending: pendingCount,
-            approved: approvedCount,
-            total: requests.length
-          });
         } else {
-          console.warn('⚠️ 구매 요청 데이터 로드 실패, 기본값 사용');
+          console.warn('구매 요청 데이터 로드 실패, 기본값 사용');
           setPurchaseData({
             pendingRequests: 0,
             approvedRequests: 0,
@@ -56,7 +47,7 @@ const ErpPurchaseRequestPanel = ({ user }) => {
           });
         }
       } catch (error) {
-        console.error('❌ ERP 구매 요청 데이터 로드 오류:', error);
+        console.error('ERP 구매 요청 데이터 로드 오류:', error);
         setPurchaseData({
           pendingRequests: 0,
           approvedRequests: 0,
@@ -79,7 +70,8 @@ const ErpPurchaseRequestPanel = ({ user }) => {
       >
         <div className="mg-flex mg-justify-between mg-align-center">
           <h3 className="mg-h4 mg-mb-0 mg-flex mg-align-center mg-gap-sm">
-            🛒 비품 구매 요청
+            <ShoppingCart size={20} aria-hidden />
+            비품 구매 요청
             {purchaseData.pendingRequests > 0 && (
               <span className="mg-badge mg-badge-warning">
                 {purchaseData.pendingRequests}
@@ -103,7 +95,7 @@ const ErpPurchaseRequestPanel = ({ user }) => {
             <div className="mg-dashboard-stats mg-mb-lg">
               <div className="mg-dashboard-stat-card">
                 <div className="mg-dashboard-stat-icon" style={{ background: 'var(--color-warning)' }}>
-                  ⏳
+                  <Clock size={24} aria-hidden />
                 </div>
                 <div className="mg-dashboard-stat-content">
                   <div className="mg-dashboard-stat-value">{purchaseData.pendingRequests}</div>
@@ -113,7 +105,7 @@ const ErpPurchaseRequestPanel = ({ user }) => {
 
               <div className="mg-dashboard-stat-card">
                 <div className="mg-dashboard-stat-icon" style={{ background: 'var(--color-success)' }}>
-                  ✅
+                  <Check size={24} aria-hidden />
                 </div>
                 <div className="mg-dashboard-stat-content">
                   <div className="mg-dashboard-stat-value">{purchaseData.approvedRequests}</div>
@@ -123,7 +115,7 @@ const ErpPurchaseRequestPanel = ({ user }) => {
 
               <div className="mg-dashboard-stat-card">
                 <div className="mg-dashboard-stat-icon" style={{ background: 'var(--color-info)' }}>
-                  📋
+                  <ClipboardList size={24} aria-hidden />
                 </div>
                 <div className="mg-dashboard-stat-content">
                   <div className="mg-dashboard-stat-value">{purchaseData.totalRequests}</div>

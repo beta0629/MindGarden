@@ -6,14 +6,28 @@ import { useSession } from '../../contexts/SessionContext';
 import { sessionManager } from '../../utils/sessionManager';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
-import { ERP_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
+import { ContentHeader, ContentArea } from '../dashboard-v2/content';
+import {
+  Calculator,
+  LayoutDashboard,
+  FileText,
+  Settings,
+  DollarSign,
+  CheckCircle,
+  Clock,
+  AlertTriangle,
+  Plus,
+  Pencil,
+  Trash2,
+  RefreshCw,
+  FilePlus,
+  FileCheck
+} from 'lucide-react';
 import './ErpCommon.css';
 import notificationManager from '../../utils/notification';
 
 /**
- * 개선된 ERP 세무 관리 페이지
-/**
- * 세금 계산, 신고, 납부 관리
+ * 개선된 ERP 세무 관리 페이지 - 세금 계산, 신고, 납부 관리
  */
 const ImprovedTaxManagement = () => {
   const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
@@ -41,7 +55,6 @@ const ImprovedTaxManagement = () => {
 
   useEffect(() => {
     if (sessionIsLoggedIn && sessionUser?.id) {
-      console.log('✅ ImprovedTaxManagement 데이터 로드 시작');
       loadData();
     }
   }, [sessionIsLoggedIn, sessionUser?.id, activeTab]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -236,65 +249,71 @@ const ImprovedTaxManagement = () => {
 
   return (
     <AdminCommonLayout title="세무 관리">
-      <div className="erp-system">
-        <div className="erp-container">
-          {/* 헤더 */}
-          <div className="erp-header">
-            <h1 className="erp-title">
-              <i className="bi bi-calculator"></i>
-              세무 관리
-            </h1>
-            <p className="erp-subtitle">
-              세금 계산, 신고, 납부를 체계적으로 관리할 수 있습니다.
-            </p>
-          </div>
+      <ContentHeader
+        title="세무 관리"
+        subtitle="세금 계산, 신고, 납부를 체계적으로 관리할 수 있습니다."
+        actions={
+          activeTab === 'calculations' ? (
+            <button
+              type="button"
+              className="mg-v2-ad-b0kla__btn mg-v2-ad-b0kla__btn--primary"
+              onClick={() => setShowCreateModal(true)}
+            >
+              <Plus size={16} />
+              세금 항목 추가
+            </button>
+          ) : null
+        }
+      />
+      <ContentArea className="erp-system erp-container">
+        <div className="mg-v2-ad-b0kla__pill-group" role="tablist">
+          <button
+            type="button"
+            className={`mg-v2-ad-b0kla__pill ${activeTab === 'overview' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+            onClick={() => setActiveTab('overview')}
+          >
+            <LayoutDashboard size={18} />
+            개요
+          </button>
+          <button
+            type="button"
+            className={`mg-v2-ad-b0kla__pill ${activeTab === 'calculations' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+            onClick={() => setActiveTab('calculations')}
+          >
+            <Calculator size={18} />
+            세금 계산
+          </button>
+          <button
+            type="button"
+            className={`mg-v2-ad-b0kla__pill ${activeTab === 'reports' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+            onClick={() => setActiveTab('reports')}
+          >
+            <FileText size={18} />
+            신고서
+          </button>
+          <button
+            type="button"
+            className={`mg-v2-ad-b0kla__pill ${activeTab === 'settings' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+            onClick={() => setActiveTab('settings')}
+          >
+            <Settings size={18} />
+            설정
+          </button>
+        </div>
 
-          {/* 탭 네비게이션 */}
-          <div className="erp-tabs">
-            <button
-              className={`erp-tab ${activeTab === 'overview' ? 'active' : ''}`}
-              onClick={() => setActiveTab('overview')}
-            >
-              <i className="bi bi-speedometer2"></i>
-              개요
-            </button>
-            <button
-              className={`erp-tab ${activeTab === 'calculations' ? 'active' : ''}`}
-              onClick={() => setActiveTab('calculations')}
-            >
-              <i className="bi bi-calculator"></i>
-              세금 계산
-            </button>
-            <button
-              className={`erp-tab ${activeTab === 'reports' ? 'active' : ''}`}
-              onClick={() => setActiveTab('reports')}
-            >
-              <i className="bi bi-file-earmark-text"></i>
-              신고서
-            </button>
-            <button
-              className={`erp-tab ${activeTab === 'settings' ? 'active' : ''}`}
-              onClick={() => setActiveTab('settings')}
-            >
-              <i className="bi bi-gear"></i>
-              설정
-            </button>
-          </div>
-
-          {/* 콘텐츠 영역 */}
-          <div className="erp-content">
+        <div className="erp-content">
           {loading && (
               <UnifiedLoading type="inline" text="로딩 중..." />
           )}
 
             {error && (
               <div className="erp-error">
-                <div className="alert alert-danger" role="alert">
-                  <i className="bi bi-exclamation-triangle-fill"></i>
+                <div className="mg-v2-content-area__alert" role="alert" style={{ background: 'var(--mg-layout-section-bg)', border: '1px solid var(--mg-color-border-main)', borderRadius: '16px', padding: 'var(--mg-layout-section-padding)' }}>
+                  <AlertTriangle size={20} style={{ color: 'var(--mg-color-text-secondary)' }} />
                   {error}
                 </div>
-                <button className="btn btn-outline-primary" onClick={loadData}>
-                  <i className="bi bi-arrow-clockwise"></i>
+                <button type="button" className="mg-v2-ad-b0kla__btn mg-v2-ad-b0kla__btn--outline" onClick={loadData}>
+                  <RefreshCw size={16} />
                   다시 시도
                 </button>
               </div>
@@ -303,75 +322,57 @@ const ImprovedTaxManagement = () => {
             {!loading && !error && (
               <>
                 {activeTab === 'overview' && (
-                  <div className="erp-section">
-                    <h2>세무 개요</h2>
-                    <div className="row">
-                      <div className="col-md-3 mb-3">
-                        <div className="erp-card">
-                          <div className="erp-card-header">
-                            <h3>총 세금액</h3>
-                            <i className="bi bi-currency-dollar text-primary"></i>
-                          </div>
-                          <div className="erp-card-body">
-                            <div className="h4 text-primary">₩0</div>
-                            <small className="text-muted">이번 달</small>
-                          </div>
+                  <section className="mg-v2-ad-b0kla__card" style={{ background: 'var(--mg-layout-section-bg)', border: '1px solid var(--mg-layout-section-border)', borderRadius: '16px', padding: 'var(--mg-layout-section-padding)' }}>
+                    <h2 className="mg-v2-ad-b0kla__chart-title">세무 개요</h2>
+                    <div className="mg-v2-ad-b0kla__grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 'var(--mg-layout-grid-gap)' }}>
+                      <div className="mg-v2-ad-b0kla__card" style={{ background: 'var(--mg-color-surface-main)', borderLeft: '4px solid var(--mg-color-primary-main)' }}>
+                        <div className="mg-v2-ad-b0kla__chart-header">
+                          <h3 className="mg-v2-ad-b0kla__chart-title">총 세금액</h3>
+                          <DollarSign size={20} style={{ color: 'var(--mg-color-primary-main)' }} />
+                        </div>
+                        <div className="mg-v2-ad-b0kla__chart-body">
+                          <div style={{ color: 'var(--mg-color-primary-main)', fontWeight: 600 }}>₩0</div>
+                          <small style={{ color: 'var(--mg-color-text-secondary)' }}>이번 달</small>
                         </div>
                       </div>
-                      <div className="col-md-3 mb-3">
-                        <div className="erp-card">
-                          <div className="erp-card-header">
-                            <h3>납부 완료</h3>
-                            <i className="bi bi-check-circle text-success"></i>
-                          </div>
-                          <div className="erp-card-body">
-                            <div className="h4 text-success">0건</div>
-                            <small className="text-muted">완료된 납부</small>
-                          </div>
+                      <div className="mg-v2-ad-b0kla__card" style={{ background: 'var(--mg-color-surface-main)', borderLeft: '4px solid var(--mg-color-primary-main)' }}>
+                        <div className="mg-v2-ad-b0kla__chart-header">
+                          <h3 className="mg-v2-ad-b0kla__chart-title">납부 완료</h3>
+                          <CheckCircle size={20} style={{ color: 'var(--mg-color-success-main, #22c55e)' }} />
+                        </div>
+                        <div className="mg-v2-ad-b0kla__chart-body">
+                          <div style={{ color: 'var(--mg-color-success-main, #22c55e)', fontWeight: 600 }}>0건</div>
+                          <small style={{ color: 'var(--mg-color-text-secondary)' }}>완료된 납부</small>
                         </div>
                       </div>
-                      <div className="col-md-3 mb-3">
-                        <div className="erp-card">
-                          <div className="erp-card-header">
-                            <h3>대기 중</h3>
-                            <i className="bi bi-clock text-warning"></i>
-                          </div>
-                          <div className="erp-card-body">
-                            <div className="h4 text-warning">0건</div>
-                            <small className="text-muted">처리 대기</small>
-                          </div>
+                      <div className="mg-v2-ad-b0kla__card" style={{ background: 'var(--mg-color-surface-main)', borderLeft: '4px solid var(--mg-color-primary-main)' }}>
+                        <div className="mg-v2-ad-b0kla__chart-header">
+                          <h3 className="mg-v2-ad-b0kla__chart-title">대기 중</h3>
+                          <Clock size={20} style={{ color: 'var(--mg-color-warning-main, #eab308)' }} />
+                        </div>
+                        <div className="mg-v2-ad-b0kla__chart-body">
+                          <div style={{ color: 'var(--mg-color-warning-main, #eab308)', fontWeight: 600 }}>0건</div>
+                          <small style={{ color: 'var(--mg-color-text-secondary)' }}>처리 대기</small>
                         </div>
                       </div>
-                      <div className="col-md-3 mb-3">
-                        <div className="erp-card">
-                          <div className="erp-card-header">
-                            <h3>연체</h3>
-                            <i className="bi bi-exclamation-triangle text-danger"></i>
-                          </div>
-                          <div className="erp-card-body">
-                            <div className="h4 text-danger">0건</div>
-                            <small className="text-muted">연체된 항목</small>
-                          </div>
+                      <div className="mg-v2-ad-b0kla__card" style={{ background: 'var(--mg-color-surface-main)', borderLeft: '4px solid var(--mg-color-primary-main)' }}>
+                        <div className="mg-v2-ad-b0kla__chart-header">
+                          <h3 className="mg-v2-ad-b0kla__chart-title">연체</h3>
+                          <AlertTriangle size={20} style={{ color: 'var(--mg-color-error-main, #ef4444)' }} />
+                        </div>
+                        <div className="mg-v2-ad-b0kla__chart-body">
+                          <div style={{ color: 'var(--mg-color-error-main, #ef4444)', fontWeight: 600 }}>0건</div>
+                          <small style={{ color: 'var(--mg-color-text-secondary)' }}>연체된 항목</small>
                         </div>
                       </div>
                     </div>
-                  </div>
+                  </section>
                 )}
 
                 {activeTab === 'calculations' && (
-                  <div className="erp-section">
-                    <div className="d-flex justify-content-between align-items-center mb-3">
-                      <h2>세금 계산</h2>
-                      <button 
-                        className="btn btn-primary"
-                        onClick={() => setShowCreateModal(true)}
-                      >
-                        <i className="bi bi-plus"></i>
-                        세금 항목 추가
-                      </button>
-                    </div>
-                    
-                    {/* 세금 항목 카드 그리드 (표준화 원칙: 테이블 → 카드 전환) */}
+                  <section className="mg-v2-ad-b0kla__card" style={{ background: 'var(--mg-layout-section-bg)', border: '1px solid var(--mg-layout-section-border)', borderRadius: '16px', padding: 'var(--mg-layout-section-padding)' }}>
+                    <h2 className="mg-v2-ad-b0kla__chart-title">세금 계산</h2>
+                    {/* 세금 항목 카드 그리드 */}
                     <div className="mg-tax-cards-grid">
                       {taxData.length > 0 ? (
                         taxData.map((tax) => (
@@ -427,7 +428,7 @@ const ImprovedTaxManagement = () => {
                                   onClick={() => setEditingTax(tax)}
                                   preventDoubleClick={true}
                                 >
-                                  <i className="bi bi-pencil"></i> 수정
+                                  <Pencil size={14} /> 수정
                                 </Button>
                                 <Button
                                   variant="outline"
@@ -435,129 +436,109 @@ const ImprovedTaxManagement = () => {
                                   onClick={() => handleDeleteTaxItem(tax.id)}
                                   preventDoubleClick={true}
                                 >
-                                  <i className="bi bi-trash"></i> 삭제
+                                  <Trash2 size={14} /> 삭제
                                 </Button>
                               </div>
                             </div>
                           </MGCard>
                         ))
                       ) : (
-                        <div className="mg-tax-empty">
-                          <i className="bi bi-calculator mg-tax-empty__icon"></i>
+                        <div className="mg-tax-empty" style={{ textAlign: 'center', padding: 'var(--mg-layout-section-padding)', color: 'var(--mg-color-text-secondary)' }}>
+                          <Calculator size={48} style={{ marginBottom: 'var(--mg-layout-gap)' }} />
                           <p className="mg-tax-empty__text">세금 항목이 없습니다.</p>
                         </div>
                       )}
                     </div>
-                  </div>
+                  </section>
                 )}
 
                 {activeTab === 'reports' && (
-                  <div className="erp-section">
-                    <h2>세금 신고서</h2>
-                    <div className="row">
-                      <div className="col-md-6 mb-3">
-                        <div className="erp-card">
-                          <div className="erp-card-header">
-                            <h3>부가가치세 신고</h3>
-                            <i className="bi bi-file-earmark-text text-primary"></i>
-                          </div>
-                          <div className="erp-card-body">
-                            <p className="erp-description">분기별 부가가치세 신고서 작성 및 제출</p>
-                            <div className="erp-details">
-                              <div className="erp-detail">
-                                <span className="erp-label">다음 신고일:</span>
-                                <span className="erp-value">2025-01-25</span>
-                              </div>
-                              <div className="erp-detail">
-                                <span className="erp-label">상태:</span>
-                                <span className="erp-value">준비 중</span>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="erp-card-footer">
-                            <button className="btn btn-primary btn-sm">
-                              <i className="bi bi-file-earmark-plus"></i>
-                              신고서 작성
-                            </button>
+                  <section className="mg-v2-ad-b0kla__card" style={{ background: 'var(--mg-layout-section-bg)', border: '1px solid var(--mg-layout-section-border)', borderRadius: '16px', padding: 'var(--mg-layout-section-padding)' }}>
+                    <h2 className="mg-v2-ad-b0kla__chart-title">세금 신고서</h2>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 'var(--mg-layout-grid-gap)' }}>
+                      <div className="mg-v2-ad-b0kla__card" style={{ background: 'var(--mg-color-surface-main)', borderLeft: '4px solid var(--mg-color-primary-main)' }}>
+                        <div className="mg-v2-ad-b0kla__chart-header">
+                          <h3 className="mg-v2-ad-b0kla__chart-title">부가가치세 신고</h3>
+                          <FileText size={20} style={{ color: 'var(--mg-color-primary-main)' }} />
+                        </div>
+                        <div className="mg-v2-ad-b0kla__chart-body">
+                          <p style={{ color: 'var(--mg-color-text-secondary)', fontSize: '14px' }}>분기별 부가가치세 신고서 작성 및 제출</p>
+                          <div style={{ marginTop: 'var(--mg-layout-gap)' }}>
+                            <div><span style={{ color: 'var(--mg-color-text-secondary)' }}>다음 신고일:</span> 2025-01-25</div>
+                            <div><span style={{ color: 'var(--mg-color-text-secondary)' }}>상태:</span> 준비 중</div>
                           </div>
                         </div>
+                        <div style={{ marginTop: 'var(--mg-layout-gap)' }}>
+                          <button type="button" className="mg-v2-ad-b0kla__btn mg-v2-ad-b0kla__btn--primary">
+                            <FilePlus size={16} />
+                            신고서 작성
+                          </button>
+                        </div>
                       </div>
-                      <div className="col-md-6 mb-3">
-                        <div className="erp-card">
-                          <div className="erp-card-header">
-                            <h3>소득세 신고</h3>
-                            <i className="bi bi-file-earmark-text text-success"></i>
+                      <div className="mg-v2-ad-b0kla__card" style={{ background: 'var(--mg-color-surface-main)', borderLeft: '4px solid var(--mg-color-primary-main)' }}>
+                        <div className="mg-v2-ad-b0kla__chart-header">
+                          <h3 className="mg-v2-ad-b0kla__chart-title">소득세 신고</h3>
+                          <FileText size={20} style={{ color: 'var(--mg-color-success-main, #22c55e)' }} />
+                        </div>
+                        <div className="mg-v2-ad-b0kla__chart-body">
+                          <p style={{ color: 'var(--mg-color-text-secondary)', fontSize: '14px' }}>연말정산 및 소득세 신고서 작성</p>
+                          <div style={{ marginTop: 'var(--mg-layout-gap)' }}>
+                            <div><span style={{ color: 'var(--mg-color-text-secondary)' }}>신고 기간:</span> 2025-01-01 ~ 2025-12-31</div>
+                            <div><span style={{ color: 'var(--mg-color-text-secondary)' }}>상태:</span> 진행 중</div>
                           </div>
-                          <div className="erp-card-body">
-                            <p className="erp-description">연말정산 및 소득세 신고서 작성</p>
-                            <div className="erp-details">
-                              <div className="erp-detail">
-                                <span className="erp-label">신고 기간:</span>
-                                <span className="erp-value">2025-01-01 ~ 2025-12-31</span>
-                              </div>
-                              <div className="erp-detail">
-                                <span className="erp-label">상태:</span>
-                                <span className="erp-value">진행 중</span>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="erp-card-footer">
-                            <button className="btn btn-success btn-sm">
-                              <i className="bi bi-file-earmark-check"></i>
-                              신고서 확인
-                            </button>
-                          </div>
+                        </div>
+                        <div style={{ marginTop: 'var(--mg-layout-gap)' }}>
+                          <button type="button" className="mg-v2-ad-b0kla__btn mg-v2-ad-b0kla__btn--primary">
+                            <FileCheck size={16} />
+                            신고서 확인
+                          </button>
                         </div>
                       </div>
                     </div>
-                  </div>
+                  </section>
                 )}
 
                 {activeTab === 'settings' && (
-                  <div className="erp-section">
-                    <h2>세무 설정</h2>
-                    <div className="erp-grid">
+                  <section className="mg-v2-ad-b0kla__card" style={{ background: 'var(--mg-layout-section-bg)', border: '1px solid var(--mg-layout-section-border)', borderRadius: '16px', padding: 'var(--mg-layout-section-padding)' }}>
+                    <h2 className="mg-v2-ad-b0kla__chart-title">세무 설정</h2>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 'var(--mg-layout-grid-gap)' }}>
                       {taxCategories.map((category) => (
-                        <div key={category.id} className="erp-card">
-                          <div className="erp-card-header">
-                            <h3>{category.codeLabel}</h3>
-                            <span className="erp-status success">활성</span>
+                        <div key={category.id} className="mg-v2-ad-b0kla__card" style={{ background: 'var(--mg-color-surface-main)', borderLeft: '4px solid var(--mg-color-primary-main)' }}>
+                          <div className="mg-v2-ad-b0kla__chart-header">
+                            <h3 className="mg-v2-ad-b0kla__chart-title">{category.codeLabel}</h3>
+                            <span style={{ fontSize: '12px', color: 'var(--mg-color-text-secondary)' }}>활성</span>
                           </div>
-                          <div className="erp-card-body">
-                            <p className="erp-description">{category.codeDescription}</p>
-                            <div className="erp-details">
-                              <div className="erp-detail">
-                                <span className="erp-label">코드:</span>
-                                <span className="erp-value">{category.codeValue}</span>
-                              </div>
-                              <div className="erp-detail">
-                                <span className="erp-label">세율:</span>
-                                <span className="erp-value">
-                                  {(() => {
-                                    try {
-                                      if (category.extraData) {
-                                        const extraData = JSON.parse(category.extraData);
-                                        return extraData.taxRate || 'N/A';
-                                      }
-                                      return 'N/A';
-                                    } catch (e) {
-                                      return 'N/A';
+                          <div className="mg-v2-ad-b0kla__chart-body">
+                            <p style={{ color: 'var(--mg-color-text-secondary)', fontSize: '14px' }}>{category.codeDescription}</p>
+                            <div style={{ marginTop: 'var(--mg-layout-gap)' }}>
+                              <div><span style={{ color: 'var(--mg-color-text-secondary)' }}>코드:</span> {category.codeValue}</div>
+                              <div>
+                                <span style={{ color: 'var(--mg-color-text-secondary)' }}>세율:</span>{' '}
+                                {(() => {
+                                  try {
+                                    if (category.extraData) {
+                                      const extraData = JSON.parse(category.extraData);
+                                      return (extraData.taxRate || 'N/A') + '%';
                                     }
-                                  })()}%
-                                </span>
+                                    return 'N/A';
+                                  } catch (e) {
+                                    return 'N/A';
+                                  }
+                                })()}
                               </div>
                             </div>
                           </div>
                         </div>
                       ))}
                     </div>
-                  </div>
+                  </section>
                 )}
               </>
             )}
-          </div>
+        </div>
+      </ContentArea>
 
-          {/* 세금 항목 생성 모달 */}
+      {/* 세금 항목 생성 모달 */}
           {showCreateModal && (
             <div className="modal show d-block tax-management-modal-backdrop">
               <div className="modal-dialog">
@@ -660,8 +641,6 @@ const ImprovedTaxManagement = () => {
               </div>
             </div>
           )}
-        </div>
-      </div>
     </AdminCommonLayout>
   );
 };

@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { 
+import {
     getMappingStatusKoreanName,
     getStatusColor,
     getStatusIcon
 } from '../../../utils/codeHelper';
+import { getLucideIcon } from '../../../utils/iconUtils';
 
 /**
  * 매칭 통계 컴포넌트 (동적 처리 지원)
@@ -102,7 +103,7 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                     
                     Promise.resolve({
                         id: 'TOTAL',
-                        icon: '📊',
+                        icon: 'BarChart3',
                         label: '전체 매칭',
                         value: stats.total,
                         color: 'var(--color-primary)',
@@ -156,61 +157,12 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
             } catch (error) {
                 console.error('매칭 통계 카드 로드 실패:', error);
                 setStatCards([
-                    {
-                        id: 'PENDING_PAYMENT',
-                        icon: '⏳',
-                        label: '결제 대기',
-                        value: stats.pending,
-                        color: 'var(--color-warning)',
-                        bgColor: 'var(--color-warning-light)',
-                        action: 'payment'
-                    },
-                    {
-                        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-                        id: 'ACTIVE',
-                        icon: '✅',
-                        label: '활성 매칭',
-                        value: stats.active,
-                        color: 'var(--color-success)',
-                        bgColor: 'var(--color-success-light)',
-                        action: 'view'
-                    },
-                    {
-                        id: 'PAYMENT_CONFIRMED',
-                        icon: '💰',
-                        label: '결제 확인',
-                        value: stats.paymentConfirmed,
-                        color: 'var(--color-info)',
-                        bgColor: 'var(--color-info-light)',
-                        action: 'view'
-                    },
-                    {
-                        id: 'TOTAL',
-                        icon: '📊',
-                        label: '전체 매칭',
-                        value: stats.total,
-                        color: 'var(--color-primary)',
-                        bgColor: 'var(--color-primary-light)',
-                        action: 'view_all'
-                    },
-                    {
-                        id: 'TERMINATED',
-                        icon: '❌',
-                        label: '종료됨',
-                        value: stats.terminated,
-                        color: 'var(--color-danger)',
-                        bgColor: 'var(--color-danger-light)',
-                        action: 'view'
-                    },
-                    {
-                        id: 'SESSIONS_EXHAUSTED',
-                        icon: '🔚',
-                        label: '회기 소진',
-                        value: stats.sessionsExhausted,
-                        color: 'var(--color-warning)',
-                        bgColor: 'var(--color-warning-light)',
-                        action: 'view'
-                    }
+                    { id: 'PENDING_PAYMENT', icon: 'Loader2', label: '결제 대기', value: stats.pending, color: 'var(--mg-warning-500)', bgColor: 'var(--mg-warning-50)', action: 'payment' },
+                    { id: 'ACTIVE', icon: 'Check', label: '활성 매칭', value: stats.active, color: 'var(--mg-success-500)', bgColor: 'var(--mg-success-50)', action: 'view' },
+                    { id: 'PAYMENT_CONFIRMED', icon: 'DollarSign', label: '결제 확인', value: stats.paymentConfirmed, color: 'var(--mg-primary-500)', bgColor: 'var(--mg-primary-50)', action: 'view' },
+                    { id: 'TOTAL', icon: 'BarChart3', label: '전체 매칭', value: stats.total, color: 'var(--mg-primary-500)', bgColor: 'var(--mg-primary-50)', action: 'view_all' },
+                    { id: 'TERMINATED', icon: 'X', label: '종료됨', value: stats.terminated, color: 'var(--mg-error-500)', bgColor: 'var(--mg-error-50)', action: 'view' },
+                    { id: 'SESSIONS_EXHAUSTED', icon: 'CircleDot', label: '회기 소진', value: stats.sessionsExhausted, color: 'var(--mg-warning-500)', bgColor: 'var(--mg-warning-50)', action: 'view' }
                 ]);
             } finally {
                 setLoading(false);
@@ -259,7 +211,7 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                         title={`${stat.label} 클릭하여 ${stat.action === 'payment' ? '결제 확인' : '상세 조회'}`}
                     >
                         <div className={`mg-v2-content-kpi-card__icon mg-v2-content-kpi-card__icon--${iconVariant}`}>
-                            <span className="mg-v2-content-kpi-card__icon-emoji">{stat.icon}</span>
+                            <span className="mg-v2-content-kpi-card__icon-emoji">{getLucideIcon(stat.icon, { size: 24 })}</span>
                         </div>
                         <div className="mg-v2-content-kpi-card__info">
                             <div className="mg-v2-content-kpi-card__top">

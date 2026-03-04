@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import UnifiedLoading from '../common/UnifiedLoading';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
-import { ERP_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
+import { ContentHeader, ContentArea } from '../dashboard-v2/content';
 import { apiGet, apiPost } from '../../utils/ajax';
 import { showNotification } from '../../utils/notification';
 import { Calculator, Receipt, Plus, TrendingUp, FileText, Settings } from 'lucide-react';
@@ -97,32 +97,24 @@ const TaxManagement = () => {
 
     return (
         <AdminCommonLayout title="세금 관리" loading={loading} loadingText="세금 데이터를 불러오는 중...">
-            <div className="mg-dashboard-layout">
-                {/* Dashboard Header */}
-                <div className="mg-dashboard-header">
-                    <div className="mg-dashboard-header-content">
-                        <div className="mg-dashboard-header-left">
-                            <Calculator className="mg-dashboard-icon" size={28} />
-                            <div>
-                                <h1 className="mg-dashboard-title">세무 관리</h1>
-                                <p className="mg-dashboard-subtitle">세금 계산, 신고, 납부를 체계적으로 관리할 수 있습니다</p>
-                            </div>
-                        </div>
-                        <div className="mg-dashboard-header-right">
-                            <select 
-                                value={selectedPeriod} 
-                                onChange={(e) => setSelectedPeriod(e.target.value)}
-                                className="mg-v2-select"
-                            >
-                                <option key="tax-period-default" value="">기간 선택</option>
-                                <option key="2025-01" value="2025-01">2025년 1월</option>
-                                <option key="2025-02" value="2025-02">2025년 2월</option>
-                                <option key="2025-03" value="2025-03">2025년 3월</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-
+            <ContentHeader
+                title="세무 관리"
+                subtitle="세금 계산, 신고, 납부를 체계적으로 관리할 수 있습니다"
+                actions={
+                    <select
+                        value={selectedPeriod}
+                        onChange={(e) => setSelectedPeriod(e.target.value)}
+                        className="mg-v2-select"
+                        aria-label="기간 선택"
+                    >
+                        <option key="tax-period-default" value="">기간 선택</option>
+                        <option key="2025-01" value="2025-01">2025년 1월</option>
+                        <option key="2025-02" value="2025-02">2025년 2월</option>
+                        <option key="2025-03" value="2025-03">2025년 3월</option>
+                    </select>
+                }
+            />
+            <ContentArea className="mg-dashboard-layout" ariaLabel="세금 관리 콘텐츠">
                 {/* 통계 카드 그리드 */}
                 {taxStatistics && (
                     <div className="mg-dashboard-stats">
@@ -375,7 +367,7 @@ const TaxManagement = () => {
                         </div>
                     </div>
                 </div>
-            </div>
+            </ContentArea>
         </AdminCommonLayout>
     );
 };

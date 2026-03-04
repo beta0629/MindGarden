@@ -63,9 +63,9 @@ export const DEFAULT_FORM_DATA = {
     icon: ''
 };
 
-// UI 텍스트 상수
+// UI 텍스트 상수 (이모지 미사용 - UNIFIED_LAYOUT_SPEC)
 export const UI_TEXT = {
-    PAGE_TITLE: '🏢 테넌트 코드 관리',
+    PAGE_TITLE: '테넌트 코드 관리',
     PAGE_DESCRIPTION: '테넌트별 독립 코드와 시스템 코어 코드를 관리합니다.',
     
     TAB_TENANT: '테넌트 코드',

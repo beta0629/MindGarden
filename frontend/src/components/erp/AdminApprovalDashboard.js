@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { RefreshCw } from 'lucide-react';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
-import { ERP_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
+import { ContentHeader, ContentArea } from '../dashboard-v2/content';
 import ErpCard from './common/ErpCard';
 import ErpButton from './common/ErpButton';
-import ErpHeader from './common/ErpHeader';
 import ErpModal from './common/ErpModal';
 import { useSession } from '../../hooks/useSession';
 import './ApprovalDashboard.css';
@@ -169,27 +169,27 @@ const AdminApprovalDashboard = () => {
 
   return (
     <AdminCommonLayout title="승인 관리">
-      <div className="approval-dashboard-container">
-        <ErpHeader
-          title="관리자 승인 대시보드"
-          subtitle="구매 요청 승인 및 거부"
-          actions={
-            <ErpButton
-              variant="primary"
-              onClick={loadPendingRequests}
-            >
-              새로고침
-            </ErpButton>
-          }
-        />
+      <ContentHeader
+        title="관리자 승인 대시보드"
+        subtitle="구매 요청 승인 및 거부"
+        actions={
+          <ErpButton
+            variant="primary"
+            onClick={loadPendingRequests}
+          >
+            <RefreshCw size={16} aria-hidden />
+            새로고침
+          </ErpButton>
+        }
+      />
+      <ContentArea className="approval-dashboard-container">
+        {error && (
+          <div className="approval-dashboard-error">
+            {error}
+          </div>
+        )}
 
-      {error && (
-        <div className="approval-dashboard-error">
-          {error}
-        </div>
-      )}
-
-      {requests.length === 0 ? (
+        {requests.length === 0 ? (
         <ErpCard title="승인 대기 목록">
           <div className="approval-dashboard-empty">
             승인 대기 중인 구매 요청이 없습니다.
@@ -260,9 +260,6 @@ const AdminApprovalDashboard = () => {
 
             <div className="approval-request-comment-group">
               <label className="approval-request-comment-label">
-                marginBottom: '8px', 
-                fontWeight: '600' 
-              }}>
                 승인 코멘트 (선택사항)
               </label>
               <textarea
@@ -314,9 +311,6 @@ const AdminApprovalDashboard = () => {
 
             <div className="approval-request-comment-group">
               <label className="approval-request-comment-label">
-                marginBottom: '8px', 
-                fontWeight: '600' 
-              }}>
                 거부 사유 *
               </label>
               <textarea
@@ -349,7 +343,7 @@ const AdminApprovalDashboard = () => {
           </div>
         )}
       </ErpModal>
-      </div>
+      </ContentArea>
     </AdminCommonLayout>
   );
 };

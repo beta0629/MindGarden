@@ -126,10 +126,8 @@ const SessionManagement = () => {
         } catch (error) {
             console.error('매핑 상태 코드 로드 실패:', error);
             setMappingStatusOptions([
-                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-                { value: 'ACTIVE', label: '활성', icon: '✅', color: 'var(--success-600)' },
-                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-                { value: 'INACTIVE', label: '비활성', icon: '❌', color: 'var(--danger-600)' }
+                { value: 'ACTIVE', label: '활성', icon: 'Check', color: 'var(--mg-success-600)' },
+                { value: 'INACTIVE', label: '비활성', icon: 'X', color: 'var(--mg-error-600)' }
             ]);
         } finally {
             setLoadingCodes(false);

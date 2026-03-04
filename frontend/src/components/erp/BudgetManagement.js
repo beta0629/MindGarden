@@ -3,7 +3,8 @@ import UnifiedLoading from '../common/UnifiedLoading';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
-import { ERP_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
+import { ContentArea, ContentHeader } from '../dashboard-v2/content';
+import { PiggyBank, List, Tag, TrendingUp, AlertTriangle, RefreshCw } from 'lucide-react';
 import './ErpCommon.css';
 import notificationManager from '../../utils/notification';
 
@@ -288,40 +289,33 @@ const BudgetManagement = () => {
 
   return (
     <AdminCommonLayout title="예산 관리">
-      <div className="erp-system">
+      <ContentArea className="erp-system mg-v2-content-area">
+        <ContentHeader
+          title="예산 관리"
+          subtitle="예산 계획 및 관리를 할 수 있습니다."
+        />
         <div className="erp-container">
-          {/* 헤더 */}
-          <div className="erp-header">
-            <h1 className="erp-title">
-              <i className="bi bi-piggy-bank"></i>
-              예산 관리
-            </h1>
-            <p className="erp-subtitle">
-              예산 계획 및 관리를 할 수 있습니다.
-            </p>
-          </div>
-
           {/* 탭 네비게이션 */}
           <div className="erp-tabs">
             <button
               className={`erp-tab ${activeTab === 'budgets' ? 'active' : ''}`}
               onClick={() => setActiveTab('budgets')}
             >
-              <i className="bi bi-list-ul"></i>
+              <List size={18} aria-hidden />
               예산 목록
             </button>
             <button
               className={`erp-tab ${activeTab === 'categories' ? 'active' : ''}`}
               onClick={() => setActiveTab('categories')}
             >
-              <i className="bi bi-tags"></i>
+              <Tag size={18} aria-hidden />
               카테고리
             </button>
             <button
               className={`erp-tab ${activeTab === 'reports' ? 'active' : ''}`}
               onClick={() => setActiveTab('reports')}
             >
-              <i className="bi bi-graph-up"></i>
+              <TrendingUp size={18} aria-hidden />
               보고서
             </button>
           </div>
@@ -337,11 +331,11 @@ const BudgetManagement = () => {
             {error && hasDataError && (
               <div className="erp-error">
                 <div className="alert alert-danger" role="alert">
-                  <i className="bi bi-exclamation-triangle-fill"></i>
+                  <AlertTriangle size={18} aria-hidden />
                   {error}
                 </div>
                 <button className="btn btn-outline-primary" onClick={loadData}>
-                  <i className="bi bi-arrow-clockwise"></i>
+                  <RefreshCw size={18} aria-hidden />
                   다시 시도
                 </button>
               </div>
@@ -355,7 +349,7 @@ const BudgetManagement = () => {
                     <div className="erp-stats-grid mb-4">
                       <div className="erp-stat-card">
                         <div className="erp-stat-icon">
-                          <i className="bi bi-piggy-bank"></i>
+                          <PiggyBank size={24} aria-hidden />
                         </div>
                         <div className="erp-stat-content">
                           <h3>총 예산</h3>
@@ -507,7 +501,7 @@ const BudgetManagement = () => {
                       ) : (
                         <div className="erp-empty-state">
                           <div className="erp-empty-icon">
-                            <i className="bi bi-piggy-bank"></i>
+                            <PiggyBank size={24} aria-hidden />
                           </div>
                           <h3>예산이 없습니다</h3>
                           <p>새로운 예산을 추가하여 시작해보세요.</p>
@@ -620,7 +614,7 @@ const BudgetManagement = () => {
                       
                       <div className="erp-stat-card">
                         <div className="erp-stat-icon">
-                          <i className="bi bi-piggy-bank"></i>
+                          <PiggyBank size={24} aria-hidden />
                         </div>
                         <div className="erp-stat-content">
                           <h3>잔여 예산</h3>
@@ -857,6 +851,7 @@ const BudgetManagement = () => {
           )}
         </div>
       </div>
+      </ContentArea>
     </AdminCommonLayout>
   );
 };

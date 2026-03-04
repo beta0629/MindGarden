@@ -79,7 +79,7 @@ const ErpReportModal = ({ isOpen, onClose }) => {
             }
 
         } catch (error) {
-            console.error('❌ 보고서 생성 실패:', error);
+            console.error('보고서 생성 실패:', error);
             notificationManager.error(error.message || '보고서 생성 중 오류가 발생했습니다.');
         } finally {
             setLoading(false);
@@ -125,7 +125,7 @@ const ErpReportModal = ({ isOpen, onClose }) => {
             }
 
         } catch (error) {
-            console.error('❌ 보고서 다운로드 실패:', error);
+            console.error('보고서 다운로드 실패:', error);
             notificationManager.error(error.message || '다운로드 중 오류가 발생했습니다.');
         }
     };

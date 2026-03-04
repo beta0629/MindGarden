@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
-import { ERP_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
+import { ContentHeader, ContentArea } from '../dashboard-v2/content';
 import ErpCard from './common/ErpCard';
 import ErpButton from './common/ErpButton';
 import './ItemManagement.css';
-import ErpHeader from './common/ErpHeader';
 import ErpModal from './common/ErpModal';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
+import { Plus, Pencil, Trash2 } from 'lucide-react';
 
 /**
  * 아이템 관리 컴포넌트 (관리자/수퍼어드민 전용)
@@ -60,17 +60,14 @@ const ItemManagement = () => {
       console.error('아이템 카테고리 코드 로드 실패:', error);
       // 실패 시 기본값 설정
       setCategoryOptions([
-        { value: 'OFFICE_SUPPLIES', label: '사무용품', icon: '📝', color: 'var(--mg-primary-500)', description: '사무용품 및 문구류' },
-        { value: 'COUNSELING_TOOLS', label: '상담 도구', icon: '🧠', color: 'var(--mg-success-500)', description: '상담에 사용되는 도구 및 자료' },
-        { value: 'ELECTRONICS', label: '전자제품', icon: '💻', color: 'var(--mg-purple-500)', description: '전자기기 및 IT 장비' },
-        { value: 'FURNITURE', label: '가구', icon: '🪑', color: 'var(--mg-warning-500)', description: '사무용 가구 및 인테리어' },
-        { value: 'BOOKS', label: '도서', icon: '📚', color: 'var(--mg-error-500)', description: '도서 및 참고자료' },
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #f97316 -> var(--mg-custom-f97316)
-        { value: 'MEDICAL_SUPPLIES', label: '의료용품', icon: '🏥', color: '#f97316', description: '의료 및 건강 관련 용품' },
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #06b6d4 -> var(--mg-custom-06b6d4)
-        { value: 'CLEANING_SUPPLIES', label: '청소용품', icon: '🧽', color: '#06b6d4', description: '청소 및 위생용품' },
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6b7280 -> var(--mg-custom-6b7280)
-        { value: 'OTHER', label: '기타', icon: '📦', color: '#6b7280', description: '기타 아이템' }
+        { value: 'OFFICE_SUPPLIES', label: '사무용품', icon: 'FileText', color: 'var(--mg-primary-500)', description: '사무용품 및 문구류' },
+        { value: 'COUNSELING_TOOLS', label: '상담 도구', icon: 'Brain', color: 'var(--mg-success-500)', description: '상담에 사용되는 도구 및 자료' },
+        { value: 'ELECTRONICS', label: '전자제품', icon: 'Monitor', color: 'var(--mg-purple-500)', description: '전자기기 및 IT 장비' },
+        { value: 'FURNITURE', label: '가구', icon: 'Armchair', color: 'var(--mg-warning-500)', description: '사무용 가구 및 인테리어' },
+        { value: 'BOOKS', label: '도서', icon: 'BookOpen', color: 'var(--mg-error-500)', description: '도서 및 참고자료' },
+        { value: 'MEDICAL_SUPPLIES', label: '의료용품', icon: 'Building2', color: 'var(--mg-orange-500)', description: '의료 및 건강 관련 용품' },
+        { value: 'CLEANING_SUPPLIES', label: '청소용품', icon: 'Spray', color: 'var(--mg-primary-400)', description: '청소 및 위생용품' },
+        { value: 'OTHER', label: '기타', icon: 'Package', color: 'var(--mg-color-text-secondary)', description: '기타 아이템' }
       ]);
     } finally {
       setLoadingCodes(false);
@@ -244,50 +241,36 @@ const ItemManagement = () => {
 
   return (
     <AdminCommonLayout title="아이템 관리">
-      <div className="item-management-container">
-        <ErpHeader
-          title="아이템 관리"
-          subtitle="비품 아이템을 관리하세요"
-          actions={
-            <div className="action-buttons">
-              <ErpButton
-                variant="secondary"
-                onClick={() => window.history.back()}
-              >
-                뒤로가기
-              </ErpButton>
-              <ErpButton
-                variant="primary"
-                onClick={() => setShowCreateModal(true)}
-              >
-                <i className="bi bi-plus-circle"></i> 새 아이템 추가
-              </ErpButton>
-            </div>
-          }
-        />
-
+      <ContentHeader
+        title="아이템 관리"
+        subtitle="비품 아이템을 관리하세요"
+        actions={
+          <div className="action-buttons">
+            <ErpButton
+              variant="secondary"
+              onClick={() => window.history.back()}
+            >
+              뒤로가기
+            </ErpButton>
+            <ErpButton
+              variant="primary"
+              onClick={() => setShowCreateModal(true)}
+            >
+              <Plus size={16} /> 새 아이템 추가
+            </ErpButton>
+          </div>
+        }
+      />
+      <ContentArea className="item-management-container" ariaLabel="아이템 관리 콘텐츠">
         {/* 성공/오류 메시지 */}
         {success && (
-          <div className="item-management-success">
-            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #74c0fc -> var(--mg-custom-74c0fc)
-            border: '1px solid #74c0fc',
-            borderRadius: '4px'
-          }}>
+          <div className="success-message">
             {success}
           </div>
         )}
 
         {error && (
-          <div className="item-management-success">
-            padding: '12px', 
-            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #f8d7da -> var(--mg-custom-f8d7da)
-            backgroundColor: '#f8d7da', 
-            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #721c24 -> var(--mg-custom-721c24)
-            color: '#721c24',
-            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #f5c6cb -> var(--mg-custom-f5c6cb)
-            border: '1px solid #f5c6cb',
-            borderRadius: '4px'
-          }}>
+          <div className="error-message">
             {error}
           </div>
         )}
@@ -329,14 +312,14 @@ const ItemManagement = () => {
                     size="small"
                     onClick={() => handleEditItem(item)}
                   >
-                    <i className="bi bi-pencil"></i> 수정
+                    <Pencil size={14} /> 수정
                   </ErpButton>
                   <ErpButton
                     variant="outline-danger"
                     size="small"
                     onClick={() => handleDeleteItem(item)}
                   >
-                    <i className="bi bi-trash"></i> 삭제
+                    <Trash2 size={14} /> 삭제
                   </ErpButton>
                 </div>
               </div>
@@ -377,14 +360,8 @@ const ItemManagement = () => {
                 value={formData.description}
                 onChange={handleInputChange}
                 rows="3"
-                style={{
-                  width: '100%',
-                  padding: '8px 12px',
-                  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #ddd -> var(--mg-custom-ddd)
-                  border: '1px solid #ddd',
-                  borderRadius: '4px',
-                  resize: 'vertical'
-                }}
+                className="mg-v2-form-input"
+                style={{ resize: 'vertical' }}
               />
             </div>
 
@@ -402,7 +379,7 @@ const ItemManagement = () => {
                 <option key="item-category-default" value="">카테고리를 선택하세요</option>
                 {categoryOptions.map(option => (
                   <option key={option.value} value={option.value}>
-                    {option.icon} {option.label} ({option.value})
+                    {option.label} ({option.value})
                   </option>
                 ))}
               </select>
@@ -454,7 +431,7 @@ const ItemManagement = () => {
               />
             </div>
 
-            <div className="mg-v2-text-right" style={{ display: 'flex', gap: '12px' }}>
+            <div className="mg-v2-text-right" style={{ display: 'flex', gap: 'var(--mg-layout-gap)' }}>
               <ErpButton
                 type="button"
                 variant="secondary"
@@ -510,14 +487,8 @@ const ItemManagement = () => {
                 value={formData.description}
                 onChange={handleInputChange}
                 rows="3"
-                style={{
-                  width: '100%',
-                  padding: '8px 12px',
-                  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #ddd -> var(--mg-custom-ddd)
-                  border: '1px solid #ddd',
-                  borderRadius: '4px',
-                  resize: 'vertical'
-                }}
+                className="mg-v2-form-input"
+                style={{ resize: 'vertical' }}
               />
             </div>
 
@@ -534,7 +505,7 @@ const ItemManagement = () => {
               >
                 {categoryOptions.map(option => (
                   <option key={option.value} value={option.value}>
-                    {option.icon} {option.label} ({option.value})
+                    {option.label} ({option.value})
                   </option>
                 ))}
               </select>
@@ -586,7 +557,7 @@ const ItemManagement = () => {
               />
             </div>
 
-            <div className="mg-v2-text-right" style={{ display: 'flex', gap: '12px' }}>
+            <div className="mg-v2-text-right" style={{ display: 'flex', gap: 'var(--mg-layout-gap)' }}>
               <ErpButton
                 type="button"
                 variant="secondary"
@@ -608,7 +579,7 @@ const ItemManagement = () => {
             </div>
           </form>
         </ErpModal>
-      </div>
+      </ContentArea>
     </AdminCommonLayout>
   );
 };

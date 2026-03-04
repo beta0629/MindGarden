@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import ReactDOM from 'react-dom';
 import axios from 'axios';
 import MGButton from '../common/MGButton';
+import { getLucideIcon } from '../../utils/iconUtils';
 import './QuickExpenseForm.css';
 import notificationManager from '../../utils/notification';
 
@@ -43,28 +43,18 @@ const QuickExpenseForm = ({ onClose, onSuccess }) => {
   // 빠른 지출 항목 생성 (공통 코드 기반)
   const getQuickExpenses = () => {
     const quickExpenseConfigs = [
-      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e74c3c -> var(--mg-custom-e74c3c)
-      { categoryCode: 'SALARY', subcategoryCode: 'CONSULTANT_SALARY', icon: '💰', color: '#e74c3c' },
-      { categoryCode: 'RENT', subcategoryCode: 'OFFICE_RENT', icon: '🏢', color: 'var(--mg-finance-dark)' },
-      { categoryCode: 'MANAGEMENT_FEE', subcategoryCode: 'ELECTRICITY', icon: '⚡', color: 'var(--mg-finance-primary)' },
-      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #3498db -> var(--mg-custom-3498db)
-      { categoryCode: 'MANAGEMENT_FEE', subcategoryCode: 'WATER', icon: '💧', color: '#3498db' },
-      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e74c3c -> var(--mg-custom-e74c3c)
-      { categoryCode: 'MANAGEMENT_FEE', subcategoryCode: 'GAS', icon: '🔥', color: '#e74c3c' },
-      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #9b59b6 -> var(--mg-custom-9b59b6)
-      { categoryCode: 'MANAGEMENT_FEE', subcategoryCode: 'INTERNET', icon: '🌐', color: '#9b59b6' },
-      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #9b59b6 -> var(--mg-custom-9b59b6)
-      { categoryCode: 'TAX', subcategoryCode: 'INCOME_TAX', icon: '📋', color: '#9b59b6' },
-      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #8e44ad -> var(--mg-custom-8e44ad)
-      { categoryCode: 'TAX', subcategoryCode: 'CORPORATE_TAX', icon: '📊', color: '#8e44ad' },
-      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #3498db -> var(--mg-custom-3498db)
-      { categoryCode: 'OFFICE_SUPPLIES', subcategoryCode: 'STATIONERY', icon: '📝', color: '#3498db' },
-      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #2c3e50 -> var(--mg-custom-2c3e50)
-      { categoryCode: 'OFFICE_SUPPLIES', subcategoryCode: 'EQUIPMENT', icon: '🖥️', color: '#2c3e50' },
-      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #1abc9c -> var(--mg-custom-1abc9c)
-      { categoryCode: 'MARKETING', subcategoryCode: 'ONLINE_ADS', icon: '📢', color: '#1abc9c' },
-      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #27ae60 -> var(--mg-custom-27ae60)
-      { categoryCode: 'MARKETING', subcategoryCode: 'PROMOTION', icon: '📈', color: '#27ae60' }
+      { categoryCode: 'SALARY', subcategoryCode: 'CONSULTANT_SALARY', icon: 'DollarSign', color: 'var(--mg-error-500)' },
+      { categoryCode: 'RENT', subcategoryCode: 'OFFICE_RENT', icon: 'Building2', color: 'var(--mg-finance-dark)' },
+      { categoryCode: 'MANAGEMENT_FEE', subcategoryCode: 'ELECTRICITY', icon: 'Zap', color: 'var(--mg-finance-primary)' },
+      { categoryCode: 'MANAGEMENT_FEE', subcategoryCode: 'WATER', icon: 'Droplet', color: 'var(--mg-primary-500)' },
+      { categoryCode: 'MANAGEMENT_FEE', subcategoryCode: 'GAS', icon: 'Flame', color: 'var(--mg-error-500)' },
+      { categoryCode: 'MANAGEMENT_FEE', subcategoryCode: 'INTERNET', icon: 'Globe', color: 'var(--mg-purple-500)' },
+      { categoryCode: 'TAX', subcategoryCode: 'INCOME_TAX', icon: 'ClipboardList', color: 'var(--mg-purple-500)' },
+      { categoryCode: 'TAX', subcategoryCode: 'CORPORATE_TAX', icon: 'BarChart3', color: 'var(--mg-purple-600)' },
+      { categoryCode: 'OFFICE_SUPPLIES', subcategoryCode: 'STATIONERY', icon: 'FileText', color: 'var(--mg-primary-500)' },
+      { categoryCode: 'OFFICE_SUPPLIES', subcategoryCode: 'EQUIPMENT', icon: 'Monitor', color: 'var(--mg-color-text-main)' },
+      { categoryCode: 'MARKETING', subcategoryCode: 'ONLINE_ADS', icon: 'Megaphone', color: 'var(--mg-success-500)' },
+      { categoryCode: 'MARKETING', subcategoryCode: 'PROMOTION', icon: 'TrendingUp', color: 'var(--mg-success-600)' }
     ];
 
     return quickExpenseConfigs.map(config => {
@@ -148,7 +138,7 @@ const QuickExpenseForm = ({ onClose, onSuccess }) => {
       <div className="quick-expense-modal">
         <div className="quick-expense-modal-header">
           <h2 className="quick-expense-modal-title">
-            ⚡ 빠른 지출 등록
+            {getLucideIcon('Zap', { size: 20 })} 빠른 지출 등록
           </h2>
           <button
             onClick={onClose}
@@ -184,7 +174,7 @@ const QuickExpenseForm = ({ onClose, onSuccess }) => {
                   className="quick-expense-category-btn"
                 >
                   <div className="quick-expense-category-icon">
-                    {expense.icon}
+                    {getLucideIcon(expense.icon, { size: 20 })}
                   </div>
                   <div className="quick-expense-category-name">
                     {expense.displayName}
@@ -200,7 +190,7 @@ const QuickExpenseForm = ({ onClose, onSuccess }) => {
 
         <div className="quick-expense-info-box">
           <p className="quick-expense-info-text">
-            💡 버튼을 클릭하면 금액 입력창이 나타납니다 (부가세 포함 금액 입력)
+            {getLucideIcon('Lightbulb', { size: 16 })} 버튼을 클릭하면 금액 입력창이 나타납니다 (부가세 포함 금액 입력)
           </p>
         </div>
 

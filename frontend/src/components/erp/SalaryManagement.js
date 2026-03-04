@@ -439,7 +439,7 @@ const SalaryManagement = () => {
                     {salaryProfiles.length === 0 && !loading && (
                         <div className="no-profiles-message">
                             <h4 className="salary-no-profiles-title">
-                                📋 급여 프로필이 없습니다
+                                급여 프로필이 없습니다
                             </h4>
                             <p className="salary-no-profiles-description">
                                 급여 계산을 하기 위해서는 먼저 상담사별 급여 프로필을 작성해야 합니다.<br/>
@@ -503,7 +503,7 @@ const SalaryManagement = () => {
                     actions={
                         salaryProfiles.length === 0 && (
                             <div className="profile-warning">
-                                ⚠️ 급여 프로필이 작성되지 않았습니다. 
+                                급여 프로필이 작성되지 않았습니다. 
                                 <button className="mg-button"
                                     variant="outline"
                                     size="small"
@@ -584,7 +584,7 @@ const SalaryManagement = () => {
                         {previewResult && (
                             <div className="preview-result">
                                 <div className="salary-preview-header">
-                                    <h5 className="salary-preview-title">💰 급여 계산 미리보기</h5>
+                                    <h5 className="salary-preview-title">급여 계산 미리보기</h5>
                                     <span className="salary-preview-timestamp">
                                         미리보기
                                     </span>
@@ -610,7 +610,7 @@ const SalaryManagement = () => {
                                     </div>
                                 </div>
                                 <div className="salary-management-preview-section">
-                                    ⚠️ 실제 급여는 매월 기산일에 배치로 처리됩니다.
+                                    실제 급여는 매월 기산일에 배치로 처리됩니다.
                                 </div>
                             </div>
                         )}

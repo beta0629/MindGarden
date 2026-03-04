@@ -2,16 +2,15 @@ import React, { useState, useEffect, useCallback } from 'react';
 import UnifiedLoading from '../common/UnifiedLoading';
 import { useNavigate } from 'react-router-dom';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
-import { ERP_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
+import { ContentHeader, ContentArea } from '../dashboard-v2/content';
 import ErpButton from './common/ErpButton';
-import ErpHeader from './common/ErpHeader';
 import RefundStatsCards from './refund/RefundStatsCards';
 import RefundFilters from './refund/RefundFilters';
 import RefundHistoryTable from './refund/RefundHistoryTable';
 import RefundReasonStats from './refund/RefundReasonStats';
 import ErpSyncStatus from './refund/ErpSyncStatus';
 import RefundAccountingStatus from './refund/RefundAccountingStatus';
-import { FaArrowLeft } from 'react-icons/fa';
+import { ArrowLeft } from 'lucide-react';
 import notificationManager from '../../utils/notification';
 
 /**
@@ -92,62 +91,61 @@ const RefundManagement = () => {
             {loading ? (
                 <UnifiedLoading type="page" text="환불 데이터를 불러오는 중..." />
             ) : (
-            <div className="erp-system erp-refund-container">
-                <ErpHeader 
-                    title="환불 관리 시스템"
-                    subtitle="상담 환불 현황 및 ERP 연동 관리"
-                />
+                <>
+                    <ContentHeader
+                        title="환불 관리 시스템"
+                        subtitle="상담 환불 현황 및 ERP 연동 관리"
+                        actions={
+                            <ErpButton
+                                variant="secondary"
+                                onClick={() => navigate('/erp/dashboard')}
+                                icon={<ArrowLeft size={16} />}
+                            >
+                                ERP 대시보드로 돌아가기
+                            </ErpButton>
+                        }
+                    />
+                    <ContentArea className="erp-system erp-refund-container" ariaLabel="환불 관리 콘텐츠">
+                        {/* 환불 통계 카드 */}
+                        <RefundStatsCards
+                            refundStats={refundStats}
+                            selectedPeriod={selectedPeriod}
+                            erpSyncStatus={erpSyncStatus}
+                        />
 
-                {/* 뒤로가기 버튼 */}
-                <div className="erp-refund-back-button">
-                    <ErpButton
-                        variant="secondary"
-                        onClick={() => navigate('/erp/dashboard')}
-                        icon={<FaArrowLeft />}
-                    >
-                        ERP 대시보드로 돌아가기
-                    </ErpButton>
-                </div>
+                        {/* 필터 및 제어 */}
+                        <RefundFilters
+                            selectedPeriod={selectedPeriod}
+                            selectedStatus={selectedStatus}
+                            onPeriodChange={handlePeriodChange}
+                            onStatusChange={handleStatusChange}
+                            onRefresh={loadRefundData}
+                            onExportExcel={handleExportExcel}
+                        />
 
-                {/* 환불 통계 카드 */}
-                <RefundStatsCards 
-                    refundStats={refundStats}
-                    selectedPeriod={selectedPeriod}
-                    erpSyncStatus={erpSyncStatus}
-                />
+                        {/* 환불 이력 테이블 */}
+                        <RefundHistoryTable
+                            refundHistory={refundHistory}
+                            pageInfo={pageInfo}
+                            onPageChange={setCurrentPage}
+                        />
 
-                {/* 필터 및 제어 */}
-                <RefundFilters
-                    selectedPeriod={selectedPeriod}
-                    selectedStatus={selectedStatus}
-                    onPeriodChange={handlePeriodChange}
-                    onStatusChange={handleStatusChange}
-                    onRefresh={loadRefundData}
-                    onExportExcel={handleExportExcel}
-                />
+                        {/* 환불 사유별 통계 */}
+                        <RefundReasonStats
+                            refundReasonStats={refundStats.refundReasonStats}
+                        />
 
-                {/* 환불 이력 테이블 */}
-                <RefundHistoryTable
-                    refundHistory={refundHistory}
-                    pageInfo={pageInfo}
-                    onPageChange={setCurrentPage}
-                />
+                        {/* ERP 동기화 상태 */}
+                        <ErpSyncStatus
+                            erpSyncStatus={erpSyncStatus}
+                        />
 
-                {/* 환불 사유별 통계 */}
-                <RefundReasonStats 
-                    refundReasonStats={refundStats.refundReasonStats}
-                />
-
-                {/* ERP 동기화 상태 */}
-                <ErpSyncStatus 
-                    erpSyncStatus={erpSyncStatus}
-                />
-
-                {/* 회계 처리 현황 */}
-                <RefundAccountingStatus 
-                    erpSyncStatus={erpSyncStatus}
-                />
-            </div>
+                        {/* 회계 처리 현황 */}
+                        <RefundAccountingStatus
+                            erpSyncStatus={erpSyncStatus}
+                        />
+                    </ContentArea>
+                </>
             )}
         </AdminCommonLayout>
     );

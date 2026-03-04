@@ -5,7 +5,8 @@ import Button from '../ui/Button/Button';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet } from '../../utils/ajax';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
-import { ERP_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
+import { ContentArea, ContentHeader } from '../dashboard-v2/content';
+import { Package, FileText, ShoppingCart, AlertTriangle, RefreshCw, Eye } from 'lucide-react';
 import './ErpCommon.css';
 
 /**
@@ -118,40 +119,33 @@ const PurchaseManagement = () => {
 
   return (
     <AdminCommonLayout title="구매 관리">
-      <div className="erp-system">
+      <ContentArea className="erp-system mg-v2-content-area">
+        <ContentHeader
+          title="구매 관리"
+          subtitle="비품 구매 요청 및 주문을 관리할 수 있습니다."
+        />
         <div className="erp-container">
-        {/* 헤더 */}
-        <div className="erp-header">
-          <h1 className="erp-title">
-            <i className="bi bi-cart-check"></i>
-            구매 관리
-          </h1>
-          <p className="erp-subtitle">
-            비품 구매 요청 및 주문을 관리할 수 있습니다.
-          </p>
-        </div>
-
         {/* 탭 네비게이션 */}
         <div className="erp-tabs">
           <button
             className={`erp-tab ${activeTab === 'items' ? 'active' : ''}`}
             onClick={() => setActiveTab('items')}
           >
-            <i className="bi bi-box"></i>
+            <Package size={18} aria-hidden />
             비품 목록
           </button>
           <button
             className={`erp-tab ${activeTab === 'requests' ? 'active' : ''}`}
             onClick={() => setActiveTab('requests')}
           >
-            <i className="bi bi-clipboard-check"></i>
+            <FileText size={18} aria-hidden />
             구매 요청
           </button>
           <button
             className={`erp-tab ${activeTab === 'orders' ? 'active' : ''}`}
             onClick={() => setActiveTab('orders')}
           >
-            <i className="bi bi-truck"></i>
+            <ShoppingCart size={18} aria-hidden />
             구매 주문
           </button>
         </div>
@@ -167,11 +161,11 @@ const PurchaseManagement = () => {
           {error && (
             <div className="erp-error">
               <div className="alert alert-danger" role="alert">
-                <i className="bi bi-exclamation-triangle-fill"></i>
+                <AlertTriangle size={18} aria-hidden />
                 {error}
               </div>
               <button className="btn btn-outline-primary" onClick={loadData}>
-                <i className="bi bi-arrow-clockwise"></i>
+                <RefreshCw size={18} aria-hidden />
                 다시 시도
               </button>
             </div>
@@ -214,7 +208,7 @@ const PurchaseManagement = () => {
                         </div>
                         <div className="erp-card-footer">
                           <button className="btn btn-primary btn-sm">
-                            <i className="bi bi-cart-plus"></i>
+                            <ShoppingCart size={16} aria-hidden />
                             구매 요청
                           </button>
                         </div>
@@ -264,7 +258,7 @@ const PurchaseManagement = () => {
                             onClick={() => {}}
                             preventDoubleClick={true}
                           >
-                            <i className="bi bi-eye"></i> 상세
+                            <Eye size={16} aria-hidden /> 상세
                           </Button>
                         </div>
                       </MGCard>
@@ -315,7 +309,7 @@ const PurchaseManagement = () => {
                             onClick={() => {}}
                             preventDoubleClick={true}
                           >
-                            <i className="bi bi-eye"></i> 상세
+                            <Eye size={16} aria-hidden /> 상세
                           </Button>
                         </div>
                       </MGCard>
@@ -327,7 +321,7 @@ const PurchaseManagement = () => {
           )}
         </div>
       </div>
-      </div>
+      </ContentArea>
     </AdminCommonLayout>
   );
 };

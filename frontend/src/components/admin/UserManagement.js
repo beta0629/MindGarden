@@ -1,7 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-// import MGButton from '../../components/common/MGButton'; // 임시 비활성화
-import { FaUsers, FaEdit, FaUser, FaUserTie, FaCrown, FaBuilding, FaSearch, FaFilter, FaSync, FaTimes } from 'react-icons/fa';
-import { apiGet } from '../../utils/ajax';
+import { Users, Pencil, User, UserCircle, Crown, Building2, Search, Filter, RefreshCw } from 'lucide-react';
 import { USER_ROLES } from '../../constants/roles';
 import notificationManager from '../../utils/notification';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
@@ -44,10 +42,10 @@ const UserManagement = ({ onUpdate }) => {
             
             const ALLOWED = ['ADMIN', 'STAFF', 'CONSULTANT', 'CLIENT'];
             const defaultOptions = [
-                { value: USER_ROLES.CLIENT, label: '내담자', icon: '👤', color: 'var(--mg-primary-500)', description: '상담을 받는 내담자' },
-                { value: USER_ROLES.CONSULTANT, label: '상담사', icon: '👨‍⚕️', color: 'var(--mg-success-500)', description: '상담을 제공하는 상담사' },
-                { value: USER_ROLES.STAFF, label: '사무원', icon: '👨‍💼', color: 'var(--mg-info-500)', description: '사무/행정 담당' },
-                { value: USER_ROLES.ADMIN, label: '관리자', icon: '👑', color: 'var(--mg-warning-500)', description: '시스템 관리자' }
+                { value: USER_ROLES.CLIENT, label: '내담자', icon: 'User', color: 'var(--mg-primary-500)', description: '상담을 받는 내담자' },
+                { value: USER_ROLES.CONSULTANT, label: '상담사', icon: 'UserCircle', color: 'var(--mg-success-500)', description: '상담을 제공하는 상담사' },
+                { value: USER_ROLES.STAFF, label: '사무원', icon: 'Building2', color: 'var(--mg-info-500)', description: '사무/행정 담당' },
+                { value: USER_ROLES.ADMIN, label: '관리자', icon: 'Crown', color: 'var(--mg-warning-500)', description: '시스템 관리자' }
             ];
             if (codes && Array.isArray(codes) && codes.length > 0) {
                 const options = codes
@@ -66,10 +64,10 @@ const UserManagement = ({ onUpdate }) => {
         } catch (error) {
             console.error('역할 코드 로드 실패:', error);
             setRoleOptions([
-                { value: USER_ROLES.CLIENT, label: '내담자', icon: '👤' },
-                { value: USER_ROLES.CONSULTANT, label: '상담사', icon: '👨‍⚕️' },
-                { value: USER_ROLES.STAFF, label: '사무원', icon: '👨‍💼' },
-                { value: USER_ROLES.ADMIN, label: '관리자', icon: '👑' }
+                { value: USER_ROLES.CLIENT, label: '내담자', icon: 'User' },
+                { value: USER_ROLES.CONSULTANT, label: '상담사', icon: 'UserCircle' },
+                { value: USER_ROLES.STAFF, label: '사무원', icon: 'Building2' },
+                { value: USER_ROLES.ADMIN, label: '관리자', icon: 'Crown' }
             ]);
         } finally {
             setLoadingCodes(false);
@@ -199,11 +197,11 @@ const UserManagement = ({ onUpdate }) => {
 
     const getRoleIcon = (role) => {
         switch (role) {
-            case USER_ROLES.CLIENT: return <FaUser />;
-            case USER_ROLES.CONSULTANT: return <FaUserTie />;
-            case USER_ROLES.STAFF: return <FaBuilding />;
-            case USER_ROLES.ADMIN: return <FaCrown />;
-            default: return <FaUsers />;
+            case USER_ROLES.CLIENT: return <User size={20} />;
+            case USER_ROLES.CONSULTANT: return <UserCircle size={20} />;
+            case USER_ROLES.STAFF: return <Building2 size={20} />;
+            case USER_ROLES.ADMIN: return <Crown size={20} />;
+            default: return <Users size={20} />;
         }
     };
 
@@ -214,7 +212,7 @@ const UserManagement = ({ onUpdate }) => {
                 <div className="mg-v2-dashboard-header">
                     <div className="mg-v2-dashboard-header-content">
                         <div className="mg-v2-dashboard-header-left">
-                            <FaUsers className="mg-v2-dashboard-icon" />
+                            <Users className="mg-v2-dashboard-icon" size={24} />
                             <div>
                                 <h1 className="mg-v2-dashboard-title">사용자 관리</h1>
                                 <p className="mg-v2-dashboard-subtitle">전체 {filteredUsers.length}명의 사용자를 관리합니다</p>
@@ -222,7 +220,7 @@ const UserManagement = ({ onUpdate }) => {
                         </div>
                         <div className="mg-v2-dashboard-header-right">
                             <button className="mg-v2-dashboard-icon-btn" onClick={loadData} title="새로고침">
-                                <FaSync />
+                                <RefreshCw size={18} />
                             </button>
                         </div>
                     </div>
@@ -234,7 +232,7 @@ const UserManagement = ({ onUpdate }) => {
                         {/* 필터 및 검색 */}
                         <div className="user-mgmt-filters">
                             <div className="user-mgmt-search-wrapper">
-                                <FaSearch className="user-mgmt-search-icon" />
+                                <Search className="user-mgmt-search-icon" size={18} />
                                 <input
                                     type="text"
                                     className="mg-v2-input user-mgmt-search-input"
@@ -272,7 +270,7 @@ const UserManagement = ({ onUpdate }) => {
                                     setIncludeInactive(false);
                                 }}
                             >
-                                <FaFilter className="mg-v2-button-icon" />
+                                <Filter className="mg-v2-button-icon" size={16} />
                                 초기화
                             </button>
                         </div>
@@ -280,12 +278,12 @@ const UserManagement = ({ onUpdate }) => {
                             <UnifiedLoading type="inline" text="로딩 중..." />
                         ) : users.length === 0 ? (
                             <div className="mg-v2-empty-state">
-                                <FaUsers className="mg-v2-empty-state__icon" />
+                                <Users className="mg-v2-empty-state__icon" size={32} />
                                 <p className="mg-v2-empty-state__text">등록된 사용자가 없습니다.</p>
                             </div>
                         ) : filteredUsers.length === 0 ? (
                             <div className="mg-v2-empty-state">
-                                <FaSearch className="mg-v2-empty-state__icon" />
+                                <Search className="mg-v2-empty-state__icon" size={32} />
                                 <p className="mg-v2-empty-state__text">검색 결과가 없습니다.</p>
                                 <p className="mg-v2-empty-state__hint">다른 검색어나 필터를 시도해보세요.</p>
                             </div>
@@ -344,7 +342,7 @@ const UserManagement = ({ onUpdate }) => {
                                                 }}
                                                 title="역할 변경"
                                             >
-                                                <FaEdit className="mg-v2-button-icon" />
+                                                <Pencil className="mg-v2-button-icon" size={16} />
                                                 변경
                                             </button>
                                         </div>
@@ -400,7 +398,7 @@ const UserManagement = ({ onUpdate }) => {
                                 <option value="">역할을 선택하세요</option>
                                 {roleOptions.map(role => (
                                     <option key={role.value} value={role.value}>
-                                        {role.icon} {role.label} ({role.value})
+                                        {role.label} ({role.value})
                                     </option>
                                 ))}
                             </select>

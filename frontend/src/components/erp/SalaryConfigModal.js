@@ -137,7 +137,7 @@ const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
           )}
 
           <div className="config-section">
-            <h4>📅 급여 기산일 설정</h4>
+            <h4>급여 기산일 설정</h4>
             
             <div className="config-item">
               <label>월급여 기산일</label>
@@ -183,7 +183,7 @@ const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
           </div>
 
           <div className="config-section">
-            <h4>⚙️ 배치 설정</h4>
+            <h4>배치 설정</h4>
             
             <div className="config-item">
               <label>배치 실행 주기</label>
@@ -201,7 +201,7 @@ const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
           </div>
 
           <div className="config-section">
-            <h4>💰 급여 계산 방식</h4>
+            <h4>급여 계산 방식</h4>
             
             <div className="config-item">
               <label>계산 방식</label>
@@ -219,7 +219,7 @@ const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
           </div>
 
           <div className="config-preview">
-            <h4>📋 설정 미리보기</h4>
+            <h4>설정 미리보기</h4>
             <div className="preview-item">
               <span>급여 기산일:</span>
               <span>{configs.monthlyBaseDay === 'LAST_DAY' ? '매월 말일' : `매월 ${configs.monthlyBaseDay}일`}</span>

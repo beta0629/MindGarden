@@ -8,6 +8,8 @@ import { getCodeLabel } from '../../utils/commonCodeUtils';
 import notificationManager from '../../utils/notification';
 import ConfirmModal from '../common/ConfirmModal';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { ContentArea, ContentHeader } from '../dashboard-v2/content';
+import { DollarSign, Wallet, RefreshCw, Search, Link2, User, Users, BarChart3, FileText, Calendar, Building2, ClipboardList, X } from 'lucide-react';
 import { ERP_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import { getStatusLabel } from '../../utils/colorUtils';
 import FinancialCalendarView from './FinancialCalendarView';
@@ -354,20 +356,12 @@ const FinancialManagement = () => {
 
   return (
     <AdminCommonLayout title={`재무 관리${dashboardStats.branchName ? ' - ' + dashboardStats.branchName : ''}`}>
-      <div className="erp-system">
+      <ContentArea className="erp-system">
+        <ContentHeader
+          title="재무 관리"
+          subtitle="재무 거래 및 회계를 관리할 수 있습니다."
+        />
         <div className="erp-container">
-        {/* 헤더 */}
-        <div className="erp-header">
-          <h1 className="erp-title">
-            <i className="bi bi-graph-up"></i>
-            재무 관리
-          </h1>
-          <p className="erp-subtitle">
-            재무 거래 및 회계를 관리할 수 있습니다.
-          </p>
-        </div>
-
-        {/* 탭 네비게이션 */}
         <div className="erp-tabs">
           <button
             className={`erp-tab ${activeTab === 'transactions' ? 'active' : ''}`}
@@ -440,7 +434,7 @@ const FinancialManagement = () => {
                   {/* 필터 섹션 */}
                   <div className="mg-v2-filter-section">
                     <h3 className="mg-v2-filter-title">
-                      🔍 필터 및 검색
+                      필터 및 검색
                     </h3>
                     
                     <div className="mg-v2-filter-grid">
@@ -455,8 +449,8 @@ const FinancialManagement = () => {
                           className="mg-v2-form-select"
                         >
                           <option value="ALL">전체</option>
-                          <option value="INCOME">💰 수입</option>
-                          <option value="EXPENSE">💸 지출</option>
+                          <option value="INCOME">수입</option>
+                          <option value="EXPENSE">지출</option>
                         </select>
                       </div>
                       
@@ -471,12 +465,12 @@ const FinancialManagement = () => {
                           className="mg-v2-form-select"
                         >
                           <option value="ALL">전체</option>
-                          <option value="CONSULTATION">🗣️ 상담료</option>
-                          <option value="SALARY">💼 급여</option>
-                          <option value="RENT">🏢 임대료</option>
-                          <option value="UTILITY">⚡ 관리비</option>
-                          <option value="OFFICE_SUPPLIES">📝 사무용품</option>
-                          <option value="OTHER">🔧 기타</option>
+                          <option value="CONSULTATION">상담료</option>
+                          <option value="SALARY">급여</option>
+                          <option value="RENT">임대료</option>
+                          <option value="UTILITY">관리비</option>
+                          <option value="OFFICE_SUPPLIES">사무용품</option>
+                          <option value="OTHER">기타</option>
                         </select>
                       </div>
                       
@@ -491,11 +485,11 @@ const FinancialManagement = () => {
                           className="mg-v2-form-select"
                         >
                           <option value="ALL">전체</option>
-                          <option value="CONSULTANT_CLIENT_MAPPING">🔗 매핑연동</option>
-                          <option value="CONSULTANT_CLIENT_MAPPING_REFUND">📤 환불처리</option>
-                          <option value="PAYMENT">💳 결제</option>
-                          <option value="SALARY_CALCULATION">💼 급여</option>
-                          <option value="PURCHASE_REQUEST">🛒 구매</option>
+                          <option value="CONSULTANT_CLIENT_MAPPING">매핑연동</option>
+                          <option value="CONSULTANT_CLIENT_MAPPING_REFUND">환불처리</option>
+                          <option value="PAYMENT">결제</option>
+                          <option value="SALARY_CALCULATION">급여</option>
+                          <option value="PURCHASE_REQUEST">구매</option>
                         </select>
                       </div>
                       
@@ -527,14 +521,14 @@ const FinancialManagement = () => {
                         })}
                         className="mg-v2-button mg-v2-button-secondary"
                       >
-                        🔄 필터 초기화
+                        <RefreshCw size={16} aria-hidden /> 필터 초기화
                       </button>
                       
                       <button
                         onClick={() => loadData()}
                         className="mg-v2-button mg-v2-button-primary"
                       >
-                        🔍 검색
+                        <Search size={16} aria-hidden /> 검색
                       </button>
                     </div>
                   </div>
@@ -568,7 +562,7 @@ const FinancialManagement = () => {
                                 transaction.description?.includes('상담료 입금 확인') ||
                                 transaction.description?.includes('상담료 환불')) && (
                                 <span className="mg-v2-badge mg-v2-badge--primary">
-                                  🔗 매핑연동
+                                  <Link2 size={12} aria-hidden /> 매핑연동
                                 </span>
                               )}
                             </div>
@@ -592,12 +586,12 @@ const FinancialManagement = () => {
                                 {/* 매핑 연동 거래 세부 정보 */}
                                 {transaction.relatedEntityType === 'CONSULTANT_CLIENT_MAPPING' && (
                                   <div className="mg-financial-transaction-card__auto-generated mg-financial-transaction-card__auto-generated--success">
-                                    💰 입금확인 자동생성
+                                    <DollarSign size={12} aria-hidden /> 입금확인 자동생성
                                   </div>
                                 )}
                                 {transaction.relatedEntityType === 'CONSULTANT_CLIENT_MAPPING_REFUND' && (
                                   <div className="mg-financial-transaction-card__auto-generated mg-financial-transaction-card__auto-generated--danger">
-                                    📤 환불처리 자동생성
+                                    <Wallet size={12} aria-hidden /> 환불처리 자동생성
                                   </div>
                                 )}
                               </div>
@@ -609,10 +603,10 @@ const FinancialManagement = () => {
                                 {transaction.consultantName || transaction.clientName ? (
                                   <>
                                     <div className="mg-financial-transaction-card__consultant">
-                                      👤 {transaction.consultantName || '상담사 정보 없음'}
+                                      <User size={14} aria-hidden /> {transaction.consultantName || '상담사 정보 없음'}
                                     </div>
                                     <div className="mg-financial-transaction-card__client">
-                                      👥 {transaction.clientName || '내담자 정보 없음'}
+                                      <Users size={14} aria-hidden /> {transaction.clientName || '내담자 정보 없음'}
                                     </div>
                                   </>
                                 ) : (
@@ -777,7 +771,7 @@ const FinancialManagement = () => {
                   
                   {/* 매핑 연동 현황 */}
                   <div className="mt-4">
-                    <h3>📊 매핑 연동 현황</h3>
+                    <h3><BarChart3 size={20} aria-hidden /> 매핑 연동 현황</h3>
                     <div className="row">
                       <div className="col-md-6 mb-3">
                         <div className="erp-card">
@@ -825,31 +819,31 @@ const FinancialManagement = () => {
                   
                   {/* 빠른 액션 */}
                   <div className="mt-4">
-                    <h3>⚡ 빠른 액션</h3>
+                    <h3>빠른 액션</h3>
                     <div className="d-flex gap-2 flex-wrap">
                       <button 
                         className="mg-btn mg-btn--primary"
                         onClick={() => setActiveTab('transactions')}
                       >
-                        📋 거래 내역 보기
+                        <ClipboardList size={16} aria-hidden /> 거래 내역 보기
                       </button>
                       <button 
                         className="mg-btn mg-btn--success"
                         onClick={() => setActiveTab('calendar')}
                       >
-                        📅 달력 뷰 보기
+                        <Calendar size={16} aria-hidden /> 달력 뷰 보기
                       </button>
                       <button 
                         className="mg-btn mg-btn--info"
                         onClick={() => window.location.href = '/branch_super_admin/mapping-management'}
                       >
-                        🔗 매핑 시스템 확인
+                        <Link2 size={16} aria-hidden /> 매핑 시스템 확인
                       </button>
                       <button 
                         className="mg-btn mg-btn--secondary"
                         onClick={() => window.location.href = '/erp/finance-dashboard'}
                       >
-                        🏢 통합 재무 대시보드
+                        <Building2 size={16} aria-hidden /> 통합 재무 대시보드
                       </button>
                     </div>
                   </div>
@@ -931,20 +925,21 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
         {/* 헤더 */}
         <div className="mg-v2-modal-header">
           <h2 className="mg-v2-modal-title">
-            💰 거래 상세 정보 #{transaction.id}
+            <DollarSign size={20} aria-hidden /> 거래 상세 정보 #{transaction.id}
           </h2>
           <button
             onClick={onClose}
             className="mg-v2-modal-close"
+            aria-label="닫기"
           >
-            ✕
+            <X size={20} aria-hidden />
           </button>
         </div>
 
         {/* 기본 거래 정보 */}
         <div className="mg-v2-card mg-v2-card--outlined">
           <h3 className="mg-v2-section-header">
-            📊 기본 정보
+            <BarChart3 size={18} aria-hidden /> 기본 정보
           </h3>
           
           <div className="mg-v2-form-grid">
@@ -958,7 +953,7 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
                 backgroundColor: transaction.transactionType === 'INCOME' ? 'var(--mg-success-100, rgba(40, 167, 69, 0.1))' : 'var(--mg-error-100, rgba(220, 53, 69, 0.1))',
                 color: transaction.transactionType === 'INCOME' ? 'var(--mg-success-700, #155724)' : 'var(--mg-error-700, #721c24)'
               }}>
-                {transaction.transactionType === 'INCOME' ? '💰 수입' : '💸 지출'}
+                {transaction.transactionType === 'INCOME' ? '수입' : '지출'}
               </span>
             </div>
             
@@ -998,7 +993,7 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
             border: '2px solid var(--mg-secondary-600)'
           }}>
             <h3 style={{ marginBottom: '12px', fontSize: 'var(--font-size-base)', color: 'var(--mg-secondary-600)' }}>
-              🔗 매핑 연동 정보
+              <Link2 size={18} aria-hidden /> 매핑 연동 정보
             </h3>
             
             {loading ? (
@@ -1040,7 +1035,7 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
                     {formatCurrency(mappingDetail.paymentAmount)}
                     {mappingDetail.packagePrice !== mappingDetail.paymentAmount && (
                       <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--mg-error-500)', marginLeft: '4px' }}>
-                        (⚠️ 패키지 가격과 다름)
+                        (패키지 가격과 다름)
                       </span>
                     )}
                   </span>
@@ -1057,7 +1052,7 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
                       backgroundColor: mappingDetail.isConsistent ? 'var(--mg-success-100, rgba(40, 167, 69, 0.1))' : 'var(--mg-error-100, rgba(220, 53, 69, 0.1))',
                       color: mappingDetail.isConsistent ? 'var(--mg-success-700, #155724)' : 'var(--mg-error-700, #721c24)'
                     }}>
-                      {mappingDetail.isConsistent ? '✅ 정상' : '⚠️ 불일치'}
+                      {mappingDetail.isConsistent ? '정상' : '불일치'}
                     </span>
                     {!mappingDetail.isConsistent && (
                       <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--mg-error-500)', marginTop: '4px' }}>
@@ -1105,7 +1100,7 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
             border: '2px solid var(--mg-warning-500)'
           }}>
             <h3 style={{ marginBottom: '12px', fontSize: 'var(--font-size-base)', color: 'var(--mg-warning-700, #856404)' }}>
-              🔗 연동 정보
+              <Link2 size={18} aria-hidden /> 연동 정보
             </h3>
             
             <div className="mg-v2-form-grid">
@@ -1156,12 +1151,13 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
                 cursor: 'pointer'
               }}
             >
-              📋 매핑 보기
+              매핑 보기
             </button>
           )}
         </div>
       </div>
-    </div>
+        </div>
+      </ContentArea>
   );
 };
 

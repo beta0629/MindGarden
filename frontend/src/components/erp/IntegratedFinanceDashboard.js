@@ -546,7 +546,7 @@ const OverviewTab = ({ data }) => {
               실시간 연동
             </div>
             <div className="mg-v2-text-xs mg-v2-text-secondary mg-v2-mt-xs">
-              ✅ 매핑 ↔ ERP 자동 동기화
+              매핑 ↔ ERP 자동 동기화
             </div>
             <MGButton
               variant="outline"
@@ -554,7 +554,7 @@ const OverviewTab = ({ data }) => {
               className="mg-v2-mt-sm"
               onClick={() => navigate('/admin/mapping-management')}
             >
-              📋 매핑시스템 확인
+              매핑시스템 확인
             </MGButton>
           </div>
         </div>
@@ -776,11 +776,11 @@ const BalanceSheetTab = () => {
           </div>
         </div>
         <div className={`balance-sheet-card balance-verification-card ${isBalanced ? 'balance-sheet-card--assets' : 'balance-sheet-card--liabilities'}`}>
-          <h4 className="balance-sheet-card-title">{isBalanced ? '✅ 대차대조표 균형' : '❌ 대차대조표 불균형'}</h4>
+          <h4 className="balance-sheet-card-title">{isBalanced ? '대차대조표 균형' : '대차대조표 불균형'}</h4>
           <div className="balance-sheet-items balance-verification-content">
             자산 총계: <strong>{formatCurrency(balanceCheck.assets ?? assetsTotal)}</strong> = 부채 + 자본: <strong>{formatCurrency(balanceCheck.liabilitiesPlusEquity ?? (liabilitiesTotal + equityTotal))}</strong>
             {!isBalanced && balanceCheck.difference != null && (
-              <div className="balance-sheet-total">⚠️ 차이: {formatCurrency(balanceCheck.difference)}</div>
+              <div className="balance-sheet-total">차이: {formatCurrency(balanceCheck.difference)}</div>
             )}
           </div>
         </div>
@@ -1718,7 +1718,7 @@ const JournalEntriesTab = () => {
                 borderRadius: 'var(--border-radius-sm)',
                 fontSize: 'var(--font-size-sm)'
               }}>
-                💡 <strong>예시:</strong> 현금 100만원으로 사무용품을 구매한 경우<br />
+                <strong>예시:</strong> 현금 100만원으로 사무용품을 구매한 경우<br />
                 &nbsp;&nbsp;&nbsp;&nbsp;차변: 사무용품비 100만원 / 대변: 현금 100만원
               </div>
             </div>

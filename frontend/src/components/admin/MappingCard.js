@@ -1,45 +1,42 @@
 import React, { useState, useEffect } from 'react';
-// // import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
-import MGButton from '../../components/common/MGButton'; // 임시 비활성화
-import { User, Package, Plus, PauseCircle, CheckCircle } from 'lucide-react';
+import { User, Package } from 'lucide-react';
 import { getStatusColor, getStatusIcon, getMappingStatusKoreanName } from '../../utils/codeHelper';
+import { getLucideIcon } from '../../utils/iconUtils';
 import Avatar from '../common/Avatar';
 
-const MappingCard = ({ 
-    mapping, 
+const MappingCard = ({
+    mapping,
     onClick,
-    actions = null 
+    actions = null
 }) => {
     const [statusInfo, setStatusInfo] = useState({
-        color: 'var(--color-gray)',
-        icon: '❓',
+        color: 'var(--mg-color-text-secondary)',
+        icon: 'HelpCircle',
         label: '로딩 중...'
     });
 
     useEffect(() => {
-        const loadStatusInfo = async() => {
+        const loadStatusInfo = async () => {
             try {
                 const [statusColor, statusIcon, statusLabel] = await Promise.all([
                     getStatusColor(mapping.status, 'MAPPING_STATUS'),
                     getStatusIcon(mapping.status, 'MAPPING_STATUS'),
                     getMappingStatusKoreanName(mapping.status)
                 ]);
-                
                 setStatusInfo({
                     color: statusColor,
                     icon: statusIcon,
                     label: statusLabel
                 });
             } catch (error) {
-                console.error('❌ 상태 정보 로드 실패:', error);
+                console.error('상태 정보 로드 실패:', error);
                 setStatusInfo({
-                    color: 'var(--color-gray)',
-                    icon: '❓',
+                    color: 'var(--mg-color-text-secondary)',
+                    icon: 'HelpCircle',
                     label: mapping.status || '알 수 없음'
                 });
             }
         };
-
         loadStatusInfo();
     }, [mapping.status]);
 
@@ -65,11 +62,11 @@ const MappingCard = ({
                     </div>
                 </div>
                 
-                <div 
-                    className="mg-v2-status-badge" 
+                <div
+                    className="mg-v2-status-badge"
                     style={{ '--status-color': statusInfo.color }}
                 >
-                    { statusInfo.icon } { statusInfo.label }
+                    {getLucideIcon(statusInfo.icon, { size: 14 })} {statusInfo.label}
                 </div>
             </div>
 

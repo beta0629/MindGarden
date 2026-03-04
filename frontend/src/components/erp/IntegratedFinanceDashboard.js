@@ -7,6 +7,7 @@ import { sessionManager } from '../../utils/sessionManager';
 import { getCodeLabel } from '../../utils/commonCodeUtils';
 import { fetchUserPermissions, PermissionChecks, PERMISSIONS } from '../../utils/permissionUtils';
 import { AUTH_API, ERP_API } from '../../constants/api';
+import { ACCOUNT_API_ENDPOINTS } from '../../constants/account';
 import StandardizedApi from '../../utils/standardizedApi';
 import { RoleUtils, USER_ROLES } from '../../constants/roles';
 import { COMMON_CSS_CLASSES } from '../../constants/css';
@@ -1826,11 +1827,26 @@ const JournalEntriesTab = () => {
 const LedgersTab = () => {
   const [ledgers, setLedgers] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [accountList, setAccountList] = useState([]);
   const [selectedAccountId, setSelectedAccountId] = useState(null);
   const [periodStart, setPeriodStart] = useState('');
   const [periodEnd, setPeriodEnd] = useState('');
   const [selectedLedger, setSelectedLedger] = useState(null);
   const [showLedgerDetailModal, setShowLedgerDetailModal] = useState(false);
+
+  useEffect(() => {
+    const loadAccounts = async () => {
+      try {
+        const res = await axios.get(ACCOUNT_API_ENDPOINTS.ACTIVE, { withCredentials: true });
+        const list = Array.isArray(res.data) ? res.data : (res.data?.data ?? []);
+        setAccountList(list);
+      } catch (err) {
+        console.error('계좌 목록 로드 실패:', err);
+        notificationManager.show('계좌 목록을 불러오는데 실패했습니다.', 'error');
+      }
+    };
+    loadAccounts();
+  }, []);
 
   useEffect(() => {
     if (selectedAccountId) {
@@ -1867,13 +1883,19 @@ const LedgersTab = () => {
       <DashboardSection title="원장 조회" icon={<BookOpen size={20} />}>
         <div className="mg-v2-form-group mg-v2-mb-md">
           <div className="mg-v2-flex mg-v2-gap-sm" style={{ flexWrap: 'wrap' }}>
-            <input
-              type="number"
+            <select
               className="mg-v2-input"
-              placeholder="계정 ID"
-              value={selectedAccountId || ''}
-              onChange={(e) => setSelectedAccountId(e.target.value ? parseInt(e.target.value) : null)}
-            />
+              value={selectedAccountId ?? ''}
+              onChange={(e) => setSelectedAccountId(e.target.value ? Number.parseInt(e.target.value, 10) : null)}
+              aria-label="계좌 선택"
+            >
+              <option value="">계좌를 선택하세요</option>
+              {accountList.map((acc) => (
+                <option key={acc.id} value={acc.id}>
+                  {[acc.bankName, acc.accountNumber, acc.accountHolder].filter(Boolean).join(' - ')}
+                </option>
+              ))}
+            </select>
             <input
               type="date"
               className="mg-v2-input"

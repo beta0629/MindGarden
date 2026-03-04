@@ -1294,6 +1294,7 @@ const AdminDashboard = ({ user: propUser }) => {
                         <p className="mg-management-description">상담사와 내담자 매칭을 관리합니다</p>
                     </div>
                     
+                    {/* 사용자 관리 기능 임시 숨김
                     {PermissionChecks.canManageUsers(userPermissions) && (
                         <div className="mg-management-card" onClick={() => navigate(ADMIN_ROUTES.USER_MANAGEMENT)}>
                             <div className="mg-management-icon">
@@ -1303,6 +1304,7 @@ const AdminDashboard = ({ user: propUser }) => {
                             <p className="mg-management-description">사용자 역할 변경 및 권한 관리</p>
                         </div>
                     )}
+                    */}
                     
                     <div className="mg-management-card" onClick={() => navigate(ADMIN_ROUTES.COMMON_CODES)}>
                         <div className="mg-management-icon">
@@ -1376,6 +1378,7 @@ const AdminDashboard = ({ user: propUser }) => {
                         <p className="mg-management-description">TCI/MMPI 업로드 및 리포트 생성을 관리합니다</p>
                     </div>
                     
+                    {/* 웰니스 알림 관리 기능 임시 숨김
                     <div className="mg-management-card" onClick={() => navigate('/admin/wellness')}>
                         <div className="mg-management-icon">
                             <Sparkles />
@@ -1383,6 +1386,7 @@ const AdminDashboard = ({ user: propUser }) => {
                         <h3>웰니스 알림 관리</h3>
                         <p className="mg-management-description">AI 기반 웰니스 컨텐츠 생성 및 비용 관리</p>
                     </div>
+                    */}
                     
                     <div className="mg-management-card" onClick={handleMergeDuplicateMappings}>
                         <div className="mg-management-icon">

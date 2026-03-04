@@ -51,6 +51,10 @@ const FinancialCalendarView = () => {
         transactions = response.data;
       }
 
+      // 안전장치: 해당 월 범위 밖 거래 제외 후 집계
+      const inRange = (dateStr) => dateStr >= startDate && dateStr <= endDate;
+      transactions = transactions.filter((t) => t.transactionDate && inRange(t.transactionDate));
+
       const groupedByDate = {};
       transactions.forEach((transaction) => {
         const date = transaction.transactionDate;

@@ -2715,7 +2715,8 @@ public class AdminController extends BaseApiController {
             @RequestParam(required = false) String startDate,
             @RequestParam(required = false) String endDate, HttpSession session) {
         try {
-            log.info("🔍 재무 거래 목록 조회: 유형={}, 카테고리={}", transactionType, category);
+            log.info("🔍 재무 거래 목록 조회: 유형={}, 카테고리={}, startDate={}, endDate={}", transactionType,
+                    category, startDate, endDate);
 
             User currentUser = SessionUtils.getCurrentUser(session);
             if (currentUser == null) {
@@ -2731,9 +2732,14 @@ public class AdminController extends BaseApiController {
             log.info("👤 현재 사용자: 이메일={}, 역할={}, tenantId={}", currentUser.getEmail(),
                     currentUser.getRole(), tenantId);
 
-            org.springframework.data.domain.Page<com.coresolution.consultation.dto.FinancialTransactionResponse> transactions =
-                    financialTransactionService
-                            .getTransactions(PaginationUtils.createPageable(page, size));
+            org.springframework.data.domain.Pageable pageable = PaginationUtils.createPageable(page, size);
+            org.springframework.data.domain.Page<com.coresolution.consultation.dto.FinancialTransactionResponse> transactions;
+            if (startDate != null && !startDate.isBlank() && endDate != null && !endDate.isBlank()) {
+                transactions = financialTransactionService.getTransactionsByDateRange(
+                        LocalDate.parse(startDate), LocalDate.parse(endDate), pageable);
+            } else {
+                transactions = financialTransactionService.getTransactions(pageable);
+            }
 
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);

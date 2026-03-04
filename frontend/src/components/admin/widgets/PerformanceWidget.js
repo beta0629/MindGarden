@@ -6,7 +6,6 @@ import './PerformanceWidget.css';
 
 /**
  * 성능 모니터링 위젯
-/**
  * 실시간 시스템 성능 지표를 표시
  */
 const PerformanceWidget = ({ 

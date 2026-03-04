@@ -4,15 +4,14 @@ import { FaArrowLeft, FaSync, FaTrash, FaDownload } from 'react-icons/fa';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import ApiPerformanceWidget from './widgets/ApiPerformanceWidget';
 import PerformanceWidget from './widgets/PerformanceWidget';
-import MGButton from '../../components/common/MGButton'; // 임시 비활성화
+import MGButton from '../../components/common/MGButton';
 import { ApiPerformanceReportGenerator } from '../../utils/apiPerformanceUtils';
-import { WIDGET_CONSTANTS } from '../../constants/widgetConstants';
+import { WIDGET_CONSTANTS, API_PERFORMANCE_WIDGET } from '../../constants/widgetConstants';
 import notificationManager from '../../utils/notification';
 import './ApiPerformanceMonitoring.css';
 
 /**
  * API 성능 모니터링 페이지
-/**
  * 종합적인 API 성능 분석 및 모니터링 대시보드
  */
 const ApiPerformanceMonitoring = () => {
@@ -34,7 +33,7 @@ const ApiPerformanceMonitoring = () => {
 
   // 통계 초기화
   const handleClearStats = async () => {
-    const messages = WIDGET_CONSTANTS.API_PERFORMANCE_WIDGET.MESSAGES;
+    const messages = API_PERFORMANCE_WIDGET.MESSAGES;
     const confirmed = await new Promise((resolve) => {
       notificationManager.confirm(messages.CLEAR_CONFIRM, resolve);
     });
@@ -42,7 +41,7 @@ const ApiPerformanceMonitoring = () => {
     
     setClearLoading(true);
     try {
-      const response = await fetch(WIDGET_CONSTANTS.API_PERFORMANCE_WIDGET.API_ENDPOINTS.CLEAR_STATS, { 
+      const response = await fetch(API_PERFORMANCE_WIDGET.API_ENDPOINTS.CLEAR_STATS, { 
         method: 'DELETE' 
       });
       if (response.ok) {
@@ -63,7 +62,7 @@ const ApiPerformanceMonitoring = () => {
   const handleDownloadReport = async () => {
     setDownloadLoading(true);
     try {
-      const response = await fetch(WIDGET_CONSTANTS.API_PERFORMANCE_WIDGET.API_ENDPOINTS.STATS);
+      const response = await fetch(API_PERFORMANCE_WIDGET.API_ENDPOINTS.STATS);
       if (response.ok) {
         const data = await response.json();
         const reportData = ApiPerformanceReportGenerator.generateReportData(data.data || {});
@@ -71,7 +70,7 @@ const ApiPerformanceMonitoring = () => {
       }
     } catch (error) {
       console.error('보고서 다운로드 오류:', error);
-      notificationManager.error(WIDGET_CONSTANTS.API_PERFORMANCE_WIDGET.MESSAGES.DOWNLOAD_ERROR);
+      notificationManager.error(API_PERFORMANCE_WIDGET.MESSAGES.DOWNLOAD_ERROR);
     } finally {
       setDownloadLoading(false);
     }
@@ -82,15 +81,15 @@ const ApiPerformanceMonitoring = () => {
       <div className="api-performance-monitoring">
         <div className="page-header">
           <div className="header-left">
-            <button className="mg-button"
+            <MGButton
+              className="mg-button back-button"
               variant="outline"
               size="small"
               onClick={() => navigate('/admin')}
-              className="back-button"
             >
               <FaArrowLeft />
               관리자 대시보드
-            </button>
+            </MGButton>
             <div className="page-title">
               <h1>API 성능 모니터링</h1>
               <p>실시간 API 응답 시간 및 성능 지표 분석</p>
@@ -125,7 +124,8 @@ const ApiPerformanceMonitoring = () => {
               통계 초기화
             </MGButton>
             
-            <button className="mg-button"
+            <MGButton
+              className="mg-button"
               variant="primary"
               size="small"
               onClick={handleRefresh}
@@ -133,7 +133,7 @@ const ApiPerformanceMonitoring = () => {
             >
               <FaSync className={refreshing ? 'spinning' : ''} />
               새로고침
-            </button>
+            </MGButton>
           </div>
         </div>
 

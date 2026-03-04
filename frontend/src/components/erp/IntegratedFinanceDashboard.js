@@ -626,11 +626,9 @@ const BalanceSheetTab = () => {
     setLoading(true);
     try {
       const response = await StandardizedApi.get(ERP_API.FINANCIAL_STATEMENT_BALANCE, { asOfDate });
-      if (response && response.success) {
-        setBalanceSheetData(response.data ?? null);
-      } else {
-        setBalanceSheetData(null);
-      }
+      // StandardizedApi(apiGet)는 { success, data } 래퍼 시 data만 반환함. 일관성 위해 둘 다 처리.
+      const raw = (response && typeof response === 'object' && 'data' in response && response.data != null) ? response.data : response;
+      setBalanceSheetData(raw && typeof raw === 'object' ? raw : null);
     } catch (err) {
       console.error('Balance sheet fetch error:', err);
       setError(err);
@@ -806,11 +804,9 @@ const IncomeStatementTab = () => {
     setLoading(true);
     try {
       const response = await StandardizedApi.get(ERP_API.FINANCIAL_STATEMENT_INCOME, { startDate, endDate });
-      if (response && response.success) {
-        setIncomeStatementData(response.data ?? null);
-      } else {
-        setIncomeStatementData(null);
-      }
+      // StandardizedApi(apiGet)는 { success, data } 래퍼 시 data만 반환함. 일관성 위해 둘 다 처리.
+      const raw = (response && typeof response === 'object' && 'data' in response && response.data != null) ? response.data : response;
+      setIncomeStatementData(raw && typeof raw === 'object' ? raw : null);
     } catch (err) {
       console.error('Income statement fetch error:', err);
       setError(err);

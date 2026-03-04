@@ -62,15 +62,12 @@ const getFallbackRoleData = () => ({
 /**
  * 역할의 한국어 표시명 가져오기
  */
-export const getRoleDisplayName = async (role, branchName = null) => {
+export const getRoleDisplayName = async (role) => {
     try {
         const roleData = await loadRoleData();
         const roleInfo = roleData[role];
         
         if (roleInfo && roleInfo.displayName) {
-            if (branchName && role === USER_ROLES.ADMIN) {
-                return `${roleInfo.displayName} (${branchName})`;
-            }
             return roleInfo.displayName;
         }
         
@@ -84,15 +81,12 @@ export const getRoleDisplayName = async (role, branchName = null) => {
 /**
  * 역할의 영문 표시명 가져오기
  */
-export const getRoleDisplayNameEn = async (role, branchName = null) => {
+export const getRoleDisplayNameEn = async (role) => {
     try {
         const roleData = await loadRoleData();
         const roleInfo = roleData[role];
         
         if (roleInfo && roleInfo.displayNameEn) {
-            if (branchName && role === USER_ROLES.ADMIN) {
-                return `${roleInfo.displayNameEn} (${branchName})`;
-            }
             return roleInfo.displayNameEn;
         }
         

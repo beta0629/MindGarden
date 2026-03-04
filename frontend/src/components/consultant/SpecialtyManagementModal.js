@@ -44,7 +44,7 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
     }, [isOpen]);
 
 /**
-     * 상담사 목록 로드 (통합 API 사용, 지점별 + 삭제 제외)
+     * 상담사 목록 로드 (통합 API 사용, 삭제 제외)
      */
     const loadConsultants = async () => {
         try {
@@ -103,7 +103,6 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
                         phone: consultantEntity.phone || '',
                         role: consultantEntity.role || 'CONSULTANT',
                         isActive: consultantEntity.isActive !== undefined ? consultantEntity.isActive : true,
-                        // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
                         branchCode: consultantEntity.branchCode || '',
                         specialty: rawSpecialty, // 원본 저장
                         specialtyDisplay: specialtyDisplay, // 동적으로 조회한 한글명

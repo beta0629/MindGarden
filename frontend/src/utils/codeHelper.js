@@ -476,11 +476,7 @@ export const getUserGradeKoreanName = async (grade) => {
         'CONSULTANT_JUNIOR': '주니어',
         'CONSULTANT_SENIOR': '시니어',
         'CONSULTANT_EXPERT': '전문가',
-        'ADMIN': '관리자',
-        'BRANCH_SUPER_ADMIN': '수퍼관리자',
-        'HQ_ADMIN': '본사 관리자',
-        'SUPER_HQ_ADMIN': '본사 수퍼 관리자',
-        'HQ_MASTER': '본사 총관리자'
+        'ADMIN': '관리자'
     };
     
     return defaultGradeMap[grade] || grade || '브론즈';
@@ -499,11 +495,7 @@ export const getUserGradeKoreanNameSync = (grade) => {
         'CONSULTANT_JUNIOR': '주니어',
         'CONSULTANT_SENIOR': '시니어',
         'CONSULTANT_EXPERT': '전문가',
-        'ADMIN': '관리자',
-        'BRANCH_SUPER_ADMIN': '수퍼관리자',
-        'HQ_ADMIN': '본사 관리자',
-        'SUPER_HQ_ADMIN': '본사 수퍼 관리자',
-        'HQ_MASTER': '본사 총관리자'
+        'ADMIN': '관리자'
     };
     
     return defaultGradeMap[grade] || grade || '브론즈';
@@ -534,11 +526,7 @@ export const getUserGradeIcon = async (grade) => {
         'CONSULTANT_JUNIOR': '⭐',
         'CONSULTANT_SENIOR': '⭐⭐',
         'CONSULTANT_EXPERT': '⭐⭐⭐',
-        'ADMIN': '👑',
-        'BRANCH_SUPER_ADMIN': '👑👑',
-        'HQ_ADMIN': '🏢',
-        'SUPER_HQ_ADMIN': '🏢👑',
-        'HQ_MASTER': '👑🏢'
+        'ADMIN': '👑'
     };
     
     return defaultGradeIconMap[grade] || '🥉';
@@ -557,11 +545,7 @@ export const getUserGradeIconSync = (grade) => {
         'CONSULTANT_JUNIOR': '⭐',
         'CONSULTANT_SENIOR': '⭐⭐',
         'CONSULTANT_EXPERT': '⭐⭐⭐',
-        'ADMIN': '👑',
-        'BRANCH_SUPER_ADMIN': '👑👑',
-        'HQ_ADMIN': '🏢',
-        'SUPER_HQ_ADMIN': '🏢👑',
-        'HQ_MASTER': '👑🏢'
+        'ADMIN': '👑'
     };
     
     return defaultGradeIconMap[grade] || '👤';

@@ -63,12 +63,7 @@ const UnifiedNotifications = () => {
       
       // 관리자 여부 확인 (role에 ADMIN이 포함되거나 특정 관리자 역할인 경우)
       const userRole = String(user.role || '');
-      const isAdmin = userRole && (
-        userRole.includes('ADMIN') || 
-        userRole.includes('SUPER') || 
-        userRole.includes('HQ_MASTER') ||
-        userRole.includes('BRANCH_SUPER_ADMIN')
-      );
+      const isAdmin = userRole === 'ADMIN';
       
       if (userRole === 'CONSULTANT' || userRole === 'ROLE_CONSULTANT') {
         endpoint = `/api/v1/consultation-messages/consultant/${user.id}?page=0&size=50`;

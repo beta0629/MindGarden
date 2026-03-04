@@ -196,7 +196,7 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
                                                 <span>{getPaymentStatusBadge(mapping?.paymentStatus)}</span>
                                             </div>
                                             <div className="info-item">
-                                                <label>지점</label>
+                                                <label>소속</label>
                                                 <span>{mapping?.branchCode || '-'}</span>
                                             </div>
                                         </div>

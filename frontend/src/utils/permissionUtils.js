@@ -172,7 +172,6 @@ export const PERMISSIONS = {
     TAX_MANAGE: 'TAX_MANAGE',
     SALARY_MANAGE: 'SALARY_MANAGE',
     REFUND_MANAGE: 'REFUND_MANAGE',
-    BRANCH_FINANCIAL_VIEW: 'BRANCH_FINANCIAL_VIEW',
     ANNUAL_FINANCIAL_REPORT_VIEW: 'ANNUAL_FINANCIAL_REPORT_VIEW',
     
     // 결제 관리
@@ -192,10 +191,6 @@ export const PERMISSIONS = {
     ITEM_MANAGE: 'ITEM_MANAGE',
     BUDGET_MANAGE: 'BUDGET_MANAGE',
     
-    // 지점 관리
-    BRANCH_VIEW: 'BRANCH_VIEW',
-    BRANCH_MANAGE: 'BRANCH_MANAGE',
-    
     // 시스템 관리
     PERMISSION_MANAGEMENT: 'PERMISSION_MANAGEMENT',
     SYSTEM_SETTINGS_MANAGE: 'SYSTEM_SETTINGS_MANAGE',
@@ -213,7 +208,6 @@ export const PERMISSIONS = {
     DATA_IMPORT: 'DATA_IMPORT',
     
     // 대시보드
-    HQ_DASHBOARD_VIEW: 'HQ_DASHBOARD_VIEW',
     INTEGRATED_FINANCE_VIEW: 'INTEGRATED_FINANCE_VIEW',
     
     // 소셜 계정 관리
@@ -231,11 +225,9 @@ export const PERMISSIONS = {
 
 /**
  * 권한별 역할 매핑 (백엔드와 일치)
-/**
- * 특정 권한이 필요한 기능에 접근할 수 있는 역할들을 정의합니다.
+ * 4역할: ADMIN, STAFF, CONSULTANT, CLIENT
  */
 export const PERMISSION_ROLES = {
-    // 관리자 권한 (ADMIN, BRANCH_SUPER_ADMIN, HQ_ADMIN 등)
     ADMIN_PERMISSIONS: [
         PERMISSIONS.USER_MANAGE,
         PERMISSIONS.CONSULTANT_MANAGE,
@@ -246,23 +238,6 @@ export const PERMISSION_ROLES = {
         PERMISSIONS.PAYMENT_ACCESS,
         PERMISSIONS.SYSTEM_SETTINGS_MANAGE
     ],
-    
-    // 본사 관리자 권한 (HQ_ADMIN, SUPER_HQ_ADMIN, HQ_MASTER)
-    HQ_ADMIN_PERMISSIONS: [
-        PERMISSIONS.ERP_ACCESS,
-        PERMISSIONS.ERP_DASHBOARD_VIEW,
-        PERMISSIONS.BRANCH_VIEW,
-        PERMISSIONS.ANNUAL_FINANCIAL_REPORT_VIEW,
-        PERMISSIONS.HQ_DASHBOARD_VIEW
-    ],
-    
-    // 지점 관리자 권한 (BRANCH_SUPER_ADMIN, BRANCH_ADMIN, BRANCH_MANAGER)
-    BRANCH_ADMIN_PERMISSIONS: [
-        PERMISSIONS.BRANCH_FINANCIAL_VIEW,
-        PERMISSIONS.CONSULTANT_AVAILABILITY_MANAGE,
-        PERMISSIONS.VACATION_MANAGE
-    ],
-    
     // 상담사 권한 (CONSULTANT)
     CONSULTANT_PERMISSIONS: [
         PERMISSIONS.SCHEDULE_VIEW,
@@ -369,7 +344,6 @@ export const PermissionChecks = {
     // 보고서 및 대시보드 권한
     canViewReports: (permissions) => hasPermission(permissions, PERMISSIONS.REPORT_VIEW),
     canViewDashboard: (permissions) => hasPermission(permissions, PERMISSIONS.DASHBOARD_VIEW),
-    canViewHQDashboard: (permissions) => hasPermission(permissions, PERMISSIONS.HQ_DASHBOARD_VIEW),
     canViewIntegratedFinance: (permissions, user = null) => {
         if (user && RoleUtils.isAdmin(user)) return true;
         return hasPermission(permissions, PERMISSIONS.INTEGRATED_FINANCE_VIEW);

@@ -137,11 +137,6 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
   const [showTransactionForm, setShowTransactionForm] = useState(false);
   const [showQuickExpenseForm, setShowQuickExpenseForm] = useState(false);
   
-  // 본사 사용자를 위한 지점 선택
-  const [selectedBranch, setSelectedBranch] = useState('');
-  const [branches, setBranches] = useState([]);
-  const [isHQUser, setIsHQUser] = useState(false);
-  
   // 권한 체크 중복 실행 방지
   const permissionCheckedRef = useRef(false);
 
@@ -269,79 +264,20 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
     checkPermissionAndLoad();
   }, [sessionLoading, user]); // eslint-disable-line react-hooks/exhaustive-deps
   
-  useEffect(() => {
-    // selectedBranch가 설정되거나 권한 체크가 완료된 후 데이터 로드
-    if (permissionCheckedRef.current && (selectedBranch || !isHQUser)) {
-      console.log('📍 대시보드 데이터 로드 시작:', { selectedBranch, isHQUser });
-      fetchDashboardData();
-    }
-  }, [selectedBranch, permissionCheckedRef.current]); // eslint-disable-line react-hooks/exhaustive-deps
-  
   const initializeComponent = async () => {
     try {
-      // 사용자 권한 확인 (표준화: RoleUtils 사용)
-      const isHQ = RoleUtils.isHqMaster(user) || RoleUtils.isSuperHqAdmin(user) || user?.branchCode === 'HQ';
-      setIsHQUser(isHQ);
-      
-      if (isHQ) {
-        // 본사 사용자: 지점 목록 로드
-        await loadBranches();
-      } else {
-        // 지점 사용자: 자기 지점으로 설정하고 즉시 데이터 로드
-        const branchCode = user?.branchCode || '';
-        setSelectedBranch(branchCode);
-        console.log('📍 지점 사용자 - 지점 코드 설정:', branchCode);
-        // fetchDashboardData는 useEffect에서 자동 호출됨
-      }
+      await fetchDashboardData();
     } catch (err) {
       console.error('컴포넌트 초기화 실패:', err);
       setError('초기화 중 오류가 발생했습니다.');
-    }
-  };
-  
-  const loadBranches = async () => {
-    try {
-      const response = await axios.get(ERP_API.HQ_BRANCHES, {
-        withCredentials: true
-      });
-      
-      if (response.data.success) {
-        setBranches(response.data.data || []);
-        // 기본값으로 첫 번째 지점 선택
-        if (response.data.data && response.data.data.length > 0) {
-          setSelectedBranch(response.data.data[0].branchCode);
-        }
-      }
-    } catch (err) {
-      console.error('지점 목록 로드 실패:', err);
+      setLoading(false);
     }
   };
 
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      
-      // 지점 선택에 따른 API 호출
-      let url = ERP_API.FINANCE_DASHBOARD;
-      let targetBranch = selectedBranch;
-      
-      if (isHQUser) {
-        // 본사 사용자: 선택된 지점의 데이터 조회
-        if (selectedBranch === 'HQ' || !selectedBranch) {
-          // HQ 선택 또는 미선택 시 통합 데이터 조회
-          console.log('📍 본사 - 통합 데이터 조회');
-          // 파라미터 없이 호출하면 통합 데이터
-        } else {
-          // 특정 지점 선택 시 해당 지점 데이터 조회
-          url += `?branchCode=${selectedBranch}`;
-          console.log('📍 본사 - 지점별 데이터 조회:', selectedBranch);
-        }
-      } else {
-        // 지점 사용자: 자기 지점 데이터만 조회 (파라미터 전달하지 않음)
-        targetBranch = user?.branchCode;
-        console.log('📍 지점 사용자 - 자기 지점 데이터 조회:', targetBranch);
-      }
-      
+      const url = ERP_API.FINANCE_DASHBOARD;
       const response = await axios.get(url, {
         withCredentials: true
       });
@@ -403,28 +339,11 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
               <div>
                 <h1 className="mg-dashboard-title">통합 회계 관리 시스템</h1>
                 <p className="mg-dashboard-subtitle">
-                  {isHQUser 
-                    ? `${selectedBranch ? (selectedBranch === 'HQ' ? '전체 지점 통합' : `${selectedBranch} 지점`) : '지점을 선택하세요'} - 수입/지출 관리`
-                    : `${user?.branchCode || ''} 지점 - 수입/지출 관리`
-                  }
+                  수입/지출 관리
                 </p>
               </div>
             </div>
             <div className="mg-dashboard-header-right">
-              {isHQUser && (
-                <select
-                  value={selectedBranch}
-                  onChange={(e) => setSelectedBranch(e.target.value)}
-                  className="mg-v2-select"
-                >
-                  <option key="branch-default" value="">지점 선택</option>
-                  {branches.map(branch => (
-                    <option key={branch.codeValue} value={branch.codeValue}>
-                      {branch.codeLabel}
-                    </option>
-                  ))}
-                </select>
-              )}
               <MGButton
                 variant="danger"
                 size="small"

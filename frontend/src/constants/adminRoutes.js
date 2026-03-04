@@ -27,12 +27,6 @@ export const ADMIN_ROUTES = {
     INTEGRATED_SCHEDULE: '/admin/integrated-schedule',
     /** 상담일지 조회 */
     CONSULTATION_LOGS: '/admin/consultation-logs',
-    BRANCHES: '/admin/branches',
-    BRANCH_CREATE: '/admin/branch-create',
-    BRANCH_HIERARCHY: '/admin/branch-hierarchy',
-    BRANCH_MANAGERS: '/admin/branch-managers',
-    BRANCH_STATUS: '/admin/branch-status',
-    BRANCH_CONSULTANTS: '/admin/branch-consultants',
     COMMON_CODES: '/admin/common-codes',
     /** 패키지 요금(가격) 관리 */
     PACKAGE_PRICING: '/admin/package-pricing',

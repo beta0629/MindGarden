@@ -139,7 +139,7 @@ export const ACADEMY_MESSAGES = {
   CLASS_FULL: '정원이 가득 찼습니다.',
   CLASS_NOT_RECRUITING: '현재 모집 중인 반이 아닙니다.',
   PERMISSION_DENIED: '권한이 없습니다.',
-  BRANCH_REQUIRED: '지점을 선택해주세요.',
+  BRANCH_REQUIRED: '소속을 선택해주세요.',
   
   NAME_REQUIRED: '이름은 필수입니다.',
   CAPACITY_INVALID: '정원은 1명 이상이어야 합니다.',

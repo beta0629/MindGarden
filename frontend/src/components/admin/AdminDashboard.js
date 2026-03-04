@@ -1190,17 +1190,6 @@ const AdminDashboard = ({ user: propUser }) => {
                     <button
                         type="button"
                         className="mg-v2-ad-b0kla__admin-card"
-                        onClick={() => { if (PermissionChecks.canViewHQDashboard(userPermissions)) navigate('/hq/dashboard'); }}
-                    >
-                        <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--green">
-                            <Building size={28} />
-                        </div>
-                        <span className="mg-v2-ad-b0kla__admin-label">신규 입주사 등록</span>
-                        <span className="mg-v2-ad-b0kla__admin-desc">계약 및 계정 생성</span>
-                    </button>
-                    <button
-                        type="button"
-                        className="mg-v2-ad-b0kla__admin-card"
                         onClick={() => navigate(ADMIN_ROUTES.COMPLIANCE)}
                     >
                         <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--orange">
@@ -1525,16 +1514,13 @@ const AdminDashboard = ({ user: propUser }) => {
                             <p className="mg-management-description">구매 가능한 아이템을 관리합니다</p>
                         </div>
                         
-                        {/* ERP 보고서 카드 - 본사 관리자 전용 (동적 권한) */}
-                        {PermissionChecks.canViewHQDashboard(userPermissions) && (
-                            <div className="mg-management-card" onClick={() => setShowErpReport(true)}>
-                                <div className="mg-management-icon">
-                                    <FaFileExport />
-                                </div>
-                                <h3>ERP 보고서</h3>
-                                <p className="mg-management-description">월별/분기별/연별 재무 보고서를 생성합니다</p>
+                        <div className="mg-management-card" onClick={() => setShowErpReport(true)}>
+                            <div className="mg-management-icon">
+                                <FaFileExport />
                             </div>
-                        )}
+                            <h3>ERP 보고서</h3>
+                            <p className="mg-management-description">월별/분기별/연별 재무 보고서를 생성합니다</p>
+                        </div>
                         
                         <div className="mg-management-card" onClick={() => navigate('/erp/budgets')}>
                             <div className="mg-management-icon">
@@ -1563,68 +1549,8 @@ const AdminDashboard = ({ user: propUser }) => {
                 </DashboardSection>
             </PermissionGroupGuard>
 
-            {/* 지점 관리 */}
-            {PermissionChecks.canViewHQDashboard(userPermissions) && (
-                <DashboardSection
-                    title="지점 관리"
-                    subtitle="지점 정보 및 설정 관리"
-                    icon={<Settings />}
-                >
-                    <div className="mg-management-grid">
-                        <div className="mg-management-card" onClick={() => navigate('/hq/dashboard')}>
-                            <div className="mg-management-icon">
-                                <FaBuilding />
-                            </div>
-                            <h3>지점 관리</h3>
-                            <p className="mg-management-description">지점 등록, 수정, 통계를 통합 관리합니다</p>
-                        </div>
-                        
-                        <div className="mg-management-card" onClick={() => navigate(ADMIN_ROUTES.BRANCH_CREATE)}>
-                            <div className="mg-management-icon">
-                                <FaMapMarkerAlt />
-                            </div>
-                            <h3>지점 생성</h3>
-                            <p className="mg-management-description">새로운 지점을 등록합니다</p>
-                        </div>
-                        
-                        <div className="mg-management-card" onClick={() => navigate(ADMIN_ROUTES.BRANCH_HIERARCHY)}>
-                            <div className="mg-management-icon">
-                                <FaCogs />
-                            </div>
-                            <h3>지점 계층 구조</h3>
-                            <p className="mg-management-description">지점 간 계층 관계를 관리합니다</p>
-                        </div>
-                        
-                        <div className="mg-management-card" onClick={() => navigate(ADMIN_ROUTES.BRANCH_MANAGERS)}>
-                            <div className="mg-management-icon">
-                                <FaUserCog />
-                            </div>
-                            <h3>지점장 관리</h3>
-                            <p className="mg-management-description">지점장을 지정하고 관리합니다</p>
-                        </div>
-                        
-                        <div className="mg-management-card" onClick={() => navigate(ADMIN_ROUTES.BRANCH_STATUS)}>
-                            <div className="mg-management-icon">
-                                <FaToggleOn />
-                            </div>
-                            <h3>지점 상태 관리</h3>
-                            <p className="mg-management-description">지점 활성화/비활성화를 관리합니다</p>
-                        </div>
-                        
-                        <div className="mg-management-card" onClick={() => navigate(ADMIN_ROUTES.BRANCH_CONSULTANTS)}>
-                            <div className="mg-management-icon">
-                                <FaUserTie />
-                            </div>
-                            <h3>지점 상담사 관리</h3>
-                            <p className="mg-management-description">지점별 상담사를 할당하고 관리합니다</p>
-                        </div>
-                    </div>
-                </DashboardSection>
-            )}
-
-            {/* 통계 및 분석 - 본사 관리자 전용 (동적 권한) */}
-            {PermissionChecks.canViewHQDashboard(userPermissions) && (
-                <DashboardSection
+            {/* 통계 및 분석 */}
+            <DashboardSection
                     title="통계 및 분석"
                     subtitle="시스템 통계 및 성과 분석"
                     icon={<BarChart />}
@@ -1638,8 +1564,7 @@ const AdminDashboard = ({ user: propUser }) => {
                             <p className="mg-management-description">실시간 성과 지표를 확인하고 재계산합니다</p>
                         </div>
                     </div>
-            </DashboardSection>
-            )}
+                </DashboardSection>
 
             {/* 상담사 관리 */}
             {PermissionChecks.canManageConsultants(userPermissions) && (

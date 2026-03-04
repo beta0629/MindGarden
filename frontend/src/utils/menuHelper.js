@@ -62,13 +62,10 @@ export const loadMenuStructure = async () => {
             const user = sessionManager.getUser();
             const userRole = user?.role || 'CLIENT';
             
-            // 역할별 표시명 매핑
+            // 역할별 표시명 매핑 (4역할: ADMIN, STAFF, CONSULTANT, CLIENT)
             const roleDisplayMap = {
                 'ADMIN': '관리자',
-                'BRANCH_SUPER_ADMIN': '지점 관리자',
-                'HQ_ADMIN': '본사 관리자',
-                'HQ_MASTER': '본사 마스터',
-                'SUPER_ADMIN': '슈퍼 관리자',
+                'STAFF': '사무원',
                 'CONSULTANT': '상담사',
                 'CLIENT': '내담자'
             };

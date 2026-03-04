@@ -147,10 +147,7 @@ export const getRoleColor = (role) => {
     'CLIENT': 'var(--role-client)',
     'CONSULTANT': 'var(--role-consultant)',
     'ADMIN': 'var(--role-admin)',
-    'BRANCH_SUPER_ADMIN': 'var(--role-branch-admin)',
-    'BRANCH_MANAGER': 'var(--role-branch-admin)',
-    'HQ_ADMIN': 'var(--role-hq-admin)',
-    'HQ_MASTER': 'var(--role-hq-master)'
+    'STAFF': 'var(--role-admin)'
   };
   
   return roleMap[role] || 'var(--user-inactive)';
@@ -275,10 +272,7 @@ export const getRoleLabel = (role) => {
     'CLIENT': '내담자',
     'CONSULTANT': '상담사',
     'ADMIN': '관리자',
-    'BRANCH_SUPER_ADMIN': '지점 슈퍼관리자',
-    'BRANCH_MANAGER': '지점 관리자',
-    'HQ_ADMIN': '본사 관리자',
-    'HQ_MASTER': '본사 마스터'
+    'STAFF': '사무원'
   };
   
   return labelMap[role] || role;

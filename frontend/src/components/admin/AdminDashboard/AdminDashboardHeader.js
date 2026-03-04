@@ -39,9 +39,7 @@ const AdminDashboardHeader = ({
                         </h2>
                         <p className="mg-v2-admin-dashboard-role">
                             {currentUser?.role === 'ADMIN' ? '시스템 관리자' : 
-                             currentUser?.role === 'BRANCH_SUPER_ADMIN' ? '지점 관리자' : 
-                             currentUser?.role === 'HQ_MASTER' ? '본사 관리자' : 
-                             currentUser?.role === 'SUPER_HQ_ADMIN' ? '최고 관리자' : '관리자'}
+                             currentUser?.role === 'BRANCH_SUPER_ADMIN' ? '지점 관리자' : '관리자'}
                         </p>
                         {currentUser?.branchName && (
                             <p className="mg-v2-admin-dashboard-branch">

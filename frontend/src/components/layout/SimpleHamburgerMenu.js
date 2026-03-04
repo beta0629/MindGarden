@@ -51,11 +51,10 @@ const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
         // 권한에 따라 메뉴 필터링 (권한 체크를 메모리에서 수행)
         const transformedStructure = transformMenuStructure(structure);
         
-        // 권한 매핑 테이블
+        // 권한 매핑 테이블 (4역할: ADMIN, STAFF, CONSULTANT, CLIENT)
         const menuGroupPermissionMap = {
           'COMMON_MENU': ['ADMIN_DASHBOARD_VIEW'],
           'ADMIN_MENU': ['ADMIN_DASHBOARD_VIEW', 'USER_MANAGE', 'CONSULTANT_MANAGE', 'CLIENT_MANAGE'],
-          'HQ_ADMIN_MENU': ['ADMIN_DASHBOARD_VIEW', 'ALL_BRANCHES_VIEW', 'USER_MANAGE', 'BRANCH_DETAILS_VIEW'],
           'ERP_MENU': ['ERP_ACCESS', 'FINANCIAL_VIEW', 'INTEGRATED_FINANCE_VIEW'],
           'CLIENT_MENU': ['CONSULTATION_RECORD_VIEW'],
           'CONSULTANT_MENU': ['CONSULTATION_RECORD_VIEW', 'SCHEDULE_MANAGE']
@@ -262,8 +261,6 @@ const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
             const roleDisplayMap = {
               'ADMIN': '관리자',
               'BRANCH_SUPER_ADMIN': '지점 관리자',
-              'HQ_ADMIN': '본사 관리자',
-              'HQ_MASTER': '본사 마스터',
               'SUPER_ADMIN': '슈퍼 관리자',
               'CONSULTANT': '상담사',
               'CLIENT': '내담자'

@@ -67,7 +67,6 @@ import PaymentTest from './components/test/PaymentTest';
 // IntegrationTest는 현재 사용되지 않음
 import AccountManagement from './components/admin/AccountManagement';
 import PermissionManagement from './components/admin/PermissionManagement';
-import BranchManagement from './components/hq/BranchManagement';
 import ConsultationHistory from './components/consultation/ConsultationHistory';
 import ConsultationReport from './components/consultation/ConsultationReport';
 import ComplianceMenu from './components/compliance/ComplianceMenu';
@@ -360,14 +359,14 @@ function AppContent() {
             <Route path="/admin/dashboard-widget" element={<WidgetBasedAdminDashboard />} />
             <Route path="/admin/dashboard-old" element={<DynamicDashboard user={user} />} />
             <Route path="/super_admin/dashboard" element={<DynamicDashboard user={user} />} />
-            <Route path="/branch_super_admin/dashboard" element={<DynamicDashboard user={user} />} />
-            <Route path="/branch_manager/dashboard" element={<DynamicDashboard user={user} />} />
+            <Route path="/branch_super_admin/dashboard" element={<Navigate to="/admin/dashboard" replace />} />
+            <Route path="/branch_manager/dashboard" element={<Navigate to="/admin/dashboard" replace />} />
             <Route path="/client/mypage" element={<MyPage />} />
             <Route path="/consultant/mypage" element={<MyPage />} />
             <Route path="/admin/mypage" element={<MyPage />} />
             <Route path="/super_admin/mypage" element={<MyPage />} />
-            <Route path="/branch_super_admin/mypage" element={<Navigate to="/super_admin/mypage" replace />} />
-            <Route path="/branch_manager/mypage" element={<MyPage />} />
+            <Route path="/branch_super_admin/mypage" element={<Navigate to="/admin/mypage" replace />} />
+            <Route path="/branch_manager/mypage" element={<Navigate to="/admin/mypage" replace />} />
             
             {/* 상담사 전용 라우트 */}
             <Route path="/consultant/schedule" element={<ConsultantSchedule />} />
@@ -543,26 +542,6 @@ function AppContent() {
               />
             } />
             
-            {/* 지점 수퍼 어드민 시스템 관리 라우트 (준비중) */}
-            <Route path="/branch-super-admin/system" element={
-              <ComingSoon 
-                title="시스템 도구"
-                description="시스템 도구 기능은 현재 개발 중입니다. 곧 출시될 예정입니다."
-              />
-            } />
-            <Route path="/branch-super-admin/logs" element={
-              <ComingSoon 
-                title="시스템 로그"
-                description="시스템 로그 조회 기능은 현재 개발 중입니다. 곧 출시될 예정입니다."
-              />
-            } />
-            <Route path="/branch-super-admin/settings" element={
-              <ComingSoon 
-                title="관리자 설정"
-                description="관리자 설정 기능은 현재 개발 중입니다. 곧 출시될 예정입니다."
-              />
-            } />
-            
             {/* 기존 재무관리 라우트들은 ERP로 통합되어 제거됨 */}
             
             {/* ERP 라우트 (기존) */}
@@ -594,42 +573,17 @@ function AppContent() {
               />
             } />
             
-            {/* 지점 관리 라우트 (준비중 - 브랜치 코드 제거 정책에 따라 ComingSoon으로 처리) */}
+            {/* 관리자 추가 메뉴 (준비중) */}
             <Route path="/admin/branches" element={
-              <AdminCommonLayout title="지점 관리">
-                <BranchManagement />
+              <AdminCommonLayout title="준비 중">
+                <ComingSoon title="준비 중" description="해당 기능은 현재 개발 중입니다." />
               </AdminCommonLayout>
             } />
-            <Route path="/admin/branch-create" element={
-              <ComingSoon 
-                title="지점 등록"
-                description="지점 등록 기능은 현재 개발 중입니다. 곧 출시될 예정입니다."
-              />
-            } />
-            <Route path="/admin/branch-hierarchy" element={
-              <ComingSoon 
-                title="지점 계층 관리"
-                description="지점 계층 관리 기능은 현재 개발 중입니다. 곧 출시될 예정입니다."
-              />
-            } />
-            <Route path="/admin/branch-managers" element={
-              <ComingSoon 
-                title="지점장 관리"
-                description="지점장 관리 기능은 현재 개발 중입니다. 곧 출시될 예정입니다."
-              />
-            } />
-            <Route path="/admin/branch-status" element={
-              <ComingSoon 
-                title="지점 상태 관리"
-                description="지점 상태 관리 기능은 현재 개발 중입니다. 곧 출시될 예정입니다."
-              />
-            } />
-            <Route path="/admin/branch-consultants" element={
-              <ComingSoon 
-                title="지점 상담사 관리"
-                description="지점 상담사 관리 기능은 현재 개발 중입니다. 곧 출시될 예정입니다."
-              />
-            } />
+            <Route path="/admin/branch-create" element={<Navigate to="/admin/branches" replace />} />
+            <Route path="/admin/branch-hierarchy" element={<Navigate to="/admin/branches" replace />} />
+            <Route path="/admin/branch-managers" element={<Navigate to="/admin/branches" replace />} />
+            <Route path="/admin/branch-status" element={<Navigate to="/admin/branches" replace />} />
+            <Route path="/admin/branch-consultants" element={<Navigate to="/admin/branches" replace />} />
             
             {/* OAuth2 콜백 처리 라우트 */}
             <Route path="/oauth2/callback" element={<OAuth2Callback />} />

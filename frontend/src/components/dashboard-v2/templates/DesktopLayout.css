@@ -25,7 +25,15 @@
 
 .mg-v2-desktop-layout__main {
   flex: 1;
+  display: flex;
+  flex-direction: column;
   overflow-y: auto;
   padding: var(--mg-layout-page-padding, 24px);
+  min-height: 0;
+}
+
+/* 단일 자식(로딩 또는 콘텐츠)이 영역을 채우도록 */
+.mg-v2-desktop-layout__main > * {
+  flex: 1 1 0%;
   min-height: 0;
 }

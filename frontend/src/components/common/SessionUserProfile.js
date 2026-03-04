@@ -20,8 +20,8 @@ const SessionUserProfile = ({ onProfileClick, showRole = true }) => {
     const loadRoleDisplayNames = async () => {
       if (sessionUser?.role) {
         try {
-          const koreanName = await getRoleDisplayName(sessionUser.role, sessionUser.branchName);
-          const englishName = await getRoleDisplayNameEn(sessionUser.role, sessionUser.branchName);
+          const koreanName = await getRoleDisplayName(sessionUser.role);
+          const englishName = await getRoleDisplayNameEn(sessionUser.role);
           setRoleDisplayName(koreanName);
           setRoleDisplayNameEn(englishName);
         } catch (error) {
@@ -33,7 +33,7 @@ const SessionUserProfile = ({ onProfileClick, showRole = true }) => {
     };
 
     loadRoleDisplayNames();
-  }, [sessionUser?.role, sessionUser?.branchName]);
+  }, [sessionUser?.role]);
   
   // 디버깅: 세션 데이터 확인
   console.log('🔍 SessionUserProfile - 세션 데이터:', sessionUser);

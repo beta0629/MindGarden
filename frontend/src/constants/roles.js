@@ -51,11 +51,6 @@ export const RoleUtils = {
   /**
    * @deprecated 브랜치 개념 제거. ADMIN_ROLES 사용 권장
    */
-  isHqAdmin: (user) => user?.role && ADMIN_ROLES.includes(user.role),
-
-  /**
-   * @deprecated 브랜치 개념 제거. ADMIN_ROLES 사용 권장
-   */
   isBranchAdmin: (user) => user?.role && ADMIN_ROLES.includes(user.role),
 
   isConsultant: (user) => !!user?.role && user.role === USER_ROLES.CONSULTANT,
@@ -71,13 +66,7 @@ export const RoleUtils = {
   /** @deprecated 4역할 단순화. isAdmin 사용 */
   isBranchSuperAdmin: (user) => !!user?.role && user.role === USER_ROLES.ADMIN,
   /** @deprecated 4역할 단순화. isAdmin 사용 */
-  isSuperHqAdmin: (user) => !!user?.role && user.role === USER_ROLES.ADMIN,
-  /** @deprecated 4역할 단순화. isAdmin 사용 */
-  isHqMaster: (user) => !!user?.role && user.role === USER_ROLES.ADMIN,
-  /** @deprecated 4역할 단순화. isAdmin 사용 */
-  isBranchManager: (user) => !!user?.role && user.role === USER_ROLES.ADMIN,
-  /** @deprecated 4역할 단순화. isAdmin 사용 */
-  isHqSuperAdmin: (user) => !!user?.role && user.role === USER_ROLES.ADMIN
+  isBranchManager: (user) => !!user?.role && user.role === USER_ROLES.ADMIN
 };
 
 export default USER_ROLES;

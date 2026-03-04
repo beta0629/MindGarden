@@ -21,73 +21,19 @@ const SocialSignupModal = ({
     nickname: '',
     password: '',
     confirmPassword: '',
-    phone: '',
-    // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
-    branchCode: ''
+    phone: ''
   });
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [branches, setBranches] = useState([]);
-  const [isLoadingBranches, setIsLoadingBranches] = useState(false);
-  
-  // 개인정보 동의 관련 상태
+
   const [showPrivacyConsent, setShowPrivacyConsent] = useState(false);
   const [privacyConsents, setPrivacyConsents] = useState({
     privacy: false,
     terms: false,
     marketing: false
   });
-
-  // 지점 목록 로드
-  const loadBranches = async () => {
-    try {
-      setIsLoadingBranches(true);
-      
-      // 학원 시스템 회원가입 모드인 경우 테넌트별 지점 목록 조회
-      if (socialUser?.isAcademySignup && socialUser?.tenantId) {
-        const { API_BASE_URL } = require('../../constants/api');
-        const response = await fetch(
-          `${API_BASE_URL}/api/v1/academy/registration/branches?tenantId=${socialUser.tenantId}`,
-          {
-            method: 'GET',
-            credentials: 'include',
-            headers: {
-              'Content-Type': 'application/json'
-            }
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error('지점 목록을 불러오는데 실패했습니다.');
-        }
-
-        const data = await response.json();
-        setBranches(data.success ? (data.data || []) : []);
-      } else {
-        // 일반 회원가입 모드
-        const response = await fetch('/api/v1/auth/branches', {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        });
-
-        if (!response.ok) {
-          throw new Error('지점 목록을 불러오는데 실패했습니다.');
-        }
-
-        const data = await response.json();
-        setBranches(data.branches || []);
-      }
-    } catch (error) {
-      console.error('지점 목록 조회 오류:', error);
-      setErrors(prev => ({ ...prev, branch: '지점 목록을 불러오는데 실패했습니다.' }));
-    } finally {
-      setIsLoadingBranches(false);
-    }
-  };
 
   // SNS 사용자 정보로 폼 초기화
   useEffect(() => {
@@ -104,18 +50,12 @@ const SocialSignupModal = ({
       setFormData(prev => ({
         ...prev,
         email: socialUser.email || '',
-        name: socialUser.name || '', // SNS에서 받은 이름 자동 입력
-        nickname: socialUser.nickname || '', // SNS에서 받은 닉네임 자동 입력
+        name: socialUser.name || '',
+        nickname: socialUser.nickname || '',
         password: '',
         confirmPassword: '',
-        phone: '',
-        // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
-        branchCode: ''
+        phone: ''
       }));
-      
-      // 지점 목록 로드
-      loadBranches();
-      
       console.log('✅ 폼 데이터 업데이트 완료');
     } else {
       console.log('❌ socialUser가 null이거나 모달이 닫혀있음');
@@ -177,7 +117,7 @@ const SocialSignupModal = ({
       newErrors.email = '올바른 이메일 형식이 아닙니다.';
     }
 
-    // 지점 매핑이 아닌 경우에만 추가 검사
+    // 회원가입 모드인 경우에만 추가 검사
     if (!socialUser?.needsBranchMapping) {
       // 이름 검사
       if (!formData.name.trim()) {
@@ -215,12 +155,6 @@ const SocialSignupModal = ({
       } else if (formData.phone.replace(/\D/g, '').length !== 11) {
         newErrors.phone = '휴대폰 번호는 11자리여야 합니다.';
       }
-    }
-
-    // 지점 선택 검사 (항상 필요)
-    if (!formData.branchCode) {
-      // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
-      newErrors.branchCode = '지점을 선택해주세요.';
     }
 
     setErrors(newErrors);
@@ -270,8 +204,7 @@ const SocialSignupModal = ({
         password: formData.password,
         phone: formData.phone,
         providerProfileImage: socialUser.profileImageUrl,
-        // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
-        branchCode: formData.branchCode,
+        branchCode: '',
         // 개인정보 동의 정보 추가
         privacyConsent: privacyConsents.privacy,
         termsConsent: privacyConsents.terms,
@@ -317,9 +250,8 @@ const SocialSignupModal = ({
       }
       
       if (response.success) {
-        // 지점 매핑이 필요한 경우 (기존 사용자)
         if (socialUser.needsBranchMapping) {
-          notificationManager.show('지점이 성공적으로 매핑되었습니다. 다시 로그인해주세요.', 'success');
+          notificationManager.show('계정이 활성화되었습니다. 다시 로그인해주세요.', 'success');
           onClose();
           // 로그인 페이지로 리다이렉트
           window.location.href = '/login';
@@ -372,8 +304,8 @@ const SocialSignupModal = ({
       <div className="social-signup-modal">
         <div className="modal-header">
           <h2 className="modal-title">
-            <i className={socialUser?.needsBranchMapping ? "bi bi-geo-alt" : "bi bi-person-plus"}></i>
-            {socialUser?.needsBranchMapping ? "지점 매핑" : "간편 회원가입"}
+            <i className={socialUser?.needsBranchMapping ? "bi bi-person-check" : "bi bi-person-plus"}></i>
+            {socialUser?.needsBranchMapping ? "계정 활성화" : "간편 회원가입"}
           </h2>
           <button className="modal-close" onClick={() => {
             onClose();
@@ -393,12 +325,12 @@ const SocialSignupModal = ({
                    data-provider-color={socialUser?.provider === 'KAKAO' ? '#FEE500' : '#03C75A'}></i>
               </span>
               <span className="provider-name">
-                {socialUser?.provider === 'KAKAO' ? '카카오' : '네이버'} 계정으로 {socialUser?.needsBranchMapping ? '지점 매핑' : '가입'}
+                {socialUser?.provider === 'KAKAO' ? '카카오' : '네이버'} 계정으로 {socialUser?.needsBranchMapping ? '계정 활성화' : '가입'}
               </span>
             </div>
             <p className="social-description">
-              {socialUser?.needsBranchMapping 
-                ? '지점을 선택하여 계정을 활성화하세요' 
+              {socialUser?.needsBranchMapping
+                ? '계정을 활성화합니다'
                 : '소셜 계정 정보로 간편하게 가입하세요'
               }
             </p>
@@ -527,33 +459,6 @@ const SocialSignupModal = ({
               </div>
             )}
             
-            <div className="form-group">
-              <label htmlFor="socialBranch" className="form-label">지점 선택 *</label>
-              {isLoadingBranches ? (
-                <div className="form-input loading">
-                  지점 목록을 불러오는 중...
-                </div>
-              ) : (
-                <select
-                  id="socialBranch"
-                  name="branchCode"
-                  className={`form-input ${errors.branchCode ? 'error' : ''}`}
-                  value={formData.branchCode}
-                  onChange={handleInputChange}
-                  required
-                >
-                  <option value="">지점을 선택해주세요</option>
-                  {branches.map((branch) => (
-                    <option key={branch.branchCode} value={branch.branchCode}>
-                      {branch.branchName} ({branch.branchCode})
-                    </option>
-                  ))}
-                </select>
-              )}
-              {errors.branchCode && <span className="error-message">{errors.branchCode}</span>}
-              <small className="form-help">회원가입 후 해당 지점의 서비스를 이용할 수 있습니다</small>
-            </div>
-            
             {/* 개인정보 수집 및 이용 동의 섹션 */}
             <div className="form-group">
               <div className="privacy-consent-section">
@@ -631,10 +536,10 @@ const SocialSignupModal = ({
                 type="submit"
                 variant="primary"
                 loading={isLoading}
-                loadingText={socialUser?.needsBranchMapping ? '매핑 중...' : '가입 중...'}
+                loadingText={socialUser?.needsBranchMapping ? '처리 중...' : '가입 중...'}
                 preventDoubleClick
               >
-                {socialUser?.needsBranchMapping ? '지점 매핑 완료' : '회원가입 완료'}
+                {socialUser?.needsBranchMapping ? '계정 활성화 완료' : '회원가입 완료'}
               </MGButton>
             </div>
           </form>

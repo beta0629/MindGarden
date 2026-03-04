@@ -307,22 +307,7 @@ export const ERP_API = {
   FINANCE_INCOME_STATEMENT: '/api/v1/erp/finance/income-statement',
   FINANCE_DAILY_REPORT: '/api/v1/erp/finance/daily-report',
   FINANCE_MONTHLY_REPORT: '/api/v1/erp/finance/monthly-report',
-  FINANCE_YEARLY_REPORT: '/api/v1/erp/finance/yearly-report',
-  
-  // 본사 지점 관리
-  HQ_BRANCHES: '/api/v1/hq/branches'
-};
-
-// 지점 관리 관련 API (표준화 2025-12-05: /api/v1/ 경로 적용)
-// ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
-export const BRANCH_API = {
-  BRANCHES: '/api/v1/branches',
-  BRANCH_DETAIL: '/api/v1/branches',
-  BRANCH_CREATE: '/api/v1/branches',
-  BRANCH_UPDATE: '/api/v1/branches',
-  BRANCH_DELETE: '/api/v1/branches',
-  BRANCH_USERS: '/api/v1/branches',
-  BRANCH_STATISTICS: '/api/v1/branches'
+  FINANCE_YEARLY_REPORT: '/api/v1/erp/finance/yearly-report'
 };
 
 // 온보딩 관련 API
@@ -369,12 +354,9 @@ export const API_ENDPOINTS = {
   NOTIFICATION: NOTIFICATION_API,
   SEARCH: SEARCH_API,
   ERP: ERP_API,
-  // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
-  BRANCH: BRANCH_API,
   ONBOARDING: ONBOARDING_API,
   BUSINESS_CATEGORY: BUSINESS_CATEGORY_API,
-  COMMON_CODE: COMMON_CODE_API,
-  BRANCHES: '/api/v1/branches' // 기존 컴포넌트 호환성을 위해 추가 (표준화 2025-12-05)
+  COMMON_CODE: COMMON_CODE_API
 };
 
 // API 응답 상태 코드

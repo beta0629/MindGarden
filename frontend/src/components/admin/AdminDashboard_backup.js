@@ -1145,14 +1145,13 @@ const AdminDashboard = ({ user: propUser }) => {
             )}
 
             {/* 지점 관리 */}
-            {PermissionChecks.canViewHQDashboard(userPermissions) && (
-                <DashboardSection
+            <DashboardSection
                     title="지점 관리"
                     subtitle="지점 정보 및 설정 관리"
                     icon={<Settings />}
                 >
                     <div className="mg-management-grid">
-                        <div className="mg-management-card" onClick={() => navigate('/hq/dashboard')}>
+                        <div className="mg-management-card" onClick={() => navigate(ADMIN_ROUTES.BRANCHES)}>
                             <div className="mg-management-icon">
                                 <FaBuilding />
                             </div>
@@ -1201,7 +1200,6 @@ const AdminDashboard = ({ user: propUser }) => {
                         </div>
                     </div>
                 </DashboardSection>
-            )}
 
             {/* 통계 및 분석 */}
             {PermissionChecks.canViewStatistics(userPermissions) && (

@@ -143,7 +143,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
             
             let url = `/api/schedules?userId=${userId}&userRole=${userRole}`;
             
-            if (userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN' || userRole === 'HQ_MASTER' || userRole === 'SUPER_HQ_ADMIN') {
+            if (userRole === 'ADMIN') {
                 url = '/api/schedules/admin';
                 if (selectedConsultantId && selectedConsultantId !== '') {
                     url += `?consultantId=${selectedConsultantId}`;
@@ -203,7 +203,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
             }
 
             let vacationEvents = [];
-            if (userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN') {
+            if (userRole === 'ADMIN' || userRole === 'ADMIN') {
                 try {
                     const today = new Date();
                     const startDate = new Date(today.getFullYear(), today.getMonth() - 1, 1).toISOString().split('T')[0];
@@ -253,7 +253,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
         loadSchedules();
         loadScheduleStatusCodes();
         
-        if (userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN') {
+        if (userRole === 'ADMIN' || userRole === 'ADMIN') {
             loadConsultants();
         }
     }, [loadSchedules, loadScheduleStatusCodes, loadConsultants, userRole, selectedConsultantId]);
@@ -445,7 +445,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
         
         const isPastDate = clickedDate < today;
         
-        if (userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN' || userRole === 'CONSULTANT') {
+        if (userRole === 'ADMIN' || userRole === 'ADMIN' || userRole === 'CONSULTANT') {
             if (isPastDate) {
                 alert('과거 날짜에는 새로운 스케줄을 등록할 수 없습니다.\n기존 스케줄을 클릭하여 조회하실 수 있습니다.');
                 return;
@@ -660,8 +660,8 @@ const ScheduleCalendar = ({ userRole, userId }) => {
             <div className="calendar-header">
                 <h2>📅 스케줄 관리</h2>
                 <div className="header-actions">
-                    {/* 상담사 선택 (어드민/수퍼어드민만) */}
-                    {(userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN') && (
+                    {/* 상담사 선택 (관리자만) */}
+                    {(userRole === 'ADMIN' || userRole === 'ADMIN') && (
                         <select
                             value={selectedConsultantId}
                             onChange={(e) => {
@@ -762,8 +762,8 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                 dateClick={handleDateClick}
                 eventClick={handleEventClick}
                 eventDrop={handleEventDrop}
-                editable={userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN'}
-                droppable={userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN'}
+                editable={userRole === 'ADMIN' || userRole === 'ADMIN'}
+                droppable={userRole === 'ADMIN' || userRole === 'ADMIN'}
                 height="auto"
                 slotMinTime="08:00:00"
                 slotMaxTime="20:00:00"
@@ -878,7 +878,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                                 </div>
                             </button>
                             
-                            {(userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN') && (
+                            {(userRole === 'ADMIN' || userRole === 'ADMIN') && (
                                 <button 
                                     onClick={handleVacationClick}
                                     style={{

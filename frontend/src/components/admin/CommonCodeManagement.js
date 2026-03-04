@@ -46,10 +46,6 @@ const CommonCodeManagement = () => {
         return RoleUtils.isAdmin(user);
     };
     
-    const hasHqCodePermission = () => {
-        return RoleUtils.isAdmin(user);
-    };
-    
     const hasBranchCodePermission = () => {
         return RoleUtils.isAdmin(user);
     };
@@ -68,20 +64,13 @@ const CommonCodeManagement = () => {
                 'PAYMENT_METHOD', 'PAYMENT_STATUS', 'SALARY_TYPE', 'SALARY_GRADE', 'TAX_TYPE'].includes(codeGroup);
     };
     
-    const isHqCodeGroup = (codeGroup) => {
-        return ['HQ_SETTING', 'HQ_MANAGEMENT', 'HQ_PERMISSION', 'HQ_STATISTICS', 
-                'HQ_CONFIG'].includes(codeGroup);
-    };
-    
     const isBranchCodeGroup = (codeGroup) => {
-        return ['BRANCH_STATUS', 'BRANCH_TYPE', 'BRANCH_PERMISSION', 'BRANCH_STATISTICS', 
-                'BRANCH_SETTING', 'BRANCH_CODE', 'BRANCH_MANAGEMENT'].includes(codeGroup);
+        return ['BRANCH_STATUS', 'BRANCH_TYPE', 'BRANCH_PERMISSION', 'BRANCH_STATISTICS',
+                'BRANCH_SETTING', 'BRANCH_CODE', 'BRANCH_MANAGEMENT',
+                'HQ_SETTING', 'HQ_MANAGEMENT', 'HQ_PERMISSION', 'HQ_STATISTICS', 'HQ_CONFIG'].includes(codeGroup);
     };
     
     const hasCodeGroupPermission = (codeGroup) => {
-        if (isHqCodeGroup(codeGroup)) {
-            return hasHqCodePermission();
-        }
         if (isBranchCodeGroup(codeGroup)) {
             return hasBranchCodePermission();
         }
@@ -197,14 +186,12 @@ const CommonCodeManagement = () => {
 
     const handleGroupSelect = (group) => {
         if (!hasCodeGroupPermission(group)) {
-            if (isHqCodeGroup(group)) {
-                notificationManager.error('HQ 관련 코드 그룹은 HQ 역할만 접근할 수 있습니다.');
-            } else if (isBranchCodeGroup(group)) {
-                notificationManager.error('지점 관련 코드 그룹은 지점수퍼어드민 또는 HQ_MASTER만 접근할 수 있습니다.');
+            if (isBranchCodeGroup(group)) {
+                notificationManager.error('지점 관련 코드 그룹은 관리자만 접근할 수 있습니다.');
             } else if (isErpCodeGroup(group)) {
-                notificationManager.error('ERP 관련 코드 그룹은 지점수퍼어드민 또는 HQ_MASTER만 접근할 수 있습니다.');
+                notificationManager.error('ERP 관련 코드 그룹은 관리자만 접근할 수 있습니다.');
             } else if (isFinancialCodeGroup(group)) {
-                notificationManager.error('수입지출 관련 코드 그룹은 지점수퍼어드민 또는 HQ_MASTER만 접근할 수 있습니다.');
+                notificationManager.error('수입지출 관련 코드 그룹은 관리자만 접근할 수 있습니다.');
             } else {
                 notificationManager.error('해당 코드 그룹에 대한 접근 권한이 없습니다.');
             }
@@ -342,7 +329,7 @@ const CommonCodeManagement = () => {
             'ADMIN_MENU': '관리자메뉴',
             'CLIENT_MENU': '내담자메뉴',
             'CONSULTANT_MENU': '상담사메뉴',
-            'HQ_ADMIN_MENU': '본사관리자메뉴',
+            'HQ_ADMIN_MENU': '관리자메뉴',
             'BRANCH_SUPER_ADMIN_MENU': '지점수퍼관리자메뉴',
             'COMMON_MENU': '공통메뉴',
             

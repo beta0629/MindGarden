@@ -26,10 +26,7 @@ const ScheduleCalendarHeader = ({
     setForceMobileMode,
     loading
 }) => {
-    const isAdmin = currentUserRole === 'ADMIN' || 
-                    currentUserRole === 'BRANCH_SUPER_ADMIN' || 
-                    currentUserRole === 'HQ_MASTER' || 
-                    currentUserRole === 'SUPER_HQ_ADMIN';
+    const isAdmin = currentUserRole === 'ADMIN';
 
     return (
         <div className="mg-v2-calendar-header">

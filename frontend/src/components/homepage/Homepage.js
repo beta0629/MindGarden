@@ -2,21 +2,20 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CommonPageTemplate from '../common/CommonPageTemplate';
 import TabletBottomNavigation from '../layout/TabletBottomNavigation';
+import UnifiedHeader from '../common/UnifiedHeader';
 import { HOMEPAGE_CONSTANTS } from '../../constants/css-variables';
 import { useSession } from '../../contexts/SessionContext';
 import { redirectToDynamicDashboard } from '../../utils/dashboardUtils';
 import { sessionManager } from '../../utils/sessionManager';
 import notificationManager from '../../utils/notification';
-import Avatar from '../common/Avatar';
 import '../../styles/main.css';
 import './Homepage.css';
 
 const Homepage = () => {
   const navigate = useNavigate();
-  const { user, logout } = useSession();
+  const { user } = useSession();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -41,19 +40,6 @@ const Homepage = () => {
       notificationManager.info(newState ? MESSAGES.MENU_OPENED : MESSAGES.MENU_CLOSED);
       return newState;
     });
-  };
-
-  const handleProfileClick = () => {
-    const { MESSAGES } = HOMEPAGE_CONSTANTS;
-    if (user) {
-      setIsProfileMenuOpen(prev => {
-        const newState = !prev;
-        notificationManager.info(newState ? MESSAGES.PROFILE_OPENED : MESSAGES.PROFILE_CLOSED);
-        return newState;
-      });
-    } else {
-      navigate('/login');
-    }
   };
 
   const handleMenuClick = (menuItem) => {
@@ -84,45 +70,8 @@ const Homepage = () => {
     }
   };
 
-  const handleProfileMenuClick = async (menuItem) => {
-    const { PROFILE_MENU_ITEMS, MESSAGES } = HOMEPAGE_CONSTANTS;
-    setIsProfileMenuOpen(false);
-    
-    switch (menuItem) {
-      case PROFILE_MENU_ITEMS.DASHBOARD:
-        if (user?.role) {
-          const authResponse = {
-            user: user,
-            currentTenantRole: sessionManager.getCurrentTenantRole()
-          };
-          await redirectToDynamicDashboard(authResponse, navigate);
-        } else {
-          navigate('/dashboard');
-        }
-        break;
-      case PROFILE_MENU_ITEMS.PROFILE:
-        navigate('/mypage');
-        break;
-      case PROFILE_MENU_ITEMS.SETTINGS:
-        navigate('/settings');
-        break;
-      case PROFILE_MENU_ITEMS.LOGOUT:
-        try {
-          await logout();
-          notificationManager.success(MESSAGES.LOGOUT_SUCCESS);
-        } catch (error) {
-          console.error('로그아웃 실패:', error);
-          notificationManager.error(MESSAGES.LOGOUT_ERROR);
-        }
-        break;
-      default:
-        console.log('알 수 없는 프로필 메뉴 항목:', menuItem);
-    }
-  };
-
   const handleOverlayClick = () => {
     setIsMenuOpen(false);
-    setIsProfileMenuOpen(false);
   };
 
   return (
@@ -133,29 +82,28 @@ const Homepage = () => {
     >
       <div className="mg-v2-homepage">
         {/* Header (GNB) */}
-        <header className={`mg-v2-homepage-header ${isScrolled ? 'scrolled' : ''}`}>
-          <div className="mg-v2-homepage-header-inner">
-            <div className="mg-v2-homepage-logo">Core Solution</div>
-            <nav className="mg-v2-homepage-nav desktop-only">
-              {user ? (
-                <div className="mg-v2-homepage-profile-trigger" onClick={handleProfileClick}>
-                  <Avatar profileImageUrl={user?.profileImageUrl || user?.avatar} displayName={user?.name} />
-                </div>
-              ) : (
-                <>
+        <UnifiedHeader 
+          variant={isScrolled ? 'default' : 'transparent'}
+          sticky={true}
+          showBackButton={false}
+          onLogoClick={() => navigate('/')}
+          extraActions={
+            !user && (
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <nav className="mg-v2-homepage-nav desktop-only">
                   <button className="mg-v2-btn-text" onClick={handleLogin}>로그인</button>
                   <button className="mg-v2-btn-primary" onClick={handleRegister}>회원가입</button>
-                </>
-              )}
-            </nav>
-            <button className="mg-v2-homepage-hamburger mobile-only" onClick={handleHamburgerToggle}>
-              <i className="bi bi-list"></i>
-            </button>
-          </div>
-        </header>
+                </nav>
+                <button className="mg-v2-homepage-hamburger mobile-only" onClick={handleHamburgerToggle}>
+                  <i className="bi bi-list"></i>
+                </button>
+              </div>
+            )
+          }
+        />
         
         {/* 햄버거 메뉴 */}
-        {isMenuOpen && (
+        {!user && isMenuOpen && (
           <div className="hamburger-menu-overlay" onClick={handleOverlayClick}>
             <div className="hamburger-menu" onClick={(e) => e.stopPropagation()}>
               <div className="hamburger-menu-header">
@@ -196,80 +144,19 @@ const Homepage = () => {
                   <i className="bi bi-telephone"></i>
                   문의
                 </button>
-                {!user && (
-                  <>
-                    <button 
-                      className="hamburger-menu-item"
-                      onClick={() => handleMenuClick(HOMEPAGE_CONSTANTS.MENU_ITEMS.LOGIN)}
-                    >
-                      <i className="bi bi-box-arrow-in-right"></i>
-                      로그인
-                    </button>
-                    <button 
-                      className="hamburger-menu-item"
-                      onClick={() => handleMenuClick(HOMEPAGE_CONSTANTS.MENU_ITEMS.REGISTER)}
-                    >
-                      <i className="bi bi-person-plus"></i>
-                      회원가입
-                    </button>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-        
-        {/* 프로필 메뉴 */}
-        {isProfileMenuOpen && user && (
-          <div className="profile-menu-overlay" onClick={handleOverlayClick}>
-            <div className="profile-menu" onClick={(e) => e.stopPropagation()}>
-              <div className="profile-menu-header">
-                <div className="profile-menu-user">
-                  <Avatar
-                    profileImageUrl={user.profileImageUrl || user.avatar}
-                    displayName={user.name}
-                    className="profile-menu-avatar"
-                  />
-                  <div className="profile-menu-info">
-                    <h4>{user.name}</h4>
-                    <p>{user.email}</p>
-                  </div>
-                </div>
                 <button 
-                  className="profile-menu-close"
-                  onClick={() => setIsProfileMenuOpen(false)}
+                  className="hamburger-menu-item"
+                  onClick={() => handleMenuClick(HOMEPAGE_CONSTANTS.MENU_ITEMS.LOGIN)}
                 >
-                  <i className="bi bi-x"></i>
-                </button>
-              </div>
-              <div className="profile-menu-content">
-                <button 
-                  className="profile-menu-item"
-                  onClick={() => handleProfileMenuClick(HOMEPAGE_CONSTANTS.PROFILE_MENU_ITEMS.DASHBOARD)}
-                >
-                  <i className="bi bi-speedometer2"></i>
-                  대시보드
+                  <i className="bi bi-box-arrow-in-right"></i>
+                  로그인
                 </button>
                 <button 
-                  className="profile-menu-item"
-                  onClick={() => handleProfileMenuClick(HOMEPAGE_CONSTANTS.PROFILE_MENU_ITEMS.PROFILE)}
+                  className="hamburger-menu-item"
+                  onClick={() => handleMenuClick(HOMEPAGE_CONSTANTS.MENU_ITEMS.REGISTER)}
                 >
-                  <i className="bi bi-person"></i>
-                  프로필
-                </button>
-                <button 
-                  className="profile-menu-item"
-                  onClick={() => handleProfileMenuClick(HOMEPAGE_CONSTANTS.PROFILE_MENU_ITEMS.SETTINGS)}
-                >
-                  <i className="bi bi-gear"></i>
-                  설정
-                </button>
-                <button 
-                  className="profile-menu-item profile-menu-logout"
-                  onClick={() => handleProfileMenuClick(HOMEPAGE_CONSTANTS.PROFILE_MENU_ITEMS.LOGOUT)}
-                >
-                  <i className="bi bi-box-arrow-right"></i>
-                  로그아웃
+                  <i className="bi bi-person-plus"></i>
+                  회원가입
                 </button>
               </div>
             </div>
@@ -284,7 +171,21 @@ const Homepage = () => {
             <p className="mg-v2-homepage-hero-subtitle">Core Solution과 함께 비즈니스의 모든 과정을 통합하고 자동화하여 혁신적인 성장을 경험하세요.</p>
             <button 
               className="mg-v2-btn-primary-large" 
-              onClick={user ? () => handleProfileMenuClick(HOMEPAGE_CONSTANTS.PROFILE_MENU_ITEMS.DASHBOARD) : handleRegister}
+              onClick={async () => {
+                if (user) {
+                  if (user?.role) {
+                    const authResponse = {
+                      user: user,
+                      currentTenantRole: sessionManager.getCurrentTenantRole()
+                    };
+                    await redirectToDynamicDashboard(authResponse, navigate);
+                  } else {
+                    navigate('/dashboard');
+                  }
+                } else {
+                  handleRegister();
+                }
+              }}
             >
               무료로 시작하기
             </button>

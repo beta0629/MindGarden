@@ -895,28 +895,28 @@ const FinancialManagement = () => {
                   <div className="mg-v2-erp-dashboard-actions">
                     <button
                       type="button"
-                      className="mg-v2-button-primary"
+                      className="mg-v2-button mg-v2-button-primary"
                       onClick={() => setActiveTab('transactions')}
                     >
                       <ClipboardList size={16} aria-hidden /> 거래 내역 보기
                     </button>
                     <button
                       type="button"
-                      className="mg-v2-button-secondary"
+                      className="mg-v2-button mg-v2-button-secondary"
                       onClick={() => setActiveTab('calendar')}
                     >
                       <Calendar size={16} aria-hidden /> 달력 뷰 보기
                     </button>
                     <button
                       type="button"
-                      className="mg-v2-button-secondary"
+                      className="mg-v2-button mg-v2-button-secondary"
                       onClick={() => { window.location.href = '/branch_super_admin/mapping-management'; }}
                     >
                       <Link2 size={16} aria-hidden /> 매핑 시스템 확인
                     </button>
                     <button
                       type="button"
-                      className="mg-v2-button-secondary"
+                      className="mg-v2-button mg-v2-button-secondary"
                       onClick={() => { window.location.href = '/erp/finance-dashboard'; }}
                     >
                       <Building2 size={16} aria-hidden /> 통합 재무 대시보드

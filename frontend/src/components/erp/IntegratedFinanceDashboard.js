@@ -43,6 +43,7 @@ import {
 } from 'lucide-react';
 import '../../styles/main.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
+import './ErpCommon.css';
 import './IntegratedFinanceDashboard.css';
 
 // 공통 유틸리티 함수들
@@ -561,12 +562,12 @@ const OverviewTab = ({ data }) => {
         </div>
       </DashboardSection>
 
-      {/* 수입/지출 요약: B0KlA 카드·토큰 */}
+      {/* 수입/지출 요약: B0KlA 카드·토큰 — 수입/지출/순이익 3카드 동일 그리드 */}
       <DashboardSection
         title="수입/지출 요약"
         icon={<BarChart3 size={24} />}
       >
-        <div className="mg-v2-erp-dashboard-kpi-grid">
+        <div className="mg-v2-erp-dashboard-kpi-grid mg-v2-erp-dashboard-kpi-grid--summary">
           <div className="mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card-accent">
             <div className="mg-v2-ad-b0kla__chart-header">
               <h3 className="mg-v2-ad-b0kla__chart-title">수입</h3>
@@ -587,19 +588,17 @@ const OverviewTab = ({ data }) => {
               <span className="mg-v2-ad-b0kla__kpi-label">{getExpenseDescription()}</span>
             </div>
           </div>
-        </div>
-
-        {/* 순이익: B0KlA 카드 */}
-        <div className="mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card-accent--blue integrated-finance-net-income-card">
-          <div className="mg-v2-ad-b0kla__chart-header">
-            <h3 className="mg-v2-ad-b0kla__chart-title">순이익</h3>
-            <DollarSign size={24} aria-hidden className="mg-v2-ad-b0kla__kpi-value--primary" />
-          </div>
-          <div className="mg-v2-ad-b0kla__chart-body">
-            <div className={`mg-v2-ad-b0kla__kpi-value ${netProfit >= 0 ? 'mg-v2-ad-b0kla__kpi-value--primary' : 'mg-v2-ad-b0kla__kpi-value--danger'}`}>
-              {formatCurrency(netProfit)}
+          <div className="mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card-accent--blue integrated-finance-net-income-card">
+            <div className="mg-v2-ad-b0kla__chart-header">
+              <h3 className="mg-v2-ad-b0kla__chart-title">순이익</h3>
+              <DollarSign size={24} aria-hidden className="mg-v2-ad-b0kla__kpi-value--primary" />
             </div>
-            <span className="mg-v2-ad-b0kla__kpi-label">수입 - 지출</span>
+            <div className="mg-v2-ad-b0kla__chart-body">
+              <div className={`mg-v2-ad-b0kla__kpi-value ${netProfit >= 0 ? 'mg-v2-ad-b0kla__kpi-value--primary' : 'mg-v2-ad-b0kla__kpi-value--danger'}`}>
+                {formatCurrency(netProfit)}
+              </div>
+              <span className="mg-v2-ad-b0kla__kpi-label">수입 - 지출</span>
+            </div>
           </div>
         </div>
       </DashboardSection>

@@ -1310,10 +1310,34 @@
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
 }
 
+/* 수입/지출 요약: 수입·지출·순이익 3카드 동일 그리드 */
+.mg-v2-erp-dashboard-kpi-grid--summary {
+  margin-bottom: 0;
+}
+
+@media (min-width: 768px) {
+  .mg-v2-erp-dashboard-kpi-grid--summary {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1280px) {
+  .mg-v2-erp-dashboard-kpi-grid--summary {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
 .mg-v2-erp-dashboard-actions {
   display: flex;
   gap: var(--mg-layout-grid-gap);
   flex-wrap: wrap;
+  align-items: center;
+}
+
+.mg-v2-erp-dashboard-actions .mg-v2-button,
+.mg-v2-erp-dashboard-actions .mg-v2-button-primary,
+.mg-v2-erp-dashboard-actions .mg-v2-button-secondary {
+  flex-shrink: 0;
 }
 
 /* B0KlA 차트 헤더 내 아이콘 색상 (재무 대시보드) */

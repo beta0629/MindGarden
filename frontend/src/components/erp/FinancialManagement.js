@@ -356,13 +356,13 @@ const FinancialManagement = () => {
 
   return (
     <AdminCommonLayout title={`재무 관리${dashboardStats.branchName ? ' - ' + dashboardStats.branchName : ''}`}>
-      <ContentArea className="erp-system">
+      <ContentArea className="erp-system mg-v2-content-area">
         <ContentHeader
           title="재무 관리"
           subtitle="재무 거래 및 회계를 관리할 수 있습니다."
         />
         <div className="erp-container">
-        <div className="erp-tabs">
+          <div className="erp-tabs">
           <button
             className={`erp-tab ${activeTab === 'transactions' ? 'active' : ''}`}
             onClick={() => setActiveTab('transactions')}
@@ -384,32 +384,32 @@ const FinancialManagement = () => {
             <i className="bi bi-speedometer2"></i>
             대시보드
           </button>
-        </div>
+          </div>
 
-        {/* 콘텐츠 영역 */}
-        <div className="erp-content">
-          {loading && (
-            <div className="financial-management-loading">
-              <UnifiedLoading type="inline" text="로딩 중..." />
-            </div>
-          )}
-
-          {error && (
-            <div className="erp-error">
-              <div className="alert alert-danger" role="alert">
-                <i className="bi bi-exclamation-triangle-fill"></i>
-                {error}
+          {/* 콘텐츠 영역 */}
+          <div className="erp-content">
+            {loading && (
+              <div className="financial-management-loading">
+                <UnifiedLoading type="inline" text="로딩 중..." />
               </div>
-              <button className="mg-btn mg-btn--outline mg-btn--primary" onClick={loadData}>
-                <i className="bi bi-arrow-clockwise"></i>
-                다시 시도
-              </button>
-            </div>
-          )}
+            )}
 
-          {!loading && !error && (
-            <>
-              {activeTab === 'calendar' && (
+            {error && (
+              <div className="erp-error">
+                <div className="alert alert-danger" role="alert">
+                  <i className="bi bi-exclamation-triangle-fill"></i>
+                  {error}
+                </div>
+                <button className="mg-btn mg-btn--outline mg-btn--primary" onClick={loadData}>
+                  <i className="bi bi-arrow-clockwise"></i>
+                  다시 시도
+                </button>
+              </div>
+            )}
+
+            {!loading && !error && (
+              <>
+                {activeTab === 'calendar' && (
                 <div className="erp-section">
                   <FinancialCalendarView />
                 </div>
@@ -851,9 +851,9 @@ const FinancialManagement = () => {
               )}
             </>
           )}
+          </div>
         </div>
-      </div>
-      </div>
+      </ContentArea>
 
       {/* 거래 상세 정보 모달 */}
       {showDetailModal && selectedTransaction && (
@@ -1156,8 +1156,7 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
           )}
         </div>
       </div>
-        </div>
-      </ContentArea>
+    </div>
   );
 };
 

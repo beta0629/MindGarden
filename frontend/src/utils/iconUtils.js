@@ -84,6 +84,10 @@ export const EMOJI_TO_LUCIDE = {
 
 const DEFAULT_ICON = 'HelpCircle';
 
+/** ESLint import/namespace 회피: computed 접근용 로컬 복사 */
+// eslint-disable-next-line import/namespace -- Lucide 아이콘 이름으로 동적 접근을 위해 namespace 복사
+const iconMap = { ...LucideIcons };
+
 /**
  * Lucide 아이콘 이름 또는 이모지 문자열을 React 엘리먼트로 반환
  * @param {string} nameOrEmoji - Lucide 컴포넌트 이름(예: 'User') 또는 이모지(레거시)
@@ -100,11 +104,11 @@ export function getLucideIcon(nameOrEmoji, props = {}) {
     iconName = EMOJI_TO_LUCIDE[nameOrEmoji];
   }
   if (!iconName || typeof iconName !== 'string') {
-    const Icon = LucideIcons[DEFAULT_ICON];
+    const Icon = iconMap[DEFAULT_ICON];
     return Icon ? React.createElement(Icon, { size, ...rest }) : null;
   }
-  const Icon = LucideIcons[iconName];
-  return Icon ? React.createElement(Icon, { size, ...rest }) : React.createElement(LucideIcons[DEFAULT_ICON], { size, ...rest });
+  const Icon = iconMap[iconName];
+  return Icon ? React.createElement(Icon, { size, ...rest }) : React.createElement(iconMap[DEFAULT_ICON], { size, ...rest });
 }
 
 /**
@@ -117,5 +121,5 @@ export function getLucideIconComponent(nameOrEmoji) {
   if (typeof nameOrEmoji === 'string' && EMOJI_TO_LUCIDE[nameOrEmoji]) {
     iconName = EMOJI_TO_LUCIDE[nameOrEmoji];
   }
-  return LucideIcons[iconName] || LucideIcons[DEFAULT_ICON];
+  return iconMap[iconName] || iconMap[DEFAULT_ICON];
 }

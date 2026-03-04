@@ -295,7 +295,6 @@ const BudgetManagement = () => {
           subtitle="예산 계획 및 관리를 할 수 있습니다."
         />
         <div className="erp-container">
-          {/* 탭 네비게이션 */}
           <div className="erp-tabs">
             <button
               className={`erp-tab ${activeTab === 'budgets' ? 'active' : ''}`}
@@ -425,7 +424,6 @@ const BudgetManagement = () => {
                                   <div className="erp-budget-title">
                                     <h3>{budget.name}</h3>
                                     <span className={`erp-budget-status ${getStatusColor(budget.status)}`}>
-                                      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                                       {budget.status === 'ACTIVE' ? '활성' : budget.status}
                                     </span>
                                   </div>
@@ -746,8 +744,10 @@ const BudgetManagement = () => {
               </>
             )}
           </div>
+        </div>
+      </ContentArea>
 
-          {/* 예산 생성 모달 */}
+      {/* 예산 생성 모달 */}
           {showCreateModal && (
             <div className="modal show d-block budget-management-modal-backdrop">
               <div className="modal-dialog">
@@ -849,9 +849,6 @@ const BudgetManagement = () => {
               </div>
             </div>
           )}
-        </div>
-      </div>
-      </ContentArea>
     </AdminCommonLayout>
   );
 };

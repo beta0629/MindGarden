@@ -100,7 +100,9 @@ const HIDE_ADMIN_CARD_IDS = new Set([
   'dashboards',         // 대시보드 관리
   'cache-monitoring',   // 캐시 모니터링
   'security-monitoring', // 보안 모니터링
-  'merge-duplicate-mappings'  // 중복 매칭 통합
+  'merge-duplicate-mappings',  // 중복 매칭 통합
+  'user-management',    // 사용자 관리 (관리 기능에서 숨김)
+  'wellness'            // 웰니스 알림 관리 (관리 기능에서 숨김)
 ]);
 
 /** 차트용 최근 N주 빈 데이터 (데이터 없을 때 0으로 표시) */
@@ -1081,7 +1083,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
             <span className="mg-v2-ad-b0kla__admin-label">통합 스케줄링</span>
             <span className="mg-v2-ad-b0kla__admin-desc">매칭 대기자와 캘린더를 한 화면에서 스케줄 등록</span>
           </button>
-          {PermissionChecks.canManageUsers(userPermissions) && (
+          {!HIDE_ADMIN_CARD_IDS.has('user-management') && PermissionChecks.canManageUsers(userPermissions) && (
             <button
               type="button"
               className="mg-v2-ad-b0kla__admin-card"
@@ -1210,6 +1212,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
             <span className="mg-v2-ad-b0kla__admin-label">심리검사 리포트(AI)</span>
             <span className="mg-v2-ad-b0kla__admin-desc">TCI/MMPI 업로드 및 리포트 생성을 관리합니다</span>
           </button>
+          {!HIDE_ADMIN_CARD_IDS.has('wellness') && (
           <button
             type="button"
             className="mg-v2-ad-b0kla__admin-card"
@@ -1221,6 +1224,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
             <span className="mg-v2-ad-b0kla__admin-label">웰니스 알림 관리</span>
             <span className="mg-v2-ad-b0kla__admin-desc">AI 기반 웰니스 컨텐츠 생성 및 비용 관리</span>
           </button>
+          )}
           {!HIDE_ADMIN_CARD_IDS.has('merge-duplicate-mappings') && (
           <MGButton
             type="button"

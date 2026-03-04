@@ -925,44 +925,9 @@ const AdminDashboardV2 = ({ user: propUser }) => {
           <button
             type="button"
             className="mg-v2-ad-b0kla__admin-card"
-            onClick={() => navigate(ADMIN_ROUTES.COMPLIANCE)}
-          >
-            <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--orange">
-              <ShieldCheck size={28} />
-            </div>
-            <span className="mg-v2-ad-b0kla__admin-label">상담사 승인 관리</span>
-            <span className="mg-v2-ad-b0kla__admin-desc">자격 증명 검토</span>
-          </button>
-          <button
-            type="button"
-            className="mg-v2-ad-b0kla__admin-card"
-            onClick={() => navigate(ADMIN_ROUTES.SYSTEM_NOTIFICATIONS)}
-          >
-            <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--blue">
-              <Megaphone size={28} />
-            </div>
-            <span className="mg-v2-ad-b0kla__admin-label">전체 공지 발송</span>
-            <span className="mg-v2-ad-b0kla__admin-desc">앱 푸시 및 메일</span>
-          </button>
-          <button
-            type="button"
-            className="mg-v2-ad-b0kla__admin-card"
-            onClick={() => navigate(ADMIN_ROUTES.SYSTEM_CONFIG)}
-          >
-            <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--gray">
-              <Settings size={28} />
-            </div>
-            <span className="mg-v2-ad-b0kla__admin-label">시스템 설정</span>
-            <span className="mg-v2-ad-b0kla__admin-desc">API 및 연동 관리</span>
-          </button>
-        </div>
-        <div className="mg-management-grid mg-v2-ad-b0kla__admin-grid">
-          <button
-            type="button"
-            className="mg-v2-ad-b0kla__admin-card"
             onClick={() => navigate(ADMIN_ROUTES.USER_MANAGEMENT)}
           >
-            <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--green">
+            <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--blue">
               <FaUsers size={28} />
             </div>
             <span className="mg-v2-ad-b0kla__admin-label">사용자 관리</span>
@@ -990,6 +955,8 @@ const AdminDashboardV2 = ({ user: propUser }) => {
             <span className="mg-v2-ad-b0kla__admin-label">상담일지 조회</span>
             <span className="mg-v2-ad-b0kla__admin-desc">상담일지를 검색하고 목록에서 클릭해 수정할 수 있습니다</span>
           </button>
+        </div>
+        <div className="mg-management-grid mg-v2-ad-b0kla__admin-grid">
           {!HIDE_ADMIN_CARD_IDS.has('sessions') && (
           <button
             type="button"

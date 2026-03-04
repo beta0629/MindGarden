@@ -390,7 +390,7 @@ function AppContent() {
               }
             >
               <Route index element={<Navigate to="/admin/common-codes" replace />} />
-              <Route path="common-codes" element={<TenantCommonCodeManager />} />
+              <Route path="tenant-common-codes" element={<TenantCommonCodeManager />} />
               <Route path="package-pricing/new" element={<PackagePricingDetailPage isNew />} />
               <Route path="package-pricing/:id" element={<PackagePricingDetailPage />} />
               <Route path="package-pricing" element={<PackagePricingListPage />} />

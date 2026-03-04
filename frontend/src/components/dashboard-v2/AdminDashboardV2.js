@@ -936,13 +936,13 @@ const AdminDashboardV2 = ({ user: propUser }) => {
           <button
             type="button"
             className="mg-v2-ad-b0kla__admin-card"
-            onClick={() => navigate(ADMIN_ROUTES.SCHEDULES)}
+            onClick={() => navigate(ADMIN_ROUTES.INTEGRATED_SCHEDULE)}
           >
             <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--green">
-              <FaCalendarAlt size={28} />
+              <FaCalendarCheck size={28} />
             </div>
-            <span className="mg-v2-ad-b0kla__admin-label">스케줄 관리</span>
-            <span className="mg-v2-ad-b0kla__admin-desc">상담 일정을 관리하고 조정합니다</span>
+            <span className="mg-v2-ad-b0kla__admin-label">통합 스케줄링</span>
+            <span className="mg-v2-ad-b0kla__admin-desc">매칭 대기자와 캘린더를 한 화면에서 스케줄 등록</span>
           </button>
           <button
             type="button"
@@ -1042,13 +1042,13 @@ const AdminDashboardV2 = ({ user: propUser }) => {
           <button
             type="button"
             className="mg-v2-ad-b0kla__admin-card"
-            onClick={() => navigate(ADMIN_ROUTES.INTEGRATED_SCHEDULE)}
+            onClick={() => navigate(ADMIN_ROUTES.SCHEDULES)}
           >
             <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--green">
-              <FaCalendarCheck size={28} />
+              <FaCalendarAlt size={28} />
             </div>
-            <span className="mg-v2-ad-b0kla__admin-label">통합 스케줄링</span>
-            <span className="mg-v2-ad-b0kla__admin-desc">매칭 대기자와 캘린더를 한 화면에서 스케줄 등록</span>
+            <span className="mg-v2-ad-b0kla__admin-label">스케줄 관리</span>
+            <span className="mg-v2-ad-b0kla__admin-desc">상담 일정을 관리하고 조정합니다</span>
           </button>
           {!HIDE_ADMIN_CARD_IDS.has('user-management') && PermissionChecks.canManageUsers(userPermissions) && (
             <button

@@ -52,18 +52,30 @@ public class AdminUserController {
     /**
      * 전체 사용자 목록 조회 (관리자 전용)
      * @param includeInactive 비활성 사용자 포함 여부 (기본값: false)
+     * @param role 역할 필터 (선택, 예: STAFF, ADMIN). 지정 시 해당 역할만 반환
      */
     @GetMapping("")
     public ResponseEntity<Map<String, Object>> getAllUsers(
-            @RequestParam(value = "includeInactive", defaultValue = "false") boolean includeInactive) {
+            @RequestParam(value = "includeInactive", defaultValue = "false") boolean includeInactive,
+            @RequestParam(value = "role", required = false) String role) {
         try {
-            log.info("전체 사용자 목록 조회 요청 - 비활성 포함: {}", includeInactive);
-            
+            log.info("전체 사용자 목록 조회 요청 - 비활성 포함: {}, 역할 필터: {}", includeInactive, role);
+
             // UserService를 통해 사용자 조회 (활성/전체 선택 가능)
-            List<User> users = includeInactive ? 
-                userService.getRepository().findAll() : 
+            List<User> users = includeInactive ?
+                userService.getRepository().findAll() :
                 userService.findAllActive();
-            
+
+            // 역할 필터 적용 (선택)
+            if (role != null && !role.isBlank()) {
+                UserRole filterRole = UserRole.fromString(role.trim());
+                if (filterRole != null) {
+                    users = users.stream()
+                        .filter(u -> filterRole.equals(u.getRole()))
+                        .toList();
+                }
+            }
+
             // 사용자 정보를 Map으로 변환
             List<Map<String, Object>> userList = new ArrayList<>();
             for (User user : users) {

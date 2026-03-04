@@ -23,6 +23,7 @@
 |------|------|
 | [MENU_PERMISSION_SYSTEM_OVERVIEW.md](./MENU_PERMISSION_SYSTEM_OVERVIEW.md) | 현재 시스템 메뉴·권한 구조 요약 — 역할 정의, 메뉴 노출 경로(/admin 라우트·LNB), 권한 코드·편의 함수, 역할별 메뉴 그룹, 백엔드 메뉴 API, 재조정 시 체크 포인트 |
 | [ROLE_SIMPLIFICATION_AND_TENANT_DEFAULT_ROLES.md](./ROLE_SIMPLIFICATION_AND_TENANT_DEFAULT_ROLES.md) | 역할 단순화(ADMIN, STAFF, CONSULTANT, CLIENT) 및 테넌트 기본 역할 — 정의 위치, tenant_roles·공통코드 ROLE, 단순화 제안(CLIENT/CONSULTANT/ADMIN/SUBADMIN), ERP 구분 규칙 |
+| [STAFF_ACCOUNT_MANAGEMENT_PLAN.md](./STAFF_ACCOUNT_MANAGEMENT_PLAN.md) | **스태프 계정 관리** — 사용자 관리 페이지에 스태프 탭 추가, 목록·역할 변경(Phase 1) / 스태프 신규 등록(Phase 2). 디자이너·코더 전달 요구사항·체크리스트 포함 |
 
 ---
 

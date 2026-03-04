@@ -114,7 +114,7 @@ const UnifiedLogin = () => {
         if (!host) return;
 
         // 3. subdomain 추출: host의 첫 라벨을 사용 (도메인 문자열 하드코딩 금지)
-        // 예) mindgarden.dev.core-solution.co.kr -> mindgarden
+        // 예) coresolution.dev.core-solution.co.kr -> coresolution
         // 예) dev.core-solution.co.kr -> dev (기본 서브도메인으로 간주하여 제외)
         const hostWithoutPort = host.split(':')[0];
         const firstLabel = hostWithoutPort.split('.')[0];
@@ -153,7 +153,7 @@ const UnifiedLogin = () => {
           console.log('💡 로컬 환경: 서브도메인 없음. 테스트를 위해 다음 방법을 사용하세요:');
           console.log('   1. URL 파라미터: ?tenantId=tenant-incheon-counseling-001');
           console.log('   2. 환경 변수: REACT_APP_TEST_TENANT_ID=tenant-incheon-counseling-001');
-          console.log('   3. /etc/hosts 설정: mindgarden.localhost → 127.0.0.1');
+          console.log('   3. /etc/hosts 설정: coresolution.localhost → 127.0.0.1');
         }
       } catch (error) {
         console.error('❌ 서브도메인에서 tenant_id 감지 실패:', error);
@@ -219,7 +219,7 @@ const UnifiedLogin = () => {
       
       // 서브도메인이 없으면 안내 메시지 추가
       if (!hasSubdomain && !host.includes('localhost') && !host.includes('127.0.0.1')) {
-        const subdomainMessage = '서브도메인으로 접속해주세요.\n\n예: mindgarden.dev.core-solution.co.kr';
+        const subdomainMessage = '서브도메인으로 접속해주세요.\n\n예: coresolution.dev.core-solution.co.kr';
         setTimeout(() => {
           showTooltip(subdomainMessage, 'warning');
           notificationManager.show(subdomainMessage, 'warning');
@@ -255,7 +255,7 @@ const UnifiedLogin = () => {
         const isLocalEnv = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
         if (!isLocalEnv && (decodedError.includes('테넌트 정보가 없습니다') || decodedError.includes('서브도메인'))) {
           const host = window.location.hostname;
-          const friendlyMessage = '서브도메인이 필요합니다.\n\n예: mindgarden.dev.core-solution.co.kr\n\n현재 도메인: ' + host + '\n\n올바른 서브도메인으로 접속 후 다시 시도해주세요.';
+          const friendlyMessage = '서브도메인이 필요합니다.\n\n예: coresolution.dev.core-solution.co.kr\n\n현재 도메인: ' + host + '\n\n올바른 서브도메인으로 접속 후 다시 시도해주세요.';
           showTooltip(friendlyMessage, 'error');
           notificationManager.show(friendlyMessage, 'error');
         } else {
@@ -455,7 +455,7 @@ const UnifiedLogin = () => {
       const hasSubdomain = !defaultSubdomains.includes(firstLabel) && hostParts.length > 2;
 
       if (!hasSubdomain) {
-        const friendlyMessage = '서브도메인이 필요합니다.\n\n예: mindgarden.dev.core-solution.co.kr\n\n현재 도메인: ' + host + '\n\n올바른 서브도메인으로 접속 후 다시 시도해주세요.';
+        const friendlyMessage = '서브도메인이 필요합니다.\n\n예: coresolution.dev.core-solution.co.kr\n\n현재 도메인: ' + host + '\n\n올바른 서브도메인으로 접속 후 다시 시도해주세요.';
         console.error('⚠️ 서브도메인 없음:', friendlyMessage);
         showTooltip(friendlyMessage, 'error');
         notificationManager.show(friendlyMessage, 'error');
@@ -628,7 +628,7 @@ const UnifiedLogin = () => {
         if (!isLocalEnv && (errorMessage.includes('테넌트 정보가 없습니다') ||
             errorMessage.includes('서브도메인') ||
             errorMessage.includes('TENANT_REQUIRED'))) {
-          const friendlyMessage = '서브도메인이 필요합니다.\n\n예: mindgarden.dev.core-solution.co.kr\n\n현재 도메인: ' + window.location.hostname + '\n\n올바른 서브도메인으로 접속 후 다시 시도해주세요.';
+          const friendlyMessage = '서브도메인이 필요합니다.\n\n예: coresolution.dev.core-solution.co.kr\n\n현재 도메인: ' + window.location.hostname + '\n\n올바른 서브도메인으로 접속 후 다시 시도해주세요.';
           showTooltip(friendlyMessage, 'error');
           notificationManager.show(friendlyMessage, 'error');
         } else {
@@ -648,7 +648,7 @@ const UnifiedLogin = () => {
           errorMessage.includes('TENANT_REQUIRED'))) {
         const friendlyMessage = errorMessage.includes('서브도메인이 필요합니다')
           ? errorMessage
-          : '서브도메인이 필요합니다.\n\n예: mindgarden.dev.core-solution.co.kr\n\n현재 도메인: ' + window.location.hostname + '\n\n올바른 서브도메인으로 접속 후 다시 시도해주세요.';
+          : '서브도메인이 필요합니다.\n\n예: coresolution.dev.core-solution.co.kr\n\n현재 도메인: ' + window.location.hostname + '\n\n올바른 서브도메인으로 접속 후 다시 시도해주세요.';
         showTooltip(friendlyMessage, 'error');
         notificationManager.show(friendlyMessage, 'error');
       } else {
@@ -733,7 +733,7 @@ const UnifiedLogin = () => {
         {/* 좌측: 브랜딩 이미지 영역 */}
         <div className="mg-v2-login-hero">
           <div className="mg-v2-login-hero-content">
-            <h1 className="mg-v2-login-hero-logo">MindGarden</h1>
+            <h1 className="mg-v2-login-hero-logo">CoreSolution</h1>
             <p className="mg-v2-login-hero-slogan">마음의 평화를 가꾸는 공간</p>
           </div>
         </div>
@@ -743,7 +743,7 @@ const UnifiedLogin = () => {
           <div className="mg-v2-login-form-wrapper">
             <div className="mg-v2-login-header">
               <h1 className="mg-v2-login-title">환영합니다</h1>
-              <p className="mg-v2-login-subtitle">마인드가든 서비스에 로그인하세요.</p>
+              <p className="mg-v2-login-subtitle">CoreSolution 서비스에 로그인하세요.</p>
             </div>
 
             {/* ID/PW 로그인 폼 */}
@@ -824,8 +824,10 @@ const UnifiedLogin = () => {
                     xmlns="http://www.w3.org/2000/svg"
                   >
                     <path 
-                      d="M9 0C4.03 0 0 2.69 0 6c0 1.92 1.21 3.61 3.04 4.61L1.5 14.85l4.49-1.24C6.64 13.95 7.81 14 9 14c4.97 0 9-2.69 9-6s-4.03-6-9-6z" 
-                      fill="var(--mg-black, #000000)"
+                      fillRule="evenodd" 
+                      clipRule="evenodd" 
+                      d="M9 2C4.029 2 0 4.961 0 8.613c0 2.146 1.348 4.053 3.395 5.213-.153.535-.552 1.93-.603 2.133-.064.254.088.249.186.183.078-.052 1.99-1.332 2.793-1.874.394.058.802.088 1.229.088 4.971 0 9-2.961 9-6.613C18 4.961 13.971 2 9 2z" 
+                      fill="#000000"
                     />
                   </svg>
                   카카오 로그인
@@ -844,33 +846,9 @@ const UnifiedLogin = () => {
                     xmlns="http://www.w3.org/2000/svg"
                   >
                     <path 
-                      d="M0 0h9v9H0V0z" 
-                      fill="var(--mg-white, #FFFFFF)"
+                      d="M12.067 9.599L6.5 1.933H2v14.134h4.433V8.401l5.567 7.666H16V1.933h-4.433v7.666z" 
+                      fill="#FFFFFF"
                     />
-                    <path 
-                      d="M9 9h9v9H9V9z" 
-                      fill="#03C75A"
-                    />
-                    <path 
-                      d="M9 0h9v9H9V0z" 
-                      fill="#03C75A"
-                    />
-                    <path 
-                      d="M0 9h9v9H0V9z" 
-                      fill="var(--mg-white, #FFFFFF)"
-                    />
-                    <text 
-                      x="9" 
-                      y="12.5" 
-                      fontFamily="Arial, sans-serif" 
-                      fontSize="10" 
-                      fontWeight="bold" 
-                      fill="var(--mg-white, #FFFFFF)" 
-                      textAnchor="middle"
-                      dominantBaseline="middle"
-                    >
-                      N
-                    </text>
                   </svg>
                   네이버 로그인
                 </button>

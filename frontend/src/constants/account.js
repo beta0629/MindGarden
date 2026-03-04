@@ -5,13 +5,13 @@
 import { createApiUrl } from './environment';
 
 export const ACCOUNT_API_ENDPOINTS = {
-  BASE: createApiUrl('/api/accounts'),
+  BASE: createApiUrl('/api/v1/accounts'),
   // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-  ACTIVE: createApiUrl('/api/accounts/active'),
-  BANKS: createApiUrl('/api/accounts/banks'),
-  STATISTICS: createApiUrl('/api/accounts/statistics'),
-  VALIDATE: createApiUrl('/api/accounts/validate'),
-  PRIMARY: createApiUrl('/api/accounts/primary')
+  ACTIVE: createApiUrl('/api/v1/accounts/active'),
+  BANKS: createApiUrl('/api/v1/accounts/banks'),
+  STATISTICS: createApiUrl('/api/v1/accounts/statistics'),
+  VALIDATE: createApiUrl('/api/v1/accounts/validate'),
+  PRIMARY: createApiUrl('/api/v1/accounts/primary')
 };
 
 export const HTTP_METHODS = {

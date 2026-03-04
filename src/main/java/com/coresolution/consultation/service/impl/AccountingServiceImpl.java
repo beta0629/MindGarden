@@ -223,7 +223,11 @@ public class AccountingServiceImpl implements AccountingService {
             Long cashAccountId = getDefaultAccountId(tenantId, "CASH"); // 현금 계정
 
             if (revenueAccountId == null || expenseAccountId == null || cashAccountId == null) {
-                log.warn("기본 계정을 찾을 수 없어 분개를 생성할 수 없습니다: tenantId={}", tenantId);
+                log.warn(
+                        "기본 계정을 찾을 수 없어 분개를 생성할 수 없습니다: tenantId={}, "
+                                + "ERP_ACCOUNT_TYPE(REVENUE, EXPENSE, CASH) 계정 ID 설정 필요. "
+                                + "revenue={}, expense={}, cash={}",
+                        tenantId, revenueAccountId, expenseAccountId, cashAccountId);
                 return null;
             }
 
@@ -263,8 +267,20 @@ public class AccountingServiceImpl implements AccountingService {
             // 3. 분개 저장
             AccountingEntry saved = createJournalEntry(tenantId, entry, lines);
 
+            // 4. 자동 생성 분개: 승인 후 전기하여 원장에 반영 (재무제표 노출을 위해 필수)
+            try {
+                approveJournalEntry(tenantId, saved.getId(), null, "자동승인(결제/입금연동)");
+                postJournalEntry(tenantId, saved.getId());
+            } catch (Exception e) {
+                log.error(
+                        "분개 전기 실패: 원장 미반영. entryId={}, entryNumber={}, transactionId={}. "
+                                + "분개는 APPROVED 상태로 남음. 수동 전기 또는 재처리 필요. error={}",
+                        saved.getId(), saved.getEntryNumber(), transaction.getId(), e.getMessage(), e);
+                return saved;
+            }
+
             log.info(
-                    "FinancialTransaction에서 분개 자동 생성 완료: transactionId={}, entryId={}, entryNumber={}",
+                    "FinancialTransaction에서 분개 자동 생성·승인·전기 완료: transactionId={}, entryId={}, entryNumber={}",
                     transaction.getId(), saved.getId(), saved.getEntryNumber());
 
             return saved;

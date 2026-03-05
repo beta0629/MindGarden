@@ -4,7 +4,7 @@ import { apiGet, apiPost, apiPut } from '../../utils/ajax';
 import { showNotification } from '../../utils/notification';
 import { getGradeSalaryMap, getGradeKoreanName } from '../../utils/commonCodeUtils';
 import ErpModal from './common/ErpModal';
-import CustomSelect from '../common/CustomSelect';
+import BadgeSelect from '../common/BadgeSelect';
 import './SalaryProfileFormModal.css';
 
 const SalaryProfileFormModal = ({ 
@@ -345,8 +345,8 @@ const SalaryProfileFormModal = ({
                     {/* 상담사 등급 선택 */}
                     <div className="consultant-profile-form-item">
                         <label className="consultant-profile-form-label">상담사 등급</label>
-                        <CustomSelect
-                            className="consultant-profile-form-select"
+                        <BadgeSelect
+                            className="mg-v2-form-badge-select consultant-profile-form-select"
                             value={formData.grade}
                             onChange={(val) => handleGradeChange(val)}
                             options={[
@@ -413,8 +413,8 @@ const SalaryProfileFormModal = ({
                     {/* 급여 유형 */}
                     <div className="consultant-profile-form-item">
                         <label className="consultant-profile-form-label">급여 유형</label>
-                        <CustomSelect
-                            className="consultant-profile-form-select"
+                        <BadgeSelect
+                            className="mg-v2-form-badge-select consultant-profile-form-select"
                             value={formData.salaryType}
                             onChange={(val) => handleInputChange('salaryType', val)}
                             options={[
@@ -444,8 +444,8 @@ const SalaryProfileFormModal = ({
                     {formData.salaryType === 'FREELANCE' && (
                         <div className="consultant-profile-form-item">
                             <label className="consultant-profile-form-label">사업자 등록 여부</label>
-                            <CustomSelect
-                                className="consultant-profile-form-select"
+                            <BadgeSelect
+                                className="mg-v2-form-badge-select consultant-profile-form-select"
                                 value={formData.isBusinessRegistered ? 'true' : 'false'}
                                 onChange={(val) => handleInputChange('isBusinessRegistered', val === 'true')}
                                 options={[
@@ -520,8 +520,8 @@ const SalaryProfileFormModal = ({
                         {selectedOptions.map((option, index) => (
                             <div key={index} className="option-item">
                                 <div className="option-item-field">
-                                    <CustomSelect
-                                        className="consultant-profile-form-select"
+                                    <BadgeSelect
+                                        className="mg-v2-form-badge-select consultant-profile-form-select"
                                         value={option.type}
                                         onChange={(val) => handleOptionChange(index, 'type', val)}
                                         options={[

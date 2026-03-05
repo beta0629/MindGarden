@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import CustomSelect from '../common/CustomSelect';
+import BadgeSelect from '../common/BadgeSelect';
 import { useNavigate } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
 import { useNotification } from '../../contexts/NotificationContext';
@@ -248,7 +249,7 @@ const ConsultantMessages = () => {
           </div>
           
           <div className="consultant-messages-filter-container">
-            <CustomSelect
+            <BadgeSelect
               value={filterStatus}
               onChange={(val) => setFilterStatus(val)}
               options={[
@@ -259,7 +260,7 @@ const ConsultantMessages = () => {
                 }))
               ]}
               placeholder="선택하세요"
-              className="consultant-messages-filter-select"
+              className="mg-v2-form-badge-select consultant-messages-filter-select"
             />
           </div>
 
@@ -396,8 +397,8 @@ const ConsultantMessages = () => {
           </div>
           <div className="mg-v2-form-group">
             <label className="mg-v2-label">메시지 유형</label>
-            <CustomSelect
-              className="mg-v2-select"
+            <BadgeSelect
+              className="mg-v2-form-badge-select"
               value={newMessage.messageType}
               onChange={(val) => setNewMessage({ ...newMessage, messageType: val })}
               options={messageTypes.map(type => ({

@@ -18,7 +18,6 @@ import notificationManager from '../../utils/notification';
 import SearchInput from '../dashboard-v2/atoms/SearchInput';
 import Button from '../ui/Button/Button';
 import Avatar from '../common/Avatar';
-import CustomSelect from '../common/CustomSelect';
 import BadgeSelect from '../common/BadgeSelect';
 import { DEFAULT_MAPPING_CONFIG } from '../../constants/mapping';
 import '../schedule/ScheduleB0KlA.css';
@@ -532,7 +531,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                 placeholder="내담자 이름 또는 이메일로 검색..."
               />
               <div className="mg-v2-mapping-creation-modal__filter-row">
-                <CustomSelect
+                <BadgeSelect
                   value={clientFilterStatus}
                   onChange={(val) => setClientFilterStatus(val)}
                   options={[
@@ -543,9 +542,9 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                     { value: 'TERMINATED', label: '종료됨' }
                   ]}
                   placeholder="선택하세요"
-                  className="mg-v2-mapping-creation-modal__select"
+                  className="mg-v2-form-badge-select mg-v2-mapping-creation-modal__select"
                 />
-                <CustomSelect
+                <BadgeSelect
                   value={clientSortBy}
                   onChange={(val) => setClientSortBy(val)}
                   options={[
@@ -554,7 +553,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                     { value: 'createdAt', label: '등록일순' }
                   ]}
                   placeholder="선택하세요"
-                  className="mg-v2-mapping-creation-modal__select"
+                  className="mg-v2-form-badge-select mg-v2-mapping-creation-modal__select"
                 />
               </div>
               <span className="mg-v2-mapping-creation-modal__count">{filteredClients.length}명</span>

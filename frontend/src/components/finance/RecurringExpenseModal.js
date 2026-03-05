@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { RefreshCw, XCircle, Plus, Edit2, Trash2, DollarSign, Calendar, FileText } from 'lucide-react';
 import UnifiedModal from '../common/modals/UnifiedModal';
-import CustomSelect from '../common/CustomSelect';
+import BadgeSelect from '../common/BadgeSelect';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 
@@ -420,7 +420,7 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
                                             <label htmlFor="frequency" className="mg-v2-form-label">
                                                 주기 <span className="mg-v2-form-label-required">*</span>
                                             </label>
-                                            <CustomSelect
+                                            <BadgeSelect
                                                 value={formData.frequency}
                                                 onChange={(val) => handleInputChange('frequency', val)}
                                                 options={[
@@ -430,7 +430,7 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
                                                 ]}
                                                 placeholder="선택하세요"
                                                 disabled={loading}
-                                                className="mg-v2-form-select"
+                                                className="mg-v2-form-badge-select"
                                             />
                                         </div>
                                     </div>
@@ -439,7 +439,7 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
                                         <label htmlFor="category" className="mg-v2-form-label">
                                             카테고리 <span className="mg-v2-form-label-required">*</span>
                                         </label>
-                                        <CustomSelect
+                                        <BadgeSelect
                                             value={formData.category}
                                             onChange={(val) => handleInputChange('category', val)}
                                             options={[
@@ -451,7 +451,7 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
                                             ]}
                                             placeholder="카테고리를 선택하세요"
                                             disabled={loading}
-                                            className="mg-v2-form-select"
+                                            className="mg-v2-form-badge-select"
                                         />
                                     </div>
 

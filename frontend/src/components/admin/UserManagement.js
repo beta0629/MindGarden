@@ -7,7 +7,7 @@ import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import csrfTokenManager from '../../utils/csrfTokenManager';
 import UnifiedModal from '../common/modals/UnifiedModal';
-import CustomSelect from '../common/CustomSelect';
+import BadgeSelect from '../common/BadgeSelect';
 import './UserManagement.css';
 
 const UserManagement = ({ onUpdate }) => {
@@ -242,8 +242,8 @@ const UserManagement = ({ onUpdate }) => {
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                 />
                             </div>
-                            <CustomSelect
-                                className="mg-v2-select user-mgmt-role-select"
+                            <BadgeSelect
+                                className="mg-v2-form-badge-select user-mgmt-role-select"
                                 value={selectedRole}
                                 onChange={(val) => setSelectedRole(val)}
                                 options={[
@@ -392,8 +392,8 @@ const UserManagement = ({ onUpdate }) => {
 
                         <div className="mg-v2-form-group">
                             <label className="mg-v2-label">새로운 역할</label>
-                            <CustomSelect
-                                className="mg-v2-select"
+                            <BadgeSelect
+                                className="mg-v2-form-badge-select"
                                 value={form.newRole}
                                 onChange={(val) => setForm({ ...form, newRole: val })}
                                 options={[

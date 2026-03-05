@@ -4,7 +4,7 @@ import MGButton from '../../common/MGButton';
 import ProfileImageInput from '../../common/ProfileImageInput';
 import { apiGet } from '../../../utils/ajax';
 import UnifiedModal from '../../common/modals/UnifiedModal';
-import CustomSelect from '../../common/CustomSelect';
+import BadgeSelect from '../../common/BadgeSelect';
 import './ClientModal.css';
 
 /**
@@ -339,7 +339,7 @@ const ClientModal = ({
                 )}
                 <div className="mg-v2-form-group">
                     <label htmlFor="status" className="mg-v2-form-label">상태</label>
-                    <CustomSelect
+                    <BadgeSelect
                         value={safeFormData.status}
                         onChange={(val) => setFormData(prev => ({ ...prev, status: val }))}
                         options={userStatusOptions && userStatusOptions.length > 0
@@ -353,12 +353,12 @@ const ClientModal = ({
                                 { value: 'PENDING', label: '대기' }
                               ]}
                         placeholder="선택하세요"
-                        className="mg-v2-form-select"
+                        className="mg-v2-form-badge-select"
                     />
                 </div>
                 <div className="mg-v2-form-group">
                     <label htmlFor="grade" className="mg-v2-form-label">등급</label>
-                    <CustomSelect
+                    <BadgeSelect
                         value={safeFormData.grade}
                         onChange={(val) => setFormData(prev => ({ ...prev, grade: val }))}
                         options={[
@@ -369,7 +369,7 @@ const ClientModal = ({
                             { value: 'DIAMOND', label: '다이아몬드' }
                         ]}
                         placeholder="선택하세요"
-                        className="mg-v2-form-select"
+                        className="mg-v2-form-badge-select"
                     />
                 </div>
                 <div className="mg-v2-form-group">

@@ -6,7 +6,7 @@ import ErpCard from './common/ErpCard';
 import ErpButton from './common/ErpButton';
 import './ItemManagement.css';
 import ErpModal from './common/ErpModal';
-import CustomSelect from '../common/CustomSelect';
+import BadgeSelect from '../common/BadgeSelect';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
@@ -370,7 +370,7 @@ const ItemManagement = () => {
               <label className="mg-v2-form-label">
                 카테고리 *
               </label>
-              <CustomSelect
+              <BadgeSelect
                 value={formData.category}
                 onChange={(val) => setFormData(prev => ({ ...prev, category: val }))}
                 options={[
@@ -381,7 +381,7 @@ const ItemManagement = () => {
                   }))
                 ]}
                 placeholder="카테고리를 선택하세요"
-                className="mg-v2-form-input"
+                className="mg-v2-form-badge-select"
               />
             </div>
 
@@ -496,7 +496,7 @@ const ItemManagement = () => {
               <label className="mg-v2-form-label">
                 카테고리 *
               </label>
-              <CustomSelect
+              <BadgeSelect
                 value={formData.category}
                 onChange={(val) => setFormData(prev => ({ ...prev, category: val }))}
                 options={categoryOptions.map(option => ({
@@ -504,7 +504,7 @@ const ItemManagement = () => {
                   label: `${option.label} (${option.value})`
                 }))}
                 placeholder="카테고리를 선택하세요"
-                className="mg-v2-form-input"
+                className="mg-v2-form-badge-select"
               />
             </div>
 

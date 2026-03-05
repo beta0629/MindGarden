@@ -8,6 +8,7 @@ import { API_BASE_URL } from '../../constants/api';
 import csrfTokenManager from '../../utils/csrfTokenManager';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import CustomSelect from '../common/CustomSelect';
+import BadgeSelect from '../common/BadgeSelect';
 
 /**
  * 관리자용 휴가 관리 모달 컴포넌트
@@ -552,7 +553,7 @@ const VacationManagementModal = ({
 
                                     <div className="form-group">
                                         <label>휴가 유형</label>
-                                        <CustomSelect
+                                        <BadgeSelect
                                             value={vacationData.type}
                                             onChange={(val) => handleVacationTypeChange(val)}
                                             options={vacationTypeOptions.map(option => ({
@@ -561,6 +562,7 @@ const VacationManagementModal = ({
                                             }))}
                                             placeholder="선택하세요"
                                             disabled={loading || loadingCodes}
+                                            className="mg-v2-form-badge-select"
                                         />
                                     </div>
                                 </div>

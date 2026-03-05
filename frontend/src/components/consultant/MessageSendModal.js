@@ -5,7 +5,7 @@ import { apiPost, apiGet } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import Button from '../ui/Button/Button';
-import CustomSelect from '../common/CustomSelect';
+import BadgeSelect from '../common/BadgeSelect';
 
 /**
  * 내담자 메시지 전송 모달 컴포넌트
@@ -222,7 +222,7 @@ const MessageSendModal = ({
 
           <div className="mg-v2-form-group">
             <label className="mg-v2-form-label">메시지 타입</label>
-            <CustomSelect
+            <BadgeSelect
               value={formData.messageType}
               onChange={(val) => setFormData(prev => ({ ...prev, messageType: val }))}
               options={messageTypeOptions.map(type => ({
@@ -230,7 +230,7 @@ const MessageSendModal = ({
                 label: `${type.icon} ${type.label} (${type.value})`
               }))}
               placeholder="선택하세요"
-              className="mg-v2-form-select"
+              className="mg-v2-form-badge-select"
               disabled={loadingCodes}
             />
           </div>

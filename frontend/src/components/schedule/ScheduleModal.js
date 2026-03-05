@@ -5,7 +5,7 @@ import ClientSelectionStep from './steps/ClientSelectionStep';
 import TimeSlotGrid from './TimeSlotGrid';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import MGButton from '../common/MGButton';
-import CustomSelect from '../common/CustomSelect';
+import BadgeSelect from '../common/BadgeSelect';
 import notificationManager from '../../utils/notification';
 import { useSession } from '../../contexts/SessionContext';
 import StandardizedApi from '../../utils/standardizedApi';
@@ -455,7 +455,7 @@ const ScheduleModalNew = ({
                                     <div className="mg-v2-ad-time-step__form-row">
                                         <div className="mg-v2-ad-time-step__form-group">
                                             <label className="mg-v2-ad-time-step__label" htmlFor="schedule-consultation-type">상담 유형</label>
-                                            <CustomSelect
+                                            <BadgeSelect
                                                 value={consultationType}
                                                 onChange={(val) => setConsultationType(val)}
                                                 options={consultationTypeOptions.map(option => ({
@@ -464,12 +464,12 @@ const ScheduleModalNew = ({
                                                 }))}
                                                 placeholder="선택하세요"
                                                 disabled={loadingCodes}
-                                                className="mg-v2-ad-time-step__select"
+                                                className="mg-v2-form-badge-select mg-v2-ad-time-step__select"
                                             />
                                         </div>
                                         <div className="mg-v2-ad-time-step__form-group">
                                             <label className="mg-v2-ad-time-step__label" htmlFor="schedule-duration">상담 시간</label>
-                                            <CustomSelect
+                                            <BadgeSelect
                                                 value={selectedDuration}
                                                 onChange={(val) => setSelectedDuration(val)}
                                                 options={durationOptions.map(option => ({
@@ -478,7 +478,7 @@ const ScheduleModalNew = ({
                                                 }))}
                                                 placeholder="선택하세요"
                                                 disabled={loadingCodes}
-                                                className="mg-v2-ad-time-step__select"
+                                                className="mg-v2-form-badge-select mg-v2-ad-time-step__select"
                                             />
                                         </div>
                                     </div>

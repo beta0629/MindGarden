@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import MGButton from '../common/MGButton';
-import CustomSelect from '../common/CustomSelect';
+import BadgeSelect from '../common/BadgeSelect';
 // import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import './SalaryConfigModal.css';
 
@@ -142,31 +142,34 @@ const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
             
             <div className="config-item">
               <label>월급여 기산일</label>
-              <CustomSelect
+              <BadgeSelect
                 value={configs.monthlyBaseDay}
                 onChange={(val) => handleInputChange('monthlyBaseDay', val)}
                 options={options.monthlyBaseDays.map(option => ({ value: option.value, label: option.label }))}
                 placeholder="선택하세요"
+                className="mg-v2-form-badge-select"
               />
             </div>
 
             <div className="config-item">
               <label>급여 지급일</label>
-              <CustomSelect
+              <BadgeSelect
                 value={configs.paymentDay}
                 onChange={(val) => handleInputChange('paymentDay', Number(val))}
                 options={options.paymentDays.map(option => ({ value: option.value, label: option.label }))}
                 placeholder="선택하세요"
+                className="mg-v2-form-badge-select"
               />
             </div>
 
             <div className="config-item">
               <label>급여 마감일</label>
-              <CustomSelect
+              <BadgeSelect
                 value={configs.cutoffDay}
                 onChange={(val) => handleInputChange('cutoffDay', val)}
                 options={options.cutoffDays.map(option => ({ value: option.value, label: option.label }))}
                 placeholder="선택하세요"
+                className="mg-v2-form-badge-select"
               />
             </div>
           </div>
@@ -176,11 +179,12 @@ const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
             
             <div className="config-item">
               <label>배치 실행 주기</label>
-              <CustomSelect
+              <BadgeSelect
                 value={configs.batchCycle}
                 onChange={(val) => handleInputChange('batchCycle', val)}
                 options={options.batchCycles.map(option => ({ value: option.value, label: option.label }))}
                 placeholder="선택하세요"
+                className="mg-v2-form-badge-select"
               />
             </div>
           </div>
@@ -190,11 +194,12 @@ const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
             
             <div className="config-item">
               <label>계산 방식</label>
-              <CustomSelect
+              <BadgeSelect
                 value={configs.calculationMethod}
                 onChange={(val) => handleInputChange('calculationMethod', val)}
                 options={options.calculationMethods.map(option => ({ value: option.value, label: option.label }))}
                 placeholder="선택하세요"
+                className="mg-v2-form-badge-select"
               />
             </div>
           </div>

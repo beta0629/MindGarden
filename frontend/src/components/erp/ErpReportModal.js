@@ -4,6 +4,7 @@ import { apiGet } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import CustomSelect from '../common/CustomSelect';
+import BadgeSelect from '../common/BadgeSelect';
 
 /**
  * ERP 보고서 모달 컴포넌트
@@ -209,7 +210,7 @@ const ErpReportModal = ({ isOpen, onClose }) => {
                                 />
                             )}
                             {reportType === 'quarterly' && (
-                                <CustomSelect
+                                <BadgeSelect
                                     value={period}
                                     onChange={(val) => setPeriod(val)}
                                     options={[
@@ -221,11 +222,11 @@ const ErpReportModal = ({ isOpen, onClose }) => {
                                     ]}
                                     placeholder="분기를 선택하세요"
                                     disabled={loading}
-                                    className="mg-v2-form-select"
+                                    className="mg-v2-form-badge-select"
                                 />
                             )}
                             {reportType === 'yearly' && (
-                                <CustomSelect
+                                <BadgeSelect
                                     value={period}
                                     onChange={(val) => setPeriod(val)}
                                     options={[
@@ -236,7 +237,7 @@ const ErpReportModal = ({ isOpen, onClose }) => {
                                     ]}
                                     placeholder="연도를 선택하세요"
                                     disabled={loading}
-                                    className="mg-v2-form-select"
+                                    className="mg-v2-form-badge-select"
                                 />
                             )}
                         </div>

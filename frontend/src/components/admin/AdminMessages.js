@@ -10,7 +10,7 @@ import { sessionManager } from '../../utils/sessionManager';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import MGCard from '../common/MGCard';
 import UnifiedModal from '../common/modals/UnifiedModal';
-import CustomSelect from '../common/CustomSelect';
+import BadgeSelect from '../common/BadgeSelect';
 import '../../styles/unified-design-tokens.css';
 
 /**
@@ -173,8 +173,8 @@ const AdminMessages = () => {
             </div>
 
             {/* 유형 필터 */}
-            <CustomSelect
-              className="mg-v2-select mg-v2-message-type-filter"
+            <BadgeSelect
+              className="mg-v2-form-badge-select mg-v2-message-type-filter"
               value={filterType}
               onChange={(val) => setFilterType(val)}
               options={Object.entries(MESSAGE_TYPES).map(([value, { label }]) => ({ value, label }))}
@@ -182,8 +182,8 @@ const AdminMessages = () => {
             />
 
             {/* 상태 필터 */}
-            <CustomSelect
-              className="mg-v2-select mg-v2-message-status-filter"
+            <BadgeSelect
+              className="mg-v2-form-badge-select mg-v2-message-status-filter"
               value={filterStatus}
               onChange={(val) => setFilterStatus(val)}
               options={[

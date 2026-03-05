@@ -6,7 +6,7 @@ import notificationManager from '../../utils/notification';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import Button from '../ui/Button/Button';
 import '../schedule/ScheduleB0KlA.css';
-import CustomSelect from '../common/CustomSelect';
+import BadgeSelect from '../common/BadgeSelect';
 import { getUserStatusKoreanNameSync } from '../../utils/codeHelper';
 
 /** 심리검사 요약/권고 문장에서 "위험"·"주의"·"권고" 키워드를 굵은 텍스트+색상으로 강조 */
@@ -1012,12 +1012,12 @@ const ConsultationLogModal = ({
 
               <div className="mg-v2-form-group">
                 <label className="mg-v2-label">세션 완료 여부</label>
-                <CustomSelect
+                <BadgeSelect
                   options={completionStatusOptions.map(o => ({ value: o.value, label: o.label }))}
                   value={formData.isSessionCompleted === true ? 'COMPLETED' : 'PENDING'}
                   onChange={(v) => setFormData(prev => ({ ...prev, isSessionCompleted: v === 'COMPLETED' }))}
                   placeholder="선택하세요"
-                  className="mg-v2-w-full"
+                  className="mg-v2-form-badge-select mg-v2-w-full"
                   disabled={true}
                 />
               </div>
@@ -1118,12 +1118,12 @@ const ConsultationLogModal = ({
               {/* 위험도 평가 */}
               <div className="mg-v2-form-group">
                 <label className="mg-v2-label">위험도 평가 *</label>
-                <CustomSelect
+                <BadgeSelect
                   options={[{ value: '', label: '위험도를 선택하세요' }, ...riskLevels.map(l => ({ value: l.value, label: l.label }))]}
                   value={formData.riskAssessment}
                   onChange={(v) => handleInputChange({ target: { name: 'riskAssessment', value: v } })}
                   placeholder="위험도를 선택하세요"
-                  className="mg-v2-w-full"
+                  className="mg-v2-form-badge-select mg-v2-w-full"
                   disabled={loadingCodes}
                   error={!!validationErrors.riskAssessment}
                 />
@@ -1183,12 +1183,12 @@ const ConsultationLogModal = ({
               {/* 목표 달성도 */}
               <div className="mg-v2-form-group">
                 <label className="mg-v2-label">목표 달성도</label>
-                <CustomSelect
+                <BadgeSelect
                   options={goalAchievementLevels.map(l => ({ value: l.value, label: l.label }))}
                   value={formData.goalAchievement}
                   onChange={(v) => handleInputChange({ target: { name: 'goalAchievement', value: v } })}
                   placeholder="선택하세요"
-                  className="mg-v2-w-full"
+                  className="mg-v2-form-badge-select mg-v2-w-full"
                 />
               </div>
 

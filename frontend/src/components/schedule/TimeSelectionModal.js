@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import UnifiedModal from '../../components/common/modals/UnifiedModal';
-import CustomSelect from '../common/CustomSelect';
+import BadgeSelect from '../common/BadgeSelect';
 
 /**
  * 드래그앤드롭 시 시간 선택 모달 컴포넌트
@@ -146,22 +146,24 @@ const TimeSelectionModal = ({
             {/* 상담 유형 선택 */}
             <div className="time-selection-field">
                 <label className="time-selection-label">상담 유형</label>
-                <CustomSelect
+                <BadgeSelect
                     value={localSchedule.consultationType || 'INDIVIDUAL'}
                     onChange={handleConsultationTypeChange}
                     options={consultationTypeOptions}
                     placeholder="상담 유형을 선택하세요"
+                    className="mg-v2-form-badge-select"
                 />
             </div>
 
             {/* 상담 시간 선택 */}
             <div className="time-selection-field">
                 <label className="time-selection-label">상담 시간</label>
-                <CustomSelect
+                <BadgeSelect
                     value={localSchedule.duration || '50'}
                     onChange={handleDurationChange}
                     options={durationOptions}
                     placeholder="상담 시간을 선택하세요"
+                    className="mg-v2-form-badge-select"
                 />
             </div>
 

@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import ErpModal from './common/ErpModal';
 import MGButton from '../common/MGButton';
-import CustomSelect from '../common/CustomSelect';
+import BadgeSelect from '../common/BadgeSelect';
 import './FinancialTransactionForm.css';
 import notificationManager from '../../utils/notification';
 
@@ -158,7 +158,7 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
             <label className="mg-v2-form-label">
               카테고리
             </label>
-            <CustomSelect
+            <BadgeSelect
               value={formData.category}
               onChange={(val) => setFormData(prev => ({
                 ...prev,
@@ -174,7 +174,7 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
               ]}
               placeholder="카테고리를 선택하세요"
               disabled={loadingCodes}
-              className="mg-v2-form-select"
+              className="mg-v2-form-badge-select"
             />
             {loadingCodes && (
               <div className="mg-v2-text-xs mg-v2-text-secondary" style={{ marginTop: 'var(--spacing-xs)' }}>
@@ -188,7 +188,7 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
             <label className="mg-v2-form-label">
               세부 카테고리
             </label>
-            <CustomSelect
+            <BadgeSelect
               value={formData.subcategory}
               onChange={(val) => setFormData(prev => ({ ...prev, subcategory: val }))}
               options={[
@@ -200,7 +200,7 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
               ]}
               placeholder="세부 카테고리를 선택하세요"
               disabled={!formData.category || loadingCodes}
-              className="mg-v2-form-select"
+              className="mg-v2-form-badge-select"
             />
             {!formData.category && (
               <div className="mg-v2-text-xs mg-v2-text-secondary" style={{ marginTop: 'var(--spacing-xs)' }}>

@@ -4,7 +4,7 @@ import notificationManager from '../../../utils/notification';
 import csrfTokenManager from '../../../utils/csrfTokenManager';
 import PackageSelector from '../../common/PackageSelector';
 import UnifiedModal from '../../common/modals/UnifiedModal';
-import CustomSelect from '../../common/CustomSelect';
+import BadgeSelect from '../../common/BadgeSelect';
 
 /**
  * 회기 추가 요청 모달 컴포넌트
@@ -268,8 +268,8 @@ const SessionExtensionModal = ({
                         {/* 결제 방법 선택 */}
                         <div className="mg-v2-form-group">
                             <label className="mg-v2-label">결제 방법</label>
-                            <CustomSelect
-                                className="mg-v2-select"
+                            <BadgeSelect
+                                className="mg-v2-form-badge-select"
                                 value={paymentMethod}
                                 onChange={(val) => handlePaymentMethodChange(val)}
                                 options={[

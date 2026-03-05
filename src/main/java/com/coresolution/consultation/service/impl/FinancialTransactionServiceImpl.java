@@ -79,6 +79,10 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
             log.info("💼 시스템 자동 거래 생성 (권한 검사 우회)");
         }
         
+        String tenantId = (request.getTenantId() != null && !request.getTenantId().isEmpty())
+            ? request.getTenantId()
+            : getTenantIdOrNull();
+        
         FinancialTransaction transaction = FinancialTransaction.builder()
                 .transactionType(FinancialTransaction.TransactionType.valueOf(request.getTransactionType()))
                 .category(request.getCategory())
@@ -98,12 +102,14 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
                 // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 .status(FinancialTransaction.TransactionStatus.PENDING)
                 .build();
+        if (tenantId != null && !tenantId.isEmpty()) {
+            transaction.setTenantId(tenantId);
+        }
         
         FinancialTransaction savedTransaction = financialTransactionRepository.save(transaction);
         
         try {
             // 표준화 2025-12-06: branchCode는 더 이상 사용하지 않음
-            String tenantId = getTenantIdOrNull();
             String incomeType = getSafeCodeName("TRANSACTION_TYPE", "INCOME", "INCOME");
             if (incomeType.equals(request.getTransactionType())) {
                 realTimeStatisticsService.updateFinancialStatisticsOnPayment(

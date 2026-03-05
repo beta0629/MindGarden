@@ -564,7 +564,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                                         savedMapping.getNotes().contains("[추가 매칭]");
             if (isAdditionalMapping) {
                 log.info("🔄 추가 매칭 입금 확인 - 추가 회기에 대한 ERP 거래 생성 (별도 트랜잭션)");
-                runInNewTransaction(() -> createAdditionalSessionIncomeTransaction(savedMapping, paymentAmount));
+                String tenantId = getTenantIdFromMapping(savedMapping);
+                if (tenantId == null) tenantId = getTenantIdOrNull();
+                runInNewTransaction(tenantId, () -> createAdditionalSessionIncomeTransaction(savedMapping, paymentAmount));
             } else {
                 log.info("🆕 신규 매칭 입금 확인 - 전체 패키지에 대한 ERP 거래 생성 (별도 트랜잭션)");
                 createConsultationIncomeTransactionAsync(savedMapping);
@@ -582,29 +584,56 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
 
      /**
      * 상담료 수입 거래 자동 생성 (중앙화된 금액 관리 사용)
-     * TransactionTemplate을 사용하여 독립적인 트랜잭션에서 실행되며, 실패해도 부모 트랜잭션에 영향을 주지 않음
+     * TransactionTemplate을 사용하여 독립적인 트랜잭션에서 실행되며, 실패해도 부모 트랜잭션에 영향을 주지 않음.
+     * REQUIRES_NEW 트랜잭션 내에서 TenantContextHolder가 비어 있지 않도록 매핑의 tenantId를 설정 후 clear.
      */
     public void createConsultationIncomeTransactionAsync(ConsultantClientMapping mapping) {
-        // TransactionTemplate을 사용하여 REQUIRES_NEW 트랜잭션을 수동으로 관리
-        // 이렇게 하면 예외가 발생해도 부모 트랜잭션에 영향을 주지 않음
-        org.springframework.transaction.support.TransactionTemplate newTransactionTemplate = 
+        String tenantId = getTenantIdFromMapping(mapping);
+        if (tenantId == null || tenantId.isEmpty()) {
+            tenantId = TenantContextHolder.getTenantId();
+        }
+        if (tenantId == null || tenantId.isEmpty()) {
+            log.warn("💰 [비동기] 상담료 수입 거래 스킵: MappingID={}, tenantId 없음", mapping.getId());
+            return;
+        }
+        final String tenantIdForCallback = tenantId;
+        org.springframework.transaction.support.TransactionTemplate newTransactionTemplate =
             new org.springframework.transaction.support.TransactionTemplate(transactionManager);
         newTransactionTemplate.setPropagationBehavior(
             org.springframework.transaction.TransactionDefinition.PROPAGATION_REQUIRES_NEW);
-        
+
         try {
             newTransactionTemplate.executeWithoutResult(status -> {
                 try {
-                    createConsultationIncomeTransaction(mapping);
+                    TenantContextHolder.setTenantId(tenantIdForCallback);
+                    try {
+                        createConsultationIncomeTransaction(mapping);
+                    } finally {
+                        TenantContextHolder.clear();
+                    }
                 } catch (Exception e) {
                     log.error("💰 [비동기] 상담료 수입 거래 생성 실패: MappingID={}, Error: {}", mapping.getId(), e.getMessage(), e);
-                    // 예외를 다시 던지지 않아 부모 트랜잭션에 영향을 주지 않음
                 }
             });
         } catch (Exception e) {
-            // TransactionTemplate에서 발생한 예외도 잡아서 부모 트랜잭션에 영향을 주지 않음
             log.error("💰 [비동기] 상담료 수입 거래 트랜잭션 실행 실패: MappingID={}, Error: {}", mapping.getId(), e.getMessage(), e);
         }
+    }
+
+    /**
+     * 매핑 소속 테넌트 ID 조회 (consultant 또는 client의 tenantId)
+     */
+    private String getTenantIdFromMapping(ConsultantClientMapping mapping) {
+        if (mapping == null) {
+            return null;
+        }
+        if (mapping.getConsultant() != null && mapping.getConsultant().getTenantId() != null) {
+            return mapping.getConsultant().getTenantId();
+        }
+        if (mapping.getClient() != null && mapping.getClient().getTenantId() != null) {
+            return mapping.getClient().getTenantId();
+        }
+        return null;
     }
 
     private void createConsultationIncomeTransaction(ConsultantClientMapping mapping) {
@@ -891,9 +920,11 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         // 통계/ERP 실패가 결제 완료 트랜잭션에 영향 주지 않도록 별도 트랜잭션에서 실행
         final Long consultantId = savedMapping.getConsultant() != null ? savedMapping.getConsultant().getId() : null;
         final Long clientId = savedMapping.getClient() != null ? savedMapping.getClient().getId() : null;
+        String tenantIdForTx = getTenantIdFromMapping(savedMapping);
+        if (tenantIdForTx == null) tenantIdForTx = getTenantIdOrNull();
         try {
             if (consultantId != null && clientId != null) {
-                runInNewTransaction(() -> realTimeStatisticsService.updateStatisticsOnMappingChange(
+                runInNewTransaction(tenantIdForTx, () -> realTimeStatisticsService.updateStatisticsOnMappingChange(
                     consultantId, clientId, null));
             }
             log.info("✅ 결제 확인시 실시간 통계 업데이트 완료: mappingId={}", mappingId);
@@ -902,7 +933,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         }
         
         try {
-            runInNewTransaction(() -> createReceivablesTransaction(savedMapping));
+            runInNewTransaction(tenantIdForTx, () -> createReceivablesTransaction(savedMapping));
             log.info("💚 매칭 결제 확인으로 인한 미수금 거래 자동 생성: MappingID={}", mappingId);
         } catch (Exception e) {
             log.error("미수금 거래 자동 생성 실패: {}", e.getMessage(), e);
@@ -917,11 +948,31 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
      * REQUIRES_NEW 트랜잭션에서 실행하여, 내부 예외 시에도 부모 트랜잭션이 rollback-only로 마크되지 않도록 함.
      */
     private void runInNewTransaction(Runnable action) {
+        runInNewTransaction(null, action);
+    }
+
+    /**
+     * REQUIRES_NEW 트랜잭션에서 실행하며, 콜백 진입 시 tenantId를 TenantContextHolder에 설정.
+     * ERP/통계 등에서 getRequiredTenantId() 사용 시 새 트랜잭션에서도 동작하도록 함. 종료 시 clear.
+     *
+     * @param tenantId 콜백 내에서 사용할 테넌트 ID (null이면 설정 생략)
+     * @param action 실행할 작업
+     */
+    private void runInNewTransaction(String tenantId, Runnable action) {
         org.springframework.transaction.support.TransactionTemplate template =
             new org.springframework.transaction.support.TransactionTemplate(transactionManager);
         template.setPropagationBehavior(org.springframework.transaction.TransactionDefinition.PROPAGATION_REQUIRES_NEW);
         try {
-            template.executeWithoutResult(status -> action.run());
+            template.executeWithoutResult(status -> {
+                if (tenantId != null && !tenantId.isEmpty()) {
+                    TenantContextHolder.setTenantId(tenantId);
+                }
+                try {
+                    action.run();
+                } finally {
+                    TenantContextHolder.clear();
+                }
+            });
         } catch (Exception e) {
             log.error("별도 트랜잭션 실행 실패: {}", e.getMessage(), e);
         }
@@ -1016,7 +1067,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                         mappingId, mapping.getPackagePrice(), mapping.getPaymentAmount());
             } else if (isAdditionalMapping) {
                 log.info("🔄 추가 매칭 입금 확인 - 추가 회기에 대한 ERP 거래 생성 (별도 트랜잭션): MappingID={}", mappingId);
-                runInNewTransaction(() -> createAdditionalSessionIncomeTransaction(savedMapping, effectiveAmount));
+                String tenantIdForTx = getTenantIdFromMapping(savedMapping);
+                if (tenantIdForTx == null) tenantIdForTx = getTenantIdOrNull();
+                runInNewTransaction(tenantIdForTx, () -> createAdditionalSessionIncomeTransaction(savedMapping, effectiveAmount));
                 log.info("💚 입금 확인 ERP 거래 생성 완료 (추가 매칭): MappingID={}, Amount={}", mappingId, effectiveAmount);
             } else {
                 log.info("🆕 신규 매칭 입금 확인 - 전체 패키지에 대한 ERP 거래 생성 (별도 트랜잭션): MappingID={}", mappingId);
@@ -1025,6 +1078,25 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             }
         } catch (Exception e) {
             log.error("❌ 입금 확인 ERP 거래 생성 실패 (입금 확인은 완료됨): MappingID={}, Error={}", mappingId, e.getMessage(), e);
+        }
+
+        // 입금 확인 후 ERP 매핑 정보 동기화 프로시저 호출 (실패 시 로그만, 예외 전파 안 함)
+        try {
+            log.info("🔄 입금 확인 완료, ERP 매핑 정보 동기화 프로시저 호출: mappingId={}", mappingId);
+            Map<String, Object> procedureResult = storedProcedureService.updateMappingInfo(
+                mappingId,
+                savedMapping.getPackageName(),
+                savedMapping.getPackagePrice() != null ? savedMapping.getPackagePrice().doubleValue() : 0.0,
+                savedMapping.getTotalSessions() != null ? savedMapping.getTotalSessions() : 0,
+                "입금확인"
+            );
+            if (Boolean.TRUE.equals(procedureResult.get("success"))) {
+                log.info("✅ ERP 매핑 정보 동기화 완료: mappingId={}, message={}", mappingId, procedureResult.get("message"));
+            } else {
+                log.warn("⚠️ ERP 매핑 정보 동기화 실패: mappingId={}, message={}", mappingId, procedureResult.get("message"));
+            }
+        } catch (Exception e) {
+            log.error("❌ 입금 확인 후 ERP 매핑 정보 동기화 프로시저 호출 실패: mappingId={}", mappingId, e);
         }
 
         // 컨트롤러에서 mapping.getConsultant()/getClient() 접근 시 no Session 방지
@@ -2685,8 +2757,10 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         final int finalRefundedSessions = refundedSessions;
         final long finalRefundAmount = refundAmount;
         final String finalReason = reason;
+        String tenantIdForErp = getTenantIdFromMapping(mapping);
+        if (tenantIdForErp == null) tenantIdForErp = getTenantIdOrNull();
         try {
-            runInNewTransaction(() -> sendRefundToErp(mappingForErp, finalRefundedSessions, finalRefundAmount, finalReason));
+            runInNewTransaction(tenantIdForErp, () -> sendRefundToErp(mappingForErp, finalRefundedSessions, finalRefundAmount, finalReason));
         } catch (Exception e) {
             log.error("❌ ERP 환불 데이터 전송 실패: MappingID={}", id, e);
         }
@@ -2856,8 +2930,10 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         final int finalRefundSessions = refundSessions;
         final long finalRefundAmount = refundAmount;
         final String finalReason = reason;
+        String tenantIdForErp = getTenantIdFromMapping(mapping);
+        if (tenantIdForErp == null) tenantIdForErp = getTenantIdOrNull();
         try {
-            runInNewTransaction(() -> sendRefundToErp(mappingForRefund, finalRefundSessions, finalRefundAmount, finalReason));
+            runInNewTransaction(tenantIdForErp, () -> sendRefundToErp(mappingForRefund, finalRefundSessions, finalRefundAmount, finalReason));
             log.info("💚 부분 환불 ERP 전송 성공: MappingID={}, RefundSessions={}, RefundAmount={}", 
                 id, refundSessions, refundAmount);
         } catch (Exception e) {
@@ -2865,7 +2941,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         }
         
         try {
-            runInNewTransaction(() -> createPartialConsultationRefundTransaction(mappingForRefund, finalRefundSessions, finalRefundAmount, finalReason));
+            runInNewTransaction(tenantIdForErp, () -> createPartialConsultationRefundTransaction(mappingForRefund, finalRefundSessions, finalRefundAmount, finalReason));
             log.info("💚 부분 환불 거래 자동 생성 완료: MappingID={}, RefundSessions={}, RefundAmount={}", 
                 id, refundSessions, refundAmount);
         } catch (Exception e) {

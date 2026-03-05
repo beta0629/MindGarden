@@ -47,6 +47,12 @@ public class FinancialTransactionRequest {
     
     @Size(max = 50, message = "관련 엔티티 타입은 50자 이하여야 합니다.")
     private String relatedEntityType;
+
+    /**
+     * 테넌트 ID (선택). 지정 시 REQUIRES_NEW 등 새 트랜잭션에서도 해당 테넌트로 저장됨.
+     */
+    @Size(max = 36, message = "테넌트 ID는 36자 이하여야 합니다.")
+    private String tenantId;
     
     @Size(max = 100, message = "부서명은 100자 이하여야 합니다.")
     private String department;

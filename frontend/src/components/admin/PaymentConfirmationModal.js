@@ -5,7 +5,7 @@ import { getCommonCodes } from '../../utils/commonCodeApi';
 import notificationManager from '../../utils/notification';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import MGButton from '../common/MGButton';
-import CustomSelect from '../common/CustomSelect';
+import BadgeSelect from '../common/BadgeSelect';
 import './PaymentConfirmationModal.css';
 
 /**
@@ -384,16 +384,19 @@ const PaymentConfirmationModal = ({
             
             <div className="mg-v2-form-group">
               <label className="mg-v2-label">결제 방법</label>
-              <CustomSelect
+              <BadgeSelect
                 value={paymentData.method}
                 onChange={(val) => handlePaymentDataChange('method', val)}
                 options={paymentMethodOptions.map(option => ({
                   value: option.value,
-                  label: `${option.icon != null ? option.icon + ' ' : ''}${option.label || option.value || ''}`
+                  label: `${option.icon != null ? option.icon + ' ' : ''}${option.label || option.value || ''}`,
+                  icon: option.icon
                 }))}
                 placeholder="선택하세요"
-                className="mg-v2-select"
+                className="mg-v2-badge-select-wrap"
                 disabled={loadingCodes}
+                loading={loadingCodes}
+                aria-label="결제 방법"
               />
             </div>
 

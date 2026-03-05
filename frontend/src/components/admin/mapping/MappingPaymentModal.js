@@ -3,7 +3,7 @@ import { CreditCard, CheckCircle, XCircle, DollarSign } from 'lucide-react';
 import { apiPost } from '../../../utils/ajax';
 import notificationManager from '../../../utils/notification';
 import UnifiedModal from '../../common/modals/UnifiedModal';
-import CustomSelect from '../../common/CustomSelect';
+import BadgeSelect from '../../common/BadgeSelect';
 /**
  * 매칭 입금확인 모달 컴포넌트
 /**
@@ -165,7 +165,7 @@ const MappingPaymentModal = ({
                     <label className="mg-v2-form-label">
                         결제 방법
                     </label>
-                    <CustomSelect
+                    <BadgeSelect
                         value={paymentData.paymentMethod}
                         onChange={(val) => handlePaymentMethodChange(val)}
                         options={[
@@ -173,7 +173,8 @@ const MappingPaymentModal = ({
                             { value: 'CARD', label: '신용카드' },
                             { value: 'CASH', label: '현금' }
                         ]}
-                        className="mg-v2-form-select"
+                        className="mg-v2-form-badge-select"
+                        aria-label="결제 방법"
                     />
                 </div>
 

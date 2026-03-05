@@ -3,7 +3,7 @@ import { CreditCard, Tag, CheckCircle, XCircle } from 'lucide-react';
 import { apiGet, apiPost } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 import UnifiedModal from '../common/modals/UnifiedModal';
-import CustomSelect from '../common/CustomSelect';
+import BadgeSelect from '../common/BadgeSelect';
 
 /**
  * 할인 적용 결제 확인 모달 컴포넌트
@@ -367,7 +367,7 @@ const DiscountPaymentConfirmationModal = ({
               결제 방법
             </h3>
             <div className="mg-v2-form-group">
-              <CustomSelect
+              <BadgeSelect
                 value={paymentData.method}
                 onChange={(val) => setPaymentData(prev => ({ ...prev, method: val }))}
                 options={[
@@ -378,6 +378,7 @@ const DiscountPaymentConfirmationModal = ({
                 ]}
                 placeholder="선택하세요"
                 className="mg-v2-select"
+                aria-label="결제 방법"
               />
             </div>
           </div>

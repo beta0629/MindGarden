@@ -19,6 +19,7 @@ import SearchInput from '../dashboard-v2/atoms/SearchInput';
 import Button from '../ui/Button/Button';
 import Avatar from '../common/Avatar';
 import CustomSelect from '../common/CustomSelect';
+import BadgeSelect from '../common/BadgeSelect';
 import { DEFAULT_MAPPING_CONFIG } from '../../constants/mapping';
 import '../schedule/ScheduleB0KlA.css';
 import './MappingCreationModal.css';
@@ -613,7 +614,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
               </div>
               <div className="mg-v2-mapping-creation-modal__form-group">
                 <label>결제 방법</label>
-                <CustomSelect
+                <BadgeSelect
                   value={paymentInfo.paymentMethod}
                   onChange={(m) => {
                     setPaymentInfo(prev => ({ ...prev, paymentMethod: m, paymentReference: generateReferenceNumber(m) }));
@@ -627,6 +628,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                       ]}
                   placeholder="선택하세요"
                   className="mg-v2-mapping-creation-modal__input"
+                  aria-label="결제 방법"
                 />
               </div>
               <div className="mg-v2-mapping-creation-modal__form-group">
@@ -641,12 +643,13 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
               </div>
               <div className="mg-v2-mapping-creation-modal__form-group">
                 <label>담당 업무</label>
-                <CustomSelect
+                <BadgeSelect
                   value={paymentInfo.responsibility}
                   onChange={(val) => setPaymentInfo(prev => ({ ...prev, responsibility: val }))}
                   options={responsibilityOptions.map(r => ({ value: r.label, label: r.label }))}
                   placeholder="선택하세요"
                   className="mg-v2-mapping-creation-modal__input"
+                  aria-label="담당 업무"
                 />
               </div>
               <div className="mg-v2-mapping-creation-modal__form-group">

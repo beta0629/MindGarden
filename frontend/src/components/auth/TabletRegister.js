@@ -335,6 +335,7 @@ const TabletRegister = () => {
                       className="mg-v2-email-suggestions"
                       role="listbox"
                       aria-label="이메일 도메인 제안"
+                      id="email-suggestions-listbox"
                     >
                       {EMAIL_DOMAINS.map((domain) => {
                         const prefix = formData.email?.includes('@')
@@ -345,6 +346,7 @@ const TabletRegister = () => {
                           <li
                             key={domain}
                             role="option"
+                            aria-selected="false"
                             className="mg-v2-email-suggestion-item"
                             onMouseDown={(e) => {
                               e.preventDefault();

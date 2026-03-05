@@ -429,12 +429,16 @@ public class ScheduleController extends BaseApiController {
         
         existingSchedule.setUpdatedAt(java.time.LocalDateTime.now());
         
-        Schedule updatedSchedule = scheduleService.updateSchedule(id, existingSchedule);
-        
-        Map<String, Object> data = Map.of("scheduleId", updatedSchedule.getId());
-        
-        log.info("✅ 스케줄 수정 완료: ID {}", updatedSchedule.getId());
-        return updated("스케줄이 성공적으로 수정되었습니다.", data);
+        try {
+            Schedule updatedSchedule = scheduleService.updateSchedule(id, existingSchedule);
+            Map<String, Object> data = Map.of("scheduleId", updatedSchedule.getId());
+            log.info("✅ 스케줄 수정 완료: ID {}", updatedSchedule.getId());
+            return updated("스케줄이 성공적으로 수정되었습니다.", data);
+        } catch (IllegalStateException e) {
+            log.warn("⚠️ 스케줄 완료 처리 거부 (상담일지 미작성): id={}, message={}", id, e.getMessage());
+            return ResponseEntity.badRequest()
+                .body(com.coresolution.core.dto.ApiResponse.<Map<String, Object>>error(e.getMessage()));
+        }
     }
 
     /**

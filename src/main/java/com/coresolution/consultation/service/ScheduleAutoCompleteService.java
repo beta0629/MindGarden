@@ -131,29 +131,28 @@ public class ScheduleAutoCompleteService {
                         try {
                             // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                             if (ScheduleStatus.BOOKED.equals(schedule.getStatus()) || ScheduleStatus.CONFIRMED.equals(schedule.getStatus())) {
-                                // 지난 스케줄: 상담일지 여부와 관계없이 Java에서 COMPLETED 전환 후, 상담일지 없으면 리마인더만 생성
-                                schedule.setStatus(ScheduleStatus.COMPLETED);
-                                scheduleRepository.save(schedule);
-                                tenantCompletedCount++;
-
+                                // 지난 스케줄: 상담일지 작성된 경우에만 COMPLETED 전환, 미작성이면 리마인더만 발송
                                 boolean hasRecord = consultationRecordRepository.existsByTenantIdAndConsultationIdAndIsDeletedFalse(tenantId, schedule.getId());
-                                if (!hasRecord) {
+                                if (hasRecord) {
+                                    schedule.setStatus(ScheduleStatus.COMPLETED);
+                                    scheduleRepository.save(schedule);
+                                    tenantCompletedCount++;
+                                    realTimeStatisticsService.updateStatisticsOnScheduleCompletion(schedule);
+                                    log.info("✅ 지난 스케줄 COMPLETED 전환 및 통계 업데이트: tenantId={}, ID={}, 제목={}, 날짜={}",
+                                        tenantId, schedule.getId(), schedule.getTitle(), schedule.getDate());
+                                } else {
                                     var reminderResult = plSqlScheduleValidationService.createConsultationRecordReminder(
                                         schedule.getId(),
                                         schedule.getConsultantId(),
                                         schedule.getClientId(),
                                         schedule.getDate(),
-                                        schedule.getTitle()
+                                        "상담일지 누락 안내"
                                     );
                                     if (Boolean.TRUE.equals(reminderResult.get("success"))) {
                                         tenantReminderSentCount++;
-                                        log.info("📤 지난 스케줄 상담일지 미작성 알림 생성 완료: tenantId={}, ID={}", tenantId, reminderResult.get("reminderId"));
+                                        log.info("📤 지난 스케줄 상담일지 미작성 알림 생성 완료(완료 처리 보류): tenantId={}, ID={}", tenantId, reminderResult.get("reminderId"));
                                     }
                                 }
-
-                                realTimeStatisticsService.updateStatisticsOnScheduleCompletion(schedule);
-                                log.info("✅ 지난 스케줄 COMPLETED 전환 및 통계 업데이트: tenantId={}, ID={}, 제목={}, 날짜={}",
-                                    tenantId, schedule.getId(), schedule.getTitle(), schedule.getDate());
                             }
                         } catch (Exception e) {
                             log.error("❌ 지난 스케줄 자동 완료 실패: tenantId={}, ID={}, 오류={}", tenantId, schedule.getId(), e.getMessage());

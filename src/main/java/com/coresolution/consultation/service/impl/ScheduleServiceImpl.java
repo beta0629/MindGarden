@@ -19,6 +19,7 @@ import com.coresolution.consultation.entity.Schedule;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.entity.Vacation;
 import com.coresolution.consultation.repository.BranchRepository;
+import com.coresolution.consultation.repository.ConsultationRecordRepository;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.consultation.repository.UserRepository;
@@ -26,6 +27,7 @@ import com.coresolution.consultation.repository.VacationRepository;
 import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.consultation.service.ConsultantAvailabilityService;
 import com.coresolution.consultation.service.ConsultationMessageService;
+import com.coresolution.consultation.service.PlSqlScheduleValidationService;
 import com.coresolution.consultation.service.ScheduleService;
 import com.coresolution.consultation.service.SessionSyncService;
 import com.coresolution.consultation.service.StatisticsService;
@@ -70,6 +72,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     private final StatisticsService statisticsService;
     private final ConsultationMessageService consultationMessageService;
     private final com.coresolution.core.service.DashboardIntegrationService dashboardIntegrationService;
+    private final ConsultationRecordRepository consultationRecordRepository;
+    private final PlSqlScheduleValidationService plSqlScheduleValidationService;
     
     public ScheduleServiceImpl(
             ScheduleRepository scheduleRepository,
@@ -83,7 +87,9 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             SessionSyncService sessionSyncService,
             StatisticsService statisticsService,
             ConsultationMessageService consultationMessageService,
-            com.coresolution.core.service.DashboardIntegrationService dashboardIntegrationService) {
+            com.coresolution.core.service.DashboardIntegrationService dashboardIntegrationService,
+            ConsultationRecordRepository consultationRecordRepository,
+            PlSqlScheduleValidationService plSqlScheduleValidationService) {
         super(scheduleRepository, accessControlService);
         this.scheduleRepository = scheduleRepository;
         this.mappingRepository = mappingRepository;
@@ -96,6 +102,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         this.statisticsService = statisticsService;
         this.consultationMessageService = consultationMessageService;
         this.dashboardIntegrationService = dashboardIntegrationService;
+        this.consultationRecordRepository = consultationRecordRepository;
+        this.plSqlScheduleValidationService = plSqlScheduleValidationService;
     }
     
     
@@ -206,6 +214,44 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         Long clientId = existingSchedule.getClientId();
         
         copyScheduleFields(updateData, existingSchedule);
+        
+        // 완료(COMPLETED)로 변경 시 상담일지 작성 여부 검증: 미작성이면 완료 불가 + 상담사에게 리마인드
+        if (existingSchedule.getStatus() == ScheduleStatus.COMPLETED) {
+            String tenantIdForCheck = TenantContextHolder.getTenantId();
+            if (tenantIdForCheck == null && existingSchedule.getTenantId() != null) {
+                tenantIdForCheck = existingSchedule.getTenantId();
+            }
+            if (tenantIdForCheck != null) {
+                boolean hasRecord = consultationRecordRepository.existsByTenantIdAndConsultationIdAndIsDeletedFalse(tenantIdForCheck, id);
+                if (!hasRecord) {
+                    try {
+                        plSqlScheduleValidationService.createConsultationRecordReminder(
+                            id, existingSchedule.getConsultantId(), existingSchedule.getClientId(),
+                            existingSchedule.getDate(),
+                            "상담일지 누락 안내"
+                        );
+                    } catch (Exception e) {
+                        log.warn("상담일지 미작성 알림 생성 실패(무시): scheduleId={}, {}", id, e.getMessage());
+                    }
+                    try {
+                        consultationMessageService.sendMessage(
+                            existingSchedule.getConsultantId(),
+                            existingSchedule.getClientId(),
+                            id,
+                            getRoleCodeFromCommonCode(UserRole.CONSULTANT.name()),
+                            "상담일지 누락 안내",
+                            "상담일지가 누락되었습니다. 상담일지를 작성한 후 완료 처리해 주세요.",
+                            getMessageTypeFromCommonCode("COMPLETION"),
+                            true,
+                            false
+                        );
+                    } catch (Exception e) {
+                        log.warn("상담일지 누락 리마인드 메시지 발송 실패(무시): scheduleId={}, {}", id, e.getMessage());
+                    }
+                    throw new IllegalStateException("상담일지를 작성한 후 완료 처리할 수 있습니다.");
+                }
+            }
+        }
         
         Schedule saved;
         String tenantId = TenantContextHolder.getTenantId();
@@ -515,7 +561,27 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     public Schedule completeSchedule(Long scheduleId) {
         log.info("✅ 스케줄 완료: ID {}", scheduleId);
         Schedule schedule = findById(scheduleId);
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null && schedule.getTenantId() != null) tenantId = schedule.getTenantId();
+        if (tenantId != null) {
+            boolean hasRecord = consultationRecordRepository.existsByTenantIdAndConsultationIdAndIsDeletedFalse(tenantId, scheduleId);
+            if (!hasRecord) {
+                try {
+                    plSqlScheduleValidationService.createConsultationRecordReminder(
+                        scheduleId, schedule.getConsultantId(), schedule.getClientId(),
+                        schedule.getDate(), "상담일지 누락 안내");
+                } catch (Exception e) { log.warn("상담일지 리마인더 생성 실패: {}", e.getMessage()); }
+                try {
+                    consultationMessageService.sendMessage(
+                        schedule.getConsultantId(), schedule.getClientId(), scheduleId,
+                        getRoleCodeFromCommonCode(UserRole.CONSULTANT.name()),
+                        "상담일지 누락 안내",
+                        "상담일지가 누락되었습니다. 상담일지를 작성한 후 완료 처리해 주세요.",
+                        getMessageTypeFromCommonCode("COMPLETION"), true, false);
+                } catch (Exception e) { log.warn("상담일지 누락 리마인드 발송 실패: {}", e.getMessage()); }
+                throw new IllegalStateException("상담일지를 작성한 후 완료 처리할 수 있습니다.");
+            }
+        }
         schedule.setStatus(ScheduleStatus.COMPLETED);
         
         Schedule completedSchedule = scheduleRepository.save(schedule);
@@ -1530,16 +1596,22 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             for (Schedule schedule : todayExpiredSchedules) {
                 try {
                     Schedule latestSchedule = scheduleRepository.findById(schedule.getId()).orElse(null);
-                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                     if (latestSchedule != null && ScheduleStatus.CONFIRMED.equals(latestSchedule.getStatus())) {
-                        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
-                        latestSchedule.setStatus(ScheduleStatus.COMPLETED);
-                        latestSchedule.setUpdatedAt(LocalDateTime.now());
-                        scheduleRepository.save(latestSchedule);
-                        completedCount++;
-                        
-                        log.info("✅ 오늘 확정 스케줄 자동 완료: ID={}, 제목={}, 시간={}", 
-                            latestSchedule.getId(), latestSchedule.getTitle(), latestSchedule.getStartTime());
+                        boolean hasRecord = consultationRecordRepository.existsByTenantIdAndConsultationIdAndIsDeletedFalse(tenantId, latestSchedule.getId());
+                        if (hasRecord) {
+                            latestSchedule.setStatus(ScheduleStatus.COMPLETED);
+                            latestSchedule.setUpdatedAt(LocalDateTime.now());
+                            scheduleRepository.save(latestSchedule);
+                            completedCount++;
+                            log.info("✅ 오늘 확정 스케줄 자동 완료: ID={}, 제목={}, 시간={}", 
+                                latestSchedule.getId(), latestSchedule.getTitle(), latestSchedule.getStartTime());
+                        } else {
+                            try {
+                                plSqlScheduleValidationService.createConsultationRecordReminder(
+                                    latestSchedule.getId(), latestSchedule.getConsultantId(), latestSchedule.getClientId(),
+                                    latestSchedule.getDate(), "상담일지 누락 안내");
+                            } catch (Exception e) { log.warn("상담일지 리마인더 생성 실패: {}", e.getMessage()); }
+                        }
                     }
                 } catch (Exception e) {
                     log.error("❌ 오늘 스케줄 자동 완료 실패: ID={}, 오류={}", schedule.getId(), e.getMessage());
@@ -1554,16 +1626,22 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             for (Schedule schedule : pastBookedSchedules) {
                 try {
                     Schedule latestSchedule = scheduleRepository.findById(schedule.getId()).orElse(null);
-                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                     if (latestSchedule != null && ScheduleStatus.BOOKED.equals(latestSchedule.getStatus())) {
-                        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
-                        latestSchedule.setStatus(ScheduleStatus.COMPLETED);
-                        latestSchedule.setUpdatedAt(LocalDateTime.now());
-                        scheduleRepository.save(latestSchedule);
-                        completedCount++;
-                        
-                        log.info("✅ 지난 예약 스케줄 자동 완료: ID={}, 제목={}, 날짜={}, 시간={}", 
-                            latestSchedule.getId(), latestSchedule.getTitle(), latestSchedule.getDate(), latestSchedule.getStartTime());
+                        boolean hasRecord = consultationRecordRepository.existsByTenantIdAndConsultationIdAndIsDeletedFalse(tenantId, latestSchedule.getId());
+                        if (hasRecord) {
+                            latestSchedule.setStatus(ScheduleStatus.COMPLETED);
+                            latestSchedule.setUpdatedAt(LocalDateTime.now());
+                            scheduleRepository.save(latestSchedule);
+                            completedCount++;
+                            log.info("✅ 지난 예약 스케줄 자동 완료: ID={}, 제목={}, 날짜={}, 시간={}", 
+                                latestSchedule.getId(), latestSchedule.getTitle(), latestSchedule.getDate(), latestSchedule.getStartTime());
+                        } else {
+                            try {
+                                plSqlScheduleValidationService.createConsultationRecordReminder(
+                                    latestSchedule.getId(), latestSchedule.getConsultantId(), latestSchedule.getClientId(),
+                                    latestSchedule.getDate(), "상담일지 누락 안내");
+                            } catch (Exception e) { log.warn("상담일지 리마인더 생성 실패: {}", e.getMessage()); }
+                        }
                     }
                 } catch (Exception e) {
                     log.error("❌ 지난 예약 스케줄 자동 완료 실패: ID={}, 오류={}", schedule.getId(), e.getMessage());
@@ -1573,16 +1651,22 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             for (Schedule schedule : pastConfirmedSchedules) {
                 try {
                     Schedule latestSchedule = scheduleRepository.findById(schedule.getId()).orElse(null);
-                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                     if (latestSchedule != null && ScheduleStatus.CONFIRMED.equals(latestSchedule.getStatus())) {
-                        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
-                        latestSchedule.setStatus(ScheduleStatus.COMPLETED);
-                        latestSchedule.setUpdatedAt(LocalDateTime.now());
-                        scheduleRepository.save(latestSchedule);
-                        completedCount++;
-                        
-                        log.info("✅ 지난 확정 스케줄 자동 완료: ID={}, 제목={}, 날짜={}, 시간={}", 
-                            latestSchedule.getId(), latestSchedule.getTitle(), latestSchedule.getDate(), latestSchedule.getStartTime());
+                        boolean hasRecord = consultationRecordRepository.existsByTenantIdAndConsultationIdAndIsDeletedFalse(tenantId, latestSchedule.getId());
+                        if (hasRecord) {
+                            latestSchedule.setStatus(ScheduleStatus.COMPLETED);
+                            latestSchedule.setUpdatedAt(LocalDateTime.now());
+                            scheduleRepository.save(latestSchedule);
+                            completedCount++;
+                            log.info("✅ 지난 확정 스케줄 자동 완료: ID={}, 제목={}, 날짜={}, 시간={}", 
+                                latestSchedule.getId(), latestSchedule.getTitle(), latestSchedule.getDate(), latestSchedule.getStartTime());
+                        } else {
+                            try {
+                                plSqlScheduleValidationService.createConsultationRecordReminder(
+                                    latestSchedule.getId(), latestSchedule.getConsultantId(), latestSchedule.getClientId(),
+                                    latestSchedule.getDate(), "상담일지 누락 안내");
+                            } catch (Exception e) { log.warn("상담일지 리마인더 생성 실패: {}", e.getMessage()); }
+                        }
                     }
                 } catch (Exception e) {
                     log.error("❌ 지난 확정 스케줄 자동 완료 실패: ID={}, 오류={}", schedule.getId(), e.getMessage());

@@ -2650,9 +2650,12 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         if (mapping.getPackagePrice() != null && mapping.getTotalSessions() > 0) {
             refundAmount = (mapping.getPackagePrice() * refundedSessions) / mapping.getTotalSessions();
         }
-        
+        final ConsultantClientMapping mappingForErp = mapping;
+        final int finalRefundedSessions = refundedSessions;
+        final long finalRefundAmount = refundAmount;
+        final String finalReason = reason;
         try {
-            runInNewTransaction(() -> sendRefundToErp(mapping, refundedSessions, refundAmount, reason));
+            runInNewTransaction(() -> sendRefundToErp(mappingForErp, finalRefundedSessions, finalRefundAmount, finalReason));
         } catch (Exception e) {
             log.error("❌ ERP 환불 데이터 전송 실패: MappingID={}", id, e);
         }
@@ -2818,8 +2821,12 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         log.info("💰 부분 환불 금액 계산 완료: 환불회기={}, 계산방식={}, 환불금액={}원", 
                 refundSessions, calculationMethod, refundAmount);
         
+        final ConsultantClientMapping mappingForRefund = mapping;
+        final int finalRefundSessions = refundSessions;
+        final long finalRefundAmount = refundAmount;
+        final String finalReason = reason;
         try {
-            runInNewTransaction(() -> sendRefundToErp(mapping, refundSessions, refundAmount, reason));
+            runInNewTransaction(() -> sendRefundToErp(mappingForRefund, finalRefundSessions, finalRefundAmount, finalReason));
             log.info("💚 부분 환불 ERP 전송 성공: MappingID={}, RefundSessions={}, RefundAmount={}", 
                 id, refundSessions, refundAmount);
         } catch (Exception e) {
@@ -2827,7 +2834,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         }
         
         try {
-            runInNewTransaction(() -> createPartialConsultationRefundTransaction(mapping, refundSessions, refundAmount, reason));
+            runInNewTransaction(() -> createPartialConsultationRefundTransaction(mappingForRefund, finalRefundSessions, finalRefundAmount, finalReason));
             log.info("💚 부분 환불 거래 자동 생성 완료: MappingID={}, RefundSessions={}, RefundAmount={}", 
                 id, refundSessions, refundAmount);
         } catch (Exception e) {

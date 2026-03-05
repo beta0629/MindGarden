@@ -888,14 +888,14 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         
         ConsultantClientMapping savedMapping = mappingRepository.save(mapping);
         
+        // 통계/ERP 실패가 결제 완료 트랜잭션에 영향 주지 않도록 별도 트랜잭션에서 실행
+        final Long consultantId = savedMapping.getConsultant() != null ? savedMapping.getConsultant().getId() : null;
+        final Long clientId = savedMapping.getClient() != null ? savedMapping.getClient().getId() : null;
         try {
-            // 표준화 2025-12-06: 브랜치 코드 사용 금지 - null 전달
-            realTimeStatisticsService.updateStatisticsOnMappingChange(
-                savedMapping.getConsultant().getId(), 
-                savedMapping.getClient().getId(), 
-                null // 브랜치 코드 사용 금지
-            );
-            
+            if (consultantId != null && clientId != null) {
+                runInNewTransaction(() -> realTimeStatisticsService.updateStatisticsOnMappingChange(
+                    consultantId, clientId, null));
+            }
             log.info("✅ 결제 확인시 실시간 통계 업데이트 완료: mappingId={}", mappingId);
         } catch (Exception e) {
             log.error("❌ 결제 확인시 실시간 통계 업데이트 실패: {}", e.getMessage(), e);

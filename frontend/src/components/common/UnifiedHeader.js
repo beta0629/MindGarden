@@ -43,6 +43,8 @@ import '../../styles/main.css';
  * @param {function} [props.onLogoClick] - 로고 클릭 핸들러
 /**
  * @param {object} [props.extraActions] - 추가 액션 버튼들
+ * @param {boolean} [props.singleLineLogo=false] - true면 로고 한 줄만 표시(서브타이틀 숨김, 홈페이지 등)
+ * @param {string} [props.logoSubtitle] - 서브타이틀 오버라이드. null이면 중복 시 숨김
  */
 const UnifiedHeader = ({
   title = '', // 빈 문자열이면 브랜딩 정보에서 가져옴
@@ -59,6 +61,8 @@ const UnifiedHeader = ({
   extraActions = null,
   notificationAction = null, // 알림 액션
   useBrandingInfo = true, // 브랜딩 정보 사용 여부
+  singleLineLogo = false,
+  logoSubtitle,
   ...props
 }) => {
   const navigate = useNavigate();
@@ -81,7 +85,17 @@ const UnifiedHeader = ({
   const actualLogoType = logoType || (useBrandingInfo ? headerProps.logoType : 'text');
   const actualLogoImage = logoImage || (useBrandingInfo ? headerProps.logoImage : '');
   const actualLogoAlt = logoAlt || (useBrandingInfo ? headerProps.logoAlt : 'CoreSolution');
-  
+
+  // 로고 한 줄 표시용: "CoreSolution" → "Core Solution" 통일 (중복·테넌트 조각 방지)
+  const displayTitle = (actualTitle === 'CoreSolution' || actualTitle === 'coreSolution')
+    ? 'Core Solution'
+    : actualTitle;
+  // 서브타이틀 중복 시 숨김 (actualTitle이 CoreSolution이면 "Core Solution" 서브타이틀 미표시)
+  const subtitleRedundant = (actualTitle === 'CoreSolution' || actualTitle === 'Core Solution');
+  const showSubtitle = !singleLineLogo && (logoSubtitle !== undefined
+    ? (logoSubtitle != null && logoSubtitle !== '')
+    : !subtitleRedundant);
+
   // 테넌트 이름 결정 (우선순위: 사용자 정보 > 브랜딩 정보 > 기본값)
   const getTenantDisplayName = () => {
     // 1순위: 사용자 정보에서 테넌트 이름
@@ -279,8 +293,10 @@ const UnifiedHeader = ({
     );
   };
 
-  // 로고 렌더링
+  // 로고 렌더링 (singleLineLogo·중복 서브타이틀 제거 반영)
   const renderLogo = () => {
+    const subtitleText = (logoSubtitle != null && logoSubtitle !== '') ? logoSubtitle : 'Core Solution';
+
     // 브랜딩 정보 로딩 중일 때는 기본 로고 표시
     if (useBrandingInfo && isBrandingLoading) {
       return (
@@ -289,7 +305,7 @@ const UnifiedHeader = ({
           onClick={handleLogoClick}
         >
           <span className="mg-header__logo-text">Core Solution</span>
-          <span className="mg-header__logo-subtitle">Core Solution</span>
+          {!singleLineLogo && <span className="mg-header__logo-subtitle">Core Solution</span>}
         </div>
       );
     }
@@ -303,7 +319,6 @@ const UnifiedHeader = ({
               alt={actualLogoAlt}
               className="mg-header__logo mg-header__logo--image"
               onError={(e) => {
-                // 이미지 로드 실패 시 텍스트 로고로 폴백
                 console.warn('로고 이미지 로드 실패, 텍스트 로고로 변경:', actualLogoImage);
                 e.target.style.display = 'none';
                 const textLogo = e.target.parentNode.querySelector('.mg-header__logo--text-fallback');
@@ -316,8 +331,8 @@ const UnifiedHeader = ({
               className="mg-header__logo mg-header__logo--text mg-header__logo--text-fallback"
               style={{ display: 'none' }}
             >
-              <span className="mg-header__logo-text">{actualTitle}</span>
-              <span className="mg-header__logo-subtitle">Core Solution</span>
+              <span className="mg-header__logo-text">{displayTitle}</span>
+              {showSubtitle && <span className="mg-header__logo-subtitle">{subtitleText}</span>}
             </div>
           </div>
         );
@@ -337,11 +352,13 @@ const UnifiedHeader = ({
             onClick={handleLogoClick}
           >
             <span className="mg-header__logo-text">
-              {actualTitle}
+              {displayTitle}
             </span>
-            <span className="mg-header__logo-subtitle">
-              Core Solution
-            </span>
+            {showSubtitle && (
+              <span className="mg-header__logo-subtitle">
+                {subtitleText}
+              </span>
+            )}
           </div>
         );
     }

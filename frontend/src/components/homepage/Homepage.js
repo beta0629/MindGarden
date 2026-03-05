@@ -86,6 +86,9 @@ const Homepage = () => {
           variant={isScrolled ? 'default' : 'transparent'}
           sticky={true}
           showBackButton={false}
+          title="Core Solution"
+          singleLineLogo={true}
+          useBrandingInfo={!!user}
           onLogoClick={() => navigate('/')}
           extraActions={
             !user && (

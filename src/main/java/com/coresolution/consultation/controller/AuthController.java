@@ -286,19 +286,18 @@ public class AuthController extends BaseApiController {
             throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
         }
 
-        // tenantId 가져오기 (회원가입 시 필요)
+        // tenantId 가져오기 (회원가입 시 필수)
         String tenantId = TenantContextHolder.getTenantId();
-        if (tenantId == null) {
-            log.warn("⚠️ 회원가입 시 tenantId가 없습니다. 기본 테넌트 사용 또는 오류 처리 필요");
-            // TODO: 기본 테넌트 설정 또는 오류 처리
+        if (tenantId == null || tenantId.isEmpty()) {
+            log.warn("⚠️ 회원가입 시 tenantId가 없습니다. 테넌트 정보 필수.");
+            throw new IllegalArgumentException(
+                    "회원가입을 위해서는 테넌트 정보가 필요합니다. 올바른 주소(서브도메인)에서 접속했는지 확인해 주세요.");
         }
-        
+
         User user = new User();
         user.setUserId(generateUniqueUserId(email, tenantId));
         user.setEmail(email);
-        if (tenantId != null) {
-            user.setTenantId(tenantId);
-        }
+        user.setTenantId(tenantId);
         user.setPassword(request.getPassword());
         user.setName(encryptionUtil.safeEncrypt(request.getName().trim()));
 

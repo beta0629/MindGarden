@@ -14,6 +14,11 @@ import { useSession } from '../../contexts/SessionContext';
 import { LOGIN_SESSION_CHECK_DELAY, EXISTING_SESSION_CHECK_DELAY } from '../../constants/session';
 import { redirectToDynamicDashboard, getLegacyDashboardPath } from '../../utils/dashboardUtils';
 import notificationManager from '../../utils/notification';
+import {
+  shouldRedirectWrongPath,
+  WRONG_PATH_MESSAGE,
+  WRONG_PATH_REDIRECT_DELAY_MS
+} from '../../utils/subdomainUtils';
 import { TABLET_LOGIN_CSS } from '../../constants/css';
 import csrfTokenManager from '../../utils/csrfTokenManager';
 import { TABLET_LOGIN_CONSTANTS } from '../../constants/css-variables';
@@ -74,6 +79,16 @@ const TabletLogin = () => {
     getOAuth2Config();
     checkOAuthCallback();
   }, [location]); // location 변경 시 OAuth 콜백 체크
+
+  /** 테넌트 도메인인데 서브도메인이 없으면 잘못된 경로: 알림 후 홈으로 리다이렉트 (localhost 제외) */
+  useEffect(() => {
+    if (!shouldRedirectWrongPath()) return;
+    notificationManager.show(WRONG_PATH_MESSAGE, 'warning');
+    const timer = setTimeout(() => {
+      navigate('/', { replace: true });
+    }, WRONG_PATH_REDIRECT_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, [navigate]);
   
   // 카운트다운 타이머 (별도 useEffect)
   useEffect(() => {

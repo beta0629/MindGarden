@@ -3,6 +3,12 @@ import { useNavigate, Link } from 'react-router-dom';
 import { apiGet } from '../../utils/ajax';
 import csrfTokenManager from '../../utils/csrfTokenManager';
 import notificationManager from '../../utils/notification';
+import {
+  getTenantSubdomainFromHost,
+  shouldRedirectWrongPath,
+  WRONG_PATH_MESSAGE,
+  WRONG_PATH_REDIRECT_DELAY_MS
+} from '../../utils/subdomainUtils';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import { TermsOfServiceContent } from '../common/TermsOfService';
 import { PrivacyPolicyContent } from '../common/PrivacyPolicy';
@@ -48,6 +54,16 @@ const TabletRegister = () => {
   useEffect(() => {
     getOAuth2Config();
   }, []);
+
+  /** 테넌트 도메인인데 서브도메인이 없으면 잘못된 경로: 알림 후 홈으로 리다이렉트 (localhost 제외) */
+  useEffect(() => {
+    if (!shouldRedirectWrongPath()) return;
+    notificationManager.show(WRONG_PATH_MESSAGE, 'warning');
+    const timer = setTimeout(() => {
+      navigate('/', { replace: true });
+    }, WRONG_PATH_REDIRECT_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, [navigate]);
 
   const getOAuth2Config = async () => {
     try {
@@ -223,7 +239,9 @@ const TabletRegister = () => {
         agreeTerms: formData.agreeTerms,
         agreePrivacy: formData.agreePrivacy
       };
-      const response = await csrfTokenManager.post('/api/v1/auth/register', payload);
+      const subdomain = getTenantSubdomainFromHost();
+      const registerOptions = subdomain ? { headers: { 'X-Tenant-Subdomain': subdomain } } : {};
+      const response = await csrfTokenManager.post('/api/v1/auth/register', payload, registerOptions);
 
       if (response.ok) {
         await response.json();

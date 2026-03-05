@@ -39,6 +39,11 @@ import PasswordChangeModal from '../mypage/components/PasswordChangeModal';
 import '../../styles/auth/UnifiedLogin.css';
 import csrfTokenManager from '../../utils/csrfTokenManager';
 import notificationManager from '../../utils/notification';
+import {
+  shouldRedirectWrongPath,
+  WRONG_PATH_MESSAGE,
+  WRONG_PATH_REDIRECT_DELAY_MS
+} from '../../utils/subdomainUtils';
 
 const UnifiedLogin = () => {
   console.log('🚀 UnifiedLogin 컴포넌트 렌더링 시작');
@@ -64,6 +69,16 @@ const UnifiedLogin = () => {
     console.log('📋 마운트 시 formData:', formData);
     console.log('🔧 handleInputChange 함수:', typeof handleInputChange);
   }, []);
+
+  /** 테넌트 도메인인데 서브도메인이 없으면 잘못된 경로: 알림 후 홈으로 리다이렉트 (localhost 제외) */
+  useEffect(() => {
+    if (!shouldRedirectWrongPath()) return;
+    notificationManager.show(WRONG_PATH_MESSAGE, 'warning');
+    const timer = setTimeout(() => {
+      navigate('/', { replace: true });
+    }, WRONG_PATH_REDIRECT_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, [navigate]);
   const [oauth2Config, setOauth2Config] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showSocialSignupModal, setShowSocialSignupModal] = useState(false);

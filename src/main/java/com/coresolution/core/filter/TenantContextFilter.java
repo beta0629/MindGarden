@@ -441,6 +441,28 @@ public class TenantContextFilter implements Filter {
             }
         }
 
+        // 3.5. X-Tenant-Subdomain 헤더 (API가 다른 호스트일 때 프론트에서 현재 페이지 서브도메인 전달)
+        String subdomainHeader = request.getHeader("X-Tenant-Subdomain");
+        if (subdomainHeader != null && !subdomainHeader.isEmpty()) {
+            try {
+                return tenantRepository.findBySubdomainIgnoreCase(subdomainHeader.trim())
+                        .map(tenant -> {
+                            String foundTenantId = tenant.getTenantId();
+                            log.info("✅ X-Tenant-Subdomain으로 테넌트 조회 성공: subdomain={}, tenantId={}",
+                                    subdomainHeader, foundTenantId);
+                            return foundTenantId;
+                        })
+                        .orElseGet(() -> {
+                            log.warn("⚠️ X-Tenant-Subdomain으로 테넌트를 찾을 수 없음: subdomain={}",
+                                    subdomainHeader);
+                            return null;
+                        });
+            } catch (Exception e) {
+                log.error("❌ X-Tenant-Subdomain 테넌트 조회 중 오류: subdomain={}, error={}",
+                        subdomainHeader, e.getMessage(), e);
+            }
+        }
+
         // 4. 로컬 프로파일이지만 서브도메인도 없는 경우 기본 테넌트 사용
         if (host != null && (host.contains("localhost") || host.contains("127.0.0.1"))) {
             boolean isLocalProfile = isLocalProfile();

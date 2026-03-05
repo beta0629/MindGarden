@@ -3,20 +3,28 @@ import { useNavigate, Link } from 'react-router-dom';
 import { apiGet } from '../../utils/ajax';
 import csrfTokenManager from '../../utils/csrfTokenManager';
 import notificationManager from '../../utils/notification';
-import CustomSelect from '../common/CustomSelect';
 import './AuthPageCommon.css';
+
+/** 주민번호 7번째 자리로 성별 코드 반환 (1,3: 남성 / 2,4: 여성 / 그 외: 기타) */
+const GENDER_FROM_RRN = {
+  '1': 'MALE',
+  '3': 'MALE',
+  '2': 'FEMALE',
+  '4': 'FEMALE'
+};
+const GENDER_LABEL = { MALE: '남성', FEMALE: '여성', OTHER: '기타' };
 
 const TabletRegister = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: '',
-    nickname: '',
     email: '',
     password: '',
     confirmPassword: '',
     phone: '',
     gender: '',
-    birthDate: '',
+    rrnFirst6: '',
+    rrnLast1: '',
     agreeTerms: false,
     agreePrivacy: false
   });
@@ -24,44 +32,11 @@ const TabletRegister = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState({});
-  const [genderOptions, setGenderOptions] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [emailCheckStatus, setEmailCheckStatus] = useState(null); // 'checking' | 'duplicate' | 'available' | null
   const [isCheckingEmail, setIsCheckingEmail] = useState(false);
 
-  // OAuth2 설정 가져오기
   useEffect(() => {
     getOAuth2Config();
-  }, []);
-
-  // 성별 코드 로드
-  useEffect(() => {
-    const loadGenderCodes = async () => {
-      try {
-        setLoading(true);
-        const response = await apiGet('/api/v1/common-codes/GENDER');
-        if (response && response.length > 0) {
-          const options = response.map(code => ({
-            value: code.codeValue,
-            label: code.codeLabel,
-            icon: code.icon,
-            color: code.colorCode
-          }));
-          setGenderOptions(options);
-        }
-      } catch (error) {
-        console.error('성별 코드 로드 실패:', error);
-        setGenderOptions([
-          { value: 'MALE', label: '남성', icon: '♂️', color: 'var(--mg-primary-500)' },
-          { value: 'FEMALE', label: '여성', icon: '♀️', color: 'var(--mg-primary-500)' },
-          { value: 'OTHER', label: '기타', icon: '⚧', color: 'var(--mg-text-secondary)' }
-        ]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadGenderCodes();
   }, []);
 
   const getOAuth2Config = async () => {
@@ -75,18 +50,19 @@ const TabletRegister = () => {
     }
   };
 
-  const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
-
-    if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: '' }));
-    }
-    if (name === 'email') {
-      setEmailCheckStatus(null);
+  /** 이메일 중복 여부만 API로 확인. true: 중복, false: 사용가능, 예외 시 null */
+  const checkEmailDuplicate = async (email) => {
+    const trimmed = email?.trim();
+    if (!trimmed) return null;
+    try {
+      const response = await apiGet(`/api/v1/auth/duplicate-check/email?email=${encodeURIComponent(trimmed)}`);
+      if (response && typeof response.isDuplicate === 'boolean') {
+        return response.isDuplicate;
+      }
+      return null;
+    } catch (error) {
+      console.error('이메일 중복 확인 오류:', error);
+      return null;
     }
   };
 
@@ -105,25 +81,44 @@ const TabletRegister = () => {
     setIsCheckingEmail(true);
     setEmailCheckStatus('checking');
     try {
-      const response = await apiGet(`/api/v1/auth/duplicate-check/email?email=${encodeURIComponent(email)}`);
-      if (response && typeof response.isDuplicate === 'boolean') {
-        if (response.isDuplicate) {
-          setEmailCheckStatus('duplicate');
-          notificationManager.show('이미 사용 중인 이메일입니다.', 'error');
-        } else {
-          setEmailCheckStatus('available');
-          notificationManager.show('사용 가능한 이메일입니다.', 'success');
-        }
+      const isDuplicate = await checkEmailDuplicate(email);
+      if (isDuplicate === true) {
+        setEmailCheckStatus('duplicate');
+        notificationManager.show('이미 사용 중인 이메일입니다.', 'error');
+      } else if (isDuplicate === false) {
+        setEmailCheckStatus('available');
+        notificationManager.show('사용 가능한 이메일입니다.', 'success');
       } else {
         setEmailCheckStatus(null);
         notificationManager.show('이메일 중복 확인 중 오류가 발생했습니다.', 'error');
       }
-    } catch (error) {
-      console.error('이메일 중복 확인 오류:', error);
-      setEmailCheckStatus(null);
-      notificationManager.show('이메일 중복 확인 중 오류가 발생했습니다.', 'error');
     } finally {
       setIsCheckingEmail(false);
+    }
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    let nextValue = type === 'checkbox' ? checked : value;
+    if (name === 'rrnFirst6') {
+      nextValue = value.replaceAll(/\D/g, '').slice(0, 6);
+    } else if (name === 'rrnLast1') {
+      nextValue = value.replaceAll(/\D/g, '').slice(0, 1);
+    }
+
+    setFormData(prev => {
+      const next = { ...prev, [name]: nextValue };
+      if (name === 'rrnLast1' && nextValue.length === 1) {
+        next.gender = GENDER_FROM_RRN[nextValue] || 'OTHER';
+      }
+      return next;
+    });
+
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: '' }));
+    }
+    if (name === 'email') {
+      setEmailCheckStatus(null);
     }
   };
 
@@ -164,6 +159,13 @@ const TabletRegister = () => {
       newErrors.phone = '휴대폰 번호를 입력해주세요.';
     }
 
+    if (formData.rrnFirst6.length !== 6 || !/^\d{6}$/.test(formData.rrnFirst6)) {
+      newErrors.rrnFirst6 = '주민번호 앞 6자리를 입력해주세요.';
+    }
+    if (formData.rrnLast1.length !== 1 || !/^\d$/.test(formData.rrnLast1)) {
+      newErrors.rrnLast1 = '주민번호 뒤 1자리를 입력해주세요.';
+    }
+
     if (!formData.agreeTerms) {
       newErrors.agreeTerms = '이용약관에 동의해주세요.';
     }
@@ -183,10 +185,34 @@ const TabletRegister = () => {
       return;
     }
 
+    if (emailCheckStatus !== 'available') {
+      const isDuplicate = await checkEmailDuplicate(formData.email);
+      if (isDuplicate === true) {
+        setEmailCheckStatus('duplicate');
+        notificationManager.show('이미 사용 중인 이메일입니다. 이메일 중복확인을 해주세요.', 'error');
+        return;
+      }
+      if (isDuplicate === false) {
+        setEmailCheckStatus('available');
+      } else {
+        notificationManager.show('이메일 중복 확인 중 오류가 발생했습니다.', 'error');
+        return;
+      }
+    }
+
     setIsLoading(true);
 
     try {
-      const { branchCode, ...payload } = formData;
+      const payload = {
+        name: formData.name.trim(),
+        email: formData.email.trim(),
+        password: formData.password,
+        confirmPassword: formData.confirmPassword,
+        phone: formData.phone.trim(),
+        gender: formData.gender || 'OTHER',
+        agreeTerms: formData.agreeTerms,
+        agreePrivacy: formData.agreePrivacy
+      };
       const response = await csrfTokenManager.post('/api/v1/auth/register', payload);
 
       if (response.ok) {
@@ -205,11 +231,6 @@ const TabletRegister = () => {
     }
   };
 
-  const genderSelectOptions = genderOptions.map(opt => ({
-    value: opt.value,
-    label: opt.label
-  }));
-
   return (
     <div className="mg-v2-auth-container">
       <div className="mg-v2-auth-hero">
@@ -227,34 +248,19 @@ const TabletRegister = () => {
           </div>
 
           <form onSubmit={handleSubmit} className="mg-v2-auth-form">
-            <div className="mg-v2-form-row">
-              <div className="mg-v2-form-group">
-                <label htmlFor="name" className="mg-v2-form-label">이름 *</label>
-                <input
-                  type="text"
-                  id="name"
-                  name="name"
-                  className={`mg-v2-form-input ${errors.name ? 'mg-v2-input error' : ''}`}
-                  placeholder="이름을 입력하세요"
-                  value={formData.name}
-                  onChange={handleInputChange}
-                  required
-                />
-                {errors.name && <span className="mg-v2-error-text">{errors.name}</span>}
-              </div>
-
-              <div className="mg-v2-form-group">
-                <label htmlFor="nickname" className="mg-v2-form-label">닉네임</label>
-                <input
-                  type="text"
-                  id="nickname"
-                  name="nickname"
-                  className="mg-v2-form-input"
-                  placeholder="닉네임을 입력하세요"
-                  value={formData.nickname}
-                  onChange={handleInputChange}
-                />
-              </div>
+            <div className="mg-v2-form-group">
+              <label htmlFor="name" className="mg-v2-form-label">이름 *</label>
+              <input
+                type="text"
+                id="name"
+                name="name"
+                className={`mg-v2-form-input ${errors.name ? 'mg-v2-input error' : ''}`}
+                placeholder="이름을 입력하세요"
+                value={formData.name}
+                onChange={handleInputChange}
+                required
+              />
+              {errors.name && <span className="mg-v2-error-text">{errors.name}</span>}
             </div>
 
             <div className="mg-v2-form-group">
@@ -268,6 +274,12 @@ const TabletRegister = () => {
                   placeholder="이메일을 입력하세요"
                   value={formData.email}
                   onChange={handleInputChange}
+                  onBlur={() => {
+                  const email = formData.email?.trim();
+                  if (email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                    handleEmailDuplicateCheck();
+                  }
+                }}
                   required
                 />
                 <button
@@ -340,49 +352,60 @@ const TabletRegister = () => {
               </div>
             </div>
 
+            <div className="mg-v2-form-group">
+              <label htmlFor="phone" className="mg-v2-form-label">휴대폰 번호 *</label>
+              <input
+                type="tel"
+                id="phone"
+                name="phone"
+                className={`mg-v2-form-input ${errors.phone ? 'mg-v2-input error' : ''}`}
+                placeholder="010-0000-0000"
+                value={formData.phone}
+                onChange={handleInputChange}
+                required
+                maxLength="13"
+              />
+              {errors.phone && <span className="mg-v2-error-text">{errors.phone}</span>}
+            </div>
+
             <div className="mg-v2-form-row">
               <div className="mg-v2-form-group">
-                <label htmlFor="phone" className="mg-v2-form-label">휴대폰 번호 *</label>
+                <label htmlFor="rrnFirst6" className="mg-v2-form-label">주민번호 앞 6자리</label>
                 <input
-                  type="tel"
-                  id="phone"
-                  name="phone"
-                  className={`mg-v2-form-input ${errors.phone ? 'mg-v2-input error' : ''}`}
-                  placeholder="010-0000-0000"
-                  value={formData.phone}
+                  type="text"
+                  id="rrnFirst6"
+                  name="rrnFirst6"
+                  inputMode="numeric"
+                  maxLength={6}
+                  className={`mg-v2-form-input ${errors.rrnFirst6 ? 'mg-v2-input error' : ''}`}
+                  placeholder="900101"
+                  value={formData.rrnFirst6}
                   onChange={handleInputChange}
-                  required
-                  maxLength="13"
                 />
-                {errors.phone && <span className="mg-v2-error-text">{errors.phone}</span>}
+                {errors.rrnFirst6 && <span className="mg-v2-error-text">{errors.rrnFirst6}</span>}
               </div>
-
               <div className="mg-v2-form-group">
-                <label htmlFor="gender" className="mg-v2-form-label">성별</label>
-                <CustomSelect
-                  value={formData.gender}
-                  onChange={(val) => {
-                    setFormData(prev => ({ ...prev, gender: val }));
-                    if (errors.gender) setErrors(prev => ({ ...prev, gender: '' }));
-                  }}
-                  options={genderSelectOptions}
-                  placeholder="성별을 선택하세요"
-                  className="mg-v2-form-select"
-                  disabled={loading}
+                <label htmlFor="rrnLast1" className="mg-v2-form-label">주민번호 뒤 1자리</label>
+                <input
+                  type="text"
+                  id="rrnLast1"
+                  name="rrnLast1"
+                  inputMode="numeric"
+                  maxLength={1}
+                  className={`mg-v2-form-input ${errors.rrnLast1 ? 'mg-v2-input error' : ''}`}
+                  placeholder="1"
+                  value={formData.rrnLast1}
+                  onChange={handleInputChange}
                 />
+                {errors.rrnLast1 && <span className="mg-v2-error-text">{errors.rrnLast1}</span>}
               </div>
             </div>
 
             <div className="mg-v2-form-group">
-              <label htmlFor="birthDate" className="mg-v2-form-label">생년월일</label>
-              <input
-                type="date"
-                id="birthDate"
-                name="birthDate"
-                className="mg-v2-form-input"
-                value={formData.birthDate}
-                onChange={handleInputChange}
-              />
+              <span className="mg-v2-form-label">성별</span>
+              <p className="mg-v2-form-readonly">
+                성별: {formData.gender ? GENDER_LABEL[formData.gender] : '주민번호 뒤 1자리 입력 시 자동 표시'}
+              </p>
             </div>
 
             <div className="mg-v2-checkbox-group">
@@ -426,7 +449,8 @@ const TabletRegister = () => {
             <button type="submit" className="mg-v2-button-primary" disabled={isLoading}>
               {isLoading ? (
                 <>
-                  <span className="mg-v2-spinner"></span>
+                  <span className="mg-v2-spinner" aria-hidden="true" />
+                  {' '}
                   회원가입 중...
                 </>
               ) : (

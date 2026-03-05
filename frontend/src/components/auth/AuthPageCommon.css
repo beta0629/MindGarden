@@ -151,6 +151,13 @@
   display: block;
 }
 
+.mg-v2-auth-form .mg-v2-form-readonly {
+  font-size: 14px;
+  color: var(--mg-text-secondary, #6B7280);
+  margin: 0;
+  padding-top: 4px;
+}
+
 .mg-v2-input,
 .mg-v2-auth-form .mg-v2-form-input {
   background-color: var(--mg-surface-primary, #F5F3EF);

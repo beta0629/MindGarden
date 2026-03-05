@@ -1,5 +1,5 @@
 name: 🎨 Frontend (CoreSolution) 개발 서버 배포
-# 배포 트리거: 2025-12-10
+# 배포 트리거: 2025-12-10 (paths: frontend/**)
 
 on:
   push:

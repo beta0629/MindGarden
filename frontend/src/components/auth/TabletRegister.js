@@ -14,6 +14,9 @@ const GENDER_FROM_RRN = {
 };
 const GENDER_LABEL = { MALE: '남성', FEMALE: '여성', OTHER: '기타' };
 
+/** 이메일 입력 시 제안할 도메인 목록 (클릭하면 입력란에 적용) */
+const EMAIL_DOMAINS = ['@gmail.com', '@naver.com', '@daum.net', '@kakao.com', '@hanmail.net', '@nate.com', '@yahoo.co.kr', '@outlook.com'];
+
 const TabletRegister = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
@@ -34,6 +37,7 @@ const TabletRegister = () => {
   const [errors, setErrors] = useState({});
   const [emailCheckStatus, setEmailCheckStatus] = useState(null); // 'checking' | 'duplicate' | 'available' | null
   const [isCheckingEmail, setIsCheckingEmail] = useState(false);
+  const [emailSuggestionsOpen, setEmailSuggestionsOpen] = useState(false);
 
   useEffect(() => {
     getOAuth2Config();
@@ -263,37 +267,99 @@ const TabletRegister = () => {
               {errors.name && <span className="mg-v2-error-text">{errors.name}</span>}
             </div>
 
-            <datalist id="email-domains">
-              <option value="example@gmail.com" />
-              <option value="example@naver.com" />
-              <option value="example@daum.net" />
-              <option value="example@kakao.com" />
-              <option value="example@hanmail.net" />
-              <option value="example@nate.com" />
-              <option value="example@yahoo.co.kr" />
-              <option value="example@outlook.com" />
-            </datalist>
+            <div className="mg-v2-form-row">
+              <div className="mg-v2-form-group">
+                <label htmlFor="rrnFirst6" className="mg-v2-form-label">주민번호 앞 6자리</label>
+                <input
+                  type="text"
+                  id="rrnFirst6"
+                  name="rrnFirst6"
+                  inputMode="numeric"
+                  maxLength={6}
+                  className={`mg-v2-form-input ${errors.rrnFirst6 ? 'mg-v2-input error' : ''}`}
+                  placeholder="900101"
+                  value={formData.rrnFirst6}
+                  onChange={handleInputChange}
+                />
+                {errors.rrnFirst6 && <span className="mg-v2-error-text">{errors.rrnFirst6}</span>}
+              </div>
+              <div className="mg-v2-form-group">
+                <label htmlFor="rrnLast1" className="mg-v2-form-label">주민번호 뒤 1자리</label>
+                <input
+                  type="text"
+                  id="rrnLast1"
+                  name="rrnLast1"
+                  inputMode="numeric"
+                  maxLength={1}
+                  className={`mg-v2-form-input ${errors.rrnLast1 ? 'mg-v2-input error' : ''}`}
+                  placeholder="1"
+                  value={formData.rrnLast1}
+                  onChange={handleInputChange}
+                />
+                {errors.rrnLast1 && <span className="mg-v2-error-text">{errors.rrnLast1}</span>}
+              </div>
+            </div>
+
             <div className="mg-v2-form-group">
+              <span className="mg-v2-form-label">성별</span>
+              <p className="mg-v2-form-readonly">
+                성별: {formData.gender ? GENDER_LABEL[formData.gender] : '주민번호 뒤 1자리 입력 시 자동 표시'}
+              </p>
+            </div>
+
+            <div className="mg-v2-form-group" style={{ position: 'relative' }}>
               <label htmlFor="email" className="mg-v2-form-label">이메일 *</label>
               <div className="mg-v2-form-email-row">
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  autoComplete="email"
-                  list="email-domains"
-                  className={`mg-v2-form-input ${errors.email ? 'mg-v2-input error' : ''}`}
-                  placeholder="이메일을 입력하세요"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  onBlur={() => {
-                  const email = formData.email?.trim();
-                  if (email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-                    handleEmailDuplicateCheck();
-                  }
-                }}
-                  required
-                />
+                <div style={{ position: 'relative', flex: 1, minWidth: 0 }}>
+                  <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    autoComplete="email"
+                    className={`mg-v2-form-input ${errors.email ? 'mg-v2-input error' : ''}`}
+                    placeholder="이메일을 입력하세요"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    onFocus={() => setEmailSuggestionsOpen(true)}
+                    onBlur={() => {
+                      setTimeout(() => setEmailSuggestionsOpen(false), 150);
+                      const email = formData.email?.trim();
+                      if (email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                        handleEmailDuplicateCheck();
+                      }
+                    }}
+                    required
+                  />
+                  {emailSuggestionsOpen && (
+                    <ul
+                      className="mg-v2-email-suggestions"
+                      role="listbox"
+                      aria-label="이메일 도메인 제안"
+                    >
+                      {EMAIL_DOMAINS.map((domain) => {
+                        const prefix = formData.email?.includes('@')
+                          ? formData.email.slice(0, formData.email.indexOf('@')).trim() || 'example'
+                          : (formData.email?.trim() || 'example');
+                        const fullEmail = prefix + domain;
+                        return (
+                          <li
+                            key={domain}
+                            role="option"
+                            className="mg-v2-email-suggestion-item"
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              setFormData((prev) => ({ ...prev, email: fullEmail }));
+                              setEmailCheckStatus(null);
+                              setEmailSuggestionsOpen(false);
+                            }}
+                          >
+                            {fullEmail}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </div>
                 <button
                   type="button"
                   onClick={handleEmailDuplicateCheck}
@@ -378,46 +444,6 @@ const TabletRegister = () => {
                 maxLength="13"
               />
               {errors.phone && <span className="mg-v2-error-text">{errors.phone}</span>}
-            </div>
-
-            <div className="mg-v2-form-row">
-              <div className="mg-v2-form-group">
-                <label htmlFor="rrnFirst6" className="mg-v2-form-label">주민번호 앞 6자리</label>
-                <input
-                  type="text"
-                  id="rrnFirst6"
-                  name="rrnFirst6"
-                  inputMode="numeric"
-                  maxLength={6}
-                  className={`mg-v2-form-input ${errors.rrnFirst6 ? 'mg-v2-input error' : ''}`}
-                  placeholder="900101"
-                  value={formData.rrnFirst6}
-                  onChange={handleInputChange}
-                />
-                {errors.rrnFirst6 && <span className="mg-v2-error-text">{errors.rrnFirst6}</span>}
-              </div>
-              <div className="mg-v2-form-group">
-                <label htmlFor="rrnLast1" className="mg-v2-form-label">주민번호 뒤 1자리</label>
-                <input
-                  type="text"
-                  id="rrnLast1"
-                  name="rrnLast1"
-                  inputMode="numeric"
-                  maxLength={1}
-                  className={`mg-v2-form-input ${errors.rrnLast1 ? 'mg-v2-input error' : ''}`}
-                  placeholder="1"
-                  value={formData.rrnLast1}
-                  onChange={handleInputChange}
-                />
-                {errors.rrnLast1 && <span className="mg-v2-error-text">{errors.rrnLast1}</span>}
-              </div>
-            </div>
-
-            <div className="mg-v2-form-group">
-              <span className="mg-v2-form-label">성별</span>
-              <p className="mg-v2-form-readonly">
-                성별: {formData.gender ? GENDER_LABEL[formData.gender] : '주민번호 뒤 1자리 입력 시 자동 표시'}
-              </p>
             </div>
 
             <div className="mg-v2-checkbox-group">

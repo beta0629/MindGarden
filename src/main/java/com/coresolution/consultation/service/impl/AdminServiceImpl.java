@@ -1139,9 +1139,14 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     public List<ConsultantClientMapping> getPendingPaymentMappings() {
         String pendingPaymentStatus = getMappingStatusCode("PENDING_PAYMENT");
         String tenantId = getTenantId();
-        return mappingRepository.findByTenantId(tenantId).stream()
+        List<ConsultantClientMapping> list = mappingRepository.findByTenantId(tenantId).stream()
                 .filter(mapping -> mapping.getStatus().name().equals(pendingPaymentStatus))
                 .collect(Collectors.toList());
+        for (ConsultantClientMapping m : list) {
+            Hibernate.initialize(m.getConsultant());
+            Hibernate.initialize(m.getClient());
+        }
+        return list;
     }
 
      /**
@@ -1151,9 +1156,14 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     public List<ConsultantClientMapping> getPaymentConfirmedMappings() {
         String paymentConfirmedStatus = getMappingStatusCode("PAYMENT_CONFIRMED");
         String tenantId = getTenantId();
-        return mappingRepository.findByTenantId(tenantId).stream()
+        List<ConsultantClientMapping> list = mappingRepository.findByTenantId(tenantId).stream()
                 .filter(mapping -> mapping.getStatus().name().equals(paymentConfirmedStatus))
                 .collect(Collectors.toList());
+        for (ConsultantClientMapping m : list) {
+            Hibernate.initialize(m.getConsultant());
+            Hibernate.initialize(m.getClient());
+        }
+        return list;
     }
 
      /**
@@ -1162,12 +1172,18 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     @Override
     public List<ConsultantClientMapping> getPendingDepositMappings() {
         String tenantId = getTenantId();
-        return mappingRepository.findByTenantId(tenantId).stream()
-                .filter(mapping -> mapping.getPaymentStatus() != null && 
+        List<ConsultantClientMapping> list = mappingRepository.findByTenantId(tenantId).stream()
+                .filter(mapping -> mapping.getPaymentStatus() != null &&
                                  mapping.getPaymentStatus().name().equals("CONFIRMED") &&
                                  mapping.getStatus() != null &&
                                  mapping.getStatus().name().equals("PAYMENT_CONFIRMED"))
                 .collect(Collectors.toList());
+        // 컨트롤러에서 mapping.getConsultant()/getClient() 접근 시 no Session 방지
+        for (ConsultantClientMapping m : list) {
+            Hibernate.initialize(m.getConsultant());
+            Hibernate.initialize(m.getClient());
+        }
+        return list;
     }
 
      /**
@@ -1177,7 +1193,12 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     public List<ConsultantClientMapping> getActiveMappings() {
         // 표준화 2025-12-05: tenantId 필터링 필수
         String tenantId = getTenantId();
-        return mappingRepository.findActiveMappingsWithDetailsByTenantId(tenantId);
+        List<ConsultantClientMapping> list = mappingRepository.findActiveMappingsWithDetailsByTenantId(tenantId);
+        for (ConsultantClientMapping m : list) {
+            Hibernate.initialize(m.getConsultant());
+            Hibernate.initialize(m.getClient());
+        }
+        return list;
     }
 
      /**
@@ -1187,9 +1208,14 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     public List<ConsultantClientMapping> getSessionsExhaustedMappings() {
         String sessionsExhaustedStatus = getMappingStatusCode("SESSIONS_EXHAUSTED");
         String tenantId = getTenantId();
-        return mappingRepository.findByTenantId(tenantId).stream()
+        List<ConsultantClientMapping> list = mappingRepository.findByTenantId(tenantId).stream()
                 .filter(mapping -> mapping.getStatus().name().equals(sessionsExhaustedStatus))
                 .collect(Collectors.toList());
+        for (ConsultantClientMapping m : list) {
+            Hibernate.initialize(m.getConsultant());
+            Hibernate.initialize(m.getClient());
+        }
+        return list;
     }
 
     @Override
@@ -1842,7 +1868,12 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         try {
             // 표준화 2025-12-05: tenantId 필터링 필수
             String tenantId = getTenantId();
-            return mappingRepository.findAllWithDetailsByTenantId(tenantId);
+            List<ConsultantClientMapping> list = mappingRepository.findAllWithDetailsByTenantId(tenantId);
+            for (ConsultantClientMapping m : list) {
+                Hibernate.initialize(m.getConsultant());
+                Hibernate.initialize(m.getClient());
+            }
+            return list;
         } catch (Exception e) {
             System.err.println("매칭 목록 조회 실패 (빈 목록 반환): " + e.getMessage());
             return new java.util.ArrayList<>();

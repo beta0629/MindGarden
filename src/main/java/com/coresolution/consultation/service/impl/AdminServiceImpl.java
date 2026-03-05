@@ -2179,33 +2179,37 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                                 (dto.getTotalSessions() != null && oldTotalSessions == null);
         
         if (packageChanged) {
-            try {
-                log.info("🔄 패키지 정보 변경 감지, ERP 재무 거래 동기화 프로시저 호출: mappingId={}", id);
-                
-                String procedureUpdatedBy = updatedBy != null && !updatedBy.isEmpty() 
-                    ? updatedBy 
-                    : (savedMapping.getConsultant() != null && savedMapping.getConsultant().getName() != null
-                        ? savedMapping.getConsultant().getName()
-                        : "System");
-                
-                Map<String, Object> procedureResult = storedProcedureService.updateMappingInfo(
-                    id,
-                    savedMapping.getPackageName(),
-                    savedMapping.getPackagePrice() != null ? savedMapping.getPackagePrice().doubleValue() : 0.0,
-                    savedMapping.getTotalSessions(),
-                    procedureUpdatedBy
-                );
-                
-                if ((Boolean) procedureResult.getOrDefault("success", false)) {
-                    log.info("✅ ERP 재무 거래 동기화 완료: mappingId={}, message={}", 
-                            id, procedureResult.get("message"));
-                } else {
-                    log.warn("⚠️ ERP 재무 거래 동기화 실패: mappingId={}, message={}", 
-                            id, procedureResult.get("message"));
+            String tenantId = getTenantIdFromMapping(savedMapping);
+            if (tenantId == null) tenantId = getTenantIdOrNull();
+            runInNewTransaction(tenantId, () -> {
+                try {
+                    log.info("🔄 패키지 정보 변경 감지, ERP 재무 거래 동기화 프로시저 호출: mappingId={}", id);
+
+                    String procedureUpdatedBy = updatedBy != null && !updatedBy.isEmpty()
+                        ? updatedBy
+                        : (savedMapping.getConsultant() != null && savedMapping.getConsultant().getName() != null
+                            ? savedMapping.getConsultant().getName()
+                            : "System");
+
+                    Map<String, Object> procedureResult = storedProcedureService.updateMappingInfo(
+                        id,
+                        savedMapping.getPackageName(),
+                        savedMapping.getPackagePrice() != null ? savedMapping.getPackagePrice().doubleValue() : 0.0,
+                        savedMapping.getTotalSessions(),
+                        procedureUpdatedBy
+                    );
+
+                    if ((Boolean) procedureResult.getOrDefault("success", false)) {
+                        log.info("✅ ERP 재무 거래 동기화 완료: mappingId={}, message={}",
+                                id, procedureResult.get("message"));
+                    } else {
+                        log.warn("⚠️ ERP 재무 거래 동기화 실패: mappingId={}, message={}",
+                                id, procedureResult.get("message"));
+                    }
+                } catch (Exception e) {
+                    log.error("❌ ERP 재무 거래 동기화 프로시저 호출 실패: mappingId={}", id, e);
                 }
-            } catch (Exception e) {
-                log.error("❌ ERP 재무 거래 동기화 프로시저 호출 실패: mappingId={}", id, e);
-            }
+            });
         }
         
         try {

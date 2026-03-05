@@ -38,7 +38,7 @@ const ClientSessionManagement = () => {
       const mappingsResponse = await apiGet(`/api/v1/admin/mappings/client?clientId=${userId}`);
       const mappings = mappingsResponse.data || [];
 
-      const schedulesResponse = await apiGet(`/api/schedules?userId=${userId}&userRole=CLIENT`);
+      const schedulesResponse = await apiGet(`/api/v1/schedules?userId=${userId}&userRole=CLIENT`);
       const schedules = schedulesResponse.data || [];
 
       const totalSessions = mappings.reduce((sum, mapping) => sum + (mapping.totalSessions || 0), 0);

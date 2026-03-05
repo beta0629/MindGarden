@@ -330,7 +330,7 @@ const ConsultantMessageScreen = () => {
         }));
       } else {
         // state가 없는 경우 API에서 데이터 로드
-        const consultationResponse = await apiGet(`/api/schedules/${consultationId}`);
+        const consultationResponse = await apiGet(`/api/v1/schedules/${consultationId}`);
         if (consultationResponse.success) {
           setConsultation(consultationResponse.data);
           

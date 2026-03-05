@@ -172,7 +172,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
         try {
             console.log('📅 스케줄 로드 시작:', { currentUserId, currentUserRole, selectedConsultantId });
             
-            let url = `/api/schedules?userId=${currentUserId}&userRole=${currentUserRole}`;
+            let url = `/api/v1/schedules?userId=${currentUserId}&userRole=${currentUserRole}`;
             
             if (currentUserRole === 'ADMIN') {
                 url = '/api/v1/schedules/admin';
@@ -481,7 +481,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
 
     const handleTimeSelectionConfirm = async () => {
         try {
-            const response = await fetch(`/api/schedules/${selectedSchedule.id}`, {
+            const response = await fetch(`/api/v1/schedules/${selectedSchedule.id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',

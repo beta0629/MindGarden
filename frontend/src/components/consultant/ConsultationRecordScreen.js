@@ -334,7 +334,7 @@ const ConsultationRecordScreen = () => {
     try {
       setLoading(true);
       
-      const scheduleResponse = await apiGet(`/api/schedules?userId=0&userRole=ADMIN`);
+      const scheduleResponse = await apiGet(`/api/v1/schedules?userId=0&userRole=ADMIN`);
       if (scheduleResponse.success && scheduleResponse.data.length > 0) {
         const scheduleData = scheduleResponse.data[0];
         const consultationData = {

@@ -83,7 +83,7 @@ const ConsultantStatus = () => {
             const today = new Date().toISOString().split('T')[0];
             console.log(`🔍 상담사 ${consultant.name} (ID: ${consultant.id}) 상태 계산 시작`);
             
-            const response = await apiGet(`/api/schedules?userId=${consultant.id}&userRole=CONSULTANT`);
+            const response = await apiGet(`/api/v1/schedules?userId=${consultant.id}&userRole=CONSULTANT`);
             console.log(`📅 상담사 ${consultant.name} 스케줄 데이터:`, response);
             
             if (response && Array.isArray(response)) {

@@ -322,7 +322,7 @@ const UnifiedScheduleComponent = ({ userRole, userId, refetchTrigger, onDropFrom
             
             // 상담사는 자신의 스케줄만 조회
             if (userRole === 'CONSULTANT') {
-                url = `/api/schedules/consultant/${userId}`;
+                url = `/api/v1/schedules/consultant/${userId}`;
                 console.log('🔍 상담사 자신의 스케줄만 조회:', userId);
             }
             // 관리자는 관리자 API 사용
@@ -338,7 +338,7 @@ const UnifiedScheduleComponent = ({ userRole, userId, refetchTrigger, onDropFrom
             }
             // 기타 사용자 (내담자 등)
             else {
-                url = `/api/schedules?userId=${userId}&userRole=${userRole}`;
+                url = `/api/v1/schedules?userId=${userId}&userRole=${userRole}`;
                 console.log('🔍 일반 사용자 스케줄 조회');
             }
             

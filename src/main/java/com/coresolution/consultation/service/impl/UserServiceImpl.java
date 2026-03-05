@@ -318,24 +318,17 @@ public class UserServiceImpl implements UserService {
             return Optional.empty();
         }
         String normalizedEmail = email.trim().toLowerCase();
-        String tenantId = TenantContextHolder.getTenantId();
+        // 로그인/인증은 서브도메인으로 테넌트 조회 후 사용. 테넌트 없이 이메일만 조회 시 복수 건·잘못된 사용자 반환 방지
+        String tenantId = TenantContextHolder.getRequiredTenantId();
 
-        // 1) 평문 이메일로 조회 (평문 저장 사용자 또는 레거시)
-        if (tenantId != null && !tenantId.isEmpty()) {
-            Optional<User> byPlain = userRepository.findByTenantIdAndEmail(tenantId, normalizedEmail);
-            if (byPlain.isPresent()) {
-                return byPlain;
-            }
-        } else {
-            log.warn("⚠️ 테넌트 컨텍스트 없이 findByEmail() 호출됨: {} (멀티 테넌트 사용자 고려하여 첫 번째 결과 반환)", normalizedEmail);
-            List<User> users = userRepository.findAllByEmail(normalizedEmail);
-            if (!users.isEmpty()) {
-                return Optional.of(users.get(0));
-            }
+        // 1) 평문 이메일로 조회 (테넌트 기준)
+        Optional<User> byPlain = userRepository.findByTenantIdAndEmail(tenantId, normalizedEmail);
+        if (byPlain.isPresent()) {
+            return byPlain;
         }
 
         // 2) 조회 실패 시: 관리자 생성 사용자 등 이메일 암호화 저장된 경우 복호화 비교
-        if (tenantId != null && !tenantId.isEmpty()) {
+        {
             List<User> tenantUsers = userRepository.findByTenantId(tenantId);
             for (User u : tenantUsers) {
                 try {

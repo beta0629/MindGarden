@@ -105,6 +105,15 @@ export const getTenantId = async (forceRefresh = false) => {
             }
         }
         
+        // 로그인 전: 서브도메인으로 조회한 tenant_id (UnifiedLogin에서 저장, 로그인 API 호출 시 필수)
+        if (typeof window !== 'undefined' && window.sessionStorage) {
+            const subdomainTenantId = window.sessionStorage.getItem('subdomain_tenant_id');
+            if (subdomainTenantId && typeof subdomainTenantId === 'string' && subdomainTenantId.trim()) {
+                console.log('✅ getTenantId: subdomain_tenant_id 사용 (로그인 등):', subdomainTenantId.trim());
+                return subdomainTenantId.trim();
+            }
+        }
+        
         console.warn('⚠️ tenantId를 찾을 수 없음');
     } catch (error) {
         console.error('❌ tenantId를 가져오는 중 오류:', error);
@@ -187,6 +196,15 @@ export const getDefaultApiHeaders = (additionalHeaders = {}) => {
                 } catch (parseError) {
                     console.warn('⚠️ localStorage userInfo 파싱 오류:', parseError);
                 }
+            }
+        }
+        
+        // 2.5 로그인 전: 서브도메인으로 조회한 tenant_id (로그인 페이지에서 저장, API 호출 시 필수)
+        if (!tenantId && typeof sessionStorage !== 'undefined') {
+            const subdomainTenantId = sessionStorage.getItem('subdomain_tenant_id');
+            if (subdomainTenantId && typeof subdomainTenantId === 'string' && subdomainTenantId.trim()) {
+                tenantId = subdomainTenantId.trim();
+                console.log('✅ X-Tenant-Id 헤더용 subdomain_tenant_id 사용:', tenantId);
             }
         }
         

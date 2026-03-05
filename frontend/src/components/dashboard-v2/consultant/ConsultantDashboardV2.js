@@ -52,10 +52,12 @@ const ConsultantDashboardV2 = ({ user }) => {
         userRole: 'CONSULTANT'
       });
 
-      // 데이터 가공
+      // 데이터 가공: 오늘·어제 포함 (테넌트 조회는 백엔드 TenantContextHolder로 적용됨)
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+
       let rawSchedules = [];
       if (scheduleResponse) {
         if (Array.isArray(scheduleResponse)) {
@@ -103,8 +105,16 @@ const ConsultantDashboardV2 = ({ user }) => {
         const scheduleDate = new Date(schedule.startTime);
         if (isNaN(scheduleDate.getTime())) return false;
         scheduleDate.setHours(0, 0, 0, 0);
-        return scheduleDate.getTime() === today.getTime();
+        const isToday = scheduleDate.getTime() === today.getTime();
+        const isYesterday = scheduleDate.getTime() === yesterday.getTime();
+        return isToday || isYesterday;
       }).sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
+
+      const todayOnlyCount = schedules.filter(s => {
+        const d = new Date(s.startTime);
+        d.setHours(0, 0, 0, 0);
+        return d.getTime() === today.getTime();
+      }).length;
 
       const stats = statsResponse?.data ? statsResponse.data : (statsResponse || {});
 
@@ -128,7 +138,7 @@ const ConsultantDashboardV2 = ({ user }) => {
 
       setDashboardData({
         stats: {
-          todaySchedules: schedules.length || stats.todaySchedules || 0,
+          todaySchedules: todayOnlyCount ?? stats.todaySchedules ?? 0,
           newClients: stats.newClients || 0,
           unreadMessages: stats.unreadMessages || 0,
           averageRating: stats.averageRating || 4.8
@@ -197,7 +207,7 @@ const ConsultantDashboardV2 = ({ user }) => {
     return (
       <div className="empty-state">
         <Calendar size={32} className="empty-state-icon" />
-        <span className="empty-state-text">오늘 예정된 일정이 없습니다.</span>
+        <span className="empty-state-text">오늘·어제 예정된 일정이 없습니다.</span>
       </div>
     );
   };
@@ -269,12 +279,12 @@ const ConsultantDashboardV2 = ({ user }) => {
         {/* Main Content Grid */}
         <section className="consultant-main-grid">
           
-          {/* Section A: 오늘의 일정 */}
+          {/* Section A: 최근 일정 (오늘·어제) - 테넌트별 조회는 백엔드 TenantContextHolder 적용 */}
           <div className="dashboard-card">
             <div className="card-header">
               <h2 className="card-title">
                 <Clock size={18} className="card-title-icon" />
-                오늘의 일정
+                최근 일정 (오늘·어제)
               </h2>
               <button 
                 className="mg-v2-btn mg-v2-btn-ghost mg-v2-btn-sm"

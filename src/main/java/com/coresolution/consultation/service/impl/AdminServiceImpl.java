@@ -559,23 +559,20 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         ConsultantClientMapping savedMapping = mappingRepository.save(mapping);
         
         try {
-            boolean isAdditionalMapping = savedMapping.getNotes() != null && 
+            boolean isAdditionalMapping = savedMapping.getNotes() != null &&
                                         savedMapping.getNotes().contains("[추가 매칭]");
-            
             if (isAdditionalMapping) {
-                log.info("🔄 추가 매칭 입금 확인 - 추가 회기에 대한 ERP 거래 생성");
-                createAdditionalSessionIncomeTransaction(savedMapping, paymentAmount);
+                log.info("🔄 추가 매칭 입금 확인 - 추가 회기에 대한 ERP 거래 생성 (별도 트랜잭션)");
+                runInNewTransaction(() -> createAdditionalSessionIncomeTransaction(savedMapping, paymentAmount));
             } else {
-                log.info("🆕 신규 매칭 입금 확인 - 전체 패키지에 대한 ERP 거래 생성");
-                createConsultationIncomeTransaction(savedMapping);
+                log.info("🆕 신규 매칭 입금 확인 - 전체 패키지에 대한 ERP 거래 생성 (별도 트랜잭션)");
+                createConsultationIncomeTransactionAsync(savedMapping);
             }
-            
-            log.info("💚 매칭 입금 확인으로 인한 상담료 수입 거래 자동 생성 완료: MappingID={}, PaymentAmount={}, 추가매칭={}", 
+            log.info("💚 매칭 입금 확인으로 인한 상담료 수입 거래 자동 생성 완료: MappingID={}, PaymentAmount={}, 추가매칭={}",
                 mappingId, paymentAmount, isAdditionalMapping);
         } catch (Exception e) {
             log.error("상담료 수입 거래 자동 생성 실패: {}", e.getMessage(), e);
         }
-        
         return savedMapping;
     }
     
@@ -901,15 +898,28 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         }
         
         try {
-            createReceivablesTransaction(savedMapping);
+            runInNewTransaction(() -> createReceivablesTransaction(savedMapping));
             log.info("💚 매칭 결제 확인으로 인한 미수금 거래 자동 생성: MappingID={}", mappingId);
         } catch (Exception e) {
             log.error("미수금 거래 자동 생성 실패: {}", e.getMessage(), e);
         }
-        
         return savedMapping;
     }
-    
+
+    /**
+     * REQUIRES_NEW 트랜잭션에서 실행하여, 내부 예외 시에도 부모 트랜잭션이 rollback-only로 마크되지 않도록 함.
+     */
+    private void runInNewTransaction(Runnable action) {
+        org.springframework.transaction.support.TransactionTemplate template =
+            new org.springframework.transaction.support.TransactionTemplate(transactionManager);
+        template.setPropagationBehavior(org.springframework.transaction.TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+        try {
+            template.executeWithoutResult(status -> action.run());
+        } catch (Exception e) {
+            log.error("별도 트랜잭션 실행 실패: {}", e.getMessage(), e);
+        }
+    }
+
      /**
      * 미수금(매출채권) 거래 생성
      */

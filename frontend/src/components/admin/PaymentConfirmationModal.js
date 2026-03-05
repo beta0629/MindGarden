@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { CreditCard, CheckCircle, XCircle } from 'lucide-react';
 import { apiGet } from '../../utils/ajax';
+import { getCommonCodes } from '../../utils/commonCodeApi';
 import notificationManager from '../../utils/notification';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import MGButton from '../common/MGButton';
@@ -103,34 +104,38 @@ const PaymentConfirmationModal = ({
   // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
   }, [isOpen, mappings, PAYMENT_STATUS.PENDING]);
 
+  const PAYMENT_METHOD_FALLBACK = [
+    { value: 'CARD', label: '카드', icon: '💳', color: 'var(--mg-primary-500)', description: '신용카드/체크카드 결제' },
+    { value: 'BANK_TRANSFER', label: '계좌이체', icon: '🏦', color: 'var(--mg-success-500)', description: '은행 계좌 이체' },
+    { value: 'CASH', label: '현금', icon: '💵', color: 'var(--mg-warning-500)', description: '현금 결제' },
+    { value: 'KAKAO_PAY', label: '카카오페이', icon: '💛', color: '#fee500', description: '카카오페이 간편결제' },
+    { value: 'NAVER_PAY', label: '네이버페이', icon: '💚', color: '#03c75a', description: '네이버페이 간편결제' },
+    { value: 'TOSS', label: '토스', icon: '🔷', color: '#0064ff', description: '토스 간편결제' },
+    { value: 'PAYPAL', label: '페이팔', icon: '🔵', color: '#0070ba', description: '페이팔 결제' },
+    { value: 'OTHER', label: '기타', icon: '💱', color: '#6b7280', description: '기타 결제 방법' }
+  ];
+
   useEffect(() => {
     const loadPaymentMethodCodes = async () => {
       try {
         setLoadingCodes(true);
-        // 표준화 2025-12-08: 올바른 API 경로 사용 (/groups/{codeGroup})
-        const response = await apiGet('/api/v1/common-codes/groups/PAYMENT_METHOD');
-        if (response && response.length > 0) {
-          const options = response.map(code => ({
-            value: code.codeValue,
-            label: code.codeLabel,
+        const codes = await getCommonCodes('PAYMENT_METHOD');
+        const list = Array.isArray(codes) ? codes : (codes?.codes || []);
+        if (list.length > 0) {
+          const options = list.map(code => ({
+            value: code.codeValue || code.code_value,
+            label: code.codeLabel || code.code_label || code.codeValue || code.code_value,
             icon: code.icon,
-            color: code.colorCode,
+            color: code.colorCode || code.color_code,
             description: code.description
           }));
           setPaymentMethodOptions(options);
+        } else {
+          setPaymentMethodOptions(PAYMENT_METHOD_FALLBACK);
         }
       } catch (error) {
         console.error('결제 방법 코드 로드 실패:', error);
-        setPaymentMethodOptions([
-          { value: 'CARD', label: '카드', icon: '💳', color: 'var(--mg-primary-500)', description: '신용카드/체크카드 결제' },
-          { value: 'BANK_TRANSFER', label: '계좌이체', icon: '🏦', color: 'var(--mg-success-500)', description: '은행 계좌 이체' },
-          { value: 'CASH', label: '현금', icon: '💵', color: 'var(--mg-warning-500)', description: '현금 결제' },
-          { value: 'KAKAO_PAY', label: '카카오페이', icon: '💛', color: '#fee500', description: '카카오페이 간편결제' },
-          { value: 'NAVER_PAY', label: '네이버페이', icon: '💚', color: '#03c75a', description: '네이버페이 간편결제' },
-          { value: 'TOSS', label: '토스', icon: '🔷', color: '#0064ff', description: '토스 간편결제' },
-          { value: 'PAYPAL', label: '페이팔', icon: '🔵', color: '#0070ba', description: '페이팔 결제' },
-          { value: 'OTHER', label: '기타', icon: '💱', color: '#6b7280', description: '기타 결제 방법' }
-        ]);
+        setPaymentMethodOptions(PAYMENT_METHOD_FALLBACK);
       } finally {
         setLoadingCodes(false);
       }

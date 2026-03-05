@@ -389,7 +389,7 @@ const PaymentConfirmationModal = ({
                 onChange={(val) => handlePaymentDataChange('method', val)}
                 options={paymentMethodOptions.map(option => ({
                   value: option.value,
-                  label: `${option.icon} ${option.label}`
+                  label: `${option.icon != null ? option.icon + ' ' : ''}${option.label || option.value || ''}`
                 }))}
                 placeholder="선택하세요"
                 className="mg-v2-select"

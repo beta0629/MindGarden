@@ -73,7 +73,8 @@
   border: 1px solid var(--mg-shadow-light);
   border-radius: var(--border-radius-lg);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-  z-index: 1000 !important;
+  /* 모달(최대 10050)보다 위에 표시해 옵션 클릭이 모달에 가로채이지 않도록 함 */
+  z-index: 10100 !important;
   max-height: 200px;
   overflow: hidden;
   margin-top: 4px;

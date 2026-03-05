@@ -83,7 +83,19 @@ const TimeSlotGrid = ({
                 setDefaultConsultantInfo();
                 return;
             }
-            const result = await response.json();
+            const text = await response.text();
+            let result;
+            try {
+                result = JSON.parse(text);
+            } catch (parseError) {
+                const pos = parseError.message.match(/position (\d+)/)?.[1];
+                const snippet = pos != null && text.length > 0
+                    ? text.slice(Math.max(0, Number(pos) - 80), Number(pos) + 80)
+                    : text.slice(0, 200);
+                console.error('상담사 정보 JSON 파싱 실패:', parseError.message, { snippet });
+                setDefaultConsultantInfo();
+                return;
+            }
             if (result.success && result.data) {
                 setConsultantInfo(result.data);
             } else {

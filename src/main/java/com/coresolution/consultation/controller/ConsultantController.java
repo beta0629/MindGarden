@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import com.coresolution.consultation.constant.UserRole;
+import com.coresolution.consultation.dto.ConsultantScheduleSettingsDto;
 import com.coresolution.consultation.entity.Client;
 import com.coresolution.consultation.entity.Consultant;
 import com.coresolution.consultation.entity.User;
@@ -98,12 +99,18 @@ public class ConsultantController extends BaseApiController {
      * GET /api/v1/consultants/{id}
      */
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<Consultant>> getConsultantById(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<ConsultantScheduleSettingsDto>> getConsultantById(@PathVariable Long id) {
         log.info("상담사 상세 정보 조회 - ID: {}", id);
-        
+
         Consultant consultant = consultantService.findByIdWithDetails(id)
                 .orElseThrow(() -> new RuntimeException("상담사를 찾을 수 없습니다."));
-        return success(consultant);
+        ConsultantScheduleSettingsDto dto = ConsultantScheduleSettingsDto.builder()
+                .consultationHours(consultant.getConsultationHours())
+                .breakTime(consultant.getBreakTime())
+                .sessionDuration(consultant.getSessionDuration())
+                .breakBetweenSessions(consultant.getBreakBetweenSessions())
+                .build();
+        return success(dto);
     }
     
     /**

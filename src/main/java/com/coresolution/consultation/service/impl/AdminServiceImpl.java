@@ -1015,18 +1015,21 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 log.warn("⚠️ 입금 확인 ERP 거래 스킵: MappingID={}, packagePrice={}, paymentAmount={} (유효 금액 없음)",
                         mappingId, mapping.getPackagePrice(), mapping.getPaymentAmount());
             } else if (isAdditionalMapping) {
-                log.info("🔄 추가 매칭 입금 확인 - 추가 회기에 대한 ERP 거래 생성: MappingID={}", mappingId);
-                createAdditionalSessionIncomeTransaction(savedMapping, effectiveAmount);
+                log.info("🔄 추가 매칭 입금 확인 - 추가 회기에 대한 ERP 거래 생성 (별도 트랜잭션): MappingID={}", mappingId);
+                runInNewTransaction(() -> createAdditionalSessionIncomeTransaction(savedMapping, effectiveAmount));
                 log.info("💚 입금 확인 ERP 거래 생성 완료 (추가 매칭): MappingID={}, Amount={}", mappingId, effectiveAmount);
             } else {
-                log.info("🆕 신규 매칭 입금 확인 - 전체 패키지에 대한 ERP 거래 생성: MappingID={}", mappingId);
-                createConsultationIncomeTransaction(savedMapping);
+                log.info("🆕 신규 매칭 입금 확인 - 전체 패키지에 대한 ERP 거래 생성 (별도 트랜잭션): MappingID={}", mappingId);
+                createConsultationIncomeTransactionAsync(savedMapping);
                 log.info("💚 입금 확인 ERP 거래 생성 완료 (신규 매칭): MappingID={}", mappingId);
             }
         } catch (Exception e) {
             log.error("❌ 입금 확인 ERP 거래 생성 실패 (입금 확인은 완료됨): MappingID={}, Error={}", mappingId, e.getMessage(), e);
         }
 
+        // 컨트롤러에서 mapping.getConsultant()/getClient() 접근 시 no Session 방지
+        Hibernate.initialize(savedMapping.getConsultant());
+        Hibernate.initialize(savedMapping.getClient());
         return savedMapping;
     }
 
@@ -1044,7 +1047,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         
         // 통계 업데이트는 Controller에서 트랜잭션 커밋 후 별도로 호출
         // 이렇게 하면 통계 업데이트 실패가 승인 트랜잭션에 영향을 주지 않음
-        
+        // 컨트롤러/직렬화 시 no Session 방지
+        Hibernate.initialize(savedMapping.getConsultant());
+        Hibernate.initialize(savedMapping.getClient());
         return savedMapping;
     }
 
@@ -1061,7 +1066,10 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         mapping.setNotes(reason);
         mapping.setTerminatedAt(LocalDateTime.now());
         
-        return mappingRepository.save(mapping);
+        ConsultantClientMapping saved = mappingRepository.save(mapping);
+        Hibernate.initialize(saved.getConsultant());
+        Hibernate.initialize(saved.getClient());
+        return saved;
     }
 
     /**
@@ -1075,7 +1083,10 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         
         mapping.useSession();
         
-        return mappingRepository.save(mapping);
+        ConsultantClientMapping saved = mappingRepository.save(mapping);
+        Hibernate.initialize(saved.getConsultant());
+        Hibernate.initialize(saved.getClient());
+        return saved;
     }
 
     /**
@@ -1094,7 +1105,10 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         
         mapping.addSessions(additionalSessions, packageName, packagePrice);
         
-        return mappingRepository.save(mapping);
+        ConsultantClientMapping saved = mappingRepository.save(mapping);
+        Hibernate.initialize(saved.getConsultant());
+        Hibernate.initialize(saved.getClient());
+        return saved;
     }
     
      /**
@@ -2623,6 +2637,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         
         ConsultantClientMapping mapping = mappingRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("매칭을 찾을 수 없습니다."));
+        Hibernate.initialize(mapping.getConsultant());
+        Hibernate.initialize(mapping.getClient());
         
         String terminatedStatus = getMappingStatusCode("TERMINATED");
         if (mapping.getStatus().name().equals(terminatedStatus)) {
@@ -2636,7 +2652,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         }
         
         try {
-            sendRefundToErp(mapping, refundedSessions, refundAmount, reason);
+            runInNewTransaction(() -> sendRefundToErp(mapping, refundedSessions, refundAmount, reason));
         } catch (Exception e) {
             log.error("❌ ERP 환불 데이터 전송 실패: MappingID={}", id, e);
         }
@@ -2731,6 +2747,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         
         ConsultantClientMapping mapping = mappingRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("매칭을 찾을 수 없습니다."));
+        Hibernate.initialize(mapping.getConsultant());
+        Hibernate.initialize(mapping.getClient());
         
         String terminatedStatus = getMappingStatusCode("TERMINATED");
         if (mapping.getStatus().name().equals(terminatedStatus)) {
@@ -2801,7 +2819,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 refundSessions, calculationMethod, refundAmount);
         
         try {
-            sendRefundToErp(mapping, refundSessions, refundAmount, reason);
+            runInNewTransaction(() -> sendRefundToErp(mapping, refundSessions, refundAmount, reason));
             log.info("💚 부분 환불 ERP 전송 성공: MappingID={}, RefundSessions={}, RefundAmount={}", 
                 id, refundSessions, refundAmount);
         } catch (Exception e) {
@@ -2809,7 +2827,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         }
         
         try {
-            createPartialConsultationRefundTransaction(mapping, refundSessions, refundAmount, reason);
+            runInNewTransaction(() -> createPartialConsultationRefundTransaction(mapping, refundSessions, refundAmount, reason));
             log.info("💚 부분 환불 거래 자동 생성 완료: MappingID={}, RefundSessions={}, RefundAmount={}", 
                 id, refundSessions, refundAmount);
         } catch (Exception e) {
@@ -4035,6 +4053,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 currentMapping.getClient().getName(), 
                 newConsultant.getName());
         
+        Hibernate.initialize(savedMapping.getConsultant());
+        Hibernate.initialize(savedMapping.getClient());
         return savedMapping;
     }
 

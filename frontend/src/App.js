@@ -352,10 +352,22 @@ function AppContent() {
             {/* 일반 대시보드 라우트 (동적 대시보드 우선) */}
             <Route path="/dashboard" element={<DynamicDashboard user={user} />} />
             
-            {/* 역할별 대시보드 라우트 - 레거시 대시보드 사용 (디자인 개선 전까지) */}
-            <Route path="/client/dashboard" element={<ClientDashboard user={user} />} />
-            <Route path="/consultant/dashboard" element={<ConsultantDashboardV2 user={user} />} />
-            <Route path="/admin/dashboard" element={<AdminDashboardV2 user={user} />} />
+            {/* 역할별 대시보드 라우트 - 세션/권한 체크 후 해당 역할만 접근 (링크만으로 어드민 대시보드 이동 불가) */}
+            <Route path="/client/dashboard" element={
+              <ProtectedRoute requiredRoles={[USER_ROLES.CLIENT]}>
+                <ClientDashboard user={user} />
+              </ProtectedRoute>
+            } />
+            <Route path="/consultant/dashboard" element={
+              <ProtectedRoute requiredRoles={[USER_ROLES.CONSULTANT]}>
+                <ConsultantDashboardV2 user={user} />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/dashboard" element={
+              <ProtectedRoute requiredRoles={[USER_ROLES.ADMIN, USER_ROLES.STAFF]}>
+                <AdminDashboardV2 user={user} />
+              </ProtectedRoute>
+            } />
             <Route path="/admin/dashboard-legacy" element={<AdminDashboard user={user} />} />
             <Route path="/admin/dashboard-widget" element={<WidgetBasedAdminDashboard />} />
             <Route path="/admin/dashboard-old" element={<DynamicDashboard user={user} />} />

@@ -10,6 +10,7 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
+import { getDashboardPathByRole } from '../../constants/session';
 import UnifiedLoading from './UnifiedLoading';
 
 const ProtectedRoute = ({ children, requiredRole, requiredRoles, requiredPermissionGroups }) => {
@@ -27,10 +28,12 @@ const ProtectedRoute = ({ children, requiredRole, requiredRoles, requiredPermiss
     return <Navigate to="/login" replace />;
   }
 
+  const roleDashboardPath = getDashboardPathByRole(user?.role);
+
   if (requiredPermissionGroups && Array.isArray(requiredPermissionGroups)) {
     const hasAnyGroup = requiredPermissionGroups.some((code) => hasPermissionGroup(code));
     if (!hasAnyGroup) {
-      return <Navigate to="/dashboard" replace />;
+      return <Navigate to={roleDashboardPath} replace />;
     }
   }
 
@@ -43,7 +46,7 @@ const ProtectedRoute = ({ children, requiredRole, requiredRoles, requiredPermiss
       allowed = allowed || requiredRoles.some((role) => hasRole(role)) || isAdmin();
     }
     if (!allowed) {
-      return <Navigate to="/dashboard" replace />;
+      return <Navigate to={roleDashboardPath} replace />;
     }
   }
 

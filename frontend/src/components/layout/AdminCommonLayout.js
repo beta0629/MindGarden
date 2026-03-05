@@ -12,7 +12,7 @@ import { useNavigate } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
 import { useResponsive } from '../../hooks/useResponsive';
 import { DesktopLayout, MobileLayout } from '../dashboard-v2/templates';
-import { DEFAULT_MENU_ITEMS, BREAKPOINT_DESKTOP } from '../dashboard-v2/constants/menuItems';
+import { DEFAULT_MENU_ITEMS, CONSULTANT_MENU_ITEMS, CLIENT_MENU_ITEMS, BREAKPOINT_DESKTOP } from '../dashboard-v2/constants/menuItems';
 import { ADMIN_ROUTES } from '../../constants/adminRoutes';
 import UnifiedLoading from '../common/UnifiedLoading';
 import { getLnbMenus } from '../../utils/menuApi';
@@ -30,33 +30,37 @@ const AdminCommonLayout = ({
   loadingText = "데이터를 불러오는 중..."
 }) => {
   const navigate = useNavigate();
-  const { logout } = useSession();
+  const { user, logout } = useSession();
   const { windowSize } = useResponsive();
   const isDesktop = windowSize.width >= BREAKPOINT_DESKTOP;
+  const userRole = user?.role;
+
+  const getDefaultMenu = () => (userRole === 'CONSULTANT' ? CONSULTANT_MENU_ITEMS : userRole === 'CLIENT' ? CLIENT_MENU_ITEMS : DEFAULT_MENU_ITEMS);
 
   const [lnbMenuItems, setLnbMenuItems] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
+    const fallback = getDefaultMenu();
     getLnbMenus()
       .then((res) => {
         if (cancelled) return;
         const tree = getLnbTreeFromResponse(res);
         if (tree && tree.length > 0) {
-          setLnbMenuItems(normalizeLnbTree(tree));
+          setLnbMenuItems(normalizeLnbTree(tree, { userRole }));
         } else {
-          setLnbMenuItems(DEFAULT_MENU_ITEMS);
+          setLnbMenuItems(fallback);
         }
       })
       .catch(() => {
         if (!cancelled) {
-          setLnbMenuItems(DEFAULT_MENU_ITEMS);
+          setLnbMenuItems(fallback);
         }
       });
     return () => { cancelled = true; };
-  }, []);
+  }, [userRole]);
 
-  const menuItems = lnbMenuItems !== null ? lnbMenuItems : DEFAULT_MENU_ITEMS;
+  const menuItems = lnbMenuItems !== null ? lnbMenuItems : getDefaultMenu();
 
   const handleLogout = useCallback(async () => {
     try {

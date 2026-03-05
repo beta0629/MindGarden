@@ -39,13 +39,21 @@ export const SESSION_KEYS = {
   SESSION_EXPIRY: 'sessionExpiry'
 };
 
-// 역할별 대시보드 경로
+// 역할별 대시보드 경로 (권한 격리: 링크만으로 타 역할 대시보드 접근 방지용)
 export const DASHBOARD_PATHS = {
   CLIENT: '/client/dashboard',
   CONSULTANT: '/consultant/dashboard',
   ADMIN: '/admin/dashboard',
+  STAFF: '/admin/dashboard',
   BRANCH_SUPER_ADMIN: '/super_admin/dashboard'
 };
+
+/** 역할에 맞는 대시보드 경로 반환 (세션/권한 체크 후 리다이렉트용) */
+export function getDashboardPathByRole(role) {
+  if (!role) return DASHBOARD_PATHS.CLIENT;
+  const path = DASHBOARD_PATHS[role];
+  return path || DASHBOARD_PATHS.ADMIN;
+}
 
 // 기본 대시보드 경로
 export const DEFAULT_DASHBOARD_PATH = DASHBOARD_PATHS.CLIENT;

@@ -408,7 +408,10 @@ const UnifiedHeader = ({
           
           {/* 사용자 정보 */}
           <div className="mg-header__user-details">
-            <span className="mg-header__user-name">{user.name || user.nickname || user.userId}</span>
+            <span className="mg-header__user-name">
+              {(user.name || user.nickname || user.userId)}
+              {(user.role === 'ROLE_CONSULTANT' || user.role === 'CONSULTANT') ? ' 선생님' : ''}
+            </span>
             <span className="mg-header__user-role">{getTenantDisplayName()}</span>
           </div>
         </div>

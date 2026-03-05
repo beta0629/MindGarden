@@ -1,0 +1,16 @@
+/**
+ * ClientModal 전용 스타일 (이메일 행 등)
+ * 모달이 어떤 페이지에서 열리든 동일한 레이아웃을 보장하기 위해 컴포넌트에 포함.
+ */
+
+/* 이메일 + 중복확인 행: input이 남은 공간을 채우고 줄어들 수 있도록 min-width: 0 */
+.mg-modal.mg-v2-ad-b0kla .mg-v2-form-email-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.mg-modal.mg-v2-ad-b0kla .mg-v2-form-email-row .mg-v2-form-input {
+  flex: 1;
+  min-width: 0;
+}

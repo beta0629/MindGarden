@@ -5,6 +5,7 @@ import ProfileImageInput from '../../common/ProfileImageInput';
 import { apiGet } from '../../../utils/ajax';
 import UnifiedModal from '../../common/modals/UnifiedModal';
 import CustomSelect from '../../common/CustomSelect';
+import './ClientModal.css';
 
 /**
  * 내담자 모달 컴포넌트

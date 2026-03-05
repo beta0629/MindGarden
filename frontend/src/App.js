@@ -61,6 +61,7 @@ const AdminDashboard = lazy(() => import('./components/admin/AdminDashboard'));
 const AdminDashboardV2 = lazy(() => import('./components/dashboard-v2/AdminDashboardV2'));
 const ClientDashboard = lazy(() => import('./components/client/ClientDashboard'));
 const CommonDashboard = lazy(() => import('./components/dashboard/CommonDashboard'));
+const ConsultantDashboardV2 = lazy(() => import('./components/dashboard-v2/consultant/ConsultantDashboardV2'));
 import UnifiedNotification from './components/common/UnifiedNotification';
 import NotificationTest from './components/test/NotificationTest';
 import PaymentTest from './components/test/PaymentTest';
@@ -353,7 +354,7 @@ function AppContent() {
             
             {/* 역할별 대시보드 라우트 - 레거시 대시보드 사용 (디자인 개선 전까지) */}
             <Route path="/client/dashboard" element={<ClientDashboard user={user} />} />
-            <Route path="/consultant/dashboard" element={<CommonDashboard user={user} />} />
+            <Route path="/consultant/dashboard" element={<ConsultantDashboardV2 user={user} />} />
             <Route path="/admin/dashboard" element={<AdminDashboardV2 user={user} />} />
             <Route path="/admin/dashboard-legacy" element={<AdminDashboard user={user} />} />
             <Route path="/admin/dashboard-widget" element={<WidgetBasedAdminDashboard />} />

@@ -88,11 +88,36 @@ const CLIENT_MENU_ITEMS = [
 
 const CONSULTANT_MENU_ITEMS = [
   { to: '/consultant/dashboard', icon: LayoutDashboard, label: '대시보드', end: true },
-  { to: '/consultant/schedule', icon: Calendar, label: '스케줄', end: true },
-  { to: '/consultant/consultation-records', icon: FileText, label: '상담 기록', end: true },
-  { to: '/consultant/consultation-logs', icon: FileText, label: '상담일지 조회', end: true },
-  { to: '/consultant/availability', icon: Users, label: '가능 시간', end: true },
-  { to: '/consultant/messages', icon: MessageCircle, label: '메시지', end: true }
+  {
+    to: '/consultant/schedule',
+    icon: Calendar,
+    label: '일정 관리',
+    end: false,
+    children: [
+      { to: '/consultant/schedule', icon: Calendar, label: '전체 스케줄', end: true },
+      { to: '/consultant/availability', icon: CalendarDays, label: '가능 시간 설정', end: true }
+    ]
+  },
+  {
+    to: '/consultant/clients',
+    icon: Users,
+    label: '내담자 관리',
+    end: false,
+    children: [
+      { to: '/consultant/clients', icon: Users, label: '내 내담자 목록', end: true },
+      { to: '/consultant/messages', icon: MessageCircle, label: '상담사 메시지', end: true }
+    ]
+  },
+  {
+    to: '/consultant/consultation-records',
+    icon: FileText,
+    label: '상담 기록',
+    end: false,
+    children: [
+      { to: '/consultant/consultation-records', icon: FileText, label: '상담 일지 관리', end: true },
+      { to: '/consultant/consultation-logs', icon: FileText, label: '상담 리포트/로그', end: true }
+    ]
+  }
 ];
 
 const ERP_MENU_ITEMS = [

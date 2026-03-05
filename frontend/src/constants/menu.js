@@ -87,21 +87,29 @@ export const CONSULTANT_MENU_ITEMS = {
       label: '일정 관리',
       icon: 'bi-calendar'
     },
-    CONSULTATION: {
-      id: 'consultation',
-      label: '상담 관리',
-      icon: 'bi-chat-dots'
+    CLIENT_MGMT: {
+      id: 'client_mgmt',
+      label: '내담자 관리',
+      icon: 'bi-people'
+    },
+    RECORD_MGMT: {
+      id: 'record_mgmt',
+      label: '상담 기록',
+      icon: 'bi-journal-text'
     }
   },
   SUB: {
     schedule: [
-      { id: 'consultant-schedule', label: '일정 관리', path: '/consultant/schedule', icon: 'bi-calendar' },
-      { id: 'consultant-availability', label: '상담 가능 시간', path: '/consultant/availability', icon: 'bi-clock' }
+      { id: 'consultant-schedule', label: '전체 스케줄', path: '/consultant/schedule', icon: 'bi-calendar-check' },
+      { id: 'consultant-availability', label: '가능 시간 설정', path: '/consultant/availability', icon: 'bi-clock' }
     ],
-    consultation: [
-      { id: 'consultant-records', label: '상담 기록', path: '/consultant/consultation-records', icon: 'bi-journal-text' },
-      { id: 'consultant-clients', label: '내담자 목록', path: '/consultant/clients', icon: 'bi-people' },
-      { id: 'consultant-messages', label: '메시지 관리', path: '/consultant/messages', icon: 'bi-chat-dots' }
+    client_mgmt: [
+      { id: 'consultant-clients', label: '내 내담자 목록', path: '/consultant/clients', icon: 'bi-person-lines-fill' },
+      { id: 'consultant-messages', label: '상담사 메시지', path: '/consultant/messages', icon: 'bi-chat-dots' }
+    ],
+    record_mgmt: [
+      { id: 'consultant-records', label: '상담 일지 관리', path: '/consultant/consultation-records', icon: 'bi-journal-check' },
+      { id: 'consultant-logs', label: '상담 리포트/로그', path: '/consultant/consultation-logs', icon: 'bi-file-earmark-text' }
     ]
   }
 };

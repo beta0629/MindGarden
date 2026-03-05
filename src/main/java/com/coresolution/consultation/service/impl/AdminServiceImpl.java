@@ -1080,24 +1080,28 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             log.error("❌ 입금 확인 ERP 거래 생성 실패 (입금 확인은 완료됨): MappingID={}, Error={}", mappingId, e.getMessage(), e);
         }
 
-        // 입금 확인 후 ERP 매핑 정보 동기화 프로시저 호출 (실패 시 로그만, 예외 전파 안 함)
-        try {
-            log.info("🔄 입금 확인 완료, ERP 매핑 정보 동기화 프로시저 호출: mappingId={}", mappingId);
-            Map<String, Object> procedureResult = storedProcedureService.updateMappingInfo(
-                mappingId,
-                savedMapping.getPackageName(),
-                savedMapping.getPackagePrice() != null ? savedMapping.getPackagePrice().doubleValue() : 0.0,
-                savedMapping.getTotalSessions() != null ? savedMapping.getTotalSessions() : 0,
-                "입금확인"
-            );
-            if (Boolean.TRUE.equals(procedureResult.get("success"))) {
-                log.info("✅ ERP 매핑 정보 동기화 완료: mappingId={}, message={}", mappingId, procedureResult.get("message"));
-            } else {
-                log.warn("⚠️ ERP 매핑 정보 동기화 실패: mappingId={}, message={}", mappingId, procedureResult.get("message"));
+        // 입금 확인 후 ERP 매핑 정보 동기화 프로시저 호출 (별도 트랜잭션, 실패 시 로그만)
+        String tenantIdForProc = getTenantIdFromMapping(savedMapping);
+        if (tenantIdForProc == null) tenantIdForProc = getTenantIdOrNull();
+        runInNewTransaction(tenantIdForProc, () -> {
+            try {
+                log.info("🔄 입금 확인 완료, ERP 매핑 정보 동기화 프로시저 호출: mappingId={}", mappingId);
+                Map<String, Object> procedureResult = storedProcedureService.updateMappingInfo(
+                    mappingId,
+                    savedMapping.getPackageName(),
+                    savedMapping.getPackagePrice() != null ? savedMapping.getPackagePrice().doubleValue() : 0.0,
+                    savedMapping.getTotalSessions() != null ? savedMapping.getTotalSessions() : 0,
+                    "입금확인"
+                );
+                if (Boolean.TRUE.equals(procedureResult.get("success"))) {
+                    log.info("✅ ERP 매핑 정보 동기화 완료: mappingId={}, message={}", mappingId, procedureResult.get("message"));
+                } else {
+                    log.warn("⚠️ ERP 매핑 정보 동기화 실패: mappingId={}, message={}", mappingId, procedureResult.get("message"));
+                }
+            } catch (Exception e) {
+                log.error("❌ 입금 확인 후 ERP 매핑 정보 동기화 프로시저 호출 실패: mappingId={}", mappingId, e);
             }
-        } catch (Exception e) {
-            log.error("❌ 입금 확인 후 ERP 매핑 정보 동기화 프로시저 호출 실패: mappingId={}", mappingId, e);
-        }
+        });
 
         // 컨트롤러에서 mapping.getConsultant()/getClient() 접근 시 no Session 방지
         Hibernate.initialize(savedMapping.getConsultant());

@@ -3,6 +3,10 @@ import { useNavigate, Link } from 'react-router-dom';
 import { apiGet } from '../../utils/ajax';
 import csrfTokenManager from '../../utils/csrfTokenManager';
 import notificationManager from '../../utils/notification';
+import UnifiedModal from '../common/modals/UnifiedModal';
+import { TermsOfServiceContent } from '../common/TermsOfService';
+import { PrivacyPolicyContent } from '../common/PrivacyPolicy';
+import '../common/PrivacyPolicy.css';
 import './AuthPageCommon.css';
 
 /** 주민번호 7번째 자리로 성별 코드 반환 (1,3: 남성 / 2,4: 여성 / 그 외: 기타) */
@@ -38,6 +42,8 @@ const TabletRegister = () => {
   const [emailCheckStatus, setEmailCheckStatus] = useState(null); // 'checking' | 'duplicate' | 'available' | null
   const [isCheckingEmail, setIsCheckingEmail] = useState(false);
   const [emailSuggestionsOpen, setEmailSuggestionsOpen] = useState(false);
+  const [termsModalOpen, setTermsModalOpen] = useState(false);
+  const [privacyModalOpen, setPrivacyModalOpen] = useState(false);
 
   useEffect(() => {
     getOAuth2Config();
@@ -458,7 +464,10 @@ const TabletRegister = () => {
                 required
               />
               <label htmlFor="agreeTerms">
-                <a href="#!">이용약관</a>에 동의합니다
+                <button type="button" className="mg-v2-link-button" onClick={(e) => { e.preventDefault(); setTermsModalOpen(true); }}>
+                  이용약관
+                </button>
+                {' '}에 동의합니다
               </label>
             </div>
             {errors.agreeTerms && (
@@ -477,7 +486,10 @@ const TabletRegister = () => {
                 required
               />
               <label htmlFor="agreePrivacy">
-                <a href="#!">개인정보처리방침</a>에 동의합니다
+                <button type="button" className="mg-v2-link-button" onClick={(e) => { e.preventDefault(); setPrivacyModalOpen(true); }}>
+                  개인정보처리방침
+                </button>
+                {' '}에 동의합니다
               </label>
             </div>
             {errors.agreePrivacy && (
@@ -504,6 +516,30 @@ const TabletRegister = () => {
           </Link>
         </div>
       </div>
+
+      <UnifiedModal
+        isOpen={termsModalOpen}
+        onClose={() => setTermsModalOpen(false)}
+        title="이용약관"
+        size="large"
+        showCloseButton
+      >
+        <div className="mg-modal-terms-body">
+          <TermsOfServiceContent />
+        </div>
+      </UnifiedModal>
+
+      <UnifiedModal
+        isOpen={privacyModalOpen}
+        onClose={() => setPrivacyModalOpen(false)}
+        title="개인정보처리방침"
+        size="large"
+        showCloseButton
+      >
+        <div className="mg-modal-terms-body">
+          <PrivacyPolicyContent />
+        </div>
+      </UnifiedModal>
     </div>
   );
 };

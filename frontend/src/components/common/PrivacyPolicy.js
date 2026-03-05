@@ -1,23 +1,17 @@
 import React from 'react';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
-import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import './PrivacyPolicy.css';
 
 /**
  * 개인정보 처리방침 컴포넌트
-/**
- * 
-/**
  * @author Core Solution
-/**
  * @version 1.0.0
-/**
  * @since 2025-01-17
  */
-const PrivacyPolicy = () => {
-  return (
-    <AdminCommonLayout title="개인정보처리방침">
-      <div className="privacy-policy-container">
+
+/** 레이아웃 없이 개인정보처리방침 본문만 렌더 (페이지·모달 공용) */
+export const PrivacyPolicyContent = () => (
+  <div className="privacy-policy-container">
         <h1 className="privacy-policy-title">
           개인정보 처리방침
         </h1>
@@ -99,17 +93,14 @@ const PrivacyPolicy = () => {
             회사는 개인정보를 제1조(개인정보의 처리목적)에서 명시한 범위 내에서만 처리하며, 정보주체의 동의, 법률의 특별한 규정 등 개인정보보호법 제17조에 해당하는 경우에만 개인정보를 제3자에게 제공합니다.
           </p>
           <div style={{
-            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff3cd -> var(--mg-custom-fff3cd)
-            background: '#fff3cd',
-            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #ffeaa7 -> var(--mg-custom-ffeaa7)
-            border: '1px solid #ffeaa7',
+            background: 'var(--mg-custom-fff3cd, #fff3cd)',
+            border: '1px solid var(--mg-custom-ffeaa7, #ffeaa7)',
             borderRadius: '8px',
             padding: '15px',
             marginBottom: '15px'
           }}>
-            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #856404 -> var(--mg-custom-856404)
-            <p className="mg-v2-text-sm mg-v2-m-0" style={{ color: '#856404' }}>
-              <strong>주의:</strong> 상담 서비스 제공을 위해 상담사에게 필요한 최소한의 정보만 제공되며, 
+            <p className="mg-v2-text-sm mg-v2-m-0" style={{ color: 'var(--mg-custom-856404, #856404)' }}>
+              <strong>주의:</strong> 상담 서비스 제공을 위해 상담사에게 필요한 최소한의 정보만 제공되며,
               이는 상담 서비스의 질적 향상을 위한 목적으로만 사용됩니다.
             </p>
           </div>
@@ -191,21 +182,23 @@ const PrivacyPolicy = () => {
         </div>
 
         <div style={{
-          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e8f4fd -> var(--mg-custom-e8f4fd)
-          background: '#e8f4fd',
-          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #bee5eb -> var(--mg-custom-bee5eb)
-          border: '1px solid #bee5eb',
+          background: 'var(--mg-custom-e8f4fd, #e8f4fd)',
+          border: '1px solid var(--mg-custom-bee5eb, #bee5eb)',
           borderRadius: '8px',
           padding: '20px',
           textAlign: 'center'
         }}>
-          <p style={{ margin: '0', fontSize: 'var(--font-size-sm)', color: '#0c5460' }}>
+          <p style={{ margin: '0', fontSize: 'var(--font-size-sm)', color: 'var(--mg-custom-0c5460, #0c5460)' }}>
             <strong>본 개인정보처리방침은 2025년 1월 17일부터 시행됩니다.</strong>
           </p>
         </div>
-      </div>
-    </AdminCommonLayout>
-  );
-};
+  </div>
+);
+
+const PrivacyPolicy = () => (
+  <AdminCommonLayout title="개인정보처리방침">
+    <PrivacyPolicyContent />
+  </AdminCommonLayout>
+);
 
 export default PrivacyPolicy;

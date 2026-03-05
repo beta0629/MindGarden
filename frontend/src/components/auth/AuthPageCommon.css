@@ -329,6 +329,27 @@
   text-decoration: underline;
 }
 
+/* 체크박스 라벨 내 링크 스타일 버튼 (이용약관·개인정보처리방침) */
+.mg-v2-link-button {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: var(--mg-primary-color, #3D5246);
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.mg-v2-link-button:hover {
+  text-decoration: none;
+}
+
+/* 모달 내 약관/개인정보 본문 스크롤 영역 */
+.mg-modal-terms-body {
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
 /* 스피너 */
 .mg-v2-spinner {
   width: 20px;

@@ -1,23 +1,17 @@
 import React from 'react';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
-import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import './PrivacyPolicy.css';
 
 /**
  * 이용약관 컴포넌트
-/**
- * 
-/**
  * @author Core Solution
-/**
  * @version 1.0.0
-/**
  * @since 2025-01-17
  */
-const TermsOfService = () => {
-  return (
-    <AdminCommonLayout title="이용약관">
-      <div className="privacy-policy-container">
+
+/** 레이아웃 없이 이용약관 본문만 렌더 (페이지·모달 공용) */
+export const TermsOfServiceContent = () => (
+  <div className="privacy-policy-container">
         <h1 className="privacy-policy-title">
           이용약관
         </h1>
@@ -231,9 +225,13 @@ const TermsOfService = () => {
             <strong>본 이용약관은 2025년 1월 17일부터 시행됩니다.</strong>
           </p>
         </div>
-      </div>
-    </AdminCommonLayout>
-  );
-};
+  </div>
+);
+
+const TermsOfService = () => (
+  <AdminCommonLayout title="이용약관">
+    <TermsOfServiceContent />
+  </AdminCommonLayout>
+);
 
 export default TermsOfService;

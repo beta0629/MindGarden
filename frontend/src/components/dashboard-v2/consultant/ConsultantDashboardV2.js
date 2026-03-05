@@ -56,16 +56,57 @@ const ConsultantDashboardV2 = ({ user }) => {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       
-      let schedules = [];
-      if (scheduleResponse?.success && scheduleResponse?.data) {
-        schedules = scheduleResponse.data.filter(schedule => {
-          const scheduleDate = new Date(schedule.startTime);
-          scheduleDate.setHours(0, 0, 0, 0);
-          return scheduleDate.getTime() === today.getTime();
-        }).sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
+      let rawSchedules = [];
+      if (scheduleResponse) {
+        if (Array.isArray(scheduleResponse)) {
+          rawSchedules = scheduleResponse;
+        } else if (scheduleResponse.schedules && Array.isArray(scheduleResponse.schedules)) {
+          rawSchedules = scheduleResponse.schedules;
+        } else if (scheduleResponse.data && Array.isArray(scheduleResponse.data)) {
+          rawSchedules = scheduleResponse.data;
+        }
       }
 
-      const stats = statsResponse?.success && statsResponse?.data ? statsResponse.data : {};
+      const formatTimeStr = (timeData) => {
+        if (!timeData) return '00:00:00';
+        if (Array.isArray(timeData)) {
+            const h = String(timeData[0] || 0).padStart(2, '0');
+            const m = String(timeData[1] || 0).padStart(2, '0');
+            const s = String(timeData[2] || 0).padStart(2, '0');
+            return `${h}:${m}:${s}`;
+        }
+        return (String(timeData).includes('T') ? String(timeData).split('T')[1] : String(timeData)).split('.')[0];
+      };
+
+      const schedules = rawSchedules.map(schedule => {
+        let fullStartTime = schedule.startTime;
+        let fullEndTime = schedule.endTime;
+
+        if (schedule.date) {
+            const dateStr = String(schedule.date).includes('T') ? String(schedule.date).split('T')[0] : String(schedule.date);
+            const timeStr = formatTimeStr(schedule.startTime);
+            const endTimeStr = formatTimeStr(schedule.endTime);
+            fullStartTime = `${dateStr}T${timeStr}`;
+            fullEndTime = `${dateStr}T${endTimeStr}`;
+        } else if (Array.isArray(schedule.startTime)) {
+            const todayStr = today.toISOString().split('T')[0];
+            fullStartTime = `${todayStr}T${formatTimeStr(schedule.startTime)}`;
+        }
+
+        return {
+            ...schedule,
+            startTime: fullStartTime,
+            endTime: fullEndTime
+        };
+      }).filter(schedule => {
+        if (!schedule.startTime) return false;
+        const scheduleDate = new Date(schedule.startTime);
+        if (isNaN(scheduleDate.getTime())) return false;
+        scheduleDate.setHours(0, 0, 0, 0);
+        return scheduleDate.getTime() === today.getTime();
+      }).sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
+
+      const stats = statsResponse?.data ? statsResponse.data : (statsResponse || {});
 
       // 주간 통계 모의 데이터 (실제 API가 있다면 교체)
       const mockWeeklyStats = [
@@ -161,10 +202,27 @@ const ConsultantDashboardV2 = ({ user }) => {
     );
   };
 
+  const todayDateStr = new Date().toLocaleDateString('ko-KR', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    weekday: 'long'
+  });
+
   return (
     <AdminCommonLayout title="상담사 대시보드">
       <div className="consultant-dashboard-v2">
         
+        {/* 웰컴 메시지 영역 */}
+        <div className="dashboard-welcome-section" style={{ marginBottom: '24px', padding: '0 4px' }}>
+          <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--mg-gray-900)', margin: '0 0 8px 0' }}>
+            {user?.name || '상담사'} 선생님, 환영합니다.
+          </h1>
+          <p style={{ fontSize: '1rem', color: 'var(--mg-gray-600)', margin: 0 }}>
+            오늘({todayDateStr}) 하루도 화이팅하세요!
+          </p>
+        </div>
+
         {/* Hero Area: 주요 통계 */}
         <section className="consultant-hero-grid">
           <div className="consultant-stat-card">

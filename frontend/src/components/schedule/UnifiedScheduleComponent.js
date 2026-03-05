@@ -352,6 +352,17 @@ const UnifiedScheduleComponent = ({ userRole, userId, refetchTrigger, onDropFrom
 
             let scheduleEvents = [];
             
+            const formatTimeStr = (timeData) => {
+                if (!timeData) return '00:00:00';
+                if (Array.isArray(timeData)) {
+                    const h = String(timeData[0] || 0).padStart(2, '0');
+                    const m = String(timeData[1] || 0).padStart(2, '0');
+                    const s = String(timeData[2] || 0).padStart(2, '0');
+                    return `${h}:${m}:${s}`;
+                }
+                return (String(timeData).includes('T') ? String(timeData).split('T')[1] : String(timeData)).split('.')[0];
+            };
+            
             // apiGet은 이미 ApiResponse의 data를 추출하므로, response는 data 부분만 받음
             // 응답 구조: { schedules: [...], count: N, ... } 또는 배열
             
@@ -371,18 +382,9 @@ const UnifiedScheduleComponent = ({ userRole, userId, refetchTrigger, onDropFrom
                             ? schedule.date.split('T')[0] 
                             : schedule.date;
                         
-                        // LocalTime은 "HH:mm:ss" 또는 "HH:mm" 형식
-                        const startTimeStr = schedule.startTime 
-                            ? (schedule.startTime.includes('T') 
-                                ? schedule.startTime.split('T')[1] 
-                                : schedule.startTime).split('.')[0] // 밀리초 제거
-                            : '00:00:00';
-                        
-                        const endTimeStr = schedule.endTime 
-                            ? (schedule.endTime.includes('T') 
-                                ? schedule.endTime.split('T')[1] 
-                                : schedule.endTime).split('.')[0] // 밀리초 제거
-                            : '00:00:00';
+                        // LocalTime은 배열 또는 "HH:mm:ss" 형식
+                        const startTimeStr = formatTimeStr(schedule.startTime);
+                        const endTimeStr = formatTimeStr(schedule.endTime);
                         
                         startDateStr = `${dateStr}T${startTimeStr}`;
                         endDateStr = `${dateStr}T${endTimeStr}`;
@@ -471,18 +473,9 @@ const UnifiedScheduleComponent = ({ userRole, userId, refetchTrigger, onDropFrom
                                 ? schedule.date.split('T')[0] 
                                 : schedule.date;
                             
-                            // LocalTime은 "HH:mm:ss" 또는 "HH:mm" 형식
-                            const startTimeStr = schedule.startTime 
-                                ? (schedule.startTime.includes('T') 
-                                    ? schedule.startTime.split('T')[1] 
-                                    : schedule.startTime).split('.')[0] // 밀리초 제거
-                                : '00:00:00';
-                            
-                            const endTimeStr = schedule.endTime 
-                                ? (schedule.endTime.includes('T') 
-                                    ? schedule.endTime.split('T')[1] 
-                                    : schedule.endTime).split('.')[0] // 밀리초 제거
-                                : '00:00:00';
+                            // LocalTime은 배열 또는 "HH:mm:ss" 형식
+                            const startTimeStr = formatTimeStr(schedule.startTime);
+                            const endTimeStr = formatTimeStr(schedule.endTime);
                             
                             startDateStr = `${dateStr}T${startTimeStr}`;
                             endDateStr = `${dateStr}T${endTimeStr}`;

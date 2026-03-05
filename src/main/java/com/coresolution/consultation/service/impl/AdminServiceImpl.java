@@ -67,6 +67,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.hibernate.Hibernate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import java.util.UUID;
@@ -573,9 +574,12 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         } catch (Exception e) {
             log.error("상담료 수입 거래 자동 생성 실패: {}", e.getMessage(), e);
         }
+        // 컨트롤러에서 mapping.getConsultant()/getClient() 접근 시 no Session 방지: 같은 트랜잭션 내에서 lazy 초기화
+        Hibernate.initialize(savedMapping.getConsultant());
+        Hibernate.initialize(savedMapping.getClient());
         return savedMapping;
     }
-    
+
      /**
      * 상담료 수입 거래 자동 생성 (중앙화된 금액 관리 사용)
      * TransactionTemplate을 사용하여 독립적인 트랜잭션에서 실행되며, 실패해도 부모 트랜잭션에 영향을 주지 않음
@@ -903,6 +907,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         } catch (Exception e) {
             log.error("미수금 거래 자동 생성 실패: {}", e.getMessage(), e);
         }
+        // 컨트롤러에서 mapping.getConsultant()/getClient() 접근 시 no Session 방지
+        Hibernate.initialize(savedMapping.getConsultant());
+        Hibernate.initialize(savedMapping.getClient());
         return savedMapping;
     }
 

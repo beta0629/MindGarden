@@ -75,7 +75,7 @@ const CustomSelect = ({
       const viewportWidth = window.innerWidth;
       const dropdownHeight = 200;
       dropdown.style.position = 'fixed';
-      dropdown.style.zIndex = '9999';
+      // z-index는 CSS .custom-select__dropdown(10100) 사용 - 모달 위에 표시되도록 인라인 제거
       dropdown.style.left = `${rect.left}px`;
       dropdown.style.width = `${Math.max(rect.width, 120)}px`;
       if (rect.bottom + dropdownHeight > viewportHeight) {

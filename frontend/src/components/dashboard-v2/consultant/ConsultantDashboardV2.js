@@ -17,9 +17,12 @@ import StandardizedApi from '../../../utils/standardizedApi';
 import { DASHBOARD_API } from '../../../constants/api';
 import './ConsultantDashboard.css';
 
+const TENANT_ERROR_MESSAGE = '테넌트 정보를 불러올 수 없습니다. 로그아웃 후 다시 로그인해 주세요.';
+
 const ConsultantDashboardV2 = ({ user }) => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+  const [dashboardError, setDashboardError] = useState('');
   const [dashboardData, setDashboardData] = useState({
     stats: {
       todaySchedules: 0,
@@ -51,6 +54,7 @@ const ConsultantDashboardV2 = ({ user }) => {
 
     if (!tenantId) {
       console.warn('⚠️ [상담사 대시보드] tenantId 없음 - 스케줄/통계 API 호출 생략. user.tenantId=', currentUser?.tenantId);
+      setDashboardError(TENANT_ERROR_MESSAGE);
       setLoading(false);
       setDashboardData(prev => ({
         ...prev,
@@ -65,6 +69,7 @@ const ConsultantDashboardV2 = ({ user }) => {
       return;
     }
 
+    setDashboardError('');
     setLoading(true);
     try {
       // 1. 통계 데이터 조회 (apiGet이 { success, data }면 data만 반환)
@@ -74,6 +79,8 @@ const ConsultantDashboardV2 = ({ user }) => {
           userRole: 'CONSULTANT'
         });
       } catch (statsErr) {
+        const isTenantError = (statsErr?.status === 400 || statsErr?.response?.status === 400) && /테넌트/.test(statsErr?.response?.data?.message || statsErr?.message || '');
+        if (isTenantError) setDashboardError(TENANT_ERROR_MESSAGE);
         console.warn('상담사 통계 API 실패, 기본값 사용:', statsErr?.message || statsErr);
         statsResponse = null;
       }
@@ -86,6 +93,8 @@ const ConsultantDashboardV2 = ({ user }) => {
           userRole: 'CONSULTANT'
         });
       } catch (scheduleErr) {
+        const isTenantError = (scheduleErr?.status === 400 || scheduleErr?.response?.status === 400) && /테넌트/.test(scheduleErr?.response?.data?.message || scheduleErr?.message || '');
+        if (isTenantError) setDashboardError(TENANT_ERROR_MESSAGE);
         console.warn('상담사 스케줄 API 실패, 빈 목록 사용:', scheduleErr?.message || scheduleErr);
         scheduleResponse = { schedules: [] };
       }
@@ -188,6 +197,8 @@ const ConsultantDashboardV2 = ({ user }) => {
         weeklyStats: mockWeeklyStats
       });
     } catch (error) {
+      const isTenantError = (error?.status === 400 || error?.response?.status === 400) && /테넌트/.test(error?.response?.data?.message || error?.message || '');
+      if (isTenantError) setDashboardError(TENANT_ERROR_MESSAGE);
       console.error('대시보드 데이터 로드 실패:', error);
       setDashboardData(prev => ({
         ...prev,
@@ -282,6 +293,13 @@ const ConsultantDashboardV2 = ({ user }) => {
             오늘({todayDateStr}) 하루도 화이팅하세요!
           </p>
         </div>
+
+        {/* 테넌트 미설정 안내 배너 */}
+        {dashboardError && (
+          <div className="consultant-dashboard-tenant-alert" role="alert">
+            {dashboardError}
+          </div>
+        )}
 
         {/* Hero Area: 주요 통계 */}
         <section className="consultant-hero-grid">

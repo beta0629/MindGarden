@@ -9,6 +9,17 @@
   box-sizing: border-box;
 }
 
+/* 테넌트 미설정 안내 배너 */
+.consultant-dashboard-tenant-alert {
+  margin-bottom: var(--mg-v2-spacing-md, 16px);
+  padding: var(--mg-v2-spacing-md, 12px) var(--mg-v2-spacing-lg, 16px);
+  background-color: var(--mg-v2-color-warning-50, #fffbeb);
+  border: 1px solid var(--mg-v2-color-warning-200, #fde68a);
+  border-radius: var(--mg-v2-radius-md, 8px);
+  color: var(--mg-v2-color-text-primary, #111827);
+  font-size: var(--mg-v2-font-size-sm, 0.9375rem);
+}
+
 /* Hero Area */
 .consultant-hero-grid {
   display: grid;

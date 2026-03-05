@@ -33,6 +33,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -115,6 +116,13 @@ public class ScheduleController extends BaseApiController {
         
         ensureTenantContextFromSession(session);
         log.info("🔐 권한 기반 스케줄 조회 요청: 사용자 {}, 역할 {}, tenantId={}", userId, userRole, TenantContextHolder.getTenantId());
+
+        String tenantIdVal = TenantContextHolder.getTenantId();
+        if (tenantIdVal == null || tenantIdVal.isEmpty()) {
+            log.warn("❌ 테넌트 정보 없음 - 스케줄 조회 거부 (400)");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error("테넌트 정보가 없습니다. 로그아웃 후 다시 로그인해 주세요."));
+        }
         
         if (userId == null || userRole == null) {
             log.error("❌ 필수 파라미터 누락: userId={}, userRole={}", userId, userRole);
@@ -530,6 +538,11 @@ public class ScheduleController extends BaseApiController {
                     TenantContextHolder.setTenantId(currentUser.getTenantId());
                     log.info("📌 오늘 통계 테넌트 보완(세션): consultantId={}, tenantId={}", currentUser.getId(), currentUser.getTenantId());
                 }
+            }
+            if (TenantContextHolder.getTenantId() == null || TenantContextHolder.getTenantId().isEmpty()) {
+                log.warn("❌ 테넌트 정보 없음 - 오늘 통계 조회 거부 (400)");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error("테넌트 정보가 없습니다. 로그아웃 후 다시 로그인해 주세요."));
             }
             statistics = scheduleService.getTodayScheduleStatisticsByConsultant(currentUser.getId());
             log.info("✅ 상담사 오늘의 스케줄 통계 조회 완료 - 상담사 ID: {}", currentUser.getId());

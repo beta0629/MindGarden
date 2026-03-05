@@ -50,6 +50,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
@@ -335,6 +336,23 @@ public class AuthController extends BaseApiController {
         data.put("userId", registeredUser.getId());
 
         return created("회원가입이 완료되었습니다.", data);
+    }
+
+    /**
+     * 회원가입용 이메일 중복 확인 (공개 API)
+     * GET /api/v1/auth/duplicate-check/email?email={email}
+     */
+    @GetMapping("/duplicate-check/email")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> checkEmailDuplicateForSignup(
+            @RequestParam String email) {
+        String trimmed = email != null ? email.trim().toLowerCase() : "";
+        boolean isDuplicate = StringUtils.hasText(trimmed) && userRepository.existsByEmailAll(trimmed);
+        Map<String, Object> result = new HashMap<>();
+        result.put("email", trimmed);
+        result.put("isDuplicate", isDuplicate);
+        result.put("available", !isDuplicate);
+        result.put("message", isDuplicate ? "이미 사용 중인 이메일입니다." : "사용 가능한 이메일입니다.");
+        return success(result);
     }
 
     /**

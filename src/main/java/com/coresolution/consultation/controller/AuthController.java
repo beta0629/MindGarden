@@ -16,6 +16,7 @@ import com.coresolution.consultation.dto.AuthResponse;
 import com.coresolution.consultation.dto.BranchLoginRequest;
 import com.coresolution.consultation.dto.BranchLoginResponse;
 import com.coresolution.consultation.dto.RegisterRequest;
+import com.coresolution.consultation.dto.UserDto;
 import com.coresolution.consultation.entity.Branch;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.entity.UserSocialAccount;
@@ -513,6 +514,11 @@ public class AuthController extends BaseApiController {
             if (authResponse.getUser().getTenantId() != null) {
                 sessionUser.setTenantId(authResponse.getUser().getTenantId());
             }
+            if (sessionUser.getTenantId() == null && sessionUser.getId() != null) {
+                userRepository.findById(sessionUser.getId())
+                    .filter(u -> u.getTenantId() != null && !u.getTenantId().isEmpty())
+                    .ifPresent(u -> sessionUser.setTenantId(u.getTenantId()));
+            }
             
             SessionUtils.setCurrentUser(session, sessionUser);
             
@@ -731,6 +737,14 @@ public class AuthController extends BaseApiController {
             response.put("user", authResponse.getUser());
             response.put("sessionId", sessionId);
             response.put("requiresPasswordChange", authResponse.isRequiresPasswordChange()); // 임시 비밀번호인 경우 비밀번호 변경 필요
+            // 응답 user에 tenantId 보장 (세션 사용자와 일치)
+            Object responseUser = response.get("user");
+            if (responseUser instanceof UserDto) {
+                UserDto dto = (UserDto) responseUser;
+                if ((dto.getTenantId() == null || dto.getTenantId().isEmpty()) && sessionUser.getTenantId() != null) {
+                    dto.setTenantId(sessionUser.getTenantId());
+                }
+            }
             
             return success(response);
         } else if (authResponse.isRequiresConfirmation()) {
@@ -1251,6 +1265,12 @@ public class AuthController extends BaseApiController {
                 }
             }
             
+            // 세션 저장 전 tenantId 보완 (DB 조회)
+            if (user.getTenantId() == null || user.getTenantId().isEmpty()) {
+                userRepository.findById(user.getId())
+                    .filter(u -> u.getTenantId() != null && !u.getTenantId().isEmpty())
+                    .ifPresent(u -> user.setTenantId(u.getTenantId()));
+            }
             // 사용자 정보 세션에 저장
             SessionUtils.setCurrentUser(session, user);
             session.setAttribute("sessionId", sessionId);
@@ -1271,6 +1291,7 @@ public class AuthController extends BaseApiController {
                 .branchId(user.getBranch() != null ? user.getBranch().getId() : null)
                 .branchName(user.getBranch() != null ? user.getBranch().getBranchName() : null)
                 .branchCode(user.getBranch() != null ? user.getBranch().getBranchCode() : null)
+                .tenantId(user.getTenantId())
                 .build();
             
             BranchLoginResponse.BranchInfo branchInfo = null;
@@ -1439,7 +1460,11 @@ public class AuthController extends BaseApiController {
             if (user.getBranch() == null || !user.getBranch().getBranchCode().equals(branchCode)) {
                 throw new IllegalArgumentException("해당 지점에 소속되지 않은 사용자입니다.");
             }
-            
+            if (user.getTenantId() == null || user.getTenantId().isEmpty()) {
+                userRepository.findById(user.getId())
+                    .filter(u -> u.getTenantId() != null && !u.getTenantId().isEmpty())
+                    .ifPresent(u -> user.setTenantId(u.getTenantId()));
+            }
             // 사용자 정보 세션에 저장
             SessionUtils.setCurrentUser(session, user);
             session.setAttribute("sessionId", sessionId);
@@ -1459,6 +1484,7 @@ public class AuthController extends BaseApiController {
             userInfo.put("branchId", user.getBranch().getId());
             userInfo.put("branchName", user.getBranch().getBranchName());
             userInfo.put("branchCode", user.getBranch().getBranchCode());
+            userInfo.put("tenantId", user.getTenantId());
             
             Map<String, Object> data = new HashMap<>();
             data.put("message", "로그인 성공");
@@ -1548,7 +1574,11 @@ public class AuthController extends BaseApiController {
             if (user.getRole() == null || !isAdminRoleFromCommonCode(user.getRole())) {
                 throw new IllegalArgumentException("관리자 로그인은 관리자만 가능합니다.");
             }
-            
+            if (user.getTenantId() == null || user.getTenantId().isEmpty()) {
+                userRepository.findById(user.getId())
+                    .filter(u -> u.getTenantId() != null && !u.getTenantId().isEmpty())
+                    .ifPresent(u -> user.setTenantId(u.getTenantId()));
+            }
             // 사용자 정보 세션에 저장
             SessionUtils.setCurrentUser(session, user);
             session.setAttribute("sessionId", sessionId);
@@ -1568,6 +1598,7 @@ public class AuthController extends BaseApiController {
             userInfo.put("branchId", null);
             userInfo.put("branchName", null);
             userInfo.put("branchCode", null);
+            userInfo.put("tenantId", user.getTenantId());
             
             Map<String, Object> data = new HashMap<>();
             data.put("message", "로그인 성공");

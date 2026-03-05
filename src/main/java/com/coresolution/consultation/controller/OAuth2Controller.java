@@ -1362,7 +1362,11 @@ public class OAuth2Controller extends BaseApiController {
                     // 데이터베이스에서 완전한 User 객체를 가져와서 세션에 저장 (이메일 로그인과 동일)
                     User user = userRepository.findById(userInfo.getId())
                             .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
-
+                    if (user.getTenantId() == null || user.getTenantId().isEmpty()) {
+                        userRepository.findById(user.getId())
+                                .filter(u -> u.getTenantId() != null && !u.getTenantId().isEmpty())
+                                .ifPresent(u -> user.setTenantId(u.getTenantId()));
+                    }
                     // 세션에 완전한 User 객체 저장
                     SessionUtils.setCurrentUser(session, user);
 
@@ -2018,7 +2022,11 @@ public class OAuth2Controller extends BaseApiController {
                     // 데이터베이스에서 완전한 User 객체를 가져와서 세션에 저장 (이메일 로그인과 동일)
                     User user = userRepository.findById(userInfo.getId())
                             .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
-
+                    if (user.getTenantId() == null || user.getTenantId().isEmpty()) {
+                        userRepository.findById(user.getId())
+                                .filter(u -> u.getTenantId() != null && !u.getTenantId().isEmpty())
+                                .ifPresent(u -> user.setTenantId(u.getTenantId()));
+                    }
                     // 세션에 완전한 User 객체 저장
                     SessionUtils.setCurrentUser(session, user);
 
@@ -2240,6 +2248,11 @@ public class OAuth2Controller extends BaseApiController {
             // 사용자 정보 조회
             User user = userRepository.findById(userId)
                     .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: userId=" + userId));
+            if (user.getTenantId() == null || user.getTenantId().isEmpty()) {
+                userRepository.findById(user.getId())
+                        .filter(u -> u.getTenantId() != null && !u.getTenantId().isEmpty())
+                        .ifPresent(u -> user.setTenantId(u.getTenantId()));
+            }
 
             // 세션 생성 또는 기존 세션 사용
             if (sessionId != null && !sessionId.isEmpty()) {
@@ -2420,7 +2433,11 @@ public class OAuth2Controller extends BaseApiController {
             // 기존 사용자 로그인
             User user = userRepository.findById(existingUserId)
                     .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
-
+            if (user.getTenantId() == null || user.getTenantId().isEmpty()) {
+                userRepository.findById(user.getId())
+                        .filter(u -> u.getTenantId() != null && !u.getTenantId().isEmpty())
+                        .ifPresent(u -> user.setTenantId(u.getTenantId()));
+            }
             // 세션에 사용자 정보 저장 (다른 메서드와 동일한 방식 사용)
             SessionUtils.setCurrentUser(session, user);
 

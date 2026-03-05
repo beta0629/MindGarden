@@ -37,20 +37,58 @@ const ConsultantDashboardV2 = ({ user }) => {
   }, [user]);
 
   const fetchDashboardData = async () => {
-    if (!user?.id) return;
-    
+    if (!user?.id) {
+      setLoading(false);
+      return;
+    }
+    // API 호출 전 세션 한 번 갱신 후 최신 user 사용
+    if (typeof window !== 'undefined' && window.sessionManager?.checkSession) {
+      await window.sessionManager.checkSession(true);
+    }
+    const sessionManager = typeof window !== 'undefined' ? window.sessionManager : null;
+    const currentUser = sessionManager?.getUser?.() ?? user;
+    const tenantId = currentUser?.tenantId ?? sessionManager?.getSessionInfo?.()?.tenantId ?? null;
+
+    if (!tenantId) {
+      console.warn('⚠️ [상담사 대시보드] tenantId 없음 - 스케줄/통계 API 호출 생략. user.tenantId=', currentUser?.tenantId);
+      setLoading(false);
+      setDashboardData(prev => ({
+        ...prev,
+        stats: {
+          todaySchedules: 0,
+          newClients: 0,
+          unreadMessages: 0,
+          averageRating: 0
+        },
+        todaySchedules: []
+      }));
+      return;
+    }
+
     setLoading(true);
     try {
-      // 1. 통계 데이터 조회
-      const statsResponse = await StandardizedApi.get(DASHBOARD_API.CONSULTANT_STATS, {
-        userRole: 'CONSULTANT'
-      });
-      
+      // 1. 통계 데이터 조회 (apiGet이 { success, data }면 data만 반환)
+      let statsResponse;
+      try {
+        statsResponse = await StandardizedApi.get(DASHBOARD_API.CONSULTANT_STATS, {
+          userRole: 'CONSULTANT'
+        });
+      } catch (statsErr) {
+        console.warn('상담사 통계 API 실패, 기본값 사용:', statsErr?.message || statsErr);
+        statsResponse = null;
+      }
+
       // 2. 오늘의 일정 조회
-      const scheduleResponse = await StandardizedApi.get(DASHBOARD_API.CONSULTANT_SCHEDULES, {
-        userId: user.id,
-        userRole: 'CONSULTANT'
-      });
+      let scheduleResponse;
+      try {
+        scheduleResponse = await StandardizedApi.get(DASHBOARD_API.CONSULTANT_SCHEDULES, {
+          userId: currentUser.id,
+          userRole: 'CONSULTANT'
+        });
+      } catch (scheduleErr) {
+        console.warn('상담사 스케줄 API 실패, 빈 목록 사용:', scheduleErr?.message || scheduleErr);
+        scheduleResponse = { schedules: [] };
+      }
 
       // 데이터 가공: 오늘·어제 포함 (테넌트 조회는 백엔드 TenantContextHolder로 적용됨)
       const today = new Date();
@@ -116,7 +154,9 @@ const ConsultantDashboardV2 = ({ user }) => {
         return d.getTime() === today.getTime();
       }).length;
 
-      const stats = statsResponse?.data ? statsResponse.data : (statsResponse || {});
+      // apiGet이 ApiResponse면 data만 반환하므로 statsResponse가 이미 통계 객체
+      const stats = statsResponse && typeof statsResponse === 'object' ? statsResponse : {};
+      const todaySchedulesFromStats = stats.totalToday ?? stats.todaySchedules;
 
       // 주간 통계 모의 데이터 (실제 API가 있다면 교체)
       const mockWeeklyStats = [
@@ -138,10 +178,10 @@ const ConsultantDashboardV2 = ({ user }) => {
 
       setDashboardData({
         stats: {
-          todaySchedules: todayOnlyCount ?? stats.todaySchedules ?? 0,
-          newClients: stats.newClients || 0,
-          unreadMessages: stats.unreadMessages || 0,
-          averageRating: stats.averageRating || 4.8
+          todaySchedules: todayOnlyCount ?? todaySchedulesFromStats ?? 0,
+          newClients: stats.newClients ?? 0,
+          unreadMessages: stats.unreadMessages ?? 0,
+          averageRating: stats.averageRating ?? 4.8
         },
         todaySchedules: schedules,
         recentNotifications: mockNotifications,
@@ -149,6 +189,16 @@ const ConsultantDashboardV2 = ({ user }) => {
       });
     } catch (error) {
       console.error('대시보드 데이터 로드 실패:', error);
+      setDashboardData(prev => ({
+        ...prev,
+        stats: {
+          ...prev.stats,
+          todaySchedules: prev.stats?.todaySchedules ?? 0,
+          newClients: prev.stats?.newClients ?? 0,
+          unreadMessages: prev.stats?.unreadMessages ?? 0,
+          averageRating: prev.stats?.averageRating ?? 4.8
+        }
+      }));
     } finally {
       setLoading(false);
     }

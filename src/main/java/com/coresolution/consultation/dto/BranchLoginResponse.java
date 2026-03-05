@@ -47,6 +47,8 @@ public class BranchLoginResponse {
          * @Deprecated - 표준화 2025-12-07: 브랜치 개념 제거됨
          */
         @Deprecated        private String branchCode;
+        /** 테넌트 ID (세션/API 일관성) */
+        private String tenantId;
     }
     
     @Data

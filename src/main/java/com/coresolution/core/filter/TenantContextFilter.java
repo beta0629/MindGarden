@@ -320,6 +320,7 @@ public class TenantContextFilter implements Filter {
                 }
                 // 1-1-1. 세션 User에 tenantId가 없을 때 DB에서 조회 후 세션 보완 (재로그인/직렬화 이슈 대응)
                 if (user.getId() != null && userRepository != null) {
+                    log.debug("Tenant ID 복구(DB) 시도: userId={}, URI={}", user.getId(), request.getRequestURI());
                     try {
                         java.util.Optional<User> dbUserOpt = userRepository.findById(user.getId());
                         if (dbUserOpt.isPresent()) {

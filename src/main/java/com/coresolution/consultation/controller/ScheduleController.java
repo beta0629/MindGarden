@@ -26,6 +26,7 @@ import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.service.ScheduleService;
 import com.coresolution.consultation.util.PermissionCheckUtils;
 import com.coresolution.consultation.utils.SessionUtils;
+import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.controller.BaseApiController;
 import com.coresolution.core.dto.ApiResponse;
 import org.springframework.data.domain.Page;
@@ -71,6 +72,37 @@ public class ScheduleController extends BaseApiController {
     private final com.coresolution.consultation.service.UserPersonalDataCacheService userPersonalDataCacheService;
 
     /**
+     * 테넌트 컨텍스트가 비어 있을 때 세션 사용자의 tenantId로 보완 (상담사 대시보드 등).
+     * 세션 User에 tenantId가 없으면 DB 조회로 보완한다.
+     */
+    private void ensureTenantContextFromSession(HttpSession session) {
+        if (TenantContextHolder.getTenantId() != null && !TenantContextHolder.getTenantId().isEmpty()) {
+            return;
+        }
+        User currentUser = SessionUtils.getCurrentUser(session);
+        if (currentUser != null && currentUser.getTenantId() != null && !currentUser.getTenantId().isEmpty()) {
+            TenantContextHolder.setTenantId(currentUser.getTenantId());
+            log.info("📌 테넌트 컨텍스트 보완(세션 사용자): userId={}, tenantId={}", currentUser.getId(), currentUser.getTenantId());
+            return;
+        }
+        // 세션 User에 tenantId가 없을 때 DB에서 조회 후 보완
+        if (currentUser != null && currentUser.getId() != null && userRepository != null) {
+            try {
+                Optional<User> dbUserOpt = userRepository.findById(currentUser.getId());
+                if (dbUserOpt.isPresent()) {
+                    User dbUser = dbUserOpt.get();
+                    if (dbUser.getTenantId() != null && !dbUser.getTenantId().isEmpty()) {
+                        TenantContextHolder.setTenantId(dbUser.getTenantId());
+                        log.info("📌 테넌트 컨텍스트 보완(DB 조회): userId={}, tenantId={}", currentUser.getId(), dbUser.getTenantId());
+                    }
+                }
+            } catch (Exception e) {
+                log.warn("⚠️ 테넌트 컨텍스트 DB 보완 실패 (무시): userId={}, error={}", currentUser.getId(), e.getMessage());
+            }
+        }
+    }
+
+    /**
      /**
      * 권한 기반 전체 스케줄 조회 (상담사 이름 포함)
      * 상담사: 자신의 일정만, 관리자: 모든 일정
@@ -78,9 +110,11 @@ public class ScheduleController extends BaseApiController {
     @GetMapping
     public ResponseEntity<ApiResponse<Map<String, Object>>> getSchedulesByUserRole(
             @RequestParam(required = false) Long userId,
-            @RequestParam(required = false) String userRole) {
+            @RequestParam(required = false) String userRole,
+            HttpSession session) {
         
-        log.info("🔐 권한 기반 스케줄 조회 요청: 사용자 {}, 역할 {}", userId, userRole);
+        ensureTenantContextFromSession(session);
+        log.info("🔐 권한 기반 스케줄 조회 요청: 사용자 {}, 역할 {}, tenantId={}", userId, userRole, TenantContextHolder.getTenantId());
         
         if (userId == null || userRole == null) {
             log.error("❌ 필수 파라미터 누락: userId={}, userRole={}", userId, userRole);
@@ -478,24 +512,32 @@ public class ScheduleController extends BaseApiController {
             @RequestParam(required = false) String tenantId,
             HttpSession session) {
         
-        log.info("📊 오늘의 스케줄 통계 조회 요청: 역할 {}, 테넌트 ID: {}", userRole, tenantId);
-        
-        ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkStatisticsPermission(session, dynamicPermissionService);
-        if (permissionResponse != null) {
-            throw new org.springframework.security.access.AccessDeniedException("통계 조회 권한이 없습니다.");
-        }
+        ensureTenantContextFromSession(session);
+        log.info("📊 오늘의 스케줄 통계 조회 요청: 역할 {}, 테넌트 ID(파라미터): {}, tenantContext={}", userRole, tenantId, TenantContextHolder.getTenantId());
         
         Map<String, Object> statistics;
-        
-        if (userRole != null && UserRole.fromString(userRole) == UserRole.CONSULTANT) {
+        boolean isConsultantSelf = userRole != null && UserRole.fromString(userRole) == UserRole.CONSULTANT;
+
+        if (isConsultantSelf) {
+            // 상담사 본인 대시보드: 로그인만 확인, STATISTICS_VIEW 불필요
             User currentUser = SessionUtils.getCurrentUser(session);
             if (currentUser == null) {
                 throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
             }
-            
+            // 테넌트가 비어 있으면 세션 사용자로 보완 (getTodayScheduleStatisticsByConsultant가 tenantId 사용)
+            if (TenantContextHolder.getTenantId() == null || TenantContextHolder.getTenantId().isEmpty()) {
+                if (currentUser.getTenantId() != null && !currentUser.getTenantId().isEmpty()) {
+                    TenantContextHolder.setTenantId(currentUser.getTenantId());
+                    log.info("📌 오늘 통계 테넌트 보완(세션): consultantId={}, tenantId={}", currentUser.getId(), currentUser.getTenantId());
+                }
+            }
             statistics = scheduleService.getTodayScheduleStatisticsByConsultant(currentUser.getId());
             log.info("✅ 상담사 오늘의 스케줄 통계 조회 완료 - 상담사 ID: {}", currentUser.getId());
         } else {
+            ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkStatisticsPermission(session, dynamicPermissionService);
+            if (permissionResponse != null) {
+                throw new org.springframework.security.access.AccessDeniedException("통계 조회 권한이 없습니다.");
+            }
             if (tenantId != null && !tenantId.isEmpty()) {
                 statistics = scheduleService.getTodayScheduleStatisticsByTenant(tenantId);
                 log.info("✅ 테넌트별 오늘의 스케줄 통계 조회 완료 - 테넌트 ID: {}", tenantId);

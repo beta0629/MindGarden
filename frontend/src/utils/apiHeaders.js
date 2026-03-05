@@ -14,15 +14,16 @@
  */
 export const getTenantId = async (forceRefresh = false) => {
     try {
+        // forceRefresh 시 API 호출 전 한 번 갱신: 맨 처음 checkSession(true) await 후 조회
+        if (forceRefresh && typeof window !== 'undefined' && window.sessionManager?.checkSession) {
+            await window.sessionManager.checkSession(true);
+        }
         // sessionManager가 있으면 우선 사용 (최신 정보)
         if (typeof window !== 'undefined' && window.sessionManager) {
-            // 세션이 없거나 강제 갱신이 요청된 경우 세션 체크
             const user = window.sessionManager.getUser();
-            if (!user || !user.tenantId || forceRefresh) {
-                // 세션 강제 갱신 시도
-                try {
-                    await window.sessionManager.checkSession(true);
-                    const refreshedUser = window.sessionManager.getUser();
+            if (!user || !user.tenantId) {
+                // 이미 forceRefresh 시 위에서 갱신됨; 여기서는 갱신된 뒤 조회만
+                const refreshedUser = window.sessionManager.getUser();
                     if (refreshedUser && refreshedUser.tenantId) {
                         const tenantId = refreshedUser.tenantId.trim();
                         // 기본값 체크: "tenant-unknown-"으로 시작하는 것은 실제 tenantId일 수 있음
@@ -41,9 +42,6 @@ export const getTenantId = async (forceRefresh = false) => {
                             return refreshedUser.tenantId;
                         }
                     }
-                } catch (refreshError) {
-                    console.warn('⚠️ 세션 갱신 실패:', refreshError);
-                }
             } else if (user && user.tenantId) {
                 const tenantId = user.tenantId.trim();
                 // "tenant-unknown-consultation-*" 같은 실제 tenantId는 허용 (우선 체크)

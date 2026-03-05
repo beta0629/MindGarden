@@ -263,6 +263,16 @@ const TabletRegister = () => {
               {errors.name && <span className="mg-v2-error-text">{errors.name}</span>}
             </div>
 
+            <datalist id="email-domains">
+              <option value="example@gmail.com" />
+              <option value="example@naver.com" />
+              <option value="example@daum.net" />
+              <option value="example@kakao.com" />
+              <option value="example@hanmail.net" />
+              <option value="example@nate.com" />
+              <option value="example@yahoo.co.kr" />
+              <option value="example@outlook.com" />
+            </datalist>
             <div className="mg-v2-form-group">
               <label htmlFor="email" className="mg-v2-form-label">이메일 *</label>
               <div className="mg-v2-form-email-row">
@@ -270,6 +280,8 @@ const TabletRegister = () => {
                   type="email"
                   id="email"
                   name="email"
+                  autoComplete="email"
+                  list="email-domains"
                   className={`mg-v2-form-input ${errors.email ? 'mg-v2-input error' : ''}`}
                   placeholder="이메일을 입력하세요"
                   value={formData.email}

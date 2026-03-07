@@ -27,19 +27,24 @@ const ConsultantRecordFilterBlock = ({
         />
       </div>
       
-      <div style={{ flex: '0 0 auto' }}>
-        <select
-          className="mg-select"
-          style={{ padding: '0.5rem 1rem', borderRadius: 'var(--mg-radius-md)', border: '1px solid var(--mg-gray-300)', backgroundColor: 'var(--mg-bg-white)', minWidth: '150px' }}
-          value={filterStatus}
-          onChange={(e) => onFilterStatusChange(e.target.value)}
-        >
-          {statusOptions.map(option => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
+      <div style={{ flex: '0 0 auto', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+        {statusOptions.map(option => (
+          <button
+            key={option.value}
+            type="button"
+            onClick={() => onFilterStatusChange(option.value)}
+            className={`mg-v2-badge ${filterStatus === option.value ? 'mg-v2-badge--primary' : 'mg-v2-badge--default'}`}
+            style={{ 
+              cursor: 'pointer', 
+              border: filterStatus === option.value ? 'none' : '1px solid var(--mg-gray-300)',
+              backgroundColor: filterStatus === option.value ? 'var(--mg-primary-color)' : 'var(--mg-bg-white)',
+              color: filterStatus === option.value ? '#fff' : 'var(--mg-text-secondary)',
+              padding: '0.5rem 1rem'
+            }}
+          >
+            {option.label}
+          </button>
+        ))}
       </div>
     </div>
   );

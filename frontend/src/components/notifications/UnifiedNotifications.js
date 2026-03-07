@@ -35,7 +35,9 @@ const UnifiedNotifications = () => {
       const response = await apiGet('/api/v1/system-notifications?page=0&size=50');
 
       if (response.success) {
-        setSystemNotifications(response.data || []);
+        // 백엔드 응답이 { notifications: [...] } 형태일 수 있음
+        const notificationsData = response.data?.notifications || (Array.isArray(response.data) ? response.data : []);
+        setSystemNotifications(notificationsData);
       }
     } catch (error) {
       // 인증 오류는 조용히 처리
@@ -82,7 +84,9 @@ const UnifiedNotifications = () => {
       const response = await apiGet(endpoint);
 
       if (response.success) {
-        setMessages(response.data || []);
+        // 백엔드 응답이 { messages: [...] } 형태일 수 있음
+        const messagesData = response.data?.messages || (Array.isArray(response.data) ? response.data : []);
+        setMessages(messagesData);
       }
     } catch (error) {
       console.error('메시지 로드 오류:', error);

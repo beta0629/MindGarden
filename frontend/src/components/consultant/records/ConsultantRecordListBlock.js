@@ -36,7 +36,7 @@ const ConsultantRecordListBlock = ({ records, onViewRecord, onWriteRecord, onNav
           <h3 className="mg-v2-consultation-log-list-block__empty-title">{EMPTY_TITLE}</h3>
           <p className="mg-v2-consultation-log-list-block__empty-desc">{EMPTY_DESC}</p>
           <button 
-            className="mg-btn mg-btn--outline mg-btn--primary"
+            className="mg-v2-button mg-v2-button--outline"
             onClick={onNavigateSchedule}
             style={{ marginTop: '1rem' }}
           >

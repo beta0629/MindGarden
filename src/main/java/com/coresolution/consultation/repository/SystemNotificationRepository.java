@@ -51,8 +51,8 @@ public interface SystemNotificationRepository extends BaseRepository<SystemNotif
      * 테넌트별 관리자용 전체 공지 조회 (테넌트 필터링)
      */
     @Query("SELECT n FROM SystemNotification n WHERE n.tenantId = :tenantId AND n.isDeleted = false " +
-           "AND (:targetType IS NULL OR n.targetType = :targetType) " +
-           "AND (:status IS NULL OR n.status = :status) " +
+           "AND (CAST(:targetType AS string) IS NULL OR n.targetType = :targetType) " +
+           "AND (CAST(:status AS string) IS NULL OR n.status = :status) " +
            "ORDER BY n.createdAt DESC")
     Page<SystemNotification> findAllForAdminByTenantId(
         @Param("tenantId") String tenantId,
@@ -65,8 +65,8 @@ public interface SystemNotificationRepository extends BaseRepository<SystemNotif
      */
     @Deprecated
     @Query("SELECT n FROM SystemNotification n WHERE n.isDeleted = false " +
-           "AND (:targetType IS NULL OR n.targetType = :targetType) " +
-           "AND (:status IS NULL OR n.status = :status) " +
+           "AND (CAST(:targetType AS string) IS NULL OR n.targetType = :targetType) " +
+           "AND (CAST(:status AS string) IS NULL OR n.status = :status) " +
            "ORDER BY n.createdAt DESC")
     Page<SystemNotification> findAllForAdmin(
         @Param("targetType") String targetType,

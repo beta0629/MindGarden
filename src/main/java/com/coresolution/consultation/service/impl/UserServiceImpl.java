@@ -752,11 +752,7 @@ public class UserServiceImpl implements UserService {
         
         // 현재 테넌트의 비밀번호만 변경
         String hashedPassword = passwordEncoder.encode(newPassword);
-        user.setPassword(hashedPassword);
-        user.setUpdatedAt(LocalDateTime.now());
-        user.setVersion(user.getVersion() + 1);
-        
-        userRepository.save(user);
+        userRepository.updatePassword(user.getId(), hashedPassword, LocalDateTime.now());
         
         log.info("비밀번호 변경 완료: email={}, userId={}", 
             user.getEmail(), userId);
@@ -769,11 +765,7 @@ public class UserServiceImpl implements UserService {
         
         // 임시 비밀번호 생성 및 설정
         String tempPassword = generateTempPassword();
-        user.setPassword(passwordEncoder.encode(tempPassword));
-        user.setUpdatedAt(LocalDateTime.now());
-        user.setVersion(user.getVersion() + 1);
-        
-        userRepository.save(user);
+        userRepository.updatePassword(user.getId(), passwordEncoder.encode(tempPassword), LocalDateTime.now());
         
         // 이메일로 임시 비밀번호 발송
         try {
@@ -932,11 +924,7 @@ public class UserServiceImpl implements UserService {
         
         // 현재 테넌트의 비밀번호만 변경
         String hashedPassword = passwordEncoder.encode(newPassword);
-        user.setPassword(hashedPassword);
-        user.setUpdatedAt(LocalDateTime.now());
-        user.setVersion(user.getVersion() + 1);
-        
-        userRepository.save(user);
+        userRepository.updatePassword(user.getId(), hashedPassword, LocalDateTime.now());
         
         log.info("비밀번호 변경 완료: email={}, userId={}", 
             user.getEmail(), userId);

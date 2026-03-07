@@ -7,6 +7,7 @@ import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -1298,4 +1299,11 @@ public interface UserRepository extends BaseRepository<User, Long> {
     @Deprecated
     @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.branch.id = :branchId AND u.isDeleted = false")
     Page<User> findAllByTenantIdAndBranchId(@Param("tenantId") String tenantId, @Param("branchId") Long branchId, Pageable pageable);
+
+    /**
+     * 비밀번호만 안전하게 업데이트 (엔티티 평문 저장 방지)
+     */
+    @Modifying
+    @Query("UPDATE User u SET u.password = :password, u.updatedAt = :updatedAt WHERE u.id = :id")
+    void updatePassword(@Param("id") Long id, @Param("password") String password, @Param("updatedAt") LocalDateTime updatedAt);
 }

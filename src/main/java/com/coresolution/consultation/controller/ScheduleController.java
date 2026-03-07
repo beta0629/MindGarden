@@ -338,8 +338,13 @@ public class ScheduleController extends BaseApiController {
         
         User currentUser = SessionUtils.getCurrentUser(session);
         if (currentUser == null) {
-            log.warn("❌ 세션에서 사용자 정보를 찾을 수 없습니다.");
             throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
+        }
+        
+        Long requestConsultantId = request.getConsultantId();
+        if (!isAdminRoleFromCommonCode(currentUser.getRole()) && !currentUser.getId().equals(requestConsultantId)) {
+            log.warn("❌ 스케줄 등록 권한 없음 (본인 아님): currentUser={}, targetConsultant={}", currentUser.getId(), requestConsultantId);
+            throw new org.springframework.security.access.AccessDeniedException("본인의 스케줄만 등록할 수 있습니다.");
         }
         
         UserRole userRole = currentUser.getRole();
@@ -411,6 +416,14 @@ public class ScheduleController extends BaseApiController {
         }
         
         Schedule existingSchedule = scheduleService.findById(id);
+        
+        User currentUser = SessionUtils.getCurrentUser(session);
+        if (currentUser == null) {
+            throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
+        }
+        if (!isAdminRoleFromCommonCode(currentUser.getRole()) && !currentUser.getId().equals(existingSchedule.getConsultantId())) {
+            throw new org.springframework.security.access.AccessDeniedException("본인의 스케줄만 수정할 수 있습니다.");
+        }
         
         if (updateData.containsKey("status")) {
             String newStatus = (String) updateData.get("status");

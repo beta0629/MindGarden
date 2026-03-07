@@ -78,6 +78,20 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
         return null;
     }
 
+    private void validateUserAccess(Long targetConsultantId) {
+        com.coresolution.consultation.entity.User currentUser = com.coresolution.consultation.utils.SessionUtils.getCurrentUser(null);
+        if (currentUser == null) {
+            throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
+        }
+        
+        boolean isAdmin = currentUser.getRole() != null && currentUser.getRole().isAdmin();
+        
+        if (!isAdmin && !currentUser.getId().equals(targetConsultantId)) {
+            log.warn("❌ 타인 기록 접근 시도 차단: currentUser={}, targetConsultantId={}", currentUser.getId(), targetConsultantId);
+            throw new org.springframework.security.access.AccessDeniedException("본인의 상담일지만 접근/수정할 수 있습니다.");
+        }
+    }
+
     @Override
     public ConsultationRecord createConsultationRecord(Map<String, Object> recordData) {
         log.info("📝 상담일지 작성 - 데이터: {}", recordData);
@@ -97,6 +111,9 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
             if (consultationId == null || clientId == null || consultantId == null) {
                 throw new RuntimeException("필수 필드가 누락되었습니다: consultationId, clientId, consultantId");
             }
+            
+            // 권한 검증: 본인 기록만 생성 가능
+            validateUserAccess(consultantId);
             
             // 스케줄 검증: 상담 예약이 실제로 존재하는지 확인
             validateConsultationExists(consultationId, clientId, consultantId);
@@ -228,6 +245,9 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
         }
         ConsultationRecord record = recordOpt.get();
         
+        // 권한 검증: 본인 기록만 수정 가능
+        validateUserAccess(record.getConsultantId());
+        
         try {
             // 수정 가능한 필드들만 업데이트
             if (recordData.get("sessionNumber") != null) {
@@ -305,6 +325,9 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
         String tenantId = TenantContextHolder.getRequiredTenantId();
         Optional<ConsultationRecord> record = consultationRecordRepository.findByTenantIdAndId(tenantId, recordId);
         if (record.isPresent() && !record.get().getIsDeleted()) {
+            // 권한 검증: 본인 기록만 삭제 가능
+            validateUserAccess(record.get().getConsultantId());
+            
             record.get().setIsDeleted(true);
             consultationRecordRepository.save(record.get());
         } else {
@@ -339,6 +362,7 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
         String tenantId = TenantContextHolder.getRequiredTenantId();
         Optional<ConsultationRecord> record = consultationRecordRepository.findByTenantIdAndId(tenantId, recordId);
         if (record.isPresent() && !record.get().getIsDeleted()) {
+            validateUserAccess(record.get().getConsultantId());
             record.get().completeSession();
             return consultationRecordRepository.save(record.get());
         } else {
@@ -352,6 +376,7 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
         String tenantId = TenantContextHolder.getRequiredTenantId();
         Optional<ConsultationRecord> record = consultationRecordRepository.findByTenantIdAndId(tenantId, recordId);
         if (record.isPresent() && !record.get().getIsDeleted()) {
+            validateUserAccess(record.get().getConsultantId());
             record.get().setIsSessionCompleted(false);
             record.get().setIncompletionReason(reason);
             return consultationRecordRepository.save(record.get());

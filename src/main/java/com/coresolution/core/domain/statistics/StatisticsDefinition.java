@@ -127,7 +127,7 @@ public class StatisticsDefinition extends BaseEntity {
     /**
      * 테넌트 ID (NULL이면 시스템 기본 통계)
      */
-    @Column(name = "tenant_id", length = 36)
+    @Column(name = "tenant_id", length = 100)
     private String tenantId;
     
     /**

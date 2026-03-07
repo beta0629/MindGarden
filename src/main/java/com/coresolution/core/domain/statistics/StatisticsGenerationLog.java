@@ -60,7 +60,7 @@ public class StatisticsGenerationLog extends BaseEntity {
      * 테넌트 ID
      */
     @NotBlank(message = "테넌트 ID는 필수입니다")
-    @Column(name = "tenant_id", nullable = false, length = 36)
+    @Column(name = "tenant_id", nullable = false, length = 100)
     private String tenantId;
     
     /**

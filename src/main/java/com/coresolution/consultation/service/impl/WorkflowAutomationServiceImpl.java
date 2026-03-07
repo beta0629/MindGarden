@@ -134,17 +134,22 @@ public class WorkflowAutomationServiceImpl implements WorkflowAutomationService 
                     "내담자"
                 );
                 
-                consultationMessageService.sendMessage(
-                    schedule.getConsultantId(), 
-                    schedule.getClientId(), 
-                    null, // consultationId
-                    getRoleCodeFromCommonCode(UserRole.CONSULTANT.name()), 
-                    "미완료 상담 알림", 
-                    alertMessage,
-                    getMessageTypeFromCommonCode("INCOMPLETE_CONSULTATION"),
-                    true, // isImportant
-                    false  // isUrgent
-                );
+                try {
+                    TenantContextHolder.setTenantId(schedule.getTenantId());
+                    consultationMessageService.sendMessage(
+                        schedule.getConsultantId(), 
+                        schedule.getClientId(), 
+                        null, // consultationId
+                        "SYSTEM", // 시스템 발송
+                        "미완료 상담 알림", 
+                        alertMessage,
+                        getMessageTypeFromCommonCode("INCOMPLETE_CONSULTATION"),
+                        true, // isImportant
+                        false  // isUrgent
+                    );
+                } finally {
+                    TenantContextHolder.clear();
+                }
                 
                 log.info("⚠️ 미완료 상담 알림 발송: scheduleId={}, consultantId={}", 
                     schedule.getId(), schedule.getConsultantId());
@@ -390,32 +395,37 @@ public class WorkflowAutomationServiceImpl implements WorkflowAutomationService 
     private void sendReminderMessage(Schedule schedule, String title, String message) {
         try {
             // 내담자에게 리마인더 발송
-            consultationMessageService.sendMessage(
-                schedule.getClientId(), 
-                schedule.getConsultantId(), 
-                null, // consultationId
-                getRoleCodeFromCommonCode(UserRole.CLIENT.name()), 
-                title, 
-                message + String.format("\n\n📅 일시: %s %s-%s", 
-                    schedule.getDate(), schedule.getStartTime(), schedule.getEndTime()),
-                getMessageTypeFromCommonCode("REMINDER"),
-                false, // isImportant
-                false  // isUrgent
-            );
-            
-            // 상담사에게도 리마인더 발송
-            consultationMessageService.sendMessage(
-                schedule.getConsultantId(), 
-                schedule.getClientId(), 
-                null, // consultationId
-                getRoleCodeFromCommonCode("CONSULTANT"), 
-                title, 
-                message + String.format("\n\n📅 일시: %s %s-%s", 
-                    schedule.getDate(), schedule.getStartTime(), schedule.getEndTime()),
-                getMessageTypeFromCommonCode("REMINDER"),
-                false, // isImportant
-                false  // isUrgent
-            );
+            try {
+                TenantContextHolder.setTenantId(schedule.getTenantId());
+                consultationMessageService.sendMessage(
+                    schedule.getConsultantId(), 
+                    schedule.getClientId(), 
+                    null, // consultationId
+                    "SYSTEM", // 시스템 발송
+                    title, 
+                    message + String.format("\n\n📅 일시: %s %s-%s", 
+                        schedule.getDate(), schedule.getStartTime(), schedule.getEndTime()),
+                    "REMINDER",
+                    false, // isImportant
+                    false  // isUrgent
+                );
+                
+                // 상담사에게도 리마인더 발송
+                consultationMessageService.sendMessage(
+                    schedule.getConsultantId(), 
+                    schedule.getClientId(), 
+                    null, // consultationId
+                    "SYSTEM", // 시스템 발송
+                    title, 
+                    message + String.format("\n\n📅 일시: %s %s-%s", 
+                        schedule.getDate(), schedule.getStartTime(), schedule.getEndTime()),
+                    "REMINDER",
+                    false, // isImportant
+                    false  // isUrgent
+                );
+            } finally {
+                TenantContextHolder.clear();
+            }
             
             log.info("🔔 리마인더 발송: scheduleId={}, title={}", schedule.getId(), title);
             

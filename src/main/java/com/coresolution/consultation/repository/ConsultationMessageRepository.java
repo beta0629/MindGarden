@@ -39,11 +39,11 @@ public interface ConsultationMessageRepository extends BaseRepository<Consultati
      * 상담사 메시지 목록 조회 (tenantId 필수)
      */
     @Query("SELECT m FROM ConsultationMessage m WHERE m.tenantId = :tenantId AND m.consultantId = :consultantId " +
-           "AND (:clientId IS NULL OR m.clientId = :clientId) " +
-           "AND (:status IS NULL OR m.status = :status) " +
-           "AND (:isRead IS NULL OR m.isRead = :isRead) " +
-           "AND (:isImportant IS NULL OR m.isImportant = :isImportant) " +
-           "AND (:isUrgent IS NULL OR m.isUrgent = :isUrgent) " +
+           "AND (CAST(:clientId AS long) IS NULL OR m.clientId = :clientId) " +
+           "AND (CAST(:status AS string) IS NULL OR m.status = :status) " +
+           "AND (CAST(:isRead AS boolean) IS NULL OR m.isRead = :isRead) " +
+           "AND (CAST(:isImportant AS boolean) IS NULL OR m.isImportant = :isImportant) " +
+           "AND (CAST(:isUrgent AS boolean) IS NULL OR m.isUrgent = :isUrgent) " +
            "AND m.isDeleted = false " +
            "ORDER BY m.createdAt DESC")
     Page<ConsultationMessage> findByTenantIdAndConsultantIdAndClientIdAndStatusAndIsReadAndIsImportantAndIsUrgent(
@@ -60,10 +60,10 @@ public interface ConsultationMessageRepository extends BaseRepository<Consultati
      * 상담사 메시지 목록 조회 (tenantId 필수, 수신자 또는 발신자)
      */
     @Query("SELECT m FROM ConsultationMessage m WHERE m.tenantId = :tenantId AND (m.receiverId = :receiverId OR m.senderId = :senderId) " +
-           "AND (:status IS NULL OR m.status = :status) " +
-           "AND (:isRead IS NULL OR m.isRead = :isRead) " +
-           "AND (:isImportant IS NULL OR m.isImportant = :isImportant) " +
-           "AND (:isUrgent IS NULL OR m.isUrgent = :isUrgent) " +
+           "AND (CAST(:status AS string) IS NULL OR m.status = :status) " +
+           "AND (CAST(:isRead AS boolean) IS NULL OR m.isRead = :isRead) " +
+           "AND (CAST(:isImportant AS boolean) IS NULL OR m.isImportant = :isImportant) " +
+           "AND (CAST(:isUrgent AS boolean) IS NULL OR m.isUrgent = :isUrgent) " +
            "AND m.isDeleted = false " +
            "ORDER BY m.createdAt DESC")
     Page<ConsultationMessage> findByTenantIdAndReceiverIdOrSenderId(
@@ -80,11 +80,11 @@ public interface ConsultationMessageRepository extends BaseRepository<Consultati
      * 내담자 메시지 목록 조회 (수신자 기준, tenantId 필수)
      */
     @Query("SELECT m FROM ConsultationMessage m WHERE m.tenantId = :tenantId AND m.receiverId = :clientId " +
-           "AND (:consultantId IS NULL OR m.consultantId = :consultantId) " +
-           "AND (:status IS NULL OR m.status = :status) " +
-           "AND (:isRead IS NULL OR m.isRead = :isRead) " +
-           "AND (:isImportant IS NULL OR m.isImportant = :isImportant) " +
-           "AND (:isUrgent IS NULL OR m.isUrgent = :isUrgent) " +
+           "AND (CAST(:consultantId AS long) IS NULL OR m.consultantId = :consultantId) " +
+           "AND (CAST(:status AS string) IS NULL OR m.status = :status) " +
+           "AND (CAST(:isRead AS boolean) IS NULL OR m.isRead = :isRead) " +
+           "AND (CAST(:isImportant AS boolean) IS NULL OR m.isImportant = :isImportant) " +
+           "AND (CAST(:isUrgent AS boolean) IS NULL OR m.isUrgent = :isUrgent) " +
            "AND m.isDeleted = false " +
            "ORDER BY m.createdAt DESC")
     Page<ConsultationMessage> findByTenantIdAndClientIdAndConsultantIdAndStatusAndIsReadAndIsImportantAndIsUrgent(
@@ -134,9 +134,9 @@ public interface ConsultationMessageRepository extends BaseRepository<Consultati
      */
     @Query("SELECT m FROM ConsultationMessage m WHERE m.tenantId = :tenantId AND m.consultantId = :consultantId " +
            "AND (m.title LIKE %:keyword% OR m.content LIKE %:keyword%) " +
-           "AND (:messageType IS NULL OR m.messageType = :messageType) " +
-           "AND (:isImportant IS NULL OR m.isImportant = :isImportant) " +
-           "AND (:isUrgent IS NULL OR m.isUrgent = :isUrgent) " +
+           "AND (CAST(:messageType AS string) IS NULL OR m.messageType = :messageType) " +
+           "AND (CAST(:isImportant AS boolean) IS NULL OR m.isImportant = :isImportant) " +
+           "AND (CAST(:isUrgent AS boolean) IS NULL OR m.isUrgent = :isUrgent) " +
            "AND m.isDeleted = false " +
            "ORDER BY m.createdAt DESC")
     Page<ConsultationMessage> findByTenantIdAndConsultantIdAndTitleContainingOrContentContainingAndMessageTypeAndIsImportantAndIsUrgent(
@@ -153,9 +153,9 @@ public interface ConsultationMessageRepository extends BaseRepository<Consultati
      */
     @Query("SELECT m FROM ConsultationMessage m WHERE m.tenantId = :tenantId AND m.receiverId = :clientId " +
            "AND (m.title LIKE %:keyword% OR m.content LIKE %:keyword%) " +
-           "AND (:messageType IS NULL OR m.messageType = :messageType) " +
-           "AND (:isImportant IS NULL OR m.isImportant = :isImportant) " +
-           "AND (:isUrgent IS NULL OR m.isUrgent = :isUrgent) " +
+           "AND (CAST(:messageType AS string) IS NULL OR m.messageType = :messageType) " +
+           "AND (CAST(:isImportant AS boolean) IS NULL OR m.isImportant = :isImportant) " +
+           "AND (CAST(:isUrgent AS boolean) IS NULL OR m.isUrgent = :isUrgent) " +
            "AND m.isDeleted = false " +
            "ORDER BY m.createdAt DESC")
     Page<ConsultationMessage> findByTenantIdAndClientIdAndTitleContainingOrContentContainingAndMessageTypeAndIsImportantAndIsUrgent(
@@ -219,7 +219,7 @@ public interface ConsultationMessageRepository extends BaseRepository<Consultati
      *             대신 {@link #findByTenantId(String)}를 사용하세요.
      */
     @Deprecated
-    @Query("SELECT m FROM ConsultationMessage m WHERE m.tenantId = :tenantId AND m.isDeleted = false AND (:branchId IS NULL OR 1=1)")
+    @Query("SELECT m FROM ConsultationMessage m WHERE m.tenantId = :tenantId AND m.isDeleted = false AND (CAST(:branchId AS long) IS NULL OR 1=1)")
     List<ConsultationMessage> findAllByTenantIdAndBranchId(@Param("tenantId") String tenantId, @Param("branchId") Long branchId);
     
     /**
@@ -233,6 +233,6 @@ public interface ConsultationMessageRepository extends BaseRepository<Consultati
      *             대신 {@link BaseRepository#findAllByTenantId(String, Pageable)}를 사용하세요.
      */
     @Deprecated
-    @Query("SELECT m FROM ConsultationMessage m WHERE m.tenantId = :tenantId AND m.isDeleted = false AND (:branchId IS NULL OR 1=1)")
+    @Query("SELECT m FROM ConsultationMessage m WHERE m.tenantId = :tenantId AND m.isDeleted = false AND (CAST(:branchId AS long) IS NULL OR 1=1)")
     Page<ConsultationMessage> findAllByTenantIdAndBranchId(@Param("tenantId") String tenantId, @Param("branchId") Long branchId, Pageable pageable);
 }

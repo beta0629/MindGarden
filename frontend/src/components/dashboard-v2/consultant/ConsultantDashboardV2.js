@@ -167,23 +167,42 @@ const ConsultantDashboardV2 = ({ user }) => {
       const stats = statsResponse && typeof statsResponse === 'object' ? statsResponse : {};
       const todaySchedulesFromStats = stats.totalToday ?? stats.todaySchedules;
 
-      // 주간 통계 모의 데이터 (실제 API가 있다면 교체)
+      // 주간 통계 및 최근 알림 연동
       const mockWeeklyStats = [
-        { day: '월', count: 3 },
-        { day: '화', count: 5 },
-        { day: '수', count: 2 },
-        { day: '목', count: 6 },
-        { day: '금', count: 4 },
-        { day: '토', count: 8 },
-        { day: '일', count: 1 }
+        { day: '월', count: 0 }, { day: '화', count: 0 }, { day: '수', count: 0 },
+        { day: '목', count: 0 }, { day: '금', count: 0 }, { day: '토', count: 0 }, { day: '일', count: 0 }
       ];
+      const weeklyStatsData = stats?.weeklyStats?.length > 0 
+        ? stats.weeklyStats.map(s => {
+            const dateStr = s.period; // "MM/dd"
+            let dayName = '';
+            if (dateStr) {
+               const parts = dateStr.split('/');
+               if (parts.length === 2) {
+                 const year = new Date().getFullYear();
+                 const tempDate = new Date(`${year}-${parts[0]}-${parts[1]}`);
+                 const days = ['일', '월', '화', '수', '목', '금', '토'];
+                 if (!isNaN(tempDate.getTime())) dayName = days[tempDate.getDay()];
+               }
+            }
+            return { day: dayName || s.period, count: s.completedCount || 0 };
+        })
+        : mockWeeklyStats;
 
-      // 알림 모의 데이터
-      const mockNotifications = [
-        { id: 1, text: '새로운 상담 예약이 접수되었습니다.', time: '10분 전' },
-        { id: 2, text: '김민수 내담자가 메시지를 보냈습니다.', time: '1시간 전' },
-        { id: 3, text: '주간 상담 리포트가 생성되었습니다.', time: '어제' }
-      ];
+      let activeNotifications = [];
+      try {
+        const notiRes = await StandardizedApi.get('/api/v1/system-notifications/active');
+        if (notiRes && Array.isArray(notiRes)) {
+          activeNotifications = notiRes.slice(0, 3).map(n => ({
+            id: n.id,
+            text: n.title,
+            time: n.publishedAt ? new Date(n.publishedAt).toLocaleDateString() : '최근',
+            isRead: n.isRead
+          }));
+        }
+      } catch (err) {
+        console.warn('알림 API 호출 실패:', err);
+      }
 
       setDashboardData({
         stats: {
@@ -193,8 +212,8 @@ const ConsultantDashboardV2 = ({ user }) => {
           averageRating: stats.averageRating ?? 4.8
         },
         todaySchedules: schedules,
-        recentNotifications: mockNotifications,
-        weeklyStats: mockWeeklyStats
+        recentNotifications: activeNotifications,
+        weeklyStats: weeklyStatsData
       });
     } catch (error) {
       const isTenantError = (error?.status === 400 || error?.response?.status === 400) && /테넌트/.test(error?.response?.data?.message || error?.message || '');

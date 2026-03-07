@@ -744,6 +744,10 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
      */
     @Query("SELECT COUNT(s) FROM Schedule s WHERE s.tenantId = :tenantId AND s.consultantId = :consultantId AND s.date = :date AND s.status = :status AND s.isDeleted = false")
     long countByDateAndStatusAndConsultantId(@Param("tenantId") String tenantId, @Param("date") LocalDate date, @Param("status") ScheduleStatus status, @Param("consultantId") Long consultantId);
+
+    @Query("SELECT COUNT(s) FROM Schedule s WHERE s.tenantId = :tenantId AND s.consultantId = :consultantId AND s.status = :status AND s.date BETWEEN :startDate AND :endDate AND s.isDeleted = false")
+    long countByStatusAndDateBetweenAndConsultantId(@Param("tenantId") String tenantId, @Param("status") ScheduleStatus status, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate, @Param("consultantId") Long consultantId);
+
     
     /**
      * @Deprecated - 🚨 위험: tenantId 필터링 없이 스케줄 접근!

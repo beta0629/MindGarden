@@ -312,6 +312,8 @@ public interface ScheduleService {
      */
     Map<String, Object> getTodayScheduleStatisticsByTenant(String tenantId);
     
+    List<Map<String, Object>> getConsultantWeeklyTrend(Long consultantId, int lastWeeks);
+    
     /**
      * 특정 상담사의 오늘의 스케줄 통계 조회
      */

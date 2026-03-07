@@ -1131,6 +1131,34 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         return statistics;
     }
     
+    @Override
+    public List<Map<String, Object>> getConsultantWeeklyTrend(Long consultantId, int lastWeeks) {
+        log.info("📊 상담사 주간 상담 추이 조회 - 상담사 ID: {}, 주간: {}, tenantId={}", consultantId, lastWeeks, TenantContextHolder.getTenantId());
+        
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null || tenantId.isEmpty()) {
+            log.warn("❌ 테넌트 컨텍스트 없음 - 빈 통계 반환. consultantId={}", consultantId);
+            return new ArrayList<>();
+        }
+        
+        List<Map<String, Object>> weeklyData = new ArrayList<>();
+        LocalDate now = LocalDate.now();
+        for (int i = lastWeeks - 1; i >= 0; i--) {
+            LocalDate weekEnd = now.minusWeeks(i);
+            LocalDate weekStart = weekEnd.minusDays(6);
+            
+            long completedCount = scheduleRepository.countByStatusAndDateBetweenAndConsultantId(
+                    tenantId, ScheduleStatus.COMPLETED, weekStart, weekEnd, consultantId);
+            
+            Map<String, Object> row = new HashMap<>();
+            row.put("period", weekEnd.format(java.time.format.DateTimeFormatter.ofPattern("MM/dd")));
+            row.put("completedCount", completedCount);
+            weeklyData.add(row);
+        }
+        log.info("✅ 상담사 주간 상담 추이 조회 완료: {}주", weeklyData.size());
+        return weeklyData;
+    }
+
      /**
      * 특정 상담사의 오늘의 스케줄 통계 조회
      */

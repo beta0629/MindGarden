@@ -545,6 +545,16 @@ public class ScheduleController extends BaseApiController {
                     .body(ApiResponse.error("테넌트 정보가 없습니다. 로그아웃 후 다시 로그인해 주세요."));
             }
             statistics = scheduleService.getTodayScheduleStatisticsByConsultant(currentUser.getId());
+            
+            // 주간 상담 추이 데이터 추가 (최근 7주, 요일별로 보여주기 위해 7개 데이터)
+            try {
+                List<Map<String, Object>> weeklyData = scheduleService.getConsultantWeeklyTrend(currentUser.getId(), 7);
+                statistics.put("weeklyStats", weeklyData);
+            } catch (Exception e) {
+                log.warn("상담사 주간 통계 조회 실패: {}", e.getMessage());
+                statistics.put("weeklyStats", new ArrayList<>());
+            }
+            
             log.info("✅ 상담사 오늘의 스케줄 통계 조회 완료 - 상담사 ID: {}", currentUser.getId());
         } else {
             ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkStatisticsPermission(session, dynamicPermissionService);

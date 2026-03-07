@@ -44,6 +44,7 @@ public class ConsultantRecordsController {
     private final DynamicPermissionService dynamicPermissionService;
     private final UserService userService;
     private final ScheduleService scheduleService;
+    private final com.coresolution.consultation.service.UserPersonalDataCacheService userPersonalDataCacheService;
     
     /**
      * 상담사별 상담 기록 목록 조회
@@ -360,9 +361,15 @@ public class ConsultantRecordsController {
      */
     private String getClientName(Long clientId) {
         try {
-            Optional<User> client = userService.findById(clientId);
-            if (client.isPresent()) {
-                return client.get().getUserId() != null ? client.get().getUserId() : "내담자 ID: " + clientId;
+            Optional<User> clientOpt = userService.findById(clientId);
+            if (clientOpt.isPresent()) {
+                User client = clientOpt.get();
+                Map<String, String> decryptedData = userPersonalDataCacheService.getDecryptedUserData(client);
+                String name = decryptedData.get("name");
+                if (name != null && !name.isEmpty()) {
+                    return name;
+                }
+                return client.getUserId() != null ? client.getUserId() : "내담자 ID: " + clientId;
             }
         } catch (Exception e) {
             log.warn("내담자 이름 조회 실패: clientId={}, error={}", clientId, e.getMessage());

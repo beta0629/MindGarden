@@ -74,6 +74,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     private final com.coresolution.core.service.DashboardIntegrationService dashboardIntegrationService;
     private final ConsultationRecordRepository consultationRecordRepository;
     private final PlSqlScheduleValidationService plSqlScheduleValidationService;
+    private final com.coresolution.consultation.service.UserPersonalDataCacheService userPersonalDataCacheService;
     
     public ScheduleServiceImpl(
             ScheduleRepository scheduleRepository,
@@ -89,7 +90,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             ConsultationMessageService consultationMessageService,
             com.coresolution.core.service.DashboardIntegrationService dashboardIntegrationService,
             ConsultationRecordRepository consultationRecordRepository,
-            PlSqlScheduleValidationService plSqlScheduleValidationService) {
+            PlSqlScheduleValidationService plSqlScheduleValidationService,
+            com.coresolution.consultation.service.UserPersonalDataCacheService userPersonalDataCacheService) {
         super(scheduleRepository, accessControlService);
         this.scheduleRepository = scheduleRepository;
         this.mappingRepository = mappingRepository;
@@ -104,6 +106,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         this.dashboardIntegrationService = dashboardIntegrationService;
         this.consultationRecordRepository = consultationRecordRepository;
         this.plSqlScheduleValidationService = plSqlScheduleValidationService;
+        this.userPersonalDataCacheService = userPersonalDataCacheService;
     }
     
     
@@ -1535,10 +1538,16 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                         client != null ? client.getName() : "null", 
                         client != null ? client.getIsActive() : "null");
                 
-                if (client != null && client.getIsActive()) {
-                    clientName = client.getName();
-                } else if (client != null && !client.getIsActive()) {
-                    clientName = client.getName() + " (비활성)";
+                if (client != null) {
+                    Map<String, String> decryptedClient = userPersonalDataCacheService.getDecryptedUserData(client);
+                    String decryptedName = decryptedClient.get("name");
+                    String actualName = (decryptedName != null && !decryptedName.isEmpty()) ? decryptedName : client.getName();
+                    
+                    if (client.getIsActive()) {
+                        clientName = actualName;
+                    } else {
+                        clientName = actualName + " (비활성)";
+                    }
                 }
             }
         } catch (Exception e) {

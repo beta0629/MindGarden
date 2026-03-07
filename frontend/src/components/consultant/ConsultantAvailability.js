@@ -121,9 +121,9 @@ const ConsultantAvailability = () => {
 
       const response = await StandardizedApi.get(`/api/v1/consultants/${user.id}/availability`);
       
-      if (response?.success) {
-        console.log('✅ 상담 가능 시간 로드 성공:', response?.data);
-        setAvailability(response?.data || []);
+      if (Array.isArray(response) || response?.success || response?.id || response?.success === undefined) {
+        console.log('✅ 상담 가능 시간 로드 성공:', response);
+        setAvailability(Array.isArray(response) ? response : (response?.data || []));
       } else {
         console.error('❌ 상담 가능 시간 로드 실패:', response?.message);
         setError(response?.message || '상담 가능 시간을 불러오는데 실패했습니다.');
@@ -143,7 +143,7 @@ const ConsultantAvailability = () => {
 
       const response = await StandardizedApi.post(`/api/v1/consultants/${user.id}/availability`, formData);
       
-      if (response?.success) {
+      if (Array.isArray(response) || response?.success || response?.id || response?.success === undefined) {
         console.log('✅ 상담 가능 시간 추가 성공');
         await loadAvailability();
         setShowAddModal(false);
@@ -164,7 +164,7 @@ const ConsultantAvailability = () => {
 
       const response = await StandardizedApi.put(`/api/v1/consultants/availability/${id}`, formData);
       
-      if (response?.success) {
+      if (Array.isArray(response) || response?.success || response?.id || response?.success === undefined) {
         console.log('✅ 상담 가능 시간 수정 성공');
         await loadAvailability();
         setEditingSlot(null);
@@ -185,7 +185,7 @@ const ConsultantAvailability = () => {
 
       const response = await StandardizedApi.delete(`/api/v1/consultants/availability/${id}`);
       
-      if (response?.success) {
+      if (Array.isArray(response) || response?.success || response?.id || response?.success === undefined) {
         console.log('✅ 상담 가능 시간 삭제 성공');
         await loadAvailability();
       } else {

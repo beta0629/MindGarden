@@ -750,23 +750,16 @@ public class UserServiceImpl implements UserService {
             throw new RuntimeException("기존 비밀번호가 일치하지 않습니다.");
         }
         
-        // 멀티 테넌트 사용자인 경우 모든 테넌트의 비밀번호 동기화
-        String email = user.getEmail();
-        List<User> allUsers = userRepository.findAllByEmail(email);
-        
+        // 현재 테넌트의 비밀번호만 변경
         String hashedPassword = passwordEncoder.encode(newPassword);
-        LocalDateTime now = LocalDateTime.now();
+        user.setPassword(hashedPassword);
+        user.setUpdatedAt(LocalDateTime.now());
+        user.setVersion(user.getVersion() + 1);
         
-        for (User u : allUsers) {
-            u.setPassword(hashedPassword);
-            u.setUpdatedAt(now);
-            u.setVersion(u.getVersion() + 1);
-        }
+        userRepository.save(user);
         
-        userRepository.saveAll(allUsers);
-        
-        log.info("비밀번호 변경 완료 (멀티 테넌트 동기화): email={}, userId={}, tenantCount={}", 
-            email, userId, allUsers.size());
+        log.info("비밀번호 변경 완료: email={}, userId={}", 
+            user.getEmail(), userId);
     }
     
     @Override
@@ -937,23 +930,16 @@ public class UserServiceImpl implements UserService {
     public void changePassword(Long userId, String newPassword) {
         User user = findActiveByIdOrThrow(userId);
         
-        // 멀티 테넌트 사용자인 경우 모든 테넌트의 비밀번호 동기화
-        String email = user.getEmail();
-        List<User> allUsers = userRepository.findAllByEmail(email);
-        
+        // 현재 테넌트의 비밀번호만 변경
         String hashedPassword = passwordEncoder.encode(newPassword);
-        LocalDateTime now = LocalDateTime.now();
+        user.setPassword(hashedPassword);
+        user.setUpdatedAt(LocalDateTime.now());
+        user.setVersion(user.getVersion() + 1);
         
-        for (User u : allUsers) {
-            u.setPassword(hashedPassword);
-            u.setUpdatedAt(now);
-            u.setVersion(u.getVersion() + 1);
-        }
+        userRepository.save(user);
         
-        userRepository.saveAll(allUsers);
-        
-        log.info("비밀번호 변경 완료 (멀티 테넌트 동기화): email={}, userId={}, tenantCount={}", 
-            email, userId, allUsers.size());
+        log.info("비밀번호 변경 완료: email={}, userId={}", 
+            user.getEmail(), userId);
     }
     
     @Override

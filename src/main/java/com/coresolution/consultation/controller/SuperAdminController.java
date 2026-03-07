@@ -68,16 +68,22 @@ public class SuperAdminController extends BaseApiController {
             throw new RuntimeException("관리자 권한이 필요합니다.");
         }
         
-        // 이메일 중복 확인
-        if (userRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("이미 존재하는 이메일입니다.");
-        }
-        
         // 사용자 ID 중복 확인 (테넌트별)
         String tenantId = TenantContextHolder.getTenantId();
         if (tenantId == null) {
             // 세션에서 tenantId 가져오기 시도
             tenantId = SessionUtils.getTenantId(session);
+        }
+        
+        // 이메일 중복 확인 (테넌트별)
+        if (tenantId != null && !tenantId.isEmpty()) {
+            if (userRepository.existsByTenantIdAndEmail(tenantId, request.getEmail())) {
+                throw new RuntimeException("이미 존재하는 이메일입니다.");
+            }
+        } else {
+            if (userRepository.existsByEmail(request.getEmail())) {
+                throw new RuntimeException("이미 존재하는 이메일입니다.");
+            }
         }
         if (tenantId != null && !tenantId.isEmpty()) {
             if (userRepository.existsByTenantIdAndUserId(tenantId, request.getUserId())) {

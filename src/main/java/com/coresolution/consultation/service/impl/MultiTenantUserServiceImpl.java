@@ -45,39 +45,16 @@ public class MultiTenantUserServiceImpl implements MultiTenantUserService {
         
         Set<String> tenantIds = new HashSet<>();
         
-        // 멀티 테넌트 지원: 같은 이메일의 모든 User를 조회하여 모든 테넌트 접근 권한 확인
-        // 같은 이메일로 여러 테넌트에 계정이 있을 수 있음 (예: 테넌트 A에 ADMIN, 테넌트 B에 CLIENT)
-        if (user.getEmail() != null && !user.getEmail().trim().isEmpty()) {
-            List<User> allUsers = userRepository.findAllByEmail(user.getEmail());
-            log.debug("멀티 테넌트 사용자 확인: email={}, userCount={}", user.getEmail(), allUsers.size());
-            
-            for (User u : allUsers) {
-                // 삭제되지 않은 사용자만 확인
-                if (u.getIsDeleted() != null && u.getIsDeleted()) {
-                    continue;
-                }
-                
-                // 1. User의 Branch를 통해 테넌트 조회
-                if (u.getBranch() != null && u.getBranch().getTenantId() != null) {
-                    tenantIds.add(u.getBranch().getTenantId());
-                }
-                
-                // 2. User의 tenantId (BaseEntity에서 상속)
-                if (u.getTenantId() != null && !u.getTenantId().trim().isEmpty()) {
-                    tenantIds.add(u.getTenantId());
-                }
-            }
-        } else {
-            // 이메일이 없는 경우 기존 로직 사용 (레거시 호환)
-            // 1. User의 Branch를 통해 현재 테넌트 조회
-            if (user.getBranch() != null && user.getBranch().getTenantId() != null) {
-                tenantIds.add(user.getBranch().getTenantId());
-            }
-            
-            // 2. User의 tenantId (BaseEntity에서 상속)
-            if (user.getTenantId() != null) {
-                tenantIds.add(user.getTenantId());
-            }
+        // 이메일만으로 다른 테넌트의 권한을 부여하는 보안 취약점 제거
+        // 단일 사용자 엔티티의 권한만 반환하도록 축소
+        // 1. User의 Branch를 통해 현재 테넌트 조회
+        if (user.getBranch() != null && user.getBranch().getTenantId() != null) {
+            tenantIds.add(user.getBranch().getTenantId());
+        }
+        
+        // 2. User의 tenantId (BaseEntity에서 상속)
+        if (user.getTenantId() != null && !user.getTenantId().trim().isEmpty()) {
+            tenantIds.add(user.getTenantId());
         }
         
         // 3. RefreshToken에서 사용자가 접근한 모든 테넌트 조회
@@ -127,40 +104,31 @@ public class MultiTenantUserServiceImpl implements MultiTenantUserService {
     @Override
     @Transactional(readOnly = true)
     public boolean hasAccessToTenantByEmail(String email, String tenantId) {
-        if (email == null || email.trim().isEmpty()) {
-            log.warn("이메일이 비어있어 테넌트 접근 권한 확인 불가: email={}, tenantId={}", email, tenantId);
+        if (email == null || email.trim().isEmpty() || tenantId == null || tenantId.trim().isEmpty()) {
+            log.warn("이메일 또는 테넌트 ID가 비어있어 권한 확인 불가: email={}, tenantId={}", email, tenantId);
             return false;
         }
         
-        // 로그인 이메일로 모든 테넌트의 User 조회
-        List<User> users = userRepository.findAllByEmail(email.trim().toLowerCase());
-        if (users == null || users.isEmpty()) {
-            log.debug("사용자를 찾을 수 없음: email={}, tenantId={}", email, tenantId);
+        // 특정 테넌트의 해당 이메일 사용자만 조회
+        java.util.Optional<User> userOpt = userRepository.findByTenantIdAndEmail(tenantId, email.trim().toLowerCase());
+        if (userOpt.isEmpty()) {
+            log.debug("해당 테넌트에 사용자를 찾을 수 없음: email={}, tenantId={}", email, tenantId);
             return false;
         }
         
-        // 해당 테넌트에 삭제되지 않은 사용자 계정이 있는지 확인
-        boolean hasAccess = users.stream()
-            .anyMatch(user -> {
-                if (user.getIsDeleted() != null && user.getIsDeleted()) {
-                    return false;
-                }
-                
-                // User의 tenantId 확인
-                if (user.getTenantId() != null && user.getTenantId().equals(tenantId)) {
-                    return true;
-                }
-                
-                // User의 Branch를 통한 테넌트 확인
-                if (user.getBranch() != null && user.getBranch().getTenantId() != null 
-                    && user.getBranch().getTenantId().equals(tenantId)) {
-                    return true;
-                }
-                
-                return false;
-            });
+        User user = userOpt.get();
+        if (user.getIsDeleted() != null && user.getIsDeleted()) {
+            return false;
+        }
         
-        log.info("테넌트 접근 권한 확인 (이메일 기반): email={}, tenantId={}, hasAccess={}", 
+        boolean hasAccess = false;
+        if (user.getTenantId() != null && user.getTenantId().equals(tenantId)) {
+            hasAccess = true;
+        } else if (user.getBranch() != null && user.getBranch().getTenantId() != null && user.getBranch().getTenantId().equals(tenantId)) {
+            hasAccess = true;
+        }
+        
+        log.info("테넌트 접근 권한 확인 (단일 테넌트 이메일 기반): email={}, tenantId={}, hasAccess={}", 
             email, tenantId, hasAccess);
         return hasAccess;
     }
@@ -175,40 +143,39 @@ public class MultiTenantUserServiceImpl implements MultiTenantUserService {
         
         log.debug("이메일로 접근 가능한 테넌트 목록 조회: email={}", email);
         
-        // 로그인 이메일로 모든 테넌트의 User 조회
-        List<User> users = userRepository.findAllByEmail(email.trim().toLowerCase());
-        if (users == null || users.isEmpty()) {
-            log.debug("사용자를 찾을 수 없음: email={}", email);
+        String currentTenantId = com.coresolution.core.context.TenantContextHolder.getTenantId();
+        if (currentTenantId == null || currentTenantId.trim().isEmpty()) {
+            log.warn("현재 테넌트 컨텍스트가 없어 조회 불가: email={}", email);
+            return new ArrayList<>();
+        }
+        
+        // 현재 테넌트의 해당 이메일 사용자만 조회
+        java.util.Optional<User> userOpt = userRepository.findByTenantIdAndEmail(currentTenantId, email.trim().toLowerCase());
+        if (userOpt.isEmpty()) {
+            log.debug("해당 테넌트에 사용자를 찾을 수 없음: email={}, tenantId={}", email, currentTenantId);
+            return new ArrayList<>();
+        }
+        
+        User user = userOpt.get();
+        if (user.getIsDeleted() != null && user.getIsDeleted()) {
             return new ArrayList<>();
         }
         
         Set<String> tenantIds = new HashSet<>();
-        
-        for (User user : users) {
-            // 삭제되지 않은 사용자만 확인
-            if (user.getIsDeleted() != null && user.getIsDeleted()) {
-                continue;
-            }
-            
-            // 1. User의 Branch를 통해 테넌트 조회
-            if (user.getBranch() != null && user.getBranch().getTenantId() != null) {
-                tenantIds.add(user.getBranch().getTenantId());
-            }
-            
-            // 2. User의 tenantId (BaseEntity에서 상속)
-            if (user.getTenantId() != null && !user.getTenantId().trim().isEmpty()) {
-                tenantIds.add(user.getTenantId());
-            }
+        if (user.getBranch() != null && user.getBranch().getTenantId() != null) {
+            tenantIds.add(user.getBranch().getTenantId());
+        }
+        if (user.getTenantId() != null && !user.getTenantId().trim().isEmpty()) {
+            tenantIds.add(user.getTenantId());
         }
         
-        // tenantIds로 Tenant 목록 조회
         List<Tenant> tenants = new ArrayList<>();
         for (String tenantId : tenantIds) {
             tenantRepository.findByTenantIdAndIsDeletedFalse(tenantId)
                 .ifPresent(tenants::add);
         }
         
-        log.info("✅ 이메일로 접근 가능한 테넌트 목록: email={}, tenantCount={}", 
+        log.info("✅ 이메일로 접근 가능한 테넌트 목록 (단일 테넌트 기준): email={}, tenantCount={}", 
             email, tenants.size());
         return tenants;
     }

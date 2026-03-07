@@ -104,9 +104,10 @@ public interface UserRepository extends BaseRepository<User, Long> {
     Optional<User> findByEmail(String email);
     
     /**
-     * 이메일로 모든 테넌트의 사용자 조회 (멀티 테넌트 사용자 확인용)
+     * @Deprecated - 새로운 테넌트별 이메일 중복 허용 정책에 따라 사용을 금지합니다. 테넌트 식별자가 포함된 메서드를 사용하세요.
      * 한 계정에 멀티 테넌트 구조 지원
      */
+    @Deprecated
     @Query("SELECT u FROM User u WHERE u.email = ?1 AND u.isDeleted = false")
     List<User> findAllByEmail(String email);
     
@@ -118,14 +119,16 @@ public interface UserRepository extends BaseRepository<User, Long> {
     Optional<User> findByEmailAndTenantId(String email, String tenantId);
     
     /**
-     * 이메일로 사용자 존재 여부 확인 (활성 상태만)
+     * @Deprecated - 새로운 테넌트별 이메일 중복 허용 정책에 따라 사용을 금지합니다. 테넌트 식별자가 포함된 메서드를 사용하세요.
      */
+    @Deprecated
     @Query("SELECT CASE WHEN COUNT(u) > 0 THEN true ELSE false END FROM User u WHERE u.email = ?1 AND u.isDeleted = false")
     boolean existsByEmail(String email);
     
     /**
-     * 이메일로 사용자 존재 여부 확인 (전체)
+     * @Deprecated - 새로운 테넌트별 이메일 중복 허용 정책에 따라 사용을 금지합니다. 테넌트 식별자가 포함된 메서드를 사용하세요.
      */
+    @Deprecated
     @Query("SELECT CASE WHEN COUNT(u) > 0 THEN true ELSE false END FROM User u WHERE u.email = ?1")
     boolean existsByEmailAll(String email);
     

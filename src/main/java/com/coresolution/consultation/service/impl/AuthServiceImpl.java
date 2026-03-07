@@ -578,51 +578,9 @@ public class AuthServiceImpl implements AuthService {
      * @return 테넌트 정보 목록 (멀티 테넌트 사용자인 경우), null (단일 테넌트 사용자인 경우)
      */
     private List<AuthResponse.TenantInfo> checkMultiTenantUser(String email) {
-        try {
-            // 이메일로 모든 테넌트의 User 조회
-            List<User> users = userRepository.findAllByEmail(email);
-            
-            if (users == null || users.isEmpty() || users.size() == 1) {
-                return null; // 단일 테넌트 사용자 또는 사용자 없음
-            }
-            
-            // 멀티 테넌트 사용자인 경우 테넌트 목록 구성
-            List<AuthResponse.TenantInfo> tenantInfos = new ArrayList<>();
-            
-            for (User user : users) {
-                if (user.getTenantId() == null || user.getTenantId().isEmpty()) {
-                    continue; // tenant_id가 없는 경우 건너뛰기
-                }
-                
-                // 테넌트 정보 조회
-                tenantRepository.findByTenantIdAndIsDeletedFalse(user.getTenantId())
-                    .ifPresent(tenant -> {
-                        // 테넌트별 활성 역할 조회 (UserRoleAssignment)
-                        AuthResponse.TenantRoleInfo tenantRoleInfo = getTenantRoleInfo(user.getId(), user.getTenantId());
-                        
-                        AuthResponse.TenantInfo tenantInfo = AuthResponse.TenantInfo.builder()
-                            .tenantId(tenant.getTenantId())
-                            .tenantName(tenant.getName())
-                            .businessType(tenant.getBusinessType())
-                            .status(tenant.getStatus() != null ? tenant.getStatus().name() : null)
-                            .role(user.getRole() != null ? user.getRole().getValue() : null) // 레거시 호환
-                            .tenantRole(tenantRoleInfo) // 새로운 역할 시스템
-                            .build();
-                        tenantInfos.add(tenantInfo);
-                    });
-            }
-            
-            if (tenantInfos.isEmpty()) {
-                return null;
-            }
-            
-            log.info("멀티 테넌트 사용자 감지: email={}, tenantCount={}", email, tenantInfos.size());
-            return tenantInfos;
-                
-        } catch (Exception e) {
-            log.error("멀티 테넌트 사용자 감지 실패: email={}, error={}", email, e.getMessage(), e);
-            return null;
-        }
+        // 이메일만으로 여러 테넌트 권한을 부여하는 보안 취약점 제거
+        // 더 이상 테넌트 선택 화면을 강제하지 않음 (단일 테넌트로 취급)
+        return null;
     }
     
     /**

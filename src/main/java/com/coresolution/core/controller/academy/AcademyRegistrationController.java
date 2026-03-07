@@ -124,7 +124,7 @@ public class AcademyRegistrationController extends BaseApiController {
         }
         
         String email = request.getEmail().trim().toLowerCase();
-        if (userRepository.existsByEmailAll(email)) {
+        if (userRepository.existsByTenantIdAndEmail(currentTenantId, email)) {
             throw new org.springframework.dao.DataIntegrityViolationException("이미 사용 중인 이메일입니다.");
         }
         

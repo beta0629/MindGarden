@@ -114,9 +114,14 @@ public class AuthController extends BaseApiController {
             String userId = authentication.getName();
             log.info("🔍 JWT 인증 사용자 확인: userId={}", userId);
             
-            // 데이터베이스에서 사용자 조회 (멀티 테넌트 사용자 고려)
-            List<User> users = userRepository.findAllByEmail(userId);
-            currentUser = users.isEmpty() ? null : users.get(0);
+            // 데이터베이스에서 사용자 조회 (현재 테넌트)
+            String tenantId = TenantContextHolder.getTenantId();
+            if (tenantId != null && !tenantId.isEmpty()) {
+                currentUser = userRepository.findByTenantIdAndEmail(tenantId, userId).orElse(null);
+            } else {
+                List<User> users = userRepository.findAllByEmail(userId);
+                currentUser = users.isEmpty() ? null : users.get(0);
+            }
             
             if (currentUser == null) {
                 // 데이터베이스에 없는 경우 (Ops Portal 전용 계정 등)
@@ -282,17 +287,17 @@ public class AuthController extends BaseApiController {
             throw new IllegalArgumentException("이용약관과 개인정보처리방침에 동의해야 회원가입이 가능합니다.");
         }
 
-        String email = request.getEmail().trim().toLowerCase();
-        if (userRepository.existsByEmailAll(email)) {
-            throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
-        }
-
         // tenantId 가져오기 (회원가입 시 필수)
         String tenantId = TenantContextHolder.getTenantId();
         if (tenantId == null || tenantId.isEmpty()) {
             log.warn("⚠️ 회원가입 시 tenantId가 없습니다. 테넌트 정보 필수.");
             throw new IllegalArgumentException(
                     "회원가입을 위해서는 테넌트 정보가 필요합니다. 올바른 주소(서브도메인)에서 접속했는지 확인해 주세요.");
+        }
+
+        String email = request.getEmail().trim().toLowerCase();
+        if (userRepository.existsByTenantIdAndEmail(tenantId, email)) {
+            throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
         }
 
         User user = new User();
@@ -345,8 +350,16 @@ public class AuthController extends BaseApiController {
     @GetMapping("/duplicate-check/email")
     public ResponseEntity<ApiResponse<Map<String, Object>>> checkEmailDuplicateForSignup(
             @RequestParam String email) {
+        String tenantId = TenantContextHolder.getTenantId();
         String trimmed = email != null ? email.trim().toLowerCase() : "";
-        boolean isDuplicate = StringUtils.hasText(trimmed) && userRepository.existsByEmailAll(trimmed);
+        boolean isDuplicate = false;
+        if (StringUtils.hasText(trimmed)) {
+            if (tenantId != null && !tenantId.isEmpty()) {
+                isDuplicate = userRepository.existsByTenantIdAndEmail(tenantId, trimmed);
+            } else {
+                isDuplicate = userRepository.existsByEmailAll(trimmed);
+            }
+        }
         Map<String, Object> result = new HashMap<>();
         result.put("email", trimmed);
         result.put("isDuplicate", isDuplicate);
@@ -486,13 +499,20 @@ public class AuthController extends BaseApiController {
         String sessionId = session.getId();
         
         if (confirmTerminate) {
-            // 사용자가 기존 세션 종료를 확인한 경우
-            // 사용자 조회 (멀티 테넌트 사용자 고려)
+        // 사용자가 기존 세션 종료를 확인한 경우
+        String tenantId = TenantContextHolder.getTenantId();
+        User user = null;
+        if (tenantId != null && !tenantId.isEmpty()) {
+            user = userRepository.findByTenantIdAndEmail(tenantId, email).orElse(null);
+        }
+        if (user == null) {
+            // 호환성 유지: 테넌트 컨텍스트가 없는 경우 첫 번째 활성 사용자
             List<User> users = userRepository.findAllByEmail(email);
             if (users.isEmpty()) {
                 throw new IllegalArgumentException("사용자를 찾을 수 없습니다.");
             }
-            User user = users.get(0);
+            user = users.get(0);
+        }
             
             // 기존 세션들 정리
             authService.cleanupUserSessions(user, "USER_CONFIRMED_TERMINATE");
@@ -615,12 +635,20 @@ public class AuthController extends BaseApiController {
         log.info("🔐 authenticateWithSession 호출 완료: success={}", authResponse.isSuccess());
         
         if (authResponse.isSuccess()) {
-            // 데이터베이스에서 완전한 User 객체를 가져와서 세션에 저장 (멀티 테넌트 사용자 고려)
-            List<User> users = userRepository.findAllByEmail(email);
-            if (users.isEmpty()) {
-                throw new RuntimeException("사용자를 찾을 수 없습니다.");
+            // 데이터베이스에서 완전한 User 객체를 가져와서 세션에 저장
+            String tenantId = TenantContextHolder.getTenantId();
+            User sessionUser = null;
+            if (tenantId != null && !tenantId.isEmpty()) {
+                sessionUser = userRepository.findByTenantIdAndEmail(tenantId, email).orElse(null);
             }
-            User sessionUser = users.get(0);
+            if (sessionUser == null) {
+                // 호환성 유지
+                List<User> users = userRepository.findAllByEmail(email);
+                if (users.isEmpty()) {
+                    throw new RuntimeException("사용자를 찾을 수 없습니다.");
+                }
+                sessionUser = users.get(0);
+            }
             
             // tenantId 확인 및 로깅
             log.info("🔍 로그인 사용자 정보: userId={}, email={}, tenantId={}, role={}", 

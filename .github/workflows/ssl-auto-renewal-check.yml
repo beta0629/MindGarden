@@ -36,7 +36,7 @@ jobs:
 
       - name: 🔍 개발 서버 SSL 점검
         if: inputs.target == 'dev'
-        uses: appleboy/ssh-action@v1.2.4
+        uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.DEV_SERVER_HOST }}
           username: ${{ secrets.DEV_SERVER_USER }}
@@ -57,7 +57,7 @@ jobs:
 
       - name: 🔍 운영 서버 SSL 점검
         if: inputs.target == 'prod'
-        uses: appleboy/ssh-action@v1.2.4
+        uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.PRODUCTION_HOST }}
           username: ${{ secrets.PRODUCTION_USER }}

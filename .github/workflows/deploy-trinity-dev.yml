@@ -54,7 +54,7 @@ jobs:
         fi
         
     - name: 🔍 개발 서버 SSH 연결 테스트
-      uses: appleboy/ssh-action@v1.2.4
+      uses: appleboy/ssh-action@master
       with:
         host: ${{ secrets.DEV_SERVER_HOST }}
         username: ${{ secrets.DEV_SERVER_USER }}
@@ -66,7 +66,7 @@ jobs:
           echo "서버 정보: $(uname -a)"
           
     - name: 💾 배포 전 기존 파일 백업
-      uses: appleboy/ssh-action@v1.2.4
+      uses: appleboy/ssh-action@master
       with:
         host: ${{ secrets.DEV_SERVER_HOST }}
         username: ${{ secrets.DEV_SERVER_USER }}
@@ -102,7 +102,7 @@ jobs:
         overwrite: true
         
     - name: 🔄 Trinity 프론트엔드 배포 완료 및 검증
-      uses: appleboy/ssh-action@v1.2.4
+      uses: appleboy/ssh-action@master
       with:
         host: ${{ secrets.DEV_SERVER_HOST }}
         username: ${{ secrets.DEV_SERVER_USER }}
@@ -144,7 +144,7 @@ jobs:
           echo "✅ Trinity 프론트엔드 배포 완료"
           
     - name: 🏥 배포 후 헬스체크
-      uses: appleboy/ssh-action@v1.2.4
+      uses: appleboy/ssh-action@master
       with:
         host: ${{ secrets.DEV_SERVER_HOST }}
         username: ${{ secrets.DEV_SERVER_USER }}

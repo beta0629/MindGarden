@@ -10,7 +10,7 @@ jobs:
     
     steps:
     - name: 종합 진단 실행
-      uses: appleboy/ssh-action@v1.2.4
+      uses: appleboy/ssh-action@master
       with:
         host: ${{ secrets.DEV_SERVER_HOST }}
         username: ${{ secrets.DEV_SERVER_USER }}

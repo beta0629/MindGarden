@@ -85,7 +85,7 @@ jobs:
         fi
 
     - name: 🔍 개발 서버 SSH 연결 테스트
-      uses: appleboy/ssh-action@v1.2.4
+      uses: appleboy/ssh-action@master
       with:
         host: ${{ secrets.DEV_SERVER_HOST }}
         username: ${{ secrets.DEV_SERVER_USER }}
@@ -96,7 +96,7 @@ jobs:
           echo "SSH 연결 테스트 성공: $(date)"
           
     - name: 🚀 개발 서버 배포 준비
-      uses: appleboy/ssh-action@v1.2.4
+      uses: appleboy/ssh-action@master
       with:
         host: ${{ secrets.DEV_SERVER_HOST }}
         username: ${{ secrets.DEV_SERVER_USER }}
@@ -149,7 +149,7 @@ jobs:
         overwrite: true
         
     - name: 🔄 개발 서버 서비스 재시작
-      uses: appleboy/ssh-action@v1.2.4
+      uses: appleboy/ssh-action@master
       with:
         host: ${{ secrets.DEV_SERVER_HOST }}
         username: ${{ secrets.DEV_SERVER_USER }}
@@ -332,7 +332,7 @@ jobs:
           fi
           
     - name: 🏥 개발 서버 헬스체크
-      uses: appleboy/ssh-action@v1.2.4
+      uses: appleboy/ssh-action@master
       with:
         host: ${{ secrets.DEV_SERVER_HOST }}
         username: ${{ secrets.DEV_SERVER_USER }}
@@ -396,7 +396,7 @@ jobs:
           fi
 
     - name: 📋 온보딩 프로세스 로그 확인
-      uses: appleboy/ssh-action@v1.2.4
+      uses: appleboy/ssh-action@master
       with:
         host: ${{ secrets.DEV_SERVER_HOST }}
         username: ${{ secrets.DEV_SERVER_USER }}

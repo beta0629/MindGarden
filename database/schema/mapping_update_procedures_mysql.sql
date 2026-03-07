@@ -19,7 +19,7 @@ CREATE PROCEDURE UpdateMappingInfo(
     OUT p_success BOOLEAN,
     OUT p_message VARCHAR(500)
 )
-BEGIN
+main_proc: BEGIN
     DECLARE v_error_message VARCHAR(500);
     DECLARE v_old_package_price DECIMAL(15,2) DEFAULT 0;
     DECLARE v_old_total_sessions INT DEFAULT 0;
@@ -46,7 +46,7 @@ BEGIN
         SET p_success = FALSE;
         SET p_message = '테넌트 ID는 필수입니다.';
         ROLLBACK;
-        LEAVE;
+        LEAVE main_proc;
     END IF;
 
     -- 2. 기존 매핑 정보 조회 (테넌트 격리)
@@ -78,7 +78,7 @@ BEGIN
         SET p_success = FALSE;
         SET p_message = '매핑을 찾을 수 없습니다.';
         ROLLBACK;
-        LEAVE;
+        LEAVE main_proc;
     ELSE
         -- 3. 가격 및 세션 차이 계산
         SET v_price_difference = p_new_package_price - v_old_package_price;
@@ -185,7 +185,7 @@ CREATE PROCEDURE UpdateMappingStatistics(
     IN p_client_id BIGINT,
     IN p_tenant_id VARCHAR(100)
 )
-BEGIN
+main_proc: BEGIN
     DECLARE v_error_message VARCHAR(500);
     DECLARE v_package_price DECIMAL(15,2) DEFAULT 0;
     DECLARE v_total_sessions INT DEFAULT 0;
@@ -241,7 +241,7 @@ CREATE PROCEDURE CheckMappingUpdatePermission(
     OUT p_can_update BOOLEAN,
     OUT p_reason VARCHAR(500)
 )
-BEGIN
+main_proc: BEGIN
     DECLARE v_error_message VARCHAR(500);
     DECLARE v_mapping_status VARCHAR(50) DEFAULT '';
     DECLARE v_payment_status VARCHAR(50) DEFAULT '';
@@ -260,7 +260,7 @@ BEGIN
     IF p_tenant_id IS NULL OR p_tenant_id = '' THEN
         SET p_can_update = FALSE;
         SET p_reason = '테넌트 ID는 필수입니다.';
-        LEAVE;
+        LEAVE main_proc;
     END IF;
     
     -- 매핑 상태 조회 (테넌트 격리)

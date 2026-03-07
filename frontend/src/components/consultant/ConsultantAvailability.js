@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import { useSession } from '../../hooks/useSession';
 import { sessionManager } from '../../utils/sessionManager';
-import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
+import StandardizedApi from '../../utils/standardizedApi';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { CONSULTANT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import Button from '../ui/Button/Button';
@@ -23,9 +23,10 @@ const ConsultantAvailability = () => {
   const loadDurationCodes = useCallback(async () => {
     try {
       setLoadingCodes(true);
-      const response = await apiGet('/api/v1/common-codes/groups/DURATION');
-      if (response && response.length > 0) {
-        setDurationOptions(response.map(code => ({
+      const response = await StandardizedApi.get('/api/v1/common-codes/groups/DURATION');
+      const data = response?.data || response;
+      if (data && data.length > 0) {
+        setDurationOptions(data.map(code => ({
           value: code.codeValue,
           label: code.codeLabel,
           icon: code.icon,
@@ -118,18 +119,18 @@ const ConsultantAvailability = () => {
 
       console.log('👤 상담사 상담 가능 시간 로드:', user.id);
 
-      const response = await apiGet(`/api/consultant/${user.id}/availability`);
+      const response = await StandardizedApi.get(`/api/v1/consultants/${user.id}/availability`);
       
-      if (response.success) {
-        console.log('✅ 상담 가능 시간 로드 성공:', response.data);
-        setAvailability(response.data || []);
+      if (response?.success) {
+        console.log('✅ 상담 가능 시간 로드 성공:', response?.data);
+        setAvailability(response?.data || []);
       } else {
-        console.error('❌ 상담 가능 시간 로드 실패:', response.message);
-        setError(response.message || '상담 가능 시간을 불러오는데 실패했습니다.');
+        console.error('❌ 상담 가능 시간 로드 실패:', response?.message);
+        setError(response?.message || '상담 가능 시간을 불러오는데 실패했습니다.');
       }
     } catch (err) {
       console.error('❌ 상담 가능 시간 로드 중 오류:', err);
-      setError('상담 가능 시간을 불러오는 중 오류가 발생했습니다.');
+      setError(err?.message || '상담 가능 시간을 불러오는 중 오류가 발생했습니다.');
     } finally {
       setLoading(false);
     }
@@ -140,19 +141,19 @@ const ConsultantAvailability = () => {
     try {
       console.log('➕ 상담 가능 시간 추가:', formData);
 
-      const response = await apiPost(`/api/consultant/${user.id}/availability`, formData);
+      const response = await StandardizedApi.post(`/api/v1/consultants/${user.id}/availability`, formData);
       
-      if (response.success) {
+      if (response?.success) {
         console.log('✅ 상담 가능 시간 추가 성공');
         await loadAvailability();
         setShowAddModal(false);
       } else {
-        console.error('❌ 상담 가능 시간 추가 실패:', response.message);
-        setError(response.message || '상담 가능 시간 추가에 실패했습니다.');
+        console.error('❌ 상담 가능 시간 추가 실패:', response?.message);
+        setError(response?.message || '상담 가능 시간 추가에 실패했습니다.');
       }
     } catch (err) {
       console.error('❌ 상담 가능 시간 추가 중 오류:', err);
-      setError('상담 가능 시간 추가 중 오류가 발생했습니다.');
+      setError(err?.message || '상담 가능 시간 추가 중 오류가 발생했습니다.');
     }
   };
 
@@ -161,19 +162,19 @@ const ConsultantAvailability = () => {
     try {
       console.log('✏️ 상담 가능 시간 수정:', id, formData);
 
-      const response = await apiPut(`/api/consultant/availability/${id}`, formData);
+      const response = await StandardizedApi.put(`/api/v1/consultants/availability/${id}`, formData);
       
-      if (response.success) {
+      if (response?.success) {
         console.log('✅ 상담 가능 시간 수정 성공');
         await loadAvailability();
         setEditingSlot(null);
       } else {
-        console.error('❌ 상담 가능 시간 수정 실패:', response.message);
-        setError(response.message || '상담 가능 시간 수정에 실패했습니다.');
+        console.error('❌ 상담 가능 시간 수정 실패:', response?.message);
+        setError(response?.message || '상담 가능 시간 수정에 실패했습니다.');
       }
     } catch (err) {
       console.error('❌ 상담 가능 시간 수정 중 오류:', err);
-      setError('상담 가능 시간 수정 중 오류가 발생했습니다.');
+      setError(err?.message || '상담 가능 시간 수정 중 오류가 발생했습니다.');
     }
   };
 
@@ -182,18 +183,18 @@ const ConsultantAvailability = () => {
     try {
       console.log('🗑️ 상담 가능 시간 삭제:', id);
 
-      const response = await apiDelete(`/api/consultant/availability/${id}`);
+      const response = await StandardizedApi.delete(`/api/v1/consultants/availability/${id}`);
       
-      if (response.success) {
+      if (response?.success) {
         console.log('✅ 상담 가능 시간 삭제 성공');
         await loadAvailability();
       } else {
-        console.error('❌ 상담 가능 시간 삭제 실패:', response.message);
-        setError(response.message || '상담 가능 시간 삭제에 실패했습니다.');
+        console.error('❌ 상담 가능 시간 삭제 실패:', response?.message);
+        setError(response?.message || '상담 가능 시간 삭제에 실패했습니다.');
       }
     } catch (err) {
       console.error('❌ 상담 가능 시간 삭제 중 오류:', err);
-      setError('상담 가능 시간 삭제 중 오류가 발생했습니다.');
+      setError(err?.message || '상담 가능 시간 삭제 중 오류가 발생했습니다.');
     }
   };
 

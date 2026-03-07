@@ -14,7 +14,7 @@ const getConsultantLevel = (consultant) => {
     if (num >= 3) return { label: '매니어 상담사', level: 'manier' };
     return { label: '주니어 상담사', level: 'junior' };
 };
-import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
+import { apiGet, apiPost, apiPut } from '../../utils/ajax';
 import StandardizedApi from '../../utils/standardizedApi';
 import { getAllConsultantsWithStats } from '../../utils/consultantHelper';
 import SpecialtyDisplay from '../ui/SpecialtyDisplay';
@@ -843,8 +843,8 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
 
     const deleteConsultant = useCallback(async (id) => {
         try {
-            const response = await apiDelete(`/api/v1/admin/consultants/${id}`);
-            if (response.success) {
+            const response = await StandardizedApi.delete(`/api/v1/admin/consultants/${id}`);
+            if (!response || response.success !== false) {
                 await loadConsultants();
                 window.dispatchEvent(new CustomEvent('showNotification', {
                     detail: { message: '상담사가 성공적으로 삭제되었습니다.', type: 'success' }
@@ -852,7 +852,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                 return { success: true };
             } else {
                 window.dispatchEvent(new CustomEvent('showNotification', {
-                    detail: { message: response.message || '상담사 삭제에 실패했습니다.', type: 'error' }
+                    detail: { message: response?.message || '상담사 삭제에 실패했습니다.', type: 'error' }
                 }));
                 return { success: false };
             }

@@ -19,6 +19,9 @@ import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import com.coresolution.consultation.repository.ConsultantRatingRepository;
+import com.coresolution.consultation.entity.ConsultantRating;
+
 /**
  * 통계 계산 엔진
  * 메타데이터 기반으로 통계를 계산
@@ -35,6 +38,7 @@ public class StatisticsCalculationEngine {
     private final ScheduleRepository scheduleRepository;
     private final ConsultantClientMappingRepository mappingRepository;
     private final UserRepository userRepository;
+    private final ConsultantRatingRepository ratingRepository;
     private final ObjectMapper objectMapper;
     
     /**
@@ -216,6 +220,8 @@ public class StatisticsCalculationEngine {
                 return fetchUserData(filter, tenantId, params);
             case "CONSULTATION":
                 return fetchConsultationData(filter, date, tenantId, params);
+            case "RATING":
+                return fetchRatingData(filter, date, tenantId, params);
             default:
                 throw new IllegalArgumentException("Unknown source type: " + sourceType);
         }
@@ -344,6 +350,30 @@ public class StatisticsCalculationEngine {
     }
     
     /**
+     * 평점 데이터 조회
+     */
+    private List<ConsultantRating> fetchRatingData(JsonNode filter, LocalDate date, String tenantId, Map<String, Object> params) {
+        List<ConsultantRating> allRatings = ratingRepository.findAll();
+        
+        // 테넌트 필터링
+        if (tenantId != null) {
+            allRatings = allRatings.stream()
+                .filter(r -> tenantId.equals(r.getTenantId()))
+                .collect(Collectors.toList());
+        }
+        
+        // 상태 필터링
+        if (filter != null && filter.has("status")) {
+            String status = filter.get("status").asText();
+            allRatings = allRatings.stream()
+                .filter(r -> status.equals(r.getStatus() != null ? r.getStatus().toString() : null))
+                .collect(Collectors.toList());
+        }
+        
+        return allRatings;
+    }
+    
+    /**
      * 필드 값 추출
      */
     private BigDecimal extractFieldValue(Object item, String field, JsonNode fallback, Map<String, Object> params) {
@@ -363,6 +393,9 @@ public class StatisticsCalculationEngine {
             } else if (item instanceof User) {
                 User user = (User) item;
                 value = getUserFieldValue(user, field);
+            } else if (item instanceof ConsultantRating) {
+                ConsultantRating rating = (ConsultantRating) item;
+                value = getRatingFieldValue(rating, field);
             }
             
             if (value == null) {
@@ -385,6 +418,18 @@ public class StatisticsCalculationEngine {
         } catch (Exception e) {
             log.warn("필드 값 추출 실패: field={}", field, e);
             return handleFallback(fallback, params);
+        }
+    }
+    
+    /**
+     * 평점 필드 값 추출
+     */
+    private Object getRatingFieldValue(ConsultantRating rating, String field) {
+        switch (field) {
+            case "heartScore":
+                return rating.getHeartScore();
+            default:
+                return null;
         }
     }
     

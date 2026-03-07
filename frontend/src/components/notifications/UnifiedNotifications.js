@@ -34,9 +34,9 @@ const UnifiedNotifications = () => {
       setLoading(true);
       const response = await apiGet('/api/v1/system-notifications?page=0&size=50');
 
-      if (response.success) {
+      if (response) {
         // 백엔드 응답이 { notifications: [...] } 형태일 수 있음
-        const notificationsData = response.data?.notifications || (Array.isArray(response.data) ? response.data : []);
+        const notificationsData = response.notifications || (Array.isArray(response) ? response : []);
         setSystemNotifications(notificationsData);
       }
     } catch (error) {
@@ -83,9 +83,9 @@ const UnifiedNotifications = () => {
       console.log('🌐 API 호출:', endpoint);
       const response = await apiGet(endpoint);
 
-      if (response.success) {
+      if (response) {
         // 백엔드 응답이 { messages: [...] } 형태일 수 있음
-        const messagesData = response.data?.messages || (Array.isArray(response.data) ? response.data : []);
+        const messagesData = response.messages || (Array.isArray(response) ? response : []);
         setMessages(messagesData);
       }
     } catch (error) {
@@ -112,8 +112,8 @@ const UnifiedNotifications = () => {
       // 상세 조회 API 호출 (자동 읽음 처리)
       const response = await apiGet(`/api/v1/system-notifications/${notification.id}`);
       
-      if (response.success) {
-        setSelectedItem({ type: 'system', data: response.data });
+      if (response) {
+        setSelectedItem({ type: 'system', data: response });
       } else {
         // 실패 시 기존 데이터 사용
         setSelectedItem({ type: 'system', data: notification });
@@ -131,8 +131,8 @@ const UnifiedNotifications = () => {
       // 상세 조회 API 호출 (자동 읽음 처리)
       const response = await apiGet(`/api/v1/consultation-messages/${message.id}`);
       
-      if (response.success) {
-        setSelectedItem({ type: 'message', data: response.data });
+      if (response) {
+        setSelectedItem({ type: 'message', data: response });
       } else {
         // 실패 시 기존 데이터 사용
         setSelectedItem({ type: 'message', data: message });

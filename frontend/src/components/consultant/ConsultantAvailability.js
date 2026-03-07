@@ -66,23 +66,13 @@ const ConsultantAvailability = () => {
     userEmail: user?.email
   });
   
-  // 세션 매니저 상태도 확인
-  console.log('🔍 sessionManager 상태:', {
-    sessionManagerUser: sessionManager.getUser(),
-    sessionManagerIsLoggedIn: sessionManager.isLoggedIn(),
-    sessionManagerIsLoading: sessionManager.isLoading
-  });
-
   // 세션 상태 상세 분석
   console.log('🔍 세션 상태 분석:', {
     'user 존재': !!user,
     'user.id': user?.id,
     'user.role': user?.role,
     'isLoggedIn 값': isLoggedIn,
-    'sessionLoading 값': sessionLoading,
-    'sessionManager.user': sessionManager.getUser(),
-    'sessionManager.isLoggedIn()': sessionManager.isLoggedIn(),
-    'sessionManager.isLoading': sessionManager.isLoading
+    'sessionLoading 값': sessionLoading
   });
 
   // 요일 상수
@@ -228,19 +218,13 @@ const ConsultantAvailability = () => {
 
   // 세션 로딩이 완료된 후 권한 체크
   if (!sessionLoading) {
-    // 세션 매니저에서 직접 사용자 정보 확인
-    const sessionManagerUser = sessionManager.getUser();
-    const sessionManagerIsLoggedIn = sessionManager.isLoggedIn();
-    
     console.log('🔍 최종 세션 체크:', {
       'useSession user': user,
-      'useSession isLoggedIn': isLoggedIn,
-      'sessionManager user': sessionManagerUser,
-      'sessionManager isLoggedIn': sessionManagerIsLoggedIn
+      'useSession isLoggedIn': isLoggedIn
     });
 
-    // 로그인되지 않은 경우 (세션 매니저 기준으로 확인)
-    if (!sessionManagerIsLoggedIn || !sessionManagerUser) {
+    // 로그인되지 않은 경우
+    if (!isLoggedIn || !user) {
       return (
         <AdminCommonLayout title="가능 시간">
           <div className="consultant-availability-error-container">
@@ -262,7 +246,7 @@ const ConsultantAvailability = () => {
     }
 
     // 권한 체크 (상담사 또는 관리자만 접근 가능)
-    const userRole = sessionManagerUser?.role;
+    const userRole = user?.role;
     const hasPermission = userRole === 'CONSULTANT' || userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN';
     
     if (!hasPermission) {

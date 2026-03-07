@@ -238,8 +238,15 @@
 }
 
 .notification-icon {
-  color: var(--mg-v2-color-primary-500, #3b82f6);
-  margin-top: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: var(--mg-v2-color-primary-50, #eff6ff);
+  color: var(--mg-v2-color-primary-600, #2563eb);
+  flex-shrink: 0;
 }
 
 .notification-content {

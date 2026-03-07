@@ -386,7 +386,7 @@ const ConsultantDashboardV2 = ({ user }) => {
                   {dashboardData.recentNotifications.map((noti) => (
                     <div key={noti.id} className="notification-item">
                       <div className="notification-icon">
-                        <div className="mg-v2-badge-dot mg-v2-badge-primary"></div>
+                        <Bell size={16} />
                       </div>
                       <div className="notification-content">
                         <div className="notification-text">{noti.text}</div>

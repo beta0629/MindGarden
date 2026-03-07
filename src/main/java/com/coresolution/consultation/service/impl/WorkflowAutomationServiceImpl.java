@@ -140,7 +140,7 @@ public class WorkflowAutomationServiceImpl implements WorkflowAutomationService 
                         schedule.getConsultantId(), 
                         schedule.getClientId(), 
                         null, // consultationId
-                        "SYSTEM", // 시스템 발송
+                        "SYSTEM", // 시스템 발송 (수신자: 상담사)
                         "미완료 상담 알림", 
                         alertMessage,
                         getMessageTypeFromCommonCode("INCOMPLETE_CONSULTATION"),
@@ -398,8 +398,8 @@ public class WorkflowAutomationServiceImpl implements WorkflowAutomationService 
             try {
                 TenantContextHolder.setTenantId(schedule.getTenantId());
                 consultationMessageService.sendMessage(
-                    schedule.getConsultantId(), 
-                    schedule.getClientId(), 
+                    schedule.getClientId(), // 수신자가 내담자
+                    schedule.getConsultantId(), // 반대편이 상담사
                     null, // consultationId
                     "SYSTEM", // 시스템 발송
                     title, 
@@ -412,8 +412,8 @@ public class WorkflowAutomationServiceImpl implements WorkflowAutomationService 
                 
                 // 상담사에게도 리마인더 발송
                 consultationMessageService.sendMessage(
-                    schedule.getConsultantId(), 
-                    schedule.getClientId(), 
+                    schedule.getConsultantId(), // 수신자가 상담사
+                    schedule.getClientId(), // 반대편이 내담자
                     null, // consultationId
                     "SYSTEM", // 시스템 발송
                     title, 

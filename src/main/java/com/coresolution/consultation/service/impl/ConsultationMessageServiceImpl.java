@@ -69,6 +69,13 @@ public class ConsultationMessageServiceImpl extends BaseTenantEntityServiceImpl<
         log.info("📨 상담사 메시지 목록 조회 - 상담사 ID: {}, 내담자 ID: {}", consultantId, clientId);
         
         String tenantId = TenantContextHolder.getRequiredTenantId();
+        
+        // 내담자가 지정되지 않은 경우, 상담사가 포함된 모든 메시지 조회 (수신자이거나 발신자인 경우)
+        if (clientId == null) {
+            return consultationMessageRepository.findByTenantIdAndReceiverIdOrSenderId(
+                tenantId, consultantId, consultantId, status, isRead, isImportant, isUrgent, pageable);
+        }
+        
         return consultationMessageRepository.findByTenantIdAndConsultantIdAndClientIdAndStatusAndIsReadAndIsImportantAndIsUrgent(
             tenantId, consultantId, clientId, status, isRead, isImportant, isUrgent, pageable);
     }
@@ -108,6 +115,11 @@ public class ConsultationMessageServiceImpl extends BaseTenantEntityServiceImpl<
         // 발신자/수신자 ID 설정 (표준화 2025-12-05: enum 활용)
         if (UserRole.CONSULTANT.name().equals(senderType)) {
             message.setSenderId(consultantId);
+            message.setReceiverId(clientId);
+        } else if ("SYSTEM".equals(senderType)) {
+            message.setSenderId(0L); // 시스템 ID
+            // 시스템 메시지의 수신자를 판별 (WorkflowAutomationServiceImpl 등에서 보내는 방식에 의존)
+            // 보통 두 번째 파라미터(clientId 위치)에 실제 수신자 ID를 넣도록 호출부를 수정했습니다.
             message.setReceiverId(clientId);
         } else {
             message.setSenderId(clientId);

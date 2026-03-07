@@ -57,6 +57,26 @@ public interface ConsultationMessageRepository extends BaseRepository<Consultati
         Pageable pageable);
     
     /**
+     * 상담사 메시지 목록 조회 (tenantId 필수, 수신자 또는 발신자)
+     */
+    @Query("SELECT m FROM ConsultationMessage m WHERE m.tenantId = :tenantId AND (m.receiverId = :receiverId OR m.senderId = :senderId) " +
+           "AND (:status IS NULL OR m.status = :status) " +
+           "AND (:isRead IS NULL OR m.isRead = :isRead) " +
+           "AND (:isImportant IS NULL OR m.isImportant = :isImportant) " +
+           "AND (:isUrgent IS NULL OR m.isUrgent = :isUrgent) " +
+           "AND m.isDeleted = false " +
+           "ORDER BY m.createdAt DESC")
+    Page<ConsultationMessage> findByTenantIdAndReceiverIdOrSenderId(
+        @Param("tenantId") String tenantId,
+        @Param("receiverId") Long receiverId,
+        @Param("senderId") Long senderId,
+        @Param("status") String status,
+        @Param("isRead") Boolean isRead,
+        @Param("isImportant") Boolean isImportant,
+        @Param("isUrgent") Boolean isUrgent,
+        Pageable pageable);
+    
+    /**
      * 내담자 메시지 목록 조회 (수신자 기준, tenantId 필수)
      */
     @Query("SELECT m FROM ConsultationMessage m WHERE m.tenantId = :tenantId AND m.receiverId = :clientId " +

@@ -102,6 +102,12 @@ public interface SystemNotificationRepository extends BaseRepository<SystemNotif
         @Param("now") LocalDateTime now);
     
     /**
+     * 특정 테넌트에서 특정 기간 내에 특정 타입의 공지가 존재하는지 확인 (Idempotency 체크용)
+     */
+    boolean existsByTenantIdAndNotificationTypeAndCreatedAtBetween(
+        String tenantId, String notificationType, LocalDateTime start, LocalDateTime end);
+
+    /**
      * 조회수 증가 (버전 충돌 방지를 위해 직접 업데이트)
      */
     @Modifying

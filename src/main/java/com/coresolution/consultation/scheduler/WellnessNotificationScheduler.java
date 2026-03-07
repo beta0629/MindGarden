@@ -149,6 +149,17 @@ public class WellnessNotificationScheduler {
      */
     private void sendWellnessTipForTenant(String tenantId) {
         LocalDate today = LocalDate.now();
+        
+        // 당일 웰니스 공지가 이미 존재하는지 방어 로직 (Idempotency)
+        LocalDateTime startOfDay = today.atStartOfDay();
+        LocalDateTime endOfDay = today.plusDays(1).atStartOfDay(); // 다음날 자정 전까지
+        
+        if (systemNotificationRepository.existsByTenantIdAndNotificationTypeAndCreatedAtBetween(
+                tenantId, "WELLNESS", startOfDay, endOfDay)) {
+            log.info("ℹ️ [WellnessNotification] 오늘({})의 웰니스 공지가 이미 존재하여 발송을 건너뜁니다. tenantId={}", today, tenantId);
+            return;
+        }
+        
         DayOfWeek dayOfWeek = today.getDayOfWeek();
         String season = getCurrentSeason(today);
         

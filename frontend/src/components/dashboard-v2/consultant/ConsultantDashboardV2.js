@@ -132,7 +132,15 @@ const ConsultantDashboardV2 = ({ user }) => {
         let fullEndTime = schedule.endTime;
 
         if (schedule.date) {
-            const dateStr = String(schedule.date).includes('T') ? String(schedule.date).split('T')[0] : String(schedule.date);
+            let dateStr = '';
+            if (Array.isArray(schedule.date)) {
+                const y = schedule.date[0];
+                const m = String(schedule.date[1] || 1).padStart(2, '0');
+                const d = String(schedule.date[2] || 1).padStart(2, '0');
+                dateStr = `${y}-${m}-${d}`;
+            } else {
+                dateStr = String(schedule.date).includes('T') ? String(schedule.date).split('T')[0] : String(schedule.date);
+            }
             const timeStr = formatTimeStr(schedule.startTime);
             const endTimeStr = formatTimeStr(schedule.endTime);
             fullStartTime = `${dateStr}T${timeStr}`;

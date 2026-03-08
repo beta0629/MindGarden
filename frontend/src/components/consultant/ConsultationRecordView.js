@@ -39,7 +39,7 @@ const ConsultationRecordView = () => {
       console.log('📋 상담기록 조회:', recordId);
 
       // 상담기록 상세 정보 조회
-      const response = await apiGet(`/api/consultant/${user.id}/consultation-records/${recordId}`);
+      const response = await apiGet(`/api/v1/admin/consultant-records/${user.id}/consultation-records/${recordId}`);
       
       if (response) {
         const data = response.data !== undefined ? response.data : response;

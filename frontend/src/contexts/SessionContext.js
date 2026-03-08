@@ -370,30 +370,30 @@ export const SessionProvider = ({ children }) => {
     }
   };
 
-  // 주기적 세션 체크
-  // 무한루프 방지를 위해 임시 비활성화
-  // useEffect(() => {
-  //   // 현재 페이지가 로그인 페이지인지 확인
-  //   const currentPath = window.location.pathname;
-  //   const isLoginPage = currentPath === '/login' || currentPath.startsWith('/login/');
-  //   
-  //   // 로그인 페이지가 아니면 초기 세션 체크
-  //   if (!isLoginPage) {
-  //     checkSession();
-  //   }
+  // 주기적 세션 체크 (30초마다)
+  useEffect(() => {
+    // 로그인 페이지에서는 세션 체크 안 함
+    const currentPath = window.location.pathname;
+    const isLoginPage = currentPath === '/login' || currentPath.startsWith('/login/');
+    
+    if (isLoginPage) {
+      return;
+    }
 
-  //   // 주기적 세션 체크 설정 (로그인 페이지가 아닐 때만)
-  //   const interval = setInterval(() => {
-  //     const currentPath = window.location.pathname;
-  //     const isLoginPage = currentPath === '/login' || currentPath.startsWith('/login/');
-  //     
-  //     if (!state.isLoading && !isLoginPage) {
-  //       checkSession();
-  //     }
-  //   }, SESSION_CHECK_INTERVAL);
+    // 주기적 세션 체크 설정
+    const interval = setInterval(() => {
+      const currentPath = window.location.pathname;
+      const isLoginPage = currentPath === '/login' || currentPath.startsWith('/login/');
+      
+      // 로그인 페이지가 아니고, 로딩 중이 아니고, 사용자가 있을 때만 체크
+      if (!state.isLoading && !isLoginPage && state.user) {
+        console.log('🔍 주기적 세션 체크 실행');
+        checkSession();
+      }
+    }, SESSION_CHECK_INTERVAL);
 
-  //   return () => clearInterval(interval);
-  // }, []); // 의존성 배열을 빈 배열로 설정 (checkSession이 안정적이므로)
+    return () => clearInterval(interval);
+  }, [state.user, state.isLoading, checkSession]); // 의존성 추가
 
   // 자동 리다이렉트 로직 제거 (무한루프 방지)
   // OAuth2 콜백에서만 리다이렉트 처리

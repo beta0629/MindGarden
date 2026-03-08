@@ -133,9 +133,12 @@ class SessionManager {
         this.lastCheckTime = now;
         this.notifyListeners();
 
+        // 환경변수로 리다이렉트 제어 (개발 시 필요하면 .env에서 false 설정)
+        const ENABLE_AUTH_REDIRECT = process.env.REACT_APP_ENABLE_AUTH_REDIRECT !== 'false';
         const isLocalEnv = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-        if (isLocalEnv) {
-          console.log('🔍 로컬 환경 - 401 리다이렉트 스킵');
+        
+        if (isLocalEnv && !ENABLE_AUTH_REDIRECT) {
+          console.log('🔍 로컬 환경 - 401 리다이렉트 스킵 (환경변수 설정)');
           return false;
         }
 
@@ -246,9 +249,12 @@ class SessionManager {
         this.user = null;
         this.sessionInfo = null;
 
+        // 환경변수로 리다이렉트 제어
+        const ENABLE_AUTH_REDIRECT = process.env.REACT_APP_ENABLE_AUTH_REDIRECT !== 'false';
         const isLocalEnv = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-        if (isLocalEnv) {
-          console.log('🔍 로컬 환경 - 네트워크 오류 리다이렉트 스킵');
+        
+        if (isLocalEnv && !ENABLE_AUTH_REDIRECT) {
+          console.log('🔍 로컬 환경 - 네트워크 오류 리다이렉트 스킵 (환경변수 설정)');
           return false;
         }
 

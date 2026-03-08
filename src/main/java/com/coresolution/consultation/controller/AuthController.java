@@ -132,12 +132,15 @@ public class AuthController extends BaseApiController {
             }
         }
         
-        // 인증되지 않은 사용자에 대해서는 null 반환 (Trinity 온보딩 등에서 사용)
-        // 403 오류 대신 200 OK와 null 데이터 반환하여 프론트엔드에서 처리 가능하도록
+        // 인증되지 않은 사용자에 대해서는 401 Unauthorized 반환
         if (currentUser == null) {
-            log.info("ℹ️ 인증되지 않은 사용자 - null 반환 (온보딩 등에서 정상 동작)");
-            Map<String, Object> emptyUserInfo = new HashMap<>();
-            return success(emptyUserInfo);
+            log.info("❌ 인증되지 않은 사용자 - 401 Unauthorized 반환");
+            return ResponseEntity.status(org.springframework.http.HttpStatus.UNAUTHORIZED)
+                .body(ApiResponse.<Map<String, Object>>builder()
+                    .success(false)
+                    .message("인증이 필요합니다.")
+                    .data(null)
+                    .build());
         }
         
         log.info("🔍 데이터베이스에서 사용자 정보 조회 시작: userId={}", currentUser.getId());

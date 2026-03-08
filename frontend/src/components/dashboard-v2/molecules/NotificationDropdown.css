@@ -88,15 +88,17 @@
 
 .mg-v2-notification-dropdown__panel {
   width: 360px;
-  max-height: 480px;
+  max-height: min(480px, calc(100vh - 80px));
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 @media (max-width: 767px) {
   .mg-v2-notification-dropdown__panel {
     width: 320px;
     max-width: calc(100vw - 32px);
+    max-height: calc(100vh - 100px);
   }
 }
 

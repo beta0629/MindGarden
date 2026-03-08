@@ -199,7 +199,10 @@ public class ConsultantRecordsController {
             // 실제 내담자 이름 조회
             String clientName = getClientName(record.getClientId());
             recordMap.put("clientName", clientName);
+            recordMap.put("clientId", record.getClientId());
+            recordMap.put("consultantId", record.getConsultantId());
             recordMap.put("consultationDate", record.getSessionDate().toString());
+            recordMap.put("sessionDate", record.getSessionDate().toString());
             
             // 상담 시간 설정
             int sessionDuration = record.getSessionDurationMinutes() != null ? record.getSessionDurationMinutes() : 60;
@@ -218,6 +221,34 @@ public class ConsultantRecordsController {
             recordMap.put("isSessionCompleted", record.getIsSessionCompleted());
             recordMap.put("sessionNumber", record.getSessionNumber());
             recordMap.put("sessionDuration", record.getSessionDurationMinutes());
+            
+            // 상담일지 전체 필드 추가
+            recordMap.put("clientCondition", record.getClientCondition());
+            recordMap.put("mainIssues", record.getMainIssues());
+            recordMap.put("interventionMethods", record.getInterventionMethods());
+            recordMap.put("clientResponse", record.getClientResponse());
+            recordMap.put("nextSessionPlan", record.getNextSessionPlan());
+            recordMap.put("homeworkAssigned", record.getHomeworkAssigned());
+            recordMap.put("homeworkDueDate", record.getHomeworkDueDate());
+            recordMap.put("riskAssessment", record.getRiskAssessment());
+            recordMap.put("riskFactors", record.getRiskFactors());
+            recordMap.put("emergencyResponsePlan", record.getEmergencyResponsePlan());
+            recordMap.put("progressEvaluation", record.getProgressEvaluation());
+            recordMap.put("progressScore", record.getProgressScore());
+            recordMap.put("goalAchievement", record.getGoalAchievement());
+            recordMap.put("goalAchievementDetails", record.getGoalAchievementDetails());
+            recordMap.put("consultantObservations", record.getConsultantObservations());
+            recordMap.put("consultantAssessment", record.getConsultantAssessment());
+            recordMap.put("specialConsiderations", record.getSpecialConsiderations());
+            recordMap.put("medicalInformation", record.getMedicalInformation());
+            recordMap.put("medicationInfo", record.getMedicationInfo());
+            recordMap.put("familyRelationships", record.getFamilyRelationships());
+            recordMap.put("socialSupport", record.getSocialSupport());
+            recordMap.put("environmentalFactors", record.getEnvironmentalFactors());
+            recordMap.put("incompletionReason", record.getIncompletionReason());
+            recordMap.put("nextSessionDate", record.getNextSessionDate());
+            recordMap.put("followUpActions", record.getFollowUpActions());
+            recordMap.put("followUpDueDate", record.getFollowUpDueDate());
             
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);

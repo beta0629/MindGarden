@@ -249,7 +249,22 @@ const ConsultationLogModal = ({
             setClient(clientData);
           }
         } catch (err) {
-          setClient({ id: cId, name: record.clientName || `내담자 #${cId}` });
+          console.warn('내담자 통계 정보 로드 실패, 기본 정보만 사용:', err);
+          // 기본 정보만으로 설정
+          setClient({ 
+            id: cId, 
+            name: record.clientName || `내담자 #${cId}`,
+            email: record.clientEmail || '',
+            phone: record.clientPhone || ''
+          });
+          setClientWithStats({ 
+            client: { 
+              id: cId, 
+              name: record.clientName || `내담자 #${cId}`,
+              email: record.clientEmail || '',
+              phone: record.clientPhone || ''
+            } 
+          });
         }
         setLoadingPsych(true);
         try {

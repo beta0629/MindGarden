@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import { Star, BarChart3, TrendingUp } from 'lucide-react';
 import { RoleUtils } from '../../../constants/roles';
 import { useWidget } from '../../../hooks/useWidget';
@@ -7,16 +8,23 @@ import './ConsultantRatingWidget.css';
 
 const ConsultantRatingWidget = ({ widget, user }) => {
   // 데이터 소스 설정 (상담사 전용)
-  const getDataSourceConfig = () => ({
-    type: 'api',
-    cache: true,
-    refreshInterval: 300000, // 5분마다 새로고침 (평가 변경)
-    url: `/api/ratings/consultant/${user.id}/stats`,
-    params: {
-      includeRecentRatings: true,
-      recentLimit: 5
-    }
-  });
+  const getDataSourceConfig = () => {
+    // RATING_API import 필요
+    const RATING_API = {
+      CONSULTANT_STATS: (consultantId) => `/api/v1/ratings/consultant/${consultantId}/stats`
+    };
+    
+    return {
+      type: 'api',
+      cache: true,
+      refreshInterval: 300000, // 5분마다 새로고침 (평가 변경)
+      url: RATING_API.CONSULTANT_STATS(user.id),
+      params: {
+        includeRecentRatings: true,
+        recentLimit: 5
+      }
+    };
+  };
 
   // 위젯 설정에 데이터 소스 동적 설정
   const widgetWithDataSource = {
@@ -216,6 +224,15 @@ const ConsultantRatingWidget = ({ widget, user }) => {
       {renderContent()}
     </BaseWidget>
   );
+};
+
+ConsultantRatingWidget.propTypes = {
+  widget: PropTypes.shape({
+    config: PropTypes.object
+  }).isRequired,
+  user: PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
+  }).isRequired
 };
 
 export default ConsultantRatingWidget;

@@ -61,7 +61,7 @@ const RatingWidget = ({ widget, user }) => {
     try {
       setLoading(true);
       
-      const url = dataSource.url || `/api/ratings/${targetId}/stats`;
+      const url = dataSource.url || `/api/v1/ratings/${targetId}/stats`;
       const response = await apiGet(url);
       
       if (response && response.data) {
@@ -78,7 +78,7 @@ const RatingWidget = ({ widget, user }) => {
     try {
       setLoading(true);
       
-      const url = dataSource.url || `/api/ratings/${targetId}/ratable-items`;
+      const url = dataSource.url || `/api/v1/ratings/${targetId}/ratable-items`;
       const response = await apiGet(url);
       
       if (response && response.data) {

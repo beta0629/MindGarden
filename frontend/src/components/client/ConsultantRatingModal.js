@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
 import { Heart, XCircle, CheckCircle, Calendar, User, Briefcase } from 'lucide-react';
 import UnifiedModal from '../common/modals/UnifiedModal';
-import { API_BASE_URL } from '../../constants/api';
+import { API_BASE_URL, RATING_API } from '../../constants/api';
 import { useSession } from '../../contexts/SessionContext';
 import csrfTokenManager from '../../utils/csrfTokenManager';
 import notificationManager from '../../utils/notification';
 import '../../styles/unified-design-tokens.css';
-// import ConsultantRatingModal from '../consultant/ConsultantRatingModal'; // 자기 자신을 import하지 않음
 
 /**
  * 상담사 하트 평가 모달 컴포넌트
@@ -71,7 +71,7 @@ const ConsultantRatingModal = ({ isOpen, onClose, schedule, onRatingComplete }) 
 
         setIsSubmitting(true);
         try {
-            const response = await csrfTokenManager.post(`${API_BASE_URL}/api/ratings/create`, {
+            const response = await csrfTokenManager.post(`${API_BASE_URL}${RATING_API.CREATE}`, {
                 scheduleId: schedule.scheduleId,
                 clientId: user.id,
                 heartScore: heartScore,
@@ -234,6 +234,19 @@ const ConsultantRatingModal = ({ isOpen, onClose, schedule, onRatingComplete }) 
                     </div>
         </UnifiedModal>
     );
+};
+
+ConsultantRatingModal.propTypes = {
+  isOpen: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  schedule: PropTypes.shape({
+    scheduleId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    consultantName: PropTypes.string,
+    consultationDate: PropTypes.string,
+    consultationTime: PropTypes.string,
+    consultationType: PropTypes.string
+  }),
+  onRatingComplete: PropTypes.func
 };
 
 export default ConsultantRatingModal;

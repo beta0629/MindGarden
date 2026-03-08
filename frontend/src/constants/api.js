@@ -342,6 +342,17 @@ export const COMMON_CODE_API = {
   TENANT_GROUPS: '/api/v1/common-codes/tenant/groups'
 };
 
+// 평가(Rating) 관련 API (표준 경로: /api/v1/ratings)
+export const RATING_API = {
+  CREATE: '/api/v1/ratings/create',
+  CONSULTANT_STATS: (consultantId) => `/api/v1/ratings/consultant/${consultantId}/stats`,
+  CONSULTANT_RATINGS: (consultantId) => `/api/v1/ratings/consultant/${consultantId}`,
+  CLIENT_RATABLE: (clientId) => `/api/v1/ratings/client/${clientId}/ratable-schedules`,
+  POPULAR_TAGS: (consultantId) => `/api/v1/ratings/consultant/${consultantId}/popular-tags`,
+  RANKING: '/api/v1/ratings/ranking',
+  ADMIN_STATS: '/api/v1/ratings/admin/statistics'
+};
+
 // 전체 API 엔드포인트 객체
 export const API_ENDPOINTS = {
   AUTH: AUTH_API,
@@ -357,7 +368,8 @@ export const API_ENDPOINTS = {
   ERP: ERP_API,
   ONBOARDING: ONBOARDING_API,
   BUSINESS_CATEGORY: BUSINESS_CATEGORY_API,
-  COMMON_CODE: COMMON_CODE_API
+  COMMON_CODE: COMMON_CODE_API,
+  RATING: RATING_API
 };
 
 // API 응답 상태 코드

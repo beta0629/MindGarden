@@ -7,10 +7,9 @@ import {
   CheckCircle,
   Wrench
 } from 'lucide-react';
-import { API_BASE_URL } from '../../constants/api';
+import { API_BASE_URL, RATING_API } from '../../constants/api';
 import { useSession } from '../../contexts/SessionContext';
 import ConsultantRatingModal from './ConsultantRatingModal';
-import UnifiedLoading from '../../components/common/UnifiedLoading';
 import '../../styles/unified-design-tokens.css';
 import './RatableConsultationsSection.css';
 
@@ -54,9 +53,9 @@ const RatableConsultationsSection = () => {
 
     setLoading(true);
     try {
-      console.log('💖 API 호출 시작:', `${API_BASE_URL}/api/ratings/client/${user.id}/ratable-schedules`);
+      console.log('💖 API 호출 시작:', `${API_BASE_URL}${RATING_API.CLIENT_RATABLE(user.id)}`);
       
-      const response = await fetch(`${API_BASE_URL}/api/ratings/client/${user.id}/ratable-schedules`, {
+      const response = await fetch(`${API_BASE_URL}${RATING_API.CLIENT_RATABLE(user.id)}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

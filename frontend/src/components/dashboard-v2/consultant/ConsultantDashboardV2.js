@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import AdminCommonLayout from '../../layout/AdminCommonLayout';
 import StandardizedApi from '../../../utils/standardizedApi';
-import { DASHBOARD_API } from '../../../constants/api';
+import { DASHBOARD_API, RATING_API } from '../../../constants/api';
 import './ConsultantDashboard.css';
 
 const TENANT_ERROR_MESSAGE = '테넌트 정보를 불러올 수 없습니다. 로그아웃 후 다시 로그인해 주세요.';
@@ -29,7 +29,8 @@ const ConsultantDashboardV2 = ({ user }) => {
       todaySchedules: 0,
       newClients: 0,
       unreadMessages: 0,
-      averageRating: 0
+      averageRating: 0,
+      totalRatingCount: 0
     },
     todaySchedules: [],
     upcomingSchedules: [],
@@ -58,16 +59,17 @@ const ConsultantDashboardV2 = ({ user }) => {
       console.warn('⚠️ [상담사 대시보드] tenantId 없음 - 스케줄/통계 API 호출 생략. user.tenantId=', currentUser?.tenantId);
       setDashboardError(TENANT_ERROR_MESSAGE);
       setLoading(false);
-      setDashboardData(prev => ({
-        ...prev,
-        stats: {
-          todaySchedules: 0,
-          newClients: 0,
-          unreadMessages: 0,
-          averageRating: 0
-        },
-        todaySchedules: []
-      }));
+        setDashboardData(prev => ({
+          ...prev,
+          stats: {
+            todaySchedules: 0,
+            newClients: 0,
+            unreadMessages: 0,
+            averageRating: 0,
+            totalRatingCount: 0
+          },
+          todaySchedules: []
+        }));
       return;
     }
 
@@ -85,6 +87,15 @@ const ConsultantDashboardV2 = ({ user }) => {
         if (isTenantError) setDashboardError(TENANT_ERROR_MESSAGE);
         console.warn('상담사 통계 API 실패, 기본값 사용:', statsErr?.message || statsErr);
         statsResponse = null;
+      }
+
+      // 1-1. 평가 통계 조회 (하트 점수)
+      let ratingStatsResponse;
+      try {
+        ratingStatsResponse = await StandardizedApi.get(RATING_API.CONSULTANT_STATS(currentUser.id));
+      } catch (ratingErr) {
+        console.warn('평가 통계 API 실패, 기본값 사용:', ratingErr?.message || ratingErr);
+        ratingStatsResponse = null;
       }
 
       // 2. 오늘의 일정 조회
@@ -276,12 +287,18 @@ const ConsultantDashboardV2 = ({ user }) => {
         return getTimeValue(a.startTime) - getTimeValue(b.startTime);
       });
 
+      // 평가 통계 데이터 추출
+      const ratingStats = ratingStatsResponse && typeof ratingStatsResponse === 'object' ? ratingStatsResponse : {};
+      const averageHeartScore = ratingStats.averageHeartScore ?? 0;
+      const totalRatingCount = ratingStats.totalRatingCount ?? 0;
+
       setDashboardData({
         stats: {
           todaySchedules: todayOnlyCount ?? todaySchedulesFromStats ?? 0,
           newClients: stats.newClients ?? 0,
           unreadMessages: stats.unreadMessages ?? 0,
-          averageRating: stats.averageRating ?? 4.8
+          averageRating: averageHeartScore,
+          totalRatingCount: totalRatingCount
         },
         todaySchedules: schedules,
         upcomingSchedules: upcomingSchedules,
@@ -299,7 +316,8 @@ const ConsultantDashboardV2 = ({ user }) => {
           todaySchedules: prev.stats?.todaySchedules ?? 0,
           newClients: prev.stats?.newClients ?? 0,
           unreadMessages: prev.stats?.unreadMessages ?? 0,
-          averageRating: prev.stats?.averageRating ?? 4.8
+          averageRating: prev.stats?.averageRating ?? 0,
+          totalRatingCount: prev.stats?.totalRatingCount ?? 0
         }
       }));
     } finally {
@@ -546,7 +564,14 @@ const ConsultantDashboardV2 = ({ user }) => {
             </div>
             <div className="stat-content">
               <span className="stat-label">평균 평점</span>
-              <span className="stat-value">{dashboardData.stats.averageRating.toFixed(1)}</span>
+              <span className="stat-value">
+                {dashboardData.stats.averageRating > 0 
+                  ? dashboardData.stats.averageRating.toFixed(1) 
+                  : '-'}
+              </span>
+              {dashboardData.stats.totalRatingCount > 0 && (
+                <span className="stat-sublabel">({dashboardData.stats.totalRatingCount}개 평가)</span>
+              )}
             </div>
           </div>
         </section>

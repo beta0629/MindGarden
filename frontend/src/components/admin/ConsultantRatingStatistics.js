@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import ConsultantRatingStatisticsView from '../ui/Statistics/ConsultantRatingStatisticsView';
-import { API_BASE_URL } from '../../constants/api';
+import { API_BASE_URL, RATING_API } from '../../constants/api';
 import './ConsultantRatingStatistics.css';
 
 /**
@@ -34,7 +34,7 @@ const ConsultantRatingStatistics = () => {
     const loadRatingStatistics = async () => {
         setLoading(true);
         try {
-            const response = await fetch(`${API_BASE_URL}/api/admin/consultant-rating-stats`, {
+            const response = await fetch(`${API_BASE_URL}${RATING_API.ADMIN_STATS}`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json'

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import PropTypes from 'prop-types';
 import { 
   Heart, 
   Calendar, 
@@ -10,25 +11,29 @@ import {
 import { RoleUtils } from '../../../constants/roles';
 import { useWidget } from '../../../hooks/useWidget';
 import BaseWidget from './BaseWidget';
-import { useSession } from '../../../contexts/SessionContext';
 import './RatableConsultationsWidget.css';
-import ConsultantRatingModal from '../../client/ConsultantRatingModal';
 
 const RatableConsultationsWidget = ({ widget, user }) => {
-  const { user: sessionUser } = useSession();
   const [selectedSchedule, setSelectedSchedule] = useState(null);
   const [showRatingModal, setShowRatingModal] = useState(false);
 
   // 데이터 소스 설정 (내담자 전용)
-  const getDataSourceConfig = () => ({
-    type: 'api',
-    cache: true,
-    refreshInterval: 600000, // 10분마다 새로고침 (평가 상태 변경)
-    url: `/api/ratings/client/${user.id}/ratable-schedules`,
-    params: {
-      includeConsultantInfo: true
-    }
-  });
+  const getDataSourceConfig = () => {
+    // RATING_API import 필요
+    const RATING_API = {
+      CLIENT_RATABLE: (clientId) => `/api/v1/ratings/client/${clientId}/ratable-schedules`
+    };
+    
+    return {
+      type: 'api',
+      cache: true,
+      refreshInterval: 600000, // 10분마다 새로고침 (평가 상태 변경)
+      url: RATING_API.CLIENT_RATABLE(user.id),
+      params: {
+        includeConsultantInfo: true
+      }
+    };
+  };
 
   // 위젯 설정에 데이터 소스 동적 설정
   const widgetWithDataSource = {
@@ -178,68 +183,29 @@ const RatableConsultationsWidget = ({ widget, user }) => {
     );
   };
 
-  // 평가 모달 렌더링 (향후 구현)
-  const renderRatingModal = () => {
-    if (!showRatingModal || !selectedSchedule) {
-      return null;
-    }
-
-    // TODO: ConsultantRatingModal 컴포넌트 구현 필요
-    // 현재는 간단한 알림으로 대체
-    return (
-      <div className="ratable-consultations-modal-overlay">
-        <div className="ratable-consultations-modal">
-          <div className="ratable-consultations-modal-header">
-            <h3>상담사 평가</h3>
-            <button 
-              className="ratable-consultations-modal-close"
-              onClick={() => setShowRatingModal(false)}
-            >
-              ×
-            </button>
-          </div>
-          <div className="ratable-consultations-modal-body">
-            <p>{selectedSchedule.consultantName}님과의 상담은 어떠셨나요?</p>
-            <div className="ratable-consultations-hearts">
-              {[1, 2, 3, 4, 5].map(heart => (
-                <button
-                  key={heart}
-                  className="ratable-consultations-heart-btn"
-                  onClick={() => {
-                    console.log(`💖 ${heart}점 평가 선택됨`);
-                    // TODO: 실제 평가 API 호출 구현
-                    alert(`${heart}점으로 평가되었습니다!`);
-                    handleRatingComplete();
-                  }}
-                >
-                  <Heart size={24} />
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
   return (
-    <>
-      <BaseWidget
-        widget={widget}
-        user={user}
-        loading={loading}
-        error={null} // 에러를 내부적으로 처리
-        hasData={hasData}
-        onRefresh={refresh}
-        headerConfig={headerConfig}
-        className="ratable-consultations-widget"
-      >
-        {renderContent()}
-      </BaseWidget>
-      
-      {renderRatingModal()}
-    </>
+    <BaseWidget
+      widget={widget}
+      user={user}
+      loading={loading}
+      error={null}
+      hasData={hasData}
+      onRefresh={refresh}
+      headerConfig={headerConfig}
+      className="ratable-consultations-widget"
+    >
+      {renderContent()}
+    </BaseWidget>
   );
+};
+
+RatableConsultationsWidget.propTypes = {
+  widget: PropTypes.shape({
+    config: PropTypes.object
+  }).isRequired,
+  user: PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
+  }).isRequired
 };
 
 export default RatableConsultationsWidget;

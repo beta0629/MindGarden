@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
-import { API_BASE_URL } from '../../constants/api';
+import PropTypes from 'prop-types';
+import { API_BASE_URL, RATING_API } from '../../constants/api';
 import { useSession } from '../../contexts/SessionContext';
 
 /**
@@ -33,7 +33,7 @@ const ConsultantRatingDisplay = ({ consultantId }) => {
     const loadRatingStats = async (targetConsultantId) => {
         setLoading(true);
         try {
-            const response = await fetch(`${API_BASE_URL}/api/ratings/consultant/${targetConsultantId}/stats`, {
+            const response = await fetch(`${API_BASE_URL}${RATING_API.CONSULTANT_STATS(targetConsultantId)}`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -213,6 +213,10 @@ const ConsultantRatingDisplay = ({ consultantId }) => {
             </div>
         </div>
     );
+};
+
+ConsultantRatingDisplay.propTypes = {
+  consultantId: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
 };
 
 export default ConsultantRatingDisplay;

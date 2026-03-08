@@ -91,6 +91,13 @@
   line-height: 1.2;
 }
 
+.stat-sublabel {
+  font-size: var(--mg-v2-font-size-xs, 12px);
+  color: var(--mg-v2-color-text-tertiary, #9ca3af);
+  font-weight: var(--mg-v2-font-weight-normal, 400);
+  margin-top: var(--mg-v2-spacing-xs, 4px);
+}
+
 /* Main Content Grid (3 Columns) */
 .consultant-main-grid {
   display: grid;

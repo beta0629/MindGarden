@@ -7,9 +7,11 @@
  */
 
 import React from 'react';
+import PropTypes from 'prop-types';
 import { NavLink } from 'react-router-dom';
-import { Menu, Bell, User } from 'lucide-react';
+import { Menu } from 'lucide-react';
 import { NavIcon } from '../atoms';
+import { NotificationDropdown, ProfileDropdown } from '../molecules';
 import { ADMIN_ROUTES } from '../../../constants/adminRoutes';
 import './MobileGnb.css';
 
@@ -19,8 +21,7 @@ const MobileGnb = ({
   logoLabel = DEFAULT_LOGO_LABEL,
   logoUrl,
   onMenuClick,
-  onBellClick,
-  onProfileClick
+  onLogout
 }) => {
   return (
     <header className="mg-v2-mobile-gnb" role="banner">
@@ -33,11 +34,18 @@ const MobileGnb = ({
         )}
       </NavLink>
       <div className="mg-v2-mobile-gnb__actions">
-        <NavIcon icon={Bell} label="알림" onClick={onBellClick} />
-        <NavIcon icon={User} label="프로필" onClick={onProfileClick} />
+        <NotificationDropdown />
+        <ProfileDropdown onLogout={onLogout} />
       </div>
     </header>
   );
+};
+
+MobileGnb.propTypes = {
+  logoLabel: PropTypes.string,
+  logoUrl: PropTypes.string,
+  onMenuClick: PropTypes.func,
+  onLogout: PropTypes.func
 };
 
 export default MobileGnb;

@@ -5,4 +5,7 @@
  */
 
 export { default as GnbRight } from './GnbRight';
+export { default as NotificationDropdown } from './NotificationDropdown';
+export { default as QuickActionsDropdown } from './QuickActionsDropdown';
+export { default as ProfileDropdown } from './ProfileDropdown';
 export { default as LnbMenuItem } from './LnbMenuItem';

@@ -1,0 +1,44 @@
+/**
+ * ProfileAvatar - 프로필 아바타 스타일
+ * @author CoreSolution
+ * @since 2026-03-09
+ */
+
+.mg-v2-profile-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background-color: var(--mg-color-primary-main, #3D5246);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.mg-v2-profile-avatar--small {
+  width: 32px;
+  height: 32px;
+}
+
+.mg-v2-profile-avatar--medium {
+  width: 56px;
+  height: 56px;
+}
+
+.mg-v2-profile-avatar__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.mg-v2-profile-avatar__initial {
+  color: #FFFFFF;
+  font-weight: 600;
+}
+
+.mg-v2-profile-avatar--small .mg-v2-profile-avatar__initial {
+  font-size: 14px;
+}
+
+.mg-v2-profile-avatar--medium .mg-v2-profile-avatar__initial {
+  font-size: 24px;
+}

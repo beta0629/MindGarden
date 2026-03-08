@@ -1,0 +1,65 @@
+/**
+ * QuickActionsDropdown - 역할별 빠른 액션 드롭다운 스타일
+ * @author CoreSolution
+ * @since 2026-03-09
+ */
+
+.mg-v2-quick-actions-dropdown {
+  position: relative;
+}
+
+.mg-v2-quick-actions-trigger {
+  position: relative;
+}
+
+.mg-v2-quick-actions-dropdown__panel {
+  width: 280px;
+}
+
+@media (max-width: 767px) {
+  .mg-v2-quick-actions-dropdown__panel {
+    width: 260px;
+    max-width: calc(100vw - 32px);
+  }
+}
+
+.mg-v2-quick-actions-list {
+  padding: 8px 0;
+}
+
+.mg-v2-quick-action-item {
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: background-color 150ms;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  font-family: inherit;
+}
+
+.mg-v2-quick-action-item:hover {
+  background-color: var(--mg-color-background-main, #FAF9F7);
+}
+
+.mg-v2-quick-action-item__icon {
+  color: var(--mg-color-primary-main, #3D5246);
+  flex-shrink: 0;
+}
+
+.mg-v2-quick-action-item__label {
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--mg-color-text-main, #2C2C2C);
+  flex: 1;
+}
+
+.mg-v2-quick-action-item__arrow {
+  color: var(--mg-color-text-secondary, #5C6B61);
+  margin-left: auto;
+  flex-shrink: 0;
+}

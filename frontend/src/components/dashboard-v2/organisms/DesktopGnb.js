@@ -7,6 +7,7 @@
  */
 
 import React from 'react';
+import PropTypes from 'prop-types';
 import { NavLink } from 'react-router-dom';
 import { GnbRight } from '../molecules';
 import { ADMIN_ROUTES } from '../../../constants/adminRoutes';
@@ -19,10 +20,8 @@ const DesktopGnb = ({
   logoUrl,
   searchValue = '',
   onSearchChange,
-  onCalendarClick,
-  onBellClick,
-  onMoonClick,
-  onLogout
+  onLogout,
+  onModalAction
 }) => {
   return (
     <header className="mg-v2-desktop-gnb" role="banner">
@@ -37,14 +36,21 @@ const DesktopGnb = ({
         <GnbRight
           searchValue={searchValue}
           onSearchChange={onSearchChange}
-          onCalendarClick={onCalendarClick}
-          onBellClick={onBellClick}
-          onMoonClick={onMoonClick}
           onLogout={onLogout}
+          onModalAction={onModalAction}
         />
       </div>
     </header>
   );
+};
+
+DesktopGnb.propTypes = {
+  logoLabel: PropTypes.string,
+  logoUrl: PropTypes.string,
+  searchValue: PropTypes.string,
+  onSearchChange: PropTypes.func,
+  onLogout: PropTypes.func,
+  onModalAction: PropTypes.func
 };
 
 export default DesktopGnb;

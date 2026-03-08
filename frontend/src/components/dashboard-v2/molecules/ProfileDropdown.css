@@ -1,0 +1,164 @@
+/**
+ * ProfileDropdown - 프로필 메뉴 드롭다운 스타일
+ * @author CoreSolution
+ * @since 2026-03-09
+ */
+
+.mg-v2-profile-dropdown {
+  position: relative;
+}
+
+.mg-v2-profile-trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px 6px 6px;
+  height: 44px;
+  border-radius: 22px;
+  background-color: transparent;
+  cursor: pointer;
+  transition: background-color 150ms;
+  border: none;
+  font-family: inherit;
+}
+
+.mg-v2-profile-trigger:hover {
+  background-color: var(--mg-color-surface-main, #F5F3EF);
+}
+
+.mg-v2-profile-trigger__name {
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--mg-color-text-main, #2C2C2C);
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mg-v2-profile-trigger__icon {
+  color: var(--mg-color-text-secondary, #5C6B61);
+}
+
+@media (max-width: 767px) {
+  .mg-v2-profile-trigger__name,
+  .mg-v2-profile-trigger__icon {
+    display: none;
+  }
+  
+  .mg-v2-profile-trigger {
+    padding: 6px;
+  }
+}
+
+.mg-v2-profile-dropdown__panel {
+  width: 260px;
+}
+
+@media (max-width: 767px) {
+  .mg-v2-profile-dropdown__panel {
+    width: 240px;
+    max-width: calc(100vw - 32px);
+  }
+}
+
+.mg-v2-profile-dropdown__header {
+  padding: 20px;
+  border-bottom: 1px solid var(--mg-color-border-main, #D4CFC8);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.mg-v2-profile-dropdown__info {
+  margin-top: 12px;
+  text-align: center;
+  width: 100%;
+}
+
+.mg-v2-profile-dropdown__name {
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--mg-color-text-main, #2C2C2C);
+  margin-bottom: 4px;
+}
+
+.mg-v2-profile-dropdown__email {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--mg-color-text-secondary, #5C6B61);
+  margin-bottom: 8px;
+  word-break: break-all;
+}
+
+.mg-v2-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.mg-v2-badge-role {
+  margin-top: 4px;
+}
+
+.mg-v2-badge-role--admin {
+  background-color: #3D5246;
+  color: #FFFFFF;
+}
+
+.mg-v2-badge-role--consultant {
+  background-color: #6B7F72;
+  color: #FFFFFF;
+}
+
+.mg-v2-badge-role--client {
+  background-color: #8B7355;
+  color: #FFFFFF;
+}
+
+.mg-v2-badge-role--staff {
+  background-color: #D4CFC8;
+  color: #2C2C2C;
+}
+
+.mg-v2-profile-dropdown__menu {
+  padding: 8px 0;
+}
+
+.mg-v2-profile-menu-item {
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: background-color 150ms;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--mg-color-text-main, #2C2C2C);
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+}
+
+.mg-v2-profile-menu-item:hover {
+  background-color: var(--mg-color-background-main, #FAF9F7);
+}
+
+.mg-v2-profile-menu-item svg {
+  color: var(--mg-color-text-main, #2C2C2C);
+  flex-shrink: 0;
+}
+
+.mg-v2-profile-menu-item--danger {
+  color: var(--mg-color-error-500, #EF4444);
+}
+
+.mg-v2-profile-menu-item--danger svg {
+  color: var(--mg-color-error-500, #EF4444);
+}

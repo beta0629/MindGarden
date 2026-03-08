@@ -1,0 +1,24 @@
+/**
+ * NotificationBadge - 알림 개수 배지 스타일
+ * @author CoreSolution
+ * @since 2026-03-09
+ */
+
+.mg-v2-notification-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--mg-color-error-500, #EF4444);
+  color: #FFFFFF;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 9px;
+  line-height: 1;
+  white-space: nowrap;
+}

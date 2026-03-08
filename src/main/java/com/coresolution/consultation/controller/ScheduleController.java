@@ -71,6 +71,7 @@ public class ScheduleController extends BaseApiController {
     private final DynamicPermissionService dynamicPermissionService;
     private final com.coresolution.consultation.repository.UserRepository userRepository;
     private final com.coresolution.consultation.service.UserPersonalDataCacheService userPersonalDataCacheService;
+    private final com.coresolution.consultation.service.ConsultantDashboardService consultantDashboardService;
 
     /**
      * 테넌트 컨텍스트가 비어 있을 때 세션 사용자의 tenantId로 보완 (상담사 대시보드 등).
@@ -1271,6 +1272,155 @@ public class ScheduleController extends BaseApiController {
         
         log.info("✅ 다가오는 상담 조회 완료: consultantId={}, count={}", targetConsultantId, schedules.size());
         return success("다가오는 상담 조회 성공", data);
+    }
+    
+    // ==================== Phase 1 대시보드 컨텐츠 API ====================
+    
+    /**
+     * 미작성 상담일지 목록 조회
+     * GET /api/v1/schedules/consultants/{consultantId}/incomplete-records
+     * 
+     * @param consultantId 상담사 ID
+     * @param limit 최대 개수 (기본값: 10)
+     * @param session HTTP 세션
+     * @return 미작성 상담일지 목록
+     */
+    @GetMapping("/consultants/{consultantId}/incomplete-records")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getIncompleteRecords(
+            @PathVariable Long consultantId,
+            @RequestParam(required = false) Integer limit,
+            HttpSession session) {
+        
+        ensureTenantContextFromSession(session);
+        log.info("📝 미작성 상담일지 조회 요청: consultantId={}, limit={}, tenantId={}", 
+                consultantId, limit, TenantContextHolder.getTenantId());
+        
+        String tenantIdVal = TenantContextHolder.getTenantId();
+        if (tenantIdVal == null || tenantIdVal.isEmpty()) {
+            log.warn("❌ 테넌트 정보 없음 - 미작성 상담일지 조회 거부 (400)");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error("테넌트 정보가 없습니다. 로그아웃 후 다시 로그인해 주세요."));
+        }
+        
+        User currentUser = SessionUtils.getCurrentUser(session);
+        if (currentUser == null) {
+            log.error("❌ 세션에서 사용자 정보를 찾을 수 없습니다.");
+            throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
+        }
+        
+        if (!isAdminRoleFromCommonCode(currentUser.getRole()) && !currentUser.getId().equals(consultantId)) {
+            log.warn("❌ 다른 상담사의 미작성 상담일지 조회 권한 없음: currentUser={}, targetConsultant={}", 
+                    currentUser.getId(), consultantId);
+            throw new org.springframework.security.access.AccessDeniedException("다른 상담사의 정보를 조회할 권한이 없습니다.");
+        }
+        
+        List<com.coresolution.consultation.dto.response.IncompleteRecordResponse> records = 
+            consultantDashboardService.getIncompleteRecords(consultantId, limit);
+        
+        Map<String, Object> data = new HashMap<>();
+        data.put("count", records.size());
+        data.put("records", records);
+        
+        log.info("✅ 미작성 상담일지 조회 완료: consultantId={}, count={}", consultantId, records.size());
+        return success("미작성 상담일지 조회 성공", data);
+    }
+    
+    /**
+     * 긴급 확인 필요 내담자 목록 조회
+     * GET /api/v1/schedules/consultants/{consultantId}/high-priority-clients
+     * 
+     * @param consultantId 상담사 ID
+     * @param limit 최대 개수 (기본값: 5)
+     * @param session HTTP 세션
+     * @return 긴급 내담자 목록
+     */
+    @GetMapping("/consultants/{consultantId}/high-priority-clients")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getHighPriorityClients(
+            @PathVariable Long consultantId,
+            @RequestParam(required = false) Integer limit,
+            HttpSession session) {
+        
+        ensureTenantContextFromSession(session);
+        log.info("🚨 긴급 확인 필요 내담자 조회 요청: consultantId={}, limit={}, tenantId={}", 
+                consultantId, limit, TenantContextHolder.getTenantId());
+        
+        String tenantIdVal = TenantContextHolder.getTenantId();
+        if (tenantIdVal == null || tenantIdVal.isEmpty()) {
+            log.warn("❌ 테넌트 정보 없음 - 긴급 내담자 조회 거부 (400)");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error("테넌트 정보가 없습니다. 로그아웃 후 다시 로그인해 주세요."));
+        }
+        
+        User currentUser = SessionUtils.getCurrentUser(session);
+        if (currentUser == null) {
+            log.error("❌ 세션에서 사용자 정보를 찾을 수 없습니다.");
+            throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
+        }
+        
+        if (!isAdminRoleFromCommonCode(currentUser.getRole()) && !currentUser.getId().equals(consultantId)) {
+            log.warn("❌ 다른 상담사의 긴급 내담자 조회 권한 없음: currentUser={}, targetConsultant={}", 
+                    currentUser.getId(), consultantId);
+            throw new org.springframework.security.access.AccessDeniedException("다른 상담사의 정보를 조회할 권한이 없습니다.");
+        }
+        
+        List<com.coresolution.consultation.dto.response.HighPriorityClientResponse> clients = 
+            consultantDashboardService.getHighPriorityClients(consultantId, limit);
+        
+        Map<String, Object> data = new HashMap<>();
+        data.put("count", clients.size());
+        data.put("clients", clients);
+        
+        log.info("✅ 긴급 확인 필요 내담자 조회 완료: consultantId={}, count={}", consultantId, clients.size());
+        return success("긴급 확인 필요 내담자 조회 성공", data);
+    }
+    
+    /**
+     * 다음 상담 준비 정보 조회
+     * GET /api/v1/schedules/consultants/{consultantId}/upcoming-preparation
+     * 
+     * @param consultantId 상담사 ID
+     * @param hoursAhead 앞으로 몇 시간 이내 (기본값: 2시간)
+     * @param session HTTP 세션
+     * @return 다음 상담 목록
+     */
+    @GetMapping("/consultants/{consultantId}/upcoming-preparation")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getUpcomingPreparation(
+            @PathVariable Long consultantId,
+            @RequestParam(required = false) Integer hoursAhead,
+            HttpSession session) {
+        
+        ensureTenantContextFromSession(session);
+        log.info("📅 다음 상담 준비 정보 조회 요청: consultantId={}, hoursAhead={}, tenantId={}", 
+                consultantId, hoursAhead, TenantContextHolder.getTenantId());
+        
+        String tenantIdVal = TenantContextHolder.getTenantId();
+        if (tenantIdVal == null || tenantIdVal.isEmpty()) {
+            log.warn("❌ 테넌트 정보 없음 - 다음 상담 준비 조회 거부 (400)");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error("테넌트 정보가 없습니다. 로그아웃 후 다시 로그인해 주세요."));
+        }
+        
+        User currentUser = SessionUtils.getCurrentUser(session);
+        if (currentUser == null) {
+            log.error("❌ 세션에서 사용자 정보를 찾을 수 없습니다.");
+            throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
+        }
+        
+        if (!isAdminRoleFromCommonCode(currentUser.getRole()) && !currentUser.getId().equals(consultantId)) {
+            log.warn("❌ 다른 상담사의 다음 상담 준비 조회 권한 없음: currentUser={}, targetConsultant={}", 
+                    currentUser.getId(), consultantId);
+            throw new org.springframework.security.access.AccessDeniedException("다른 상담사의 정보를 조회할 권한이 없습니다.");
+        }
+        
+        List<com.coresolution.consultation.dto.response.UpcomingPreparationResponse> preparations = 
+            consultantDashboardService.getUpcomingPreparation(consultantId, hoursAhead);
+        
+        Map<String, Object> data = new HashMap<>();
+        data.put("count", preparations.size());
+        data.put("preparations", preparations);
+        
+        log.info("✅ 다음 상담 준비 정보 조회 완료: consultantId={}, count={}", consultantId, preparations.size());
+        return success("다음 상담 준비 정보 조회 성공", data);
     }
     
     /**

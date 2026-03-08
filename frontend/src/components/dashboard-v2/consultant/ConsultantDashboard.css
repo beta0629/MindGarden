@@ -469,3 +469,424 @@
     font-size: var(--mg-v2-font-size-sm, 14px);
   }
 }
+
+/* ===== Phase 1 컨텐츠 스타일 ===== */
+
+/* 1. 빠른 액션 바 (Quick Action Bar) */
+.mg-v2-quick-action-bar {
+  background: var(--mg-color-surface-main, #F5F3EF);
+  border: 1px solid var(--mg-color-border-main, #D4CFC8);
+  border-radius: 16px;
+  padding: 20px 24px;
+  margin-bottom: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.mg-v2-quick-action-bar__title {
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--mg-color-text-main, #2C2C2C);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mg-v2-quick-action-bar__title svg {
+  width: 18px;
+  height: 18px;
+  color: var(--mg-color-accent-main, #8B7355);
+}
+
+.mg-v2-quick-action-bar__actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.mg-v2-btn-md {
+  height: 40px;
+  padding: 10px 20px;
+  font-size: 14px;
+}
+
+.mg-v2-btn-sm {
+  height: 36px;
+  padding: 8px 16px;
+  font-size: 14px;
+}
+
+@media (max-width: 767px) {
+  .mg-v2-quick-action-bar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  
+  .mg-v2-quick-action-bar__actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  
+  .mg-v2-quick-action-bar__actions .mg-v2-btn {
+    flex: 1 1 auto;
+    min-width: 120px;
+  }
+}
+
+/* 2. 미작성 상담일지 알림 (Incomplete Records Alert) */
+.mg-v2-alert {
+  border-radius: 16px;
+  padding: 20px 24px;
+  margin-bottom: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  position: relative;
+}
+
+.mg-v2-alert::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  border-radius: 2px 0 0 2px;
+}
+
+.mg-v2-alert--warning {
+  background: var(--mg-color-warning-light, #FEF3C7);
+  border: 1px solid var(--mg-color-warning-main, #F59E0B);
+}
+
+.mg-v2-alert--warning::before {
+  background: var(--mg-color-warning-main, #F59E0B);
+}
+
+.mg-v2-alert__content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.mg-v2-alert__icon {
+  width: 24px;
+  height: 24px;
+  color: var(--mg-color-warning-main, #F59E0B);
+  flex-shrink: 0;
+}
+
+.mg-v2-alert__text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.mg-v2-alert__text-title {
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--mg-color-text-main, #2C2C2C);
+}
+
+.mg-v2-alert__text-subtitle {
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--mg-color-text-secondary, #5C6B61);
+}
+
+.mg-v2-alert__action {
+  flex-shrink: 0;
+}
+
+@media (max-width: 767px) {
+  .mg-v2-alert {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .mg-v2-alert__action {
+    width: 100%;
+  }
+  
+  .mg-v2-alert__action .mg-v2-btn {
+    width: 100%;
+  }
+}
+
+/* 3. 다음 상담 준비 카드 (Next Consultation Card) */
+.mg-v2-next-consultation-card {
+  background: var(--mg-color-surface-main, #F5F3EF);
+  border: 1px solid var(--mg-color-border-main, #D4CFC8);
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 24px;
+  position: relative;
+  transition: border-color 0.2s ease;
+}
+
+.mg-v2-next-consultation-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: var(--mg-color-primary-main, #3D5246);
+  border-radius: 2px 0 0 2px;
+}
+
+.mg-v2-next-consultation-card:hover {
+  border-color: var(--mg-color-primary-main, #3D5246);
+}
+
+.mg-v2-next-consultation-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.mg-v2-next-consultation-card__title {
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--mg-color-text-main, #2C2C2C);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mg-v2-next-consultation-card__title svg {
+  width: 18px;
+  height: 18px;
+  color: var(--mg-color-primary-main, #3D5246);
+}
+
+.mg-v2-badge {
+  padding: 4px 12px;
+  border-radius: 8px;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+}
+
+.mg-v2-badge--primary {
+  background: var(--mg-color-primary-main, #3D5246);
+  color: var(--mg-color-background-main, #FAF9F7);
+}
+
+.mg-v2-badge--critical {
+  background: var(--mg-color-error-main, #EF4444);
+  color: var(--mg-white, #FFFFFF);
+}
+
+.mg-v2-badge--high {
+  background: #fd7e14;
+  color: var(--mg-white, #FFFFFF);
+}
+
+.mg-v2-badge--medium {
+  background: var(--mg-color-warning-main, #F59E0B);
+  color: var(--mg-white, #FFFFFF);
+}
+
+.mg-v2-next-consultation-card__body {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.mg-v2-info-block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.mg-v2-info-block__label {
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--mg-color-text-secondary, #5C6B61);
+}
+
+.mg-v2-info-block__value {
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--mg-color-text-main, #2C2C2C);
+}
+
+.mg-v2-next-consultation-card__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+@media (max-width: 767px) {
+  .mg-v2-next-consultation-card__body {
+    grid-template-columns: 1fr;
+  }
+  
+  .mg-v2-next-consultation-card__footer {
+    flex-direction: column;
+  }
+  
+  .mg-v2-next-consultation-card__footer .mg-v2-btn {
+    width: 100%;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1279px) {
+  .mg-v2-next-consultation-card__body {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* 4. 긴급 확인 필요 내담자 (Urgent Clients Section) */
+.mg-v2-urgent-clients-section {
+  background: var(--mg-color-surface-main, #F5F3EF);
+  border: 1px solid var(--mg-color-border-main, #D4CFC8);
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 24px;
+  position: relative;
+}
+
+.mg-v2-urgent-clients-section::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: var(--mg-color-error-main, #EF4444);
+  border-radius: 2px 0 0 2px;
+}
+
+.mg-v2-urgent-clients-section__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.mg-v2-urgent-clients-section__title {
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--mg-color-text-main, #2C2C2C);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mg-v2-urgent-clients-section__title svg {
+  width: 18px;
+  height: 18px;
+  color: var(--mg-color-error-main, #EF4444);
+}
+
+.mg-v2-urgent-clients-section__body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mg-v2-urgent-client-card {
+  background: var(--mg-color-background-main, #FAF9F7);
+  border: 1px solid var(--mg-color-border-main, #D4CFC8);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
+}
+
+.mg-v2-urgent-client-card:hover {
+  border-color: var(--mg-color-error-main, #EF4444);
+  background: rgba(239, 68, 68, 0.02);
+}
+
+.mg-v2-urgent-client-card__info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+
+.mg-v2-urgent-client-card__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.mg-v2-urgent-client-card__name {
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--mg-color-text-main, #2C2C2C);
+}
+
+.mg-v2-urgent-client-card__meta {
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--mg-color-text-secondary, #5C6B61);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.mg-v2-urgent-client-card__meta svg {
+  width: 14px;
+  height: 14px;
+}
+
+.mg-v2-urgent-client-card__issue {
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--mg-color-text-secondary, #5C6B61);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mg-v2-urgent-client-card__icon {
+  width: 20px;
+  height: 20px;
+  color: var(--mg-color-text-secondary, #5C6B61);
+  flex-shrink: 0;
+}
+
+@media (max-width: 767px) {
+  .mg-v2-urgent-client-card {
+    padding: 12px;
+  }
+  
+  .mg-v2-urgent-client-card__name {
+    font-size: 14px;
+  }
+  
+  .mg-v2-urgent-client-card__issue {
+    font-size: 13px;
+  }
+}

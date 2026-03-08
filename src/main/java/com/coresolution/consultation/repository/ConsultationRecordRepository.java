@@ -385,4 +385,50 @@ public interface ConsultationRecordRepository extends JpaRepository<Consultation
            "WHERE cr.isSessionCompleted = true AND cr.isDeleted = false " +
            "ORDER BY cr.sessionDate DESC")
     List<Object[]> findRecentCompletedSessionsDeprecated(Pageable pageable);
+    
+    // ==================== Phase 1 대시보드 컨텐츠용 메서드 ====================
+    
+    /**
+     * 긴급 확인 필요 내담자 조회 (위험도 높음 또는 진행도 저하)
+     * 
+     * @param tenantId 테넌트 ID
+     * @param consultantId 상담사 ID
+     * @param pageable 페이징 정보
+     * @return 긴급 내담자 목록
+     */
+    @Query("SELECT cr FROM ConsultationRecord cr " +
+           "WHERE cr.tenantId = :tenantId " +
+           "AND cr.consultantId = :consultantId " +
+           "AND cr.riskAssessment IN ('HIGH', 'CRITICAL') " +
+           "AND cr.isDeleted = false " +
+           "ORDER BY " +
+           "  CASE cr.riskAssessment " +
+           "    WHEN 'CRITICAL' THEN 1 " +
+           "    WHEN 'HIGH' THEN 2 " +
+           "    ELSE 3 " +
+           "  END, " +
+           "  cr.sessionDate DESC")
+    List<ConsultationRecord> findHighPriorityClients(
+        @Param("tenantId") String tenantId,
+        @Param("consultantId") Long consultantId,
+        Pageable pageable
+    );
+    
+    /**
+     * 특정 내담자의 최근 상담일지 조회 (1건)
+     * 
+     * @param tenantId 테넌트 ID
+     * @param clientId 내담자 ID
+     * @return 최근 상담일지
+     */
+    @Query("SELECT cr FROM ConsultationRecord cr " +
+           "WHERE cr.tenantId = :tenantId " +
+           "AND cr.clientId = :clientId " +
+           "AND cr.isDeleted = false " +
+           "ORDER BY cr.sessionDate DESC, cr.createdAt DESC")
+    List<ConsultationRecord> findLatestByClientId(
+        @Param("tenantId") String tenantId,
+        @Param("clientId") Long clientId,
+        Pageable pageable
+    );
 }

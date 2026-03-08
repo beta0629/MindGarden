@@ -243,6 +243,9 @@ export const DASHBOARD_API = {
   CONSULTANT_SCHEDULES: '/api/v1/schedules',
   CONSULTANT_STATS: '/api/v1/schedules/today/statistics',
   CONSULTANT_UPCOMING_SCHEDULES: '/api/v1/schedules/upcoming',
+  CONSULTANT_INCOMPLETE_RECORDS: (consultantId) => `/api/v1/schedules/consultants/${consultantId}/incomplete-records`,
+  CONSULTANT_HIGH_PRIORITY_CLIENTS: (consultantId) => `/api/v1/schedules/consultants/${consultantId}/high-priority-clients`,
+  CONSULTANT_UPCOMING_PREPARATION: (consultantId) => `/api/v1/schedules/consultants/${consultantId}/upcoming-preparation`,
   
   // 관리자 대시보드
   ADMIN_STATS: '/api/v1/schedules/admin/statistics',

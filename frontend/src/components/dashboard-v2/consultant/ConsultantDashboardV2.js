@@ -10,12 +10,16 @@ import {
   Bell,
   BarChart3,
   ChevronRight,
-  UserPlus,
-  FileText
+  UserPlus
 } from 'lucide-react';
 import AdminCommonLayout from '../../layout/AdminCommonLayout';
 import StandardizedApi from '../../../utils/standardizedApi';
 import { DASHBOARD_API, RATING_API } from '../../../constants/api';
+import QuickActionBar from './QuickActionBar';
+import IncompleteRecordsAlert from './IncompleteRecordsAlert';
+import NextConsultationCard from './NextConsultationCard';
+import UrgentClientsSection from './UrgentClientsSection';
+import ConsultationLogModal from '../../consultant/ConsultationLogModal';
 import './ConsultantDashboard.css';
 
 const TENANT_ERROR_MESSAGE = '테넌트 정보를 불러올 수 없습니다. 로그아웃 후 다시 로그인해 주세요.';
@@ -37,6 +41,12 @@ const ConsultantDashboardV2 = ({ user }) => {
     recentNotifications: [],
     weeklyStats: []
   });
+
+  const [incompleteRecords, setIncompleteRecords] = useState({ count: 0, schedules: [] });
+  const [urgentClients, setUrgentClients] = useState([]);
+  const [nextConsultation, setNextConsultation] = useState(null);
+  const [showConsultationLogModal, setShowConsultationLogModal] = useState(false);
+  const [selectedSchedule, setSelectedSchedule] = useState(null);
 
   useEffect(() => {
     fetchDashboardData();
@@ -305,6 +315,8 @@ const ConsultantDashboardV2 = ({ user }) => {
         recentNotifications: activeNotifications,
         weeklyStats: weeklyStatsData
       });
+
+      await fetchPhase1Content(currentUser.id);
     } catch (error) {
       const isTenantError = (error?.status === 400 || error?.response?.status === 400) && /테넌트/.test(error?.response?.data?.message || error?.message || '');
       if (isTenantError) setDashboardError(TENANT_ERROR_MESSAGE);
@@ -371,9 +383,94 @@ const ConsultantDashboardV2 = ({ user }) => {
     return { dateStr, weekday, timeStr };
   };
 
+  const fetchPhase1Content = async (consultantId) => {
+    if (!consultantId) return;
+
+    try {
+      const [incompleteRes, urgentRes, preparationRes] = await Promise.allSettled([
+        StandardizedApi.get(DASHBOARD_API.CONSULTANT_INCOMPLETE_RECORDS(consultantId)),
+        StandardizedApi.get(DASHBOARD_API.CONSULTANT_HIGH_PRIORITY_CLIENTS(consultantId)),
+        StandardizedApi.get(DASHBOARD_API.CONSULTANT_UPCOMING_PREPARATION(consultantId))
+      ]);
+
+      if (incompleteRes.status === 'fulfilled' && incompleteRes.value) {
+        const data = incompleteRes.value;
+        setIncompleteRecords({
+          count: data.count ?? 0,
+          schedules: data.schedules ?? []
+        });
+      }
+
+      if (urgentRes.status === 'fulfilled' && urgentRes.value) {
+        const data = urgentRes.value;
+        setUrgentClients(data.clients ?? []);
+      }
+
+      if (preparationRes.status === 'fulfilled' && preparationRes.value) {
+        const data = preparationRes.value;
+        if (data.consultation) {
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          const consultationDate = new Date(data.consultation.startTime);
+          consultationDate.setHours(0, 0, 0, 0);
+          const tomorrow = new Date(today);
+          tomorrow.setDate(tomorrow.getDate() + 1);
+          
+          const isToday = consultationDate.getTime() === today.getTime();
+          const isTomorrow = consultationDate.getTime() === tomorrow.getTime();
+          
+          if (isToday || isTomorrow) {
+            setNextConsultation({
+              ...data.consultation,
+              isToday
+            });
+          }
+        }
+      }
+    } catch (error) {
+      console.warn('Phase 1 컨텐츠 로드 실패:', error);
+    }
+  };
+
   const handleScheduleClick = (scheduleId) => {
     if (!scheduleId) return;
     navigate(`/consultant/consultation-records?scheduleId=${scheduleId}`);
+  };
+
+  const handleIncompleteRecordsAction = () => {
+    if (incompleteRecords.schedules.length > 0) {
+      const firstSchedule = incompleteRecords.schedules[0];
+      setSelectedSchedule({
+        id: firstSchedule.scheduleId,
+        clientName: firstSchedule.clientName,
+        sessionDate: firstSchedule.consultationDate
+      });
+      setShowConsultationLogModal(true);
+    } else {
+      navigate('/consultant/consultation-records?filter=incomplete');
+    }
+  };
+
+  const handleViewPreviousRecords = (clientId) => {
+    navigate(`/consultant/consultation-records?clientId=${clientId}`);
+  };
+
+  const handleViewDetails = (scheduleId) => {
+    navigate(`/consultant/consultation-records?scheduleId=${scheduleId}`);
+  };
+
+  const handleViewAllClients = () => {
+    navigate('/consultant/clients?filter=urgent');
+  };
+
+  const handleViewClientDetails = (clientId) => {
+    navigate(`/consultant/clients/${clientId}`);
+  };
+
+  const handleConsultationLogSave = () => {
+    setShowConsultationLogModal(false);
+    setSelectedSchedule(null);
+    fetchDashboardData();
   };
 
   const maxChartValue = Math.max(...(dashboardData.weeklyStats.map(s => s.count) || [1]));
@@ -505,18 +602,7 @@ const ConsultantDashboardV2 = ({ user }) => {
               오늘({todayDateStr}) 하루도 화이팅하세요!
             </p>
           </div>
-          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-            <div className="mg-v2-badge mg-v2-badge--primary" style={{ padding: '8px 16px', fontSize: '0.9rem', borderRadius: '8px' }}>
-              오늘의 예약: {dashboardData.stats.todaySchedules}건
-            </div>
-            <button 
-              className="mg-v2-btn mg-v2-btn-outline mg-v2-btn-md"
-              onClick={() => navigate('/consultant/consultation-records')}
-              style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
-            >
-              <FileText size={16} /> 상담일지 조회
-            </button>
-          </div>
+          <QuickActionBar onNavigate={navigate} />
         </div>
 
         {/* 테넌트 미설정 안내 배너 */}
@@ -525,6 +611,20 @@ const ConsultantDashboardV2 = ({ user }) => {
             {dashboardError}
           </div>
         )}
+
+        {/* Phase 1 컨텐츠: 미작성 상담일지 알림 */}
+        <IncompleteRecordsAlert
+          count={incompleteRecords.count}
+          schedules={incompleteRecords.schedules}
+          onAction={handleIncompleteRecordsAction}
+        />
+
+        {/* Phase 1 컨텐츠: 다음 상담 준비 카드 */}
+        <NextConsultationCard
+          consultation={nextConsultation}
+          onViewPreviousRecords={handleViewPreviousRecords}
+          onViewDetails={handleViewDetails}
+        />
 
         {/* Hero Area: 주요 통계 */}
         <section className="consultant-hero-grid">
@@ -685,7 +785,27 @@ const ConsultantDashboardV2 = ({ user }) => {
           </div>
 
         </section>
+
+        {/* Phase 1 컨텐츠: 긴급 확인 필요 내담자 */}
+        <UrgentClientsSection
+          clients={urgentClients}
+          onViewAllClients={handleViewAllClients}
+          onViewClientDetails={handleViewClientDetails}
+        />
       </div>
+
+      {/* 상담일지 작성 모달 */}
+      {showConsultationLogModal && selectedSchedule && (
+        <ConsultationLogModal
+          isOpen={showConsultationLogModal}
+          onClose={() => {
+            setShowConsultationLogModal(false);
+            setSelectedSchedule(null);
+          }}
+          scheduleData={selectedSchedule}
+          onSave={handleConsultationLogSave}
+        />
+      )}
     </AdminCommonLayout>
   );
 };

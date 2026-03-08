@@ -811,6 +811,59 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
     @Query("SELECT COUNT(s) FROM Schedule s WHERE s.tenantId = :tenantId AND s.date = :date AND s.status = :status AND s.isDeleted = false")
     long countByTenantIdAndDateAndStatus(@Param("tenantId") String tenantId, @Param("date") LocalDate date, @Param("status") ScheduleStatus status);
     
+    // ==================== Phase 1 대시보드 컨텐츠용 메서드 ====================
+    
+    /**
+     * 미작성 상담일지 조회 (완료된 상담 중 일지 미작성)
+     * 
+     * @param tenantId 테넌트 ID
+     * @param consultantId 상담사 ID
+     * @param limit 최대 개수
+     * @return 미작성 상담일지 목록
+     */
+    @Query("SELECT s FROM Schedule s " +
+           "WHERE s.tenantId = :tenantId " +
+           "AND s.consultantId = :consultantId " +
+           "AND s.status = 'COMPLETED' " +
+           "AND s.isDeleted = false " +
+           "AND NOT EXISTS (" +
+           "  SELECT cr FROM ConsultationRecord cr " +
+           "  WHERE cr.consultationId = s.id AND cr.isSessionCompleted = true AND cr.isDeleted = false" +
+           ") " +
+           "ORDER BY s.date DESC")
+    List<Schedule> findIncompleteRecords(
+        @Param("tenantId") String tenantId,
+        @Param("consultantId") Long consultantId,
+        Pageable pageable
+    );
+    
+    /**
+     * 다음 상담 준비 정보 조회 (특정 시간 이내 예정 상담)
+     * 
+     * @param tenantId 테넌트 ID
+     * @param consultantId 상담사 ID
+     * @param startDate 시작 날짜
+     * @param endDate 종료 날짜
+     * @param currentTime 현재 시간
+     * @return 다음 상담 목록
+     */
+    @Query("SELECT s FROM Schedule s " +
+           "WHERE s.tenantId = :tenantId " +
+           "AND s.consultantId = :consultantId " +
+           "AND s.date BETWEEN :startDate AND :endDate " +
+           "AND (s.date > :startDate OR (s.date = :startDate AND s.startTime >= :currentTime)) " +
+           "AND s.status IN ('BOOKED', 'CONFIRMED') " +
+           "AND s.isDeleted = false " +
+           "ORDER BY s.date ASC, s.startTime ASC")
+    List<Schedule> findUpcomingPreparation(
+        @Param("tenantId") String tenantId,
+        @Param("consultantId") Long consultantId,
+        @Param("startDate") LocalDate startDate,
+        @Param("endDate") LocalDate endDate,
+        @Param("currentTime") LocalTime currentTime,
+        Pageable pageable
+    );
+    
     // === BaseRepository 메서드 오버라이드 ===
     // Schedule 엔티티는 branchId 필드가 없음 (branchCode만 있음)
     // findAllByTenantIdAndBranchId 메서드를 오버라이드하여 branchId를 무시하도록 함

@@ -181,7 +181,7 @@ const ConsultantDashboardV2 = ({ user }) => {
         { day: '월', count: 0 }, { day: '화', count: 0 }, { day: '수', count: 0 },
         { day: '목', count: 0 }, { day: '금', count: 0 }, { day: '토', count: 0 }, { day: '일', count: 0 }
       ];
-      let weeklyStatsData = [...mockWeeklyStats];
+      const weeklyStatsData = [...mockWeeklyStats];
       if (stats?.weeklyStats?.length > 0) {
         stats.weeklyStats.forEach(s => {
             const dateStr = s.period; // "MM/dd"

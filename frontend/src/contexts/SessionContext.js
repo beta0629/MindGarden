@@ -385,15 +385,18 @@ export const SessionProvider = ({ children }) => {
       const currentPath = window.location.pathname;
       const isLoginPage = currentPath === '/login' || currentPath.startsWith('/login/');
       
+      // stateRef로 최신 상태 참조 (클로저 문제 방지)
+      const currentState = stateRef.current;
+      
       // 로그인 페이지가 아니고, 로딩 중이 아니고, 사용자가 있을 때만 체크
-      if (!state.isLoading && !isLoginPage && state.user) {
+      if (!currentState.isLoading && !isLoginPage && currentState.user) {
         console.log('🔍 주기적 세션 체크 실행');
         checkSession();
       }
     }, SESSION_CHECK_INTERVAL);
 
     return () => clearInterval(interval);
-  }, [state.user, state.isLoading, checkSession]); // 의존성 추가
+  }, [checkSession]); // state.user, state.isLoading 제거 - stateRef로 최신 상태 참조
 
   // 자동 리다이렉트 로직 제거 (무한루프 방지)
   // OAuth2 콜백에서만 리다이렉트 처리

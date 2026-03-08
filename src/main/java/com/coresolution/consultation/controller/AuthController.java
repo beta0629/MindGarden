@@ -636,18 +636,10 @@ public class AuthController extends BaseApiController {
         
         if (authResponse.isSuccess()) {
             // 데이터베이스에서 완전한 User 객체를 가져와서 세션에 저장
-            String tenantId = TenantContextHolder.getTenantId();
-            User sessionUser = null;
-            if (tenantId != null && !tenantId.isEmpty()) {
-                sessionUser = userRepository.findByTenantIdAndEmail(tenantId, email).orElse(null);
-            }
+            // userService.findByEmail 사용: 암호화된 이메일(legacy::...)도 복호화하여 조회 가능
+            User sessionUser = userService.findByEmail(email).orElse(null);
             if (sessionUser == null) {
-                // 호환성 유지
-                List<User> users = userRepository.findAllByEmail(email);
-                if (users.isEmpty()) {
-                    throw new RuntimeException("사용자를 찾을 수 없습니다.");
-                }
-                sessionUser = users.get(0);
+                throw new RuntimeException("사용자를 찾을 수 없습니다.");
             }
             
             // tenantId 확인 및 로깅

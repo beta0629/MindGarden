@@ -112,7 +112,7 @@ const NotificationDropdown = () => {
 
   return (
     <div className="mg-v2-notification-dropdown" ref={dropdownRef}>
-      <div style={{ position: 'relative' }}>
+      <div className="mg-v2-notification-trigger-wrapper">
         <NavIcon
           icon={Bell}
           label="알림"

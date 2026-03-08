@@ -8,23 +8,12 @@
   position: relative;
 }
 
-.mg-v2-notification-trigger {
+.mg-v2-notification-trigger-wrapper {
   position: relative;
 }
 
-.mg-v2-dropdown-panel__header {
-  padding: 16px 20px;
-  border-bottom: 1px solid var(--mg-color-border-main, #D4CFC8);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.mg-v2-dropdown-panel__title {
-  font-family: 'Noto Sans KR', sans-serif;
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--mg-color-text-main, #2C2C2C);
+.mg-v2-notification-trigger {
+  position: relative;
 }
 
 .mg-v2-btn-text {

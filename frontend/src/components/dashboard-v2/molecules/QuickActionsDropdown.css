@@ -14,20 +14,25 @@
 
 .mg-v2-quick-actions-dropdown__panel {
   width: 280px;
-  max-height: calc(100vh - 80px);
-  overflow-y: auto;
+  max-height: 400px;
+  min-height: 180px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 @media (max-width: 767px) {
   .mg-v2-quick-actions-dropdown__panel {
     width: 260px;
     max-width: calc(100vw - 32px);
-    max-height: calc(100vh - 100px);
+    max-height: 360px;
   }
 }
 
 .mg-v2-quick-actions-list {
   padding: 8px 0;
+  overflow-y: auto;
+  flex: 1;
 }
 
 .mg-v2-quick-action-item {

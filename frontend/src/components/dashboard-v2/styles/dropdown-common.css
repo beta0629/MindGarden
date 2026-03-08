@@ -50,3 +50,20 @@
     transform: translateY(0);
   }
 }
+
+/* 드롭다운 패널 헤더 (공통) */
+.mg-v2-dropdown-panel__header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--mg-color-border-main, #D4CFC8);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.mg-v2-dropdown-panel__title {
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--mg-color-text-main, #2C2C2C);
+}

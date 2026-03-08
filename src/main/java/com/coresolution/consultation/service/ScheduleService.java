@@ -323,6 +323,17 @@ public interface ScheduleService {
      * 특정 날짜의 스케줄 조회 (드래그 앤 드롭용)
      */
     List<Schedule> getSchedulesByDate(LocalDate date, Long consultantId);
+    
+    /**
+     * 다가오는 상담 조회 (상담사 대시보드용)
+     * 
+     * @param consultantId 상담사 ID
+     * @param startDate 시작 날짜 (기본값: 오늘)
+     * @param endDate 종료 날짜 (기본값: 오늘 + 7일)
+     * @param limit 최대 개수 (기본값: 5)
+     * @return 다가오는 상담 목록
+     */
+    List<ScheduleResponse> getUpcomingSchedules(Long consultantId, LocalDate startDate, LocalDate endDate, Integer limit);
 
     // ==================== 자동 완료 처리 ====================
     

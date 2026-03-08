@@ -2148,4 +2148,93 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             return messageTypeName;
         }
     }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public List<ScheduleResponse> getUpcomingSchedules(Long consultantId, LocalDate startDate, LocalDate endDate, Integer limit) {
+        log.info("📅 다가오는 상담 조회: consultantId={}, startDate={}, endDate={}, limit={}", 
+                consultantId, startDate, endDate, limit);
+        
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null || tenantId.isEmpty()) {
+            log.warn("❌ 테넌트 정보 없음 - 다가오는 상담 조회 거부");
+            throw new IllegalStateException("테넌트 정보가 없습니다. 로그아웃 후 다시 로그인해 주세요.");
+        }
+        
+        LocalDate actualStartDate = startDate != null ? startDate : LocalDate.now();
+        LocalDate actualEndDate = endDate != null ? endDate : actualStartDate.plusDays(7);
+        int actualLimit = limit != null && limit > 0 ? limit : 5;
+        
+        List<Schedule> schedules = scheduleRepository.findByTenantIdAndConsultantIdAndDateBetween(
+                tenantId, consultantId, actualStartDate, actualEndDate);
+        
+        List<ScheduleResponse> responses = schedules.stream()
+                .filter(schedule -> schedule.getStatus() == ScheduleStatus.BOOKED || 
+                                  schedule.getStatus() == ScheduleStatus.CONFIRMED)
+                .sorted((s1, s2) -> {
+                    int dateCompare = s1.getDate().compareTo(s2.getDate());
+                    if (dateCompare != 0) {
+                        return dateCompare;
+                    }
+                    return s1.getStartTime().compareTo(s2.getStartTime());
+                })
+                .limit(actualLimit)
+                .map(schedule -> {
+                    String consultantName = "알 수 없음";
+                    String clientName = "알 수 없음";
+                    
+                    try {
+                        if (schedule.getConsultantId() != null) {
+                            User consultant = userRepository.findById(schedule.getConsultantId()).orElse(null);
+                            if (consultant != null) {
+                                Map<String, String> decryptedData = userPersonalDataCacheService.getDecryptedUserData(consultant);
+                                if (decryptedData != null && decryptedData.get("name") != null) {
+                                    consultantName = decryptedData.get("name");
+                                }
+                            }
+                        }
+                        
+                        if (schedule.getClientId() != null) {
+                            User client = userRepository.findById(schedule.getClientId()).orElse(null);
+                            if (client != null) {
+                                Map<String, String> decryptedData = userPersonalDataCacheService.getDecryptedUserData(client);
+                                if (decryptedData != null && decryptedData.get("name") != null) {
+                                    clientName = decryptedData.get("name");
+                                }
+                            }
+                        }
+                    } catch (Exception e) {
+                        log.warn("⚠️ 사용자 정보 조회 실패: scheduleId={}, error={}", 
+                                schedule.getId(), e.getMessage());
+                    }
+                    
+                    String koreanConsultationType = schedule.getConsultationType() != null 
+                            ? commonCodeService.getCodeName("CONSULTATION_TYPE", schedule.getConsultationType())
+                            : "알 수 없음";
+                    
+                    return ScheduleResponse.builder()
+                            .id(schedule.getId())
+                            .consultantId(schedule.getConsultantId())
+                            .consultantName(consultantName)
+                            .clientId(schedule.getClientId())
+                            .clientName(clientName)
+                            .date(schedule.getDate())
+                            .startTime(schedule.getStartTime())
+                            .endTime(schedule.getEndTime())
+                            .status(schedule.getStatus() != null ? schedule.getStatus().name() : "UNKNOWN")
+                            .scheduleType(schedule.getScheduleType())
+                            .consultationType(koreanConsultationType)
+                            .title(schedule.getTitle())
+                            .description(schedule.getDescription())
+                            .notes(schedule.getNotes())
+                            .consultationId(schedule.getConsultationId())
+                            .createdAt(schedule.getCreatedAt())
+                            .updatedAt(schedule.getUpdatedAt())
+                            .build();
+                })
+                .collect(Collectors.toList());
+        
+        log.info("✅ 다가오는 상담 조회 완료: consultantId={}, count={}", consultantId, responses.size());
+        return responses;
+    }
 }

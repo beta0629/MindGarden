@@ -1302,8 +1302,10 @@ public interface UserRepository extends BaseRepository<User, Long> {
 
     /**
      * 비밀번호만 안전하게 업데이트 (엔티티 평문 저장 방지)
+     * clearAutomatically = true: JPQL UPDATE 후 영속성 컨텍스트를 초기화해
+     * decryptUserPersonalData()로 dirty 상태가 된 엔티티의 flush가 새 비밀번호를 덮어쓰는 것을 방지
      */
-    @Modifying
+    @Modifying(clearAutomatically = true)
     @Query("UPDATE User u SET u.password = :password, u.updatedAt = :updatedAt WHERE u.id = :id")
     void updatePassword(@Param("id") Long id, @Param("password") String password, @Param("updatedAt") LocalDateTime updatedAt);
 }

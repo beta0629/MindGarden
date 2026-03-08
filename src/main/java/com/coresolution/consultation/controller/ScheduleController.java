@@ -1209,6 +1209,71 @@ public class ScheduleController extends BaseApiController {
     }
 
     /**
+     * 다가오는 상담 조회 (상담사 대시보드용)
+     * GET /api/v1/schedules/upcoming
+     * 
+     * @param consultantId 상담사 ID (선택, 없으면 세션에서 조회)
+     * @param startDate 시작 날짜 (선택, 기본값: 오늘)
+     * @param endDate 종료 날짜 (선택, 기본값: 오늘 + 7일)
+     * @param limit 최대 개수 (선택, 기본값: 5)
+     * @return 다가오는 상담 목록
+     */
+    @GetMapping("/upcoming")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getUpcomingSchedules(
+            @RequestParam(required = false) Long consultantId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(required = false) Integer limit,
+            HttpSession session) {
+        
+        ensureTenantContextFromSession(session);
+        log.info("📅 다가오는 상담 조회 요청: consultantId={}, startDate={}, endDate={}, limit={}, tenantId={}", 
+                consultantId, startDate, endDate, limit, TenantContextHolder.getTenantId());
+        
+        String tenantIdVal = TenantContextHolder.getTenantId();
+        if (tenantIdVal == null || tenantIdVal.isEmpty()) {
+            log.warn("❌ 테넌트 정보 없음 - 다가오는 상담 조회 거부 (400)");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error("테넌트 정보가 없습니다. 로그아웃 후 다시 로그인해 주세요."));
+        }
+        
+        User currentUser = SessionUtils.getCurrentUser(session);
+        if (currentUser == null) {
+            log.error("❌ 세션에서 사용자 정보를 찾을 수 없습니다.");
+            throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
+        }
+        
+        Long targetConsultantId = consultantId;
+        if (targetConsultantId == null) {
+            targetConsultantId = currentUser.getId();
+        }
+        
+        if (!isAdminRoleFromCommonCode(currentUser.getRole()) && !currentUser.getId().equals(targetConsultantId)) {
+            log.warn("❌ 다른 상담사의 다가오는 상담 조회 권한 없음: currentUser={}, targetConsultant={}", 
+                    currentUser.getId(), targetConsultantId);
+            throw new org.springframework.security.access.AccessDeniedException("다른 상담사의 일정을 조회할 권한이 없습니다.");
+        }
+        
+        LocalDate actualStartDate = startDate != null ? startDate : LocalDate.now();
+        LocalDate actualEndDate = endDate != null ? endDate : actualStartDate.plusDays(7);
+        Integer actualLimit = limit != null && limit > 0 ? limit : 5;
+        
+        List<ScheduleResponse> schedules = scheduleService.getUpcomingSchedules(
+                targetConsultantId, actualStartDate, actualEndDate, actualLimit);
+        
+        Map<String, Object> data = new HashMap<>();
+        data.put("schedules", schedules);
+        data.put("totalCount", schedules.size());
+        data.put("consultantId", targetConsultantId);
+        data.put("startDate", actualStartDate.toString());
+        data.put("endDate", actualEndDate.toString());
+        data.put("limit", actualLimit);
+        
+        log.info("✅ 다가오는 상담 조회 완료: consultantId={}, count={}", targetConsultantId, schedules.size());
+        return success("다가오는 상담 조회 성공", data);
+    }
+    
+    /**
      * Schedule 엔티티를 ScheduleResponse로 변환하는 헬퍼 메서드
      * 표준화 2025-12-08: UserPersonalDataCacheService를 사용하여 복호화된 이름 사용
      */

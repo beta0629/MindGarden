@@ -32,6 +32,7 @@ const ConsultantDashboardV2 = ({ user }) => {
       averageRating: 0
     },
     todaySchedules: [],
+    upcomingSchedules: [],
     recentNotifications: [],
     weeklyStats: []
   });
@@ -221,6 +222,60 @@ const ConsultantDashboardV2 = ({ user }) => {
         console.warn('알림 API 호출 실패:', err);
       }
 
+      // 4. 다가오는 상담 조회
+      let upcomingResponse;
+      try {
+        const todayDate = new Date();
+        const endDate = new Date(todayDate);
+        endDate.setDate(endDate.getDate() + 7);
+        
+        upcomingResponse = await StandardizedApi.get(DASHBOARD_API.CONSULTANT_UPCOMING_SCHEDULES, {
+          userId: currentUser.id,
+          userRole: 'CONSULTANT',
+          startDate: todayDate.toISOString().split('T')[0],
+          endDate: endDate.toISOString().split('T')[0],
+          limit: 5
+        });
+      } catch (upcomingErr) {
+        console.warn('다가오는 상담 API 실패, 빈 목록 사용:', upcomingErr?.message || upcomingErr);
+        upcomingResponse = { schedules: [] };
+      }
+
+      let upcomingSchedules = [];
+      if (upcomingResponse) {
+        if (Array.isArray(upcomingResponse)) {
+          upcomingSchedules = upcomingResponse;
+        } else if (upcomingResponse.schedules && Array.isArray(upcomingResponse.schedules)) {
+          upcomingSchedules = upcomingResponse.schedules;
+        } else if (upcomingResponse.data && Array.isArray(upcomingResponse.data)) {
+          upcomingSchedules = upcomingResponse.data;
+        }
+      }
+
+      upcomingSchedules = upcomingSchedules.sort((a, b) => {
+        const dateA = Array.isArray(a.date) 
+          ? new Date(a.date[0], a.date[1] - 1, a.date[2]) 
+          : new Date(a.date);
+        const dateB = Array.isArray(b.date) 
+          ? new Date(b.date[0], b.date[1] - 1, b.date[2]) 
+          : new Date(b.date);
+        
+        if (dateA.getTime() !== dateB.getTime()) {
+          return dateA - dateB;
+        }
+        
+        const getTimeValue = (time) => {
+          if (Array.isArray(time)) return time[0] * 60 + time[1];
+          if (typeof time === 'string') {
+            const [h, m] = time.split(':').map(Number);
+            return h * 60 + m;
+          }
+          return 0;
+        };
+        
+        return getTimeValue(a.startTime) - getTimeValue(b.startTime);
+      });
+
       setDashboardData({
         stats: {
           todaySchedules: todayOnlyCount ?? todaySchedulesFromStats ?? 0,
@@ -229,6 +284,7 @@ const ConsultantDashboardV2 = ({ user }) => {
           averageRating: stats.averageRating ?? 4.8
         },
         todaySchedules: schedules,
+        upcomingSchedules: upcomingSchedules,
         recentNotifications: activeNotifications,
         weeklyStats: weeklyStatsData
       });
@@ -259,6 +315,47 @@ const ConsultantDashboardV2 = ({ user }) => {
     const meridiem = hours >= 12 ? 'PM' : 'AM';
     hours = hours % 12 || 12;
     return { time: `${hours}:${minutes}`, meridiem };
+  };
+
+  const formatUpcomingSchedule = (schedule) => {
+    if (!schedule.date || !schedule.startTime) {
+      return { dateStr: '', weekday: '', timeStr: '' };
+    }
+    
+    let dateObj;
+    if (Array.isArray(schedule.date)) {
+      const [year, month, day] = schedule.date;
+      dateObj = new Date(year, month - 1, day);
+    } else if (typeof schedule.date === 'string') {
+      dateObj = new Date(schedule.date);
+    } else {
+      dateObj = new Date();
+    }
+    
+    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const day = String(dateObj.getDate()).padStart(2, '0');
+    const dateStr = `${month}/${day}`;
+    
+    const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
+    const weekday = weekdays[dateObj.getDay()];
+    
+    let timeStr = '';
+    if (Array.isArray(schedule.startTime)) {
+      const [hours, minutes] = schedule.startTime;
+      timeStr = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+    } else if (typeof schedule.startTime === 'string') {
+      const timePart = schedule.startTime.includes('T') 
+        ? schedule.startTime.split('T')[1] 
+        : schedule.startTime;
+      timeStr = timePart.substring(0, 5);
+    }
+    
+    return { dateStr, weekday, timeStr };
+  };
+
+  const handleScheduleClick = (scheduleId) => {
+    if (!scheduleId) return;
+    navigate(`/consultant/consultation-records?scheduleId=${scheduleId}`);
   };
 
   const maxChartValue = Math.max(...(dashboardData.weeklyStats.map(s => s.count) || [1]));
@@ -305,6 +402,66 @@ const ConsultantDashboardV2 = ({ user }) => {
       <div className="empty-state">
         <Calendar size={32} className="empty-state-icon" />
         <span className="empty-state-text">오늘·어제 예정된 일정이 없습니다.</span>
+      </div>
+    );
+  };
+
+  const renderUpcomingSchedules = () => {
+    if (loading) {
+      return (
+        <div className="empty-state">
+          <div className="mg-v2-spinner"></div>
+          <span className="empty-state-text">일정을 불러오는 중...</span>
+        </div>
+      );
+    }
+    
+    if (dashboardData.upcomingSchedules && dashboardData.upcomingSchedules.length > 0) {
+      return (
+        <div className="upcoming-schedule-list">
+          {dashboardData.upcomingSchedules.slice(0, 5).map((schedule, idx) => {
+            const isHighlighted = idx === 0;
+            const { dateStr, weekday, timeStr } = formatUpcomingSchedule(schedule);
+            
+            return (
+              <button 
+                key={schedule.id || `upcoming-schedule-${idx}`} 
+                className={`upcoming-schedule-item ${isHighlighted ? 'upcoming-schedule-item--highlighted' : ''}`}
+                onClick={() => handleScheduleClick(schedule.id)}
+                type="button"
+                aria-label={`${dateStr} ${timeStr} ${schedule.clientName} ${schedule.consultationType} ${schedule.status === 'CONFIRMED' ? '확정' : '대기'}`}
+              >
+                <div className="upcoming-schedule-date">
+                  <span className="upcoming-schedule-date__day">{dateStr}</span>
+                  <span className="upcoming-schedule-date__weekday">{weekday}</span>
+                  <span className="upcoming-schedule-date__time">{timeStr}</span>
+                </div>
+                
+                <div className="upcoming-schedule-details">
+                  <div className="upcoming-schedule-details__client">
+                    {schedule.clientName || '내담자'}
+                  </div>
+                  <div className="upcoming-schedule-details__meta">
+                    <Users size={12} />
+                    {schedule.consultationType || '개인상담'}
+                    {schedule.sessionNumber && ` · ${schedule.sessionNumber}회기`}
+                  </div>
+                </div>
+                
+                <div className={`schedule-status ${schedule.status === 'CONFIRMED' ? 'status-confirmed' : 'status-pending'}`}>
+                  {schedule.status === 'CONFIRMED' ? '확정' : '대기'}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      );
+    }
+    
+    return (
+      <div className="empty-state">
+        <Calendar size={32} className="empty-state-icon" />
+        <span className="empty-state-text">다가오는 상담이 없습니다.</span>
       </div>
     );
   };
@@ -416,7 +573,26 @@ const ConsultantDashboardV2 = ({ user }) => {
             </div>
           </div>
 
-          {/* Section B: 최근 알림 */}
+          {/* Section B: 다가오는 상담 (신규) */}
+          <section className="dashboard-card" aria-label="다가오는 상담">
+            <div className="card-header">
+              <h2 className="card-title">
+                <Calendar size={18} className="card-title-icon" />
+                다가오는 상담
+              </h2>
+              <button 
+                className="mg-v2-btn mg-v2-btn-ghost mg-v2-btn-sm"
+                onClick={() => navigate('/consultant/schedule')}
+              >
+                전체보기 <ChevronRight size={16} />
+              </button>
+            </div>
+            <div className="card-body">
+              {renderUpcomingSchedules()}
+            </div>
+          </section>
+
+          {/* Section C: 최근 알림 */}
           <div className="dashboard-card">
             <div className="card-header">
               <h2 className="card-title">
@@ -454,8 +630,8 @@ const ConsultantDashboardV2 = ({ user }) => {
             </div>
           </div>
 
-          {/* Section C: 주간 상담 현황 */}
-          <div className="dashboard-card">
+          {/* Section D: 주간 상담 현황 (전체 너비) */}
+          <div className="dashboard-card" style={{ gridColumn: '1 / -1' }}>
             <div className="card-header">
               <h2 className="card-title">
                 <BarChart3 size={18} className="card-title-icon" />
@@ -466,7 +642,7 @@ const ConsultantDashboardV2 = ({ user }) => {
               <div className="chart-container">
                 {dashboardData.weeklyStats.map((stat, idx) => {
                   const heightPercent = maxChartValue > 0 ? (stat.count / maxChartValue) * 100 : 0;
-                  const isToday = new Date().getDay() === (idx === 6 ? 0 : idx + 1); // 0=일, 1=월...
+                  const isToday = new Date().getDay() === (idx === 6 ? 0 : idx + 1);
                   
                   return (
                     <div key={`stat-${stat.day}`} className="chart-bar-wrapper">

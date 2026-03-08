@@ -242,6 +242,7 @@ export const DASHBOARD_API = {
   // 상담사 대시보드
   CONSULTANT_SCHEDULES: '/api/v1/schedules',
   CONSULTANT_STATS: '/api/v1/schedules/today/statistics',
+  CONSULTANT_UPCOMING_SCHEDULES: '/api/v1/schedules/upcoming',
   
   // 관리자 대시보드
   ADMIN_STATS: '/api/v1/schedules/admin/statistics',

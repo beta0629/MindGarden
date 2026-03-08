@@ -329,16 +329,16 @@ public interface AlertRepository extends BaseRepository<Alert, Long> {
      * 복합 조건으로 알림 검색 (활성 상태만)
      */
     @Query("SELECT a FROM Alert a WHERE " +
-           "(:userId IS NULL OR a.userId = :userId) AND " +
-           "(:type IS NULL OR a.type = :type) AND " +
-           "(:priority IS NULL OR a.priority = :priority) AND " +
-           "(:status IS NULL OR a.status = :status) AND " +
-           "(:channel IS NULL OR a.channel = :channel) AND " +
-           "(:isSticky IS NULL OR a.isSticky = :isSticky) AND " +
-           "(:isRecurring IS NULL OR a.isRecurring = :isRecurring) AND " +
-           "(:isSent IS NULL OR a.isSent = :isSent) AND " +
-           "(:startDate IS NULL OR a.createdAt >= :startDate) AND " +
-           "(:endDate IS NULL OR a.createdAt <= :endDate) AND " +
+           "(CAST(:userId AS long) IS NULL OR a.userId = :userId) AND " +
+           "(CAST(:type AS string) IS NULL OR a.type = :type) AND " +
+           "(CAST(:priority AS string) IS NULL OR a.priority = :priority) AND " +
+           "(CAST(:status AS string) IS NULL OR a.status = :status) AND " +
+           "(CAST(:channel AS string) IS NULL OR a.channel = :channel) AND " +
+           "(CAST(:isSticky AS boolean) IS NULL OR a.isSticky = :isSticky) AND " +
+           "(CAST(:isRecurring AS boolean) IS NULL OR a.isRecurring = :isRecurring) AND " +
+           "(CAST(:isSent AS boolean) IS NULL OR a.isSent = :isSent) AND " +
+           "(CAST(:startDate AS date) IS NULL OR a.createdAt >= :startDate) AND " +
+           "(CAST(:endDate AS date) IS NULL OR a.createdAt <= :endDate) AND " +
            "a.isDeleted = false " +
            "ORDER BY a.createdAt DESC")
     Page<Alert> findByComplexCriteria(@Param("userId") Long userId,
@@ -420,7 +420,7 @@ public interface AlertRepository extends BaseRepository<Alert, Long> {
      *             대신 {@link BaseRepository#findAllByTenantId(String)}를 사용하세요.
      */
     @Deprecated
-    @Query("SELECT a FROM Alert a WHERE a.tenantId = :tenantId AND a.isDeleted = false AND (:branchId IS NULL OR 1=1)")
+    @Query("SELECT a FROM Alert a WHERE a.tenantId = :tenantId AND a.isDeleted = false AND (CAST(:branchId AS long) IS NULL OR 1=1)")
     List<Alert> findAllByTenantIdAndBranchId(@Param("tenantId") String tenantId, @Param("branchId") Long branchId);
     
     /**
@@ -440,7 +440,7 @@ public interface AlertRepository extends BaseRepository<Alert, Long> {
          log.warn("Deprecated 파라미터: branchId는 더 이상 사용하지 않음");
      }     */
     @Deprecated
-    @Query("SELECT a FROM Alert a WHERE a.tenantId = :tenantId AND a.isDeleted = false AND (:branchId IS NULL OR 1=1)")
+    @Query("SELECT a FROM Alert a WHERE a.tenantId = :tenantId AND a.isDeleted = false AND (CAST(:branchId AS long) IS NULL OR 1=1)")
     Page<Alert> findAllByTenantIdAndBranchId(@Param("tenantId") String tenantId, @Param("branchId") Long branchId, Pageable pageable);
 
 }

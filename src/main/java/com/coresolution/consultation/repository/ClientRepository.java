@@ -82,7 +82,7 @@ public interface ClientRepository extends BaseRepository<Client, Long> {
      *             대신 {@link #findByTenantIdAndIsDeletedFalse(String)}를 사용하세요.
      */
     @Deprecated
-    @Query("SELECT c FROM Client c WHERE c.tenantId = :tenantId AND c.isDeleted = false AND (:branchId IS NULL OR 1=1)")
+    @Query("SELECT c FROM Client c WHERE c.tenantId = :tenantId AND c.isDeleted = false AND (CAST(:branchId AS long) IS NULL OR 1=1)")
     List<Client> findAllByTenantIdAndBranchId(@Param("tenantId") String tenantId, @Param("branchId") Long branchId);
     
     /**
@@ -102,6 +102,6 @@ public interface ClientRepository extends BaseRepository<Client, Long> {
          log.warn("Deprecated 파라미터: branchId는 더 이상 사용하지 않음");
      }     */
     @Deprecated
-    @Query("SELECT c FROM Client c WHERE c.tenantId = :tenantId AND c.isDeleted = false AND (:branchId IS NULL OR 1=1)")
+    @Query("SELECT c FROM Client c WHERE c.tenantId = :tenantId AND c.isDeleted = false AND (CAST(:branchId AS long) IS NULL OR 1=1)")
     org.springframework.data.domain.Page<Client> findAllByTenantIdAndBranchId(@Param("tenantId") String tenantId, @Param("branchId") Long branchId, org.springframework.data.domain.Pageable pageable);
 }

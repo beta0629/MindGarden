@@ -58,7 +58,7 @@ public interface DailyStatisticsRepository extends JpaRepository<DailyStatistics
      */
     @Query("SELECT ds FROM DailyStatistics ds " +
            "WHERE ds.statDate >= :startDate " +
-           "AND (:branchCode IS NULL OR ds.branchCode = :branchCode) " +
+           "AND (CAST(:branchCode AS string) IS NULL OR ds.branchCode = :branchCode) " +
            "ORDER BY ds.statDate DESC")
     List<DailyStatistics> findRecentStatistics(@Param("startDate") LocalDate startDate, 
                                                @Param("branchCode") String branchCode);
@@ -73,7 +73,7 @@ public interface DailyStatisticsRepository extends JpaRepository<DailyStatistics
            "AVG(ds.avgRating) as avgRating " +
            "FROM DailyStatistics ds " +
            "WHERE ds.statDate BETWEEN :startDate AND :endDate " +
-           "AND (:branchCode IS NULL OR ds.branchCode = :branchCode) " +
+           "AND (CAST(:branchCode AS string) IS NULL OR ds.branchCode = :branchCode) " +
            "GROUP BY ds.branchCode " +
            "ORDER BY totalRevenue DESC")
     List<Object[]> getMonthlyAggregatedStatistics(@Param("startDate") LocalDate startDate,
@@ -87,7 +87,7 @@ public interface DailyStatisticsRepository extends JpaRepository<DailyStatistics
            "LAG(ds.totalConsultations) OVER (PARTITION BY ds.branchCode ORDER BY ds.statDate) as prevConsultations " +
            "FROM DailyStatistics ds " +
            "WHERE ds.statDate BETWEEN :startDate AND :endDate " +
-           "AND (:branchCode IS NULL OR ds.branchCode = :branchCode) " +
+           "AND (CAST(:branchCode AS string) IS NULL OR ds.branchCode = :branchCode) " +
            "ORDER BY ds.branchCode, ds.statDate")
     List<Object[]> getTrendAnalysisData(@Param("startDate") LocalDate startDate,
                                        @Param("endDate") LocalDate endDate,

@@ -374,16 +374,16 @@ public interface ConsultationRepository extends BaseRepository<Consultation, Lon
      * 복합 조건으로 상담 검색 (활성 상태만)
      */
     @Query("SELECT c FROM Consultation c WHERE " +
-           "(:clientId IS NULL OR c.clientId = :clientId) AND " +
-           "(:consultantId IS NULL OR c.consultantId = :consultantId) AND " +
-           "(:status IS NULL OR c.status = :status) AND " +
-           "(:priority IS NULL OR c.priority = :priority) AND " +
-           "(:riskLevel IS NULL OR c.riskLevel = :riskLevel) AND " +
-           "(:consultationMethod IS NULL OR c.consultationMethod = :consultationMethod) AND " +
-           "(:isEmergency IS NULL OR c.isEmergency = :isEmergency) AND " +
-           "(:isFirstSession IS NULL OR c.isFirstSession = :isFirstSession) AND " +
-           "(:startDate IS NULL OR c.consultationDate >= :startDate) AND " +
-           "(:endDate IS NULL OR c.consultationDate <= :endDate) AND " +
+           "(CAST(:clientId AS long) IS NULL OR c.clientId = :clientId) AND " +
+           "(CAST(:consultantId AS long) IS NULL OR c.consultantId = :consultantId) AND " +
+           "(CAST(:status AS string) IS NULL OR c.status = :status) AND " +
+           "(CAST(:priority AS string) IS NULL OR c.priority = :priority) AND " +
+           "(CAST(:riskLevel AS string) IS NULL OR c.riskLevel = :riskLevel) AND " +
+           "(CAST(:consultationMethod AS string) IS NULL OR c.consultationMethod = :consultationMethod) AND " +
+           "(CAST(:isEmergency AS boolean) IS NULL OR c.isEmergency = :isEmergency) AND " +
+           "(CAST(:isFirstSession AS boolean) IS NULL OR c.isFirstSession = :isFirstSession) AND " +
+           "(CAST(:startDate AS date) IS NULL OR c.consultationDate >= :startDate) AND " +
+           "(CAST(:endDate AS date) IS NULL OR c.consultationDate <= :endDate) AND " +
            "c.isDeleted = false " +
            "ORDER BY c.consultationDate DESC, c.startTime")
     List<Consultation> findByComplexCriteria(@Param("clientId") Long clientId,
@@ -410,7 +410,7 @@ public interface ConsultationRepository extends BaseRepository<Consultation, Lon
      *             대신 {@link BaseRepository#findAllByTenantId(String)}를 사용하세요.
      */
     @Deprecated
-    @Query("SELECT c FROM Consultation c WHERE c.tenantId = :tenantId AND c.isDeleted = false AND (:branchId IS NULL OR 1=1)")
+    @Query("SELECT c FROM Consultation c WHERE c.tenantId = :tenantId AND c.isDeleted = false AND (CAST(:branchId AS long) IS NULL OR 1=1)")
     List<Consultation> findAllByTenantIdAndBranchId(@Param("tenantId") String tenantId, @Param("branchId") Long branchId);
     
     /**
@@ -432,7 +432,7 @@ public interface ConsultationRepository extends BaseRepository<Consultation, Lon
          // log.warn("Deprecated 파라미터: branchId는 더 이상 사용하지 않음");
      }     */
     @Deprecated
-    @Query("SELECT c FROM Consultation c WHERE c.tenantId = :tenantId AND c.isDeleted = false AND (:branchId IS NULL OR 1=1)")
+    @Query("SELECT c FROM Consultation c WHERE c.tenantId = :tenantId AND c.isDeleted = false AND (CAST(:branchId AS long) IS NULL OR 1=1)")
     org.springframework.data.domain.Page<Consultation> findAllByTenantIdAndBranchId(@Param("tenantId") String tenantId, @Param("branchId") Long branchId, org.springframework.data.domain.Pageable pageable);
 
 }

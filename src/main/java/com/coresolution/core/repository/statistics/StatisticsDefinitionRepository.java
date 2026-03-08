@@ -29,7 +29,7 @@ public interface StatisticsDefinitionRepository extends JpaRepository<Statistics
      */
     @Query("SELECT sd FROM StatisticsDefinition sd WHERE " +
            "(sd.tenantId = :tenantId OR sd.tenantId IS NULL) AND " +
-           "(:category IS NULL OR sd.category = :category) AND " +
+           "(CAST(:category AS string) IS NULL OR sd.category = :category) AND " +
            "sd.isActive = true " +
            "ORDER BY sd.displayOrder ASC, sd.statisticCode ASC")
     List<StatisticsDefinition> findActiveByTenantIdAndCategory(

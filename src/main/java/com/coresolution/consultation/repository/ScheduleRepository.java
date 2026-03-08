@@ -823,7 +823,7 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
      * @param branchId 지점 ID (무시됨, 쿼리에서 사용하지 않음)
      * @return 활성 스케줄 목록
      */
-    @Query("SELECT s FROM Schedule s WHERE s.tenantId = :tenantId AND s.isDeleted = false AND (:branchId IS NULL OR 1=1)")
+    @Query("SELECT s FROM Schedule s WHERE s.tenantId = :tenantId AND s.isDeleted = false AND (CAST(:branchId AS long) IS NULL OR 1=1)")
     List<Schedule> findAllByTenantIdAndBranchId(@Param("tenantId") String tenantId, @Param("branchId") Long branchId);
     
     /**
@@ -835,6 +835,6 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
      * @param pageable 페이징 정보
      * @return 활성 스케줄 페이지
      */
-    @Query("SELECT s FROM Schedule s WHERE s.tenantId = :tenantId AND s.isDeleted = false AND (:branchId IS NULL OR 1=1)")
+    @Query("SELECT s FROM Schedule s WHERE s.tenantId = :tenantId AND s.isDeleted = false AND (CAST(:branchId AS long) IS NULL OR 1=1)")
     Page<Schedule> findAllByTenantIdAndBranchId(@Param("tenantId") String tenantId, @Param("branchId") Long branchId, Pageable pageable);
 }

@@ -342,7 +342,7 @@ public interface UserRepository extends BaseRepository<User, Long> {
     /**
      * 역할별 사용자 조회 (활성 상태 옵션) (tenantId 필터링)
      */
-    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.role = :role AND (:isActive IS NULL OR u.isActive = :isActive) AND u.isDeleted = false")
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.role = :role AND (CAST(:isActive AS boolean) IS NULL OR u.isActive = :isActive) AND u.isDeleted = false")
     List<User> findByRoleAndIsActive(@Param("tenantId") String tenantId, @Param("role") UserRole role, @Param("isActive") Boolean isActive);
     
     /**
@@ -362,7 +362,7 @@ public interface UserRepository extends BaseRepository<User, Long> {
      *             대신 {@link #findByTenantIdAndRoleAndIsActive(String, UserRole, Boolean)}를 사용하세요.
      */
     @Deprecated
-    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.role = :role AND u.branchCode = :branchCode AND (:isActive IS NULL OR u.isActive = :isActive) AND u.isDeleted = false")
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.role = :role AND u.branchCode = :branchCode AND (CAST(:isActive AS boolean) IS NULL OR u.isActive = :isActive) AND u.isDeleted = false")
     List<User> findByRoleAndBranchCodeAndIsActive(@Param("tenantId") String tenantId, @Param("role") UserRole role, @Param("branchCode") String branchCode, @Param("isActive") Boolean isActive);
     
     /**
@@ -373,7 +373,7 @@ public interface UserRepository extends BaseRepository<User, Long> {
      * @param isActive 활성 상태 (null이면 전체)
      * @return 사용자 목록
      */
-    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.role = :role AND (:isActive IS NULL OR u.isActive = :isActive) AND u.isDeleted = false")
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.role = :role AND (CAST(:isActive AS boolean) IS NULL OR u.isActive = :isActive) AND u.isDeleted = false")
     List<User> findByTenantIdAndRoleAndIsActive(@Param("tenantId") String tenantId, @Param("role") UserRole role, @Param("isActive") Boolean isActive);
     
     /**
@@ -688,13 +688,13 @@ public interface UserRepository extends BaseRepository<User, Long> {
      * 복합 조건으로 사용자 검색 (tenantId 필터링)
      */
     @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND " +
-           "(:name IS NULL OR u.name LIKE %:name%) AND " +
-           "(:email IS NULL OR u.email LIKE %:email%) AND " +
-           "(:role IS NULL OR u.role = :role) AND " +
-           "(:grade IS NULL OR u.grade = :grade) AND " +
-           "(:isActive IS NULL OR u.isActive = :isActive) AND " +
-           "(:gender IS NULL OR u.gender = :gender) AND " +
-           "(:ageGroup IS NULL OR u.ageGroup = :ageGroup) AND " +
+           "(CAST(:name AS string) IS NULL OR u.name LIKE %:name%) AND " +
+           "(CAST(:email AS string) IS NULL OR u.email LIKE %:email%) AND " +
+           "(CAST(:role AS string) IS NULL OR u.role = :role) AND " +
+           "(CAST(:grade AS string) IS NULL OR u.grade = :grade) AND " +
+           "(CAST(:isActive AS boolean) IS NULL OR u.isActive = :isActive) AND " +
+           "(CAST(:gender AS string) IS NULL OR u.gender = :gender) AND " +
+           "(CAST(:ageGroup AS string) IS NULL OR u.ageGroup = :ageGroup) AND " +
            "u.isDeleted = false")
     Page<User> findByComplexCriteria(@Param("tenantId") String tenantId,
                                    @Param("name") String name,
@@ -711,13 +711,13 @@ public interface UserRepository extends BaseRepository<User, Long> {
      */
     @Deprecated
     @Query("SELECT u FROM User u WHERE " +
-           "(:name IS NULL OR u.name LIKE %:name%) AND " +
-           "(:email IS NULL OR u.email LIKE %:email%) AND " +
-           "(:role IS NULL OR u.role = :role) AND " +
-           "(:grade IS NULL OR u.grade = :grade) AND " +
-           "(:isActive IS NULL OR u.isActive = :isActive) AND " +
-           "(:gender IS NULL OR u.gender = :gender) AND " +
-           "(:ageGroup IS NULL OR u.ageGroup = :ageGroup) AND " +
+           "(CAST(:name AS string) IS NULL OR u.name LIKE %:name%) AND " +
+           "(CAST(:email AS string) IS NULL OR u.email LIKE %:email%) AND " +
+           "(CAST(:role AS string) IS NULL OR u.role = :role) AND " +
+           "(CAST(:grade AS string) IS NULL OR u.grade = :grade) AND " +
+           "(CAST(:isActive AS boolean) IS NULL OR u.isActive = :isActive) AND " +
+           "(CAST(:gender AS string) IS NULL OR u.gender = :gender) AND " +
+           "(CAST(:ageGroup AS string) IS NULL OR u.ageGroup = :ageGroup) AND " +
            "u.isDeleted = false")
     Page<User> findByComplexCriteriaDeprecated(@Param("name") String name,
                                    @Param("email") String email,

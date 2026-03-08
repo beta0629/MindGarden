@@ -92,7 +92,7 @@ public interface ConsultantPerformanceRepository extends JpaRepository<Consultan
     @Query("SELECT cp.grade, COUNT(cp) FROM ConsultantPerformance cp " +
            "WHERE cp.tenantId = :tenantId " +
            "AND cp.performanceDate BETWEEN :startDate AND :endDate " +
-           "AND (:branchCode IS NULL OR cp.consultant.branchCode = :branchCode) " +
+           "AND (CAST(:branchCode AS string) IS NULL OR cp.consultant.branchCode = :branchCode) " +
            "GROUP BY cp.grade " +
            "ORDER BY cp.grade")
     List<Object[]> getGradeDistributionByTenantId(@Param("tenantId") String tenantId,
@@ -142,7 +142,7 @@ public interface ConsultantPerformanceRepository extends JpaRepository<Consultan
            "FROM ConsultantPerformance cp " +
            "WHERE cp.tenantId = :tenantId " +
            "AND cp.performanceDate BETWEEN :startDate AND :endDate " +
-           "AND (:branchCode IS NULL OR cp.consultant.branchCode = :branchCode) " +
+           "AND (CAST(:branchCode AS string) IS NULL OR cp.consultant.branchCode = :branchCode) " +
            "GROUP BY FUNCTION('DATE_FORMAT', cp.performanceDate, '%Y-%m') " +
            "ORDER BY month")
     List<Object[]> getMonthlyPerformanceAggregateByTenantId(@Param("tenantId") String tenantId,
@@ -214,7 +214,7 @@ public interface ConsultantPerformanceRepository extends JpaRepository<Consultan
     @Deprecated
     @Query("SELECT cp.grade, COUNT(cp) FROM ConsultantPerformance cp " +
            "WHERE cp.performanceDate BETWEEN :startDate AND :endDate " +
-           "AND (:branchCode IS NULL OR cp.consultant.branchCode = :branchCode) " +
+           "AND (CAST(:branchCode AS string) IS NULL OR cp.consultant.branchCode = :branchCode) " +
            "GROUP BY cp.grade " +
            "ORDER BY cp.grade")
     List<Object[]> getGradeDistribution(@Param("startDate") LocalDate startDate,
@@ -261,7 +261,7 @@ public interface ConsultantPerformanceRepository extends JpaRepository<Consultan
            "COUNT(cp) as consultantCount " +
            "FROM ConsultantPerformance cp " +
            "WHERE cp.performanceDate BETWEEN :startDate AND :endDate " +
-           "AND (:branchCode IS NULL OR cp.consultant.branchCode = :branchCode) " +
+           "AND (CAST(:branchCode AS string) IS NULL OR cp.consultant.branchCode = :branchCode) " +
            "GROUP BY FUNCTION('DATE_FORMAT', cp.performanceDate, '%Y-%m') " +
            "ORDER BY month")
     List<Object[]> getMonthlyPerformanceAggregate(@Param("startDate") LocalDate startDate,

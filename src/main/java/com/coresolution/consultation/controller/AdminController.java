@@ -51,6 +51,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -168,9 +169,10 @@ public class AdminController extends BaseApiController {
     }
 
     /**
-     * /** 내담자 통계 정보 조회 (캐시 사용) /** GET /api/admin/clients/with-stats/{id}
+     * /** 내담자 통계 정보 조회 (관리자, 스태프만 가능)
      */
     @GetMapping("/clients/with-stats/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getClientWithStats(
             @PathVariable Long id) {
         log.info("📊 내담자 통계 조회 API 호출: clientId={}", id);
@@ -181,9 +183,10 @@ public class AdminController extends BaseApiController {
     }
 
     /**
-     * /** 전체 내담자 통계 정보 조회 (캐시 사용 + 지점별 필터링) /** GET /api/admin/clients/with-stats
+     * /** 전체 내담자 통계 정보 조회 (관리자, 스태프만 가능)
      */
     @GetMapping("/clients/with-stats")
+    @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getAllClientsWithStats(
             HttpSession session) {
         log.info("📊 전체 내담자 통계 조회 API 호출");
@@ -369,9 +372,10 @@ public class AdminController extends BaseApiController {
     }
 
     /**
-     * /** 내담자 목록 조회
+     * /** 내담자 목록 조회 (관리자, 스태프만 가능)
      */
     @GetMapping("/clients")
+    @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getAllClients(HttpSession session) {
         log.info("🔍 내담자 목록 조회");
 
@@ -397,9 +401,10 @@ public class AdminController extends BaseApiController {
     }
 
     /**
-     * /** 통합 내담자 데이터 조회 (매칭 정보, 결제 상태, 남은 세션 등 포함)
+     * /** 통합 내담자 데이터 조회 (관리자, 스태프만 가능)
      */
     @GetMapping("/clients/with-mapping-info")
+    @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getAllClientsWithMappingInfo(
             HttpSession session) {
         log.info("🔍 통합 내담자 데이터 조회");
@@ -1610,9 +1615,10 @@ public class AdminController extends BaseApiController {
     }
 
     /**
-     * 내담자 등록
+     * 내담자 등록 (관리자, 스태프만 가능)
      */
     @PostMapping("/clients")
+    @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
     public ResponseEntity<ApiResponse<Client>> registerClient(
             @RequestBody ClientRegistrationRequest request, HttpSession session) {
         log.info("🔧 내담자 등록: {}", request.getName());
@@ -1778,10 +1784,11 @@ public class AdminController extends BaseApiController {
     }
 
     /**
-     * 내담자 정보 수정
+     * 내담자 정보 수정 (관리자, 스태프만 가능)
      * LazyInitializationException 방지: Client 엔티티 대신 Map(id) 반환 (상담사 updateConsultant와 동일)
      */
     @PutMapping("/clients/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
     public ResponseEntity<ApiResponse<Map<String, Object>>> updateClient(@PathVariable Long id,
             @RequestBody @Valid ClientRegistrationRequest request, HttpSession session) {
         log.info("🔧 내담자 정보 수정: ID={}", id);
@@ -1867,9 +1874,10 @@ public class AdminController extends BaseApiController {
     }
 
     /**
-     * 내담자 삭제 (비활성화)
+     * 내담자 삭제 (관리자, 스태프만 가능)
      */
     @DeleteMapping("/clients/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
     public ResponseEntity<ApiResponse<Void>> deleteClient(@PathVariable Long id) {
         log.info("🔧 내담자 삭제: ID={}", id);
         adminService.deleteClient(id);
@@ -1877,9 +1885,10 @@ public class AdminController extends BaseApiController {
     }
 
     /**
-     * 내담자 삭제 가능 여부 확인
+     * 내담자 삭제 가능 여부 확인 (관리자, 스태프만 가능)
      */
     @GetMapping("/clients/{id}/deletion-status")
+    @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
     public ResponseEntity<ApiResponse<Map<String, Object>>> checkClientDeletionStatus(
             @PathVariable Long id) {
         log.info("🔍 내담자 삭제 가능 여부 확인: ID={}", id);

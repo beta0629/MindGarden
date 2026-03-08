@@ -478,9 +478,13 @@ function AppContent() {
             <Route path="/consultant/schedule-new" element={<SchedulePage user={user} />} />
             <Route path="/super_admin/schedule" element={<SchedulePage user={user} />} />
             
-            {/* 관리자 전용 라우트 */}
+            {/* 관리자/스태프 전용 라우트 */}
             <Route path="/admin/consultant-comprehensive" element={<Navigate to="/admin/user-management?type=consultant" replace />} />
-            <Route path="/admin/client-comprehensive" element={<Navigate to="/admin/user-management?type=client" replace />} />
+            <Route path="/admin/client-comprehensive" element={
+              <ProtectedRoute requiredRoles={['ADMIN', 'STAFF']}>
+                <Navigate to="/admin/user-management?type=client" replace />
+              </ProtectedRoute>
+            } />
             <Route path="/admin/mapping-management" element={<MappingManagement />} />
             <Route path="/admin/consultation-logs" element={<ConsultationLogView />} />
             <Route
@@ -494,7 +498,11 @@ function AppContent() {
             <Route path="/admin/common-codes" element={<CommonCodeManagement />} />
             <Route path="/admin/sessions" element={<SessionManagement />} />
             <Route path="/admin/accounts" element={<AccountManagement />} />
-            <Route path="/admin/user-management" element={<UserManagementPage />} />
+            <Route path="/admin/user-management" element={
+              <ProtectedRoute requiredRoles={['ADMIN', 'STAFF']}>
+                <UserManagementPage />
+              </ProtectedRoute>
+            } />
             <Route path="/admin/dashboards" element={<DashboardManagement />} />
                 <Route path="/admin/cache-monitoring" element={<CacheMonitoringDashboard />} />
                 <Route path="/admin/security-monitoring" element={<SecurityMonitoringDashboard />} />

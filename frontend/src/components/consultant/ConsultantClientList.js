@@ -339,8 +339,12 @@ const ConsultantClientList = () => {
           내담자 목록 {clients.length > 0 && `(${clients.length}명)`}
         </h1>
         <p className="client-list-subtitle">
-          나와 연계된 내담자들을 관리할 수 있습니다.
+          나와 연계된 내담자들을 조회할 수 있습니다. (읽기 전용)
         </p>
+        <div className="alert alert-info" style={{ marginTop: '1rem', padding: '0.75rem 1rem', borderRadius: '0.5rem', backgroundColor: 'var(--mg-info-50)', border: '1px solid var(--mg-info-200)', color: 'var(--mg-info-700)' }}>
+          <i className="bi bi-info-circle" style={{ marginRight: '0.5rem' }}></i>
+          내담자 생성, 수정, 삭제는 관리자와 스태프만 가능합니다.
+        </div>
       </div>
 
       {/* 검색 및 필터 */}

@@ -87,9 +87,9 @@ export const CONSULTANT_MENU_ITEMS = {
       label: '일정 관리',
       icon: 'bi-calendar'
     },
-    CLIENT_MGMT: {
-      id: 'client_mgmt',
-      label: '내담자 관리',
+    CLIENT_VIEW: {
+      id: 'client_view',
+      label: '내담자 조회',
       icon: 'bi-people'
     },
     RECORD_MGMT: {
@@ -103,7 +103,7 @@ export const CONSULTANT_MENU_ITEMS = {
       { id: 'consultant-schedule', label: '전체 스케줄', path: '/consultant/schedule', icon: 'bi-calendar-check' },
       { id: 'consultant-availability', label: '가능 시간 설정', path: '/consultant/availability', icon: 'bi-clock' }
     ],
-    client_mgmt: [
+    client_view: [
       { id: 'consultant-clients', label: '내 내담자 목록', path: '/consultant/clients', icon: 'bi-person-lines-fill' },
       { id: 'consultant-messages', label: '상담사 메시지', path: '/consultant/messages', icon: 'bi-chat-dots' }
     ],

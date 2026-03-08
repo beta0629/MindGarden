@@ -124,9 +124,11 @@ function getEmptyWeeklyChartData(weeks = 6) {
 
 const AdminDashboardV2 = ({ user: propUser }) => {
   const navigate = useNavigate();
-  const { user: sessionUser, isLoading: sessionLoading, logout } = useSession();
+  const { user: sessionUser, isLoading: sessionLoading, logout, hasRole } = useSession();
   const { windowSize } = useResponsive();
   const isDesktop = windowSize.width >= BREAKPOINT_DESKTOP;
+  
+  const canManageClients = hasRole('ADMIN') || hasRole('STAFF');
 
   const [lnbMenuItems, setLnbMenuItems] = useState(null);
 
@@ -1015,7 +1017,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
             <span className="mg-v2-ad-b0kla__admin-desc">상담사 정보를 관리합니다</span>
           </button>
           )}
-          {!HIDE_ADMIN_CARD_IDS.has('client-comprehensive') && (
+          {!HIDE_ADMIN_CARD_IDS.has('client-comprehensive') && canManageClients && (
           <button
             type="button"
             className="mg-v2-ad-b0kla__admin-card"

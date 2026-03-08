@@ -26,8 +26,8 @@ const QuickActionBar = ({ onNavigate, className = '' }) => {
       variant: 'outline'
     },
     {
-      id: 'manage-clients',
-      label: '내담자 관리',
+      id: 'view-clients',
+      label: '내담자 조회',
       icon: Users,
       path: '/consultant/clients',
       variant: 'outline'

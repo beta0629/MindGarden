@@ -2,6 +2,7 @@
  * 통합 사용자 관리 페이지 (상담사 / 내담자 / 스태프 단일 진입점)
  * - URL 쿼리 type=consultant | type=client | type=staff 로 타입 전환
  * - 기본값: client (?type 없으면 내담자)
+ * - 내담자 관리는 ADMIN, STAFF만 접근 가능
  *
  * @author Core Solution
  * @since 2026-02-24
@@ -9,6 +10,7 @@
 
 import React from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSession } from '../../contexts/SessionContext';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import ContentArea from '../dashboard-v2/content/ContentArea';
 import ConsultantComprehensiveManagement from './ConsultantComprehensiveManagement';
@@ -31,11 +33,23 @@ const getTypeFromParams = (searchParams) => {
 const UserManagementPage = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { user, hasRole } = useSession();
   const type = getTypeFromParams(searchParams);
 
+  const canManageClients = hasRole('ADMIN') || hasRole('STAFF');
+
   const handleTypeChange = (newType) => {
+    if (newType === TYPE_CLIENT && !canManageClients) {
+      return;
+    }
     navigate(`/admin/user-management?type=${newType}`, { replace: true });
   };
+
+  React.useEffect(() => {
+    if (type === TYPE_CLIENT && !canManageClients) {
+      navigate('/admin/user-management?type=consultant', { replace: true });
+    }
+  }, [type, canManageClients, navigate]);
 
   return (
     <AdminCommonLayout>
@@ -50,13 +64,15 @@ const UserManagementPage = () => {
               >
                 상담사
               </button>
-              <button
-                type="button"
-                className={`mg-v2-ad-b0kla__pill ${type === TYPE_CLIENT ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
-                onClick={() => handleTypeChange(TYPE_CLIENT)}
-              >
-                내담자
-              </button>
+              {canManageClients && (
+                <button
+                  type="button"
+                  className={`mg-v2-ad-b0kla__pill ${type === TYPE_CLIENT ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+                  onClick={() => handleTypeChange(TYPE_CLIENT)}
+                >
+                  내담자
+                </button>
+              )}
               <button
                 type="button"
                 className={`mg-v2-ad-b0kla__pill ${type === TYPE_STAFF ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
@@ -67,7 +83,7 @@ const UserManagementPage = () => {
             </div>
 
             {type === TYPE_CONSULTANT && <ConsultantComprehensiveManagement embedded />}
-            {type === TYPE_CLIENT && <ClientComprehensiveManagement embedded />}
+            {type === TYPE_CLIENT && canManageClients && <ClientComprehensiveManagement embedded />}
             {type === TYPE_STAFF && <StaffManagement embedded />}
           </ContentArea>
         </div>

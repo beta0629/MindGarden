@@ -101,7 +101,7 @@ const CONSULTANT_MENU_ITEMS = [
   {
     to: '/consultant/clients',
     icon: Users,
-    label: '내담자 관리',
+    label: '내담자 조회',
     end: false,
     children: [
       { to: '/consultant/clients', icon: Users, label: '내 내담자 목록', end: true },

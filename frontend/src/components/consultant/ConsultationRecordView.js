@@ -5,6 +5,7 @@ import { useSession } from '../../contexts/SessionContext';
 import { apiGet } from '../../utils/ajax';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { CONSULTANT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
+import Button from '../ui/Button/Button';
 import '../../styles/unified-design-tokens.css';
 
 /**
@@ -40,10 +41,17 @@ const ConsultationRecordView = () => {
       // 상담기록 상세 정보 조회
       const response = await apiGet(`/api/consultant/${user.id}/consultation-records/${recordId}`);
       
-      if (response.success) {
-        setRecord(response.data);
+      if (response) {
+        const data = response.data !== undefined ? response.data : response;
+        if (response.success === false) {
+          setError(response.message || '상담기록을 불러올 수 없습니다.');
+        } else if (data) {
+          setRecord(data);
+        } else {
+          setError('상담기록 데이터가 없습니다.');
+        }
       } else {
-        setError(response.message || '상담기록을 불러올 수 없습니다.');
+        setError('상담기록을 불러올 수 없습니다.');
       }
     } catch (err) {
       console.error('❌ 상담기록 조회 실패:', err);
@@ -67,13 +75,14 @@ const ConsultationRecordView = () => {
         <div className="mg-v2-empty-state">
           <div className="mg-v2-empty-state-icon">⚠️</div>
           <div className="mg-v2-empty-state-text">{error}</div>
-          <button 
-            className="mg-v2-button mg-v2-button--secondary mg-mt-md"
+          <Button 
+            variant="secondary"
+            className="mg-mt-md"
             onClick={() => navigate('/consultant/consultation-records')}
           >
             <i className="bi bi-arrow-left"></i>
             목록으로 돌아가기
-          </button>
+          </Button>
         </div>
       </AdminCommonLayout>
     );
@@ -85,13 +94,14 @@ const ConsultationRecordView = () => {
         <div className="mg-v2-empty-state">
           <div className="mg-v2-empty-state-icon">📋</div>
           <div className="mg-v2-empty-state-text">상담기록을 찾을 수 없습니다.</div>
-          <button 
-            className="mg-v2-button mg-v2-button--secondary mg-mt-md"
+          <Button 
+            variant="secondary"
+            className="mg-mt-md"
             onClick={() => navigate('/consultant/consultation-records')}
           >
             <i className="bi bi-arrow-left"></i>
             목록으로 돌아가기
-          </button>
+          </Button>
         </div>
       </AdminCommonLayout>
     );
@@ -155,13 +165,13 @@ const ConsultationRecordView = () => {
 
         {/* 액션 버튼 */}
         <div className="mg-v2-record-actions mg-mt-lg">
-          <button 
-            className="mg-v2-button mg-v2-button--secondary"
+          <Button 
+            variant="secondary"
             onClick={() => navigate('/consultant/consultation-records')}
           >
             <i className="bi bi-arrow-left"></i>
             목록으로 돌아가기
-          </button>
+          </Button>
         </div>
       </div>
     </AdminCommonLayout>

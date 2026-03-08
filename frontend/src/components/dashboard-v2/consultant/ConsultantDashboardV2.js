@@ -10,7 +10,8 @@ import {
   Bell,
   BarChart3,
   ChevronRight,
-  UserPlus
+  UserPlus,
+  FileText
 } from 'lucide-react';
 import AdminCommonLayout from '../../layout/AdminCommonLayout';
 import StandardizedApi from '../../../utils/standardizedApi';
@@ -180,8 +181,9 @@ const ConsultantDashboardV2 = ({ user }) => {
         { day: '월', count: 0 }, { day: '화', count: 0 }, { day: '수', count: 0 },
         { day: '목', count: 0 }, { day: '금', count: 0 }, { day: '토', count: 0 }, { day: '일', count: 0 }
       ];
-      const weeklyStatsData = stats?.weeklyStats?.length > 0 
-        ? stats.weeklyStats.map(s => {
+      let weeklyStatsData = [...mockWeeklyStats];
+      if (stats?.weeklyStats?.length > 0) {
+        stats.weeklyStats.forEach(s => {
             const dateStr = s.period; // "MM/dd"
             let dayName = '';
             if (dateStr) {
@@ -193,9 +195,16 @@ const ConsultantDashboardV2 = ({ user }) => {
                  if (!isNaN(tempDate.getTime())) dayName = days[tempDate.getDay()];
                }
             }
-            return { day: dayName || s.period, count: s.completedCount || 0 };
-        })
-        : mockWeeklyStats;
+            const targetDay = dayName || s.period;
+            const existingIndex = weeklyStatsData.findIndex(w => w.day === targetDay);
+            if (existingIndex !== -1) {
+              weeklyStatsData[existingIndex].count = s.completedCount || 0;
+            } else if (targetDay) {
+              // 요일 매칭이 안되는 경우 추가 (예: 날짜 형식)
+              weeklyStatsData.push({ day: targetDay, count: s.completedCount || 0 });
+            }
+        });
+      }
 
       let activeNotifications = [];
       try {
@@ -312,13 +321,27 @@ const ConsultantDashboardV2 = ({ user }) => {
       <div className="consultant-dashboard-v2">
         
         {/* 웰컴 메시지 영역 */}
-        <div className="dashboard-welcome-section" style={{ marginBottom: '24px', padding: '0 4px' }}>
-          <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--mg-gray-900)', margin: '0 0 8px 0' }}>
-            {user?.name || '상담사'} 선생님, 환영합니다.
-          </h1>
-          <p style={{ fontSize: '1rem', color: 'var(--mg-gray-600)', margin: 0 }}>
-            오늘({todayDateStr}) 하루도 화이팅하세요!
-          </p>
+        <div className="dashboard-welcome-section mg-v2-content-card" style={{ marginBottom: '24px', padding: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'var(--mg-white)' }}>
+          <div>
+            <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--mg-gray-900)', margin: '0 0 8px 0' }}>
+              {user?.name || '상담사'} 선생님, 환영합니다.
+            </h1>
+            <p style={{ fontSize: '1rem', color: 'var(--mg-gray-600)', margin: 0 }}>
+              오늘({todayDateStr}) 하루도 화이팅하세요!
+            </p>
+          </div>
+          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+            <div className="mg-v2-badge mg-v2-badge--primary" style={{ padding: '8px 16px', fontSize: '0.9rem', borderRadius: '8px' }}>
+              오늘의 예약: {dashboardData.stats.todaySchedules}건
+            </div>
+            <button 
+              className="mg-v2-btn mg-v2-btn-outline mg-v2-btn-md"
+              onClick={() => navigate('/consultant/consultation-records')}
+              style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+            >
+              <FileText size={16} /> 상담일지 조회
+            </button>
+          </div>
         </div>
 
         {/* 테넌트 미설정 안내 배너 */}
@@ -468,7 +491,8 @@ const ConsultantDashboardV2 = ({ user }) => {
 
 ConsultantDashboardV2.propTypes = {
   user: PropTypes.shape({
-    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    name: PropTypes.string
   })
 };
 

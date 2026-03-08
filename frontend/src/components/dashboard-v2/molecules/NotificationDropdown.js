@@ -9,6 +9,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Bell, Clock } from 'lucide-react';
 import { NavIcon, NotificationBadge } from '../atoms';
 import StandardizedApi from '../../../utils/standardizedApi';
+import '../styles/dropdown-common.css';
 import './NotificationDropdown.css';
 
 const NotificationDropdown = () => {

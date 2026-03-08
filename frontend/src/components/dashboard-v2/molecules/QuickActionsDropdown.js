@@ -12,6 +12,7 @@ import { useNavigate } from 'react-router-dom';
 import { NavIcon } from '../atoms';
 import { sessionManager } from '../../../utils/sessionManager';
 import { getQuickActionsForRole } from '../../../constants/gnbQuickActions';
+import '../styles/dropdown-common.css';
 import './QuickActionsDropdown.css';
 
 const QuickActionsDropdown = ({ onModalAction }) => {

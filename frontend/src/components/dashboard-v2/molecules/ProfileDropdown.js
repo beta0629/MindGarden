@@ -11,6 +11,7 @@ import { ChevronDown, User, Settings, LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ProfileAvatar } from '../atoms';
 import { sessionManager } from '../../../utils/sessionManager';
+import '../styles/dropdown-common.css';
 import './ProfileDropdown.css';
 
 const ROLE_LABELS = {

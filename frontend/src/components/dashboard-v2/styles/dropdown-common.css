@@ -1,0 +1,52 @@
+/**
+ * MindGarden v2 - 공통 드롭다운 스타일
+ * 
+ * NotificationDropdown, QuickActionsDropdown, ProfileDropdown에서 공통으로 사용
+ * 
+ * @author CoreSolution
+ * @since 2026-03-09
+ */
+
+/* 드롭다운 오버레이 (모바일 배경) */
+.mg-v2-dropdown-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.4);
+  z-index: 999;
+  display: none;
+  border: none;
+  padding: 0;
+  cursor: default;
+}
+
+@media (max-width: 767px) {
+  .mg-v2-dropdown-overlay {
+    display: block;
+  }
+}
+
+/* 드롭다운 패널 공통 스타일 */
+.mg-v2-dropdown-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background-color: var(--mg-color-surface-main, #F5F3EF);
+  border: 1px solid var(--mg-color-border-main, #D4CFC8);
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  z-index: 1000;
+  opacity: 0;
+  transform: translateY(-8px);
+  animation: dropdownFadeIn 200ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* 드롭다운 페이드인 애니메이션 */
+@keyframes dropdownFadeIn {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

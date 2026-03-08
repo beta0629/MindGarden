@@ -6,44 +6,6 @@
  * @since 2026-03-09
  */
 
-/* 전체 컨테이너 */
-.consultant-client-list-container {
-  max-width: 1440px;
-  margin: 0 auto;
-  padding: 24px;
-  background: var(--mg-color-background-main, #FAF9F7);
-}
-
-/* 페이지 헤더 */
-.client-list-header {
-  padding-bottom: 24px;
-}
-
-.client-list-title {
-  font-family: 'Noto Sans KR', sans-serif;
-  font-size: 24px;
-  font-weight: 600;
-  color: var(--mg-color-text-main, #2C2C2C);
-  margin-bottom: 8px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.client-list-title svg {
-  width: 24px;
-  height: 24px;
-  color: var(--mg-color-primary-main, #3D5246);
-}
-
-.client-list-subtitle {
-  font-family: 'Noto Sans KR', sans-serif;
-  font-size: 14px;
-  font-weight: 400;
-  color: var(--mg-color-text-secondary, #5C6B61);
-  margin-bottom: 16px;
-}
-
 /* 안내 배너 */
 .mg-v2-alert {
   border-radius: 12px;
@@ -72,7 +34,6 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
-  margin-bottom: 24px;
 }
 
 /* 검색 입력 */
@@ -494,10 +455,6 @@
 
 /* 반응형 - 모바일 */
 @media (max-width: 767px) {
-  .consultant-client-list-container {
-    padding: 16px;
-  }
-
   .client-list-controls {
     flex-direction: column;
     gap: 12px;

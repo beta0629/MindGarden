@@ -11,6 +11,10 @@
 - 디자인 토큰: `frontend/src/styles/unified-design-tokens.css`
 - Phase 1 디자인 스펙: `docs/design-system/v2/CONSULTANT_DASHBOARD_PHASE1_DESIGN_SPEC.md`
 - 기존 컴포넌트: `frontend/src/components/consultant/ConsultantClientList.js`
+- **레이아웃 수정 핸드오프**: `docs/design-system/v2/CONSULTANT_CLIENT_LIST_LAYOUT_FIX.md` ⭐ 최우선 참조
+
+**업데이트 이력**:
+- 2026-03-09: 레이아웃 구조 수정 (ContentArea 패턴 적용, 비표준 래퍼 제거)
 
 ---
 
@@ -36,86 +40,90 @@
 
 ## 1. 전체 레이아웃 구조
 
-### 1.1 화면 구성 기획서
+### 1.1 AdminCommonLayout 기반 구조
+
+**핵심 원칙**: `AdminCommonLayout`은 이미 `mg-v2-desktop-layout` 구조를 제공하므로, 내부에서는 **ContentArea 패턴**을 사용해야 합니다.
+
+```
+AdminCommonLayout (DesktopLayout/MobileLayout 래핑)
+└── mg-v2-desktop-layout
+    ├── DesktopGnb (상단 네비게이션)
+    └── mg-v2-desktop-layout__body
+        ├── DesktopLnb (좌측 사이드바, 260px)
+        └── mg-v2-desktop-layout__main (메인 콘텐츠 영역)
+            └── ContentArea ← 여기서부터 페이지 콘텐츠 시작
+                ├── ContentHeader (페이지 제목·설명)
+                ├── ContentSection (검색·필터 영역)
+                └── ContentSection (카드 그리드)
+```
+
+### 1.2 화면 구성 기획서
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│ 페이지 헤더 (Page Header)                                    │
-│ - 제목: "내담자 목록 (N명)"                                   │
-│ - 설명: "나와 연계된 내담자들을 조회할 수 있습니다."           │
-│ - 안내 배너: "내담자 생성, 수정, 삭제는 관리자와 스태프만..."  │
+│ [AdminCommonLayout - GNB + LNB 자동 제공]                    │
 ├─────────────────────────────────────────────────────────────┤
-│ 검색 및 필터 영역 (Search & Filter Section)                  │
-│ - 검색 입력: "이름, 이메일, 전화번호로 검색..."               │
-│ - 필터 배지: [전체] [활성] [비활성] [대기중] [완료] [일시정지] │
-├─────────────────────────────────────────────────────────────┤
-│ 내담자 카드 그리드 (Client Card Grid)                         │
-│ ┌──────────┐ ┌──────────┐ ┌──────────┐                      │
-│ │ 카드 1   │ │ 카드 2   │ │ 카드 3   │                      │
-│ └──────────┘ └──────────┘ └──────────┘                      │
-│ ┌──────────┐ ┌──────────┐ ┌──────────┐                      │
-│ │ 카드 4   │ │ 카드 5   │ │ 카드 6   │                      │
-│ └──────────┘ └──────────┘ └──────────┘                      │
+│ ContentArea (mg-v2-content-area)                            │
+│ ┌───────────────────────────────────────────────────────────┐│
+│ │ ContentHeader                                             ││
+│ │ - 제목: "내담자 목록"                                      ││
+│ │ - 설명: "나와 연계된 내담자들을 조회할 수 있습니다."        ││
+│ │ - 안내 배너: "내담자 생성, 수정, 삭제는 관리자와..."       ││
+│ └───────────────────────────────────────────────────────────┘│
+│ ┌───────────────────────────────────────────────────────────┐│
+│ │ ContentSection (검색·필터)                                 ││
+│ │ - 검색 입력: "이름, 이메일, 전화번호로 검색..."            ││
+│ │ - 필터 배지: [전체] [활성] [비활성] [대기중] [완료]        ││
+│ └───────────────────────────────────────────────────────────┘│
+│ ┌───────────────────────────────────────────────────────────┐│
+│ │ ContentSection (카드 그리드)                               ││
+│ │ ┌──────────┐ ┌──────────┐ ┌──────────┐                   ││
+│ │ │ 카드 1   │ │ 카드 2   │ │ 카드 3   │                   ││
+│ │ └──────────┘ └──────────┘ └──────────┘                   ││
+│ └───────────────────────────────────────────────────────────┘│
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### 1.2 영역별 배치
+### 1.3 영역별 배치 (수정됨)
 
 | 영역 | 클래스명 | 배경 | 패딩 | 비고 |
 |------|---------|------|------|------|
-| 전체 컨테이너 | `consultant-client-list-container` | `var(--mg-color-background-main)` | 24px | 최대 너비 1440px |
-| 페이지 헤더 | `client-list-header` | transparent | 0 0 24px 0 | 제목·설명·안내 배너 |
-| 검색·필터 영역 | `client-list-controls` | transparent | 0 0 24px 0 | 검색 + 필터 배지 |
-| 카드 그리드 | `client-card-grid` | transparent | 0 | 반응형 그리드 |
+| 전체 래퍼 | `mg-v2-content-area` | transparent | 0 | ContentArea 컴포넌트 |
+| 페이지 헤더 | ContentHeader 컴포넌트 | transparent | 0 0 24px 0 | title·subtitle props |
+| 안내 배너 | `mg-v2-alert mg-v2-alert--info` | info-50 | 12px 16px | ContentHeader 내부 |
+| 검색·필터 영역 | ContentSection | transparent | 24px | title 없음 |
+| 카드 그리드 | ContentSection | transparent | 24px | title 없음 |
+
+**중요 변경사항**:
+- ❌ `consultant-client-list-container` 클래스 제거
+- ✅ `ContentArea` 컴포넌트 사용
+- ✅ `ContentHeader` 컴포넌트 사용
+- ✅ `ContentSection` 컴포넌트로 영역 구분
 
 ---
 
-## 2. 페이지 헤더 (Page Header)
+## 2. 페이지 헤더 (ContentHeader)
 
-### 2.1 제목 (Title)
+### 2.1 ContentHeader 컴포넌트 사용
 
-**클래스**: `client-list-title`
+**컴포넌트**: `ContentHeader` (from `../dashboard-v2/content`)
 
-```css
-.client-list-title {
-  font-family: 'Noto Sans KR', sans-serif;
-  font-size: 24px;
-  font-weight: 600;
-  color: var(--mg-color-text-main); /* #2C2C2C */
-  margin-bottom: 8px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.client-list-title svg {
-  width: 24px;
-  height: 24px;
-  color: var(--mg-color-primary-main); /* #3D5246 */
-}
+**Props**:
+```javascript
+<ContentHeader
+  title="내담자 목록"
+  subtitle="나와 연계된 내담자들을 조회할 수 있습니다."
+/>
 ```
 
-**구조**:
-- 아이콘: `Users` (lucide-react, 24px)
-- 텍스트: "내담자 목록 (N명)"
+**스타일**: `mg-v2-content-header` (자동 적용)
+- 제목: 24px, 600, `var(--mg-color-text-main)`
+- 설명: 14px, 400, `var(--mg-color-text-secondary)`
+- 하단 여백: 24px
 
-### 2.2 설명 (Subtitle)
+### 2.2 안내 배너 (Info Banner)
 
-**클래스**: `client-list-subtitle`
-
-```css
-.client-list-subtitle {
-  font-family: 'Noto Sans KR', sans-serif;
-  font-size: 14px;
-  font-weight: 400;
-  color: var(--mg-color-text-secondary); /* #5C6B61 */
-  margin-bottom: 16px;
-}
-```
-
-**텍스트**: "나와 연계된 내담자들을 조회할 수 있습니다. (읽기 전용)"
-
-### 2.3 안내 배너 (Info Banner)
+**위치**: ContentHeader 바로 다음 (ContentArea 직속 자식)
 
 **클래스**: `mg-v2-alert mg-v2-alert--info`
 
@@ -141,14 +149,31 @@
 ```
 
 **구조**:
-- 아이콘: `Info` (lucide-react, 20px)
-- 텍스트: "내담자 생성, 수정, 삭제는 관리자와 스태프만 가능합니다."
+```jsx
+<div className="mg-v2-alert mg-v2-alert--info">
+  <Info size={20} />
+  내담자 생성, 수정, 삭제는 관리자와 스태프만 가능합니다.
+</div>
+```
 
 ---
 
-## 3. 검색 및 필터 영역 (Search & Filter Section)
+## 3. 검색 및 필터 영역 (ContentSection)
 
-### 3.1 컨테이너
+### 3.1 ContentSection 컴포넌트 사용
+
+**컴포넌트**: `ContentSection` (from `../dashboard-v2/content`)
+
+**Props**:
+```javascript
+<ContentSection noCard={true}>
+  {/* 검색 입력 + 필터 배지 */}
+</ContentSection>
+```
+
+**noCard={true}**: 이 섹션은 카드 스타일이 필요 없으므로 plain 모드 사용
+
+### 3.2 내부 컨테이너
 
 **클래스**: `client-list-controls`
 
@@ -157,7 +182,6 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
-  margin-bottom: 24px;
 }
 ```
 
@@ -296,9 +320,24 @@
 
 ---
 
-## 4. 내담자 카드 그리드 (Client Card Grid)
+## 4. 내담자 카드 그리드 (ContentSection)
 
-### 4.1 그리드 컨테이너
+### 4.1 ContentSection 컴포넌트 사용
+
+**컴포넌트**: `ContentSection` (from `../dashboard-v2/content`)
+
+**Props**:
+```javascript
+<ContentSection noCard={true}>
+  <div className="client-card-grid">
+    {/* 카드 목록 */}
+  </div>
+</ContentSection>
+```
+
+**noCard={true}**: 카드들이 이미 개별 카드 스타일을 가지므로 섹션 자체는 plain 모드
+
+### 4.2 그리드 컨테이너
 
 **클래스**: `client-card-grid`
 
@@ -804,9 +843,7 @@
 
 ```css
 @media (max-width: 767px) {
-  .consultant-client-list-container {
-    padding: 16px;
-  }
+  /* ContentArea 패딩은 mg-v2-desktop-layout__main에서 처리 */
   
   .client-list-controls {
     flex-direction: column;
@@ -850,7 +887,109 @@
 }
 ```
 
+**참고**: 
+- 페이지 패딩은 `mg-v2-desktop-layout__main`에서 `var(--mg-layout-page-padding, 24px)` 토큰으로 처리
+- ContentArea는 패딩 없이 자식 요소들을 세로로 배치
+
 ---
+
+## 9. CSS 스펙 — 제거·유지·추가
+
+### 9.0 CSS 파일 수정 가이드
+
+**파일**: `frontend/src/components/consultant/ConsultantClientList.css`
+
+#### 제거할 CSS (AdminCommonLayout/ContentArea가 처리)
+
+```css
+/* ❌ 제거: 전체 컨테이너 (ContentArea가 대체) */
+.consultant-client-list-container {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 24px;
+  background: var(--mg-color-background-main, #FAF9F7);
+}
+
+/* ❌ 제거: 페이지 헤더 (ContentHeader가 대체) */
+.client-list-header {
+  padding-bottom: 24px;
+}
+
+.client-list-title {
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--mg-color-text-main, #2C2C2C);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.client-list-title svg {
+  width: 24px;
+  height: 24px;
+  color: var(--mg-color-primary-main, #3D5246);
+}
+
+.client-list-subtitle {
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--mg-color-text-secondary, #5C6B61);
+  margin-bottom: 16px;
+}
+```
+
+#### 유지할 CSS
+
+```css
+/* ✅ 유지: 안내 배너 */
+.mg-v2-alert { ... }
+.mg-v2-alert--info { ... }
+
+/* ✅ 유지: 검색·필터 영역 */
+.client-list-controls { ... }
+.client-search-input-wrapper { ... }
+.client-search-input { ... }
+.client-filter-badges { ... }
+
+/* ✅ 유지: 필터 배지 */
+.mg-v2-filter-badge { ... }
+.mg-v2-filter-badge--active { ... }
+
+/* ✅ 유지: 카드 그리드 */
+.client-card-grid { ... }
+
+/* ✅ 유지: 내담자 카드 */
+.mg-v2-client-card { ... }
+.mg-v2-client-card__header { ... }
+.mg-v2-client-card__body { ... }
+.mg-v2-client-card__footer { ... }
+
+/* ✅ 유지: 회기 현황 */
+.mg-v2-client-session-info { ... }
+.mg-v2-client-session-grid { ... }
+
+/* ✅ 유지: 빈 상태·에러 상태 */
+.client-list-empty-state { ... }
+.client-list-error-state { ... }
+
+/* ✅ 유지: 반응형 */
+@media (max-width: 767px) { ... }
+```
+
+#### 수정할 CSS
+
+```css
+/* 🔧 수정: margin-bottom 제거 (ContentSection이 처리) */
+.client-list-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  /* margin-bottom: 24px; */ /* ← 제거 */
+}
+```
 
 ## 9. 디자인 토큰 매핑
 
@@ -916,12 +1055,14 @@ Pages (페이지)
 └── ConsultantClientList (상담사 내담자 목록 페이지)
 
 Templates (템플릿)
-└── AdminCommonLayout (기존 레이아웃 재사용)
+├── AdminCommonLayout (DesktopLayout/MobileLayout 래핑)
+└── ContentArea (from dashboard-v2/content)
 
 Organisms (유기체)
-├── ClientListHeader (페이지 헤더: 제목·설명·안내 배너)
-├── ClientListControls (검색·필터 영역)
-└── ClientCardGrid (내담자 카드 그리드)
+├── ContentHeader (from dashboard-v2/content) - 페이지 제목·설명
+├── ContentSection (from dashboard-v2/content) - 검색·필터 영역
+├── ContentSection (from dashboard-v2/content) - 카드 그리드 영역
+└── ClientCardGrid (내담자 카드 그리드 래퍼)
 
 Molecules (분자)
 ├── FilterBadge (필터 배지: 클릭 가능한 상태 필터)
@@ -936,6 +1077,11 @@ Atoms (원자)
 ├── Input (검색 입력)
 └── Icon (아이콘)
 ```
+
+**중요**: 
+- ✅ `ContentArea`, `ContentHeader`, `ContentSection`은 `dashboard-v2/content`에서 import
+- ✅ `AdminCommonLayout`은 이미 `mg-v2-desktop-layout` 구조 제공
+- ❌ `consultant-client-list-container` 같은 커스텀 래퍼 사용 금지
 
 ### 10.2 컴포넌트 파일 구조
 
@@ -1223,46 +1369,194 @@ const statusCounts = useMemo(() => {
 - [x] **반응형 그리드**: 데스크톱 3열, 태블릿 2열, 모바일 1열
 - [x] **접근성**: ARIA 속성, 키보드 내비게이션
 
+### 14.4 레이아웃 표준 준수 (신규)
+
+- [x] **AdminCommonLayout 패턴**: ContentArea → ContentHeader → ContentSection 계층 사용
+- [x] **비표준 래퍼 제거**: `consultant-client-list-container` 같은 커스텀 컨테이너 제거
+- [x] **ContentArea 사용**: 전체 콘텐츠를 ContentArea로 래핑
+- [x] **ContentHeader 사용**: 페이지 제목·설명을 ContentHeader 컴포넌트로 처리
+- [x] **ContentSection 사용**: 검색·필터 영역과 카드 그리드를 각각 ContentSection으로 구분
+- [x] **대시보드 일관성**: AdminDashboardV2와 동일한 레이아웃 패턴 적용
+
 ---
 
 ## 15. 구현 가이드 (core-coder 전달용)
 
-### 15.1 구현 순서
+### 15.1 레이아웃 구조 변경 (최우선)
 
-1. **FilterBadge 컴포넌트 생성** (`frontend/src/components/consultant/molecules/FilterBadge.js`)
-   - Props: label, value, count, icon, isActive, onClick, activeColor
-   - 클래스: `mg-v2-filter-badge`, `mg-v2-filter-badge--active`
-   - lucide-react 아이콘 사용
+**현재 구조 (잘못됨)**:
+```jsx
+<AdminCommonLayout title="내담자 목록">
+  <div className="consultant-client-list-container"> {/* ❌ 비표준 래퍼 */}
+    <div className="client-list-header">...</div>
+    <div className="client-list-controls">...</div>
+    <div className="client-card-grid">...</div>
+  </div>
+</AdminCommonLayout>
+```
 
-2. **ClientCard 컴포넌트 생성** (`frontend/src/components/consultant/molecules/ClientCard.js`)
-   - Props: client, onViewDetails
-   - 클래스: `mg-v2-client-card`, `mg-v2-client-card__header`, `mg-v2-client-card__body`, `mg-v2-client-card__footer`
-   - Avatar 컴포넌트 재사용
-   - StatusBadge 컴포넌트 재사용 또는 신규 생성
+**올바른 구조 (AdminDashboardV2 패턴)**:
+```jsx
+import { ContentArea, ContentHeader, ContentSection } from '../dashboard-v2/content';
 
-3. **ClientSessionInfo 컴포넌트 생성** (`frontend/src/components/consultant/molecules/ClientSessionInfo.js`)
-   - Props: totalSessions, usedSessions, remainingSessions
-   - 클래스: `mg-v2-client-session-info`, `mg-v2-client-session-grid`, `mg-v2-client-session-item`
+<AdminCommonLayout title="내담자 목록">
+  <ContentArea>
+    <ContentHeader
+      title="내담자 목록"
+      subtitle="나와 연계된 내담자들을 조회할 수 있습니다."
+    />
+    
+    <div className="mg-v2-alert mg-v2-alert--info">
+      <Info size={20} />
+      내담자 생성, 수정, 삭제는 관리자와 스태프만 가능합니다.
+    </div>
 
-4. **ConsultantClientList.js 수정**
-   - 기존 셀렉트 박스 제거 → FilterBadge 배열로 교체
-   - 기존 카드 구조 → ClientCard 컴포넌트로 교체
-   - 검색 입력 스타일 업데이트 (lucide-react Search 아이콘 추가)
-   - 필터링 로직 업데이트 (activeFilter 상태 추가)
-   - 상태별 카운트 계산 로직 추가
+    <ContentSection noCard={true}>
+      <div className="client-list-controls">
+        {/* 검색 입력 + 필터 배지 */}
+      </div>
+    </ContentSection>
 
-5. **CSS 작성** (`frontend/src/components/consultant/ConsultantClientList.css` 신규 또는 기존 수정)
-   - 위 CSS 스펙 그대로 적용
-   - `var(--mg-*)` 토큰 사용
-   - 반응형 미디어 쿼리 추가
+    <ContentSection noCard={true}>
+      {loading && <UnifiedLoading type="inline" text="..." />}
+      {error && <div className="client-list-error-state">...</div>}
+      {!loading && !error && (
+        filteredClients.length === 0 
+          ? <div className="client-list-empty-state">...</div>
+          : <div className="client-card-grid">...</div>
+      )}
+    </ContentSection>
+  </ContentArea>
+</AdminCommonLayout>
+```
 
-### 15.2 주의사항
+### 15.2 구현 순서
 
-- **이모지 제거**: 기존 코드의 모든 이모지(`🟢`, `🔴`, `⏳`, `✅`, `⏸️` 등)를 lucide-react 아이콘으로 교체
-- **셀렉트 박스 제거**: `<select>` 태그를 FilterBadge 배열로 교체
-- **하드코딩 색상 제거**: 모든 색상을 `var(--mg-*)` 토큰으로 교체
+1. **Import 추가**
+   ```javascript
+   import { ContentArea, ContentHeader, ContentSection } from '../dashboard-v2/content';
+   ```
+
+2. **레이아웃 구조 수정**
+   - `consultant-client-list-container` div 제거
+   - `ContentArea` 컴포넌트로 전체 래핑
+   - `client-list-header` → `ContentHeader` 컴포넌트로 교체
+   - 안내 배너를 ContentArea 직속 자식으로 배치
+   - `client-list-controls`를 `ContentSection(noCard)` 내부로 이동
+   - 카드 그리드를 `ContentSection(noCard)` 내부로 이동
+
+3. **CSS 수정** (`frontend/src/components/consultant/ConsultantClientList.css`)
+   - `.consultant-client-list-container` 스타일 제거
+   - `.client-list-header`, `.client-list-title`, `.client-list-subtitle` 제거 (ContentHeader가 처리)
+   - `.client-list-controls` margin-bottom 제거 (ContentSection이 처리)
+   - 나머지 스타일 유지 (검색 입력, 필터 배지, 카드 등)
+
+### 15.2 구현 예시 코드
+
+**ConsultantClientList.js 수정 (레이아웃 부분만)**:
+
+```jsx
+import { ContentArea, ContentHeader, ContentSection } from '../dashboard-v2/content';
+
+const ConsultantClientList = () => {
+  // ... 기존 state·hooks
+
+  return (
+    <AdminCommonLayout title="내담자 목록">
+      <ContentArea>
+        {/* 페이지 헤더 */}
+        <ContentHeader
+          title="내담자 목록"
+          subtitle="나와 연계된 내담자들을 조회할 수 있습니다."
+        />
+        
+        {/* 안내 배너 */}
+        <div className="mg-v2-alert mg-v2-alert--info">
+          <Info size={20} />
+          내담자 생성, 수정, 삭제는 관리자와 스태프만 가능합니다.
+        </div>
+
+        {/* 검색·필터 영역 */}
+        <ContentSection noCard={true}>
+          <div className="client-list-controls">
+            <div className="client-search-input-wrapper">
+              <Search size={18} />
+              <input
+                type="text"
+                className="client-search-input"
+                placeholder="이름, 이메일, 전화번호로 검색..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+
+            <div className="client-filter-badges">
+              {FILTER_CONFIG.map(filter => (
+                <FilterBadge
+                  key={filter.value}
+                  label={filter.label}
+                  value={filter.value}
+                  count={statusCounts[filter.value] || 0}
+                  icon={filter.icon}
+                  isActive={filterStatus === filter.value}
+                  onClick={handleFilterClick}
+                  activeColor={filter.activeColor}
+                />
+              ))}
+            </div>
+          </div>
+        </ContentSection>
+
+        {/* 카드 그리드 영역 */}
+        <ContentSection noCard={true}>
+          {loading && (
+            <UnifiedLoading type="inline" text="내담자 목록을 불러오는 중..." />
+          )}
+
+          {error && (
+            <div className="client-list-error-state">
+              <AlertTriangle size={48} />
+              <div className="client-list-error-state__message">{error}</div>
+              <button className="mg-v2-client-view-btn" onClick={loadClients}>
+                다시 시도
+              </button>
+            </div>
+          )}
+
+          {!loading && !error && (
+            filteredClients.length === 0 ? (
+              <div className="client-list-empty-state">
+                {/* 빈 상태 UI */}
+              </div>
+            ) : (
+              <div className="client-card-grid">
+                {filteredClients.map(client => (
+                  <ClientCard
+                    key={client.id}
+                    client={client}
+                    onViewDetails={handleViewClient}
+                  />
+                ))}
+              </div>
+            )
+          )}
+        </ContentSection>
+      </ContentArea>
+    </AdminCommonLayout>
+  );
+};
+```
+
+### 15.3 주의사항
+
+- **레이아웃 구조**: `consultant-client-list-container` 제거, ContentArea 패턴 적용 (최우선)
+- **Import 추가**: `ContentArea`, `ContentHeader`, `ContentSection` from `../dashboard-v2/content`
+- **CSS 정리**: `.consultant-client-list-container`, `.client-list-header`, `.client-list-title`, `.client-list-subtitle` 제거
+- **이모지 제거**: 기존 코드의 모든 이모지(`🟢`, `🔴`, `⏳`, `✅`, `⏸️` 등)를 lucide-react 아이콘으로 교체 (이미 완료됨)
+- **셀렉트 박스 제거**: `<select>` 태그를 FilterBadge 배열로 교체 (이미 완료됨)
+- **하드코딩 색상 제거**: 모든 색상을 `var(--mg-*)` 토큰으로 교체 (이미 완료됨)
 - **디자인 토큰 사용**: `unified-design-tokens.css`에 정의된 토큰만 사용
-- **아토믹 디자인 준수**: 컴포넌트를 Atoms → Molecules → Organisms 계층으로 분리
+- **아토믹 디자인 준수**: 컴포넌트를 Atoms → Molecules → Organisms 계층으로 분리 (이미 완료됨)
 - **UnifiedModal 사용**: 기존 `ClientDetailModal`이 UnifiedModal을 사용하는지 확인, 아니면 수정
 
 ### 15.3 API 연동 (기존 유지)
@@ -1369,15 +1663,37 @@ const statusCounts = useMemo(() => {
 
 ## 19. 다음 단계
 
-1. **core-coder에게 전달**: 본 문서를 handoff하여 구현 착수
-2. **컴포넌트 분리**: FilterBadge, ClientCard, ClientSessionInfo 컴포넌트 생성
-3. **기존 코드 수정**: ConsultantClientList.js에서 셀렉트 박스·이모지 제거
-4. **CSS 작성**: 위 CSS 스펙 그대로 적용
-5. **디자인 검증**: 구현 후 어드민 대시보드 샘플과 비주얼 일관성 확인
-6. **사용자 테스트**: 상담사 피드백 수집 후 개선
+### 19.1 core-coder 전달 사항
+
+1. **레이아웃 구조 수정 (최우선)**
+   - `consultant-client-list-container` div 제거
+   - `ContentArea`, `ContentHeader`, `ContentSection` import 추가
+   - AdminDashboardV2 패턴으로 레이아웃 재구성
+
+2. **CSS 정리**
+   - `.consultant-client-list-container`, `.client-list-header`, `.client-list-title`, `.client-list-subtitle` 제거
+   - `.client-list-controls` margin-bottom 제거
+   - 나머지 스타일 유지
+
+3. **컴포넌트 확인**
+   - FilterBadge, ClientCard, ClientSessionInfo 컴포넌트가 이미 존재하는지 확인
+   - 존재하면 재사용, 없으면 생성
+
+4. **디자인 검증**
+   - 구현 후 AdminDashboardV2와 레이아웃 일관성 확인
+   - 어드민 대시보드 샘플(https://mindgarden.dev.core-solution.co.kr/admin-dashboard-sample)과 비주얼 일관성 확인
+
+### 19.2 검증 체크리스트
+
+- [ ] `ContentArea` → `ContentHeader` → `ContentSection` 계층 적용
+- [ ] `consultant-client-list-container` 클래스 제거
+- [ ] AdminDashboardV2와 동일한 레이아웃 구조
+- [ ] CSS에서 레이아웃 관련 스타일 제거 (ContentArea가 처리)
+- [ ] 대시보드와 동일한 네비게이션 경험
+- [ ] 일관된 시각적 계층
 
 ---
 
 **설계 완료일**: 2026-03-09  
 **설계자**: core-designer  
-**다음 단계**: core-coder에게 전달 → 구현
+**다음 단계**: core-coder에게 전달 → 레이아웃 구조 수정 우선 → 컴포넌트 구현

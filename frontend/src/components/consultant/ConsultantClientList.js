@@ -9,6 +9,7 @@ import notificationManager from '../../utils/notification';
 import { Users, Info, Search, AlertTriangle, List, CheckCircle, XCircle, Clock, CheckCircle2, PauseCircle } from 'lucide-react';
 import FilterBadge from './molecules/FilterBadge';
 import ClientCard from './molecules/ClientCard';
+import { ContentArea, ContentHeader, ContentSection } from '../dashboard-v2/content';
 import './ConsultantClientList.css';
 
 const ConsultantClientList = () => {
@@ -226,66 +227,64 @@ const ConsultantClientList = () => {
 
   return (
     <AdminCommonLayout title="내담자 목록">
-      <div className="consultant-client-list-container">
-        <div className="client-list-header">
-          <h1 className="client-list-title">
-            <Users size={24} />
-            내담자 목록 {clients.length > 0 && `(${clients.length}명)`}
-          </h1>
-          <p className="client-list-subtitle">
-            나와 연계된 내담자들을 조회할 수 있습니다. (읽기 전용)
-          </p>
-          <div className="mg-v2-alert mg-v2-alert--info">
-            <Info size={20} />
-            내담자 생성, 수정, 삭제는 관리자와 스태프만 가능합니다.
-          </div>
+      <ContentArea>
+        <ContentHeader
+          title="내담자 목록"
+          subtitle="나와 연계된 내담자들을 조회할 수 있습니다."
+        />
+        
+        <div className="mg-v2-alert mg-v2-alert--info">
+          <Info size={20} />
+          내담자 생성, 수정, 삭제는 관리자와 스태프만 가능합니다.
         </div>
 
-        <div className="client-list-controls">
-          <div className="client-search-input-wrapper">
-            <Search size={18} />
-            <input
-              type="text"
-              className="client-search-input"
-              placeholder="이름, 이메일, 전화번호로 검색..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-
-          <div className="client-filter-badges">
-            {FILTER_CONFIG.map(filter => (
-              <FilterBadge
-                key={filter.value}
-                label={filter.label}
-                value={filter.value}
-                count={statusCounts[filter.value] || 0}
-                icon={filter.icon}
-                isActive={filterStatus === filter.value}
-                onClick={handleFilterClick}
-                activeColor={filter.activeColor}
+        <ContentSection noCard={true}>
+          <div className="client-list-controls">
+            <div className="client-search-input-wrapper">
+              <Search size={18} />
+              <input
+                type="text"
+                className="client-search-input"
+                placeholder="이름, 이메일, 전화번호로 검색..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
               />
-            ))}
+            </div>
+
+            <div className="client-filter-badges">
+              {FILTER_CONFIG.map(filter => (
+                <FilterBadge
+                  key={filter.value}
+                  label={filter.label}
+                  value={filter.value}
+                  count={statusCounts[filter.value] || 0}
+                  icon={filter.icon}
+                  isActive={filterStatus === filter.value}
+                  onClick={handleFilterClick}
+                  activeColor={filter.activeColor}
+                />
+              ))}
+            </div>
           </div>
-        </div>
+        </ContentSection>
 
-        {loading && (
-          <UnifiedLoading type="inline" text="내담자 목록을 불러오는 중..." />
-        )}
+        <ContentSection noCard={true}>
+          {loading && (
+            <UnifiedLoading type="inline" text="내담자 목록을 불러오는 중..." />
+          )}
 
-        {error && (
-          <div className="client-list-error-state">
-            <AlertTriangle size={48} />
-            <div className="client-list-error-state__message">{error}</div>
-            <button className="mg-v2-client-view-btn" onClick={loadClients}>
-              다시 시도
-            </button>
-          </div>
-        )}
+          {error && (
+            <div className="client-list-error-state">
+              <AlertTriangle size={48} />
+              <div className="client-list-error-state__message">{error}</div>
+              <button className="mg-v2-client-view-btn" onClick={loadClients}>
+                다시 시도
+              </button>
+            </div>
+          )}
 
-        {!loading && !error && (
-          <div className="client-list-content">
-            {filteredClients.length === 0 ? (
+          {!loading && !error && (
+            filteredClients.length === 0 ? (
               <div 
                 role="status" 
                 aria-live="polite" 
@@ -323,9 +322,9 @@ const ConsultantClientList = () => {
                   />
                 ))}
               </div>
-            )}
-          </div>
-        )}
+            )
+          )}
+        </ContentSection>
 
         {showClientModal && selectedClient && (
           <ClientDetailModal
@@ -335,7 +334,7 @@ const ConsultantClientList = () => {
             onSave={handleSaveClient}
           />
         )}
-      </div>
+      </ContentArea>
     </AdminCommonLayout>
   );
 };

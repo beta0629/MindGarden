@@ -1,5 +1,6 @@
 package com.coresolution.consultation.controller;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -65,21 +66,30 @@ public class AlertController extends BaseApiController {
             Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
             Page<Alert> alerts = alertRepository.findByTenantIdAndUserId(tenantId, userId, pageable);
             
-            Page<Map<String, Object>> response = alerts.map(alert -> Map.of(
-                "id", alert.getId(),
-                "type", alert.getType() != null ? alert.getType() : "NOTIFICATION",
-                "title", alert.getTitle(),
-                "message", alert.getContent() != null ? alert.getContent() : "",
-                "isRead", "READ".equals(alert.getStatus()),
-                "linkUrl", alert.getLinkUrl() != null ? alert.getLinkUrl() : "",
-                "createdAt", alert.getCreatedAt() != null ? alert.getCreatedAt().toString() : ""
-            ));
+            Page<Map<String, Object>> response = alerts.map(alert -> {
+                Map<String, Object> map = new HashMap<>();
+                map.put("id", alert.getId() != null ? alert.getId() : 0L);
+                map.put("type", alert.getType() != null ? alert.getType() : "NOTIFICATION");
+                map.put("title", alert.getTitle() != null ? alert.getTitle() : "");
+                map.put("message", alert.getContent() != null ? alert.getContent() : "");
+                map.put("isRead", "READ".equals(alert.getStatus()));
+                map.put("linkUrl", alert.getLinkUrl() != null ? alert.getLinkUrl() : "");
+                map.put("createdAt", alert.getCreatedAt() != null ? alert.getCreatedAt().toString() : "");
+                return map;
+            });
             
             return success(response);
+        } catch (IllegalStateException e) {
+            log.error("알림 목록 조회 실패 - 인증/테넌트 오류: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(ApiResponse.error(e.getMessage()));
         } catch (Exception e) {
-            log.error("알림 목록 조회 실패", e);
+            log.error("알림 목록 조회 실패 - tenantId: {}, userId: {}", 
+                TenantContextHolder.getTenantId(), 
+                authentication != null ? authentication.getName() : "null", 
+                e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.error("알림 목록 조회에 실패했습니다."));
+                .body(ApiResponse.error("알림 목록을 조회하는 중 오류가 발생했습니다."));
         }
     }
     

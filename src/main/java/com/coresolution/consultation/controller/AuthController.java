@@ -148,13 +148,16 @@ public class AuthController extends BaseApiController {
         
         Map<String, Object> userInfo = new HashMap<>();
         userInfo.put("id", user.getId());
-        userInfo.put("email", user.getEmail());
         
-        // 이름과 닉네임 복호화
+        // 이메일, 이름, 닉네임 복호화
+        String decryptedEmail = null;
         String decryptedName = null;
         String decryptedNickname = null;
         
         try {
+            if (user.getEmail() != null && !user.getEmail().trim().isEmpty()) {
+                decryptedEmail = encryptionUtil.safeDecrypt(user.getEmail());
+            }
             if (user.getName() != null && !user.getName().trim().isEmpty()) {
                 decryptedName = encryptionUtil.safeDecrypt(user.getName());
             }
@@ -163,10 +166,12 @@ public class AuthController extends BaseApiController {
             }
         } catch (Exception e) {
             log.warn("사용자 정보 복호화 실패: {}", e.getMessage());
+            decryptedEmail = user.getEmail();
             decryptedName = user.getName();
             decryptedNickname = user.getNickname();
         }
         
+        userInfo.put("email", decryptedEmail);
         userInfo.put("name", decryptedName);
         userInfo.put("nickname", decryptedNickname);
         userInfo.put("role", user.getRole());

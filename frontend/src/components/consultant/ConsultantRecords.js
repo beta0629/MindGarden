@@ -8,6 +8,7 @@ import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import ConsultantRecordFilterBlock from './records/ConsultantRecordFilterBlock';
 import ConsultantRecordListBlock from './records/ConsultantRecordListBlock';
+import ConsultationLogModal from './ConsultationLogModal';
 import './ConsultantRecords.css';
 
 const ConsultantRecords = () => {
@@ -21,6 +22,8 @@ const ConsultantRecords = () => {
   const [statusOptions, setStatusOptions] = useState([
     { value: 'ALL', label: '전체' }
   ]);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalRecordId, setModalRecordId] = useState(null);
 
   const loadStatusCodes = useCallback(async () => {
     try {
@@ -105,7 +108,8 @@ const ConsultantRecords = () => {
   });
 
   const handleViewRecord = (recordId) => {
-    navigate(`/consultant/consultation-record-view/${recordId}`);
+    setModalRecordId(recordId);
+    setModalOpen(true);
   };
 
   const handleWriteRecord = (recordId) => {
@@ -114,6 +118,17 @@ const ConsultantRecords = () => {
 
   const handleNavigateSchedule = () => {
     navigate('/consultant/schedule');
+  };
+
+  const handleModalClose = () => {
+    setModalOpen(false);
+    setModalRecordId(null);
+  };
+
+  const handleModalSave = () => {
+    loadRecords();
+    setModalOpen(false);
+    setModalRecordId(null);
   };
 
   if (sessionLoading) {
@@ -192,6 +207,14 @@ const ConsultantRecords = () => {
             )}
           </ContentArea>
         </div>
+
+        <ConsultationLogModal
+          isOpen={modalOpen}
+          onClose={handleModalClose}
+          onSave={handleModalSave}
+          recordId={modalRecordId}
+          isAdmin={false}
+        />
       </div>
     </AdminCommonLayout>
   );

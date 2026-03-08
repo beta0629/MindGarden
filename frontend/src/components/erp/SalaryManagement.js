@@ -109,7 +109,7 @@ const SalaryManagement = () => {
     // 급여일 옵션 로드
     const loadPayDayOptions = async () => {
         try {
-        const response = await apiGet('/api/v1/common-codes/SALARY_PAY_DAY');
+        const response = await apiGet('/api/v1/common-codes?codeGroup=SALARY_PAY_DAY');
         if (response && Array.isArray(response)) {
             setPayDayOptions(response);
         }

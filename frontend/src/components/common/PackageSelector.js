@@ -42,7 +42,7 @@ const PackageSelector = ({
                 data = codes || [];
             } catch (error) {
                 // 하위 호환성: 기존 API 사용
-                const response = await apiGet('/api/v1/common-codes/PACKAGE');
+                const response = await apiGet('/api/v1/common-codes?codeGroup=PACKAGE');
                 data = response?.data || response || [];
             }
             

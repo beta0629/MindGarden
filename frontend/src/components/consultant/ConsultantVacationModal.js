@@ -52,7 +52,7 @@ const ConsultantVacationModal = ({
     useEffect(() => {
         const loadVacationTypeCodes = async () => {
             try {
-                const response = await apiGet('/api/v1/common-codes/VACATION_TYPE');
+                const response = await apiGet('/api/v1/common-codes?codeGroup=VACATION_TYPE');
                 if (response && response.length > 0) {
                     const allowedTypes = [
                         'MORNING_HALF_DAY',

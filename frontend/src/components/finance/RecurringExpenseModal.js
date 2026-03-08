@@ -95,7 +95,7 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
      */
     const loadCategories = async () => {
         try {
-            const response = await apiGet('/api/v1/common-codes/FINANCIAL_CATEGORY');
+            const response = await apiGet('/api/v1/common-codes?codeGroup=FINANCIAL_CATEGORY');
             if (response && Array.isArray(response)) {
                 setCategories(response);
             } else if (response && response.success !== false) {

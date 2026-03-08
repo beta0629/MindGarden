@@ -36,7 +36,7 @@ const CommonCodeFilters = ({
                 codes = await getCommonCodes('STATUS');
             } catch (error) {
                 // 하위 호환성: 기존 API 사용
-                const response = await fetch('/api/v1/common-codes/STATUS');
+                const response = await fetch('/api/v1/common-codes?codeGroup=STATUS');
                 if (response.ok) {
                     const data = await response.json();
                     codes = Array.isArray(data) ? data : [];

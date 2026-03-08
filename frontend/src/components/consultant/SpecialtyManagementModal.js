@@ -145,7 +145,7 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
      */
     const loadSpecialties = async () => {
         try {
-            const response = await apiGet('/api/v1/common-codes/SPECIALTY');
+            const response = await apiGet('/api/v1/common-codes?codeGroup=SPECIALTY');
             if (response && Array.isArray(response)) {
                 setSpecialties(response);
             } else if (response && response.success !== false) {

@@ -28,7 +28,7 @@ const AccountForm = ({
   const loadBankCodes = useCallback(async () => {
     try {
       setLoadingCodes(true);
-      const response = await fetch('/api/v1/common-codes/BANK');
+      const response = await fetch('/api/v1/common-codes?codeGroup=BANK');
       if (response.ok) {
         const data = await response.json();
         if (data && data.length > 0) {

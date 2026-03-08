@@ -34,7 +34,7 @@ const ConsultationRecordScreen = () => {
   const loadPriorityCodes = useCallback(async () => {
     try {
       setLoadingCodes(true);
-      const response = await apiGet('/api/v1/common-codes/PRIORITY');
+      const response = await apiGet('/api/v1/common-codes?codeGroup=PRIORITY');
       if (response && response.length > 0) {
         const options = response.map(code => ({
           value: code.codeValue,
@@ -302,7 +302,7 @@ const ConsultationRecordScreen = () => {
   const loadCompletionStatusCodes = useCallback(async () => {
     try {
       setLoadingCompletionCodes(true);
-      const response = await apiGet('/api/v1/common-codes/COMPLETION_STATUS');
+      const response = await apiGet('/api/v1/common-codes?codeGroup=COMPLETION_STATUS');
       if (response && response.length > 0) {
         setCompletionStatusOptions(response.map(code => ({
           // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용

@@ -2,7 +2,6 @@ package com.coresolution.consultation.controller;
 
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -17,12 +16,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.coresolution.consultation.dto.response.ApiResponse;
+import com.coresolution.core.dto.ApiResponse;
 import com.coresolution.consultation.entity.Alert;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.AlertRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.core.controller.BaseApiController;
+import com.coresolution.core.context.TenantContextHolder;
+import org.springframework.http.HttpStatus;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -77,7 +78,8 @@ public class AlertController extends BaseApiController {
             return success(response);
         } catch (Exception e) {
             log.error("알림 목록 조회 실패", e);
-            return error("알림 목록 조회에 실패했습니다.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ApiResponse.error("알림 목록 조회에 실패했습니다."));
         }
     }
     
@@ -99,7 +101,8 @@ public class AlertController extends BaseApiController {
             return success(count);
         } catch (Exception e) {
             log.error("읽지 않은 알림 개수 조회 실패", e);
-            return error("읽지 않은 알림 개수 조회에 실패했습니다.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ApiResponse.error("읽지 않은 알림 개수 조회에 실패했습니다."));
         }
     }
     
@@ -129,13 +132,15 @@ public class AlertController extends BaseApiController {
             alert.markAsRead();
             alertRepository.save(alert);
             
-            return success();
+            return success("알림이 읽음 처리되었습니다.");
         } catch (IllegalArgumentException e) {
             log.warn("알림 읽음 처리 실패: {}", e.getMessage());
-            return error(e.getMessage());
+            return ResponseEntity.badRequest()
+                .body(ApiResponse.error(e.getMessage()));
         } catch (Exception e) {
             log.error("알림 읽음 처리 실패", e);
-            return error("알림 읽음 처리에 실패했습니다.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ApiResponse.error("알림 읽음 처리에 실패했습니다."));
         }
     }
     
@@ -157,10 +162,11 @@ public class AlertController extends BaseApiController {
             unreadAlerts.forEach(Alert::markAsRead);
             alertRepository.saveAll(unreadAlerts);
             
-            return success();
+            return success("모든 알림이 읽음 처리되었습니다.");
         } catch (Exception e) {
             log.error("전체 알림 읽음 처리 실패", e);
-            return error("전체 알림 읽음 처리에 실패했습니다.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ApiResponse.error("전체 알림 읽음 처리에 실패했습니다."));
         }
     }
     
@@ -171,8 +177,14 @@ public class AlertController extends BaseApiController {
      * @return 사용자 엔티티
      */
     private User getCurrentUser(Authentication authentication) {
-        String username = authentication.getName();
-        return userRepository.findByUsername(username)
+        String userId = authentication.getName();
+        String tenantId = TenantContextHolder.getTenantId();
+        
+        if (tenantId == null || tenantId.isEmpty()) {
+            throw new IllegalStateException("테넌트 정보가 없습니다.");
+        }
+        
+        return userRepository.findByTenantIdAndUserId(tenantId, userId)
             .orElseThrow(() -> new IllegalStateException("사용자를 찾을 수 없습니다."));
     }
 }

@@ -128,24 +128,33 @@ export const SessionProvider = ({ children }) => {
     stateRef.current = state;
   }, [state]);
 
-  // 초기 마운트 시 sessionManager에서 사용자 정보 복원 후 세션 확인 완료 플래그 설정
+  // 초기 마운트 시 checkSession( true )로 서버 검증 후 성공(200)일 때만 Context에 user 설정
   useEffect(() => {
-    console.log('🔄 SessionProvider 마운트: sessionManager에서 사용자 정보 복원');
-    const user = sessionManager.getUser();
-    const sessionInfo = sessionManager.getSessionInfo();
-    const isLoggedIn = sessionManager.isLoggedIn();
-
-    if (user && isLoggedIn) {
-      console.log('✅ SessionProvider: sessionManager에서 사용자 정보 발견:', user);
-      dispatch({ type: SessionActionTypes.SET_USER, payload: user });
-      dispatch({ type: SessionActionTypes.SET_LOGGED_IN, payload: true });
-      if (sessionInfo) {
-        dispatch({ type: SessionActionTypes.SET_SESSION_INFO, payload: sessionInfo });
+    let cancelled = false;
+    (async () => {
+      console.log('🔄 SessionProvider 마운트: checkSession( true ) 실행');
+      const ok = await sessionManager.checkSession(true);
+      if (cancelled) return;
+      if (ok) {
+        const user = sessionManager.getUser();
+        const sessionInfo = sessionManager.getSessionInfo();
+        if (user) {
+          console.log('✅ SessionProvider: checkSession 성공, 사용자 설정:', user);
+          dispatch({ type: SessionActionTypes.SET_USER, payload: user });
+          dispatch({ type: SessionActionTypes.SET_LOGGED_IN, payload: true });
+          if (sessionInfo) {
+            dispatch({ type: SessionActionTypes.SET_SESSION_INFO, payload: sessionInfo });
+          }
+        } else {
+          dispatch({ type: SessionActionTypes.CLEAR_SESSION });
+        }
+      } else {
+        console.log('❌ SessionProvider: checkSession 실패(401 등), 로그인 상태 없음');
+        dispatch({ type: SessionActionTypes.CLEAR_SESSION });
       }
-    } else {
-      console.log('❌ SessionProvider: sessionManager에 사용자 정보 없음');
-    }
-    dispatch({ type: SessionActionTypes.SET_HAS_CHECKED_SESSION, payload: true });
+      dispatch({ type: SessionActionTypes.SET_HAS_CHECKED_SESSION, payload: true });
+    })();
+    return () => { cancelled = true; };
   }, []); // 빈 배열: 마운트 시 한 번만 실행
 
   // 세션 체크 함수 (useCallback으로 메모이제이션)
@@ -202,15 +211,7 @@ export const SessionProvider = ({ children }) => {
         
         console.log('✅ 중앙 세션 확인 완료:', user);
       } else {
-        // 세션 확인 실패 시 기존 사용자 정보가 있으면 보존
-        if (state.user && state.user.role) {
-          console.log('🔄 세션 확인 실패했지만 기존 사용자 정보 보존:', state.user.role);
-          // 기존 사용자 정보 유지, 세션만 클리어하지 않음
-          return true; // 로그인 상태 유지
-        } else {
-          dispatch({ type: SessionActionTypes.CLEAR_SESSION });
-          // CONSTANTS.HTTP_STATUS.UNAUTHORIZED 오류는 정상적인 상황이므로 콘솔에 로그하지 않음
-        }
+        dispatch({ type: SessionActionTypes.CLEAR_SESSION });
       }
 
       return isLoggedIn;

@@ -194,12 +194,20 @@ const UnifiedLogin = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.search]);
 
-  // useSession에서 사용자 정보가 감지되면 리다이렉트
+  // useSession에서 사용자 정보가 감지되면, 실제 세션(200) 검증 후에만 리다이렉트
   useEffect(() => {
-    if (user && user.id && !isLoading && !tooltip.show) {
-      console.log('✅ useSession에서 사용자 정보 감지, 리다이렉트 시작:', user.id);
-      checkMultiTenantAndRedirect(user);
-    }
+    if (!user?.id || isLoading || tooltip.show) return;
+    let cancelled = false;
+    (async () => {
+      const ok = await checkSession(true);
+      if (cancelled) return;
+      if (!ok) return;
+      const validatedUser = sessionManager.getUser();
+      if (validatedUser?.id) {
+        checkMultiTenantAndRedirect(validatedUser);
+      }
+    })();
+    return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, isLoading, tooltip.show]);
 
@@ -383,18 +391,20 @@ const UnifiedLogin = () => {
         credentials: 'include'
       });
 
-      if (response.ok) {
-        const responseData = await response.json();
-        // ApiResponse 래퍼 처리: { success: true, data: T } 형태면 data 추출
-        const data = (responseData && typeof responseData === 'object' && 'success' in responseData && 'data' in responseData)
-          ? responseData.data
-          : responseData;
-        if (data.isMultiTenant) {
-          // 멀티 테넌트 사용자: 테넌트 선택 화면 표시
-          await loadAccessibleTenants();
-          setShowTenantSelection(true);
-          return;
-        }
+      if (response.status === 401 || !response.ok) {
+        await checkSession(true);
+        return;
+      }
+
+      const responseData = await response.json();
+      // ApiResponse 래퍼 처리: { success: true, data: T } 형태면 data 추출
+      const data = (responseData && typeof responseData === 'object' && 'success' in responseData && 'data' in responseData)
+        ? responseData.data
+        : responseData;
+      if (data && data.isMultiTenant) {
+        await loadAccessibleTenants();
+        setShowTenantSelection(true);
+        return;
       }
 
       // 단일 테넌트 또는 멀티 테넌트가 아닌 경우: redirect 파라미터 확인 후 리다이렉트
@@ -402,10 +412,8 @@ const UnifiedLogin = () => {
       const redirectPath = searchParams.get('redirect');
 
       if (redirectPath) {
-        // redirect 파라미터가 있으면 해당 경로로 이동
         navigate(redirectPath, { replace: true });
       } else {
-        // redirect 파라미터가 없으면 동적 대시보드로 이동
         const { redirectToDynamicDashboard } = await import('../../utils/dashboardUtils');
         const authResponse = {
           user: user,
@@ -415,25 +423,6 @@ const UnifiedLogin = () => {
       }
     } catch (error) {
       console.error('멀티 테넌트 확인 오류:', error);
-      // 오류 시에도 redirect 파라미터 확인 후 리다이렉트
-      const user = sessionManager.getUser();
-      if (user) {
-        const searchParams = new URLSearchParams(location.search);
-        const redirectPath = searchParams.get('redirect');
-
-        if (redirectPath) {
-          // redirect 파라미터가 있으면 해당 경로로 이동
-          navigate(redirectPath, { replace: true });
-        } else {
-          // redirect 파라미터가 없으면 동적 대시보드로 이동
-          const { redirectToDynamicDashboard } = await import('../../utils/dashboardUtils');
-          const authResponse = {
-            user: user,
-            isMultiTenant: false
-          };
-          await redirectToDynamicDashboard(authResponse, navigate);
-        }
-      }
     }
   };
 

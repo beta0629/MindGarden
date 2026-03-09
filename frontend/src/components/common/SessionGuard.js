@@ -13,6 +13,8 @@
 import React, { useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
+import { sessionManager } from '../../utils/sessionManager';
+import { SESSION_CHECK_RECENT_SKIP_MS } from '../../constants/session';
 
 /**
  * 세션 가드 컴포넌트
@@ -61,6 +63,14 @@ const SessionGuard = ({ children }) => {
         // 공개 경로는 세션 체크 스킵
         if (isPublicPath) {
             console.log('🔓 [SessionGuard] 공개 경로 - 세션 체크 건너뛰기:', currentPath);
+            return;
+        }
+
+        // remount 시 최근 1초 이내 체크했으면 스킵 (무한루프 방지)
+        const lastCheck = sessionManager.getLastCheckTime();
+        if (lastCheck && Date.now() - lastCheck < SESSION_CHECK_RECENT_SKIP_MS) {
+            console.log('🔓 [SessionGuard] 최근 체크 완료 - 스킵:', currentPath);
+            lastPathRef.current = currentPath;
             return;
         }
         

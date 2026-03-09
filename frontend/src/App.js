@@ -164,32 +164,7 @@ function AppContent() {
     autoApply: true
   });
   
-  // 공개 경로 정의 (인증 없이 접근 가능)
-  const publicPaths = [
-    '/login',
-    '/register',
-    '/forgot-password',
-    '/reset-password',
-    '/oauth2/callback',
-    '/design-system',
-    '/design-system-v2',
-    '/test/notifications',
-    '/test/payment',
-    '/test/integration',
-    '/test/ios-cards',
-    '/test/design-sample',
-    '/test/premium-sample',
-    '/test/advanced-sample',
-    '/test/components'
-  ];
-
-  const location = useLocation();
-  useEffect(() => {
-    const isPublicPath = publicPaths.includes(location.pathname);
-    if (!isPublicPath) {
-      checkSession();
-    }
-  }, [location.pathname, checkSession]);
+  // pathname 변경 시 checkSession은 SessionGuard에서만 호출 (중복 제거 - 무한루프 방지)
 
   // 통계 모달 상태
   const [showStatisticsModal, setShowStatisticsModal] = React.useState(false);
@@ -323,13 +298,30 @@ function AppContent() {
     }, 1000); // eslint-disable-line no-magic-numbers
   }, []); // checkSession 의존성 제거 (무한루프 방지)
 
-  if (isLoading) {
-    return <div>로딩 중...</div>;
-  }
-
   return (
     <QueryParamHandler onLoginSuccess={handleLoginSuccess}>
       <SessionGuard>
+        {isLoading && (
+          <div
+            className="session-loading-overlay"
+            style={{
+              position: 'fixed',
+              inset: 0,
+              zIndex: 9999,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: 'var(--mg-surface, rgba(255, 255, 255, 0.95))'
+            }}
+          >
+            <div className="mg-loading-container mg-loading-container--centered">
+              <div className="mg-loading-content">
+                <div className="mg-loading-spinner" />
+                <span className="mg-loading-text">로딩 중...</span>
+              </div>
+            </div>
+          </div>
+        )}
         <div className="App">
           <UnifiedNotification type="toast" position="top-right" />
           <Suspense fallback={<div className="mg-loading" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '200px' }}>로딩 중...</div>}>

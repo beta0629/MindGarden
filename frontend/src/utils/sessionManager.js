@@ -547,6 +547,7 @@ class SessionManager {
   }
 
   getSessionInfo() { return this.sessionInfo; }
+  getLastCheckTime() { return this.lastCheckTime; }
   isLoading() { return this.isLoading; }
 
   isLoggedIn() {

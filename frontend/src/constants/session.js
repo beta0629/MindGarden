@@ -21,6 +21,9 @@ export const SESSION_CHECK_TIMEOUT = 10 * 1000; // 10초
 // 로그인 후 세션 확인 지연 시간 (밀리초)
 export const LOGIN_SESSION_CHECK_DELAY = 100; // 100ms
 
+// remount 시 최근 체크 후 이 시간 이내면 checkSession 스킵 (무한루프 방지)
+export const SESSION_CHECK_RECENT_SKIP_MS = 1000; // 1초
+
 // 기존 세션 확인 지연 시간 (밀리초) - 로그인 페이지에서 세션 체크
 export const EXISTING_SESSION_CHECK_DELAY = 500; // OAuth2 콜백 후 세션 쿠키 설정 대기
 

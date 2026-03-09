@@ -36,6 +36,7 @@
 
 .mg-v2-notification-dropdown__panel {
   width: 360px;
+  min-height: 240px; /* flex 붕괴(2px) 방지: 헤더+빈 메시지+푸터 영역 보장 */
   max-height: min(480px, calc(100vh - 80px));
   display: flex;
   flex-direction: column;

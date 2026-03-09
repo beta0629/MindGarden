@@ -55,6 +55,7 @@
 
 .mg-v2-profile-dropdown__panel {
   width: 260px;
+  min-height: 220px;  /* 헤더+메뉴가 보이도록 최소 높이 보장 (제거 시 flex로 2px 등으로 붕괴됨) */
   max-height: 400px;
   display: flex;
   flex-direction: column;

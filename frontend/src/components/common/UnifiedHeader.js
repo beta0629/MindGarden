@@ -96,6 +96,15 @@ const UnifiedHeader = ({
     ? (logoSubtitle != null && logoSubtitle !== '')
     : !subtitleRedundant);
 
+  // legacy:: = 복호화 실패한 암호문 → 표시하지 않음
+  const getSafeDisplayName = (u) => {
+    const isEncryptedRaw = (s) => !s || s.includes('==') || s.startsWith('legacy::');
+    if (u?.name && !isEncryptedRaw(u.name)) return u.name;
+    if (u?.nickname && !isEncryptedRaw(u.nickname)) return u.nickname;
+    if (u?.userId) return u.userId;
+    return '사용자';
+  };
+
   // 테넌트 이름 결정 (우선순위: 사용자 정보 > 브랜딩 정보 > 기본값)
   const getTenantDisplayName = () => {
     // 1순위: 사용자 정보에서 테넌트 이름
@@ -401,7 +410,7 @@ const UnifiedHeader = ({
           >
             <Avatar
               profileImageUrl={profileImageUrl}
-              displayName={user?.name || user?.nickname || user?.userId || '사용자'}
+              displayName={getSafeDisplayName(user)}
               className="mg-header__profile-image"
             />
           </div>
@@ -409,7 +418,7 @@ const UnifiedHeader = ({
           {/* 사용자 정보 */}
           <div className="mg-header__user-details">
             <span className="mg-header__user-name">
-              {(user.name || user.nickname || user.userId)}
+              {getSafeDisplayName(user)}
               {(user.role === 'ROLE_CONSULTANT' || user.role === 'CONSULTANT') ? ' 선생님' : ''}
             </span>
             <span className="mg-header__user-role">{getTenantDisplayName()}</span>

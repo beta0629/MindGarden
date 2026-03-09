@@ -14,14 +14,11 @@ import './WelcomeSection.css';
 const WelcomeSection = ({ user, currentTime, consultationData }) => {
   const navigate = useNavigate();
 
-  // 사용자 이름 가져오기
+  // 사용자 이름 가져오기 (legacy:: = 복호화 실패한 암호문 → 표시하지 않음)
   const getUserDisplayName = () => {
-    if (user?.name && !user.name.includes('==')) {
-      return user.name;
-    }
-    if (user?.nickname && !user.nickname.includes('==')) {
-      return user.nickname;
-    }
+    const isEncryptedRaw = (s) => !s || s.includes('==') || s.startsWith('legacy::');
+    if (user?.name && !isEncryptedRaw(user.name)) return user.name;
+    if (user?.nickname && !isEncryptedRaw(user.nickname)) return user.nickname;
     if (user?.userId) {
       return user.userId;
     }

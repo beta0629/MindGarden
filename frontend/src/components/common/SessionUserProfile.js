@@ -65,16 +65,13 @@ const SessionUserProfile = ({ onProfileClick, showRole = true }) => {
 
   // 사용자 이름 (복호화된 세션 데이터 사용)
   const getUserDisplayName = () => {
-    // 세션에서 복호화된 이름 우선 사용
-    if (sessionUser?.name && !sessionUser.name.includes('==')) {
-      return sessionUser.name;
-    }
-    if (sessionUser?.nickname && !sessionUser.nickname.includes('==')) {
-      return sessionUser.nickname;
-    }
-    if (sessionUser?.userId) {
-      return sessionUser.userId;
-    }
+    // legacy:: 접두사 = 복호화 실패로 노출된 암호문 → 표시하지 않음
+    const isEncryptedRaw = (s) => !s || s.includes('==') || s.startsWith('legacy::');
+    const name = sessionUser?.name && !isEncryptedRaw(sessionUser.name) ? sessionUser.name : null;
+    const nickname = sessionUser?.nickname && !isEncryptedRaw(sessionUser.nickname) ? sessionUser.nickname : null;
+    if (name) return name;
+    if (nickname) return nickname;
+    if (sessionUser?.userId) return sessionUser.userId;
     return '사용자';
   };
 

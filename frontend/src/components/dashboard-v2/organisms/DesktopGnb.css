@@ -14,6 +14,7 @@
   padding: 0 24px;
   background: var(--mg-layout-header-bg, #FAF9F7);
   border-bottom: 1px solid var(--mg-layout-header-border, #D4CFC8);
+  overflow: visible;
 }
 
 .mg-v2-desktop-gnb__logo {
@@ -38,4 +39,5 @@
   justify-content: flex-end;
   align-items: center;
   margin-left: 24px;
+  overflow: visible;
 }

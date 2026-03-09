@@ -14,7 +14,7 @@ import React, { useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
 import { sessionManager } from '../../utils/sessionManager';
-import { SESSION_CHECK_RECENT_SKIP_MS } from '../../constants/session';
+import { SESSION_CHECK_COOLDOWN_MS } from '../../constants/session';
 
 /**
  * 세션 가드 컴포넌트
@@ -66,9 +66,9 @@ const SessionGuard = ({ children }) => {
             return;
         }
 
-        // remount 시 최근 1초 이내 체크했으면 스킵 (무한루프 방지)
+        // remount/재실행 시 최근 3초 이내 체크했으면 스킵 (무한루프 근본 방지)
         const lastCheck = sessionManager.getLastCheckTime();
-        if (lastCheck && Date.now() - lastCheck < SESSION_CHECK_RECENT_SKIP_MS) {
+        if (lastCheck && Date.now() - lastCheck < SESSION_CHECK_COOLDOWN_MS) {
             console.log('🔓 [SessionGuard] 최근 체크 완료 - 스킵:', currentPath);
             lastPathRef.current = currentPath;
             return;

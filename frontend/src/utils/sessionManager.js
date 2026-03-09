@@ -1,7 +1,8 @@
 import { API_BASE_URL } from '../constants/api';
 import {
   SESSION_CHECK_INTERVAL,
-  SESSION_CHECK_TIMEOUT
+  SESSION_CHECK_TIMEOUT,
+  SESSION_CHECK_COOLDOWN_MS
 } from '../constants/session';
 import { getDefaultApiHeaders } from './apiHeaders';
 
@@ -83,6 +84,10 @@ class SessionManager {
     }
 
     // 강제 확인이 아니고, 이미 체크 중이거나 최근에 체크했으면 스킵
+    // 3초 이내 최근 체크: 무조건 스킵 (무한루프 근본 방지)
+    if (!force && this.lastCheckTime && (now - this.lastCheckTime) < SESSION_CHECK_COOLDOWN_MS) {
+      return this.user !== null;
+    }
     // 페이지 이동 시에는 더 긴 간격 적용
     const minInterval = this.isPageNavigation() ? this.minCheckInterval * 3 : this.minCheckInterval;
     if (!force && (this.checkInProgress || (now - this.lastCheckTime < minInterval))) {

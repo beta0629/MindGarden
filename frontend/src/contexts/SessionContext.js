@@ -2,7 +2,7 @@ import React, { createContext, useContext, useReducer, useEffect, useCallback, u
 import { CONSTANTS } from '../constants/magicNumbers';
 import { sessionManager } from '../utils/sessionManager';
 import { authAPI } from '../utils/ajax';
-import { SESSION_CHECK_INTERVAL } from '../constants/session';
+import { SESSION_CHECK_INTERVAL, SESSION_CHECK_COOLDOWN_MS } from '../constants/session';
 
 // 세션 상태 타입 정의
 const SessionState = {
@@ -151,6 +151,14 @@ export const SessionProvider = ({ children }) => {
   // 세션 체크 함수 (useCallback으로 메모이제이션)
   const checkSession = useCallback(async (force = false) => {
     const now = Date.now();
+    
+    // 강제가 아니면: sessionManager 최근 체크 후 3초 이내면 무조건 스킵 (무한루프 근본 방지)
+    if (!force) {
+      const lastCheck = sessionManager.getLastCheckTime();
+      if (lastCheck && (now - lastCheck) < SESSION_CHECK_COOLDOWN_MS) {
+        return sessionManager.isLoggedIn();
+      }
+    }
     
     // stateRef를 통해 최신 state 값 참조
     const currentState = stateRef.current;

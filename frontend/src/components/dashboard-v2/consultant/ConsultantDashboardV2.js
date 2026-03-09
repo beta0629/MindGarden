@@ -57,9 +57,12 @@ const ConsultantDashboardV2 = ({ user }) => {
       setLoading(false);
       return;
     }
-    // API 호출 전 세션 한 번 갱신 후 최신 user 사용
+    // API 호출 전 세션 갱신 (30초 이내 최근 체크 시 스킵 - 무한루프 방지)
     if (typeof window !== 'undefined' && window.sessionManager?.checkSession) {
-      await window.sessionManager.checkSession(true);
+      const lastCheck = window.sessionManager.getLastCheckTime?.() || 0;
+      if (!lastCheck || Date.now() - lastCheck > 30000) {
+        await window.sessionManager.checkSession(true);
+      }
     }
     const sessionManager = typeof window !== 'undefined' ? window.sessionManager : null;
     const currentUser = sessionManager?.getUser?.() ?? user;

@@ -8,10 +8,9 @@ server:
   servlet:
     session:
       cookie:
-        # 루트 도메인(dev.core-solution.co.kr) 콜백 사용 시, 서브도메인(mindgarden 등)에서도 세션 공유
-        # SESSION_COOKIE_DOMAIN=.dev.core-solution.co.kr 이면 JSESSIONID가 *.dev.core-solution.co.kr 로 전송됨
-        # 기본값 적용: env 미설정 시에도 네이버/카카오 로그인 후 current-user 401 방지
-        domain: ${SESSION_COOKIE_DOMAIN:.dev.core-solution.co.kr}
+        # 루트 도메인(dev) 콜백 사용 시, 서브도메인(mindgarden 등)에서도 세션 공유
+        # RFC 6265: 선행 점(.) 불허 → dev.core-solution.co.kr 사용 시에도 서브도메인에 쿠키 전송됨
+        domain: ${SESSION_COOKIE_DOMAIN:dev.core-solution.co.kr}
 
 # JWT/암호화 키: dev에서 미설정 시 기본값으로 기동 가능 (검증기는 dev 한정 완화)
 jwt:

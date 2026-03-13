@@ -28,10 +28,10 @@
 ### 방식 A: 루트 도메인 콜백 + 세션 쿠키 Domain 설정 (현재 적용)
 
 - **콜백 URL**: `https://dev.core-solution.co.kr/api/auth/naver/callback` (그대로 루트 도메인)
-- **세션 쿠키**: `Domain=.dev.core-solution.co.kr` 로 설정 → `dev.core-solution.co.kr` 및 **모든 서브도메인**(mindgarden 등)에서 동일 쿠키 전송
+- **세션 쿠키**: `Domain=dev.core-solution.co.kr` 로 설정 (RFC 6265: 선행 점 불허) → `dev.core-solution.co.kr` 및 **모든 서브도메인**(mindgarden 등)에서 동일 쿠키 전송
 - **장점**: 네이버/카카오 개발자 콘솔에 **기존 루트 도메인 콜백만** 등록하면 됨. 서브도메인용 URL 추가 불필요.
-- **설정**: `config/environments/development/dev.env` 에 `SESSION_COOKIE_DOMAIN=.dev.core-solution.co.kr`, `NAVER_REDIRECT_URI`/`KAKAO_REDIRECT_URI` 는 `https://dev.core-solution.co.kr/...` 유지.  
-  `application-dev.yml` 에 `server.servlet.session.cookie.domain: ${SESSION_COOKIE_DOMAIN:}` 반영됨.
+- **설정**: `config/environments/development/dev.env` 에 `SESSION_COOKIE_DOMAIN=dev.core-solution.co.kr` (선행 점 없음), `NAVER_REDIRECT_URI`/`KAKAO_REDIRECT_URI` 는 `https://dev.core-solution.co.kr/...` 유지.  
+  `application-dev.yml` 에 `server.servlet.session.cookie.domain: ${SESSION_COOKIE_DOMAIN:dev.core-solution.co.kr}` 반영됨.
 
 ### 방식 B: 서브도메인 콜백 (콜백과 프론트 동일 호스트)
 
@@ -40,14 +40,14 @@
 - **장점**: 쿠키 도메인 설정 불필요.
 - **단점**: 네이버/카카오 개발자 콘솔에 **서브도메인 콜백 URL**을 추가로 등록해야 함.
 
-**현재 저장소 설정**: **방식 A** (루트 도메인 콜백 + `SESSION_COOKIE_DOMAIN=.dev.core-solution.co.kr`) 로 통일해 두었습니다.
+**현재 저장소 설정**: **방식 A** (루트 도메인 콜백 + `SESSION_COOKIE_DOMAIN=dev.core-solution.co.kr`, RFC 6265 준수로 선행 점 없음) 로 통일해 두었습니다.
 
 ---
 
 ## 조치 (반영됨)
 
 1. **config/environments/development/dev.env**
-   - `SESSION_COOKIE_DOMAIN=.dev.core-solution.co.kr` 로 **세션 쿠키를 서브도메인과 공유**
+   - `SESSION_COOKIE_DOMAIN=dev.core-solution.co.kr` 로 **세션 쿠키를 서브도메인과 공유** (선행 점 없음: RFC 6265/Chrome invalid 방지)
    - `NAVER_REDIRECT_URI`, `KAKAO_REDIRECT_URI` 는 **루트 도메인** 유지:  
      `https://dev.core-solution.co.kr/api/auth/naver/callback`,  
      `https://dev.core-solution.co.kr/api/auth/kakao/callback`
@@ -63,7 +63,7 @@
    - (방식 B로 바꿀 경우에만) 서브도메인 URL 추가 등록
 
 4. **서버 반영**
-   - 개발 서버 env에 `SESSION_COOKIE_DOMAIN=.dev.core-solution.co.kr` 및 위 redirect URI 반영 후 **앱 재시작**  
+   - 개발 서버 env에 `SESSION_COOKIE_DOMAIN=dev.core-solution.co.kr` 및 위 redirect URI 반영 후 **앱 재시작**  
      `sudo systemctl restart mindgarden-dev`
 
 ## OAuth 진입 경로 (참고)

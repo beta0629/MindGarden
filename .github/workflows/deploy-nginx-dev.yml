@@ -82,16 +82,54 @@ jobs:
             sudo systemctl start nginx 2>/dev/null || true
           fi
           
-          # api.dev.core-solution.co.kr 인증서 (동일 서버에서 사용 시)
-          if [ -f /etc/letsencrypt/live/api.dev.core-solution.co.kr/fullchain.pem ]; then
+          # api.dev.core-solution.co.kr 인증서 확인 및 발급 (서브도메인)
+          NEED_API_ISSUE=false
+          if [ ! -f /etc/letsencrypt/live/api.dev.core-solution.co.kr/fullchain.pem ]; then
+            echo "⚠️ api.dev.core-solution.co.kr 인증서가 없습니다. 발급 시도 중..."
+            NEED_API_ISSUE=true
+          else
             API_NOT_BEFORE=$(openssl x509 -noout -startdate -in /etc/letsencrypt/live/api.dev.core-solution.co.kr/fullchain.pem 2>/dev/null | cut -d= -f2)
             if echo "$API_NOT_BEFORE" | grep -q "1970\|Jan 21 00:00:00"; then
-              echo "⚠️ api.dev.core-solution.co.kr 인증서 날짜 오류. 재발급 시도..."
-              sudo certbot delete --cert-name api.dev.core-solution.co.kr --non-interactive 2>/dev/null || true
-              sudo systemctl stop nginx 2>/dev/null || true
-              sudo certbot certonly --standalone -d api.dev.core-solution.co.kr --non-interactive --agree-tos --email admin@core-solution.co.kr --preferred-challenges http 2>&1 || true
-              sudo systemctl start nginx 2>/dev/null || true
+              echo "⚠️ api.dev.core-solution.co.kr 인증서 날짜 오류 (날짜: $API_NOT_BEFORE). 재발급 시도 중..."
+              NEED_API_ISSUE=true
+            else
+              echo "✅ api.dev.core-solution.co.kr 인증서 유효 (notBefore: $API_NOT_BEFORE)"
             fi
+          fi
+          if [ "$NEED_API_ISSUE" = true ]; then
+            sudo certbot delete --cert-name api.dev.core-solution.co.kr --non-interactive 2>/dev/null || true
+            sudo systemctl stop nginx 2>/dev/null || true
+            if sudo certbot certonly --standalone -d api.dev.core-solution.co.kr --non-interactive --agree-tos --email admin@core-solution.co.kr --preferred-challenges http 2>&1; then
+              echo "✅ api.dev.core-solution.co.kr 인증서 발급 성공"
+            else
+              echo "⚠️ api.dev.core-solution.co.kr 인증서 발급 실패 - 수동 발급 필요"
+            fi
+            sudo systemctl start nginx 2>/dev/null || true
+          fi
+          
+          # mindgarden.dev.core-solution.co.kr 인증서 확인 및 발급 (서브도메인)
+          NEED_MINDGARDEN_ISSUE=false
+          if [ ! -f /etc/letsencrypt/live/mindgarden.dev.core-solution.co.kr/fullchain.pem ]; then
+            echo "⚠️ mindgarden.dev.core-solution.co.kr 인증서가 없습니다. 발급 시도 중..."
+            NEED_MINDGARDEN_ISSUE=true
+          else
+            MG_NOT_BEFORE=$(openssl x509 -noout -startdate -in /etc/letsencrypt/live/mindgarden.dev.core-solution.co.kr/fullchain.pem 2>/dev/null | cut -d= -f2)
+            if echo "$MG_NOT_BEFORE" | grep -q "1970\|Jan 21 00:00:00"; then
+              echo "⚠️ mindgarden.dev.core-solution.co.kr 인증서 날짜 오류 (날짜: $MG_NOT_BEFORE). 재발급 시도 중..."
+              NEED_MINDGARDEN_ISSUE=true
+            else
+              echo "✅ mindgarden.dev.core-solution.co.kr 인증서 유효 (notBefore: $MG_NOT_BEFORE)"
+            fi
+          fi
+          if [ "$NEED_MINDGARDEN_ISSUE" = true ]; then
+            sudo certbot delete --cert-name mindgarden.dev.core-solution.co.kr --non-interactive 2>/dev/null || true
+            sudo systemctl stop nginx 2>/dev/null || true
+            if sudo certbot certonly --standalone -d mindgarden.dev.core-solution.co.kr --non-interactive --agree-tos --email admin@core-solution.co.kr --preferred-challenges http 2>&1; then
+              echo "✅ mindgarden.dev.core-solution.co.kr 인증서 발급 성공"
+            else
+              echo "⚠️ mindgarden.dev.core-solution.co.kr 인증서 발급 실패 - 수동 발급 필요"
+            fi
+            sudo systemctl start nginx 2>/dev/null || true
           fi
           
           # dev.e-trinity.co.kr 인증서 확인 및 발급

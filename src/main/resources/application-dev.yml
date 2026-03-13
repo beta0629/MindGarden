@@ -5,6 +5,12 @@
 # 서버 기준 URL (OAuth2 callback 등에 사용, 환경 변수로 오버라이드)
 server:
   base-url: ${OAUTH2_BASE_URL:https://mindgarden.dev.core-solution.co.kr}
+  servlet:
+    session:
+      cookie:
+        # 루트 도메인(dev.core-solution.co.kr) 콜백 사용 시, 서브도메인(mindgarden 등)에서도 세션 공유
+        # SESSION_COOKIE_DOMAIN=.dev.core-solution.co.kr 이면 JSESSIONID가 *.dev.core-solution.co.kr 로 전송됨
+        domain: ${SESSION_COOKIE_DOMAIN:}
 
 # JWT/암호화 키: dev에서 미설정 시 기본값으로 기동 가능 (검증기는 dev 한정 완화)
 jwt:

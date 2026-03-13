@@ -134,7 +134,7 @@ public class AuthController extends BaseApiController {
         
         // 인증되지 않은 사용자에 대해서는 401 Unauthorized 반환
         if (currentUser == null) {
-            log.info("❌ 인증되지 않은 사용자 - 401 Unauthorized 반환");
+            log.warn("current-user 401: 세션존재={}, sessionId={}, 세션사용자={}", session != null, session != null ? session.getId() : "N/A", sessionUser != null);
             return ResponseEntity.status(org.springframework.http.HttpStatus.UNAUTHORIZED)
                 .body(ApiResponse.<Map<String, Object>>builder()
                     .success(false)

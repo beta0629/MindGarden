@@ -6,6 +6,8 @@ After=network.target mysql.service
 Type=simple
 User=root
 WorkingDirectory=/var/www/mindgarden-dev
+# 세션 쿠키 도메인 등 OAuth/세션 env 로드 (파일 없으면 무시: -)
+EnvironmentFile=-/etc/mindgarden/dev.env
 ExecStart=/opt/mindgarden/start.sh
 Restart=always
 RestartSec=10

@@ -42,9 +42,21 @@ const SCHEDULABLE_STATUSES = new Set(['PAYMENT_CONFIRMED', 'DEPOSIT_PENDING', 'A
 const canScheduleForMapping = (mapping) =>
   mapping?.status && SCHEDULABLE_STATUSES.has(mapping.status);
 
-/** 좌측 목록 필터: 회기 남은 매칭만(기본) | 전체 */
-const SESSION_FILTER_REMAINING = 'remaining';
-const SESSION_FILTER_ALL = 'all';
+/** 신규 매칭 판별: createdAt 최근 N일 이내. 운영 피드백으로 14일 등 조정 가능. */
+const NEW_DAYS = 7;
+
+/** 좌측 목록 보기 필터: 신규 매칭(기본) | 회기 남은 매칭 | 전체 */
+const VIEW_FILTER_NEW = 'new';
+const VIEW_FILTER_REMAINING = 'remaining';
+const VIEW_FILTER_ALL = 'all';
+
+/** 매칭 정렬/신규 판별용 날짜 반환 (createdAt → assignedAt → startDate fallback) */
+const getMappingDate = (m) => {
+  const raw = m.createdAt ?? m.assignedAt ?? m.startDate;
+  if (!raw) return 0;
+  const d = new Date(raw);
+  return Number.isNaN(d.getTime()) ? 0 : d.getTime();
+};
 
 /** 상태별 필터 옵션 (value: '' = 전체) */
 const STATUS_FILTER_OPTIONS = [
@@ -68,7 +80,7 @@ const IntegratedMatchingSchedule = () => {
   const [selectedDateForModal, setSelectedDateForModal] = useState(() => new Date());
   const [refetchTrigger, setRefetchTrigger] = useState(0);
   const [createMappingModalOpen, setCreateMappingModalOpen] = useState(false);
-  const [sessionFilter, setSessionFilter] = useState(SESSION_FILTER_REMAINING);
+  const [viewFilter, setViewFilter] = useState(VIEW_FILTER_NEW);
   const [statusFilter, setStatusFilter] = useState('');
   const [paymentModalMapping, setPaymentModalMapping] = useState(null);
   const [depositModalMapping, setDepositModalMapping] = useState(null);
@@ -79,9 +91,9 @@ const IntegratedMatchingSchedule = () => {
     setLoading(true);
     try {
       const response = await StandardizedApi.get('/api/v1/admin/mappings');
-      if (response && response.mappings) {
+      if (response?.mappings) {
         setMappings(response.mappings);
-      } else if (response && Array.isArray(response)) {
+      } else if (Array.isArray(response)) {
         setMappings(response);
       } else {
         setMappings([]);
@@ -99,17 +111,31 @@ const IntegratedMatchingSchedule = () => {
     loadMappings();
   }, [loadMappings]);
 
-  const bySession =
-    sessionFilter === SESSION_FILTER_REMAINING
-      ? mappings.filter((m) => (m.remainingSessions ?? 0) > 0)
-      : mappings;
+  const cutoff = Date.now() - NEW_DAYS * 24 * 60 * 60 * 1000;
+  let byView;
+  if (viewFilter === VIEW_FILTER_NEW) {
+    byView = mappings.filter((m) => {
+      const created = getMappingDate(m);
+      const withinDays = created >= cutoff;
+      const actionNeeded =
+        m.status === 'PENDING_PAYMENT' || m.status === 'DEPOSIT_PENDING';
+      return withinDays || actionNeeded;
+    });
+  } else if (viewFilter === VIEW_FILTER_REMAINING) {
+    byView = mappings.filter((m) => (m.remainingSessions ?? 0) > 0);
+  } else {
+    byView = mappings;
+  }
 
+  const sortedByView = [...byView].sort(
+    (a, b) => getMappingDate(b) - getMappingDate(a)
+  );
   const filteredMappings = statusFilter
-    ? bySession.filter((m) => m.status === statusFilter)
-    : bySession;
+    ? sortedByView.filter((m) => m.status === statusFilter)
+    : sortedByView;
 
   const getStatusCount = (value) =>
-    value === '' ? bySession.length : bySession.filter((m) => m.status === value).length;
+    value === '' ? byView.length : byView.filter((m) => m.status === value).length;
 
   /** 스케줄 가능(드래그 가능) 카드 수 — 결제/입금/승인 후 목록 갱신 시 Draggable 재바인딩 */
   const scheduleableCount = filteredMappings.filter((m) => canScheduleForMapping(m)).length;
@@ -120,7 +146,7 @@ const IntegratedMatchingSchedule = () => {
       itemSelector: '.integrated-schedule__card.fc-event'
     });
     return () => draggable.destroy();
-  }, [sessionFilter, filteredMappings.length, scheduleableCount]);
+  }, [viewFilter, filteredMappings.length, scheduleableCount]);
 
   const handleScheduleRegister = (mapping) => {
     if (!canScheduleForMapping(mapping)) {
@@ -142,7 +168,7 @@ const IntegratedMatchingSchedule = () => {
   };
 
   const handleDropFromExternal = (date, mappingPayload) => {
-    if (!mappingPayload || !mappingPayload.consultantId || !mappingPayload.clientId) {
+    if (!mappingPayload?.consultantId || !mappingPayload?.clientId) {
       notificationManager.error('매칭 정보가 올바르지 않습니다.');
       return;
     }
@@ -222,26 +248,37 @@ const IntegratedMatchingSchedule = () => {
       <div className="integrated-schedule__content">
         <aside className="integrated-schedule__sidebar">
           <h2 className="integrated-schedule__sidebar-title">매칭 목록</h2>
-          <fieldset className="integrated-schedule__filter" aria-label="매칭 목록 필터">
-            <legend className="integrated-schedule__filter-legend">회기</legend>
-            <label className={`integrated-schedule__filter-label ${sessionFilter === SESSION_FILTER_REMAINING ? 'integrated-schedule__filter-label--selected' : ''}`}>
+          <fieldset className="integrated-schedule__filter" aria-label="매칭 목록 보기 필터">
+            <legend className="integrated-schedule__filter-legend">보기</legend>
+            <label className={`integrated-schedule__filter-label ${viewFilter === VIEW_FILTER_NEW ? 'integrated-schedule__filter-label--selected' : ''}`}>
               <input
                 type="radio"
-                name="sessionFilter"
-                value={SESSION_FILTER_REMAINING}
-                checked={sessionFilter === SESSION_FILTER_REMAINING}
-                onChange={() => setSessionFilter(SESSION_FILTER_REMAINING)}
-                aria-label="회기 남은 매칭만"
+                name="viewFilter"
+                value={VIEW_FILTER_NEW}
+                checked={viewFilter === VIEW_FILTER_NEW}
+                onChange={() => setViewFilter(VIEW_FILTER_NEW)}
+                aria-label="신규 매칭"
               />
-              <span className="integrated-schedule__filter-text">회기 남은 매칭만</span>
+              <span className="integrated-schedule__filter-text">신규 매칭</span>
             </label>
-            <label className={`integrated-schedule__filter-label ${sessionFilter === SESSION_FILTER_ALL ? 'integrated-schedule__filter-label--selected' : ''}`}>
+            <label className={`integrated-schedule__filter-label ${viewFilter === VIEW_FILTER_REMAINING ? 'integrated-schedule__filter-label--selected' : ''}`}>
               <input
                 type="radio"
-                name="sessionFilter"
-                value={SESSION_FILTER_ALL}
-                checked={sessionFilter === SESSION_FILTER_ALL}
-                onChange={() => setSessionFilter(SESSION_FILTER_ALL)}
+                name="viewFilter"
+                value={VIEW_FILTER_REMAINING}
+                checked={viewFilter === VIEW_FILTER_REMAINING}
+                onChange={() => setViewFilter(VIEW_FILTER_REMAINING)}
+                aria-label="회기 남은 매칭"
+              />
+              <span className="integrated-schedule__filter-text">회기 남은 매칭</span>
+            </label>
+            <label className={`integrated-schedule__filter-label ${viewFilter === VIEW_FILTER_ALL ? 'integrated-schedule__filter-label--selected' : ''}`}>
+              <input
+                type="radio"
+                name="viewFilter"
+                value={VIEW_FILTER_ALL}
+                checked={viewFilter === VIEW_FILTER_ALL}
+                onChange={() => setViewFilter(VIEW_FILTER_ALL)}
                 aria-label="전체"
               />
               <span className="integrated-schedule__filter-text">전체</span>
@@ -284,7 +321,9 @@ const IntegratedMatchingSchedule = () => {
                   let emptyMessage = '매칭이 없습니다.';
                   if (statusFilter) {
                     emptyMessage = '선택한 조건에 맞는 매칭이 없습니다.';
-                  } else if (sessionFilter === SESSION_FILTER_REMAINING) {
+                  } else if (viewFilter === VIEW_FILTER_NEW) {
+                    emptyMessage = '신규 매칭이 없습니다.';
+                  } else if (viewFilter === VIEW_FILTER_REMAINING) {
                     emptyMessage = '회기 남은 매칭이 없습니다.';
                   }
                   return (

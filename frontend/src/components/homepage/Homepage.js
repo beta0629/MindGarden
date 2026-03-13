@@ -186,7 +186,7 @@ const Homepage = () => {
                     navigate('/dashboard');
                   }
                 } else {
-                  handleRegister();
+                  handleLogin();
                 }
               }}
             >

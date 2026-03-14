@@ -9,7 +9,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Draggable } from '@fullcalendar/interaction';
-import { CalendarPlus, UserPlus, CreditCard, DollarSign, CheckCircle } from 'lucide-react';
+import { UserPlus } from 'lucide-react';
 import StandardizedApi from '../../../utils/standardizedApi';
 import notificationManager from '../../../utils/notification';
 import { useSession } from '../../../contexts/SessionContext';
@@ -19,23 +19,10 @@ import ScheduleModal from '../../schedule/ScheduleModal';
 import MappingCreationModal from '../MappingCreationModal';
 import MappingPaymentModal from '../mapping/MappingPaymentModal';
 import MappingDepositModal from '../mapping/MappingDepositModal';
-import MGButton from '../../common/MGButton';
+import MappingScheduleCard from './integrated-schedule/organisms/MappingScheduleCard';
 import '../../../styles/unified-design-tokens.css';
 import '../AdminDashboard/AdminDashboardB0KlA.css';
 import './IntegratedMatchingSchedule.css';
-
-const STATUS_KO = {
-  ACTIVE: '활성',
-  INACTIVE: '비활성',
-  PENDING_PAYMENT: '결제 대기',
-  PAYMENT_CONFIRMED: '결제 확인',
-  DEPOSIT_PENDING: '승인 대기',
-  TERMINATED: '종료됨',
-  SESSIONS_EXHAUSTED: '회기 소진',
-  SUSPENDED: '일시정지'
-};
-
-const getStatusKoreanName = (status) => STATUS_KO[status] || status;
 
 /** 스케줄 등록 가능한 매칭 상태 (입금 확인 후 스케줄 등록·드래그 허용) */
 const SCHEDULABLE_STATUSES = new Set(['PAYMENT_CONFIRMED', 'DEPOSIT_PENDING', 'ACTIVE']);
@@ -351,87 +338,17 @@ const IntegratedMatchingSchedule = () => {
                       className={`integrated-schedule__card ${canScheduleForMapping(mapping) ? 'fc-event' : ''}`}
                       data-event={canScheduleForMapping(mapping) ? JSON.stringify(eventData) : undefined}
                     >
-                      <div className="integrated-schedule__card-body">
-                        <div className="integrated-schedule__card-parties">
-                          <span className="integrated-schedule__card-consultant">
-                            {mapping.consultantName || 'N/A'}
-                          </span>
-                          <span className="integrated-schedule__card-arrow">→</span>
-                          <span className="integrated-schedule__card-client">
-                            {mapping.clientName || 'N/A'}
-                          </span>
-                        </div>
-                        <div className="integrated-schedule__card-meta">
-                          <span className={`integrated-schedule__card-status integrated-schedule__card-status--${(mapping.status || '').toLowerCase()}`}>
-                            {getStatusKoreanName(mapping.status)}
-                          </span>
-                          {mapping.remainingSessions != null && mapping.remainingSessions >= 0 && (
-                            <span className="integrated-schedule__card-remaining integrated-schedule__card-remaining-badge">
-                              {mapping.remainingSessions}회 남음
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <div className="integrated-schedule__card-actions">
-                        {mapping.status === 'PENDING_PAYMENT' && (
-                          <MGButton
-                            type="button"
-                            variant="success"
-                            size="small"
-                            className="integrated-schedule__btn-action integrated-schedule__btn-action--payment"
-                            onClick={() => setPaymentModalMapping(mapping)}
-                            preventDoubleClick={false}
-                            aria-label="결제 확인"
-                          >
-                            <CreditCard size={14} />
-                            결제 확인
-                          </MGButton>
-                        )}
-                        {mapping.status === 'PAYMENT_CONFIRMED' && (
-                          <MGButton
-                            type="button"
-                            variant="primary"
-                            size="small"
-                            className="integrated-schedule__btn-action integrated-schedule__btn-action--deposit"
-                            onClick={() => setDepositModalMapping(mapping)}
-                            preventDoubleClick={false}
-                            aria-label="입금 확인"
-                          >
-                            <DollarSign size={14} />
-                            입금 확인
-                          </MGButton>
-                        )}
-                        {mapping.status === 'DEPOSIT_PENDING' && (
-                          <MGButton
-                            type="button"
-                            variant="success"
-                            size="small"
-                            className="integrated-schedule__btn-action integrated-schedule__btn-action--approve"
-                            onClick={() => handleApprove(mapping.id)}
-                            loading={approveProcessing}
-                            loadingText="승인 중..."
-                            preventDoubleClick
-                            aria-label="승인"
-                          >
-                            <CheckCircle size={14} />
-                            승인
-                          </MGButton>
-                        )}
-                        <MGButton
-                          type="button"
-                          variant="primary"
-                          size="small"
-                          className="integrated-schedule__btn-schedule"
-                          onClick={() => handleScheduleRegister(mapping)}
-                          disabled={!canScheduleForMapping(mapping)}
-                          preventDoubleClick={false}
-                          aria-label={canScheduleForMapping(mapping) ? `${mapping.clientName} 스케줄 등록` : '결제 완료 후 스케줄 등록 가능'}
-                          title={canScheduleForMapping(mapping) ? undefined : '결제가 완료된 매칭만 스케줄 등록이 가능합니다.'}
-                        >
-                          <CalendarPlus size={14} />
-                          스케줄 등록
-                        </MGButton>
-                      </div>
+                      <MappingScheduleCard
+                        mapping={mapping}
+                        eventData={eventData}
+                        isDraggable={canScheduleForMapping(mapping)}
+                        onPayment={setPaymentModalMapping}
+                        onDeposit={setDepositModalMapping}
+                        onApprove={handleApprove}
+                        onScheduleRegister={handleScheduleRegister}
+                        approveProcessing={approveProcessing}
+                        canScheduleForMapping={canScheduleForMapping(mapping)}
+                      />
                     </li>
                   );
                 });

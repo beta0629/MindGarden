@@ -1,0 +1,133 @@
+/* CardActionGroup - integrated-schedule__card-actions, 버튼 스타일 */
+.integrated-schedule__card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mg-spacing-8, 8px);
+  margin-top: var(--mg-spacing-4, 4px);
+  min-height: 44px;
+}
+
+.integrated-schedule__btn-schedule {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--mg-color-primary-inverse);
+  background-color: var(--mg-color-primary-main);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.integrated-schedule__btn-schedule:hover {
+  background-color: var(--mg-color-primary-dark, #2d3d34);
+}
+
+.integrated-schedule__btn-schedule:focus-visible {
+  outline: 2px solid var(--mg-color-primary-main);
+  outline-offset: 2px;
+}
+
+.integrated-schedule__btn-schedule--disabled,
+.integrated-schedule__btn-schedule:disabled,
+.integrated-schedule__card-actions .mg-button.integrated-schedule__btn-schedule.mg-button--disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background-color: var(--mg-color-border-main);
+}
+
+.integrated-schedule__btn-schedule--disabled:hover,
+.integrated-schedule__btn-schedule:disabled:hover,
+.integrated-schedule__card-actions .mg-button.integrated-schedule__btn-schedule.mg-button--disabled:hover {
+  background-color: var(--mg-color-border-main);
+}
+
+.integrated-schedule__btn-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.integrated-schedule__btn-action:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.integrated-schedule__btn-action--payment {
+  color: var(--mg-color-white);
+  background-color: var(--mg-success-600, var(--mg-success-500));
+}
+
+.integrated-schedule__btn-action--payment:hover:not(:disabled) {
+  background-color: var(--mg-success-700, var(--mg-success-600));
+}
+
+.integrated-schedule__btn-action--deposit {
+  color: var(--mg-color-primary-inverse);
+  background-color: var(--mg-color-primary-main);
+}
+
+.integrated-schedule__btn-action--deposit:hover:not(:disabled) {
+  background-color: var(--mg-color-primary-dark);
+}
+
+.integrated-schedule__btn-action--approve {
+  color: var(--mg-color-white);
+  background-color: var(--mg-success-600, var(--mg-success-500));
+}
+
+.integrated-schedule__btn-action--approve:hover:not(:disabled) {
+  background-color: var(--mg-success-700, var(--mg-success-600));
+}
+
+.integrated-schedule__btn-action:focus-visible {
+  outline: 2px solid var(--mg-color-primary-main);
+  outline-offset: 2px;
+}
+
+/* MGButton in card-actions */
+.integrated-schedule__card-actions .mg-button {
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.integrated-schedule__card-actions .mg-button.integrated-schedule__btn-action--payment {
+  background-color: var(--mg-success-600, var(--mg-success-500));
+  color: var(--mg-color-white);
+}
+
+.integrated-schedule__card-actions .mg-button.integrated-schedule__btn-action--payment:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  background-color: var(--mg-success-700, var(--mg-success-600));
+}
+
+.integrated-schedule__card-actions .mg-button.integrated-schedule__btn-action--deposit {
+  background-color: var(--mg-color-primary-main);
+  color: var(--mg-color-primary-inverse);
+}
+
+.integrated-schedule__card-actions .mg-button.integrated-schedule__btn-action--deposit:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  background-color: var(--mg-color-primary-dark);
+}
+
+.integrated-schedule__card-actions .mg-button.integrated-schedule__btn-action--approve {
+  background-color: var(--mg-success-600, var(--mg-success-500));
+  color: var(--mg-color-white);
+}
+
+.integrated-schedule__card-actions .mg-button.integrated-schedule__btn-action--approve:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  background-color: var(--mg-success-700, var(--mg-success-600));
+}

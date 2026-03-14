@@ -1,0 +1,15 @@
+/* MappingPartiesRow - integrated-schedule__card-parties */
+.integrated-schedule__card-parties {
+  font-size: 14px;
+  color: var(--mg-color-text-main, var(--mg-gray-900));
+}
+
+.integrated-schedule__card-consultant,
+.integrated-schedule__card-client {
+  font-weight: 600;
+}
+
+.integrated-schedule__card-arrow {
+  margin: 0 var(--mg-spacing-4, 4px);
+  color: var(--mg-color-text-secondary, var(--mg-gray-600));
+}

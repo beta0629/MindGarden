@@ -1,0 +1,7 @@
+/* CardMeta - integrated-schedule__card-meta */
+.integrated-schedule__card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mg-spacing-8, 8px);
+}

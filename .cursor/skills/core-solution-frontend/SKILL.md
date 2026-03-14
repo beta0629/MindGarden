@@ -63,6 +63,21 @@ const data = await apiGet('/api/v1/...');
 
 메인 페이지와 모달·버튼·위젯이 동일한 디자인 시스템으로 일관되게 표시되어야 합니다.
 
+### 공통 컴포넌트 모듈화 (필수)
+
+**버튼·배지·카드 등 공통 UI는 반드시 `common/` 모듈을 사용한다. 새로 만들지 않는다.**
+
+| 용도 | 사용할 컴포넌트 | import 경로 |
+|------|----------------|-------------|
+| 상태 배지 | StatusBadge | `common/StatusBadge` 또는 `common` |
+| 회기 배지 | RemainingSessionsBadge | `common/RemainingSessionsBadge` |
+| 버튼 | ActionButton | `common/ActionButton` |
+| 카드 컨테이너 | CardContainer | `common/CardContainer` |
+| 카드 액션 그룹 | CardActionGroup | `common/CardActionGroup` |
+
+- `integrated-schedule__card-status`, `mg-v2-status-badge` 등 **컴포넌트별로 중복 정의 금지**
+- 참조: `docs/project-management/COMMON_UI_ENCAPSULATION_PLAN.md`, `docs/design-system/v2/COMMON_UI_IMPLEMENTATION_SPEC.md`
+
 ### 컴포넌트 (아토믹 디자인)
 
 - **아토믹 디자인 준수**: Atoms → Molecules → Organisms → Templates → Pages 계층

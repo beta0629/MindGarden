@@ -59,6 +59,11 @@
 - [심리검사 AI 필수 섹션 누락·파싱 분석](./troubleshooting/PSYCH_AI_MISSING_REQUIRED_SECTIONS_PRECISE_ANALYSIS.md), [서버 로그 분석](./troubleshooting/PSYCH_AI_MISSING_REQUIRED_SECTIONS_SERVER_LOG_ANALYSIS.md)
 - [QUICK_WILDCARD_TEST](./troubleshooting/QUICK_WILDCARD_TEST.md)
 
+### Project Management (프로젝트 관리)
+- [공통 UI 캡슐화·모듈화 계획](./project-management/COMMON_UI_ENCAPSULATION_PLAN.md) — 버튼·배지·카드 공통 컴포넌트 통합
+- [통합 스케줄 카드 디자인 개선](./project-management/INTEGRATED_SCHEDULE_CARD_DESIGN_PLAN.md)
+- [카드 시각 통합 스펙](./design-system/v2/CARD_VISUAL_UNIFIED_SPEC.md)
+
 ### 기타
 - **루트에서 이동한 문서**: [QUICK_START](./guides/quick-start/QUICK_START.md), [DEPLOYMENT_CHECKLIST](./guides/deployment/DEPLOYMENT_CHECKLIST.md), [PROJECT_STRUCTURE](./architecture/PROJECT_STRUCTURE.md), [KOREAN_ENCODING_SETUP](./guides/development/KOREAN_ENCODING_SETUP.md)
 - **문서 작성·정리 규칙**: [.cursor/skills/core-solution-documentation/SKILL.md](../.cursor/skills/core-solution-documentation/SKILL.md)

@@ -1,7 +1,7 @@
 /**
  * IntegratedMatchingSchedule - 매칭·스케줄 통합 원스톱 화면
  * 좌: 매칭 목록(실 API /api/v1/admin/mappings), 우: 스케줄 캘린더(실 API)
- * "스케줄 등록" 클릭 시 ScheduleModal을 상담사·내담자 Pre-filled로 오픈
+ * 카드 드래그 → 캘린더 드롭 시 ScheduleModal 상담사·내담자 Pre-filled로 오픈
  *
  * @author Core Solution
  * @since 2025-02-25
@@ -19,6 +19,7 @@ import ScheduleModal from '../../schedule/ScheduleModal';
 import MappingCreationModal from '../MappingCreationModal';
 import MappingPaymentModal from '../mapping/MappingPaymentModal';
 import MappingDepositModal from '../mapping/MappingDepositModal';
+import { ActionButton } from '../../common';
 import MappingScheduleCard from './integrated-schedule/organisms/MappingScheduleCard';
 import '../../../styles/unified-design-tokens.css';
 import '../AdminDashboard/AdminDashboardB0KlA.css';
@@ -135,25 +136,6 @@ const IntegratedMatchingSchedule = () => {
     return () => draggable.destroy();
   }, [viewFilter, filteredMappings.length, scheduleableCount]);
 
-  const handleScheduleRegister = (mapping) => {
-    if (!canScheduleForMapping(mapping)) {
-      notificationManager.warning('결제가 완료된 매칭만 스케줄 등록이 가능합니다.');
-      return;
-    }
-    if (!mapping.consultantId || !mapping.clientId) {
-      notificationManager.error('상담사·내담자 정보가 없는 매칭입니다.');
-      return;
-    }
-    setPreFilledMapping({
-      consultantId: mapping.consultantId,
-      clientId: mapping.clientId,
-      consultantName: mapping.consultantName || '상담사',
-      clientName: mapping.clientName || '내담자'
-    });
-    setSelectedDateForModal(new Date());
-    setScheduleModalOpen(true);
-  };
-
   const handleDropFromExternal = (date, mappingPayload) => {
     if (!mappingPayload?.consultantId || !mappingPayload?.clientId) {
       notificationManager.error('매칭 정보가 올바르지 않습니다.');
@@ -221,15 +203,16 @@ const IntegratedMatchingSchedule = () => {
     <div className="integrated-schedule">
       <header className="integrated-schedule__header">
         <h1 className="integrated-schedule__title">통합 스케줄링 센터</h1>
-        <button
-          type="button"
-          className="integrated-schedule__btn-new-mapping"
+        <ActionButton
+          variant="primary"
+          size="medium"
           onClick={() => setCreateMappingModalOpen(true)}
           aria-label="신규 매칭 생성"
+          className="integrated-schedule__btn-new-mapping"
         >
           <UserPlus size={18} />
           신규 매칭
-        </button>
+        </ActionButton>
       </header>
 
       <div className="integrated-schedule__content">
@@ -345,9 +328,7 @@ const IntegratedMatchingSchedule = () => {
                         onPayment={setPaymentModalMapping}
                         onDeposit={setDepositModalMapping}
                         onApprove={handleApprove}
-                        onScheduleRegister={handleScheduleRegister}
                         approveProcessing={approveProcessing}
-                        canScheduleForMapping={canScheduleForMapping(mapping)}
                       />
                     </li>
                   );

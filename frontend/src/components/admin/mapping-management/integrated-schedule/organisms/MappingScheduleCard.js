@@ -6,13 +6,12 @@
  * @param {Function} onPayment - 결제 확인 핸들러
  * @param {Function} onDeposit - 입금 확인 핸들러
  * @param {Function} onApprove - 승인 핸들러
- * @param {Function} onScheduleRegister - 스케줄 등록 핸들러
  * @param {boolean} approveProcessing - 승인 처리 중 여부
- * @param {boolean} canScheduleForMapping - 스케줄 등록 가능 여부
  */
 
 import React from 'react';
 import PropTypes from 'prop-types';
+import CardContainer from '../../../../common/CardContainer';
 import MappingPartiesRow from '../molecules/MappingPartiesRow';
 import CardMeta from '../molecules/CardMeta';
 import CardActionGroup from '../molecules/CardActionGroup';
@@ -25,11 +24,9 @@ const MappingScheduleCard = ({
   onPayment,
   onDeposit,
   onApprove,
-  onScheduleRegister,
-  approveProcessing,
-  canScheduleForMapping
+  approveProcessing
 }) => (
-  <>
+  <CardContainer>
     <div className="integrated-schedule__card-body">
       <MappingPartiesRow
         consultantName={mapping?.consultantName}
@@ -45,11 +42,9 @@ const MappingScheduleCard = ({
       onPayment={onPayment}
       onDeposit={onDeposit}
       onApprove={onApprove}
-      onScheduleRegister={onScheduleRegister}
       approveProcessing={approveProcessing}
-      canScheduleForMapping={canScheduleForMapping}
     />
-  </>
+  </CardContainer>
 );
 
 MappingScheduleCard.propTypes = {
@@ -65,9 +60,7 @@ MappingScheduleCard.propTypes = {
   onPayment: PropTypes.func,
   onDeposit: PropTypes.func,
   onApprove: PropTypes.func,
-  onScheduleRegister: PropTypes.func,
-  approveProcessing: PropTypes.bool,
-  canScheduleForMapping: PropTypes.bool
+  approveProcessing: PropTypes.bool
 };
 
 MappingScheduleCard.defaultProps = {
@@ -77,9 +70,7 @@ MappingScheduleCard.defaultProps = {
   onPayment: null,
   onDeposit: null,
   onApprove: null,
-  onScheduleRegister: null,
-  approveProcessing: false,
-  canScheduleForMapping: false
+  approveProcessing: false
 };
 
 export default MappingScheduleCard;

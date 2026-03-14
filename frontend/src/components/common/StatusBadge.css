@@ -1,0 +1,34 @@
+/* StatusBadge - 공통 상태 배지 (COMMON_UI_IMPLEMENTATION_SPEC) */
+.mg-v2-status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--mg-spacing-2, 2px) var(--mg-spacing-8, 8px);
+  font-size: var(--mg-font-xs);
+  font-weight: 600;
+  border-radius: var(--mg-radius-full);
+}
+
+.mg-v2-badge--success {
+  background-color: var(--mg-success-100);
+  color: var(--mg-success-700);
+}
+
+.mg-v2-badge--warning {
+  background-color: var(--mg-warning-100);
+  color: var(--mg-warning-700);
+}
+
+.mg-v2-badge--neutral {
+  background-color: var(--mg-gray-100);
+  color: var(--mg-gray-600);
+}
+
+.mg-v2-badge--danger {
+  background-color: var(--mg-error-100);
+  color: var(--mg-error-700);
+}
+
+.mg-v2-badge--info {
+  background-color: var(--mg-info-100);
+  color: var(--mg-info-700);
+}

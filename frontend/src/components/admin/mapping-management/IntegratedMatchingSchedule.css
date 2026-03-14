@@ -265,43 +265,19 @@
   font-size: 14px;
 }
 
-/* 매칭 카드 (사이드바 전용) - INTEGRATED_SCHEDULE_CARD_FINAL_SPEC 적용 */
-.integrated-schedule__sidebar .integrated-schedule__list > li.integrated-schedule__card {
-  flex-shrink: 0;
-}
-
+/* 매칭 카드 (사이드바 전용) - CardContainer가 시각 스타일 담당, li는 리스트 레이아웃만 */
 .integrated-schedule__sidebar .integrated-schedule__list > li.integrated-schedule__card,
 .integrated-schedule__sidebar .integrated-schedule__list > li.integrated-schedule__card.fc-event {
-  position: relative;
-  min-height: 140px;
-  padding: var(--mg-spacing-16, 16px);
+  flex-shrink: 0;
+  list-style: none;
+  width: 100%;
+}
+
+.integrated-schedule__sidebar .integrated-schedule__list > li.integrated-schedule__card .mg-v2-card-container {
   display: flex;
   flex-direction: column;
   gap: var(--mg-spacing-12, 12px);
-  border: 1px solid var(--mg-color-border-main, rgba(0, 0, 0, 0.12));
-  border-radius: var(--mg-radius-lg, 12px);
-  box-shadow: var(--mg-shadow-sm);
-  background: var(--mg-bg-card, var(--mg-color-surface-main));
   font-size: inherit;
-  transition: box-shadow 0.2s ease;
-}
-
-.integrated-schedule__sidebar .integrated-schedule__list > li.integrated-schedule__card::before,
-.integrated-schedule__sidebar .integrated-schedule__list > li.integrated-schedule__card.fc-event::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 4px;
-  background-color: var(--mg-color-primary-main);
-  border-radius: 12px 0 0 12px;
-}
-
-.integrated-schedule__sidebar .integrated-schedule__list > li.integrated-schedule__card:hover,
-.integrated-schedule__sidebar .integrated-schedule__list > li.integrated-schedule__card.fc-event:hover {
-  box-shadow: var(--mg-card-hover-shadow);
-  transform: none;
 }
 
 /* 우측 캘린더 */

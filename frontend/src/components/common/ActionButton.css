@@ -1,0 +1,94 @@
+/* ActionButton - 카드 액션 버튼 (COMMON_UI_IMPLEMENTATION_SPEC) */
+/* hover 시 transform 미사용, box-shadow만 변경 */
+
+.mg-v2-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--mg-radius-md, 10px);
+  font-weight: 600;
+  cursor: pointer;
+  transition: box-shadow 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, opacity 0.2s ease;
+}
+
+/* variant: primary */
+.mg-v2-button--primary {
+  background: var(--mg-color-primary-main, var(--mg-primary-500));
+  color: var(--mg-color-background-main, var(--mg-white));
+  border: none;
+  box-shadow: none;
+}
+.mg-v2-button--primary:hover:not(:disabled) {
+  box-shadow: var(--mg-button-hover-shadow);
+}
+
+/* variant: success */
+.mg-v2-button--success {
+  background: var(--mg-success-500);
+  color: var(--mg-white);
+  border: none;
+  box-shadow: none;
+}
+.mg-v2-button--success:hover:not(:disabled) {
+  box-shadow: var(--mg-button-hover-shadow);
+}
+
+/* variant: outline */
+.mg-v2-button--outline {
+  background: transparent;
+  color: var(--mg-color-text-main, var(--mg-gray-900));
+  border: 1px solid var(--mg-color-border-main, var(--mg-gray-200));
+  box-shadow: none;
+}
+.mg-v2-button--outline:hover:not(:disabled) {
+  box-shadow: var(--mg-shadow-sm, 0 1px 2px 0 rgba(0, 0, 0, 0.05));
+}
+
+/* variant: secondary */
+.mg-v2-button--secondary {
+  background: var(--mg-color-surface-main, var(--mg-gray-100));
+  color: var(--mg-color-text-main, var(--mg-gray-900));
+  border: 1px solid var(--mg-color-border-main, var(--mg-gray-200));
+  box-shadow: none;
+}
+.mg-v2-button--secondary:hover:not(:disabled) {
+  box-shadow: var(--mg-shadow-sm, 0 1px 2px 0 rgba(0, 0, 0, 0.05));
+}
+
+/* variant: danger */
+.mg-v2-button--danger {
+  background: var(--mg-error-500);
+  color: var(--mg-white);
+  border: none;
+  box-shadow: none;
+}
+.mg-v2-button--danger:hover:not(:disabled) {
+  box-shadow: var(--mg-button-hover-shadow);
+}
+
+/* size */
+.mg-v2-button--small {
+  min-height: 36px;
+  padding: var(--mg-spacing-6, 6px) var(--mg-spacing-12, 12px);
+  font-size: var(--mg-font-sm);
+}
+
+.mg-v2-button--medium {
+  min-height: 40px;
+  padding: var(--mg-spacing-8, 8px) var(--mg-spacing-16, 16px);
+  font-size: var(--mg-font-md);
+}
+
+.mg-v2-button--large {
+  min-height: 48px;
+  padding: var(--mg-spacing-10, 10px) var(--mg-spacing-20, 20px);
+  font-size: var(--mg-font-lg);
+}
+
+/* disabled */
+.mg-v2-button:disabled,
+.mg-v2-button.mg-v2-button--disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}

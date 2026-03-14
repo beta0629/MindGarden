@@ -1,13 +1,13 @@
 /**
- * CardMeta - StatusBadge + RemainingSessionsBadge
+ * CardMeta - StatusBadge + RemainingSessionsBadge (common 컴포넌트)
  * @param {string} status - 매칭 상태
  * @param {number} remainingSessions - 남은 회기 수
  */
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import StatusBadge from '../atoms/StatusBadge';
-import RemainingSessionsBadge from '../atoms/RemainingSessionsBadge';
+import StatusBadge from '../../../../common/StatusBadge';
+import RemainingSessionsBadge from '../../../../common/RemainingSessionsBadge';
 import './CardMeta.css';
 
 const CardMeta = ({ status, remainingSessions }) => (

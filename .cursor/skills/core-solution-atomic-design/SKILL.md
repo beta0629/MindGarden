@@ -25,6 +25,7 @@ Atoms (원자)
 
 - 가장 작은 단위 UI. 더 이상 분해 불가.
 - 예: Button, Input, Label, Icon, Badge, Text
+- **버튼·배지·카드 등은 반드시 `common/` 모듈 사용** — StatusBadge, RemainingSessionsBadge, ActionButton, CardContainer, CardActionGroup. 새로 만들지 않음.
 - `atoms/` 폴더 또는 `common/` 내 기본 컴포넌트
 - CSS 클래스: `cs-{component-name}` 또는 `mg-*`
 

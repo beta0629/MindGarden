@@ -6,6 +6,6 @@
   font-size: var(--mg-font-xs);
   font-weight: 500;
   border-radius: var(--mg-radius-sm);
-  background-color: var(--mg-primary-100);
-  color: var(--mg-primary-700);
+  background-color: var(--mg-badge-count-bg);
+  color: var(--mg-badge-count-text);
 }

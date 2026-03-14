@@ -167,5 +167,24 @@
   --ad-b0kla-icon-color: var(--mg-gray-600);
   --ad-b0kla-danger: var(--mg-error-500);
   --ad-b0kla-overlay-bg: var(--droplet-bg-dark);
+
+  /* ===== 배지 밝은 배경 대비 (BADGE_LIGHT_BG_CONTRAST_SPEC) ===== */
+  /* StatusBadge, RemainingSessionsBadge — *-200 bg + *-800 text */
+
+  /* StatusBadge - 밝은 배경 대비용 */
+  --mg-badge-status-success-bg: var(--mg-success-200);
+  --mg-badge-status-success-text: var(--mg-success-800);
+  --mg-badge-status-warning-bg: var(--mg-warning-200);
+  --mg-badge-status-warning-text: var(--mg-warning-800);
+  --mg-badge-status-neutral-bg: var(--mg-gray-200);
+  --mg-badge-status-neutral-text: var(--mg-gray-800);
+  --mg-badge-status-danger-bg: var(--mg-error-200);
+  --mg-badge-status-danger-text: var(--mg-error-800);
+  --mg-badge-status-info-bg: var(--mg-info-200);
+  --mg-badge-status-info-text: var(--mg-info-800);
+
+  /* RemainingSessionsBadge - 밝은 배경 대비용 */
+  --mg-badge-count-bg: var(--mg-primary-200);
+  --mg-badge-count-text: var(--mg-primary-800);
 }
 

@@ -67,12 +67,44 @@
 
 /* 에러 메시지 */
 .quick-expense-error {
-  background-color: #fee;
-  color: #c33;
+  background-color: var(--status-error-border, #fee);
+  color: var(--status-error-dark, #c33);
   padding: var(--spacing-md);
-  margin: var(--spacing-md) var(--spacing-lg);
+  margin-bottom: var(--spacing-md);
   border-radius: var(--radius-sm);
-  border-left: 4px solid #c33;
+  border-left: 4px solid var(--status-error-dark, #c33);
+}
+
+/* 금액 입력 폼 (버튼 클릭 후) */
+.quick-expense-amount-form {
+  padding: var(--spacing-lg);
+}
+.quick-expense-selected-label {
+  font-weight: 600;
+  color: var(--mg-color-text-main, var(--dark-gray));
+  margin: 0 0 var(--spacing-sm);
+}
+.quick-expense-amount-hint {
+  color: var(--medium-gray);
+  font-size: var(--font-size-sm);
+  margin: 0 0 var(--spacing-md);
+}
+.quick-expense-amount-input {
+  width: 100%;
+  max-width: 280px;
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: var(--font-size-base);
+  border: 1px solid var(--light-beige);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--spacing-lg);
+}
+.quick-expense-amount-input:focus {
+  outline: none;
+  border-color: var(--mint-green, var(--mg-primary-500));
+}
+.quick-expense-amount-actions {
+  display: flex;
+  gap: var(--spacing-md);
 }
 
 /* 로딩 */

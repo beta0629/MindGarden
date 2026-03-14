@@ -32,6 +32,16 @@ const canScheduleForMapping = (mapping) =>
 
 /** 신규 매칭 판별: createdAt 최근 N일 이내. 운영 피드백으로 14일 등 조정 가능. */
 const NEW_DAYS = 7;
+/** 신규 매칭 필터 기간 표기 (NEW_DAYS 기반) */
+function getNewDaysLabel(days) {
+  if (days === 1) return '1일';
+  if (days === 7) return '7일';
+  if (days === 14) return '2주';
+  if (days === 30) return '30일';
+  return `${days}일`;
+}
+const NEW_DAYS_LABEL = getNewDaysLabel(NEW_DAYS);
+const VIEW_FILTER_NEW_LABEL = `신규 매칭 (${NEW_DAYS_LABEL})`;
 
 /** 좌측 목록 보기 필터: 신규 매칭(기본) | 회기 남은 매칭 | 전체 */
 const VIEW_FILTER_NEW = 'new';
@@ -148,7 +158,7 @@ const IntegratedMatchingSchedule = () => {
       itemSelector: '.integrated-schedule__card.fc-event'
     });
     return () => draggable.destroy();
-  }, [viewFilter, filteredMappings.length, scheduleableCount]);
+  }, [viewFilter, filteredMappings.length, scheduleableCount, mappings]);
 
   const handleDropFromExternal = (date, mappingPayload) => {
     if (!mappingPayload?.consultantId || !mappingPayload?.clientId) {
@@ -241,9 +251,9 @@ const IntegratedMatchingSchedule = () => {
                 value={VIEW_FILTER_NEW}
                 checked={viewFilter === VIEW_FILTER_NEW}
                 onChange={() => setViewFilter(VIEW_FILTER_NEW)}
-                aria-label="신규 매칭"
+                aria-label={VIEW_FILTER_NEW_LABEL}
               />
-              <span className="integrated-schedule__filter-text">신규 매칭</span>
+              <span className="integrated-schedule__filter-text">{VIEW_FILTER_NEW_LABEL}</span>
             </label>
             <label className={`integrated-schedule__filter-label ${viewFilter === VIEW_FILTER_REMAINING ? 'integrated-schedule__filter-label--selected' : ''}`}>
               <input
@@ -306,7 +316,7 @@ const IntegratedMatchingSchedule = () => {
                   if (statusFilter) {
                     emptyMessage = '선택한 조건에 맞는 매칭이 없습니다.';
                   } else if (viewFilter === VIEW_FILTER_NEW) {
-                    emptyMessage = '신규 매칭이 없습니다.';
+                    emptyMessage = `${VIEW_FILTER_NEW_LABEL}이 없습니다.`;
                   } else if (viewFilter === VIEW_FILTER_REMAINING) {
                     emptyMessage = '회기 남은 매칭이 없습니다.';
                   }

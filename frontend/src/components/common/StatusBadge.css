@@ -8,27 +8,30 @@
   border-radius: var(--mg-radius-full);
 }
 
-.mg-v2-badge--success {
+/* specificity 강화: unified-design-tokens 레거시 규칙(.mg-v2-status-badge color, .mg-v2-badge--* color)을 이김 */
+.mg-v2-status-badge.mg-v2-badge--success {
   background-color: var(--mg-badge-status-success-bg);
   color: var(--mg-badge-status-success-text);
+  font-weight: 700;
 }
 
-.mg-v2-badge--warning {
+.mg-v2-status-badge.mg-v2-badge--warning {
   background-color: var(--mg-badge-status-warning-bg);
   color: var(--mg-badge-status-warning-text);
+  font-weight: 700;
 }
 
-.mg-v2-badge--neutral {
+.mg-v2-status-badge.mg-v2-badge--neutral {
   background-color: var(--mg-badge-status-neutral-bg);
   color: var(--mg-badge-status-neutral-text);
 }
 
-.mg-v2-badge--danger {
+.mg-v2-status-badge.mg-v2-badge--danger {
   background-color: var(--mg-badge-status-danger-bg);
   color: var(--mg-badge-status-danger-text);
 }
 
-.mg-v2-badge--info {
+.mg-v2-status-badge.mg-v2-badge--info {
   background-color: var(--mg-badge-status-info-bg);
   color: var(--mg-badge-status-info-text);
 }

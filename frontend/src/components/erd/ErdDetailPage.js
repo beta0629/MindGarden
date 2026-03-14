@@ -5,6 +5,7 @@ import { getErdDetail, getErdHistory } from '../../utils/erdApi';
 import { exportSvgToPng, exportSvgToSvg, exportMermaidToPng, exportMermaidToSvg } from '../../utils/erdExport';
 import mermaid from 'mermaid';
 import { Download } from 'lucide-react';
+import notificationManager from '../../utils/notification';
 import './ErdDetailPage.css';
 
 /**
@@ -603,7 +604,7 @@ const ErdDetailPage = () => {
                     }
                   } catch (error) {
                     console.error('PNG 내보내기 실패:', error);
-                    alert('PNG 내보내기 중 오류가 발생했습니다.');
+                    notificationManager.error('PNG 내보내기 중 오류가 발생했습니다.');
                   }
                 }}
               >
@@ -620,7 +621,7 @@ const ErdDetailPage = () => {
                     }
                   } catch (error) {
                     console.error('SVG 내보내기 실패:', error);
-                    alert('SVG 내보내기 중 오류가 발생했습니다.');
+                    notificationManager.error('SVG 내보내기 중 오류가 발생했습니다.');
                   }
                 }}
               >

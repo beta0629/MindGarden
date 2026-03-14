@@ -4,6 +4,7 @@ import SOAPNoteEditor from './SOAPNoteEditor';
 import { apiGet, apiPost } from '../../utils/ajax';
 import { CLINICAL_API } from '../../constants/clinicalApi';
 import { CLINICAL_CSS } from '../../constants/clinicalCss';
+import notificationManager from '../../utils/notification';
 import './SmartNoteTab.css';
 
 /**
@@ -125,15 +126,20 @@ const SmartNoteTab = ({ consultationRecordId, consultationId }) => {
         try {
             const data = await apiPost(CLINICAL_API.ANALYZE_RISKS(consultationRecordId));
 
-            if (data.riskDetected) {
-                alert(`⚠️ 위험 징후가 감지되었습니다!\n\n위험도: ${data.alert.severity}\n내용: ${data.alert.message}`);
+            if (data.riskDetected && data.alert) {
+                notificationManager.show(
+                    `위험 징후가 감지되었습니다. 위험도: ${data.alert.severity || '-'}\n내용: ${data.alert.message || '-'}`,
+                    'warning',
+                    4000
+                );
             } else {
-                alert('✅ 위험 징후가 발견되지 않았습니다.');
+                notificationManager.success('위험 징후가 발견되지 않았습니다.');
             }
 
         } catch (error) {
             console.error('위험 분석 실패:', error);
             setError('위험 징후 분석에 실패했습니다.');
+            notificationManager.error('위험 징후 분석에 실패했습니다.');
         }
     };
 

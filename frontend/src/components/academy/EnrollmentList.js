@@ -16,6 +16,7 @@ import React, { useState, useEffect } from 'react';
 import { DataTable, ErrorState } from './shared';
 import { ACADEMY_API, ACADEMY_MESSAGES } from '../../constants/academy';
 import { API_BASE_URL } from '../../constants/api';
+import notificationManager from '../../utils/notification';
 import './Academy.css';
 
 const EnrollmentList = ({ branchId, classId, consumerId, onEnrollmentSelect, onCreateEnrollment }) => {
@@ -77,14 +78,14 @@ const EnrollmentList = ({ branchId, classId, consumerId, onEnrollmentSelect, onC
       const data = await response.json();
       
       if (data.success) {
-        alert(ACADEMY_MESSAGES.ENROLLMENT_CANCEL_SUCCESS);
+        notificationManager.success(ACADEMY_MESSAGES.ENROLLMENT_CANCEL_SUCCESS);
         fetchEnrollments();
       } else {
-        alert(data.message || '수강 취소에 실패했습니다.');
+        notificationManager.error(data.message || '수강 취소에 실패했습니다.');
       }
     } catch (err) {
       console.error('수강 취소 실패:', err);
-      alert('수강 취소 중 오류가 발생했습니다.');
+      notificationManager.error('수강 취소 중 오류가 발생했습니다.');
     }
   };
 

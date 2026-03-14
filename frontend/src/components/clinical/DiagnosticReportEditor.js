@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { apiGet, apiPost, apiPut } from '../../utils/ajax';
 import { CLINICAL_API } from '../../constants/clinicalApi';
 import { CLINICAL_CSS } from '../../constants/clinicalCss';
+import notificationManager from '../../utils/notification';
 import './DiagnosticReportEditor.css';
 
 /**
@@ -124,11 +125,11 @@ const DiagnosticReportEditor = ({ consultationRecordId }) => {
             }
             setReport(data.report);
 
-            alert('✅ 진단 보고서가 승인되었습니다!');
+            notificationManager.success('진단 보고서가 승인되었습니다.');
 
         } catch (error) {
             console.error('승인 실패:', error);
-            alert('❌ 승인에 실패했습니다.');
+            notificationManager.error('승인에 실패했습니다.');
         }
     };
 
@@ -137,7 +138,7 @@ const DiagnosticReportEditor = ({ consultationRecordId }) => {
      */
     const exportToPDF = () => {
         // TODO: PDF 생성 라이브러리 통합 (jsPDF 등)
-        alert('PDF 내보내기 기능은 곧 추가됩니다.');
+        notificationManager.info('PDF 내보내기 기능은 곧 추가됩니다.');
     };
 
     if (isLoading) {

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { apiPost, apiGet } from '../../utils/ajax';
 import { TRAINING_API } from '../../constants/trainingApi';
 import { TRAINING_CSS } from '../../constants/trainingCss';
+import notificationManager from '../../utils/notification';
 import './VirtualClientSimulator.css';
 
 /**
@@ -45,7 +46,7 @@ const VirtualClientSimulator = ({ consultantId }) => {
      */
     const startSimulation = async () => {
         if (!selectedScenario) {
-            alert('시나리오를 선택해주세요');
+            notificationManager.warning('시나리오를 선택해주세요.');
             return;
         }
 
@@ -71,7 +72,7 @@ const VirtualClientSimulator = ({ consultantId }) => {
 
         } catch (error) {
             console.error('시뮬레이션 시작 실패:', error);
-            alert('시뮬레이션을 시작할 수 없습니다');
+            notificationManager.error(error?.response?.data?.message || '시뮬레이션을 시작할 수 없습니다.');
         }
     };
 
@@ -129,11 +130,16 @@ const VirtualClientSimulator = ({ consultantId }) => {
 
             if (data && data.success) {
                 setIsSessionActive(false);
-                alert(`시뮬레이션 완료!\n\n평가 점수: ${(data.performanceScore * 100).toFixed(0)}점\n턴 수: ${data.turnCount}\n\n${data.evaluation}`);
+                notificationManager.show(
+                    `시뮬레이션 완료! 평가 점수: ${(data.performanceScore * 100).toFixed(0)}점, 턴 수: ${data.turnCount}. ${data.evaluation || ''}`,
+                    'success',
+                    4000
+                );
             }
 
         } catch (error) {
             console.error('세션 종료 실패:', error);
+            notificationManager.error('세션 종료 중 오류가 발생했습니다.');
         }
     };
 

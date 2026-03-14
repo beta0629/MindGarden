@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { apiPut, apiPost } from '../../utils/ajax';
 import { CLINICAL_API } from '../../constants/clinicalApi';
 import { CLINICAL_CSS } from '../../constants/clinicalCss';
+import notificationManager from '../../utils/notification';
 import './SOAPNoteEditor.css';
 
 /**
@@ -84,7 +85,7 @@ const SOAPNoteEditor = ({ report, onSave }) => {
                 throw new Error(data?.message || '승인 실패');
             }
 
-            alert('✅ SOAP 노트가 승인되었습니다!');
+            notificationManager.success('SOAP 노트가 승인되었습니다.');
 
             if (onSave) {
                 onSave(data.report);
@@ -92,7 +93,7 @@ const SOAPNoteEditor = ({ report, onSave }) => {
 
         } catch (error) {
             console.error('승인 실패:', error);
-            alert('❌ 승인에 실패했습니다.');
+            notificationManager.error('승인에 실패했습니다.');
         } finally {
             setIsApproving(false);
         }

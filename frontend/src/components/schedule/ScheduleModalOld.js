@@ -163,7 +163,7 @@ const ScheduleModal = ({
      */
     const handleCreateSchedule = async () => {
         if (!selectedConsultant || !selectedClient || !selectedTimeSlot) {
-            alert('모든 항목을 선택해주세요.');
+            notificationManager.warning('모든 항목을 선택해주세요.');
             return;
         }
 

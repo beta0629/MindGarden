@@ -16,6 +16,7 @@ import React, { useState, useEffect } from 'react';
 import { FormField, ErrorState } from './shared';
 import { ACADEMY_API, ACADEMY_MESSAGES } from '../../constants/academy';
 import { API_BASE_URL } from '../../constants/api';
+import notificationManager from '../../utils/notification';
 import './Academy.css';
 
 const EnrollmentForm = ({ enrollment, branchId, classId, consumerId, onSave, onCancel }) => {
@@ -144,15 +145,19 @@ const EnrollmentForm = ({ enrollment, branchId, classId, consumerId, onSave, onC
       const data = await response.json();
 
       if (data.success) {
+        notificationManager.success('수강 등록이 완료되었습니다.');
         if (onSave) {
           onSave(data.data);
         }
       } else {
-        setError(data.message || ACADEMY_MESSAGES.ENROLLMENT_SAVE_FAILED);
+        const msg = data.message || ACADEMY_MESSAGES.ENROLLMENT_SAVE_FAILED;
+        setError(msg);
+        notificationManager.error(msg);
       }
     } catch (err) {
       console.error('수강 등록 저장 실패:', err);
       setError(ACADEMY_MESSAGES.ENROLLMENT_SAVE_FAILED);
+      notificationManager.error(ACADEMY_MESSAGES.ENROLLMENT_SAVE_FAILED);
     } finally {
       setLoading(false);
     }

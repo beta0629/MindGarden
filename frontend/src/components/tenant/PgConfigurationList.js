@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import { useSession } from '../../contexts/SessionContext';
 import { getPgConfigurations, deletePgConfiguration, testPgConnection } from '../../utils/pgApi';
-import { showNotification } from '../../utils/notification';
+import notificationManager from '../../utils/notification';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
@@ -85,7 +85,7 @@ const PgConfigurationList = () => {
     } catch (err) {
       console.error('PG 설정 목록 로드 실패:', err);
       setError('PG 설정 목록을 불러오는 중 오류가 발생했습니다.');
-      showNotification('PG 설정 목록 로드 실패', 'error');
+      notificationManager.error('PG 설정 목록 로드 실패');
     } finally {
       setLoading(false);
     }
@@ -109,7 +109,7 @@ const PgConfigurationList = () => {
       loadConfigurations();
     } catch (err) {
       console.error('PG 설정 삭제 실패:', err);
-      showNotification('PG 설정 삭제 중 오류가 발생했습니다.', 'error');
+      notificationManager.error('PG 설정 삭제 중 오류가 발생했습니다.');
     } finally {
       setLoading(false);
     }
@@ -123,15 +123,15 @@ const PgConfigurationList = () => {
       const result = await testPgConnection(tenantId, configId);
       
       if (result.success) {
-        showNotification('연결 테스트 성공', 'success');
+        notificationManager.success('연결 테스트 성공');
       } else {
-        showNotification(`연결 테스트 실패: ${result.message}`, 'error');
+        notificationManager.error(`연결 테스트 실패: ${result.message}`);
       }
       
       loadConfigurations();
     } catch (err) {
       console.error('연결 테스트 실패:', err);
-      showNotification('연결 테스트 중 오류가 발생했습니다.', 'error');
+      notificationManager.error('연결 테스트 중 오류가 발생했습니다.');
     } finally {
       setTestingConnection(null);
     }

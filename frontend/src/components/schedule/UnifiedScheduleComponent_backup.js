@@ -8,6 +8,7 @@ import ScheduleDetailModal from './ScheduleDetailModal';
 import VacationManagementModal from '../admin/VacationManagementModal';
 import { apiGet } from '../../utils/ajax';
 import { getStatusColor, getStatusIcon } from '../../utils/codeHelper';
+import notificationManager from '../../utils/notification';
 import './ScheduleCalendar.css';
 
 /**
@@ -447,7 +448,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
         
         if (userRole === 'ADMIN' || userRole === 'ADMIN' || userRole === 'CONSULTANT') {
             if (isPastDate) {
-                alert('과거 날짜에는 새로운 스케줄을 등록할 수 없습니다.\n기존 스케줄을 클릭하여 조회하실 수 있습니다.');
+                notificationManager.show('과거 날짜에는 새로운 스케줄을 등록할 수 없습니다. 기존 스케줄을 클릭하여 조회하실 수 있습니다.', 'info', 3000);
                 return;
             }
             
@@ -456,7 +457,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
             console.log('📅 DateActionModal 열기 시도 - isDateActionModalOpen을 true로 설정');
             setIsDateActionModalOpen(true);
         } else {
-            alert('스케줄 생성 권한이 없습니다.');
+            notificationManager.warning('스케줄 생성 권한이 없습니다.');
         }
     };
 
@@ -600,14 +601,14 @@ const ScheduleCalendar = ({ userRole, userId }) => {
 
             if (!response.ok) {
                 info.revert();
-                alert('스케줄 이동에 실패했습니다.');
+                notificationManager.error('스케줄 이동에 실패했습니다.');
             } else {
                 console.log('✅ 스케줄 이동 완료');
             }
         } catch (error) {
             console.error('스케줄 이동 오류:', error);
             info.revert();
-            alert('스케줄 이동 중 오류가 발생했습니다.');
+            notificationManager.error('스케줄 이동 중 오류가 발생했습니다.');
         }
     };
 

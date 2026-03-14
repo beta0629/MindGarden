@@ -17,6 +17,7 @@ import React, { useState, useEffect } from 'react';
 import { FormField, ErrorState } from './shared';
 import { ACADEMY_API, ACADEMY_MESSAGES, PRICING_POLICY, PRICING_POLICY_LABELS, ACADEMY_DEFAULTS, ACADEMY_FILTERS } from '../../constants/academy';
 import { API_BASE_URL } from '../../constants/api';
+import notificationManager from '../../utils/notification';
 import './Academy.css';
 
 const CourseForm = ({ course, branchId, onSave, onCancel }) => {
@@ -108,14 +109,17 @@ const CourseForm = ({ course, branchId, onSave, onCancel }) => {
       const data = await response.json();
 
       if (data.success) {
-        alert(course ? ACADEMY_MESSAGES.COURSE_UPDATE_SUCCESS : ACADEMY_MESSAGES.COURSE_CREATE_SUCCESS);
+        notificationManager.success(course ? ACADEMY_MESSAGES.COURSE_UPDATE_SUCCESS : ACADEMY_MESSAGES.COURSE_CREATE_SUCCESS);
         if (onSave) onSave(data.data);
       } else {
-        setError(data.message || '저장에 실패했습니다.');
+        const msg = data.message || '저장에 실패했습니다.';
+        setError(msg);
+        notificationManager.error(msg);
       }
     } catch (err) {
       console.error('강좌 저장 실패:', err);
       setError('저장 중 오류가 발생했습니다.');
+      notificationManager.error('저장 중 오류가 발생했습니다.');
     } finally {
       setLoading(false);
     }

@@ -17,6 +17,7 @@ import React, { useState, useEffect } from 'react';
 import { DataTable, FilterBar, ErrorState } from './shared';
 import { ACADEMY_API, ACADEMY_MESSAGES, PRICING_POLICY_LABELS, ACADEMY_FILTERS } from '../../constants/academy';
 import { API_BASE_URL } from '../../constants/api';
+import notificationManager from '../../utils/notification';
 import './Academy.css';
 
 const CourseList = ({ branchId, onCourseSelect, onCreateCourse, onEditCourse, onDeleteCourse }) => {
@@ -84,15 +85,15 @@ const CourseList = ({ branchId, onCourseSelect, onCreateCourse, onEditCourse, on
       const data = await response.json();
       
       if (data.success) {
-        alert(ACADEMY_MESSAGES.COURSE_DELETE_SUCCESS);
+        notificationManager.success(ACADEMY_MESSAGES.COURSE_DELETE_SUCCESS);
         fetchCourses();
         if (onDeleteCourse) onDeleteCourse(courseId);
       } else {
-        alert(data.message || '삭제에 실패했습니다.');
+        notificationManager.error(data.message || '삭제에 실패했습니다.');
       }
     } catch (err) {
       console.error('강좌 삭제 실패:', err);
-      alert('삭제 중 오류가 발생했습니다.');
+      notificationManager.error('삭제 중 오류가 발생했습니다.');
     }
   };
 

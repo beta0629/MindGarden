@@ -69,10 +69,18 @@ public class AccountingBackfillController extends BaseApiController {
         String tenantId = TenantContextHolder.getRequiredTenantId();
         log.info("ERP 계정 매핑 초기화 요청: tenantId={}, userId={}", tenantId, currentUser.getId());
 
-        accountingService.ensureErpAccountMappingForTenant(tenantId);
-        return success(Map.of(
-                "success", true,
-                "message", "ERP 계정 매핑 초기화 완료 (이미 존재 시 스킵됨)",
-                "tenantId", tenantId));
+        try {
+            accountingService.ensureErpAccountMappingForTenant(tenantId);
+            return success(Map.of(
+                    "success", true,
+                    "message", "ERP 계정 매핑 초기화 완료 (이미 존재 시 스킵됨)",
+                    "tenantId", tenantId));
+        } catch (Exception e) {
+            log.error("ERP 계정 매핑 초기화 실패: tenantId={}, error={}", tenantId, e.getMessage(), e);
+            return ResponseEntity.status(500).body(Map.of(
+                    "success", false,
+                    "message", "ERP 계정 매핑 초기화 실패: " + (e.getMessage() != null ? e.getMessage() : "알 수 없는 오류"),
+                    "tenantId", tenantId));
+        }
     }
 }

@@ -24,6 +24,7 @@ import org.springframework.transaction.TransactionStatus;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -142,10 +143,9 @@ class AccountingServiceImplTest {
                 .thenReturn(transactionStatus);
         doThrow(new RuntimeException("시딩 실패 시뮬레이션")).when(accountRepository).save(any(Account.class));
 
-        // When
-        accountingService.ensureErpAccountMappingForTenant(TEST_TENANT_ID);
-
-        // Then: rollback 호출, commit 미호출
+        // When & Then: 예외 전파, rollback 호출, commit 미호출
+        assertThrows(RuntimeException.class,
+                () -> accountingService.ensureErpAccountMappingForTenant(TEST_TENANT_ID));
         verify(transactionManager).rollback(transactionStatus);
         verify(transactionManager, never()).commit(any(TransactionStatus.class));
     }

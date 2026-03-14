@@ -440,6 +440,7 @@ public class AccountingServiceImpl implements AccountingService {
         } catch (Exception e) {
             transactionManager.rollback(status);
             log.error("테넌트 ERP 계정 매핑 시딩 실패: tenantId={}, error={}", tenantId, e.getMessage(), e);
+            throw e instanceof RuntimeException ? (RuntimeException) e : new RuntimeException("ERP 계정 매핑 시딩 실패", e);
         }
     }
 

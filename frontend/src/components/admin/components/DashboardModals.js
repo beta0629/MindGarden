@@ -8,7 +8,7 @@ import RecurringExpenseModal from '../../finance/RecurringExpenseModal';
 import StatisticsModal from '../../common/StatisticsModal';
 
 const DashboardModals = ({
-    // ERP 보고서 모달
+    // 운영 리포트 모달
     showErpReport,
     setShowErpReport,
     
@@ -33,7 +33,7 @@ const DashboardModals = ({
 }) => {
     return (
         <div className={`dashboard-modals ${className}`} {...props}>
-            {/* ERP 보고서 모달 */}
+            {/* 운영 리포트 모달 */}
             {showErpReport && (
                 <ErpReportModal
                     show={showErpReport}

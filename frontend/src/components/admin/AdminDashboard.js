@@ -1464,8 +1464,8 @@ const AdminDashboard = ({ user: propUser }) => {
             {/* ERP 관리 */}
             <PermissionGroupGuard groupCode="DASHBOARD_ERP">
                 <DashboardSection
-                    title="ERP 관리"
-                    subtitle="기업 자원 계획 시스템 관리"
+                    title="운영·재무"
+                    subtitle="운영·재무 메뉴"
                     icon={<Settings />}
                 >
                     <div className="mg-management-grid">
@@ -1482,8 +1482,8 @@ const AdminDashboard = ({ user: propUser }) => {
                             <div className="mg-management-icon">
                                 <FaChartLine />
                             </div>
-                            <h3>ERP 대시보드</h3>
-                            <p className="mg-management-description">전체 ERP 현황을 한눈에 확인합니다</p>
+                            <h3>운영 현황</h3>
+                            <p className="mg-management-description">수입·지출·구매를 한눈에 확인합니다</p>
                         </div>
                         
                         <div className="mg-management-card" onClick={() => navigate('/erp/purchase-requests')}>
@@ -1522,7 +1522,7 @@ const AdminDashboard = ({ user: propUser }) => {
                             <div className="mg-management-icon">
                                 <FaFileExport />
                             </div>
-                            <h3>ERP 보고서</h3>
+                            <h3>운영 리포트</h3>
                             <p className="mg-management-description">월별/분기별/연별 재무 보고서를 생성합니다</p>
                         </div>
                         
@@ -1546,7 +1546,7 @@ const AdminDashboard = ({ user: propUser }) => {
                             <div className="mg-management-icon">
                                 <FaDollarSign />
                             </div>
-                            <h3>통합 재무 관리</h3>
+                            <h3>수입·지출 관리</h3>
                             <p className="mg-management-description">수입/지출 통합 관리 및 대차대조표</p>
                         </div>
                     </div>

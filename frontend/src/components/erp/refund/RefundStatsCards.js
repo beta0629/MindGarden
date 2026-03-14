@@ -50,7 +50,7 @@ const RefundStatsCards = ({ refundStats, selectedPeriod, erpSyncStatus }) => {
                 </div>
             </ErpCard>
 
-            <ErpCard title="ERP 연동 상태">
+            <ErpCard title="연동 상태">
                 <div className={`refund-erp-sync-status ${erpSyncStatus.erpSystemAvailable ? 'refund-erp-sync-status--available' : 'refund-erp-sync-status--error'}`}>
                     <div className="refund-erp-sync-status-icon">
                         {erpSyncStatus.erpSystemAvailable ? '정상' : '오류'}

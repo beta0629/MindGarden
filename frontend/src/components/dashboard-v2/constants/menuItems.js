@@ -43,12 +43,12 @@ const DEFAULT_MENU_ITEMS = [
   {
     to: '/erp/dashboard',
     icon: LayoutDashboard,
-    label: 'ERP 관리',
+    label: '운영·재무',
     end: false,
     children: [
-      { to: '/erp/dashboard', icon: LayoutDashboard, label: 'ERP 대시보드', end: true },
+      { to: '/erp/dashboard', icon: LayoutDashboard, label: '운영 현황', end: true },
       { to: '/erp/purchase', icon: ShoppingCart, label: '구매 관리', end: true },
-      { to: '/erp/financial', icon: DollarSign, label: '재무 관리', end: true },
+      { to: '/erp/financial', icon: DollarSign, label: '수입·지출', end: true },
       { to: '/erp/budget', icon: PieChart, label: '예산 관리', end: true },
       { to: '/erp/tax', icon: Receipt, label: '세무 관리', end: true }
     ]
@@ -121,9 +121,9 @@ const CONSULTANT_MENU_ITEMS = [
 ];
 
 const ERP_MENU_ITEMS = [
-  { to: '/erp/dashboard', icon: LayoutDashboard, label: 'ERP 대시보드', end: true },
+  { to: '/erp/dashboard', icon: LayoutDashboard, label: '운영 현황', end: true },
   { to: '/erp/purchase', icon: ShoppingCart, label: '구매 관리', end: true },
-  { to: '/erp/financial', icon: DollarSign, label: '재무 관리', end: true },
+  { to: '/erp/financial', icon: DollarSign, label: '수입·지출', end: true },
   { to: '/erp/budget', icon: PieChart, label: '예산 관리', end: true },
   { to: '/erp/tax', icon: Receipt, label: '세무 관리', end: true }
 ];

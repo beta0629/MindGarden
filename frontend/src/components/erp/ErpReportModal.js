@@ -147,7 +147,7 @@ const ErpReportModal = ({ isOpen, onClose }) => {
         <UnifiedModal
             isOpen={isOpen}
             onClose={handleClose}
-            title="ERP 보고서"
+            title="운영 리포트"
             size="large"
             backdropClick
             showCloseButton

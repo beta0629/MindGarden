@@ -12,6 +12,73 @@
   color: var(--ad-b0kla-text-secondary, var(--mg-color-text-secondary));
 }
 
+/* ========== ERP 회계 초기화·동기화 카드 ========== */
+.erp-sync-card {
+  margin-bottom: 1.5rem;
+}
+.erp-sync__usage {
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+  color: var(--ad-b0kla-text-secondary, var(--mg-color-text-secondary));
+}
+.erp-sync__usage ol {
+  margin: 0.5rem 0 0 1.25rem;
+  padding: 0;
+}
+.erp-sync__usage li {
+  margin-bottom: 0.35rem;
+}
+.erp-sync__auto {
+  margin: 0.75rem 0 0;
+  padding: 0.5rem 0.75rem;
+  background: var(--ad-b0kla-surface-muted, rgba(0, 0, 0, 0.03));
+  border-radius: var(--radius-md, 6px);
+  font-size: 0.85rem;
+}
+.erp-sync__urls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.erp-sync__url-item {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+.erp-sync__url-item code {
+  font-size: 0.8rem;
+  background: var(--ad-b0kla-surface-muted, #f5f5f5);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  flex: 1;
+  min-width: 200px;
+}
+.erp-sync__results {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.erp-sync__result {
+  font-size: 0.9rem;
+  padding: 0.35rem 0.5rem;
+  border-radius: 4px;
+}
+.erp-sync__result.success {
+  background: rgba(34, 197, 94, 0.12);
+  color: #15803d;
+}
+.erp-sync__result.error {
+  background: rgba(239, 68, 68, 0.12);
+  color: #b91c1c;
+}
+.erp-sync__help {
+  margin-top: 1rem;
+  font-size: 0.8rem;
+  color: var(--ad-b0kla-text-secondary, #666);
+}
+
 /* ========== 반응형: 768px·1024px 레이아웃 보완 ========== */
 @media (max-width: 1024px) {
   .erp-dashboard__content .mg-v2-ad-b0kla__admin-grid {

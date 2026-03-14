@@ -94,14 +94,14 @@ const RefundManagement = () => {
                 <>
                     <ContentHeader
                         title="환불 관리 시스템"
-                        subtitle="상담 환불 현황 및 ERP 연동 관리"
+                        subtitle="상담 환불 현황 및 환불·결제 연동"
                         actions={
                             <ErpButton
                                 variant="secondary"
                                 onClick={() => navigate('/erp/dashboard')}
                                 icon={<ArrowLeft size={16} />}
                             >
-                                ERP 대시보드로 돌아가기
+                                운영 현황으로 돌아가기
                             </ErpButton>
                         }
                     />

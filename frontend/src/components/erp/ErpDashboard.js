@@ -10,7 +10,7 @@ import {
   ContentHeader,
   ContentKpiRow
 } from '../dashboard-v2/content';
-import { Package, Clock, ShoppingCart, TrendingUp, DollarSign, Receipt, BookOpen, Calculator, FileText, LayoutDashboard } from 'lucide-react';
+import { Package, Clock, ShoppingCart, TrendingUp, DollarSign, Receipt, BookOpen, Calculator, FileText, LayoutDashboard, RefreshCw, Settings2, HelpCircle } from 'lucide-react';
 import Button from '../ui/Button/Button';
 import '../../styles/main.css';
 import '../../styles/unified-design-tokens.css';
@@ -68,6 +68,10 @@ const ErpDashboard = ({ user: propUser }) => {
     totalBudget: 0,
     usedBudget: 0
   });
+  const [initLoading, setInitLoading] = useState(false);
+  const [initResult, setInitResult] = useState(null);
+  const [backfillLoading, setBackfillLoading] = useState(false);
+  const [backfillResult, setBackfillResult] = useState(null);
 
   // 세션 체크 및 권한 확인
   useEffect(() => {
@@ -242,6 +246,51 @@ const ErpDashboard = ({ user: propUser }) => {
     }
   };
 
+  const handleInitTenantErp = async () => {
+    setInitResult(null);
+    setInitLoading(true);
+    try {
+      const res = await fetch('/api/v1/erp/accounting/init-tenant-erp', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      const json = await res.json();
+      const data = json.data ?? json;
+      const ok = res.ok && (json.success !== false);
+      setInitResult(ok ? { ok: true, message: data?.message || '완료' } : { ok: false, message: json.message || data?.message || '실패' });
+    } catch (e) {
+      setInitResult({ ok: false, message: e.message || '네트워크 오류' });
+    } finally {
+      setInitLoading(false);
+    }
+  };
+
+  const handleBackfillJournalEntries = async () => {
+    setBackfillResult(null);
+    setBackfillLoading(true);
+    try {
+      const res = await fetch('/api/v1/erp/accounting/backfill-journal-entries', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      const json = await res.json();
+      const data = json.data ?? json;
+      const ok = res.ok && (json.success !== false);
+      const processed = data.processedCount ?? 0;
+      const failed = data.failedCount ?? 0;
+      const skipped = data.skippedCount ?? 0;
+      setBackfillResult(ok
+        ? { ok: true, message: `처리 ${processed}건, 스킵 ${skipped}건, 실패 ${failed}건` }
+        : { ok: false, message: json.message || '실패' });
+    } catch (e) {
+      setBackfillResult({ ok: false, message: e.message || '네트워크 오류' });
+    } finally {
+      setBackfillLoading(false);
+    }
+  };
+
   const getBudgetUsagePercentage = () => {
     if (stats.totalBudget === 0) return 0;
     return Math.round((stats.usedBudget / stats.totalBudget) * 100);
@@ -256,7 +305,7 @@ const ErpDashboard = ({ user: propUser }) => {
 
   if (loading) {
     return (
-      <AdminCommonLayout title="ERP 대시보드" loading={true} loadingText="대시보드를 불러오는 중...">
+      <AdminCommonLayout title="운영 현황" loading={true} loadingText="불러오는 중...">
         <div />
       </AdminCommonLayout>
     );
@@ -266,8 +315,8 @@ const ErpDashboard = ({ user: propUser }) => {
   const tenantId = currentUser?.tenantId || sessionManager.getSessionInfo()?.tenantId || '알 수 없음';
   const subtitleWithTenant =
     tenantId && tenantId !== '알 수 없음'
-      ? `통합 자원 관리 및 회계 시스템 (터넌트: ${tenantId})`
-      : '통합 자원 관리 및 회계 시스템';
+      ? `수입·지출·구매를 한눈에 (터넌트: ${tenantId})`
+      : '수입·지출·구매를 한눈에';
 
   const kpiItems = [
     {
@@ -330,8 +379,8 @@ const ErpDashboard = ({ user: propUser }) => {
     (permissionChecks[PERMISSIONS.REFUND_MANAGE] ?? PermissionChecks.canManageRefund(userPermissions, currentUser)) || isAdmin;
 
   return (
-    <AdminCommonLayout title="ERP 대시보드">
-      <ContentArea className="erp-dashboard__content" ariaLabel="ERP 대시보드">
+    <AdminCommonLayout title="운영 현황">
+      <ContentArea className="erp-dashboard__content" ariaLabel="운영 현황">
         <ContentHeader
           subtitle={subtitleWithTenant}
           actions={
@@ -341,6 +390,59 @@ const ErpDashboard = ({ user: propUser }) => {
           }
         />
         <ContentKpiRow items={kpiItems} />
+
+        {/* 데이터 동기화 (관리자 전용) */}
+        {hasIntegratedFinanceView && (
+          <div className="mg-v2-ad-b0kla__card erp-sync-card">
+            <h2 className="mg-v2-ad-b0kla__section-title">
+              <Settings2 size={20} style={{ marginRight: 8, verticalAlign: 'middle' }} />
+              데이터 동기화
+            </h2>
+            <div className="erp-sync__usage">
+              <p><strong>사용 방법</strong></p>
+              <ol>
+                <li><strong>init-tenant-erp</strong>: 신규 테넌트 또는 재무 데이터가 보이지 않을 때 먼저 실행. 계정 매핑(REVENUE/EXPENSE/CASH)을 생성합니다.</li>
+                <li><strong>backfill-journal-entries</strong>: 미반영 수입 거래를 자동으로 반영합니다. init 이후 실행 권장.</li>
+              </ol>
+              <p className="erp-sync__auto">
+                <RefreshCw size={16} style={{ marginRight: 6, verticalAlign: 'middle' }} />
+                <strong>자동 동기화</strong>: 매일 00:08에 init·백필이 자동 실행됩니다. (scheduler.erp-automation.enabled=true)
+              </p>
+            </div>
+            <div className="erp-sync__urls">
+              <div className="erp-sync__url-item">
+                <code>POST /api/v1/erp/accounting/init-tenant-erp</code>
+                <Button variant="primary" size="small" onClick={handleInitTenantErp} disabled={initLoading} preventDoubleClick={true}>
+                  {initLoading ? '실행 중...' : '실행'}
+                </Button>
+              </div>
+              <div className="erp-sync__url-item">
+                <code>POST /api/v1/erp/accounting/backfill-journal-entries</code>
+                <Button variant="primary" size="small" onClick={handleBackfillJournalEntries} disabled={backfillLoading} preventDoubleClick={true}>
+                  {backfillLoading ? '실행 중...' : '실행'}
+                </Button>
+              </div>
+            </div>
+            {(initResult || backfillResult) && (
+              <div className="erp-sync__results">
+                {initResult && (
+                  <div className={`erp-sync__result ${initResult.ok ? 'success' : 'error'}`}>
+                    init: {initResult.message}
+                  </div>
+                )}
+                {backfillResult && (
+                  <div className={`erp-sync__result ${backfillResult.ok ? 'success' : 'error'}`}>
+                    backfill: {backfillResult.message}
+                  </div>
+                )}
+              </div>
+            )}
+            <p className="erp-sync__help">
+              <HelpCircle size={14} style={{ marginRight: 4, verticalAlign: 'middle' }} />
+              curl/Postman: 관리자 로그인 후 세션 쿠키와 함께 POST 호출. X-Tenant-Id는 현재 테넌트에 맞게 설정.
+            </p>
+          </div>
+        )}
 
         {/* 빠른 액션 섹션 */}
         <div className="mg-v2-ad-b0kla__card">
@@ -405,8 +507,8 @@ const ErpDashboard = ({ user: propUser }) => {
                 <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--blue">
                   <TrendingUp size={28} />
                 </div>
-                <span className="mg-v2-ad-b0kla__admin-label">통합 회계 시스템</span>
-                <span className="mg-v2-ad-b0kla__admin-desc">전체 재무 데이터 및 통계를 확인합니다</span>
+                <span className="mg-v2-ad-b0kla__admin-label">수입·지출 한눈에</span>
+                <span className="mg-v2-ad-b0kla__admin-desc">거래·손익·정산을 한곳에서 확인합니다</span>
               </button>
             )}
             {hasRefundManage && (
@@ -424,29 +526,29 @@ const ErpDashboard = ({ user: propUser }) => {
                   <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--gray">
                     <Receipt size={28} />
                   </div>
-                  <span className="mg-v2-ad-b0kla__admin-label">분개 관리</span>
-                  <span className="mg-v2-ad-b0kla__admin-desc">회계 분개를 생성, 승인, 전기합니다</span>
+                  <span className="mg-v2-ad-b0kla__admin-label">거래 정리</span>
+                  <span className="mg-v2-ad-b0kla__admin-desc">거래를 등록·승인하고 수입·지출에 반영합니다</span>
                 </button>
                 <button type="button" className="mg-v2-ad-b0kla__admin-card" onClick={() => navigate('/admin/erp/financial?tab=ledgers')}>
                   <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--gray">
                     <BookOpen size={28} />
                   </div>
-                  <span className="mg-v2-ad-b0kla__admin-label">원장 조회</span>
-                  <span className="mg-v2-ad-b0kla__admin-desc">계정별 원장을 조회하고 상세 내역을 확인합니다</span>
+                  <span className="mg-v2-ad-b0kla__admin-label">계정별 내역</span>
+                  <span className="mg-v2-ad-b0kla__admin-desc">계정별로 거래 내역을 조회합니다</span>
                 </button>
                 <button type="button" className="mg-v2-ad-b0kla__admin-card" onClick={() => navigate('/admin/erp/financial?tab=settlement')}>
                   <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--gray">
                     <Calculator size={28} />
                   </div>
-                  <span className="mg-v2-ad-b0kla__admin-label">정산 관리</span>
-                  <span className="mg-v2-ad-b0kla__admin-desc">정산 규칙을 설정하고 정산을 계산 및 승인합니다</span>
+                  <span className="mg-v2-ad-b0kla__admin-label">정산</span>
+                  <span className="mg-v2-ad-b0kla__admin-desc">정산 규칙 설정 및 계산·승인</span>
                 </button>
                 <button type="button" className="mg-v2-ad-b0kla__admin-card" onClick={() => navigate('/admin/erp/financial?tab=cash-flow')}>
                   <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--gray">
                     <FileText size={28} />
                   </div>
-                  <span className="mg-v2-ad-b0kla__admin-label">현금흐름표</span>
-                  <span className="mg-v2-ad-b0kla__admin-desc">영업, 투자, 재무 활동의 현금흐름을 확인합니다</span>
+                  <span className="mg-v2-ad-b0kla__admin-label">현금 흐름</span>
+                  <span className="mg-v2-ad-b0kla__admin-desc">영업·투자·재무 활동의 현금 흐름을 확인합니다</span>
                 </button>
               </>
             )}

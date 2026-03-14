@@ -9,6 +9,7 @@ import com.coresolution.consultation.service.PlSqlMappingSyncService;
 import com.coresolution.consultation.service.PlSqlFinancialService;
 import com.coresolution.consultation.service.erp.ErpFinancialCloseService;
 import com.coresolution.consultation.service.erp.ErpService;
+import com.coresolution.consultation.service.erp.accounting.AccountingService;
 import com.coresolution.consultation.service.erp.accounting.FinancialStatementService;
 import com.coresolution.consultation.service.erp.settlement.SettlementService;
 import com.coresolution.core.context.TenantContextHolder;
@@ -46,6 +47,29 @@ public class ErpAutomationScheduler {
     private final SettlementService settlementService;
     private final PlSqlFinancialService plSqlFinancialService;
     private final PlSqlMappingSyncService plSqlMappingSyncService;
+    private final AccountingService accountingService;
+
+    /**
+     * ERP init + 백필 — 매일 00:08 (일별 통계 00:01 이후, 일 마감 00:10 이전)
+     * 신규 테넌트 계정 매핑 초기화 후, INCOME 거래 중 분개 미생성 건 분개 생성·전기.
+     */
+    @Scheduled(cron = "${scheduler.erp-init-backfill.cron:0 8 0 * * *}")
+    public void scheduleErpInitAndBackfill() {
+        runPerTenant("ErpInitAndBackfill", "daily", () -> {
+            String tenantId = TenantContextHolder.getTenantId();
+            try {
+                accountingService.ensureErpAccountMappingForTenant(tenantId);
+                var result = accountingService.backfillJournalEntriesFromIncomeTransactions(tenantId);
+                log.info("[ErpAutomation] init+backfill 완료: tenantId={}, processed={}, failed={}, skipped={}",
+                    tenantId,
+                    result.getOrDefault("processedCount", 0L),
+                    result.getOrDefault("failedCount", 0L),
+                    result.getOrDefault("skippedCount", 0L));
+            } catch (Exception e) {
+                log.warn("[ErpAutomation] init+backfill 실패: tenantId={}, error={}", tenantId, e.getMessage());
+            }
+        });
+    }
 
     /**
      * 정기 일 마감(재무) — 매일 00:10 (일별 통계 00:01 이후)

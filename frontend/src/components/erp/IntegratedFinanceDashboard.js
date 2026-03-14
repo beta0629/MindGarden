@@ -251,7 +251,7 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
         
         if (!hasIntegratedFinancePermission) {
           console.log('❌ 통합재무관리 접근 권한 없음');
-          setError('통합재무관리 접근 권한이 없습니다.');
+          setError('수입·지출 관리 접근 권한이 없습니다.');
           setLoading(false);
           permissionCheckedRef.current = true;
           return;
@@ -319,7 +319,7 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
 
   if (loading) {
     return (
-      <AdminCommonLayout title="통합 재무" loading={true} loadingText="데이터를 불러오는 중...">
+      <AdminCommonLayout title="수입·지출 관리" loading={true} loadingText="데이터를 불러오는 중...">
         <div />
       </AdminCommonLayout>
     );
@@ -334,7 +334,7 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
   }
 
   return (
-    <AdminCommonLayout title="통합 재무">
+    <AdminCommonLayout title="수입·지출 관리">
       <div className="mg-dashboard-layout mg-v2-ad-b0kla">
         {/* Dashboard Header */}
         <div className="mg-dashboard-header">
@@ -342,9 +342,9 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
             <div className="mg-dashboard-header-left">
               <BarChart3 size={32} />
               <div>
-                <h1 className="mg-dashboard-title">통합 회계 관리 시스템</h1>
+                <h1 className="mg-dashboard-title">수입·지출 관리</h1>
                 <p className="mg-dashboard-subtitle">
-                  수입/지출 관리
+                  거래·손익·정산을 한곳에서
                 </p>
               </div>
             </div>
@@ -390,15 +390,15 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
             <div className="mg-v2-ad-b0kla__pill-toggle integrated-finance-tabs">
               {[
                 { key: 'overview', label: '개요' },
-                { key: 'journal-entries', label: '분개 관리' },
-                { key: 'ledgers', label: '원장 조회' },
-                { key: 'balance-sheet', label: '대차대조표' },
-                { key: 'income-statement', label: '손익계산서' },
-                { key: 'cash-flow', label: '현금흐름표' },
-                { key: 'settlement', label: '정산 관리' },
+                { key: 'journal-entries', label: '거래 정리' },
+                { key: 'ledgers', label: '계정별 내역' },
+                { key: 'balance-sheet', label: '자산·부채 현황' },
+                { key: 'income-statement', label: '손익 현황' },
+                { key: 'cash-flow', label: '현금 흐름' },
+                { key: 'settlement', label: '정산' },
                 { key: 'daily', label: '일간 리포트' },
                 { key: 'monthly', label: '월간 리포트' },
-                { key: 'yearly', label: '년간 리포트' }
+                { key: 'yearly', label: '연간 리포트' }
               ].map(tab => (
                 <button
                   key={tab.key}
@@ -687,7 +687,7 @@ const BalanceSheetTab = () => {
           </div>
           <div className="finance-statement-block mg-v2-empty-state" style={{ background: 'var(--mg-color-surface-main)', border: '1px solid var(--mg-color-border-main)', borderRadius: '16px', padding: 'var(--mg-spacing-24)', textAlign: 'center' }}>
             <h4 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--mg-color-text-main)' }}>해당 기간 데이터가 없습니다</h4>
-            <p style={{ fontSize: '14px', color: 'var(--mg-color-text-secondary)' }}>선택한 기준일자에 등록된 원장 데이터가 없습니다.</p>
+            <p style={{ fontSize: '14px', color: 'var(--mg-color-text-secondary)' }}>선택한 기준일자에 등록된 내역이 없습니다.</p>
           </div>
         </DashboardSection>
       </div>
@@ -889,7 +889,7 @@ const IncomeStatementTab = () => {
           </div>
           <div className="finance-statement-block mg-v2-empty-state" style={{ background: 'var(--mg-color-surface-main)', border: '1px solid var(--mg-color-border-main)', borderRadius: '16px', padding: 'var(--mg-spacing-24)', textAlign: 'center' }}>
             <h4 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--mg-color-text-main)' }}>해당 기간 데이터가 없습니다</h4>
-            <p style={{ fontSize: '14px', color: 'var(--mg-color-text-secondary)' }}>선택한 기간에 등록된 원장 데이터가 없습니다.</p>
+            <p style={{ fontSize: '14px', color: 'var(--mg-color-text-secondary)' }}>선택한 기간에 등록된 내역이 없습니다.</p>
           </div>
         </DashboardSection>
       </div>
@@ -1636,7 +1636,7 @@ const JournalEntriesTab = () => {
       }
     } catch (err) {
       console.error('Journal entries fetch error:', err);
-      notificationManager.show('분개 목록을 불러오는데 실패했습니다.', 'error');
+      notificationManager.show('거래 목록을 불러오는데 실패했습니다.', 'error');
     } finally {
       setLoading(false);
     }
@@ -1648,12 +1648,12 @@ const JournalEntriesTab = () => {
         withCredentials: true
       });
       if (response.data.success) {
-        notificationManager.show('분개가 승인되었습니다.', 'success');
+        notificationManager.show('거래가 반영되었습니다.', 'success');
         fetchJournalEntries();
       }
     } catch (err) {
       console.error('Approve error:', err);
-      notificationManager.show('분개 승인에 실패했습니다.', 'error');
+      notificationManager.show('거래 반영에 실패했습니다. 다시 시도해 주세요.', 'error');
     }
   };
 
@@ -1663,22 +1663,22 @@ const JournalEntriesTab = () => {
         withCredentials: true
       });
       if (response.data.success) {
-        notificationManager.show('분개가 전기되었습니다.', 'success');
+        notificationManager.show('거래가 반영되었습니다.', 'success');
         fetchJournalEntries();
       }
     } catch (err) {
       console.error('Post error:', err);
-      notificationManager.show('분개 전기에 실패했습니다.', 'error');
+      notificationManager.show('거래 반영에 실패했습니다. 다시 시도해 주세요.', 'error');
     }
   };
 
   if (loading) {
-    return <UnifiedLoading text="분개 목록을 불러오는 중..." size="medium" type="inline" />;
+    return <UnifiedLoading text="거래 목록을 불러오는 중..." size="medium" type="inline" />;
   }
 
   return (
     <section className="mg-v2-section">
-      <DashboardSection title="분개 관리" icon={<Receipt size={20} />}>
+      <DashboardSection title="거래 정리" icon={<Receipt size={20} />}>
         {/* 분개 설명 섹션 */}
         <div className="mg-v2-mb-md" style={{ 
           backgroundColor: 'var(--color-bg-secondary)', 
@@ -1702,7 +1702,7 @@ const JournalEntriesTab = () => {
             }}
           >
             <Info size={18} />
-            <span>분개란 무엇인가요?</span>
+            <span>거래 정리란?</span>
             {showHelp ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
           </button>
           {showHelp && (
@@ -1714,7 +1714,7 @@ const JournalEntriesTab = () => {
               lineHeight: 1.6
             }}>
               <div style={{ marginBottom: 'var(--spacing-sm)' }}>
-                <strong style={{ color: 'var(--color-text-primary)' }}>분개(Journal Entry)</strong>는 모든 회계 거래를 기록하는 기본 단위입니다.
+                <strong style={{ color: 'var(--color-text-primary)' }}>거래(Journal Entry)</strong>는 모든 회계 거래를 기록하는 기본 단위입니다.
               </div>
               <ul style={{ margin: 0, paddingLeft: 'var(--spacing-lg)' }}>
                 <li style={{ marginBottom: 'var(--spacing-xs)' }}>
@@ -1724,10 +1724,10 @@ const JournalEntriesTab = () => {
                   <strong>대변(Credit):</strong> 자산 감소, 수익 발생, 부채 증가, 자본 증가를 의미합니다.
                 </li>
                 <li style={{ marginBottom: 'var(--spacing-xs)' }}>
-                  <strong>복식부기 원칙:</strong> 모든 분개는 차변 합계와 대변 합계가 반드시 일치해야 합니다.
+                  <strong>복식부기 원칙:</strong> 모든 거래는 차변 합계와 대변 합계가 반드시 일치해야 합니다.
                 </li>
                 <li style={{ marginBottom: 'var(--spacing-xs)' }}>
-                  <strong>분개 프로세스:</strong> 초안 작성 → 승인 → 전기 순서로 진행됩니다.
+                  <strong>처리 순서:</strong> 작성 → 승인 → 반영 순서로 진행됩니다.
                 </li>
               </ul>
               <div style={{ 
@@ -1750,15 +1750,15 @@ const JournalEntriesTab = () => {
             size="medium"
             onClick={() => setShowCreateModal(true)}
           >
-            분개 생성
+            거래 등록
           </MGButton>
         </div>
         <div className="mg-v2-table-container">
-          <table className="mg-table" data-label="분개 목록">
+          <table className="mg-table" data-label="거래 목록">
             <thead>
               <tr>
-                <th>분개번호</th>
-                <th>분개일자</th>
+                <th>거래번호</th>
+                <th>기준일자</th>
                 <th>차변합계</th>
                 <th>대변합계</th>
                 <th>상태</th>
@@ -1769,21 +1769,21 @@ const JournalEntriesTab = () => {
               {entries.length === 0 ? (
                 <tr>
                   <td colSpan="6" className="mg-v2-text-center mg-v2-text-secondary">
-                    분개가 없습니다.
+                    등록된 거래가 없습니다.
                   </td>
                 </tr>
               ) : (
                 entries.map(entry => (
                   <tr key={entry.id}>
-                    <td data-label="분개번호">{entry.entryNumber}</td>
-                    <td data-label="분개일자">{entry.entryDate}</td>
+                    <td data-label="거래번호">{entry.entryNumber}</td>
+                    <td data-label="기준일자">{entry.entryDate}</td>
                     <td data-label="차변합계">{formatCurrency(entry.totalDebit || 0)}</td>
                     <td data-label="대변합계">{formatCurrency(entry.totalCredit || 0)}</td>
                     <td data-label="상태">
                       <span className={`mg-v2-badge mg-v2-badge--${entry.entryStatus?.toLowerCase() || 'default'}`}>
                         {entry.entryStatus === 'DRAFT' ? '초안' : 
                          entry.entryStatus === 'APPROVED' ? '승인됨' : 
-                         entry.entryStatus === 'POSTED' ? '전기됨' : entry.entryStatus}
+                         entry.entryStatus === 'POSTED' ? '반영 완료' : entry.entryStatus}
                       </span>
                     </td>
                     <td data-label="작업">
@@ -1810,7 +1810,7 @@ const JournalEntriesTab = () => {
                             size="small"
                             onClick={() => handlePost(entry.id)}
                           >
-                            전기
+                            반영
                           </MGButton>
                         )}
                       </div>
@@ -1892,7 +1892,7 @@ const LedgersTab = () => {
       }
     } catch (err) {
       console.error('Ledger fetch error:', err);
-      notificationManager.show('원장을 불러오는데 실패했습니다.', 'error');
+      notificationManager.show('계정별 내역을 불러오는데 실패했습니다.', 'error');
     } finally {
       setLoading(false);
     }
@@ -1900,7 +1900,7 @@ const LedgersTab = () => {
 
   return (
     <section className="mg-v2-section">
-      <DashboardSection title="원장 조회" icon={<BookOpen size={20} />}>
+      <DashboardSection title="계정별 내역" icon={<BookOpen size={20} />}>
         <div className="mg-v2-form-group mg-v2-mb-md">
           <div className="mg-v2-flex mg-v2-gap-sm" style={{ flexWrap: 'wrap' }}>
             <select
@@ -1943,7 +1943,7 @@ const LedgersTab = () => {
         
         {ledgers.length > 0 ? (
           <div className="mg-v2-table-container">
-            <table className="mg-table" data-label="원장 목록">
+            <table className="mg-table" data-label="계정별 내역">
               <thead>
                 <tr>
                   <th>계정 ID</th>
@@ -1975,7 +1975,7 @@ const LedgersTab = () => {
             </table>
           </div>
         ) : selectedAccountId ? (
-          <p className="mg-v2-text-center mg-v2-text-secondary">원장 데이터가 없습니다.</p>
+          <p className="mg-v2-text-center mg-v2-text-secondary">내역이 없습니다.</p>
         ) : (
           <p className="mg-v2-text-center mg-v2-text-secondary">계정을 선택해주세요.</p>
         )}
@@ -2066,7 +2066,7 @@ const SettlementTab = () => {
 
   return (
     <section className="mg-v2-section">
-      <DashboardSection title="정산 관리" icon={<Calculator size={20} />}>
+      <DashboardSection title="정산" icon={<Calculator size={20} />}>
         <div className="mg-v2-tabs">
           <button 
             className={`mg-v2-tab ${activeSubTab === 'rules' ? COMMON_CSS_CLASSES.ACTIVE : ''}`}
@@ -2267,7 +2267,7 @@ const JournalEntryDetailModal = ({ entry, onClose, onRefresh }) => {
       }
     } catch (err) {
       console.error('Entry detail fetch error:', err);
-      notificationManager.show('분개 상세를 불러오는데 실패했습니다.', 'error');
+      notificationManager.show('거래 정보를 불러오는데 실패했습니다.', 'error');
     } finally {
       setLoading(false);
     }
@@ -2275,17 +2275,17 @@ const JournalEntryDetailModal = ({ entry, onClose, onRefresh }) => {
 
   return (
     <>
-      <ErpModal isOpen={true} onClose={onClose} title="분개 상세" size="xl">
+      <ErpModal isOpen={true} onClose={onClose} title="거래 상세" size="xl">
         {loading ? (
-          <UnifiedLoading text="분개 상세를 불러오는 중..." size="medium" type="inline" />
+          <UnifiedLoading text="거래 정보를 불러오는 중..." size="medium" type="inline" />
         ) : entryDetail ? (
           <div className="mg-v2-form-group">
             <div className="mg-v2-mb-md">
-              <label className="mg-v2-label">분개번호</label>
+              <label className="mg-v2-label">거래번호</label>
               <div className="mg-v2-text">{entryDetail.entryNumber}</div>
             </div>
             <div className="mg-v2-mb-md">
-              <label className="mg-v2-label">분개일자</label>
+              <label className="mg-v2-label">기준일자</label>
               <div className="mg-v2-text">{entryDetail.entryDate}</div>
             </div>
             <div className="mg-v2-mb-md">
@@ -2294,15 +2294,15 @@ const JournalEntryDetailModal = ({ entry, onClose, onRefresh }) => {
                 <span className={`mg-v2-badge mg-v2-badge--${entryDetail.entryStatus?.toLowerCase() || 'default'}`}>
                   {entryDetail.entryStatus === 'DRAFT' ? '초안' :
                    entryDetail.entryStatus === 'APPROVED' ? '승인됨' :
-                   entryDetail.entryStatus === 'POSTED' ? '전기됨' : entryDetail.entryStatus}
+                   entryDetail.entryStatus === 'POSTED' ? '반영 완료' : entryDetail.entryStatus}
                 </span>
               </div>
             </div>
             {entryDetail.lines && entryDetail.lines.length > 0 && (
               <div className="mg-v2-mb-md">
-                <label className="mg-v2-label">분개 라인</label>
+                <label className="mg-v2-label">거래 라인</label>
                 <div className="mg-v2-table-container">
-                  <table className="mg-table" data-label="분개 라인 목록">
+                  <table className="mg-table" data-label="거래 라인 목록">
                     <thead>
                       <tr>
                         <th>계정</th>
@@ -2327,7 +2327,7 @@ const JournalEntryDetailModal = ({ entry, onClose, onRefresh }) => {
             )}
           </div>
         ) : (
-          <p className="mg-v2-text-center mg-v2-text-secondary">분개 상세를 불러올 수 없습니다.</p>
+          <p className="mg-v2-text-center mg-v2-text-secondary">거래 정보를 불러올 수 없습니다.</p>
         )}
         <div className="mg-v2-modal-footer">
           <MGButton variant="secondary" onClick={onClose}>닫기</MGButton>
@@ -2405,7 +2405,7 @@ const JournalEntryCreateModal = ({ onClose, onRefresh }) => {
     const newErrors = {};
     
     if (!formData.entryDate) {
-      newErrors.entryDate = '분개일자는 필수입니다.';
+      newErrors.entryDate = '기준일자는 필수입니다.';
     }
     
     if (lines.length < 2) {
@@ -2459,15 +2459,15 @@ const JournalEntryCreateModal = ({ onClose, onRefresh }) => {
       });
 
       if (response.data.success) {
-        notificationManager.show('분개가 생성되었습니다.', 'success');
+        notificationManager.show('거래가 등록되었습니다.', 'success');
         onRefresh();
         onClose();
       } else {
-        notificationManager.show(response.data.message || '분개 생성에 실패했습니다.', 'error');
+        notificationManager.show(response.data.message || '거래 등록에 실패했습니다. 다시 시도해 주세요.', 'error');
       }
     } catch (err) {
       console.error('Create entry error:', err);
-      notificationManager.show('분개 생성에 실패했습니다.', 'error');
+      notificationManager.show('거래 등록에 실패했습니다. 다시 시도해 주세요.', 'error');
     } finally {
       setLoading(false);
     }
@@ -2477,7 +2477,7 @@ const JournalEntryCreateModal = ({ onClose, onRefresh }) => {
   const isBalanced = totalDebit === totalCredit;
 
   return (
-    <ErpModal isOpen={true} onClose={onClose} title="분개 생성" size="xl">
+    <ErpModal isOpen={true} onClose={onClose} title="거래 등록" size="xl">
       {/* 분개 작성 가이드 */}
       <div style={{
         backgroundColor: 'var(--color-info-light)',
@@ -2491,7 +2491,7 @@ const JournalEntryCreateModal = ({ onClose, onRefresh }) => {
         <div style={{ display: 'flex', alignItems: 'start', gap: 'var(--spacing-xs)' }}>
           <Info size={16} style={{ marginTop: '2px', flexShrink: 0 }} />
           <div>
-            <strong style={{ color: 'var(--color-text-primary)' }}>분개 작성 가이드:</strong>
+            <strong style={{ color: 'var(--color-text-primary)' }}>거래 등록 가이드:</strong>
             <ul style={{ margin: 'var(--spacing-xs) 0 0 0', paddingLeft: 'var(--spacing-md)' }}>
               <li>차변과 대변은 한 라인에 동시에 입력할 수 없습니다.</li>
               <li>차변 합계와 대변 합계가 반드시 일치해야 합니다.</li>
@@ -2504,7 +2504,7 @@ const JournalEntryCreateModal = ({ onClose, onRefresh }) => {
       <div className="mg-v2-form-group">
         <div className="mg-v2-mb-md">
           <label className="mg-v2-label">
-            분개일자 <span className="mg-v2-text-danger">*</span>
+            기준일자 <span className="mg-v2-text-danger">*</span>
           </label>
           <input
             type="date"
@@ -2520,7 +2520,7 @@ const JournalEntryCreateModal = ({ onClose, onRefresh }) => {
           <input
             type="text"
             className="mg-v2-input"
-            placeholder="분개 설명을 입력하세요"
+            placeholder="거래 내용을 입력하세요"
             value={formData.description}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
           />
@@ -2528,14 +2528,14 @@ const JournalEntryCreateModal = ({ onClose, onRefresh }) => {
 
         <div className="mg-v2-mb-md">
           <div className="mg-v2-flex mg-v2-justify-between mg-v2-mb-sm">
-            <label className="mg-v2-label">분개 라인</label>
+            <label className="mg-v2-label">거래 라인</label>
             <MGButton variant="outline" size="small" onClick={handleAddLine}>
               라인 추가
             </MGButton>
           </div>
           
           <div className="mg-v2-table-container">
-            <table className="mg-table" data-label="분개 라인 입력">
+            <table className="mg-table" data-label="거래 라인 입력">
               <thead>
                 <tr>
                   <th>계정 ID</th>
@@ -2893,7 +2893,7 @@ const LedgerDetailModal = ({ ledger, onClose }) => {
     <div className="mg-v2-modal-overlay" onClick={onClose}>
       <div className="mg-v2-modal-content" style={{ maxWidth: 'min(95vw, 1100px)' }} onClick={(e) => e.stopPropagation()}>
         <div className="mg-v2-modal-header">
-          <h3 className="mg-v2-modal-title">원장 상세</h3>
+          <h3 className="mg-v2-modal-title">계정별 내역 상세</h3>
           <button className="mg-v2-modal-close" onClick={onClose}>×</button>
         </div>
         <div className="mg-v2-modal-body">
@@ -2925,16 +2925,16 @@ const LedgerDetailModal = ({ ledger, onClose }) => {
 
             {/* 분개 내역 */}
             <div className="mg-v2-mb-md">
-              <label className="mg-v2-label">분개 내역</label>
+              <label className="mg-v2-label">관련 거래 내역</label>
               {loadingEntries ? (
-                <UnifiedLoading text="분개 내역을 불러오는 중..." size="small" type="inline" />
+                <UnifiedLoading text="거래 내역을 불러오는 중..." size="small" type="inline" />
               ) : journalEntries.length > 0 ? (
                 <div className="mg-v2-table-container">
-                  <table className="mg-table" data-label="분개 내역 목록">
+                  <table className="mg-table" data-label="거래 내역 목록">
                     <thead>
                       <tr>
-                        <th>분개번호</th>
-                        <th>분개일자</th>
+                        <th>거래번호</th>
+                        <th>기준일자</th>
                         <th>차변</th>
                         <th>대변</th>
                         <th>설명</th>
@@ -2945,8 +2945,8 @@ const LedgerDetailModal = ({ ledger, onClose }) => {
                         const line = entry.lines?.find(l => l.accountId === ledger.accountId);
                         return line ? (
                           <tr key={entry.id}>
-                            <td data-label="분개번호">{entry.entryNumber}</td>
-                            <td data-label="분개일자">{entry.entryDate}</td>
+                            <td data-label="거래번호">{entry.entryNumber}</td>
+                            <td data-label="기준일자">{entry.entryDate}</td>
                             <td data-label="차변">{formatCurrency(line.debitAmount || 0)}</td>
                             <td data-label="대변">{formatCurrency(line.creditAmount || 0)}</td>
                             <td data-label="설명">{line.description || entry.description || '-'}</td>
@@ -2957,7 +2957,7 @@ const LedgerDetailModal = ({ ledger, onClose }) => {
                   </table>
                 </div>
               ) : (
-                <p className="mg-v2-text-center mg-v2-text-secondary">분개 내역이 없습니다.</p>
+                <p className="mg-v2-text-center mg-v2-text-secondary">관련 거래 내역이 없습니다.</p>
               )}
             </div>
           </div>
@@ -3031,7 +3031,7 @@ const JournalEntryEditModal = ({ entry, onClose, onRefresh }) => {
     const newErrors = {};
     
     if (!formData.entryDate) {
-      newErrors.entryDate = '분개일자는 필수입니다.';
+      newErrors.entryDate = '기준일자는 필수입니다.';
     }
     
     if (lines.length < 2) {
@@ -3085,15 +3085,15 @@ const JournalEntryEditModal = ({ entry, onClose, onRefresh }) => {
       });
 
       if (response.data.success) {
-        notificationManager.show('분개가 수정되었습니다.', 'success');
+        notificationManager.show('거래가 수정되었습니다.', 'success');
         onRefresh();
         onClose();
       } else {
-        notificationManager.show(response.data.message || '분개 수정에 실패했습니다.', 'error');
+        notificationManager.show(response.data.message || '거래 수정에 실패했습니다. 다시 시도해 주세요.', 'error');
       }
     } catch (err) {
       console.error('Update entry error:', err);
-      notificationManager.show('분개 수정에 실패했습니다.', 'error');
+      notificationManager.show('거래 수정에 실패했습니다. 다시 시도해 주세요.', 'error');
     } finally {
       setLoading(false);
     }
@@ -3103,17 +3103,17 @@ const JournalEntryEditModal = ({ entry, onClose, onRefresh }) => {
   const isBalanced = totalDebit === totalCredit;
 
   return (
-    <ErpModal isOpen={true} onClose={onClose} title="분개 수정" size="xl">
+    <ErpModal isOpen={true} onClose={onClose} title="거래 수정" size="xl">
       <div className="mg-v2-form-group">
         <div className="mg-v2-mb-md">
           <label className="mg-v2-label">
-            분개번호
+            거래번호
           </label>
           <div className="mg-v2-text">{entry.entryNumber}</div>
         </div>
         <div className="mg-v2-mb-md">
           <label className="mg-v2-label">
-            분개일자 <span className="mg-v2-text-danger">*</span>
+            기준일자 <span className="mg-v2-text-danger">*</span>
           </label>
           <input
             type="date"
@@ -3129,7 +3129,7 @@ const JournalEntryEditModal = ({ entry, onClose, onRefresh }) => {
           <input
             type="text"
             className="mg-v2-input"
-            placeholder="분개 설명을 입력하세요"
+            placeholder="거래 내용을 입력하세요"
             value={formData.description}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
           />
@@ -3137,14 +3137,14 @@ const JournalEntryEditModal = ({ entry, onClose, onRefresh }) => {
 
         <div className="mg-v2-mb-md">
           <div className="mg-v2-flex mg-v2-justify-between mg-v2-mb-sm">
-            <label className="mg-v2-label">분개 라인</label>
+            <label className="mg-v2-label">거래 라인</label>
             <MGButton variant="outline" size="small" onClick={handleAddLine}>
               라인 추가
             </MGButton>
           </div>
           
           <div className="mg-v2-table-container">
-            <table className="mg-table" data-label="분개 라인 입력">
+            <table className="mg-table" data-label="거래 라인 입력">
               <thead>
                 <tr>
                   <th>계정 ID</th>

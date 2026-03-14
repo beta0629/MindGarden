@@ -9,9 +9,9 @@ const PERMISSION_CATEGORIES = {
         { code: 'ADMIN_DASHBOARD_VIEW', name: '관리자 대시보드', description: '관리자 대시보드 전체 접근' },
         { code: 'DASHBOARD_VIEW', name: '대시보드 조회', description: '대시보드 통계 및 데이터 조회' },
         { code: 'REPORT_VIEW', name: '보고서 조회', description: '보고서 및 통계 조회 (성과지표 포함)' },
-        { code: 'ERP_ACCESS', name: 'ERP 시스템', description: 'ERP 시스템 전체 접근' },
-        { code: 'ERP_DASHBOARD_VIEW', name: 'ERP 대시보드', description: 'ERP 대시보드 조회' },
-        { code: 'INTEGRATED_FINANCE_VIEW', name: '통합 재무 관리', description: '통합 재무 관리 시스템 접근' }
+        { code: 'ERP_ACCESS', name: '운영·재무 접근', description: '운영·재무 메뉴 전체 접근' },
+        { code: 'ERP_DASHBOARD_VIEW', name: '운영 현황', description: '운영 현황(수입·지출·구매) 조회' },
+        { code: 'INTEGRATED_FINANCE_VIEW', name: '수입·지출 관리', description: '수입·지출·거래·정산 화면 접근' }
     ],
     '사용자 관리': [
         { code: 'USER_VIEW', name: '사용자 조회', description: '사용자 목록 및 정보 조회' },

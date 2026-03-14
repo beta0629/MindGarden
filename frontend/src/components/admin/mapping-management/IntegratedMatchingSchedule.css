@@ -265,7 +265,11 @@
   font-size: 14px;
 }
 
-/* 매칭 카드 (사이드바 전용) */
+/* 매칭 카드 (사이드바 전용) - 리스트 아이템이 축소되지 않도록 flex-shrink: 0 */
+.integrated-schedule__sidebar .integrated-schedule__list > li.integrated-schedule__card {
+  flex-shrink: 0;
+}
+
 .integrated-schedule__sidebar .integrated-schedule__card {
   position: relative;
   min-height: 140px;
@@ -297,8 +301,8 @@
   transform: none;
 }
 
-/* 드래그 가능 카드: fc-event 대신 --draggable 사용, 동일 스펙 적용 */
-.integrated-schedule__sidebar .integrated-schedule__card--draggable {
+/* fc-event 카드: 전역 .fc-event 스타일 덮어쓰기 (동일 스펙 적용) */
+.integrated-schedule__sidebar .integrated-schedule__card.fc-event {
   border: 1px solid var(--mg-color-border-main);
   border-radius: var(--mg-radius-lg);
   padding: var(--mg-spacing-16);
@@ -308,7 +312,7 @@
   font-size: inherit;
 }
 
-.integrated-schedule__sidebar .integrated-schedule__card--draggable:hover {
+.integrated-schedule__sidebar .integrated-schedule__card.fc-event:hover {
   box-shadow: var(--mg-card-hover-shadow);
   transform: none;
 }

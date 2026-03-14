@@ -130,7 +130,7 @@ const IntegratedMatchingSchedule = () => {
   useEffect(() => {
     if (!sidebarListRef.current || filteredMappings.length === 0) return;
     const draggable = new Draggable(sidebarListRef.current, {
-      itemSelector: '.integrated-schedule__card--draggable'
+      itemSelector: '.integrated-schedule__card.fc-event'
     });
     return () => draggable.destroy();
   }, [viewFilter, filteredMappings.length, scheduleableCount]);
@@ -335,7 +335,7 @@ const IntegratedMatchingSchedule = () => {
                   return (
                     <li
                       key={mapping.id}
-                      className={canScheduleForMapping(mapping) ? 'integrated-schedule__card integrated-schedule__card--draggable' : 'integrated-schedule__card'}
+                      className={`integrated-schedule__card ${canScheduleForMapping(mapping) ? 'fc-event' : ''}`}
                       data-event={canScheduleForMapping(mapping) ? JSON.stringify(eventData) : undefined}
                     >
                       <MappingScheduleCard

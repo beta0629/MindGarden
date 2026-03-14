@@ -46,8 +46,14 @@ const getMappingDate = (m) => {
   return Number.isNaN(d.getTime()) ? 0 : d.getTime();
 };
 
-/** 상태별 필터 옵션 (value: '' = 전체) */
+/** 신규 매칭중: 회기 소진·종료됨 제외 */
+const ONGOING_EXCLUDED_STATUSES = new Set(['SESSIONS_EXHAUSTED', 'TERMINATED']);
+const isOngoingMapping = (m) =>
+  m?.status && !ONGOING_EXCLUDED_STATUSES.has(m.status);
+
+/** 상태별 필터 옵션 (value: 'ongoing' = 신규 매칭중, value: '' = 전체) */
 const STATUS_FILTER_OPTIONS = [
+  { value: 'ongoing', label: '신규 매칭중' },
   { value: '', label: '전체' },
   { value: 'PENDING_PAYMENT', label: '결제 대기' },
   { value: 'PAYMENT_CONFIRMED', label: '결제 확인' },
@@ -69,7 +75,7 @@ const IntegratedMatchingSchedule = () => {
   const [refetchTrigger, setRefetchTrigger] = useState(0);
   const [createMappingModalOpen, setCreateMappingModalOpen] = useState(false);
   const [viewFilter, setViewFilter] = useState(VIEW_FILTER_NEW);
-  const [statusFilter, setStatusFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('ongoing');
   const [paymentModalMapping, setPaymentModalMapping] = useState(null);
   const [depositModalMapping, setDepositModalMapping] = useState(null);
   const [approveProcessing, setApproveProcessing] = useState(false);
@@ -118,12 +124,20 @@ const IntegratedMatchingSchedule = () => {
   const sortedByView = [...byView].sort(
     (a, b) => getMappingDate(b) - getMappingDate(a)
   );
-  const filteredMappings = statusFilter
-    ? sortedByView.filter((m) => m.status === statusFilter)
-    : sortedByView;
+  let filteredMappings;
+  if (statusFilter === 'ongoing') {
+    filteredMappings = sortedByView.filter(isOngoingMapping);
+  } else if (statusFilter) {
+    filteredMappings = sortedByView.filter((m) => m.status === statusFilter);
+  } else {
+    filteredMappings = sortedByView;
+  }
 
-  const getStatusCount = (value) =>
-    value === '' ? byView.length : byView.filter((m) => m.status === value).length;
+  const getStatusCount = (value) => {
+    if (value === 'ongoing') return byView.filter(isOngoingMapping).length;
+    if (value === '') return byView.length;
+    return byView.filter((m) => m.status === value).length;
+  };
 
   /** 스케줄 가능(드래그 가능) 카드 수 — 결제/입금/승인 후 목록 갱신 시 Draggable 재바인딩 */
   const scheduleableCount = filteredMappings.filter((m) => canScheduleForMapping(m)).length;

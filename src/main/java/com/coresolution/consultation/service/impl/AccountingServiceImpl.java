@@ -553,7 +553,7 @@ public class AccountingServiceImpl implements AccountingService {
     }
 
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
     public Map<String, Long> backfillJournalEntriesFromIncomeTransactions(String tenantId) {
         TenantIsolationValidator.requireTenantIdMatch(tenantId);
         Map<String, Long> result = new HashMap<>();
@@ -564,6 +564,9 @@ public class AccountingServiceImpl implements AccountingService {
         List<FinancialTransaction> transactions =
                 financialTransactionRepository.findByTenantIdAndTransactionTypeAndIsDeletedFalse(
                         tenantId, FinancialTransaction.TransactionType.INCOME);
+
+        DefaultTransactionDefinition def = new DefaultTransactionDefinition(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+        def.setName("backfill-journal-entry");
 
         for (FinancialTransaction transaction : transactions) {
             if (transaction.getId() == null) {
@@ -576,11 +579,18 @@ public class AccountingServiceImpl implements AccountingService {
                 continue;
             }
             try {
-                AccountingEntry created = createJournalEntryFromTransaction(transaction);
-                if (created != null) {
-                    result.put("processedCount", result.get("processedCount") + 1);
-                } else {
-                    result.put("failedCount", result.get("failedCount") + 1);
+                TransactionStatus status = transactionManager.getTransaction(def);
+                try {
+                    AccountingEntry created = createJournalEntryFromTransaction(transaction);
+                    transactionManager.commit(status);
+                    if (created != null) {
+                        result.put("processedCount", result.get("processedCount") + 1);
+                    } else {
+                        result.put("failedCount", result.get("failedCount") + 1);
+                    }
+                } catch (Exception e) {
+                    transactionManager.rollback(status);
+                    throw e;
                 }
             } catch (Exception e) {
                 log.warn("백필 분개 생성 실패: transactionId={}, error={}", transaction.getId(),

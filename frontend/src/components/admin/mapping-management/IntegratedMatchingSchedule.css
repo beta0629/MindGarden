@@ -68,6 +68,7 @@
   min-width: 320px;
   width: 320px;
   flex-shrink: 0;
+  min-height: 0;
   background-color: var(--mg-color-surface-main);
   border: 1px solid var(--mg-color-border-main);
   border-radius: 16px;
@@ -246,6 +247,7 @@
 
 .integrated-schedule__list {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   list-style: none;
   margin: 0;
@@ -263,34 +265,52 @@
   font-size: 14px;
 }
 
-/* 매칭 카드 */
-.integrated-schedule__card {
+/* 매칭 카드 (사이드바 전용, fc-event 전역 스타일 덮어쓰기) */
+.integrated-schedule__sidebar .integrated-schedule__card {
   position: relative;
   min-height: 140px;
-  background-color: var(--mg-bg-card, var(--mg-color-surface-main, var(--mg-white)));
-  border: 1px solid var(--mg-color-border-main, var(--mg-gray-200));
-  border-radius: var(--mg-radius-lg, 12px);
   padding: var(--mg-spacing-16, 16px);
   display: flex;
   flex-direction: column;
   gap: var(--mg-spacing-12, 12px);
-  transition: box-shadow 0.2s ease, border-color 0.2s ease;
-  box-shadow: var(--mg-shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.05));
+  border: 1px solid var(--mg-color-border-main);
+  border-radius: var(--mg-radius-lg, 12px);
+  box-shadow: var(--mg-shadow-sm);
+  background: var(--mg-bg-card, var(--mg-color-surface-main));
+  font-size: inherit;
+  transition: box-shadow 0.2s ease;
 }
 
-.integrated-schedule__card::before {
+.integrated-schedule__sidebar .integrated-schedule__card::before {
   content: '';
   position: absolute;
   left: 0;
   top: 0;
   bottom: 0;
   width: 4px;
-  background-color: var(--mg-color-primary-main, var(--mg-primary-500));
+  background-color: var(--mg-color-primary-main);
   border-radius: var(--mg-radius-lg, 12px) 0 0 var(--mg-radius-lg, 12px);
 }
 
-.integrated-schedule__card:hover {
+.integrated-schedule__sidebar .integrated-schedule__card:hover {
   box-shadow: var(--mg-card-hover-shadow, 0 4px 12px rgba(0, 0, 0, 0.08));
+  transform: none;
+}
+
+/* fc-event 클래스가 붙은 카드에도 동일 스펙 강제 적용 */
+.integrated-schedule__sidebar .integrated-schedule__card.fc-event {
+  border: 1px solid var(--mg-color-border-main);
+  border-radius: var(--mg-radius-lg, 12px);
+  padding: var(--mg-spacing-16, 16px);
+  min-height: 140px;
+  box-shadow: var(--mg-shadow-sm);
+  background: var(--mg-bg-card, var(--mg-color-surface-main));
+  font-size: inherit;
+}
+
+.integrated-schedule__sidebar .integrated-schedule__card.fc-event:hover {
+  box-shadow: var(--mg-card-hover-shadow, 0 4px 12px rgba(0, 0, 0, 0.08));
+  transform: none;
 }
 
 /* 우측 캘린더 */

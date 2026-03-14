@@ -33,9 +33,10 @@ description: Core Solution(MindGarden) 프로젝트 전체 룰 인덱스. 백엔
 
 | 작업 유형 | 서브에이전트 | 적용 스킬 | 비고 |
 |----------|--------------|----------|------|
-| React/JS 컴포넌트 코드 작성·수정 | core-coder | /core-solution-frontend | 프론트엔드 소스 |
+| **HTML 마크업 (퍼블리싱)** | **core-publisher** | /core-solution-publisher, /core-solution-atomic-design | designer 스펙 → HTML. JS/CSS 수정 안 함 |
+| React/JS 컴포넌트 코드 작성·수정 | core-coder | /core-solution-frontend | 프론트엔드 소스. publisher HTML 기반 |
 | Java/Spring 백엔드 코드 | core-coder | /core-solution-backend | API, Service, Entity 등 |
-| UI/UX·레이아웃·비주얼 설계 | core-designer | /core-solution-standardization, /core-solution-design-handoff | 시안·토큰·스펙 정의 선행. 산출물·코더 전달 형식은 design-handoff |
+| UI/UX·레이아웃·비주얼 설계 | core-designer | /core-solution-standardization, /core-solution-design-handoff | 시안·토큰·스펙 정의 선행. 산출물은 publisher 전달 |
 | 헤더·푸터·공통 레이아웃 수정 | core-coder | /core-solution-frontend, /core-solution-atomic-design | B0KlA·디자인 토큰 준수 |
 | 스케줄·캘린더·모달 UI 수정 | core-coder | /core-solution-frontend | core-designer 시안 있으면 참조 |
 | 매핑·ERP·비즈니스 로직 | core-coder | /core-solution-erp, /core-solution-business-flow | |
@@ -55,7 +56,7 @@ description: Core Solution(MindGarden) 프로젝트 전체 룰 인덱스. 백엔
 - **explore** 서브에이전트: 코드베이스 탐색·분석, **작업 전 조사** 시 사용 (수정 작업 아님). 문서·기획 시 1단계로 사용.
 - **generalPurpose** 서브에이전트: 복합 연구·다단계 작업, **문서 작성·정리** 시 /core-solution-documentation 스킬과 함께 사용.
 - **서버 상태·긴급 복구**: 개발·운영 서버 상태·에러 로그 확인, 긴급 복구(백업 복원·재시작), 원인 분석 후 core-coder 즉시 조치는 **shell** → **core-debugger** → **core-coder** 순서로 진행. `/core-solution-server-status` 스킬 적용.
-- **UI/레이아웃·비주얼 작업**: 반드시 **core-designer(설계·시안 선행)** → **core-coder(구현)** 순서. `docs/standards/SUBAGENT_USAGE.md`의 [서브에이전트 검토 요약] 및 [UI/레이아웃·비주얼 작업 시 워크플로우] 참고.
+- **UI/레이아웃·비주얼 작업**: **core-designer(설계)** → **core-publisher(HTML 마크업)** → **core-coder(JSX·로직·스타일)** 순서. `docs/standards/SUBAGENT_USAGE.md` 참고.
 
 ## 사용할 스킬
 
@@ -65,6 +66,7 @@ description: Core Solution(MindGarden) 프로젝트 전체 룰 인덱스. 백엔
 | **멀티테넌트 (tenantId 필수)** | `/core-solution-multi-tenant` |
 | **디자인·소스 표준화** | `/core-solution-standardization` |
 | **디자이너 산출물·코더 전달 형식** | `/core-solution-design-handoff` (core-designer 전용) |
+| **퍼블리셔 HTML 마크업 표준** | `/core-solution-publisher` (core-publisher 전용) |
 | Java/Spring 백엔드 코드 | `/core-solution-backend` |
 | React/JS/TS 프론트엔드 코드 | `/core-solution-frontend` |
 | **아토믹 디자인** (Atoms/Molecules/Organisms) | `/core-solution-atomic-design` |

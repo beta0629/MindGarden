@@ -10,7 +10,8 @@
 | 서브에이전트 | 역할 | 적용 스킬 | 비고 |
 |--------------|------|-----------|------|
 | **core-designer** | UI/UX·레이아웃·비주얼 **설계만** (시안·토큰·스펙). **코드 작성 안 함** | /core-solution-standardization, /core-solution-design-handoff | **펜슬 가이드 숙지 필수**(docs/design-system/PENCIL_DESIGN_GUIDE.md). 대시보드·리포트·새 화면 설계 시 선행, 산출물은 design-handoff 형식 |
-| **core-coder** | React/JS·Java/Spring **코드 구현**. designer 시안 있으면 그에 맞춤 | /core-solution-frontend, /core-solution-atomic-design 등 | 구현 단계에서 사용 |
+| **core-publisher** | **HTML 마크업 전담**. designer 스펙을 아토믹·BEM 기반 HTML로 작성. JS/React·CSS 수정 안 함 | /core-solution-publisher, /core-solution-atomic-design | 퍼블리싱 단계. 산출물은 core-coder가 JSX·로직·스타일 연결 |
+| **core-coder** | React/JS·Java/Spring **코드 구현**. designer 스펙 + **publisher HTML** 기반으로 수정 | /core-solution-frontend, /core-solution-atomic-design 등 | publisher HTML을 JSX로 변환·로직 연동 |
 | **core-debugger** | **디버그 전용**. 에러·500 원인 분석, 로그·스택트레이스 해석, 재현 절차·수정 제안. **코드 수정은 core-coder 위임**. 필요 시 **shell**과 연계해 서버 로그·DB 확인 | /core-solution-debug | 오류 원인 파악·수정 제안 시 사용 |
 | **core-tester** | 단위·통합·E2E·보안 **테스트 작성·실행**. 코드 구현 안 함 | /core-solution-testing | |
 | **explore** | 코드베이스 탐색·**작업 전 플랜·조사** (수정 작업 안 함) | /core-solution-documentation (문서 시) | 넓은 범위 작업 전 1단계 |
@@ -19,14 +20,17 @@
 
 ### UI/레이아웃·비주얼 작업 시 워크플로우 (필수)
 
-레이아웃 변경, 대시보드/리포트 UI 개선, 새 화면 비주얼 설계 등은 **반드시 설계 선행 → 구현** 순서를 따른다.
+레이아웃 변경, 대시보드/리포트 UI 개선, 새 화면 비주얼 설계 등은 **설계 → 퍼블리싱 → 구현** 순서를 따른다.
 
 | 단계 | 서브에이전트 | 스킬 | 산출물 |
 |------|--------------|------|--------|
-| **1. 설계** | **core-designer** | /core-solution-standardization, /core-solution-design-handoff | 레이아웃·컴포넌트 구성·토큰 사용 스펙(또는 시안 설명). 코더 전달 시 handoff 형식 준수 |
-| **2. 구현** | **core-coder** | /core-solution-frontend, /core-solution-atomic-design (필요 시 /core-solution-design-system-css) | designer 스펙대로 코드 반영 |
+| **1. 기획** | **core-planner** | /core-solution-planning | 기획서·요구사항·범위 (선택) |
+| **2. 설계** | **core-designer** | /core-solution-standardization, /core-solution-design-handoff | 레이아웃·토큰·클래스명 스펙 |
+| **3. 퍼블리싱** | **core-publisher** | /core-solution-publisher, /core-solution-atomic-design | **HTML 마크업** (designer 스펙 기반) |
+| **4. 구현** | **core-coder** | /core-solution-frontend, /core-solution-atomic-design | publisher HTML → JSX·로직·스타일 연결 |
 
-- designer가 **코드를 수정하지 않음**. 코더가 designer 산출물을 참고해 구현한다.
+- **퍼블리셔**: HTML 마크업 전담. designer 스펙의 클래스·구조를 HTML로 작성. JS/CSS 수정 안 함.
+- **코더**: publisher HTML을 기반으로 React/JSX 변환·이벤트·상태·API 연동.
 - 상세 매핑은 아래 [작업 유형별 서브에이전트 매핑](#작업-유형별-서브에이전트-매핑) 참고.
 
 ## 원칙
@@ -38,6 +42,7 @@
 
 | 작업 유형 | 서브에이전트 | 적용 스킬 |
 |----------|--------------|----------|
+| **HTML 마크업 (퍼블리싱)** | **core-publisher** | /core-solution-publisher, /core-solution-atomic-design |
 | React/JS 컴포넌트 코드 | core-coder | /core-solution-frontend |
 | Java/Spring 백엔드 | core-coder | /core-solution-backend |
 | UI/UX·레이아웃·비주얼 설계 | core-designer | /core-solution-standardization, /core-solution-design-handoff |

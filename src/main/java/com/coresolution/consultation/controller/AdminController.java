@@ -1426,7 +1426,8 @@ public class AdminController extends BaseApiController {
      */
     @PostMapping("/mappings/{mappingId}/approve")
     public ResponseEntity<ApiResponse<Map<String, Object>>> approveMapping(
-            @PathVariable Long mappingId, @RequestBody Map<String, Object> request) {
+            @PathVariable Long mappingId, @RequestBody Map<String, Object> request,
+            HttpSession session) {
         log.info("✅ 매칭 ID {} 관리자 승인", mappingId);
 
         String adminName = (String) request.get("adminName");
@@ -1456,6 +1457,11 @@ public class AdminController extends BaseApiController {
         }
 
         try {
+            // TenantContextHolder 설정 (RealTimeStatisticsService.getRequiredTenantId() 방지)
+            String tenantId = SessionUtils.getTenantId(session);
+            if (tenantId != null) {
+                com.coresolution.core.context.TenantContextHolder.setTenantId(tenantId);
+            }
             // 통계 업데이트 (독립적인 트랜잭션)
             if (consultantId != null && clientId != null) {
                 realTimeStatisticsService.updateStatisticsOnMappingChange(consultantId, clientId,
@@ -2148,6 +2154,11 @@ public class AdminController extends BaseApiController {
         }
 
         try {
+            // TenantContextHolder 설정 (RealTimeStatisticsService.getRequiredTenantId() 방지)
+            String tenantId = SessionUtils.getTenantId(session);
+            if (tenantId != null) {
+                com.coresolution.core.context.TenantContextHolder.setTenantId(tenantId);
+            }
             // 통계 업데이트 (독립적인 트랜잭션)
             if (consultantId != null && clientId != null) {
                 realTimeStatisticsService.updateStatisticsOnMappingChange(consultantId, clientId,

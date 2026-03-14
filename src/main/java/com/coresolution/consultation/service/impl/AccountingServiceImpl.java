@@ -18,7 +18,11 @@ import com.coresolution.consultation.service.erp.accounting.AccountingService;
 import com.coresolution.consultation.service.erp.accounting.LedgerService;
 import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.DefaultTransactionDefinition;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -41,6 +45,7 @@ public class AccountingServiceImpl implements AccountingService {
     private final CommonCodeService commonCodeService;
     private final AccountRepository accountRepository;
     private final CommonCodeRepository commonCodeRepository;
+    private final PlatformTransactionManager transactionManager;
 
     @Override
     @Transactional
@@ -374,11 +379,11 @@ public class AccountingServiceImpl implements AccountingService {
 
     /**
      * 테넌트별 ERP_ACCOUNT_TYPE(REVENUE, EXPENSE, CASH) 계정 매핑이 없으면 기본 계정 생성 후 공통코드 시딩.
+     * REQUIRES_NEW 트랜잭션에서 실행하여 시딩 실패 시 부모 트랜잭션이 rollback-only로 오염되지 않도록 함.
      * 표준: docs/planning/ERP_STATEMENTS_VS_OTHER_REPORTS_LINKAGE_PLAN.md
      *
      * @param tenantId 테넌트 ID (필수)
      */
-    @Transactional
     public void ensureErpAccountMappingForTenant(String tenantId) {
         if (tenantId == null || tenantId.isEmpty()) {
             return;
@@ -388,8 +393,24 @@ public class AccountingServiceImpl implements AccountingService {
                 && getDefaultAccountId(tenantId, "CASH") != null) {
             return;
         }
+        DefaultTransactionDefinition def = new DefaultTransactionDefinition(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+        TransactionStatus status = transactionManager.getTransaction(def);
         try {
-            // 1. ERP 가상 계정 찾기 또는 생성 (수익/비용/현금)
+            doEnsureErpAccountMappingForTenant(tenantId);
+            transactionManager.commit(status);
+        } catch (Exception e) {
+            transactionManager.rollback(status);
+            log.error("테넌트 ERP 계정 매핑 시딩 실패: tenantId={}, error={}", tenantId, e.getMessage(), e);
+        }
+    }
+
+    /**
+     * ERP 계정·공통코드 시딩 실제 로직 (REQUIRES_NEW 트랜잭션 내부에서 호출됨)
+     *
+     * @param tenantId 테넌트 ID (필수)
+     */
+    private void doEnsureErpAccountMappingForTenant(String tenantId) {
+        // 1. ERP 가상 계정 찾기 또는 생성 (수익/비용/현금)
             Account revenueAccount = accountRepository
                     .findByTenantIdAndAccountNumberAndIsDeletedFalse(tenantId, "ERP-REVENUE")
                     .orElseGet(() -> {
@@ -402,6 +423,7 @@ public class AccountingServiceImpl implements AccountingService {
                                 .description("수익 계정")
                                 .isActive(true)
                                 .isDeleted(false)
+                                .isPrimary(false)
                                 .build();
                         return accountRepository.save(a);
                     });
@@ -417,6 +439,7 @@ public class AccountingServiceImpl implements AccountingService {
                                 .description("비용 계정")
                                 .isActive(true)
                                 .isDeleted(false)
+                                .isPrimary(false)
                                 .build();
                         return accountRepository.save(a);
                     });
@@ -432,6 +455,7 @@ public class AccountingServiceImpl implements AccountingService {
                                 .description("현금 계정")
                                 .isActive(true)
                                 .isDeleted(false)
+                                .isPrimary(false)
                                 .build();
                         return accountRepository.save(a);
                     });
@@ -464,10 +488,7 @@ public class AccountingServiceImpl implements AccountingService {
                 }
             }
             log.info("테넌트 ERP 계정 매핑 시딩 완료: tenantId={}, revenueId={}, expenseId={}, cashId={}",
-                    tenantId, revenueAccount.getId(), expenseAccount.getId(), cashAccount.getId());
-        } catch (Exception e) {
-            log.error("테넌트 ERP 계정 매핑 시딩 실패: tenantId={}, error={}", tenantId, e.getMessage(), e);
-        }
+                tenantId, revenueAccount.getId(), expenseAccount.getId(), cashAccount.getId());
     }
 
     /**

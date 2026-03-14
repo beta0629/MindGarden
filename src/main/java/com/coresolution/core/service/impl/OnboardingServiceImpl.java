@@ -12,6 +12,7 @@ import com.coresolution.consultation.entity.CommonCode;
 import com.coresolution.consultation.repository.CommonCodeRepository;
 import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.consultation.service.EmailService;
+import com.coresolution.consultation.service.erp.accounting.AccountingService;
 import com.coresolution.core.constant.OnboardingConstants;
 import com.coresolution.core.domain.Tenant;
 import com.coresolution.core.domain.onboarding.OnboardingRequest;
@@ -67,6 +68,7 @@ public class OnboardingServiceImpl implements OnboardingService {
     private final CommonCodeRepository commonCodeRepository;
     private final OnboardingPreValidationService preValidationService;
     private final OnboardingErrorHandlingService errorHandlingService;
+    private final AccountingService accountingService;
     private final com.coresolution.core.service.PermissionGroupService permissionGroupService;
     private final com.coresolution.core.repository.TenantRoleRepository tenantRoleRepository;
     private final ApplicationContext applicationContext;
@@ -1385,6 +1387,7 @@ public class OnboardingServiceImpl implements OnboardingService {
         statusMap.put("commonCodes", createInitializationStatus("PENDING", null));
         statusMap.put("roleCodes", createInitializationStatus("PENDING", null));
         statusMap.put("permissionGroups", createInitializationStatus("PENDING", null));
+        statusMap.put("erpAccounts", createInitializationStatus("PENDING", null));
 
         // 1. 공통코드 삽입 (별도 트랜잭션)
         try {
@@ -1417,6 +1420,17 @@ public class OnboardingServiceImpl implements OnboardingService {
             String errorMsg = e.getMessage() != null ? e.getMessage() : "알 수 없는 오류";
             statusMap.put("permissionGroups", createInitializationStatus("FAILED", errorMsg));
             log.error("권한 그룹 할당 실패 (계속 진행): tenantId={}, error={}", tenantId, errorMsg, e);
+        }
+
+        // 4. ERP 계정 매핑 시딩 (별도 트랜잭션)
+        try {
+            accountingService.ensureErpAccountMappingForTenant(tenantId);
+            statusMap.put("erpAccounts", createInitializationStatus("SUCCESS", null));
+            log.info("✅ ERP 계정 매핑 시딩 성공: tenantId={}", tenantId);
+        } catch (Exception e) {
+            String errorMsg = e.getMessage() != null ? e.getMessage() : "알 수 없는 오류";
+            statusMap.put("erpAccounts", createInitializationStatus("FAILED", errorMsg));
+            log.error("ERP 계정 매핑 시딩 실패 (계속 진행): tenantId={}, error={}", tenantId, errorMsg, e);
         }
 
         // 상태 JSON 생성 (메인 트랜잭션에서 저장하기 위해 반환)

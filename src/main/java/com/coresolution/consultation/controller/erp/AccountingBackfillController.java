@@ -48,4 +48,31 @@ public class AccountingBackfillController extends BaseApiController {
         Map<String, Long> result = accountingService.backfillJournalEntriesFromIncomeTransactions(tenantId);
         return success(result);
     }
+
+    /**
+     * 테넌트 ERP 계정 매핑 초기화 (관리자 전용).
+     * 해당 테넌트의 ERP_ACCOUNT_TYPE(REVENUE, EXPENSE, CASH) 계정·공통코드가 없으면 생성.
+     * 이미 있으면 스킵.
+     */
+    @PostMapping("init-tenant-erp")
+    public ResponseEntity<?> initTenantErp(HttpSession session) {
+        User currentUser = SessionUtils.getCurrentUser(session);
+        if (currentUser == null) {
+            return ResponseEntity.status(401)
+                    .body(Map.of("success", false, "message", "로그인이 필요합니다.", "redirectToLogin", true));
+        }
+        if (currentUser.getRole() == null || !currentUser.getRole().isAdmin()) {
+            return ResponseEntity.status(403).body(
+                    Map.of("success", false, "message", "관리자만 실행할 수 있습니다."));
+        }
+
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        log.info("ERP 계정 매핑 초기화 요청: tenantId={}, userId={}", tenantId, currentUser.getId());
+
+        accountingService.ensureErpAccountMappingForTenant(tenantId);
+        return success(Map.of(
+                "success", true,
+                "message", "ERP 계정 매핑 초기화 완료 (이미 존재 시 스킵됨)",
+                "tenantId", tenantId));
+    }
 }

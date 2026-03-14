@@ -60,5 +60,13 @@ public interface AccountingService {
      * @return processedCount(처리 건수), failedCount(실패 건수), skippedCount(이미 분개 있음 스킵 건수)
      */
     Map<String, Long> backfillJournalEntriesFromIncomeTransactions(String tenantId);
+
+    /**
+     * 테넌트별 ERP_ACCOUNT_TYPE(REVENUE, EXPENSE, CASH) 계정 매핑이 없으면 기본 계정 및 공통코드 시딩.
+     * 온보딩 시 호출되며, 이미 있으면 스킵.
+     *
+     * @param tenantId 테넌트 ID (필수)
+     */
+    void ensureErpAccountMappingForTenant(String tenantId);
 }
 

@@ -352,13 +352,7 @@ public class AccountingServiceImpl implements AccountingService {
         }
     }
 
-    /**
-     * 테넌트별 ERP_ACCOUNT_TYPE(REVENUE, EXPENSE, CASH) 계정 매핑이 없으면 기본 계정 생성 후 공통코드 시딩.
-     * REQUIRES_NEW 트랜잭션에서 실행하여 시딩 실패 시 부모 트랜잭션이 rollback-only로 오염되지 않도록 함.
-     * 표준: docs/planning/ERP_STATEMENTS_VS_OTHER_REPORTS_LINKAGE_PLAN.md
-     *
-     * @param tenantId 테넌트 ID (필수)
-     */
+    @Override
     public void ensureErpAccountMappingForTenant(String tenantId) {
         if (tenantId == null || tenantId.isEmpty()) {
             return;

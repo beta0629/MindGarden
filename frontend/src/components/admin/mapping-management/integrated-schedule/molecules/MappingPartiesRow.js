@@ -13,7 +13,7 @@ const MappingPartiesRow = ({ consultantName, clientName }) => (
     <span className="integrated-schedule__card-consultant">
       {consultantName || 'N/A'}
     </span>
-    <span className="integrated-schedule__card-arrow">→</span>
+    <span className="integrated-schedule__card-arrow" aria-hidden="true">→</span>
     <span className="integrated-schedule__card-client">
       {clientName || 'N/A'}
     </span>

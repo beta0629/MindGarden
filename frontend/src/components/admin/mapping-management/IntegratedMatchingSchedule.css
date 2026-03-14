@@ -278,7 +278,7 @@
   flex-direction: column;
   gap: var(--mg-spacing-12);
   min-height: 172px;
-  font-size: inherit;
+  font-size: var(--mg-font-size-base, 1rem);
 }
 
 .integrated-schedule__sidebar .mg-v2-card-actions {

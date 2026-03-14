@@ -35,13 +35,15 @@
   border-color: var(--ad-b0kla-green);
 }
 
-.mg-v2-ad-b0kla .mg-v2-button-success {
+.mg-v2-ad-b0kla .mg-v2-button-success,
+.mg-v2-ad-b0kla .mg-v2-button--success {
   background: var(--ad-b0kla-green);
   color: #fff;
   border: none;
 }
 
-.mg-v2-ad-b0kla .mg-v2-button-success:hover:not(:disabled) {
+.mg-v2-ad-b0kla .mg-v2-button-success:hover:not(:disabled),
+.mg-v2-ad-b0kla .mg-v2-button--success:hover:not(:disabled) {
   background: var(--ad-b0kla-green);
   opacity: 0.9;
 }

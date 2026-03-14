@@ -250,8 +250,9 @@ public class StoredProcedureServiceImpl implements StoredProcedureService {
     @Transactional
     public Map<String, Object> updateMappingInfo(Long mappingId, String newPackageName,
                                                 Double newPackagePrice, Integer newTotalSessions, String updatedBy) {
-        log.info("🔄 매핑 정보 수정 프로시저 호출: mappingId={}, packageName={}, price={}, sessions={}, updatedBy={}",
-                mappingId, newPackageName, newPackagePrice, newTotalSessions, updatedBy);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        log.info("🔄 매핑 정보 수정 프로시저 호출: mappingId={}, packageName={}, price={}, sessions={}, updatedBy={}, tenantId={}",
+                mappingId, newPackageName, newPackagePrice, newTotalSessions, updatedBy, tenantId);
 
         try {
             return jdbcTemplate.execute(

@@ -595,8 +595,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             tenantId = TenantContextHolder.getTenantId();
         }
         if (tenantId == null || tenantId.isEmpty()) {
-            log.warn("💰 [비동기] 상담료 수입 거래 스킵: MappingID={}, tenantId 없음", mapping.getId());
-            return;
+            throw new IllegalStateException("테넌트는 필수입니다. tenantId 없이 상담료 수입 거래를 생성할 수 없습니다. MappingID=" + mapping.getId());
         }
         final String tenantIdForCallback = tenantId;
         try {
@@ -1055,6 +1054,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 log.info("🔄 추가 매칭 입금 확인 - 추가 회기에 대한 ERP 거래 생성 (별도 트랜잭션): MappingID={}", mappingId);
                 String tenantIdForTx = getTenantIdFromMapping(savedMapping);
                 if (tenantIdForTx == null) tenantIdForTx = getTenantIdOrNull();
+                if (tenantIdForTx == null || tenantIdForTx.isEmpty()) {
+                    throw new IllegalStateException("테넌트는 필수입니다. MappingID=" + mappingId);
+                }
                 runInNewTransaction(tenantIdForTx, () -> createAdditionalSessionIncomeTransaction(savedMapping, effectiveAmount));
                 log.info("💚 입금 확인 ERP 거래 생성 완료 (추가 매칭): MappingID={}, Amount={}", mappingId, effectiveAmount);
             } else {
@@ -1069,6 +1071,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         // 입금 확인 후 ERP 매핑 정보 동기화 프로시저 호출 (별도 트랜잭션, 실패 시 로그만)
         String tenantIdForProc = getTenantIdFromMapping(savedMapping);
         if (tenantIdForProc == null) tenantIdForProc = getTenantIdOrNull();
+        if (tenantIdForProc == null || tenantIdForProc.isEmpty()) {
+            throw new IllegalStateException("테넌트는 필수입니다. ERP 매핑 정보 동기화를 수행할 수 없습니다. MappingID=" + mappingId);
+        }
         runInNewTransaction(tenantIdForProc, () -> {
             try {
                 log.info("🔄 입금 확인 완료, ERP 매핑 정보 동기화 프로시저 호출: mappingId={}", mappingId);

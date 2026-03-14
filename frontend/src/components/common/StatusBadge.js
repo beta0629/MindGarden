@@ -48,7 +48,10 @@ function getVariant(status, variantProp) {
 
 function StatusBadge({ status = '', variant, children, ...rest }) {
   const resolvedVariant = getVariant(status, variant);
-  const label = children == null ? (STATUS_KO[status] ?? status || '—') : children;
+  const displayStatus = status || '—';
+  const label = children == null
+    ? (STATUS_KO[status] != null ? STATUS_KO[status] : displayStatus)
+    : children;
 
   return (
     <span

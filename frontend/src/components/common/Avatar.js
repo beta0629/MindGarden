@@ -52,11 +52,11 @@ const Avatar = ({
         <img
           src={profileImageUrl}
           alt={alt || '프로필 사진'}
-          className="mg-v2-avatar__img"
+          className="mg-v2-avatar-img"
           onError={() => setImageLoaded(false)}
         />
       ) : (
-        <span className="mg-v2-avatar__fallback" aria-hidden="true">
+        <span className="mg-v2-avatar-fallback" aria-hidden="true">
           {initial}
         </span>
       )}

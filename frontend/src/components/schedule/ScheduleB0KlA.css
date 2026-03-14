@@ -256,6 +256,39 @@
   background: var(--ad-b0kla-green-bg, rgba(72, 187, 120, 0.08));
 }
 
+/* ClientCard 아바타 B0KlA (CLIENT_SELECTION_CARD_AVATAR_SPEC) */
+.mg-v2-ad-b0kla .mg-client-cards-grid--schedule-client .mg-client-card.mg-client-card--detailed .mg-client-card__avatar--large {
+  width: 80px;
+  height: 80px;
+  overflow: hidden;
+  border-radius: 50%;
+  position: relative;
+  background: var(--ad-b0kla-green-bg);
+  color: var(--ad-b0kla-title-color);
+  font-size: 2rem;
+  font-weight: 600;
+  margin: 0 auto var(--spacing-md, var(--ad-b0kla-radius-sm, 12px));
+}
+
+.mg-v2-ad-b0kla .mg-client-cards-grid--schedule-client .mg-client-card.mg-client-card--detailed .mg-client-card__avatar--large .mg-v2-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  display: block;
+}
+
+.mg-v2-ad-b0kla .mg-client-cards-grid--schedule-client .mg-client-card.mg-client-card--detailed .mg-client-card__avatar--large .mg-v2-avatar-fallback {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: inherit;
+  color: var(--ad-b0kla-title-color);
+  font-weight: 600;
+}
+
 .mg-v2-ad-b0kla .mg-client-card__name--large,
 .mg-v2-ad-b0kla .mg-client-card__name--mobile-simple {
   color: var(--ad-b0kla-title-color);

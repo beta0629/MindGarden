@@ -343,7 +343,7 @@ public class ScheduleController extends BaseApiController {
         }
         
         Long requestConsultantId = request.getConsultantId();
-        if (!isAdminRoleFromCommonCode(currentUser.getRole()) && !currentUser.getId().equals(requestConsultantId)) {
+        if (!canRegisterOrModifyOthersSchedule(currentUser.getRole()) && !currentUser.getId().equals(requestConsultantId)) {
             log.warn("❌ 스케줄 등록 권한 없음 (본인 아님): currentUser={}, targetConsultant={}", currentUser.getId(), requestConsultantId);
             throw new org.springframework.security.access.AccessDeniedException("본인의 스케줄만 등록할 수 있습니다.");
         }
@@ -422,7 +422,7 @@ public class ScheduleController extends BaseApiController {
         if (currentUser == null) {
             throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
         }
-        if (!isAdminRoleFromCommonCode(currentUser.getRole()) && !currentUser.getId().equals(existingSchedule.getConsultantId())) {
+        if (!canRegisterOrModifyOthersSchedule(currentUser.getRole()) && !currentUser.getId().equals(existingSchedule.getConsultantId())) {
             throw new org.springframework.security.access.AccessDeniedException("본인의 스케줄만 수정할 수 있습니다.");
         }
         
@@ -898,7 +898,7 @@ public class ScheduleController extends BaseApiController {
             throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
         }
         
-        if (!currentUser.getRole().isAdmin() && !currentUser.getId().equals(consultantId)) {
+        if (!canRegisterOrModifyOthersSchedule(currentUser.getRole()) && !currentUser.getId().equals(consultantId)) {
             throw new org.springframework.security.access.AccessDeniedException("다른 상담사의 스케줄을 수정할 권한이 없습니다.");
         }
         
@@ -925,7 +925,7 @@ public class ScheduleController extends BaseApiController {
             throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
         }
         
-        if (!currentUser.getRole().isAdmin() && !currentUser.getId().equals(consultantId)) {
+        if (!canRegisterOrModifyOthersSchedule(currentUser.getRole()) && !currentUser.getId().equals(consultantId)) {
             throw new org.springframework.security.access.AccessDeniedException("다른 상담사의 스케줄을 삭제할 권한이 없습니다.");
         }
         
@@ -1184,6 +1184,17 @@ public class ScheduleController extends BaseApiController {
             log.warn("공통코드에서 사무원 역할 조회 실패, 폴백 사용: {}", role, e);
             return role == UserRole.STAFF;
         }
+    }
+
+    /**
+     * 어드민·스태프는 타인 스케줄 등록/수정/삭제 가능. canRegisterScheduler와 동일한 기준.
+     * @param role 사용자 역할
+     * @return 타인 스케줄 등록·수정·삭제 가능 여부
+     */
+    private boolean canRegisterOrModifyOthersSchedule(UserRole role) {
+        if (role == null) return false;
+        return isAdminRoleFromCommonCode(role) || isStaffRoleFromCommonCode(role)
+            || role.isAdmin() || role.isStaff();
     }
 
     /**

@@ -248,32 +248,28 @@ public class StoredProcedureServiceImpl implements StoredProcedureService {
     
     @Override
     @Transactional
-    public Map<String, Object> updateMappingInfo(Long mappingId, String newPackageName, 
+    public Map<String, Object> updateMappingInfo(Long mappingId, String newPackageName,
                                                 Double newPackagePrice, Integer newTotalSessions, String updatedBy) {
-        log.info("🔄 매핑 정보 수정 프로시저 호출: mappingId={}, packageName={}, price={}, sessions={}, updatedBy={}", 
+        log.info("🔄 매핑 정보 수정 프로시저 호출: mappingId={}, packageName={}, price={}, sessions={}, updatedBy={}",
                 mappingId, newPackageName, newPackagePrice, newTotalSessions, updatedBy);
-        
-        // 테넌트 ID 가져오기
-        String tenantId = TenantContextHolder.getRequiredTenantId();
-        
+
         try {
             return jdbcTemplate.execute(
-                connection -> connection.prepareCall("{CALL UpdateMappingInfo(?, ?, ?, ?, ?, ?, ?, ?)}"),
+                connection -> connection.prepareCall("{CALL UpdateMappingInfo(?, ?, ?, ?, ?, ?, ?)}"),
                 (CallableStatementCallback<Map<String, Object>>) cs -> {
                     cs.setLong(1, mappingId);
                     cs.setString(2, newPackageName);
                     cs.setDouble(3, newPackagePrice);
                     cs.setInt(4, newTotalSessions);
-                    cs.setString(5, tenantId); // p_tenant_id 추가
-                    cs.setString(6, updatedBy);
-                    cs.registerOutParameter(7, Types.BOOLEAN); // p_success
-                    cs.registerOutParameter(8, Types.VARCHAR); // p_message
-                    
+                    cs.setString(5, updatedBy);
+                    cs.registerOutParameter(6, Types.BOOLEAN); // p_success
+                    cs.registerOutParameter(7, Types.VARCHAR); // p_message
+
                     cs.execute();
-                    
+
                     Map<String, Object> result = new HashMap<>();
-                    result.put("success", cs.getBoolean(7));
-                    result.put("message", cs.getString(8));
+                    result.put("success", cs.getBoolean(6));
+                    result.put("message", cs.getString(7));
                     result.put("mappingId", mappingId);
                     result.put("newPackageName", newPackageName);
                     result.put("newPackagePrice", newPackagePrice);

@@ -576,6 +576,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         } catch (Exception e) {
             log.error("상담료 수입 거래 자동 생성 실패: {}", e.getMessage(), e);
         }
+        // ERP 수입 등록은 입금 확인(confirm-deposit)에서만 수행. 결제 확인(confirm-payment)에서는 호출하지 않음.
+
         // 컨트롤러에서 mapping.getConsultant()/getClient() 접근 시 no Session 방지: 같은 트랜잭션 내에서 lazy 초기화
         Hibernate.initialize(savedMapping.getConsultant());
         Hibernate.initialize(savedMapping.getClient());
@@ -584,8 +586,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
 
      /**
      * 상담료 수입 거래 자동 생성 (중앙화된 금액 관리 사용)
-     * TransactionTemplate을 사용하여 독립적인 트랜잭션에서 실행되며, 실패해도 부모 트랜잭션에 영향을 주지 않음.
-     * REQUIRES_NEW 트랜잭션 내에서 TenantContextHolder가 비어 있지 않도록 매핑의 tenantId를 설정 후 clear.
+     * runInNewTransaction(REQUIRES_NEW)로 별도 트랜잭션에서 실행되며, 실패해도 부모 트랜잭션이
+     * rollback-only로 마크되지 않음. rollback-only 발생 시 내부 서비스 예외가 원인.
      */
     public void createConsultationIncomeTransactionAsync(ConsultantClientMapping mapping) {
         String tenantId = getTenantIdFromMapping(mapping);
@@ -597,24 +599,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             return;
         }
         final String tenantIdForCallback = tenantId;
-        org.springframework.transaction.support.TransactionTemplate newTransactionTemplate =
-            new org.springframework.transaction.support.TransactionTemplate(transactionManager);
-        newTransactionTemplate.setPropagationBehavior(
-            org.springframework.transaction.TransactionDefinition.PROPAGATION_REQUIRES_NEW);
-
         try {
-            newTransactionTemplate.executeWithoutResult(status -> {
-                try {
-                    TenantContextHolder.setTenantId(tenantIdForCallback);
-                    try {
-                        createConsultationIncomeTransaction(mapping);
-                    } finally {
-                        TenantContextHolder.clear();
-                    }
-                } catch (Exception e) {
-                    log.error("💰 [비동기] 상담료 수입 거래 생성 실패: MappingID={}, Error: {}", mapping.getId(), e.getMessage(), e);
-                }
-            });
+            runInNewTransaction(tenantIdForCallback, () -> createConsultationIncomeTransaction(mapping));
         } catch (Exception e) {
             log.error("💰 [비동기] 상담료 수입 거래 트랜잭션 실행 실패: MappingID={}, Error: {}", mapping.getId(), e.getMessage(), e);
         }
@@ -1118,9 +1104,10 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 .orElseThrow(() -> new RuntimeException("Mapping not found"));
         
         mapping.approveByAdmin(adminName);
-        
+
         ConsultantClientMapping savedMapping = mappingRepository.save(mapping);
-        
+        // ERP 수입 등록은 입금 확인(confirm-deposit)에서만 수행. 승인(approve)에서는 호출하지 않음.
+
         // 통계 업데이트는 Controller에서 트랜잭션 커밋 후 별도로 호출
         // 이렇게 하면 통계 업데이트 실패가 승인 트랜잭션에 영향을 주지 않음
         // 컨트롤러/직렬화 시 no Session 방지

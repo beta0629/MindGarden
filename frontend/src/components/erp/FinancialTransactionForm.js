@@ -22,6 +22,7 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [successMessage, setSuccessMessage] = useState(null);
   const [commonCodes, setCommonCodes] = useState({
     transactionTypes: [],
     incomeCategories: [],
@@ -69,19 +70,28 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setSuccessMessage(null);
 
     try {
       const response = await axios.post('/api/v1/erp/finance/transactions', formData);
-      
-      if (response.data.success) {
-        notificationManager.show('거래가 성공적으로 등록되었습니다.', 'info');
-        onSuccess && onSuccess(response.data.data);
-        onClose && onClose();
+      const ok = response?.data && (response.data.success === true || (response.data.success === undefined && response.status === 200));
+
+      if (ok) {
+        setSuccessMessage('등록되었습니다. 수입/지출에 자동 반영됩니다.');
+        notificationManager.show('수입/지출이 등록되었습니다.', 'success', 3000);
+        setTimeout(() => {
+          onSuccess?.(response?.data?.data ?? response?.data);
+          onClose?.();
+        }, 1200);
       } else {
-        setError(response.data.message);
+        const msg = response.data?.message || '등록에 실패했습니다.';
+        setError(msg);
+        notificationManager.show(msg, 'error', 4000);
       }
     } catch (err) {
-      setError(err.response?.data?.message || '거래 등록 중 오류가 발생했습니다.');
+      const msg = err.response?.data?.message || '거래 등록 중 오류가 발생했습니다.';
+      setError(msg);
+      notificationManager.show(msg, 'error', 4000);
     } finally {
       setLoading(false);
     }
@@ -109,9 +119,21 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
       size="medium"
     >
 
+        {successMessage && (
+          <div className="mg-v2-form-success" role="alert" style={{
+            padding: 'var(--spacing-md)',
+            marginBottom: 'var(--spacing-md)',
+            backgroundColor: 'var(--mg-success-100, #dcfce7)',
+            color: 'var(--mg-success-800, #166534)',
+            borderRadius: 'var(--radius-sm)',
+            fontWeight: 500
+          }}>
+            ✓ {successMessage}
+          </div>
+        )}
         {error && (
-          <div className="mg-v2-form-error" style={{ 
-            padding: 'var(--spacing-sm)', 
+          <div className="mg-v2-form-error" style={{
+            padding: 'var(--spacing-sm)',
             marginBottom: 'var(--spacing-md)',
             backgroundColor: 'var(--status-error-border)',
             color: 'var(--status-error-dark)',

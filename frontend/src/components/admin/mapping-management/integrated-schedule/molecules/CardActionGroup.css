@@ -5,21 +5,21 @@
   align-items: center;
   gap: var(--mg-spacing-8, 8px);
   margin-top: var(--mg-spacing-4, 4px);
-  min-height: 44px;
+  min-height: var(--touch-target-min, 44px);
 }
 
 .integrated-schedule__btn-schedule {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 8px 12px;
-  font-size: 13px;
+  gap: var(--mg-spacing-6, 6px);
+  padding: var(--mg-spacing-8, 8px) var(--mg-spacing-12, 12px);
+  font-size: var(--mg-font-sm, 14px);
   font-weight: 600;
   color: var(--mg-color-primary-inverse);
   background-color: var(--mg-color-primary-main);
   border: none;
-  border-radius: 8px;
+  border-radius: var(--mg-radius-sm, 8px);
   cursor: pointer;
   transition: background-color 0.2s ease;
 }
@@ -51,12 +51,12 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 8px 12px;
-  font-size: 13px;
+  gap: var(--mg-spacing-6, 6px);
+  padding: var(--mg-spacing-8, 8px) var(--mg-spacing-12, 12px);
+  font-size: var(--mg-font-sm, 14px);
   font-weight: 600;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--mg-radius-sm, 8px);
   cursor: pointer;
   transition: background-color 0.2s ease;
 }
@@ -81,7 +81,7 @@
 }
 
 .integrated-schedule__btn-action--deposit:hover:not(:disabled) {
-  background-color: var(--mg-color-primary-dark);
+  background-color: var(--mg-color-primary-dark, #2d3d34);
 }
 
 .integrated-schedule__btn-action--approve {
@@ -100,8 +100,8 @@
 
 /* MGButton in card-actions */
 .integrated-schedule__card-actions .mg-button {
-  padding: 8px 12px;
-  font-size: 13px;
+  padding: var(--mg-spacing-8, 8px) var(--mg-spacing-12, 12px);
+  font-size: var(--mg-font-sm, 14px);
   font-weight: 600;
 }
 
@@ -120,7 +120,7 @@
 }
 
 .integrated-schedule__card-actions .mg-button.integrated-schedule__btn-action--deposit:hover:not(.mg-button--disabled):not(.mg-button--loading) {
-  background-color: var(--mg-color-primary-dark);
+  background-color: var(--mg-color-primary-dark, #2d3d34);
 }
 
 .integrated-schedule__card-actions .mg-button.integrated-schedule__btn-action--approve {

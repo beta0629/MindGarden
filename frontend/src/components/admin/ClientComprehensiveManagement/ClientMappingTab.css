@@ -123,14 +123,33 @@
   }
 }
 
-/* ===== 매칭 카드 컴팩트 (MAPPING_CARD_COMPACT_SPEC 3절) ===== */
+/* ===== 매칭 카드: CARD_VISUAL_UNIFIED_SPEC 1번 통일 스펙 적용 (__compact는 내부 padding/gap 축소 허용) ===== */
 .mg-v2-mapping-client-block .mg-v2-card.mg-v2-mapping-card {
-  min-width: 0; /* 그리드 셀 오버플로우 방지 */
+  position: relative;
+  min-width: 0;
   max-width: 100%;
   padding: 0;
-  background: var(--ad-b0kla-card-bg);
-  border: 1px solid var(--ad-b0kla-border);
-  border-radius: var(--ad-b0kla-radius-sm, 12px);
+  border: 1px solid var(--mg-color-border-main);
+  border-radius: var(--mg-radius-lg);
+  min-height: 140px;
+  box-shadow: var(--mg-shadow-sm);
+  background: var(--mg-bg-card, var(--mg-color-surface-main));
+  transition: box-shadow 0.2s ease;
+}
+
+.mg-v2-mapping-client-block .mg-v2-card.mg-v2-mapping-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background-color: var(--mg-color-primary-main);
+  border-radius: 12px 0 0 12px;
+}
+
+.mg-v2-mapping-client-block .mg-v2-card.mg-v2-mapping-card:hover {
+  box-shadow: var(--mg-card-hover-shadow);
 }
 
 .mg-v2-mapping-client-block .mg-v2-card.mg-v2-mapping-card .mg-v2-card-header {

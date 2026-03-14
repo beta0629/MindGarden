@@ -1,6 +1,6 @@
 /* MappingPartiesRow - integrated-schedule__card-parties */
 .integrated-schedule__card-parties {
-  font-size: 14px;
+  font-size: var(--mg-font-sm, 14px);
   color: var(--mg-color-text-main, var(--mg-gray-900));
 }
 

@@ -8,8 +8,31 @@
   margin-bottom: 0;
 }
 
+/* CARD_VISUAL_UNIFIED_SPEC 1번 통일 스펙 적용 */
 .mg-v2-mapping-list-block__card {
-  min-height: 200px;
+  position: relative;
+  border: 1px solid var(--mg-color-border-main);
+  border-radius: var(--mg-radius-lg);
+  padding: var(--mg-spacing-16);
+  min-height: 140px;
+  box-shadow: var(--mg-shadow-sm);
+  background: var(--mg-bg-card, var(--mg-color-surface-main));
+  transition: box-shadow 0.2s ease;
+}
+
+.mg-v2-mapping-list-block__card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background-color: var(--mg-color-primary-main);
+  border-radius: 12px 0 0 12px;
+}
+
+.mg-v2-mapping-list-block__card:hover {
+  box-shadow: var(--mg-card-hover-shadow);
 }
 
 .mg-v2-mapping-list-block__header {

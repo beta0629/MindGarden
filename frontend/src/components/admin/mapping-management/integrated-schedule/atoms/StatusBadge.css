@@ -3,7 +3,7 @@
   display: inline-flex;
   align-items: center;
   padding: var(--mg-spacing-2, 2px) var(--mg-spacing-8, 8px);
-  font-size: 12px;
+  font-size: var(--mg-font-xs, var(--mg-font-size-xs, 12px));
   font-weight: 600;
   border-radius: var(--mg-radius-full, 9999px);
   background-color: var(--mg-color-surface-sub, var(--mg-gray-100));

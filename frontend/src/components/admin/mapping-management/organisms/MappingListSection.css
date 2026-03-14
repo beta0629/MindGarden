@@ -13,17 +13,31 @@
   margin-bottom: 0;
 }
 
-/* MappingCard B0KlA ContentCard 스타일 오버라이드 */
+/* MappingCard: CARD_VISUAL_UNIFIED_SPEC 1번 통일 스펙 적용 */
 .mg-v2-mapping-list-section .mg-v2-content-card.mg-v2-mapping-card {
-  background: var(--ad-b0kla-card-bg);
-  border: 1px solid var(--ad-b0kla-border);
-  border-radius: var(--ad-b0kla-radius-sm);
-  box-shadow: var(--ad-b0kla-shadow);
-  transition: all 0.2s;
+  position: relative;
+  border: 1px solid var(--mg-color-border-main);
+  border-radius: var(--mg-radius-lg);
+  padding: var(--mg-spacing-16);
+  min-height: 140px;
+  box-shadow: var(--mg-shadow-sm);
+  background: var(--mg-bg-card, var(--mg-color-surface-main));
+  transition: box-shadow 0.2s ease;
+}
+
+.mg-v2-mapping-list-section .mg-v2-content-card.mg-v2-mapping-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background-color: var(--mg-color-primary-main);
+  border-radius: 12px 0 0 12px;
 }
 
 .mg-v2-mapping-list-section .mg-v2-content-card.mg-v2-mapping-card:hover {
-  box-shadow: 0 12px 32px var(--mg-shadow-light);
+  box-shadow: var(--mg-card-hover-shadow);
 }
 
 .mg-v2-mapping-list-grid {

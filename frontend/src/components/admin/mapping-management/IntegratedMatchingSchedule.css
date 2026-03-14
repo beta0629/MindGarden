@@ -193,7 +193,7 @@
 }
 
 .integrated-schedule__status-btn--selected .integrated-schedule__status-badge {
-  background-color: rgba(255, 255, 255, 0.25);
+  background-color: var(--mg-badge-on-primary-bg, rgba(255, 255, 255, 0.25));
   color: var(--mg-color-primary-inverse, var(--mg-white));
 }
 
@@ -265,7 +265,7 @@
   font-size: 14px;
 }
 
-/* 매칭 카드 (사이드바 전용, fc-event 전역 스타일 덮어쓰기) */
+/* 매칭 카드 (사이드바 전용) */
 .integrated-schedule__sidebar .integrated-schedule__card {
   position: relative;
   min-height: 140px;
@@ -293,23 +293,23 @@
 }
 
 .integrated-schedule__sidebar .integrated-schedule__card:hover {
-  box-shadow: var(--mg-card-hover-shadow, 0 4px 12px rgba(0, 0, 0, 0.08));
+  box-shadow: var(--mg-card-hover-shadow);
   transform: none;
 }
 
-/* fc-event 클래스가 붙은 카드에도 동일 스펙 강제 적용 */
-.integrated-schedule__sidebar .integrated-schedule__card.fc-event {
+/* 드래그 가능 카드: fc-event 대신 --draggable 사용, 동일 스펙 적용 */
+.integrated-schedule__sidebar .integrated-schedule__card--draggable {
   border: 1px solid var(--mg-color-border-main);
-  border-radius: var(--mg-radius-lg, 12px);
-  padding: var(--mg-spacing-16, 16px);
+  border-radius: var(--mg-radius-lg);
+  padding: var(--mg-spacing-16);
   min-height: 140px;
   box-shadow: var(--mg-shadow-sm);
   background: var(--mg-bg-card, var(--mg-color-surface-main));
   font-size: inherit;
 }
 
-.integrated-schedule__sidebar .integrated-schedule__card.fc-event:hover {
-  box-shadow: var(--mg-card-hover-shadow, 0 4px 12px rgba(0, 0, 0, 0.08));
+.integrated-schedule__sidebar .integrated-schedule__card--draggable:hover {
+  box-shadow: var(--mg-card-hover-shadow);
   transform: none;
 }
 
@@ -331,7 +331,7 @@
   min-height: 0;
 }
 
-@media (max-width: 1024px) {
+@media (max-width: var(--mg-breakpoint-lg, 1024px)) {
   .integrated-schedule__sidebar {
     display: none;
   }

@@ -4,20 +4,34 @@
  * @since 2025-02-22
  */
 
+/* CARD_VISUAL_UNIFIED_SPEC 1번 통일 스펙 적용 */
 .mg-v2-mapping-list-row {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  padding: 1rem 1.25rem;
-  background: var(--ad-b0kla-card-bg, var(--mg-white));
-  border: 1px solid var(--ad-b0kla-border, #e2e8f0);
-  border-radius: var(--ad-b0kla-radius-sm, 12px);
-  transition: all 0.2s;
+  padding: var(--mg-spacing-16);
+  min-height: 140px;
+  background: var(--mg-bg-card, var(--mg-color-surface-main));
+  border: 1px solid var(--mg-color-border-main);
+  border-radius: var(--mg-radius-lg);
+  box-shadow: var(--mg-shadow-sm);
+  transition: box-shadow 0.2s ease;
+}
+
+.mg-v2-mapping-list-row::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background-color: var(--mg-color-primary-main);
+  border-radius: 12px 0 0 12px;
 }
 
 .mg-v2-mapping-list-row:hover {
-  border-color: var(--ad-b0kla-green, #4b745c);
-  box-shadow: 0 4px 12px rgba(75, 116, 92, 0.08);
+  box-shadow: var(--mg-card-hover-shadow);
 }
 
 @media (min-width: 900px) {

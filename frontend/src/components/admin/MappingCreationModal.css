@@ -335,7 +335,7 @@
 .mg-v2-mapping-creation-modal__summary-bar {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--mg-spacing-sm, 0.5rem);
   flex-wrap: wrap;
   padding: 1rem;
   background: var(--ad-b0kla-blue-bg);
@@ -349,6 +349,40 @@
 }
 
 .mg-v2-mapping-creation-modal__summary-bar svg {
+  color: var(--ad-b0kla-blue);
+}
+
+.mg-v2-mapping-creation-modal__summary-segment {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mg-spacing-xs, 0.25rem);
+}
+
+.mg-v2-mapping-creation-modal__summary-segment--person {
+  /* 상담사·내담자: 기존 스타일 유지 */
+}
+
+.mg-v2-mapping-creation-modal__summary-segment--product {
+  /* 상품 세그먼트: 패키지명·회기 */
+}
+
+.mg-v2-mapping-creation-modal__summary-segment--amount {
+  font-weight: 600;
+  color: var(--ad-b0kla-title-color);
+}
+
+.mg-v2-mapping-creation-modal__summary-separator {
+  color: var(--ad-b0kla-text-secondary);
+  padding: 0 var(--mg-spacing-xs, 0.25rem);
+  font-size: 0.75rem;
+}
+
+.mg-v2-mapping-creation-modal__summary-divider {
+  display: inline-flex;
+  align-items: center;
+}
+
+.mg-v2-mapping-creation-modal__summary-divider svg {
   color: var(--ad-b0kla-blue);
 }
 

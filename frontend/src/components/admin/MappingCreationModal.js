@@ -595,11 +595,21 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
           <section className="mg-v2-mapping-creation-modal__step-content">
             <h3 className="mg-v2-mapping-creation-modal__step-title">결제 정보</h3>
             <div className="mg-v2-mapping-creation-modal__summary-bar">
-              <span><User size={16} /> {selectedConsultant?.name}</span>
-              <Link2 size={16} />
-              <span><UserCircle size={16} /> {selectedClient?.name}</span>
-              <span className="mg-v2-mapping-creation-modal__summary-pkg">
+              <span className="mg-v2-mapping-creation-modal__summary-segment mg-v2-mapping-creation-modal__summary-segment--person">
+                <User size={16} /> {selectedConsultant?.name}
+              </span>
+              <span className="mg-v2-mapping-creation-modal__summary-divider" aria-hidden="true">
+                <Link2 size={16} />
+              </span>
+              <span className="mg-v2-mapping-creation-modal__summary-segment mg-v2-mapping-creation-modal__summary-segment--person">
+                <UserCircle size={16} /> {selectedClient?.name}
+              </span>
+              <span className="mg-v2-mapping-creation-modal__summary-separator">|</span>
+              <span className="mg-v2-mapping-creation-modal__summary-segment mg-v2-mapping-creation-modal__summary-segment--product">
                 {paymentInfo.packageName} · {paymentInfo.totalSessions}회
+              </span>
+              <span className="mg-v2-mapping-creation-modal__summary-segment mg-v2-mapping-creation-modal__summary-segment--amount">
+                {paymentInfo.packagePrice != null ? `${Number(paymentInfo.packagePrice).toLocaleString()}원` : 'N/A'}
               </span>
             </div>
             <div className="mg-v2-mapping-creation-modal__form">

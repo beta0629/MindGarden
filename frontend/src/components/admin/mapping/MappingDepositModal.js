@@ -127,12 +127,23 @@ const MappingDepositModal = ({
             <div className="mg-v2-mapping-creation-modal-wrapper">
                 <div className="mg-v2-ad-b0kla mg-v2-mapping-creation-modal">
                     <div className="mg-v2-mapping-creation-modal__summary-bar">
-                        <span><User size={16} /> {mapping.consultantName || mapping.consultant?.name || mapping.consultant?.userId || 'N/A'}</span>
-                        <Link2 size={16} />
-                        <span><UserCircle size={16} /> {mapping.clientName || mapping.client?.name || mapping.client?.userId || 'N/A'}</span>
-                        <span>{mapping.packageName || 'N/A'}</span>
-                        <span className="mg-v2-mapping-creation-modal__summary-pkg">
-                            {(mapping.packagePrice || mapping.paymentAmount) ? `${(mapping.packagePrice || mapping.paymentAmount).toLocaleString()}원` : 'N/A'}
+                        <span className="mg-v2-mapping-creation-modal__summary-segment mg-v2-mapping-creation-modal__summary-segment--person">
+                            <User size={16} /> {mapping.consultantName || mapping.consultant?.name || mapping.consultant?.userId || 'N/A'}
+                        </span>
+                        <span className="mg-v2-mapping-creation-modal__summary-divider" aria-hidden="true">
+                            <Link2 size={16} />
+                        </span>
+                        <span className="mg-v2-mapping-creation-modal__summary-segment mg-v2-mapping-creation-modal__summary-segment--person">
+                            <UserCircle size={16} /> {mapping.clientName || mapping.client?.name || mapping.client?.userId || 'N/A'}
+                        </span>
+                        <span className="mg-v2-mapping-creation-modal__summary-separator">|</span>
+                        <span className="mg-v2-mapping-creation-modal__summary-segment mg-v2-mapping-creation-modal__summary-segment--product">
+                            {mapping.packageName || 'N/A'}
+                        </span>
+                        <span className="mg-v2-mapping-creation-modal__summary-segment mg-v2-mapping-creation-modal__summary-segment--amount">
+                            {(mapping.packagePrice != null || mapping.paymentAmount != null)
+                                ? `${Number(mapping.packagePrice || mapping.paymentAmount).toLocaleString()}원`
+                                : 'N/A'}
                         </span>
                     </div>
                     <div className="mg-v2-mapping-creation-modal__form-group">

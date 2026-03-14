@@ -374,26 +374,32 @@ const IntegratedMatchingSchedule = () => {
                       </div>
                       <div className="integrated-schedule__card-actions">
                         {mapping.status === 'PENDING_PAYMENT' && (
-                          <button
+                          <MGButton
                             type="button"
+                            variant="success"
+                            size="small"
                             className="integrated-schedule__btn-action integrated-schedule__btn-action--payment"
                             onClick={() => setPaymentModalMapping(mapping)}
+                            preventDoubleClick={false}
                             aria-label="결제 확인"
                           >
                             <CreditCard size={14} />
                             결제 확인
-                          </button>
+                          </MGButton>
                         )}
                         {mapping.status === 'PAYMENT_CONFIRMED' && (
-                          <button
+                          <MGButton
                             type="button"
+                            variant="primary"
+                            size="small"
                             className="integrated-schedule__btn-action integrated-schedule__btn-action--deposit"
                             onClick={() => setDepositModalMapping(mapping)}
+                            preventDoubleClick={false}
                             aria-label="입금 확인"
                           >
                             <DollarSign size={14} />
                             입금 확인
-                          </button>
+                          </MGButton>
                         )}
                         {mapping.status === 'DEPOSIT_PENDING' && (
                           <MGButton
@@ -411,17 +417,20 @@ const IntegratedMatchingSchedule = () => {
                             승인
                           </MGButton>
                         )}
-                        <button
+                        <MGButton
                           type="button"
-                          className={`integrated-schedule__btn-schedule ${canScheduleForMapping(mapping) ? '' : 'integrated-schedule__btn-schedule--disabled'}`}
+                          variant="primary"
+                          size="small"
+                          className="integrated-schedule__btn-schedule"
                           onClick={() => handleScheduleRegister(mapping)}
                           disabled={!canScheduleForMapping(mapping)}
+                          preventDoubleClick={false}
                           aria-label={canScheduleForMapping(mapping) ? `${mapping.clientName} 스케줄 등록` : '결제 완료 후 스케줄 등록 가능'}
                           title={canScheduleForMapping(mapping) ? undefined : '결제가 완료된 매칭만 스케줄 등록이 가능합니다.'}
                         >
                           <CalendarPlus size={14} />
                           스케줄 등록
-                        </button>
+                        </MGButton>
                       </div>
                     </li>
                   );

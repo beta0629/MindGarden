@@ -10,15 +10,18 @@
 /* 토큰 정의: frontend/src/styles/dashboard-tokens-extension.css */
 
 /* ===== mg-v2-button B0KlA 스코프 오버라이드 (B0KlA 토큰만 사용) ===== */
+/* Button 컴포넌트(mg-button--primary) 및 mg-v2-button-primary 모두 적용 */
 .mg-v2-ad-b0kla .mg-v2-button-primary,
-.mg-v2-ad-b0kla .mg-v2-button--primary {
+.mg-v2-ad-b0kla .mg-v2-button--primary,
+.mg-v2-ad-b0kla .mg-button--primary {
   background: var(--ad-b0kla-green);
   color: #fff;
   border: none;
 }
 
 .mg-v2-ad-b0kla .mg-v2-button-primary:hover:not(:disabled),
-.mg-v2-ad-b0kla .mg-v2-button--primary:hover:not(:disabled) {
+.mg-v2-ad-b0kla .mg-v2-button--primary:hover:not(:disabled),
+.mg-v2-ad-b0kla .mg-button--primary:hover:not(:disabled) {
   background: var(--ad-b0kla-green);
   opacity: 0.9;
 }

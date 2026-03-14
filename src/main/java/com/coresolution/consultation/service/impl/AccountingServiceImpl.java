@@ -232,34 +232,84 @@ public class AccountingServiceImpl implements AccountingService {
                 return null;
             }
 
-            // 2. 분개 생성
-            AccountingEntry entry =
-                    AccountingEntry.builder().entryDate(transaction.getTransactionDate())
-                            .description(
-                                    String.format("거래 자동 분개: %s", transaction.getDescription()))
-                            .financialTransactionId(transaction.getId())
-                            .build();
+            // 2. Account 엔티티 조회 (accountCode, accountName 등 필드 설정용)
+            Account cashAccount = findAccountForTenant(tenantId, cashAccountId).orElse(null);
+            Account expenseAccount = findAccountForTenant(tenantId, expenseAccountId).orElse(null);
+            Account revenueAccount = findAccountForTenant(tenantId, revenueAccountId).orElse(null);
+
+            if (cashAccount == null || expenseAccount == null || revenueAccount == null) {
+                log.warn(
+                        "계정 엔티티 조회 실패: tenantId={}, cashAccount={}, expenseAccount={}, revenueAccount={}. "
+                                + "accountRepository.findById 결과 없음 또는 테넌트 불일치.",
+                        tenantId, cashAccount != null, expenseAccount != null, revenueAccount != null);
+                return null;
+            }
+
+            // 3. amount 방어 로직 (null 시 BigDecimal.ZERO)
+            BigDecimal amount = transaction.getAmount() != null
+                    ? transaction.getAmount()
+                    : BigDecimal.ZERO;
+
+            // 4. 거래 유형별 계정·분개 유형 매핑
+            Account primaryAccount;
+            AccountingEntry.EntryType entryType;
+            AccountingEntry.BalanceSheetCategory balanceSheetCategory;
+
+            if (transaction.getTransactionType() == FinancialTransaction.TransactionType.INCOME) {
+                primaryAccount = cashAccount;
+                entryType = AccountingEntry.EntryType.DEBIT;
+                balanceSheetCategory = AccountingEntry.BalanceSheetCategory.ASSETS_CURRENT;
+            } else if (transaction.getTransactionType() == FinancialTransaction.TransactionType.EXPENSE) {
+                primaryAccount = expenseAccount;
+                entryType = AccountingEntry.EntryType.DEBIT;
+                balanceSheetCategory = AccountingEntry.BalanceSheetCategory.EXPENSES;
+            } else {
+                log.warn("지원하지 않는 거래 유형: {}", transaction.getTransactionType());
+                return null;
+            }
+
+            // 5. 분개 생성 (Bean Validation 필수 필드: accountCode, accountName, amount, entryType, balanceSheetCategory)
+            java.time.LocalDate entryDate = transaction.getTransactionDate() != null
+                    ? transaction.getTransactionDate()
+                    : java.time.LocalDate.now();
+            String accountCode = primaryAccount.getAccountNumber() != null
+                    ? primaryAccount.getAccountNumber()
+                    : "";
+            String accountName = primaryAccount.getDescription() != null && !primaryAccount.getDescription().isBlank()
+                    ? primaryAccount.getDescription()
+                    : (transaction.getTransactionType() == FinancialTransaction.TransactionType.INCOME ? "현금 계정" : "비용 계정");
+
+            AccountingEntry entry = AccountingEntry.builder()
+                    .entryDate(entryDate)
+                    .entryType(entryType)
+                    .accountCode(accountCode)
+                    .accountName(accountName)
+                    .amount(amount)
+                    .balanceSheetCategory(balanceSheetCategory)
+                    .description(String.format("거래 자동 분개: %s", transaction.getDescription()))
+                    .financialTransactionId(transaction.getId())
+                    .build();
 
             java.util.List<JournalEntryLine> lines = new java.util.ArrayList<>();
 
             if (transaction.getTransactionType() == FinancialTransaction.TransactionType.INCOME) {
                 // 수익 거래: 현금(차변) / 수익(대변)
                 lines.add(JournalEntryLine.builder().accountId(cashAccountId)
-                        .debitAmount(transaction.getAmount()).creditAmount(BigDecimal.ZERO)
+                        .debitAmount(amount).creditAmount(BigDecimal.ZERO)
                         .description("수익 입금").build());
 
                 lines.add(JournalEntryLine.builder().accountId(revenueAccountId)
-                        .debitAmount(BigDecimal.ZERO).creditAmount(transaction.getAmount())
+                        .debitAmount(BigDecimal.ZERO).creditAmount(amount)
                         .description(transaction.getDescription()).build());
             } else if (transaction
                     .getTransactionType() == FinancialTransaction.TransactionType.EXPENSE) {
                 // 비용 거래: 비용(차변) / 현금(대변)
                 lines.add(JournalEntryLine.builder().accountId(expenseAccountId)
-                        .debitAmount(transaction.getAmount()).creditAmount(BigDecimal.ZERO)
+                        .debitAmount(amount).creditAmount(BigDecimal.ZERO)
                         .description(transaction.getDescription()).build());
 
                 lines.add(JournalEntryLine.builder().accountId(cashAccountId)
-                        .debitAmount(BigDecimal.ZERO).creditAmount(transaction.getAmount())
+                        .debitAmount(BigDecimal.ZERO).creditAmount(amount)
                         .description("비용 지출").build());
             } else {
                 log.warn("지원하지 않는 거래 유형: {}", transaction.getTransactionType());
@@ -294,6 +344,21 @@ public class AccountingServiceImpl implements AccountingService {
                     transaction.getId(), e.getMessage(), e);
             return null;
         }
+    }
+
+    /**
+     * 테넌트에 소속된 계정 조회. ID로 조회 후 tenantId 일치 여부 검증.
+     *
+     * @param tenantId   테넌트 ID (필수)
+     * @param accountId  계정 ID
+     * @return 테넌트에 속한 Account, 없으면 empty
+     */
+    private Optional<Account> findAccountForTenant(String tenantId, Long accountId) {
+        if (tenantId == null || accountId == null) {
+            return Optional.empty();
+        }
+        return accountRepository.findById(accountId)
+                .filter(a -> tenantId.equals(a.getTenantId()));
     }
 
     /**

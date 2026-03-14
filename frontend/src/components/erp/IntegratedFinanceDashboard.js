@@ -1946,7 +1946,7 @@ const LedgersTab = () => {
             <table className="mg-table" data-label="계정별 내역">
               <thead>
                 <tr>
-                  <th>계정 ID</th>
+                  <th>계정과목</th>
                   <th>기간 시작</th>
                   <th>기간 종료</th>
                   <th>기초잔액</th>
@@ -1962,7 +1962,7 @@ const LedgersTab = () => {
                     style={{ cursor: 'pointer' }}
                     onClick={() => { setSelectedLedger(ledger); setShowLedgerDetailModal(true); }}
                   >
-                    <td data-label="계정 ID">{ledger.accountId}</td>
+                    <td data-label="계정과목">{ledger.accountId}</td>
                     <td data-label="기간 시작">{ledger.periodStart}</td>
                     <td data-label="기간 종료">{ledger.periodEnd}</td>
                     <td data-label="기초잔액">{formatCurrency(ledger.openingBalance || 0)}</td>
@@ -2364,6 +2364,32 @@ const JournalEntryCreateModal = ({ onClose, onRefresh }) => {
   ]);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
+  const [accountTypes, setAccountTypes] = useState([]);
+  const [accountTypesLoading, setAccountTypesLoading] = useState(true);
+  const [accountTypesError, setAccountTypesError] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const fetchAccountTypes = async () => {
+      setAccountTypesLoading(true);
+      setAccountTypesError(null);
+      try {
+        const response = await StandardizedApi.get(ERP_API.ACCOUNT_TYPES);
+        if (cancelled) return;
+        const raw = (response && typeof response === 'object' && 'data' in response && response.data != null) ? response.data : response;
+        setAccountTypes(Array.isArray(raw) ? raw : []);
+      } catch (err) {
+        if (!cancelled) {
+          setAccountTypesError(err?.message || '계정과목 목록을 불러올 수 없습니다.');
+          setAccountTypes([]);
+        }
+      } finally {
+        if (!cancelled) setAccountTypesLoading(false);
+      }
+    };
+    fetchAccountTypes();
+    return () => { cancelled = true; };
+  }, []);
 
   const calculateTotals = () => {
     const totalDebit = lines.reduce((sum, line) => {
@@ -2414,7 +2440,7 @@ const JournalEntryCreateModal = ({ onClose, onRefresh }) => {
     
     lines.forEach((line, index) => {
       if (!line.accountId) {
-        newErrors[`line_${index}_accountId`] = '계정 ID는 필수입니다.';
+        newErrors[`line_${index}_accountId`] = '계정과목을 선택해주세요.';
       }
       if (!line.debitAmount && !line.creditAmount) {
         newErrors[`line_${index}_amount`] = '차변 또는 대변 금액을 입력해주세요.';
@@ -2478,14 +2504,14 @@ const JournalEntryCreateModal = ({ onClose, onRefresh }) => {
 
   return (
     <ErpModal isOpen={true} onClose={onClose} title="거래 등록" size="xl">
-      {/* 분개 작성 가이드 */}
-      <div style={{
-        backgroundColor: 'var(--color-info-light)',
-        borderRadius: 'var(--border-radius-sm)',
-        padding: 'var(--spacing-sm)',
+      {/* 거래 등록 가이드 — B0KlA·디자인 토큰 준수 */}
+      <div className="mg-v2-ad-b0kla__card" style={{
         marginBottom: 'var(--spacing-md)',
+        padding: 'var(--spacing-md)',
+        backgroundColor: 'var(--ad-b0kla-surface-muted, var(--mg-color-background-muted))',
+        borderRadius: 'var(--radius-md)',
         fontSize: 'var(--font-size-sm)',
-        color: 'var(--color-text-secondary)',
+        color: 'var(--ad-b0kla-text-secondary, var(--mg-color-text-secondary))',
         lineHeight: 1.5
       }}>
         <div style={{ display: 'flex', alignItems: 'start', gap: 'var(--spacing-xs)' }}>
@@ -2496,6 +2522,7 @@ const JournalEntryCreateModal = ({ onClose, onRefresh }) => {
               <li>차변과 대변은 한 라인에 동시에 입력할 수 없습니다.</li>
               <li>차변 합계와 대변 합계가 반드시 일치해야 합니다.</li>
               <li>최소 2개 이상의 라인이 필요합니다.</li>
+              <li><strong>계정과목</strong>: 아래 목록에서 선택합니다. 목록이 비어 있으면 운영 현황 &gt; 데이터 동기화를 먼저 실행해 주세요.</li>
             </ul>
           </div>
         </div>
@@ -2533,12 +2560,21 @@ const JournalEntryCreateModal = ({ onClose, onRefresh }) => {
               라인 추가
             </MGButton>
           </div>
-          
+          {accountTypesError && (
+            <div className="mg-v2-text-danger mg-v2-mb-sm" style={{ fontSize: 'var(--font-size-sm)' }}>
+              {accountTypesError}
+            </div>
+          )}
+          {!accountTypesError && accountTypes.length === 0 && !accountTypesLoading && (
+            <div className="mg-v2-mb-sm" style={{ fontSize: 'var(--font-size-sm)', color: 'var(--mg-color-text-secondary)' }}>
+              계정과목이 없습니다. 운영 현황 &gt; 데이터 동기화를 먼저 실행해 주세요.
+            </div>
+          )}
           <div className="mg-v2-table-container">
             <table className="mg-table" data-label="거래 라인 입력">
               <thead>
                 <tr>
-                  <th>계정 ID</th>
+                  <th>계정과목</th>
                   <th>차변</th>
                   <th>대변</th>
                   <th>설명</th>
@@ -2548,14 +2584,20 @@ const JournalEntryCreateModal = ({ onClose, onRefresh }) => {
               <tbody>
                 {lines.map((line, index) => (
                   <tr key={index}>
-                    <td data-label="계정 ID">
-                      <input
-                        type="number"
+                    <td data-label="계정과목">
+                      <select
                         className={`mg-v2-input mg-v2-input-sm ${errors[`line_${index}_accountId`] ? 'mg-v2-input-error' : ''}`}
-                        placeholder="계정 ID"
                         value={line.accountId}
                         onChange={(e) => handleLineChange(index, 'accountId', e.target.value)}
-                      />
+                        disabled={accountTypesLoading || !!accountTypesError || accountTypes.length === 0}
+                      >
+                        <option value="">계정과목 선택</option>
+                        {accountTypes.map((at) => (
+                          <option key={at.accountId} value={String(at.accountId)}>
+                            {at.label}
+                          </option>
+                        ))}
+                      </select>
                       {errors[`line_${index}_accountId`] && (
                         <div className="mg-v2-text-danger mg-v2-text-xs">{errors[`line_${index}_accountId`]}</div>
                       )}
@@ -2899,7 +2941,7 @@ const LedgerDetailModal = ({ ledger, onClose }) => {
         <div className="mg-v2-modal-body">
           <div className="mg-v2-form-group">
             <div className="mg-v2-mb-md">
-              <label className="mg-v2-label">계정 ID</label>
+              <label className="mg-v2-label">계정과목</label>
               <div className="mg-v2-text">{ledger.accountId}</div>
             </div>
             <div className="mg-v2-mb-md">
@@ -2990,6 +3032,32 @@ const JournalEntryEditModal = ({ entry, onClose, onRefresh }) => {
   );
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
+  const [accountTypes, setAccountTypes] = useState([]);
+  const [accountTypesLoading, setAccountTypesLoading] = useState(true);
+  const [accountTypesError, setAccountTypesError] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const fetchAccountTypes = async () => {
+      setAccountTypesLoading(true);
+      setAccountTypesError(null);
+      try {
+        const response = await StandardizedApi.get(ERP_API.ACCOUNT_TYPES);
+        if (cancelled) return;
+        const raw = (response && typeof response === 'object' && 'data' in response && response.data != null) ? response.data : response;
+        setAccountTypes(Array.isArray(raw) ? raw : []);
+      } catch (err) {
+        if (!cancelled) {
+          setAccountTypesError(err?.message || '계정과목 목록을 불러올 수 없습니다.');
+          setAccountTypes([]);
+        }
+      } finally {
+        if (!cancelled) setAccountTypesLoading(false);
+      }
+    };
+    fetchAccountTypes();
+    return () => { cancelled = true; };
+  }, []);
 
   const calculateTotals = () => {
     const totalDebit = lines.reduce((sum, line) => {
@@ -3040,7 +3108,7 @@ const JournalEntryEditModal = ({ entry, onClose, onRefresh }) => {
     
     lines.forEach((line, index) => {
       if (!line.accountId) {
-        newErrors[`line_${index}_accountId`] = '계정 ID는 필수입니다.';
+        newErrors[`line_${index}_accountId`] = '계정과목을 선택해주세요.';
       }
       if (!line.debitAmount && !line.creditAmount) {
         newErrors[`line_${index}_amount`] = '차변 또는 대변 금액을 입력해주세요.';
@@ -3142,12 +3210,21 @@ const JournalEntryEditModal = ({ entry, onClose, onRefresh }) => {
               라인 추가
             </MGButton>
           </div>
-          
+          {accountTypesError && (
+            <div className="mg-v2-text-danger mg-v2-mb-sm" style={{ fontSize: 'var(--font-size-sm)' }}>
+              {accountTypesError}
+            </div>
+          )}
+          {!accountTypesError && accountTypes.length === 0 && !accountTypesLoading && (
+            <div className="mg-v2-mb-sm" style={{ fontSize: 'var(--font-size-sm)', color: 'var(--mg-color-text-secondary)' }}>
+              계정과목이 없습니다. 운영 현황 &gt; 데이터 동기화를 먼저 실행해 주세요.
+            </div>
+          )}
           <div className="mg-v2-table-container">
             <table className="mg-table" data-label="거래 라인 입력">
               <thead>
                 <tr>
-                  <th>계정 ID</th>
+                  <th>계정과목</th>
                   <th>차변</th>
                   <th>대변</th>
                   <th>설명</th>
@@ -3157,14 +3234,20 @@ const JournalEntryEditModal = ({ entry, onClose, onRefresh }) => {
               <tbody>
                 {lines.map((line, index) => (
                   <tr key={index}>
-                    <td data-label="계정 ID">
-                      <input
-                        type="number"
+                    <td data-label="계정과목">
+                      <select
                         className={`mg-v2-input mg-v2-input-sm ${errors[`line_${index}_accountId`] ? 'mg-v2-input-error' : ''}`}
-                        placeholder="계정 ID"
                         value={line.accountId}
                         onChange={(e) => handleLineChange(index, 'accountId', e.target.value)}
-                      />
+                        disabled={accountTypesLoading || !!accountTypesError || accountTypes.length === 0}
+                      >
+                        <option value="">계정과목 선택</option>
+                        {accountTypes.map((at) => (
+                          <option key={at.accountId} value={String(at.accountId)}>
+                            {at.label}
+                          </option>
+                        ))}
+                      </select>
                       {errors[`line_${index}_accountId`] && (
                         <div className="mg-v2-text-danger mg-v2-text-xs">{errors[`line_${index}_accountId`]}</div>
                       )}

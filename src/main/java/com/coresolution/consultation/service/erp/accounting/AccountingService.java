@@ -1,5 +1,6 @@
 package com.coresolution.consultation.service.erp.accounting;
 
+import com.coresolution.consultation.dto.AccountTypeForJournalDto;
 import com.coresolution.consultation.entity.erp.accounting.AccountingEntry;
 import com.coresolution.consultation.entity.erp.accounting.JournalEntryLine;
 import com.coresolution.consultation.entity.erp.financial.FinancialTransaction;
@@ -68,5 +69,14 @@ public interface AccountingService {
      * @param tenantId 테넌트 ID (필수)
      */
     void ensureErpAccountMappingForTenant(String tenantId);
+
+    /**
+     * 분개용 계정과목 목록 조회. CommonCode(ERP_ACCOUNT_TYPE) + extraData.accountId 기반.
+     * 빈 목록이면 빈 리스트 반환.
+     *
+     * @param tenantId 테넌트 ID (필수)
+     * @return accountId, label, codeValue 목록
+     */
+    List<AccountTypeForJournalDto> getAccountTypesForJournal(String tenantId);
 }
 

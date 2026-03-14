@@ -283,6 +283,7 @@ export const ERP_API = {
   // ERP 고도화 API (표준 문서: docs/standards/ERP_ADVANCEMENT_STANDARD.md)
   // 분개 관리
   JOURNAL_ENTRIES: '/api/v1/erp/accounting/entries',
+  ACCOUNT_TYPES: '/api/v1/erp/accounting/account-types',
   JOURNAL_ENTRY_DETAIL: (id) => `/api/v1/erp/accounting/entries/${id}`,
   JOURNAL_ENTRY_UPDATE: (id) => `/api/v1/erp/accounting/entries/${id}`,
   JOURNAL_ENTRY_APPROVE: (id) => `/api/v1/erp/accounting/entries/${id}/approve`,

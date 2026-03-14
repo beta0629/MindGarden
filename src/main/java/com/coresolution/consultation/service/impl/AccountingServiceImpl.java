@@ -2,10 +2,12 @@ package com.coresolution.consultation.service.impl;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import com.coresolution.consultation.dto.AccountTypeForJournalDto;
 import com.coresolution.consultation.entity.Account;
 import com.coresolution.consultation.entity.CommonCode;
 import com.coresolution.consultation.entity.erp.accounting.AccountingEntry;
@@ -21,6 +23,8 @@ import com.coresolution.consultation.service.erp.accounting.AccountingService;
 import com.coresolution.consultation.service.erp.accounting.LedgerService;
 import com.coresolution.core.context.TenantIsolationValidator;
 import com.coresolution.core.context.TenantContextHolder;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
@@ -51,6 +55,7 @@ public class AccountingServiceImpl implements AccountingService {
     private final AccountRepository accountRepository;
     private final CommonCodeRepository commonCodeRepository;
     private final PlatformTransactionManager transactionManager;
+    private final ObjectMapper objectMapper;
 
     @Override
     @Transactional
@@ -587,6 +592,51 @@ public class AccountingServiceImpl implements AccountingService {
         log.info("백필 완료: tenantId={}, processed={}, failed={}, skipped={}", tenantId,
                 result.get("processedCount"), result.get("failedCount"), result.get("skippedCount"));
         return result;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<AccountTypeForJournalDto> getAccountTypesForJournal(String tenantId) {
+        TenantIsolationValidator.requireTenantIdMatch(tenantId);
+        List<CommonCode> codes = commonCodeRepository
+                .findByTenantIdAndCodeGroupAndIsActiveTrueOrderBySortOrderAsc(tenantId,
+                        ERP_ACCOUNT_TYPE_GROUP);
+        List<AccountTypeForJournalDto> result = new ArrayList<>();
+        for (CommonCode cc : codes) {
+            Long accountId = parseAccountIdFromExtraData(cc.getExtraData());
+            if (accountId == null) {
+                continue;
+            }
+            String label = (cc.getKoreanName() != null && !cc.getKoreanName().isBlank())
+                    ? cc.getKoreanName()
+                    : (cc.getCodeLabel() != null ? cc.getCodeLabel() : cc.getCodeValue());
+            result.add(AccountTypeForJournalDto.builder()
+                    .accountId(accountId)
+                    .label(label)
+                    .codeValue(cc.getCodeValue())
+                    .build());
+        }
+        return result;
+    }
+
+    /**
+     * extraData JSON에서 accountId 파싱. 형식: {"accountId": number}. 실패 시 null.
+     */
+    private Long parseAccountIdFromExtraData(String extraData) {
+        if (extraData == null || extraData.isBlank()) {
+            return null;
+        }
+        try {
+            JsonNode node = objectMapper.readTree(extraData);
+            JsonNode idNode = node != null ? node.get("accountId") : null;
+            if (idNode == null || !idNode.isNumber()) {
+                return null;
+            }
+            return idNode.asLong();
+        } catch (Exception e) {
+            log.debug("extraData 파싱 스킵: extraData={}, error={}", extraData, e.getMessage());
+            return null;
+        }
     }
 }
 

@@ -89,6 +89,13 @@
   align-self: center;
 }
 
+/* large 모달: 테이블/폼이 들어갈 때 500px로 짓눌리지 않도록 (디자인 가이드) */
+.mg-modal.mg-modal--large {
+  min-width: 720px;
+  max-width: min(900px, 92vw);
+  width: 90%;
+}
+
 .mg-modal.mg-modal--small .mg-modal__body,
 .mg-modal.mg-modal--medium .mg-modal__body,
 .mg-modal.mg-modal--large .mg-modal__body {

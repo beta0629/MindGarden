@@ -28,6 +28,8 @@ on:
       # dev 프로파일 설정 (기동 오류 방지)
       - 'src/main/resources/application.yml'
       - 'src/main/resources/application-dev.yml'
+      # DB 마이그레이션 (Flyway 적용을 위해 배포 필요)
+      - 'src/main/resources/db/migration/**'
       - 'pom.xml'
       - '.github/workflows/deploy-backend-dev.yml'
   workflow_dispatch:

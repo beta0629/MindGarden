@@ -424,7 +424,7 @@ const SystemNotificationManagement = () => {
           size="large"
           actions={
             <>
-              <button onClick={() => setShowModal(false)} className="mg-v2-button mg-v2-button-outline">
+              <button onClick={() => setShowModal(false)} className="mg-v2-button mg-v2-button-secondary">
                 취소
               </button>
               <button onClick={handleSave} className="mg-v2-button mg-v2-button-primary">

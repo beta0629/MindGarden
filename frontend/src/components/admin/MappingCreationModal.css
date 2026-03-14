@@ -53,6 +53,11 @@
   border-color: var(--ad-b0kla-green);
 }
 
+/* 입금 확인 모달(compact): 바디 높이 제한 */
+.mg-modal.mg-v2-ad-b0kla.mg-v2-deposit-modal .mg-modal__body {
+  max-height: min(55vh, 420px);
+}
+
 /* 모달 바디: 콘텐츠 양에 맞게 자동 조절, 내용 많을 때만 스크롤 */
 .mg-modal.mg-v2-ad-b0kla .mg-modal__body {
   min-height: 0; /* flexbox에서 스크롤 시 축소 허용 */

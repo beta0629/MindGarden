@@ -41,18 +41,6 @@ const MappingDepositModal = ({
         if (isOpen && mapping) {
             const referenceNumber = generateDepositReference();
             setDepositReference(referenceNumber);
-            
-            // 디버깅: 매칭 데이터 구조 확인
-            console.log('🔍 MappingDepositModal 매칭 데이터:', {
-                mapping,
-                consultantName: mapping.consultantName,
-                clientName: mapping.clientName,
-                consultant: mapping.consultant,
-                client: mapping.client,
-                packageName: mapping.packageName,
-                packagePrice: mapping.packagePrice,
-                paymentAmount: mapping.paymentAmount
-            });
         }
     }, [isOpen, mapping]);
 
@@ -105,8 +93,8 @@ const MappingDepositModal = ({
             isOpen={isOpen}
             onClose={handleClose}
             title="입금 확인"
-            size="auto"
-            className="mg-v2-ad-b0kla"
+            size="medium"
+            className="mg-v2-ad-b0kla mg-v2-deposit-modal"
             backdropClick
             showCloseButton
             loading={isLoading}
@@ -114,7 +102,7 @@ const MappingDepositModal = ({
                 <>
                     <button
                         type="button"
-                        className="mg-v2-button mg-v2-button-outline"
+                        className="mg-v2-button mg-v2-button-secondary"
                         onClick={(e) => {
                             e?.preventDefault();
                             e?.stopPropagation();

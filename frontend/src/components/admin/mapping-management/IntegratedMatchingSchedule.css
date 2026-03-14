@@ -229,14 +229,15 @@
 
 .integrated-schedule__filter-label:has(input:checked),
 .integrated-schedule__filter-label.integrated-schedule__filter-label--selected {
-  background-color: var(--mg-color-primary-main, var(--mg-primary-500));
-  color: var(--mg-color-primary-inverse, var(--mg-white));
+  background-color: var(--mg-color-primary-main, #3D5246);
+  color: var(--mg-color-primary-inverse, #FAF9F7);
+  font-weight: 600;
 }
 
 .integrated-schedule__filter-label:has(input:checked):hover,
 .integrated-schedule__filter-label.integrated-schedule__filter-label--selected:hover {
-  background-color: var(--mg-color-primary-dark, var(--mg-primary-600));
-  color: var(--mg-color-primary-inverse, var(--mg-white));
+  background-color: var(--mg-color-primary-dark, #2d3d34);
+  color: var(--mg-color-primary-inverse, #FAF9F7);
 }
 
 .integrated-schedule__filter-text {

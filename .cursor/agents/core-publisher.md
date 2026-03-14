@@ -19,6 +19,20 @@ description: 퍼블리셔 전용 서브에이전트. core-planner·core-designer
 - **퍼블리셔**: HTML 마크업 전담. 디자인 스펙에 정의된 클래스명·구조를 그대로 반영.
 - **코더**: 퍼블리셔 HTML을 JSX로 변환·컴포넌트화, 이벤트·상태·API 연동, CSS 파일 작성·수정.
 
+## 공통 컴포넌트 모듈화 (필수)
+
+**버튼·배지·카드 등 공통 UI 마크업 시 반드시 `common/` 모듈의 클래스를 사용한다. 새 클래스·구조를 만들지 않는다.**
+
+| 용도 | 사용 클래스 | 참조 |
+|------|-------------|------|
+| 상태 배지 | `mg-v2-status-badge`, `mg-v2-badge--success` 등 | `docs/design-system/v2/COMMON_UI_IMPLEMENTATION_SPEC.md` |
+| 회기 배지 | `mg-v2-count-badge` | 위 참조 |
+| 버튼 | `mg-v2-button`, `mg-v2-button--primary` 등 | 위 참조 |
+| 카드 컨테이너 | `mg-v2-card-container` | 위 참조 |
+| 카드 액션 그룹 | `mg-v2-card-actions` | 위 참조 |
+
+- `integrated-schedule__card-status`, `status-badge` 등 **컴포넌트별 신규 클래스 금지**
+
 ## 아토믹 디자인 기반 HTML 규칙
 
 - **계층**: Atoms → Molecules → Organisms → Templates → Pages

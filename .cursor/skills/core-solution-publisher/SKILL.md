@@ -30,6 +30,20 @@ core-coder (JSX·컴포넌트화·로직·CSS)
 
 ## 2. HTML 마크업 규칙
 
+### 2.0 공통 컴포넌트 모듈화 (필수)
+
+**버튼·배지·카드 등 공통 UI는 반드시 `common/` 모듈 클래스를 사용한다. 새로 만들지 않는다.**
+
+| 용도 | 사용 클래스 |
+|------|-------------|
+| 상태 배지 | `mg-v2-status-badge` + `mg-v2-badge--success` \| `--warning` \| `--neutral` \| `--danger` \| `--info` |
+| 회기 배지 | `mg-v2-count-badge` |
+| 버튼 | `mg-v2-button` + `mg-v2-button--primary` \| `--success` \| `--outline` \| `--secondary` \| `--danger` |
+| 카드 컨테이너 | `mg-v2-card-container` |
+| 카드 액션 그룹 | `mg-v2-card-actions` |
+
+- 참조: `docs/design-system/v2/COMMON_UI_IMPLEMENTATION_SPEC.md`, `docs/design-system/v2/COMMON_UI_MARKUP_TEMPLATES.md`
+
 ### 2.1 시맨틱 태그 우선
 
 | 용도 | 사용 태그 | 비고 |

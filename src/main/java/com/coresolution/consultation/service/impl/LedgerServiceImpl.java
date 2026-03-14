@@ -5,6 +5,7 @@ import com.coresolution.consultation.entity.erp.accounting.Ledger;
 import com.coresolution.consultation.repository.AccountRepository;
 import com.coresolution.consultation.repository.erp.accounting.LedgerRepository;
 import com.coresolution.consultation.service.erp.accounting.LedgerService;
+import com.coresolution.core.context.TenantIsolationValidator;
 import com.coresolution.core.context.TenantContextHolder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,11 +34,7 @@ public class LedgerServiceImpl implements LedgerService {
     @Transactional
     public void updateLedgerFromJournalEntry(String tenantId, Long accountId, LocalDate entryDate, 
                                             BigDecimal debitAmount, BigDecimal creditAmount) {
-        // 0. 테넌트 컨텍스트 검증 (ERP 독립성 보장)
-        String currentTenantId = TenantContextHolder.getTenantId();
-        if (currentTenantId == null || !currentTenantId.equals(tenantId)) {
-            throw new IllegalStateException("테넌트 ID 불일치: 다른 테넌트의 원장에 접근할 수 없습니다.");
-        }
+        TenantIsolationValidator.requireTenantIdMatch(tenantId);
         
         // 1. 계정 존재 여부 확인 (테넌트 검증)
         Account account = accountRepository.findById(accountId)
@@ -112,36 +109,21 @@ public class LedgerServiceImpl implements LedgerService {
     @Override
     @Transactional(readOnly = true)
     public List<Ledger> getLedgersByAccount(String tenantId, Long accountId) {
-        // 테넌트 컨텍스트 검증
-        String currentTenantId = TenantContextHolder.getTenantId();
-        if (currentTenantId == null || !currentTenantId.equals(tenantId)) {
-            throw new IllegalStateException("테넌트 ID 불일치");
-        }
-        
+        TenantIsolationValidator.requireTenantIdMatch(tenantId);
         return ledgerRepository.findByTenantIdAndAccountId(tenantId, accountId);
     }
     
     @Override
     @Transactional(readOnly = true)
     public List<Ledger> getLedgersByPeriod(String tenantId, LocalDate startDate, LocalDate endDate) {
-        // 테넌트 컨텍스트 검증
-        String currentTenantId = TenantContextHolder.getTenantId();
-        if (currentTenantId == null || !currentTenantId.equals(tenantId)) {
-            throw new IllegalStateException("테넌트 ID 불일치");
-        }
-        
+        TenantIsolationValidator.requireTenantIdMatch(tenantId);
         return ledgerRepository.findByTenantIdAndPeriod(tenantId, startDate, endDate);
     }
     
     @Override
     @Transactional(readOnly = true)
     public BigDecimal getAccountBalance(String tenantId, Long accountId, LocalDate asOfDate) {
-        // 테넌트 컨텍스트 검증
-        String currentTenantId = TenantContextHolder.getTenantId();
-        if (currentTenantId == null || !currentTenantId.equals(tenantId)) {
-            throw new IllegalStateException("테넌트 ID 불일치");
-        }
-        
+        TenantIsolationValidator.requireTenantIdMatch(tenantId);
         // 해당 날짜가 포함된 기간의 원장 조회
         YearMonth yearMonth = YearMonth.from(asOfDate);
         LocalDate periodStart = yearMonth.atDay(1);

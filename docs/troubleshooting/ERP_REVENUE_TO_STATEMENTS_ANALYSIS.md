@@ -1,6 +1,7 @@
-# 상담료 결제 완료 시 재무제표(대차대조표·손익계산서) 내역 없음 — 원인 분석
+# 상담료 결제 완료 시 재무제표(대차대조표·손익계산서·현금흐름표) 내역 없음 — 원인 분석
 
 **작성일**: 2025-03-04  
+**갱신일**: 2025-03-14 (데이터 소스·분개 전기 흐름·프로시저 의존성·재현 절차 보강)  
 **역할**: core-debugger (원인 분석·수정 제안만, 코드 수정은 core-coder 위임)  
 **참조**: `docs/standards/ERROR_HANDLING_STANDARD.md`, `docs/troubleshooting/ERP_DEV_TEST_DATA_GUIDE.md`
 
@@ -8,99 +9,128 @@
 
 ## 1. 증상 요약
 
-- **현상**: ERP에서 상담료가 테스트로 "결제 완료"가 되면 수익으로 잡혀야 하는데, **대차대조표 및 손익계산서 내역이 없다**.
-- **기대**: 결제 완료 → 수익 인식 → 손익계산서(수익·비용·순이익) / 대차대조표(자산·부채·자본)에 노출.
+- **현상**: ERP 상담료 수입(INCOME)은 `financial_transactions`에 등록되어 있으나, **대차대조표·손익계산서·현금흐름표에는 실제 데이터가 표시되지 않음**.
+- **기대**: 결제/입금 확인 → 수익 인식 → 손익계산서(수익·비용·순이익) / 대차대조표(자산·부채·자본) / 현금흐름표에 노출.
 
 ---
 
-## 2. 결제 완료가 어디에 기록되는지
+## 2. 재무제표 데이터 소스 추적 (테이블·컬럼·서비스)
 
-### 2.1 결제 완료 시 갱신되는 테이블/엔티티
+### 2.1 대차대조표·손익계산서·현금흐름표가 읽는 데이터
 
-| 경로 | 갱신/생성되는 것 | 분개/원장 연동 |
-|------|------------------|----------------|
-| **Payment 상태 → APPROVED** | `payments` 갱신, `financial_transactions` 생성, `accounting_entries`(분개) + `erp_journal_entry_lines` 생성 | 분개는 **DRAFT**로만 생성됨. 전기(post) 없음 → **원장 미반영** |
-| **매핑 입금 확인 (confirmPayment)** | `consultant_client_mappings` 갱신, `financial_transactions` 생성, 분개 생성 | 동일. DRAFT 분개만 생성 → **원장 미반영** |
-| **상담 비용 정산 (settleConsultationCost)** | `consultations` 의 `consultant_notes`에 결제정보 JSON 저장만 | Payment/FinancialTransaction/분개 **생성 없음** |
+| 구분 | API | 서비스 메서드 | 저장소 |
+|------|-----|---------------|--------|
+| 손익계산서 | `GET /api/v1/erp/accounting/statements/income?startDate=&endDate=` | `FinancialStatementServiceImpl.generateIncomeStatement()` | `ledgerService.getLedgersByPeriod()` → **`erp_ledgers`** |
+| 대차대조표 | `GET /api/v1/erp/accounting/statements/balance?asOfDate=` | `FinancialStatementServiceImpl.generateBalanceSheet()` | 동일. `asOfDate` 기준 월의 `periodStart`~`periodEnd`로 `getLedgersByPeriod()` 호출 → **`erp_ledgers`** |
+| 현금흐름표 | `GET /api/v1/erp/accounting/statements/cash-flow?startDate=&endDate=` | `FinancialStatementServiceImpl.generateCashFlowStatement()` | 동일 → **`erp_ledgers`** |
 
-- **Payment 경로**  
-  - `PaymentServiceImpl.updatePaymentStatus()` 에서 `status == Payment.PaymentStatus.APPROVED` 일 때  
-    `financialTransactionService.createPaymentTransaction(payment.getId(), ...)` 호출 (약 219줄).  
-  - `FinancialTransactionServiceImpl.createPaymentTransaction()` → `createTransaction()` →  
-    `accountingService.createJournalEntryFromTransaction(savedTransaction)` 호출 (약 142줄).
-- **입금 확인 경로**  
-  - `AdminServiceImpl.confirmPayment()` → `createConsultationIncomeTransaction()` / `createAdditionalSessionIncomeTransaction()`  
-    → `financialTransactionService.createTransaction(request, null)`  
-    → 동일하게 `createJournalEntryFromTransaction(savedTransaction)` 호출.
+- **컨트롤러**: `FinancialStatementController` → `FinancialStatementService`  
+- **구현체**: `FinancialStatementServiceImpl` (40~41, 94~96, 161~162줄)  
+  - 세 제표 모두 **원장만** 사용. `LedgerService.getLedgersByPeriod(tenantId, startDate, endDate)` 호출.
+- **원장 조회**: `LedgerServiceImpl.getLedgersByPeriod()` → `LedgerRepository.findByTenantIdAndPeriod(tenantId, startDate, endDate)`  
+  - **테이블**: `erp_ledgers` (엔티티 `Ledger`)  
+  - **쿼리**: `periodStart >= :startDate AND periodEnd <= :endDate`, `tenantId` 일치.
 
-즉, “결제 완료”(Payment APPROVED 또는 매핑 입금 확인) 시 **FinancialTransaction**과 **분개(AccountingEntry + JournalEntryLine)** 는 생성되지만, 아래에서 설명할 **전기(post)** 가 없어 원장에 반영되지 않음.
+**결론**: 재무제표는 **`erp_ledgers`만** 읽음. `financial_transactions`, `accounting_entries`, `erp_journal_entry_lines`는 재무제표 생성 시 **직접 사용하지 않음**.
 
-### 2.2 결제 완료 시 수익 인식 트리거
+### 2.2 테이블·엔티티 연결 관계
 
-- **있는 것**:  
-  - Payment APPROVED 시: `createPaymentTransaction()` → FinancialTransaction(INCOME) 생성 + `createJournalEntryFromTransaction()`.  
-  - confirmPayment 시: `createConsultationIncomeTransaction()` 등 → 동일하게 FinancialTransaction + `createJournalEntryFromTransaction()`.
-- **없는 것**:  
-  - 분개를 **승인(APPROVED)** 하거나 **전기(POSTED)** 하는 트리거가 **전혀 없음**.  
-  - 원장 갱신은 `AccountingServiceImpl.postJournalEntry()` 안에서만 이루어지며, 이 메서드는 **APPROVED** 상태 분개만 전기할 수 있음.
+```
+financial_transactions (수입/지출 거래)
+    ↓ createJournalEntryFromTransaction()
+accounting_entries (분개 헤더) + erp_journal_entry_lines (분개 라인)
+    ↓ postJournalEntry() → updateLedgerFromJournalEntry()
+erp_ledgers (원장: 계정별·기간별 합계)
+    ↑ 재무제표는 여기만 조회
+```
 
----
+- **원장에 쓰기**: `postJournalEntry()` 내부에서만 `LedgerServiceImpl.updateLedgerFromJournalEntry()` 호출 → `erp_ledgers` 행 생성/갱신.
+- **원장에 쓰이려면**: 분개가 **APPROVED** 상태여야 하고, **postJournalEntry()**가 호출되어야 함.
 
-## 3. 대차대조표·손익계산서 API가 어디서 데이터를 가져오는지
+### 2.3 프로시저·저장함수·뷰 의존성
 
-- **소스**: **원장(Ledger)** 만 사용.  
-  - `FinancialStatementServiceImpl.generateIncomeStatement()` / `generateBalanceSheet()` / `generateCashFlowStatement()`  
-    → 모두 `ledgerService.getLedgersByPeriod(tenantId, startDate, endDate)` (또는 동일 기간) 호출.  
-  - `LedgerServiceImpl.getLedgersByPeriod()` → `LedgerRepository.findByTenantIdAndPeriod()` → **`erp_ledgers`** 테이블만 조회.
-- **조건**:  
-  - `tenantId` (TenantContextHolder),  
-  - 손익계산서/현금흐름: `startDate`, `endDate`,  
-  - 대차대조표: `asOfDate` → 해당 월 `periodStart`~`periodEnd` 로 변환 후 동일하게 `getLedgersByPeriod()`.
-- **계정 분류**:  
-  - 수익/비용/자산/부채/자본은 `Ledger`의 `Account.description` / `Account.accountNumber` 키워드로 판별  
-  - (`FinancialStatementServiceImpl` 내 `isRevenueAccount`, `isExpenseAccount`, `isAssetAccount` 등).  
-  - **원장에 행이 없으면** 해당 구간 수익/비용/자산/부채/자본은 0 또는 빈 항목으로 나옴.
+- **대차대조표/손익계산서/현금흐름표**: **저장 프로시저·저장함수·DB 뷰 미사용**.  
+  Java 서비스에서 `LedgerRepository`(JPA)로 `erp_ledgers`만 조회 후 메모리에서 계정별 합계·분류.
+- **PlSqlStatisticsService**: 재무제표 API와 **무관**. 실시간 통계·스케줄 통계 등 별도 용도.  
+  재무제표는 `FinancialStatementService` + `LedgerService`만 사용.
 
 ---
 
-## 4. 데이터가 끊기는 지점 (근본 원인)
+## 3. 결제/입금 확인이 어디에 기록되는지
 
-### 4.1 끊김 1: 분개는 생성되지만 전기되지 않음 (핵심)
+### 3.1 갱신되는 테이블/엔티티
 
-- `AccountingServiceImpl.createJournalEntryFromTransaction()`:  
-  - FinancialTransaction(INCOME/EXPENSE)에 따라 분개 라인을 만들고  
-  - `createJournalEntry(tenantId, entry, lines)` 를 호출해 **DRAFT** 상태로만 저장 (`AccountingServiceImpl` 64줄: `entry.setEntryStatus(EntryStatus.DRAFT)`).
-- 원장 반영은 **`postJournalEntry(tenantId, entryId)`** 에서만 일어남:  
-  - `AccountingServiceImpl.postJournalEntry()` (129~167줄)  
-  - 조건: `entry.getEntryStatus() == APPROVED`  
-  - 동작: 각 `JournalEntryLine`에 대해 `ledgerService.updateLedgerFromJournalEntry()` 호출 → `erp_ledgers` 생성/갱신.
-- **자동 생성 분개**에는 `approveJournalEntry()` / `postJournalEntry()` 호출이 **한 번도 없음**.  
-  → 결제 완료/입금 확인으로 분개가 생겨도 **원장에 안 들어가고**, 재무제표는 원장만 보므로 **대차대조표·손익계산서 내역이 없는 것**이 맞음.
+| 경로 | 갱신/생성되는 것 | 분개/원장 연동 (현재 코드 기준) |
+|------|------------------|--------------------------------|
+| **Payment 상태 → APPROVED** | `payments` 갱신, `financial_transactions` 생성, `accounting_entries` + `erp_journal_entry_lines` 생성 | 분개 생성 후 **자동 승인·전기** 시도 (`AccountingServiceImpl` 292~305). 전기 성공 시 원장 반영 |
+| **매핑 입금 확인 (confirmPayment)** | `consultant_client_mappings` 갱신, `financial_transactions` 생성, 분개 생성 | 동일. 자동 승인·전기 시도 |
+| **상담 비용 정산 (settleConsultationCost)** | `consultations`의 `consultant_notes`에 JSON 저장만 | Payment/FinancialTransaction/분개 **생성 없음** |
 
-### 4.2 끊김 2: 전기 가능 상태
+- **Payment 경로**: `PaymentServiceImpl` (약 219줄) → `financialTransactionService.createPaymentTransaction()` → `createTransaction()` → `accountingService.createJournalEntryFromTransaction(savedTransaction)` (약 148줄).
+- **입금 확인 경로**: `AdminServiceImpl.confirmPayment()` → `createConsultationIncomeTransaction()` 등 → `financialTransactionService.createTransaction(request, null)` → 동일하게 `createJournalEntryFromTransaction()`.
 
-- `postJournalEntry()` 는 **APPROVED** 분개만 전기 가능.  
-- 현재 자동 생성 분개는 **DRAFT** 이므로, 배치 등으로 나중에 전기하려면 “자동 생성 분개를 APPROVED로 변경한 뒤 전기”하는 로직이 별도로 필요함.
+### 3.2 분개·전기 흐름 (현재 구현)
 
-### 4.3 끊김 3 (가능): 계정 매핑 없음
+- `AccountingServiceImpl.createJournalEntryFromTransaction()` (216~318줄):
+  1. `getDefaultAccountId(tenantId, "REVENUE"|"EXPENSE"|"CASH")` 로 계정 ID 조회. 없으면 `ensureErpAccountMappingForTenant(tenantId)` 호출 후 재조회.  
+     **여전히 null이면 분개 생성하지 않고 null 반환** (246~253줄).
+  2. `createJournalEntry(tenantId, entry, lines)` → 분개를 **DRAFT** 상태로 저장 (77줄: `entry.setEntryStatus(EntryStatus.DRAFT)`).
+  3. **자동 승인·전기** (292~305줄):  
+     `approveJournalEntry(tenantId, saved.getId(), null, "자동승인(결제/입금연동)")` → `postJournalEntry(tenantId, saved.getId())`.  
+     전기 중 예외 발생 시 로그만 남기고, 분개는 APPROVED 상태로 남을 수 있음(원장 미반영).
+- **전기 조건**: `postJournalEntry()`는 **APPROVED** 상태 분개만 전기 가능 (161~162줄).  
+  `approveJournalEntry()`는 **approvalStatus == PENDING**일 때만 승인 가능 (121~123줄).  
+  새로 저장한 분개는 기본값이 PENDING이므로 자동 승인 가능.
 
-- `createJournalEntryFromTransaction()` 내부에서  
-  `getDefaultAccountId(tenantId, "REVENUE")`, `"EXPENSE"`, `"CASH"` 를 **공통코드** `ERP_ACCOUNT_TYPE` 에서 조회.  
-- 여기서 계정 ID를 못 찾으면 `revenueAccountId` / `expenseAccountId` / `cashAccountId` 중 하나가 null 이 되어  
-  **분개 생성 자체를 하지 않고** null 반환 (AccountingServiceImpl 224~232, 278~279줄).  
-- 이 경우 FinancialTransaction만 있고 분개가 없음 → 원장·재무제표 당연히 0.
+**이전 분석과의 차이**: 코드 상에는 이미 **자동 승인·전기**가 구현되어 있음. 그럼에도 재무제표에 데이터가 없다면 아래 “끊기는 지점” 후보를 확인해야 함.
 
-### 4.4 정리
+---
 
-- **재무제표** = 원장(`erp_ledgers`)만 읽음.  
-- **원장** = **전기(POSTED)** 된 분개에 대해서만 `updateLedgerFromJournalEntry()` 로 채워짐.  
-- **결제/입금 확인** 시에는 분개만 DRAFT로 생성되고, **승인·전기 호출이 없음** → 원장 비어 있음 → **대차대조표·손익계산서 내역 없음**.
+## 4. 데이터가 끊기는 지점 (근본 원인 후보)
+
+현재 코드에는 자동 승인·전기가 있으므로, **재무제표에 여전히 데이터가 없다면** 아래 중 하나 이상일 가능성이 있음.
+
+### 4.1 분개가 아예 생성되지 않음 (계정 매핑)
+
+- `createJournalEntryFromTransaction()` 에서 `getDefaultAccountId(tenantId, "REVENUE"|"EXPENSE"|"CASH")` 가 null 이면  
+  `ensureErpAccountMappingForTenant(tenantId)` 호출 후에도 하나라도 null 이면 **분개 생성하지 않고 null 반환** (246~253줄).
+- **확인**: 해당 테넌트의 공통코드 `ERP_ACCOUNT_TYPE` (REVENUE, EXPENSE, CASH)에 `extraData` 또는 `codeDescription` 으로 계정 ID가 설정되어 있는지.  
+  없으면 FinancialTransaction만 있고 분개·원장 없음 → 재무제표 0.
+
+### 4.2 테넌트 컨텍스트 불일치로 분개 생성 건너뜀
+
+- `createJournalEntryFromTransaction()` 상단 (224~229줄):  
+  `TenantContextHolder.getTenantId()` 와 `transaction.getTenantId()` 가 다르면 **경고 로그 후 null 반환**, 분개 미생성.
+- **확인**: 입금 확인/결제 완료가 **비동기·별도 트랜잭션**에서 실행될 때 해당 콜백에서 `TenantContextHolder`에 올바른 tenantId가 설정되어 있는지.
+
+### 4.3 자동 승인·전기 중 예외 발생
+
+- 292~305줄: `approveJournalEntry()` 또는 `postJournalEntry()` 에서 예외가 나면 catch 되어 로그만 남고,  
+  분개는 저장된 상태(APPROVED까지 갔을 수 있음)로 남지만 **원장에는 미반영**될 수 있음.
+- **확인**: 애플리케이션 로그에서  
+  `"분개 전기 실패: 원장 미반영"` / `"분개 생성 실패"` / `"테넌트 ID 불일치"` 등 검색.  
+  원인: 계정 테넌트 불일치, 원장 기간/계정 조회 예외 등.
+
+### 4.4 과거 데이터 (자동 전기 도입 전 생성된 거래)
+
+- 자동 승인·전기 로직이 추가되기 **이전**에 생성된 INCOME 거래는 분개가 DRAFT 또는 APPROVED로만 있고 전기되지 않았을 수 있음.  
+  해당 분개들은 원장에 없음 → 재무제표에 반영 안 됨.
+- **확인**: `accounting_entries` 에서 `entry_status = 'POSTED'` 가 아닌 행이 해당 기간·거래에 있는지.  
+  필요 시 과거 분개에 대해 수동 전기 또는 배치 전기 검토.
+
+### 4.5 정리
+
+- **재무제표** = **`erp_ledgers`만** 읽음.
+- **원장** = **전기(POSTED)** 된 분개에 대해서만 `updateLedgerFromJournalEntry()` 로 채워짐.
+- **자동 생성 분개**에는 이미 승인·전기 호출이 있으나, **계정 매핑·테넌트·예외·과거 데이터** 중 하나 때문에 원장이 비어 있을 수 있음.
 
 ---
 
 ## 5. 수정 제안 (core-coder 위임용)
 
-### 5.1 방향 A (권장): 자동 생성 분개에 대해 “승인 + 전기” 자동 호출
+**참고**: 자동 승인·전기는 이미 `AccountingServiceImpl.createJournalEntryFromTransaction()` (292~305줄)에 구현되어 있음. 재무제표에 데이터가 없다면 원인 후보(4.1~4.4)를 먼저 점검한 뒤, 아래는 필요 시 적용.
+
+### 5.1 방향 A (참고): 자동 생성 분개에 대해 “승인 + 전기” 자동 호출
 
 - **파일**: `AccountingServiceImpl.java`  
   - `createJournalEntryFromTransaction()` 에서 `createJournalEntry()` 로 분개 저장 후,  
@@ -134,33 +164,56 @@
 
 ---
 
-## 6. 체크리스트 (수정 후 core-coder / 검증용)
+## 6. 재현 절차
 
-- [ ] 결제 완료(Payment APPROVED) 또는 매핑 입금 확인(confirmPayment) 시  
-      `createJournalEntryFromTransaction()` 이후 **같은 분개에 대해 approve + post** 가 호출되는가?
-- [ ] 호출 순서: `createJournalEntry` → (필요 시) `approveJournalEntry` → `postJournalEntry` 가  
-      트랜잭션/예외 처리 상 안전한가? (전기 실패 시 보상 처리 정책 확인)
-- [ ] 테넌트별 `ERP_ACCOUNT_TYPE` (REVENUE, EXPENSE, CASH) 계정 ID가 설정되어 있는가?
-- [ ] 해당 테넌트·기간으로  
-      `GET /api/v1/erp/accounting/statements/income?startDate=...&endDate=...`  
-      `GET /api/v1/erp/accounting/statements/balance?asOfDate=...`  
-      호출 시, 결제 완료/입금 확인한 금액이 수익(또는 자산/현금) 쪽에 반영되는가?
-- [ ] `erp_ledgers` 에 해당 기간·계정에 대한 행이 생겼는지 DB로 확인할 수 있는가?
+1. **테넌트·기간 정하기**: 대상 tenantId, 조회할 월(예: 2025-03).
+2. **수입 거래 존재 확인**:  
+   `SELECT id, tenant_id, transaction_type, amount, transaction_date FROM financial_transactions WHERE tenant_id = ? AND transaction_type = 'INCOME' AND transaction_date BETWEEN '2025-03-01' AND '2025-03-31';`
+3. **분개·전기 상태 확인**:  
+   `SELECT ae.id, ae.tenant_id, ae.entry_number, ae.entry_status, ae.approval_status, ae.entry_date FROM accounting_entries ae WHERE ae.tenant_id = ? AND ae.entry_date BETWEEN '2025-03-01' AND '2025-03-31' ORDER BY ae.entry_date;`  
+   - `entry_status = 'POSTED'` 인 분개만 원장에 반영됨.
+4. **원장 확인**:  
+   `SELECT * FROM erp_ledgers WHERE tenant_id = ? AND period_start >= '2025-03-01' AND period_end <= '2025-03-31';`  
+   - 비어 있으면 재무제표에도 해당 기간 데이터 없음.
+5. **재무제표 API 호출**:  
+   `GET /api/v1/erp/accounting/statements/income?startDate=2025-03-01&endDate=2025-03-31`  
+   `GET /api/v1/erp/accounting/statements/balance?asOfDate=2025-03-31`  
+   `GET /api/v1/erp/accounting/statements/cash-flow?startDate=2025-03-01&endDate=2025-03-31`  
+   - 로그인·ERP 권한 필요.
+6. **애플리케이션 로그**:  
+   결제/입금 확인 직후 `"분개 전기 실패"`, `"테넌트 ID 불일치"`, `"기본 계정을 찾을 수 없습니다"` 등 검색.
 
 ---
 
-## 7. 참고 코드 위치
+## 7. 체크리스트 (수정·점검 후 검증용)
+
+- [ ] 테넌트별 `ERP_ACCOUNT_TYPE` (REVENUE, EXPENSE, CASH) 계정 ID가 설정되어 있는가?
+- [ ] 결제 완료 또는 매핑 입금 확인 시 `createJournalEntryFromTransaction()` 이후  
+      **approveJournalEntry** → **postJournalEntry** 가 호출되는가? (이미 코드에 있음)
+- [ ] 전기 중 예외가 나지 않는가? (로그에 "분개 전기 실패" 없음)
+- [ ] 해당 테넌트·기간으로 재현 절차 2~5 실행 시  
+      `financial_transactions` INCOME → `accounting_entries` POSTED → `erp_ledgers` 행 존재 → 재무제표에 금액 반영되는가?
+- [ ] `erp_ledgers` 에 해당 기간·계정에 대한 행이 생겼는지 DB로 확인했는가?
+
+---
+
+## 8. 참고 코드 위치
 
 | 구분 | 파일·위치 |
 |------|-----------|
-| 결제 완료 시 FinancialTransaction·분개 생성 | `PaymentServiceImpl` 212~221줄 (APPROVED 시 createPaymentTransaction) |
-| 입금 확인 시 수입 거래·분개 생성 | `AdminServiceImpl` confirmPayment, createConsultationIncomeTransaction 등 |
-| 분개 생성(자동) | `AccountingServiceImpl.createJournalEntryFromTransaction()` (201~277), `createJournalEntry()` (64: DRAFT 설정) |
-| 분개 승인/전기 | `AccountingServiceImpl.approveJournalEntry()`, `postJournalEntry()` (129~167, 153~156: 원장 갱신) |
+| 재무제표 API | `FinancialStatementController` (income/balance/cash-flow) |
 | 재무제표 데이터 소스 | `FinancialStatementServiceImpl` 40~41, 94~96, 161~162: `ledgerService.getLedgersByPeriod()` |
+| 원장 조회 | `LedgerServiceImpl.getLedgersByPeriod()` → `LedgerRepository.findByTenantIdAndPeriod()` → `erp_ledgers` |
 | 원장 갱신 | `LedgerServiceImpl.updateLedgerFromJournalEntry()` (34~89) |
-| 계정 ID 조회 | `AccountingServiceImpl.getDefaultAccountId()` (281~339), 공통코드 `ERP_ACCOUNT_TYPE` |
+| 결제 완료 시 거래·분개 | `PaymentServiceImpl` → `FinancialTransactionServiceImpl.createTransaction()` → `createJournalEntryFromTransaction()` |
+| 입금 확인 시 거래·분개 | `AdminServiceImpl` confirmPayment, createConsultationIncomeTransaction 등 → `createTransaction()` → `createJournalEntryFromTransaction()` |
+| 분개 생성·자동 승인·전기 | `AccountingServiceImpl.createJournalEntryFromTransaction()` (216~318), 292~305: approve + post |
+| 분개 승인/전기 | `AccountingServiceImpl.approveJournalEntry()` (104~139), `postJournalEntry()` (144~180) |
+| 계정 ID 조회·시딩 | `AccountingServiceImpl.getDefaultAccountId()` (322~377), `ensureErpAccountMappingForTenant()` (386~498) |
 
 ---
 
-**요약**: 상담료 결제 완료 시 수익이 대차대조표·손익계산서에 안 나오는 이유는, **분개가 DRAFT로만 생성되고 승인·전기가 한 번도 호출되지 않아 원장이 갱신되지 않기 때문**입니다. 재무제표는 원장만 읽으므로, **자동 생성 분개에 대해 승인 + 전기를 호출**하도록 하면 됩니다. 추가로 테넌트별 수익/비용/현금 계정 매핑(공통코드) 존재 여부를 반드시 점검해야 합니다.
+**요약**:  
+- **재무제표(대차대조표·손익계산서·현금흐름표)** 는 **`erp_ledgers`만** 조회하며, 저장 프로시저/PlSqlStatisticsService는 사용하지 않음.  
+- **수입 거래**는 `financial_transactions` → 분개(`accounting_entries` + `erp_journal_entry_lines`) → **전기 시** `erp_ledgers` 에 반영됨.  
+- 코드에는 이미 **자동 승인·전기**가 있으므로, 재무제표에 데이터가 없다면 **계정 매핑·테넌트 컨텍스트·전기 예외·과거 미전기 분개** 중 하나를 우선 점검하고, 계정 매핑 시딩·로그 확인·필요 시 과거 분개 배치 전기를 검토하면 됨.

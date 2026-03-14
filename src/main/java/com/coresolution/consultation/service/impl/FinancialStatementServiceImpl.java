@@ -5,7 +5,7 @@ import com.coresolution.consultation.entity.erp.accounting.Ledger;
 import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.consultation.service.erp.accounting.FinancialStatementService;
 import com.coresolution.consultation.service.erp.accounting.LedgerService;
-import com.coresolution.core.context.TenantContextHolder;
+import com.coresolution.core.context.TenantIsolationValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -36,12 +36,7 @@ public class FinancialStatementServiceImpl implements FinancialStatementService 
     @Override
     @Transactional(readOnly = true)
     public Map<String, Object> generateIncomeStatement(String tenantId, LocalDate startDate, LocalDate endDate) {
-        // 0. 테넌트 컨텍스트 검증
-        String currentTenantId = TenantContextHolder.getTenantId();
-        if (currentTenantId == null || !currentTenantId.equals(tenantId)) {
-            throw new IllegalStateException("테넌트 ID 불일치");
-        }
-        
+        TenantIsolationValidator.requireTenantIdMatch(tenantId);
         log.info("손익계산서 생성: tenantId={}, startDate={}, endDate={}", tenantId, startDate, endDate);
         
         // 1. 기간별 원장 조회
@@ -86,12 +81,7 @@ public class FinancialStatementServiceImpl implements FinancialStatementService 
     @Override
     @Transactional(readOnly = true)
     public Map<String, Object> generateBalanceSheet(String tenantId, LocalDate asOfDate) {
-        // 0. 테넌트 컨텍스트 검증
-        String currentTenantId = TenantContextHolder.getTenantId();
-        if (currentTenantId == null || !currentTenantId.equals(tenantId)) {
-            throw new IllegalStateException("테넌트 ID 불일치");
-        }
-        
+        TenantIsolationValidator.requireTenantIdMatch(tenantId);
         log.info("재무상태표 생성: tenantId={}, asOfDate={}", tenantId, asOfDate);
         
         // 1. 모든 계정의 잔액 조회 (asOfDate 기준)
@@ -155,12 +145,7 @@ public class FinancialStatementServiceImpl implements FinancialStatementService 
     @Override
     @Transactional(readOnly = true)
     public Map<String, Object> generateCashFlowStatement(String tenantId, LocalDate startDate, LocalDate endDate) {
-        // 0. 테넌트 컨텍스트 검증
-        String currentTenantId = TenantContextHolder.getTenantId();
-        if (currentTenantId == null || !currentTenantId.equals(tenantId)) {
-            throw new IllegalStateException("테넌트 ID 불일치");
-        }
-        
+        TenantIsolationValidator.requireTenantIdMatch(tenantId);
         log.info("현금흐름표 생성: tenantId={}, startDate={}, endDate={}", tenantId, startDate, endDate);
         
         // 1. 기간별 원장 조회

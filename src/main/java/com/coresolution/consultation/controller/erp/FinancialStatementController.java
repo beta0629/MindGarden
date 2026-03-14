@@ -1,8 +1,8 @@
 package com.coresolution.consultation.controller.erp;
 
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.Map;
-import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.service.erp.accounting.FinancialStatementService;
@@ -61,15 +61,26 @@ public class FinancialStatementController extends BaseApiController {
     }
 
     /**
-     * 손익계산서 생성 GET /api/v1/erp/accounting/statements/income?startDate=2025-01-01&endDate=2025-12-31
-     * 응답 스키마: success, data{ tenantId, startDate, endDate, revenue{ total, items[{ accountId, accountName, amount }] },
-     *   expenses{ total, items[{ accountId, accountName, amount }] }, netIncome }
-     * 표준 문서: docs/standards/ERP_ADVANCEMENT_STANDARD.md
+     * 분기(1~4) → 해당 분기 startDate/endDate 계산. Q1: 1/1~3/31, Q2: 4/1~6/30, Q3: 7/1~9/30, Q4: 10/1~12/31.
+     */
+    private static LocalDate[] quarterToDateRange(int year, int quarter) {
+        int startMonth = (quarter - 1) * 3 + 1;
+        LocalDate startDate = LocalDate.of(year, startMonth, 1);
+        LocalDate endDate = startDate.plusMonths(3).minusDays(1);
+        return new LocalDate[] { startDate, endDate };
+    }
+
+    /**
+     * 손익계산서 생성
+     * - 기간 조회: GET .../income?startDate=2025-01-01&endDate=2025-12-31
+     * - 분기 조회: GET .../income?year=2025&quarter=1 (periodType, year, quarter, startDate, endDate 응답 포함)
      */
     @GetMapping("/income")
     public ResponseEntity<?> getIncomeStatement(
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(required = false) Integer year,
+            @RequestParam(required = false) Integer quarter,
             HttpSession session) {
         ResponseEntity<?> accessCheck = checkErpAccess(session);
         if (accessCheck != null) {
@@ -77,50 +88,86 @@ public class FinancialStatementController extends BaseApiController {
         }
 
         String tenantId = TenantContextHolder.getRequiredTenantId();
-        log.info("손익계산서 조회: tenantId={}, startDate={}, endDate={}", tenantId, startDate, endDate);
+        boolean useQuarter = (year != null && quarter != null && quarter >= 1 && quarter <= 4);
+        if (useQuarter) {
+            LocalDate[] range = quarterToDateRange(year.intValue(), quarter.intValue());
+            startDate = range[0];
+            endDate = range[1];
+        }
+        if (startDate == null || endDate == null) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "message",
+                    "startDate/endDate 또는 year(1~4)/quarter 를 지정해야 합니다."));
+        }
+
+        log.info("손익계산서 조회: tenantId={}, startDate={}, endDate={}, quarterly={}", tenantId, startDate, endDate, useQuarter);
 
         Map<String, Object> statement =
                 financialStatementService.generateIncomeStatement(tenantId, startDate, endDate);
+        if (useQuarter && year != null && quarter != null) {
+            statement = new HashMap<>(statement);
+            statement.put("periodType", "QUARTERLY");
+            statement.put("year", year);
+            statement.put("quarter", quarter);
+            statement.put("startDate", startDate);
+            statement.put("endDate", endDate);
+        }
         return success(statement);
     }
 
     /**
-     * 재무상태표 생성 GET /api/v1/erp/accounting/statements/balance?asOfDate=2025-12-31
-     * 응답 스키마: success, data{ tenantId, asOfDate, assets{ total, items[{ accountId, accountName, balance }] },
-     *   liabilities{ total, items[] }, equity{ total, items[] }, isBalanced, balanceCheck{ assets, liabilitiesPlusEquity, difference } }
-     * 표준 문서: docs/standards/ERP_ADVANCEMENT_STANDARD.md
+     * 재무상태표 생성
+     * - 기준일 조회: GET .../balance?asOfDate=2025-12-31
+     * - 분기 말일 조회: GET .../balance?year=2025&quarter=1&asOfEndOfQuarter=true (periodType, year, quarter, startDate, endDate 응답 포함)
      */
     @GetMapping("/balance")
-    public ResponseEntity<?> getBalanceSheet(@RequestParam(required = false) @DateTimeFormat(
-            iso = DateTimeFormat.ISO.DATE) LocalDate asOfDate, HttpSession session) {
+    public ResponseEntity<?> getBalanceSheet(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate asOfDate,
+            @RequestParam(required = false) Integer year,
+            @RequestParam(required = false) Integer quarter,
+            @RequestParam(required = false) Boolean asOfEndOfQuarter,
+            HttpSession session) {
         ResponseEntity<?> accessCheck = checkErpAccess(session);
         if (accessCheck != null) {
             return accessCheck;
         }
 
         String tenantId = TenantContextHolder.getRequiredTenantId();
-
-        // asOfDate가 없으면 오늘 날짜 사용
+        boolean useQuarter = Boolean.TRUE.equals(asOfEndOfQuarter) && year != null && quarter != null && quarter >= 1 && quarter <= 4;
+        if (useQuarter && year != null && quarter != null) {
+            LocalDate[] range = quarterToDateRange(year.intValue(), quarter.intValue());
+            asOfDate = range[1]; // 분기 말일
+        }
         if (asOfDate == null) {
             asOfDate = LocalDate.now();
         }
 
-        log.info("재무상태표 조회: tenantId={}, asOfDate={}", tenantId, asOfDate);
+        log.info("재무상태표 조회: tenantId={}, asOfDate={}, quarterly={}", tenantId, asOfDate, useQuarter);
 
         Map<String, Object> statement =
                 financialStatementService.generateBalanceSheet(tenantId, asOfDate);
+        if (useQuarter && year != null && quarter != null) {
+            LocalDate[] range = quarterToDateRange(year.intValue(), quarter.intValue());
+            statement = new HashMap<>(statement);
+            statement.put("periodType", "QUARTERLY");
+            statement.put("year", year);
+            statement.put("quarter", quarter);
+            statement.put("startDate", range[0]);
+            statement.put("endDate", range[1]);
+        }
         return success(statement);
     }
 
     /**
-     * 현금흐름표 생성 GET
-     * /api/v1/erp/accounting/statements/cash-flow?startDate=2025-01-01&endDate=2025-12-31 표준 문서:
-     * docs/standards/ERP_ADVANCEMENT_STANDARD.md
+     * 현금흐름표 생성
+     * - 기간 조회: GET .../cash-flow?startDate=2025-01-01&endDate=2025-12-31
+     * - 분기 조회: GET .../cash-flow?year=2025&quarter=1 (periodType, year, quarter, startDate, endDate 응답 포함)
      */
     @GetMapping("/cash-flow")
     public ResponseEntity<?> getCashFlowStatement(
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(required = false) Integer year,
+            @RequestParam(required = false) Integer quarter,
             HttpSession session) {
         ResponseEntity<?> accessCheck = checkErpAccess(session);
         if (accessCheck != null) {
@@ -128,10 +175,29 @@ public class FinancialStatementController extends BaseApiController {
         }
 
         String tenantId = TenantContextHolder.getRequiredTenantId();
-        log.info("현금흐름표 조회: tenantId={}, startDate={}, endDate={}", tenantId, startDate, endDate);
+        boolean useQuarter = (year != null && quarter != null && quarter >= 1 && quarter <= 4);
+        if (useQuarter && year != null && quarter != null) {
+            LocalDate[] range = quarterToDateRange(year.intValue(), quarter.intValue());
+            startDate = range[0];
+            endDate = range[1];
+        }
+        if (startDate == null || endDate == null) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "message",
+                    "startDate/endDate 또는 year(1~4)/quarter 를 지정해야 합니다."));
+        }
+
+        log.info("현금흐름표 조회: tenantId={}, startDate={}, endDate={}, quarterly={}", tenantId, startDate, endDate, useQuarter);
 
         Map<String, Object> statement =
                 financialStatementService.generateCashFlowStatement(tenantId, startDate, endDate);
+        if (useQuarter && year != null && quarter != null) {
+            statement = new HashMap<>(statement);
+            statement.put("periodType", "QUARTERLY");
+            statement.put("year", year);
+            statement.put("quarter", quarter);
+            statement.put("startDate", startDate);
+            statement.put("endDate", endDate);
+        }
         return success(statement);
     }
 }

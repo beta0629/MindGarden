@@ -48,5 +48,18 @@ public interface AccountingEntryRepository extends JpaRepository<AccountingEntry
      */
     @Query("SELECT e FROM AccountingEntry e WHERE e.tenantId = :tenantId AND e.entryStatus = 'POSTED' AND e.isDeleted = false ORDER BY e.entryDate, e.entryNumber")
     List<AccountingEntry> findPostedEntriesByTenantId(@Param("tenantId") String tenantId);
+
+    /**
+     * 테넌트별 분개 ID 조회 (tenant_id WHERE 조건으로 격리 보장)
+     */
+    @Query("SELECT e FROM AccountingEntry e WHERE e.tenantId = :tenantId AND e.id = :id AND e.isDeleted = false")
+    Optional<AccountingEntry> findByTenantIdAndId(@Param("tenantId") String tenantId, @Param("id") Long id);
+
+    /**
+     * financial_transaction_id로 분개 조회 (중복 방지용)
+     */
+    @Query("SELECT e FROM AccountingEntry e WHERE e.tenantId = :tenantId AND e.financialTransactionId = :financialTransactionId AND e.isDeleted = false")
+    Optional<AccountingEntry> findByTenantIdAndFinancialTransactionId(@Param("tenantId") String tenantId,
+            @Param("financialTransactionId") Long financialTransactionId);
 }
 

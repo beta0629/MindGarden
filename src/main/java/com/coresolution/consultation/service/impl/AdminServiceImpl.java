@@ -650,18 +650,23 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             log.warn("💡 권장사항: {}", consistency.getRecommendation());
         }
         
+        String tenantId = getTenantIdFromMapping(mapping);
+        if (tenantId == null || tenantId.isEmpty()) {
+            tenantId = TenantContextHolder.getTenantId();
+        }
         FinancialTransactionRequest request = FinancialTransactionRequest.builder()
                 .transactionType("INCOME")
                 .category("CONSULTATION") // 필수 필드: 상담료 수입 거래
                 .subcategory("CONSULTATION_FEE") // 상세 분류
                 .amount(java.math.BigDecimal.valueOf(accurateAmount))
-                .description(String.format("상담료 입금 확인 - %s (%s) [정확한금액: %,d원]", 
+                .description(String.format("상담료 입금 확인 - %s (%s) [정확한금액: %,d원]",
                     mapping.getPackageName() != null ? mapping.getPackageName() : "상담 패키지",
                     mapping.getPaymentMethod() != null ? mapping.getPaymentMethod() : "미지정",
                     accurateAmount))
                 .transactionDate(java.time.LocalDate.now())
                 .relatedEntityId(mapping.getId())
                 .relatedEntityType("CONSULTANT_CLIENT_MAPPING")
+                .tenantId(tenantId) // 테넌트 명시: createTransaction 시 tenantId 누락 방지
                 .branchCode(null) // 표준화 2025-12-06: 브랜치 코드 사용 금지
                 .taxIncluded(false) // 상담료는 부가세 면세
                 .build();

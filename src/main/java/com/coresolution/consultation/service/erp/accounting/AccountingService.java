@@ -5,6 +5,7 @@ import com.coresolution.consultation.entity.erp.accounting.JournalEntryLine;
 import com.coresolution.consultation.entity.erp.financial.FinancialTransaction;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 회계 Service 인터페이스
@@ -51,5 +52,13 @@ public interface AccountingService {
      * 표준 문서: docs/standards/ERP_ADVANCEMENT_STANDARD.md
      */
     AccountingEntry updateJournalEntry(String tenantId, Long entryId, AccountingEntry entry, List<JournalEntryLine> lines);
+
+    /**
+     * INCOME 거래 백필: 해당 테넌트의 financial_transactions(INCOME, 미삭제)에 대해 분개가 없으면 생성.
+     *
+     * @param tenantId 테넌트 ID (필수)
+     * @return processedCount(처리 건수), failedCount(실패 건수), skippedCount(이미 분개 있음 스킵 건수)
+     */
+    Map<String, Long> backfillJournalEntriesFromIncomeTransactions(String tenantId);
 }
 

@@ -2,7 +2,9 @@ package com.coresolution.consultation.service.impl;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import com.coresolution.consultation.entity.Account;
 import com.coresolution.consultation.entity.CommonCode;
@@ -13,9 +15,11 @@ import com.coresolution.consultation.repository.CommonCodeRepository;
 import com.coresolution.consultation.repository.AccountRepository;
 import com.coresolution.consultation.repository.erp.accounting.AccountingEntryRepository;
 import com.coresolution.consultation.repository.erp.accounting.JournalEntryLineRepository;
+import com.coresolution.consultation.repository.erp.financial.FinancialTransactionRepository;
 import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.consultation.service.erp.accounting.AccountingService;
 import com.coresolution.consultation.service.erp.accounting.LedgerService;
+import com.coresolution.core.context.TenantIsolationValidator;
 import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -41,6 +45,7 @@ public class AccountingServiceImpl implements AccountingService {
 
     private final AccountingEntryRepository accountingEntryRepository;
     private final JournalEntryLineRepository journalEntryLineRepository;
+    private final FinancialTransactionRepository financialTransactionRepository;
     private final LedgerService ledgerService;
     private final CommonCodeService commonCodeService;
     private final AccountRepository accountRepository;
@@ -51,12 +56,7 @@ public class AccountingServiceImpl implements AccountingService {
     @Transactional
     public AccountingEntry createJournalEntry(String tenantId, AccountingEntry entry,
             List<JournalEntryLine> lines) {
-        // 0. 테넌트 컨텍스트 검증 (ERP 독립성 보장)
-        String currentTenantId = TenantContextHolder.getTenantId();
-        if (currentTenantId == null || !currentTenantId.equals(tenantId)) {
-            throw new IllegalStateException("테넌트 ID 불일치: 다른 테넌트의 분개를 생성할 수 없습니다.");
-        }
-
+        TenantIsolationValidator.requireTenantIdMatch(tenantId);
         // 1. 차변/대변 합계 계산
         BigDecimal totalDebit = lines.stream().map(JournalEntryLine::getDebitAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -103,19 +103,9 @@ public class AccountingServiceImpl implements AccountingService {
     @Transactional
     public AccountingEntry approveJournalEntry(String tenantId, Long entryId, Long approverId,
             String comment) {
-        // 0. 테넌트 컨텍스트 검증
-        String currentTenantId = TenantContextHolder.getTenantId();
-        if (currentTenantId == null || !currentTenantId.equals(tenantId)) {
-            throw new IllegalStateException("테넌트 ID 불일치");
-        }
-
-        // 1. 분개 조회 (테넌트 검증)
-        AccountingEntry entry = accountingEntryRepository.findById(entryId)
+        TenantIsolationValidator.requireTenantIdMatch(tenantId);
+        AccountingEntry entry = accountingEntryRepository.findByTenantIdAndId(tenantId, entryId)
                 .orElseThrow(() -> new IllegalArgumentException("분개를 찾을 수 없습니다: " + entryId));
-
-        if (!entry.getTenantId().equals(tenantId)) {
-            throw new IllegalStateException("다른 테넌트의 분개입니다.");
-        }
 
         // 2. 승인 가능 상태 확인
         if (!entry.isApprovable()) {
@@ -142,19 +132,9 @@ public class AccountingServiceImpl implements AccountingService {
     @Override
     @Transactional
     public AccountingEntry postJournalEntry(String tenantId, Long entryId) {
-        // 0. 테넌트 컨텍스트 검증
-        String currentTenantId = TenantContextHolder.getTenantId();
-        if (currentTenantId == null || !currentTenantId.equals(tenantId)) {
-            throw new IllegalStateException("테넌트 ID 불일치");
-        }
-
-        // 1. 분개 조회 (테넌트 검증)
-        AccountingEntry entry = accountingEntryRepository.findById(entryId)
+        TenantIsolationValidator.requireTenantIdMatch(tenantId);
+        AccountingEntry entry = accountingEntryRepository.findByTenantIdAndId(tenantId, entryId)
                 .orElseThrow(() -> new IllegalArgumentException("분개를 찾을 수 없습니다: " + entryId));
-
-        if (!entry.getTenantId().equals(tenantId)) {
-            throw new IllegalStateException("다른 테넌트의 분개입니다.");
-        }
 
         // 2. 승인 상태 확인
         if (entry.getEntryStatus() != AccountingEntry.EntryStatus.APPROVED) {
@@ -185,30 +165,16 @@ public class AccountingServiceImpl implements AccountingService {
     @Override
     @Transactional(readOnly = true)
     public List<AccountingEntry> getJournalEntries(String tenantId) {
-        String currentTenantId = TenantContextHolder.getTenantId();
-        if (currentTenantId == null || !currentTenantId.equals(tenantId)) {
-            throw new IllegalStateException("테넌트 ID 불일치");
-        }
-
+        TenantIsolationValidator.requireTenantIdMatch(tenantId);
         return accountingEntryRepository.findByTenantId(tenantId);
     }
 
     @Override
     @Transactional(readOnly = true)
     public AccountingEntry getJournalEntry(String tenantId, Long entryId) {
-        String currentTenantId = TenantContextHolder.getTenantId();
-        if (currentTenantId == null || !currentTenantId.equals(tenantId)) {
-            throw new IllegalStateException("테넌트 ID 불일치");
-        }
-
-        AccountingEntry entry = accountingEntryRepository.findById(entryId)
+        TenantIsolationValidator.requireTenantIdMatch(tenantId);
+        return accountingEntryRepository.findByTenantIdAndId(tenantId, entryId)
                 .orElseThrow(() -> new IllegalArgumentException("분개를 찾을 수 없습니다: " + entryId));
-
-        if (!entry.getTenantId().equals(tenantId)) {
-            throw new IllegalStateException("다른 테넌트의 분개입니다.");
-        }
-
-        return entry;
     }
 
     @Override
@@ -220,13 +186,21 @@ public class AccountingServiceImpl implements AccountingService {
                     transaction.getId());
             return null;
         }
-
-        // 0. 테넌트 컨텍스트 검증
-        String currentTenantId = TenantContextHolder.getTenantId();
-        if (currentTenantId == null || !currentTenantId.equals(tenantId)) {
-            log.warn("테넌트 ID 불일치: 분개 생성 건너뜀. transactionTenantId={}, currentTenantId={}", tenantId,
-                    currentTenantId);
+        try {
+            TenantIsolationValidator.requireTenantIdMatch(tenantId);
+        } catch (IllegalStateException e) {
+            log.warn("테넌트 ID 불일치: 분개 생성 건너뜀. transactionTenantId={}, message={}", tenantId, e.getMessage());
             return null;
+        }
+
+        if (transaction.getId() != null) {
+            Optional<AccountingEntry> existing = accountingEntryRepository
+                    .findByTenantIdAndFinancialTransactionId(tenantId, transaction.getId());
+            if (existing.isPresent()) {
+                log.debug("이미 분개 존재: transactionId={}, entryId={}", transaction.getId(),
+                        existing.get().getId());
+                return existing.get();
+            }
         }
 
         try {
@@ -258,6 +232,7 @@ public class AccountingServiceImpl implements AccountingService {
                     AccountingEntry.builder().entryDate(transaction.getTransactionDate())
                             .description(
                                     String.format("거래 자동 분개: %s", transaction.getDescription()))
+                            .financialTransactionId(transaction.getId())
                             .build();
 
             java.util.List<JournalEntryLine> lines = new java.util.ArrayList<>();
@@ -576,6 +551,48 @@ public class AccountingServiceImpl implements AccountingService {
                 savedEntry.getEntryNumber());
 
         return savedEntry;
+    }
+
+    @Override
+    @Transactional
+    public Map<String, Long> backfillJournalEntriesFromIncomeTransactions(String tenantId) {
+        TenantIsolationValidator.requireTenantIdMatch(tenantId);
+        Map<String, Long> result = new HashMap<>();
+        result.put("processedCount", 0L);
+        result.put("failedCount", 0L);
+        result.put("skippedCount", 0L);
+
+        List<FinancialTransaction> transactions =
+                financialTransactionRepository.findByTenantIdAndTransactionTypeAndIsDeletedFalse(
+                        tenantId, FinancialTransaction.TransactionType.INCOME);
+
+        for (FinancialTransaction transaction : transactions) {
+            if (transaction.getId() == null) {
+                continue;
+            }
+            Optional<AccountingEntry> existing = accountingEntryRepository
+                    .findByTenantIdAndFinancialTransactionId(tenantId, transaction.getId());
+            if (existing.isPresent()) {
+                result.put("skippedCount", result.get("skippedCount") + 1);
+                continue;
+            }
+            try {
+                AccountingEntry created = createJournalEntryFromTransaction(transaction);
+                if (created != null) {
+                    result.put("processedCount", result.get("processedCount") + 1);
+                } else {
+                    result.put("failedCount", result.get("failedCount") + 1);
+                }
+            } catch (Exception e) {
+                log.warn("백필 분개 생성 실패: transactionId={}, error={}", transaction.getId(),
+                        e.getMessage());
+                result.put("failedCount", result.get("failedCount") + 1);
+            }
+        }
+
+        log.info("백필 완료: tenantId={}, processed={}, failed={}, skipped={}", tenantId,
+                result.get("processedCount"), result.get("failedCount"), result.get("skippedCount"));
+        return result;
     }
 }
 

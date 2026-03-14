@@ -49,7 +49,8 @@ import lombok.NoArgsConstructor;
         @Index(name = "idx_accounting_entry_created_at", columnList = "created_at"),
         @Index(name = "idx_accounting_entries_tenant_id", columnList = "tenant_id"),
         @Index(name = "idx_accounting_entries_entry_number", columnList = "entry_number"),
-        @Index(name = "idx_accounting_entries_tenant_entry_date", columnList = "tenant_id, entry_date")
+        @Index(name = "idx_accounting_entries_tenant_entry_date", columnList = "tenant_id, entry_date"),
+        @Index(name = "idx_accounting_entries_financial_transaction_id", columnList = "financial_transaction_id")
     },
     uniqueConstraints = {
         @UniqueConstraint(name = "uk_accounting_entries_tenant_entry_number", 
@@ -135,6 +136,12 @@ public class AccountingEntry {
      */
     @Column(name = "related_transaction_id")
     private Long relatedTransactionId;
+
+    /**
+     * 회계 거래 ID (financial_transactions.id) - 분개 추적·중복 방지용
+     */
+    @Column(name = "financial_transaction_id")
+    private Long financialTransactionId;
     
      /**
      * 관련 거래 타입

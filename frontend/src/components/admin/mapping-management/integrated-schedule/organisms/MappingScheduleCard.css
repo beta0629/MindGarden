@@ -1,7 +1,7 @@
 /* MappingScheduleCard - card-body 구조 (높이 등은 IntegratedMatchingSchedule.css와 공유) */
 .integrated-schedule__card-body {
-  min-height: var(--mg-spacing-3xl, 64px);
+  min-height: 64px;
   display: flex;
   flex-direction: column;
-  gap: var(--mg-spacing-4, 4px);
+  gap: var(--mg-spacing-8);
 }

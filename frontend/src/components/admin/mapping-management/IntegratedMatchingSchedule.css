@@ -276,8 +276,19 @@
 .integrated-schedule__sidebar .integrated-schedule__list > li.integrated-schedule__card .mg-v2-card-container {
   display: flex;
   flex-direction: column;
-  gap: var(--mg-spacing-12, 12px);
+  gap: var(--mg-spacing-12);
+  min-height: 172px;
   font-size: inherit;
+}
+
+.integrated-schedule__sidebar .mg-v2-card-actions {
+  justify-content: center;
+}
+
+.integrated-schedule__sidebar .mg-v2-card-actions .mg-v2-button {
+  min-width: 100px;
+  min-height: 40px;
+  white-space: nowrap;
 }
 
 /* 우측 캘린더 */

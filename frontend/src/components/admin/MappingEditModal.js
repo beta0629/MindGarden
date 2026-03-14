@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Edit3, XCircle, Package2, DollarSign, Calendar, AlertCircle, User, CalendarDays } from 'lucide-react';
 import notificationManager from '../../utils/notification';
-import { getMappingStatusKoreanNameSync } from '../../utils/codeHelper';
 import UnifiedModal from '../common/modals/UnifiedModal';
-import MGButton from '../common/MGButton';
+import { ActionButton, StatusBadge } from '../common';
 import './MappingEditModal.css';
 
 /**
@@ -26,19 +25,6 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
   const [packageOptions, setPackageOptions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
-
-  const getStatusBadgeClass = (status) => {
-    const map = {
-      ACTIVE: 'status-active',
-      PENDING_PAYMENT: 'status-pending',
-      PAYMENT_CONFIRMED: 'status-confirmed',
-      TERMINATED: 'status-terminated',
-      SESSIONS_EXHAUSTED: 'status-exhausted',
-      INACTIVE: 'status-inactive',
-      SUSPENDED: 'status-suspended'
-    };
-    return map[status] || 'status-default';
-  };
 
   const formatDate = (dateString) => {
     if (!dateString) return '-';
@@ -214,8 +200,6 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
     return null;
   }
 
-  const statusLabel = getMappingStatusKoreanNameSync(mapping.status);
-
   return (
     <UnifiedModal
       isOpen={isOpen}
@@ -228,27 +212,22 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
       loading={loading}
       actions={
         <>
-          <button
-            type="button"
-            className="mg-v2-button mg-v2-button-secondary"
+          <ActionButton
+            variant="secondary"
             onClick={handleClose}
             disabled={loading}
           >
             <XCircle size={18} />
             취소
-          </button>
-          <MGButton
-            type="button"
+          </ActionButton>
+          <ActionButton
             variant="primary"
-            className="mg-v2-button mg-v2-button-primary"
             onClick={handleSubmit}
-            loading={loading}
-            preventDoubleClick={true}
-            loadingText="수정 중..."
+            disabled={loading}
           >
             <Edit3 size={18} />
             수정 완료
-          </MGButton>
+          </ActionButton>
         </>
       }
     >
@@ -270,8 +249,8 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
               </div>
               <div className="mg-v2-info-row">
                 <span className="mg-v2-info-label">상태</span>
-                <span className={`mg-v2-badge ${getStatusBadgeClass(mapping.status)}`}>
-                  {statusLabel || mapping.status || '-'}
+                <span>
+                  <StatusBadge status={mapping?.status} />
                 </span>
               </div>
               <div className="mg-v2-info-row">

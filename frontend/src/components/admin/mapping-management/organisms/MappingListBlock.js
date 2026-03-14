@@ -10,6 +10,7 @@ import PropTypes from 'prop-types';
 import { Plus, Link2, LayoutGrid, List, Calendar } from 'lucide-react';
 import ContentSection from '../../../dashboard-v2/content/ContentSection';
 import ContentCard from '../../../dashboard-v2/content/ContentCard';
+import { ActionButton } from '../../../common';
 import MappingListRow from './MappingListRow';
 import MappingTableView from './MappingTableView';
 import MappingCalendarView from './MappingCalendarView';
@@ -45,14 +46,14 @@ const MappingListBlock = ({
           <h3 className="mg-v2-mapping-list-block__empty-title">{MAPPING_MESSAGES.NO_MAPPINGS}</h3>
           <p className="mg-v2-mapping-list-block__empty-desc">{MAPPING_MESSAGES.NO_MAPPINGS_DESC}</p>
           {onCreateClick && (
-            <button
-              type="button"
-              className="mg-v2-button mg-v2-button-primary mg-v2-mapping-list-block__empty-btn"
+            <ActionButton
+              variant="primary"
               onClick={onCreateClick}
+              className="mg-v2-mapping-list-block__empty-btn"
             >
               <Plus size={20} />
               매칭 생성
-            </button>
+            </ActionButton>
           )}
         </div>
       );

@@ -123,52 +123,30 @@
   }
 }
 
-/* ===== 매칭 카드: CARD_VISUAL_UNIFIED_SPEC 1번 통일 스펙 적용 (__compact는 내부 padding/gap 축소 허용) ===== */
-.mg-v2-mapping-client-block .mg-v2-card.mg-v2-mapping-card {
+/* ===== 매칭 카드: CardContainer + __compact modifier (내부 padding/gap 축소) ===== */
+.mg-v2-mapping-client-block .mg-v2-card-container.mg-v2-mapping-card__compact {
   position: relative;
   min-width: 0;
   max-width: 100%;
-  padding: 0;
-  border: 1px solid var(--mg-color-border-main);
-  border-radius: var(--mg-radius-lg);
-  min-height: 140px;
-  box-shadow: var(--mg-shadow-sm);
-  background: var(--mg-bg-card, var(--mg-color-surface-main));
-  transition: box-shadow 0.2s ease;
 }
 
-.mg-v2-mapping-client-block .mg-v2-card.mg-v2-mapping-card::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 4px;
-  background-color: var(--mg-color-primary-main);
-  border-radius: 12px 0 0 12px;
-}
-
-.mg-v2-mapping-client-block .mg-v2-card.mg-v2-mapping-card:hover {
-  box-shadow: var(--mg-card-hover-shadow);
-}
-
-.mg-v2-mapping-client-block .mg-v2-card.mg-v2-mapping-card .mg-v2-card-header {
+.mg-v2-mapping-client-block .mg-v2-card-container.mg-v2-mapping-card__compact .mg-v2-card-header {
   padding: var(--spacing-xs, 8px) var(--spacing-md, 16px);
   border-bottom: 1px solid var(--ad-b0kla-border);
 }
 
-.mg-v2-mapping-client-block .mg-v2-card.mg-v2-mapping-card .mg-v2-card-content {
+.mg-v2-mapping-client-block .mg-v2-card-container.mg-v2-mapping-card__compact .mg-v2-card-content {
   padding: var(--spacing-sm, 12px) var(--spacing-md, 16px);
 }
 
-.mg-v2-mapping-client-block .mg-v2-card.mg-v2-mapping-card .mg-v2-card-footer {
+.mg-v2-mapping-client-block .mg-v2-card-container.mg-v2-mapping-card__compact .mg-v2-card-footer {
   padding: var(--spacing-xs, 8px) var(--spacing-md, 16px);
   border-top: 1px solid var(--ad-b0kla-border);
 }
 
 /* 제목·날짜·상태 타이포 (스펙 3.3) */
-.mg-v2-mapping-client-block .mg-v2-mapping-card__title,
-.mg-v2-mapping-client-block .mg-v2-mapping-card__title.mg-v2-h4 {
+.mg-v2-mapping-client-block .mg-v2-card-container .mg-v2-mapping-card__title,
+.mg-v2-mapping-client-block .mg-v2-card-container .mg-v2-mapping-card__title.mg-v2-h4 {
   font-size: var(--font-size-sm, 13px);
   font-weight: 600;
   color: var(--ad-b0kla-title-color);
@@ -182,7 +160,7 @@
   margin: 0;
 }
 
-.mg-v2-mapping-client-block .mg-v2-status-badge {
+.mg-v2-mapping-client-block .mg-v2-card-container .mg-v2-status-badge {
   font-size: 11px;
   font-weight: 600;
 }

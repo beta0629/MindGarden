@@ -6,50 +6,21 @@ import {
   CreditCard,
   Clock,
   CheckCircle,
-  Database,
   Eye,
   Edit,
   XCircle,
-  DollarSign,
-  Pause,
-  CircleDot,
-  Ban,
-  FileText
+  DollarSign
 } from 'lucide-react';
 import MappingPaymentModal from './MappingPaymentModal';
 import MappingDepositModal from './MappingDepositModal';
-import MGButton from '../../common/MGButton';
+import { ActionButton, StatusBadge, CardContainer } from '../../common';
 import Avatar from '../../common/Avatar';
 
-/** 매칭 상태별 배지 variant (mg-v2-badge + B0KlA 토큰) */
-const getStatusVariant = (status) => {
-  const variantMap = {
-    ACTIVE: 'success',
-    INACTIVE: 'secondary',
-    PENDING_PAYMENT: 'warning',
-    PAYMENT_CONFIRMED: 'info',
-    DEPOSIT_PENDING: 'info',
-    TERMINATED: 'error',
-    SESSIONS_EXHAUSTED: 'secondary',
-    SUSPENDED: 'warning',
-    CANCELLED: 'error'
-  };
-  return variantMap[status] || 'secondary';
-};
-
-/** 매칭 상태별 Lucide 아이콘 (이모지 미사용) */
-const getStatusIconComponent = (status) => {
-  const iconMap = {
-    ACTIVE: CheckCircle,
-    INACTIVE: Pause,
-    PENDING_PAYMENT: Clock,
-    PAYMENT_CONFIRMED: DollarSign,
-    TERMINATED: XCircle,
-    SESSIONS_EXHAUSTED: CircleDot,
-    SUSPENDED: Pause,
-    CANCELLED: Ban
-  };
-  return iconMap[status] || FileText;
+/** statusInfo.variant (legacy) → StatusBadge variant 매핑 */
+const mapStatusVariant = (v) => {
+  if (!v) return undefined;
+  if (v === 'secondary' || v === 'error') return v === 'secondary' ? 'neutral' : 'danger';
+  return ['success', 'warning', 'neutral', 'danger', 'info'].includes(v) ? v : undefined;
 };
 
 /**
@@ -106,42 +77,31 @@ const MappingCard = ({
                mapping.paymentConfirmed === true;
     };
 
-  const badgeVariant = statusInfo.variant ?? getStatusVariant(mapping?.status);
-  const StatusIcon = mapping?.status ? getStatusIconComponent(mapping.status) : null;
   const statusLabel = statusInfo.label || mapping?.status || 'N/A';
 
   return (
-    <div className="mg-v2-content-card mg-v2-mapping-card">
+    <CardContainer className="mg-v2-mapping-card">
       {/* Header */}
       <div className="mg-v2-card-header">
         <div className="mg-v2-mapping-card-header-left">
-          <span
-            className={`mg-v2-badge ${badgeVariant}`}
-            role="status"
-            aria-label={statusLabel}
-          >
-            {StatusIcon ? <StatusIcon size={12} className="mg-v2-mapping-card__status-icon" aria-hidden /> : null}
+          <StatusBadge status={mapping?.status} variant={mapStatusVariant(statusInfo.variant)}>
             {statusLabel}
-          </span>
+          </StatusBadge>
 
           {isErpIntegrated() && (
-            <span className="mg-v2-badge info">
-              <Database size={12} />
-              ERP 연동
-            </span>
+            <StatusBadge variant="info">ERP 연동</StatusBadge>
           )}
         </div>
 
         {onView && (
-          <MGButton
+          <ActionButton
             variant="primary"
-            size="sm"
+            size="small"
             onClick={() => onView(mapping)}
-            preventDoubleClick={true}
           >
             <Eye size={16} />
             상세보기
-          </MGButton>
+          </ActionButton>
         )}
       </div>
 
@@ -229,65 +189,58 @@ const MappingCard = ({
             <div className="mg-v2-card-footer">
                 <div className="mg-v2-mapping-card-footer-left">
                     {mapping.status === 'PENDING_PAYMENT' && (
-                        <MGButton
+                        <ActionButton
                             variant="success"
-                            size="sm"
+                            size="small"
                             onClick={() => setShowPaymentModal(true)}
-                            preventDoubleClick={true}
                         >
                             <CreditCard size={16} />
                             결제 확인
-                        </MGButton>
+                        </ActionButton>
                     )}
                     
                     {mapping.status === 'PAYMENT_CONFIRMED' && (
-                        <MGButton
+                        <ActionButton
                             variant="primary"
-                            size="sm"
+                            size="small"
                             onClick={() => setShowDepositModal(true)}
-                            preventDoubleClick={true}
                         >
                             <DollarSign size={16} />
                             입금 확인
-                        </MGButton>
+                        </ActionButton>
                     )}
                     
                     {mapping.status === 'DEPOSIT_PENDING' && onApprove && (
-                        <MGButton
+                        <ActionButton
                             variant="success"
-                            size="sm"
+                            size="small"
                             onClick={() => onApprove(mapping)}
-                            preventDoubleClick={true}
-                            clickDelay={1000}
                         >
                             <CheckCircle size={18} />
                             최종 승인
-                        </MGButton>
+                        </ActionButton>
                     )}
                     
                     {onEdit && (
-                        <MGButton
+                        <ActionButton
                             variant="outline"
-                            size="sm"
+                            size="small"
                             onClick={() => onEdit(mapping)}
-                            preventDoubleClick={true}
                         >
                             <Edit size={16} />
                             수정
-                        </MGButton>
+                        </ActionButton>
                     )}
                     
                     {onRefund && (
-                        <MGButton
+                        <ActionButton
                             variant="danger"
-                            size="sm"
+                            size="small"
                             onClick={() => onRefund(mapping)}
-                            preventDoubleClick={true}
-                            clickDelay={1000}
                         >
                             <XCircle size={16} />
                             환불
-                        </MGButton>
+                        </ActionButton>
                     )}
                 </div>
             </div>
@@ -310,7 +263,7 @@ const MappingCard = ({
                     onDepositConfirmed={onConfirmDeposit}
                 />
             )}
-        </div>
+        </CardContainer>
     );
 };
 

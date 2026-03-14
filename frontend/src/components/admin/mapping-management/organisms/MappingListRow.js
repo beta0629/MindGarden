@@ -23,7 +23,7 @@ import {
 } from 'lucide-react';
 import MappingPaymentModal from '../../mapping/MappingPaymentModal';
 import MappingDepositModal from '../../mapping/MappingDepositModal';
-import MGButton from '../../../common/MGButton';
+import { ActionButton, StatusBadge } from '../../../common';
 import './MappingListRow.css';
 
 const formatDate = (dateString) => {
@@ -83,21 +83,19 @@ const MappingListRow = ({
     mapping.paymentConfirmed === true;
 
   const statusLabel = statusInfo.label || mapping.status || 'N/A';
-  const badgeVariant = statusInfo.variant || 'secondary';
-  const StatusIcon = getStatusIconComponent && mapping.status ? getStatusIconComponent(mapping.status) : null;
+  const badgeVariant = statusInfo.variant === 'secondary' ? 'neutral' : (statusInfo.variant || undefined);
 
   return (
     <div className="mg-v2-mapping-list-row">
       <div className="mg-v2-mapping-list-row__main">
         <div className="mg-v2-mapping-list-row__status-col">
-          <span
-            className={`mg-v2-mapping-list-row__status mg-v2-badge ${badgeVariant}`}
-            role="status"
-            aria-label={statusLabel}
+          <StatusBadge
+            status={mapping.status}
+            variant={badgeVariant}
+            className="mg-v2-mapping-list-row__status"
           >
-            {StatusIcon ? <StatusIcon size={12} className="mg-v2-mapping-list-row__status-icon" aria-hidden /> : null}
             {statusLabel}
-          </span>
+          </StatusBadge>
           {isErpIntegrated && (
             <span className="mg-v2-mapping-list-row__erp">
               <Database size={12} />
@@ -143,69 +141,66 @@ const MappingListRow = ({
       </div>
       <div className="mg-v2-mapping-list-row__actions">
         {onView && (
-          <button
-            type="button"
-            className="mg-v2-button mg-v2-button-primary mg-v2-button-sm"
+          <ActionButton
+            variant="primary"
+            size="small"
             onClick={() => onView(mapping)}
           >
             <Eye size={14} />
             상세
-          </button>
+          </ActionButton>
         )}
         {mapping.status === 'PENDING_PAYMENT' && (
-          <button
-            type="button"
-            className="mg-v2-button mg-v2-button-success mg-v2-button-sm"
+          <ActionButton
+            variant="success"
+            size="small"
             onClick={() => setShowPaymentModal(true)}
           >
             <CreditCard size={14} />
             결제 확인
-          </button>
+          </ActionButton>
         )}
         {mapping.status === 'PAYMENT_CONFIRMED' && (
-          <button
-            type="button"
-            className="mg-v2-button mg-v2-button-primary mg-v2-button-sm"
+          <ActionButton
+            variant="primary"
+            size="small"
             onClick={() => setShowDepositModal(true)}
           >
             <DollarSign size={14} />
             입금 확인
-          </button>
+          </ActionButton>
         )}
         {mapping.status === 'DEPOSIT_PENDING' && onApprove && (
-          <MGButton
-            type="button"
+          <ActionButton
             variant="success"
             size="small"
             onClick={() => handleCriticalAction(() => onApprove(mapping.id))}
-            loading={processing}
-            loadingText="승인 중..."
-            preventDoubleClick
+            disabled={processing}
           >
             <CheckCircle size={14} />
             승인
-          </MGButton>
+          </ActionButton>
         )}
         {onEdit && (
-          <button
-            type="button"
-            className="mg-v2-button mg-v2-button-outline mg-v2-button-sm"
+          <ActionButton
+            variant="outline"
+            size="small"
             onClick={() => onEdit(mapping)}
           >
             <Edit size={14} />
             수정
-          </button>
+          </ActionButton>
         )}
         {onRefund && (
-          <button
-            type="button"
-            className="mg-v2-button mg-v2-button-danger mg-v2-button-sm"
+          <ActionButton
+            variant="danger"
+            size="small"
             onClick={() => handleCriticalAction(() => onRefund(mapping))}
             disabled={processing}
           >
             <XCircle size={14} />
             환불
-          </button>
+          </ActionButton>
         )}
       </div>
 

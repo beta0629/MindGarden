@@ -46,16 +46,17 @@ function getVariant(status, variantProp) {
   return mapped || 'neutral';
 }
 
-function StatusBadge({ status = '', variant, children, ...rest }) {
+function StatusBadge({ status = '', variant, children, className = '', ...rest }) {
   const resolvedVariant = getVariant(status, variant);
   const displayStatus = status || '—';
   const label = children == null
     ? (STATUS_KO[status] != null ? STATUS_KO[status] : displayStatus)
     : children;
+  const classNames = ['mg-v2-status-badge', `mg-v2-badge--${resolvedVariant}`, className].filter(Boolean).join(' ');
 
   return (
     <span
-      className={`mg-v2-status-badge mg-v2-badge--${resolvedVariant}`}
+      className={classNames}
       role="status"
       {...rest}
     >
@@ -67,13 +68,15 @@ function StatusBadge({ status = '', variant, children, ...rest }) {
 StatusBadge.propTypes = {
   status: PropTypes.string,
   variant: PropTypes.oneOf(['success', 'warning', 'neutral', 'danger', 'info']),
-  children: PropTypes.node
+  children: PropTypes.node,
+  className: PropTypes.string
 };
 
 StatusBadge.defaultProps = {
   status: '',
   variant: undefined,
-  children: undefined
+  children: undefined,
+  className: ''
 };
 
 export default StatusBadge;

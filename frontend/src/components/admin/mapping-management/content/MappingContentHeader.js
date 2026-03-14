@@ -8,6 +8,7 @@
 
 import React from 'react';
 import { Plus } from 'lucide-react';
+import { ActionButton } from '../../../common';
 import './MappingContentHeader.css';
 
 const MappingContentHeader = ({ title, subtitle, onCreateClick }) => {
@@ -19,14 +20,10 @@ const MappingContentHeader = ({ title, subtitle, onCreateClick }) => {
       </div>
       {onCreateClick && (
         <div className="mg-v2-ad-b0kla__header-right">
-          <button
-            type="button"
-            className="mg-v2-button mg-v2-button-primary"
-            onClick={onCreateClick}
-          >
+          <ActionButton variant="primary" onClick={onCreateClick}>
             <Plus size={20} />
             새 매칭 생성
-          </button>
+          </ActionButton>
         </div>
       )}
     </header>

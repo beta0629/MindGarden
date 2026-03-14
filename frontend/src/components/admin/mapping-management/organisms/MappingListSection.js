@@ -10,6 +10,7 @@ import React from 'react';
 import { Plus } from 'lucide-react';
 import ContentCard from '../../../dashboard-v2/content/ContentCard';
 import MappingCard from '../../mapping/MappingCard';
+import { ActionButton } from '../../../common';
 import { MAPPING_MESSAGES } from '../../../../constants/mapping';
 import './MappingListSection.css';
 
@@ -38,14 +39,14 @@ const MappingListSection = ({
             <h3 className="mg-v2-mapping-empty__title">{MAPPING_MESSAGES.NO_MAPPINGS}</h3>
             <p className="mg-v2-ad-b0kla__chart-empty-desc mg-v2-mapping-empty__desc">{MAPPING_MESSAGES.NO_MAPPINGS_DESC}</p>
             {onCreateClick && (
-              <button
-                type="button"
-                className="mg-v2-button mg-v2-button-primary mg-v2-mapping-empty__action"
+              <ActionButton
+                variant="primary"
                 onClick={onCreateClick}
+                className="mg-v2-mapping-empty__action"
               >
                 <Plus size={20} style={{ marginRight: 8 }} />
                 매칭 생성하기
-              </button>
+              </ActionButton>
             )}
           </div>
         ) : (

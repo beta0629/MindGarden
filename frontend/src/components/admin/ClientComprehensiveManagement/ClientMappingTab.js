@@ -1,41 +1,7 @@
 import Button from '../../ui/Button/Button';
 import { User, Handshake, Calendar, Eye } from 'lucide-react';
-import { getMappingStatusKoreanNameSync } from '../../../utils/codeHelper';
+import { StatusBadge, CardContainer } from '../../common';
 import './ClientMappingTab.css';
-
-/** 매칭 상태별 배지 배경색(디자인 토큰만 사용) */
-const MAPPING_STATUS_COLOR_MAP = {
-  ACTIVE: 'var(--mg-success-500)',
-  PAYMENT_CONFIRMED: 'var(--mg-success-500)',
-  COMPLETED: 'var(--mg-success-500)',
-  PENDING_PAYMENT: 'var(--mg-warning-500)',
-  PENDING: 'var(--mg-warning-500)',
-  DEPOSIT_PENDING: 'var(--mg-warning-500)',
-  SUSPENDED: 'var(--mg-warning-500)',
-  INACTIVE: 'var(--mg-gray-500)',
-  TERMINATED: 'var(--mg-gray-500)',
-  SESSIONS_EXHAUSTED: 'var(--mg-gray-500)'
-};
-
-const getMappingStatusColorToken = (status) =>
-  (status && MAPPING_STATUS_COLOR_MAP[status]) || 'var(--mg-gray-500)';
-
-/** B0KlA 아토믹 디자인용 배지 변형: success | warning | neutral */
-const MAPPING_STATUS_VARIANT = {
-  ACTIVE: 'success',
-  PAYMENT_CONFIRMED: 'success',
-  COMPLETED: 'success',
-  PENDING_PAYMENT: 'warning',
-  PENDING: 'warning',
-  DEPOSIT_PENDING: 'warning',
-  SUSPENDED: 'warning',
-  INACTIVE: 'neutral',
-  TERMINATED: 'neutral',
-  SESSIONS_EXHAUSTED: 'neutral'
-};
-
-const getMappingStatusVariant = (status) =>
-  (status && MAPPING_STATUS_VARIANT[status]) || 'neutral';
 
 /**
  * 내담자 매칭 관리 탭 컴포넌트 (아토믹 디자인: mg-v2-client-mapping / mg-v2-mapping-client-block / mg-v2-card)
@@ -61,7 +27,7 @@ const ClientMappingTab = ({
     const endDateStr = mapping.endDate ? new Date(mapping.endDate).toLocaleDateString('ko-KR') : null;
     const createdStr = mapping.createdAt ? new Date(mapping.createdAt).toLocaleDateString('ko-KR') : '날짜 없음';
     return (
-      <div key={mapping.id} className="mg-v2-card mg-v2-mapping-card mg-v2-mapping-card__compact">
+      <CardContainer key={mapping.id} className="mg-v2-mapping-card__compact">
         <div className="mg-v2-card-header">
           <div className="mg-v2-mapping-info">
             <h4 className="mg-v2-mapping-card__title mg-v2-h4">매칭 #{mapping.id}</h4>
@@ -70,12 +36,7 @@ const ClientMappingTab = ({
             </p>
           </div>
           <div className="mg-v2-mapping-status">
-            <span
-              className={`mg-v2-status-badge mg-v2-status-badge--${getMappingStatusVariant(mapping.status)}`}
-              style={{ '--status-bg-color': getMappingStatusColorToken(mapping.status) }}
-            >
-              {getMappingStatusKoreanNameSync(mapping.status)}
-            </span>
+            <StatusBadge status={mapping.status} />
           </div>
         </div>
         <div className="mg-v2-card-content">
@@ -126,7 +87,7 @@ const ClientMappingTab = ({
             수정
           </Button>
         </div>
-      </div>
+      </CardContainer>
     );
   };
 

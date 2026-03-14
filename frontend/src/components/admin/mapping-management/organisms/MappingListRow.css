@@ -58,13 +58,9 @@
   gap: 0.5rem;
 }
 
-/* 아토믹 디자인: mg-v2-badge + variant(success/warning/info/error/secondary) 적용 */
-.mg-v2-mapping-list-row__status.mg-v2-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
+/* StatusBadge(common) 사용 - modifier용 */
+.mg-v2-mapping-list-row__status.mg-v2-status-badge {
   font-size: 12px;
-  font-weight: 600;
 }
 
 .mg-v2-mapping-list-row__erp {

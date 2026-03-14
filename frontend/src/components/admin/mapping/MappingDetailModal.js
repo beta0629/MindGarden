@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Info, XCircle, User, CreditCard, Calendar, TrendingUp, Clock, CheckCircle, AlertTriangle } from 'lucide-react';
 import { apiGet } from '../../../utils/ajax';
-import { getMappingStatusKoreanNameSync, getUserStatusKoreanNameSync } from '../../../utils/codeHelper';
+import { getUserStatusKoreanNameSync } from '../../../utils/codeHelper';
 import UnifiedModal from '../../common/modals/UnifiedModal';
+import { StatusBadge, ActionButton } from '../../common';
 import './MappingDetailModal.css';
 
 /**
@@ -55,48 +56,11 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
         }
     };
 
-    const getStatusBadge = (status) => {
-        const statusConfig = {
-            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-            'ACTIVE': { className: 'status-active' },
-            'PENDING_PAYMENT': { className: 'status-pending' },
-            'PAYMENT_CONFIRMED': { className: 'status-confirmed' },
-            'TERMINATED': { className: 'status-terminated' },
-            'SESSIONS_EXHAUSTED': { className: 'status-exhausted' },
-            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-            'INACTIVE': { className: 'status-inactive' },
-            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-            'SUSPENDED': { className: 'status-suspended' }
-        };
-        
-        const config = statusConfig[status] || { className: 'status-default' };
-        const label = getMappingStatusKoreanNameSync(status);
-        
-        return (
-            <span className={`mg-v2-badge ${config.className}`}>
-                {label}
-            </span>
-        );
-    };
-
     const getPaymentStatusBadge = (paymentStatus) => {
-        const statusConfig = {
-            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-            'PENDING': { className: 'payment-pending' },
-            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-            'APPROVED': { className: 'payment-approved' },
-            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-            'REJECTED': { className: 'payment-rejected' }
-        };
-        
-        const config = statusConfig[paymentStatus] || { className: 'payment-default' };
+        const variantMap = { PENDING: 'warning', APPROVED: 'success', REJECTED: 'danger' };
+        const variant = variantMap[paymentStatus] || 'neutral';
         const label = getUserStatusKoreanNameSync(paymentStatus) || '알 수 없음';
-        
-        return (
-            <span className={`mg-v2-badge ${config.className}`}>
-                {label}
-            </span>
-        );
+        return <StatusBadge variant={variant}>{label}</StatusBadge>;
     };
 
     if (!isOpen) return null;
@@ -112,14 +76,10 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
             showCloseButton
             loading={loading}
             actions={
-                <button
-                    type="button"
-                    className="mg-v2-button mg-v2-button-secondary"
-                    onClick={onClose}
-                >
+                <ActionButton variant="secondary" onClick={onClose}>
                     <XCircle size={18} />
                     닫기
-                </button>
+                </ActionButton>
             }
         >
                 {loading ? (
@@ -189,7 +149,7 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
                                             </div>
                                             <div className="info-item">
                                                 <label>상태</label>
-                                                <span>{getStatusBadge(mapping?.status)}</span>
+                                                <span><StatusBadge status={mapping?.status} /></span>
                                             </div>
                                             <div className="info-item">
                                                 <label>결제 상태</label>

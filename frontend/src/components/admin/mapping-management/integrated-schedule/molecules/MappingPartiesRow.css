@@ -13,3 +13,11 @@
   margin: 0 var(--mg-spacing-4, 4px);
   color: var(--mg-color-text-secondary, var(--mg-gray-600));
 }
+
+.integrated-schedule__card-consultant-honorific,
+.integrated-schedule__card-client-honorific {
+  margin-left: 0.25em;
+  font-size: var(--mg-font-xs);
+  color: var(--mg-color-text-secondary);
+  font-weight: normal;
+}

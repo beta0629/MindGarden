@@ -17,7 +17,7 @@ function RemainingSessionsBadge({ remainingSessions }) {
 
   return (
     <span className="mg-v2-count-badge">
-      {remainingSessions}회 남음
+      {remainingSessions} 회기 남음
     </span>
   );
 }

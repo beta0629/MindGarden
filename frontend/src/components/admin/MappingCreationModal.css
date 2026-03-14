@@ -365,12 +365,23 @@
   gap: 1rem;
 }
 
+.mg-v2-mapping-creation-modal__form-group {
+  margin-bottom: 0;
+}
+
 .mg-v2-mapping-creation-modal__form-group label {
   display: block;
   font-size: 0.8125rem;
   font-weight: 500;
   color: var(--ad-b0kla-text-secondary);
   margin-bottom: 0.25rem;
+}
+
+.mg-v2-mapping-creation-modal__form-help {
+  font-size: 0.75rem;
+  color: var(--ad-b0kla-text-secondary);
+  margin-top: 0.25rem;
+  display: block;
 }
 
 .mg-v2-mapping-creation-modal__input,

@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { DollarSign, XCircle, CheckCircle } from 'lucide-react';
+import { User, Link2, UserCircle, CheckCircle } from 'lucide-react';
 import notificationManager from '../../../utils/notification';
 import { apiPost } from '../../../utils/ajax';
 import UnifiedModal from '../../common/modals/UnifiedModal';
+import '../MappingCreationModal.css';
 
 /**
  * 매칭 입금 확인 모달 컴포넌트
@@ -135,51 +136,33 @@ const MappingDepositModal = ({
                 </>
             }
         >
-                <div className="mg-v2-modal-body">
-                    <div className="mg-v2-ad-b0kla__card mg-v2-info-box">
-                        <div className="mg-v2-info-row">
-                            <span className="mg-v2-info-label">상담사:</span>
-                            <span className="mg-v2-info-value">
-                                {mapping.consultantName || mapping.consultant?.name || mapping.consultant?.userId || 'N/A'}
-                            </span>
-                        </div>
-                        <div className="mg-v2-info-row">
-                            <span className="mg-v2-info-label">내담자:</span>
-                            <span className="mg-v2-info-value">
-                                {mapping.clientName || mapping.client?.name || mapping.client?.userId || 'N/A'}
-                            </span>
-                        </div>
-                        <div className="mg-v2-info-row">
-                            <span className="mg-v2-info-label">패키지:</span>
-                            <span className="mg-v2-info-value">{mapping.packageName || 'N/A'}</span>
-                        </div>
-                        <div className="mg-v2-info-row mg-info-row-highlight">
-                            <span className="mg-v2-info-label">금액:</span>
-                            <span className="mg-v2-info-value">
-                                {(mapping.packagePrice || mapping.paymentAmount) ? `${(mapping.packagePrice || mapping.paymentAmount).toLocaleString()}원` : 'N/A'}
-                            </span>
-                        </div>
+            <div className="mg-v2-mapping-creation-modal-wrapper">
+                <div className="mg-v2-ad-b0kla mg-v2-mapping-creation-modal">
+                    <div className="mg-v2-mapping-creation-modal__summary-bar">
+                        <span><User size={16} /> {mapping.consultantName || mapping.consultant?.name || mapping.consultant?.userId || 'N/A'}</span>
+                        <Link2 size={16} />
+                        <span><UserCircle size={16} /> {mapping.clientName || mapping.client?.name || mapping.client?.userId || 'N/A'}</span>
+                        <span>{mapping.packageName || 'N/A'}</span>
+                        <span className="mg-v2-mapping-creation-modal__summary-pkg">
+                            {(mapping.packagePrice || mapping.paymentAmount) ? `${(mapping.packagePrice || mapping.paymentAmount).toLocaleString()}원` : 'N/A'}
+                        </span>
                     </div>
-
-                    <div>
-                        <div className="mg-v2-form-group">
-                            <label className="mg-v2-label">
-                                입금 참조번호 *
-                            </label>
-                            <input
-                                type="text"
-                                value={depositReference}
-                                onChange={(e) => setDepositReference(e.target.value)}
-                                placeholder="자동 생성됩니다 (수정 가능)"
-                                className="mg-v2-input"
-                                required
-                            />
-                            <small className="mg-v2-form-help">
-                                자동으로 입금 참조번호가 생성됩니다. 필요시 수정할 수 있습니다.
-                            </small>
-                        </div>
+                    <div className="mg-v2-mapping-creation-modal__form-group">
+                        <label>입금 참조번호 *</label>
+                        <input
+                            type="text"
+                            value={depositReference}
+                            onChange={(e) => setDepositReference(e.target.value)}
+                            placeholder="자동 생성됩니다 (수정 가능)"
+                            className="mg-v2-mapping-creation-modal__input"
+                            required
+                        />
+                        <small className="mg-v2-mapping-creation-modal__form-help">
+                            자동으로 입금 참조번호가 생성됩니다. 필요시 수정할 수 있습니다.
+                        </small>
                     </div>
                 </div>
+            </div>
         </UnifiedModal>
     );
 };

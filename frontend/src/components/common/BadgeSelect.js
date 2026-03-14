@@ -17,6 +17,7 @@ const BadgeSelect = ({
   disabled = false,
   loading = false,
   error = false,
+  size = 'default',
   className = '',
   placeholder = '선택하세요',
   'aria-label': ariaLabel
@@ -57,10 +58,11 @@ const BadgeSelect = ({
   const role = multiple ? 'group' : 'radiogroup';
   const itemRole = multiple ? 'checkbox' : 'radio';
 
+  const sizeModifier = size === 'small' ? 'mg-v2-badge-select--small' : '';
   if (loading) {
     return (
       <div
-        className={`mg-v2-badge-select mg-v2-badge-select--loading ${className}`.trim()}
+        className={`mg-v2-badge-select mg-v2-badge-select--loading ${sizeModifier} ${className}`.trim()}
         role={role}
         aria-label={ariaLabel}
         aria-busy="true"
@@ -74,7 +76,7 @@ const BadgeSelect = ({
   if (safeOptions.length === 0) {
     return (
       <div
-        className={`mg-v2-badge-select mg-v2-badge-select--empty ${error ? 'mg-v2-badge-select--error' : ''} ${className}`.trim()}
+        className={`mg-v2-badge-select mg-v2-badge-select--empty ${sizeModifier} ${error ? 'mg-v2-badge-select--error' : ''} ${className}`.trim()}
         role={role}
         aria-label={ariaLabel}
       >
@@ -85,7 +87,7 @@ const BadgeSelect = ({
 
   return (
     <div
-      className={`mg-v2-badge-select ${error ? 'mg-v2-badge-select--error' : ''} ${disabled ? 'mg-v2-badge-select--disabled' : ''} ${className}`.trim()}
+      className={`mg-v2-badge-select ${sizeModifier} ${error ? 'mg-v2-badge-select--error' : ''} ${disabled ? 'mg-v2-badge-select--disabled' : ''} ${className}`.trim()}
       role={role}
       aria-label={ariaLabel}
       aria-disabled={disabled}

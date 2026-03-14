@@ -95,3 +95,16 @@
 .mg-v2-badge-select__item-label {
   white-space: nowrap;
 }
+
+/* Small variant */
+.mg-v2-badge-select--small {
+  min-height: 28px;
+  gap: 6px;
+}
+
+.mg-v2-badge-select--small .mg-v2-badge-select__item {
+  padding: 6px 10px;
+  min-height: 28px;
+  font-size: 12px;
+  border-radius: 8px;
+}

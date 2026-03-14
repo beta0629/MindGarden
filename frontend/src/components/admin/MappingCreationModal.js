@@ -532,6 +532,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
               />
               <div className="mg-v2-mapping-creation-modal__filter-row">
                 <BadgeSelect
+                  size="small"
                   value={clientFilterStatus}
                   onChange={(val) => setClientFilterStatus(val)}
                   options={[
@@ -545,6 +546,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                   className="mg-v2-form-badge-select mg-v2-mapping-creation-modal__select"
                 />
                 <BadgeSelect
+                  size="small"
                   value={clientSortBy}
                   onChange={(val) => setClientSortBy(val)}
                   options={[

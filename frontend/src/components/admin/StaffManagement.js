@@ -22,6 +22,7 @@ import { showSuccess, showError } from '../../utils/notification';
 import { apiGet } from '../../utils/ajax';
 import { maskEncryptedDisplay } from '../../utils/codeHelper';
 import ProfileImageInput from '../common/ProfileImageInput';
+import Avatar from '../common/Avatar';
 import '../../styles/unified-design-tokens.css';
 import './ClientComprehensiveManagement/ClientModal.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
@@ -72,9 +73,12 @@ const AddStaffModalContent = ({ list = [], searchTerm, onSearch, roleOf, onAssig
             {filtered.map((u) => (
               <div key={u.id} className="mg-v2-profile-card">
                 <div className="mg-v2-profile-card__header">
-                  <div className="mg-v2-profile-card__avatar">
-                    <User size={24} />
-                  </div>
+                  <Avatar
+                    profileImageUrl={u.profileImageUrl}
+                    displayName={u.name}
+                    className="mg-v2-profile-card__avatar"
+                    size={48}
+                  />
                   <div className="mg-v2-profile-card__info">
                     <h3 className="mg-v2-profile-card__name">{maskEncryptedDisplay(u.name, '이름')}</h3>
                     <div className="mg-v2-profile-card__contact">
@@ -464,9 +468,12 @@ const StaffManagement = ({ embedded = false }) => {
               {filteredStaff.map((staff) => (
                 <div key={staff.id} className="mg-v2-profile-card">
                   <div className="mg-v2-profile-card__header">
-                    <div className="mg-v2-profile-card__avatar">
-                      <User size={24} />
-                    </div>
+                    <Avatar
+                      profileImageUrl={staff.profileImageUrl}
+                      displayName={staff.name}
+                      className="mg-v2-profile-card__avatar"
+                      size={48}
+                    />
                     <div className="mg-v2-profile-card__info">
                       <h3 className="mg-v2-profile-card__name">{maskEncryptedDisplay(staff.name, '이름')}</h3>
                       <div className="mg-v2-profile-card__contact">

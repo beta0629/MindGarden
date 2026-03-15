@@ -107,6 +107,7 @@ public class AdminUserController {
                 userInfo.put("address", addressInfo.get("address"));
                 userInfo.put("addressDetail", addressInfo.get("addressDetail"));
                 userInfo.put("postalCode", addressInfo.get("postalCode"));
+                userInfo.put("profileImageUrl", user.getProfileImageUrl());
                 
                 // 디버깅을 위한 로깅
                 log.info("👤 사용자 정보 - ID: {}, 이름: '{}', 이메일: '{}', 전화번호: '{}', 역할: '{}', 주소: '{}'", 

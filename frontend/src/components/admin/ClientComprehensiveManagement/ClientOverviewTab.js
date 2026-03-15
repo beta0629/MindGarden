@@ -1,4 +1,5 @@
 import Button from '../../ui/Button/Button';
+import Avatar from '../../common/Avatar';
 import { User, Edit, Trash2, Eye, Key, Mail, Phone } from 'lucide-react';
 import { getUserStatusKoreanNameSync, getUserGradeKoreanNameSync, getUserGradeIconSync, getStatusColorSync, maskEncryptedDisplay } from '../../../utils/codeHelper';
 import '../ProfileCard.css';
@@ -33,9 +34,12 @@ const ClientOverviewTab = ({
         return (
             <div key={client.id} className="mg-v2-profile-card">
                 <div className="mg-v2-profile-card__header">
-                    <div className="mg-v2-profile-card__avatar">
-                        <User size={24} />
-                    </div>
+                    <Avatar
+                        profileImageUrl={client.profileImageUrl}
+                        displayName={client.name}
+                        className="mg-v2-profile-card__avatar"
+                        size={48}
+                    />
                     <div className="mg-v2-profile-card__info">
                         <h3 className="mg-v2-profile-card__name">{maskEncryptedDisplay(client.name, '이름')}</h3>
                         <div className="mg-v2-profile-card__contact">

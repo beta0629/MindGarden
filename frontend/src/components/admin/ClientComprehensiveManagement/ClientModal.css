@@ -1,10 +1,11 @@
 /**
  * ClientModal 전용 스타일 (이메일 행 등)
  * 모달이 어떤 페이지에서 열리든 동일한 레이아웃을 보장하기 위해 컴포넌트에 포함.
+ * 특이도: .mg-modal__body .mg-v2-modal-body 포함해 AdminDashboardB0KlA.css 공통 규칙보다 우선 적용.
  */
 
 /* 이메일 + 중복확인 행: 전체 폭 사용, input이 넓게 차지하고 버튼은 고정 */
-.mg-modal.mg-v2-ad-b0kla .mg-v2-form-email-row {
+.mg-modal.mg-v2-ad-b0kla .mg-modal__body .mg-v2-modal-body .mg-v2-form-email-row {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -12,19 +13,19 @@
 }
 
 /* 이메일 입력란: 넓게 차지, 최소 너비로 영역 크게 */
-.mg-modal.mg-v2-ad-b0kla .mg-v2-form-email-row .mg-v2-form-input {
+.mg-modal.mg-v2-ad-b0kla .mg-modal__body .mg-v2-modal-body .mg-v2-form-email-row .mg-v2-form-input {
   flex: 1;
   min-width: 320px; /* 이메일 영역 크게 */
   padding: 10px 14px;
   font-size: 15px;
 }
 
-.mg-modal.mg-v2-ad-b0kla .mg-v2-form-email-row .mg-v2-button {
+.mg-modal.mg-v2-ad-b0kla .mg-modal__body .mg-v2-modal-body .mg-v2-form-email-row .mg-v2-button {
   flex-shrink: 0;
 }
 
-/* 이메일 행 중복확인 버튼만 compact: 스펙(CLIENT_MODAL_EMAIL_BUTTON_SPEC) — 다른 폼 버튼(주소 검색·등록·취소) 미영향 */
-.mg-modal.mg-v2-ad-b0kla .mg-v2-form-email-row .mg-v2-button.mg-v2-button--compact {
+/* 이메일 행 중복확인 버튼만 compact — 다른 폼 버튼(주소 검색·등록·취소) 미영향 */
+.mg-modal.mg-v2-ad-b0kla .mg-modal__body .mg-v2-modal-body .mg-v2-form-email-row .mg-v2-button.mg-v2-button--compact {
   padding: var(--cs-spacing-xs, 0.25rem) var(--cs-spacing-sm, 0.5rem);
   min-height: 28px;
   font-size: var(--cs-text-xs, 0.75rem);

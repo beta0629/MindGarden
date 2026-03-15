@@ -998,7 +998,8 @@
   box-sizing: border-box;
 }
 
-.mg-modal.mg-v2-ad-b0kla .mg-v2-form-email-row__input-wrap {
+.mg-modal.mg-v2-ad-b0kla .mg-v2-form-email-row__input-wrap,
+.mg-modal.mg-v2-ad-b0kla .mg-modal__body .mg-v2-modal-body .mg-v2-form-email-row__input-wrap {
   flex: 1 1 0%;
   display: block;
   box-sizing: border-box;
@@ -1011,15 +1012,25 @@
   box-sizing: border-box;
 }
 
-.mg-modal.mg-v2-ad-b0kla .mg-v2-form-email-row .mg-v2-button {
+/* 이메일 행 버튼: 콤팩트 고정(다른 스타일의 width:100%/flex:1 덮어쓰기 위해 명시·구체화) */
+.mg-modal.mg-v2-ad-b0kla .mg-v2-form-email-row .mg-v2-button,
+.mg-modal.mg-v2-ad-b0kla .mg-modal__body .mg-v2-modal-body .mg-v2-form-email-row .mg-v2-button {
   flex: 0 0 auto;
   flex-shrink: 0;
+  width: auto;
+  min-width: 90px;
 }
 
 /* 이메일 행 중복확인 버튼 — 버튼으로 명확히 보이도록 (ADMIN_MODAL_EMAIL_ROW_TARGET_SPEC, CLIENT_MODAL_EMAIL_BUTTON_SPEC) */
 .mg-modal.mg-v2-ad-b0kla .mg-v2-form-email-row .mg-v2-button.mg-v2-button--compact,
 .mg-modal.mg-v2-ad-b0kla .mg-v2-form-email-row [data-action="email-duplicate-check"],
-.mg-modal.mg-v2-ad-b0kla .mg-v2-form-group .mg-v2-form-email-row .mg-v2-button {
+.mg-modal.mg-v2-ad-b0kla .mg-v2-form-group .mg-v2-form-email-row .mg-v2-button,
+.mg-modal.mg-v2-ad-b0kla .mg-modal__body .mg-v2-modal-body .mg-v2-form-email-row .mg-v2-button.mg-v2-button--compact,
+.mg-modal.mg-v2-ad-b0kla .mg-modal__body .mg-v2-modal-body .mg-v2-form-email-row [data-action="email-duplicate-check"] {
+  flex: 0 0 auto;
+  flex-shrink: 0;
+  width: auto;
+  min-width: 90px;
   /* compact 크기 */
   padding: var(--mg-spacing-xs) var(--mg-spacing-sm);
   min-height: 28px;

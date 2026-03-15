@@ -18,9 +18,9 @@ import java.util.Optional;
 public interface LedgerRepository extends JpaRepository<Ledger, Long> {
     
     /**
-     * 테넌트별 계정별 원장 조회
+     * 테넌트별 계정별 원장 조회 (Account JOIN FETCH로 LazyInitializationException 방지)
      */
-    @Query("SELECT l FROM Ledger l WHERE l.tenantId = :tenantId AND l.account.id = :accountId ORDER BY l.periodStart DESC")
+    @Query("SELECT l FROM Ledger l JOIN FETCH l.account WHERE l.tenantId = :tenantId AND l.account.id = :accountId ORDER BY l.periodStart DESC")
     List<Ledger> findByTenantIdAndAccountId(@Param("tenantId") String tenantId, @Param("accountId") Long accountId);
     
     /**
@@ -28,7 +28,7 @@ public interface LedgerRepository extends JpaRepository<Ledger, Long> {
      * 원장은 월 단위(periodEnd=월 말일)이므로, 요청이 당월 1일~오늘이어도 해당 월 원장이 조회되도록
      * periodStart <= endDate AND periodEnd >= startDate 조건 사용.
      */
-    @Query("SELECT l FROM Ledger l WHERE l.tenantId = :tenantId AND l.periodStart <= :endDate AND l.periodEnd >= :startDate ORDER BY l.account.id, l.periodStart")
+    @Query("SELECT DISTINCT l FROM Ledger l JOIN FETCH l.account WHERE l.tenantId = :tenantId AND l.periodStart <= :endDate AND l.periodEnd >= :startDate ORDER BY l.account.id, l.periodStart")
     List<Ledger> findByTenantIdAndPeriod(@Param("tenantId") String tenantId,
                                           @Param("startDate") LocalDate startDate,
                                           @Param("endDate") LocalDate endDate);
@@ -36,7 +36,7 @@ public interface LedgerRepository extends JpaRepository<Ledger, Long> {
     /**
      * 테넌트별 계정별 기간별 원장 조회 (유니크)
      */
-    @Query("SELECT l FROM Ledger l WHERE l.tenantId = :tenantId AND l.account.id = :accountId AND l.periodStart = :periodStart AND l.periodEnd = :periodEnd")
+    @Query("SELECT l FROM Ledger l JOIN FETCH l.account WHERE l.tenantId = :tenantId AND l.account.id = :accountId AND l.periodStart = :periodStart AND l.periodEnd = :periodEnd")
     Optional<Ledger> findByTenantIdAndAccountIdAndPeriod(@Param("tenantId") String tenantId,
                                                           @Param("accountId") Long accountId,
                                                           @Param("periodStart") LocalDate periodStart,
@@ -45,7 +45,7 @@ public interface LedgerRepository extends JpaRepository<Ledger, Long> {
     /**
      * 테넌트별 계정별 최신 원장 조회 (기간 종료일 기준)
      */
-    @Query("SELECT l FROM Ledger l WHERE l.tenantId = :tenantId AND l.account.id = :accountId ORDER BY l.periodEnd DESC")
+    @Query("SELECT l FROM Ledger l JOIN FETCH l.account WHERE l.tenantId = :tenantId AND l.account.id = :accountId ORDER BY l.periodEnd DESC")
     List<Ledger> findLatestByTenantIdAndAccountId(@Param("tenantId") String tenantId, @Param("accountId") Long accountId);
 }
 

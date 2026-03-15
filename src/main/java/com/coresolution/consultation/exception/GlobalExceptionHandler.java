@@ -223,9 +223,14 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleDataIntegrityViolation(
             DataIntegrityViolationException e, HttpServletRequest request) {
         String message = e.getMessage() != null ? e.getMessage().toLowerCase() : "";
-        String clientMessage = (message.contains("unique") || message.contains("duplicate"))
-                ? "이메일이 이미 사용 중입니다."
-                : "데이터 제약 위반입니다.";
+        String clientMessage;
+        if (message.contains("uk_users_email_tenant") || (message.contains("unique") && message.contains("email"))) {
+            clientMessage = "이미 등록된 이메일입니다.";
+        } else if (message.contains("unique") || message.contains("duplicate")) {
+            clientMessage = "이메일이 이미 사용 중입니다.";
+        } else {
+            clientMessage = "데이터 제약 위반입니다.";
+        }
         log.warn("Data integrity violation: {}", e.getMessage());
 
         ErrorResponse error = ErrorResponse.of(

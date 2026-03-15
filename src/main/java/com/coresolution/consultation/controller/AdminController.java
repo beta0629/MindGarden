@@ -1582,7 +1582,7 @@ public class AdminController extends BaseApiController {
      */
     @PostMapping("/consultants")
     public ResponseEntity<ApiResponse<User>> registerConsultant(
-            @RequestBody ConsultantRegistrationRequest request, HttpSession session) {
+            @RequestBody @Valid ConsultantRegistrationRequest request, HttpSession session) {
         log.info("🔧 상담사 등록: {}", request.getUserId());
 
         ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session,

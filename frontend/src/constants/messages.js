@@ -148,6 +148,7 @@ export const VALIDATION_MESSAGES = {
   EMAIL_AVAILABLE: '사용 가능한 이메일입니다.',
   EMAIL_DUPLICATE_CHECK_ERROR: '이메일 중복 확인 중 오류가 발생했습니다.',
   EMAIL_DUPLICATE_CHECK_REQUIRED_MESSAGE: '이미 사용 중인 이메일입니다. 이메일 중복확인을 해주세요.',
+  EMAIL_DUPLICATE_CHECK_REQUIRED: '이메일 중복 확인을 해주세요.',
   INVALID_EMAIL_FORMAT: '올바른 이메일 형식을 입력해주세요.',
   
   INVALID_EMAIL: '올바른 이메일 형식이 아닙니다.',

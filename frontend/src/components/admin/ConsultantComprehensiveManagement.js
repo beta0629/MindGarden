@@ -21,6 +21,7 @@ import SpecialtyDisplay from '../ui/SpecialtyDisplay';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import { getCommonCodes } from '../../utils/commonCodeApi';
 import { sessionManager } from '../../utils/sessionManager';
+import MgEmailFieldWithAutocomplete from '../common/MgEmailFieldWithAutocomplete';
 import ProfileImageInput from '../common/ProfileImageInput';
 import Avatar from '../common/Avatar';
 import PasswordResetModal from './PasswordResetModal';
@@ -727,7 +728,16 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                 }));
                 return { success: false };
             }
-            
+
+            // 이메일 필수 검증
+            const emailTrimmed = data.email != null ? String(data.email).trim() : '';
+            if (!emailTrimmed) {
+                window.dispatchEvent(new CustomEvent('showNotification', {
+                    detail: { message: VALIDATION_MESSAGES.REQUIRED_EMAIL, type: 'error' }
+                }));
+                return { success: false };
+            }
+
             // 표준화 2025-12-08: userId 자동 생성
             // userId가 없으면 name을 기반으로 자동 생성
             let userId = data.userId && data.userId.trim();
@@ -896,8 +906,15 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
         
         try {
             let result;
-            
+
             if (modalType === 'create') {
+                const emailTrimmed = formData.email != null ? String(formData.email).trim() : '';
+                if (emailTrimmed && emailCheckStatus !== 'available') {
+                    window.dispatchEvent(new CustomEvent('showNotification', {
+                        detail: { message: VALIDATION_MESSAGES.EMAIL_DUPLICATE_CHECK_REQUIRED, type: 'warning' }
+                    }));
+                    return;
+                }
                 result = await createConsultant(formData);
             } else if (modalType === 'edit') {
                 result = await updateConsultant(selectedConsultant.id, formData, selectedConsultant);
@@ -914,7 +931,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                 detail: { message: '작업 중 오류가 발생했습니다.', type: 'error' }
             }));
         }
-    }, [modalType, formData, selectedConsultant, createConsultant, updateConsultant, deleteConsultant, handleCloseModal]);
+    }, [modalType, formData, selectedConsultant, emailCheckStatus, createConsultant, updateConsultant, deleteConsultant, handleCloseModal]);
 
     const stats = getOverallStats();
     const consultantFilterOptions = useMemo(() => {
@@ -1569,16 +1586,15 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                         <label htmlFor="consultant-email" className="mg-v2-form-label">{VALIDATION_MESSAGES.LABEL_EMAIL_REQUIRED}</label>
                         <div className="mg-v2-form-email-row">
                             <div className="mg-v2-form-email-row__input-wrap">
-                                <input
+                                <MgEmailFieldWithAutocomplete
                                     id="consultant-email"
-                                    type="email"
                                     name="email"
                                     value={formData.email || ''}
                                     onChange={handleFormChange}
                                     placeholder="example@email.com"
-                                    className="mg-v2-form-input"
                                     required
                                     disabled={modalType === 'edit'}
+                                    autocompleteMode="datalist"
                                 />
                             </div>
                             {modalType === 'create' && (
@@ -1693,6 +1709,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                 </>
             );
         }
+        const isCreateSubmitDisabled = modalType === 'create' && (formData.email != null && String(formData.email).trim() !== '') && emailCheckStatus !== 'available';
         return (
             <>
                 <button type="button" className="mg-v2-button mg-v2-button-secondary" onClick={handleCloseModal}>
@@ -1702,6 +1719,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                     type="button"
                     className={modalType === 'delete' ? 'mg-v2-button mg-v2-button-danger' : 'mg-v2-button mg-v2-button-primary'}
                     onClick={handleModalSubmit}
+                    disabled={isCreateSubmitDisabled}
                 >
                     {modalType === 'create' && '등록'}
                     {modalType === 'edit' && '수정'}

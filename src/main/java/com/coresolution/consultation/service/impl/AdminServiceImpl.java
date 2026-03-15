@@ -20,6 +20,7 @@ import com.coresolution.consultation.dto.ConsultantClientMappingCreateRequest;
 import com.coresolution.consultation.dto.ConsultantRegistrationRequest;
 import com.coresolution.consultation.dto.ConsultantTransferRequest;
 import com.coresolution.consultation.dto.FinancialTransactionRequest;
+import com.coresolution.consultation.dto.StaffRegistrationRequest;
 import com.coresolution.consultation.entity.Branch;
 import com.coresolution.consultation.entity.Client;
 import com.coresolution.consultation.entity.CommonCode;
@@ -441,6 +442,79 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 client.getId(), savedUser.getUserId(), client.getIsDeleted(), savedUser.getIsActive(), tenantId);
         
         return client;
+    }
+
+    @Override
+    public User registerStaff(StaffRegistrationRequest request) {
+        String email = request.getEmail();
+        if (email == null || email.trim().isEmpty()) {
+            throw new IllegalArgumentException("이메일은 필수입니다.");
+        }
+        email = email.trim().toLowerCase();
+
+        String tenantId = getTenantIdOrNull();
+        if (tenantId == null) {
+            log.warn("TenantContext에 tenantId가 없습니다.");
+            throw new IllegalStateException("테넌트 정보가 없습니다. 관리자에게 문의하세요.");
+        }
+
+        String userId = userIdGenerator.generateUniqueUserId(email, tenantId);
+        log.info("스태프 사용자 ID 자동 생성: email={}, tenantId={}, userId={}", email, tenantId, userId);
+
+        String password;
+        boolean isTempPassword = false;
+        if (request.getPassword() != null && !request.getPassword().trim().isEmpty()) {
+            password = request.getPassword().trim();
+        } else {
+            password = generateTempPassword();
+            isTempPassword = true;
+        }
+
+        String name = request.getName();
+        if (name == null || name.trim().isEmpty()) {
+            String localPart = email.split("@")[0];
+            name = localPart.replaceAll("[^a-zA-Z0-9가-힣]", "");
+            if (name.isEmpty()) {
+                name = "사무원";
+            }
+        }
+        name = name.trim();
+
+        String encryptedName = encryptionUtil.safeEncrypt(name);
+        String encryptedEmail = encryptionUtil.safeEncrypt(email);
+        String encryptedPhone = null;
+        if (request.getPhone() != null && !request.getPhone().trim().isEmpty()) {
+            encryptedPhone = encryptionUtil.safeEncrypt(request.getPhone());
+        }
+
+        User staffUser = User.builder()
+                .userId(userId)
+                .email(encryptedEmail)
+                .password(passwordEncoder.encode(password))
+                .name(encryptedName)
+                .phone(encryptedPhone)
+                .role(UserRole.STAFF)
+                .isActive(true)
+                .isPasswordChanged(!isTempPassword)
+                .branch(null)
+                .branchCode(null)
+                .build();
+        staffUser.setTenantId(tenantId);
+        if (request.getProfileImageUrl() != null && !request.getProfileImageUrl().trim().isEmpty()) {
+            staffUser.setProfileImageUrl(request.getProfileImageUrl().trim());
+        }
+
+        User savedUser = userRepository.save(staffUser);
+        createUserRoleAssignment(savedUser, tenantId, UserRole.STAFF);
+
+        try {
+            userPersonalDataCacheService.decryptAndCacheUserPersonalData(savedUser);
+        } catch (Exception e) {
+            log.warn("스태프 개인정보 캐시 저장 실패: userId={}", savedUser.getId(), e);
+        }
+
+        log.info("스태프 등록 완료: id={}, userId={}, tenantId={}", savedUser.getId(), savedUser.getUserId(), tenantId);
+        return savedUser;
     }
 
     @Override

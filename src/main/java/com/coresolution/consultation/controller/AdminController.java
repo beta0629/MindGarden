@@ -15,6 +15,7 @@ import com.coresolution.consultation.dto.ConsultantClientMappingCreateRequest;
 import com.coresolution.consultation.dto.ConsultantClientMappingResponse;
 import com.coresolution.consultation.dto.ConsultantRegistrationRequest;
 import com.coresolution.consultation.dto.ConsultantTransferRequest;
+import com.coresolution.consultation.dto.StaffRegistrationRequest;
 import com.coresolution.consultation.entity.Client;
 // 표준화 2025-12-05: 역할 체크를 공통코드 기반 동적 조회로 변경 (COMMON_CODE_SYSTEM_STANDARD.md 준수)
 import com.coresolution.consultation.entity.CommonCode;
@@ -1666,6 +1667,37 @@ public class AdminController extends BaseApiController {
                 request.getBranchCode());
 
         return created("내담자가 성공적으로 등록되었습니다", client);
+    }
+
+    /**
+     * 스태프(사무원) 등록 - 신규 사용자 생성 후 role=STAFF 부여 (관리자 전용)
+     */
+    @PostMapping("/staff")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<User>> registerStaff(
+            @RequestBody StaffRegistrationRequest request, HttpSession session) {
+        log.info("🔧 스태프 등록: {}", request.getEmail());
+
+        ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session,
+                "USER_MANAGE", dynamicPermissionService);
+        if (permissionResponse != null) {
+            throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
+        }
+
+        User currentUser = SessionUtils.getCurrentUser(session);
+        if (currentUser == null) {
+            throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
+        }
+
+        String tenantId = SessionUtils.getTenantId(session);
+        if (tenantId == null || tenantId.isEmpty()) {
+            throw new IllegalArgumentException("테넌트 정보가 없습니다. 관리자에게 문의하세요.");
+        }
+
+        com.coresolution.core.context.TenantContextHolder.setTenantId(tenantId);
+
+        User staff = adminService.registerStaff(request);
+        return created("스태프가 성공적으로 등록되었습니다", staff);
     }
 
     /**

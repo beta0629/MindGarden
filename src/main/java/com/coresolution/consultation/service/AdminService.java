@@ -5,6 +5,7 @@ import java.util.Map;
 import com.coresolution.consultation.dto.ClientRegistrationRequest;
 import com.coresolution.consultation.dto.ConsultantClientMappingCreateRequest;
 import com.coresolution.consultation.dto.ConsultantRegistrationRequest;
+import com.coresolution.consultation.dto.StaffRegistrationRequest;
 import com.coresolution.consultation.dto.ConsultantTransferRequest;
 import com.coresolution.consultation.entity.Client;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
@@ -28,6 +29,11 @@ public interface AdminService {
      * 내담자 등록
      */
     Client registerClient(ClientRegistrationRequest request);
+
+    /**
+     * 스태프(사무원) 등록 - 신규 사용자 생성 후 role=STAFF 부여
+     */
+    User registerStaff(StaffRegistrationRequest request);
 
     /**
      * 상담사-내담자 매칭 생성

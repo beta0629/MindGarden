@@ -28,6 +28,7 @@ import './ProfileCard.css';
 
 const API_USER_MANAGEMENT = '/api/v1/admin/user-management';
 const API_ROLES = '/api/v1/admin/user-management/roles';
+const API_STAFF_REGISTER = '/api/v1/admin/staff';
 const ROLE_STAFF = 'STAFF';
 
 /** 역할 표시명 (백엔드 UserRole displayName과 동일) */
@@ -118,6 +119,8 @@ const StaffManagement = ({ embedded = false }) => {
   const [roleChangeSubmitting, setRoleChangeSubmitting] = useState(false);
   const [addStaffModal, setAddStaffModal] = useState({ open: false, nonStaffUsers: [], loading: false, assignSubmitting: false });
   const [addStaffSearch, setAddStaffSearch] = useState('');
+  const [createStaffModal, setCreateStaffModal] = useState({ open: false, submitting: false });
+  const [createForm, setCreateForm] = useState({ email: '', name: '', password: '', phone: '' });
 
   const loadUsers = useCallback(async () => {
     setLoading(true);
@@ -167,6 +170,52 @@ const StaffManagement = ({ embedded = false }) => {
     setAddStaffModal({ open: false, nonStaffUsers: [], loading: false, assignSubmitting: false });
     setAddStaffSearch('');
   }, []);
+
+  const openCreateStaffModal = useCallback(() => {
+    setCreateForm({ email: '', name: '', password: '', phone: '' });
+    setCreateStaffModal({ open: true, submitting: false });
+  }, []);
+
+  const closeCreateStaffModal = useCallback(() => {
+    setCreateStaffModal({ open: false, submitting: false });
+    setCreateForm({ email: '', name: '', password: '', phone: '' });
+  }, []);
+
+  const handleCreateStaffSubmit = useCallback(
+    async (e) => {
+      e.preventDefault();
+      const email = (createForm.email || '').trim().toLowerCase();
+      const name = (createForm.name || '').trim();
+      if (!email) {
+        showError('이메일을 입력해 주세요.');
+        return;
+      }
+      setCreateStaffModal((prev) => ({ ...prev, submitting: true }));
+      try {
+        const payload = {
+          email,
+          name: name || undefined,
+          password: (createForm.password || '').trim() || undefined,
+          phone: (createForm.phone || '').trim() || undefined
+        };
+        const response = await StandardizedApi.post(API_STAFF_REGISTER, payload);
+        const user = response?.data ?? response;
+        if (user && (user.id || user.email)) {
+          showSuccess('스태프가 성공적으로 등록되었습니다.');
+          closeCreateStaffModal();
+          loadUsers();
+        } else {
+          throw new Error('등록에 실패했습니다.');
+        }
+      } catch (err) {
+        console.error('스태프 등록 실패:', err);
+        showError(err.message || err.response?.data?.message || '스태프 등록 중 오류가 발생했습니다.');
+      } finally {
+        setCreateStaffModal((prev) => ({ ...prev, submitting: false }));
+      }
+    },
+    [createForm, closeCreateStaffModal, loadUsers]
+  );
 
   const handleAssignAsStaff = useCallback(
     async (user) => {
@@ -296,11 +345,21 @@ const StaffManagement = ({ embedded = false }) => {
               type="button"
               variant="primary"
               size="small"
+              onClick={openCreateStaffModal}
+              disabled={loading}
+              preventDoubleClick
+            >
+              <UserPlus size={16} /> 새 스태프 등록
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              size="small"
               onClick={openAddStaffModal}
               disabled={loading}
               preventDoubleClick
             >
-              <UserPlus size={16} /> 스태프로 지정
+              스태프로 지정
             </Button>
             <button
               type="button"
@@ -450,6 +509,86 @@ const StaffManagement = ({ embedded = false }) => {
             assigning={addStaffModal.assignSubmitting}
           />
         )}
+      </UnifiedModal>
+
+      <UnifiedModal
+        isOpen={createStaffModal.open}
+        onClose={closeCreateStaffModal}
+        title="새 스태프 등록"
+        subtitle="이메일·이름·비밀번호를 입력해 사무원(스태프) 계정을 생성합니다."
+        size="small"
+        variant="form"
+        loading={createStaffModal.submitting}
+        actions={
+          <>
+            <Button variant="secondary" onClick={closeCreateStaffModal} disabled={createStaffModal.submitting}>
+              취소
+            </Button>
+            <Button
+              variant="primary"
+              onClick={handleCreateStaffSubmit}
+              disabled={createStaffModal.submitting || !(createForm.email || '').trim()}
+              preventDoubleClick
+            >
+              등록
+            </Button>
+          </>
+        }
+      >
+        <form onSubmit={handleCreateStaffSubmit} className="mg-v2-form">
+          <div className="mg-v2-info-box mg-v2-ad-b0kla-info-box">
+            <p className="mg-v2-info-text">비밀번호를 입력하지 않으면 임시 비밀번호가 자동으로 생성됩니다.</p>
+          </div>
+          <div className="mg-modal__form-group">
+            <label htmlFor="create-staff-email" className="mg-modal__label">이메일 *</label>
+            <input
+              id="create-staff-email"
+              type="email"
+              className="mg-modal__input"
+              value={createForm.email}
+              onChange={(e) => setCreateForm((prev) => ({ ...prev, email: e.target.value }))}
+              placeholder="staff@example.com"
+              required
+              disabled={createStaffModal.submitting}
+            />
+          </div>
+          <div className="mg-modal__form-group">
+            <label htmlFor="create-staff-name" className="mg-modal__label">이름</label>
+            <input
+              id="create-staff-name"
+              type="text"
+              className="mg-modal__input"
+              value={createForm.name}
+              onChange={(e) => setCreateForm((prev) => ({ ...prev, name: e.target.value }))}
+              placeholder="홍길동"
+              disabled={createStaffModal.submitting}
+            />
+          </div>
+          <div className="mg-modal__form-group">
+            <label htmlFor="create-staff-password" className="mg-modal__label">비밀번호</label>
+            <input
+              id="create-staff-password"
+              type="password"
+              className="mg-modal__input"
+              value={createForm.password}
+              onChange={(e) => setCreateForm((prev) => ({ ...prev, password: e.target.value }))}
+              placeholder="미입력 시 임시 비밀번호 발급"
+              disabled={createStaffModal.submitting}
+            />
+          </div>
+          <div className="mg-modal__form-group">
+            <label htmlFor="create-staff-phone" className="mg-modal__label">전화번호</label>
+            <input
+              id="create-staff-phone"
+              type="tel"
+              className="mg-modal__input"
+              value={createForm.phone}
+              onChange={(e) => setCreateForm((prev) => ({ ...prev, phone: e.target.value }))}
+              placeholder="010-0000-0000"
+              disabled={createStaffModal.submitting}
+            />
+          </div>
+        </form>
       </UnifiedModal>
     </>
   );

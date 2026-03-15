@@ -16,7 +16,7 @@ import { RoleUtils } from '../../constants/roles';
 import {
   Settings, Check, LayoutDashboard, Activity, MessageSquare, Sparkles,
   ShieldCheck, Megaphone, DollarSign, Receipt, TrendingUp, Package,
-  Search, Calendar, Bell, Sun
+  Calendar, Bell, Sun
 } from 'lucide-react';
 import {
   FaCalendarAlt, FaCalendarCheck, FaSyncAlt, FaExclamationTriangle, FaUserTie, FaUsers,
@@ -69,12 +69,12 @@ const STEP_CHART_COLORS = [
   'var(--ad-b0kla-text-secondary)'
 ];
 
-/** 단계별 도넛 차트 hex 색상 (Chart.js Canvas는 CSS 변수 미해석 → backgroundColor/borderColor용) */
+/** 단계별 도넛 차트 hex 색상 (서로 구분되게: teal, orange, violet, blue, gray) */
 const STEP_CHART_COLORS_HEX = [
-  '#4b745c', /* green - 매칭 */
-  '#e8a87c', /* orange - 입금 확인 */
-  '#4b745c', /* green - 회기 권한 */
-  '#6d9dc5', /* blue - 스케줄 등록 */
+  '#0d9488', /* teal - 매칭 */
+  '#ea580c', /* orange - 입금 확인 */
+  '#7c3aed', /* violet - 회기 권한 */
+  '#2563eb', /* blue - 스케줄 등록 */
   '#64748b'  /* gray - 회계처리 */
 ];
 import {
@@ -274,7 +274,6 @@ const AdminDashboardV2 = ({ user: propUser }) => {
   const [lineChartPeriod, setLineChartPeriod] = useState('monthly');
   const [searchValue, setSearchValue] = useState('');
   /** 헤더 통합 검색(placeholder 전용, 라우트/메뉴 연동 없음) */
-  const [headerSearchValue, setHeaderSearchValue] = useState('');
   /** 상담 현황 추이 막대 차트 색상 (CSS 변수 resolved, Canvas용) */
   const [chartBarColors, setChartBarColors] = useState({
     fill: CHART_BAR_FALLBACK.FILL,
@@ -778,17 +777,6 @@ const AdminDashboardV2 = ({ user: propUser }) => {
 
   const headerActions = (
       <div className="mg-v2-ad-b0kla__header-actions">
-        <div className="mg-v2-ad-b0kla__search">
-          <Search className="mg-v2-ad-b0kla__search-icon" size={20} aria-hidden />
-          <input
-            type="text"
-            placeholder="통합 검색..."
-            value={headerSearchValue}
-            onChange={(e) => setHeaderSearchValue(e.target.value)}
-            className="mg-v2-ad-b0kla__search-input"
-            aria-label="통합 검색"
-          />
-        </div>
         <div className="mg-v2-ad-b0kla__icon-group">
           <button
             type="button"

@@ -15,7 +15,8 @@ import notificationManager from '../../utils/notification';
 import { RoleUtils } from '../../constants/roles';
 import {
   Settings, Check, LayoutDashboard, Activity, MessageSquare, Sparkles,
-  ShieldCheck, Megaphone, DollarSign, Receipt, TrendingUp, Package
+  ShieldCheck, Megaphone, DollarSign, Receipt, TrendingUp, Package,
+  Search, Calendar, Bell, Sun
 } from 'lucide-react';
 import {
   FaCalendarAlt, FaCalendarCheck, FaSyncAlt, FaExclamationTriangle, FaUserTie, FaUsers,
@@ -261,18 +262,22 @@ const AdminDashboardV2 = ({ user: propUser }) => {
   const [autoCompleteWithReminderLoading, setAutoCompleteWithReminderLoading] = useState(false);
   const [mergeDuplicateLoading, setMergeDuplicateLoading] = useState(false);
   const [chartPeriod, setChartPeriod] = useState('monthly');
+  const [lineChartPeriod, setLineChartPeriod] = useState('monthly');
   const [searchValue, setSearchValue] = useState('');
+  /** 헤더 통합 검색(placeholder 전용, 라우트/메뉴 연동 없음) */
+  const [headerSearchValue, setHeaderSearchValue] = useState('');
   /** 상담 현황 추이 막대 차트 색상 (CSS 변수 resolved, Canvas용) */
   const [chartBarColors, setChartBarColors] = useState({
     fill: CHART_BAR_FALLBACK.FILL,
     border: CHART_BAR_FALLBACK.BORDER
   });
   const chartBarWrapperRef = useRef(null);
+  const lineChartWrapperRef = useRef(null);
   const isInitialized = useRef(false);
 
-  /** B0KlA 차트 막대 색상: CSS 변수를 resolved 값(hex/rgb)으로 읽어 Canvas에 전달 */
+  /** B0KlA 차트 막대/라인 색상: CSS 변수를 resolved 값(hex/rgb)으로 읽어 Canvas에 전달 */
   useEffect(() => {
-    const el = chartBarWrapperRef.current || document.documentElement;
+    const el = chartBarWrapperRef.current || lineChartWrapperRef.current || document.documentElement;
     const style = el && typeof getComputedStyle !== 'undefined' ? getComputedStyle(el) : null;
     if (!style) return;
     const fill = style.getPropertyValue('--ad-b0kla-green').trim();
@@ -281,7 +286,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
       fill: fill || CHART_BAR_FALLBACK.FILL,
       border: border || CHART_BAR_FALLBACK.BORDER
     });
-  }, [chartPeriod]);
+  }, [chartPeriod, lineChartPeriod]);
 
   const loadTodayStats = useCallback(async () => {
     const user = propUser || sessionUser;
@@ -762,9 +767,55 @@ const AdminDashboardV2 = ({ user: propUser }) => {
     }
   ];
 
+  const headerActions = (
+      <div className="mg-v2-ad-b0kla__header-actions">
+        <div className="mg-v2-ad-b0kla__search">
+          <Search className="mg-v2-ad-b0kla__search-icon" size={20} aria-hidden />
+          <input
+            type="text"
+            placeholder="통합 검색..."
+            value={headerSearchValue}
+            onChange={(e) => setHeaderSearchValue(e.target.value)}
+            className="mg-v2-ad-b0kla__search-input"
+            aria-label="통합 검색"
+          />
+        </div>
+        <div className="mg-v2-ad-b0kla__icon-group">
+          <button
+            type="button"
+            className="mg-v2-ad-b0kla__icon-btn"
+            onClick={() => navigate(ADMIN_ROUTES.INTEGRATED_SCHEDULE)}
+            aria-label="캘린더"
+          >
+            <Calendar size={20} />
+          </button>
+          <button
+            type="button"
+            className="mg-v2-ad-b0kla__icon-btn"
+            onClick={() => navigate(ADMIN_ROUTES.MESSAGES)}
+            aria-label="알림"
+          >
+            <Bell size={20} />
+          </button>
+          <button
+            type="button"
+            className="mg-v2-ad-b0kla__icon-btn"
+            aria-label="테마"
+            onClick={() => {}}
+          >
+            <Sun size={20} />
+          </button>
+        </div>
+      </div>
+    );
+
   const mainContent = (
     <ContentArea>
-      <ContentHeader title="대시보드 개요" subtitle="오늘의 주요 지표와 현황을 한눈에 확인하세요." />
+      <ContentHeader
+        title="대시보드 개요"
+        subtitle="오늘의 주요 지표와 현황을 한눈에 확인하세요."
+        actions={headerActions}
+      />
 
       <ContentKpiRow items={kpiItems} />
 
@@ -853,6 +904,130 @@ const AdminDashboardV2 = ({ user: propUser }) => {
                         tooltip: {
                           callbacks: {
                             label: (ctx) => `완료: ${ctx.parsed.y}건`
+                          }
+                        }
+                      },
+                      scales: {
+                        x: {
+                          grid: { display: false },
+                          ticks: { maxRotation: 0, font: { size: 11 } }
+                        },
+                        y: {
+                          beginAtZero: true,
+                          suggestedMax: Math.max(maxVal + 1, 2),
+                          ticks: { stepSize: 1 },
+                          grid: { color: 'var(--mg-shadow-light)' }
+                        }
+                      }
+                    }}
+                  />
+                );
+              })()}
+            </div>
+          </div>
+          {/* 예약 vs 완료 라인 차트: consultationStats에 bookedCount/scheduledCount 있으면 2선, 없으면 완료 1선 */}
+          <div className="mg-v2-ad-b0kla__card">
+            <div className="mg-v2-ad-b0kla__chart-header">
+              <div>
+                <h3 className="mg-v2-ad-b0kla__chart-title">예약 vs 완료</h3>
+                <p className="mg-v2-ad-b0kla__chart-desc">
+                  {lineChartPeriod === 'weekly'
+                    ? '최근 6주 완료 추이 (예약 시계열 API 확장 후 2선 표시)'
+                    : '최근 6개월 완료 추이 (예약 시계열 API 확장 후 2선 표시)'}
+                </p>
+              </div>
+              <div className="mg-v2-ad-b0kla__pill-toggle">
+                <button
+                  type="button"
+                  className={`mg-v2-ad-b0kla__pill ${lineChartPeriod === 'monthly' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+                  onClick={() => setLineChartPeriod('monthly')}
+                >
+                  월간
+                </button>
+                <button
+                  type="button"
+                  className={`mg-v2-ad-b0kla__pill ${lineChartPeriod === 'weekly' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+                  onClick={() => setLineChartPeriod('weekly')}
+                >
+                  주간
+                </button>
+              </div>
+            </div>
+            <div
+              className="mg-v2-ad-b0kla__chart-placeholder mg-v2-ad-b0kla__chart-wrapper"
+              ref={lineChartWrapperRef}
+            >
+              {(() => {
+                const isWeekly = lineChartPeriod === 'weekly';
+                const rawData = isWeekly
+                  ? (stats.consultationStats?.weeklyData?.length > 0
+                      ? stats.consultationStats.weeklyData.slice(0, 6)
+                      : getEmptyWeeklyChartData(6))
+                  : (stats.consultationStats?.monthlyData?.length > 0
+                      ? stats.consultationStats.monthlyData.slice(0, 6)
+                      : getEmptyMonthlyChartData(6));
+                const completedValues = rawData.map((d) => d.completedCount ?? 0);
+                // TODO: API에 bookedCount/scheduledCount 추가 시 2선(예약 vs 완료) 적용
+                const hasBooked = rawData.some((d) => (d.bookedCount ?? d.scheduledCount) != null);
+                const bookedValues = hasBooked
+                  ? rawData.map((d) => d.bookedCount ?? d.scheduledCount ?? 0)
+                  : null;
+                const allZero =
+                  completedValues.every((v) => v === 0) &&
+                  (!bookedValues || bookedValues.every((v) => v === 0));
+                if (allZero) {
+                  return (
+                    <p className="mg-v2-ad-b0kla__chart-empty">
+                      기간 내 데이터가 없습니다.
+                    </p>
+                  );
+                }
+                const maxVal = Math.max(
+                  ...completedValues,
+                  ...(bookedValues || [0]),
+                  1
+                );
+                const datasets = [
+                  {
+                    label: '완료',
+                    data: completedValues,
+                    borderColor: chartBarColors.border,
+                    backgroundColor: chartBarColors.fill,
+                    borderWidth: 2,
+                    tension: 0.3,
+                    fill: false
+                  }
+                ];
+                if (bookedValues && bookedValues.some((v) => v > 0)) {
+                  datasets.push({
+                    label: '예약',
+                    data: bookedValues,
+                    borderColor: chartBarColors.fill,
+                    backgroundColor: chartBarColors.fill,
+                    borderWidth: 2,
+                    tension: 0.3,
+                    fill: false
+                  });
+                }
+                return (
+                  <Chart
+                    type={CHART_TYPES.LINE}
+                    data={{
+                      labels: rawData.map((d) => d.period),
+                      datasets
+                    }}
+                    height="200px"
+                    options={{
+                      maintainAspectRatio: false,
+                      plugins: {
+                        legend: {
+                          display: true,
+                          position: 'top',
+                          labels: { usePointStyle: true, padding: 12, font: { size: 11 } }
+                        },
+                        tooltip: {
+                          callbacks: {
+                            label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.y}건`
                           }
                         }
                       },

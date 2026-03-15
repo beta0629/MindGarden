@@ -300,6 +300,8 @@ const ClientModal = ({
                             placeholder="example@email.com"
                             className="mg-v2-form-input"
                             disabled={type === 'edit'}
+                            autoComplete="email"
+                            list="client-modal-email-domains"
                         />
                         {type === 'create' && (
                             <button
@@ -307,6 +309,7 @@ const ClientModal = ({
                                 onClick={handleEmailDuplicateCheck}
                                 disabled={isCheckingEmail || !safeFormData.email?.trim()}
                                 className="mg-v2-button mg-v2-button-secondary mg-v2-button--compact"
+                                data-action="email-duplicate-check"
                             >
                                 {isCheckingEmail ? '확인 중...' : '중복확인'}
                             </button>
@@ -321,6 +324,13 @@ const ClientModal = ({
                     {type === 'create' && emailCheckStatus === 'available' && (
                         <small className="mg-v2-form-help mg-v2-form-help--success">✅ 사용 가능한 이메일입니다.</small>
                     )}
+                    <datalist id="client-modal-email-domains">
+                        <option value="@gmail.com" />
+                        <option value="@naver.com" />
+                        <option value="@daum.net" />
+                        <option value="@kakao.com" />
+                        <option value="@hanmail.net" />
+                    </datalist>
                 </div>
                 {type === 'create' && (
                     <div className="mg-v2-form-group">

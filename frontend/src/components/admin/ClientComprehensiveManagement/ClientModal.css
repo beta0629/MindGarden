@@ -32,3 +32,14 @@
   line-height: 1.2;
   border-radius: var(--cs-radius-md, 8px);
 }
+
+/* 선택자 강화: .mg-v2-form-group 포함 + data-action — compact 반드시 적용, 전역 규칙 덮어쓰기 방지 */
+.mg-modal.mg-v2-ad-b0kla .mg-modal__body .mg-v2-modal-body .mg-v2-form-group .mg-v2-form-email-row .mg-v2-button.mg-v2-button--compact,
+.mg-modal.mg-v2-ad-b0kla .mg-modal__body .mg-v2-modal-body .mg-v2-form-group .mg-v2-form-email-row [data-action="email-duplicate-check"] {
+  padding: var(--cs-spacing-xs, 0.25rem) var(--cs-spacing-sm, 0.5rem) !important;
+  min-height: 28px !important;
+  max-height: 30px;
+  font-size: var(--cs-text-xs, 0.75rem) !important;
+  line-height: 1.2;
+  border-radius: var(--cs-radius-md, 8px);
+}

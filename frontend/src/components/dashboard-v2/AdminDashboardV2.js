@@ -843,10 +843,27 @@ const AdminDashboardV2 = ({ user: propUser }) => {
 
       <div className="mg-v2-content-growth-row">
         <div className="mg-v2-content-growth-row__left">
-          <div className="mg-v2-ad-b0kla__card">
-            <div className="mg-v2-ad-b0kla__chart-header">
-              <div>
-                <h3 className="mg-v2-ad-b0kla__chart-title">상담 현황 추이</h3>
+          <section
+            className="mg-v2-content-visualization-group"
+            aria-labelledby="admin-viz-group-title"
+          >
+            <div className="mg-v2-content-visualization-group__header">
+              <span
+                className="mg-v2-content-visualization-group__accent"
+                aria-hidden="true"
+              />
+              <h2
+                id="admin-viz-group-title"
+                className="mg-v2-content-visualization-group__title"
+              >
+                시각화
+              </h2>
+            </div>
+            <div className="mg-v2-content-visualization-group__grid">
+              <div className="mg-v2-ad-b0kla__card">
+                <div className="mg-v2-ad-b0kla__chart-header">
+                  <div>
+                    <h3 className="mg-v2-ad-b0kla__chart-title">상담 현황 추이</h3>
                 <p className="mg-v2-ad-b0kla__chart-desc">
                   {chartPeriod === 'weekly' ? '최근 6주 간의 완료 추이' : '최근 6개월 간의 예약 및 완료 추이'}
                 </p>
@@ -905,7 +922,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
                         }
                       ]
                     }}
-                    height="200px"
+                    height="180px"
                     options={{
                       maintainAspectRatio: false,
                       plugins: {
@@ -1025,7 +1042,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
                       labels: rawData.map((d) => d.period),
                       datasets
                     }}
-                    height="200px"
+                    height="180px"
                     options={{
                       maintainAspectRatio: false,
                       plugins: {
@@ -1091,7 +1108,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
                         }
                       ]
                     }}
-                    height="200px"
+                    height="180px"
                     options={{
                       maintainAspectRatio: false,
                       plugins: {
@@ -1115,6 +1132,8 @@ const AdminDashboardV2 = ({ user: propUser }) => {
               })()}
             </div>
           </div>
+            </div>
+          </section>
         </div>
         <div className="mg-v2-ad-b0kla__card">
           <h3 className="mg-v2-ad-b0kla__counselor-title">우수 상담사 평점</h3>

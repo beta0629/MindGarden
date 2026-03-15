@@ -30,12 +30,72 @@
   min-width: 0;
 }
 
+/* 시각화 그룹: 상담 현황 추이 / 예약 vs 완료 / 단계별 현황 (B0KlA 스펙) */
+.mg-v2-content-visualization-group {
+  background: var(--mg-color-surface-main);
+  border: 1px solid var(--mg-color-border-main);
+  border-radius: 16px;
+  padding: var(--mg-spacing-lg, 24px);
+}
+
+.mg-v2-content-visualization-group__header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  margin-bottom: var(--mg-spacing-md, 1rem);
+}
+
+.mg-v2-content-visualization-group__accent {
+  width: 4px;
+  min-width: 4px;
+  height: 1.25em;
+  background: var(--mg-color-primary-main);
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.mg-v2-content-visualization-group__title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--mg-color-text-main);
+  margin: 0;
+}
+
+.mg-v2-content-visualization-group__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto auto;
+  gap: 1rem;
+}
+
+.mg-v2-content-visualization-group .mg-v2-ad-b0kla__card {
+  padding: 16px;
+  margin-bottom: 0;
+}
+
+/* 2+1 그리드: 세 번째 카드(단계별 현황)는 하단 전체 너비 */
+.mg-v2-content-visualization-group__grid .mg-v2-ad-b0kla__card:nth-child(3) {
+  grid-column: 1 / -1;
+}
+
+.mg-v2-content-visualization-group .mg-v2-ad-b0kla__chart-wrapper--donut {
+  min-height: 180px;
+}
+
 .mg-v2-ad-b0kla__chart-wrapper--donut {
   min-height: 220px;
 }
 
 @media (max-width: 900px) {
   .mg-v2-content-growth-row {
+    grid-template-columns: 1fr;
+  }
+
+  .mg-v2-content-visualization-group {
+    padding: 16px;
+  }
+
+  .mg-v2-content-visualization-group__grid {
     grid-template-columns: 1fr;
   }
 }

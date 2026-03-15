@@ -190,6 +190,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                     c.setWorkHistory(request.getWorkHistory().trim());
                 }
             }
+            if (request.getGrade() != null && !request.getGrade().trim().isEmpty()) {
+                consultant.setGrade(request.getGrade().trim());
+            }
             applyRrnAndAddressToUser(consultant, request.getRrnFirst6(), request.getRrnLast1(),
                     request.getAddress(), request.getAddressDetail(), request.getPostalCode());
 
@@ -265,6 +268,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             }
             if (request.getProfileImageUrl() != null && !request.getProfileImageUrl().trim().isEmpty()) {
                 consultant.setProfileImageUrl(request.getProfileImageUrl().trim());
+            }
+            if (request.getGrade() != null && !request.getGrade().trim().isEmpty()) {
+                consultant.setGrade(request.getGrade().trim());
             }
             applyRrnAndAddressToUser(consultant, request.getRrnFirst6(), request.getRrnLast1(),
                     request.getAddress(), request.getAddressDetail(), request.getPostalCode());
@@ -2092,6 +2098,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         if (request.getWorkHistory() != null) {
             consultant.setWorkHistory(request.getWorkHistory().trim().isEmpty() ? null : request.getWorkHistory().trim());
         }
+        if (request.getGrade() != null) {
+            consultant.setGrade(request.getGrade().trim().isEmpty() ? null : request.getGrade().trim());
+        }
 
         User savedConsultant = consultantRepository.save(consultant);
 
@@ -2119,7 +2128,14 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         consultant.setUpdatedAt(LocalDateTime.now());
         
         log.info("🔧 상담사 등급 업데이트: ID={}, 등급={}", id, grade);
-        return userRepository.save(consultant);
+        User saved = userRepository.save(consultant);
+
+        if (saved.getTenantId() != null) {
+            userPersonalDataCacheService.evictUserPersonalDataCache(saved.getTenantId(), saved.getId());
+        }
+        consultantStatsService.evictAllConsultantStatsCache();
+
+        return saved;
     }
 
     @Override

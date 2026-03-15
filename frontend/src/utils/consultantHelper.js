@@ -16,6 +16,42 @@
 
 import { apiGet } from './ajax';
 
+/** CONSULTANT_GRADE 공통코드값 → 배지 level(BEM modifier) 매핑 */
+export const CONSULTANT_GRADE_TO_LEVEL = {
+  CONSULTANT_JUNIOR: 'junior',
+  CONSULTANT_SENIOR: 'senior',
+  CONSULTANT_EXPERT: 'expert',
+  CONSULTANT_MASTER: 'master'
+};
+
+/** CONSULTANT_GRADE 공통코드값 → 한글 라벨 (배지 표시용) */
+export const CONSULTANT_GRADE_TO_LABEL = {
+  CONSULTANT_JUNIOR: '주니어 상담사',
+  CONSULTANT_SENIOR: '시니어 상담사',
+  CONSULTANT_EXPERT: '엑스퍼트 상담사',
+  CONSULTANT_MASTER: '마스터 상담사'
+};
+
+/**
+ * 상담사 배지 표시용 { label, level } 반환. grade 우선, 없으면 연차 기반 fallback
+ * @param {Object} consultant - consultant 객체 (grade, yearsOfExperience 포함)
+ * @returns {{ label: string, level: string }}
+ */
+export const getConsultantBadgeDisplay = (consultant) => {
+  const grade = consultant?.grade;
+  if (grade && CONSULTANT_GRADE_TO_LEVEL[grade]) {
+    return {
+      label: CONSULTANT_GRADE_TO_LABEL[grade] || grade,
+      level: CONSULTANT_GRADE_TO_LEVEL[grade]
+    };
+  }
+  const years = consultant?.yearsOfExperience ?? 0;
+  const num = Number(years);
+  if (num >= 6) return { label: '시니어 상담사', level: 'senior' };
+  if (num >= 3) return { label: '매니어 상담사', level: 'manier' };
+  return { label: '주니어 상담사', level: 'junior' };
+};
+
 /**
  * 상담사 등급별 색상/아이콘 정보 조회
 /**

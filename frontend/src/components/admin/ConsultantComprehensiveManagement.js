@@ -6,17 +6,9 @@ import AdminCommonLayout from '../layout/AdminCommonLayout';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import { getStatusLabel } from '../../utils/colorUtils';
 
-/** 상담사 경력 연차에 따른 레벨 라벨 (카드 배지용) */
-const getConsultantLevel = (consultant) => {
-    const years = consultant?.yearsOfExperience ?? 0;
-    const num = Number(years);
-    if (num >= 6) return { label: '시니어 상담사', level: 'senior' };
-    if (num >= 3) return { label: '매니어 상담사', level: 'manier' };
-    return { label: '주니어 상담사', level: 'junior' };
-};
 import { apiGet, apiPost, apiPut } from '../../utils/ajax';
 import StandardizedApi from '../../utils/standardizedApi';
-import { getAllConsultantsWithStats } from '../../utils/consultantHelper';
+import { getAllConsultantsWithStats, getConsultantBadgeDisplay } from '../../utils/consultantHelper';
 import SpecialtyDisplay from '../ui/SpecialtyDisplay';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import { getCommonCodes } from '../../utils/commonCodeApi';
@@ -63,6 +55,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
         status: 'ACTIVE',
         specialty: [],
         profileImageUrl: '',
+        grade: '',
         rrnFirst6: '',
         rrnLast1: '',
         address: '',
@@ -72,6 +65,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
         workHistory: ''
     });
     const [specialtyCodes, setSpecialtyCodes] = useState([]);
+    const [gradeOptions, setGradeOptions] = useState([]);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [emailCheckStatus, setEmailCheckStatus] = useState(null); // 'checking', 'duplicate', 'available', null
     const [isCheckingEmail, setIsCheckingEmail] = useState(false);
@@ -154,6 +148,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                         postalCode: consultantEntity.postalCode,
                         certification: consultantEntity.certification,
                         workHistory: consultantEntity.workHistory,
+                        grade: consultantEntity.grade,
                         yearsOfExperience: consultantEntity.yearsOfExperience,
                         maxClients: consultantEntity.maxClients,
                         totalConsultations: consultantEntity.totalConsultations,
@@ -468,6 +463,29 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
         };
         loadStatusCodes();
     }, []);
+
+    // 상담사 등급 공통코드 로드 (CONSULTANT_GRADE)
+    useEffect(() => {
+        const loadGradeCodes = async () => {
+            try {
+                const codes = await getCommonCodes('CONSULTANT_GRADE');
+                const list = Array.isArray(codes) ? codes : [];
+                setGradeOptions(list.map(c => ({
+                    codeValue: c.codeValue || c.value,
+                    codeLabel: c.codeLabel || c.codeName || c.label || c.codeValue
+                })));
+            } catch (error) {
+                console.error('상담사 등급 공통코드 로드 실패:', error);
+                setGradeOptions([
+                    { codeValue: 'CONSULTANT_JUNIOR', codeLabel: '주니어 상담사' },
+                    { codeValue: 'CONSULTANT_SENIOR', codeLabel: '시니어 상담사' },
+                    { codeValue: 'CONSULTANT_EXPERT', codeLabel: '엑스퍼트 상담사' },
+                    { codeValue: 'CONSULTANT_MASTER', codeLabel: '마스터 상담사' }
+                ]);
+            }
+        };
+        loadGradeCodes();
+    }, []);
     
     const getFilteredConsultants = useMemo(() => {
         let filtered = consultants;
@@ -545,6 +563,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                     status: consultant.status || 'ACTIVE',
                     specialty: specialties,
                     profileImageUrl: consultant.profileImageUrl || '',
+                    grade: consultant.grade || '',
                     rrnFirst6: '',
                     rrnLast1: '',
                     address: consultant.address || '',
@@ -563,6 +582,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                 status: 'ACTIVE',
                 specialty: [],
                 profileImageUrl: '',
+                grade: '',
                 rrnFirst6: '',
                 rrnLast1: '',
                 address: '',
@@ -587,6 +607,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
             status: 'ACTIVE',
             specialty: [],
             profileImageUrl: '',
+            grade: '',
             rrnFirst6: '',
             rrnLast1: '',
             address: '',
@@ -820,6 +841,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                 phone: phoneVal === '' ? (existing?.phone ?? '') : phoneVal,
                 specialization,
                 profileImageUrl: (data.profileImageUrl != null && data.profileImageUrl !== '') ? data.profileImageUrl : (existing?.profileImageUrl ?? undefined),
+                grade: data.grade != null && String(data.grade).trim() !== '' ? String(data.grade).trim() : undefined,
                 address: data.address != null ? data.address.trim() : undefined,
                 addressDetail: data.addressDetail != null ? data.addressDetail.trim() : undefined,
                 postalCode: data.postalCode != null ? data.postalCode.trim() : undefined,
@@ -1110,7 +1132,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                             </div>
                                                             <div className="mg-v2-profile-card__badges">
                                                                 {(() => {
-                                                                    const { label, level } = getConsultantLevel(consultant);
+                                                                    const { label, level } = getConsultantBadgeDisplay(consultant);
                                                                     return (
                                                                         <span className={`mg-v2-consultant-level-badge mg-v2-consultant-level-badge--${level}`}>
                                                                             {label}
@@ -1264,7 +1286,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                             </div>
                                                             <div className="mg-v2-profile-card__badges">
                                                                 {(() => {
-                                                                    const { label, level } = getConsultantLevel(consultant);
+                                                                    const { label, level } = getConsultantBadgeDisplay(consultant);
                                                                     return (
                                                                         <span className={`mg-v2-consultant-level-badge mg-v2-consultant-level-badge--${level}`}>
                                                                             {label}
@@ -1521,6 +1543,23 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                             placeholder="전화번호를 입력하세요 (선택사항)"
                             className="mg-v2-form-input"
                         />
+                    </div>
+                    <div className="mg-v2-form-group">
+                        <label htmlFor="consultant-grade" className="mg-v2-form-label">등급</label>
+                        <select
+                            id="consultant-grade"
+                            name="grade"
+                            value={formData.grade || ''}
+                            onChange={handleFormChange}
+                            className="mg-v2-form-input"
+                        >
+                            <option value="">등급 선택</option>
+                            {gradeOptions.map((opt) => (
+                                <option key={opt.codeValue} value={opt.codeValue}>
+                                    {opt.codeLabel}
+                                </option>
+                            ))}
+                        </select>
                     </div>
                     <div className="mg-v2-form-group">
                         <label className="mg-v2-form-label">주소 검색</label>

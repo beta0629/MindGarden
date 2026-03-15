@@ -57,6 +57,9 @@ public class ConsultantRegistrationRequest {
     /** 경력사항 — consultants.work_history 매핑 */
     private String workHistory;
 
+    /** 상담사 등급 (CONSULTANT_GRADE 공통코드: CONSULTANT_JUNIOR, CONSULTANT_SENIOR, CONSULTANT_EXPERT, CONSULTANT_MASTER) */
+    private String grade;
+
     private String notes;
 
     /** 프로필 사진 (base64 data URL, 최대 2MB, 리사이즈·크롭 적용) */

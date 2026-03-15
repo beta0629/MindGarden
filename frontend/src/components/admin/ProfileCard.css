@@ -136,6 +136,16 @@
   color: var(--ad-b0kla-green, var(--mg-success-600));
 }
 
+.mg-v2-consultant-level-badge--expert {
+  background: var(--mg-primary-100, #e0e7ff);
+  color: var(--mg-primary-600, #4f46e5);
+}
+
+.mg-v2-consultant-level-badge--master {
+  background: var(--mg-warning-100, #fef3c7);
+  color: var(--mg-warning-700, #b45309);
+}
+
 .mg-v2-profile-card__body {
   display: flex;
   flex-direction: column;

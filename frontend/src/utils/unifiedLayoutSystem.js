@@ -4,6 +4,19 @@
  * 헤더, 드롭다운, z-index 등 모든 레이아웃 요소를 구조적으로 관리
  */
 
+/** GNB v2 드롭다운 패널 클래스 (자체 포지셔닝 사용 → 전역 등록 제외) */
+const V2_DROPDOWN_PANEL_CLASSES = [
+  'mg-v2-dropdown-panel',
+  'mg-v2-profile-dropdown__panel',
+  'mg-v2-quick-actions-dropdown__panel',
+  'mg-v2-notification-dropdown__panel'
+];
+
+const isV2DropdownPanel = (element) => {
+  if (!element?.classList) return false;
+  return V2_DROPDOWN_PANEL_CLASSES.some((cls) => element.classList.contains(cls));
+};
+
 // 전역 레이아웃 관리자
 class UnifiedLayoutManager {
   constructor() {
@@ -89,6 +102,7 @@ class UnifiedLayoutManager {
    */
   registerDropdown(element) {
     if (!element || this.dropdownInstances.has(element)) return;
+    if (isV2DropdownPanel(element)) return;
 
     // 드롭다운 고정 설정
     element.style.position = 'relative';

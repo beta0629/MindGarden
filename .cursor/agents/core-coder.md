@@ -82,6 +82,8 @@ description: 코딩 전용 서브에이전트. Core Solution(MindGarden) 코드 
 - 단일 책임. div 중첩 최대 5단계. `header`, `main`, `section`, `article` 등 시맨틱 태그 사용
 - 상수: API URL, CSS 클래스명, 라벨, 매직 넘버 모두 상수로 정의
 
+- **캡슐화·모듈화**: `/core-solution-encapsulation-modularization` — 작업 단위를 캡슐화·모듈화하고, 동일·유사 코드는 공통 함수·훅·컴포넌트로 추출해 반복 제거. **core-component-manager와 한 팀**: component-manager의 중복 제안·적재적소 배치 제안을 받아 실제 코드 이동·통합·배치를 수행하고, 필요 시 인벤토리·제안서 갱신을 요청한다.
+
 ## 공통
 
 - 주석: 한글 가능. 복잡한 로직만 설명하고 당연한 내용은 생략

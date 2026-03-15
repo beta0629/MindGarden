@@ -12,29 +12,29 @@ const DEFAULT_OFFSET_Y = 8;
 const DEFAULT_VIEWPORT_PADDING = 16;
 const Z_INDEX_DROPDOWN = 'var(--z-dropdown)';
 
+/** panelEl 없을 때 사용하는 기본 패널 너비 (트리거만 있을 때 fallback) */
+const FALLBACK_PANEL_WIDTH = 280;
+const FALLBACK_PANEL_HEIGHT = 240;
+
 /**
  * 트리거 기준 패널 위치 계산 (뷰포트 아래/오른쪽 나가면 플립)
+ * panelEl이 null이면 트리거만으로 기본 top/left 반환 (ref 타이밍 이슈 완화)
  * @param {HTMLElement} triggerEl
- * @param {HTMLElement} panelEl
+ * @param {HTMLElement|null} panelEl
  * @param {{ offsetY?: number, viewportPadding?: number }} options
  * @returns {React.CSSProperties}
  */
 function computePanelStyle(triggerEl, panelEl, options = {}) {
-  if (!triggerEl || !panelEl) return { position: 'fixed', zIndex: Z_INDEX_DROPDOWN };
+  const style = { position: 'fixed', zIndex: Z_INDEX_DROPDOWN };
+  if (!triggerEl) return style;
 
   const offsetY = options.offsetY ?? DEFAULT_OFFSET_Y;
   const pad = options.viewportPadding ?? DEFAULT_VIEWPORT_PADDING;
   const vw = window.innerWidth;
   const vh = window.innerHeight;
   const tr = triggerEl.getBoundingClientRect();
-  const pr = panelEl.getBoundingClientRect();
-  const panelWidth = pr.width;
-  const panelHeight = pr.height;
-
-  const style = {
-    position: 'fixed',
-    zIndex: Z_INDEX_DROPDOWN
-  };
+  const panelWidth = panelEl ? panelEl.getBoundingClientRect().width : FALLBACK_PANEL_WIDTH;
+  const panelHeight = panelEl ? panelEl.getBoundingClientRect().height : FALLBACK_PANEL_HEIGHT;
 
   // 세로: 아래 우선, 공간 부족 시 위로 플립
   const spaceBelow = vh - tr.bottom - pad;
@@ -78,10 +78,11 @@ export function useDropdownPosition(triggerRef, panelRef, isOpen, options = {}) 
 
     const triggerEl = triggerRef?.current;
     const panelEl = panelRef?.current;
-    if (!triggerEl || !panelEl) return;
+    if (!triggerEl) return;
 
     const onFrame = () => {
-      const next = computePanelStyle(triggerEl, panelEl, options);
+      const el = panelRef?.current ?? panelEl;
+      const next = computePanelStyle(triggerEl, el, options);
       setPanelStyle(next);
     };
 

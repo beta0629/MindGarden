@@ -46,6 +46,7 @@ description: 퍼블리셔 전용 서브에이전트. core-planner·core-designer
 - **디자인 스펙**: core-designer 산출물 (docs/design-system/v2/*.md 등)
 - **아토믹**: `.cursor/skills/core-solution-atomic-design/SKILL.md`
 - **토큰·클래스**: `unified-design-tokens.css`, `AdminDashboardB0KlA.css` 클래스명 참조
+- **캡슐화·모듈화**: `/core-solution-encapsulation-modularization` — 동일 마크업 패턴은 공통 HTML 조각·클래스 세트로 정의해 반복 제거. 공통 컴포넌트 목록은 core-component-manager 산출물 참조.
 
 ## 역할 제한
 

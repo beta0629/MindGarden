@@ -14,6 +14,7 @@ description: 디버그 전용 서브에이전트. 에러·500·예외 원인 분
 
 ## 반드시 참조할 표준
 
+- **캡슐화·모듈화**: `/core-solution-encapsulation-modularization` — 수정 제안 시 모듈 경계·중복 제거 방향 고려. 컴포넌트/모듈 정리 제안은 core-component-manager와 협업 가능.
 - **에러 처리**: `docs/standards/ERROR_HANDLING_STANDARD.md` — 예외 처리 패턴, 로깅
 - **로깅**: `docs/standards/LOGGING_STANDARD.md` — 로그 포맷·레벨
 - **API**: `docs/standards/API_CALL_STANDARD.md`, `docs/standards/API_INTEGRATION_STANDARD.md` — API 호출·응답 형식

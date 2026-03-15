@@ -50,7 +50,7 @@ const CHART_BAR_FALLBACK = {
   BORDER: '#2563eb'
 };
 import {
-  CoreFlowPipeline,
+  AdminMetricsVisualization,
   ManualMatchingQueue,
   DepositPendingList,
   SchedulePendingList
@@ -747,7 +747,8 @@ const AdminDashboardV2 = ({ user: propUser }) => {
       <ContentKpiRow items={kpiItems} />
 
       <ContentCard className="mg-v2-content-card--pipeline">
-        <CoreFlowPipeline
+        <AdminMetricsVisualization
+          variant="pipeline"
           loading={loading}
           stats={{
             totalMappings: stats.totalMappings,

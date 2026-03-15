@@ -1003,7 +1003,7 @@
   display: block;
   box-sizing: border-box;
   /* flex 자식이 0으로 줄어 input이 안 보이는 것 방지 (스태프/내담자/상담사 모달 공통) */
-  min-width: 12rem;
+  min-width: 12rem !important;
 }
 
 .mg-modal.mg-v2-ad-b0kla .mg-v2-form-email-row__input-wrap .mg-v2-form-input {

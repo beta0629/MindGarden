@@ -49,6 +49,11 @@
   box-sizing: border-box;
 }
 
+/* B0KlA 모달 본문: min-width: 0으로 인한 이메일 행 입력란 수축 방지 (내담자/상담사/스태프 등록·수정 모달) */
+.mg-modal.mg-v2-ad-b0kla .mg-modal__body .mg-v2-modal-body {
+  min-width: 280px;
+}
+
 .mg-modal__actions {
   flex-shrink: 0;
   display: flex;

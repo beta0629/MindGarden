@@ -11,9 +11,12 @@
   width: 100%;
 }
 
+/* 이메일 입력란: 넓게 차지, 최소 너비로 영역 크게 */
 .mg-modal.mg-v2-ad-b0kla .mg-v2-form-email-row .mg-v2-form-input {
   flex: 1;
-  min-width: 200px; /* 이메일 란 최소 너비 보장 */
+  min-width: 320px; /* 이메일 영역 크게 */
+  padding: 10px 14px;
+  font-size: 15px;
 }
 
 .mg-modal.mg-v2-ad-b0kla .mg-v2-form-email-row .mg-v2-button {

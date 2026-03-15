@@ -731,10 +731,14 @@ const AdminDashboardV2 = ({ user: propUser }) => {
       id: 'completion',
       icon: <Check size={28} />,
       label: '완료율',
-      value: stats.consultationStats?.completionRate != null ? `${stats.consultationStats.completionRate}%` : todayStats.completedToday,
+      value: stats.consultationStats?.completionRate != null ? `${stats.consultationStats.completionRate}%` : 'N/A',
+      subtitle: stats.consultationStats?.completionRate == null && todayStats.completedToday != null
+        ? `오늘 완료 ${todayStats.completedToday}건`
+        : undefined,
       badge: stats.consultationStats?.completionRateChange != null
         ? `${stats.consultationStats.completionRateChange > 0 ? '+' : ''}${stats.consultationStats.completionRateChange}%`
         : undefined,
+      badgeTitle: stats.consultationStats?.completionRateChange != null ? '전월 대비 변동' : undefined,
       badgeVariant: 'blue',
       iconVariant: 'blue'
     }

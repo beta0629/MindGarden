@@ -25,7 +25,10 @@ const ContentKpiRow = ({ items = [] }) => {
               <div className="mg-v2-content-kpi-card__top">
                 <span className="mg-v2-content-kpi-card__label">{item.label}</span>
                 {item.badge != null && (
-                  <span className={`mg-v2-content-kpi-card__badge mg-v2-content-kpi-card__badge--${item.badgeVariant || 'green'}`}>
+                  <span
+                    className={`mg-v2-content-kpi-card__badge mg-v2-content-kpi-card__badge--${item.badgeVariant || 'green'}`}
+                    title={item.badgeTitle ?? undefined}
+                  >
                     {item.badge}
                   </span>
                 )}

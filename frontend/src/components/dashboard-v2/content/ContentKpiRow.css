@@ -4,10 +4,12 @@
  * @since 2025-02-22
  */
 
+/* 그리드 필수: 카드 행 레이아웃. 덮어쓰지 말 것 */
 .mg-v2-content-kpi-row {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: var(--mg-layout-grid-gap, 1.5rem);
+  min-width: 0;
 }
 
 .mg-v2-content-kpi-card {
@@ -15,6 +17,7 @@
   align-items: center;
   gap: 1.25rem;
   padding: 1.5rem;
+  min-width: 0; /* flex 자식 수축 시 그리드 셀 넘침 방지 */
   background: var(--ad-b0kla-card-bg, var(--mg-white));
   border: 1px solid var(--ad-b0kla-border, #e2e8f0);
   border-radius: var(--ad-b0kla-radius, 24px);
@@ -73,7 +76,7 @@ button.mg-v2-content-kpi-card.mg-v2-content-kpi-card--clickable:hover {
 
 .mg-v2-content-kpi-card__info {
   flex: 1;
-  min-width: 0;
+  min-width: 0; /* flex 맥락에서 그리드가 찌그러지지 않도록 */
 }
 
 .mg-v2-content-kpi-card__top {

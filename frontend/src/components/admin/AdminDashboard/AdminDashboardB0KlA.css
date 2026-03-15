@@ -1016,16 +1016,38 @@
   flex-shrink: 0;
 }
 
-/* 이메일 행 중복확인 버튼 compact — 한 줄에 입력란과 버튼이 자연스럽게 배치 */
+/* 이메일 행 중복확인 버튼 — 버튼으로 명확히 보이도록 (ADMIN_MODAL_EMAIL_ROW_TARGET_SPEC, CLIENT_MODAL_EMAIL_BUTTON_SPEC) */
 .mg-modal.mg-v2-ad-b0kla .mg-v2-form-email-row .mg-v2-button.mg-v2-button--compact,
 .mg-modal.mg-v2-ad-b0kla .mg-v2-form-email-row [data-action="email-duplicate-check"],
 .mg-modal.mg-v2-ad-b0kla .mg-v2-form-group .mg-v2-form-email-row .mg-v2-button {
-  padding: 6px 12px;
-  min-height: 32px;
-  font-size: 13px;
+  /* compact 크기 */
+  padding: var(--mg-spacing-xs) var(--mg-spacing-sm);
+  min-height: 28px;
+  font-size: 0.75rem;
   line-height: 1.2;
   border-radius: 8px;
   white-space: nowrap;
+  /* 버튼 비주얼 강화: input과 구분되는 아웃라인 스타일 */
+  background-color: transparent;
+  border: 2px solid var(--ad-b0kla-border);
+  color: var(--ad-b0kla-text-secondary);
+  cursor: pointer;
+  transition: border-color 0.2s, background-color 0.2s, color 0.2s;
+}
+
+.mg-modal.mg-v2-ad-b0kla .mg-v2-form-email-row .mg-v2-button.mg-v2-button--compact:hover:not(:disabled),
+.mg-modal.mg-v2-ad-b0kla .mg-v2-form-email-row [data-action="email-duplicate-check"]:hover:not(:disabled),
+.mg-modal.mg-v2-ad-b0kla .mg-v2-form-group .mg-v2-form-email-row .mg-v2-button:hover:not(:disabled) {
+  border-color: var(--ad-b0kla-green);
+  color: var(--ad-b0kla-green);
+  background-color: var(--ad-b0kla-green-bg);
+}
+
+.mg-modal.mg-v2-ad-b0kla .mg-v2-form-email-row .mg-v2-button.mg-v2-button--compact:focus-visible,
+.mg-modal.mg-v2-ad-b0kla .mg-v2-form-email-row [data-action="email-duplicate-check"]:focus-visible,
+.mg-modal.mg-v2-ad-b0kla .mg-v2-form-group .mg-v2-form-email-row .mg-v2-button:focus-visible {
+  outline: 2px solid var(--ad-b0kla-green);
+  outline-offset: 2px;
 }
 
 /* 전문분야 태그 선택 (상담사 등록/수정 모달) */

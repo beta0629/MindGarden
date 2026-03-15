@@ -187,6 +187,7 @@
 - `docs/debug/EMAIL_ROW_LAYOUT_PRECISE_ANALYSIS.md` — 깨짐 원인·캐스케이드 분석
 - `docs/debug/EMAIL_ROW_MARKUP_ACCESSIBILITY_ANALYSIS.md` — 마크업·접근성
 - `.cursor/skills/core-solution-encapsulation-modularization/SKILL.md` — 캡슐화·모듈화 원칙
+- **`docs/project-management/EMAIL_ROW_COMPONENT_EXTRACTION_PROPOSAL.md`** — 사용처 전수 목록(파일·라인), 공통 Molecules 추출 제안·수정 위치 요약
 
 ---
 

@@ -1567,16 +1567,18 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                     <div className="mg-v2-form-group">
                         <label className="mg-v2-form-label">이메일 *</label>
                         <div className="mg-v2-form-email-row">
-                            <input
-                                type="email"
-                                name="email"
-                                value={formData.email || ''}
-                                onChange={handleFormChange}
-                                placeholder="example@email.com"
-                                className="mg-v2-form-input"
-                                required
-                                disabled={modalType === 'edit'}
-                            />
+                            <div className="mg-v2-form-email-row__input-wrap">
+                                <input
+                                    type="email"
+                                    name="email"
+                                    value={formData.email || ''}
+                                    onChange={handleFormChange}
+                                    placeholder="example@email.com"
+                                    className="mg-v2-form-input"
+                                    required
+                                    disabled={modalType === 'edit'}
+                                />
+                            </div>
                             {modalType === 'create' && (
                                 <button
                                     type="button"

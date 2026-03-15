@@ -4,28 +4,19 @@
  * 특이도: .mg-modal__body .mg-v2-modal-body 포함해 AdminDashboardB0KlA.css 공통 규칙보다 우선 적용.
  */
 
-/* 이메일 + 중복확인 행: 전체 폭 사용, input이 넓게 차지하고 버튼은 고정 */
-.mg-modal.mg-v2-ad-b0kla .mg-modal__body .mg-v2-modal-body .mg-v2-form-email-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-}
-
-/* 이메일 입력란: 전역 width:100% 충돌 방지, flex로 남은 공간만 차지 */
-.mg-modal.mg-v2-ad-b0kla .mg-modal__body .mg-v2-modal-body .mg-v2-form-email-row .mg-v2-form-input {
+/* 이메일 행: 래퍼가 flex 공간 차지, input은 래퍼 안에서 100% */
+.mg-modal.mg-v2-ad-b0kla .mg-modal__body .mg-v2-modal-body .mg-v2-form-email-row__input-wrap {
   flex: 1 1 0%;
   min-width: 0;
-  width: auto !important;
-  max-width: none;
+  display: block;
+  box-sizing: border-box;
+}
+
+.mg-modal.mg-v2-ad-b0kla .mg-modal__body .mg-v2-modal-body .mg-v2-form-email-row__input-wrap .mg-v2-form-input {
+  width: 100%;
   padding: 10px 14px;
   font-size: 15px;
   box-sizing: border-box;
-}
-@media (min-width: 480px) {
-  .mg-modal.mg-v2-ad-b0kla .mg-modal__body .mg-v2-modal-body .mg-v2-form-email-row .mg-v2-form-input {
-    min-width: 200px;
-  }
 }
 
 .mg-modal.mg-v2-ad-b0kla .mg-modal__body .mg-v2-modal-body .mg-v2-form-email-row .mg-v2-button {

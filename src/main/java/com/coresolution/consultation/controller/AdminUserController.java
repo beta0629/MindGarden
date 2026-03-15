@@ -61,10 +61,10 @@ public class AdminUserController {
         try {
             log.info("전체 사용자 목록 조회 요청 - 비활성 포함: {}, 역할 필터: {}", includeInactive, role);
 
-            // UserService를 통해 사용자 조회 (활성/전체 선택 가능)
-            List<User> users = includeInactive ?
-                userService.getRepository().findAll() :
-                userService.findAllActive();
+            // 현재 테넌트 기준으로만 조회 (includeInactive 여부에 따라 활성만 / 전체)
+            List<User> users = includeInactive
+                ? userService.findAllByCurrentTenant()
+                : userService.findAllActive();
 
             // 역할 필터 적용 (선택)
             if (role != null && !role.isBlank()) {

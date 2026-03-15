@@ -290,19 +290,21 @@ const ClientModal = ({
                 <div className="mg-v2-form-group">
                     <label htmlFor="email" className="mg-v2-form-label">이메일 *</label>
                     <div className="mg-v2-form-email-row">
-                        <input
-                            type="email"
-                            id="email"
-                            name="email"
-                            value={safeFormData.email}
-                            onChange={handleInputChange}
-                            required
-                            placeholder="example@email.com"
-                            className="mg-v2-form-input"
-                            disabled={type === 'edit'}
-                            autoComplete="email"
-                            list="client-modal-email-domains"
-                        />
+                        <div className="mg-v2-form-email-row__input-wrap">
+                            <input
+                                type="email"
+                                id="email"
+                                name="email"
+                                value={safeFormData.email}
+                                onChange={handleInputChange}
+                                required
+                                placeholder="example@email.com"
+                                className="mg-v2-form-input"
+                                disabled={type === 'edit'}
+                                autoComplete="email"
+                                list="client-modal-email-domains"
+                            />
+                        </div>
                         {type === 'create' && (
                             <button
                                 type="button"

@@ -210,6 +210,13 @@ public class UserServiceImpl implements UserService {
         List<User> users = userRepository.findAllActiveByTenantId(tenantId);
         return decryptUserListPersonalData(users);
     }
+
+    @Override
+    public List<User> findAllByCurrentTenant() {
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        List<User> users = userRepository.findByTenantId(tenantId);
+        return decryptUserListPersonalData(users);
+    }
     
     @Override
     public Optional<User> findActiveById(Long id) {

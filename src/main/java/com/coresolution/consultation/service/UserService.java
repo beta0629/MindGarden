@@ -250,9 +250,15 @@ public interface UserService extends BaseService<User, Long> {
     void changeUserGrade(Long id, String newGrade);
     
     /**
+     * 현재 테넌트의 전체 사용자 조회 (비활성 포함, isDeleted=false만)
+     * 관리자 사용자 목록(includeInactive=true) 등에서 사용.
+     */
+    List<User> findAllByCurrentTenant();
+
+    /**
      * @Deprecated - 표준화 2025-12-07: 브랜치 개념 제거됨, tenantId만 사용
      * 레거시 호환을 위해 유지되지만 새로운 코드에서는 사용하지 마세요.
-     * 대신 {@link #findAllActive()} 또는 Repository의 {@code findByTenantId()}를 사용하세요.
+     * 대신 {@link #findAllActive()} 또는 {@link #findAllByCurrentTenant()}를 사용하세요.
      */
     @Deprecated
     List<User> findByBranchCode(String branchCode);

@@ -746,18 +746,20 @@ const StaffManagement = ({ embedded = false }) => {
             <div className="mg-v2-form-group">
               <label htmlFor="staff-email" className="mg-v2-form-label">이메일 *</label>
               <div className="mg-v2-form-email-row">
-                <input
-                  type="email"
-                  id="staff-email"
-                  name="email"
-                  value={createForm.email}
-                  onChange={handleCreateFormChange}
-                  required
-                  placeholder="example@email.com"
-                  className="mg-v2-form-input"
-                  disabled={createStaffModal.submitting}
-                  autoComplete="email"
-                />
+                <div className="mg-v2-form-email-row__input-wrap">
+                  <input
+                    type="email"
+                    id="staff-email"
+                    name="email"
+                    value={createForm.email}
+                    onChange={handleCreateFormChange}
+                    required
+                    placeholder="example@email.com"
+                    className="mg-v2-form-input"
+                    disabled={createStaffModal.submitting}
+                    autoComplete="email"
+                  />
+                </div>
                 <button
                   type="button"
                   onClick={handleStaffEmailDuplicateCheck}

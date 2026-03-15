@@ -24,11 +24,13 @@ public interface LedgerRepository extends JpaRepository<Ledger, Long> {
     List<Ledger> findByTenantIdAndAccountId(@Param("tenantId") String tenantId, @Param("accountId") Long accountId);
     
     /**
-     * 테넌트별 기간별 원장 조회
+     * 테넌트별 기간별 원장 조회 (요청 기간과 겹치는 원장 포함).
+     * 원장은 월 단위(periodEnd=월 말일)이므로, 요청이 당월 1일~오늘이어도 해당 월 원장이 조회되도록
+     * periodStart <= endDate AND periodEnd >= startDate 조건 사용.
      */
-    @Query("SELECT l FROM Ledger l WHERE l.tenantId = :tenantId AND l.periodStart >= :startDate AND l.periodEnd <= :endDate ORDER BY l.account.id, l.periodStart")
-    List<Ledger> findByTenantIdAndPeriod(@Param("tenantId") String tenantId, 
-                                          @Param("startDate") LocalDate startDate, 
+    @Query("SELECT l FROM Ledger l WHERE l.tenantId = :tenantId AND l.periodStart <= :endDate AND l.periodEnd >= :startDate ORDER BY l.account.id, l.periodStart")
+    List<Ledger> findByTenantIdAndPeriod(@Param("tenantId") String tenantId,
+                                          @Param("startDate") LocalDate startDate,
                                           @Param("endDate") LocalDate endDate);
     
     /**

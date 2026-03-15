@@ -10,22 +10,20 @@
 3. 등록 성공 토스트 후 목록 새로고침(또는 자동 재조회)
 4. **결과: 총 스태프 0명, "등록된 스태프가 없습니다"**
 
-## 원인 (근본 원인)
+## 원인 (근본 원인) — 2가지
 
+### 1) 백엔드: 테넌트 미적용 (이미 수정됨)
 **AdminUserController `GET /api/v1/admin/user-management`** 에서  
-`includeInactive=true` 일 때 **테넌트 필터 없이** `userService.getRepository().findAll()` 을 사용하고 있었음.
+`includeInactive=true` 일 때 **테넌트 필터 없이** `userService.getRepository().findAll()` 을 사용하고 있었음.  
+→ 수정: `userService.findAllByCurrentTenant()` 사용.
 
-- `includeInactive=false` → `userService.findAllActive()`  
-  → **현재 테넌트** + 활성만 조회 (`findAllActiveByTenantId(tenantId)`) ✅
-- `includeInactive=true` → `getRepository().findAll()`  
-  → **전 테넌트** 조회 (JPA `findAll()`) ❌
+### 2) 프론트: 응답 파싱 오류 (추가 수정)
+**ajax.js** 의 `apiGet` 은 백엔드가 `{ success, data }` 형태로 주면 **`data`만 반환**함.  
+그런데 **StaffManagement** 에서는 `response.data` 를 배열로 기대하고 있어,  
+실제로는 `response` 자체가 배열인데 `response.data` 를 쓰면서 항상 `undefined` → **목록이 항상 []** 이 됨.
 
-스태프 목록은 프론트에서 `includeInactive: true`, `role: STAFF` 로 요청함.  
-백엔드에서 `findAll()` 은 테넌트 조건이 없어, 환경에 따라:
-- 멀티테넌트/필터 적용 시: 현재 테넌트 사용자만 노출되도록 다른 레이어에서 걸러질 수 있고,
-- 또는 **현재 테넌트 컨텍스트와 다른 결과**가 나와 목록이 비어 보일 수 있음.
-
-또한 **테넌트 스코프를 지키지 않으면** 다른 테넌트 사용자 노출 위험이 있음.
+- 기대한 코드: `response = { data: [ ... ] }` → `response.data` 사용
+- 실제 동작: `response = [ ... ]` (apiGet이 이미 unwrap) → `response.data` 는 undefined → list = []
 
 ## 수정 내용
 
@@ -43,6 +41,11 @@
      **`userService.findAllByCurrentTenant()`** 사용하도록 변경
 
 이제 스태프 목록은 항상 **현재 테넌트** 기준으로만 조회되며, 방금 등록한 스태프도 목록에 표시됨.
+
+### 4) StaffManagement.js (프론트 응답 파싱)
+- `loadUsers` / `openAddStaffModal` 에서  
+  `response` 가 이미 배열인 경우를 처리:  
+  `list = Array.isArray(response) ? response : (response?.data && Array.isArray(response.data) ? response.data : []);`
 
 ## 개발 서버 로그로 확인하는 방법 (코어 쉘)
 

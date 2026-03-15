@@ -145,7 +145,8 @@ const StaffManagement = ({ embedded = false }) => {
         includeInactive: true,
         role: ROLE_STAFF
       });
-      const list = response?.data && Array.isArray(response.data) ? response.data : [];
+      // apiGet이 { success, data } 응답 시 data만 반환하므로 배열 직접 처리
+      const list = Array.isArray(response) ? response : (response?.data && Array.isArray(response.data) ? response.data : []);
       setStaffList(list);
     } catch (err) {
       console.error('스태프 목록 조회 실패:', err);
@@ -171,7 +172,7 @@ const StaffManagement = ({ embedded = false }) => {
     setAddStaffModal((prev) => ({ ...prev, open: true, loading: true, nonStaffUsers: [] }));
     try {
       const response = await StandardizedApi.get(API_USER_MANAGEMENT, { includeInactive: true });
-      const list = response?.data && Array.isArray(response.data) ? response.data : [];
+      const list = Array.isArray(response) ? response : (response?.data && Array.isArray(response.data) ? response.data : []);
       const roleOf = (u) => (typeof u.role === 'string' ? u.role : u.role?.name) || '';
       const nonStaff = list.filter((u) => roleOf(u) !== ROLE_STAFF);
       setAddStaffModal((prev) => ({ ...prev, nonStaffUsers: nonStaff, loading: false }));

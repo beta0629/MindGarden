@@ -18,7 +18,7 @@ const PipelineStepCard = ({ title, badgeValue, badgeLabel, variant = 'neutral', 
   return (
     <article className={`pipeline-step-card pipeline-step-card--${variant}`}>
       {Icon && (
-        <div className="pipeline-step-card__icon">
+        <div className="pipeline-step-card__icon" aria-hidden="true">
           <Icon size={20} aria-hidden />
         </div>
       )}

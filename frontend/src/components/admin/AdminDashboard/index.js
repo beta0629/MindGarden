@@ -6,6 +6,7 @@
  */
 
 export { default as CoreFlowPipeline } from './organisms/CoreFlowPipeline';
+export { default as AdminMetricsVisualization } from './organisms/AdminMetricsVisualization';
 export { default as ManualMatchingQueue } from './organisms/ManualMatchingQueue';
 export { default as DepositPendingList } from './organisms/DepositPendingList';
 export { default as SchedulePendingList } from './organisms/SchedulePendingList';

@@ -30,7 +30,7 @@ import {
   ContentSection,
   ContentCard
 } from './content';
-import { API_BASE_URL } from '../../constants/api';
+import { API_BASE_URL, SCHEDULE_API } from '../../constants/api';
 import { getDefaultApiHeaders } from '../../utils/apiHeaders';
 import StatisticsDashboard from '../admin/StatisticsDashboard';
 import SpecialtyManagementModal from '../consultant/SpecialtyManagementModal';
@@ -182,6 +182,8 @@ const AdminDashboardV2 = ({ user: propUser }) => {
     totalClients: 0,
     totalMappings: 0,
     activeMappings: 0,
+    /** 스케줄 등록 대기(의견수렴) 건수. GET /api/v1/admin/schedules/statistics 연동 */
+    schedulePendingCount: null,
     consultantRatingStats: {
       totalRatings: 0,
       averageScore: 0,
@@ -337,15 +339,23 @@ const AdminDashboardV2 = ({ user: propUser }) => {
     setLoading(true);
     try {
       const headers = { 'Content-Type': 'application/json', ...getDefaultApiHeaders() };
-      const [consultantsRes, clientsRes, mappingsRes, ratingRes, vacationRes, consultationRes] =
-        await Promise.all([
-          fetch('/api/v1/admin/consultants/with-vacation?date=' + new Date().toISOString().split('T')[0], { headers, credentials: 'include' }),
-          fetch('/api/v1/admin/clients/with-mapping-info', { headers, credentials: 'include' }),
-          fetch('/api/v1/admin/mappings', { headers, credentials: 'include' }),
-          fetch('/api/v1/admin/consultant-rating-stats', { headers, credentials: 'include' }),
-          fetch('/api/v1/admin/vacation-statistics?period=month', { headers, credentials: 'include' }),
-          fetch('/api/v1/admin/statistics/consultation-completion', { headers, credentials: 'include' })
-        ]);
+      const [
+        consultantsRes,
+        clientsRes,
+        mappingsRes,
+        ratingRes,
+        vacationRes,
+        consultationRes,
+        scheduleStatsRes
+      ] = await Promise.all([
+        fetch('/api/v1/admin/consultants/with-vacation?date=' + new Date().toISOString().split('T')[0], { headers, credentials: 'include' }),
+        fetch('/api/v1/admin/clients/with-mapping-info', { headers, credentials: 'include' }),
+        fetch('/api/v1/admin/mappings', { headers, credentials: 'include' }),
+        fetch('/api/v1/admin/consultant-rating-stats', { headers, credentials: 'include' }),
+        fetch('/api/v1/admin/vacation-statistics?period=month', { headers, credentials: 'include' }),
+        fetch('/api/v1/admin/statistics/consultation-completion', { headers, credentials: 'include' }),
+        fetch(SCHEDULE_API.STATISTICS, { headers, credentials: 'include' })
+      ]);
 
       let totalConsultants = 0;
       let totalClients = 0;
@@ -419,11 +429,33 @@ const AdminDashboardV2 = ({ user: propUser }) => {
         }
       }
 
+      let schedulePendingCount = null;
+      if (scheduleStatsRes.ok) {
+        try {
+          const d = await scheduleStatsRes.json();
+          const payload = d?.data != null ? d.data : d;
+          if (payload != null) {
+            const booked = payload.bookedSchedules;
+            const statusCount = payload.statusCount;
+            if (typeof booked === 'number') {
+              schedulePendingCount = booked;
+            } else if (statusCount && typeof statusCount.BOOKED === 'number') {
+              schedulePendingCount = statusCount.BOOKED;
+            } else if (statusCount && typeof statusCount.BOOKED === 'string') {
+              schedulePendingCount = parseInt(statusCount.BOOKED, 10) || 0;
+            }
+          }
+        } catch (e) {
+          console.error('스케줄 통계 파싱 실패:', e);
+        }
+      }
+
       setStats({
         totalConsultants,
         totalClients,
         totalMappings,
         activeMappings,
+        schedulePendingCount,
         consultantRatingStats,
         vacationStats,
         consultationStats
@@ -714,13 +746,14 @@ const AdminDashboardV2 = ({ user: propUser }) => {
 
       <ContentKpiRow items={kpiItems} />
 
-      <ContentCard>
+      <ContentCard className="mg-v2-content-card--pipeline">
         <CoreFlowPipeline
+          loading={loading}
           stats={{
             totalMappings: stats.totalMappings,
             pendingDepositCount: pendingDepositStats.count,
             activeMappings: stats.activeMappings,
-            schedulePendingCount: 0
+            schedulePendingCount: stats.schedulePendingCount
           }}
         />
       </ContentCard>

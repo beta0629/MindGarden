@@ -641,12 +641,18 @@
 }
 
 .mg-v2-ad-b0kla .mg-v2-card,
-.mg-v2-ad-b0kla .mg-dashboard-section,
-.mg-v2-ad-b0kla .core-flow-pipeline {
+.mg-v2-ad-b0kla .mg-dashboard-section {
   background: var(--ad-b0kla-card-bg);
   border: 1px solid var(--ad-b0kla-border);
   border-radius: var(--ad-b0kla-radius);
   box-shadow: var(--ad-b0kla-shadow);
+}
+
+/* ContentCard--pipeline 내부 파이프라인: 이중 카드 제거, ContentCard와 하나로 보이게 */
+.mg-v2-ad-b0kla .mg-v2-content-card--pipeline .core-flow-pipeline {
+  background: transparent;
+  border: none;
+  box-shadow: none;
 }
 
 /* ContentSection 내부 mg-stats-grid: 그리드만, 카드 스타일 제거 (섹션이 카드) */

@@ -5,7 +5,7 @@
   margin-bottom: var(--mg-spacing-lg, 24px);
   width: 100%;
   min-width: 0;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .core-flow-pipeline__steps {
@@ -21,6 +21,12 @@
   -webkit-overflow-scrolling: touch;
 }
 
+.core-flow-pipeline__loading {
+  padding: var(--mg-spacing-lg, 24px);
+  color: var(--mg-text-secondary, #64748b);
+  font-size: var(--mg-font-size-sm, 0.875rem);
+}
+
 /* 데스크톱: 카드 균형 배치 (좌우 여백 비슷하게) */
 @media (min-width: 1280px) {
   .core-flow-pipeline__steps {
@@ -34,4 +40,10 @@
   flex-shrink: 0;
   border-top: 2px dashed var(--mg-border-default, #cbd5e1);
   margin-top: 40px;
+}
+
+/* 포커스 가능한 단계 카드: B0KlA 접근성 포커스 링 */
+.pipeline-step-card:focus-visible {
+  outline: 2px solid var(--ad-b0kla-green, var(--mg-focus-ring-color, #059669));
+  outline-offset: 2px;
 }

@@ -17,3 +17,9 @@
   box-sizing: border-box;
   overflow: hidden;
 }
+
+/* 파이프라인 래퍼: 가로 스크롤이 잘리지 않도록 overflow 허용, 패딩은 __steps에서만 */
+.mg-v2-content-card--pipeline {
+  overflow: visible;
+  padding: var(--mg-spacing-md, 12px) 0;
+}

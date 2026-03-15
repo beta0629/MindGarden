@@ -23,6 +23,17 @@
   gap: var(--mg-layout-grid-gap, 1.5rem);
 }
 
+.mg-v2-content-growth-row__left {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-layout-grid-gap, 1.5rem);
+  min-width: 0;
+}
+
+.mg-v2-ad-b0kla__chart-wrapper--donut {
+  min-height: 220px;
+}
+
 @media (max-width: 900px) {
   .mg-v2-content-growth-row {
     grid-template-columns: 1fr;

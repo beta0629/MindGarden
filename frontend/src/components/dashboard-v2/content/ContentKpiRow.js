@@ -50,12 +50,14 @@ const ContentKpiRow = ({ items = [] }) => {
           </>
         );
         const hasClick = typeof item.onClick === 'function';
+        const accentClass = `mg-v2-content-kpi-card--accent-${iconVariant}`;
+        const cardClassName = `mg-v2-content-kpi-card ${accentClass}`;
         if (hasClick) {
           return (
             <button
               key={item.id || idx}
               type="button"
-              className="mg-v2-content-kpi-card mg-v2-content-kpi-card--clickable"
+              className={`${cardClassName} mg-v2-content-kpi-card--clickable`}
               onClick={item.onClick}
             >
               {cardContent}
@@ -63,7 +65,7 @@ const ContentKpiRow = ({ items = [] }) => {
           );
         }
         return (
-          <div key={item.id || idx} className="mg-v2-content-kpi-card">
+          <div key={item.id || idx} className={cardClassName}>
             {cardContent}
           </div>
         );

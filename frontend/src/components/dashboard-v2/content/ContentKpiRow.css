@@ -20,9 +20,26 @@
   min-width: 0; /* flex 자식 수축 시 그리드 셀 넘침 방지 */
   background: var(--ad-b0kla-card-bg, var(--mg-white));
   border: 1px solid var(--ad-b0kla-border, #e2e8f0);
-  border-radius: var(--ad-b0kla-radius, 24px);
+  border-radius: 16px;
   box-shadow: var(--ad-b0kla-shadow, 0 8px 24px rgba(0, 0, 0, 0.05));
   transition: all 0.2s;
+}
+
+/* B0KlA 통일: 좌측 세로 악센트 4px */
+.mg-v2-content-kpi-card--accent-green {
+  border-left: 4px solid var(--ad-b0kla-green, #4b745c);
+}
+
+.mg-v2-content-kpi-card--accent-orange {
+  border-left: 4px solid var(--ad-b0kla-orange, #e8a87c);
+}
+
+.mg-v2-content-kpi-card--accent-blue {
+  border-left: 4px solid var(--ad-b0kla-blue, #6d9dc5);
+}
+
+.mg-v2-content-kpi-card--accent-gray {
+  border-left: 4px solid var(--ad-b0kla-text-secondary, #4a5568);
 }
 
 .mg-v2-content-kpi-card:hover {

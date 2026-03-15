@@ -1028,6 +1028,17 @@
   border-left: 4px solid var(--ad-b0kla-green);
 }
 
+/* ContentSection 제목 B0KlA 통일: 좌측 악센트 4px, 16px 600 */
+.mg-v2-ad-b0kla .mg-v2-content-section__title-wrap {
+  padding-left: 12px;
+  border-left: 4px solid var(--ad-b0kla-green);
+}
+
+.mg-v2-ad-b0kla .mg-v2-content-section__title {
+  font-size: 16px;
+  font-weight: 600;
+}
+
 /* B0KlA 뱃지 스타일 */
 .mg-v2-ad-b0kla .mg-v2-badge.status-active,
 .mg-v2-ad-b0kla .mg-v2-badge.payment-approved {

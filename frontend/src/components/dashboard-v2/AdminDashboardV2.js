@@ -49,6 +49,24 @@ const CHART_BAR_FALLBACK = {
   FILL: '#059669',
   BORDER: '#2563eb'
 };
+
+/** 단계별 현황 도넛 차트 라벨 (5단계) */
+const STEP_CHART_LABELS = [
+  '매칭',
+  '입금 확인',
+  '회기 권한',
+  '스케줄 등록',
+  '회계처리'
+];
+
+/** 단계별 도넛 B0KlA 색상 (CSS 변수) */
+const STEP_CHART_COLORS = [
+  'var(--ad-b0kla-green)',
+  'var(--ad-b0kla-orange)',
+  'var(--ad-b0kla-green)',
+  'var(--ad-b0kla-blue)',
+  'var(--ad-b0kla-text-secondary)'
+];
 import {
   AdminMetricsVisualization,
   ManualMatchingQueue,
@@ -764,95 +782,154 @@ const AdminDashboardV2 = ({ user: propUser }) => {
       </ContentCard>
 
       <div className="mg-v2-content-growth-row">
-        <div className="mg-v2-ad-b0kla__card">
-          <div className="mg-v2-ad-b0kla__chart-header">
-            <div>
-              <h3 className="mg-v2-ad-b0kla__chart-title">상담 현황 추이</h3>
-              <p className="mg-v2-ad-b0kla__chart-desc">
-                {chartPeriod === 'weekly' ? '최근 6주 간의 완료 추이' : '최근 6개월 간의 예약 및 완료 추이'}
-              </p>
+        <div className="mg-v2-content-growth-row__left">
+          <div className="mg-v2-ad-b0kla__card">
+            <div className="mg-v2-ad-b0kla__chart-header">
+              <div>
+                <h3 className="mg-v2-ad-b0kla__chart-title">상담 현황 추이</h3>
+                <p className="mg-v2-ad-b0kla__chart-desc">
+                  {chartPeriod === 'weekly' ? '최근 6주 간의 완료 추이' : '최근 6개월 간의 예약 및 완료 추이'}
+                </p>
+              </div>
+              <div className="mg-v2-ad-b0kla__pill-toggle">
+                <button
+                  type="button"
+                  className={`mg-v2-ad-b0kla__pill ${chartPeriod === 'monthly' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+                  onClick={() => setChartPeriod('monthly')}
+                >
+                  월간
+                </button>
+                <button
+                  type="button"
+                  className={`mg-v2-ad-b0kla__pill ${chartPeriod === 'weekly' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+                  onClick={() => setChartPeriod('weekly')}
+                >
+                  주간
+                </button>
+              </div>
             </div>
-            <div className="mg-v2-ad-b0kla__pill-toggle">
-              <button
-                type="button"
-                className={`mg-v2-ad-b0kla__pill ${chartPeriod === 'monthly' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
-                onClick={() => setChartPeriod('monthly')}
-              >
-                월간
-              </button>
-              <button
-                type="button"
-                className={`mg-v2-ad-b0kla__pill ${chartPeriod === 'weekly' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
-                onClick={() => setChartPeriod('weekly')}
-              >
-                주간
-              </button>
-            </div>
-          </div>
-          <div
-            className="mg-v2-ad-b0kla__chart-placeholder mg-v2-ad-b0kla__chart-wrapper"
-            ref={chartBarWrapperRef}
-          >
-            {(() => {
-              const isWeekly = chartPeriod === 'weekly';
-              const rawData = isWeekly
-                ? (stats.consultationStats?.weeklyData?.length > 0
-                    ? stats.consultationStats.weeklyData.slice(0, 6)
-                    : getEmptyWeeklyChartData(6))
-                : (stats.consultationStats?.monthlyData?.length > 0
-                    ? stats.consultationStats.monthlyData.slice(0, 6)
-                    : getEmptyMonthlyChartData(6));
-              const values = rawData.map((d) => d.completedCount || 0);
-              const allZero = values.length > 0 && values.every((v) => v === 0);
-              if (allZero) {
+            <div
+              className="mg-v2-ad-b0kla__chart-placeholder mg-v2-ad-b0kla__chart-wrapper"
+              ref={chartBarWrapperRef}
+            >
+              {(() => {
+                const isWeekly = chartPeriod === 'weekly';
+                const rawData = isWeekly
+                  ? (stats.consultationStats?.weeklyData?.length > 0
+                      ? stats.consultationStats.weeklyData.slice(0, 6)
+                      : getEmptyWeeklyChartData(6))
+                  : (stats.consultationStats?.monthlyData?.length > 0
+                      ? stats.consultationStats.monthlyData.slice(0, 6)
+                      : getEmptyMonthlyChartData(6));
+                const values = rawData.map((d) => d.completedCount || 0);
+                const allZero = values.length > 0 && values.every((v) => v === 0);
+                if (allZero) {
+                  return (
+                    <p className="mg-v2-ad-b0kla__chart-empty">기간 내 완료된 상담이 없습니다.</p>
+                  );
+                }
+                const maxVal = Math.max(...values, 1);
                 return (
-                  <p className="mg-v2-ad-b0kla__chart-empty">기간 내 완료된 상담이 없습니다.</p>
-                );
-              }
-              const maxVal = Math.max(...values, 1);
-              return (
-                <Chart
-                  type={CHART_TYPES.BAR}
-                  data={{
-                    labels: rawData.map((d) => d.period),
-                    datasets: [
-                      {
-                        label: '완료 상담',
-                        data: values,
-                        backgroundColor: chartBarColors.fill,
-                        borderColor: chartBarColors.border,
-                        borderWidth: 1,
-                        borderRadius: 6
-                      }
-                    ]
-                  }}
-                  height="200px"
-                  options={{
-                    maintainAspectRatio: false,
-                    plugins: {
-                      legend: { display: false },
-                      tooltip: {
-                        callbacks: {
-                          label: (ctx) => `완료: ${ctx.parsed.y}건`
+                  <Chart
+                    type={CHART_TYPES.BAR}
+                    data={{
+                      labels: rawData.map((d) => d.period),
+                      datasets: [
+                        {
+                          label: '완료 상담',
+                          data: values,
+                          backgroundColor: chartBarColors.fill,
+                          borderColor: chartBarColors.border,
+                          borderWidth: 1,
+                          borderRadius: 6
+                        }
+                      ]
+                    }}
+                    height="200px"
+                    options={{
+                      maintainAspectRatio: false,
+                      plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                          callbacks: {
+                            label: (ctx) => `완료: ${ctx.parsed.y}건`
+                          }
+                        }
+                      },
+                      scales: {
+                        x: {
+                          grid: { display: false },
+                          ticks: { maxRotation: 0, font: { size: 11 } }
+                        },
+                        y: {
+                          beginAtZero: true,
+                          suggestedMax: Math.max(maxVal + 1, 2),
+                          ticks: { stepSize: 1 },
+                          grid: { color: 'var(--mg-shadow-light)' }
                         }
                       }
-                    },
-                    scales: {
-                      x: {
-                        grid: { display: false },
-                        ticks: { maxRotation: 0, font: { size: 11 } }
-                      },
-                      y: {
-                        beginAtZero: true,
-                        suggestedMax: Math.max(maxVal + 1, 2),
-                        ticks: { stepSize: 1 },
-                        grid: { color: 'var(--mg-shadow-light)' }
+                    }}
+                  />
+                );
+              })()}
+            </div>
+          </div>
+          <div className="mg-v2-ad-b0kla__card">
+            <h3 className="mg-v2-ad-b0kla__chart-title">단계별 현황</h3>
+            <p className="mg-v2-ad-b0kla__chart-desc">5단계 건수 비율</p>
+            <div className="mg-v2-ad-b0kla__chart-placeholder mg-v2-ad-b0kla__chart-wrapper mg-v2-ad-b0kla__chart-wrapper--donut">
+              {(() => {
+                const stepValues = [
+                  stats.totalMappings ?? 0,
+                  pendingDepositStats.count ?? 0,
+                  stats.activeMappings ?? 0,
+                  stats.schedulePendingCount ?? 0,
+                  0
+                ];
+                const total = stepValues.reduce((a, b) => a + b, 0);
+                const allZero = total === 0;
+                if (allZero) {
+                  return (
+                    <p className="mg-v2-ad-b0kla__chart-empty">단계별 데이터가 없습니다.</p>
+                  );
+                }
+                return (
+                  <Chart
+                    type={CHART_TYPES.DOUGHNUT}
+                    data={{
+                      labels: STEP_CHART_LABELS,
+                      datasets: [
+                        {
+                          data: stepValues,
+                          backgroundColor: STEP_CHART_COLORS,
+                          borderColor: 'var(--ad-b0kla-card-bg)',
+                          borderWidth: 2
+                        }
+                      ]
+                    }}
+                    height="200px"
+                    options={{
+                      maintainAspectRatio: false,
+                      plugins: {
+                        legend: {
+                          position: 'right',
+                          labels: { usePointStyle: true, padding: 12, font: { size: 11 } }
+                        },
+                        tooltip: {
+                          callbacks: {
+                            label: (ctx) => {
+                              const v = ctx.parsed;
+                              const pct = total > 0 ? ((v / total) * 100).toFixed(1) : '0';
+                              return `${ctx.label}: ${v}건 (${pct}%)`;
+                            }
+                          }
+                        }
                       }
-                    }
-                  }}
-                />
-              );
-            })()}
+                    }}
+                  />
+                );
+              })()}
+            </div>
           </div>
         </div>
         <div className="mg-v2-ad-b0kla__card">

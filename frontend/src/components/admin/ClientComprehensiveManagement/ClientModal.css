@@ -19,3 +19,12 @@
 .mg-modal.mg-v2-ad-b0kla .mg-v2-form-email-row .mg-v2-button {
   flex-shrink: 0;
 }
+
+/* 이메일 행 중복확인 버튼만 compact: 스펙(CLIENT_MODAL_EMAIL_BUTTON_SPEC) — 다른 폼 버튼(주소 검색·등록·취소) 미영향 */
+.mg-modal.mg-v2-ad-b0kla .mg-v2-form-email-row .mg-v2-button.mg-v2-button--compact {
+  padding: var(--cs-spacing-xs, 0.25rem) var(--cs-spacing-sm, 0.5rem);
+  min-height: 28px;
+  font-size: var(--cs-text-xs, 0.75rem);
+  line-height: 1.2;
+  border-radius: var(--cs-radius-md, 8px);
+}

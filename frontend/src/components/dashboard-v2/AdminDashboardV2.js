@@ -60,13 +60,22 @@ const STEP_CHART_LABELS = [
   '회계처리'
 ];
 
-/** 단계별 도넛 B0KlA 색상 (CSS 변수) */
+/** 단계별 도넛 B0KlA 색상 (CSS 변수, CSS/스타일용) */
 const STEP_CHART_COLORS = [
   'var(--ad-b0kla-green)',
   'var(--ad-b0kla-orange)',
   'var(--ad-b0kla-green)',
   'var(--ad-b0kla-blue)',
   'var(--ad-b0kla-text-secondary)'
+];
+
+/** 단계별 도넛 차트 hex 색상 (Chart.js Canvas는 CSS 변수 미해석 → backgroundColor/borderColor용) */
+const STEP_CHART_COLORS_HEX = [
+  '#4b745c', /* green - 매칭 */
+  '#e8a87c', /* orange - 입금 확인 */
+  '#4b745c', /* green - 회기 권한 */
+  '#6d9dc5', /* blue - 스케줄 등록 */
+  '#64748b'  /* gray - 회계처리 */
 ];
 import {
   AdminMetricsVisualization,
@@ -1076,8 +1085,8 @@ const AdminDashboardV2 = ({ user: propUser }) => {
                       datasets: [
                         {
                           data: stepValues,
-                          backgroundColor: STEP_CHART_COLORS,
-                          borderColor: 'var(--ad-b0kla-card-bg)',
+                          backgroundColor: STEP_CHART_COLORS_HEX,
+                          borderColor: STEP_CHART_COLORS_HEX,
                           borderWidth: 2
                         }
                       ]

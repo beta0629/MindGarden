@@ -306,7 +306,7 @@ const ClientModal = ({
                                 type="button"
                                 onClick={handleEmailDuplicateCheck}
                                 disabled={isCheckingEmail || !safeFormData.email?.trim()}
-                                className="mg-v2-button mg-v2-button-secondary"
+                                className="mg-v2-button mg-v2-button-secondary mg-v2-button--compact"
                             >
                                 {isCheckingEmail ? '확인 중...' : '중복확인'}
                             </button>

@@ -135,6 +135,7 @@
 | `frontend/src/styles/unified-design-tokens.css` | `var(--mg-*)` 토큰 목록 |
 | `frontend/src/styles/dashboard-tokens-extension.css` | `--ad-b0kla-*` 토큰 |
 | `frontend/src/components/admin/AdminDashboard/AdminDashboardB0KlA.css` | `mg-v2-ad-b0kla__kpi-*`, `mg-v2-ad-b0kla__card` 등 |
+| [ADMIN_DASHBOARD_STEP_CHART_COLORS_SPEC.md](./ADMIN_DASHBOARD_STEP_CHART_COLORS_SPEC.md) | 단계별 현황 **도넛 차트** 색상(hex 필수)·라벨–색상 1:1 대응표 |
 | `.cursor/skills/core-solution-design-handoff/SKILL.md` | 산출물 형식·코더 전달 항목 |
 
 ---

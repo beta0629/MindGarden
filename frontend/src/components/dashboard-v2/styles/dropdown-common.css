@@ -28,16 +28,19 @@
   }
 }
 
-/* 드롭다운 패널 공통 스타일 */
-.mg-v2-dropdown-panel {
-  position: absolute;
-  top: calc(100% + 8px);
-  right: 0;
+/* v2 드롭다운 패널: 전역 [role="menu"] 규칙보다 우선, position/top/left는 JS 인라인으로 설정 */
+.mg-v2-dropdown-panel,
+.mg-v2-dropdown-panel[role="menu"],
+.mg-v2-profile-dropdown__panel,
+.mg-v2-quick-actions-dropdown__panel,
+.mg-v2-notification-dropdown__panel {
+  position: fixed;
+  /* top, left, right는 useDropdownPosition 훅에서 인라인으로 설정 */
   background-color: var(--mg-color-surface-main, #F5F3EF);
   border: 1px solid var(--mg-color-border-main, #D4CFC8);
   border-radius: 16px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-  z-index: 1000;
+  z-index: var(--z-dropdown);
   opacity: 0;
   transform: translateY(-8px);
   animation: dropdownFadeIn 200ms cubic-bezier(0.4, 0, 0.2, 1) forwards;

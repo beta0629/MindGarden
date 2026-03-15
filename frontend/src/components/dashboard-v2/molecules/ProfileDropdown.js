@@ -1,16 +1,19 @@
 /**
  * ProfileDropdown - 프로필 메뉴 드롭다운 (Molecule)
- * 
+ * Portal + position:fixed 로 전역 overflow/transform 영향 없음
+ *
  * @author CoreSolution
  * @since 2026-03-09
  */
 
 import React, { useState, useEffect, useRef } from 'react';
+import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
 import { ChevronDown, User, Settings, LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ProfileAvatar } from '../atoms';
 import { sessionManager } from '../../../utils/sessionManager';
+import { useDropdownPosition } from '../hooks/useDropdownPosition';
 import '../styles/dropdown-common.css';
 import './ProfileDropdown.css';
 
@@ -25,7 +28,10 @@ const ProfileDropdown = ({ onLogout }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [user, setUser] = useState(null);
   const dropdownRef = useRef(null);
+  const triggerRef = useRef(null);
+  const panelRef = useRef(null);
   const navigate = useNavigate();
+  const panelStyle = useDropdownPosition(triggerRef, panelRef, isOpen);
 
   useEffect(() => {
     const currentUser = sessionManager.getUser();
@@ -34,7 +40,11 @@ const ProfileDropdown = ({ onLogout }) => {
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+      const target = event.target;
+      if (
+        dropdownRef.current && !dropdownRef.current.contains(target) &&
+        panelRef.current && !panelRef.current.contains(target)
+      ) {
         setIsOpen(false);
       }
     };
@@ -48,9 +58,19 @@ const ProfileDropdown = ({ onLogout }) => {
     };
   }, [isOpen]);
 
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === 'Escape') setIsOpen(false);
+    };
+    if (isOpen) {
+      document.addEventListener('keydown', handleEscape);
+    }
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [isOpen]);
+
   const handleMenuClick = (action) => {
     setIsOpen(false);
-    
+
     if (action === 'mypage') {
       navigate('/mypage');
     } else if (action === 'settings') {
@@ -72,6 +92,7 @@ const ProfileDropdown = ({ onLogout }) => {
   return (
     <div className="mg-v2-profile-dropdown" ref={dropdownRef}>
       <button
+        ref={triggerRef}
         className="mg-v2-profile-trigger"
         onClick={() => setIsOpen(!isOpen)}
         aria-expanded={isOpen}
@@ -83,15 +104,20 @@ const ProfileDropdown = ({ onLogout }) => {
         <ChevronDown size={16} className="mg-v2-profile-trigger__icon" />
       </button>
 
-      {isOpen && (
+      {isOpen && ReactDOM.createPortal(
         <>
-          <button 
-            className="mg-v2-dropdown-overlay" 
+          <button
+            className="mg-v2-dropdown-overlay"
             onClick={() => setIsOpen(false)}
             type="button"
             aria-label="드롭다운 닫기"
           />
-          <div className="mg-v2-dropdown-panel mg-v2-profile-dropdown__panel" role="menu">
+          <div
+            ref={panelRef}
+            className="mg-v2-dropdown-panel mg-v2-profile-dropdown__panel"
+            role="menu"
+            style={panelStyle}
+          >
             <div className="mg-v2-profile-dropdown__header">
               <ProfileAvatar name={userName} imageUrl={user.profileImageUrl} size="medium" />
               <div className="mg-v2-profile-dropdown__info">
@@ -134,7 +160,8 @@ const ProfileDropdown = ({ onLogout }) => {
               </button>
             </div>
           </div>
-        </>
+        </>,
+        document.body
       )}
     </div>
   );

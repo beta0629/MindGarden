@@ -1,17 +1,20 @@
 /**
  * QuickActionsDropdown - 역할별 빠른 액션 드롭다운 (Molecule)
- * 
+ * Portal + position:fixed 로 전역 overflow/transform 영향 없음
+ *
  * @author CoreSolution
  * @since 2026-03-09
  */
 
 import React, { useState, useEffect, useRef } from 'react';
+import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
 import { Zap, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { NavIcon } from '../atoms';
 import { sessionManager } from '../../../utils/sessionManager';
 import { getQuickActionsForRole } from '../../../constants/gnbQuickActions';
+import { useDropdownPosition } from '../hooks/useDropdownPosition';
 import '../styles/dropdown-common.css';
 import './QuickActionsDropdown.css';
 
@@ -19,7 +22,10 @@ const QuickActionsDropdown = ({ onModalAction }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [actions, setActions] = useState([]);
   const dropdownRef = useRef(null);
+  const triggerRef = useRef(null);
+  const panelRef = useRef(null);
   const navigate = useNavigate();
+  const panelStyle = useDropdownPosition(triggerRef, panelRef, isOpen);
 
   useEffect(() => {
     const user = sessionManager.getUser();
@@ -30,7 +36,11 @@ const QuickActionsDropdown = ({ onModalAction }) => {
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+      const target = event.target;
+      if (
+        dropdownRef.current && !dropdownRef.current.contains(target) &&
+        panelRef.current && !panelRef.current.contains(target)
+      ) {
         setIsOpen(false);
       }
     };
@@ -42,6 +52,16 @@ const QuickActionsDropdown = ({ onModalAction }) => {
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
+  }, [isOpen]);
+
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === 'Escape') setIsOpen(false);
+    };
+    if (isOpen) {
+      document.addEventListener('keydown', handleEscape);
+    }
+    return () => document.removeEventListener('keydown', handleEscape);
   }, [isOpen]);
 
   const handleActionClick = (action) => {
@@ -59,24 +79,31 @@ const QuickActionsDropdown = ({ onModalAction }) => {
 
   return (
     <div className="mg-v2-quick-actions-dropdown" ref={dropdownRef}>
-      <NavIcon
-        icon={Zap}
-        label="빠른 액션"
-        onClick={() => setIsOpen(!isOpen)}
-        className="mg-v2-quick-actions-trigger"
-        aria-expanded={isOpen}
-        aria-haspopup="menu"
-      />
+      <div ref={triggerRef}>
+        <NavIcon
+          icon={Zap}
+          label="빠른 액션"
+          onClick={() => setIsOpen(!isOpen)}
+          className="mg-v2-quick-actions-trigger"
+          aria-expanded={isOpen}
+          aria-haspopup="menu"
+        />
+      </div>
 
-      {isOpen && (
+      {isOpen && ReactDOM.createPortal(
         <>
-          <button 
-            className="mg-v2-dropdown-overlay" 
+          <button
+            className="mg-v2-dropdown-overlay"
             onClick={() => setIsOpen(false)}
             type="button"
             aria-label="드롭다운 닫기"
           />
-          <div className="mg-v2-dropdown-panel mg-v2-quick-actions-dropdown__panel" role="menu">
+          <div
+            ref={panelRef}
+            className="mg-v2-dropdown-panel mg-v2-quick-actions-dropdown__panel"
+            role="menu"
+            style={panelStyle}
+          >
             <div className="mg-v2-dropdown-panel__header">
               <span className="mg-v2-dropdown-panel__title">빠른 액션</span>
             </div>
@@ -99,7 +126,8 @@ const QuickActionsDropdown = ({ onModalAction }) => {
               })}
             </div>
           </div>
-        </>
+        </>,
+        document.body
       )}
     </div>
   );

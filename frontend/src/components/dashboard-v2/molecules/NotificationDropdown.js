@@ -1,14 +1,17 @@
 /**
  * NotificationDropdown - 알림 센터 드롭다운 (Molecule)
- * 
+ * Portal + position:fixed 로 전역 overflow/transform 영향 없음
+ *
  * @author CoreSolution
  * @since 2026-03-09
  */
 
 import React, { useState, useEffect, useRef } from 'react';
+import ReactDOM from 'react-dom';
 import { Bell, Clock } from 'lucide-react';
 import { NavIcon, NotificationBadge } from '../atoms';
 import StandardizedApi from '../../../utils/standardizedApi';
+import { useDropdownPosition } from '../hooks/useDropdownPosition';
 import '../styles/dropdown-common.css';
 import './NotificationDropdown.css';
 
@@ -18,6 +21,9 @@ const NotificationDropdown = () => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const dropdownRef = useRef(null);
+  const triggerRef = useRef(null);
+  const panelRef = useRef(null);
+  const panelStyle = useDropdownPosition(triggerRef, panelRef, isOpen);
 
   useEffect(() => {
     if (isOpen) {
@@ -27,7 +33,11 @@ const NotificationDropdown = () => {
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+      const target = event.target;
+      if (
+        dropdownRef.current && !dropdownRef.current.contains(target) &&
+        panelRef.current && !panelRef.current.contains(target)
+      ) {
         setIsOpen(false);
       }
     };
@@ -39,6 +49,16 @@ const NotificationDropdown = () => {
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
+  }, [isOpen]);
+
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === 'Escape') setIsOpen(false);
+    };
+    if (isOpen) {
+      document.addEventListener('keydown', handleEscape);
+    }
+    return () => document.removeEventListener('keydown', handleEscape);
   }, [isOpen]);
 
   const fetchNotifications = async () => {
@@ -112,7 +132,7 @@ const NotificationDropdown = () => {
 
   return (
     <div className="mg-v2-notification-dropdown" ref={dropdownRef}>
-      <div className="mg-v2-notification-trigger-wrapper">
+      <div className="mg-v2-notification-trigger-wrapper" ref={triggerRef}>
         <NavIcon
           icon={Bell}
           label="알림"
@@ -124,15 +144,20 @@ const NotificationDropdown = () => {
         <NotificationBadge count={unreadCount} />
       </div>
 
-      {isOpen && (
+      {isOpen && ReactDOM.createPortal(
         <>
-          <button 
-            className="mg-v2-dropdown-overlay" 
+          <button
+            className="mg-v2-dropdown-overlay"
             onClick={() => setIsOpen(false)}
             type="button"
             aria-label="드롭다운 닫기"
           />
-          <div className="mg-v2-dropdown-panel mg-v2-notification-dropdown__panel" role="menu">
+          <div
+            ref={panelRef}
+            className="mg-v2-dropdown-panel mg-v2-notification-dropdown__panel"
+            role="menu"
+            style={panelStyle}
+          >
             <div className="mg-v2-dropdown-panel__header">
               <span className="mg-v2-dropdown-panel__title">알림</span>
               {unreadCount > 0 && (
@@ -198,7 +223,8 @@ const NotificationDropdown = () => {
               </div>
             )}
           </div>
-        </>
+        </>,
+        document.body
       )}
     </div>
   );

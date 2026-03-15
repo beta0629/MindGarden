@@ -9,6 +9,7 @@ import {
   WRONG_PATH_MESSAGE,
   WRONG_PATH_REDIRECT_DELAY_MS
 } from '../../utils/subdomainUtils';
+import { VALIDATION_MESSAGES } from '../../constants/messages';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import { TermsOfServiceContent } from '../common/TermsOfService';
 import { PrivacyPolicyContent } from '../common/PrivacyPolicy';
@@ -95,12 +96,12 @@ const TabletRegister = () => {
   const handleEmailDuplicateCheck = async () => {
     const email = formData.email?.trim();
     if (!email) {
-      notificationManager.show('이메일을 입력해주세요.', 'warning');
+      notificationManager.show(VALIDATION_MESSAGES.REQUIRED_EMAIL, 'warning');
       return;
     }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      notificationManager.show('올바른 이메일 형식을 입력해주세요.', 'warning');
+      notificationManager.show(VALIDATION_MESSAGES.INVALID_EMAIL_FORMAT, 'warning');
       return;
     }
 
@@ -110,13 +111,13 @@ const TabletRegister = () => {
       const isDuplicate = await checkEmailDuplicate(email);
       if (isDuplicate === true) {
         setEmailCheckStatus('duplicate');
-        notificationManager.show('이미 사용 중인 이메일입니다.', 'error');
+        notificationManager.show(VALIDATION_MESSAGES.EMAIL_EXISTS, 'error');
       } else if (isDuplicate === false) {
         setEmailCheckStatus('available');
-        notificationManager.show('사용 가능한 이메일입니다.', 'success');
+        notificationManager.show(VALIDATION_MESSAGES.EMAIL_AVAILABLE, 'success');
       } else {
         setEmailCheckStatus(null);
-        notificationManager.show('이메일 중복 확인 중 오류가 발생했습니다.', 'error');
+        notificationManager.show(VALIDATION_MESSAGES.EMAIL_DUPLICATE_CHECK_ERROR, 'error');
       }
     } finally {
       setIsCheckingEmail(false);
@@ -164,9 +165,9 @@ const TabletRegister = () => {
     }
 
     if (!formData.email.trim()) {
-      newErrors.email = '이메일을 입력해주세요.';
+      newErrors.email = VALIDATION_MESSAGES.REQUIRED_EMAIL;
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = '올바른 이메일 형식을 입력해주세요.';
+      newErrors.email = VALIDATION_MESSAGES.INVALID_EMAIL_FORMAT;
     }
 
     if (!formData.password) {
@@ -215,13 +216,13 @@ const TabletRegister = () => {
       const isDuplicate = await checkEmailDuplicate(formData.email);
       if (isDuplicate === true) {
         setEmailCheckStatus('duplicate');
-        notificationManager.show('이미 사용 중인 이메일입니다. 이메일 중복확인을 해주세요.', 'error');
+        notificationManager.show(VALIDATION_MESSAGES.EMAIL_DUPLICATE_CHECK_REQUIRED_MESSAGE, 'error');
         return;
       }
       if (isDuplicate === false) {
         setEmailCheckStatus('available');
       } else {
-        notificationManager.show('이메일 중복 확인 중 오류가 발생했습니다.', 'error');
+        notificationManager.show(VALIDATION_MESSAGES.EMAIL_DUPLICATE_CHECK_ERROR, 'error');
         return;
       }
     }
@@ -332,7 +333,7 @@ const TabletRegister = () => {
             </div>
 
             <div className="mg-v2-form-group" style={{ position: 'relative' }}>
-              <label htmlFor="email" className="mg-v2-form-label">이메일 *</label>
+              <label htmlFor="email" className="mg-v2-form-label">{VALIDATION_MESSAGES.LABEL_EMAIL_REQUIRED}</label>
               <div className="mg-v2-form-email-row">
                 <div style={{ position: 'relative', flex: 1, minWidth: 0 }}>
                   <input
@@ -341,7 +342,7 @@ const TabletRegister = () => {
                     name="email"
                     autoComplete="email"
                     className={`mg-v2-form-input ${errors.email ? 'mg-v2-input error' : ''}`}
-                    placeholder="이메일을 입력하세요"
+                    placeholder={VALIDATION_MESSAGES.REQUIRED_EMAIL}
                     value={formData.email}
                     onChange={handleInputChange}
                     onFocus={() => setEmailSuggestionsOpen(true)}
@@ -392,14 +393,14 @@ const TabletRegister = () => {
                   disabled={isCheckingEmail || !formData.email?.trim()}
                   className="mg-v2-button mg-v2-button-secondary mg-v2-auth-email-check-btn"
                 >
-                  {isCheckingEmail ? '확인 중...' : '중복확인'}
+                  {isCheckingEmail ? VALIDATION_MESSAGES.BUTTON_CHECKING : VALIDATION_MESSAGES.BUTTON_DUPLICATE_CHECK}
                 </button>
               </div>
               {emailCheckStatus === 'duplicate' && (
-                <small className="mg-v2-form-help mg-v2-form-help--error">이미 사용 중인 이메일입니다.</small>
+                <small className="mg-v2-form-help mg-v2-form-help--error">{VALIDATION_MESSAGES.EMAIL_EXISTS}</small>
               )}
               {emailCheckStatus === 'available' && (
-                <small className="mg-v2-form-help mg-v2-form-help--success">사용 가능한 이메일입니다.</small>
+                <small className="mg-v2-form-help mg-v2-form-help--success">{VALIDATION_MESSAGES.EMAIL_AVAILABLE}</small>
               )}
               {errors.email && <span className="mg-v2-error-text">{errors.email}</span>}
             </div>

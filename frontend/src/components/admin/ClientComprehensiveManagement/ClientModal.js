@@ -5,6 +5,9 @@ import ProfileImageInput from '../../common/ProfileImageInput';
 import { apiGet } from '../../../utils/ajax';
 import UnifiedModal from '../../common/modals/UnifiedModal';
 import BadgeSelect from '../../common/BadgeSelect';
+import {
+  VALIDATION_MESSAGES
+} from '../../../constants/messages';
 import './ClientModal.css';
 
 /**
@@ -39,7 +42,7 @@ const ClientModal = ({
         const email = formData.email?.trim();
         if (!email) {
             window.dispatchEvent(new CustomEvent('showNotification', {
-                detail: { message: '이메일을 입력해주세요.', type: 'warning' }
+                detail: { message: VALIDATION_MESSAGES.REQUIRED_EMAIL, type: 'warning' }
             }));
             return;
         }
@@ -48,7 +51,7 @@ const ClientModal = ({
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
             window.dispatchEvent(new CustomEvent('showNotification', {
-                detail: { message: '올바른 이메일 형식을 입력해주세요.', type: 'warning' }
+                detail: { message: VALIDATION_MESSAGES.INVALID_EMAIL_FORMAT, type: 'warning' }
             }));
             return;
         }
@@ -64,25 +67,25 @@ const ClientModal = ({
                 if (response.isDuplicate) {
                     setEmailCheckStatus('duplicate');
                     window.dispatchEvent(new CustomEvent('showNotification', {
-                        detail: { message: '이미 사용 중인 이메일입니다.', type: 'error' }
+                        detail: { message: VALIDATION_MESSAGES.EMAIL_EXISTS, type: 'error' }
                     }));
                 } else {
                     setEmailCheckStatus('available');
                     window.dispatchEvent(new CustomEvent('showNotification', {
-                        detail: { message: '사용 가능한 이메일입니다.', type: 'success' }
+                        detail: { message: VALIDATION_MESSAGES.EMAIL_AVAILABLE, type: 'success' }
                     }));
                 }
             } else {
                 setEmailCheckStatus(null);
                 window.dispatchEvent(new CustomEvent('showNotification', {
-                    detail: { message: '이메일 중복 확인 중 오류가 발생했습니다.', type: 'error' }
+                    detail: { message: VALIDATION_MESSAGES.EMAIL_DUPLICATE_CHECK_ERROR, type: 'error' }
                 }));
             }
         } catch (error) {
             console.error('❌ 이메일 중복 확인 오류:', error);
             setEmailCheckStatus(null);
             window.dispatchEvent(new CustomEvent('showNotification', {
-                detail: { message: '이메일 중복 확인 중 오류가 발생했습니다.', type: 'error' }
+                detail: { message: VALIDATION_MESSAGES.EMAIL_DUPLICATE_CHECK_ERROR, type: 'error' }
             }));
         } finally {
             setIsCheckingEmail(false);
@@ -288,7 +291,7 @@ const ClientModal = ({
                     />
                 </div>
                 <div className="mg-v2-form-group">
-                    <label htmlFor="email" className="mg-v2-form-label">이메일 *</label>
+                    <label htmlFor="email" className="mg-v2-form-label">{VALIDATION_MESSAGES.LABEL_EMAIL_REQUIRED}</label>
                     <div className="mg-v2-form-email-row">
                         <div className="mg-v2-form-email-row__input-wrap">
                             <input
@@ -313,18 +316,18 @@ const ClientModal = ({
                                 className="mg-v2-button mg-v2-button-secondary mg-v2-button--compact"
                                 data-action="email-duplicate-check"
                             >
-                                {isCheckingEmail ? '확인 중...' : '중복확인'}
+                                {isCheckingEmail ? VALIDATION_MESSAGES.BUTTON_CHECKING : VALIDATION_MESSAGES.BUTTON_DUPLICATE_CHECK}
                             </button>
                         )}
                     </div>
                     {type === 'edit' && (
-                        <small className="mg-v2-form-help">이메일은 변경할 수 없습니다.</small>
+                        <small className="mg-v2-form-help">{VALIDATION_MESSAGES.HELP_EMAIL_READONLY}</small>
                     )}
                     {type === 'create' && emailCheckStatus === 'duplicate' && (
-                        <small className="mg-v2-form-help mg-v2-form-help--error">⚠️ 이미 사용 중인 이메일입니다.</small>
+                        <small className="mg-v2-form-help mg-v2-form-help--error">⚠️ {VALIDATION_MESSAGES.EMAIL_EXISTS}</small>
                     )}
                     {type === 'create' && emailCheckStatus === 'available' && (
-                        <small className="mg-v2-form-help mg-v2-form-help--success">✅ 사용 가능한 이메일입니다.</small>
+                        <small className="mg-v2-form-help mg-v2-form-help--success">✅ {VALIDATION_MESSAGES.EMAIL_AVAILABLE}</small>
                     )}
                     <datalist id="client-modal-email-domains">
                         <option value="@gmail.com" />

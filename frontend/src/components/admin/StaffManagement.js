@@ -21,6 +21,7 @@ import Button from '../ui/Button/Button';
 import { showSuccess, showError } from '../../utils/notification';
 import { apiGet } from '../../utils/ajax';
 import { maskEncryptedDisplay } from '../../utils/codeHelper';
+import { VALIDATION_MESSAGES } from '../../constants/messages';
 import ProfileImageInput from '../common/ProfileImageInput';
 import Avatar from '../common/Avatar';
 import '../../styles/unified-design-tokens.css';
@@ -220,12 +221,12 @@ const StaffManagement = ({ embedded = false }) => {
   const handleStaffEmailDuplicateCheck = useCallback(async () => {
     const email = (createForm.email || '').trim();
     if (!email) {
-      showError('이메일을 입력해 주세요.');
+      showError(VALIDATION_MESSAGES.REQUIRED_EMAIL);
       return;
     }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      showError('올바른 이메일 형식을 입력해 주세요.');
+      showError(VALIDATION_MESSAGES.INVALID_EMAIL_FORMAT);
       return;
     }
     setIsCheckingStaffEmail(true);
@@ -235,17 +236,17 @@ const StaffManagement = ({ embedded = false }) => {
       if (response && typeof response.isDuplicate === 'boolean') {
         if (response.isDuplicate) {
           setStaffEmailCheckStatus('duplicate');
-          showError('이미 사용 중인 이메일입니다.');
+          showError(VALIDATION_MESSAGES.EMAIL_EXISTS);
         } else {
           setStaffEmailCheckStatus('available');
-          showSuccess('사용 가능한 이메일입니다.');
+          showSuccess(VALIDATION_MESSAGES.EMAIL_AVAILABLE);
         }
       } else {
         setStaffEmailCheckStatus(null);
       }
     } catch (err) {
       setStaffEmailCheckStatus(null);
-      showError('이메일 중복 확인 중 오류가 발생했습니다.');
+      showError(VALIDATION_MESSAGES.EMAIL_DUPLICATE_CHECK_ERROR);
     } finally {
       setIsCheckingStaffEmail(false);
     }
@@ -257,7 +258,7 @@ const StaffManagement = ({ embedded = false }) => {
       const email = (createForm.email || '').trim().toLowerCase();
       const name = (createForm.name || '').trim();
       if (!email) {
-        showError('이메일을 입력해 주세요.');
+        showError(VALIDATION_MESSAGES.REQUIRED_EMAIL);
         return;
       }
       setCreateStaffModal((prev) => ({ ...prev, submitting: true }));
@@ -753,7 +754,7 @@ const StaffManagement = ({ embedded = false }) => {
               />
             </div>
             <div className="mg-v2-form-group">
-              <label htmlFor="staff-email" className="mg-v2-form-label">이메일 *</label>
+              <label htmlFor="staff-email" className="mg-v2-form-label">{VALIDATION_MESSAGES.LABEL_EMAIL_REQUIRED}</label>
               <div className="mg-v2-form-email-row">
                 <div className="mg-v2-form-email-row__input-wrap">
                   <input
@@ -776,14 +777,14 @@ const StaffManagement = ({ embedded = false }) => {
                   className="mg-v2-button mg-v2-button-secondary mg-v2-button--compact"
                   data-action="email-duplicate-check"
                 >
-                  {isCheckingStaffEmail ? '확인 중...' : '중복확인'}
+                  {isCheckingStaffEmail ? VALIDATION_MESSAGES.BUTTON_CHECKING : VALIDATION_MESSAGES.BUTTON_DUPLICATE_CHECK}
                 </button>
               </div>
               {staffEmailCheckStatus === 'duplicate' && (
-                <small className="mg-v2-form-help mg-v2-form-help--error">이미 사용 중인 이메일입니다.</small>
+                <small className="mg-v2-form-help mg-v2-form-help--error">{VALIDATION_MESSAGES.EMAIL_EXISTS}</small>
               )}
               {staffEmailCheckStatus === 'available' && (
-                <small className="mg-v2-form-help mg-v2-form-help--success">사용 가능한 이메일입니다.</small>
+                <small className="mg-v2-form-help mg-v2-form-help--success">{VALIDATION_MESSAGES.EMAIL_AVAILABLE}</small>
               )}
             </div>
             <div className="mg-v2-form-group">

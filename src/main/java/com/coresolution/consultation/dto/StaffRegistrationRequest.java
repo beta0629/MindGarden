@@ -31,6 +31,14 @@ public class StaffRegistrationRequest {
 
     private String phone;
 
+    /** 주민번호 앞 6자리 (선택) */
+    private String rrnFirst6;
+    /** 주민번호 뒤 1자리 (선택) */
+    private String rrnLast1;
+    private String address;
+    private String addressDetail;
+    private String postalCode;
+
     /** 프로필 사진 (base64 data URL, 선택) */
     private String profileImageUrl;
 }

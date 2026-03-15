@@ -19,7 +19,10 @@ import ContentSection from '../dashboard-v2/content/ContentSection';
 import { SearchInput } from '../dashboard-v2/atoms';
 import Button from '../ui/Button/Button';
 import { showSuccess, showError } from '../../utils/notification';
+import { apiGet } from '../../utils/ajax';
+import ProfileImageInput from '../common/ProfileImageInput';
 import '../../styles/unified-design-tokens.css';
+import './ClientComprehensiveManagement/ClientModal.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
 import './mapping-management/organisms/MappingKpiSection.css';
 import './mapping-management/organisms/MappingSearchSection.css';
@@ -120,7 +123,20 @@ const StaffManagement = ({ embedded = false }) => {
   const [addStaffModal, setAddStaffModal] = useState({ open: false, nonStaffUsers: [], loading: false, assignSubmitting: false });
   const [addStaffSearch, setAddStaffSearch] = useState('');
   const [createStaffModal, setCreateStaffModal] = useState({ open: false, submitting: false });
-  const [createForm, setCreateForm] = useState({ email: '', name: '', password: '', phone: '' });
+  const [createForm, setCreateForm] = useState({
+    email: '',
+    name: '',
+    password: '',
+    phone: '',
+    profileImageUrl: '',
+    rrnFirst6: '',
+    rrnLast1: '',
+    address: '',
+    addressDetail: '',
+    postalCode: ''
+  });
+  const [staffEmailCheckStatus, setStaffEmailCheckStatus] = useState(null);
+  const [isCheckingStaffEmail, setIsCheckingStaffEmail] = useState(false);
 
   const loadUsers = useCallback(async () => {
     setLoading(true);
@@ -172,14 +188,62 @@ const StaffManagement = ({ embedded = false }) => {
   }, []);
 
   const openCreateStaffModal = useCallback(() => {
-    setCreateForm({ email: '', name: '', password: '', phone: '' });
+    setCreateForm({
+      email: '', name: '', password: '', phone: '', profileImageUrl: '',
+      rrnFirst6: '', rrnLast1: '', address: '', addressDetail: '', postalCode: ''
+    });
+    setStaffEmailCheckStatus(null);
     setCreateStaffModal({ open: true, submitting: false });
   }, []);
 
   const closeCreateStaffModal = useCallback(() => {
     setCreateStaffModal({ open: false, submitting: false });
-    setCreateForm({ email: '', name: '', password: '', phone: '' });
+    setCreateForm({
+      email: '', name: '', password: '', phone: '', profileImageUrl: '',
+      rrnFirst6: '', rrnLast1: '', address: '', addressDetail: '', postalCode: ''
+    });
+    setStaffEmailCheckStatus(null);
   }, []);
+
+  const handleCreateFormChange = useCallback((e) => {
+    const { name, value } = e.target;
+    setCreateForm((prev) => ({ ...prev, [name]: value }));
+    if (name === 'email') setStaffEmailCheckStatus(null);
+  }, []);
+
+  const handleStaffEmailDuplicateCheck = useCallback(async () => {
+    const email = (createForm.email || '').trim();
+    if (!email) {
+      showError('이메일을 입력해 주세요.');
+      return;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      showError('올바른 이메일 형식을 입력해 주세요.');
+      return;
+    }
+    setIsCheckingStaffEmail(true);
+    setStaffEmailCheckStatus('checking');
+    try {
+      const response = await apiGet(`/api/v1/admin/duplicate-check/email?email=${encodeURIComponent(email)}`);
+      if (response && typeof response.isDuplicate === 'boolean') {
+        if (response.isDuplicate) {
+          setStaffEmailCheckStatus('duplicate');
+          showError('이미 사용 중인 이메일입니다.');
+        } else {
+          setStaffEmailCheckStatus('available');
+          showSuccess('사용 가능한 이메일입니다.');
+        }
+      } else {
+        setStaffEmailCheckStatus(null);
+      }
+    } catch (err) {
+      setStaffEmailCheckStatus(null);
+      showError('이메일 중복 확인 중 오류가 발생했습니다.');
+    } finally {
+      setIsCheckingStaffEmail(false);
+    }
+  }, [createForm.email]);
 
   const handleCreateStaffSubmit = useCallback(
     async (e) => {
@@ -196,7 +260,13 @@ const StaffManagement = ({ embedded = false }) => {
           email,
           name: name || undefined,
           password: (createForm.password || '').trim() || undefined,
-          phone: (createForm.phone || '').trim() || undefined
+          phone: (createForm.phone || '').trim() || undefined,
+          profileImageUrl: (createForm.profileImageUrl || '').trim() || undefined,
+          rrnFirst6: (createForm.rrnFirst6 || '').trim() || undefined,
+          rrnLast1: (createForm.rrnLast1 || '').trim() || undefined,
+          address: (createForm.address || '').trim() || undefined,
+          addressDetail: (createForm.addressDetail || '').trim() || undefined,
+          postalCode: (createForm.postalCode || '').trim() || undefined
         };
         const response = await StandardizedApi.post(API_STAFF_REGISTER, payload);
         const user = response?.data ?? response;
@@ -515,9 +585,10 @@ const StaffManagement = ({ embedded = false }) => {
         isOpen={createStaffModal.open}
         onClose={closeCreateStaffModal}
         title="새 스태프 등록"
-        subtitle="이메일·이름·비밀번호를 입력해 사무원(스태프) 계정을 생성합니다."
-        size="small"
+        subtitle="내담자·상담사와 동일한 양식으로 사무원(스태프) 계정을 생성합니다."
+        size="large"
         variant="form"
+        className="mg-v2-ad-b0kla"
         loading={createStaffModal.submitting}
         actions={
           <>
@@ -535,60 +606,190 @@ const StaffManagement = ({ embedded = false }) => {
           </>
         }
       >
-        <form onSubmit={handleCreateStaffSubmit} className="mg-v2-form">
-          <div className="mg-v2-info-box mg-v2-ad-b0kla-info-box">
-            <p className="mg-v2-info-text">비밀번호를 입력하지 않으면 임시 비밀번호가 자동으로 생성됩니다.</p>
-          </div>
-          <div className="mg-modal__form-group">
-            <label htmlFor="create-staff-email" className="mg-modal__label">이메일 *</label>
-            <input
-              id="create-staff-email"
-              type="email"
-              className="mg-modal__input"
-              value={createForm.email}
-              onChange={(e) => setCreateForm((prev) => ({ ...prev, email: e.target.value }))}
-              placeholder="staff@example.com"
-              required
-              disabled={createStaffModal.submitting}
+        <div className="mg-v2-modal-body">
+          <form onSubmit={handleCreateStaffSubmit} className="mg-v2-form">
+            <div className="mg-v2-info-box mg-v2-ad-b0kla-info-box">
+              <p className="mg-v2-info-text">비밀번호를 입력하지 않으면 임시 비밀번호가 자동으로 생성됩니다.</p>
+            </div>
+            <ProfileImageInput
+              value={createForm.profileImageUrl || ''}
+              onChange={(url) => setCreateForm((prev) => ({ ...prev, profileImageUrl: url || '' }))}
+              maxBytes={2 * 1024 * 1024}
+              cropSize={400}
+              maxSize={512}
+              quality={0.85}
+              helpText="이미지 파일만 가능, 최대 2MB (리사이즈·크롭 적용)"
             />
-          </div>
-          <div className="mg-modal__form-group">
-            <label htmlFor="create-staff-name" className="mg-modal__label">이름</label>
-            <input
-              id="create-staff-name"
-              type="text"
-              className="mg-modal__input"
-              value={createForm.name}
-              onChange={(e) => setCreateForm((prev) => ({ ...prev, name: e.target.value }))}
-              placeholder="홍길동"
-              disabled={createStaffModal.submitting}
-            />
-          </div>
-          <div className="mg-modal__form-group">
-            <label htmlFor="create-staff-password" className="mg-modal__label">비밀번호</label>
-            <input
-              id="create-staff-password"
-              type="password"
-              className="mg-modal__input"
-              value={createForm.password}
-              onChange={(e) => setCreateForm((prev) => ({ ...prev, password: e.target.value }))}
-              placeholder="미입력 시 임시 비밀번호 발급"
-              disabled={createStaffModal.submitting}
-            />
-          </div>
-          <div className="mg-modal__form-group">
-            <label htmlFor="create-staff-phone" className="mg-modal__label">전화번호</label>
-            <input
-              id="create-staff-phone"
-              type="tel"
-              className="mg-modal__input"
-              value={createForm.phone}
-              onChange={(e) => setCreateForm((prev) => ({ ...prev, phone: e.target.value }))}
-              placeholder="010-0000-0000"
-              disabled={createStaffModal.submitting}
-            />
-          </div>
-        </form>
+            <div className="mg-v2-form-group">
+              <div className="mg-v2-form-row mg-v2-form-row--two" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
+                <div className="mg-v2-form-group">
+                  <label htmlFor="staff-rrnFirst6" className="mg-v2-form-label">주민번호 앞 6자리 (선택)</label>
+                  <input
+                    type="text"
+                    id="staff-rrnFirst6"
+                    name="rrnFirst6"
+                    value={createForm.rrnFirst6}
+                    onChange={handleCreateFormChange}
+                    placeholder="900101"
+                    maxLength={6}
+                    inputMode="numeric"
+                    className="mg-v2-form-input"
+                    disabled={createStaffModal.submitting}
+                  />
+                </div>
+                <div className="mg-v2-form-group">
+                  <label htmlFor="staff-rrnLast1" className="mg-v2-form-label">주민번호 뒤 1자리 (선택)</label>
+                  <input
+                    type="text"
+                    id="staff-rrnLast1"
+                    name="rrnLast1"
+                    value={createForm.rrnLast1}
+                    onChange={handleCreateFormChange}
+                    placeholder="1"
+                    maxLength={1}
+                    inputMode="numeric"
+                    className="mg-v2-form-input"
+                    disabled={createStaffModal.submitting}
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="mg-v2-form-group">
+              <label htmlFor="staff-name" className="mg-v2-form-label">이름 *</label>
+              <input
+                type="text"
+                id="staff-name"
+                name="name"
+                value={createForm.name}
+                onChange={handleCreateFormChange}
+                placeholder="이름을 입력하세요"
+                className="mg-v2-form-input"
+                required
+                disabled={createStaffModal.submitting}
+              />
+            </div>
+            <div className="mg-v2-form-group">
+              <label htmlFor="staff-phone" className="mg-v2-form-label">전화번호</label>
+              <input
+                type="tel"
+                id="staff-phone"
+                name="phone"
+                value={createForm.phone}
+                onChange={handleCreateFormChange}
+                placeholder="010-1234-5678"
+                className="mg-v2-form-input"
+                disabled={createStaffModal.submitting}
+              />
+            </div>
+            <div className="mg-v2-form-group">
+              <label htmlFor="staff-address-input" className="mg-v2-form-label">주소 검색</label>
+              <div className="mg-v2-address-search-row" style={{ display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  className="mg-v2-button mg-v2-button-secondary"
+                  onClick={() => {
+                    if (globalThis.window?.daum?.Postcode) {
+                      new globalThis.window.daum.Postcode({
+                        oncomplete: function (data) {
+                          setCreateForm((prev) => ({
+                            ...prev,
+                            postalCode: data.zonecode || '',
+                            address: data.address || ''
+                          }));
+                        }
+                      }).open();
+                    } else {
+                      showError('주소 검색 서비스를 불러올 수 없습니다.');
+                    }
+                  }}
+                >
+                  주소 검색
+                </button>
+                <input
+                  id="staff-address-input"
+                  type="text"
+                  readOnly
+                  className="mg-v2-form-input"
+                  style={{ flex: 1, minWidth: '200px' }}
+                  value={createForm.address}
+                  placeholder="주소 검색 버튼을 눌러 주소를 입력하세요."
+                />
+              </div>
+            </div>
+            <div className="mg-v2-form-group">
+              <label htmlFor="staff-addressDetail" className="mg-v2-form-label">상세 주소</label>
+              <input
+                type="text"
+                id="staff-addressDetail"
+                name="addressDetail"
+                value={createForm.addressDetail}
+                onChange={handleCreateFormChange}
+                placeholder="동, 호수, 상세 주소를 입력하세요."
+                className="mg-v2-form-input"
+                disabled={createStaffModal.submitting}
+              />
+            </div>
+            <div className="mg-v2-form-group">
+              <label htmlFor="staff-postalCode" className="mg-v2-form-label">우편번호</label>
+              <input
+                type="text"
+                id="staff-postalCode"
+                name="postalCode"
+                value={createForm.postalCode}
+                onChange={handleCreateFormChange}
+                placeholder="00000"
+                maxLength={5}
+                className="mg-v2-form-input"
+                disabled={createStaffModal.submitting}
+              />
+            </div>
+            <div className="mg-v2-form-group">
+              <label htmlFor="staff-email" className="mg-v2-form-label">이메일 *</label>
+              <div className="mg-v2-form-email-row">
+                <input
+                  type="email"
+                  id="staff-email"
+                  name="email"
+                  value={createForm.email}
+                  onChange={handleCreateFormChange}
+                  required
+                  placeholder="example@email.com"
+                  className="mg-v2-form-input"
+                  disabled={createStaffModal.submitting}
+                  autoComplete="email"
+                />
+                <button
+                  type="button"
+                  onClick={handleStaffEmailDuplicateCheck}
+                  disabled={isCheckingStaffEmail || !(createForm.email || '').trim()}
+                  className="mg-v2-button mg-v2-button-secondary mg-v2-button--compact"
+                >
+                  {isCheckingStaffEmail ? '확인 중...' : '중복확인'}
+                </button>
+              </div>
+              {staffEmailCheckStatus === 'duplicate' && (
+                <small className="mg-v2-form-help mg-v2-form-help--error">이미 사용 중인 이메일입니다.</small>
+              )}
+              {staffEmailCheckStatus === 'available' && (
+                <small className="mg-v2-form-help mg-v2-form-help--success">사용 가능한 이메일입니다.</small>
+              )}
+            </div>
+            <div className="mg-v2-form-group">
+              <label htmlFor="staff-password" className="mg-v2-form-label">비밀번호</label>
+              <input
+                type="password"
+                id="staff-password"
+                name="password"
+                value={createForm.password}
+                onChange={handleCreateFormChange}
+                placeholder="비밀번호를 입력하지 않으면 자동 생성됩니다"
+                className="mg-v2-form-input"
+                disabled={createStaffModal.submitting}
+              />
+              <small className="mg-v2-form-help">비밀번호를 입력하지 않으면 임시 비밀번호가 자동으로 생성됩니다.</small>
+            </div>
+          </form>
+        </div>
       </UnifiedModal>
     </>
   );

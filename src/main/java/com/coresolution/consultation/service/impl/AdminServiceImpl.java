@@ -503,6 +503,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         if (request.getProfileImageUrl() != null && !request.getProfileImageUrl().trim().isEmpty()) {
             staffUser.setProfileImageUrl(request.getProfileImageUrl().trim());
         }
+        applyRrnAndAddressToUser(staffUser, request.getRrnFirst6(), request.getRrnLast1(),
+                request.getAddress(), request.getAddressDetail(), request.getPostalCode());
 
         User savedUser = userRepository.save(staffUser);
         createUserRoleAssignment(savedUser, tenantId, UserRole.STAFF);

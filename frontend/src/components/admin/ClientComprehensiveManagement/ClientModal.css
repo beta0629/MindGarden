@@ -1,44 +1,5 @@
 /**
- * ClientModal 전용 스타일 (이메일 행 등)
- * 모달이 어떤 페이지에서 열리든 동일한 레이아웃을 보장하기 위해 컴포넌트에 포함.
- * 특이도: .mg-modal__body .mg-v2-modal-body 포함해 AdminDashboardB0KlA.css 공통 규칙보다 우선 적용.
+ * ClientModal 전용 스타일
+ * 이메일 행 레이아웃·input·버튼 규칙은 AdminDashboardB0KlA.css에서 단일화 적용.
+ * (내담자/상담사/스태프 모달 공통 — B0KlA만으로 동일 레이아웃 보장)
  */
-
-/* 이메일 행: 래퍼가 flex 공간 차지, input은 래퍼 안에서 100% (min-width로 입력란 붕괴 방지) */
-.mg-modal.mg-v2-ad-b0kla .mg-modal__body .mg-v2-modal-body .mg-v2-form-email-row__input-wrap {
-  flex: 1 1 0%;
-  min-width: 12rem !important;
-  display: block;
-  box-sizing: border-box;
-}
-
-.mg-modal.mg-v2-ad-b0kla .mg-modal__body .mg-v2-modal-body .mg-v2-form-email-row__input-wrap .mg-v2-form-input {
-  width: 100%;
-  padding: 10px 14px;
-  font-size: 15px;
-  box-sizing: border-box;
-}
-
-.mg-modal.mg-v2-ad-b0kla .mg-modal__body .mg-v2-modal-body .mg-v2-form-email-row .mg-v2-button {
-  flex-shrink: 0;
-}
-
-/* 이메일 행 중복확인 버튼만 compact — 다른 폼 버튼(주소 검색·등록·취소) 미영향 */
-.mg-modal.mg-v2-ad-b0kla .mg-modal__body .mg-v2-modal-body .mg-v2-form-email-row .mg-v2-button.mg-v2-button--compact {
-  padding: var(--cs-spacing-xs, 0.25rem) var(--cs-spacing-sm, 0.5rem);
-  min-height: 28px;
-  font-size: var(--cs-text-xs, 0.75rem);
-  line-height: 1.2;
-  border-radius: var(--cs-radius-md, 8px);
-}
-
-/* 선택자 강화: .mg-v2-form-group 포함 + data-action — compact 반드시 적용, 전역 규칙 덮어쓰기 방지 */
-.mg-modal.mg-v2-ad-b0kla .mg-modal__body .mg-v2-modal-body .mg-v2-form-group .mg-v2-form-email-row .mg-v2-button.mg-v2-button--compact,
-.mg-modal.mg-v2-ad-b0kla .mg-modal__body .mg-v2-modal-body .mg-v2-form-group .mg-v2-form-email-row [data-action="email-duplicate-check"] {
-  padding: var(--cs-spacing-xs, 0.25rem) var(--cs-spacing-sm, 0.5rem) !important;
-  min-height: 28px !important;
-  max-height: 30px;
-  font-size: var(--cs-text-xs, 0.75rem) !important;
-  line-height: 1.2;
-  border-radius: var(--cs-radius-md, 8px);
-}

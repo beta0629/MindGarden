@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
+import com.coresolution.consultation.constant.FinancialTransactionConstants;
 import com.coresolution.consultation.entity.erp.financial.FinancialTransaction;
 import com.coresolution.consultation.entity.PackageDiscount;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
@@ -325,7 +326,7 @@ public class DiscountAccountingServiceImpl implements DiscountAccountingService 
         
         FinancialTransaction transaction = new FinancialTransaction();
         transaction.setTransactionType(FinancialTransaction.TransactionType.INCOME);
-        transaction.setCategory("CONSULTATION");
+        transaction.setCategory(FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE);
         transaction.setSubcategory("PACKAGE_SALE");
         transaction.setAmount(amount);
         transaction.setDescription(String.format("패키지 판매 - %s (원래 금액)", mapping.getPackageName()));

@@ -2,6 +2,7 @@ package com.coresolution.consultation.repository.erp.financial;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 import com.coresolution.consultation.entity.erp.financial.FinancialTransaction;
 import org.springframework.data.domain.Page;
@@ -159,6 +160,13 @@ public interface FinancialTransactionRepository extends JpaRepository<FinancialT
      */
     Page<FinancialTransaction> findByTenantIdAndCategoryAndIsDeletedFalseOrderByTransactionDateDescCreatedAtDesc(
         String tenantId, String category, Pageable pageable);
+    
+    /**
+     * 카테고리 In 페이징 조회 (tenantId 필터링)
+     * 상담료 하위호환: CONSULTATION, 상담료 둘 다 조회 시 사용
+     */
+    Page<FinancialTransaction> findByTenantIdAndCategoryInAndIsDeletedFalseOrderByTransactionDateDescCreatedAtDesc(
+        String tenantId, Collection<String> categories, Pageable pageable);
     
     /**
      * @Deprecated - 🚨 극도로 위험: tenantId 필터링 없이 금융 데이터 노출!

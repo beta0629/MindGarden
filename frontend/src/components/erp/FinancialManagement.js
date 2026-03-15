@@ -698,7 +698,7 @@ const FinancialManagement = () => {
                             </div>
                             <div className="mg-financial-transaction-card__field">
                               <span className="mg-financial-transaction-card__label">카테고리</span>
-                              <span>{transaction.category || '-'}</span>
+                              <span>{transaction.category === 'CONSULTATION' ? '상담료' : (transaction.category || '-')}</span>
                             </div>
                             <div className="mg-financial-transaction-card__field">
                               <span className="mg-financial-transaction-card__label">금액</span>
@@ -1042,7 +1042,8 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
             </span>
           </div>
           <div>
-            <strong>카테고리:</strong> {transaction.category}
+            <strong>카테고리:</strong>{' '}
+            {transaction.category === 'CONSULTATION' ? '상담료' : (transaction.category || '-')}
           </div>
           <div>
             <strong>금액:</strong>

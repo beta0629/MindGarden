@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import com.coresolution.consultation.constant.FinancialTransactionConstants;
 import com.coresolution.consultation.entity.erp.financial.FinancialTransaction;
 import com.coresolution.consultation.repository.erp.financial.FinancialTransactionRepository;
 import com.coresolution.consultation.service.PlSqlMappingSyncService;
@@ -290,7 +291,7 @@ public class PlSqlMappingSyncServiceImpl implements PlSqlMappingSyncService {
                         .filter(t -> {
                             // 환불 거래: EXPENSE, category='CONSULTATION', subcategory='SESSION_REFUND'
                             boolean isRefund = t.getTransactionType() == FinancialTransaction.TransactionType.EXPENSE &&
-                                             "CONSULTATION".equals(t.getCategory()) &&
+                                             FinancialTransactionConstants.isConsultationCategory(t.getCategory()) &&
                                              "SESSION_REFUND".equals(t.getSubcategory());
                             return isRefund;
                         })
@@ -382,7 +383,7 @@ public class PlSqlMappingSyncServiceImpl implements PlSqlMappingSyncService {
                         .filter(t -> {
                             // 부분 환불 거래: EXPENSE, category='CONSULTATION', subcategory='PARTIAL_SESSION_REFUND'
                             boolean isPartialRefund = t.getTransactionType() == FinancialTransaction.TransactionType.EXPENSE &&
-                                                     "CONSULTATION".equals(t.getCategory()) &&
+                                                     FinancialTransactionConstants.isConsultationCategory(t.getCategory()) &&
                                                      "PARTIAL_SESSION_REFUND".equals(t.getSubcategory());
                             return isPartialRefund;
                         })

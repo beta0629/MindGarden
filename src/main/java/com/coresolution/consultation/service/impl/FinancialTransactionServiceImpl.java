@@ -7,7 +7,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Arrays;
 import java.util.stream.Collectors;
+import com.coresolution.consultation.constant.FinancialTransactionConstants;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.dto.FinancialDashboardResponse;
 import com.coresolution.consultation.dto.FinancialTransactionRequest;
@@ -250,8 +252,20 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
         String tenantId = getTenantIdOrNull();
         log.info("🏢 재무 거래 카테고리별 조회 (테넌트 필터링): tenantId={}, 카테고리={}", tenantId, category);
         
-        Page<FinancialTransaction> transactions = financialTransactionRepository
-                .findByTenantIdAndCategoryAndIsDeletedFalseOrderByTransactionDateDescCreatedAtDesc(tenantId, category, pageable);
+        Page<FinancialTransaction> transactions;
+        if (FinancialTransactionConstants.isConsultationCategory(category)) {
+            List<String> consultationCategories = Arrays.asList(
+                FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE,
+                FinancialTransactionConstants.CATEGORY_CONSULTATION_LEGACY
+            );
+            transactions = financialTransactionRepository
+                    .findByTenantIdAndCategoryInAndIsDeletedFalseOrderByTransactionDateDescCreatedAtDesc(
+                        tenantId, consultationCategories, pageable);
+        } else {
+            transactions = financialTransactionRepository
+                    .findByTenantIdAndCategoryAndIsDeletedFalseOrderByTransactionDateDescCreatedAtDesc(
+                        tenantId, category, pageable);
+        }
         
         log.info("✅ 재무 거래 카테고리별 조회 완료: tenantId={}, 카테고리={}, 총 {}건", tenantId, category, transactions.getTotalElements());
         
@@ -1087,7 +1101,7 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
             List<FinancialTransaction> transactions = allTransactions
                     .stream()
                     .filter(t -> !startDate.isAfter(t.getTransactionDate()) && !endDate.isBefore(t.getTransactionDate()))
-                    .filter(t -> category == null || category.isEmpty() || category.equals(t.getCategory()))
+                    .filter(t -> FinancialTransactionConstants.matchesConsultationFilter(category, t.getCategory()))
                     .filter(t -> transactionType == null || transactionType.isEmpty() || 
                             transactionType.equals(t.getTransactionType().name()))
                     .collect(Collectors.toList());
@@ -1210,7 +1224,7 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
                     })
                     .filter(t -> {
                         if (category != null && !category.isEmpty() && !"ALL".equals(category)) {
-                            return category.equals(t.getCategory());
+                            return FinancialTransactionConstants.matchesConsultationFilter(category, t.getCategory());
                         }
                         return true;
                     })

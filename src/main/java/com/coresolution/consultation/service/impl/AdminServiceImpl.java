@@ -27,6 +27,7 @@ import com.coresolution.consultation.entity.Consultant;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.Schedule;
 import com.coresolution.consultation.entity.User;
+import com.coresolution.consultation.constant.FinancialTransactionConstants;
 import com.coresolution.consultation.entity.erp.financial.FinancialTransaction;
 import com.coresolution.consultation.repository.CommonCodeRepository;
 import com.coresolution.consultation.exception.EntityNotFoundException;
@@ -656,7 +657,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         }
         FinancialTransactionRequest request = FinancialTransactionRequest.builder()
                 .transactionType("INCOME")
-                .category("CONSULTATION") // 필수 필드: 상담료 수입 거래
+                .category(FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE) // 필수 필드: 상담료 수입 거래
                 .subcategory("CONSULTATION_FEE") // 상세 분류
                 .amount(java.math.BigDecimal.valueOf(accurateAmount))
                 .description(String.format("상담료 입금 확인 - %s (%s) [정확한금액: %,d원]",
@@ -730,7 +731,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         
         FinancialTransactionRequest request = FinancialTransactionRequest.builder()
                 .transactionType("INCOME")
-                .category("CONSULTATION") // 필수 필드: 상담료 수입 거래
+                .category(FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE) // 필수 필드: 상담료 수입 거래
                 .subcategory("ADDITIONAL_CONSULTATION") // 추가 회기 세부카테고리
                 .amount(java.math.BigDecimal.valueOf(transactionAmount))
                 .description(String.format("추가 회기 상담료 입금 확인 - %s (%d회 추가, %s) [추가금액: %,d원]", 
@@ -804,7 +805,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         
         FinancialTransactionRequest request = FinancialTransactionRequest.builder()
                 .transactionType("EXPENSE") // 환불은 지출
-                .category("CONSULTATION")
+                .category(FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE)
                 .subcategory("CONSULTATION_REFUND") // 환불 세부카테고리
                 .amount(java.math.BigDecimal.valueOf(refundAmount))
                 .description(String.format("상담료 환불 - %s (%d회기 환불, 사유: %s)", 
@@ -846,7 +847,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         
         FinancialTransactionRequest request = FinancialTransactionRequest.builder()
                 .transactionType("EXPENSE") // 환불은 지출
-                .category("CONSULTATION")
+                .category(FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE)
                 .subcategory("CONSULTATION_PARTIAL_REFUND") // 부분 환불 세부카테고리
                 .amount(java.math.BigDecimal.valueOf(refundAmount))
                 .description(String.format("상담료 부분 환불 - %s (%d회기 부분 환불, 사유: %s) [남은회기: %d회]", 

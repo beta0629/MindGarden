@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 import com.coresolution.consultation.dto.FinancialTransactionRequest;
 import com.coresolution.consultation.dto.FinancialTransactionResponse;
 import com.coresolution.consultation.entity.Budget;
+import com.coresolution.consultation.constant.FinancialTransactionConstants;
 import com.coresolution.consultation.entity.erp.financial.FinancialTransaction;
 import com.coresolution.consultation.entity.Item;
 import com.coresolution.consultation.entity.PurchaseOrder;
@@ -1571,13 +1572,13 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
             
             BigDecimal consultationRevenue = transactions.stream()
                 .filter(t -> "INCOME".equals(t.getTransactionType()))
-                .filter(t -> "CONSULTATION".equals(t.getCategory()))
+                .filter(t -> FinancialTransactionConstants.isConsultationCategory(t.getCategory()))
                 .map(com.coresolution.consultation.dto.FinancialTransactionResponse::getAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
             
             BigDecimal otherRevenue = transactions.stream()
                 .filter(t -> "INCOME".equals(t.getTransactionType()))
-                .filter(t -> !"CONSULTATION".equals(t.getCategory()))
+                .filter(t -> !FinancialTransactionConstants.isConsultationCategory(t.getCategory()))
                 .map(com.coresolution.consultation.dto.FinancialTransactionResponse::getAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
             
@@ -1665,13 +1666,13 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
         Map<String, Object> dailyIncome = new HashMap<>();
         BigDecimal consultationFees = dailyTransactions.stream()
             .filter(t -> t.getTransactionType() == FinancialTransaction.TransactionType.INCOME)
-            .filter(t -> "CONSULTATION".equals(t.getCategory()))
+            .filter(t -> FinancialTransactionConstants.isConsultationCategory(t.getCategory()))
             .map(FinancialTransaction::getAmount)
             .reduce(BigDecimal.ZERO, BigDecimal::add);
         
         BigDecimal otherIncome = dailyTransactions.stream()
             .filter(t -> t.getTransactionType() == FinancialTransaction.TransactionType.INCOME)
-            .filter(t -> !"CONSULTATION".equals(t.getCategory()))
+            .filter(t -> !FinancialTransactionConstants.isConsultationCategory(t.getCategory()))
             .map(FinancialTransaction::getAmount)
             .reduce(BigDecimal.ZERO, BigDecimal::add);
             
@@ -1721,7 +1722,7 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
         
         long consultations = dailyTransactions.stream()
             .filter(t -> t.getTransactionType() == FinancialTransaction.TransactionType.INCOME)
-            .filter(t -> "CONSULTATION".equals(t.getCategory()))
+            .filter(t -> FinancialTransactionConstants.isConsultationCategory(t.getCategory()))
             .count();
             
         long purchases = dailyTransactions.stream()
@@ -1767,13 +1768,13 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
         Map<String, Object> monthlyIncome = new HashMap<>();
         BigDecimal consultationRevenue = monthlyTransactions.stream()
             .filter(t -> t.getTransactionType() == FinancialTransaction.TransactionType.INCOME)
-            .filter(t -> "CONSULTATION".equals(t.getCategory()))
+            .filter(t -> FinancialTransactionConstants.isConsultationCategory(t.getCategory()))
             .map(FinancialTransaction::getAmount)
             .reduce(BigDecimal.ZERO, BigDecimal::add);
         
         BigDecimal otherRevenue = monthlyTransactions.stream()
             .filter(t -> t.getTransactionType() == FinancialTransaction.TransactionType.INCOME)
-            .filter(t -> !"CONSULTATION".equals(t.getCategory()))
+            .filter(t -> !FinancialTransactionConstants.isConsultationCategory(t.getCategory()))
             .map(FinancialTransaction::getAmount)
             .reduce(BigDecimal.ZERO, BigDecimal::add);
             
@@ -1839,7 +1840,7 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
         
         long totalConsultations = monthlyTransactions.stream()
             .filter(t -> t.getTransactionType() == FinancialTransaction.TransactionType.INCOME)
-            .filter(t -> "CONSULTATION".equals(t.getCategory()))
+            .filter(t -> FinancialTransactionConstants.isConsultationCategory(t.getCategory()))
             .count();
             
         long totalPurchases = monthlyTransactions.stream()
@@ -1883,13 +1884,13 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
         Map<String, Object> yearlyIncome = new HashMap<>();
         BigDecimal consultationRevenue = yearlyTransactions.stream()
             .filter(t -> t.getTransactionType() == FinancialTransaction.TransactionType.INCOME)
-            .filter(t -> "CONSULTATION".equals(t.getCategory()))
+            .filter(t -> FinancialTransactionConstants.isConsultationCategory(t.getCategory()))
             .map(FinancialTransaction::getAmount)
             .reduce(BigDecimal.ZERO, BigDecimal::add);
         
         BigDecimal otherRevenue = yearlyTransactions.stream()
             .filter(t -> t.getTransactionType() == FinancialTransaction.TransactionType.INCOME)
-            .filter(t -> !"CONSULTATION".equals(t.getCategory()))
+            .filter(t -> !FinancialTransactionConstants.isConsultationCategory(t.getCategory()))
             .map(FinancialTransaction::getAmount)
             .reduce(BigDecimal.ZERO, BigDecimal::add);
             
@@ -1963,7 +1964,7 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
         
         long totalConsultations = yearlyTransactions.stream()
             .filter(t -> t.getTransactionType() == FinancialTransaction.TransactionType.INCOME)
-            .filter(t -> "CONSULTATION".equals(t.getCategory()))
+            .filter(t -> FinancialTransactionConstants.isConsultationCategory(t.getCategory()))
             .count();
             
         long totalPurchases = yearlyTransactions.stream()

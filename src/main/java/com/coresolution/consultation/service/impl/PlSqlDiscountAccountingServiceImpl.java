@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import com.coresolution.consultation.service.PlSqlDiscountAccountingService;
+import com.coresolution.consultation.constant.FinancialTransactionConstants;
 import com.coresolution.consultation.entity.erp.financial.FinancialTransaction;
 import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -89,7 +90,7 @@ public class PlSqlDiscountAccountingServiceImpl implements PlSqlDiscountAccounti
                         .filter(t -> {
                             // 매출 거래: INCOME, category='CONSULTATION', subcategory='PACKAGE_SALE'
                             boolean isRevenue = t.getTransactionType() == FinancialTransaction.TransactionType.INCOME &&
-                                              "CONSULTATION".equals(t.getCategory()) &&
+                                              FinancialTransactionConstants.isConsultationCategory(t.getCategory()) &&
                                               "PACKAGE_SALE".equals(t.getSubcategory());
                             // 할인 거래: EXPENSE, category='SALES_DISCOUNT', subcategory='PACKAGE_DISCOUNT'
                             boolean isDiscount = t.getTransactionType() == FinancialTransaction.TransactionType.EXPENSE &&

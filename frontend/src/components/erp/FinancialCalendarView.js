@@ -284,7 +284,7 @@ const FinancialCalendarView = () => {
                         )}
                       </div>
                       <div className="mg-financial-calendar-detail-item-category">
-                        {transaction.category} - {transaction.subcategory || ''}
+                        {(transaction.category === 'CONSULTATION' ? '상담료' : transaction.category) || '-'} - {transaction.subcategory || ''}
                       </div>
                       <div className="mg-financial-calendar-detail-item-desc">
                         {transaction.description || '-'}

@@ -1582,7 +1582,8 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                     type="button"
                                     onClick={handleEmailDuplicateCheck}
                                     disabled={isCheckingEmail || !formData.email?.trim()}
-                                    className="mg-v2-button mg-v2-button-secondary"
+                                    className="mg-v2-button mg-v2-button-secondary mg-v2-button--compact"
+                                    data-action="email-duplicate-check"
                                 >
                                     {isCheckingEmail ? '확인 중...' : '중복확인'}
                                 </button>

@@ -12,12 +12,17 @@
   width: 100%;
 }
 
-/* 이메일 입력란: 넓게 차지, 최소 너비로 영역 크게 */
+/* 이메일 입력란: 넓게 차지 (flex: 1), 좁은 화면에서도 한 줄 유지 위해 min-width 0 허용 후 최소 200px */
 .mg-modal.mg-v2-ad-b0kla .mg-modal__body .mg-v2-modal-body .mg-v2-form-email-row .mg-v2-form-input {
   flex: 1;
-  min-width: 320px; /* 이메일 영역 크게 */
+  min-width: 0;
   padding: 10px 14px;
   font-size: 15px;
+}
+@media (min-width: 480px) {
+  .mg-modal.mg-v2-ad-b0kla .mg-modal__body .mg-v2-modal-body .mg-v2-form-email-row .mg-v2-form-input {
+    min-width: 200px;
+  }
 }
 
 .mg-modal.mg-v2-ad-b0kla .mg-modal__body .mg-v2-modal-body .mg-v2-form-email-row .mg-v2-button {

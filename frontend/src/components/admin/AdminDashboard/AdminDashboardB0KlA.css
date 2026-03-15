@@ -988,15 +988,33 @@
   margin: 0;
 }
 
-/* 폼 행 (이메일 + 중복확인 버튼) */
+/* 폼 행 (이메일 + 중복확인 버튼) — 내담자/상담사/스태프 공통, 깨짐 방지 */
 .mg-modal.mg-v2-ad-b0kla .mg-v2-form-email-row {
   display: flex;
-  gap: 0.5rem;
-  align-items: flex-start;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
 }
 
 .mg-modal.mg-v2-ad-b0kla .mg-v2-form-email-row .mg-v2-form-input {
   flex: 1;
+  min-width: 0; /* flex 시 줄바꿈/깨짐 방지 */
+}
+
+.mg-modal.mg-v2-ad-b0kla .mg-v2-form-email-row .mg-v2-button {
+  flex-shrink: 0;
+}
+
+/* 이메일 행 중복확인 버튼 compact — 한 줄에 입력란과 버튼이 자연스럽게 배치 */
+.mg-modal.mg-v2-ad-b0kla .mg-v2-form-email-row .mg-v2-button.mg-v2-button--compact,
+.mg-modal.mg-v2-ad-b0kla .mg-v2-form-email-row [data-action="email-duplicate-check"],
+.mg-modal.mg-v2-ad-b0kla .mg-v2-form-group .mg-v2-form-email-row .mg-v2-button {
+  padding: 6px 12px;
+  min-height: 32px;
+  font-size: 13px;
+  line-height: 1.2;
+  border-radius: 8px;
+  white-space: nowrap;
 }
 
 /* 전문분야 태그 선택 (상담사 등록/수정 모달) */

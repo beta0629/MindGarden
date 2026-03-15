@@ -957,76 +957,32 @@ public class UserServiceImpl implements UserService {
     }
     
     /**
-     * 사용자 개인정보 복호화
+     * 사용자 개인정보 복호화 (safeDecrypt 사용: legacy:: 접두어 제거 및 복호화 통합)
      */
     private User decryptUserPersonalData(User user) {
         if (user == null || encryptionUtil == null) {
             return user;
         }
-        
         try {
-            // 이름 복호화 (암호화된 데이터인지 확인)
             if (user.getName() != null && !user.getName().trim().isEmpty()) {
-                if (isEncryptedData(user.getName())) {
-                    user.setName(encryptionUtil.decrypt(user.getName()));
-                }
-                // 암호화되지 않은 데이터는 그대로 유지
+                user.setName(encryptionUtil.safeDecrypt(user.getName()));
             }
-            
-            // 닉네임 복호화
+            if (user.getEmail() != null && !user.getEmail().trim().isEmpty()) {
+                user.setEmail(encryptionUtil.safeDecrypt(user.getEmail()));
+            }
             if (user.getNickname() != null && !user.getNickname().trim().isEmpty()) {
-                if (isEncryptedData(user.getNickname())) {
-                    user.setNickname(encryptionUtil.decrypt(user.getNickname()));
-                }
+                user.setNickname(encryptionUtil.safeDecrypt(user.getNickname()));
             }
-            
-            // 전화번호 복호화
             if (user.getPhone() != null && !user.getPhone().trim().isEmpty()) {
-                if (isEncryptedData(user.getPhone())) {
-                    user.setPhone(encryptionUtil.decrypt(user.getPhone()));
-                }
+                user.setPhone(encryptionUtil.safeDecrypt(user.getPhone()));
             }
-            
-            // 성별 복호화
             if (user.getGender() != null && !user.getGender().trim().isEmpty()) {
-                if (isEncryptedData(user.getGender())) {
-                    user.setGender(encryptionUtil.decrypt(user.getGender()));
-                }
+                user.setGender(encryptionUtil.safeDecrypt(user.getGender()));
             }
-            
         } catch (Exception e) {
-            // 복호화 실패 시 원본 데이터 유지
-            System.err.println("사용자 개인정보 복호화 실패: " + e.getMessage());
+            log.warn("사용자 개인정보 복호화 실패: {}", e.getMessage());
         }
-        
         return user;
-    }
-    
-    /**
-     * 데이터가 암호화된 데이터인지 확인
-     * Base64 패턴과 길이로 판단
-     */
-    private boolean isEncryptedData(String data) {
-        if (data == null || data.trim().isEmpty()) {
-            return false;
-        }
-        
-        // Base64 패턴 확인 (A-Z, a-z, 0-9, +, /, =)
-        if (!data.matches("^[A-Za-z0-9+/]*={0,2}$")) {
-            return false;
-        }
-        
-        // 암호화된 데이터는 일반적으로 20자 이상
-        if (data.length() < 20) {
-            return false;
-        }
-        
-        // 한글이나 특수문자가 포함된 경우 평문으로 판단
-        if (data.matches(".*[가-힣].*") || data.matches(".*[^A-Za-z0-9+/=].*")) {
-            return false;
-        }
-        
-        return true;
     }
     
     /**

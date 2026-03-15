@@ -767,6 +767,7 @@ const StaffManagement = ({ embedded = false }) => {
                   onClick={handleStaffEmailDuplicateCheck}
                   disabled={isCheckingStaffEmail || !(createForm.email || '').trim()}
                   className="mg-v2-button mg-v2-button-secondary mg-v2-button--compact"
+                  data-action="email-duplicate-check"
                 >
                   {isCheckingStaffEmail ? '확인 중...' : '중복확인'}
                 </button>

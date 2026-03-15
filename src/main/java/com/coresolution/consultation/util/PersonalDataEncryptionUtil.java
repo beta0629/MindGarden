@@ -23,6 +23,8 @@ public class PersonalDataEncryptionUtil {
 
     private static final String ALGORITHM = "AES/CBC/PKCS5Padding";
     private static final String VERSION_DELIMITER = "::";
+    /** legacy 마이그레이션 시 DB에 저장된 접두어. 복호화 불가 시 제거 후 평문만 반환용 */
+    private static final String LEGACY_PREFIX = "legacy::";
 
     private final PersonalDataEncryptionKeyProvider keyProvider;
 
@@ -198,13 +200,17 @@ public class PersonalDataEncryptionUtil {
         if (text == null || text.trim().isEmpty()) {
             return text;
         }
-        
-        // 암호화되지 않은 경우 그대로 반환
+        String result;
         if (!isEncrypted(text)) {
-            return text;
+            result = text;
+        } else {
+            result = decrypt(text);
         }
-        
-        return decrypt(text);
+        // 키 없음/복호화 실패로 legacy:: 접두어가 남은 경우 제거 후 평문만 반환
+        if (result != null && result.startsWith(LEGACY_PREFIX)) {
+            return result.substring(LEGACY_PREFIX.length());
+        }
+        return result;
     }
 
     /**

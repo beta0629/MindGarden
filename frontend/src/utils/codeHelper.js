@@ -16,6 +16,9 @@ let groupMetadataCache = null;
 let lastCacheTime = 0;
 const CACHE_DURATION = 5 * 60 * 1000; // 5분
 
+/** Base64 암호문으로 간주할 최소 길이 (평문 오탐 최소화) */
+const ENCRYPTED_BASE64_MIN_LENGTH = 32;
+
 /**
  * 복호화되지 않은 값(legacy:: 또는 암호문 패턴)이면 마스킹하여 표시용 문자열 반환
  * @param {string} value - 표시할 값
@@ -25,7 +28,9 @@ const CACHE_DURATION = 5 * 60 * 1000; // 5분
 export const maskEncryptedDisplay = (value, fallback = '—') => {
   if (value == null || value === '') return fallback;
   const s = String(value).trim();
-  if (s.startsWith('legacy::') || (s.includes('==') && /^[A-Za-z0-9+/=]+$/.test(s))) return fallback;
+  if (s.startsWith('legacy::')) return fallback;
+  const looksLikeBase64 = /^[A-Za-z0-9+/]+=*$/.test(s) && s.length >= ENCRYPTED_BASE64_MIN_LENGTH;
+  if (looksLikeBase64) return fallback;
   return s;
 };
 

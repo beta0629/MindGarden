@@ -1565,10 +1565,11 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                         />
                     </div>
                     <div className="mg-v2-form-group">
-                        <label className="mg-v2-form-label">이메일 *</label>
+                        <label htmlFor="consultant-email" className="mg-v2-form-label">이메일 *</label>
                         <div className="mg-v2-form-email-row">
                             <div className="mg-v2-form-email-row__input-wrap">
                                 <input
+                                    id="consultant-email"
                                     type="email"
                                     name="email"
                                     value={formData.email || ''}

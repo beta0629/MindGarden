@@ -467,9 +467,17 @@ export const getUserGradeKoreanName = async (grade) => {
         'CLIENT_GOLD': '골드',
         'CLIENT_PLATINUM': '플래티넘',
         'CLIENT_DIAMOND': '다이아몬드',
+        'BRONZE': '브론즈',
+        'SILVER': '실버',
+        'GOLD': '골드',
+        'PLATINUM': '플래티넘',
+        'DIAMOND': '다이아몬드',
         'CONSULTANT_JUNIOR': '주니어',
         'CONSULTANT_SENIOR': '시니어',
         'CONSULTANT_EXPERT': '전문가',
+        'JUNIOR': '주니어',
+        'SENIOR': '시니어',
+        'EXPERT': '전문가',
         'ADMIN': '관리자'
     };
     
@@ -486,9 +494,17 @@ export const getUserGradeKoreanNameSync = (grade) => {
         'CLIENT_GOLD': '골드',
         'CLIENT_PLATINUM': '플래티넘',
         'CLIENT_DIAMOND': '다이아몬드',
+        'BRONZE': '브론즈',
+        'SILVER': '실버',
+        'GOLD': '골드',
+        'PLATINUM': '플래티넘',
+        'DIAMOND': '다이아몬드',
         'CONSULTANT_JUNIOR': '주니어',
         'CONSULTANT_SENIOR': '시니어',
         'CONSULTANT_EXPERT': '전문가',
+        'JUNIOR': '주니어',
+        'SENIOR': '시니어',
+        'EXPERT': '전문가',
         'ADMIN': '관리자'
     };
     
@@ -517,9 +533,17 @@ export const getUserGradeIcon = async (grade) => {
         'CLIENT_GOLD': '🥇',
         'CLIENT_PLATINUM': '💎',
         'CLIENT_DIAMOND': '💠',
+        'BRONZE': '🥉',
+        'SILVER': '🥈',
+        'GOLD': '🥇',
+        'PLATINUM': '💎',
+        'DIAMOND': '💠',
         'CONSULTANT_JUNIOR': '⭐',
         'CONSULTANT_SENIOR': '⭐⭐',
         'CONSULTANT_EXPERT': '⭐⭐⭐',
+        'JUNIOR': '⭐',
+        'SENIOR': '⭐⭐',
+        'EXPERT': '⭐⭐⭐',
         'ADMIN': '👑'
     };
     
@@ -536,9 +560,17 @@ export const getUserGradeIconSync = (grade) => {
         'CLIENT_GOLD': '🥇',
         'CLIENT_PLATINUM': '💎',
         'CLIENT_DIAMOND': '💠',
+        'BRONZE': '🥉',
+        'SILVER': '🥈',
+        'GOLD': '🥇',
+        'PLATINUM': '💎',
+        'DIAMOND': '💠',
         'CONSULTANT_JUNIOR': '⭐',
         'CONSULTANT_SENIOR': '⭐⭐',
         'CONSULTANT_EXPERT': '⭐⭐⭐',
+        'JUNIOR': '⭐',
+        'SENIOR': '⭐⭐',
+        'EXPERT': '⭐⭐⭐',
         'ADMIN': '👑'
     };
     

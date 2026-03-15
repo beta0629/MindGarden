@@ -592,7 +592,7 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                         onSave={(data) => {
                             const handleSave = async () => {
                                 try {
-                                    if (modalType === 'edit' && (data.rrnFirst6?.trim() || data.rrnLast1?.trim())) {
+                                    if (data.rrnFirst6?.trim() || data.rrnLast1?.trim()) {
                                         const f = (data.rrnFirst6 || '').trim();
                                         const l = (data.rrnLast1 || '').trim();
                                         if (f.length !== 6 || !/^[0-9]{6}$/.test(f) || l.length !== 1 || !/^[1-4]$/.test(l)) {
@@ -614,13 +614,11 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                                     if (data.profileImageUrl && data.profileImageUrl.trim() !== '') {
                                         payload.profileImageUrl = data.profileImageUrl;
                                     }
-                                    if (modalType === 'edit') {
-                                        if (data.address != null) payload.address = data.address.trim();
-                                        if (data.addressDetail != null) payload.addressDetail = data.addressDetail.trim();
-                                        if (data.postalCode != null) payload.postalCode = data.postalCode.trim();
-                                        if (data.rrnFirst6?.trim()) payload.rrnFirst6 = data.rrnFirst6.trim();
-                                        if (data.rrnLast1?.trim()) payload.rrnLast1 = data.rrnLast1.trim();
-                                    }
+                                    if (data.address != null) payload.address = data.address.trim();
+                                    if (data.addressDetail != null) payload.addressDetail = data.addressDetail.trim();
+                                    if (data.postalCode != null) payload.postalCode = data.postalCode.trim();
+                                    if (data.rrnFirst6?.trim()) payload.rrnFirst6 = data.rrnFirst6.trim();
+                                    if (data.rrnLast1?.trim()) payload.rrnLast1 = data.rrnLast1.trim();
                                     let response;
                                     if (modalType === 'create') {
                                         console.log('🔧 내담자 등록 시작:', { ...payload, profileImageUrl: payload.profileImageUrl ? '(base64)' : undefined });

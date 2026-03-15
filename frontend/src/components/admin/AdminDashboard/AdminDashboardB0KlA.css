@@ -960,6 +960,17 @@
   padding: var(--mg-spacing-lg, 1rem) var(--mg-spacing-xl, 1.5rem);
 }
 
+/* B0KlA 모달 액션 버튼 크기 통일 (아이콘 유무와 관계없이 동일) */
+.mg-modal.mg-v2-ad-b0kla .mg-modal__actions .mg-button,
+.mg-modal.mg-v2-ad-b0kla .mg-modal__actions > button,
+.mg-modal.mg-v2-ad-b0kla .mg-modal__actions .mg-v2-button,
+.mg-modal.mg-v2-ad-b0kla .mg-modal__actions .mg-btn,
+.mg-modal.mg-v2-ad-b0kla .mg-modal__actions .mg-modal__button {
+  min-width: 112px;
+  min-height: 40px;
+  box-sizing: border-box;
+}
+
 /* 안내 박스 (💡 비밀번호 미입력 시 임시 비밀번호 등) */
 .mg-v2-ad-b0kla-info-box,
 .mg-modal.mg-v2-ad-b0kla .mg-v2-info-box.mg-v2-ad-b0kla-info-box {

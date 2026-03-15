@@ -1,6 +1,6 @@
 import Button from '../../ui/Button/Button';
 import { User, Edit, Trash2, Eye, Key, Mail, Phone } from 'lucide-react';
-import { getUserStatusKoreanNameSync, getUserGradeKoreanNameSync, getUserGradeIconSync, getStatusColorSync } from '../../../utils/codeHelper';
+import { getUserStatusKoreanNameSync, getUserGradeKoreanNameSync, getUserGradeIconSync, getStatusColorSync, maskEncryptedDisplay } from '../../../utils/codeHelper';
 import '../ProfileCard.css';
 
 /**
@@ -37,13 +37,13 @@ const ClientOverviewTab = ({
                         <User size={24} />
                     </div>
                     <div className="mg-v2-profile-card__info">
-                        <h3 className="mg-v2-profile-card__name">{client.name}</h3>
+                        <h3 className="mg-v2-profile-card__name">{maskEncryptedDisplay(client.name, '이름')}</h3>
                         <div className="mg-v2-profile-card__contact">
                             <span className="mg-v2-profile-card__email">
-                                <Mail size={12} /> {client.email}
+                                <Mail size={12} /> {maskEncryptedDisplay(client.email, '이메일')}
                             </span>
                             <span className="mg-v2-profile-card__phone">
-                                <Phone size={12} /> {client.phone}
+                                <Phone size={12} /> {maskEncryptedDisplay(client.phone, '전화번호')}
                             </span>
                         </div>
                     </div>
@@ -84,7 +84,7 @@ const ClientOverviewTab = ({
                         </div>
                     </div>
                     
-                    {client.notes && (
+                    {client.notes && !String(client.notes).startsWith('legacy::') && (
                         <div className="mg-v2-profile-card__extra-info">
                             <span className="mg-v2-profile-card__extra-label">특이사항:</span>
                             <span className="mg-v2-profile-card__extra-value">{client.notes}</span>

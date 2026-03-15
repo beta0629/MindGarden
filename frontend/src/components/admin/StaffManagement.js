@@ -20,6 +20,7 @@ import { SearchInput } from '../dashboard-v2/atoms';
 import Button from '../ui/Button/Button';
 import { showSuccess, showError } from '../../utils/notification';
 import { apiGet } from '../../utils/ajax';
+import { maskEncryptedDisplay } from '../../utils/codeHelper';
 import ProfileImageInput from '../common/ProfileImageInput';
 import '../../styles/unified-design-tokens.css';
 import './ClientComprehensiveManagement/ClientModal.css';
@@ -75,10 +76,10 @@ const AddStaffModalContent = ({ list = [], searchTerm, onSearch, roleOf, onAssig
                     <User size={24} />
                   </div>
                   <div className="mg-v2-profile-card__info">
-                    <h3 className="mg-v2-profile-card__name">{u.name || '-'}</h3>
+                    <h3 className="mg-v2-profile-card__name">{maskEncryptedDisplay(u.name, '이름')}</h3>
                     <div className="mg-v2-profile-card__contact">
                       <span className="mg-v2-profile-card__email">
-                        <Mail size={12} /> {u.email || '-'}
+                        <Mail size={12} /> {maskEncryptedDisplay(u.email, '이메일')}
                       </span>
                       <span className="mg-v2-profile-card__badges">{ROLE_DISPLAY_NAMES[roleOf(u)] || roleOf(u)}</span>
                     </div>
@@ -467,13 +468,13 @@ const StaffManagement = ({ embedded = false }) => {
                       <User size={24} />
                     </div>
                     <div className="mg-v2-profile-card__info">
-                      <h3 className="mg-v2-profile-card__name">{staff.name || '-'}</h3>
+                      <h3 className="mg-v2-profile-card__name">{maskEncryptedDisplay(staff.name, '이름')}</h3>
                       <div className="mg-v2-profile-card__contact">
                         <span className="mg-v2-profile-card__email">
-                          <Mail size={12} /> {staff.email || '-'}
+                          <Mail size={12} /> {maskEncryptedDisplay(staff.email, '이메일')}
                         </span>
                         <span className="mg-v2-profile-card__phone">
-                          <Phone size={12} /> {staff.phone || '전화번호 없음'}
+                          <Phone size={12} /> {maskEncryptedDisplay(staff.phone, '전화번호 없음')}
                         </span>
                       </div>
                     </div>

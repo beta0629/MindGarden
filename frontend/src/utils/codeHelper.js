@@ -17,6 +17,19 @@ let lastCacheTime = 0;
 const CACHE_DURATION = 5 * 60 * 1000; // 5분
 
 /**
+ * 복호화되지 않은 값(legacy:: 또는 암호문 패턴)이면 마스킹하여 표시용 문자열 반환
+ * @param {string} value - 표시할 값
+ * @param {string} fallback - 암호문일 때 반환할 대체 문자열
+ * @returns {string}
+ */
+export const maskEncryptedDisplay = (value, fallback = '—') => {
+  if (value == null || value === '') return fallback;
+  const s = String(value).trim();
+  if (s.startsWith('legacy::') || (s.includes('==') && /^[A-Za-z0-9+/=]+$/.test(s))) return fallback;
+  return s;
+};
+
+/**
  * 코드그룹 메타데이터 로드 (캐시 적용)
  */
 export const loadCodeGroupMetadata = async () => {

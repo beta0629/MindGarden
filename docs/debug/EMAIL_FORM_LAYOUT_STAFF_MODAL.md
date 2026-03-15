@@ -18,6 +18,9 @@
 - **AdminDashboardB0KlA.css**  
   `.mg-modal.mg-v2-ad-b0kla .mg-v2-form-email-row__input-wrap` 에  
   **`min-width: 12rem`** 추가 → 래퍼가 최소 12rem 을 유지해 입력란이 항상 보이도록 함.
+- **ClientModal.css**  
+  내담자 등록 모달은 `.mg-modal__body .mg-v2-modal-body` 안에 있어, 더 구체적인 선택자로 **`min-width: 0`** 이 적용되고 있었음.  
+  동일 래퍼에 **`min-width: 12rem`** 으로 변경해, 내담자 모달에서도 이메일 입력란이 붕괴되지 않도록 함.
 - (이미 적용된 구조) 이메일 input 은 `.mg-v2-form-email-row__input-wrap` 안에 두어, 래퍼가 flex 공간을 차지하고 그 안에서 input 이 100% 로 채우는 형태 유지.
 
 ## 기획 관점 (공통)

@@ -4,10 +4,10 @@
  * 특이도: .mg-modal__body .mg-v2-modal-body 포함해 AdminDashboardB0KlA.css 공통 규칙보다 우선 적용.
  */
 
-/* 이메일 행: 래퍼가 flex 공간 차지, input은 래퍼 안에서 100% */
+/* 이메일 행: 래퍼가 flex 공간 차지, input은 래퍼 안에서 100% (min-width로 입력란 붕괴 방지) */
 .mg-modal.mg-v2-ad-b0kla .mg-modal__body .mg-v2-modal-body .mg-v2-form-email-row__input-wrap {
   flex: 1 1 0%;
-  min-width: 0;
+  min-width: 12rem;
   display: block;
   box-sizing: border-box;
 }

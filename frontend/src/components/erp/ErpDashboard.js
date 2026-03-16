@@ -484,6 +484,15 @@ const ErpDashboard = ({ user: propUser }) => {
                 <span className="mg-v2-ad-b0kla__admin-desc">지점별 예산을 설정하고 관리합니다</span>
               </button>
             )}
+            {(hasSalaryManage || hasTaxManage) && (
+              <button type="button" className="mg-v2-ad-b0kla__admin-card" onClick={() => navigate('/erp/salary')}>
+                <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--gray">
+                  <DollarSign size={28} />
+                </div>
+                <span className="mg-v2-ad-b0kla__admin-label">급여 세금 통합관리</span>
+                <span className="mg-v2-ad-b0kla__admin-desc">급여 계산·세금 통계를 한 화면에서 관리합니다</span>
+              </button>
+            )}
             {hasSalaryManage && (
               <button type="button" className="mg-v2-ad-b0kla__admin-card" onClick={() => navigate('/erp/salary')}>
                 <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--gray">

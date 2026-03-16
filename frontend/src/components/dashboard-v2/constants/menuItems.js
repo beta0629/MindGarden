@@ -50,6 +50,7 @@ const DEFAULT_MENU_ITEMS = [
       { to: '/erp/purchase', icon: ShoppingCart, label: '구매 관리', end: true },
       { to: '/erp/financial', icon: DollarSign, label: '수입·지출', end: true },
       { to: '/erp/budget', icon: PieChart, label: '예산 관리', end: true },
+      { to: '/erp/salary', icon: DollarSign, label: '급여 관리', end: true },
       { to: '/erp/tax', icon: Receipt, label: '세무 관리', end: true }
     ]
   },
@@ -125,6 +126,7 @@ const ERP_MENU_ITEMS = [
   { to: '/erp/purchase', icon: ShoppingCart, label: '구매 관리', end: true },
   { to: '/erp/financial', icon: DollarSign, label: '수입·지출', end: true },
   { to: '/erp/budget', icon: PieChart, label: '예산 관리', end: true },
+  { to: '/erp/salary', icon: DollarSign, label: '급여 관리', end: true },
   { to: '/erp/tax', icon: Receipt, label: '세무 관리', end: true }
 ];
 

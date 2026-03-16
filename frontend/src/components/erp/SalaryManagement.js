@@ -487,9 +487,10 @@ const SalaryManagement = () => {
               </div>
             </section>
 
-            {/* (3) 탭 */}
+            {/* (3) 탭 — ARIA 탭 패턴: tablist 컨테이너는 div 사용, 접근성 유지 */}
             <div className="mg-v2-ad-b0kla__section salary-management__tabs-wrap">
-              <nav className="mg-tabs" role="tablist" aria-label="급여 관리 탭">
+              {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-to-interactive-role -- W3C 탭 패턴상 tablist는 div 컨테이너 사용 */}
+              <div className="mg-tabs" role="tablist" aria-label="급여 관리 탭">
                 <button
                   type="button"
                   role="tab"
@@ -526,7 +527,7 @@ const SalaryManagement = () => {
                   <Receipt size={18} aria-hidden />
                   세금 관리
                 </button>
-              </nav>
+              </div>
 
               {/* (4) 탭별 콘텐츠 */}
               {activeTab === TAB_PROFILES && (

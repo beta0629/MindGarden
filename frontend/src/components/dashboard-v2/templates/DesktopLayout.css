@@ -37,3 +37,8 @@
   flex: 1 1 0%;
   min-height: 0;
 }
+
+/* ContentHeader는 본래 크기만 사용, 세로 확장 제외(ContentHeader+ContentArea 형제 페이지 대응) */
+.mg-v2-desktop-layout__main > .mg-v2-content-header {
+  flex: 0 0 auto;
+}

@@ -1,525 +1,561 @@
-/* ============================================
-   급여 관리 - Core Solution 디자인 시스템 v2.0
-   ============================================ */
+/**
+ * 급여 관리 - B0KlA·아토믹 디자인 (디자인 토큰만 사용)
+ * SALARY_MANAGEMENT_LAYOUT_DESIGN.md, SALARY_MANAGEMENT_ATOMIC_MARKUP.md 준수
+ *
+ * @author CoreSolution
+ * @since 2025-03-16
+ */
 
-/* ==================== 섹션 헤더 ==================== */
-.section-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: var(--spacing-lg);
-    padding-bottom: var(--spacing-md);
-    border-bottom: 1px solid var(--light-beige);
+/* ========== 메인 래퍼 ========== */
+.salary-management__main {
+  padding: var(--mg-spacing-lg);
 }
 
-.section-header h3 {
-    font-size: var(--font-size-xl);
-    font-weight: var(--font-weight-semibold, 600);
-    color: var(--dark-gray);
-    margin: 0;
+.salary-management__header-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mg-spacing-sm);
 }
 
-/* ==================== 프로필 섹션 ==================== */
-.profiles-section {
-    padding: var(--spacing-lg);
+.salary-management__header-btn-text {
+  margin-left: var(--mg-spacing-xs);
 }
 
-.profiles-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: var(--spacing-lg);
-    margin-top: var(--spacing-lg);
+.salary-management__period-select {
+  min-width: 140px;
 }
 
-.profile-card {
-    background: white;
-    border-radius: var(--radius-lg);
-    padding: var(--spacing-lg);
-    box-shadow: var(--shadow-md);
-    transition: all 0.3s ease;
-    border: 1px solid var(--light-beige);
+.salary-management__loading-text,
+.salary-profile-block__empty-state {
+  color: var(--mg-color-text-secondary);
+  font-size: 14px;
+  margin: 0;
+  padding: var(--mg-spacing-lg);
 }
 
-.profile-card:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-lg);
+.salary-management__stat-label {
+  font-size: 12px;
+  color: var(--mg-color-text-secondary);
 }
 
-.profile-info h4 {
-    font-size: var(--font-size-lg);
-    font-weight: var(--font-weight-semibold, 600);
-    color: var(--dark-gray);
-    margin: 0 0 var(--spacing-sm) 0;
+.salary-management__stat-value {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--mg-color-text-main);
 }
 
-.profile-info p {
-    font-size: var(--font-size-sm);
-    color: var(--medium-gray);
-    margin: var(--spacing-xs) 0;
+.salary-management__detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--mg-spacing-xs) 0;
+  font-size: 14px;
+  color: var(--mg-color-text-main);
 }
 
-.profile-actions {
-    margin-top: var(--spacing-md);
-    display: flex;
-    gap: var(--spacing-sm);
+.salary-management__detail-row--tax,
+.salary-management__detail-row--total {
+  font-weight: 600;
 }
 
-/* ==================== 프로필 없음 메시지 ==================== */
-.no-profiles-message {
-    text-align: center;
-    padding: var(--spacing-xl);
-    background: var(--light-cream);
-    border-radius: var(--radius-lg);
-    border: 2px dashed var(--light-beige);
-    margin: var(--spacing-lg) 0;
+.salary-management-loading-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--mg-color-background-main);
+  opacity: 0.9;
+  z-index: 1000;
 }
 
-.salary-no-profiles-title {
-    font-size: var(--font-size-xl);
-    color: var(--dark-gray);
-    margin-bottom: var(--spacing-md);
+/* ========== 필터 블록 ========== */
+.salary-filter-block {
+  background: var(--mg-color-surface-main);
+  border: 1px solid var(--mg-color-border-main);
+  border-radius: 16px;
+  padding: var(--mg-spacing-lg);
 }
 
-.salary-no-profiles-description {
-    font-size: var(--font-size-md);
-    color: var(--medium-gray);
-    margin-bottom: var(--spacing-lg);
-    line-height: 1.6;
+.salary-filter-block__title {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-spacing-sm);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--mg-color-text-main);
+  margin: 0 0 var(--mg-spacing-md) 0;
 }
 
-.salary-management-create-btn {
-    background: var(--mint-green);
-    color: var(--dark-gray);
-    border: none;
-    padding: var(--spacing-sm) var(--spacing-lg);
-    border-radius: var(--radius-md);
-    font-size: var(--font-size-md);
-    font-weight: var(--font-weight-semibold, 600);
-    cursor: pointer;
-    transition: all 0.2s ease;
+.salary-filter-block__accent {
+  width: 4px;
+  min-width: 4px;
+  height: 1.25em;
+  background: var(--mg-color-primary-main);
+  border-radius: 2px;
 }
 
-.salary-management-create-btn:hover {
-    background: var(--olive-green);
-    color: white;
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
+.salary-filter-block__group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--mg-spacing-md);
 }
 
-/* ==================== 데이터 없음 ==================== */
-.no-data {
-    text-align: center;
-    padding: var(--spacing-xl);
-    color: var(--medium-gray);
-    background: white;
-    border-radius: var(--radius-lg);
-    border: 1px solid var(--light-beige);
+.salary-filter-block__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-xs);
 }
 
-.no-data p {
-    margin: 0;
-    font-size: var(--font-size-md);
+.salary-filter-block__field .mg-v2-form-label {
+  font-size: 12px;
+  color: var(--mg-color-text-secondary);
 }
 
-/* ==================== 계산 섹션 ==================== */
-.calculations-section {
-    padding: var(--spacing-lg);
+.salary-filter-block__field .mg-v2-select {
+  min-width: 160px;
 }
 
-.profile-warning {
-    background: var(--light-beige);
-    padding: var(--spacing-md);
-    border-radius: var(--radius-md);
-    margin-bottom: var(--spacing-lg);
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-sm);
-    font-size: var(--font-size-sm);
-    color: var(--dark-gray);
+.salary-filter-block__run-calc {
+  margin-left: auto;
 }
 
-.salary-management-profile-link {
-    background: var(--mint-green);
-    color: var(--dark-gray);
-    border: none;
-    padding: var(--spacing-xs) var(--spacing-sm);
-    border-radius: var(--radius-sm);
-    font-size: var(--font-size-sm);
-    font-weight: var(--font-weight-semibold, 600);
-    cursor: pointer;
-    transition: all 0.2s ease;
+.salary-filter-block__period-display {
+  min-width: 200px;
 }
 
-.salary-management-profile-link:hover {
-    background: var(--olive-green);
-    color: white;
+.salary-filter-block__period-text {
+  font-size: 12px;
+  color: var(--mg-color-text-secondary);
 }
 
-.calculation-controls {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--spacing-md);
-    margin-bottom: var(--spacing-lg);
-    padding: var(--spacing-md);
-    background: var(--light-cream);
-    border-radius: var(--radius-md);
+.salary-management__header-btn--primary {
+  background: var(--mg-color-primary-main);
+  color: var(--mg-color-background-main);
+  border: none;
 }
 
-.control-group {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-sm);
+/* ========== 탭 래퍼 ========== */
+.salary-management__tabs-wrap {
+  background: var(--mg-color-surface-main);
+  border: 1px solid var(--mg-color-border-main);
+  border-radius: 16px;
+  padding: var(--mg-spacing-lg);
 }
 
-.control-group label {
-    font-size: var(--font-size-sm);
-    font-weight: var(--font-weight-semibold, 600);
-    color: var(--dark-gray);
-    white-space: nowrap;
+.salary-management__tabs-wrap .mg-tabs {
+  display: flex;
+  gap: var(--mg-spacing-xs);
+  margin-bottom: var(--mg-spacing-lg);
+  border-bottom: 1px solid var(--mg-color-border-main);
+  padding-bottom: 0;
 }
 
-.control-group select {
-    min-width: 150px;
+.salary-management__tabs-wrap .mg-tab {
+  padding: 12px 14px;
+  font-size: 14px;
+  color: var(--mg-color-text-secondary);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 10px 10px 0 0;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mg-spacing-sm);
+  min-height: 44px;
 }
 
-/* ==================== 계산 결과 카드 ==================== */
-.calculations-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: var(--spacing-lg);
-    margin-top: var(--spacing-lg);
+.salary-management__tabs-wrap .mg-tab:hover {
+  color: var(--mg-color-text-main);
 }
 
-.calculation-card {
-    background: white;
-    border-radius: var(--radius-lg);
-    padding: var(--spacing-lg);
-    box-shadow: var(--shadow-md);
-    transition: all 0.3s ease;
-    border: 1px solid var(--light-beige);
+.salary-management__tabs-wrap .mg-tab-active {
+  color: var(--mg-color-primary-main);
+  font-weight: 600;
+  border-bottom-color: var(--mg-color-primary-main);
 }
 
-.calculation-card:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-lg);
+/* ========== 급여 프로필 블록 ========== */
+.salary-profile-block__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--mg-spacing-md);
+  margin-bottom: var(--mg-spacing-lg);
 }
 
-.calculation-card h4 {
-    font-size: var(--font-size-lg);
-    font-weight: var(--font-weight-semibold, 600);
-    color: var(--dark-gray);
-    margin: 0 0 var(--spacing-md) 0;
+.salary-profile-block__title {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-spacing-sm);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--mg-color-text-main);
+  margin: 0;
 }
 
-.calculation-card p {
-    font-size: var(--font-size-sm);
-    color: var(--medium-gray);
-    margin: var(--spacing-xs) 0;
+.salary-profile-block__accent {
+  width: 4px;
+  min-width: 4px;
+  height: 1.25em;
+  background: var(--mg-color-primary-main);
+  border-radius: 2px;
 }
 
-.calculation-card strong {
-    color: var(--dark-gray);
+.salary-profile-block__empty {
+  text-align: center;
+  padding: var(--mg-spacing-xl);
+  background: var(--mg-color-surface-main);
+  border: 2px dashed var(--mg-color-border-main);
+  border-radius: 16px;
+  margin-bottom: var(--mg-spacing-lg);
 }
 
-.calculation-actions {
-    margin-top: var(--spacing-md);
-    display: flex;
-    gap: var(--spacing-sm);
-    flex-wrap: wrap;
+.salary-no-profiles-message {
+  font-size: 14px;
+  color: var(--mg-color-text-secondary);
+  margin: 0 0 var(--mg-spacing-lg) 0;
+  line-height: 1.6;
 }
 
-/* ==================== 세금 관리 섹션 ==================== */
-.tax-section {
-    padding: var(--spacing-lg);
+.salary-profile-block__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--mg-spacing-lg);
 }
 
-.tax-statistics {
-    margin-top: var(--spacing-lg);
+/* 프로필 카드 */
+.salary-profile-card {
+  position: relative;
+  background: var(--mg-color-surface-main);
+  border: 1px solid var(--mg-color-border-main);
+  border-radius: 16px;
+  padding: var(--mg-spacing-lg);
+  transition: box-shadow 0.2s ease;
 }
 
-.tax-stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: var(--spacing-lg);
-    margin-bottom: var(--spacing-xl);
+.salary-profile-card:hover {
+  box-shadow: var(--ad-b0kla-shadow-hover, 0 4px 12px rgba(0, 0, 0, 0.08));
 }
 
-.tax-stat-card {
-    background: white;
-    border-radius: var(--radius-lg);
-    padding: var(--spacing-lg);
-    box-shadow: var(--shadow-md);
-    text-align: center;
-    border: 1px solid var(--light-beige);
+.salary-profile-card__accent {
+  position: absolute;
+  left: 0;
+  top: var(--mg-spacing-md);
+  bottom: var(--mg-spacing-md);
+  width: 4px;
+  background: var(--mg-color-primary-main);
+  border-radius: 2px;
 }
 
-.tax-stat-card h4 {
-    font-size: var(--font-size-sm);
-    color: var(--medium-gray);
-    margin: 0 0 var(--spacing-sm) 0;
-    font-weight: var(--font-weight-semibold, 600);
+.salary-profile-card__name {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--mg-color-text-main);
+  margin: 0 0 var(--mg-spacing-xs) 0;
+  padding-left: var(--mg-spacing-sm);
 }
 
-.tax-stat-card .amount {
-    font-size: var(--font-size-xl);
-    font-weight: 700;
-    color: var(--dark-gray);
+.salary-profile-card__meta {
+  font-size: 12px;
+  color: var(--mg-color-text-secondary);
+  margin: 0 0 var(--mg-spacing-sm) 0;
+  padding-left: var(--mg-spacing-sm);
 }
 
-/* ==================== 세금 명세서 ==================== */
-.tax-specification {
-    background: white;
-    border: 1px solid var(--light-beige);
-    border-radius: var(--radius-lg);
-    overflow: hidden;
-    margin-top: var(--spacing-lg);
-    width: 100%;
+.salary-profile-card__grade {
+  font-size: 12px;
+  color: var(--mg-color-text-secondary);
+  margin: 0 0 var(--mg-spacing-xs) 0;
+  padding-left: var(--mg-spacing-sm);
 }
 
-.spec-header {
-    display: grid;
-    grid-template-columns: 3fr 1fr 1.5fr;
-    background: var(--dark-gray);
-    color: white;
-    font-weight: var(--font-weight-semibold, 600);
-    padding: var(--spacing-md) var(--spacing-lg);
-    font-size: var(--font-size-sm);
+.salary-profile-card__base {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: var(--mg-spacing-sm) 0 var(--mg-spacing-md) 0;
+  padding-left: var(--mg-spacing-sm);
 }
 
-.spec-section {
-    border-bottom: 1px solid var(--light-beige);
+.salary-profile-card__base .salary-management__stat-value {
+  font-size: 20px;
 }
 
-.spec-section:last-of-type {
-    border-bottom: none;
+.salary-profile-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mg-spacing-sm);
+  margin-top: var(--mg-spacing-md);
+  padding-top: var(--mg-spacing-md);
+  border-top: 1px solid var(--mg-color-border-main);
 }
 
-.section-title {
-    background: var(--medium-gray);
-    color: white;
-    padding: var(--spacing-sm) var(--spacing-md);
-    font-weight: var(--font-weight-semibold, 600);
-    font-size: var(--font-size-sm);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+/* ========== 급여 계산 블록 ========== */
+.salary-calc-block__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--mg-spacing-md);
+  margin-bottom: var(--mg-spacing-lg);
 }
 
-.spec-item {
-    display: grid;
-    grid-template-columns: 3fr 1fr 1.5fr;
-    padding: var(--spacing-md) var(--spacing-lg);
-    border-bottom: 1px solid var(--light-cream);
-    align-items: center;
-    font-size: var(--font-size-sm);
+.salary-calc-block__title {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-spacing-sm);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--mg-color-text-main);
+  margin: 0;
 }
 
-.spec-item:last-child {
-    border-bottom: none;
+.salary-calc-block__accent {
+  width: 4px;
+  min-width: 4px;
+  height: 1.25em;
+  background: var(--mg-color-primary-main);
+  border-radius: 2px;
 }
 
-.item-name {
-    font-weight: 500;
-    color: var(--dark-gray);
+.salary-calc-block__preview {
+  margin-bottom: var(--mg-spacing-lg);
 }
 
-.item-rate {
-    color: var(--medium-gray);
-    text-align: center;
+.salary-calc-block__preview-card {
+  background: var(--mg-color-surface-main);
+  border: 1px solid var(--mg-color-border-main);
+  border-radius: 16px;
+  padding: var(--mg-spacing-lg);
 }
 
-.item-amount {
-    text-align: right;
-    font-weight: var(--font-weight-semibold, 600);
-    color: var(--dark-gray);
+.salary-calc-block__preview-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--mg-color-text-main);
+  margin: 0 0 var(--mg-spacing-md) 0;
 }
 
-.spec-total {
-    background: var(--light-beige);
-    border-top: 2px solid var(--dark-gray);
-    font-weight: 700;
+.salary-calc-block__preview-grid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--mg-spacing-xs) var(--mg-spacing-lg);
+  align-items: center;
 }
 
-.spec-total .item-name,
-.spec-total .item-amount {
-    font-size: var(--font-size-lg);
-    color: var(--dark-gray);
+.salary-calc-block__preview-period {
+  font-size: 12px;
+  color: var(--mg-color-text-secondary);
+  margin: 0 0 var(--mg-spacing-md) 0;
 }
 
-.spec-net-pay {
-    background: var(--mint-green);
-    font-weight: 700;
+.salary-calc-block__preview-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: var(--mg-spacing-md);
+  margin-bottom: var(--mg-spacing-md);
 }
 
-.spec-net-pay .item-name,
-.spec-net-pay .item-amount {
-    font-size: var(--font-size-xl);
-    color: var(--dark-gray);
+.salary-calc-block__preview-card-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-xs);
 }
 
-/* ==================== 버튼 스타일 ==================== */
-.mg-btn--primary,
-.mg-btn--secondary,
-.btn-success,
-.btn-danger {
-    padding: var(--spacing-sm) var(--spacing-md);
-    border: none;
-    border-radius: var(--radius-md);
-    font-size: var(--font-size-sm);
-    font-weight: var(--font-weight-semibold, 600);
-    cursor: pointer;
-    transition: all 0.2s ease;
+.salary-calc-block__preview-card-item--net .salary-management__stat-value {
+  color: var(--mg-color-primary-main);
 }
 
-.mg-btn--primary {
-    background: var(--mint-green);
-    color: var(--dark-gray);
+.salary-calc-block__preview-actions {
+  display: flex;
+  gap: var(--mg-spacing-sm);
+  margin-top: var(--mg-spacing-md);
 }
 
-.mg-btn--primary:hover {
-    background: var(--olive-green);
-    color: white;
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
+.salary-calc-block__preview-notice {
+  font-size: 12px;
+  color: var(--mg-color-text-secondary);
+  margin: var(--mg-spacing-md) 0 0 0;
 }
 
-.mg-btn--secondary {
-    background: var(--light-beige);
-    color: var(--dark-gray);
+.salary-calc-block__list-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--mg-color-text-main);
+  margin: 0 0 var(--mg-spacing-md) 0;
 }
 
-.mg-btn--secondary:hover {
-    background: var(--medium-gray);
-    color: white;
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
+.salary-calc-block__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-md);
 }
 
-.btn-success {
-    background: var(--status-active);
-    color: white;
+.salary-calc-block__card {
+  background: var(--mg-color-surface-main);
+  border: 1px solid var(--mg-color-border-main);
+  border-radius: 16px;
+  padding: var(--mg-spacing-lg);
 }
 
-.btn-success:hover {
-    background: #059669;
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
+.salary-calc-block__card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--mg-spacing-md);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--mg-color-text-main);
 }
 
-.btn-danger {
-    background: var(--color-danger);
-    color: white;
+.salary-calc-block__card-details {
+  margin-bottom: var(--mg-spacing-md);
 }
 
-.btn-danger:hover {
-    background: #dc2626;
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
+.salary-calc-block__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mg-spacing-sm);
+  padding-top: var(--mg-spacing-md);
+  border-top: 1px solid var(--mg-color-border-main);
 }
 
-/* ==================== 반응형 디자인 ==================== */
-
-/* 태블릿 (768px ~ 1024px) */
-@media (min-width: 768px) and (max-width: 1024px) {
-    .profiles-grid,
-    .calculations-grid {
-        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    }
-    
-    .tax-stats-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-    
-    .spec-header,
-    .spec-item {
-        grid-template-columns: 2fr 1fr 1.5fr;
-        padding: var(--spacing-sm) var(--spacing-md);
-    }
+/* ========== 세금 관리 블록 ========== */
+.salary-tax-block__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--mg-spacing-md);
+  margin-bottom: var(--mg-spacing-lg);
 }
 
-/* 모바일 (< 768px) */
+.salary-tax-block__title {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-spacing-sm);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--mg-color-text-main);
+  margin: 0;
+}
+
+.salary-tax-block__accent {
+  width: 4px;
+  min-width: 4px;
+  height: 1.25em;
+  background: var(--mg-color-primary-main);
+  border-radius: 2px;
+}
+
+.salary-tax-block__card {
+  background: var(--mg-color-surface-main);
+  border: 1px solid var(--mg-color-border-main);
+  border-radius: 16px;
+  padding: var(--mg-spacing-lg);
+}
+
+.salary-tax-block__card-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--mg-color-text-main);
+  margin: 0 0 var(--mg-spacing-md) 0;
+}
+
+.salary-tax-block__card-body {
+  margin-bottom: var(--mg-spacing-md);
+}
+
+.salary-tax-block__value {
+  font-weight: 600;
+  color: var(--mg-color-text-main);
+}
+
+.salary-tax-block__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mg-spacing-sm);
+  padding-top: var(--mg-spacing-md);
+  border-top: 1px solid var(--mg-color-border-main);
+}
+
+.salary-tax-block__empty {
+  text-align: center;
+  padding: var(--mg-spacing-xl);
+  color: var(--mg-color-text-secondary);
+  font-size: 14px;
+  background: var(--mg-color-surface-main);
+  border: 1px dashed var(--mg-color-border-main);
+  border-radius: 16px;
+}
+
+.salary-tax-block__empty p {
+  margin: 0;
+}
+
+/* ========== 반응형 (SALARY_MANAGEMENT_LAYOUT_DESIGN §5) ========== */
 @media (max-width: 767px) {
-    .section-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: var(--spacing-md);
-    }
-    
-    .profiles-grid,
-    .calculations-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .tax-stats-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .calculation-controls {
-        flex-direction: column;
-    }
-    
-    .control-group {
-        width: 100%;
-        flex-direction: column;
-        align-items: flex-start;
-    }
-    
-    .control-group select {
-        width: 100%;
-    }
-    
-    /* 세금 명세서 모바일 최적화 */
-    .spec-header,
-    .spec-item {
-        grid-template-columns: 1fr;
-        gap: var(--spacing-xs);
-    }
-    
-    .spec-header > div,
-    .spec-item > div {
-        padding: var(--spacing-xs) 0;
-    }
-    
-    .item-rate,
-    .item-amount {
-        text-align: left;
-    }
-    
-    .item-name::after {
-        content: ':';
-    }
-    
-    .calculation-actions {
-        flex-direction: column;
-    }
-    
-    .calculation-actions button {
-        width: 100%;
-    }
+  .salary-management__main {
+    padding: var(--mg-spacing-md);
+  }
+
+  .salary-filter-block__group {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .salary-filter-block__field .mg-v2-select {
+    min-width: 100%;
+  }
+
+  .salary-filter-block__run-calc {
+    margin-left: 0;
+  }
+
+  .salary-filter-block__run-calc .mg-v2-button {
+    width: 100%;
+  }
+
+  .salary-management__tabs-wrap .mg-tabs {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .salary-management__tabs-wrap .mg-tab {
+    flex-shrink: 0;
+  }
+
+  .salary-profile-block__grid {
+    grid-template-columns: 1fr;
+    gap: var(--mg-spacing-md);
+  }
+
+  .salary-calc-block__preview-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .salary-calc-block__actions {
+    flex-direction: column;
+  }
+
+  .salary-calc-block__actions .mg-v2-button {
+    width: 100%;
+  }
 }
 
-/* 작은 모바일 (< 480px) */
-@media (max-width: 480px) {
-    .profiles-section,
-    .calculations-section,
-    .tax-section {
-        padding: var(--spacing-md);
-    }
-    
-    .profile-card,
-    .calculation-card,
-    .tax-stat-card {
-        padding: var(--spacing-md);
-    }
-    
-    .section-header h3 {
-        font-size: var(--font-size-lg);
-    }
-    
-    .mg-btn--primary,
-    .mg-btn--secondary,
-    .btn-success,
-    .btn-danger {
-        width: 100%;
-        justify-content: center;
-    }
+@media (min-width: 768px) and (max-width: 1279px) {
+  .salary-profile-block__grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1280px) {
+  .salary-profile-block__grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }

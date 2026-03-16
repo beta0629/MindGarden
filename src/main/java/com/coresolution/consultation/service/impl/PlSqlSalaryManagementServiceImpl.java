@@ -253,40 +253,42 @@ public class PlSqlSalaryManagementServiceImpl implements PlSqlSalaryManagementSe
         log.info("💰 PL/SQL 급여 미리보기 계산: ConsultantID={}, Period={} ~ {}", 
                 consultantId, periodStart, periodEnd);
         
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         Map<String, Object> result = new HashMap<>();
         
         try (Connection connection = jdbcTemplate.getDataSource().getConnection();
              CallableStatement stmt = connection.prepareCall(
-                 "{CALL CalculateSalaryPreview(?, ?, ?, ?, ?, ?, ?, ?, ?)}")) {
+                 "{CALL CalculateSalaryPreview(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}")) {
             
             // UTF-8 인코딩 설정
             connection.createStatement().execute("SET character_set_client = utf8mb4");
             connection.createStatement().execute("SET character_set_connection = utf8mb4");
             connection.createStatement().execute("SET character_set_results = utf8mb4");
             
-            // IN 파라미터 설정
+            // IN 파라미터 설정 (1~4)
             stmt.setLong(1, consultantId);
             stmt.setDate(2, java.sql.Date.valueOf(periodStart));
             stmt.setDate(3, java.sql.Date.valueOf(periodEnd));
+            stmt.setString(4, tenantId);
             
-            // OUT 파라미터 등록
-            stmt.registerOutParameter(4, java.sql.Types.DECIMAL);   // p_gross_salary
-            stmt.registerOutParameter(5, java.sql.Types.DECIMAL);   // p_net_salary
-            stmt.registerOutParameter(6, java.sql.Types.DECIMAL);   // p_tax_amount
-            stmt.registerOutParameter(7, java.sql.Types.INTEGER);   // p_consultation_count
-            stmt.registerOutParameter(8, java.sql.Types.BOOLEAN);   // p_success
-            stmt.registerOutParameter(9, java.sql.Types.VARCHAR);   // p_message
+            // OUT 파라미터 등록 (5~10: success, message, gross_salary, net_salary, tax_amount, consultation_count)
+            stmt.registerOutParameter(5, java.sql.Types.BOOLEAN);   // p_success
+            stmt.registerOutParameter(6, java.sql.Types.VARCHAR);   // p_message
+            stmt.registerOutParameter(7, java.sql.Types.DECIMAL);   // p_gross_salary
+            stmt.registerOutParameter(8, java.sql.Types.DECIMAL);   // p_net_salary
+            stmt.registerOutParameter(9, java.sql.Types.DECIMAL);   // p_tax_amount
+            stmt.registerOutParameter(10, java.sql.Types.INTEGER);  // p_consultation_count
             
             // 프로시저 실행
             stmt.execute();
             
             // 결과 추출
-            result.put("grossSalary", stmt.getBigDecimal(4));
-            result.put("netSalary", stmt.getBigDecimal(5));
-            result.put("taxAmount", stmt.getBigDecimal(6));
-            result.put("consultationCount", stmt.getInt(7));
-            result.put("success", stmt.getBoolean(8));
-            result.put("message", stmt.getString(9));
+            result.put("success", stmt.getBoolean(5));
+            result.put("message", stmt.getString(6));
+            result.put("grossSalary", stmt.getBigDecimal(7));
+            result.put("netSalary", stmt.getBigDecimal(8));
+            result.put("taxAmount", stmt.getBigDecimal(9));
+            result.put("consultationCount", stmt.getInt(10));
             
             log.info("✅ PL/SQL 급여 미리보기 완료: ConsultantID={}, GrossSalary={}, NetSalary={}, ConsultationCount={}", 
                     consultantId, result.get("grossSalary"), result.get("netSalary"), result.get("consultationCount"));

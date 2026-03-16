@@ -46,7 +46,7 @@ const TaxDetailsModal = ({
     setError(null);
     
     try {
-      const response = await apiGet(`/api/admin/salary/tax/${calculationId}`);
+      const response = await apiGet(`/api/v1/admin/salary/tax/${calculationId}`);
       
       if (response.success) {
         setTaxDetails(response.data?.taxDetails || []);

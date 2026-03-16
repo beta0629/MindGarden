@@ -331,11 +331,11 @@ const SalaryProfileFormModal = ({
             onClose={onClose}
             title={`급여 프로필 생성 - ${consultant.name}`}
             size="large"
-            className="salary-profile-modal-content"
+            className="salary-profile-modal-content mg-v2-ad-b0kla"
         >
-            <div>
+            <div className="salary-profile-form">
                 {/* 기본 정보 */}
-                <div className="consultant-info-section">
+                <div className="salary-profile-form__section consultant-info-section">
                         <h4 className="consultant-info-title">상담사 정보</h4>
                         <p className="consultant-info-item"><strong>이름:</strong> {consultant.name}</p>
                         <p className="consultant-info-item"><strong>현재 등급:</strong> {convertGradeToKorean(consultant.grade)}</p>
@@ -343,7 +343,7 @@ const SalaryProfileFormModal = ({
                     </div>
 
                     {/* 상담사 등급 선택 */}
-                    <div className="consultant-profile-form-item">
+                    <div className="salary-profile-form__section consultant-profile-form-item">
                         <label className="consultant-profile-form-label">상담사 등급</label>
                         <BadgeSelect
                             className="mg-v2-form-badge-select consultant-profile-form-select"
@@ -364,7 +364,7 @@ const SalaryProfileFormModal = ({
                     </div>
 
                     {/* 등급표 */}
-                    <div className="consultant-profile-form-item">
+                    <div className="salary-profile-form__section consultant-profile-form-item">
                         <label className="consultant-profile-form-label">상담사 등급표</label>
                         <div className="grade-table-container">
                             <div className="grade-table-header">
@@ -411,7 +411,7 @@ const SalaryProfileFormModal = ({
                     </div>
 
                     {/* 급여 유형 */}
-                    <div className="consultant-profile-form-item">
+                    <div className="salary-profile-form__section consultant-profile-form-item">
                         <label className="consultant-profile-form-label">급여 유형</label>
                         <BadgeSelect
                             className="mg-v2-form-badge-select consultant-profile-form-select"
@@ -429,7 +429,7 @@ const SalaryProfileFormModal = ({
                     </div>
 
                     {/* 기본 급여 */}
-                    <div className="consultant-profile-form-item">
+                    <div className="salary-profile-form__section consultant-profile-form-item">
                         <label className="consultant-profile-form-label">기본 급여 (원)</label>
                         <input
                             type="number"
@@ -442,7 +442,7 @@ const SalaryProfileFormModal = ({
 
                     {/* 사업자 등록 여부 (프리랜서만) */}
                     {formData.salaryType === 'FREELANCE' && (
-                        <div className="consultant-profile-form-item">
+                        <div className="salary-profile-form__section consultant-profile-form-item">
                             <label className="consultant-profile-form-label">사업자 등록 여부</label>
                             <BadgeSelect
                                 className="mg-v2-form-badge-select consultant-profile-form-select"
@@ -464,7 +464,7 @@ const SalaryProfileFormModal = ({
                     {/* 사업자 등록 시 추가 필드 */}
                     {formData.salaryType === 'FREELANCE' && formData.isBusinessRegistered && (
                         <>
-                            <div className="consultant-profile-form-item">
+                            <div className="salary-profile-form__section consultant-profile-form-item">
                                 <label className="consultant-profile-form-label">사업자 등록번호 *</label>
                                 <input
                                     type="text"
@@ -477,7 +477,7 @@ const SalaryProfileFormModal = ({
                                     사업자 등록번호를 입력하세요 (예: 123-45-67890)
                                 </div>
                             </div>
-                            <div className="consultant-profile-form-item">
+                            <div className="salary-profile-form__section consultant-profile-form-item">
                                 <label className="consultant-profile-form-label">사업자명 *</label>
                                 <input
                                     type="text"
@@ -494,7 +494,7 @@ const SalaryProfileFormModal = ({
                     )}
 
                     {/* 계약 조건 */}
-                    <div className="consultant-profile-form-item consultant-profile-form-item--full-width">
+                    <div className="salary-profile-form__section consultant-profile-form-item consultant-profile-form-item--full-width">
                         <label className="consultant-profile-form-label">계약 조건</label>
                         <textarea
                             className="consultant-profile-form-textarea"
@@ -506,7 +506,7 @@ const SalaryProfileFormModal = ({
                     </div>
 
                     {/* 급여 옵션 */}
-                    <div className="consultant-profile-form-item consultant-profile-form-item--full-width">
+                    <div className="salary-profile-form__section consultant-profile-form-item consultant-profile-form-item--full-width">
                         <div className="option-header">
                             <label className="consultant-profile-form-label">급여 옵션 (등급별 자동 추가됨)</label>
                             <button className="mg-btn mg-btn--success option-add-btn" onClick={addOption}>
@@ -562,16 +562,18 @@ const SalaryProfileFormModal = ({
                         ))}
                     </div>
 
-                <div className="consultant-profile-form-actions">
-                    <button 
-                        className="mg-btn mg-btn--secondary"
+                <div className="salary-profile-form__actions consultant-profile-form-actions">
+                    <button
+                        type="button"
+                        className="mg-v2-button mg-v2-button--outline"
                         onClick={onClose}
                         disabled={loading}
                     >
                         취소
                     </button>
-                    <button 
-                        className="mg-btn mg-btn--primary"
+                    <button
+                        type="button"
+                        className="mg-v2-button mg-v2-button--primary"
                         onClick={handleSave}
                         disabled={loading}
                     >

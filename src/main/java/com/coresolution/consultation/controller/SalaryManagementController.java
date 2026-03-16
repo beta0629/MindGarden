@@ -18,6 +18,7 @@ import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.service.PlSqlSalaryManagementService;
 import com.coresolution.consultation.service.SalaryManagementService;
+import com.coresolution.consultation.service.SalaryScheduleService;
 import com.coresolution.consultation.util.PermissionCheckUtils;
 import com.coresolution.consultation.utils.SessionUtils;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -48,6 +49,7 @@ public class SalaryManagementController {
     
     private final SalaryManagementService salaryManagementService;
     private final PlSqlSalaryManagementService plSqlSalaryManagementService;
+    private final SalaryScheduleService salaryScheduleService;
     private final CommonCodeService commonCodeService;
     private final DynamicPermissionService dynamicPermissionService;
     
@@ -246,6 +248,49 @@ public class SalaryManagementController {
     }
     
     /**
+     * 기산일 기준 실제 계산 기간 조회 (선택 월에 대한 적용 기간)
+     *
+     * @param year  년도 (예: 2025)
+     * @param month 월 (1~12)
+     * @return periodStart, periodEnd (기산일 기준)
+     */
+    @GetMapping("/calculation-period")
+    public ResponseEntity<Map<String, Object>> getCalculationPeriod(
+            @RequestParam int year,
+            @RequestParam int month,
+            HttpSession session) {
+        try {
+            ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session, "SALARY_MANAGE", dynamicPermissionService);
+            if (permissionResponse != null) {
+                return (ResponseEntity<Map<String, Object>>) permissionResponse;
+            }
+            if (month < 1 || month > 12) {
+                return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "월은 1~12 사이여야 합니다."
+                ));
+            }
+            LocalDate[] period = salaryScheduleService.getCalculationPeriod(year, month);
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "data", Map.of(
+                    "periodStart", period[0].toString(),
+                    "periodEnd", period[1].toString(),
+                    "year", year,
+                    "month", month
+                ),
+                "message", "계산 기간을 조회했습니다."
+            ));
+        } catch (Exception e) {
+            log.error("계산 기간 조회 오류", e);
+            return ResponseEntity.internalServerError().body(Map.of(
+                "success", false,
+                "message", "계산 기간 조회 중 오류가 발생했습니다: " + e.getMessage()
+            ));
+        }
+    }
+
+    /**
      * 급여 계산별 세금 상세 조회
      */
     @GetMapping("/tax/{calculationId}")
@@ -374,7 +419,51 @@ public class SalaryManagementController {
             ));
         }
     }
-    
+
+    /**
+     * 급여 계산 확정 (실제 저장)
+     */
+    @PostMapping("/confirm")
+    public ResponseEntity<Map<String, Object>> confirmSalaryCalculation(
+            @RequestParam Long consultantId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate periodStart,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate periodEnd,
+            HttpSession session) {
+        try {
+            User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser == null) {
+                return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "로그인이 필요합니다."
+                ));
+            }
+            ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session, "SALARY_MANAGE", dynamicPermissionService);
+            if (permissionResponse != null) {
+                return (ResponseEntity<Map<String, Object>>) permissionResponse;
+            }
+            Map<String, Object> result = plSqlSalaryManagementService.processIntegratedSalaryCalculation(
+                consultantId, periodStart, periodEnd, currentUser.getName()
+            );
+            if (Boolean.TRUE.equals(result.get("success"))) {
+                return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "data", result,
+                    "message", "급여 계산이 확정되었습니다."
+                ));
+            }
+            return ResponseEntity.badRequest().body(Map.of(
+                "success", false,
+                "message", (String) result.getOrDefault("message", "급여 계산 확정에 실패했습니다.")
+            ));
+        } catch (Exception e) {
+            log.error("급여 계산 확정 오류", e);
+            return ResponseEntity.internalServerError().body(Map.of(
+                "success", false,
+                "message", "급여 계산 확정 중 오류가 발생했습니다: " + e.getMessage()
+            ));
+        }
+    }
+
     /**
      * 급여 승인 (PL/SQL 통합)
      */

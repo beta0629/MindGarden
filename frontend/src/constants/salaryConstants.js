@@ -83,19 +83,20 @@ export const EMAIL_TEMPLATE_LABELS = {
 };
 
 export const SALARY_API_ENDPOINTS = {
-  CALCULATE: '/api/admin/salary/calculate',
-  CALCULATIONS: '/api/admin/salary/calculations',
-  
-  TAX_DETAILS: '/api/admin/salary/tax',
-  TAX_BY_TYPE: '/api/admin/salary/tax/type',
-  TAX_STATISTICS: '/api/admin/salary/tax/statistics',
-  
-  EXPORT_PDF: '/api/admin/salary/export/pdf',
-  EXPORT_EXCEL: '/api/admin/salary/export/excel',
-  EXPORT_CSV: '/api/admin/salary/export/csv',
-  
-  SEND_EMAIL: '/api/admin/salary/email/send',
-  EMAIL_TEMPLATES: '/api/admin/salary/email/templates'
+  CALCULATE: '/api/v1/admin/salary/calculate',
+  CALCULATIONS: '/api/v1/admin/salary/calculations',
+  CALCULATION_PERIOD: '/api/v1/admin/salary/calculation-period',
+
+  TAX_DETAILS: '/api/v1/admin/salary/tax',
+  TAX_BY_TYPE: '/api/v1/admin/salary/tax/type',
+  TAX_STATISTICS: '/api/v1/admin/salary/tax/statistics',
+
+  EXPORT_PDF: '/api/v1/admin/salary/export/pdf',
+  EXPORT_EXCEL: '/api/v1/admin/salary/export/excel',
+  EXPORT_CSV: '/api/v1/admin/salary/export/csv',
+
+  SEND_EMAIL: '/api/v1/admin/salary/email/send',
+  EMAIL_TEMPLATES: '/api/v1/admin/salary/email/templates'
 };
 
 export const SALARY_CSS_CLASSES = {

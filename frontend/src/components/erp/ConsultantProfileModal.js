@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
-import ReactDOM from 'react-dom';
-import { apiGet, apiPost, apiPut } from '../../utils/ajax';
+import { apiGet, apiPost } from '../../utils/ajax';
 import { getGradeSalaryMap, getGradeKoreanName } from '../../utils/commonCodeUtils';
+import ErpModal from './common/ErpModal';
 import './ConsultantProfileModal.css';
 import notificationManager from '../../utils/notification';
 
@@ -42,7 +41,7 @@ const ConsultantProfileModal = ({
     const loadSalaryProfile = async () => {
         try {
             setLoading(true);
-            const response = await apiGet(`/api/admin/salary/profiles/${consultant.id}`);
+            const response = await apiGet(`/api/v1/admin/salary/profiles/${consultant.id}`);
             console.log('급여 프로필 조회 응답:', response);
             if (response.success && response.data) {
                 // 급여 프로필에 등급 정보 추가
@@ -235,37 +234,28 @@ const ConsultantProfileModal = ({
 
     if (!isOpen || !consultant) return null;
 
-    return ReactDOM.createPortal(
-        <div className="consultant-profile-modal-overlay" onClick={onClose}>
-            <div className="consultant-profile-modal-content" onClick={(e) => e.stopPropagation()}>
-                <div className="consultant-profile-modal-header">
-                    <h3 className="consultant-profile-modal-title">
-                        급여 프로필 생성 - {consultant.name}
-                    </h3>
-                    <button className="consultant-profile-modal-close" onClick={onClose}>
-                        ×
-                    </button>
-                </div>
-                
-                <div className="consultant-profile-modal-body">
-                    <div className="consultant-profile-info-section">
-                        <div className="consultant-profile-info-header">
-                            <h4 className="consultant-profile-info-title">급여 프로필</h4>
-                            {(() => {
-                                console.log('수정 버튼 표시 조건 확인:');
-                                console.log('- salaryProfile:', !!salaryProfile);
-                                console.log('- showSalaryForm:', showSalaryForm);
-                                console.log('- 수정 버튼 표시 여부:', !showSalaryForm);
-                                return !showSalaryForm;
-                            })() && (
-                                <button 
-                                    className="mg-btn mg-btn--primary mg-btn--sm consultant-profile-edit-btn"
-                                    onClick={() => setShowSalaryForm(true)}
-                                >
-                                    {salaryProfile ? '수정' : '생성'}
-                                </button>
-                            )}
-                        </div>
+    return (
+        <ErpModal
+            isOpen={isOpen}
+            onClose={onClose}
+            title={`급여 프로필 - ${consultant.name}`}
+            size="large"
+            className="mg-v2-ad-b0kla consultant-profile-modal-content"
+        >
+            <div className="consultant-profile-modal-body">
+                <div className="consultant-profile-info-section salary-management__profile-view">
+                    <div className="consultant-profile-info-header">
+                        <h4 className="consultant-profile-info-title">급여 프로필</h4>
+                        {!showSalaryForm && (
+                            <button
+                                type="button"
+                                className="mg-v2-button mg-v2-button--primary consultant-profile-edit-btn"
+                                onClick={() => setShowSalaryForm(true)}
+                            >
+                                {salaryProfile ? '수정' : '생성'}
+                            </button>
+                        )}
+                    </div>
                         
                         {loading ? (
                             <div className="consultant-profile-loading">로딩 중...</div>
@@ -281,14 +271,7 @@ const ConsultantProfileModal = ({
                                 <div className="consultant-profile-info-item">
                                     <label className="consultant-profile-info-label">상담사 등급</label>
                                     <span className="consultant-profile-info-value">
-                                        {(() => {
-                                            console.log('salaryProfile:', salaryProfile);
-                                            console.log('salaryProfile.grade:', salaryProfile.grade);
-                                            console.log('grades:', grades);
-                                            const foundGrade = grades.find(g => g.codeValue === salaryProfile.grade);
-                                            console.log('foundGrade:', foundGrade);
-                                            return foundGrade?.codeLabel || salaryProfile.grade || '미설정';
-                                        })()}
+                                        {grades.find(g => g.codeValue === salaryProfile.grade)?.codeLabel || salaryProfile.grade || '미설정'}
                                     </span>
                                 </div>
                                 <div className="consultant-profile-info-item">
@@ -325,7 +308,7 @@ const ConsultantProfileModal = ({
 
                         {/* 급여 프로필 폼 */}
                         {showSalaryForm && (
-                            <form onSubmit={handleSalaryProfileSubmit} className="consultant-profile-form">
+                            <form onSubmit={handleSalaryProfileSubmit} className="salary-profile-form consultant-profile-form">
                                 <div className="consultant-profile-form-notice">
                                     <h5 className="consultant-profile-form-notice-title">💡 안내사항</h5>
                                     <ul className="consultant-profile-form-notice-list">
@@ -468,17 +451,17 @@ const ConsultantProfileModal = ({
                                         />
                                     </div>
                                 </div>
-                                <div className="consultant-profile-form-actions">
+                                <div className="salary-profile-form__actions consultant-profile-form-actions">
                                     <button
                                         type="button"
-                                        className="mg-btn mg-btn--secondary"
+                                        className="mg-v2-button mg-v2-button--outline"
                                         onClick={() => setShowSalaryForm(false)}
                                     >
                                         취소
                                     </button>
                                     <button
                                         type="submit"
-                                        className="mg-btn mg-btn--primary"
+                                        className="mg-v2-button mg-v2-button--primary"
                                         disabled={loading}
                                     >
                                         {loading ? '저장 중...' : '저장'}
@@ -486,20 +469,19 @@ const ConsultantProfileModal = ({
                                 </div>
                             </form>
                         )}
-                    </div>
-                </div>
-
-                <div className="consultant-profile-modal-footer">
-                    <button 
-                        className="mg-btn mg-btn--secondary"
-                        onClick={onClose}
-                    >
-                        닫기
-                    </button>
                 </div>
             </div>
-        </div>,
-        document.body
+
+            <div className="consultant-profile-modal-footer">
+                <button
+                    type="button"
+                    className="mg-v2-button mg-v2-button--outline"
+                    onClick={onClose}
+                >
+                    닫기
+                </button>
+            </div>
+        </ErpModal>
     );
 };
 

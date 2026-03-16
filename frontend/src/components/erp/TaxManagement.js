@@ -19,7 +19,7 @@ const TaxManagement = () => {
     const loadTaxStatistics = async (period) => {
         try {
             setLoading(true);
-            const response = await apiGet(`/api/admin/salary/tax/statistics?period=${period}`);
+            const response = await apiGet(`/api/v1/admin/salary/tax/statistics?period=${period}`);
             if (response && response.success) {
                 setTaxStatistics(response.data);
             }
@@ -35,7 +35,7 @@ const TaxManagement = () => {
     const loadTaxCalculationsByType = async (taxType) => {
         try {
             setLoading(true);
-            const response = await apiGet(`/api/admin/salary/tax/type/${taxType}`);
+            const response = await apiGet(`/api/v1/admin/salary/tax/type/${taxType}`);
             if (response && response.success) {
                 setTaxCalculations(response.data);
             }

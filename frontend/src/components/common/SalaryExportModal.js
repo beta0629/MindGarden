@@ -80,7 +80,7 @@ const SalaryExportModal = ({
         emailAddress: sendEmail ? emailAddress : null
       };
 
-      const response = await apiPost(`/api/admin/salary/export/${selectedFormat.toLowerCase()}`, exportData);
+      const response = await apiPost(`/api/v1/admin/salary/export/${selectedFormat.toLowerCase()}`, exportData);
       
       if (response.success) {
         // 파일 다운로드

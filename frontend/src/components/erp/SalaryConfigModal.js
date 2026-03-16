@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import MGButton from '../common/MGButton';
 import BadgeSelect from '../common/BadgeSelect';
-// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import ErpModal from './common/ErpModal';
 import './SalaryConfigModal.css';
 
 const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
@@ -120,17 +120,15 @@ const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
     }
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="salary-config-modal-overlay">
-      <div className="salary-config-modal">
-        <div className="salary-config-modal-header">
-          <h3>급여 기산일 설정</h3>
-          <button className="close-button" onClick={onClose}>×</button>
-        </div>
-
-        <div className="salary-config-modal-body">
+    <ErpModal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="급여 기산일 설정"
+      size="medium"
+      className="mg-v2-ad-b0kla salary-config-modal"
+    >
+      <div className="salary-config-modal-body">
           {error && (
             <div className="error-message">
               {error}
@@ -225,29 +223,28 @@ const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
           </div>
         </div>
 
-        <div className="mg-modal__footer salary-config-modal-footer">
-          <MGButton
-            variant="outline"
-            size="medium"
-            onClick={onClose}
-            disabled={loading}
-            preventDoubleClick={false}
-          >
-            취소
-          </MGButton>
-          <MGButton
-            variant="primary"
-            size="medium"
-            onClick={handleSave}
-            loading={loading}
-            loadingText="저장 중..."
-            preventDoubleClick
-          >
-            저장
-          </MGButton>
-        </div>
+      <div className="mg-modal__footer salary-config-modal-footer">
+        <MGButton
+          variant="outline"
+          size="medium"
+          onClick={onClose}
+          disabled={loading}
+          preventDoubleClick={false}
+        >
+          취소
+        </MGButton>
+        <MGButton
+          variant="primary"
+          size="medium"
+          onClick={handleSave}
+          loading={loading}
+          loadingText="저장 중..."
+          preventDoubleClick
+        >
+          저장
+        </MGButton>
       </div>
-    </div>
+    </ErpModal>
   );
 };
 

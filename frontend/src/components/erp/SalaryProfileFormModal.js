@@ -31,6 +31,10 @@ const SalaryProfileFormModal = ({
     const [selectedOptions, setSelectedOptions] = useState([]);
     const [loading, setLoading] = useState(false);
     const [gradeTableData, setGradeTableData] = useState([]);
+    /** 등급 한글명(표시용). async 결과만 넣어 React #31 방지 */
+    const [gradeLabel, setGradeLabel] = useState('');
+    /** 기본 급여 표시용. async 결과만 넣어 React #31 방지 */
+    const [displayBaseSalary, setDisplayBaseSalary] = useState(null);
 
     // 등급을 한글로 변환 (공통 코드에서 동적 조회)
     const convertGradeToKorean = async (grade) => {
@@ -152,9 +156,43 @@ const SalaryProfileFormModal = ({
         if (isOpen && consultant) {
             loadInitialData();
             loadGradeTableData();
-            initializeFormData();
+            (async () => { await initializeFormData(); })();
         }
     }, [isOpen, consultant]);
+
+    // consultant/formData.grade 변경 시 등급 한글명·기본급 표시용 state 갱신 (async 결과만 state에 넣어 React #31 방지)
+    useEffect(() => {
+        if (!consultant) {
+            setGradeLabel('');
+            setDisplayBaseSalary(null);
+            return;
+        }
+        const grade = formData.grade || consultant.grade;
+        if (!grade) {
+            setGradeLabel('');
+            setDisplayBaseSalary(null);
+            return;
+        }
+        let cancelled = false;
+        (async () => {
+            try {
+                const [label, salary] = await Promise.all([
+                    convertGradeToKorean(grade),
+                    getGradeBaseSalary(grade)
+                ]);
+                if (!cancelled) {
+                    setGradeLabel(label);
+                    setDisplayBaseSalary(typeof salary === 'number' ? salary : null);
+                }
+            } catch (e) {
+                if (!cancelled) {
+                    setGradeLabel('');
+                    setDisplayBaseSalary(null);
+                }
+            }
+        })();
+        return () => { cancelled = true; };
+    }, [consultant, formData.grade]);
 
     const loadInitialData = async () => {
         try {
@@ -198,16 +236,16 @@ const SalaryProfileFormModal = ({
         }
     };
 
-    const initializeFormData = () => {
+    const initializeFormData = async () => {
         if (!consultant) return;
 
-        const baseSalary = getGradeBaseSalary(consultant.grade);
+        const baseSalary = await getGradeBaseSalary(consultant.grade);
         const gradeOptions = getGradeOptions(consultant.grade);
 
         setFormData({
             consultantId: consultant.id,
             salaryType: 'FREELANCE',
-            baseSalary: baseSalary,
+            baseSalary: typeof baseSalary === 'number' ? baseSalary : 0,
             contractTerms: '',
             isActive: true,
             grade: consultant.grade
@@ -218,15 +256,15 @@ const SalaryProfileFormModal = ({
 
     // 등급 변경 시 기본 급여와 옵션 업데이트
     const handleGradeChange = async (newGrade) => {
-        const baseSalary = getGradeBaseSalary(newGrade);
+        const baseSalary = await getGradeBaseSalary(newGrade);
         const gradeOptions = getGradeOptions(newGrade);
-        
+
         setFormData(prev => ({
             ...prev,
             grade: newGrade,
-            baseSalary: baseSalary
+            baseSalary: typeof baseSalary === 'number' ? baseSalary : 0
         }));
-        
+
         setSelectedOptions(gradeOptions);
         
         // 상담사 등급 업데이트
@@ -346,8 +384,8 @@ const SalaryProfileFormModal = ({
                 <div className="salary-profile-form__section consultant-info-section">
                         <h4 className="consultant-info-title">상담사 정보</h4>
                         <p className="consultant-info-item"><strong>이름:</strong> {consultant.name}</p>
-                        <p className="consultant-info-item"><strong>현재 등급:</strong> {convertGradeToKorean(consultant.grade)}</p>
-                        <p className="consultant-info-item"><strong>기본 급여:</strong> {getGradeBaseSalary(formData.grade || consultant.grade).toLocaleString()}원</p>
+                        <p className="consultant-info-item"><strong>현재 등급:</strong> {gradeLabel || ((formData.grade || consultant.grade) ? '조회 중...' : '')}</p>
+                        <p className="consultant-info-item"><strong>기본 급여:</strong> {displayBaseSalary != null ? displayBaseSalary.toLocaleString() : '—'}원</p>
                     </div>
 
                     {/* 상담사 등급 선택 */}

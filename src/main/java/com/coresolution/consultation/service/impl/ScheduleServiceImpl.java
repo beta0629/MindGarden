@@ -1058,6 +1058,19 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         log.info("📊 오늘의 스케줄 통계 조회");
         
         String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null || tenantId.isEmpty()) {
+            log.warn("❌ 테넌트 컨텍스트 없음 - 오늘 통계 빈 결과 반환");
+            Map<String, Object> empty = new HashMap<>();
+            empty.put("totalToday", 0L);
+            empty.put("completedToday", 0L);
+            empty.put("inProgressToday", 0L);
+            empty.put("cancelledToday", 0L);
+            empty.put("bookedToday", 0L);
+            empty.put("confirmedToday", 0L);
+            empty.put("bookedGrowthRate", 0.0);
+            empty.put("totalUsersGrowthRate", 0.0);
+            return empty;
+        }
         LocalDate today = LocalDate.now();
         Map<String, Object> statistics = new HashMap<>();
         

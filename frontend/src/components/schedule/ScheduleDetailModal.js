@@ -158,6 +158,11 @@ const ScheduleDetailModal = ({
             if (response != null) {
                 notificationManager.success('예약이 확정되었습니다.');
                 onScheduleUpdated?.();
+                try {
+                  window.dispatchEvent(new CustomEvent('admin-dashboard-refresh-stats'));
+                } catch (e) {
+                  // CustomEvent 미지원 등 무시
+                }
                 onClose();
             } else {
                 throw new Error('예약 확정에 실패했습니다.');
@@ -377,6 +382,13 @@ return isStatus(displayData.status, vacationStatus) ||
             if (response != null) {
                 notificationManager.success('상태가 변경되었습니다.');
                 onScheduleUpdated?.();
+                if (newStatus === 'CONFIRMED') {
+                  try {
+                    window.dispatchEvent(new CustomEvent('admin-dashboard-refresh-stats'));
+                  } catch (e) {
+                    // CustomEvent 미지원 등 무시
+                  }
+                }
                 const merged = {
                     ...scheduleData,
                     ...(typeof response === 'object' && response !== null ? response : {}),

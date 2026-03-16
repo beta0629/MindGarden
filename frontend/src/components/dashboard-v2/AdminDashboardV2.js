@@ -260,6 +260,8 @@ const AdminDashboardV2 = ({ user: propUser }) => {
     completedToday: 0,
     inProgressToday: 0,
     cancelledToday: 0,
+    bookedToday: 0,
+    confirmedToday: 0,
     bookedGrowthRate: null,
     totalUsersGrowthRate: null
   });
@@ -313,6 +315,8 @@ const AdminDashboardV2 = ({ user: propUser }) => {
           completedToday: payload.completedToday ?? 0,
           inProgressToday: payload.inProgressToday ?? 0,
           cancelledToday: payload.cancelledToday ?? 0,
+          bookedToday: payload.bookedToday ?? 0,
+          confirmedToday: payload.confirmedToday ?? 0,
           bookedGrowthRate: payload.bookedGrowthRate != null ? payload.bookedGrowthRate : null,
           totalUsersGrowthRate: payload.totalUsersGrowthRate != null ? payload.totalUsersGrowthRate : null
         });
@@ -696,12 +700,15 @@ const AdminDashboardV2 = ({ user: propUser }) => {
     loadTodayStats
   ]);
 
-  /** 상담사/내담자 등록 성공 시 대시보드 KPI 재조회 */
+  /** 상담사/내담자 등록·예약 확정 등 시 대시보드 KPI 및 오늘 통계 재조회 */
   useEffect(() => {
-    const handler = () => loadStats();
+    const handler = () => {
+      loadStats();
+      loadTodayStats();
+    };
     window.addEventListener('admin-dashboard-refresh-stats', handler);
     return () => window.removeEventListener('admin-dashboard-refresh-stats', handler);
-  }, [loadStats]);
+  }, [loadStats, loadTodayStats]);
 
   /** 탭 포커스 복귀 시 KPI 한 번 재조회 (다른 탭에서 등록 후 돌아온 경우 등) */
   useEffect(() => {
@@ -767,7 +774,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
       id: 'booked',
       icon: <FaCalendarAlt size={28} />,
       label: '예약된 상담',
-      value: todayStats.totalToday,
+      value: (todayStats.bookedToday ?? 0) + (todayStats.confirmedToday ?? 0),
       badge: todayStats.bookedGrowthRate != null
         ? (todayStats.bookedGrowthRate === 0 ? '변동 없음' : `${todayStats.bookedGrowthRate > 0 ? '+' : ''}${todayStats.bookedGrowthRate}%`)
         : '-',

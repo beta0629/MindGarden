@@ -579,6 +579,12 @@ public class ScheduleController extends BaseApiController {
                 statistics = scheduleService.getTodayScheduleStatisticsByTenant(tenantId);
                 log.info("✅ 테넌트별 오늘의 스케줄 통계 조회 완료 - 테넌트 ID: {}", tenantId);
             } else {
+                String contextTenantId = TenantContextHolder.getTenantId();
+                if (contextTenantId == null || contextTenantId.isEmpty()) {
+                    log.warn("❌ 테넌트 정보 없음 - 오늘 통계 조회 거부 (400)");
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(ApiResponse.error("테넌트 정보가 없습니다. 로그아웃 후 다시 로그인해 주세요."));
+                }
                 statistics = scheduleService.getTodayScheduleStatistics();
                 log.info("✅ 전체 오늘의 스케줄 통계 조회 완료");
             }

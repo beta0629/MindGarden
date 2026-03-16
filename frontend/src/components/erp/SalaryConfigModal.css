@@ -87,6 +87,32 @@
   padding: var(--spacing-xl);
 }
 
+.salary-config-modal-intro {
+  margin: 0 0 var(--spacing-lg) 0;
+  padding: var(--spacing-md) var(--spacing-lg);
+  background: var(--light-cream, #f8f9fa);
+  border-radius: var(--radius-md);
+  border-left: 4px solid var(--mint-green, #98fb98);
+  font-size: var(--font-size-sm);
+  color: var(--dark-gray, #333);
+  line-height: 1.5;
+}
+
+.config-section-desc {
+  margin: 0 0 var(--spacing-md) 0;
+  font-size: var(--font-size-sm);
+  color: var(--dark-gray, #555);
+  line-height: 1.5;
+}
+
+.config-item-hint {
+  display: block;
+  margin-bottom: var(--spacing-xs);
+  font-size: 0.8125rem;
+  color: var(--dark-gray, #666);
+  line-height: 1.4;
+}
+
 /* ==================== 설정 섹션 ==================== */
 .config-section {
   margin-bottom: var(--spacing-xl);

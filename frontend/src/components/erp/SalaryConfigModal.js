@@ -129,6 +129,9 @@ const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
       className="mg-v2-ad-b0kla salary-config-modal"
     >
       <div className="salary-config-modal-body">
+          <p className="salary-config-modal-intro">
+            아래 설정은 급여 계산 기간과 지급·마감 일자를 정하는 데 사용됩니다. 저장 후 급여 계산·세금 조회 시 반영되므로, 한 번 설정해 두시면 됩니다.
+          </p>
           {error && (
             <div className="error-message">
               {error}
@@ -137,7 +140,7 @@ const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
 
           <div className="config-section">
             <h4>급여 기산일 설정</h4>
-            
+            <p className="config-section-desc">매월 급여를 몇 일 기준으로 계산할지 정합니다. 선택한 날짜가 해당 월의 계산 시작일이 됩니다.</p>
             <div className="config-item">
               <label>월급여 기산일</label>
               <BadgeSelect
@@ -151,6 +154,7 @@ const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
 
             <div className="config-item">
               <label>급여 지급일</label>
+              <span className="config-item-hint">해당 월 급여를 다음 달 몇 일에 지급할지 선택합니다.</span>
               <BadgeSelect
                 value={configs.paymentDay}
                 onChange={(val) => handleInputChange('paymentDay', Number(val))}
@@ -162,6 +166,7 @@ const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
 
             <div className="config-item">
               <label>급여 마감일</label>
+              <span className="config-item-hint">해당 월에 포함할 상담·실적을 몇 일까지로 볼지(마감일) 정합니다.</span>
               <BadgeSelect
                 value={configs.cutoffDay}
                 onChange={(val) => handleInputChange('cutoffDay', val)}
@@ -189,7 +194,7 @@ const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
 
           <div className="config-section">
             <h4>급여 계산 방식</h4>
-            
+            <p className="config-section-desc">상담사 급여를 어떤 기준으로 계산할지(상담 건수·시간당·고정급 등) 선택합니다.</p>
             <div className="config-item">
               <label>계산 방식</label>
               <BadgeSelect

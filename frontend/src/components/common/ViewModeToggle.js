@@ -9,12 +9,12 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { LayoutGrid, LayoutGrid2, List } from 'lucide-react';
+import { LayoutGrid, Grid2X2, List } from 'lucide-react';
 
 /** 기본 옵션: 큰 카드 / 작은 카드 / 리스트 (문서 §3.3) */
 const DEFAULT_OPTIONS = [
   { value: 'largeCard', icon: LayoutGrid, label: '큰 카드' },
-  { value: 'smallCard', icon: LayoutGrid2, label: '작은 카드' },
+  { value: 'smallCard', icon: Grid2X2, label: '작은 카드' },
   { value: 'list', icon: List, label: '리스트' }
 ];
 

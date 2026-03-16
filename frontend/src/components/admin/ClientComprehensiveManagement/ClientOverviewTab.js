@@ -17,7 +17,7 @@ const ClientOverviewTab = ({
     consultants,
     mappings,
     consultations,
-    viewMode = 'largeCard'
+    viewMode = 'smallCard'
 }) => {
     // 내담자 카드 렌더링
     const renderClientCard = (client) => {

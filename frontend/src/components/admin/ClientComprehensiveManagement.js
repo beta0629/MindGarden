@@ -60,7 +60,7 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
     const [userStatusOptions, setUserStatusOptions] = useState([]);
     const [loadingCodes, setLoadingCodes] = useState(false);
     const [activeFilters, setActiveFilters] = useState({});
-    const [viewMode, setViewMode] = useState('largeCard'); // 'largeCard' | 'smallCard' | 'list'
+    const [viewMode, setViewMode] = useState('smallCard'); // 'largeCard' | 'smallCard' | 'list' — 기본: 컴팩트(작은 카드)
     
     const [showModal, setShowModal] = useState(false);
     const [modalType, setModalType] = useState(''); // 'create', 'edit', 'delete'

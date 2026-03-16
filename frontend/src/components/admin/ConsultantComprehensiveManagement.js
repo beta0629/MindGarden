@@ -70,7 +70,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [emailCheckStatus, setEmailCheckStatus] = useState(null); // 'checking', 'duplicate', 'available', null
     const [isCheckingEmail, setIsCheckingEmail] = useState(false);
-    const [viewMode, setViewMode] = useState('largeCard'); // 'largeCard' | 'smallCard' | 'list'
+    const [viewMode, setViewMode] = useState('smallCard'); // 'largeCard' | 'smallCard' | 'list' — 기본: 컴팩트(작은 카드)
 
     const loadConsultants = useCallback(async() => {
         try {

@@ -22,6 +22,7 @@ import { showSuccess, showError } from '../../utils/notification';
 import { apiGet } from '../../utils/ajax';
 import { maskEncryptedDisplay } from '../../utils/codeHelper';
 import { VALIDATION_MESSAGES } from '../../constants/messages';
+import MgEmailFieldWithAutocomplete from '../common/MgEmailFieldWithAutocomplete';
 import ProfileImageInput from '../common/ProfileImageInput';
 import Avatar from '../common/Avatar';
 import '../../styles/unified-design-tokens.css';
@@ -757,17 +758,15 @@ const StaffManagement = ({ embedded = false }) => {
               <label htmlFor="staff-email" className="mg-v2-form-label">{VALIDATION_MESSAGES.LABEL_EMAIL_REQUIRED}</label>
               <div className="mg-v2-form-email-row">
                 <div className="mg-v2-form-email-row__input-wrap">
-                  <input
-                    type="email"
+                  <MgEmailFieldWithAutocomplete
                     id="staff-email"
                     name="email"
                     value={createForm.email}
                     onChange={handleCreateFormChange}
-                    required
                     placeholder="example@email.com"
-                    className="mg-v2-form-input"
+                    required
                     disabled={createStaffModal.submitting}
-                    autoComplete="email"
+                    autocompleteMode="datalist"
                   />
                 </div>
                 <button

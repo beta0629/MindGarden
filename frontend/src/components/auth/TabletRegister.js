@@ -10,6 +10,7 @@ import {
   WRONG_PATH_REDIRECT_DELAY_MS
 } from '../../utils/subdomainUtils';
 import { VALIDATION_MESSAGES } from '../../constants/messages';
+import MgEmailFieldWithAutocomplete from '../common/MgEmailFieldWithAutocomplete';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import { TermsOfServiceContent } from '../common/TermsOfService';
 import { PrivacyPolicyContent } from '../common/PrivacyPolicy';
@@ -24,9 +25,6 @@ const GENDER_FROM_RRN = {
   '4': 'FEMALE'
 };
 const GENDER_LABEL = { MALE: '남성', FEMALE: '여성', OTHER: '기타' };
-
-/** 이메일 입력 시 제안할 도메인 목록 (클릭하면 입력란에 적용) */
-const EMAIL_DOMAINS = ['@gmail.com', '@naver.com', '@daum.net', '@kakao.com', '@hanmail.net', '@nate.com', '@yahoo.co.kr', '@outlook.com'];
 
 const TabletRegister = () => {
   const navigate = useNavigate();
@@ -48,7 +46,6 @@ const TabletRegister = () => {
   const [errors, setErrors] = useState({});
   const [emailCheckStatus, setEmailCheckStatus] = useState(null); // 'checking' | 'duplicate' | 'available' | null
   const [isCheckingEmail, setIsCheckingEmail] = useState(false);
-  const [emailSuggestionsOpen, setEmailSuggestionsOpen] = useState(false);
   const [termsModalOpen, setTermsModalOpen] = useState(false);
   const [privacyModalOpen, setPrivacyModalOpen] = useState(false);
 
@@ -332,60 +329,27 @@ const TabletRegister = () => {
               </p>
             </div>
 
-            <div className="mg-v2-form-group" style={{ position: 'relative' }}>
+            <div className="mg-v2-form-group">
               <label htmlFor="email" className="mg-v2-form-label">{VALIDATION_MESSAGES.LABEL_EMAIL_REQUIRED}</label>
               <div className="mg-v2-form-email-row">
-                <div style={{ position: 'relative', flex: 1, minWidth: 0 }}>
-                  <input
-                    type="email"
+                <div className="mg-v2-form-email-row__input-wrap">
+                  <MgEmailFieldWithAutocomplete
                     id="email"
                     name="email"
-                    autoComplete="email"
-                    className={`mg-v2-form-input ${errors.email ? 'mg-v2-input error' : ''}`}
-                    placeholder={VALIDATION_MESSAGES.REQUIRED_EMAIL}
                     value={formData.email}
                     onChange={handleInputChange}
-                    onFocus={() => setEmailSuggestionsOpen(true)}
+                    placeholder={VALIDATION_MESSAGES.REQUIRED_EMAIL}
+                    required
+                    autocompleteMode="custom-dropdown"
+                    ariaInvalid={!!errors.email}
+                    className={errors.email ? 'mg-v2-email-field--has-error' : ''}
                     onBlur={() => {
-                      setTimeout(() => setEmailSuggestionsOpen(false), 150);
                       const email = formData.email?.trim();
                       if (email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
                         handleEmailDuplicateCheck();
                       }
                     }}
-                    required
                   />
-                  {emailSuggestionsOpen && (
-                    <ul
-                      className="mg-v2-email-suggestions"
-                      role="listbox"
-                      aria-label="이메일 도메인 제안"
-                      id="email-suggestions-listbox"
-                    >
-                      {EMAIL_DOMAINS.map((domain) => {
-                        const prefix = formData.email?.includes('@')
-                          ? formData.email.slice(0, formData.email.indexOf('@')).trim() || 'example'
-                          : (formData.email?.trim() || 'example');
-                        const fullEmail = prefix + domain;
-                        return (
-                          <li
-                            key={domain}
-                            role="option"
-                            aria-selected="false"
-                            className="mg-v2-email-suggestion-item"
-                            onMouseDown={(e) => {
-                              e.preventDefault();
-                              setFormData((prev) => ({ ...prev, email: fullEmail }));
-                              setEmailCheckStatus(null);
-                              setEmailSuggestionsOpen(false);
-                            }}
-                          >
-                            {fullEmail}
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  )}
                 </div>
                 <button
                   type="button"

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { CheckCircle, AlertTriangle } from 'lucide-react';
 import MGButton from '../../common/MGButton';
 import ProfileImageInput from '../../common/ProfileImageInput';
+import MgEmailFieldWithAutocomplete from '../../common/MgEmailFieldWithAutocomplete';
 import { apiGet } from '../../../utils/ajax';
 import UnifiedModal from '../../common/modals/UnifiedModal';
 import BadgeSelect from '../../common/BadgeSelect';
@@ -294,18 +295,15 @@ const ClientModal = ({
                     <label htmlFor="email" className="mg-v2-form-label">{VALIDATION_MESSAGES.LABEL_EMAIL_REQUIRED}</label>
                     <div className="mg-v2-form-email-row">
                         <div className="mg-v2-form-email-row__input-wrap">
-                            <input
-                                type="email"
+                            <MgEmailFieldWithAutocomplete
                                 id="email"
                                 name="email"
                                 value={safeFormData.email}
                                 onChange={handleInputChange}
-                                required
                                 placeholder="example@email.com"
-                                className="mg-v2-form-input"
+                                required
                                 disabled={type === 'edit'}
-                                autoComplete="email"
-                                list="client-modal-email-domains"
+                                autocompleteMode="datalist"
                             />
                         </div>
                         {type === 'create' && (
@@ -329,13 +327,6 @@ const ClientModal = ({
                     {type === 'create' && emailCheckStatus === 'available' && (
                         <small className="mg-v2-form-help mg-v2-form-help--success">✅ {VALIDATION_MESSAGES.EMAIL_AVAILABLE}</small>
                     )}
-                    <datalist id="client-modal-email-domains">
-                        <option value="@gmail.com" />
-                        <option value="@naver.com" />
-                        <option value="@daum.net" />
-                        <option value="@kakao.com" />
-                        <option value="@hanmail.net" />
-                    </datalist>
                 </div>
                 {type === 'create' && (
                     <div className="mg-v2-form-group">

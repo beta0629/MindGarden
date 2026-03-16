@@ -696,6 +696,22 @@ const AdminDashboardV2 = ({ user: propUser }) => {
     loadTodayStats
   ]);
 
+  /** 상담사/내담자 등록 성공 시 대시보드 KPI 재조회 */
+  useEffect(() => {
+    const handler = () => loadStats();
+    window.addEventListener('admin-dashboard-refresh-stats', handler);
+    return () => window.removeEventListener('admin-dashboard-refresh-stats', handler);
+  }, [loadStats]);
+
+  /** 탭 포커스 복귀 시 KPI 한 번 재조회 (다른 탭에서 등록 후 돌아온 경우 등) */
+  useEffect(() => {
+    const handler = () => {
+      if (document.visibilityState === 'visible') loadStats();
+    };
+    document.addEventListener('visibilitychange', handler);
+    return () => document.removeEventListener('visibilitychange', handler);
+  }, [loadStats]);
+
   /** 세션 준비 시 오늘 통계 로드 보장 (첫 로딩에 sessionUser 지연으로 loadTodayStats 미호출 방지) */
   useEffect(() => {
     if (sessionLoading) return;

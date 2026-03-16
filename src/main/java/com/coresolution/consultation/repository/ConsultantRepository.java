@@ -1,5 +1,6 @@
 package com.coresolution.consultation.repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import com.coresolution.consultation.entity.Consultant;
 import org.springframework.data.jpa.repository.Query;
@@ -73,6 +74,16 @@ public interface ConsultantRepository extends BaseRepository<Consultant, Long> {
     @Query("SELECT c FROM Consultant c WHERE c.isDeleted = false AND c.isActive = true")
     List<Consultant> findActiveConsultants();
     
+    /**
+     * 비교 기준 시점(전일 0시 등) 이전에 생성된 상담사 수 (KPI 총 사용자 증감률 계산용)
+     *
+     * @param tenantId 테넌트 UUID
+     * @param before 기준 시점 (미만)
+     * @return 해당 시점 이전 생성·미삭제 상담사 수
+     */
+    @Query("SELECT COUNT(c) FROM Consultant c WHERE c.tenantId = :tenantId AND c.isDeleted = false AND c.createdAt < :before")
+    long countByTenantIdAndIsDeletedFalseAndCreatedAtBefore(@Param("tenantId") String tenantId, @Param("before") LocalDateTime before);
+
     // === BaseRepository 메서드 오버라이드 ===
     // 브랜치 개념 제거: findAllByTenantIdAndBranchId 메서드는 Deprecated 처리됨 (표준화 2025-12-05)
     

@@ -19,8 +19,10 @@ import com.coresolution.consultation.entity.Schedule;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.entity.Vacation;
 import com.coresolution.consultation.repository.BranchRepository;
+import com.coresolution.consultation.repository.ClientRepository;
 import com.coresolution.consultation.repository.ConsultationRecordRepository;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
+import com.coresolution.consultation.repository.ConsultantRepository;
 import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.repository.VacationRepository;
@@ -63,6 +65,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
 
     private final ScheduleRepository scheduleRepository;
     private final ConsultantClientMappingRepository mappingRepository;
+    private final ConsultantRepository consultantRepository;
+    private final ClientRepository clientRepository;
     private final UserRepository userRepository;
     private final VacationRepository vacationRepository;
     private final BranchRepository branchRepository;
@@ -80,6 +84,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             ScheduleRepository scheduleRepository,
             TenantAccessControlService accessControlService,
             ConsultantClientMappingRepository mappingRepository,
+            ConsultantRepository consultantRepository,
+            ClientRepository clientRepository,
             UserRepository userRepository,
             VacationRepository vacationRepository,
             BranchRepository branchRepository,
@@ -95,6 +101,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         super(scheduleRepository, accessControlService);
         this.scheduleRepository = scheduleRepository;
         this.mappingRepository = mappingRepository;
+        this.consultantRepository = consultantRepository;
+        this.clientRepository = clientRepository;
         this.userRepository = userRepository;
         this.vacationRepository = vacationRepository;
         this.branchRepository = branchRepository;
@@ -1082,9 +1090,13 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 ? Math.round(((double) (bookedToday - lastWeekBooked) / lastWeekBooked * 100.0) * 10.0) / 10.0
                 : (bookedToday > 0 ? 100.0 : 0.0);
         statistics.put("bookedGrowthRate", bookedGrowthRate);
+
+        // 총 사용자(상담사+내담자) 증감률: 전일 0시 시점 대비 (KPI 배지용)
+        double totalUsersGrowthRate = computeTotalUsersGrowthRate(tenantId);
+        statistics.put("totalUsersGrowthRate", totalUsersGrowthRate);
         
-        log.info("✅ 오늘의 스케줄 통계 조회 완료: 총 {}개, 완료 {}개, 진행중 {}개, 취소 {}개, 예약 {}개, 확인 {}개, 예약증감 {}%", 
-                totalToday, completedToday, inProgressToday, cancelledToday, bookedToday, confirmedToday, bookedGrowthRate);
+        log.info("✅ 오늘의 스케줄 통계 조회 완료: 총 {}개, 완료 {}개, 진행중 {}개, 취소 {}개, 예약 {}개, 확인 {}개, 예약증감 {}%, 사용자증감 {}%", 
+                totalToday, completedToday, inProgressToday, cancelledToday, bookedToday, confirmedToday, bookedGrowthRate, totalUsersGrowthRate);
         
         return statistics;
     }
@@ -1127,11 +1139,44 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 ? Math.round(((double) (bookedToday - lastWeekBooked) / lastWeekBooked * 100.0) * 10.0) / 10.0
                 : (bookedToday > 0 ? 100.0 : 0.0);
         statistics.put("bookedGrowthRate", bookedGrowthRate);
+
+        // 총 사용자(상담사+내담자) 증감률: 전일 0시 시점 대비 (KPI 배지용)
+        double totalUsersGrowthRate = computeTotalUsersGrowthRate(tenantId);
+        statistics.put("totalUsersGrowthRate", totalUsersGrowthRate);
         
-        log.info("📊 테넌트별 오늘의 통계 - 테넌트: {}, 총: {}, 완료: {}, 진행중: {}, 취소: {}, 예약: {}, 확인: {}, 예약증감: {}%", 
-                tenantId, totalToday, completedToday, inProgressToday, cancelledToday, bookedToday, confirmedToday, bookedGrowthRate);
+        log.info("📊 테넌트별 오늘의 통계 - 테넌트: {}, 총: {}, 완료: {}, 진행중: {}, 취소: {}, 예약: {}, 확인: {}, 예약증감: {}%, 사용자증감: {}%", 
+                tenantId, totalToday, completedToday, inProgressToday, cancelledToday, bookedToday, confirmedToday, bookedGrowthRate, totalUsersGrowthRate);
         
         return statistics;
+    }
+
+    /**
+     * 총 사용자(상담사+내담자) 수 전일 0시 대비 증감률 계산.
+     * 비교 시점(전일 0시) 이전 생성 건수와 현재 건수를 비교해 증가율 반환. 비교 데이터 없으면 0.0.
+     *
+     * @param tenantId 테넌트 UUID (필수)
+     * @return 증감률 (소수점 1자리, 비교 불가 시 0.0)
+     */
+    private double computeTotalUsersGrowthRate(String tenantId) {
+        if (tenantId == null || tenantId.isEmpty()) {
+            return 0.0;
+        }
+        try {
+            LocalDateTime todayStart = LocalDate.now().atStartOfDay();
+            long currentConsultants = consultantRepository.countByTenantId(tenantId);
+            long currentClients = clientRepository.countByTenantId(tenantId);
+            long currentTotal = currentConsultants + currentClients;
+            long previousConsultants = consultantRepository.countByTenantIdAndIsDeletedFalseAndCreatedAtBefore(tenantId, todayStart);
+            long previousClients = clientRepository.countByTenantIdAndIsDeletedFalseAndCreatedAtBefore(tenantId, todayStart);
+            long previousTotal = previousConsultants + previousClients;
+            if (previousTotal <= 0) {
+                return 0.0;
+            }
+            return Math.round(((double) (currentTotal - previousTotal) / previousTotal * 100.0) * 10.0) / 10.0;
+        } catch (Exception e) {
+            log.warn("총 사용자 증감률 계산 스킵: tenantId={}, {}", tenantId, e.getMessage());
+            return 0.0;
+        }
     }
     
     @Override

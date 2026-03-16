@@ -791,6 +791,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
             if (response && (response.id || response.userId || response.email)) {
                 console.log('✅ 상담사 등록 성공:', response);
                 await loadConsultants();
+                window.dispatchEvent(new CustomEvent('admin-dashboard-refresh-stats'));
                 window.dispatchEvent(new CustomEvent('showNotification', {
                     detail: { message: '상담사가 성공적으로 등록되었습니다.', type: 'success' }
                 }));

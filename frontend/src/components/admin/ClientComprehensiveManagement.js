@@ -629,6 +629,7 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                                         }
                                         showSuccess('내담자가 성공적으로 등록되었습니다.');
                                         await loadClients();
+                                        window.dispatchEvent(new CustomEvent('admin-dashboard-refresh-stats'));
                                         handleCloseModal();
                                     } else if (modalType === 'edit') {
                                         response = await apiPut(`/api/v1/admin/clients/${editingClient.id}`, payload);

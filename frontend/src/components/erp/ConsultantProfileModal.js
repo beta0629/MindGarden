@@ -42,31 +42,25 @@ const ConsultantProfileModal = ({
         try {
             setLoading(true);
             const response = await apiGet(`/api/v1/admin/salary/profiles/${consultant.id}`);
-            console.log('급여 프로필 조회 응답:', response);
-            if (response.success && response.data) {
-                // 급여 프로필에 등급 정보 추가
-                const grade = response.consultant?.grade || '';
-                const profileWithGrade = {
-                    ...response.data,
-                    grade: grade
-                };
+            const profile = response && typeof response === 'object' && (response.data ?? response) && !Array.isArray(response)
+                ? (response.data ?? response)
+                : null;
+            const grade = (response && response.consultant?.grade) || profile?.grade || '';
+            if (profile && (profile.salaryType != null || profile.baseSalary != null || profile.consultantId != null)) {
+                const profileWithGrade = { ...profile, grade };
                 setSalaryProfile(profileWithGrade);
-                
-                // 폼 데이터 초기화
-                console.log('설정할 등급:', grade);
                 setSalaryFormData({
-                    salaryType: response.data.salaryType || 'FREELANCE',
-                    contractTerms: response.data.contractTerms || '',
-                    grade: grade,
-                    baseSalary: response.data.baseSalary || '',
-                    optionTypes: response.data.optionTypes || [],
-                    isBusinessRegistered: response.data.isBusinessRegistered || false,
-                    businessRegistrationNumber: response.data.businessRegistrationNumber || '',
-                    businessName: response.data.businessName || ''
+                    salaryType: profile.salaryType || 'FREELANCE',
+                    contractTerms: profile.contractTerms || '',
+                    grade,
+                    baseSalary: profile.baseSalary || '',
+                    optionTypes: profile.optionTypes || [],
+                    isBusinessRegistered: profile.isBusinessRegistered || false,
+                    businessRegistrationNumber: profile.businessRegistrationNumber || '',
+                    businessName: profile.businessName || ''
                 });
             } else {
                 setSalaryProfile(null);
-                // 기본값으로 초기화
                 setSalaryFormData({
                     salaryType: 'FREELANCE',
                     contractTerms: '',
@@ -98,8 +92,7 @@ const ConsultantProfileModal = ({
     const loadOptionTypes = async () => {
         try {
             const response = await apiGet('/api/v1/admin/salary/option-types');
-            console.log('옵션 유형 조회 응답:', response);
-            // API가 직접 배열을 반환하므로 response 자체가 배열인지 확인
+            // apiGet이 unwrap하여 배열 또는 객체 반환
             if (Array.isArray(response)) {
                 setOptionTypes(response);
             } else if (response && response.data) {
@@ -118,16 +111,11 @@ const ConsultantProfileModal = ({
     const loadGrades = async () => {
         try {
             const response = await apiGet('/api/v1/admin/salary/grades');
-            console.log('등급 조회 응답:', response);
-            // API가 직접 배열을 반환하므로 response 자체가 배열인지 확인
             if (Array.isArray(response)) {
                 setGrades(response);
-                console.log('등급 목록 설정 완료:', response.length, '개');
-            } else if (response && response.data) {
-                setGrades(response.data);
-                console.log('등급 목록 설정 완료:', response.data.length, '개');
+            } else if (response?.data) {
+                setGrades(Array.isArray(response.data) ? response.data : []);
             } else {
-                console.warn('등급 데이터 형식이 예상과 다릅니다:', response);
                 setGrades([]);
             }
         } catch (error) {
@@ -153,11 +141,10 @@ const ConsultantProfileModal = ({
     const loadSalaryTypes = async () => {
         try {
             const response = await apiGet('/api/v1/admin/salary/codes');
-            console.log('급여 유형 조회 응답:', response);
-            if (response && response.data && response.data.salaryTypes) {
-                setSalaryTypes(response.data.salaryTypes);
+            const salaryTypesList = response?.salaryTypes ?? response?.data?.salaryTypes;
+            if (Array.isArray(salaryTypesList)) {
+                setSalaryTypes(salaryTypesList);
             } else {
-                console.warn('급여 유형 데이터를 찾을 수 없습니다:', response);
                 setSalaryTypes([]);
             }
         } catch (error) {
@@ -216,13 +203,12 @@ const ConsultantProfileModal = ({
             };
 
             const response = await apiPost('/api/v1/admin/salary/profiles', profileData);
-            
-            if (response.success) {
+            if (response != null && typeof response === 'object' && response.success === false) {
+                notificationManager.show('급여 프로필 저장에 실패했습니다: ' + (response.message || ''), 'error');
+            } else {
                 notificationManager.show('급여 프로필이 성공적으로 저장되었습니다.', 'info');
                 setShowSalaryForm(false);
-                loadSalaryProfile(); // 프로필 다시 조회
-            } else {
-                notificationManager.show('급여 프로필 저장에 실패했습니다: ' + response.message, 'error');
+                loadSalaryProfile();
             }
         } catch (error) {
             console.error('급여 프로필 저장 실패:', error);

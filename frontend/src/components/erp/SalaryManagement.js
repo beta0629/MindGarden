@@ -64,7 +64,12 @@ const SalaryManagement = () => {
     }
     try {
       const response = await apiGet(`/api/v1/admin/salary/calculation-period?year=${year}&month=${month}`);
-      if (response && response.success && response.data) {
+      if (response && typeof response === 'object' && (response.periodStart != null || response.periodEnd != null)) {
+        setCalculationPeriodDisplay({
+          periodStart: response.periodStart,
+          periodEnd: response.periodEnd
+        });
+      } else if (response && response.data) {
         setCalculationPeriodDisplay({
           periodStart: response.data.periodStart,
           periodEnd: response.data.periodEnd
@@ -85,10 +90,12 @@ const SalaryManagement = () => {
         setConsultants([]);
         return;
       }
-      if (response && response.success) {
+      if (Array.isArray(response)) {
+        setConsultants(response);
+      } else if (response && response.success) {
         setConsultants(response.data || []);
       } else {
-        setConsultants([]);
+        setConsultants(response?.data ?? []);
         if (response && response.message) {
           showNotification(response.message, 'error');
         }
@@ -110,10 +117,12 @@ const SalaryManagement = () => {
         setSalaryProfiles([]);
         return;
       }
-      if (response && response.success) {
+      if (Array.isArray(response)) {
+        setSalaryProfiles(response);
+      } else if (response && response.success) {
         setSalaryProfiles(response.data || []);
       } else {
-        setSalaryProfiles([]);
+        setSalaryProfiles(response?.data ?? []);
         if (response && response.message) {
           showNotification(response.message, 'error');
         }
@@ -130,8 +139,12 @@ const SalaryManagement = () => {
   const loadPayDayOptions = async () => {
     try {
       const response = await apiGet('/api/v1/common-codes?codeGroup=SALARY_PAY_DAY');
-      if (response && Array.isArray(response)) {
+      if (Array.isArray(response)) {
         setPayDayOptions(response);
+      } else if (response && response?.data) {
+        setPayDayOptions(Array.isArray(response.data) ? response.data : []);
+      } else {
+        setPayDayOptions([]);
       }
     } catch (error) {
       console.error('급여일 옵션 로드 실패:', error);
@@ -174,25 +187,29 @@ const SalaryManagement = () => {
         periodEnd
       });
       const response = await apiPost(`/api/v1/admin/salary/calculate?${queryParams}`);
-      if (response && response.success) {
+      if (response && typeof response === 'object' && response.success === false) {
+        showNotification(response?.message || '급여 계산에 실패했습니다.', 'error');
+      } else if (response && typeof response === 'object') {
+        const data = response.data ?? response;
         showNotification('급여 계산 미리보기가 완료되었습니다.', 'success');
-        if (response.data) {
-          setPreviewResult({
-            consultantId: selectedConsultant.id,
-            consultantName: selectedConsultant.name,
-            period: selectedPeriod,
-            periodStart,
-            periodEnd,
-            grossSalary: response.data.grossSalary || 0,
-            netSalary: response.data.netSalary || 0,
-            taxAmount: response.data.taxAmount || 0,
-            consultationCount: response.data.consultationCount || 0,
-            calculatedAt: new Date().toISOString()
-          });
-        }
+        setPreviewResult({
+          consultantId: selectedConsultant.id,
+          consultantName: selectedConsultant.name,
+          period: selectedPeriod,
+          periodStart,
+          periodEnd,
+          grossSalary: data?.grossSalary ?? 0,
+          netSalary: data?.netSalary ?? 0,
+          taxAmount: data?.taxAmount ?? 0,
+          consultationCount: data?.consultationCount ?? 0,
+          calculatedAt: new Date().toISOString()
+        });
+        loadSalaryCalculations(selectedConsultant.id);
+      } else if (response != null) {
+        showNotification('급여 계산 미리보기가 완료되었습니다.', 'success');
         loadSalaryCalculations(selectedConsultant.id);
       } else {
-        showNotification(response?.message || '급여 계산에 실패했습니다.', 'error');
+        showNotification('급여 계산에 실패했습니다.', 'error');
       }
     } catch (error) {
       console.error('급여 계산 실행 실패:', error);
@@ -231,8 +248,14 @@ const SalaryManagement = () => {
     try {
       setLoading(true);
       const response = await apiGet(`/api/v1/admin/salary/calculations/${consultantId}`);
-      if (response && response.success) {
-        setSalaryCalculations(response.data);
+      if (Array.isArray(response)) {
+        setSalaryCalculations(response);
+      } else if (response && response.success) {
+        setSalaryCalculations(response.data ?? []);
+      } else if (response && response?.data) {
+        setSalaryCalculations(Array.isArray(response.data) ? response.data : []);
+      } else {
+        setSalaryCalculations([]);
       }
     } catch (error) {
       console.error('급여 계산 내역 로드 실패:', error);
@@ -251,8 +274,10 @@ const SalaryManagement = () => {
         return;
       }
       const response = await apiGet(`/api/v1/admin/salary/tax/statistics?period=${period}`);
-      if (response && response.success) {
-        setTaxStatistics(response.data);
+      if (response != null && typeof response === 'object') {
+        setTaxStatistics(response.data ?? response);
+      } else {
+        setTaxStatistics(null);
       }
     } catch (error) {
       console.error('세금 통계 로드 실패:', error);
@@ -626,12 +651,12 @@ const SalaryManagement = () => {
                                   periodEnd: previewResult.periodEnd
                                 });
                                 const res = await apiPost(`/api/v1/admin/salary/confirm?${params}`);
-                                if (res && res.success) {
+                                if (res && typeof res === 'object' && res.success === false) {
+                                  showNotification(res?.message || '확정에 실패했습니다.', 'error');
+                                } else {
                                   showNotification('급여 계산이 확정되었습니다.', 'success');
                                   setPreviewResult(null);
                                   if (previewResult.consultantId) loadSalaryCalculations(previewResult.consultantId);
-                                } else {
-                                  showNotification(res?.message || '확정에 실패했습니다.', 'error');
                                 }
                               } catch (err) {
                                 showNotification('확정 처리 중 오류가 발생했습니다.', 'error');

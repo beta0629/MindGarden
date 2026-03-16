@@ -23,6 +23,7 @@ import com.coresolution.consultation.service.SalaryManagementService;
 import com.coresolution.consultation.service.SalaryScheduleService;
 import com.coresolution.consultation.util.PermissionCheckUtils;
 import com.coresolution.consultation.utils.SessionUtils;
+import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -69,6 +70,9 @@ public class SalaryManagementController {
             }
             
             User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser != null && currentUser.getTenantId() != null) {
+                TenantContextHolder.setTenantId(currentUser.getTenantId());
+            }
             
             log.info("개별 급여 프로필 조회: 상담사 ID {}", consultantId);
             List<ConsultantSalaryProfile> profiles = salaryManagementService.getAllSalaryProfiles();
@@ -109,6 +113,9 @@ public class SalaryManagementController {
     public ResponseEntity<Map<String, Object>> getSalaryProfiles(HttpSession session) {
         try {
             User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser != null && currentUser.getTenantId() != null) {
+                TenantContextHolder.setTenantId(currentUser.getTenantId());
+            }
             if (currentUser == null) {
                 log.warn("급여 프로필 조회: 세션에 currentUser가 없음, 세션 ID: {}", session.getId());
                 return ResponseEntity.badRequest().body(Map.of(
@@ -142,6 +149,9 @@ public class SalaryManagementController {
     public ResponseEntity<Map<String, Object>> getConsultants(HttpSession session) {
         try {
             User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser != null && currentUser.getTenantId() != null) {
+                TenantContextHolder.setTenantId(currentUser.getTenantId());
+            }
             if (currentUser == null) {
                 log.warn("상담사 목록 조회: 세션에 currentUser가 없음, 세션 ID: {}", session.getId());
                 return ResponseEntity.badRequest().body(Map.of(

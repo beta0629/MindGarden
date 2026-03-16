@@ -2877,8 +2877,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         mapping.setNotes(updatedNotes);
         
         mapping.setRemainingSessions(0);
-        mapping.setUsedSessions(mapping.getTotalSessions()); // 전체를 사용한 것으로 처리하지 않고 실제 사용한 만큼만
-        
+        mapping.setUsedSessions(mapping.getTotalSessions()); // 종료 시 남은 회기 없음: used=total 로 두어 total=used+remaining 유지
+
         mappingRepository.save(mapping);
         
         try {

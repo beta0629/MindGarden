@@ -42,6 +42,11 @@
   min-height: 44px;
 }
 
+/* compact 카드가 너무 좁아져 배지 오버플로우 나지 않도록 최소 폭 */
+.mg-v2-list-block__grid--small .mg-v2-profile-card--compact {
+  min-width: 140px;
+}
+
 /* ----- 리스트(테이블) 뷰 ----- */
 .mg-v2-list-block__table,
 .mg-v2-list-block__list {

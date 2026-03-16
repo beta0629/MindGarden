@@ -17,7 +17,7 @@ import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import ContentSection from '../dashboard-v2/content/ContentSection';
 import ContentCard from '../dashboard-v2/content/ContentCard';
-import { ViewModeToggle, SmallCardGrid, ListTableView } from '../common';
+import { ViewModeToggle, SmallCardGrid, ListTableView, StatusBadge } from '../common';
 import { SearchInput } from '../dashboard-v2/atoms';
 import Button from '../ui/Button/Button';
 import { showSuccess, showError } from '../../utils/notification';
@@ -500,12 +500,12 @@ const StaffManagement = ({ embedded = false }) => {
                       </div>
                     </div>
                     <div className="mg-v2-profile-card__badges">
-                      <span className="mg-v2-status-badge">
+                      <StatusBadge variant={staff.role === 'ADMIN' ? 'info' : 'neutral'}>
                         {ROLE_DISPLAY_NAMES[staff.role] || staff.role}
-                      </span>
-                      <span className="mg-v2-grade-badge">
+                      </StatusBadge>
+                      <StatusBadge variant={staff.isActive ? 'success' : 'neutral'}>
                         {staff.isActive ? '활성' : '비활성'}
-                      </span>
+                      </StatusBadge>
                     </div>
                   </div>
                   <div className="mg-v2-profile-card__footer">
@@ -549,8 +549,12 @@ const StaffManagement = ({ embedded = false }) => {
                         </div>
                       </div>
                       <div className="mg-v2-profile-card__badges">
-                        <span className="mg-v2-status-badge">{ROLE_DISPLAY_NAMES[staff.role] || staff.role}</span>
-                        <span className="mg-v2-grade-badge">{staff.isActive ? '활성' : '비활성'}</span>
+                        <StatusBadge variant={staff.role === 'ADMIN' ? 'info' : 'neutral'}>
+                          {ROLE_DISPLAY_NAMES[staff.role] || staff.role}
+                        </StatusBadge>
+                        <StatusBadge variant={staff.isActive ? 'success' : 'neutral'}>
+                          {staff.isActive ? '활성' : '비활성'}
+                        </StatusBadge>
                       </div>
                     </div>
                   </div>

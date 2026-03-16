@@ -221,46 +221,8 @@
   margin: 0;
 }
 
-/* 상태 배지 */
-.mg-v2-status-badge {
-  height: 28px;
-  padding: 4px 12px;
-  border-radius: 8px;
-  font-family: 'Noto Sans KR', sans-serif;
-  font-size: 12px;
-  font-weight: 600;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  white-space: nowrap;
-}
-
-.mg-v2-status-badge--active {
-  background: var(--mg-v2-color-success-50, #f0fdf4);
-  color: var(--mg-v2-color-success-700, #15803d);
-}
-
-.mg-v2-status-badge--inactive {
-  background: var(--mg-v2-color-secondary-100, #f3f4f6);
-  color: var(--mg-v2-color-secondary-700, #374151);
-}
-
-.mg-v2-status-badge--pending {
-  background: var(--mg-v2-color-warning-50, #fffbeb);
-  color: var(--mg-v2-color-warning-700, #b45309);
-}
-
-.mg-v2-status-badge--completed {
-  background: var(--mg-v2-color-success-100, #d1fae5);
-  color: var(--mg-v2-color-success-800, #065f46);
-}
-
-.mg-v2-status-badge--suspended {
-  background: var(--mg-v2-color-error-50, #fef2f2);
-  color: var(--mg-v2-color-error-700, #b91c1c);
-}
-
-.mg-v2-status-badge svg {
+/* 상태 배지: StatusBadge.css 단일 소스. 이 영역에서는 StatusBadge 컴포넌트 또는 .mg-v2-badge--* 모디파이어 사용 */
+.mg-v2-client-card__body .mg-v2-status-badge svg {
   width: 14px;
   height: 14px;
 }

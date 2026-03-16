@@ -1,8 +1,8 @@
 import Button from '../../ui/Button/Button';
 import Avatar from '../../common/Avatar';
-import { SmallCardGrid, ListTableView } from '../../common';
+import { SmallCardGrid, ListTableView, StatusBadge } from '../../common';
 import { User, Edit, Trash2, Eye, Key, Mail, Phone } from 'lucide-react';
-import { getUserStatusKoreanNameSync, getUserGradeKoreanNameSync, getUserGradeIconSync, getStatusColorSync, maskEncryptedDisplay } from '../../../utils/codeHelper';
+import { getUserStatusKoreanNameSync, getUserGradeKoreanNameSync, getUserGradeIconSync, maskEncryptedDisplay } from '../../../utils/codeHelper';
 import '../ProfileCard.css';
 
 /**
@@ -21,10 +21,7 @@ const ClientOverviewTab = ({
 }) => {
     // 내담자 카드 렌더링
     const renderClientCard = (client) => {
-        // statusColor를 동기 함수로 처리 (undefined 방지)
-        const statusColor = getStatusColorSync(client?.status);
         const statusKorean = getUserStatusKoreanNameSync(client?.status);
-        
         // 공통 유틸리티 함수 사용 (동기 버전)
         const gradeIcon = getUserGradeIconSync(client.grade);
         const gradeKorean = getUserGradeKoreanNameSync(client.grade);
@@ -54,12 +51,7 @@ const ClientOverviewTab = ({
                         </div>
                     </div>
                     <div className="mg-v2-profile-card__badges">
-                        <span 
-                            className="mg-v2-status-badge"
-                            style={{ '--status-bg-color': statusColor }}
-                        >
-                            {statusKorean}
-                        </span>
+                        <StatusBadge status={client?.status}>{statusKorean}</StatusBadge>
                         <span className="mg-v2-grade-badge">
                             {gradeIcon} {gradeKorean}
                         </span>
@@ -120,7 +112,6 @@ const ClientOverviewTab = ({
         );
     };
 
-    const statusColor = (client) => getStatusColorSync(client?.status);
     const renderCompactClientCard = (client) => {
         const statusKorean = getUserStatusKoreanNameSync(client?.status);
         const gradeIcon = getUserGradeIconSync(client.grade);
@@ -149,7 +140,7 @@ const ClientOverviewTab = ({
                         </div>
                     </div>
                     <div className="mg-v2-profile-card__badges">
-                        <span className="mg-v2-status-badge" style={{ '--status-bg-color': statusColor(client) }}>{statusKorean}</span>
+                        <StatusBadge status={client?.status}>{statusKorean}</StatusBadge>
                         <span className="mg-v2-grade-badge">{gradeIcon} {gradeKorean}</span>
                     </div>
                 </div>

@@ -1,4 +1,6 @@
 // import MGButton from '../../../components/common/MGButton'; // 임시 비활성화
+import { StatusBadge } from '../../common';
+
 /**
  * 상담 완료 통계 뷰 컴포넌트 (Presentational)
 /**
@@ -129,10 +131,10 @@ const ConsultationCompletionStatsView = ({
                                 </div>
                             </div>
                             
-                            {/* 등급 배지 */}
-                            <div className={`mg-v2-grade-badge ${stat.grade ? 'mg-v2-grade-badge-active' : 'mg-v2-grade-badge-inactive'}`}>
+                            {/* 등급 설정 상태: 설정됨(success) / 미설정(neutral) */}
+                            <StatusBadge variant={stat.grade ? 'success' : 'neutral'}>
                                 {stat.grade ? convertGradeToKorean(stat.grade) : '미설정'}
-                            </div>
+                            </StatusBadge>
                         </div>
 
                         {/* 전문분야 */}

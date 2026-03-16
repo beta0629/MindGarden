@@ -1,5 +1,6 @@
 import Button from '../../ui/Button/Button';
 import { User, Calendar, Clock, Eye } from 'lucide-react';
+import StatusBadge from '../../common/StatusBadge';
 import './ClientConsultationTab.css';
 
 /**
@@ -30,9 +31,9 @@ const ClientConsultationTab = ({
                     </p>
                 </div>
                 <div className="mg-v2-consultation-status">
-                    <span className="mg-v2-status-badge" style={{ '--status-bg-color': consultation.isSessionCompleted ? 'var(--mg-success-500, #22c55e)' : 'var(--mg-warning-500, #eab308)' }}>
+                    <StatusBadge variant={consultation.isSessionCompleted ? 'success' : 'warning'}>
                         {consultation.isSessionCompleted ? '완료' : '진행중'}
-                    </span>
+                    </StatusBadge>
                 </div>
             </div>
             <div className="mg-v2-card-content">

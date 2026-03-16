@@ -122,28 +122,28 @@
 }
 
 .mg-v2-consultant-level-badge--junior {
-  background: var(--ad-b0kla-blue-bg, var(--mg-info-100));
-  color: var(--ad-b0kla-blue, var(--mg-info-600));
+  background: var(--mg-info-100);
+  color: var(--mg-info-600);
 }
 
 .mg-v2-consultant-level-badge--manier {
-  background: var(--ad-b0kla-orange-bg, var(--mg-warning-100));
-  color: var(--ad-b0kla-orange, var(--mg-warning-600));
+  background: var(--mg-warning-100);
+  color: var(--mg-warning-600);
 }
 
 .mg-v2-consultant-level-badge--senior {
-  background: var(--ad-b0kla-green-bg, var(--mg-success-100));
-  color: var(--ad-b0kla-green, var(--mg-success-600));
+  background: var(--mg-success-100);
+  color: var(--mg-success-600);
 }
 
 .mg-v2-consultant-level-badge--expert {
-  background: var(--mg-primary-100, #e0e7ff);
-  color: var(--mg-primary-600, #4f46e5);
+  background: var(--mg-primary-100);
+  color: var(--mg-primary-600);
 }
 
 .mg-v2-consultant-level-badge--master {
-  background: var(--mg-warning-100, #fef3c7);
-  color: var(--mg-warning-700, #b45309);
+  background: var(--mg-warning-100);
+  color: var(--mg-warning-700);
 }
 
 .mg-v2-profile-card__body {
@@ -262,6 +262,18 @@
 .mg-v2-profile-card--compact {
   padding: var(--mg-spacing-12, 0.75rem);
   gap: var(--mg-spacing-8, 0.5rem);
+  min-width: 0;
+}
+
+/* compact: 헤더 줄바꿈 허용, 배지를 두 번째 줄로 내려도 됨 */
+.mg-v2-profile-card--compact .mg-v2-profile-card__header {
+  flex-wrap: wrap;
+  gap: var(--mg-spacing-8, 0.5rem);
+}
+
+/* compact: info가 flex로 줄어들 수 있도록 (배지가 밀려 나가는 것 방지) */
+.mg-v2-profile-card--compact .mg-v2-profile-card__info {
+  min-width: 0;
 }
 
 .mg-v2-profile-card--compact .mg-v2-profile-card__avatar {
@@ -283,7 +295,24 @@
   display: none;
 }
 
+/* compact: 배지 영역을 100% 너비로 두어 두 번째 줄에 배치, 카드 안에서만 표시 */
 .mg-v2-profile-card--compact .mg-v2-profile-card__badges {
   position: static;
+  flex-basis: 100%;
   flex-shrink: 0;
+  flex-wrap: wrap;
+  gap: var(--mg-spacing-4, 0.25rem);
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* compact: 배지 폰트/패딩 소폭 축소 (가독성 유지) */
+.mg-v2-profile-card--compact .mg-v2-consultant-level-badge {
+  padding: 2px 6px;
+  font-size: 10px;
+}
+
+.mg-v2-profile-card--compact .mg-v2-profile-card__badges > * {
+  font-size: 10px;
+  padding: 2px 6px;
 }

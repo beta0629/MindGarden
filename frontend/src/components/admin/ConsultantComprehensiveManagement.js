@@ -24,7 +24,7 @@ import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import ContentSection from '../dashboard-v2/content/ContentSection';
 import ContentCard from '../dashboard-v2/content/ContentCard';
 import { SearchInput } from '../dashboard-v2/atoms';
-import { ViewModeToggle, SmallCardGrid, ListTableView } from '../common';
+import { ViewModeToggle, SmallCardGrid, ListTableView, StatusBadge } from '../common';
 import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
 import './mapping-management/organisms/MappingKpiSection.css';
@@ -1147,9 +1147,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                                         </span>
                                                                     );
                                                                 })()}
-                                                                <span className={`mg-v2-status-badge mg-v2-status-badge--${consultant.status?.toLowerCase() || 'active'}`}>
-                                                                    {getStatusLabel(consultant.status || 'ACTIVE')}
-                                                                </span>
+                                                                <StatusBadge status={consultant.status || 'ACTIVE'}>{getStatusLabel(consultant.status || 'ACTIVE')}</StatusBadge>
                                                             </div>
                                                         </div>
                                                         <div className="mg-v2-profile-card__body">
@@ -1246,7 +1244,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                                     const { label, level } = getConsultantBadgeDisplay(consultant);
                                                                     return <span className={`mg-v2-consultant-level-badge mg-v2-consultant-level-badge--${level}`}>{label}</span>;
                                                                 })()}
-                                                                <span className={`mg-v2-status-badge mg-v2-status-badge--${consultant.status?.toLowerCase() || 'active'}`}>{getStatusLabel(consultant.status || 'ACTIVE')}</span>
+                                                                <StatusBadge status={consultant.status || 'ACTIVE'}>{getStatusLabel(consultant.status || 'ACTIVE')}</StatusBadge>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -1361,9 +1359,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                                         </span>
                                                                     );
                                                                 })()}
-                                                                <span className={`mg-v2-status-badge mg-v2-status-badge--${consultant.status?.toLowerCase() || 'active'}`}>
-                                                                    {getStatusLabel(consultant.status || 'ACTIVE')}
-                                                                </span>
+                                                                <StatusBadge status={consultant.status || 'ACTIVE'}>{getStatusLabel(consultant.status || 'ACTIVE')}</StatusBadge>
                                                             </div>
                                                         </div>
                                                         <div className="mg-v2-profile-card__body">
@@ -1460,7 +1456,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                                     const { label, level } = getConsultantBadgeDisplay(consultant);
                                                                     return <span className={`mg-v2-consultant-level-badge mg-v2-consultant-level-badge--${level}`}>{label}</span>;
                                                                 })()}
-                                                                <span className={`mg-v2-status-badge mg-v2-status-badge--${consultant.status?.toLowerCase() || 'active'}`}>{getStatusLabel(consultant.status || 'ACTIVE')}</span>
+                                                                <StatusBadge status={consultant.status || 'ACTIVE'}>{getStatusLabel(consultant.status || 'ACTIVE')}</StatusBadge>
                                                             </div>
                                                         </div>
                                                     </div>

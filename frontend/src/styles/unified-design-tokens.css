@@ -11294,20 +11294,15 @@ body {
     color: var(--color-secondary);
 }
 
+/* 등급 배지: 등급 이름(브론즈/실버/골드 등) 전용. 상태(설정됨/미설정)는 StatusBadge 사용 */
 .mg-v2-grade-badge {
-    padding: 6px 12px;
-    border-radius: 20px;
+    display: inline-block;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--border-radius-full);
+    background-color: var(--color-bg-secondary);
     font-size: var(--font-size-xs);
-    font-weight: 500;
-    color: var(--color-secondary);
-}
-
-.mg-v2-grade-badge-active {
-    background-color: var(--color-bg-secondary);
-}
-
-.mg-v2-grade-badge-inactive {
-    background-color: var(--color-bg-secondary);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-secondary);
 }
 
 .mg-v2-specialty-section {
@@ -11874,24 +11869,7 @@ body {
     font-weight: 500;
 }
 
-.mg-v2-status-badge {
-    padding: 4px 12px;
-    background-color: var(--status-bg-color, var(--mg-secondary-500));
-    border-radius: 20px;
-    font-size: var(--font-size-xs);
-    font-weight: 600;
-    color: var(--mg-white, #fff);
-}
-
-.mg-v2-status-badge-active {
-    background-color: var(--status-success-bg);
-    color: var(--status-success-dark);
-}
-
-.mg-v2-status-badge-inactive {
-    background-color: var(--status-error-bg);
-    color: var(--status-error-dark);
-}
+/* .mg-v2-status-badge: StatusBadge.css 단일 소스 (variant 기반) */
 
 .mg-v2-code-description-container {
     margin-bottom: 12px;
@@ -12464,27 +12442,7 @@ body {
     gap: var(--spacing-md);
 }
 
-.mg-v2-status-badge {
-    display: inline-block;
-    padding: 4px 12px;
-    border-radius: 16px;
-    font-size: var(--font-size-xs);
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    background-color: var(--status-color, var(--color-gray));
-    color: white;
-}
-
-.mg-v2-status-badge-active {
-    background-color: var(--color-success);
-    color: white;
-}
-
-.mg-v2-status-badge-inactive {
-    background-color: var(--color-secondary);
-    color: white;
-}
+/* .mg-v2-status-badge: StatusBadge.css 단일 소스 */
 
 /* MappingCard specific classes */
 .mg-v2-mapping-card-title-section {
@@ -12559,11 +12517,6 @@ body {
     display: flex;
     gap: var(--spacing-xs);
     justify-content: flex-end;
-}
-
-.mg-v2-status-badge-no-mapping {
-    background-color: var(--color-warning);
-    color: white;
 }
 
 .mg-v2-client-phone {
@@ -15353,25 +15306,6 @@ body {
     align-items: flex-end;
 }
 
-.mg-v2-status-badge {
-    display: inline-block;
-    padding: var(--spacing-xs) var(--spacing-sm);
-    border-radius: var(--border-radius-full);
-    font-size: var(--font-size-xs);
-    font-weight: var(--font-weight-medium);
-    color: white;
-}
-
-.mg-v2-grade-badge {
-    display: inline-block;
-    padding: var(--spacing-xs) var(--spacing-sm);
-    border-radius: var(--border-radius-full);
-    background-color: var(--color-bg-secondary);
-    font-size: var(--font-size-xs);
-    font-weight: var(--font-weight-medium);
-    color: var(--color-text-secondary);
-}
-
 .mg-v2-client-stats {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -16984,27 +16918,7 @@ button span, .btn span, [class*="btn-"] span, [class*="mg-btn"] span, [class*="m
     flex-shrink: 0;
 }
 
-.mg-v2-status-badge {
-    color: var(--mg-white);
-    padding: 6px 12px;
-    border-radius: 15px;
-    font-size: 0.8rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    white-space: nowrap;
-    box-shadow: 0 2px 4px var(--mg-shadow-light);
-}
-
-.mg-v2-status-badge--active { background-color: var(--mg-success-500); }
-.mg-v2-status-badge--inactive { background-color: var(--mg-error-500); }
-.mg-v2-status-badge--pending { background-color: var(--mg-warning-500); }
-.mg-v2-status-badge--completed { background-color: #059669; }
-.mg-v2-status-badge--suspended { background-color: #dc2626; }
-.mg-v2-status-badge--default { background-color: #6b7280; }
+/* .mg-v2-status-badge: StatusBadge.css 단일 소스 (variant 기반, 레거시 BEM 별도 정의) */
 
 /* ============================================
    시간 슬롯 그리드

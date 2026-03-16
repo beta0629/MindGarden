@@ -143,20 +143,33 @@ export const getCodeGroupColor = async (groupName) => {
 };
 
 /**
- * 상태별 색상 조회 (동기 버전 - fallback 사용)
-/**
- * @deprecated - getStatusColorAsync 사용 권장
+ * 상태별 배경색 조회 (동기 버전 - fallback 사용)
+ * 배지용 색상은 StatusBadge 컴포넌트 사용 권장. 레거시/보조용.
+ * @deprecated - 배지 표시 시 StatusBadge 사용 권장, getStatusColorAsync 사용 권장
  */
 export const getStatusColorSync = (codeValue) => {
     if (!codeValue) {
         return 'var(--mg-gray-500)';
     }
-    
     const defaultColorMap = {
         'true': 'var(--mg-success-500)',
-        'false': 'var(--mg-error-500)'
+        'false': 'var(--mg-error-500)',
+        /* 사용자 상태 (ACTIVE/INACTIVE 등) - StatusBadge variant와 동일 의미 */
+        ACTIVE: 'var(--mg-badge-status-success-bg, var(--mg-success-300))',
+        INACTIVE: 'var(--mg-badge-status-neutral-bg, var(--mg-gray-200))',
+        PENDING: 'var(--mg-badge-status-warning-bg, var(--mg-warning-300))',
+        SUSPENDED: 'var(--mg-badge-status-warning-bg, var(--mg-warning-300))',
+        COMPLETED: 'var(--mg-badge-status-success-bg, var(--mg-success-300))',
+        TERMINATED: 'var(--mg-badge-status-neutral-bg, var(--mg-gray-200))',
+        SESSIONS_EXHAUSTED: 'var(--mg-badge-status-neutral-bg, var(--mg-gray-200))',
+        PAYMENT_CONFIRMED: 'var(--mg-badge-status-success-bg, var(--mg-success-300))',
+        DEPOSIT_PENDING: 'var(--mg-badge-status-success-bg, var(--mg-success-300))',
+        PENDING_PAYMENT: 'var(--mg-badge-status-warning-bg, var(--mg-warning-300))',
+        ACTIVE_MAPPING: 'var(--mg-badge-status-success-bg, var(--mg-success-300))',
+        INACTIVE_MAPPING: 'var(--mg-badge-status-neutral-bg, var(--mg-gray-200))',
+        TERMINATED_MAPPING: 'var(--mg-badge-status-neutral-bg, var(--mg-gray-200))',
+        SESSIONS_EXHAUSTED_MAPPING: 'var(--mg-badge-status-neutral-bg, var(--mg-gray-200))'
     };
-    
     return defaultColorMap[codeValue] || 'var(--mg-gray-500)';
 };
 

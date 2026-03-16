@@ -10,21 +10,21 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Mail, Phone, Calendar, Package, Clock, Eye, CheckCircle, XCircle, Clock as ClockIcon, CheckCircle2, PauseCircle } from 'lucide-react';
 import Avatar from '../../common/Avatar';
+import StatusBadge from '../../common/StatusBadge';
 import ClientSessionInfo from './ClientSessionInfo';
 
 const STATUS_CONFIG = {
-  ACTIVE: { icon: CheckCircle, label: '활성', className: 'mg-v2-status-badge--active' },
-  INACTIVE: { icon: XCircle, label: '비활성', className: 'mg-v2-status-badge--inactive' },
-  PENDING: { icon: ClockIcon, label: '대기중', className: 'mg-v2-status-badge--pending' },
-  COMPLETED: { icon: CheckCircle2, label: '완료', className: 'mg-v2-status-badge--completed' },
-  SUSPENDED: { icon: PauseCircle, label: '일시정지', className: 'mg-v2-status-badge--suspended' }
+  ACTIVE: { icon: CheckCircle, label: '활성' },
+  INACTIVE: { icon: XCircle, label: '비활성' },
+  PENDING: { icon: ClockIcon, label: '대기중' },
+  COMPLETED: { icon: CheckCircle2, label: '완료' },
+  SUSPENDED: { icon: PauseCircle, label: '일시정지' }
 };
 
 const ClientCard = ({ client, onViewDetails }) => {
   const statusConfig = STATUS_CONFIG[client.status] || {
     icon: XCircle,
-    label: client.status || '알 수 없음',
-    className: 'mg-v2-status-badge--default'
+    label: client.status || '알 수 없음'
   };
 
   const StatusIcon = statusConfig.icon;
@@ -51,10 +51,10 @@ const ClientCard = ({ client, onViewDetails }) => {
             {client.name || '이름 없음'}
           </h3>
         </div>
-        <span className={`mg-v2-status-badge ${statusConfig.className}`}>
+        <StatusBadge status={client.status}>
           <StatusIcon size={14} />
           {statusConfig.label}
-        </span>
+        </StatusBadge>
       </div>
 
       <div className="mg-v2-client-card__body">

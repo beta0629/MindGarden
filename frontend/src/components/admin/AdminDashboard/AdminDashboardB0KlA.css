@@ -106,16 +106,19 @@
   color: var(--ad-b0kla-text-secondary);
 }
 
-/* 매칭 카드 내 배지: B0KlA 아토믹 토큰으로 통일 */
-.mg-v2-ad-b0kla .mg-v2-mapping-client-block .mg-v2-status-badge--success {
+/* 매칭 카드 내 배지: B0KlA 아토믹 토큰 (통일 variant .mg-v2-badge--* 및 레거시 .mg-v2-status-badge--* 호환) */
+.mg-v2-ad-b0kla .mg-v2-mapping-client-block .mg-v2-status-badge--success,
+.mg-v2-ad-b0kla .mg-v2-mapping-client-block .mg-v2-status-badge.mg-v2-badge--success {
   background: var(--ad-b0kla-green) !important;
   color: #fff;
 }
-.mg-v2-ad-b0kla .mg-v2-mapping-client-block .mg-v2-status-badge--warning {
+.mg-v2-ad-b0kla .mg-v2-mapping-client-block .mg-v2-status-badge--warning,
+.mg-v2-ad-b0kla .mg-v2-mapping-client-block .mg-v2-status-badge.mg-v2-badge--warning {
   background: var(--ad-b0kla-orange) !important;
   color: #fff;
 }
-.mg-v2-ad-b0kla .mg-v2-mapping-client-block .mg-v2-status-badge--neutral {
+.mg-v2-ad-b0kla .mg-v2-mapping-client-block .mg-v2-status-badge--neutral,
+.mg-v2-ad-b0kla .mg-v2-mapping-client-block .mg-v2-status-badge.mg-v2-badge--neutral {
   background: var(--ad-b0kla-text-secondary) !important;
   color: #fff;
 }

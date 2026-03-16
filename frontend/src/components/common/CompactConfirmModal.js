@@ -6,6 +6,7 @@ import Button from '../ui/Button/Button';
 /**
  * 컴팩트 확인 모달 컴포넌트
  * 로그아웃 같은 간단한 확인 작업에 사용하는 작은 크기 모달
+ * 사용처: SimpleHamburgerMenu. ConfirmModal과 통일 시 size="compact" 또는 동일 props 지원 검토 가능.
  *
  * @param {Object} props - 컴포넌트 props
  * @param {boolean} props.isOpen - 모달 열림/닫힘 상태

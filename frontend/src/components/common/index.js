@@ -1,4 +1,6 @@
 export { default as StatCard } from './StatCard';
+export { default as StatsCard } from './StatsCard';
+export { default as StatisticsCard } from './StatisticsCard';
 export { default as ManagementCard } from './ManagementCard';
 export { default as DashboardHeader } from './DashboardHeader';
 
@@ -11,3 +13,9 @@ export { default as CardActionGroup } from './CardActionGroup';
 export { default as ViewModeToggle } from './ViewModeToggle';
 export { default as SmallCardGrid } from './SmallCardGrid';
 export { default as ListTableView } from './ListTableView';
+export {
+  default as StatsGrid,
+  StatisticsGrid,
+  StatsCardGrid,
+  DetailedStatsGrid
+} from './StatsGrid';

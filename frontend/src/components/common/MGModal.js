@@ -1,7 +1,7 @@
 /**
- * Core Solution 모달 컴포넌트
-/**
- * 다양한 스타일과 크기의 모달 다이얼로그
+ * Core Solution 모달 컴포넌트 (레거시)
+ * 사용처: AdvancedDesignSample, PsychAssessmentManagement, PsychAssessmentAdminWidget.
+ * @deprecated common/modals/UnifiedModal 및 common/ConfirmModal 사용 권장. 마이그레이션 후 제거 예정.
  */
 
 import React, { useEffect } from 'react';

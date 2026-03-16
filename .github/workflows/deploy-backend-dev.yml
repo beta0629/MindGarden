@@ -221,7 +221,7 @@ jobs:
         key: ${{ secrets.DEV_SERVER_SSH_KEY }}
         port: 22
         timeout: 60s
-        command_timeout: 5m
+        command_timeout: 10m
         script: |
           cd /var/www/mindgarden-dev
           
@@ -356,6 +356,8 @@ jobs:
           
           if [ "$SERVICE_STARTED" = false ]; then
             echo "⚠️ 서비스 시작 대기 시간 초과 - 상태 확인 중..."
+            echo "📋 서비스 로그 (원인 파악용):"
+            sudo journalctl -u mindgarden-dev.service --no-pager -n 80 || true
           fi
           
           # 서비스 상태 확인

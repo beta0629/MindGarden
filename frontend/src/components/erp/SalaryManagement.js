@@ -17,6 +17,7 @@ import StandardizedApi from '../../utils/standardizedApi';
 import { SALARY_API_ENDPOINTS, TAX_BREAKDOWN_ORDER, TAX_BREAKDOWN_LABELS } from '../../constants/salaryConstants';
 import { getAllConsultantsWithStats } from '../../utils/consultantHelper';
 import { showNotification } from '../../utils/notification';
+import UnifiedModal from '../common/modals/UnifiedModal';
 import ConsultantProfileModal from './ConsultantProfileModal';
 import SalaryProfileFormModal from './SalaryProfileFormModal';
 import TaxDetailsModal from '../common/TaxDetailsModal';
@@ -55,6 +56,7 @@ const SalaryManagement = () => {
   const [previewResult, setPreviewResult] = useState(null);
   const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
   const [calculationPeriodDisplay, setCalculationPeriodDisplay] = useState(null);
+  const [isConsultantPickerOpen, setIsConsultantPickerOpen] = useState(false);
 
   useEffect(() => {
     const t = searchParams.get('tab');
@@ -110,12 +112,34 @@ const SalaryManagement = () => {
     }
   };
 
-  /** 상담사 목록: 공통 모듈 consultantHelper 사용 (GET /api/v1/admin/consultants/with-stats) */
+  /** 상담사 목록: 공통 모듈 consultantHelper 사용 (GET /api/v1/admin/consultants/with-stats).
+   * API 반환형 { consultant: { id, name, ... }, ... } → item.consultant 기준 평탄화 후 setConsultants (ConsultantManagement/VacationManagementModal과 동일). */
   const loadConsultants = async () => {
     try {
       setLoading(true);
       const list = await getAllConsultantsWithStats();
-      setConsultants(Array.isArray(list) ? list : []);
+      const raw = Array.isArray(list) ? list : [];
+      const flattened = raw.map((item) => {
+        const c = item.consultant || {};
+        return {
+          id: c.id,
+          name: c.name,
+          email: c.email,
+          phone: c.phone,
+          role: c.role,
+          isActive: c.isActive,
+          branchCode: c.branchCode,
+          specialty: c.specialty,
+          specialtyDetails: c.specialtyDetails,
+          specialization: c.specialization,
+          specializationDetails: c.specializationDetails,
+          yearsOfExperience: c.yearsOfExperience,
+          maxClients: c.maxClients,
+          currentClients: item.currentClients,
+          totalClients: item.totalClients
+        };
+      });
+      setConsultants(flattened);
     } catch (error) {
       console.error('상담사 목록 로드 실패:', error);
       setConsultants([]);
@@ -251,6 +275,24 @@ const SalaryManagement = () => {
   const handleCreateProfile = (consultant) => {
     setSelectedConsultant(consultant);
     setIsProfileFormOpen(true);
+  };
+
+  /** 새 프로필 생성/지금 프로필 작성하기 클릭 시 상담사 선택 단계 오픈. 상담사 0명이면 모달 띄우지 않고 안내만. */
+  const openConsultantPicker = () => {
+    if (consultants.length === 0) {
+      showNotification('상담사가 없습니다. 상담사를 먼저 등록해주세요.', 'warning');
+      return;
+    }
+    setIsConsultantPickerOpen(true);
+  };
+
+  const closeConsultantPicker = () => {
+    setIsConsultantPickerOpen(false);
+  };
+
+  const handleConsultantPickForProfile = (consultant) => {
+    handleCreateProfile(consultant);
+    closeConsultantPicker();
   };
 
   const handleProfileSaved = () => {
@@ -545,7 +587,7 @@ const SalaryManagement = () => {
                     <MGButton
                       variant="primary"
                       size="small"
-                      onClick={() => setIsProfileFormOpen(true)}
+                      onClick={openConsultantPicker}
                       className="mg-v2-button mg-v2-button--primary"
                     >
                       새 프로필 생성
@@ -560,7 +602,7 @@ const SalaryManagement = () => {
                       <MGButton
                         variant="primary"
                         size="medium"
-                        onClick={() => setIsProfileFormOpen(true)}
+                        onClick={openConsultantPicker}
                         className="mg-v2-button mg-v2-button--primary"
                       >
                         지금 프로필 작성하기
@@ -875,6 +917,37 @@ const SalaryManagement = () => {
         </div>
       )}
 
+      <UnifiedModal
+        isOpen={isConsultantPickerOpen}
+        onClose={closeConsultantPicker}
+        title="상담사 선택"
+        subtitle="급여 프로필을 작성할 상담사를 선택하세요."
+        size="small"
+        backdropClick={true}
+        showCloseButton={true}
+        className="mg-v2-ad-b0kla"
+      >
+        {consultants.length === 0 ? (
+          <p className="salary-profile-block__empty-state mg-v2-mb-md">상담사가 없습니다.</p>
+        ) : (
+          <ul className="mg-v2-list-container">
+            {consultants.map((consultant) => (
+              <li key={consultant.id}>
+                <button
+                  type="button"
+                  className="mg-v2-list-item mg-v2-list-item--clickable salary-consultant-picker-item"
+                  onClick={() => handleConsultantPickForProfile(consultant)}
+                >
+                  <span className="mg-v2-list-item-title">{consultant.name}</span>
+                  {consultant.email && (
+                    <span className="mg-v2-list-item-subtitle">{consultant.email}</span>
+                  )}
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </UnifiedModal>
       <ConsultantProfileModal isOpen={isModalOpen} onClose={closeModal} consultant={selectedConsultant} />
       <SalaryProfileFormModal
         isOpen={isProfileFormOpen}

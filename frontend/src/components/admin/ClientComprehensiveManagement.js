@@ -8,9 +8,11 @@ import { getAllClientsWithStats } from '../../utils/consultantHelper';
 import { showError, showSuccess } from '../../utils/notification';
 import { getCommonCodes } from '../../utils/commonCodeApi';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
+import { ViewModeToggle } from '../common';
 import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import ContentSection from '../dashboard-v2/content/ContentSection';
+import ContentCard from '../dashboard-v2/content/ContentCard';
 import { SearchInput } from '../dashboard-v2/atoms';
 import ClientOverviewTab from './ClientComprehensiveManagement/ClientOverviewTab';
 import ClientConsultationTab from './ClientComprehensiveManagement/ClientConsultationTab';
@@ -58,6 +60,7 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
     const [userStatusOptions, setUserStatusOptions] = useState([]);
     const [loadingCodes, setLoadingCodes] = useState(false);
     const [activeFilters, setActiveFilters] = useState({});
+    const [viewMode, setViewMode] = useState('largeCard'); // 'largeCard' | 'smallCard' | 'list'
     
     const [showModal, setShowModal] = useState(false);
     const [modalType, setModalType] = useState(''); // 'create', 'edit', 'delete'
@@ -539,16 +542,29 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
 
                         <div className="mg-v2-tab-content">
                             {mainTab === 'overview' && (
-                                <ClientOverviewTab
-                                    clients={filteredClients}
-                                    onClientSelect={handleClientSelect}
-                                    onEditClient={handleEditClient}
-                                    onDeleteClient={handleDeleteClient}
-                                    onResetPassword={handleResetPassword}
-                                    consultants={consultants}
-                                    mappings={mappings}
-                                    consultations={consultations}
-                                />
+                                <ContentSection noCard className="mg-v2-mapping-list-block">
+                                    <ContentCard className="mg-v2-mapping-list-block__card">
+                                        <div className="mg-v2-mapping-list-block__header">
+                                            <div className="mg-v2-mapping-list-block__title">내담자 목록</div>
+                                            <ViewModeToggle
+                                                viewMode={viewMode}
+                                                onViewModeChange={setViewMode}
+                                                className="mg-v2-mapping-list-block__toggle"
+                                            />
+                                        </div>
+                                        <ClientOverviewTab
+                                            clients={filteredClients}
+                                            onClientSelect={handleClientSelect}
+                                            onEditClient={handleEditClient}
+                                            onDeleteClient={handleDeleteClient}
+                                            onResetPassword={handleResetPassword}
+                                            consultants={consultants}
+                                            mappings={mappings}
+                                            consultations={consultations}
+                                            viewMode={viewMode}
+                                        />
+                                    </ContentCard>
+                                </ContentSection>
                             )}
 
                             {mainTab === 'consultation' && (

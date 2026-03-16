@@ -257,3 +257,33 @@
   filter: brightness(1.05);
   transform: translateY(-1px);
 }
+
+/* 작은 카드용 compact 모드 (mg-v2-list-block__grid--small 내 사용) */
+.mg-v2-profile-card--compact {
+  padding: var(--mg-spacing-12, 0.75rem);
+  gap: var(--mg-spacing-8, 0.5rem);
+}
+
+.mg-v2-profile-card--compact .mg-v2-profile-card__avatar {
+  width: 36px;
+  height: 36px;
+  font-size: var(--mg-font-size-sm, 0.875rem);
+}
+
+.mg-v2-profile-card--compact .mg-v2-profile-card__name {
+  font-size: var(--mg-font-size-sm, 0.875rem);
+}
+
+.mg-v2-profile-card--compact .mg-v2-profile-card__contact {
+  font-size: var(--mg-font-size-xs, 0.75rem);
+}
+
+.mg-v2-profile-card--compact .mg-v2-profile-card__body,
+.mg-v2-profile-card--compact .mg-v2-profile-card__footer {
+  display: none;
+}
+
+.mg-v2-profile-card--compact .mg-v2-profile-card__badges {
+  position: static;
+  flex-shrink: 0;
+}

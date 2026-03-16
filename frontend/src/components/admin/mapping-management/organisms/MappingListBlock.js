@@ -10,7 +10,14 @@ import PropTypes from 'prop-types';
 import { Plus, Link2, LayoutGrid, List, Calendar } from 'lucide-react';
 import ContentSection from '../../../dashboard-v2/content/ContentSection';
 import ContentCard from '../../../dashboard-v2/content/ContentCard';
-import { ActionButton } from '../../../common';
+import { ActionButton, ViewModeToggle } from '../../../common';
+
+/** 매칭 리스트 보기 전환 옵션: 카드 / 테이블 / 캘린더 */
+const MAPPING_VIEW_MODE_OPTIONS = [
+  { value: 'card', icon: LayoutGrid, label: '카드 뷰' },
+  { value: 'table', icon: List, label: '테이블 뷰' },
+  { value: 'calendar', icon: Calendar, label: '캘린더 뷰' }
+];
 import MappingListRow from './MappingListRow';
 import MappingTableView from './MappingTableView';
 import MappingCalendarView from './MappingCalendarView';
@@ -121,32 +128,13 @@ const MappingListBlock = ({
       <ContentCard className="mg-v2-mapping-list-block__card">
         <div className="mg-v2-mapping-list-block__header">
           <div className="mg-v2-mapping-list-block__title">매칭 리스트</div>
-          <div className="mg-v2-ad-b0kla__pill-toggle mg-v2-mapping-list-block__toggle">
-            <button
-              type="button"
-              className={`mg-v2-ad-b0kla__pill ${viewMode === 'card' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
-              onClick={() => setViewMode('card')}
-              title="카드 뷰"
-            >
-              <LayoutGrid size={16} />
-            </button>
-            <button
-              type="button"
-              className={`mg-v2-ad-b0kla__pill ${viewMode === 'table' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
-              onClick={() => setViewMode('table')}
-              title="테이블 뷰"
-            >
-              <List size={16} />
-            </button>
-            <button
-              type="button"
-              className={`mg-v2-ad-b0kla__pill ${viewMode === 'calendar' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
-              onClick={() => setViewMode('calendar')}
-              title="캘린더 뷰"
-            >
-              <Calendar size={16} />
-            </button>
-          </div>
+          <ViewModeToggle
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
+            options={MAPPING_VIEW_MODE_OPTIONS}
+            className="mg-v2-mapping-list-block__toggle"
+            ariaLabel="목록 보기 전환"
+          />
         </div>
         {renderContent()}
       </ContentCard>

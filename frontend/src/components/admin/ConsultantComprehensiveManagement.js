@@ -24,6 +24,7 @@ import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import ContentSection from '../dashboard-v2/content/ContentSection';
 import ContentCard from '../dashboard-v2/content/ContentCard';
 import { SearchInput } from '../dashboard-v2/atoms';
+import { ViewModeToggle, SmallCardGrid, ListTableView } from '../common';
 import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
 import './mapping-management/organisms/MappingKpiSection.css';
@@ -69,6 +70,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [emailCheckStatus, setEmailCheckStatus] = useState(null); // 'checking', 'duplicate', 'available', null
     const [isCheckingEmail, setIsCheckingEmail] = useState(false);
+    const [viewMode, setViewMode] = useState('largeCard'); // 'largeCard' | 'smallCard' | 'list'
 
     const loadConsultants = useCallback(async() => {
         try {
@@ -1089,6 +1091,11 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                     <ContentCard className="mg-v2-mapping-list-block__card">
                                         <div className="mg-v2-mapping-list-block__header">
                                             <div className="mg-v2-mapping-list-block__title">상담사 목록</div>
+                                            <ViewModeToggle
+                                                viewMode={viewMode}
+                                                onViewModeChange={setViewMode}
+                                                className="mg-v2-mapping-list-block__toggle"
+                                            />
                                         </div>
                                         {getFilteredConsultants.length === 0 ? (
                                             <div className="mg-v2-mapping-list-block__empty">
@@ -1106,7 +1113,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                     새 상담사 등록
                                                 </button>
                                             </div>
-                                        ) : (
+                                        ) : viewMode === 'largeCard' ? (
                                             <div className="mg-v2-mapping-list-block__grid">
                                                 {getFilteredConsultants.map((consultant) => (
                                                     <div
@@ -1209,6 +1216,61 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                     </div>
                                                 ))}
                                             </div>
+                                        ) : viewMode === 'smallCard' ? (
+                                            <SmallCardGrid>
+                                                {getFilteredConsultants.map((consultant) => (
+                                                    <div
+                                                        key={consultant.id}
+                                                        className="mg-v2-profile-card mg-v2-profile-card--compact"
+                                                        onClick={() => handleConsultantSelect(consultant)}
+                                                        role="button"
+                                                        tabIndex={0}
+                                                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleConsultantSelect(consultant); } }}
+                                                    >
+                                                        <div className="mg-v2-profile-card__header">
+                                                            <Avatar
+                                                                profileImageUrl={consultant.profileImageUrl}
+                                                                displayName={consultant.name}
+                                                                className="mg-v2-profile-card__avatar"
+                                                                size={36}
+                                                            />
+                                                            <div className="mg-v2-profile-card__info">
+                                                                <h3 className="mg-v2-profile-card__name">{consultant.name || '이름 없음'}</h3>
+                                                                <div className="mg-v2-profile-card__contact">
+                                                                    <span className="mg-v2-profile-card__email"><Mail size={12} /> {consultant.email}</span>
+                                                                    <span className="mg-v2-profile-card__phone"><Phone size={12} /> {consultant.phone || '전화번호 없음'}</span>
+                                                                </div>
+                                                            </div>
+                                                            <div className="mg-v2-profile-card__badges">
+                                                                {(() => {
+                                                                    const { label, level } = getConsultantBadgeDisplay(consultant);
+                                                                    return <span className={`mg-v2-consultant-level-badge mg-v2-consultant-level-badge--${level}`}>{label}</span>;
+                                                                })()}
+                                                                <span className={`mg-v2-status-badge mg-v2-status-badge--${consultant.status?.toLowerCase() || 'active'}`}>{getStatusLabel(consultant.status || 'ACTIVE')}</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </SmallCardGrid>
+                                        ) : (
+                                            <ListTableView
+                                                columns={[
+                                                    { key: 'name', label: '이름' },
+                                                    { key: 'email', label: '이메일' },
+                                                    { key: 'status', label: '상태' },
+                                                    { key: 'createdAt', label: '가입일', hideOnMobile: true },
+                                                    { key: 'currentClients', label: '클라이언트 수', hideOnMobile: true }
+                                                ]}
+                                                data={getFilteredConsultants}
+                                                renderCell={(key, item) => {
+                                                    if (key === 'status') return getStatusLabel(item.status || 'ACTIVE');
+                                                    if (key === 'createdAt') return item.createdAt ? new Date(item.createdAt).toLocaleDateString('ko-KR') : '-';
+                                                    if (key === 'currentClients') return item.currentClients != null ? `${item.currentClients}명` : '-';
+                                                    const v = item[key];
+                                                    return v != null ? String(v) : '-';
+                                                }}
+                                                onRowClick={handleConsultantSelect}
+                                            />
                                         )}
                                     </ContentCard>
                                 </ContentSection>
@@ -1243,6 +1305,11 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                     <ContentCard className="mg-v2-mapping-list-block__card">
                                         <div className="mg-v2-mapping-list-block__header">
                                             <div className="mg-v2-mapping-list-block__title">상담사 목록</div>
+                                            <ViewModeToggle
+                                                viewMode={viewMode}
+                                                onViewModeChange={setViewMode}
+                                                className="mg-v2-mapping-list-block__toggle"
+                                            />
                                         </div>
                                         {getFilteredConsultants.length === 0 ? (
                                             <div className="mg-v2-mapping-list-block__empty">
@@ -1260,7 +1327,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                     새 상담사 등록
                                                 </button>
                                             </div>
-                                        ) : (
+                                        ) : viewMode === 'largeCard' ? (
                                             <div className="mg-v2-mapping-list-block__grid">
                                                 {getFilteredConsultants.map((consultant) => (
                                                     <div
@@ -1363,6 +1430,61 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                     </div>
                                                 ))}
                                             </div>
+                                        ) : viewMode === 'smallCard' ? (
+                                            <SmallCardGrid>
+                                                {getFilteredConsultants.map((consultant) => (
+                                                    <div
+                                                        key={consultant.id}
+                                                        className="mg-v2-profile-card mg-v2-profile-card--compact"
+                                                        onClick={() => handleConsultantSelect(consultant)}
+                                                        role="button"
+                                                        tabIndex={0}
+                                                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleConsultantSelect(consultant); } }}
+                                                    >
+                                                        <div className="mg-v2-profile-card__header">
+                                                            <Avatar
+                                                                profileImageUrl={consultant.profileImageUrl}
+                                                                displayName={consultant.name}
+                                                                className="mg-v2-profile-card__avatar"
+                                                                size={36}
+                                                            />
+                                                            <div className="mg-v2-profile-card__info">
+                                                                <h3 className="mg-v2-profile-card__name">{consultant.name || '이름 없음'}</h3>
+                                                                <div className="mg-v2-profile-card__contact">
+                                                                    <span className="mg-v2-profile-card__email"><Mail size={12} /> {consultant.email}</span>
+                                                                    <span className="mg-v2-profile-card__phone"><Phone size={12} /> {consultant.phone || '전화번호 없음'}</span>
+                                                                </div>
+                                                            </div>
+                                                            <div className="mg-v2-profile-card__badges">
+                                                                {(() => {
+                                                                    const { label, level } = getConsultantBadgeDisplay(consultant);
+                                                                    return <span className={`mg-v2-consultant-level-badge mg-v2-consultant-level-badge--${level}`}>{label}</span>;
+                                                                })()}
+                                                                <span className={`mg-v2-status-badge mg-v2-status-badge--${consultant.status?.toLowerCase() || 'active'}`}>{getStatusLabel(consultant.status || 'ACTIVE')}</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </SmallCardGrid>
+                                        ) : (
+                                            <ListTableView
+                                                columns={[
+                                                    { key: 'name', label: '이름' },
+                                                    { key: 'email', label: '이메일' },
+                                                    { key: 'status', label: '상태' },
+                                                    { key: 'createdAt', label: '가입일', hideOnMobile: true },
+                                                    { key: 'currentClients', label: '클라이언트 수', hideOnMobile: true }
+                                                ]}
+                                                data={getFilteredConsultants}
+                                                renderCell={(key, item) => {
+                                                    if (key === 'status') return getStatusLabel(item.status || 'ACTIVE');
+                                                    if (key === 'createdAt') return item.createdAt ? new Date(item.createdAt).toLocaleDateString('ko-KR') : '-';
+                                                    if (key === 'currentClients') return item.currentClients != null ? `${item.currentClients}명` : '-';
+                                                    const v = item[key];
+                                                    return v != null ? String(v) : '-';
+                                                }}
+                                                onRowClick={handleConsultantSelect}
+                                            />
                                         )}
                                     </ContentCard>
                                 </ContentSection>

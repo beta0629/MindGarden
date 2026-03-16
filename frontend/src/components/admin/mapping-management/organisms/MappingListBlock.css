@@ -151,3 +151,10 @@
   background: var(--mg-success-700);
   transform: translateY(-1px);
 }
+
+.mg-v2-mapping-list-block__placeholder {
+  padding: 2rem;
+  text-align: center;
+  color: var(--ad-b0kla-text-secondary);
+  font-size: 14px;
+}

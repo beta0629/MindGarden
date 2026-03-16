@@ -8,3 +8,6 @@ export { default as RemainingSessionsBadge } from './RemainingSessionsBadge';
 export { default as ActionButton } from './ActionButton';
 export { default as CardContainer } from './CardContainer';
 export { default as CardActionGroup } from './CardActionGroup';
+export { default as ViewModeToggle } from './ViewModeToggle';
+export { default as SmallCardGrid } from './SmallCardGrid';
+export { default as ListTableView } from './ListTableView';

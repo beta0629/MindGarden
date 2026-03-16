@@ -1,0 +1,117 @@
+/**
+ * ListBlockView - 목록 블록 그리드/테이블 뷰 (작은 카드 그리드, 리스트)
+ * B0KlA·mg 토큰 사용. 문서 §4.1 래퍼 클래스.
+ *
+ * @author Core Solution
+ * @since 2025-03-17
+ * @see docs/project-management/USER_MANAGEMENT_VIEW_MODE_MEETING.md
+ */
+
+/* ----- 작은 카드 그리드 (mg-v2-list-block__grid--small) ----- */
+.mg-v2-list-block__grid {
+  display: grid;
+  gap: var(--mg-spacing-16, 1rem);
+}
+
+.mg-v2-list-block__grid--small {
+  grid-template-columns: 1fr;
+  gap: var(--mg-spacing-12, 0.75rem);
+}
+
+@media (min-width: 600px) {
+  .mg-v2-list-block__grid--small {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 900px) {
+  .mg-v2-list-block__grid--small {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1200px) {
+  .mg-v2-list-block__grid--small {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* 터치 타겟 44px 이상 유지 (카드 전체가 클릭 영역이므로 min-height 보장) */
+.mg-v2-list-block__grid--small .mg-v2-profile-card,
+.mg-v2-list-block__grid--small .mg-v2-profile-card--compact {
+  min-height: 44px;
+}
+
+/* ----- 리스트(테이블) 뷰 ----- */
+.mg-v2-list-block__table,
+.mg-v2-list-block__list {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--mg-font-size-sm, 14px);
+  color: var(--ad-b0kla-text-primary, var(--mg-color-text-primary));
+  background: var(--ad-b0kla-card-bg, var(--mg-color-surface-main));
+  border: 1px solid var(--ad-b0kla-border, var(--mg-color-border-main));
+  border-radius: var(--mg-radius-lg);
+  overflow: hidden;
+}
+
+.mg-v2-list-block__table thead,
+.mg-v2-list-block__list thead {
+  background: var(--ad-b0kla-bg, var(--mg-color-background-sub));
+  border-bottom: 1px solid var(--ad-b0kla-border);
+}
+
+.mg-v2-list-block__table th,
+.mg-v2-list-block__list th {
+  padding: var(--mg-spacing-12, 0.75rem) var(--mg-spacing-16, 1rem);
+  text-align: left;
+  font-weight: 600;
+  color: var(--ad-b0kla-title-color);
+  white-space: nowrap;
+}
+
+.mg-v2-list-block__table td,
+.mg-v2-list-block__list td {
+  padding: var(--mg-spacing-12, 0.75rem) var(--mg-spacing-16, 1rem);
+  border-bottom: 1px solid var(--ad-b0kla-border);
+  vertical-align: middle;
+}
+
+.mg-v2-list-block__table tbody tr:last-child td,
+.mg-v2-list-block__list tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.mg-v2-list-block__table tbody tr:hover,
+.mg-v2-list-block__list tbody tr:hover {
+  background: var(--ad-b0kla-green-bg, var(--mg-color-background-sub));
+}
+
+.mg-v2-list-block__table tbody tr[role="button"],
+.mg-v2-list-block__list tbody tr[role="button"] {
+  cursor: pointer;
+}
+
+/* 반응형: 작은 화면에서 가로 스크롤 허용 (테이블 래퍼) */
+.mg-v2-list-block__table-wrapper,
+.mg-v2-list-block__list-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: var(--mg-radius-lg);
+  border: 1px solid var(--ad-b0kla-border);
+}
+
+.mg-v2-list-block__table-wrapper .mg-v2-list-block__table,
+.mg-v2-list-block__table-wrapper .mg-v2-list-block__list,
+.mg-v2-list-block__list-wrapper .mg-v2-list-block__table,
+.mg-v2-list-block__list-wrapper .mg-v2-list-block__list {
+  margin-bottom: 0;
+  min-width: 600px;
+}
+
+/* 컬럼 숨김: 모바일에서 보조 컬럼 숨기기 (필요 시 각 페이지에서 .mg-v2-list-block__col--hide-mobile 적용) */
+@media (max-width: 599px) {
+  .mg-v2-list-block__col--hide-mobile {
+    display: none !important;
+  }
+}

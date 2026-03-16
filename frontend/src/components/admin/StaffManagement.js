@@ -16,6 +16,8 @@ import UnifiedModal from '../common/modals/UnifiedModal';
 import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import ContentSection from '../dashboard-v2/content/ContentSection';
+import ContentCard from '../dashboard-v2/content/ContentCard';
+import { ViewModeToggle, SmallCardGrid, ListTableView } from '../common';
 import { SearchInput } from '../dashboard-v2/atoms';
 import Button from '../ui/Button/Button';
 import { showSuccess, showError } from '../../utils/notification';
@@ -144,6 +146,7 @@ const StaffManagement = ({ embedded = false }) => {
   });
   const [staffEmailCheckStatus, setStaffEmailCheckStatus] = useState(null);
   const [isCheckingStaffEmail, setIsCheckingStaffEmail] = useState(false);
+  const [viewMode, setViewMode] = useState('largeCard'); // 'largeCard' | 'smallCard' | 'list'
 
   const loadUsers = useCallback(async () => {
     setLoading(true);
@@ -452,22 +455,31 @@ const StaffManagement = ({ embedded = false }) => {
       </ContentSection>
 
       <div className="mg-v2-tab-content">
-        <div className="mg-v2-client-list-block">
-          {filteredStaff.length === 0 ? (
-            <div className="mg-v2-mapping-list-block__empty">
-              <div className="mg-v2-mapping-list-block__empty-icon">
-                <User size={48} />
-              </div>
-              <h3 className="mg-v2-mapping-list-block__empty-title">
-                {staffList.length === 0 ? '등록된 스태프가 없습니다' : '검색 결과가 없습니다'}
-              </h3>
-              <p className="mg-v2-mapping-list-block__empty-desc">
-                {staffList.length === 0 ? '기존 사용자를 스태프(사무원)로 역할 변경할 수 있습니다.' : '다른 검색어로 시도해 보세요.'}
-              </p>
+        <ContentSection noCard className="mg-v2-mapping-list-block">
+          <ContentCard className="mg-v2-mapping-list-block__card">
+            <div className="mg-v2-mapping-list-block__header">
+              <div className="mg-v2-mapping-list-block__title">스태프 목록</div>
+              <ViewModeToggle
+                viewMode={viewMode}
+                onViewModeChange={setViewMode}
+                className="mg-v2-mapping-list-block__toggle"
+              />
             </div>
-          ) : (
-            <div className="mg-v2-mapping-list-block__grid">
-              {filteredStaff.map((staff) => (
+            {filteredStaff.length === 0 ? (
+              <div className="mg-v2-mapping-list-block__empty">
+                <div className="mg-v2-mapping-list-block__empty-icon">
+                  <User size={48} />
+                </div>
+                <h3 className="mg-v2-mapping-list-block__empty-title">
+                  {staffList.length === 0 ? '등록된 스태프가 없습니다' : '검색 결과가 없습니다'}
+                </h3>
+                <p className="mg-v2-mapping-list-block__empty-desc">
+                  {staffList.length === 0 ? '기존 사용자를 스태프(사무원)로 역할 변경할 수 있습니다.' : '다른 검색어로 시도해 보세요.'}
+                </p>
+              </div>
+            ) : viewMode === 'largeCard' ? (
+              <div className="mg-v2-mapping-list-block__grid">
+                {filteredStaff.map((staff) => (
                 <div key={staff.id} className="mg-v2-profile-card">
                   <div className="mg-v2-profile-card__header">
                     <Avatar
@@ -511,8 +523,61 @@ const StaffManagement = ({ embedded = false }) => {
                 </div>
               ))}
             </div>
-          )}
-        </div>
+            ) : viewMode === 'smallCard' ? (
+              <SmallCardGrid>
+                {filteredStaff.map((staff) => (
+                  <div
+                    key={staff.id}
+                    className="mg-v2-profile-card mg-v2-profile-card--compact"
+                    onClick={() => handleOpenRoleChange(staff)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleOpenRoleChange(staff); } }}
+                  >
+                    <div className="mg-v2-profile-card__header">
+                      <Avatar
+                        profileImageUrl={staff.profileImageUrl}
+                        displayName={staff.name}
+                        className="mg-v2-profile-card__avatar"
+                        size={36}
+                      />
+                      <div className="mg-v2-profile-card__info">
+                        <h3 className="mg-v2-profile-card__name">{maskEncryptedDisplay(staff.name, '이름')}</h3>
+                        <div className="mg-v2-profile-card__contact">
+                          <span className="mg-v2-profile-card__email"><Mail size={12} /> {maskEncryptedDisplay(staff.email, '이메일')}</span>
+                          <span className="mg-v2-profile-card__phone"><Phone size={12} /> {maskEncryptedDisplay(staff.phone, '전화번호 없음')}</span>
+                        </div>
+                      </div>
+                      <div className="mg-v2-profile-card__badges">
+                        <span className="mg-v2-status-badge">{ROLE_DISPLAY_NAMES[staff.role] || staff.role}</span>
+                        <span className="mg-v2-grade-badge">{staff.isActive ? '활성' : '비활성'}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </SmallCardGrid>
+            ) : (
+              <ListTableView
+                columns={[
+                  { key: 'name', label: '이름' },
+                  { key: 'email', label: '이메일' },
+                  { key: 'role', label: '역할' },
+                  { key: 'isActive', label: '상태' }
+                ]}
+                data={filteredStaff}
+                renderCell={(key, item) => {
+                  if (key === 'role') return ROLE_DISPLAY_NAMES[item.role] || item.role;
+                  if (key === 'isActive') return item.isActive ? '활성' : '비활성';
+                  if (key === 'name') return maskEncryptedDisplay(item.name, '이름');
+                  if (key === 'email') return maskEncryptedDisplay(item.email, '이메일');
+                  const v = item[key];
+                  return v != null ? String(v) : '-';
+                }}
+                onRowClick={handleOpenRoleChange}
+              />
+            )}
+          </ContentCard>
+        </ContentSection>
       </div>
 
       <UnifiedModal

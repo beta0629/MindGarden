@@ -1,5 +1,6 @@
 import Button from '../../ui/Button/Button';
 import Avatar from '../../common/Avatar';
+import { SmallCardGrid, ListTableView } from '../../common';
 import { User, Edit, Trash2, Eye, Key, Mail, Phone } from 'lucide-react';
 import { getUserStatusKoreanNameSync, getUserGradeKoreanNameSync, getUserGradeIconSync, getStatusColorSync, maskEncryptedDisplay } from '../../../utils/codeHelper';
 import '../ProfileCard.css';
@@ -15,7 +16,8 @@ const ClientOverviewTab = ({
     onResetPassword,
     consultants,
     mappings,
-    consultations
+    consultations,
+    viewMode = 'largeCard'
 }) => {
     // 내담자 카드 렌더링
     const renderClientCard = (client) => {
@@ -118,6 +120,43 @@ const ClientOverviewTab = ({
         );
     };
 
+    const statusColor = (client) => getStatusColorSync(client?.status);
+    const renderCompactClientCard = (client) => {
+        const statusKorean = getUserStatusKoreanNameSync(client?.status);
+        const gradeIcon = getUserGradeIconSync(client.grade);
+        const gradeKorean = getUserGradeKoreanNameSync(client.grade);
+        return (
+            <div
+                key={client.id}
+                className="mg-v2-profile-card mg-v2-profile-card--compact"
+                onClick={() => onClientSelect(client)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClientSelect(client); } }}
+            >
+                <div className="mg-v2-profile-card__header">
+                    <Avatar
+                        profileImageUrl={client.profileImageUrl}
+                        displayName={client.name}
+                        className="mg-v2-profile-card__avatar"
+                        size={36}
+                    />
+                    <div className="mg-v2-profile-card__info">
+                        <h3 className="mg-v2-profile-card__name">{maskEncryptedDisplay(client.name, '이름')}</h3>
+                        <div className="mg-v2-profile-card__contact">
+                            <span className="mg-v2-profile-card__email"><Mail size={12} /> {maskEncryptedDisplay(client.email, '이메일')}</span>
+                            <span className="mg-v2-profile-card__phone"><Phone size={12} /> {maskEncryptedDisplay(client.phone, '전화번호')}</span>
+                        </div>
+                    </div>
+                    <div className="mg-v2-profile-card__badges">
+                        <span className="mg-v2-status-badge" style={{ '--status-bg-color': statusColor(client) }}>{statusKorean}</span>
+                        <span className="mg-v2-grade-badge">{gradeIcon} {gradeKorean}</span>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
     return (
         <div className="mg-v2-client-list-block">
             {clients.length === 0 ? (
@@ -128,10 +167,35 @@ const ClientOverviewTab = ({
                     <h3 className="mg-v2-mapping-list-block__empty-title">등록된 내담자가 없습니다</h3>
                     <p className="mg-v2-mapping-list-block__empty-desc">새로운 내담자를 등록해보세요.</p>
                 </div>
-            ) : (
+            ) : viewMode === 'largeCard' ? (
                 <div className="mg-v2-mapping-list-block__grid">
                     {clients.map(renderClientCard)}
                 </div>
+            ) : viewMode === 'smallCard' ? (
+                <SmallCardGrid>
+                    {clients.map(renderCompactClientCard)}
+                </SmallCardGrid>
+            ) : (
+                <ListTableView
+                    columns={[
+                        { key: 'name', label: '이름' },
+                        { key: 'email', label: '이메일' },
+                        { key: 'status', label: '상태' },
+                        { key: 'grade', label: '등급', hideOnMobile: true },
+                        { key: 'createdAt', label: '등록일', hideOnMobile: true }
+                    ]}
+                    data={clients}
+                    renderCell={(key, item) => {
+                        if (key === 'name') return maskEncryptedDisplay(item.name, '이름');
+                        if (key === 'email') return maskEncryptedDisplay(item.email, '이메일');
+                        if (key === 'status') return getUserStatusKoreanNameSync(item?.status);
+                        if (key === 'grade') return getUserGradeKoreanNameSync(item.grade);
+                        if (key === 'createdAt') return item.createdAt ? new Date(item.createdAt).toLocaleDateString('ko-KR') : '-';
+                        const v = item[key];
+                        return v != null ? String(v) : '-';
+                    }}
+                    onRowClick={onClientSelect}
+                />
             )}
         </div>
     );

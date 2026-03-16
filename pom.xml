@@ -9,7 +9,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.2.0</version>
+        <version>3.2.1</version>
         <relativePath/>
     </parent>
 
@@ -24,6 +24,7 @@
         <java.version>17</java.version>
         <spring-cloud.version>2023.0.0</spring-cloud.version>
         <hibernate.version>6.4.0.Final</hibernate.version>
+        <antlr4.version>4.13.0</antlr4.version>
         <mysql.version>8.0.33</mysql.version>
         <jwt.version>0.11.5</jwt.version>
         <oauth2.version>3.1.0</oauth2.version>
@@ -97,6 +98,13 @@
             <groupId>org.hibernate.orm</groupId>
             <artifactId>hibernate-core</artifactId>
             <version>${hibernate.version}</version>
+        </dependency>
+
+        <!-- ANTLR 4.13.0 명시: Spring Data JPA·Hibernate와 버전 일치 (exit 1 방지). 참조: docs/debug/PROCEDURE_DEPLOY_AND_BUILD_ERROR_ANALYSIS.md §2.4 -->
+        <dependency>
+            <groupId>org.antlr</groupId>
+            <artifactId>antlr4-runtime</artifactId>
+            <version>${antlr4.version}</version>
         </dependency>
 
         <!-- JWT -->

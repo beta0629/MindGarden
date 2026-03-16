@@ -4,8 +4,10 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import com.coresolution.consultation.dto.TaxCalculateRequest;
 import com.coresolution.consultation.entity.ConsultantSalaryProfile;
 import com.coresolution.consultation.entity.SalaryCalculation;
+import com.coresolution.consultation.entity.SalaryTaxCalculation;
 import com.coresolution.consultation.entity.User;
 
 public interface SalaryManagementService {
@@ -31,6 +33,14 @@ public interface SalaryManagementService {
     List<SalaryCalculation> getSalaryCalculations(Long consultantId);
     Map<String, Object> getTaxDetails(Long calculationId);
     Map<String, Object> getTaxStatistics(String period);
+    
+    /**
+     * 추가 세금 계산 (POST tax/calculate). SalaryTaxCalculation 생성·저장 및 salary_calculations.deductions 반영.
+     *
+     * @param request calculationId, grossAmount, taxType, taxRate 등
+     * @return 생성된 세금 계산 정보
+     */
+    SalaryTaxCalculation calculateAdditionalTax(TaxCalculateRequest request);
     
     // 통계 및 분석
     Map<String, Object> getSalaryStatistics(LocalDate startDate, LocalDate endDate);

@@ -7,8 +7,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import com.coresolution.consultation.constant.UserRole;
+import com.coresolution.consultation.dto.TaxCalculateRequest;
 import com.coresolution.consultation.entity.ConsultantSalaryProfile;
 import com.coresolution.consultation.entity.SalaryCalculation;
+import com.coresolution.consultation.entity.SalaryTaxCalculation;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.ConsultantSalaryProfileRepository;
 import com.coresolution.consultation.repository.SalaryCalculationRepository;
@@ -301,7 +303,7 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
     }
     
     /**
-     * 세금 통계 조회 (프론트엔드 호환성)
+     * 세금 통계 조회 (프론트엔드 호환성). 2차: 세목별 breakdown 포함.
      */
     @Override
     public Map<String, Object> getTaxStatistics(String period) {
@@ -320,6 +322,9 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
         LocalDate endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
         
         List<SalaryCalculation> calculations = getSalaryCalculations(startDate, endDate);
+        List<Long> calculationIds = calculations.stream()
+            .map(SalaryCalculation::getId)
+            .collect(Collectors.toList());
         
         BigDecimal totalGrossSalary = calculations.stream()
             .map(SalaryCalculation::getGrossSalary)
@@ -331,17 +336,102 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
             
         BigDecimal totalTaxAmount = totalGrossSalary.subtract(totalNetSalary);
         
+        Map<String, BigDecimal> breakdown = new HashMap<>();
+        breakdown.put("withholdingTax", BigDecimal.ZERO);
+        breakdown.put("localIncomeTax", BigDecimal.ZERO);
+        breakdown.put("vat", BigDecimal.ZERO);
+        breakdown.put("incomeTax", BigDecimal.ZERO);
+        breakdown.put("nationalPension", BigDecimal.ZERO);
+        breakdown.put("fourInsurance", BigDecimal.ZERO);
+        Map<String, BigDecimal> taxByType = new HashMap<>();
+        
+        if (!calculationIds.isEmpty()) {
+            List<Object[]> taxSums = salaryTaxCalculationRepository.findTaxAmountSumsByCalculationIds(calculationIds);
+            for (Object[] row : taxSums) {
+                String taxType = (String) row[0];
+                BigDecimal sum = (BigDecimal) row[1];
+                if (sum == null) {
+                    sum = BigDecimal.ZERO;
+                }
+                taxByType.put(taxType, sum);
+                switch (taxType) {
+                    case "WITHHOLDING_TAX":
+                        breakdown.put("withholdingTax", sum);
+                        break;
+                    case "LOCAL_INCOME_TAX":
+                        breakdown.put("localIncomeTax", sum);
+                        break;
+                    case "VAT":
+                        breakdown.put("vat", sum);
+                        break;
+                    case "INCOME_TAX":
+                        breakdown.put("incomeTax", sum);
+                        break;
+                    case "FOUR_INSURANCE":
+                        breakdown.put("fourInsurance", sum);
+                        break;
+                    default:
+                        breakdown.put(taxType, sum);
+                        break;
+                }
+            }
+        }
+        
         Map<String, Object> result = new HashMap<>();
         result.put("period", period);
         result.put("totalCalculations", calculations.size());
         result.put("totalGrossSalary", totalGrossSalary);
         result.put("totalNetSalary", totalNetSalary);
         result.put("totalTaxAmount", totalTaxAmount);
-        result.put("averageGrossSalary", calculations.isEmpty() ? BigDecimal.ZERO : 
+        result.put("taxCount", calculations.size());
+        result.put("averageGrossSalary", calculations.isEmpty() ? BigDecimal.ZERO :
             totalGrossSalary.divide(BigDecimal.valueOf(calculations.size()), 2, java.math.RoundingMode.HALF_UP));
-        result.put("averageNetSalary", calculations.isEmpty() ? BigDecimal.ZERO : 
+        result.put("averageNetSalary", calculations.isEmpty() ? BigDecimal.ZERO :
             totalNetSalary.divide(BigDecimal.valueOf(calculations.size()), 2, java.math.RoundingMode.HALF_UP));
+        result.put("breakdown", breakdown);
+        result.put("taxByType", taxByType);
         
         return result;
+    }
+    
+    @Override
+    public SalaryTaxCalculation calculateAdditionalTax(TaxCalculateRequest request) {
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        log.info("💰 추가 세금 계산: calculationId={}, taxType={}, tenantId={}",
+                request.getCalculationId(), request.getTaxType(), tenantId);
+        
+        SalaryCalculation calculation = salaryCalculationRepository.findById(request.getCalculationId())
+                .orElseThrow(() -> new RuntimeException("급여 계산 정보를 찾을 수 없습니다: " + request.getCalculationId()));
+        
+        BigDecimal baseAmount = request.getGrossAmount() != null ? request.getGrossAmount() : BigDecimal.ZERO;
+        BigDecimal taxRate = request.getTaxRate() != null ? request.getTaxRate() : BigDecimal.ZERO;
+        BigDecimal taxAmount = baseAmount.multiply(taxRate).setScale(0, java.math.RoundingMode.HALF_UP);
+        
+        String taxName = request.getTaxName() != null && !request.getTaxName().isBlank()
+                ? request.getTaxName() : request.getTaxType();
+        String description = request.getDescription() != null ? request.getDescription() : "";
+        
+        SalaryTaxCalculation taxCalc = new SalaryTaxCalculation();
+        taxCalc.setTenantId(tenantId);
+        taxCalc.setCalculationId(request.getCalculationId());
+        taxCalc.setTaxType(request.getTaxType());
+        taxCalc.setTaxName(taxName);
+        taxCalc.setTaxRate(taxRate);
+        taxCalc.setBaseAmount(baseAmount);
+        taxCalc.setTaxableAmount(baseAmount);
+        taxCalc.setTaxAmount(taxAmount);
+        taxCalc.setDescription(description);
+        taxCalc.setIsActive(true);
+        
+        SalaryTaxCalculation saved = salaryTaxCalculationRepository.save(taxCalc);
+        
+        BigDecimal currentDeductions = calculation.getDeductions() != null ? calculation.getDeductions() : BigDecimal.ZERO;
+        calculation.setDeductions(currentDeductions.add(taxAmount));
+        BigDecimal gross = calculation.getGrossSalary() != null ? calculation.getGrossSalary() : BigDecimal.ZERO;
+        calculation.setNetSalary(gross.subtract(calculation.getDeductions()));
+        salaryCalculationRepository.save(calculation);
+        
+        log.info("✅ 추가 세금 저장 완료: id={}, taxAmount={}", saved.getId(), taxAmount);
+        return saved;
     }
 }

@@ -92,6 +92,8 @@ const TaxManagement = () => {
         { value: 'WITHHOLDING_TAX', label: '원천징수', color: 'var(--mg-primary-500)' },
         { value: 'VAT', label: '부가세', color: 'var(--mg-success-500)' },
         { value: 'INCOME_TAX', label: '소득세', color: 'var(--mg-error-500)' },
+        { value: 'FOUR_INSURANCE', label: '4대보험', color: 'var(--mg-info-500)' },
+        { value: 'LOCAL_INCOME_TAX', label: '지방소득세', color: 'var(--mg-neutral-500)' },
         { value: 'ADDITIONAL_TAX', label: '추가세금', color: 'var(--mg-warning-500)' }
     ];
 

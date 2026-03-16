@@ -9,9 +9,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import com.coresolution.consultation.dto.CommonCodeDto;
+import com.coresolution.consultation.dto.TaxCalculateRequest;
 import com.coresolution.consultation.entity.CommonCode;
 import com.coresolution.consultation.entity.ConsultantSalaryProfile;
 import com.coresolution.consultation.entity.SalaryCalculation;
+import com.coresolution.consultation.entity.SalaryTaxCalculation;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.service.CommonCodeService;
@@ -31,6 +33,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import jakarta.servlet.http.HttpSession;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -327,6 +330,54 @@ public class SalaryManagementController {
             return ResponseEntity.internalServerError().body(Map.of(
                 "success", false,
                 "message", "세금 상세 조회 중 오류가 발생했습니다: " + e.getMessage()
+            ));
+        }
+    }
+    
+    /**
+     * 추가 세금 계산 (POST /api/v1/admin/salary/tax/calculate). SalaryTaxCalculation 생성·저장 및 deductions 반영.
+     */
+    @PostMapping("/tax/calculate")
+    public ResponseEntity<Map<String, Object>> calculateTax(
+            @RequestBody @Valid TaxCalculateRequest request,
+            HttpSession session) {
+        try {
+            User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser == null) {
+                return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "로그인이 필요합니다."
+                ));
+            }
+            if (!isAdminRoleFromCommonCode(currentUser.getRole())) {
+                return ResponseEntity.status(403).body(Map.of(
+                    "success", false,
+                    "message", "급여/세금 관리 권한이 없습니다."
+                ));
+            }
+            SalaryTaxCalculation created = salaryManagementService.calculateAdditionalTax(request);
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "data", Map.of(
+                    "id", created.getId(),
+                    "calculationId", created.getCalculationId(),
+                    "taxType", created.getTaxType(),
+                    "taxAmount", created.getTaxAmount(),
+                    "taxRate", created.getTaxRate()
+                ),
+                "message", "추가 세금이 계산·반영되었습니다."
+            ));
+        } catch (RuntimeException e) {
+            log.warn("추가 세금 계산 실패: {}", e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of(
+                "success", false,
+                "message", e.getMessage()
+            ));
+        } catch (Exception e) {
+            log.error("추가 세금 계산 오류", e);
+            return ResponseEntity.internalServerError().body(Map.of(
+                "success", false,
+                "message", "추가 세금 계산 중 오류가 발생했습니다: " + e.getMessage()
             ));
         }
     }

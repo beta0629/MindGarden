@@ -56,6 +56,14 @@ public interface SalaryTaxCalculationRepository extends JpaRepository<SalaryTaxC
     List<Object[]> getTotalTaxAmountByTaxType();
     
     /**
+     * 급여 계산 ID 목록에 대한 세목별 세금 합계 (2차 세금 연동 - 통계 breakdown)
+     */
+    @Query("SELECT stc.taxType, SUM(stc.taxAmount) FROM SalaryTaxCalculation stc " +
+           "WHERE stc.calculationId IN :calculationIds AND stc.isActive = true " +
+           "GROUP BY stc.taxType")
+    List<Object[]> findTaxAmountSumsByCalculationIds(@Param("calculationIds") List<Long> calculationIds);
+    
+    /**
      * 프론트엔드 호환성을 위한 세금 상세 조회
      */
     @Query("SELECT new map(stc.taxType as taxType, stc.taxAmount as taxAmount, " +

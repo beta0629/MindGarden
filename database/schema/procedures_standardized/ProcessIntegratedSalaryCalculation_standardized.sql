@@ -313,6 +313,45 @@ BEGIN
                     SET p_calculation_id = LAST_INSERT_ID();
                     SET p_erp_sync_id = NULL;
                     
+                    -- 9. 세목별 세금 내역 salary_tax_calculations INSERT (2차 세금 연동)
+                    IF v_withholding_amount > 0 THEN
+                        INSERT INTO salary_tax_calculations (
+                            tenant_id, calculation_id, tax_type, tax_name, tax_rate,
+                            base_amount, taxable_amount, tax_amount, description, is_active, created_at, updated_at
+                        ) VALUES (
+                            p_tenant_id, p_calculation_id, 'WITHHOLDING_TAX', '원천징수', v_withholding_tax,
+                            p_gross_salary, p_gross_salary, v_withholding_amount, '프리랜서 원천징수 3.3%', TRUE, NOW(), NOW()
+                        );
+                    END IF;
+                    IF v_vat_amount > 0 THEN
+                        INSERT INTO salary_tax_calculations (
+                            tenant_id, calculation_id, tax_type, tax_name, tax_rate,
+                            base_amount, taxable_amount, tax_amount, description, is_active, created_at, updated_at
+                        ) VALUES (
+                            p_tenant_id, p_calculation_id, 'VAT', '부가세', v_vat,
+                            p_gross_salary, p_gross_salary, v_vat_amount, '사업자 부가세 10%', TRUE, NOW(), NOW()
+                        );
+                    END IF;
+                    IF v_income_tax_amount > 0 THEN
+                        INSERT INTO salary_tax_calculations (
+                            tenant_id, calculation_id, tax_type, tax_name, tax_rate,
+                            base_amount, taxable_amount, tax_amount, description, is_active, created_at, updated_at
+                        ) VALUES (
+                            p_tenant_id, p_calculation_id, 'INCOME_TAX', '소득세', v_income_tax_rate,
+                            p_gross_salary, p_gross_salary, v_income_tax_amount, '정규직 소득세', TRUE, NOW(), NOW()
+                        );
+                    END IF;
+                    IF v_4insurance_amount > 0 THEN
+                        INSERT INTO salary_tax_calculations (
+                            tenant_id, calculation_id, tax_type, tax_name, tax_rate,
+                            base_amount, taxable_amount, tax_amount, description, is_active, created_at, updated_at
+                        ) VALUES (
+                            p_tenant_id, p_calculation_id, 'FOUR_INSURANCE', '4대보험',
+                            (v_pension_rate + v_health_rate + v_longterm_rate + v_employment_rate),
+                            p_gross_salary, p_gross_salary, v_4insurance_amount, '국민연금·건강·장기요양·고용보험', TRUE, NOW(), NOW()
+                        );
+                    END IF;
+                    
                     COMMIT;
                 END IF;
             END IF;

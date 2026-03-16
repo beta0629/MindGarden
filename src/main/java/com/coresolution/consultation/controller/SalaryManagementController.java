@@ -143,42 +143,6 @@ public class SalaryManagementController {
     }
     
     /**
-     * 상담사 목록 조회 (급여용)
-     */
-    @GetMapping("/consultants")
-    public ResponseEntity<Map<String, Object>> getConsultants(HttpSession session) {
-        try {
-            User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser != null && currentUser.getTenantId() != null) {
-                TenantContextHolder.setTenantId(currentUser.getTenantId());
-            }
-            if (currentUser == null) {
-                log.warn("상담사 목록 조회: 세션에 currentUser가 없음, 세션 ID: {}", session.getId());
-                return ResponseEntity.badRequest().body(Map.of(
-                    "success", false,
-                    "message", "로그인이 필요합니다. 세션을 확인해주세요."
-                ));
-            }
-            
-            log.info("상담사 목록 조회: 사용자 {}, 지점 {}", currentUser.getName(), currentUser.getBranchCode());
-            List<User> consultants = salaryManagementService.getConsultantsForSalary();
-            
-            return ResponseEntity.ok(Map.of(
-                "success", true,
-                "data", consultants,
-                "message", "상담사 목록을 조회했습니다."
-            ));
-            
-        } catch (Exception e) {
-            log.error("상담사 목록 조회 오류", e);
-            return ResponseEntity.internalServerError().body(Map.of(
-                "success", false,
-                "message", "상담사 목록 조회 중 오류가 발생했습니다: " + e.getMessage()
-            ));
-        }
-    }
-    
-    /**
      * 상담사별 급여 계산 내역 조회
      */
     @GetMapping("/calculations/{consultantId}")

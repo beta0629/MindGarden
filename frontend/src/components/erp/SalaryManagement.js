@@ -13,6 +13,7 @@ import { Settings, Users, Calculator, Receipt } from 'lucide-react';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentHeader, ContentArea } from '../dashboard-v2/content';
 import { apiGet, apiPost } from '../../utils/ajax';
+import { getAllConsultantsWithStats } from '../../utils/consultantHelper';
 import { showNotification } from '../../utils/notification';
 import ConsultantProfileModal from './ConsultantProfileModal';
 import SalaryProfileFormModal from './SalaryProfileFormModal';
@@ -82,24 +83,12 @@ const SalaryManagement = () => {
     }
   };
 
+  /** 상담사 목록: 공통 모듈 consultantHelper 사용 (GET /api/v1/admin/consultants/with-stats) */
   const loadConsultants = async () => {
     try {
       setLoading(true);
-      const response = await apiGet('/api/v1/admin/salary/consultants');
-      if (!response) {
-        setConsultants([]);
-        return;
-      }
-      if (Array.isArray(response)) {
-        setConsultants(response);
-      } else if (response && response.success) {
-        setConsultants(response.data || []);
-      } else {
-        setConsultants(response?.data ?? []);
-        if (response && response.message) {
-          showNotification(response.message, 'error');
-        }
-      }
+      const list = await getAllConsultantsWithStats();
+      setConsultants(Array.isArray(list) ? list : []);
     } catch (error) {
       console.error('상담사 목록 로드 실패:', error);
       setConsultants([]);

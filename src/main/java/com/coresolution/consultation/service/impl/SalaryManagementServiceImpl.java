@@ -6,12 +6,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.dto.TaxCalculateRequest;
 import com.coresolution.consultation.entity.ConsultantSalaryProfile;
 import com.coresolution.consultation.entity.SalaryCalculation;
 import com.coresolution.consultation.entity.SalaryTaxCalculation;
-import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.ConsultantSalaryProfileRepository;
 import com.coresolution.consultation.repository.SalaryCalculationRepository;
 import com.coresolution.consultation.repository.SalaryTaxCalculationRepository;
@@ -80,23 +78,6 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
         ConsultantSalaryProfile profile = getSalaryProfileById(id);
         profile.setIsActive(false);
         consultantSalaryProfileRepository.save(profile);
-    }
-    
-    @Override
-    public List<User> getConsultantsForSalary() {
-        String tenantId = TenantContextHolder.getRequiredTenantId();
-        log.info("👥 급여용 상담사 목록 조회: tenantId={}", tenantId);
-        
-        // 표준화 2025-12-05: UserRole enum 사용 (TENANT_ROLE_SYSTEM_STANDARD.md 준수)
-        // CONSULTANT 역할의 활성 사용자만 조회
-        return userRepository.findByTenantId(tenantId).stream()
-            .filter(user -> {
-                if (user.getRole() == null) return false;
-                // UserRole.isConsultant() 메서드 사용
-                return user.getRole().isConsultant();
-            })
-            .filter(user -> Boolean.TRUE.equals(user.getIsActive()))
-            .collect(Collectors.toList());
     }
     
     @Override

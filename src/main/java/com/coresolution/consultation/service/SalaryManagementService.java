@@ -8,7 +8,6 @@ import com.coresolution.consultation.dto.TaxCalculateRequest;
 import com.coresolution.consultation.entity.ConsultantSalaryProfile;
 import com.coresolution.consultation.entity.SalaryCalculation;
 import com.coresolution.consultation.entity.SalaryTaxCalculation;
-import com.coresolution.consultation.entity.User;
 
 public interface SalaryManagementService {
     
@@ -19,8 +18,7 @@ public interface SalaryManagementService {
     ConsultantSalaryProfile updateSalaryProfile(ConsultantSalaryProfile salaryProfile);
     void deleteSalaryProfile(Long id);
     
-    // Consultant 관리
-    List<User> getConsultantsForSalary();
+    // Consultant 관리 (상담사 목록은 공통 API GET /api/v1/admin/consultants/with-stats 사용)
     List<Map<String, Object>> getConsultantSalarySummary(Long consultantId, String period);
     
     // Salary Calculation 관리

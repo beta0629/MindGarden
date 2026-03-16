@@ -169,6 +169,16 @@ const IntegratedMatchingSchedule = () => {
       notificationManager.warning('결제가 완료된 매칭만 스케줄 등록이 가능합니다.');
       return;
     }
+    // 과거 날짜 드롭 차단: 자정 기준 날짜만 비교
+    const dropDate = date instanceof Date ? date : new Date(date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const dropDateOnly = new Date(dropDate);
+    dropDateOnly.setHours(0, 0, 0, 0);
+    if (dropDateOnly.getTime() < today.getTime()) {
+      notificationManager.warning('과거 날짜에는 예약할 수 없습니다.');
+      return;
+    }
     setPreFilledMapping({
       consultantId: mappingPayload.consultantId,
       clientId: mappingPayload.clientId,

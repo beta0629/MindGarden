@@ -863,6 +863,7 @@ const SalaryManagement = () => {
                 </section>
               )}
             </div>
+          </main>
           </ContentArea>
         </>
       )}

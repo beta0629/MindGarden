@@ -22,15 +22,12 @@ jobs:
         chmod +x database/schema/procedures_standardized/create_deployment_files.sh
         bash database/schema/procedures_standardized/create_deployment_files.sh
 
-    # 배포 전 서버 호스트 키를 known_hosts에 추가하면 "Host key verification failed" (exit 255)를 방지할 수 있습니다.
-    # 자세한 옵션(A: ssh-keyscan, B: SSH_KNOWN_HOSTS 시크릿, C: StrictHostKeyChecking 등)은
-    # docs/debug/PROCEDURE_DEPLOY_AND_BUILD_ERROR_ANALYSIS.md §1.4 를 참조하세요.
-    # 아래 주석을 해제하고, 리포지토리 시크릿에 SSH_KNOWN_HOSTS(대상 서버의 known_hosts 한 줄)를 등록한 뒤 사용하세요.
-    # - name: 🔑 known_hosts 추가 (Host key verification 방지)
-    #   run: |
-    #     mkdir -p ~/.ssh
-    #     echo "${{ secrets.SSH_KNOWN_HOSTS }}" >> ~/.ssh/known_hosts
-    #   # 시크릿 SSH_KNOWN_HOSTS: <YOUR_SERVER_HOST> ssh-ed25519 AAAAC3... 형태의 한 줄 (실제 값은 리포지토리 시크릿에 등록)
+    # 배포 전 서버 호스트 키를 known_hosts에 추가해 "Host key verification failed" (exit 255) 방지.
+    # 자세한 옵션: docs/debug/PROCEDURE_DEPLOY_AND_BUILD_ERROR_ANALYSIS.md §1.4
+    - name: 🔑 known_hosts 추가 (Host key verification 방지)
+      run: |
+        mkdir -p ~/.ssh
+        ssh-keyscan -H "${{ secrets.DEV_SERVER_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null || true
       
     - name: 📤 프로시저 배포
       env:

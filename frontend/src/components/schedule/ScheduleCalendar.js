@@ -434,11 +434,22 @@ const ScheduleCalendar = ({ userRole, userId }) => {
     const handleEventDrop = async (info) => {
         console.log('📅 이벤트 드롭:', info);
         
+        const event = info.event;
+        const newStart = event.start;
+        const newEnd = event.end;
+
+        // 과거 날짜로 이동 불가: 자정 기준 날짜만 비교 (UnifiedScheduleComponent와 동일 기준)
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const dropDate = new Date(newStart);
+        dropDate.setHours(0, 0, 0, 0);
+        if (dropDate.getTime() < today.getTime()) {
+            info.revert();
+            notificationManager.warning('과거 날짜로는 스케줄을 이동할 수 없습니다.');
+            return;
+        }
+
         try {
-            const event = info.event;
-            const newStart = event.start;
-            const newEnd = event.end;
-            
             await apiPut(`/api/v1/schedules/${event.id}`, {
                 date: newStart.toISOString().split('T')[0],
                 startTime: newStart.toTimeString().split(' ')[0].substring(0, 5),

@@ -357,6 +357,12 @@ public class ScheduleController extends BaseApiController {
         }
         
         LocalDate date = LocalDate.parse(request.getDate());
+        if (date.isBefore(LocalDate.now())) {
+            log.warn("❌ 과거 날짜 예약 생성 거부: date={}", date);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error("과거 날짜에는 예약할 수 없습니다."));
+        }
+        
         LocalTime startTime = LocalTime.parse(request.getStartTime());
         LocalTime endTime = LocalTime.parse(request.getEndTime());
         
@@ -446,7 +452,13 @@ public class ScheduleController extends BaseApiController {
         if (updateData.containsKey("date")) {
             String dateStr = (String) updateData.get("date");
             try {
-                existingSchedule.setDate(java.time.LocalDate.parse(dateStr));
+                java.time.LocalDate newDate = java.time.LocalDate.parse(dateStr);
+                if (newDate.isBefore(java.time.LocalDate.now())) {
+                    log.warn("❌ 과거 날짜로 스케줄 수정 거부: newDate={}", newDate);
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(ApiResponse.error("과거 날짜에는 예약할 수 없습니다."));
+                }
+                existingSchedule.setDate(newDate);
                 log.info("📝 스케줄 날짜 변경: {}", dateStr);
             } catch (Exception e) {
                 log.warn("⚠️ 유효하지 않은 날짜 형식: {}", dateStr);

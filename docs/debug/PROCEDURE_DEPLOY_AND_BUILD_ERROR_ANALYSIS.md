@@ -13,6 +13,11 @@
 
 아래에서 각각 증상·원인·대응 옵션을 정리한다. 실제 호스트명·키 값·시크릿은 문서에 기재하지 않는다.
 
+### 사용자 인식 vs 실제 원인 (exit 255)
+
+- **사용자 인식**: "프로시져 빌드 오류"로 보일 수 있음 (메시지: "UpdateConsultantPerformance_deploy.sql 업로드 완료" → "📥 서버에서 프로시저 배포 중..." 후 실패).
+- **실제 원인**: **exit 255는 프로시저 SQL 빌드 오류가 아님.** 프로시저 파일 업로드(SCP)까지는 성공하고, 그 다음 단계인 **서버에 SSH로 접속해 배포하는 구간**에서 **SSH 호스트 키 검증 실패(Host key verification failed.)**가 발생한 것이다. 즉, CI 러너의 `known_hosts`에 배포 대상 서버가 없어 `scp`/`ssh`가 연결을 거부한 결과이다.
+
 ---
 
 ## 1. SCP/호스트 키 실패 (exit 255)
@@ -71,7 +76,14 @@
 #### 권장 조합
 
 - **권장**: 옵션 B(시크릿에 `SSH_KNOWN_HOSTS` 저장) + 필요 시 옵션 A(스텝에서 `known_hosts`에 추가).  
-- **최소 변경**: 옵션 C는 “임시 우회”로만 사용하고, 원인 제거를 위해 추후 옵션 A 또는 B 도입.
+- **최소 변경**: 옵션 C는 "임시 우회"로만 사용하고, 원인 제거를 위해 추후 옵션 A 또는 B 도입.
+
+#### 수정 제안 요약 (exit 255 해결)
+
+| 우선순위 | 수정 위치 | 내용 |
+|----------|-----------|------|
+| **A (권장)** | 워크플로 | `ssh-keyscan -H $DEV_SERVER_HOST >> ~/.ssh/known_hosts` 또는 리포지토리 시크릿 `SSH_KNOWN_HOSTS`에 대상 서버의 known_hosts 한 줄을 넣고, 배포 스텝 **이전**에 `echo "${{ secrets.SSH_KNOWN_HOSTS }}" >> ~/.ssh/known_hosts` 실행. (`.github/workflows/deploy-procedures-dev.yml` 등에 배포 전 단계 추가.) |
+| **B (선택)** | 배포 스크립트 | `scp`/`ssh` 호출 시 `-o StrictHostKeyChecking=no` 등 옵션 추가 시 호스트 키 검증을 건너뜀. 보안상 가능하면 A 방식(known_hosts 추가)을 권장하고, B는 임시 우회용으로만 사용. |
 
 ---
 
@@ -147,6 +159,13 @@
 - [ ] 워크플로에 `known_hosts` 추가 단계 도입: `SSH_KNOWN_HOSTS` 시크릿 사용 또는 `ssh-keyscan`으로 대상 호스트 키를 `~/.ssh/known_hosts`에 추가.
 - [ ] 또는 배포 스크립트/워크플로에서 `scp`/`ssh` 호출 시 `-o StrictHostKeyChecking=no` 등 옵션 추가 (보안 리스크 문서화·임시 조치로만 사용 권장).
 - [ ] 수정 후: 해당 워크플로를 수동 실행해 프로시저 배포가 끝까지 성공하는지 확인.
+
+**수정 후 사용자 체크리스트 (3~5줄)**
+
+- [ ] 리포지토리 시크릿에 `SSH_KNOWN_HOSTS`가 등록되어 있는지 확인 (옵션 A/B 사용 시). 값은 대상 서버의 known_hosts 한 줄(호스트명, 키 타입, 공개키).
+- [ ] 워크플로에서 known_hosts 단계 주석을 해제했는지, 또는 `ssh-keyscan`/StrictHostKeyChecking 적용이 배포 스텝 **이전**에 오는지 확인.
+- [ ] GitHub Actions에서 해당 워크플로를 수동 실행(workflow_dispatch)하여 "Host key verification failed" 없이 배포가 완료되는지 확인.
+- [ ] (선택) 운영 워크플로(`deploy-procedures-prod.yml`)에도 동일한 known_hosts 설정이 필요하면 적용·시크릿(`PROD` 대응) 확인.
 
 ### ANTLR/빌드 (exit 1)
 

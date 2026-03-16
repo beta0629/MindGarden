@@ -7,7 +7,8 @@ import {useSession} from '../../contexts/SessionContext';
 import './NotificationBadge.css';
 
 /**
- * 알림 배지 컴포넌트
+ * 알림 배지 컴포넌트 (레거시 - 모달·컨텍스트 연동형)
+ * @deprecated 알림 개수만 표시할 경우 dashboard-v2/atoms/NotificationBadge (count prop) 단일 소스 사용 권장.
  * 헤더에서 알림 개수를 표시하는 공통 컴포넌트
  * 
  * @param {Object} props - 컴포넌트 props

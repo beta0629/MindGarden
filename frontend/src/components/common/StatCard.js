@@ -1,11 +1,7 @@
 /**
- * 통계 카드 컴포넌트
-/**
- * Phase 3.1: 관리자 대시보드 핵심 컴포넌트
-/**
- * 
-/**
+ * 통계 카드 단일 진입점
  * 재사용 가능한 통계 카드 (상담사 수, 내담자 수, 매핑 수 등)
+ * StatsCard·StatisticsCard는 용도별 호환용으로 동일 common에서 re-export.
  */
 
 import React from 'react';
@@ -37,4 +33,6 @@ const StatCard = ({
 };
 
 export default StatCard;
+export { default as StatsCard } from './StatsCard';
+export { default as StatisticsCard } from './StatisticsCard';
 

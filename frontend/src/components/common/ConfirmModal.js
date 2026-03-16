@@ -4,8 +4,9 @@ import { useSession } from '../../contexts/SessionContext';
 import UnifiedModal from './modals/UnifiedModal';
 
 /**
- * 확인 모달 컴포넌트
+ * 확인 모달 컴포넌트 (단일 소스)
  * 알럿창 대신 사용할 커스텀 모달 (UnifiedModal 기반)
+ * common/modals/ConfirmModal.js는 본 파일 re-export만 제공.
  */
 const ConfirmModal = ({
   isOpen,

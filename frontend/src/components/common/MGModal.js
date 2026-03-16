@@ -1,6 +1,6 @@
 /**
  * Core Solution 모달 컴포넌트 (레거시)
- * 사용처: AdvancedDesignSample, PsychAssessmentManagement, PsychAssessmentAdminWidget.
+ * 사용처: AdvancedDesignSample.js, PsychAssessmentManagement.js, PsychAssessmentAdminWidget.js
  * @deprecated common/modals/UnifiedModal 및 common/ConfirmModal 사용 권장. 마이그레이션 후 제거 예정.
  */
 

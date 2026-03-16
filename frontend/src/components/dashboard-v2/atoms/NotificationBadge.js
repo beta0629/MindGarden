@@ -1,6 +1,6 @@
 /**
- * NotificationBadge - 알림 개수 배지 (Atom)
- * 
+ * NotificationBadge - 알림 개수 배지 단일 소스 (Atom)
+ * common/NotificationBadge는 레거시(모달 연동). 개수만 표시 시 본 컴포넌트 사용.
  * @author CoreSolution
  * @since 2026-03-09
  */

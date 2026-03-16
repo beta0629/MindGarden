@@ -23,6 +23,7 @@
 // 기본 UI 컴포넌트들
 export { default as Button } from './Button/Button';
 export { default as Card } from './Card/Card';
+/** @deprecated common/modals/UnifiedModal 사용 권장. Modal은 UnifiedModal re-export */
 export { default as Modal } from './Modal/Modal';
 export { default as Loading } from './Loading/Loading';
 

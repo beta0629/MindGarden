@@ -1,12 +1,7 @@
 /**
- * 통계 카드 컴포넌트
-/**
- * 
-/**
+ * 통계 카드 컴포넌트 (용도별 호환)
+ * 단일 진입점: common/StatCard (default + StatsCard·StatisticsCard re-export)
  * @author Core Solution
-/**
- * @version 1.0.0
-/**
  * @since 2025-09-05
  */
 

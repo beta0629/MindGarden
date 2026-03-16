@@ -16,7 +16,7 @@ import { RefreshCw, BarChart, Calendar } from 'lucide-react';
 import { apiGet } from '../../utils/ajax';
 import { SCHEDULE_API, API_BASE_URL } from '../../constants/api';
 import { STATS_LOADING_STATES, STATS_ERROR_MESSAGES } from '../../constants/stats';
-import StatisticsGrid from './StatisticsGrid';
+import StatisticsGrid from './StatsGrid';
 import UnifiedModal from './modals/UnifiedModal';
 
 const StatisticsModal = ({ isOpen, onClose, userRole = 'ADMIN' }) => {

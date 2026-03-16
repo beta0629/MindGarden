@@ -1,8 +1,17 @@
+/**
+ * @deprecated 2026-03-16 /erp/tax 단일화로 ImprovedTaxManagement만 사용.
+ * 라우트는 App.js에서 ImprovedTaxManagement로 통일됨. 실데이터 연동은 ImprovedTaxManagement 참조.
+ */
 import React, { useState, useEffect } from 'react';
 import UnifiedLoading from '../common/UnifiedLoading';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentHeader, ContentArea } from '../dashboard-v2/content';
-import { apiGet, apiPost } from '../../utils/ajax';
+import StandardizedApi from '../../utils/standardizedApi';
+import {
+  SALARY_API_ENDPOINTS,
+  TAX_BREAKDOWN_ORDER,
+  TAX_BREAKDOWN_LABELS
+} from '../../constants/salaryConstants';
 import { showNotification } from '../../utils/notification';
 import { Calculator, Receipt, Plus, TrendingUp, FileText, Settings } from 'lucide-react';
 import './TaxManagement.css';
@@ -19,9 +28,11 @@ const TaxManagement = () => {
     const loadTaxStatistics = async (period) => {
         try {
             setLoading(true);
-            const response = await apiGet(`/api/v1/admin/salary/tax/statistics?period=${period}`);
-            if (response && response.success) {
-                setTaxStatistics(response.data);
+            const response = await StandardizedApi.get(SALARY_API_ENDPOINTS.TAX_STATISTICS, {
+              period
+            });
+            if (response != null && typeof response === 'object') {
+                setTaxStatistics(response.data ?? response);
             }
         } catch (error) {
             console.error('세금 통계 로드 실패:', error);
@@ -35,9 +46,11 @@ const TaxManagement = () => {
     const loadTaxCalculationsByType = async (taxType) => {
         try {
             setLoading(true);
-            const response = await apiGet(`/api/v1/admin/salary/tax/type/${taxType}`);
-            if (response && response.success) {
-                setTaxCalculations(response.data);
+            const response = await StandardizedApi.get(
+              `${SALARY_API_ENDPOINTS.TAX_BY_TYPE}/${taxType}`
+            );
+            if (response != null && typeof response === 'object') {
+                setTaxCalculations(response.data ?? response ?? []);
             }
         } catch (error) {
             console.error('세금 내역 로드 실패:', error);
@@ -58,8 +71,11 @@ const TaxManagement = () => {
                 taxRate
             };
 
-            const response = await apiPost('/api/v1/admin/salary/tax/calculate', requestData);
-            if (response && response.success) {
+            const response = await StandardizedApi.post(
+              SALARY_API_ENDPOINTS.TAX_CALCULATE,
+              requestData
+            );
+            if (response != null && (response.success === true || response.data != null)) {
                 showNotification('추가 세금이 계산되었습니다.', 'success');
                 loadTaxStatistics(selectedPeriod);
             }
@@ -203,28 +219,31 @@ const TaxManagement = () => {
                                         </button>
                                     </div>
                                     
-                                    {taxStatistics && taxStatistics.taxByType && (
+                                    {taxStatistics && (taxStatistics.breakdown || taxStatistics.taxByType) && (
                                         <div className="mg-dashboard-section-content">
                                             <div className="tax-breakdown-grid">
-                                                {Object.entries(taxStatistics.taxByType).map(([type, amount]) => {
-                                                    const taxTypeInfo = taxTypes.find(t => t.value === type);
-                                                    return (
-                                                        <div key={type} className="mg-v2-card tax-breakdown-item">
-                                                            <div 
-                                                                className="tax-type-indicator" 
-                                                                data-color={taxTypeInfo?.color || 'default'}
-                                                            ></div>
-                                                            <div className="tax-type-info">
-                                                                <span className="tax-type-name">
-                                                                    {taxTypeInfo?.label || type}
-                                                                </span>
-                                                                <span className="tax-type-amount">
-                                                                    {formatCurrency(amount)}
-                                                                </span>
-                                                            </div>
+                                                {(taxStatistics.breakdown
+                                                    ? TAX_BREAKDOWN_ORDER.map((key) => ({
+                                                            key,
+                                                            label: TAX_BREAKDOWN_LABELS[key] ?? key,
+                                                            amount: taxStatistics.breakdown[key]
+                                                      })).filter(({ amount }) => amount != null && Number(amount) !== 0)
+                                                    : Object.entries(taxStatistics.taxByType || {}).map(([type, amount]) => ({
+                                                            key: type,
+                                                            label: taxTypes.find(t => t.value === type)?.label ?? type,
+                                                            amount
+                                                      }))
+                                                ).map(({ key, label, amount }) => (
+                                                    <div key={key} className="mg-v2-card tax-breakdown-item">
+                                                        <div className="tax-type-indicator" data-color="default" />
+                                                        <div className="tax-type-info">
+                                                            <span className="tax-type-name">{label}</span>
+                                                            <span className="tax-type-amount">
+                                                                {formatCurrency(Number(amount))}
+                                                            </span>
                                                         </div>
-                                                    );
-                                                })}
+                                                    </div>
+                                                ))}
                                             </div>
                                         </div>
                                     )}

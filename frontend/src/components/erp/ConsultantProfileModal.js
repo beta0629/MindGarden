@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { apiGet, apiPost } from '../../utils/ajax';
+import StandardizedApi from '../../utils/standardizedApi';
+import { SALARY_API_ENDPOINTS } from '../../constants/salaryConstants';
 import { getGradeSalaryMap, getGradeKoreanName } from '../../utils/commonCodeUtils';
 import ErpModal from './common/ErpModal';
 import './ConsultantProfileModal.css';
@@ -41,7 +42,9 @@ const ConsultantProfileModal = ({
     const loadSalaryProfile = async () => {
         try {
             setLoading(true);
-            const response = await apiGet(`/api/v1/admin/salary/profiles/${consultant.id}`);
+            const response = await StandardizedApi.get(
+              `${SALARY_API_ENDPOINTS.PROFILES}/${consultant.id}`
+            );
             const profile = response && typeof response === 'object' && (response.data ?? response) && !Array.isArray(response)
                 ? (response.data ?? response)
                 : null;
@@ -91,7 +94,7 @@ const ConsultantProfileModal = ({
     // 옵션 유형 조회
     const loadOptionTypes = async () => {
         try {
-            const response = await apiGet('/api/v1/admin/salary/option-types');
+            const response = await StandardizedApi.get(SALARY_API_ENDPOINTS.OPTION_TYPES);
             // apiGet이 unwrap하여 배열 또는 객체 반환
             if (Array.isArray(response)) {
                 setOptionTypes(response);
@@ -110,7 +113,7 @@ const ConsultantProfileModal = ({
     // 등급 조회
     const loadGrades = async () => {
         try {
-            const response = await apiGet('/api/v1/admin/salary/grades');
+            const response = await StandardizedApi.get(SALARY_API_ENDPOINTS.GRADES);
             if (Array.isArray(response)) {
                 setGrades(response);
             } else if (response?.data) {
@@ -140,7 +143,7 @@ const ConsultantProfileModal = ({
     // 급여 유형 조회
     const loadSalaryTypes = async () => {
         try {
-            const response = await apiGet('/api/v1/admin/salary/codes');
+            const response = await StandardizedApi.get(SALARY_API_ENDPOINTS.CODES);
             const salaryTypesList = response?.salaryTypes ?? response?.data?.salaryTypes;
             if (Array.isArray(salaryTypesList)) {
                 setSalaryTypes(salaryTypesList);
@@ -202,7 +205,7 @@ const ConsultantProfileModal = ({
                 businessName: salaryFormData.businessName
             };
 
-            const response = await apiPost('/api/v1/admin/salary/profiles', profileData);
+            const response = await StandardizedApi.post(SALARY_API_ENDPOINTS.PROFILES, profileData);
             if (response != null && typeof response === 'object' && response.success === false) {
                 notificationManager.show('급여 프로필 저장에 실패했습니다: ' + (response.message || ''), 'error');
             } else {

@@ -1,13 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useReactToPrint } from 'react-to-print';
 import notificationManager from '../../utils/notification';
-import { 
-  SALARY_CSS_CLASSES, 
-  SALARY_MESSAGES, 
-  EXPORT_FORMAT, 
-  EXPORT_FORMAT_LABELS 
+import {
+  SALARY_CSS_CLASSES,
+  SALARY_MESSAGES,
+  EXPORT_FORMAT,
+  EXPORT_FORMAT_LABELS,
+  SALARY_API_ENDPOINTS
 } from '../../constants/salaryConstants';
-import { apiPost } from '../../utils/ajax';
+import StandardizedApi from '../../utils/standardizedApi';
 import { useSession } from '../../contexts/SessionContext';
 
 /**
@@ -80,29 +81,34 @@ const SalaryExportModal = ({
         emailAddress: sendEmail ? emailAddress : null
       };
 
-      const response = await apiPost(`/api/v1/admin/salary/export/${selectedFormat.toLowerCase()}`, exportData);
-      
-      if (response.success) {
-        // 파일 다운로드
-        if (response.data.downloadUrl) {
+      const exportEndpoint =
+        selectedFormat === EXPORT_FORMAT.PDF
+          ? SALARY_API_ENDPOINTS.EXPORT_PDF
+          : selectedFormat === EXPORT_FORMAT.EXCEL
+            ? SALARY_API_ENDPOINTS.EXPORT_EXCEL
+            : SALARY_API_ENDPOINTS.EXPORT_CSV;
+      const response = await StandardizedApi.post(exportEndpoint, exportData);
+
+      if (response && (response.success !== false)) {
+        const data = response.data ?? response;
+        if (data && data.downloadUrl) {
           const link = document.createElement('a');
-          link.href = response.data.downloadUrl;
-          link.download = response.data.filename || `급여계산서_${consultantName}_${period}.${selectedFormat.toLowerCase()}`;
+          link.href = data.downloadUrl;
+          link.download = data.filename || `급여계산서_${consultantName}_${period}.${selectedFormat.toLowerCase()}`;
           document.body.appendChild(link);
           link.click();
           document.body.removeChild(link);
         }
-        
-        // 이메일 발송 성공 메시지
+
         if (sendEmail && emailAddress) {
           notificationManager.show(`${SALARY_MESSAGES.EMAIL_SENT_SUCCESS}\n수신자: ${emailAddress}`, 'info');
         } else {
           notificationManager.show(SALARY_MESSAGES.EXPORT_SUCCESS, 'success');
         }
-        
+
         onClose();
       } else {
-        setError(response.message || SALARY_MESSAGES.EXPORT_ERROR);
+        setError((response && response.message) || SALARY_MESSAGES.EXPORT_ERROR);
       }
     } catch (err) {
       console.error('출력 실패:', err);

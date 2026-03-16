@@ -5,14 +5,18 @@ import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import com.coresolution.consultation.dto.TaxCalculateRequest;
 import com.coresolution.consultation.entity.ConsultantSalaryProfile;
 import com.coresolution.consultation.entity.SalaryCalculation;
 import com.coresolution.consultation.entity.SalaryTaxCalculation;
+import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.ConsultantSalaryProfileRepository;
 import com.coresolution.consultation.repository.SalaryCalculationRepository;
 import com.coresolution.consultation.repository.SalaryTaxCalculationRepository;
+import com.coresolution.consultation.exception.EntityNotFoundException;
+import com.coresolution.consultation.exception.ValidationException;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.SalaryManagementService;
 import com.coresolution.core.context.TenantContextHolder;
@@ -82,7 +86,13 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
     
     @Override
     public List<Map<String, Object>> getConsultantSalarySummary(Long consultantId, String period) {
-        log.info("📊 상담사 급여 요약 조회: ConsultantID={}, Period={}", consultantId, period);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        log.info("📊 상담사 급여 요약 조회: ConsultantID={}, Period={}, tenantId={}", consultantId, period, tenantId);
+        
+        User consultant = userRepository.findById(consultantId).orElse(null);
+        if (consultant == null || !tenantId.equals(consultant.getTenantId())) {
+            return List.of();
+        }
         
         LocalDate endDate = LocalDate.now();
         LocalDate startDate;
@@ -102,8 +112,8 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
         }
         
         List<SalaryCalculation> calculations = salaryCalculationRepository
-                .findByConsultantAndCalculationPeriodStartBetween(
-                        userRepository.findById(consultantId).orElse(null), startDate, endDate);
+                .findByTenantIdAndConsultantAndCalculationPeriodStartBetween(
+                        tenantId, consultant, startDate, endDate);
         
         return calculations.stream()
                 .map(calc -> {
@@ -125,8 +135,8 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
         String tenantId = TenantContextHolder.getRequiredTenantId();
         log.info("📋 급여 계산 목록 조회: tenantId={}, Period={} ~ {}", tenantId, startDate, endDate);
         
-        return salaryCalculationRepository.findByStatusAndCalculationPeriodStartBetween(
-                SalaryCalculation.SalaryStatus.CALCULATED, startDate, endDate);
+        return salaryCalculationRepository.findByTenantIdAndStatusAndCalculationPeriodStartBetween(
+                tenantId, SalaryCalculation.SalaryStatus.CALCULATED, startDate, endDate);
     }
     
     @Override
@@ -178,15 +188,15 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
         List<SalaryCalculation> calculations = getSalaryCalculations(startDate, endDate);
         
         BigDecimal totalGrossSalary = calculations.stream()
-                .map(SalaryCalculation::getGrossSalary)
+                .map(calc -> Optional.ofNullable(calc.getGrossSalary()).orElse(BigDecimal.ZERO))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-        
+            
         BigDecimal totalNetSalary = calculations.stream()
-                .map(SalaryCalculation::getNetSalary)
+                .map(calc -> Optional.ofNullable(calc.getNetSalary()).orElse(BigDecimal.ZERO))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-        
+            
         BigDecimal totalTaxAmount = calculations.stream()
-                .map(SalaryCalculation::getDeductions)
+                .map(calc -> Optional.ofNullable(calc.getDeductions()).orElse(BigDecimal.ZERO))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         
         BigDecimal averageSalary = calculations.isEmpty() ? BigDecimal.ZERO :
@@ -208,17 +218,21 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
         log.info("🏆 상위 성과자 조회: tenantId={}, Period={} ~ {}, Limit={}", 
                 tenantId, startDate, endDate, limit);
         
-        List<SalaryCalculation> calculations = getSalaryCalculations(startDate, endDate);
+        List<SalaryCalculation> calculations = salaryCalculationRepository
+                .findByTenantIdAndStatusAndCalculationPeriodStartBetweenWithConsultant(
+                        tenantId, SalaryCalculation.SalaryStatus.CALCULATED, startDate, endDate);
         
         return calculations.stream()
-                .sorted((a, b) -> b.getNetSalary().compareTo(a.getNetSalary()))
+                .filter(calc -> calc.getConsultant() != null)
+                .sorted((a, b) -> Optional.ofNullable(b.getNetSalary()).orElse(BigDecimal.ZERO)
+                        .compareTo(Optional.ofNullable(a.getNetSalary()).orElse(BigDecimal.ZERO)))
                 .limit(limit)
                 .map(calc -> {
                     Map<String, Object> result = new HashMap<>();
                     result.put("consultantId", calc.getConsultant().getId());
                     result.put("consultantName", calc.getConsultant().getName());
-                    result.put("netSalary", calc.getNetSalary());
-                    result.put("completedConsultations", calc.getCompletedConsultations());
+                    result.put("netSalary", Optional.ofNullable(calc.getNetSalary()).orElse(BigDecimal.ZERO));
+                    result.put("completedConsultations", calc.getCompletedConsultations() != null ? calc.getCompletedConsultations() : 0);
                     result.put("status", calc.getStatus());
                     return result;
                 })
@@ -238,28 +252,30 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
     }
     
     /**
-     * 상담사별 급여 계산 내역 조회 (프론트엔드 호환성)
+     * 상담사별 급여 계산 내역 조회 (테넌트 격리 적용)
      */
     @Override
     public List<SalaryCalculation> getSalaryCalculations(Long consultantId) {
         String tenantId = TenantContextHolder.getRequiredTenantId();
         log.info("💰 상담사별 급여 계산 조회: ConsultantId={}, tenantId={}", consultantId, tenantId);
         
-        return salaryCalculationRepository.findAll().stream()
-            .filter(calc -> calc.getConsultant().getId().equals(consultantId))
-            .collect(Collectors.toList());
+        return salaryCalculationRepository.findByTenantIdAndConsultant_IdOrderByCalculatedAtDesc(
+                tenantId, consultantId);
     }
     
     /**
-     * 세금 상세 내역 조회 (프론트엔드 호환성)
+     * 세금 상세 내역 조회 (테넌트 소유 검증 적용)
      */
     @Override
     public Map<String, Object> getTaxDetails(Long calculationId) {
         String tenantId = TenantContextHolder.getRequiredTenantId();
         log.info("💰 세금 상세 조회: CalculationId={}, tenantId={}", calculationId, tenantId);
         
-        SalaryCalculation calculation = salaryCalculationRepository.findById(calculationId)
-            .orElseThrow(() -> new RuntimeException("급여 계산 정보를 찾을 수 없습니다: " + calculationId));
+        SalaryCalculation calculation = salaryCalculationRepository.findByIdWithConsultant(calculationId)
+                .orElseThrow(() -> new EntityNotFoundException("급여 계산 정보를 찾을 수 없습니다: " + calculationId));
+        if (calculation.getTenantId() == null || !calculation.getTenantId().equals(tenantId)) {
+            throw new EntityNotFoundException("급여 계산 정보를 찾을 수 없습니다: " + calculationId);
+        }
         
         List<Map<String, Object>> taxCalculations = salaryTaxCalculationRepository
             .findByCalculationIdOrderByCreatedAtDesc(calculationId).stream()
@@ -272,9 +288,10 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
             })
             .collect(Collectors.toList());
         
+        String consultantName = calculation.getConsultant() != null ? calculation.getConsultant().getName() : "";
         Map<String, Object> result = new HashMap<>();
         result.put("calculationId", calculationId);
-        result.put("consultantName", calculation.getConsultant().getName());
+        result.put("consultantName", consultantName);
         result.put("calculationPeriod", calculation.getCalculationPeriodStart() + " ~ " + calculation.getCalculationPeriodEnd());
         result.put("grossSalary", calculation.getGrossSalary());
         result.put("netSalary", calculation.getNetSalary());
@@ -291,13 +308,27 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
         String tenantId = TenantContextHolder.getRequiredTenantId();
         log.info("💰 세금 통계 조회: Period={}, tenantId={}", period, tenantId);
         
-        String[] periodParts = period.split("-");
-        if (periodParts.length != 2) {
-            throw new RuntimeException("잘못된 기간 형식입니다: " + period);
+        if (period == null || period.isBlank()) {
+            throw new ValidationException("기간(period)은 필수이며 YYYY-MM 형식이어야 합니다.");
         }
-        
-        int year = Integer.parseInt(periodParts[0]);
-        int month = Integer.parseInt(periodParts[1]);
+        String[] periodParts = period.trim().split("-");
+        if (periodParts.length != 2) {
+            throw new ValidationException("기간 형식이 올바르지 않습니다. YYYY-MM 형식으로 입력해 주세요. (예: 2025-01)");
+        }
+        int year;
+        int month;
+        try {
+            year = Integer.parseInt(periodParts[0].trim());
+            month = Integer.parseInt(periodParts[1].trim());
+        } catch (NumberFormatException e) {
+            throw new ValidationException("기간 형식이 올바르지 않습니다. YYYY-MM 형식으로 입력해 주세요. (예: 2025-01)");
+        }
+        if (month < 1 || month > 12) {
+            throw new ValidationException("월은 1~12 사이여야 합니다. (입력값: " + month + ")");
+        }
+        if (year < 1900 || year > 2100) {
+            throw new ValidationException("연도는 1900~2100 사이여야 합니다. (입력값: " + year + ")");
+        }
         
         LocalDate startDate = LocalDate.of(year, month, 1);
         LocalDate endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
@@ -308,11 +339,11 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
             .collect(Collectors.toList());
         
         BigDecimal totalGrossSalary = calculations.stream()
-            .map(SalaryCalculation::getGrossSalary)
+            .map(calc -> Optional.ofNullable(calc.getGrossSalary()).orElse(BigDecimal.ZERO))
             .reduce(BigDecimal.ZERO, BigDecimal::add);
             
         BigDecimal totalNetSalary = calculations.stream()
-            .map(SalaryCalculation::getNetSalary)
+            .map(calc -> Optional.ofNullable(calc.getNetSalary()).orElse(BigDecimal.ZERO))
             .reduce(BigDecimal.ZERO, BigDecimal::add);
             
         BigDecimal totalTaxAmount = totalGrossSalary.subtract(totalNetSalary);
@@ -382,7 +413,10 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
                 request.getCalculationId(), request.getTaxType(), tenantId);
         
         SalaryCalculation calculation = salaryCalculationRepository.findById(request.getCalculationId())
-                .orElseThrow(() -> new RuntimeException("급여 계산 정보를 찾을 수 없습니다: " + request.getCalculationId()));
+                .orElseThrow(() -> new EntityNotFoundException("급여 계산 정보를 찾을 수 없습니다: " + request.getCalculationId()));
+        if (calculation.getTenantId() == null || !calculation.getTenantId().equals(tenantId)) {
+            throw new EntityNotFoundException("급여 계산 정보를 찾을 수 없습니다: " + request.getCalculationId());
+        }
         
         BigDecimal baseAmount = request.getGrossAmount() != null ? request.getGrossAmount() : BigDecimal.ZERO;
         BigDecimal taxRate = request.getTaxRate() != null ? request.getTaxRate() : BigDecimal.ZERO;

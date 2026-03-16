@@ -86,10 +86,17 @@ export const SALARY_API_ENDPOINTS = {
   CALCULATE: '/api/v1/admin/salary/calculate',
   CALCULATIONS: '/api/v1/admin/salary/calculations',
   CALCULATION_PERIOD: '/api/v1/admin/salary/calculation-period',
+  CONFIRM: '/api/v1/admin/salary/confirm',
+
+  PROFILES: '/api/v1/admin/salary/profiles',
+  OPTION_TYPES: '/api/v1/admin/salary/option-types',
+  GRADES: '/api/v1/admin/salary/grades',
+  CODES: '/api/v1/admin/salary/codes',
 
   TAX_DETAILS: '/api/v1/admin/salary/tax',
   TAX_BY_TYPE: '/api/v1/admin/salary/tax/type',
   TAX_STATISTICS: '/api/v1/admin/salary/tax/statistics',
+  TAX_CALCULATE: '/api/v1/admin/salary/tax/calculate',
 
   EXPORT_PDF: '/api/v1/admin/salary/export/pdf',
   EXPORT_EXCEL: '/api/v1/admin/salary/export/excel',
@@ -97,6 +104,32 @@ export const SALARY_API_ENDPOINTS = {
 
   SEND_EMAIL: '/api/v1/admin/salary/email/send',
   EMAIL_TEMPLATES: '/api/v1/admin/salary/email/templates'
+};
+
+/** 상담사 등급 변경 API (표준 경로 /api/v1/admin) */
+export const getConsultantGradeUpdateUrl = (consultantId) =>
+  `/api/v1/admin/consultants/${consultantId}/grade`;
+
+/**
+ * 세금 통계 breakdown 표시 순서·라벨 (SCREEN_SPEC_SALARY_TAX_ENHANCEMENT §4.2)
+ * 백엔드 getTaxStatistics 응답 breakdown 키와 1:1 매핑
+ */
+export const TAX_BREAKDOWN_ORDER = [
+  'withholdingTax',
+  'localIncomeTax',
+  'vat',
+  'incomeTax',
+  'nationalPension',
+  'fourInsurance'
+];
+
+export const TAX_BREAKDOWN_LABELS = {
+  withholdingTax: '원천징수세',
+  localIncomeTax: '지방소득세',
+  vat: '부가가치세',
+  incomeTax: '소득세',
+  nationalPension: '국민연금',
+  fourInsurance: '4대보험'
 };
 
 export const SALARY_CSS_CLASSES = {

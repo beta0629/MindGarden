@@ -83,7 +83,6 @@ import AdminApprovalDashboard from './components/erp/AdminApprovalDashboard';
 import SuperAdminApprovalDashboard from './components/erp/SuperAdminApprovalDashboard';
 import ItemManagement from './components/erp/ItemManagement';
 import SalaryManagement from './components/erp/SalaryManagement';
-import TaxManagement from './components/erp/TaxManagement';
 import RefundManagement from './components/erp/RefundManagement';
 import ClientSchedule from './components/client/ClientSchedule';
 import ClientSessionManagement from './components/client/ClientSessionManagement';
@@ -408,7 +407,7 @@ function AppContent() {
             <Route path="/erp/purchase" element={<PurchaseManagement />} />
             <Route path="/erp/financial" element={<FinancialManagement />} />
             <Route path="/erp/budget" element={<BudgetManagement />} />
-            <Route path="/erp/tax" element={<ImprovedTaxManagement />} />
+            <Route path="/erp/tax" element={<Navigate to="/erp/salary?tab=tax" replace />} />
             <Route path="/consultant/send-message/:consultationId" element={<ConsultantMessageScreen />} />
             <Route path="/consultant/clients" element={<ConsultantClientList />} />
             <Route path="/consultant/client/:id" element={<ConsultantClientList />} />
@@ -566,7 +565,6 @@ function AppContent() {
             <Route path="/erp/items" element={<ItemManagement />} />
             <Route path="/erp/budgets" element={<BudgetManagement />} />
             <Route path="/erp/salary" element={<SalaryManagement />} />
-            <Route path="/erp/tax" element={<TaxManagement />} />
             <Route path="/erp/orders" element={
               <ComingSoon 
                 title="주문 관리"

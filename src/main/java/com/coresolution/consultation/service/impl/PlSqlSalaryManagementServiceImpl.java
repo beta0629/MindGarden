@@ -44,7 +44,7 @@ public class PlSqlSalaryManagementServiceImpl implements PlSqlSalaryManagementSe
         
         try (Connection connection = jdbcTemplate.getDataSource().getConnection();
              CallableStatement stmt = connection.prepareCall(
-                 "{CALL ProcessIntegratedSalaryCalculation(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}")) {
+                 "{CALL ProcessIntegratedSalaryCalculation(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}")) {
             
             // UTF-8 인코딩 설정
             connection.createStatement().execute("SET character_set_client = utf8mb4");

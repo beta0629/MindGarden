@@ -8,11 +8,13 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import UnifiedLoading from '../common/UnifiedLoading';
-import { Settings, Users, Calculator, Receipt } from 'lucide-react';
+import { Settings, Users, Calculator, Receipt, HelpCircle } from 'lucide-react';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentHeader, ContentArea } from '../dashboard-v2/content';
-import { apiGet, apiPost } from '../../utils/ajax';
+import StandardizedApi from '../../utils/standardizedApi';
+import { SALARY_API_ENDPOINTS, TAX_BREAKDOWN_ORDER, TAX_BREAKDOWN_LABELS } from '../../constants/salaryConstants';
 import { getAllConsultantsWithStats } from '../../utils/consultantHelper';
 import { showNotification } from '../../utils/notification';
 import ConsultantProfileModal from './ConsultantProfileModal';
@@ -25,7 +27,16 @@ import MGButton from '../common/MGButton';
 import { getStatusLabel } from '../../utils/colorUtils';
 import './SalaryManagement.css';
 
+const TAB_CALC = 'calculations';
+const TAB_PROFILES = 'profiles';
+const TAB_TAX = 'tax';
+
 const SalaryManagement = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabFromUrl = searchParams.get('tab');
+  const initialTab =
+    tabFromUrl === TAB_TAX ? TAB_TAX : tabFromUrl === TAB_PROFILES ? TAB_PROFILES : TAB_CALC;
+
   const [consultants, setConsultants] = useState([]);
   const [salaryProfiles, setSalaryProfiles] = useState([]);
   const [salaryCalculations, setSalaryCalculations] = useState([]);
@@ -39,11 +50,27 @@ const SalaryManagement = () => {
   const [selectedPayDay, setSelectedPayDay] = useState('TENTH');
   const [payDayOptions, setPayDayOptions] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState('profiles');
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [selectedCalculation, setSelectedCalculation] = useState(null);
   const [previewResult, setPreviewResult] = useState(null);
   const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
   const [calculationPeriodDisplay, setCalculationPeriodDisplay] = useState(null);
+
+  useEffect(() => {
+    const t = searchParams.get('tab');
+    const next = t === TAB_TAX ? TAB_TAX : t === TAB_PROFILES ? TAB_PROFILES : TAB_CALC;
+    setActiveTab(next);
+  }, [searchParams]);
+
+  const setActiveTabAndUrl = (tab) => {
+    setActiveTab(tab);
+    if (tab === TAB_CALC) {
+      setSearchParams({}, { replace: true });
+    } else {
+      setSearchParams({ tab }, { replace: true });
+    }
+    if (tab === TAB_TAX && selectedPeriod) loadTaxStatistics(selectedPeriod);
+  };
 
   /** 최근 12개월 기간 옵션 (YYYY-MM) */
   const periodOptions = (() => {
@@ -64,7 +91,7 @@ const SalaryManagement = () => {
       return;
     }
     try {
-      const response = await apiGet(`/api/v1/admin/salary/calculation-period?year=${year}&month=${month}`);
+      const response = await StandardizedApi.get(SALARY_API_ENDPOINTS.CALCULATION_PERIOD, { year, month });
       if (response && typeof response === 'object' && (response.periodStart != null || response.periodEnd != null)) {
         setCalculationPeriodDisplay({
           periodStart: response.periodStart,
@@ -101,7 +128,7 @@ const SalaryManagement = () => {
   const loadSalaryProfiles = async () => {
     try {
       setLoading(true);
-      const response = await apiGet('/api/v1/admin/salary/profiles');
+      const response = await StandardizedApi.get(SALARY_API_ENDPOINTS.PROFILES);
       if (!response) {
         setSalaryProfiles([]);
         return;
@@ -127,7 +154,7 @@ const SalaryManagement = () => {
 
   const loadPayDayOptions = async () => {
     try {
-      const response = await apiGet('/api/v1/common-codes?codeGroup=SALARY_PAY_DAY');
+      const response = await StandardizedApi.get('/api/v1/common-codes', { codeGroup: 'SALARY_PAY_DAY' });
       if (Array.isArray(response)) {
         setPayDayOptions(response);
       } else if (response && response?.data) {
@@ -147,13 +174,13 @@ const SalaryManagement = () => {
     }
     if (salaryProfiles.length === 0) {
       showNotification('급여 계산을 위해서는 먼저 급여 프로필을 작성해주세요.\n급여 프로필 탭에서 "새 프로필 생성" 버튼을 클릭하세요.', 'warning');
-      setActiveTab('profiles');
+      setActiveTabAndUrl(TAB_PROFILES);
       return;
     }
     const consultantProfile = salaryProfiles.find(profile => profile.consultantId === selectedConsultant.id);
     if (!consultantProfile) {
       showNotification(`${selectedConsultant.name} 상담사의 급여 프로필이 없습니다.\n급여 프로필 탭에서 해당 상담사의 프로필을 먼저 작성해주세요.`, 'warning');
-      setActiveTab('profiles');
+      setActiveTabAndUrl(TAB_PROFILES);
       return;
     }
 
@@ -175,7 +202,10 @@ const SalaryManagement = () => {
         periodStart,
         periodEnd
       });
-      const response = await apiPost(`/api/v1/admin/salary/calculate?${queryParams}`);
+      const response = await StandardizedApi.post(
+        `${SALARY_API_ENDPOINTS.CALCULATE}?${queryParams}`,
+        {}
+      );
       if (response && typeof response === 'object' && response.success === false) {
         showNotification(response?.message || '급여 계산에 실패했습니다.', 'error');
       } else if (response && typeof response === 'object') {
@@ -236,7 +266,7 @@ const SalaryManagement = () => {
   const loadSalaryCalculations = async (consultantId) => {
     try {
       setLoading(true);
-      const response = await apiGet(`/api/v1/admin/salary/calculations/${consultantId}`);
+      const response = await StandardizedApi.get(`${SALARY_API_ENDPOINTS.CALCULATIONS}/${consultantId}`);
       if (Array.isArray(response)) {
         setSalaryCalculations(response);
       } else if (response && response.success) {
@@ -262,7 +292,7 @@ const SalaryManagement = () => {
         setLoading(false);
         return;
       }
-      const response = await apiGet(`/api/v1/admin/salary/tax/statistics?period=${period}`);
+      const response = await StandardizedApi.get(SALARY_API_ENDPOINTS.TAX_STATISTICS, { period });
       if (response != null && typeof response === 'object') {
         setTaxStatistics(response.data ?? response);
       } else {
@@ -302,8 +332,8 @@ const SalaryManagement = () => {
       ) : (
         <>
           <ContentHeader
-            title="급여 관리"
-            subtitle="상담사 급여 프로필 및 계산 관리"
+            title="급여·세금 관리"
+            subtitle="상담사 급여 및 세금 계산·통계"
             actions={
               <>
                 <MGButton
@@ -324,7 +354,7 @@ const SalaryManagement = () => {
                     if (val) {
                       const [y, m] = val.split('-');
                       loadCalculationPeriod(parseInt(y, 10), parseInt(m, 10));
-                      if (activeTab === 'tax') loadTaxStatistics(val);
+                      if (activeTab === TAB_TAX) loadTaxStatistics(val);
                     } else {
                       setCalculationPeriodDisplay(null);
                     }
@@ -340,8 +370,8 @@ const SalaryManagement = () => {
                 <MGButton
                   variant="primary"
                   size="small"
-                  onClick={() => setActiveTab('calculations')}
-                  className="salary-management__header-btn salary-management__header-btn--primary"
+                  onClick={() => setActiveTabAndUrl(TAB_CALC)}
+                  className="salary-management__header-btn salary-management__header-btn--primary mg-v2-button mg-v2-button--primary"
                   aria-label="한 번에 계산"
                 >
                   <Calculator size={18} aria-hidden />
@@ -350,13 +380,11 @@ const SalaryManagement = () => {
               </>
             }
           />
-          <ContentArea
-            className="mg-v2-ad-b0kla salary-management__main"
-            ariaLabel="급여 관리 콘텐츠"
-          >
-            {/* (2) 필터·제어 / 계산 대상 선택 */}
-            <section className="salary-filter-block" aria-labelledby="salary-filter-title">
-              <h2 id="salary-filter-title" className="salary-filter-block__title">
+          <ContentArea className="mg-v2-content-area" ariaLabel="급여·세금 관리 콘텐츠">
+            <main className="mg-v2-ad-b0kla salary-management__main" aria-label="급여·세금 관리 콘텐츠">
+            {/* 블록 1: 계산 대상 선택 */}
+            <section className="mg-v2-ad-b0kla__card salary-filter-block" aria-labelledby="salary-filter-title">
+              <h2 id="salary-filter-title" className="mg-v2-ad-b0kla__section-title salary-filter-block__title">
                 <span className="salary-filter-block__accent" aria-hidden />
                 계산 대상 선택
               </h2>
@@ -372,12 +400,13 @@ const SalaryManagement = () => {
                       if (val) {
                         const [y, m] = val.split('-');
                         loadCalculationPeriod(parseInt(y, 10), parseInt(m, 10));
-                        if (activeTab === 'tax') loadTaxStatistics(val);
+                        if (activeTab === TAB_TAX) loadTaxStatistics(val);
                       } else {
                         setCalculationPeriodDisplay(null);
                       }
                     }}
                     className="mg-v2-select"
+                    aria-label="기간 선택"
                   >
                     <option value="">기간 선택</option>
                     {periodOptions.map(opt => (
@@ -385,12 +414,28 @@ const SalaryManagement = () => {
                     ))}
                   </select>
                 </div>
-                {calculationPeriodDisplay && selectedPeriod && (
+                {selectedPeriod && (
                   <div className="salary-filter-block__field salary-filter-block__period-display" role="status">
                     <span className="mg-v2-form-label">실제 계산 기간</span>
                     <span className="salary-filter-block__period-text">
-                      {calculationPeriodDisplay.periodStart} ~ {calculationPeriodDisplay.periodEnd} (기산일 기준)
+                      {calculationPeriodDisplay
+                        ? `${calculationPeriodDisplay.periodStart} ~ ${calculationPeriodDisplay.periodEnd} (기산일 기준)`
+                        : (() => {
+                            const [y, m] = selectedPeriod.split('-');
+                            const lastDay = new Date(parseInt(y, 10), parseInt(m, 10), 0).getDate();
+                            return `${y}-${m}-01 ~ ${y}-${m}-${String(lastDay).padStart(2, '0')} (기산일 기준, 조회 중…)`;
+                          })()}
                     </span>
+                    <button
+                      type="button"
+                      className="salary-filter-block__period-link"
+                      onClick={() => setIsConfigModalOpen(true)}
+                      title="기산일 기준 기간입니다. 설정에서 변경할 수 있습니다."
+                      aria-label="기산일 설정"
+                    >
+                      <HelpCircle size={14} aria-hidden />
+                      <span className="sr-only">기산일 설정</span>
+                    </button>
                   </div>
                 )}
                 <div className="salary-filter-block__field">
@@ -404,6 +449,7 @@ const SalaryManagement = () => {
                       if (consultant) loadSalaryCalculations(consultant.id);
                     }}
                     className="mg-v2-select"
+                    aria-label="상담사 선택"
                   >
                     <option value="">상담사 선택</option>
                     {consultants.map(c => (
@@ -418,6 +464,7 @@ const SalaryManagement = () => {
                     value={selectedPayDay}
                     onChange={(e) => setSelectedPayDay(e.target.value)}
                     className="mg-v2-select"
+                    aria-label="급여 지급일 선택"
                   >
                     {payDayOptions.map(opt => (
                       <option key={opt.codeValue} value={opt.codeValue}>{opt.codeLabel}</option>
@@ -442,15 +489,15 @@ const SalaryManagement = () => {
 
             {/* (3) 탭 */}
             <div className="mg-v2-ad-b0kla__section salary-management__tabs-wrap">
-              <div className="mg-tabs" role="tablist" aria-label="급여 관리 탭">
+              <nav className="mg-tabs" role="tablist" aria-label="급여 관리 탭">
                 <button
                   type="button"
                   role="tab"
-                  aria-selected={activeTab === 'profiles'}
+                  aria-selected={activeTab === TAB_PROFILES}
                   aria-controls="salary-profile-panel"
                   id="tab-profiles"
-                  className={`mg-tab ${activeTab === 'profiles' ? 'mg-tab-active' : ''}`}
-                  onClick={() => setActiveTab('profiles')}
+                  className={`mg-tab ${activeTab === TAB_PROFILES ? 'mg-tab-active' : ''}`}
+                  onClick={() => setActiveTabAndUrl(TAB_PROFILES)}
                 >
                   <Users size={18} aria-hidden />
                   급여 프로필
@@ -458,11 +505,11 @@ const SalaryManagement = () => {
                 <button
                   type="button"
                   role="tab"
-                  aria-selected={activeTab === 'calculations'}
+                  aria-selected={activeTab === TAB_CALC}
                   aria-controls="salary-calc-panel"
                   id="tab-calculations"
-                  className={`mg-tab ${activeTab === 'calculations' ? 'mg-tab-active' : ''}`}
-                  onClick={() => setActiveTab('calculations')}
+                  className={`mg-tab ${activeTab === TAB_CALC ? 'mg-tab-active' : ''}`}
+                  onClick={() => setActiveTabAndUrl(TAB_CALC)}
                 >
                   <Calculator size={18} aria-hidden />
                   급여 계산
@@ -470,22 +517,19 @@ const SalaryManagement = () => {
                 <button
                   type="button"
                   role="tab"
-                  aria-selected={activeTab === 'tax'}
+                  aria-selected={activeTab === TAB_TAX}
                   aria-controls="salary-tax-panel"
                   id="tab-tax"
-                  className={`mg-tab ${activeTab === 'tax' ? 'mg-tab-active' : ''}`}
-                  onClick={() => {
-                    setActiveTab('tax');
-                    if (selectedPeriod) loadTaxStatistics(selectedPeriod);
-                  }}
+                  className={`mg-tab ${activeTab === TAB_TAX ? 'mg-tab-active' : ''}`}
+                  onClick={() => setActiveTabAndUrl(TAB_TAX)}
                 >
                   <Receipt size={18} aria-hidden />
                   세금 관리
                 </button>
-              </div>
+              </nav>
 
               {/* (4) 탭별 콘텐츠 */}
-              {activeTab === 'profiles' && (
+              {activeTab === TAB_PROFILES && (
                 <section
                   id="salary-profile-panel"
                   role="tabpanel"
@@ -493,7 +537,7 @@ const SalaryManagement = () => {
                   className="salary-profile-block"
                 >
                   <div className="salary-profile-block__header">
-                    <h2 className="salary-profile-block__title">
+                    <h2 className="mg-v2-ad-b0kla__section-title salary-profile-block__title">
                       <span className="salary-profile-block__accent" aria-hidden />
                       상담사 급여 프로필
                     </h2>
@@ -507,8 +551,8 @@ const SalaryManagement = () => {
                     </MGButton>
                   </div>
                   {salaryProfiles.length === 0 && !loading && (
-                    <div className="salary-profile-block__empty salary-profile-block__empty--no-profiles">
-                      <p className="salary-no-profiles-message">
+                    <div className="salary-profile-block__empty salary-profile-block__empty--no-profiles" data-state="empty">
+                      <p className="salary-profile-block__empty-message salary-no-profiles-message">
                         급여 프로필이 없습니다. 급여 계산을 하기 위해서는 먼저 상담사별 급여 프로필을 작성해야 합니다.
                         위의 &quot;새 프로필 생성&quot; 버튼을 클릭하여 급여 프로필을 작성해주세요.
                       </p>
@@ -522,7 +566,7 @@ const SalaryManagement = () => {
                       </MGButton>
                     </div>
                   )}
-                  <div className="salary-profile-block__grid">
+                  <div className="mg-v2-ad-b0kla__admin-grid salary-profile-block__grid">
                     {loading ? (
                       <p className="salary-management__loading-text">데이터를 불러오는 중...</p>
                     ) : consultants.length === 0 ? (
@@ -533,7 +577,7 @@ const SalaryManagement = () => {
                         return (
                           <article
                             key={consultant.id}
-                            className="salary-profile-card"
+                            className="mg-v2-ad-b0kla__card salary-profile-card"
                             aria-labelledby={`profile-name-${consultant.id}`}
                           >
                             <span className="salary-profile-card__accent" aria-hidden />
@@ -543,12 +587,12 @@ const SalaryManagement = () => {
                             <div className="salary-profile-card__meta">{consultant.email}</div>
                             <div className="salary-profile-card__grade">등급: {consultant.grade || '—'}</div>
                             <div className="salary-profile-card__base">
-                              <span className="salary-management__stat-label">기본급</span>
-                              <span className="salary-management__stat-value">
+                              <span className="mg-v2-ad-b0kla__kpi-label salary-management__stat-label">기본급</span>
+                              <span className="mg-v2-ad-b0kla__kpi-value salary-management__stat-value">
                                 {profile ? formatCurrency(profile.baseSalary || 0) : '—'}
                               </span>
                             </div>
-                            <div className="salary-profile-card__actions">
+                            <div className="mg-v2-card-actions salary-profile-card__actions">
                               <MGButton
                                 variant="secondary"
                                 size="small"
@@ -574,7 +618,7 @@ const SalaryManagement = () => {
                 </section>
               )}
 
-              {activeTab === 'calculations' && (
+              {activeTab === TAB_CALC && (
                 <section
                   id="salary-calc-panel"
                   role="tabpanel"
@@ -582,7 +626,7 @@ const SalaryManagement = () => {
                   className="salary-calc-block"
                 >
                   <div className="salary-calc-block__header">
-                    <h2 className="salary-calc-block__title">
+                    <h2 className="mg-v2-ad-b0kla__section-title salary-calc-block__title">
                       <span className="salary-calc-block__accent" aria-hidden />
                       급여 계산
                     </h2>
@@ -594,7 +638,7 @@ const SalaryManagement = () => {
                   </div>
                   <div className="salary-calc-block__preview">
                     {previewResult && (
-                      <div className="salary-calc-block__preview-card">
+                      <div className="mg-v2-ad-b0kla__card salary-calc-block__preview-card">
                         <h3 className="salary-calc-block__preview-title">계산 결과 미리보기</h3>
                         {previewResult.periodStart && previewResult.periodEnd && (
                           <p className="salary-calc-block__preview-period">
@@ -603,27 +647,27 @@ const SalaryManagement = () => {
                         )}
                         <div className="salary-calc-block__preview-summary">
                           <div className="salary-calc-block__preview-card-item">
-                            <span className="salary-management__stat-label">총 급여</span>
-                            <span className="salary-management__stat-value">{formatCurrency(previewResult.grossSalary)}</span>
+                            <span className="mg-v2-ad-b0kla__kpi-label salary-management__stat-label">총 급여</span>
+                            <span className="mg-v2-ad-b0kla__kpi-value salary-management__stat-value">{formatCurrency(previewResult.grossSalary)}</span>
                           </div>
                           <div className="salary-calc-block__preview-card-item">
-                            <span className="salary-management__stat-label">세금·공제</span>
-                            <span className="salary-management__stat-value">-{formatCurrency(previewResult.taxAmount)}</span>
+                            <span className="mg-v2-ad-b0kla__kpi-label salary-management__stat-label">세금·공제</span>
+                            <span className="mg-v2-ad-b0kla__kpi-value salary-management__stat-value">-{formatCurrency(previewResult.taxAmount)}</span>
                           </div>
                           <div className="salary-calc-block__preview-card-item salary-calc-block__preview-card-item--net">
-                            <span className="salary-management__stat-label">실지급액</span>
-                            <span className="salary-management__stat-value">{formatCurrency(previewResult.netSalary)}</span>
+                            <span className="mg-v2-ad-b0kla__kpi-label salary-management__stat-label">실지급액</span>
+                            <span className="mg-v2-ad-b0kla__kpi-value salary-management__stat-value">{formatCurrency(previewResult.netSalary)}</span>
                           </div>
                         </div>
-                        <div className="salary-calc-block__preview-grid">
-                          <div className="salary-management__stat-label">상담사</div>
-                          <div className="salary-management__stat-value">{previewResult.consultantName}</div>
-                          <div className="salary-management__stat-label">기간</div>
-                          <div className="salary-management__stat-value">{previewResult.period}</div>
-                          <div className="salary-management__stat-label">상담 건수</div>
-                          <div className="salary-management__stat-value">{previewResult.consultationCount}건</div>
-                        </div>
-                        <div className="salary-calc-block__preview-actions">
+                        <dl className="salary-calc-block__preview-grid">
+                          <dt className="salary-management__stat-label">상담사</dt>
+                          <dd className="salary-management__stat-value">{previewResult.consultantName}</dd>
+                          <dt className="salary-management__stat-label">기간</dt>
+                          <dd className="salary-management__stat-value">{previewResult.period}</dd>
+                          <dt className="salary-management__stat-label">상담 건수</dt>
+                          <dd className="salary-management__stat-value">{previewResult.consultationCount}건</dd>
+                        </dl>
+                        <div className="mg-v2-card-actions salary-calc-block__preview-actions">
                           <MGButton
                             variant="primary"
                             size="medium"
@@ -634,12 +678,15 @@ const SalaryManagement = () => {
                               }
                               try {
                                 setLoading(true);
-                                const params = new URLSearchParams({
+                                const confirmParams = new URLSearchParams({
                                   consultantId: previewResult.consultantId,
                                   periodStart: previewResult.periodStart,
                                   periodEnd: previewResult.periodEnd
                                 });
-                                const res = await apiPost(`/api/v1/admin/salary/confirm?${params}`);
+                                const res = await StandardizedApi.post(
+                                  `${SALARY_API_ENDPOINTS.CONFIRM}?${confirmParams}`,
+                                  {}
+                                );
                                 if (res && typeof res === 'object' && res.success === false) {
                                   showNotification(res?.message || '확정에 실패했습니다.', 'error');
                                 } else {
@@ -674,9 +721,9 @@ const SalaryManagement = () => {
                     )}
                   </div>
                   <div className="salary-calc-block__list">
-                    <h3 className="salary-calc-block__list-title">급여 계산 내역</h3>
+                    <h3 className="mg-v2-ad-b0kla__section-title salary-calc-block__list-title">급여 계산 내역</h3>
                     {salaryCalculations.map(calculation => (
-                      <article key={calculation.id} className="salary-calc-block__card">
+                      <article key={calculation.id} className="mg-v2-ad-b0kla__card salary-calc-block__card">
                         <div className="salary-calc-block__card-header">
                           <span>{calculation.calculationPeriod}</span>
                           <span className="mg-v2-status-badge mg-v2-badge--neutral" role="status">
@@ -711,7 +758,7 @@ const SalaryManagement = () => {
                             <span>{calculation.consultationCount}건</span>
                           </div>
                         </div>
-                        <div className="salary-calc-block__actions">
+                        <div className="mg-v2-card-actions salary-calc-block__actions">
                           <MGButton
                             variant="secondary"
                             size="small"
@@ -748,7 +795,7 @@ const SalaryManagement = () => {
                 </section>
               )}
 
-              {activeTab === 'tax' && (
+              {activeTab === TAB_TAX && (
                 <section
                   id="salary-tax-panel"
                   role="tabpanel"
@@ -756,21 +803,22 @@ const SalaryManagement = () => {
                   className="salary-tax-block"
                 >
                   <div className="salary-tax-block__header">
-                    <h2 className="salary-tax-block__title">
+                    <h2 className="mg-v2-ad-b0kla__section-title salary-tax-block__title">
                       <span className="salary-tax-block__accent" aria-hidden />
-                      세금 관리
+                      세금 통계
                     </h2>
                     <MGButton
                       variant="primary"
                       size="small"
                       onClick={() => loadTaxStatistics(selectedPeriod)}
+                      disabled={!selectedPeriod || loading}
                       className="mg-v2-button mg-v2-button--primary"
                     >
                       세금 통계 조회
                     </MGButton>
                   </div>
                   {taxStatistics ? (
-                    <div className="salary-tax-block__card">
+                    <div className="mg-v2-ad-b0kla__card salary-tax-block__card">
                       <h3 className="salary-tax-block__card-title">세금 통계 내역</h3>
                       <div className="salary-tax-block__card-body">
                         <div className="salary-management__detail-row">
@@ -779,48 +827,26 @@ const SalaryManagement = () => {
                         </div>
                         <div className="salary-management__detail-row">
                           <span>세금 건수</span>
-                          <span>{taxStatistics.taxCount || 0}건</span>
+                          <span>{taxStatistics.taxCount ?? taxStatistics.totalCalculations ?? 0}건</span>
                         </div>
-                        {(taxStatistics.withholdingTax > 0 || taxStatistics.localIncomeTax > 0) && (
-                          <>
-                            <div className="salary-management__detail-row">
-                              <span>원천징수세 (3.3%)</span>
-                              <span>-{formatCurrency(taxStatistics.withholdingTax || 0)}</span>
+                        {TAX_BREAKDOWN_ORDER.map((key) => {
+                          const breakdown = taxStatistics.breakdown || {};
+                          const amount = breakdown[key];
+                          const label = TAX_BREAKDOWN_LABELS[key] ?? key;
+                          const display = amount != null && Number(amount) !== 0 ? `-${formatCurrency(Number(amount))}` : '—';
+                          return (
+                            <div key={key} className="salary-management__detail-row">
+                              <span>{label}</span>
+                              <span>{display}</span>
                             </div>
-                            <div className="salary-management__detail-row">
-                              <span>지방소득세 (0.33%)</span>
-                              <span>-{formatCurrency(taxStatistics.localIncomeTax || 0)}</span>
-                            </div>
-                          </>
-                        )}
-                        {taxStatistics.vat > 0 && (
-                          <div className="salary-management__detail-row">
-                            <span>부가가치세 (10%)</span>
-                            <span>-{formatCurrency(taxStatistics.vat || 0)}</span>
-                          </div>
-                        )}
-                        <div className="salary-management__detail-row">
-                          <span>국민연금 (4.5%)</span>
-                          <span>-{formatCurrency(taxStatistics.nationalPension || 0)}</span>
-                        </div>
-                        <div className="salary-management__detail-row">
-                          <span>건강보험 (3.545%)</span>
-                          <span>-{formatCurrency(taxStatistics.healthInsurance || 0)}</span>
-                        </div>
-                        <div className="salary-management__detail-row">
-                          <span>장기요양보험 (0.545%)</span>
-                          <span>-{formatCurrency(taxStatistics.longTermCare || 0)}</span>
-                        </div>
-                        <div className="salary-management__detail-row">
-                          <span>고용보험 (0.9%)</span>
-                          <span>-{formatCurrency(taxStatistics.employmentInsurance || 0)}</span>
-                        </div>
+                          );
+                        })}
                         <div className="salary-management__detail-row salary-management__detail-row--total">
                           <span>총 공제액</span>
                           <span>-{formatCurrency(taxStatistics.totalTaxAmount || 0)}</span>
                         </div>
                       </div>
-                      <div className="salary-tax-block__actions">
+                      <div className="mg-v2-card-actions salary-tax-block__actions">
                         <MGButton variant="secondary" size="small" className="mg-v2-button mg-v2-button--secondary">
                           세금 상세 내역 보기
                         </MGButton>
@@ -830,7 +856,7 @@ const SalaryManagement = () => {
                       </div>
                     </div>
                   ) : (
-                    <div className="salary-tax-block__empty">
+                    <div className="salary-tax-block__empty" data-state="empty">
                       <p>세금 통계를 조회하려면 기간을 선택한 뒤 &quot;세금 통계 조회&quot; 버튼을 클릭하세요.</p>
                     </div>
                   )}

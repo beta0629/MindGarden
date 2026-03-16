@@ -46,6 +46,40 @@ public class GlobalExceptionHandler {
         
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
     }
+
+    /**
+     * UnauthorizedException 처리 (인증 필요)
+     * HTTP 401 Unauthorized
+     */
+    @ExceptionHandler(UnauthorizedException.class)
+    public ResponseEntity<ErrorResponse> handleUnauthorized(UnauthorizedException e, HttpServletRequest request) {
+        log.warn("Unauthorized: {}", e.getMessage());
+        ErrorResponse error = ErrorResponse.of(
+            e.getMessage(),
+            "UNAUTHORIZED",
+            HttpStatus.UNAUTHORIZED.value(),
+            request.getRequestURI(),
+            request.getMethod()
+        );
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
+    }
+
+    /**
+     * ForbiddenException 처리 (권한 없음)
+     * HTTP 403 Forbidden
+     */
+    @ExceptionHandler(ForbiddenException.class)
+    public ResponseEntity<ErrorResponse> handleForbidden(ForbiddenException e, HttpServletRequest request) {
+        log.warn("Forbidden: {}", e.getMessage());
+        ErrorResponse error = ErrorResponse.of(
+            e.getMessage(),
+            "FORBIDDEN",
+            HttpStatus.FORBIDDEN.value(),
+            request.getRequestURI(),
+            request.getMethod()
+        );
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
+    }
     
     /**
      * ValidationException 처리

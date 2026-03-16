@@ -1,12 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import UnifiedLoading from '../common/UnifiedLoading';
-import MGCard from '../common/MGCard';
-import Button from '../ui/Button/Button.js';
 import { useSession } from '../../contexts/SessionContext';
 import { sessionManager } from '../../utils/sessionManager';
-import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
+import StandardizedApi from '../../utils/standardizedApi';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentHeader, ContentArea } from '../dashboard-v2/content';
+import {
+  SALARY_API_ENDPOINTS,
+  TAX_BREAKDOWN_ORDER,
+  TAX_BREAKDOWN_LABELS,
+  TAX_TYPE
+} from '../../constants/salaryConstants';
 import {
   Calculator,
   LayoutDashboard,
@@ -14,11 +18,8 @@ import {
   Settings,
   DollarSign,
   CheckCircle,
-  Clock,
   AlertTriangle,
   Plus,
-  Pencil,
-  Trash2,
   RefreshCw,
   FilePlus,
   FileCheck
@@ -26,30 +27,44 @@ import {
 import './ErpCommon.css';
 import notificationManager from '../../utils/notification';
 
+/** 현재 월 YYYY-MM */
+const getDefaultPeriod = () => {
+  const n = new Date();
+  return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}`;
+};
+
+/** period(YYYY-MM) → 해당 월의 startDate, endDate (YYYY-MM-DD) */
+const periodToDateRange = (period) => {
+  const [y, m] = period.split('-').map(Number);
+  const startDate = `${period}-01`;
+  const lastDay = new Date(y, m, 0).getDate();
+  const endDate = `${period}-${String(lastDay).padStart(2, '0')}`;
+  return { startDate, endDate };
+};
+
 /**
- * 개선된 ERP 세무 관리 페이지 - 세금 계산, 신고, 납부 관리
+ * 개선된 ERP 세무 관리 페이지 - 실데이터 /api/v1/admin/salary/tax/* 연동
  */
 const ImprovedTaxManagement = () => {
-  const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
-  
+  useSession();
   const sessionUser = sessionManager.getUser();
   const sessionIsLoggedIn = sessionManager.isLoggedIn();
+
   const [activeTab, setActiveTab] = useState('overview');
-  const [taxData, setTaxData] = useState([]);
+  const [selectedPeriod, setSelectedPeriod] = useState(() => getDefaultPeriod());
+  const [statistics, setStatistics] = useState(null);
+  const [calculationsList, setCalculationsList] = useState([]);
   const [taxCategories, setTaxCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [editingTax, setEditingTax] = useState(null);
 
   const [newTaxItem, setNewTaxItem] = useState({
-    name: '',
-    category: '',
-    amount: '',
+    calculationId: '',
+    grossAmount: '',
+    taxType: TAX_TYPE.VAT,
     taxRate: '',
-    dueDate: '',
-    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-    status: 'PENDING',
+    taxName: '',
     description: ''
   });
 
@@ -57,7 +72,7 @@ const ImprovedTaxManagement = () => {
     if (sessionIsLoggedIn && sessionUser?.id) {
       loadData();
     }
-  }, [sessionIsLoggedIn, sessionUser?.id, activeTab]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [sessionIsLoggedIn, sessionUser?.id, activeTab, selectedPeriod]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadData = async () => {
     try {
@@ -90,7 +105,11 @@ const ImprovedTaxManagement = () => {
 
   const loadTaxOverview = async () => {
     try {
-      console.log('세금 개요 데이터 로드');
+      const response = await StandardizedApi.get(SALARY_API_ENDPOINTS.TAX_STATISTICS, {
+        period: selectedPeriod
+      });
+      const data = response?.data ?? response;
+      setStatistics(data || null);
     } catch (err) {
       console.error('세금 개요 로드 실패:', err);
       setError('세금 개요를 불러오는 중 오류가 발생했습니다.');
@@ -99,14 +118,20 @@ const ImprovedTaxManagement = () => {
 
   const loadTaxCalculations = async () => {
     try {
-      const response = await apiGet('/api/v1/admin/tax/calculations');
-      if (response.success) {
-        setTaxData(response.data || []);
-      } else {
-        setError(response.message || '세금 계산 내역을 불러올 수 없습니다.');
-      }
+      const statsRes = await StandardizedApi.get(SALARY_API_ENDPOINTS.TAX_STATISTICS, {
+        period: selectedPeriod
+      });
+      const statsData = statsRes?.data ?? statsRes;
+      setStatistics(statsData || null);
+      const { startDate, endDate } = periodToDateRange(selectedPeriod);
+      const calcRes = await StandardizedApi.get(SALARY_API_ENDPOINTS.CALCULATIONS, {
+        startDate,
+        endDate
+      });
+      const list = calcRes?.data ?? calcRes ?? [];
+      setCalculationsList(Array.isArray(list) ? list : []);
     } catch (err) {
-      console.error('세금 계산 로드 실패:', err);
+      console.error('세금 계산 내역 로드 실패:', err);
       setError('세금 계산 내역을 불러오는 중 오류가 발생했습니다.');
     }
   };
@@ -122,118 +147,60 @@ const ImprovedTaxManagement = () => {
 
   const loadTaxSettings = async () => {
     try {
-      const response = await apiGet('/api/v1/common-codes?codeGroup=TAX_CATEGORY');
-      if (response.success) {
-        setTaxCategories(response.data || []);
-      } else {
-        setError(response.message || '세금 카테고리를 불러올 수 없습니다.');
-      }
+      const response = await StandardizedApi.get('/api/v1/common-codes', {
+        codeGroup: 'TAX_CATEGORY'
+      });
+      const data = response?.data ?? response ?? [];
+      setTaxCategories(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error('세금 카테고리 로드 실패:', err);
-      setError('세금 카테고리를 불러오는 중 오류가 발생했습니다.');
+      setError('세금 카테고리를 불러올 수 없습니다.');
     }
   };
 
   const handleCreateTaxItem = async () => {
-    try {
-      setLoading(true);
-      const response = await apiPost('/api/v1/admin/tax/calculations', newTaxItem);
-      if (response.success) {
-        setShowCreateModal(false);
-        setNewTaxItem({
-          name: '',
-          category: '',
-          amount: '',
-          taxRate: '',
-          dueDate: '',
-          // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-          status: 'PENDING',
-          description: ''
-        });
-        await loadTaxCalculations();
-      } else {
-        setError(response.message || '세금 항목 생성에 실패했습니다.');
-      }
-    } catch (err) {
-      console.error('세금 항목 생성 실패:', err);
-      setError('세금 항목 생성 중 오류가 발생했습니다.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleEditTaxItem = async (taxItem) => {
-    try {
-      setLoading(true);
-      const response = await apiPut(`/api/admin/tax/calculations/${taxItem.id}`, taxItem);
-      if (response.success) {
-        setEditingTax(null);
-        await loadTaxCalculations();
-      } else {
-        setError(response.message || '세금 항목 수정에 실패했습니다.');
-      }
-    } catch (err) {
-      console.error('세금 항목 수정 실패:', err);
-      setError('세금 항목 수정 중 오류가 발생했습니다.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDeleteTaxItem = async (taxItemId) => {
-    const confirmed = await new Promise((resolve) => { 
-      notificationManager.confirm('정말로 이 세금 항목을 삭제하시겠습니까?', resolve); 
-    });
-    if (!confirmed) {
+    const calculationId = newTaxItem.calculationId ? Number(newTaxItem.calculationId) : null;
+    const grossAmount = newTaxItem.grossAmount ? Number(newTaxItem.grossAmount) : null;
+    const taxRate = newTaxItem.taxRate ? Number(newTaxItem.taxRate) : null;
+    if (!calculationId || grossAmount == null || !newTaxItem.taxType || taxRate == null) {
+      notificationManager.warning('급여 계산, 과세 금액, 세금 유형, 세율을 입력해 주세요.');
       return;
     }
-
     try {
       setLoading(true);
-      const response = await apiDelete(`/api/admin/tax/calculations/${taxItemId}`);
-      if (response.success) {
-        await loadTaxCalculations();
-      } else {
-        setError(response.message || '세금 항목 삭제에 실패했습니다.');
-      }
+      setError(null);
+      await StandardizedApi.post(SALARY_API_ENDPOINTS.TAX_CALCULATE, {
+        calculationId,
+        grossAmount,
+        taxType: newTaxItem.taxType,
+        taxRate,
+        taxName: newTaxItem.taxName || undefined,
+        description: newTaxItem.description || undefined
+      });
+      notificationManager.success('추가 세금이 계산·반영되었습니다.');
+      setShowCreateModal(false);
+      setNewTaxItem({
+        calculationId: '',
+        grossAmount: '',
+        taxType: TAX_TYPE.VAT,
+        taxRate: '',
+        taxName: '',
+        description: ''
+      });
+      await loadTaxCalculations();
     } catch (err) {
-      console.error('세금 항목 삭제 실패:', err);
-      setError('세금 항목 삭제 중 오류가 발생했습니다.');
+      console.error('세금 항목 생성 실패:', err);
+      setError(err?.message || '세금 항목 생성 중 오류가 발생했습니다.');
     } finally {
       setLoading(false);
     }
   };
+
+  /* 백엔드 PUT/DELETE /api/v1/admin/salary/tax/* 미지원. 기획 확정 시 추가 후 연동 */
 
   const formatCurrency = (amount) => {
     if (!amount) return '0원';
     return new Intl.NumberFormat('ko-KR').format(amount) + '원';
-  };
-
-  const formatDate = (dateString) => {
-    if (!dateString) return '-';
-    return new Date(dateString).toLocaleDateString('ko-KR');
-  };
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-      case 'PENDING': return 'warning';
-      case 'CALCULATED': return 'info';
-      case 'PAID': return 'success';
-      case 'OVERDUE': return 'danger';
-      default: return 'secondary';
-    }
-  };
-
-  const getStatusLabel = (status) => {
-    switch (status) {
-      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-      case 'PENDING': return '대기';
-      case 'CALCULATED': return '계산완료';
-      case 'PAID': return '납부완료';
-      case 'OVERDUE': return '연체';
-      default: return status;
-    }
   };
 
   if (!sessionIsLoggedIn || !sessionUser) {
@@ -253,16 +220,28 @@ const ImprovedTaxManagement = () => {
         title="세무 관리"
         subtitle="세금 계산, 신고, 납부를 체계적으로 관리할 수 있습니다."
         actions={
-          activeTab === 'calculations' ? (
-            <button
-              type="button"
-              className="mg-v2-ad-b0kla__btn mg-v2-ad-b0kla__btn--primary"
-              onClick={() => setShowCreateModal(true)}
-            >
-              <Plus size={16} />
-              세금 항목 추가
-            </button>
-          ) : null
+          <>
+            <label className="mg-v2-content-header__period" style={{ marginRight: 'var(--mg-layout-gap)' }}>
+              <span style={{ marginRight: 8 }}>기간</span>
+              <input
+                type="month"
+                value={selectedPeriod}
+                onChange={(e) => setSelectedPeriod(e.target.value)}
+                className="mg-v2-ad-b0kla__input"
+                style={{ padding: '6px 10px', borderRadius: 8 }}
+              />
+            </label>
+            {activeTab === 'calculations' && (
+              <button
+                type="button"
+                className="mg-v2-ad-b0kla__btn mg-v2-ad-b0kla__btn--primary"
+                onClick={() => setShowCreateModal(true)}
+              >
+                <Plus size={16} />
+                추가 세금 계산
+              </button>
+            )}
+          </>
         }
       />
       <ContentArea className="erp-system erp-container">
@@ -331,124 +310,120 @@ const ImprovedTaxManagement = () => {
                           <DollarSign size={20} style={{ color: 'var(--mg-color-primary-main)' }} />
                         </div>
                         <div className="mg-v2-ad-b0kla__chart-body">
-                          <div style={{ color: 'var(--mg-color-primary-main)', fontWeight: 600 }}>₩0</div>
-                          <small style={{ color: 'var(--mg-color-text-secondary)' }}>이번 달</small>
+                          <div style={{ color: 'var(--mg-color-primary-main)', fontWeight: 600 }}>
+                            {formatCurrency(statistics?.totalTaxAmount)}
+                          </div>
+                          <small style={{ color: 'var(--mg-color-text-secondary)' }}>{selectedPeriod}</small>
                         </div>
                       </div>
                       <div className="mg-v2-ad-b0kla__card" style={{ background: 'var(--mg-color-surface-main)', borderLeft: '4px solid var(--mg-color-primary-main)' }}>
                         <div className="mg-v2-ad-b0kla__chart-header">
-                          <h3 className="mg-v2-ad-b0kla__chart-title">납부 완료</h3>
+                          <h3 className="mg-v2-ad-b0kla__chart-title">계산 건수</h3>
                           <CheckCircle size={20} style={{ color: 'var(--mg-color-success-main, #22c55e)' }} />
                         </div>
                         <div className="mg-v2-ad-b0kla__chart-body">
-                          <div style={{ color: 'var(--mg-color-success-main, #22c55e)', fontWeight: 600 }}>0건</div>
-                          <small style={{ color: 'var(--mg-color-text-secondary)' }}>완료된 납부</small>
+                          <div style={{ color: 'var(--mg-color-success-main, #22c55e)', fontWeight: 600 }}>
+                            {statistics?.totalCalculations ?? 0}건
+                          </div>
+                          <small style={{ color: 'var(--mg-color-text-secondary)' }}>급여 계산 기준</small>
                         </div>
                       </div>
                       <div className="mg-v2-ad-b0kla__card" style={{ background: 'var(--mg-color-surface-main)', borderLeft: '4px solid var(--mg-color-primary-main)' }}>
                         <div className="mg-v2-ad-b0kla__chart-header">
-                          <h3 className="mg-v2-ad-b0kla__chart-title">대기 중</h3>
-                          <Clock size={20} style={{ color: 'var(--mg-color-warning-main, #eab308)' }} />
+                          <h3 className="mg-v2-ad-b0kla__chart-title">총 급여</h3>
+                          <DollarSign size={20} style={{ color: 'var(--mg-color-text-secondary)' }} />
                         </div>
                         <div className="mg-v2-ad-b0kla__chart-body">
-                          <div style={{ color: 'var(--mg-color-warning-main, #eab308)', fontWeight: 600 }}>0건</div>
-                          <small style={{ color: 'var(--mg-color-text-secondary)' }}>처리 대기</small>
+                          <div style={{ color: 'var(--mg-color-text-main)', fontWeight: 600 }}>
+                            {formatCurrency(statistics?.totalGrossSalary)}
+                          </div>
+                          <small style={{ color: 'var(--mg-color-text-secondary)' }}>총 지급액</small>
                         </div>
                       </div>
                       <div className="mg-v2-ad-b0kla__card" style={{ background: 'var(--mg-color-surface-main)', borderLeft: '4px solid var(--mg-color-primary-main)' }}>
                         <div className="mg-v2-ad-b0kla__chart-header">
-                          <h3 className="mg-v2-ad-b0kla__chart-title">연체</h3>
-                          <AlertTriangle size={20} style={{ color: 'var(--mg-color-error-main, #ef4444)' }} />
+                          <h3 className="mg-v2-ad-b0kla__chart-title">실지급액</h3>
+                          <DollarSign size={20} style={{ color: 'var(--mg-color-text-secondary)' }} />
                         </div>
                         <div className="mg-v2-ad-b0kla__chart-body">
-                          <div style={{ color: 'var(--mg-color-error-main, #ef4444)', fontWeight: 600 }}>0건</div>
-                          <small style={{ color: 'var(--mg-color-text-secondary)' }}>연체된 항목</small>
+                          <div style={{ color: 'var(--mg-color-text-main)', fontWeight: 600 }}>
+                            {formatCurrency(statistics?.totalNetSalary)}
+                          </div>
+                          <small style={{ color: 'var(--mg-color-text-secondary)' }}>공제 후</small>
                         </div>
                       </div>
                     </div>
+                    {statistics?.breakdown && (
+                      <div style={{ marginTop: 'var(--mg-layout-section-padding)' }}>
+                        <h3 className="mg-v2-ad-b0kla__chart-title" style={{ marginBottom: 12 }}>세목별 breakdown</h3>
+                        <table className="salary-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
+                          <thead>
+                            <tr style={{ borderBottom: '1px solid var(--mg-color-border-main)' }}>
+                              <th style={{ textAlign: 'left', padding: 8 }}>세목</th>
+                              <th style={{ textAlign: 'right', padding: 8 }}>금액</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {TAX_BREAKDOWN_ORDER.map((key) => (
+                              <tr key={key} style={{ borderBottom: '1px solid var(--mg-color-border-sub)' }}>
+                                <td style={{ padding: 8 }}>{TAX_BREAKDOWN_LABELS[key] || key}</td>
+                                <td style={{ textAlign: 'right', padding: 8 }}>{formatCurrency(statistics.breakdown[key])}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
                   </section>
                 )}
 
                 {activeTab === 'calculations' && (
                   <section className="mg-v2-ad-b0kla__card" style={{ background: 'var(--mg-layout-section-bg)', border: '1px solid var(--mg-layout-section-border)', borderRadius: '16px', padding: 'var(--mg-layout-section-padding)' }}>
-                    <h2 className="mg-v2-ad-b0kla__chart-title">세금 계산</h2>
-                    {/* 세금 항목 카드 그리드 */}
-                    <div className="mg-tax-cards-grid">
-                      {taxData.length > 0 ? (
-                        taxData.map((tax) => (
-                          <MGCard 
-                            key={tax.id}
-                            variant="default"
-                            className="mg-tax-card"
-                          >
-                            <div className="mg-tax-card__header">
-                              <div className="mg-tax-card__title-section">
-                                <h3 className="mg-tax-card__name">{tax.name}</h3>
-                                {tax.description && (
-                                  <div className="mg-tax-card__description">{tax.description}</div>
-                                )}
-                              </div>
-                              <div className="mg-tax-card__status">
-                                <span className={`erp-status ${getStatusColor(tax.status)}`}>
-                                  {getStatusLabel(tax.status)}
-                                </span>
-                              </div>
+                    <h2 className="mg-v2-ad-b0kla__chart-title">세금 계산 · 기간별 통계</h2>
+                    {statistics ? (
+                      <>
+                        <div className="mg-v2-ad-b0kla__grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 'var(--mg-layout-grid-gap)', marginBottom: 24 }}>
+                          <div className="mg-v2-ad-b0kla__card" style={{ background: 'var(--mg-color-surface-main)', borderLeft: '4px solid var(--mg-color-primary-main)' }}>
+                            <div className="mg-v2-ad-b0kla__chart-body">
+                              <div style={{ fontSize: 12, color: 'var(--mg-color-text-secondary)' }}>총 세금</div>
+                              <div style={{ fontWeight: 600 }}>{formatCurrency(statistics.totalTaxAmount)}</div>
                             </div>
-                            
-                            <div className="mg-tax-card__body">
-                              <div className="mg-tax-card__field">
-                                <span className="mg-tax-card__label">카테고리</span>
-                                <span className="mg-tax-card__value">{tax.category}</span>
-                              </div>
-                              <div className="mg-tax-card__field">
-                                <span className="mg-tax-card__label">금액</span>
-                                <span className="mg-tax-card__value">{formatCurrency(tax.amount)}</span>
-                              </div>
-                              <div className="mg-tax-card__field">
-                                <span className="mg-tax-card__label">세율</span>
-                                <span className="mg-tax-card__value">{tax.taxRate}%</span>
-                              </div>
-                              <div className="mg-tax-card__field">
-                                <span className="mg-tax-card__label">세금액</span>
-                                <span className="mg-tax-card__value mg-tax-card__value--tax-amount">
-                                  {formatCurrency(tax.amount * (tax.taxRate / 100))}
-                                </span>
-                              </div>
-                              <div className="mg-tax-card__field">
-                                <span className="mg-tax-card__label">납부일</span>
-                                <span className="mg-tax-card__value">{formatDate(tax.dueDate)}</span>
-                              </div>
+                          </div>
+                          <div className="mg-v2-ad-b0kla__card" style={{ background: 'var(--mg-color-surface-main)', borderLeft: '4px solid var(--mg-color-primary-main)' }}>
+                            <div className="mg-v2-ad-b0kla__chart-body">
+                              <div style={{ fontSize: 12, color: 'var(--mg-color-text-secondary)' }}>계산 건수</div>
+                              <div style={{ fontWeight: 600 }}>{statistics.totalCalculations ?? 0}건</div>
                             </div>
-                            
-                            <div className="mg-tax-card__footer">
-                              <div className="mg-tax-card__actions">
-                                <Button
-                                  variant="outline"
-                                  size="small"
-                                  onClick={() => setEditingTax(tax)}
-                                  preventDoubleClick={true}
-                                >
-                                  <Pencil size={14} /> 수정
-                                </Button>
-                                <Button
-                                  variant="outline"
-                                  size="small"
-                                  onClick={() => handleDeleteTaxItem(tax.id)}
-                                  preventDoubleClick={true}
-                                >
-                                  <Trash2 size={14} /> 삭제
-                                </Button>
-                              </div>
-                            </div>
-                          </MGCard>
-                        ))
-                      ) : (
-                        <div className="mg-tax-empty" style={{ textAlign: 'center', padding: 'var(--mg-layout-section-padding)', color: 'var(--mg-color-text-secondary)' }}>
-                          <Calculator size={48} style={{ marginBottom: 'var(--mg-layout-gap)' }} />
-                          <p className="mg-tax-empty__text">세금 항목이 없습니다.</p>
+                          </div>
                         </div>
-                      )}
-                    </div>
+                        {statistics.breakdown && (
+                          <table className="salary-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
+                            <thead>
+                              <tr style={{ borderBottom: '1px solid var(--mg-color-border-main)' }}>
+                                <th style={{ textAlign: 'left', padding: 8 }}>세목</th>
+                                <th style={{ textAlign: 'right', padding: 8 }}>금액</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {TAX_BREAKDOWN_ORDER.map((key) => (
+                                <tr key={key} style={{ borderBottom: '1px solid var(--mg-color-border-sub)' }}>
+                                  <td style={{ padding: 8 }}>{TAX_BREAKDOWN_LABELS[key] || key}</td>
+                                  <td style={{ textAlign: 'right', padding: 8 }}>{formatCurrency(statistics.breakdown[key])}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        )}
+                        <p style={{ marginTop: 16, fontSize: 14, color: 'var(--mg-color-text-secondary)' }}>
+                          상단 「추가 세금 계산」으로 급여 계산에 추가 세금을 반영할 수 있습니다.
+                        </p>
+                      </>
+                    ) : (
+                      <div className="mg-tax-empty" style={{ textAlign: 'center', padding: 'var(--mg-layout-section-padding)', color: 'var(--mg-color-text-secondary)' }}>
+                        <Calculator size={48} style={{ marginBottom: 'var(--mg-layout-gap)' }} />
+                        <p className="mg-tax-empty__text">해당 기간 데이터가 없습니다.</p>
+                      </div>
+                    )}
                   </section>
                 )}
 
@@ -521,7 +496,7 @@ const ImprovedTaxManagement = () => {
                                       return (extraData.taxRate || 'N/A') + '%';
                                     }
                                     return 'N/A';
-                                  } catch (e) {
+                                  } catch {
                                     return 'N/A';
                                   }
                                 })()}
@@ -538,103 +513,113 @@ const ImprovedTaxManagement = () => {
         </div>
       </ContentArea>
 
-      {/* 세금 항목 생성 모달 */}
+      {/* 추가 세금 계산 모달 (POST /api/v1/admin/salary/tax/calculate) */}
           {showCreateModal && (
             <div className="modal show d-block tax-management-modal-backdrop">
               <div className="modal-dialog">
                 <div className="modal-content">
                   <div className="modal-header">
-                    <h5 className="modal-title">새 세금 항목 추가</h5>
-                    <button 
-                      type="button" 
-                      className="btn-close" 
+                    <h5 className="modal-title">추가 세금 계산</h5>
+                    <button
+                      type="button"
+                      className="btn-close"
                       onClick={() => setShowCreateModal(false)}
-                    ></button>
+                      aria-label="닫기"
+                    />
                   </div>
                   <div className="modal-body">
                     <div className="mb-3">
-                      <label className="form-label">세금명</label>
-                      <input
-                        type="text"
-                        className="form-control"
-                        value={newTaxItem.name}
-                        onChange={(e) => setNewTaxItem({...newTaxItem, name: e.target.value})}
-                      />
-                    </div>
-                    <div className="mb-3">
-                      <label className="form-label">카테고리</label>
+                      <label className="form-label" htmlFor="tax-modal-calculationId">급여 계산 *</label>
                       <select
+                        id="tax-modal-calculationId"
                         className="form-select"
-                        value={newTaxItem.category}
-                        onChange={(e) => setNewTaxItem({...newTaxItem, category: e.target.value})}
+                        value={newTaxItem.calculationId}
+                        onChange={(e) => setNewTaxItem({ ...newTaxItem, calculationId: e.target.value })}
                       >
-                        <option value="">카테고리 선택</option>
-                        {taxCategories.map(category => (
-                          <option key={category.id} value={category.codeValue}>
-                            {category.codeLabel}
+                        <option value="">선택</option>
+                        {calculationsList.map((c) => (
+                          <option key={c.id} value={c.id}>
+                            ID {c.id} · {c.consultant?.name ?? c.consultantId ?? '-'} · {formatCurrency(c.grossSalary)}
                           </option>
                         ))}
                       </select>
-                    </div>
-                    <div className="row">
-                      <div className="col-md-6">
-                        <div className="mb-3">
-                          <label className="form-label">금액</label>
-                          <input
-                            type="number"
-                            className="form-control"
-                            value={newTaxItem.amount}
-                            onChange={(e) => setNewTaxItem({...newTaxItem, amount: e.target.value})}
-                          />
-                        </div>
-                      </div>
-                      <div className="col-md-6">
-                        <div className="mb-3">
-                          <label className="form-label">세율 (%)</label>
-                          <input
-                            type="number"
-                            step="0.01"
-                            className="form-control"
-                            value={newTaxItem.taxRate}
-                            onChange={(e) => setNewTaxItem({...newTaxItem, taxRate: e.target.value})}
-                          />
-                        </div>
-                      </div>
+                      {calculationsList.length === 0 && (
+                        <small className="text-muted">해당 기간 급여 계산이 없습니다. 급여 관리에서 먼저 계산해 주세요.</small>
+                      )}
                     </div>
                     <div className="mb-3">
-                      <label className="form-label">납부일</label>
+                      <label className="form-label" htmlFor="tax-modal-grossAmount">과세 기준 금액 *</label>
                       <input
-                        type="date"
+                        id="tax-modal-grossAmount"
+                        type="number"
+                        min="0"
+                        step="1"
                         className="form-control"
-                        value={newTaxItem.dueDate}
-                        onChange={(e) => setNewTaxItem({...newTaxItem, dueDate: e.target.value})}
+                        value={newTaxItem.grossAmount}
+                        onChange={(e) => setNewTaxItem({ ...newTaxItem, grossAmount: e.target.value })}
                       />
                     </div>
                     <div className="mb-3">
-                      <label className="form-label">설명</label>
-                      <textarea
+                      <label className="form-label" htmlFor="tax-modal-taxType">세금 유형 *</label>
+                      <select
+                        id="tax-modal-taxType"
+                        className="form-select"
+                        value={newTaxItem.taxType}
+                        onChange={(e) => setNewTaxItem({ ...newTaxItem, taxType: e.target.value })}
+                      >
+                        {Object.entries(TAX_TYPE).map(([k, v]) => (
+                          <option key={k} value={v}>{v}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="mb-3">
+                      <label className="form-label" htmlFor="tax-modal-taxRate">세율 (%) *</label>
+                      <input
+                        id="tax-modal-taxRate"
+                        type="number"
+                        min="0"
+                        step="0.01"
                         className="form-control"
-                        rows="3"
+                        value={newTaxItem.taxRate}
+                        onChange={(e) => setNewTaxItem({ ...newTaxItem, taxRate: e.target.value })}
+                      />
+                    </div>
+                    <div className="mb-3">
+                      <label className="form-label" htmlFor="tax-modal-taxName">세금명 (선택)</label>
+                      <input
+                        id="tax-modal-taxName"
+                        type="text"
+                        className="form-control"
+                        value={newTaxItem.taxName}
+                        onChange={(e) => setNewTaxItem({ ...newTaxItem, taxName: e.target.value })}
+                      />
+                    </div>
+                    <div className="mb-3">
+                      <label className="form-label" htmlFor="tax-modal-description">설명 (선택)</label>
+                      <textarea
+                        id="tax-modal-description"
+                        className="form-control"
+                        rows={2}
                         value={newTaxItem.description}
-                        onChange={(e) => setNewTaxItem({...newTaxItem, description: e.target.value})}
-                      ></textarea>
+                        onChange={(e) => setNewTaxItem({ ...newTaxItem, description: e.target.value })}
+                      />
                     </div>
                   </div>
                   <div className="modal-footer">
-                    <button 
-                      type="button" 
-                      className="btn btn-secondary" 
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
                       onClick={() => setShowCreateModal(false)}
                     >
                       취소
                     </button>
-                    <button 
-                      type="button" 
-                      className="btn btn-primary" 
+                    <button
+                      type="button"
+                      className="btn btn-primary"
                       onClick={handleCreateTaxItem}
                       disabled={loading}
                     >
-                      {loading ? '생성 중...' : '생성'}
+                      {loading ? '계산 중...' : '계산 반영'}
                     </button>
                   </div>
                 </div>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 // import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
-import { apiGet, apiPost, apiPut } from '../../utils/ajax';
+import StandardizedApi from '../../utils/standardizedApi';
+import { SALARY_API_ENDPOINTS, getConsultantGradeUpdateUrl } from '../../constants/salaryConstants';
 import { showNotification } from '../../utils/notification';
 import { getGradeSalaryMap, getGradeKoreanName } from '../../utils/commonCodeUtils';
 import ErpModal from './common/ErpModal';
@@ -102,7 +103,9 @@ const SalaryProfileFormModal = ({
     // 공통 코드에서 등급 정보 로드
     const loadGradeTableData = async () => {
         try {
-            const response = await apiGet('/api/v1/common-codes?codeGroup=CONSULTANT_GRADE');
+            const response = await StandardizedApi.get('/api/v1/common-codes', {
+              codeGroup: 'CONSULTANT_GRADE'
+            });
             if (Array.isArray(response)) {
                 const baseOptions = [
                     { type: 'FAMILY_CONSULTATION', name: '가족상담', baseAmount: 3000 },
@@ -159,14 +162,18 @@ const SalaryProfileFormModal = ({
             console.log('🔍 급여 프로필 폼 초기 데이터 로드 시작');
             
             // 급여 유형 로드
-            const salaryTypeResponse = await apiGet('/api/v1/common-codes?codeGroup=SALARY_TYPE');
+            const salaryTypeResponse = await StandardizedApi.get('/api/v1/common-codes', {
+              codeGroup: 'SALARY_TYPE'
+            });
             console.log('📊 급여 유형 응답:', salaryTypeResponse);
             if (Array.isArray(salaryTypeResponse)) {
                 setSalaryTypes(salaryTypeResponse);
             }
 
             // 옵션 유형 로드
-            const optionTypeResponse = await apiGet('/api/v1/common-codes?codeGroup=SALARY_OPTION_TYPE');
+            const optionTypeResponse = await StandardizedApi.get('/api/v1/common-codes', {
+              codeGroup: 'SALARY_OPTION_TYPE'
+            });
             console.log('📊 옵션 유형 응답:', optionTypeResponse);
             if (Array.isArray(optionTypeResponse)) {
                 setOptionTypes(optionTypeResponse);
@@ -224,10 +231,11 @@ const SalaryProfileFormModal = ({
         
         // 상담사 등급 업데이트
         try {
-            const response = await apiPut(`/api/admin/consultants/${consultant.id}/grade`, {
-                grade: newGrade
-            });
-            
+            const response = await StandardizedApi.put(
+              getConsultantGradeUpdateUrl(consultant.id),
+              { grade: newGrade }
+            );
+
             if (response && response.success) {
                 showNotification('상담사 등급이 업데이트되었습니다.', 'success');
                 // 상담사 정보도 업데이트
@@ -306,7 +314,7 @@ const SalaryProfileFormModal = ({
                 options: selectedOptions.filter(opt => opt.type && opt.amount > 0)
             };
 
-            const response = await apiPost('/api/v1/admin/salary/profiles', profileData);
+            const response = await StandardizedApi.post(SALARY_API_ENDPOINTS.PROFILES, profileData);
             
             if (response && response.success) {
                 showNotification('급여 프로필이 성공적으로 생성되었습니다.', 'success');

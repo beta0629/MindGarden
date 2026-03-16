@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Receipt, User, Calendar, AlertCircle, RefreshCw } from 'lucide-react';
 import UnifiedModal from './modals/UnifiedModal';
 // import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
-import { SALARY_CSS_CLASSES, SALARY_MESSAGES, TAX_TYPE_LABELS } from '../../constants/salaryConstants';
-import { apiGet } from '../../utils/ajax';
+import { SALARY_CSS_CLASSES, SALARY_MESSAGES, TAX_TYPE_LABELS, SALARY_API_ENDPOINTS } from '../../constants/salaryConstants';
+import StandardizedApi from '../../utils/standardizedApi';
 
 /**
  * 세금 내역 보기 모달 컴포넌트
@@ -46,12 +46,15 @@ const TaxDetailsModal = ({
     setError(null);
     
     try {
-      const response = await apiGet(`/api/v1/admin/salary/tax/${calculationId}`);
-      
-      if (response.success) {
-        setTaxDetails(response.data?.taxDetails || []);
+      const response = await StandardizedApi.get(
+        `${SALARY_API_ENDPOINTS.TAX_DETAILS}/${calculationId}`
+      );
+
+      if (response && (response.success !== false)) {
+        const data = response.data ?? response;
+        setTaxDetails(data?.taxDetails ?? []);
       } else {
-        setError(response.message || SALARY_MESSAGES.CALCULATION_ERROR);
+        setError((response && response.message) || SALARY_MESSAGES.CALCULATION_ERROR);
       }
     } catch (err) {
       console.error('세금 내역 조회 실패:', err);

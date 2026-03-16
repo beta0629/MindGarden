@@ -147,19 +147,18 @@ public class SalaryBatchServiceImpl implements SalaryBatchService {
     
     @Override
     public BatchStatus getBatchStatus(int targetYear, int targetMonth) {
-        log.info("🔍 급여 배치 상태 조회: {}-{}", targetYear, targetMonth);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        log.info("🔍 급여 배치 상태 조회: {}-{}, tenantId={}", targetYear, targetMonth, tenantId);
         
-        LocalDate targetDate = LocalDate.of(targetYear, targetMonth, 1);
         List<User> consultants = getTargetConsultants(null);
         
-        // 해당 월의 급여 계산 기록 조회 (기간으로 조회)
-        LocalDate periodStart = LocalDate.of(targetYear, targetMonth, 1);
-        LocalDate periodEnd = periodStart.withDayOfMonth(periodStart.lengthOfMonth());
-        
-        // 테넌트 기반으로 조회 (branchCode 필터링 제거)
+        // 해당 월의 급여 계산 기록 조회: 배치 실행과 동일한 기산일 기준 기간 사용 (테넌트 격리)
+        LocalDate[] period = salaryScheduleService.getCalculationPeriod(targetYear, targetMonth);
+        LocalDate periodStart = period[0];
+        LocalDate periodEnd = period[1];
         List<SalaryCalculation> existingCalculations = salaryCalculationRepository
-                .findByStatusAndCalculationPeriodStartBetween(
-                    SalaryCalculation.SalaryStatus.CALCULATED, periodStart, periodEnd);
+                .findByTenantIdAndStatusAndCalculationPeriodStartBetween(
+                    tenantId, SalaryCalculation.SalaryStatus.CALCULATED, periodStart, periodEnd);
         
         int processedConsultants = existingCalculations.size();
         int totalConsultants = consultants.size();

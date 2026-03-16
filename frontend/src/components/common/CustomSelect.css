@@ -91,6 +91,12 @@
   pointer-events: auto;
 }
 
+/* 포탈된 드롭다운은 부모 .custom-select 없이 렌더되므로 열림 시 단독 클래스로 표시 */
+.custom-select__dropdown--open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
 .custom-select__search {
   padding: 8px;
   border-bottom: 1px solid var(--color-border-secondary, #E8E8ED);

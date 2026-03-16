@@ -200,7 +200,7 @@ const CustomSelect = ({
 
       {/* 드롭다운 메뉴: 포탈로 body에 렌더해 스크롤 시 옵션 패널이 모달과 함께 움직이지 않도록 함 */}
       {isOpen && ReactDOM.createPortal(
-        <div ref={dropdownRef} className="custom-select__dropdown">
+        <div ref={dropdownRef} className={`custom-select__dropdown ${isOpen ? 'custom-select__dropdown--open' : ''}`}>
           {safeOptions.length > 5 && (
             <div className="custom-select__search">
               <input

@@ -275,8 +275,8 @@ const AdminDashboardV2 = ({ user: propUser }) => {
   const [mergeDuplicateLoading, setMergeDuplicateLoading] = useState(false);
   const [chartPeriod, setChartPeriod] = useState('monthly');
   const [lineChartPeriod, setLineChartPeriod] = useState('monthly');
-  /** 상담사 별 통합데이터 뷰: 'table' | 'graph' | 'progress', 기본 테이블 */
-  const [integratedDataView, setIntegratedDataView] = useState('table');
+  /** 상담사 별 통합데이터 뷰: 'table' | 'graph' | 'progress', 기본 프로그레스 바 */
+  const [integratedDataView, setIntegratedDataView] = useState('progress');
   const [searchValue, setSearchValue] = useState('');
   /** 헤더 통합 검색(placeholder 전용, 라우트/메뉴 연동 없음) */
   /** 상담 현황 추이 막대 차트 색상 (CSS 변수 resolved, Canvas용) */

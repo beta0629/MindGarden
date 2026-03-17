@@ -382,6 +382,18 @@ const AdminDashboardV2 = ({ user: propUser }) => {
       const consultationRes = settled[5].status === 'fulfilled' ? settled[5].value : dummyFailedResponse();
       const scheduleStatsRes = settled[6].status === 'fulfilled' ? settled[6].value : dummyFailedResponse();
 
+      // [Dashboard Charts] consultation-completion 호출 결과(상담 현황 추이/예약 vs 완료 차트용)
+      if (settled[5].status === 'rejected') {
+        console.warn('[Dashboard Charts] consultation-completion 요청 실패 (rejected):', settled[5].reason);
+      } else {
+        const res = settled[5].value;
+        console.log('[Dashboard Charts] consultation-completion 응답:', {
+          status: res.status,
+          ok: res.ok,
+          statusText: res.statusText
+        });
+      }
+
       let totalConsultants = 0;
       let totalClients = 0;
       let totalMappings = 0;
@@ -454,6 +466,14 @@ const AdminDashboardV2 = ({ user: propUser }) => {
             consultantStatistics: Array.isArray(payload.statistics) ? payload.statistics : []
           };
         }
+        console.log('[Dashboard Charts] consultation-completion payload:', {
+          monthlyDataLength: consultationStats.monthlyData?.length ?? 0,
+          weeklyDataLength: consultationStats.weeklyData?.length ?? 0,
+          monthlySample: consultationStats.monthlyData?.[0],
+          weeklySample: consultationStats.weeklyData?.[0]
+        });
+      } else {
+        console.warn('[Dashboard Charts] consultation-completion 응답이 ok가 아님 (차트 데이터 미적용). status:', consultationRes.status);
       }
 
       let schedulePendingCount = null;

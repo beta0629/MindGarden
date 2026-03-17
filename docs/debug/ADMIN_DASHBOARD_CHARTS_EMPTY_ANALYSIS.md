@@ -161,7 +161,7 @@
 
 ### 7.1 호출 API 목록·순서
 
-`loadStats()` (AdminDashboardV2.js 362~506행)는 **한 번의 `Promise.all`**로 아래 **7개 API**를 **동시에** 호출한다.
+`loadStats()` (AdminDashboardV2.js 344~406행)는 **한 번의 `Promise.allSettled`**로 아래 **7개 API**를 **동시에** 호출한다. (과거 `Promise.all`에서 변경됨 — 일부 API 실패 시에도 성공한 결과만으로 setStats 호출)
 
 | 순서 | 변수명 | URL | 용도 |
 |------|--------|-----|------|
@@ -217,3 +217,95 @@
   - `AdminController.getScheduleStatistics` (2489~2521행) — 스케줄 상태별 통계  
   - `AdminServiceImpl.getConsultationMonthlyTrend` (4410~4448행), `getConsultationWeeklyTrend` (4449~4484행)
 - **스킬**: `.cursor/skills/core-solution-debug/SKILL.md`, `docs/standards/ERROR_HANDLING_STANDARD.md`, `docs/standards/LOGGING_STANDARD.md`
+
+---
+
+## 9. 정밀 원인 분석 (Promise.allSettled · consultation-completion 전용)
+
+**작성일**: 2025-03-17  
+**목적**: 상담 현황 추이·예약 vs 완료 두 그래프 미표시에 대한 라인 단위 호출·파싱 흐름 및 백엔드 응답 형식 검증.
+
+### 9.1 consultation-completion API 호출·파싱 흐름 (AdminDashboardV2.js)
+
+| 라인 | 코드/동작 | 설명 |
+|------|-----------|------|
+| 354 | `const dummyFailedResponse = () => ({ ok: false, json: () => Promise.resolve({}) });` | fetch 실패(rejected) 시 사용할 더미. `ok: false` 이므로 이후 `consultationRes.ok` 분기에서 진입 안 함. |
+| 355~363 | `const settled = await Promise.allSettled([ ... fetch(consultation-completion) ... ]);` | 7개 fetch 병렬 실행. **consultation-completion**은 **settled[5]** (인덱스 5). |
+| 365~371 | `consultationRes = settled[5].status === 'fulfilled' ? settled[5].value : dummyFailedResponse();` | **fulfilled**: 실제 `Response` 사용. **rejected**(네트워크 오류 등): `dummyFailedResponse()` → `consultationRes.ok === false`. |
+| 394~400 | 로컬 `consultationStats` 초기값 | `monthlyData: []`, `weeklyData: []`, `consultantStatistics: []` 등. |
+| 405~416 | `if (consultationRes.ok) { const d = await consultationRes.json(); ... consultationStats = { ... monthlyData: Array.isArray(payload.monthlyData) ? payload.monthlyData : [], weeklyData: Array.isArray(payload.weeklyData) ? payload.weeklyData : [], ... }; }` | **ok가 true일 때만** `consultationStats` 갱신. **ok가 false**이면 이 블록 미진입 → **consultationStats는 위 초기값(빈 배열) 유지**. |
+| 406~407 | `const d = await consultationRes.json(); const payload = d?.data != null ? d.data : d;` | 응답 본문에서 `data` 우선 사용. 백엔드가 `{ success: true, data: { ... } }` 형식이면 `payload === data`. |
+| 452~453 | `monthlyData: Array.isArray(payload.monthlyData) ? payload.monthlyData : []` | 프론트 기대: `payload.monthlyData`, `payload.weeklyData` 배열. 없거나 배열 아니면 `[]`. |
+| 430~434 | `setStats({ ... consultationStats });` | 위에서 채운(또는 빈 배열로 유지된) `consultationStats`를 state에 반영. |
+
+**결론 (흐름)**  
+- **consultation-completion이 4xx/5xx** → fetch는 reject 안 함 → `status === 'fulfilled'`, `value`는 `Response`이고 `ok === false` → `if (consultationRes.ok)` 미진입 → **consultationStats는 갱신되지 않고 초기값(monthlyData/weeklyData 빈 배열) 유지** → setStats에 빈 consultationStats 전달 → 차트는 "기간 내 완료된 상담이 없습니다." / "기간 내 데이터가 없습니다." 표시.  
+- **consultation-completion이 fetch 단계에서 예외**(네트워크 오류 등) → `status === 'rejected'` → `consultationRes = dummyFailedResponse()` → `ok === false` → 동일하게 **consultationStats 미갱신(빈 배열 유지)**.
+
+### 9.2 백엔드 응답 형식 검증
+
+- **Controller**: `AdminController.getConsultationCompletionStatistics(period, session)`  
+  - **파일**: `src/main/java/com/coresolution/consultation/controller/AdminController.java` (2342~2406행)
+- **응답 생성**: `Map<String, Object> data`에 아래 키로 넣은 뒤 `return success(data);` (2405행)
+  - `data.put("monthlyData", monthlyData);` (2399행)
+  - `data.put("weeklyData", weeklyData);` (2400행)
+  - 그 외: `statistics`, `count`, `period`, `totalCompleted`, `completionRate`, `completionRateChange`
+- **ApiResponse**: `success(data)` → JSON 예: `{ "success": true, "data": { "monthlyData": [...], "weeklyData": [...], ... } }`
+- **프론트 기대와 일치**: `payload = d.data` → `payload.monthlyData`, `payload.weeklyData` 키 이름·중첩 구조 일치.  
+- **Service 데이터 구조** (`AdminServiceImpl` 4410~4484행):
+  - **monthlyData** 각 항목: `period` (yyyy-MM), `completedCount`, `bookedCount`
+  - **weeklyData** 각 항목: `period` (MM/dd), `completedCount`, `bookedCount`  
+  프론트 차트는 `period`, `completedCount`, `bookedCount`(또는 `scheduledCount`) 사용 → **필드명 일치**.
+
+즉, **백엔드가 200으로 정상 반환할 경우** 응답 구조·필드명은 프론트 파싱과 **불일치 없음**. 문제는 (1) API가 200이 아니거나, (2) 200인데 `monthlyData`/`weeklyData`가 빈 배열이거나, (3) 200인데 다른 키로만 내려오는 경우로 한정됨.
+
+### 9.3 데이터가 비어 나오는 경우 구분
+
+| 구분 | 상황 | consultationStats 결과 | 차트 메시지 |
+|------|------|--------------------------|-------------|
+| **(가)** | **API 4xx/5xx 또는 fetch 예외** | `consultationRes.ok === false` → consultationStats **미갱신**(초기값 유지) → monthlyData/weeklyData = [] | "기간 내 완료된 상담이 없습니다." / "기간 내 데이터가 없습니다." |
+| **(나)** | **API 200이지만 monthlyData/weeklyData가 빈 배열이거나 없음** | payload.monthlyData/weeklyData가 [] 또는 비배열 → consultationStats에 빈 배열 설정 → getEmpty* 폴백으로 6구간 0 → allZero | 동일 |
+| **(다)** | **API 200이고 데이터는 있으나 프론트 파싱 경로 오류** | 예: 백엔드가 `monthlyTrend` 등 다른 키로만 반환 시 `payload.monthlyData` 없음 → [] 폴백 | 동일 (현재 백엔드는 `monthlyData`/`weeklyData` 사용으로 (다) 해당 없음) |
+| **(라)** | **API 200이고 monthlyData/weeklyData에 항목은 있으나 전부 0** | DB에 해당 기간 완료/예약 없음 → 모든 completedCount/bookedCount 0 → allZero | 동일 (데이터 없음이 정상인 경우) |
+
+**Promise.allSettled 적용 후**:  
+- 다른 API 하나가 실패해도 consultation-completion만 성공하면 consultationStats는 **정상 갱신**됨.  
+- **consultation-completion만** 실패(4xx/5xx 또는 fetch 예외)하면 consultationStats는 **갱신되지 않고 빈 배열 유지** → 위 (가)와 동일 결과.
+
+### 9.4 재현·검증 방법
+
+1. **브라우저 Network**
+   - 관리자 대시보드 접속 → F12 → Network → Fetch/XHR.
+   - `consultation-completion` 포함 요청 선택 (`GET /api/v1/admin/statistics/consultation-completion`).
+   - **Status**: 200이면 호출 성공. 401/403/500 등이면 **(가)** 가능성.
+   - **Response (JSON)**:
+     - 최상위 `success`, `data` 존재 여부.
+     - `data.monthlyData`, `data.weeklyData` 존재·배열 여부·길이·요소에 `period`, `completedCount`, `bookedCount` 포함 여부.
+   - 200 + monthlyData/weeklyData 비어 있거나 전부 0 → **(나)** 또는 **(라)**.  
+   - 200 + 해당 키 없음/다른 구조 → **(다)**(현재 백엔드 코드상 가능성 낮음).
+
+2. **일시적 로그 제안 (코드 수정은 제안만, core-coder 적용)**
+   - **위치 1**: `loadStats` 내, `consultationRes` 처리 직후 (예: 416행 다음).  
+     `console.log('[consultation-completion] ok=', consultationRes.ok, 'payloadKeys=', payload ? Object.keys(payload) : null, 'monthlyLen=', payload?.monthlyData?.length, 'weeklyLen=', payload?.weeklyData?.length);`  
+     (payload는 `if (consultationRes.ok)` 블록 안에서만 정의되므로, 블록 안 마지막에 로그하는 것이 안전.)
+   - **위치 2**: 동일 블록 내, `consultationStats` 할당 직후.  
+     `console.log('[consultation-completion] consultationStats.monthlyData.length=', consultationStats.monthlyData?.length, 'weeklyData.length=', consultationStats.weeklyData?.length);`  
+   - **목적**: API 200 여부, payload 구조, 최종 consultationStats 배열 길이를 한 번에 확인.
+
+### 9.5 결론·조치 제안
+
+- **근본 원인 (한 줄)**  
+  **"consultation-completion API가 4xx/5xx 또는 fetch 예외로 실패해 consultationRes.ok가 false이므로 consultationStats가 갱신되지 않고, monthlyData/weeklyData가 빈 배열로 유지되어 두 차트가 모두 '데이터 없음' 메시지를 표시함."**  
+  또는 **"API는 200이지만 백엔드에서 monthlyData/weeklyData를 빈 배열로 반환(tenantId 미설정·예외 등)하거나, 해당 기간 DB에 완료/예약 데이터가 없어 전부 0으로 나와 allZero 처리됨."**
+
+- **조치**
+  1. **즉시 확인**: Network에서 `GET /api/v1/admin/statistics/consultation-completion` **Status**와 **Response body** (`data.monthlyData`, `data.weeklyData`) 확인.
+  2. **4xx/5xx인 경우**: 백엔드 로그에서 tenantId·세션·예외 메시지 확인. Controller 2354~2360행(로그인/tenantId 검증) 및 AdminServiceImpl getConsultationMonthlyTrend/getConsultationWeeklyTrend 내 tenantId·예외 로그 확인. → **백엔드 수정**(세션/tenantId 설정·에러 핸들링) 필요.
+  3. **200인데 monthlyData/weeklyData 빈 배열**: AdminServiceImpl 4413~4416, 4452~4455행 — tenantId 없음 시 빈 리스트 반환. TenantContextHolder 설정(Controller 2366행) 이후 서비스에서 getTenantId()가 null을 반환하는지 로그로 확인. → **백엔드 수정**(tenantId 전달·컨텍스트 유지) 필요.
+  4. **200이고 배열에 데이터 있는데 차트 미표시**: 프론트 파싱 경로·payload 키 재확인(현재 코드상 일치). 위 9.4 로그로 payload/consultationStats 확인 후 **프론트 파싱 수정** 여부 판단.
+  5. **200이고 데이터 있으나 전부 0**: "기간 내 데이터가 없습니다"는 **정상 동작**. 필요 시 안내 문구 개선만 core-coder에 요청.
+
+- **core-coder 전달 포인트**
+  - **백엔드**: `AdminController.getConsultationCompletionStatistics` 호출 전·후 tenantId 로그; `AdminServiceImpl.getConsultationMonthlyTrend`/`getConsultationWeeklyTrend` 내 getTenantId() 결과·예외 로그. tenantId null 시 원인(세션/컨텍스트) 수정.
+  - **프론트**: 9.4의 임시 로그 추가로 응답·consultationStats 확인 후, 필요 시 에러 시 "차트 데이터를 불러오지 못했습니다" 등 구체 메시지 또는 재시도 로직 검토.
+  - **체크리스트**: 수정 후 동일 환경에서 consultation-completion 200·Response에 monthlyData/weeklyData 존재 확인 → 상담 현황 추이·예약 vs 완료 차트에 막대/라인 표시 여부 확인.

@@ -70,8 +70,8 @@
   color: #fff;
 }
 .mg-v2-ad-b0kla .mg-v2-badge.error {
-  background: var(--ad-b0kla-red, #dc3545);
-  color: #fff;
+  background: var(--ad-b0kla-danger);
+  color: var(--mg-white);
 }
 .mg-v2-ad-b0kla .mg-v2-badge.secondary {
   background: var(--ad-b0kla-text-secondary);
@@ -687,14 +687,14 @@
   border-bottom: none;
 }
 
-/* 순위 변동 펄스: 상승(녹색), 하락(주황) */
+/* 순위 변동 펄스: 상승(녹색), 하락(주황) — 디자인 토큰만 사용 */
 @keyframes mg-v2-ad-b0kla-rank-pulse-up {
   0%, 100% { background-color: transparent; box-shadow: none; }
-  50% { background-color: var(--ad-b0kla-green-bg, rgba(0, 120, 80, 0.08)); box-shadow: 0 0 0 2px var(--ad-b0kla-green); }
+  50% { background-color: var(--ad-b0kla-green-bg); box-shadow: 0 0 0 2px var(--ad-b0kla-green); }
 }
 @keyframes mg-v2-ad-b0kla-rank-pulse-down {
   0%, 100% { background-color: transparent; box-shadow: none; }
-  50% { background-color: rgba(255, 152, 0, 0.06); box-shadow: 0 0 0 2px var(--ad-b0kla-orange); }
+  50% { background-color: var(--ad-b0kla-orange-bg); box-shadow: 0 0 0 2px var(--ad-b0kla-orange); }
 }
 
 .mg-v2-ad-b0kla__integrated-data-row--rank-up {
@@ -710,10 +710,10 @@
     animation: none;
   }
   .mg-v2-ad-b0kla__integrated-data-row--rank-up {
-    background-color: var(--ad-b0kla-green-bg, rgba(0, 120, 80, 0.08));
+    background-color: var(--ad-b0kla-green-bg);
   }
   .mg-v2-ad-b0kla__integrated-data-row--rank-down {
-    background-color: rgba(255, 152, 0, 0.06);
+    background-color: var(--ad-b0kla-orange-bg);
   }
 }
 
@@ -765,10 +765,10 @@
     animation: none;
   }
   .mg-v2-ad-b0kla__integrated-progress-row--rank-up {
-    background-color: var(--ad-b0kla-green-bg, rgba(0, 120, 80, 0.08));
+    background-color: var(--ad-b0kla-green-bg);
   }
   .mg-v2-ad-b0kla__integrated-progress-row--rank-down {
-    background-color: rgba(255, 152, 0, 0.06);
+    background-color: var(--ad-b0kla-orange-bg);
   }
 }
 
@@ -1154,7 +1154,6 @@
 /* ===== B0KlA 모달 공통 스타일 (UnifiedModal + className="mg-v2-ad-b0kla") ===== */
 /* 오버레이: 상담사/내담자/매칭 등 어드민 모달에서 반투명 배경 */
 .mg-modal-overlay.mg-v2-ad-b0kla {
-  --ad-b0kla-overlay-bg: var(--droplet-bg-dark, rgba(0, 0, 0, 0.4));
   background: var(--ad-b0kla-overlay-bg);
 }
 
@@ -1392,8 +1391,8 @@
   height: 96px;
   border-radius: 50%;
   overflow: hidden;
-  background: var(--ad-b0kla-bg-secondary, #f0f0f0);
-  border: 2px solid var(--ad-b0kla-border, #e0e0e0);
+  background: var(--ad-b0kla-bg);
+  border: 2px solid var(--ad-b0kla-border);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1405,7 +1404,7 @@
   object-fit: cover;
 }
 .mg-v2-ad-b0kla .mg-v2-profile-photo-placeholder {
-  color: var(--ad-b0kla-text-secondary, #888);
+  color: var(--ad-b0kla-text-secondary);
   display: flex;
   align-items: center;
   justify-content: center;

@@ -34,6 +34,28 @@ export const CHART_COLORS = {
   BLACK: 'var(--mg-black)'
 };
 
+/**
+ * B0KlA 대시보드 차트용 Canvas fallback 색상 (hex).
+ * unified-design-tokens.css --cs-success-600, --cs-primary-600 등과 동일 값.
+ * CSS 변수가 Canvas에서 미해석될 때만 사용.
+ */
+export const B0KLA_CHART_BAR_FALLBACK = {
+  FILL: '#059669',
+  BORDER: '#2563eb'
+};
+
+/**
+ * B0KlA 단계별 도넛 차트용 hex 색상 (5단계).
+ * unified-design-tokens: teal-600, orange-400, purple-700, primary-600, slate-500.
+ */
+export const B0KLA_STEP_CHART_HEX = [
+  '#0d9488',
+  '#fb923c',
+  '#7c3aed',
+  '#2563eb',
+  '#64748b'
+];
+
 export const CHART_GRADIENTS = {
   PRIMARY: ['var(--mg-primary-500)', '#0056b3'],
   SUCCESS: ['var(--mg-success-500)', '#1e7e34'],

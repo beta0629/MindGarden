@@ -43,13 +43,7 @@ import AdminDashboardMonitoring from '../admin/AdminDashboard/AdminDashboardMoni
 import UnifiedModal from '../common/modals/UnifiedModal';
 import StandardizedApi from '../../utils/standardizedApi';
 import Chart from '../common/Chart';
-import { CHART_TYPES } from '../../constants/charts';
-
-/** 상담 현황 추이 막대 차트 B0KlA 색상 fallback (Canvas가 CSS 변수 미해석 시) */
-const CHART_BAR_FALLBACK = {
-  FILL: '#059669',
-  BORDER: '#2563eb'
-};
+import { CHART_TYPES, B0KLA_CHART_BAR_FALLBACK, B0KLA_STEP_CHART_HEX } from '../../constants/charts';
 
 /** 단계별 현황 도넛 차트 라벨 (5단계) */
 const STEP_CHART_LABELS = [
@@ -58,24 +52,6 @@ const STEP_CHART_LABELS = [
   '회기 권한',
   '스케줄 등록',
   '회계처리'
-];
-
-/** 단계별 도넛 B0KlA 색상 (CSS 변수, CSS/스타일용) */
-const STEP_CHART_COLORS = [
-  'var(--ad-b0kla-green)',
-  'var(--ad-b0kla-orange)',
-  'var(--ad-b0kla-green)',
-  'var(--ad-b0kla-blue)',
-  'var(--ad-b0kla-text-secondary)'
-];
-
-/** 단계별 도넛 차트 hex 색상 (서로 구분되게: teal, orange, violet, blue, gray) */
-const STEP_CHART_COLORS_HEX = [
-  '#0d9488', /* teal - 매칭 */
-  '#ea580c', /* orange - 입금 확인 */
-  '#7c3aed', /* violet - 회기 권한 */
-  '#2563eb', /* blue - 스케줄 등록 */
-  '#64748b'  /* gray - 회계처리 */
 ];
 import {
   AdminMetricsVisualization,
@@ -277,7 +253,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
   const [lineChartPeriod, setLineChartPeriod] = useState('monthly');
   /** 상담사 별 통합데이터 뷰: 'table' | 'graph' | 'progress', 기본 프로그레스 바 */
   const [integratedDataView, setIntegratedDataView] = useState('progress');
-  /** 상담사 통합데이터 집계 기간: 'all' | 'month' | 'year' */
+  /** 상담사 통합데이터 집계 기간: 'all' | 'month' | 'year'. TODO: 년도별은 현재 전체와 동일 동작. consultation-completion에 year 파라미터 지원 시 연동 예정 (ADMIN_DASHBOARD_V2_INTEGRATED_DATA_PERIOD_AND_RANK_PULSE_PLAN Phase 1). */
   const [integratedDataPeriodType, setIntegratedDataPeriodType] = useState('all');
   const [integratedDataYear, setIntegratedDataYear] = useState(() => new Date().getFullYear());
   const [integratedDataMonth, setIntegratedDataMonth] = useState(() => new Date().getMonth() + 1);
@@ -291,8 +267,8 @@ const AdminDashboardV2 = ({ user: propUser }) => {
   /** 헤더 통합 검색(placeholder 전용, 라우트/메뉴 연동 없음) */
   /** 상담 현황 추이 막대 차트 색상 (CSS 변수 resolved, Canvas용) */
   const [chartBarColors, setChartBarColors] = useState({
-    fill: CHART_BAR_FALLBACK.FILL,
-    border: CHART_BAR_FALLBACK.BORDER
+    fill: B0KLA_CHART_BAR_FALLBACK.FILL,
+    border: B0KLA_CHART_BAR_FALLBACK.BORDER
   });
   const chartBarWrapperRef = useRef(null);
   const lineChartWrapperRef = useRef(null);
@@ -306,8 +282,8 @@ const AdminDashboardV2 = ({ user: propUser }) => {
     const fill = style.getPropertyValue('--ad-b0kla-green').trim();
     const border = style.getPropertyValue('--ad-b0kla-blue').trim();
     setChartBarColors({
-      fill: fill || CHART_BAR_FALLBACK.FILL,
-      border: border || CHART_BAR_FALLBACK.BORDER
+      fill: fill || B0KLA_CHART_BAR_FALLBACK.FILL,
+      border: border || B0KLA_CHART_BAR_FALLBACK.BORDER
     });
   }, [chartPeriod, lineChartPeriod]);
 
@@ -762,7 +738,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
       .catch(() => setIntegratedDataConsultationStats({ consultantStatistics: [] }));
   }, [integratedDataPeriodType, integratedDataYear, integratedDataMonth]);
 
-  /** 상담사 별 통합데이터: 평점(topConsultants) + 완료 통계(consultantStatistics)를 상담사명 기준 머지. 기간 선택 시 해당 기간 completion 사용 */
+  /** 상담사 별 통합데이터: 평점(topConsultants) + 완료 통계(consultantStatistics)를 상담사명 기준 머지. 월별만 period API 연동; 년도별/전체는 동일 소스(전체). */
   const completionListForIntegrated = integratedDataPeriodType === 'month' && integratedDataConsultationStats
     ? (integratedDataConsultationStats.consultantStatistics || [])
     : (stats.consultationStats?.consultantStatistics || []);
@@ -1205,8 +1181,8 @@ const AdminDashboardV2 = ({ user: propUser }) => {
                       datasets: [
                         {
                           data: stepValues,
-                          backgroundColor: STEP_CHART_COLORS_HEX,
-                          borderColor: STEP_CHART_COLORS_HEX,
+                          backgroundColor: B0KLA_STEP_CHART_HEX,
+                          borderColor: B0KLA_STEP_CHART_HEX,
                           borderWidth: 2
                         }
                       ]

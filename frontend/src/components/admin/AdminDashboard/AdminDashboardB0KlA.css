@@ -577,6 +577,63 @@
   margin: 0;
 }
 
+/* 상담사 별 통합데이터 카드 */
+.mg-v2-ad-b0kla__counselor-subtitle {
+  font-size: 0.75rem;
+  color: var(--ad-b0kla-text-secondary);
+  margin: -0.5rem 0 1rem 0;
+}
+
+.mg-v2-ad-b0kla__integrated-data-wrap {
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.mg-v2-ad-b0kla__integrated-data-header {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto;
+  gap: 0.5rem 1rem;
+  padding: 0.5rem 0;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--ad-b0kla-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  border-bottom: 1px solid var(--ad-b0kla-border);
+  margin-bottom: 0.5rem;
+}
+
+.mg-v2-ad-b0kla__integrated-data-th {
+  min-width: 0;
+}
+
+.mg-v2-ad-b0kla__integrated-data-list {
+  gap: 0.25rem;
+}
+
+.mg-v2-ad-b0kla__integrated-data-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto;
+  gap: 0.5rem 1rem;
+  align-items: center;
+  padding: 0.5rem 0;
+  font-size: 13px;
+  border-bottom: 1px solid var(--ad-b0kla-border);
+}
+
+.mg-v2-ad-b0kla__integrated-data-row:last-child {
+  border-bottom: none;
+}
+
+.mg-v2-ad-b0kla__integrated-data-cell {
+  color: var(--ad-b0kla-text-secondary);
+  white-space: nowrap;
+}
+
+.mg-v2-ad-b0kla__integrated-data-empty {
+  margin: 1rem 0 0;
+}
+
 /* ===== 관리자 기능 그리드 (B0KlA 4카드 스타일) ===== */
 .mg-v2-ad-b0kla__admin-grid {
   display: grid;

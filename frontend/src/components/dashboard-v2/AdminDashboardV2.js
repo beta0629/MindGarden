@@ -91,7 +91,6 @@ import { useResponsive } from '../../hooks/useResponsive';
 import { DesktopLayout, MobileLayout } from './templates';
 import { DEFAULT_MENU_ITEMS, BREAKPOINT_DESKTOP } from './constants/menuItems';
 import { ADMIN_ROUTES } from '../../constants/adminRoutes';
-import Avatar from '../common/Avatar';
 import MGButton from '../common/MGButton';
 import '../../styles/main.css';
 import '../../styles/unified-design-tokens.css';
@@ -231,7 +230,9 @@ const AdminDashboardV2 = ({ user: propUser }) => {
       completionRateChange: null,
       averageCompletionTime: 0,
       monthlyData: [],
-      weeklyData: []
+      weeklyData: [],
+      /** 상담사별 완료 건수/완료율 (consultation-completion API statistics) */
+      consultantStatistics: []
     }
   });
   const [refundStats, setRefundStats] = useState({
@@ -406,7 +407,8 @@ const AdminDashboardV2 = ({ user: propUser }) => {
         completionRate: 0,
         averageCompletionTime: 0,
         monthlyData: [],
-        weeklyData: []
+        weeklyData: [],
+        consultantStatistics: []
       };
 
       if (consultantsRes.ok) {
@@ -459,7 +461,8 @@ const AdminDashboardV2 = ({ user: propUser }) => {
             completionRateChange: payload.completionRateChange != null ? payload.completionRateChange : null,
             averageCompletionTime: payload.averageCompletionTime ?? 0,
             monthlyData: Array.isArray(payload.monthlyData) ? payload.monthlyData : [],
-            weeklyData: Array.isArray(payload.weeklyData) ? payload.weeklyData : []
+            weeklyData: Array.isArray(payload.weeklyData) ? payload.weeklyData : [],
+            consultantStatistics: Array.isArray(payload.statistics) ? payload.statistics : []
           };
         }
       }
@@ -726,15 +729,42 @@ const AdminDashboardV2 = ({ user: propUser }) => {
     if (user?.role) loadTodayStats();
   }, [sessionLoading, propUser, sessionUser, loadTodayStats]);
 
-  const topConsultantsData = (stats.consultantRatingStats?.topConsultants || [])
-    .slice(0, 4)
-    .map((c) => ({
-      name: c.consultantName || '-',
-      profileImageUrl: c.profileImageUrl || c.consultantProfileImageUrl || null,
-      rating: c.averageScore ? c.averageScore.toFixed(1) : '-',
-      barWidth: c.averageScore ? Math.min(100, (c.averageScore / 5) * 100) : 0,
-      barColor: 'var(--mg-success-600)'
-    }));
+  /** 상담사 별 통합데이터: 평점(topConsultants) + 완료 통계(consultantStatistics)를 상담사명 기준 머지 */
+  const consultantIntegratedData = (() => {
+    const byName = new Map();
+    const completionList = stats.consultationStats?.consultantStatistics || [];
+    completionList.forEach((s) => {
+      const name = s.consultantName || '-';
+      byName.set(name, {
+        consultantName: name,
+        consultantId: s.consultantId,
+        rating: null,
+        completedCount: s.completedCount ?? 0,
+        totalCount: s.totalCount ?? 0,
+        completionRate: s.completionRate != null ? s.completionRate : (s.totalCount > 0 ? Math.round((s.completedCount / s.totalCount) * 100) : 0)
+      });
+    });
+    const topList = stats.consultantRatingStats?.topConsultants || [];
+    topList.forEach((c) => {
+      const name = c.consultantName || '-';
+      const rating = c.averageHeartScore ?? c.averageScore;
+      if (byName.has(name)) {
+        byName.get(name).rating = rating;
+      } else {
+        byName.set(name, {
+          consultantName: name,
+          consultantId: c.consultantId,
+          rating: rating,
+          completedCount: 0,
+          totalCount: 0,
+          completionRate: 0
+        });
+      }
+    });
+    return Array.from(byName.values())
+      .sort((a, b) => (b.completedCount - a.completedCount) || ((b.rating ?? 0) - (a.rating ?? 0)))
+      .slice(0, 10);
+  })();
 
   const handleLogout = useCallback(async () => {
     try {
@@ -1147,35 +1177,35 @@ const AdminDashboardV2 = ({ user: propUser }) => {
           </section>
         </div>
         <div className="mg-v2-ad-b0kla__card">
-          <h3 className="mg-v2-ad-b0kla__counselor-title">우수 상담사 평점</h3>
-          <div className="mg-v2-ad-b0kla__counselor-list">
-            {topConsultantsData.length > 0 ? (
-              topConsultantsData.map((c) => (
-                <div
-                  key={`${c.name}-${c.rating}`}
-                  className="mg-v2-ad-b0kla__counselor-item"
-                >
-                  <Avatar
-                    profileImageUrl={c.profileImageUrl}
-                    displayName={c.name}
-                    className="mg-v2-ad-b0kla__counselor-avatar mg-v2-ad-b0kla__counselor-avatar--green mg-v2-consultant-detail-avatar"
-                  />
-                  <div className="mg-v2-ad-b0kla__counselor-data">
-                    <span className="mg-v2-ad-b0kla__counselor-name">{c.name}</span>
-                    <div className="mg-v2-ad-b0kla__counselor-rating-row">
-                      <span className="mg-v2-ad-b0kla__counselor-rating">{c.rating}</span>
-                      <div className="mg-v2-ad-b0kla__counselor-bar-track">
-                        <div
-                          className="mg-v2-ad-b0kla__counselor-bar-fill"
-                          style={{ width: `${c.barWidth}%`, backgroundColor: c.barColor }}
-                        />
-                      </div>
-                    </div>
-                  </div>
+          <h3 className="mg-v2-ad-b0kla__counselor-title">상담사 별 통합데이터</h3>
+          <p className="mg-v2-ad-b0kla__counselor-subtitle">평점·상담 완료·완료율</p>
+          <div className="mg-v2-ad-b0kla__integrated-data-wrap">
+            {consultantIntegratedData.length > 0 ? (
+              <>
+                <div className="mg-v2-ad-b0kla__integrated-data-header">
+                  <span className="mg-v2-ad-b0kla__integrated-data-th">상담사명</span>
+                  <span className="mg-v2-ad-b0kla__integrated-data-th">평점</span>
+                  <span className="mg-v2-ad-b0kla__integrated-data-th">완료 건수</span>
+                  <span className="mg-v2-ad-b0kla__integrated-data-th">완료율</span>
                 </div>
-              ))
+                <div className="mg-v2-ad-b0kla__counselor-list mg-v2-ad-b0kla__integrated-data-list">
+                  {consultantIntegratedData.map((row) => (
+                    <div
+                      key={`${row.consultantName}-${row.consultantId ?? ''}`}
+                      className="mg-v2-ad-b0kla__integrated-data-row"
+                    >
+                      <span className="mg-v2-ad-b0kla__counselor-name">{row.consultantName}</span>
+                      <span className="mg-v2-ad-b0kla__counselor-rating">
+                        {row.rating != null ? Number(row.rating).toFixed(1) : '-'}
+                      </span>
+                      <span className="mg-v2-ad-b0kla__integrated-data-cell">{row.completedCount}건</span>
+                      <span className="mg-v2-ad-b0kla__integrated-data-cell">{row.completionRate}%</span>
+                    </div>
+                  ))}
+                </div>
+              </>
             ) : (
-              <p className="mg-v2-ad-b0kla__counselor-empty">평가 데이터가 없습니다.</p>
+              <p className="mg-v2-ad-b0kla__counselor-empty mg-v2-ad-b0kla__integrated-data-empty">상담사 통합 데이터가 없습니다.</p>
             )}
           </div>
         </div>

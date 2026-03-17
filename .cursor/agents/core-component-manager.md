@@ -56,6 +56,7 @@ description: 화면 컴포넌트(UI) 및 서버 모듈 컴포넌트를 관리하
 
 ## 반드시 참조할 스킬·문서
 
+- **공통 모듈**: `/core-solution-common-modules`, `docs/standards/COMMON_MODULES_USAGE_GUIDE.md` — 공통 모듈 목록·사용 가이드. 중복 제안·배치 제안 시 "이미 있는 공통 모듈 우선 사용" 원칙 반영.
 - **캡슐화·모듈화**: `.cursor/skills/core-solution-encapsulation-modularization/SKILL.md`
 - **아토믹 디자인**: `.cursor/skills/core-solution-atomic-design/SKILL.md`
 - **프론트 구조**: `docs/standards/FRONTEND_DEVELOPMENT_STANDARD.md`, `docs/standards/COMPONENT_STRUCTURE_STANDARD.md`

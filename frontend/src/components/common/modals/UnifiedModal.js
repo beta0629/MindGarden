@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useId } from 'react';
 import ReactDOM from 'react-dom';
 import UnifiedLoading from '../UnifiedLoading';
 import '../../../styles/main.css'; // Ensure main.css is imported for mg-modal styles
@@ -51,6 +51,8 @@ const UnifiedModal = ({
   loading = false,
   ...props 
 }) => {
+  const titleId = useId();
+
   useEffect(() => {
     const handleEscape = (e) => {
       if (e.key === 'Escape' && isOpen) {
@@ -102,6 +104,9 @@ const UnifiedModal = ({
 
   const modalContent = (
     <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={title ? titleId : undefined}
       className={overlayClasses}
       onClick={handleBackdropClick}
       style={overlayStyle}
@@ -114,7 +119,7 @@ const UnifiedModal = ({
           <div className="mg-modal__header">
             <div className="mg-modal__header-content">
               {title && (
-                <h2 className="mg-modal__title">{title}</h2>
+                <h2 id={titleId} className="mg-modal__title">{title}</h2>
               )}
               {subtitle && (
                 <p className="mg-modal__subtitle">{subtitle}</p>

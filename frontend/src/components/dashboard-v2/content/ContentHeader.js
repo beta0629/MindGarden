@@ -13,12 +13,17 @@ import './ContentHeader.css';
 const ContentHeader = ({
   title = '대시보드 개요',
   subtitle = '오늘의 주요 지표와 현황을 한눈에 확인하세요.',
-  actions
+  actions,
+  titleId
 }) => {
   return (
     <header className="mg-v2-content-header">
       <div className="mg-v2-content-header__left">
-        {title ? <h1 className="mg-v2-content-header__title">{title}</h1> : null}
+        {title ? (
+          <h1 id={titleId} className="mg-v2-content-header__title">
+            {title}
+          </h1>
+        ) : null}
         {subtitle && <p className="mg-v2-content-header__subtitle">{subtitle}</p>}
       </div>
       {actions && <div className="mg-v2-content-header__right">{actions}</div>}

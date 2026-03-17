@@ -60,3 +60,18 @@
 - **매핑**: SUBAGENT_USAGE.md, core-solution-rules/SKILL.md에 배포·CI 행 추가.
 
 이 문서는 검토 결과 기록용이며, 추후 스킬 증설 시 참고합니다.
+
+---
+
+## 전체 점검 (2026-03)
+
+**점검일**: 2026-03-17
+
+서브에이전트 **스킬(SKILL.md)** 과 **에이전트 정의(.cursor/agents/core-*.md)** 를 전수 점검하고, 아래 항목을 보강·반영했다.
+
+- **공통 모듈 사용**: core-designer, core-publisher, core-coder, core-component-manager가 `/core-solution-common-modules` 및 `docs/standards/COMMON_MODULES_USAGE_GUIDE.md`를 반드시 참조하도록 스킬·에이전트·SUBAGENT_USAGE 보강
+- **크로스레퍼런스**: common-modules ↔ design-handoff, frontend, atomic-design, encapsulation-modularization, publisher, unified-modal 간 상호 참조 추가
+- **core-solution-rules**: "공통 모듈 우선" 원칙 문단 추가
+- **문서·역할 경계**: 실제 존재하는 문서 경로만 참조, 에이전트 역할(디자이너 코드 미작성, 퍼블리셔 HTML만 등) 정합성 확인
+
+**상세 변경 목록·파일 경로**: [docs/standards/SUBAGENT_SKILL_AUDIT_202603.md](SUBAGENT_SKILL_AUDIT_202603.md)

@@ -26,6 +26,7 @@ description: 디자이너(core-designer) 설계 산출물 형식·코더 전달 
 | **아토믹 계층** | 해당 화면/블록이 Atoms / Molecules / Organisms / Template 중 어디에 해당하는지, 기존 컴포넌트명(MGButton, FormInput 등) 재사용 여부 |
 | **상태·예외** | 비활성, 로딩, 에러, 빈 목록 등 표시 방식(문구·아이콘·레이아웃) |
 | **참조 문서** | 참고한 기존 스펙 또는 디자인 시스템 문서 경로. 예: `docs/design-system/ATOMIC_DESIGN_SYSTEM.md`, `docs/design-system/v2/MATCHING_SCHEDULE_INTEGRATION_SPEC.md` |
+| **공통 모듈 검토** | 새 컴포넌트 설계 전 **공통 모듈 우선 검토**. `/core-solution-common-modules` 스킬, `docs/standards/COMMON_MODULES_USAGE_GUIDE.md`, core-component-manager 산출물(인벤토리·배치 제안) 참조. 재사용 가능한 기존 컴포넌트가 있으면 스펙에 명시. |
 
 ## 산출물 형식 (문서 구조)
 
@@ -55,4 +56,4 @@ description: 디자이너(core-designer) 설계 산출물 형식·코더 전달 
 - **코드 미작성**: 디자이너는 HTML/CSS/JS 코드를 작성하지 않습니다. 스펙·설명만 작성하고, 구현은 **core-coder**가 수행합니다.
 - **연관 요소 명시**: 해당 화면에서 열리는 모달·탭·드로어가 있으면 같은 스펙 문서에 포함하거나, 별도 섹션으로 명시합니다.
 
-이 스킬은 **/core-solution-standardization** 과 함께 사용합니다. standardization은 전반 디자인·표준 원칙, handoff는 **산출물 형식·코더 전달**에 초점을 둡니다.
+이 스킬은 **/core-solution-standardization**, **/core-solution-common-modules**(새 컴포넌트 설계 시 공통 모듈 우선 검토)와 함께 사용합니다. standardization은 전반 디자인·표준 원칙, handoff는 **산출물 형식·코더 전달**에 초점을 둡니다.

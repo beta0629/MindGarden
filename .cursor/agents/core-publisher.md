@@ -43,10 +43,11 @@ description: 퍼블리셔 전용 서브에이전트. core-planner·core-designer
 ## 필수 참조
 
 - **스킬**: `.cursor/skills/core-solution-publisher/SKILL.md` — HTML 마크업 표준·일관성 규칙
+- **공통 모듈**: `/core-solution-common-modules`, `docs/standards/COMMON_MODULES_USAGE_GUIDE.md` — 마크업 시 사용할 공통 클래스·구조를 **우선 검토**. 새 클래스·구조를 만들지 않음.
 - **디자인 스펙**: core-designer 산출물 (docs/design-system/v2/*.md 등)
 - **아토믹**: `.cursor/skills/core-solution-atomic-design/SKILL.md`
 - **토큰·클래스**: `unified-design-tokens.css`, `AdminDashboardB0KlA.css` 클래스명 참조
-- **캡슐화·모듈화**: `/core-solution-encapsulation-modularization` — 동일 마크업 패턴은 공통 HTML 조각·클래스 세트로 정의해 반복 제거. 공통 컴포넌트 목록은 core-component-manager 산출물 참조.
+- **캡슐화·모듈화**: `/core-solution-encapsulation-modularization` — 동일 마크업 패턴은 공통 HTML 조각·클래스 세트로 정의해 반복 제거. 공통 컴포넌트 목록은 core-component-manager 산출물·COMMON_MODULES_USAGE_GUIDE 참조.
 
 ## 역할 제한
 

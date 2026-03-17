@@ -54,11 +54,12 @@ public class SystemNotificationServiceImpl implements SystemNotificationService 
     public Page<SystemNotification> getNotificationsForUser(Long userId, String userRole, Pageable pageable) {
         log.info("📢 사용자 공지 조회 - 사용자 ID: {}, 역할: {}", userId, userRole);
         
+        String tenantId = TenantContextHolder.getTenantId();
         List<String> targetTypes = getTargetTypesForUser(userRole);
         LocalDateTime now = LocalDateTime.now();
         
         Page<SystemNotification> notifications = systemNotificationRepository
-            .findValidNotificationsByTargetTypes(targetTypes, now, pageable);
+            .findValidNotificationsByTenantIdAndTargetTypes(tenantId, targetTypes, now, pageable);
         
         // 각 공지에 대해 읽음 여부 체크 (현재는 클라이언트에서 별도로 조회)
         // TODO: 엔티티에 transient 필드 추가하여 읽음 여부를 직접 포함하도록 개선

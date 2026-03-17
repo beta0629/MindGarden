@@ -84,6 +84,130 @@
   color: var(--mg-color-text-secondary, #5C6B61);
 }
 
+/* 탭 패널 래퍼 (탭과 본문 간격) */
+.mg-v2-ad-b0kla__section-wrapper {
+  margin-top: 0;
+}
+
+/* 목록·카드 그리드 (ADMIN_NOTIFICATIONS_UNIFIED_UI_SPEC §5) */
+.mg-v2-ad-notifications__list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 120px;
+}
+
+.mg-v2-ad-notifications__card-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 16px;
+  grid-template-columns: 1fr;
+}
+
+.mg-v2-ad-notifications__card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: var(--mg-color-surface-main, #F5F3EF);
+  border: 1px solid var(--mg-color-border-main, #D4CFC8);
+  border-radius: 10px;
+  padding: 16px 16px 16px 20px;
+  position: relative;
+}
+
+.mg-v2-ad-notifications__card-accent {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  border-radius: 2px 0 0 2px;
+  flex-shrink: 0;
+}
+
+.mg-v2-ad-notifications__card > div:first-of-type {
+  flex: 1;
+  min-width: 0;
+}
+
+.mg-v2-ad-notifications__card-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--mg-color-text-main, #2C2C2C);
+  margin: 0 0 8px 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mg-v2-ad-notifications__card-meta {
+  font-size: 12px;
+  color: var(--mg-color-text-secondary, #5C6B61);
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.mg-v2-ad-notifications__card-actions,
+.mg-v2-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.mg-v2-ad-notifications__card-actions .mg-v2-button,
+.mg-v2-card-actions .mg-v2-button {
+  min-height: 36px;
+  border-radius: 8px;
+}
+
+.mg-v2-notification-empty {
+  text-align: center;
+  padding: 24px;
+  font-size: 14px;
+  color: var(--mg-color-text-secondary, #5C6B61);
+}
+
+.mg-v2-ad-b0kla__filter-input {
+  min-width: 160px;
+  padding: 8px 12px;
+  font-size: 14px;
+  border: 1px solid var(--mg-color-border-main);
+  border-radius: 8px;
+  background: var(--mg-color-surface-main);
+}
+
+/* 배지 변형 (공지 카드용) */
+.mg-v2-status-badge.mg-v2-badge--success { background: var(--mg-color-success, #3D5246); color: #fff; }
+.mg-v2-status-badge.mg-v2-badge--info { background: var(--mg-color-info); color: #fff; }
+.mg-v2-status-badge.mg-v2-badge--neutral { background: var(--mg-color-text-secondary); color: #fff; }
+.mg-v2-status-badge.mg-v2-badge--secondary { background: var(--mg-color-border-main); color: var(--mg-color-text-main); }
+
+@media (min-width: 768px) {
+  .mg-v2-ad-notifications__card-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .mg-v2-ad-notifications__card-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+  }
+}
+
+@media (min-width: 1920px) {
+  .mg-v2-ad-notifications__card-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
 @media (max-width: 767px) {
   .mg-v2-ad-b0kla__tabs {
     overflow-x: auto;
@@ -92,5 +216,11 @@
   .mg-v2-ad-b0kla__tab {
     flex-shrink: 0;
     min-height: 44px;
+  }
+  .mg-v2-ad-notifications__card {
+    flex-wrap: wrap;
+  }
+  .mg-v2-ad-notifications__card-actions {
+    width: 100%;
   }
 }

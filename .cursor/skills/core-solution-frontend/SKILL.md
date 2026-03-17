@@ -94,5 +94,6 @@ const data = await apiGet('/api/v1/...');
 ## Reference
 
 - 전체 규칙: `docs/standards/FRONTEND_DEVELOPMENT_STANDARD.md`, `docs/standards/API_CALL_STANDARD.md`, `docs/standards/COMPONENT_STRUCTURE_STANDARD.md`
+- **공통 모듈 우선**: `/core-solution-common-modules` 스킬, `docs/standards/COMMON_MODULES_USAGE_GUIDE.md` — 새 기능·UI 구현 시 공통 모듈 검토 필수
 - 아토믹 디자인: `/core-solution-atomic-design` 스킬, `docs/design-system/ATOMIC_DESIGN_SYSTEM.md`
 - 디자인·소스 표준화: `/core-solution-standardization`, `docs/standards/DESIGN_CENTRALIZATION_STANDARD.md`

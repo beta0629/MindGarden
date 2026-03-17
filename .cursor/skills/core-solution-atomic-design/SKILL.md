@@ -68,3 +68,4 @@ frontend/src/components/
 
 - `docs/design-system/ATOMIC_DESIGN_SYSTEM.md` — 상세 컴포넌트 스펙 및 CSS 변수
 - `core-solution-frontend` — API, 스타일, 상수화 규칙
+- **공통 모듈**: `/core-solution-common-modules` — 버튼·배지·카드 등 공통 UI 목록·사용 가이드

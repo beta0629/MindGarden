@@ -1,16 +1,18 @@
 /**
  * 알림·메시지 관리 통합 페이지
- * 탭: 시스템 공지 | 메시지. AdminCommonLayout + ContentHeader + 탭별 블록.
+ * AdminCommonLayout + ContentHeader + 탭(시스템 공지 | 메시지) + 탭별 블록.
+ * contentOnly 임베드 제거, SystemNotificationListBlock·AdminMessageListBlock 사용.
  * @author CoreSolution
  * @since 2026-03-17
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
-import SystemNotificationManagement from './SystemNotificationManagement';
-import AdminMessages from './AdminMessages';
-import { fetchUserPermissions } from '../../utils/permissionUtils';
+import SystemNotificationListBlock from './organisms/SystemNotificationListBlock';
+import AdminMessageListBlock from './organisms/AdminMessageListBlock';
+import { fetchUserPermissions, hasPermission } from '../../utils/permissionUtils';
 import '../../styles/unified-design-tokens.css';
 import './AdminNotificationsPage.css';
 
@@ -18,16 +20,43 @@ const TAB_SYSTEM = 'system';
 const TAB_MESSAGES = 'messages';
 
 const AdminNotificationsPage = () => {
-  const [activeTab, setActiveTab] = useState(TAB_SYSTEM);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabParam = searchParams.get('tab');
+  const [activeTab, setActiveTab] = useState(
+    tabParam === TAB_MESSAGES ? TAB_MESSAGES : TAB_SYSTEM
+  );
   const [userPermissions, setUserPermissions] = useState([]);
 
-  const hasNotifyPermission = userPermissions.includes('SYSTEM_NOTIFICATION_MANAGE');
+  const hasNotifyPermission = hasPermission(userPermissions, 'SYSTEM_NOTIFICATION_MANAGE');
 
   useEffect(() => {
     fetchUserPermissions(setUserPermissions).catch(() => {});
   }, []);
 
-  const subtitle = '시스템 공지와 메시지를 한 화면에서 관리합니다.';
+  useEffect(() => {
+    const t = tabParam === TAB_MESSAGES ? TAB_MESSAGES : TAB_SYSTEM;
+    setActiveTab(t);
+  }, [tabParam]);
+
+  const setTab = useCallback(
+    (tab) => {
+      setActiveTab(tab);
+      setSearchParams({ tab }, { replace: true });
+    },
+    [setSearchParams]
+  );
+
+  const handleTabKeyDown = (e) => {
+    if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      setTab(TAB_SYSTEM);
+    } else if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      setTab(TAB_MESSAGES);
+    }
+  };
+
+  const subtitle = '공지 작성과 메시지 조회를 한 화면에서 관리합니다.';
 
   const headerActions =
     activeTab === TAB_SYSTEM && hasNotifyPermission ? (
@@ -43,17 +72,21 @@ const AdminNotificationsPage = () => {
 
   return (
     <AdminCommonLayout title="알림·메시지 관리">
-      <div className="mg-v2-dashboard-layout">
+      <main
+        className="mg-v2-dashboard-layout"
+        aria-labelledby="admin-notifications-page-title"
+      >
         <ContentHeader
           title="알림·메시지 관리"
           subtitle={subtitle}
           actions={headerActions}
+          titleId="admin-notifications-page-title"
         />
 
         <div
           className="mg-v2-ad-b0kla__tabs"
           role="tablist"
-          aria-label="알림·메시지 관리 탭"
+          aria-label="알림·메시지 탭"
         >
           <button
             type="button"
@@ -64,7 +97,8 @@ const AdminNotificationsPage = () => {
             className={`mg-v2-ad-b0kla__tab ${
               activeTab === TAB_SYSTEM ? 'mg-v2-ad-b0kla__tab--active' : ''
             }`}
-            onClick={() => setActiveTab(TAB_SYSTEM)}
+            onClick={() => setTab(TAB_SYSTEM)}
+            onKeyDown={handleTabKeyDown}
           >
             시스템 공지
           </button>
@@ -77,7 +111,8 @@ const AdminNotificationsPage = () => {
             className={`mg-v2-ad-b0kla__tab ${
               activeTab === TAB_MESSAGES ? 'mg-v2-ad-b0kla__tab--active' : ''
             }`}
-            onClick={() => setActiveTab(TAB_MESSAGES)}
+            onClick={() => setTab(TAB_MESSAGES)}
+            onKeyDown={handleTabKeyDown}
           >
             메시지
           </button>
@@ -87,24 +122,27 @@ const AdminNotificationsPage = () => {
           id="admin-panel-system"
           role="tabpanel"
           aria-labelledby="admin-tab-system"
-          className="mg-v2-ad-b0kla__section"
+          className="mg-v2-ad-b0kla__section-wrapper"
           aria-label="시스템 공지 목록"
           hidden={activeTab !== TAB_SYSTEM}
         >
-          <SystemNotificationManagement contentOnly />
+          <SystemNotificationListBlock
+            hasManagePermission={hasNotifyPermission}
+            onOpenCreate={hasNotifyPermission}
+          />
         </section>
 
         <section
           id="admin-panel-messages"
           role="tabpanel"
           aria-labelledby="admin-tab-messages"
-          className="mg-v2-ad-b0kla__section"
+          className="mg-v2-ad-b0kla__section-wrapper"
           aria-label="메시지 목록"
           hidden={activeTab !== TAB_MESSAGES}
         >
-          <AdminMessages contentOnly />
+          <AdminMessageListBlock />
         </section>
-      </div>
+      </main>
     </AdminCommonLayout>
   );
 };

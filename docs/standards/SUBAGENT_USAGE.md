@@ -10,12 +10,12 @@
 | 서브에이전트 | 역할 | 적용 스킬 | 비고 |
 |--------------|------|-----------|------|
 | **core-planner** | **전반 기획·Phase 설계·분배실행**. 담당 배정 후 서브에이전트 호출·결과 취합·최종 보고. 직접 코드·디자인·디버깅 안 함 | /core-solution-planning | 복합·다단계 작업 시 1단계로 호출. 분배실행 표에 designer·coder·debugger·component-manager·tester 등 명시 |
-| **core-designer** | UI/UX·레이아웃·비주얼 **설계만** (시안·토큰·스펙). **코드 작성 안 함** | /core-solution-standardization, /core-solution-design-handoff | **펜슬 가이드 숙지 필수**(docs/design-system/PENCIL_DESIGN_GUIDE.md). 대시보드·리포트·새 화면 설계 시 선행, 산출물은 design-handoff 형식 |
-| **core-publisher** | **HTML 마크업 전담**. designer 스펙을 아토믹·BEM 기반 HTML로 작성. JS/React·CSS 수정 안 함 | /core-solution-publisher, /core-solution-atomic-design | 퍼블리싱 단계. 산출물은 core-coder가 JSX·로직·스타일 연결 |
-| **core-coder** | React/JS·Java/Spring **코드 구현**. designer 스펙 + **publisher HTML** 기반으로 수정 | /core-solution-frontend, /core-solution-atomic-design 등 | publisher HTML을 JSX로 변환·로직 연동 |
+| **core-designer** | UI/UX·레이아웃·비주얼 **설계만** (시안·토큰·스펙). **코드 작성 안 함** | /core-solution-standardization, /core-solution-design-handoff, /core-solution-common-modules | **펜슬 가이드 숙지 필수**. 새 컴포넌트 설계 시 공통 모듈 우선 검토(COMMON_MODULES_USAGE_GUIDE) |
+| **core-publisher** | **HTML 마크업 전담**. designer 스펙을 아토믹·BEM 기반 HTML로 작성. JS/React·CSS 수정 안 함 | /core-solution-publisher, /core-solution-atomic-design, /core-solution-common-modules | 퍼블리싱 단계. 마크업 시 공통 클래스·구조 우선 사용 |
+| **core-coder** | React/JS·Java/Spring **코드 구현**. designer 스펙 + **publisher HTML** 기반으로 수정 | /core-solution-frontend, /core-solution-atomic-design, /core-solution-common-modules 등 | publisher HTML → JSX·로직 연동. 새 기능·UI 시 공통 모듈 우선 검토 |
 | **core-debugger** | **디버그 전용**. 에러·500 원인 분석, 로그·스택트레이스 해석, 재현 절차·수정 제안. **코드 수정은 core-coder 위임**. 필요 시 **shell**과 연계해 서버 로그·DB 확인 | /core-solution-debug | 오류 원인 파악·수정 제안 시 사용 |
 | **core-tester** | 단위·통합·E2E·보안 **테스트 작성·실행**. 코드 구현 안 함 | /core-solution-testing | |
-| **core-component-manager** | **화면·서버 컴포넌트 관리**. 중복 컴포넌트 여부 제안·적재적소 배치 제안·문서화. **core-coder와 한 팀**으로 협업(제안 → 코더 실행). 코드 직접 작성 안 함 | /core-solution-encapsulation-modularization, /core-solution-atomic-design | 제품에 타입 없으면 generalPurpose + 역할 프롬프트 |
+| **core-component-manager** | **화면·서버 컴포넌트 관리**. 중복 컴포넌트 여부 제안·적재적소 배치 제안·문서화. **core-coder와 한 팀**으로 협업(제안 → 코더 실행). 코드 직접 작성 안 함 | /core-solution-encapsulation-modularization, /core-solution-atomic-design, /core-solution-common-modules | 공통 모듈 목록·가이드 반영. 제품에 타입 없으면 generalPurpose + 역할 프롬프트 |
 | **explore** | 코드베이스 탐색·**작업 전 플랜·조사** (수정 작업 안 함) | /core-solution-documentation (문서 시) | 넓은 범위 작업 전 1단계 |
 | **generalPurpose** | 복합·다단계, **문서 작성·정리** | /core-solution-documentation | |
 | **shell** | 터미널·git·빌드 명령 실행 | — | |
@@ -38,6 +38,7 @@
 ## 원칙
 
 - **캡슐화·모듈화**: 모든 코어 에이전트(기획·디자이너·퍼블리셔·코더 등)는 작업 시 **경량화·단순화·반복 제거**를 위해 `/core-solution-encapsulation-modularization` 스킬을 적용한다. 단위를 캡슐화·모듈화하고, 동일·유사 작업은 공통 모듈·스펙·문서로 한 번만 정의해 재사용한다.
+- **공통 모듈 우선**: 새 기능·UI·마크업·구현 시 **기존 공통 모듈(UnifiedModal, ContentHeader, BadgeSelect, StandardizedApi 등)을 먼저 검토·사용**한다. `docs/standards/COMMON_MODULES_USAGE_GUIDE.md`, `/core-solution-common-modules` 스킬 참조. **core-designer, core-publisher, core-coder, core-component-manager**는 해당 작업 시 이 원칙을 적용한다.
 - **직접 수정 금지**: Agent가 코드/디자인/테스트를 직접 수정하지 않고, 해당 영역 서브에이전트를 호출한다.
 - **누락 시 추가**: 매핑에 없는 작업 유형이 발견되면 `.cursor/skills/core-solution-rules/SKILL.md`의 [서브에이전트 활용 매핑] 섹션에 행을 추가한 뒤, 해당 서브에이전트를 사용한다.
 

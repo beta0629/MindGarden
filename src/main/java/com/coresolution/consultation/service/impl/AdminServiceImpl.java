@@ -4429,9 +4429,14 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 for (Consultant consultant : consultants) {
                     sum += getCompletedScheduleCount(consultant.getId(), monthStart, monthEnd);
                 }
+                long bookedSum = scheduleRepository.countByStatusAndDateBetween(
+                        tenantId, ScheduleStatus.BOOKED.name(), monthStart, monthEnd)
+                        + scheduleRepository.countByStatusAndDateBetween(
+                                tenantId, ScheduleStatus.CONFIRMED.name(), monthStart, monthEnd);
                 Map<String, Object> row = new HashMap<>();
                 row.put("period", monthStart.format(DateTimeFormatter.ofPattern("yyyy-MM")));
                 row.put("completedCount", sum);
+                row.put("bookedCount", bookedSum);
                 monthlyData.add(row);
             }
             log.info("✅ 월별 상담 완료 추이 조회 완료: {}개월 (KPI와 동일 집계)", monthlyData.size());
@@ -4460,9 +4465,14 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 for (Consultant consultant : consultants) {
                     sum += getCompletedScheduleCount(consultant.getId(), weekStart, weekEnd);
                 }
+                long bookedSum = scheduleRepository.countByStatusAndDateBetween(
+                        tenantId, ScheduleStatus.BOOKED.name(), weekStart, weekEnd)
+                        + scheduleRepository.countByStatusAndDateBetween(
+                                tenantId, ScheduleStatus.CONFIRMED.name(), weekStart, weekEnd);
                 Map<String, Object> row = new HashMap<>();
                 row.put("period", weekEnd.format(DateTimeFormatter.ofPattern("MM/dd")));
                 row.put("completedCount", sum);
+                row.put("bookedCount", bookedSum);
                 weeklyData.add(row);
             }
             log.info("✅ 주간 상담 완료 추이 조회 완료: {}주 (KPI와 동일 집계)", weeklyData.size());

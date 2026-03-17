@@ -137,6 +137,7 @@ React 프로젝트이므로, 필요 시 **JSX 형식**으로 마크업을 작성
 
 ## 6. 참조 문서
 
+- **공통 모듈**: `/core-solution-common-modules`, `docs/standards/COMMON_MODULES_USAGE_GUIDE.md` — 마크업 시 사용할 공통 클래스·구조 우선 검토. 새 클래스·구조 만들지 않음.
 - `docs/standards/COMPONENT_STRUCTURE_STANDARD.md` — div 중첩·시맨틱
 - `.cursor/skills/core-solution-atomic-design/SKILL.md` — Atoms → Pages
 - `docs/design-system/PENCIL_DESIGN_GUIDE.md` — B0KlA·토큰

@@ -23,6 +23,7 @@ description: 코딩 전용 서브에이전트. Core Solution(MindGarden) 코드 
 
 작업 전·중에 아래 문서를 참조하고, 규칙을 위반하지 않습니다.
 
+- `docs/standards/COMMON_MODULES_USAGE_GUIDE.md` — **공통 모듈 우선 사용**(UnifiedModal, ContentHeader, BadgeSelect, StandardizedApi 등). 새 기능·UI 구현 시 먼저 검토.
 - `docs/standards/CODE_STYLE_STANDARD.md` — 코드 스타일(네이밍, 들여쓰기, import, 주석)
 - `docs/standards/BACKEND_CODING_STANDARD.md` — 백엔드 패키지 구조, Controller/Service/Repository/Entity/DTO 규칙
 - `docs/standards/FRONTEND_DEVELOPMENT_STANDARD.md` — 프론트엔드 구조, 상수화, 디자인 시스템
@@ -82,6 +83,7 @@ description: 코딩 전용 서브에이전트. Core Solution(MindGarden) 코드 
 - 단일 책임. div 중첩 최대 5단계. `header`, `main`, `section`, `article` 등 시맨틱 태그 사용
 - 상수: API URL, CSS 클래스명, 라벨, 매직 넘버 모두 상수로 정의
 
+- **공통 모듈 우선**: `/core-solution-common-modules` — 새 기능·모달·폼·리스트 구현 시 **공통 모듈을 먼저 검토·사용**. 없으면 추출·공통화 제안은 core-component-manager와 협업.
 - **캡슐화·모듈화**: `/core-solution-encapsulation-modularization` — 작업 단위를 캡슐화·모듈화하고, 동일·유사 코드는 공통 함수·훅·컴포넌트로 추출해 반복 제거. **core-component-manager와 한 팀**: component-manager의 중복 제안·적재적소 배치 제안을 받아 실제 코드 이동·통합·배치를 수행하고, 필요 시 인벤토리·제안서 갱신을 요청한다.
 
 ## 공통

@@ -24,5 +24,7 @@ description: Core Solution(MindGarden) 모달 컴포넌트 표준. 모든 모달
 
 ## Reference
 
+- **공통 모듈**: `/core-solution-common-modules` — 모든 모달은 공통 UnifiedModal 사용(공통 모듈 우선 원칙)
 - `frontend/src/components/common/modals/UnifiedModal.js`
+- `docs/standards/MODAL_STANDARD.md`, `docs/standards/COMMON_MODULES_USAGE_GUIDE.md`
 - ScheduleModal (UnifiedModal + className="mg-v2-ad-b0kla"), MappingCreationModal (UnifiedModal 마이그레이션 대상)

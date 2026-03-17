@@ -54,6 +54,7 @@ description: Core Solution(MindGarden) 프로젝트 전체 룰 인덱스. 백엔
 | **문서 작성·정리·체계화** | **generalPurpose** | /core-solution-documentation | 표준 문서·가이드 작성·수정·재구성. 기획(explore/core-planner) 후 진행 권장 |
 | 새 작업 유형 추가 시 | — | — | docs/standards/SUBAGENT_USAGE.md 절차 따름 |
 
+- **공통 모듈 우선**: UI·컴포넌트·마크업·구현 작업 시 **core-designer, core-publisher, core-coder, core-component-manager**는 `/core-solution-common-modules` 스킬과 `docs/standards/COMMON_MODULES_USAGE_GUIDE.md`를 참조해 기존 공통 모듈을 우선 검토·사용한다.
 - **core-planner** 에이전트: **기획 오케스트레이터**. 사용자 명령 → 기획이 담당 배정(분배실행 표) → 서브에이전트 실행(병렬 가능) → **결과를 기획에게 보고** → 기획이 취합해 **사용자에게 최종 보고**. 역할별(디자인·코더·디버그·쉘·문서정리·탐색·테스터) 담당·전달 프롬프트 명시. `/core-solution-planning` 스킬 적용.
 - **explore** 서브에이전트: 코드베이스 탐색·분석, **작업 전 조사** 시 사용 (수정 작업 아님). 문서·기획 시 1단계로 사용.
 - **generalPurpose** 서브에이전트: 복합 연구·다단계 작업, **문서 작성·정리** 시 /core-solution-documentation 스킬과 함께 사용.
@@ -78,6 +79,7 @@ description: Core Solution(MindGarden) 프로젝트 전체 룰 인덱스. 백엔
 | 핵심 비즈니스 흐름 및 UI 규칙 | `/core-solution-business-flow` |
 | **ERP 연동·거래 생성·트러블슈팅** | `/core-solution-erp` |
 | **모달 추가·수정** | `/core-solution-unified-modal` |
+| **공통 모듈 사용**(컴포넌트·유틸 우선 검토·사용) | `/core-solution-common-modules` |
 | **전반 기획·Phase·서브에이전트 가동 계획** | `/core-solution-planning` |
 | **서버 상태·에러 로그·긴급 복구** | `/core-solution-server-status` |
 | **배포·CI 워크플로 수정** | `/core-solution-deployment` |
@@ -109,6 +111,7 @@ description: Core Solution(MindGarden) 프로젝트 전체 룰 인덱스. 백엔
 - **FRONTEND_DEVELOPMENT_STANDARD.md** — 프론트 구조·상수화·디자인 시스템
 - **API_CALL_STANDARD.md** — StandardizedApi 필수 (프론트 API 호출)
 - **COMPONENT_STRUCTURE_STANDARD.md** — 컴포넌트 계층·시맨틱 태그
+- **COMMON_MODULES_USAGE_GUIDE.md** — 공통 모듈 목록·사용 가이드 (UnifiedModal, ContentHeader, BadgeSelect, StandardizedApi 등)
 - **MODAL_STANDARD.md** — UnifiedModal 공통 모달, size(small/medium/large/fullscreen) 사용 가이드
 - **API_INTEGRATION_STANDARD.md**, **API_DESIGN_STANDARD.md**
 - **DTO_NAMING_STANDARD.md**, **ERROR_HANDLING_STANDARD.md**, **LOGGING_STANDARD.md**

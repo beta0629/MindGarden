@@ -363,15 +363,9 @@ const AdminDashboardV2 = ({ user: propUser }) => {
     setLoading(true);
     try {
       const headers = { 'Content-Type': 'application/json', ...getDefaultApiHeaders() };
-      const [
-        consultantsRes,
-        clientsRes,
-        mappingsRes,
-        ratingRes,
-        vacationRes,
-        consultationRes,
-        scheduleStatsRes
-      ] = await Promise.all([
+      /** fetch 실패(rejected) 시 res.ok 체크를 통과하지 않도록 쓰는 더미 */
+      const dummyFailedResponse = () => ({ ok: false, json: () => Promise.resolve({}) });
+      const settled = await Promise.allSettled([
         fetch('/api/v1/admin/consultants/with-vacation?date=' + new Date().toISOString().split('T')[0], { headers, credentials: 'include' }),
         fetch('/api/v1/admin/clients/with-mapping-info', { headers, credentials: 'include' }),
         fetch('/api/v1/admin/mappings', { headers, credentials: 'include' }),
@@ -380,6 +374,13 @@ const AdminDashboardV2 = ({ user: propUser }) => {
         fetch('/api/v1/admin/statistics/consultation-completion', { headers, credentials: 'include' }),
         fetch(SCHEDULE_API.STATISTICS, { headers, credentials: 'include' })
       ]);
+      const consultantsRes = settled[0].status === 'fulfilled' ? settled[0].value : dummyFailedResponse();
+      const clientsRes = settled[1].status === 'fulfilled' ? settled[1].value : dummyFailedResponse();
+      const mappingsRes = settled[2].status === 'fulfilled' ? settled[2].value : dummyFailedResponse();
+      const ratingRes = settled[3].status === 'fulfilled' ? settled[3].value : dummyFailedResponse();
+      const vacationRes = settled[4].status === 'fulfilled' ? settled[4].value : dummyFailedResponse();
+      const consultationRes = settled[5].status === 'fulfilled' ? settled[5].value : dummyFailedResponse();
+      const scheduleStatsRes = settled[6].status === 'fulfilled' ? settled[6].value : dummyFailedResponse();
 
       let totalConsultants = 0;
       let totalClients = 0;

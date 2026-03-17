@@ -29,6 +29,7 @@ const NotificationDropdown = () => {
     unreadSystemCount,
     unreadMessageCount,
     refreshNotifications,
+    loadUnreadCount,
     markSystemNotificationAsRead,
     markAllSystemNotificationsAsRead,
     markMessageAsRead
@@ -142,11 +143,9 @@ const NotificationDropdown = () => {
 
   const handleMarkAllRead = async () => {
     try {
-      // 시스템 공지: 백엔드 일괄 읽음 API 호출 (전체 미읽음 처리)
       if ((unreadSystemCount || 0) > 0) {
         await markAllSystemNotificationsAsRead();
       }
-      // 메시지: 현재 드롭다운에 로드된 목록만 개별 읽음 처리 (백엔드 read-all 없음)
       const unreadMessages = messageList.filter((m) => !m.isRead);
       for (const m of unreadMessages) {
         try {
@@ -156,6 +155,7 @@ const NotificationDropdown = () => {
         }
       }
       refreshNotifications();
+      await loadUnreadCount();
       if (isOpen && activeTab === TAB_SYSTEM) fetchSystemNotifications();
       if (isOpen && activeTab === TAB_MESSAGES) fetchMessages();
     } catch (err) {

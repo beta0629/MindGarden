@@ -59,7 +59,9 @@ export const NotificationProvider = ({ children }) => {
   // isLoggedIn과 user를 ref로 저장 (클로저 문제 해결)
   const isLoggedInRef = React.useRef(isLoggedIn);
   const userRef = React.useRef(user);
-  
+  /** 일괄 읽음 직후 서버가 이전 값을 주어 0을 덮어쓰지 않도록 하는 grace period (ms) */
+  const lastMarkAllReadSystemAtRef = React.useRef(0);
+
   // ref 업데이트
   useEffect(() => {
     isLoggedInRef.current = isLoggedIn;
@@ -120,12 +122,14 @@ export const NotificationProvider = ({ children }) => {
       const endpoint = `/api/v1/system-notifications/unread-count?_t=${timestamp}`;
 
       const response = await apiGet(endpoint);
-      // apiGet은 { success, data }일 때 data만 반환하므로 response = { unreadCount: N }
       const count = response != null && typeof response.unreadCount === 'number' ? response.unreadCount : 0;
+      const justMarkedAllRead = lastMarkAllReadSystemAtRef.current > 0 && (timestamp - lastMarkAllReadSystemAtRef.current) < 3000;
+      if (justMarkedAllRead && count > 0) {
+        return;
+      }
       setUnreadSystemCount(count);
       if (count > 0) console.log('📢 읽지 않은 공지 개수 업데이트:', count);
     } catch (error) {
-      // 인증 오류는 조용히 처리
       if (error.status === CONSTANTS.HTTP_STATUS.UNAUTHORIZED || error.status === CONSTANTS.HTTP_STATUS.FORBIDDEN) {
         console.log('📢 시스템 공지 개수 로드 실패 - 인증 필요');
       } else {
@@ -242,6 +246,8 @@ export const NotificationProvider = ({ children }) => {
       console.log('📢 공지 일괄 읽음 처리 시작');
       await apiPost('/api/v1/system-notifications/read-all', {});
       setSystemNotifications([]);
+      lastMarkAllReadSystemAtRef.current = Date.now();
+      setUnreadSystemCount(0);
       await loadUnreadSystemCount();
     } catch (error) {
       console.error('❌ 공지 일괄 읽음 처리 오류:', error);

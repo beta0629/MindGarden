@@ -280,6 +280,22 @@ public class SystemNotificationController extends BaseApiController {
         
         return success("공지를 읽음 처리했습니다.");
     }
+
+    /**
+     * 공지 일괄 읽음 처리 (현재 사용자 기준 읽지 않은 모든 공지)
+     */
+    @PostMapping("/read-all")
+    public ResponseEntity<ApiResponse<Void>> markAllAsRead(HttpSession session) {
+        User currentUser = SessionUtils.getCurrentUser(session);
+        if (currentUser == null) {
+            throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
+        }
+        Long userId = currentUser.getId();
+        String userRole = currentUser.getRole().name();
+        log.info("📢 공지 일괄 읽음 처리 - 사용자 ID: {}, 역할: {}", userId, userRole);
+        systemNotificationService.markAllAsRead(userId, userRole);
+        return success("모든 공지를 읽음 처리했습니다.");
+    }
     
     /**
      * 긴급 공지 조회

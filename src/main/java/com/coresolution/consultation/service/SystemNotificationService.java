@@ -24,6 +24,11 @@ public interface SystemNotificationService {
      * 공지 읽음 처리
      */
     void markAsRead(Long notificationId, Long userId);
+
+    /**
+     * 현재 사용자 기준 읽지 않은 모든 공지 일괄 읽음 처리
+     */
+    void markAllAsRead(Long userId, String userRole);
     
     /**
      * 공지 읽음 여부 확인

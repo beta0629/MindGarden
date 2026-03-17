@@ -102,6 +102,19 @@ public interface SystemNotificationRepository extends BaseRepository<SystemNotif
         @Param("now") LocalDateTime now);
     
     /**
+     * 사용자가 읽지 않은 공지 ID 목록 조회 (일괄 읽음 처리용)
+     */
+    @Query("SELECT n.id FROM SystemNotification n WHERE n.tenantId = :tenantId AND n.targetType IN (:targetTypes) " +
+           "AND n.status = 'PUBLISHED' AND n.isDeleted = false " +
+           "AND (n.publishedAt IS NULL OR n.publishedAt <= CURRENT_TIMESTAMP) " +
+           "AND (n.expiresAt IS NULL OR n.expiresAt > CURRENT_TIMESTAMP) " +
+           "AND n.id NOT IN (SELECT r.notificationId FROM SystemNotificationRead r WHERE r.tenantId = :tenantId AND r.userId = :userId AND r.isRead = true)")
+    List<Long> findUnreadNotificationIdsByTenantIdAndUser(
+        @Param("tenantId") String tenantId,
+        @Param("userId") Long userId,
+        @Param("targetTypes") List<String> targetTypes);
+
+    /**
      * 특정 테넌트에서 특정 기간 내에 특정 타입의 공지가 존재하는지 확인 (Idempotency 체크용)
      */
     boolean existsByTenantIdAndNotificationTypeAndCreatedAtBetween(

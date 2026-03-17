@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { CONSTANTS } from '../constants/magicNumbers';
 import { useSession } from './SessionContext';
-import { apiGet } from '../utils/ajax';
+import { apiGet, apiPost } from '../utils/ajax';
 
 const NotificationContext = createContext();
 
@@ -236,6 +236,19 @@ export const NotificationProvider = ({ children }) => {
     }
   };
 
+  // 시스템 공지 일괄 읽음 처리 (읽지 않은 모든 공지)
+  const markAllSystemNotificationsAsRead = async () => {
+    try {
+      console.log('📢 공지 일괄 읽음 처리 시작');
+      await apiPost('/api/v1/system-notifications/read-all', {});
+      setSystemNotifications([]);
+      await loadUnreadSystemCount();
+    } catch (error) {
+      console.error('❌ 공지 일괄 읽음 처리 오류:', error);
+      throw error;
+    }
+  };
+
   // 알림 새로고침
   const refreshNotifications = () => {
     // 로그인하지 않으면 스킵
@@ -339,6 +352,7 @@ export const NotificationProvider = ({ children }) => {
     decrementUnreadCount,
     markMessageAsRead,
     markSystemNotificationAsRead,
+    markAllSystemNotificationsAsRead,
     refreshNotifications
   };
 

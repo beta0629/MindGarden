@@ -133,6 +133,49 @@ public class SystemNotificationServiceImpl implements SystemNotificationService 
         
         return readStatus.isPresent() && readStatus.get().getIsRead();
     }
+
+    @Override
+    public void markAllAsRead(Long userId, String userRole) {
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null || tenantId.trim().isEmpty()) {
+            log.warn("📢 일괄 읽음 처리 스킵 - tenantId 없음");
+            return;
+        }
+        List<String> targetTypes = getTargetTypesForUser(userRole);
+        List<Long> unreadIds = systemNotificationRepository.findUnreadNotificationIdsByTenantIdAndUser(tenantId, userId, targetTypes);
+        if (unreadIds == null || unreadIds.isEmpty()) {
+            log.info("📢 일괄 읽음 - 읽지 않은 공지 없음");
+            return;
+        }
+        log.info("📢 일괄 읽음 처리 시작 - 사용자 ID: {}, 대상 건수: {}", userId, unreadIds.size());
+        final int batchSize = 500;
+        List<SystemNotificationRead> toSave = new ArrayList<>();
+        for (Long notificationId : unreadIds) {
+            Optional<SystemNotificationRead> existing = systemNotificationReadRepository.findByTenantIdAndNotificationIdAndUserId(tenantId, notificationId, userId);
+            if (existing.isPresent()) {
+                SystemNotificationRead r = existing.get();
+                if (!Boolean.TRUE.equals(r.getIsRead())) {
+                    r.markAsRead();
+                    toSave.add(r);
+                }
+            } else {
+                SystemNotificationRead r = new SystemNotificationRead();
+                r.setTenantId(tenantId);
+                r.setNotificationId(notificationId);
+                r.setUserId(userId);
+                r.markAsRead();
+                toSave.add(r);
+            }
+            if (toSave.size() >= batchSize) {
+                systemNotificationReadRepository.saveAll(toSave);
+                toSave.clear();
+            }
+        }
+        if (!toSave.isEmpty()) {
+            systemNotificationReadRepository.saveAll(toSave);
+        }
+        log.info("📢 일괄 읽음 처리 완료 - 처리 건수: {}", unreadIds.size());
+    }
     
     @Override
     public Long getUnreadCount(Long userId, String userRole) {

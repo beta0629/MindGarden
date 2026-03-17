@@ -584,6 +584,52 @@
   margin: -0.5rem 0 0 0;
 }
 
+/* 상담사 통합데이터 집계 기간 선택 */
+.mg-v2-ad-b0kla__integrated-data-period {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  margin-top: var(--mg-spacing-md, 1rem);
+}
+
+.mg-v2-ad-b0kla__integrated-data-period-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--ad-b0kla-text-secondary);
+}
+
+.mg-v2-ad-b0kla__integrated-data-period-tabs {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.mg-v2-ad-b0kla__pill--sm {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+}
+
+.mg-v2-ad-b0kla__integrated-data-month-picker {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.mg-v2-ad-b0kla__select {
+  padding: 0.35rem 0.5rem;
+  font-size: 0.8125rem;
+  border: 1px solid var(--ad-b0kla-border);
+  border-radius: 6px;
+  background: var(--ad-b0kla-card-bg);
+  color: var(--ad-b0kla-title-color);
+  min-width: 4rem;
+}
+
+.mg-v2-ad-b0kla__select--sm {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  min-width: 3.5rem;
+}
+
 .mg-v2-ad-b0kla__integrated-data-view-toggle {
   margin-top: var(--mg-spacing-md, 1rem);
   margin-bottom: var(--mg-spacing-lg, 1.25rem);
@@ -641,6 +687,36 @@
   border-bottom: none;
 }
 
+/* 순위 변동 펄스: 상승(녹색), 하락(주황) */
+@keyframes mg-v2-ad-b0kla-rank-pulse-up {
+  0%, 100% { background-color: transparent; box-shadow: none; }
+  50% { background-color: var(--ad-b0kla-green-bg, rgba(0, 120, 80, 0.08)); box-shadow: 0 0 0 2px var(--ad-b0kla-green); }
+}
+@keyframes mg-v2-ad-b0kla-rank-pulse-down {
+  0%, 100% { background-color: transparent; box-shadow: none; }
+  50% { background-color: rgba(255, 152, 0, 0.06); box-shadow: 0 0 0 2px var(--ad-b0kla-orange); }
+}
+
+.mg-v2-ad-b0kla__integrated-data-row--rank-up {
+  animation: mg-v2-ad-b0kla-rank-pulse-up 1.75s ease-out 1;
+}
+.mg-v2-ad-b0kla__integrated-data-row--rank-down {
+  animation: mg-v2-ad-b0kla-rank-pulse-down 1.75s ease-out 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mg-v2-ad-b0kla__integrated-data-row--rank-up,
+  .mg-v2-ad-b0kla__integrated-data-row--rank-down {
+    animation: none;
+  }
+  .mg-v2-ad-b0kla__integrated-data-row--rank-up {
+    background-color: var(--ad-b0kla-green-bg, rgba(0, 120, 80, 0.08));
+  }
+  .mg-v2-ad-b0kla__integrated-data-row--rank-down {
+    background-color: rgba(255, 152, 0, 0.06);
+  }
+}
+
 .mg-v2-ad-b0kla__integrated-data-cell {
   color: var(--ad-b0kla-text-secondary);
   white-space: nowrap;
@@ -674,6 +750,26 @@
 
 .mg-v2-ad-b0kla__integrated-progress-row:last-child {
   border-bottom: none;
+}
+
+.mg-v2-ad-b0kla__integrated-progress-row--rank-up {
+  animation: mg-v2-ad-b0kla-rank-pulse-up 1.75s ease-out 1;
+}
+.mg-v2-ad-b0kla__integrated-progress-row--rank-down {
+  animation: mg-v2-ad-b0kla-rank-pulse-down 1.75s ease-out 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mg-v2-ad-b0kla__integrated-progress-row--rank-up,
+  .mg-v2-ad-b0kla__integrated-progress-row--rank-down {
+    animation: none;
+  }
+  .mg-v2-ad-b0kla__integrated-progress-row--rank-up {
+    background-color: var(--ad-b0kla-green-bg, rgba(0, 120, 80, 0.08));
+  }
+  .mg-v2-ad-b0kla__integrated-progress-row--rank-down {
+    background-color: rgba(255, 152, 0, 0.06);
+  }
 }
 
 .mg-v2-ad-b0kla__integrated-progress-rank {

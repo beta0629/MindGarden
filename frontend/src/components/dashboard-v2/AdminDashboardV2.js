@@ -277,6 +277,16 @@ const AdminDashboardV2 = ({ user: propUser }) => {
   const [lineChartPeriod, setLineChartPeriod] = useState('monthly');
   /** 상담사 별 통합데이터 뷰: 'table' | 'graph' | 'progress', 기본 프로그레스 바 */
   const [integratedDataView, setIntegratedDataView] = useState('progress');
+  /** 상담사 통합데이터 집계 기간: 'all' | 'month' | 'year' */
+  const [integratedDataPeriodType, setIntegratedDataPeriodType] = useState('all');
+  const [integratedDataYear, setIntegratedDataYear] = useState(() => new Date().getFullYear());
+  const [integratedDataMonth, setIntegratedDataMonth] = useState(() => new Date().getMonth() + 1);
+  /** 기간별 consultation-completion 결과(월별 선택 시 전용) */
+  const [integratedDataConsultationStats, setIntegratedDataConsultationStats] = useState(null);
+  /** 순위 변동 펄스: 상승/하락한 consultantId Set */
+  const [integratedDataRankUpSet, setIntegratedDataRankUpSet] = useState(() => new Set());
+  const [integratedDataRankDownSet, setIntegratedDataRankDownSet] = useState(() => new Set());
+  const previousRankByConsultantIdRef = useRef(new Map());
   const [searchValue, setSearchValue] = useState('');
   /** 헤더 통합 검색(placeholder 전용, 라우트/메뉴 연동 없음) */
   /** 상담 현황 추이 막대 차트 색상 (CSS 변수 resolved, Canvas용) */
@@ -731,10 +741,35 @@ const AdminDashboardV2 = ({ user: propUser }) => {
     if (user?.role) loadTodayStats();
   }, [sessionLoading, propUser, sessionUser, loadTodayStats]);
 
-  /** 상담사 별 통합데이터: 평점(topConsultants) + 완료 통계(consultantStatistics)를 상담사명 기준 머지 */
+  /** 상담사 통합데이터 전용: 월별 선택 시 consultation-completion?period=YYYY-MM 호출 */
+  useEffect(() => {
+    if (integratedDataPeriodType !== 'month') {
+      setIntegratedDataConsultationStats(null);
+      return;
+    }
+    const period = `${integratedDataYear}-${String(integratedDataMonth).padStart(2, '0')}`;
+    const headers = { 'Content-Type': 'application/json', ...getDefaultApiHeaders() };
+    fetch(`/api/v1/admin/statistics/consultation-completion?period=${period}`, { headers, credentials: 'include' })
+      .then((res) => res.ok ? res.json() : null)
+      .then((d) => {
+        const payload = d?.data != null ? d.data : d;
+        if (payload && Array.isArray(payload.statistics)) {
+          setIntegratedDataConsultationStats({ consultantStatistics: payload.statistics });
+        } else {
+          setIntegratedDataConsultationStats({ consultantStatistics: [] });
+        }
+      })
+      .catch(() => setIntegratedDataConsultationStats({ consultantStatistics: [] }));
+  }, [integratedDataPeriodType, integratedDataYear, integratedDataMonth]);
+
+  /** 상담사 별 통합데이터: 평점(topConsultants) + 완료 통계(consultantStatistics)를 상담사명 기준 머지. 기간 선택 시 해당 기간 completion 사용 */
+  const completionListForIntegrated = integratedDataPeriodType === 'month' && integratedDataConsultationStats
+    ? (integratedDataConsultationStats.consultantStatistics || [])
+    : (stats.consultationStats?.consultantStatistics || []);
+
   const consultantIntegratedData = (() => {
     const byName = new Map();
-    const completionList = stats.consultationStats?.consultantStatistics || [];
+    const completionList = completionListForIntegrated;
     completionList.forEach((s) => {
       const name = s.consultantName || '-';
       byName.set(name, {
@@ -767,6 +802,32 @@ const AdminDashboardV2 = ({ user: propUser }) => {
       .sort((a, b) => (b.completedCount - a.completedCount) || ((b.rating ?? 0) - (a.rating ?? 0)))
       .slice(0, 10);
   })();
+
+  /** 순위 변동 감지: 이전 순위와 비교해 rankUp/rankDown Set 갱신 후 ref 업데이트, 2초 뒤 펄스 클래스용 Set 초기화 */
+  const integratedDataRankSignature = consultantIntegratedData.map((r) => r.consultantId).join(',');
+  useEffect(() => {
+    const current = consultantIntegratedData.map((row, i) => ({ consultantId: row.consultantId, rank: i + 1 }));
+    const prev = previousRankByConsultantIdRef.current;
+    const rankUp = new Set();
+    const rankDown = new Set();
+    current.forEach(({ consultantId, rank }) => {
+      if (consultantId == null) return;
+      const prevRank = prev.get(consultantId);
+      if (prevRank != null && prevRank !== rank) {
+        if (rank < prevRank) rankUp.add(consultantId);
+        else rankDown.add(consultantId);
+      }
+    });
+    const nextMap = new Map(current.map(({ consultantId, rank }) => [consultantId, rank]).filter(([id]) => id != null));
+    previousRankByConsultantIdRef.current = nextMap;
+    setIntegratedDataRankUpSet(rankUp);
+    setIntegratedDataRankDownSet(rankDown);
+    const t = setTimeout(() => {
+      setIntegratedDataRankUpSet(new Set());
+      setIntegratedDataRankDownSet(new Set());
+    }, 2000);
+    return () => clearTimeout(t);
+  }, [integratedDataRankSignature]);
 
   const handleLogout = useCallback(async () => {
     try {
@@ -1001,8 +1062,8 @@ const AdminDashboardV2 = ({ user: propUser }) => {
                 <h3 className="mg-v2-ad-b0kla__chart-title">예약 vs 완료</h3>
                 <p className="mg-v2-ad-b0kla__chart-desc">
                   {lineChartPeriod === 'weekly'
-                    ? '최근 6주 완료 추이 (예약 시계열 API 확장 후 2선 표시)'
-                    : '최근 6개월 완료 추이 (예약 시계열 API 확장 후 2선 표시)'}
+                    ? '최근 6주 예약·완료 추이'
+                    : '최근 6개월 예약·완료 추이'}
                 </p>
               </div>
               <div className="mg-v2-ad-b0kla__pill-toggle">
@@ -1036,7 +1097,6 @@ const AdminDashboardV2 = ({ user: propUser }) => {
                       ? stats.consultationStats.monthlyData.slice(0, 6)
                       : getEmptyMonthlyChartData(6));
                 const completedValues = rawData.map((d) => d.completedCount ?? 0);
-                // TODO: API에 bookedCount/scheduledCount 추가 시 2선(예약 vs 완료) 적용
                 const hasBooked = rawData.some((d) => (d.bookedCount ?? d.scheduledCount) != null);
                 const bookedValues = hasBooked
                   ? rawData.map((d) => d.bookedCount ?? d.scheduledCount ?? 0)
@@ -1181,6 +1241,59 @@ const AdminDashboardV2 = ({ user: propUser }) => {
         <div className="mg-v2-ad-b0kla__card">
           <h3 className="mg-v2-ad-b0kla__counselor-title">상담사 별 통합데이터</h3>
           <p className="mg-v2-ad-b0kla__counselor-subtitle">평점·상담 완료·완료율</p>
+          <div className="mg-v2-ad-b0kla__integrated-data-period">
+            <span className="mg-v2-ad-b0kla__integrated-data-period-label">집계 기간</span>
+            <div className="mg-v2-ad-b0kla__integrated-data-period-tabs">
+              <button
+                type="button"
+                aria-pressed={integratedDataPeriodType === 'all'}
+                className={`mg-v2-ad-b0kla__pill mg-v2-ad-b0kla__pill--sm ${integratedDataPeriodType === 'all' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+                onClick={() => setIntegratedDataPeriodType('all')}
+              >
+                전체
+              </button>
+              <button
+                type="button"
+                aria-pressed={integratedDataPeriodType === 'month'}
+                className={`mg-v2-ad-b0kla__pill mg-v2-ad-b0kla__pill--sm ${integratedDataPeriodType === 'month' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+                onClick={() => setIntegratedDataPeriodType('month')}
+              >
+                월별
+              </button>
+              <button
+                type="button"
+                aria-pressed={integratedDataPeriodType === 'year'}
+                className={`mg-v2-ad-b0kla__pill mg-v2-ad-b0kla__pill--sm ${integratedDataPeriodType === 'year' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+                onClick={() => setIntegratedDataPeriodType('year')}
+              >
+                년도별
+              </button>
+            </div>
+            {integratedDataPeriodType === 'month' && (
+              <div className="mg-v2-ad-b0kla__integrated-data-month-picker">
+                <select
+                  aria-label="년도 선택"
+                  value={integratedDataYear}
+                  onChange={(e) => setIntegratedDataYear(Number(e.target.value))}
+                  className="mg-v2-ad-b0kla__select mg-v2-ad-b0kla__select--sm"
+                >
+                  {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i).map((y) => (
+                    <option key={y} value={y}>{y}년</option>
+                  ))}
+                </select>
+                <select
+                  aria-label="월 선택"
+                  value={integratedDataMonth}
+                  onChange={(e) => setIntegratedDataMonth(Number(e.target.value))}
+                  className="mg-v2-ad-b0kla__select mg-v2-ad-b0kla__select--sm"
+                >
+                  {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
+                    <option key={m} value={m}>{m}월</option>
+                  ))}
+                </select>
+              </div>
+            )}
+          </div>
           <div className="mg-v2-ad-b0kla__integrated-data-view-toggle">
             <div className="mg-v2-ad-b0kla__pill-toggle" role="tablist" aria-label="통합데이터 뷰 전환">
               <button
@@ -1228,10 +1341,18 @@ const AdminDashboardV2 = ({ user: propUser }) => {
                       <span className="mg-v2-ad-b0kla__integrated-data-th">완료율</span>
                     </div>
                     <div className="mg-v2-ad-b0kla__counselor-list mg-v2-ad-b0kla__integrated-data-list">
-                      {consultantIntegratedData.map((row, index) => (
+                      {consultantIntegratedData.map((row, index) => {
+                        const rankUp = row.consultantId != null && integratedDataRankUpSet.has(row.consultantId);
+                        const rankDown = row.consultantId != null && integratedDataRankDownSet.has(row.consultantId);
+                        const rowClass = [
+                          'mg-v2-ad-b0kla__integrated-data-row',
+                          rankUp && 'mg-v2-ad-b0kla__integrated-data-row--rank-up',
+                          rankDown && 'mg-v2-ad-b0kla__integrated-data-row--rank-down'
+                        ].filter(Boolean).join(' ');
+                        return (
                         <div
                           key={`${row.consultantName}-${row.consultantId ?? ''}`}
-                          className="mg-v2-ad-b0kla__integrated-data-row"
+                          className={rowClass}
                         >
                           <span className="mg-v2-ad-b0kla__integrated-data-rank">{index + 1}</span>
                           <span className="mg-v2-ad-b0kla__counselor-name">{row.consultantName}</span>
@@ -1241,7 +1362,8 @@ const AdminDashboardV2 = ({ user: propUser }) => {
                           <span className="mg-v2-ad-b0kla__integrated-data-cell">{row.completedCount}건</span>
                           <span className="mg-v2-ad-b0kla__integrated-data-cell">{row.completionRate}%</span>
                         </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </>
                 )}
@@ -1301,10 +1423,17 @@ const AdminDashboardV2 = ({ user: propUser }) => {
                     {consultantIntegratedData.map((row, index) => {
                       const rank = index + 1;
                       const rate = Math.min(100, Math.max(0, Number(row.completionRate) || 0));
+                      const rankUp = row.consultantId != null && integratedDataRankUpSet.has(row.consultantId);
+                      const rankDown = row.consultantId != null && integratedDataRankDownSet.has(row.consultantId);
+                      const progressRowClass = [
+                        'mg-v2-ad-b0kla__integrated-progress-row',
+                        rankUp && 'mg-v2-ad-b0kla__integrated-progress-row--rank-up',
+                        rankDown && 'mg-v2-ad-b0kla__integrated-progress-row--rank-down'
+                      ].filter(Boolean).join(' ');
                       return (
                         <div
                           key={`${row.consultantName}-${row.consultantId ?? ''}`}
-                          className="mg-v2-ad-b0kla__integrated-progress-row"
+                          className={progressRowClass}
                         >
                           <span className="mg-v2-ad-b0kla__integrated-progress-rank">{rank}위</span>
                           <span className="mg-v2-ad-b0kla__integrated-progress-name" title={row.consultantName}>

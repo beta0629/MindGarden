@@ -1314,7 +1314,7 @@ const AdminDashboard = ({ user: propUser }) => {
                         <p className="mg-management-description">시스템 공통코드를 관리합니다</p>
                     </div>
                     
-                    <div className="mg-management-card" onClick={() => navigate(ADMIN_ROUTES.SYSTEM_NOTIFICATIONS)}>
+                    <div className="mg-management-card" onClick={() => navigate(ADMIN_ROUTES.NOTIFICATIONS)}>
                         <div className="mg-management-icon">
                             <FaBell />
                         </div>

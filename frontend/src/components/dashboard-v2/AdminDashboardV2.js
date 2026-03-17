@@ -155,7 +155,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
     );
     const alarm = replaced.find(
       (i) =>
-        i.to === ADMIN_ROUTES.SYSTEM_NOTIFICATIONS || i.label === '알림'
+        i.to === ADMIN_ROUTES.NOTIFICATIONS || i.to === ADMIN_ROUTES.SYSTEM_NOTIFICATIONS || i.label === '알림' || i.label === '알림·메시지 관리'
     );
     const rest = replaced.filter(
       (i) => i !== dashboard && i !== integrated && i !== alarm
@@ -1682,13 +1682,13 @@ const AdminDashboardV2 = ({ user: propUser }) => {
           <button
             type="button"
             className="mg-v2-ad-b0kla__admin-card"
-            onClick={() => navigate(ADMIN_ROUTES.SYSTEM_NOTIFICATIONS)}
+            onClick={() => navigate(ADMIN_ROUTES.NOTIFICATIONS)}
           >
             <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--blue">
               <FaBell size={28} />
             </div>
-            <span className="mg-v2-ad-b0kla__admin-label">시스템 공지 관리</span>
-            <span className="mg-v2-ad-b0kla__admin-desc">전체/상담사/내담자 공지를 관리합니다</span>
+            <span className="mg-v2-ad-b0kla__admin-label">알림·메시지 관리</span>
+            <span className="mg-v2-ad-b0kla__admin-desc">시스템 공지와 메시지를 한 화면에서 관리합니다</span>
           </button>
           {!HIDE_ADMIN_CARD_IDS.has('dashboards') && (
           <button

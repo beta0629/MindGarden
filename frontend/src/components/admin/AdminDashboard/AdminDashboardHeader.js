@@ -56,7 +56,7 @@ const AdminDashboardHeader = ({
                         <button className="mg-button"
                             variant="outline"
                             size="small"
-                            onClick={() => onNavigate('/admin/system-notifications')}
+                            onClick={() => onNavigate('/admin/notifications')}
                             className="mg-v2-admin-dashboard-action-btn"
                         >
                             <Bell className="mg-v2-icon" />

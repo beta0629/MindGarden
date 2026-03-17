@@ -105,7 +105,7 @@ const AdminDashboardStats = ({
             value: stats.systemNotifications,
             icon: <AlertTriangle className="mg-v2-icon" />,
             color: 'red',
-            onClick: () => onNavigate('/admin/system-notifications'),
+            onClick: () => onNavigate('/admin/notifications'),
             description: '미확인 시스템 알림'
         },
         {

@@ -118,7 +118,7 @@ const ManagementGridWidget = ({ widget, user }) => {
       title: '시스템 알림',
       description: '시스템 알림을 관리합니다',
       icon: <Bell size={24} />,
-      url: ADMIN_ROUTES.SYSTEM_NOTIFICATIONS,
+      url: ADMIN_ROUTES.NOTIFICATIONS,
       color: 'pink'
     },
     {

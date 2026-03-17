@@ -112,6 +112,7 @@ const ClientModal = ({
             case 'create': return '등록';
             case 'edit': return '수정';
             case 'delete': return '삭제';
+            case 'view': return '닫기';
             default: return '저장';
         }
     };
@@ -420,6 +421,9 @@ const ClientModal = ({
                             e.preventDefault();
                             e.stopPropagation();
                             console.log('🔘 모달 저장 버튼 클릭', { type });
+                            if (type === 'view') {
+                                return onClose();
+                            }
                             if (type === 'delete') {
                                 return onSave(formData);
                             }

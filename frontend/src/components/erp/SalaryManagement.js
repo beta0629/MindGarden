@@ -657,11 +657,25 @@ const SalaryManagement = () => {
                                 key={consultant.id}
                                 className="mg-v2-ad-b0kla__card salary-profile-card salary-profile-card--compact"
                                 aria-labelledby={`profile-name-sm-${consultant.id}`}
-                                onClick={() => openModal(consultant)}
-                                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openModal(consultant); } }}
-                                role="button"
-                                tabIndex={0}
+                                style={{ position: 'relative' }}
                               >
+                                <button
+                                  type="button"
+                                  className="salary-profile-card__open-btn"
+                                  onClick={() => openModal(consultant)}
+                                  style={{
+                                    position: 'absolute',
+                                    inset: 0,
+                                    zIndex: 1,
+                                    cursor: 'pointer',
+                                    background: 'transparent',
+                                    border: 'none',
+                                    padding: 0,
+                                    width: '100%',
+                                    height: '100%',
+                                  }}
+                                  aria-label={`${consultant.name} 상세 보기`}
+                                />
                                 <span className="salary-profile-card__accent" aria-hidden />
                                 <div className="salary-profile-card__name" id={`profile-name-sm-${consultant.id}`}>
                                   {consultant.name}
@@ -674,7 +688,7 @@ const SalaryManagement = () => {
                                     {profile ? formatCurrency(profile.baseSalary || 0) : '—'}
                                   </span>
                                 </div>
-                                <div className="mg-v2-card-actions salary-profile-card__actions">
+                                <div className="mg-v2-card-actions salary-profile-card__actions" style={{ position: 'relative', zIndex: 2 }}>
                                   <MGButton
                                     variant="outline"
                                     size="small"

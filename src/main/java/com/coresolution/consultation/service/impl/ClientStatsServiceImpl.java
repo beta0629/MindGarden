@@ -59,6 +59,8 @@ public class ClientStatsServiceImpl implements ClientStatsService {
         Map<String, Object> clientMap = convertClientToMap(client);
         clientMap.put("grade", user.getGrade());
         clientMap.put("notes", user.getNotes());
+        clientMap.put("status", Boolean.TRUE.equals(user.getIsActive()) ? "ACTIVE" : "INACTIVE");
+        clientMap.put("isActive", user.getIsActive() != null ? user.getIsActive() : true);
 
         long currentConsultants = calculateCurrentConsultants(clientId);
         
@@ -83,7 +85,7 @@ public class ClientStatsServiceImpl implements ClientStatsService {
             return List.of();
         }
         List<com.coresolution.consultation.entity.User> clientUsers = userRepository
-                .findByRoleAndIsActiveTrue(tenantId, UserRole.CLIENT);
+                .findByRole(tenantId, UserRole.CLIENT);
         
         return buildClientStatsList(clientUsers);
     }
@@ -96,7 +98,7 @@ public class ClientStatsServiceImpl implements ClientStatsService {
         log.info("📊 테넌트별 내담자 통계 조회: tenantId={}", tenantId);
         
         List<com.coresolution.consultation.entity.User> clientUsers = userRepository
-                .findByRoleAndIsActiveTrue(tenantId, UserRole.CLIENT);
+                .findByRole(tenantId, UserRole.CLIENT);
         
         log.info("📊 테넌트별 내담자 조회 완료: tenantId={}, 조회된 수={}", tenantId, clientUsers.size());
         
@@ -115,6 +117,8 @@ public class ClientStatsServiceImpl implements ClientStatsService {
                     Map<String, Object> clientMap = convertClientToMap(client);
                     clientMap.put("grade", user.getGrade());
                     clientMap.put("notes", user.getNotes());
+                    clientMap.put("status", Boolean.TRUE.equals(user.getIsActive()) ? "ACTIVE" : "INACTIVE");
+                    clientMap.put("isActive", user.getIsActive() != null ? user.getIsActive() : true);
                     if (user.getProfileImageUrl() != null) {
                         clientMap.put("profileImageUrl", user.getProfileImageUrl());
                     }
@@ -249,8 +253,6 @@ public class ClientStatsServiceImpl implements ClientStatsService {
         clientMap.put("addressDetail", client.getAddressDetail());
         clientMap.put("postalCode", client.getPostalCode());
         clientMap.put("role", UserRole.CLIENT.name());
-        clientMap.put("status", "ACTIVE");
-        clientMap.put("isActive", true);
         clientMap.put("isDeleted", client.getIsDeleted());
         clientMap.put("createdAt", client.getCreatedAt());
         clientMap.put("updatedAt", client.getUpdatedAt());

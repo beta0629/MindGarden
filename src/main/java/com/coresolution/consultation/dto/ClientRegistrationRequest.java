@@ -61,6 +61,9 @@ public class ClientRegistrationRequest {
     private String notes;
 
     private String grade;
+
+    /** 상태 (ACTIVE, INACTIVE, PENDING 등). 수정/등록 시 User.isActive 매핑에 사용 */
+    private String status;
     
     private String registeredBy;
     

@@ -62,6 +62,9 @@ public class ConsultantRegistrationRequest {
 
     private String notes;
 
+    /** 상태 (ACTIVE, INACTIVE, PENDING 등). 수정/등록 시 User.isActive 매핑에 사용 */
+    private String status;
+
     /** 프로필 사진 (base64 data URL, 최대 2MB, 리사이즈·크롭 적용) */
     private String profileImageUrl;
 

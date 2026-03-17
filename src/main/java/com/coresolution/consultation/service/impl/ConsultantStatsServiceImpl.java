@@ -82,15 +82,13 @@ public class ConsultantStatsServiceImpl implements ConsultantStatsService {
     }
 
     @Override
-    @Cacheable(value = "consultantsWithStats", key = "'all:active'")
+    @Cacheable(value = "consultantsWithStats", key = "'all'")
     public List<Map<String, Object>> getAllConsultantsWithStats() {
         log.info("📊 전체 상담사 통계 조회 (DB) - 레거시 호환");
         
-        // 표준화 2025-12-06: deprecated 메서드 대체
+        // 표준화 2025-12-06: deprecated 메서드 대체. 비활성 상담사 포함 전체 조회
         String tenantId = TenantContextHolder.getRequiredTenantId();
-        List<Consultant> consultants = consultantRepository.findByTenantIdAndIsDeletedFalse(tenantId).stream()
-                .filter(c -> c.getIsActive() != null && c.getIsActive())
-                .collect(Collectors.toList());
+        List<Consultant> consultants = consultantRepository.findByTenantIdAndIsDeletedFalse(tenantId);
         
         return buildConsultantStatsList(consultants);
     }
@@ -98,14 +96,12 @@ public class ConsultantStatsServiceImpl implements ConsultantStatsService {
     /**
      * 테넌트별 상담사 통계 조회 (신규 추가)
      */
-    @Cacheable(value = "consultantsWithStats", key = "'tenant:' + #tenantId + ':active'")
+    @Cacheable(value = "consultantsWithStats", key = "'tenant:' + #tenantId")
     public List<Map<String, Object>> getAllConsultantsWithStatsByTenant(String tenantId) {
         log.info("📊 테넌트별 상담사 통계 조회: tenantId={}", tenantId);
         
-        // 표준화 2025-12-06: deprecated 메서드 대체
-        List<Consultant> consultants = consultantRepository.findByTenantIdAndIsDeletedFalse(tenantId).stream()
-                .filter(c -> c.getIsActive() != null && c.getIsActive())
-                .collect(Collectors.toList());
+        // 비활성 상담사 포함 전체 조회
+        List<Consultant> consultants = consultantRepository.findByTenantIdAndIsDeletedFalse(tenantId);
         
         log.info("📊 테넌트별 상담사 조회 완료: tenantId={}, 조회된 수={}", tenantId, consultants.size());
         
@@ -305,6 +301,7 @@ public class ConsultantStatsServiceImpl implements ConsultantStatsService {
         consultantMap.put("phone", phone);
         
         consultantMap.put("role", consultant.getRole() != null ? consultant.getRole().name() : null);
+        consultantMap.put("status", Boolean.TRUE.equals(consultant.getIsActive()) ? "ACTIVE" : "INACTIVE");
         consultantMap.put("isActive", consultant.getIsActive());
         consultantMap.put("isDeleted", consultant.getIsDeleted());
         

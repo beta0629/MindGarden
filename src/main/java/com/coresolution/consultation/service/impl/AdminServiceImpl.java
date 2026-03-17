@@ -379,6 +379,12 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         }
         log.info("🔐 관리자 내담자 등록 시 이름, 이메일 암호화 완료");
         
+        // 등록 시 상태 반영: request.getStatus()가 있으면 ACTIVE→true, 그 외→false (없으면 기본 true)
+        boolean isActive = true;
+        if (request.getStatus() != null && !request.getStatus().trim().isEmpty()) {
+            isActive = "ACTIVE".equalsIgnoreCase(request.getStatus().trim());
+        }
+
         // User 엔티티 생성
         User clientUser = User.builder()
                 .userId(userId)
@@ -387,7 +393,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 .name(encryptedName)
                 .phone(encryptedPhone)
                 .role(UserRole.CLIENT)
-                .isActive(true)
+                .isActive(isActive)
                 .isPasswordChanged(!isTempPassword)
                 .branch(null)
                 .branchCode(null)
@@ -2102,6 +2108,11 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             consultant.setGrade(request.getGrade().trim().isEmpty() ? null : request.getGrade().trim());
         }
 
+        // 상태 반영: request.getStatus()가 null/empty가 아니면 ACTIVE→true, 그 외→false
+        if (request.getStatus() != null && !request.getStatus().trim().isEmpty()) {
+            consultant.setIsActive("ACTIVE".equalsIgnoreCase(request.getStatus().trim()));
+        }
+
         User savedConsultant = consultantRepository.save(consultant);
 
         // 표준화 2025-12-08: 사용자 정보 업데이트 시 캐시 무효화
@@ -2185,6 +2196,11 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         }
         if (request.getPostalCode() != null) {
             clientUser.setPostalCode(request.getPostalCode().trim().isEmpty() ? null : request.getPostalCode().trim());
+        }
+
+        // 상태 반영: request.getStatus()가 null/empty가 아니면 ACTIVE→true, 그 외→false
+        if (request.getStatus() != null && !request.getStatus().trim().isEmpty()) {
+            clientUser.setIsActive("ACTIVE".equalsIgnoreCase(request.getStatus().trim()));
         }
 
         User savedUser = userRepository.save(clientUser);

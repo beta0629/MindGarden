@@ -2402,6 +2402,9 @@ public class AdminController extends BaseApiController {
         data.put("completionRate", completionRate);
         data.put("completionRateChange", completionRateChange);
 
+        log.info("📊 consultation-completion 응답: tenantId={}, monthlyData={}건, weeklyData={}건",
+                tenantId, monthlyData.size(), weeklyData.size());
+
         return success(data);
     }
 

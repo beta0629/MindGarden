@@ -925,27 +925,27 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             
             if (start != null && end != null) {
                 // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
-                bookedSchedules = scheduleRepository.countByStatusAndDateBetween(tenantId, ScheduleStatus.BOOKED.name(), start, end);
+                bookedSchedules = scheduleRepository.countByStatusAndDateBetween(tenantId, ScheduleStatus.BOOKED, start, end);
                 // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
-                completedSchedules = scheduleRepository.countByStatusAndDateBetween(tenantId, ScheduleStatus.COMPLETED.name(), start, end);
+                completedSchedules = scheduleRepository.countByStatusAndDateBetween(tenantId, ScheduleStatus.COMPLETED, start, end);
                 // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
-                cancelledSchedules = scheduleRepository.countByStatusAndDateBetween(tenantId, ScheduleStatus.CANCELLED.name(), start, end);
+                cancelledSchedules = scheduleRepository.countByStatusAndDateBetween(tenantId, ScheduleStatus.CANCELLED, start, end);
                 inProgressSchedules = 0; // IN_PROGRESS 상태가 없으므로 0으로 설정
             } else if (start != null) {
                 // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
-                bookedSchedules = scheduleRepository.countByStatusAndDateGreaterThanEqual(tenantId, ScheduleStatus.BOOKED.name(), start);
+                bookedSchedules = scheduleRepository.countByStatusAndDateGreaterThanEqual(tenantId, ScheduleStatus.BOOKED, start);
                 // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
-                completedSchedules = scheduleRepository.countByStatusAndDateGreaterThanEqual(tenantId, ScheduleStatus.COMPLETED.name(), start);
+                completedSchedules = scheduleRepository.countByStatusAndDateGreaterThanEqual(tenantId, ScheduleStatus.COMPLETED, start);
                 // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
-                cancelledSchedules = scheduleRepository.countByStatusAndDateGreaterThanEqual(tenantId, ScheduleStatus.CANCELLED.name(), start);
+                cancelledSchedules = scheduleRepository.countByStatusAndDateGreaterThanEqual(tenantId, ScheduleStatus.CANCELLED, start);
                 inProgressSchedules = 0; // IN_PROGRESS 상태가 없으므로 0으로 설정
             } else if (end != null) {
                 // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
-                bookedSchedules = scheduleRepository.countByStatusAndDateLessThanEqual(tenantId, ScheduleStatus.BOOKED.name(), end);
+                bookedSchedules = scheduleRepository.countByStatusAndDateLessThanEqual(tenantId, ScheduleStatus.BOOKED, end);
                 // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
-                completedSchedules = scheduleRepository.countByStatusAndDateLessThanEqual(tenantId, ScheduleStatus.COMPLETED.name(), end);
+                completedSchedules = scheduleRepository.countByStatusAndDateLessThanEqual(tenantId, ScheduleStatus.COMPLETED, end);
                 // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
-                cancelledSchedules = scheduleRepository.countByStatusAndDateLessThanEqual(tenantId, ScheduleStatus.CANCELLED.name(), end);
+                cancelledSchedules = scheduleRepository.countByStatusAndDateLessThanEqual(tenantId, ScheduleStatus.CANCELLED, end);
                 inProgressSchedules = 0; // IN_PROGRESS 상태가 없으므로 0으로 설정
             } else {
                 // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
@@ -1013,7 +1013,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             
             long totalSchedulesInPeriod = scheduleRepository.countByDateBetween(tenantId, thisMonthStart, today);
             // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
-            long completedSchedulesInPeriod = scheduleRepository.countByStatusAndDateBetween(tenantId, ScheduleStatus.COMPLETED.name(), thisMonthStart, today);
+            long completedSchedulesInPeriod = scheduleRepository.countByStatusAndDateBetween(tenantId, ScheduleStatus.COMPLETED, thisMonthStart, today);
             double completionRate = totalSchedulesInPeriod > 0 ? ((double) completedSchedulesInPeriod / totalSchedulesInPeriod) * 100 : 0;
             
             statistics.put("totalSchedulesInPeriod", totalSchedulesInPeriod);
@@ -1021,7 +1021,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             statistics.put("completionRate", Math.round(completionRate * 100.0) / 100.0);
             
             // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
-            long cancelledSchedulesInPeriod = scheduleRepository.countByStatusAndDateBetween(tenantId, ScheduleStatus.CANCELLED.name(), thisMonthStart, today);
+            long cancelledSchedulesInPeriod = scheduleRepository.countByStatusAndDateBetween(tenantId, ScheduleStatus.CANCELLED, thisMonthStart, today);
             double cancellationRate = totalSchedulesInPeriod > 0 ? ((double) cancelledSchedulesInPeriod / totalSchedulesInPeriod) * 100 : 0;
             
             statistics.put("cancelledSchedulesInPeriod", cancelledSchedulesInPeriod);
@@ -1030,9 +1030,9 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             LocalDate weekAgo = today.minusDays(7);
             long weeklySchedules = scheduleRepository.countByDateBetween(tenantId, weekAgo, today);
             // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
-            long weeklyCompleted = scheduleRepository.countByStatusAndDateBetween(tenantId, ScheduleStatus.COMPLETED.name(), weekAgo, today);
+            long weeklyCompleted = scheduleRepository.countByStatusAndDateBetween(tenantId, ScheduleStatus.COMPLETED, weekAgo, today);
             // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
-            long weeklyCancelled = scheduleRepository.countByStatusAndDateBetween(tenantId, ScheduleStatus.CANCELLED.name(), weekAgo, today);
+            long weeklyCancelled = scheduleRepository.countByStatusAndDateBetween(tenantId, ScheduleStatus.CANCELLED, weekAgo, today);
             
             statistics.put("weeklySchedules", weeklySchedules);
             statistics.put("weeklyCompleted", weeklyCompleted);

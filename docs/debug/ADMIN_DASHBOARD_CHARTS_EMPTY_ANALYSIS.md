@@ -309,3 +309,41 @@
   - **백엔드**: `AdminController.getConsultationCompletionStatistics` 호출 전·후 tenantId 로그; `AdminServiceImpl.getConsultationMonthlyTrend`/`getConsultationWeeklyTrend` 내 getTenantId() 결과·예외 로그. tenantId null 시 원인(세션/컨텍스트) 수정.
   - **프론트**: 9.4의 임시 로그 추가로 응답·consultationStats 확인 후, 필요 시 에러 시 "차트 데이터를 불러오지 못했습니다" 등 구체 메시지 또는 재시도 로직 검토.
   - **체크리스트**: 수정 후 동일 환경에서 consultation-completion 200·Response에 monthlyData/weeklyData 존재 확인 → 상담 현황 추이·예약 vs 완료 차트에 막대/라인 표시 여부 확인.
+
+---
+
+## 10. “오전에는 나왔는데 지금 안 나올 때” 원인 추적 (코어 디버거)
+
+**상황**: 같은 대시보드·같은 테넌트인데 이전에는 차트가 나왔고, 현재는 “기간 내 완료된 상담이 없습니다” / “기간 내 데이터가 없습니다”만 표시됨.
+
+**코드 변경 여부**: `AdminController.java`, `AdminServiceImpl.java`의 consultation-completion 관련 로직은 당일 커밋과 비교 시 **변경 없음**. 따라서 **동일 코드**에서 **환경/데이터/예외**로만 빈 데이터가 나올 수 있음.
+
+### 10.1 가능 원인 3가지
+
+| 구분 | 설명 | 확인 방법 |
+|------|------|-----------|
+| **(A) API 실패** | consultation-completion이 4xx/5xx 또는 fetch 예외로 실패 → `consultationRes.ok === false` → state 갱신 안 됨(빈 배열 유지). | 브라우저 콘솔 `[Dashboard Charts] consultation-completion 응답이 ok가 아님. status: xxx` 또는 `요청 실패 (rejected)` 확인. |
+| **(B) 백엔드 예외** | 서비스 내 `getConsultationMonthlyTrend` / `getConsultationWeeklyTrend`에서 예외 발생 → catch에서 빈 `ArrayList` 반환 → 200 + monthlyData/weeklyData = `[]`. | **서버 로그**에서 `❌ 월별 상담 완료 추이 조회 실패 (반환: 빈 목록). 원인: ...` 또는 `❌ 주간 상담 완료 추이 조회 실패 ...` 및 스택트레이스 확인. |
+| **(C) 테넌트/세션** | 세션의 tenantId 없음 또는 TenantContextHolder 미설정 → Controller에서 throw 또는 서비스에서 getRequiredTenantId() 예외 → (B)와 동일. | 서버 로그 `❌ tenantId가 필수입니다` 또는 예외 원인 `IllegalStateException`(getRequiredTenantId) 확인. |
+
+### 10.2 권장 확인 순서
+
+1. **브라우저 콘솔** (F12 → Console, 대시보드 새로고침)
+   - `[Dashboard Charts] consultation-completion 응답:` → **status**, **ok** 확인.
+   - **ok: false** → (A) API 실패. Status 401/403/500이면 세션·권한·서버 에러 점검.
+   - **ok: true** → `[Dashboard Charts] consultation-completion payload:` → **monthlyDataLength**, **weeklyDataLength** 확인.
+   - **monthlyDataLength: 0, weeklyDataLength: 0** → 백엔드가 빈 배열 반환 → (B) 또는 (C). 서버 로그로 이동.
+
+2. **서버 로그** (해당 요청 시점)
+   - `📊 consultation-completion 응답: tenantId=..., monthlyData=...건, weeklyData=...건` → **0건**이면 서비스에서 빈 리스트 반환한 것.
+   - `❌ 월별 상담 완료 추이 조회 실패 (반환: 빈 목록). 원인: <예외클래스> - <메시지>` 및 스택트레이스 → **원인 예외** 확인 (tenantId, DB, Repository 등).
+   - `❌ tenantId가 필수입니다` → 세션/User의 tenantId 없음 → (C).
+
+3. **Network 탭**
+   - `GET /api/v1/admin/statistics/consultation-completion` 선택 → **Status**, **Response** body의 `data.monthlyData`, `data.weeklyData` 길이 확인.
+
+### 10.3 정리
+
+- **오전과 비교해 코드는 동일**하므로, 차트가 안 나오는 이유는 **(A) API 실패**, **(B) 서비스 예외로 빈 배열 반환**, **(C) tenantId/세션 문제** 중 하나임.
+- 위 순서대로 **콘솔 → 서버 로그 → Network** 확인하면 원인 구분 가능.
+- 백엔드에 추가된 로그: Controller `📊 consultation-completion 응답: ...`, Service catch `❌ ... 조회 실패 (반환: 빈 목록). 원인: ...`.

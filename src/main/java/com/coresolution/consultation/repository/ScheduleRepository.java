@@ -648,7 +648,7 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
      * 날짜 범위 내 특정 상태 스케줄 개수 조회 (tenantId 필터링)
      */
     @Query("SELECT COUNT(s) FROM Schedule s WHERE s.tenantId = :tenantId AND s.status = :status AND s.date BETWEEN :startDate AND :endDate AND s.isDeleted = false")
-    long countByStatusAndDateBetween(@Param("tenantId") String tenantId, @Param("status") String status, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
+    long countByStatusAndDateBetween(@Param("tenantId") String tenantId, @Param("status") ScheduleStatus status, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
     
     /**
      * @Deprecated - 🚨 위험: tenantId 필터링 없이 스케줄 접근!
@@ -661,7 +661,7 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
      * 시작일 이후 특정 상태 스케줄 개수 조회 (tenantId 필터링)
      */
     @Query("SELECT COUNT(s) FROM Schedule s WHERE s.tenantId = :tenantId AND s.status = :status AND s.date >= :startDate AND s.isDeleted = false")
-    long countByStatusAndDateGreaterThanEqual(@Param("tenantId") String tenantId, @Param("status") String status, @Param("startDate") LocalDate startDate);
+    long countByStatusAndDateGreaterThanEqual(@Param("tenantId") String tenantId, @Param("status") ScheduleStatus status, @Param("startDate") LocalDate startDate);
     
     /**
      * @Deprecated - 🚨 위험: tenantId 필터링 없이 스케줄 접근!
@@ -674,7 +674,7 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
      * 종료일 이전 특정 상태 스케줄 개수 조회 (tenantId 필터링)
      */
     @Query("SELECT COUNT(s) FROM Schedule s WHERE s.tenantId = :tenantId AND s.status = :status AND s.date <= :endDate AND s.isDeleted = false")
-    long countByStatusAndDateLessThanEqual(@Param("tenantId") String tenantId, @Param("status") String status, @Param("endDate") LocalDate endDate);
+    long countByStatusAndDateLessThanEqual(@Param("tenantId") String tenantId, @Param("status") ScheduleStatus status, @Param("endDate") LocalDate endDate);
     
     /**
      * @Deprecated - 🚨 위험: tenantId 필터링 없이 스케줄 접근!

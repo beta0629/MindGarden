@@ -4430,9 +4430,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                     sum += getCompletedScheduleCount(consultant.getId(), monthStart, monthEnd);
                 }
                 long bookedSum = scheduleRepository.countByStatusAndDateBetween(
-                        tenantId, ScheduleStatus.BOOKED.name(), monthStart, monthEnd)
+                        tenantId, ScheduleStatus.BOOKED, monthStart, monthEnd)
                         + scheduleRepository.countByStatusAndDateBetween(
-                                tenantId, ScheduleStatus.CONFIRMED.name(), monthStart, monthEnd);
+                                tenantId, ScheduleStatus.CONFIRMED, monthStart, monthEnd);
                 Map<String, Object> row = new HashMap<>();
                 row.put("period", monthStart.format(DateTimeFormatter.ofPattern("yyyy-MM")));
                 row.put("completedCount", sum);
@@ -4442,7 +4442,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             log.info("✅ 월별 상담 완료 추이 조회 완료: {}개월 (KPI와 동일 집계)", monthlyData.size());
             return monthlyData;
         } catch (Exception e) {
-            log.error("❌ 월별 상담 완료 추이 조회 실패", e);
+            log.error("❌ 월별 상담 완료 추이 조회 실패 (반환: 빈 목록). 원인: {} - {}", e.getClass().getSimpleName(), e.getMessage(), e);
             return new ArrayList<>();
         }
     }
@@ -4466,9 +4466,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                     sum += getCompletedScheduleCount(consultant.getId(), weekStart, weekEnd);
                 }
                 long bookedSum = scheduleRepository.countByStatusAndDateBetween(
-                        tenantId, ScheduleStatus.BOOKED.name(), weekStart, weekEnd)
+                        tenantId, ScheduleStatus.BOOKED, weekStart, weekEnd)
                         + scheduleRepository.countByStatusAndDateBetween(
-                                tenantId, ScheduleStatus.CONFIRMED.name(), weekStart, weekEnd);
+                                tenantId, ScheduleStatus.CONFIRMED, weekStart, weekEnd);
                 Map<String, Object> row = new HashMap<>();
                 row.put("period", weekEnd.format(DateTimeFormatter.ofPattern("MM/dd")));
                 row.put("completedCount", sum);
@@ -4478,7 +4478,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             log.info("✅ 주간 상담 완료 추이 조회 완료: {}주 (KPI와 동일 집계)", weeklyData.size());
             return weeklyData;
         } catch (Exception e) {
-            log.error("❌ 주간 상담 완료 추이 조회 실패", e);
+            log.error("❌ 주간 상담 완료 추이 조회 실패 (반환: 빈 목록). 원인: {} - {}", e.getClass().getSimpleName(), e.getMessage(), e);
             return new ArrayList<>();
         }
     }
@@ -4497,7 +4497,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 return 0.0;
             }
             long totalCompleted = scheduleRepository.countByStatusAndDateBetween(
-                    tenantId, ScheduleStatus.COMPLETED.name(), monthStart, monthEnd);
+                    tenantId, ScheduleStatus.COMPLETED, monthStart, monthEnd);
             return Math.round((double) totalCompleted / totalScheduled * 100.0 * 10.0) / 10.0;
         } catch (Exception e) {
             log.warn("월별 완료율 조회 실패: year={}, month={}, error={}", year, month, e.getMessage());

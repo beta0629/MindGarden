@@ -180,12 +180,18 @@ public class SystemNotificationServiceImpl implements SystemNotificationService 
     @Override
     public Long getUnreadCount(Long userId, String userRole) {
         log.info("📢 읽지 않은 공지 수 조회 - 사용자 ID: {}, 역할: {}", userId, userRole);
-        
+
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null || tenantId.isBlank()) {
+            log.warn("📢 tenantId 없음 - 읽지 않은 공지 수 0 반환");
+            return 0L;
+        }
+
         List<String> targetTypes = getTargetTypesForUser(userRole);
-        Long count = systemNotificationReadRepository.countUnreadNotificationsByUser(userId, targetTypes);
-        
-        log.info("✅ 읽지 않은 공지 수: {}", count);
-        
+        Long count = systemNotificationReadRepository.countUnreadNotificationsByTenantIdAndUser(tenantId, userId, targetTypes);
+
+        log.info("✅ 읽지 않은 공지 수: {} (tenantId: {})", count, tenantId);
+
         return count;
     }
     

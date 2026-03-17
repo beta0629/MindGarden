@@ -48,7 +48,8 @@ const SystemNotificationListBlock = ({ hasManagePermission, onOpenCreate }) => {
       params.size = 50;
 
       const response = await StandardizedApi.get('/api/v1/system-notifications/admin/all', params);
-      const list = Array.isArray(response) ? response : (response?.data ?? response ?? []);
+      const raw = response?.notifications ?? response?.content ?? response?.data ?? response;
+      const list = Array.isArray(raw) ? raw : [];
       setNotifications(list);
     } catch (error) {
       console.error('공지 목록 로드 오류:', error);
@@ -161,7 +162,7 @@ const SystemNotificationListBlock = ({ hasManagePermission, onOpenCreate }) => {
     return text.length > 150 ? `${text.substring(0, 150)}...` : text;
   };
 
-  const filteredList = notifications.filter((n) => {
+  const filteredList = (Array.isArray(notifications) ? notifications : []).filter((n) => {
     if (!searchTerm.trim()) return true;
     const term = searchTerm.toLowerCase();
     return (

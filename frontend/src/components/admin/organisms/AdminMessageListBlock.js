@@ -34,7 +34,8 @@ const AdminMessageListBlock = () => {
     try {
       setLoading(true);
       const response = await StandardizedApi.get('/api/v1/consultation-messages/all');
-      const list = Array.isArray(response) ? response : (response?.data ?? response ?? []);
+      const raw = response?.content ?? response?.messages ?? response?.data ?? response;
+      const list = Array.isArray(raw) ? raw : [];
       setMessages(list);
     } catch (err) {
       console.error('메시지 로드 중 오류:', err);
@@ -49,7 +50,7 @@ const AdminMessageListBlock = () => {
     loadMessages();
   }, [loadMessages]);
 
-  const filteredMessages = messages.filter((message) => {
+  const filteredMessages = (Array.isArray(messages) ? messages : []).filter((message) => {
     const matchesSearch =
       (message.title || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       (message.content || '').toLowerCase().includes(searchTerm.toLowerCase()) ||

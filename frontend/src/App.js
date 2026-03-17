@@ -377,18 +377,20 @@ function AppContent() {
             <Route path="/consultant/consultation-record/:consultationId" element={<ConsultationRecordScreen />} />
             <Route path="/consultant/consultation-record-view/:recordId" element={<ConsultationRecordView />} />
             
-            {/* 권한 관리 */}
+            {/* 권한 관리 (ADMIN 전용) */}
             <Route path="/admin/permissions" element={
-              <AdminCommonLayout title="권한 관리">
-                <PermissionManagement />
-              </AdminCommonLayout>
+              <ProtectedRoute requiredRoles={[USER_ROLES.ADMIN]}>
+                <AdminCommonLayout title="권한 관리">
+                  <PermissionManagement />
+                </AdminCommonLayout>
+              </ProtectedRoute>
             } />
             
-            {/* 관리자 전용 메뉴 시스템 (관리자 역할 접근) */}
+            {/* 관리자 전용 메뉴 시스템 (관리자·스태프 역할 접근, ERP는 STAFF 제외) */}
             <Route
               path="/admin"
               element={
-                <ProtectedRoute requiredRoles={[USER_ROLES.ADMIN]}>
+                <ProtectedRoute requiredRoles={[USER_ROLES.ADMIN, USER_ROLES.STAFF]}>
                   <AdminLayout />
                 </ProtectedRoute>
               }

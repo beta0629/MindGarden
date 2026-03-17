@@ -201,7 +201,7 @@ public class SalaryManagementController extends BaseApiController {
         if (currentUser.getTenantId() != null) {
             TenantContextHolder.setTenantId(currentUser.getTenantId());
         }
-        if (!isAdminRoleFromCommonCode(currentUser.getRole())) {
+        if (!isAdminOrStaffRoleFromCommonCode(currentUser.getRole())) {
             throw new ForbiddenException("급여/세금 관리 권한이 없습니다.");
         }
         log.info("세금 상세 조회: 사용자 {}, 계산 ID {}", currentUser.getName(), calculationId);
@@ -223,7 +223,7 @@ public class SalaryManagementController extends BaseApiController {
         if (currentUser.getTenantId() != null) {
             TenantContextHolder.setTenantId(currentUser.getTenantId());
         }
-        if (!isAdminRoleFromCommonCode(currentUser.getRole())) {
+        if (!isAdminOrStaffRoleFromCommonCode(currentUser.getRole())) {
             throw new ForbiddenException("급여/세금 관리 권한이 없습니다.");
         }
         SalaryTaxCalculation created = salaryManagementService.calculateAdditionalTax(request);
@@ -251,7 +251,7 @@ public class SalaryManagementController extends BaseApiController {
         if (currentUser.getTenantId() != null) {
             TenantContextHolder.setTenantId(currentUser.getTenantId());
         }
-        if (!isAdminRoleFromCommonCode(currentUser.getRole())) {
+        if (!isAdminOrStaffRoleFromCommonCode(currentUser.getRole())) {
             throw new ForbiddenException("급여/세금 관리 권한이 없습니다.");
         }
         log.info("세금 통계 조회: 사용자 {}, 기간 {}", currentUser.getName(), period);
@@ -611,5 +611,41 @@ public class SalaryManagementController extends BaseApiController {
             return role == UserRole.ADMIN || 
                        role.isAdmin();
         }
+    }
+
+    /**
+     * 공통코드에서 사무원 역할인지 확인 (STAFF)
+     *
+     * @param role 사용자 역할
+     * @return 사무원 역할 여부
+     */
+    private boolean isStaffRoleFromCommonCode(UserRole role) {
+        if (role == null) {
+            return false;
+        }
+        try {
+            List<CommonCode> roleCodes = commonCodeService.getActiveCommonCodesByGroup("ROLE");
+            if (roleCodes == null || roleCodes.isEmpty()) {
+                return role == UserRole.STAFF;
+            }
+            String roleName = role.name();
+            return roleCodes.stream()
+                .anyMatch(code -> code.getCodeValue().equals(roleName) && (code.getExtraData() != null
+                    && (code.getExtraData().contains("\"isStaff\":true")
+                        || code.getExtraData().contains("\"roleType\":\"STAFF\""))));
+        } catch (Exception e) {
+            log.warn("공통코드에서 사무원 역할 조회 실패, 폴백 사용: {}", role, e);
+            return role == UserRole.STAFF;
+        }
+    }
+
+    /**
+     * 공통코드에서 관리자 또는 스태프 역할인지 확인 (ERP 제외 동일 접근용)
+     *
+     * @param role 사용자 역할
+     * @return ADMIN 또는 STAFF(공통코드 기준)이면 true
+     */
+    private boolean isAdminOrStaffRoleFromCommonCode(UserRole role) {
+        return isAdminRoleFromCommonCode(role) || isStaffRoleFromCommonCode(role);
     }
 }

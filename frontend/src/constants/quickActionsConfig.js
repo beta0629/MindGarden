@@ -117,7 +117,7 @@ const ADMIN_ACTIONS = [
     label: '매칭 시스템',
     icon: <Link2 size={24} />,
     url: '/admin/mapping-management',
-    roles: ['ADMIN', 'HQ_MASTER', 'BRANCH_SUPER_ADMIN'],
+    roles: ['ADMIN', 'STAFF', 'HQ_MASTER', 'BRANCH_SUPER_ADMIN'],
     tooltip: '상담사-내담자 매칭 관리'
   },
   {
@@ -125,7 +125,7 @@ const ADMIN_ACTIONS = [
     label: '공통코드',
     icon: <Code size={24} />,
     url: '/admin/common-codes',
-    roles: ['ADMIN', 'HQ_MASTER'],
+    roles: ['ADMIN', 'STAFF', 'HQ_MASTER'],
     tooltip: '시스템 공통코드 관리'
   },
   {
@@ -133,7 +133,7 @@ const ADMIN_ACTIONS = [
     label: '통계',
     icon: <BarChart3 size={24} />,
     url: '/admin/statistics',
-    roles: ['ADMIN', 'HQ_MASTER'],
+    roles: ['ADMIN', 'STAFF', 'HQ_MASTER'],
     tooltip: '시스템 통계 보기'
   }
 ];
@@ -162,8 +162,8 @@ export const generateQuickActionsConfig = (user) => {
     actions = [...actions, ...CLIENT_ACTIONS.filter(action => action.enabled !== false)];
   }
   
-  // 관리자 전용 액션 추가
-  if (['ADMIN', 'BRANCH_SUPER_ADMIN', 'HQ_MASTER'].includes(user.role)) {
+  // 관리자·스태프 전용 액션 추가
+  if (['ADMIN', 'STAFF', 'BRANCH_SUPER_ADMIN', 'HQ_MASTER'].includes(user.role)) {
     actions = [...actions, ...ADMIN_ACTIONS];
   }
 

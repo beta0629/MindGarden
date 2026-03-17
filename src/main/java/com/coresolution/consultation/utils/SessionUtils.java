@@ -220,4 +220,17 @@ public class SessionUtils implements ApplicationContextAware {
         UserRole role = getRole(session);
         return role != null && role.isAdmin();
     }
+
+    /**
+     * 관리자 또는 스태프 여부 확인
+     * 
+     * ERP 제외 동일 메뉴·기능 노출용 (STAFF는 ADMIN과 동일하되 ERP만 제외)
+     *
+     * @param session HTTP 세션
+     * @return ADMIN 또는 STAFF이면 true
+     */
+    public static boolean isAdminOrStaff(HttpSession session) {
+        UserRole role = getRole(session);
+        return role != null && (role.isAdmin() || role.isStaff());
+    }
 }

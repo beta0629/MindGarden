@@ -15,9 +15,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * 메뉴 API
@@ -93,11 +93,10 @@ public class MenuController {
     }
 
     @GetMapping("/admin")
-    @Operation(summary = "관리자 전용 메뉴 조회", description = "관리자 전용 메뉴를 조회합니다. (ADMIN만 접근 가능)")
+    @Operation(summary = "관리자 전용 메뉴 조회", description = "관리자·스태프 전용 메뉴를 조회합니다. STAFF는 ERP 노드 제외.")
     public ResponseEntity<ApiResponse<List<MenuDTO>>> getAdminMenus(HttpSession session) {
         try {
-            // 표준화된 방법으로 관리자 여부 확인
-            if (!SessionUtils.isAdmin(session)) {
+            if (!SessionUtils.isAdminOrStaff(session)) {
                 String role = SessionUtils.getRoleName(session);
                 log.warn("관리자 메뉴 접근 거부: role={}", role);
                 return ResponseEntity.status(403)
@@ -106,13 +105,38 @@ public class MenuController {
 
             log.info("관리자 메뉴 조회");
             List<MenuDTO> menus = menuService.getAdminMenus();
-            
+
+            // STAFF인 경우 반환 목록에서 ERP 노드(ADM_ERP) 제거
+            if (SessionUtils.getRole(session) != null && SessionUtils.getRole(session).isStaff()) {
+                menus = filterOutErpMenus(menus);
+            }
+
             return ResponseEntity.ok(ApiResponse.success(menus));
         } catch (Exception e) {
             log.error("관리자 메뉴 조회 실패", e);
             return ResponseEntity.internalServerError()
                 .body(ApiResponse.error(MSG_MENU_ERROR));
         }
+    }
+
+    /**
+     * STAFF용: 메뉴 트리에서 ERP 노드(ADM_ERP) 및 하위 제거
+     */
+    private List<MenuDTO> filterOutErpMenus(List<MenuDTO> menus) {
+        if (menus == null) {
+            return List.of();
+        }
+        List<MenuDTO> result = new ArrayList<>();
+        for (MenuDTO m : menus) {
+            if ("ADM_ERP".equals(m.getMenuCode())) {
+                continue;
+            }
+            if (m.getChildren() != null && !m.getChildren().isEmpty()) {
+                m.setChildren(filterOutErpMenus(m.getChildren()));
+            }
+            result.add(m);
+        }
+        return result;
     }
 
     @GetMapping("/all")

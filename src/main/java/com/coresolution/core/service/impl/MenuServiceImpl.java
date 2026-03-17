@@ -33,8 +33,8 @@ public class MenuServiceImpl implements MenuService {
 
         List<Menu> menus;
 
-        if ("ADMIN".equals(role)) {
-            // 관리자: 모든 메뉴 (일반 + 관리자 전용)
+        if ("ADMIN".equals(role) || "STAFF".equals(role)) {
+            // 관리자·스태프: 모든 메뉴 (일반 + 관리자 전용, STAFF는 LNB/ getAdminMenus에서 ERP 제외)
             menus = menuRepository.findAllActiveMenusOrdered();
         } else {
             // 일반 사용자: 관리자 전용 메뉴 제외

@@ -403,17 +403,22 @@ const checkMenuPermission = (menuConfig, userRole, userPermissions = []) => {
       }
       return false;
     case MENU_PERMISSION_LEVELS.ADMIN_ONLY:
-      return isAdminRole(userRole);
+      return isAdminOrStaffRole(userRole);
     default:
       return false;
   }
 };
 
 /**
- * 관리자 역할 확인 (동적)
-/**
+ * 관리자 또는 스태프 역할 확인 (동적) — ERP 제외 동일 노출용
  * @param {string} userRole - 사용자 역할
+ * @returns {boolean} 관리자·스태프 역할 여부
+ */
+const isAdminOrStaffRole = (userRole) => userRole === 'ADMIN' || userRole === 'STAFF';
+
 /**
+ * 관리자 역할 확인 (동적)
+ * @param {string} userRole - 사용자 역할
  * @returns {boolean} 관리자 역할 여부
  */
 const isAdminRole = (userRole) => userRole === 'ADMIN';

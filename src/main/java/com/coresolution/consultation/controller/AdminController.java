@@ -2501,7 +2501,7 @@ public class AdminController extends BaseApiController {
                 currentUser.getBranchCode());
 
         Map<String, Object> statistics;
-        if (isAdminRoleFromCommonCode(currentUser.getRole())
+        if (isAdminOrStaffRoleFromCommonCode(currentUser.getRole())
                 && currentUser.getBranchCode() != null) {
             log.info("🏢 지점 관리자 - 자신의 지점 스케줄만 조회 (역할: {}, 지점: {})", currentUser.getRole(),
                     currentUser.getBranchCode());
@@ -2618,7 +2618,7 @@ public class AdminController extends BaseApiController {
         log.info("🔍 사용자 상세 정보 조회: ID={}", id);
 
         User currentUser = SessionUtils.getCurrentUser(session);
-        if (currentUser == null || (!isAdminRoleFromCommonCode(currentUser.getRole()))) {
+        if (currentUser == null || (!isAdminOrStaffRoleFromCommonCode(currentUser.getRole()))) {
             throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
         }
 
@@ -2654,7 +2654,7 @@ public class AdminController extends BaseApiController {
         log.info("🔍 사용자 소셜 계정 정보 조회: ID={}", id);
 
         User currentUser = SessionUtils.getCurrentUser(session);
-        if (currentUser == null || (!isAdminRoleFromCommonCode(currentUser.getRole()))) {
+        if (currentUser == null || (!isAdminOrStaffRoleFromCommonCode(currentUser.getRole()))) {
             throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
         }
 
@@ -2968,7 +2968,7 @@ public class AdminController extends BaseApiController {
                         .body(Map.of("success", false, "message", "로그인이 필요합니다."));
             }
 
-            if (!isAdminRoleFromCommonCode(currentUser.getRole())) {
+            if (!isAdminOrStaffRoleFromCommonCode(currentUser.getRole())) {
                 return ResponseEntity.status(403)
                         .body(Map.of("success", false, "message", "관리자 권한이 필요합니다."));
             }
@@ -3023,7 +3023,7 @@ public class AdminController extends BaseApiController {
                         .body(Map.of("success", false, "message", "로그인이 필요합니다."));
             }
 
-            if (!isAdminRoleFromCommonCode(currentUser.getRole())) {
+            if (!isAdminOrStaffRoleFromCommonCode(currentUser.getRole())) {
                 return ResponseEntity.status(403)
                         .body(Map.of("success", false, "message", "관리자 권한이 필요합니다."));
             }
@@ -3063,7 +3063,7 @@ public class AdminController extends BaseApiController {
                         .body(Map.of("success", false, "message", "로그인이 필요합니다."));
             }
 
-            if (!isAdminRoleFromCommonCode(currentUser.getRole())) {
+            if (!isAdminOrStaffRoleFromCommonCode(currentUser.getRole())) {
                 return ResponseEntity.status(403)
                         .body(Map.of("success", false, "message", "관리자 권한이 필요합니다."));
             }
@@ -3100,7 +3100,7 @@ public class AdminController extends BaseApiController {
                         .body(Map.of("success", false, "message", "로그인이 필요합니다."));
             }
 
-            if (!isAdminRoleFromCommonCode(currentUser.getRole())) {
+            if (!isAdminOrStaffRoleFromCommonCode(currentUser.getRole())) {
                 return ResponseEntity.status(403)
                         .body(Map.of("success", false, "message", "관리자 권한이 필요합니다."));
             }
@@ -3133,7 +3133,7 @@ public class AdminController extends BaseApiController {
             throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
         }
 
-        if (!isAdminRoleFromCommonCode(currentUser.getRole())) {
+        if (!isAdminOrStaffRoleFromCommonCode(currentUser.getRole())) {
             throw new org.springframework.security.access.AccessDeniedException("관리자 권한이 필요합니다.");
         }
 
@@ -3159,7 +3159,7 @@ public class AdminController extends BaseApiController {
             throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
         }
 
-        if (!isAdminRoleFromCommonCode(currentUser.getRole())) {
+        if (!isAdminOrStaffRoleFromCommonCode(currentUser.getRole())) {
             throw new org.springframework.security.access.AccessDeniedException("관리자 권한이 필요합니다.");
         }
 
@@ -3520,6 +3520,16 @@ public class AdminController extends BaseApiController {
             // 폴백: 표준 관리자 역할만 체크
             return role != null && role.isAdmin();
         }
+    }
+
+    /**
+     * 공통코드에서 관리자 또는 스태프 역할인지 확인 (ERP 제외 동일 접근용)
+     *
+     * @param role 사용자 역할
+     * @return ADMIN 또는 STAFF(공통코드 기준)이면 true
+     */
+    private boolean isAdminOrStaffRoleFromCommonCode(UserRole role) {
+        return isAdminRoleFromCommonCode(role) || isStaffRoleFromCommonCode(role);
     }
 
     /**

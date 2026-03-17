@@ -116,8 +116,8 @@ public class SalaryConfigController {
                 ));
             }
             
-            // 급여 관리 권한 확인 (관리자, 지점 수퍼 관리자, 본사 관리자)
-            if (!isAdminRoleFromCommonCode(currentUser.getRole())) {
+            // 급여 관리 권한 확인 (관리자·스태프)
+            if (!isAdminOrStaffRoleFromCommonCode(currentUser.getRole())) {
                 return ResponseEntity.status(403).body(Map.of(
                     "success", false,
                     "message", "급여 관리 권한이 없습니다."
@@ -233,9 +233,9 @@ public class SalaryConfigController {
                 ));
             }
             
-            // 관리자 권한 확인 (표준화 2025-12-05: 표준 관리자 역할만 체크)
+            // 관리자·스태프 권한 확인
             UserRole userRole = currentUser.getRole();
-            if (!isAdminRoleFromCommonCode(userRole)) {
+            if (!isAdminOrStaffRoleFromCommonCode(userRole)) {
                 return ResponseEntity.badRequest().body(Map.of(
                     "success", false,
                     "message", "급여 배치 실행 권한이 없습니다."
@@ -318,5 +318,41 @@ public class SalaryConfigController {
             return role == UserRole.ADMIN || 
                        role.isAdmin();
         }
+    }
+
+    /**
+     * 공통코드에서 사무원 역할인지 확인 (STAFF)
+     *
+     * @param role 사용자 역할
+     * @return 사무원 역할 여부
+     */
+    private boolean isStaffRoleFromCommonCode(UserRole role) {
+        if (role == null) {
+            return false;
+        }
+        try {
+            List<CommonCode> roleCodes = commonCodeService.getActiveCommonCodesByGroup("ROLE");
+            if (roleCodes == null || roleCodes.isEmpty()) {
+                return role == UserRole.STAFF;
+            }
+            String roleName = role.name();
+            return roleCodes.stream()
+                .anyMatch(code -> code.getCodeValue().equals(roleName) && (code.getExtraData() != null
+                    && (code.getExtraData().contains("\"isStaff\":true")
+                        || code.getExtraData().contains("\"roleType\":\"STAFF\""))));
+        } catch (Exception e) {
+            log.warn("공통코드에서 사무원 역할 조회 실패, 폴백 사용: {}", role, e);
+            return role == UserRole.STAFF;
+        }
+    }
+
+    /**
+     * 공통코드에서 관리자 또는 스태프 역할인지 확인 (ERP 제외 동일 접근용)
+     *
+     * @param role 사용자 역할
+     * @return ADMIN 또는 STAFF(공통코드 기준)이면 true
+     */
+    private boolean isAdminOrStaffRoleFromCommonCode(UserRole role) {
+        return isAdminRoleFromCommonCode(role) || isStaffRoleFromCommonCode(role);
     }
 }

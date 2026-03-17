@@ -50,7 +50,7 @@ const AdminNotificationsPage = () => {
           actions={headerActions}
         />
 
-        <nav
+        <div
           className="mg-v2-ad-b0kla__tabs"
           role="tablist"
           aria-label="알림·메시지 관리 탭"
@@ -81,7 +81,7 @@ const AdminNotificationsPage = () => {
           >
             메시지
           </button>
-        </nav>
+        </div>
 
         <section
           id="admin-panel-system"

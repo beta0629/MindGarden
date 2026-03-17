@@ -102,7 +102,7 @@ import ProtectedRoute from './components/common/ProtectedRoute';
 import SessionGuard from './components/common/SessionGuard';
 import { SessionProvider, useSession } from './contexts/SessionContext';
 import { ThemeProvider } from './contexts/ThemeContext';
-import { NotificationProvider } from './contexts/NotificationContext';
+import { NotificationProvider, useNotification } from './contexts/NotificationContext';
 import { sessionManager } from './utils/sessionManager';
 import duplicateLoginManager from './utils/duplicateLoginManager';
 import notificationManager from './utils/notification';
@@ -157,8 +157,15 @@ function QueryParamHandler({ children, onLoginSuccess }) {
 
 // 실제 앱 컴포넌트 (SessionProvider 내부에서 사용)
 function AppContent() {
+  const { pathname } = useLocation();
+  const { setPathname } = useNotification();
   const { user, sessionInfo, isLoading, checkSession, logout } = useSession();
-  
+
+  // 공개→보호 경로 전환 시 NotificationContext가 loadUnreadCount 하도록 pathname 동기화
+  useEffect(() => {
+    setPathname(pathname);
+  }, [pathname, setPathname]);
+
   // 테넌트별 브랜딩 시스템 초기화
   const { hasCustomBranding, companyName, primaryColor } = useTenantBranding({
     autoApply: true

@@ -275,6 +275,8 @@ const AdminDashboardV2 = ({ user: propUser }) => {
   const [mergeDuplicateLoading, setMergeDuplicateLoading] = useState(false);
   const [chartPeriod, setChartPeriod] = useState('monthly');
   const [lineChartPeriod, setLineChartPeriod] = useState('monthly');
+  /** 상담사 별 통합데이터 뷰: 'table' | 'graph' | 'progress', 기본 테이블 */
+  const [integratedDataView, setIntegratedDataView] = useState('table');
   const [searchValue, setSearchValue] = useState('');
   /** 헤더 통합 검색(placeholder 전용, 라우트/메뉴 연동 없음) */
   /** 상담 현황 추이 막대 차트 색상 (CSS 변수 resolved, Canvas용) */
@@ -1179,33 +1181,159 @@ const AdminDashboardV2 = ({ user: propUser }) => {
         <div className="mg-v2-ad-b0kla__card">
           <h3 className="mg-v2-ad-b0kla__counselor-title">상담사 별 통합데이터</h3>
           <p className="mg-v2-ad-b0kla__counselor-subtitle">평점·상담 완료·완료율</p>
+          <div className="mg-v2-ad-b0kla__integrated-data-view-toggle">
+            <div className="mg-v2-ad-b0kla__pill-toggle" role="tablist" aria-label="통합데이터 뷰 전환">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={integratedDataView === 'table'}
+                aria-label="테이블 뷰"
+                className={`mg-v2-ad-b0kla__pill ${integratedDataView === 'table' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+                onClick={() => setIntegratedDataView('table')}
+              >
+                테이블
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={integratedDataView === 'graph'}
+                aria-label="그래프 뷰"
+                className={`mg-v2-ad-b0kla__pill ${integratedDataView === 'graph' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+                onClick={() => setIntegratedDataView('graph')}
+              >
+                그래프
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={integratedDataView === 'progress'}
+                aria-label="프로그레스 뷰"
+                className={`mg-v2-ad-b0kla__pill ${integratedDataView === 'progress' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
+                onClick={() => setIntegratedDataView('progress')}
+              >
+                프로그레스
+              </button>
+            </div>
+          </div>
           <div className="mg-v2-ad-b0kla__integrated-data-wrap">
             {consultantIntegratedData.length > 0 ? (
               <>
-                <div className="mg-v2-ad-b0kla__integrated-data-header">
-                  <span className="mg-v2-ad-b0kla__integrated-data-th">상담사명</span>
-                  <span className="mg-v2-ad-b0kla__integrated-data-th">평점</span>
-                  <span className="mg-v2-ad-b0kla__integrated-data-th">완료 건수</span>
-                  <span className="mg-v2-ad-b0kla__integrated-data-th">완료율</span>
-                </div>
-                <div className="mg-v2-ad-b0kla__counselor-list mg-v2-ad-b0kla__integrated-data-list">
-                  {consultantIntegratedData.map((row) => (
-                    <div
-                      key={`${row.consultantName}-${row.consultantId ?? ''}`}
-                      className="mg-v2-ad-b0kla__integrated-data-row"
-                    >
-                      <span className="mg-v2-ad-b0kla__counselor-name">{row.consultantName}</span>
-                      <span className="mg-v2-ad-b0kla__counselor-rating">
-                        {row.rating != null ? Number(row.rating).toFixed(1) : '-'}
-                      </span>
-                      <span className="mg-v2-ad-b0kla__integrated-data-cell">{row.completedCount}건</span>
-                      <span className="mg-v2-ad-b0kla__integrated-data-cell">{row.completionRate}%</span>
+                {integratedDataView === 'table' && (
+                  <>
+                    <div className="mg-v2-ad-b0kla__integrated-data-header">
+                      <span className="mg-v2-ad-b0kla__integrated-data-th mg-v2-ad-b0kla__integrated-data-th--rank">순위</span>
+                      <span className="mg-v2-ad-b0kla__integrated-data-th">상담사명</span>
+                      <span className="mg-v2-ad-b0kla__integrated-data-th">평점</span>
+                      <span className="mg-v2-ad-b0kla__integrated-data-th">완료 건수</span>
+                      <span className="mg-v2-ad-b0kla__integrated-data-th">완료율</span>
                     </div>
-                  ))}
-                </div>
+                    <div className="mg-v2-ad-b0kla__counselor-list mg-v2-ad-b0kla__integrated-data-list">
+                      {consultantIntegratedData.map((row, index) => (
+                        <div
+                          key={`${row.consultantName}-${row.consultantId ?? ''}`}
+                          className="mg-v2-ad-b0kla__integrated-data-row"
+                        >
+                          <span className="mg-v2-ad-b0kla__integrated-data-rank">{index + 1}</span>
+                          <span className="mg-v2-ad-b0kla__counselor-name">{row.consultantName}</span>
+                          <span className="mg-v2-ad-b0kla__counselor-rating">
+                            {row.rating != null ? Number(row.rating).toFixed(1) : '-'}
+                          </span>
+                          <span className="mg-v2-ad-b0kla__integrated-data-cell">{row.completedCount}건</span>
+                          <span className="mg-v2-ad-b0kla__integrated-data-cell">{row.completionRate}%</span>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
+                {integratedDataView === 'graph' && (
+                  <div className="mg-v2-ad-b0kla__chart-placeholder mg-v2-ad-b0kla__chart-wrapper mg-v2-ad-b0kla__integrated-chart-wrapper">
+                    <Chart
+                      type={CHART_TYPES.BAR}
+                      data={{
+                        labels: consultantIntegratedData.map((d, i) => `${i + 1}위 ${d.consultantName}`),
+                        datasets: [
+                          {
+                            label: '완료 건수',
+                            data: consultantIntegratedData.map((d) => d.completedCount),
+                            backgroundColor: chartBarColors.fill,
+                            borderColor: chartBarColors.fill,
+                            borderWidth: 1,
+                            borderRadius: 4
+                          }
+                        ]
+                      }}
+                      height="220px"
+                      options={{
+                        maintainAspectRatio: false,
+                        plugins: {
+                          legend: { display: false },
+                          tooltip: {
+                            callbacks: {
+                              label: (ctx) => {
+                                const d = consultantIntegratedData[ctx.dataIndex];
+                                return [`완료: ${d.completedCount}건`, `완료율: ${d.completionRate}%`];
+                              }
+                            }
+                          }
+                        },
+                        scales: {
+                          x: {
+                            grid: { display: false },
+                            ticks: {
+                              font: { size: 11 },
+                              color: 'var(--ad-b0kla-text-secondary)',
+                              maxRotation: 45,
+                              minRotation: 0
+                            }
+                          },
+                          y: {
+                            beginAtZero: true,
+                            grid: { color: 'var(--mg-shadow-light)' },
+                            ticks: { font: { size: 11 }, color: 'var(--ad-b0kla-text-secondary)' }
+                          }
+                        }
+                      }}
+                    />
+                  </div>
+                )}
+                {integratedDataView === 'progress' && (
+                  <div className="mg-v2-ad-b0kla__integrated-progress-list">
+                    {consultantIntegratedData.map((row, index) => {
+                      const rank = index + 1;
+                      const rate = Math.min(100, Math.max(0, Number(row.completionRate) || 0));
+                      return (
+                        <div
+                          key={`${row.consultantName}-${row.consultantId ?? ''}`}
+                          className="mg-v2-ad-b0kla__integrated-progress-row"
+                        >
+                          <span className="mg-v2-ad-b0kla__integrated-progress-rank">{rank}위</span>
+                          <span className="mg-v2-ad-b0kla__integrated-progress-name" title={row.consultantName}>
+                            {row.consultantName}
+                          </span>
+                          <div
+                            className="mg-v2-ad-b0kla__integrated-progress-track"
+                            role="progressbar"
+                            aria-valuenow={rate}
+                            aria-valuemin={0}
+                            aria-valuemax={100}
+                            aria-label={`${row.consultantName} 상담사 완료율 ${rate}%`}
+                          >
+                            <div
+                              className="mg-v2-ad-b0kla__integrated-progress-fill"
+                              style={{ width: `${rate}%` }}
+                            />
+                          </div>
+                          <span className="mg-v2-ad-b0kla__integrated-progress-value">{rate}%</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </>
             ) : (
-              <p className="mg-v2-ad-b0kla__counselor-empty mg-v2-ad-b0kla__integrated-data-empty">상담사 통합 데이터가 없습니다.</p>
+              <p className="mg-v2-ad-b0kla__counselor-empty mg-v2-ad-b0kla__integrated-data-empty">
+                상담사 통합 데이터가 없습니다.
+              </p>
             )}
           </div>
         </div>

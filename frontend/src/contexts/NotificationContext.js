@@ -46,13 +46,16 @@ export const useNotification = () => {
 
 export const NotificationProvider = ({ children }) => {
   const { user, isLoggedIn } = useSession();
+  const [pathname, setPathname] = useState(() =>
+    typeof window !== 'undefined' ? window.location.pathname : ''
+  );
   const [unreadCount, setUnreadCount] = useState(0);
   const [unreadMessageCount, setUnreadMessageCount] = useState(0);
   const [unreadSystemCount, setUnreadSystemCount] = useState(0);
   const [notifications, setNotifications] = useState([]);
   const [systemNotifications, setSystemNotifications] = useState([]);
   const [loading, setLoading] = useState(false);
-  
+
   // isLoggedIn과 user를 ref로 저장 (클로저 문제 해결)
   const isLoggedInRef = React.useRef(isLoggedIn);
   const userRef = React.useRef(user);
@@ -334,7 +337,7 @@ export const NotificationProvider = ({ children }) => {
       window.removeEventListener('message-read', handleMessageRead);
       window.removeEventListener('notification-read', handleNotificationRead);
     };
-  }, [isLoggedIn, user?.id]); // isLoggedIn, user?.id 의존성 추가
+  }, [isLoggedIn, user?.id, pathname]); // pathname 추가: 공개→보호 경로 전환 시에도 로드
 
   // 통합 unreadCount 계산
   useEffect(() => {
@@ -348,6 +351,8 @@ export const NotificationProvider = ({ children }) => {
   }, [unreadMessageCount, unreadSystemCount]);
 
   const value = {
+    pathname,
+    setPathname,
     unreadCount,
     unreadMessageCount,
     unreadSystemCount,

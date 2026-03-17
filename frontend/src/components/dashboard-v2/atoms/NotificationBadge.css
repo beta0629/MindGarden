@@ -21,4 +21,5 @@
   border-radius: 9px;
   line-height: 1;
   white-space: nowrap;
+  z-index: 10;
 }

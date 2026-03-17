@@ -581,7 +581,12 @@
 .mg-v2-ad-b0kla__counselor-subtitle {
   font-size: 0.75rem;
   color: var(--ad-b0kla-text-secondary);
-  margin: -0.5rem 0 1rem 0;
+  margin: -0.5rem 0 0 0;
+}
+
+.mg-v2-ad-b0kla__integrated-data-view-toggle {
+  margin-top: var(--mg-spacing-md, 1rem);
+  margin-bottom: var(--mg-spacing-lg, 1.25rem);
 }
 
 .mg-v2-ad-b0kla__integrated-data-wrap {
@@ -591,7 +596,7 @@
 
 .mg-v2-ad-b0kla__integrated-data-header {
   display: grid;
-  grid-template-columns: 1fr auto auto auto;
+  grid-template-columns: auto 1fr auto auto auto;
   gap: 0.5rem 1rem;
   padding: 0.5rem 0;
   font-size: 0.6875rem;
@@ -607,13 +612,24 @@
   min-width: 0;
 }
 
+.mg-v2-ad-b0kla__integrated-data-th--rank {
+  width: 2ch;
+  min-width: 40px;
+}
+
+.mg-v2-ad-b0kla__integrated-data-rank {
+  font-weight: 600;
+  color: var(--ad-b0kla-title-color);
+  min-width: 40px;
+}
+
 .mg-v2-ad-b0kla__integrated-data-list {
   gap: 0.25rem;
 }
 
 .mg-v2-ad-b0kla__integrated-data-row {
   display: grid;
-  grid-template-columns: 1fr auto auto auto;
+  grid-template-columns: auto 1fr auto auto auto;
   gap: 0.5rem 1rem;
   align-items: center;
   padding: 0.5rem 0;
@@ -632,6 +648,70 @@
 
 .mg-v2-ad-b0kla__integrated-data-empty {
   margin: 1rem 0 0;
+}
+
+/* 통합데이터 그래프 뷰 */
+.mg-v2-ad-b0kla__integrated-chart-wrapper {
+  min-height: 220px;
+}
+
+/* 통합데이터 프로그레스 뷰 */
+.mg-v2-ad-b0kla__integrated-progress-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-sm, 0.5rem);
+}
+
+.mg-v2-ad-b0kla__integrated-progress-row {
+  display: grid;
+  grid-template-columns: auto minmax(80px, 1fr) 1fr auto;
+  align-items: center;
+  gap: 0.75rem 1rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--ad-b0kla-border);
+  font-size: 13px;
+}
+
+.mg-v2-ad-b0kla__integrated-progress-row:last-child {
+  border-bottom: none;
+}
+
+.mg-v2-ad-b0kla__integrated-progress-rank {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ad-b0kla-title-color);
+  min-width: 36px;
+}
+
+.mg-v2-ad-b0kla__integrated-progress-name {
+  font-size: 14px;
+  color: var(--ad-b0kla-title-color);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.mg-v2-ad-b0kla__integrated-progress-track {
+  height: 24px;
+  min-width: 0;
+  background: var(--ad-b0kla-bg);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.mg-v2-ad-b0kla__integrated-progress-fill {
+  height: 100%;
+  background: var(--ad-b0kla-green);
+  border-radius: 8px;
+  transition: width 0.3s ease;
+}
+
+.mg-v2-ad-b0kla__integrated-progress-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ad-b0kla-title-color);
+  white-space: nowrap;
 }
 
 /* ===== 관리자 기능 그리드 (B0KlA 4카드 스타일) ===== */

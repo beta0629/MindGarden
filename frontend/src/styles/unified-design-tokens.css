@@ -7569,8 +7569,8 @@ body {
   box-shadow: 0 4px 12px rgba(182, 229, 216, 0.4);
 }
 
-/* Spinner */
-.mg-spinner {
+/* Spinner - 인라인/작은 용도 (16px, 0.6s). 기본 스피너는 상단 .mg-spinner (2rem, spin 1s) */
+.mg-spinner--sm {
   display: inline-block;
   width: 16px;
   height: 16px;

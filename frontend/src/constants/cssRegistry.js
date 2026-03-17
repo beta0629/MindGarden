@@ -41,6 +41,7 @@ export const CSS_REGISTRY = {// 기존 클래스 (레거시)
     'mg-progress',
     'mg-scrollspy',
     'mg-spinner',
+    'mg-spinner--sm',
     'mg-toast',
     'mg-tooltip'],
   

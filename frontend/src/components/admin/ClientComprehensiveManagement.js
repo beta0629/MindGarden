@@ -663,6 +663,22 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                                         globalThis.window.dispatchEvent(new CustomEvent('admin-dashboard-refresh-stats'));
                                         handleCloseModal();
                                     } else if (modalType === 'edit') {
+                                        if (editingClient?.id == null || editingClient?.id === '') {
+                                            const idErr = '내담자 ID가 없어 수정할 수 없습니다. 목록에서 다시 선택해 주세요.';
+                                            showError(idErr);
+                                            if (typeof globalThis.window !== 'undefined') {
+                                                globalThis.window.dispatchEvent(new CustomEvent('showNotification', { detail: { message: idErr, type: 'error', duration: 5000 } }));
+                                            }
+                                            return;
+                                        }
+                                        if (!(dataToUse.email && String(dataToUse.email).trim())) {
+                                            const emailErr = '이메일은 필수입니다.';
+                                            showError(emailErr);
+                                            if (typeof globalThis.window !== 'undefined') {
+                                                globalThis.window.dispatchEvent(new CustomEvent('showNotification', { detail: { message: emailErr, type: 'error', duration: 5000 } }));
+                                            }
+                                            return;
+                                        }
                                         console.log('🔧 내담자 수정 요청:', { id: editingClient.id, payload });
                                         response = await apiPut(`/api/v1/admin/clients/${editingClient.id}`, payload);
                                         console.log('✅ 내담자 수정 응답:', response);

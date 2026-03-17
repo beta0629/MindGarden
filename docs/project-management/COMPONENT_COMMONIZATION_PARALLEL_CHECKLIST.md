@@ -13,7 +13,7 @@
 | A2 | `ui/Modal/Modal.js` → UnifiedModal re-export 또는 deprecated 주석 + 단일 진입점 안내 | ✅ | core-coder | ☑ |
 | A3 | CompactConfirmModal 사용처 확인 후 ConfirmModal과 props 통일(또는 size="compact") 검토 | ✅ | core-coder | ☑ |
 | A4 | MGModal/MGConfirmModal 사용처 목록화 → UnifiedModal 마이그레이션(또는 1차로 deprecated 표시) | ✅ | core-coder | ☑ |
-| A5 | Bootstrap Modal 사용 모달(ConsultantApplicationModal 등) → UnifiedModal 마이그레이션 | 제안 후 | component-manager → coder | ☐ |
+| A5 | Bootstrap Modal 사용 모달(ConsultantApplicationModal 등) → UnifiedModal 마이그레이션 | 제안 후 | component-manager → coder | ☑ |
 
 ---
 
@@ -23,7 +23,7 @@
 |---|------|-----------|------|------|
 | B1 | StatCard / StatsCard / StatisticsCard 사용처 목록화 및 단일 진입점(common/StatCard 또는 DataCard) 제안 | ✅ | core-coder | ☑ |
 | B2 | 통일 후보 컴포넌트 하나로 re-export 정리(예: StatCard.js에서 StatsCard·StatisticsCard re-export) | ✅ | core-coder | ☑ |
-| B3 | GlassStatCard, DetailedStatsCard → StatCard variant 또는 layout prop으로 흡수(API 설계 후 구현) | 제안 후 | component-manager → coder | ☐ |
+| B3 | GlassStatCard, DetailedStatsCard → StatCard variant 또는 layout prop으로 흡수(API 설계 후 구현) | 제안 후 | component-manager → coder | ☑ |
 | B4 | StatisticsGrid, StatsCardGrid, DetailedStatsGrid → StatsGrid 단일 컴포넌트 또는 re-export | ✅ | core-coder | ☑ |
 
 ---
@@ -35,7 +35,7 @@
 | C1 | `admin/mapping-management/integrated-schedule/atoms/StatusBadge.js` re-export 제거 — 사용처를 `common/StatusBadge` 직접 import로 변경 | ✅ | core-coder | ☑ |
 | C2 | RemainingSessionsBadge re-export 제거 — integrated-schedule/atoms 사용처를 common 직접 import로 변경 | ✅ | core-coder | ☑ |
 | C3 | NotificationBadge 이중 구현(common vs dashboard-v2/atoms) → 하나로 통일, 다른 쪽 re-export | ✅ | core-coder | ☑ |
-| C4 | FilterBadge·PipelineStepBadge 등 도메인 배지 스타일을 StatusBadge variant/토큰에 맞춤 | 제안 후 | component-manager → coder | ☐ |
+| C4 | FilterBadge·PipelineStepBadge 등 도메인 배지 스타일을 StatusBadge variant/토큰에 맞춤 | 제안 후 | component-manager → coder | ☑ |
 
 ---
 

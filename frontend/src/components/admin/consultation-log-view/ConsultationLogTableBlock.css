@@ -52,16 +52,16 @@
   white-space: nowrap;
 }
 
-.mg-v2-consultation-log-table__row {
+.mg-v2-consultation-log-table tbody tr {
   cursor: pointer;
   transition: background 0.15s;
 }
 
-.mg-v2-consultation-log-table__row:hover {
+.mg-v2-consultation-log-table tbody tr:hover {
   background: var(--ad-b0kla-green-bg);
 }
 
-.mg-v2-consultation-log-table__row:focus {
+.mg-v2-consultation-log-table tbody tr:focus {
   outline: 2px solid var(--mg-color-primary-main);
   outline-offset: -2px;
 }
@@ -73,37 +73,26 @@
   white-space: nowrap;
 }
 
-/* 빈 상태 */
-.mg-v2-consultation-log-table-block__empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+/* 빈 상태 (EmptyState 공통 컴포넌트 + 블록 스코프) */
+.mg-v2-consultation-log-table-block__empty.mg-v2-empty-state {
   padding: 3rem 2rem;
-  text-align: center;
 }
 
-.mg-v2-consultation-log-table-block__empty-icon {
+.mg-v2-consultation-log-table-block__empty.mg-v2-empty-state .mg-v2-empty-state__icon {
   width: 80px;
   height: 80px;
   border-radius: 20px;
   background: var(--ad-b0kla-green-bg);
   color: var(--ad-b0kla-green);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 1.25rem;
 }
 
-.mg-v2-consultation-log-table-block__empty-title {
+.mg-v2-consultation-log-table-block__empty.mg-v2-empty-state .mg-v2-empty-state__title {
   font-size: 1.125rem;
   font-weight: 700;
   color: var(--ad-b0kla-title-color);
-  margin: 0 0 0.5rem 0;
 }
 
-.mg-v2-consultation-log-table-block__empty-desc {
+.mg-v2-consultation-log-table-block__empty.mg-v2-empty-state .mg-v2-empty-state__desc {
   font-size: 14px;
   color: var(--ad-b0kla-text-secondary);
-  margin: 0;
 }

@@ -13,6 +13,7 @@ export { default as CardActionGroup } from './CardActionGroup';
 export { default as ViewModeToggle } from './ViewModeToggle';
 export { default as SmallCardGrid } from './SmallCardGrid';
 export { default as ListTableView } from './ListTableView';
+export { default as EmptyState } from './EmptyState';
 export {
   default as StatsGrid,
   StatisticsGrid,

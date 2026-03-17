@@ -112,9 +112,9 @@
 }
 
 .mg-v2-filter-badge--active {
-  background: var(--mg-color-primary-main, #3D5246);
-  color: var(--mg-color-background-main, #FAF9F7);
-  border-color: var(--mg-color-primary-main, #3D5246);
+  background: var(--mg-badge-status-success-bg);
+  color: var(--mg-badge-status-success-text);
+  border-color: var(--mg-badge-status-success-bg);
 }
 
 .mg-v2-filter-badge:hover:not(.mg-v2-filter-badge--active) {

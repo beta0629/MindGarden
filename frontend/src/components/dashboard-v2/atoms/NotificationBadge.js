@@ -15,11 +15,14 @@ const NotificationBadge = ({ count = 0 }) => {
   }
 
   const displayCount = count > 99 ? '99+' : count;
+  const ariaLabel = count >= 100
+    ? '읽지 않은 알림 99개 이상'
+    : `읽지 않은 알림 ${count}개`;
 
   return (
     <span 
       className="mg-v2-notification-badge"
-      aria-label={`읽지 않은 알림 ${count}개`}
+      aria-label={ariaLabel}
     >
       {displayCount}
     </span>

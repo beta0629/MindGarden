@@ -117,6 +117,7 @@ import SystemNotifications from './components/notifications/SystemNotifications'
 import UnifiedNotifications from './components/notifications/UnifiedNotifications';
 import SystemNotificationManagement from './components/admin/SystemNotificationManagement';
 import AdminMessages from './components/admin/AdminMessages';
+import AdminNotificationsPage from './components/admin/AdminNotificationsPage';
 import SystemConfigManagement from './components/admin/SystemConfigManagement';
 import PsychAssessmentManagement from './components/admin/PsychAssessmentManagement';
 import BrandingManagementPage from './pages/BrandingManagementPage';
@@ -500,11 +501,12 @@ function AppContent() {
                 <Route path="/admin/cache-monitoring" element={<CacheMonitoringDashboard />} />
                 <Route path="/admin/security-monitoring" element={<SecurityMonitoringDashboard />} />
             <Route path="/admin/api-performance" element={<ApiPerformanceMonitoring />} />
-            <Route path="/admin/system-notifications" element={<SystemNotificationManagement />} />
+            <Route path="/admin/notifications" element={<AdminNotificationsPage />} />
+            <Route path="/admin/system-notifications" element={<Navigate to="/admin/notifications" replace />} />
             <Route path="/admin/system-config" element={<SystemConfigManagement />} />
             <Route path="/admin/psych-assessments" element={<PsychAssessmentManagement user={user} />} />
             <Route path="/admin/branding" element={<BrandingManagementPage />} />
-            <Route path="/admin/messages" element={<AdminMessages />} />
+            <Route path="/admin/messages" element={<Navigate to="/admin/notifications" replace />} />
             
             {/* 학원 시스템 라우트 */}
             <Route path="/academy" element={<AcademyDashboard />} />

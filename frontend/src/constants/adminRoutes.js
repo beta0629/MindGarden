@@ -30,8 +30,12 @@ export const ADMIN_ROUTES = {
     COMMON_CODES: '/admin/common-codes',
     /** 패키지 요금(가격) 관리 */
     PACKAGE_PRICING: '/admin/package-pricing',
+    /** 통합 알림·메시지 관리 (단일 페이지) */
+    NOTIFICATIONS: '/admin/notifications',
+    /** @deprecated redirect to NOTIFICATIONS */
     SYSTEM_NOTIFICATIONS: '/admin/system-notifications',
     SYSTEM_CONFIG: '/admin/system-config',
+    /** @deprecated redirect to NOTIFICATIONS */
     MESSAGES: '/admin/messages',
     STATISTICS: '/admin/statistics',
     COMPLIANCE: '/admin/compliance',

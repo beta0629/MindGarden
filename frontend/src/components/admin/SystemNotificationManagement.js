@@ -15,7 +15,7 @@ import '../../styles/unified-design-tokens.css';
 /**
  * 시스템 공지 관리 (관리자 전용 - 지점 관리자 이상)
  */
-const SystemNotificationManagement = () => {
+const SystemNotificationManagement = ({ contentOnly = false }) => {
   const { user, isLoggedIn } = useSession();
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -239,64 +239,96 @@ const SystemNotificationManagement = () => {
     }
   }, [permissionsLoading, userPermissions, filterTarget, filterStatus]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // 통합 페이지에서 "공지 작성" 버튼 클릭 시 모달 열기
+  useEffect(() => {
+    if (!contentOnly) return;
+    const onCreate = () => handleCreate();
+    window.addEventListener('admin-notifications-create-notice', onCreate);
+    return () => window.removeEventListener('admin-notifications-create-notice', onCreate);
+  }, [contentOnly]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // 로그인 체크
   if (!sessionIsLoggedIn || !sessionUser) {
-    return (
-      <AdminCommonLayout title="시스템 공지 관리">
-        <div className="mg-v2-card mg-v2-text-center mg-p-xl">
-          <h3>로그인이 필요합니다.</h3>
-        </div>
-      </AdminCommonLayout>
-    );
+    const msg = <div className="mg-v2-card mg-v2-text-center mg-p-xl"><h3>로그인이 필요합니다.</h3></div>;
+    return contentOnly ? msg : <AdminCommonLayout title="시스템 공지 관리">{msg}</AdminCommonLayout>;
   }
 
   // 권한 로딩 중
   if (permissionsLoading) {
-    return (
+    const loadingEl = <UnifiedLoading type="page" text="권한을 확인하는 중..." />;
+    return contentOnly ? loadingEl : (
       <AdminCommonLayout title="시스템 공지 관리" loading={true} loadingText="권한을 확인하는 중...">
-        <UnifiedLoading type="page" text="권한을 확인하는 중..." />
+        {loadingEl}
       </AdminCommonLayout>
     );
   }
 
   // 권한 체크
   if (!hasManagePermission()) {
-    return (
-      <AdminCommonLayout title="시스템 공지 관리">
-        <div className="mg-v2-card mg-v2-text-center mg-p-xl">
-          <h3>접근 권한이 없습니다.</h3>
-          <p className="mg-v2-text-sm mg-v2-color-text-secondary">
-            시스템 공지 관리 권한이 필요합니다.
-          </p>
-        </div>
-      </AdminCommonLayout>
+    const noPerm = (
+      <div className="mg-v2-card mg-v2-text-center mg-p-xl">
+        <h3>접근 권한이 없습니다.</h3>
+        <p className="mg-v2-text-sm mg-v2-color-text-secondary">시스템 공지 관리 권한이 필요합니다.</p>
+      </div>
     );
+    return contentOnly ? noPerm : <AdminCommonLayout title="시스템 공지 관리">{noPerm}</AdminCommonLayout>;
   }
 
   return (
-    <AdminCommonLayout title="시스템 공지 관리">
-      <div className="mg-v2-dashboard-layout">
-        {/* 헤더 */}
-        <div className="mg-v2-card mg-mb-lg">
-          <div className="mg-v2-flex mg-justify-between mg-align-center mg-mb-md">
-            <div className="mg-v2-flex mg-align-center mg-gap-sm">
-              <Bell className="mg-v2-color-primary" size={24} />
-              <h2 className="mg-v2-h3 mg-mb-0">시스템 공지 관리</h2>
-            </div>
-            <button onClick={handleCreate} className="mg-v2-button mg-v2-button-primary">
-              <Plus size={18} className="mg-v2-mr-sm" />
-              새 공지 작성
-            </button>
-          </div>
+    <>
+      {contentOnly ? null : (
+        <AdminCommonLayout title="시스템 공지 관리">
+          <div className="mg-v2-dashboard-layout">
+            <div className="mg-v2-card mg-mb-lg">
+              <div className="mg-v2-flex mg-justify-between mg-align-center mg-mb-md">
+                <div className="mg-v2-flex mg-align-center mg-gap-sm">
+                  <Bell className="mg-v2-color-primary" size={24} />
+                  <h2 className="mg-v2-h3 mg-mb-0">시스템 공지 관리</h2>
+                </div>
+                <button onClick={handleCreate} className="mg-v2-button mg-v2-button-primary">
+                  <Plus size={18} className="mg-v2-mr-sm" />
+                  새 공지 작성
+                </button>
+              </div>
 
-          {/* 필터 */}
-          <div className="mg-v2-flex mg-gap-md mg-flex-wrap">
+              {/* 필터 */}
+              <div className="mg-v2-flex mg-gap-md mg-flex-wrap">
+                <select
+                  value={filterTarget}
+                  onChange={(e) => setFilterTarget(e.target.value)}
+                  className="mg-v2-select"
+                >
+                  <option value="">전체 대상</option>
+                  <option value="ALL">전체 사용자</option>
+                  <option value={USER_ROLES.CONSULTANT}>상담사만</option>
+                  <option value={USER_ROLES.CLIENT}>내담자만</option>
+                </select>
+                <select
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value)}
+                  className="mg-v2-select"
+                >
+                  <option value="">전체 상태</option>
+                  <option value="DRAFT">임시 저장</option>
+                  <option value="PUBLISHED">게시됨</option>
+                  <option value="ARCHIVED">보관됨</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </AdminCommonLayout>
+      )}
+      {contentOnly && (
+        <>
+          <h2 className="mg-v2-ad-b0kla__section-title">공지 목록</h2>
+          <div className="mg-v2-ad-b0kla__section-filters" role="group" aria-label="공지 필터">
             <select
               value={filterTarget}
               onChange={(e) => setFilterTarget(e.target.value)}
-              className="mg-v2-select"
+              className="mg-v2-ad-b0kla__filter-select"
+              aria-label="대상 선택"
             >
-              <option value="">전체 대상</option>
+              <option value="">전체</option>
               <option value="ALL">전체 사용자</option>
               <option value={USER_ROLES.CONSULTANT}>상담사만</option>
               <option value={USER_ROLES.CLIENT}>내담자만</option>
@@ -304,122 +336,168 @@ const SystemNotificationManagement = () => {
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              className="mg-v2-select"
+              className="mg-v2-ad-b0kla__filter-select"
+              aria-label="상태 선택"
             >
-              <option value="">전체 상태</option>
+              <option value="">전체</option>
               <option value="DRAFT">임시 저장</option>
               <option value="PUBLISHED">게시됨</option>
               <option value="ARCHIVED">보관됨</option>
             </select>
           </div>
-        </div>
-
-        {/* 로딩 */}
-        {loading && <UnifiedLoading type="inline" text="로딩 중..." />}
-
-        {/* 공지 목록 */}
-        {!loading && (
-          <div className="mg-v2-space-y-sm">
-            {notifications.length === 0 ? (
-              <div className="mg-v2-empty-state">
-                <div className="mg-v2-empty-state__icon">
-                  <Bell size={48} />
-                </div>
-                <div className="mg-v2-empty-state__text">작성된 공지가 없습니다</div>
-                <button onClick={handleCreate} className="mg-v2-button mg-v2-button-primary mg-mt-md">
-                  첫 공지 작성하기
-                </button>
-              </div>
-            ) : (
-              notifications.map((notification) => (
-                <div key={notification.id} className="mg-v2-card">
-                  <div className="mg-v2-flex mg-justify-between mg-align-start mg-gap-md">
-                    <div className="mg-v2-flex-1">
-                      <div className="mg-v2-flex mg-align-center mg-gap-sm mg-mb-sm mg-flex-wrap">
-                        <h4 className="mg-v2-h5 mg-mb-0">{notification.title}</h4>
-                        <span className={`mg-v2-badge ${
-                          notification.status === 'PUBLISHED' ? 'mg-v2-badge-success' :
-                          notification.status === 'DRAFT' ? 'mg-v2-badge-secondary' :
-                          'mg-v2-badge-warning'
-                        }`}>
-                          {notification.status === 'PUBLISHED' ? '게시됨' :
-                           notification.status === 'DRAFT' ? '임시저장' : '보관됨'}
-                        </span>
-                        <span className="mg-v2-badge mg-v2-badge-primary">
-                          {notification.targetType === 'ALL' ? '전체' :
-                           notification.targetType === 'CONSULTANT' ? '상담사' : '내담자'}
-                        </span>
-                        {notification.isUrgent && (
-                          <span className="mg-v2-badge mg-v2-badge-danger mg-v2-text-xs">긴급</span>
-                        )}
-                        {notification.isImportant && (
-                          <span className="mg-v2-badge mg-v2-badge-warning mg-v2-text-xs">중요</span>
-                        )}
+          <div className="mg-v2-ad-b0kla__section-body">
+            {loading && <UnifiedLoading type="inline" text="로딩 중..." />}
+            {!loading && notifications.length === 0 && (
+              <div className="mg-v2-ad-b0kla__table-empty">등록된 공지가 없습니다.</div>
+            )}
+            {!loading && notifications.length > 0 && (
+              <div className="mg-v2-space-y-sm">
+                {notifications.map((notification) => (
+                  <div key={notification.id} className="mg-v2-card">
+                    <div className="mg-v2-flex mg-justify-between mg-align-start mg-gap-md">
+                      <div className="mg-v2-flex-1">
+                        <div className="mg-v2-flex mg-align-center mg-gap-sm mg-mb-sm mg-flex-wrap">
+                          <h4 className="mg-v2-h5 mg-mb-0">{notification.title}</h4>
+                          <span className={`mg-v2-badge ${
+                            notification.status === 'PUBLISHED' ? 'mg-v2-badge-success' :
+                            notification.status === 'DRAFT' ? 'mg-v2-badge-secondary' :
+                            'mg-v2-badge-warning'
+                          }`}>
+                            {notification.status === 'PUBLISHED' ? '게시됨' :
+                             notification.status === 'DRAFT' ? '임시저장' : '보관됨'}
+                          </span>
+                          <span className="mg-v2-badge mg-v2-badge-primary">
+                            {notification.targetType === 'ALL' ? '전체' :
+                             notification.targetType === 'CONSULTANT' ? '상담사' : '내담자'}
+                          </span>
+                          {notification.isUrgent && (
+                            <span className="mg-v2-badge mg-v2-badge-danger mg-v2-text-xs">긴급</span>
+                          )}
+                          {notification.isImportant && (
+                            <span className="mg-v2-badge mg-v2-badge-warning mg-v2-text-xs">중요</span>
+                          )}
+                        </div>
+                        <div
+                          className="mg-v2-text-sm mg-v2-color-text-secondary mg-mb-sm"
+                          dangerouslySetInnerHTML={{
+                            __html: (() => {
+                              const content = notification.content || '';
+                              const textOnly = content.replace(/<[^>]*>/g, '');
+                              return textOnly.length > 150 ? `${textOnly.substring(0, 150)}...` : textOnly;
+                            })()
+                          }}
+                        />
+                        <div className="mg-v2-text-xs mg-v2-color-text-secondary">
+                          작성자: {notification.authorName} · 작성일: {new Date(notification.createdAt).toLocaleDateString('ko-KR')}
+                          {notification.viewCount > 0 && ` · 조회수: ${notification.viewCount}`}
+                        </div>
                       </div>
-                      <div 
-                        className="mg-v2-text-sm mg-v2-color-text-secondary mg-mb-sm"
-                        dangerouslySetInnerHTML={{ 
-                          __html: (() => {
-                            const content = notification.content || '';
-                            // HTML 태그 제거하여 미리보기만 표시
-                            const textOnly = content.replace(/<[^>]*>/g, '');
-                            return textOnly.length > 150
-                              ? `${textOnly.substring(0, 150)}...`
-                              : textOnly;
-                          })()
-                        }}
-                      />
-                      <div className="mg-v2-text-xs mg-v2-color-text-secondary">
-                        작성자: {notification.authorName} · 
-                        작성일: {new Date(notification.createdAt).toLocaleDateString('ko-KR')}
-                        {notification.viewCount > 0 && ` · 조회수: ${notification.viewCount}`}
+                      <div className="mg-v2-notification-actions">
+                        {notification.status === 'DRAFT' && (
+                          <button onClick={() => handlePublish(notification.id)} className="mg-v2-button mg-v2-button-primary mg-v2-button-small" title="게시">
+                            <Send size={16} />
+                          </button>
+                        )}
+                        {notification.status === 'PUBLISHED' && (
+                          <button onClick={() => handleArchive(notification.id)} className="mg-v2-button mg-v2-button-outline mg-v2-button-small" title="보관">
+                            <Archive size={16} />
+                          </button>
+                        )}
+                        <button onClick={() => handleEdit(notification)} className="mg-v2-button mg-v2-button-outline mg-v2-button-small" title="수정">
+                          <Edit size={16} />
+                        </button>
+                        <button onClick={() => handleDelete(notification.id)} className="mg-v2-button mg-v2-button-danger mg-v2-button-small" title="삭제">
+                          <Trash2 size={16} />
+                        </button>
                       </div>
-                    </div>
-                    <div className="mg-v2-notification-actions">
-                      {notification.status === 'DRAFT' && (
-                        <button
-                          onClick={() => handlePublish(notification.id)}
-                          className="mg-v2-button mg-v2-button-primary mg-v2-button-small"
-                          title="게시"
-                        >
-                          <Send size={16} />
-                        </button>
-                      )}
-                      {notification.status === 'PUBLISHED' && (
-                        <button
-                          onClick={() => handleArchive(notification.id)}
-                          className="mg-v2-button mg-v2-button-outline mg-v2-button-small"
-                          title="보관"
-                        >
-                          <Archive size={16} />
-                        </button>
-                      )}
-                      <button
-                        onClick={() => handleEdit(notification)}
-                        className="mg-v2-button mg-v2-button-outline mg-v2-button-small"
-                        title="수정"
-                      >
-                        <Edit size={16} />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(notification.id)}
-                        className="mg-v2-button mg-v2-button-danger mg-v2-button-small"
-                        title="삭제"
-                      >
-                        <Trash2 size={16} />
-                      </button>
                     </div>
                   </div>
-                </div>
-              ))
+                ))}
+              </div>
             )}
           </div>
-        )}
+        </>
+      )}
+      {!contentOnly && (
+        <AdminCommonLayout title="시스템 공지 관리">
+          <div className="mg-v2-dashboard-layout">
+            <div className="mg-v2-card mg-mb-lg">
+              <div className="mg-v2-flex mg-justify-between mg-align-center mg-mb-md">
+                <div className="mg-v2-flex mg-align-center mg-gap-sm">
+                  <Bell className="mg-v2-color-primary" size={24} />
+                  <h2 className="mg-v2-h3 mg-mb-0">시스템 공지 관리</h2>
+                </div>
+                <button onClick={handleCreate} className="mg-v2-button mg-v2-button-primary">
+                  <Plus size={18} className="mg-v2-mr-sm" />
+                  새 공지 작성
+                </button>
+              </div>
+              <div className="mg-v2-flex mg-gap-md mg-flex-wrap">
+                <select value={filterTarget} onChange={(e) => setFilterTarget(e.target.value)} className="mg-v2-select">
+                  <option value="">전체 대상</option>
+                  <option value="ALL">전체 사용자</option>
+                  <option value={USER_ROLES.CONSULTANT}>상담사만</option>
+                  <option value={USER_ROLES.CLIENT}>내담자만</option>
+                </select>
+                <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="mg-v2-select">
+                  <option value="">전체 상태</option>
+                  <option value="DRAFT">임시 저장</option>
+                  <option value="PUBLISHED">게시됨</option>
+                  <option value="ARCHIVED">보관됨</option>
+                </select>
+              </div>
+            </div>
+            {loading && <UnifiedLoading type="inline" text="로딩 중..." />}
+            {!loading && (
+              <div className="mg-v2-space-y-sm">
+                {notifications.length === 0 ? (
+                  <div className="mg-v2-empty-state">
+                    <div className="mg-v2-empty-state__icon"><Bell size={48} /></div>
+                    <div className="mg-v2-empty-state__text">작성된 공지가 없습니다</div>
+                    <button onClick={handleCreate} className="mg-v2-button mg-v2-button-primary mg-mt-md">첫 공지 작성하기</button>
+                  </div>
+                ) : (
+                  notifications.map((notification) => (
+                    <div key={notification.id} className="mg-v2-card">
+                      <div className="mg-v2-flex mg-justify-between mg-align-start mg-gap-md">
+                        <div className="mg-v2-flex-1">
+                          <div className="mg-v2-flex mg-align-center mg-gap-sm mg-mb-sm mg-flex-wrap">
+                            <h4 className="mg-v2-h5 mg-mb-0">{notification.title}</h4>
+                            <span className={`mg-v2-badge ${notification.status === 'PUBLISHED' ? 'mg-v2-badge-success' : notification.status === 'DRAFT' ? 'mg-v2-badge-secondary' : 'mg-v2-badge-warning'}`}>
+                              {notification.status === 'PUBLISHED' ? '게시됨' : notification.status === 'DRAFT' ? '임시저장' : '보관됨'}
+                            </span>
+                            <span className="mg-v2-badge mg-v2-badge-primary">
+                              {notification.targetType === 'ALL' ? '전체' : notification.targetType === 'CONSULTANT' ? '상담사' : '내담자'}
+                            </span>
+                            {notification.isUrgent && <span className="mg-v2-badge mg-v2-badge-danger mg-v2-text-xs">긴급</span>}
+                            {notification.isImportant && <span className="mg-v2-badge mg-v2-badge-warning mg-v2-text-xs">중요</span>}
+                          </div>
+                          <div className="mg-v2-text-sm mg-v2-color-text-secondary mg-mb-sm" dangerouslySetInnerHTML={{ __html: (() => { const c = notification.content || ''; const t = c.replace(/<[^>]*>/g, ''); return t.length > 150 ? t.substring(0, 150) + '...' : t; })() }} />
+                          <div className="mg-v2-text-xs mg-v2-color-text-secondary">
+                            작성자: {notification.authorName} · 작성일: {new Date(notification.createdAt).toLocaleDateString('ko-KR')}
+                            {notification.viewCount > 0 && ` · 조회수: ${notification.viewCount}`}
+                          </div>
+                        </div>
+                        <div className="mg-v2-notification-actions">
+                          {notification.status === 'DRAFT' && <button onClick={() => handlePublish(notification.id)} className="mg-v2-button mg-v2-button-primary mg-v2-button-small" title="게시"><Send size={16} /></button>}
+                          {notification.status === 'PUBLISHED' && <button onClick={() => handleArchive(notification.id)} className="mg-v2-button mg-v2-button-outline mg-v2-button-small" title="보관"><Archive size={16} /></button>}
+                          <button onClick={() => handleEdit(notification)} className="mg-v2-button mg-v2-button-outline mg-v2-button-small" title="수정"><Edit size={16} /></button>
+                          <button onClick={() => handleDelete(notification.id)} className="mg-v2-button mg-v2-button-danger mg-v2-button-small" title="삭제"><Trash2 size={16} /></button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
+        </AdminCommonLayout>
+      )}
 
-        {/* 작성/수정 모달 */}
-        <div className="mg-modal"
-          isOpen={showModal}
-          onClose={() => setShowModal(false)}
+      {/* 작성/수정 모달 (contentOnly / 전체 공통) */}
+      <div className="mg-modal"
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
           title={editingNotification ? '공지 수정' : '새 공지 작성'}
           size="large"
           actions={
@@ -524,8 +602,7 @@ const SystemNotificationManagement = () => {
             </div>
           </div>
         </div>
-      </div>
-    </AdminCommonLayout>
+    </>
   );
 };
 

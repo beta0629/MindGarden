@@ -43,6 +43,53 @@
   overflow: hidden;
 }
 
+/* §1.3 탭 바: 시스템 공지 | 메시지 */
+.mg-v2-notification-dropdown__tabs {
+  display: flex;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--mg-color-border-main, #D4CFC8);
+  padding: 0;
+  min-height: 40px;
+}
+
+.mg-v2-notification-dropdown__tab {
+  flex: 1;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--mg-color-text-secondary, #5C6B61);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  cursor: pointer;
+  font-family: 'Noto Sans KR', sans-serif;
+  min-height: 40px;
+}
+
+.mg-v2-notification-dropdown__tab:hover {
+  color: var(--mg-color-text-main, #2C2C2C);
+}
+
+.mg-v2-notification-dropdown__tab--active {
+  font-weight: 600;
+  color: var(--mg-color-text-main, #2C2C2C);
+  border-bottom-color: var(--mg-color-primary-main, #3D5246);
+  border-radius: 2px;
+}
+
+.mg-v2-notification-dropdown__panel-content {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.mg-v2-notification-dropdown__panel-content[hidden] {
+  display: none;
+}
+
 @media (max-width: 767px) {
   .mg-v2-notification-dropdown__panel {
     width: 320px;

@@ -17,7 +17,7 @@ import '../../styles/unified-design-tokens.css';
  * 관리자 메시지 관리 페이지
  * 모든 상담사-내담자 메시지를 조회하고 관리할 수 있는 화면
  */
-const AdminMessages = () => {
+const AdminMessages = ({ contentOnly = false }) => {
   const navigate = useNavigate();
   const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
   const { unreadCount = 0 } = useNotification();
@@ -109,36 +109,21 @@ const AdminMessages = () => {
     return MESSAGE_TYPES[type]?.color || MESSAGE_TYPES.GENERAL.color;
   };
 
-  // 로딩 상태
-  if (sessionLoading || loading) {
-    return (
-      <AdminCommonLayout>
-        <div className="mg-v2-dashboard-layout">
-          <div className="mg-loading">로딩중...</div>
-        </div>
-      </AdminCommonLayout>
-    );
-  }
-
-  // 권한 체크 (sessionManager에서 직접 확인)
   const sessionUser = sessionManager.getUser();
-  if (!sessionUser) {
-    return (
-      <AdminCommonLayout>
-        <div className="mg-v2-dashboard-layout">
-          <div className="mg-v2-card">
-            <h3>로그인이 필요합니다</h3>
-            <p>메시지를 확인하려면 로그인해주세요.</p>
-          </div>
-        </div>
-      </AdminCommonLayout>
-    );
+
+  if (sessionLoading || loading) {
+    const loadEl = <div className="mg-loading">로딩중...</div>;
+    return contentOnly ? loadEl : <AdminCommonLayout><div className="mg-v2-dashboard-layout">{loadEl}</div></AdminCommonLayout>;
   }
 
-  return (
-    <AdminCommonLayout>
-      <div className="mg-v2-dashboard-layout">
-        {/* 헤더 */}
+  if (!sessionUser) {
+    const msg = <div className="mg-v2-card"><h3>로그인이 필요합니다</h3><p>메시지를 확인하려면 로그인해주세요.</p></div>;
+    return contentOnly ? msg : <AdminCommonLayout><div className="mg-v2-dashboard-layout">{msg}</div></AdminCommonLayout>;
+  }
+
+  const innerContent = (
+    <>
+      {!contentOnly && (
         <div className="mg-v2-dashboard-header">
           <div className="mg-v2-dashboard-header-content">
             <div className="mg-v2-dashboard-header-left">
@@ -146,15 +131,16 @@ const AdminMessages = () => {
               <div>
                 <h1 className="mg-v2-dashboard-title">메시지 관리</h1>
                 <p className="mg-v2-dashboard-subtitle">
-                  전체 메시지 {messages.length}개 
+                  전체 메시지 {messages.length}개
                   {unreadCount > 0 && ` · 읽지 않음 ${unreadCount}개`}
                 </p>
               </div>
             </div>
           </div>
         </div>
-
-        {/* 필터 및 검색 */}
+      )}
+      {contentOnly && <h2 className="mg-v2-ad-b0kla__section-title">메시지 목록</h2>}
+      {/* 필터 및 검색 */}
         <div className="mg-v2-card mg-v2-message-filters-card">
           <div className="mg-v2-message-filters-container">
             {/* 검색 */}
@@ -310,7 +296,12 @@ const AdminMessages = () => {
             </>
           )}
         </UnifiedModal>
-      </div>
+    </>
+  );
+
+  return contentOnly ? innerContent : (
+    <AdminCommonLayout>
+      <div className="mg-v2-dashboard-layout">{innerContent}</div>
     </AdminCommonLayout>
   );
 };

@@ -28,7 +28,7 @@ const DEFAULT_MENU_ITEMS = [
   { to: ADMIN_ROUTES.DASHBOARD, icon: LayoutDashboard, label: '대시보드', end: true },
   { to: ADMIN_ROUTES.INTEGRATED_SCHEDULE, icon: Calendar, label: '통합 스케줄 센터', end: true },
   { to: ADMIN_ROUTES.CONSULTATION_LOGS, icon: CalendarDays, label: '상담일지 조회', end: true },
-  { to: ADMIN_ROUTES.SYSTEM_NOTIFICATIONS, icon: MessageCircle, label: '알림', end: true },
+  { to: ADMIN_ROUTES.NOTIFICATIONS, icon: MessageCircle, label: '알림·메시지 관리', end: true },
   {
     to: '/admin/user-management',
     icon: Users,

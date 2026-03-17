@@ -1,0 +1,96 @@
+/**
+ * 알림·메시지 관리 통합 페이지 스타일
+ * GNB_AND_ADMIN_NOTIFICATION_UI_SPEC.md §2.4·§2.5 반영
+ * @author CoreSolution
+ * @since 2026-03-17
+ */
+
+.mg-v2-ad-b0kla__tabs {
+  display: flex;
+  flex-shrink: 0;
+  gap: 0;
+  border-bottom: 1px solid var(--mg-color-border-main, #D4CFC8);
+  margin-bottom: 16px;
+  min-height: 44px;
+}
+
+.mg-v2-ad-b0kla__tab {
+  padding: 12px 20px;
+  font-size: 16px;
+  font-weight: 400;
+  color: var(--mg-color-text-secondary, #5C6B61);
+  background: none;
+  border: none;
+  border-bottom: 4px solid transparent;
+  border-radius: 0;
+  cursor: pointer;
+  font-family: 'Noto Sans KR', sans-serif;
+  min-height: 44px;
+}
+
+.mg-v2-ad-b0kla__tab:hover {
+  color: var(--mg-color-text-main, #2C2C2C);
+}
+
+.mg-v2-ad-b0kla__tab--active {
+  font-weight: 600;
+  color: var(--mg-color-text-main, #2C2C2C);
+  border-bottom-color: var(--mg-color-primary-main, #3D5246);
+  border-radius: 2px;
+}
+
+.mg-v2-ad-b0kla__section {
+  background: var(--mg-color-surface-main, #F5F3EF);
+  border: 1px solid var(--mg-color-border-main, #D4CFC8);
+  border-radius: 16px;
+  padding: 24px;
+}
+
+.mg-v2-ad-b0kla__section-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--mg-color-text-main, #2C2C2C);
+  margin: 0 0 16px 0;
+  padding-left: 8px;
+  border-left: 4px solid var(--mg-color-primary-main, #3D5246);
+  border-radius: 2px;
+}
+
+.mg-v2-ad-b0kla__section-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.mg-v2-ad-b0kla__section-filters .mg-v2-select,
+.mg-v2-ad-b0kla__filter-select {
+  min-width: 120px;
+  padding: 8px 12px;
+  font-size: 14px;
+  border: 1px solid var(--mg-color-border-main);
+  border-radius: 8px;
+  background: var(--mg-color-surface-main);
+}
+
+.mg-v2-ad-b0kla__section-body {
+  min-height: 120px;
+}
+
+.mg-v2-ad-b0kla__table-empty {
+  text-align: center;
+  padding: 24px;
+  font-size: 14px;
+  color: var(--mg-color-text-secondary, #5C6B61);
+}
+
+@media (max-width: 767px) {
+  .mg-v2-ad-b0kla__tabs {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .mg-v2-ad-b0kla__tab {
+    flex-shrink: 0;
+    min-height: 44px;
+  }
+}

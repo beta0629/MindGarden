@@ -550,6 +550,7 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                                                 viewMode={viewMode}
                                                 onViewModeChange={setViewMode}
                                                 className="mg-v2-mapping-list-block__toggle"
+                                                ariaLabel="목록 보기 전환"
                                             />
                                         </div>
                                         <ClientOverviewTab

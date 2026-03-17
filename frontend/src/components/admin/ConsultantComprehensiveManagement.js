@@ -1095,6 +1095,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                 viewMode={viewMode}
                                                 onViewModeChange={setViewMode}
                                                 className="mg-v2-mapping-list-block__toggle"
+                                                ariaLabel="목록 보기 전환"
                                             />
                                         </div>
                                         {getFilteredConsultants.length === 0 ? (
@@ -1307,6 +1308,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                 viewMode={viewMode}
                                                 onViewModeChange={setViewMode}
                                                 className="mg-v2-mapping-list-block__toggle"
+                                                ariaLabel="목록 보기 전환"
                                             />
                                         </div>
                                         {getFilteredConsultants.length === 0 ? (

@@ -362,8 +362,8 @@ const UnifiedNotifications = () => {
                             : message.content}
                         </p>
                         <div className="mg-v2-text-xs mg-v2-color-text-secondary">
-                          {message.senderType === 'CONSULTANT' ? '발신' : '수신'} · 
-                          {message.senderName || '알 수 없음'}
+                          {message.senderType === 'CONSULTANT' ? '발신' : '수신'} ·
+                          {message.senderType === 'SYSTEM' ? '시스템 메시지' : (message.senderName || '알 수 없음')}
                         </div>
                       </div>
                     </div>
@@ -380,7 +380,7 @@ const UnifiedNotifications = () => {
             isOpen={!!selectedItem}
             onClose={closeModal}
             title={selectedItem.data.title}
-            subtitle={`${selectedItem.data.authorName || selectedItem.data.senderName || '관리자'} · ${formatDate(selectedItem.data.publishedAt || selectedItem.data.createdAt)}`}
+            subtitle={`${selectedItem.data.senderType === 'SYSTEM' ? '시스템 메시지' : (selectedItem.data.authorName || selectedItem.data.senderName || '관리자')} · ${formatDate(selectedItem.data.publishedAt || selectedItem.data.createdAt)}`}
             size="large"
             actions={
               <button onClick={closeModal} className="mg-button mg-button-primary">

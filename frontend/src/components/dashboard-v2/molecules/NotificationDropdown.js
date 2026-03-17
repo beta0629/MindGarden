@@ -25,6 +25,20 @@ const NotificationDropdown = () => {
   const panelRef = useRef(null);
   const panelStyle = useDropdownPosition(triggerRef, panelRef, isOpen);
 
+  /** 마운트 시 미읽음 개수 조회하여 배지에 반영 (드롭다운 미오픈 시에도 배지 표시) */
+  useEffect(() => {
+    const fetchUnreadCount = async () => {
+      try {
+        const count = await StandardizedApi.get('/api/v1/alerts/unread-count');
+        const value = count != null ? Number(count) : 0;
+        setUnreadCount(Number.isFinite(value) ? Math.max(0, value) : 0);
+      } catch (err) {
+        console.error('알림 미읽음 개수 조회 실패:', err);
+      }
+    };
+    fetchUnreadCount();
+  }, []);
+
   useEffect(() => {
     if (isOpen) {
       fetchNotifications();
@@ -71,9 +85,15 @@ const NotificationDropdown = () => {
       
       const items = response?.content || response || [];
       setNotifications(items);
-      
-      const unread = items.filter(n => !n.isRead).length;
-      setUnreadCount(unread);
+
+      try {
+        const count = await StandardizedApi.get('/api/v1/alerts/unread-count');
+        const value = count != null ? Number(count) : 0;
+        setUnreadCount(Number.isFinite(value) ? Math.max(0, value) : 0);
+      } catch {
+        const unread = items.filter(n => !n.isRead).length;
+        setUnreadCount(unread);
+      }
     } catch (error) {
       console.error('알림 조회 실패:', error);
     } finally {

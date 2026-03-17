@@ -244,7 +244,7 @@ const AdminMessages = () => {
                     <div className="mg-v2-message-card__participants">
                       <div className="mg-v2-message-card__participant">
                         <User size={14} />
-                        <span>발신: {message.senderName}</span>
+                        <span>발신: {message.senderType === 'SYSTEM' ? '시스템 메시지' : (message.senderName || '알 수 없음')}</span>
                       </div>
                       <div className="mg-v2-message-card__participant">
                         <Users size={14} />
@@ -294,7 +294,7 @@ const AdminMessages = () => {
                 </div>
                 <div className="mg-v2-message-modal-info-grid">
                   <div>
-                    <strong>발신자:</strong> {selectedMessage.senderName}
+                    <strong>발신자:</strong> {selectedMessage.senderType === 'SYSTEM' ? '시스템 메시지' : (selectedMessage.senderName || '알 수 없음')}
                   </div>
                   <div>
                     <strong>수신자:</strong> {selectedMessage.receiverName}

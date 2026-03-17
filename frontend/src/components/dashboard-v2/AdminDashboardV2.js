@@ -67,6 +67,7 @@ import { useResponsive } from '../../hooks/useResponsive';
 import { DesktopLayout, MobileLayout } from './templates';
 import { DEFAULT_MENU_ITEMS, BREAKPOINT_DESKTOP } from './constants/menuItems';
 import { ADMIN_ROUTES } from '../../constants/adminRoutes';
+import { maskEncryptedDisplay } from '../../utils/codeHelper';
 import MGButton from '../common/MGButton';
 import '../../styles/main.css';
 import '../../styles/unified-design-tokens.css';
@@ -1352,7 +1353,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
                           className={rowClass}
                         >
                           <span className="mg-v2-ad-b0kla__integrated-data-rank">{index + 1}</span>
-                          <span className="mg-v2-ad-b0kla__counselor-name">{row.consultantName}</span>
+                          <span className="mg-v2-ad-b0kla__counselor-name">{maskEncryptedDisplay(row.consultantName, '상담사')}</span>
                           <span className="mg-v2-ad-b0kla__counselor-rating">
                             {row.rating != null ? Number(row.rating).toFixed(1) : '-'}
                           </span>
@@ -1369,7 +1370,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
                     <Chart
                       type={CHART_TYPES.BAR}
                       data={{
-                        labels: consultantIntegratedData.map((d, i) => `${i + 1}위 ${d.consultantName}`),
+                        labels: consultantIntegratedData.map((d, i) => `${i + 1}위 ${maskEncryptedDisplay(d.consultantName, '상담사')}`),
                         datasets: [
                           {
                             label: '완료 건수',
@@ -1433,8 +1434,8 @@ const AdminDashboardV2 = ({ user: propUser }) => {
                           className={progressRowClass}
                         >
                           <span className="mg-v2-ad-b0kla__integrated-progress-rank">{rank}위</span>
-                          <span className="mg-v2-ad-b0kla__integrated-progress-name" title={row.consultantName}>
-                            {row.consultantName}
+                          <span className="mg-v2-ad-b0kla__integrated-progress-name" title={maskEncryptedDisplay(row.consultantName, '상담사')}>
+                            {maskEncryptedDisplay(row.consultantName, '상담사')}
                           </span>
                           <div
                             className="mg-v2-ad-b0kla__integrated-progress-track"
@@ -1442,7 +1443,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
                             aria-valuenow={rate}
                             aria-valuemin={0}
                             aria-valuemax={100}
-                            aria-label={`${row.consultantName} 상담사 완료율 ${rate}%`}
+                            aria-label={`${maskEncryptedDisplay(row.consultantName, '상담사')} 상담사 완료율 ${rate}%`}
                           >
                             <div
                               className="mg-v2-ad-b0kla__integrated-progress-fill"

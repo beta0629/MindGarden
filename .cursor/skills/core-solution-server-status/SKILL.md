@@ -26,14 +26,27 @@ description: 개발·운영 서버 상태·에러 로그 확인, 긴급 복구, 
 - **core-debugger**는 로그 내용을 바탕으로 원인과 수정 방향을 정리하고, **core-coder에게 넘길 태스크 설명**을 구체적으로 작성한다.
 - **core-coder**는 해당 태스크만 수행한다.
 
+## SSH 접속 정보 (core-shell / shell 서브에이전트용)
+
+shell 서브에이전트로 개발·운영 서버 로그·상태 확인 시 아래 접속 정보를 사용한다. (프로젝트 스크립트 기준: `scripts/clean-dev-server-logs.sh`, `deployment/check-and-deploy-permission-auto.sh` 등)
+
+| 구분 | SSH 접속 | 비고 |
+|------|-----------|------|
+| **개발 서버** | `ssh root@beta0629.cafe24.com` | 로그: `/var/www/mindgarden-dev/logs/` |
+| **운영 서버** | `ssh root@beta74.cafe24.com` | 로그: `/var/log/mindgarden/` 등 (배포 가이드 참조). 배포 시에는 `beta74` 계정 사용 가능. |
+
+- **개발 서버 로그 경로**: `/var/www/mindgarden-dev/logs/` — `error.log`, `coresolution.log`, `sql-error.log`, 롤링 파일 `*.2026-03-*.log`.
+- **운영 서버 로그 경로**: `/var/log/mindgarden/application.log`, `memory-alert.log` 등 (`deployment/pre-deployment-checklist.md`, `deployment/application-production.yml` 참조).
+- 로컬 `~/.ssh/config` 또는 CI secrets(DEV_SERVER_HOST, DEV_SERVER_SSH_KEY 등)가 있으면 해당 설정 사용. 없으면 위 `root@호스트` 로 접속.
+
 ## 대상 서버·경로 (참고)
 
 | 구분 | 서비스/호스트 | 서비스명 | 로그·경로 |
 |------|----------------|----------|-----------|
-| **개발** | beta0629.cafe24.com 등 (SSH 설정 참고) | mindgarden-dev.service | /var/www/mindgarden-dev/logs/error.log, /var/log/mindgarden/dev-error.log, journalctl -u mindgarden-dev.service |
-| **운영** | beta74.cafe24.com 등 (배포 워크플로 참고) | 해당 systemd 서비스명 | 운영 서버 로그 경로(배포 가이드 참조) |
+| **개발** | root@beta0629.cafe24.com | mindgarden-dev.service | /var/www/mindgarden-dev/logs/error.log, coresolution.log, sql-error.log, journalctl -u mindgarden-dev.service |
+| **운영** | root@beta74.cafe24.com | 해당 systemd 서비스명 | /var/log/mindgarden/application.log, 배포 가이드 참조 |
 
-- SSH 호스트·계정은 로컬 `~/.ssh/config` 또는 CI secrets(DEV_SERVER_HOST 등) 기준. shell 서브에이전트는 로컬 SSH 설정을 사용할 수 있음.
+- shell 서브에이전트는 위 **SSH 접속 정보**를 사용해 `ssh root@beta0629.cafe24.com "tail -n 200 /var/www/mindgarden-dev/logs/error.log"` 형태로 로그 수집.
 
 ## 1단계: shell — 상태·로그·복구 체크리스트
 

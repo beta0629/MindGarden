@@ -966,19 +966,10 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             log.error("부분 환불 거래 완료 처리 실패: {}", e.getMessage(), e);
         }
         
-        try {
-            Long originalAmount = mapping.getPackagePrice();
-            Long newEffectiveAmount = originalAmount != null ? originalAmount - refundAmount : null;
-            
-            if (originalAmount != null && newEffectiveAmount != null) {
-                amountManagementService.recordAmountChange(mapping.getId(), 
-                    originalAmount, newEffectiveAmount, 
-                    String.format("부분 환불로 인한 유효 금액 감소 (%d회기 환불)", refundSessions), 
-                    "SYSTEM_PARTIAL_REFUND");
-            }
-        } catch (Exception e) {
-            log.error("부분 환불 금액 변경 이력 기록 실패: {}", e.getMessage(), e);
-        }
+        // 부분 환불 시 매핑 notes/version은 부모 트랜잭션(partialRefundMapping)에서 한 번만 갱신함.
+        // 여기서 recordAmountChange를 호출하면 T3에서 mapping.save()로 version이 올라가
+        // 부모 복귀 후 StaleStateException이 발생하므로, 부분 환불 경로에서는 호출하지 않음.
+        // 금액 변경 이력 문구는 T1의 refundNote에 이미 포함됨.
         
         log.info("✅ [중앙화] 부분 환불 거래 생성 완료: MappingID={}, RefundSessions={}, RefundAmount={}원", 
             mapping.getId(), refundSessions, refundAmount);

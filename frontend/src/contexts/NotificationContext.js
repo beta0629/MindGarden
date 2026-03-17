@@ -92,13 +92,10 @@ export const NotificationProvider = ({ children }) => {
 
       console.log('📨 메시지 개수 API 호출:', endpoint);
       const response = await apiGet(endpoint);
-      
-      if (response && response.success) {
-        console.log('📊 읽지 않은 메시지 개수 업데이트:', response.unreadCount);
-        setUnreadMessageCount(response.unreadCount || 0);
-      } else {
-        setUnreadMessageCount(0);
-      }
+      // apiGet은 { success, data }일 때 data만 반환하므로 response = { unreadCount: N }
+      const count = response != null && typeof response.unreadCount === 'number' ? response.unreadCount : 0;
+      setUnreadMessageCount(count);
+      if (count > 0) console.log('📊 읽지 않은 메시지 개수 업데이트:', count);
     } catch (error) {
       // 인증 오류는 조용히 처리
       if (error.status === CONSTANTS.HTTP_STATUS.UNAUTHORIZED || error.status === CONSTANTS.HTTP_STATUS.FORBIDDEN) {
@@ -123,13 +120,10 @@ export const NotificationProvider = ({ children }) => {
       const endpoint = `/api/v1/system-notifications/unread-count?_t=${timestamp}`;
 
       const response = await apiGet(endpoint);
-      
-      if (response && response.success) {
-        console.log('📢 읽지 않은 공지 개수 업데이트:', response.unreadCount);
-        setUnreadSystemCount(response.unreadCount || 0);
-      } else {
-        setUnreadSystemCount(0);
-      }
+      // apiGet은 { success, data }일 때 data만 반환하므로 response = { unreadCount: N }
+      const count = response != null && typeof response.unreadCount === 'number' ? response.unreadCount : 0;
+      setUnreadSystemCount(count);
+      if (count > 0) console.log('📢 읽지 않은 공지 개수 업데이트:', count);
     } catch (error) {
       // 인증 오류는 조용히 처리
       if (error.status === CONSTANTS.HTTP_STATUS.UNAUTHORIZED || error.status === CONSTANTS.HTTP_STATUS.FORBIDDEN) {
@@ -168,16 +162,12 @@ export const NotificationProvider = ({ children }) => {
         : `/api/v1/consultation-messages/client/${user.id}`;
 
       const response = await apiGet(endpoint);
-      
-      if (response && response.success) {
-        const unreadMessages = (response.data || [])
-          .filter(msg => !msg.isRead)
-          .slice(0, CONSTANTS.NOTIFICATION_CONSTANTS.MAX_NOTIFICATIONS); // 최근 MAX_NOTIFICATIONS개만
-        
-        setNotifications(unreadMessages);
-      } else {
-        setNotifications([]);
-      }
+      // apiGet은 data만 반환. 목록은 response 자체가 배열이거나 response.messages/content 등
+      const list = Array.isArray(response) ? response : (response?.messages ?? response?.content ?? response?.data ?? []);
+      const unreadMessages = (Array.isArray(list) ? list : [])
+        .filter(msg => !msg.isRead)
+        .slice(0, CONSTANTS.NOTIFICATION_CONSTANTS.MAX_NOTIFICATIONS);
+      setNotifications(unreadMessages);
     } catch (error) {
       // 인증 오류는 조용히 처리
       if (error.status !== CONSTANTS.HTTP_STATUS.UNAUTHORIZED && error.status !== CONSTANTS.HTTP_STATUS.FORBIDDEN) {
@@ -201,13 +191,9 @@ export const NotificationProvider = ({ children }) => {
       const endpoint = `/api/v1/system-notifications?page=0&size=${CONSTANTS.NOTIFICATION_CONSTANTS.MAX_NOTIFICATIONS}`;
       
       const response = await apiGet(endpoint);
-      
-      if (response && response.success) {
-        console.log('📢 공지 목록 업데이트:', response.data?.length || 0, '개');
-        setSystemNotifications(response.data || []);
-      } else {
-        setSystemNotifications([]);
-      }
+      // apiGet은 data만 반환. 목록은 response가 배열이거나 response.notifications 등
+      const list = Array.isArray(response) ? response : (response?.notifications ?? response?.data ?? []);
+      setSystemNotifications(Array.isArray(list) ? list : []);
     } catch (error) {
       // 인증 오류는 조용히 처리
       if (error.status === CONSTANTS.HTTP_STATUS.UNAUTHORIZED || error.status === CONSTANTS.HTTP_STATUS.FORBIDDEN) {
@@ -228,17 +214,10 @@ export const NotificationProvider = ({ children }) => {
   const markMessageAsRead = async (messageId) => {
     try {
       console.log('📨 메시지 읽음 처리 시작:', messageId);
-      const response = await apiGet(`/api/v1/consultation-messages/${messageId}/read`);
-      
-      if (response.success) {
-        console.log('✅ 메시지 읽음 처리 성공:', messageId);
-        // 로컬 상태 업데이트
-        setNotifications(prev => prev.filter(n => n.id !== messageId));
-        // 서버에서 최신 카운트 다시 로드
-        await loadUnreadMessageCount();
-      } else {
-        console.error('❌ 메시지 읽음 처리 실패:', response.message);
-      }
+      await apiGet(`/api/v1/consultation-messages/${messageId}/read`);
+      // apiGet은 data만 반환. 에러 시 throw되므로 여기 도달하면 성공으로 간주
+      setNotifications(prev => prev.filter(n => n.id !== messageId));
+      await loadUnreadMessageCount();
     } catch (error) {
       console.error('❌ 메시지 읽음 처리 오류:', error);
     }
@@ -248,17 +227,10 @@ export const NotificationProvider = ({ children }) => {
   const markSystemNotificationAsRead = async (notificationId) => {
     try {
       console.log('📢 공지 읽음 처리 시작:', notificationId);
-      const response = await apiGet(`/api/v1/system-notifications/${notificationId}/read`);
-      
-      if (response.success) {
-        console.log('✅ 공지 읽음 처리 성공:', notificationId);
-        // 로컬 상태 업데이트
-        setSystemNotifications(prev => prev.filter(n => n.id !== notificationId));
-        // 서버에서 최신 카운트 다시 로드
-        await loadUnreadSystemCount();
-      } else {
-        console.error('❌ 공지 읽음 처리 실패:', response.message);
-      }
+      await apiGet(`/api/v1/system-notifications/${notificationId}/read`);
+      // apiGet은 data만 반환. 에러 시 throw되므로 여기 도달하면 성공으로 간주
+      setSystemNotifications(prev => prev.filter(n => n.id !== notificationId));
+      await loadUnreadSystemCount();
     } catch (error) {
       console.error('❌ 공지 읽음 처리 오류:', error);
     }

@@ -618,7 +618,11 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                                         const f = (dataToUse.rrnFirst6 || '').trim();
                                         const l = (dataToUse.rrnLast1 || '').trim();
                                         if (f.length !== 6 || !/^[0-9]{6}$/.test(f) || l.length !== 1 || !/^[1-4]$/.test(l)) {
-                                            showError('주민번호 앞 6자리는 6자리 숫자, 뒤 1자리는 1자리 숫자(1~4)로 입력해 주세요.');
+                                            const rrnMsg = '주민번호 앞 6자리는 6자리 숫자, 뒤 1자리는 1자리 숫자(1~4)로 입력해 주세요.';
+                                            showError(rrnMsg);
+                                            if (typeof globalThis.window !== 'undefined') {
+                                                globalThis.window.dispatchEvent(new CustomEvent('showNotification', { detail: { message: rrnMsg, type: 'error', duration: 5000 } }));
+                                            }
                                             return;
                                         }
                                     }
@@ -649,9 +653,13 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                                         if (!response) {
                                             throw new Error('등록 응답이 없습니다.');
                                         }
-                                        showSuccess('내담자가 성공적으로 등록되었습니다.');
+                                        const msg = '내담자가 성공적으로 등록되었습니다.';
+                                        showSuccess(msg);
+                                        if (typeof globalThis.window !== 'undefined') {
+                                            globalThis.window.dispatchEvent(new CustomEvent('showNotification', { detail: { message: msg, type: 'success', duration: 3000 } }));
+                                        }
                                         await loadClients();
-                                        window.dispatchEvent(new CustomEvent('admin-dashboard-refresh-stats'));
+                                        globalThis.window.dispatchEvent(new CustomEvent('admin-dashboard-refresh-stats'));
                                         handleCloseModal();
                                     } else if (modalType === 'edit') {
                                         console.log('🔧 내담자 수정 요청:', { id: editingClient.id, payload });
@@ -661,19 +669,30 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                                         if (!success) {
                                             throw new Error(response?.message || '수정에 실패했습니다.');
                                         }
-                                        showSuccess('내담자 정보가 성공적으로 수정되었습니다.');
+                                        const msg = '내담자 정보가 성공적으로 수정되었습니다.';
+                                        showSuccess(msg);
+                                        if (typeof globalThis.window !== 'undefined') {
+                                            globalThis.window.dispatchEvent(new CustomEvent('showNotification', { detail: { message: msg, type: 'success', duration: 3000 } }));
+                                        }
                                         await loadClients();
                                         handleCloseModal();
                                     } else if (modalType === 'delete') {
                                         await apiDelete(`/api/v1/admin/clients/${editingClient.id}`);
-                                        showSuccess('내담자가 성공적으로 삭제되었습니다.');
-
+                                        const msg = '내담자가 성공적으로 삭제되었습니다.';
+                                        showSuccess(msg);
+                                        if (typeof globalThis.window !== 'undefined') {
+                                            globalThis.window.dispatchEvent(new CustomEvent('showNotification', { detail: { message: msg, type: 'success', duration: 3000 } }));
+                                        }
                                         await loadClients();
                                         handleCloseModal();
                                     }
                                 } catch (error) {
                                     console.error('❌ 내담자 처리 실패:', error);
-                                    showError('내담자 처리 중 오류가 발생했습니다: ' + (error.message || '알 수 없는 오류'));
+                                    const errMsg = '내담자 처리 중 오류가 발생했습니다: ' + (error?.message || '알 수 없는 오류');
+                                    showError(errMsg);
+                                    if (typeof globalThis.window !== 'undefined') {
+                                        globalThis.window.dispatchEvent(new CustomEvent('showNotification', { detail: { message: errMsg, type: 'error', duration: 5000 } }));
+                                    }
                                 }
                             };
                             return handleSave();

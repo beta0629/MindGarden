@@ -249,9 +249,13 @@ export const apiGet = async (endpoint, params = {}, options = {}) => {
       }
     }
 
-    // ApiResponse 래퍼 처리: { success: true, data: T } 형태면 data 추출
+    // ApiResponse 래퍼 처리: { success: true, data: T } 형태면 data 추출. data가 null/undefined면 전체 객체 반환(성공 여부 판단용)
     if (jsonData && typeof jsonData === 'object' && 'success' in jsonData && 'data' in jsonData) {
-      return jsonData.data;
+      const data = jsonData.data;
+      if (data !== null && data !== undefined) {
+        return data;
+      }
+      return jsonData;
     }
     
     // ApiResponse 래퍼가 없으면 그대로 반환
@@ -400,9 +404,13 @@ export const apiPost = async (endpoint, data = {}, options = {}) => {
       throw error;
     }
 
-    // ApiResponse 래퍼 처리: { success: true, data: T } 형태면 data 추출
+    // ApiResponse 래퍼 처리: { success: true, data: T } 형태면 data 추출. data가 null/undefined면 전체 객체 반환(성공 여부 판단용)
     if (jsonData && typeof jsonData === 'object' && 'success' in jsonData && 'data' in jsonData) {
-      return jsonData.data;
+      const data = jsonData.data;
+      if (data !== null && data !== undefined) {
+        return data;
+      }
+      return jsonData;
     }
     
     // ApiResponse 래퍼가 없으면 그대로 반환
@@ -453,9 +461,13 @@ export const apiPut = async (endpoint, data = {}, options = {}) => {
       throw new Error(serverMessage);
     }
 
-    // ApiResponse 래퍼 처리: { success: true, data: T } 형태면 data 추출
+    // ApiResponse 래퍼 처리: { success: true, data: T } 형태면 data 추출. data가 null/undefined면 전체 객체 반환(성공 여부 판단용)
     if (jsonData && typeof jsonData === 'object' && 'success' in jsonData && 'data' in jsonData) {
-      return jsonData.data;
+      const data = jsonData.data;
+      if (data !== null && data !== undefined) {
+        return data;
+      }
+      return jsonData;
     }
     
     // ApiResponse 래퍼가 없으면 그대로 반환
@@ -539,9 +551,13 @@ export const apiDelete = async (endpoint, options = {}) => {
       handleError(new Error('DELETE 요청 실패'), response.status);
     }
 
-    // ApiResponse 래퍼 처리: { success: true, data: T } 형태면 data 추출
+    // ApiResponse 래퍼 처리: { success: true, data: T } 형태면 data 추출. data가 null/undefined면 전체 객체 반환(성공 여부 판단용)
     if (jsonData && typeof jsonData === 'object' && 'success' in jsonData && 'data' in jsonData) {
-      return jsonData.data;
+      const data = jsonData.data;
+      if (data !== null && data !== undefined) {
+        return data;
+      }
+      return jsonData;
     }
     
     // ApiResponse 래퍼가 없으면 그대로 반환

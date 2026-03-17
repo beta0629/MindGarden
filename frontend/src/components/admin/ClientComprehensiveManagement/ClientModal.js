@@ -419,10 +419,13 @@ const ClientModal = ({
                         onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
+                            console.log('🔘 모달 저장 버튼 클릭', { type });
                             if (type === 'delete') {
                                 return onSave(formData);
                             }
-                            return handleSubmit(e);
+                            const result = handleSubmit(e);
+                            console.log('🔘 모달 handleSubmit 반환', { type, hasResult: result != null });
+                            return result;
                         }}
                         preventDoubleClick={true}
                         clickDelay={1000}

@@ -611,6 +611,7 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                         setFormData={setFormData}
                         onClose={handleCloseModal}
                         onSave={(data) => {
+                            console.log('🔘 내담자 저장 클릭 (onSave 호출)', { modalType, editingClientId: editingClient?.id, hasData: !!data });
                             const handleSave = async () => {
                                 // 모달 제출 시점의 최신 폼 데이터(data) 우선 사용. (상담사는 formData 직접 전달과 동일)
                                 const dataToUse = data ?? formDataRef.current ?? formData;

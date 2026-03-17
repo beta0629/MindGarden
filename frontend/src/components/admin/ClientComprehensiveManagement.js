@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import PropTypes from 'prop-types';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import { Plus, Users, UserCheck, Clock, Link2 } from 'lucide-react';
@@ -67,6 +67,7 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
     const [editingClient, setEditingClient] = useState(null);
     const [showPasswordResetModal, setShowPasswordResetModal] = useState(false);
     const [passwordResetClient, setPasswordResetClient] = useState(null);
+    const formDataRef = useRef(null);
     const [formData, setFormData] = useState({
         name: '',
         email: '',
@@ -82,6 +83,9 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
         addressDetail: '',
         postalCode: ''
     });
+    useEffect(() => {
+        formDataRef.current = formData;
+    }, [formData]);
 
     const loadCommonCodes = useCallback(async () => {
         if (loadingCodes) return;
@@ -608,34 +612,35 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                         onClose={handleCloseModal}
                         onSave={(data) => {
                             const handleSave = async () => {
+                                const dataToUse = formDataRef.current != null ? formDataRef.current : data;
                                 try {
-                                    if (data.rrnFirst6?.trim() || data.rrnLast1?.trim()) {
-                                        const f = (data.rrnFirst6 || '').trim();
-                                        const l = (data.rrnLast1 || '').trim();
+                                    if (dataToUse.rrnFirst6?.trim() || dataToUse.rrnLast1?.trim()) {
+                                        const f = (dataToUse.rrnFirst6 || '').trim();
+                                        const l = (dataToUse.rrnLast1 || '').trim();
                                         if (f.length !== 6 || !/^[0-9]{6}$/.test(f) || l.length !== 1 || !/^[1-4]$/.test(l)) {
                                             showError('주민번호 앞 6자리는 6자리 숫자, 뒤 1자리는 1자리 숫자(1~4)로 입력해 주세요.');
                                             return;
                                         }
                                     }
                                     const payload = {
-                                        name: data.name,
-                                        email: data.email,
-                                        phone: data.phone ?? '',
-                                        status: data.status,
-                                        grade: data.grade,
-                                        notes: data.notes ?? ''
+                                        name: dataToUse.name,
+                                        email: dataToUse.email,
+                                        phone: dataToUse.phone ?? '',
+                                        status: dataToUse.status,
+                                        grade: dataToUse.grade,
+                                        notes: dataToUse.notes ?? ''
                                     };
                                     if (modalType === 'create') {
-                                        payload.password = data.password ?? '';
+                                        payload.password = dataToUse.password ?? '';
                                     }
-                                    if (data.profileImageUrl && data.profileImageUrl.trim() !== '') {
-                                        payload.profileImageUrl = data.profileImageUrl;
+                                    if (dataToUse.profileImageUrl && dataToUse.profileImageUrl.trim() !== '') {
+                                        payload.profileImageUrl = dataToUse.profileImageUrl;
                                     }
-                                    if (data.address != null) payload.address = data.address.trim();
-                                    if (data.addressDetail != null) payload.addressDetail = data.addressDetail.trim();
-                                    if (data.postalCode != null) payload.postalCode = data.postalCode.trim();
-                                    if (data.rrnFirst6?.trim()) payload.rrnFirst6 = data.rrnFirst6.trim();
-                                    if (data.rrnLast1?.trim()) payload.rrnLast1 = data.rrnLast1.trim();
+                                    if (dataToUse.address != null) payload.address = dataToUse.address.trim();
+                                    if (dataToUse.addressDetail != null) payload.addressDetail = dataToUse.addressDetail.trim();
+                                    if (dataToUse.postalCode != null) payload.postalCode = dataToUse.postalCode.trim();
+                                    if (dataToUse.rrnFirst6?.trim()) payload.rrnFirst6 = dataToUse.rrnFirst6.trim();
+                                    if (dataToUse.rrnLast1?.trim()) payload.rrnLast1 = dataToUse.rrnLast1.trim();
                                     let response;
                                     if (modalType === 'create') {
                                         console.log('🔧 내담자 등록 시작:', { ...payload, profileImageUrl: payload.profileImageUrl ? '(base64)' : undefined });
@@ -649,7 +654,9 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                                         window.dispatchEvent(new CustomEvent('admin-dashboard-refresh-stats'));
                                         handleCloseModal();
                                     } else if (modalType === 'edit') {
+                                        console.log('🔧 내담자 수정 요청:', { id: editingClient.id, payload });
                                         response = await apiPut(`/api/v1/admin/clients/${editingClient.id}`, payload);
+                                        console.log('✅ 내담자 수정 응답:', response);
                                         const success = response != null && (response.success === true || response.id != null);
                                         if (!success) {
                                             throw new Error(response?.message || '수정에 실패했습니다.');
@@ -660,8 +667,7 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                                     } else if (modalType === 'delete') {
                                         await apiDelete(`/api/v1/admin/clients/${editingClient.id}`);
                                         showSuccess('내담자가 성공적으로 삭제되었습니다.');
-                                        
-                                        // 목록 새로고침
+
                                         await loadClients();
                                         handleCloseModal();
                                     }
@@ -670,7 +676,7 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                                     showError('내담자 처리 중 오류가 발생했습니다: ' + (error.message || '알 수 없는 오류'));
                                 }
                             };
-                            handleSave();
+                            return handleSave();
                         }}
                         userStatusOptions={userStatusOptions}
                     />

@@ -95,7 +95,7 @@ const ClientModal = ({
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        onSave(formData);
+        return onSave(formData);
     };
 
     const getTitle = () => {
@@ -415,14 +415,14 @@ const ClientModal = ({
                     </MGButton>
                     <MGButton
                         variant={type === 'delete' ? 'danger' : 'primary'}
+                        type="button"
                         onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
                             if (type === 'delete') {
-                                onSave(formData);
-                            } else {
-                                handleSubmit(e);
+                                return onSave(formData);
                             }
+                            return handleSubmit(e);
                         }}
                         preventDoubleClick={true}
                         clickDelay={1000}

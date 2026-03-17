@@ -612,7 +612,8 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                         onClose={handleCloseModal}
                         onSave={(data) => {
                             const handleSave = async () => {
-                                const dataToUse = formDataRef.current != null ? formDataRef.current : data;
+                                // 모달 제출 시점의 최신 폼 데이터(data) 우선 사용. (상담사는 formData 직접 전달과 동일)
+                                const dataToUse = data ?? formDataRef.current ?? formData;
                                 try {
                                     if (dataToUse.rrnFirst6?.trim() || dataToUse.rrnLast1?.trim()) {
                                         const f = (dataToUse.rrnFirst6 || '').trim();

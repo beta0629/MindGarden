@@ -8,10 +8,11 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, List } from 'lucide-react';
 import UnifiedLoading from '../common/UnifiedLoading';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
-import { ContentHeader, ContentArea } from '../dashboard-v2/content';
+import { ContentHeader, ContentArea, ContentSection, ContentCard } from '../dashboard-v2/content';
+import { ViewModeToggle } from '../common';
 import {
   RefundKpiBlock,
   RefundFilterBlock,
@@ -21,8 +22,14 @@ import {
   RefundAccountingBlock
 } from './refund-management';
 import './refund-management/RefundManagement.css';
+import '../admin/mapping-management/organisms/MappingListBlock.css';
 import StandardizedApi from '../../utils/standardizedApi';
 import notificationManager from '../../utils/notification';
+
+/** 환불 이력 보기 전환 옵션 (현재 테이블만 지원, 카드 뷰 추후 구현) */
+const REFUND_VIEW_MODE_OPTIONS = [
+  { value: 'table', icon: List, label: '테이블' }
+];
 
 const REFUND_STATISTICS_ENDPOINT = '/api/v1/admin/refund-statistics';
 const REFUND_HISTORY_ENDPOINT = '/api/v1/admin/refund-history';
@@ -42,6 +49,7 @@ const RefundManagement = () => {
   const [selectedPeriod, setSelectedPeriod] = useState('month');
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [selectedRowIds, setSelectedRowIds] = useState([]);
+  const [refundViewMode, setRefundViewMode] = useState('table');
 
   const loadRefundData = useCallback(async () => {
     try {
@@ -208,15 +216,29 @@ const RefundManagement = () => {
               selectedRowIds={selectedRowIds}
               isLoadingReflect={isLoadingReflect}
             />
-            <RefundHistoryTableBlock
-              refundHistory={refundHistory}
-              pageInfo={pageInfo}
-              onPageChange={setCurrentPage}
-              onReflectErp={handleReflectErp}
-              selectedRowIds={selectedRowIds}
-              onToggleRowSelection={handleToggleRowSelection}
-              isLoadingReflect={isLoadingReflect}
-            />
+            <ContentSection noCard className="mg-v2-mapping-list-block">
+              <ContentCard className="mg-v2-mapping-list-block__card">
+                <div className="mg-v2-mapping-list-block__header">
+                  <div className="mg-v2-mapping-list-block__title">환불 이력</div>
+                  <ViewModeToggle
+                    viewMode={refundViewMode}
+                    onViewModeChange={setRefundViewMode}
+                    options={REFUND_VIEW_MODE_OPTIONS}
+                    className="mg-v2-mapping-list-block__toggle"
+                    ariaLabel="목록 보기 전환"
+                  />
+                </div>
+                <RefundHistoryTableBlock
+                  refundHistory={refundHistory}
+                  pageInfo={pageInfo}
+                  onPageChange={setCurrentPage}
+                  onReflectErp={handleReflectErp}
+                  selectedRowIds={selectedRowIds}
+                  onToggleRowSelection={handleToggleRowSelection}
+                  isLoadingReflect={isLoadingReflect}
+                />
+              </ContentCard>
+            </ContentSection>
             <RefundReasonStatsBlock refundReasonStats={refundStats?.refundReasonStats} />
             <RefundErpSyncBlock erpSyncStatus={erpSyncStatus} />
             <RefundAccountingBlock erpSyncStatus={erpSyncStatus} />

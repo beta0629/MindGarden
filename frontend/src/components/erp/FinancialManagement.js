@@ -7,7 +7,8 @@ import notificationManager from '../../utils/notification';
 import ConfirmModal from '../common/ConfirmModal';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
-import { ContentArea, ContentHeader } from '../dashboard-v2/content';
+import { ContentArea, ContentHeader, ContentSection, ContentCard } from '../dashboard-v2/content';
+import { ViewModeToggle } from '../common';
 import {
   DollarSign,
   RefreshCw,
@@ -18,6 +19,8 @@ import {
   Building2,
   ClipboardList,
   LayoutDashboard,
+  LayoutGrid,
+  List,
   Download,
   Eye,
   Pencil,
@@ -31,7 +34,14 @@ import {
 import { getStatusLabel } from '../../utils/colorUtils';
 import FinancialCalendarView from './FinancialCalendarView';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
+import '../admin/mapping-management/organisms/MappingListBlock.css';
 import './ErpCommon.css';
+
+/** 거래 내역 보기 전환 옵션: 카드 / 테이블 (테이블 뷰는 추후 구현, 현재 동일 카드 뷰) */
+const TRANSACTION_VIEW_MODE_OPTIONS = [
+  { value: 'card', icon: LayoutGrid, label: '카드' },
+  { value: 'table', icon: List, label: '테이블' }
+];
 
 /**
  * ERP 재무 관리 페이지
@@ -60,6 +70,7 @@ const FinancialManagement = () => {
     searchText: '' // 상담사명, 내담자명, 설명 검색
   });
   
+  const [transactionViewMode, setTransactionViewMode] = useState('card');
   const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [showAdvancedFilter, setShowAdvancedFilter] = useState(false);
@@ -467,23 +478,31 @@ const FinancialManagement = () => {
               )}
 
               {activeTab === 'transactions' && (
-                <section
-                  className="erp-section mg-v2-erp-section-block"
-                  style={{
-                    background: 'var(--mg-layout-section-bg, var(--mg-color-surface-main))',
-                    border: '1px solid var(--mg-layout-section-border, var(--mg-color-border-main))',
-                    borderRadius: '16px',
-                    padding: 'var(--mg-layout-section-padding, 1.5rem)'
-                  }}
-                >
-                  <div className="d-flex justify-content-between align-items-center mb-3">
-                    <h2>재무 거래 내역</h2>
-                    <div className="d-flex gap-2">
-                      <button type="button" className="mg-btn mg-btn--outline mg-btn--secondary">
-                        <Download size={16} aria-hidden /> 내보내기
-                      </button>
+                <ContentSection noCard className="mg-v2-mapping-list-block">
+                  <ContentCard
+                    className="mg-v2-mapping-list-block__card"
+                    style={{
+                      background: 'var(--mg-layout-section-bg, var(--mg-color-surface-main))',
+                      border: '1px solid var(--mg-layout-section-border, var(--mg-color-border-main))',
+                      borderRadius: '16px',
+                      padding: 'var(--mg-layout-section-padding, 1.5rem)'
+                    }}
+                  >
+                    <div className="mg-v2-mapping-list-block__header">
+                      <div className="mg-v2-mapping-list-block__title">재무 거래 내역</div>
+                      <div className="d-flex gap-2 align-items-center">
+                        <ViewModeToggle
+                          viewMode={transactionViewMode}
+                          onViewModeChange={setTransactionViewMode}
+                          options={TRANSACTION_VIEW_MODE_OPTIONS}
+                          className="mg-v2-mapping-list-block__toggle"
+                          ariaLabel="목록 보기 전환"
+                        />
+                        <button type="button" className="mg-btn mg-btn--outline mg-btn--secondary">
+                          <Download size={16} aria-hidden /> 내보내기
+                        </button>
+                      </div>
                     </div>
-                  </div>
 
                   {/* 필터: 기간(필수) + 거래 유형 + 카테고리 + 검색. 연동 유형은 고급 필터 접기 */}
                   <div className="mg-v2-filter-section">
@@ -797,7 +816,8 @@ const FinancialManagement = () => {
                       </nav>
                     </div>
                   )}
-                </section>
+                  </ContentCard>
+                </ContentSection>
               )}
 
               {activeTab === 'dashboard' && (

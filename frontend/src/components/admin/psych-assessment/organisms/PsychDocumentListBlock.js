@@ -11,8 +11,16 @@ import PropTypes from 'prop-types';
 import { FileText, LayoutGrid, List, PlayCircle, FileSearch } from 'lucide-react';
 import ContentSection from '../../../dashboard-v2/content/ContentSection';
 import ContentCard from '../../../dashboard-v2/content/ContentCard';
+import { ViewModeToggle } from '../../../common';
 import MGButton from '../../../common/MGButton';
+import '../../mapping-management/organisms/MappingListBlock.css';
 import './PsychDocumentListBlock.css';
+
+/** 심리 문서 목록 보기 전환 옵션 */
+const PSYCH_DOCUMENT_VIEW_MODE_OPTIONS = [
+  { value: 'table', icon: List, label: '테이블' },
+  { value: 'card', icon: LayoutGrid, label: '카드' }
+];
 
 const getStatusVariant = (status) => {
   if (!status) return 'secondary';
@@ -162,28 +170,15 @@ const PsychDocumentListBlock = ({
   return (
     <ContentSection noCard className="mg-v2-psych-document-list-block">
       <ContentCard className="mg-v2-psych-document-list-block__card">
-        <div className="mg-v2-psych-document-list-block__header">
-          <div className="mg-v2-psych-document-list-block__title">최근 업로드(최대 20개)</div>
-          <div className="mg-v2-ad-b0kla__pill-toggle">
-            <button
-              type="button"
-              className={`mg-v2-ad-b0kla__pill ${viewMode === 'table' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
-              onClick={() => setViewMode('table')}
-              title="테이블 뷰"
-            >
-              <List size={16} />
-              테이블
-            </button>
-            <button
-              type="button"
-              className={`mg-v2-ad-b0kla__pill ${viewMode === 'card' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
-              onClick={() => setViewMode('card')}
-              title="카드 뷰"
-            >
-              <LayoutGrid size={16} />
-              카드
-            </button>
-          </div>
+        <div className="mg-v2-psych-document-list-block__header mg-v2-mapping-list-block__header">
+          <div className="mg-v2-psych-document-list-block__title mg-v2-mapping-list-block__title">최근 업로드(최대 20개)</div>
+          <ViewModeToggle
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
+            options={PSYCH_DOCUMENT_VIEW_MODE_OPTIONS}
+            className="mg-v2-mapping-list-block__toggle"
+            ariaLabel="목록 보기 전환"
+          />
         </div>
         {renderContent()}
       </ContentCard>

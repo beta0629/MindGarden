@@ -155,8 +155,8 @@
   --ad-b0kla-shadow: var(--cs-shadow-xs);
   --ad-b0kla-shadow-hover: var(--cs-shadow-soft);
   --ad-b0kla-title-color: var(--mg-gray-800);
-  --ad-b0kla-subtitle-color: var(--mg-gray-500);
-  --ad-b0kla-text-secondary: var(--mg-gray-600);
+  --ad-b0kla-subtitle-color: var(--mg-gray-700);
+  --ad-b0kla-text-secondary: var(--mg-gray-700);
   --ad-b0kla-placeholder: var(--mg-gray-400);
   --ad-b0kla-green: var(--mg-success-600);
   --ad-b0kla-green-bg: var(--mg-success-50);

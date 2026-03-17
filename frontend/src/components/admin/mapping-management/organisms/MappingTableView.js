@@ -11,6 +11,7 @@ import { useNavigate } from 'react-router-dom';
 import { Eye, Edit, XCircle, CheckCircle, CreditCard, DollarSign, Database, Calendar } from 'lucide-react';
 import MappingPaymentModal from '../../mapping/MappingPaymentModal';
 import MappingDepositModal from '../../mapping/MappingDepositModal';
+import { StatusBadge } from '../../../common';
 import './MappingTableView.css';
 
 const formatDate = (dateString) => {
@@ -112,16 +113,23 @@ const MappingTableView = ({
               mapping.paymentConfirmed === true;
 
             const statusLabel = statusInfo.label || mapping.status || 'N/A';
-            const badgeVariant = statusInfo.variant || 'secondary';
+            const rawVariant = statusInfo.variant || 'secondary';
+            let statusBadgeVariant = rawVariant;
+            if (rawVariant === 'secondary') statusBadgeVariant = 'neutral';
+            else if (rawVariant === 'error') statusBadgeVariant = 'danger';
 
             return (
               <tr key={mapping.id}>
                 <td>
                   <div className="mg-v2-mapping-table__status">
-                    <span className={`mg-v2-badge ${badgeVariant}`} role="status" aria-label={statusLabel}>
-                      {StatusIcon ? <StatusIcon size={12} className="mg-v2-mapping-table__status-icon" aria-hidden /> : null}
+                    {StatusIcon ? <StatusIcon size={12} className="mg-v2-mapping-table__status-icon" aria-hidden /> : null}
+                    <StatusBadge
+                      status={mapping.status}
+                      variant={statusBadgeVariant}
+                      className="mg-v2-mapping-table__status-badge"
+                    >
                       {statusLabel}
-                    </span>
+                    </StatusBadge>
                     {isErpIntegrated && (
                       <span className="mg-v2-mapping-table__erp" title="ERP 연동됨">
                         <Database size={12} />

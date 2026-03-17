@@ -22,6 +22,7 @@ import notificationManager from '../../utils/notification';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
+import StatusBadge from '../../components/common/StatusBadge';
 import MGButton from '../../components/common/MGButton'; // 임시 비활성화
 import './PgConfigurationList.css';
 
@@ -139,50 +140,24 @@ const PgConfigurationList = () => {
   
   const renderStatusBadge = (status) => {
     const statusConfig = {
-      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-      PENDING: { label: '대기 중', icon: Clock, color: 'warning' },
-      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-      APPROVED: { label: '승인됨', icon: CheckCircle, color: 'success' },
-      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-      REJECTED: { label: '거부됨', icon: XCircle, color: 'danger' },
-      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-      ACTIVE: { label: '활성화', icon: Power, color: 'success' },
-      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-      INACTIVE: { label: '비활성화', icon: PowerOff, color: 'secondary' }
+      PENDING: { label: '대기 중', variant: 'warning' },
+      APPROVED: { label: '승인됨', variant: 'success' },
+      REJECTED: { label: '거부됨', variant: 'danger' },
+      ACTIVE: { label: '활성화', variant: 'success' },
+      INACTIVE: { label: '비활성화', variant: 'neutral' }
     };
-    
-    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     const config = statusConfig[status] || statusConfig.PENDING;
-    const Icon = config.icon;
-    
-    return (
-      <span className={`status-badge status-badge--${config.color}`}>
-        <Icon size={14} />
-        {config.label}
-      </span>
-    );
+    return <StatusBadge variant={config.variant}>{config.label}</StatusBadge>;
   };
-  
+
   const renderApprovalBadge = (approvalStatus) => {
     const statusConfig = {
-      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-      PENDING: { label: '승인 대기', icon: Clock, color: 'warning' },
-      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-      APPROVED: { label: '승인됨', icon: CheckCircle, color: 'success' },
-      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-      REJECTED: { label: '거부됨', icon: XCircle, color: 'danger' }
+      PENDING: { label: '승인 대기', variant: 'warning' },
+      APPROVED: { label: '승인됨', variant: 'success' },
+      REJECTED: { label: '거부됨', variant: 'danger' }
     };
-    
-    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     const config = statusConfig[approvalStatus] || statusConfig.PENDING;
-    const Icon = config.icon;
-    
-    return (
-      <span className={`status-badge status-badge--${config.color}`}>
-        <Icon size={14} />
-        {config.label}
-      </span>
-    );
+    return <StatusBadge variant={config.variant}>{config.label}</StatusBadge>;
   };
   
   if (sessionLoading || loading && configurations.length === 0) {
@@ -334,9 +309,7 @@ const PgConfigurationList = () => {
                       {renderStatusBadge(config.status)}
                       {renderApprovalBadge(config.approvalStatus)}
                       {config.testMode && (
-                        <span className="status-badge status-badge--info">
-                          테스트 모드
-                        </span>
+                        <StatusBadge variant="info">테스트 모드</StatusBadge>
                       )}
                     </div>
                   </div>

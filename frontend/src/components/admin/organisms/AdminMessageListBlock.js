@@ -10,6 +10,7 @@ import StandardizedApi from '../../../utils/standardizedApi';
 import notificationManager from '../../../utils/notification';
 import UnifiedLoading from '../../common/UnifiedLoading';
 import UnifiedModal from '../../common/modals/UnifiedModal';
+import Badge from '../../common/Badge';
 import BadgeSelect from '../../common/BadgeSelect';
 import '../../../styles/unified-design-tokens.css';
 
@@ -209,14 +210,17 @@ const AdminMessageListBlock = () => {
           <div id="admin-message-detail-body" className="mg-v2-ad-b0kla-modal__body">
             <div className="mg-v2-message-modal-content">
               <div className="mg-v2-message-modal-header">
-                <span className="mg-v2-badge mg-v2-message-badge">
-                  {MESSAGE_TYPES[selectedMessage.messageType]?.label || '일반'}
-                </span>
+                <Badge
+                  variant="status"
+                  statusVariant="info"
+                  label={MESSAGE_TYPES[selectedMessage.messageType]?.label || '일반'}
+                  className="mg-v2-message-badge"
+                />
                 {selectedMessage.isImportant && (
-                  <span className="mg-v2-badge mg-v2-badge-warning">중요</span>
+                  <Badge variant="status" statusVariant="warning" label="중요" />
                 )}
                 {selectedMessage.isUrgent && (
-                  <span className="mg-v2-badge mg-v2-badge-danger">긴급</span>
+                  <Badge variant="status" statusVariant="danger" label="긴급" />
                 )}
               </div>
               <div className="mg-v2-message-modal-info-grid">

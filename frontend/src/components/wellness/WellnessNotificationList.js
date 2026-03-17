@@ -7,6 +7,7 @@ import notificationManager from '../../utils/notification';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { CLIENT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
+import Badge from '../common/Badge';
 import './WellnessNotificationList.css';
 
 /**
@@ -152,16 +153,13 @@ const WellnessNotificationList = () => {
                 {/* 배지 */}
                 <div className="card-badges">
                   {notification.isImportant && (
-                    <span className="badge badge-important">
-                      <Heart size={12} />
-                      <span>중요</span>
-                    </span>
+                    <Badge variant="status" statusVariant="warning" label="중요" size="sm" />
                   )}
                   {notification.isUrgent && (
-                    <span className="badge badge-urgent">긴급</span>
+                    <Badge variant="status" statusVariant="danger" label="긴급" size="sm" />
                   )}
                   {!notification.isRead && (
-                    <span className="badge badge-new">NEW</span>
+                    <Badge variant="status" statusVariant="info" label="NEW" size="sm" />
                   )}
                 </div>
 

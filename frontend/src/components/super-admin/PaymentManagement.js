@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
+import StatusBadge from '../common/StatusBadge';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import MGCard from '../common/MGCard';
@@ -406,22 +407,18 @@ const PaymentManagement = () => {
     }
   };
 
+  const paymentStatusToVariant = (s) => {
+    const v = (s || '').toUpperCase();
+    if (v.includes('COMPLETE') || v.includes('CONFIRM') || v.includes('SUCCESS')) return 'success';
+    if (v.includes('PENDING') || v.includes('WAIT')) return 'warning';
+    if (v.includes('FAIL') || v.includes('CANCEL')) return 'danger';
+    return 'neutral';
+  };
+
   const getStatusBadge = (status) => {
-    const statusOption = paymentStatusOptions.find(option => option.value === status);
-    
-    if (statusOption) {
-      return (
-        <span className="badge" data-badge-color={statusOption.color}>
-          {statusOption.icon} {statusOption.label}
-        </span>
-      );
-    }
-    
-    return (
-      <span className="badge badge-secondary">
-        ❓ {status}
-      </span>
-    );
+    const statusOption = paymentStatusOptions.find((option) => option.value === status);
+    const label = statusOption ? statusOption.label : status;
+    return <StatusBadge variant={paymentStatusToVariant(status)}>{label}</StatusBadge>;
   };
 
   if (loading) {

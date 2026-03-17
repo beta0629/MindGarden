@@ -1,32 +1,26 @@
 import React from 'react';
 import ErpCard from '../common/ErpCard';
 import ErpButton from '../common/ErpButton';
+import StatusBadge from '../../common/StatusBadge';
 
 /**
  * 환불 이력 테이블 컴포넌트
  */
+const ERP_STATUS_MAP = {
+  SENT: { text: '전송완료', variant: 'success' },
+  PENDING: { text: '전송대기', variant: 'warning' },
+  FAILED: { text: '전송실패', variant: 'danger' },
+  CONFIRMED: { text: '확인완료', variant: 'neutral' }
+};
+
 const RefundHistoryTable = ({ refundHistory, pageInfo, onPageChange }) => {
     const formatCurrency = (amount) => {
         return new Intl.NumberFormat('ko-KR').format(amount || 0) + '원';
     };
 
     const getErpStatusBadge = (status) => {
-        const statusConfig = {
-            'SENT': { text: '전송완료', color: 'var(--mg-success-500)' },
-            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-            'PENDING': { text: '전송대기', color: 'var(--mg-warning-500)' },
-            'FAILED': { text: '전송실패', color: 'var(--mg-error-500)' },
-            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-            'CONFIRMED': { text: '확인완료', color: 'var(--mg-purple-500)' }
-        };
-
-        const config = statusConfig[status] || { text: '알수없음', color: 'var(--mg-secondary-500)' };
-
-        return (
-            <span className="refund-history-table-status">
-                {config.text}
-            </span>
-        );
+        const config = ERP_STATUS_MAP[status] || { text: '알수없음', variant: 'neutral' };
+        return <StatusBadge variant={config.variant}>{config.text}</StatusBadge>;
     };
 
     return (

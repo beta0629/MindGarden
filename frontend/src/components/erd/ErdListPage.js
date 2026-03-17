@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSession } from '../../hooks/useSession';
 import { getTenantErds } from '../../utils/erdApi';
+import StatusBadge from '../common/StatusBadge';
 import './ErdListPage.css';
 
 /**
@@ -86,10 +87,6 @@ const ErdListPage = () => {
 /**
    * ERD 상태 뱃지 스타일
    */
-  const getStatusBadgeClass = (isActive) => {
-    return isActive ? 'erd-status-active' : 'erd-status-inactive';
-  };
-
   if (sessionLoading || loading) {
     return (
       <div className="erd-list-page">
@@ -158,9 +155,9 @@ const ErdListPage = () => {
             >
               <div className="erd-card-header">
                 <h3 className="erd-card-title">{erd.name}</h3>
-                <span className={`erd-status-badge ${getStatusBadgeClass(erd.isActive)}`}>
+                <StatusBadge variant={erd.isActive ? 'success' : 'neutral'}>
                   {erd.isActive ? '활성' : '비활성'}
-                </span>
+                </StatusBadge>
               </div>
               
               <div className="erd-card-body">

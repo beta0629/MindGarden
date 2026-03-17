@@ -9,6 +9,7 @@ import UnifiedModal from '../common/modals/UnifiedModal';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentArea, ContentHeader, ContentSection, ContentCard } from '../dashboard-v2/content';
 import { ViewModeToggle } from '../common';
+import Badge from '../common/Badge';
 import {
   DollarSign,
   RefreshCw,
@@ -693,9 +694,9 @@ const FinancialManagement = () => {
                                 transaction.relatedEntityType === 'CONSULTANT_CLIENT_MAPPING_REFUND' ||
                                 transaction.description?.includes('상담료 입금 확인') ||
                                 transaction.description?.includes('상담료 환불')) && (
-                                <span className="mg-v2-badge mg-v2-badge--primary">
+                                <Badge variant="status" statusVariant="info" size="sm">
                                   <Link2 size={12} aria-hidden /> 매핑
-                                </span>
+                                </Badge>
                               )}
                             </div>
                             <div className="mg-financial-transaction-card__date">
@@ -705,15 +706,12 @@ const FinancialManagement = () => {
                           <div className="mg-financial-transaction-card__body">
                             <div className="mg-financial-transaction-card__field">
                               <span className="mg-financial-transaction-card__label">유형</span>
-                              <span
-                                className={
-                                  transaction.transactionType === 'INCOME'
-                                    ? 'mg-financial-transaction-card__type-badge mg-financial-transaction-card__type-badge--income'
-                                    : 'mg-financial-transaction-card__type-badge mg-financial-transaction-card__type-badge--expense'
-                                }
-                              >
-                                {transaction.transactionType === 'INCOME' ? '수입' : '지출'}
-                              </span>
+                              <Badge
+                                variant="status"
+                                statusVariant={transaction.transactionType === 'INCOME' ? 'success' : 'danger'}
+                                label={transaction.transactionType === 'INCOME' ? '수입' : '지출'}
+                                size="sm"
+                              />
                             </div>
                             <div className="mg-financial-transaction-card__field">
                               <span className="mg-financial-transaction-card__label">카테고리</span>

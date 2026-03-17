@@ -11,16 +11,8 @@
   font-weight: var(--cs-font-semibold);
 }
 
-.client-message-unread-badge {
-  background: var(--cs-error-500);
-  color: white;
-  font-size: var(--cs-text-xs);
-  font-weight: var(--cs-font-bold);
-  padding: 2px 6px;
-  border-radius: var(--cs-radius-sm);
+.client-message-header-title__count {
   margin-left: var(--cs-spacing-xs);
-  min-width: 18px;
-  text-align: center;
 }
 
 .client-message-view-all-btn {
@@ -220,55 +212,7 @@
   margin-left: auto;
 }
 
-/* ============================================================================
-   배지 스타일
-   ============================================================================ */
-.client-message-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 6px;
-  font-size: var(--cs-text-xs);
-  font-weight: var(--cs-font-medium);
-  border-radius: var(--cs-radius-sm);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.client-message-badge.primary {
-  background: var(--cs-primary-100);
-  color: var(--cs-primary-700);
-  border: 1px solid var(--cs-primary-200);
-}
-
-.client-message-badge.secondary {
-  background: var(--cs-gray-100);
-  color: var(--cs-gray-700);
-  border: 1px solid var(--cs-gray-200);
-}
-
-.client-message-badge.success {
-  background: var(--cs-success-100);
-  color: var(--cs-success-700);
-  border: 1px solid var(--cs-success-200);
-}
-
-.client-message-badge.warning {
-  background: var(--cs-warning-100);
-  color: var(--cs-warning-700);
-  border: 1px solid var(--cs-warning-200);
-}
-
-.client-message-badge.danger {
-  background: var(--cs-error-100);
-  color: var(--cs-error-700);
-  border: 1px solid var(--cs-error-200);
-}
-
-.client-message-badge.info {
-  background: var(--cs-blue-100);
-  color: var(--cs-blue-700);
-  border: 1px solid var(--cs-blue-200);
-}
+/* 배지: common Badge variant=status/count 사용 */
 
 /* ============================================================================
    모달 스타일

@@ -25,6 +25,7 @@ import ErpReportModal from '../erp/ErpReportModal';
 import MappingDepositModal from './mapping/MappingDepositModal';
 import AdminDashboardMonitoring from './AdminDashboard/AdminDashboardMonitoring';
 import UnifiedModal from '../common/modals/UnifiedModal';
+import Badge from '../common/Badge';
 import StandardizedApi from '../../utils/standardizedApi';
 import {
   CoreFlowPipeline,
@@ -683,9 +684,12 @@ const AdminDashboard = ({ user: propUser }) => {
                         <div className="mg-v2-ad-b0kla__kpi-top">
                             <span className="mg-v2-ad-b0kla__kpi-label">총 사용자</span>
                             {todayStats.totalUsersGrowthRate !== undefined && (
-                                <span className="mg-v2-ad-b0kla__kpi-badge mg-v2-ad-b0kla__kpi-badge--green">
-                                    {todayStats.totalUsersGrowthRate > 0 ? '+' : ''}{todayStats.totalUsersGrowthRate}%
-                                </span>
+                                <Badge
+                                  variant="kpi"
+                                  kpiVariant="green"
+                                  value={`${todayStats.totalUsersGrowthRate > 0 ? '+' : ''}${todayStats.totalUsersGrowthRate}%`}
+                                  className="mg-v2-ad-b0kla__kpi-badge"
+                                />
                             )}
                         </div>
                         <span className="mg-v2-ad-b0kla__kpi-value">
@@ -701,9 +705,12 @@ const AdminDashboard = ({ user: propUser }) => {
                         <div className="mg-v2-ad-b0kla__kpi-top">
                             <span className="mg-v2-ad-b0kla__kpi-label">예약된 상담</span>
                             {todayStats.bookedGrowthRate !== undefined && (
-                                <span className="mg-v2-ad-b0kla__kpi-badge mg-v2-ad-b0kla__kpi-badge--orange">
-                                    {todayStats.bookedGrowthRate > 0 ? '+' : ''}{todayStats.bookedGrowthRate}%
-                                </span>
+                                <Badge
+                                  variant="kpi"
+                                  kpiVariant="orange"
+                                  value={`${todayStats.bookedGrowthRate > 0 ? '+' : ''}${todayStats.bookedGrowthRate}%`}
+                                  className="mg-v2-ad-b0kla__kpi-badge"
+                                />
                             )}
                         </div>
                         <span className="mg-v2-ad-b0kla__kpi-value">{todayStats.totalToday}</span>
@@ -717,9 +724,12 @@ const AdminDashboard = ({ user: propUser }) => {
                         <div className="mg-v2-ad-b0kla__kpi-top">
                             <span className="mg-v2-ad-b0kla__kpi-label">완료율</span>
                             {stats.consultationStats?.completionRate !== undefined && (
-                                <span className="mg-v2-ad-b0kla__kpi-badge mg-v2-ad-b0kla__kpi-badge--blue">
-                                    {stats.consultationStats.completionRate}%
-                                </span>
+                                <Badge
+                                  variant="kpi"
+                                  kpiVariant="blue"
+                                  value={`${stats.consultationStats.completionRate}%`}
+                                  className="mg-v2-ad-b0kla__kpi-badge"
+                                />
                             )}
                         </div>
                         <span className="mg-v2-ad-b0kla__kpi-value">

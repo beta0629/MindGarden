@@ -79,11 +79,15 @@ MindGarden 프로젝트에서 **공통으로 사용하는 컴포넌트·유틸**
 
 | 모듈 | 용도 | 위치 | 참조 경로 |
 |------|------|------|------------|
+| **Badge** | 일반 표시용 배지 (variant: status/count/tab/pill/kpi) | common | `components/common/Badge` |
 | **StatusBadge** | 상태 배지 (승인·대기·반려 등) | common | `components/common/StatusBadge` |
 | **RemainingSessionsBadge** | 남은 회기 배지 | common | `components/common/RemainingSessionsBadge` |
-| **NotificationBadge** | 알림 개수 배지 (GNB 등) | common / dashboard-v2/atoms | `components/common/NotificationBadge` 또는 dashboard-v2 atoms |
+| **NotificationBadge** | 알림 개수 배지 (GNB 등) | common / dashboard-v2/atoms | `components/common/NotificationBadge` 또는 **dashboard-v2/atoms** (개수만 표시 시 권장) |
 | **ActionButton** | 카드/리스트용 액션 버튼 | common | `components/common/ActionButton` |
 | **MGButton** | 버튼 (레거시; 신규는 디자인 토큰·B0KlA 버튼 클래스 권장) | common | `components/common/MGButton` |
+
+- **일반 표시용 배지**: 상태·중요도·KPI·탭/필터 pill 등 **표시 전용**이면 **common/Badge** 사용. `variant`: `status`(success/warning/neutral/danger/info), `count`, `tab`, `pill`, `kpi`(green/orange/blue). `size`: `sm`|`default`|`lg`. 상태 전용은 StatusBadge, 알림 개수는 dashboard-v2 NotificationBadge 또는 Badge variant=count, 남은 회기는 RemainingSessionsBadge 우선.
+- **Phase 3·4 적용 범위**: 시스템 알림 위젯/관리(미읽음·중요/긴급), 웰니스 알림 리스트(중요/긴급/NEW), 클라이언트 메시지 위젯(미읽음·타입·중요/긴급), ERP 환불/재무(상태·거래 유형), 구독 관리(구독 상태), PG 설정·테넌트 프로필·상담 내역·결제 관리·ERD·샘플 테이블 등 인라인 상태 배지는 **common Badge/StatusBadge** 사용으로 통일됨. 신규 화면에서는 로컬 배지 클래스·인라인 getStatusBadge 대신 공통 모듈만 사용.
 
 ### 1.6 로딩·알림
 

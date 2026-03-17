@@ -162,27 +162,31 @@
     box-shadow: var(--shadow-sm);
 }
 
+/* 알림 개수: dashboard-v2 NotificationBadge 사용, 위치만 기존과 동일하게 */
 .notification-badge {
     position: absolute;
     top: 0;
     right: 0;
     min-width: var(--icon-size-xs);
     height: var(--icon-size-xs);
-    padding: 0 var(--spacing-xs, 0.1875rem);
-    background: var(--color-danger);
-    color: var(--mg-white);
-    border-radius: var(--radius-full);
-    font-size: var(--font-size-xs);
-    font-weight: var(--font-weight-bold);
     display: flex;
     align-items: center;
     justify-content: center;
-    line-height: 1;
-    border: var(--border-width-medium) solid var(--mg-white);
+    z-index: calc(var(--z-header) + 1);
+    pointer-events: none;
+}
+
+.notification-badge .mg-v2-notification-badge {
+    position: relative;
+    top: 0;
+    right: 0;
+    min-width: var(--icon-size-xs);
+    height: var(--icon-size-xs);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-bold);
+    border: var(--border-width-medium, 2px) solid var(--mg-white);
     box-shadow: var(--shadow-sm);
     animation: pulse-badge var(--animation-duration-slow) infinite;
-    z-index: calc(var(--z-header) + 1); /* 헤더보다 위에 표시 */
-    pointer-events: none; /* 클릭 방해하지 않도록 */
 }
 
 @keyframes pulse-badge {
@@ -201,12 +205,10 @@
         height: var(--header-avatar-size-mobile, 32px);
     }
     
-    .notification-badge {
+    .notification-badge .mg-v2-notification-badge {
         min-width: var(--icon-size-xs, 0.875rem);
         height: var(--icon-size-xs, 0.875rem);
         font-size: var(--font-size-xs, 0.5625rem);
-        top: 0;
-        right: 0;
         border-width: var(--border-width);
     }
 }

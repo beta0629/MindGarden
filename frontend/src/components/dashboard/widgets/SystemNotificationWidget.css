@@ -11,16 +11,8 @@
   font-weight: var(--cs-font-semibold);
 }
 
-.system-notification-unread-badge {
-  background: var(--cs-error-500);
-  color: white;
-  font-size: var(--cs-text-xs);
-  font-weight: var(--cs-font-bold);
-  padding: 2px 6px;
-  border-radius: var(--cs-radius-sm);
+.system-notification-header-title__count {
   margin-left: var(--cs-spacing-xs);
-  min-width: 18px;
-  text-align: center;
 }
 
 .system-notification-view-all-btn {
@@ -130,28 +122,7 @@
   margin-top: 4px;
 }
 
-.system-notification-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 1px 4px;
-  font-size: var(--cs-text-xs);
-  font-weight: var(--cs-font-medium);
-  border-radius: var(--cs-radius-sm);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.system-notification-badge.important {
-  background: var(--cs-warning-100);
-  color: var(--cs-warning-700);
-  border: 1px solid var(--cs-warning-200);
-}
-
-.system-notification-badge.urgent {
-  background: var(--cs-error-100);
-  color: var(--cs-error-700);
-  border: 1px solid var(--cs-error-200);
-}
+/* 항목 중요/긴급 배지는 common Badge variant=status 사용 */
 
 .system-notification-item-unread-dot {
   width: 8px;
@@ -332,7 +303,7 @@
   }
 }
 
-.system-notification-badge.urgent:hover {
+.mg-common-badge--danger:hover {
   animation: badgeGlow 1s ease-in-out;
 }
 
@@ -354,6 +325,6 @@
   }
 }
 
-.system-notification-unread-badge {
+.system-notification-header-title__count {
   animation: bounceIn 0.4s ease-out;
 }

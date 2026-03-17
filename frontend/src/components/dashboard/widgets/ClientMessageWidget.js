@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Mail, 
-  MessageSquare, 
-  AlertCircle, 
-  CheckCircle, 
+import {
+  Mail,
+  MessageSquare,
+  AlertCircle,
+  CheckCircle,
   Clock,
   FileText,
   Bell,
@@ -15,6 +15,7 @@ import { RoleUtils } from '../../../constants/roles';
 import { useWidget } from '../../../hooks/useWidget';
 import BaseWidget from './BaseWidget';
 import { apiGet } from '../../../utils/ajax';
+import Badge from '../../common/Badge';
 import './ClientMessageWidget.css';
 
 const ClientMessageWidget = ({ widget, user }) => {
@@ -59,43 +60,43 @@ const ClientMessageWidget = ({ widget, user }) => {
     retryCount: 3
   });
 
-  // 메시지 타입별 정보
+  // 메시지 타입별 정보 (statusVariant: common Badge variant=status 매핑)
   const getMessageTypeInfo = (type) => {
     const types = {
-      GENERAL: { 
-        icon: MessageSquare, 
-        label: '일반', 
-        colorClass: 'secondary',
+      GENERAL: {
+        icon: MessageSquare,
+        label: '일반',
+        statusVariant: 'neutral',
         bgClass: 'message-type-general'
       },
-      FOLLOW_UP: { 
-        icon: FileText, 
-        label: '후속 조치', 
-        colorClass: 'primary',
+      FOLLOW_UP: {
+        icon: FileText,
+        label: '후속 조치',
+        statusVariant: 'info',
         bgClass: 'message-type-followup'
       },
-      HOMEWORK: { 
-        icon: CheckCircle, 
-        label: '과제 안내', 
-        colorClass: 'success',
+      HOMEWORK: {
+        icon: CheckCircle,
+        label: '과제 안내',
+        statusVariant: 'success',
         bgClass: 'message-type-homework'
       },
-      REMINDER: { 
-        icon: Bell, 
-        label: '알림', 
-        colorClass: 'warning',
+      REMINDER: {
+        icon: Bell,
+        label: '알림',
+        statusVariant: 'warning',
         bgClass: 'message-type-reminder'
       },
-      URGENT: { 
-        icon: AlertCircle, 
-        label: '긴급', 
-        colorClass: 'danger',
+      URGENT: {
+        icon: AlertCircle,
+        label: '긴급',
+        statusVariant: 'danger',
         bgClass: 'message-type-urgent'
       },
       SYSTEM_NOTICE: {
         icon: Megaphone,
         label: '시스템 공지',
-        colorClass: 'info',
+        statusVariant: 'info',
         bgClass: 'message-type-system'
       }
     };
@@ -256,9 +257,7 @@ const ClientMessageWidget = ({ widget, user }) => {
         <Mail size={24} />
         알림 및 메시지
         {unreadCount > 0 && (
-          <span className="client-message-unread-badge">
-            {unreadCount > 9 ? '9+' : unreadCount}
-          </span>
+          <Badge variant="count" count={unreadCount} maxCount={9} size="sm" className="client-message-header-title__count" />
         )}
       </div>
     ),
@@ -318,14 +317,12 @@ const ClientMessageWidget = ({ widget, user }) => {
                   {message.content?.substring(0, 60) + (message.content?.length > 60 ? '...' : '')}
                 </div>
                 <div className="client-message-item-footer">
-                  <span className={`client-message-badge ${messageTypeInfo.colorClass}`}>
-                    {messageTypeInfo.label}
-                  </span>
+                  <Badge variant="status" statusVariant={messageTypeInfo.statusVariant} label={messageTypeInfo.label} size="sm" />
                   {message.isImportant && (
-                    <span className="client-message-badge warning">중요</span>
+                    <Badge variant="status" statusVariant="warning" label="중요" size="sm" />
                   )}
                   {message.isUrgent && (
-                    <span className="client-message-badge danger">긴급</span>
+                    <Badge variant="status" statusVariant="danger" label="긴급" size="sm" />
                   )}
                   <span className="client-message-item-date">
                     <Clock size={12} />
@@ -367,14 +364,12 @@ const ClientMessageWidget = ({ widget, user }) => {
                     <TypeIcon size={20} />
                   </div>
                 )}
-                <span className={`client-message-badge ${typeInfo.colorClass}`}>
-                  {typeInfo.label}
-                </span>
+                <Badge variant="status" statusVariant={typeInfo.statusVariant} label={typeInfo.label} size="sm" />
                 {selectedMessage.isImportant && (
-                  <span className="client-message-badge warning">중요</span>
+                  <Badge variant="status" statusVariant="warning" label="중요" size="sm" />
                 )}
                 {selectedMessage.isUrgent && (
-                  <span className="client-message-badge danger">긴급</span>
+                  <Badge variant="status" statusVariant="danger" label="긴급" size="sm" />
                 )}
               </div>
               <span className="client-message-detail-date">

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Bell } from 'lucide-react';
 import UnifiedHeader from '../common/UnifiedHeader';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
+import NotificationBadge from '../dashboard-v2/atoms/NotificationBadge';
 import { useNotification } from '../../contexts/NotificationContext';
 import { useSession } from '../../contexts/SessionContext';
 import '../../styles/main.css';
@@ -61,7 +62,7 @@ const SimpleLayout = ({
         <Bell size={20} />
         {unreadCount > 0 && (
           <span className="notification-badge">
-            {unreadCount > 9 ? '9+' : unreadCount}
+            <NotificationBadge count={unreadCount} />
           </span>
         )}
       </button>

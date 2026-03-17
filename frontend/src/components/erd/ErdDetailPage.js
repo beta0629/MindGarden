@@ -6,6 +6,7 @@ import { exportSvgToPng, exportSvgToSvg, exportMermaidToPng, exportMermaidToSvg 
 import mermaid from 'mermaid';
 import { Download } from 'lucide-react';
 import notificationManager from '../../utils/notification';
+import StatusBadge from '../common/StatusBadge';
 import './ErdDetailPage.css';
 
 /**
@@ -575,9 +576,9 @@ const ErdDetailPage = () => {
               )}
               <span className="erd-meta-badge">v{erd.version}</span>
               {erd.isActive ? (
-                <span className="erd-status-badge active">활성</span>
+                <StatusBadge variant="success">활성</StatusBadge>
               ) : (
-                <span className="erd-status-badge inactive">비활성</span>
+                <StatusBadge variant="neutral">비활성</StatusBadge>
               )}
             </div>
           </div>

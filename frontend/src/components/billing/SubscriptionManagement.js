@@ -9,7 +9,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { CreditCard, Calendar, DollarSign, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { CreditCard, Calendar, DollarSign, AlertCircle } from 'lucide-react';
 import { useSession } from '../../contexts/SessionContext';
 import {
   getSubscriptions,
@@ -29,6 +29,7 @@ import notificationManager from '../../utils/notification';
 import SimpleLayout from '../layout/SimpleLayout';
 import Button from '../ui/Button/Button';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
+import StatusBadge from '../common/StatusBadge';
 import PaymentMethodRegistration from './PaymentMethodRegistration';
 import {
   BILLING_CSS,
@@ -342,7 +343,7 @@ const SubscriptionManagement = ({ tenantId: propTenantId }) => {
                   <div className={BILLING_CSS.SUBSCRIPTION_MANAGEMENT.SUBSCRIPTION_HEADER}>
                     <div>
                       <h4>{subscription.planName || BILLING_MESSAGES.SUBSCRIPTION.DEFAULT_PLAN_NAME}</h4>
-                      <SubscriptionStatusBadge
+                      <SubscriptionStatusBadgeLabel
                         status={subscription.status}
                         statusCodes={subscriptionStatusCodes}
                       />
@@ -397,57 +398,36 @@ const SubscriptionManagement = ({ tenantId: propTenantId }) => {
 };
 
 /**
- * 구독 상태 배지 컴포넌트 (공통 코드 기반)
+ * 구독 상태 배지 (common StatusBadge + 공통코드 라벨)
  */
-const SubscriptionStatusBadge = ({ status, statusCodes }) => {
+const SubscriptionStatusBadgeLabel = ({ status, statusCodes }) => {
   const [statusLabel, setStatusLabel] = useState(status || BILLING_MESSAGES.SUBSCRIPTION.STATUS_UNKNOWN);
-  const [statusClass, setStatusClass] = useState('');
 
   useEffect(() => {
-    const loadStatusLabel = async () => {
+    const load = async () => {
       if (!status) {
         setStatusLabel(BILLING_MESSAGES.SUBSCRIPTION.STATUS_UNKNOWN);
         return;
       }
-
-      if (statusCodes && statusCodes.length > 0) {
-        const code = statusCodes.find(c => c.codeValue === status);
-        if (code) {
-          setStatusLabel(code.koreanName || code.codeLabel || status);
-        } else {
-          setStatusLabel(status);
-        }
+      if (statusCodes?.length > 0) {
+        const code = statusCodes.find((c) => c.codeValue === status);
+        setStatusLabel(code ? (code.koreanName || code.codeLabel || status) : status);
       } else {
         const label = await getCodeLabel(COMMON_CODE_GROUPS.SUBSCRIPTION_STATUS, status);
         setStatusLabel(label);
       }
-
-      const normalizedStatus = status?.toLowerCase() || '';
-      if (normalizedStatus.includes('active')) {
-        setStatusClass(BILLING_CSS.SUBSCRIPTION_MANAGEMENT.STATUS_ACTIVE);
-      } else if (normalizedStatus.includes('pending')) {
-        setStatusClass(BILLING_CSS.SUBSCRIPTION_MANAGEMENT.STATUS_PENDING_ACTIVATION);
-      } else if (normalizedStatus.includes('cancel')) {
-        setStatusClass(BILLING_CSS.SUBSCRIPTION_MANAGEMENT.STATUS_CANCELLED);
-      }
     };
-
-    loadStatusLabel();
+    load();
   }, [status, statusCodes]);
 
-  return (
-    <span className={`${BILLING_CSS.SUBSCRIPTION_MANAGEMENT.STATUS} ${statusClass}`}>
-      {/* ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용 */}
-      {status === SUBSCRIPTION_CONSTANTS.STATUS.ACTIVE && (
-        <CheckCircle size={ICON_SIZES.SMALL} />
-      )}
-      {/* ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용 */}
-      {status === SUBSCRIPTION_CONSTANTS.STATUS.CANCELLED && (
-        <XCircle size={ICON_SIZES.SMALL} />
-      )}
-      {statusLabel}
-    </span>
-  );
+  const normalized = (status || '').toLowerCase();
+  const variant = normalized.includes('active')
+    ? 'success'
+    : normalized.includes('pending')
+      ? 'warning'
+      : 'neutral';
+
+  return <StatusBadge variant={variant}>{statusLabel}</StatusBadge>;
 };
 
 /**

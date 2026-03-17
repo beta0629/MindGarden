@@ -3,6 +3,7 @@ import IPhone17Card from '../common/IPhone17Card';
 import IPhone17Button from '../common/IPhone17Button';
 import IPhone17Modal from '../common/IPhone17Modal';
 import IPhone17PageHeader from '../common/IPhone17PageHeader';
+import StatusBadge from '../common/StatusBadge';
 // import { useMoodTheme } from '../../hooks/useMoodTheme';
 
 
@@ -232,29 +233,11 @@ const ResponsiveDataTable = () => {
   };
 
   const getStatusBadge = (status) => {
-    const statusConfig = {
-      active: { color: 'var(--mg-success-500)', text: '활성' },
-      inactive: { color: 'var(--mg-warning-500)', text: '비활성' },
-      pending: { color: 'var(--mg-primary-500)', text: '대기' }
-    };
-    
-    const config = statusConfig[status] || statusConfig.active;
-    
-    return (
-      <span
-        style={{
-          padding: '4px 8px',
-          borderRadius: '12px',
-          fontSize: '12px',
-          fontWeight: '500',
-          background: `${config.color}20`,
-          color: config.color,
-          border: `1px solid ${config.color}40`
-        }}
-      >
-        {config.text}
-      </span>
-    );
+    const variantMap = { active: 'success', inactive: 'warning', pending: 'info' };
+    const labelMap = { active: '활성', inactive: '비활성', pending: '대기' };
+    const variant = variantMap[status] || 'neutral';
+    const label = labelMap[status] || status;
+    return <StatusBadge variant={variant}>{label}</StatusBadge>;
   };
 
   // 모바일 카드 컴포넌트

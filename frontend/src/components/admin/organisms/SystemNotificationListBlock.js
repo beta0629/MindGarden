@@ -10,6 +10,7 @@ import { Edit, Trash2, Send, Archive } from 'lucide-react';
 import StandardizedApi from '../../../utils/standardizedApi';
 import { USER_ROLES } from '../../../constants/roles';
 import notificationManager from '../../../utils/notification';
+import StatusBadge from '../../common/StatusBadge';
 import UnifiedLoading from '../../common/UnifiedLoading';
 import SystemNotificationFormModal from '../molecules/SystemNotificationFormModal';
 import '../../../styles/unified-design-tokens.css';
@@ -261,36 +262,36 @@ const SystemNotificationListBlock = ({ hasManagePermission, onOpenCreate }) => {
                   <div>
                     <h3 className="mg-v2-ad-notifications__card-title">{notification.title}</h3>
                     <div className="mg-v2-ad-notifications__card-meta">
-                      <span
-                        className={`mg-v2-status-badge ${
+                      <StatusBadge
+                        variant={
                           notification.status === 'PUBLISHED'
-                            ? 'mg-v2-badge--success'
+                            ? 'success'
                             : notification.status === 'DRAFT'
-                              ? 'mg-v2-badge--info'
-                              : 'mg-v2-badge--neutral'
-                        }`}
+                              ? 'info'
+                              : 'neutral'
+                        }
                       >
                         {notification.targetType === 'ALL'
                           ? '전체'
                           : notification.targetType === 'CONSULTANT'
                             ? '상담사'
                             : '내담자'}
-                      </span>
-                      <span
-                        className={`mg-v2-status-badge ${
+                      </StatusBadge>
+                      <StatusBadge
+                        variant={
                           notification.status === 'PUBLISHED'
-                            ? 'mg-v2-badge--success'
+                            ? 'success'
                             : notification.status === 'DRAFT'
-                              ? 'mg-v2-badge--secondary'
-                              : 'mg-v2-badge--neutral'
-                        }`}
+                              ? 'neutral'
+                              : 'neutral'
+                        }
                       >
                         {notification.status === 'PUBLISHED'
                           ? '게시중'
                           : notification.status === 'DRAFT'
                             ? '임시저장'
                             : '만료'}
-                      </span>
+                      </StatusBadge>
                       <span>
                         등록일:{' '}
                         {new Date(notification.createdAt).toLocaleDateString('ko-KR')}

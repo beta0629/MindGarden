@@ -4,6 +4,7 @@ import { Bell } from 'lucide-react';
 import { RoleUtils } from '../../../constants/roles';
 import { useWidget } from '../../../hooks/useWidget';
 import { useNotification } from '../../../contexts/NotificationContext';
+import Badge from '../../common/Badge';
 import BaseWidget from './BaseWidget';
 import './SystemNotificationWidget.css';
 
@@ -87,9 +88,7 @@ const SystemNotificationWidget = ({ widget, user }) => {
         <Bell size={20} />
         시스템 알림
         {totalUnreadCount > 0 && (
-          <span className="system-notification-unread-badge">
-            {totalUnreadCount}
-          </span>
+          <Badge variant="count" count={totalUnreadCount} size="sm" className="system-notification-header-title__count" />
         )}
       </div>
     ),
@@ -135,10 +134,10 @@ const SystemNotificationWidget = ({ widget, user }) => {
                 </div>
                 <div className="system-notification-item-badges">
                   {item.isImportant && (
-                    <span className="system-notification-badge important">중요</span>
+                    <Badge variant="status" statusVariant="warning" label="중요" size="sm" />
                   )}
                   {item.isUrgent && (
-                    <span className="system-notification-badge urgent">긴급</span>
+                    <Badge variant="status" statusVariant="danger" label="긴급" size="sm" />
                   )}
                 </div>
               </div>

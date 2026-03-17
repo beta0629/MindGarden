@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
+import StatusBadge from '../../components/common/StatusBadge';
 import { useNavigate } from 'react-router-dom';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import { useSession } from '../../contexts/SessionContext';
@@ -107,26 +108,21 @@ const ConsultationHistory = () => {
     }
   };
 
+  const statusToVariant = (s) => {
+    const v = (s || '').toUpperCase();
+    if (v.includes('COMPLETE') || v.includes('CONFIRMED')) return 'success';
+    if (v.includes('PENDING') || v.includes('WAIT')) return 'warning';
+    if (v.includes('CANCEL') || v.includes('REJECT')) return 'neutral';
+    return 'neutral';
+  };
+
   const getStatusBadge = (status) => {
-    // 동적으로 로드된 상태 옵션에서 찾기
-    const statusOption = statusOptions.find(option => option.value === status);
-    
-    if (statusOption) {
-      return (
-        <span 
-          className={`status-badge status-${status.toLowerCase()}`} 
-          data-color={statusOption.color}
-        >
-          {statusOption.icon} {statusOption.label}
-        </span>
-      );
-    }
-    
-    // 기본값
+    const statusOption = statusOptions.find((option) => option.value === status);
+    const label = statusOption ? statusOption.label : status;
     return (
-      <span className="status-badge status-default">
-        ❓ {status}
-      </span>
+      <StatusBadge variant={statusToVariant(status)}>
+        {label}
+      </StatusBadge>
     );
   };
 

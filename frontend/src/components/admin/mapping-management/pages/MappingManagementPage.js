@@ -39,6 +39,7 @@ import PaymentConfirmationModal from '../../PaymentConfirmationModal';
 import MappingDetailModal from '../../mapping/MappingDetailModal';
 import MappingEditModal from '../../MappingEditModal';
 import '../../../../styles/unified-design-tokens.css';
+import '../../../../styles/dashboard-tokens-extension.css';
 import '../../AdminDashboard/AdminDashboardB0KlA.css';
 import '../MappingManagementPage.css';
 

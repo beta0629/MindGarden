@@ -96,7 +96,7 @@
 .mg-v2-ad-b0kla .mg-v2-mapping-table__actions-inner .mg-v2-button-danger,
 .mg-v2-ad-b0kla .mg-v2-mapping-card .mg-v2-card-footer .mg-v2-button--danger {
   background: var(--mg-error-600, #dc2626);
-  color: var(--mg-white, #fff);
+  color: var(--mg-white, #ffffff);
   border: 1px solid var(--mg-error-700, #b91c1c);
   font-weight: 600;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
@@ -139,6 +139,28 @@
 .mg-v2-ad-b0kla .mg-v2-mapping-client-block .mg-v2-status-badge--neutral,
 .mg-v2-ad-b0kla .mg-v2-mapping-client-block .mg-v2-status-badge.mg-v2-badge--neutral {
   background: var(--ad-b0kla-text-secondary) !important;
+  color: #fff;
+}
+
+/* 매칭 리스트 행 내 상태 배지: 배경·글자색 확실히 적용 (카드 블록과 동일) */
+.mg-v2-ad-b0kla .mg-v2-mapping-list-row .mg-v2-status-badge.mg-v2-badge--success {
+  background: var(--ad-b0kla-green);
+  color: #fff;
+}
+.mg-v2-ad-b0kla .mg-v2-mapping-list-row .mg-v2-status-badge.mg-v2-badge--warning {
+  background: var(--ad-b0kla-orange);
+  color: #fff;
+}
+.mg-v2-ad-b0kla .mg-v2-mapping-list-row .mg-v2-status-badge.mg-v2-badge--neutral {
+  background: var(--ad-b0kla-text-secondary);
+  color: #fff;
+}
+.mg-v2-ad-b0kla .mg-v2-mapping-list-row .mg-v2-status-badge.mg-v2-badge--danger {
+  background: var(--ad-b0kla-danger);
+  color: #fff;
+}
+.mg-v2-ad-b0kla .mg-v2-mapping-list-row .mg-v2-status-badge.mg-v2-badge--info {
+  background: var(--ad-b0kla-blue);
   color: #fff;
 }
 

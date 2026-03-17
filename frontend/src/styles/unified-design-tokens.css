@@ -56,7 +56,7 @@
   --cs-error-200: #fecaca;
   --cs-error-300: #fca5a5;
   --cs-error-400: #f87171;
-  --cs-error-500: var(--mg-error-500);
+  --cs-error-500: #ef4444;
   --cs-error-600: #dc2626;
   --cs-error-700: #b91c1c;
   --cs-error-800: #991b1b;
@@ -187,7 +187,7 @@
   --cs-purple-900: #581c87;
   
   /* 기본 색상 */
-  --cs-white: var(--mg-white);
+  --cs-white: #ffffff;
   --cs-black: var(--mg-black);
   --cs-transparent: transparent;
   

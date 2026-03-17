@@ -6,9 +6,9 @@
  */
 
 import React from 'react';
-import UnifiedModal from '../../../common/modals/UnifiedModal';
-import { USER_ROLES } from '../../../../constants/roles';
-import '../../../../styles/unified-design-tokens.css';
+import UnifiedModal from '../../common/modals/UnifiedModal';
+import { USER_ROLES } from '../../../constants/roles';
+import '../../../styles/unified-design-tokens.css';
 
 const TARGET_OPTIONS = [
   { value: 'ALL', label: '전체 사용자' },

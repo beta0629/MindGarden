@@ -760,18 +760,18 @@ const AdminDashboardV2 = ({ user: propUser }) => {
       .catch(() => setIntegratedDataConsultationStats({ consultantStatistics: [] }));
   }, [integratedDataPeriodType, integratedDataYear, integratedDataMonth]);
 
-  /** 상담사 별 통합데이터: 평점(topConsultants) + 완료 통계(consultantStatistics)를 상담사명 기준 머지. 월별만 period API 연동; 년도별/전체는 동일 소스(전체). */
+  /** 상담사 별 통합데이터: 평점(topConsultants) + 완료 통계(consultantStatistics)를 consultantId 기준 머지. 표시 이름은 API 복호화된 consultantName 사용. */
   const completionListForIntegrated = integratedDataPeriodType === 'month' && integratedDataConsultationStats
     ? (integratedDataConsultationStats.consultantStatistics || [])
     : (stats.consultationStats?.consultantStatistics || []);
 
   const consultantIntegratedData = (() => {
-    const byName = new Map();
+    const byConsultantId = new Map();
     const completionList = completionListForIntegrated;
-    completionList.forEach((s) => {
-      const name = s.consultantName || '-';
-      byName.set(name, {
-        consultantName: name,
+    completionList.forEach((s, idx) => {
+      const key = s.consultantId != null ? String(s.consultantId) : `noid-c-${idx}`;
+      byConsultantId.set(key, {
+        consultantName: s.consultantName || '-',
         consultantId: s.consultantId,
         rating: null,
         completedCount: s.completedCount ?? 0,
@@ -780,14 +780,18 @@ const AdminDashboardV2 = ({ user: propUser }) => {
       });
     });
     const topList = stats.consultantRatingStats?.topConsultants || [];
-    topList.forEach((c) => {
-      const name = c.consultantName || '-';
+    topList.forEach((c, idx) => {
+      const key = c.consultantId != null ? String(c.consultantId) : `noid-r-${idx}`;
       const rating = c.averageHeartScore ?? c.averageScore;
-      if (byName.has(name)) {
-        byName.get(name).rating = rating;
+      if (byConsultantId.has(key)) {
+        const row = byConsultantId.get(key);
+        row.rating = rating;
+        if ((c.consultantName != null && c.consultantName !== '-') && (row.consultantName == null || row.consultantName === '-')) {
+          row.consultantName = c.consultantName;
+        }
       } else {
-        byName.set(name, {
-          consultantName: name,
+        byConsultantId.set(key, {
+          consultantName: c.consultantName || '-',
           consultantId: c.consultantId,
           rating: rating,
           completedCount: 0,
@@ -796,7 +800,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
         });
       }
     });
-    return Array.from(byName.values())
+    return Array.from(byConsultantId.values())
       .sort((a, b) => (b.completedCount - a.completedCount) || ((b.rating ?? 0) - (a.rating ?? 0)))
       .slice(0, 10);
   })();

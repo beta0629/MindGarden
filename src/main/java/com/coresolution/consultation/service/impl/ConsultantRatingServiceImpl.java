@@ -19,6 +19,8 @@ import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.BranchService;
 import com.coresolution.consultation.service.ConsultantRatingService;
 import com.coresolution.consultation.service.RealTimeStatisticsService;
+import com.coresolution.consultation.service.UserPersonalDataCacheService;
+import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.context.TenantContextHolder;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -49,6 +51,8 @@ public class ConsultantRatingServiceImpl implements ConsultantRatingService {
     private final ObjectMapper objectMapper;
     private final RealTimeStatisticsService realTimeStatisticsService;
     private final BranchService branchService;
+    private final UserPersonalDataCacheService userPersonalDataCacheService;
+    private final PersonalDataEncryptionUtil encryptionUtil;
 
     @Override
     public ConsultantRating createRating(Long scheduleId, Long clientId, Integer heartScore, 
@@ -367,10 +371,23 @@ public class ConsultantRatingServiceImpl implements ConsultantRatingService {
                 Double avgScore = (Double) row[1];
                 Long totalCount = (Long) row[2];
 
+                // 표준화: AdminServiceImpl with-vacation과 동일하게 복호화된 상담사명 사용 (순위 목록 3·4위 실명 표시)
+                String consultantName = null;
+                Map<String, String> decryptedData = userPersonalDataCacheService.getDecryptedUserData(consultant);
+                if (decryptedData != null) {
+                    consultantName = decryptedData.get("name");
+                }
+                if (consultantName == null || consultantName.trim().isEmpty()) {
+                    consultantName = encryptionUtil.safeDecrypt(consultant.getName());
+                }
+                if (consultantName == null || consultantName.trim().isEmpty()) {
+                    consultantName = consultant.getName() != null ? consultant.getName() : "알 수 없음";
+                }
+
                 Map<String, Object> rankingInfo = new HashMap<>();
                 rankingInfo.put("rank", rank++);
                 rankingInfo.put("consultantId", consultant.getId());
-                rankingInfo.put("consultantName", consultant.getName());
+                rankingInfo.put("consultantName", consultantName);
                 rankingInfo.put("averageHeartScore", Math.round(avgScore * 10.0) / 10.0);
                 rankingInfo.put("totalRatingCount", totalCount);
                 rankingInfo.put("specialty", "전문분야"); // TODO: User 엔티티에 specialty 필드 추가 필요

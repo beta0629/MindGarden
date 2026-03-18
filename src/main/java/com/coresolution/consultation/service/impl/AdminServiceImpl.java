@@ -4377,10 +4377,28 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                     
                     long totalCount = getTotalScheduleCount(consultant.getId());
                     
+                    // 표준화: with-vacation과 동일하게 복호화된 상담사명 사용 (순위 목록 3·4위 실명 표시)
+                    String consultantName = null;
+                    String consultantEmail = null;
+                    Map<String, String> decryptedData = userPersonalDataCacheService.getDecryptedUserData(consultant);
+                    if (decryptedData != null) {
+                        consultantName = decryptedData.get("name");
+                        consultantEmail = decryptedData.get("email");
+                    }
+                    if (consultantName == null || consultantName.trim().isEmpty()) {
+                        consultantName = encryptionUtil.safeDecrypt(consultant.getName());
+                    }
+                    if (consultantEmail == null || consultantEmail.trim().isEmpty()) {
+                        consultantEmail = encryptionUtil.safeDecrypt(consultant.getEmail());
+                    }
+                    if (consultantName == null || consultantName.trim().isEmpty()) {
+                        consultantName = consultant.getName() != null ? consultant.getName() : "알 수 없음";
+                    }
+
                     Map<String, Object> consultantStats = new HashMap<>();
                     consultantStats.put("consultantId", consultant.getId());
-                    consultantStats.put("consultantName", consultant.getName());
-                    consultantStats.put("consultantEmail", consultant.getEmail());
+                    consultantStats.put("consultantName", consultantName);
+                    consultantStats.put("consultantEmail", consultantEmail != null ? consultantEmail : consultant.getEmail());
                     consultantStats.put("consultantPhone", maskPhone(consultant.getPhone()));
                     consultantStats.put("specialization", consultant.getSpecialization());
                     consultantStats.put("grade", consultant.getGrade());
@@ -4558,10 +4576,28 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                     
                     long totalCount = getTotalScheduleCount(consultant.getId());
                     
+                    // 표준화: with-vacation과 동일하게 복호화된 상담사명 사용 (순위 목록 3·4위 실명 표시)
+                    String consultantName = null;
+                    String consultantEmail = null;
+                    Map<String, String> decryptedData = userPersonalDataCacheService.getDecryptedUserData(consultant);
+                    if (decryptedData != null) {
+                        consultantName = decryptedData.get("name");
+                        consultantEmail = decryptedData.get("email");
+                    }
+                    if (consultantName == null || consultantName.trim().isEmpty()) {
+                        consultantName = encryptionUtil.safeDecrypt(consultant.getName());
+                    }
+                    if (consultantEmail == null || consultantEmail.trim().isEmpty()) {
+                        consultantEmail = encryptionUtil.safeDecrypt(consultant.getEmail());
+                    }
+                    if (consultantName == null || consultantName.trim().isEmpty()) {
+                        consultantName = consultant.getName() != null ? consultant.getName() : "알 수 없음";
+                    }
+
                     Map<String, Object> consultantStats = new HashMap<>();
                     consultantStats.put("consultantId", consultant.getId());
-                    consultantStats.put("consultantName", consultant.getName());
-                    consultantStats.put("consultantEmail", consultant.getEmail());
+                    consultantStats.put("consultantName", consultantName);
+                    consultantStats.put("consultantEmail", consultantEmail != null ? consultantEmail : consultant.getEmail());
                     consultantStats.put("consultantPhone", maskPhone(consultant.getPhone()));
                     consultantStats.put("specialization", consultant.getSpecialization());
                     consultantStats.put("grade", consultant.getGrade());

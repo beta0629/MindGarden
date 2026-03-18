@@ -58,6 +58,42 @@ const formatNumber = (num) => {
   return new Intl.NumberFormat('ko-KR').format(num);
 };
 
+/** 지출 카테고리 코드 → 한글 라벨 (개요 탭 지출 카드 표시용, FinancialCommonCodeInitializer와 동기화) */
+const EXPENSE_CATEGORY_LABELS = {
+  SALARY: '급여',
+  RENT: '임대료',
+  UTILITY: '관리비',
+  OFFICE_SUPPLIES: '사무용품',
+  TAX: '세금',
+  MARKETING: '마케팅',
+  EQUIPMENT: '장비',
+  SOFTWARE: '소프트웨어',
+  CONSULTING: '컨설팅',
+  OTHER: '기타',
+  CONSULTATION: '상담료',
+  CONSULTATION_REFUND: '상담료환불',
+  CONSULTATION_PARTIAL_REFUND: '상담 부분환불',
+  OFFICE_RENT: '사무실임대료',
+  STATIONERY: '문구류',
+  ONLINE_ADS: '온라인광고',
+  INCOME_TAX: '소득세',
+  VAT: '부가가치세',
+  CORPORATE_TAX: '법인세',
+  기타: '기타'
+};
+
+/** 수입 카테고리 코드 → 한글 라벨 */
+const INCOME_CATEGORY_LABELS = {
+  CONSULTATION: '상담료',
+  상담료: '상담료',
+  PACKAGE: '패키지',
+  OTHER: '기타수입',
+  기타: '기타수입'
+};
+
+const getExpenseCategoryLabel = (code) => EXPENSE_CATEGORY_LABELS[code] || code;
+const getIncomeCategoryLabel = (code) => INCOME_CATEGORY_LABELS[code] || code;
+
 /**
  * 권한 조회 실패 시 사용자 역할 기반 기본 권한 설정
  * 표준화: ErpDashboard와 동일한 로직 사용
@@ -471,17 +507,17 @@ const OverviewTab = ({ data }) => {
   const incomeByCategory = financialData.incomeByCategory || {};
   const expenseByCategory = financialData.expenseByCategory || {};
 
-  // 카테고리별 수입/지출 설명 생성
+  // 카테고리별 수입/지출 설명 생성 (한글 라벨로 표시)
   const getIncomeDescription = () => {
     const categories = Object.keys(incomeByCategory);
     if (categories.length === 0) return '상담료, 기타수입';
-    return categories.join(', ');
+    return categories.map(getIncomeCategoryLabel).join(', ');
   };
 
   const getExpenseDescription = () => {
     const categories = Object.keys(expenseByCategory);
     if (categories.length === 0) return '급여, 임대료, 관리비, 세금';
-    return categories.join(', ');
+    return categories.map(getExpenseCategoryLabel).join(', ');
   };
 
   return (
@@ -586,6 +622,7 @@ const OverviewTab = ({ data }) => {
             <div className="mg-v2-ad-b0kla__chart-body">
               <div className="mg-v2-ad-b0kla__kpi-value mg-v2-ad-b0kla__kpi-value--danger">{formatCurrency(totalExpense)}</div>
               <span className="mg-v2-ad-b0kla__kpi-label">{getExpenseDescription()}</span>
+              <p className="mg-v2-ad-b0kla__kpi-hint">항목별 비용 내역은 <strong>손익 현황</strong> 탭에서 확인할 수 있습니다.</p>
             </div>
           </div>
           <div className="mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card-accent--blue integrated-finance-net-income-card">
@@ -710,6 +747,9 @@ const BalanceSheetTab = () => {
           <label className="mg-v2-label">기준일자</label>
           <input type="date" value={asOfDate} onChange={(e) => setAsOfDate(e.target.value)} className="mg-v2-input" />
         </div>
+        <p className="mg-v2-caption integrated-finance-balance-sheet-hint" style={{ fontSize: 12, color: 'var(--mg-color-text-secondary)', marginBottom: 12, padding: '12px 16px', background: 'var(--mg-color-surface-main)', borderRadius: 10, border: '1px solid var(--mg-color-border-main)' }}>
+          임대료·비용 내역은 <strong>손익 현황</strong> 탭에서 확인할 수 있습니다. 대차대조표는 자산·부채·자본만 표시됩니다.
+        </p>
         {allZero && (
           <p className="mg-v2-caption" style={{ fontSize: 12, color: 'var(--mg-color-text-secondary)', marginBottom: 12, padding: '12px 16px', background: 'var(--mg-color-surface-main)', borderRadius: 10, border: '1px solid var(--mg-color-border-main)' }}>
             기준일자까지 등록된 거래가 없어 금액이 0으로 표시됩니다.
@@ -905,6 +945,9 @@ const IncomeStatementTab = () => {
   return (
     <div>
       <DashboardSection title="손익계산서" icon={<BarChart3 size={24} />}>
+        <p className="mg-v2-caption" style={{ fontSize: 13, color: 'var(--mg-color-text-secondary)', marginBottom: 12 }}>
+          비용·수익 항목별 내역은 아래 카드에서 확인할 수 있습니다. (ERP 원장 기준)
+        </p>
         <div className="mg-v2-mb-md">
           <div className="mg-v2-form-row">
             <div className="mg-v2-form-group">

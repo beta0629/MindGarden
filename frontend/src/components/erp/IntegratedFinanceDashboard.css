@@ -43,6 +43,14 @@
   margin-top: var(--spacing-xs);
 }
 
+/* 개요 탭 지출 카드: 비용 내역 확인 안내 */
+.mg-v2-ad-b0kla__kpi-hint {
+  font-size: var(--font-size-xs, 12px);
+  color: var(--mg-color-text-secondary, var(--text-muted));
+  margin-top: var(--spacing-xs, 4px);
+  margin-bottom: 0;
+}
+
 .finance-badge {
   padding: var(--spacing-xs) var(--spacing-sm);
   font-size: var(--font-size-xs);

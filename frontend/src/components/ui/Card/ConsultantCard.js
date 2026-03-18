@@ -483,9 +483,12 @@ const ConsultantCard = ({
 
         if (onCardClick) {
             return (
-                <article
+                <div
                     className={baseClass}
+                    role="button"
+                    tabIndex={0}
                     aria-labelledby={profileNameId}
+                    aria-label={`${consultant.name} 상세 보기`}
                     style={{ position: 'relative' }}
                     onClick={() => onCardClick(consultant)}
                     onKeyDown={(e) => {
@@ -494,12 +497,9 @@ const ConsultantCard = ({
                             onCardClick(consultant);
                         }
                     }}
-                    role="button"
-                    tabIndex={0}
-                    aria-label={`${consultant.name} 상세 보기`}
                 >
                     {cardContent}
-                </article>
+                </div>
             );
         }
 

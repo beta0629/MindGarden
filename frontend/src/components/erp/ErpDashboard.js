@@ -10,7 +10,7 @@ import {
   ContentHeader,
   ContentKpiRow
 } from '../dashboard-v2/content';
-import { Package, Clock, ShoppingCart, TrendingUp, DollarSign, Receipt, BookOpen, Calculator, FileText, LayoutDashboard, RefreshCw, Settings2, HelpCircle } from 'lucide-react';
+import { Package, Clock, ShoppingCart, TrendingUp, DollarSign, LayoutDashboard, RefreshCw, Settings2, HelpCircle } from 'lucide-react';
 import Button from '../ui/Button/Button';
 import '../../styles/main.css';
 import '../../styles/unified-design-tokens.css';
@@ -484,7 +484,8 @@ const ErpDashboard = ({ user: propUser }) => {
                 <span className="mg-v2-ad-b0kla__admin-desc">지점별 예산을 설정하고 관리합니다</span>
               </button>
             )}
-            {(hasSalaryManage || hasTaxManage) && (
+            {/* 급여·세금: 권한별 1개만 노출 (기획 정리) */}
+            {hasSalaryManage && hasTaxManage && (
               <button type="button" className="mg-v2-ad-b0kla__admin-card" onClick={() => navigate('/erp/salary')}>
                 <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--gray">
                   <DollarSign size={28} />
@@ -493,7 +494,7 @@ const ErpDashboard = ({ user: propUser }) => {
                 <span className="mg-v2-ad-b0kla__admin-desc">급여 계산·세금 통계를 한 화면에서 관리합니다</span>
               </button>
             )}
-            {hasSalaryManage && (
+            {hasSalaryManage && !hasTaxManage && (
               <button type="button" className="mg-v2-ad-b0kla__admin-card" onClick={() => navigate('/erp/salary')}>
                 <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--gray">
                   <DollarSign size={28} />
@@ -502,7 +503,7 @@ const ErpDashboard = ({ user: propUser }) => {
                 <span className="mg-v2-ad-b0kla__admin-desc">상담사 급여 계산 및 지급을 관리합니다</span>
               </button>
             )}
-            {hasTaxManage && (
+            {!hasSalaryManage && hasTaxManage && (
               <button type="button" className="mg-v2-ad-b0kla__admin-card" onClick={() => navigate('/erp/tax')}>
                 <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--gray">
                   <LayoutDashboard size={28} />
@@ -529,38 +530,7 @@ const ErpDashboard = ({ user: propUser }) => {
                 <span className="mg-v2-ad-b0kla__admin-desc">환불 요청 및 처리 내역을 관리합니다</span>
               </button>
             )}
-            {hasIntegratedFinanceView && (
-              <>
-                <button type="button" className="mg-v2-ad-b0kla__admin-card" onClick={() => navigate('/admin/erp/financial?tab=journal-entries')}>
-                  <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--gray">
-                    <Receipt size={28} />
-                  </div>
-                  <span className="mg-v2-ad-b0kla__admin-label">거래 정리</span>
-                  <span className="mg-v2-ad-b0kla__admin-desc">거래를 등록·승인하고 수입·지출에 반영합니다</span>
-                </button>
-                <button type="button" className="mg-v2-ad-b0kla__admin-card" onClick={() => navigate('/admin/erp/financial?tab=ledgers')}>
-                  <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--gray">
-                    <BookOpen size={28} />
-                  </div>
-                  <span className="mg-v2-ad-b0kla__admin-label">계정별 내역</span>
-                  <span className="mg-v2-ad-b0kla__admin-desc">계정별로 거래 내역을 조회합니다</span>
-                </button>
-                <button type="button" className="mg-v2-ad-b0kla__admin-card" onClick={() => navigate('/admin/erp/financial?tab=settlement')}>
-                  <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--gray">
-                    <Calculator size={28} />
-                  </div>
-                  <span className="mg-v2-ad-b0kla__admin-label">정산</span>
-                  <span className="mg-v2-ad-b0kla__admin-desc">정산 규칙 설정 및 계산·승인</span>
-                </button>
-                <button type="button" className="mg-v2-ad-b0kla__admin-card" onClick={() => navigate('/admin/erp/financial?tab=cash-flow')}>
-                  <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--gray">
-                    <FileText size={28} />
-                  </div>
-                  <span className="mg-v2-ad-b0kla__admin-label">현금 흐름</span>
-                  <span className="mg-v2-ad-b0kla__admin-desc">영업·투자·재무 활동의 현금 흐름을 확인합니다</span>
-                </button>
-              </>
-            )}
+            {/* 재무: 수입·지출 한눈에 1개만 유지, 탭별 카드 4개 제거 (기획 정리) */}
           </div>
         </div>
 

@@ -139,7 +139,8 @@ const SalaryManagement = () => {
           yearsOfExperience: c.yearsOfExperience,
           maxClients: c.maxClients,
           currentClients: item.currentClients,
-          totalClients: item.totalClients
+          totalClients: item.totalClients,
+          grade: c.grade
         };
       });
       setConsultants(flattened);

@@ -89,6 +89,8 @@ export const SALARY_API_ENDPOINTS = {
   CONFIRM: '/api/v1/admin/salary/confirm',
 
   PROFILES: '/api/v1/admin/salary/profiles',
+  /** PUT 급여 프로필 수정 URL: PROFILES + '/' + profileId */
+  getProfileUpdateUrl: (id) => `/api/v1/admin/salary/profiles/${id}`,
   OPTION_TYPES: '/api/v1/admin/salary/option-types',
   GRADES: '/api/v1/admin/salary/grades',
   CODES: '/api/v1/admin/salary/codes',

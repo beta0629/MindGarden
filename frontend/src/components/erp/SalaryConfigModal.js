@@ -29,14 +29,31 @@ const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
     }
   }, [isOpen]);
 
+  /**
+   * 백엔드 GET /api/v1/admin/salary/configs 응답: data는 SALARY_CONFIG 그룹의 codeValue를 키로,
+   * codeDescription(없으면 codeLabel)을 값으로 하는 객체.
+   * 키: SALARY_BASE_DATE, SALARY_PAYMENT_DAY, SALARY_CUTOFF_DAY, SALARY_BATCH_CYCLE, SALARY_CALCULATION_METHOD
+   */
   const loadCurrentConfigs = async () => {
     try {
       setLoading(true);
       const response = await fetch('/api/v1/admin/salary/configs');
       if (response.ok) {
         const data = await response.json();
-        if (data.success) {
-          setConfigs(data.data);
+        if (data.success && data.data && typeof data.data === 'object') {
+          const raw = data.data;
+          const str = (v) => (v == null ? '' : String(v).trim());
+          const num = (v, fallback) => {
+            const n = Number(v);
+            return Number.isFinite(n) ? n : fallback;
+          };
+          setConfigs({
+            monthlyBaseDay: str(raw.SALARY_BASE_DATE) || 'LAST_DAY',
+            paymentDay: num(raw.SALARY_PAYMENT_DAY, 5),
+            cutoffDay: str(raw.SALARY_CUTOFF_DAY) || 'LAST_DAY',
+            batchCycle: str(raw.SALARY_BATCH_CYCLE) || 'MONTHLY',
+            calculationMethod: str(raw.SALARY_CALCULATION_METHOD) || 'CONSULTATION_COUNT'
+          });
         }
       }
     } catch (error) {

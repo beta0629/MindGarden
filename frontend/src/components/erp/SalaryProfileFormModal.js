@@ -6,7 +6,10 @@ import { showNotification } from '../../utils/notification';
 import { getGradeSalaryMap, getGradeKoreanName } from '../../utils/commonCodeUtils';
 import ErpModal from './common/ErpModal';
 import BadgeSelect from '../common/BadgeSelect';
+import MGButton from '../common/MGButton';
 import './SalaryProfileFormModal.css';
+
+const getProfileUrl = (consultantId) => `${SALARY_API_ENDPOINTS.PROFILES}/${consultantId}`;
 
 const SalaryProfileFormModal = ({ 
     isOpen, 
@@ -20,12 +23,12 @@ const SalaryProfileFormModal = ({
         baseSalary: 0,
         contractTerms: '',
         isActive: true,
-        grade: '', // 상담사 등급
-        isBusinessRegistered: false, // 사업자 등록 여부
-        businessRegistrationNumber: '', // 사업자 등록번호
-        businessName: '' // 사업자명
+        grade: '', // 상담사 등급 (User 쪽, API 미포함)
+        isBusinessRegistered: false,
+        businessRegistrationNumber: '',
+        businessName: ''
     });
-    
+
     const [salaryTypes, setSalaryTypes] = useState([]);
     const [optionTypes, setOptionTypes] = useState([]);
     const [selectedOptions, setSelectedOptions] = useState([]);
@@ -35,6 +38,8 @@ const SalaryProfileFormModal = ({
     const [gradeLabel, setGradeLabel] = useState('');
     /** 기본 급여 표시용. async 결과만 넣어 React #31 방지 */
     const [displayBaseSalary, setDisplayBaseSalary] = useState(null);
+    /** 기존 프로필 ID (수정 시 PUT 사용) */
+    const [existingProfileId, setExistingProfileId] = useState(null);
 
     // 등급을 한글로 변환 (공통 코드에서 동적 조회)
     const convertGradeToKorean = async (grade) => {
@@ -151,12 +156,47 @@ const SalaryProfileFormModal = ({
         }
     };
 
-    // 컴포넌트 마운트 시 데이터 로드
+    // 모달 오픈 시: 기존 프로필 조회 후 폼 세팅(수정) 또는 신규 초기화
+    const loadProfileAndInitForm = async () => {
+        if (!consultant) return;
+        try {
+            const res = await StandardizedApi.get(getProfileUrl(consultant.id));
+            const raw = (res && typeof res === 'object' && (res.data !== undefined ? res.data : res)) && !Array.isArray(res) ? (res.data !== undefined ? res.data : res) : null;
+            const profile = raw && (raw.id != null || raw.consultantId != null) ? raw : null;
+            if (profile && profile.id) {
+                setExistingProfileId(profile.id);
+                const baseSalary = await getGradeBaseSalary(consultant.grade || profile.grade);
+                const gradeOpts = getGradeOptions(consultant.grade || profile.grade);
+                setFormData({
+                    consultantId: consultant.id,
+                    salaryType: profile.salaryType || 'FREELANCE',
+                    baseSalary: profile.baseSalary != null ? Number(profile.baseSalary) : (typeof baseSalary === 'number' ? baseSalary : 0),
+                    contractTerms: profile.contractTerms || '',
+                    isActive: profile.isActive !== false,
+                    grade: consultant.grade || profile.grade || '',
+                    isBusinessRegistered: profile.isBusinessRegistered === true,
+                    businessRegistrationNumber: profile.businessRegistrationNumber || '',
+                    businessName: profile.businessName || ''
+                });
+                setSelectedOptions(Array.isArray(profile.optionTypes) && profile.optionTypes.length > 0
+                    ? profile.optionTypes.map(o => ({ type: o.type || o.optionType, amount: Number(o.amount || o.optionAmount) || 0, name: o.name || o.optionName || '' }))
+                    : gradeOpts);
+            } else {
+                setExistingProfileId(null);
+                await initializeFormData();
+            }
+        } catch (e) {
+            console.error('급여 프로필 조회 실패:', e);
+            setExistingProfileId(null);
+            await initializeFormData();
+        }
+    };
+
     useEffect(() => {
         if (isOpen && consultant) {
             loadInitialData();
             loadGradeTableData();
-            (async () => { await initializeFormData(); })();
+            loadProfileAndInitForm();
         }
     }, [isOpen, consultant]);
 
@@ -352,18 +392,21 @@ const SalaryProfileFormModal = ({
                 options: selectedOptions.filter(opt => opt.type && opt.amount > 0)
             };
 
-            const response = await StandardizedApi.post(SALARY_API_ENDPOINTS.PROFILES, profileData);
-            
+            const isUpdate = Boolean(existingProfileId);
+            const response = isUpdate
+                ? await StandardizedApi.put(SALARY_API_ENDPOINTS.getProfileUpdateUrl(existingProfileId), profileData)
+                : await StandardizedApi.post(SALARY_API_ENDPOINTS.PROFILES, profileData);
+
             if (response && response.success) {
-                showNotification('급여 프로필이 성공적으로 생성되었습니다.', 'success');
+                showNotification(isUpdate ? '급여 프로필이 수정되었습니다.' : '급여 프로필이 성공적으로 생성되었습니다.', 'success');
                 onSave(response.data);
                 onClose();
             } else {
-                showNotification(response?.message || '급여 프로필 생성에 실패했습니다.', 'error');
+                showNotification(response?.message || (isUpdate ? '급여 프로필 수정에 실패했습니다.' : '급여 프로필 생성에 실패했습니다.'), 'error');
             }
         } catch (error) {
-            console.error('급여 프로필 생성 실패:', error);
-            showNotification('급여 프로필 생성에 실패했습니다.', 'error');
+            console.error(existingProfileId ? '급여 프로필 수정 실패' : '급여 프로필 생성 실패', error);
+            showNotification(existingProfileId ? '급여 프로필 수정에 실패했습니다.' : '급여 프로필 생성에 실패했습니다.', 'error');
         } finally {
             setLoading(false);
         }
@@ -375,7 +418,7 @@ const SalaryProfileFormModal = ({
         <ErpModal
             isOpen={isOpen}
             onClose={onClose}
-            title={`급여 프로필 생성 - ${consultant.name}`}
+            title={existingProfileId ? `급여 프로필 수정 - ${consultant.name}` : `급여 프로필 생성 - ${consultant.name}`}
             size="large"
             className="salary-profile-modal-content mg-v2-ad-b0kla"
         >
@@ -598,12 +641,15 @@ const SalaryProfileFormModal = ({
                                         placeholder="옵션명"
                                     />
                                 </div>
-                                <button 
-                                    className="mg-btn mg-btn--danger option-remove-btn"
+                                <MGButton
+                                    type="button"
+                                    variant="danger"
+                                    size="small"
+                                    className="option-remove-btn"
                                     onClick={() => removeOption(index)}
                                 >
                                     삭제
-                                </button>
+                                </MGButton>
                             </div>
                         ))}
                     </div>

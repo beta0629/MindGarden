@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import com.coresolution.consultation.dto.CommonCodeDto;
+import com.coresolution.consultation.dto.ConsultantSalaryProfileRequest;
 import com.coresolution.consultation.dto.TaxCalculateRequest;
 import com.coresolution.consultation.entity.CommonCode;
 import com.coresolution.consultation.entity.ConsultantSalaryProfile;
@@ -34,6 +35,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -83,6 +85,80 @@ public class SalaryManagementController extends BaseApiController {
             .orElse(null);
         String message = consultantProfile != null ? "급여 프로필을 조회했습니다." : "해당 상담사의 급여 프로필이 없습니다.";
         return success(message, consultantProfile);
+    }
+
+    /**
+     * 급여 프로필 생성
+     */
+    @PostMapping("/profiles")
+    public ResponseEntity<?> createSalaryProfile(
+            @RequestBody @Valid ConsultantSalaryProfileRequest request,
+            HttpSession session) {
+        ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session, "SALARY_MANAGE", dynamicPermissionService);
+        if (permissionResponse != null) {
+            throw new ForbiddenException("급여 관리 권한이 없습니다.");
+        }
+        User currentUser = SessionUtils.getCurrentUser(session);
+        if (currentUser == null) {
+            throw new UnauthorizedException("로그인이 필요합니다. 세션을 확인해 주세요.");
+        }
+        if (currentUser.getTenantId() != null) {
+            TenantContextHolder.setTenantId(currentUser.getTenantId());
+        }
+        log.info("급여 프로필 생성: 상담사 ID {}", request.getConsultantId());
+        ConsultantSalaryProfile entity = toEntity(request, null, currentUser.getTenantId());
+        ConsultantSalaryProfile created = salaryManagementService.createSalaryProfile(entity);
+        return created("급여 프로필이 생성되었습니다.", created);
+    }
+
+    /**
+     * 급여 프로필 수정
+     */
+    @PutMapping("/profiles/{id}")
+    public ResponseEntity<?> updateSalaryProfile(
+            @PathVariable Long id,
+            @RequestBody @Valid ConsultantSalaryProfileRequest request,
+            HttpSession session) {
+        ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session, "SALARY_MANAGE", dynamicPermissionService);
+        if (permissionResponse != null) {
+            throw new ForbiddenException("급여 관리 권한이 없습니다.");
+        }
+        User currentUser = SessionUtils.getCurrentUser(session);
+        if (currentUser == null) {
+            throw new UnauthorizedException("로그인이 필요합니다. 세션을 확인해 주세요.");
+        }
+        if (currentUser.getTenantId() != null) {
+            TenantContextHolder.setTenantId(currentUser.getTenantId());
+        }
+        ConsultantSalaryProfile existing = salaryManagementService.getSalaryProfileById(id);
+        if (existing.getTenantId() != null && !existing.getTenantId().equals(currentUser.getTenantId())) {
+            throw new ForbiddenException("해당 급여 프로필을 수정할 권한이 없습니다.");
+        }
+        log.info("급여 프로필 수정: ID={}, 상담사 ID {}", id, request.getConsultantId());
+        ConsultantSalaryProfile entity = toEntity(request, id, existing.getTenantId());
+        ConsultantSalaryProfile updated = salaryManagementService.updateSalaryProfile(entity);
+        return success("급여 프로필이 수정되었습니다.", updated);
+    }
+
+    private ConsultantSalaryProfile toEntity(ConsultantSalaryProfileRequest req, Long id, String tenantId) {
+        ConsultantSalaryProfile entity = new ConsultantSalaryProfile();
+        if (id != null) {
+            entity.setId(id);
+        }
+        entity.setTenantId(tenantId);
+        entity.setConsultantId(req.getConsultantId());
+        entity.setSalaryType(req.getSalaryType());
+        entity.setBaseSalary(req.getBaseSalary() != null ? req.getBaseSalary() : BigDecimal.ZERO);
+        entity.setHourlyRate(req.getHourlyRate());
+        entity.setContractStartDate(req.getContractStartDate());
+        entity.setContractEndDate(req.getContractEndDate());
+        entity.setContractTerms(req.getContractTerms());
+        entity.setPaymentCycle(req.getPaymentCycle());
+        entity.setIsBusinessRegistered(req.getIsBusinessRegistered() != null ? req.getIsBusinessRegistered() : false);
+        entity.setBusinessRegistrationNumber(req.getBusinessRegistrationNumber());
+        entity.setBusinessName(req.getBusinessName());
+        entity.setIsActive(req.getIsActive() != null ? req.getIsActive() : true);
+        return entity;
     }
     
     /**

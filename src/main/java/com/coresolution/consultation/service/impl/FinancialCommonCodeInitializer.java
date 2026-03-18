@@ -76,8 +76,24 @@ public class FinancialCommonCodeInitializer {
      */
     private void initializeErpAccountTypes() {
         String codeGroup = "ERP_ACCOUNT_TYPE";
-        if (!commonCodeRepository.findCoreCodesByGroup(codeGroup).isEmpty()) {
-            log.info("ERP_ACCOUNT_TYPE 코어 코드가 이미 존재합니다.");
+        java.util.List<CommonCode> existing = commonCodeRepository.findCoreCodesByGroup(codeGroup);
+        if (!existing.isEmpty()) {
+            boolean hasLiability = existing.stream()
+                    .anyMatch(cc -> "LIABILITY".equals(cc.getCodeValue()));
+            if (!hasLiability) {
+                commonCodeRepository.save(CommonCode.builder()
+                        .codeGroup(codeGroup)
+                        .codeValue("LIABILITY")
+                        .codeLabel("환불부채")
+                        .koreanName("환불부채")
+                        .codeDescription("환불부채 계정 (대차대조표 부채)")
+                        .sortOrder(4)
+                        .isActive(true)
+                        .build());
+                log.info("ERP_ACCOUNT_TYPE LIABILITY 코어 코드 추가 완료");
+            } else {
+                log.info("ERP_ACCOUNT_TYPE 코어 코드가 이미 존재합니다.");
+            }
             return;
         }
 
@@ -111,7 +127,17 @@ public class FinancialCommonCodeInitializer {
                 .isActive(true)
                 .build());
 
-        log.info("ERP_ACCOUNT_TYPE 코어 코드 초기화 완료");
+        commonCodeRepository.save(CommonCode.builder()
+                .codeGroup(codeGroup)
+                .codeValue("LIABILITY")
+                .codeLabel("환불부채")
+                .koreanName("환불부채")
+                .codeDescription("환불부채 계정 (대차대조표 부채)")
+                .sortOrder(4)
+                .isActive(true)
+                .build());
+
+        log.info("ERP_ACCOUNT_TYPE 코어 코드 초기화 완료 (REVENUE, EXPENSE, CASH, LIABILITY)");
     }
 
     /**

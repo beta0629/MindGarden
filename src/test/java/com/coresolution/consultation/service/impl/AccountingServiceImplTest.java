@@ -106,12 +106,19 @@ class AccountingServiceImplTest {
                 .accountNumber("ERP-CASH")
                 .isPrimary(false)
                 .build();
+        Account savedLiability = Account.builder()
+                .id(4L)
+                .tenantId(TEST_TENANT_ID)
+                .accountNumber("ERP-LIABILITY")
+                .isPrimary(false)
+                .build();
         when(accountRepository.save(any(Account.class)))
                 .thenAnswer(inv -> {
                     Account a = inv.getArgument(0);
                     if ("ERP-REVENUE".equals(a.getAccountNumber())) return savedRevenue;
                     if ("ERP-EXPENSE".equals(a.getAccountNumber())) return savedExpense;
                     if ("ERP-CASH".equals(a.getAccountNumber())) return savedCash;
+                    if ("ERP-LIABILITY".equals(a.getAccountNumber())) return savedLiability;
                     return a;
                 });
         when(commonCodeRepository.findByTenantIdAndCodeGroupAndCodeValue(eq(TEST_TENANT_ID), anyString(), anyString()))
@@ -121,9 +128,9 @@ class AccountingServiceImplTest {
         // When
         accountingService.ensureErpAccountMappingForTenant(TEST_TENANT_ID);
 
-        // Then: 저장된 Account가 isPrimary=false인지 ArgumentCaptor로 검증
+        // Then: 저장된 Account가 isPrimary=false인지 ArgumentCaptor로 검증 (REVENUE, EXPENSE, CASH, LIABILITY 4개)
         ArgumentCaptor<Account> accountCaptor = ArgumentCaptor.forClass(Account.class);
-        verify(accountRepository, org.mockito.Mockito.atLeast(3)).save(accountCaptor.capture());
+        verify(accountRepository, org.mockito.Mockito.atLeast(4)).save(accountCaptor.capture());
         for (Account captured : accountCaptor.getAllValues()) {
             assertNotNull(captured.getAccountNumber());
             assertFalse(captured.getIsPrimary(), "ERP 가상 계정은 isPrimary=false 여야 함: " + captured.getAccountNumber());

@@ -880,7 +880,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     }
     
      /**
-     * 상담료 환불 거래 자동 생성
+     * 상담료 환불 거래 자동 생성.
+     * 회계: AccountingServiceImpl에서 환불부채 2단계 분개 (비용/매출환입↔환불부채, 환불부채↔현금)로 처리됨.
      */
     private void createConsultationRefundTransaction(ConsultantClientMapping mapping, int refundedSessions, long refundAmount, String reason) {
         log.info("상담료 환불 거래 생성 시작: MappingID={}, RefundAmount={}", 
@@ -913,7 +914,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     }
     
      /**
-     * 부분 환불 상담료 거래 자동 생성 (중앙화된 금액 관리 사용)
+     * 부분 환불 상담료 거래 자동 생성 (중앙화된 금액 관리 사용).
+     * 회계: AccountingServiceImpl에서 환불부채 2단계 분개로 처리됨.
      */
     private void createPartialConsultationRefundTransaction(ConsultantClientMapping mapping, int refundSessions, long refundAmount, String reason) {
         log.info("💰 [중앙화] 부분 환불 거래 생성 시작: MappingID={}, RefundSessions={}, RefundAmount={}", 

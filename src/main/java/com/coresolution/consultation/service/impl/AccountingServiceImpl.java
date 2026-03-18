@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import com.coresolution.consultation.constant.FinancialTransactionConstants;
 import com.coresolution.consultation.dto.AccountTypeForJournalDto;
 import com.coresolution.consultation.entity.Account;
 import com.coresolution.consultation.entity.CommonCode;
@@ -215,12 +216,15 @@ public class AccountingServiceImpl implements AccountingService {
             Long revenueAccountId = getDefaultAccountId(tenantId, "REVENUE"); // 수익 계정
             Long expenseAccountId = getDefaultAccountId(tenantId, "EXPENSE"); // 비용 계정
             Long cashAccountId = getDefaultAccountId(tenantId, "CASH"); // 현금 계정
+            Long liabilityAccountId = getDefaultAccountId(tenantId, "LIABILITY"); // 환불부채 계정
 
-            if (revenueAccountId == null || expenseAccountId == null || cashAccountId == null) {
+            if (revenueAccountId == null || expenseAccountId == null || cashAccountId == null
+                    || liabilityAccountId == null) {
                 ensureErpAccountMappingForTenant(tenantId);
                 revenueAccountId = getDefaultAccountId(tenantId, "REVENUE");
                 expenseAccountId = getDefaultAccountId(tenantId, "EXPENSE");
                 cashAccountId = getDefaultAccountId(tenantId, "CASH");
+                liabilityAccountId = getDefaultAccountId(tenantId, "LIABILITY");
             }
 
             if (revenueAccountId == null || expenseAccountId == null || cashAccountId == null) {
@@ -236,6 +240,9 @@ public class AccountingServiceImpl implements AccountingService {
             Account cashAccount = findAccountForTenant(tenantId, cashAccountId).orElse(null);
             Account expenseAccount = findAccountForTenant(tenantId, expenseAccountId).orElse(null);
             Account revenueAccount = findAccountForTenant(tenantId, revenueAccountId).orElse(null);
+            Account liabilityAccount = liabilityAccountId != null
+                    ? findAccountForTenant(tenantId, liabilityAccountId).orElse(null)
+                    : null;
 
             if (cashAccount == null || expenseAccount == null || revenueAccount == null) {
                 log.warn(
@@ -301,9 +308,31 @@ public class AccountingServiceImpl implements AccountingService {
                 lines.add(JournalEntryLine.builder().accountId(revenueAccountId)
                         .debitAmount(BigDecimal.ZERO).creditAmount(amount)
                         .description(transaction.getDescription()).build());
+            } else if (transaction.getTransactionType() == FinancialTransaction.TransactionType.EXPENSE
+                    && FinancialTransactionConstants.isRefundSubcategory(transaction.getSubcategory())) {
+                // 환불 거래: (차) 비용/매출환입 (대) 환불부채 → (차) 환불부채 (대) 현금 (2단계 분개, 단일 엔트리 4라인)
+                if (liabilityAccountId == null || liabilityAccount == null) {
+                    log.warn(
+                            "환불 분개를 위해 LIABILITY 계정이 필요합니다: tenantId={}, liabilityAccountId={}. "
+                                    + "ensureErpAccountMappingForTenant 후 재시도하거나 ERP_ACCOUNT_TYPE=LIABILITY 설정 필요.",
+                            tenantId, liabilityAccountId);
+                    return null;
+                }
+                lines.add(JournalEntryLine.builder().accountId(expenseAccountId)
+                        .debitAmount(amount).creditAmount(BigDecimal.ZERO)
+                        .description("환불 발생(비용/매출환입)").build());
+                lines.add(JournalEntryLine.builder().accountId(liabilityAccountId)
+                        .debitAmount(BigDecimal.ZERO).creditAmount(amount)
+                        .description("환불부채 계상").build());
+                lines.add(JournalEntryLine.builder().accountId(liabilityAccountId)
+                        .debitAmount(amount).creditAmount(BigDecimal.ZERO)
+                        .description("환불 지급(부채 상환)").build());
+                lines.add(JournalEntryLine.builder().accountId(cashAccountId)
+                        .debitAmount(BigDecimal.ZERO).creditAmount(amount)
+                        .description("환불 현금 지급").build());
             } else if (transaction
                     .getTransactionType() == FinancialTransaction.TransactionType.EXPENSE) {
-                // 비용 거래: 비용(차변) / 현금(대변)
+                // 일반 비용 거래: 비용(차변) / 현금(대변) (quick-expense 등, 부채 계정 미사용)
                 lines.add(JournalEntryLine.builder().accountId(expenseAccountId)
                         .debitAmount(amount).creditAmount(BigDecimal.ZERO)
                         .description(transaction.getDescription()).build());
@@ -429,7 +458,8 @@ public class AccountingServiceImpl implements AccountingService {
         }
         if (getDefaultAccountId(tenantId, "REVENUE") != null
                 && getDefaultAccountId(tenantId, "EXPENSE") != null
-                && getDefaultAccountId(tenantId, "CASH") != null) {
+                && getDefaultAccountId(tenantId, "CASH") != null
+                && getDefaultAccountId(tenantId, "LIABILITY") != null) {
             return;
         }
         DefaultTransactionDefinition def = new DefaultTransactionDefinition(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
@@ -499,11 +529,27 @@ public class AccountingServiceImpl implements AccountingService {
                                 .build();
                         return accountRepository.save(a);
                     });
+            Account liabilityAccount = accountRepository
+                    .findByTenantIdAndAccountNumberAndIsDeletedFalse(tenantId, "ERP-LIABILITY")
+                    .orElseGet(() -> {
+                        Account a = Account.builder()
+                                .tenantId(tenantId)
+                                .bankCode(ERP_VIRTUAL_BANK_CODE)
+                                .bankName(ERP_VIRTUAL_BANK_NAME)
+                                .accountNumber("ERP-LIABILITY")
+                                .accountHolder("ERP")
+                                .description("환불부채")
+                                .isActive(true)
+                                .isDeleted(false)
+                                .isPrimary(false)
+                                .build();
+                        return accountRepository.save(a);
+                    });
 
             // 2. 테넌트 공통코드 ERP_ACCOUNT_TYPE 생성 또는 extraData 갱신
-            String[] types = {"REVENUE", "EXPENSE", "CASH"};
-            Account[] accounts = {revenueAccount, expenseAccount, cashAccount};
-            String[] labels = {"수익", "비용", "현금"};
+            String[] types = {"REVENUE", "EXPENSE", "CASH", "LIABILITY"};
+            Account[] accounts = {revenueAccount, expenseAccount, cashAccount, liabilityAccount};
+            String[] labels = {"수익", "비용", "현금", "환불부채"};
             for (int i = 0; i < types.length; i++) {
                 String extraData = "{\"accountId\":" + accounts[i].getId() + "}";
                 Optional<CommonCode> existing = commonCodeRepository.findByTenantIdAndCodeGroupAndCodeValue(
@@ -527,8 +573,8 @@ public class AccountingServiceImpl implements AccountingService {
                     commonCodeRepository.save(code);
                 }
             }
-            log.info("테넌트 ERP 계정 매핑 시딩 완료: tenantId={}, revenueId={}, expenseId={}, cashId={}",
-                tenantId, revenueAccount.getId(), expenseAccount.getId(), cashAccount.getId());
+            log.info("테넌트 ERP 계정 매핑 시딩 완료: tenantId={}, revenueId={}, expenseId={}, cashId={}, liabilityId={}",
+                tenantId, revenueAccount.getId(), expenseAccount.getId(), cashAccount.getId(), liabilityAccount.getId());
     }
 
     /**

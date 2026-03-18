@@ -288,9 +288,16 @@ public class FinancialStatementServiceImpl implements FinancialStatementService 
     }
     
     private boolean isLiabilityAccount(Ledger ledger) {
+        String tenantId = ledger.getAccount() != null ? ledger.getAccount().getTenantId() : null;
+        if (tenantId != null) {
+            Long liabilityAccountId = getErpAccountIdByType(tenantId, "LIABILITY");
+            if (liabilityAccountId != null && ledger.getAccount().getId().equals(liabilityAccountId)) {
+                return true;
+            }
+        }
         String desc = ledger.getAccount().getDescription();
         String num = ledger.getAccount().getAccountNumber();
-        return matchesKeyword(desc, "부채", "liability", "유동부채", "비유동부채")
+        return matchesKeyword(desc, "부채", "liability", "유동부채", "비유동부채", "환불부채")
             || matchesKeyword(num, "liability", "부채");
     }
     

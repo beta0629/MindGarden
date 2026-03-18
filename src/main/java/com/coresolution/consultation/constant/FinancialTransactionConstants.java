@@ -54,4 +54,22 @@ public final class FinancialTransactionConstants {
         }
         return isConsultationCategory(transactionCategory);
     }
+
+    /** 환불 관련 서브카테고리 (부채 계정 경유 분개 적용) */
+    private static final java.util.Set<String> REFUND_SUBCATEGORIES = java.util.Set.of(
+            "CONSULTATION_REFUND",
+            "CONSULTATION_PARTIAL_REFUND",
+            "SESSION_REFUND",
+            "PARTIAL_SESSION_REFUND"
+    );
+
+    /**
+     * 환불 거래 서브카테고리 여부 (환불부채 2단계 분개 대상)
+     *
+     * @param subcategory 거래 서브카테고리 (null 허용)
+     * @return 환불 계열 서브카테고리이면 true
+     */
+    public static boolean isRefundSubcategory(String subcategory) {
+        return subcategory != null && REFUND_SUBCATEGORIES.contains(subcategory);
+    }
 }

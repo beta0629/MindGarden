@@ -276,8 +276,8 @@ public class PlSqlMappingSyncServiceImpl implements PlSqlMappingSyncService {
                 log.info("✅ PL/SQL 환불 처리 완료: {}", message);
                 
                 // ERP 고도화 연동: 프로시저에서 생성된 FinancialTransaction에 대해 분개 자동 생성
+                // 환불 거래는 부채 계정 경유 2단계 분개(비용↔환불부채, 환불부채↔현금)로 생성됨
                 // 표준 문서: docs/standards/ERP_ADVANCEMENT_STANDARD.md
-                // 자동화 원칙: 모든 거래는 자동으로 분개에 반영
                 try {
                     // 프로시저가 생성한 financial_transactions 조회
                     // 환불 거래: EXPENSE 타입, category='CONSULTATION', subcategory='SESSION_REFUND'
@@ -368,8 +368,8 @@ public class PlSqlMappingSyncServiceImpl implements PlSqlMappingSyncService {
                 log.info("✅ PL/SQL 부분 환불 처리 완료: {}", message);
                 
                 // ERP 고도화 연동: 프로시저에서 생성된 FinancialTransaction에 대해 분개 자동 생성
+                // 부분 환불 거래는 부채 계정 경유 2단계 분개로 생성됨
                 // 표준 문서: docs/standards/ERP_ADVANCEMENT_STANDARD.md
-                // 자동화 원칙: 모든 거래는 자동으로 분개에 반영
                 try {
                     // 프로시저가 생성한 financial_transactions 조회
                     // 부분 환불 거래: EXPENSE 타입, category='CONSULTATION', subcategory='PARTIAL_SESSION_REFUND'

@@ -1808,7 +1808,13 @@ public class AdminController extends BaseApiController {
     @PutMapping("/consultants/{id}/grade")
     public ResponseEntity<ApiResponse<Map<String, Object>>> updateConsultantGrade(
             @PathVariable Long id, @RequestBody Map<String, Object> request) {
-        String grade = request.get("grade").toString();
+        Object gradeObj = request != null ? request.get("grade") : null;
+        String grade = gradeObj != null ? gradeObj.toString().trim() : null;
+        if (grade == null || grade.isEmpty()) {
+            log.warn("🔧 상담사 등급 업데이트: grade 누락 또는 빈 값, ID={}", id);
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("등급(grade)을 선택해 주세요."));
+        }
         log.info("🔧 상담사 등급 업데이트: ID={}, 등급={}", id, grade);
 
         User consultant = adminService.updateConsultantGrade(id, grade);

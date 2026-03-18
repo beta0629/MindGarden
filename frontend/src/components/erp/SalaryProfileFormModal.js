@@ -11,6 +11,17 @@ import './SalaryProfileFormModal.css';
 
 const getProfileUrl = (consultantId) => `${SALARY_API_ENDPOINTS.PROFILES}/${consultantId}`;
 
+/** 급여 옵션 유형 코드 → 한글 라벨 (옵션 유형 선택 드롭다운 표시용) */
+const SALARY_OPTION_TYPE_LABELS = {
+  FAMILY_CONSULTATION: '가족상담',
+  INITIAL_CONSULTATION: '초기상담',
+  WEEKEND_CONSULTATION: '주말상담',
+  ONLINE_CONSULTATION: '온라인상담',
+  PHONE_CONSULTATION: '전화상담',
+  TRAUMA_CONSULTATION: '트라우마상담'
+};
+const getOptionTypeLabel = (opt) => (opt && (opt.codeLabel || opt.codeName || SALARY_OPTION_TYPE_LABELS[opt.codeValue])) || (opt && opt.codeValue ? SALARY_OPTION_TYPE_LABELS[opt.codeValue] || opt.codeValue : '옵션 유형 선택');
+
 const SalaryProfileFormModal = ({ 
     isOpen, 
     onClose, 
@@ -109,43 +120,50 @@ const SalaryProfileFormModal = ({
         return '기본 옵션 금액';
     };
 
-    // 공통 코드에서 등급 정보 로드
+    // 공통 코드에서 등급 정보 로드 (API 응답: { data: { codes: [...] } } 또는 { codes: [...] } 또는 배열)
     const loadGradeTableData = async () => {
         try {
             const response = await StandardizedApi.get('/api/v1/common-codes', {
               codeGroup: 'CONSULTANT_GRADE'
             });
-            if (Array.isArray(response)) {
+            const rawList = (response && response.data && response.data.codes) || (response && response.codes) || (Array.isArray(response) ? response : null);
+            const list = Array.isArray(rawList) ? rawList : null;
+            if (list && list.length > 0) {
                 const baseOptions = [
                     { type: 'FAMILY_CONSULTATION', name: '가족상담', baseAmount: 3000 },
                     { type: 'INITIAL_CONSULTATION', name: '초기상담', baseAmount: 5000 }
                 ];
-
-                const gradeData = response.map(grade => {
-                    const extraData = JSON.parse(grade.extraData || '{}');
+                const gradeData = list.map(grade => {
+                    const extraData = (() => { try { return JSON.parse(grade.extraData || '{}'); } catch { return {}; } })();
                     const level = extraData.level || 1;
                     const multiplier = extraData.multiplier || 1.0;
-                    
                     const options = baseOptions.map(option => ({
                         ...option,
                         amount: Math.round(option.baseAmount * multiplier)
                     }));
-
                     return {
                         code: grade.codeValue,
-                        name: grade.codeLabel,
-                        baseSalary: 30000 + (level - 1) * 5000, // 프리랜서 기본 상담료
+                        name: grade.codeLabel || grade.codeValue,
+                        baseSalary: 30000 + (level - 1) * 5000,
                         multiplier: level,
-                        options: options,
-                        level: level,
-                        multiplier: multiplier
+                        options,
+                        level,
+                        multiplier
                     };
                 });
                 setGradeTableData(gradeData);
+                return;
             }
+            // API가 빈 목록이거나 응답 형식이 다르면 폴백 사용
+            const fallbackData = [
+                { code: 'CONSULTANT_JUNIOR', name: '주니어', baseSalary: 30000, multiplier: 1, level: 1, options: [{ type: 'FAMILY_CONSULTATION', name: '가족상담', amount: 3000 }, { type: 'INITIAL_CONSULTATION', name: '초기상담', amount: 5000 }] },
+                { code: 'CONSULTANT_SENIOR', name: '시니어', baseSalary: 35000, multiplier: 2, level: 2, options: [{ type: 'FAMILY_CONSULTATION', name: '가족상담', amount: 3600 }, { type: 'INITIAL_CONSULTATION', name: '초기상담', amount: 6000 }] },
+                { code: 'CONSULTANT_EXPERT', name: '엑스퍼트', baseSalary: 40000, multiplier: 3, level: 3, options: [{ type: 'FAMILY_CONSULTATION', name: '가족상담', amount: 4200 }, { type: 'INITIAL_CONSULTATION', name: '초기상담', amount: 7000 }] },
+                { code: 'CONSULTANT_MASTER', name: '마스터', baseSalary: 45000, multiplier: 4, level: 4, options: [{ type: 'FAMILY_CONSULTATION', name: '가족상담', amount: 4800 }, { type: 'INITIAL_CONSULTATION', name: '초기상담', amount: 8000 }] }
+            ];
+            setGradeTableData(fallbackData);
         } catch (error) {
             console.error('등급 정보 로드 실패:', error);
-            // 폴백 데이터
             const fallbackData = [
                 { code: 'CONSULTANT_JUNIOR', name: '주니어', baseSalary: 30000, multiplier: 1, level: 1, options: [{ type: 'FAMILY_CONSULTATION', name: '가족상담', amount: 3000 }, { type: 'INITIAL_CONSULTATION', name: '초기상담', amount: 5000 }] },
                 { code: 'CONSULTANT_SENIOR', name: '시니어', baseSalary: 35000, multiplier: 2, level: 2, options: [{ type: 'FAMILY_CONSULTATION', name: '가족상담', amount: 3600 }, { type: 'INITIAL_CONSULTATION', name: '초기상담', amount: 6000 }] },
@@ -306,24 +324,29 @@ const SalaryProfileFormModal = ({
         }));
 
         setSelectedOptions(gradeOptions);
-        
+
+        // 등급이 비어 있으면(placeholder 선택) API 호출하지 않음
+        if (!newGrade || String(newGrade).trim() === '') {
+            return;
+        }
         // 상담사 등급 업데이트
         try {
             const response = await StandardizedApi.put(
               getConsultantGradeUpdateUrl(consultant.id),
               { grade: newGrade }
             );
-
-            if (response && response.success) {
+            const ok = response && (response.success === true || (response.data != null && response.success !== false));
+            if (ok) {
                 showNotification('상담사 등급이 업데이트되었습니다.', 'success');
-                // 상담사 정보도 업데이트
                 consultant.grade = newGrade;
             } else {
-                showNotification('등급 업데이트에 실패했습니다.', 'error');
+                const msg = (response && response.message) ? response.message : '등급 업데이트에 실패했습니다.';
+                showNotification(msg, 'error');
             }
         } catch (error) {
             console.error('등급 업데이트 실패:', error);
-            showNotification('등급 업데이트에 실패했습니다.', 'error');
+            const msg = error?.response?.data?.message || error?.message || '등급 업데이트에 실패했습니다.';
+            showNotification(msg, 'error');
         }
     };
 
@@ -598,9 +621,9 @@ const SalaryProfileFormModal = ({
                     <div className="salary-profile-form__section consultant-profile-form-item consultant-profile-form-item--full-width">
                         <div className="option-header">
                             <label className="consultant-profile-form-label">급여 옵션 (등급별 자동 추가됨)</label>
-                            <button className="mg-btn mg-btn--success option-add-btn" onClick={addOption}>
+                            <MGButton type="button" variant="secondary" size="small" className="option-add-btn" onClick={addOption}>
                                 + 옵션 추가
-                            </button>
+                            </MGButton>
                         </div>
                         <p className="option-description">
                             {getGradeOptionsDescription(formData.grade || consultant.grade)}
@@ -617,7 +640,7 @@ const SalaryProfileFormModal = ({
                                             { value: '', label: '옵션 유형 선택' },
                                             ...optionTypes.map(opt => ({
                                                 value: opt.codeValue,
-                                                label: opt.codeLabel || opt.codeValue
+                                                label: getOptionTypeLabel(opt)
                                             }))
                                         ]}
                                         placeholder="옵션 유형 선택"
@@ -655,22 +678,24 @@ const SalaryProfileFormModal = ({
                     </div>
 
                 <div className="salary-profile-form__actions consultant-profile-form-actions">
-                    <button
+                    <MGButton
                         type="button"
-                        className="mg-v2-button mg-v2-button--outline"
+                        variant="outline"
                         onClick={onClose}
                         disabled={loading}
                     >
                         취소
-                    </button>
-                    <button
+                    </MGButton>
+                    <MGButton
                         type="button"
-                        className="mg-v2-button mg-v2-button--primary"
+                        variant="primary"
                         onClick={handleSave}
                         disabled={loading}
+                        loading={loading}
+                        loadingText="저장 중..."
                     >
                         {loading ? '저장 중...' : '저장'}
-                    </button>
+                    </MGButton>
                 </div>
             </div>
         </ErpModal>

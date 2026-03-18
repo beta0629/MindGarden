@@ -264,34 +264,37 @@ const SalaryProfileFormModal = ({
             setLoading(true);
             console.log('🔍 급여 프로필 폼 초기 데이터 로드 시작');
             
-            // 급여 유형 로드
+            // 급여 유형 로드 (공통코드 응답: { data: { codes: [...] } } 또는 { codes: [...] } 또는 배열)
             const salaryTypeResponse = await StandardizedApi.get('/api/v1/common-codes', {
               codeGroup: 'SALARY_TYPE'
             });
-            console.log('📊 급여 유형 응답:', salaryTypeResponse);
-            if (Array.isArray(salaryTypeResponse)) {
-                setSalaryTypes(salaryTypeResponse);
+            const salaryTypeList = (salaryTypeResponse?.data?.codes) ?? (salaryTypeResponse?.codes) ?? (Array.isArray(salaryTypeResponse) ? salaryTypeResponse : null);
+            if (Array.isArray(salaryTypeList) && salaryTypeList.length > 0) {
+                setSalaryTypes(salaryTypeList);
+            } else {
+                setSalaryTypes([
+                    { codeValue: 'FREELANCE', codeLabel: '프리랜서' },
+                    { codeValue: 'REGULAR', codeLabel: '정규직' }
+                ]);
             }
 
-            // 옵션 유형 로드
+            // 옵션 유형 로드 (동일 응답 형식)
             const optionTypeResponse = await StandardizedApi.get('/api/v1/common-codes', {
               codeGroup: 'SALARY_OPTION_TYPE'
             });
-            console.log('📊 옵션 유형 응답:', optionTypeResponse);
-            if (Array.isArray(optionTypeResponse)) {
-                setOptionTypes(optionTypeResponse);
+            const optionTypeList = (optionTypeResponse?.data?.codes) ?? (optionTypeResponse?.codes) ?? (Array.isArray(optionTypeResponse) ? optionTypeResponse : null);
+            if (Array.isArray(optionTypeList) && optionTypeList.length > 0) {
+                setOptionTypes(optionTypeList);
             } else {
-                // 하드코딩된 옵션 유형 추가 (임시)
                 const hardcodedOptions = [
-                    { codeValue: 'FAMILY_CONSULTATION', codeName: '가족상담', codeDescription: '가족상담 시 추가 급여' },
-                    { codeValue: 'INITIAL_CONSULTATION', codeName: '초기상담', codeDescription: '초기상담 시 추가 급여' },
-                    { codeValue: 'WEEKEND_CONSULTATION', codeName: '주말상담', codeDescription: '주말상담 시 추가 급여' },
-                    { codeValue: 'ONLINE_CONSULTATION', codeName: '온라인상담', codeDescription: '온라인상담 시 추가 급여' },
-                    { codeValue: 'PHONE_CONSULTATION', codeName: '전화상담', codeDescription: '전화상담 시 추가 급여' },
-                    { codeValue: 'TRAUMA_CONSULTATION', codeName: '트라우마상담', codeDescription: '트라우마상담 시 추가 급여' }
+                    { codeValue: 'FAMILY_CONSULTATION', codeName: '가족상담', codeLabel: '가족상담', codeDescription: '가족상담 시 추가 급여' },
+                    { codeValue: 'INITIAL_CONSULTATION', codeName: '초기상담', codeLabel: '초기상담', codeDescription: '초기상담 시 추가 급여' },
+                    { codeValue: 'WEEKEND_CONSULTATION', codeName: '주말상담', codeLabel: '주말상담', codeDescription: '주말상담 시 추가 급여' },
+                    { codeValue: 'ONLINE_CONSULTATION', codeName: '온라인상담', codeLabel: '온라인상담', codeDescription: '온라인상담 시 추가 급여' },
+                    { codeValue: 'PHONE_CONSULTATION', codeName: '전화상담', codeLabel: '전화상담', codeDescription: '전화상담 시 추가 급여' },
+                    { codeValue: 'TRAUMA_CONSULTATION', codeName: '트라우마상담', codeLabel: '트라우마상담', codeDescription: '트라우마상담 시 추가 급여' }
                 ];
                 setOptionTypes(hardcodedOptions);
-                console.log('📊 하드코딩된 옵션 유형 설정:', hardcodedOptions);
             }
         } catch (error) {
             console.error('초기 데이터 로드 실패:', error);

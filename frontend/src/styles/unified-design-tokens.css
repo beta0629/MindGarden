@@ -4956,6 +4956,88 @@ body {
   color: white;
 }
 
+/* Salary Profile Card (급여 프로필 탭) */
+.mg-consultant-card--salary-profile {
+  position: relative;
+  background: var(--mg-color-surface-main);
+  border: 1px solid var(--mg-color-border-main);
+  border-radius: 16px;
+  padding: var(--mg-spacing-lg);
+  transition: box-shadow 0.2s ease;
+  min-height: auto;
+}
+
+.mg-consultant-card--salary-profile:hover {
+  box-shadow: var(--ad-b0kla-shadow-hover, 0 4px 12px rgba(0, 0, 0, 0.08));
+}
+
+.mg-consultant-card--salary-profile .mg-consultant-card__accent--salary-profile {
+  position: absolute;
+  left: 0;
+  top: var(--mg-spacing-md);
+  bottom: var(--mg-spacing-md);
+  width: 4px;
+  background: var(--mg-color-primary-main);
+  border-radius: 2px;
+}
+
+.mg-consultant-card--salary-profile .mg-consultant-card__info--salary-profile {
+  padding-left: var(--mg-spacing-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.mg-consultant-card--salary-profile .mg-consultant-card__name--salary-profile {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--mg-color-text-main);
+  margin: 0 0 var(--mg-spacing-xs) 0;
+}
+
+.mg-consultant-card--salary-profile .mg-consultant-card__meta--salary-profile {
+  font-size: 12px;
+  color: var(--mg-color-text-secondary);
+  margin: 0 0 var(--mg-spacing-sm) 0;
+}
+
+.mg-consultant-card--salary-profile .mg-consultant-card__grade--salary-profile {
+  font-size: 12px;
+  color: var(--mg-color-text-secondary);
+  margin: 0 0 var(--mg-spacing-xs) 0;
+}
+
+.mg-consultant-card--salary-profile .mg-consultant-card__base--salary-profile {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: var(--mg-spacing-sm) 0 var(--mg-spacing-md) 0;
+}
+
+.mg-consultant-card--salary-profile .mg-consultant-card__base-label {
+  font-size: 12px;
+  color: var(--mg-color-text-secondary);
+}
+
+.mg-consultant-card--salary-profile .mg-consultant-card__base-value {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--mg-color-text-main);
+}
+
+.mg-consultant-card--salary-profile .mg-consultant-card__actions--salary-profile {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mg-spacing-sm);
+  margin-top: var(--mg-spacing-md);
+  padding-top: var(--mg-spacing-md);
+  border-top: 1px solid var(--mg-color-border-main);
+}
+
+.mg-consultant-card--salary-profile-compact {
+  cursor: pointer;
+}
+
 /* ============================================
    Client Card Mobile Simple
    ============================================ */

@@ -6,6 +6,7 @@ import Button from '../Button/Button';
 import Avatar from '../../common/Avatar';
 import { getConsultantRatingInfo } from '../../../utils/ratingHelper';
 import { getFormattedCurrentClients, getFormattedExperience } from '../../../utils/codeHelper';
+import { formatCurrency } from '../../../utils/formatUtils';
 
 /**
  * 공통 상담사 카드 컴포넌트
@@ -15,14 +16,22 @@ import { getFormattedCurrentClients, getFormattedExperience } from '../../../uti
  * @version 2.0.0
  * @since 2025-10-15
  */
-const ConsultantCard = ({ 
-    consultant, 
-    onClick, 
+const ConsultantCard = ({
+    consultant,
+    onClick,
     selected = false,
     draggable = false,
-    variant = 'detailed', // 'compact', 'detailed', 'mobile', 'mobile-simple', 'schedule-select'
+    variant = 'detailed', // 'compact', 'detailed', 'mobile', 'mobile-simple', 'schedule-select', 'salary-profile'
     showActions = true,
-    className = ''
+    className = '',
+    // salary-profile 전용
+    grade,
+    baseSalary = null,
+    formattedBaseSalary,
+    renderActions,
+    onCardClick,
+    compact: salaryProfileCompact = false,
+    nameId
 }) => {
     const [showDetailModal, setShowDetailModal] = useState(false);
     
@@ -435,6 +444,72 @@ const ConsultantCard = ({
         </div>
     );
 
+    /** salary-profile: 등급·기본급 메타, renderActions, onCardClick(선택). 상세 모달은 호출처에서 처리. */
+    const getBaseSalaryDisplay = () => {
+        if (formattedBaseSalary != null && formattedBaseSalary !== '') return formattedBaseSalary;
+        if (baseSalary != null && baseSalary !== '') return formatCurrency(Number(baseSalary));
+        return '—';
+    };
+
+    const renderSalaryProfileCard = () => {
+        const profileNameId = nameId || `profile-name-${consultant.id}`;
+        const cardContent = (
+            <>
+                <span className="mg-consultant-card__accent mg-consultant-card__accent--salary-profile" aria-hidden />
+                <div className="mg-consultant-card__info mg-consultant-card__info--salary-profile">
+                    <h4 className="mg-consultant-card__name mg-consultant-card__name--salary-profile" id={profileNameId}>
+                        {consultant.name}
+                    </h4>
+                    <div className="mg-consultant-card__meta mg-consultant-card__meta--salary-profile">
+                        {consultant.email || '—'}
+                    </div>
+                    <div className="mg-consultant-card__grade mg-consultant-card__grade--salary-profile">
+                        등급: {grade != null && grade !== '' ? grade : '—'}
+                    </div>
+                    <div className="mg-consultant-card__base mg-consultant-card__base--salary-profile">
+                        <span className="mg-consultant-card__base-label">기본급</span>
+                        <span className="mg-consultant-card__base-value">{getBaseSalaryDisplay()}</span>
+                    </div>
+                    {renderActions && (
+                        <div className="mg-consultant-card__actions mg-consultant-card__actions--salary-profile" style={{ position: 'relative', zIndex: 2 }}>
+                            {renderActions(consultant)}
+                        </div>
+                    )}
+                </div>
+            </>
+        );
+
+        const baseClass = `mg-consultant-card mg-consultant-card--salary-profile ${salaryProfileCompact ? 'mg-consultant-card--salary-profile-compact' : ''} ${className}`.trim();
+
+        if (onCardClick) {
+            return (
+                <article
+                    className={baseClass}
+                    aria-labelledby={profileNameId}
+                    style={{ position: 'relative' }}
+                    onClick={() => onCardClick(consultant)}
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            onCardClick(consultant);
+                        }
+                    }}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`${consultant.name} 상세 보기`}
+                >
+                    {cardContent}
+                </article>
+            );
+        }
+
+        return (
+            <article className={baseClass} aria-labelledby={profileNameId}>
+                {cardContent}
+            </article>
+        );
+    };
+
     // 모바일 간단 카드 렌더링 (스케줄 모달용)
     const renderMobileSimpleCard = () => (
         <div
@@ -498,22 +573,26 @@ const ConsultantCard = ({
                 return renderMobileSimpleCard();
             case 'schedule-select':
                 return renderScheduleSelectCard();
+            case 'salary-profile':
+                return renderSalaryProfileCard();
             case 'detailed':
             default:
                 return renderDetailedCard();
         }
     };
 
+    const showDetailModalForVariant = variant !== 'salary-profile';
+
     return (
         <>
             {renderCard()}
-            
-            {/* 상담사 상세 모달 */}
-            <ConsultantDetailModal
-                isOpen={showDetailModal}
-                onClose={() => setShowDetailModal(false)}
-                consultant={consultant}
-            />
+            {showDetailModalForVariant && (
+                <ConsultantDetailModal
+                    isOpen={showDetailModal}
+                    onClose={() => setShowDetailModal(false)}
+                    consultant={consultant}
+                />
+            )}
         </>
     );
 };

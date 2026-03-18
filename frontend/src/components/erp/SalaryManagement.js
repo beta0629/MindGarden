@@ -25,6 +25,7 @@ import SalaryExportModal from '../common/SalaryExportModal';
 import SalaryPrintComponent from '../common/SalaryPrintComponent';
 import SalaryConfigModal from './SalaryConfigModal';
 import MGButton from '../common/MGButton';
+import ConsultantCard from '../ui/Card/ConsultantCard';
 import { ViewModeToggle, SmallCardGrid, ListTableView } from '../common';
 import { getStatusLabel } from '../../utils/colorUtils';
 import './SalaryManagement.css';
@@ -654,52 +655,28 @@ const SalaryManagement = () => {
                           {consultants.map((consultant) => {
                             const profile = salaryProfiles.find(p => p.consultantId === consultant.id);
                             return (
-                              <article
+                              <ConsultantCard
                                 key={consultant.id}
-                                className="mg-v2-ad-b0kla__card salary-profile-card salary-profile-card--compact"
-                                aria-labelledby={`profile-name-sm-${consultant.id}`}
-                                style={{ position: 'relative' }}
-                              >
-                                <button
-                                  type="button"
-                                  className="salary-profile-card__open-btn"
-                                  onClick={() => openModal(consultant)}
-                                  style={{
-                                    position: 'absolute',
-                                    inset: 0,
-                                    zIndex: 1,
-                                    cursor: 'pointer',
-                                    background: 'transparent',
-                                    border: 'none',
-                                    padding: 0,
-                                    width: '100%',
-                                    height: '100%',
-                                  }}
-                                  aria-label={`${consultant.name} 상세 보기`}
-                                />
-                                <span className="salary-profile-card__accent" aria-hidden />
-                                <div className="salary-profile-card__name" id={`profile-name-sm-${consultant.id}`}>
-                                  {consultant.name}
-                                </div>
-                                <div className="salary-profile-card__meta">{consultant.email}</div>
-                                <div className="salary-profile-card__grade">등급: {consultant.grade || '—'}</div>
-                                <div className="salary-profile-card__base">
-                                  <span className="mg-v2-ad-b0kla__kpi-label salary-management__stat-label">기본급</span>
-                                  <span className="mg-v2-ad-b0kla__kpi-value salary-management__stat-value">
-                                    {profile ? formatCurrency(profile.baseSalary || 0) : '—'}
-                                  </span>
-                                </div>
-                                <div className="mg-v2-card-actions salary-profile-card__actions" style={{ position: 'relative', zIndex: 2 }}>
+                                variant="salary-profile"
+                                consultant={consultant}
+                                grade={consultant.grade}
+                                baseSalary={profile?.baseSalary}
+                                formattedBaseSalary={profile != null ? formatCurrency(profile.baseSalary || 0) : '—'}
+                                renderActions={(c) => (
                                   <MGButton
                                     variant="outline"
                                     size="small"
-                                    onClick={(e) => { e.stopPropagation(); handleCreateProfile(consultant); }}
+                                    onClick={(e) => { e.stopPropagation(); handleCreateProfile(c); }}
                                     className="mg-v2-button mg-v2-button--outline"
                                   >
                                     편집
                                   </MGButton>
-                                </div>
-                              </article>
+                                )}
+                                onCardClick={openModal}
+                                compact
+                                nameId={`profile-name-sm-${consultant.id}`}
+                                className="mg-v2-ad-b0kla__card"
+                              />
                             );
                           })}
                         </SmallCardGrid>
@@ -708,42 +685,35 @@ const SalaryManagement = () => {
                           {consultants.map((consultant) => {
                             const profile = salaryProfiles.find(p => p.consultantId === consultant.id);
                             return (
-                              <article
+                              <ConsultantCard
                                 key={consultant.id}
-                                className="mg-v2-ad-b0kla__card salary-profile-card"
-                                aria-labelledby={`profile-name-${consultant.id}`}
-                              >
-                                <span className="salary-profile-card__accent" aria-hidden />
-                                <div className="salary-profile-card__name" id={`profile-name-${consultant.id}`}>
-                                  {consultant.name}
-                                </div>
-                                <div className="salary-profile-card__meta">{consultant.email}</div>
-                                <div className="salary-profile-card__grade">등급: {consultant.grade || '—'}</div>
-                                <div className="salary-profile-card__base">
-                                  <span className="mg-v2-ad-b0kla__kpi-label salary-management__stat-label">기본급</span>
-                                  <span className="mg-v2-ad-b0kla__kpi-value salary-management__stat-value">
-                                    {profile ? formatCurrency(profile.baseSalary || 0) : '—'}
-                                  </span>
-                                </div>
-                                <div className="mg-v2-card-actions salary-profile-card__actions">
-                                  <MGButton
-                                    variant="secondary"
-                                    size="small"
-                                    onClick={() => openModal(consultant)}
-                                    className="mg-v2-button mg-v2-button--outline"
-                                  >
-                                    프로필 조회
-                                  </MGButton>
-                                  <MGButton
-                                    variant="outline"
-                                    size="small"
-                                    onClick={() => handleCreateProfile(consultant)}
-                                    className="mg-v2-button mg-v2-button--outline"
-                                  >
-                                    편집
-                                  </MGButton>
-                                </div>
-                              </article>
+                                variant="salary-profile"
+                                consultant={consultant}
+                                grade={consultant.grade}
+                                baseSalary={profile?.baseSalary}
+                                formattedBaseSalary={profile != null ? formatCurrency(profile.baseSalary || 0) : '—'}
+                                renderActions={(c) => (
+                                  <>
+                                    <MGButton
+                                      variant="secondary"
+                                      size="small"
+                                      onClick={() => openModal(c)}
+                                      className="mg-v2-button mg-v2-button--outline"
+                                    >
+                                      프로필 조회
+                                    </MGButton>
+                                    <MGButton
+                                      variant="outline"
+                                      size="small"
+                                      onClick={() => handleCreateProfile(c)}
+                                      className="mg-v2-button mg-v2-button--outline"
+                                    >
+                                      편집
+                                    </MGButton>
+                                  </>
+                                )}
+                                className="mg-v2-ad-b0kla__card"
+                              />
                             );
                           })}
                         </div>

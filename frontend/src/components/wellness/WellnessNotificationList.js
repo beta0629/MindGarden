@@ -159,7 +159,7 @@ const WellnessNotificationList = () => {
                     <Badge variant="status" statusVariant="danger" label="긴급" size="sm" />
                   )}
                   {!notification.isRead && (
-                    <Badge variant="status" statusVariant="info" label="NEW" size="sm" />
+                    <Badge variant="status" statusVariant="info" label="신규" size="sm" />
                   )}
                 </div>
 

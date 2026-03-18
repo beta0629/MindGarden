@@ -313,11 +313,11 @@ const PgConfigurationDetail = () => {
               <div className="detail-value">{config.pgName || '-'}</div>
             </div>
             <div className="detail-item">
-              <label>Merchant ID</label>
+              <label>가맹점 ID</label>
               <div className="detail-value">{config.merchantId || '-'}</div>
             </div>
             <div className="detail-item">
-              <label>Store ID</label>
+              <label>스토어 ID</label>
               <div className="detail-value">{config.storeId || '-'}</div>
             </div>
             <div className="detail-item">
@@ -342,7 +342,7 @@ const PgConfigurationDetail = () => {
             <div className="detail-grid">
               {config.webhookUrl && (
                 <div className="detail-item detail-item--full">
-                  <label>Webhook URL</label>
+                  <label>웹훅 URL</label>
                   <div className="detail-value detail-value--url">
                     <a href={config.webhookUrl} target="_blank" rel="noopener noreferrer">
                       {config.webhookUrl}
@@ -353,7 +353,7 @@ const PgConfigurationDetail = () => {
               )}
               {config.returnUrl && (
                 <div className="detail-item detail-item--full">
-                  <label>Return URL</label>
+                  <label>리턴 URL</label>
                   <div className="detail-value detail-value--url">
                     <a href={config.returnUrl} target="_blank" rel="noopener noreferrer">
                       {config.returnUrl}
@@ -364,7 +364,7 @@ const PgConfigurationDetail = () => {
               )}
               {config.cancelUrl && (
                 <div className="detail-item detail-item--full">
-                  <label>Cancel URL</label>
+                  <label>취소 URL</label>
                   <div className="detail-value detail-value--url">
                     <a href={config.cancelUrl} target="_blank" rel="noopener noreferrer">
                       {config.cancelUrl}
@@ -398,14 +398,14 @@ const PgConfigurationDetail = () => {
             ) : (
               <div className="key-display">
                 <div className="key-item">
-                  <label>API Key</label>
+                  <label>API 키</label>
                   <div className="key-value">
                     <code>{decryptedKeys?.apiKey || '***'}</code>
                     <button
                       className="key-copy-button"
                       onClick={() => {
                         navigator.clipboard.writeText(decryptedKeys?.apiKey || '');
-                        showNotification('API Key가 복사되었습니다.', 'success');
+                        showNotification('API 키가 복사되었습니다.', 'success');
                       }}
                       title="복사"
                     >
@@ -414,14 +414,14 @@ const PgConfigurationDetail = () => {
                   </div>
                 </div>
                 <div className="key-item">
-                  <label>Secret Key</label>
+                  <label>시크릿 키</label>
                   <div className="key-value">
                     <code>{decryptedKeys?.secretKey || '***'}</code>
                     <button
                       className="key-copy-button"
                       onClick={() => {
                         navigator.clipboard.writeText(decryptedKeys?.secretKey || '');
-                        showNotification('Secret Key가 복사되었습니다.', 'success');
+                        showNotification('시크릿 키가 복사되었습니다.', 'success');
                       }}
                       title="복사"
                     >

@@ -245,17 +245,17 @@ export const CacheHitBarChart = ({ data }) => {
   const missRate = 100 - hitRate;
 
   const chartData = {
-    labels: ['Cache'],
+    labels: ['캐시'],
     datasets: [
       {
-        label: 'Cache Hit',
+        label: '캐시 적중',
         data: [hitRate],
         backgroundColor: colors.success,
         barThickness: 24,
         borderRadius: { topLeft: 12, bottomLeft: 12, topRight: missRate === 0 ? 12 : 0, bottomRight: missRate === 0 ? 12 : 0 }
       },
       {
-        label: 'Cache Miss',
+        label: '캐시 미적중',
         data: [missRate],
         backgroundColor: colors.gray,
         barThickness: 24,
@@ -268,10 +268,10 @@ export const CacheHitBarChart = ({ data }) => {
     <div className="mg-v2-ad-b0kla__flex-col" style={{ width: '100%', height: '100%', justifyContent: 'center' }}>
       <div className="mg-v2-ad-b0kla__flex-between" style={{ marginBottom: '8px' }}>
         <span className="mg-v2-ad-b0kla__text--sm mg-v2-ad-b0kla__text--bold" style={{ color: 'var(--mg-success-500)' }}>
-          Hit: {hitRate}%
+          적중: {hitRate}%
         </span>
         <span className="mg-v2-ad-b0kla__text--sm" style={{ color: 'var(--mg-color-text-secondary)' }}>
-          Miss: {missRate}%
+          미적중: {missRate}%
         </span>
       </div>
       <div style={{ height: '24px', width: '100%' }}>

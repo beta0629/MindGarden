@@ -186,7 +186,7 @@ export const apiGet = async (endpoint, params = {}, options = {}) => {
                                    errorMessage.includes('로그인이 필요');
 
           if (isTenantIdError) {
-            const err = new Error(errorMessage || 'Tenant ID is required. Please log in again.');
+            const err = new Error(errorMessage || '테넌트 정보가 없습니다. 다시 로그인해 주세요.');
             err.status = 400;
             err.response = { data: errorData };
             const isLocalEnv = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';

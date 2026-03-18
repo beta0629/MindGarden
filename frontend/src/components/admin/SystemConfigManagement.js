@@ -422,7 +422,7 @@ const SystemConfigManagement = () => {
                       <small className="help-text"><Shield size={14} /> API 키는 암호화되어 저장됩니다.</small>
                     </div>
                     <div className="config-item">
-                      <label htmlFor={`apiUrl-${id}`}>API URL</label>
+                      <label htmlFor={`apiUrl-${id}`}>API 주소</label>
                       <input
                         id={`apiUrl-${id}`}
                         type="text"

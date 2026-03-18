@@ -323,13 +323,13 @@ const PgConfigurationList = () => {
                     </div>
                     {config.merchantId && (
                       <div className="info-item">
-                        <span className="info-label">Merchant ID:</span>
+                        <span className="info-label">가맹점 ID:</span>
                         <span className="info-value">{config.merchantId}</span>
                       </div>
                     )}
                     {config.storeId && (
                       <div className="info-item">
-                        <span className="info-label">Store ID:</span>
+                        <span className="info-label">스토어 ID:</span>
                         <span className="info-value">{config.storeId}</span>
                       </div>
                     )}

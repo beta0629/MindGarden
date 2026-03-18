@@ -105,11 +105,11 @@ const PgConfigurationForm = ({
     }
     
     if (!formData.apiKey) {
-      newErrors.apiKey = 'API Key를 입력해주세요.';
+      newErrors.apiKey = 'API 키를 입력해주세요.';
     }
     
     if (!formData.secretKey) {
-      newErrors.secretKey = 'Secret Key를 입력해주세요.';
+      newErrors.secretKey = '시크릿 키를 입력해주세요.';
     }
     
     if (formData.pgName && formData.pgName.length > 255) {
@@ -121,11 +121,11 @@ const PgConfigurationForm = ({
     }
     
     if (formData.returnUrl && formData.returnUrl.length > 500) {
-      newErrors.returnUrl = 'Return URL은 500자 이하여야 합니다.';
+      newErrors.returnUrl = '리턴 URL은 500자 이하여야 합니다.';
     }
     
     if (formData.cancelUrl && formData.cancelUrl.length > 500) {
-      newErrors.cancelUrl = 'Cancel URL은 500자 이하여야 합니다.';
+      newErrors.cancelUrl = '취소 URL은 500자 이하여야 합니다.';
     }
     
     if (formData.notes && formData.notes.length > 1000) {
@@ -266,10 +266,10 @@ const PgConfigurationForm = ({
           )}
         </div>
         
-        {/* API Key */}
+        {/* API 키 */}
         <div className="form-group">
           <label htmlFor="apiKey" className="required">
-            API Key <span className="required-mark">*</span>
+            API 키 <span className="required-mark">*</span>
           </label>
           <div className="input-with-icon">
             <input
@@ -277,7 +277,7 @@ const PgConfigurationForm = ({
               type={showApiKey ? 'text' : 'password'}
               value={formData.apiKey}
               onChange={(e) => handleChange('apiKey', e.target.value)}
-              placeholder="API Key를 입력하세요"
+              placeholder="API 키를 입력하세요"
               className={`form-input ${getFieldError('apiKey') ? 'error' : ''}`}
               required
               aria-required="true"
@@ -288,7 +288,7 @@ const PgConfigurationForm = ({
               type="button"
               onClick={() => setShowApiKey(!showApiKey)}
               className="icon-button"
-              aria-label={showApiKey ? 'API Key 숨기기' : 'API Key 보기'}
+              aria-label={showApiKey ? 'API 키 숨기기' : 'API 키 보기'}
             >
               {showApiKey ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
@@ -301,14 +301,14 @@ const PgConfigurationForm = ({
           )}
           <small id="apiKey-help" className="help-text">
             <Info size={14} aria-hidden="true" />
-            API Key는 암호화되어 저장됩니다.
+            API 키는 암호화되어 저장됩니다.
           </small>
         </div>
         
-        {/* Secret Key */}
+        {/* 시크릿 키 */}
         <div className="form-group">
           <label htmlFor="secretKey" className="required">
-            Secret Key <span className="required-mark">*</span>
+            시크릿 키 <span className="required-mark">*</span>
           </label>
           <div className="input-with-icon">
             <input
@@ -316,7 +316,7 @@ const PgConfigurationForm = ({
               type={showSecretKey ? 'text' : 'password'}
               value={formData.secretKey}
               onChange={(e) => handleChange('secretKey', e.target.value)}
-              placeholder="Secret Key를 입력하세요"
+              placeholder="시크릿 키를 입력하세요"
               className={`form-input ${getFieldError('secretKey') ? 'error' : ''}`}
               required
               aria-required="true"
@@ -327,7 +327,7 @@ const PgConfigurationForm = ({
               type="button"
               onClick={() => setShowSecretKey(!showSecretKey)}
               className="icon-button"
-              aria-label={showSecretKey ? 'Secret Key 숨기기' : 'Secret Key 보기'}
+              aria-label={showSecretKey ? '시크릿 키 숨기기' : '시크릿 키 보기'}
             >
               {showSecretKey ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
@@ -340,41 +340,41 @@ const PgConfigurationForm = ({
           )}
           <small id="secretKey-help" className="help-text">
             <Info size={14} aria-hidden="true" />
-            Secret Key는 암호화되어 저장됩니다.
+            시크릿 키는 암호화되어 저장됩니다.
           </small>
         </div>
         
-        {/* Merchant ID */}
+        {/* 가맹점 ID */}
         <div className="form-group">
-          <label htmlFor="merchantId">Merchant ID (선택)</label>
+          <label htmlFor="merchantId">가맹점 ID (선택)</label>
           <input
             id="merchantId"
             type="text"
             value={formData.merchantId}
             onChange={(e) => handleChange('merchantId', e.target.value)}
-            placeholder="Merchant ID를 입력하세요"
+            placeholder="가맹점 ID를 입력하세요"
             className="form-input"
             maxLength={255}
           />
         </div>
         
-        {/* Store ID */}
+        {/* 스토어 ID */}
         <div className="form-group">
-          <label htmlFor="storeId">Store ID (선택)</label>
+          <label htmlFor="storeId">스토어 ID (선택)</label>
           <input
             id="storeId"
             type="text"
             value={formData.storeId}
             onChange={(e) => handleChange('storeId', e.target.value)}
-            placeholder="Store ID를 입력하세요"
+            placeholder="스토어 ID를 입력하세요"
             className="form-input"
             maxLength={255}
           />
         </div>
         
-        {/* Webhook URL */}
+        {/* 웹훅 URL */}
         <div className="form-group">
-          <label htmlFor="webhookUrl">Webhook URL (선택)</label>
+          <label htmlFor="webhookUrl">웹훅 URL (선택)</label>
           <input
             id="webhookUrl"
             type="url"
@@ -392,9 +392,9 @@ const PgConfigurationForm = ({
           )}
         </div>
         
-        {/* Return URL */}
+        {/* 리턴 URL */}
         <div className="form-group">
-          <label htmlFor="returnUrl">Return URL (선택)</label>
+          <label htmlFor="returnUrl">리턴 URL (선택)</label>
           <input
             id="returnUrl"
             type="url"
@@ -412,9 +412,9 @@ const PgConfigurationForm = ({
           )}
         </div>
         
-        {/* Cancel URL */}
+        {/* 취소 URL */}
         <div className="form-group">
-          <label htmlFor="cancelUrl">Cancel URL (선택)</label>
+          <label htmlFor="cancelUrl">취소 URL (선택)</label>
           <input
             id="cancelUrl"
             type="url"

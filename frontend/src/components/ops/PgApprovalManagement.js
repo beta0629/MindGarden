@@ -447,7 +447,7 @@ const PgApprovalManagement = () => {
                     </div>
                     {config.merchantId && (
                       <div className="info-item">
-                        <span className="info-label">Merchant ID:</span>
+                        <span className="info-label">가맹점 ID:</span>
                         <span className="info-value">{config.merchantId}</span>
                       </div>
                     )}
@@ -764,11 +764,11 @@ const PgApprovalManagement = () => {
                       <div className="detail-value">{configDetail.pgName || '-'}</div>
                     </div>
                     <div className="detail-item">
-                      <label>Merchant ID</label>
+                      <label>가맹점 ID</label>
                       <div className="detail-value">{configDetail.merchantId || '-'}</div>
                     </div>
                     <div className="detail-item">
-                      <label>Store ID</label>
+                      <label>스토어 ID</label>
                       <div className="detail-value">{configDetail.storeId || '-'}</div>
                     </div>
                     <div className="detail-item">
@@ -799,14 +799,14 @@ const PgApprovalManagement = () => {
                     ) : (
                       <div className="key-display">
                         <div className="key-item">
-                          <label>API Key</label>
+                          <label>API 키</label>
                           <div className="key-value">
                             <code>{decryptedKeys?.apiKey || '***'}</code>
                             <button
                               className="key-copy-button"
                               onClick={() => {
                                 navigator.clipboard.writeText(decryptedKeys?.apiKey || '');
-                                showNotification('API Key가 복사되었습니다.', 'success');
+                                showNotification('API 키가 복사되었습니다.', 'success');
                               }}
                               title="복사"
                             >
@@ -815,14 +815,14 @@ const PgApprovalManagement = () => {
                           </div>
                         </div>
                         <div className="key-item">
-                          <label>Secret Key</label>
+                          <label>시크릿 키</label>
                           <div className="key-value">
                             <code>{decryptedKeys?.secretKey || '***'}</code>
                             <button
                               className="key-copy-button"
                               onClick={() => {
                                 navigator.clipboard.writeText(decryptedKeys?.secretKey || '');
-                                showNotification('Secret Key가 복사되었습니다.', 'success');
+                                showNotification('시크릿 키가 복사되었습니다.', 'success');
                               }}
                               title="복사"
                             >

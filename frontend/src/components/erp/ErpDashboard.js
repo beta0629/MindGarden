@@ -83,6 +83,29 @@ const ErpDashboard = ({ user: propUser }) => {
   const [financeLoading, setFinanceLoading] = useState(false);
   const [financeError, setFinanceError] = useState(null);
 
+  /** 이번 달 1일~말일 기준 수입·지출 대시보드 조회 (권한 있을 때만 호출) */
+  const loadIncomeExpenseSummary = useCallback(async () => {
+    setFinanceError(null);
+    setFinanceLoading(true);
+    try {
+      const now = new Date();
+      const startDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
+      const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+      const endDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+      const raw = await StandardizedApi.get(ERP_API.FINANCE_DASHBOARD, { startDate, endDate });
+      const data = raw?.data ?? raw;
+      setFinancialData(data?.financialData ?? null);
+      setRecentTransactions(Array.isArray(data?.recentTransactions) ? data.recentTransactions : []);
+    } catch (err) {
+      console.error('수입·지출 대시보드 로드 실패:', err);
+      setFinanceError(err?.message || '수입·지출 데이터를 불러올 수 없습니다.');
+      setFinancialData(null);
+      setRecentTransactions([]);
+    } finally {
+      setFinanceLoading(false);
+    }
+  }, []);
+
   // 세션 체크 및 권한 확인
   useEffect(() => {
     if (sessionLoading) {
@@ -220,29 +243,6 @@ const ErpDashboard = ({ user: propUser }) => {
 
     return () => clearTimeout(timeoutId);
   }, [userPermissions, navigate, propUser, sessionUser, loadIncomeExpenseSummary]);
-
-  /** 이번 달 1일~말일 기준 수입·지출 대시보드 조회 (권한 있을 때만 호출) */
-  const loadIncomeExpenseSummary = useCallback(async () => {
-    setFinanceError(null);
-    setFinanceLoading(true);
-    try {
-      const now = new Date();
-      const startDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
-      const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-      const endDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
-      const raw = await StandardizedApi.get(ERP_API.FINANCE_DASHBOARD, { startDate, endDate });
-      const data = raw?.data ?? raw;
-      setFinancialData(data?.financialData ?? null);
-      setRecentTransactions(Array.isArray(data?.recentTransactions) ? data.recentTransactions : []);
-    } catch (err) {
-      console.error('수입·지출 대시보드 로드 실패:', err);
-      setFinanceError(err?.message || '수입·지출 데이터를 불러올 수 없습니다.');
-      setFinancialData(null);
-      setRecentTransactions([]);
-    } finally {
-      setFinanceLoading(false);
-    }
-  }, []);
 
   const loadDashboardData = async () => {
     try {

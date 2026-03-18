@@ -12,6 +12,119 @@
   color: var(--ad-b0kla-text-secondary, var(--mg-color-text-secondary));
 }
 
+/* ========== 수입·지출 요약·차트·최근 거래 (B0KlA·디자인 토큰) ========== */
+.erp-dashboard__section-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--mg-color-text-main);
+  margin: 0 0 var(--mg-spacing-md, 1rem);
+  padding: 0;
+}
+
+.erp-dashboard__summary {
+  padding: var(--mg-spacing-lg, 24px) 0;
+  gap: var(--mg-spacing-md, 16px);
+  border-left: 4px solid var(--mg-primary-500, var(--ad-b0kla-green));
+  padding-left: var(--mg-spacing-md, 16px);
+  margin-bottom: var(--mg-spacing-xl, 1.5rem);
+}
+
+.erp-dashboard__finance-error {
+  font-size: 0.875rem;
+  color: var(--mg-error-500);
+  padding: var(--mg-spacing-sm, 8px) 0;
+}
+
+.erp-dashboard__charts {
+  margin-bottom: var(--mg-spacing-xl, 1.5rem);
+  padding: var(--mg-spacing-lg, 24px) 0;
+  border-left: 4px solid var(--mg-primary-300);
+  padding-left: var(--mg-spacing-md, 16px);
+}
+
+.erp-dashboard__chart-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--mg-spacing-lg, 1.5rem);
+}
+
+.erp-dashboard__chart-item {
+  margin: 0;
+  padding: var(--mg-spacing-md, 16px);
+  background: var(--ad-b0kla-surface-muted, var(--mg-color-surface-subtle, rgba(0, 0, 0, 0.03)));
+  border-radius: var(--radius-md, 8px);
+}
+
+.erp-dashboard__chart-placeholder {
+  min-height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+  color: var(--mg-color-text-secondary);
+}
+
+.erp-dashboard__chart-caption {
+  font-size: 12px;
+  color: var(--mg-color-text-secondary);
+  margin-top: var(--mg-spacing-sm, 8px);
+  text-align: center;
+}
+
+.erp-dashboard__recent {
+  margin-bottom: var(--mg-spacing-xl, 1.5rem);
+  padding: var(--mg-spacing-lg, 24px) 0;
+  border-left: 4px solid var(--mg-primary-300);
+  padding-left: var(--mg-spacing-md, 16px);
+}
+
+.erp-dashboard__table-wrapper {
+  overflow-x: auto;
+  border-radius: var(--radius-md, 8px);
+  border: 1px solid var(--ad-b0kla-border, var(--mg-color-border));
+}
+
+.erp-dashboard__transactions-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.erp-dashboard__transactions-table th,
+.erp-dashboard__transactions-table td {
+  padding: var(--mg-spacing-sm, 8px) var(--mg-spacing-md, 12px);
+  text-align: left;
+  border-bottom: 1px solid var(--ad-b0kla-border, var(--mg-color-border));
+}
+
+.erp-dashboard__transactions-table th {
+  font-weight: 600;
+  color: var(--mg-color-text-secondary);
+  background: var(--ad-b0kla-surface-muted, rgba(0, 0, 0, 0.02));
+}
+
+.erp-dashboard__transactions-table tbody tr:hover {
+  background: var(--ad-b0kla-surface-muted, rgba(0, 0, 0, 0.02));
+}
+
+.erp-dashboard__amount--income {
+  color: var(--mg-success-500);
+  font-weight: 500;
+}
+
+.erp-dashboard__amount--expense {
+  color: var(--mg-error-500);
+  font-weight: 500;
+}
+
+.erp-dashboard__recent-empty {
+  padding: var(--mg-spacing-lg, 24px);
+  text-align: center;
+  font-size: 14px;
+  color: var(--mg-color-text-secondary);
+  margin: 0;
+}
+
 /* ========== ERP 회계 초기화·동기화 카드 ========== */
 .erp-sync-card {
   margin-bottom: 1.5rem;

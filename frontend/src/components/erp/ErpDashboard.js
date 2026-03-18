@@ -1,20 +1,24 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
 import { sessionManager } from '../../utils/sessionManager';
 import { fetchUserPermissions, PermissionChecks, PERMISSIONS } from '../../utils/permissionUtils';
 import { RoleUtils } from '../../constants/roles';
+import { ERP_API } from '../../constants/api';
+import StandardizedApi from '../../utils/standardizedApi';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import {
   ContentArea,
   ContentHeader,
   ContentKpiRow
 } from '../dashboard-v2/content';
-import { Package, Clock, ShoppingCart, TrendingUp, DollarSign, LayoutDashboard, RefreshCw, Settings2, HelpCircle } from 'lucide-react';
+import { Package, Clock, ShoppingCart, TrendingUp, TrendingDown, BarChart3, DollarSign, LayoutDashboard, RefreshCw, Settings2, HelpCircle } from 'lucide-react';
 import Button from '../ui/Button/Button';
+import MGChart from '../common/MGChart';
 import '../../styles/main.css';
 import '../../styles/unified-design-tokens.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
+import './ErpCommon.css';
 import './ErpDashboard.css';
 
 /**
@@ -72,6 +76,12 @@ const ErpDashboard = ({ user: propUser }) => {
   const [initResult, setInitResult] = useState(null);
   const [backfillLoading, setBackfillLoading] = useState(false);
   const [backfillResult, setBackfillResult] = useState(null);
+
+  // 수입·지출 대시보드 (GET /api/v1/erp/finance/dashboard)
+  const [financialData, setFinancialData] = useState(null);
+  const [recentTransactions, setRecentTransactions] = useState([]);
+  const [financeLoading, setFinanceLoading] = useState(false);
+  const [financeError, setFinanceError] = useState(null);
 
   // 세션 체크 및 권한 확인
   useEffect(() => {
@@ -178,7 +188,9 @@ const ErpDashboard = ({ user: propUser }) => {
         return;
       }
       console.log('✅ ERP 접근 권한 확인됨 (동적 권한 시스템)', isAdmin ? '(관리자 특권)' : '');
+      const hasIntegratedFinanceView = PermissionChecks.canViewIntegratedFinance(userPermissions, currentUser) || isAdmin;
       loadDashboardData();
+      if (hasIntegratedFinanceView) loadIncomeExpenseSummary();
       return;
     }
 
@@ -198,6 +210,7 @@ const ErpDashboard = ({ user: propUser }) => {
         if (isAdmin) {
           console.log('⚠️ 권한 조회 실패했으나 관리자 역할이므로 대시보드 로드 시도');
           loadDashboardData();
+          loadIncomeExpenseSummary();
         } else {
           console.log('❌ 권한 조회 실패 및 관리자 역할 아님, 일반 대시보드로 이동');
           navigate('/dashboard', { replace: true });
@@ -206,7 +219,30 @@ const ErpDashboard = ({ user: propUser }) => {
     }, 3000);
 
     return () => clearTimeout(timeoutId);
-  }, [userPermissions, navigate, propUser, sessionUser]);
+  }, [userPermissions, navigate, propUser, sessionUser, loadIncomeExpenseSummary]);
+
+  /** 이번 달 1일~말일 기준 수입·지출 대시보드 조회 (권한 있을 때만 호출) */
+  const loadIncomeExpenseSummary = useCallback(async () => {
+    setFinanceError(null);
+    setFinanceLoading(true);
+    try {
+      const now = new Date();
+      const startDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
+      const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+      const endDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+      const raw = await StandardizedApi.get(ERP_API.FINANCE_DASHBOARD, { startDate, endDate });
+      const data = raw?.data ?? raw;
+      setFinancialData(data?.financialData ?? null);
+      setRecentTransactions(Array.isArray(data?.recentTransactions) ? data.recentTransactions : []);
+    } catch (err) {
+      console.error('수입·지출 대시보드 로드 실패:', err);
+      setFinanceError(err?.message || '수입·지출 데이터를 불러올 수 없습니다.');
+      setFinancialData(null);
+      setRecentTransactions([]);
+    } finally {
+      setFinanceLoading(false);
+    }
+  }, []);
 
   const loadDashboardData = async () => {
     try {
@@ -303,6 +339,24 @@ const ErpDashboard = ({ user: propUser }) => {
     }).format(amount);
   };
 
+  /** 차트용 수입·지출 데이터 (막대 2개) */
+  const incomeExpenseChartData = useMemo(() => {
+    const income = financialData?.totalIncome ?? 0;
+    const expense = financialData?.totalExpense ?? 0;
+    return {
+      labels: ['수입', '지출'],
+      datasets: [
+        {
+          label: '금액',
+          data: [income, expense],
+          backgroundColor: ['var(--mg-success-500)', 'var(--mg-error-500)'],
+          borderColor: ['var(--mg-success-600)', 'var(--mg-error-600)'],
+          borderWidth: 1
+        }
+      ]
+    };
+  }, [financialData?.totalIncome, financialData?.totalExpense]);
+
   if (loading) {
     return (
       <AdminCommonLayout title="운영 현황" loading={true} loadingText="불러오는 중...">
@@ -378,18 +432,155 @@ const ErpDashboard = ({ user: propUser }) => {
   const hasRefundManage =
     (permissionChecks[PERMISSIONS.REFUND_MANAGE] ?? PermissionChecks.canManageRefund(userPermissions, currentUser)) || isAdmin;
 
+  const isNetProfitNegative = financialData != null && (financialData.netProfit ?? 0) < 0;
+
   return (
     <AdminCommonLayout title="운영 현황">
-      <ContentArea className="erp-dashboard__content" ariaLabel="운영 현황">
+      <ContentArea className="erp-dashboard__content mg-v2-erp-dashboard-block" ariaLabel="운영 현황">
         <ContentHeader
           subtitle={subtitleWithTenant}
           actions={
-            <Button variant="outline" size="small" onClick={loadDashboardData} preventDoubleClick={true}>
+            <Button
+              variant="outline"
+              size="small"
+              onClick={() => {
+                loadDashboardData();
+                if (hasIntegratedFinanceView) loadIncomeExpenseSummary();
+              }}
+              preventDoubleClick={true}
+            >
               새로고침
             </Button>
           }
         />
+
+        {/* 수입·지출 요약 (통합 재무 보기 권한 있을 때만) */}
+        {hasIntegratedFinanceView && (
+          <section className="erp-dashboard__summary" aria-labelledby="erp-dashboard-summary-heading" aria-label="수입·지출 요약">
+            <h2 id="erp-dashboard-summary-heading" className="erp-dashboard__section-title">수입·지출 요약</h2>
+            {financeError && (
+              <div className="erp-dashboard__finance-error" role="alert">
+                {financeError}
+              </div>
+            )}
+            {!financeError && (
+              <div className="mg-v2-erp-dashboard-kpi-grid mg-v2-erp-dashboard-kpi-grid--summary">
+                <article className="mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card--accent-success">
+                  <div className="mg-v2-ad-b0kla__chart-header">
+                    <span className="mg-v2-erp-dashboard-kpi-label">수입</span>
+                    <TrendingUp size={24} aria-hidden className="mg-v2-erp-dashboard-kpi-icon mg-v2-erp-dashboard-kpi-icon--success" />
+                  </div>
+                  <div className="mg-v2-ad-b0kla__chart-body">
+                    <div className="mg-v2-erp-dashboard-kpi-value">
+                      {financeLoading ? '—' : (financialData != null ? formatCurrency(financialData.totalIncome ?? 0) : '0원')}
+                    </div>
+                    <span className="mg-v2-erp-dashboard-kpi-label">이번 달</span>
+                  </div>
+                </article>
+                <article className="mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card--accent-error">
+                  <div className="mg-v2-ad-b0kla__chart-header">
+                    <span className="mg-v2-erp-dashboard-kpi-label">지출</span>
+                    <TrendingDown size={24} aria-hidden className="mg-v2-erp-dashboard-kpi-icon mg-v2-erp-dashboard-kpi-icon--error" />
+                  </div>
+                  <div className="mg-v2-ad-b0kla__chart-body">
+                    <div className="mg-v2-erp-dashboard-kpi-value">
+                      {financeLoading ? '—' : (financialData != null ? formatCurrency(financialData.totalExpense ?? 0) : '0원')}
+                    </div>
+                    <span className="mg-v2-erp-dashboard-kpi-label">이번 달</span>
+                  </div>
+                </article>
+                <article className={`mg-v2-ad-b0kla__card ${isNetProfitNegative ? 'mg-v2-ad-b0kla__card--accent-error' : 'mg-v2-ad-b0kla__card--accent-primary'}`}>
+                  <div className="mg-v2-ad-b0kla__chart-header">
+                    <span className="mg-v2-erp-dashboard-kpi-label">순이익</span>
+                    <BarChart3 size={24} aria-hidden className={`mg-v2-erp-dashboard-kpi-icon ${isNetProfitNegative ? 'mg-v2-erp-dashboard-kpi-icon--error' : 'mg-v2-erp-dashboard-kpi-icon--primary'}`} />
+                  </div>
+                  <div className="mg-v2-ad-b0kla__chart-body">
+                    <div className="mg-v2-erp-dashboard-kpi-value">
+                      {financeLoading ? '—' : (financialData != null ? formatCurrency(Math.abs(financialData.netProfit ?? 0)) : '0원')}
+                    </div>
+                    <span className="mg-v2-erp-dashboard-kpi-label">이번 달</span>
+                  </div>
+                </article>
+              </div>
+            )}
+          </section>
+        )}
+
         <ContentKpiRow items={kpiItems} />
+
+        {/* 차트: 수입·지출 비교 (권한 있을 때) */}
+        {hasIntegratedFinanceView && !financeError && (
+          <section className="erp-dashboard__charts" aria-labelledby="erp-dashboard-charts-heading" aria-label="수입·지출 차트">
+            <h3 id="erp-dashboard-charts-heading" className="erp-dashboard__section-title">수입·지출 비교</h3>
+            <div className="erp-dashboard__chart-grid">
+              <figure className="erp-dashboard__chart-item">
+                {financeLoading ? (
+                  <div className="erp-dashboard__chart-placeholder">차트를 불러오는 중...</div>
+                ) : (
+                  <MGChart
+                    type="bar"
+                    height={280}
+                    loading={false}
+                    error={null}
+                    data={incomeExpenseChartData}
+                    options={{
+                      plugins: {
+                        legend: { display: false }
+                      },
+                      scales: {
+                        y: {
+                          beginAtZero: true,
+                          ticks: { callback: (v) => (v >= 1000000 ? `${(v / 1000000).toFixed(0)}M` : v >= 1000 ? `${(v / 1000).toFixed(0)}K` : v) }
+                        }
+                      }
+                    }}
+                  />
+                )}
+                <figcaption className="erp-dashboard__chart-caption">이번 달 수입·지출</figcaption>
+              </figure>
+            </div>
+          </section>
+        )}
+
+        {/* 최근 거래 목록 (권한 있을 때) */}
+        {hasIntegratedFinanceView && (
+          <section className="erp-dashboard__recent" aria-labelledby="erp-dashboard-recent-heading" aria-label="최근 거래 목록">
+            <h3 id="erp-dashboard-recent-heading" className="erp-dashboard__section-title">최근 거래</h3>
+            <div className="erp-dashboard__table-wrapper">
+              {financeLoading ? (
+                <p className="erp-dashboard__recent-empty">불러오는 중...</p>
+              ) : recentTransactions.length === 0 ? (
+                <p className="erp-dashboard__recent-empty">최근 거래 내역이 없습니다.</p>
+              ) : (
+                <table className="erp-dashboard__transactions-table" aria-label="최근 거래 목록">
+                  <thead>
+                    <tr>
+                      <th scope="col">날짜</th>
+                      <th scope="col">구분</th>
+                      <th scope="col">금액</th>
+                      <th scope="col">적요</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {recentTransactions.map((tx) => {
+                      const isIncome = tx.type === 'INCOME' || tx.type === 'income';
+                      return (
+                        <tr key={tx.id || `${tx.transactionDate}-${tx.amount}-${tx.type}`}>
+                          <td>{tx.transactionDate ? String(tx.transactionDate).slice(0, 10) : '—'}</td>
+                          <td>{isIncome ? '수입' : '지출'}</td>
+                          <td className={isIncome ? 'erp-dashboard__amount--income' : 'erp-dashboard__amount--expense'}>
+                            {formatCurrency(tx.amount ?? 0)}
+                          </td>
+                          <td>{tx.description ?? tx.memo ?? '—'}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </section>
+        )}
 
         {/* 데이터 동기화 (관리자 전용) */}
         {hasIntegratedFinanceView && (

@@ -133,7 +133,7 @@ const SalaryProfileFormModal = ({
                     { type: 'FAMILY_CONSULTATION', name: '가족상담', baseAmount: 3000 },
                     { type: 'INITIAL_CONSULTATION', name: '초기상담', baseAmount: 5000 }
                 ];
-                const gradeData = list.map(grade => {
+                const mapped = list.map(grade => {
                     const extraData = (() => { try { return JSON.parse(grade.extraData || '{}'); } catch { return {}; } })();
                     const level = extraData.level || 1;
                     const multiplier = extraData.multiplier || 1.0;
@@ -150,6 +150,13 @@ const SalaryProfileFormModal = ({
                         level,
                         multiplier
                     };
+                });
+                // codeValue 기준 중복 제거 (테넌트+코어 동시 반환 시 동일 등급이 두 번 나오는 것 방지)
+                const seen = new Set();
+                const gradeData = mapped.filter(g => {
+                    if (seen.has(g.code)) return false;
+                    seen.add(g.code);
+                    return true;
                 });
                 setGradeTableData(gradeData);
                 return;

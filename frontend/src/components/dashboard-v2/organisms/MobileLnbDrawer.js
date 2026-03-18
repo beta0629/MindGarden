@@ -7,7 +7,7 @@
  * @since 2025-02-22
  */
 
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { LogOut, ChevronRight, ChevronDown } from 'lucide-react';
 import { NavLinkWithRouter } from '../atoms';
@@ -36,11 +36,9 @@ const MobileLnbDrawer = ({ isOpen, onClose, menuItems = [], headerTitle = 'ì‹œìŠ
   const location = useLocation();
   const pathname = location.pathname;
 
-  const initialExpanded = useMemo(
-    () => getInitialExpandedKey(menuItems, pathname),
-    [menuItems, pathname]
+  const [expandedGroupKey, setExpandedGroupKey] = useState(() =>
+    getInitialExpandedKey(menuItems, pathname)
   );
-  const [expandedGroupKey, setExpandedGroupKey] = useState(initialExpanded);
 
   useEffect(() => {
     if (isOpen) {

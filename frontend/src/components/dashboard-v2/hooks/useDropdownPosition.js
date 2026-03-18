@@ -64,10 +64,13 @@ function computePanelStyle(triggerEl, panelEl, options = {}) {
  * @param {React.RefObject<HTMLElement>} triggerRef - 트리거 버튼/영역 ref
  * @param {React.RefObject<HTMLElement>} panelRef - 패널 DOM ref
  * @param {boolean} isOpen - 열림 여부
- * @param {{ offsetY?: number, viewportPadding?: number }} options
+ * @param {{ offsetY?: number, viewportPadding?: number }} opts
  * @returns {React.CSSProperties} 패널에 적용할 style
  */
-export function useDropdownPosition(triggerRef, panelRef, isOpen, options = {}) {
+export function useDropdownPosition(triggerRef, panelRef, isOpen, opts = {}) {
+  const offsetY = opts.offsetY ?? DEFAULT_OFFSET_Y;
+  const viewportPadding = opts.viewportPadding ?? DEFAULT_VIEWPORT_PADDING;
+
   const [panelStyle, setPanelStyle] = useState(() => ({
     position: 'fixed',
     zIndex: Z_INDEX_DROPDOWN
@@ -82,7 +85,7 @@ export function useDropdownPosition(triggerRef, panelRef, isOpen, options = {}) 
 
     const onFrame = () => {
       const el = panelRef?.current ?? panelEl;
-      const next = computePanelStyle(triggerEl, el, options);
+      const next = computePanelStyle(triggerEl, el, { offsetY, viewportPadding });
       setPanelStyle(next);
     };
 
@@ -95,7 +98,7 @@ export function useDropdownPosition(triggerRef, panelRef, isOpen, options = {}) 
       window.removeEventListener('resize', onFrame);
       window.removeEventListener('scroll', onFrame, true);
     };
-  }, [isOpen, triggerRef, panelRef, options.offsetY, options.viewportPadding]);
+  }, [isOpen, triggerRef, panelRef, offsetY, viewportPadding]);
 
   return panelStyle;
 }

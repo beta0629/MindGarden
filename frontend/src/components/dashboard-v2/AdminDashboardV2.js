@@ -44,15 +44,6 @@ import UnifiedModal from '../common/modals/UnifiedModal';
 import StandardizedApi from '../../utils/standardizedApi';
 import Chart from '../common/Chart';
 import { CHART_TYPES, B0KLA_CHART_BAR_FALLBACK, B0KLA_STEP_CHART_HEX } from '../../constants/charts';
-
-/** 단계별 현황 도넛 차트 라벨 (5단계) */
-const STEP_CHART_LABELS = [
-  '매칭',
-  '입금 확인',
-  '회기 권한',
-  '스케줄 등록',
-  '회계처리'
-];
 import {
   AdminMetricsVisualization,
   ManualMatchingQueue,
@@ -76,6 +67,15 @@ import '../../styles/dashboard-common-v3.css';
 import '../../styles/themes/admin-theme.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import '../admin/AdminDashboard/AdminDashboardPipeline.css';
+
+/** 단계별 현황 도넛 차트 라벨 (5단계) */
+const STEP_CHART_LABELS = [
+  '매칭',
+  '입금 확인',
+  '회기 권한',
+  '스케줄 등록',
+  '회계처리'
+];
 
 /** 차트용 최근 N개월 빈 데이터 (데이터 없을 때 0으로 표시) */
 function getEmptyMonthlyChartData(months = 6) {

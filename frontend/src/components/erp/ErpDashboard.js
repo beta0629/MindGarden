@@ -94,8 +94,19 @@ const ErpDashboard = ({ user: propUser }) => {
       const endDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
       const raw = await StandardizedApi.get(ERP_API.FINANCE_DASHBOARD, { startDate, endDate });
       const data = raw?.data ?? raw;
-      setFinancialData(data?.financialData ?? null);
-      setRecentTransactions(Array.isArray(data?.recentTransactions) ? data.recentTransactions : []);
+      const financialData = data?.financialData ?? data;
+      const totalIncome = financialData?.totalIncome ?? financialData?.summary?.totalRevenue ?? 0;
+      const totalExpense = financialData?.totalExpense ?? financialData?.summary?.totalExpenses ?? 0;
+      const netProfit = financialData?.netProfit ?? financialData?.summary?.netProfit ?? 0;
+      setFinancialData({
+        totalIncome,
+        totalExpense,
+        netProfit,
+        ...(financialData?.summary ? { summary: financialData.summary } : {}),
+        ...(financialData?.transactions ? { transactions: financialData.transactions } : {})
+      });
+      const rawRecent = data?.financialData?.transactions ?? data?.recentTransactions ?? [];
+      setRecentTransactions(Array.isArray(rawRecent) ? rawRecent : []);
     } catch (err) {
       console.error('수입·지출 대시보드 로드 실패:', err);
       setFinanceError(err?.message || '수입·지출 데이터를 불러올 수 없습니다.');
@@ -254,13 +265,20 @@ const ErpDashboard = ({ user: propUser }) => {
         StandardizedApi.get('/api/v1/erp/budgets')
       ]);
 
-      const toList = (value) =>
-        Array.isArray(value) ? value : (value?.data ?? []);
+      const toListAndCount = (value) => {
+        if (value == null) return { list: [], count: 0 };
+        if (Array.isArray(value)) return { list: value, count: value.length };
+        const count = value?.count ?? value?.totalItems ?? value?.totalElements ?? value?.size ?? 0;
+        const listRaw = value?.data ?? value?.content ?? [];
+        const list = Array.isArray(listRaw) ? listRaw : [];
+        return { list, count };
+      };
 
-      const itemsList = results[0].status === 'fulfilled' ? toList(results[0].value) : [];
-      const pendingList = results[1].status === 'fulfilled' ? toList(results[1].value) : [];
-      const ordersList = results[2].status === 'fulfilled' ? toList(results[2].value) : [];
-      const budgetsList = results[3].status === 'fulfilled' ? toList(results[3].value) : [];
+      const items = results[0].status === 'fulfilled' ? toListAndCount(results[0].value) : { list: [], count: 0 };
+      const pending = results[1].status === 'fulfilled' ? toListAndCount(results[1].value) : { list: [], count: 0 };
+      const orders = results[2].status === 'fulfilled' ? toListAndCount(results[2].value) : { list: [], count: 0 };
+      const budgets = results[3].status === 'fulfilled' ? toListAndCount(results[3].value) : { list: [], count: 0 };
+      const budgetsList = budgets.list;
 
       results.forEach((r, i) => {
         if (r.status === 'rejected') {
@@ -274,10 +292,10 @@ const ErpDashboard = ({ user: propUser }) => {
         sum + parseFloat(budget.usedBudget || 0), 0);
 
       setStats({
-        totalItems: itemsList.length,
-        pendingRequests: pendingList.length,
+        totalItems: items.count,
+        pendingRequests: pending.count,
         approvedRequests: 0,
-        totalOrders: ordersList.length,
+        totalOrders: orders.count,
         totalBudget,
         usedBudget
       });

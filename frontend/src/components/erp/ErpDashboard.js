@@ -245,20 +245,28 @@ const ErpDashboard = ({ user: propUser }) => {
   }, [userPermissions, navigate, propUser, sessionUser, loadIncomeExpenseSummary]);
 
   const loadDashboardData = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-
-      const [itemsRaw, pendingRaw, ordersRaw, budgetsRaw] = await Promise.all([
+      const results = await Promise.allSettled([
         StandardizedApi.get('/api/v1/erp/items'),
         StandardizedApi.get('/api/v1/erp/purchase-requests/pending-admin'),
         StandardizedApi.get('/api/v1/erp/purchase-orders'),
         StandardizedApi.get('/api/v1/erp/budgets')
       ]);
 
-      const itemsList = Array.isArray(itemsRaw) ? itemsRaw : (itemsRaw?.data ?? []);
-      const pendingList = Array.isArray(pendingRaw) ? pendingRaw : (pendingRaw?.data ?? []);
-      const ordersList = Array.isArray(ordersRaw) ? ordersRaw : (ordersRaw?.data ?? []);
-      const budgetsList = Array.isArray(budgetsRaw) ? budgetsRaw : (budgetsRaw?.data ?? []);
+      const toList = (value) =>
+        Array.isArray(value) ? value : (value?.data ?? []);
+
+      const itemsList = results[0].status === 'fulfilled' ? toList(results[0].value) : [];
+      const pendingList = results[1].status === 'fulfilled' ? toList(results[1].value) : [];
+      const ordersList = results[2].status === 'fulfilled' ? toList(results[2].value) : [];
+      const budgetsList = results[3].status === 'fulfilled' ? toList(results[3].value) : [];
+
+      results.forEach((r, i) => {
+        if (r.status === 'rejected') {
+          console.warn(`대시보드 API ${i + 1}/4 실패:`, r.reason);
+        }
+      });
 
       const totalBudget = budgetsList.reduce((sum, budget) =>
         sum + parseFloat(budget.totalBudget || 0), 0);

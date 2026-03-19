@@ -508,16 +508,19 @@ const OverviewTab = ({ data }) => {
   const expenseByCategory = financialData.expenseByCategory || {};
 
   // 카테고리별 수입/지출 설명 생성 (한글 라벨로 표시)
+  // API가 CONSULTATION·상담료 등 동의 키를 동시에 내려줄 때 동일 라벨이 중복되지 않도록 정리
   const getIncomeDescription = () => {
     const categories = Object.keys(incomeByCategory);
     if (categories.length === 0) return '상담료, 기타수입';
-    return categories.map(getIncomeCategoryLabel).join(', ');
+    const labels = categories.map(getIncomeCategoryLabel);
+    return [...new Set(labels)].join(', ');
   };
 
   const getExpenseDescription = () => {
     const categories = Object.keys(expenseByCategory);
     if (categories.length === 0) return '급여, 임대료, 관리비, 세금';
-    return categories.map(getExpenseCategoryLabel).join(', ');
+    const labels = categories.map(getExpenseCategoryLabel);
+    return [...new Set(labels)].join(', ');
   };
 
   return (

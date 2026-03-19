@@ -247,33 +247,31 @@ const ErpDashboard = ({ user: propUser }) => {
   const loadDashboardData = async () => {
     try {
       setLoading(true);
-      
-      const [itemsResponse, pendingResponse, ordersResponse, budgetsResponse] = await Promise.all([
-        fetch('/api/v1/erp/items', { credentials: 'include' }),
-        fetch('/api/v1/erp/purchase-requests/pending-admin', { credentials: 'include' }),
-        fetch('/api/v1/erp/purchase-orders', { credentials: 'include' }),
-        fetch('/api/v1/erp/budgets', { credentials: 'include' })
+
+      const [itemsRaw, pendingRaw, ordersRaw, budgetsRaw] = await Promise.all([
+        StandardizedApi.get('/api/v1/erp/items'),
+        StandardizedApi.get('/api/v1/erp/purchase-requests/pending-admin'),
+        StandardizedApi.get('/api/v1/erp/purchase-orders'),
+        StandardizedApi.get('/api/v1/erp/budgets')
       ]);
 
-      const [itemsData, pendingData, ordersData, budgetsData] = await Promise.all([
-        itemsResponse.json(),
-        pendingResponse.json(),
-        ordersResponse.json(),
-        budgetsResponse.json()
-      ]);
+      const itemsList = Array.isArray(itemsRaw) ? itemsRaw : (itemsRaw?.data ?? []);
+      const pendingList = Array.isArray(pendingRaw) ? pendingRaw : (pendingRaw?.data ?? []);
+      const ordersList = Array.isArray(ordersRaw) ? ordersRaw : (ordersRaw?.data ?? []);
+      const budgetsList = Array.isArray(budgetsRaw) ? budgetsRaw : (budgetsRaw?.data ?? []);
 
-      const totalBudget = budgetsData.data?.reduce((sum, budget) => 
-        sum + parseFloat(budget.totalBudget || 0), 0) || 0;
-      const usedBudget = budgetsData.data?.reduce((sum, budget) => 
-        sum + parseFloat(budget.usedBudget || 0), 0) || 0;
+      const totalBudget = budgetsList.reduce((sum, budget) =>
+        sum + parseFloat(budget.totalBudget || 0), 0);
+      const usedBudget = budgetsList.reduce((sum, budget) =>
+        sum + parseFloat(budget.usedBudget || 0), 0);
 
       setStats({
-        totalItems: itemsData.data?.length || 0,
-        pendingRequests: pendingData.data?.length || 0,
+        totalItems: itemsList.length,
+        pendingRequests: pendingList.length,
         approvedRequests: 0,
-        totalOrders: ordersData.data?.length || 0,
-        totalBudget: totalBudget,
-        usedBudget: usedBudget
+        totalOrders: ordersList.length,
+        totalBudget,
+        usedBudget
       });
     } catch (error) {
       console.error('대시보드 데이터 로드 실패:', error);
@@ -286,17 +284,12 @@ const ErpDashboard = ({ user: propUser }) => {
     setInitResult(null);
     setInitLoading(true);
     try {
-      const res = await fetch('/api/v1/erp/accounting/init-tenant-erp', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' }
-      });
-      const json = await res.json();
-      const data = json.data ?? json;
-      const ok = res.ok && (json.success !== false);
-      setInitResult(ok ? { ok: true, message: data?.message || '완료' } : { ok: false, message: json.message || data?.message || '실패' });
+      const json = await StandardizedApi.post('/api/v1/erp/accounting/init-tenant-erp', {});
+      const data = json?.data ?? json;
+      const ok = json?.success !== false;
+      setInitResult(ok ? { ok: true, message: data?.message || '완료' } : { ok: false, message: json?.message || data?.message || '실패' });
     } catch (e) {
-      setInitResult({ ok: false, message: e.message || '네트워크 오류' });
+      setInitResult({ ok: false, message: e?.message || '네트워크 오류' });
     } finally {
       setInitLoading(false);
     }
@@ -306,22 +299,17 @@ const ErpDashboard = ({ user: propUser }) => {
     setBackfillResult(null);
     setBackfillLoading(true);
     try {
-      const res = await fetch('/api/v1/erp/accounting/backfill-journal-entries', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' }
-      });
-      const json = await res.json();
-      const data = json.data ?? json;
-      const ok = res.ok && (json.success !== false);
-      const processed = data.processedCount ?? 0;
-      const failed = data.failedCount ?? 0;
-      const skipped = data.skippedCount ?? 0;
+      const json = await StandardizedApi.post('/api/v1/erp/accounting/backfill-journal-entries', {});
+      const data = json?.data ?? json;
+      const ok = json?.success !== false;
+      const processed = data?.processedCount ?? 0;
+      const failed = data?.failedCount ?? 0;
+      const skipped = data?.skippedCount ?? 0;
       setBackfillResult(ok
         ? { ok: true, message: `처리 ${processed}건, 스킵 ${skipped}건, 실패 ${failed}건` }
-        : { ok: false, message: json.message || '실패' });
+        : { ok: false, message: json?.message || '실패' });
     } catch (e) {
-      setBackfillResult({ ok: false, message: e.message || '네트워크 오류' });
+      setBackfillResult({ ok: false, message: e?.message || '네트워크 오류' });
     } finally {
       setBackfillLoading(false);
     }

@@ -1,9 +1,6 @@
 /**
  * GNB 빠른 액션 상수 - 역할별 빠른 액션 목록
- *
- * 경로는 LNB 폴백(`menuItems.js`)·`ADMIN_ROUTES`와 동기화.
- * @see docs/project-management/GNB_LNB_MENU_SYNCHRONIZATION_DIRECTIVE.md
- *
+ * 
  * @author CoreSolution
  * @since 2026-03-09
  */
@@ -13,13 +10,14 @@ import {
   Users,
   Settings,
   FileText,
+  Database,
   FileEdit,
   Calendar,
-  MessageCircle,
+  MessageSquare,
+  Clock,
   CalendarPlus,
-  CreditCard
+  Star
 } from 'lucide-react';
-import { ADMIN_ROUTES } from './adminRoutes';
 
 export const QUICK_ACTIONS = {
   ADMIN: [
@@ -27,35 +25,35 @@ export const QUICK_ACTIONS = {
       id: 'dashboard',
       icon: LayoutDashboard,
       label: '대시보드 보기',
-      action: ADMIN_ROUTES.DASHBOARD,
+      action: '/admin/dashboard',
       type: 'navigate'
     },
     {
       id: 'users',
       icon: Users,
       label: '사용자 관리',
-      action: ADMIN_ROUTES.USER_MANAGEMENT,
+      action: '/admin/users',
       type: 'navigate'
     },
     {
       id: 'settings',
       icon: Settings,
       label: '시스템 설정',
-      action: ADMIN_ROUTES.SYSTEM_CONFIG,
+      action: '/admin/settings',
       type: 'navigate'
     },
     {
       id: 'reports',
       icon: FileText,
-      label: '통계',
-      action: ADMIN_ROUTES.STATISTICS,
+      label: '통계 리포트',
+      action: '/admin/reports',
       type: 'navigate'
     },
     {
-      id: 'notifications',
-      icon: MessageCircle,
-      label: '알림·메시지 관리',
-      action: ADMIN_ROUTES.NOTIFICATIONS,
+      id: 'backup',
+      icon: Database,
+      label: '백업 관리',
+      action: '/admin/backup',
       type: 'navigate'
     }
   ],
@@ -64,8 +62,8 @@ export const QUICK_ACTIONS = {
       id: 'record',
       icon: FileEdit,
       label: '상담일지 작성',
-      action: '/consultant/consultation-records',
-      type: 'navigate'
+      action: 'openRecordModal',
+      type: 'modal'
     },
     {
       id: 'schedule',
@@ -80,94 +78,89 @@ export const QUICK_ACTIONS = {
       label: '내담자 관리',
       action: '/consultant/clients',
       type: 'navigate'
+    },
+    {
+      id: 'message',
+      icon: MessageSquare,
+      label: '메시지 발송',
+      action: 'openMessageModal',
+      type: 'modal'
+    },
+    {
+      id: 'vacation',
+      icon: Clock,
+      label: '휴가 신청',
+      action: 'openVacationModal',
+      type: 'modal'
     }
   ],
   CLIENT: [
     {
-      id: 'schedule',
+      id: 'booking',
       icon: CalendarPlus,
+      label: '상담 예약',
+      action: '/client/booking',
+      type: 'navigate'
+    },
+    {
+      id: 'schedule',
+      icon: Calendar,
       label: '내 일정',
       action: '/client/schedule',
       type: 'navigate'
     },
     {
-      id: 'sessions',
+      id: 'records',
       icon: FileText,
-      label: '회기 관리',
-      action: '/client/session-management',
+      label: '상담 기록',
+      action: '/client/records',
       type: 'navigate'
     },
     {
-      id: 'payment',
-      icon: CreditCard,
-      label: '결제 내역',
-      action: '/client/payment-history',
-      type: 'navigate'
-    },
-    {
-      id: 'dashboard',
-      icon: LayoutDashboard,
-      label: '대시보드',
-      action: '/client/dashboard',
-      type: 'navigate'
+      id: 'rating',
+      icon: Star,
+      label: '상담사 평가',
+      action: 'openRatingModal',
+      type: 'modal'
     }
   ],
   STAFF: [
     {
       id: 'schedule',
       icon: Calendar,
-      label: '통합 스케줄',
-      action: ADMIN_ROUTES.INTEGRATED_SCHEDULE,
+      label: '일정 관리',
+      action: '/staff/schedule',
       type: 'navigate'
     },
     {
-      id: 'users',
+      id: 'clients',
       icon: Users,
-      label: '사용자 관리',
-      action: ADMIN_ROUTES.USER_MANAGEMENT,
+      label: '내담자 관리',
+      action: '/staff/clients',
       type: 'navigate'
     },
     {
-      id: 'consultation-logs',
+      id: 'records',
       icon: FileText,
-      label: '상담일지 조회',
-      action: ADMIN_ROUTES.CONSULTATION_LOGS,
+      label: '기록 조회',
+      action: '/staff/records',
       type: 'navigate'
+    },
+    {
+      id: 'notification',
+      icon: MessageSquare,
+      label: '알림 발송',
+      action: 'openNotificationModal',
+      type: 'modal'
     }
   ]
 };
 
-/** Spring Security 등 `ROLE_ADMIN` 형태·레거시 관리자 역할 → QUICK_ACTIONS 키(4역할)로 정규화 */
-export const normalizeRoleForQuickActions = (role) => {
-  if (role == null || role === '') {
-    return '';
-  }
-  let r = String(role).toUpperCase().trim();
-  if (r.startsWith('ROLE_')) {
-    r = r.slice(5);
-  }
-  if (Object.hasOwn(QUICK_ACTIONS, r)) {
-    return r;
-  }
-  const adminAliases = new Set([
-    'TENANT_ADMIN',
-    'SUPER_ADMIN',
-    'PRINCIPAL',
-    'OWNER',
-    'BRANCH_SUPER_ADMIN',
-    'BRANCH_MANAGER',
-    'HQ_ADMIN'
-  ]);
-  if (adminAliases.has(r) || (r.includes('ADMIN') && r !== 'CONSULTANT')) {
-    return 'ADMIN';
-  }
-  return r;
-};
-
 export const getQuickActionsForRole = (role) => {
-  const key = normalizeRoleForQuickActions(role);
-  if (!key) {
+  if (!role) {
     return [];
   }
-  return QUICK_ACTIONS[key] || [];
+  
+  const normalizedRole = role.toUpperCase();
+  return QUICK_ACTIONS[normalizedRole] || [];
 };

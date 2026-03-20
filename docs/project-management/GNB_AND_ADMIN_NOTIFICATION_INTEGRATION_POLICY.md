@@ -2,8 +2,7 @@
 
 **목표**: (1) GNB 공통 알림과 메시지 기능 통합 (2) 관리자 페이지에서 시스템 공지와 메시지 관리 통합·레이아웃 리뉴얼·고도화  
 **기획 산출**: 통합 정책·API 정리·분배실행 표  
-**참조**: `GNB_AND_ADMIN_NOTIFICATION_COMPONENT_PROPOSAL.md`, `docs/design-system/GNB_AND_ADMIN_NOTIFICATION_UI_SPEC.md`  
-**연계**: GNB **빠른 액션·LNB·DB 메뉴** 동기화·카테고리 재정비는 기획 지휘서 **[GNB_LNB_MENU_SYNCHRONIZATION_DIRECTIVE.md](./GNB_LNB_MENU_SYNCHRONIZATION_DIRECTIVE.md)** 를 따름.
+**참조**: `GNB_AND_ADMIN_NOTIFICATION_COMPONENT_PROPOSAL.md`, `docs/design-system/GNB_AND_ADMIN_NOTIFICATION_UI_SPEC.md`
 
 ---
 

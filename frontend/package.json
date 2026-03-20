@@ -73,6 +73,7 @@
     "lint:check": "eslint src --ext .js,.jsx,.ts,.tsx --max-warnings 0",
     "format": "prettier --write src/**/*.{js,jsx,ts,tsx,css,scss,json,md}",
     "format:check": "prettier --check src/**/*.{js,jsx,ts,tsx,css,scss,json,md}",
+    "verify:quick-action-routes": "node scripts/verify-quick-action-routes.mjs",
     "validate-css": "node scripts/validate-css-classes.js",
     "scan-css": "node scripts/scan-css-classes.js",
     "generate-css-docs": "node scripts/generate-css-docs.js",

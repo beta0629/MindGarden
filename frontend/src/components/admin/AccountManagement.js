@@ -1,9 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
-import MGButton from '../../components/common/MGButton'; // 임시 비활성화
 import notificationManager from '../../utils/notification';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
-import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import './AccountManagement.css';
 import AccountForm from './components/AccountForm';
 import AccountTable from './components/AccountTable';
@@ -16,6 +13,18 @@ import {
   ACCOUNT_MESSAGES,
   ACCOUNT_PAGE_TITLES
 } from '../../constants/account';
+
+const FETCH_CREDENTIALS = 'include';
+
+/**
+ * API가 배열을 직접 주거나 ApiResponse({ data: [] }) 형태일 때 모두 안전하게 배열로 정규화
+ */
+const normalizeListResponse = (payload) => {
+  if (payload == null) return [];
+  if (Array.isArray(payload)) return payload;
+  if (typeof payload === 'object' && Array.isArray(payload.data)) return payload.data;
+  return [];
+};
 
 const AccountManagement = () => {
   const [accounts, setAccounts] = useState([]);
@@ -43,13 +52,18 @@ const AccountManagement = () => {
     try {
       setLoading(true);
       // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-      const response = await fetch(ACCOUNT_API_ENDPOINTS.ACTIVE);
+      const response = await fetch(ACCOUNT_API_ENDPOINTS.ACTIVE, {
+        credentials: FETCH_CREDENTIALS
+      });
       if (response.ok) {
-        const data = await response.json();
-        setAccounts(data);
+        const raw = await response.json();
+        setAccounts(normalizeListResponse(raw));
+      } else {
+        notificationManager.show(ACCOUNT_MESSAGES.ERROR.LOAD_FAILED, 'error');
       }
     } catch (error) {
       console.error(ACCOUNT_MESSAGES.ERROR.LOAD_FAILED, error);
+      notificationManager.show(ACCOUNT_MESSAGES.ERROR.LOAD_FAILED, 'error');
     } finally {
       setLoading(false);
     }
@@ -57,10 +71,12 @@ const AccountManagement = () => {
 
   const loadBanks = async() => {
     try {
-      const response = await fetch(ACCOUNT_API_ENDPOINTS.BANKS);
+      const response = await fetch(ACCOUNT_API_ENDPOINTS.BANKS, {
+        credentials: FETCH_CREDENTIALS
+      });
       if (response.ok) {
-        const data = await response.json();
-        setBanks(data);
+        const raw = await response.json();
+        setBanks(normalizeListResponse(raw));
       }
     } catch (error) {
       console.error(ACCOUNT_MESSAGES.ERROR.BANK_LOAD_FAILED, error);
@@ -81,7 +97,7 @@ const AccountManagement = () => {
         method,
         headers: {
           [HTTP_HEADERS.CONTENT_TYPE]: HTTP_HEADERS.APPLICATION_JSON },
-        credentials: 'include',
+        credentials: FETCH_CREDENTIALS,
         body: JSON.stringify(formData)
       });
 
@@ -126,7 +142,7 @@ const AccountManagement = () => {
       setLoading(true);
       const response = await fetch(`${ACCOUNT_API_ENDPOINTS.BASE}/${id}`, {
         method: HTTP_METHODS.DELETE,
-        credentials: 'include'
+        credentials: FETCH_CREDENTIALS
       });
 
       if (response.ok) {
@@ -149,7 +165,7 @@ const AccountManagement = () => {
       setLoading(true);
       const response = await fetch(`${ACCOUNT_API_ENDPOINTS.BASE}/${id}/toggle-status`, {
         method: HTTP_METHODS.PATCH,
-        credentials: 'include'
+        credentials: FETCH_CREDENTIALS
       });
 
       if (response.ok) {
@@ -171,7 +187,7 @@ const AccountManagement = () => {
       setLoading(true);
       const response = await fetch(`${ACCOUNT_API_ENDPOINTS.BASE}/${id}/set-primary`, {
         method: HTTP_METHODS.PATCH,
-        credentials: 'include'
+        credentials: FETCH_CREDENTIALS
       });
 
       if (response.ok) {
@@ -224,7 +240,8 @@ const AccountManagement = () => {
       <div className={ ACCOUNT_CSS_CLASSES.ACCOUNT_MANAGEMENT }>
         <div className={ ACCOUNT_CSS_CLASSES.ACCOUNT_HEADER }>
           <h2>{ ACCOUNT_PAGE_TITLES.MAIN }</h2>
-          <button className="mg-button" variant="primary" className="btn btn-primary" onClick={ () => setShowForm(true) }>{ ACCOUNT_BUTTON_TEXT.REGISTER }
+          <button type="button" className="mg-button btn btn-primary" onClick={() => setShowForm(true)}>
+            {ACCOUNT_BUTTON_TEXT.REGISTER}
           </button>
         </div>
 

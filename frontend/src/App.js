@@ -498,7 +498,11 @@ function AppContent() {
             />
             <Route path="/admin/common-codes" element={<CommonCodeManagement />} />
             <Route path="/admin/sessions" element={<SessionManagement />} />
-            <Route path="/admin/accounts" element={<AccountManagement />} />
+            <Route path="/admin/accounts" element={
+              <ProtectedRoute requiredRoles={[USER_ROLES.ADMIN, USER_ROLES.STAFF]}>
+                <AccountManagement />
+              </ProtectedRoute>
+            } />
             <Route path="/admin/user-management" element={
               <ProtectedRoute requiredRoles={['ADMIN', 'STAFF']}>
                 <UserManagementPage />

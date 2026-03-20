@@ -9,7 +9,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Bell, MessageSquare, Info } from 'lucide-react';
 import { NavIcon, NotificationBadge } from '../atoms';
 import { useNotification } from '../../../contexts/NotificationContext';
@@ -24,6 +24,7 @@ const TAB_MESSAGES = 'messages';
 const LIST_SIZE = 10;
 
 const NotificationDropdown = () => {
+  const navigate = useNavigate();
   const { user } = useSession();
   const {
     unreadSystemCount,
@@ -164,33 +165,44 @@ const NotificationDropdown = () => {
   };
 
   const handleSystemItemClick = async (item) => {
+    const id = item?.id;
+    if (id == null) return;
+
     if (!item.isRead) {
       try {
-        await markSystemNotificationAsRead(item.id);
+        await markSystemNotificationAsRead(id);
         refreshNotifications();
+        await loadUnreadCount();
         setSystemList((prev) =>
-          prev.map((n) => (n.id === item.id ? { ...n, isRead: true } : n))
+          prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
         );
       } catch (err) {
         console.error('공지 읽음 처리 실패:', err);
       }
     }
     setIsOpen(false);
+    // 통합 알림 페이지에서 상세 모달 자동 오픈 (GET 상세 시 서버에서도 읽음 처리됨)
+    navigate('/notifications', { state: { openSystemNotificationId: id } });
   };
 
   const handleMessageItemClick = async (item) => {
+    const mid = item?.id;
+    if (mid == null) return;
+
     if (!item.isRead) {
       try {
-        await markMessageAsRead(item.id);
+        await markMessageAsRead(mid);
         refreshNotifications();
+        await loadUnreadCount();
         setMessageList((prev) =>
-          prev.map((m) => (m.id === item.id ? { ...m, isRead: true } : m))
+          prev.map((m) => (m.id === mid ? { ...m, isRead: true } : m))
         );
       } catch (err) {
         console.error('메시지 읽음 처리 실패:', err);
       }
     }
     setIsOpen(false);
+    navigate('/notifications', { state: { openConsultationMessageId: mid } });
   };
 
   const formatTime = (dateString) => {

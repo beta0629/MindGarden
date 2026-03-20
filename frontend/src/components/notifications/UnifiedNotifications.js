@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet } from '../../utils/ajax';
 import { Bell, MessageSquare, AlertCircle, Info, AlertTriangle } from 'lucide-react';
@@ -15,7 +16,9 @@ import '../../styles/unified-design-tokens.css';
  */
 const UnifiedNotifications = () => {
   const { user, isLoggedIn } = useSession();
-  
+  const location = useLocation();
+  const navigate = useNavigate();
+
   const [activeTab, setActiveTab] = useState('system'); // 'system' or 'messages'
   const [systemNotifications, setSystemNotifications] = useState([]);
   const [messages, setMessages] = useState([]);
@@ -204,6 +207,57 @@ const UnifiedNotifications = () => {
       loadMessages();
     }
   }, [isLoggedIn, user?.id]);
+
+  /** GNB 알림 드롭다운 등에서 state로 전달된 공지/메시지 ID → 상세 모달 자동 오픈 */
+  useEffect(() => {
+    const openSystemId = location.state?.openSystemNotificationId;
+    const openMessageId = location.state?.openConsultationMessageId;
+    if (!isLoggedIn || (!openSystemId && !openMessageId)) {
+      return;
+    }
+
+    let cancelled = false;
+    (async () => {
+      try {
+        if (openSystemId != null) {
+          setActiveTab('system');
+          const response = await apiGet(`/api/v1/system-notifications/${openSystemId}`);
+          if (!cancelled && response) {
+            setSelectedItem({ type: 'system', data: response });
+          }
+          if (!cancelled) {
+            window.dispatchEvent(new Event('notification-read'));
+          }
+        } else if (openMessageId != null) {
+          setActiveTab('messages');
+          const response = await apiGet(`/api/v1/consultation-messages/${openMessageId}`);
+          if (!cancelled && response) {
+            setSelectedItem({ type: 'message', data: response });
+          }
+          if (!cancelled) {
+            window.dispatchEvent(new Event('message-read'));
+          }
+        }
+      } catch (error) {
+        if (!cancelled) {
+          console.error('알림 딥링크 상세 로드 실패:', error);
+        }
+      } finally {
+        if (!cancelled) {
+          navigate('/notifications', { replace: true, state: {} });
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    isLoggedIn,
+    location.state?.openSystemNotificationId,
+    location.state?.openConsultationMessageId,
+    navigate
+  ]);
 
   if (!isLoggedIn) {
     return (

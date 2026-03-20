@@ -231,7 +231,8 @@ export const NotificationProvider = ({ children }) => {
   const markSystemNotificationAsRead = async (notificationId) => {
     try {
       console.log('📢 공지 읽음 처리 시작:', notificationId);
-      await apiGet(`/api/v1/system-notifications/${notificationId}/read`);
+      // 백엔드: SystemNotificationController @PostMapping("/{notificationId}/read")
+      await apiPost(`/api/v1/system-notifications/${notificationId}/read`, {});
       // apiGet은 data만 반환. 에러 시 throw되므로 여기 도달하면 성공으로 간주
       setSystemNotifications(prev => prev.filter(n => n.id !== notificationId));
       await loadUnreadSystemCount();

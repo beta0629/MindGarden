@@ -18,7 +18,7 @@ import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useWidget } from '../../../hooks/useWidget';
 import BaseWidget from './BaseWidget';
-import { apiGet } from '../../../utils/ajax';
+import { apiPost } from '../../../utils/ajax';
 import './Widget.css';
 
 const NotificationWidget = ({ widget, user }) => {
@@ -78,7 +78,7 @@ const NotificationWidget = ({ widget, user }) => {
     if (!notification.isRead && notification.id) {
       try {
         // 실제 API 엔드포인트: /api/v1/system-notifications/{notificationId}/read
-        await apiGet(`/api/v1/system-notifications/${notification.id}/read`);
+        await apiPost(`/api/v1/system-notifications/${notification.id}/read`, {});
         setLocalNotifications(prev => prev.map(n => 
           n.id === notification.id ? { ...n, isRead: true } : n
         ));

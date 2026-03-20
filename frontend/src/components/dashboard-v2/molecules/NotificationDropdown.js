@@ -15,6 +15,7 @@ import { NavIcon, NotificationBadge } from '../atoms';
 import { useNotification } from '../../../contexts/NotificationContext';
 import { useSession } from '../../../contexts/SessionContext';
 import StandardizedApi from '../../../utils/standardizedApi';
+import { toDisplayString } from '../../../utils/safeDisplay';
 import { useDropdownPosition } from '../hooks/useDropdownPosition';
 import '../styles/dropdown-common.css';
 import './NotificationDropdown.css';

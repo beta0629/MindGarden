@@ -8,6 +8,7 @@ import React, { useState } from 'react';
 // // import MGButton from '../components/common/MGButton'; // 임시 비활성화
 import MGCard from '../components/common/MGCard'; // 임시 비활성화
 import MGPageHeader from '../components/common/MGPageHeader';
+import SafeText from '../components/common/SafeText';
 import './PremiumDesignSample.css';
 
 const PremiumDesignSample = () => {
@@ -113,7 +114,9 @@ const PremiumDesignSample = () => {
                 </div>
                 <div className="stat-info">
                   <div className="stat-value">{stat.value}</div>
-                  <div className="stat-label">{stat.label}</div>
+                  <div className="stat-label">
+                    <SafeText>{stat.label}</SafeText>
+                  </div>
                   <div className={`stat-change ${stat.trend}`}>
                     {stat.change}
                   </div>
@@ -143,9 +146,13 @@ const PremiumDesignSample = () => {
                 <div className="feature-icon" style={{ background: feature.color }}>
                   {feature.icon}
                 </div>
-                <h3>{feature.title}</h3>
+                <h3>
+                  <SafeText tag="span">{feature.title}</SafeText>
+                </h3>
               </div>
-              <p className="feature-description">{feature.description}</p>
+              <p className="feature-description">
+                <SafeText>{feature.description}</SafeText>
+              </p>
               <div className="feature-actions">
                 <button className="mg-button" variant="ghost" size="small">
                   자세히 보기

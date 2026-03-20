@@ -20,6 +20,8 @@ import Button from '../ui/Button/Button';
 import Avatar from '../common/Avatar';
 import BadgeSelect from '../common/BadgeSelect';
 import { DEFAULT_MAPPING_CONFIG } from '../../constants/mapping';
+import { toDisplayString } from '../../utils/safeDisplay';
+import SafeText from '../common/SafeText';
 import '../schedule/ScheduleB0KlA.css';
 import './MappingCreationModal.css';
 
@@ -307,7 +309,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
         localStorage.setItem('lastUsedPaymentMethod', paymentInfo.paymentMethod);
       }
       notificationManager.success(
-        `매칭이 완료되었습니다! 상담사: ${selectedConsultant.name}, 내담자: ${selectedClient.name}`
+        `매칭이 완료되었습니다! 상담사: ${toDisplayString(selectedConsultant.name)}, 내담자: ${toDisplayString(selectedClient.name)}`
       );
       setStep(5);
       onMappingCreated?.();
@@ -421,7 +423,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                   <div className="mg-v2-ad-stepper__icon">
                     {isCompleted ? <Check size={18} strokeWidth={2.5} /> : <Icon size={18} strokeWidth={isCurrent ? 2.5 : 2} />}
                   </div>
-                  <span className="mg-v2-ad-stepper__title">{s.label}</span>
+                  <SafeText className="mg-v2-ad-stepper__title" tag="span">{s.label}</SafeText>
                 </div>
                 {index < STEPS_CONFIG.length - 1 && (
                   <div className={`mg-v2-ad-stepper__line ${isCompleted ? 'completed' : ''}`} />
@@ -456,12 +458,12 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                   >
                     <Avatar
                       profileImageUrl={c.profileImageUrl}
-                      displayName={c.name}
+                      displayName={toDisplayString(c.name)}
                       className="mg-v2-mapping-creation-modal__avatar"
                     />
                     <div className="mg-v2-mapping-creation-modal__card-info">
-                      <strong>{c.name}</strong>
-                      <span>{c.email}</span>
+                      <strong><SafeText tag="span">{c.name}</SafeText></strong>
+                      <span>{toDisplayString(c.email)}</span>
                     </div>
                   </button>
                 ))
@@ -511,7 +513,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                     }))}
                   >
                     <Package size={24} />
-                    <strong>{pkg.label}</strong>
+                    <strong><SafeText tag="span">{pkg.label}</SafeText></strong>
                     <span>{pkg.sessions}회기 · {pkg.price.toLocaleString()}원</span>
                   </button>
                 ))}
@@ -571,12 +573,12 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                   >
                     <Avatar
                       profileImageUrl={c.profileImageUrl}
-                      displayName={c.name}
+                      displayName={toDisplayString(c.name)}
                       className="mg-v2-mapping-creation-modal__avatar"
                     />
                     <div className="mg-v2-mapping-creation-modal__card-info">
-                      <strong>{c.name}</strong>
-                      <span>{c.email}</span>
+                      <strong><SafeText tag="span">{c.name}</SafeText></strong>
+                      <span>{toDisplayString(c.email)}</span>
                     </div>
                   </button>
                 ))
@@ -596,17 +598,17 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
             <h3 className="mg-v2-mapping-creation-modal__step-title">결제 정보</h3>
             <div className="mg-v2-mapping-creation-modal__summary-bar">
               <span className="mg-v2-mapping-creation-modal__summary-segment mg-v2-mapping-creation-modal__summary-segment--person">
-                <User size={16} /> {selectedConsultant?.name}
+                <User size={16} /> {toDisplayString(selectedConsultant?.name)}
               </span>
               <span className="mg-v2-mapping-creation-modal__summary-divider" aria-hidden="true">
                 <Link2 size={16} />
               </span>
               <span className="mg-v2-mapping-creation-modal__summary-segment mg-v2-mapping-creation-modal__summary-segment--person">
-                <UserCircle size={16} /> {selectedClient?.name}
+                <UserCircle size={16} /> {toDisplayString(selectedClient?.name)}
               </span>
               <span className="mg-v2-mapping-creation-modal__summary-separator">|</span>
               <span className="mg-v2-mapping-creation-modal__summary-segment mg-v2-mapping-creation-modal__summary-segment--product">
-                {paymentInfo.packageName} · {paymentInfo.totalSessions}회
+                {toDisplayString(paymentInfo.packageName)} · {paymentInfo.totalSessions}회
               </span>
               <span className="mg-v2-mapping-creation-modal__summary-segment mg-v2-mapping-creation-modal__summary-segment--amount">
                 {paymentInfo.packagePrice != null ? `${Number(paymentInfo.packagePrice).toLocaleString()}원` : 'N/A'}
@@ -695,9 +697,9 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
             </div>
             <h3>매칭이 완료되었습니다!</h3>
             <div className="mg-v2-mapping-creation-modal__completion-summary">
-              <p><strong>상담사:</strong> {selectedConsultant?.name}</p>
-              <p><strong>내담자:</strong> {selectedClient?.name}</p>
-              <p><strong>패키지:</strong> {paymentInfo.packageName}</p>
+              <p><strong>상담사:</strong> {toDisplayString(selectedConsultant?.name)}</p>
+              <p><strong>내담자:</strong> {toDisplayString(selectedClient?.name)}</p>
+              <p><strong>패키지:</strong> {toDisplayString(paymentInfo.packageName)}</p>
               <p><strong>세션/가격:</strong> {paymentInfo.totalSessions}회 · {paymentInfo.packagePrice?.toLocaleString()}원</p>
             </div>
           </section>

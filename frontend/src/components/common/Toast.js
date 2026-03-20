@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import notificationManager from '../../utils/notification';
+import { toDisplayString } from '../../utils/safeDisplay';
 import './Toast.css';
 
 /**
@@ -64,7 +65,7 @@ const Toast = () => {
                             {getIcon(notification.type)}
                         </div>
                         <div className="toast-message">
-                            {notification.message}
+                            {toDisplayString(notification.message)}
                         </div>
                         <button 
                             className="toast-close"

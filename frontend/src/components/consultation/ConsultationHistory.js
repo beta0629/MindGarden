@@ -12,6 +12,7 @@ import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import notificationManager from '../../utils/notification';
 import './ConsultationHistory.css';
+import SafeText from '../common/SafeText';
 
 const ConsultationHistory = () => {
   const navigate = useNavigate();
@@ -277,14 +278,14 @@ const ConsultationHistory = () => {
                     {consultation.title && (
                       <div className="detail-item">
                         <i className="bi bi-chat-text"></i>
-                        <span>{consultation.title}</span>
+                        <span><SafeText>{consultation.title}</SafeText></span>
                       </div>
                     )}
                     
                     {consultation.description && (
                       <div className="detail-item description">
                         <i className="bi bi-file-text"></i>
-                        <span>{consultation.description}</span>
+                        <span><SafeText>{consultation.description}</SafeText></span>
                       </div>
                     )}
                   </div>

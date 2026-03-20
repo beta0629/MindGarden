@@ -1,5 +1,5 @@
 /**
- * Chart Widget
+ * Chart Widget - 표준화된 위젯
 /**
  * 차트를 표시하는 위젯
 /**
@@ -7,105 +7,99 @@
 /**
  * @author CoreSolution
 /**
- * @version 1.0.0
+ * @version 2.0.0 (표준화 업그레이드)
 /**
  * @since 2025-11-21
  */
 
-import React, { useState, useEffect } from 'react';
-// import UnifiedLoading from '../../../components/common/UnifiedLoading'; // 임시 비활성화
-import { apiGet } from '../../../utils/ajax';
+import React from 'react';
+import { useWidget } from '../../../hooks/useWidget';
+import BaseWidget from './BaseWidget';
+import { WIDGET_CONSTANTS } from '../../../constants/widgetConstants';
 import './Widget.css';
+import SafeText from '../../common/SafeText';
 
 const ChartWidget = ({ widget, user }) => {
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  
+  // 표준화된 위젯 훅 사용
+  const {
+    data,
+    loading,
+    error,
+    hasData,
+    isEmpty,
+    refresh,
+    formatValue
+  } = useWidget(widget, user, {
+    immediate: !!(user && user.id),
+    cache: true,
+    retryCount: 3
+  });
+
   const config = widget.config || {};
-  const dataSource = config.dataSource || {};
   const chartType = config.chartType || 'line';
-  
-  useEffect(() => {
-    if (dataSource.type === 'api' && dataSource.url) {
-      loadData();
-    } else {
-      setLoading(false);
-    }
-  }, []);
-  
-  const loadData = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const response = await apiGet(dataSource.url, dataSource.params || {});
-      
-      if (response) {
-        setData(response);
-      }
-    } catch (err) {
-      console.error('ChartWidget 데이터 로드 실패:', err);
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-  
+
+  // 차트 렌더링
   const renderChart = () => {
-    // 실제 차트 라이브러리(Chart.js, Recharts 등)를 사용하여 구현
-    // 여기서는 간단한 플레이스홀더만 표시
-    
-    if (!data) {
+    if (isEmpty) {
       return (
-        <div className="chart-placeholder">
-          <p>차트 데이터가 없습니다.</p>
+        <div className={WIDGET_CONSTANTS.CSS_CLASSES.MG_TEXT_MUTED}>
+          표시할 차트 데이터가 없습니다.
         </div>
       );
     }
     
+    if (!hasData) {
+      return null; // BaseWidget에서 빈 상태 처리
+    }
+
+    // 간단한 차트 플레이스홀더 (실제 차트 라이브러리 연동 필요)
     return (
       <div className="chart-container">
         <div className="chart-placeholder">
-          <p>차트 타입: {chartType}</p>
-          <p>데이터 포인트: {Array.isArray(data) ? data.length : 'N/A'}</p>
-          <small>차트 라이브러리 통합 필요 (Chart.js, Recharts 등)</small>
+          <i className="bi bi-bar-chart-line"></i>
+          <p>📊 {chartType.toUpperCase()} 차트</p>
+          <p className="chart-data-info">
+            데이터 포인트: {Array.isArray(data) ? data.length : '1'}개
+          </p>
+          {/* TODO: 실제 차트 라이브러리 (Chart.js, D3.js 등) 연동 */}
+          <div className="chart-mock">
+            {Array.isArray(data) ? (
+              <div className="data-preview">
+                {data.slice(0, 3).map((item, index) => (
+                  <div key={index} className="data-item">
+                    <span className="data-label"><SafeText fallback={`항목 ${index + 1}`}>{item.label}</SafeText></span>
+                    <span className="data-value">{formatValue(item.value || item)}</span>
+                  </div>
+                ))}
+                {data.length > 3 && <div className="data-more">외 {data.length - 3}개 항목...</div>}
+              </div>
+            ) : (
+              <div className="single-data">
+                <span className="data-value">{formatValue(data)}</span>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     );
   };
-  
-  if (loading) {
-    return (
-      <div className="widget widget-chart">
-        <div className="widget-title">{config.title || '차트'}</div>
-        <div className="mg-loading">로딩중...</div>
-      </div>
-    );
-  }
-  
-  if (error) {
-    return (
-      <div className="widget widget-chart widget-error">
-        <div className="widget-title">{config.title || '차트'}</div>
-        <div className="widget-error-message">{error}</div>
-      </div>
-    );
-  }
-  
+
   return (
-    <div className="widget widget-chart">
-      <div className="widget-header">
-        <div className="widget-title">{config.title || '차트'}</div>
-      </div>
-      <div className="widget-body">
+    <BaseWidget
+      widget={widget}
+      user={user}
+      loading={loading}
+      error={error}
+      isEmpty={isEmpty}
+      onRefresh={refresh}
+      title={widget.config?.title || WIDGET_CONSTANTS.DEFAULT_TITLES.CHART}
+      subtitle={widget.config?.subtitle || ''}
+    >
+      <div className={WIDGET_CONSTANTS.CSS_CLASSES.WIDGET_CONTENT}>
         {renderChart()}
       </div>
-    </div>
+    </BaseWidget>
   );
 };
 
 export default ChartWidget;
-
-
-

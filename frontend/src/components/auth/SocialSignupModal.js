@@ -6,6 +6,7 @@ import { userAPI } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 import PrivacyConsentModal from '../common/PrivacyConsentModal';
 import MGButton from '../common/MGButton';
+import { toDisplayString } from '../../utils/safeDisplay';
 import '../../styles/auth/social-signup-modal.css';
 
 const SocialSignupModal = ({ 
@@ -351,7 +352,9 @@ const SocialSignupModal = ({
                     required
                     placeholder="이름을 입력하세요"
                   />
-                  {errors.name && <span className="error-message">{errors.name}</span>}
+                  {errors.name && (
+                    <span className="error-message">{toDisplayString(errors.name)}</span>
+                  )}
                 </div>
                 
                 <div className="form-group">

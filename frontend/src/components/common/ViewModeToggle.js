@@ -10,6 +10,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { LayoutGrid, Grid2X2, List } from 'lucide-react';
+import { toDisplayString } from '../../utils/safeDisplay';
 
 /** 기본 옵션: 큰 카드 / 작은 카드 / 리스트 (문서 §3.3) */
 const DEFAULT_OPTIONS = [
@@ -45,7 +46,7 @@ function ViewModeToggle({
       {options.map((opt) => {
         const Icon = opt.icon;
         const isActive = viewMode === opt.value;
-        const title = opt.title ?? opt.label;
+        const title = toDisplayString(opt.title ?? opt.label);
         return (
           <button
             key={opt.value}
@@ -53,7 +54,7 @@ function ViewModeToggle({
             className={`mg-v2-ad-b0kla__pill ${isActive ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
             onClick={() => onViewModeChange(opt.value)}
             aria-pressed={isActive}
-            aria-label={opt.label}
+            aria-label={toDisplayString(opt.label)}
             title={title}
           >
             <Icon size={16} />

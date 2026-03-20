@@ -21,6 +21,7 @@ import {
   getAcademyWidgetTypes,
   getErpWidgetTypes
 } from '../dashboard/widgets/WidgetRegistry';
+import { toDisplayString } from '../../utils/safeDisplay';
 import { 
   FaGripVertical, 
   FaTrash, 
@@ -209,7 +210,7 @@ const ModernDashboardEditor = ({
                   {WIDGET_NAMES[widget.type] || widget.type}
                 </div>
                 <div className="compact-widget-category">
-                  {categoryInfo.label}
+                  {toDisplayString(categoryInfo.label)}
                 </div>
                 <div className="compact-add-btn">
                   <FaPlus />
@@ -279,7 +280,7 @@ const ModernDashboardEditor = ({
                             {WIDGET_NAMES[widget.type] || widget.type}
                           </h4>
                           <span className={`widget-category ${categoryInfo.cssClass || ''}`}>
-                            {categoryInfo.label}
+                            {toDisplayString(categoryInfo.label)}
                           </span>
                         </div>
                       </div>

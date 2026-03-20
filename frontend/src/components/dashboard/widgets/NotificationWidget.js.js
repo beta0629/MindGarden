@@ -1,5 +1,5 @@
 /**
- * Notification Widget
+ * Notification Widget - 표준화된 위젯
 /**
  * 알림 목록을 표시하는 범용 위젯
 /**
@@ -9,76 +9,70 @@
 /**
  * @author CoreSolution
 /**
- * @version 1.0.0
+ * @version 2.0.0 (위젯 표준화 업그레이드)
 /**
- * @since 2025-11-22
+ * @since 2025-11-30
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { apiGet, apiPost } from '../../../utils/ajax';
-// import UnifiedLoading from '../../../components/common/UnifiedLoading'; // 임시 비활성화
+import { useWidget } from '../../../hooks/useWidget';
+import BaseWidget from './BaseWidget';
+import { apiPost } from '../../../utils/ajax';
 import './Widget.css';
+import SafeText from '../../common/SafeText';
 
 const NotificationWidget = ({ widget, user }) => {
   const navigate = useNavigate();
-  const [notifications, setNotifications] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [unreadCount, setUnreadCount] = useState(0);
+  const [localNotifications, setLocalNotifications] = useState([]);
   
   const config = widget.config || {};
-  const dataSource = config.dataSource || {};
   const maxItems = config.maxItems || 5;
   
-  useEffect(() => {
-    if (dataSource.type === 'api' && dataSource.url) {
-      loadNotifications();
-      
-      if (dataSource.refreshInterval) {
-        const interval = setInterval(loadNotifications, dataSource.refreshInterval);
-        return () => clearInterval(interval);
+  // 데이터 소스 설정 with transform
+  const widgetWithDataSource = useMemo(() => ({
+    ...widget,
+    config: {
+      ...config,
+      dataSource: {
+        ...config.dataSource,
+        transform: (response) => {
+          if (response && response.success) {
+            const notificationList = response.data || [];
+            return Array.isArray(notificationList) ? notificationList.slice(0, maxItems) : [];
+          } else if (response) {
+            const notificationList = response.notifications || response.data || response || [];
+            return Array.isArray(notificationList) ? notificationList.slice(0, maxItems) : [];
+          }
+          return [];
+        }
       }
-    } else if (config.notifications && Array.isArray(config.notifications)) {
-      setNotifications(config.notifications);
-      setUnreadCount(config.notifications.filter(n => !n.isRead).length);
-      setLoading(false);
-    } else {
-      setLoading(false);
     }
-  }, []);
+  }), [widget, config, maxItems]);
   
-  const loadNotifications = async () => {
-    try {
-      setLoading(true);
-      
-      // 실제 API 엔드포인트: /api/v1/system-notifications/active
-      const url = dataSource.url || '/api/v1/system-notifications/active';
-      const params = { ...dataSource.params };
-      
-      const response = await apiGet(url, params);
-      
-      if (response && response.success) {
-        // SystemNotificationController 응답 형식: { data: [...] }
-        const notificationList = response.data || [];
-        setNotifications(Array.isArray(notificationList) ? notificationList.slice(0, maxItems) : []);
-        setUnreadCount(notificationList.filter(n => !n.isRead).length);
-      } else if (response) {
-        // 다른 응답 형식 지원
-        const notificationList = response.notifications || response.data || response || [];
-        setNotifications(Array.isArray(notificationList) ? notificationList.slice(0, maxItems) : []);
-        setUnreadCount(notificationList.filter(n => !n.isRead).length);
-      } else {
-        setNotifications([]);
-        setUnreadCount(0);
-      }
-    } catch (err) {
-      console.error('NotificationWidget 데이터 로드 실패:', err);
-      setNotifications([]);
-      setUnreadCount(0);
-    } finally {
-      setLoading(false);
+  // 표준화된 위젯 훅 사용
+  const {
+    data: notifications,
+    loading,
+    error,
+    hasData,
+    isEmpty,
+    refresh
+  } = useWidget(widgetWithDataSource, user, {
+    immediate: !!(user && user.id),
+    cache: true,
+    retryCount: 3
+  });
+  
+  // 로컬 상태 초기화
+  useMemo(() => {
+    if (notifications && Array.isArray(notifications)) {
+      setLocalNotifications(notifications);
     }
-  };
+  }, [notifications]);
+  
+  const displayNotifications = localNotifications.length > 0 ? localNotifications : (notifications || []);
+  const unreadCount = displayNotifications.filter(n => !n.isRead).length;
   
   const handleNotificationClick = async (notification) => {
     // 읽음 처리
@@ -86,10 +80,9 @@ const NotificationWidget = ({ widget, user }) => {
       try {
         // 실제 API 엔드포인트: /api/v1/system-notifications/{notificationId}/read
         await apiPost(`/api/v1/system-notifications/${notification.id}/read`, {});
-        setNotifications(prev => prev.map(n => 
+        setLocalNotifications(prev => prev.map(n => 
           n.id === notification.id ? { ...n, isRead: true } : n
         ));
-        setUnreadCount(prev => Math.max(0, prev - 1));
       } catch (err) {
         console.error('알림 읽음 처리 실패:', err);
       }
@@ -127,60 +120,50 @@ const NotificationWidget = ({ widget, user }) => {
     return date.toLocaleDateString('ko-KR');
   };
   
-  if (loading && notifications.length === 0) {
-    return (
-      <div className="widget widget-notification">
-        <div className="mg-loading">로딩중...</div>
-      </div>
-    );
-  }
-  
-  const displayNotifications = notifications.slice(0, maxItems);
+  // 헤더 액션 설정
+  const headerActions = unreadCount > 0 ? (
+    <button className="widget-view-all" onClick={handleViewAll}>
+      {unreadCount > maxItems ? `전체 보기 (+${unreadCount - maxItems})` : '전체 보기'}
+    </button>
+  ) : null;
   
   return (
-    <div className="widget widget-notification">
-      <div className="widget-header">
-        <div className="widget-title">
-          <i className="bi bi-bell"></i>
-          {config.title || '알림'}
-          {unreadCount > 0 && (
-            <span className="widget-badge widget-badge-danger">{unreadCount}</span>
-          )}
-        </div>
-        {unreadCount > 0 && (
-          <button className="widget-view-all" onClick={handleViewAll}>
-            {unreadCount > maxItems ? `전체 보기 (+${unreadCount - maxItems})` : '전체 보기'}
-          </button>
-        )}
-      </div>
-      <div className="widget-body">
-        {displayNotifications.length > 0 ? (
-          <div className="notification-list">
-            {displayNotifications.map((notification, index) => (
-              <div
-                key={notification.id || index}
-                className={`notification-item ${!notification.isRead ? 'unread' : ''}`}
-                onClick={() => handleNotificationClick(notification)}
-              >
-                <div className="notification-icon">
-                  {notification.type === 'system' ? '📢' : '📨'}
-                </div>
-                <div className="notification-content">
-                  <div className="notification-title">{notification.title}</div>
-                  <div className="notification-preview">{notification.message || notification.content}</div>
-                  <div className="notification-time">{formatTime(notification.createdAt || notification.publishedAt)}</div>
-                </div>
+    <BaseWidget
+      widget={widget}
+      user={user}
+      loading={loading}
+      error={error}
+      isEmpty={isEmpty}
+      onRefresh={refresh}
+      headerActions={headerActions}
+      className="notification-widget"
+    >
+      {displayNotifications.length > 0 ? (
+        <div className="notification-list">
+          {displayNotifications.map((notification, index) => (
+            <div
+              key={notification.id || index}
+              className={`notification-item ${!notification.isRead ? 'unread' : ''}`}
+              onClick={() => handleNotificationClick(notification)}
+            >
+              <div className="notification-icon">
+                {notification.type === 'system' ? '📢' : '📨'}
               </div>
-            ))}
-          </div>
-        ) : (
-          <div className="widget-empty">
-            <div className="widget-empty-icon">📭</div>
-            <div className="widget-empty-text">{config.emptyMessage || '읽지 않은 알림이 없습니다'}</div>
-          </div>
-        )}
-      </div>
-    </div>
+              <div className="notification-content">
+                <div className="notification-title"><SafeText>{notification.title}</SafeText></div>
+                <div className="notification-preview"><SafeText>{notification.message ?? notification.content}</SafeText></div>
+                <div className="notification-time">{formatTime(notification.createdAt || notification.publishedAt)}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="widget-empty">
+          <div className="widget-empty-icon">📭</div>
+          <div className="widget-empty-text">{config.emptyMessage || '읽지 않은 알림이 없습니다'}</div>
+        </div>
+      )}
+    </BaseWidget>
   );
 };
 

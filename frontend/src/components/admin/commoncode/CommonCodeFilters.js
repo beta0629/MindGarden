@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { toDisplayString } from '../../../utils/safeDisplay';
 import './CommonCodeFilters.css';
 
 /**
@@ -129,7 +130,7 @@ const CommonCodeFilters = ({
                         >
                             {activeStatusOptions.map(option => (
                                 <option key={option.value} value={option.value}>
-                                    {option.label}
+                                    {toDisplayString(option.label)}
                                 </option>
                             ))}
                         </select>

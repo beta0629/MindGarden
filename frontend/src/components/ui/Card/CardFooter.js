@@ -1,3 +1,4 @@
+import SafeText from '../../common/SafeText';
 import './Card.css';
 
 /**
@@ -28,7 +29,7 @@ const CardFooter = ({children,
               className={`mg-v2-button ${action.variant || 'mg-v2-button--secondary'}`}
               disabled={action.disabled}
             >
-              {action.label}
+              <SafeText>{action.label}</SafeText>
             </button>))}
         </div>)}
       {children}

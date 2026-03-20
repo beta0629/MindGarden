@@ -20,6 +20,7 @@ import ClientMappingTab from './ClientComprehensiveManagement/ClientMappingTab';
 import ClientStatisticsTab from './ClientComprehensiveManagement/ClientStatisticsTab';
 import ClientModal from './ClientComprehensiveManagement/ClientModal';
 import PasswordResetModal from './PasswordResetModal';
+import SafeText from '../common/SafeText';
 import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
 import './mapping-management/organisms/MappingKpiSection.css';
@@ -537,7 +538,7 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                                             className={`mg-v2-mapping-search-section__chip ${chipFilterStatus === opt.value ? 'mg-v2-mapping-search-section__chip--active' : ''}`}
                                             onClick={() => handleFilterChange({ ...activeFilters, status: opt.value })}
                                         >
-                                            {opt.label}
+                                            <SafeText>{opt.label}</SafeText>
                                         </button>
                                     ))}
                                 </div>

@@ -15,6 +15,7 @@ import { NavIcon } from '../atoms';
 import { useSession } from '../../../contexts/SessionContext';
 import { getQuickActionsForRole } from '../../../constants/gnbQuickActions';
 import { useDropdownPosition } from '../hooks/useDropdownPosition';
+import SafeText from '../../common/SafeText';
 import '../styles/dropdown-common.css';
 import './QuickActionsDropdown.css';
 
@@ -117,7 +118,7 @@ const QuickActionsDropdown = ({ onModalAction }) => {
                     type="button"
                   >
                     <Icon size={20} className="mg-v2-quick-action-item__icon" />
-                    <span className="mg-v2-quick-action-item__label">{action.label}</span>
+                    <SafeText className="mg-v2-quick-action-item__label" tag="span">{action.label}</SafeText>
                     <ChevronRight size={16} className="mg-v2-quick-action-item__arrow" />
                   </button>
                 );

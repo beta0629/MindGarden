@@ -18,6 +18,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiGet } from '../../../utils/ajax';
 // import UnifiedLoading from '../../../components/common/UnifiedLoading'; // 임시 비활성화
+import SafeText from '../../common/SafeText';
 import './Widget.css';
 
 const PersonalizedMessageWidget = ({ widget, user }) => {
@@ -98,7 +99,7 @@ const PersonalizedMessageWidget = ({ widget, user }) => {
     <div className="widget widget-personalized-message">
       <div className="widget-header">
         {config.title && (
-          <div className="widget-title">{config.title}</div>
+          <div className="widget-title"><SafeText>{config.title}</SafeText></div>
         )}
       </div>
       <div className="widget-body">
@@ -116,13 +117,14 @@ const PersonalizedMessageWidget = ({ widget, user }) => {
                   </div>
                 )}
                 <div className="personalized-message-content">
-                  <div className="personalized-message-title">{message.title}</div>
+                  <div className="personalized-message-title"><SafeText>{message.title}</SafeText></div>
                   {message.description && (
-                    <div className="personalized-message-description">{message.description}</div>
+                    <div className="personalized-message-description"><SafeText>{message.description}</SafeText></div>
                   )}
                   {message.action && message.action.label && (
                     <div className="personalized-message-action">
-                      {message.action.label} <i className="bi bi-arrow-right"></i>
+                      <SafeText>{message.action.label}</SafeText>{' '}
+                      <i className="bi bi-arrow-right"></i>
                     </div>
                   )}
                 </div>
@@ -132,7 +134,7 @@ const PersonalizedMessageWidget = ({ widget, user }) => {
         ) : (
           <div className="widget-empty">
             <i className="bi bi-chat-dots"></i>
-            <p>{config.emptyMessage || '맞춤형 메시지가 없습니다'}</p>
+            <p><SafeText>{config.emptyMessage || '맞춤형 메시지가 없습니다'}</SafeText></p>
           </div>
         )}
       </div>

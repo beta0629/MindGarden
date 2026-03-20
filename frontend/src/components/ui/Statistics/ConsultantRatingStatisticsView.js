@@ -1,4 +1,5 @@
 import { Star, Users, TrendingUp, Award } from 'lucide-react';
+import SafeText from '../../common/SafeText';
 
 /**
  * 상담사 평가 통계 뷰 컴포넌트 (Presentational)
@@ -95,7 +96,7 @@ const ConsultantRatingStatisticsView = ({ statistics, loading }) => {
                                     {index + 1}
                                 </div>
                                 <div className="consultant-info">
-                                    <div className="consultant-name">{consultant.name}</div>
+                                    <SafeText tag="div" className="consultant-name">{consultant.name}</SafeText>
                                     <div className="consultant-details">
                                         <span className="consultant-score">
                                             ⭐ {consultant.averageRating ? consultant.averageRating.toFixed(1) : '0.0'}
@@ -124,9 +125,9 @@ const ConsultantRatingStatisticsView = ({ statistics, loading }) => {
                     <div className="trends-list">
                         {statistics.recentTrends.map((trend, index) => (
                             <div key={trend.id || `trend-${index}`} className="trend-item">
-                                <div className="trend-date">{trend.date}</div>
+                                <SafeText tag="div" className="trend-date">{trend.date}</SafeText>
                                 <div className="trend-content">
-                                    <div className="trend-consultant">{trend.consultantName}</div>
+                                    <SafeText tag="div" className="trend-consultant">{trend.consultantName}</SafeText>
                                     <div className="trend-rating">
                                         {'⭐'.repeat(Math.floor(trend.rating))}
                                         <span className="trend-score">{trend.rating}</span>

@@ -101,12 +101,65 @@ export const useTheme = () => {
         }
     }, [theme, systemTheme]);
 
+    const resolvedTheme = theme === 'system' ? systemTheme : theme;
+    let themeDisplayName = '라이트 모드';
+    if (theme === 'system') {
+        themeDisplayName = `시스템 (${resolvedTheme === 'dark' ? '다크' : '라이트'})`;
+    } else if (resolvedTheme === 'dark') {
+        themeDisplayName = '다크 모드';
+    }
+    const currentTheme = {
+        type: theme,
+        name: themeDisplayName,
+        description:
+            resolvedTheme === 'dark'
+                ? '어두운 배경으로 눈의 피로를 줄입니다.'
+                : '밝은 배경의 기본 화면 테마입니다.'
+    };
+
+    const themeColors = {
+        primary:
+            resolvedTheme === 'dark'
+                ? 'var(--theme-text-primary)'
+                : 'var(--mg-primary-500)'
+    };
+
+    const changeToTheme = useCallback(
+        async (themeType) => {
+            setThemeMode(themeType);
+            return { success: true, theme: { type: themeType } };
+        },
+        [setThemeMode]
+    );
+
+    const applyCustomTheme = useCallback(
+        async (baseThemeType, _customColors) => {
+            if (baseThemeType === 'light' || baseThemeType === 'dark' || baseThemeType === 'system') {
+                setThemeMode(baseThemeType);
+            }
+            return { success: true, theme: { type: baseThemeType } };
+        },
+        [setThemeMode]
+    );
+
+    const resetToDefault = useCallback(async () => {
+        setThemeMode('light');
+        return { success: true, theme: { type: 'light' } };
+    }, [setThemeMode]);
+
     return {
         theme,
         systemTheme,
         toggleTheme,
         setThemeMode,
         isDark: theme === 'system' ? systemTheme === 'dark' : theme === 'dark',
-        isLight: theme === 'system' ? systemTheme === 'light' : theme === 'light'
+        isLight: theme === 'system' ? systemTheme === 'light' : theme === 'light',
+        currentTheme,
+        themeColors,
+        changeToTheme,
+        applyCustomTheme,
+        resetToDefault,
+        isLoading: false,
+        error: null
     };
 };

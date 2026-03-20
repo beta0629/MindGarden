@@ -12,6 +12,7 @@ import PropTypes from 'prop-types';
 import { Upload, FileSearch, FileCheck2 } from 'lucide-react';
 import ContentSection from '../../../dashboard-v2/content/ContentSection';
 import './PsychKpiSection.css';
+import SafeText from '../../../common/SafeText';
 
 const ICON_SIZE = 24;
 
@@ -57,7 +58,7 @@ const PsychKpiSection = ({ stats = {}, onStatCardClick }) => {
                 <Icon size={ICON_SIZE} />
               </div>
               <div className="mg-v2-psych-kpi-section__info">
-                <span className="mg-v2-psych-kpi-section__label">{item.label}</span>
+                <span className="mg-v2-psych-kpi-section__label"><SafeText>{item.label}</SafeText></span>
                 <span className="mg-v2-psych-kpi-section__value">{value.toLocaleString()}</span>
               </div>
             </button>

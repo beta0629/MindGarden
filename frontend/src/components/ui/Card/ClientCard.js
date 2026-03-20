@@ -1,6 +1,8 @@
 import React from 'react';
 import { User, Calendar, Clock, TrendingUp, MessageCircle, Phone, CheckCircle, AlertCircle } from 'lucide-react';
 import Avatar from '../../common/Avatar';
+import SafeText from '../../common/SafeText';
+import { toDisplayString } from '../../../utils/safeDisplay';
 
 /**
  * 공통 내담자 카드 컴포넌트
@@ -105,16 +107,16 @@ const ClientCard = ({
                     handleClick();
                 }
             }}
-            aria-label={`${client.name} 내담자 선택`}
+            aria-label={`${toDisplayString(client.name, '내담자')} 내담자 선택`}
         >
             <Avatar
                 profileImageUrl={client.profileImageUrl}
-                displayName={client.name}
+                displayName={toDisplayString(client.name, '내담자')}
                 className="mg-client-card__avatar"
             />
             <div className="mg-client-card__info">
                 <div className="mg-client-card__header">
-                    <h4 className="mg-client-card__name">{client.name}</h4>
+                    <SafeText tag="h4" className="mg-client-card__name">{client.name}</SafeText>
                     <div className={`mg-client-card__status mg-client-card__status--${getStatusClass()}`}>
                         {getStatusIcon()}
                         <span>{getStatusText()}</span>
@@ -147,7 +149,7 @@ const ClientCard = ({
                     handleClick();
                 }
             }}
-            aria-label={`${client.name} 내담자 선택`}
+            aria-label={`${toDisplayString(client.name, '내담자')} 내담자 선택`}
         >
             {/* 상태 배지 */}
             <div className={`mg-client-card__status-badge mg-client-card__status-badge--${getStatusClass()}`}>
@@ -158,18 +160,18 @@ const ClientCard = ({
             {/* 내담자 아바타 */}
             <Avatar
                 profileImageUrl={client.profileImageUrl}
-                displayName={client.name}
+                displayName={toDisplayString(client.name, '내담자')}
                 className="mg-client-card__avatar mg-client-card__avatar--large"
             />
 
             {/* 내담자 정보 */}
             <div className="mg-client-card__info">
-                <h4 className="mg-client-card__name mg-client-card__name--large">{client.name}</h4>
+                <SafeText tag="h4" className="mg-client-card__name mg-client-card__name--large">{client.name}</SafeText>
                 
                 <div className="mg-client-card__details">
                     <div className="mg-client-card__detail-item">
                         <Calendar size={16} />
-                        <span>최근 상담: {client.lastConsultationDate || '없음'}</span>
+                        <span>최근 상담: <SafeText>{client.lastConsultationDate || '없음'}</SafeText></span>
                     </div>
                     
                     <div className="mg-client-card__detail-item">
@@ -180,7 +182,7 @@ const ClientCard = ({
                     {client.nextConsultationDate && (
                         <div className="mg-client-card__detail-item">
                             <Clock size={16} />
-                            <span>다음 상담: {client.nextConsultationDate}</span>
+                            <span>다음 상담: <SafeText>{client.nextConsultationDate}</SafeText></span>
                         </div>
                     )}
                 </div>
@@ -202,7 +204,7 @@ const ClientCard = ({
                 {client.consultantName && (
                     <div className="mg-client-card__consultant-info">
                         <div className="mg-client-card__consultant-label">담당 상담사</div>
-                        <div className="mg-client-card__consultant-name">{client.consultantName}</div>
+                        <SafeText tag="div" className="mg-client-card__consultant-name">{client.consultantName}</SafeText>
                     </div>
                 )}
                 
@@ -255,12 +257,12 @@ const ClientCard = ({
                     handleClick();
                 }
             }}
-            aria-label={`${client.name} 내담자 선택`}
+            aria-label={`${toDisplayString(client.name, '내담자')} 내담자 선택`}
         >
             <div className="mg-client-card__header-mobile">
                 <Avatar
                     profileImageUrl={client.profileImageUrl}
-                    displayName={client.name}
+                    displayName={toDisplayString(client.name, '내담자')}
                     className="mg-client-card__avatar mg-client-card__avatar--mobile"
                 />
                 <div className={`mg-client-card__status mg-client-card__status--${getStatusClass()}`}>
@@ -270,12 +272,12 @@ const ClientCard = ({
             </div>
             
             <div className="mg-client-card__content-mobile">
-                <h4 className="mg-client-card__name mg-client-card__name--mobile">{client.name}</h4>
+                <SafeText tag="h4" className="mg-client-card__name mg-client-card__name--mobile">{client.name}</SafeText>
                 
                 <div className="mg-client-card__info-mobile">
                     <div className="mg-client-card__info-row">
                         <Calendar size={14} />
-                        <span>최근: {client.lastConsultationDate || '없음'}</span>
+                        <span>최근: <SafeText>{client.lastConsultationDate || '없음'}</SafeText></span>
                     </div>
                     <div className="mg-client-card__info-row">
                         <TrendingUp size={14} />
@@ -298,7 +300,7 @@ const ClientCard = ({
                 {client.consultantName && (
                     <div className="mg-client-card__consultant-mobile">
                         <span className="mg-client-card__consultant-label-mobile">담당:</span>
-                        <span className="mg-client-card__consultant-name-mobile">{client.consultantName}</span>
+                        <SafeText tag="span" className="mg-client-card__consultant-name-mobile">{client.consultantName}</SafeText>
                     </div>
                 )}
                 
@@ -340,16 +342,16 @@ const ClientCard = ({
                     handleClick();
                 }
             }}
-            aria-label={`${client.name} 내담자 선택`}
+            aria-label={`${toDisplayString(client.name, '내담자')} 내담자 선택`}
         >
             <Avatar
                 profileImageUrl={client.profileImageUrl}
-                displayName={client.name}
+                displayName={toDisplayString(client.name, '내담자')}
                 className="mg-client-card__avatar mg-client-card__avatar--mobile-simple"
             />
             
             <div className="mg-client-card__info mg-client-card__info--mobile-simple">
-                <h4 className="mg-client-card__name mg-client-card__name--mobile-simple">{client.name}</h4>
+                <SafeText tag="h4" className="mg-client-card__name mg-client-card__name--mobile-simple">{client.name}</SafeText>
                 
                 <div className="mg-client-card__meta mg-client-card__meta--mobile-simple">
                     <div className="mg-client-card__progress mg-client-card__progress--mobile-simple">

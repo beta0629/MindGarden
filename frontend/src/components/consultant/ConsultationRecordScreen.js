@@ -6,6 +6,7 @@ import notificationManager from '../../utils/notification';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { CONSULTANT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import { getUserStatusKoreanNameSync } from '../../utils/codeHelper';
+import SafeText from '../common/SafeText';
 
 /**
  * 상담일지 작성 화면
@@ -557,7 +558,7 @@ const ConsultationRecordScreen = () => {
         <div className="mg-grid mg-grid-cols-2 mg-gap-md">
           <div className="mg-flex mg-flex-col">
             <span className="mg-v2-label mg-v2-text-sm mg-v2-color-text-secondary">이름</span>
-            <span className="mg-v2-text-base mg-font-medium">{client.name}</span>
+            <span className="mg-v2-text-base mg-font-medium"><SafeText>{client.name}</SafeText></span>
           </div>
           <div style={styles.clientInfoItem}>
             <span style={styles.clientInfoLabel}>나이</span>
@@ -566,21 +567,21 @@ const ConsultationRecordScreen = () => {
           <div style={styles.clientInfoItem}>
             <span style={styles.clientInfoLabel}>성별</span>
             <span style={styles.clientInfoValue}>
-              {client.gender === 'MALE' ? '남' : client.gender === 'FEMALE' ? '여' : client.gender || '—'}
+              <SafeText>{client.gender === 'MALE' ? '남' : client.gender === 'FEMALE' ? '여' : client.gender}</SafeText>
             </span>
           </div>
           <div style={styles.clientInfoItem}>
             <span style={styles.clientInfoLabel}>이메일</span>
-            <span style={styles.clientInfoValue}>{client.email || '정보 없음'}</span>
+            <span style={styles.clientInfoValue}><SafeText fallback="정보 없음">{client.email}</SafeText></span>
           </div>
           <div style={styles.clientInfoItem}>
             <span style={styles.clientInfoLabel}>전화번호</span>
-            <span style={styles.clientInfoValue}>{client.phone || '정보 없음'}</span>
+            <span style={styles.clientInfoValue}><SafeText fallback="정보 없음">{client.phone}</SafeText></span>
           </div>
           <div style={styles.clientInfoItem}>
             <span style={styles.clientInfoLabel}>주소</span>
             <span style={styles.clientInfoValue}>
-              {[client.postalCode, client.address, client.addressDetail].filter(Boolean).join(' ') || '정보 없음'}
+              <SafeText fallback="정보 없음">{[client.postalCode, client.address, client.addressDetail].filter(Boolean).join(' ')}</SafeText>
             </span>
           </div>
           <div style={styles.clientInfoItem}>
@@ -592,7 +593,7 @@ const ConsultationRecordScreen = () => {
                 backgroundColor: client.status === 'ACTIVE' ? 'var(--mg-success-500)' : 'var(--mg-secondary-500)',
                 color: '#fff'
               }}>
-                {getUserStatusKoreanNameSync(client.status)}
+                <SafeText>{getUserStatusKoreanNameSync(client.status)}</SafeText>
               </span>
             </span>
           </div>
@@ -608,7 +609,7 @@ const ConsultationRecordScreen = () => {
           </div>
           <div style={styles.clientInfoItem}>
             <span style={styles.clientInfoLabel}>가입일</span>
-            <span style={styles.clientInfoValue}>{client.createdAt?.split('T')[0] || '정보 없음'}</span>
+            <span style={styles.clientInfoValue}><SafeText fallback="정보 없음">{client.createdAt?.split('T')[0]}</SafeText></span>
           </div>
         </div>
       </div>

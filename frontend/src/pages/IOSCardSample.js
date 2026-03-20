@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import SafeText from '../components/common/SafeText';
 import './IOSCardSample.css';
 
 const IOSCardSample = () => {
@@ -101,7 +102,9 @@ const IOSCardSample = () => {
                 <span className="stat-icon-emoji">{stat.icon}</span>
               </div>
               <div className="stat-value">{stat.value}</div>
-              <div className="stat-label">{stat.title}</div>
+              <div className="stat-label">
+                <SafeText>{stat.title}</SafeText>
+              </div>
               <div className={`stat-change ${stat.changeType}`}>
                 <span className="stat-change-icon">
                   {stat.changeType === 'positive' ? '↗' : '↘'}
@@ -127,7 +130,9 @@ const IOSCardSample = () => {
                 <span className="management-icon-emoji">{card.icon}</span>
               </div>
               <div className="management-content">
-                <h3>{card.title}</h3>
+                <h3>
+                  <SafeText tag="span">{card.title}</SafeText>
+                </h3>
                 <p>{card.description}</p>
               </div>
             </div>
@@ -186,7 +191,12 @@ const IOSCardSample = () => {
       {/* 선택된 카드 정보 */}
       {selectedCard && (
         <div className="ios-selected-info">
-          <h3>선택된 카드: {managementCards.find(c => c.id === selectedCard)?.title}</h3>
+          <h3>
+            선택된 카드:{' '}
+            <SafeText tag="span">
+              {managementCards.find((c) => c.id === selectedCard)?.title}
+            </SafeText>
+          </h3>
           <p>터치 피드백이 적용된 카드입니다.</p>
         </div>
       )}

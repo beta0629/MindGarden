@@ -12,6 +12,8 @@ import StandardizedApi from '../../utils/standardizedApi';
 import '../../styles/modules/schedule-modal.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ScheduleB0KlA.css';
+import SafeText from '../common/SafeText';
+import { toDisplayString } from '../../utils/safeDisplay';
 
 /**
  * 새로운 디자인의 스케줄 생성 모달 컴포넌트
@@ -259,7 +261,7 @@ const ScheduleModalNew = ({
                 date: dateString,
                 startTime: startTime,
                 endTime: endTime,
-                title: title || `${selectedConsultant.name} - ${selectedClient.name}`,
+                title: title || `${toDisplayString(selectedConsultant?.name, '—')} - ${toDisplayString(selectedClient?.name, '—')}`,
                 description: description,
                 scheduleType: 'CONSULTATION',
                 consultationType: consultationType
@@ -380,7 +382,7 @@ const ScheduleModalNew = ({
                                 <div className="mg-v2-ad-stepper__icon">
                                     {isCompleted ? <Check size={18} strokeWidth={2.5} /> : <Icon size={18} strokeWidth={isCurrent ? 2.5 : 2} />}
                                 </div>
-                                <span className="mg-v2-ad-stepper__title">{s.title}</span>
+                                <span className="mg-v2-ad-stepper__title"><SafeText>{s.title}</SafeText></span>
                             </div>
                             {index < steps.length - 1 && (
                                 <div className={`mg-v2-ad-stepper__line ${isCompleted ? 'completed' : ''}`} />
@@ -460,7 +462,7 @@ const ScheduleModalNew = ({
                                                 onChange={(val) => setConsultationType(val)}
                                                 options={consultationTypeOptions.map(option => ({
                                                     value: option.value,
-                                                    label: `${option.label} (${option.value})`
+                                                    label: `${toDisplayString(option.label, '—')} (${toDisplayString(option.value, '')})`
                                                 }))}
                                                 placeholder="선택하세요"
                                                 disabled={loadingCodes}
@@ -474,7 +476,7 @@ const ScheduleModalNew = ({
                                                 onChange={(val) => setSelectedDuration(val)}
                                                 options={durationOptions.map(option => ({
                                                     value: option.value,
-                                                    label: `${option.label} (${option.durationMinutes}분)`
+                                                    label: `${toDisplayString(option.label, '—')} (${toDisplayString(option.durationMinutes, '0')}분)`
                                                 }))}
                                                 placeholder="선택하세요"
                                                 disabled={loadingCodes}
@@ -506,21 +508,21 @@ const ScheduleModalNew = ({
                                     <div className="mg-v2-ad-details-summary">
                                         <div className="mg-v2-ad-details-summary__row">
                                             <span className="mg-v2-ad-details-summary__label">상담사:</span>
-                                            <span className="mg-v2-ad-details-summary__value">{selectedConsultant?.name}</span>
+                                            <span className="mg-v2-ad-details-summary__value"><SafeText>{selectedConsultant?.name}</SafeText></span>
                                         </div>
                                         <div className="mg-v2-ad-details-summary__row">
                                             <span className="mg-v2-ad-details-summary__label">내담자:</span>
-                                            <span className="mg-v2-ad-details-summary__value">{selectedClient?.name}</span>
+                                            <span className="mg-v2-ad-details-summary__value"><SafeText>{selectedClient?.name}</SafeText></span>
                                         </div>
                                         <div className="mg-v2-ad-details-summary__row">
                                             <span className="mg-v2-ad-details-summary__label">시간:</span>
                                             <span className="mg-v2-ad-details-summary__value">
-                                                {selectedTimeSlot?.time} - {selectedTimeSlot?.endTime} ({getDurationFromCode(selectedDuration)}분)
+                                                <SafeText>{selectedTimeSlot?.time}</SafeText> - <SafeText>{selectedTimeSlot?.endTime}</SafeText> ({getDurationFromCode(selectedDuration)}분)
                                             </span>
                                         </div>
                                         <div className="mg-v2-ad-details-summary__row mg-v2-ad-details-summary__row--highlight">
                                             <span className="mg-v2-ad-details-summary__label">유형:</span>
-                                            <span className="mg-v2-ad-details-summary__value">{convertConsultationTypeToKorean(consultationType)}</span>
+                                            <span className="mg-v2-ad-details-summary__value"><SafeText>{convertConsultationTypeToKorean(consultationType)}</SafeText></span>
                                         </div>
                                     </div>
                                     <div className="mg-v2-ad-details-step__form-group">

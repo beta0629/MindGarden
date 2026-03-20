@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 // import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import SafeText from '../common/SafeText';
 
 const TableShowcase = () => {
   const [currentPage, setCurrentPage] = useState(1);
@@ -55,9 +56,9 @@ const TableShowcase = () => {
               {currentData.map(item => (
                 <tr key={item.id}>
                   <td data-label="ID">{item.id}</td>
-                  <td data-label="이름">{item.name}</td>
-                  <td data-label="이메일">{item.email}</td>
-                  <td data-label="역할">{item.role}</td>
+                  <td data-label="이름"><SafeText>{item.name}</SafeText></td>
+                  <td data-label="이메일"><SafeText>{item.email}</SafeText></td>
+                  <td data-label="역할"><SafeText>{item.role}</SafeText></td>
                   <td data-label="상태">
                     <span style={{
                       padding: '0.25rem 0.75rem',
@@ -67,7 +68,7 @@ const TableShowcase = () => {
                       color: 'white',
                       backgroundColor: getStatusColor(item.status)
                     }}>
-                      {item.status}
+                      <SafeText>{item.status}</SafeText>
                     </span>
                   </td>
                 </tr>
@@ -113,8 +114,8 @@ const TableShowcase = () => {
             <tbody>
               {tableData.slice(0, 5).map(item => (
                 <tr key={item.id}>
-                  <td data-label="이름">{item.name}</td>
-                  <td data-label="역할">{item.role}</td>
+                  <td data-label="이름"><SafeText>{item.name}</SafeText></td>
+                  <td data-label="역할"><SafeText>{item.role}</SafeText></td>
                   <td data-label="상태">
                     <span style={{
                       padding: '0.25rem 0.75rem',
@@ -124,7 +125,7 @@ const TableShowcase = () => {
                       color: 'white',
                       backgroundColor: getStatusColor(item.status)
                     }}>
-                      {item.status}
+                      <SafeText>{item.status}</SafeText>
                     </span>
                   </td>
                 </tr>

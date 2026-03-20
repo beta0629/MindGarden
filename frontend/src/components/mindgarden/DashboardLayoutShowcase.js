@@ -2,6 +2,7 @@
 import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { LayoutDashboard, Users, Calendar, TrendingUp, Bell, Settings } from 'lucide-react';
 import Avatar from '../common/Avatar';
+import SafeText from '../common/SafeText';
 
 const DashboardLayoutShowcase = () => {
   const stats = [
@@ -59,10 +60,10 @@ const DashboardLayoutShowcase = () => {
                 {stat.icon}
               </div>
               <div className="mg-dashboard-stat-content">
-                <div className="mg-dashboard-stat-value">{stat.value}</div>
-                <div className="mg-dashboard-stat-label">{stat.label}</div>
+                <div className="mg-dashboard-stat-value"><SafeText>{stat.value}</SafeText></div>
+                <div className="mg-dashboard-stat-label"><SafeText>{stat.label}</SafeText></div>
                 <div className={`mg-dashboard-stat-change ${stat.positive ? 'positive' : 'negative'}`}>
-                  {stat.change}
+                  <SafeText>{stat.change}</SafeText>
                 </div>
               </div>
             </div>
@@ -88,9 +89,9 @@ const DashboardLayoutShowcase = () => {
                     />
                     <div className="mg-dashboard-activity-content">
                       <div className="mg-dashboard-activity-text">
-                        <strong>{activity.user}</strong>님이 <span>{activity.action}</span>
+                        <strong><SafeText>{activity.user}</SafeText></strong>님이 <span><SafeText>{activity.action}</SafeText></span>
                       </div>
-                      <div className="mg-dashboard-activity-time">{activity.time}</div>
+                      <div className="mg-dashboard-activity-time"><SafeText>{activity.time}</SafeText></div>
                     </div>
                   </div>
                 ))}

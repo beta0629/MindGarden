@@ -30,6 +30,7 @@ import { useWidget } from '../../../../hooks/useWidget';
 import BaseWidget from '../BaseWidget';
 import { RoleUtils, USER_ROLES } from '../../../../constants/roles';
 import './ErpManagementGridWidget.css';
+import SafeText from '../../../common/SafeText';
 
 const ErpManagementGridWidget = ({ widget, user }) => {
   const navigate = useNavigate();
@@ -265,8 +266,8 @@ const ErpManagementGridWidget = ({ widget, user }) => {
                         <action.icon className="erp-action-icon" />
                       </div>
                       <div className="erp-action-content">
-                        <h4 className="erp-action-title">{action.title}</h4>
-                        <p className="erp-action-description">{action.description}</p>
+                        <SafeText tag="h4" className="erp-action-title">{action.title}</SafeText>
+                        <SafeText tag="p" className="erp-action-description">{action.description}</SafeText>
                       </div>
                     </div>
                   ))}

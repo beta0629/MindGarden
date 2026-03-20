@@ -28,6 +28,7 @@ import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import UnifiedLoading from '../common/UnifiedLoading';
 import Button from '../ui/Button/Button';
 import { getModelPricingLabel, getModelOptionSuffix, PRICING_URLS } from './modelPricing';
+import { toDisplayString } from '../../utils/safeDisplay';
 import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
 import './SystemConfigManagement.css';
@@ -391,7 +392,7 @@ const SystemConfigManagement = () => {
                         onChange={() => setAiDefaultProvider(p.id)}
                         className="mg-v2-radio"
                       />
-                      <span>{p.label}</span>
+                      <span>{toDisplayString(p.label)}</span>
                     </label>
                   ))}
                   {AI_PROVIDERS.every((p) => !(providers[p.id]?.apiKey || '').trim()) && (
@@ -402,7 +403,7 @@ const SystemConfigManagement = () => {
 
               {AI_PROVIDERS.map(({ id, label, keyPrefix, defaultUrl }) => (
                 <div key={id} className="mg-v2-ad-b0kla__card mg-v2-system-config__provider-card">
-                  <h3 className="mg-v2-system-config__provider-title">{label}</h3>
+                  <h3 className="mg-v2-system-config__provider-title">{toDisplayString(label)}</h3>
                   <div className="config-grid">
                     <div className="config-item">
                       <label htmlFor={`apiKey-${id}`}>API 키</label>
@@ -604,7 +605,7 @@ const SystemConfigManagement = () => {
                             {testResult.success ? <CheckCircle size={20} /> : <AlertCircle size={20} />}
                           </div>
                           <div className="result-content">
-                            <strong>{testResult.message}</strong>
+                            <strong>{toDisplayString(testResult.message)}</strong>
                           </div>
                         </div>
                       )}
@@ -635,7 +636,7 @@ const SystemConfigManagement = () => {
                             {testResultGemini.success ? <CheckCircle size={20} /> : <AlertCircle size={20} />}
                           </div>
                           <div className="result-content">
-                            <strong>{testResultGemini.message}</strong>
+                            <strong>{toDisplayString(testResultGemini.message)}</strong>
                           </div>
                         </div>
                       )}

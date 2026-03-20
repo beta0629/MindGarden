@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 // import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { CheckCircle, XCircle, AlertTriangle, Info, X } from 'lucide-react';
+import SafeText from '../common/SafeText';
 
 const NotificationShowcase = () => {
   const [notifications, setNotifications] = useState([]);
@@ -99,8 +100,12 @@ const NotificationShowcase = () => {
               {getIcon(notification.type)}
             </div>
             <div className="mg-notification-content">
-              <div className="mg-notification-title">{notification.title}</div>
-              <div className="mg-notification-message">{notification.message}</div>
+              <div className="mg-notification-title">
+                <SafeText>{notification.title}</SafeText>
+              </div>
+              <div className="mg-notification-message">
+                <SafeText>{notification.message}</SafeText>
+              </div>
             </div>
             <button 
               className="mg-notification-close"

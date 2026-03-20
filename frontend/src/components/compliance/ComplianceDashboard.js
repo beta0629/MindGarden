@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
+import SafeText from '../common/SafeText';
+import { toDisplayString } from '../../utils/safeDisplay';
 import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import '../../styles/main.css';
 import './ComplianceDashboard.css';
@@ -108,7 +110,7 @@ const ComplianceDashboard = () => {
             <AdminCommonLayout title="컴플라이언스 관리">
                 <div className="error-container">
                     <h2>❌ 오류 발생</h2>
-                    <p>{error}</p>
+                    <p><SafeText>{error}</SafeText></p>
                     <button onClick={loadComplianceData} className="retry-button">
                         다시 시도
                     </button>
@@ -136,19 +138,22 @@ const ComplianceDashboard = () => {
                         <div className="metric-item">
                             <div className="metric-label">종합 점수</div>
                             <div className="metric-value" data-compliance-color={getComplianceLevelColor(overallStatus.complianceLevel)}>
-                                {overallStatus.overallScore || 0}점
+                                {toDisplayString(overallStatus.overallScore ?? 0)}점
                             </div>
                         </div>
                         <div className="metric-item">
                             <div className="metric-label">준수 수준</div>
                             <div className="metric-value" data-compliance-color={getComplianceLevelColor(overallStatus.complianceLevel)}>
-                                {getComplianceLevelIcon(overallStatus.complianceLevel)} {overallStatus.complianceLevel || '미평가'}
+                                {getComplianceLevelIcon(overallStatus.complianceLevel)}{' '}
+                                <SafeText fallback="미평가">{overallStatus.complianceLevel}</SafeText>
                             </div>
                         </div>
                         <div className="metric-item">
                             <div className="metric-label">마지막 업데이트</div>
                             <div className="metric-value">
-                                {overallStatus.lastUpdated ? new Date(overallStatus.lastUpdated).toLocaleString() : 'N/A'}
+                                <SafeText fallback="N/A">
+                                  {overallStatus.lastUpdated ? new Date(overallStatus.lastUpdated).toLocaleString() : null}
+                                </SafeText>
                             </div>
                         </div>
                     </div>
@@ -162,15 +167,15 @@ const ComplianceDashboard = () => {
                     <div className="status-content">
                         <div className="status-item">
                             <span className="label">총 처리 건수:</span>
-                            <span className="value">{processingStatus.totalCount || 0}건</span>
+                            <span className="value">{toDisplayString(processingStatus.totalCount ?? 0)}건</span>
                         </div>
                         <div className="status-item">
                             <span className="label">데이터 유형별:</span>
                             <div className="data-type-stats">
                                 {processingStatus.dataTypeStats && Object.entries(processingStatus.dataTypeStats).map(([type, count]) => (
                                     <div key={type} className="data-type-item">
-                                        <span className="type">{type}:</span>
-                                        <span className="count">{count}건</span>
+                                        <span className="type">{toDisplayString(type)}:</span>
+                                        <span className="count">{toDisplayString(count)}건</span>
                                     </div>
                                 ))}
                             </div>
@@ -187,20 +192,20 @@ const ComplianceDashboard = () => {
                         <div className="status-item">
                             <span className="label">전체 위험도:</span>
                             <span className="value risk-level">
-                                {impactAssessment.overallAssessment?.overallRiskLevel || '미평가'}
+                                <SafeText fallback="미평가">{impactAssessment.overallAssessment?.overallRiskLevel}</SafeText>
                             </span>
                         </div>
                         <div className="status-item">
                             <span className="label">준수 상태:</span>
                             <span className="value">
-                                {impactAssessment.overallAssessment?.complianceStatus || '미평가'}
+                                <SafeText fallback="미평가">{impactAssessment.overallAssessment?.complianceStatus}</SafeText>
                             </span>
                         </div>
                         <div className="status-item">
                             <span className="label">개선 필요 영역:</span>
                             <div className="improvement-areas">
                                 {impactAssessment.overallAssessment?.improvementAreas?.map((area, index) => (
-                                    <div key={index} className="improvement-item">• {area}</div>
+                                    <div key={index} className="improvement-item">• <SafeText>{area}</SafeText></div>
                                 ))}
                             </div>
                         </div>
@@ -216,13 +221,13 @@ const ComplianceDashboard = () => {
                         <div className="status-item">
                             <span className="label">대응팀 구성:</span>
                             <span className="value">
-                                {breachResponse.responseTeam?.teamLeader || 'N/A'}
+                                <SafeText fallback="N/A">{breachResponse.responseTeam?.teamLeader}</SafeText>
                             </span>
                         </div>
                         <div className="status-item">
                             <span className="label">긴급 연락처:</span>
                             <span className="value">
-                                {breachResponse.responseTeam?.contactInfo?.emergency || 'N/A'}
+                                <SafeText fallback="N/A">{breachResponse.responseTeam?.contactInfo?.emergency}</SafeText>
                             </span>
                         </div>
                         <div className="status-item">
@@ -230,7 +235,7 @@ const ComplianceDashboard = () => {
                             <div className="response-procedures">
                                 {breachResponse.responseProcedures && Object.entries(breachResponse.responseProcedures).map(([step, procedure]) => (
                                     <div key={step} className="procedure-item">
-                                        <strong>{procedure.title}:</strong> {procedure.timeframe}
+                                        <strong><SafeText>{procedure.title}</SafeText>:</strong> <SafeText>{procedure.timeframe}</SafeText>
                                     </div>
                                 ))}
                             </div>
@@ -247,13 +252,13 @@ const ComplianceDashboard = () => {
                         <div className="status-item">
                             <span className="label">이수율:</span>
                             <span className="value">
-                                {educationStatus.completionStatus?.completionRate || 'N/A'}
+                                <SafeText fallback="N/A">{educationStatus.completionStatus?.completionRate}</SafeText>
                             </span>
                         </div>
                         <div className="status-item">
                             <span className="label">전체 임직원:</span>
                             <span className="value">
-                                {educationStatus.completionStatus?.totalEmployees || 0}명
+                                {toDisplayString(educationStatus.completionStatus?.totalEmployees ?? 0)}명
                             </span>
                         </div>
                         <div className="status-item">
@@ -261,7 +266,7 @@ const ComplianceDashboard = () => {
                             <div className="education-programs">
                                 {educationStatus.educationPrograms && Object.entries(educationStatus.educationPrograms).map(([type, program]) => (
                                     <div key={type} className="program-item">
-                                        <strong>{program.title}:</strong> {program.frequency}
+                                        <strong><SafeText>{program.title}</SafeText>:</strong> <SafeText>{program.frequency}</SafeText>
                                     </div>
                                 ))}
                             </div>
@@ -278,25 +283,27 @@ const ComplianceDashboard = () => {
                         <div className="status-item">
                             <span className="label">회사명:</span>
                             <span className="value">
-                                {policyStatus.policyComponents?.basicInfo?.companyName || 'N/A'}
+                                <SafeText fallback="N/A">{policyStatus.policyComponents?.basicInfo?.companyName}</SafeText>
                             </span>
                         </div>
                         <div className="status-item">
                             <span className="label">개인정보보호책임자:</span>
                             <span className="value">
-                                {policyStatus.policyComponents?.basicInfo?.privacyOfficer || 'N/A'}
+                                <SafeText fallback="N/A">{policyStatus.policyComponents?.basicInfo?.privacyOfficer}</SafeText>
                             </span>
                         </div>
                         <div className="status-item">
                             <span className="label">마지막 업데이트:</span>
                             <span className="value">
-                                {policyStatus.policyComponents?.basicInfo?.lastUpdated || 'N/A'}
+                                <SafeText fallback="N/A">{policyStatus.policyComponents?.basicInfo?.lastUpdated}</SafeText>
                             </span>
                         </div>
                         <div className="status-item">
                             <span className="label">다음 검토일:</span>
                             <span className="value">
-                                {policyStatus.nextReviewDate ? new Date(policyStatus.nextReviewDate).toLocaleDateString() : 'N/A'}
+                                <SafeText fallback="N/A">
+                                  {policyStatus.nextReviewDate ? new Date(policyStatus.nextReviewDate).toLocaleDateString() : null}
+                                </SafeText>
                             </span>
                         </div>
                     </div>
@@ -311,13 +318,15 @@ const ComplianceDashboard = () => {
                         <div className="status-item">
                             <span className="label">최근 1개월 파기 건수:</span>
                             <span className="value">
-                                {destructionStatus.totalDestroyed || 0}건
+                                {toDisplayString(destructionStatus.totalDestroyed ?? 0)}건
                             </span>
                         </div>
                         <div className="status-item">
                             <span className="label">마지막 파기:</span>
                             <span className="value">
-                                {destructionStatus.lastDestruction ? new Date(destructionStatus.lastDestruction).toLocaleString() : 'N/A'}
+                                <SafeText fallback="N/A">
+                                  {destructionStatus.lastDestruction ? new Date(destructionStatus.lastDestruction).toLocaleString() : null}
+                                </SafeText>
                             </span>
                         </div>
                         <div className="status-item">
@@ -325,8 +334,8 @@ const ComplianceDashboard = () => {
                             <div className="destruction-stats">
                                 {destructionStatus.destructionStats && Object.entries(destructionStatus.destructionStats).map(([type, count]) => (
                                     <div key={type} className="destruction-item">
-                                        <span className="type">{type}:</span>
-                                        <span className="count">{count}건</span>
+                                        <span className="type">{toDisplayString(type)}:</span>
+                                        <span className="count">{toDisplayString(count)}건</span>
                                     </div>
                                 ))}
                             </div>

@@ -9,6 +9,7 @@ import ErpModal from './common/ErpModal';
 import { useSession } from '../../hooks/useSession';
 import './ApprovalDashboard.css';
 import SafeErrorDisplay from '../common/SafeErrorDisplay';
+import { toDisplayString } from '../../utils/safeDisplay';
 
 /**
  * 수퍼 관리자 승인 대시보드 컴포넌트
@@ -202,9 +203,9 @@ const SuperAdminApprovalDashboard = () => {
             <ErpCard key={request.id} title={`구매 요청 #${request.id}`}>
               <div className="approval-request-info">
                 <div className="approval-request-grid">
-                  <div><strong>요청자:</strong> {request.requester?.name || '알 수 없음'}</div>
+                  <div><strong>요청자:</strong> {toDisplayString(request.requester?.name, '알 수 없음')}</div>
                   <div><strong>요청일:</strong> {formatDate(request.createdAt)}</div>
-                  <div><strong>아이템:</strong> {request.item?.name || '알 수 없음'}</div>
+                  <div><strong>아이템:</strong> {toDisplayString(request.item?.name, '알 수 없음')}</div>
                   <div><strong>수량:</strong> {request.quantity}개</div>
                   <div><strong>단가:</strong> {formatCurrency(request.unitPrice)}</div>
                   <div><strong>총액:</strong> {formatCurrency(request.totalAmount)}</div>
@@ -217,10 +218,10 @@ const SuperAdminApprovalDashboard = () => {
                       관리자 승인 완료
                     </div>
                     <div className="mg-v2-text-sm">
-                      <div><strong>승인자:</strong> {request.adminApprover.name}</div>
+                      <div><strong>승인자:</strong> {toDisplayString(request.adminApprover?.name, '알 수 없음')}</div>
                       <div><strong>승인일:</strong> {formatDate(request.adminApprovedAt)}</div>
                       {request.adminComment && (
-                        <div><strong>코멘트:</strong> {request.adminComment}</div>
+                        <div><strong>코멘트:</strong> {toDisplayString(request.adminComment)}</div>
                       )}
                     </div>
                   </div>
@@ -230,7 +231,7 @@ const SuperAdminApprovalDashboard = () => {
                   <div className="super-admin-form-group">
                     <strong>요청 사유:</strong>
                     <div className="super-admin-reason-box">
-                      {request.reason}
+                      {toDisplayString(request.reason)}
                     </div>
                   </div>
                 )}
@@ -269,10 +270,10 @@ const SuperAdminApprovalDashboard = () => {
             <div className="mg-v2-form-group">
               <h4>최종 승인할 구매 요청</h4>
               <div className="super-admin-info-box">
-                <div><strong>아이템:</strong> {selectedRequest.item?.name}</div>
+                <div><strong>아이템:</strong> {toDisplayString(selectedRequest.item?.name)}</div>
                 <div><strong>수량:</strong> {selectedRequest.quantity}개</div>
                 <div><strong>총액:</strong> {formatCurrency(selectedRequest.totalAmount)}</div>
-                <div><strong>요청자:</strong> {selectedRequest.requester?.name}</div>
+                <div><strong>요청자:</strong> {toDisplayString(selectedRequest.requester?.name)}</div>
               </div>
             </div>
 
@@ -321,10 +322,10 @@ const SuperAdminApprovalDashboard = () => {
             <div className="mg-v2-form-group">
               <h4>거부할 구매 요청</h4>
               <div className="super-admin-info-box">
-                <div><strong>아이템:</strong> {selectedRequest.item?.name}</div>
+                <div><strong>아이템:</strong> {toDisplayString(selectedRequest.item?.name)}</div>
                 <div><strong>수량:</strong> {selectedRequest.quantity}개</div>
                 <div><strong>총액:</strong> {formatCurrency(selectedRequest.totalAmount)}</div>
-                <div><strong>요청자:</strong> {selectedRequest.requester?.name}</div>
+                <div><strong>요청자:</strong> {toDisplayString(selectedRequest.requester?.name)}</div>
               </div>
             </div>
 

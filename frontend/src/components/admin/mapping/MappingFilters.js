@@ -3,6 +3,7 @@ import { Search, Filter, RotateCcw, X } from 'lucide-react';
 import { MAPPING_FILTER_OPTIONS } from '../../../constants/mapping';
 // import MGButton from '../../../components/common/MGButton'; // 임시 비활성화
 import './MappingFilters.css';
+import { toDisplayString } from '../../../utils/safeDisplay';
 
 /**
  * 매칭 필터 컴포넌트
@@ -56,7 +57,7 @@ const MappingFilters = ({
                     >
                         {statusOptions.map(option => (
                             <option key={option.value} value={option.value}>
-                                {option.label}
+                                {toDisplayString(option.label)}
                             </option>
                         ))}
                     </select>

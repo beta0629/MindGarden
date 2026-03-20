@@ -7,6 +7,7 @@ import Avatar from '../../common/Avatar';
 import { getConsultantRatingInfo } from '../../../utils/ratingHelper';
 import { getFormattedCurrentClients, getFormattedExperience } from '../../../utils/codeHelper';
 import { formatCurrency } from '../../../utils/formatUtils';
+import { toDisplayString } from '../../../utils/safeDisplay';
 
 /**
  * 공통 상담사 카드 컴포넌트
@@ -111,16 +112,16 @@ const ConsultantCard = ({
                     handleClick();
                 }
             }}
-            aria-label={`${consultant.name} 상담사 선택`}
+            aria-label={`${toDisplayString(consultant.name)} 상담사 선택`}
         >
             <Avatar
                 profileImageUrl={consultant.profileImageUrl}
-                displayName={consultant.name}
+                displayName={toDisplayString(consultant.name)}
                 className="mg-consultant-card__avatar"
             />
             <div className="mg-consultant-card__info">
                 <div className="mg-consultant-card__header">
-                    <h4 className="mg-consultant-card__name">{consultant.name}</h4>
+                    <h4 className="mg-consultant-card__name">{toDisplayString(consultant.name)}</h4>
                     <div className="mg-consultant-card__status" style={{ '--availability-color': getAvailabilityColor() }}>
                         <span>{getAvailabilityText()}</span>
                     </div>
@@ -152,7 +153,7 @@ const ConsultantCard = ({
                     handleClick();
                 }
             }}
-            aria-label={`${consultant.name} 상담사 선택`}
+            aria-label={`${toDisplayString(consultant.name)} 상담사 선택`}
         >
             {/* 상태 배지 */}
             <div className="mg-consultant-card__status-badge" style={{ '--availability-color': getAvailabilityColor() }}>
@@ -162,13 +163,13 @@ const ConsultantCard = ({
             {/* 상담사 아바타 */}
             <Avatar
                 profileImageUrl={consultant.profileImageUrl}
-                displayName={consultant.name}
+                displayName={toDisplayString(consultant.name)}
                 className="mg-consultant-card__avatar mg-consultant-card__avatar--large"
             />
 
             {/* 상담사 정보 */}
             <div className="mg-consultant-card__info">
-                <h4 className="mg-consultant-card__name mg-consultant-card__name--large">{consultant.name}</h4>
+                <h4 className="mg-consultant-card__name mg-consultant-card__name--large">{toDisplayString(consultant.name)}</h4>
                 
                 {/* 평점 섹션 */}
                 <div className="mg-consultant-card__rating-section">
@@ -190,12 +191,12 @@ const ConsultantCard = ({
                 <div className="mg-consultant-card__details">
                     <div className="mg-consultant-card__detail-item">
                         <Mail size={16} />
-                        <span>{consultant.email || '이메일 없음'}</span>
+                        <span>{toDisplayString(consultant.email, '이메일 없음')}</span>
                     </div>
                     
                     <div className="mg-consultant-card__detail-item">
                         <Phone size={16} />
-                        <span>{consultant.phone || '전화번호 없음'}</span>
+                        <span>{toDisplayString(consultant.phone, '전화번호 없음')}</span>
                     </div>
                     
                     <div className="mg-consultant-card__detail-item">
@@ -278,12 +279,12 @@ const ConsultantCard = ({
                     handleClick();
                 }
             }}
-            aria-label={`${consultant.name} 상담사 선택`}
+            aria-label={`${toDisplayString(consultant.name)} 상담사 선택`}
         >
             <div className="mg-consultant-card__header-mobile">
                 <Avatar
                     profileImageUrl={consultant.profileImageUrl}
-                    displayName={consultant.name}
+                    displayName={toDisplayString(consultant.name)}
                     className="mg-consultant-card__avatar mg-consultant-card__avatar--mobile"
                 />
                 <div className="mg-consultant-card__status" style={{ '--availability-color': getAvailabilityColor() }}>
@@ -292,7 +293,7 @@ const ConsultantCard = ({
             </div>
             
             <div className="mg-consultant-card__content-mobile">
-                <h4 className="mg-consultant-card__name mg-consultant-card__name--mobile">{consultant.name}</h4>
+                <h4 className="mg-consultant-card__name mg-consultant-card__name--mobile">{toDisplayString(consultant.name)}</h4>
                 
                 <div className="mg-consultant-card__rating-mobile">
                     <div className="mg-consultant-card__rating-item">
@@ -308,11 +309,11 @@ const ConsultantCard = ({
                 <div className="mg-consultant-card__info-mobile">
                     <div className="mg-consultant-card__info-row">
                         <Mail size={14} />
-                        <span>{consultant.email || '이메일 없음'}</span>
+                        <span>{toDisplayString(consultant.email, '이메일 없음')}</span>
                     </div>
                     <div className="mg-consultant-card__info-row">
                         <Phone size={14} />
-                        <span>{consultant.phone || '전화번호 없음'}</span>
+                        <span>{toDisplayString(consultant.phone, '전화번호 없음')}</span>
                     </div>
                 </div>
                 
@@ -382,7 +383,7 @@ const ConsultantCard = ({
                     handleClick();
                 }
             }}
-            aria-label={`${consultant.name} 상담사 선택`}
+            aria-label={`${toDisplayString(consultant.name)} 상담사 선택`}
         >
             <div className="mg-consultant-card__status-badge" style={{ '--availability-color': getAvailabilityColor() }}>
                 <span>{getAvailabilityText()}</span>
@@ -390,12 +391,12 @@ const ConsultantCard = ({
 
             <Avatar
                 profileImageUrl={consultant.profileImageUrl}
-                displayName={consultant.name}
+                displayName={toDisplayString(consultant.name)}
                 className="mg-consultant-card__avatar mg-consultant-card__avatar--schedule-select"
             />
 
             <div className="mg-consultant-card__info mg-consultant-card__info--schedule-select">
-                <h4 className="mg-consultant-card__name mg-consultant-card__name--schedule-select">{consultant.name}</h4>
+                <h4 className="mg-consultant-card__name mg-consultant-card__name--schedule-select">{toDisplayString(consultant.name)}</h4>
 
                 <div className="mg-consultant-card__specialty-inline">
                     <SpecialtyDisplay
@@ -458,13 +459,13 @@ const ConsultantCard = ({
                 <span className="mg-consultant-card__accent mg-consultant-card__accent--salary-profile" aria-hidden />
                 <div className="mg-consultant-card__info mg-consultant-card__info--salary-profile">
                     <h4 className="mg-consultant-card__name mg-consultant-card__name--salary-profile" id={profileNameId}>
-                        {consultant.name}
+                        {toDisplayString(consultant.name)}
                     </h4>
                     <div className="mg-consultant-card__meta mg-consultant-card__meta--salary-profile">
-                        {consultant.email || '—'}
+                        {toDisplayString(consultant.email, '—')}
                     </div>
                     <div className="mg-consultant-card__grade mg-consultant-card__grade--salary-profile">
-                        등급: {grade != null && grade !== '' ? grade : '—'}
+                        등급: {grade != null && grade !== '' ? toDisplayString(grade) : '—'}
                     </div>
                     <div className="mg-consultant-card__base mg-consultant-card__base--salary-profile">
                         <span className="mg-consultant-card__base-label">기본급</span>
@@ -488,7 +489,7 @@ const ConsultantCard = ({
                     role="button"
                     tabIndex={0}
                     aria-labelledby={profileNameId}
-                    aria-label={`${consultant.name} 상세 보기`}
+                    aria-label={`${toDisplayString(consultant.name)} 상세 보기`}
                     style={{ position: 'relative' }}
                     onClick={() => onCardClick(consultant)}
                     onKeyDown={(e) => {
@@ -524,16 +525,16 @@ const ConsultantCard = ({
                     handleClick();
                 }
             }}
-            aria-label={`${consultant.name} 상담사 선택`}
+            aria-label={`${toDisplayString(consultant.name)} 상담사 선택`}
         >
             <Avatar
                 profileImageUrl={consultant.profileImageUrl}
-                displayName={consultant.name}
+                displayName={toDisplayString(consultant.name)}
                 className="mg-consultant-card__avatar mg-consultant-card__avatar--mobile-simple"
             />
             
             <div className="mg-consultant-card__info mg-consultant-card__info--mobile-simple">
-                <h4 className="mg-consultant-card__name mg-consultant-card__name--mobile-simple">{consultant.name}</h4>
+                <h4 className="mg-consultant-card__name mg-consultant-card__name--mobile-simple">{toDisplayString(consultant.name)}</h4>
                 
                 <div className="mg-consultant-card__meta mg-consultant-card__meta--mobile-simple">
                     <div className="mg-consultant-card__rating mg-consultant-card__rating--mobile-simple">

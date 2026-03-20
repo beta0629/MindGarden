@@ -17,6 +17,8 @@ import { apiGet, apiPost } from '../../utils/ajax';
 import { useSession } from '../../contexts/SessionContext';
 import notificationManager from '../../utils/notification';
 import ConfirmModal from '../common/ConfirmModal';
+import SafeText from '../common/SafeText';
+import { toDisplayString, toSafeNumber } from '../../utils/safeDisplay';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { sessionManager } from '../../utils/sessionManager';
@@ -485,7 +487,7 @@ const WellnessManagement = () => {
                             templates.map((template) => (
                                 <div key={template.id} className="wellness-template-card">
                                     <div className="wellness-template-header">
-                                        <h3 className="wellness-template-title">{template.title}</h3>
+                                        <h3 className="wellness-template-title"><SafeText>{template.title}</SafeText></h3>
                                         {template.isImportant && (
                                             <span className="wellness-template-badge wellness-template-badge--important">
                                                 중요
@@ -494,21 +496,21 @@ const WellnessManagement = () => {
                                     </div>
                                     <div className="wellness-template-meta">
                                         <span className="wellness-template-tag">
-                                            {getCategoryName(template.category)}
+                                            <SafeText>{getCategoryName(template.category)}</SafeText>
                                         </span>
                                         <span className="wellness-template-tag">
-                                            {getDayName(template.dayOfWeek)}
+                                            <SafeText>{getDayName(template.dayOfWeek)}</SafeText>
                                         </span>
                                         <span className="wellness-template-tag">
-                                            {getSeasonName(template.season)}
+                                            <SafeText>{getSeasonName(template.season)}</SafeText>
                                         </span>
                                     </div>
                                     <div className="wellness-template-stats">
                                         <span className="wellness-template-stat">
-                                            사용 {template.usageCount}회
+                                            사용 {toSafeNumber(template.usageCount)}회
                                         </span>
                                         <span className="wellness-template-stat">
-                                            생성자: {template.createdBy}
+                                            생성자: <SafeText>{template.createdBy}</SafeText>
                                         </span>
                                     </div>
                                     {template.lastUsedAt && (
@@ -536,8 +538,8 @@ const WellnessManagement = () => {
                 isOpen={confirmModal.isOpen}
                 onClose={() => setConfirmModal({ isOpen: false, title: '', message: '', type: 'default', onConfirm: null })}
                 onConfirm={confirmModal.onConfirm}
-                title={confirmModal.title}
-                message={confirmModal.message}
+                title={toDisplayString(confirmModal.title, '')}
+                message={toDisplayString(confirmModal.message, '')}
                 type={confirmModal.type}
             />
         </AdminCommonLayout>

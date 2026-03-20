@@ -1,7 +1,8 @@
-// import React from 'react';
+import React from 'react';
 import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { Link } from 'react-router-dom';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
+import SafeText from '../common/SafeText';
 import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import './ComplianceMenu.css';
 
@@ -100,11 +101,11 @@ const ComplianceMenu = () => {
                         className={`menu-item ${item.color}`}
                     >
                         <div className="menu-item-icon">
-                            {item.icon}
+                            <SafeText>{item.icon}</SafeText>
                         </div>
                         <div className="menu-item-content">
-                            <h3>{item.title}</h3>
-                            <p>{item.description}</p>
+                            <h3><SafeText>{item.title}</SafeText></h3>
+                            <p><SafeText>{item.description}</SafeText></p>
                         </div>
                         <div className="menu-item-arrow">
                             →

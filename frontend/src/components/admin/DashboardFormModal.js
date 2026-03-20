@@ -27,6 +27,7 @@ import Dashboard3DPreview from './Dashboard3DPreview';
 import WidgetConfigModal from './WidgetConfigModal';
 import ModernDashboardEditor from './ModernDashboardEditor';
 import './DashboardFormModal.css';
+import { toDisplayString } from '../../utils/safeDisplay';
 
 // 대시보드 설정을 JSON 문자열로 변환하는 유틸리티 함수
 const stringifyDashboardConfig = (config) => {
@@ -1157,7 +1158,7 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
                   ) : (
                     tenantRoles.map(role => (
                       <option key={role.tenantRoleId} value={role.tenantRoleId}>
-                        {role.nameKo || role.name || role.tenantRoleId}
+                        {toDisplayString(role.nameKo || role.name || role.tenantRoleId)}
                       </option>
                     ))
                   )}
@@ -1272,7 +1273,7 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
                   <option value="">타입을 선택해주세요</option>
                   {dashboardTypeOptions.map(option => (
                     <option key={option.value} value={option.value}>
-                      {option.label}
+                      {toDisplayString(option.label)}
                     </option>
                   ))}
                 </select>
@@ -1514,7 +1515,9 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
                       ) : (
                         roleTemplates.map(template => (
                           <option key={template.roleTemplateId} value={template.roleTemplateId}>
-                            {template.nameKo || template.name} {template.businessType ? `(${template.businessType})` : ''}
+                            {`${toDisplayString(template.nameKo || template.name)}${
+                              template.businessType ? ` (${toDisplayString(template.businessType)})` : ''
+                            }`}
                           </option>
                         ))
                       )}

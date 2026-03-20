@@ -13,6 +13,8 @@ import { useLocation } from 'react-router-dom';
 import { ChevronRight, ChevronDown } from 'lucide-react';
 import { NavLinkWithRouter } from '../atoms';
 import { LnbMenuItem } from '../molecules';
+import SafeText from '../../common/SafeText';
+import { toDisplayString } from '../../../utils/safeDisplay';
 import './DesktopLnb.css';
 
 const hasChildren = (item) => item.children && item.children.length > 0;
@@ -91,7 +93,7 @@ const DesktopLnb = ({ menuItems = [], headerTitle = '시스템 관리' }) => {
                     onClick={(e) => handleGroupToggle(e, item.to)}
                     aria-expanded={expandedGroupKey === item.to}
                     aria-controls={sublistId('mg-v2-desktop-lnb', item.to)}
-                    aria-label={`${item.label} 메뉴 ${expandedGroupKey === item.to ? '접기' : '펼치기'}`}
+                    aria-label={`${toDisplayString(item.label)} 메뉴 ${expandedGroupKey === item.to ? '접기' : '펼치기'}`}
                   >
                     {expandedGroupKey === item.to ? (
                       <ChevronDown size={18} aria-hidden />
@@ -104,14 +106,14 @@ const DesktopLnb = ({ menuItems = [], headerTitle = '시스템 관리' }) => {
                     icon={item.icon}
                     end={item.end}
                   >
-                    {item.label}
+                    <SafeText>{item.label}</SafeText>
                   </NavLinkWithRouter>
                 </div>
                 <ul
                   id={sublistId('mg-v2-desktop-lnb', item.to)}
                   className="mg-v2-desktop-lnb__sublist"
                   role="group"
-                  aria-label={item.label}
+                  aria-label={toDisplayString(item.label)}
                 >
                   {item.children.map((sub) => (
                     <LnbMenuItem
@@ -120,7 +122,7 @@ const DesktopLnb = ({ menuItems = [], headerTitle = '시스템 관리' }) => {
                       icon={sub.icon}
                       end={sub.end !== false}
                     >
-                      {sub.label}
+                      <SafeText>{sub.label}</SafeText>
                     </LnbMenuItem>
                   ))}
                 </ul>
@@ -132,7 +134,7 @@ const DesktopLnb = ({ menuItems = [], headerTitle = '시스템 관리' }) => {
                 icon={item.icon}
                 end={item.end !== false}
               >
-                {item.label}
+                <SafeText>{item.label}</SafeText>
               </LnbMenuItem>
             )
           )}

@@ -30,6 +30,8 @@ import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import MGButton from '../../components/common/MGButton'; // 임시 비활성화
 import './PgConfigurationDetail.css';
+import { toDisplayString } from '../../utils/safeDisplay';
+import SafeText from '../common/SafeText';
 
 /**
  * PG 설정 상세 페이지
@@ -161,7 +163,7 @@ const PgConfigurationDetail = () => {
     return (
       <span className={`status-badge status-badge--${config.color}`}>
         <Icon size={14} />
-        {config.label}
+        {toDisplayString(config.label)}
       </span>
     );
   };
@@ -183,7 +185,7 @@ const PgConfigurationDetail = () => {
     return (
       <span className={`status-badge status-badge--${config.color}`}>
         <Icon size={14} />
-        {config.label}
+        {toDisplayString(config.label)}
       </span>
     );
   };
@@ -252,7 +254,7 @@ const PgConfigurationDetail = () => {
           <div className="header-title">
             <CreditCard size={32} aria-hidden="true" />
             <div>
-              <h1 id="pg-config-title">{config.pgName || config.pgProvider}</h1>
+              <h1 id="pg-config-title"><SafeText fallback="PG">{config.pgName ?? config.pgProvider}</SafeText></h1>
               <div className="header-badges">
                 {renderStatusBadge(config.status)}
                 {renderApprovalBadge(config.approvalStatus)}
@@ -306,19 +308,19 @@ const PgConfigurationDetail = () => {
           <div className="detail-grid">
             <div className="detail-item">
               <label>PG 제공자</label>
-              <div className="detail-value">{config.pgProvider}</div>
+              <div className="detail-value"><SafeText>{config.pgProvider}</SafeText></div>
             </div>
             <div className="detail-item">
               <label>PG사 명칭</label>
-              <div className="detail-value">{config.pgName || '-'}</div>
+              <div className="detail-value"><SafeText fallback="-">{config.pgName}</SafeText></div>
             </div>
             <div className="detail-item">
               <label>가맹점 ID</label>
-              <div className="detail-value">{config.merchantId || '-'}</div>
+              <div className="detail-value"><SafeText fallback="-">{config.merchantId}</SafeText></div>
             </div>
             <div className="detail-item">
               <label>스토어 ID</label>
-              <div className="detail-value">{config.storeId || '-'}</div>
+              <div className="detail-value"><SafeText fallback="-">{config.storeId}</SafeText></div>
             </div>
             <div className="detail-item">
               <label>테스트 모드</label>
@@ -333,7 +335,7 @@ const PgConfigurationDetail = () => {
               </div>
             </div>
           </div>
-        </div>
+        </section>
         
         {/* URL 정보 */}
         {(config.webhookUrl || config.returnUrl || config.cancelUrl) && (
@@ -344,8 +346,8 @@ const PgConfigurationDetail = () => {
                 <div className="detail-item detail-item--full">
                   <label>웹훅 URL</label>
                   <div className="detail-value detail-value--url">
-                    <a href={config.webhookUrl} target="_blank" rel="noopener noreferrer">
-                      {config.webhookUrl}
+                    <a href={toDisplayString(config.webhookUrl, '#')} target="_blank" rel="noopener noreferrer">
+                      <SafeText>{config.webhookUrl}</SafeText>
                       <ExternalLink size={14} />
                     </a>
                   </div>
@@ -355,8 +357,8 @@ const PgConfigurationDetail = () => {
                 <div className="detail-item detail-item--full">
                   <label>리턴 URL</label>
                   <div className="detail-value detail-value--url">
-                    <a href={config.returnUrl} target="_blank" rel="noopener noreferrer">
-                      {config.returnUrl}
+                    <a href={toDisplayString(config.returnUrl, '#')} target="_blank" rel="noopener noreferrer">
+                      <SafeText>{config.returnUrl}</SafeText>
                       <ExternalLink size={14} />
                     </a>
                   </div>
@@ -366,15 +368,15 @@ const PgConfigurationDetail = () => {
                 <div className="detail-item detail-item--full">
                   <label>취소 URL</label>
                   <div className="detail-value detail-value--url">
-                    <a href={config.cancelUrl} target="_blank" rel="noopener noreferrer">
-                      {config.cancelUrl}
+                    <a href={toDisplayString(config.cancelUrl, '#')} target="_blank" rel="noopener noreferrer">
+                      <SafeText>{config.cancelUrl}</SafeText>
                       <ExternalLink size={14} />
                     </a>
                   </div>
                 </div>
               )}
             </div>
-          </div>
+        </section>
         )}
         
         {/* 키 정보 */}
@@ -449,7 +451,7 @@ const PgConfigurationDetail = () => {
               </div>
             )}
           </div>
-        </div>
+        </section>
         
         {/* 연결 테스트 결과 */}
         {config.lastConnectionTestAt && (
@@ -472,9 +474,7 @@ const PgConfigurationDetail = () => {
                 </div>
               </div>
               {config.connectionTestMessage && (
-                <div className="test-result-message">
-                  {config.connectionTestMessage}
-                </div>
+                <SafeText tag="div" className="test-result-message">{config.connectionTestMessage}</SafeText>
               )}
             </div>
           </div>
@@ -493,7 +493,7 @@ const PgConfigurationDetail = () => {
                 {config.requestedAt && (
                   <div className="request-info">
                     <span>요청 시각: {new Date(config.requestedAt).toLocaleString('ko-KR')}</span>
-                    {config.requestedBy && <span>요청자: {config.requestedBy}</span>}
+                    {config.requestedBy && <span>요청자: <SafeText>{config.requestedBy}</SafeText></span>}
                   </div>
                 )}
               </div>
@@ -509,7 +509,7 @@ const PgConfigurationDetail = () => {
                   {config.approvedBy && (
                     <div className="detail-item">
                       <label>승인자</label>
-                      <div className="detail-value">{config.approvedBy}</div>
+                      <div className="detail-value"><SafeText>{config.approvedBy}</SafeText></div>
                     </div>
                   )}
                   {config.approvedAt && (
@@ -534,14 +534,14 @@ const PgConfigurationDetail = () => {
                   <div className="detail-item detail-item--full">
                     <label>거부 사유</label>
                     <div className="detail-value detail-value--error">
-                      {config.rejectionReason}
+                      <SafeText>{config.rejectionReason}</SafeText>
                     </div>
                   </div>
                 )}
                 {config.approvedBy && (
                   <div className="detail-item">
                     <label>처리자</label>
-                    <div className="detail-value">{config.approvedBy}</div>
+                    <div className="detail-value"><SafeText>{config.approvedBy}</SafeText></div>
                   </div>
                 )}
                 {config.approvedAt && (
@@ -555,15 +555,13 @@ const PgConfigurationDetail = () => {
               </div>
             </div>
           )}
-        </div>
+        </section>
         
         {/* 비고 */}
         {config.notes && (
           <div className="detail-section">
             <h2>비고</h2>
-            <div className="detail-notes">
-              {config.notes}
-            </div>
+            <SafeText tag="div" className="detail-notes">{config.notes}</SafeText>
           </div>
         )}
         
@@ -578,20 +576,18 @@ const PgConfigurationDetail = () => {
               {config.history.map((item, index) => (
                 <div key={index} className="history-item">
                   <div className="history-header">
-                    <span className="history-action">{item.action}</span>
+                    <span className="history-action"><SafeText>{item.action}</SafeText></span>
                     <span className="history-time">
                       {new Date(item.changedAt).toLocaleString('ko-KR')}
                     </span>
                   </div>
                   {item.changedBy && (
                     <div className="history-user">
-                      변경자: {item.changedBy}
+                      변경자: <SafeText>{item.changedBy}</SafeText>
                     </div>
                   )}
                   {item.description && (
-                    <div className="history-description">
-                      {item.description}
-                    </div>
+                    <SafeText tag="div" className="history-description">{item.description}</SafeText>
                   )}
                 </div>
               ))}
@@ -614,7 +610,7 @@ const PgConfigurationDetail = () => {
               </div>
               <div className="modal-body">
                 <p>
-                  정말로 <strong>{config.pgName || config.pgProvider}</strong> 설정을 삭제하시겠습니까?
+                  정말로 <strong><SafeText>{config.pgName ?? config.pgProvider}</SafeText></strong> 설정을 삭제하시겠습니까?
                 </p>
                 <p className="warning-text">
                   이 작업은 되돌릴 수 없습니다.

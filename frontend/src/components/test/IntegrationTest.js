@@ -12,6 +12,7 @@ import {
   TEST_TYPES
 } from '../../constants/integrationTest';
 import notificationManager from '../../utils/notification';
+import { toDisplayString } from '../../utils/safeDisplay';
 import './IntegrationTest.css';
 
 /**
@@ -704,7 +705,8 @@ const IntegrationTest = () => {
                 </p>
                 <p style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: '#6b7280', gridColumn: '1 / -1' }}>
                   // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #374151 -> var(--mg-custom-374151)
-                  <strong style={{ color: '#374151' }}>메시지:</strong> {healthStatus.message}
+                  <strong style={{ color: '#374151' }}>메시지:</strong>{' '}
+                  {toDisplayString(healthStatus.message)}
                 </p>
               </div>
               
@@ -752,7 +754,7 @@ const IntegrationTest = () => {
                         fontWeight: '500',
                         // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #374151 -> var(--mg-custom-374151)
                         color: '#374151'
-                      }}>{service.name}:</span>
+                      }}>{toDisplayString(service.name)}:</span>
                       <span style={{
                         padding: '4px 8px',
                         backgroundColor: service.status === 'HEALTHY' ? 'var(--mg-success-500)' : 'var(--mg-error-500)',

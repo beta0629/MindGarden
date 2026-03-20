@@ -4,6 +4,7 @@ import { apiGet, apiPost } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import CustomSelect from '../common/CustomSelect';
+import SafeText from '../common/SafeText';
 
 /**
  * 성과 지표 대시보드 모달 컴포넌트
@@ -272,7 +273,7 @@ const PerformanceMetricsModal = ({ isOpen, onClose }) => {
                                         {metrics.consultantPerformance?.map((consultant, index) => (
                                             <div key={index} className="mg-v2-list-item">
                                                 <div className="mg-v2-list-item-content">
-                                                    <div className="mg-v2-list-item-title">{consultant.name}</div>
+                                                    <SafeText tag="div" className="mg-v2-list-item-title">{consultant.name}</SafeText>
                                                     <div className="mg-v2-list-item-subtitle">
                                                         상담: {consultant.consultationCount}건 · 매출: {consultant.revenue?.toLocaleString()}원 · 만족도: {consultant.satisfaction}점
                                                     </div>

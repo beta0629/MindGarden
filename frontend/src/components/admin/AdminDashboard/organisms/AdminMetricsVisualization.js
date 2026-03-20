@@ -18,6 +18,7 @@
 import React from 'react';
 import { Link2, DollarSign, KeyRound, Calendar, Receipt } from 'lucide-react';
 import SafeErrorDisplay from '../../../common/SafeErrorDisplay';
+import { toDisplayString } from '../../../../utils/safeDisplay';
 import CoreFlowPipeline from './CoreFlowPipeline';
 import './AdminMetricsVisualization.css';
 
@@ -137,10 +138,10 @@ const AdminMetricsVisualization = ({
                       <Icon size={20} aria-hidden />
                     </div>
                   )}
-                  <h3 className="admin-metrics-visualization__grid-tile-title">{step.title}</h3>
-                  <span className="admin-metrics-visualization__grid-tile-value">{step.badgeValue}</span>
+                  <h3 className="admin-metrics-visualization__grid-tile-title">{toDisplayString(step.title)}</h3>
+                  <span className="admin-metrics-visualization__grid-tile-value">{toDisplayString(step.badgeValue)}</span>
                   {step.badgeLabel ? (
-                    <span className="admin-metrics-visualization__grid-tile-label">{step.badgeLabel}</span>
+                    <span className="admin-metrics-visualization__grid-tile-label">{toDisplayString(step.badgeLabel)}</span>
                   ) : null}
                 </div>
               </article>

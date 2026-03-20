@@ -38,6 +38,7 @@ import {
   SUBSCRIPTION_CONSTANTS,
   COMMON_CODE_GROUPS,
 } from '../../constants/billing';
+import SafeText from '../common/SafeText';
 import './SubscriptionManagement.css';
 
 /**
@@ -263,8 +264,8 @@ const SubscriptionManagement = ({ tenantId: propTenantId }) => {
                   <CreditCard size={ICON_SIZES.MEDIUM} />
                   <div className={BILLING_CSS.SUBSCRIPTION_MANAGEMENT.PAYMENT_METHOD_INFO}>
                     <div>
-                      <strong>{method.cardBrand || BILLING_MESSAGES.SUBSCRIPTION.CARD_DEFAULT_LABEL}</strong>
-                      {method.cardLast4 && <span> **** {method.cardLast4}</span>}
+                      <strong><SafeText fallback={BILLING_MESSAGES.SUBSCRIPTION.CARD_DEFAULT_LABEL}>{method.cardBrand}</SafeText></strong>
+                      {method.cardLast4 && <span> **** <SafeText>{method.cardLast4}</SafeText></span>}
                     </div>
                     {method.cardExpMonth && method.cardExpYear && (
                       <small>
@@ -303,14 +304,14 @@ const SubscriptionManagement = ({ tenantId: propTenantId }) => {
                         }`}
                         onClick={() => setSelectedPlan(plan)}
                       >
-                        <h4>{plan.nameKo || plan.name}</h4>
+                        <h4><SafeText>{plan.nameKo || plan.name}</SafeText></h4>
                         <div className={BILLING_CSS.SUBSCRIPTION_MANAGEMENT.PLAN_PRICE}>
                           {formatCurrency(plan.baseFee, plan.currency)}
                           {BILLING_MESSAGES.SUBSCRIPTION.MONTHLY_LABEL}
                         </div>
                         {plan.descriptionKo && (
                           <p className={BILLING_CSS.SUBSCRIPTION_MANAGEMENT.PLAN_DESCRIPTION}>
-                            {plan.descriptionKo}
+                            <SafeText>{plan.descriptionKo}</SafeText>
                           </p>
                         )}
                       </div>
@@ -342,7 +343,7 @@ const SubscriptionManagement = ({ tenantId: propTenantId }) => {
                 <div key={subscription.subscriptionId} className={BILLING_CSS.SUBSCRIPTION_MANAGEMENT.SUBSCRIPTION}>
                   <div className={BILLING_CSS.SUBSCRIPTION_MANAGEMENT.SUBSCRIPTION_HEADER}>
                     <div>
-                      <h4>{subscription.planName || BILLING_MESSAGES.SUBSCRIPTION.DEFAULT_PLAN_NAME}</h4>
+                      <h4><SafeText fallback={BILLING_MESSAGES.SUBSCRIPTION.DEFAULT_PLAN_NAME}>{subscription.planName}</SafeText></h4>
                       <SubscriptionStatusBadgeLabel
                         status={subscription.status}
                         statusCodes={subscriptionStatusCodes}
@@ -427,7 +428,7 @@ const SubscriptionStatusBadgeLabel = ({ status, statusCodes }) => {
       ? 'warning'
       : 'neutral';
 
-  return <StatusBadge variant={variant}>{statusLabel}</StatusBadge>;
+  return <StatusBadge variant={variant}><SafeText>{statusLabel}</SafeText></StatusBadge>;
 };
 
 /**
@@ -459,7 +460,7 @@ const BillingCycleLabel = ({ cycle, cycleCodes }) => {
     loadCycleLabel();
   }, [cycle, cycleCodes]);
 
-  return <span>{cycleLabel}</span>;
+  return <span><SafeText>{cycleLabel}</SafeText></span>;
 };
 
 export default SubscriptionManagement;

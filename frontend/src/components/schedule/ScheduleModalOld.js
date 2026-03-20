@@ -8,6 +8,7 @@ import notificationManager from '../../utils/notification';
 import { CSS_VARIABLES } from '../../constants/css-variables';
 import { useSession } from '../../contexts/SessionContext';
 import csrfTokenManager from '../../utils/csrfTokenManager';
+import { toDisplayString } from '../../utils/safeDisplay';
 import './ScheduleModal.css';
 
 /**
@@ -312,7 +313,7 @@ const ScheduleModal = ({
                                 >
                                     {consultationTypeOptions.map(option => (
                                         <option key={option.value} value={option.value}>
-                                            {option.icon} {option.label}
+                                            {option.icon} {toDisplayString(option.label)}
                                         </option>
                                     ))}
                                 </select>

@@ -1,6 +1,7 @@
-// import React from 'react';
+import React from 'react';
 import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { BarChart3, PieChart, TrendingUp } from 'lucide-react';
+import SafeText from '../common/SafeText';
 
 const ChartShowcase = () => {
   const barData = [
@@ -38,7 +39,9 @@ const ChartShowcase = () => {
                 style={{ height: item.height }}
               >
                 <span className="mg-bar-value">{item.value}</span>
-                <span className="mg-bar-label">{item.label}</span>
+                <span className="mg-bar-label">
+                  <SafeText>{item.label}</SafeText>
+                </span>
               </div>
             ))}
           </div>
@@ -62,7 +65,9 @@ const ChartShowcase = () => {
                 >
                   <span className="mg-progress-circle-value">{item.value}%</span>
                 </div>
-                <span className="mg-v2-text-sm" style={{ fontWeight: 500 }}>{item.label}</span>
+                <span className="mg-v2-text-sm" style={{ fontWeight: 500 }}>
+                  <SafeText>{item.label}</SafeText>
+                </span>
               </div>
             ))}
           </div>

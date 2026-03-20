@@ -4,6 +4,7 @@ import { apiPost } from '../../../utils/ajax';
 import notificationManager, { showNotification } from '../../../utils/notification';
 import UnifiedModal from '../../common/modals/UnifiedModal';
 import Button from '../../ui/Button/Button';
+import SafeText from '../../common/SafeText';
 
 /**
  * 부분 환불 모달 컴포넌트
@@ -203,8 +204,8 @@ const PartialRefundModal = ({ mapping, isOpen, onClose, onSuccess }) => {
               매핑 정보
             </h4>
             <div className="mg-v2-info-grid">
-              <div><strong>내담자:</strong> {mapping.clientName}</div>
-              <div><strong>상담사:</strong> {mapping.consultantName}</div>
+              <div><strong>내담자:</strong> <SafeText>{mapping.clientName}</SafeText></div>
+              <div><strong>상담사:</strong> <SafeText>{mapping.consultantName}</SafeText></div>
               <div><strong>총 회기:</strong> {mapping.totalSessions}회</div>
               <div><strong>사용 회기:</strong> {mapping.usedSessions}회</div>
               <div><strong>남은 회기:</strong> {mapping.remainingSessions}회</div>
@@ -219,7 +220,7 @@ const PartialRefundModal = ({ mapping, isOpen, onClose, onSuccess }) => {
               환불 대상 (최근 추가 패키지)
             </h4>
             <div className="mg-v2-refund-package-grid">
-              <div><strong>패키지명:</strong> {lastAddedPackage.packageName}</div>
+              <div><strong>패키지명:</strong> <SafeText>{lastAddedPackage.packageName}</SafeText></div>
               <div><strong>패키지 회기수:</strong> {lastAddedPackage.sessions}회</div>
               <div><strong>패키지 가격:</strong> {lastAddedPackage.price?.toLocaleString()}원</div>
               <div><strong>회기당 단가:</strong> {lastAddedPackage.sessions > 0 ? Math.round(lastAddedPackage.price / lastAddedPackage.sessions).toLocaleString() : 0}원</div>
@@ -236,7 +237,7 @@ const PartialRefundModal = ({ mapping, isOpen, onClose, onSuccess }) => {
               청약 철회 기간 확인
             </h4>
             <div className={`mg-v2-withdrawal-period-message mg-v2-withdrawal-period-message--${withdrawalCheck.isValid ? 'valid' : 'invalid'}`}>
-              {withdrawalCheck.message}
+              <SafeText>{withdrawalCheck.message}</SafeText>
             </div>
             {mapping.paymentDate && (
               <div className={`mg-v2-withdrawal-period-date mg-v2-withdrawal-period-date--${withdrawalCheck.isValid ? 'valid' : 'invalid'}`}>

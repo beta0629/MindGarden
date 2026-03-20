@@ -20,6 +20,7 @@ import BaseWidget from '../BaseWidget';
 import { RoleUtils } from '../../../../constants/roles';
 import { formatDate } from '../../../../utils/formatUtils';
 import './SystemStatusWidget.css';
+import SafeText from '../../../common/SafeText';
 
 const SystemStatusWidget = ({ widget, user }) => {
   const navigate = useNavigate();
@@ -291,7 +292,7 @@ const SystemStatusWidget = ({ widget, user }) => {
                 <div className="service-list">
                   {displayData.externalServices.slice(0, 3).map((service, index) => (
                     <div key={index} className="service-item">
-                      <span className="service-item-name">{service.name}</span>
+                      <span className="service-item-name"><SafeText>{service.name}</SafeText></span>
                       <span className={`service-item-status ${service.status}`}>
                         {getStatusText(service.status)}
                       </span>

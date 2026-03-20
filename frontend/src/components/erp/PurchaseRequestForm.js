@@ -8,6 +8,8 @@ import ErpHeader from './common/ErpHeader';
 import ErpModal from './common/ErpModal';
 import { useSession } from '../../hooks/useSession';
 import SafeErrorDisplay from '../common/SafeErrorDisplay';
+import SafeText from '../common/SafeText';
+import { toDisplayString } from '../../utils/safeDisplay';
 
 /**
  * 구매 요청 폼 컴포넌트
@@ -89,7 +91,7 @@ const PurchaseRequestForm = () => {
     for (const item of selectedItems) {
       const quantity = itemQuantities[item.id] || 1;
       if (quantity < 1) {
-        setError(`${item.name}의 수량은 1개 이상이어야 합니다.`);
+        setError(`${toDisplayString(item.name)}의 수량은 1개 이상이어야 합니다.`);
         return;
       }
     }
@@ -145,7 +147,7 @@ const PurchaseRequestForm = () => {
         setReason('');
       } else {
         const failedItems = results
-          .map((result, index) => result.success ? null : selectedItems[index].name)
+          .map((result, index) => result.success ? null : toDisplayString(selectedItems[index]?.name))
           .filter(Boolean);
         setError(`다음 아이템의 구매 요청에 실패했습니다: ${failedItems.join(', ')}`);
       }
@@ -260,7 +262,7 @@ const PurchaseRequestForm = () => {
                       color: '#212529',
                       lineHeight: '1.3'
                     }}>
-                      {item.name}
+                      <SafeText>{item.name}</SafeText>
                     </div>
                     
                     {/* 카테고리 */}
@@ -272,7 +274,7 @@ const PurchaseRequestForm = () => {
                       letterSpacing: '0.5px',
                       fontWeight: '500'
                     }}>
-                      {item.category}
+                      <SafeText>{item.category}</SafeText>
                     </div>
                     
                     {/* 가격 */}
@@ -335,7 +337,7 @@ const PurchaseRequestForm = () => {
                     }}>
                       <div style={{ flex: 1 }}>
                         <div style={{ fontWeight: '600', marginBottom: '4px' }}>
-                          {item.name}
+                          <SafeText>{item.name}</SafeText>
                         </div>
                         <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--mg-secondary-500)' }}>
                           {formatCurrency(item.unitPrice)} × {itemQuantities[item.id] || 1} = {formatCurrency(item.unitPrice * (itemQuantities[item.id] || 1))}
@@ -459,7 +461,8 @@ const PurchaseRequestForm = () => {
                         border: '1px solid #e9ecef'
                       }}>
                         <div>
-                          <strong>{item.name}</strong> ({item.category})
+                          <strong><SafeText>{item.name}</SafeText></strong>{' '}
+                          (<SafeText>{item.category}</SafeText>)
                         </div>
                         <div style={{ color: 'var(--mg-primary-500)', fontWeight: '600' }}>
                           {formatCurrency(item.unitPrice)} × {quantity} = {formatCurrency(totalPrice)}

@@ -8,6 +8,7 @@
 
 import React from 'react';
 import { RefreshCw, Download } from 'lucide-react';
+import { toDisplayString } from '../../../utils/safeDisplay';
 
 const PERIOD_OPTIONS = [
   { value: 'today', label: '오늘' },
@@ -67,7 +68,7 @@ const RefundFilterBlock = ({
             >
               {PERIOD_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
-                  {opt.label}
+                  {toDisplayString(opt.label)}
                 </option>
               ))}
             </select>
@@ -86,7 +87,7 @@ const RefundFilterBlock = ({
             >
               {STATUS_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
-                  {opt.label}
+                  {toDisplayString(opt.label)}
                 </option>
               ))}
             </select>

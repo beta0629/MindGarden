@@ -8,6 +8,8 @@ import UnifiedModal from '../common/modals/UnifiedModal';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ScheduleB0KlA.css';
 import '../../styles/main.css';
+import SafeText from '../common/SafeText';
+import { toDisplayString } from '../../utils/safeDisplay';
 
 /**
  * 스케줄 상세 정보 및 관리 모달
@@ -579,7 +581,7 @@ return isStatus(displayData.status, vacationStatus) ||
                             <div className="section-content" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                     <span style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>이벤트</span>
-                                    <span style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>{displayData.title}</span>
+                                    <span style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}><SafeText>{displayData.title}</SafeText></span>
                                 </div>
                     
                     {!isVacationEvent() && (() => {
@@ -588,8 +590,9 @@ return isStatus(displayData.status, vacationStatus) ||
                         
                         if ((!parsedConsultantName || parsedConsultantName === '상담사 정보 없음' || parsedConsultantName === 'undefined') &&
                             (!parsedClientName || parsedClientName === '내담자 정보 없음' || parsedClientName === 'undefined')) {
-                            if (displayData.title && displayData.title.includes(' - ')) {
-                                const names = displayData.title.split(' - ');
+                            const titleStr = toDisplayString(displayData.title, '');
+                            if (titleStr && titleStr.includes(' - ')) {
+                                const names = titleStr.split(' - ');
                                 if (names.length === 2) {
                                     parsedConsultantName = names[0].trim();
                                     parsedClientName = names[1].trim();
@@ -601,11 +604,11 @@ return isStatus(displayData.status, vacationStatus) ||
                             <>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                     <span style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>상담사</span>
-                                    <span style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>{parsedConsultantName || '상담사 정보 없음'}</span>
+                                    <span style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}><SafeText fallback="상담사 정보 없음">{parsedConsultantName}</SafeText></span>
                                 </div>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                     <span style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>내담자</span>
-                                    <span style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>{parsedClientName || '내담자 정보 없음'}</span>
+                                    <span style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}><SafeText fallback="내담자 정보 없음">{parsedClientName}</SafeText></span>
                                 </div>
                             </>
                         );
@@ -615,18 +618,18 @@ return isStatus(displayData.status, vacationStatus) ||
                         <>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                 <span style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>휴가 사유</span>
-                                <span style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>{displayData.description || displayData.reason || '사유 없음'}</span>
+                                <span style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}><SafeText fallback="사유 없음">{displayData.description ?? displayData.reason}</SafeText></span>
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                 <span style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>휴가 유형</span>
-                                <span style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>{getVacationTypeDisplay(displayData.vacationType)}</span>
+                                <span style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}><SafeText>{getVacationTypeDisplay(displayData.vacationType)}</SafeText></span>
                             </div>
                         </>
                     ) : (
                         <>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                 <span style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>상담 유형</span>
-                                <span style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>{convertConsultationTypeToKorean(displayData.consultationType)}</span>
+                                <span style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}><SafeText>{convertConsultationTypeToKorean(displayData.consultationType)}</SafeText></span>
                             </div>
                         </>
                     )}
@@ -634,13 +637,13 @@ return isStatus(displayData.status, vacationStatus) ||
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <span style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>시간</span>
                         <span style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>
-                            {displayData.startTime} - {displayData.endTime}
+                            <SafeText>{displayData.startTime}</SafeText> - <SafeText>{displayData.endTime}</SafeText>
                         </span>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '8px', borderTop: '1px solid var(--color-border)' }}>
                         <span style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>상태</span>
                         <span className={`mg-v2-badge mg-v2-badge-${getStatusColorClass(getStatusCodeValue(displayData.status))}`}>
-                            {convertStatusToKorean(displayData.status)}
+                            <SafeText>{convertStatusToKorean(displayData.status)}</SafeText>
                         </span>
                     </div>
                             </div>

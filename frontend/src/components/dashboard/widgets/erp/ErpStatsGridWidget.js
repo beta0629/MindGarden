@@ -20,6 +20,7 @@ import BaseWidget from '../BaseWidget';
 import { RoleUtils, USER_ROLES } from '../../../../constants/roles';
 import { formatCurrency, formatNumber, formatPercent } from '../../../../utils/formatUtils';
 import './ErpStatsGridWidget.css';
+import SafeText from '../../../common/SafeText';
 
 const ErpStatsGridWidget = ({ widget, user }) => {
   const navigate = useNavigate();
@@ -245,19 +246,19 @@ const ErpStatsGridWidget = ({ widget, user }) => {
                 <div className="erp-stat-icon-wrapper">
                   {card.icon}
                 </div>
-                <div className="erp-stat-title">{card.title}</div>
+                <SafeText tag="div" className="erp-stat-title">{card.title}</SafeText>
                 {card.badge && (
                   <div className={`erp-stat-badge badge-${card.badge.variant}`}>
-                    {card.badge.text}
+                    <SafeText>{card.badge.text}</SafeText>
                   </div>
                 )}
               </div>
               <div className="erp-stat-body">
-                <div className="erp-stat-value">{card.value}</div>
+                <div className="erp-stat-value"><SafeText>{card.value}</SafeText></div>
                 {card.change && (
                   <div className={`erp-stat-change ${card.change.isPositive ? 'positive' : 'negative'}`}>
                     {React.createElement(card.change.icon, { className: "change-icon" })}
-                    <span>{card.change.value}</span>
+                    <span><SafeText>{card.change.value}</SafeText></span>
                   </div>
                 )}
               </div>

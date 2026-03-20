@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { apiGet } from '../../../utils/ajax';
+import { toDisplayString } from '../../../utils/safeDisplay';
 import './CommonCodeForm.css';
 
 /**
@@ -163,11 +164,10 @@ const CommonCodeForm = ({ code, codeGroups, onSubmit, onClose }) => {
         setIsSubmitting(true);
         try {
             // CONSULTATION_PACKAGE 그룹일 때 회기 수를 extraData에 포함
-            let submitData = { ...formData };
-            if (formData.codeGroup === 'CONSULTATION_PACKAGE') {
-                submitData.extraData = JSON.stringify({ sessions: packageSessions });
-            }
-            
+            const submitData = formData.codeGroup === 'CONSULTATION_PACKAGE'
+                ? { ...formData, extraData: JSON.stringify({ sessions: packageSessions }) }
+                : { ...formData };
+
             await onSubmit(submitData);
         } catch (error) {
             console.error('폼 제출 오류:', error);
@@ -212,12 +212,14 @@ const CommonCodeForm = ({ code, codeGroups, onSubmit, onClose }) => {
                                     <>
                                         {commonCodeGroupOptions.map(option => (
                                             <option key={option.value} value={option.value}>
-                                                {option.icon} {option.label}
+                                                {[toDisplayString(option.icon, ''), toDisplayString(option.label)]
+                                                  .filter((s) => s !== '')
+                                                  .join(' ')}
                                             </option>
                                         ))}
                                         {codeGroups.filter(group => !commonCodeGroupOptions.some(opt => opt.value === group)).map(group => (
                                             <option key={group} value={group}>
-                                                {group}
+                                                {toDisplayString(group)}
                                             </option>
                                         ))}
                                     </>
@@ -325,21 +327,21 @@ const CommonCodeForm = ({ code, codeGroups, onSubmit, onClose }) => {
                         <div className="form-group">
                             <label htmlFor="colorCode">색상 코드</label>
                             <div className="color-input-group">
+                                {/* 표준화 2025-12-05: CSS 변수 사용 (fallback) */}
                                 <input
                                     type="color"
                                     id="colorCode"
                                     name="colorCode"
-                                    {/* 표준화 2025-12-05: CSS 변수 사용 (fallback) */}
                                     value={formData.colorCode || 'var(--mg-gray-500)'}
                                     onChange={handleChange}
                                     className="form-control color-picker"
                                 />
+                                {/* 표준화 2025-12-05: CSS 변수 사용 권장 */}
                                 <input
                                     type="text"
                                     value={formData.colorCode}
                                     onChange={handleChange}
                                     className="form-control color-text"
-                                    {/* 표준화 2025-12-05: CSS 변수 사용 권장 */}
                                     placeholder="var(--mg-gray-500) 또는 #hex"
                                     pattern="^#[0-9A-Fa-f]{6}$"
                                 />

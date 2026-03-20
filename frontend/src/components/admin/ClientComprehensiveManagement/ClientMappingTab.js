@@ -1,6 +1,8 @@
 import Button from '../../ui/Button/Button';
 import { User, Handshake, Calendar, Eye } from 'lucide-react';
 import { StatusBadge, CardContainer } from '../../common';
+import SafeText from '../../common/SafeText';
+import { toDisplayString } from '../../../utils/safeDisplay';
 import './ClientMappingTab.css';
 
 /**
@@ -43,12 +45,14 @@ const ClientMappingTab = ({
           <div className="mg-v2-mapping-details">
             <div className="mg-v2-mapping-card__row">
               <span className="mg-v2-mapping-card__label">상담사</span>
-              <span className="mg-v2-mapping-card__value">{consultant?.name || '알 수 없음'}</span>
+              <span className="mg-v2-mapping-card__value">
+                <SafeText fallback="알 수 없음">{consultant?.name}</SafeText>
+              </span>
             </div>
             {mapping.packageName && (
               <div className="mg-v2-mapping-card__row">
                 <span className="mg-v2-mapping-card__label">패키지</span>
-                <span className="mg-v2-mapping-card__value">{mapping.packageName}</span>
+                <span className="mg-v2-mapping-card__value"><SafeText>{mapping.packageName}</SafeText></span>
               </div>
             )}
             {(mapping.totalSessions != null || mapping.remainingSessions !== undefined) && (
@@ -72,8 +76,8 @@ const ClientMappingTab = ({
             {mapping.notes && (
               <div className="mg-v2-mapping-card__row">
                 <span className="mg-v2-mapping-card__label">메모</span>
-                <span className="mg-v2-mapping-card__value mg-v2-mapping-card__memo" title={mapping.notes}>
-                  {mapping.notes}
+                <span className="mg-v2-mapping-card__value mg-v2-mapping-card__memo" title={toDisplayString(mapping.notes)}>
+                  <SafeText>{mapping.notes}</SafeText>
                 </span>
               </div>
             )}
@@ -97,9 +101,9 @@ const ClientMappingTab = ({
       <div key={client.id} className="mg-v2-mapping-client-block">
         <div className="mg-v2-mapping-client-block__header">
           <div className="mg-v2-mapping-client-block__info">
-            <h3 className="mg-v2-mapping-client-block__name">{client.name}</h3>
+            <h3 className="mg-v2-mapping-client-block__name"><SafeText>{client.name}</SafeText></h3>
             <p className="mg-v2-mapping-client-block__email">
-              <span className="mg-v2-client-email">{client.email}</span>
+              <span className="mg-v2-client-email"><SafeText>{client.email}</SafeText></span>
             </p>
           </div>
           <div className="mg-v2-mapping-client-block__actions">

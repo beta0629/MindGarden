@@ -17,6 +17,8 @@ import { useWidget } from '../../../hooks/useWidget';
 import BaseWidget from './BaseWidget';
 import { WIDGET_CONSTANTS } from '../../../constants/widgetConstants';
 import './Widget.css';
+import SafeText from '../../common/SafeText';
+import { toDisplayString } from '../../../utils/safeDisplay';
 
 const FormWidget = ({ widget, user }) => {
   // 표준화된 위젯 훅 사용
@@ -90,6 +92,7 @@ const FormWidget = ({ widget, user }) => {
   // 폼 필드 렌더링
   const renderField = (field, index) => {
     const { name, label, type = 'text', required = false, options = [] } = field;
+    const labelSafe = toDisplayString(label);
     const value = formData[name] || '';
 
     switch (type) {
@@ -97,7 +100,7 @@ const FormWidget = ({ widget, user }) => {
         return (
           <div key={index} className="form-field">
             <label htmlFor={name}>
-              {label}
+              {labelSafe}
               {required && <span className="required">*</span>}
             </label>
             <select
@@ -109,7 +112,7 @@ const FormWidget = ({ widget, user }) => {
               <option value="">선택하세요</option>
               {options.map((option, optIndex) => (
                 <option key={optIndex} value={option.value || option}>
-                  {option.label || option}
+                  {toDisplayString(option.label != null ? option.label : option)}
                 </option>
               ))}
             </select>
@@ -120,7 +123,7 @@ const FormWidget = ({ widget, user }) => {
         return (
           <div key={index} className="form-field">
             <label htmlFor={name}>
-              {label}
+              {labelSafe}
               {required && <span className="required">*</span>}
             </label>
             <textarea
@@ -137,7 +140,7 @@ const FormWidget = ({ widget, user }) => {
         return (
           <div key={index} className="form-field">
             <label htmlFor={name}>
-              {label}
+              {labelSafe}
               {required && <span className="required">*</span>}
             </label>
             <input
@@ -188,7 +191,7 @@ const FormWidget = ({ widget, user }) => {
         {submitResult && (
           <div className={`form-result ${submitResult.success ? 'form-success' : 'form-error'}`}>
             <i className={`bi bi-${submitResult.success ? 'check-circle' : 'exclamation-triangle'}`}></i>
-            <span>{submitResult.message}</span>
+            <SafeText>{submitResult.message}</SafeText>
           </div>
         )}
       </div>

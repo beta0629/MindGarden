@@ -3,6 +3,7 @@
  */
 
 import React from 'react';
+import { toDisplayString } from '../../../utils/safeDisplay';
 
 const Select = ({
   label,
@@ -16,7 +17,7 @@ const Select = ({
     <div className={`mg-form-group ${className}`.trim()}>
       {label && (
         <label className="mg-v2-label">
-          {label}
+          {toDisplayString(label)}
           {required && <span className="mg-required">*</span>}
         </label>
       )}
@@ -27,7 +28,7 @@ const Select = ({
       >
         {options.map((option, index) => (
           <option key={index} value={option.value}>
-            {option.label}
+            {toDisplayString(option.label)}
           </option>
         ))}
       </select>

@@ -1,5 +1,6 @@
 // import React from 'react';
 import MGButton from '../../../components/common/MGButton'; // 임시 비활성화
+import SafeText from '../../../components/common/SafeText';
 import { FaSyncAlt, FaCogs, FaBox, FaShoppingCart, FaCheckCircle, FaFileExport, FaRedo } from 'react-icons/fa';
 import { RotateCcw, Settings, Package, ShoppingCart, CheckCircle, FileText, RefreshCw } from 'lucide-react';
 
@@ -124,7 +125,7 @@ const AdminDashboardActions = ({
             {actionGroups.map((group, groupIndex) => (
                 <div key={groupIndex} className="mg-v2-admin-dashboard-action-group">
                     <h3 className="mg-v2-admin-dashboard-action-group-title">
-                        {group.title}
+                        <SafeText>{group.title}</SafeText>
                     </h3>
                     <div className="mg-v2-admin-dashboard-action-buttons">
                         {group.actions.map((action, actionIndex) => {
@@ -141,10 +142,10 @@ const AdminDashboardActions = ({
                                     {action.icon}
                                     <div className="mg-v2-admin-dashboard-action-content">
                                         <span className="mg-v2-admin-dashboard-action-title">
-                                            {action.title}
+                                            <SafeText>{action.title}</SafeText>
                                         </span>
                                         <span className="mg-v2-admin-dashboard-action-description">
-                                            {action.description}
+                                            <SafeText>{action.description}</SafeText>
                                         </span>
                                     </div>
                                 </button>

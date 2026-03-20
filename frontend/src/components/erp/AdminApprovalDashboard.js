@@ -9,6 +9,8 @@ import ErpModal from './common/ErpModal';
 import { useSession } from '../../hooks/useSession';
 import './ApprovalDashboard.css';
 import SafeErrorDisplay from '../common/SafeErrorDisplay';
+import SafeText from '../common/SafeText';
+import { toDisplayString } from '../../utils/safeDisplay';
 
 /**
  * 관리자 승인 대시보드 컴포넌트
@@ -199,13 +201,13 @@ const AdminApprovalDashboard = () => {
       ) : (
         <div className="approval-dashboard-grid">
           {requests.map(request => (
-            <ErpCard key={request.id} title={`구매 요청 #${request.id}`}>
+            <ErpCard key={request.id} title={toDisplayString(`구매 요청 #${request.id}`)}>
               <div className="approval-request-info">
                 <div className="approval-request-grid">
-                  <div><strong>요청자:</strong> {request.requester?.name || '알 수 없음'}</div>
-                  <div><strong>요청일:</strong> {formatDate(request.createdAt)}</div>
-                  <div><strong>아이템:</strong> {request.item?.name || '알 수 없음'}</div>
-                  <div><strong>수량:</strong> {request.quantity}개</div>
+                  <div><strong>요청자:</strong> <SafeText fallback="알 수 없음">{request.requester?.name}</SafeText></div>
+                  <div><strong>요청일:</strong> {toDisplayString(formatDate(request.createdAt))}</div>
+                  <div><strong>아이템:</strong> <SafeText fallback="알 수 없음">{request.item?.name}</SafeText></div>
+                  <div><strong>수량:</strong> {toDisplayString(request.quantity)}개</div>
                   <div><strong>단가:</strong> {formatCurrency(request.unitPrice)}</div>
                   <div><strong>총액:</strong> {formatCurrency(request.totalAmount)}</div>
                 </div>
@@ -214,7 +216,7 @@ const AdminApprovalDashboard = () => {
                   <div className="approval-request-reason">
                     <strong>사유:</strong>
                     <div className="approval-request-reason-text">
-                      {request.reason}
+                      <SafeText>{request.reason}</SafeText>
                     </div>
                   </div>
                 )}
@@ -253,8 +255,8 @@ const AdminApprovalDashboard = () => {
             <div className="approval-request-details">
               <h4>승인할 구매 요청</h4>
               <div className="approval-request-info-box">
-                <div><strong>아이템:</strong> {selectedRequest.item?.name}</div>
-                <div><strong>수량:</strong> {selectedRequest.quantity}개</div>
+                <div><strong>아이템:</strong> <SafeText>{selectedRequest.item?.name}</SafeText></div>
+                <div><strong>수량:</strong> {toDisplayString(selectedRequest.quantity)}개</div>
                 <div><strong>총액:</strong> {formatCurrency(selectedRequest.totalAmount)}</div>
               </div>
             </div>
@@ -304,8 +306,8 @@ const AdminApprovalDashboard = () => {
             <div className="approval-request-comment-group">
               <h4>거부할 구매 요청</h4>
               <div className="approval-request-info-box">
-                <div><strong>아이템:</strong> {selectedRequest.item?.name}</div>
-                <div><strong>수량:</strong> {selectedRequest.quantity}개</div>
+                <div><strong>아이템:</strong> <SafeText>{selectedRequest.item?.name}</SafeText></div>
+                <div><strong>수량:</strong> {toDisplayString(selectedRequest.quantity)}개</div>
                 <div><strong>총액:</strong> {formatCurrency(selectedRequest.totalAmount)}</div>
               </div>
             </div>

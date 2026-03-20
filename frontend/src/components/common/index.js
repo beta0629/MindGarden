@@ -21,3 +21,5 @@ export {
   DetailedStatsGrid
 } from './StatsGrid';
 export { default as SafeErrorDisplay } from './SafeErrorDisplay';
+export { default as SafeText } from './SafeText';
+export { default as SafeNumeric } from './SafeNumeric';

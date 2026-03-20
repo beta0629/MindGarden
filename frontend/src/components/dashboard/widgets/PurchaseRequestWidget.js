@@ -19,6 +19,7 @@ import { useNavigate } from 'react-router-dom';
 import { ShoppingCart, ChevronDown, ChevronUp, ShoppingBag, Plus, ChevronRight } from 'lucide-react';
 import { apiGet } from '../../../utils/ajax';
 import './Widget.css';
+import SafeText from '../../common/SafeText';
 
 const PurchaseRequestWidget = ({ widget, user }) => {
   const navigate = useNavigate();
@@ -166,7 +167,7 @@ const PurchaseRequestWidget = ({ widget, user }) => {
                   onClick={() => handleRequestClick(request)}
                 >
                   <div className="purchase-request-info">
-                    <div className="purchase-request-title">{request.title || request.itemName}</div>
+                    <div className="purchase-request-title"><SafeText>{request.title ?? request.itemName}</SafeText></div>
                     <div className="purchase-request-details">
                       {request.quantity && <span>수량: {request.quantity}</span>}
                       {request.amount && <span>금액: ₩{request.amount.toLocaleString()}</span>}
@@ -178,7 +179,7 @@ const PurchaseRequestWidget = ({ widget, user }) => {
                     )}
                   </div>
                   <div className={`purchase-request-status status-${request.status?.toLowerCase()}`}>
-                    {request.status}
+                    <SafeText>{request.status}</SafeText>
                   </div>
                 </div>
               ))}

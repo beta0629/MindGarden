@@ -20,6 +20,7 @@ import IncompleteRecordsAlert from './IncompleteRecordsAlert';
 import NextConsultationCard from './NextConsultationCard';
 import UrgentClientsSection from './UrgentClientsSection';
 import ConsultationLogModal from '../../consultant/ConsultationLogModal';
+import SafeText from '../../common/SafeText';
 import './ConsultantDashboard.css';
 
 const TENANT_ERROR_MESSAGE = '테넌트 정보를 불러올 수 없습니다. 로그아웃 후 다시 로그인해 주세요.';
@@ -743,8 +744,8 @@ const ConsultantDashboardV2 = ({ user }) => {
                         <Bell size={16} />
                       </div>
                       <div className="notification-content">
-                        <div className="notification-text">{noti.text}</div>
-                        <div className="notification-time">{noti.time}</div>
+                        <SafeText className="notification-text" tag="div">{noti.text}</SafeText>
+                        <SafeText className="notification-time" tag="div">{noti.time}</SafeText>
                       </div>
                     </div>
                   ))}

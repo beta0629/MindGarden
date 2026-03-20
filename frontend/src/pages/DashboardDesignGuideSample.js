@@ -1,4 +1,5 @@
 import React from 'react';
+import SafeText from '../components/common/SafeText';
 
 /**
  * 🎨 [Atomic Design Sample - Pure Presentational Component]
@@ -82,7 +83,7 @@ const KpiCard = ({ label, value, badge, icon, iconBg, iconColor, isDark }) => (
     <div className="flex-1 flex flex-col gap-2">
       <div className="flex justify-between items-center w-full">
         <span style={{ color: isDark ? 'rgba(255,255,255,0.7)' : 'var(--mg-text-secondary, #64748b)' }} className="text-sm">
-          {label}
+          <SafeText>{label}</SafeText>
         </span>
         <TrendBadge text={badge} isDark={isDark} />
       </div>
@@ -159,7 +160,9 @@ const SystemGrowthSection = () => (
           <div key={i} className="flex items-center gap-4">
             <IconBox icon={c.initial} bgColor={c.bgColor} color={c.barColor} size="w-10 h-10" fontSize="text-sm" />
             <div className="flex-1 flex flex-col gap-1">
-              <span className="text-sm font-bold" style={{ color: 'var(--mg-text-primary, #1e293b)' }}>{c.name}</span>
+              <span className="text-sm font-bold" style={{ color: 'var(--mg-text-primary, #1e293b)' }}>
+                <SafeText>{c.name}</SafeText>
+              </span>
               <div className="flex items-center gap-2">
                 <span className="text-xs" style={{ color: 'var(--mg-text-secondary, #64748b)' }}>{c.rating}</span>
                 <div className="flex-1 h-2 rounded-full bg-gray-200 overflow-hidden">
@@ -199,7 +202,9 @@ const MetricsSection = () => (
         <div key={i} className="flex-1 p-5 rounded-xl border flex items-center gap-4" style={{ borderColor: 'var(--mg-border-light, #e2e8f0)' }}>
           <IconBox icon={m.icon} bgColor={m.iconBg} color={m.iconColor} size="w-12 h-12" />
           <div className="flex flex-col gap-1">
-            <span className="text-xs" style={{ color: 'var(--mg-text-secondary, #64748b)' }}>{m.label}</span>
+            <span className="text-xs" style={{ color: 'var(--mg-text-secondary, #64748b)' }}>
+              <SafeText>{m.label}</SafeText>
+            </span>
             <span className="text-xl font-bold" style={{ color: 'var(--mg-text-primary, #1e293b)' }}>{m.value}</span>
           </div>
         </div>
@@ -220,7 +225,9 @@ const AdminFeaturesSection = () => (
         <div key={i} className="flex-1 p-5 rounded-xl border flex flex-col gap-4 items-center text-center hover:-translate-y-1 transition-transform cursor-pointer" style={{ borderColor: 'var(--mg-border-light, #e2e8f0)' }}>
           <IconBox icon={a.icon} bgColor={a.bgColor} color="#fff" rounded="rounded-xl" size="w-14 h-14" fontSize="text-2xl" />
           <div className="flex flex-col gap-1">
-            <span className="text-sm font-bold" style={{ color: 'var(--mg-text-primary, #1e293b)' }}>{a.title}</span>
+            <span className="text-sm font-bold" style={{ color: 'var(--mg-text-primary, #1e293b)' }}>
+              <SafeText>{a.title}</SafeText>
+            </span>
             <span className="text-xs" style={{ color: 'var(--mg-text-secondary, #94a3b8)' }}>{a.desc}</span>
           </div>
         </div>

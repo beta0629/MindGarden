@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
 import notificationManager from '../../utils/notification';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
+import SafeText from '../common/SafeText';
 import { CLIENT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import './MindfulnessGuide.css';
 
@@ -246,8 +247,8 @@ const MindfulnessGuide = () => {
                     className={`mindfulness-guide-nav-item ${activeSection === section.id ? 'active' : ''}`}
                     onClick={() => handleSectionClick(section.id)}
                   >
-                    <span className="nav-icon">{section.icon}</span>
-                    <span className="nav-title">{section.title}</span>
+                    <span className="nav-icon"><SafeText>{section.icon}</SafeText></span>
+                    <span className="nav-title"><SafeText>{section.title}</SafeText></span>
                   </button>
                 ))}
               </nav>
@@ -259,11 +260,11 @@ const MindfulnessGuide = () => {
               <div className="mindfulness-section">
                 <div className="mg-card mindfulness-section-header">
                   <h2 className="mindfulness-section-title">
-                    <span className="section-icon">{currentSection.icon}</span>
-                    {currentSection.content.title}
+                    <span className="section-icon"><SafeText>{currentSection.icon}</SafeText></span>
+                    <SafeText tag="span">{currentSection.content.title}</SafeText>
                   </h2>
                   <p className="mindfulness-section-description">
-                    {currentSection.content.description}
+                    <SafeText>{currentSection.content.description}</SafeText>
                   </p>
                 </div>
 
@@ -271,15 +272,15 @@ const MindfulnessGuide = () => {
                   {currentSection.content.techniques.map((technique, index) => (
                     <div key={index} className="mg-card mindfulness-technique">
                       <div className="technique-header">
-                        <h3 className="technique-name">{technique.name}</h3>
-                        <p className="technique-description">{technique.description}</p>
+                        <SafeText tag="h3" className="technique-name">{technique.name}</SafeText>
+                        <p className="technique-description"><SafeText>{technique.description}</SafeText></p>
                       </div>
                       <div className="technique-steps">
                         <h4 className="steps-title">실행 방법</h4>
                         <ol className="steps-list">
                           {technique.steps.map((step, stepIndex) => (
                             <li key={stepIndex} className="step-item">
-                              {step}
+                              <SafeText>{step}</SafeText>
                             </li>
                           ))}
                         </ol>

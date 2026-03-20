@@ -6,6 +6,7 @@ import ConsultantFilter from '../components/ConsultantFilter';
 import UnifiedLoading from '../../../components/common/UnifiedLoading';
 import notificationManager from '../../../utils/notification';
 import './ConsultantSelectionStep.css';
+import SafeText from '../../common/SafeText';
 
 /**
  * 새로운 디자인의 상담사 선택 단계 컴포넌트
@@ -383,7 +384,7 @@ const ConsultantSelectionStepNew = ({
             {selectedConsultant && (
                 <div className="consultant-selection-selected">
                     <div className="consultant-selection-selected-text">
-                        <strong>선택된 상담사:</strong> {selectedConsultant.name}
+                        <strong>선택된 상담사:</strong> <SafeText>{selectedConsultant.name}</SafeText>
                         <SpecialtyDisplay 
                             consultant={selectedConsultant} 
                             variant="inline" 

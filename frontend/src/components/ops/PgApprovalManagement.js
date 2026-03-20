@@ -29,6 +29,8 @@ import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import MGButton from '../../components/common/MGButton'; // 임시 비활성화
+import SafeText from '../common/SafeText';
+import { toDisplayString } from '../../utils/safeDisplay';
 import './PgApprovalManagement.css';
 
 /**
@@ -378,7 +380,7 @@ const PgApprovalManagement = () => {
             >
               {pgProviders.map(provider => (
                 <option key={provider.value} value={provider.value}>
-                  {provider.label}
+                  {toDisplayString(provider.label)}
                 </option>
               ))}
             </select>
@@ -398,7 +400,7 @@ const PgApprovalManagement = () => {
         {error && (
           <div className="error-alert">
             <AlertCircle size={20} />
-            <span>{error}</span>
+            <span><SafeText>{error}</SafeText></span>
           </div>
         )}
         
@@ -416,11 +418,11 @@ const PgApprovalManagement = () => {
                 key={config.configId} 
                 className="pg-approval-card"
                 role="article"
-                aria-label={`PG 설정 승인 대기: ${config.pgName || config.pgProvider}`}
+                aria-label={toDisplayString(`PG 설정 승인 대기: ${config.pgName || config.pgProvider}`)}
               >
                 <div className="card-header">
                   <div className="card-title">
-                    <h3>{config.pgName || config.pgProvider}</h3>
+                    <h3><SafeText>{config.pgName || config.pgProvider}</SafeText></h3>
                     <div className="card-badges">
                       <span className="status-badge status-badge--warning">
                         <Clock size={14} />
@@ -439,36 +441,36 @@ const PgApprovalManagement = () => {
                   <div className="card-info">
                     <div className="info-item">
                       <span className="info-label">테넌트 ID:</span>
-                      <span className="info-value">{config.tenantId}</span>
+                      <span className="info-value"><SafeText>{config.tenantId}</SafeText></span>
                     </div>
                     <div className="info-item">
                       <span className="info-label">PG 제공자:</span>
-                      <span className="info-value">{config.pgProvider}</span>
+                      <span className="info-value"><SafeText>{config.pgProvider}</SafeText></span>
                     </div>
                     {config.merchantId && (
                       <div className="info-item">
                         <span className="info-label">가맹점 ID:</span>
-                        <span className="info-value">{config.merchantId}</span>
+                        <span className="info-value"><SafeText>{config.merchantId}</SafeText></span>
                       </div>
                     )}
                     {config.requestedAt && (
                       <div className="info-item">
                         <span className="info-label">요청 시각:</span>
                         <span className="info-value">
-                          {new Date(config.requestedAt).toLocaleString('ko-KR')}
+                          {toDisplayString(new Date(config.requestedAt).toLocaleString('ko-KR'))}
                         </span>
                       </div>
                     )}
                     {config.requestedBy && (
                       <div className="info-item">
                         <span className="info-label">요청자:</span>
-                        <span className="info-value">{config.requestedBy}</span>
+                        <span className="info-value"><SafeText>{config.requestedBy}</SafeText></span>
                       </div>
                     )}
                     {config.notes && (
                       <div className="info-item">
                         <span className="info-label">비고:</span>
-                        <span className="info-value">{config.notes}</span>
+                        <span className="info-value"><SafeText>{config.notes}</SafeText></span>
                       </div>
                     )}
                   </div>
@@ -529,7 +531,7 @@ const PgApprovalManagement = () => {
                       ) : (
                         <XCircle size={14} />
                       )}
-                      <span>{testResult.message}</span>
+                      <span><SafeText>{testResult.message}</SafeText></span>
                     </div>
                   )}
                 </div>
@@ -555,16 +557,16 @@ const PgApprovalManagement = () => {
               <div className="modal-body">
                 <div className="approval-info">
                   <p>
-                    <strong>{selectedConfig.pgName || selectedConfig.pgProvider}</strong> 설정을 승인하시겠습니까?
+                    <strong><SafeText>{selectedConfig.pgName || selectedConfig.pgProvider}</SafeText></strong> 설정을 승인하시겠습니까?
                   </p>
                   <div className="approval-details">
                     <div className="detail-row">
                       <span className="detail-label">테넌트 ID:</span>
-                      <span className="detail-value">{selectedConfig.tenantId}</span>
+                      <span className="detail-value"><SafeText>{selectedConfig.tenantId}</SafeText></span>
                     </div>
                     <div className="detail-row">
                       <span className="detail-label">PG 제공자:</span>
-                      <span className="detail-value">{selectedConfig.pgProvider}</span>
+                      <span className="detail-value"><SafeText>{selectedConfig.pgProvider}</SafeText></span>
                     </div>
                   </div>
                 </div>
@@ -591,11 +593,13 @@ const PgApprovalManagement = () => {
                         <XCircle size={16} />
                       )}
                       <span>
-                        {testResult.success ? '연결 테스트 성공' : `연결 테스트 실패: ${testResult.message}`}
+                        <SafeText>
+                          {testResult.success ? '연결 테스트 성공' : `연결 테스트 실패: ${toDisplayString(testResult.message)}`}
+                        </SafeText>
                       </span>
                       {testResult.testedAt && (
                         <small>
-                          ({new Date(testResult.testedAt).toLocaleString('ko-KR')})
+                          ({toDisplayString(new Date(testResult.testedAt).toLocaleString('ko-KR'))})
                         </small>
                       )}
                     </div>
@@ -675,7 +679,7 @@ const PgApprovalManagement = () => {
               <div className="modal-body">
                 <div className="reject-info">
                   <p>
-                    <strong>{selectedConfig.pgName || selectedConfig.pgProvider}</strong> 설정을 거부하시겠습니까?
+                    <strong><SafeText>{selectedConfig.pgName || selectedConfig.pgProvider}</SafeText></strong> 설정을 거부하시겠습니까?
                   </p>
                   <p className="warning-text">
                     거부 사유는 테넌트에게 전달됩니다.
@@ -753,23 +757,23 @@ const PgApprovalManagement = () => {
                   <div className="detail-grid">
                     <div className="detail-item">
                       <label>테넌트 ID</label>
-                      <div className="detail-value">{configDetail.tenantId}</div>
+                      <div className="detail-value"><SafeText>{configDetail.tenantId}</SafeText></div>
                     </div>
                     <div className="detail-item">
                       <label>PG 제공자</label>
-                      <div className="detail-value">{configDetail.pgProvider}</div>
+                      <div className="detail-value"><SafeText>{configDetail.pgProvider}</SafeText></div>
                     </div>
                     <div className="detail-item">
                       <label>PG사 명칭</label>
-                      <div className="detail-value">{configDetail.pgName || '-'}</div>
+                      <div className="detail-value"><SafeText fallback="-">{configDetail.pgName}</SafeText></div>
                     </div>
                     <div className="detail-item">
                       <label>가맹점 ID</label>
-                      <div className="detail-value">{configDetail.merchantId || '-'}</div>
+                      <div className="detail-value"><SafeText fallback="-">{configDetail.merchantId}</SafeText></div>
                     </div>
                     <div className="detail-item">
                       <label>스토어 ID</label>
-                      <div className="detail-value">{configDetail.storeId || '-'}</div>
+                      <div className="detail-value"><SafeText fallback="-">{configDetail.storeId}</SafeText></div>
                     </div>
                     <div className="detail-item">
                       <label>테스트 모드</label>
@@ -801,14 +805,14 @@ const PgApprovalManagement = () => {
                         <div className="key-item">
                           <label>API 키</label>
                           <div className="key-value">
-                            <code>{decryptedKeys?.apiKey || '***'}</code>
+                            <code><SafeText>{decryptedKeys?.apiKey || '***'}</SafeText></code>
                             <button
                               className="key-copy-button"
                               onClick={() => {
                                 navigator.clipboard.writeText(decryptedKeys?.apiKey || '');
                                 showNotification('API 키가 복사되었습니다.', 'success');
                               }}
-                              title="복사"
+                              title={toDisplayString('복사')}
                             >
                               복사
                             </button>
@@ -817,14 +821,14 @@ const PgApprovalManagement = () => {
                         <div className="key-item">
                           <label>시크릿 키</label>
                           <div className="key-value">
-                            <code>{decryptedKeys?.secretKey || '***'}</code>
+                            <code><SafeText>{decryptedKeys?.secretKey || '***'}</SafeText></code>
                             <button
                               className="key-copy-button"
                               onClick={() => {
                                 navigator.clipboard.writeText(decryptedKeys?.secretKey || '');
                                 showNotification('시크릿 키가 복사되었습니다.', 'success');
                               }}
-                              title="복사"
+                              title={toDisplayString('복사')}
                             >
                               복사
                             </button>
@@ -855,8 +859,8 @@ const PgApprovalManagement = () => {
                         <div className="detail-item detail-item--full">
                           <label>Webhook URL</label>
                           <div className="detail-value detail-value--url">
-                            <a href={configDetail.webhookUrl} target="_blank" rel="noopener noreferrer">
-                              {configDetail.webhookUrl}
+                            <a href={toDisplayString(configDetail.webhookUrl, '#')} target="_blank" rel="noopener noreferrer">
+                              <SafeText>{configDetail.webhookUrl}</SafeText>
                               <ExternalLink size={14} />
                             </a>
                           </div>
@@ -866,8 +870,8 @@ const PgApprovalManagement = () => {
                         <div className="detail-item detail-item--full">
                           <label>Return URL</label>
                           <div className="detail-value detail-value--url">
-                            <a href={configDetail.returnUrl} target="_blank" rel="noopener noreferrer">
-                              {configDetail.returnUrl}
+                            <a href={toDisplayString(configDetail.returnUrl, '#')} target="_blank" rel="noopener noreferrer">
+                              <SafeText>{configDetail.returnUrl}</SafeText>
                               <ExternalLink size={14} />
                             </a>
                           </div>
@@ -877,8 +881,8 @@ const PgApprovalManagement = () => {
                         <div className="detail-item detail-item--full">
                           <label>Cancel URL</label>
                           <div className="detail-value detail-value--url">
-                            <a href={configDetail.cancelUrl} target="_blank" rel="noopener noreferrer">
-                              {configDetail.cancelUrl}
+                            <a href={toDisplayString(configDetail.cancelUrl, '#')} target="_blank" rel="noopener noreferrer">
+                              <SafeText>{configDetail.cancelUrl}</SafeText>
                               <ExternalLink size={14} />
                             </a>
                           </div>
@@ -893,7 +897,7 @@ const PgApprovalManagement = () => {
                   <div className="detail-section">
                     <h3>비고</h3>
                     <div className="detail-notes">
-                      {configDetail.notes}
+                      <SafeText>{configDetail.notes}</SafeText>
                     </div>
                   </div>
                 )}

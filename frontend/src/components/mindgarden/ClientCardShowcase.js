@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 // import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { User, MessageCircle, Calendar, TrendingUp, Phone, Mail, Clock, CheckCircle } from 'lucide-react';
 import Avatar from '../common/Avatar';
+import SafeText from '../common/SafeText';
+import { toDisplayString } from '../../utils/safeDisplay';
 
 const ClientCardShowcase = () => {
   const [viewMode, setViewMode] = useState('detailed'); // 'compact', 'detailed', 'mobile', 'mobile-simple'
@@ -67,15 +69,15 @@ const ClientCardShowcase = () => {
     <div key={client.id} className="mg-client-card mg-client-card--compact">
       <Avatar
         profileImageUrl={client.profileImageUrl}
-        displayName={client.name}
+        displayName={toDisplayString(client.name)}
         className="mg-client-card__avatar"
       />
       <div className="mg-client-card__info">
         <div className="mg-client-card__header">
-          <h4 className="mg-client-card__name">{client.name}</h4>
+          <h4 className="mg-client-card__name"><SafeText>{client.name}</SafeText></h4>
           <div className="mg-client-card__status" style={{ backgroundColor: getStatusColor(client.status) }}>
             {getStatusIcon(client.status)}
-            <span>{client.status}</span>
+            <span><SafeText>{client.status}</SafeText></span>
           </div>
         </div>
         <div className="mg-client-card__meta">
@@ -91,22 +93,22 @@ const ClientCardShowcase = () => {
     <div key={client.id} className="mg-client-card mg-client-card--detailed">
       <div className="mg-client-card__status-badge" style={{ backgroundColor: getStatusColor(client.status) }}>
         {getStatusIcon(client.status)}
-        <span>{client.status}</span>
+        <span><SafeText>{client.status}</SafeText></span>
       </div>
       
       <Avatar
         profileImageUrl={client.profileImageUrl}
-        displayName={client.name}
+        displayName={toDisplayString(client.name)}
         className="mg-client-card__avatar mg-client-card__avatar--large"
       />
       
       <div className="mg-client-card__info">
-        <h4 className="mg-client-card__name mg-client-card__name--large">{client.name}</h4>
+        <h4 className="mg-client-card__name mg-client-card__name--large"><SafeText>{client.name}</SafeText></h4>
         
         <div className="mg-client-card__details">
           <div className="mg-client-card__detail-item">
             <Calendar size={16} />
-            <span>최근 상담: {client.lastConsultation}</span>
+            <span>최근 상담: <SafeText>{client.lastConsultation}</SafeText></span>
           </div>
           
           <div className="mg-client-card__detail-item">
@@ -117,7 +119,7 @@ const ClientCardShowcase = () => {
           {client.nextAppointment && (
             <div className="mg-client-card__detail-item">
               <Clock size={16} />
-              <span>다음 상담: {client.nextAppointment}</span>
+              <span>다음 상담: <SafeText>{client.nextAppointment}</SafeText></span>
             </div>
           )}
         </div>
@@ -153,30 +155,30 @@ const ClientCardShowcase = () => {
       <div className="mg-client-card__header-mobile">
         <Avatar
           profileImageUrl={client.profileImageUrl}
-          displayName={client.name}
+          displayName={toDisplayString(client.name)}
           className="mg-client-card__avatar mg-client-card__avatar--mobile"
         />
         <div className="mg-client-card__status" style={{ backgroundColor: getStatusColor(client.status) }}>
           {getStatusIcon(client.status)}
-          <span>{client.status}</span>
+          <span><SafeText>{client.status}</SafeText></span>
         </div>
       </div>
       
       <div className="mg-client-card__content-mobile">
-        <h4 className="mg-client-card__name mg-client-card__name--mobile">{client.name}</h4>
+        <h4 className="mg-client-card__name mg-client-card__name--mobile"><SafeText>{client.name}</SafeText></h4>
         
         <div className="mg-client-card__info-mobile">
           <div className="mg-client-card__info-row">
             <Mail size={14} />
-            <span>{client.email}</span>
+            <span><SafeText>{client.email}</SafeText></span>
           </div>
           <div className="mg-client-card__info-row">
             <Phone size={14} />
-            <span>{client.phone}</span>
+            <span><SafeText>{client.phone}</SafeText></span>
           </div>
           <div className="mg-client-card__info-row">
             <Calendar size={14} />
-            <span>최근: {client.lastConsultation}</span>
+            <span>최근: <SafeText>{client.lastConsultation}</SafeText></span>
           </div>
         </div>
         
@@ -208,12 +210,12 @@ const ClientCardShowcase = () => {
     <div key={client.id} className="mg-client-card mg-client-card--mobile-simple">
       <Avatar
         profileImageUrl={client.profileImageUrl}
-        displayName={client.name}
+        displayName={toDisplayString(client.name)}
         className="mg-client-card__avatar mg-client-card__avatar--mobile-simple"
       />
       
       <div className="mg-client-card__info mg-client-card__info--mobile-simple">
-        <h4 className="mg-client-card__name mg-client-card__name--mobile-simple">{client.name}</h4>
+        <h4 className="mg-client-card__name mg-client-card__name--mobile-simple"><SafeText>{client.name}</SafeText></h4>
         
         <div className="mg-client-card__meta mg-client-card__meta--mobile-simple">
           <div className="mg-client-card__progress mg-client-card__progress--mobile-simple">
@@ -224,7 +226,7 @@ const ClientCardShowcase = () => {
       </div>
       
       <div className="mg-client-card__status mg-client-card__status--mobile-simple" style={{ backgroundColor: getStatusColor(client.status) }}>
-        <span>{client.status}</span>
+        <span><SafeText>{client.status}</SafeText></span>
       </div>
     </div>
   );

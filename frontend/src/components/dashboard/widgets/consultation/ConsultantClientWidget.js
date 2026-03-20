@@ -17,6 +17,8 @@ import { useNavigate } from 'react-router-dom';
 import { Users, Eye, MessageCircle, Calendar, UserCheck, UserPlus } from 'lucide-react';
 import { useWidget } from '../../../../hooks/useWidget';
 import BaseWidget from '../BaseWidget';
+import SafeText from '../../../common/SafeText';
+import { toDisplayString } from '../../../../utils/safeDisplay';
 import { RoleUtils, USER_ROLES } from '../../../../constants/roles';
 import Avatar from '../../../common/Avatar';
 import './ConsultantClientWidget.css';
@@ -98,11 +100,11 @@ const ConsultantClientWidget = ({ widget, user }) => {
             <div key={client.id} className="client-item">
               <Avatar
                 profileImageUrl={client.profileImageUrl}
-                displayName={client.name}
+                displayName={toDisplayString(client.name, '내담자')}
                 className="client-avatar"
               />
               <div className="client-info">
-                <div className="client-name">{client.name}</div>
+                <SafeText tag="div" className="client-name">{client.name}</SafeText>
                 <div className="client-details">
                   <div className={`client-status ${getStatusClass(client.status)}`}>
                     // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용

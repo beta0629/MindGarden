@@ -4,6 +4,7 @@ import { apiGet, apiPost } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import BadgeSelect from '../common/BadgeSelect';
+import SafeText from '../common/SafeText';
 
 /**
  * 할인 적용 결제 확인 모달 컴포넌트
@@ -255,16 +256,16 @@ const DiscountPaymentConfirmationModal = ({
               {selectedMappings.map(mapping => (
                 <div key={mapping.id} className="mg-v2-mapping-card">
                   <div className="mg-v2-mapping-row">
-                    <strong>패키지:</strong> <span>{mapping.packageName}</span>
+                    <strong>패키지:</strong> <span><SafeText>{mapping.packageName}</SafeText></span>
                   </div>
                   <div className="mg-v2-mapping-row">
                     <strong>원래 금액:</strong> <span>{formatAmount(mapping.amount)}원</span>
                   </div>
                   <div className="mg-v2-mapping-row">
-                    <strong>상담사:</strong> <span>{mapping.consultantName}</span>
+                    <strong>상담사:</strong> <span><SafeText>{mapping.consultantName}</SafeText></span>
                   </div>
                   <div className="mg-v2-mapping-row">
-                    <strong>내담자:</strong> <span>{mapping.clientName}</span>
+                    <strong>내담자:</strong> <span><SafeText>{mapping.clientName}</SafeText></span>
                   </div>
                 </div>
               ))}
@@ -328,7 +329,7 @@ const DiscountPaymentConfirmationModal = ({
                   <span>{formatAmount(discountInfo.finalAmount)}원</span>
                 </div>
                 <div className="mg-v2-discount-name">
-                  적용된 할인: {discountInfo.discountName}
+                  적용된 할인: <SafeText>{discountInfo.discountName}</SafeText>
                 </div>
               </div>
             )}
@@ -348,10 +349,10 @@ const DiscountPaymentConfirmationModal = ({
                         }
                       }}
                     >
-                      <div className="mg-v2-discount-option-name">{discount.name}</div>
-                      <div className="mg-v2-discount-option-desc">{discount.description}</div>
+                      <div className="mg-v2-discount-option-name"><SafeText>{discount.name}</SafeText></div>
+                      <div className="mg-v2-discount-option-desc"><SafeText>{discount.description}</SafeText></div>
                       <div className={`mg-discount-option-status ${discount.isApplicable ? 'success' : 'error'}`}>
-                        {discount.isApplicable ? '적용 가능' : discount.reason}
+                        {discount.isApplicable ? '적용 가능' : <SafeText>{discount.reason}</SafeText>}
                       </div>
                     </div>
                   ))}

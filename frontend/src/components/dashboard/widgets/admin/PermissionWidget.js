@@ -21,6 +21,7 @@ import { useWidget } from '../../../../hooks/useWidget';
 import BaseWidget from '../BaseWidget';
 import { RoleUtils } from '../../../../constants/roles';
 import './PermissionWidget.css';
+import SafeText from '../../../common/SafeText';
 
 const PermissionWidget = ({ widget, user }) => {
   const navigate = useNavigate();
@@ -216,7 +217,7 @@ const PermissionWidget = ({ widget, user }) => {
                 >
                   <div className="category-left">
                     {getCategoryIcon(category)}
-                    <span className="category-title">{category}</span>
+                    <span className="category-title"><SafeText>{category}</SafeText></span>
                     <span className="category-count">({permissions.length})</span>
                   </div>
                   <div className="category-right">
@@ -233,11 +234,11 @@ const PermissionWidget = ({ widget, user }) => {
                     {permissions.slice(0, maxItems).map((permission) => (
                       <div key={permission.id || permission.code} className="permission-item">
                         <div className="permission-info">
-                          <div className="permission-name">{permission.name}</div>
+                          <SafeText tag="div" className="permission-name">{permission.name}</SafeText>
                           {permission.description && (
-                            <div className="permission-description">{permission.description}</div>
+                            <SafeText tag="div" className="permission-description">{permission.description}</SafeText>
                           )}
-                          <div className="permission-code">Code: {permission.code}</div>
+                          <div className="permission-code">Code: <SafeText>{permission.code}</SafeText></div>
                         </div>
                         <div className={`permission-status ${
                           !permission.isActive ? 'disabled' : 

@@ -3,6 +3,7 @@ import {
     MAPPING_ACTIONS, 
     MAPPING_ACTION_BUTTONS 
 } from '../../../constants/mapping';
+import { toDisplayString } from '../../../utils/safeDisplay';
 import './MappingActions.css';
 
 /**
@@ -122,10 +123,10 @@ const MappingActions = ({
                         key={index}
                         className={`btn ${action.className} btn-sm`}
                         onClick={action.onClick}
-                        title={action.label}
+                        title={toDisplayString(action.label)}
                     >
                         <i className={action.icon}></i>
-                        <span className="action-label">{action.label}</span>
+                        <span className="action-label">{toDisplayString(action.label)}</span>
                     </button>
                 ))}
             </div>

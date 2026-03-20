@@ -19,6 +19,7 @@ import { useWidget } from '../../../../hooks/useWidget';
 import BaseWidget from '../BaseWidget';
 import { RoleUtils, USER_ROLES } from '../../../../constants/roles';
 import './ScheduleRegistrationWidget.css';
+import SafeText from '../../../common/SafeText';
 
 const ScheduleRegistrationWidget = ({ widget, user }) => {
   const navigate = useNavigate();
@@ -293,35 +294,35 @@ const ScheduleRegistrationWidget = ({ widget, user }) => {
                     </div>
                     <div className={`schedule-status ${getStatusClass(schedule.status)}`}>
                       {getStatusIcon(schedule.status)}
-                      <span className="status-text">{getStatusLabel(schedule.status)}</span>
+                      <span className="status-text"><SafeText>{getStatusLabel(schedule.status)}</SafeText></span>
                     </div>
                   </div>
                   <div className="schedule-details">
-                    <div className="schedule-title">{schedule.title || '제목 없음'}</div>
+                    <SafeText tag="div" className="schedule-title" fallback="제목 없음">{schedule.title}</SafeText>
                     <div className="schedule-participants">
                       {schedule.consultantName && (
                         <div className="participant consultant">
                           <span className="participant-label">상담사:</span>
-                          <span className="participant-name">{schedule.consultantName}</span>
+                          <span className="participant-name"><SafeText>{schedule.consultantName}</SafeText></span>
                         </div>
                       )}
                       {schedule.clientName && (
                         <div className="participant client">
                           <span className="participant-label">내담자:</span>
-                          <span className="participant-name">{schedule.clientName}</span>
+                          <span className="participant-name"><SafeText>{schedule.clientName}</SafeText></span>
                         </div>
                       )}
                     </div>
                     {schedule.location && (
                       <div className="schedule-location">
                         <span className="location-label">장소:</span>
-                        <span className="location-value">{schedule.location}</span>
+                        <span className="location-value"><SafeText>{schedule.location}</SafeText></span>
                       </div>
                     )}
                     {schedule.notes && (
                       <div className="schedule-notes">
                         <span className="notes-label">메모:</span>
-                        <span className="notes-value">{schedule.notes}</span>
+                        <span className="notes-value"><SafeText>{schedule.notes}</SafeText></span>
                       </div>
                     )}
                   </div>

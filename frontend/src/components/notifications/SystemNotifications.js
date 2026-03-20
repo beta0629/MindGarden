@@ -7,6 +7,7 @@ import { Bell, AlertCircle, Info, AlertTriangle, Settings, Calendar } from 'luci
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import './SystemNotifications.css';
+import SafeText from '../common/SafeText';
 
 /**
  * 시스템 공지 목록 페이지
@@ -165,7 +166,7 @@ const SystemNotifications = () => {
                         <div className="mg-flex-1">
                           <div className="mg-flex mg-justify-between mg-align-start mg-mb-sm">
                             <div className="mg-flex mg-align-center mg-gap-sm mg-flex-wrap">
-                              <h4 className="mg-h5 mg-mb-0">{notification.title}</h4>
+                              <SafeText tag="h4" className="mg-h5 mg-mb-0">{notification.title}</SafeText>
                               {notification.isUrgent && (
                                 <span className="mg-badge mg-badge-danger mg-v2-text-xs">긴급</span>
                               )}
@@ -225,7 +226,7 @@ const SystemNotifications = () => {
               <div className="mg-modal-header">
                 <div>
                   <div className="mg-flex mg-align-center mg-gap-sm mg-mb-sm">
-                    <h3 className="mg-h3 mg-mb-0">{selectedNotification.title}</h3>
+                    <SafeText tag="h3" className="mg-h3 mg-mb-0">{selectedNotification.title}</SafeText>
                     {selectedNotification.isUrgent && (
                       <span className="mg-badge mg-badge-danger">긴급</span>
                     )}

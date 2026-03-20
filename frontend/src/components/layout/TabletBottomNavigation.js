@@ -2,6 +2,7 @@
 import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { useNavigate, useLocation } from 'react-router-dom';
 import { getLegacyDashboardPath } from '../../utils/dashboardUtils';
+import { toDisplayString } from '../../utils/safeDisplay';
 
 const TabletBottomNavigation = ({ userRole }) => {
   const navigate = useNavigate();
@@ -55,7 +56,7 @@ const TabletBottomNavigation = ({ userRole }) => {
             }}
           >
             <i className={item.icon}></i>
-            <span>{item.label}</span>
+            <span>{toDisplayString(item.label, '—')}</span>
           </a>
         ))}
       </div>

@@ -1,5 +1,6 @@
 // import React from 'react';
 import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import SafeText from '../common/SafeText';
 import './SectionHeader.css';
 
 /**
@@ -30,19 +31,21 @@ const SectionHeader = ({
                 <div className="mg-v2-section-title-area">
                     <div className="mg-v2-flex mg-v2-items-center mg-v2-gap-sm">
                         {icon && <div className="mg-v2-section-icon">{icon}</div>}
-                        <h2 className="mg-v2-section-title">{title}</h2>
+                        <h2 className="mg-v2-section-title">
+                            <SafeText>{title}</SafeText>
+                        </h2>
                     </div>
                     {subtitle && (
                         <div className="mg-v2-section-subtitle">
-                            <span className="mg-v2-badge mg-v2-badge-info">{subtitle}</span>
+                            <SafeText className="mg-v2-badge mg-v2-badge-info">{subtitle}</SafeText>
                         </div>
                     )}
                     {stats && (
                         <div className="mg-v2-section-stats">
                             {stats.map((stat, index) => (
                                 <div key={`stat-${index}`} className="mg-v2-stat-item">
-                                    <span className="mg-v2-stat-label">{stat.label}</span>
-                                    <span className="mg-v2-stat-value">{stat.value}</span>
+                                    <SafeText className="mg-v2-stat-label">{stat.label}</SafeText>
+                                    <SafeText className="mg-v2-stat-value">{stat.value}</SafeText>
                                 </div>
                             ))}
                         </div>

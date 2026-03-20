@@ -9,6 +9,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
+import { toDisplayString, toSafeNumber } from '../../utils/safeDisplay';
 import './Badge.css';
 
 const STATUS_VARIANTS = new Set(['success', 'warning', 'neutral', 'danger', 'info']);
@@ -38,17 +39,21 @@ function Badge({
   let displayContent;
   if (variant === 'count') {
     const num = count != null ? count : value;
-    const n = Number(num);
-    if (n <= 0) {
+    const n = toSafeNumber(num, NaN);
+    if (!Number.isFinite(n) || n <= 0) {
       return null;
     }
     displayContent = n > maxCount ? `${maxCount}+` : n;
   } else if (variant === 'kpi') {
-    const val = value != null ? String(value) : '';
-    const lbl = label != null ? String(label) : (children != null ? children : '');
+    const val = value != null ? toDisplayString(value, '') : '';
+    const lbl =
+      label != null
+        ? toDisplayString(label, '')
+        : (children != null ? toDisplayString(children, '') : '');
     displayContent = val ? (lbl ? `${val} ${lbl}` : val) : lbl;
   } else {
-    displayContent = label != null ? label : (children != null ? children : value);
+    const raw = label != null ? label : (children != null ? children : value);
+    displayContent = React.isValidElement(raw) ? raw : toDisplayString(raw, '');
   }
 
   const baseClass = 'mg-common-badge';

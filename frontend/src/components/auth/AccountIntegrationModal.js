@@ -4,6 +4,7 @@ import { FaTimes, FaEnvelope, FaKey, FaCheck, FaExclamationTriangle } from 'reac
 import { apiPost } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 import './AccountIntegrationModal.css';
+import SafeText from '../common/SafeText';
 
 /**
  * 계정 통합 모달 컴포넌트
@@ -197,7 +198,7 @@ const AccountIntegrationModal = ({
                             <div className="step-description">
                                 <FaExclamationTriangle className="warning-icon" />
                                 <p>
-                                    <strong>{socialUserInfo?.provider}</strong> 계정으로 로그인하려고 하는데, 
+                                    <strong><SafeText>{socialUserInfo?.provider}</SafeText></strong> 계정으로 로그인하려고 하는데, 
                                     기존 계정과 연결하시겠습니까?
                                 </p>
                                 <p className="sub-description">
@@ -209,15 +210,15 @@ const AccountIntegrationModal = ({
                                 <h4>소셜 계정 정보</h4>
                                 <div className="info-item">
                                     <span className="label">이메일:</span>
-                                    <span className="value">{socialUserInfo?.email}</span>
+                                    <span className="value"><SafeText>{socialUserInfo?.email}</SafeText></span>
                                 </div>
                                 <div className="info-item">
                                     <span className="label">이름:</span>
-                                    <span className="value">{socialUserInfo?.name}</span>
+                                    <span className="value"><SafeText>{socialUserInfo?.name}</SafeText></span>
                                 </div>
                                 <div className="info-item">
                                     <span className="label">닉네임:</span>
-                                    <span className="value">{socialUserInfo?.nickname}</span>
+                                    <span className="value"><SafeText>{socialUserInfo?.nickname}</SafeText></span>
                                 </div>
                             </div>
 

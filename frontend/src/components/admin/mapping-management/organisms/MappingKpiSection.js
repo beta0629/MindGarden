@@ -10,6 +10,7 @@ import React from 'react';
 import { Clock, CheckCircle, CreditCard, LayoutGrid, XCircle, RotateCcw } from 'lucide-react';
 import ContentSection from '../../../dashboard-v2/content/ContentSection';
 import './MappingKpiSection.css';
+import SafeText from '../../../common/SafeText';
 
 const ICON_SIZE = 24;
 
@@ -98,8 +99,8 @@ const MappingKpiSection = ({ mappings = [], onStatCardClick }) => {
               {item.icon}
             </div>
             <div className="mg-v2-mapping-kpi-section__info">
-              <span className="mg-v2-mapping-kpi-section__label">{item.label}</span>
-              <span className="mg-v2-mapping-kpi-section__value">{item.value}</span>
+              <span className="mg-v2-mapping-kpi-section__label"><SafeText>{item.label}</SafeText></span>
+              <span className="mg-v2-mapping-kpi-section__value"><SafeText>{item.value}</SafeText></span>
             </div>
           </button>
         ))}

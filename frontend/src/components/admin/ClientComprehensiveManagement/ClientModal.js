@@ -9,6 +9,7 @@ import BadgeSelect from '../../common/BadgeSelect';
 import {
   VALIDATION_MESSAGES
 } from '../../../constants/messages';
+import SafeText from '../../common/SafeText';
 import './ClientModal.css';
 
 /**
@@ -123,9 +124,9 @@ const ClientModal = ({
                 <h3>정말로 삭제하시겠습니까?</h3>
                 <p>다음 내담자의 정보가 영구적으로 삭제됩니다:</p>
                 <div className="mg-v2-client-info">
-                    <p><strong>이름:</strong> {client?.name}</p>
-                    <p><strong>이메일:</strong> {client?.email}</p>
-                    <p><strong>전화번호:</strong> {client?.phone}</p>
+                    <p><strong>이름:</strong> <SafeText>{client?.name}</SafeText></p>
+                    <p><strong>이메일:</strong> <SafeText>{client?.email}</SafeText></p>
+                    <p><strong>전화번호:</strong> <SafeText>{client?.phone}</SafeText></p>
                 </div>
                 <p className="mg-v2-warning-text">
                     ⚠️ 이 작업은 되돌릴 수 없습니다.

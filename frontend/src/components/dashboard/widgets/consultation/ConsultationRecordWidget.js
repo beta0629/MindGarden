@@ -19,6 +19,7 @@ import { useWidget } from '../../../../hooks/useWidget';
 import BaseWidget from '../BaseWidget';
 import { RoleUtils, USER_ROLES } from '../../../../constants/roles';
 import './ConsultationRecordWidget.css';
+import SafeText from '../../../common/SafeText';
 
 const ConsultationRecordWidget = ({ widget, user }) => {
   const navigate = useNavigate();
@@ -85,19 +86,19 @@ const ConsultationRecordWidget = ({ widget, user }) => {
                 <FileText />
               </div>
               <div className="record-info">
-                <div className="record-title">{record.title || '상담 기록'}</div>
+                <SafeText tag="div" className="record-title" fallback="상담 기록">{record.title}</SafeText>
                 <div className="record-details">
                   <div className="detail-item">
                     <User className="detail-icon" />
-                    <span>{record.clientName}</span>
+                    <span><SafeText>{record.clientName}</SafeText></span>
                   </div>
                   <div className="detail-item">
                     <Calendar className="detail-icon" />
-                    <span>{formatDate(record.createdAt)}</span>
+                    <span><SafeText>{formatDate(record.createdAt)}</SafeText></span>
                   </div>
                 </div>
                 {record.summary && (
-                  <div className="record-summary">{record.summary}</div>
+                  <SafeText tag="div" className="record-summary">{record.summary}</SafeText>
                 )}
               </div>
               <button 

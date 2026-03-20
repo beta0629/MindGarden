@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Users, Calendar, Check, Search, Bell, Moon, Activity, Building, ShieldCheck, Megaphone, Settings } from 'lucide-react';
+import SafeText from '../components/common/SafeText';
 import './AdminDashboardSample.css';
 
 /**
@@ -145,7 +146,9 @@ const AdminDashboardSample = () => {
                     {c.initial}
                   </div>
                   <div className="ads-counselor-data">
-                    <span className="ads-counselor-name">{c.name}</span>
+                    <span className="ads-counselor-name">
+                      <SafeText>{c.name}</SafeText>
+                    </span>
                     <div className="ads-counselor-rating-row">
                       <span className="ads-counselor-rating">{c.rating}</span>
                       <div className="ads-counselor-bar-track">
@@ -171,7 +174,9 @@ const AdminDashboardSample = () => {
                 <div className="ads-admin-icon" style={{ backgroundColor: f.bgColor, color: f.color }}>
                   <f.icon size={28} />
                 </div>
-                <span className="ads-admin-label">{f.label}</span>
+                <span className="ads-admin-label">
+                  <SafeText>{f.label}</SafeText>
+                </span>
                 <span className="ads-admin-desc">{f.desc}</span>
               </button>
             ))}

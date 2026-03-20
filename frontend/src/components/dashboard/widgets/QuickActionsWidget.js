@@ -19,6 +19,8 @@ import { useNavigate } from 'react-router-dom';
 import { Zap } from 'lucide-react';
 import { RoleUtils } from '../../../constants/roles';
 import ConsultantApplicationModal from '../../common/ConsultantApplicationModal';
+import SafeText from '../../common/SafeText';
+import { toDisplayString } from '../../../utils/safeDisplay';
 import './Widget.css';
 
 const QuickActionsWidget = ({ widget, user }) => {
@@ -106,7 +108,7 @@ const QuickActionsWidget = ({ widget, user }) => {
         <div className="widget-header">
           <div className="mg-card-header mg-flex mg-align-center mg-gap-sm">
             <Zap size={20} className="finance-icon-inline" />
-            <h3 className="mg-h4 mg-mb-0">{config.title || '빠른 액션'}</h3>
+            <SafeText tag="h3" className="mg-h4 mg-mb-0" fallback="빠른 액션">{config.title}</SafeText>
           </div>
         </div>
         <div className="widget-body">
@@ -117,7 +119,7 @@ const QuickActionsWidget = ({ widget, user }) => {
                   key={action.id || index}
                   className="quick-action-btn"
                   onClick={() => handleActionClick(action)}
-                  title={action.tooltip || action.label}
+                  title={toDisplayString(action.tooltip || action.label)}
                 >
                   {action.icon && (
                     typeof action.icon === 'string' ? (
@@ -126,7 +128,7 @@ const QuickActionsWidget = ({ widget, user }) => {
                       action.icon
                     )
                   )}
-                  <span>{action.label}</span>
+                  <span><SafeText>{action.label}</SafeText></span>
                 </button>
               ))}
             </div>

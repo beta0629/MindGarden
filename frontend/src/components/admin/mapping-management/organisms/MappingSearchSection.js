@@ -10,6 +10,7 @@ import React from 'react';
 import { SearchInput } from '../../../dashboard-v2/atoms';
 import ContentSection from '../../../dashboard-v2/content/ContentSection';
 import { MAPPING_FILTER_OPTIONS } from '../../../../constants/mapping';
+import { toDisplayString } from '../../../../utils/safeDisplay';
 import './MappingSearchSection.css';
 
 const MappingSearchSection = ({
@@ -39,7 +40,7 @@ const MappingSearchSection = ({
               }`}
               onClick={() => onFilterChange && onFilterChange(opt.value)}
             >
-              {opt.label}
+              {toDisplayString(opt.label)}
             </button>
           ))}
         </div>

@@ -3,10 +3,13 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useSession } from '../../hooks/useSession';
 import { getErdDetail, getErdHistory } from '../../utils/erdApi';
 import { exportSvgToPng, exportSvgToSvg, exportMermaidToPng, exportMermaidToSvg } from '../../utils/erdExport';
+// eslint-disable-next-line import/no-unresolved -- 런타임 번들 의존성(mermaid)
 import mermaid from 'mermaid';
 import { Download } from 'lucide-react';
 import notificationManager from '../../utils/notification';
 import StatusBadge from '../common/StatusBadge';
+import SafeText from '../common/SafeText';
+import { toDisplayString } from '../../utils/safeDisplay';
 import './ErdDetailPage.css';
 
 /**
@@ -542,7 +545,7 @@ const ErdDetailPage = () => {
     return (
       <div className="erd-detail-page">
         <div className="erd-error">
-          <p className="error-message">{error || 'ERD를 찾을 수 없습니다.'}</p>
+          <p className="error-message"><SafeText fallback="ERD를 찾을 수 없습니다.">{error}</SafeText></p>
           <div className="error-actions">
             <button onClick={() => navigate('/tenant/erd')} className="back-button">
               목록으로 돌아가기
@@ -568,13 +571,13 @@ const ErdDetailPage = () => {
             ← 목록으로
           </button>
           <div className="erd-detail-title-section">
-            <h1 className="erd-detail-title">{erd.name}</h1>
+            <h1 className="erd-detail-title"><SafeText>{erd.name}</SafeText></h1>
             <div className="erd-detail-meta">
-              <span className="erd-meta-badge">{getDiagramTypeLabel(erd.diagramType)}</span>
+              <span className="erd-meta-badge"><SafeText>{getDiagramTypeLabel(erd.diagramType)}</SafeText></span>
               {erd.moduleType && (
-                <span className="erd-meta-badge">{erd.moduleType}</span>
+                <span className="erd-meta-badge"><SafeText>{erd.moduleType}</SafeText></span>
               )}
-              <span className="erd-meta-badge">v{erd.version}</span>
+              <span className="erd-meta-badge">v{toDisplayString(erd.version)}</span>
               {erd.isActive ? (
                 <StatusBadge variant="success">활성</StatusBadge>
               ) : (
@@ -584,12 +587,12 @@ const ErdDetailPage = () => {
           </div>
         </div>
         {erd.description && (
-          <p className="erd-detail-description">{erd.description}</p>
+          <p className="erd-detail-description"><SafeText>{erd.description}</SafeText></p>
         )}
         {/* 내보내기 버튼 */}
         <div className="erd-export-buttons">
           <div className="export-dropdown">
-            <button className="export-button" title="ERD 내보내기">
+            <button className="export-button" title={toDisplayString('ERD 내보내기')}>
               <Download size={18} />
               내보내기
             </button>
@@ -663,14 +666,14 @@ const ErdDetailPage = () => {
           <div className="erd-diagram-container">
             {/* 확대/축소 컨트롤 */}
             <div className="erd-zoom-controls">
-              <button onClick={handleZoomIn} className="zoom-button" title="확대">
+              <button onClick={handleZoomIn} className="zoom-button" title={toDisplayString('확대')}>
                 <span>+</span>
               </button>
               <span className="zoom-level">{Math.round(zoomLevel * 100)}%</span>
-              <button onClick={handleZoomOut} className="zoom-button" title="축소">
+              <button onClick={handleZoomOut} className="zoom-button" title={toDisplayString('축소')}>
                 <span>−</span>
               </button>
-              <button onClick={handleZoomReset} className="zoom-reset-button" title="리셋">
+              <button onClick={handleZoomReset} className="zoom-reset-button" title={toDisplayString('리셋')}>
                 <span>⌂</span>
               </button>
             </div>
@@ -680,7 +683,7 @@ const ErdDetailPage = () => {
               <button 
                 onClick={() => setFilterVisible(!filterVisible)}
                 className="filter-toggle-button"
-                title="필터 토글"
+                title={toDisplayString('필터 토글')}
               >
                 <span>🔍</span>
               </button>
@@ -711,7 +714,7 @@ const ErdDetailPage = () => {
                 {selectedTable && (
                   <div className="selection-info">
                     <span className="selection-label">선택된 테이블:</span>
-                    <span className="selection-value">{selectedTable}</span>
+                    <span className="selection-value"><SafeText>{selectedTable}</SafeText></span>
                     <button 
                       onClick={() => resetSelection(
                         mermaidRef.current?.querySelectorAll('g.node, g[class*="node"]') || [],
@@ -726,7 +729,7 @@ const ErdDetailPage = () => {
                 {selectedRelation && (
                   <div className="selection-info">
                     <span className="selection-label">선택된 관계:</span>
-                    <span className="selection-value">{selectedRelation}</span>
+                    <span className="selection-value"><SafeText>{selectedRelation}</SafeText></span>
                     <button 
                       onClick={() => resetSelection(
                         mermaidRef.current?.querySelectorAll('g.node, g[class*="node"]') || [],
@@ -741,7 +744,7 @@ const ErdDetailPage = () => {
                 {hoveredElement && !selectedTable && !selectedRelation && (
                   <div className="selection-info hover">
                     <span className="selection-label">호버:</span>
-                    <span className="selection-value">{hoveredElement}</span>
+                    <span className="selection-value"><SafeText>{hoveredElement}</SafeText></span>
                   </div>
                 )}
               </div>
@@ -749,7 +752,7 @@ const ErdDetailPage = () => {
             
             {mermaidError ? (
               <div className="mermaid-error">
-                <p className="error-message">{mermaidError}</p>
+                <p className="error-message"><SafeText>{mermaidError}</SafeText></p>
                 <button onClick={renderMermaid} className="retry-button">
                   다시 시도
                 </button>
@@ -773,21 +776,21 @@ const ErdDetailPage = () => {
                 {history.map((item) => (
                   <div key={item.id} className="history-item">
                     <div className="history-item-header">
-                      <span className="history-version">버전 {item.version}</span>
-                      <span className={`history-change-type ${item.changeType.toLowerCase()}`}>
-                        {getChangeTypeLabel(item.changeType)}
+                      <span className="history-version">버전 {toDisplayString(item.version)}</span>
+                      <span className={`history-change-type ${toDisplayString(item.changeType, '').toLowerCase()}`}>
+                        <SafeText>{getChangeTypeLabel(item.changeType)}</SafeText>
                       </span>
                     </div>
                     {item.changeDescription && (
-                      <p className="history-description">{item.changeDescription}</p>
+                      <p className="history-description"><SafeText>{item.changeDescription}</SafeText></p>
                     )}
                     {item.diffSummary && (
-                      <p className="history-diff">{item.diffSummary}</p>
+                      <p className="history-diff"><SafeText>{item.diffSummary}</SafeText></p>
                     )}
                     <div className="history-meta">
-                      <span className="history-author">{item.changedBy}</span>
+                      <span className="history-author"><SafeText>{item.changedBy}</SafeText></span>
                       <span className="history-date">
-                        {new Date(item.changedAt).toLocaleString('ko-KR')}
+                        {toDisplayString(new Date(item.changedAt).toLocaleString('ko-KR'))}
                       </span>
                     </div>
                   </div>
@@ -799,7 +802,7 @@ const ErdDetailPage = () => {
 
         {activeTab === 'text' && erd.textErd && (
           <div className="erd-text-container">
-            <pre className="erd-text-content">{erd.textErd}</pre>
+            <pre className="erd-text-content">{toDisplayString(erd.textErd, '')}</pre>
           </div>
         )}
       </div>

@@ -7,6 +7,8 @@ import { getLucideIcon } from '../../utils/iconUtils';
 import notificationManager from '../../utils/notification';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { CONSULTANT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
+import SafeText from '../common/SafeText';
+import { toDisplayString } from '../../utils/safeDisplay';
 
 /**
  * 상담사 메시지 전송 화면
@@ -326,7 +328,7 @@ const ConsultantMessageScreen = () => {
         // 기본 메시지 제목 설정
         setMessageData(prev => ({
           ...prev,
-          title: `상담 완료 안내 - ${location.state.client.name}님`
+          title: `상담 완료 안내 - ${toDisplayString(location.state.client?.name, '고객')}님`
         }));
       } else {
         // state가 없는 경우 API에서 데이터 로드
@@ -342,7 +344,7 @@ const ConsultantMessageScreen = () => {
                 setClient(clientData);
                 setMessageData(prev => ({
                   ...prev,
-                  title: `상담 완료 안내 - ${clientData.name}님`
+                  title: `상담 완료 안내 - ${toDisplayString(clientData.name, '고객')}님`
                 }));
               }
             }
@@ -450,23 +452,23 @@ const ConsultantMessageScreen = () => {
         <div className="mg-grid mg-grid-cols-2 mg-gap-md">
           <div className="mg-flex mg-flex-col">
             <span className="mg-v2-label mg-v2-text-sm mg-v2-color-text-secondary">이름</span>
-            <span className="mg-v2-text-base mg-font-medium">{client.name}</span>
+            <span className="mg-v2-text-base mg-font-medium"><SafeText>{client.name}</SafeText></span>
           </div>
           <div className="mg-flex mg-flex-col">
             <span className="mg-v2-label mg-v2-text-sm mg-v2-color-text-secondary">이메일</span>
-            <span className="mg-v2-text-base mg-font-medium">{client.email || '정보 없음'}</span>
+            <span className="mg-v2-text-base mg-font-medium"><SafeText fallback="정보 없음">{client.email}</SafeText></span>
           </div>
           <div className="mg-flex mg-flex-col">
             <span className="mg-v2-label mg-v2-text-sm mg-v2-color-text-secondary">전화번호</span>
-            <span className="mg-v2-text-base mg-font-medium">{client.phone || '정보 없음'}</span>
+            <span className="mg-v2-text-base mg-font-medium"><SafeText fallback="정보 없음">{client.phone}</SafeText></span>
           </div>
           <div className="mg-flex mg-flex-col">
             <span className="mg-v2-label mg-v2-text-sm mg-v2-color-text-secondary">주소</span>
-            <span className="mg-v2-text-base mg-font-medium">{client.address || '정보 없음'}</span>
+            <span className="mg-v2-text-base mg-font-medium"><SafeText fallback="정보 없음">{client.address}</SafeText></span>
           </div>
           <div className="mg-flex mg-flex-col">
             <span className="mg-v2-label mg-v2-text-sm mg-v2-color-text-secondary">상담일</span>
-            <span className="mg-v2-text-base mg-font-medium">{consultation.startTime?.split('T')[0]}</span>
+            <span className="mg-v2-text-base mg-font-medium"><SafeText>{consultation.startTime?.split('T')[0]}</SafeText></span>
           </div>
           <div className="mg-flex mg-flex-col">
             <span className="mg-v2-label mg-v2-text-sm mg-v2-color-text-secondary">상담시간</span>
@@ -476,7 +478,7 @@ const ConsultantMessageScreen = () => {
           </div>
           <div className="mg-flex mg-flex-col">
             <span className="mg-v2-label mg-v2-text-sm mg-v2-color-text-secondary">상담사</span>
-            <span className="mg-v2-text-base mg-font-medium">{user.name}</span>
+            <span className="mg-v2-text-base mg-font-medium"><SafeText>{user.name}</SafeText></span>
           </div>
         </div>
       </div>
@@ -502,7 +504,7 @@ const ConsultantMessageScreen = () => {
                   onClick={() => handleMessageTypeSelect(type.value)}
                 >
                   <div style={styles.messageTypeIcon}>{getLucideIcon(type.icon, { size: 24 })}</div>
-                  <div style={styles.messageTypeLabel}>{type.label}</div>
+                  <div style={styles.messageTypeLabel}><SafeText>{type.label}</SafeText></div>
                 </div>
               ))}
             </div>

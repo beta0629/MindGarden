@@ -27,6 +27,8 @@ import StatusBadge from '../../components/common/StatusBadge';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import MGButton from '../../components/common/MGButton'; // 임시 비활성화
+import SafeText from '../../components/common/SafeText';
+import { toDisplayString } from '../../utils/safeDisplay';
 import './TenantProfile.css';
 
 const TenantProfile = () => {
@@ -228,7 +230,7 @@ const TenantProfile = () => {
           <div className="tenant-profile-header-content">
             <Building2 size={32} />
             <div>
-              <h1>{tenantInfo.name || '테넌트 정보'}</h1>
+              <h1><SafeText fallback="테넌트 정보">{tenantInfo.name}</SafeText></h1>
               <p className="tenant-profile-subtitle">테넌트 상태 및 결제 정보 관리</p>
             </div>
           </div>
@@ -267,15 +269,15 @@ const TenantProfile = () => {
                 <div className="tenant-info-grid">
                   <div className="tenant-info-item">
                     <label>테넌트 ID</label>
-                    <p>{tenantInfo.tenantId}</p>
+                    <p><SafeText>{tenantInfo.tenantId}</SafeText></p>
                   </div>
                   <div className="tenant-info-item">
                     <label>테넌트명</label>
-                    <p>{tenantInfo.name}</p>
+                    <p><SafeText>{tenantInfo.name}</SafeText></p>
                   </div>
                   <div className="tenant-info-item">
                     <label>업종</label>
-                    <p>{tenantInfo.businessType || '-'}</p>
+                    <p><SafeText fallback="-">{tenantInfo.businessType}</SafeText></p>
                   </div>
                   <div className="tenant-info-item">
                     <label>상태</label>
@@ -291,9 +293,9 @@ const TenantProfile = () => {
                     {subscriptions.map((subscription) => (
                       <div key={subscription.subscriptionId} className="subscription-summary-item">
                         <div>
-                          <strong>{subscription.planName || '요금제'}</strong>
-                          <span className={`subscription-status subscription-status--${subscription.status?.toLowerCase()}`}>
-                            {subscription.status}
+                          <strong><SafeText fallback="요금제">{subscription.planName}</SafeText></strong>
+                          <span className={`subscription-status subscription-status--${toDisplayString(subscription.status, 'unknown').toLowerCase()}`}>
+                            <SafeText>{subscription.status}</SafeText>
                           </span>
                         </div>
                         {subscription.amount && (
@@ -317,7 +319,7 @@ const TenantProfile = () => {
                     {paymentMethods.map((pm) => (
                       <div key={pm.paymentMethodId} className="payment-method-summary-item">
                         <CreditCard size={16} />
-                        <span>{pm.cardNumber || pm.methodType || '결제 수단'}</span>
+                        <span><SafeText fallback="결제 수단">{pm.cardNumber ?? pm.methodType}</SafeText></span>
                         {pm.isDefault && (
                           <span className="default-badge">기본</span>
                         )}
@@ -373,14 +375,14 @@ const TenantProfile = () => {
                         <CreditCard size={24} />
                         <div className="payment-method-info">
                           <div className="payment-method-name">
-                            {pm.cardNumber || pm.methodType || '결제 수단'}
+                            <SafeText fallback="결제 수단">{pm.cardNumber ?? pm.methodType}</SafeText>
                             {pm.isDefault && (
                               <span className="default-badge">기본</span>
                             )}
                           </div>
                           {pm.cardExpiry && (
                             <div className="payment-method-expiry">
-                              만료일: {pm.cardExpiry}
+                              만료일: <SafeText>{pm.cardExpiry}</SafeText>
                             </div>
                           )}
                         </div>
@@ -390,7 +392,7 @@ const TenantProfile = () => {
                           <button
                             className="payment-method-action-btn"
                             onClick={() => handleSetDefaultPaymentMethod(pm.paymentMethodId)}
-                            title="기본 결제 수단으로 설정"
+                            title={toDisplayString('기본 결제 수단으로 설정')}
                           >
                             <Edit2 size={16} />
                           </button>
@@ -398,7 +400,7 @@ const TenantProfile = () => {
                         <button
                           className="payment-method-action-btn payment-method-action-btn--danger"
                           onClick={() => handleDeletePaymentMethod(pm.paymentMethodId)}
-                          title="삭제"
+                          title={toDisplayString('삭제')}
                         >
                           <Trash2 size={16} />
                         </button>

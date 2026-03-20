@@ -25,6 +25,7 @@ import UnifiedLoading from '../../components/common/UnifiedLoading';
 import StatusBadge from '../../components/common/StatusBadge';
 import MGButton from '../../components/common/MGButton'; // 임시 비활성화
 import './PgConfigurationList.css';
+import { toDisplayString } from '../../utils/safeDisplay';
 
 /**
  * PG 설정 목록 페이지
@@ -147,7 +148,7 @@ const PgConfigurationList = () => {
       INACTIVE: { label: '비활성화', variant: 'neutral' }
     };
     const config = statusConfig[status] || statusConfig.PENDING;
-    return <StatusBadge variant={config.variant}>{config.label}</StatusBadge>;
+    return <StatusBadge variant={config.variant}>{toDisplayString(config.label, '—')}</StatusBadge>;
   };
 
   const renderApprovalBadge = (approvalStatus) => {
@@ -157,7 +158,7 @@ const PgConfigurationList = () => {
       REJECTED: { label: '거부됨', variant: 'danger' }
     };
     const config = statusConfig[approvalStatus] || statusConfig.PENDING;
-    return <StatusBadge variant={config.variant}>{config.label}</StatusBadge>;
+    return <StatusBadge variant={config.variant}>{toDisplayString(config.label, '—')}</StatusBadge>;
   };
   
   if (sessionLoading || loading && configurations.length === 0) {

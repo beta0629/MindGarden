@@ -9,6 +9,7 @@ import VacationManagementModal from '../admin/VacationManagementModal';
 import { apiGet } from '../../utils/ajax';
 import { getStatusColor, getStatusIcon } from '../../utils/codeHelper';
 import notificationManager from '../../utils/notification';
+import { toDisplayString } from '../../utils/safeDisplay';
 import './ScheduleCalendar.css';
 
 /**
@@ -203,7 +204,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                 console.warn('📅 API 응답 실패:', response);
             }
 
-            let vacationEvents = [];
+            const vacationEvents = [];
             if (userRole === 'ADMIN' || userRole === 'ADMIN') {
                 try {
                     const today = new Date();
@@ -681,7 +682,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                             ) : (
                                 consultants.map(consultant => (
                                     <option key={consultant.id} value={consultant.id}>
-                                        👤 {consultant.name}
+                                        👤 {toDisplayString(consultant.name)}
                                     </option>
                                 ))
                             )}
@@ -708,7 +709,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                                     <span 
                                         className="legend-color"
                                     ></span>
-                                    <span>{consultant.name}</span>
+                                    <span>{toDisplayString(consultant.name)}</span>
                                 </div>
                             ))}
                         </div>
@@ -726,7 +727,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                                         ></span>
                                         <span className="legend-text">
                                             {option.icon && <span className="legend-icon">{option.icon}</span>}
-                                            {option.label}
+                                            {toDisplayString(option.label)}
                                         </span>
                                     </div>
                                 ))

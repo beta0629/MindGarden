@@ -20,6 +20,8 @@ import MGStatistics, { MGStatisticsGrid, MGStatisticsChart, MGStatisticsCard } f
 import MGFilter from '../components/common/MGFilter';
 import MGPagination from '../components/common/MGPagination';
 import './AdvancedDesignSample.css';
+import SafeText from '../components/common/SafeText';
+import { toDisplayString } from '../utils/safeDisplay';
 // import { PerformanceOptimizationSample } from '../components/v0-results/mindgarden-design-system/components/mindgarden/performance-optimization-sample.js';
 
 // 글래스모피즘 스파크라인 컴포넌트
@@ -95,8 +97,8 @@ const GlassStatCard = ({ title, value, trend, icon, iconColor, sparklineData }) 
 
         {/* Title and value */}
         <div className="glass-stat-card__main">
-          <p className="glass-stat-card__title">{title}</p>
-          <p className="glass-stat-card__value">{value}</p>
+          <p className="glass-stat-card__title"><SafeText>{title}</SafeText></p>
+          <p className="glass-stat-card__value"><SafeText>{value}</SafeText></p>
         </div>
 
         {/* Sparkline chart */}
@@ -162,11 +164,11 @@ const AdvancedDesignSample = () => {
   }, []);
 
   const tableColumns = [
-    { key: 'name', header: '이름', render: (value) => <strong>{value}</strong> },
+    { key: 'name', header: '이름', render: (value) => <strong><SafeText>{value}</SafeText></strong> },
     { key: 'email', header: '이메일' },
     { key: 'role', header: '역할' },
     { key: 'status', header: '상태', render: (value) => (
-      <span className={`status-badge status-${value}`}>{value}</span>
+      <span className={`status-badge status-${value}`}><SafeText>{value}</SafeText></span>
     )},
     { key: 'joinDate', header: '가입일' },
     { key: 'lastLogin', header: '마지막 로그인' }
@@ -464,14 +466,14 @@ const AdvancedDesignSample = () => {
               {statsData.map((stat, index) => (
                 <MGStats
                   key={index}
-                  title={stat.title}
-                  value={stat.value}
+                  title={toDisplayString(stat.title)}
+                  value={toDisplayString(stat.value)}
                   change={stat.change}
                   changeType={stat.changeType}
                   icon={stat.icon}
                   color={stat.color}
                   sparklineData={stat.sparklineData}
-                  onClick={() => console.log(`${stat.title} 클릭됨`)}
+                  onClick={() => console.log(`${toDisplayString(stat.title)} 클릭됨`)}
                 />
               ))}
             </MGStatsGrid>
@@ -510,7 +512,7 @@ const AdvancedDesignSample = () => {
                 onClick={() => setSelectedTab(tab.id)}
               >
                 <span className="tab-icon">{tab.icon}</span>
-                <span className="tab-label">{tab.label}</span>
+                <span className="tab-label"><SafeText>{tab.label}</SafeText></span>
               </button>
             ))}
           </MGFlex>
@@ -540,19 +542,19 @@ const AdvancedDesignSample = () => {
                         {feature.icon}
                       </div>
                       <MGFlex direction="column" gap="xs">
-                        <h3 className="feature-title">{feature.title}</h3>
+                        <h3 className="feature-title"><SafeText>{feature.title}</SafeText></h3>
                         <MGFlex gap="medium">
                           <span className="feature-stat">
-                            {feature.stats.sessions} 세션
+                            <SafeText>{feature.stats.sessions}</SafeText> 세션
                           </span>
                           <span className="feature-stat">
-                            {feature.stats.satisfaction} 만족도
+                            <SafeText>{feature.stats.satisfaction}</SafeText> 만족도
                           </span>
                         </MGFlex>
                       </MGFlex>
                     </MGFlex>
                     
-                    <p className="feature-description">{feature.description}</p>
+                    <p className="feature-description"><SafeText>{feature.description}</SafeText></p>
                     
                     <MGFlex justify="between" align="center">
                       <MGFlex gap="small">

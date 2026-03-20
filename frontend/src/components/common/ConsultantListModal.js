@@ -1,6 +1,8 @@
 import React from 'react';
 import { Users, UserX, User, Check } from 'lucide-react';
 import UnifiedModal from './modals/UnifiedModal';
+import SafeText from './SafeText';
+import { toDisplayString } from '../../utils/safeDisplay';
 
 /**
  * 상담사 목록 모달 컴포넌트
@@ -39,12 +41,16 @@ const ConsultantListModal = ({ isOpen, onClose, consultantList }) => {
                   <User size={24} />
                 </div>
                 <div className="mg-v2-list-item-content">
-                  <div className="mg-v2-list-item-title">{consultant.name}</div>
+                  <SafeText className="mg-v2-list-item-title" tag="div">{consultant.name}</SafeText>
                   <div className="mg-v2-list-item-subtitle">
-                    {consultant.specialty || consultant.specialization || '상담 심리학'}
+                    {toDisplayString(
+                      consultant.specialty || consultant.specialization || '상담 심리학'
+                    )}
                   </div>
                   {consultant.intro && (
-                    <div className="mg-v2-list-item-description">{consultant.intro}</div>
+                    <div className="mg-v2-list-item-description">
+                      {toDisplayString(consultant.intro)}
+                    </div>
                   )}
                 </div>
               </div>

@@ -10,6 +10,8 @@ import BadgeSelect from '../common/BadgeSelect';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 import SafeErrorDisplay from '../common/SafeErrorDisplay';
+import SafeText from '../common/SafeText';
+import { toDisplayString } from '../../utils/safeDisplay';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 
 /**
@@ -267,7 +269,7 @@ const ItemManagement = () => {
         {/* 성공/오류 메시지 */}
         {success && (
           <div className="success-message">
-            {success}
+            <SafeText>{success}</SafeText>
           </div>
         )}
 
@@ -276,18 +278,18 @@ const ItemManagement = () => {
         )}
 
         {/* 아이템 목록 */}
-        <ErpCard title={`아이템 목록 (${items.length}개)`}>
+        <ErpCard title={toDisplayString(`아이템 목록 (${items.length}개)`)}>
           <div className="item-management-grid">
             {items.map(item => (
               <div key={item.id} className="item-management-card">
                 <div className="item-management-card-header">
-                  <h4 className="item-management-card-title">{item.name}</h4>
+                  <h4 className="item-management-card-title"><SafeText>{item.name}</SafeText></h4>
                   <div className="item-management-card-category">
-                    {getCategoryLabel(item.category)}
+                    <SafeText>{getCategoryLabel(item.category)}</SafeText>
                   </div>
                   {item.description && (
                     <div className="item-management-card-description">
-                      {item.description}
+                      <SafeText>{item.description}</SafeText>
                     </div>
                   )}
                 </div>
@@ -297,11 +299,11 @@ const ItemManagement = () => {
                     {formatCurrency(item.unitPrice)}
                   </div>
                   <div className="item-management-card-stock">
-                    재고: {item.stockQuantity}개
+                    재고: {toDisplayString(item.stockQuantity)}개
                   </div>
                   {item.supplier && (
                     <div className="item-management-card-supplier">
-                      공급업체: {item.supplier}
+                      공급업체: <SafeText>{item.supplier}</SafeText>
                     </div>
                   )}
                 </div>

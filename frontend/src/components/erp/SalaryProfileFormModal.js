@@ -8,6 +8,8 @@ import ErpModal from './common/ErpModal';
 import BadgeSelect from '../common/BadgeSelect';
 import MGButton from '../common/MGButton';
 import './SalaryProfileFormModal.css';
+import SafeText from '../common/SafeText';
+import { toDisplayString } from '../../utils/safeDisplay';
 
 const getProfileUrl = (consultantId) => `${SALARY_API_ENDPOINTS.PROFILES}/${consultantId}`;
 
@@ -451,7 +453,11 @@ const SalaryProfileFormModal = ({
         <ErpModal
             isOpen={isOpen}
             onClose={onClose}
-            title={existingProfileId ? `급여 프로필 수정 - ${consultant.name}` : `급여 프로필 생성 - ${consultant.name}`}
+            title={toDisplayString(
+                existingProfileId
+                    ? `급여 프로필 수정 - ${consultant.name}`
+                    : `급여 프로필 생성 - ${consultant.name}`
+            )}
             size="large"
             className="salary-profile-modal-content mg-v2-ad-b0kla"
         >
@@ -459,8 +465,8 @@ const SalaryProfileFormModal = ({
                 {/* 기본 정보 */}
                 <div className="salary-profile-form__section consultant-info-section">
                         <h4 className="consultant-info-title">상담사 정보</h4>
-                        <p className="consultant-info-item"><strong>이름:</strong> {consultant.name}</p>
-                        <p className="consultant-info-item"><strong>현재 등급:</strong> {gradeLabel || ((formData.grade || consultant.grade) ? '조회 중...' : '')}</p>
+                        <p className="consultant-info-item"><strong>이름:</strong> <SafeText>{consultant.name}</SafeText></p>
+                        <p className="consultant-info-item"><strong>현재 등급:</strong> <SafeText>{gradeLabel || ((formData.grade || consultant.grade) ? '조회 중...' : '')}</SafeText></p>
                         <p className="consultant-info-item"><strong>기본 급여:</strong> {displayBaseSalary != null ? displayBaseSalary.toLocaleString() : '—'}원</p>
                     </div>
 
@@ -475,7 +481,7 @@ const SalaryProfileFormModal = ({
                                 { value: '', label: '상담사 등급 선택' },
                                 ...gradeTableData.map(grade => ({
                                     value: grade.code,
-                                    label: `${grade.name} (${grade.baseSalary.toLocaleString()}원)`
+                                    label: `${toDisplayString(grade.name)} (${grade.baseSalary.toLocaleString()}원)`
                                 }))
                             ]}
                             placeholder="상담사 등급 선택"
@@ -500,7 +506,7 @@ const SalaryProfileFormModal = ({
                             {gradeTableData.map((grade, index) => (
                                 <div key={grade.code} className="grade-table-row">
                                     <div className="grade-table-cell grade-table-cell--name">
-                                        {grade.name}
+                                        <SafeText>{grade.name}</SafeText>
                                         {grade.code === formData.grade && (
                                             <span className="grade-selected-badge">
                                                 선택됨
@@ -543,7 +549,7 @@ const SalaryProfileFormModal = ({
                                 { value: '', label: '급여 유형 선택' },
                                 ...salaryTypes.map(type => ({
                                     value: type.codeValue,
-                                    label: type.codeLabel || type.codeValue
+                                    label: toDisplayString(type.codeLabel || type.codeValue)
                                 }))
                             ]}
                             placeholder="급여 유형 선택"
@@ -636,7 +642,7 @@ const SalaryProfileFormModal = ({
                             </MGButton>
                         </div>
                         <p className="option-description">
-                            {getGradeOptionsDescription(formData.grade || consultant.grade)}
+                            <SafeText>{getGradeOptionsDescription(formData.grade || consultant.grade)}</SafeText>
                         </p>
                         
                         {selectedOptions.map((option, index) => (
@@ -650,7 +656,7 @@ const SalaryProfileFormModal = ({
                                             { value: '', label: '옵션 유형 선택' },
                                             ...optionTypes.map(opt => ({
                                                 value: opt.codeValue,
-                                                label: getOptionTypeLabel(opt)
+                                                label: toDisplayString(getOptionTypeLabel(opt))
                                             }))
                                         ]}
                                         placeholder="옵션 유형 선택"

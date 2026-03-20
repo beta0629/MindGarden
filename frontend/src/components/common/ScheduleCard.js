@@ -22,6 +22,7 @@ import {
   TIME_FORMATS
 } from '../../constants/schedule';
 import './ScheduleCard.css';
+import SafeText from './SafeText';
 
 const ScheduleCard = ({ 
   schedule, 
@@ -142,12 +143,12 @@ const ScheduleCard = ({
     <div className="schedule-card">
       <div className="schedule-card-header">
         <div className="schedule-card-title">
-          <h3>{schedule.title || '제목 없음'}</h3>
+          <SafeText tag="h3" fallback="제목 없음">{schedule.title}</SafeText>
           <span 
             className="schedule-status-badge"
             data-status={schedule.status}
           >
-            {STATUS_LABELS[schedule.status] || schedule.status}
+            <SafeText>{STATUS_LABELS[schedule.status] ?? schedule.status}</SafeText>
           </span>
         </div>
         <div className="schedule-card-actions">
@@ -167,25 +168,25 @@ const ScheduleCard = ({
           </div>
           <div className="schedule-info-item">
             <i className="bi bi-person"></i>
-            <span>{schedule.consultantName || '상담사 정보 없음'}</span>
+            <SafeText tag="span" fallback="상담사 정보 없음">{schedule.consultantName}</SafeText>
           </div>
           {schedule.clientName && (
             <div className="schedule-info-item">
               <i className="bi bi-person-circle"></i>
-              <span>{schedule.clientName}</span>
+              <SafeText tag="span">{schedule.clientName}</SafeText>
             </div>
           )}
           {schedule.consultationType && (
             <div className="schedule-info-item">
               <i className="bi bi-tag"></i>
-              <span>{schedule.consultationType}</span>
+              <SafeText tag="span">{schedule.consultationType}</SafeText>
             </div>
           )}
         </div>
         
         {schedule.description && (
           <div className="schedule-card-description">
-            <p>{schedule.description}</p>
+            <SafeText tag="p">{schedule.description}</SafeText>
           </div>
         )}
       </div>

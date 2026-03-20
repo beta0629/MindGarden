@@ -13,6 +13,8 @@ import ClientCard from '../ui/Card/ClientCard';
 import MappingCard from './MappingCard';
 import SessionExtensionModal from './mapping/SessionExtensionModal';
 import Avatar from '../common/Avatar';
+import SafeText from '../common/SafeText';
+import { toDisplayString } from '../../utils/safeDisplay';
 import { getFormattedContact, getFormattedConsultationCount, getFormattedRegistrationDate, getMappingStatusKoreanNameSync } from '../../utils/codeHelper';
 import '../../styles/unified-design-tokens.css';
 
@@ -369,16 +371,16 @@ const SessionManagement = () => {
                                             <div className="mg-v2-quick-mapping-info">
                                                 <Avatar
                                                     profileImageUrl={clientProfileImageUrl}
-                                                    displayName={clientName}
+                                                    displayName={toDisplayString(clientName)}
                                                     className="mg-v2-quick-mapping-avatar"
                                                 />
                                                 <div className="mg-v2-quick-mapping-details">
-                                                    <div className="mg-v2-quick-mapping-client">{clientName}</div>
-                                                    <div className="mg-v2-quick-mapping-consultant">{consultantName}</div>
+                                                    <div className="mg-v2-quick-mapping-client"><SafeText>{clientName}</SafeText></div>
+                                                    <div className="mg-v2-quick-mapping-consultant"><SafeText>{consultantName}</SafeText></div>
                                                     <div className="mg-v2-quick-mapping-sessions">
-                                                        <span className="mg-v2-sessions-current mg-v2-sessions-current-danger">{usedSessions}</span>
+                                                        <span className="mg-v2-sessions-current mg-v2-sessions-current-danger">{toDisplayString(usedSessions)}</span>
                                                         <span className="mg-v2-sessions-separator">/</span>
-                                                        <span className="mg-v2-sessions-total mg-v2-sessions-total-primary">{totalSessions}</span>
+                                                        <span className="mg-v2-sessions-total mg-v2-sessions-total-primary">{toDisplayString(totalSessions)}</span>
                                                         <span className="mg-v2-sessions-unit">회기</span>
                                                     </div>
                                                 </div>
@@ -450,11 +452,11 @@ const SessionManagement = () => {
                                                 <div className="mg-v2-client-info">
                                                     <Avatar
                                                         profileImageUrl={client.profileImageUrl}
-                                                        displayName={client.name}
+                                                        displayName={toDisplayString(client.name)}
                                                         className="mg-v2-client-avatar"
                                                     />
                                                     <div className="mg-v2-client-details">
-                                                        <div className="mg-v2-client-name">{client.name}</div>
+                                                        <SafeText className="mg-v2-client-name" tag="div">{client.name}</SafeText>
                                                         <div className="mg-v2-client-mappings">
                                                             {clientMappings.length}개 활성 매핑
                                                         </div>
@@ -464,7 +466,7 @@ const SessionManagement = () => {
                                                     variant="success"
                                                     size="small"
                                                     disabled={clientMappings.length === 0}
-                                                    title={clientMappings.length === 0 ? '활성 매핑이 없습니다' : ''}
+                                                    title={toDisplayString(clientMappings.length === 0 ? '활성 매핑이 없습니다' : '')}
                                                     onClick={() => {
                                                         if (clientMappings.length > 0) {
                                                             handleQuickAdd(clientMappings[0]);
@@ -516,16 +518,16 @@ const SessionManagement = () => {
                                             <div key={mapping.id} className="mg-v2-mapping-card">
                                                 <div className="mg-v2-mapping-info">
                                                     <div className="mg-v2-mapping-client">
-                                                        👤 {mapping.clientName}
+                                                        👤 <SafeText>{mapping.clientName}</SafeText>
                                                     </div>
                                                     <div className="mg-v2-mapping-consultant">
-                                                        🤝 {mapping.consultantName}
+                                                        🤝 <SafeText>{mapping.consultantName}</SafeText>
                                                     </div>
                                                     <div className="mg-v2-mapping-sessions">
-                                                        📊 {mapping.usedSessions}/{mapping.totalSessions}회기
+                                                        📊 <SafeText>{mapping.usedSessions}</SafeText>/<SafeText>{mapping.totalSessions}</SafeText>회기
                                                     </div>
-                                                    <div className={`mg-mapping-status mg-status-${mapping.status.toLowerCase()}`}>
-                                                        {getMappingStatusKoreanNameSync(mapping.status)}
+                                                    <div className={`mg-mapping-status mg-status-${toDisplayString(mapping.status, 'unknown').toLowerCase()}`}>
+                                                        <SafeText>{getMappingStatusKoreanNameSync(mapping.status)}</SafeText>
                                                     </div>
                                                 </div>
                                                 <div className="mg-v2-mapping-card-actions">
@@ -536,7 +538,7 @@ const SessionManagement = () => {
                                                         // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                                                         disabled={mapping.status !== 'ACTIVE'}
                                                         // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-                                                        title={mapping.status !== 'ACTIVE' ? '활성 상태가 아닙니다' : ''}
+                                                        title={toDisplayString(mapping.status !== 'ACTIVE' ? '활성 상태가 아닙니다' : '')}
                                                     >
                                                         <Plus size={14} />
                                                         회기 추가

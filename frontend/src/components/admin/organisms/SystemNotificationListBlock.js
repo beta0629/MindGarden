@@ -13,6 +13,7 @@ import notificationManager from '../../../utils/notification';
 import StatusBadge from '../../common/StatusBadge';
 import UnifiedLoading from '../../common/UnifiedLoading';
 import SystemNotificationFormModal from '../molecules/SystemNotificationFormModal';
+import { toDisplayString } from '../../../utils/safeDisplay';
 import '../../../styles/unified-design-tokens.css';
 
 const STATUS_OPTIONS = [
@@ -204,7 +205,7 @@ const SystemNotificationListBlock = ({ hasManagePermission, onOpenCreate }) => {
             aria-label="대상 선택"
           >
             {TARGET_OPTIONS.map((o) => (
-              <option key={o.value || 'all'} value={o.value}>{o.label}</option>
+              <option key={o.value || 'all'} value={o.value}>{toDisplayString(o.label)}</option>
             ))}
           </select>
           <label htmlFor="admin-notice-status" className="sr-only">상태</label>
@@ -216,7 +217,7 @@ const SystemNotificationListBlock = ({ hasManagePermission, onOpenCreate }) => {
             aria-label="상태 선택"
           >
             {STATUS_OPTIONS.map((o) => (
-              <option key={o.value || 'all'} value={o.value}>{o.label}</option>
+              <option key={o.value || 'all'} value={o.value}>{toDisplayString(o.label)}</option>
             ))}
           </select>
           <label htmlFor="admin-notice-search" className="sr-only">검색</label>
@@ -260,7 +261,7 @@ const SystemNotificationListBlock = ({ hasManagePermission, onOpenCreate }) => {
                     }}
                   />
                   <div>
-                    <h3 className="mg-v2-ad-notifications__card-title">{notification.title}</h3>
+                    <h3 className="mg-v2-ad-notifications__card-title">{toDisplayString(notification.title)}</h3>
                     <div className="mg-v2-ad-notifications__card-meta">
                       <StatusBadge
                         variant={

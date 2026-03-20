@@ -8,6 +8,7 @@ import { FaUsers, FaUserTie, FaLink, FaCalendarAlt, FaCalendarCheck, FaCog, FaDo
 import { Calendar, CheckCircle, Check, TrendingUp, AlertTriangle, BarChart, Settings, LayoutDashboard, Heart, Trophy, Users, CalendarDays, User, Clock, PieChart, Target, Shield, Activity, Link2, DollarSign, RotateCcw, Receipt, MessageSquare, Sparkles, Search, Bell, Moon, Building, ShieldCheck, Megaphone } from 'lucide-react';
 import SimpleLayout from '../layout/SimpleLayout';
 import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import SafeText from '../common/SafeText';
 import SystemStatus from './system/SystemStatus';
 import DashboardSection from '../layout/DashboardSection';
 import StatCard from '../ui/Card/StatCard';
@@ -799,7 +800,9 @@ const AdminDashboard = ({ user: propUser }) => {
                                                 className="mg-v2-ad-b0kla__chart-bar-fill"
                                                 style={{ '--chart-bar-height': `${heightPercent}%` }}
                                             />
-                                            <span className="mg-v2-ad-b0kla__chart-bar-label">{data.period}</span>
+                                            <span className="mg-v2-ad-b0kla__chart-bar-label">
+                                                <SafeText>{data.period}</SafeText>
+                                            </span>
                                         </div>
                                     );
                                 })}
@@ -826,9 +829,13 @@ const AdminDashboard = ({ user: propUser }) => {
                                         className="mg-v2-ad-b0kla__counselor-avatar mg-v2-ad-b0kla__counselor-avatar--green"
                                     />
                                     <div className="mg-v2-ad-b0kla__counselor-data">
-                                        <span className="mg-v2-ad-b0kla__counselor-name">{c.name}</span>
+                                        <span className="mg-v2-ad-b0kla__counselor-name">
+                                            <SafeText>{c.name}</SafeText>
+                                        </span>
                                         <div className="mg-v2-ad-b0kla__counselor-rating-row">
-                                            <span className="mg-v2-ad-b0kla__counselor-rating">{c.rating}</span>
+                                            <span className="mg-v2-ad-b0kla__counselor-rating">
+                                                <SafeText>{c.rating}</SafeText>
+                                            </span>
                                             <div className="mg-v2-ad-b0kla__counselor-bar-track">
                                                 <div
                                                     className="mg-v2-ad-b0kla__counselor-bar-fill"

@@ -9,6 +9,8 @@ import { ContentArea, ContentHeader } from '../dashboard-v2/content';
 import { Package, FileText, ShoppingCart, RefreshCw, Eye } from 'lucide-react';
 import './ErpCommon.css';
 import SafeErrorDisplay from '../common/SafeErrorDisplay';
+import SafeText from '../common/SafeText';
+import { toDisplayString } from '../../utils/safeDisplay';
 
 /**
  * ERP 구매 관리 페이지
@@ -178,29 +180,29 @@ const PurchaseManagement = () => {
                     {items.map((item) => (
                       <div key={item.id} className="erp-card">
                         <div className="erp-card-header">
-                          <h3>{item.name}</h3>
+                          <h3><SafeText>{item.name}</SafeText></h3>
                           <span className={`erp-status ${item.stockQuantity > 10 ? 'success' : 'warning'}`}>
                             {item.stockQuantity > 10 ? '충분' : '부족'}
                           </span>
                         </div>
                         <div className="erp-card-body">
-                          <p className="erp-description">{item.description}</p>
+                          <p className="erp-description"><SafeText>{item.description}</SafeText></p>
                           <div className="erp-details">
                             <div className="erp-detail">
                               <span className="erp-label">가격:</span>
-                              <span className="erp-value">{item.unitPrice?.toLocaleString()}원</span>
+                              <span className="erp-value">{toDisplayString(item.unitPrice != null ? `${item.unitPrice.toLocaleString()}원` : '—')}</span>
                             </div>
                             <div className="erp-detail">
                               <span className="erp-label">재고:</span>
-                              <span className="erp-value">{item.stockQuantity}개</span>
+                              <span className="erp-value">{toDisplayString(item.stockQuantity)}개</span>
                             </div>
                             <div className="erp-detail">
                               <span className="erp-label">카테고리:</span>
-                              <span className="erp-value">{item.category}</span>
+                              <span className="erp-value"><SafeText>{item.category}</SafeText></span>
                             </div>
                             <div className="erp-detail">
                               <span className="erp-label">공급업체:</span>
-                              <span className="erp-value">{item.supplier}</span>
+                              <span className="erp-value"><SafeText>{item.supplier}</SafeText></span>
                             </div>
                           </div>
                         </div>
@@ -228,23 +230,23 @@ const PurchaseManagement = () => {
                         className="mg-purchase-request-card"
                       >
                         <div className="mg-purchase-request-card__header">
-                          <div className="mg-purchase-request-card__id">#{request.id}</div>
-                          <div className="mg-purchase-request-card__date">{request.createdAt}</div>
+                          <div className="mg-purchase-request-card__id">#{toDisplayString(request.id)}</div>
+                          <div className="mg-purchase-request-card__date"><SafeText>{request.createdAt}</SafeText></div>
                         </div>
                         
                         <div className="mg-purchase-request-card__body">
                           <div className="mg-purchase-request-card__field">
                             <span className="mg-purchase-request-card__label">아이템</span>
-                            <span className="mg-purchase-request-card__value">{request.itemName}</span>
+                            <span className="mg-purchase-request-card__value"><SafeText>{request.itemName}</SafeText></span>
                           </div>
                           <div className="mg-purchase-request-card__field">
                             <span className="mg-purchase-request-card__label">수량</span>
-                            <span className="mg-purchase-request-card__value">{request.quantity}개</span>
+                            <span className="mg-purchase-request-card__value">{toDisplayString(request.quantity)}개</span>
                           </div>
                           <div className="mg-purchase-request-card__field">
                             <span className="mg-purchase-request-card__label">상태</span>
-                            <span className={`erp-status ${request.status?.toLowerCase()}`}>
-                              {request.status}
+                            <span className={`erp-status ${toDisplayString(request.status, '').toLowerCase()}`}>
+                              <SafeText>{request.status}</SafeText>
                             </span>
                           </div>
                         </div>
@@ -277,25 +279,25 @@ const PurchaseManagement = () => {
                         className="mg-purchase-order-card"
                       >
                         <div className="mg-purchase-order-card__header">
-                          <div className="mg-purchase-order-card__id">#{order.orderNumber}</div>
-                          <div className="mg-purchase-order-card__date">{order.createdAt}</div>
+                          <div className="mg-purchase-order-card__id">#{toDisplayString(order.orderNumber)}</div>
+                          <div className="mg-purchase-order-card__date"><SafeText>{order.createdAt}</SafeText></div>
                         </div>
                         
                         <div className="mg-purchase-order-card__body">
                           <div className="mg-purchase-order-card__field">
                             <span className="mg-purchase-order-card__label">공급업체</span>
-                            <span className="mg-purchase-order-card__value">{order.supplier}</span>
+                            <span className="mg-purchase-order-card__value"><SafeText>{order.supplier}</SafeText></span>
                           </div>
                           <div className="mg-purchase-order-card__field">
                             <span className="mg-purchase-order-card__label">총 금액</span>
                             <span className="mg-purchase-order-card__value mg-purchase-order-card__value--amount">
-                              {order.totalAmount?.toLocaleString()}원
+                              {toDisplayString(order.totalAmount != null ? `${order.totalAmount.toLocaleString()}원` : '—')}
                             </span>
                           </div>
                           <div className="mg-purchase-order-card__field">
                             <span className="mg-purchase-order-card__label">상태</span>
-                            <span className={`erp-status ${order.status?.toLowerCase()}`}>
-                              {order.status}
+                            <span className={`erp-status ${toDisplayString(order.status, '').toLowerCase()}`}>
+                              <SafeText>{order.status}</SafeText>
                             </span>
                           </div>
                         </div>

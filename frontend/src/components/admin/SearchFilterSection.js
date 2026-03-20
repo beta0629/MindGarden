@@ -1,5 +1,6 @@
 // import React from 'react';
 import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import { toDisplayString } from '../../utils/safeDisplay';
 import './SearchFilterSection.css';
 
 /**
@@ -50,7 +51,9 @@ const SearchFilterSection = ({
                     <option value="">{filterLabel}</option>
                     {filterOptions.map((option, index) => (
                         <option key={`filter-${option.value}-${index}`} value={option.value}>
-                            {option.icon} {option.label}
+                            {[toDisplayString(option.icon, ''), toDisplayString(option.label)]
+                              .filter((s) => s !== '')
+                              .join(' ')}
                         </option>
                     ))}
                 </select>

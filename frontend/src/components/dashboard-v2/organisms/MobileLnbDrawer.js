@@ -12,6 +12,8 @@ import { useLocation } from 'react-router-dom';
 import { LogOut, ChevronRight, ChevronDown } from 'lucide-react';
 import { NavLinkWithRouter } from '../atoms';
 import { LnbMenuItem } from '../molecules';
+import SafeText from '../../common/SafeText';
+import { toDisplayString } from '../../../utils/safeDisplay';
 import './MobileLnbDrawer.css';
 
 const hasChildren = (item) => item.children && item.children.length > 0;
@@ -112,7 +114,7 @@ const MobileLnbDrawer = ({ isOpen, onClose, menuItems = [], headerTitle = '시�
                       onClick={(e) => handleGroupToggle(e, item.to)}
                       aria-expanded={expandedGroupKey === item.to}
                       aria-controls={sublistId('mg-v2-mobile-lnb', item.to)}
-                      aria-label={`${item.label} 메뉴 ${expandedGroupKey === item.to ? '접기' : '펼치기'}`}
+                      aria-label={`${toDisplayString(item.label)} 메뉴 ${expandedGroupKey === item.to ? '접기' : '펼치기'}`}
                     >
                       {expandedGroupKey === item.to ? (
                         <ChevronDown size={18} aria-hidden />
@@ -126,14 +128,14 @@ const MobileLnbDrawer = ({ isOpen, onClose, menuItems = [], headerTitle = '시�
                       end={item.end}
                       onClick={onClose}
                     >
-                      {item.label}
+                      <SafeText>{item.label}</SafeText>
                     </NavLinkWithRouter>
                   </div>
                   <ul
                     id={sublistId('mg-v2-mobile-lnb', item.to)}
                     className="mg-v2-mobile-lnb-drawer__sublist"
                     role="group"
-                    aria-label={item.label}
+                    aria-label={toDisplayString(item.label)}
                   >
                     {item.children.map((sub) => (
                       <LnbMenuItem
@@ -143,7 +145,7 @@ const MobileLnbDrawer = ({ isOpen, onClose, menuItems = [], headerTitle = '시�
                         end={sub.end !== false}
                         onItemClick={onClose}
                       >
-                        {sub.label}
+                        <SafeText>{sub.label}</SafeText>
                       </LnbMenuItem>
                     ))}
                   </ul>
@@ -156,7 +158,7 @@ const MobileLnbDrawer = ({ isOpen, onClose, menuItems = [], headerTitle = '시�
                   end={item.end !== false}
                   onItemClick={onClose}
                 >
-                  {item.label}
+                  <SafeText>{item.label}</SafeText>
                 </LnbMenuItem>
               )
             )}

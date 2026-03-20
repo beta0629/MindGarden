@@ -9,6 +9,8 @@ import csrfTokenManager from '../../utils/csrfTokenManager';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import CustomSelect from '../common/CustomSelect';
 import BadgeSelect from '../common/BadgeSelect';
+import { toDisplayString } from '../../utils/safeDisplay';
+import SafeText from '../common/SafeText';
 
 /**
  * 관리자용 휴가 관리 모달 컴포넌트
@@ -498,7 +500,7 @@ const VacationManagementModal = ({
                                     { value: '', label: '상담사를 선택하세요' },
                                     ...consultants.map(consultant => ({
                                         value: consultant.id,
-                                        label: `${consultant.name} (${consultant.email})`
+                                        label: `${toDisplayString(consultant.name)} (${toDisplayString(consultant.email)})`
                                     }))
                                 ]}
                                 placeholder="상담사를 선택하세요"
@@ -558,7 +560,7 @@ const VacationManagementModal = ({
                                             onChange={(val) => handleVacationTypeChange(val)}
                                             options={vacationTypeOptions.map(option => ({
                                                 value: option.value,
-                                                label: `${option.icon} ${option.label} (${option.value})`
+                                                label: `${option.icon} ${toDisplayString(option.label)} (${option.value})`
                                             }))}
                                             placeholder="선택하세요"
                                             disabled={loading || loadingCodes}
@@ -624,17 +626,18 @@ const VacationManagementModal = ({
                                         {existingVacations.map(vacation => (
                                             <div key={vacation.id} className="vacation-item">
                                                 <div className="vacation-info">
-                                                    <div className="vacation-date">{vacation.date}</div>
+                                                    <div className="vacation-date"><SafeText>{vacation.date}</SafeText></div>
                                                     <div className="vacation-type">
-                                                        {getVacationTypeName(vacation.type)}
+                                                        <SafeText>{getVacationTypeName(vacation.type)}</SafeText>
                                                     </div>
                                                     <div className="vacation-time">
-                                                        {vacation.startTime && vacation.endTime 
-                                                            ? `${vacation.startTime} - ${vacation.endTime}`
-                                                            : '하루 종일'
-                                                        }
+                                                        <SafeText>
+                                                          {vacation.startTime && vacation.endTime
+                                                            ? `${toDisplayString(vacation.startTime)} - ${toDisplayString(vacation.endTime)}`
+                                                            : '하루 종일'}
+                                                        </SafeText>
                                                     </div>
-                                                    <div className="vacation-reason">{vacation.reason}</div>
+                                                    <div className="vacation-reason"><SafeText>{vacation.reason}</SafeText></div>
                                                 </div>
                                                 <button
                                                     className="delete-button"
@@ -656,7 +659,7 @@ const VacationManagementModal = ({
                     {/* 메시지 표시 */}
                     {message && (
                         <div className={`message ${message.includes('성공') ? 'success' : 'error'}`}>
-                            {message}
+                            <SafeText>{message}</SafeText>
                         </div>
                     )}
                 </div>

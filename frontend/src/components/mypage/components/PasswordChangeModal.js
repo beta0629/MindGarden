@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { API_BASE_URL } from '../../../constants/api';
 import UnifiedModal from '../../common/modals/UnifiedModal';
+import SafeText from '../../common/SafeText';
 import './PasswordChangeModal.css';
 import notificationManager from '../../../utils/notification';
 
@@ -250,7 +251,7 @@ const PasswordChangeModal = ({ isOpen, onClose, onSuccess, tempPassword }) => {
             </div>
             {!validation.currentPassword.isValid && (
               <div className="invalid-feedback">
-                {validation.currentPassword.message}
+                <SafeText>{validation.currentPassword.message}</SafeText>
               </div>
             )}
           </div>
@@ -282,7 +283,7 @@ const PasswordChangeModal = ({ isOpen, onClose, onSuccess, tempPassword }) => {
             </div>
             {!validation.newPassword.isValid && (
               <div className="invalid-feedback">
-                {validation.newPassword.message}
+                <SafeText>{validation.newPassword.message}</SafeText>
               </div>
             )}
             <div className="password-requirements">
@@ -325,7 +326,7 @@ const PasswordChangeModal = ({ isOpen, onClose, onSuccess, tempPassword }) => {
             </div>
             {!validation.confirmPassword.isValid && (
               <div className="invalid-feedback">
-                {validation.confirmPassword.message}
+                <SafeText>{validation.confirmPassword.message}</SafeText>
               </div>
             )}
           </div>

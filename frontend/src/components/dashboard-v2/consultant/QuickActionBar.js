@@ -1,6 +1,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Zap, FileText, Calendar, Users, MessageSquare } from 'lucide-react';
+import SafeText from '../../common/SafeText';
+import { toDisplayString } from '../../../utils/safeDisplay';
 
 /**
  * 빠른 액션 바 컴포넌트
@@ -56,10 +58,10 @@ const QuickActionBar = ({ onNavigate, className = '' }) => {
               className={`mg-v2-btn mg-v2-btn-${action.variant} mg-v2-btn-md`}
               onClick={() => onNavigate(action.path)}
               type="button"
-              aria-label={action.label}
+              aria-label={toDisplayString(action.label)}
             >
               <Icon size={16} />
-              {action.label}
+              <SafeText tag="span">{action.label}</SafeText>
             </button>
           );
         })}

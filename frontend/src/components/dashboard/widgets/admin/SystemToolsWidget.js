@@ -17,6 +17,8 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../Widget.css';
+import SafeText from '../../../common/SafeText';
+import { toDisplayString } from '../../../../utils/safeDisplay';
 
 const SystemToolsWidget = ({ widget, user }) => {
   const navigate = useNavigate();
@@ -119,15 +121,15 @@ const SystemToolsWidget = ({ widget, user }) => {
               key={tool.id}
               className={`system-tool-card ${getVariantClass(tool.variant)}`}
               onClick={() => handleToolClick(tool)}
-              title={tool.description}
+              title={toDisplayString(tool.description, '')}
             >
               <div className="system-tool-icon">
                 <i className={`bi ${tool.icon}`}></i>
               </div>
               <div className="system-tool-content">
-                <span className="system-tool-label">{tool.label}</span>
-                {tool.description && (
-                  <div className="system-tool-description">{tool.description}</div>
+                <span className="system-tool-label"><SafeText>{tool.label}</SafeText></span>
+                  {tool.description && (
+                  <SafeText tag="div" className="system-tool-description">{tool.description}</SafeText>
                 )}
               </div>
             </button>

@@ -6,6 +6,8 @@ import StandardizedApi from '../../utils/standardizedApi';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { CONSULTANT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import Button from '../ui/Button/Button';
+import SafeText from '../common/SafeText';
+import { toDisplayString } from '../../utils/safeDisplay';
 import './ConsultantAvailability.css';
 
 const ConsultantAvailability = () => {
@@ -336,7 +338,7 @@ const ConsultantAvailability = () => {
               {DAYS_OF_WEEK.map(day => (
                 <div key={day.key} className="day-card">
                   <div className="day-header">
-                    <h3 className="day-title">{day.label}</h3>
+                    <SafeText tag="h3" className="day-title">{day.label}</SafeText>
                     <span className="day-count">
                       {groupedAvailability[day.key]?.length || 0}개 시간
                     </span>
@@ -347,7 +349,7 @@ const ConsultantAvailability = () => {
                       <div key={slot.id} className="time-slot">
                         <div className="time-info">
                           <span className="time-range">
-                            {slot.startTime} - {slot.endTime}
+                            <SafeText>{slot.startTime}</SafeText> - <SafeText>{slot.endTime}</SafeText>
                           </span>
                           <span className="time-duration">
                             {slot.duration}분
@@ -494,7 +496,7 @@ const AvailabilityModal = ({ isOpen, onClose, onSubmit, initialData, timeSlots, 
             >
               {daysOfWeek.map(day => (
                 <option key={day.key} value={day.key}>
-                  {day.label}
+                  {toDisplayString(day.label, '—')}
                 </option>
               ))}
             </select>
@@ -512,7 +514,7 @@ const AvailabilityModal = ({ isOpen, onClose, onSubmit, initialData, timeSlots, 
               >
                 {timeSlots.map(slot => (
                   <option key={slot.value} value={slot.value}>
-                    {slot.label}
+                    {toDisplayString(slot.label, '—')}
                   </option>
                 ))}
               </select>
@@ -532,7 +534,7 @@ const AvailabilityModal = ({ isOpen, onClose, onSubmit, initialData, timeSlots, 
               >
                 {timeSlots.map(slot => (
                   <option key={slot.value} value={slot.value}>
-                    {slot.label}
+                    {toDisplayString(slot.label, '—')}
                   </option>
                 ))}
               </select>
@@ -554,7 +556,7 @@ const AvailabilityModal = ({ isOpen, onClose, onSubmit, initialData, timeSlots, 
               {durationOptions && durationOptions.length > 0 ? (
                 durationOptions.map(option => (
                   <option key={option.value} value={option.value}>
-                    {option.icon} {option.label}
+                    {`${toDisplayString(option.icon, '')} ${toDisplayString(option.label, '—')}`.trim()}
                   </option>
                 ))
               ) : (

@@ -6,6 +6,7 @@ import notificationManager from '../../utils/notification';
 import { sessionManager } from '../../utils/sessionManager';
 import UnifiedModal from './modals/UnifiedModal';
 import Button from '../ui/Button/Button';
+import SafeText from './SafeText';
 
 const DuplicateLoginModal = () => {
   const { duplicateLoginModal, setDuplicateLoginModal, checkSession } = useSession();
@@ -114,7 +115,7 @@ const DuplicateLoginModal = () => {
     >
       <div className="mg-v2-empty-state">
         <AlertTriangle size={48} className="mg-v2-color-warning" />
-        <p className="mg-v2-text-base mg-v2-mt-md">{duplicateLoginModal.message}</p>
+        <SafeText className="mg-v2-text-base mg-v2-mt-md" tag="p">{duplicateLoginModal.message}</SafeText>
       </div>
 
       <div className="mg-v2-info-box mg-v2-mt-md">

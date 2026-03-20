@@ -20,6 +20,8 @@ import { apiGet } from '../../../utils/ajax';
 // // import UnifiedLoading from '../../../components/common/UnifiedLoading'; // 임시 비활성화
 import UnifiedModal from '../../../components/common/modals/UnifiedModal'; // 임시 비활성화
 import './Widget.css';
+import SafeText from '../../common/SafeText';
+import { toDisplayString } from '../../../utils/safeDisplay';
 
 const MessageWidget = ({ widget, user }) => {
   const navigate = useNavigate();
@@ -165,12 +167,12 @@ const MessageWidget = ({ widget, user }) => {
                     <i className={`bi ${typeInfo.icon}`}></i>
                   </div>
                   <div className="message-content">
-                    <div className="message-title">{message.title || message.subject}</div>
-                    <div className="message-preview">{message.content || message.body}</div>
+                    <div className="message-title"><SafeText>{message.title ?? message.subject}</SafeText></div>
+                    <div className="message-preview"><SafeText>{message.content ?? message.body}</SafeText></div>
                     <div className="message-meta">
                       <span className="message-time">{formatTime(message.createdAt || message.sentAt)}</span>
                       {message.sender && (
-                        <span className="message-sender">{message.sender}</span>
+                        <span className="message-sender"><SafeText>{message.sender}</SafeText></span>
                       )}
                     </div>
                   </div>
@@ -190,15 +192,15 @@ const MessageWidget = ({ widget, user }) => {
         <div className="mg-modal"
           isOpen={!!selectedMessage}
           onClose={() => setSelectedMessage(null)}
-          title={selectedMessage.title || selectedMessage.subject}
+          title={toDisplayString(selectedMessage.title ?? selectedMessage.subject, '메시지')}
         >
           <div className="message-detail">
             <div className="message-detail-content">
-              {selectedMessage.content || selectedMessage.body}
+              <SafeText tag="div">{selectedMessage.content ?? selectedMessage.body}</SafeText>
             </div>
             <div className="message-detail-meta">
               {selectedMessage.sender && (
-                <div>보낸 사람: {selectedMessage.sender}</div>
+                <div>보낸 사람: <SafeText>{selectedMessage.sender}</SafeText></div>
               )}
               {selectedMessage.createdAt && (
                 <div>받은 시간: {new Date(selectedMessage.createdAt).toLocaleString('ko-KR')}</div>

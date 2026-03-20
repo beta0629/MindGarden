@@ -2,6 +2,7 @@ import React from 'react';
 import ErpCard from '../common/ErpCard';
 import ErpButton from '../common/ErpButton';
 import StatusBadge from '../../common/StatusBadge';
+import { toDisplayString } from '../../../utils/safeDisplay';
 
 /**
  * 환불 이력 테이블 컴포넌트
@@ -20,7 +21,7 @@ const RefundHistoryTable = ({ refundHistory, pageInfo, onPageChange }) => {
 
     const getErpStatusBadge = (status) => {
         const config = ERP_STATUS_MAP[status] || { text: '알수없음', variant: 'neutral' };
-        return <StatusBadge variant={config.variant}>{config.text}</StatusBadge>;
+        return <StatusBadge variant={config.variant}>{toDisplayString(config.text, '—')}</StatusBadge>;
     };
 
     return (

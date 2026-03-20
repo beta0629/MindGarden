@@ -17,6 +17,7 @@ import { useWidget } from '../../../hooks/useWidget';
 import BaseWidget from './BaseWidget';
 import { WIDGET_CONSTANTS } from '../../../constants/widgetConstants';
 import './Widget.css';
+import SafeText from '../../common/SafeText';
 
 const StatisticsWidget = ({ widget, user }) => {
   // 표준화된 위젯 훅 사용
@@ -54,7 +55,7 @@ const StatisticsWidget = ({ widget, user }) => {
       return (
         <div className="single-stat">
           <div className="stat-value">{formatValue(value, widget.config?.format)}</div>
-          {data.label && <div className="stat-label">{data.label}</div>}
+          {data.label && <div className="stat-label"><SafeText>{data.label}</SafeText></div>}
           {data.change && (
             <div className={`stat-change ${data.change > 0 ? 'positive' : 'negative'}`}>
               <i className={`bi bi-arrow-${data.change > 0 ? 'up' : 'down'}`}></i>
@@ -72,7 +73,7 @@ const StatisticsWidget = ({ widget, user }) => {
           {data.map((stat, index) => (
             <div key={index} className="stat-item">
               <div className="stat-value">{formatValue(stat.value, widget.config?.format)}</div>
-              <div className="stat-label">{stat.label}</div>
+              <div className="stat-label"><SafeText>{stat.label}</SafeText></div>
               {stat.change && (
                 <div className={`stat-change ${stat.change > 0 ? 'positive' : 'negative'}`}>
                   <i className={`bi bi-arrow-${stat.change > 0 ? 'up' : 'down'}`}></i>
@@ -91,7 +92,7 @@ const StatisticsWidget = ({ widget, user }) => {
         {Object.entries(data).map(([key, value]) => (
           <div key={key} className="stat-item">
             <div className="stat-value">{formatValue(value, widget.config?.format)}</div>
-            <div className="stat-label">{key}</div>
+            <div className="stat-label"><SafeText>{key}</SafeText></div>
           </div>
         ))}
       </div>

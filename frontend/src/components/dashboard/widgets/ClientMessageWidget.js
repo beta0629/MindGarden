@@ -17,6 +17,8 @@ import BaseWidget from './BaseWidget';
 import { apiGet } from '../../../utils/ajax';
 import Badge from '../../common/Badge';
 import './ClientMessageWidget.css';
+import SafeText from '../../common/SafeText';
+import { toDisplayString } from '../../../utils/safeDisplay';
 
 const ClientMessageWidget = ({ widget, user }) => {
   const navigate = useNavigate();
@@ -307,14 +309,19 @@ const ClientMessageWidget = ({ widget, user }) => {
                 <div className="client-message-item-header">
                   <h4 className="client-message-item-title">
                     {message.isImportant && <Star size={14} className="important-star" />}
-                    {message.title}
+                    <SafeText>{message.title}</SafeText>
                   </h4>
                   {!message.isRead && (
                     <span className="client-message-item-unread-dot"></span>
                   )}
                 </div>
                 <div className="client-message-item-preview">
-                  {message.content?.substring(0, 60) + (message.content?.length > 60 ? '...' : '')}
+                  {toDisplayString(
+                    typeof message.content === 'string'
+                      ? `${message.content.slice(0, 60)}${message.content.length > 60 ? '...' : ''}`
+                      : message.content,
+                    ''
+                  )}
                 </div>
                 <div className="client-message-item-footer">
                   <Badge variant="status" statusVariant={messageTypeInfo.statusVariant} label={messageTypeInfo.label} size="sm" />
@@ -348,7 +355,7 @@ const ClientMessageWidget = ({ widget, user }) => {
       <div className="client-message-modal-overlay">
         <div className="client-message-modal">
           <div className="client-message-modal-header">
-            <h3>{selectedMessage.title}</h3>
+            <SafeText tag="h3">{selectedMessage.title}</SafeText>
             <button 
               className="client-message-modal-close"
               onClick={closeModal}

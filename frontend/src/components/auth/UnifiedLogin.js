@@ -39,6 +39,7 @@ import PasswordChangeModal from '../mypage/components/PasswordChangeModal';
 import '../../styles/auth/UnifiedLogin.css';
 import csrfTokenManager from '../../utils/csrfTokenManager';
 import notificationManager from '../../utils/notification';
+import { toDisplayString, toErrorMessage } from '../../utils/safeDisplay';
 import {
   shouldRedirectWrongPath,
   WRONG_PATH_MESSAGE,
@@ -98,7 +99,9 @@ const UnifiedLogin = () => {
 
   // 툴팁 표시 함수
   const showTooltip = (message, type = 'error') => {
-    setTooltip({ show: true, message, type });
+    const text =
+      type === 'error' ? toErrorMessage(message) : toDisplayString(message);
+    setTooltip({ show: true, message: text, type });
     setTimeout(() => {
       setTooltip({ show: false, message: '', type: 'error' });
     }, 6000);

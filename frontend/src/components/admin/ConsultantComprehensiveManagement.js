@@ -33,6 +33,8 @@ import './mapping-management/organisms/MappingListBlock.css';
 import './mapping-management/MappingManagementPage.css';
 import './ConsultantManagementPage.css';
 import './ProfileCard.css';
+import { toDisplayString } from '../../utils/safeDisplay';
+import SafeText from '../common/SafeText';
 
 const ConsultantComprehensiveManagement = ({ embedded = false }) => {
     const [consultants, setConsultants] = useState([]);
@@ -1030,7 +1032,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                             </div>
                                             <div className="mg-v2-mapping-kpi-section__info">
                                                 <span className="mg-v2-mapping-kpi-section__label">총 상담사</span>
-                                                <span className="mg-v2-mapping-kpi-section__value">{stats.totalConsultants}명</span>
+                                                <span className="mg-v2-mapping-kpi-section__value">{toDisplayString(stats.totalConsultants)}명</span>
                                             </div>
                                         </div>
                                         <div className="mg-v2-mapping-kpi-section__card">
@@ -1039,7 +1041,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                             </div>
                                             <div className="mg-v2-mapping-kpi-section__info">
                                                 <span className="mg-v2-mapping-kpi-section__label">활성 매칭</span>
-                                                <span className="mg-v2-mapping-kpi-section__value">{stats.activeMappings}건</span>
+                                                <span className="mg-v2-mapping-kpi-section__value">{toDisplayString(stats.activeMappings)}건</span>
                                             </div>
                                         </div>
                                         <div className="mg-v2-mapping-kpi-section__card">
@@ -1048,7 +1050,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                             </div>
                                             <div className="mg-v2-mapping-kpi-section__info">
                                                 <span className="mg-v2-mapping-kpi-section__label">총 스케줄</span>
-                                                <span className="mg-v2-mapping-kpi-section__value">{stats.totalSchedules}건</span>
+                                                <span className="mg-v2-mapping-kpi-section__value">{toDisplayString(stats.totalSchedules)}건</span>
                                             </div>
                                         </div>
                                         <div className="mg-v2-mapping-kpi-section__card">
@@ -1057,7 +1059,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                             </div>
                                             <div className="mg-v2-mapping-kpi-section__info">
                                                 <span className="mg-v2-mapping-kpi-section__label">오늘 스케줄</span>
-                                                <span className="mg-v2-mapping-kpi-section__value">{stats.todaySchedules}건</span>
+                                                <span className="mg-v2-mapping-kpi-section__value">{toDisplayString(stats.todaySchedules)}건</span>
                                             </div>
                                         </div>
                                     </div>
@@ -1080,7 +1082,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                     className={`mg-v2-mapping-search-section__chip ${chipFilterStatus === opt.value ? 'mg-v2-mapping-search-section__chip--active' : ''}`}
                                                     onClick={() => handleFilterChange({ ...activeFilters, status: opt.value })}
                                                 >
-                                                    {opt.label}
+                                                    {toDisplayString(opt.label)}
                                                 </button>
                                             ))}
                                         </div>
@@ -1125,17 +1127,17 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                         <div className="mg-v2-profile-card__header">
                                                             <Avatar
                                                                 profileImageUrl={consultant.profileImageUrl}
-                                                                displayName={consultant.name}
+                                                                displayName={toDisplayString(consultant.name)}
                                                                 className="mg-v2-profile-card__avatar"
                                                             />
                                                             <div className="mg-v2-profile-card__info">
-                                                                <h3 className="mg-v2-profile-card__name">{consultant.name || '이름 없음'}</h3>
+                                                                <h3 className="mg-v2-profile-card__name"><SafeText fallback="이름 없음">{consultant.name}</SafeText></h3>
                                                                 <div className="mg-v2-profile-card__contact">
                                                                     <span className="mg-v2-profile-card__email">
-                                                                        <Mail size={12} /> {consultant.email}
+                                                                        <Mail size={12} /> <SafeText>{consultant.email}</SafeText>
                                                                     </span>
                                                                     <span className="mg-v2-profile-card__phone">
-                                                                        <Phone size={12} /> {consultant.phone || '전화번호 없음'}
+                                                                        <Phone size={12} /> <SafeText fallback="전화번호 없음">{consultant.phone}</SafeText>
                                                                     </span>
                                                                 </div>
                                                             </div>
@@ -1144,22 +1146,22 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                                     const { label, level } = getConsultantBadgeDisplay(consultant);
                                                                     return (
                                                                         <span className={`mg-v2-consultant-level-badge mg-v2-consultant-level-badge--${level}`}>
-                                                                            {label}
+                                                                            <SafeText>{label}</SafeText>
                                                                         </span>
                                                                     );
                                                                 })()}
-                                                                <StatusBadge status={consultant.status || 'ACTIVE'}>{getStatusLabel(consultant.status || 'ACTIVE')}</StatusBadge>
+                                                                <StatusBadge status={consultant.status || 'ACTIVE'}><SafeText>{getStatusLabel(consultant.status || 'ACTIVE')}</SafeText></StatusBadge>
                                                             </div>
                                                         </div>
                                                         <div className="mg-v2-profile-card__body">
                                                             <div className="mg-v2-profile-card__stats-grid">
                                                                 <div className="mg-v2-profile-card__stat-item">
                                                                     <span className="mg-v2-profile-card__stat-label">가입일</span>
-                                                                    <span className="mg-v2-profile-card__stat-value">{consultant.createdAt ? new Date(consultant.createdAt).toLocaleDateString() : '-'}</span>
+                                                                    <span className="mg-v2-profile-card__stat-value"><SafeText fallback="-">{consultant.createdAt ? new Date(consultant.createdAt).toLocaleDateString() : null}</SafeText></span>
                                                                 </div>
                                                                 <div className="mg-v2-profile-card__stat-item">
                                                                     <span className="mg-v2-profile-card__stat-label">총 클라이언트</span>
-                                                                    <span className="mg-v2-profile-card__stat-value">{consultant.currentClients || 0}명</span>
+                                                                    <span className="mg-v2-profile-card__stat-value">{toDisplayString(consultant.currentClients ?? 0)}명</span>
                                                                 </div>
                                                                 <div className="mg-v2-profile-card__stat-item">
                                                                     {/* 3단 그리드 여백용 */}
@@ -1168,7 +1170,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                             {consultant.specialty && (
                                                                 <div className="mg-v2-profile-card__extra-info">
                                                                     <span className="mg-v2-profile-card__extra-label">전문분야:</span>
-                                                                    <span className="mg-v2-profile-card__extra-value">{consultant.specialty}</span>
+                                                                    <span className="mg-v2-profile-card__extra-value"><SafeText>{consultant.specialty}</SafeText></span>
                                                                 </div>
                                                             )}
                                                         </div>
@@ -1229,23 +1231,23 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                         <div className="mg-v2-profile-card__header">
                                                             <Avatar
                                                                 profileImageUrl={consultant.profileImageUrl}
-                                                                displayName={consultant.name}
+                                                                displayName={toDisplayString(consultant.name)}
                                                                 className="mg-v2-profile-card__avatar"
                                                                 size={36}
                                                             />
                                                             <div className="mg-v2-profile-card__info">
-                                                                <h3 className="mg-v2-profile-card__name">{consultant.name || '이름 없음'}</h3>
+                                                                <h3 className="mg-v2-profile-card__name"><SafeText fallback="이름 없음">{consultant.name}</SafeText></h3>
                                                                 <div className="mg-v2-profile-card__contact">
-                                                                    <span className="mg-v2-profile-card__email"><Mail size={12} /> {consultant.email}</span>
-                                                                    <span className="mg-v2-profile-card__phone"><Phone size={12} /> {consultant.phone || '전화번호 없음'}</span>
+                                                                    <span className="mg-v2-profile-card__email"><Mail size={12} /> <SafeText>{consultant.email}</SafeText></span>
+                                                                    <span className="mg-v2-profile-card__phone"><Phone size={12} /> <SafeText fallback="전화번호 없음">{consultant.phone}</SafeText></span>
                                                                 </div>
                                                             </div>
                                                             <div className="mg-v2-profile-card__badges">
                                                                 {(() => {
                                                                     const { label, level } = getConsultantBadgeDisplay(consultant);
-                                                                    return <span className={`mg-v2-consultant-level-badge mg-v2-consultant-level-badge--${level}`}>{label}</span>;
+                                                                    return <span className={`mg-v2-consultant-level-badge mg-v2-consultant-level-badge--${level}`}><SafeText>{label}</SafeText></span>;
                                                                 })()}
-                                                                <StatusBadge status={consultant.status || 'ACTIVE'}>{getStatusLabel(consultant.status || 'ACTIVE')}</StatusBadge>
+                                                                <StatusBadge status={consultant.status || 'ACTIVE'}><SafeText>{getStatusLabel(consultant.status || 'ACTIVE')}</SafeText></StatusBadge>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -1265,8 +1267,9 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                     if (key === 'status') return getStatusLabel(item.status || 'ACTIVE');
                                                     if (key === 'createdAt') return item.createdAt ? new Date(item.createdAt).toLocaleDateString('ko-KR') : '-';
                                                     if (key === 'currentClients') return item.currentClients != null ? `${item.currentClients}명` : '-';
+                                                    if (key === 'name' || key === 'email') return toDisplayString(item[key], '-');
                                                     const v = item[key];
-                                                    return v != null ? String(v) : '-';
+                                                    return toDisplayString(v, '-');
                                                 }}
                                                 onRowClick={handleConsultantSelect}
                                             />
@@ -1293,7 +1296,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                     className={`mg-v2-mapping-search-section__chip ${chipFilterStatus === opt.value ? 'mg-v2-mapping-search-section__chip--active' : ''}`}
                                                     onClick={() => handleFilterChange({ ...activeFilters, status: opt.value })}
                                                 >
-                                                    {opt.label}
+                                                    {toDisplayString(opt.label)}
                                                 </button>
                                             ))}
                                         </div>
@@ -1338,17 +1341,17 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                         <div className="mg-v2-profile-card__header">
                                                             <Avatar
                                                                 profileImageUrl={consultant.profileImageUrl}
-                                                                displayName={consultant.name}
+                                                                displayName={toDisplayString(consultant.name)}
                                                                 className="mg-v2-profile-card__avatar"
                                                             />
                                                             <div className="mg-v2-profile-card__info">
-                                                                <h3 className="mg-v2-profile-card__name">{consultant.name || '이름 없음'}</h3>
+                                                                <h3 className="mg-v2-profile-card__name"><SafeText fallback="이름 없음">{consultant.name}</SafeText></h3>
                                                                 <div className="mg-v2-profile-card__contact">
                                                                     <span className="mg-v2-profile-card__email">
-                                                                        <Mail size={12} /> {consultant.email}
+                                                                        <Mail size={12} /> <SafeText>{consultant.email}</SafeText>
                                                                     </span>
                                                                     <span className="mg-v2-profile-card__phone">
-                                                                        <Phone size={12} /> {consultant.phone || '전화번호 없음'}
+                                                                        <Phone size={12} /> <SafeText fallback="전화번호 없음">{consultant.phone}</SafeText>
                                                                     </span>
                                                                 </div>
                                                             </div>
@@ -1357,22 +1360,22 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                                     const { label, level } = getConsultantBadgeDisplay(consultant);
                                                                     return (
                                                                         <span className={`mg-v2-consultant-level-badge mg-v2-consultant-level-badge--${level}`}>
-                                                                            {label}
+                                                                            <SafeText>{label}</SafeText>
                                                                         </span>
                                                                     );
                                                                 })()}
-                                                                <StatusBadge status={consultant.status || 'ACTIVE'}>{getStatusLabel(consultant.status || 'ACTIVE')}</StatusBadge>
+                                                                <StatusBadge status={consultant.status || 'ACTIVE'}><SafeText>{getStatusLabel(consultant.status || 'ACTIVE')}</SafeText></StatusBadge>
                                                             </div>
                                                         </div>
                                                         <div className="mg-v2-profile-card__body">
                                                             <div className="mg-v2-profile-card__stats-grid">
                                                                 <div className="mg-v2-profile-card__stat-item">
                                                                     <span className="mg-v2-profile-card__stat-label">가입일</span>
-                                                                    <span className="mg-v2-profile-card__stat-value">{consultant.createdAt ? new Date(consultant.createdAt).toLocaleDateString() : '-'}</span>
+                                                                    <span className="mg-v2-profile-card__stat-value"><SafeText fallback="-">{consultant.createdAt ? new Date(consultant.createdAt).toLocaleDateString() : null}</SafeText></span>
                                                                 </div>
                                                                 <div className="mg-v2-profile-card__stat-item">
                                                                     <span className="mg-v2-profile-card__stat-label">총 클라이언트</span>
-                                                                    <span className="mg-v2-profile-card__stat-value">{consultant.currentClients || 0}명</span>
+                                                                    <span className="mg-v2-profile-card__stat-value">{toDisplayString(consultant.currentClients ?? 0)}명</span>
                                                                 </div>
                                                                 <div className="mg-v2-profile-card__stat-item">
                                                                     {/* 3단 그리드 여백용 */}
@@ -1381,7 +1384,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                             {consultant.specialty && (
                                                                 <div className="mg-v2-profile-card__extra-info">
                                                                     <span className="mg-v2-profile-card__extra-label">전문분야:</span>
-                                                                    <span className="mg-v2-profile-card__extra-value">{consultant.specialty}</span>
+                                                                    <span className="mg-v2-profile-card__extra-value"><SafeText>{consultant.specialty}</SafeText></span>
                                                                 </div>
                                                             )}
                                                         </div>
@@ -1442,23 +1445,23 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                         <div className="mg-v2-profile-card__header">
                                                             <Avatar
                                                                 profileImageUrl={consultant.profileImageUrl}
-                                                                displayName={consultant.name}
+                                                                displayName={toDisplayString(consultant.name)}
                                                                 className="mg-v2-profile-card__avatar"
                                                                 size={36}
                                                             />
                                                             <div className="mg-v2-profile-card__info">
-                                                                <h3 className="mg-v2-profile-card__name">{consultant.name || '이름 없음'}</h3>
+                                                                <h3 className="mg-v2-profile-card__name"><SafeText fallback="이름 없음">{consultant.name}</SafeText></h3>
                                                                 <div className="mg-v2-profile-card__contact">
-                                                                    <span className="mg-v2-profile-card__email"><Mail size={12} /> {consultant.email}</span>
-                                                                    <span className="mg-v2-profile-card__phone"><Phone size={12} /> {consultant.phone || '전화번호 없음'}</span>
+                                                                    <span className="mg-v2-profile-card__email"><Mail size={12} /> <SafeText>{consultant.email}</SafeText></span>
+                                                                    <span className="mg-v2-profile-card__phone"><Phone size={12} /> <SafeText fallback="전화번호 없음">{consultant.phone}</SafeText></span>
                                                                 </div>
                                                             </div>
                                                             <div className="mg-v2-profile-card__badges">
                                                                 {(() => {
                                                                     const { label, level } = getConsultantBadgeDisplay(consultant);
-                                                                    return <span className={`mg-v2-consultant-level-badge mg-v2-consultant-level-badge--${level}`}>{label}</span>;
+                                                                    return <span className={`mg-v2-consultant-level-badge mg-v2-consultant-level-badge--${level}`}><SafeText>{label}</SafeText></span>;
                                                                 })()}
-                                                                <StatusBadge status={consultant.status || 'ACTIVE'}>{getStatusLabel(consultant.status || 'ACTIVE')}</StatusBadge>
+                                                                <StatusBadge status={consultant.status || 'ACTIVE'}><SafeText>{getStatusLabel(consultant.status || 'ACTIVE')}</SafeText></StatusBadge>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -1478,8 +1481,9 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                     if (key === 'status') return getStatusLabel(item.status || 'ACTIVE');
                                                     if (key === 'createdAt') return item.createdAt ? new Date(item.createdAt).toLocaleDateString('ko-KR') : '-';
                                                     if (key === 'currentClients') return item.currentClients != null ? `${item.currentClients}명` : '-';
+                                                    if (key === 'name' || key === 'email') return toDisplayString(item[key], '-');
                                                     const v = item[key];
-                                                    return v != null ? String(v) : '-';
+                                                    return toDisplayString(v, '-');
                                                 }}
                                                 onRowClick={handleConsultantSelect}
                                             />
@@ -1508,15 +1512,15 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                             <div className="mg-v2-consultant-detail-header">
                                 <Avatar
                                     profileImageUrl={selectedConsultant.profileImageUrl}
-                                    displayName={selectedConsultant.name}
+                                    displayName={toDisplayString(selectedConsultant.name)}
                                     className="mg-v2-consultant-detail-avatar"
                                     size={64}
                                 />
                                 <div className="mg-v2-consultant-detail-info">
-                                    <h4 className="mg-v2-consultant-detail-name">{selectedConsultant.name || '이름 없음'}</h4>
-                                    <p className="mg-v2-consultant-detail-email">{selectedConsultant.email}</p>
+                                    <h4 className="mg-v2-consultant-detail-name"><SafeText fallback="이름 없음">{selectedConsultant.name}</SafeText></h4>
+                                    <p className="mg-v2-consultant-detail-email"><SafeText>{selectedConsultant.email}</SafeText></p>
                                     <span className="mg-status-badge">
-                                        {getStatusLabel(selectedConsultant.status)}
+                                        <SafeText>{getStatusLabel(selectedConsultant.status)}</SafeText>
                                     </span>
                                 </div>
                             </div>
@@ -1527,17 +1531,21 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                         <div className="mg-v2-detail-item">
                                             <span className="mg-v2-detail-label">성별:</span>
                                             <span className="mg-v2-detail-value">
-                                                {selectedConsultant.gender === 'MALE' ? '남성' : selectedConsultant.gender === 'FEMALE' ? '여성' : selectedConsultant.gender || '-'}
+                                                <SafeText fallback="-">
+                                                  {selectedConsultant.gender === 'MALE' ? '남성' : selectedConsultant.gender === 'FEMALE' ? '여성' : selectedConsultant.gender}
+                                                </SafeText>
                                             </span>
                                         </div>
                                         <div className="mg-v2-detail-item">
                                             <span className="mg-v2-detail-label">전화번호:</span>
-                                            <span className="mg-v2-detail-value">{selectedConsultant.phone || '전화번호 없음'}</span>
+                                            <span className="mg-v2-detail-value"><SafeText fallback="전화번호 없음">{selectedConsultant.phone}</SafeText></span>
                                         </div>
                                         <div className="mg-v2-detail-item">
                                             <span className="mg-v2-detail-label">가입일:</span>
                                             <span className="mg-v2-detail-value">
-                                                {selectedConsultant.createdAt ? new Date(selectedConsultant.createdAt).toLocaleDateString('ko-KR') : '-'}
+                                                <SafeText fallback="-">
+                                                  {selectedConsultant.createdAt ? new Date(selectedConsultant.createdAt).toLocaleDateString('ko-KR') : null}
+                                                </SafeText>
                                             </span>
                                         </div>
                                     </div>
@@ -1567,16 +1575,16 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
             return (
                 <div className="mg-v2-modal-body">
                     <div className="mg-v2-delete-confirmation">
-                        <p>{selectedConsultant?.name || '이 상담사'}를 정말 삭제하시겠습니까?</p>
+                        <p><SafeText fallback="이 상담사">{selectedConsultant?.name}</SafeText>를 정말 삭제하시겠습니까?</p>
                         {selectedConsultant && (
                             <div className="mg-v2-detail-grid" style={{ marginTop: '0.75rem' }}>
                                 <div className="mg-v2-detail-item">
                                     <span className="mg-v2-detail-label">이름:</span>
-                                    <span className="mg-v2-detail-value">{selectedConsultant.name || '-'}</span>
+                                    <span className="mg-v2-detail-value"><SafeText fallback="-">{selectedConsultant.name}</SafeText></span>
                                 </div>
                                 <div className="mg-v2-detail-item">
                                     <span className="mg-v2-detail-label">이메일:</span>
-                                    <span className="mg-v2-detail-value">{selectedConsultant.email || '-'}</span>
+                                    <span className="mg-v2-detail-value"><SafeText fallback="-">{selectedConsultant.email}</SafeText></span>
                                 </div>
                             </div>
                         )}
@@ -1677,7 +1685,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                             <option value="">등급 선택</option>
                             {gradeOptions.map((opt) => (
                                 <option key={opt.codeValue} value={opt.codeValue}>
-                                    {opt.codeLabel}
+                                    {toDisplayString(opt.codeLabel)}
                                 </option>
                             ))}
                         </select>
@@ -1809,7 +1817,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                         className={`mg-v2-specialty-tag ${isSelected ? 'mg-v2-specialty-tag--selected' : ''}`}
                                         onClick={() => handleSpecialtyTagClick(opt.codeValue)}
                                     >
-                                        {opt.codeName || opt.codeLabel || opt.codeValue}
+                                        {toDisplayString(opt.codeName || opt.codeLabel || opt.codeValue)}
                                     </button>
                                 );
                             })}
@@ -1938,7 +1946,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                 }
             >
                 <div className="mg-v2-modal-body">
-                    <p>{selectedConsultant?.name || '이 상담사'}를 정말 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.</p>
+                    <p><SafeText fallback="이 상담사">{selectedConsultant?.name}</SafeText>를 정말 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.</p>
                 </div>
             </UnifiedModal>
 

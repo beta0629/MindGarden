@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
-// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import UnifiedLoading from '../common/UnifiedLoading';
 import notificationManager from '../../utils/notification';
 import { Button, Modal, Form, Badge } from 'react-bootstrap';
 import { FaUserTie, FaPlus, FaTrash, FaEye } from 'react-icons/fa';
 import { getAllConsultantsWithStats } from '../../utils/consultantHelper';
+import SafeText from '../common/SafeText';
 
 const ConsultantManagement = ({ onUpdate, showToast }) => {
     const [consultants, setConsultants] = useState([]);
@@ -150,8 +151,8 @@ const ConsultantManagement = ({ onUpdate, showToast }) => {
                                     <FaUserTie />
                                 </div>
                                 <div className="summary-info">
-                                    <div className="summary-label">{consultant.name}</div>
-                                    <div className="summary-value">{consultant.email}</div>
+                                    <SafeText className="summary-label" tag="div">{consultant.name}</SafeText>
+                                    <div className="summary-value"><SafeText>{consultant.email}</SafeText></div>
                                 </div>
                                 <div className="d-flex gap-1">
                                     <Button 
@@ -265,10 +266,10 @@ const ConsultantManagement = ({ onUpdate, showToast }) => {
                 <Modal.Body>
                     {selectedConsultant && (
                         <div>
-                            <p><strong>이름:</strong> {selectedConsultant.name}</p>
-                            <p><strong>이메일:</strong> {selectedConsultant.email}</p>
-                            <p><strong>전화번호:</strong> {selectedConsultant.phone}</p>
-                            <p><strong>전문분야:</strong> {selectedConsultant.specialty || selectedConsultant.specialization || '미설정'}</p>
+                            <p><strong>이름:</strong> <SafeText tag="span">{selectedConsultant.name}</SafeText></p>
+                            <p><strong>이메일:</strong> <SafeText>{selectedConsultant.email}</SafeText></p>
+                            <p><strong>전화번호:</strong> <SafeText>{selectedConsultant.phone}</SafeText></p>
+                            <p><strong>전문분야:</strong> <SafeText fallback="미설정">{selectedConsultant.specialty ?? selectedConsultant.specialization}</SafeText></p>
                             <p><strong>상태:</strong> 
                                 <Badge bg={selectedConsultant.isActive ? 'success' : 'secondary'} className="ms-2">
                                     {selectedConsultant.isActive ? '활성' : '비활성'}

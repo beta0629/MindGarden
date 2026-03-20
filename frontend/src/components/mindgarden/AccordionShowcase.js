@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 // import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { ChevronDown } from 'lucide-react';
+import SafeText from '../common/SafeText';
 
 const AccordionShowcase = () => {
   const [openItems, setOpenItems] = useState([0]); // 첫 번째 아이템만 열림
@@ -44,7 +45,9 @@ const AccordionShowcase = () => {
                 className="mg-accordion-header"
                 onClick={() => toggleItem(index)}
               >
-                <span className="mg-accordion-title">{item.title}</span>
+                <span className="mg-accordion-title">
+                  <SafeText>{item.title}</SafeText>
+                </span>
                 <ChevronDown 
                   size={20} 
                   className={`mg-accordion-icon ${openItems.includes(index) ? 'open' : ''}`}
@@ -52,7 +55,7 @@ const AccordionShowcase = () => {
               </button>
               <div className={`mg-accordion-content ${openItems.includes(index) ? 'open' : ''}`}>
                 <div className="mg-accordion-body">
-                  {item.content}
+                  <SafeText tag="div">{item.content}</SafeText>
                 </div>
               </div>
             </div>

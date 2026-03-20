@@ -10,6 +10,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
+import SafeText from './SafeText';
 import './ListBlockView.css';
 
 const TABLE_CLASS = 'mg-v2-list-block__table';
@@ -51,7 +52,7 @@ function ListTableView({
                 key={col.key}
                 className={col.hideOnMobile ? 'mg-v2-list-block__col--hide-mobile' : ''}
               >
-                {col.label}
+                <SafeText tag="span">{col.label}</SafeText>
               </th>
             ))}
           </tr>

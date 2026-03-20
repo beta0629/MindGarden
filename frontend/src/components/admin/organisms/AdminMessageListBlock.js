@@ -12,6 +12,8 @@ import UnifiedLoading from '../../common/UnifiedLoading';
 import UnifiedModal from '../../common/modals/UnifiedModal';
 import Badge from '../../common/Badge';
 import BadgeSelect from '../../common/BadgeSelect';
+import SafeText from '../../common/SafeText';
+import { toDisplayString } from '../../../utils/safeDisplay';
 import '../../../styles/unified-design-tokens.css';
 
 const MESSAGE_TYPES = {
@@ -163,10 +165,12 @@ const AdminMessageListBlock = () => {
                     <p className="mg-v2-ad-notifications__card-meta">
                       {message.senderType === 'SYSTEM'
                         ? '시스템'
-                        : message.senderName || '알 수 없음'}{' '}
-                      → {message.receiverName}
+                        : toDisplayString(message.senderName || '알 수 없음')}{' '}
+                      → {toDisplayString(message.receiverName)}
                     </p>
-                    <h3 className="mg-v2-ad-notifications__card-title">{message.title}</h3>
+                    <h3 className="mg-v2-ad-notifications__card-title">
+                      <SafeText tag="span">{message.title}</SafeText>
+                    </h3>
                     <p className="mg-v2-ad-notifications__card-meta">
                       {(message.content || '').replaceAll(/<[^>]*>/g, '').slice(0, 80)}
                       {(message.content || '').length > 80 ? '…' : ''}
@@ -201,7 +205,7 @@ const AdminMessageListBlock = () => {
       <UnifiedModal
         isOpen={!!selectedMessage}
         onClose={closeModal}
-        title={selectedMessage?.title || '메시지 상세'}
+        title={selectedMessage ? toDisplayString(selectedMessage.title, '메시지 상세') : '메시지 상세'}
         size="medium"
         showCloseButton
         backdropClick
@@ -228,10 +232,10 @@ const AdminMessageListBlock = () => {
                   <strong>발신자:</strong>{' '}
                   {selectedMessage.senderType === 'SYSTEM'
                     ? '시스템 메시지'
-                    : selectedMessage.senderName || '알 수 없음'}
+                    : toDisplayString(selectedMessage.senderName || '알 수 없음')}
                 </div>
                 <div>
-                  <strong>수신자:</strong> {selectedMessage.receiverName}
+                  <strong>수신자:</strong> {toDisplayString(selectedMessage.receiverName)}
                 </div>
                 <div>
                   <strong>발송일:</strong>{' '}

@@ -6,6 +6,7 @@ import notificationManager from '../../utils/notification';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import Button from '../ui/Button/Button';
 import BadgeSelect from '../common/BadgeSelect';
+import { toDisplayString, toSafeNumber } from '../../utils/safeDisplay';
 
 /**
  * 내담자 메시지 전송 모달 컴포넌트
@@ -90,8 +91,8 @@ const MessageSendModal = ({
       const startTime = safeFormatDateTime(scheduleData.startTime);
 
       setFormData({
-        title: `상담 일지 작성 완료 - ${scheduleData.title || '상담'}`,
-        content: `안녕하세요 ${clientData.name}님,\n\n상담 일지가 작성되었습니다.\n\n상담 일시: ${startTime}\n\n추가 문의사항이 있으시면 언제든지 연락주세요.\n\n감사합니다.`,
+        title: `상담 일지 작성 완료 - ${toDisplayString(scheduleData.title, '상담')}`,
+        content: `안녕하세요 ${toDisplayString(clientData.name)}님,\n\n상담 일지가 작성되었습니다.\n\n상담 일시: ${startTime}\n\n추가 문의사항이 있으시면 언제든지 연락주세요.\n\n감사합니다.`,
         messageType: 'GENERAL',
         isImportant: false,
         isUrgent: false
@@ -201,7 +202,7 @@ const MessageSendModal = ({
                 수신자
               </h4>
               <div className="mg-v2-info-text">
-                {clientData.name} ({clientData.age}세, {clientData.gender})
+                {toDisplayString(clientData.name)} ({toSafeNumber(clientData.age)}세, {toDisplayString(clientData.gender)})
               </div>
             </div>
           )}
@@ -227,7 +228,7 @@ const MessageSendModal = ({
               onChange={(val) => setFormData(prev => ({ ...prev, messageType: val }))}
               options={messageTypeOptions.map(type => ({
                 value: type.value,
-                label: `${type.icon} ${type.label} (${type.value})`
+                label: `${toDisplayString(type.icon)} ${toDisplayString(type.label)} (${toDisplayString(type.value)})`
               }))}
               placeholder="선택하세요"
               className="mg-v2-form-badge-select"

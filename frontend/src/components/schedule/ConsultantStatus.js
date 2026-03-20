@@ -3,6 +3,8 @@ import UnifiedLoading from '../common/UnifiedLoading';
 import Avatar from '../common/Avatar';
 import { apiGet } from '../../utils/ajax';
 import './ConsultantStatus.css';
+import SafeText from '../common/SafeText';
+import { toDisplayString } from '../../utils/safeDisplay';
 
 /**
  * 상담사 현황 컴포넌트
@@ -194,21 +196,21 @@ const ConsultantStatus = () => {
                             <div key={consultant.id} className="consultant-status-card">
                                 <Avatar
                                     profileImageUrl={consultant.profileImageUrl || consultant.profileImage || consultant.socialProfileImage}
-                                    displayName={consultant.name}
+                                    displayName={toDisplayString(consultant.name, '상담사')}
                                     className="consultant-status-avatar"
                                 />
                                 <div className="consultant-status-info">
-                                    <div className="consultant-status-name">{consultant.name}</div>
-                                    <div className="consultant-status-email">{consultant.email}</div>
-                                    <div className="consultant-status-phone">{consultant.phone || '전화번호 없음'}</div>
-                                    <div className="consultant-status-specialty">{consultant.specialty || '전문분야 미설정'}</div>
+                                    <SafeText tag="div" className="consultant-status-name">{consultant.name}</SafeText>
+                                    <SafeText tag="div" className="consultant-status-email">{consultant.email}</SafeText>
+                                    <SafeText tag="div" className="consultant-status-phone" fallback="전화번호 없음">{consultant.phone}</SafeText>
+                                    <SafeText tag="div" className="consultant-status-specialty" fallback="전문분야 미설정">{consultant.specialty}</SafeText>
                                     <div className="consultant-status-status">
                                         <span className="consultant-status-badge" data-status={status.color}>
-                                            {status.text}
+                                            <SafeText>{status.text}</SafeText>
                                         </span>
                                     </div>
                                     <div className="consultant-status-date">
-                                        등록일: {consultant.createdAt ? new Date(consultant.createdAt).toLocaleDateString('ko-KR') : '-'}
+                                        등록일: <SafeText>{consultant.createdAt ? new Date(consultant.createdAt).toLocaleDateString('ko-KR') : '-'}</SafeText>
                                     </div>
                                 </div>
                             </div>

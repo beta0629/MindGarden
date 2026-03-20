@@ -14,13 +14,18 @@
  * @since 2025-11-22
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Zap } from 'lucide-react';
+import { RoleUtils } from '../../../constants/roles';
+import ConsultantApplicationModal from '../../common/ConsultantApplicationModal';
+import SafeText from '../../common/SafeText';
+import { toDisplayString } from '../../../utils/safeDisplay';
 import './Widget.css';
 
 const QuickActionsWidget = ({ widget, user }) => {
   const navigate = useNavigate();
+  const [showConsultantApplicationModal, setShowConsultantApplicationModal] = useState(false);
   
   const config = widget.config || {};
   const actions = config.actions || [];
@@ -41,16 +46,42 @@ const QuickActionsWidget = ({ widget, user }) => {
       if (typeof action.onClick === 'function') {
         action.onClick(user);
       } else if (typeof action.onClick === 'string') {
-        // 문자열인 경우 navigate로 처리
-        navigate(action.onClick);
+        // 특별한 액션 처리
+        if (action.onClick.startsWith('MODAL:')) {
+          const modalType = action.onClick.replace('MODAL:', '');
+          handleModalAction(modalType);
+        } else {
+          // 일반 URL로 네비게이션
+          navigate(action.onClick);
+        }
       }
     }
+  };
+
+  // 모달 액션 처리
+  const handleModalAction = (modalType) => {
+    switch (modalType) {
+      case 'consultant-application':
+        setShowConsultantApplicationModal(true);
+        break;
+      default:
+        console.warn('알 수 없는 모달 타입:', modalType);
+        break;
+    }
+  };
+
+  // 상담사 신청 성공 핸들러
+  const handleConsultantApplicationSuccess = (result) => {
+    console.log('상담사 신청 성공:', result);
+    setShowConsultantApplicationModal(false);
+    // 페이지 새로고침 또는 사용자 정보 업데이트
+    window.location.reload();
   };
   
   const shouldShowAction = (action) => {
     // 역할 기반 필터링
-    if (action.roles && user?.role) {
-      return action.roles.includes(user.role);
+    if (action.roles && action.roles.length > 0) {
+      return action.roles.some(role => RoleUtils.hasRole(user, role));
     }
     
     // 조건 기반 필터링 (향후 확장 가능)
@@ -72,37 +103,48 @@ const QuickActionsWidget = ({ widget, user }) => {
   }
   
   return (
-    <div className="widget widget-quick-actions">
-      <div className="widget-header">
-        <div className="mg-card-header mg-flex mg-align-center mg-gap-sm">
-          <Zap size={20} className="finance-icon-inline" />
-          <h3 className="mg-h4 mg-mb-0">{config.title || '빠른 액션'}</h3>
+    <>
+      <div className="widget widget-quick-actions">
+        <div className="widget-header">
+          <div className="mg-card-header mg-flex mg-align-center mg-gap-sm">
+            <Zap size={20} className="finance-icon-inline" />
+            <SafeText tag="h3" className="mg-h4 mg-mb-0" fallback="빠른 액션">{config.title}</SafeText>
+          </div>
         </div>
-      </div>
-      <div className="widget-body">
-        <div className="mg-card-body">
-          <div className="quick-actions-grid">
-            {visibleActions.map((action, index) => (
-              <button
-                key={action.id || index}
-                className="quick-action-btn"
-                onClick={() => handleActionClick(action)}
-                title={action.tooltip || action.label}
-              >
-                {action.icon && (
-                  typeof action.icon === 'string' ? (
-                    <i className={`bi ${action.icon}`}></i>
-                  ) : (
-                    action.icon
-                  )
-                )}
-                <span>{action.label}</span>
-              </button>
-            ))}
+        <div className="widget-body">
+          <div className="mg-card-body">
+            <div className="quick-actions-grid">
+              {visibleActions.map((action, index) => (
+                <button
+                  key={action.id || index}
+                  className="quick-action-btn"
+                  onClick={() => handleActionClick(action)}
+                  title={toDisplayString(action.tooltip || action.label)}
+                >
+                  {action.icon && (
+                    typeof action.icon === 'string' ? (
+                      <i className={`bi ${action.icon}`}></i>
+                    ) : (
+                      action.icon
+                    )
+                  )}
+                  <span><SafeText>{action.label}</SafeText></span>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </div>
-    </div>
+
+      {/* 상담사 신청 모달 */}
+      <ConsultantApplicationModal
+        isOpen={showConsultantApplicationModal}
+        onClose={() => setShowConsultantApplicationModal(false)}
+        userId={user?.id}
+        user={user}
+        onSuccess={handleConsultantApplicationSuccess}
+      />
+    </>
   );
 };
 

@@ -4,6 +4,8 @@ import { useSession } from '../../contexts/SessionContext';
 import { apiGet, apiPost, apiPut } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 import UnifiedModal from '../common/modals/UnifiedModal';
+import SafeText from '../common/SafeText';
+import { toDisplayString } from '../../utils/safeDisplay';
 import Button from '../ui/Button/Button';
 import '../schedule/ScheduleB0KlA.css';
 import BadgeSelect from '../common/BadgeSelect';
@@ -718,17 +720,17 @@ const ConsultationLogModal = ({
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
                   <div>
                     <span style={{ fontSize: 12, color: 'var(--mg-color-text-secondary, var(--mg-gray-600))' }}>이름</span>
-                    <div style={{ fontSize: 14, color: 'var(--mg-color-text-main, var(--mg-gray-800))' }}>{client.name || '—'}</div>
+                    <div style={{ fontSize: 14, color: 'var(--mg-color-text-main, var(--mg-gray-800))' }}><SafeText fallback="—">{client.name}</SafeText></div>
                   </div>
                   <div>
                     <span style={{ fontSize: 12, color: 'var(--mg-color-text-secondary, var(--mg-gray-600))' }}>연락처(전화)</span>
                     <div style={{ fontSize: 14, color: 'var(--mg-color-text-main, var(--mg-gray-800))' }}>
-                      {(client.phone || client.phoneNumber || client.mobile || '').toString().trim() || '—'}
+                      {toDisplayString(client.phone ?? client.phoneNumber ?? client.mobile, '—')}
                     </div>
                   </div>
                   <div>
                     <span style={{ fontSize: 12, color: 'var(--mg-color-text-secondary, var(--mg-gray-600))' }}>이메일</span>
-                    <div style={{ fontSize: 14, color: 'var(--mg-color-text-main, var(--mg-gray-800))' }}>{client.email || '—'}</div>
+                    <div style={{ fontSize: 14, color: 'var(--mg-color-text-main, var(--mg-gray-800))' }}><SafeText fallback="—">{client.email}</SafeText></div>
                   </div>
                   <div>
                     <span style={{ fontSize: 12, color: 'var(--mg-color-text-secondary, var(--mg-gray-600))' }}>성별</span>
@@ -839,8 +841,13 @@ const ConsultationLogModal = ({
               ) : (
                 <ul style={{ margin: 0, paddingLeft: 20, fontSize: 14, color: 'var(--mg-color-text-main, var(--mg-gray-800))' }}>
                   {importantComments.map((item, idx) => (
-                    <li key={`${item.source}-${idx}`} style={{ marginBottom: 8 }}>
-                      <span style={{ fontSize: 12, color: 'var(--mg-color-text-secondary, var(--mg-gray-600))' }}>[{item.source}]</span> {item.text}
+                    <li key={`${toDisplayString(item.source)}-${idx}`} style={{ marginBottom: 8 }}>
+                      <span style={{ fontSize: 12, color: 'var(--mg-color-text-secondary, var(--mg-gray-600))' }}>
+                        [<SafeText tag="span">{item.source}</SafeText>]
+                      </span>{' '}
+                      {typeof item.text === 'string'
+                        ? renderTextWithKeywordHighlight(item.text)
+                        : <SafeText>{item.text}</SafeText>}
                     </li>
                   ))}
                 </ul>

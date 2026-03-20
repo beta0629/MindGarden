@@ -26,6 +26,7 @@ import {
   SCHEDULE_ERROR_MESSAGES
 } from '../../constants/schedule';
 import ScheduleCard from './ScheduleCard';
+import { toDisplayString } from '../../utils/safeDisplay';
 import './ScheduleList.css';
 
 const ScheduleList = ({ 
@@ -353,7 +354,7 @@ const ScheduleList = ({
                 { value: '', label: '👥 전체 상담사' },
                 ...consultants.map(consultant => ({
                   value: consultant.id,
-                  label: `👤 ${consultant.name}`
+                  label: `👤 ${toDisplayString(consultant.name, '')}`
                 }))
               ]}
             />
@@ -369,7 +370,7 @@ const ScheduleList = ({
             ) : (
               filterOptions.map(option => (
                 <option key={option.value} value={option.value}>
-                  {option.icon} {option.label}
+                  {option.icon} {toDisplayString(option.label)}
                 </option>
               ))
             )}
@@ -385,7 +386,7 @@ const ScheduleList = ({
             ) : (
               sortOptions.map(option => (
                 <option key={option.value} value={option.value}>
-                  {option.icon} {option.label}
+                  {option.icon} {toDisplayString(option.label)}
                 </option>
               ))
             )}

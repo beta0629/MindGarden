@@ -4,6 +4,8 @@ import { apiGet } from '../../utils/ajax';
 import { Users, Calendar, TrendingUp } from 'lucide-react';
 import UnifiedLoading from '../common/UnifiedLoading';
 import Avatar from '../common/Avatar';
+import SafeText from '../common/SafeText';
+import { toDisplayString } from '../../utils/safeDisplay';
 import '../../styles/unified-design-tokens.css';
 
 /**
@@ -204,17 +206,17 @@ const ConsultantClientSection = ({ userId }) => {
                 <div className="mg-v2-client-card-header">
                   <Avatar
                     profileImageUrl={client.profileImageUrl}
-                    displayName={client.name}
+                    displayName={toDisplayString(client.name, '내담자')}
                     className="mg-v2-client-card-avatar"
                   />
                   <div className="mg-v2-client-card-info">
-                    <h4 className="mg-v2-h4">{client.name || '이름 없음'}</h4>
+                    <SafeText tag="h4" className="mg-v2-h4" fallback="이름 없음">{client.name}</SafeText>
                     <p className="mg-v2-text-sm mg-v2-color-text-secondary">
-                      {client.email || '이메일 없음'}
+                      <SafeText fallback="이메일 없음">{client.email}</SafeText>
                     </p>
                   </div>
                   <span className={`mg-v2-badge ${getStatusClass(client.mappingStatus)}`}>
-                    {getStatusText(client.mappingStatus)}
+                    <SafeText>{getStatusText(client.mappingStatus)}</SafeText>
                   </span>
                 </div>
 

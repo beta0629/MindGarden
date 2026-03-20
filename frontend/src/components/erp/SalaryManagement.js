@@ -28,6 +28,8 @@ import MGButton from '../common/MGButton';
 import ConsultantCard from '../ui/Card/ConsultantCard';
 import { ViewModeToggle, SmallCardGrid, ListTableView } from '../common';
 import { getStatusLabel } from '../../utils/colorUtils';
+import { toDisplayString } from '../../utils/safeDisplay';
+import SafeText from '../common/SafeText';
 import './SalaryManagement.css';
 import '../admin/mapping-management/organisms/MappingListBlock.css';
 
@@ -411,7 +413,7 @@ const SalaryManagement = () => {
                 >
                   <option value="">기간 선택</option>
                   {periodOptions.map(opt => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    <option key={opt.value} value={opt.value}>{toDisplayString(opt.label)}</option>
                   ))}
                 </select>
                 <MGButton
@@ -457,7 +459,7 @@ const SalaryManagement = () => {
                   >
                     <option value="">기간 선택</option>
                     {periodOptions.map(opt => (
-                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                      <option key={opt.value} value={opt.value}>{toDisplayString(opt.label)}</option>
                     ))}
                   </select>
                 </div>
@@ -500,7 +502,7 @@ const SalaryManagement = () => {
                   >
                     <option value="">상담사 선택</option>
                     {consultants.map(c => (
-                      <option key={c.id} value={c.id}>{c.name}</option>
+                      <option key={c.id} value={c.id}>{toDisplayString(c.name)}</option>
                     ))}
                   </select>
                 </div>
@@ -514,7 +516,7 @@ const SalaryManagement = () => {
                     aria-label="급여 지급일 선택"
                   >
                     {payDayOptions.map(opt => (
-                      <option key={opt.codeValue} value={opt.codeValue}>{opt.codeLabel}</option>
+                      <option key={opt.codeValue} value={opt.codeValue}>{toDisplayString(opt.codeLabel)}</option>
                     ))}
                   </select>
                 </div>
@@ -746,7 +748,7 @@ const SalaryManagement = () => {
                         <h3 className="salary-calc-block__preview-title">계산 결과 미리보기</h3>
                         {previewResult.periodStart && previewResult.periodEnd && (
                           <p className="salary-calc-block__preview-period">
-                            적용 기간: {previewResult.periodStart} ~ {previewResult.periodEnd} (기산일 기준)
+                            적용 기간: <SafeText>{previewResult.periodStart}</SafeText> ~ <SafeText>{previewResult.periodEnd}</SafeText> (기산일 기준)
                           </p>
                         )}
                         <div className="salary-calc-block__preview-summary">
@@ -765,11 +767,11 @@ const SalaryManagement = () => {
                         </div>
                         <dl className="salary-calc-block__preview-grid">
                           <dt className="salary-management__stat-label">상담사</dt>
-                          <dd className="salary-management__stat-value">{previewResult.consultantName}</dd>
+                          <dd className="salary-management__stat-value"><SafeText>{previewResult.consultantName}</SafeText></dd>
                           <dt className="salary-management__stat-label">기간</dt>
-                          <dd className="salary-management__stat-value">{previewResult.period}</dd>
+                          <dd className="salary-management__stat-value"><SafeText>{previewResult.period}</SafeText></dd>
                           <dt className="salary-management__stat-label">상담 건수</dt>
-                          <dd className="salary-management__stat-value">{previewResult.consultationCount}건</dd>
+                          <dd className="salary-management__stat-value">{toDisplayString(previewResult.consultationCount)}건</dd>
                         </dl>
                         <div className="mg-v2-card-actions salary-calc-block__preview-actions">
                           <MGButton
@@ -829,9 +831,9 @@ const SalaryManagement = () => {
                     {salaryCalculations.map(calculation => (
                       <article key={calculation.id} className="mg-v2-ad-b0kla__card salary-calc-block__card">
                         <div className="salary-calc-block__card-header">
-                          <span>{calculation.calculationPeriod}</span>
+                          <span><SafeText>{calculation.calculationPeriod}</SafeText></span>
                           <span className="mg-v2-status-badge mg-v2-badge--neutral" role="status">
-                            {getStatusLabel(calculation.status)}
+                            <SafeText>{getStatusLabel(calculation.status)}</SafeText>
                           </span>
                         </div>
                         <div className="salary-calc-block__card-details">
@@ -859,7 +861,7 @@ const SalaryManagement = () => {
                           </div>
                           <div className="salary-management__detail-row">
                             <span>상담 건수</span>
-                            <span>{calculation.consultationCount}건</span>
+                            <span>{toDisplayString(calculation.consultationCount)}건</span>
                           </div>
                         </div>
                         <div className="mg-v2-card-actions salary-calc-block__actions">
@@ -887,8 +889,8 @@ const SalaryManagement = () => {
                           </MGButton>
                           <SalaryPrintComponent
                             salaryData={calculation}
-                            consultantName={consultants.find(c => c.id === calculation.consultantId)?.name || '알 수 없음'}
-                            period={calculation.calculationPeriod}
+                            consultantName={toDisplayString(consultants.find(c => c.id === calculation.consultantId)?.name, '알 수 없음')}
+                            period={toDisplayString(calculation.calculationPeriod)}
                             includeTaxDetails
                             includeCalculationDetails
                           />
@@ -931,7 +933,7 @@ const SalaryManagement = () => {
                         </div>
                         <div className="salary-management__detail-row">
                           <span>세금 건수</span>
-                          <span>{taxStatistics.taxCount ?? taxStatistics.totalCalculations ?? 0}건</span>
+                          <span>{toDisplayString(taxStatistics.taxCount ?? taxStatistics.totalCalculations ?? 0)}건</span>
                         </div>
                         {TAX_BREAKDOWN_ORDER.map((key) => {
                           const breakdown = taxStatistics.breakdown || {};
@@ -940,8 +942,8 @@ const SalaryManagement = () => {
                           const display = amount != null && Number(amount) !== 0 ? `-${formatCurrency(Number(amount))}` : '—';
                           return (
                             <div key={key} className="salary-management__detail-row">
-                              <span>{label}</span>
-                              <span>{display}</span>
+                              <span><SafeText>{label}</SafeText></span>
+                              <span><SafeText>{display}</SafeText></span>
                             </div>
                           );
                         })}
@@ -999,9 +1001,9 @@ const SalaryManagement = () => {
                   className="mg-v2-list-item mg-v2-list-item--clickable salary-consultant-picker-item"
                   onClick={() => handleConsultantPickForProfile(consultant)}
                 >
-                  <span className="mg-v2-list-item-title">{consultant.name}</span>
+                  <span className="mg-v2-list-item-title"><SafeText>{consultant.name}</SafeText></span>
                   {consultant.email && (
-                    <span className="mg-v2-list-item-subtitle">{consultant.email}</span>
+                    <span className="mg-v2-list-item-subtitle"><SafeText>{consultant.email}</SafeText></span>
                   )}
                 </button>
               </li>

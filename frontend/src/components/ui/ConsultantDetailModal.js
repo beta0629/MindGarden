@@ -13,6 +13,8 @@ import {
     getFormattedAvailability 
 } from '../../utils/codeHelper';
 import Avatar from '../common/Avatar';
+import SafeText from '../common/SafeText';
+import { toDisplayString } from '../../utils/safeDisplay';
 
 /**
  * 상담사 상세 정보 모달
@@ -58,7 +60,7 @@ const ConsultantDetailModal = ({
                             상담사 상세 정보
                         </h2>
                         <p className="mg-modal-description">
-                            {consultant.name} 상담사의 상세 정보입니다.
+                            <SafeText>{consultant.name}</SafeText> 상담사의 상세 정보입니다.
                         </p>
                     </div>
                     <button 
@@ -78,19 +80,19 @@ const ConsultantDetailModal = ({
                             <div className="mg-consultant-detail-avatar mg-v2-consultant-detail-avatar">
                                 <Avatar
                                     profileImageUrl={consultant.profileImageUrl}
-                                    displayName={consultant.name}
+                                    displayName={toDisplayString(consultant.name, '상담사')}
                                     className="mg-consultant-detail-avatar-circle"
                                 />
                                 <div 
                                     className="mg-consultant-detail-status-badge"
                                     style={{ '--availability-color': availability.color }}
                                 >
-                                    {availability.text}
+                                    <SafeText>{availability.text}</SafeText>
                                 </div>
                             </div>
                             
                             <div className="mg-consultant-detail-info">
-                                <h3 className="mg-consultant-detail-name">{consultant.name}</h3>
+                                <SafeText tag="h3" className="mg-consultant-detail-name">{consultant.name}</SafeText>
                                 <p className="mg-consultant-detail-role">상담사</p>
                                 
                                 <div className="mg-consultant-detail-stats">
@@ -133,7 +135,7 @@ const ConsultantDetailModal = ({
                                     <div className="mg-consultant-detail-contact-info">
                                         <span className="mg-consultant-detail-contact-label">이메일</span>
                                         <span className="mg-consultant-detail-contact-value">
-                                            {contact.email}
+                                            <SafeText>{contact.email}</SafeText>
                                         </span>
                                     </div>
                                 </div>
@@ -143,7 +145,7 @@ const ConsultantDetailModal = ({
                                     <div className="mg-consultant-detail-contact-info">
                                         <span className="mg-consultant-detail-contact-label">전화번호</span>
                                         <span className="mg-consultant-detail-contact-value">
-                                            {contact.phone}
+                                            <SafeText>{contact.phone}</SafeText>
                                         </span>
                                     </div>
                                 </div>
@@ -179,7 +181,7 @@ const ConsultantDetailModal = ({
                                         {consultant.availableSlots.map((slot, index) => (
                                             <div key={index} className="mg-consultant-detail-availability-item">
                                                 <Calendar size={16} />
-                                                <span>{slot}</span>
+                                                <SafeText>{slot}</SafeText>
                                             </div>
                                         ))}
                                     </div>

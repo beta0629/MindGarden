@@ -28,6 +28,7 @@ import MgEmailFieldWithAutocomplete from '../common/MgEmailFieldWithAutocomplete
 import ProfileImageInput from '../common/ProfileImageInput';
 import Avatar from '../common/Avatar';
 import '../../styles/unified-design-tokens.css';
+import { toDisplayString } from '../../utils/safeDisplay';
 import './ClientComprehensiveManagement/ClientModal.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
 import './mapping-management/organisms/MappingKpiSection.css';
@@ -79,7 +80,7 @@ const AddStaffModalContent = ({ list = [], searchTerm, onSearch, roleOf, onAssig
                 <div className="mg-v2-profile-card__header">
                   <Avatar
                     profileImageUrl={u.profileImageUrl}
-                    displayName={u.name}
+                    displayName={toDisplayString(u.name)}
                     className="mg-v2-profile-card__avatar"
                     size={48}
                   />
@@ -485,7 +486,7 @@ const StaffManagement = ({ embedded = false }) => {
                   <div className="mg-v2-profile-card__header">
                     <Avatar
                       profileImageUrl={staff.profileImageUrl}
-                      displayName={staff.name}
+                      displayName={toDisplayString(staff.name)}
                       className="mg-v2-profile-card__avatar"
                       size={48}
                     />
@@ -538,7 +539,7 @@ const StaffManagement = ({ embedded = false }) => {
                     <div className="mg-v2-profile-card__header">
                       <Avatar
                         profileImageUrl={staff.profileImageUrl}
-                        displayName={staff.name}
+                        displayName={toDisplayString(staff.name)}
                         className="mg-v2-profile-card__avatar"
                         size={36}
                       />
@@ -589,7 +590,9 @@ const StaffManagement = ({ embedded = false }) => {
         isOpen={roleChangeModal.open}
         onClose={handleCloseRoleChange}
         title="역할 변경"
-        subtitle={roleChangeModal.user ? `${roleChangeModal.user.name} (${roleChangeModal.user.email})` : ''}
+        subtitle={roleChangeModal.user
+          ? `${toDisplayString(roleChangeModal.user.name)} (${toDisplayString(roleChangeModal.user.email)})`
+          : ''}
         size="small"
         variant="form"
         loading={roleChangeSubmitting}

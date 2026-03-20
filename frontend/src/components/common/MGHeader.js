@@ -6,6 +6,8 @@
 
 import React, { useState } from 'react';
 import Avatar from './Avatar';
+import SafeText from './SafeText';
+import { toDisplayString } from '../../utils/safeDisplay';
 // 헤더 스타일은 main.css를 통해 _header.css에서 중앙화되어 로드됨
 
 const MGHeader = ({
@@ -107,11 +109,11 @@ const MGHeader = ({
             >
               <Avatar
                 profileImageUrl={user?.avatar || user?.profileImageUrl}
-                displayName={user?.name || '사용자'}
+                displayName={toDisplayString(user?.name, '사용자')}
                 className="mg-header__user-avatar"
               />
               <span className="mg-header__user-name">
-                {user?.name || '사용자'}
+                <SafeText fallback="사용자">{user?.name}</SafeText>
               </span>
               <span className="mg-header__user-arrow">▼</span>
             </button>
@@ -122,15 +124,15 @@ const MGHeader = ({
                 <div className="mg-header__user-info">
                   <Avatar
                     profileImageUrl={user?.avatar || user?.profileImageUrl}
-                    displayName={user?.name || '사용자'}
+                    displayName={toDisplayString(user?.name, '사용자')}
                     className="mg-header__user-avatar-large"
                   />
                   <div className="mg-header__user-details">
                     <div className="mg-header__user-name-large">
-                      {user?.name || '사용자'}
+                      <SafeText fallback="사용자">{user?.name}</SafeText>
                     </div>
                     <div className="mg-header__user-email">
-                      {user?.email || 'user@mindgarden.com'}
+                      <SafeText fallback="user@mindgarden.com">{user?.email}</SafeText>
                     </div>
                   </div>
                 </div>
@@ -231,12 +233,12 @@ const MGHeader = ({
           <div className="mg-header__mobile-user">
             <Avatar
               profileImageUrl={user?.avatar || user?.profileImageUrl}
-              displayName={user?.name || '사용자'}
+              displayName={toDisplayString(user?.name, '사용자')}
               className="mg-header__user-avatar"
             />
             <div className="mg-header__user-info">
-              <div className="mg-header__user-name">{user?.name || '사용자'}</div>
-              <div className="mg-header__user-email">{user?.email || 'user@mindgarden.com'}</div>
+              <div className="mg-header__user-name"><SafeText fallback="사용자">{user?.name}</SafeText></div>
+              <div className="mg-header__user-email"><SafeText fallback="user@mindgarden.com">{user?.email}</SafeText></div>
             </div>
           </div>
         )}

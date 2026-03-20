@@ -1,5 +1,5 @@
 /**
- * Summary Statistics Widget
+ * Summary Statistics Widget - 표준화된 위젯
 /**
  * 통계 요약 패널을 표시하는 범용 위젯
 /**
@@ -9,64 +9,34 @@
 /**
  * @author CoreSolution
 /**
- * @version 1.0.0
+ * @version 2.0.0 (위젯 표준화 업그레이드)
 /**
- * @since 2025-11-22
+ * @since 2025-11-30
  */
 
-import React, { useState, useEffect } from 'react';
-// import UnifiedLoading from '../../../components/common/UnifiedLoading'; // 임시 비활성화
-import { apiGet } from '../../../utils/ajax';
+import React from 'react';
+import { useWidget } from '../../../hooks/useWidget';
+import BaseWidget from './BaseWidget';
 import './Widget.css';
 import '../SummaryPanels.css';
 
 const SummaryStatisticsWidget = ({ widget, user }) => {
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  
   const config = widget.config || {};
-  const dataSource = config.dataSource || {};
   const statistics = config.statistics || []; // 통계 항목 목록
   
-  useEffect(() => {
-    if (dataSource.type === 'api' && dataSource.url) {
-      loadData();
-      
-      // 자동 새로고침 설정
-      if (dataSource.refreshInterval) {
-        const interval = setInterval(loadData, dataSource.refreshInterval);
-        return () => clearInterval(interval);
-      }
-    } else if (config.data) {
-      // 정적 데이터 사용
-      setData(config.data);
-      setLoading(false);
-    } else {
-      setLoading(false);
-    }
-  }, []);
-  
-  const loadData = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const response = await apiGet(dataSource.url, dataSource.params || {});
-      
-      if (response) {
-        setData(response);
-      } else {
-        setData(config.data || {});
-      }
-    } catch (err) {
-      console.error('SummaryStatisticsWidget 데이터 로드 실패:', err);
-      setError(err.message);
-      setData(config.data || {});
-    } finally {
-      setLoading(false);
-    }
-  };
+  // 표준화된 위젯 훅 사용
+  const {
+    data,
+    loading,
+    error,
+    hasData,
+    isEmpty,
+    refresh
+  } = useWidget(widget, user, {
+    immediate: !!(user && user.id),
+    cache: true,
+    retryCount: 3
+  });
   
   const getStatValue = (statKey) => {
     if (!data) return 0;
@@ -90,65 +60,46 @@ const SummaryStatisticsWidget = ({ widget, user }) => {
     return value;
   };
   
-  if (loading && !data) {
-    return (
-      <div className="widget widget-summary-statistics">
-        <div className="mg-loading">로딩중...</div>
-      </div>
-    );
-  }
-  
-  if (error && !data) {
-    return (
-      <div className="widget widget-summary-statistics widget-error">
-        <div className="widget-title">{config.title || '통계 요약'}</div>
-        <div className="widget-error-message">{error}</div>
-      </div>
-    );
-  }
-  
   return (
-    <div className="widget widget-summary-statistics">
-      <div className="widget-header">
-        {config.icon && (
-          <div className="widget-icon">
-            <i className={`bi ${config.icon}`}></i>
-          </div>
-        )}
-        <div className="widget-title">{config.title || '통계 요약'}</div>
-      </div>
-      <div className="widget-body">
-        <div className="summary-panels-container">
-          {statistics.map((stat, index) => {
-            const value = getStatValue(stat.key);
-            const displayValue = formatValue(value, stat.format || 'number');
-            
-            return (
-              <div key={index} className="summary-panel-item">
-                <div className="summary-item-icon">
-                  {stat.icon && <i className={`bi ${stat.icon}`}></i>}
-                </div>
-                <div className="summary-item-info">
-                  <div className="summary-item-label">{stat.label}</div>
-                  <div className="summary-item-value">{displayValue}</div>
-                  {stat.suffix && (
-                    <div className="summary-item-suffix">{stat.suffix}</div>
-                  )}
-                </div>
+    <BaseWidget
+      widget={widget}
+      user={user}
+      loading={loading}
+      error={error}
+      isEmpty={isEmpty}
+      onRefresh={refresh}
+      className="summary-statistics-widget"
+    >
+      <div className="summary-panels-container">
+        {statistics.map((stat, index) => {
+          const value = getStatValue(stat.key);
+          const displayValue = formatValue(value, stat.format || 'number');
+          
+          return (
+            <div key={index} className="summary-panel-item">
+              <div className="summary-item-icon">
+                {stat.icon && <i className={`bi ${stat.icon}`}></i>}
               </div>
-            );
-          })}
-        </div>
-        
-        {config.viewMoreUrl && (
-          <div className="summary-panels-more">
-            <a href={config.viewMoreUrl} className="mg-v2-link">
-              자세히 보기 →
-            </a>
-          </div>
-        )}
+              <div className="summary-item-info">
+                <div className="summary-item-label">{stat.label}</div>
+                <div className="summary-item-value">{displayValue}</div>
+                {stat.suffix && (
+                  <div className="summary-item-suffix">{stat.suffix}</div>
+                )}
+              </div>
+            </div>
+          );
+        })}
       </div>
-    </div>
+      
+      {config.viewMoreUrl && (
+        <div className="summary-panels-more">
+          <a href={config.viewMoreUrl} className="mg-v2-link">
+            자세히 보기 →
+          </a>
+        </div>
+      )}
+    </BaseWidget>
   );
 };
 

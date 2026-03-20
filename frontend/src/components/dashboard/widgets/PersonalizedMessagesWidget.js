@@ -21,6 +21,8 @@ import {
 } from 'lucide-react';
 import { useWidget } from '../../../hooks/useWidget';
 import BaseWidget from './BaseWidget';
+import SafeText from '../../common/SafeText';
+import { toDisplayString } from '../../../utils/safeDisplay';
 import { RoleUtils } from '../../../constants/roles';
 import { DASHBOARD_API } from '../../../constants/api';
 import { apiGet } from '../../../utils/ajax';
@@ -197,7 +199,7 @@ const PersonalizedMessagesWidget = ({ widget, user }) => {
           id: 'upcoming-consultation',
           icon: 'calendar-check',
           title: '다가오는 상담',
-          subtitle: `${nextConsultation.consultantName} 상담사와 ${new Date(nextConsultation.date).toLocaleDateString('ko-KR')} ${nextConsultation.startTime} 예정`,
+          subtitle: `${toDisplayString(nextConsultation.consultantName, '상담사')} 상담사와 ${new Date(nextConsultation.date).toLocaleDateString('ko-KR')} ${toDisplayString(nextConsultation.startTime, '')} 예정`,
           colorClass: 'success',
           action: 'session-status'
         });
@@ -364,8 +366,8 @@ const PersonalizedMessagesWidget = ({ widget, user }) => {
                   <IconComponent size={24} />
                 </div>
                 <div className="message-content">
-                  <h4 className="message-title">{message.title}</h4>
-                  <p className="message-subtitle">{message.subtitle}</p>
+                  <SafeText tag="h4" className="message-title">{message.title}</SafeText>
+                  <SafeText tag="p" className="message-subtitle">{message.subtitle}</SafeText>
                 </div>
                 {message.action && (
                   <div className="message-arrow">

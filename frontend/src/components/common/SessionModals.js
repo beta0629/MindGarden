@@ -4,14 +4,16 @@
  * 디자인 가이드 준수 - ITCSS 아키텍처, 상수화 필수 원칙
  */
 
-
-  BUTTON_TEXT, 
-  COLORS, 
-  SPACING, 
+import React, { useState, useEffect } from 'react';
+import {
+  BUTTON_TEXT,
+  COLORS,
+  SPACING,
   FONT_SIZES,
   Z_INDEX,
   PACKAGE_TYPES
 } from '../../constants/sessionManagement';
+import { toDisplayString, toSafeNumber } from '../../utils/safeDisplay';
 import CustomSelect from './CustomSelect';
 
 // 모달 스타일
@@ -204,7 +206,7 @@ export const AddSessionModal = ({
     if (selectedPackage) {
       setFormData(prev => ({
         ...prev,
-        packageName: selectedPackage.name,
+        packageName: toDisplayString(selectedPackage.name, ''),
         packagePrice: selectedPackage.price,
         additionalSessions: selectedPackage.value.startsWith(PACKAGE_TYPES.SINGLE) ? 1 : prev.additionalSessions
       }));
@@ -238,11 +240,11 @@ export const AddSessionModal = ({
             <div style={modalStyles.infoCard}>
               <div style={modalStyles.infoRow}>
                 <span style={modalStyles.infoLabel}>내담자:</span>
-                <span style={modalStyles.infoValue}>{selectedClient?.name || '선택되지 않음'}</span>
+                <span style={modalStyles.infoValue}>{toDisplayString(selectedClient?.name, '선택되지 않음')}</span>
               </div>
               <div style={modalStyles.infoRow}>
                 <span style={modalStyles.infoLabel}>상담사:</span>
-                <span style={modalStyles.infoValue}>{selectedMapping?.consultantName || '선택되지 않음'}</span>
+                <span style={modalStyles.infoValue}>{toDisplayString(selectedMapping?.consultantName, '선택되지 않음')}</span>
               </div>
             </div>
           )}
@@ -257,7 +259,7 @@ export const AddSessionModal = ({
                   { value: '', label: '패키지를 선택해주세요' },
                   ...packageOptions.map((pkg) => ({
                     value: pkg.value,
-                    label: `${pkg.name} - ${pkg.price.toLocaleString()}원`
+                    label: `${toDisplayString(pkg.name, '')} - ${toSafeNumber(pkg.price).toLocaleString()}원`
                   }))
                 ]}
                 placeholder="패키지를 선택해주세요"
@@ -293,7 +295,7 @@ export const AddSessionModal = ({
               <div style={modalStyles.infoCard}>
                 <div style={modalStyles.infoRow}>
                   <span style={modalStyles.infoLabel}>선택된 패키지:</span>
-                  <span style={modalStyles.infoValue}>{formData.packageName}</span>
+                  <span style={modalStyles.infoValue}>{toDisplayString(formData.packageName, '—')}</span>
                 </div>
                 <div style={modalStyles.infoRow}>
                   <span style={modalStyles.infoLabel}>회기 수:</span>
@@ -361,15 +363,15 @@ export const PaymentModal = ({
           <div style={modalStyles.infoCard}>
             <div style={modalStyles.infoRow}>
               <span style={modalStyles.infoLabel}>내담자:</span>
-              <span style={modalStyles.infoValue}>{selectedMapping.clientName}</span>
+              <span style={modalStyles.infoValue}>{toDisplayString(selectedMapping.clientName, '—')}</span>
             </div>
             <div style={modalStyles.infoRow}>
               <span style={modalStyles.infoLabel}>상담사:</span>
-              <span style={modalStyles.infoValue}>{selectedMapping.consultantName}</span>
+              <span style={modalStyles.infoValue}>{toDisplayString(selectedMapping.consultantName, '—')}</span>
             </div>
             <div style={modalStyles.infoRow}>
               <span style={modalStyles.infoLabel}>패키지:</span>
-              <span style={modalStyles.infoValue}>{selectedMapping.packageName}</span>
+              <span style={modalStyles.infoValue}>{toDisplayString(selectedMapping.packageName, '—')}</span>
             </div>
             <div style={modalStyles.infoRow}>
               <span style={modalStyles.infoLabel}>총 금액:</span>
@@ -450,15 +452,15 @@ export const ApprovalModal = ({
           <div style={modalStyles.infoCard}>
             <div style={modalStyles.infoRow}>
               <span style={modalStyles.infoLabel}>내담자:</span>
-              <span style={modalStyles.infoValue}>{selectedMapping.clientName}</span>
+              <span style={modalStyles.infoValue}>{toDisplayString(selectedMapping.clientName, '—')}</span>
             </div>
             <div style={modalStyles.infoRow}>
               <span style={modalStyles.infoLabel}>상담사:</span>
-              <span style={modalStyles.infoValue}>{selectedMapping.consultantName}</span>
+              <span style={modalStyles.infoValue}>{toDisplayString(selectedMapping.consultantName, '—')}</span>
             </div>
             <div style={modalStyles.infoRow}>
               <span style={modalStyles.infoLabel}>패키지:</span>
-              <span style={modalStyles.infoValue}>{selectedMapping.packageName}</span>
+              <span style={modalStyles.infoValue}>{toDisplayString(selectedMapping.packageName, '—')}</span>
             </div>
           </div>
 

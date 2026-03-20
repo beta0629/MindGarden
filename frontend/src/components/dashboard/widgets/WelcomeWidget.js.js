@@ -1,140 +1,140 @@
+import React, { useState, useEffect } from 'react';
+import { useSession } from '../../../contexts/SessionContext';
+import Button from '../../ui/Button/Button';
+import Avatar from '../../common/Avatar';
+import './WelcomeWidget.css';
+
 /**
- * Welcome Widget
+ * 환영 위젯 컴포넌트
 /**
- * 환영 메시지와 사용자 정보를 표시하는 범용 위젯
+ * - 사용자 환영 메시지
 /**
- * WelcomeSection을 기반으로 범용화 (상담소 특화 기능 제거)
+ * - 오늘의 할 일 요약
 /**
- * 
-/**
- * @author CoreSolution
-/**
- * @version 1.0.0
-/**
- * @since 2025-11-22
+ * - 빠른 액션 버튼
  */
+const WelcomeWidget = ({ config }) => {
+    const { user } = useSession();
+    const [currentTime, setCurrentTime] = useState(new Date());
+    const [todayStats, setTodayStats] = useState({
+        pendingTasks: 5,
+        newMessages: 3,
+        upcomingSessions: 2
+    });
 
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import Avatar from '../../../common/Avatar';
-import './Widget.css';
-import '../WelcomeSection.css';
+    // 현재 시간 업데이트
+    useEffect(() => {
+        const timer = setInterval(() => {
+            setCurrentTime(new Date());
+        }, 60000); // 1분마다 업데이트
 
-const WelcomeWidget = ({ widget, user }) => {
-  const navigate = useNavigate();
-  const config = widget.config || {};
-  
-  // 사용자 이름 가져오기
-  const getUserDisplayName = () => {
-    if (config.displayName) {
-      return config.displayName;
-    }
-    if (user?.name && !user.name.includes('==')) {
-      return user.name;
-    }
-    if (user?.nickname && !user.nickname.includes('==')) {
-      return user.nickname;
-    }
-    if (user?.userId) {
-      return user.userId;
-    }
-    return config.defaultName || '사용자';
-  };
-  
-  // 환영 메시지 가져오기
-  const getWelcomeMessage = () => {
-    if (config.welcomeMessage) {
-      return config.welcomeMessage;
-    }
-    
-    // 사용자 역할에 따른 기본 메시지
-    const roleMessages = config.roleMessages || {
-      'ADMIN': '관리자님, 환영합니다!',
-      'CLIENT': '고객님, 환영합니다!',
-      'CONSULTANT': '상담사님, 환영합니다!',
-      'default': '환영합니다!'
+        return () => clearInterval(timer);
+    }, []);
+
+    // 시간대별 인사말
+    const getGreeting = () => {
+        const hour = currentTime.getHours();
+        if (hour < 12) return '좋은 아침입니다';
+        if (hour < 18) return '좋은 오후입니다';
+        return '좋은 저녁입니다';
     };
-    
-    const userRole = user?.role;
-    return roleMessages[userRole] || roleMessages.default;
-  };
-  
-  // 현재 시간 표시
-  const getCurrentTime = () => {
-    if (config.showTime !== false) {
-      const now = new Date();
-      return now.toLocaleTimeString('ko-KR', { 
-        hour: '2-digit', 
-        minute: '2-digit' 
-      });
-    }
-    return null;
-  };
-  
-  const profileImageUrl = config.profileImageUrl || user?.profileImageUrl || user?.socialProfileImage;
-  const displayName = getUserDisplayName();
-  const welcomeMessage = getWelcomeMessage();
-  const currentTime = getCurrentTime();
-  
-  const handleCardClick = (action) => {
-    if (action.url) {
-      navigate(action.url);
-    } else if (action.onClick) {
-      action.onClick();
-    }
-  };
-  
-  return (
-    <div className="widget widget-welcome">
-      <div className="widget-header">
-        <div className="welcome-section-container">
-          <div className="welcome-section-profile">
-            <Avatar
-              profileImageUrl={profileImageUrl}
-              displayName={displayName}
-              className="welcome-profile-image-wrapper"
-            />
-            <div className="welcome-profile-info">
-              <h2 className="welcome-title">
-                {welcomeMessage.replace('{name}', displayName)}
-              </h2>
-              {currentTime && (
-                <div className="welcome-time">{currentTime}</div>
-              )}
-            </div>
-          </div>
-          
-          {config.quickCards && config.quickCards.length > 0 && (
-            <div className="welcome-quick-cards">
-              {config.quickCards.map((card, index) => (
-                <div
-                  key={index}
-                  className="welcome-quick-card"
-                  onClick={() => handleCardClick(card)}
-                  style={{ cursor: card.url || card.onClick ? 'pointer' : 'default' }}
-                >
-                  {card.icon && (
-                    <div className="welcome-card-icon">
-                      <i className={`bi ${card.icon}`}></i>
-                    </div>
-                  )}
-                  <div className="welcome-card-content">
-                    <div className="welcome-card-title">{card.title}</div>
-                    {card.description && (
-                      <div className="welcome-card-description">{card.description}</div>
-                    )}
-                  </div>
+
+    // 날짜 포맷
+    const getFormattedDate = () => {
+        const options = { 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric',
+            weekday: 'long'
+        };
+        return currentTime.toLocaleDateString('ko-KR', options);
+    };
+
+    return (
+        <div className="welcome-widget">
+            {/* 헤더 섹션 */}
+            <div className="welcome-header">
+                <div className="greeting-section">
+                    <h2 className="greeting-text">{getGreeting()}, {user?.name || '사용자'}님! 👋</h2>
+                    <p className="date-text">{getFormattedDate()}</p>
                 </div>
-              ))}
+                <div className="user-avatar">
+                    <Avatar
+                        profileImageUrl={user?.profileImageUrl || user?.avatar}
+                        displayName={user?.name || '사용자'}
+                        className="avatar-circle"
+                    />
+                </div>
             </div>
-          )}
+
+            {/* 오늘의 요약 */}
+            <div className="today-summary">
+                <h3 className="summary-title">오늘의 할 일</h3>
+                <div className="summary-cards">
+                    <div className="summary-card pending">
+                        <div className="card-icon">📋</div>
+                        <div className="card-content">
+                            <span className="card-number">{todayStats.pendingTasks}</span>
+                            <span className="card-label">대기 중인 작업</span>
+                        </div>
+                    </div>
+                    <div className="summary-card messages">
+                        <div className="card-icon">💬</div>
+                        <div className="card-content">
+                            <span className="card-number">{todayStats.newMessages}</span>
+                            <span className="card-label">새 메시지</span>
+                        </div>
+                    </div>
+                    <div className="summary-card sessions">
+                        <div className="card-icon">📅</div>
+                        <div className="card-content">
+                            <span className="card-number">{todayStats.upcomingSessions}</span>
+                            <span className="card-label">예정된 일정</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* 빠른 액션 */}
+            <div className="quick-actions">
+                <h3 className="actions-title">빠른 작업</h3>
+                <div className="action-buttons">
+                    <Button 
+                        variant="primary"
+                        className="action-btn primary"
+                        preventDoubleClick={true}
+                    >
+                        <span className="btn-icon">➕</span>
+                        <span className="btn-text">새 상담 등록</span>
+                    </Button>
+                    <Button 
+                        variant="secondary"
+                        className="action-btn secondary"
+                        preventDoubleClick={true}
+                    >
+                        <span className="btn-icon">📊</span>
+                        <span className="btn-text">통계 보기</span>
+                    </Button>
+                    <Button 
+                        variant="secondary"
+                        className="action-btn secondary"
+                        preventDoubleClick={true}
+                    >
+                        <span className="btn-icon">⚙️</span>
+                        <span className="btn-text">설정</span>
+                    </Button>
+                </div>
+            </div>
+
+            {/* 최근 활동 알림 */}
+            <div className="recent-activity">
+                <div className="activity-item">
+                    <span className="activity-icon">🔔</span>
+                    <span className="activity-text">새로운 상담 요청이 2건 있습니다.</span>
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
-  );
+    );
 };
 
 export default WelcomeWidget;
-
-
-

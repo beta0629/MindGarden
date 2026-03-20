@@ -1,6 +1,7 @@
 import Button from '../../ui/Button/Button';
 import { User, Calendar, Clock, Eye } from 'lucide-react';
 import StatusBadge from '../../common/StatusBadge';
+import SafeText from '../../common/SafeText';
 import './ClientConsultationTab.css';
 
 /**
@@ -38,13 +39,13 @@ const ClientConsultationTab = ({
             </div>
             <div className="mg-v2-card-content">
                 <div className="mg-v2-consultation-details">
-                    <p><span className="mg-v2-form-label">세션 번호</span> {consultation.sessionNumber ?? 'N/A'}</p>
+                    <p><span className="mg-v2-form-label">세션 번호</span> <SafeText fallback="N/A">{consultation.sessionNumber}</SafeText></p>
                     <p><span className="mg-v2-form-label">상담 시간</span> <Clock size={12} /> {consultation.sessionDurationMinutes ?? 0}분</p>
                     {consultation.progressScore != null && (
-                        <p><span className="mg-v2-form-label">진행 점수</span> {consultation.progressScore}</p>
+                        <p><span className="mg-v2-form-label">진행 점수</span> <SafeText>{consultation.progressScore}</SafeText></p>
                     )}
                     {consultation.consultantObservations && (
-                        <p><span className="mg-v2-form-label">상담 내용</span> {consultation.consultantObservations}</p>
+                        <p><span className="mg-v2-form-label">상담 내용</span> <SafeText>{consultation.consultantObservations}</SafeText></p>
                     )}
                 </div>
             </div>
@@ -58,9 +59,9 @@ const ClientConsultationTab = ({
             <div key={client.id} className="mg-v2-consultation-client-block">
                 <div className="mg-v2-consultation-client-block__header">
                     <div className="mg-v2-consultation-client-block__info">
-                        <h3 className="mg-v2-consultation-client-block__name">{client.name}</h3>
+                        <h3 className="mg-v2-consultation-client-block__name"><SafeText>{client.name}</SafeText></h3>
                         <p className="mg-v2-consultation-client-block__email">
-                            <span className="mg-v2-client-email">{client.email}</span>
+                            <span className="mg-v2-client-email"><SafeText>{client.email}</SafeText></span>
                         </p>
                     </div>
                     <div className="mg-v2-consultation-client-block__actions">

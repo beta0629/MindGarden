@@ -5,6 +5,8 @@ import StandardizedApi from '../../utils/standardizedApi';
 import { getCodeLabel } from '../../utils/commonCodeUtils';
 import notificationManager from '../../utils/notification';
 import SafeErrorDisplay from '../common/SafeErrorDisplay';
+import { toDisplayString, toErrorMessage, toSafeNumber } from '../../utils/safeDisplay';
+import SafeText from '../common/SafeText';
 import ConfirmModal from '../common/ConfirmModal';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
@@ -315,7 +317,7 @@ const FinancialManagement = () => {
     setConfirmModal({
       isOpen: true,
       title: '거래 삭제 확인',
-      message: `정말 이 거래를 삭제하시겠습니까?\n거래 번호: #${transaction.id}\n금액: ${transaction.amount.toLocaleString()}원`,
+      message: `정말 이 거래를 삭제하시겠습니까?\n거래 번호: #${toDisplayString(transaction.id)}\n금액: ${toSafeNumber(transaction.amount).toLocaleString()}원`,
       type: 'danger',
       onConfirm: async () => {
         try {
@@ -330,7 +332,7 @@ const FinancialManagement = () => {
             notificationManager.success('거래가 성공적으로 삭제되었습니다.');
             loadData(); // 데이터 새로고침
           } else {
-            notificationManager.error('거래 삭제에 실패했습니다: ' + result.message);
+            notificationManager.error(`거래 삭제에 실패했습니다: ${toErrorMessage(result.message)}`);
           }
         } catch (error) {
           console.error('거래 삭제 실패:', error);
@@ -686,7 +688,7 @@ const FinancialManagement = () => {
                                 }}
                                 className="mg-financial-transaction-card__id-button"
                               >
-                                #{transaction.id}
+                                #{toDisplayString(transaction.id)}
                               </button>
                               {(transaction.relatedEntityType === 'CONSULTANT_CLIENT_MAPPING' ||
                                 transaction.relatedEntityType === 'CONSULTANT_CLIENT_MAPPING_REFUND' ||
@@ -713,7 +715,7 @@ const FinancialManagement = () => {
                             </div>
                             <div className="mg-financial-transaction-card__field">
                               <span className="mg-financial-transaction-card__label">카테고리</span>
-                              <span>{transaction.category === 'CONSULTATION' ? '상담료' : (transaction.category || '-')}</span>
+                              <span><SafeText fallback="-">{transaction.category === 'CONSULTATION' ? '상담료' : transaction.category}</SafeText></span>
                             </div>
                             <div className="mg-financial-transaction-card__field">
                               <span className="mg-financial-transaction-card__label">금액</span>
@@ -730,8 +732,8 @@ const FinancialManagement = () => {
                             </div>
                             <div className="mg-financial-transaction-card__field">
                               <span className="mg-financial-transaction-card__label">상태</span>
-                              <span className={`erp-status ${transaction.status?.toLowerCase()}`}>
-                                {getStatusLabel(transaction.status)}
+                              <span className={`erp-status ${toDisplayString(transaction.status, '').toLowerCase()}`}>
+                                <SafeText>{getStatusLabel(transaction.status)}</SafeText>
                               </span>
                             </div>
                           </div>
@@ -858,7 +860,7 @@ const FinancialManagement = () => {
                           <ClipboardList size={24} aria-hidden className="mg-v2-erp-dashboard-kpi-icon mg-v2-erp-dashboard-kpi-icon--secondary" />
                         </div>
                         <div className="mg-v2-ad-b0kla__chart-body">
-                          <div className="mg-v2-erp-dashboard-kpi-value">{dashboardStats.transactionCount}건</div>
+                          <div className="mg-v2-erp-dashboard-kpi-value">{toDisplayString(dashboardStats.transactionCount)}건</div>
                           <span className="mg-v2-erp-dashboard-kpi-label">이번 달</span>
                         </div>
                       </div>
@@ -1015,7 +1017,7 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
 
   const modalTitle = (
     <>
-      <DollarSign size={20} aria-hidden /> 거래 상세 정보 #{transaction.id}
+      <DollarSign size={20} aria-hidden /> 거래 상세 정보 #{toDisplayString(transaction.id)}
     </>
   );
 
@@ -1059,7 +1061,7 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
           </div>
           <div>
             <strong>카테고리:</strong>{' '}
-            {transaction.category === 'CONSULTATION' ? '상담료' : (transaction.category || '-')}
+            <SafeText fallback="-">{transaction.category === 'CONSULTATION' ? '상담료' : transaction.category}</SafeText>
           </div>
           <div>
             <strong>금액:</strong>
@@ -1071,7 +1073,7 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
             <strong>거래일:</strong> {formatDate(transaction.transactionDate)}
           </div>
           <div className="mg-v2-transaction-detail-form-grid__item--span2">
-            <strong>설명:</strong> {transaction.description || '-'}
+            <strong>설명:</strong> <SafeText fallback="-">{transaction.description}</SafeText>
           </div>
         </div>
       </div>
@@ -1088,13 +1090,13 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
           ) : mappingDetail ? (
             <div className="mg-v2-transaction-detail-form-grid mg-v2-form-grid">
               <div>
-                <strong>매핑 ID:</strong> #{mappingDetail.mappingId}
+                <strong>매핑 ID:</strong> #{toDisplayString(mappingDetail.mappingId)}
               </div>
               <div>
-                <strong>패키지명:</strong> {mappingDetail.packageName || '-'}
+                <strong>패키지명:</strong> <SafeText fallback="-">{mappingDetail.packageName}</SafeText>
               </div>
               <div>
-                <strong>총 회기수:</strong> {mappingDetail.totalSessions}회
+                <strong>총 회기수:</strong> {toDisplayString(mappingDetail.totalSessions)}회
               </div>
               <div>
                 <strong>회기당 단가:</strong> {formatCurrency(mappingDetail.pricePerSession)}
@@ -1119,7 +1121,7 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
                     {mappingDetail.isConsistent ? '정상' : '불일치'}
                   </span>
                   {!mappingDetail.isConsistent && (
-                    <div className="mg-v2-transaction-detail-consistency-msg">{mappingDetail.consistencyMessage}</div>
+                    <div className="mg-v2-transaction-detail-consistency-msg"><SafeText>{mappingDetail.consistencyMessage}</SafeText></div>
                   )}
                 </div>
               )}
@@ -1129,7 +1131,7 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
                   <div className="mg-v2-transaction-detail-related-list">
                     {mappingDetail.relatedTransactions.map((relatedTx, index) => (
                       <div key={index} className="mg-v2-transaction-detail-related-item">
-                        #{relatedTx.id} - {relatedTx.type} - {formatCurrency(relatedTx.amount)} ({formatDate(relatedTx.createdAt)})
+                        #{toDisplayString(relatedTx.id)} - <SafeText>{relatedTx.type}</SafeText> - {formatCurrency(relatedTx.amount)} ({formatDate(relatedTx.createdAt)})
                       </div>
                     ))}
                   </div>
@@ -1149,10 +1151,10 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
           </h3>
           <div className="mg-v2-transaction-detail-form-grid mg-v2-form-grid">
             <div>
-              <strong>연동 유형:</strong> {transaction.relatedEntityType}
+              <strong>연동 유형:</strong> <SafeText>{transaction.relatedEntityType}</SafeText>
             </div>
             <div>
-              <strong>연동 ID:</strong> #{transaction.relatedEntityId}
+              <strong>연동 ID:</strong> #{toDisplayString(transaction.relatedEntityId)}
             </div>
           </div>
         </div>

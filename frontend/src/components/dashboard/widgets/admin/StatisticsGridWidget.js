@@ -17,8 +17,10 @@ import { useNavigate } from 'react-router-dom';
 import { useWidget } from '../../../../hooks/useWidget';
 import { Users, User, Link2, Calendar, CheckCircle, DollarSign, TrendingUp, AlertTriangle } from 'lucide-react';
 import BaseWidget from '../BaseWidget';
+import SafeText from '../../../common/SafeText';
 import { RoleUtils } from '../../../../constants/roles';
 import { formatCurrency } from '../../../../utils/formatUtils';
+import { toDisplayString } from '../../../../utils/safeDisplay';
 import './StatisticsGridWidget.css';
 
 const StatisticsGridWidget = ({ widget, user }) => {
@@ -222,17 +224,17 @@ const StatisticsGridWidget = ({ widget, user }) => {
               key={card.id} 
               className={`stat-card stat-card-${card.category} ${card.status ? `stat-card-${card.status}` : ''} clickable`}
               onClick={card.onClick}
-              title={card.description}
+              title={toDisplayString(card.description)}
             >
               <div className="stat-card-header">
                 <div className="stat-card-icon-wrapper">
                   {card.icon}
                 </div>
-                <div className="stat-card-title">{card.title}</div>
+                <SafeText className="stat-card-title" tag="div">{card.title}</SafeText>
               </div>
               <div className="stat-card-body">
-                <div className="stat-card-value">{card.value}</div>
-                <div className="stat-card-description">{card.description}</div>
+                <SafeText className="stat-card-value" tag="div">{card.value}</SafeText>
+                <SafeText className="stat-card-description" tag="div">{card.description}</SafeText>
               </div>
             </div>
           ))}

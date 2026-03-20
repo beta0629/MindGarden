@@ -19,6 +19,7 @@ import { useWidget } from '../../../../hooks/useWidget';
 import BaseWidget from '../BaseWidget';
 import { RoleUtils, USER_ROLES } from '../../../../constants/roles';
 import './ConsultationScheduleWidget.css';
+import SafeText from '../../../common/SafeText';
 
 const ConsultationScheduleWidget = ({ widget, user }) => {
   const navigate = useNavigate();
@@ -91,13 +92,13 @@ const ConsultationScheduleWidget = ({ widget, user }) => {
             <div key={schedule.id} className="schedule-item">
               <div className="schedule-time">
                 <Clock className="time-icon" />
-                <span>{formatTime(schedule.startTime)}</span>
+                <span><SafeText>{formatTime(schedule.startTime)}</SafeText></span>
               </div>
               <div className="schedule-info">
-                <div className="schedule-title">{schedule.title || '상담 세션'}</div>
+                <SafeText tag="div" className="schedule-title" fallback="상담 세션">{schedule.title}</SafeText>
                 <div className="schedule-client">
                   <Users className="client-icon" />
-                  <span>{schedule.clientName}</span>
+                  <span><SafeText>{schedule.clientName}</SafeText></span>
                 </div>
               </div>
               <button 

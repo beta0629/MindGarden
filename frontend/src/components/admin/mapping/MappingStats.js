@@ -5,6 +5,8 @@ import {
     getStatusIcon
 } from '../../../utils/codeHelper';
 import { getLucideIcon } from '../../../utils/iconUtils';
+import SafeText from '../../common/SafeText';
+import { toDisplayString, toSafeNumber } from '../../../utils/safeDisplay';
 
 /**
  * 매칭 통계 컴포넌트 (동적 처리 지원)
@@ -201,30 +203,34 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
         <div className="mg-v2-content-kpi-row">
             {statCards.map((stat, index) => {
                 const iconVariant = ICON_VARIANT_MAP[stat.id] || (['green', 'orange', 'blue', 'gray'][index % 4]);
-                const percentage = stats.total > 0 ? Math.round((stat.value / stats.total) * 100) : 0;
+                const numericValue = toSafeNumber(stat.value);
+                const percentage = stats.total > 0 ? Math.round((numericValue / stats.total) * 100) : 0;
+                const titleHint = `${toDisplayString(stat.label)} 클릭하여 ${
+                    stat.action === 'payment' ? '결제 확인' : '상세 조회'
+                }`;
+                const valueLine =
+                    `${numericValue}건${percentage > 0 ? ` (${percentage}%)` : ''}`;
                 return (
                     <button
                         key={stat.id || index}
                         type="button"
                         className="mg-v2-content-kpi-card mg-v2-content-kpi-card--clickable"
                         onClick={() => onStatCardClick && onStatCardClick(stat)}
-                        title={`${stat.label} 클릭하여 ${stat.action === 'payment' ? '결제 확인' : '상세 조회'}`}
+                        title={titleHint}
                     >
                         <div className={`mg-v2-content-kpi-card__icon mg-v2-content-kpi-card__icon--${iconVariant}`}>
                             <span className="mg-v2-content-kpi-card__icon-emoji">{getLucideIcon(stat.icon, { size: 24 })}</span>
                         </div>
                         <div className="mg-v2-content-kpi-card__info">
                             <div className="mg-v2-content-kpi-card__top">
-                                <span className="mg-v2-content-kpi-card__label">{stat.label}</span>
-                                {stat.action === 'payment' && stat.value > 0 && (
+                                <SafeText className="mg-v2-content-kpi-card__label">{stat.label}</SafeText>
+                                {stat.action === 'payment' && numericValue > 0 && (
                                     <span className="mg-v2-content-kpi-card__badge mg-v2-content-kpi-card__badge--orange">
                                         결제 확인
                                     </span>
                                 )}
                             </div>
-                            <span className="mg-v2-content-kpi-card__value">
-                                {stat.value}건{percentage > 0 ? ` (${percentage}%)` : ''}
-                            </span>
+                            <SafeText className="mg-v2-content-kpi-card__value">{valueLine}</SafeText>
                         </div>
                     </button>
                 );

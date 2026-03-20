@@ -9,6 +9,7 @@ import { apiGet } from '../../utils/ajax';
 import { showNotification } from '../../utils/notification';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import UnifiedLoading from '../common/UnifiedLoading';
+import SafeText from '../common/SafeText';
 import Chart from '../common/Chart';
 import './StatisticsDashboard.css';
 
@@ -387,12 +388,18 @@ const StatisticsDashboard = ({ userRole = 'ADMIN', userId }) => {
                                         <IconComponent />
                                     </div>
                                     <div className="statistics-activity-item-content">
-                                        <p className="statistics-activity-item-message">
+                                        <SafeText
+                                            className="statistics-activity-item-message"
+                                            tag="p"
+                                        >
                                             {activity.message}
-                                        </p>
-                                        <span className="statistics-activity-item-time">
+                                        </SafeText>
+                                        <SafeText
+                                            className="statistics-activity-item-time"
+                                            tag="span"
+                                        >
                                             {activity.time}
-                                        </span>
+                                        </SafeText>
                                     </div>
                                 </div>
                             );

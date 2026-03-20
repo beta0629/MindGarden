@@ -27,6 +27,8 @@ import { sessionManager } from '../../utils/sessionManager';
 import { redirectToDynamicDashboard } from '../../utils/dashboardUtils';
 import notificationManager from '../../utils/notification';
 import '../../styles/auth/TenantSelection.css';
+import SafeText from '../common/SafeText';
+import { toDisplayString } from '../../utils/safeDisplay';
 
 const TenantSelection = ({ tenants, onSelect, onCancel }) => {
   const navigate = useNavigate();
@@ -163,16 +165,16 @@ const TenantSelection = ({ tenants, onSelect, onCancel }) => {
                   }`}
                 >
                   <div className="tenant-selection__item-content">
-                    <div className="tenant-selection__item-name">{tenant.tenantName || tenant.name}</div>
+                    <div className="tenant-selection__item-name"><SafeText>{tenant.tenantName ?? tenant.name}</SafeText></div>
                     <div className="tenant-selection__item-meta">
-                      <span className="tenant-selection__item-type">{tenant.businessType}</span>
+                      <span className="tenant-selection__item-type"><SafeText>{tenant.businessType}</SafeText></span>
                       {tenant.status && (
-                        <span className={`tenant-selection__item-status tenant-selection__item-status--${tenant.status.toLowerCase()}`}>
-                          {tenant.status}
+                        <span className={`tenant-selection__item-status tenant-selection__item-status--${toDisplayString(tenant.status, 'unknown').toLowerCase()}`}>
+                          <SafeText>{tenant.status}</SafeText>
                         </span>
                       )}
                       {tenant.role && (
-                        <span className="tenant-selection__item-role">{tenant.role}</span>
+                        <span className="tenant-selection__item-role"><SafeText>{tenant.role}</SafeText></span>
                       )}
                     </div>
                   </div>

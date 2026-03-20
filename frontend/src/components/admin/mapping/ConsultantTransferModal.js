@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { XCircle, Users, Package, Calendar } from 'lucide-react';
 import notificationManager from '../../../utils/notification';
+import { toErrorMessage, toDisplayString } from '../../../utils/safeDisplay';
+import SafeText from '../../common/SafeText';
 import UnifiedModal from '../../common/modals/UnifiedModal';
 import MGButton from '../../common/MGButton';
 import CustomSelect from '../../common/CustomSelect';
@@ -160,7 +162,7 @@ const ConsultantTransferModal = ({
         onTransfer(result.data);
         onClose();
       } else {
-        notificationManager.show(`상담사 변경에 실패했습니다: ${result.message}`, 'info');
+        notificationManager.show(`상담사 변경에 실패했습니다: ${toErrorMessage(result)}`, 'info');
       }
     } catch (error) {
       console.error('상담사 변경 실패:', error);
@@ -237,19 +239,19 @@ const ConsultantTransferModal = ({
               <div className="mg-v2-info-grid">
                 <div className="mg-v2-info-row">
                   <span className="mg-v2-info-label">내담자:</span>
-                  <span className="mg-v2-info-value">{currentMapping.clientName}</span>
+                  <span className="mg-v2-info-value"><SafeText>{currentMapping.clientName}</SafeText></span>
                 </div>
                 <div className="mg-v2-info-row">
                   <span className="mg-v2-info-label">현재 상담사:</span>
-                  <span className="mg-v2-info-value">{currentMapping.consultantName}</span>
+                  <span className="mg-v2-info-value"><SafeText>{currentMapping.consultantName}</SafeText></span>
                 </div>
                 <div className="mg-v2-info-row">
                   <span className="mg-v2-info-label">남은 회기수:</span>
-                  <span className="mg-v2-info-value"><Calendar size={16} className="mg-v2-icon-inline" />{currentMapping.remainingSessions}회</span>
+                  <span className="mg-v2-info-value"><Calendar size={16} className="mg-v2-icon-inline" /><SafeText>{currentMapping.remainingSessions}</SafeText>회</span>
                 </div>
                 <div className="mg-v2-info-row">
                   <span className="mg-v2-info-label">패키지:</span>
-                  <span className="mg-v2-info-value"><Package size={16} className="mg-v2-icon-inline" />{currentMapping.packageName}</span>
+                  <span className="mg-v2-info-value"><Package size={16} className="mg-v2-icon-inline" /><SafeText>{currentMapping.packageName}</SafeText></span>
                 </div>
               </div>
             </div>
@@ -276,7 +278,7 @@ const ConsultantTransferModal = ({
                   { value: '', label: '상담사를 선택해주세요' },
                   ...consultants.map(consultant => ({
                     value: consultant.id,
-                    label: `${consultant.name} (${consultant.email})`
+                    label: `${toDisplayString(consultant.name)} (${toDisplayString(consultant.email)})`
                   }))
                 ]}
                 placeholder="상담사를 선택해주세요"

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
+import SafeText from '../../components/common/SafeText';
 import '../../styles/unified-design-tokens.css';
 import { USER_ROLES } from '../../constants/roles';
 
@@ -415,7 +416,7 @@ const PermissionManagement = () => {
                         }, {})
                     ).map(([categoryName, permissions]) => (
                         <div key={categoryName} className="mg-v2-permission-category">
-                            <h3>{categoryName}</h3>
+                            <h3><SafeText>{categoryName}</SafeText></h3>
                             <div className="mg-v2-permission-list">
                                 {permissions.map(permission => (
                                     <div key={permission.permissionCode} className="mg-v2-permission-item">
@@ -425,7 +426,7 @@ const PermissionManagement = () => {
                                                 checked={rolePermissions.includes(permission.permissionCode)}
                                                 onChange={() => handlePermissionToggle(permission.permissionCode)}
                                             />
-                                            <span className="mg-v2-permission-name">{permission.permissionName}</span>
+                                            <span className="mg-v2-permission-name"><SafeText>{permission.permissionName}</SafeText></span>
                                         </label>
                                     </div>
                                 ))}
@@ -436,7 +437,7 @@ const PermissionManagement = () => {
                     // 로딩 중이면 하드코딩된 목록 사용 (폴백)
                     Object.entries(PERMISSION_CATEGORIES).map(([categoryName, permissions]) => (
                         <div key={categoryName} className="mg-v2-permission-category">
-                            <h3>{categoryName}</h3>
+                            <h3><SafeText>{categoryName}</SafeText></h3>
                             <div className="mg-v2-permission-list">
                                 {permissions.map(permission => (
                                     <div key={permission.code} className="mg-v2-permission-item">
@@ -446,9 +447,9 @@ const PermissionManagement = () => {
                                                 checked={rolePermissions.includes(permission.code)}
                                                 onChange={() => handlePermissionToggle(permission.code)}
                                             />
-                                            <span className="mg-v2-permission-name">{permission.name}</span>
+                                            <span className="mg-v2-permission-name"><SafeText>{permission.name}</SafeText></span>
                                         </label>
-                                        <p className="mg-v2-permission-description">{permission.description}</p>
+                                        <p className="mg-v2-permission-description"><SafeText>{permission.description}</SafeText></p>
                                     </div>
                                 ))}
                             </div>
@@ -466,7 +467,7 @@ const PermissionManagement = () => {
                             .find(p => p.code === permissionCode);
                         return (
                             <span key={permissionCode} className="mg-v2-permission-tag">
-                                {permission ? permission.name : permissionCode}
+                                <SafeText>{permission ? permission.name : permissionCode}</SafeText>
                             </span>
                         );
                     })}

@@ -28,6 +28,7 @@ import '../../styles/unified-design-tokens.css';
 import '../../styles/dashboard-tokens-extension.css';
 import '../../styles/dashboard-common-v3.css';
 import '../../styles/themes/client-theme.css';
+import SafeText from '../common/SafeText';
 import './ClientDashboard.css';
 
 /**
@@ -277,7 +278,7 @@ const ClientDashboard = () => {
               </div>
               <div>
                 <h1 className="mg-v2-h1">
-                  {getGreeting()}, <span className="mg-v2-color-primary">{currentUser?.name}</span>님!
+                  {getGreeting()}, <span className="mg-v2-color-primary"><SafeText>{currentUser?.name}</SafeText></span>님!
                 </h1>
                 <p className="mg-v2-text-sm mg-v2-color-text-secondary mg-mt-xs">
                   <Sparkles size={16} className="mg-v2-mr-xs" />
@@ -385,10 +386,10 @@ const ClientDashboard = () => {
                     </div>
                   </div>
                   <div className="client-dashboard__schedule-info">
-                    <h3 className="client-dashboard__schedule-title">{schedule.title}</h3>
+                    <SafeText tag="h3" className="client-dashboard__schedule-title">{schedule.title}</SafeText>
                     <p className="client-dashboard__schedule-time">
                       <Clock size={14} />
-                      {schedule.startTime} - {schedule.endTime}
+                      <SafeText>{schedule.startTime}</SafeText> - <SafeText>{schedule.endTime}</SafeText>
                     </p>
                   </div>
                   <div className="client-dashboard__schedule-status">

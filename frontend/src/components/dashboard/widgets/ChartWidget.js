@@ -17,6 +17,7 @@ import { useWidget } from '../../../hooks/useWidget';
 import BaseWidget from './BaseWidget';
 import { WIDGET_CONSTANTS } from '../../../constants/widgetConstants';
 import './Widget.css';
+import SafeText from '../../common/SafeText';
 
 const ChartWidget = ({ widget, user }) => {
   // 표준화된 위젯 훅 사용
@@ -66,7 +67,7 @@ const ChartWidget = ({ widget, user }) => {
               <div className="data-preview">
                 {data.slice(0, 3).map((item, index) => (
                   <div key={index} className="data-item">
-                    <span className="data-label">{item.label || `항목 ${index + 1}`}</span>
+                    <span className="data-label"><SafeText fallback={`항목 ${index + 1}`}>{item.label}</SafeText></span>
                     <span className="data-value">{formatValue(item.value || item)}</span>
                   </div>
                 ))}

@@ -9,6 +9,8 @@ import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ErpCommon.css';
 import notificationManager from '../../utils/notification';
 import SafeErrorDisplay from '../common/SafeErrorDisplay';
+import { toDisplayString, toSafeNumber } from '../../utils/safeDisplay';
+import SafeText from '../common/SafeText';
 
 /**
  * ERP 예산 관리 페이지
@@ -387,7 +389,7 @@ const BudgetManagement = () => {
                           <List size={24} aria-hidden className="mg-v2-ad-b0kla__kpi-value--info" />
                         </div>
                         <div className="mg-v2-ad-b0kla__chart-body">
-                          <div className="mg-v2-ad-b0kla__kpi-value mg-v2-ad-b0kla__kpi-value--info">{budgets.length}개</div>
+                          <div className="mg-v2-ad-b0kla__kpi-value mg-v2-ad-b0kla__kpi-value--info">{toDisplayString(budgets.length)}개</div>
                           <span className="mg-v2-ad-b0kla__kpi-label">등록된 예산</span>
                         </div>
                       </div>
@@ -425,9 +427,9 @@ const BudgetManagement = () => {
                               <div key={budget.id} className="mg-v2-ad-b0kla__card erp-budget-card">
                                 <div className="erp-budget-header">
                                   <div className="erp-budget-title">
-                                    <h3>{budget.name}</h3>
+                                    <h3>{toDisplayString(budget.name)}</h3>
                                     <span className={`erp-budget-status ${getStatusColor(budget.status)}`}>
-                                      {budget.status === 'ACTIVE' ? '활성' : budget.status}
+                                      {budget.status === 'ACTIVE' ? '활성' : toDisplayString(budget.status)}
                                     </span>
                                   </div>
                                   <div className="erp-budget-actions">
@@ -451,11 +453,11 @@ const BudgetManagement = () => {
                                 <div className="erp-budget-body">
                                   <div className="erp-budget-category">
                                     <i className="bi bi-tag"></i>
-                                    {budget.category}
+                                    {toDisplayString(budget.category)}
                                   </div>
                                   
                                   {budget.description && (
-                                    <p className="erp-budget-description">{budget.description}</p>
+                                    <p className="erp-budget-description">{toDisplayString(budget.description)}</p>
                                   )}
                                   
                                   <div className="erp-budget-amounts">
@@ -492,7 +494,7 @@ const BudgetManagement = () => {
                                   
                                   <div className="erp-budget-period">
                                     <i className="bi bi-calendar"></i>
-                                    {budget.year}년 {budget.month}월
+                                    {toSafeNumber(budget.year)}년 {toSafeNumber(budget.month)}월
                                   </div>
                                 </div>
                               </div>
@@ -536,19 +538,19 @@ const BudgetManagement = () => {
                         {budgetCategories.map((category) => (
                           <div key={category.id} className="mg-v2-ad-b0kla__card erp-card">
                             <div className="erp-card-header">
-                              <h3>{category.codeLabel}</h3>
+                              <h3><SafeText>{category.codeLabel}</SafeText></h3>
                               <span className="erp-status success">활성</span>
                             </div>
                             <div className="erp-card-body">
-                              <p className="erp-description">{category.codeDescription}</p>
+                              <p className="erp-description"><SafeText>{category.codeDescription}</SafeText></p>
                               <div className="erp-details">
                                 <div className="erp-detail">
                                   <span className="erp-label">코드:</span>
-                                  <span className="erp-value">{category.codeValue}</span>
+                                  <span className="erp-value"><SafeText>{category.codeValue}</SafeText></span>
                                 </div>
                                 <div className="erp-detail">
                                   <span className="erp-label">정렬:</span>
-                                  <span className="erp-value">{category.sortOrder}</span>
+                                  <span className="erp-value"><SafeText>{category.sortOrder}</SafeText></span>
                                 </div>
                               </div>
                             </div>
@@ -681,7 +683,7 @@ const BudgetManagement = () => {
                               return (
                                 <div key={category} className="mg-v2-ad-b0kla__card erp-card">
                                   <div className="erp-card-header">
-                                    <h4>{category}</h4>
+                                    <h4><SafeText>{category}</SafeText></h4>
                                     <span className={`erp-status ${isOverBudget ? 'danger' : 'success'}`}>
                                       {isOverBudget ? '예산 초과' : '정상'}
                                     </span>
@@ -721,7 +723,7 @@ const BudgetManagement = () => {
                                     
                                     <div className="erp-budget-count">
                                       <i className="bi bi-list-ul"></i>
-                                      {stats.count}개 예산
+                                      {toDisplayString(stats.count)}개 예산
                                     </div>
                                   </div>
                                 </div>
@@ -780,7 +782,7 @@ const BudgetManagement = () => {
                         <option key="budget-category-default" value="">카테고리 선택</option>
                         {budgetCategories.map(category => (
                           <option key={category.id} value={category.codeValue}>
-                            {category.codeLabel}
+                            {toDisplayString(category.codeLabel)}
                           </option>
                         ))}
                       </select>

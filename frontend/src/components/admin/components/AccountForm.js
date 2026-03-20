@@ -9,6 +9,7 @@ import {
   ACCOUNT_PAGE_TITLES
 } from '../../../constants/account';
 import MGButton from '../../common/MGButton';
+import { toDisplayString } from '../../../utils/safeDisplay';
 
 const AccountForm = ({
   showForm,
@@ -79,7 +80,9 @@ const AccountForm = ({
               <option value="">{ACCOUNT_FORM_PLACEHOLDERS.BANK_SELECT}</option>
               {bankOptions.map(option => (
                 <option key={option.value} value={option.value}>
-                  {option.icon} {option.label}
+                  {[toDisplayString(option.icon, ''), toDisplayString(option.label)]
+                    .filter((s) => s !== '')
+                    .join(' ')}
                 </option>
               ))}
             </select>

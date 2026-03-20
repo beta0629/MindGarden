@@ -1,4 +1,5 @@
 import React from 'react';
+import { toDisplayString } from '../../utils/safeDisplay';
 
 /**
  * Core Solution 폼 컴포넌트
@@ -276,7 +277,7 @@ export const MGFormSelect = ({
           <option value="">{placeholder}</option>
           {options.map((option, index) => (
             <option key={index} value={option.value}>
-              {option.label}
+              {toDisplayString(option.label)}
             </option>
           ))}
         </select>

@@ -7,6 +7,7 @@
 
 import React from 'react';
 import UnifiedModal from '../../common/modals/UnifiedModal';
+import { toDisplayString } from '../../../utils/safeDisplay';
 import { USER_ROLES } from '../../../constants/roles';
 import '../../../styles/unified-design-tokens.css';
 
@@ -121,7 +122,7 @@ const SystemNotificationFormModal = ({
                 aria-label="대상 선택"
               >
                 {TARGET_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>{o.label}</option>
+                  <option key={o.value} value={o.value}>{toDisplayString(o.label)}</option>
                 ))}
               </select>
             </div>
@@ -162,7 +163,7 @@ const SystemNotificationFormModal = ({
                 aria-label="유형 선택"
               >
                 {TYPE_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>{o.label}</option>
+                  <option key={o.value} value={o.value}>{toDisplayString(o.label)}</option>
                 ))}
               </select>
             </div>

@@ -7,6 +7,8 @@ import { useSession } from '../../contexts/SessionContext';
 import { getSpecialtyKoreanName } from '../../utils/codeHelper';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import BadgeSelect from '../common/BadgeSelect';
+import SafeText from '../common/SafeText';
+import { toDisplayString } from '../../utils/safeDisplay';
 
 /**
  * 상담사 전문분야 관리 모달 컴포넌트
@@ -373,9 +375,9 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
                                         onClick={() => handleConsultantSelect(consultant)}
                                     >
                                         <div className="mg-v2-list-item-content">
-                                            <div className="mg-v2-list-item-title">{consultant.name || consultant.userId}</div>
+                                            <div className="mg-v2-list-item-title"><SafeText fallback={toDisplayString(consultant.userId, '—')}>{consultant.name ?? consultant.userId}</SafeText></div>
                                             <div className="mg-v2-list-item-subtitle">
-                                                {consultant.specialtyDisplay || getSpecialtyKoreanName(consultant.specialty || consultant.specialization)}
+                                                <SafeText>{consultant.specialtyDisplay ?? getSpecialtyKoreanName(consultant.specialty || consultant.specialization)}</SafeText>
                                             </div>
                                         </div>
                                         <button 
@@ -405,7 +407,7 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
                                         <label className="mg-v2-form-label">선택된 상담사</label>
                                         <div className="mg-v2-info-box">
                                             <div className="mg-v2-info-text">
-                                                {selectedConsultant.name || selectedConsultant.userId}
+                                                <SafeText fallback={toDisplayString(selectedConsultant.userId, '—')}>{selectedConsultant.name ?? selectedConsultant.userId}</SafeText>
                                             </div>
                                         </div>
                                     </div>

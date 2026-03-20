@@ -4,6 +4,8 @@ import UnifiedModal from '../common/modals/UnifiedModal';
 import BadgeSelect from '../common/BadgeSelect';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
+import SafeText from '../common/SafeText';
+import { toDisplayString } from '../../utils/safeDisplay';
 
 /**
  * 반복 지출 관리 모달 컴포넌트
@@ -267,7 +269,7 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
                             <div className="mg-v2-info-grid">
                                 <div className="mg-v2-info-item">
                                     <span className="mg-v2-info-label">총 반복 지출</span>
-                                    <span className="mg-v2-info-value">{statistics.totalExpenses || 0}개</span>
+                                    <span className="mg-v2-info-value">{toDisplayString(statistics.totalExpenses ?? 0)}개</span>
                                 </div>
                                 <div className="mg-v2-info-item">
                                     <DollarSign size={16} className="mg-v2-icon-inline" />
@@ -311,16 +313,22 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
                                 {expenses.map(expense => (
                                     <div key={expense.id} className="mg-v2-list-item">
                                         <div className="mg-v2-list-item-content">
-                                            <div className="mg-v2-list-item-title">{expense.name}</div>
+                                            <div className="mg-v2-list-item-title"><SafeText>{expense.name}</SafeText></div>
                                             <div className="mg-v2-list-item-subtitle">
-                                                {expense.amount?.toLocaleString()}원 · {' '}
-                                                {expense.frequency === 'monthly' ? '월간' : 
-                                                 expense.frequency === 'quarterly' ? '분기별' : 
-                                                 expense.frequency === 'yearly' ? '연간' : expense.frequency} · {' '}
-                                                {expense.category}
+                                                <SafeText>
+                                                  {expense.amount != null ? `${expense.amount.toLocaleString()}원` : '—'}
+                                                </SafeText>
+                                                {' · '}
+                                                <SafeText>
+                                                  {expense.frequency === 'monthly' ? '월간'
+                                                    : expense.frequency === 'quarterly' ? '분기별'
+                                                      : expense.frequency === 'yearly' ? '연간' : expense.frequency}
+                                                </SafeText>
+                                                {' · '}
+                                                <SafeText>{expense.category}</SafeText>
                                             </div>
                                             {expense.description && (
-                                                <div className="mg-v2-list-item-description">{expense.description}</div>
+                                                <div className="mg-v2-list-item-description"><SafeText>{expense.description}</SafeText></div>
                                             )}
                                         </div>
                                         <div className="mg-v2-list-item-actions">

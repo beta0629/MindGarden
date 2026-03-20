@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { CalendarX, XCircle, Clock, AlertTriangle, CheckCircle } from 'lucide-react';
 import { apiPost } from '../../utils/ajax';
 import UnifiedModal from '../common/modals/UnifiedModal';
+import SafeText from '../common/SafeText';
 import { 
   VACATION_TYPES, 
   VACATION_TYPE_LABELS, 
@@ -175,7 +176,7 @@ const VacationModal = ({ isOpen, onClose, onSuccess, selectedDate, consultantId 
                   />
                   <div className="mg-v2-radio-content">
                     <span className="mg-v2-radio-icon">{type.icon}</span>
-                    <span className="mg-v2-radio-label">{type.label}</span>
+                    <span className="mg-v2-radio-label"><SafeText>{type.label}</SafeText></span>
                     <span 
                       className="mg-v2-radio-color"
                       data-color={type.color}

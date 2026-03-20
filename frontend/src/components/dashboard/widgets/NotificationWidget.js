@@ -20,6 +20,7 @@ import { useWidget } from '../../../hooks/useWidget';
 import BaseWidget from './BaseWidget';
 import { apiPost } from '../../../utils/ajax';
 import './Widget.css';
+import SafeText from '../../common/SafeText';
 
 const NotificationWidget = ({ widget, user }) => {
   const navigate = useNavigate();
@@ -149,8 +150,8 @@ const NotificationWidget = ({ widget, user }) => {
                 {notification.type === 'system' ? '📢' : '📨'}
               </div>
               <div className="notification-content">
-                <div className="notification-title">{notification.title}</div>
-                <div className="notification-preview">{notification.message || notification.content}</div>
+                <div className="notification-title"><SafeText>{notification.title}</SafeText></div>
+                <div className="notification-preview"><SafeText>{notification.message ?? notification.content}</SafeText></div>
                 <div className="notification-time">{formatTime(notification.createdAt || notification.publishedAt)}</div>
               </div>
             </div>

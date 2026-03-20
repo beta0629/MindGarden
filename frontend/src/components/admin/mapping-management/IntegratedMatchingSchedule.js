@@ -24,6 +24,7 @@ import MappingScheduleCard from './integrated-schedule/organisms/MappingSchedule
 import '../../../styles/unified-design-tokens.css';
 import '../AdminDashboard/AdminDashboardB0KlA.css';
 import './IntegratedMatchingSchedule.css';
+import { toDisplayString } from '../../../utils/safeDisplay';
 
 /** 스케줄 등록 가능한 매칭 상태 (입금 확인 후 스케줄 등록·드래그 허용) */
 const SCHEDULABLE_STATUSES = new Set(['PAYMENT_CONFIRMED', 'DEPOSIT_PENDING', 'ACTIVE']);
@@ -301,9 +302,9 @@ const IntegratedMatchingSchedule = () => {
                     className={`integrated-schedule__status-btn ${isSelected ? 'integrated-schedule__status-btn--selected' : ''}`}
                     onClick={() => setStatusFilter(opt.value)}
                     aria-pressed={isSelected}
-                    aria-label={`${opt.label} (${count}건)`}
+                    aria-label={`${toDisplayString(opt.label)} (${count}건)`}
                   >
-                    <span className="integrated-schedule__status-btn-text">{opt.label}</span>
+                    <span className="integrated-schedule__status-btn-text">{toDisplayString(opt.label)}</span>
                     <span className="integrated-schedule__status-badge" aria-hidden="true">
                       {count}
                     </span>

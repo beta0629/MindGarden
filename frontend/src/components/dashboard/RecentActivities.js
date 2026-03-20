@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import { RECENT_ACTIVITIES_CSS } from '../../constants/css';
 import './RecentActivities.css';
+import SafeText from '../common/SafeText';
 
 const RecentActivities = ({ consultationData }) => {
   const navigate = useNavigate();
@@ -57,8 +58,8 @@ const RecentActivities = ({ consultationData }) => {
                 <i className={`bi ${getActivityIcon(activity.type)}`}></i>
               </div>
               <div className={RECENT_ACTIVITIES_CSS.ACTIVITY_CONTENT}>
-                <div className={RECENT_ACTIVITIES_CSS.ACTIVITY_TITLE}>{activity.title}</div>
-                <div className={RECENT_ACTIVITIES_CSS.ACTIVITY_TIME}>{activity.time}</div>
+                <div className={RECENT_ACTIVITIES_CSS.ACTIVITY_TITLE}><SafeText>{activity.title}</SafeText></div>
+                <div className={RECENT_ACTIVITIES_CSS.ACTIVITY_TIME}><SafeText>{activity.time}</SafeText></div>
               </div>
             </div>
           ))

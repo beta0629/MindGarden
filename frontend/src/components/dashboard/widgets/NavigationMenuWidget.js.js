@@ -20,6 +20,7 @@ import { sessionManager } from '../../../utils/sessionManager';
 import { hasMenuAccess } from '../../../utils/menuPermissionValidator';
 import './Widget.css';
 import './NavigationMenuWidget.css';
+import SafeText from '../../common/SafeText';
 
 const NavigationMenuWidget = ({ widget, user }) => {
   const navigate = useNavigate();
@@ -122,14 +123,14 @@ const NavigationMenuWidget = ({ widget, user }) => {
           {showIcons && item.icon && (
             <i className={`navigation-menu-icon ${item.icon}`}></i>
           )}
-          <span className="navigation-menu-label">{item.label}</span>
+          <span className="navigation-menu-label"><SafeText>{item.label}</SafeText></span>
           {hasSubItems && (
             <i className={`navigation-menu-arrow ${isExpanded ? 'expanded' : ''}`}>
               <i className="bi bi-chevron-down"></i>
             </i>
           )}
           {item.badge && (
-            <span className="navigation-menu-badge">{item.badge}</span>
+            <span className="navigation-menu-badge"><SafeText>{item.badge}</SafeText></span>
           )}
         </div>
         
@@ -178,7 +179,7 @@ const NavigationMenuWidget = ({ widget, user }) => {
     return (
       <div className="widget widget-navigation-menu">
         <div className="widget-header">
-          <div className="widget-title">{config.title || '메뉴'}</div>
+          <div className="widget-title"><SafeText>{config.title || '메뉴'}</SafeText></div>
         </div>
         <div className="widget-body">
           <div className="navigation-menu-empty">
@@ -193,7 +194,7 @@ const NavigationMenuWidget = ({ widget, user }) => {
     <div className={`widget widget-navigation-menu widget-navigation-${menuStyle}`}>
       <div className="widget-header">
         {config.title && (
-          <div className="widget-title">{config.title}</div>
+          <div className="widget-title"><SafeText>{config.title}</SafeText></div>
         )}
       </div>
       <div className="widget-body">

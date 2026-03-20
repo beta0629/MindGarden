@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import notificationManager from '../../utils/notification';
+import { toDisplayString } from '../../utils/safeDisplay';
 import '../../styles/main.css'; // Ensure main.css is imported for mg-notification styles
 
 /**
@@ -176,7 +177,7 @@ const UnifiedNotification = ({
                 {getIcon(notification.type || variant)}
               </div>
               <div className="mg-notification-message">
-                {notification.message}
+                {toDisplayString(notification.message)}
               </div>
               <button 
                 className="mg-notification-close"
@@ -217,13 +218,13 @@ const UnifiedNotification = ({
                   {getIcon(notification.type || variant)}
                 </div>
                 <h3 className="mg-notification-title">
-                  {notification.title || '알림'}
+                  {toDisplayString(notification.title || '알림')}
                 </h3>
               </div>
               
               <div className="mg-notification-body">
                 <p className="mg-notification-message">
-                  {notification.message}
+                  {toDisplayString(notification.message)}
                 </p>
                 
                 {/* 카운트다운 표시 */}
@@ -243,10 +244,9 @@ const UnifiedNotification = ({
                       className={`mg-btn mg-btn--${action.variant || 'secondary'}`}
                       onClick={() => handleAction(action, notification.id)}
                     >
-                      {countdowns[notification.id] && action.showCountdown 
-                        ? `${action.label} (${countdowns[notification.id]}초)`
-                        : action.label
-                      }
+                      {countdowns[notification.id] && action.showCountdown
+                        ? `${toDisplayString(action.label)} (${countdowns[notification.id]}초)`
+                        : toDisplayString(action.label)}
                     </button>
                   ))}
                 </div>
@@ -284,7 +284,7 @@ const UnifiedNotification = ({
               {getIcon(notification.type || variant)}
             </div>
             <div className="mg-notification-banner-message">
-              {notification.message}
+              {toDisplayString(notification.message)}
             </div>
             <button 
               className="mg-notification-banner-close"

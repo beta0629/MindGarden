@@ -22,6 +22,7 @@ import {
   Building, MapPin, UserCog, Cog, FileText
 } from 'lucide-react';
 import { ADMIN_ROUTES } from '../../../../constants/adminRoutes';
+import SafeText from '../../../common/SafeText';
 import '../Widget.css';
 
 const ManagementGridWidget = ({ widget, user }) => {
@@ -170,7 +171,7 @@ const ManagementGridWidget = ({ widget, user }) => {
       <div className="widget-header">
         <div className="widget-title">
           <Settings className="mg-v2-icon" />
-          {title}
+          <SafeText tag="span">{title}</SafeText>
         </div>
         <div className="widget-subtitle">Core Solution 관리 기능</div>
       </div>
@@ -186,8 +187,8 @@ const ManagementGridWidget = ({ widget, user }) => {
                 {item.icon}
               </div>
               <div className="mg-management-content">
-                <h3 className="mg-management-title">{item.title}</h3>
-                <p className="mg-management-description">{item.description}</p>
+                <SafeText className="mg-management-title" tag="h3">{item.title}</SafeText>
+                <SafeText className="mg-management-description" tag="p">{item.description}</SafeText>
               </div>
             </div>
           ))}

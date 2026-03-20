@@ -7,6 +7,8 @@ import notificationManager from '../../utils/notification';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { CLIENT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
+import SafeText from '../common/SafeText';
+import { toDisplayString } from '../../utils/safeDisplay';
 import './WellnessNotificationDetail.css';
 
 /**
@@ -80,7 +82,7 @@ const WellnessNotificationDetail = () => {
       'UPDATE': '업데이트',
       'WELLNESS': '웰니스'
     };
-    return types[type] || type;
+    return toDisplayString(types[type] ?? type, '—');
   };
 
   const getNotificationTypeClass = (type) => {
@@ -103,13 +105,13 @@ const WellnessNotificationDetail = () => {
    * - 안전한 HTML 렌더링을 위해 dangerouslySetInnerHTML 사용
    */
   const formatWellnessContent = (content) => {
-    if (!content) return null;
+    if (content == null || content === '') return null;
 
-    // HTML을 그대로 렌더링
+    const html = typeof content === 'string' ? content : toDisplayString(content, '');
     return (
-      <div 
+      <div
         className="wellness-content-html"
-        dangerouslySetInnerHTML={{ __html: content }}
+        dangerouslySetInnerHTML={{ __html: html }}
       />
     );
   };
@@ -132,7 +134,7 @@ const WellnessNotificationDetail = () => {
               <Heart size={48} />
             </div>
             <h2 className="error-title">알림을 찾을 수 없습니다</h2>
-            <p className="error-message">{error || '요청하신 알림을 찾을 수 없습니다.'}</p>
+            <p className="error-message"><SafeText fallback="요청하신 알림을 찾을 수 없습니다.">{error}</SafeText></p>
             <button className="mg-btn mg-btn--primary" onClick={handleBack}>
               <ArrowLeft size={16} />
               <span>돌아가기</span>
@@ -166,28 +168,28 @@ const WellnessNotificationDetail = () => {
               </span>
             )}
             <span className={`badge badge-type ${getNotificationTypeClass(notification.notificationType)}`}>
-              {getNotificationTypeLabel(notification.notificationType)}
+              <SafeText>{getNotificationTypeLabel(notification.notificationType)}</SafeText>
             </span>
           </div>
         </div>
 
         {/* 제목 */}
         <div className="wellness-notification-title-section">
-          <h1 className="notification-title">{notification.title}</h1>
+          <h1 className="notification-title"><SafeText>{notification.title}</SafeText></h1>
           
           <div className="notification-meta">
             <div className="meta-item">
               <User size={16} />
-              <span>{notification.authorName || '관리자'}</span>
+              <span><SafeText fallback="관리자">{notification.authorName}</SafeText></span>
             </div>
             <div className="meta-item">
               <Calendar size={16} />
-              <span>{new Date(notification.publishedAt || notification.createdAt).toLocaleDateString('ko-KR')}</span>
+              <span>{toDisplayString(new Date(notification.publishedAt || notification.createdAt).toLocaleDateString('ko-KR'))}</span>
             </div>
             {notification.expiresAt && (
               <div className="meta-item">
                 <Clock size={16} />
-                <span>만료: {new Date(notification.expiresAt).toLocaleDateString('ko-KR')}</span>
+                <span>만료: {toDisplayString(new Date(notification.expiresAt).toLocaleDateString('ko-KR'))}</span>
               </div>
             )}
           </div>

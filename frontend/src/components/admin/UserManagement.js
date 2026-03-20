@@ -9,6 +9,8 @@ import csrfTokenManager from '../../utils/csrfTokenManager';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import BadgeSelect from '../common/BadgeSelect';
 import './UserManagement.css';
+import SafeText from '../common/SafeText';
+import { toDisplayString } from '../../utils/safeDisplay';
 
 const UserManagement = ({ onUpdate }) => {
     // notificationManager 사용
@@ -143,7 +145,7 @@ const UserManagement = ({ onUpdate }) => {
         if (selectedUser.role === USER_ROLES.CLIENT && form.newRole === USER_ROLES.CONSULTANT) {
             const confirmed = await new Promise((resolve) => {
       notificationManager.confirm(
-                `${selectedUser.name}님을 상담사로 변경하시겠습니까?\n\n` +
+                `${toDisplayString(selectedUser.name)}님을 상담사로 변경하시겠습니까?\n\n` +
                 '이 변경으로 인해:\n' +
                 '• 상담사 메뉴와 기능에 접근 가능\n' +
                 '• 내담자 관리, 스케줄 관리 권한 부여\n' +
@@ -159,16 +161,16 @@ const UserManagement = ({ onUpdate }) => {
             const result = await response.json();
 
             if (response.ok && result.success) {
-                const message = selectedUser.role === USER_ROLES.CLIENT && form.newRole === USER_ROLES.CONSULTANT 
-                    ? `${selectedUser.name}님이 상담사로 성공적으로 변경되었습니다.`
-                    : result.message || '사용자 역할이 성공적으로 변경되었습니다.';
+                const message = selectedUser.role === USER_ROLES.CLIENT && form.newRole === USER_ROLES.CONSULTANT
+                    ? `${toDisplayString(selectedUser.name)}님이 상담사로 성공적으로 변경되었습니다.`
+                    : toDisplayString(result.message, '사용자 역할이 성공적으로 변경되었습니다.');
                 toast(message, 'success');
                 setShowRoleModal(false);
                 setForm({ newRole: '' });
                 loadData();
                 onUpdate && onUpdate();
             } else {
-                toast(result.message || '역할 변경에 실패했습니다.', 'danger');
+                toast(toDisplayString(result.message, '역할 변경에 실패했습니다.'), 'danger');
             }
         } catch (error) {
             console.error('역할 변경 실패:', error);
@@ -299,11 +301,11 @@ const UserManagement = ({ onUpdate }) => {
                                                 {getRoleIcon(user.role)}
                                             </div>
                                             <div className="user-mgmt-info">
-                                                <h6 className="user-mgmt-name" title={user.name}>
-                                                    {user.name}
+                                                <h6 className="user-mgmt-name" title={toDisplayString(user.name)}>
+                                                    <SafeText tag="span">{user.name}</SafeText>
                                                 </h6>
-                                                <p className="user-mgmt-email" title={user.email}>
-                                                    {user.email}
+                                                <p className="user-mgmt-email" title={toDisplayString(user.email)}>
+                                                    {toDisplayString(user.email)}
                                                 </p>
                                             </div>
                                         </div>
@@ -369,7 +371,8 @@ const UserManagement = ({ onUpdate }) => {
                 {selectedUser && (
                     <form onSubmit={handleRoleChange}>
                         <div className="mg-v2-form-group">
-                            <strong>사용자:</strong> {selectedUser.name} ({selectedUser.email})
+                            <strong>사용자:</strong>{' '}
+                            <SafeText tag="span">{selectedUser.name}</SafeText> ({toDisplayString(selectedUser.email)})
                         </div>
                         <div className="mg-v2-form-group">
                             <strong>현재 역할:</strong>

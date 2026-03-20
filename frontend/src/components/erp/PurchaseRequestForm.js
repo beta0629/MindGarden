@@ -7,7 +7,7 @@ import ErpButton from './common/ErpButton';
 import ErpHeader from './common/ErpHeader';
 import ErpModal from './common/ErpModal';
 import { useSession } from '../../hooks/useSession';
-import { toErrorMessage } from '../../utils/safeDisplay';
+import SafeErrorDisplay from '../common/SafeErrorDisplay';
 
 /**
  * 구매 요청 폼 컴포넌트
@@ -489,18 +489,8 @@ const PurchaseRequestForm = () => {
 
             {/* 오류 메시지 */}
             {error && (
-              <div style={{ 
-                marginBottom: '16px', 
-                padding: '12px', 
-                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #f8d7da -> var(--mg-custom-f8d7da)
-                backgroundColor: '#f8d7da', 
-                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #721c24 -> var(--mg-custom-721c24)
-                color: '#721c24',
-                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #f5c6cb -> var(--mg-custom-f5c6cb)
-                border: '1px solid #f5c6cb',
-                borderRadius: '4px'
-              }}>
-                {toErrorMessage(error)}
+              <div style={{ marginBottom: '16px' }}>
+                <SafeErrorDisplay error={error} variant="banner" iconSize={18} />
               </div>
             )}
 

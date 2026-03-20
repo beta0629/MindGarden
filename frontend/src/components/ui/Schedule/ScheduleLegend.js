@@ -1,3 +1,5 @@
+import { toDisplayString } from '../../../utils/safeDisplay';
+
 /**
  * 스케줄 범례 컴포넌트 (Presentational)
 /**
@@ -41,7 +43,7 @@ const ScheduleLegend = ({
                                     className="mg-v2-legend-color" 
                                     style={{ '--legend-color': getConsultantColor(consultant.id) }}
                                 ></span>
-                                <span className="mg-v2-legend-text">{consultant.name}</span>
+                                <span className="mg-v2-legend-text">{toDisplayString(consultant.name, '—')}</span>
                             </div>
                         ))}
                         {consultants.length > 5 && (
@@ -62,7 +64,7 @@ const ScheduleLegend = ({
                                     className="mg-v2-legend-color" 
                                     style={{ '--legend-color': option.color }}
                                 ></span>
-                                <span className="mg-v2-legend-text">{option.label}</span>
+                                <span className="mg-v2-legend-text">{toDisplayString(option.label, '—')}</span>
                             </div>
                         ))}
                     </div>

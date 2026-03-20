@@ -17,7 +17,7 @@
 
 import React from 'react';
 import { Link2, DollarSign, KeyRound, Calendar, Receipt } from 'lucide-react';
-import { toErrorMessage } from '../../../../utils/safeDisplay';
+import SafeErrorDisplay from '../../../common/SafeErrorDisplay';
 import CoreFlowPipeline from './CoreFlowPipeline';
 import './AdminMetricsVisualization.css';
 
@@ -93,7 +93,12 @@ const AdminMetricsVisualization = ({
   if (error) {
     return (
       <section className={wrapperClass} aria-live="assertive" aria-label="지표 영역">
-        <p className="admin-metrics-visualization__error">{toErrorMessage(error)}</p>
+        <SafeErrorDisplay
+          error={error}
+          variant="inline"
+          icon={false}
+          className="admin-metrics-visualization__error"
+        />
       </section>
     );
   }

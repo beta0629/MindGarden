@@ -22,7 +22,7 @@
  */
 
 import React from 'react';
-import { toErrorMessage } from '../../../utils/safeDisplay';
+import SafeErrorDisplay from '../../common/SafeErrorDisplay';
 import { WIDGET_CONSTANTS } from '../../../constants/widgetConstants';
 import { MG_DESIGN_TOKENS } from '../../../constants/designTokens';
 import './Widget.css';
@@ -107,7 +107,7 @@ const BaseWidget = ({
         </span>
         <div className={WIDGET_CONSTANTS.CSS_CLASSES.MG_ALERT_MESSAGE}>
           <strong>오류 발생</strong>
-          <p>{toErrorMessage(error)}</p>
+          <SafeErrorDisplay error={error} variant="inline" icon={false} />
           {onRefresh && (
             <button 
               className="mg-button mg-button--sm mg-button--outline"

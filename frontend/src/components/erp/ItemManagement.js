@@ -9,7 +9,7 @@ import ErpModal from './common/ErpModal';
 import BadgeSelect from '../common/BadgeSelect';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
-import { toErrorMessage } from '../../utils/safeDisplay';
+import SafeErrorDisplay from '../common/SafeErrorDisplay';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 
 /**
@@ -272,9 +272,7 @@ const ItemManagement = () => {
         )}
 
         {error && (
-          <div className="error-message">
-            {toErrorMessage(error)}
-          </div>
+          <SafeErrorDisplay error={error} variant="inline" className="error-message" />
         )}
 
         {/* 아이템 목록 */}

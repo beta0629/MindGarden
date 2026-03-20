@@ -4,7 +4,7 @@ import MGButton from '../common/MGButton';
 import { getLucideIcon } from '../../utils/iconUtils';
 import ErpModal from './common/ErpModal';
 import notificationManager from '../../utils/notification';
-import { toErrorMessage } from '../../utils/safeDisplay';
+import SafeErrorDisplay from '../common/SafeErrorDisplay';
 import './QuickExpenseForm.css';
 
 /**
@@ -149,9 +149,7 @@ const QuickExpenseForm = ({ onClose, onSuccess }) => {
       size="medium"
     >
       {error && (
-        <div className="quick-expense-error">
-          {toErrorMessage(error)}
-        </div>
+        <SafeErrorDisplay error={error} variant="inline" className="quick-expense-error" />
       )}
 
       {loadingCodes ? (

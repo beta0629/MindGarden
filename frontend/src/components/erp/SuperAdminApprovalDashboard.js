@@ -8,7 +8,7 @@ import ErpButton from './common/ErpButton';
 import ErpModal from './common/ErpModal';
 import { useSession } from '../../hooks/useSession';
 import './ApprovalDashboard.css';
-import { toErrorMessage } from '../../utils/safeDisplay';
+import SafeErrorDisplay from '../common/SafeErrorDisplay';
 
 /**
  * 수퍼 관리자 승인 대시보드 컴포넌트
@@ -186,7 +186,7 @@ const SuperAdminApprovalDashboard = () => {
       <ContentArea className="approval-dashboard-container">
         {error && (
           <div className="approval-dashboard-error">
-            {toErrorMessage(error)}
+            <SafeErrorDisplay error={error} variant="inline" />
           </div>
         )}
 

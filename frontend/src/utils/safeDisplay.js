@@ -46,3 +46,37 @@ export function toErrorMessage(error, fallback = '오류가 발생했습니다.'
   }
   return fallback;
 }
+
+/**
+ * API 숫자 필드가 객체·문자열로 올 때 JSX `{n}%` / 차트 data 등에 안전한 finite number로
+ * (React #130: completedCount·completionRate 등이 객체인 경우 방지)
+ * @param {*} value
+ * @param {number} [fallback=0]
+ * @returns {number}
+ */
+export function toSafeNumber(value, fallback = 0) {
+  if (value == null || value === '') return fallback;
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : fallback;
+  }
+  if (typeof value === 'string') {
+    const t = value.trim();
+    if (t === '') return fallback;
+    const n = Number(t);
+    return Number.isFinite(n) ? n : fallback;
+  }
+  if (typeof value === 'boolean') return value ? 1 : 0;
+  if (typeof value === 'object') {
+    const inner =
+      value.value ??
+      value.current ??
+      value.rate ??
+      value.completionRate ??
+      value.completedCount ??
+      value.count;
+    if (inner != null && inner !== value) {
+      return toSafeNumber(inner, fallback);
+    }
+  }
+  return fallback;
+}

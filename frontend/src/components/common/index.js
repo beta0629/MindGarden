@@ -20,3 +20,4 @@ export {
   StatsCardGrid,
   DetailedStatsGrid
 } from './StatsGrid';
+export { default as SafeErrorDisplay } from './SafeErrorDisplay';

@@ -7,7 +7,17 @@
  */
 
 import React from 'react';
+import { toDisplayString } from '../../../utils/safeDisplay';
 import './ContentKpiRow.css';
+
+/** KPI 텍스트/숫자·객체 혼재 시 React #130 방지 */
+function safeKpiChild(value) {
+  if (value == null) return '—';
+  if (React.isValidElement(value)) return value;
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+  if (typeof value === 'string') return value;
+  return toDisplayString(value, '—');
+}
 
 const ICON_VARIANTS = ['green', 'orange', 'blue', 'gray'];
 
@@ -23,25 +33,25 @@ const ContentKpiRow = ({ items = [] }) => {
             </div>
             <div className="mg-v2-content-kpi-card__info">
               <div className="mg-v2-content-kpi-card__top">
-                <span className="mg-v2-content-kpi-card__label">{item.label}</span>
+                <span className="mg-v2-content-kpi-card__label">{safeKpiChild(item.label)}</span>
                 {item.badge != null && (
                   <span
                     className={`mg-v2-content-kpi-card__badge mg-v2-content-kpi-card__badge--${item.badgeVariant || 'green'}`}
                     title={item.badgeTitle ?? undefined}
                   >
-                    {item.badge}
+                    {safeKpiChild(item.badge)}
                   </span>
                 )}
               </div>
-              <span className="mg-v2-content-kpi-card__value">{item.value}</span>
+              <span className="mg-v2-content-kpi-card__value">{safeKpiChild(item.value)}</span>
               {(item.subtitle != null && item.subtitle !== '') || item.subtitleBadge != null ? (
                 <div className="mg-v2-content-kpi-card__subtitle-row">
                   {item.subtitle != null && item.subtitle !== '' && (
-                    <span className="mg-v2-content-kpi-card__subtitle">{item.subtitle}</span>
+                    <span className="mg-v2-content-kpi-card__subtitle">{safeKpiChild(item.subtitle)}</span>
                   )}
                   {item.subtitleBadge != null && (
                     <span className={`mg-v2-content-kpi-card__subtitle-badge mg-v2-content-kpi-card__subtitle-badge--${item.badgeVariant || 'green'}`}>
-                      {item.subtitleBadge}
+                      {safeKpiChild(item.subtitleBadge)}
                     </span>
                   )}
                 </div>

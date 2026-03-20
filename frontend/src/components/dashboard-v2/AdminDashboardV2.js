@@ -59,6 +59,7 @@ import { DesktopLayout, MobileLayout } from './templates';
 import { DEFAULT_MENU_ITEMS, BREAKPOINT_DESKTOP } from './constants/menuItems';
 import { ADMIN_ROUTES } from '../../constants/adminRoutes';
 import { maskEncryptedDisplay } from '../../utils/codeHelper';
+import { toSafeNumber } from '../../utils/safeDisplay';
 import MGButton from '../common/MGButton';
 import '../../styles/main.css';
 import '../../styles/unified-design-tokens.css';
@@ -803,22 +804,31 @@ const AdminDashboardV2 = ({ user: propUser }) => {
     const completionList = completionListForIntegrated;
     completionList.forEach((s, idx) => {
       const key = s.consultantId != null ? String(s.consultantId) : `noid-c-${idx}`;
+      const completedCount = toSafeNumber(s.completedCount, 0);
+      const totalCount = toSafeNumber(s.totalCount, 0);
+      const completionRate =
+        s.completionRate != null
+          ? toSafeNumber(s.completionRate, 0)
+          : totalCount > 0
+            ? Math.round((completedCount / totalCount) * 100)
+            : 0;
       byConsultantId.set(key, {
         consultantName: s.consultantName || '-',
         consultantId: s.consultantId,
         rating: null,
-        completedCount: s.completedCount ?? 0,
-        totalCount: s.totalCount ?? 0,
-        completionRate: s.completionRate != null ? s.completionRate : (s.totalCount > 0 ? Math.round((s.completedCount / s.totalCount) * 100) : 0)
+        completedCount,
+        totalCount,
+        completionRate
       });
     });
     const topList = stats.consultantRatingStats?.topConsultants || [];
     topList.forEach((c, idx) => {
       const key = c.consultantId != null ? String(c.consultantId) : `noid-r-${idx}`;
-      const rating = c.averageHeartScore ?? c.averageScore;
+      const ratingRaw = c.averageHeartScore ?? c.averageScore;
+      const rating = ratingRaw != null ? toSafeNumber(ratingRaw, NaN) : NaN;
       if (byConsultantId.has(key)) {
         const row = byConsultantId.get(key);
-        row.rating = rating;
+        row.rating = Number.isFinite(rating) ? rating : null;
         if ((c.consultantName != null && c.consultantName !== '-') && (row.consultantName == null || row.consultantName === '-')) {
           row.consultantName = c.consultantName;
         }
@@ -826,7 +836,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
         byConsultantId.set(key, {
           consultantName: c.consultantName || '-',
           consultantId: c.consultantId,
-          rating: rating,
+          rating: Number.isFinite(rating) ? rating : null,
           completedCount: 0,
           totalCount: 0,
           completionRate: 0
@@ -902,7 +912,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
       id: 'booked',
       icon: <FaCalendarAlt size={28} />,
       label: '예약된 상담',
-      value: (todayStats.bookedToday ?? 0) + (todayStats.confirmedToday ?? 0),
+      value: toSafeNumber(todayStats.bookedToday, 0) + toSafeNumber(todayStats.confirmedToday, 0),
       badge: todayStats.bookedGrowthRate != null
         ? (todayStats.bookedGrowthRate === 0 ? '변동 없음' : `${todayStats.bookedGrowthRate > 0 ? '+' : ''}${todayStats.bookedGrowthRate}%`)
         : '-',
@@ -1394,8 +1404,8 @@ const AdminDashboardV2 = ({ user: propUser }) => {
                           <span className="mg-v2-ad-b0kla__counselor-rating">
                             {row.rating != null ? Number(row.rating).toFixed(1) : '-'}
                           </span>
-                          <span className="mg-v2-ad-b0kla__integrated-data-cell">{row.completedCount}건</span>
-                          <span className="mg-v2-ad-b0kla__integrated-data-cell">{row.completionRate}%</span>
+                          <span className="mg-v2-ad-b0kla__integrated-data-cell">{`${toSafeNumber(row.completedCount, 0)}건`}</span>
+                          <span className="mg-v2-ad-b0kla__integrated-data-cell">{`${toSafeNumber(row.completionRate, 0)}%`}</span>
                         </div>
                         );
                       })}
@@ -1428,7 +1438,10 @@ const AdminDashboardV2 = ({ user: propUser }) => {
                             callbacks: {
                               label: (ctx) => {
                                 const d = consultantIntegratedData[ctx.dataIndex];
-                                return [`완료: ${d.completedCount}건`, `완료율: ${d.completionRate}%`];
+                                return [
+                                  `완료: ${toSafeNumber(d.completedCount, 0)}건`,
+                                  `완료율: ${toSafeNumber(d.completionRate, 0)}%`
+                                ];
                               }
                             }
                           }

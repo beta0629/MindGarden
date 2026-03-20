@@ -21,7 +21,7 @@ import StatCard from '../ui/Card/StatCard';
 import DashboardSection from '../layout/DashboardSection';
 import MGButton from '../../components/common/MGButton';
 import notificationManager from '../../utils/notification';
-import { toErrorMessage } from '../../utils/safeDisplay';
+import SafeErrorDisplay from '../common/SafeErrorDisplay';
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -365,7 +365,7 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
   if (error) {
     return (
       <div className="error-container">
-        오류: {toErrorMessage(error)}
+        <SafeErrorDisplay error={error} variant="inline" prefix="오류: " />
       </div>
     );
   }
@@ -1250,7 +1250,7 @@ const DailyReportTab = ({ period }) => {
   if (error) {
     return (
       <div className="finance-empty-state">
-        오류: {toErrorMessage(error)}
+        <SafeErrorDisplay error={error} variant="inline" prefix="오류: " />
       </div>
     );
   }
@@ -1411,7 +1411,7 @@ const MonthlyReportTab = ({ period }) => {
   if (error) {
     return (
       <div className="finance-empty-state">
-        오류: {toErrorMessage(error)}
+        <SafeErrorDisplay error={error} variant="inline" prefix="오류: " />
       </div>
     );
   }
@@ -1573,7 +1573,7 @@ const YearlyReportTab = ({ period }) => {
   if (error) {
     return (
       <div className="finance-empty-state">
-        오류: {toErrorMessage(error)}
+        <SafeErrorDisplay error={error} variant="inline" prefix="오류: " />
       </div>
     );
   }

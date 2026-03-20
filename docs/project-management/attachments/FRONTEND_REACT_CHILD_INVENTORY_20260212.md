@@ -61,6 +61,26 @@
 
 ---
 
+## E. API 숫자·KPI가 객체로 올 때 (관리자 대시보드 #130)
+
+**증상**: `consultation-completion` 등 응답에서 `completionRate` / `completedCount` 가 **객체**이면  
+JSX 패턴 `{row.completionRate}%` 처럼 **표현식만 자식으로 두면** React **#130** (object is not valid as a child).
+
+**2026-03-21 대응 (소스)**:
+
+| 파일 | 내용 |
+|------|------|
+| `utils/safeDisplay.js` | **`toSafeNumber(value, fallback)`** 추가 |
+| `dashboard-v2/AdminDashboardV2.js` | `consultantIntegratedData` 병합 시 `toSafeNumber` 정규화; 통합 테이블 셀은 **템플릿 문자열**로만 출력 |
+| `dashboard-v2/content/ContentKpiRow.js` | `label` / `value` / `badge` / `subtitle*` 에 **`toDisplayString` + `isValidElement`** 방어 |
+| `ui/Schedule/ScheduleLegend.js` | `name` / `label` → `toDisplayString` |
+| `ui/Schedule/ScheduleCalendarView.js` | 이벤트 표시명·휴가 제목 → `toDisplayString` |
+| `common/Chart.js` | `data.labels[]` 를 차트 전 **`toDisplayString` 정규화** (객체 라벨 방지) |
+
+**추가 점검 권장**: `rg '\{[a-zA-Z0-9_.]+\}%'` / `rg '\{[a-zA-Z0-9_.]+\}건'` 로 동일 패턴 수동 필터.
+
+---
+
 ## 재현용 명령
 
 ```bash

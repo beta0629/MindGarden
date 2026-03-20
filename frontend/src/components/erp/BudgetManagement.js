@@ -4,11 +4,11 @@ import { useSession } from '../../contexts/SessionContext';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentArea, ContentHeader } from '../dashboard-v2/content';
-import { PiggyBank, List, Tag, TrendingUp, AlertTriangle, RefreshCw, Wallet, Percent, DollarSign } from 'lucide-react';
+import { PiggyBank, List, Tag, TrendingUp, RefreshCw, Wallet, Percent, DollarSign } from 'lucide-react';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ErpCommon.css';
 import notificationManager from '../../utils/notification';
-import { toErrorMessage } from '../../utils/safeDisplay';
+import SafeErrorDisplay from '../common/SafeErrorDisplay';
 
 /**
  * ERP 예산 관리 페이지
@@ -331,10 +331,7 @@ const BudgetManagement = () => {
 
             {error && hasDataError && (
               <div className="erp-error">
-                <div className="alert alert-danger" role="alert">
-                  <AlertTriangle size={18} aria-hidden />
-                  {toErrorMessage(error)}
-                </div>
+                <SafeErrorDisplay error={error} variant="banner" iconSize={18} />
                 <button className="btn btn-outline-primary" onClick={loadData}>
                   <RefreshCw size={18} aria-hidden />
                   다시 시도

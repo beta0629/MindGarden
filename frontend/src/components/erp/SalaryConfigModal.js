@@ -3,7 +3,7 @@ import MGButton from '../common/MGButton';
 import BadgeSelect from '../common/BadgeSelect';
 import ErpModal from './common/ErpModal';
 import './SalaryConfigModal.css';
-import { toErrorMessage } from '../../utils/safeDisplay';
+import SafeErrorDisplay from '../common/SafeErrorDisplay';
 
 const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
   const [configs, setConfigs] = useState({
@@ -151,9 +151,7 @@ const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
             아래 설정은 급여 계산 기간과 지급·마감 일자를 정하는 데 사용됩니다. 저장 후 급여 계산·세금 조회 시 반영되므로, 한 번 설정해 두시면 됩니다.
           </p>
           {error && (
-            <div className="error-message">
-              {toErrorMessage(error)}
-            </div>
+            <SafeErrorDisplay error={error} variant="inline" className="error-message" />
           )}
 
           <div className="config-section">

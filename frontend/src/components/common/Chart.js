@@ -39,6 +39,7 @@ import {
   CHART_HEIGHTS,
   CHART_DEFAULTS 
 } from '../../constants/charts';
+import { toDisplayString } from '../../utils/safeDisplay';
 import './Chart.css';
 
 // Chart.js 등록
@@ -128,8 +129,13 @@ const Chart = ({
     // 기본 색상 적용
     const colors = data.colors || CHART_DEFAULTS.COLORS;
     
+    const safeLabels = Array.isArray(data.labels)
+      ? data.labels.map((l) => (typeof l === 'string' || typeof l === 'number' ? String(l) : toDisplayString(l, '')))
+      : data.labels;
+
     const processed = {
       ...data,
+      labels: safeLabels,
       datasets: data.datasets?.map((dataset, index) => ({
         ...dataset,
         backgroundColor: dataset.backgroundColor || colors[index % colors.length],

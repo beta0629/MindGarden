@@ -3,6 +3,7 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import { Calendar as CalendarIcon } from 'lucide-react';
+import { toDisplayString } from '../../../utils/safeDisplay';
 import './ScheduleCalendarView.css';
 
 /**
@@ -61,18 +62,19 @@ const ScheduleCalendarView = ({
 
         // 휴가 이벤트 렌더링 (월간/주간/일간 모두 기존 방식 유지)
         if (extendedProps.type === 'vacation') {
+            const vacTitle = toDisplayString(event.title, '휴무');
             return (
-                <div className={`mg-v2-ad-calendar-event mg-v2-ad-calendar-event--vacation${pastClass}`.trim()} title={event.title}>
+                <div className={`mg-v2-ad-calendar-event mg-v2-ad-calendar-event--vacation${pastClass}`.trim()} title={vacTitle}>
                     <CalendarIcon size={14} className="mg-v2-ad-calendar-event__icon" style={{ color: event.backgroundColor }} />
-                    <span className="mg-v2-ad-calendar-event__client">{event.title}</span>
+                    <span className="mg-v2-ad-calendar-event__client">{vacTitle}</span>
                 </div>
             );
         }
 
         // 일반 스케줄 이벤트 렌더링
-        const clientName = extendedProps.clientName || '이름 없음';
-        const consultantName = extendedProps.consultantName || '';
-        const statusKorean = extendedProps.statusKorean || '상태 없음';
+        const clientName = toDisplayString(extendedProps.clientName, '이름 없음');
+        const consultantName = toDisplayString(extendedProps.consultantName, '');
+        const statusKorean = toDisplayString(extendedProps.statusKorean, '상태 없음');
         const borderColor = event.backgroundColor || 'var(--mg-primary-500)';
 
         // 월간 뷰: 컴팩트 렌더링 (시간 + 내담자명만)

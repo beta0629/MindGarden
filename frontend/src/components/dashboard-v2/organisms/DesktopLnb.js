@@ -8,7 +8,7 @@
  * @since 2025-02-22
  */
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { ChevronRight, ChevronDown } from 'lucide-react';
 import { NavLinkWithRouter } from '../atoms';
@@ -16,6 +16,7 @@ import { LnbMenuItem } from '../molecules';
 import './DesktopLnb.css';
 
 const hasChildren = (item) => item.children && item.children.length > 0;
+const EXPANDED_GROUP_STORAGE_KEY = 'mg:v2:lnb:desktop:expanded-group';
 
 /** 현재 경로가 속한 그룹의 key(item.to) 반환, 없으면 null */
 const getInitialExpandedKey = (items, pathname) => {
@@ -37,9 +38,32 @@ const DesktopLnb = ({ menuItems = [], headerTitle = '시스템 관리' }) => {
   const location = useLocation();
   const pathname = location.pathname;
 
-  const [expandedGroupKey, setExpandedGroupKey] = useState(() =>
-    getInitialExpandedKey(menuItems, pathname)
-  );
+  const [expandedGroupKey, setExpandedGroupKey] = useState(() => {
+    const initial = getInitialExpandedKey(menuItems, pathname);
+    if (typeof globalThis.window === 'undefined') return initial;
+    const saved = globalThis.window.sessionStorage.getItem(EXPANDED_GROUP_STORAGE_KEY);
+    if (saved && menuItems.some((m) => hasChildren(m) && m.to === saved)) {
+      return saved;
+    }
+    return initial;
+  });
+
+  useEffect(() => {
+    if (typeof globalThis.window === 'undefined') return;
+    if (!expandedGroupKey) {
+      globalThis.window.sessionStorage.removeItem(EXPANDED_GROUP_STORAGE_KEY);
+      return;
+    }
+    globalThis.window.sessionStorage.setItem(EXPANDED_GROUP_STORAGE_KEY, expandedGroupKey);
+  }, [expandedGroupKey]);
+
+  useEffect(() => {
+    if (!expandedGroupKey) return;
+    const exists = menuItems.some((item) => hasChildren(item) && item.to === expandedGroupKey);
+    if (!exists) {
+      setExpandedGroupKey(getInitialExpandedKey(menuItems, pathname));
+    }
+  }, [expandedGroupKey, menuItems, pathname]);
 
   const handleGroupToggle = (e, groupKey) => {
     e.preventDefault();

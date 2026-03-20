@@ -1,5 +1,9 @@
 문서 위치: docs/guides/deployment/DEPLOYMENT_CHECKLIST.md
 
+> **안내(2026-02-12)**: 본 파일은 **특정 기능 배포** 시나리오(예: 입금 확인·매핑) 중심의 **레거시 체크리스트**입니다.  
+> **운영 Go-Live 전 종합 점검**(도메인·서브도메인·TLS·보안·OAuth·인프라 등)은 반드시  
+> **[PRE_PRODUCTION_GO_LIVE_CHECKLIST.md](../../운영반영/PRE_PRODUCTION_GO_LIVE_CHECKLIST.md)** 를 따르세요.
+
 # 🚀 운영 환경 배포 체크리스트
 
 ## 📋 **배포 전 체크리스트**

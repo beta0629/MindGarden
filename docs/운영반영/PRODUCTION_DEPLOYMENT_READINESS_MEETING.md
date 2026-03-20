@@ -2,6 +2,7 @@
 
 **문서 유형**: 기획(플래너) 주관 — 운영 배포 준비 회의 산출물  
 **작성일**: 2025-03-17  
+**개정**: 2026-02-12 — Go-Live 종합 체크리스트 신설 및 전 에이전트 합의 반영  
 **상태**: 준비 회의용 (실제 배포 실행 없음)  
 **참조**: `../standards/DEPLOYMENT_STANDARD.md`, `../guides/deployment/DEPLOYMENT_CHECKLIST.md`, `../troubleshooting/DEV_DEPLOYMENT_STABILITY_CHECKLIST.md`, `../../.cursor/skills/core-solution-deployment/SKILL.md`
 
@@ -120,10 +121,24 @@
 
 ---
 
-## 6. 문서 저장 위치
+## 6. 2026-02-12 전 에이전트 회의 보완 (도메인·보안·운영)
+
+| 구분 | 합의 내용 |
+|------|-----------|
+| **도메인/DNS** | Apex·www·와일드카드(테넌트) 레코드가 **개발/운영 IP 혼선 없이** 분리되었는지 배포 전 `dig`/LB 콘솔로 재확인. 과거 문서의 IP는 **참고용**. |
+| **TLS** | HTTPS 강제, 인증서 SAN·만료·자동 갱신, 프록시 헤더와 Spring 신뢰 설정 일치. |
+| **보안** | 운영 CORS 화이트리스트, OAuth redirect 전 등록, Actuator/Swagger 최소 공개, 시크릿 비저장소화. |
+| **문서 체계** | 종합 체크리스트 **`PRE_PRODUCTION_GO_LIVE_CHECKLIST.md`** 를 단일 진입으로 사용; 기능 단위 `DEPLOYMENT_CHECKLIST.md` 는 보조. |
+| **담당** | 기획(Go/No-Go)·shell(DNS/TLS/방화벽)·coder(env/CORS/OAuth)·tester(스모크 S1–S6)·debugger(롤백)·designer(브랜딩 URL)·component-manager(중복 진입점). |
+
+상세 체크 항목·표는 **[PRE_PRODUCTION_GO_LIVE_CHECKLIST.md](./PRE_PRODUCTION_GO_LIVE_CHECKLIST.md)** 에서 유지한다.
+
+---
+
+## 7. 문서 저장 위치
 
 - **제안 저장 위치**: `docs/운영반영/PRODUCTION_DEPLOYMENT_READINESS_MEETING.md`  
-- **이유**: 기획(planning) 산출물이며, 실제 배포 실행이 아닌 “준비 회의” 결론이므로 `docs/운영반영/` 에 두고, 배포 실행 시에는 `../standards/DEPLOYMENT_STANDARD.md`, `../guides/deployment/DEPLOYMENT_CHECKLIST.md` 를 함께 참조하는 구조를 유지한다.
+- **이유**: 기획(planning) 산출물이며, 실제 배포 실행이 아닌 “준비 회의” 결론이므로 `docs/운영반영/` 에 두고, 배포 실행 시에는 **`PRE_PRODUCTION_GO_LIVE_CHECKLIST.md`**, `../standards/DEPLOYMENT_STANDARD.md`, `../guides/deployment/DEPLOYMENT_CHECKLIST.md` 를 함께 참조하는 구조를 유지한다.
 
 ---
 

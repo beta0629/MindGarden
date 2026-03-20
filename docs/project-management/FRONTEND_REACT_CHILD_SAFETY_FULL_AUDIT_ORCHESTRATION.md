@@ -1,6 +1,6 @@
 # 프론트엔드 React 자식 안전성 전역 점검 — 기획 주관 오케스트레이션
 
-**문서 버전**: 1.1.0  
+**문서 버전**: 1.2.0  
 **작성일**: 2026-02-12  
 **주관**: core-planner  
 
@@ -122,8 +122,15 @@ rg "\{[a-zA-Z]+\.(description|message|detail|payload|data)\}" frontend/src --glo
 ## 6. 연관 문서
 
 - `docs/project-management/ERP_ADMIN_DASHBOARD_REACT_ERROR_130_ORCHESTRATION.md` — 최초 발화 지점·부분 수정 이력.
+- **`docs/project-management/CORE_PLANNER_DELEGATION_ORDER.md`** — **core-planner에 붙여 넣는 위임 명령(복사용)**.
 - `.cursor/skills/core-solution-rules/SKILL.md` — 서브에이전트 호출 원칙.
 - `docs/standards/SUBAGENT_USAGE.md`
+
+---
+
+## 6.1 플래너에게 내리는 한 줄 위임 (요약)
+
+> **「`CORE_PLANNER_DELEGATION_ORDER.md` 명령대로 오케스트레이션하고, 코드 수정은 전부 `core-coder`에 배분한다. 일반 어시스턴트 직접 패치 금지。」**
 
 ---
 
@@ -147,6 +154,7 @@ rg "\{[a-zA-Z]+\.(description|message|detail|payload|data)\}" frontend/src --glo
 
 | 버전 | 일자 | 내용 |
 |------|------|------|
+| 1.2.0 | 2026-03-22 | **§6 연관 문서** + **§6.1** — `CORE_PLANNER_DELEGATION_ORDER.md` 링크 및 **core-planner 복붙 위임 명령** 요약 |
 | 1.1.0 | 2026-02-12 | **§0 프로세스 원칙** 추가: 기획 위임·사전 서브에이전트 회의 게이트·**core-component-manager 필수**·에러 표시 **DoD 기본**; G3·§4.6 정합 |
 | 1.0.1 | 2026-02-12 | Phase 1 인벤토리 첨부; `safeDisplay.js` + BaseWidget/MGChart/AdminMetricsVisualization 에러 문자열화(배치 0 착수) |
 | 1.0.0 | 2026-02-12 | 초안: 전역 React 자식 안전성 감사 오케스트레이션 |

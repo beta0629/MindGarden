@@ -375,6 +375,7 @@ const IntegratedMatchingSchedule = () => {
         <main className="integrated-schedule__calendar-wrapper">
           <UnifiedScheduleComponent
             userRole="ADMIN"
+            userId={user?.id ?? undefined}
             refetchTrigger={refetchTrigger}
             onDropFromExternal={handleDropFromExternal}
           />

@@ -28,6 +28,7 @@
 참고 문서:
 - docs/project-management/FRONTEND_REACT_CHILD_SAFETY_FULL_AUDIT_ORCHESTRATION.md (본편 §0·§4)
 - docs/project-management/attachments/FRONTEND_REACT_CHILD_INVENTORY_20260212.md
+- docs/project-management/ORCHESTRATION_BATCH_REACT130_UNIFIED_SCHEDULE_20260321.md (대시보드 #130 + UnifiedSchedule 배치)
 
 위 지시를 수락하고, 다음 배치 작업 계획서와 서브에이전트 배분표부터 출력하라.
 ```

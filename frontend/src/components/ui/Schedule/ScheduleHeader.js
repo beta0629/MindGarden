@@ -7,6 +7,7 @@
  */
 import PropTypes from 'prop-types';
 import { Calendar, RefreshCw } from 'lucide-react';
+import { toDisplayString } from '../../../utils/safeDisplay';
 
 const ScheduleHeader = ({
   userRole,
@@ -36,7 +37,7 @@ const ScheduleHeader = ({
             ) : (
               consultants.map(consultant => (
                 <option key={consultant.id} value={consultant.id}>
-                  {consultant.name}
+                  {toDisplayString(consultant.name, '—')}
                 </option>
               ))
             )}
@@ -59,7 +60,10 @@ const ScheduleHeader = ({
 
 ScheduleHeader.propTypes = {
   userRole: PropTypes.string,
-  consultants: PropTypes.arrayOf(PropTypes.shape({ id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]), name: PropTypes.string })),
+  consultants: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    name: PropTypes.oneOfType([PropTypes.string, PropTypes.number, PropTypes.object])
+  })),
   selectedConsultantId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   loadingConsultants: PropTypes.bool,
   onConsultantChange: PropTypes.func,

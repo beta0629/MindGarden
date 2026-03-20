@@ -49,6 +49,9 @@ jobs:
     - name: 🔍 하드코딩 검사
       run: |
         node scripts/design-system/css-tools/check-hardcoding-enhanced.js || exit 1
+
+    - name: 🔗 프론트 GNB·프로필 네비 경로 정합 (quick-action vs App.js)
+      run: node frontend/scripts/verify-quick-action-routes.mjs
         
     - name: 🧪 테스트 실행
       run: |

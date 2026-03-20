@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * GNB 빠른 액션 중 type navigate 의 action 경로가 App.js Route path에 정의돼 있는지 검사.
+ * GNB 빠른 액션(navigate) + 프로필 드롭다운(내 정보·설정) 이동 경로가 App.js Route에 있는지 검사.
  * lucide 등을 import 하지 않도록 소스 텍스트만 파싱한다.
  *
  * @see docs/project-management/GNB_LNB_MENU_SYNCHRONIZATION_DIRECTIVE.md
@@ -42,15 +42,27 @@ for (const m of app.matchAll(/\bpath=["']([^"']+)["']/g)) {
   appPaths.add(m[1]);
 }
 
-const missing = [...navigatePaths].filter((p) => {
+const profileNavPaths = new Set([
+  '/client/mypage',
+  '/consultant/mypage',
+  '/admin/mypage',
+  '/client/settings',
+  routeMap.SYSTEM_CONFIG
+].filter(Boolean));
+
+const allPaths = new Set([...navigatePaths, ...profileNavPaths]);
+
+const missing = [...allPaths].filter((p) => {
   const base = p.split('?')[0];
   return !appPaths.has(base);
 });
 
 if (missing.length > 0) {
-  console.error('❌ 빠른 액션 navigate 경로가 App.js Route에 없습니다:');
+  console.error('❌ GNB/프로필 네비 경로가 App.js Route에 없습니다:');
   for (const p of missing) console.error('   ', p);
   process.exit(1);
 }
 
-console.log(`✅ 빠른 액션 navigate 경로 ${navigatePaths.size}개 모두 App.js에 존재합니다.`);
+console.log(
+  `✅ 빠른 액션 navigate ${navigatePaths.size}개 + 프로필 고정 경로 ${profileNavPaths.size}개 — App.js와 정합합니다.`
+);

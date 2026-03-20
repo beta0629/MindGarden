@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import './ErpCommon.css';
 import notificationManager from '../../utils/notification';
+import { toErrorMessage } from '../../utils/safeDisplay';
 
 /** 현재 월 YYYY-MM */
 const getDefaultPeriod = () => {
@@ -289,7 +290,7 @@ const ImprovedTaxManagement = () => {
               <div className="erp-error">
                 <div className="mg-v2-content-area__alert" role="alert" style={{ background: 'var(--mg-layout-section-bg)', border: '1px solid var(--mg-color-border-main)', borderRadius: '16px', padding: 'var(--mg-layout-section-padding)' }}>
                   <AlertTriangle size={20} style={{ color: 'var(--mg-color-text-secondary)' }} />
-                  {error}
+                  {toErrorMessage(error)}
                 </div>
                 <button type="button" className="mg-v2-ad-b0kla__btn mg-v2-ad-b0kla__btn--outline" onClick={loadData}>
                   <RefreshCw size={16} />

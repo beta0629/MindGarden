@@ -3,6 +3,7 @@ import MGButton from '../common/MGButton';
 import BadgeSelect from '../common/BadgeSelect';
 import ErpModal from './common/ErpModal';
 import './SalaryConfigModal.css';
+import { toErrorMessage } from '../../utils/safeDisplay';
 
 const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
   const [configs, setConfigs] = useState({
@@ -151,7 +152,7 @@ const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
           </p>
           {error && (
             <div className="error-message">
-              {error}
+              {toErrorMessage(error)}
             </div>
           )}
 

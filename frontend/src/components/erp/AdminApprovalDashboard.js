@@ -8,6 +8,7 @@ import ErpButton from './common/ErpButton';
 import ErpModal from './common/ErpModal';
 import { useSession } from '../../hooks/useSession';
 import './ApprovalDashboard.css';
+import { toErrorMessage } from '../../utils/safeDisplay';
 
 /**
  * 관리자 승인 대시보드 컴포넌트
@@ -185,7 +186,7 @@ const AdminApprovalDashboard = () => {
       <ContentArea className="approval-dashboard-container">
         {error && (
           <div className="approval-dashboard-error">
-            {error}
+            {toErrorMessage(error)}
           </div>
         )}
 

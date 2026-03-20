@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { toErrorMessage } from '../../utils/safeDisplay';
 import './MGChart.css';
 
 /**
@@ -127,7 +128,7 @@ const MGChart = ({
         <div className="mg-chart__error">
           <span className="mg-chart__error-icon">📊</span>
           <span className="mg-chart__error-message">차트를 불러올 수 없습니다</span>
-          <span className="mg-chart__error-detail">{error}</span>
+          <span className="mg-chart__error-detail">{toErrorMessage(error)}</span>
         </div>
       </div>
     );

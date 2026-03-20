@@ -8,6 +8,7 @@ import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentArea, ContentHeader } from '../dashboard-v2/content';
 import { Package, FileText, ShoppingCart, AlertTriangle, RefreshCw, Eye } from 'lucide-react';
 import './ErpCommon.css';
+import { toErrorMessage } from '../../utils/safeDisplay';
 
 /**
  * ERP 구매 관리 페이지
@@ -162,7 +163,7 @@ const PurchaseManagement = () => {
             <div className="erp-error">
               <div className="alert alert-danger" role="alert">
                 <AlertTriangle size={18} aria-hidden />
-                {error}
+                {toErrorMessage(error)}
               </div>
               <button className="btn btn-outline-primary" onClick={loadData}>
                 <RefreshCw size={18} aria-hidden />

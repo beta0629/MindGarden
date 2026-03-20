@@ -578,6 +578,12 @@ const ErpDashboard = ({ user: propUser }) => {
                   <tbody>
                     {recentTransactions.map((tx) => {
                       const isIncome = tx.type === 'INCOME' || tx.type === 'income';
+                      const descText = tx.description ?? tx.memo;
+                      let descDisplay = '—';
+                      if (descText != null) {
+                        descDisplay =
+                          typeof descText === 'object' ? JSON.stringify(descText) : String(descText);
+                      }
                       return (
                         <tr key={tx.id || `${tx.transactionDate}-${tx.amount}-${tx.type}`}>
                           <td>{tx.transactionDate ? String(tx.transactionDate).slice(0, 10) : '—'}</td>
@@ -585,7 +591,7 @@ const ErpDashboard = ({ user: propUser }) => {
                           <td className={isIncome ? 'erp-dashboard__amount--income' : 'erp-dashboard__amount--expense'}>
                             {formatCurrency(tx.amount ?? 0)}
                           </td>
-                          <td>{tx.description ?? tx.memo ?? '—'}</td>
+                          <td>{descDisplay}</td>
                         </tr>
                       );
                     })}

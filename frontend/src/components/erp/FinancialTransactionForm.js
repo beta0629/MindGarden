@@ -6,6 +6,7 @@ import MGButton from '../common/MGButton';
 import BadgeSelect from '../common/BadgeSelect';
 import './FinancialTransactionForm.css';
 import notificationManager from '../../utils/notification';
+import { toErrorMessage } from '../../utils/safeDisplay';
 
 /**
  * 수입/지출 거래 등록 폼 컴포넌트 (공통 코드 사용)
@@ -139,7 +140,7 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
             color: 'var(--status-error-dark)',
             borderRadius: 'var(--radius-sm)'
           }}>
-            {error}
+            {toErrorMessage(error)}
           </div>
         )}
 

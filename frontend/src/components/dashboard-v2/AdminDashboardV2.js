@@ -109,6 +109,39 @@ const HIDE_ADMIN_CARD_IDS = new Set([
   'wellness'            // 웰니스 알림 관리 (관리 기능에서 숨김)
 ]);
 
+/**
+ * period 객체를 차트 라벨 문자열로 변환
+ * @param {object} p
+ * @returns {string}
+ */
+function chartPeriodObjectToLabel(p) {
+  const { label, value, month, year } = p;
+  if (typeof label === 'string') return label;
+  if (typeof value === 'string') return value;
+  if (typeof month === 'string' && typeof year === 'string') return `${year}-${month}`;
+  if (typeof month === 'string') return month;
+  if (typeof year === 'string') return year;
+  if (label != null) return String(label);
+  if (value != null) return String(value);
+  try {
+    return JSON.stringify(p);
+  } catch {
+    return '';
+  }
+}
+
+/**
+ * 차트 X축 라벨용: API가 period를 객체로 줄 때 React/Chart.js에서 객체 자식 오류 방지
+ * @param {object} d 월간/주간 데이터 행
+ * @returns {string}
+ */
+function formatChartPeriodLabel(d) {
+  const p = d?.period;
+  if (p == null) return '';
+  if (typeof p !== 'object') return String(p);
+  return chartPeriodObjectToLabel(p);
+}
+
 /** 차트용 최근 N주 빈 데이터 (데이터 없을 때 0으로 표시) */
 function getEmptyWeeklyChartData(weeks = 6) {
   const result = [];
@@ -1016,7 +1049,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
                   <Chart
                     type={CHART_TYPES.BAR}
                     data={{
-                      labels: rawData.map((d) => d.period),
+                      labels: rawData.map(formatChartPeriodLabel),
                       datasets: [
                         {
                           label: '완료 상담',
@@ -1144,7 +1177,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
                   <Chart
                     type={CHART_TYPES.LINE}
                     data={{
-                      labels: rawData.map((d) => d.period),
+                      labels: rawData.map(formatChartPeriodLabel),
                       datasets
                     }}
                     height="180px"

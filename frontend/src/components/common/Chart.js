@@ -203,7 +203,9 @@ const Chart = ({
         <div className="chart-error-content">
           <i className="bi bi-exclamation-triangle chart-error-icon"></i>
           <p className="chart-error-text">차트를 불러올 수 없습니다</p>
-          <small className="chart-error-detail">{error}</small>
+          <small className="chart-error-detail">
+            {typeof error === 'string' ? error : (error?.message ?? JSON.stringify(error))}
+          </small>
         </div>
       </div>
     );
@@ -281,7 +283,7 @@ Chart.propTypes = {
   height: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   options: PropTypes.object,
   loading: PropTypes.bool,
-  error: PropTypes.string,
+  error: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
   className: PropTypes.string,
   onDataPointClick: PropTypes.func,
   onLegendClick: PropTypes.func

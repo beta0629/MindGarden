@@ -9,6 +9,7 @@ import ErpModal from './common/ErpModal';
 import BadgeSelect from '../common/BadgeSelect';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
+import { toErrorMessage } from '../../utils/safeDisplay';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 
 /**
@@ -272,7 +273,7 @@ const ItemManagement = () => {
 
         {error && (
           <div className="error-message">
-            {error}
+            {toErrorMessage(error)}
           </div>
         )}
 

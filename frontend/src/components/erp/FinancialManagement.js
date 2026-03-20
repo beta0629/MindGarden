@@ -4,6 +4,7 @@ import { useSession } from '../../contexts/SessionContext';
 import StandardizedApi from '../../utils/standardizedApi';
 import { getCodeLabel } from '../../utils/commonCodeUtils';
 import notificationManager from '../../utils/notification';
+import { toErrorMessage } from '../../utils/safeDisplay';
 import ConfirmModal from '../common/ConfirmModal';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
@@ -454,7 +455,7 @@ const FinancialManagement = () => {
             {error && (
               <div className="erp-error">
                 <div className="alert alert-danger" role="alert">
-                  <AlertTriangle size={20} aria-hidden /> {error}
+                  <AlertTriangle size={20} aria-hidden /> {toErrorMessage(error)}
                 </div>
                 <button type="button" className="mg-v2-button mg-v2-button-primary" onClick={loadData}>
                   <RefreshCw size={16} aria-hidden /> 다시 시도

@@ -8,6 +8,7 @@ import { PiggyBank, List, Tag, TrendingUp, AlertTriangle, RefreshCw, Wallet, Per
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ErpCommon.css';
 import notificationManager from '../../utils/notification';
+import { toErrorMessage } from '../../utils/safeDisplay';
 
 /**
  * ERP 예산 관리 페이지
@@ -332,7 +333,7 @@ const BudgetManagement = () => {
               <div className="erp-error">
                 <div className="alert alert-danger" role="alert">
                   <AlertTriangle size={18} aria-hidden />
-                  {error}
+                  {toErrorMessage(error)}
                 </div>
                 <button className="btn btn-outline-primary" onClick={loadData}>
                   <RefreshCw size={18} aria-hidden />

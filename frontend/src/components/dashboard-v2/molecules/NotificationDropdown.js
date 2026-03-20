@@ -181,8 +181,7 @@ const NotificationDropdown = () => {
       }
     }
     setIsOpen(false);
-    // 통합 알림 페이지에서 상세 모달 자동 오픈 (GET 상세 시 서버에서도 읽음 처리됨)
-    navigate('/notifications', { state: { openSystemNotificationId: id } });
+    // 시스템 공지: 읽음 처리 후 드롭다운만 닫음(통합 알림 상세 페이지로 이동하지 않음). 전체 목록은 footer 링크 이용.
   };
 
   const handleMessageItemClick = async (item) => {

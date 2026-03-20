@@ -58,6 +58,13 @@ Core Solution(MindGarden)의 모든 코드·UI는 **표준화 원칙**을 따릅
 - 매직 넘버·문자열 하드코딩 금지
 - 네이밍 규칙 준수 (PascalCase, camelCase, UPPER_SNAKE_CASE)
 
+### 운영 반영 전 — 하드코딩 발견 시 즉시 수정 (필수)
+
+- **원칙**: MindGarden은 **운영(go-live) 반영을 앞두고 있으므로**, 리뷰·작업 중 **하드코딩이 보이면 모두 수정 대상**이다. “pre-commit이 커밋은 허용한다” 수준으로 두지 않고, **해당 변경과 함께 제거·치환까지 마친다**.
+- **범례**: 인라인 색·`rgba`/`#rrggbb`, 표준 외 URL/호스트, 반복 라벨·코드값, CI/BI 색상·문자열 하드코딩 검사 위반, API 경로·환경값의 코드 직접 삽입 등.
+- **역할**: 구현·치환은 **core-coder**. 토큰·팔레트·UI 규칙이 없으면 **core-designer**에 스펙 요청 후 토큰에 반영하고 코더가 적용한다.
+- **참조**: `docs/운영반영/PRE_PRODUCTION_GO_LIVE_CHECKLIST.md`, 프로젝트 하드코딩 검사 스크립트·워크플로(예: `code-quality-check.yml`).
+
 ### 참조 문서
 - `docs/standards/BACKEND_CODING_STANDARD.md`
 - `docs/standards/FRONTEND_DEVELOPMENT_STANDARD.md`

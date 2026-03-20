@@ -37,6 +37,7 @@
 
 ## 원칙
 
+- **운영 반영 준비 — 하드코딩은 발견 즉시 제거**: 운영(go-live) 대비를 위해, 작업 중 **하드코딩이 보이면 해당 작업 범위에서 모두 수정·치환**한다(색상·rgba/hex, 매직 값, 표준 위 URL, CI/BI 가드 위반 등). 미루지 않는다. **core-coder**가 구현하고, 토큰·시각 규칙이 없으면 **core-designer**와 스펙을 맞춘 뒤 반영한다. 코어 스킬: `.cursor/skills/core-solution-rules/SKILL.md` (필수 준수 사항), `/core-solution-standardization`. 체크리스트: `docs/운영반영/PRE_PRODUCTION_GO_LIVE_CHECKLIST.md`.
 - **캡슐화·모듈화**: 모든 코어 에이전트(기획·디자이너·퍼블리셔·코더 등)는 작업 시 **경량화·단순화·반복 제거**를 위해 `/core-solution-encapsulation-modularization` 스킬을 적용한다. 단위를 캡슐화·모듈화하고, 동일·유사 작업은 공통 모듈·스펙·문서로 한 번만 정의해 재사용한다.
 - **공통 모듈 우선**: 새 기능·UI·마크업·구현 시 **기존 공통 모듈(UnifiedModal, ContentHeader, BadgeSelect, StandardizedApi 등)을 먼저 검토·사용**한다. `docs/standards/COMMON_MODULES_USAGE_GUIDE.md`, `/core-solution-common-modules` 스킬 참조. **core-designer, core-publisher, core-coder, core-component-manager**는 해당 작업 시 이 원칙을 적용한다.
 - **직접 수정 금지**: Agent가 코드/디자인/테스트를 직접 수정하지 않고, 해당 영역 서브에이전트를 호출한다.
@@ -63,6 +64,7 @@
 | **배포·CI 워크플로 수정** | **core-coder** | /core-solution-deployment |
 | **작업 전 플랜·조사·영역 분석** | **explore** | /core-solution-documentation |
 | **문서 작성·정리·체계화** | **generalPurpose** | /core-solution-documentation |
+| **하드코딩 제거·CI/BI 가드 통과·토큰·상수 치환**(운영 반영 준비) | **core-coder** | /core-solution-standardization, /core-solution-code-style, /core-solution-frontend 또는 /core-solution-backend |
 | **화면·서버 컴포넌트 중복 제안·적재적소 배치 제안**(코더와 한 팀) | **core-component-manager** | /core-solution-encapsulation-modularization |
 | 코드베이스 탐색·분석 | explore | — |
 

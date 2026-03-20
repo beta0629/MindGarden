@@ -52,6 +52,9 @@ jobs:
 
     - name: 🔗 프론트 GNB·프로필 네비 경로 정합 (quick-action vs App.js)
       run: node frontend/scripts/verify-quick-action-routes.mjs
+
+    - name: 🏷️ 프론트 GNB 빠른액션 라벨 정합 (quick-action vs LNB fallback)
+      run: node frontend/scripts/verify-quick-action-labels.mjs
         
     - name: 🧪 테스트 실행
       run: |

@@ -15,11 +15,8 @@ import {
   FileText,
   FileEdit,
   Calendar,
-  MessageSquare,
   MessageCircle,
-  Clock,
   CalendarPlus,
-  Star,
   CreditCard
 } from 'lucide-react';
 import { ADMIN_ROUTES } from './adminRoutes';
@@ -67,8 +64,8 @@ export const QUICK_ACTIONS = {
       id: 'record',
       icon: FileEdit,
       label: '상담일지 작성',
-      action: 'openRecordModal',
-      type: 'modal'
+      action: '/consultant/consultation-records',
+      type: 'navigate'
     },
     {
       id: 'schedule',
@@ -83,20 +80,6 @@ export const QUICK_ACTIONS = {
       label: '내담자 관리',
       action: '/consultant/clients',
       type: 'navigate'
-    },
-    {
-      id: 'message',
-      icon: MessageSquare,
-      label: '메시지 발송',
-      action: 'openMessageModal',
-      type: 'modal'
-    },
-    {
-      id: 'vacation',
-      icon: Clock,
-      label: '휴가 신청',
-      action: 'openVacationModal',
-      type: 'modal'
     }
   ],
   CLIENT: [
@@ -127,13 +110,6 @@ export const QUICK_ACTIONS = {
       label: '대시보드',
       action: '/client/dashboard',
       type: 'navigate'
-    },
-    {
-      id: 'rating',
-      icon: Star,
-      label: '상담사 평가',
-      action: 'openRatingModal',
-      type: 'modal'
     }
   ],
   STAFF: [
@@ -157,13 +133,6 @@ export const QUICK_ACTIONS = {
       label: '상담일지 조회',
       action: ADMIN_ROUTES.CONSULTATION_LOGS,
       type: 'navigate'
-    },
-    {
-      id: 'notification',
-      icon: MessageSquare,
-      label: '알림 발송',
-      action: 'openNotificationModal',
-      type: 'modal'
     }
   ]
 };

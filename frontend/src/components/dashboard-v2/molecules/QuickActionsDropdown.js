@@ -12,13 +12,14 @@ import PropTypes from 'prop-types';
 import { Zap, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { NavIcon } from '../atoms';
-import { sessionManager } from '../../../utils/sessionManager';
+import { useSession } from '../../../contexts/SessionContext';
 import { getQuickActionsForRole } from '../../../constants/gnbQuickActions';
 import { useDropdownPosition } from '../hooks/useDropdownPosition';
 import '../styles/dropdown-common.css';
 import './QuickActionsDropdown.css';
 
 const QuickActionsDropdown = ({ onModalAction }) => {
+  const { user } = useSession();
   const [isOpen, setIsOpen] = useState(false);
   const [actions, setActions] = useState([]);
   const dropdownRef = useRef(null);
@@ -28,11 +29,8 @@ const QuickActionsDropdown = ({ onModalAction }) => {
   const panelStyle = useDropdownPosition(triggerRef, panelRef, isOpen);
 
   useEffect(() => {
-    const user = sessionManager.getUser();
-    const role = user?.role;
-    const roleActions = getQuickActionsForRole(role);
-    setActions(roleActions);
-  }, []);
+    setActions(getQuickActionsForRole(user?.role));
+  }, [user?.role]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {

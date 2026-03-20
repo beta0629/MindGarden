@@ -12,7 +12,9 @@ import PropTypes from 'prop-types';
 import { ChevronDown, User, Settings, LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ProfileAvatar } from '../atoms';
-import { sessionManager } from '../../../utils/sessionManager';
+import { useSession } from '../../../contexts/SessionContext';
+import { ADMIN_ROUTES } from '../../../constants/adminRoutes';
+import { normalizeRoleForQuickActions } from '../../../constants/gnbQuickActions';
 import { useDropdownPosition } from '../hooks/useDropdownPosition';
 import '../styles/dropdown-common.css';
 import './ProfileDropdown.css';
@@ -25,18 +27,13 @@ const ROLE_LABELS = {
 };
 
 const ProfileDropdown = ({ onLogout }) => {
+  const { user } = useSession();
   const [isOpen, setIsOpen] = useState(false);
-  const [user, setUser] = useState(null);
   const dropdownRef = useRef(null);
   const triggerRef = useRef(null);
   const panelRef = useRef(null);
   const navigate = useNavigate();
   const panelStyle = useDropdownPosition(triggerRef, panelRef, isOpen);
-
-  useEffect(() => {
-    const currentUser = sessionManager.getUser();
-    setUser(currentUser);
-  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -68,13 +65,31 @@ const ProfileDropdown = ({ onLogout }) => {
     return () => document.removeEventListener('keydown', handleEscape);
   }, [isOpen]);
 
+  const resolveMypagePath = (role) => {
+    const r = normalizeRoleForQuickActions(role);
+    if (r === 'CLIENT') return '/client/mypage';
+    if (r === 'CONSULTANT') return '/consultant/mypage';
+    if (r === 'STAFF' || r === 'ADMIN') return '/admin/mypage';
+    return '/client/mypage';
+  };
+
+  /** LNB·App.js와 맞춤: 관리자/스태프는 시스템 설정, 내담자는 클라이언트 설정, 상담사 전용 설정 라우트 없음 → 마이페이지 */
+  const resolveSettingsPath = (role) => {
+    const r = normalizeRoleForQuickActions(role);
+    if (r === 'CLIENT') return '/client/settings';
+    if (r === 'CONSULTANT') return '/consultant/mypage';
+    if (r === 'STAFF' || r === 'ADMIN') return ADMIN_ROUTES.SYSTEM_CONFIG;
+    return '/client/settings';
+  };
+
   const handleMenuClick = (action) => {
     setIsOpen(false);
+    const role = user?.role;
 
     if (action === 'mypage') {
-      navigate('/mypage');
+      navigate(resolveMypagePath(role));
     } else if (action === 'settings') {
-      navigate('/settings');
+      navigate(resolveSettingsPath(role));
     } else if (action === 'logout' && onLogout) {
       onLogout();
     }
@@ -87,7 +102,8 @@ const ProfileDropdown = ({ onLogout }) => {
   const userName = user.name || user.username || '사용자';
   const userEmail = user.email || '';
   const userRole = user.role || '';
-  const roleLabel = ROLE_LABELS[userRole] || userRole;
+  const roleKey = normalizeRoleForQuickActions(userRole);
+  const roleLabel = ROLE_LABELS[roleKey] || userRole;
 
   return (
     <div className="mg-v2-profile-dropdown" ref={dropdownRef}>
@@ -126,7 +142,7 @@ const ProfileDropdown = ({ onLogout }) => {
                   <div className="mg-v2-profile-dropdown__email">{userEmail}</div>
                 )}
                 {roleLabel && (
-                  <span className={`mg-v2-badge mg-v2-badge-role mg-v2-badge-role--${userRole.toLowerCase()}`}>
+                  <span className={`mg-v2-badge mg-v2-badge-role mg-v2-badge-role--${(roleKey || userRole).toLowerCase()}`}>
                     {roleLabel}
                   </span>
                 )}

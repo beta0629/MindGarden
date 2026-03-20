@@ -1,9 +1,9 @@
 # GNB · LNB 메뉴 동기화 및 카테고리 재정비 — 기획 지휘서
 
 **문서 유형**: core-planner 주관 · 전 에이전트 공통 작업 지시  
-**버전**: 1.0.4  
+**버전**: 1.0.5  
 **작성일**: 2026-02-13  
-**개정**: 2026-02-13 — 검증 스크립트에 프로필 드롭다운 경로 포함; `code-quality-check.yml` 워크플로 연동  
+**개정**: 2026-02-13 — 검증 스크립트 범위를 LNB 폴백(`menuItems.js`)까지 확장
 **상태**: 승인 후 실행 (코드 변경은 **core-coder**만 수행)
 
 ### 구현 위임 원칙 (필독)
@@ -145,6 +145,7 @@ CONSULTANT/STAFF는 상대적으로 실제 라우트와 근접하나, **명칭·
 | 2026-02-13 | `gnbQuickActions`: ADMIN→`ADMIN_ROUTES`, CLIENT/STAFF 실경로 정합; `normalizeRoleForQuickActions`(`ROLE_*`·레거시 관리자→ADMIN); `QuickActionsDropdown`→`useSession`으로 역할 변경 시 목록 갱신; `ProfileDropdown`→`useSession`+동일 정규화로 마이페이지·설정 경로 정렬 |
 | 2026-02-13 | `frontend`: `npm run verify:quick-action-routes` — 빠른액션·프로필 고정 경로 vs `App.js` |
 | 2026-02-13 | `.github/workflows/code-quality-check.yml`에 검증 스텝 추가(PRs·push develop/main) |
+| 2026-02-13 | 검증 스크립트가 `menuItems.js`(`DEFAULT/CLIENT/CONSULTANT/ERP`) `to` 경로도 함께 검사 |
 | (예정) | 기획 SSOT(A/B/C) 확정 후 DB 메뉴 단일화 또는 LNB 폴백·DB diff 스크립트 |
 
 ---

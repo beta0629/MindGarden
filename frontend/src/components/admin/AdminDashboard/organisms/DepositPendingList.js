@@ -1,5 +1,6 @@
 import React from 'react';
 import MGButton from '../../../common/MGButton';
+import { toDisplayString } from '../../../../utils/safeDisplay';
 import './DepositPendingList.css';
 
 /**
@@ -23,7 +24,9 @@ const DepositPendingList = ({ items = [], onDepositConfirm }) => {
         {items.map((item) => (
           <li key={item.id} className="deposit-pending-list__item">
             <div className="deposit-pending-list__info">
-              <span className="deposit-pending-list__name">{item.clientName || '-'}</span>
+              <span className="deposit-pending-list__name">
+                {toDisplayString(item.clientName, '-')}
+              </span>
               {item.amount != null && (
                 <span className="deposit-pending-list__amount">
                   {item.amount.toLocaleString()}원

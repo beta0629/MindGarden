@@ -59,7 +59,7 @@ import { DesktopLayout, MobileLayout } from './templates';
 import { DEFAULT_MENU_ITEMS, BREAKPOINT_DESKTOP } from './constants/menuItems';
 import { ADMIN_ROUTES } from '../../constants/adminRoutes';
 import { maskEncryptedDisplay } from '../../utils/codeHelper';
-import { toSafeNumber } from '../../utils/safeDisplay';
+import { toSafeNumber, toDisplayString } from '../../utils/safeDisplay';
 import MGButton from '../common/MGButton';
 import '../../styles/main.css';
 import '../../styles/unified-design-tokens.css';
@@ -1883,7 +1883,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
             <strong className="me-auto">알림</strong>
             <button type="button" className="mg-toast-close" onClick={() => setShowToastState(false)} />
           </div>
-          <div className="mg-toast-body">{toastMessage}</div>
+          <div className="mg-toast-body">{toDisplayString(toastMessage, '')}</div>
         </div>
       )}
 

@@ -7,17 +7,19 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
+import { toSafeNumber } from '../../../utils/safeDisplay';
 import './NotificationBadge.css';
 
 const NotificationBadge = ({ count = 0 }) => {
-  if (count <= 0) {
+  const n = toSafeNumber(count, 0);
+  if (n <= 0) {
     return null;
   }
 
-  const displayCount = count > 99 ? '99+' : count;
-  const ariaLabel = count >= 100
+  const displayCount = n > 99 ? '99+' : n;
+  const ariaLabel = n >= 100
     ? '읽지 않은 알림 99개 이상'
-    : `읽지 않은 알림 ${count}개`;
+    : `읽지 않은 알림 ${n}개`;
 
   return (
     <span 

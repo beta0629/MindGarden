@@ -204,6 +204,12 @@ const NotificationDropdown = () => {
     navigate('/notifications', { state: { openConsultationMessageId: mid } });
   };
 
+  const sliceContentPreview = (content) => {
+    if (content == null) return '';
+    const s = toDisplayString(content, '');
+    return s.length > 30 ? `${s.slice(0, 30)}…` : s;
+  };
+
   const formatTime = (dateString) => {
     if (!dateString) return '';
     const date = new Date(dateString);
@@ -344,7 +350,7 @@ const NotificationDropdown = () => {
                             <div className="mg-v2-notification-item__content">
                               <div className="mg-v2-notification-item__header">
                                 <span className="mg-v2-notification-item__title">
-                                  {item.title || '제목 없음'}
+                                  {toDisplayString(item.title, '제목 없음')}
                                 </span>
                                 <span className="mg-v2-notification-item__time">
                                   {formatTime(item.createdAt)}
@@ -380,10 +386,10 @@ const NotificationDropdown = () => {
                   {!loadingMessages &&
                     messageList.map((item) => {
                       const isUnread = !item.isRead;
+                      const sn = toDisplayString(item.senderName, '');
+                      const rn = toDisplayString(item.receiverName, '');
                       const senderLabel =
-                        item.senderName && item.receiverName
-                          ? `${item.senderName} → ${item.receiverName}`
-                          : item.senderName || '메시지';
+                        sn && rn ? `${sn} → ${rn}` : sn || '메시지';
                       return (
                         <li key={item.id}>
                           <button
@@ -408,7 +414,9 @@ const NotificationDropdown = () => {
                             <div className="mg-v2-notification-item__content">
                               <div className="mg-v2-notification-item__header">
                                 <span className="mg-v2-notification-item__title">
-                                  {item.title || item.content?.slice(0, 30) || '메시지'}
+                                  {item.title != null && item.title !== ''
+                                    ? toDisplayString(item.title, '메시지')
+                                    : sliceContentPreview(item.content) || '메시지'}
                                 </span>
                                 <span className="mg-v2-notification-item__time">
                                   {formatTime(item.createdAt)}

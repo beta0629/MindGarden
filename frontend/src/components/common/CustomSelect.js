@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { ChevronDown } from 'lucide-react';
+import { toDisplayString } from '../../utils/safeDisplay';
 import './CustomSelect.css';
 
 /**
@@ -120,8 +121,11 @@ const CustomSelect = ({
 
   // 필터링된 옵션
   const safeOptions = Array.isArray(options) ? options : [];
-  const filteredOptions = safeOptions.filter(option =>
-    option && (option.label || '').toLowerCase().includes((searchTerm || '').toLowerCase())
+  const optionLabelText = (option) => toDisplayString(option?.label, '');
+  const filteredOptions = safeOptions.filter(
+    (option) =>
+      option &&
+      optionLabelText(option).toLowerCase().includes((searchTerm || '').toLowerCase())
   );
 
   // 선택된 옵션 찾기
@@ -191,7 +195,11 @@ const CustomSelect = ({
         }}
       >
         <span className="custom-select__value">
-          {loading ? '로딩 중...' : selectedOption ? selectedOption.label : placeholder}
+          {loading
+            ? '로딩 중...'
+            : selectedOption
+              ? toDisplayString(selectedOption.label, placeholder)
+              : placeholder}
         </span>
         <span className="custom-select__arrow">
           <ChevronDown size={16} style={{ transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s ease' }} />
@@ -229,7 +237,7 @@ const CustomSelect = ({
                     handleOptionSelect(option.value);
                   }}
                 >
-                  {option.label}
+                  {toDisplayString(option.label, '—')}
                 </div>
               ))
             )}

@@ -11,6 +11,7 @@
  */
 
 import React from 'react';
+import { toDisplayString } from '../../../utils/safeDisplay';
 
 /**
  * 통계 카드 컴포넌트
@@ -76,7 +77,7 @@ const StatCard = ({
           onClick(e);
         }
       } : undefined}
-      title={onClick ? `${label} 상세 보기` : undefined}
+      title={onClick ? `${toDisplayString(label, '')} 상세 보기` : undefined}
       {...domProps}
     >
       {icon && (
@@ -85,11 +86,11 @@ const StatCard = ({
         </div>
       )}
       <div className="mg-dashboard-stat-content">
-        <div className="mg-dashboard-stat-value">{value}</div>
-        <div className="mg-dashboard-stat-label">{label}</div>
-        {change && (
+        <div className="mg-dashboard-stat-value">{toDisplayString(value, '—')}</div>
+        <div className="mg-dashboard-stat-label">{toDisplayString(label, '')}</div>
+        {change != null && change !== '' && (
           <div className={`mg-dashboard-stat-change ${changeType || ''}`.trim()}>
-            {change}
+            {toDisplayString(change, '')}
           </div>
         )}
       </div>

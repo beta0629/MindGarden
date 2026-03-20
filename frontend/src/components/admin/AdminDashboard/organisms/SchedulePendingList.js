@@ -1,5 +1,6 @@
 import React from 'react';
 import MGButton from '../../../common/MGButton';
+import { toDisplayString } from '../../../../utils/safeDisplay';
 import './SchedulePendingList.css';
 
 /**
@@ -23,10 +24,12 @@ const SchedulePendingList = ({ items = [], onScheduleRegister }) => {
         {items.map((item) => (
           <li key={item.id} className="schedule-pending-list__item">
             <div className="schedule-pending-list__info">
-              <span className="schedule-pending-list__name">{item.clientName || '-'}</span>
-              {item.consultantName && (
+              <span className="schedule-pending-list__name">
+                {toDisplayString(item.clientName, '-')}
+              </span>
+              {item.consultantName != null && item.consultantName !== '' && (
                 <span className="schedule-pending-list__consultant">
-                  · {item.consultantName}
+                  · {toDisplayString(item.consultantName, '—')}
                 </span>
               )}
             </div>

@@ -2,6 +2,7 @@ import React from 'react';
 import { ArrowRight } from 'lucide-react';
 import CustomSelect from '../../../common/CustomSelect';
 import MGButton from '../../../common/MGButton';
+import { toDisplayString } from '../../../../utils/safeDisplay';
 import './MatchQueueRow.css';
 
 /**
@@ -33,9 +34,13 @@ const MatchQueueRow = ({
   return (
     <div className="match-queue-row">
       <div className="match-queue-row__client">
-        <div className="match-queue-row__client-name">{clientName}</div>
-        {clientMeta && (
-          <div className="match-queue-row__client-meta">{clientMeta}</div>
+        <div className="match-queue-row__client-name">
+          {toDisplayString(clientName, '—')}
+        </div>
+        {clientMeta != null && clientMeta !== '' && (
+          <div className="match-queue-row__client-meta">
+            {toDisplayString(clientMeta, '')}
+          </div>
         )}
       </div>
       <div className="match-queue-row__arrow" aria-hidden>

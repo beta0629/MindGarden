@@ -7,7 +7,7 @@
  * @since 2025-02-22
  */
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
 import { useResponsive } from '../../hooks/useResponsive';
@@ -17,38 +17,6 @@ import { ADMIN_ROUTES } from '../../constants/adminRoutes';
 import UnifiedLoading from '../common/UnifiedLoading';
 import { getLnbMenus } from '../../utils/menuApi';
 import { getLnbTreeFromResponse, normalizeLnbTree } from '../../utils/lnbMenuUtils';
-
-const LNB_CACHE_PREFIX = 'mg:v2:lnb:menu:';
-
-const normalizeRoleKey = (role) => {
-  const raw = String(role || '').toUpperCase();
-  return raw.startsWith('ROLE_') ? raw.slice(5) : raw;
-};
-
-const getCacheKey = (role) => `${LNB_CACHE_PREFIX}${normalizeRoleKey(role) || 'GUEST'}`;
-
-const loadCachedMenu = (role) => {
-  if (typeof globalThis.window === 'undefined') return null;
-  try {
-    const key = getCacheKey(role);
-    const raw = globalThis.window.sessionStorage.getItem(key);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : null;
-  } catch {
-    return null;
-  }
-};
-
-const saveCachedMenu = (role, menu) => {
-  if (typeof globalThis.window === 'undefined') return;
-  try {
-    const key = getCacheKey(role);
-    globalThis.window.sessionStorage.setItem(key, JSON.stringify(menu));
-  } catch {
-    // 저장 실패 시 무시 (quota 등)
-  }
-};
 
 const AdminCommonLayout = ({
   children,
@@ -69,39 +37,30 @@ const AdminCommonLayout = ({
 
   const getDefaultMenu = () => (userRole === 'CONSULTANT' ? CONSULTANT_MENU_ITEMS : userRole === 'CLIENT' ? CLIENT_MENU_ITEMS : DEFAULT_MENU_ITEMS);
 
-  const [lnbMenuItems, setLnbMenuItems] = useState(() => loadCachedMenu(userRole));
-  const fallbackMenu = useMemo(() => getDefaultMenu(), [userRole]);
+  const [lnbMenuItems, setLnbMenuItems] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
-    const cached = loadCachedMenu(userRole);
-    if (cached && cached.length > 0) {
-      setLnbMenuItems(cached);
-    } else {
-      setLnbMenuItems(fallbackMenu);
-    }
-
+    const fallback = getDefaultMenu();
     getLnbMenus()
       .then((res) => {
         if (cancelled) return;
         const tree = getLnbTreeFromResponse(res);
         if (tree && tree.length > 0) {
-          const normalized = normalizeLnbTree(tree, { userRole });
-          setLnbMenuItems(normalized);
-          saveCachedMenu(userRole, normalized);
+          setLnbMenuItems(normalizeLnbTree(tree, { userRole }));
         } else {
-          setLnbMenuItems((prev) => (prev && prev.length > 0 ? prev : fallbackMenu));
+          setLnbMenuItems(fallback);
         }
       })
       .catch(() => {
         if (!cancelled) {
-          setLnbMenuItems((prev) => (prev && prev.length > 0 ? prev : fallbackMenu));
+          setLnbMenuItems(fallback);
         }
       });
     return () => { cancelled = true; };
-  }, [fallbackMenu, userRole]);
+  }, [userRole]);
 
-  const menuItems = lnbMenuItems !== null ? lnbMenuItems : fallbackMenu;
+  const menuItems = lnbMenuItems !== null ? lnbMenuItems : getDefaultMenu();
 
   const handleLogout = useCallback(async () => {
     try {

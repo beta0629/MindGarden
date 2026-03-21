@@ -1,5 +1,4 @@
 package com.coresolution.core.service.impl;
-import com.coresolution.core.context.TenantContextHolder;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -30,7 +29,6 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @Service
-@Transactional
 public class ErdGenerationServiceImpl implements ErdGenerationService {
     
     private final SchemaService schemaService;
@@ -57,6 +55,7 @@ public class ErdGenerationServiceImpl implements ErdGenerationService {
     private String defaultSchemaName;
     
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public ErdDiagramResponse generateFullSystemErd(String schemaName, String createdBy) {
         log.info("전체 시스템 ERD 생성 시작: schemaName={}", schemaName);
         
@@ -103,6 +102,7 @@ public class ErdGenerationServiceImpl implements ErdGenerationService {
     }
     
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public ErdDiagramResponse generateTenantErd(String tenantId, String schemaName, String createdBy) {
         log.info("테넌트별 ERD 생성 시작: tenantId={}, schemaName={}", tenantId, schemaName);
         
@@ -159,6 +159,7 @@ public class ErdGenerationServiceImpl implements ErdGenerationService {
     }
     
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public ErdDiagramResponse generateModuleErd(String moduleType, String schemaName, String createdBy) {
         log.info("모듈별 ERD 생성 시작: moduleType={}, schemaName={}", moduleType, schemaName);
         
@@ -196,6 +197,7 @@ public class ErdGenerationServiceImpl implements ErdGenerationService {
     }
     
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public ErdDiagramResponse generateCustomErd(List<String> tableNames, String name, 
                                                String description, String schemaName, String createdBy) {
         log.info("커스텀 ERD 생성 시작: tableNames={}, name={}", tableNames, name);
@@ -236,6 +238,7 @@ public class ErdGenerationServiceImpl implements ErdGenerationService {
     }
     
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public ErdDiagramResponse regenerateErd(String diagramId, String schemaName, String updatedBy) {
         log.info("ERD 재생성 시작: diagramId={}", diagramId);
         

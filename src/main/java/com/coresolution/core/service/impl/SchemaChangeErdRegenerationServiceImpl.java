@@ -1,5 +1,4 @@
 package com.coresolution.core.service.impl;
-import com.coresolution.core.context.TenantContextHolder;
 
 import com.coresolution.core.repository.ErdDiagramRepository;
 import com.coresolution.core.repository.TenantRepository;
@@ -9,8 +8,11 @@ import com.coresolution.core.service.SchemaChangeErdRegenerationService;
 import com.coresolution.core.service.SchemaService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
@@ -28,7 +30,6 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class SchemaChangeErdRegenerationServiceImpl implements SchemaChangeErdRegenerationService {
 
     private final SchemaService schemaService;
@@ -36,6 +37,13 @@ public class SchemaChangeErdRegenerationServiceImpl implements SchemaChangeErdRe
     private final TenantRepository tenantRepository;
     private final ErdDiagramRepository erdDiagramRepository;
     private final ErdChangeNotificationService erdChangeNotificationService;
+
+    /**
+     * 동일 클래스 내 호출에서도 REQUIRES_NEW 트랜잭션 경계가 적용되도록 프록시를 통해 호출한다.
+     */
+    @Lazy
+    @Autowired
+    private SchemaChangeErdRegenerationService self;
 
     @Value("${spring.datasource.schema:core_solution}")
     private String defaultSchemaName;
@@ -61,7 +69,7 @@ public class SchemaChangeErdRegenerationServiceImpl implements SchemaChangeErdRe
             // 현재는 항상 재생성하도록 구현 (향후 스키마 스냅샷 비교 로직 추가)
 
             // 전체 시스템 ERD 재생성
-            regenerateFullSystemErd(targetSchema);
+            self.regenerateFullSystemErd(targetSchema);
 
             // 모든 활성 테넌트의 ERD 재생성
             int regeneratedCount = regenerateAllTenantErds(targetSchema);
@@ -77,6 +85,7 @@ public class SchemaChangeErdRegenerationServiceImpl implements SchemaChangeErdRe
     }
 
     @Override
+    @Transactional(propagation = Propagation.REQUIRES_NEW, rollbackFor = Exception.class)
     public boolean regenerateTenantErd(String tenantId, String schemaName) {
         log.info("🔄 테넌트 ERD 재생성 시작: tenantId={}, schemaName={}", tenantId, schemaName);
 
@@ -129,7 +138,7 @@ public class SchemaChangeErdRegenerationServiceImpl implements SchemaChangeErdRe
         int failureCount = 0;
 
         for (String tenantId : activeTenantIds) {
-            if (regenerateTenantErd(tenantId, targetSchema)) {
+            if (self.regenerateTenantErd(tenantId, targetSchema)) {
                 successCount++;
                 
                 // ERD 변경 알림 발송
@@ -161,6 +170,7 @@ public class SchemaChangeErdRegenerationServiceImpl implements SchemaChangeErdRe
     }
 
     @Override
+    @Transactional(propagation = Propagation.REQUIRES_NEW, rollbackFor = Exception.class)
     public boolean regenerateFullSystemErd(String schemaName) {
         log.info("🔄 전체 시스템 ERD 재생성 시작: schemaName={}", schemaName);
 
@@ -231,12 +241,12 @@ public class SchemaChangeErdRegenerationServiceImpl implements SchemaChangeErdRe
         }
 
         // 전체 시스템 ERD도 재생성 (어떤 테이블이든 변경되면)
-        regenerateFullSystemErd(targetSchema);
+        self.regenerateFullSystemErd(targetSchema);
 
         // 영향받는 테넌트의 ERD 재생성
         int regeneratedCount = 0;
         for (String tenantId : affectedTenantIds) {
-            if (regenerateTenantErd(tenantId, targetSchema)) {
+            if (self.regenerateTenantErd(tenantId, targetSchema)) {
                 regeneratedCount++;
                 
                 // 스키마 변경 알림 발송

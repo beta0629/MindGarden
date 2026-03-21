@@ -26,7 +26,6 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Service  // 급여 시스템 데이터 초기화를 위해 활성화
 @RequiredArgsConstructor
-@Transactional
 public class CodeInitializationServiceImpl implements CodeInitializationService {
     
     private final CommonCodeRepository commonCodeRepository;
@@ -34,6 +33,7 @@ public class CodeInitializationServiceImpl implements CodeInitializationService 
     
     @EventListener(ApplicationReadyEvent.class)
     @Order(30) // 다른 초기화 작업보다 먼저 실행
+    @Transactional(rollbackFor = Exception.class)
     public void initialize(ApplicationReadyEvent event) {
         try {
             log.info("🚀 급여 시스템 코드 초기화 시작");

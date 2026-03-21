@@ -9,13 +9,18 @@ import com.coresolution.core.service.OpenAIMonitoringService.AnomalyAnalysisResu
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import javax.sql.DataSource;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -38,6 +43,8 @@ public class AnomalyDetectionService {
     private final SystemMetricRepository systemMetricRepository;
     private final AiAnomalyDetectionRepository anomalyDetectionRepository;
     private final AIMonitoringConfig aiConfig;
+    private final ConfigurableApplicationContext applicationContext;
+    private final DataSource dataSource;
     
     @Autowired(required = false)
     private OpenAIMonitoringService openAIMonitoringService;
@@ -62,17 +69,53 @@ public class AnomalyDetectionService {
      */
     @Scheduled(fixedRate = 300000) // 5분
     public void detectAnomalies() {
+        if (!applicationContext.isActive()) {
+            return;
+        }
+        AtomicBoolean closedResourceWarned = new AtomicBoolean(false);
+        if (!validateDataSourceAvailable(closedResourceWarned)) {
+            return;
+        }
         try {
             log.debug("🔍 이상 탐지 시작");
             
-            detectCpuAnomaly();
-            detectMemoryAnomaly();
-            detectJvmAnomaly();
+            detectCpuAnomaly(closedResourceWarned);
+            detectMemoryAnomaly(closedResourceWarned);
+            detectJvmAnomaly(closedResourceWarned);
             
             log.debug("✅ 이상 탐지 완료");
         } catch (Exception e) {
-            log.error("❌ 이상 탐지 실패", e);
+            handleScheduledDataAccess("이상 탐지", e, closedResourceWarned);
         }
+    }
+
+    private boolean validateDataSourceAvailable(AtomicBoolean closedResourceWarned) {
+        try (Connection ignored = dataSource.getConnection()) {
+            return true;
+        } catch (SQLException e) {
+            handleScheduledDataAccess("이상 탐지(DB 연결 확인)", e, closedResourceWarned);
+            return false;
+        }
+    }
+
+    private void handleScheduledDataAccess(String operation, Throwable e, AtomicBoolean closedResourceWarned) {
+        if (isDataSourceClosedMessage(e)) {
+            if (closedResourceWarned.compareAndSet(false, true)) {
+                log.warn("{} 건너뜀: 애플리케이션 종료 중 DB 리소스가 닫혔습니다.", operation, e);
+            }
+            return;
+        }
+        log.error("{} 실패", operation, e);
+    }
+
+    private boolean isDataSourceClosedMessage(Throwable throwable) {
+        for (Throwable t = throwable; t != null; t = t.getCause()) {
+            String msg = t.getMessage();
+            if (msg != null && msg.toLowerCase().contains("has been closed")) {
+                return true;
+            }
+        }
+        return false;
     }
     
     /**
@@ -80,15 +123,16 @@ public class AnomalyDetectionService {
      * 1단계: 통계 기반 필터링
      * 2단계: 조건 충족 시 AI 분석
      */
-    private void detectCpuAnomaly() {
+    private void detectCpuAnomaly(AtomicBoolean closedResourceWarned) {
         detectAnomalyHybrid("CPU_LOAD", CPU_THRESHOLD, 
-            aiConfig.getHybrid().getStatisticalThreshold().getCpu());
+            aiConfig.getHybrid().getStatisticalThreshold().getCpu(), closedResourceWarned);
     }
     
     /**
      * 하이브리드 이상 탐지 핵심 로직
      */
-    private void detectAnomalyHybrid(String metricType, double criticalThreshold, double aiTriggerThreshold) {
+    private void detectAnomalyHybrid(String metricType, double criticalThreshold, double aiTriggerThreshold,
+            AtomicBoolean closedResourceWarned) {
         try {
             LocalDateTime since = LocalDateTime.now().minusMinutes(10);
             List<SystemMetric> metrics = systemMetricRepository
@@ -164,7 +208,7 @@ public class AnomalyDetectionService {
             }
             
         } catch (Exception e) {
-            log.error("{} 이상 탐지 실패", metricType, e);
+            handleScheduledDataAccess(metricType + " 이상 탐지", e, closedResourceWarned);
         }
     }
     
@@ -290,17 +334,17 @@ public class AnomalyDetectionService {
     /**
      * 메모리 이상 탐지 (하이브리드 방식)
      */
-    private void detectMemoryAnomaly() {
+    private void detectMemoryAnomaly(AtomicBoolean closedResourceWarned) {
         detectAnomalyHybrid("MEMORY_USAGE", MEMORY_THRESHOLD, 
-            aiConfig.getHybrid().getStatisticalThreshold().getMemory());
+            aiConfig.getHybrid().getStatisticalThreshold().getMemory(), closedResourceWarned);
     }
     
     /**
      * JVM 메모리 이상 탐지 (하이브리드 방식)
      */
-    private void detectJvmAnomaly() {
+    private void detectJvmAnomaly(AtomicBoolean closedResourceWarned) {
         detectAnomalyHybrid("JVM_MEMORY", JVM_THRESHOLD, 
-            aiConfig.getHybrid().getStatisticalThreshold().getJvm());
+            aiConfig.getHybrid().getStatisticalThreshold().getJvm(), closedResourceWarned);
     }
     
     /**

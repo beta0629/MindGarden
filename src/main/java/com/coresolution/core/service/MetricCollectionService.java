@@ -4,13 +4,18 @@ import com.coresolution.core.domain.SystemMetric;
 import com.coresolution.core.repository.SystemMetricRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import javax.sql.DataSource;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryMXBean;
 import java.lang.management.OperatingSystemMXBean;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.time.LocalDateTime;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * 메트릭 수집 서비스
@@ -25,25 +30,63 @@ import java.time.LocalDateTime;
 public class MetricCollectionService {
     
     private final SystemMetricRepository systemMetricRepository;
+    private final ConfigurableApplicationContext applicationContext;
+    private final DataSource dataSource;
     
     /**
      * 시스템 메트릭 수집 (1분마다)
      */
     @Scheduled(fixedRate = 60000) // 1분
     public void collectSystemMetrics() {
-        try {
-            collectCpuMetric();
-            collectMemoryMetric();
-            collectJvmMetric();
-        } catch (Exception e) {
-            log.error("메트릭 수집 실패", e);
+        if (!applicationContext.isActive()) {
+            return;
         }
+        AtomicBoolean closedResourceWarned = new AtomicBoolean(false);
+        if (!validateDataSourceAvailable(closedResourceWarned)) {
+            return;
+        }
+        try {
+            collectCpuMetric(closedResourceWarned);
+            collectMemoryMetric(closedResourceWarned);
+            collectJvmMetric(closedResourceWarned);
+        } catch (Exception e) {
+            handleScheduledDataAccess("메트릭 수집", e, closedResourceWarned);
+        }
+    }
+
+    private boolean validateDataSourceAvailable(AtomicBoolean closedResourceWarned) {
+        try (Connection ignored = dataSource.getConnection()) {
+            return true;
+        } catch (SQLException e) {
+            handleScheduledDataAccess("메트릭 수집(DB 연결 확인)", e, closedResourceWarned);
+            return false;
+        }
+    }
+
+    private void handleScheduledDataAccess(String operation, Throwable e, AtomicBoolean closedResourceWarned) {
+        if (isDataSourceClosedMessage(e)) {
+            if (closedResourceWarned.compareAndSet(false, true)) {
+                log.warn("{} 건너뜀: 애플리케이션 종료 중 DB 리소스가 닫혔습니다.", operation, e);
+            }
+            return;
+        }
+        log.error("{} 실패", operation, e);
+    }
+
+    private boolean isDataSourceClosedMessage(Throwable throwable) {
+        for (Throwable t = throwable; t != null; t = t.getCause()) {
+            String msg = t.getMessage();
+            if (msg != null && msg.toLowerCase().contains("has been closed")) {
+                return true;
+            }
+        }
+        return false;
     }
     
     /**
      * CPU 사용률 수집
      */
-    private void collectCpuMetric() {
+    private void collectCpuMetric(AtomicBoolean closedResourceWarned) {
         try {
             OperatingSystemMXBean osBean = ManagementFactory.getOperatingSystemMXBean();
             double cpuLoad = osBean.getSystemLoadAverage();
@@ -62,14 +105,14 @@ public class MetricCollectionService {
                 log.debug("CPU 메트릭 수집: {}", cpuLoad);
             }
         } catch (Exception e) {
-            log.error("CPU 메트릭 수집 실패", e);
+            handleScheduledDataAccess("CPU 메트릭 수집", e, closedResourceWarned);
         }
     }
     
     /**
      * 메모리 사용률 수집
      */
-    private void collectMemoryMetric() {
+    private void collectMemoryMetric(AtomicBoolean closedResourceWarned) {
         try {
             MemoryMXBean memoryBean = ManagementFactory.getMemoryMXBean();
             long usedMemory = memoryBean.getHeapMemoryUsage().getUsed();
@@ -89,14 +132,14 @@ public class MetricCollectionService {
             systemMetricRepository.save(metric);
             log.debug("메모리 메트릭 수집: {}%", String.format("%.2f", memoryUsagePercent));
         } catch (Exception e) {
-            log.error("메모리 메트릭 수집 실패", e);
+            handleScheduledDataAccess("메모리 메트릭 수집", e, closedResourceWarned);
         }
     }
     
     /**
      * JVM 메트릭 수집
      */
-    private void collectJvmMetric() {
+    private void collectJvmMetric(AtomicBoolean closedResourceWarned) {
         try {
             Runtime runtime = Runtime.getRuntime();
             long totalMemory = runtime.totalMemory();
@@ -117,7 +160,7 @@ public class MetricCollectionService {
             systemMetricRepository.save(metric);
             log.debug("JVM 메트릭 수집: {}%", String.format("%.2f", jvmUsagePercent));
         } catch (Exception e) {
-            log.error("JVM 메트릭 수집 실패", e);
+            handleScheduledDataAccess("JVM 메트릭 수집", e, closedResourceWarned);
         }
     }
     

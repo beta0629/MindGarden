@@ -112,7 +112,7 @@
 | 근본 원인 | **A** `SchemaChangeErdRegenerationServiceImpl` **클래스 단일 `@Transactional`** + 테넌트 루프에서 예외 삼킴 → Hibernate 세션 오염·연쇄 `ErdDiagram` assertion. **B/C** 컨텍스트 종료/기동 실패 시 풀 종료 후 `@Scheduled`·리스너가 DB 접근. |
 | 영향 범위 | dev에서 명확; prod도 동일 배치/스케줄 사용 시 동일 패턴 가능. |
 | 권장 수정 요약 | 테넌트·전체시스템 ERD 작업 **`REQUIRES_NEW`** + **self 프록시 호출**; `ErdGenerationServiceImpl` 클래스 트랜잭션 축소; 메트릭/이상탐지 **컨텍스트 active·DataSource 검증**; `CodeInitializationServiceImpl` 클래스 `@Transactional` 제거 후 `initialize`에만 적용. |
-| 코더 반영 커밋 | `224ebc78d` — 추가로 **REQUIRES_NEW 메서드 내부에서 예외를 삼키지 않도록** 루프에서 try/catch (롤백 보장) 보완 커밋 예정. |
+| 코더 반영 커밋 | `224ebc78d`(트랜잭션·스케줄 방어) + `535955b54`(REQUIRES_NEW 내 예외 삼킴 제거·루프에서 catch로 롤백 보장) |
 
 **파일**: `SchemaChangeErdRegenerationServiceImpl`, `ErdGenerationServiceImpl`, `MetricCollectionService`, `AnomalyDetectionService`, `CodeInitializationServiceImpl`
 

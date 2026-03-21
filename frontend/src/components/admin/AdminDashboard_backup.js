@@ -20,7 +20,6 @@ import { sessionManager } from '../../utils/sessionManager';
 import { fetchUserPermissions, PermissionChecks } from '../../utils/permissionUtils';
 import '../../styles/main.css';
 import '../../styles/unified-design-tokens.css';
-import './AdminDashboard.new.css';
 import './system/SystemStatus.css';
 import './system/SystemTools.css';
 

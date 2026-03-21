@@ -11,7 +11,6 @@ import { getStatusLabel } from '../../utils/colorUtils';
 import '../../styles/main.css';
 import '../../styles/unified-design-tokens.css';
 import '../../styles/dashboard-tokens-extension.css';
-import '../../styles/dashboard-common-v3.css';
 import './CommonDashboard.css';
 import { DASHBOARD_DEFAULT_DATA, DASHBOARD_ERROR_MESSAGES } from '../../constants/dashboard';
 import { WIDGET_CONSTANTS } from '../../constants/widgetConstants';

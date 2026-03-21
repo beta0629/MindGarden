@@ -28,7 +28,6 @@ import HealingCard from '../common/HealingCard';
 import '../../styles/unified-design-tokens.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import '../../styles/dashboard-tokens-extension.css';
-import '../../styles/dashboard-common-v3.css';
 import '../../styles/themes/client-theme.css';
 import SafeText from '../common/SafeText';
 import './ClientDashboard.css';

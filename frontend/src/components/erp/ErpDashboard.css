@@ -2,7 +2,7 @@
  * ErpDashboard 전용 스타일
  * 본문 구조는 ContentArea / ContentHeader / ContentKpiRow 및 B0KlA(AdminDashboardB0KlA.css) 사용.
  * 아래 레거시 클래스(erp-*, mg-dashboard-tenant-info 등)는 리팩터링 후 미사용으로 주석 처리.
- * dashboard-common-v3.css 등 공통의 mg-dashboard-layout, mg-dashboard-stats 등은 그대로 유지.
+ * 공통 mg-dashboard-layout, mg-dashboard-stats 등은 dashboard-tokens-extension.css(전역)에서 유지.
  */
 
 /* 터넌트 정보 (subtitle 내 터넌트 텍스트 스타일, 필요 시 사용) */

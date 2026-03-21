@@ -10,7 +10,6 @@
 
 /* ===== Import 공통 스타일 및 테마 ===== */
 @import '../../styles/dashboard-tokens-extension.css';
-@import '../../styles/dashboard-common-v3.css';
 
 /* ===== 공통 대시보드 레이아웃 ===== */
 .mg-dashboard-layout,

@@ -109,9 +109,9 @@
     gap: var(--spacing-xl);
 }
 
-/* management-card 스타일은 glassmorphism.css에서 관리 */
+/* management-card: mindgarden-design-system / MGCard 유틸 참고 */
 
-/* management-card 호버 효과는 glassmorphism.css에서 관리 */
+/* management-card 호버: 디자인 시스템 카드 토큰 사용 */
 
 .management-icon {
     width: 80px;
@@ -287,8 +287,7 @@
     }
     
     .overview-card,
-    /* management-card 반응형 스타일은 glassmorphism.css에서 관리 */
-    
+    .mg-management-card,
     .card-icon,
     .management-icon {
         width: 50px;
@@ -316,8 +315,7 @@
     }
     
     .overview-card,
-    /* management-card 모바일 스타일은 glassmorphism.css에서 관리 */
-    
+    .mg-management-card,
     .card-value {
         font-size: var(--admin-font-huge);
     }

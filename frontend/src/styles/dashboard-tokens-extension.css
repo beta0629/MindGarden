@@ -188,3 +188,337 @@
   --mg-badge-count-text: var(--mg-primary-800);
 }
 
+
+
+/* ===== Merged from dashboard-common-v3.css (standalone file removed) ===== */
+/**
+ * 대시보드 공통 스타일 v3
+ * 
+ * Phase 6: 대시보드 디자인 개선 - 공통 컴포넌트 스타일
+ * 모든 대시보드에서 공통으로 사용되는 스타일 정의
+ * 
+ * 생성일: 2025-12-03
+ * 표준: DESIGN_CENTRALIZATION_STANDARD.md 준수
+ * 네이밍: BEM 규칙 (mg-{component}-{element}--{modifier})
+ */
+
+/* ===== 공통 대시보드 레이아웃 (RESPONSIVE_LAYOUT_SPEC) ===== */
+.mg-dashboard-layout {
+    min-height: 100vh;
+    background: linear-gradient(to bottom, var(--mg-layout-main-bg-start), var(--mg-layout-main-bg-end));
+    padding: var(--mg-layout-section-padding);
+    max-width: var(--mg-container-max);
+    margin: 0 auto;
+}
+
+/* ===== 대시보드 헤더 ===== */
+.mg-dashboard-header {
+    background: var(--mg-bg-card);
+    border-radius: var(--mg-radius-lg);
+    padding: var(--mg-spacing-xl);
+    margin-bottom: var(--mg-spacing-xl);
+    box-shadow: var(--mg-shadow-md);
+}
+
+.mg-dashboard-title {
+    font-size: var(--mg-font-xxl);
+    font-weight: var(--mg-font-bold);
+    color: var(--mg-text-primary);
+    margin: 0;
+}
+
+.mg-dashboard-subtitle {
+    font-size: var(--mg-font-md);
+    color: var(--mg-text-secondary);
+    margin: var(--mg-spacing-xs) 0 0 0;
+}
+
+/* ===== 통계 카드 그리드 (4K 반응형) ===== */
+.mg-dashboard-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(var(--stat-card-min-width, 17.5rem), 1fr));
+    gap: var(--mg-layout-grid-gap);
+    margin-bottom: var(--mg-layout-gap);
+}
+
+/* mg-stats-grid: StatCard 그리드 (ContentSection 내부용) */
+.mg-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--mg-layout-grid-gap, var(--mg-spacing-lg, 1.5rem));
+    width: 100%;
+    min-width: 0;
+    margin: 0;
+}
+
+.mg-stats-grid .mg-dashboard-stat-card {
+    min-width: 0;
+}
+
+/* ===== 통계 카드 ===== */
+.mg-dashboard-stat-card {
+    background: var(--mg-bg-card);
+    border-radius: var(--mg-radius-lg);
+    padding: var(--mg-spacing-xl);
+    box-shadow: var(--mg-shadow-md);
+    transition: all var(--mg-transition-normal) var(--mg-easing);
+    cursor: pointer;
+    border: var(--border-width) solid var(--mg-border-light);
+}
+
+.mg-dashboard-stat-card:hover,
+.mg-stat-card:hover {
+    transform: translateY(calc(var(--spacing-xs) * -1));
+    box-shadow: var(--mg-shadow-xl);
+    border-color: var(--mg-border);
+}
+
+/* 표준화 원칙: 클릭 가능한 통계 카드 스타일 */
+.mg-dashboard-stat-card--clickable {
+    cursor: pointer;
+    transition: all var(--mg-transition-normal) var(--mg-easing);
+}
+
+.mg-dashboard-stat-card--clickable:hover {
+    transform: translateY(calc(var(--spacing-xs) * -1));
+    box-shadow: var(--mg-shadow-xl);
+    border-color: var(--mg-primary-300);
+}
+
+.mg-dashboard-stat-card--clickable:active {
+    transform: translateY(0);
+    box-shadow: var(--mg-shadow-md);
+}
+
+.mg-stat-card-gradient {
+    background: linear-gradient(135deg, var(--mg-primary-500) 0%, var(--mg-primary-700) 100%);
+    color: var(--mg-white);
+}
+
+.mg-stat-card-icon {
+    width: var(--icon-size-lg);
+    height: var(--icon-size-lg);
+    border-radius: var(--mg-radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: var(--mg-spacing-md);
+    font-size: var(--mg-font-xl);
+    background: var(--mg-primary-100);
+    color: var(--mg-primary-600);
+}
+
+.mg-stat-card-gradient .mg-stat-card-icon {
+    background: var(--cs-glass-light);
+    color: var(--mg-white);
+}
+
+.mg-stat-card-value {
+    font-size: var(--mg-font-xxxl);
+    font-weight: var(--mg-font-bold);
+    margin-bottom: var(--mg-spacing-xs);
+    color: var(--mg-text-primary);
+}
+
+.mg-stat-card-gradient .mg-stat-card-value {
+    color: var(--mg-white);
+}
+
+.mg-stat-card-label {
+    font-size: var(--mg-font-md);
+    color: var(--mg-text-secondary);
+    opacity: var(--opacity-hover, 0.9);
+}
+
+.mg-stat-card-gradient .mg-stat-card-label {
+    color: var(--mg-white);
+}
+
+/* ===== 섹션 ===== */
+.mg-dashboard-section {
+    background: var(--mg-bg-card);
+    border-radius: var(--mg-radius-lg);
+    padding: var(--mg-spacing-xl);
+    margin-bottom: var(--mg-spacing-xl);
+    box-shadow: var(--mg-shadow-md);
+    border: var(--border-width) solid var(--mg-border-light);
+}
+
+.mg-section-header {
+    display: flex;
+    align-items: center;
+    gap: var(--mg-spacing-md);
+    margin-bottom: var(--mg-spacing-lg);
+    padding-bottom: var(--mg-spacing-md);
+    border-bottom: var(--border-width-normal) solid var(--mg-border);
+}
+
+.mg-section-title {
+    font-size: var(--mg-font-xl);
+    font-weight: var(--mg-font-semibold);
+    color: var(--mg-text-primary);
+    margin: 0;
+}
+
+.mg-section-subtitle {
+    font-size: var(--mg-font-sm);
+    color: var(--mg-text-secondary);
+    margin: var(--mg-spacing-xs) 0 0 0;
+}
+
+/* ===== 관리 기능 그리드 (4K 반응형) ===== */
+.mg-management-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(var(--management-card-min-width, 17.5rem), 1fr));
+    gap: var(--mg-layout-grid-gap);
+}
+
+.mg-management-card {
+    background: var(--mg-bg-card);
+    border-radius: var(--mg-radius-lg);
+    padding: var(--mg-spacing-xl);
+    border: var(--border-width) solid var(--mg-border);
+    transition: all var(--mg-transition-normal) var(--mg-easing);
+    cursor: pointer;
+}
+
+.mg-management-card:hover {
+    transform: translateY(calc(var(--spacing-xs) * -1));
+    box-shadow: var(--mg-shadow-lg);
+    border-color: var(--mg-primary-500);
+}
+
+.mg-management-icon {
+    width: var(--icon-size-xl);
+    height: var(--icon-size-xl);
+    border-radius: var(--mg-radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: var(--mg-spacing-md);
+    background: var(--mg-primary-100);
+    color: var(--mg-primary-600);
+    font-size: var(--mg-font-xxl);
+}
+
+.mg-management-title {
+    font-size: var(--mg-font-lg);
+    font-weight: var(--mg-font-semibold);
+    color: var(--mg-text-primary);
+    margin-bottom: var(--mg-spacing-sm);
+}
+
+.mg-management-description {
+    font-size: var(--mg-font-sm);
+    color: var(--mg-text-secondary);
+    line-height: 1.5;
+}
+
+/* ===== 등급 배지 ===== */
+.mg-grade-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--mg-spacing-xs);
+    padding: var(--mg-spacing-xs) var(--mg-spacing-md);
+    border-radius: var(--mg-radius-full);
+    font-size: var(--mg-font-xs);
+    font-weight: var(--mg-font-semibold);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* 내담자 등급 배지 */
+.mg-grade-badge--client-bronze {
+    background: var(--mg-grade-client-bronze-light);
+    color: var(--mg-grade-client-bronze-dark);
+}
+
+.mg-grade-badge--client-silver {
+    background: var(--mg-grade-client-silver-light);
+    color: var(--mg-grade-client-silver-dark);
+}
+
+.mg-grade-badge--client-gold {
+    background: var(--mg-grade-client-gold-light);
+    color: var(--mg-grade-client-gold-dark);
+}
+
+.mg-grade-badge--client-platinum {
+    background: var(--mg-grade-client-platinum-light);
+    color: var(--mg-grade-client-platinum-dark);
+}
+
+/* 상담사 등급 배지 */
+.mg-grade-badge--consultant-junior {
+    background: var(--mg-grade-consultant-junior-light);
+    color: var(--mg-grade-consultant-junior-dark);
+}
+
+.mg-grade-badge--consultant-senior {
+    background: var(--mg-grade-consultant-senior-light);
+    color: var(--mg-grade-consultant-senior-dark);
+}
+
+.mg-grade-badge--consultant-expert {
+    background: var(--mg-grade-consultant-expert-light);
+    color: var(--mg-grade-consultant-expert-dark);
+}
+
+.mg-grade-badge--consultant-master {
+    background: var(--mg-grade-consultant-master-light);
+    color: var(--mg-grade-consultant-master-dark);
+}
+
+/* 관리자 등급 배지 */
+.mg-grade-badge--admin-manager {
+    background: var(--mg-grade-admin-manager-light);
+    color: var(--mg-grade-admin-manager-dark);
+}
+
+.mg-grade-badge--admin-director {
+    background: var(--mg-grade-admin-director-light);
+    color: var(--mg-grade-admin-director-dark);
+}
+
+.mg-grade-badge--admin-executive {
+    background: var(--mg-grade-admin-executive-light);
+    color: var(--mg-grade-admin-executive-dark);
+}
+
+.mg-grade-badge--admin-super {
+    background: var(--mg-grade-admin-super-light);
+    color: var(--mg-white);
+}
+
+/* ===== 반응형 (RESPONSIVE_LAYOUT_SPEC) ===== */
+/* 태블릿: mg-stats-grid 2열 */
+@media (max-width: calc(var(--mg-breakpoint-desktop, 1280px) - 1px)) {
+    .mg-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* 모바일: mg-stats-grid 1열 */
+@media (max-width: calc(var(--mg-breakpoint-tablet, 768px) - 1px)) {
+    .mg-dashboard-layout {
+        padding: var(--mg-layout-section-padding-mobile, 16px);
+    }
+
+    .mg-dashboard-stats,
+    .mg-management-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .mg-stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .mg-dashboard-title {
+        font-size: var(--mg-font-xl);
+    }
+
+    .mg-stat-card-value {
+        font-size: var(--mg-font-xxl);
+    }
+}
+

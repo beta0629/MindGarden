@@ -14,7 +14,6 @@ import './AdminDashboard/AdminDashboardB0KlA.css';
 import '../../styles/main.css';
 import '../../styles/unified-design-tokens.css';
 import '../../styles/responsive-layout-tokens.css';
-import '../../styles/dashboard-common-v3.css';
 import '../../styles/themes/admin-theme.css';
 
 const MappingManagement = () => {

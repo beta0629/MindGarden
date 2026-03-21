@@ -94,6 +94,10 @@ import WellnessNotificationDetail from './components/wellness/WellnessNotificati
 import WellnessManagement from './components/admin/WellnessManagement';
 import MindfulnessGuide from './components/wellness/MindfulnessGuide';
 import TenantProfile from './components/tenant/TenantProfile';
+import PgConfigurationList from './components/tenant/PgConfigurationList';
+import PgConfigurationCreate from './components/tenant/PgConfigurationCreate';
+import PgConfigurationDetail from './components/tenant/PgConfigurationDetail';
+import PgConfigurationEdit from './components/tenant/PgConfigurationEdit';
 import AdminLayout from './components/layout/AdminLayout';
 import TenantCommonCodeManager from './components/admin/TenantCommonCodeManager';
 import MenuPermissionManagement from './components/admin/MenuPermissionManagement';
@@ -454,6 +458,12 @@ function AppContent() {
             {/* 테넌트 프로필/설정 라우트 */}
             <Route path="/tenant/profile" element={<TenantProfile />} />
             <Route path="/tenant/settings" element={<TenantProfile />} />
+            {/* PG 설정 라우트 (P1: 단수 경로 리다이렉트) */}
+            <Route path="/tenant/pg-configuration" element={<Navigate to="/tenant/pg-configurations" replace />} />
+            <Route path="/tenant/pg-configurations" element={<PgConfigurationList />} />
+            <Route path="/tenant/pg-configurations/new" element={<PgConfigurationCreate />} />
+            <Route path="/tenant/pg-configurations/:id" element={<PgConfigurationDetail />} />
+            <Route path="/tenant/pg-configurations/:id/edit" element={<PgConfigurationEdit />} />
             
             {/* 온보딩 관련 라우트 */}
             

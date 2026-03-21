@@ -105,7 +105,7 @@ const PgConfigurationList = () => {
     try {
       setLoading(true);
       await deletePgConfiguration(tenantId, selectedConfig.configId);
-      showNotification('PG 설정이 삭제되었습니다.', 'success');
+      notificationManager.success('PG 설정이 삭제되었습니다.');
       setShowDeleteModal(false);
       setSelectedConfig(null);
       loadConfigurations();

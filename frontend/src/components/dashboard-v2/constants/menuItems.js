@@ -64,16 +64,7 @@ const DEFAULT_MENU_ITEMS = [
       { to: '/admin/system-config', icon: Settings, label: '시스템 설정', end: true },
       { to: '/admin/common-codes', icon: FileText, label: '공통코드', end: true },
       { to: ADMIN_ROUTES.PACKAGE_PRICING, icon: Package, label: '패키지 요금 관리', end: true },
-      { to: '/tenant/profile', icon: CreditCard, label: 'PG 설정', end: true }
-    ]
-  },
-  {
-    to: '/admin/statistics',
-    icon: FileText,
-    label: '보고서',
-    end: false,
-    children: [
-      { to: '/admin/statistics', icon: FileText, label: '통계', end: true },
+      { to: '/tenant/profile', icon: CreditCard, label: 'PG 설정', end: true },
       { to: '/admin/compliance', icon: FileText, label: '컴플라이언스', end: true }
     ]
   }

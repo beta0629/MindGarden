@@ -15,7 +15,6 @@ import StatCard from '../ui/Card/StatCard';
 import MGCard from '../common/MGCard';
 import { API_BASE_URL } from '../../constants/api';
 import SystemTools from './system/SystemTools';
-import PermissionManagement from './PermissionManagement';
 import ConsultantRatingStatistics from './ConsultantRatingStatistics';
 import StatisticsDashboard from './StatisticsDashboard';
 import SystemNotificationSection from '../dashboard/SystemNotificationSection';
@@ -1727,40 +1726,6 @@ const AdminDashboard = ({ user: propUser }) => {
                 return canViewMonitoring;
             })() && (
                 <AdminDashboardMonitoring user={propUser || sessionUser} />
-            )}
-
-            {/* 권한 관리 - 지점 수퍼 어드민 이상만 접근 가능 */}
-            {(() => {
-                const user = propUser || sessionUser;
-                const canManagePermissions = RoleUtils.isAdmin(user);
-                console.log('🔍 권한 관리 섹션 렌더링 체크:', {
-                    currentRole: user?.role,
-                    canManagePermissions,
-                    userPermissions
-                });
-                return canManagePermissions;
-            })() && (
-                <div className="mg-v2-card mg-mb-lg">
-                    <div className="mg-flex mg-align-center mg-justify-between">
-                        <div className="mg-flex mg-align-center mg-gap-sm">
-                            <Shield />
-                            <div>
-                                <h3 className="mg-h4 mg-mb-0">
-                                    권한 관리
-                                </h3>
-                                <p className="mg-v2-text-sm mg-v2-color-text-secondary mg-mb-0">
-                                    사용자 권한 설정 및 관리
-                                </p>
-                            </div>
-                        </div>
-                        <button 
-                            className="mg-v2-button mg-v2-button-primary"
-                            onClick={() => navigate('/admin/permissions')}
-                        >
-                            권한 관리하기
-                        </button>
-                    </div>
-                </div>
             )}
 
         </div>

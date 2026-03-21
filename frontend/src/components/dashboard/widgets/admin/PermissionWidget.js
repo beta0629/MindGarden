@@ -120,8 +120,8 @@ const PermissionWidget = ({ widget, user }) => {
       },
       {
         icon: 'ExternalLink',
-        label: '권한 관리',
-        onClick: () => navigate('/admin/permissions')
+        label: '사용자 관리',
+        onClick: () => navigate('/admin/user-management')
       }
     ]
   };
@@ -147,9 +147,8 @@ const PermissionWidget = ({ widget, user }) => {
     return grouped;
   };
 
-  // 고급 권한 설정
-  const handleAdvancedPermissions = () => {
-    navigate('/admin/permissions/advanced');
+  const goUserManagement = () => {
+    navigate('/admin/user-management');
   };
 
   // 권한 상태별 아이콘 결정
@@ -253,8 +252,9 @@ const PermissionWidget = ({ widget, user }) => {
                     {permissions.length > maxItems && (
                       <div className="permission-more">
                         <button 
+                          type="button"
                           className="mg-btn mg-btn-ghost mg-btn-sm"
-                          onClick={() => navigate(`/admin/permissions?category=${encodeURIComponent(category)}`)}
+                          onClick={goUserManagement}
                         >
                           {permissions.length - maxItems}개 더 보기
                         </button>
@@ -265,14 +265,14 @@ const PermissionWidget = ({ widget, user }) => {
               </div>
             ))}
             
-            {/* 고급 설정 버튼 */}
             <div className="permission-actions">
               <button 
+                type="button"
                 className="mg-btn mg-btn-outline mg-btn-sm"
-                onClick={handleAdvancedPermissions}
+                onClick={goUserManagement}
               >
                 <Settings className="btn-icon" />
-                고급 권한 설정
+                사용자 관리로 이동
               </button>
             </div>
           </div>

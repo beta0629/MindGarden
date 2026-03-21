@@ -13,7 +13,6 @@ import SystemTools from './system/SystemTools';
 import ConsultationCompletionStats from './ConsultationCompletionStats';
 import VacationStatistics from './VacationStatistics';
 import ConsultantRatingStatistics from './ConsultantRatingStatistics';
-import PermissionManagement from './PermissionManagement';
 import { useSession } from '../../contexts/SessionContext';
 import '../../styles/main.css';
 import './AdminDashboard.css';
@@ -151,11 +150,6 @@ const NewAdminDashboard = ({ user: propUser }) => {
                         <ConsultantRatingStatistics />
                     </section>
 
-                    {/* 권한 관리 */}
-                    <section className="dashboard-section">
-                        <h2 className="section-title">권한 관리</h2>
-                        <PermissionManagement />
-                    </section>
                 </div>
 
                 {/* 모달들 */}

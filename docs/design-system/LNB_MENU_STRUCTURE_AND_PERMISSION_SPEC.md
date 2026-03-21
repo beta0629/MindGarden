@@ -41,8 +41,9 @@
 | menu_code       | 메뉴명         | menu_path                    | sort_order |
 |-----------------|----------------|------------------------------|------------|
 | ADM_USERS_LIST  | 사용자 관리    | /admin/user-management      | 1          |
-| ADM_PERMISSIONS | 권한 관리      | /admin/permissions           | 2          |
-| ADM_ACCOUNTS    | 계좌 관리      | /admin/accounts              | 3          |
+| ADM_ACCOUNTS    | 계좌 관리      | /admin/accounts              | 2          |
+
+*(제거됨: `ADM_PERMISSIONS` 권한 관리 — DB `is_active=0`, `/admin/permissions` → 사용자 관리 리다이렉트. 마이그레이션 `V20260323_001`.)*
 
 **ADM_ERP (ERP 관리)**  
 | menu_code       | 메뉴명         | menu_path         | sort_order |
@@ -244,8 +245,9 @@ HQ는 역할이 `ADMIN`으로 매핑되며, **menu_location** 또는 **경로 pr
 | ADM_MAPPING     | 매칭 관리     | /admin/mapping-management | NULL        | ADMIN         | true          | ADMIN_ONLY    | Link             | 20         |
 | ADM_USERS       | 사용자/권한   | #                         | NULL        | ADMIN         | true          | ADMIN_ONLY    | Users            | 30         |
 | ADM_USERS_LIST  | 사용자 관리   | /admin/user-management    | ADM_USERS   | ADMIN         | true          | ADMIN_ONLY    | Users            | 1          |
-| ADM_PERMISSIONS | 권한 관리     | /admin/permissions        | ADM_USERS   | ADMIN         | true          | ADMIN_ONLY    | FileText         | 2          |
-| ADM_ACCOUNTS    | 계좌 관리     | /admin/accounts           | ADM_USERS   | ADMIN         | true          | ADMIN_ONLY    | CreditCard       | 3          |
+| ADM_ACCOUNTS    | 계좌 관리     | /admin/accounts           | ADM_USERS   | ADMIN         | true          | ADMIN_ONLY    | CreditCard       | 2          |
+
+> 레거시 `ADM_PERMISSIONS`(권한 관리)는 `V20260323_001`에서 `is_active=0` 처리. 프론트는 `/admin/permissions` → 사용자 관리 리다이렉트.
 | ADM_ERP         | ERP 관리      | /erp/dashboard            | NULL        | ADMIN         | true          | ADMIN_ONLY    | LayoutDashboard  | 40         |
 | (ERP_MAIN 등 기존과 통합 시 위와 같이 서브는 parent = ADM_ERP) |
 | ADM_SETTINGS    | 설정          | #                         | NULL        | ADMIN         | true          | ADMIN_ONLY    | Settings         | 50         |

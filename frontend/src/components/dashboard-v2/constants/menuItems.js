@@ -36,7 +36,6 @@ const DEFAULT_MENU_ITEMS = [
     end: false,
     children: [
       { to: '/admin/user-management', icon: Users, label: '사용자 관리', end: true },
-      { to: '/admin/permissions', icon: FileText, label: '권한 관리', end: true },
       { to: '/admin/accounts', icon: CreditCard, label: '계좌 관리', end: true }
     ]
   },

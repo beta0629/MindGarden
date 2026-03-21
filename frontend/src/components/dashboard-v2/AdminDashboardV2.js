@@ -1940,28 +1940,6 @@ const AdminDashboardV2 = ({ user: propUser }) => {
         <AdminDashboardMonitoring user={propUser || sessionUser} />
       )}
 
-      {/* 권한 관리 */}
-      {!HIDE_DASHBOARD_MENUS && RoleUtils.isAdmin(propUser || sessionUser) && (
-        <div className="mg-v2-card mg-mb-lg">
-          <div className="mg-flex mg-align-center mg-justify-between">
-            <div className="mg-flex mg-align-center mg-gap-sm">
-              <FaShieldAlt />
-              <div>
-                <h3 className="mg-h4 mg-mb-0">권한 관리</h3>
-                <p className="mg-v2-text-sm mg-v2-color-text-secondary mg-mb-0">
-                  사용자 권한 설정 및 관리
-                </p>
-              </div>
-            </div>
-            <button
-              className="mg-v2-button mg-v2-button-primary"
-              onClick={() => navigate('/admin/permissions')}
-            >
-              권한 관리하기
-            </button>
-          </div>
-        </div>
-      )}
     </ContentArea>
   );
 

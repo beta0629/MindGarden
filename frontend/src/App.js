@@ -67,7 +67,6 @@ import NotificationTest from './components/test/NotificationTest';
 import PaymentTest from './components/test/PaymentTest';
 // IntegrationTest는 현재 사용되지 않음
 import AccountManagement from './components/admin/AccountManagement';
-import PermissionManagement from './components/admin/PermissionManagement';
 import ConsultationHistory from './components/consultation/ConsultationHistory';
 import ConsultationReport from './components/consultation/ConsultationReport';
 import ComplianceMenu from './components/compliance/ComplianceMenu';
@@ -100,8 +99,6 @@ import PgConfigurationDetail from './components/tenant/PgConfigurationDetail';
 import PgConfigurationEdit from './components/tenant/PgConfigurationEdit';
 import AdminLayout from './components/layout/AdminLayout';
 import TenantCommonCodeManager from './components/admin/TenantCommonCodeManager';
-import MenuPermissionManagement from './components/admin/MenuPermissionManagement';
-import PermissionGroupManagement from './components/admin/PermissionGroupManagement';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import SessionGuard from './components/common/SessionGuard';
 import { SessionProvider, useSession } from './contexts/SessionContext';
@@ -389,12 +386,8 @@ function AppContent() {
             <Route path="/consultant/consultation-record/:consultationId" element={<ConsultationRecordScreen />} />
             <Route path="/consultant/consultation-record-view/:recordId" element={<ConsultationRecordView />} />
             
-            {/* 권한 관리 (ADMIN 전용) */}
-            <Route path="/admin/permissions" element={
-              <ProtectedRoute requiredRoles={[USER_ROLES.ADMIN]}>
-                <PermissionManagement />
-              </ProtectedRoute>
-            } />
+            {/* 권한 관리 화면 제거: 역할·권한은 사용자 관리에서 처리 */}
+            <Route path="/admin/permissions" element={<Navigate to="/admin/user-management" replace />} />
             
             {/* 관리자 전용 메뉴 시스템 (관리자·스태프 역할 접근, ERP는 STAFF 제외) */}
             <Route
@@ -410,8 +403,8 @@ function AppContent() {
               <Route path="package-pricing/new" element={<PackagePricingDetailPage isNew />} />
               <Route path="package-pricing/:id" element={<PackagePricingDetailPage />} />
               <Route path="package-pricing" element={<PackagePricingListPage />} />
-              <Route path="menu-permissions" element={<MenuPermissionManagement />} />
-              <Route path="permission-groups" element={<PermissionGroupManagement />} />
+              <Route path="menu-permissions" element={<Navigate to="/admin/user-management" replace />} />
+              <Route path="permission-groups" element={<Navigate to="/admin/user-management" replace />} />
               {/* 추후 추가될 관리자 페이지들 */}
             </Route>
             

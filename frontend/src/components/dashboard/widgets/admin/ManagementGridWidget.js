@@ -18,7 +18,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Users, User, Link2, Calendar, Settings, 
-  BarChart, Shield, Database, Bell, 
+  BarChart, Database, Bell, 
   Building, MapPin, UserCog, Cog, FileText
 } from 'lucide-react';
 import { ADMIN_ROUTES } from '../../../../constants/adminRoutes';
@@ -121,14 +121,6 @@ const ManagementGridWidget = ({ widget, user }) => {
       icon: <Bell size={24} />,
       url: ADMIN_ROUTES.NOTIFICATIONS,
       color: 'pink'
-    },
-    {
-      id: 'permissions',
-      title: '권한 관리',
-      description: '사용자 권한을 관리합니다',
-      icon: <Shield size={24} />,
-      url: '/admin/permissions',
-      color: 'emerald'
     },
     {
       id: 'dashboards',

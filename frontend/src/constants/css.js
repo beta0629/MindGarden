@@ -61,7 +61,8 @@ export const COMMON_CSS_CLASSES = {
 };
 
 export const ACCOUNT_CSS_CLASSES = {
-  ACCOUNT_MANAGEMENT: 'account-management',
+  ACCOUNT_MANAGEMENT: 'mg-v2-account-management',
+  ACCOUNT_LIST_SECTION: 'mg-v2-account-management__list-section',
   ACCOUNT_HEADER: 'account-header',
   ACCOUNT_LIST: 'account-list',
   

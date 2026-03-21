@@ -6,7 +6,6 @@ import { createApiUrl } from './environment';
 
 export const ACCOUNT_API_ENDPOINTS = {
   BASE: createApiUrl('/api/v1/accounts'),
-  // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
   ACTIVE: createApiUrl('/api/v1/accounts/active'),
   BANKS: createApiUrl('/api/v1/accounts/banks'),
   STATISTICS: createApiUrl('/api/v1/accounts/statistics'),
@@ -28,16 +27,12 @@ export const HTTP_HEADERS = {
 };
 
 export const ACCOUNT_STATUS = {
-  // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
   ACTIVE: 'active',
-  // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
   INACTIVE: 'inactive'
 };
 
 export const ACCOUNT_STATUS_LABELS = {
-  // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
   ACTIVE: '활성',
-  // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
   INACTIVE: '비활성'
 };
 
@@ -97,7 +92,6 @@ export const ACCOUNT_MESSAGES = {
   SUCCESS: {
     CREATED: '계좌가 등록되었습니다.',
     UPDATED: '계좌가 수정되었습니다.',
-    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     DELETED: '계좌가 삭제되었습니다.',
     STATUS_CHANGED: '계좌 상태가 변경되었습니다.',
     PRIMARY_SET: '기본 계좌로 설정되었습니다.'
@@ -139,4 +133,15 @@ export const ACCOUNT_PAGE_TITLES = {
   MAIN: '계좌 관리',
   CREATE: '계좌 등록',
   EDIT: '계좌 수정'
+};
+
+/** 목록 영역(B0KlA 섹션) 제목 */
+export const ACCOUNT_SECTION_TITLES = {
+  REGISTERED_LIST: '등록된 계좌'
+};
+
+/** 계좌 목록이 비었을 때 안내 */
+export const ACCOUNT_EMPTY_STATE = {
+  TITLE: '등록된 계좌가 없습니다',
+  DESCRIPTION: '상단의 계좌 등록 버튼으로 정산·입금 안내에 사용할 계좌를 추가해 주세요.'
 };

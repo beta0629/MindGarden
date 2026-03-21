@@ -1,17 +1,27 @@
-import React from 'react';
 import UnifiedLoading from '../../common/UnifiedLoading';
 import MGCard from '../../common/MGCard';
 import MGButton from '../../common/MGButton';
-import { 
-  ACCOUNT_CSS_CLASSES 
-} from '../../../constants/css';
-import { 
+import { ACCOUNT_CSS_CLASSES } from '../../../constants/css';
+import {
   ACCOUNT_STATUS_LABELS,
   ACCOUNT_PRIMARY_LABELS,
   ACCOUNT_BUTTON_TEXT,
-  ACCOUNT_TABLE_COLUMNS
+  ACCOUNT_TABLE_COLUMNS,
+  ACCOUNT_EMPTY_STATE
 } from '../../../constants/account';
+import { toDisplayString } from '../../../utils/safeDisplay';
 import './AccountTable.css';
+
+const formatCreatedAt = (createdAt) => {
+  if (createdAt == null || createdAt === '') {
+    return '—';
+  }
+  const d = new Date(createdAt);
+  if (Number.isNaN(d.getTime())) {
+    return '—';
+  }
+  return d.toLocaleDateString('ko-KR');
+};
 
 const AccountTable = ({
   accounts,
@@ -24,7 +34,7 @@ const AccountTable = ({
   if (loading) {
     return (
       <div className={ACCOUNT_CSS_CLASSES.ACCOUNT_LIST}>
-        <UnifiedLoading 
+        <UnifiedLoading
           type="inline"
           text={ACCOUNT_BUTTON_TEXT.PROCESSING}
           variant="pulse"
@@ -33,75 +43,68 @@ const AccountTable = ({
     );
   }
 
+  if (!accounts.length) {
+    return (
+      <div className={ACCOUNT_CSS_CLASSES.ACCOUNT_LIST}>
+        <div className="mg-v2-account-list-empty" role="status">
+          <p className="mg-v2-account-list-empty__title">{ACCOUNT_EMPTY_STATE.TITLE}</p>
+          <p className="mg-v2-account-list-empty__desc">{ACCOUNT_EMPTY_STATE.DESCRIPTION}</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={ACCOUNT_CSS_CLASSES.ACCOUNT_LIST}>
       <div className="mg-v2-account-cards-grid">
-        {accounts.map(account => (
+        {accounts.map((account) => (
           <MGCard key={account.id} variant="default" className="account-card">
-            {/* 카드 헤더 */}
             <div className="account-card__header">
-              <h3 className="account-card__title">
-                {account.bankName}
-              </h3>
+              <h3 className="account-card__title">{toDisplayString(account.bankName)}</h3>
               {account.isPrimary && (
-                <span className="primary-badge">
-                  {ACCOUNT_PRIMARY_LABELS.TRUE}
-                </span>
+                <span className="primary-badge">{ACCOUNT_PRIMARY_LABELS.TRUE}</span>
               )}
             </div>
-            
-            {/* 카드 본문 */}
+
             <div className="account-card__content">
               <div className="account-card__field">
-                <span className="account-card__label">
-                  {ACCOUNT_TABLE_COLUMNS.ACCOUNT_NUMBER}
-                </span>
+                <span className="account-card__label">{ACCOUNT_TABLE_COLUMNS.ACCOUNT_NUMBER}</span>
                 <span className="account-card__value">
-                  {account.accountNumber}
+                  {toDisplayString(account.accountNumber)}
                 </span>
               </div>
-              
+
               <div className="account-card__field">
-                <span className="account-card__label">
-                  {ACCOUNT_TABLE_COLUMNS.ACCOUNT_HOLDER}
-                </span>
+                <span className="account-card__label">{ACCOUNT_TABLE_COLUMNS.ACCOUNT_HOLDER}</span>
                 <span className="account-card__value">
-                  {account.accountHolder}
+                  {toDisplayString(account.accountHolder)}
                 </span>
               </div>
-              
-              {account.branchId && (
+
+              {account.branchId ? (
                 <div className="account-card__field">
-                  <span className="account-card__label">
-                    {ACCOUNT_TABLE_COLUMNS.BRANCH_ID}
-                  </span>
-                  <span className="account-card__value">
-                    {account.branchId}
-                  </span>
+                  <span className="account-card__label">{ACCOUNT_TABLE_COLUMNS.BRANCH_ID}</span>
+                  <span className="account-card__value">{account.branchId}</span>
                 </div>
-              )}
-              
+              ) : null}
+
               <div className="account-card__field">
-                <span className="account-card__label">
-                  {ACCOUNT_TABLE_COLUMNS.STATUS}
-                </span>
-                <span className={`account-card__status ${account.isActive ? 'active' : 'inactive'}`}>
-                  // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
+                <span className="account-card__label">{ACCOUNT_TABLE_COLUMNS.STATUS}</span>
+                <span
+                  className={`account-card__status ${account.isActive ? 'active' : 'inactive'}`}
+                >
                   {account.isActive ? ACCOUNT_STATUS_LABELS.ACTIVE : ACCOUNT_STATUS_LABELS.INACTIVE}
                 </span>
               </div>
-              
+
               <div className="account-card__field">
-                <span className="account-card__label">
-                  {ACCOUNT_TABLE_COLUMNS.CREATED_AT}
-                </span>
+                <span className="account-card__label">{ACCOUNT_TABLE_COLUMNS.CREATED_AT}</span>
                 <span className="account-card__value account-card__value--secondary">
-                  {new Date(account.createdAt).toLocaleDateString()}
+                  {formatCreatedAt(account.createdAt)}
                 </span>
               </div>
             </div>
-            
-            {/* 카드 액션 (버튼 가로 배치) */}
+
             <div className="account-card__actions">
               <MGButton
                 variant="secondary"

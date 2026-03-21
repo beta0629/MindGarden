@@ -3,6 +3,28 @@
  * 표준화 원칙 준수: 인라인 스타일 금지, CSS 변수 사용
  */
 
+.mg-v2-account-list-empty {
+  padding: var(--spacing-xl) var(--spacing-md);
+  text-align: center;
+  border-radius: var(--border-radius-md);
+  background-color: var(--color-bg-secondary);
+  border: 1px dashed var(--color-border-light);
+}
+
+.mg-v2-account-list-empty__title {
+  margin: 0 0 var(--spacing-sm);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.mg-v2-account-list-empty__desc {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  line-height: var(--line-height-relaxed, 1.5);
+}
+
 /* 카드 그리드 */
 .mg-v2-account-cards-grid {
   display: grid;

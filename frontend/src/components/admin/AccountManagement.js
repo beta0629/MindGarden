@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import notificationManager from '../../utils/notification';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import ContentArea from '../dashboard-v2/content/ContentArea';
@@ -10,13 +10,14 @@ import './AccountManagement.css';
 import AccountForm from './components/AccountForm';
 import AccountTable from './components/AccountTable';
 import { ACCOUNT_CSS_CLASSES } from '../../constants/css';
-import { 
-  ACCOUNT_API_ENDPOINTS, 
-  HTTP_METHODS, 
+import {
+  ACCOUNT_API_ENDPOINTS,
+  HTTP_METHODS,
   HTTP_HEADERS,
   ACCOUNT_BUTTON_TEXT,
   ACCOUNT_MESSAGES,
-  ACCOUNT_PAGE_TITLES
+  ACCOUNT_PAGE_TITLES,
+  ACCOUNT_SECTION_TITLES
 } from '../../constants/account';
 
 const FETCH_CREDENTIALS = 'include';
@@ -56,7 +57,6 @@ const AccountManagement = () => {
   const loadAccounts = async() => {
     try {
       setLoading(true);
-      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       const response = await fetch(ACCOUNT_API_ENDPOINTS.ACTIVE, {
         credentials: FETCH_CREDENTIALS
       });
@@ -152,7 +152,6 @@ const AccountManagement = () => {
 
       if (response.ok) {
         await loadAccounts();
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         notificationManager.show(ACCOUNT_MESSAGES.SUCCESS.DELETED, 'success');
       } else {
         notificationManager.show(ACCOUNT_MESSAGES.ERROR.DELETE_FAILED, 'error');
@@ -258,26 +257,33 @@ const AccountManagement = () => {
               titleId="account-management-page-title"
             />
 
-        <AccountForm
-          showForm={ showForm }
-          editingAccount={ editingAccount }
-          formData={ formData }
-          banks={ banks }
-          loading={ loading }
-          onClose={ resetForm }
-          onSubmit={ handleSubmit }
-          onBankChange={ handleBankChange }
-          onFormDataChange={ handleFormDataChange }
-        />
+            <AccountForm
+              showForm={showForm}
+              editingAccount={editingAccount}
+              formData={formData}
+              loading={loading}
+              onClose={resetForm}
+              onSubmit={handleSubmit}
+              onBankChange={handleBankChange}
+              onFormDataChange={handleFormDataChange}
+            />
 
-        <AccountTable
-          accounts={ accounts }
-          loading={ loading }
-          onEdit={ handleEdit }
-          onDelete={ handleDelete }
-          onToggleStatus={ handleToggleStatus }
-          onSetPrimary={ handleSetPrimary }
-        />
+            <section
+              className={`mg-v2-ad-b0kla__card ${ACCOUNT_CSS_CLASSES.ACCOUNT_LIST_SECTION}`}
+              aria-labelledby="account-registered-list-title"
+            >
+              <h2 id="account-registered-list-title" className="mg-v2-ad-b0kla__section-title">
+                {ACCOUNT_SECTION_TITLES.REGISTERED_LIST}
+              </h2>
+              <AccountTable
+                accounts={accounts}
+                loading={loading}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+                onToggleStatus={handleToggleStatus}
+                onSetPrimary={handleSetPrimary}
+              />
+            </section>
           </ContentArea>
         </div>
       </div>

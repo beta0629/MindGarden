@@ -417,7 +417,6 @@ const PgConfigurationList = () => {
                       <span>거부됨: {config.rejectionReason}</span>
                     </div>
                   )}
-                  </div>
                 </div>
               </div>
             ))}

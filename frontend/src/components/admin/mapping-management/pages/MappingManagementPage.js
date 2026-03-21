@@ -417,10 +417,11 @@ const MappingManagementPage = () => {
   return (
     <div className="mg-v2-ad-b0kla mg-v2-mapping-management">
       <div className="mg-v2-ad-b0kla__container">
-        <ContentArea>
+        <ContentArea ariaLabel="매칭 관리 본문">
           <ContentHeader
             title="매칭 관리"
             subtitle="상담사와 내담자 간의 매칭을 관리합니다."
+            titleId="mapping-management-title"
             actions={
               <button
                 type="button"
@@ -433,6 +434,7 @@ const MappingManagementPage = () => {
             }
           />
 
+          <main aria-labelledby="mapping-management-title">
           <MappingSearchSection
             searchValue={searchTerm}
             onSearchChange={setSearchTerm}
@@ -459,6 +461,7 @@ const MappingManagementPage = () => {
             onApprove={handleApproveMapping}
             onCreateClick={() => setShowCreateModal(true)}
           />
+          </main>
         </ContentArea>
       </div>
 

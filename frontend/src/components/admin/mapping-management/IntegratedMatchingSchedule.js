@@ -19,7 +19,9 @@ import ScheduleModal from '../../schedule/ScheduleModal';
 import MappingCreationModal from '../MappingCreationModal';
 import MappingPaymentModal from '../mapping/MappingPaymentModal';
 import MappingDepositModal from '../mapping/MappingDepositModal';
-import { ActionButton } from '../../common';
+import ContentArea from '../../dashboard-v2/content/ContentArea';
+import ContentHeader from '../../dashboard-v2/content/ContentHeader';
+import MGButton from '../../common/MGButton';
 import MappingScheduleCard from './integrated-schedule/organisms/MappingScheduleCard';
 import '../../../styles/unified-design-tokens.css';
 import '../AdminDashboard/AdminDashboardB0KlA.css';
@@ -234,23 +236,32 @@ const IntegratedMatchingSchedule = () => {
     setPreFilledMapping(null);
   };
 
-  return (
-    <div className="integrated-schedule">
-      <header className="integrated-schedule__header">
-        <h1 className="integrated-schedule__title">통합 스케줄링 센터</h1>
-        <ActionButton
-          variant="primary"
-          size="medium"
-          onClick={() => setCreateMappingModalOpen(true)}
-          aria-label="신규 매칭 생성"
-          className="integrated-schedule__btn-new-mapping"
-        >
-          <UserPlus size={18} />
-          신규 매칭
-        </ActionButton>
-      </header>
+  const headerActions = (
+    <MGButton
+      variant="primary"
+      size="medium"
+      onClick={() => setCreateMappingModalOpen(true)}
+      aria-label="신규 매칭 생성"
+      className="integrated-schedule__btn-new-mapping"
+      preventDoubleClick={false}
+    >
+      <UserPlus size={18} aria-hidden />
+      신규 매칭
+    </MGButton>
+  );
 
-      <div className="integrated-schedule__content">
+  return (
+    <div className="mg-v2-ad-b0kla integrated-schedule integrated-schedule--b0kla">
+      <div className="mg-v2-ad-b0kla__container">
+        <ContentArea ariaLabel="통합 스케줄링 센터">
+          <ContentHeader
+            title="통합 스케줄링"
+            subtitle="매칭 목록과 캘린더에서 예약을 연계해 한 화면에서 관리합니다."
+            actions={headerActions}
+            titleId="integrated-schedule-page-title"
+          />
+
+          <div className="integrated-schedule__content">
         <aside className="integrated-schedule__sidebar">
           <h2 className="integrated-schedule__sidebar-title">매칭 목록</h2>
           <fieldset className="integrated-schedule__filter" aria-label="매칭 목록 보기 필터">
@@ -381,6 +392,8 @@ const IntegratedMatchingSchedule = () => {
             onDropFromExternal={handleDropFromExternal}
           />
         </main>
+          </div>
+        </ContentArea>
       </div>
 
       {scheduleModalOpen && (

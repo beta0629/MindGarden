@@ -2,6 +2,9 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Calendar, Link2, Plus, Users, CheckCircle, TrendingUp, Clock, Zap } from 'lucide-react';
 import { apiGet, apiPost, apiPut } from '../../utils/ajax';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
+import ContentArea from '../dashboard-v2/content/ContentArea';
+import ContentHeader from '../dashboard-v2/content/ContentHeader';
+import MGButton from '../common/MGButton';
 import UnifiedLoading from '../common/UnifiedLoading';
 import notificationManager from '../../utils/notification';
 import StatCard from '../ui/Card/StatCard';
@@ -17,6 +20,7 @@ import SafeText from '../common/SafeText';
 import { toDisplayString } from '../../utils/safeDisplay';
 import { getFormattedContact, getFormattedConsultationCount, getFormattedRegistrationDate, getMappingStatusKoreanNameSync } from '../../utils/codeHelper';
 import '../../styles/unified-design-tokens.css';
+import './AdminDashboard/AdminDashboardB0KlA.css';
 
 /**
  * 회기 관리 컴포넌트 - 완전 재설계
@@ -281,19 +285,15 @@ const SessionManagement = () => {
 
     return (
         <AdminCommonLayout title="회기 관리" loading={loading && clients.length === 0} loadingText="데이터를 불러오는 중...">
-            <div className="mg-dashboard-layout">
-                {/* Dashboard Header */}
-                <div className="mg-dashboard-header">
-                    <div className="mg-dashboard-header-content">
-                        <div className="mg-dashboard-header-left">
-                            <Calendar size={32} />
-                            <div>
-                                <h1 className="mg-dashboard-title">회기 관리</h1>
-                                <p className="mg-dashboard-subtitle">상담 회기 추가 및 관리</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            <div className="mg-v2-ad-b0kla mg-v2-session-management">
+                <div className="mg-v2-ad-b0kla__container">
+                    <ContentArea ariaLabel="회기 관리 본문">
+                        <ContentHeader
+                            title="회기 관리"
+                            subtitle="상담 회기 추가 및 관리"
+                            titleId="session-management-title"
+                        />
+                        <main aria-labelledby="session-management-title" className="mg-dashboard-layout">
 
                 {/* 통계 카드 그리드 */}
                 <div className="mg-dashboard-stats">
@@ -385,10 +385,11 @@ const SessionManagement = () => {
                                                     </div>
                                                 </div>
                                             </div>
-                                            <button className="mg-button" 
+                                            <MGButton
                                                 variant="primary"
                                                 size="small"
                                                 className="mg-v2-quick-add-button"
+                                                preventDoubleClick={false}
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     handleQuickAdd(mapping);
@@ -396,7 +397,7 @@ const SessionManagement = () => {
                                             >
                                                 <Plus size={16} />
                                                 회기 추가
-                                            </button>
+                                            </MGButton>
                                         </div>
                                     );
                                 })}
@@ -424,8 +425,8 @@ const SessionManagement = () => {
                                         value={searchTerm}
                                         onChange={(e) => setSearchTerm(e.target.value)}
                                     />
-                                    <button className="mg-button" 
-                                        variant="primary" 
+                                    <MGButton
+                                        variant="primary"
                                         size="medium"
                                         onClick={() => {
                                             console.log('검색 실행');
@@ -435,7 +436,7 @@ const SessionManagement = () => {
                                     >
                                         <Users size={16} />
                                         검색
-                                    </button>
+                                    </MGButton>
                                 </div>
                                 
                                 <div className="mg-v2-search-results">
@@ -462,11 +463,12 @@ const SessionManagement = () => {
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <button className="mg-button" 
+                                                <MGButton
                                                     variant="success"
                                                     size="small"
                                                     disabled={clientMappings.length === 0}
                                                     title={toDisplayString(clientMappings.length === 0 ? '활성 매핑이 없습니다' : '')}
+                                                    preventDoubleClick={false}
                                                     onClick={() => {
                                                         if (clientMappings.length > 0) {
                                                             handleQuickAdd(clientMappings[0]);
@@ -475,7 +477,7 @@ const SessionManagement = () => {
                                                 >
                                                     <Plus size={14} />
                                                     회기 추가
-                                                </button>
+                                                </MGButton>
                                             </div>
                                         );
                                     })}
@@ -531,18 +533,17 @@ const SessionManagement = () => {
                                                     </div>
                                                 </div>
                                                 <div className="mg-v2-mapping-card-actions">
-                                                    <button className="mg-button"
+                                                    <MGButton
                                                         variant="primary"
                                                         size="small"
                                                         onClick={() => handleQuickAdd(mapping)}
-                                                        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                                                         disabled={mapping.status !== 'ACTIVE'}
-                                                        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                                                         title={toDisplayString(mapping.status !== 'ACTIVE' ? '활성 상태가 아닙니다' : '')}
+                                                        preventDoubleClick={false}
                                                     >
                                                         <Plus size={14} />
                                                         회기 추가
-                                                    </button>
+                                                    </MGButton>
                                                 </div>
                                             </div>
                                         ))}
@@ -603,7 +604,7 @@ const SessionManagement = () => {
                                     // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                                     {request.status === 'PENDING' && (
                                         <div className="mg-v2-request-actions">
-                                            <button className="mg-button" 
+                                            <MGButton
                                                 variant="success"
                                                 size="small"
                                                 loading={confirmingPayment}
@@ -613,8 +614,8 @@ const SessionManagement = () => {
                                                 clickDelay={2000}
                                             >
                                                 입금 확인
-                                            </button>
-                                            <button className="mg-button" 
+                                            </MGButton>
+                                            <MGButton
                                                 variant="danger"
                                                 size="small"
                                                 loading={rejectingRequest}
@@ -624,13 +625,13 @@ const SessionManagement = () => {
                                                 clickDelay={1000}
                                             >
                                                 거부
-                                            </button>
+                                            </MGButton>
                                         </div>
                                     )}
                                     
                                     {request.status === 'PAYMENT_CONFIRMED' && (
                                         <div className="mg-v2-request-actions">
-                                            <button className="mg-button" 
+                                            <MGButton
                                                 variant="primary"
                                                 size="small"
                                                 loading={confirmingPayment}
@@ -640,8 +641,8 @@ const SessionManagement = () => {
                                                 clickDelay={2000}
                                             >
                                                 관리자 승인
-                                            </button>
-                                            <button className="mg-button" 
+                                            </MGButton>
+                                            <MGButton
                                                 variant="danger"
                                                 size="small"
                                                 loading={rejectingRequest}
@@ -651,7 +652,7 @@ const SessionManagement = () => {
                                                 clickDelay={1000}
                                             >
                                                 거부
-                                            </button>
+                                            </MGButton>
                                         </div>
                                     )}
                                 </div>
@@ -673,6 +674,9 @@ const SessionManagement = () => {
                     mapping={selectedMapping}
                     onSessionExtensionRequested={handleSessionExtensionRequested}
                 />
+                        </main>
+                    </ContentArea>
+                </div>
             </div>
         </AdminCommonLayout>
     );

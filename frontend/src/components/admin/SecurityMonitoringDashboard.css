@@ -1,7 +1,19 @@
 /* 보안 모니터링 대시보드 스타일 */
+.security-monitoring-dashboard__header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mg-space-2, var(--spacing-md));
+}
+
 .security-monitoring-dashboard {
-  min-height: 100vh;
+  min-height: 0;
   background: var(--color-background-primary);
+}
+
+.page-header--compact {
+  padding: var(--spacing-md) var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
 }
 
 /* 페이지 헤더 */

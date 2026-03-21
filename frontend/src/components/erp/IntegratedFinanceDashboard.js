@@ -12,6 +12,8 @@ import StandardizedApi from '../../utils/standardizedApi';
 import { RoleUtils, USER_ROLES } from '../../constants/roles';
 import { COMMON_CSS_CLASSES } from '../../constants/css';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
+import ContentArea from '../dashboard-v2/content/ContentArea';
+import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import { ERP_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import FinancialTransactionForm from './FinancialTransactionForm';
 import QuickExpenseForm from './QuickExpenseForm';
@@ -43,9 +45,12 @@ import {
   ChevronRight
 } from 'lucide-react';
 import '../../styles/main.css';
+import '../../styles/unified-design-tokens.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ErpCommon.css';
 import './IntegratedFinanceDashboard.css';
+
+const INTEGRATED_FINANCE_TITLE_ID = 'integrated-finance-title';
 
 // 공통 유틸리티 함수들
 const formatCurrency = (amount) => {
@@ -364,65 +369,71 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
 
   if (error) {
     return (
-      <div className="error-container">
-        <SafeErrorDisplay error={error} variant="inline" prefix="오류: " />
-      </div>
+      <AdminCommonLayout title="수입·지출 관리">
+        <div className="mg-dashboard-layout mg-v2-ad-b0kla">
+          <div className="mg-v2-ad-b0kla__container">
+            <ContentArea ariaLabel="수입·지출 관리 본문">
+              <ContentHeader
+                title="수입·지출 관리"
+                subtitle="거래·손익·정산을 한곳에서"
+                titleId={INTEGRATED_FINANCE_TITLE_ID}
+              />
+              <main aria-labelledby={INTEGRATED_FINANCE_TITLE_ID} className="mg-dashboard-content">
+                <div className="error-container">
+                  <SafeErrorDisplay error={error} variant="inline" prefix="오류: " />
+                </div>
+              </main>
+            </ContentArea>
+          </div>
+        </div>
+      </AdminCommonLayout>
     );
   }
 
   return (
     <AdminCommonLayout title="수입·지출 관리">
       <div className="mg-dashboard-layout mg-v2-ad-b0kla">
-        {/* Dashboard Header */}
-        <div className="mg-dashboard-header">
-          <div className="mg-dashboard-header-content">
-            <div className="mg-dashboard-header-left">
-              <BarChart3 size={32} />
-              <div>
-                <h1 className="mg-dashboard-title">수입·지출 관리</h1>
-                <p className="mg-dashboard-subtitle">
-                  거래·손익·정산을 한곳에서
-                </p>
-              </div>
-            </div>
-            <div className="mg-dashboard-header-right">
-              <MGButton
-                variant="danger"
-                size="small"
-                onClick={() => setShowQuickExpenseForm(true)}
-                title="빠른 지출"
-                className="mg-dashboard-icon-btn"
-              >
-                <TrendingDown size={18} />
-              </MGButton>
-              <MGButton
-                variant="success"
-                size="small"
-                onClick={() => setShowTransactionForm(true)}
-                title="거래 등록"
-                className="mg-dashboard-icon-btn"
-              >
-                <DollarSign size={18} />
-              </MGButton>
-              <MGButton
-                variant="primary"
-                size="small"
-                onClick={() => {
-                  // 재무 관리 상세 페이지로 이동
-                  navigate('/erp/financial');
-                }}
-                title="상세 내역 보기"
-                className="mg-dashboard-icon-btn"
-              >
-                <FileText size={18} />
-              </MGButton>
-            </div>
-          </div>
-        </div>
-
-        {/* Main Content */}
-        <div className="mg-dashboard-content">
-          <div className="mg-v2-ad-b0kla__container">
+        <div className="mg-v2-ad-b0kla__container">
+          <ContentArea ariaLabel="수입·지출 관리 본문">
+            <ContentHeader
+              title="수입·지출 관리"
+              subtitle="거래·손익·정산을 한곳에서"
+              titleId={INTEGRATED_FINANCE_TITLE_ID}
+              actions={(
+                <div className="mg-dashboard-header-right mg-dashboard-header-right--content-header">
+                  <MGButton
+                    variant="danger"
+                    size="small"
+                    onClick={() => setShowQuickExpenseForm(true)}
+                    title="빠른 지출"
+                    className="mg-dashboard-icon-btn"
+                  >
+                    <TrendingDown size={18} />
+                  </MGButton>
+                  <MGButton
+                    variant="success"
+                    size="small"
+                    onClick={() => setShowTransactionForm(true)}
+                    title="거래 등록"
+                    className="mg-dashboard-icon-btn"
+                  >
+                    <DollarSign size={18} />
+                  </MGButton>
+                  <MGButton
+                    variant="primary"
+                    size="small"
+                    onClick={() => {
+                      navigate('/erp/financial');
+                    }}
+                    title="상세 내역 보기"
+                    className="mg-dashboard-icon-btn"
+                  >
+                    <FileText size={18} />
+                  </MGButton>
+                </div>
+              )}
+            />
+            <main aria-labelledby={INTEGRATED_FINANCE_TITLE_ID} className="mg-dashboard-content">
             {/* 탭 메뉴: B0KlA Pill 토큰 */}
             <div className="mg-v2-ad-b0kla__pill-toggle integrated-finance-tabs">
               {[
@@ -466,7 +477,8 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
               {activeTab === 'monthly' && <MonthlyReportTab period={selectedPeriod} />}
               {activeTab === 'yearly' && <YearlyReportTab period={selectedPeriod} />}
             </div>
-          </div>
+            </main>
+          </ContentArea>
         </div>
 
       {/* 모달 컴포넌트들 */}

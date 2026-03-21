@@ -24,6 +24,8 @@
 
 import React, { useState, useEffect } from 'react';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
+import ContentArea from '../dashboard-v2/content/ContentArea';
+import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import UnifiedLoading from '../common/UnifiedLoading';
 import {
     getAllPermissionGroups,
@@ -32,6 +34,8 @@ import {
     batchGrantPermissionGroups
 } from '../../utils/permissionGroupApi';
 import PermissionGroupManagementUI from '../ui/PermissionGroupManagementUI';
+import '../../styles/unified-design-tokens.css';
+import './AdminDashboard/AdminDashboardB0KlA.css';
 
 const PermissionGroupManagement = () => {
     const [roles, setRoles] = useState([]);
@@ -234,20 +238,37 @@ const PermissionGroupManagement = () => {
         }
     };
 
+    const permissionGroupSubtitle = selectedRole
+        ? `${selectedRole.nameKo || selectedRole.nameEn} 역할의 권한 그룹을 설정합니다.`
+        : '역할을 선택한 뒤 권한 그룹을 부여하거나 회수합니다.';
+
     return (
         <AdminCommonLayout title="권한 그룹 관리" loading={loading && !selectedRole} loadingText="데이터를 불러오는 중...">
-            <PermissionGroupManagementUI
-                roles={roles}
-                selectedRole={selectedRole}
-                permissionGroups={permissionGroups}
-                rolePermissions={rolePermissions}
-                loading={loading}
-                error={error}
-                onRoleSelect={handleRoleSelect}
-                onGrantPermission={handleGrantPermission}
-                onRevokePermission={handleRevokePermission}
-                onBatchGrant={handleBatchGrant}
-            />
+            <div className="mg-v2-ad-b0kla mg-v2-permission-group-management-page">
+                <div className="mg-v2-ad-b0kla__container">
+                    <ContentArea ariaLabel="권한 그룹 관리 본문">
+                        <ContentHeader
+                            title="권한 그룹 관리"
+                            subtitle={permissionGroupSubtitle}
+                            titleId="permission-group-management-title"
+                        />
+                        <main aria-labelledby="permission-group-management-title">
+                            <PermissionGroupManagementUI
+                                roles={roles}
+                                selectedRole={selectedRole}
+                                permissionGroups={permissionGroups}
+                                rolePermissions={rolePermissions}
+                                loading={loading}
+                                error={error}
+                                onRoleSelect={handleRoleSelect}
+                                onGrantPermission={handleGrantPermission}
+                                onRevokePermission={handleRevokePermission}
+                                onBatchGrant={handleBatchGrant}
+                            />
+                        </main>
+                    </ContentArea>
+                </div>
+            </div>
         </AdminCommonLayout>
     );
 };

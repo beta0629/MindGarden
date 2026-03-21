@@ -4,11 +4,17 @@ import { useSession } from '../../hooks/useSession';
 import { sessionManager } from '../../utils/sessionManager';
 import StandardizedApi from '../../utils/standardizedApi';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
-import { CONSULTANT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
+import ContentArea from '../dashboard-v2/content/ContentArea';
+import ContentHeader from '../dashboard-v2/content/ContentHeader';
+import MGButton from '../common/MGButton';
 import Button from '../ui/Button/Button';
 import SafeText from '../common/SafeText';
 import { toDisplayString } from '../../utils/safeDisplay';
+import '../../styles/unified-design-tokens.css';
+import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ConsultantAvailability.css';
+
+const CONSULTANT_AVAILABILITY_TITLE_ID = 'consultant-availability-page-title';
 
 const ConsultantAvailability = () => {
   const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
@@ -210,6 +216,27 @@ const ConsultantAvailability = () => {
     return acc;
   }, {});
 
+  const pageShell = (body, options = {}) => {
+    const { title = '상담 가능 시간 관리', subtitle = '상담 가능한 시간을 설정하여 내담자들이 예약할 수 있도록 합니다.', actions } = options;
+    return (
+      <div className="mg-v2-ad-b0kla">
+        <div className="mg-v2-ad-b0kla__container">
+          <ContentArea ariaLabel="상담 가능 시간">
+            <ContentHeader
+              title={title}
+              subtitle={subtitle}
+              titleId={CONSULTANT_AVAILABILITY_TITLE_ID}
+              actions={actions}
+            />
+            <main aria-labelledby={CONSULTANT_AVAILABILITY_TITLE_ID}>
+              {body}
+            </main>
+          </ContentArea>
+        </div>
+      </div>
+    );
+  };
+
   // 세션 로딩 중
   if (sessionLoading) {
     return (
@@ -230,20 +257,24 @@ const ConsultantAvailability = () => {
     if (!isLoggedIn || !user) {
       return (
         <AdminCommonLayout title="가능 시간">
-          <div className="consultant-availability-error-container">
-            <div className="consultant-availability-error-box consultant-availability-error-box--login">
-              <i className="bi bi-exclamation-triangle consultant-availability-error-icon"></i>
-              <h3 className="consultant-availability-error-title">로그인이 필요합니다</h3>
-              <p className="consultant-availability-error-message">상담 가능 시간을 관리하려면 로그인해주세요.</p>
-              <button 
-                className="btn btn-primary"
-                onClick={() => window.location.href = '/login'}
-              >
-                <i className="bi bi-box-arrow-in-right"></i>
-                로그인하기
-              </button>
-            </div>
-          </div>
+          {pageShell(
+            <div className="consultant-availability-error-container">
+              <div className="consultant-availability-error-box consultant-availability-error-box--login">
+                <i className="bi bi-exclamation-triangle consultant-availability-error-icon"></i>
+                <h3 className="consultant-availability-error-title">로그인이 필요합니다</h3>
+                <p className="consultant-availability-error-message">상담 가능 시간을 관리하려면 로그인해주세요.</p>
+                <MGButton
+                  variant="primary"
+                  onClick={() => { window.location.href = '/login'; }}
+                  preventDoubleClick={false}
+                >
+                  <i className="bi bi-box-arrow-in-right"></i>
+                  로그인하기
+                </MGButton>
+              </div>
+            </div>,
+            { subtitle: '로그인 후 상담 가능 시간을 관리할 수 있습니다.' }
+          )}
         </AdminCommonLayout>
       );
     }
@@ -255,60 +286,45 @@ const ConsultantAvailability = () => {
     if (!hasPermission) {
       return (
         <AdminCommonLayout title="가능 시간">
-          <div className="consultant-availability-error-container">
-            <div className="consultant-availability-error-box consultant-availability-error-box--permission">
-              <i className="bi bi-shield-exclamation consultant-availability-error-icon"></i>
-              <h3 className="consultant-availability-error-title">접근 권한이 없습니다</h3>
-              <p className="consultant-availability-error-message">상담 가능 시간 관리는 상담사 또는 관리자만 접근할 수 있습니다.</p>
-              <p className="consultant-availability-error-detail">
-                현재 사용자 역할: {userRole || '없음'}
-              </p>
-              <button 
-                className="btn btn-warning"
-                onClick={() => window.history.back()}
-              >
-                <i className="bi bi-arrow-left"></i>
-                이전 페이지로
-              </button>
-            </div>
-          </div>
+          {pageShell(
+            <div className="consultant-availability-error-container">
+              <div className="consultant-availability-error-box consultant-availability-error-box--permission">
+                <i className="bi bi-shield-exclamation consultant-availability-error-icon"></i>
+                <h3 className="consultant-availability-error-title">접근 권한이 없습니다</h3>
+                <p className="consultant-availability-error-message">상담 가능 시간 관리는 상담사 또는 관리자만 접근할 수 있습니다.</p>
+                <p className="consultant-availability-error-detail">
+                  현재 사용자 역할: {userRole || '없음'}
+                </p>
+                <MGButton variant="warning" onClick={() => window.history.back()} preventDoubleClick={false}>
+                  <i className="bi bi-arrow-left"></i>
+                  이전 페이지로
+                </MGButton>
+              </div>
+            </div>,
+            { subtitle: '상담사 또는 관리자 계정으로 다시 시도해 주세요.' }
+          )}
         </AdminCommonLayout>
       );
     }
   }
 
+  const headerActions = (
+    <>
+      <MGButton variant="primary" onClick={() => setShowAddModal(true)} preventDoubleClick={false}>
+        <i className="bi bi-plus-circle"></i>
+        상담 가능 시간 추가
+      </MGButton>
+      <MGButton variant="outline" onClick={loadAvailability} preventDoubleClick={false}>
+        <i className="bi bi-arrow-clockwise"></i>
+        새로고침
+      </MGButton>
+    </>
+  );
+
   return (
     <AdminCommonLayout title="가능 시간">
-      <div className="consultant-availability-container">
-      {/* 헤더 */}
-      <div className="availability-header">
-        <h1 className="availability-title">
-          <i className="bi bi-clock"></i>
-          상담 가능 시간 관리
-        </h1>
-        <p className="availability-subtitle">
-          상담 가능한 시간을 설정하여 내담자들이 예약할 수 있도록 합니다.
-        </p>
-      </div>
-
-      {/* 액션 버튼 */}
-      <div className="availability-actions">
-        <button
-          className="btn btn-primary"
-          onClick={() => setShowAddModal(true)}
-        >
-          <i className="bi bi-plus-circle"></i>
-          상담 가능 시간 추가
-        </button>
-        <button
-          className="btn btn-outline-secondary"
-          onClick={loadAvailability}
-        >
-          <i className="bi bi-arrow-clockwise"></i>
-          새로고침
-        </button>
-      </div>
-
+      {pageShell(
+        <div className="consultant-availability-container">
       {/* 로딩 상태 */}
       {loading && (
         <UnifiedLoading type="inline" text="가용성 데이터를 불러오는 중..." />
@@ -402,7 +418,9 @@ const ConsultantAvailability = () => {
           durationOptions={durationOptions}
         />
       )}
-      </div>
+        </div>,
+        { actions: headerActions }
+      )}
     </AdminCommonLayout>
   );
 };

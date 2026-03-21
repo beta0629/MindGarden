@@ -1,15 +1,19 @@
 import React, { useState, useEffect } from 'react';
-// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import AdminCommonLayout from '../layout/AdminCommonLayout';
-import { ERP_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
+import { ContentArea, ContentHeader } from '../dashboard-v2/content';
+import MGButton from '../common/MGButton';
+import UnifiedLoading from '../common/UnifiedLoading';
 import ErpCard from './common/ErpCard';
 import ErpButton from './common/ErpButton';
-import ErpHeader from './common/ErpHeader';
 import ErpModal from './common/ErpModal';
+import '../../styles/unified-design-tokens.css';
+import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import { useSession } from '../../hooks/useSession';
 import SafeErrorDisplay from '../common/SafeErrorDisplay';
 import SafeText from '../common/SafeText';
 import { toDisplayString } from '../../utils/safeDisplay';
+
+const PURCHASE_REQUEST_TITLE_ID = 'purchase-request-title';
 
 /**
  * 구매 요청 폼 컴포넌트
@@ -166,31 +170,45 @@ const PurchaseRequestForm = () => {
     }).format(amount);
   };
 
+  const shell = (inner) => (
+    <AdminCommonLayout title="구매 요청">
+      <div className="mg-v2-ad-b0kla mg-v2-purchase-request-form">
+        <div className="mg-v2-ad-b0kla__container">
+          <ContentArea ariaLabel="구매 요청 본문">
+            <ContentHeader
+              title="구매 요청"
+              subtitle="필요한 비품을 요청하세요"
+              titleId={PURCHASE_REQUEST_TITLE_ID}
+              actions={
+                <MGButton
+                  type="button"
+                  variant="secondary"
+                  onClick={() => window.history.back()}
+                >
+                  뒤로가기
+                </MGButton>
+              }
+            />
+            {inner}
+          </ContentArea>
+        </div>
+      </div>
+    </AdminCommonLayout>
+  );
+
   if (loading && items.length === 0) {
-    return (
-      <AdminCommonLayout title="구매 요청" loading={true} loadingText="로딩중...">
-        <div />
-      </AdminCommonLayout>
+    return shell(
+      <UnifiedLoading type="page" text="아이템 목록을 불러오는 중..." />
     );
   }
 
-  return (
-    <AdminCommonLayout title="구매 요청">
-      <div className="purchase-request-form-container">
-        <ErpHeader
-          title="구매 요청"
-          subtitle="필요한 비품을 요청하세요"
-          actions={
-            <ErpButton
-              variant="secondary"
-              onClick={() => window.history.back()}
-            >
-              뒤로가기
-            </ErpButton>
-          }
-        />
-
-      <div className="mg-v2-container" style={{ maxWidth: '800px', margin: '0 auto' }}>
+  return shell(
+    <>
+      <main
+        aria-labelledby={PURCHASE_REQUEST_TITLE_ID}
+        className="purchase-request-form-container"
+      >
+        <div className="mg-v2-container" style={{ maxWidth: '800px', margin: '0 auto' }}>
         <ErpCard title="구매 요청서 작성">
           <form onSubmit={handleSubmit}>
             {/* 아이템 선택 */}
@@ -440,7 +458,6 @@ const PurchaseRequestForm = () => {
                 // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e9ecef -> var(--mg-custom-e9ecef)
                 border: '1px solid #e9ecef'
               }}>
-                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #333 -> var(--mg-custom-333)
                 <h4 style={{ margin: '0 0 12px 0', color: '#333' }}>
                   선택된 아이템 요약 ({selectedItems.length}개)
                 </h4>
@@ -511,9 +528,9 @@ const PurchaseRequestForm = () => {
             </div>
           </form>
         </ErpCard>
-      </div>
+        </div>
+      </main>
 
-      {/* 성공 모달 */}
       <ErpModal
         isOpen={showSuccessModal}
         onClose={() => setShowSuccessModal(false)}
@@ -525,7 +542,6 @@ const PurchaseRequestForm = () => {
           <h3 style={{ margin: '0 0 16px 0', color: 'var(--mg-success-500)' }}>
             구매 요청이 성공적으로 제출되었습니다!
           </h3>
-          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #666 -> var(--mg-custom-666)
           <p style={{ color: '#666', marginBottom: '24px' }}>
             관리자 승인 후 구매가 진행됩니다.
           </p>
@@ -537,8 +553,7 @@ const PurchaseRequestForm = () => {
           </ErpButton>
         </div>
       </ErpModal>
-      </div>
-    </AdminCommonLayout>
+    </>
   );
 };
 

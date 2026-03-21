@@ -868,3 +868,11 @@
     border-color: var(--ad-b0kla-green);
   }
 }
+
+/* ContentHeader actions: ERP 퀵 버튼 정렬 */
+.mg-dashboard-header-right--content-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mg-space-2, var(--spacing-sm));
+}

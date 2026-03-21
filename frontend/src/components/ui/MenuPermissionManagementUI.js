@@ -26,7 +26,6 @@
 import React from 'react';
 import UnifiedLoading from '../common/UnifiedLoading';
 import MGCard from '../common/MGCard';
-import Button from '../ui/Button/Button';
 import './MenuPermissionManagementUI.css';
 
 const MenuPermissionManagementUI = ({
@@ -70,19 +69,6 @@ const MenuPermissionManagementUI = ({
 
     return (
         <div className="mg-menu-permission-management">
-            <div className="mg-header">
-                <h2 className="mg-title">메뉴 권한 설정</h2>
-                {selectedRole && (
-                    <Button 
-                        variant="primary"
-                        onClick={onBatchSave}
-                        preventDoubleClick={true}
-                    >
-                        변경사항 저장
-                    </Button>
-                )}
-            </div>
-
             {error && (
                 <div className="mg-error-message">
                     <span className="mg-error-icon">⚠️</span>

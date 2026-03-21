@@ -1,8 +1,34 @@
 /* PG 설정 상세 페이지 스타일 */
+.mg-v2-pg-config-detail__header-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--mg-space-3, var(--mg-spacing-md));
+}
+
+.pg-config-detail__header-badges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mg-space-2, var(--mg-spacing-sm));
+}
+
+.pg-config-detail__header-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mg-space-2, var(--mg-spacing-sm));
+}
+
 .pg-config-detail {
   padding: 24px;
   max-width: 1200px;
   margin: 0 auto;
+}
+
+.pg-config-detail__body {
+  padding-top: 0;
 }
 
 /* 헤더 */

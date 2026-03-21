@@ -24,6 +24,9 @@
 
 import React, { useState, useEffect } from 'react';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
+import ContentArea from '../dashboard-v2/content/ContentArea';
+import ContentHeader from '../dashboard-v2/content/ContentHeader';
+import MGButton from '../common/MGButton';
 import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import UnifiedLoading from '../common/UnifiedLoading';
 import notificationManager from '../../utils/notification';
@@ -33,6 +36,8 @@ import {
     batchUpdateMenuPermissions
 } from '../../utils/menuPermissionApi';
 import MenuPermissionManagementUI from '../ui/MenuPermissionManagementUI';
+import '../../styles/unified-design-tokens.css';
+import './AdminDashboard/AdminDashboardB0KlA.css';
 
 const MenuPermissionManagement = () => {
     const [roles, setRoles] = useState([]);
@@ -204,16 +209,40 @@ const MenuPermissionManagement = () => {
 
     return (
         <AdminCommonLayout title="메뉴 권한 관리" loading={loading && !selectedRole} loadingText="데이터를 불러오는 중...">
-            <MenuPermissionManagementUI
-                roles={roles}
-                selectedRole={selectedRole}
-                menuPermissions={menuPermissions}
-                loading={loading}
-                error={error}
-                onRoleSelect={handleRoleSelect}
-                onPermissionChange={handlePermissionChange}
-                onBatchSave={handleBatchSave}
-            />
+            <div className="mg-v2-ad-b0kla mg-v2-menu-permission-management">
+                <div className="mg-v2-ad-b0kla__container">
+                    <ContentArea ariaLabel="메뉴 권한 관리 본문">
+                        <ContentHeader
+                            title="메뉴 권한 관리"
+                            subtitle="역할별 메뉴·LNB 접근 권한을 설정하고 저장합니다."
+                            titleId="menu-permission-management-title"
+                            actions={
+                                selectedRole ? (
+                                    <MGButton
+                                        variant="primary"
+                                        onClick={handleBatchSave}
+                                        preventDoubleClick={true}
+                                    >
+                                        변경사항 저장
+                                    </MGButton>
+                                ) : null
+                            }
+                        />
+                        <main aria-labelledby="menu-permission-management-title">
+                            <MenuPermissionManagementUI
+                                roles={roles}
+                                selectedRole={selectedRole}
+                                menuPermissions={menuPermissions}
+                                loading={loading}
+                                error={error}
+                                onRoleSelect={handleRoleSelect}
+                                onPermissionChange={handlePermissionChange}
+                                onBatchSave={handleBatchSave}
+                            />
+                        </main>
+                    </ContentArea>
+                </div>
+            </div>
         </AdminCommonLayout>
     );
 };

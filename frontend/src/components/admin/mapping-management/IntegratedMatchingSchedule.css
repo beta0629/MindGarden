@@ -9,6 +9,25 @@
   background-color: var(--mg-color-background-main);
 }
 
+/* B0KlA 셸: 상위 레이아웃·컨테이너 패딩과 중복되지 않도록 */
+.integrated-schedule.integrated-schedule--b0kla {
+  padding: 0;
+  min-height: 0;
+  flex: 1;
+  background-color: transparent;
+}
+
+.mg-v2-content-area > .integrated-schedule__content {
+  flex: 1;
+  min-height: 0;
+}
+
+.integrated-schedule__btn-new-mapping .mg-button__text {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mg-spacing-8, 0.5rem);
+}
+
 .integrated-schedule__header {
   display: flex;
   justify-content: space-between;

@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { 
-  CreditCard, 
-  ArrowLeft, 
-  Edit, 
-  Trash2, 
+import {
+  ArrowLeft,
+  Edit,
+  Trash2,
   RefreshCw,
   Eye,
   EyeOff,
@@ -26,24 +25,22 @@ import {
 } from '../../utils/pgApi';
 import { showNotification } from '../../utils/notification';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
-import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
-import UnifiedLoading from '../../components/common/UnifiedLoading';
-import MGButton from '../../components/common/MGButton'; // 임시 비활성화
+import UnifiedLoading from '../common/UnifiedLoading';
+import MGButton from '../common/MGButton';
+import ContentArea from '../dashboard-v2/content/ContentArea';
+import ContentHeader from '../dashboard-v2/content/ContentHeader';
+import '../../styles/unified-design-tokens.css';
+import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './PgConfigurationDetail.css';
 import { toDisplayString } from '../../utils/safeDisplay';
 import SafeText from '../common/SafeText';
 
 /**
  * PG 설정 상세 페이지
-/**
- * 테넌트 포털에서 PG 설정의 상세 정보를 조회하는 페이지
-/**
- * 
-/**
+ * 테넌트 포털에서 PG 설정의 상세 정보를 조회
+ *
  * @author CoreSolution
-/**
  * @version 1.0.0
-/**
  * @since 2025-01-XX
  */
 const PgConfigurationDetail = () => {
@@ -144,19 +141,12 @@ const PgConfigurationDetail = () => {
   
   const renderStatusBadge = (status) => {
     const statusConfig = {
-      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       PENDING: { label: '대기 중', icon: Clock, color: 'warning' },
-      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       APPROVED: { label: '승인됨', icon: CheckCircle, color: 'success' },
-      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       REJECTED: { label: '거부됨', icon: XCircle, color: 'danger' },
-      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       ACTIVE: { label: '활성화', icon: CheckCircle, color: 'success' },
-      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       INACTIVE: { label: '비활성화', icon: XCircle, color: 'secondary' }
     };
-    
-    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     const config = statusConfig[status] || statusConfig.PENDING;
     const Icon = config.icon;
     
@@ -170,15 +160,10 @@ const PgConfigurationDetail = () => {
   
   const renderApprovalBadge = (approvalStatus) => {
     const statusConfig = {
-      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       PENDING: { label: '승인 대기', icon: Clock, color: 'warning' },
-      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       APPROVED: { label: '승인됨', icon: CheckCircle, color: 'success' },
-      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       REJECTED: { label: '거부됨', icon: XCircle, color: 'danger' }
     };
-    
-    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     const config = statusConfig[approvalStatus] || statusConfig.PENDING;
     const Icon = config.icon;
     
@@ -192,8 +177,12 @@ const PgConfigurationDetail = () => {
   
   if (sessionLoading || loading) {
     return (
-      <AdminCommonLayout title="PG 설정 상세" loading={true} loadingText="PG 설정 상세를 불러오는 중...">
-        <div />
+      <AdminCommonLayout title="PG 설정 상세">
+        <div className="mg-v2-ad-b0kla mg-v2-pg-config-detail">
+          <div className="mg-v2-ad-b0kla__container">
+            <UnifiedLoading type="page" text="PG 설정 상세를 불러오는 중..." variant="pulse" />
+          </div>
+        </div>
       </AdminCommonLayout>
     );
   }
@@ -201,38 +190,54 @@ const PgConfigurationDetail = () => {
   if (!isLoggedIn || !user) {
     return (
       <AdminCommonLayout title="PG 설정 상세">
-        <div className="error-message">
-          <AlertCircle size={24} />
-          <p>로그인이 필요합니다.</p>
+        <div className="mg-v2-ad-b0kla mg-v2-pg-config-detail">
+          <div className="mg-v2-ad-b0kla__container">
+            <div className="error-message">
+              <AlertCircle size={24} />
+              <p>로그인이 필요합니다.</p>
+            </div>
+          </div>
         </div>
       </AdminCommonLayout>
     );
   }
-  
+
   if (!tenantId) {
     return (
       <AdminCommonLayout title="PG 설정 상세">
-        <div className="error-message">
-          <AlertCircle size={24} />
-          <p>테넌트 정보를 찾을 수 없습니다.</p>
+        <div className="mg-v2-ad-b0kla mg-v2-pg-config-detail">
+          <div className="mg-v2-ad-b0kla__container">
+            <div className="error-message">
+              <AlertCircle size={24} />
+              <p>테넌트 정보를 찾을 수 없습니다.</p>
+            </div>
+          </div>
         </div>
       </AdminCommonLayout>
     );
   }
-  
+
   if (error || !config) {
     return (
       <AdminCommonLayout title="PG 설정 상세">
-        <div className="error-message">
-          <AlertCircle size={24} />
-          <p>{error || 'PG 설정을 찾을 수 없습니다.'}</p>
-          <button className="mg-button"
-            variant="secondary"
-            onClick={() => navigate('/tenant/pg-configurations')}
-          >
-            <ArrowLeft size={18} />
-            목록으로
-          </button>
+        <div className="mg-v2-ad-b0kla mg-v2-pg-config-detail">
+          <div className="mg-v2-ad-b0kla__container">
+            <ContentArea ariaLabel="PG 설정 상세 오류">
+              <div className="error-message">
+                <AlertCircle size={24} />
+                <p>{error || 'PG 설정을 찾을 수 없습니다.'}</p>
+                <MGButton
+                  type="button"
+                  variant="secondary"
+                  onClick={() => navigate('/tenant/pg-configurations')}
+                  preventDoubleClick={false}
+                >
+                  <ArrowLeft size={18} />
+                  목록으로
+                </MGButton>
+              </div>
+            </ContentArea>
+          </div>
         </div>
       </AdminCommonLayout>
     );
@@ -240,68 +245,77 @@ const PgConfigurationDetail = () => {
   
   return (
     <AdminCommonLayout title="PG 설정 상세">
-        <div className="pg-config-detail" role="main" aria-label="PG 설정 상세 정보">
-        {/* 헤더 */}
-        <div className="pg-config-detail-header">
-          <button className="mg-button"
-            variant="secondary"
-            onClick={() => navigate('/tenant/pg-configurations')}
-          >
-            <ArrowLeft size={18} />
-            목록으로
-          </button>
-          
-          <div className="header-title">
-            <CreditCard size={32} aria-hidden="true" />
-            <div>
-              <h1 id="pg-config-title"><SafeText fallback="PG">{config.pgName ?? config.pgProvider}</SafeText></h1>
-              <div className="header-badges">
-                {renderStatusBadge(config.status)}
-                {renderApprovalBadge(config.approvalStatus)}
-                {config.testMode && (
-                  <span className="status-badge status-badge--info">
-                    테스트 모드
-                  </span>
-                )}
-              </div>
-            </div>
-          </div>
-          
-          <div className="header-actions">
-            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-            {config.approvalStatus === 'PENDING' && (
-              <>
-                <button className="mg-button"
-                  variant="secondary"
-                  onClick={() => navigate(`/tenant/pg-configurations/${configId}/edit`)}
-                >
-                  <Edit size={18} />
-                  수정
-                </button>
-                <button className="mg-button"
-                  variant="danger"
-                  onClick={() => setShowDeleteModal(true)}
-                >
-                  <Trash2 size={18} />
-                  삭제
-                </button>
-              </>
-            )}
-            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-            {config.status === 'APPROVED' && (
-              <button className="mg-button"
-                variant="secondary"
-                onClick={handleTestConnection}
-                disabled={testingConnection}
-                loading={testingConnection}
-              >
-                <RefreshCw size={18} />
-                연결 테스트
-              </button>
-            )}
-          </div>
-        </div>
-        
+      <div className="mg-v2-ad-b0kla mg-v2-pg-config-detail">
+        <div className="mg-v2-ad-b0kla__container">
+          <ContentArea ariaLabel="PG 설정 상세 정보">
+            <ContentHeader
+              title={toDisplayString(config.pgName ?? config.pgProvider, 'PG')}
+              subtitle={toDisplayString(config.pgProvider, 'PG 제공자')}
+              titleId="pg-config-detail-title"
+              actions={
+                <div className="mg-v2-pg-config-detail__header-toolbar">
+                  <div className="pg-config-detail__header-badges">
+                    {renderStatusBadge(config.status)}
+                    {renderApprovalBadge(config.approvalStatus)}
+                    {config.testMode && (
+                      <span className="status-badge status-badge--info">테스트 모드</span>
+                    )}
+                  </div>
+                  <div className="pg-config-detail__header-buttons">
+                    <MGButton
+                      type="button"
+                      variant="secondary"
+                      size="small"
+                      onClick={() => navigate('/tenant/pg-configurations')}
+                      preventDoubleClick={false}
+                    >
+                      <ArrowLeft size={18} />
+                      목록으로
+                    </MGButton>
+                    {config.approvalStatus === 'PENDING' && (
+                      <>
+                        <MGButton
+                          type="button"
+                          variant="secondary"
+                          size="small"
+                          onClick={() => navigate(`/tenant/pg-configurations/${configId}/edit`)}
+                          preventDoubleClick={false}
+                        >
+                          <Edit size={18} />
+                          수정
+                        </MGButton>
+                        <MGButton
+                          type="button"
+                          variant="danger"
+                          size="small"
+                          onClick={() => setShowDeleteModal(true)}
+                          preventDoubleClick={false}
+                        >
+                          <Trash2 size={18} />
+                          삭제
+                        </MGButton>
+                      </>
+                    )}
+                    {config.status === 'APPROVED' && (
+                      <MGButton
+                        type="button"
+                        variant="secondary"
+                        size="small"
+                        onClick={handleTestConnection}
+                        disabled={testingConnection}
+                        loading={testingConnection}
+                        loadingText="테스트 중..."
+                        preventDoubleClick={false}
+                      >
+                        <RefreshCw size={18} />
+                        연결 테스트
+                      </MGButton>
+                    )}
+                  </div>
+                </div>
+              }
+            />
+            <main className="pg-config-detail pg-config-detail__body">
         {/* 기본 정보 */}
         <section className="detail-section" aria-labelledby="basic-info-heading">
           <h2 id="basic-info-heading">기본 정보</h2>
@@ -376,7 +390,7 @@ const PgConfigurationDetail = () => {
                 </div>
               )}
             </div>
-        </section>
+          </section>
         )}
         
         {/* 키 정보 */}
@@ -387,15 +401,18 @@ const PgConfigurationDetail = () => {
               <div className="key-placeholder">
                 <Key size={24} />
                 <p>키 정보는 보안을 위해 암호화되어 저장됩니다.</p>
-                <button className="mg-button"
+                <MGButton
+                  type="button"
                   variant="secondary"
                   onClick={handleDecryptKeys}
                   disabled={loadingKeys}
                   loading={loadingKeys}
+                  loadingText="처리 중..."
+                  preventDoubleClick={false}
                 >
                   <Eye size={18} />
                   키 확인
-                </button>
+                </MGButton>
               </div>
             ) : (
               <div className="key-display">
@@ -437,17 +454,19 @@ const PgConfigurationDetail = () => {
                     <span>복호화 시각: {new Date(decryptedKeys.decryptedAt).toLocaleString('ko-KR')}</span>
                   </div>
                 )}
-                <button className="mg-button"
+                <MGButton
+                  type="button"
                   variant="secondary"
                   size="small"
                   onClick={() => {
                     setShowKeys(false);
                     setDecryptedKeys(null);
                   }}
+                  preventDoubleClick={false}
                 >
                   <EyeOff size={18} />
                   숨기기
-                </button>
+                </MGButton>
               </div>
             )}
           </div>
@@ -483,7 +502,6 @@ const PgConfigurationDetail = () => {
         {/* 승인 정보 */}
         <section className="detail-section" aria-labelledby="approval-info-heading">
           <h2 id="approval-info-heading">승인 정보</h2>
-          // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
           {config.approvalStatus === 'PENDING' && (
             <div className="approval-status-pending">
               <Clock size={24} />
@@ -499,7 +517,6 @@ const PgConfigurationDetail = () => {
               </div>
             </div>
           )}
-          // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
           {config.approvalStatus === 'APPROVED' && (
             <div className="approval-status-approved">
               <CheckCircle size={24} />
@@ -524,7 +541,6 @@ const PgConfigurationDetail = () => {
               </div>
             </div>
           )}
-          // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
           {config.approvalStatus === 'REJECTED' && (
             <div className="approval-status-rejected">
               <XCircle size={24} />
@@ -617,23 +633,30 @@ const PgConfigurationDetail = () => {
                 </p>
               </div>
               <div className="modal-footer">
-                <button className="mg-button"
+                <MGButton
+                  type="button"
                   variant="secondary"
                   onClick={() => setShowDeleteModal(false)}
+                  preventDoubleClick={false}
                 >
                   취소
-                </button>
-                <button className="mg-button"
+                </MGButton>
+                <MGButton
+                  type="button"
                   variant="danger"
                   onClick={handleDelete}
                   disabled={loading}
+                  preventDoubleClick={false}
                 >
                   삭제
-                </button>
+                </MGButton>
               </div>
             </div>
           </div>
         )}
+            </main>
+          </ContentArea>
+        </div>
       </div>
     </AdminCommonLayout>
   );

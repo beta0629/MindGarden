@@ -1,39 +1,36 @@
 /**
  * 테넌트 프로필/설정 페이지
-/**
- * 
-/**
- * 테넌트 상태, 구독 정보, 결제 수단을 통합 관리하는 페이지
-/**
- * 
-/**
+ * 테넌트 상태, 구독 정보, 결제 수단을 통합 관리
+ *
  * @author CoreSolution
-/**
  * @version 1.0.0
-/**
  * @since 2025-11-22
  */
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
-import { Building2, CreditCard, Calendar, DollarSign, CheckCircle, XCircle, AlertCircle, Plus, Trash2, Edit2 } from 'lucide-react';
+import { CreditCard, DollarSign, AlertCircle, Plus, Trash2, Edit2 } from 'lucide-react';
 import { getPaymentMethods, getSubscriptions } from '../../utils/billingService';
 import PaymentMethodRegistration from '../billing/PaymentMethodRegistration';
 import SubscriptionManagement from '../billing/SubscriptionManagement';
 import notificationManager from '../../utils/notification';
-import UnifiedLoading from '../../components/common/UnifiedLoading';
-import StatusBadge from '../../components/common/StatusBadge';
+import UnifiedLoading from '../common/UnifiedLoading';
+import StatusBadge from '../common/StatusBadge';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
-import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
-import MGButton from '../../components/common/MGButton'; // 임시 비활성화
-import SafeText from '../../components/common/SafeText';
+import ContentArea from '../dashboard-v2/content/ContentArea';
+import ContentHeader from '../dashboard-v2/content/ContentHeader';
+import ContentSection from '../dashboard-v2/content/ContentSection';
+import MGButton from '../common/MGButton';
+import SafeText from '../common/SafeText';
 import { toDisplayString, toSafeNumber } from '../../utils/safeDisplay';
+import '../../styles/unified-design-tokens.css';
+import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './TenantProfile.css';
 
 const TenantProfile = () => {
-  const { user, sessionInfo, isLoggedIn, isLoading: sessionLoading } = useSession();
   const navigate = useNavigate();
+  const { user, sessionInfo, isLoggedIn, isLoading: sessionLoading } = useSession();
   const [loading, setLoading] = useState(true);
   const [tenantInfo, setTenantInfo] = useState(null);
   const [subscriptions, setSubscriptions] = useState([]);
@@ -188,7 +185,11 @@ const TenantProfile = () => {
   if (sessionLoading || !isLoggedIn || !user) {
     return (
       <AdminCommonLayout title="테넌트 프로필">
-        <UnifiedLoading type="page" text="테넌트 정보를 불러오는 중..." />
+        <div className="mg-v2-ad-b0kla mg-v2-tenant-profile">
+          <div className="mg-v2-ad-b0kla__container">
+            <UnifiedLoading type="page" text="테넌트 정보를 불러오는 중..." variant="pulse" />
+          </div>
+        </div>
       </AdminCommonLayout>
     );
   }
@@ -196,9 +197,13 @@ const TenantProfile = () => {
   if (!tenantId) {
     return (
       <AdminCommonLayout title="테넌트 프로필">
-        <div className="tenant-profile-error">
-          <AlertCircle size={24} />
-          <p>테넌트 정보를 찾을 수 없습니다.</p>
+        <div className="mg-v2-ad-b0kla mg-v2-tenant-profile">
+          <div className="mg-v2-ad-b0kla__container">
+            <div className="tenant-profile-error">
+              <AlertCircle size={24} />
+              <p>테넌트 정보를 찾을 수 없습니다.</p>
+            </div>
+          </div>
         </div>
       </AdminCommonLayout>
     );
@@ -207,7 +212,11 @@ const TenantProfile = () => {
   if (loading) {
     return (
       <AdminCommonLayout title="테넌트 프로필">
-        <UnifiedLoading type="page" text="테넌트 프로필을 불러오는 중..." />
+        <div className="mg-v2-ad-b0kla mg-v2-tenant-profile">
+          <div className="mg-v2-ad-b0kla__container">
+            <UnifiedLoading type="page" text="테넌트 프로필을 불러오는 중..." variant="pulse" />
+          </div>
+        </div>
       </AdminCommonLayout>
     );
   }
@@ -215,9 +224,13 @@ const TenantProfile = () => {
   if (!tenantInfo) {
     return (
       <AdminCommonLayout title="테넌트 프로필">
-        <div className="tenant-profile-error">
-          <AlertCircle size={24} />
-          <p>테넌트 정보를 찾을 수 없습니다.</p>
+        <div className="mg-v2-ad-b0kla mg-v2-tenant-profile">
+          <div className="mg-v2-ad-b0kla__container">
+            <div className="tenant-profile-error">
+              <AlertCircle size={24} />
+              <p>테넌트 정보를 찾을 수 없습니다.</p>
+            </div>
+          </div>
         </div>
       </AdminCommonLayout>
     );
@@ -225,205 +238,216 @@ const TenantProfile = () => {
 
   return (
     <AdminCommonLayout title="테넌트 프로필">
-      <div className="tenant-profile">
-        {/* 헤더 */}
-        <div className="tenant-profile-header">
-          <div className="tenant-profile-header-content">
-            <Building2 size={32} />
-            <div>
-              <h1><SafeText fallback="테넌트 정보">{tenantInfo.name}</SafeText></h1>
-              <p className="tenant-profile-subtitle">테넌트 상태 및 결제 정보 관리</p>
-            </div>
-          </div>
-          {renderStatusBadge(tenantInfo.status)}
-        </div>
+      <div className="mg-v2-ad-b0kla mg-v2-tenant-profile">
+        <div className="mg-v2-ad-b0kla__container">
+          <ContentArea ariaLabel="테넌트 프로필 콘텐츠">
+            <ContentHeader
+              title={toDisplayString(tenantInfo.name, '테넌트')}
+              subtitle="테넌트 상태 및 결제 정보 관리"
+              titleId="tenant-profile-title"
+              actions={renderStatusBadge(tenantInfo.status)}
+            />
 
-        {/* 탭 네비게이션 */}
-        <div className="tenant-profile-tabs">
-          <button
-            className={`tenant-profile-tab ${activeTab === 'overview' ? 'active' : ''}`}
-            onClick={() => setActiveTab('overview')}
-          >
-            개요
-          </button>
-          <button
-            className={`tenant-profile-tab ${activeTab === 'subscription' ? 'active' : ''}`}
-            onClick={() => setActiveTab('subscription')}
-          >
-            구독 관리
-          </button>
-          <button
-            className={`tenant-profile-tab ${activeTab === 'payment' ? 'active' : ''}`}
-            onClick={() => setActiveTab('payment')}
-          >
-            결제 수단
-          </button>
-        </div>
+            <nav
+              className="mg-v2-tab-buttons mg-v2-tenant-profile__tabs"
+              aria-label="테넌트 프로필 섹션"
+            >
+              <button
+                type="button"
+                role="tab"
+                aria-selected={activeTab === 'overview'}
+                className={`mg-v2-tab-button${activeTab === 'overview' ? ' active' : ''}`}
+                onClick={() => setActiveTab('overview')}
+              >
+                개요
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={activeTab === 'subscription'}
+                className={`mg-v2-tab-button${activeTab === 'subscription' ? ' active' : ''}`}
+                onClick={() => setActiveTab('subscription')}
+              >
+                구독 관리
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={activeTab === 'payment'}
+                className={`mg-v2-tab-button${activeTab === 'payment' ? ' active' : ''}`}
+                onClick={() => setActiveTab('payment')}
+              >
+                결제 수단
+              </button>
+            </nav>
 
-        {/* 탭 컨텐츠 */}
-        <div className="tenant-profile-content">
-          {/* 개요 탭 */}
-          {activeTab === 'overview' && (
-            <div className="tenant-profile-overview">
-              <div className="tenant-info-card">
-                <h2>테넌트 정보</h2>
-                <div className="tenant-info-grid">
-                  <div className="tenant-info-item">
-                    <label>테넌트 ID</label>
-                    <p><SafeText>{tenantInfo.tenantId}</SafeText></p>
-                  </div>
-                  <div className="tenant-info-item">
-                    <label>테넌트명</label>
-                    <p><SafeText>{tenantInfo.name}</SafeText></p>
-                  </div>
-                  <div className="tenant-info-item">
-                    <label>업종</label>
-                    <p><SafeText fallback="-">{tenantInfo.businessType}</SafeText></p>
-                  </div>
-                  <div className="tenant-info-item">
-                    <label>상태</label>
-                    <div>{renderStatusBadge(tenantInfo.status)}</div>
-                  </div>
-                </div>
-              </div>
+            <div className="mg-v2-tenant-profile__panel" role="tabpanel">
+              {activeTab === 'overview' && (
+                <div className="mg-v2-tenant-profile__overview">
+                  <ContentSection title="테넌트 정보">
+                    <div className="mg-v2-tenant-profile__grid">
+                      <div className="mg-v2-tenant-profile__field">
+                        <label>테넌트 ID</label>
+                        <p><SafeText>{tenantInfo.tenantId}</SafeText></p>
+                      </div>
+                      <div className="mg-v2-tenant-profile__field">
+                        <label>테넌트명</label>
+                        <p><SafeText>{tenantInfo.name}</SafeText></p>
+                      </div>
+                      <div className="mg-v2-tenant-profile__field">
+                        <label>업종</label>
+                        <p><SafeText fallback="-">{tenantInfo.businessType}</SafeText></p>
+                      </div>
+                      <div className="mg-v2-tenant-profile__field">
+                        <label>상태</label>
+                        <div>{renderStatusBadge(tenantInfo.status)}</div>
+                      </div>
+                    </div>
+                  </ContentSection>
 
-              <div className="tenant-info-card">
-                <h2>구독 정보</h2>
-                {subscriptions.length > 0 ? (
-                  <div className="subscription-summary">
-                    {subscriptions.map((subscription) => (
-                      <div key={subscription.subscriptionId} className="subscription-summary-item">
-                        <div>
-                          <strong><SafeText fallback="요금제">{subscription.planName}</SafeText></strong>
-                          <span className={`subscription-status subscription-status--${toDisplayString(subscription.status, 'unknown').toLowerCase()}`}>
-                            <SafeText>{subscription.status}</SafeText>
-                          </span>
-                        </div>
-                        {subscription.amount != null && (
-                          <div className="subscription-amount">
-                            <DollarSign size={16} />
-                            {toSafeNumber(subscription.amount).toLocaleString()}원
+                  <ContentSection title="구독 정보">
+                    {subscriptions.length > 0 ? (
+                      <div className="subscription-summary">
+                        {subscriptions.map((subscription) => (
+                          <div key={subscription.subscriptionId} className="subscription-summary-item">
+                            <div>
+                              <strong><SafeText fallback="요금제">{subscription.planName}</SafeText></strong>
+                              <span className={`subscription-status subscription-status--${toDisplayString(subscription.status, 'unknown').toLowerCase()}`}>
+                                <SafeText>{subscription.status}</SafeText>
+                              </span>
+                            </div>
+                            {subscription.amount != null && (
+                              <div className="subscription-amount">
+                                <DollarSign size={16} />
+                                {toSafeNumber(subscription.amount).toLocaleString()}원
+                              </div>
+                            )}
                           </div>
-                        )}
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="no-data">등록된 구독이 없습니다.</p>
-                )}
-              </div>
+                    ) : (
+                      <p className="no-data">등록된 구독이 없습니다.</p>
+                    )}
+                  </ContentSection>
 
-              <div className="tenant-info-card">
-                <h2>결제 수단</h2>
-                {paymentMethods.length > 0 ? (
-                  <div className="payment-method-summary">
-                    {paymentMethods.map((pm) => (
-                      <div key={pm.paymentMethodId} className="payment-method-summary-item">
-                        <CreditCard size={16} />
-                        <span><SafeText fallback="결제 수단">{pm.cardNumber ?? pm.methodType}</SafeText></span>
-                        {pm.isDefault && (
-                          <span className="default-badge">기본</span>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="no-data">등록된 결제 수단이 없습니다.</p>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* 구독 관리 탭 */}
-          {activeTab === 'subscription' && (
-            <div className="tenant-profile-subscription">
-              <SubscriptionManagement tenantId={tenantId} />
-            </div>
-          )}
-
-          {/* 결제 수단 탭 */}
-          {activeTab === 'payment' && (
-            <div className="tenant-profile-payment">
-              <div className="payment-method-header">
-                <h2>결제 수단 관리</h2>
-                <button className="mg-button"
-                  onClick={() => setShowPaymentMethodRegistration(true)}
-                  variant="primary"
-                >
-                  <Plus size={16} />
-                  결제 수단 추가
-                </button>
-              </div>
-
-              {showPaymentMethodRegistration && (
-                <div className="payment-method-registration-wrapper">
-                  <PaymentMethodRegistration
-                    tenantId={tenantId}
-                    onSuccess={() => {
-                      setShowPaymentMethodRegistration(false);
-                      loadPaymentMethods();
-                    }}
-                    onCancel={() => setShowPaymentMethodRegistration(false)}
-                  />
-                </div>
-              )}
-
-              <div className="payment-method-list">
-                {paymentMethods.length > 0 ? (
-                  paymentMethods.map((pm) => (
-                    <div key={pm.paymentMethodId} className="payment-method-card">
-                      <div className="payment-method-card-content">
-                        <CreditCard size={24} />
-                        <div className="payment-method-info">
-                          <div className="payment-method-name">
-                            <SafeText fallback="결제 수단">{pm.cardNumber ?? pm.methodType}</SafeText>
+                  <ContentSection title="결제 수단">
+                    {paymentMethods.length > 0 ? (
+                      <div className="payment-method-summary">
+                        {paymentMethods.map((pm) => (
+                          <div key={pm.paymentMethodId} className="payment-method-summary-item">
+                            <CreditCard size={16} />
+                            <span><SafeText fallback="결제 수단">{pm.cardNumber ?? pm.methodType}</SafeText></span>
                             {pm.isDefault && (
                               <span className="default-badge">기본</span>
                             )}
                           </div>
-                          {pm.cardExpiry && (
-                            <div className="payment-method-expiry">
-                              만료일: <SafeText>{pm.cardExpiry}</SafeText>
-                            </div>
-                          )}
-                        </div>
+                        ))}
                       </div>
-                      <div className="payment-method-actions">
-                        {!pm.isDefault && (
-                          <button
-                            className="payment-method-action-btn"
-                            onClick={() => handleSetDefaultPaymentMethod(pm.paymentMethodId)}
-                            title={toDisplayString('기본 결제 수단으로 설정')}
-                          >
-                            <Edit2 size={16} />
-                          </button>
-                        )}
-                        <button
-                          className="payment-method-action-btn payment-method-action-btn--danger"
-                          onClick={() => handleDeletePaymentMethod(pm.paymentMethodId)}
-                          title={toDisplayString('삭제')}
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="no-payment-methods">
-                    <CreditCard size={48} />
-                    <p>등록된 결제 수단이 없습니다.</p>
-                    <button className="mg-button"
-                      onClick={() => setShowPaymentMethodRegistration(true)}
+                    ) : (
+                      <p className="no-data">등록된 결제 수단이 없습니다.</p>
+                    )}
+                  </ContentSection>
+                </div>
+              )}
+
+              {activeTab === 'subscription' && (
+                <ContentSection title="구독 관리" className="mg-v2-tenant-profile__subscription-wrap">
+                  <SubscriptionManagement tenantId={tenantId} />
+                </ContentSection>
+              )}
+
+              {activeTab === 'payment' && (
+                <ContentSection
+                  title="결제 수단 관리"
+                  actions={
+                    <MGButton
+                      type="button"
                       variant="primary"
+                      size="small"
+                      onClick={() => setShowPaymentMethodRegistration(true)}
+                      preventDoubleClick={false}
                     >
                       <Plus size={16} />
                       결제 수단 추가
-                    </button>
+                    </MGButton>
+                  }
+                  className="mg-v2-tenant-profile__payment-wrap"
+                >
+                  {showPaymentMethodRegistration && (
+                    <div className="payment-method-registration-wrapper">
+                      <PaymentMethodRegistration
+                        tenantId={tenantId}
+                        onSuccess={() => {
+                          setShowPaymentMethodRegistration(false);
+                          loadPaymentMethods();
+                        }}
+                        onCancel={() => setShowPaymentMethodRegistration(false)}
+                      />
+                    </div>
+                  )}
+
+                  <div className="payment-method-list">
+                    {paymentMethods.length > 0 ? (
+                      paymentMethods.map((pm) => (
+                        <div key={pm.paymentMethodId} className="payment-method-card">
+                          <div className="payment-method-card-content">
+                            <CreditCard size={24} />
+                            <div className="payment-method-info">
+                              <div className="payment-method-name">
+                                <SafeText fallback="결제 수단">{pm.cardNumber ?? pm.methodType}</SafeText>
+                                {pm.isDefault && (
+                                  <span className="default-badge">기본</span>
+                                )}
+                              </div>
+                              {pm.cardExpiry && (
+                                <div className="payment-method-expiry">
+                                  만료일: <SafeText>{pm.cardExpiry}</SafeText>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          <div className="payment-method-actions">
+                            {!pm.isDefault && (
+                              <button
+                                type="button"
+                                className="payment-method-action-btn"
+                                onClick={() => handleSetDefaultPaymentMethod(pm.paymentMethodId)}
+                                title={toDisplayString('기본 결제 수단으로 설정')}
+                              >
+                                <Edit2 size={16} />
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              className="payment-method-action-btn payment-method-action-btn--danger"
+                              onClick={() => handleDeletePaymentMethod(pm.paymentMethodId)}
+                              title={toDisplayString('삭제')}
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="no-payment-methods">
+                        <CreditCard size={48} />
+                        <p>등록된 결제 수단이 없습니다.</p>
+                        <MGButton
+                          type="button"
+                          variant="primary"
+                          onClick={() => setShowPaymentMethodRegistration(true)}
+                          preventDoubleClick={false}
+                        >
+                          <Plus size={16} />
+                          결제 수단 추가
+                        </MGButton>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
+                </ContentSection>
+              )}
             </div>
-          )}
+          </ContentArea>
         </div>
       </div>
     </AdminCommonLayout>

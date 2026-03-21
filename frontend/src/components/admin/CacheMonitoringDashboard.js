@@ -1,12 +1,17 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
-import UnifiedLoading from '../common/UnifiedLoading';
+import ContentArea from '../dashboard-v2/content/ContentArea';
+import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import MGButton from '../common/MGButton';
 import { FaDatabase, FaChartLine, FaClock, FaMemory, FaSync } from 'react-icons/fa';
 import { DataTransformer, PerformanceUtils } from '../../utils/performanceUtils';
 import { WIDGET_CONSTANTS } from '../../constants/widgetConstants';
 import notificationManager from '../../utils/notification';
+import '../../styles/unified-design-tokens.css';
+import './AdminDashboard/AdminDashboardB0KlA.css';
 import './CacheMonitoringDashboard.css';
+
+const CACHE_MONITOR_TITLE_ID = 'cache-monitoring-title';
 
 const CacheMonitoringDashboard = () => {
   const [cacheStats, setCacheStats] = useState({});
@@ -97,59 +102,66 @@ const CacheMonitoringDashboard = () => {
 
   return (
     <AdminCommonLayout title="캐시 성능 모니터링" loading={loading} loadingText="캐시 통계를 불러오는 중...">
-      <div className="cache-monitoring-dashboard">
-      <div className="dashboard-header">
-        <h2>
-          <FaDatabase className="header-icon" />
-          캐시 성능 모니터링
-        </h2>
-        <div className="header-controls">
-          <label className="auto-refresh-toggle">
-            <input
-              type="checkbox"
-              checked={autoRefresh}
-              onChange={(e) => setAutoRefresh(e.target.checked)}
+      <div className="mg-v2-ad-b0kla">
+        <div className="mg-v2-ad-b0kla__container">
+          <ContentArea ariaLabel="캐시 성능 모니터링 본문">
+            <ContentHeader
+              title="캐시 성능 모니터링"
+              subtitle="캐시 히트·미스 및 효율을 실시간으로 확인합니다."
+              titleId={CACHE_MONITOR_TITLE_ID}
+              actions={(
+                <div className="header-controls">
+                  <label className="auto-refresh-toggle">
+                    <input
+                      type="checkbox"
+                      checked={autoRefresh}
+                      onChange={(e) => setAutoRefresh(e.target.checked)}
+                    />
+                    자동 새로고침
+                  </label>
+                  <select
+                    value={refreshInterval}
+                    onChange={(e) => setRefreshInterval(Number(e.target.value))}
+                    disabled={!autoRefresh}
+                    className="refresh-interval-select"
+                  >
+                    <option value={WIDGET_CONSTANTS.REFRESH_INTERVALS.FAST}>1초</option>
+                    <option value={WIDGET_CONSTANTS.REFRESH_INTERVALS.DEFAULT}>5초</option>
+                    <option value={WIDGET_CONSTANTS.REFRESH_INTERVALS.NORMAL}>10초</option>
+                    <option value={WIDGET_CONSTANTS.REFRESH_INTERVALS.SLOW}>30초</option>
+                  </select>
+                  <MGButton
+                    type="button"
+                    variant="outline"
+                    size="small"
+                    onClick={fetchCacheStats}
+                    loading={loading}
+                    loadingText="새로고침 중..."
+                    preventDoubleClick
+                    className="refresh-button"
+                  >
+                    <FaSync size={14} />
+                    새로고침
+                  </MGButton>
+                  <MGButton
+                    type="button"
+                    variant="danger"
+                    size="small"
+                    onClick={clearAllCaches}
+                    loading={clearLoading}
+                    loadingText="삭제 중..."
+                    preventDoubleClick
+                    className="clear-cache-button"
+                  >
+                    캐시 삭제
+                  </MGButton>
+                </div>
+              )}
             />
-            자동 새로고침
-          </label>
-          <select
-            value={refreshInterval}
-            onChange={(e) => setRefreshInterval(Number(e.target.value))}
-            disabled={!autoRefresh}
-            className="refresh-interval-select"
-          >
-            <option value={WIDGET_CONSTANTS.REFRESH_INTERVALS.FAST}>1초</option>
-            <option value={WIDGET_CONSTANTS.REFRESH_INTERVALS.DEFAULT}>5초</option>
-            <option value={WIDGET_CONSTANTS.REFRESH_INTERVALS.NORMAL}>10초</option>
-            <option value={WIDGET_CONSTANTS.REFRESH_INTERVALS.SLOW}>30초</option>
-          </select>
-          <MGButton
-            type="button"
-            variant="outline"
-            size="small"
-            onClick={fetchCacheStats}
-            loading={loading}
-            loadingText="새로고침 중..."
-            preventDoubleClick
-            className="refresh-button"
-          >
-            <FaSync size={14} />
-            새로고침
-          </MGButton>
-          <MGButton
-            type="button"
-            variant="danger"
-            size="small"
-            onClick={clearAllCaches}
-            loading={clearLoading}
-            loadingText="삭제 중..."
-            preventDoubleClick
-            className="clear-cache-button"
-          >
-            캐시 삭제
-          </MGButton>
-        </div>
-      </div>
+            <main
+              aria-labelledby={CACHE_MONITOR_TITLE_ID}
+              className="cache-monitoring-dashboard"
+            >
 
       {lastUpdated && (
         <div className="last-updated">
@@ -235,6 +247,9 @@ const CacheMonitoringDashboard = () => {
           </MGButton>
         </div>
       )}
+            </main>
+          </ContentArea>
+        </div>
       </div>
     </AdminCommonLayout>
   );

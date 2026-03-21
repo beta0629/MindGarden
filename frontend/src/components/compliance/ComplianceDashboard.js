@@ -1,11 +1,29 @@
-import React, { useState, useEffect } from 'react';
-import UnifiedLoading from '../../components/common/UnifiedLoading';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useLocation } from 'react-router-dom';
+import UnifiedLoading from '../common/UnifiedLoading';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
+import ContentArea from '../dashboard-v2/content/ContentArea';
+import ContentHeader from '../dashboard-v2/content/ContentHeader';
+import MGButton from '../common/MGButton';
 import SafeText from '../common/SafeText';
 import { toDisplayString } from '../../utils/safeDisplay';
-import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import '../../styles/main.css';
+import '../../styles/unified-design-tokens.css';
+import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ComplianceDashboard.css';
+
+const COMPLIANCE_TITLE_ID = 'compliance-dashboard-title';
+
+const COMPLIANCE_SECTION_SUBTITLE = {
+  '/admin/compliance/dashboard': '종합 컴플라이언스 지표와 준수 현황을 확인합니다.',
+  '/admin/compliance/personal-data-processing': '개인정보 처리 건수 및 유형별 통계입니다.',
+  '/admin/compliance/impact-assessment': '개인정보 영향평가 위험도 및 개선 영역입니다.',
+  '/admin/compliance/breach-response': '침해사고 대응팀·절차 현황입니다.',
+  '/admin/compliance/education': '개인정보보호 교육 이수 및 프로그램 현황입니다.',
+  '/admin/compliance/policy': '처리방침 구성 요소 및 검토 일정입니다.',
+  '/admin/compliance/destruction': '개인정보 파기·보관 현황입니다.',
+  '/admin/compliance/audit': '감사·점검 관련 현황입니다.'
+};
 
 /**
  * 컴플라이언스 모니터링 대시보드
@@ -19,6 +37,12 @@ import './ComplianceDashboard.css';
  * @since 2024-12-19
  */
 const ComplianceDashboard = () => {
+    const location = useLocation();
+    const sectionSubtitle = useMemo(
+        () => COMPLIANCE_SECTION_SUBTITLE[location.pathname] || COMPLIANCE_SECTION_SUBTITLE['/admin/compliance/dashboard'],
+        [location.pathname]
+    );
+
     const [overallStatus, setOverallStatus] = useState(null);
     const [processingStatus, setProcessingStatus] = useState(null);
     const [impactAssessment, setImpactAssessment] = useState(null);
@@ -97,39 +121,56 @@ const ComplianceDashboard = () => {
         }
     };
 
+    const complianceShell = (body) => (
+        <AdminCommonLayout title="컴플라이언스 관리">
+            <div className="mg-v2-ad-b0kla">
+                <div className="mg-v2-ad-b0kla__container">
+                    <ContentArea ariaLabel="컴플라이언스 관리 본문">
+                        <ContentHeader
+                            title="컴플라이언스 모니터링"
+                            subtitle={sectionSubtitle}
+                            titleId={COMPLIANCE_TITLE_ID}
+                            actions={(
+                                <MGButton
+                                    type="button"
+                                    variant="outline"
+                                    size="small"
+                                    onClick={loadComplianceData}
+                                    disabled={loading}
+                                >
+                                    새로고침
+                                </MGButton>
+                            )}
+                        />
+                        <main aria-labelledby={COMPLIANCE_TITLE_ID} className="compliance-dashboard">
+                            {body}
+                        </main>
+                    </ContentArea>
+                </div>
+            </div>
+        </AdminCommonLayout>
+    );
+
     if (loading) {
-        return (
-            <AdminCommonLayout title="컴플라이언스 관리">
-                <UnifiedLoading type="page" text="컴플라이언스 데이터를 불러오는 중..." />
-            </AdminCommonLayout>
+        return complianceShell(
+            <UnifiedLoading type="page" text="컴플라이언스 데이터를 불러오는 중..." />
         );
     }
 
     if (error) {
-        return (
-            <AdminCommonLayout title="컴플라이언스 관리">
-                <div className="error-container">
-                    <h2>❌ 오류 발생</h2>
-                    <p><SafeText>{error}</SafeText></p>
-                    <button onClick={loadComplianceData} className="retry-button">
-                        다시 시도
-                    </button>
-                </div>
-            </AdminCommonLayout>
+        return complianceShell(
+            <div className="error-container">
+                <h2>오류 발생</h2>
+                <p><SafeText>{error}</SafeText></p>
+                <MGButton type="button" variant="primary" size="small" onClick={loadComplianceData}>
+                    다시 시도
+                </MGButton>
+            </div>
         );
     }
 
-    return (
-        <AdminCommonLayout title="컴플라이언스 관리">
-            <div className="compliance-dashboard">
-            <div className="dashboard-header">
-                <h1>⚖️ 컴플라이언스 모니터링 대시보드</h1>
-                <p>개인정보보호법 및 관련 법령 준수 현황을 실시간으로 모니터링합니다.</p>
-                <button onClick={loadComplianceData} className="refresh-button">
-                    🔄 새로고침
-                </button>
-            </div>
-
+    return complianceShell(
+            <>
             {/* 종합 현황 */}
             {overallStatus && (
                 <div className="overall-status-card">
@@ -346,27 +387,32 @@ const ComplianceDashboard = () => {
 
             {/* 액션 버튼들 */}
             <div className="action-buttons">
-                <button 
-                    className="action-button primary"
+                <MGButton
+                    type="button"
+                    variant="primary"
+                    size="small"
                     onClick={() => window.open('/api/v1/admin/compliance/impact-assessment/execute', '_blank')}
                 >
-                    📊 영향평가 실행
-                </button>
-                <button 
-                    className="action-button secondary"
+                    영향평가 실행
+                </MGButton>
+                <MGButton
+                    type="button"
+                    variant="secondary"
+                    size="small"
                     onClick={() => window.open('/api/v1/admin/personal-data-destruction/execute/all', '_blank')}
                 >
-                    🗑️ 전체 파기 실행
-                </button>
-                <button 
-                    className="action-button tertiary"
+                    전체 파기 실행
+                </MGButton>
+                <MGButton
+                    type="button"
+                    variant="outline"
+                    size="small"
                     onClick={() => window.open('/api/v1/admin/compliance/education/plan', '_blank')}
                 >
-                    🎓 교육 계획 수립
-                </button>
+                    교육 계획 수립
+                </MGButton>
             </div>
-            </div>
-        </AdminCommonLayout>
+            </>
     );
 };
 

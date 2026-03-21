@@ -1,8 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
-import UnifiedLoading from '../../components/common/UnifiedLoading';
-import SafeText from '../../components/common/SafeText';
+import SafeText from '../common/SafeText';
+import MGButton from '../common/MGButton';
+import ContentArea from '../dashboard-v2/content/ContentArea';
+import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import '../../styles/unified-design-tokens.css';
+import './AdminDashboard/AdminDashboardB0KlA.css';
 import { USER_ROLES } from '../../constants/roles';
 
 const PERMISSION_CATEGORIES = {
@@ -139,7 +142,7 @@ const PermissionManagement = () => {
     const [currentUserRole, setCurrentUserRole] = useState(null);
     const [selectedRole, setSelectedRole] = useState('ADMIN');
     const [rolePermissions, setRolePermissions] = useState([]);
-    const [loading, setLoading] = useState(false);
+    const [saveLoading, setSaveLoading] = useState(false);
     const [message, setMessage] = useState('');
     const [allPermissions, setAllPermissions] = useState([]); // DB에서 로드한 모든 권한
 
@@ -275,7 +278,7 @@ const PermissionManagement = () => {
     };
 
     const handleSavePermissions = async () => {
-        setLoading(true);
+        setSaveLoading(true);
         setMessage('');
         
         try {
@@ -315,7 +318,7 @@ const PermissionManagement = () => {
             console.error('권한 저장 실패:', error);
             setMessage('권한 저장에 실패했습니다.');
         } finally {
-            setLoading(false);
+            setSaveLoading(false);
         }
     };
 
@@ -332,23 +335,24 @@ const PermissionManagement = () => {
         currentUserRole
     });
 
-    if (loading) {
-        return (
-            <AdminCommonLayout title="권한 관리" loading={true} loadingText="권한 정보를 불러오는 중...">
-                <UnifiedLoading type="page" text="권한 정보를 불러오는 중..." />
-            </AdminCommonLayout>
-        );
-    }
-
     if (!canManagePermissions) {
         return (
-            <div className="mg-v2-permission-management">
-                <div className="mg-v2-error-state">
-                    <h3>접근 권한 없음</h3>
-                    <p>권한 관리를 위해서는 관리자(ADMIN) 권한이 필요합니다.</p>
-                    <p>현재 역할: {currentUserRole || '알 수 없음'}</p>
+            <AdminCommonLayout title="권한 관리">
+                <div className="mg-v2-ad-b0kla mg-v2-permission-management">
+                    <div className="mg-v2-ad-b0kla__container">
+                        <ContentArea ariaLabel="권한 관리 콘텐츠">
+                            <ContentHeader
+                                title="접근 권한 없음"
+                                subtitle="권한 관리는 관리자(ADMIN)만 이용할 수 있습니다."
+                                titleId="permission-management-title"
+                            />
+                            <div className="mg-v2-error-state" role="alert">
+                                <p>현재 역할: {currentUserRole || '알 수 없음'}</p>
+                            </div>
+                        </ContentArea>
+                    </div>
                 </div>
-            </div>
+            </AdminCommonLayout>
         );
     }
 
@@ -366,45 +370,57 @@ const PermissionManagement = () => {
     const manageableRoles = getManageableRoles();
 
     return (
-        <div className="mg-v2-permission-management">
-            {message && (
-                <div className={`mg-permission-message ${message.includes('성공') ? 'success' : 'error'}`}>
-                    {message}
-                </div>
-            )}
+        <AdminCommonLayout title="권한 관리">
+            <div className="mg-v2-ad-b0kla mg-v2-permission-management">
+                <div className="mg-v2-ad-b0kla__container">
+                    <ContentArea ariaLabel="권한 관리 콘텐츠">
+                        <ContentHeader
+                            title="권한 관리"
+                            subtitle="역할별 메뉴·기능 접근 권한을 설정하고 저장합니다."
+                            titleId="permission-management-title"
+                        />
 
-            <div className="mg-v2-permission-controls">
-                <div className="mg-v2-role-selector">
-                    <label htmlFor="role-select">역할 선택:</label>
-                    <select 
-                        id="role-select"
-                        value={selectedRole} 
-                        onChange={(e) => setSelectedRole(e.target.value)}
-                        disabled={!isTopAdmin && manageableRoles.length === 1}
-                    >
-                        {manageableRoles.map(role => (
-                            <option key={role} value={role}>
-                                {ROLE_DISPLAY_NAMES[role] || role}
-                            </option>
-                        ))}
-                    </select>
-                    {!isTopAdmin && (
-                        <small className="mg-v2-role-restriction">
-                            {ROLE_DISPLAY_NAMES[currentUserRole] || currentUserRole}는 자신의 역할만 관리할 수 있습니다.
-                        </small>
-                    )}
-                </div>
-                
-                <button 
-                    className="mg-v2-button mg-v2-button-primary"
-                    onClick={handleSavePermissions}
-                    disabled={loading}
-                >
-                    {loading ? '저장 중...' : '권한 저장'}
-                </button>
-            </div>
+                        {message && (
+                            <div className={`mg-permission-message ${message.includes('성공') ? 'success' : 'error'}`}>
+                                {message}
+                            </div>
+                        )}
 
-            <div className="mg-v2-permission-categories">
+                        <div className="mg-v2-permission-controls">
+                            <div className="mg-v2-role-selector">
+                                <label htmlFor="role-select">역할 선택:</label>
+                                <select 
+                                    id="role-select"
+                                    value={selectedRole} 
+                                    onChange={(e) => setSelectedRole(e.target.value)}
+                                    disabled={!isTopAdmin && manageableRoles.length === 1}
+                                >
+                                    {manageableRoles.map(role => (
+                                        <option key={role} value={role}>
+                                            {ROLE_DISPLAY_NAMES[role] || role}
+                                        </option>
+                                    ))}
+                                </select>
+                                {!isTopAdmin && (
+                                    <small className="mg-v2-role-restriction">
+                                        {ROLE_DISPLAY_NAMES[currentUserRole] || currentUserRole}는 자신의 역할만 관리할 수 있습니다.
+                                    </small>
+                                )}
+                            </div>
+                            
+                            <MGButton
+                                variant="primary"
+                                onClick={handleSavePermissions}
+                                disabled={saveLoading}
+                                loading={saveLoading}
+                                loadingText="저장 중..."
+                                preventDoubleClick={false}
+                            >
+                                권한 저장
+                            </MGButton>
+                        </div>
+
+                        <div className="mg-v2-permission-categories">
                 {allPermissions.length > 0 ? (
                     // DB에서 로드한 권한들을 카테고리별로 그룹화
                     Object.entries(
@@ -456,24 +472,27 @@ const PermissionManagement = () => {
                         </div>
                     ))
                 )}
-            </div>
+                        </div>
 
-            <div className="mg-v2-permission-summary">
-                <h3>현재 선택된 권한 ({rolePermissions.length}개)</h3>
-                <div className="mg-v2-selected-permissions">
-                    {rolePermissions.map(permissionCode => {
-                        const permission = Object.values(PERMISSION_CATEGORIES)
-                            .flat()
-                            .find(p => p.code === permissionCode);
-                        return (
-                            <span key={permissionCode} className="mg-v2-permission-tag">
-                                <SafeText>{permission ? permission.name : permissionCode}</SafeText>
-                            </span>
-                        );
-                    })}
+                        <div className="mg-v2-permission-summary">
+                            <h3>현재 선택된 권한 ({rolePermissions.length}개)</h3>
+                            <div className="mg-v2-selected-permissions">
+                                {rolePermissions.map(permissionCode => {
+                                    const permission = Object.values(PERMISSION_CATEGORIES)
+                                        .flat()
+                                        .find(p => p.code === permissionCode);
+                                    return (
+                                        <span key={permissionCode} className="mg-v2-permission-tag">
+                                            <SafeText>{permission ? permission.name : permissionCode}</SafeText>
+                                        </span>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    </ContentArea>
                 </div>
             </div>
-        </div>
+        </AdminCommonLayout>
     );
 };
 

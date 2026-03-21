@@ -15,14 +15,18 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
-import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
-// import Card from '../ui/Card/Card'; // 임시 비활성화
-import MGButton from '../../components/common/MGButton'; // 임시 비활성화
+import ContentArea from '../dashboard-v2/content/ContentArea';
+import ContentHeader from '../dashboard-v2/content/ContentHeader';
+import MGButton from '../common/MGButton';
 import { ACADEMY_API } from '../../constants/academy';
 import { API_BASE_URL } from '../../constants/api';
 import notificationManager from '../../utils/notification';
 import { kakaoLogin, naverLogin, googleLogin } from '../../utils/socialLogin';
+import '../../styles/unified-design-tokens.css';
+import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './Academy.css';
+
+const ACADEMY_REGISTER_TITLE_ID = 'academy-register-page-title';
 
 const AcademyRegister = () => {
   const navigate = useNavigate();
@@ -219,11 +223,17 @@ const AcademyRegister = () => {
 
   return (
     <AdminCommonLayout title="학원 등록">
+      <div className="mg-v2-ad-b0kla">
+        <div className="mg-v2-ad-b0kla__container">
+          <ContentArea ariaLabel="학원 회원가입">
+            <ContentHeader
+              title="학원 회원가입"
+              subtitle="테넌트에 소속되어 학원 서비스를 이용하려면 가입 정보를 입력하세요."
+              titleId={ACADEMY_REGISTER_TITLE_ID}
+            />
+            <main aria-labelledby={ACADEMY_REGISTER_TITLE_ID}>
       <div className="academy-register">
         <div className="mg-card">
-          <div className="mg-card__header">
-            <h2>학원 회원가입</h2>
-          </div>
           <div className="mg-card__body">
             {!tenantId && (
               <div className="academy-error">
@@ -240,36 +250,39 @@ const AcademyRegister = () => {
                     SNS 계정으로 간편하게 가입하세요
                   </p>
                   <div className="academy-social-buttons">
-                    <button className="mg-button"
+                    <MGButton
                       type="button"
                       variant="outline"
                       onClick={() => handleSocialLogin('kakao')}
                       disabled={loading}
                       className="academy-social-button academy-social-button-kakao"
+                      preventDoubleClick={false}
                     >
                       <span className="academy-social-icon">카카오</span>
                       카카오로 가입
-                    </button>
-                    <button className="mg-button"
+                    </MGButton>
+                    <MGButton
                       type="button"
                       variant="outline"
                       onClick={() => handleSocialLogin('naver')}
                       disabled={loading}
                       className="academy-social-button academy-social-button-naver"
+                      preventDoubleClick={false}
                     >
                       <span className="academy-social-icon">네이버</span>
                       네이버로 가입
-                    </button>
-                    <button className="mg-button"
+                    </MGButton>
+                    <MGButton
                       type="button"
                       variant="outline"
                       onClick={() => handleSocialLogin('google')}
                       disabled={loading}
                       className="academy-social-button academy-social-button-google"
+                      preventDoubleClick={false}
                     >
                       <span className="academy-social-icon">구글</span>
                       구글로 가입
-                    </button>
+                    </MGButton>
                   </div>
                   <div className="academy-social-divider">
                     <span>또는</span>
@@ -425,27 +438,33 @@ const AcademyRegister = () => {
 
                 {/* 액션 버튼 */}
                 <div className="academy-form-actions">
-                  <button className="mg-button"
+                  <MGButton
                     type="button"
                     variant="outline"
                     onClick={() => navigate('/login')}
                     disabled={loading}
+                    preventDoubleClick={false}
                   >
                     취소
-                  </button>
-                  <button className="mg-button"
+                  </MGButton>
+                  <MGButton
                     type="submit"
                     variant="primary"
                     loading={loading}
                     disabled={loading}
+                    preventDoubleClick={false}
                   >
                     회원가입
-                  </button>
+                  </MGButton>
                 </div>
               </form>
               </>
             )}
           </div>
+        </div>
+      </div>
+            </main>
+          </ContentArea>
         </div>
       </div>
     </AdminCommonLayout>

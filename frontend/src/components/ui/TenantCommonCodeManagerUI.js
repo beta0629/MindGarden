@@ -59,14 +59,6 @@ const TenantCommonCodeManagerUI = ({
 
     return (
         <div className="mg-tenant-code-manager">
-            {/* Header */}
-            <div className="mg-manager-header">
-                <h2>테넌트 공통코드 관리</h2>
-                <p className="mg-manager-description">
-                    테넌트 전용 공통코드를 관리합니다. 상담 패키지, 결제 방법, 전문 분야 등을 설정할 수 있습니다.
-                </p>
-            </div>
-
             {/* Error Message */}
             {error && (
                 <div className="mg-error-message">

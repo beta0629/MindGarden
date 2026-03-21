@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-// import MGButton from '../../components/common/MGButton'; // 임시 비활성화
-import { 
-    Sparkles, 
+import MGButton from '../common/MGButton';
+import {
     Send, 
     Database, 
     DollarSign, 
@@ -20,8 +19,11 @@ import ConfirmModal from '../common/ConfirmModal';
 import SafeText from '../common/SafeText';
 import { toDisplayString, toSafeNumber } from '../../utils/safeDisplay';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
-import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import ContentArea from '../dashboard-v2/content/ContentArea';
+import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import { sessionManager } from '../../utils/sessionManager';
+import '../../styles/unified-design-tokens.css';
+import './AdminDashboard/AdminDashboardB0KlA.css';
 import './WellnessManagement.css';
 
 /**
@@ -306,59 +308,58 @@ const WellnessManagement = () => {
 
     if (loading) {
         return (
-            <AdminCommonLayout title="웰니스 알림 관리" loading={true} loadingText="데이터를 불러오는 중...">
-                <UnifiedLoading type="page" text="데이터를 불러오는 중..." />
-            </AdminCommonLayout>
+            <AdminCommonLayout title="웰니스 알림 관리" loading={true} loadingText="데이터를 불러오는 중..." />
         );
     }
 
     return (
         <AdminCommonLayout title="웰니스 알림 관리" loading={loading} loadingText="데이터를 불러오는 중...">
-            <div className="mg-v2-container">
-                {/* 헤더 */}
-                <div className="mg-v2-section">
-                    <div className="mg-v2-dashboard-header">
-                        <div className="mg-v2-dashboard-header-content">
-                            <div className="mg-v2-dashboard-header-left">
-                                <Sparkles size={32} />
-                                <div>
-                                    <h1 className="mg-v2-dashboard-title">웰니스 알림 관리</h1>
-                                    <p className="mg-v2-dashboard-subtitle">AI 기반 자동 웰니스 컨텐츠 생성 및 발송 관리</p>
-                                </div>
-                            </div>
-                            <div className="mg-v2-header-actions">
-                                <button className="mg-button" 
-                                    variant="outline"
-                                    size="small"
-                                    onClick={handleExchangeRateRefresh}
-                                    disabled={refreshing}
-                                >
-                                    <TrendingUp size={18} className={refreshing ? 'spinning' : ''} />
-                                    환율 새로고침
-                                </button>
-                                <button className="mg-button" 
-                                    variant="outline"
-                                    size="small"
-                                    onClick={handleRefresh}
-                                    disabled={refreshing}
-                                >
-                                    <RefreshCw size={18} className={refreshing ? 'spinning' : ''} />
-                                    새로고침
-                                </button>
-                                <button className="mg-button" 
-                                    variant="primary"
-                                    size="small"
-                                    onClick={handleTestSend}
-                                    disabled={sending}
-                                >
-                                    <Send size={18} />
-                                    {sending ? '발송 중...' : '테스트 발송'}
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            <div className="mg-v2-ad-b0kla mg-v2-wellness-management">
+                <div className="mg-v2-ad-b0kla__container">
+                    <ContentArea ariaLabel="웰니스 알림 관리 본문">
+                        <ContentHeader
+                            title="웰니스 알림 관리"
+                            subtitle="AI 기반 자동 웰니스 컨텐츠 생성 및 발송 관리"
+                            titleId="wellness-management-title"
+                            actions={(
+                                <>
+                                    <MGButton
+                                        variant="outline"
+                                        size="small"
+                                        onClick={handleExchangeRateRefresh}
+                                        disabled={refreshing}
+                                        preventDoubleClick={false}
+                                    >
+                                        <TrendingUp size={18} className={refreshing ? 'spinning' : ''} />
+                                        환율 새로고침
+                                    </MGButton>
+                                    <MGButton
+                                        variant="outline"
+                                        size="small"
+                                        onClick={handleRefresh}
+                                        disabled={refreshing}
+                                        preventDoubleClick={false}
+                                    >
+                                        <RefreshCw size={18} className={refreshing ? 'spinning' : ''} />
+                                        새로고침
+                                    </MGButton>
+                                    <MGButton
+                                        variant="primary"
+                                        size="small"
+                                        onClick={handleTestSend}
+                                        disabled={sending}
+                                        loading={sending}
+                                        loadingText="발송 중..."
+                                        preventDoubleClick={true}
+                                    >
+                                        <Send size={18} />
+                                        테스트 발송
+                                    </MGButton>
+                                </>
+                            )}
+                        />
 
+                        <main aria-labelledby="wellness-management-title">
                 {/* 통계 카드 */}
                 <div className="mg-v2-stats-grid">
                     <div className="mg-v2-stat-card">
@@ -412,16 +413,29 @@ const WellnessManagement = () => {
                 {/* 월 선택 */}
                 <div className="mg-v2-section">
                     <div className="mg-v2-card wellness-month-selector">
-                        <button className="mg-button" variant="primary" size="small" onClick={() => handleMonthChange(-1)}>◀
-                        </button>
+                        <MGButton
+                            variant="primary"
+                            size="small"
+                            onClick={() => handleMonthChange(-1)}
+                            preventDoubleClick={false}
+                        >
+                            ◀
+                        </MGButton>
                         <span className="mg-v2-h2">
                             {selectedMonth.year}년 {selectedMonth.month}월
                         </span>
-                        <button className="mg-button" variant="primary" size="small" onClick={() => handleMonthChange(1)} disabled={
+                        <MGButton
+                            variant="primary"
+                            size="small"
+                            onClick={() => handleMonthChange(1)}
+                            disabled={
                                 selectedMonth.year === new Date().getFullYear() &&
                                 selectedMonth.month === new Date().getMonth() + 1
-                            }>▶
-                        </button>
+                            }
+                            preventDoubleClick={false}
+                        >
+                            ▶
+                        </MGButton>
                     </div>
                 </div>
 
@@ -531,8 +545,11 @@ const WellnessManagement = () => {
                     </div>
                     </div>
                 </div>
+                        </main>
+                    </ContentArea>
+                </div>
             </div>
-            
+
             {/* 컨펌 모달 */}
             <ConfirmModal
                 isOpen={confirmModal.isOpen}

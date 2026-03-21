@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import UnifiedLoading from '../../components/common/UnifiedLoading';
+import UnifiedLoading from '../common/UnifiedLoading';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentHeader, ContentArea } from '../dashboard-v2/content';
 import ErpCard from './common/ErpCard';
@@ -13,6 +13,10 @@ import SafeErrorDisplay from '../common/SafeErrorDisplay';
 import SafeText from '../common/SafeText';
 import { toDisplayString } from '../../utils/safeDisplay';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
+import '../../styles/unified-design-tokens.css';
+import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
+
+const ITEM_MANAGEMENT_TITLE_ID = 'item-management-title';
 
 /**
  * 아이템 관리 컴포넌트 (관리자/수퍼어드민 전용)
@@ -235,99 +239,101 @@ const ItemManagement = () => {
     return option ? option.label : category;
   };
 
-  if (loading && items.length === 0) {
-    return (
-      <AdminCommonLayout title="아이템 관리" loading={true} loadingText="데이터를 불러오는 중...">
-        <div />
-      </AdminCommonLayout>
-    );
-  }
-
   return (
     <AdminCommonLayout title="아이템 관리">
-      <ContentHeader
-        title="아이템 관리"
-        subtitle="비품 아이템을 관리하세요"
-        actions={
-          <div className="action-buttons">
-            <ErpButton
-              variant="secondary"
-              onClick={() => window.history.back()}
-            >
-              뒤로가기
-            </ErpButton>
-            <ErpButton
-              variant="primary"
-              onClick={() => setShowCreateModal(true)}
-            >
-              <Plus size={16} /> 새 아이템 추가
-            </ErpButton>
-          </div>
-        }
-      />
-      <ContentArea className="item-management-container" ariaLabel="아이템 관리 콘텐츠">
-        {/* 성공/오류 메시지 */}
-        {success && (
-          <div className="success-message">
-            <SafeText>{success}</SafeText>
-          </div>
-        )}
-
-        {error && (
-          <SafeErrorDisplay error={error} variant="inline" className="error-message" />
-        )}
-
-        {/* 아이템 목록 */}
-        <ErpCard title={toDisplayString(`아이템 목록 (${items.length}개)`)}>
-          <div className="item-management-grid">
-            {items.map(item => (
-              <div key={item.id} className="item-management-card">
-                <div className="item-management-card-header">
-                  <h4 className="item-management-card-title"><SafeText>{item.name}</SafeText></h4>
-                  <div className="item-management-card-category">
-                    <SafeText>{getCategoryLabel(item.category)}</SafeText>
-                  </div>
-                  {item.description && (
-                    <div className="item-management-card-description">
-                      <SafeText>{item.description}</SafeText>
-                    </div>
-                  )}
-                </div>
-                
-                <div className="item-management-card-footer">
-                  <div className="item-management-card-price">
-                    {formatCurrency(item.unitPrice)}
-                  </div>
-                  <div className="item-management-card-stock">
-                    재고: {toDisplayString(item.stockQuantity)}개
-                  </div>
-                  {item.supplier && (
-                    <div className="item-management-card-supplier">
-                      공급업체: <SafeText>{item.supplier}</SafeText>
-                    </div>
-                  )}
-                </div>
-                
-                <div className="item-management-card-actions">
+      <div className="mg-v2-ad-b0kla mg-v2-item-management">
+        <div className="mg-v2-ad-b0kla__container">
+          <ContentArea ariaLabel="아이템 관리 콘텐츠">
+            <ContentHeader
+              title="아이템 관리"
+              subtitle="비품 아이템을 관리하세요"
+              titleId={ITEM_MANAGEMENT_TITLE_ID}
+              actions={
+                <div className="action-buttons">
                   <ErpButton
-                    variant="outline-primary"
-                    size="small"
-                    onClick={() => handleEditItem(item)}
+                    variant="secondary"
+                    onClick={() => window.history.back()}
                   >
-                    <Pencil size={14} /> 수정
+                    뒤로가기
                   </ErpButton>
                   <ErpButton
-                    variant="outline-danger"
-                    size="small"
-                    onClick={() => handleDeleteItem(item)}
+                    variant="primary"
+                    onClick={() => setShowCreateModal(true)}
                   >
-                    <Trash2 size={14} /> 삭제
+                    <Plus size={16} /> 새 아이템 추가
                   </ErpButton>
                 </div>
-              </div>
-            ))}
-          </div>
-        </ErpCard>
+              }
+            />
+            {loading && items.length === 0 ? (
+              <UnifiedLoading type="page" text="데이터를 불러오는 중..." />
+            ) : (
+              <main
+                aria-labelledby={ITEM_MANAGEMENT_TITLE_ID}
+                className="item-management-container"
+              >
+                {success && (
+                  <div className="success-message">
+                    <SafeText>{success}</SafeText>
+                  </div>
+                )}
+
+                {error && (
+                  <SafeErrorDisplay error={error} variant="inline" className="error-message" />
+                )}
+
+                <ErpCard title={toDisplayString(`아이템 목록 (${items.length}개)`)}>
+                  <div className="item-management-grid">
+                    {items.map(item => (
+                      <div key={item.id} className="item-management-card">
+                        <div className="item-management-card-header">
+                          <h4 className="item-management-card-title"><SafeText>{item.name}</SafeText></h4>
+                          <div className="item-management-card-category">
+                            <SafeText>{getCategoryLabel(item.category)}</SafeText>
+                          </div>
+                          {item.description && (
+                            <div className="item-management-card-description">
+                              <SafeText>{item.description}</SafeText>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="item-management-card-footer">
+                          <div className="item-management-card-price">
+                            {formatCurrency(item.unitPrice)}
+                          </div>
+                          <div className="item-management-card-stock">
+                            재고: {toDisplayString(item.stockQuantity)}개
+                          </div>
+                          {item.supplier && (
+                            <div className="item-management-card-supplier">
+                              공급업체: <SafeText>{item.supplier}</SafeText>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="item-management-card-actions">
+                          <ErpButton
+                            variant="outline-primary"
+                            size="small"
+                            onClick={() => handleEditItem(item)}
+                          >
+                            <Pencil size={14} /> 수정
+                          </ErpButton>
+                          <ErpButton
+                            variant="outline-danger"
+                            size="small"
+                            onClick={() => handleDeleteItem(item)}
+                          >
+                            <Trash2 size={14} /> 삭제
+                          </ErpButton>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </ErpCard>
+              </main>
+            )}
 
         {/* 아이템 생성 모달 */}
         <ErpModal
@@ -577,7 +583,9 @@ const ItemManagement = () => {
             </div>
           </form>
         </ErpModal>
-      </ContentArea>
+          </ContentArea>
+        </div>
+      </div>
     </AdminCommonLayout>
   );
 };

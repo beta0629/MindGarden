@@ -17,11 +17,16 @@ import { apiGet } from '../../utils/ajax';
 import { getDashboardPath } from '../../utils/session';
 import { useSession } from '../../contexts/SessionContext';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
-import { CLIENT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
+import ContentArea from '../dashboard-v2/content/ContentArea';
+import ContentHeader from '../dashboard-v2/content/ContentHeader';
+import MGButton from '../common/MGButton';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import notificationManager from '../../utils/notification';
 import '../../styles/unified-design-tokens.css';
+import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ClientPaymentHistory.css';
+
+const CLIENT_PAYMENT_HISTORY_TITLE_ID = 'client-payment-history-title';
 
 /**
  * 내담자 결제 내역 페이지
@@ -130,6 +135,23 @@ const ClientPaymentHistory = () => {
     });
   };
 
+  const pageShell = (body) => (
+    <div className="mg-v2-ad-b0kla">
+      <div className="mg-v2-ad-b0kla__container">
+        <ContentArea ariaLabel="결제 내역">
+          <ContentHeader
+            title="결제 내역"
+            subtitle="결제 내역과 패키지 정보를 확인하세요"
+            titleId={CLIENT_PAYMENT_HISTORY_TITLE_ID}
+          />
+          <main aria-labelledby={CLIENT_PAYMENT_HISTORY_TITLE_ID}>
+            {body}
+          </main>
+        </ContentArea>
+      </div>
+    </div>
+  );
+
   const filteredMappings = paymentData?.mappings?.filter(mapping => {
     if (filter === 'all') return true;
     // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
@@ -142,8 +164,10 @@ const ClientPaymentHistory = () => {
 
   if (isLoading) {
     return (
-      <AdminCommonLayout title="결제 내역" loading={true} loadingText="결제 이력을 불러오는 중...">
-        <div />
+      <AdminCommonLayout title="결제 내역">
+        {pageShell(
+          <UnifiedLoading type="page" text="결제 이력을 불러오는 중..." />
+        )}
       </AdminCommonLayout>
     );
   }
@@ -151,21 +175,20 @@ const ClientPaymentHistory = () => {
   if (error) {
     return (
       <AdminCommonLayout title="결제 내역">
-        <div className="client-payment-history">
-          <div className="payment-error">
-            <div className="payment-error__icon">
-              <AlertTriangle size={48} />
+        {pageShell(
+          <div className="client-payment-history">
+            <div className="payment-error">
+              <div className="payment-error__icon">
+                <AlertTriangle size={48} />
+              </div>
+              <h3 className="payment-error__title">오류가 발생했습니다</h3>
+              <p className="payment-error__message">{error}</p>
+              <MGButton variant="primary" onClick={loadPaymentData} preventDoubleClick={false}>
+                다시 시도
+              </MGButton>
             </div>
-            <h3 className="payment-error__title">오류가 발생했습니다</h3>
-            <p className="payment-error__message">{error}</p>
-            <button 
-              className="mg-v2-button mg-v2-button-primary"
-              onClick={loadPaymentData}
-            >
-              다시 시도
-            </button>
           </div>
-        </div>
+        )}
       </AdminCommonLayout>
     );
   }
@@ -173,44 +196,35 @@ const ClientPaymentHistory = () => {
   if (!paymentData || paymentData.mappings.length === 0) {
     return (
       <AdminCommonLayout title="결제 내역">
-        <div className="client-payment-history">
-          <div className="payment-empty">
-            <div className="payment-empty__icon">
-              <CreditCard size={48} />
+        {pageShell(
+          <div className="client-payment-history">
+            <div className="payment-empty">
+              <div className="payment-empty__icon">
+                <CreditCard size={48} />
+              </div>
+              <h3 className="payment-empty__title">결제 내역이 없습니다</h3>
+              <p className="payment-empty__text">아직 결제한 패키지가 없습니다.</p>
+              <MGButton
+                variant="primary"
+                onClick={() => {
+                  const dashboardPath = getDashboardPath(user?.role);
+                  navigate(dashboardPath || '/dashboard');
+                }}
+                preventDoubleClick={false}
+              >
+                대시보드로 이동
+              </MGButton>
             </div>
-            <h3 className="payment-empty__title">결제 내역이 없습니다</h3>
-            <p className="payment-empty__text">아직 결제한 패키지가 없습니다.</p>
-            <button 
-              className="mg-v2-button mg-v2-button-primary"
-              onClick={() => {
-                const dashboardPath = getDashboardPath(user?.role);
-                navigate(dashboardPath || '/dashboard');
-              }}
-            >
-              대시보드로 이동
-            </button>
           </div>
-        </div>
+        )}
       </AdminCommonLayout>
     );
   }
 
   return (
     <AdminCommonLayout title="결제 내역">
-      <div className="client-payment-history">
-        {/* 페이지 헤더 */}
-        <div className="payment-header">
-          <div className="payment-header__icon">
-            <CreditCard size={32} />
-          </div>
-          <div className="payment-header__content">
-            <h1 className="payment-header__title">결제 내역</h1>
-            <p className="payment-header__subtitle">
-              결제 내역과 패키지 정보를 확인하세요
-            </p>
-          </div>
-        </div>
-
+      {pageShell(
+        <div className="client-payment-history">
         {/* 통계 카드 */}
         <div className="payment-stats">
           <div className="payment-stat-card payment-stat-card--total">
@@ -362,7 +376,8 @@ const ClientPaymentHistory = () => {
             </div>
           </div>
         </div>
-      </div>
+        </div>
+      )}
     </AdminCommonLayout>
   );
 };

@@ -1,36 +1,42 @@
-.tenant-profile {
+/* B0KlA 래퍼(mg-v2-ad-b0kla) + ContentArea/ContentHeader/ContentSection와 조합 */
+.mg-v2-tenant-profile .mg-v2-ad-b0kla__container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 2rem;
 }
 
-.tenant-profile-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2rem;
-  padding: 1.5rem;
-  background: var(--mg-color-background, #fff);
-  border-radius: 8px;
-  box-shadow: 0 2px 4px var(--mg-shadow-light);
+.mg-v2-tenant-profile__tabs {
+  margin-top: 0.5rem;
+  margin-bottom: 1.25rem;
 }
 
-.tenant-profile-header-content {
+.mg-v2-tenant-profile__panel {
+  min-height: 320px;
+}
+
+.mg-v2-tenant-profile__overview {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 1rem;
 }
 
-.tenant-profile-header-content h1 {
-  margin: 0;
-  font-size: 1.5rem;
-  font-weight: 600;
+.mg-v2-tenant-profile__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
 }
 
-.tenant-profile-subtitle {
-  margin: 0.25rem 0 0 0;
-  color: var(--mg-color-text-secondary, #666);
+.mg-v2-tenant-profile__field label {
+  display: block;
+  margin-bottom: 0.5rem;
   font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--mg-color-text-secondary, #666);
+}
+
+.mg-v2-tenant-profile__field p {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--mg-color-text, #333);
 }
 
 .tenant-status-badge {
@@ -61,13 +67,6 @@
 .tenant-status-badge--secondary {
   background: var(--mg-color-secondary-light, #e2e3e5);
   color: var(--mg-color-secondary, var(--mg-secondary-500));
-}
-
-.tenant-profile-tabs {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 2rem;
-  border-bottom: 2px solid var(--mg-color-border, #dee2e6);
 }
 
 .tenant-profile-tab {
@@ -189,27 +188,6 @@
   font-style: italic;
   text-align: center;
   padding: 2rem;
-}
-
-.tenant-profile-subscription,
-.tenant-profile-payment {
-  padding: 1.5rem;
-  background: var(--mg-color-background, #fff);
-  border-radius: 8px;
-  box-shadow: 0 2px 4px var(--mg-shadow-light);
-}
-
-.payment-method-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5rem;
-}
-
-.payment-method-header h2 {
-  margin: 0;
-  font-size: 1.25rem;
-  font-weight: 600;
 }
 
 .payment-method-registration-wrapper {

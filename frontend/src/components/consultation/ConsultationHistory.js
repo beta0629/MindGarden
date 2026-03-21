@@ -9,10 +9,16 @@ import { getCommonCodes } from '../../utils/commonCodeApi';
 import { DASHBOARD_API } from '../../constants/api';
 import { USER_ROLES } from '../../constants/roles';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
-import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
+import ContentArea from '../dashboard-v2/content/ContentArea';
+import ContentHeader from '../dashboard-v2/content/ContentHeader';
+import MGButton from '../common/MGButton';
 import notificationManager from '../../utils/notification';
+import '../../styles/unified-design-tokens.css';
+import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ConsultationHistory.css';
 import SafeText from '../common/SafeText';
+
+const CONSULTATION_HISTORY_TITLE_ID = 'consultation-history-page-title';
 
 const ConsultationHistory = () => {
   const navigate = useNavigate();
@@ -159,40 +165,53 @@ const ConsultationHistory = () => {
     return statusMatch && dateMatch;
   });
 
+  const pageShell = (body) => (
+    <div className="mg-v2-ad-b0kla">
+      <div className="mg-v2-ad-b0kla__container">
+        <ContentArea ariaLabel="상담 내역">
+          <ContentHeader
+            title="상담 내역"
+            subtitle="나의 상담 기록을 확인할 수 있습니다"
+            titleId={CONSULTATION_HISTORY_TITLE_ID}
+            actions={
+              <MGButton variant="outline" size="small" onClick={() => navigate(-1)} preventDoubleClick={false}>
+                <i className="bi bi-arrow-left"></i>
+                뒤로
+              </MGButton>
+            }
+          />
+          <main aria-labelledby={CONSULTATION_HISTORY_TITLE_ID}>
+            {body}
+          </main>
+        </ContentArea>
+      </div>
+    </div>
+  );
+
   if (sessionLoading) {
     return (
-      <AdminCommonLayout title="상담 내역" loading={true} loadingText="세션 정보를 불러오는 중...">
-        <div />
+      <AdminCommonLayout title="상담 내역">
+        {pageShell(
+          <UnifiedLoading type="page" text="세션 정보를 불러오는 중..." />
+        )}
       </AdminCommonLayout>
     );
   }
 
   if (loading) {
     return (
-      <AdminCommonLayout title="상담 내역" loading={true} loadingText="상담 내역을 불러오는 중...">
-        <div />
+      <AdminCommonLayout title="상담 내역">
+        {pageShell(
+          <UnifiedLoading type="page" text="상담 내역을 불러오는 중..." />
+        )}
       </AdminCommonLayout>
     );
   }
 
   return (
     <AdminCommonLayout title="상담 내역">
-      <div className="consultation-history-page">
-        <div className="page-header">
-          <div className="header-content">
-            <button 
-              className="back-button"
-              onClick={() => navigate(-1)}
-            >
-              <i className="bi bi-arrow-left"></i>
-            </button>
-            <div className="header-text">
-              <h1>📋 상담 내역</h1>
-              <p>나의 상담 기록을 확인할 수 있습니다</p>
-            </div>
-          </div>
-        </div>
-
+      {pageShell(
+        <div className="consultation-history-page">
         <div className="page-content">
           {/* 필터 섹션 */}
           <div className="filter-section">
@@ -225,15 +244,18 @@ const ConsultationHistory = () => {
               />
             </div>
             
-            <button
+            <MGButton
+              variant="outline"
+              size="small"
               className="clear-filters-btn"
               onClick={() => {
                 setFilterStatus('ALL');
                 setFilterDate('');
               }}
+              preventDoubleClick={false}
             >
               필터 초기화
-            </button>
+            </MGButton>
           </div>
 
           {/* 상담 내역 목록 */}
@@ -242,9 +264,9 @@ const ConsultationHistory = () => {
               <div className="error-message">
                 <i className="bi bi-exclamation-triangle"></i>
                 <p>{error}</p>
-                <button onClick={loadConsultationHistory} className="retry-btn">
+                <MGButton variant="primary" onClick={loadConsultationHistory} className="retry-btn" preventDoubleClick={false}>
                   다시 시도
-                </button>
+                </MGButton>
               </div>
             ) : filteredConsultations.length === 0 ? (
               <div className="no-data">
@@ -300,7 +322,8 @@ const ConsultationHistory = () => {
             )}
           </div>
         </div>
-      </div>
+        </div>
+      )}
     </AdminCommonLayout>
   );
 };

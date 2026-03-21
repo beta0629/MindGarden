@@ -14,17 +14,21 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-// // import MGButton from '../../components/common/MGButton'; // 임시 비활성화
-import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import AdminCommonLayout from '../layout/AdminCommonLayout';
+import ContentArea from '../dashboard-v2/content/ContentArea';
+import ContentHeader from '../dashboard-v2/content/ContentHeader';
+import MGButton from '../common/MGButton';
 import notificationManager from '../../utils/notification';
 import { apiGet } from '../../utils/ajax';
 import csrfTokenManager from '../../utils/csrfTokenManager';
-import { API_BASE_URL } from '../../constants/api';
-import { FaPlus, FaEdit, FaTrash, FaEye, FaEyeSlash, FaSearch, FaFilter, FaSync, FaCheckCircle, FaTimesCircle, FaExternalLinkAlt } from 'react-icons/fa';
-import { LayoutDashboard, Settings, Users, Shield } from 'lucide-react';
+import { FaPlus, FaEdit, FaTrash, FaEye, FaEyeSlash, FaSearch, FaSync, FaCheckCircle, FaTimesCircle, FaExternalLinkAlt } from 'react-icons/fa';
+import { LayoutDashboard } from 'lucide-react';
 import DashboardFormModal from './DashboardFormModal';
+import '../../styles/unified-design-tokens.css';
+import './AdminDashboard/AdminDashboardB0KlA.css';
 import './DashboardManagement.css';
+
+const DASHBOARD_MGMT_TITLE_ID = 'dashboard-management-title';
 
 const DashboardManagement = () => {
   const navigate = useNavigate();
@@ -281,23 +285,30 @@ const DashboardManagement = () => {
   };
 
   return (
-    <AdminCommonLayout>
-      <div className="dashboard-management-container">
-        {/* 헤더 */}
-        <div className="dashboard-management-header">
-          <div className="dashboard-management-title">
-            <LayoutDashboard className="dashboard-icon" />
-            <h2>대시보드 관리</h2>
-          </div>
-          <button className="mg-button"
-            variant="primary"
-            onClick={handleCreate}
-            className="btn-create-dashboard"
-          >
-            <FaPlus /> 새 대시보드
-          </button>
-        </div>
-
+    <AdminCommonLayout title="대시보드 관리">
+      <div className="mg-v2-ad-b0kla">
+        <div className="mg-v2-ad-b0kla__container">
+          <ContentArea ariaLabel="대시보드 관리 본문">
+            <ContentHeader
+              title="대시보드 관리"
+              subtitle="테넌트 역할별 대시보드를 구성·활성화합니다."
+              titleId={DASHBOARD_MGMT_TITLE_ID}
+              actions={(
+                <MGButton
+                  type="button"
+                  variant="primary"
+                  size="small"
+                  onClick={handleCreate}
+                  className="btn-create-dashboard"
+                >
+                  <FaPlus /> 새 대시보드
+                </MGButton>
+              )}
+            />
+            <main
+              aria-labelledby={DASHBOARD_MGMT_TITLE_ID}
+              className="dashboard-management-container"
+            >
         {/* 필터 및 검색 */}
         <div className="dashboard-management-filters">
           <div className="search-box">
@@ -311,6 +322,7 @@ const DashboardManagement = () => {
             />
             {searchTerm && (
               <button
+                type="button"
                 className="clear-search"
                 onClick={() => setSearchTerm('')}
               >
@@ -320,34 +332,42 @@ const DashboardManagement = () => {
           </div>
 
           <div className="filter-buttons">
-            <button className="mg-button"
+            <MGButton
+              type="button"
               variant={filterType === 'all' ? 'primary' : 'secondary'}
+              size="small"
               onClick={() => setFilterType('all')}
               className="filter-btn"
             >
               전체
-            </button>
-            <button className="mg-button"
+            </MGButton>
+            <MGButton
+              type="button"
               variant={filterType === 'active' ? 'primary' : 'secondary'}
+              size="small"
               onClick={() => setFilterType('active')}
               className="filter-btn"
             >
               <FaEye /> 활성
-            </button>
-            <button className="mg-button"
+            </MGButton>
+            <MGButton
+              type="button"
               variant={filterType === 'inactive' ? 'primary' : 'secondary'}
+              size="small"
               onClick={() => setFilterType('inactive')}
               className="filter-btn"
             >
               <FaEyeSlash /> 비활성
-            </button>
-            <button className="mg-button"
+            </MGButton>
+            <MGButton
+              type="button"
               variant="secondary"
+              size="small"
               onClick={loadDashboards}
               className="refresh-btn"
             >
               <FaSync /> 새로고침
-            </button>
+            </MGButton>
           </div>
         </div>
 
@@ -435,16 +455,20 @@ const DashboardManagement = () => {
                 </div>
 
                 <div className="dashboard-card-actions">
-                  <button className="mg-button"
+                  <MGButton
+                    type="button"
                     variant="primary"
+                    size="small"
                     onClick={() => handleViewDashboard(dashboard)}
                     className="btn-view"
                     title="대시보드 보기 (새 탭에서 열기: Ctrl+클릭)"
                   >
                     <FaExternalLinkAlt /> 보기
-                  </button>
-                  <button className="mg-button"
+                  </MGButton>
+                  <MGButton
+                    type="button"
                     variant="secondary"
+                    size="small"
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
@@ -456,9 +480,11 @@ const DashboardManagement = () => {
                     title={dashboard?.dashboardId ? '대시보드 수정' : '대시보드 ID가 없습니다.'}
                   >
                     <FaEdit /> 수정
-                  </button>
-                  <button className="mg-button"
+                  </MGButton>
+                  <MGButton
+                    type="button"
                     variant="secondary"
+                    size="small"
                     onClick={() => handleToggleActive(dashboard)}
                     className="btn-toggle"
                   >
@@ -471,15 +497,17 @@ const DashboardManagement = () => {
                         <FaEye /> 활성화
                       </>
                     )}
-                  </button>
+                  </MGButton>
                   {!dashboard.isDefault && (
-                    <button className="mg-button"
+                    <MGButton
+                      type="button"
                       variant="danger"
+                      size="small"
                       onClick={() => handleDelete(dashboard)}
                       className="btn-delete"
                     >
                       <FaTrash /> 삭제
-                    </button>
+                    </MGButton>
                   )}
                 </div>
               </div>
@@ -522,6 +550,9 @@ const DashboardManagement = () => {
             </div>
           </div>
         )}
+            </main>
+          </ContentArea>
+        </div>
       </div>
     </AdminCommonLayout>
   );

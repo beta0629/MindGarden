@@ -5,11 +5,17 @@ import { redirectToDynamicDashboard } from '../../utils/dashboardUtils';
 import { sessionManager } from '../../utils/sessionManager';
 import { useSession } from '../../contexts/SessionContext';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
-import { CLIENT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
+import ContentArea from '../dashboard-v2/content/ContentArea';
+import ContentHeader from '../dashboard-v2/content/ContentHeader';
+import MGButton from '../common/MGButton';
 import UnifiedLoading from '../common/UnifiedLoading';
 import 'bootstrap-icons/font/bootstrap-icons.css';
+import '../../styles/unified-design-tokens.css';
+import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ClientSessionManagement.css';
 import notificationManager from '../../utils/notification';
+
+const CLIENT_SESSION_MGMT_TITLE_ID = 'client-session-management-title';
 
 const ClientSessionManagement = () => {
   const navigate = useNavigate();
@@ -107,10 +113,29 @@ const ClientSessionManagement = () => {
     });
   };
 
+  const pageShell = (body) => (
+    <div className="mg-v2-ad-b0kla">
+      <div className="mg-v2-ad-b0kla__container">
+        <ContentArea ariaLabel="회기 관리">
+          <ContentHeader
+            title="회기 관리"
+            subtitle="상담 회기 현황과 사용 내역을 확인하세요"
+            titleId={CLIENT_SESSION_MGMT_TITLE_ID}
+          />
+          <main aria-labelledby={CLIENT_SESSION_MGMT_TITLE_ID}>
+            {body}
+          </main>
+        </ContentArea>
+      </div>
+    </div>
+  );
+
   if (isLoading) {
     return (
-      <AdminCommonLayout title="회기 관리" loading={true} loadingText="회기 데이터를 불러오는 중...">
-        <div />
+      <AdminCommonLayout title="회기 관리">
+        {pageShell(
+          <UnifiedLoading type="page" text="회기 데이터를 불러오는 중..." />
+        )}
       </AdminCommonLayout>
     );
   }
@@ -118,21 +143,20 @@ const ClientSessionManagement = () => {
   if (error) {
     return (
       <AdminCommonLayout title="회기 관리">
-        <div className="client-session-management">
-          <div className="error-container">
-            <div className="error-icon">
-              <i className="bi bi-exclamation-triangle"></i>
+        {pageShell(
+          <div className="client-session-management">
+            <div className="error-container">
+              <div className="error-icon">
+                <i className="bi bi-exclamation-triangle"></i>
+              </div>
+              <h3>오류가 발생했습니다</h3>
+              <p>{error}</p>
+              <MGButton variant="primary" onClick={loadSessionData} preventDoubleClick={false}>
+                다시 시도
+              </MGButton>
             </div>
-            <h3>오류가 발생했습니다</h3>
-            <p>{error}</p>
-            <button 
-              className="mg-btn mg-btn--primary"
-              onClick={loadSessionData}
-            >
-              다시 시도
-            </button>
           </div>
-        </div>
+        )}
       </AdminCommonLayout>
     );
   }
@@ -140,39 +164,32 @@ const ClientSessionManagement = () => {
   if (!sessionData || sessionData.mappings.length === 0) {
     return (
       <AdminCommonLayout title="회기 관리">
-        <div className="client-session-management">
-          <div className="no-data-container">
-            <div className="no-data-icon">
-              <i className="bi bi-calendar-check"></i>
+        {pageShell(
+          <div className="client-session-management">
+            <div className="no-data-container">
+              <div className="no-data-icon">
+                <i className="bi bi-calendar-check"></i>
+              </div>
+              <h3>회기 정보가 없습니다</h3>
+              <p>아직 상담사와 연결된 패키지가 없습니다.</p>
+              <MGButton
+                variant="primary"
+                onClick={() => navigate('/client/wellness')}
+                preventDoubleClick={false}
+              >
+                웰니스 가이드 보기
+              </MGButton>
             </div>
-            <h3>회기 정보가 없습니다</h3>
-            <p>아직 상담사와 연결된 패키지가 없습니다.</p>
-            <button 
-              className="btn btn-primary"
-              onClick={() => navigate('/client/wellness')}
-            >
-              웰니스 가이드 보기
-            </button>
           </div>
-        </div>
+        )}
       </AdminCommonLayout>
     );
   }
 
   return (
     <AdminCommonLayout title="회기 관리">
-      <div className="client-session-management">
-        {/* 페이지 헤드라인 */}
-        <div className="client-session-management-header">
-          <h1 className="client-session-management-title">
-            <i className="bi bi-clock-history client-session-management-title-icon"></i>
-            회기 관리
-          </h1>
-          <p className="client-session-management-subtitle">
-            상담 회기 현황과 사용 내역을 확인하세요
-          </p>
-        </div>
-
+      {pageShell(
+        <div className="client-session-management">
         {/* 햄버거 메뉴 드롭다운 */}
         {isMenuOpen && (
           <div className="client-session-menu-dropdown">
@@ -277,9 +294,7 @@ const ClientSessionManagement = () => {
                     <i className="bi bi-person package-card-icon"></i>
                     <span className="package-card-title">상담사: {mapping.consultant?.consultantName || '미지정'}</span>
                   </div>
-                  // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                   <span className={`package-card-status ${mapping.status === 'ACTIVE' ? 'active' : 'inactive'}`}>
-                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                     {mapping.status === 'ACTIVE' ? '활성' : '비활성'}
                   </span>
                 </div>
@@ -353,7 +368,8 @@ const ClientSessionManagement = () => {
             </div>
           )}
         </div>
-      </div>
+        </div>
+      )}
     </AdminCommonLayout>
   );
 };

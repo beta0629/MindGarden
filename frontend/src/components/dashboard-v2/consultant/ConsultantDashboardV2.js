@@ -13,6 +13,8 @@ import {
   UserPlus
 } from 'lucide-react';
 import AdminCommonLayout from '../../layout/AdminCommonLayout';
+import { ContentArea, ContentHeader } from '../content';
+import UnifiedLoading from '../../common/UnifiedLoading';
 import StandardizedApi from '../../../utils/standardizedApi';
 import { DASHBOARD_API, RATING_API } from '../../../constants/api';
 import QuickActionBar from './QuickActionBar';
@@ -21,9 +23,12 @@ import NextConsultationCard from './NextConsultationCard';
 import UrgentClientsSection from './UrgentClientsSection';
 import ConsultationLogModal from '../../consultant/ConsultationLogModal';
 import SafeText from '../../common/SafeText';
+import '../../../styles/unified-design-tokens.css';
+import '../../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ConsultantDashboard.css';
 
 const TENANT_ERROR_MESSAGE = '테넌트 정보를 불러올 수 없습니다. 로그아웃 후 다시 로그인해 주세요.';
+const CONSULTANT_DASHBOARD_TITLE_ID = 'consultant-dashboard-v2-page-title';
 
 const ConsultantDashboardV2 = ({ user }) => {
   const navigate = useNavigate();
@@ -73,17 +78,17 @@ const ConsultantDashboardV2 = ({ user }) => {
       console.warn('⚠️ [상담사 대시보드] tenantId 없음 - 스케줄/통계 API 호출 생략. user.tenantId=', currentUser?.tenantId);
       setDashboardError(TENANT_ERROR_MESSAGE);
       setLoading(false);
-        setDashboardData(prev => ({
-          ...prev,
-          stats: {
-            todaySchedules: 0,
-            newClients: 0,
-            unreadMessages: 0,
-            averageRating: 0,
-            totalRatingCount: 0
-          },
-          todaySchedules: []
-        }));
+      setDashboardData(prev => ({
+        ...prev,
+        stats: {
+          todaySchedules: 0,
+          newClients: 0,
+          unreadMessages: 0,
+          averageRating: 0,
+          totalRatingCount: 0
+        },
+        todaySchedules: []
+      }));
       return;
     }
 
@@ -592,23 +597,38 @@ const ConsultantDashboardV2 = ({ user }) => {
     weekday: 'long'
   });
 
+  const dashboardShell = (mainBody) => (
+    <div className="mg-v2-ad-b0kla">
+      <div className="mg-v2-ad-b0kla__container">
+        <ContentArea ariaLabel="상담사 대시보드">
+          <ContentHeader
+            title="상담 대시보드"
+            subtitle={`${user?.name || '상담사'} 선생님, 환영합니다. 오늘(${todayDateStr}) 일정·알림·내담 현황을 한곳에서 확인하세요.`}
+            titleId={CONSULTANT_DASHBOARD_TITLE_ID}
+            actions={<QuickActionBar onNavigate={navigate} />}
+          />
+          <main aria-labelledby={CONSULTANT_DASHBOARD_TITLE_ID}>
+            {mainBody}
+          </main>
+        </ContentArea>
+      </div>
+    </div>
+  );
+
+  if (loading && user?.id) {
+    return (
+      <AdminCommonLayout title="상담사 대시보드">
+        {dashboardShell(
+          <UnifiedLoading type="page" text="대시보드를 불러오는 중..." />
+        )}
+      </AdminCommonLayout>
+    );
+  }
+
   return (
     <AdminCommonLayout title="상담사 대시보드">
-      <div className="consultant-dashboard-v2">
-        
-        {/* 웰컴 메시지 영역 */}
-        <div className="dashboard-welcome-section mg-v2-content-card" style={{ marginBottom: '24px', padding: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'var(--mg-white)' }}>
-          <div>
-            <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--mg-gray-900)', margin: '0 0 8px 0' }}>
-              {user?.name || '상담사'} 선생님, 환영합니다.
-            </h1>
-            <p style={{ fontSize: '1rem', color: 'var(--mg-gray-600)', margin: 0 }}>
-              오늘({todayDateStr}) 하루도 화이팅하세요!
-            </p>
-          </div>
-          <QuickActionBar onNavigate={navigate} />
-        </div>
-
+      {dashboardShell(
+        <div className="consultant-dashboard-v2">
         {/* 테넌트 미설정 안내 배너 */}
         {dashboardError && (
           <div className="consultant-dashboard-tenant-alert" role="alert">
@@ -796,7 +816,8 @@ const ConsultantDashboardV2 = ({ user }) => {
           onViewAllClients={handleViewAllClients}
           onViewClientDetails={handleViewClientDetails}
         />
-      </div>
+        </div>
+      )}
 
       {/* 상담일지 작성 모달 */}
       {showConsultationLogModal && selectedSchedule && (

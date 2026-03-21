@@ -1,36 +1,33 @@
 /**
- * 학원 시스템 대시보드
-/**
- * 강좌, 반, 수강 등록 관리 통합 화면
-/**
- * 
-/**
+ * 학원 시스템 대시보드 — 강좌, 반, 수강 등록 관리 통합 화면
+ *
  * @author CoreSolution
-/**
  * @version 1.0.0
-/**
  * @since 2025-11-19
  */
 
 import React, { useState } from 'react';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
-import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
+import { ContentArea, ContentHeader } from '../dashboard-v2/content';
 import CourseList from './CourseList';
 import CourseForm from './CourseForm';
 import ClassList from './ClassList';
 import ClassForm from './ClassForm';
 import EnrollmentList from './EnrollmentList';
 import EnrollmentForm from './EnrollmentForm';
+import '../../styles/unified-design-tokens.css';
+import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './Academy.css';
 
+const ACADEMY_TITLE_ID = 'academy-dashboard-title';
+
 const AcademyDashboard = () => {
-  const [view, setView] = useState('courses'); // courses, classes, enrollments
+  const [view, setView] = useState('courses');
   const [showForm, setShowForm] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
-  const [selectedBranchId, setSelectedBranchId] = useState(null);
+  const selectedBranchId = null;
   const [selectedCourseId, setSelectedCourseId] = useState(null);
 
-  // 강좌 관련 핸들러
   const handleCreateCourse = () => {
     setSelectedItem(null);
     setShowForm(true);
@@ -56,7 +53,6 @@ const AcademyDashboard = () => {
     setSelectedItem(null);
   };
 
-  // 반 관련 핸들러
   const handleCreateClass = () => {
     setSelectedItem(null);
     setShowForm(true);
@@ -81,7 +77,6 @@ const AcademyDashboard = () => {
     setSelectedItem(null);
   };
 
-  // 수강 등록 관련 핸들러
   const handleCreateEnrollment = () => {
     setSelectedItem(null);
     setShowForm(true);
@@ -102,114 +97,120 @@ const AcademyDashboard = () => {
     setSelectedItem(null);
   };
 
+  const resetTabView = (next) => {
+    setView(next);
+    setShowForm(false);
+    setSelectedItem(null);
+  };
+
   return (
     <AdminCommonLayout title="학원">
-      <div className="academy-dashboard">
-        <div className="academy-header">
-          <h1>학원 시스템 관리</h1>
-          <div className="academy-tabs">
-            <button
-              className={`academy-tab ${view === 'courses' ? 'active' : ''}`}
-              onClick={() => {
-                setView('courses');
-                setShowForm(false);
-                setSelectedItem(null);
-              }}
+      <div className="mg-v2-ad-b0kla mg-v2-academy-dashboard">
+        <div className="mg-v2-ad-b0kla__container">
+          <ContentArea ariaLabel="학원 시스템 관리 본문">
+            <ContentHeader
+              title="학원 시스템 관리"
+              subtitle="강좌·반·수강 등록을 한곳에서 관리합니다"
+              titleId={ACADEMY_TITLE_ID}
+            />
+            <nav
+              className="mg-v2-tab-buttons mg-v2-academy-dashboard__tabs"
+              aria-label="학원 관리 섹션"
             >
-              강좌 관리
-            </button>
-            <button
-              className={`academy-tab ${view === 'classes' ? 'active' : ''}`}
-              onClick={() => {
-                setView('classes');
-                setShowForm(false);
-                setSelectedItem(null);
-              }}
-            >
-              반 관리
-            </button>
-            <button
-              className={`academy-tab ${view === 'enrollments' ? 'active' : ''}`}
-              onClick={() => {
-                setView('enrollments');
-                setShowForm(false);
-                setSelectedItem(null);
-              }}
-            >
-              수강 등록 관리
-            </button>
-          </div>
-        </div>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={view === 'courses'}
+                className={`mg-v2-tab-button${view === 'courses' ? ' active' : ''}`}
+                onClick={() => resetTabView('courses')}
+              >
+                강좌 관리
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={view === 'classes'}
+                className={`mg-v2-tab-button${view === 'classes' ? ' active' : ''}`}
+                onClick={() => resetTabView('classes')}
+              >
+                반 관리
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={view === 'enrollments'}
+                className={`mg-v2-tab-button${view === 'enrollments' ? ' active' : ''}`}
+                onClick={() => resetTabView('enrollments')}
+              >
+                수강 등록 관리
+              </button>
+            </nav>
 
-        <div className="academy-content">
-          {view === 'courses' && (
-            <>
-              {showForm ? (
-                <CourseForm
-                  course={selectedItem}
-                  // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
-                  branchId={selectedBranchId}
-                  onSave={handleCourseSave}
-                  onCancel={handleCourseCancel}
-                />
-              ) : (
-                <CourseList
-                  // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
-                  branchId={selectedBranchId}
-                  onCreateCourse={handleCreateCourse}
-                  onEditCourse={handleEditCourse}
-                  onCourseSelect={handleCourseSelect}
-                />
+            <main aria-labelledby={ACADEMY_TITLE_ID} className="academy-content">
+              {view === 'courses' && (
+                <>
+                  {showForm ? (
+                    <CourseForm
+                      course={selectedItem}
+                      branchId={selectedBranchId}
+                      onSave={handleCourseSave}
+                      onCancel={handleCourseCancel}
+                    />
+                  ) : (
+                    <CourseList
+                      branchId={selectedBranchId}
+                      onCreateCourse={handleCreateCourse}
+                      onEditCourse={handleEditCourse}
+                      onCourseSelect={handleCourseSelect}
+                    />
+                  )}
+                </>
               )}
-            </>
-          )}
 
-          {view === 'classes' && (
-            <>
-              {showForm ? (
-                <ClassForm
-                  classItem={selectedItem}
-                  // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
-                  branchId={selectedBranchId}
-                  courseId={selectedCourseId}
-                  onSave={handleClassSave}
-                  onCancel={handleClassCancel}
-                />
-              ) : (
-                <ClassList
-                  // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
-                  branchId={selectedBranchId}
-                  courseId={selectedCourseId}
-                  onCreateClass={handleCreateClass}
-                  onEditClass={handleEditClass}
-                  onClassSelect={handleClassSelect}
-                />
+              {view === 'classes' && (
+                <>
+                  {showForm ? (
+                    <ClassForm
+                      classItem={selectedItem}
+                      branchId={selectedBranchId}
+                      courseId={selectedCourseId}
+                      onSave={handleClassSave}
+                      onCancel={handleClassCancel}
+                    />
+                  ) : (
+                    <ClassList
+                      branchId={selectedBranchId}
+                      courseId={selectedCourseId}
+                      onCreateClass={handleCreateClass}
+                      onEditClass={handleEditClass}
+                      onClassSelect={handleClassSelect}
+                    />
+                  )}
+                </>
               )}
-            </>
-          )}
 
-          {view === 'enrollments' && (
-            <>
-              {showForm ? (
-                <EnrollmentForm
-                  enrollment={selectedItem}
-                  // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
-                  branchId={selectedBranchId}
-                  classId={null}
-                  onSave={handleEnrollmentSave}
-                  onCancel={handleEnrollmentCancel}
-                />
-              ) : (
-                <EnrollmentList
-                  // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
-                  branchId={selectedBranchId}
-                  classId={null}
-                  onCreateEnrollment={handleCreateEnrollment}
-                  onEnrollmentSelect={handleEditEnrollment}
-                />
+              {view === 'enrollments' && (
+                <>
+                  {showForm ? (
+                    <EnrollmentForm
+                      enrollment={selectedItem}
+                      branchId={selectedBranchId}
+                      classId={null}
+                      onSave={handleEnrollmentSave}
+                      onCancel={handleEnrollmentCancel}
+                    />
+                  ) : (
+                    <EnrollmentList
+                      branchId={selectedBranchId}
+                      classId={null}
+                      onCreateEnrollment={handleCreateEnrollment}
+                      onEnrollmentSelect={handleEditEnrollment}
+                    />
+                  )}
+                </>
               )}
-            </>
-          )}
+            </main>
+          </ContentArea>
         </div>
       </div>
     </AdminCommonLayout>
@@ -217,4 +218,3 @@ const AcademyDashboard = () => {
 };
 
 export default AcademyDashboard;
-

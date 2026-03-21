@@ -14,13 +14,17 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
-import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
-import UnifiedLoading from '../common/UnifiedLoading';
-import { Upload, Save, RotateCcw, Eye, AlertCircle, CheckCircle, X } from 'lucide-react';
+import ContentArea from '../dashboard-v2/content/ContentArea';
+import ContentHeader from '../dashboard-v2/content/ContentHeader';
+import { Upload, Save, RotateCcw, Eye, AlertCircle, X } from 'lucide-react';
 import { useBranding } from '../../hooks/useBranding';
 import { updateBrandingInfo, uploadLogo, getBrandingInfo } from '../../utils/brandingUtils';
 import notificationManager from '../../utils/notification';
+import '../../styles/unified-design-tokens.css';
+import './AdminDashboard/AdminDashboardB0KlA.css';
 import './BrandingManagement.css';
+
+const BRANDING_MGMT_TITLE_ID = 'branding-management-title';
 
 const BrandingManagement = ({ onClose }) => {
   const { brandingInfo, isLoading, refreshBranding } = useBranding();
@@ -292,14 +296,15 @@ const BrandingManagement = ({ onClose }) => {
 
   return (
     <AdminCommonLayout title="브랜딩 관리" loading={isLoading} loadingText="브랜딩 정보를 불러오는 중...">
-      <div className="branding-management">
-      <div className="branding-management__header">
-        <h2 className="branding-management__title">브랜딩 관리</h2>
-        <p className="branding-management__description">
-          테넌트의 로고, 상호명, 색상을 설정하여 브랜드 아이덴티티를 구축하세요.
-        </p>
-      </div>
-
+      <div className="mg-v2-ad-b0kla">
+        <div className="mg-v2-ad-b0kla__container">
+          <ContentArea ariaLabel="브랜딩 관리 본문">
+            <ContentHeader
+              title="브랜딩 관리"
+              subtitle="테넌트의 로고, 상호명, 색상을 설정하여 브랜드 아이덴티티를 구축하세요."
+              titleId={BRANDING_MGMT_TITLE_ID}
+            />
+            <main aria-labelledby={BRANDING_MGMT_TITLE_ID} className="branding-management">
       <div className="branding-management__content">
         {/* 로고 업로드 섹션 */}
         <div className="branding-management__section">
@@ -512,6 +517,9 @@ const BrandingManagement = ({ onClose }) => {
           onClose={() => setShowPreview(false)}
         />
       )}
+            </main>
+          </ContentArea>
+        </div>
       </div>
     </AdminCommonLayout>
   );

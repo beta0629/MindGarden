@@ -10,7 +10,11 @@ import { Users, Info, Search, AlertTriangle, List, CheckCircle, XCircle, Clock, 
 import FilterBadge from './molecules/FilterBadge';
 import ClientCard from './molecules/ClientCard';
 import { ContentArea, ContentHeader, ContentSection } from '../dashboard-v2/content';
+import '../../styles/unified-design-tokens.css';
+import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ConsultantClientList.css';
+
+const CONSULTANT_CLIENT_LIST_TITLE_ID = 'consultant-client-list-title';
 
 const ConsultantClientList = () => {
   const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
@@ -207,10 +211,29 @@ const ConsultantClientList = () => {
     }
   };
 
+  const authShell = (mainBody) => (
+    <div className="mg-v2-ad-b0kla">
+      <div className="mg-v2-ad-b0kla__container">
+        <ContentArea ariaLabel="내담자 목록">
+          <ContentHeader
+            title="내담자 목록"
+            subtitle="나와 연계된 내담자들을 조회할 수 있습니다."
+            titleId={CONSULTANT_CLIENT_LIST_TITLE_ID}
+          />
+          <main aria-labelledby={CONSULTANT_CLIENT_LIST_TITLE_ID}>
+            {mainBody}
+          </main>
+        </ContentArea>
+      </div>
+    </div>
+  );
+
   if (sessionLoading) {
     return (
       <AdminCommonLayout title="내담자 목록">
-        <UnifiedLoading type="page" text="내담자 목록을 불러오는 중..." />
+        {authShell(
+          <UnifiedLoading type="page" text="내담자 목록을 불러오는 중..." />
+        )}
       </AdminCommonLayout>
     );
   }
@@ -218,21 +241,27 @@ const ConsultantClientList = () => {
   if (!isLoggedIn) {
     return (
       <AdminCommonLayout title="내담자 목록">
-        <div className="consultant-client-list-login-required">
-          <h3>로그인이 필요합니다.</h3>
-        </div>
+        {authShell(
+          <div className="consultant-client-list-login-required">
+            <h3>로그인이 필요합니다.</h3>
+          </div>
+        )}
       </AdminCommonLayout>
     );
   }
 
   return (
     <AdminCommonLayout title="내담자 목록">
-      <ContentArea>
-        <ContentHeader
-          title="내담자 목록"
-          subtitle="나와 연계된 내담자들을 조회할 수 있습니다."
-        />
-        
+      <div className="mg-v2-ad-b0kla">
+        <div className="mg-v2-ad-b0kla__container">
+          <ContentArea ariaLabel="내담자 목록">
+            <ContentHeader
+              title="내담자 목록"
+              subtitle="나와 연계된 내담자들을 조회할 수 있습니다."
+              titleId={CONSULTANT_CLIENT_LIST_TITLE_ID}
+            />
+
+            <main aria-labelledby={CONSULTANT_CLIENT_LIST_TITLE_ID}>
         <div className="mg-v2-alert mg-v2-alert--info">
           <Info size={20} />
           내담자 생성, 수정, 삭제는 관리자와 스태프만 가능합니다.
@@ -325,16 +354,19 @@ const ConsultantClientList = () => {
             )
           )}
         </ContentSection>
+            </main>
 
-        {showClientModal && selectedClient && (
-          <ClientDetailModal
-            client={selectedClient}
-            isOpen={showClientModal}
-            onClose={handleCloseModal}
-            onSave={handleSaveClient}
-          />
-        )}
-      </ContentArea>
+            {showClientModal && selectedClient && (
+              <ClientDetailModal
+                client={selectedClient}
+                isOpen={showClientModal}
+                onClose={handleCloseModal}
+                onSave={handleSaveClient}
+              />
+            )}
+          </ContentArea>
+        </div>
+      </div>
     </AdminCommonLayout>
   );
 };

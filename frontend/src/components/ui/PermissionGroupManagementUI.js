@@ -148,16 +148,6 @@ const PermissionGroupManagementUI = ({
 
     return (
         <div className="mg-permission-group-management">
-            <div className="mg-header">
-                <h2 className="mg-title">권한 그룹 설정</h2>
-                {selectedRole && (
-                    <div className="mg-selected-role">
-                        <i className="bi bi-person-badge"></i>
-                        <span>{selectedRole.nameKo || selectedRole.nameEn}</span>
-                    </div>
-                )}
-            </div>
-
             {error && (
                 <div className="mg-error-message">
                     <span className="mg-error-icon">⚠️</span>

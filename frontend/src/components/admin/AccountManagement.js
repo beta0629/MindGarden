@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import notificationManager from '../../utils/notification';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
+import ContentArea from '../dashboard-v2/content/ContentArea';
+import ContentHeader from '../dashboard-v2/content/ContentHeader';
+import MGButton from '../common/MGButton';
+import '../../styles/unified-design-tokens.css';
+import './AdminDashboard/AdminDashboardB0KlA.css';
 import './AccountManagement.css';
 import AccountForm from './components/AccountForm';
 import AccountTable from './components/AccountTable';
@@ -235,15 +240,23 @@ const AccountManagement = () => {
     }));
   };
 
+  const accountHeaderActions = (
+    <MGButton variant="primary" onClick={() => setShowForm(true)} preventDoubleClick={false}>
+      {ACCOUNT_BUTTON_TEXT.REGISTER}
+    </MGButton>
+  );
+
   return (
     <AdminCommonLayout title="계좌 관리" loading={loading && accounts.length === 0} loadingText="계좌 목록을 불러오는 중...">
-      <div className={ ACCOUNT_CSS_CLASSES.ACCOUNT_MANAGEMENT }>
-        <div className={ ACCOUNT_CSS_CLASSES.ACCOUNT_HEADER }>
-          <h2>{ ACCOUNT_PAGE_TITLES.MAIN }</h2>
-          <button type="button" className="mg-button btn btn-primary" onClick={() => setShowForm(true)}>
-            {ACCOUNT_BUTTON_TEXT.REGISTER}
-          </button>
-        </div>
+      <div className={`mg-v2-ad-b0kla ${ACCOUNT_CSS_CLASSES.ACCOUNT_MANAGEMENT}`}>
+        <div className="mg-v2-ad-b0kla__container">
+          <ContentArea ariaLabel="계좌 관리 콘텐츠">
+            <ContentHeader
+              title={ACCOUNT_PAGE_TITLES.MAIN}
+              subtitle="정산·입금 안내에 사용할 계좌를 등록·관리합니다."
+              actions={accountHeaderActions}
+              titleId="account-management-page-title"
+            />
 
         <AccountForm
           showForm={ showForm }
@@ -265,6 +278,8 @@ const AccountManagement = () => {
           onToggleStatus={ handleToggleStatus }
           onSetPrimary={ handleSetPrimary }
         />
+          </ContentArea>
+        </div>
       </div>
     </AdminCommonLayout>
   );

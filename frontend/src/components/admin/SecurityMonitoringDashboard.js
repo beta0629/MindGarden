@@ -2,13 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaArrowLeft, FaSync, FaDownload, FaShieldAlt, FaExclamationTriangle } from 'react-icons/fa';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
+import ContentArea from '../dashboard-v2/content/ContentArea';
+import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import SecurityMonitoringWidget from './widgets/SecurityMonitoringWidget';
 import PerformanceWidget from './widgets/PerformanceWidget';
-import MGButton from '../../components/common/MGButton';
+import MGButton from '../common/MGButton';
 import { SecurityDataManager } from '../../utils/securityUtils';
 import { WIDGET_CONSTANTS } from '../../constants/widgetConstants';
 import notificationManager from '../../utils/notification';
+import '../../styles/unified-design-tokens.css';
+import './AdminDashboard/AdminDashboardB0KlA.css';
 import './SecurityMonitoringDashboard.css';
+
+const SECURITY_MONITOR_TITLE_ID = 'security-monitoring-title';
 
 /**
  * 보안 모니터링 대시보드 페이지
@@ -105,21 +111,56 @@ const SecurityMonitoringDashboard = () => {
 
   return (
     <AdminCommonLayout title="보안 모니터링 대시보드" loading={false}>
-      <div className="security-monitoring-dashboard">
-        <div className={`page-header ${getHeaderStatusClass()}`}>
-          <div className="header-left">
-            <button className="mg-button"
-              variant="outline"
-              size="small"
-              onClick={() => navigate('/admin')}
-              className="back-button"
+      <div className="mg-v2-ad-b0kla">
+        <div className="mg-v2-ad-b0kla__container">
+          <ContentArea ariaLabel="보안 모니터링 본문">
+            <ContentHeader
+              title="보안 모니터링"
+              subtitle="실시간 보안 위협 탐지 및 시스템 보안 상태 모니터링"
+              titleId={SECURITY_MONITOR_TITLE_ID}
+              actions={(
+                <div className="security-monitoring-dashboard__header-actions">
+                  <MGButton
+                    type="button"
+                    variant="outline"
+                    size="small"
+                    onClick={() => navigate('/admin')}
+                    className="back-button"
+                  >
+                    <FaArrowLeft />
+                    관리자 대시보드
+                  </MGButton>
+                  <MGButton
+                    type="button"
+                    variant="outline"
+                    size="small"
+                    onClick={handleDownloadReport}
+                    disabled={refreshing}
+                  >
+                    <FaDownload />
+                    보안 보고서
+                  </MGButton>
+                  <MGButton
+                    type="button"
+                    variant="primary"
+                    size="small"
+                    onClick={handleRefresh}
+                    disabled={refreshing}
+                  >
+                    <FaSync className={refreshing ? 'spinning' : ''} />
+                    새로고침
+                  </MGButton>
+                </div>
+              )}
+            />
+            <main
+              aria-labelledby={SECURITY_MONITOR_TITLE_ID}
+              className="security-monitoring-dashboard"
             >
-              <FaArrowLeft />
-              관리자 대시보드
-            </button>
+        <div className={`page-header page-header--compact ${getHeaderStatusClass()}`}>
+          <div className="header-left">
             <div className="page-title">
               <div className="title-with-status">
-                <h1>보안 모니터링</h1>
                 <div className="security-status-badge">
                   {securitySummary.overallStatus === WIDGET_CONSTANTS.SECURITY_WIDGET.SECURITY_STATUS.SECURE ? (
                     <FaShieldAlt className="status-icon secure" />
@@ -129,10 +170,8 @@ const SecurityMonitoringDashboard = () => {
                   <span>{securitySummary.overallStatus}</span>
                 </div>
               </div>
-              <p>실시간 보안 위협 탐지 및 시스템 보안 상태 모니터링</p>
             </div>
           </div>
-          
           <div className="header-actions">
             <div className="security-summary">
               <div className="summary-item">
@@ -147,28 +186,6 @@ const SecurityMonitoringDashboard = () => {
                 <span className="summary-label">차단된 IP</span>
                 <span className="summary-value">{securitySummary.blockedIPs}</span>
               </div>
-            </div>
-            
-            <div className="action-buttons">
-              <button className="mg-button"
-                variant="outline"
-                size="small"
-                onClick={handleDownloadReport}
-                disabled={refreshing}
-              >
-                <FaDownload />
-                보안 보고서
-              </button>
-              
-              <button className="mg-button"
-                variant="primary"
-                size="small"
-                onClick={handleRefresh}
-                disabled={refreshing}
-              >
-                <FaSync className={refreshing ? 'spinning' : ''} />
-                새로고침
-              </button>
             </div>
           </div>
         </div>
@@ -233,6 +250,9 @@ const SecurityMonitoringDashboard = () => {
               </div>
             </div>
           </div>
+        </div>
+            </main>
+          </ContentArea>
         </div>
       </div>
     </AdminCommonLayout>

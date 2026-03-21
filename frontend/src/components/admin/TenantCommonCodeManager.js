@@ -23,6 +23,11 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import ContentArea from '../dashboard-v2/content/ContentArea';
+import ContentHeader from '../dashboard-v2/content/ContentHeader';
+import '../../styles/unified-design-tokens.css';
+import './AdminDashboard/AdminDashboardB0KlA.css';
 import {
     getTenantCodeGroups,
     getTenantCodesByGroup,
@@ -35,6 +40,8 @@ import {
 import { getCodeGroupKoreanNameSync, loadCodeGroupMetadata } from '../../utils/codeHelper';
 import notificationManager from '../../utils/notification';
 import TenantCommonCodeManagerUI from '../ui/TenantCommonCodeManagerUI';
+
+const TENANT_COMMON_CODE_TITLE_ID = 'tenant-common-code-title';
 
 const TenantCommonCodeManager = () => {
     const [codeGroups, setCodeGroups] = useState([]);
@@ -415,6 +422,16 @@ const TenantCommonCodeManager = () => {
     };
 
     return (
+        <AdminCommonLayout title="테넌트 공통코드">
+            <div className="mg-v2-ad-b0kla">
+                <div className="mg-v2-ad-b0kla__container">
+                    <ContentArea ariaLabel="테넌트 공통코드 관리 본문">
+                        <ContentHeader
+                            title="테넌트 공통코드 관리"
+                            subtitle="상담 패키지, 결제 방법, 전문 분야 등 테넌트 전용 코드를 관리합니다."
+                            titleId={TENANT_COMMON_CODE_TITLE_ID}
+                        />
+                        <main aria-labelledby={TENANT_COMMON_CODE_TITLE_ID}>
         <TenantCommonCodeManagerUI
             // 데이터
             codeGroups={getFilteredCodeGroups()}
@@ -442,6 +459,11 @@ const TenantCommonCodeManager = () => {
             onFormSubmit={handleSubmit}
             onModalClose={() => setShowModal(false)}
         />
+                        </main>
+                    </ContentArea>
+                </div>
+            </div>
+        </AdminCommonLayout>
     );
 };
 

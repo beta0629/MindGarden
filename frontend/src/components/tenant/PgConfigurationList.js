@@ -1,43 +1,37 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  CreditCard, 
-  Plus, 
-  Search, 
-  Filter, 
-  Eye, 
-  Edit, 
+import {
+  CreditCard,
+  Plus,
+  Search,
+  Eye,
+  Edit,
   Trash2,
-  CheckCircle,
   XCircle,
   Clock,
   AlertCircle,
-  RefreshCw,
-  Power,
-  PowerOff
+  RefreshCw
 } from 'lucide-react';
 import { useSession } from '../../contexts/SessionContext';
 import { getPgConfigurations, deletePgConfiguration, testPgConnection } from '../../utils/pgApi';
 import notificationManager from '../../utils/notification';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
-import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
-import UnifiedLoading from '../../components/common/UnifiedLoading';
-import StatusBadge from '../../components/common/StatusBadge';
-import MGButton from '../../components/common/MGButton'; // 임시 비활성화
+import UnifiedLoading from '../common/UnifiedLoading';
+import StatusBadge from '../common/StatusBadge';
+import MGButton from '../common/MGButton';
+import ContentArea from '../dashboard-v2/content/ContentArea';
+import ContentHeader from '../dashboard-v2/content/ContentHeader';
+import '../../styles/unified-design-tokens.css';
+import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './PgConfigurationList.css';
 import { toDisplayString } from '../../utils/safeDisplay';
 
 /**
  * PG 설정 목록 페이지
-/**
- * 테넌트 포털에서 PG 설정 목록을 조회하고 관리하는 페이지
-/**
- * 
-/**
+ * 테넌트 포털에서 PG 설정 목록을 조회하고 관리
+ *
  * @author CoreSolution
-/**
  * @version 1.0.0
-/**
  * @since 2025-01-XX
  */
 const PgConfigurationList = () => {
@@ -161,10 +155,14 @@ const PgConfigurationList = () => {
     return <StatusBadge variant={config.variant}>{toDisplayString(config.label, '—')}</StatusBadge>;
   };
   
-  if (sessionLoading || loading && configurations.length === 0) {
+  if (sessionLoading || (loading && configurations.length === 0)) {
     return (
-      <AdminCommonLayout title="PG 설정 목록" loading={true} loadingText="PG 설정 목록을 불러오는 중...">
-        <div />
+      <AdminCommonLayout title="PG 설정 목록">
+        <div className="mg-v2-ad-b0kla mg-v2-pg-config-list">
+          <div className="mg-v2-ad-b0kla__container">
+            <UnifiedLoading type="page" text="PG 설정 목록을 불러오는 중..." variant="pulse" />
+          </div>
+        </div>
       </AdminCommonLayout>
     );
   }
@@ -172,20 +170,28 @@ const PgConfigurationList = () => {
   if (!isLoggedIn || !user) {
     return (
       <AdminCommonLayout title="PG 설정 목록">
-        <div className="error-message">
-          <AlertCircle size={24} />
-          <p>로그인이 필요합니다.</p>
+        <div className="mg-v2-ad-b0kla mg-v2-pg-config-list">
+          <div className="mg-v2-ad-b0kla__container">
+            <div className="error-message">
+              <AlertCircle size={24} />
+              <p>로그인이 필요합니다.</p>
+            </div>
+          </div>
         </div>
       </AdminCommonLayout>
     );
   }
-  
+
   if (!tenantId) {
     return (
       <AdminCommonLayout title="PG 설정 목록">
-        <div className="error-message">
-          <AlertCircle size={24} />
-          <p>테넌트 정보를 찾을 수 없습니다.</p>
+        <div className="mg-v2-ad-b0kla mg-v2-pg-config-list">
+          <div className="mg-v2-ad-b0kla__container">
+            <div className="error-message">
+              <AlertCircle size={24} />
+              <p>테넌트 정보를 찾을 수 없습니다.</p>
+            </div>
+          </div>
         </div>
       </AdminCommonLayout>
     );
@@ -193,27 +199,29 @@ const PgConfigurationList = () => {
   
   return (
     <AdminCommonLayout title="PG 설정 목록">
-      <div className="pg-config-list">
-        {/* 헤더 */}
-        <div className="pg-config-list-header">
-          <div className="header-title">
-            <CreditCard size={32} />
-            <div>
-              <h1>PG 설정 관리</h1>
-              <p>결제 게이트웨이 설정을 관리합니다.</p>
-            </div>
-          </div>
-          <button className="mg-button"
-            variant="primary"
-            onClick={() => navigate(`/tenant/pg-configurations/new`)}
-          >
-            <Plus size={18} />
-            PG 설정 등록
-          </button>
-        </div>
-        
+      <div className="mg-v2-ad-b0kla mg-v2-pg-config-list">
+        <div className="mg-v2-ad-b0kla__container">
+          <ContentArea ariaLabel="PG 설정 목록">
+            <ContentHeader
+              title="PG 설정 관리"
+              subtitle="결제 게이트웨이 설정을 조회·등록·관리합니다."
+              titleId="pg-config-list-title"
+              actions={
+                <MGButton
+                  type="button"
+                  variant="primary"
+                  size="medium"
+                  onClick={() => navigate('/tenant/pg-configurations/new')}
+                  preventDoubleClick={false}
+                >
+                  <Plus size={18} />
+                  PG 설정 등록
+                </MGButton>
+              }
+            />
+
         {/* 필터 및 검색 */}
-        <div className="pg-config-list-filters">
+        <div className="pg-config-list-filters mg-v2-pg-config-list__filters">
           <div className="search-box">
             <Search size={18} />
             <input
@@ -234,15 +242,11 @@ const PgConfigurationList = () => {
               aria-label="상태 필터"
             >
               <option value="">전체 상태</option>
-              // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
+              {/* 표준화: 상태값 공통코드 동적 조회 권장 getCommonCodes('STATUS_GROUP') */}
               <option value="PENDING">대기 중</option>
-              // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
               <option value="APPROVED">승인됨</option>
-              // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
               <option value="REJECTED">거부됨</option>
-              // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
               <option value="ACTIVE">활성화</option>
-              // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
               <option value="INACTIVE">비활성화</option>
             </select>
             
@@ -253,22 +257,22 @@ const PgConfigurationList = () => {
               aria-label="승인 상태 필터"
             >
               <option value="">전체 승인 상태</option>
-              // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
+              {/* 표준화: 승인 상태 공통코드 동적 조회 권장 */}
               <option value="PENDING">승인 대기</option>
-              // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
               <option value="APPROVED">승인됨</option>
-              // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
               <option value="REJECTED">거부됨</option>
             </select>
             
-            <button className="mg-button"
+            <MGButton
+              type="button"
               variant="secondary"
               size="small"
               onClick={loadConfigurations}
+              preventDoubleClick={false}
             >
               <RefreshCw size={16} />
               새로고침
-            </button>
+            </MGButton>
           </div>
         </div>
         
@@ -286,13 +290,15 @@ const PgConfigurationList = () => {
             <CreditCard size={48} />
             <h3>PG 설정이 없습니다</h3>
             <p>새로운 PG 설정을 등록해주세요.</p>
-            <button className="mg-button"
+            <MGButton
+              type="button"
               variant="primary"
-              onClick={() => navigate(`/tenant/pg-configurations/new`)}
+              onClick={() => navigate('/tenant/pg-configurations/new')}
+              preventDoubleClick={false}
             >
               <Plus size={18} />
               PG 설정 등록
-            </button>
+            </MGButton>
           </div>
         ) : (
           <div className="pg-config-cards">
@@ -353,64 +359,69 @@ const PgConfigurationList = () => {
                 
                 <div className="card-footer">
                   <div className="card-actions">
-                    <button className="mg-button"
+                    <MGButton
+                      type="button"
                       variant="secondary"
                       size="small"
                       onClick={() => navigate(`/tenant/pg-configurations/${config.configId}`)}
+                      preventDoubleClick={false}
                     >
                       <Eye size={16} />
                       상세보기
-                    </button>
-                    
-                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
+                    </MGButton>
+
                     {config.status === 'APPROVED' && (
-                      <button className="mg-button"
+                      <MGButton
+                        type="button"
                         variant="secondary"
                         size="small"
                         onClick={() => handleTestConnection(config.configId)}
                         disabled={testingConnection === config.configId}
                         loading={testingConnection === config.configId}
+                        loadingText="테스트 중..."
+                        preventDoubleClick={false}
                       >
                         <RefreshCw size={16} />
                         연결 테스트
-                      </button>
+                      </MGButton>
                     )}
-                    
-                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
+
                     {config.approvalStatus === 'PENDING' && (
                       <>
-                        <button className="mg-button"
+                        <MGButton
+                          type="button"
                           variant="secondary"
                           size="small"
                           onClick={() => navigate(`/tenant/pg-configurations/${config.configId}/edit`)}
+                          preventDoubleClick={false}
                         >
                           <Edit size={16} />
                           수정
-                        </button>
-                        <button className="mg-button"
+                        </MGButton>
+                        <MGButton
+                          type="button"
                           variant="danger"
                           size="small"
                           onClick={() => {
                             setSelectedConfig(config);
                             setShowDeleteModal(true);
                           }}
+                          preventDoubleClick={false}
                         >
                           <Trash2 size={16} />
                           삭제
-                        </button>
+                        </MGButton>
                       </>
                     )}
                   </div>
-                  
-                  // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
+
                   {config.approvalStatus === 'PENDING' && (
                     <div className="pending-notice">
                       <Clock size={14} />
                       <span>승인 대기 중입니다. 승인 후 사용 가능합니다.</span>
                     </div>
                   )}
-                  
-                  // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
+
                   {config.approvalStatus === 'REJECTED' && config.rejectionReason && (
                     <div className="rejected-notice">
                       <XCircle size={14} />
@@ -445,23 +456,29 @@ const PgConfigurationList = () => {
                 </p>
               </div>
               <div className="modal-footer">
-                <button className="mg-button"
+                <MGButton
+                  type="button"
                   variant="secondary"
                   onClick={() => setShowDeleteModal(false)}
+                  preventDoubleClick={false}
                 >
                   취소
-                </button>
-                <button className="mg-button"
+                </MGButton>
+                <MGButton
+                  type="button"
                   variant="danger"
                   onClick={handleDelete}
                   disabled={loading}
+                  preventDoubleClick={false}
                 >
                   삭제
-                </button>
+                </MGButton>
               </div>
             </div>
           </div>
         )}
+          </ContentArea>
+        </div>
       </div>
     </AdminCommonLayout>
   );

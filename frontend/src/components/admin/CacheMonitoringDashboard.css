@@ -2,7 +2,7 @@
 .cache-monitoring-dashboard {
   padding: var(--spacing-lg);
   background-color: var(--background-color);
-  min-height: 100vh;
+  min-height: 0;
 }
 
 /* CSS 변수 정의 */

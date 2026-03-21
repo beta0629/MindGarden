@@ -13,17 +13,17 @@ import { withFormSubmit } from '../../utils/formSubmitWrapper';
 import mypageApi from '../../utils/mypageApi';
 import notificationManager from '../../utils/notification';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
-import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
+import { ContentArea, ContentHeader } from '../dashboard-v2/content';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import ProfileSection from './components/ProfileSection';
-import SettingsSection from './components/SettingsSection';
-import SecuritySection from './components/SecuritySection';
-import SocialAccountsSection from './components/SocialAccountsSection';
 import PrivacyConsentSection from './components/PrivacyConsentSection';
 import PasswordResetModal from './components/PasswordResetModal';
 import PasswordChangeModal from './components/PasswordChangeModal';
 import '../../styles/unified-design-tokens.css';
+import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './MyPage.css';
+
+const MYPAGE_TITLE_ID = 'mypage-page-title';
 
 const MyPage = () => {
   const [user, setUser] = useState(null);
@@ -440,7 +440,20 @@ const MyPage = () => {
   if (!displayUser) {
     return (
       <AdminCommonLayout title="마이페이지">
-        <UnifiedLoading type="page" text="사용자 정보를 불러오는 중..." />
+        <div className="mg-v2-ad-b0kla">
+          <div className="mg-v2-ad-b0kla__container">
+            <ContentArea ariaLabel="마이페이지 본문">
+              <ContentHeader
+                title="마이페이지"
+                subtitle="내 정보를 관리하고 설정을 변경할 수 있습니다"
+                titleId={MYPAGE_TITLE_ID}
+              />
+              <main aria-labelledby={MYPAGE_TITLE_ID}>
+                <UnifiedLoading type="page" text="사용자 정보를 불러오는 중..." />
+              </main>
+            </ContentArea>
+          </div>
+        </div>
       </AdminCommonLayout>
     );
   }
@@ -448,61 +461,71 @@ const MyPage = () => {
   return (
     <AdminCommonLayout title="마이페이지">
       <div className={`mypage-container mypage ${isProfileEditing ? 'editing' : 'readonly'}`}>
-        {/* 페이지 헤더 */}
-        <div className="mypage-header">
-          <div className="mypage-header__icon">
-            <User size={32} />
-          </div>
-          <div className="mypage-header__content">
-            <h1 className="mypage-header__title">마이페이지</h1>
-            <p className="mypage-header__subtitle">
-              내 정보를 관리하고 설정을 변경할 수 있습니다
-            </p>
-          </div>
-        </div>
+        <div className="mg-v2-ad-b0kla">
+          <div className="mg-v2-ad-b0kla__container">
+            <ContentArea ariaLabel="마이페이지 본문">
+              <ContentHeader
+                title="마이페이지"
+                subtitle="내 정보를 관리하고 설정을 변경할 수 있습니다"
+                titleId={MYPAGE_TITLE_ID}
+              />
+              <nav
+                className="mg-v2-tab-buttons mg-v2-mypage__tabs"
+                aria-label="마이페이지 섹션"
+              >
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={activeTab === 'profile'}
+                  className={`mg-v2-tab-button${activeTab === 'profile' ? ' active' : ''}`}
+                  onClick={() => setActiveTab('profile')}
+                >
+                  <User size={18} aria-hidden />
+                  프로필 정보
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={activeTab === 'settings'}
+                  className={`mg-v2-tab-button${activeTab === 'settings' ? ' active' : ''}`}
+                  onClick={() => setActiveTab('settings')}
+                >
+                  <Settings size={18} aria-hidden />
+                  설정
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={activeTab === 'security'}
+                  className={`mg-v2-tab-button${activeTab === 'security' ? ' active' : ''}`}
+                  onClick={() => setActiveTab('security')}
+                >
+                  <Shield size={18} aria-hidden />
+                  보안
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={activeTab === 'social'}
+                  className={`mg-v2-tab-button${activeTab === 'social' ? ' active' : ''}`}
+                  onClick={() => setActiveTab('social')}
+                >
+                  <LinkIcon size={18} aria-hidden />
+                  소셜 계정
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={activeTab === 'privacy'}
+                  className={`mg-v2-tab-button${activeTab === 'privacy' ? ' active' : ''}`}
+                  onClick={() => setActiveTab('privacy')}
+                >
+                  <FileText size={18} aria-hidden />
+                  개인정보 동의
+                </button>
+              </nav>
 
-      <div className="mypage-content">
-        <div className="mypage-top-nav">
-          <div className="mypage-nav">
-            <button
-              className={`nav-item ${activeTab === 'profile' ? 'active' : ''}`}
-              onClick={() => setActiveTab('profile')}
-            >
-              <User size={18} />
-              프로필 정보
-            </button>
-            <button
-              className={`nav-item ${activeTab === 'settings' ? 'active' : ''}`}
-              onClick={() => setActiveTab('settings')}
-            >
-              <Settings size={18} />
-              설정
-            </button>
-            <button
-              className={`nav-item ${activeTab === 'security' ? 'active' : ''}`}
-              onClick={() => setActiveTab('security')}
-            >
-              <Shield size={18} />
-              보안
-            </button>
-            <button
-              className={`nav-item ${activeTab === 'social' ? 'active' : ''}`}
-              onClick={() => setActiveTab('social')}
-            >
-              <LinkIcon size={18} />
-              소셜 계정
-            </button>
-            <button
-              className={`nav-item ${activeTab === 'privacy' ? 'active' : ''}`}
-              onClick={() => setActiveTab('privacy')}
-            >
-              <FileText size={18} />
-              개인정보 동의
-            </button>
-          </div>
-        </div>
-
-        <div className="mypage-main-content">
+              <main aria-labelledby={MYPAGE_TITLE_ID} className="mypage-main-content">
           {activeTab === 'profile' && (
                     <ProfileSection
           user={user}
@@ -670,8 +693,10 @@ const MyPage = () => {
           {activeTab === 'privacy' && (
             <PrivacyConsentSection />
           )}
+              </main>
+            </ContentArea>
+          </div>
         </div>
-      </div>
       </div>
 
       {/* 비밀번호 재설정 모달 */}

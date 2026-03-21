@@ -4,7 +4,7 @@ import { useSession } from '../../contexts/SessionContext';
 import { WIDGET_CONSTANTS } from '../../constants/widgetConstants';
 import { sessionManager } from '../../utils/sessionManager';
 import { apiGet } from '../../utils/ajax';
-import { DASHBOARD_API, API_BASE_URL } from '../../constants/api';
+import { DASHBOARD_API } from '../../constants/api';
 import { 
   Heart, 
   Calendar, 
@@ -17,7 +17,8 @@ import {
   Sun
 } from 'lucide-react';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
-import { CLIENT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
+import { ContentArea, ContentHeader } from '../dashboard-v2/content';
+import MGButton from '../common/MGButton';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import ClientPersonalizedMessages from '../dashboard/ClientPersonalizedMessages';
 import ClientPaymentSessionsSection from '../dashboard/ClientPaymentSessionsSection';
@@ -25,16 +26,17 @@ import RatableConsultationsSection from './RatableConsultationsSection';
 import ClientMessageSection from '../dashboard/ClientMessageSection';
 import HealingCard from '../common/HealingCard';
 import '../../styles/unified-design-tokens.css';
+import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import '../../styles/dashboard-tokens-extension.css';
 import '../../styles/dashboard-common-v3.css';
 import '../../styles/themes/client-theme.css';
 import SafeText from '../common/SafeText';
 import './ClientDashboard.css';
 
+const CLIENT_DASHBOARD_TITLE_ID = 'client-dashboard-page-title';
+
 /**
- * 내담자 대시보드
-/**
- * 화사하고 산뜻한 느낌의 디자인으로 구성
+ * 내담자 대시보드 — 화사하고 산뜻한 느낌의 디자인
  */
 const ClientDashboard = () => {
   const navigate = useNavigate();
@@ -249,11 +251,28 @@ const ClientDashboard = () => {
 
   const currentUser = sessionUser || user;
   const currentIsLoggedIn = sessionIsLoggedIn || isLoggedIn;
-  
+
+  const pageShell = (body) => (
+    <div className="mg-v2-ad-b0kla">
+      <div className="mg-v2-ad-b0kla__container">
+        <ContentArea ariaLabel="내담자 대시보드">
+          <ContentHeader
+            title="내 대시보드"
+            subtitle="오늘의 상담·회기·메시지를 한곳에서 확인하세요."
+            titleId={CLIENT_DASHBOARD_TITLE_ID}
+          />
+          <main aria-labelledby={CLIENT_DASHBOARD_TITLE_ID}>{body}</main>
+        </ContentArea>
+      </div>
+    </div>
+  );
+
   if (isLoading || sessionLoading || !currentIsLoggedIn || !currentUser?.id) {
     return (
       <AdminCommonLayout title="대시보드">
-        <UnifiedLoading type="page" text="대시보드를 불러오는 중..." />
+        {pageShell(
+          <UnifiedLoading type="page" text="대시보드를 불러오는 중..." />
+        )}
       </AdminCommonLayout>
     );
   }
@@ -267,31 +286,32 @@ const ClientDashboard = () => {
 
   return (
     <AdminCommonLayout title="대시보드">
-      <div className="mg-v2-dashboard-layout">
-        
-        {/* 웰컴 헤더 - 화사하고 밝은 느낌 */}
-        <div className="mg-v2-client-dashboard-header">
-          <div className="mg-v2-dashboard-header-content">
-            <div className="mg-v2-flex mg-align-center mg-gap-md">
-              <div className="mg-v2-dashboard-icon">
-                <Sun size={32} />
-              </div>
-              <div>
-                <h1 className="mg-v2-h1">
-                  {getGreeting()}, <span className="mg-v2-color-primary"><SafeText>{currentUser?.name}</SafeText></span>님!
-                </h1>
-                <p className="mg-v2-text-sm mg-v2-color-text-secondary mg-mt-xs">
-                  <Sparkles size={16} className="mg-v2-mr-xs" />
-                  오늘도 마음 건강을 위한 한 걸음을 함께해요
-                </p>
-              </div>
-            </div>
-            <div className="mg-v2-flex mg-align-center mg-gap-sm">
-              <Clock size={18} />
-              <span className="mg-v2-text-sm">{currentTime}</span>
-            </div>
-          </div>
-        </div>
+      <div className="mg-v2-ad-b0kla">
+        <div className="mg-v2-ad-b0kla__container">
+          <ContentArea ariaLabel="내담자 대시보드">
+            <ContentHeader
+              title="내 대시보드"
+              subtitle={
+                <>
+                  <Sparkles size={16} className="mg-v2-mr-xs" aria-hidden />
+                  {getGreeting()},{' '}
+                  <span className="mg-v2-color-primary">
+                    <SafeText>{currentUser?.name}</SafeText>
+                  </span>
+                  {' '}
+                  님 · 오늘도 마음 건강을 위한 한 걸음을 함께해요
+                </>
+              }
+              titleId={CLIENT_DASHBOARD_TITLE_ID}
+              actions={(
+                <div className="mg-v2-flex mg-align-center mg-gap-sm">
+                  <Sun size={24} aria-hidden />
+                  <Clock size={18} aria-hidden />
+                  <span className="mg-v2-text-sm">{currentTime}</span>
+                </div>
+              )}
+            />
+            <main aria-labelledby={CLIENT_DASHBOARD_TITLE_ID} className="mg-v2-dashboard-layout">
 
         {/* 주요 통계 카드 - 밝고 화사한 색상 (표준화 원칙: 모든 카드에 링크 필수) */}
         <div className="client-dashboard__stats">
@@ -421,39 +441,50 @@ const ClientDashboard = () => {
         <div className="client-dashboard__quick-actions">
           <h2 className="client-dashboard__section-title">빠른 메뉴</h2>
           <div className="client-dashboard__action-grid">
-            <button 
-              className="mg-button mg-button--primary client-dashboard__action-btn"
+            <MGButton
+              variant="primary"
+              className="client-dashboard__action-btn"
               onClick={() => navigate('/client/schedule')}
+              preventDoubleClick={false}
             >
               <Calendar size={24} />
               <span>상담 일정</span>
-            </button>
-            <button 
-              className="mg-button mg-button--success client-dashboard__action-btn"
+            </MGButton>
+            <MGButton
+              variant="success"
+              className="client-dashboard__action-btn"
               onClick={() => navigate('/client/messages')}
+              preventDoubleClick={false}
             >
               <MessageCircle size={24} />
               <span>메시지</span>
-            </button>
-            <button 
-              className="mg-button mg-button--info client-dashboard__action-btn"
+            </MGButton>
+            <MGButton
+              variant="info"
+              className="client-dashboard__action-btn"
               onClick={() => navigate('/client/payment-history')}
+              preventDoubleClick={false}
             >
               <CreditCard size={24} />
               <span>결제 내역</span>
-            </button>
-            <button 
-              className="mg-button mg-button--warning client-dashboard__action-btn"
+            </MGButton>
+            <MGButton
+              variant="warning"
+              className="client-dashboard__action-btn"
               onClick={() => navigate('/client/settings')}
+              preventDoubleClick={false}
             >
               <Heart size={24} />
               <span>내 정보</span>
-            </button>
+            </MGButton>
           </div>
         </div>
 
         {/* 메시지 섹션 */}
         <ClientMessageSection userId={currentUser?.id} />
+            </main>
+          </ContentArea>
+        </div>
       </div>
     </AdminCommonLayout>
   );

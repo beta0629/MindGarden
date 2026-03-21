@@ -1,39 +1,31 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  CreditCard, 
-  Eye, 
-  EyeOff, 
-  Save, 
-  X, 
+import {
+  CreditCard,
+  Eye,
+  EyeOff,
+  Save,
+  X,
   AlertCircle,
-  CheckCircle,
   Info
 } from 'lucide-react';
-import { useSession } from '../../contexts/SessionContext';
 import { showNotification } from '../../utils/notification';
-import UnifiedLoading from '../../components/common/UnifiedLoading';
+import MGButton from '../common/MGButton';
 import './PgConfigurationForm.css';
 
 /**
  * PG 설정 입력/수정 폼 컴포넌트
-/**
- * 
-/**
+ *
  * @author CoreSolution
-/**
  * @version 1.0.0
-/**
  * @since 2025-01-XX
  */
-const PgConfigurationForm = ({ 
-  tenantId, 
-  initialData = null, 
-  onSave, 
+const PgConfigurationForm = ({
+  initialData = null,
+  onSave,
   onCancel,
-  mode = 'create' // 'create' or 'edit'
+  mode = 'create',
+  hidePageTitle = false
 }) => {
-  const { user } = useSession();
-  
   const [formData, setFormData] = useState({
     pgProvider: '',
     pgName: '',
@@ -186,13 +178,17 @@ const PgConfigurationForm = ({
   return (
     <form className="pg-config-form" onSubmit={handleSubmit}>
       <div className="pg-config-form-header">
-        <h2>
-          <CreditCard size={24} />
-          {mode === 'create' ? 'PG 설정 등록' : 'PG 설정 수정'}
-        </h2>
-        <p className="form-description">
-          결제 게이트웨이 설정 정보를 입력해주세요. 입력한 정보는 암호화되어 저장되며, 승인 후 사용 가능합니다.
-        </p>
+        {!hidePageTitle && (
+          <>
+            <h2>
+              <CreditCard size={24} />
+              {mode === 'create' ? 'PG 설정 등록' : 'PG 설정 수정'}
+            </h2>
+            <p className="form-description">
+              결제 게이트웨이 설정 정보를 입력해주세요. 입력한 정보는 암호화되어 저장되며, 승인 후 사용 가능합니다.
+            </p>
+          </>
+        )}
         {mode === 'create' && (
           <div className="form-info-box">
             <Info size={18} />
@@ -206,7 +202,6 @@ const PgConfigurationForm = ({
             </div>
           </div>
         )}
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         {mode === 'edit' && initialData?.approvalStatus === 'PENDING' && (
           <div className="form-warning-box">
             <AlertCircle size={18} />
@@ -474,30 +469,28 @@ const PgConfigurationForm = ({
       </div>
       
       <div className="pg-config-form-footer">
-        <button className="mg-button"
+        <MGButton
           type="button"
           variant="secondary"
           onClick={onCancel}
           disabled={loading}
+          preventDoubleClick={false}
         >
           <X size={18} />
           취소
-        </button>
-        <button className="mg-button"
+        </MGButton>
+        <MGButton
           type="submit"
           variant="primary"
           disabled={loading}
+          loading={loading}
+          loadingText="저장 중..."
+          preventDoubleClick={false}
           aria-label={mode === 'create' ? 'PG 설정 등록' : 'PG 설정 수정'}
         >
-          {loading ? (
-            <UnifiedLoading type="inline" text="저장 중..." />
-          ) : (
-            <>
-              <Save size={18} aria-hidden="true" />
-              {mode === 'create' ? '등록' : '수정'}
-            </>
-          )}
-        </button>
+          <Save size={18} aria-hidden="true" />
+          {mode === 'create' ? '등록' : '수정'}
+        </MGButton>
       </div>
     </form>
   );

@@ -27,7 +27,7 @@ import IntegratedFinanceDashboard from './components/erp/IntegratedFinanceDashbo
 import ConsultantMessageScreen from './components/consultant/ConsultantMessageScreen';
 import ClientMessageScreen from './components/client/ClientMessageScreen';
 import SchedulePage from './components/schedule/SchedulePage';
-import UnifiedScheduleComponent from './components/schedule/UnifiedScheduleComponent';
+import AdminSchedulesPage from './components/schedule/AdminSchedulesPage';
 import UnifiedModalTest from './components/test/UnifiedModalTest';
 import UnifiedLoadingTest from './components/test/UnifiedLoadingTest';
 import UnifiedHeaderTest from './components/test/UnifiedHeaderTest';
@@ -392,9 +392,7 @@ function AppContent() {
             {/* 권한 관리 (ADMIN 전용) */}
             <Route path="/admin/permissions" element={
               <ProtectedRoute requiredRoles={[USER_ROLES.ADMIN]}>
-                <AdminCommonLayout title="권한 관리">
-                  <PermissionManagement />
-                </AdminCommonLayout>
+                <PermissionManagement />
               </ProtectedRoute>
             } />
             
@@ -543,7 +541,7 @@ function AppContent() {
             <Route path="/academy/register" element={<AcademyRegister />} />
             <Route path="/admin/schedules" element={
               <AdminCommonLayout title="스케줄">
-                <UnifiedScheduleComponent 
+                <AdminSchedulesPage
                   userRole={user?.role || 'ADMIN'}
                   userId={user?.id}
                 />

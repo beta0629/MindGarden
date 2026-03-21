@@ -64,6 +64,18 @@
   gap: var(--spacing-xl);
 }
 
+/* B0KlA 탭 버튼 (AcademyDashboard와 동일 패턴, 아이콘+라벨) */
+.mg-v2-mypage__tabs {
+  margin-bottom: var(--spacing-lg);
+  flex-wrap: wrap;
+}
+
+.mg-v2-mypage__tabs .mg-v2-tab-button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
 /* ===== 탭 네비게이션 ===== */
 .mypage-top-nav {
   background: var(--glass-bg-light);

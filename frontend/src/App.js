@@ -42,13 +42,6 @@ import StatisticsDashboard from './components/admin/StatisticsDashboard';
 // ScheduleList는 현재 사용되지 않음
 import ComingSoon from './components/common/ComingSoon';
 // PaymentManagement는 현재 사용되지 않음
-import MindGardenDesignSample from './pages/MindGardenDesignSample';
-import PremiumDesignSample from './pages/PremiumDesignSample';
-import AdvancedDesignSample from './pages/AdvancedDesignSample';
-import MindGardenDesignSystemShowcase from './pages/MindGardenDesignSystemShowcase';
-import ComponentTestPage from './pages/ComponentTestPage';
-import FilterSearchShowcase from './components/ui/FilterSearch/FilterSearchShowcase';
-import AdminDashboardSample from './pages/AdminDashboardSample';
 import AdminCommonLayout from './components/layout/AdminCommonLayout';
 import { DEFAULT_MENU_ITEMS } from './components/dashboard-v2/constants/menuItems';
 import AcademyDashboard from './components/academy/AcademyDashboard';
@@ -112,7 +105,6 @@ import notificationManager from './utils/notification';
 import DuplicateLoginModal from './components/common/DuplicateLoginModal';
 import PrivacyPolicy from './components/common/PrivacyPolicy';
 import TermsOfService from './components/common/TermsOfService';
-import IOSCardSample from './pages/IOSCardSample';
 import CounselingCenterLanding from './pages/CounselingCenterLanding';
 import SystemNotifications from './components/notifications/SystemNotifications';
 import UnifiedNotifications from './components/notifications/UnifiedNotifications';
@@ -627,14 +619,6 @@ function AppContent() {
             <Route path="/test/notifications" element={<NotificationTest />} />
             <Route path="/test/payment" element={<PaymentTest />} />
             {/* <Route path="/test/integration" element={<IntegrationTest />} /> */}
-            <Route path="/test/ios-cards" element={<IOSCardSample />} />
-            <Route path="/test/design-sample" element={<MindGardenDesignSample />} />
-            <Route path="/test/premium-sample" element={<PremiumDesignSample />} />
-            <Route path="/test/advanced-sample" element={<AdvancedDesignSample />} />
-            <Route path="/test/components" element={<ComponentTestPage />} />
-            <Route path="/design-system" element={<MindGardenDesignSystemShowcase />} />
-            <Route path="/filter-search" element={<FilterSearchShowcase />} />
-            {/* /admin-dashboard-sample은 AppPublic에서 처리 */}
             
             {/* 추후 홈페이지 추가 시 사용할 경로들 */}
             {/* <Route path="/homepage" element={<Homepage />} /> */}

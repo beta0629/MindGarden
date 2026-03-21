@@ -18,9 +18,9 @@
 
 ---
 
-## 2. Phase 2 — 샘플·테스트·대용량 CSS (후속 PR)
+## 2. Phase 2 — 후속 PR (샘플 페이지 제거됨, 2026-03-21)
 
-상위 파일(건수 근사): `DashboardDesignGuideSample.css`, `IntegrationTest.js`, `AdminDashboardSample.css`, `ConsultantDashboard.css`, `glassmorphism.css`, `IOSCardSample.css`, `emergency-design-fix.css`, `SalaryExportModal.js`, `TenantCodeManagement.css`, `PgApprovalManagement.css` 등.
+디자인 **샘플·쇼케이스 페이지/컴포넌트는 저장소에서 삭제**되었음. 남은 하드코딩 상위 후보(근사): `IntegrationTest.js`, `ConsultantDashboard.css`, `glassmorphism.css`, `emergency-design-fix.css`, `SalaryExportModal.js`, `TenantCodeManagement.css`, `PgApprovalManagement.css` 등.
 
 `unified-design-tokens.css`는 정의 전용이므로 본 목적의 “위반”이 아님.
 

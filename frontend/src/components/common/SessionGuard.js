@@ -40,18 +40,9 @@ const SessionGuard = ({ children }) => {
         '/reset-password',
         '/oauth2/callback',
         '/auth/oauth2/callback',
-        '/design-system',
-        '/design-system-v2',
-        '/admin-dashboard-sample',
-        '/filter-search',
         '/test/notifications',
         '/test/payment',
-        '/test/integration',
-        '/test/ios-cards',
-        '/test/design-sample',
-        '/test/premium-sample',
-        '/test/advanced-sample',
-        '/test/components'
+        '/test/integration'
     ];
     
     useEffect(() => {

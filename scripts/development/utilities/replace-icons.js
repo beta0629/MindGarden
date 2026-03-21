@@ -427,7 +427,6 @@ const filesToProcess = [
   'frontend/src/components/admin/UserManagement.js',
   'frontend/src/components/erp/RefundManagement.js',
   'frontend/src/components/admin/VacationStatistics.js',
-  'frontend/src/pages/ComponentTestPage.js',
   'frontend/src/components/admin/system/SystemStatus.js',
   'frontend/src/components/admin/TodayStatistics.js',
   'frontend/src/components/hq/HQBranchManagement.js',

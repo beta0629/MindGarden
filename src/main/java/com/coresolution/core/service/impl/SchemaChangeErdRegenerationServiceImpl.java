@@ -91,35 +91,27 @@ public class SchemaChangeErdRegenerationServiceImpl implements SchemaChangeErdRe
 
         String targetSchema = schemaName != null ? schemaName : defaultSchemaName;
 
-        try {
-            // 기존 ERD 조회
-            List<com.coresolution.core.domain.ErdDiagram> existingErds = 
-                    erdDiagramRepository.findByTenantIdAndDiagramTypeAndIsActiveTrue(
-                            tenantId, 
-                            com.coresolution.core.domain.ErdDiagram.DiagramType.TENANT);
+        // 예외는 호출부(루프)에서 처리 — 여기서 삼키면 REQUIRES_NEW 트랜잭션이 커밋되어 세션 오염이 이어질 수 있음
+        List<com.coresolution.core.domain.ErdDiagram> existingErds =
+                erdDiagramRepository.findByTenantIdAndDiagramTypeAndIsActiveTrue(
+                        tenantId,
+                        com.coresolution.core.domain.ErdDiagram.DiagramType.TENANT);
 
-            // 기존 ERD가 있으면 재생성, 없으면 새로 생성
-            if (!existingErds.isEmpty()) {
-                for (com.coresolution.core.domain.ErdDiagram existingErd : existingErds) {
-                    erdGenerationService.regenerateErd(
-                            existingErd.getDiagramId(), 
-                            targetSchema, 
-                            SYSTEM_USER);
-                }
-                log.info("✅ 테넌트 ERD 재생성 완료: tenantId={}, 재생성된 ERD 수={}", 
-                        tenantId, existingErds.size());
-            } else {
-                // 기존 ERD가 없으면 새로 생성
-                erdGenerationService.generateTenantErd(tenantId, targetSchema, SYSTEM_USER);
-                log.info("✅ 테넌트 ERD 생성 완료: tenantId={}", tenantId);
+        if (!existingErds.isEmpty()) {
+            for (com.coresolution.core.domain.ErdDiagram existingErd : existingErds) {
+                erdGenerationService.regenerateErd(
+                        existingErd.getDiagramId(),
+                        targetSchema,
+                        SYSTEM_USER);
             }
-
-            return true;
-
-        } catch (Exception e) {
-            log.error("❌ 테넌트 ERD 재생성 실패: tenantId={}, error={}", tenantId, e.getMessage(), e);
-            return false;
+            log.info("✅ 테넌트 ERD 재생성 완료: tenantId={}, 재생성된 ERD 수={}",
+                    tenantId, existingErds.size());
+        } else {
+            erdGenerationService.generateTenantErd(tenantId, targetSchema, SYSTEM_USER);
+            log.info("✅ 테넌트 ERD 생성 완료: tenantId={}", tenantId);
         }
+
+        return true;
     }
 
     @Override
@@ -138,13 +130,13 @@ public class SchemaChangeErdRegenerationServiceImpl implements SchemaChangeErdRe
         int failureCount = 0;
 
         for (String tenantId : activeTenantIds) {
-            if (self.regenerateTenantErd(tenantId, targetSchema)) {
+            try {
+                self.regenerateTenantErd(tenantId, targetSchema);
                 successCount++;
-                
-                // ERD 변경 알림 발송
+
                 try {
                     var existingErds = erdDiagramRepository.findByTenantIdAndDiagramTypeAndIsActiveTrue(
-                            tenantId, 
+                            tenantId,
                             com.coresolution.core.domain.ErdDiagram.DiagramType.TENANT);
                     if (!existingErds.isEmpty()) {
                         var latestErd = existingErds.get(0);
@@ -157,10 +149,10 @@ public class SchemaChangeErdRegenerationServiceImpl implements SchemaChangeErdRe
                     }
                 } catch (Exception e) {
                     log.warn("⚠️ ERD 변경 알림 발송 실패: tenantId={}, error={}", tenantId, e.getMessage());
-                    // 알림 실패는 무시하고 계속 진행
                 }
-            } else {
+            } catch (Exception e) {
                 failureCount++;
+                log.error("❌ 테넌트 ERD 재생성 실패: tenantId={}, error={}", tenantId, e.getMessage(), e);
             }
         }
 
@@ -176,33 +168,24 @@ public class SchemaChangeErdRegenerationServiceImpl implements SchemaChangeErdRe
 
         String targetSchema = schemaName != null ? schemaName : defaultSchemaName;
 
-        try {
-            // 기존 전체 시스템 ERD 조회
-            List<com.coresolution.core.domain.ErdDiagram> existingErds = 
-                    erdDiagramRepository.findByDiagramTypeAndIsActiveTrue(
-                            com.coresolution.core.domain.ErdDiagram.DiagramType.FULL);
+        List<com.coresolution.core.domain.ErdDiagram> existingErds =
+                erdDiagramRepository.findByDiagramTypeAndIsActiveTrue(
+                        com.coresolution.core.domain.ErdDiagram.DiagramType.FULL);
 
-            if (!existingErds.isEmpty()) {
-                // 기존 ERD가 있으면 재생성
-                for (com.coresolution.core.domain.ErdDiagram existingErd : existingErds) {
-                    erdGenerationService.regenerateErd(
-                            existingErd.getDiagramId(), 
-                            targetSchema, 
-                            SYSTEM_USER);
-                }
-                log.info("✅ 전체 시스템 ERD 재생성 완료: 재생성된 ERD 수={}", existingErds.size());
-            } else {
-                // 기존 ERD가 없으면 새로 생성
-                erdGenerationService.generateFullSystemErd(targetSchema, SYSTEM_USER);
-                log.info("✅ 전체 시스템 ERD 생성 완료");
+        if (!existingErds.isEmpty()) {
+            for (com.coresolution.core.domain.ErdDiagram existingErd : existingErds) {
+                erdGenerationService.regenerateErd(
+                        existingErd.getDiagramId(),
+                        targetSchema,
+                        SYSTEM_USER);
             }
-
-            return true;
-
-        } catch (Exception e) {
-            log.error("❌ 전체 시스템 ERD 재생성 실패: {}", e.getMessage(), e);
-            return false;
+            log.info("✅ 전체 시스템 ERD 재생성 완료: 재생성된 ERD 수={}", existingErds.size());
+        } else {
+            erdGenerationService.generateFullSystemErd(targetSchema, SYSTEM_USER);
+            log.info("✅ 전체 시스템 ERD 생성 완료");
         }
+
+        return true;
     }
 
     @Override
@@ -246,15 +229,18 @@ public class SchemaChangeErdRegenerationServiceImpl implements SchemaChangeErdRe
         // 영향받는 테넌트의 ERD 재생성
         int regeneratedCount = 0;
         for (String tenantId : affectedTenantIds) {
-            if (self.regenerateTenantErd(tenantId, targetSchema)) {
+            try {
+                self.regenerateTenantErd(tenantId, targetSchema);
                 regeneratedCount++;
-                
-                // 스키마 변경 알림 발송
+
                 try {
                     erdChangeNotificationService.notifySchemaChange(tenantId, changedTableNames);
                 } catch (Exception e) {
                     log.warn("⚠️ 스키마 변경 알림 발송 실패: tenantId={}, error={}", tenantId, e.getMessage());
                 }
+            } catch (Exception e) {
+                log.error("❌ 테넌트 ERD 재생성 실패(변경 테이블 기준): tenantId={}, error={}",
+                        tenantId, e.getMessage(), e);
             }
         }
 

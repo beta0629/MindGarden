@@ -104,15 +104,17 @@
 
 ---
 
-## 4. core-debugger 회신용 빈칸 (분석 후 기입)
+## 4. core-debugger 회신 + core-coder 반영 (2026-03-22)
 
 | 항목 | 내용 |
 |------|------|
-| 재현 절차 | |
-| 근본 원인 | |
-| 영향 범위 (dev only / prod 가능) | |
-| 권장 수정 요약 | |
-| 코더에게 넘길 파일/PR 단위 | |
+| 재현 절차 | 개발 서버 `error.log`에서 스케줄 시각대 ERD 재생성 루프·Hikari closed 연쇄 확인. 로컬은 활성 테넌트 다수 + 의도적 ERD 실패로 루프 검증 권장. |
+| 근본 원인 | **A** `SchemaChangeErdRegenerationServiceImpl` **클래스 단일 `@Transactional`** + 테넌트 루프에서 예외 삼킴 → Hibernate 세션 오염·연쇄 `ErdDiagram` assertion. **B/C** 컨텍스트 종료/기동 실패 시 풀 종료 후 `@Scheduled`·리스너가 DB 접근. |
+| 영향 범위 | dev에서 명확; prod도 동일 배치/스케줄 사용 시 동일 패턴 가능. |
+| 권장 수정 요약 | 테넌트·전체시스템 ERD 작업 **`REQUIRES_NEW`** + **self 프록시 호출**; `ErdGenerationServiceImpl` 클래스 트랜잭션 축소; 메트릭/이상탐지 **컨텍스트 active·DataSource 검증**; `CodeInitializationServiceImpl` 클래스 `@Transactional` 제거 후 `initialize`에만 적용. |
+| 코더 반영 커밋 | `224ebc78d` — 추가로 **REQUIRES_NEW 메서드 내부에서 예외를 삼키지 않도록** 루프에서 try/catch (롤백 보장) 보완 커밋 예정. |
+
+**파일**: `SchemaChangeErdRegenerationServiceImpl`, `ErdGenerationServiceImpl`, `MetricCollectionService`, `AnomalyDetectionService`, `CodeInitializationServiceImpl`
 
 ---
 
@@ -137,3 +139,4 @@
 | 일자 | 내용 |
 |------|------|
 | 2026-03-22 | 초안 — SSH 로그 샘플 기반 오케스트레이션 문서 작성 |
+| 2026-03-22 | core-debugger 분석·core-coder 패치 반영, §4 갱신 |

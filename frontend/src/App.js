@@ -433,7 +433,9 @@ function AppContent() {
             
             {/* 내담자 전용 라우트 */}
             <Route path="/client/messages" element={<ClientMessageScreen />} />
+            <Route path="/client/booking" element={<Navigate to="/client/schedule" replace />} />
             <Route path="/client/schedule" element={<ClientSchedule />} />
+            <Route path="/client/records" element={<Navigate to="/client/session-management" replace />} />
             <Route path="/client/session-management" element={<ClientSessionManagement />} />
             <Route path="/client/payment-history" element={<ClientPaymentHistory />} />
             <Route path="/client/settings" element={<ClientSettings />} />
@@ -476,6 +478,9 @@ function AppContent() {
             {/* 통합 스케줄 관리 라우트 */}
             <Route path="/schedule" element={<SchedulePage user={user} />} />
             <Route path="/admin/schedule" element={<SchedulePage user={user} />} />
+            <Route path="/staff/schedule" element={<Navigate to="/admin/schedule" replace />} />
+            <Route path="/staff/clients" element={<Navigate to="/admin/user-management?type=client" replace />} />
+            <Route path="/staff/records" element={<Navigate to="/admin/consultation-logs" replace />} />
             <Route path="/consultant/schedule-new" element={<SchedulePage user={user} />} />
             <Route path="/super_admin/schedule" element={<SchedulePage user={user} />} />
             
@@ -514,6 +519,9 @@ function AppContent() {
             <Route path="/admin/api-performance" element={<ApiPerformanceMonitoring />} />
             <Route path="/admin/notifications" element={<AdminNotificationsPage />} />
             <Route path="/admin/system-notifications" element={<Navigate to="/admin/notifications" replace />} />
+            <Route path="/admin/users" element={<Navigate to="/admin/user-management" replace />} />
+            <Route path="/admin/reports" element={<Navigate to="/admin/consultation-logs" replace />} />
+            <Route path="/admin/backup" element={<Navigate to="/admin/system-config" replace />} />
             <Route path="/admin/system-config" element={<SystemConfigManagement />} />
             <Route path="/admin/psych-assessments" element={<PsychAssessmentManagement user={user} />} />
             <Route path="/admin/branding" element={<BrandingManagementPage />} />

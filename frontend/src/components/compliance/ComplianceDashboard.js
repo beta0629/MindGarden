@@ -100,13 +100,11 @@ const ComplianceDashboard = () => {
     const getComplianceLevelColor = (level) => {
         switch (level) {
             case '우수': return 'var(--mg-success-500)';
-            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #8BC34A -> var(--mg-custom-8BC34A)
-            case '양호': return '#8BC34A';
+            case '양호': return 'var(--mg-success-400)';
             case '보통': return 'var(--mg-warning-500)';
             case '미흡': return 'var(--mg-warning-500)';
             case '부족': return 'var(--mg-error-500)';
-            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #9E9E9E -> var(--mg-gray-400)
-            default: return '#9E9E9E';
+            default: return 'var(--mg-gray-400)';
         }
     };
 

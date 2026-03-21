@@ -319,7 +319,7 @@ function AppContent() {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              background: 'var(--mg-surface, rgba(255, 255, 255, 0.95))'
+              background: 'var(--cs-glass-strong)'
             }}
           >
             <div className="mg-loading-container mg-loading-container--centered">

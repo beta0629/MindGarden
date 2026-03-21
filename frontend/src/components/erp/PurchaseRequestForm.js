@@ -223,16 +223,13 @@ const PurchaseRequestForm = () => {
                     onClick={() => handleItemSelect(item)}
                     style={{
                       padding: '20px',
-                      border: isItemSelected(item) ? '2px solid var(--mg-primary-500)' : '1px solid #e9ecef',
+                      border: isItemSelected(item) ? '2px solid var(--mg-primary-500)' : '1px solid var(--mg-gray-200)',
                       borderRadius: '12px',
                       cursor: 'pointer',
-                      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff -> var(--mg-custom-fff)
-                      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #f8f9ff -> var(--mg-custom-f8f9ff)
-                      backgroundColor: isItemSelected(item) ? '#f8f9ff' : '#fff',
+                      backgroundColor: isItemSelected(item) ? 'var(--mg-primary-50)' : 'var(--mg-white)',
                       transition: 'all 0.3s ease',
-                      boxShadow: isItemSelected(item) 
-                        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0, 123, 255, 0.15) -> var(--mg-custom-color)
-                        ? '0 4px 12px rgba(0, 123, 255, 0.15)' 
+                      boxShadow: isItemSelected(item)
+                        ? 'var(--cs-shadow-primary)'
                         : '0 2px 4px var(--mg-shadow-light)',
                       transform: isItemSelected(item) ? 'translateY(-2px)' : 'none',
                       position: 'relative'
@@ -263,7 +260,7 @@ const PurchaseRequestForm = () => {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        color: 'white',
+                        color: 'var(--mg-white)',
                         fontSize: 'var(--font-size-xs)',
                         fontWeight: 'bold'
                       }}>
@@ -272,12 +269,11 @@ const PurchaseRequestForm = () => {
                     )}
                     
                     {/* 아이템명 */}
-                    <div style={{ 
-                      fontWeight: '700', 
+                    <div style={{
+                      fontWeight: '700',
                       fontSize: 'var(--font-size-base)',
                       marginBottom: '8px',
-                      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #212529 -> var(--mg-custom-212529)
-                      color: '#212529',
+                      color: 'var(--mg-gray-900)',
                       lineHeight: '1.3'
                     }}>
                       <SafeText>{item.name}</SafeText>
@@ -325,12 +321,11 @@ const PurchaseRequestForm = () => {
             {/* 선택된 아이템들의 수량 입력 */}
             {selectedItems.length > 0 && (
               <div className="mg-v2-form-group">
-                <label style={{ 
-                  display: 'block', 
-                  marginBottom: '16px', 
+                <label style={{
+                  display: 'block',
+                  marginBottom: '16px',
                   fontWeight: '600',
-                  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #333 -> var(--mg-custom-333)
-                  color: '#333',
+                  color: 'var(--mg-gray-800)',
                   fontSize: 'var(--font-size-base)'
                 }}>
                   선택된 아이템 수량 설정 *
@@ -350,8 +345,7 @@ const PurchaseRequestForm = () => {
                       padding: '16px',
                       backgroundColor: 'var(--mg-gray-100)',
                       borderRadius: '8px',
-                      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e9ecef -> var(--mg-custom-e9ecef)
-                      border: '1px solid #e9ecef'
+                      border: '1px solid var(--mg-gray-200)'
                     }}>
                       <div style={{ flex: 1 }}>
                         <div style={{ fontWeight: '600', marginBottom: '4px' }}>
@@ -368,11 +362,9 @@ const PurchaseRequestForm = () => {
                           style={{
                             width: '32px',
                             height: '32px',
-                            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #ddd -> var(--mg-custom-ddd)
-                            border: '1px solid #ddd',
+                            border: '1px solid var(--mg-gray-300)',
                             borderRadius: '4px',
-                            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff -> var(--mg-custom-fff)
-                            backgroundColor: '#fff',
+                            backgroundColor: 'var(--mg-white)',
                             cursor: 'pointer',
                             display: 'flex',
                             alignItems: 'center',
@@ -391,8 +383,7 @@ const PurchaseRequestForm = () => {
                           style={{
                             width: '60px',
                             padding: '6px 8px',
-                            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #ddd -> var(--mg-custom-ddd)
-                            border: '1px solid #ddd',
+                            border: '1px solid var(--mg-gray-300)',
                             borderRadius: '4px',
                             textAlign: 'center',
                             fontSize: 'var(--font-size-sm)'
@@ -404,11 +395,9 @@ const PurchaseRequestForm = () => {
                           style={{
                             width: '32px',
                             height: '32px',
-                            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #ddd -> var(--mg-custom-ddd)
-                            border: '1px solid #ddd',
+                            border: '1px solid var(--mg-gray-300)',
                             borderRadius: '4px',
-                            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff -> var(--mg-custom-fff)
-                            backgroundColor: '#fff',
+                            backgroundColor: 'var(--mg-white)',
                             cursor: 'pointer',
                             display: 'flex',
                             alignItems: 'center',
@@ -439,8 +428,7 @@ const PurchaseRequestForm = () => {
                 style={{
                   width: '100%',
                   padding: '12px',
-                  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #ddd -> var(--mg-custom-ddd)
-                  border: '1px solid #ddd',
+                  border: '1px solid var(--mg-gray-300)',
                   borderRadius: '4px',
                   fontSize: 'var(--font-size-sm)',
                   resize: 'vertical'
@@ -450,15 +438,14 @@ const PurchaseRequestForm = () => {
 
             {/* 선택된 아이템 요약 정보 */}
             {selectedItems.length > 0 && (
-              <div style={{ 
-                marginBottom: '24px', 
-                padding: '16px', 
-                backgroundColor: 'var(--mg-gray-100)', 
+              <div style={{
+                marginBottom: '24px',
+                padding: '16px',
+                backgroundColor: 'var(--mg-gray-100)',
                 borderRadius: '8px',
-                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e9ecef -> var(--mg-custom-e9ecef)
-                border: '1px solid #e9ecef'
+                border: '1px solid var(--mg-gray-200)'
               }}>
-                <h4 style={{ margin: '0 0 12px 0', color: '#333' }}>
+                <h4 style={{ margin: '0 0 12px 0', color: 'var(--mg-gray-800)' }}>
                   선택된 아이템 요약 ({selectedItems.length}개)
                 </h4>
                 <div style={{ display: 'grid', gap: '8px' }}>
@@ -471,11 +458,9 @@ const PurchaseRequestForm = () => {
                         justifyContent: 'space-between',
                         alignItems: 'center',
                         padding: '8px 12px',
-                        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff -> var(--mg-custom-fff)
-                        backgroundColor: '#fff',
+                        backgroundColor: 'var(--mg-white)',
                         borderRadius: '6px',
-                        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e9ecef -> var(--mg-custom-e9ecef)
-                        border: '1px solid #e9ecef'
+                        border: '1px solid var(--mg-gray-200)'
                       }}>
                         <div>
                           <strong><SafeText>{item.name}</SafeText></strong>{' '}
@@ -490,8 +475,7 @@ const PurchaseRequestForm = () => {
                   <div style={{
                     marginTop: '8px',
                     padding: '8px 12px',
-                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e3f2fd -> var(--mg-custom-e3f2fd)
-                    backgroundColor: '#e3f2fd',
+                    backgroundColor: 'var(--cs-blue-50)',
                     borderRadius: '6px',
                     textAlign: 'right',
                     fontWeight: '700',
@@ -542,7 +526,7 @@ const PurchaseRequestForm = () => {
           <h3 style={{ margin: '0 0 16px 0', color: 'var(--mg-success-500)' }}>
             구매 요청이 성공적으로 제출되었습니다!
           </h3>
-          <p style={{ color: '#666', marginBottom: '24px' }}>
+          <p style={{ color: 'var(--mg-gray-600)', marginBottom: '24px' }}>
             관리자 승인 후 구매가 진행됩니다.
           </p>
           <ErpButton

@@ -30,12 +30,12 @@ const ConsultantClientList = () => {
   const isModalOpeningRef = useRef(false);
 
   const FILTER_CONFIG = [
-    { value: 'ALL', label: '전체', icon: List, activeColor: 'var(--mg-color-primary-main, #3D5246)' },
-    { value: 'ACTIVE', label: '활성', icon: CheckCircle, activeColor: 'var(--mg-v2-color-success-600, #16a34a)' },
-    { value: 'INACTIVE', label: '비활성', icon: XCircle, activeColor: 'var(--mg-v2-color-secondary-500, #6b7280)' },
-    { value: 'PENDING', label: '대기중', icon: Clock, activeColor: 'var(--mg-v2-color-warning-600, #d97706)' },
-    { value: 'COMPLETED', label: '완료', icon: CheckCircle2, activeColor: 'var(--mg-v2-color-success-700, #15803d)' },
-    { value: 'SUSPENDED', label: '일시정지', icon: PauseCircle, activeColor: 'var(--mg-v2-color-error-600, #dc2626)' }
+    { value: 'ALL', label: '전체', icon: List, activeColor: 'var(--mg-color-primary-main)' },
+    { value: 'ACTIVE', label: '활성', icon: CheckCircle, activeColor: 'var(--mg-success-600)' },
+    { value: 'INACTIVE', label: '비활성', icon: XCircle, activeColor: 'var(--mg-secondary-500)' },
+    { value: 'PENDING', label: '대기중', icon: Clock, activeColor: 'var(--mg-warning-600)' },
+    { value: 'COMPLETED', label: '완료', icon: CheckCircle2, activeColor: 'var(--mg-success-700)' },
+    { value: 'SUSPENDED', label: '일시정지', icon: PauseCircle, activeColor: 'var(--mg-error-600)' }
   ];
 
   const loadClients = useCallback(async () => {

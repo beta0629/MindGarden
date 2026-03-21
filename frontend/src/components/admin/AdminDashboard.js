@@ -622,7 +622,7 @@ const AdminDashboard = ({ user: propUser }) => {
       profileImageUrl: c.profileImageUrl || c.consultantProfileImageUrl || null,
       rating: c.averageScore ? c.averageScore.toFixed(1) : '-',
       barWidth: c.averageScore ? Math.min(100, (c.averageScore / 5) * 100) : 0,
-      barColor: '#4b745c'
+      barColor: 'var(--ad-b0kla-green)'
     }));
 
     if (sessionLoading) {

@@ -28,7 +28,7 @@ import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import MGButton from '../../components/common/MGButton'; // 임시 비활성화
 import SafeText from '../../components/common/SafeText';
-import { toDisplayString } from '../../utils/safeDisplay';
+import { toDisplayString, toSafeNumber } from '../../utils/safeDisplay';
 import './TenantProfile.css';
 
 const TenantProfile = () => {
@@ -86,8 +86,9 @@ const TenantProfile = () => {
       }
 
       const data = await response.json();
-      if (data.success && data.tenant) {
-        setTenantInfo(data.tenant);
+      const tenant = data.data?.tenant ?? data.tenant;
+      if (data.success && tenant) {
+        setTenantInfo(tenant);
       }
     } catch (err) {
       console.error('테넌트 정보 로드 실패:', err);
@@ -298,10 +299,10 @@ const TenantProfile = () => {
                             <SafeText>{subscription.status}</SafeText>
                           </span>
                         </div>
-                        {subscription.amount && (
+                        {subscription.amount != null && (
                           <div className="subscription-amount">
                             <DollarSign size={16} />
-                            {subscription.amount.toLocaleString()}원
+                            {toSafeNumber(subscription.amount).toLocaleString()}원
                           </div>
                         )}
                       </div>

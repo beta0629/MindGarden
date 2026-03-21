@@ -36,6 +36,10 @@ description: Core Solution(MindGarden) 코드 스타일 일괄 적용. Java 4칸
 - 매직 넘버·문자열 금지. 상수 또는 설정 사용
 - TODO/FIXME는 구체적으로 (예: `// TODO: 2025-12-10 키 로테이션 완료`)
 
+## 운영 반영 전 — 하드코딩 (검색·스캔 전부 수정)
+
+- **스타일 정리와 별개로**, CI/검색에 걸리는 하드코딩은 **토큰·상수·설정으로 치환**한다. 상세: `docs/project-management/ADMIN_LNB_LAYOUT_UNIFICATION_MEETING_HANDOFF.md` **§17**, `/core-solution-standardization`.
+
 ## Reference
 
 전체: `docs/standards/CODE_STYLE_STANDARD.md`

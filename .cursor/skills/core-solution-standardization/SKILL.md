@@ -58,12 +58,18 @@ Core Solution(MindGarden)의 모든 코드·UI는 **표준화 원칙**을 따릅
 - 매직 넘버·문자열 하드코딩 금지
 - 네이밍 규칙 준수 (PascalCase, camelCase, UPPER_SNAKE_CASE)
 
-### 운영 반영 전 — 하드코딩 발견 시 즉시 수정 (필수)
+### 운영 반영 전 — 하드코딩: 검색·스캔에 보이면 전부 수정 (필수)
 
-- **원칙**: MindGarden은 **운영(go-live) 반영을 앞두고 있으므로**, 리뷰·작업 중 **하드코딩이 보이면 모두 수정 대상**이다. “pre-commit이 커밋은 허용한다” 수준으로 두지 않고, **해당 변경과 함께 제거·치환까지 마친다**.
-- **범례**: 인라인 색·`rgba`/`#rrggbb`, 표준 외 URL/호스트, 반복 라벨·코드값, CI/BI 색상·문자열 하드코딩 검사 위반, API 경로·환경값의 코드 직접 삽입 등.
-- **역할**: 구현·치환은 **core-coder**. 토큰·팔레트·UI 규칙이 없으면 **core-designer**에 스펙 요청 후 토큰에 반영하고 코더가 적용한다.
-- **참조**: `docs/운영반영/PRE_PRODUCTION_GO_LIVE_CHECKLIST.md`, 프로젝트 하드코딩 검사 스크립트·워크플로(예: `code-quality-check.yml`).
+- **한 줄 원칙**: **코드 검색·CI/BI 하드코딩 검사·`check-hardcode`·리뷰에서 하드코딩으로 식별되면, 운영 반영 전까지 예외 없이 수정·치환한다.** “커밋 훅이 개발 중 허용한다”는 **로컬 편의**일 뿐, **운영 게이트 기준 아님**.
+- **적용 범위**: 터치한 파일만이 아니라, **같은 PR·태스크 범위에서 스캔에 걸린 모든 파일·라인**을 정리한다.
+- **범례**: 인라인 색·`rgba`/`#rrggbb`, CSS/JS hex·고정 색, 표준 외 URL/호스트/포트, 비밀·키, 반복 라벨·상태값 하드코딩, CI 출력의 “하드코딩 발견” 항목 전부.
+- **역할**: 구현·치환은 **core-coder**. 토큰·팔레트가 없으면 **core-designer**에 스펙 요청 → 토큰 반영 후 코더 적용.
+- **필수 참조 문서**:
+  - `docs/project-management/ADMIN_LNB_LAYOUT_UNIFICATION_MEETING_HANDOFF.md` **§17** (운영 반영 준비·검사·완료 조건)
+  - `docs/project-management/SETTINGS_PAGES_LAYOUT_UNIFICATION_ORCHESTRATION.md` **§1.3** (설정 UI 오케스트레이션과 동일 게이트)
+  - `docs/운영반영/PRE_PRODUCTION_GO_LIVE_CHECKLIST.md`
+  - `docs/project-management/2025-12-03/CHECKLIST.md` (CSS·하드코딩 항목)
+- **검사 예시**: `config/shell-scripts/check-hardcode.sh`(경로는 저장소 기준 확인), 커밋 시 MindGarden CI/BI 프론트 스캔, `node scripts/design-system/color-management/convert-hardcoded-colors.js`(존재 시).
 
 ### 참조 문서
 - `docs/standards/BACKEND_CODING_STANDARD.md`

@@ -23,6 +23,11 @@
 - **AdminCommonLayout**은 사용 중이나, **본문(children) 내부**가 커스텀 클래스(`tenant-profile-*`, `pg-config-*` 등) 기반 레거시 구조
 - ContentHeader, ContentArea, `mg-v2-content-*`, `mg-v2-ad-b0kla__*` 미사용
 
+### 1.3 운영 반영 전 하드코딩 (필수)
+
+**운영 배포 전**에는 검색·CI 하드코딩 스캔·`check-hardcode` 등에 **걸리는 항목을 전부 제거·토큰화**한다. 예외는 문서로 합의한 목록만 허용한다.  
+상세 게이트·검사 절차: **`docs/project-management/ADMIN_LNB_LAYOUT_UNIFICATION_MEETING_HANDOFF.md` §17**.
+
 ---
 
 ## 2. 범위

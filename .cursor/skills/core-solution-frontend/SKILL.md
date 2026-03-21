@@ -91,6 +91,12 @@ const data = await apiGet('/api/v1/...');
 - 컴포넌트: PascalCase. 함수/변수: camelCase. 상수: UPPER_SNAKE_CASE
 - 들여쓰기 2칸, 세미콜론 사용, 문자열 작은따옴표 우선
 
+## 운영 반영 준비 — 하드코딩 (core-coder 필수)
+
+- **원칙**: **검색(ripgrep 등)·CI/BI 하드코딩 검사·`check-hardcode`에 걸리면 전부 수정**한다. 운영(go-live) 직전에는 **위반 0건**을 목표로 한다.
+- **금지**: “훅이 커밋은 허용했으니 나중에” — 운영 반영 브랜치/릴리스에는 **스캔 통과 + 문서 §17 게이트**를 적용한다.
+- **상세**: `docs/project-management/ADMIN_LNB_LAYOUT_UNIFICATION_MEETING_HANDOFF.md` **§17**, `/core-solution-standardization` 스킬 동일 절.
+
 ## Reference
 
 - 전체 규칙: `docs/standards/FRONTEND_DEVELOPMENT_STANDARD.md`, `docs/standards/API_CALL_STANDARD.md`, `docs/standards/COMPONENT_STRUCTURE_STANDARD.md`

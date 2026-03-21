@@ -42,7 +42,7 @@ Java/Spring Boot 코드를 작성·수정할 때 이 스킬을 적용하세요.
 
 ### 공통
 
-- **하드코딩 금지**. 코드값·상수는 공통코드 테이블 또는 환경변수·설정에서 조회
+- **하드코딩 금지**. 코드값·상수는 공통코드 테이블 또는 환경변수·설정에서 조회. **검색·CI 하드코딩 검사에 노출되면 운영 반영 전까지 전부 정리**한다. 게이트·범례: `docs/project-management/ADMIN_LNB_LAYOUT_UNIFICATION_MEETING_HANDOFF.md` **§17**, `/core-solution-standardization`.
 - JavaDoc: 클래스·public 메서드에 `@param` `@return` `@throws`. `@author CoreSolution` 또는 `@author MindGarden`, `@since` 날짜
 - 로깅: `log.info` 등 적절히 사용
 

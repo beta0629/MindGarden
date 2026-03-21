@@ -290,3 +290,33 @@
 - `/consultant/dashboard`
 
 **빌드**: `cd frontend && npm run build:ci` 통과 필요.
+
+---
+
+## 17. 운영 반영 준비 — 하드코딩 제거 (필수)
+
+**본 레이아웃 통일 작업을 운영에 반영하기 전**, 아래를 **반드시** 충족한다.  
+**검색·스캔·훅에 하드코딩으로 잡히는 항목은 예외 없이 수정**한다. “개발 중 허용” 커밋 훅 메시지에만 의존하지 않는다.
+
+### 17.1 원칙
+
+| 구분 | 요구 |
+|------|------|
+| **색상·스타일** | `#hex`, `rgb(a)` 직접 값, 인라인 색상 등 → **`unified-design-tokens.css` 및 `var(--mg-*)` 등 토큰**으로 치환. 훅/스크립트가 지적한 줄은 **전부** 처리. |
+| **도메인·URL·포트** | 코드·설정에 박힌 고정값 → **환경 변수·상수 모듈** (`docs/standards`, `ENVIRONMENT_SEPARATION` 계열 참고). |
+| **상태값·코드값** | 비즈니스 상태 문자열 하드코딩 → **공통코드/API 조회** 등 표준 경로 (기존 `getCommonCodes` 주석이 붙은 구간 포함). |
+| **비밀·키** | 절대 저장소에 두지 않음 (`SECURITY_AUTHENTICATION_STANDARD` 준수). |
+
+### 17.2 반드시 돌릴 검사 (예시)
+
+- 저장소 스크립트: `config/shell-scripts/check-hardcode.sh` (경로는 프로젝트 최신 기준으로 확인).
+- 커밋 시 동작하는 **MindGarden CI/BI 하드코딩 검사**(프론트 변경 파일 스캔) — **출력에 나온 파일·라인은 전부 수정 후 재실행**한다.
+- 색상 일괄 보조: `node scripts/design-system/color-management/convert-hardcoded-colors.js` (문서/스크립트 존재 시).
+
+### 17.3 완료 조건 (운영 배포 게이트)
+
+- [ ] 위 검사들에서 **하드코딩 위반 0건**(또는 팀이 합의한 예외 목록만 명시 문서화).
+- [ ] `frontend` **`npm run build:ci`** 통과.
+- [ ] `docs/project-management/2025-12-03/CHECKLIST.md` 등 **배포 체크리스트**의 CSS/하드코딩 항목과 정합.
+
+**요약**: **검색·자동 검사·리뷰에서 하드코딩으로 보이면 운영 반영 전까지 전부 수정한다.**

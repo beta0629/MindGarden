@@ -26,7 +26,7 @@ description: Core Solution(MindGarden) 프로젝트 전체 룰 인덱스. 백엔
 - **디자인·개발 일관성**: core-designer와 core-coder 산출물은 **한 사람이 한 것처럼** 동일한 디자인·코드가 나와야 한다. 토큰·클래스명·구조를 통일하고, 단일 소스(`mindgarden-design-system.pen`, `unified-design-tokens.css`)만 사용한다.
 - **페이지 수정 시 연관 요소 전체 수정**: 한 페이지를 수정할 때는 메인 화면뿐 아니라 모달·버튼·연관 컴포넌트 등 **연관된 모든 부수 요소**를 찾아 함께 수정한다. import·모달·라우트 검색으로 연관 파일을 파악한다.
 - **라이브러리 활용**: 프로젝트에 필요한 기능(파일 업로드, 날짜/폼 검증, 차트 등)에 **적합한 검증된 라이브러리**가 있으면 사용하여 오류를 줄인다. 직접 구현보다 라이브러리를 쓰면 검증·에러 처리·엣지 케이스가 통일되어 유지보수와 버그 감소에 유리하다. (예: 파일 업로드 → react-dropzone)
-- **운영 반영(go-live) 대비 — 하드코딩 제로**: 작업 중 **하드코딩이 보이면 그 자리에서 제거·치환하는 것을 완료 조건**으로 한다. *나중에*, *경고만 허용*으로 미루지 않는다. 포함: 인라인 색상·`rgba(...)`·Hex, 프로젝트 표준 위의 URL·포트·매직 문자열/숫자, CI/BI 하드코딩 가드가 잡는 항목, 공통코드/토큰/상수로 뺄 수 있는 값. **실행은 core-coder**가 담당하고, 토큰·가이드 부재 시 **core-designer**와 먼저 스펙을 맞춘 뒤 치환한다. 체크리스트: `docs/운영반영/PRE_PRODUCTION_GO_LIVE_CHECKLIST.md` 등과 함께 본 규칙을 운영 준비의 일부로 본다.
+- **운영 반영(go-live) 대비 — 하드코딩 제로**: **코드 검색·CI/BI 하드코딩 검사·`check-hardcode`·리뷰에서 식별되면 예외 없이 수정·치환**한다. 작업 중 하드코딩이 보이면 **그 자리에서 제거·치환까지 완료**가 완료 조건이다. *나중에*, *경고만 허용*으로 미루지 않는다. 포함: 인라인 색상·`rgba(...)`·Hex, 프로젝트 표준 위의 URL·포트·매직 문자열/숫자, CI/BI 하드코딩 가드가 잡는 항목, 공통코드/토큰/상수로 뺄 수 있는 값. **실행은 core-coder**가 담당하고, 토큰·가이드 부재 시 **core-designer**와 먼저 스펙을 맞춘 뒤 치환한다. **필수 문서**: `docs/project-management/ADMIN_LNB_LAYOUT_UNIFICATION_MEETING_HANDOFF.md` **§17**, `docs/project-management/SETTINGS_PAGES_LAYOUT_UNIFICATION_ORCHESTRATION.md` **§1.3**, `docs/운영반영/PRE_PRODUCTION_GO_LIVE_CHECKLIST.md`. 상세는 `/core-solution-standardization` 동일 절.
 
 ## 서브에이전트 활용 매핑
 

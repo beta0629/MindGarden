@@ -32,7 +32,10 @@ now_epoch=$(date +%s)
 had_critical=0
 lines=()
 
+# set -e + 빈 find 시 read 실패로 조기 종료 방지
+set +e
 while IFS= read -r -d '' cert; do
+  [[ -n "$cert" ]] || continue
   name=$(basename "$(dirname "$cert")")
   end=$(openssl x509 -enddate -noout -in "$cert" 2>/dev/null | cut -d= -f2-)
   [[ -n "$end" ]] || continue
@@ -48,7 +51,9 @@ while IFS= read -r -d '' cert; do
   elif (( left < WARN_DAYS )); then
     echo "[WARN] $line" >&2
   fi
-done < <(find "$LIVE_DIR" -maxdepth 2 -type f -name cert.pem -print0 2>/dev/null)
+# cert.pem 은 보통 archive 로 가는 심볼릭 링크이므로 -type f 만 쓰면 제외됨
+done < <(find "$LIVE_DIR" -maxdepth 2 \( -type f -o -type l \) -name cert.pem -print0 2>/dev/null)
+set -e
 
 if [[ ${#lines[@]} -eq 0 ]]; then
   echo "[ssl-expiry] $LIVE_DIR 에서 cert.pem 을 찾지 못했습니다." >&2

@@ -8,8 +8,12 @@ set -e
 DOMAIN="${CERTBOT_DOMAIN}"
 TXT_VALUE="${CERTBOT_VALIDATION}"
 
-# 도메인에서 루트 도메인 추출
-ROOT_DOMAIN=$(echo "$DOMAIN" | sed -E 's/^\*\.//' | sed -E 's/^[^.]*\.//')
+# 루트 도메인: *.example.com → example.com, example.com → 그대로 (apex는 co.kr로 잘리면 안 됨)
+if [[ "$DOMAIN" == "*."* ]]; then
+  ROOT_DOMAIN="${DOMAIN#\*.}"
+else
+  ROOT_DOMAIN="$DOMAIN"
+fi
 
 echo ""
 echo "=========================================="
@@ -24,7 +28,8 @@ echo "  호스트: _acme-challenge"
 echo "  타입: TXT"
 echo "  값: ${TXT_VALUE}"
 echo ""
-echo "   (인증서 발급이 완료되었으므로 더 이상 필요하지 않습니다)"
+echo "   (챌린지가 끝났습니다. 성공 시 불필요한 TXT입니다. 실패했다면 이 값만 지우고 다시 시도하세요.)"
+echo "   ※ cleanup 훅은 가비아 DNS를 자동 삭제하지 않습니다. 위 안내대로 수동 삭제만 가능합니다."
 echo ""
 
 echo "✅ 정리 안내 완료"

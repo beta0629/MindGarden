@@ -39,17 +39,25 @@
   z-index: 1;
   text-align: center;
   color: var(--mg-color-white, #FFFFFF);
+  background: rgba(20, 28, 24, 0.42);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 12px;
+  padding: 20px 24px;
+  backdrop-filter: blur(2px);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.2);
 }
 
 .mg-v2-login-hero-logo {
   font-size: 32px;
   font-weight: 700;
   margin-bottom: 16px;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
 }
 
 .mg-v2-login-hero-slogan {
   font-size: 18px;
   font-weight: 400;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.35);
 }
 
 /* 우측: 로그인 폼 영역 */

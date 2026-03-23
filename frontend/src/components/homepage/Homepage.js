@@ -193,6 +193,12 @@ const Homepage = () => {
               무료로 시작하기
             </button>
           </div>
+          <div className="mg-v2-homepage-scroll-indicator" aria-hidden="true">
+            <span className="mg-v2-homepage-scroll-indicator__text">SCROLL</span>
+            <span className="mg-v2-homepage-scroll-indicator__mouse">
+              <span className="mg-v2-homepage-scroll-indicator__wheel"></span>
+            </span>
+          </div>
         </section>
 
         {/* Features Section */}

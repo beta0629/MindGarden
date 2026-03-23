@@ -5,6 +5,8 @@
 **최종 갱신**: 2026-02-12  
 **상태**: 상시 업데이트 (배포 직전 반드시 최신본 확인)
 
+> **오케스트레이션 위임**: 운영 반영 플랜 수립·실행을 **core-planner(기획)** 에게 위임하면, 본 체크리스트·데이터 선별·서브에이전트(shell·core-debugger·core-tester·문서정리 등) 분배실행을 주관하여 오케스트레이션한다. "운영 반영 플랜 수립해줘", "Go-Live 오케스트레이션 진행해줘" 등으로 호출.
+
 ---
 
 ## 문서 계층
@@ -16,6 +18,7 @@
 | 보안 세부 | [SECURITY_STANDARD.md](../standards/SECURITY_STANDARD.md), [SECURITY_AUTHENTICATION_STANDARD.md](../standards/SECURITY_AUTHENTICATION_STANDARD.md) |
 | 기능 단위 배포 예시(레거시) | [DEPLOYMENT_CHECKLIST.md](../guides/deployment/DEPLOYMENT_CHECKLIST.md) |
 | 개발 서버 안정화 참고 | [DEV_DEPLOYMENT_STABILITY_CHECKLIST.md](../troubleshooting/DEV_DEPLOYMENT_STABILITY_CHECKLIST.md) |
+| **운영 필수·비필수 DB 데이터 선별** | [PRODUCTION_ESSENTIAL_DATA.md](../deployment/PRODUCTION_ESSENTIAL_DATA.md) |
 | 서브도메인·와일드카드 DNS 검증 기록 | [WILDCARD_DNS_SUCCESS.md](../project-management/2025-12-12/WILDCARD_DNS_SUCCESS.md) |
 
 ---
@@ -116,6 +119,7 @@
 | 5.3 | 표준화 **프로시저** 변경 시 [deploy-procedures-prod.yml](../../.github/workflows/deploy-procedures-prod.yml) 등 별도 실행 여부 |
 | 5.4 | 운영 DB **네트워크 접근**(퍼블릭 X, bastion/VPN만) |
 | 5.5 | 연결 풀·타임아웃·읽기 부하(리플리카) 정책 |
+| 5.6 | **데이터 선별**: 마스터·참조는 Flyway, **개발 테스트·개인정보 덤프는 운영 미이관**. **운영 테넌트는 Mind Garden 온보딩으로만 생성**(개발 테넌트 덤프 금지) — [PRODUCTION_ESSENTIAL_DATA.md](../deployment/PRODUCTION_ESSENTIAL_DATA.md) §1.1 |
 
 ---
 

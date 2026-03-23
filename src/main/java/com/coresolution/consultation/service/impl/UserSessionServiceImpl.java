@@ -314,7 +314,7 @@ public class UserSessionServiceImpl implements UserSessionService {
     public int cleanupExpiredSessions() {
         try {
             int cleanedCount = userSessionRepository.deactivateExpiredSessions(LocalDateTime.now());
-            log.info("🧹 만료된 세션 정리 완료: count={}", cleanedCount);
+            log.debug("🧹 만료된 세션 정리 완료: count={}", cleanedCount);
             return cleanedCount;
             
         } catch (Exception e) {

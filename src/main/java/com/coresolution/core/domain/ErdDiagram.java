@@ -81,9 +81,10 @@ public class ErdDiagram {
     private String diagramId;
     
     /**
-     * 테넌트 UUID (NULL이면 전체 시스템 ERD)
+     * 테넌트 ID (NULL이면 전체 시스템 ERD)
+     * VARCHAR(64): tenant-verify-final-*, tenant-final-report-* 등 38자 이상 지원
      */
-    @Column(name = "tenant_id", length = 36)
+    @Column(name = "tenant_id", length = 64)
     private String tenantId;
     
     /**

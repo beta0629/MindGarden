@@ -101,7 +101,8 @@ public class CommonCodeServiceImpl implements CommonCodeService {
         // 표준화 2025-12-06: deprecated 메서드 대체
         String tenantId = TenantContextHolder.getTenantId();
         if (tenantId != null) {
-            return commonCodeRepository.findByTenantIdAndCodeGroupAndCodeValue(tenantId, codeGroup, codeValue)
+            // 테넌트 코드 우선, 없으면 코어 코드 폴백 (SALARY_BASE_DATE 등)
+            return commonCodeRepository.findCodeByGroupAndValueWithFallback(tenantId, codeGroup, codeValue)
                     .orElseThrow(() -> new RuntimeException("CommonCode not found: " + codeGroup + " - " + codeValue));
         } else {
             // 코어 코드 조회 (tenantId가 null인 경우)

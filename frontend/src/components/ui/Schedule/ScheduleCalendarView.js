@@ -1,3 +1,4 @@
+import { useCallback, useEffect, useRef } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
@@ -19,6 +20,45 @@ const ScheduleCalendarView = ({
     onEventDrop,
     onExternalEventReceive
 }) => {
+    const calendarRef = useRef(null);
+    const calendarWrapperRef = useRef(null);
+
+    const updateCalendarSize = useCallback(() => {
+        const calendarApi = calendarRef.current?.getApi?.();
+        if (!calendarApi) {
+            return;
+        }
+
+        requestAnimationFrame(() => {
+            calendarApi.updateSize();
+        });
+    }, []);
+
+    useEffect(() => {
+        updateCalendarSize();
+    }, [updateCalendarSize, events.length]);
+
+    useEffect(() => {
+        const handleWindowResize = () => {
+            updateCalendarSize();
+        };
+
+        window.addEventListener('resize', handleWindowResize);
+
+        const resizeObserver = new ResizeObserver(() => {
+            updateCalendarSize();
+        });
+
+        if (calendarWrapperRef.current) {
+            resizeObserver.observe(calendarWrapperRef.current);
+        }
+
+        return () => {
+            window.removeEventListener('resize', handleWindowResize);
+            resizeObserver.disconnect();
+        };
+    }, [updateCalendarSize]);
+
     // 지난 일정 판별 함수
     const eventClassNames = (arg) => {
         const eventDate = new Date(arg.event.start);
@@ -115,8 +155,9 @@ const ScheduleCalendarView = ({
     };
 
     return (
-        <div className="mg-v2-schedule-calendar-view mg-v2-ad-b0kla-fc-wrapper">
+        <div ref={calendarWrapperRef} className="mg-v2-schedule-calendar-view mg-v2-ad-b0kla-fc-wrapper">
             <FullCalendar
+                ref={calendarRef}
                 plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
                 headerToolbar={{
                     left: 'prev,next today',
@@ -154,6 +195,7 @@ const ScheduleCalendarView = ({
                 }}
                 expandRows={true}
                 stickyHeaderDates={true}
+                windowResize={updateCalendarSize}
             />
         </div>
     );

@@ -42,3 +42,11 @@
 .mg-v2-desktop-layout__main > .mg-v2-content-header {
   flex: 0 0 auto;
 }
+
+/* 통합 스케줄: 내부 flex 높이 계산 체인 안정화 */
+.mg-v2-desktop-layout__main > .integrated-schedule.integrated-schedule--b0kla {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+}

@@ -9,13 +9,14 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Bell, MessageSquare, Info } from 'lucide-react';
 import { NavIcon, NotificationBadge } from '../atoms';
 import { useNotification } from '../../../contexts/NotificationContext';
 import { useSession } from '../../../contexts/SessionContext';
 import StandardizedApi from '../../../utils/standardizedApi';
 import { toDisplayString } from '../../../utils/safeDisplay';
+import UnifiedModal from '../../common/modals/UnifiedModal';
 import { useDropdownPosition } from '../hooks/useDropdownPosition';
 import '../styles/dropdown-common.css';
 import './NotificationDropdown.css';
@@ -25,7 +26,6 @@ const TAB_MESSAGES = 'messages';
 const LIST_SIZE = 10;
 
 const NotificationDropdown = () => {
-  const navigate = useNavigate();
   const { user } = useSession();
   const {
     unreadSystemCount,
@@ -43,6 +43,7 @@ const NotificationDropdown = () => {
   const [messageList, setMessageList] = useState([]);
   const [loadingSystem, setLoadingSystem] = useState(false);
   const [loadingMessages, setLoadingMessages] = useState(false);
+  const [selectedItem, setSelectedItem] = useState(null);
 
   const dropdownRef = useRef(null);
   const triggerRef = useRef(null);
@@ -165,7 +166,39 @@ const NotificationDropdown = () => {
     }
   };
 
-  const handleSystemItemClick = async (item) => {
+  const stopNotificationItemEvent = (event) => {
+    if (!event) return;
+    event.preventDefault();
+    event.stopPropagation();
+    if (event.nativeEvent?.stopImmediatePropagation) {
+      event.nativeEvent.stopImmediatePropagation();
+    }
+  };
+
+  const getSystemItemDetail = async (item) => {
+    if (!item?.id) return item;
+    try {
+      const response = await StandardizedApi.get(`/api/v1/system-notifications/${item.id}`);
+      return response?.data || response || item;
+    } catch (err) {
+      console.error('공지 상세 조회 실패:', err);
+      return item;
+    }
+  };
+
+  const getMessageItemDetail = async (item) => {
+    if (!item?.id) return item;
+    try {
+      const response = await StandardizedApi.get(`/api/v1/consultation-messages/${item.id}`);
+      return response?.data || response || item;
+    } catch (err) {
+      console.error('메시지 상세 조회 실패:', err);
+      return item;
+    }
+  };
+
+  const handleSystemItemClick = async (event, item) => {
+    stopNotificationItemEvent(event);
     const id = item?.id;
     if (id == null) return;
 
@@ -181,11 +214,13 @@ const NotificationDropdown = () => {
         console.error('공지 읽음 처리 실패:', err);
       }
     }
+    const detail = await getSystemItemDetail(item);
+    setSelectedItem({ type: TAB_SYSTEM, data: detail });
     setIsOpen(false);
-    // 시스템 공지: 읽음 처리 후 드롭다운만 닫음(통합 알림 상세 페이지로 이동하지 않음). 전체 목록은 footer 링크 이용.
   };
 
-  const handleMessageItemClick = async (item) => {
+  const handleMessageItemClick = async (event, item) => {
+    stopNotificationItemEvent(event);
     const mid = item?.id;
     if (mid == null) return;
 
@@ -201,8 +236,19 @@ const NotificationDropdown = () => {
         console.error('메시지 읽음 처리 실패:', err);
       }
     }
+    const detail = await getMessageItemDetail(item);
+    setSelectedItem({ type: TAB_MESSAGES, data: detail });
     setIsOpen(false);
-    navigate('/notifications', { state: { openConsultationMessageId: mid } });
+  };
+
+  const handleNotificationItemKeyDown = (event, item, type) => {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    stopNotificationItemEvent(event);
+    if (type === TAB_SYSTEM) {
+      handleSystemItemClick(event, item);
+      return;
+    }
+    handleMessageItemClick(event, item);
   };
 
   const sliceContentPreview = (content) => {
@@ -221,6 +267,22 @@ const NotificationDropdown = () => {
     if (diff < 86400) return `${Math.floor(diff / 3600)}시간 전`;
     if (diff < 604800) return `${Math.floor(diff / 86400)}일 전`;
     return date.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' });
+  };
+
+  const formatDateTime = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleString('ko-KR', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const closeDetailModal = () => {
+    setSelectedItem(null);
   };
 
   return (
@@ -334,7 +396,10 @@ const NotificationDropdown = () => {
                             className={`mg-v2-notification-item ${
                               isUnread ? 'mg-v2-notification-item--unread' : ''
                             }`}
-                            onClick={() => handleSystemItemClick(item)}
+                            onClick={(event) => handleSystemItemClick(event, item)}
+                            onKeyDown={(event) =>
+                              handleNotificationItemKeyDown(event, item, TAB_SYSTEM)
+                            }
                           >
                             {isUnread && (
                               <span
@@ -398,7 +463,10 @@ const NotificationDropdown = () => {
                             className={`mg-v2-notification-item ${
                               isUnread ? 'mg-v2-notification-item--unread' : ''
                             }`}
-                            onClick={() => handleMessageItemClick(item)}
+                            onClick={(event) => handleMessageItemClick(event, item)}
+                            onKeyDown={(event) =>
+                              handleNotificationItemKeyDown(event, item, TAB_MESSAGES)
+                            }
                           >
                             {isUnread && (
                               <span
@@ -447,6 +515,31 @@ const NotificationDropdown = () => {
           </>,
           document.body
         )}
+      {selectedItem && (
+        <UnifiedModal
+          isOpen={!!selectedItem}
+          onClose={closeDetailModal}
+          title={toDisplayString(selectedItem.data?.title, '알림')}
+          subtitle={`${toDisplayString(
+            selectedItem.data?.authorName ||
+              selectedItem.data?.senderName ||
+              (selectedItem.type === TAB_MESSAGES ? '메시지' : '시스템'),
+            '시스템'
+          )} · ${formatDateTime(selectedItem.data?.publishedAt || selectedItem.data?.createdAt)}`}
+          size="large"
+          actions={
+            <button type="button" className="mg-button mg-button-primary" onClick={closeDetailModal}>
+              확인
+            </button>
+          }
+        >
+          <div className="mg-v2-notification-modal-content">
+            <p className="mg-v2-notification-item__message">
+              {toDisplayString(selectedItem.data?.content, '내용이 없습니다.')}
+            </p>
+          </div>
+        </UnifiedModal>
+      )}
     </nav>
   );
 };

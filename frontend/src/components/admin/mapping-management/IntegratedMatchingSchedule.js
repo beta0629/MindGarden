@@ -384,13 +384,15 @@ const IntegratedMatchingSchedule = () => {
           )}
         </aside>
 
-        <main className="integrated-schedule__calendar-wrapper">
-          <UnifiedScheduleComponent
-            userRole="ADMIN"
-            userId={user?.id ?? undefined}
-            refetchTrigger={refetchTrigger}
-            onDropFromExternal={handleDropFromExternal}
-          />
+        <main className="integrated-schedule__calendar-wrapper integrated-schedule__calendar-wrapper--integrated" data-layout-context="integrated-schedule">
+          <div className="integrated-schedule__calendar-content">
+            <UnifiedScheduleComponent
+              userRole="ADMIN"
+              userId={user?.id ?? undefined}
+              refetchTrigger={refetchTrigger}
+              onDropFromExternal={handleDropFromExternal}
+            />
+          </div>
         </main>
           </div>
         </ContentArea>

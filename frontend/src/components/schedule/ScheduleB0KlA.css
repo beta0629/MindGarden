@@ -496,6 +496,20 @@
   border-radius: 2px;
 }
 
+/* 통합 스케줄 컨텍스트: viewport 기반 min-height/hidden clipping 해제 */
+.integrated-schedule__calendar-wrapper .mg-v2-ad-b0kla.mg-v2-schedule-calendar {
+  min-height: 0;
+  height: 100%;
+  overflow: visible;
+}
+
+.integrated-schedule__calendar-wrapper .mg-v2-schedule-calendar-view,
+.integrated-schedule__calendar-wrapper .mg-v2-ad-b0kla-fc-wrapper {
+  min-height: 0;
+  height: 100%;
+  overflow: visible;
+}
+
 .mg-v2-ad-b0kla .fc-timegrid-slot-label {
   color: var(--ad-b0kla-text-secondary);
 }

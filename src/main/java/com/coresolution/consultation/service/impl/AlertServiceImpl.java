@@ -3,6 +3,7 @@ package com.coresolution.consultation.service.impl;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import jakarta.persistence.EntityNotFoundException;
 import com.coresolution.consultation.entity.Alert;
 import com.coresolution.consultation.repository.AlertRepository;
 import com.coresolution.consultation.service.AlertService;
@@ -40,7 +41,12 @@ public class AlertServiceImpl extends BaseTenantEntityServiceImpl<Alert, Long>
     
     @Override
     protected Optional<Alert> findEntityById(Long id) {
-        return alertRepository.findById(id);
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null || tenantId.isEmpty()) {
+            log.warn("findEntityById: 테넌트 컨텍스트 없음, 알림 id={} 조회 생략", id);
+            return Optional.empty();
+        }
+        return alertRepository.findByTenantIdAndId(tenantId, id);
     }
     
     @Override
@@ -60,10 +66,8 @@ public class AlertServiceImpl extends BaseTenantEntityServiceImpl<Alert, Long>
     
     @Override
     public Alert save(Alert alert) {
-        // BaseTenantEntityService의 create 또는 update 메서드 사용
         String tenantId = TenantContextHolder.getTenantId();
         if (alert.getId() == null) {
-            // 새 알림 생성
             if (alert.getStatus() == null) {
                 alert.setStatus("UNREAD");
             }
@@ -74,12 +78,21 @@ public class AlertServiceImpl extends BaseTenantEntityServiceImpl<Alert, Long>
                 return create(tenantId, alert);
             }
         } else {
-            // 기존 알림 업데이트
             if (tenantId != null && alert.getTenantId() != null) {
                 return update(tenantId, alert);
             }
+            String tenantForLoad = alert.getTenantId() != null && !alert.getTenantId().isEmpty()
+                ? alert.getTenantId()
+                : TenantContextHolder.getRequiredTenantId();
+            Alert existingAlert = alertRepository.findByTenantIdAndId(tenantForLoad, alert.getId())
+                .orElseThrow(() -> new RuntimeException("알림을 찾을 수 없습니다: " + alert.getId()));
+            if (existingAlert.getTenantId() != null) {
+                accessControlService.validateTenantAccess(existingAlert.getTenantId());
+            }
+            alert.setUpdatedAt(LocalDateTime.now());
+            alert.setVersion(existingAlert.getVersion() + 1);
+            return alertRepository.save(alert);
         }
-        // 테넌트 컨텍스트가 없으면 기존 방식 사용 (하위 호환성)
         if (alert.getId() == null) {
             alert.setCreatedAt(LocalDateTime.now());
             alert.setVersion(1L);
@@ -101,14 +114,18 @@ public class AlertServiceImpl extends BaseTenantEntityServiceImpl<Alert, Long>
     
     @Override
     public Alert update(Alert alert) {
-        // BaseTenantEntityService의 update 메서드 사용
         String tenantId = TenantContextHolder.getTenantId();
         if (tenantId != null && alert.getTenantId() != null) {
             return update(tenantId, alert);
         }
-        // 테넌트 컨텍스트가 없으면 기존 방식 사용 (하위 호환성)
-        Alert existingAlert = alertRepository.findById(alert.getId())
+        String tenantForLoad = alert.getTenantId() != null && !alert.getTenantId().isEmpty()
+            ? alert.getTenantId()
+            : TenantContextHolder.getRequiredTenantId();
+        Alert existingAlert = alertRepository.findByTenantIdAndId(tenantForLoad, alert.getId())
                 .orElseThrow(() -> new RuntimeException("알림을 찾을 수 없습니다: " + alert.getId()));
+        if (existingAlert.getTenantId() != null) {
+            accessControlService.validateTenantAccess(existingAlert.getTenantId());
+        }
         alert.setUpdatedAt(LocalDateTime.now());
         alert.setVersion(existingAlert.getVersion() + 1);
         return alertRepository.save(alert);
@@ -116,68 +133,30 @@ public class AlertServiceImpl extends BaseTenantEntityServiceImpl<Alert, Long>
     
     @Override
     public Alert partialUpdate(Long id, Alert updateData) {
-        // BaseTenantEntityService의 partialUpdate 메서드 사용
-        String tenantId = TenantContextHolder.getTenantId();
-        if (tenantId != null) {
-            return partialUpdate(tenantId, id, updateData);
-        }
-        // 테넌트 컨텍스트가 없으면 기존 방식 사용 (하위 호환성)
-        Alert existingAlert = alertRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("알림을 찾을 수 없습니다: " + id));
-        
-        if (updateData.getTitle() != null) {
-            existingAlert.setTitle(updateData.getTitle());
-        }
-        if (updateData.getContent() != null) {
-            existingAlert.setContent(updateData.getContent());
-        }
-        if (updateData.getStatus() != null) {
-            existingAlert.setStatus(updateData.getStatus());
-        }
-        if (updateData.getPriority() != null) {
-            existingAlert.setPriority(updateData.getPriority());
-        }
-        if (updateData.getType() != null) {
-            existingAlert.setType(updateData.getType());
-        }
-        
-        existingAlert.setUpdatedAt(LocalDateTime.now());
-        existingAlert.setVersion(existingAlert.getVersion() + 1);
-        
-        return alertRepository.save(existingAlert);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return partialUpdate(tenantId, id, updateData);
     }
     
     @Override
     public void softDeleteById(Long id) {
-        // BaseTenantEntityService의 delete 메서드 사용
-        String tenantId = TenantContextHolder.getTenantId();
-        if (tenantId != null) {
-            delete(tenantId, id);
-            return;
-        }
-        // 테넌트 컨텍스트가 없으면 기존 방식 사용 (하위 호환성)
-        Alert alert = alertRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("알림을 찾을 수 없습니다: " + id));
-        
-        alert.setIsDeleted(true);
-        alert.setDeletedAt(LocalDateTime.now());
-        alert.setUpdatedAt(LocalDateTime.now());
-        alert.setVersion(alert.getVersion() + 1);
-        
-        alertRepository.save(alert);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        delete(tenantId, id);
     }
     
     @Override
     public void restoreById(Long id) {
-        Alert alert = alertRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("알림을 찾을 수 없습니다: " + id));
-        
-        alert.setIsDeleted(false);
-        alert.setDeletedAt(null);
-        alert.setUpdatedAt(LocalDateTime.now());
-        alert.setVersion(alert.getVersion() + 1);
-        
-        alertRepository.save(alert);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        accessControlService.validateTenantAccess(tenantId);
+        Alert ref = alertRepository.getReferenceById(id);
+        try {
+            String entityTenantId = ref.getTenantId();
+            if (entityTenantId == null || !entityTenantId.equals(tenantId)) {
+                throw new RuntimeException("알림을 찾을 수 없습니다: " + id);
+            }
+        } catch (EntityNotFoundException e) {
+            throw new RuntimeException("알림을 찾을 수 없습니다: " + id, e);
+        }
+        alertRepository.restoreByIdAndTenantId(id, tenantId);
     }
     
     @Override

@@ -46,8 +46,9 @@ public class UserAddressServiceImpl implements UserAddressService {
     @Transactional(readOnly = true)
     public UserAddressDto getAddress(Long addressId) {
         log.info("🔍 주소 상세 조회: addressId={}", addressId);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         
-        UserAddress address = userAddressRepository.findById(addressId)
+        UserAddress address = userAddressRepository.findByTenantIdAndId(tenantId, addressId)
                 .orElseThrow(() -> new RuntimeException("주소를 찾을 수 없습니다: " + addressId));
         
         return convertToDto(address);
@@ -72,8 +73,9 @@ public class UserAddressServiceImpl implements UserAddressService {
     @Override
     public UserAddressDto updateAddress(Long addressId, UserAddressDto addressDto) {
         log.info("✏️ 주소 수정: addressId={}", addressId);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         
-        UserAddress address = userAddressRepository.findById(addressId)
+        UserAddress address = userAddressRepository.findByTenantIdAndId(tenantId, addressId)
                 .orElseThrow(() -> new RuntimeException("주소를 찾을 수 없습니다: " + addressId));
         
         // 기본 주소로 설정하는 경우, 기존 기본 주소 해제
@@ -90,8 +92,9 @@ public class UserAddressServiceImpl implements UserAddressService {
     @Override
     public void deleteAddress(Long addressId) {
         log.info("🗑️ 주소 삭제: addressId={}", addressId);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         
-        UserAddress address = userAddressRepository.findById(addressId)
+        UserAddress address = userAddressRepository.findByTenantIdAndId(tenantId, addressId)
                 .orElseThrow(() -> new RuntimeException("주소를 찾을 수 없습니다: " + addressId));
         
         address.setIsDeleted(true);
@@ -112,7 +115,7 @@ public class UserAddressServiceImpl implements UserAddressService {
         
         // 새로운 기본 주소 설정
         if (addressId != null) {
-            UserAddress address = userAddressRepository.findById(addressId)
+            UserAddress address = userAddressRepository.findByTenantIdAndId(tenantId, addressId)
                     .orElseThrow(() -> new RuntimeException("주소를 찾을 수 없습니다: " + addressId));
             
             address.setIsPrimary(true);

@@ -73,7 +73,9 @@ public class SystemNotificationServiceImpl implements SystemNotificationService 
     public SystemNotification getNotificationDetail(Long notificationId, Long userId) {
         log.info("📢 공지 상세 조회 - 공지 ID: {}, 사용자 ID: {}", notificationId, userId);
         
-        Optional<SystemNotification> notificationOpt = systemNotificationRepository.findById(notificationId);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        Optional<SystemNotification> notificationOpt =
+            systemNotificationRepository.findByTenantIdAndId(tenantId, notificationId);
         if (notificationOpt.isEmpty()) {
             throw new RuntimeException("공지를 찾을 수 없습니다: " + notificationId);
         }
@@ -244,7 +246,9 @@ public class SystemNotificationServiceImpl implements SystemNotificationService 
     public SystemNotification updateNotification(Long notificationId, SystemNotification notification) {
         log.info("📢 공지 수정 - ID: {}", notificationId);
         
-        Optional<SystemNotification> existingOpt = systemNotificationRepository.findById(notificationId);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        Optional<SystemNotification> existingOpt =
+            systemNotificationRepository.findByTenantIdAndId(tenantId, notificationId);
         if (existingOpt.isEmpty()) {
             throw new RuntimeException("공지를 찾을 수 없습니다: " + notificationId);
         }
@@ -269,7 +273,9 @@ public class SystemNotificationServiceImpl implements SystemNotificationService 
     public void deleteNotification(Long notificationId) {
         log.info("📢 공지 삭제 - ID: {}", notificationId);
         
-        Optional<SystemNotification> notificationOpt = systemNotificationRepository.findById(notificationId);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        Optional<SystemNotification> notificationOpt =
+            systemNotificationRepository.findByTenantIdAndId(tenantId, notificationId);
         if (notificationOpt.isEmpty()) {
             throw new RuntimeException("공지를 찾을 수 없습니다: " + notificationId);
         }
@@ -285,7 +291,9 @@ public class SystemNotificationServiceImpl implements SystemNotificationService 
     public SystemNotification publishNotification(Long notificationId) {
         log.info("📢 공지 게시 - ID: {}", notificationId);
         
-        Optional<SystemNotification> notificationOpt = systemNotificationRepository.findById(notificationId);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        Optional<SystemNotification> notificationOpt =
+            systemNotificationRepository.findByTenantIdAndId(tenantId, notificationId);
         if (notificationOpt.isEmpty()) {
             throw new RuntimeException("공지를 찾을 수 없습니다: " + notificationId);
         }
@@ -303,7 +311,9 @@ public class SystemNotificationServiceImpl implements SystemNotificationService 
     public SystemNotification archiveNotification(Long notificationId) {
         log.info("📢 공지 보관 - ID: {}", notificationId);
         
-        Optional<SystemNotification> notificationOpt = systemNotificationRepository.findById(notificationId);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        Optional<SystemNotification> notificationOpt =
+            systemNotificationRepository.findByTenantIdAndId(tenantId, notificationId);
         if (notificationOpt.isEmpty()) {
             throw new RuntimeException("공지를 찾을 수 없습니다: " + notificationId);
         }

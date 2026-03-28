@@ -12,6 +12,7 @@ import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.UserProfileService;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -31,13 +32,24 @@ public class UserProfileServiceImpl implements UserProfileService {
     
     private final UserRepository userRepository;
     private final PersonalDataEncryptionUtil encryptionUtil;
+
+    /**
+     * 현재 테넌트 컨텍스트와 PK로 활성 사용자를 조회합니다.
+     *
+     * @param userId 사용자 PK
+     * @return 사용자 엔티티
+     */
+    private User requireUserInCurrentTenant(Long userId) {
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return userRepository.findByTenantIdAndId(tenantId, userId)
+            .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+    }
     
     @Override
     @Transactional(rollbackFor = Exception.class)
     public UserProfileResponse updateUserProfile(Long userId, UserProfileUpdateRequest request) {
         try {
-            User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+            User user = requireUserInCurrentTenant(userId);
             
             log.info("유저 프로필 업데이트 시작: userId={}", userId);
             
@@ -106,8 +118,7 @@ public class UserProfileServiceImpl implements UserProfileService {
     
     @Override
     public UserProfileResponse getUserProfile(Long userId) {
-        User user = userRepository.findById(userId)
-            .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+        User user = requireUserInCurrentTenant(userId);
         
         return buildUserProfileResponse(user);
     }
@@ -116,8 +127,7 @@ public class UserProfileServiceImpl implements UserProfileService {
     @Transactional(rollbackFor = Exception.class)
     public boolean changeUserRole(Long userId, UserRole newRole) {
         try {
-            User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+            User user = requireUserInCurrentTenant(userId);
             
             // 역할 변경 가능 여부 확인
             if (!isValidRoleTransition(user.getRole(), newRole)) {
@@ -146,8 +156,7 @@ public class UserProfileServiceImpl implements UserProfileService {
     
     @Override
     public int getProfileCompletionRate(Long userId) {
-        User user = userRepository.findById(userId)
-            .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+        User user = requireUserInCurrentTenant(userId);
         
         int completedFields = 0;
         int totalFields = 6; // 기본 필드 수
@@ -171,8 +180,7 @@ public class UserProfileServiceImpl implements UserProfileService {
     
     @Override
     public boolean checkConsultantEligibility(Long userId) {
-        User user = userRepository.findById(userId)
-            .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+        User user = requireUserInCurrentTenant(userId);
         
         // 상담사 자격 요건 확인
         // 1. 이메일 인증 완료
@@ -312,8 +320,7 @@ public class UserProfileServiceImpl implements UserProfileService {
      * 관리자 자격 요건 확인
      */
     private boolean checkAdminEligibility(Long userId) {
-        User user = userRepository.findById(userId)
-            .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+        User user = requireUserInCurrentTenant(userId);
         
         // 1. 이메일 인증 완료
         if (!user.getIsEmailVerified()) {
@@ -342,8 +349,7 @@ public class UserProfileServiceImpl implements UserProfileService {
      * 수퍼관리자 자격 요건 확인
      */
     private boolean checkSuperAdminEligibility(Long userId) {
-        User user = userRepository.findById(userId)
-            .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+        User user = requireUserInCurrentTenant(userId);
         
         // 1. 이메일 인증 완료
         if (!user.getIsEmailVerified()) {
@@ -476,8 +482,7 @@ public class UserProfileServiceImpl implements UserProfileService {
         Map<String, Object> result = new HashMap<>();
         
         try {
-            User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+            User user = requireUserInCurrentTenant(userId);
             
             log.info("상담사 신청 처리 시작: userId={}, currentRole={}", userId, user.getRole());
             

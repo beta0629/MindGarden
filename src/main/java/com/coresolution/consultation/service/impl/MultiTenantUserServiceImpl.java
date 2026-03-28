@@ -1,5 +1,6 @@
 package com.coresolution.consultation.service.impl;
 
+import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.domain.Tenant;
 import com.coresolution.core.repository.TenantRepository;
 import com.coresolution.consultation.entity.RefreshToken;
@@ -34,14 +35,30 @@ public class MultiTenantUserServiceImpl implements MultiTenantUserService {
     private final UserRepository userRepository;
     private final TenantRepository tenantRepository;
     private final RefreshTokenRepository refreshTokenRepository;
+
+    /**
+     * 현재 요청 테넌트 컨텍스트에서만 사용자를 조회합니다. 컨텍스트가 없거나 다른 테넌트 PK면 조회되지 않습니다.
+     *
+     * @param userId 사용자 PK
+     * @return 해당 테넌트의 사용자
+     * @throws IllegalStateException 테넌트 컨텍스트가 비어 있는 경우
+     */
+    private User requireUserInCurrentTenant(Long userId) {
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null || tenantId.trim().isEmpty()) {
+            throw new IllegalStateException(
+                "Tenant context is required for user-scoped tenant resolution: userId=" + userId);
+        }
+        return userRepository.findByTenantIdAndId(tenantId.trim(), userId)
+            .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다: " + userId));
+    }
     
     @Override
     @Transactional(readOnly = true)
     public List<Tenant> getAccessibleTenants(Long userId) {
         log.debug("사용자가 접근 가능한 테넌트 목록 조회: userId={}", userId);
         
-        User user = userRepository.findById(userId)
-            .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다: " + userId));
+        User user = requireUserInCurrentTenant(userId);
         
         Set<String> tenantIds = new HashSet<>();
         
@@ -143,7 +160,7 @@ public class MultiTenantUserServiceImpl implements MultiTenantUserService {
         
         log.debug("이메일로 접근 가능한 테넌트 목록 조회: email={}", email);
         
-        String currentTenantId = com.coresolution.core.context.TenantContextHolder.getTenantId();
+        String currentTenantId = TenantContextHolder.getTenantId();
         if (currentTenantId == null || currentTenantId.trim().isEmpty()) {
             log.warn("현재 테넌트 컨텍스트가 없어 조회 불가: email={}", email);
             return new ArrayList<>();
@@ -213,9 +230,8 @@ public class MultiTenantUserServiceImpl implements MultiTenantUserService {
             }
         }
         
-        // 2. User의 현재 Branch 테넌트
-        User user = userRepository.findById(userId)
-            .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다: " + userId));
+        // 2. User의 현재 Branch 테넌트 (요청 테넌트 컨텍스트와 일치하는 행만)
+        User user = requireUserInCurrentTenant(userId);
         
         Tenant currentTenant = getCurrentTenant(user);
         if (currentTenant != null) {

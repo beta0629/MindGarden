@@ -1,5 +1,6 @@
 package com.coresolution.consultation.dto;
 
+import com.coresolution.consultation.validation.VehiclePlateOptional;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
@@ -49,6 +50,10 @@ public class ClientRegistrationRequest {
     private String addressDetail;
 
     private String postalCode;
+
+    /** 차량번호 (선택, 최대 32자 — 저장 시 정규화는 서비스에서 수행) */
+    @VehiclePlateOptional
+    private String vehiclePlate;
     
     private String consultationPurpose;
     
@@ -110,6 +115,7 @@ public class ClientRegistrationRequest {
             .address(dto.getAddress())
             .addressDetail(dto.getAddressDetail())
             .postalCode(dto.getPostalCode())
+            .vehiclePlate(null)
             .consultationPurpose(dto.getConsultationPurpose())
             .consultationHistory(dto.getConsultationHistory())
             .emergencyContact(dto.getEmergencyContact())

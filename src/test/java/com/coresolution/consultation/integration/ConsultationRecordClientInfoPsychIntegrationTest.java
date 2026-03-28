@@ -58,7 +58,8 @@ class ConsultationRecordClientInfoPsychIntegrationTest {
 
     @BeforeEach
     void setUp() {
-        tenantId = "tenant-cr-" + UUID.randomUUID();
+        // BaseEntity.tenant_id 길이 36 — clients 등 하위 엔티티와 정합
+        tenantId = UUID.randomUUID().toString();
         Tenant tenant = Tenant.builder()
                 .tenantId(tenantId)
                 .name("상담일지 테스트 테넌트")

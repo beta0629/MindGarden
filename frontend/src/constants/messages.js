@@ -168,7 +168,8 @@ export const VALIDATION_MESSAGES = {
   PASSWORDS_NOT_MATCH: '비밀번호가 일치하지 않습니다.',
   INVALID_DATE: '올바른 날짜 형식이 아닙니다.',
   INVALID_TIME: '올바른 시간 형식이 아닙니다.',
-  INVALID_NUMBER: '올바른 숫자 형식이 아닙니다.'
+  INVALID_NUMBER: '올바른 숫자 형식이 아닙니다.',
+  INVALID_VEHICLE_PLATE: '차량번호는 숫자, 한글, 영문, 하이픈, 공백만 입력할 수 있으며 최대 32자입니다.'
 };
 
 export const STATUS_MESSAGES = {

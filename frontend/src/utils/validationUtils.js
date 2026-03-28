@@ -415,3 +415,38 @@ export const validateForm = (formData, rules) => {
   };
 };
 
+/**
+ * 차량번호(선택) 정규화: trim, 연속 공백 축소, 영문 대문자
+ *
+ * @param {string|null|undefined} raw 입력
+ * @returns {string} 정규화 문자열(비어 있으면 '')
+ */
+export const normalizeVehiclePlateInput = (raw) => {
+  if (raw == null || typeof raw !== 'string') {
+    return '';
+  }
+  const trimmed = raw.trim();
+  if (!trimmed) {
+    return '';
+  }
+  const collapsed = trimmed.replace(/\s+/g, ' ');
+  return collapsed.replace(/[a-z]/g, (ch) => ch.toUpperCase());
+};
+
+/**
+ * 차량번호(선택) MVP 검증: 숫자·한글·영문·하이픈·공백, 최대 32자
+ *
+ * @param {string|null|undefined} raw 입력
+ * @returns {boolean} 비어 있으면 true
+ */
+export const isValidVehiclePlateOptional = (raw) => {
+  if (raw == null || String(raw).trim() === '') {
+    return true;
+  }
+  const n = normalizeVehiclePlateInput(raw);
+  if (n.length > 32) {
+    return false;
+  }
+  return /^[0-9A-Z가-힣\- ]+$/u.test(n);
+};
+

@@ -52,7 +52,8 @@ class ConsultantClientRegistrationIntegrationTest {
 
     @BeforeEach
     void setUp() {
-        tenantId = "tenant-reg-" + UUID.randomUUID();
+        // BaseEntity.tenant_id 컬럼 길이 36 — 접두사+UUID 조합은 DB 제약 초과하므로 UUID만 사용
+        tenantId = UUID.randomUUID().toString();
         Tenant tenant = Tenant.builder()
                 .tenantId(tenantId)
                 .name("등록 테스트 테넌트")

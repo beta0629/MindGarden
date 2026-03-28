@@ -7,8 +7,11 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import ClientModal from '../ClientModal';
 
-jest.mock('../../../../utils/ajax', () => ({
-  apiGet: jest.fn(() => Promise.resolve({ isDuplicate: false }))
+jest.mock('../../../../utils/standardizedApi', () => ({
+  __esModule: true,
+  default: {
+    get: jest.fn(() => Promise.resolve({ isDuplicate: false }))
+  }
 }));
 
 const defaultProps = {
@@ -27,7 +30,8 @@ const defaultProps = {
     rrnLast1: '',
     address: '',
     addressDetail: '',
-    postalCode: ''
+    postalCode: '',
+    vehiclePlate: ''
   },
   setFormData: jest.fn(),
   onClose: jest.fn(),

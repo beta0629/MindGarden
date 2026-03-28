@@ -1627,7 +1627,7 @@ public class AdminController extends BaseApiController {
     @PostMapping("/clients")
     @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
     public ResponseEntity<ApiResponse<Client>> registerClient(
-            @RequestBody ClientRegistrationRequest request, HttpSession session) {
+            @RequestBody @Valid ClientRegistrationRequest request, HttpSession session) {
         log.info("🔧 내담자 등록: {}", request.getName());
 
         ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session,

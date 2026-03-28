@@ -52,6 +52,10 @@ public class Client extends BaseEntity {
     @Column(name = "postal_code", length = 20)
     private String postalCode;
 
+    /** 차량번호 (선택, clients 테이블 전용) */
+    @Column(name = "vehicle_plate", length = 32)
+    private String vehiclePlate;
+
     @Column(name = "emergency_contact")
     private String emergencyContact;
     

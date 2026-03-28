@@ -2,8 +2,9 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import PropTypes from 'prop-types';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import { Plus, Users, UserCheck, Clock, Link2 } from 'lucide-react';
-import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
+import { apiGet, apiDelete } from '../../utils/ajax';
 import StandardizedApi from '../../utils/standardizedApi';
+import { normalizeVehiclePlateInput } from '../../utils/validationUtils';
 import { getAllClientsWithStats } from '../../utils/consultantHelper';
 import { showError, showSuccess } from '../../utils/notification';
 import { getCommonCodes } from '../../utils/commonCodeApi';
@@ -82,7 +83,8 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
         rrnLast1: '',
         address: '',
         addressDetail: '',
-        postalCode: ''
+        postalCode: '',
+        vehiclePlate: ''
     });
     useEffect(() => {
         formDataRef.current = formData;
@@ -158,6 +160,7 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                         notes: clientEntity.notes,
                         createdAt: clientEntity.createdAt,
                         updatedAt: clientEntity.updatedAt,
+                        vehiclePlate: clientEntity.vehiclePlate,
                         currentConsultants: item.currentConsultants || 0,
                         totalConsultants: item.totalConsultants || 0,
                         statistics: item.statistics || {}
@@ -266,7 +269,8 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
             status: client.status || 'ACTIVE',
             grade: client.grade || 'BRONZE',
             notes: client.notes || '',
-            profileImageUrl: client.profileImageUrl || ''
+            profileImageUrl: client.profileImageUrl || '',
+            vehiclePlate: client.vehiclePlate || ''
         });
         setShowModal(true);
     }, []);
@@ -311,7 +315,8 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
             rrnLast1: '',
             address: '',
             addressDetail: '',
-            postalCode: ''
+            postalCode: '',
+            vehiclePlate: ''
         });
         setShowModal(true);
     }, []);
@@ -331,7 +336,8 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
             rrnLast1: '',
             address: client.address || '',
             addressDetail: client.addressDetail || '',
-            postalCode: client.postalCode || ''
+            postalCode: client.postalCode || '',
+            vehiclePlate: client.vehiclePlate || ''
         });
         setShowModal(true);
     }, []);
@@ -389,7 +395,8 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
             rrnLast1: '',
             address: '',
             addressDetail: '',
-            postalCode: ''
+            postalCode: '',
+            vehiclePlate: ''
         });
     }, []);
 
@@ -636,7 +643,8 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                                         phone: dataToUse.phone ?? '',
                                         status: dataToUse.status,
                                         grade: dataToUse.grade,
-                                        notes: dataToUse.notes ?? ''
+                                        notes: dataToUse.notes ?? '',
+                                        vehiclePlate: normalizeVehiclePlateInput(dataToUse.vehiclePlate || '')
                                     };
                                     if (modalType === 'create') {
                                         payload.password = dataToUse.password ?? '';
@@ -652,7 +660,7 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                                     let response;
                                     if (modalType === 'create') {
                                         console.log('🔧 내담자 등록 시작:', { ...payload, profileImageUrl: payload.profileImageUrl ? '(base64)' : undefined });
-                                        response = await apiPost('/api/v1/admin/clients', payload);
+                                        response = await StandardizedApi.post('/api/v1/admin/clients', payload);
                                         console.log('✅ 내담자 등록 응답:', response);
                                         if (!response) {
                                             throw new Error('등록 응답이 없습니다.');
@@ -683,7 +691,7 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                                             return;
                                         }
                                         console.log('🔧 내담자 수정 요청:', { id: editingClient.id, payload });
-                                        response = await apiPut(`/api/v1/admin/clients/${editingClient.id}`, payload);
+                                        response = await StandardizedApi.put(`/api/v1/admin/clients/${editingClient.id}`, payload);
                                         console.log('✅ 내담자 수정 응답:', response);
                                         const success = response != null && (response.success === true || response.id != null);
                                         if (!success) {

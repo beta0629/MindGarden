@@ -56,6 +56,7 @@ import com.coresolution.consultation.service.RealTimeStatisticsService;
 import com.coresolution.consultation.service.StoredProcedureService;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.consultation.util.RrnValidationUtil;
+import com.coresolution.consultation.util.VehiclePlateText;
 import com.coresolution.core.service.impl.BaseTenantAwareService;
 import com.coresolution.core.domain.UserRoleAssignment;
 import com.coresolution.core.context.TenantContextHolder;
@@ -445,6 +446,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         client.setAddress(savedUser.getAddress());
         client.setAddressDetail(savedUser.getAddressDetail());
         client.setPostalCode(savedUser.getPostalCode());
+        String vehiclePlate = VehiclePlateText.normalizeOrNull(request.getVehiclePlate());
+        client.setVehiclePlate(vehiclePlate);
         client.setIsDeleted(false);
         client.setCreatedAt(savedUser.getCreatedAt());
         client.setUpdatedAt(savedUser.getUpdatedAt());
@@ -452,8 +455,11 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         
         log.info("✅ Client 엔티티 생성 완료: id={}, userId={}, isDeleted={}, isActive={}, tenantId={}", 
                 client.getId(), savedUser.getUserId(), client.getIsDeleted(), savedUser.getIsActive(), tenantId);
-        
-        return client;
+        if (vehiclePlate != null) {
+            log.info("🚗 내담자 등록: 차량번호 저장 (마스킹): {}", maskVehiclePlate(vehiclePlate));
+        }
+
+        return clientRepository.save(client);
     }
 
     @Override
@@ -2206,13 +2212,20 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             );
         }
 
-        // Client 테이블에 레코드가 있으면 address, addressDetail, postalCode, birthDate, gender 동기화
+        // Client 테이블에 레코드가 있으면 address, addressDetail, postalCode, birthDate, gender·차량번호 동기화
         clientRepository.findById(id).ifPresent(client -> {
             client.setAddress(savedUser.getAddress());
             client.setAddressDetail(savedUser.getAddressDetail());
             client.setPostalCode(savedUser.getPostalCode());
             client.setBirthDate(savedUser.getBirthDate());
             client.setGender(savedUser.getGender());
+            if (request.getVehiclePlate() != null) {
+                String plate = VehiclePlateText.normalizeOrNull(request.getVehiclePlate());
+                client.setVehiclePlate(plate);
+                if (plate != null) {
+                    log.info("🚗 내담자 수정: 차량번호 갱신 (마스킹): {}", maskVehiclePlate(plate));
+                }
+            }
             clientRepository.save(client);
         });
 
@@ -2232,6 +2245,11 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         client.setIsDeleted(Boolean.FALSE.equals(savedUser.getIsActive()));
         client.setCreatedAt(savedUser.getCreatedAt());
         client.setUpdatedAt(savedUser.getUpdatedAt());
+        clientRepository.findById(id).ifPresent(row -> {
+            if (savedUser.getTenantId() != null && savedUser.getTenantId().equals(row.getTenantId())) {
+                client.setVehiclePlate(row.getVehiclePlate());
+            }
+        });
 
         return client;
     }
@@ -5033,6 +5051,19 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         }
         
         return phone.substring(0, 3) + "****" + phone.substring(phone.length() - 4);
+    }
+
+    /**
+     * 차량번호 로그용 마스킹 (평문 전체 출력 금지).
+     */
+    private String maskVehiclePlate(String plate) {
+        if (plate == null || plate.isEmpty()) {
+            return "(없음)";
+        }
+        if (plate.length() <= 2) {
+            return "**";
+        }
+        return plate.charAt(0) + "***" + plate.charAt(plate.length() - 1);
     }
     
     @Override

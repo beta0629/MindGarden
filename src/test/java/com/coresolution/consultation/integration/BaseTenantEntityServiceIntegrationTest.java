@@ -97,8 +97,8 @@ class BaseTenantEntityServiceIntegrationTest {
     
     @BeforeEach
     void setUp() {
-        // 테스트용 테넌트 1 생성
-        tenantId1 = "tenant-" + UUID.randomUUID().toString();
+        // 테스트용 테넌트 1 생성 (BaseEntity.tenant_id = VARCHAR(36))
+        tenantId1 = UUID.randomUUID().toString();
         tenant1 = Tenant.builder()
                 .tenantId(tenantId1)
                 .name("테스트 테넌트 1")
@@ -109,7 +109,7 @@ class BaseTenantEntityServiceIntegrationTest {
         tenant1 = tenantRepository.save(tenant1);
         
         // 테스트용 테넌트 2 생성
-        tenantId2 = "tenant-" + UUID.randomUUID().toString();
+        tenantId2 = UUID.randomUUID().toString();
         tenant2 = Tenant.builder()
                 .tenantId(tenantId2)
                 .name("테스트 테넌트 2")

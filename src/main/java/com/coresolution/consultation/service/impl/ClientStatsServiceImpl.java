@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.Client;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
+import com.coresolution.consultation.repository.ClientRepository;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.consultation.repository.UserRepository;
@@ -42,6 +43,7 @@ import lombok.extern.slf4j.Slf4j;
 public class ClientStatsServiceImpl implements ClientStatsService {
 
     private final UserRepository userRepository;
+    private final ClientRepository clientRepository;
     private final ConsultantClientMappingRepository mappingRepository;
     private final ScheduleRepository scheduleRepository;
     private final PersonalDataEncryptionUtil encryptionUtil;
@@ -234,6 +236,14 @@ public class ClientStatsServiceImpl implements ClientStatsService {
         client.setCreatedAt(user.getCreatedAt());
         client.setUpdatedAt(user.getUpdatedAt());
 
+        if (user.getTenantId() != null) {
+            clientRepository.findById(user.getId()).ifPresent(row -> {
+                if (user.getTenantId().equals(row.getTenantId())) {
+                    client.setVehiclePlate(row.getVehiclePlate());
+                }
+            });
+        }
+
         return client;
     }
     
@@ -252,6 +262,7 @@ public class ClientStatsServiceImpl implements ClientStatsService {
         clientMap.put("address", client.getAddress());
         clientMap.put("addressDetail", client.getAddressDetail());
         clientMap.put("postalCode", client.getPostalCode());
+        clientMap.put("vehiclePlate", client.getVehiclePlate());
         clientMap.put("role", UserRole.CLIENT.name());
         clientMap.put("isDeleted", client.getIsDeleted());
         clientMap.put("createdAt", client.getCreatedAt());

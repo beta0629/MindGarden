@@ -3,12 +3,13 @@ import { CheckCircle, AlertTriangle } from 'lucide-react';
 import MGButton from '../../common/MGButton';
 import ProfileImageInput from '../../common/ProfileImageInput';
 import MgEmailFieldWithAutocomplete from '../../common/MgEmailFieldWithAutocomplete';
-import { apiGet } from '../../../utils/ajax';
+import StandardizedApi from '../../../utils/standardizedApi';
 import UnifiedModal from '../../common/modals/UnifiedModal';
 import BadgeSelect from '../../common/BadgeSelect';
 import {
   VALIDATION_MESSAGES
 } from '../../../constants/messages';
+import { isValidVehiclePlateOptional } from '../../../utils/validationUtils';
 import SafeText from '../../common/SafeText';
 import './ClientModal.css';
 
@@ -26,14 +27,23 @@ const ClientModal = ({
 }) => {
     const [emailCheckStatus, setEmailCheckStatus] = useState(null); // 'checking', 'duplicate', 'available', null
     const [isCheckingEmail, setIsCheckingEmail] = useState(false);
-    
+    const [vehiclePlateError, setVehiclePlateError] = useState('');
+
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({
             ...prev,
             [name]: value
         }));
-        
+
+        if (name === 'vehiclePlate') {
+            if (value.trim() && !isValidVehiclePlateOptional(value)) {
+                setVehiclePlateError(VALIDATION_MESSAGES.INVALID_VEHICLE_PLATE);
+            } else {
+                setVehiclePlateError('');
+            }
+        }
+
         // 이메일 입력 시 중복 확인 상태 초기화
         if (name === 'email') {
             setEmailCheckStatus(null);
@@ -62,7 +72,7 @@ const ClientModal = ({
         setEmailCheckStatus('checking');
         
         try {
-            const response = await apiGet(`/api/v1/admin/duplicate-check/email?email=${encodeURIComponent(email)}`);
+            const response = await StandardizedApi.get('/api/v1/admin/duplicate-check/email', { email });
             console.log('📧 이메일 중복 확인 응답:', response);
             
             if (response && typeof response.isDuplicate === 'boolean') {
@@ -96,6 +106,12 @@ const ClientModal = ({
 
     const handleSubmit = (e) => {
         e.preventDefault();
+        const plateRaw = formData.vehiclePlate;
+        if (plateRaw != null && String(plateRaw).trim() !== '' && !isValidVehiclePlateOptional(plateRaw)) {
+            setVehiclePlateError(VALIDATION_MESSAGES.INVALID_VEHICLE_PLATE);
+            return undefined;
+        }
+        setVehiclePlateError('');
         return onSave(formData);
     };
 
@@ -149,7 +165,8 @@ const ClientModal = ({
             rrnLast1: formData.rrnLast1 || '',
             address: formData.address || '',
             addressDetail: formData.addressDetail || '',
-            postalCode: formData.postalCode || ''
+            postalCode: formData.postalCode || '',
+            vehiclePlate: formData.vehiclePlate || ''
         };
 
         return (
@@ -231,6 +248,29 @@ const ClientModal = ({
                         placeholder="010-1234-5678"
                         className="mg-v2-form-input"
                     />
+                </div>
+                <div className="mg-v2-form-group">
+                    <label htmlFor="client-vehiclePlate" className="mg-v2-form-label">차량번호 (선택)</label>
+                    <input
+                        type="text"
+                        id="client-vehiclePlate"
+                        name="vehiclePlate"
+                        value={safeFormData.vehiclePlate}
+                        onChange={handleInputChange}
+                        placeholder="예: 12가 3456"
+                        maxLength={32}
+                        className={`mg-v2-form-input${vehiclePlateError ? ' mg-v2-form-input--error' : ''}`}
+                        readOnly={type === 'view'}
+                        autoComplete="off"
+                        aria-invalid={vehiclePlateError ? true : undefined}
+                        aria-describedby={vehiclePlateError ? 'client-vehiclePlate-error' : undefined}
+                    />
+                    <small className="mg-v2-form-help">숫자, 한글, 영문, 하이픈, 공백만 가능 (최대 32자)</small>
+                    {vehiclePlateError ? (
+                        <small id="client-vehiclePlate-error" className="mg-v2-form-help mg-v2-form-help--error" role="alert">
+                            ⚠️ <SafeText>{vehiclePlateError}</SafeText>
+                        </small>
+                    ) : null}
                 </div>
                 <div className="mg-v2-form-group">
                     <label className="mg-v2-form-label">주소 검색</label>

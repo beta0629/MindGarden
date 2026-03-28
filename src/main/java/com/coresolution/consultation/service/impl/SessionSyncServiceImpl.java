@@ -77,7 +77,8 @@ public class SessionSyncServiceImpl extends BaseTenantAwareService implements Se
                 mappingId, consultantId, clientId);
         
         try {
-            ConsultantClientMapping mapping = mappingRepository.findById(mappingId)
+            String tenantId = getTenantId();
+            ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndId(tenantId, mappingId)
                     .orElseThrow(() -> new RuntimeException("매핑을 찾을 수 없습니다: " + mappingId));
             
             log.info("📋 매핑 상태 확인: mappingId={}, totalSessions={}, usedSessions={}, remainingSessions={}", 
@@ -107,7 +108,8 @@ public class SessionSyncServiceImpl extends BaseTenantAwareService implements Se
         log.info("🔍 매핑 회기 수 검증 및 동기화: mappingId={}", mappingId);
         
         try {
-            ConsultantClientMapping mapping = mappingRepository.findById(mappingId)
+            String tenantId = getTenantId();
+            ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndId(tenantId, mappingId)
                     .orElseThrow(() -> new RuntimeException("매핑을 찾을 수 없습니다: " + mappingId));
             
             validateSessionCounts(mapping);

@@ -117,7 +117,8 @@ public class AmountManagementServiceImpl implements AmountManagementService {
     public Map<String, Object> getIntegratedAmountInfo(Long mappingId) {
         log.info("📊 통합 금액 정보 조회: MappingID={}", mappingId);
         
-        Optional<ConsultantClientMapping> mappingOpt = mappingRepository.findById(mappingId);
+        Optional<ConsultantClientMapping> mappingOpt = mappingRepository.findByTenantIdAndId(
+            TenantContextHolder.getRequiredTenantId(), mappingId);
         if (mappingOpt.isEmpty()) {
             return Map.of("error", "매핑을 찾을 수 없습니다.");
         }
@@ -175,7 +176,8 @@ public class AmountManagementServiceImpl implements AmountManagementService {
             mappingId, oldAmount, newAmount, changeReason, changedBy);
         
         // 금액 변경 이력을 매핑의 notes에 추가
-        Optional<ConsultantClientMapping> mappingOpt = mappingRepository.findById(mappingId);
+        Optional<ConsultantClientMapping> mappingOpt = mappingRepository.findByTenantIdAndId(
+            TenantContextHolder.getRequiredTenantId(), mappingId);
         if (mappingOpt.isPresent()) {
             ConsultantClientMapping mapping = mappingOpt.get();
             String changeRecord = String.format("[%s] 금액 변경: %,d원 → %,d원 (사유: %s, 변경자: %s)", 
@@ -200,7 +202,8 @@ public class AmountManagementServiceImpl implements AmountManagementService {
     public AmountConsistencyResult checkAmountConsistency(Long mappingId) {
         log.info("🔍 금액 일관성 검사: MappingID={}", mappingId);
         
-        Optional<ConsultantClientMapping> mappingOpt = mappingRepository.findById(mappingId);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        Optional<ConsultantClientMapping> mappingOpt = mappingRepository.findByTenantIdAndId(tenantId, mappingId);
         if (mappingOpt.isEmpty()) {
             return new AmountConsistencyResult(false, "매핑을 찾을 수 없습니다.", Map.of(), "매핑 ID를 확인하세요.");
         }
@@ -212,7 +215,6 @@ public class AmountManagementServiceImpl implements AmountManagementService {
         amountBreakdown.put("paymentAmount", mapping.getPaymentAmount());
         
         // 관련 ERP 거래들의 금액 합계 (표준화 2025-12-06: deprecated 메서드 대체)
-        String tenantId = TenantContextHolder.getRequiredTenantId();
         List<FinancialTransaction> relatedTransactions = financialTransactionRepository
             .findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(tenantId, mappingId, "CONSULTANT_CLIENT_MAPPING");
         

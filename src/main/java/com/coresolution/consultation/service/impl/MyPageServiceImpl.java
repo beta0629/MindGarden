@@ -28,18 +28,24 @@ public class MyPageServiceImpl implements MyPageService {
     private final PersonalDataEncryptionUtil encryptionUtil;
     private final UserAddressRepository userAddressRepository;
 
+    /**
+     * 현재 테넌트 컨텍스트와 PK로 사용자를 조회합니다.
+     *
+     * @param userId 사용자 PK
+     * @return 사용자 엔티티
+     */
+    private User requireUserInCurrentTenant(Long userId) {
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return userRepository.findByTenantIdAndId(tenantId, userId)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+    }
+
     @Override
     public MyPageResponse getMyPageInfo(Long userId) {
         log.info("🔍 마이페이지 정보 조회: {}", userId);
-        
-        String tenantId = TenantContextHolder.getTenantId();
-        if (tenantId == null) {
-            log.error("❌ tenantId가 설정되지 않았습니다");
-            throw new IllegalStateException("tenantId가 설정되지 않았습니다");
-        }
-        
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + userId));
+
+        User user = requireUserInCurrentTenant(userId);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         
         log.info("🖼️ DB에서 조회한 사용자 프로필 이미지: userId={}, dbImage={}, imageType={}", 
             userId, 
@@ -157,9 +163,8 @@ public class MyPageServiceImpl implements MyPageService {
     public MyPageResponse updateMyPageInfo(Long userId, MyPageUpdateRequest request) {
         log.info("🔧 마이페이지 정보 수정: {}", userId);
         
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + userId));
-        
+        User user = requireUserInCurrentTenant(userId);
+
         // 정보 업데이트 (암호화 처리)
         if (request.getName() != null && !request.getName().trim().isEmpty()) {
             try {
@@ -304,9 +309,8 @@ public class MyPageServiceImpl implements MyPageService {
     public String uploadProfileImage(Long userId, String imageUrl) {
         log.info("🔧 프로필 이미지 업로드: {}", userId);
         
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + userId));
-        
+        User user = requireUserInCurrentTenant(userId);
+
         user.setProfileImageUrl(imageUrl);
         userRepository.save(user);
         
@@ -317,9 +321,8 @@ public class MyPageServiceImpl implements MyPageService {
     public String changePassword(Long userId, String newPassword) {
         log.info("🔧 비밀번호 변경: {}", userId);
         
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + userId));
-        
+        User user = requireUserInCurrentTenant(userId);
+
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
         
@@ -330,9 +333,8 @@ public class MyPageServiceImpl implements MyPageService {
     public String getSocialAccountInfo(Long userId) {
         log.info("🔍 소셜 계정 정보 조회: {}", userId);
         
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + userId));
-        
+        requireUserInCurrentTenant(userId);
+
         // 소셜 계정 정보 반환 (구현 필요)
         return "소셜 계정 정보";
     }

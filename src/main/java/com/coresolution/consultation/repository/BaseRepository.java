@@ -8,6 +8,7 @@ import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.NoRepositoryBean;
 import org.springframework.data.repository.query.Param;
@@ -380,12 +381,14 @@ public interface BaseRepository<T extends BaseEntity, ID> extends JpaRepository<
     /**
      * 테넌트별 소프트 삭제 (테넌트 필터링)
      */
+    @Modifying(clearAutomatically = true)
     @Query("UPDATE #{#entityName} e SET e.isDeleted = true, e.deletedAt = :deletedAt, e.version = e.version + 1 WHERE e.id = :id AND e.tenantId = :tenantId")
     void softDeleteByIdAndTenantId(@Param("id") ID id, @Param("tenantId") String tenantId, @Param("deletedAt") LocalDateTime deletedAt);
     
     /**
      * 테넌트별 엔티티 복구 (테넌트 필터링)
      */
+    @Modifying(clearAutomatically = true)
     @Query("UPDATE #{#entityName} e SET e.isDeleted = false, e.deletedAt = null, e.version = e.version + 1 WHERE e.id = :id AND e.tenantId = :tenantId")
     void restoreByIdAndTenantId(@Param("id") ID id, @Param("tenantId") String tenantId);
     

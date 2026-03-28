@@ -3,7 +3,6 @@ package com.coresolution.consultation.repository;
 import java.util.List;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.User;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -12,7 +11,7 @@ import org.springframework.stereotype.Repository;
 /**
  * @Deprecated - 표준화 2025-12-07: branchCode 파라미터는 레거시 호환용
  */
-public interface ConsultantClientMappingRepository extends JpaRepository<ConsultantClientMapping, Long> {
+public interface ConsultantClientMappingRepository extends BaseRepository<ConsultantClientMapping, Long> {
 
     // 테넌트별 모든 매칭 조회 (tenantId 필터링)
     List<ConsultantClientMapping> findByTenantId(String tenantId);

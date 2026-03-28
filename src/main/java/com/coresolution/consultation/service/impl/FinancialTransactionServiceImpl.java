@@ -167,7 +167,9 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
             throw new RuntimeException("회계 거래 수정 권한이 없습니다.");
         }
         
-        FinancialTransaction transaction = financialTransactionRepository.findById(id)
+        String tenantId = resolveTenantIdForMutation(currentUser);
+        FinancialTransaction transaction = financialTransactionRepository
+                .findByTenantIdAndId(tenantId, id)
                 .orElseThrow(() -> new RuntimeException("거래를 찾을 수 없습니다: " + id));
         
         if (transaction.isApproved()) {
@@ -200,7 +202,9 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
     public void deleteTransaction(Long id, User currentUser) {
         log.info("💼 회계 거래 삭제: ID={}", id);
         
-        FinancialTransaction transaction = financialTransactionRepository.findById(id)
+        String tenantId = resolveTenantIdForMutation(currentUser);
+        FinancialTransaction transaction = financialTransactionRepository
+                .findByTenantIdAndId(tenantId, id)
                 .orElseThrow(() -> new RuntimeException("거래를 찾을 수 없습니다: " + id));
         
         transaction.setIsDeleted(true);
@@ -212,7 +216,9 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
     @Override
     @Transactional(readOnly = true)
     public FinancialTransactionResponse getTransaction(Long id) {
-        FinancialTransaction transaction = financialTransactionRepository.findById(id)
+        String tenantId = getTenantId();
+        FinancialTransaction transaction = financialTransactionRepository
+                .findByTenantIdAndId(tenantId, id)
                 .orElseThrow(() -> new RuntimeException("거래를 찾을 수 없습니다: " + id));
         
         return convertToResponse(transaction);
@@ -311,7 +317,9 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
             throw new RuntimeException("거래 승인 권한이 없습니다.");
         }
         
-        FinancialTransaction transaction = financialTransactionRepository.findById(id)
+        String tenantId = resolveTenantIdForMutation(approver);
+        FinancialTransaction transaction = financialTransactionRepository
+                .findByTenantIdAndId(tenantId, id)
                 .orElseThrow(() -> new RuntimeException("거래를 찾을 수 없습니다: " + id));
         
         if (!transaction.isApprovable()) {
@@ -333,7 +341,9 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
             throw new RuntimeException("거래 거부 권한이 없습니다.");
         }
         
-        FinancialTransaction transaction = financialTransactionRepository.findById(id)
+        String tenantId = resolveTenantIdForMutation(approver);
+        FinancialTransaction transaction = financialTransactionRepository
+                .findByTenantIdAndId(tenantId, id)
                 .orElseThrow(() -> new RuntimeException("거래를 찾을 수 없습니다: " + id));
         
         if (!transaction.isApprovable()) {
@@ -555,7 +565,9 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
     
     @Override
     public FinancialTransactionResponse createSalaryTransaction(Long salaryCalculationId, String description) {
-        SalaryCalculation salary = salaryCalculationRepository.findById(salaryCalculationId)
+        String tenantId = getTenantId();
+        SalaryCalculation salary = salaryCalculationRepository
+                .findByTenantIdAndId(tenantId, salaryCalculationId)
                 .orElseThrow(() -> new RuntimeException("급여 계산을 찾을 수 없습니다: " + salaryCalculationId));
         
         String expenseType = getSafeCodeName("TRANSACTION_TYPE", "EXPENSE", "EXPENSE");
@@ -582,7 +594,9 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
     
     @Override
     public FinancialTransactionResponse createPurchaseTransaction(Long purchaseRequestId, String description) {
-        PurchaseRequest purchase = purchaseRequestRepository.findById(purchaseRequestId)
+        String tenantId = getTenantId();
+        PurchaseRequest purchase = purchaseRequestRepository
+                .findByTenantIdAndId(tenantId, purchaseRequestId)
                 .orElseThrow(() -> new RuntimeException("구매 요청을 찾을 수 없습니다: " + purchaseRequestId));
         
         String expenseType = getSafeCodeName("TRANSACTION_TYPE", "EXPENSE", "EXPENSE");
@@ -607,7 +621,9 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
     
     @Override
     public FinancialTransactionResponse createPaymentTransaction(Long paymentId, String description, String category, String subcategory) {
-        Payment payment = paymentRepository.findById(paymentId)
+        String tenantId = getTenantId();
+        Payment payment = paymentRepository
+                .findByTenantIdAndId(tenantId, paymentId)
                 .orElseThrow(() -> new RuntimeException("결제를 찾을 수 없습니다: " + paymentId));
         
         com.coresolution.consultation.util.TaxCalculationUtil.TaxCalculationResult taxResult = 
@@ -723,9 +739,13 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
         if ("CONSULTANT_CLIENT_MAPPING".equals(transaction.getRelatedEntityType()) 
                 || "CONSULTANT_CLIENT_MAPPING_REFUND".equals(transaction.getRelatedEntityType())) {
             if (transaction.getRelatedEntityId() != null) {
+                String mappingTenantId = transaction.getTenantId();
+                if (mappingTenantId == null || mappingTenantId.isBlank()) {
+                    log.debug("테넌트 ID 없음, 매핑 보강 생략: transactionId={}", transaction.getId());
+                } else {
                 try {
                     ConsultantClientMapping mapping = consultantClientMappingRepository
-                            .findById(transaction.getRelatedEntityId())
+                            .findByTenantIdAndId(mappingTenantId, transaction.getRelatedEntityId())
                             .orElse(null);
                     
                     if (mapping != null) {
@@ -773,6 +793,7 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
                 } catch (Exception e) {
                     log.warn("⚠️ 매핑 정보 조회 실패: mappingId={}, error={}", 
                             transaction.getRelatedEntityId(), e.getMessage());
+                }
                 }
             }
         }
@@ -1275,6 +1296,22 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
         }
     }
     
+    /**
+     * 단일 건 조회·변경 시 테넌트 ID. 사용자 엔티티에 테넌트가 있으면 우선, 없으면 컨텍스트 필수.
+     *
+     * @param user 현재 사용자(관리자·승인자 등), null이면 컨텍스트만 사용
+     * @return 테넌트 ID
+     */
+    private String resolveTenantIdForMutation(User user) {
+        if (user != null) {
+            String uid = user.getTenantId();
+            if (uid != null && !uid.isBlank()) {
+                return uid;
+            }
+        }
+        return getTenantId();
+    }
+
      /**
      * 안전한 공통 코드명 조회 (오류 시 기본값 반환)
      /**

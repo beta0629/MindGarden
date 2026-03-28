@@ -539,17 +539,17 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
 
     @Override
     public ConsultantClientMapping createMapping(ConsultantClientMappingCreateRequest dto) {
-        User consultant = userRepository.findById(dto.getConsultantId())
+        // 표준화 2025-12-05: tenantId 필터링 필수 (BaseTenantAwareService 상속으로 자동 처리)
+        String tenantId = getTenantId();
+        User consultant = userRepository.findByTenantIdAndId(tenantId, dto.getConsultantId())
                 .orElseThrow(() -> new RuntimeException("Consultant not found"));
         
-        User clientUser = userRepository.findById(dto.getClientId())
+        User clientUser = userRepository.findByTenantIdAndId(tenantId, dto.getClientId())
                 .orElseThrow(() -> new RuntimeException("Client not found"));
 
         // 표준화 2025-12-06: 브랜치 코드 사용 금지 - branchCode는 null로 설정
         String branchCode = null;
         
-        // 표준화 2025-12-05: tenantId 필터링 필수 (BaseTenantAwareService 상속으로 자동 처리)
-        String tenantId = getTenantId();
         List<ConsultantClientMapping> existingMappings = mappingRepository
             .findByTenantIdAndConsultantAndClient(tenantId, consultant, clientUser);
         
@@ -639,7 +639,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
      */
     @Override
     public ConsultantClientMapping confirmPayment(Long mappingId, String paymentMethod, String paymentReference, Long paymentAmount) {
-        ConsultantClientMapping mapping = mappingRepository.findById(mappingId)
+        ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndId(getTenantId(), mappingId)
                 .orElseThrow(() -> new RuntimeException("Mapping not found"));
         
         if (paymentAmount != null && mapping.getPackagePrice() != null) {
@@ -771,7 +771,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         
         try {
             FinancialTransaction transaction = 
-                financialTransactionRepository.findById(response.getId()).orElse(null);
+                financialTransactionRepository.findByTenantIdAndId(tenantId, response.getId()).orElse(null);
             if (transaction != null) {
                 transaction.complete(); // 완료 상태로 변경
                 transaction.setApprovedAt(java.time.LocalDateTime.now());
@@ -843,8 +843,13 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             financialTransactionService.createTransaction(request, null);
         
         try {
-            FinancialTransaction transaction = 
-                financialTransactionRepository.findById(response.getId()).orElse(null);
+            String ftTenantIdForReload = getTenantIdFromMapping(mapping);
+            if (ftTenantIdForReload == null || ftTenantIdForReload.isEmpty()) {
+                ftTenantIdForReload = TenantContextHolder.getTenantId();
+            }
+            FinancialTransaction transaction = (ftTenantIdForReload != null && !ftTenantIdForReload.isEmpty() && response.getId() != null)
+                ? financialTransactionRepository.findByTenantIdAndId(ftTenantIdForReload, response.getId()).orElse(null)
+                : null;
             if (transaction != null) {
                 transaction.complete(); // 완료 상태로 변경
                 transaction.setApprovedAt(java.time.LocalDateTime.now());
@@ -962,8 +967,13 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             financialTransactionService.createTransaction(request, null);
         
         try {
-            FinancialTransaction transaction = 
-                financialTransactionRepository.findById(response.getId()).orElse(null);
+            String ftTenantIdForReload = getTenantIdFromMapping(mapping);
+            if (ftTenantIdForReload == null || ftTenantIdForReload.isEmpty()) {
+                ftTenantIdForReload = TenantContextHolder.getTenantId();
+            }
+            FinancialTransaction transaction = (ftTenantIdForReload != null && !ftTenantIdForReload.isEmpty() && response.getId() != null)
+                ? financialTransactionRepository.findByTenantIdAndId(ftTenantIdForReload, response.getId()).orElse(null)
+                : null;
             if (transaction != null) {
                 transaction.complete(); // 완료 상태로 변경
                 transaction.setApprovedAt(java.time.LocalDateTime.now());
@@ -988,7 +998,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
      */
     @Override
     public ConsultantClientMapping confirmPayment(Long mappingId, String paymentMethod, String paymentReference) {
-        ConsultantClientMapping mapping = mappingRepository.findById(mappingId)
+        ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndId(getTenantId(), mappingId)
                 .orElseThrow(() -> new RuntimeException("Mapping not found"));
         
         mapping.confirmPayment(paymentMethod, paymentReference);
@@ -1113,7 +1123,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
      */
     @Override
     public ConsultantClientMapping confirmDeposit(Long mappingId, String depositReference) {
-        ConsultantClientMapping mapping = mappingRepository.findById(mappingId)
+        ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndId(getTenantId(), mappingId)
                 .orElseThrow(() -> new RuntimeException("Mapping not found"));
 
         mapping.confirmDeposit(depositReference);
@@ -1198,7 +1208,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
      */
     @Override
     public ConsultantClientMapping approveMapping(Long mappingId, String adminName) {
-        ConsultantClientMapping mapping = mappingRepository.findById(mappingId)
+        ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndId(getTenantId(), mappingId)
                 .orElseThrow(() -> new RuntimeException("Mapping not found"));
         
         mapping.approveByAdmin(adminName);
@@ -1219,7 +1229,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
      */
     @Override
     public ConsultantClientMapping rejectMapping(Long mappingId, String reason) {
-        ConsultantClientMapping mapping = mappingRepository.findById(mappingId)
+        ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndId(getTenantId(), mappingId)
                 .orElseThrow(() -> new RuntimeException("Mapping not found"));
         
         String terminatedStatus = getMappingStatusCode("TERMINATED");
@@ -1239,7 +1249,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
      */
     @Override
     public ConsultantClientMapping useSession(Long mappingId) {
-        ConsultantClientMapping mapping = mappingRepository.findById(mappingId)
+        ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndId(getTenantId(), mappingId)
                 .orElseThrow(() -> new RuntimeException("Mapping not found"));
         
         mapping.useSession();
@@ -1261,7 +1271,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     public ConsultantClientMapping extendSessions(Long mappingId, Integer additionalSessions, String packageName, Long packagePrice) {
         log.warn("⚠️ 즉시 회기 추가 사용됨 - 워크플로우를 통한 회기 추가를 권장합니다. mappingId={}", mappingId);
         
-        ConsultantClientMapping mapping = mappingRepository.findById(mappingId)
+        ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndId(getTenantId(), mappingId)
                 .orElseThrow(() -> new RuntimeException("Mapping not found"));
         
         mapping.addSessions(additionalSessions, packageName, packagePrice);
@@ -1281,10 +1291,11 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         log.info("🔄 회기 추가 요청 생성: mappingId={}, requesterId={}, sessions={}", 
                 mappingId, requesterId, additionalSessions);
         
-        ConsultantClientMapping mapping = mappingRepository.findById(mappingId)
+        String tenantId = getTenantId();
+        ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndId(tenantId, mappingId)
                 .orElseThrow(() -> new RuntimeException("매칭을 찾을 수 없습니다: " + mappingId));
         
-        if (!userRepository.existsById(requesterId)) {
+        if (userRepository.findByTenantIdAndId(tenantId, requesterId).isEmpty()) {
             throw new RuntimeException("요청자를 찾을 수 없습니다: " + requesterId);
         }
         
@@ -2047,7 +2058,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             throw new IllegalArgumentException("요청 본문이 없습니다.");
         }
 
-        Consultant consultant = consultantRepository.findById(id)
+        Consultant consultant = consultantRepository.findByTenantIdAndId(getTenantId(), id)
                 .orElseThrow(() -> new EntityNotFoundException("상담사", id));
 
         if (consultant.getRole() != UserRole.CONSULTANT) {
@@ -2130,7 +2141,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
 
     @Override
     public User updateConsultantGrade(Long id, String grade) {
-        User consultant = userRepository.findById(id)
+        User consultant = userRepository.findByTenantIdAndId(getTenantId(), id)
                 .orElseThrow(() -> new RuntimeException("Consultant not found"));
         
         consultant.setGrade(grade);
@@ -2154,7 +2165,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             throw new IllegalArgumentException("요청 본문이 없습니다.");
         }
 
-        User clientUser = userRepository.findById(id)
+        String tenantIdForClient = getTenantId();
+        User clientUser = userRepository.findByTenantIdAndId(tenantIdForClient, id)
                 .orElseThrow(() -> new EntityNotFoundException("내담자", id));
 
         if (clientUser.getRole() != UserRole.CLIENT) {
@@ -2213,7 +2225,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         }
 
         // Client upsert: 레거시 등 User만 있고 clients 행이 없으면 registerClient와 동일 전제로 신규 행 생성
-        Optional<Client> existingClientOpt = clientRepository.findById(id);
+        Optional<Client> existingClientOpt = clientRepository.findByTenantIdAndId(tenantIdForClient, id);
         Client persistedClient;
         if (existingClientOpt.isPresent()) {
             Client client = existingClientOpt.get();
@@ -2278,7 +2290,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     @Override
     @Transactional
     public ConsultantClientMapping updateMapping(Long id, ConsultantClientMappingCreateRequest dto, String updatedBy) {
-        ConsultantClientMapping mapping = mappingRepository.findById(id)
+        ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndId(getTenantId(), id)
                 .orElseThrow(() -> new RuntimeException("Mapping not found"));
         
         log.info("🔄 매핑 정보 수정: id={}, packageName={}, packagePrice={}, totalSessions={}", 
@@ -2386,17 +2398,12 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     public void deleteConsultant(Long id) {
         log.info("🗑️ 상담사 삭제 처리 시작: ID={}", id);
         
-        User consultant = userRepository.findById(id)
+        String tenantId = getTenantId();
+        User consultant = userRepository.findByTenantIdAndId(tenantId, id)
                 .orElseThrow(() -> new RuntimeException("상담사를 찾을 수 없습니다."));
         
         if (consultant.getRole() != UserRole.CONSULTANT) {
             throw new RuntimeException("상담사가 아닌 사용자는 삭제할 수 없습니다.");
-        }
-        
-        String tenantId = com.coresolution.core.context.TenantContextHolder.getTenantId();
-        if (tenantId == null) {
-            log.error("❌ tenantId가 설정되지 않았습니다");
-            throw new RuntimeException("테넌트 정보를 확인할 수 없습니다.");
         }
         
         List<ConsultantClientMapping> activeMappings = mappingRepository
@@ -2431,10 +2438,10 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 consultantId, transferToConsultantId);
         String tenantId = getTenantId();
         
-        User consultantToDelete = userRepository.findById(consultantId)
+        User consultantToDelete = userRepository.findByTenantIdAndId(tenantId, consultantId)
                 .orElseThrow(() -> new RuntimeException("삭제할 상담사를 찾을 수 없습니다."));
         
-        User transferToConsultant = userRepository.findById(transferToConsultantId)
+        User transferToConsultant = userRepository.findByTenantIdAndId(tenantId, transferToConsultantId)
                 .orElseThrow(() -> new RuntimeException("이전 대상 상담사를 찾을 수 없습니다."));
         
         if (consultantToDelete.getRole() != UserRole.CONSULTANT) {
@@ -2568,7 +2575,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         log.info("🔍 상담사 삭제 가능 여부 확인: ID={}", consultantId);
         String tenantId = getTenantId();
         
-        User consultant = userRepository.findById(consultantId)
+        User consultant = userRepository.findByTenantIdAndId(tenantId, consultantId)
                 .orElseThrow(() -> new RuntimeException("상담사를 찾을 수 없습니다."));
         
         if (consultant.getRole() != UserRole.CONSULTANT) {
@@ -2665,7 +2672,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         log.info("🗑️ 내담자 삭제 처리 시작: ID={}", id);
         String tenantId = getTenantId();
         
-        User client = userRepository.findById(id)
+        User client = userRepository.findByTenantIdAndId(tenantId, id)
                 .orElseThrow(() -> new RuntimeException("내담자를 찾을 수 없습니다."));
         
         if (client.getRole() != UserRole.CLIENT) {
@@ -2720,7 +2727,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             log.warn("⚠️ 내담자에게 {} 개의 예정된 스케줄이 있습니다.", activeSchedules.size());
             
             for (Schedule schedule : activeSchedules) {
-                User consultant = userRepository.findById(schedule.getConsultantId()).orElse(null);
+                User consultant = schedule.getConsultantId() != null
+                    ? userRepository.findByTenantIdAndId(tenantId, schedule.getConsultantId()).orElse(null)
+                    : null;
                 log.warn("📅 예정 스케줄: ID={}, 날짜={}, 시간={}-{}, 상담사={} (활성:{})", 
                     schedule.getId(), schedule.getDate(), schedule.getStartTime(), schedule.getEndTime(),
                     consultant != null ? consultant.getName() : "알 수 없음",
@@ -2737,7 +2746,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         
         for (Schedule schedule : allFutureSchedules) {
             if (schedule.getStatus().name().equals(bookedStatus) || schedule.getStatus().name().equals(confirmedStatus)) {
-                User consultant = userRepository.findById(schedule.getConsultantId()).orElse(null);
+                User consultant = schedule.getConsultantId() != null
+                    ? userRepository.findByTenantIdAndId(tenantId, schedule.getConsultantId()).orElse(null)
+                    : null;
                 
                 log.info("📅 내담자 삭제로 인한 스케줄 취소: ID={}, 날짜={}, 상담사={} (활성:{})", 
                     schedule.getId(), schedule.getDate(), 
@@ -2768,7 +2779,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         String tenantId = getTenantId();
         log.info("🔍 내담자 삭제 가능 여부 확인: ID={}", clientId);
         
-        User client = userRepository.findById(clientId)
+        User client = userRepository.findByTenantIdAndId(tenantId, clientId)
                 .orElseThrow(() -> new RuntimeException("내담자를 찾을 수 없습니다."));
         
         if (client.getRole() != UserRole.CLIENT) {
@@ -2870,7 +2881,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
 
     @Override
     public void deleteMapping(Long id) {
-        ConsultantClientMapping mapping = mappingRepository.findById(id)
+        ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndId(getTenantId(), id)
                 .orElseThrow(() -> new RuntimeException("Mapping not found"));
         String terminatedStatus = getMappingStatusCode("TERMINATED");
         mapping.setStatus(ConsultantClientMapping.MappingStatus.valueOf(terminatedStatus));
@@ -2884,7 +2895,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         log.info("🔧 매칭 강제 종료 처리 시작: ID={}, 사유={}", id, reason);
         String tenantId = getTenantId();
         
-        ConsultantClientMapping mapping = mappingRepository.findById(id)
+        ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndId(tenantId, id)
                 .orElseThrow(() -> new RuntimeException("매칭을 찾을 수 없습니다."));
         Hibernate.initialize(mapping.getConsultant());
         Hibernate.initialize(mapping.getClient());
@@ -2999,7 +3010,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     public void partialRefundMapping(Long id, int refundSessions, String reason) {
         log.info("🔧 부분 환불 처리 시작: ID={}, 환불회기={}, 사유={}", id, refundSessions, reason);
         
-        ConsultantClientMapping mapping = mappingRepository.findById(id)
+        ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndId(getTenantId(), id)
                 .orElseThrow(() -> new RuntimeException("매칭을 찾을 수 없습니다."));
         Hibernate.initialize(mapping.getConsultant());
         Hibernate.initialize(mapping.getClient());
@@ -3231,7 +3242,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         Map<String, Map<String, Object>> partialStats = partialRefundTransactions.stream()
                 .collect(Collectors.groupingBy(
                     transaction -> {
-                        ConsultantClientMapping mapping = mappingRepository.findById(transaction.getRelatedEntityId()).orElse(null);
+                        ConsultantClientMapping mapping = transaction.getRelatedEntityId() != null
+                            ? mappingRepository.findByTenantIdAndId(tenantId, transaction.getRelatedEntityId()).orElse(null)
+                            : null;
                         return mapping != null ? mapping.getConsultant().getName() : "알 수 없음";
                     },
                     Collectors.collectingAndThen(
@@ -3365,7 +3378,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 .map(transaction -> {
                     Map<String, Object> refund = new HashMap<>();
                     
-                    ConsultantClientMapping mapping = mappingRepository.findById(transaction.getRelatedEntityId()).orElse(null);
+                    ConsultantClientMapping mapping = transaction.getRelatedEntityId() != null
+                        ? mappingRepository.findByTenantIdAndId(tenantId, transaction.getRelatedEntityId()).orElse(null)
+                        : null;
                     
                     if (mapping != null) {
                         refund.put("mappingId", mapping.getId());
@@ -3452,7 +3467,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                     
                     ConsultantClientMapping mapping = null;
                     if (transaction.getRelatedEntityId() != null) {
-                        mapping = mappingRepository.findById(transaction.getRelatedEntityId()).orElse(null);
+                        mapping = mappingRepository.findByTenantIdAndId(tenantId, transaction.getRelatedEntityId()).orElse(null);
                     }
                     
                     if (mapping != null) {
@@ -3610,7 +3625,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                     
                     ConsultantClientMapping mapping = null;
                     if (transaction.getRelatedEntityId() != null) {
-                        mapping = mappingRepository.findById(transaction.getRelatedEntityId()).orElse(null);
+                        mapping = mappingRepository.findByTenantIdAndId(tenantId, transaction.getRelatedEntityId()).orElse(null);
                     }
                     
                     if (mapping != null) {
@@ -4239,7 +4254,11 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     @Transactional(readOnly = true)
     public ConsultantClientMapping getMappingById(Long mappingId) {
         // Lazy 프록시 초기화를 위해 트랜잭션에서 조회
-        ConsultantClientMapping mapping = mappingRepository.findById(mappingId).orElse(null);
+        String tenantId = getTenantIdOrNull();
+        if (tenantId == null || tenantId.isEmpty()) {
+            return null;
+        }
+        ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndId(tenantId, mappingId).orElse(null);
         if (mapping != null) {
             // Lazy 프록시 초기화를 위해 관계 엔티티 접근
             if (mapping.getConsultant() != null) {
@@ -4259,7 +4278,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         log.info("상담사 변경 처리 시작: 기존 매칭 ID={}, 새 상담사 ID={}", 
                 request.getCurrentMappingId(), request.getNewConsultantId());
         
-        ConsultantClientMapping currentMapping = mappingRepository.findById(request.getCurrentMappingId())
+        String tenantId = getTenantId();
+        ConsultantClientMapping currentMapping = mappingRepository.findByTenantIdAndId(tenantId, request.getCurrentMappingId())
                 .orElseThrow(() -> new RuntimeException("기존 매칭을 찾을 수 없습니다."));
         
         // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
@@ -4267,7 +4287,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             throw new RuntimeException("활성 상태의 매칭만 상담사를 변경할 수 있습니다.");
         }
         
-        User newConsultant = userRepository.findById(request.getNewConsultantId())
+        User newConsultant = userRepository.findByTenantIdAndId(tenantId, request.getNewConsultantId())
                 .orElseThrow(() -> new RuntimeException("새 상담사를 찾을 수 없습니다."));
         
         if (newConsultant.getRole() != UserRole.CONSULTANT) {
@@ -4321,7 +4341,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     @Override
     public List<ConsultantClientMapping> getTransferHistory(Long clientId) {
         String tenantId = getTenantId();
-        User client = userRepository.findById(clientId)
+        User client = userRepository.findByTenantIdAndId(tenantId, clientId)
                 .orElseThrow(() -> new RuntimeException("내담자를 찾을 수 없습니다."));
         
         return mappingRepository.findByTenantIdAndClient(tenantId, client).stream()
@@ -4338,7 +4358,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             // 표준화 2025-12-05: BaseTenantAwareService 상속으로 getTenantId() 사용
             String tenantId = getTenantId();
             
-            userRepository.findById(consultantId)
+            userRepository.findByTenantIdAndId(tenantId, consultantId)
                     .orElseThrow(() -> new RuntimeException("상담사를 찾을 수 없습니다: " + consultantId));
             
             List<Schedule> schedules = scheduleRepository.findByTenantIdAndConsultantId(tenantId, consultantId);
@@ -4358,7 +4378,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                         if (schedule.getClientId() != null) {
                             scheduleMap.put("clientId", schedule.getClientId());
                             try {
-                                User clientUser = userRepository.findById(schedule.getClientId()).orElse(null);
+                                User clientUser = userRepository.findByTenantIdAndId(tenantId, schedule.getClientId()).orElse(null);
                                 if (clientUser != null) {
                                     scheduleMap.put("clientName", clientUser.getName());
                                 } else {
@@ -4697,7 +4717,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                         
                         if (schedule.getConsultantId() != null) {
                             try {
-                                User consultant = userRepository.findById(schedule.getConsultantId()).orElse(null);
+                                User consultant = userRepository.findByTenantIdAndId(tenantId, schedule.getConsultantId()).orElse(null);
                                 if (consultant != null && consultant.getIsActive()) {
                                     scheduleMap.put("consultantName", consultant.getName());
                                     scheduleMap.put("consultantEmail", consultant.getEmail());
@@ -4721,7 +4741,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                         if (schedule.getClientId() != null) {
                             scheduleMap.put("clientId", schedule.getClientId());
                             try {
-                                User clientUser = userRepository.findById(schedule.getClientId()).orElse(null);
+                                User clientUser = userRepository.findByTenantIdAndId(tenantId, schedule.getClientId()).orElse(null);
                                 if (clientUser != null) {
                                     scheduleMap.put("clientName", clientUser.getName());
                                     scheduleMap.put("clientEmail", clientUser.getEmail());
@@ -5126,7 +5146,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     public User getUserById(Long id) {
         log.info("🔍 사용자 ID로 조회: {}", id);
         try {
-            return userRepository.findById(id).orElse(null);
+            return userRepository.findByTenantIdAndId(getTenantId(), id).orElse(null);
         } catch (Exception e) {
             log.error("❌ 사용자 조회 중 오류 발생: {}", e.getMessage(), e);
             return null;
@@ -5138,7 +5158,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     public User changeUserRole(Long userId, String newRole) {
         log.info("🔧 사용자 역할 변경: userId={}, newRole={}", userId, newRole);
         try {
-            User user = userRepository.findById(userId).orElse(null);
+            User user = userRepository.findByTenantIdAndId(getTenantId(), userId).orElse(null);
             if (user == null) {
                 log.warn("❌ 사용자를 찾을 수 없습니다: userId={}", userId);
                 return null;

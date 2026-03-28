@@ -60,22 +60,22 @@ public class UserServiceImpl implements UserService {
     // ==================== BaseService 구현 ====================
     
     public Optional<User> findById(Long id) {
-        String cacheKey = "user:" + id;
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        String cacheKey = "user:" + tenantId + ":" + id;
         
         // 캐시에서 조회 시도 - 캐시 서비스 임시 비활성화
         // Optional<User> cachedUser = cacheService.get(cacheKey, User.class);
         Optional<User> cachedUser = Optional.empty();
         if (cachedUser.isPresent()) {
-            log.debug("사용자 캐시 히트: id={}", id);
+            log.debug("사용자 캐시 히트: tenantId={}, id={}", tenantId, id);
             return cachedUser;
         }
         
-        // 데이터베이스에서 조회
-        Optional<User> user = userRepository.findById(id);
+        Optional<User> user = userRepository.findByTenantIdAndId(tenantId, id);
         if (user.isPresent()) {
             // 캐시에 저장 - 캐시 서비스 임시 비활성화
             // cacheService.put(cacheKey, user.get());
-            log.debug("사용자 캐시 저장: id={}", id);
+            log.debug("사용자 캐시 저장: tenantId={}, id={}", tenantId, id);
         }
         
         return user;
@@ -121,7 +121,10 @@ public class UserServiceImpl implements UserService {
     
     @Override
     public User update(User user) {
-        User existingUser = userRepository.findById(user.getId())
+        String tenantForLoad = user.getTenantId() != null && !user.getTenantId().isEmpty()
+            ? user.getTenantId()
+            : TenantContextHolder.getRequiredTenantId();
+        User existingUser = userRepository.findByTenantIdAndId(tenantForLoad, user.getId())
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + user.getId()));
         
         if (user.getPassword() != null && !user.getPassword().equals(existingUser.getPassword())) {
@@ -136,7 +139,7 @@ public class UserServiceImpl implements UserService {
         User savedUser = userRepository.save(user);
         
         // 캐시 무효화 - 캐시 서비스 임시 비활성화
-        // String cacheKey = "user:" + savedUser.getId();
+        // String cacheKey = "user:" + savedUser.getTenantId() + ":" + savedUser.getId();
         // cacheService.evict(cacheKey);
         log.debug("사용자 캐시 무효화: id={}", savedUser.getId());
         
@@ -145,7 +148,8 @@ public class UserServiceImpl implements UserService {
     
     @Override
     public User partialUpdate(Long id, User updateData) {
-        User existingUser = userRepository.findById(id)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        User existingUser = userRepository.findByTenantIdAndId(tenantId, id)
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + id));
         
         if (updateData.getName() != null) {
@@ -175,33 +179,26 @@ public class UserServiceImpl implements UserService {
     
     @Override
     public void softDeleteById(Long id) {
-        User user = userRepository.findById(id)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        userRepository.findByTenantIdAndId(tenantId, id)
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + id));
-        
-        user.setIsDeleted(true);
-        user.setDeletedAt(LocalDateTime.now());
-        user.setUpdatedAt(LocalDateTime.now());
-        user.setVersion(user.getVersion() + 1);
-        
-        userRepository.save(user);
+        userRepository.softDeleteByIdAndTenantId(id, tenantId, LocalDateTime.now());
     }
     
     @Override
     public void restoreById(Long id) {
-        User user = userRepository.findById(id)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        userRepository.findByTenantIdAndIdIgnoringDeleted(tenantId, id)
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + id));
-        
-        user.setIsDeleted(false);
-        user.setDeletedAt(null);
-        user.setUpdatedAt(LocalDateTime.now());
-        user.setVersion(user.getVersion() + 1);
-        
-        userRepository.save(user);
+        userRepository.restoreByIdAndTenantId(id, tenantId);
     }
     
     @Override
     public void hardDeleteById(Long id) {
-        userRepository.deleteById(id);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        User user = userRepository.findByTenantIdAndId(tenantId, id)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + id));
+        userRepository.delete(user);
     }
     
     @Override
@@ -221,7 +218,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public Optional<User> findActiveById(Long id) {
         String tenantId = TenantContextHolder.getRequiredTenantId();
-        Optional<User> userOpt = userRepository.findByTenantIdAndUserId(tenantId, String.valueOf(id));
+        Optional<User> userOpt = userRepository.findByTenantIdAndId(tenantId, id);
         if (userOpt.isPresent()) {
             return Optional.of(decryptUserPersonalData(userOpt.get()));
         }
@@ -262,7 +259,8 @@ public class UserServiceImpl implements UserService {
     
     @Override
     public Optional<User> findByIdAndVersion(Long id, Long version) {
-        return userRepository.findByIdAndVersion(id, version);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return userRepository.findByTenantIdAndIdAndVersion(tenantId, id, version);
     }
     
     @Override

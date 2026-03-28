@@ -5,14 +5,13 @@ import java.util.List;
 import java.util.Optional;
 import com.coresolution.consultation.entity.SalaryCalculation;
 import com.coresolution.consultation.entity.User;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface SalaryCalculationRepository extends JpaRepository<SalaryCalculation, Long> {
+public interface SalaryCalculationRepository extends BaseRepository<SalaryCalculation, Long> {
     
     /**
      * @deprecated 테넌트 격리 없음. {@link #findByTenantIdAndConsultantAndCalculationPeriodStartBetween} 사용

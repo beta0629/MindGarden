@@ -65,7 +65,7 @@ class AdminServiceImplConfirmDepositApproveTest {
         Long mappingId = 1L;
         ConsultantClientMapping mapping = buildMappingForConfirmDeposit(mappingId);
 
-        when(mappingRepository.findById(mappingId)).thenReturn(Optional.of(mapping));
+        when(mappingRepository.findByTenantIdAndId(eq(TEST_TENANT_ID), eq(mappingId))).thenReturn(Optional.of(mapping));
         when(mappingRepository.save(any(ConsultantClientMapping.class))).thenAnswer(inv -> inv.getArgument(0));
         doNothing().when(adminService).createConsultationIncomeTransactionAsync(any(ConsultantClientMapping.class));
         when(storedProcedureService.updateMappingInfo(any(), any(), anyDouble(), anyInt(), any()))
@@ -85,7 +85,7 @@ class AdminServiceImplConfirmDepositApproveTest {
         Long mappingId = 2L;
         ConsultantClientMapping mapping = buildMappingForApprove(mappingId);
 
-        when(mappingRepository.findById(mappingId)).thenReturn(Optional.of(mapping));
+        when(mappingRepository.findByTenantIdAndId(eq(TEST_TENANT_ID), eq(mappingId))).thenReturn(Optional.of(mapping));
         when(mappingRepository.save(any(ConsultantClientMapping.class))).thenAnswer(inv -> inv.getArgument(0));
 
         ConsultantClientMapping result = adminService.approveMapping(mappingId, "AdminName");

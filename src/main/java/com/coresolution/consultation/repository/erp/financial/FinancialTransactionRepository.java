@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import com.coresolution.consultation.entity.erp.financial.FinancialTransaction;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -21,6 +22,16 @@ import org.springframework.stereotype.Repository;
  */
 @Repository
 public interface FinancialTransactionRepository extends JpaRepository<FinancialTransaction, Long> {
+
+    /**
+     * 테넌트 ID와 거래 PK로 비삭제 건만 조회 (테넌트 격리)
+     *
+     * @param tenantId 테넌트 ID
+     * @param id       거래 PK
+     * @return 거래 Optional
+     */
+    @Query("SELECT ft FROM FinancialTransaction ft WHERE ft.tenantId = :tenantId AND ft.id = :id AND ft.isDeleted = false")
+    Optional<FinancialTransaction> findByTenantIdAndId(@Param("tenantId") String tenantId, @Param("id") Long id);
     
     /**
      * 테넌트별 모든 거래 조회 (테넌트 필터링)

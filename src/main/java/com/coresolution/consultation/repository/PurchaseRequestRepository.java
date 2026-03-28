@@ -4,7 +4,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import com.coresolution.consultation.entity.PurchaseRequest;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -17,7 +16,7 @@ import org.springframework.stereotype.Repository;
  * @since 2024-12-19
  */
 @Repository
-public interface PurchaseRequestRepository extends JpaRepository<PurchaseRequest, Long> {
+public interface PurchaseRequestRepository extends BaseRepository<PurchaseRequest, Long> {
     
     /**
      * 테넌트별 요청자별 구매 요청 목록 조회 (테넌트 필터링)

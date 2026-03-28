@@ -30,10 +30,13 @@ import com.coresolution.consultation.service.UserPersonalDataCacheService;
 import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.consultation.util.VehiclePlateText;
+import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.repository.TenantRoleRepository;
 import com.coresolution.core.repository.UserRoleAssignmentRepository;
 import com.coresolution.core.service.UserRoleQueryService;
 import com.coresolution.core.util.StatusCodeHelper;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -124,6 +127,16 @@ class AdminServiceImplUpdateClientTest {
     @InjectMocks
     private AdminServiceImpl adminService;
 
+    @BeforeEach
+    void setTenantContext() {
+        TenantContextHolder.setTenantId("tenant-ut-1");
+    }
+
+    @AfterEach
+    void clearTenantContext() {
+        TenantContextHolder.clear();
+    }
+
     @Test
     @DisplayName("Client 행이 없으면 save 호출되며 vehiclePlate가 정규화되어 저장된다")
     void updateClient_whenNoClientRow_savesNewClientWithVehiclePlate() {
@@ -145,9 +158,9 @@ class AdminServiceImplUpdateClientTest {
         ClientRegistrationRequest request = new ClientRegistrationRequest();
         request.setVehiclePlate("  12가  3456  ");
 
-        when(userRepository.findById(id)).thenReturn(Optional.of(clientUser));
+        when(userRepository.findByTenantIdAndId(tenantId, id)).thenReturn(Optional.of(clientUser));
         when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
-        when(clientRepository.findById(id)).thenReturn(Optional.empty());
+        when(clientRepository.findByTenantIdAndId(tenantId, id)).thenReturn(Optional.empty());
         when(clientRepository.save(any(Client.class))).thenAnswer(inv -> inv.getArgument(0));
         doNothing().when(userPersonalDataCacheService).evictUserPersonalDataCache(tenantId, id);
         doNothing().when(clientStatsService).evictAllClientStatsCache();

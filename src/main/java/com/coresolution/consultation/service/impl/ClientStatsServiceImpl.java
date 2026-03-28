@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.Client;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
+import com.coresolution.consultation.exception.EntityNotFoundException;
 import com.coresolution.consultation.repository.ClientRepository;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.repository.ScheduleRepository;
@@ -16,6 +17,7 @@ import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -49,13 +51,27 @@ public class ClientStatsServiceImpl implements ClientStatsService {
     private final PersonalDataEncryptionUtil encryptionUtil;
 
     @Override
-    @Cacheable(value = "clientsWithStats", key = "'client:' + #clientId")
-    public Map<String, Object> getClientWithStats(Long clientId) {
-        log.info("📊 내담자 통계 조회 (DB): clientId={}", clientId);
-        
-        com.coresolution.consultation.entity.User user = userRepository.findById(clientId)
-                .orElseThrow(() -> new RuntimeException("내담자를 찾을 수 없습니다: " + clientId));
-        
+    @Cacheable(value = "clientsWithStats", key = "'tenant:' + #tenantId + ':client:' + #clientId")
+    public Map<String, Object> getClientWithStats(String tenantId, Long clientId) {
+        if (tenantId == null || tenantId.isBlank()) {
+            log.error("❌ getClientWithStats: tenantId가 필수입니다. clientId={}", clientId);
+            throw new IllegalArgumentException("tenantId는 필수입니다.");
+        }
+        if (clientId == null) {
+            log.error("❌ getClientWithStats: clientId가 null입니다. tenantId={}", tenantId);
+            throw new IllegalArgumentException("clientId는 필수입니다.");
+        }
+        log.info("📊 내담자 통계 조회 (DB): tenantId={}, clientId={}", tenantId, clientId);
+
+        TenantContextHolder.setTenantId(tenantId);
+
+        com.coresolution.consultation.entity.User user = userRepository
+                .findByTenantIdAndId(tenantId, clientId)
+                .orElseThrow(() -> new EntityNotFoundException("내담자", clientId));
+        if (user.getRole() != UserRole.CLIENT) {
+            throw new EntityNotFoundException("내담자", clientId);
+        }
+
         Client client = convertToClient(user);
         
         Map<String, Object> clientMap = convertClientToMap(client);
@@ -236,12 +252,12 @@ public class ClientStatsServiceImpl implements ClientStatsService {
         client.setCreatedAt(user.getCreatedAt());
         client.setUpdatedAt(user.getUpdatedAt());
 
-        if (user.getTenantId() != null) {
-            clientRepository.findById(user.getId()).ifPresent(row -> {
-                if (user.getTenantId().equals(row.getTenantId())) {
-                    client.setVehiclePlate(row.getVehiclePlate());
-                }
-            });
+        String userTenantId = user.getTenantId();
+        if (userTenantId == null || userTenantId.isBlank()) {
+            log.warn("내담자 User.tenantId가 없어 차량번호 복사 생략: userId={}", user.getId());
+        } else {
+            clientRepository.findByTenantIdAndId(userTenantId, user.getId())
+                    .ifPresent(row -> client.setVehiclePlate(row.getVehiclePlate()));
         }
 
         return client;
@@ -271,15 +287,19 @@ public class ClientStatsServiceImpl implements ClientStatsService {
     }
     
      /**
-     * 캐시 무효화 (매핑 변경 시 호출)
-     /**
-     * 
-     /**
+     * 캐시 무효화 (매핑 변경 시 호출).
+     * {@link #getClientWithStats} 캐시 키는 {@code tenant:{tenantId}:client:{clientId}} 와 정합.
+     * {@code clientCurrentConsultants} 는 기존 {@code client:{id}} 키를 유지한다.
+     *
+     * @param tenantId 테넌트 ID
      * @param clientId 내담자 ID
      */
-    @CacheEvict(value = {"clientsWithStats", "clientCurrentConsultants"}, key = "'client:' + #clientId")
-    public void evictClientStatsCache(Long clientId) {
-        log.info("🗑️ 캐시 무효화: clientId={}", clientId);
+    @Caching(evict = {
+        @CacheEvict(value = "clientsWithStats", key = "'tenant:' + #tenantId + ':client:' + #clientId"),
+        @CacheEvict(value = "clientCurrentConsultants", key = "'client:' + #clientId")
+    })
+    public void evictClientStatsCache(String tenantId, Long clientId) {
+        log.info("🗑️ 캐시 무효화: tenantId={}, clientId={}", tenantId, clientId);
     }
     
      /**

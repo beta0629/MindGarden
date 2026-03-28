@@ -175,10 +175,25 @@ public class AdminController extends BaseApiController {
     @GetMapping("/clients/with-stats/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getClientWithStats(
-            @PathVariable Long id) {
+            @PathVariable Long id,
+            HttpSession session) {
         log.info("📊 내담자 통계 조회 API 호출: clientId={}", id);
 
-        Map<String, Object> stats = clientStatsService.getClientWithStats(id);
+        User currentUser = SessionUtils.getCurrentUser(session);
+        if (currentUser == null) {
+            throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
+        }
+
+        String tenantId = SessionUtils.getTenantId(session);
+        if (tenantId == null || tenantId.isEmpty()) {
+            log.error("❌ tenantId가 필수입니다. 사용자 ID: {}, 역할: {}", currentUser.getId(), currentUser.getRole());
+            String errorMessage = String.format("테넌트 정보가 없습니다. 사용자 ID: %d, 역할: %s. 관리자에게 문의하세요.",
+                    currentUser.getId(), currentUser.getRole());
+            throw new IllegalArgumentException(errorMessage);
+        }
+
+        com.coresolution.core.context.TenantContextHolder.setTenantId(tenantId);
+        Map<String, Object> stats = clientStatsService.getClientWithStats(tenantId, id);
 
         return success(stats);
     }

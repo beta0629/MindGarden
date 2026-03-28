@@ -15,12 +15,13 @@ import java.util.Map;
 public interface ClientStatsService {
     
     /**
-     * 내담자 정보 + 통계 정보 통합 조회
-     * 
-     * @param clientId 내담자 ID
+     * 내담자 정보 + 통계 정보 통합 조회 (테넌트 스코프)
+     *
+     * @param tenantId 세션 또는 호출 컨텍스트의 테넌트 ID (필수)
+     * @param clientId 내담자(User) ID
      * @return 내담자 정보 + 통계 정보 맵
      */
-    Map<String, Object> getClientWithStats(Long clientId);
+    Map<String, Object> getClientWithStats(String tenantId, Long clientId);
     
     /**
      * 내담자 목록 + 통계 정보 일괄 조회

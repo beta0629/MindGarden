@@ -93,7 +93,7 @@ class ConsultationRecordClientInfoPsychIntegrationTest {
         Long clientId = client.getId();
 
         // When: 상담일지용 내담자 정보(통계 포함) 조회
-        Map<String, Object> withStats = clientStatsService.getClientWithStats(clientId);
+        Map<String, Object> withStats = clientStatsService.getClientWithStats(tenantId, clientId);
 
         // Then: client 맵에 birthDate, gender, age, address, addressDetail, postalCode 포함
         assertThat(withStats).containsKey("client");

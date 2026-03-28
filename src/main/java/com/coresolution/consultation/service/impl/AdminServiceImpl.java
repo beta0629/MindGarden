@@ -2212,8 +2212,11 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             );
         }
 
-        // Client 테이블에 레코드가 있으면 address, addressDetail, postalCode, birthDate, gender·차량번호 동기화
-        clientRepository.findById(id).ifPresent(client -> {
+        // Client upsert: 레거시 등 User만 있고 clients 행이 없으면 registerClient와 동일 전제로 신규 행 생성
+        Optional<Client> existingClientOpt = clientRepository.findById(id);
+        Client persistedClient;
+        if (existingClientOpt.isPresent()) {
+            Client client = existingClientOpt.get();
             client.setAddress(savedUser.getAddress());
             client.setAddressDetail(savedUser.getAddressDetail());
             client.setPostalCode(savedUser.getPostalCode());
@@ -2226,32 +2229,50 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                     log.info("🚗 내담자 수정: 차량번호 갱신 (마스킹): {}", maskVehiclePlate(plate));
                 }
             }
-            clientRepository.save(client);
-        });
+            persistedClient = clientRepository.save(client);
+        } else {
+            Client client = new Client();
+            client.setId(savedUser.getId());
+            client.setTenantId(savedUser.getTenantId());
+            client.setName(savedUser.getName());
+            client.setEmail(savedUser.getEmail());
+            client.setPhone(savedUser.getPhone());
+            client.setBirthDate(savedUser.getBirthDate());
+            client.setGender(savedUser.getGender());
+            client.setAddress(savedUser.getAddress());
+            client.setAddressDetail(savedUser.getAddressDetail());
+            client.setPostalCode(savedUser.getPostalCode());
+            String vehiclePlate = VehiclePlateText.normalizeOrNull(request.getVehiclePlate());
+            client.setVehiclePlate(vehiclePlate);
+            client.setIsDeleted(false);
+            client.setCreatedAt(savedUser.getCreatedAt());
+            client.setUpdatedAt(savedUser.getUpdatedAt());
+            client.setBranchCode(null);
+            if (vehiclePlate != null) {
+                log.info("🚗 내담자 수정: Client 신규 저장, 차량번호 (마스킹): {}", maskVehiclePlate(vehiclePlate));
+            }
+            persistedClient = clientRepository.save(client);
+        }
 
         // 내담자 목록 캐시 무효화 (수정 후 목록/재진입 시 주소 등 즉시 반영)
         clientStatsService.evictAllClientStatsCache();
 
-        Client client = new Client();
-        client.setId(savedUser.getId());
-        client.setName(savedUser.getName());
-        client.setEmail(savedUser.getEmail());
-        client.setPhone(savedUser.getPhone());
-        client.setBirthDate(savedUser.getBirthDate());
-        client.setGender(savedUser.getGender());
-        client.setAddress(savedUser.getAddress());
-        client.setAddressDetail(savedUser.getAddressDetail());
-        client.setPostalCode(savedUser.getPostalCode());
-        client.setIsDeleted(Boolean.FALSE.equals(savedUser.getIsActive()));
-        client.setCreatedAt(savedUser.getCreatedAt());
-        client.setUpdatedAt(savedUser.getUpdatedAt());
-        clientRepository.findById(id).ifPresent(row -> {
-            if (savedUser.getTenantId() != null && savedUser.getTenantId().equals(row.getTenantId())) {
-                client.setVehiclePlate(row.getVehiclePlate());
-            }
-        });
+        Client response = new Client();
+        response.setId(savedUser.getId());
+        response.setName(savedUser.getName());
+        response.setEmail(savedUser.getEmail());
+        response.setPhone(savedUser.getPhone());
+        response.setBirthDate(savedUser.getBirthDate());
+        response.setGender(savedUser.getGender());
+        response.setAddress(savedUser.getAddress());
+        response.setAddressDetail(savedUser.getAddressDetail());
+        response.setPostalCode(savedUser.getPostalCode());
+        response.setVehiclePlate(persistedClient.getVehiclePlate());
+        response.setIsDeleted(Boolean.FALSE.equals(savedUser.getIsActive()));
+        response.setCreatedAt(savedUser.getCreatedAt());
+        response.setUpdatedAt(savedUser.getUpdatedAt());
 
-        return client;
+        return response;
     }
 
     @Override

@@ -1,0 +1,165 @@
+package com.coresolution.consultation.service.impl;
+
+import java.util.Optional;
+import com.coresolution.consultation.constant.UserRole;
+import com.coresolution.consultation.dto.ClientRegistrationRequest;
+import com.coresolution.consultation.entity.Client;
+import com.coresolution.consultation.entity.User;
+import com.coresolution.consultation.repository.ClientRepository;
+import com.coresolution.consultation.repository.CommonCodeRepository;
+import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
+import com.coresolution.consultation.repository.ConsultantRatingRepository;
+import com.coresolution.consultation.repository.ConsultantRepository;
+import com.coresolution.consultation.repository.ScheduleRepository;
+import com.coresolution.consultation.repository.UserRepository;
+import com.coresolution.consultation.repository.erp.financial.FinancialTransactionRepository;
+import com.coresolution.consultation.service.AmountManagementService;
+import com.coresolution.consultation.service.BranchService;
+import com.coresolution.consultation.service.ClientStatsService;
+import com.coresolution.consultation.service.CommonCodeService;
+import com.coresolution.consultation.service.ConsultantAvailabilityService;
+import com.coresolution.consultation.service.ConsultantRatingService;
+import com.coresolution.consultation.service.ConsultantStatsService;
+import com.coresolution.consultation.service.ConsultationMessageService;
+import com.coresolution.consultation.service.NotificationService;
+import com.coresolution.consultation.service.PasswordResetService;
+import com.coresolution.consultation.service.RealTimeStatisticsService;
+import com.coresolution.consultation.service.StoredProcedureService;
+import com.coresolution.consultation.service.UserIdGenerator;
+import com.coresolution.consultation.service.UserPersonalDataCacheService;
+import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
+import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.consultation.util.VehiclePlateText;
+import com.coresolution.core.repository.TenantRoleRepository;
+import com.coresolution.core.repository.UserRoleAssignmentRepository;
+import com.coresolution.core.service.UserRoleQueryService;
+import com.coresolution.core.util.StatusCodeHelper;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.transaction.PlatformTransactionManager;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+/**
+ * {@link AdminServiceImpl#updateClient} — clients 행이 없을 때 신규 저장 및 차량번호 반영 검증.
+ *
+ * @author MindGarden
+ * @since 2026-03-29
+ */
+@ExtendWith(MockitoExtension.class)
+@DisplayName("AdminServiceImpl updateClient")
+class AdminServiceImplUpdateClientTest {
+
+    @Mock
+    private UserRepository userRepository;
+    @Mock
+    private ConsultantRepository consultantRepository;
+    @Mock
+    private ClientRepository clientRepository;
+    @Mock
+    private ConsultantClientMappingRepository mappingRepository;
+    @Mock
+    private ConsultantRatingRepository consultantRatingRepository;
+    @Mock
+    private ConsultantRatingService consultantRatingService;
+    @Mock
+    private ScheduleRepository scheduleRepository;
+    @Mock
+    private CommonCodeRepository commonCodeRepository;
+    @Mock
+    private CommonCodeService commonCodeService;
+    @Mock
+    private PasswordEncoder passwordEncoder;
+    @Mock
+    private PersonalDataEncryptionUtil encryptionUtil;
+    @Mock
+    private ConsultantAvailabilityService consultantAvailabilityService;
+    @Mock
+    private ConsultationMessageService consultationMessageService;
+    @Mock
+    private BranchService branchService;
+    @Mock
+    private NotificationService notificationService;
+    @Mock
+    private FinancialTransactionService financialTransactionService;
+    @Mock
+    private RealTimeStatisticsService realTimeStatisticsService;
+    @Mock
+    private FinancialTransactionRepository financialTransactionRepository;
+    @Mock
+    private AmountManagementService amountManagementService;
+    @Mock
+    private StoredProcedureService storedProcedureService;
+    @Mock
+    private UserRoleAssignmentRepository userRoleAssignmentRepository;
+    @Mock
+    private TenantRoleRepository tenantRoleRepository;
+    @Mock
+    private UserRoleQueryService userRoleQueryService;
+    @Mock
+    private StatusCodeHelper statusCodeHelper;
+    @Mock
+    private UserPersonalDataCacheService userPersonalDataCacheService;
+    @Mock
+    private ConsultantStatsService consultantStatsService;
+    @Mock
+    private ClientStatsService clientStatsService;
+    @Mock
+    private PasswordResetService passwordResetService;
+    @Mock
+    private PlatformTransactionManager transactionManager;
+    @Mock
+    private UserIdGenerator userIdGenerator;
+
+    @InjectMocks
+    private AdminServiceImpl adminService;
+
+    @Test
+    @DisplayName("Client 행이 없으면 save 호출되며 vehiclePlate가 정규화되어 저장된다")
+    void updateClient_whenNoClientRow_savesNewClientWithVehiclePlate() {
+        Long id = 42L;
+        String tenantId = "tenant-ut-1";
+
+        User clientUser = User.builder()
+                .userId("u1")
+                .email("enc-mail")
+                .password("x")
+                .name("enc-name")
+                .role(UserRole.CLIENT)
+                .isActive(true)
+                .isPasswordChanged(true)
+                .build();
+        clientUser.setId(id);
+        clientUser.setTenantId(tenantId);
+
+        ClientRegistrationRequest request = new ClientRegistrationRequest();
+        request.setVehiclePlate("  12가  3456  ");
+
+        when(userRepository.findById(id)).thenReturn(Optional.of(clientUser));
+        when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(clientRepository.findById(id)).thenReturn(Optional.empty());
+        when(clientRepository.save(any(Client.class))).thenAnswer(inv -> inv.getArgument(0));
+        doNothing().when(userPersonalDataCacheService).evictUserPersonalDataCache(tenantId, id);
+        doNothing().when(clientStatsService).evictAllClientStatsCache();
+
+        Client result = adminService.updateClient(id, request);
+
+        ArgumentCaptor<Client> captor = ArgumentCaptor.forClass(Client.class);
+        verify(clientRepository).save(captor.capture());
+        Client saved = captor.getValue();
+        assertThat(saved.getId()).isEqualTo(id);
+        assertThat(saved.getTenantId()).isEqualTo(tenantId);
+        assertThat(saved.getVehiclePlate()).isEqualTo(VehiclePlateText.normalizeOrNull(request.getVehiclePlate()));
+        assertThat(result.getVehiclePlate()).isEqualTo(saved.getVehiclePlate());
+    }
+}

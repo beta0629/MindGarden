@@ -23,6 +23,8 @@ import com.coresolution.consultation.service.BranchService;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.security.TenantAccessControlService;
 import com.coresolution.core.service.impl.BaseTenantEntityServiceImpl;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -51,6 +53,9 @@ public class BranchServiceImpl extends BaseTenantEntityServiceImpl<Branch, Long>
     
     private final BranchRepository branchRepository;
     private final UserRepository userRepository;
+
+    @PersistenceContext
+    private EntityManager entityManager;
     
     public BranchServiceImpl(
             BranchRepository branchRepository,
@@ -64,7 +69,47 @@ public class BranchServiceImpl extends BaseTenantEntityServiceImpl<Branch, Long>
     
     @Override
     protected Optional<Branch> findEntityById(Long id) {
-        return branchRepository.findById(id);
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null || tenantId.isEmpty()) {
+            log.warn("findEntityById: 테넌트 컨텍스트 없음, 지점 id={} 조회 생략", id);
+            return Optional.empty();
+        }
+        return branchRepository.findByTenantIdAndId(tenantId, id);
+    }
+
+    /**
+     * 현재 테넌트 컨텍스트로 활성 사용자 단건 조회. tenantId·userId 없으면 빈 Optional.
+     *
+     * @param userId 사용자 PK
+     * @return 사용자 Optional
+     */
+    private Optional<User> findUserByCurrentTenant(Long userId) {
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null || tenantId.isEmpty() || userId == null) {
+            log.warn("findUserByCurrentTenant: 테넌트 컨텍스트 없음 또는 userId 없음, userId={}", userId);
+            return Optional.empty();
+        }
+        return userRepository.findByTenantIdAndId(tenantId, userId);
+    }
+
+    /**
+     * 소프트 삭제된 행 포함, 테넌트·ID로 지점 단건 조회 (복구 등).
+     *
+     * @param tenantId 테넌트 ID
+     * @param id       지점 ID
+     * @return 지점 Optional
+     */
+    private Optional<Branch> findBranchByTenantIdAndIdIncludingDeleted(String tenantId, Long id) {
+        if (tenantId == null || tenantId.isEmpty() || id == null) {
+            return Optional.empty();
+        }
+        List<Branch> rows = entityManager
+                .createQuery("SELECT b FROM Branch b WHERE b.tenantId = :tenantId AND b.id = :id", Branch.class)
+                .setParameter("tenantId", tenantId)
+                .setParameter("id", id)
+                .setMaxResults(1)
+                .getResultList();
+        return rows.isEmpty() ? Optional.empty() : Optional.of(rows.get(0));
     }
     
     @Override
@@ -96,7 +141,7 @@ public class BranchServiceImpl extends BaseTenantEntityServiceImpl<Branch, Long>
         
         User manager = null;
         if (request.getManagerId() != null) {
-            manager = userRepository.findById(request.getManagerId())
+            manager = findUserByCurrentTenant(request.getManagerId())
                     .orElseThrow(() -> new EntityNotFoundException("지점장을 찾을 수 없습니다."));
         }
         
@@ -193,7 +238,7 @@ public class BranchServiceImpl extends BaseTenantEntityServiceImpl<Branch, Long>
         }
         
         if (request.getManagerId() != null) {
-            User manager = userRepository.findById(request.getManagerId())
+            User manager = findUserByCurrentTenant(request.getManagerId())
                     .orElseThrow(() -> new EntityNotFoundException("지점장을 찾을 수 없습니다."));
             branch.setManager(manager);
         }
@@ -307,7 +352,7 @@ public class BranchServiceImpl extends BaseTenantEntityServiceImpl<Branch, Long>
         log.info("지점장 지정: 지점 ID={}, 지점장 ID={}", branchId, managerId);
         
         Branch branch = findActiveByIdOrThrow(branchId);
-        User manager = userRepository.findById(managerId)
+        User manager = findUserByCurrentTenant(managerId)
                 .orElseThrow(() -> new EntityNotFoundException("지점장을 찾을 수 없습니다."));
         
         List<Branch> existingManagedBranches = branchRepository.findByManagerAndIsDeletedFalse(manager);
@@ -379,7 +424,7 @@ public class BranchServiceImpl extends BaseTenantEntityServiceImpl<Branch, Long>
         log.info("상담사 지점 할당: 지점 ID={}, 상담사 ID={}", branchId, consultantId);
         
         Branch branch = findActiveByIdOrThrow(branchId);
-        User consultant = userRepository.findById(consultantId)
+        User consultant = findUserByCurrentTenant(consultantId)
                 .orElseThrow(() -> new EntityNotFoundException("상담사를 찾을 수 없습니다."));
         
         if (!isConsultantCapacityAvailable(branchId)) {
@@ -398,7 +443,7 @@ public class BranchServiceImpl extends BaseTenantEntityServiceImpl<Branch, Long>
         log.info("내담자 지점 할당: 지점 ID={}, 내담자 ID={}", branchId, clientId);
         
         Branch branch = findActiveByIdOrThrow(branchId);
-        User client = userRepository.findById(clientId)
+        User client = findUserByCurrentTenant(clientId)
                 .orElseThrow(() -> new EntityNotFoundException("내담자를 찾을 수 없습니다."));
         
         if (!isClientCapacityAvailable(branchId)) {
@@ -416,7 +461,7 @@ public class BranchServiceImpl extends BaseTenantEntityServiceImpl<Branch, Long>
     public void removeUserFromBranch(Long userId) {
         log.info("사용자 지점 제거: 사용자 ID={}", userId);
         
-        User user = userRepository.findById(userId)
+        User user = findUserByCurrentTenant(userId)
                 .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
         
         String branchName = user.getBranch() != null ? user.getBranch().getBranchName() : "없음";
@@ -431,7 +476,7 @@ public class BranchServiceImpl extends BaseTenantEntityServiceImpl<Branch, Long>
     public void transferUserBetweenBranches(Long userId, Long fromBranchId, Long toBranchId) {
         log.info("사용자 지점 이동: 사용자 ID={}, {} -> {}", userId, fromBranchId, toBranchId);
         
-        User user = userRepository.findById(userId)
+        User user = findUserByCurrentTenant(userId)
                 .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
         
         Branch fromBranch = findActiveByIdOrThrow(fromBranchId);
@@ -1015,24 +1060,21 @@ public class BranchServiceImpl extends BaseTenantEntityServiceImpl<Branch, Long>
     @Override
     public Branch partialUpdate(Long id, Branch updateData) {
         String tenantId = TenantContextHolder.getTenantId();
-        if (tenantId != null) {
+        if (tenantId != null && !tenantId.isEmpty()) {
             return partialUpdate(tenantId, id, updateData);
         }
-        Branch existing = branchRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("지점을 찾을 수 없습니다: " + id));
-        return branchRepository.save(existing);
+        log.warn("partialUpdate: 테넌트 컨텍스트 없음, 지점 id={}", id);
+        throw new RuntimeException("지점을 찾을 수 없습니다: " + id);
     }
     
     @Override
     public void softDeleteById(Long id) {
         String tenantId = TenantContextHolder.getTenantId();
-        if (tenantId != null) {
+        if (tenantId != null && !tenantId.isEmpty()) {
             delete(tenantId, id);
         } else {
-            Branch branch = branchRepository.findById(id)
-                    .orElseThrow(() -> new RuntimeException("지점을 찾을 수 없습니다: " + id));
-            branch.setIsDeleted(true);
-            branchRepository.save(branch);
+            log.warn("softDeleteById: 테넌트 컨텍스트 없음, 지점 id={}", id);
+            throw new RuntimeException("지점을 찾을 수 없습니다: " + id);
         }
     }
     
@@ -1043,7 +1085,12 @@ public class BranchServiceImpl extends BaseTenantEntityServiceImpl<Branch, Long>
     
     @Override
     public void restoreById(Long id) {
-        Branch branch = branchRepository.findById(id)
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null || tenantId.isEmpty()) {
+            log.warn("restoreById: 테넌트 컨텍스트 없음, 지점 id={} 복구 생략", id);
+            throw new RuntimeException("지점을 찾을 수 없습니다: " + id);
+        }
+        Branch branch = findBranchByTenantIdAndIdIncludingDeleted(tenantId, id)
                 .orElseThrow(() -> new RuntimeException("지점을 찾을 수 없습니다: " + id));
         branch.setIsDeleted(false);
         branch.setDeletedAt(null);

@@ -19,6 +19,7 @@ import com.coresolution.consultation.service.RealTimeStatisticsService;
 import com.coresolution.consultation.service.SessionExtensionService;
 import com.coresolution.consultation.service.SessionSyncService;
 import com.coresolution.consultation.service.UserService;
+import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -52,13 +53,15 @@ public class SessionExtensionServiceImpl implements SessionExtensionService {
         log.info("회기 추가 요청 생성: mappingId={}, requesterId={}, sessions={}", 
                 mappingId, requesterId, additionalSessions);
         
-        ConsultantClientMapping mapping = mappingRepository.findById(mappingId)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndId(tenantId, mappingId)
                 .orElseThrow(() -> new RuntimeException("매핑을 찾을 수 없습니다: " + mappingId));
         
         User requester = userService.findActiveById(requesterId)
                 .orElseThrow(() -> new RuntimeException("요청자를 찾을 수 없습니다: " + requesterId));
         
         SessionExtensionRequest request = SessionExtensionRequest.builder()
+                .tenantId(tenantId)
                 .mapping(mapping)
                 .requester(requester)
                 .additionalSessions(additionalSessions)
@@ -80,8 +83,7 @@ public class SessionExtensionServiceImpl implements SessionExtensionService {
         log.info("💰 입금 확인 및 자동 승인 처리: requestId={}, paymentMethod={}, paymentReference={}", 
                 requestId, paymentMethod, paymentReference);
         
-        SessionExtensionRequest request = requestRepository.findById(requestId)
-                .orElseThrow(() -> new RuntimeException("요청을 찾을 수 없습니다: " + requestId));
+        SessionExtensionRequest request = requireRequestForCurrentTenant(requestId);
         
         String finalPaymentReference = "CASH".equals(paymentMethod) ? null : paymentReference;
         
@@ -188,8 +190,7 @@ public class SessionExtensionServiceImpl implements SessionExtensionService {
     public SessionExtensionRequest approveByAdmin(Long requestId, Long adminId, String comment) {
         log.info("관리자 승인: requestId={}, adminId={}", requestId, adminId);
         
-        SessionExtensionRequest request = requestRepository.findById(requestId)
-                .orElseThrow(() -> new RuntimeException("요청을 찾을 수 없습니다: " + requestId));
+        SessionExtensionRequest request = requireRequestForCurrentTenant(requestId);
         
         User admin = userService.findActiveById(adminId)
                 .orElseThrow(() -> new RuntimeException("관리자를 찾을 수 없습니다: " + adminId));
@@ -207,8 +208,7 @@ public class SessionExtensionServiceImpl implements SessionExtensionService {
     public SessionExtensionRequest rejectRequest(Long requestId, Long adminId, String reason) {
         log.info("요청 거부: requestId={}, adminId={}", requestId, adminId);
         
-        SessionExtensionRequest request = requestRepository.findById(requestId)
-                .orElseThrow(() -> new RuntimeException("요청을 찾을 수 없습니다: " + requestId));
+        SessionExtensionRequest request = requireRequestForCurrentTenant(requestId);
         
         request.reject(reason);
         
@@ -222,8 +222,7 @@ public class SessionExtensionServiceImpl implements SessionExtensionService {
     public SessionExtensionRequest completeRequest(Long requestId) {
         log.info("요청 완료 처리: requestId={}", requestId);
         
-        SessionExtensionRequest request = requestRepository.findById(requestId)
-                .orElseThrow(() -> new RuntimeException("요청을 찾을 수 없습니다: " + requestId));
+        SessionExtensionRequest request = requireRequestForCurrentTenant(requestId);
         
         
         request.complete();
@@ -263,8 +262,7 @@ public class SessionExtensionServiceImpl implements SessionExtensionService {
     @Transactional(readOnly = true)
     public SessionExtensionRequest getRequestById(Long requestId) {
         log.info("요청 상세 조회: requestId={}", requestId);
-        return requestRepository.findById(requestId)
-                .orElseThrow(() -> new RuntimeException("요청을 찾을 수 없습니다: " + requestId));
+        return requireRequestForCurrentTenant(requestId);
     }
     
     @Override
@@ -366,6 +364,18 @@ public class SessionExtensionServiceImpl implements SessionExtensionService {
         return statistics;
     }
     
+    /**
+     * 현재 테넌트 컨텍스트의 회기 추가 요청을 ID로 조회합니다.
+     *
+     * @param requestId 요청 PK
+     * @return 요청 엔티티
+     */
+    private SessionExtensionRequest requireRequestForCurrentTenant(Long requestId) {
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return requestRepository.findByTenantIdAndId(tenantId, requestId)
+                .orElseThrow(() -> new RuntimeException("요청을 찾을 수 없습니다: " + requestId));
+    }
+
     /**
      * ERP 시스템에 회기 추가 결제 정보 전송 (매칭 시스템과 동일한 방식)
      */

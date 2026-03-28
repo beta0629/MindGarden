@@ -31,6 +31,8 @@ import com.coresolution.core.service.impl.BaseTenantAwareService;
 import com.coresolution.core.util.StatusCodeHelper;
 import com.coresolution.core.security.TenantAccessControlService;
 import com.coresolution.core.service.impl.BaseTenantEntityServiceImpl;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -82,6 +84,9 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
     @Autowired
     private StatusCodeHelper statusCodeHelper;
     
+    @PersistenceContext
+    private EntityManager entityManager;
+    
     
     public ConsultationServiceImpl(
             ConsultationRepository consultationRepository,
@@ -93,7 +98,12 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
     
     @Override
     protected Optional<Consultation> findEntityById(Long id) {
-        return consultationRepository.findById(id);
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null || tenantId.isEmpty()) {
+            log.warn("findEntityById: 테넌트 컨텍스트 없음, 상담 id={} 조회 생략", id);
+            return Optional.empty();
+        }
+        return consultationRepository.findByTenantIdAndId(tenantId, id);
     }
     
     @Override
@@ -157,7 +167,14 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
         if (tenantId != null && consultation.getTenantId() != null) {
             return update(tenantId, consultation);
         } else {
-            Consultation existingConsultation = consultationRepository.findById(consultation.getId())
+            String resolveTenantId = tenantId != null && !tenantId.isEmpty()
+                    ? tenantId
+                    : consultation.getTenantId();
+            if (resolveTenantId == null || resolveTenantId.isEmpty()) {
+                resolveTenantId = TenantContextHolder.getRequiredTenantId();
+            }
+            Consultation existingConsultation = consultationRepository
+                    .findByTenantIdAndId(resolveTenantId, consultation.getId())
                     .orElseThrow(() -> new RuntimeException("상담을 찾을 수 없습니다: " + consultation.getId()));
             
             if (existingConsultation.getTenantId() != null) {
@@ -177,7 +194,9 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
         if (tenantId != null) {
             return partialUpdate(tenantId, id, updateData);
         } else {
-            Consultation existingConsultation = consultationRepository.findById(id)
+            String resolveTenantId = TenantContextHolder.getRequiredTenantId();
+            Consultation existingConsultation = consultationRepository
+                    .findByTenantIdAndId(resolveTenantId, id)
                     .orElseThrow(() -> new RuntimeException("상담을 찾을 수 없습니다: " + id));
             
             if (existingConsultation.getTenantId() != null) {
@@ -258,7 +277,9 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
         if (tenantId != null) {
             delete(tenantId, id);
         } else {
-            Consultation consultation = consultationRepository.findById(id)
+            String resolveTenantId = TenantContextHolder.getRequiredTenantId();
+            Consultation consultation = consultationRepository
+                    .findByTenantIdAndId(resolveTenantId, id)
                     .orElseThrow(() -> new RuntimeException("상담을 찾을 수 없습니다: " + id));
             
             if (consultation.getTenantId() != null) {
@@ -276,7 +297,15 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
     
     @Override
     public void restoreById(Long id) {
-        Consultation consultation = consultationRepository.findById(id)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        Consultation consultation = entityManager
+                .createQuery(
+                        "SELECT c FROM Consultation c WHERE c.tenantId = :tenantId AND c.id = :id",
+                        Consultation.class)
+                .setParameter("tenantId", tenantId)
+                .setParameter("id", id)
+                .getResultStream()
+                .findFirst()
                 .orElseThrow(() -> new RuntimeException("상담을 찾을 수 없습니다: " + id));
         
         consultation.setIsDeleted(false);
@@ -657,6 +686,10 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
         
         List<Consultation> consultations = findByClientId(clientId);
         List<Map<String, Object>> history = new ArrayList<>();
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null || tenantId.isEmpty()) {
+            tenantId = TenantContextHolder.getRequiredTenantId();
+        }
         
         for (Consultation consultation : consultations) {
             Map<String, Object> historyItem = new HashMap<>();
@@ -670,7 +703,8 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
             
             if (consultation.getConsultantId() != null) {
                 try {
-                    Optional<Consultant> consultantOpt = consultantRepository.findById(consultation.getConsultantId());
+                    Optional<Consultant> consultantOpt = consultantRepository.findByTenantIdAndId(
+                            tenantId, consultation.getConsultantId());
                     if (consultantOpt.isPresent()) {
                         Consultant consultant = consultantOpt.get();
                         Map<String, Object> consultantInfo = new HashMap<>();
@@ -861,7 +895,12 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
         Consultation consultation = findActiveByIdOrThrow(consultationId);
         
         try {
+            String noteTenantId = consultation.getTenantId();
+            if (noteTenantId == null || noteTenantId.isEmpty()) {
+                noteTenantId = TenantContextHolder.getRequiredTenantId();
+            }
             Note noteEntity = Note.builder()
+                    .tenantId(noteTenantId)
                     .consultationId(consultationId)
                     .authorId(authorId)
                     .noteText(note)
@@ -886,7 +925,8 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
         log.info("상담 노트 수정: noteId={}", noteId);
         
         try {
-            Note noteEntity = noteRepository.findById(noteId)
+            String noteTenantId = TenantContextHolder.getRequiredTenantId();
+            Note noteEntity = noteRepository.findByTenantIdAndId(noteTenantId, noteId)
                 .orElseThrow(() -> new RuntimeException("노트를 찾을 수 없습니다: " + noteId));
             
             noteEntity.updateNote(note);
@@ -905,7 +945,8 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
         log.info("상담 노트 삭제: noteId={}", noteId);
         
         try {
-            Note noteEntity = noteRepository.findById(noteId)
+            String noteTenantId = TenantContextHolder.getRequiredTenantId();
+            Note noteEntity = noteRepository.findByTenantIdAndId(noteTenantId, noteId)
                 .orElseThrow(() -> new RuntimeException("노트를 찾을 수 없습니다: " + noteId));
             
             noteEntity.softDelete();
@@ -1090,7 +1131,8 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
             consultation.setPreparationNotes("긴급 상담 요청: " + emergencyReason);
             
             try {
-                Client client = clientRepository.findById(clientId)
+                String tenantId = TenantContextHolder.getRequiredTenantId();
+                Client client = clientRepository.findByTenantIdAndId(tenantId, clientId)
                     .orElseThrow(() -> new RuntimeException("클라이언트를 찾을 수 없습니다: " + clientId));
                 consultation.setClientId(clientId);
                 log.info("긴급 상담 요청 - 클라이언트 정보 확인: clientId={}, name={}", clientId, client.getName());
@@ -1156,7 +1198,8 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
             consultation.setConsultantId(consultantId);
             
             try {
-                Consultant consultant = consultantRepository.findById(consultantId)
+                String tenantId = TenantContextHolder.getRequiredTenantId();
+                Consultant consultant = consultantRepository.findByTenantIdAndId(tenantId, consultantId)
                     .orElseThrow(() -> new RuntimeException("상담사를 찾을 수 없습니다: " + consultantId));
                 consultation.setConsultantId(consultantId);
                 log.info("긴급 상담 할당 - 상담사 정보 확인: consultantId={}, name={}", consultantId, consultant.getName());
@@ -2384,7 +2427,12 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
     
     @Override
     public Optional<Consultation> findById(Long id) {
-        return consultationRepository.findById(id);
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null || tenantId.isEmpty()) {
+            log.warn("findById: 테넌트 컨텍스트 없음, 상담 id={} 조회 생략", id);
+            return Optional.empty();
+        }
+        return consultationRepository.findByTenantIdAndId(tenantId, id);
     }
     
      /**

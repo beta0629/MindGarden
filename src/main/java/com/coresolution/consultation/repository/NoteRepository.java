@@ -1,6 +1,7 @@
 package com.coresolution.consultation.repository;
 
 import java.util.List;
+import java.util.Optional;
 import com.coresolution.consultation.entity.Note;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -16,6 +17,18 @@ import org.springframework.stereotype.Repository;
  */
 @Repository
 public interface NoteRepository extends JpaRepository<Note, Long> {
+    
+    /**
+     * 테넌트·ID로 활성 노트 단건 조회
+     *
+     * @param tenantId 테넌트 ID
+     * @param id       노트 PK
+     * @return 노트 Optional
+     * @author CoreSolution
+     * @since 2026-03-29
+     */
+    @Query("SELECT n FROM Note n WHERE n.tenantId = :tenantId AND n.id = :id AND n.isDeleted = false")
+    Optional<Note> findByTenantIdAndId(@Param("tenantId") String tenantId, @Param("id") Long id);
     
     List<Note> findByConsultationIdAndIsDeletedFalse(Long consultationId);
     

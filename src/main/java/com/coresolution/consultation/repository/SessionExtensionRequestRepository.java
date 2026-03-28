@@ -1,6 +1,7 @@
 package com.coresolution.consultation.repository;
 
 import java.util.List;
+import java.util.Optional;
 import com.coresolution.consultation.entity.SessionExtensionRequest;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -16,6 +17,16 @@ import org.springframework.stereotype.Repository;
  */
 @Repository
 public interface SessionExtensionRequestRepository extends JpaRepository<SessionExtensionRequest, Long> {
+
+    /**
+     * 테넌트 ID와 요청 ID로 단건 조회 (소프트 삭제 컬럼 없음)
+     *
+     * @param tenantId 테넌트 ID
+     * @param id       요청 PK
+     * @return 해당 테넌트의 요청
+     */
+    @Query("SELECT ser FROM SessionExtensionRequest ser WHERE ser.tenantId = :tenantId AND ser.id = :id")
+    Optional<SessionExtensionRequest> findByTenantIdAndId(@Param("tenantId") String tenantId, @Param("id") Long id);
     
     /**
      * 전체 회기 추가 요청 목록 조회 (생성일 내림차순)

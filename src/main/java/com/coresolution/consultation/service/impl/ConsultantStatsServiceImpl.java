@@ -48,14 +48,9 @@ public class ConsultantStatsServiceImpl implements ConsultantStatsService {
     public Map<String, Object> getConsultantWithStats(Long consultantId) {
         log.info("📊 상담사 통계 조회 (DB): consultantId={}", consultantId);
         
-        Consultant consultant = consultantRepository.findById(consultantId)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        Consultant consultant = consultantRepository.findByTenantIdAndId(tenantId, consultantId)
                 .orElseThrow(() -> new RuntimeException("상담사를 찾을 수 없습니다: " + consultantId));
-        
-        String tenantId = com.coresolution.core.context.TenantContextHolder.getTenantId();
-        if (tenantId == null) {
-            log.error("❌ tenantId가 설정되지 않았습니다");
-            return new HashMap<>();
-        }
         
         long currentClients = calculateCurrentClients(consultantId);
         

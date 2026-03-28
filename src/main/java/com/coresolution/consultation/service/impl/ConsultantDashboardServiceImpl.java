@@ -180,7 +180,8 @@ public class ConsultantDashboardServiceImpl implements ConsultantDashboardServic
         }
         
         try {
-            User client = userRepository.findById(clientId).orElse(null);
+            String tenantId = TenantContextHolder.getRequiredTenantId();
+            User client = userRepository.findByTenantIdAndId(tenantId, clientId).orElse(null);
             if (client != null) {
                 java.util.Map<String, String> decryptedData = userPersonalDataCacheService.getDecryptedUserData(client);
                 if (decryptedData != null && decryptedData.get("name") != null) {

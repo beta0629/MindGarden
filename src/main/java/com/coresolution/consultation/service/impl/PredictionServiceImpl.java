@@ -7,6 +7,7 @@ import com.coresolution.consultation.repository.ClientRepository;
 import com.coresolution.consultation.repository.DropoutRiskAssessmentRepository;
 import com.coresolution.consultation.repository.TreatmentPredictionRepository;
 import com.coresolution.consultation.service.PredictionService;
+import com.coresolution.core.context.TenantContextHolder;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -41,7 +42,8 @@ public class PredictionServiceImpl implements PredictionService {
     @Override
     public TreatmentPrediction predictTreatmentOutcome(Long clientId) {
         try {
-            Client client = clientRepository.findById(clientId)
+            String tenantId = TenantContextHolder.getRequiredTenantId();
+            Client client = clientRepository.findByTenantIdAndId(tenantId, clientId)
                 .orElseThrow(() -> new IllegalArgumentException("내담자를 찾을 수 없습니다: " + clientId));
 
             log.info("치료 경과 예측 시작: clientId={}", clientId);
@@ -94,7 +96,8 @@ public class PredictionServiceImpl implements PredictionService {
     @Override
     public DropoutRiskAssessment assessDropoutRisk(Long clientId) {
         try {
-            Client client = clientRepository.findById(clientId)
+            String tenantId = TenantContextHolder.getRequiredTenantId();
+            Client client = clientRepository.findByTenantIdAndId(tenantId, clientId)
                 .orElseThrow(() -> new IllegalArgumentException("내담자를 찾을 수 없습니다: " + clientId));
 
             log.info("중도 탈락 위험 평가 시작: clientId={}", clientId);

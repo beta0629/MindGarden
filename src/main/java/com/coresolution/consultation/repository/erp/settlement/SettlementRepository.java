@@ -15,7 +15,13 @@ import java.util.Optional;
  */
 @Repository
 public interface SettlementRepository extends JpaRepository<Settlement, Long> {
-    
+
+    /**
+     * 테넌트·ID로 정산 단건 조회 (삭제 제외)
+     */
+    @Query("SELECT s FROM Settlement s WHERE s.tenantId = :tenantId AND s.id = :id AND s.isDeleted = false")
+    Optional<Settlement> findByTenantIdAndId(@Param("tenantId") String tenantId, @Param("id") Long id);
+
     /**
      * 테넌트별 정산 목록 조회
      */

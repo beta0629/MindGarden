@@ -161,13 +161,9 @@ public class SettlementServiceImpl implements SettlementService {
         }
         
         // 1. 정산 조회
-        Settlement settlement = settlementRepository.findById(settlementId)
+        Settlement settlement = settlementRepository.findByTenantIdAndId(tenantId, settlementId)
             .orElseThrow(() -> new IllegalArgumentException("정산을 찾을 수 없습니다: " + settlementId));
-        
-        if (!settlement.getTenantId().equals(tenantId)) {
-            throw new IllegalStateException("다른 테넌트의 정산입니다.");
-        }
-        
+
         // 2. 승인 가능 상태 확인
         if (settlement.getStatus() != Settlement.SettlementStatus.PENDING) {
             throw new IllegalStateException("승인 가능한 상태가 아닙니다: " + settlement.getStatus());

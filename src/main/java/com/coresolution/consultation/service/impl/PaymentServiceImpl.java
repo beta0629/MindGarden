@@ -81,7 +81,8 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
     
     @Override
     protected Optional<Payment> findEntityById(Long id) {
-        return paymentRepository.findById(id);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return paymentRepository.findByTenantIdAndId(tenantId, id);
     }
     
     @Override

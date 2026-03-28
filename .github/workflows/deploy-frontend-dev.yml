@@ -88,6 +88,11 @@ jobs:
             echo "ℹ️ 백업할 기존 파일 없음 (신규 배포)"
           fi
           
+          # 디스크 관리: 배포 전 백업 tar 누적으로 디스크 고갈 방지 — 최신 N개만 유지
+          BACKUP_RETENTION_COUNT=5
+          BACKUP_DIR="/var/www/backups/html-dev"
+          ls -1t "$BACKUP_DIR"/html-dev-backup-*.tar.gz 2>/dev/null | tail -n +$((BACKUP_RETENTION_COUNT + 1)) | xargs -r sudo rm -f
+          
     - name: 📤 프론트엔드 파일 업로드 SCP (개발 서버)
       uses: appleboy/scp-action@v0.1.7
       with:

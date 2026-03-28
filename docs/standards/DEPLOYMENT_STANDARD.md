@@ -59,6 +59,8 @@ GitHub Actions를 통한 자동 배포 프로세스를 정의합니다.
 - ✅ 롤백 절차 명확화
 - ✅ 배포 실패 시 알림
 
+**개발 서버 HTML 백업 보관**: 프론트 개발 배포 워크플로(`deploy-frontend-dev`, `deploy-trinity-dev`, `deploy-ops-dev`)는 배포 전 `/var/www/backups/html-dev`, `html-trinity`, `html-ops`에 만든 `*-backup-*.tar.gz`를 최신 5개만 남기고 이전 파일을 같은 단계에서 제거하여 디스크 사용량이 누적되지 않게 한다.
+
 ---
 
 ## 🚀 배포 프로세스

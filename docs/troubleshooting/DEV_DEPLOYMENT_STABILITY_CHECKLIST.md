@@ -38,6 +38,11 @@
   - `deploy-backend-dev.yml`: `src/main/resources/application.yml`, `src/main/resources/application-dev.yml`
   - `deploy-onboarding-dev.yml`: 동일 paths 추가됨.
 
+### 2.4 운영(MySQL) DB 연결 합산 (Too many connections 예방)
+
+- **원인**: JVM(프로세스)마다 Hikari `maximum-pool-size`만큼 연결을 유지할 수 있음. **(앱 인스턴스 수 × 풀 상한) + 배치·모니터링·수동 접속 등**이 MySQL `max_connections`를 넘으면 `Too many connections`로 로그인·API가 500/타임아웃될 수 있음.
+- **운영 대응**: `src/main/resources/application-prod.yml` 및 `deployment/application-production.yml`의 Hikari 기본 풀은 보수적으로 맞춰 두었고, **`HIKARI_MAXIMUM_POOL_SIZE`** 등으로 인스턴스당 상한을 조정한다. 배포·스케일아웃 전에 DBA/운영과 **합산 ≤ `max_connections`** 를 한 번에 확인할 것.
+
 ---
 
 ## 3. 배포 후 실패 시 점검 순서

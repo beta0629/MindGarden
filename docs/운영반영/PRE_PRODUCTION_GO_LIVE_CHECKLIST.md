@@ -120,6 +120,7 @@
 | 5.4 | 운영 DB **네트워크 접근**(퍼블릭 X, bastion/VPN만) |
 | 5.5 | 연결 풀·타임아웃·읽기 부하(리플리카) 정책 |
 | 5.6 | **데이터 선별**: 마스터·참조는 Flyway, **개발 테스트·개인정보 덤프는 운영 미이관**. **운영 테넌트는 Mind Garden 온보딩으로만 생성**(개발 테넌트 덤프 금지) — [PRODUCTION_ESSENTIAL_DATA.md](../deployment/PRODUCTION_ESSENTIAL_DATA.md) §1.1 |
+| 5.7 | **MySQL 연결 합산(배포 전)**: `(앱 인스턴스 수 × Hikari maximum-pool-size)` + 기타 DB 클라이언트 ≤ MySQL `max_connections`. 초과 시 `Too many connections` 발생 가능. 풀 상한은 `HIKARI_MAXIMUM_POOL_SIZE` 등으로 조절 — [DEV_DEPLOYMENT_STABILITY_CHECKLIST.md](../troubleshooting/DEV_DEPLOYMENT_STABILITY_CHECKLIST.md) 2.4 참고 |
 
 ---
 

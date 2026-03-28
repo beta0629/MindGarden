@@ -102,11 +102,11 @@ public class DiscountAccountingServiceImpl implements DiscountAccountingService 
         log.info("💰 할인 회계 거래 취소: MappingID={}, Reason={}", mappingId, reason);
         
         try {
-            ConsultantClientMapping mapping = mappingRepository.findById(mappingId)
+            String tenantId = TenantContextHolder.getRequiredTenantId();
+            ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndId(tenantId, mappingId)
                 .orElseThrow(() -> new RuntimeException("매핑을 찾을 수 없습니다: " + mappingId));
             
             // 표준화 2025-12-06: deprecated 메서드 대체
-            String tenantId = TenantContextHolder.getRequiredTenantId();
             List<FinancialTransaction> revenueTransactions = financialTransactionRepository
                 .findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
                     tenantId, mappingId, "CONSULTANT_CLIENT_MAPPING"
@@ -180,7 +180,8 @@ public class DiscountAccountingServiceImpl implements DiscountAccountingService 
                 return cancelResult;
             }
             
-            ConsultantClientMapping mapping = mappingRepository.findById(mappingId)
+            String tenantId = TenantContextHolder.getRequiredTenantId();
+            ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndId(tenantId, mappingId)
                 .orElseThrow(() -> new RuntimeException("매핑을 찾을 수 없습니다: " + mappingId));
             
             BigDecimal originalAmount = BigDecimal.valueOf(mapping.getPackagePrice());
@@ -214,11 +215,11 @@ public class DiscountAccountingServiceImpl implements DiscountAccountingService 
         log.info("💰 할인 회계 거래 조회: MappingID={}", mappingId);
         
         try {
-            ConsultantClientMapping mapping = mappingRepository.findById(mappingId)
+            String tenantId = TenantContextHolder.getRequiredTenantId();
+            ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndId(tenantId, mappingId)
                 .orElseThrow(() -> new RuntimeException("매핑을 찾을 수 없습니다: " + mappingId));
             
             // 표준화 2025-12-06: deprecated 메서드 대체
-            String tenantId = TenantContextHolder.getRequiredTenantId();
             List<FinancialTransaction> revenueTransactions = financialTransactionRepository
                 .findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
                     tenantId, mappingId, "CONSULTANT_CLIENT_MAPPING"
@@ -269,11 +270,11 @@ public class DiscountAccountingServiceImpl implements DiscountAccountingService 
         log.info("🔍 할인 회계 거래 검증: MappingID={}", mappingId);
         
         try {
-            ConsultantClientMapping mapping = mappingRepository.findById(mappingId)
+            String tenantId = TenantContextHolder.getRequiredTenantId();
+            ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndId(tenantId, mappingId)
                 .orElseThrow(() -> new RuntimeException("매핑을 찾을 수 없습니다: " + mappingId));
             
             // 표준화 2025-12-06: deprecated 메서드 대체
-            String tenantId = TenantContextHolder.getRequiredTenantId();
             List<FinancialTransaction> revenueTransactions = financialTransactionRepository
                 .findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
                     tenantId, mappingId, "CONSULTANT_CLIENT_MAPPING"

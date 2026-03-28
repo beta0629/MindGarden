@@ -6,7 +6,6 @@ import java.util.Optional;
 import com.coresolution.consultation.entity.ConsultantRating;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -19,7 +18,7 @@ import org.springframework.stereotype.Repository;
  * @since 2025-09-17
  */
 @Repository
-public interface ConsultantRatingRepository extends JpaRepository<ConsultantRating, Long> {
+public interface ConsultantRatingRepository extends BaseRepository<ConsultantRating, Long> {
 
     // ==================== tenantId 필터링 메서드 ====================
 

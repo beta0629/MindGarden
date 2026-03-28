@@ -60,7 +60,8 @@ public class ConsultantRatingServiceImpl implements ConsultantRatingService {
         try {
             log.info("💖 상담사 평가 등록 시작: 스케줄={}, 내담자={}, 하트점수={}", scheduleId, clientId, heartScore);
 
-            Schedule schedule = scheduleRepository.findById(scheduleId)
+            String tenantId = TenantContextHolder.getRequiredTenantId();
+            Schedule schedule = scheduleRepository.findByTenantIdAndId(tenantId, scheduleId)
                 .orElseThrow(() -> new RuntimeException("스케줄을 찾을 수 없습니다."));
 
             // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
@@ -73,16 +74,15 @@ public class ConsultantRatingServiceImpl implements ConsultantRatingService {
             }
 
             // 표준화 2025-12-06: deprecated 메서드 대체
-            String tenantId = TenantContextHolder.getRequiredTenantId();
             // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
             if (ratingRepository.existsByTenantIdAndScheduleIdAndClientIdAndStatus(tenantId, scheduleId, clientId, ConsultantRating.RatingStatus.ACTIVE)) {
                 throw new RuntimeException("이미 평가한 상담입니다.");
             }
 
-            User consultant = userRepository.findById(schedule.getConsultantId())
+            User consultant = userRepository.findByTenantIdAndId(tenantId, schedule.getConsultantId())
                 .orElseThrow(() -> new RuntimeException("상담사를 찾을 수 없습니다."));
 
-            User client = userRepository.findById(clientId)
+            User client = userRepository.findByTenantIdAndId(tenantId, clientId)
                 .orElseThrow(() -> new RuntimeException("내담자를 찾을 수 없습니다."));
 
             String ratingTagsJson = null;
@@ -136,7 +136,8 @@ public class ConsultantRatingServiceImpl implements ConsultantRatingService {
         try {
             log.info("💖 상담사 평가 수정 시작: ID={}, 하트점수={}", ratingId, heartScore);
 
-            ConsultantRating rating = ratingRepository.findById(ratingId)
+            String tenantId = TenantContextHolder.getRequiredTenantId();
+            ConsultantRating rating = ratingRepository.findByTenantIdAndId(tenantId, ratingId)
                 .orElseThrow(() -> new RuntimeException("평가를 찾을 수 없습니다."));
 
             String ratingTagsJson = null;
@@ -169,7 +170,8 @@ public class ConsultantRatingServiceImpl implements ConsultantRatingService {
         try {
             log.info("💖 상담사 평가 삭제 시작: ID={}, 내담자={}", ratingId, clientId);
 
-            ConsultantRating rating = ratingRepository.findById(ratingId)
+            String tenantId = TenantContextHolder.getRequiredTenantId();
+            ConsultantRating rating = ratingRepository.findByTenantIdAndId(tenantId, ratingId)
                 .orElseThrow(() -> new RuntimeException("평가를 찾을 수 없습니다."));
 
             if (!rating.getClient().getId().equals(clientId)) {
@@ -222,7 +224,7 @@ public class ConsultantRatingServiceImpl implements ConsultantRatingService {
 
                 if (!alreadyRated) {
                     try {
-                        User consultant = userRepository.findById(schedule.getConsultantId())
+                        User consultant = userRepository.findByTenantIdAndId(tenantId, schedule.getConsultantId())
                             .filter(user -> user.getIsActive() != null && user.getIsActive())
                             .orElse(null);
 

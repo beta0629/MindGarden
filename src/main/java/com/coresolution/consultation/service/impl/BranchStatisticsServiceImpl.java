@@ -45,7 +45,7 @@ public class BranchStatisticsServiceImpl implements BranchStatisticsService {
     public Map<String, Object> getConsultationStatistics(Long branchId, LocalDate startDate, LocalDate endDate) {
         log.info("지점별 상담 건수 통계 조회: 지점 ID={}, 기간={} ~ {}", branchId, startDate, endDate);
         String tenantId = TenantContextHolder.getRequiredTenantId();
-        Branch branch = branchRepository.findById(branchId)
+        Branch branch = branchRepository.findByTenantIdAndId(tenantId, branchId)
             .orElseThrow(() -> new IllegalArgumentException("지점을 찾을 수 없습니다: " + branchId));
         List<ConsultationRecord> records = consultationRecordRepository
             .findByTenantIdAndIsDeletedFalseOrderBySessionDateDesc(tenantId, Pageable.unpaged()).getContent();
@@ -85,7 +85,7 @@ public class BranchStatisticsServiceImpl implements BranchStatisticsService {
     public Map<String, Object> getRevenueStatistics(Long branchId, LocalDate startDate, LocalDate endDate) {
         log.info("지점별 매출 통계 조회: 지점 ID={}, 기간={} ~ {}", branchId, startDate, endDate);
         String tenantId = TenantContextHolder.getRequiredTenantId();
-        Branch branch = branchRepository.findById(branchId)
+        Branch branch = branchRepository.findByTenantIdAndId(tenantId, branchId)
             .orElseThrow(() -> new IllegalArgumentException("지점을 찾을 수 없습니다: " + branchId));
         List<ConsultationRecord> records = consultationRecordRepository
             .findByTenantIdAndIsDeletedFalseOrderBySessionDateDesc(tenantId, Pageable.unpaged()).getContent();
@@ -127,7 +127,7 @@ public class BranchStatisticsServiceImpl implements BranchStatisticsService {
     public Map<String, Object> getConsultantPerformanceStatistics(Long branchId, LocalDate startDate, LocalDate endDate) {
         log.info("지점별 상담사 성과 통계 조회: 지점 ID={}, 기간={} ~ {}", branchId, startDate, endDate);
         String tenantId = TenantContextHolder.getRequiredTenantId();
-        Branch branch = branchRepository.findById(branchId)
+        Branch branch = branchRepository.findByTenantIdAndId(tenantId, branchId)
             .orElseThrow(() -> new IllegalArgumentException("지점을 찾을 수 없습니다: " + branchId));
         
         
@@ -174,7 +174,8 @@ public class BranchStatisticsServiceImpl implements BranchStatisticsService {
     public Map<String, Object> getCustomerSatisfactionStatistics(Long branchId, LocalDate startDate, LocalDate endDate) {
         log.info("지점별 고객 만족도 통계 조회: 지점 ID={}, 기간={} ~ {}", branchId, startDate, endDate);
         
-        Branch branch = branchRepository.findById(branchId)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        Branch branch = branchRepository.findByTenantIdAndId(tenantId, branchId)
             .orElseThrow(() -> new IllegalArgumentException("지점을 찾을 수 없습니다: " + branchId));
         
         // 공통 코드에서 만족도 기준 조회
@@ -290,7 +291,7 @@ public class BranchStatisticsServiceImpl implements BranchStatisticsService {
         log.info("상담사 상세 성과 조회: 지점 ID={}, 상담사 ID={}, 기간={} ~ {}", branchId, consultantId, startDate, endDate);
         
         String tenantId = TenantContextHolder.getRequiredTenantId();
-        User consultant = userRepository.findById(consultantId)
+        User consultant = userRepository.findByTenantIdAndId(tenantId, consultantId)
             .orElseThrow(() -> new IllegalArgumentException("상담사를 찾을 수 없습니다: " + consultantId));
         Page<ConsultationRecord> recordsPage = consultationRecordRepository
             .findByTenantIdAndConsultantIdAndIsDeletedFalseOrderBySessionDateDesc(tenantId, consultantId, Pageable.unpaged());

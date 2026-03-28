@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
@@ -65,6 +66,36 @@ class ScheduleServiceImplUpcomingTest {
     private static final Long TEST_CONSULTANT_ID = 1L;
     private static final Long TEST_CLIENT_ID = 2L;
 
+    /**
+     * Mockito eq(Long)와 제네릭 Repository 메서드 조합 시 매칭이 어긋나는 환경 대비 — id로 분기한다.
+     */
+    private void stubUserFindByTenantAndId(User mockConsultant, User mockClient) {
+        when(userRepository.findByTenantIdAndId(anyString(), anyLong())).thenAnswer(inv -> {
+            long id = ((Number) inv.getArgument(1)).longValue();
+            if (id == TEST_CONSULTANT_ID) {
+                return Optional.of(mockConsultant);
+            }
+            if (id == TEST_CLIENT_ID) {
+                return Optional.of(mockClient);
+            }
+            return Optional.<User>empty();
+        });
+    }
+
+    /** User Mockito 매칭 이슈 회피: id 기준으로 복호화 이름 스텁 */
+    private void stubDecryptedNamesByUserId() {
+        when(userPersonalDataCacheService.getDecryptedUserData(any(User.class))).thenAnswer(inv -> {
+            User u = inv.getArgument(0);
+            Map<String, String> m = new HashMap<>();
+            if (TEST_CONSULTANT_ID.equals(u.getId())) {
+                m.put("name", "홍길동");
+            } else if (TEST_CLIENT_ID.equals(u.getId())) {
+                m.put("name", "김내담");
+            }
+            return m;
+        });
+    }
+
     @BeforeEach
     void setUp() {
         TenantContextHolder.setTenantId(TEST_TENANT_ID);
@@ -84,15 +115,8 @@ class ScheduleServiceImplUpcomingTest {
 
         User mockConsultant = createMockUser(TEST_CONSULTANT_ID, "홍길동");
         User mockClient = createMockUser(TEST_CLIENT_ID, "김내담");
-        when(userRepository.findById(TEST_CONSULTANT_ID)).thenReturn(Optional.of(mockConsultant));
-        when(userRepository.findById(TEST_CLIENT_ID)).thenReturn(Optional.of(mockClient));
-
-        Map<String, String> consultantData = new HashMap<>();
-        consultantData.put("name", "홍길동");
-        Map<String, String> clientData = new HashMap<>();
-        clientData.put("name", "김내담");
-        when(userPersonalDataCacheService.getDecryptedUserData(mockConsultant)).thenReturn(consultantData);
-        when(userPersonalDataCacheService.getDecryptedUserData(mockClient)).thenReturn(clientData);
+        stubUserFindByTenantAndId(mockConsultant, mockClient);
+        stubDecryptedNamesByUserId();
 
         when(commonCodeService.getCodeName(eq("CONSULTATION_TYPE"), anyString())).thenReturn("개인상담");
 
@@ -119,15 +143,8 @@ class ScheduleServiceImplUpcomingTest {
 
         User mockConsultant = createMockUser(TEST_CONSULTANT_ID, "홍길동");
         User mockClient = createMockUser(TEST_CLIENT_ID, "김내담");
-        when(userRepository.findById(TEST_CONSULTANT_ID)).thenReturn(Optional.of(mockConsultant));
-        when(userRepository.findById(TEST_CLIENT_ID)).thenReturn(Optional.of(mockClient));
-
-        Map<String, String> consultantData = new HashMap<>();
-        consultantData.put("name", "홍길동");
-        Map<String, String> clientData = new HashMap<>();
-        clientData.put("name", "김내담");
-        when(userPersonalDataCacheService.getDecryptedUserData(mockConsultant)).thenReturn(consultantData);
-        when(userPersonalDataCacheService.getDecryptedUserData(mockClient)).thenReturn(clientData);
+        stubUserFindByTenantAndId(mockConsultant, mockClient);
+        stubDecryptedNamesByUserId();
 
         when(commonCodeService.getCodeName(eq("CONSULTATION_TYPE"), anyString())).thenReturn("개인상담");
 
@@ -168,15 +185,8 @@ class ScheduleServiceImplUpcomingTest {
 
         User mockConsultant = createMockUser(TEST_CONSULTANT_ID, "홍길동");
         User mockClient = createMockUser(TEST_CLIENT_ID, "김내담");
-        when(userRepository.findById(TEST_CONSULTANT_ID)).thenReturn(Optional.of(mockConsultant));
-        when(userRepository.findById(TEST_CLIENT_ID)).thenReturn(Optional.of(mockClient));
-
-        Map<String, String> consultantData = new HashMap<>();
-        consultantData.put("name", "홍길동");
-        Map<String, String> clientData = new HashMap<>();
-        clientData.put("name", "김내담");
-        when(userPersonalDataCacheService.getDecryptedUserData(mockConsultant)).thenReturn(consultantData);
-        when(userPersonalDataCacheService.getDecryptedUserData(mockClient)).thenReturn(clientData);
+        stubUserFindByTenantAndId(mockConsultant, mockClient);
+        stubDecryptedNamesByUserId();
 
         when(commonCodeService.getCodeName(eq("CONSULTATION_TYPE"), anyString())).thenReturn("개인상담");
 
@@ -209,15 +219,8 @@ class ScheduleServiceImplUpcomingTest {
 
         User mockConsultant = createMockUser(TEST_CONSULTANT_ID, "홍길동");
         User mockClient = createMockUser(TEST_CLIENT_ID, "김내담");
-        when(userRepository.findById(TEST_CONSULTANT_ID)).thenReturn(Optional.of(mockConsultant));
-        when(userRepository.findById(TEST_CLIENT_ID)).thenReturn(Optional.of(mockClient));
-
-        Map<String, String> consultantData = new HashMap<>();
-        consultantData.put("name", "홍길동");
-        Map<String, String> clientData = new HashMap<>();
-        clientData.put("name", "김내담");
-        when(userPersonalDataCacheService.getDecryptedUserData(mockConsultant)).thenReturn(consultantData);
-        when(userPersonalDataCacheService.getDecryptedUserData(mockClient)).thenReturn(clientData);
+        stubUserFindByTenantAndId(mockConsultant, mockClient);
+        stubDecryptedNamesByUserId();
 
         when(commonCodeService.getCodeName(eq("CONSULTATION_TYPE"), anyString())).thenReturn("개인상담");
 
@@ -249,15 +252,8 @@ class ScheduleServiceImplUpcomingTest {
 
         User mockConsultant = createMockUser(TEST_CONSULTANT_ID, "홍길동");
         User mockClient = createMockUser(TEST_CLIENT_ID, "김내담");
-        when(userRepository.findById(TEST_CONSULTANT_ID)).thenReturn(Optional.of(mockConsultant));
-        when(userRepository.findById(TEST_CLIENT_ID)).thenReturn(Optional.of(mockClient));
-
-        Map<String, String> consultantData = new HashMap<>();
-        consultantData.put("name", "홍길동");
-        Map<String, String> clientData = new HashMap<>();
-        clientData.put("name", "김내담");
-        when(userPersonalDataCacheService.getDecryptedUserData(mockConsultant)).thenReturn(consultantData);
-        when(userPersonalDataCacheService.getDecryptedUserData(mockClient)).thenReturn(clientData);
+        stubUserFindByTenantAndId(mockConsultant, mockClient);
+        stubDecryptedNamesByUserId();
 
         when(commonCodeService.getCodeName(eq("CONSULTATION_TYPE"), anyString())).thenReturn("개인상담");
 

@@ -120,7 +120,27 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     
     @Override
     protected Optional<Schedule> findEntityById(Long id) {
-        return scheduleRepository.findById(id);
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null || tenantId.isEmpty()) {
+            log.warn("findEntityById: 테넌트 컨텍스트 없음, 스케줄 id={} 조회 생략", id);
+            return Optional.empty();
+        }
+        return scheduleRepository.findByTenantIdAndId(tenantId, id);
+    }
+
+    /**
+     * 엔티티에 담긴 tenantId(없으면 현재 컨텍스트)로 사용자를 테넌트 스코프 조회한다.
+     * tenantId·userId가 없으면 빈 Optional (null tenant로 Repository 호출 금지).
+     */
+    private Optional<User> findUserByTenantContext(String primaryTenantId, Long userId) {
+        String tenantId = primaryTenantId;
+        if (tenantId == null || tenantId.isEmpty()) {
+            tenantId = TenantContextHolder.getTenantId();
+        }
+        if (tenantId == null || tenantId.isEmpty() || userId == null) {
+            return Optional.empty();
+        }
+        return userRepository.findByTenantIdAndId(tenantId, userId);
     }
     
     @Override
@@ -1311,7 +1331,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 mapping.getClient().getId().equals(clientId)) {
                 
                 try {
-                    ConsultantClientMapping freshMapping = mappingRepository.findById(mapping.getId())
+                    ConsultantClientMapping freshMapping = mappingRepository.findByTenantIdAndId(tenantId, mapping.getId())
                             .orElseThrow(() -> new RuntimeException("매칭을 찾을 수 없습니다: " + mapping.getId()));
                     
                     log.info("🔍 매칭 상태 확인: mappingId={}, totalSessions={}, usedSessions={}, remainingSessions={}", 
@@ -1504,7 +1524,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         request.setCreatedAt(vacation.getCreatedAt());
         request.setUpdatedAt(vacation.getUpdatedAt());
         
-        User consultant = userRepository.findById(vacation.getConsultantId()).orElse(null);
+        User consultant = findUserByTenantContext(vacation.getTenantId(), vacation.getConsultantId()).orElse(null);
         if (consultant != null) {
             request.setConsultantName(consultant.getName());
         }
@@ -1520,7 +1540,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
      */
     private String getVacationTitle(Vacation vacation) {
         String consultantName = "";
-        User consultant = userRepository.findById(vacation.getConsultantId()).orElse(null);
+        User consultant = findUserByTenantContext(vacation.getTenantId(), vacation.getConsultantId()).orElse(null);
         if (consultant != null) {
             consultantName = consultant.getName();
         }
@@ -1579,7 +1599,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 schedule.getId(), schedule.getConsultantId(), schedule.getClientId());
         
         try {
-            User consultant = userRepository.findById(schedule.getConsultantId()).orElse(null);
+            User consultant = findUserByTenantContext(schedule.getTenantId(), schedule.getConsultantId()).orElse(null);
             log.info("👤 상담사 조회 결과: consultant={}, isActive={}", 
                     consultant != null ? consultant.getName() : "null", 
                     consultant != null ? consultant.getIsActive() : "null");
@@ -1591,7 +1611,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             }
             
             if (schedule.getClientId() != null) {
-                User client = userRepository.findById(schedule.getClientId()).orElse(null);
+                User client = findUserByTenantContext(schedule.getTenantId(), schedule.getClientId()).orElse(null);
                 log.info("👥 내담자 조회 결과: client={}, isActive={}", 
                         client != null ? client.getName() : "null", 
                         client != null ? client.getIsActive() : "null");
@@ -1701,7 +1721,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             
             for (Schedule schedule : todayExpiredSchedules) {
                 try {
-                    Schedule latestSchedule = scheduleRepository.findById(schedule.getId()).orElse(null);
+                    Schedule latestSchedule = scheduleRepository.findByTenantIdAndId(tenantId, schedule.getId()).orElse(null);
                     if (latestSchedule != null && ScheduleStatus.CONFIRMED.equals(latestSchedule.getStatus())) {
                         boolean hasRecord = consultationRecordRepository.existsByTenantIdAndConsultationIdAndIsDeletedFalse(tenantId, latestSchedule.getId());
                         if (hasRecord) {
@@ -1731,7 +1751,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             
             for (Schedule schedule : pastBookedSchedules) {
                 try {
-                    Schedule latestSchedule = scheduleRepository.findById(schedule.getId()).orElse(null);
+                    Schedule latestSchedule = scheduleRepository.findByTenantIdAndId(tenantId, schedule.getId()).orElse(null);
                     if (latestSchedule != null && ScheduleStatus.BOOKED.equals(latestSchedule.getStatus())) {
                         boolean hasRecord = consultationRecordRepository.existsByTenantIdAndConsultationIdAndIsDeletedFalse(tenantId, latestSchedule.getId());
                         if (hasRecord) {
@@ -1756,7 +1776,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             
             for (Schedule schedule : pastConfirmedSchedules) {
                 try {
-                    Schedule latestSchedule = scheduleRepository.findById(schedule.getId()).orElse(null);
+                    Schedule latestSchedule = scheduleRepository.findByTenantIdAndId(tenantId, schedule.getId()).orElse(null);
                     if (latestSchedule != null && ScheduleStatus.CONFIRMED.equals(latestSchedule.getStatus())) {
                         boolean hasRecord = consultationRecordRepository.existsByTenantIdAndConsultationIdAndIsDeletedFalse(tenantId, latestSchedule.getId());
                         if (hasRecord) {
@@ -1856,14 +1876,14 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         log.info("🏢 지점별 스케줄 조회: branchId={}, startDate={}, endDate={}", branchId, startDate, endDate);
         
         try {
-            Branch branch = branchRepository.findById(branchId)
-                .orElseThrow(() -> new IllegalArgumentException("지점을 찾을 수 없습니다: " + branchId));
-            
             String tenantId = TenantContextHolder.getTenantId();
             if (tenantId == null) {
                 log.error("❌ tenantId가 설정되지 않았습니다");
                 return new ArrayList<>();
             }
+            Branch branch = branchRepository.findByTenantIdAndId(tenantId, branchId)
+                .orElseThrow(() -> new IllegalArgumentException("지점을 찾을 수 없습니다: " + branchId));
+            
             List<User> consultants = userRepository.findByBranchAndRoleAndIsDeletedFalseOrderByUserId(
                 tenantId, branch, com.coresolution.consultation.constant.UserRole.CONSULTANT);
             if (consultants.isEmpty()) {
@@ -1895,7 +1915,11 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 branchId, consultantId, startDate, endDate);
         
         try {
-            User consultant = userRepository.findById(consultantId)
+            String tenantId = TenantContextHolder.getTenantId();
+            if (tenantId == null) {
+                throw new IllegalArgumentException("tenantId가 설정되지 않았습니다");
+            }
+            User consultant = userRepository.findByTenantIdAndId(tenantId, consultantId)
                 .orElseThrow(() -> new IllegalArgumentException("상담사를 찾을 수 없습니다: " + consultantId));
             
             if (consultant.getBranch() == null || !consultant.getBranch().getId().equals(branchId)) {
@@ -1966,14 +1990,14 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         log.info("📅 지점별 상담사 스케줄 현황 조회: branchId={}, date={}", branchId, date);
         
         try {
-            Branch branch = branchRepository.findById(branchId)
-                .orElseThrow(() -> new IllegalArgumentException("지점을 찾을 수 없습니다: " + branchId));
-            
             String tenantId = TenantContextHolder.getTenantId();
             if (tenantId == null) {
                 log.error("❌ tenantId가 설정되지 않았습니다");
                 return new HashMap<>();
             }
+            Branch branch = branchRepository.findByTenantIdAndId(tenantId, branchId)
+                .orElseThrow(() -> new IllegalArgumentException("지점을 찾을 수 없습니다: " + branchId));
+            
             List<User> consultants = userRepository.findByBranchAndRoleAndIsDeletedFalseOrderByUserId(
                 tenantId, branch, com.coresolution.consultation.constant.UserRole.CONSULTANT);
             
@@ -2012,8 +2036,12 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         log.info("🏢 지점별 스케줄 생성: branchId={}, schedule={}", branchId, schedule.getTitle());
         
         try {
+            String tenantId = TenantContextHolder.getTenantId();
+            if (tenantId == null) {
+                throw new IllegalArgumentException("tenantId가 설정되지 않았습니다");
+            }
             if (schedule.getConsultantId() != null) {
-                User consultant = userRepository.findById(schedule.getConsultantId())
+                User consultant = userRepository.findByTenantIdAndId(tenantId, schedule.getConsultantId())
                     .orElseThrow(() -> new IllegalArgumentException("상담사를 찾을 수 없습니다: " + schedule.getConsultantId()));
                 
                 if (consultant.getBranch() == null || !consultant.getBranch().getId().equals(branchId)) {
@@ -2038,11 +2066,15 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         log.info("🏢 지점별 스케줄 수정: branchId={}, scheduleId={}", branchId, scheduleId);
         
         try {
-            Schedule existingSchedule = scheduleRepository.findById(scheduleId)
+            String tenantId = TenantContextHolder.getTenantId();
+            if (tenantId == null) {
+                throw new IllegalArgumentException("tenantId가 설정되지 않았습니다");
+            }
+            Schedule existingSchedule = scheduleRepository.findByTenantIdAndId(tenantId, scheduleId)
                 .orElseThrow(() -> new IllegalArgumentException("스케줄을 찾을 수 없습니다: " + scheduleId));
             
             if (existingSchedule.getConsultantId() != null) {
-                User consultant = userRepository.findById(existingSchedule.getConsultantId())
+                User consultant = userRepository.findByTenantIdAndId(tenantId, existingSchedule.getConsultantId())
                     .orElseThrow(() -> new IllegalArgumentException("상담사를 찾을 수 없습니다: " + existingSchedule.getConsultantId()));
                 
                 if (consultant.getBranch() == null || !consultant.getBranch().getId().equals(branchId)) {
@@ -2067,11 +2099,15 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         log.info("🏢 지점별 스케줄 삭제: branchId={}, scheduleId={}", branchId, scheduleId);
         
         try {
-            Schedule existingSchedule = scheduleRepository.findById(scheduleId)
+            String tenantId = TenantContextHolder.getTenantId();
+            if (tenantId == null) {
+                throw new IllegalArgumentException("tenantId가 설정되지 않았습니다");
+            }
+            Schedule existingSchedule = scheduleRepository.findByTenantIdAndId(tenantId, scheduleId)
                 .orElseThrow(() -> new IllegalArgumentException("스케줄을 찾을 수 없습니다: " + scheduleId));
             
             if (existingSchedule.getConsultantId() != null) {
-                User consultant = userRepository.findById(existingSchedule.getConsultantId())
+                User consultant = userRepository.findByTenantIdAndId(tenantId, existingSchedule.getConsultantId())
                     .orElseThrow(() -> new IllegalArgumentException("상담사를 찾을 수 없습니다: " + existingSchedule.getConsultantId()));
                 
                 if (consultant.getBranch() == null || !consultant.getBranch().getId().equals(branchId)) {
@@ -2095,7 +2131,11 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 branchId, consultantId, startTime, endTime);
         
         try {
-            User consultant = userRepository.findById(consultantId)
+            String tenantId = TenantContextHolder.getTenantId();
+            if (tenantId == null) {
+                throw new IllegalArgumentException("tenantId가 설정되지 않았습니다");
+            }
+            User consultant = userRepository.findByTenantIdAndId(tenantId, consultantId)
                 .orElseThrow(() -> new IllegalArgumentException("상담사를 찾을 수 없습니다: " + consultantId));
             
             if (consultant.getBranch() == null || !consultant.getBranch().getId().equals(branchId)) {
@@ -2127,7 +2167,11 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         log.info("⏰ 지점별 스케줄 가능 시간 조회: branchId={}, consultantId={}, date={}", branchId, consultantId, date);
         
         try {
-            User consultant = userRepository.findById(consultantId)
+            String tenantId = TenantContextHolder.getTenantId();
+            if (tenantId == null) {
+                throw new IllegalArgumentException("tenantId가 설정되지 않았습니다");
+            }
+            User consultant = userRepository.findByTenantIdAndId(tenantId, consultantId)
                 .orElseThrow(() -> new IllegalArgumentException("상담사를 찾을 수 없습니다: " + consultantId));
             
             if (consultant.getBranch() == null || !consultant.getBranch().getId().equals(branchId)) {
@@ -2243,7 +2287,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                     
                     try {
                         if (schedule.getConsultantId() != null) {
-                            User consultant = userRepository.findById(schedule.getConsultantId()).orElse(null);
+                            User consultant = userRepository.findByTenantIdAndId(tenantId, schedule.getConsultantId()).orElse(null);
                             if (consultant != null) {
                                 Map<String, String> decryptedData = userPersonalDataCacheService.getDecryptedUserData(consultant);
                                 if (decryptedData != null && decryptedData.get("name") != null) {
@@ -2253,7 +2297,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                         }
                         
                         if (schedule.getClientId() != null) {
-                            User client = userRepository.findById(schedule.getClientId()).orElse(null);
+                            User client = userRepository.findByTenantIdAndId(tenantId, schedule.getClientId()).orElse(null);
                             if (client != null) {
                                 Map<String, String> decryptedData = userPersonalDataCacheService.getDecryptedUserData(client);
                                 if (decryptedData != null && decryptedData.get("name") != null) {

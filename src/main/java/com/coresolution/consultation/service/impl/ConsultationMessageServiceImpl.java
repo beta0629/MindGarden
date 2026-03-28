@@ -45,7 +45,8 @@ public class ConsultationMessageServiceImpl extends BaseTenantEntityServiceImpl<
     
     @Override
     protected Optional<ConsultationMessage> findEntityById(Long id) {
-        return consultationMessageRepository.findById(id);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return consultationMessageRepository.findByTenantIdAndId(tenantId, id);
     }
     
     @Override
@@ -143,12 +144,10 @@ public class ConsultationMessageServiceImpl extends BaseTenantEntityServiceImpl<
         
         log.info("📨 메시지 답장 - 원본 메시지 ID: {}", originalMessageId);
         
-        Optional<ConsultationMessage> originalMessageOpt = consultationMessageRepository.findById(originalMessageId);
-        if (originalMessageOpt.isEmpty()) {
-            throw new RuntimeException("원본 메시지를 찾을 수 없습니다: " + originalMessageId);
-        }
-        
-        ConsultationMessage originalMessage = originalMessageOpt.get();
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        ConsultationMessage originalMessage = consultationMessageRepository
+            .findByTenantIdAndId(tenantId, originalMessageId)
+            .orElseThrow(() -> new RuntimeException("원본 메시지를 찾을 수 없습니다: " + originalMessageId));
         
         // 답장 메시지 생성
         ConsultationMessage reply = new ConsultationMessage();
@@ -175,23 +174,11 @@ public class ConsultationMessageServiceImpl extends BaseTenantEntityServiceImpl<
             reply.setReceiverId(originalMessage.getClientId());
         }
         
-        // BaseTenantEntityService의 create 메서드 사용
-        String tenantId = TenantContextHolder.getTenantId();
-        ConsultationMessage savedReply;
-        if (tenantId != null) {
-            savedReply = create(tenantId, reply);
-        } else {
-            // 테넌트 컨텍스트가 없으면 기존 방식 사용 (하위 호환성)
-            savedReply = consultationMessageRepository.save(reply);
-        }
+        ConsultationMessage savedReply = create(tenantId, reply);
         
         // 원본 메시지 답장 처리
         originalMessage.markAsReplied();
-        if (tenantId != null && originalMessage.getTenantId() != null) {
-            update(tenantId, originalMessage);
-        } else {
-            consultationMessageRepository.save(originalMessage);
-        }
+        update(tenantId, originalMessage);
         
         return savedReply;
     }
@@ -216,34 +203,25 @@ public class ConsultationMessageServiceImpl extends BaseTenantEntityServiceImpl<
     public void deleteMessage(Long messageId) {
         log.info("📨 메시지 삭제 - 메시지 ID: {}", messageId);
         
-        Optional<ConsultationMessage> messageOpt = consultationMessageRepository.findById(messageId);
-        if (messageOpt.isEmpty()) {
-            throw new RuntimeException("메시지를 찾을 수 없습니다: " + messageId);
-        }
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        ConsultationMessage message = consultationMessageRepository
+            .findByTenantIdAndId(tenantId, messageId)
+            .orElseThrow(() -> new RuntimeException("메시지를 찾을 수 없습니다: " + messageId));
         
-        consultationMessageRepository.deleteById(messageId);
+        consultationMessageRepository.delete(message);
     }
 
     @Override
     public ConsultationMessage archiveMessage(Long messageId) {
         log.info("📨 메시지 아카이브 - 메시지 ID: {}", messageId);
         
-        Optional<ConsultationMessage> messageOpt = consultationMessageRepository.findById(messageId);
-        if (messageOpt.isEmpty()) {
-            throw new RuntimeException("메시지를 찾을 수 없습니다: " + messageId);
-        }
-        
-        ConsultationMessage message = messageOpt.get();
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        ConsultationMessage message = consultationMessageRepository
+            .findByTenantIdAndId(tenantId, messageId)
+            .orElseThrow(() -> new RuntimeException("메시지를 찾을 수 없습니다: " + messageId));
         message.archive();
         
-        // BaseTenantEntityService의 update 메서드 사용
-        String tenantId = TenantContextHolder.getTenantId();
-        if (tenantId != null && message.getTenantId() != null) {
-            return update(tenantId, message);
-        } else {
-            // 테넌트 컨텍스트가 없으면 기존 방식 사용 (하위 호환성)
-            return consultationMessageRepository.save(message);
-        }
+        return update(tenantId, message);
     }
 
     @Override
@@ -322,7 +300,8 @@ public class ConsultationMessageServiceImpl extends BaseTenantEntityServiceImpl<
         if (tenantId != null) {
             return partialUpdate(tenantId, id, updateData);
         }
-        ConsultationMessage existing = consultationMessageRepository.findById(id)
+        String requiredTenantId = TenantContextHolder.getRequiredTenantId();
+        ConsultationMessage existing = consultationMessageRepository.findByTenantIdAndId(requiredTenantId, id)
                 .orElseThrow(() -> new RuntimeException("메시지를 찾을 수 없습니다: " + id));
         // 부분 업데이트 로직
         return consultationMessageRepository.save(existing);
@@ -334,7 +313,8 @@ public class ConsultationMessageServiceImpl extends BaseTenantEntityServiceImpl<
         if (tenantId != null) {
             delete(tenantId, id);
         } else {
-            ConsultationMessage message = consultationMessageRepository.findById(id)
+            String requiredTenantId = TenantContextHolder.getRequiredTenantId();
+            ConsultationMessage message = consultationMessageRepository.findByTenantIdAndId(requiredTenantId, id)
                     .orElseThrow(() -> new RuntimeException("메시지를 찾을 수 없습니다: " + id));
             message.setIsDeleted(true);
             consultationMessageRepository.save(message);
@@ -348,11 +328,10 @@ public class ConsultationMessageServiceImpl extends BaseTenantEntityServiceImpl<
     
     @Override
     public void restoreById(Long id) {
-        ConsultationMessage message = consultationMessageRepository.findById(id)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        consultationMessageRepository.restoreByIdAndTenantId(id, tenantId);
+        consultationMessageRepository.findByTenantIdAndId(tenantId, id)
                 .orElseThrow(() -> new RuntimeException("메시지를 찾을 수 없습니다: " + id));
-        message.setIsDeleted(false);
-        message.setDeletedAt(null);
-        consultationMessageRepository.save(message);
     }
     
     @Override
@@ -459,12 +438,15 @@ public class ConsultationMessageServiceImpl extends BaseTenantEntityServiceImpl<
     
     @Override
     public Optional<ConsultationMessage> findByIdAndVersion(Long id, Long version) {
-        return consultationMessageRepository.findByIdAndVersion(id, version);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return consultationMessageRepository.findByIdAndVersion(id, version)
+                .filter(m -> tenantId.equals(m.getTenantId()));
     }
     
     // ConsultationMessageService 전용 메서드
     public ConsultationMessage getById(Long id) {
-        return consultationMessageRepository.findById(id).orElse(null);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return consultationMessageRepository.findByTenantIdAndId(tenantId, id).orElse(null);
     }
     
     /** tenant_id 필수: 본 API는 tenantId 기준으로만 목록을 조회함. */

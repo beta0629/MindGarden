@@ -57,10 +57,27 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
         this.consultantRepository = consultantRepository;
     }
     
+    /**
+     * 현재 컨텍스트 테넌트로 상담사를 조회한다. 테넌트 미설정 시 예외.
+     *
+     * @param consultantId 상담사 ID
+     * @return 상담사 엔티티
+     */
+    private Consultant requireConsultantInCurrentTenant(Long consultantId) {
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return consultantRepository.findByTenantIdAndId(tenantId, consultantId)
+                .orElseThrow(() -> new IllegalArgumentException(ConsultantConstants.ERROR_CONSULTANT_NOT_FOUND));
+    }
+    
     
     @Override
     protected Optional<Consultant> findEntityById(Long id) {
-        return consultantRepository.findById(id);
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null || tenantId.isEmpty()) {
+            log.warn("findEntityById: 테넌트 컨텍스트 없음, 상담사 id={} 조회 생략", id);
+            return Optional.empty();
+        }
+        return consultantRepository.findByTenantIdAndId(tenantId, id);
     }
     
     @Override
@@ -118,7 +135,15 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
         if (tenantId != null && consultant.getTenantId() != null) {
             return update(tenantId, consultant);
         } else {
-            Consultant existingConsultant = consultantRepository.findById(consultant.getId())
+            String tenantForLoad = consultant.getTenantId();
+            if (tenantForLoad == null || tenantForLoad.isEmpty()) {
+                tenantForLoad = TenantContextHolder.getTenantId();
+            }
+            if (tenantForLoad == null || tenantForLoad.isEmpty()) {
+                log.warn("update: 테넌트 정보 없음, 상담사 id={} 조회 생략", consultant.getId());
+                throw new RuntimeException("상담사를 찾을 수 없습니다: " + consultant.getId());
+            }
+            Consultant existingConsultant = consultantRepository.findByTenantIdAndId(tenantForLoad, consultant.getId())
                     .orElseThrow(() -> new RuntimeException("상담사를 찾을 수 없습니다: " + consultant.getId()));
             
             if (existingConsultant.getTenantId() != null) {
@@ -131,7 +156,8 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
     
     @Override
     public Consultant partialUpdate(Long id, Consultant updateData) {
-        Consultant existingConsultant = consultantRepository.findById(id)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        Consultant existingConsultant = consultantRepository.findByTenantIdAndId(tenantId, id)
                 .orElseThrow(() -> new RuntimeException("상담사를 찾을 수 없습니다: " + id));
         
         if (existingConsultant.getTenantId() != null) {
@@ -161,24 +187,17 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
     @Override
     public void softDeleteById(Long id) {
         String tenantId = TenantContextHolder.getTenantId();
-        if (tenantId != null) {
+        if (tenantId != null && !tenantId.isEmpty()) {
             delete(tenantId, id);
-        } else {
-            Consultant consultant = consultantRepository.findById(id)
-                    .orElseThrow(() -> new RuntimeException("상담사를 찾을 수 없습니다: " + id));
-            
-            if (consultant.getTenantId() != null) {
-                accessControlService.validateTenantAccess(consultant.getTenantId());
-            }
-            
-            consultant.setIsDeleted(true);
-            consultantRepository.save(consultant);
+            return;
         }
+        throw new IllegalStateException("tenantId는 필수입니다. 테넌트 정보가 없습니다.");
     }
     
     @Override
     public void restoreById(Long id) {
-        Consultant consultant = consultantRepository.findById(id)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        Consultant consultant = consultantRepository.findByTenantIdAndId(tenantId, id)
                 .orElseThrow(() -> new RuntimeException("상담사를 찾을 수 없습니다: " + id));
         
         consultant.setIsDeleted(false);
@@ -393,7 +412,8 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
     
     @Override
     public Optional<Consultant> findByIdWithDetails(Long id) {
-        return consultantRepository.findById(id);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return consultantRepository.findByTenantIdAndId(tenantId, id);
     }
     
     
@@ -401,16 +421,16 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
     public Page<Client> findClientsByConsultantId(Long consultantId, String status, Pageable pageable) {
         log.info("상담사별 내담자 조회: consultantId={}, status={}", consultantId, status);
         
-        Consultant consultant = consultantRepository.findById(consultantId)
-                .orElseThrow(() -> new IllegalArgumentException(ConsultantConstants.ERROR_CONSULTANT_NOT_FOUND));
-        
-        log.debug("상담사 정보 확인: consultantId={}, name={}", consultant.getId(), consultant.getName());
-        
-        String tenantId = com.coresolution.core.context.TenantContextHolder.getTenantId();
-        if (tenantId == null) {
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null || tenantId.isEmpty()) {
             log.error("❌ tenantId가 설정되지 않았습니다");
             return new org.springframework.data.domain.PageImpl<>(new java.util.ArrayList<>(), pageable, 0);
         }
+        
+        Consultant consultant = consultantRepository.findByTenantIdAndId(tenantId, consultantId)
+                .orElseThrow(() -> new IllegalArgumentException(ConsultantConstants.ERROR_CONSULTANT_NOT_FOUND));
+        
+        log.debug("상담사 정보 확인: consultantId={}, name={}", consultant.getId(), consultant.getName());
         
         List<ConsultantClientMapping> mappings;
         if (status != null && !status.trim().isEmpty()) {
@@ -452,16 +472,16 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
     public Optional<Client> findClientByConsultantId(Long consultantId, Long clientId) {
         log.info("상담사별 특정 내담자 조회: consultantId={}, clientId={}", consultantId, clientId);
         
-        Consultant consultant = consultantRepository.findById(consultantId)
-                .orElseThrow(() -> new IllegalArgumentException(ConsultantConstants.ERROR_CONSULTANT_NOT_FOUND));
-        
-        log.debug("상담사 정보 확인: consultantId={}, name={}", consultant.getId(), consultant.getName());
-        
-        String tenantId = com.coresolution.core.context.TenantContextHolder.getTenantId();
-        if (tenantId == null) {
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null || tenantId.isEmpty()) {
             log.error("❌ tenantId가 설정되지 않았습니다");
             return Optional.empty();
         }
+        
+        Consultant consultant = consultantRepository.findByTenantIdAndId(tenantId, consultantId)
+                .orElseThrow(() -> new IllegalArgumentException(ConsultantConstants.ERROR_CONSULTANT_NOT_FOUND));
+        
+        log.debug("상담사 정보 확인: consultantId={}, name={}", consultant.getId(), consultant.getName());
         
         // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         List<ConsultantClientMapping> mappings = mappingRepository.findByConsultantIdAndStatusNot(tenantId, consultantId, ConsultantClientMapping.MappingStatus.INACTIVE);
@@ -487,8 +507,7 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
     public Client updateClientProfile(Long consultantId, Long clientId, Client updateData) {
         log.info("상담사별 내담자 프로필 업데이트: consultantId={}, clientId={}", consultantId, clientId);
         
-        Consultant consultant = consultantRepository.findById(consultantId)
-                .orElseThrow(() -> new IllegalArgumentException(ConsultantConstants.ERROR_CONSULTANT_NOT_FOUND));
+        Consultant consultant = requireConsultantInCurrentTenant(consultantId);
         
         log.debug("상담사 정보 확인: consultantId={}, name={}", consultant.getId(), consultant.getName());
         
@@ -499,8 +518,7 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
     public Map<String, Object> getClientStatistics(Long consultantId) {
         log.info("상담사별 내담자 통계 조회: consultantId={}", consultantId);
         
-        Consultant consultant = consultantRepository.findById(consultantId)
-                .orElseThrow(() -> new IllegalArgumentException(ConsultantConstants.ERROR_CONSULTANT_NOT_FOUND));
+        Consultant consultant = requireConsultantInCurrentTenant(consultantId);
         
         Map<String, Object> stats = new HashMap<>();
         stats.put(ConsultantConstants.STATS_TOTAL_CLIENTS, 0);
@@ -518,8 +536,7 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
     public List<Map<String, Object>> getAvailableSlots(Long consultantId, LocalDate date) {
         log.info("상담사별 사용 가능한 시간대 조회: consultantId={}, date={}", consultantId, date);
         
-        Consultant consultant = consultantRepository.findById(consultantId)
-                .orElseThrow(() -> new IllegalArgumentException(ConsultantConstants.ERROR_CONSULTANT_NOT_FOUND));
+        Consultant consultant = requireConsultantInCurrentTenant(consultantId);
         
         log.debug("상담사 정보 확인: consultantId={}, name={}", consultant.getId(), consultant.getName());
         
@@ -540,8 +557,7 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
         log.info("상담사 스케줄 등록: consultantId={}, date={}, startTime={}, endTime={}", 
                 consultantId, date, startTime, endTime);
         
-        Consultant consultant = consultantRepository.findById(consultantId)
-                .orElseThrow(() -> new IllegalArgumentException(ConsultantConstants.ERROR_CONSULTANT_NOT_FOUND));
+        Consultant consultant = requireConsultantInCurrentTenant(consultantId);
         
         log.debug("상담사 정보 확인: consultantId={}, name={}", consultant.getId(), consultant.getName());
         
@@ -557,8 +573,7 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
         log.info("상담사 스케줄 수정: consultantId={}, scheduleId={}, date={}, startTime={}, endTime={}", 
                 consultantId, scheduleId, date, startTime, endTime);
         
-        Consultant consultant = consultantRepository.findById(consultantId)
-                .orElseThrow(() -> new IllegalArgumentException(ConsultantConstants.ERROR_CONSULTANT_NOT_FOUND));
+        Consultant consultant = requireConsultantInCurrentTenant(consultantId);
         
         log.debug("상담사 정보 확인: consultantId={}, name={}", consultant.getId(), consultant.getName());
         
@@ -573,8 +588,7 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
     public void deleteSchedule(Long consultantId, Long scheduleId) {
         log.info("상담사 스케줄 삭제: consultantId={}, scheduleId={}", consultantId, scheduleId);
         
-        Consultant consultant = consultantRepository.findById(consultantId)
-                .orElseThrow(() -> new IllegalArgumentException(ConsultantConstants.ERROR_CONSULTANT_NOT_FOUND));
+        Consultant consultant = requireConsultantInCurrentTenant(consultantId);
         
         log.debug("상담사 정보 확인: consultantId={}, name={}", consultant.getId(), consultant.getName());
         
@@ -586,8 +600,7 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
     public List<Map<String, Object>> getConsultationBookings(Long consultantId, String status) {
         log.info("상담사별 상담 예약 조회: consultantId={}, status={}", consultantId, status);
         
-        Consultant consultant = consultantRepository.findById(consultantId)
-                .orElseThrow(() -> new IllegalArgumentException(ConsultantConstants.ERROR_CONSULTANT_NOT_FOUND));
+        Consultant consultant = requireConsultantInCurrentTenant(consultantId);
         
         log.debug("상담사 정보 확인: consultantId={}, name={}", consultant.getId(), consultant.getName());
         
@@ -611,8 +624,7 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
     public void confirmConsultation(Long consultationId, Long consultantId) {
         log.info("상담 확정: consultationId={}, consultantId={}", consultationId, consultantId);
         
-        Consultant consultant = consultantRepository.findById(consultantId)
-                .orElseThrow(() -> new IllegalArgumentException(ConsultantConstants.ERROR_CONSULTANT_NOT_FOUND));
+        Consultant consultant = requireConsultantInCurrentTenant(consultantId);
         
         log.debug("상담사 정보 확인: consultantId={}, name={}", consultant.getId(), consultant.getName());
         
@@ -623,8 +635,7 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
     public void cancelConsultation(Long consultationId, Long consultantId) {
         log.info("상담 취소: consultationId={}, consultantId={}", consultationId, consultantId);
         
-        Consultant consultant = consultantRepository.findById(consultantId)
-                .orElseThrow(() -> new IllegalArgumentException(ConsultantConstants.ERROR_CONSULTANT_NOT_FOUND));
+        Consultant consultant = requireConsultantInCurrentTenant(consultantId);
         
         log.debug("상담사 정보 확인: consultantId={}, name={}", consultant.getId(), consultant.getName());
         
@@ -635,8 +646,7 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
     public void completeConsultation(Long consultationId, Long consultantId, String notes, int rating) {
         log.info("상담 완료: consultationId={}, consultantId={}, rating={}", consultationId, consultantId, rating);
         
-        Consultant consultant = consultantRepository.findById(consultantId)
-                .orElseThrow(() -> new IllegalArgumentException(ConsultantConstants.ERROR_CONSULTANT_NOT_FOUND));
+        Consultant consultant = requireConsultantInCurrentTenant(consultantId);
         
         log.debug("상담사 정보 확인: consultantId={}, name={}", consultant.getId(), consultant.getName());
         
@@ -652,8 +662,7 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
     public Map<String, Object> getConsultationStatistics(Long consultantId, LocalDate startDate, LocalDate endDate) {
         log.info("상담사별 상담 통계 조회: consultantId={}, startDate={}, endDate={}", consultantId, startDate, endDate);
         
-        Consultant consultant = consultantRepository.findById(consultantId)
-                .orElseThrow(() -> new IllegalArgumentException(ConsultantConstants.ERROR_CONSULTANT_NOT_FOUND));
+        Consultant consultant = requireConsultantInCurrentTenant(consultantId);
         
         log.debug("상담사 정보 확인: consultantId={}, name={}", consultant.getId(), consultant.getName());
         
@@ -682,8 +691,7 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
     public Map<String, Object> getRevenueStatistics(Long consultantId, LocalDate startDate, LocalDate endDate) {
         log.info("상담사별 수익 통계 조회: consultantId={}, startDate={}, endDate={}", consultantId, startDate, endDate);
         
-        Consultant consultant = consultantRepository.findById(consultantId)
-                .orElseThrow(() -> new IllegalArgumentException(ConsultantConstants.ERROR_CONSULTANT_NOT_FOUND));
+        Consultant consultant = requireConsultantInCurrentTenant(consultantId);
         
         log.debug("상담사 정보 확인: consultantId={}, name={}", consultant.getId(), consultant.getName());
         
@@ -710,8 +718,7 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
     public Map<String, Object> getSatisfactionAnalysis(Long consultantId) {
         log.info("상담사별 만족도 분석: consultantId={}", consultantId);
         
-        Consultant consultant = consultantRepository.findById(consultantId)
-                .orElseThrow(() -> new IllegalArgumentException(ConsultantConstants.ERROR_CONSULTANT_NOT_FOUND));
+        Consultant consultant = requireConsultantInCurrentTenant(consultantId);
         
         log.debug("상담사 정보 확인: consultantId={}, name={}", consultant.getId(), consultant.getName());
         
@@ -755,8 +762,7 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
     public void updateCertifications(Long consultantId, List<String> certifications) {
         log.info("상담사 자격증 업데이트: consultantId={}, certifications={}", consultantId, certifications);
         
-        Consultant consultant = consultantRepository.findById(consultantId)
-                .orElseThrow(() -> new IllegalArgumentException(ConsultantConstants.ERROR_CONSULTANT_NOT_FOUND));
+        Consultant consultant = requireConsultantInCurrentTenant(consultantId);
         
         log.debug("상담사 정보 확인: consultantId={}, name={}", consultant.getId(), consultant.getName());
         
@@ -793,8 +799,7 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
         log.info("상담사 휴가 등록: consultantId={}, startDate={}, endDate={}, reason={}", 
                 consultantId, startDate, endDate, reason);
         
-        Consultant consultant = consultantRepository.findById(consultantId)
-                .orElseThrow(() -> new IllegalArgumentException(ConsultantConstants.ERROR_CONSULTANT_NOT_FOUND));
+        Consultant consultant = requireConsultantInCurrentTenant(consultantId);
         
         log.debug("상담사 정보 확인: consultantId={}, name={}", consultant.getId(), consultant.getName());
         
@@ -809,8 +814,7 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
     public void cancelVacation(Long consultantId, Long vacationId) {
         log.info("상담사 휴가 취소: consultantId={}, vacationId={}", consultantId, vacationId);
         
-        Consultant consultant = consultantRepository.findById(consultantId)
-                .orElseThrow(() -> new IllegalArgumentException(ConsultantConstants.ERROR_CONSULTANT_NOT_FOUND));
+        Consultant consultant = requireConsultantInCurrentTenant(consultantId);
         
         log.debug("상담사 정보 확인: consultantId={}, name={}", consultant.getId(), consultant.getName());
         

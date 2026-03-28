@@ -31,6 +31,16 @@ public interface UserPasskeyRepository extends JpaRepository<UserPasskey, Long> 
      */
     @Query("SELECT p FROM UserPasskey p WHERE p.tenantId = :tenantId AND p.credentialId = :credentialId AND p.isDeleted = false")
     Optional<UserPasskey> findByTenantIdAndCredentialIdAndIsDeletedFalse(@Param("tenantId") String tenantId, @Param("credentialId") String credentialId);
+
+    /**
+     * 테넌트·PK로 Passkey 조회 (삭제 제외)
+     *
+     * @param tenantId 테넌트 ID
+     * @param id Passkey PK
+     * @return Passkey 엔티티
+     */
+    @Query("SELECT p FROM UserPasskey p WHERE p.tenantId = :tenantId AND p.id = :id AND p.isDeleted = false")
+    Optional<UserPasskey> findByTenantIdAndId(@Param("tenantId") String tenantId, @Param("id") Long id);
     
     /**
      * 사용자 ID로 활성화된 Passkey 목록 조회 (tenantId 필터링)

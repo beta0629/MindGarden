@@ -74,7 +74,8 @@ public class PasskeyServiceImpl implements PasskeyService {
     public Map<String, Object> startRegistration(Long userId, String deviceName) {
         log.info("Passkey 등록 시작: userId={}, deviceName={}", userId, deviceName);
         
-        User user = userRepository.findById(userId)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        User user = userRepository.findByTenantIdAndId(tenantId, userId)
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + userId));
         
         // 챌린지 생성
@@ -161,7 +162,8 @@ public class PasskeyServiceImpl implements PasskeyService {
             // TODO: webauthn4j를 사용한 실제 검증 로직 구현 필요
             // 현재는 기본 검증만 수행
             
-            User user = userRepository.findById(userId)
+            String tenantId = TenantContextHolder.getRequiredTenantId();
+            User user = userRepository.findByTenantIdAndId(tenantId, userId)
                     .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + userId));
             
             // Passkey 저장
@@ -333,7 +335,8 @@ public class PasskeyServiceImpl implements PasskeyService {
     public Map<String, Object> deletePasskey(Long userId, Long passkeyId) {
         log.info("Passkey 삭제: userId={}, passkeyId={}", userId, passkeyId);
         
-        UserPasskey passkey = passkeyRepository.findById(passkeyId)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        UserPasskey passkey = passkeyRepository.findByTenantIdAndId(tenantId, passkeyId)
                 .orElseThrow(() -> new RuntimeException("Passkey를 찾을 수 없습니다: " + passkeyId));
         
         if (!passkey.getUser().getId().equals(userId)) {

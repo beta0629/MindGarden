@@ -247,7 +247,7 @@ public class AccountingServiceImpl implements AccountingService {
             if (cashAccount == null || expenseAccount == null || revenueAccount == null) {
                 log.warn(
                         "계정 엔티티 조회 실패: tenantId={}, cashAccount={}, expenseAccount={}, revenueAccount={}. "
-                                + "accountRepository.findById 결과 없음 또는 테넌트 불일치.",
+                                + "findByTenantIdAndId 결과 없음 또는 테넌트 불일치.",
                         tenantId, cashAccount != null, expenseAccount != null, revenueAccount != null);
                 return null;
             }
@@ -376,7 +376,7 @@ public class AccountingServiceImpl implements AccountingService {
     }
 
     /**
-     * 테넌트에 소속된 계정 조회. ID로 조회 후 tenantId 일치 여부 검증.
+     * 테넌트에 소속된 계정 조회 (tenant_id·id·미삭제 조건).
      *
      * @param tenantId   테넌트 ID (필수)
      * @param accountId  계정 ID
@@ -386,8 +386,7 @@ public class AccountingServiceImpl implements AccountingService {
         if (tenantId == null || accountId == null) {
             return Optional.empty();
         }
-        return accountRepository.findById(accountId)
-                .filter(a -> tenantId.equals(a.getTenantId()));
+        return accountRepository.findByTenantIdAndId(tenantId, accountId);
     }
 
     /**
@@ -602,13 +601,9 @@ public class AccountingServiceImpl implements AccountingService {
             throw new IllegalStateException("테넌트 ID 불일치");
         }
 
-        // 1. 분개 조회 (테넌트 검증)
-        AccountingEntry existingEntry = accountingEntryRepository.findById(entryId)
+        // 1. 분개 조회 (테넌트·미삭제 조건)
+        AccountingEntry existingEntry = accountingEntryRepository.findByTenantIdAndId(tenantId, entryId)
                 .orElseThrow(() -> new IllegalArgumentException("분개를 찾을 수 없습니다: " + entryId));
-
-        if (!existingEntry.getTenantId().equals(tenantId)) {
-            throw new IllegalStateException("다른 테넌트의 분개입니다.");
-        }
 
         // 2. DRAFT 상태 확인 (DRAFT 상태에서만 수정 가능)
         if (existingEntry.getEntryStatus() != AccountingEntry.EntryStatus.DRAFT) {

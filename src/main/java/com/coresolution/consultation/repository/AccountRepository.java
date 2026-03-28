@@ -46,6 +46,12 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
     Optional<Account> findByTenantIdAndAccountNumberAndIsDeletedFalse(@Param("tenantId") String tenantId, @Param("accountNumber") String accountNumber);
     
     /**
+     * 테넌트·ID로 활성(미삭제) 계좌 조회
+     */
+    @Query("SELECT a FROM Account a WHERE a.tenantId = :tenantId AND a.id = :id AND a.isDeleted = false")
+    Optional<Account> findByTenantIdAndId(@Param("tenantId") String tenantId, @Param("id") Long id);
+    
+    /**
      * 테넌트별 은행별 계좌 조회 (tenantId 필터링)
      */
     @Query("SELECT a FROM Account a WHERE a.tenantId = :tenantId AND a.bankCode = :bankCode AND a.isActive = true AND a.isDeleted = false")

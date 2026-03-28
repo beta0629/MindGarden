@@ -72,7 +72,8 @@ public class AccountServiceImpl implements AccountService {
     @Override
     @Transactional(readOnly = true)
     public AccountResponse getAccount(Long id) {
-        Account account = accountRepository.findById(id)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        Account account = accountRepository.findByTenantIdAndId(tenantId, id)
                 .orElseThrow(() -> new IllegalArgumentException("계좌를 찾을 수 없습니다: " + id));
         
         if (account.getIsDeleted()) {
@@ -85,7 +86,7 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public AccountResponse updateAccount(Long id, AccountRequest request) {
         String tenantId = TenantContextHolder.getRequiredTenantId();
-        Account account = accountRepository.findById(id)
+        Account account = accountRepository.findByTenantIdAndId(tenantId, id)
                 .orElseThrow(() -> new IllegalArgumentException("계좌를 찾을 수 없습니다: " + id));
         
         if (account.getIsDeleted()) {
@@ -133,7 +134,8 @@ public class AccountServiceImpl implements AccountService {
     
     @Override
     public void deleteAccount(Long id) {
-        Account account = accountRepository.findById(id)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        Account account = accountRepository.findByTenantIdAndId(tenantId, id)
                 .orElseThrow(() -> new IllegalArgumentException("계좌를 찾을 수 없습니다: " + id));
         
         if (account.getIsDeleted()) {
@@ -150,7 +152,8 @@ public class AccountServiceImpl implements AccountService {
     
     @Override
     public AccountResponse toggleAccountStatus(Long id) {
-        Account account = accountRepository.findById(id)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        Account account = accountRepository.findByTenantIdAndId(tenantId, id)
                 .orElseThrow(() -> new IllegalArgumentException("계좌를 찾을 수 없습니다: " + id));
         
         if (account.getIsDeleted()) {
@@ -171,7 +174,7 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public AccountResponse setPrimaryAccount(Long id) {
         String tenantId = TenantContextHolder.getRequiredTenantId();
-        Account account = accountRepository.findById(id)
+        Account account = accountRepository.findByTenantIdAndId(tenantId, id)
                 .orElseThrow(() -> new IllegalArgumentException("계좌를 찾을 수 없습니다: " + id));
         
         if (account.getIsDeleted() || !account.getIsActive()) {

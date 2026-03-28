@@ -36,13 +36,10 @@ public class LedgerServiceImpl implements LedgerService {
                                             BigDecimal debitAmount, BigDecimal creditAmount) {
         TenantIsolationValidator.requireTenantIdMatch(tenantId);
         
-        // 1. 계정 존재 여부 확인 (테넌트 검증)
-        Account account = accountRepository.findById(accountId)
+        // 1. 계정 존재 여부 확인 (테넌트·미삭제 조건)
+        Account account = accountRepository.findByTenantIdAndId(
+                TenantContextHolder.getRequiredTenantId(), accountId)
             .orElseThrow(() -> new IllegalArgumentException("계정을 찾을 수 없습니다: " + accountId));
-        
-        if (!account.getTenantId().equals(tenantId)) {
-            throw new IllegalStateException("테넌트 ID 불일치: 다른 테넌트의 계정입니다.");
-        }
         
         // 2. 해당 월의 원장 조회 또는 생성
         YearMonth yearMonth = YearMonth.from(entryDate);

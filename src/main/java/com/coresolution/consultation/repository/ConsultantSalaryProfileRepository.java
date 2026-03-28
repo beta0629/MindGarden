@@ -45,6 +45,12 @@ public interface ConsultantSalaryProfileRepository extends JpaRepository<Consult
     List<ConsultantSalaryProfile> findByTenantIdAndIsActiveTrue(@Param("tenantId") String tenantId);
     
     /**
+     * PK·테넌트로 급여 프로필 조회 (BaseEntity 아님, tenantId·is_deleted 없음 대응)
+     */
+    @Query("SELECT p FROM ConsultantSalaryProfile p WHERE p.tenantId = :tenantId AND p.id = :id")
+    Optional<ConsultantSalaryProfile> findByTenantIdAndId(@Param("tenantId") String tenantId, @Param("id") Long id);
+    
+    /**
      * 계약 만료된 급여 프로필 조회 (tenantId 필터링)
      */
     @Query("SELECT csp FROM ConsultantSalaryProfile csp WHERE csp.tenantId = :tenantId AND csp.contractEndDate < CURRENT_TIMESTAMP AND csp.isActive = true")

@@ -55,7 +55,8 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
     
     @Override
     public ConsultantSalaryProfile getSalaryProfileById(Long id) {
-        return consultantSalaryProfileRepository.findById(id)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return consultantSalaryProfileRepository.findByTenantIdAndId(tenantId, id)
                 .orElseThrow(() -> new RuntimeException("급여 프로필을 찾을 수 없습니다: " + id));
     }
     
@@ -89,8 +90,8 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
         String tenantId = TenantContextHolder.getRequiredTenantId();
         log.info("📊 상담사 급여 요약 조회: ConsultantID={}, Period={}, tenantId={}", consultantId, period, tenantId);
         
-        User consultant = userRepository.findById(consultantId).orElse(null);
-        if (consultant == null || !tenantId.equals(consultant.getTenantId())) {
+        User consultant = userRepository.findByTenantIdAndId(tenantId, consultantId).orElse(null);
+        if (consultant == null) {
             return List.of();
         }
         
@@ -152,7 +153,8 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
     public SalaryCalculation approveSalaryCalculation(Long calculationId, String approvedBy) {
         log.info("✅ 급여 승인: CalculationID={}, ApprovedBy={}", calculationId, approvedBy);
         
-        SalaryCalculation calculation = salaryCalculationRepository.findById(calculationId)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        SalaryCalculation calculation = salaryCalculationRepository.findByTenantIdAndId(tenantId, calculationId)
                 .orElseThrow(() -> new RuntimeException("급여 계산을 찾을 수 없습니다: " + calculationId));
         
         if (calculation.getStatus() != SalaryCalculation.SalaryStatus.CALCULATED) {
@@ -168,7 +170,8 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
     public SalaryCalculation markAsPaid(Long calculationId, String paidBy) {
         log.info("💳 급여 지급 완료: CalculationID={}, PaidBy={}", calculationId, paidBy);
         
-        SalaryCalculation calculation = salaryCalculationRepository.findById(calculationId)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        SalaryCalculation calculation = salaryCalculationRepository.findByTenantIdAndId(tenantId, calculationId)
                 .orElseThrow(() -> new RuntimeException("급여 계산을 찾을 수 없습니다: " + calculationId));
         
         // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
@@ -412,11 +415,8 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
         log.info("💰 추가 세금 계산: calculationId={}, taxType={}, tenantId={}",
                 request.getCalculationId(), request.getTaxType(), tenantId);
         
-        SalaryCalculation calculation = salaryCalculationRepository.findById(request.getCalculationId())
+        SalaryCalculation calculation = salaryCalculationRepository.findByTenantIdAndId(tenantId, request.getCalculationId())
                 .orElseThrow(() -> new EntityNotFoundException("급여 계산 정보를 찾을 수 없습니다: " + request.getCalculationId()));
-        if (calculation.getTenantId() == null || !calculation.getTenantId().equals(tenantId)) {
-            throw new EntityNotFoundException("급여 계산 정보를 찾을 수 없습니다: " + request.getCalculationId());
-        }
         
         BigDecimal baseAmount = request.getGrossAmount() != null ? request.getGrossAmount() : BigDecimal.ZERO;
         BigDecimal taxRate = request.getTaxRate() != null ? request.getTaxRate() : BigDecimal.ZERO;

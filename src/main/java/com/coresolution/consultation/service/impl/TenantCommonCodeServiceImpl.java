@@ -8,6 +8,7 @@ import com.coresolution.consultation.entity.CommonCode;
 import com.coresolution.consultation.repository.CodeGroupMetadataRepository;
 import com.coresolution.consultation.repository.CommonCodeRepository;
 import com.coresolution.consultation.service.TenantCommonCodeService;
+import com.coresolution.core.context.TenantContextHolder;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -99,7 +100,7 @@ public class TenantCommonCodeServiceImpl implements TenantCommonCodeService {
     public CommonCodeResponse updateTenantCode(String tenantId, Long codeId, CommonCodeUpdateRequest request) {
         log.info("테넌트 공통코드 수정: tenantId={}, codeId={}", tenantId, codeId);
         
-        CommonCode code = commonCodeRepository.findById(codeId)
+        CommonCode code = commonCodeRepository.findByTenantIdAndId(TenantContextHolder.getRequiredTenantId(), codeId)
             .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 코드입니다: " + codeId));
         
         // 소유권 검증
@@ -144,7 +145,7 @@ public class TenantCommonCodeServiceImpl implements TenantCommonCodeService {
     public void deleteTenantCode(String tenantId, Long codeId) {
         log.info("테넌트 공통코드 삭제: tenantId={}, codeId={}", tenantId, codeId);
         
-        CommonCode code = commonCodeRepository.findById(codeId)
+        CommonCode code = commonCodeRepository.findByTenantIdAndId(TenantContextHolder.getRequiredTenantId(), codeId)
             .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 코드입니다: " + codeId));
         
         // 소유권 검증
@@ -165,7 +166,7 @@ public class TenantCommonCodeServiceImpl implements TenantCommonCodeService {
     public CommonCodeResponse toggleTenantCodeActive(String tenantId, Long codeId, boolean isActive) {
         log.info("테넌트 공통코드 활성화 토글: tenantId={}, codeId={}, isActive={}", tenantId, codeId, isActive);
         
-        CommonCode code = commonCodeRepository.findById(codeId)
+        CommonCode code = commonCodeRepository.findByTenantIdAndId(TenantContextHolder.getRequiredTenantId(), codeId)
             .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 코드입니다: " + codeId));
         
         // 소유권 검증
@@ -186,7 +187,7 @@ public class TenantCommonCodeServiceImpl implements TenantCommonCodeService {
     public CommonCodeResponse updateTenantCodeOrder(String tenantId, Long codeId, int newOrder) {
         log.info("테넌트 공통코드 정렬 순서 변경: tenantId={}, codeId={}, newOrder={}", tenantId, codeId, newOrder);
         
-        CommonCode code = commonCodeRepository.findById(codeId)
+        CommonCode code = commonCodeRepository.findByTenantIdAndId(TenantContextHolder.getRequiredTenantId(), codeId)
             .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 코드입니다: " + codeId));
         
         // 소유권 검증
@@ -284,7 +285,7 @@ public class TenantCommonCodeServiceImpl implements TenantCommonCodeService {
 
     @Override
     public boolean validateTenantCodeOwnership(String tenantId, Long codeId) {
-        CommonCode code = commonCodeRepository.findById(codeId)
+        CommonCode code = commonCodeRepository.findByTenantIdAndId(TenantContextHolder.getRequiredTenantId(), codeId)
             .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 코드입니다: " + codeId));
         
         // 시스템 코드는 수정 불가

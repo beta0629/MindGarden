@@ -41,7 +41,8 @@ public class PersonalDataRequestServiceImpl implements PersonalDataRequestServic
     @Override
     public Map<String, Object> requestPersonalDataAccess(Long userId, HttpServletRequest request) {
         try {
-            Optional<User> userOpt = userRepository.findById(userId);
+            String tenantId = TenantContextHolder.getRequiredTenantId();
+            Optional<User> userOpt = userRepository.findByTenantIdAndId(tenantId, userId);
             if (userOpt.isEmpty()) {
                 throw new IllegalArgumentException("사용자를 찾을 수 없습니다.");
             }
@@ -105,7 +106,8 @@ public class PersonalDataRequestServiceImpl implements PersonalDataRequestServic
     @Override
     public Map<String, Object> requestPersonalDataDeletion(Long userId, String password, String reason, HttpServletRequest request) {
         try {
-            Optional<User> userOpt = userRepository.findById(userId);
+            String tenantId = TenantContextHolder.getRequiredTenantId();
+            Optional<User> userOpt = userRepository.findByTenantIdAndId(tenantId, userId);
             if (userOpt.isEmpty()) {
                 throw new IllegalArgumentException("사용자를 찾을 수 없습니다.");
             }
@@ -215,7 +217,8 @@ public class PersonalDataRequestServiceImpl implements PersonalDataRequestServic
     @Override
     public Map<String, Object> getPersonalDataProcessingStatus(Long userId) {
         try {
-            Optional<User> userOpt = userRepository.findById(userId);
+            String tenantId = TenantContextHolder.getRequiredTenantId();
+            Optional<User> userOpt = userRepository.findByTenantIdAndId(tenantId, userId);
             if (userOpt.isEmpty()) {
                 throw new IllegalArgumentException("사용자를 찾을 수 없습니다.");
             }

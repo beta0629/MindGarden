@@ -8,6 +8,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -2224,12 +2225,22 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             );
         }
 
-        // Client upsert: 소프트 삭제 행까지 조회 (삭제만 있으면 findByTenantIdAndId가 비어 INSERT→FK 실패 방지)
+        // Client upsert: 테넌트+id(삭제 포함) → 없으면 동일 PK로 clients 행 존재 여부 확인
+        // clients.tenant_id 가 NULL·users와 불일치하면 첫 조회가 비어 INSERT 시도 → PK 중복·제약 위반
         Optional<Client> existingClientOpt =
                 clientRepository.findByTenantIdAndIdIncludingDeleted(tenantIdForClient, id);
+        if (existingClientOpt.isEmpty()) {
+            existingClientOpt = clientRepository.findById(id)
+                    .filter(c -> Objects.equals(c.getId(), savedUser.getId()));
+        }
         Client persistedClient;
         if (existingClientOpt.isPresent()) {
             Client client = existingClientOpt.get();
+            if (!Objects.equals(client.getTenantId(), savedUser.getTenantId())) {
+                log.warn("clients.tenant_id 정합 복구: clientId={}, before={}, after={}",
+                        id, client.getTenantId(), savedUser.getTenantId());
+                client.setTenantId(savedUser.getTenantId());
+            }
             if (Boolean.TRUE.equals(client.getIsDeleted())) {
                 client.restore();
             }

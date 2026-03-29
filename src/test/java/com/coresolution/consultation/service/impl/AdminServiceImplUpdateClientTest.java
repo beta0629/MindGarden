@@ -161,6 +161,7 @@ class AdminServiceImplUpdateClientTest {
         when(userRepository.findByTenantIdAndId(tenantId, id)).thenReturn(Optional.of(clientUser));
         when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
         when(clientRepository.findByTenantIdAndIdIncludingDeleted(tenantId, id)).thenReturn(Optional.empty());
+        when(clientRepository.findById(id)).thenReturn(Optional.empty());
         when(clientRepository.save(any(Client.class))).thenAnswer(inv -> inv.getArgument(0));
         doNothing().when(userPersonalDataCacheService).evictUserPersonalDataCache(tenantId, id);
         doNothing().when(clientStatsService).evictAllClientStatsCache();
@@ -203,6 +204,7 @@ class AdminServiceImplUpdateClientTest {
         when(userRepository.findByTenantIdAndId(tenantId, id)).thenReturn(Optional.of(clientUser));
         when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
         when(clientRepository.findByTenantIdAndIdIncludingDeleted(tenantId, id)).thenReturn(Optional.empty());
+        when(clientRepository.findById(id)).thenReturn(Optional.empty());
         when(clientRepository.save(any(Client.class))).thenAnswer(inv -> inv.getArgument(0));
         doNothing().when(userPersonalDataCacheService).evictUserPersonalDataCache(tenantId, id);
         doNothing().when(clientStatsService).evictAllClientStatsCache();
@@ -262,5 +264,49 @@ class AdminServiceImplUpdateClientTest {
         assertThat(existing.getName()).isEqualTo("enc-n");
         assertThat(existing.getEmail()).isEqualTo("enc-e");
         assertThat(existing.getPhone()).isEqualTo("enc-p");
+    }
+
+    @Test
+    @DisplayName("IncludingDeleted가 비어도 findById로 같은 PK 행이 있으면 UPDATE이며 tenant_id를 users에 맞춘다")
+    void updateClient_whenTenantIdMismatchOnClientRow_repairsTenantAndUpdates() {
+        Long id = 715L;
+        String tenantId = "tenant-ut-1";
+
+        User clientUser = User.builder()
+                .userId("u715")
+                .email("enc-e")
+                .password("x")
+                .name("enc-n")
+                .phone("enc-p")
+                .role(UserRole.CLIENT)
+                .isActive(true)
+                .isPasswordChanged(true)
+                .build();
+        clientUser.setId(id);
+        clientUser.setTenantId(tenantId);
+
+        Client existing = new Client();
+        existing.setId(id);
+        existing.setTenantId("legacy-wrong-tenant");
+        existing.setIsDeleted(false);
+        existing.setEmail("old");
+        existing.setName("old");
+        existing.setPhone("old");
+
+        ClientRegistrationRequest request = new ClientRegistrationRequest();
+
+        when(userRepository.findByTenantIdAndId(tenantId, id)).thenReturn(Optional.of(clientUser));
+        when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(clientRepository.findByTenantIdAndIdIncludingDeleted(tenantId, id)).thenReturn(Optional.empty());
+        when(clientRepository.findById(id)).thenReturn(Optional.of(existing));
+        when(clientRepository.save(any(Client.class))).thenAnswer(inv -> inv.getArgument(0));
+        doNothing().when(userPersonalDataCacheService).evictUserPersonalDataCache(tenantId, id);
+        doNothing().when(clientStatsService).evictAllClientStatsCache();
+
+        adminService.updateClient(id, request);
+
+        assertThat(existing.getTenantId()).isEqualTo(tenantId);
+        assertThat(existing.getName()).isEqualTo("enc-n");
+        verify(clientRepository).save(existing);
     }
 }

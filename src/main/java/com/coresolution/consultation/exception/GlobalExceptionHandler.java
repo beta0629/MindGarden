@@ -14,6 +14,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.core.NestedExceptionUtils;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
@@ -265,7 +266,10 @@ public class GlobalExceptionHandler {
         } else {
             clientMessage = "데이터 제약 위반입니다.";
         }
-        log.warn("Data integrity violation: {}", e.getMessage());
+        Throwable rootCause = NestedExceptionUtils.getMostSpecificCause(e);
+        String rootMessage = rootCause.getMessage() != null ? rootCause.getMessage() : rootCause.toString();
+        log.warn("Data integrity violation: path={}, clientMessage={}, rootCause={}",
+                request.getRequestURI(), clientMessage, rootMessage);
 
         ErrorResponse error = ErrorResponse.of(
             clientMessage,

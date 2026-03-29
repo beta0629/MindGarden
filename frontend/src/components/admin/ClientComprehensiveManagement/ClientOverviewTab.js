@@ -21,6 +21,41 @@ const ClientOverviewTab = ({
     consultations,
     viewMode = 'smallCard'
 }) => {
+    /** 큰/작은 카드·목록에서 동일한 내담자 작업 버튼 (행·카드 클릭과 분리) */
+    const renderClientActions = (client, { compact = false, table = false } = {}) => {
+        const actionClass = [
+            'mg-v2-profile-card__actions',
+            'mg-v2-client-actions',
+            compact && 'mg-v2-client-actions--compact',
+            table && 'mg-v2-client-actions--table'
+        ].filter(Boolean).join(' ');
+
+        return (
+            <div
+                className={actionClass}
+                onClick={(e) => e.stopPropagation()}
+                onKeyDown={(e) => e.stopPropagation()}
+                role="group"
+                aria-label="내담자 작업"
+            >
+                <Button variant="secondary" size="small" onClick={() => onClientSelect(client)} preventDoubleClick={true}>
+                    <Eye size={14} /> 상세보기
+                </Button>
+                <Button variant="primary" size="small" onClick={() => onEditClient(client)} preventDoubleClick={true}>
+                    <Edit size={14} /> 수정
+                </Button>
+                {onResetPassword && (
+                    <Button variant="secondary" size="small" onClick={() => onResetPassword(client)} title="비밀번호 초기화" preventDoubleClick={true}>
+                        <Key size={14} /> 비밀번호 초기화
+                    </Button>
+                )}
+                <Button variant="danger" size="small" onClick={() => onDeleteClient(client)} preventDoubleClick={true}>
+                    <Trash2 size={14} /> 삭제
+                </Button>
+            </div>
+        );
+    };
+
     // 내담자 카드 렌더링
     const renderClientCard = (client) => {
         const statusKorean = getUserStatusKoreanNameSync(client?.status);
@@ -97,22 +132,7 @@ const ClientOverviewTab = ({
                 </div>
                 
                 <div className="mg-v2-profile-card__footer">
-                    <div className="mg-v2-profile-card__actions">
-                        <Button variant="secondary" size="small" onClick={() => onClientSelect(client)} preventDoubleClick={true}>
-                            <Eye size={14} /> 상세보기
-                        </Button>
-                        <Button variant="primary" size="small" onClick={() => onEditClient(client)} preventDoubleClick={true}>
-                            <Edit size={14} /> 수정
-                        </Button>
-                        {onResetPassword && (
-                            <Button variant="secondary" size="small" onClick={() => onResetPassword(client)} title="비밀번호 초기화" preventDoubleClick={true}>
-                                <Key size={14} /> 비밀번호 초기화
-                            </Button>
-                        )}
-                        <Button variant="danger" size="small" onClick={() => onDeleteClient(client)} preventDoubleClick={true}>
-                            <Trash2 size={14} /> 삭제
-                        </Button>
-                    </div>
+                    {renderClientActions(client)}
                 </div>
             </div>
         );
@@ -152,6 +172,9 @@ const ClientOverviewTab = ({
                         <span className="mg-v2-grade-badge">{gradeIcon} <SafeText>{gradeKorean}</SafeText></span>
                     </div>
                 </div>
+                <div className="mg-v2-profile-card__inline-actions">
+                    {renderClientActions(client, { compact: true })}
+                </div>
             </div>
         );
     };
@@ -181,10 +204,12 @@ const ClientOverviewTab = ({
                         { key: 'email', label: '이메일' },
                         { key: 'status', label: '상태' },
                         { key: 'grade', label: '등급', hideOnMobile: true },
-                        { key: 'createdAt', label: '등록일', hideOnMobile: true }
+                        { key: 'createdAt', label: '등록일', hideOnMobile: true },
+                        { key: '_actions', label: '작업' }
                     ]}
                     data={clients}
                     renderCell={(key, item) => {
+                        if (key === '_actions') return renderClientActions(item, { table: true });
                         if (key === 'name') return maskEncryptedDisplay(item.name, '이름');
                         if (key === 'email') return maskEncryptedDisplay(item.email, '이메일');
                         if (key === 'status') return getUserStatusKoreanNameSync(item?.status);

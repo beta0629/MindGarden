@@ -15,6 +15,7 @@ import { NavIcon, NotificationBadge } from '../atoms';
 import { useNotification } from '../../../contexts/NotificationContext';
 import { useSession } from '../../../contexts/SessionContext';
 import StandardizedApi from '../../../utils/standardizedApi';
+import { getConsultationMessagesListPath } from '../../../utils/consultationMessagesApi';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import UnifiedModal from '../../common/modals/UnifiedModal';
 import { useDropdownPosition } from '../hooks/useDropdownPosition';
@@ -108,23 +109,8 @@ const NotificationDropdown = () => {
     }
   };
 
-  const getMessagesEndpoint = () => {
-    if (!user?.id) return null;
-    const role = String(user.role || '');
-    if (role === 'CONSULTANT' || role === 'ROLE_CONSULTANT') {
-      return `/api/v1/consultation-messages/consultant/${user.id}`;
-    }
-    if (role === 'CLIENT' || role === 'ROLE_CLIENT') {
-      return `/api/v1/consultation-messages/client/${user.id}`;
-    }
-    if (role === 'ADMIN' || role.includes('ADMIN')) {
-      return '/api/v1/consultation-messages/all';
-    }
-    return `/api/v1/consultation-messages/client/${user.id}`;
-  };
-
   const fetchMessages = async () => {
-    const endpoint = getMessagesEndpoint();
+    const endpoint = getConsultationMessagesListPath(user);
     if (!endpoint) {
       setMessageList([]);
       return;

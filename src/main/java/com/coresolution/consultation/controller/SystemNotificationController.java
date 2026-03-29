@@ -11,6 +11,7 @@ import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.service.SystemNotificationService;
 import com.coresolution.consultation.utils.SessionUtils;
+import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.controller.BaseApiController;
 import com.coresolution.core.dto.ApiResponse;
 import com.coresolution.core.util.PaginationUtils;
@@ -58,6 +59,22 @@ public class SystemNotificationController extends BaseApiController {
         // DynamicPermissionService를 사용하여 권한 체크
         return dynamicPermissionService.hasPermission(currentUser, "SYSTEM_NOTIFICATION_MANAGE");
     }
+
+    /**
+     * 세션 사용자 테넌트로 컨텍스트 설정 (서비스 계층의 TenantContextHolder 조회와 정합).
+     * 필터가 비운 경우에도 공지 목록이 테넌트별로 조회되도록 함.
+     */
+    private void setTenantContextFromUser(User currentUser) {
+        if (currentUser == null) {
+            throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
+        }
+        String tenantId = currentUser.getTenantId();
+        if (tenantId == null || tenantId.isBlank()) {
+            log.warn("⚠️ 시스템 공지 API: 테넌트 없음 - userId={}", currentUser.getId());
+            throw new org.springframework.security.access.AccessDeniedException("테넌트 정보가 없습니다.");
+        }
+        TenantContextHolder.setTenantId(tenantId.trim());
+    }
     
     /**
      * 사용자별 공지 목록 조회
@@ -77,7 +94,9 @@ public class SystemNotificationController extends BaseApiController {
         String userRole = currentUser.getRole().name();
         
         log.info("📢 사용자 공지 목록 조회 - 사용자 ID: {}, 역할: {}", userId, userRole);
-        
+
+        try {
+        setTenantContextFromUser(currentUser);
         // 표준화 원칙: 페이지 크기 최대 20개로 제한
         Pageable pageable = PaginationUtils.createPageable(page, size);
         Page<SystemNotification> notifications = systemNotificationService.getNotificationsForUser(userId, userRole, pageable);
@@ -114,6 +133,9 @@ public class SystemNotificationController extends BaseApiController {
         responseData.put("currentPage", notifications.getNumber());
         
         return success("공지 목록을 성공적으로 조회했습니다.", responseData);
+        } finally {
+            TenantContextHolder.clear();
+        }
     }
     
     /**
@@ -133,7 +155,9 @@ public class SystemNotificationController extends BaseApiController {
         String userRole = currentUser.getRole().name();
         
         log.info("📢 활성 공지 목록 조회 - 사용자 ID: {}, 역할: {}", userId, userRole);
-        
+
+        try {
+        setTenantContextFromUser(currentUser);
         // 게시 중인 공지만 조회 (페이징 없이 전체)
         Pageable pageable = PageRequest.of(0, 100); // 최대 100개
         Page<SystemNotification> notifications = systemNotificationService.getNotificationsForUser(userId, userRole, pageable);
@@ -185,6 +209,9 @@ public class SystemNotificationController extends BaseApiController {
         }
         
         return success("활성 공지 목록을 성공적으로 조회했습니다.", notificationList);
+        } finally {
+            TenantContextHolder.clear();
+        }
     }
     
     /**
@@ -205,13 +232,18 @@ public class SystemNotificationController extends BaseApiController {
         String userRole = currentUser.getRole().name();
         
         log.info("📢 읽지 않은 공지 수 조회 - 사용자 ID: {}, 역할: {}", userId, userRole);
-        
+
+        try {
+        setTenantContextFromUser(currentUser);
         Long unreadCount = systemNotificationService.getUnreadCount(userId, userRole);
         
         Map<String, Object> data = new HashMap<>();
         data.put("unreadCount", unreadCount);
         
         return success("읽지 않은 공지 수를 성공적으로 조회했습니다.", data);
+        } finally {
+            TenantContextHolder.clear();
+        }
     }
     
     /**
@@ -230,7 +262,9 @@ public class SystemNotificationController extends BaseApiController {
         Long userId = currentUser.getId();
         
         log.info("📢 공지 상세 조회 - 공지 ID: {}, 사용자 ID: {}", notificationId, userId);
-        
+
+        try {
+        setTenantContextFromUser(currentUser);
         SystemNotification notification = systemNotificationService.getNotificationDetail(notificationId, userId);
         
         // 자동 읽음 처리
@@ -257,6 +291,9 @@ public class SystemNotificationController extends BaseApiController {
         data.put("createdAt", notification.getCreatedAt());
         
         return success("공지를 성공적으로 조회했습니다.", data);
+        } finally {
+            TenantContextHolder.clear();
+        }
     }
     
     /**

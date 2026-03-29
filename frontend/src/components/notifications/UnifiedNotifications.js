@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet } from '../../utils/ajax';
+import { getConsultationMessagesListPath } from '../../utils/consultationMessagesApi';
 import { Bell, MessageSquare, AlertCircle, Info, AlertTriangle } from 'lucide-react';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import UnifiedModal from '../common/modals/UnifiedModal';
@@ -62,29 +63,13 @@ const UnifiedNotifications = () => {
     try {
       setLoading(true);
       
-      // 역할에 따라 다른 API 호출
-      let endpoint = '';
-      console.log('🔍 메시지 로드 - 사용자 역할:', user.role, 'ID:', user.id);
-      
-      // 관리자 여부 확인 (role에 ADMIN이 포함되거나 특정 관리자 역할인 경우)
-      const userRole = String(user.role || '');
-      const isAdmin = userRole === 'ADMIN';
-      
-      if (userRole === 'CONSULTANT' || userRole === 'ROLE_CONSULTANT') {
-        endpoint = `/api/v1/consultation-messages/consultant/${user.id}?page=0&size=50`;
-      } else if (userRole === 'CLIENT' || userRole === 'ROLE_CLIENT') {
-        endpoint = `/api/v1/consultation-messages/client/${user.id}?page=0&size=50`;
-      } else if (isAdmin) {
-        // 관리자는 전체 메시지
-        endpoint = '/api/v1/consultation-messages/all';
-      } else {
-        // 기본값: 내담자 API 호출
-        console.warn('⚠️ 알 수 없는 역할, 내담자 API 사용:', user.role);
-        endpoint = `/api/v1/consultation-messages/client/${user.id}?page=0&size=50`;
+      const basePath = getConsultationMessagesListPath(user);
+      if (!basePath) {
+        setMessages([]);
+        return;
       }
-
-      console.log('🌐 API 호출:', endpoint);
-      const response = await apiGet(endpoint);
+      console.log('🔍 메시지 로드 - 사용자 역할:', user.role, 'ID:', user.id, '경로:', basePath);
+      const response = await apiGet(basePath, { page: 0, size: 50 });
 
       if (response) {
         // 백엔드 응답이 { messages: [...] } 형태일 수 있음

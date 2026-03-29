@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { CONSTANTS } from '../constants/magicNumbers';
 import { useSession } from './SessionContext';
 import { apiGet, apiPost } from '../utils/ajax';
+import { getConsultationMessagesListPath } from '../utils/consultationMessagesApi';
 
 const NotificationContext = createContext();
 
@@ -158,11 +159,12 @@ export const NotificationProvider = ({ children }) => {
 
     try {
       setLoading(true);
-      const endpoint = user.role === 'ROLE_CONSULTANT'
-        ? `/api/v1/consultation-messages/consultant/${user.id}`
-        : `/api/v1/consultation-messages/client/${user.id}`;
-
-      const response = await apiGet(endpoint);
+      const path = getConsultationMessagesListPath(user);
+      if (!path) {
+        setNotifications([]);
+        return;
+      }
+      const response = await apiGet(path, { page: 0, size: 50 });
       // apiGet은 data만 반환. 목록은 response 자체가 배열이거나 response.messages/content 등
       const list = Array.isArray(response) ? response : (response?.messages ?? response?.content ?? response?.data ?? []);
       const unreadMessages = (Array.isArray(list) ? list : [])

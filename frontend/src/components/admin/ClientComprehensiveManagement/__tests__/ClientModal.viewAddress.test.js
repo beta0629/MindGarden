@@ -26,7 +26,10 @@ const formWithAddress = {
   address: '서울특별시 강남구 테헤란로',
   addressDetail: '101동 202호',
   postalCode: '06234',
-  vehiclePlate: ''
+  vehiclePlate: '',
+  gender: 'MALE',
+  birthDate: '1990-06-15',
+  age: 35
 };
 
 describe('ClientModal 조회 모드 주소', () => {
@@ -47,5 +50,7 @@ describe('ClientModal 조회 모드 주소', () => {
     expect(screen.getByDisplayValue('101동 202호')).toBeInTheDocument();
     expect(screen.getByDisplayValue('06234')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /주소 검색/i })).toBeDisabled();
+    expect(screen.getByDisplayValue('남성')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('35세')).toBeInTheDocument();
   });
 });

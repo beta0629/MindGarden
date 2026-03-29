@@ -1,5 +1,7 @@
 package com.coresolution.consultation.service.impl;
 
+import java.time.LocalDate;
+import java.time.Period;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -243,7 +245,17 @@ public class ClientStatsServiceImpl implements ClientStatsService {
         }
         
         client.setBirthDate(user.getBirthDate());
-        client.setGender(user.getGender());
+
+        String gender = user.getGender();
+        if (gender != null && !gender.trim().isEmpty()) {
+            try {
+                gender = encryptionUtil.safeDecrypt(gender);
+            } catch (Exception e) {
+                log.warn("🔓 내담자 성별 복호화 실패: userId={}, error={}", user.getId(), e.getMessage());
+            }
+        }
+        client.setGender(gender);
+
         client.setAddress(user.getAddress());
         client.setAddressDetail(user.getAddressDetail());
         client.setPostalCode(user.getPostalCode());
@@ -275,7 +287,11 @@ public class ClientStatsServiceImpl implements ClientStatsService {
         clientMap.put("phone", client.getPhone());
         clientMap.put("birthDate", client.getBirthDate());
         clientMap.put("gender", client.getGender());
-        clientMap.put("age", client.getAge());
+        Integer ageYears = null;
+        if (client.getBirthDate() != null) {
+            ageYears = Period.between(client.getBirthDate(), LocalDate.now()).getYears();
+        }
+        clientMap.put("age", ageYears);
         clientMap.put("address", client.getAddress());
         clientMap.put("addressDetail", client.getAddressDetail());
         clientMap.put("postalCode", client.getPostalCode());

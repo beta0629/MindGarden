@@ -11,6 +11,7 @@ import {
 } from '../../../constants/messages';
 import { isValidVehiclePlateOptional } from '../../../utils/validationUtils';
 import SafeText from '../../common/SafeText';
+import { formatConsultantGenderLabel, getConsultantAgeYears } from '../../../utils/consultantHelper';
 import './ClientModal.css';
 
 /**
@@ -120,6 +121,7 @@ const ClientModal = ({
             case 'create': return '새 내담자 등록';
             case 'edit': return '내담자 정보 수정';
             case 'delete': return '내담자 삭제';
+            case 'view': return '내담자 상세 정보';
             default: return '내담자 관리';
         }
     };
@@ -166,8 +168,19 @@ const ClientModal = ({
             address: formData.address || '',
             addressDetail: formData.addressDetail || '',
             postalCode: formData.postalCode || '',
-            vehiclePlate: formData.vehiclePlate || ''
+            vehiclePlate: formData.vehiclePlate || '',
+            gender: formData.gender || '',
+            birthDate: formData.birthDate ?? null,
+            age: formData.age != null && formData.age !== '' ? formData.age : null
         };
+
+        const demographicAgeYears = getConsultantAgeYears({
+            gender: safeFormData.gender,
+            birthDate: safeFormData.birthDate,
+            age: safeFormData.age
+        });
+        const demographicGenderText = formatConsultantGenderLabel(safeFormData.gender) || '—';
+        const demographicAgeText = demographicAgeYears != null ? `${demographicAgeYears}세` : '—';
 
         return (
             <form onSubmit={handleSubmit} className="mg-v2-form">
@@ -187,6 +200,7 @@ const ClientModal = ({
                     maxSize={512}
                     quality={0.85}
                     helpText="이미지 파일만 가능, 최대 2MB (리사이즈·크롭 적용)"
+                    disabled={type === 'view'}
                 />
                 {/* 공통 순서: 1. 주민번호 2. 이름 3. 전화번호 4. 주소 → 나머지 */}
                 <div className="mg-v2-form-group">
@@ -206,6 +220,7 @@ const ClientModal = ({
                                 maxLength={6}
                                 inputMode="numeric"
                                 className="mg-v2-form-input"
+                                readOnly={type === 'view'}
                             />
                         </div>
                         <div className="mg-v2-form-group">
@@ -220,10 +235,42 @@ const ClientModal = ({
                                 maxLength={1}
                                 inputMode="numeric"
                                 className="mg-v2-form-input"
+                                readOnly={type === 'view'}
                             />
                         </div>
                     </div>
                 </div>
+                {(type === 'view' || type === 'edit') && (
+                    <div className="mg-v2-form-group">
+                        <div className="mg-v2-form-row mg-v2-form-row--two" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
+                            <div className="mg-v2-form-group">
+                                <span className="mg-v2-form-label" id="client-demographic-gender-label">성별</span>
+                                <input
+                                    type="text"
+                                    readOnly
+                                    className="mg-v2-form-input"
+                                    value={demographicGenderText}
+                                    aria-labelledby="client-demographic-gender-label"
+                                />
+                            </div>
+                            <div className="mg-v2-form-group">
+                                <span className="mg-v2-form-label" id="client-demographic-age-label">나이 (만)</span>
+                                <input
+                                    type="text"
+                                    readOnly
+                                    className="mg-v2-form-input"
+                                    value={demographicAgeText}
+                                    aria-labelledby="client-demographic-age-label"
+                                />
+                            </div>
+                        </div>
+                        {type === 'edit' ? (
+                            <small className="mg-v2-form-help">
+                                주민번호 앞 6자리·뒤 1자리를 입력해 저장하면 생년·성별·나이가 갱신됩니다.
+                            </small>
+                        ) : null}
+                    </div>
+                )}
                 <div className="mg-v2-form-group">
                     <label htmlFor="name" className="mg-v2-form-label">이름 {type === 'create' && '*'}</label>
                     <input
@@ -235,6 +282,7 @@ const ClientModal = ({
                         required={type === 'create'}
                         placeholder="내담자 이름"
                         className="mg-v2-form-input"
+                        readOnly={type === 'view'}
                     />
                 </div>
                 <div className="mg-v2-form-group">
@@ -247,6 +295,7 @@ const ClientModal = ({
                         onChange={handleInputChange}
                         placeholder="010-1234-5678"
                         className="mg-v2-form-input"
+                        readOnly={type === 'view'}
                     />
                 </div>
                 <div className="mg-v2-form-group">

@@ -9,8 +9,19 @@
 -- COLLATE 는 테이블 기본 collation 을 따른다(불필요한 COLLATE 재지정 제거).
 -- email UNIQUE: 길이 확장만인 경우 InnoDB 가 인덱스 키 길이를 갱신하며, 별도 DROP/ADD INDEX 불필요.
 --
+-- 레거시 NULL 행: MODIFY ... NOT NULL 시 MySQL 1138 (Invalid use of NULL value) 발생.
+-- id 기반 placeholder로 UNIQUE(email) 충돌을 피한다. 이미 값이 있으면 UPDATE 는 0행.
+--
 -- @author CoreSolution
 -- @since 2026-03-30
+
+UPDATE clients
+SET name = CONCAT('__migrate_missing_name_', LPAD(CAST(id AS CHAR), 19, '0'))
+WHERE name IS NULL;
+
+UPDATE clients
+SET email = CONCAT('__migrate_missing_email_', LPAD(CAST(id AS CHAR), 19, '0'), '@clients.migrate.invalid')
+WHERE email IS NULL;
 
 ALTER TABLE clients MODIFY COLUMN name VARCHAR(500) NOT NULL;
 

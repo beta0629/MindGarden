@@ -1,7 +1,6 @@
 package com.coresolution.consultation.repository;
 
 import com.coresolution.consultation.entity.ConsultationAudioFile;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -15,7 +14,7 @@ import java.util.Optional;
  * @since 2026-01-21
  */
 @Repository
-public interface ConsultationAudioFileRepository extends JpaRepository<ConsultationAudioFile, Long> {
+public interface ConsultationAudioFileRepository extends BaseRepository<ConsultationAudioFile, Long> {
 
     /**
      * 상담 ID로 음성 파일 목록 조회

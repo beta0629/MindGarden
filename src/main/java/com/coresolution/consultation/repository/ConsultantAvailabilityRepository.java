@@ -2,6 +2,7 @@ package com.coresolution.consultation.repository;
 
 import java.time.DayOfWeek;
 import java.util.List;
+import java.util.Optional;
 import com.coresolution.consultation.entity.ConsultantAvailability;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -15,6 +16,16 @@ import org.springframework.stereotype.Repository;
 public interface ConsultantAvailabilityRepository extends JpaRepository<ConsultantAvailability, Long> {
     
     // ==================== tenantId 필터링 메서드 ====================
+    
+    /**
+     * 테넌트·PK로 상담 가능 시간 조회
+     *
+     * @param tenantId 테넌트 ID
+     * @param id 엔티티 PK
+     * @return 상담 가능 시간 Optional
+     */
+    @Query("SELECT ca FROM ConsultantAvailability ca WHERE ca.tenantId = :tenantId AND ca.id = :id")
+    Optional<ConsultantAvailability> findByTenantIdAndId(@Param("tenantId") String tenantId, @Param("id") Long id);
     
     /**
      * 상담사별 상담 가능 시간 조회 (tenantId 필터링)

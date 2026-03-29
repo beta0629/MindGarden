@@ -509,8 +509,9 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
         log.info("🔍 상담 예약 검증: consultationId={}, clientId={}, consultantId={}",
                 consultationId, clientId, consultantId);
 
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         Optional<com.coresolution.consultation.entity.Consultation> consultationOpt =
-                consultationRepository.findById(consultationId);
+                consultationRepository.findByTenantIdAndId(tenantId, consultationId);
 
         if (consultationOpt.isPresent()) {
             com.coresolution.consultation.entity.Consultation consult = consultationOpt.get();
@@ -529,7 +530,6 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
             return;
         }
 
-        String tenantId = TenantContextHolder.getRequiredTenantId();
         Optional<Schedule> scheduleOpt = scheduleRepository.findByTenantIdAndId(tenantId, consultationId);
         if (scheduleOpt.isEmpty()) {
             throw new RuntimeException("상담 예약을 찾을 수 없습니다: " + consultationId);

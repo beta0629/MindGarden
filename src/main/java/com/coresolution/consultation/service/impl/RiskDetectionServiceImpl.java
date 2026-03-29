@@ -14,6 +14,7 @@ import com.coresolution.consultation.entity.ConsultationRecordAlert.AlertType;
 import com.coresolution.consultation.repository.ConsultationAudioFileRepository;
 import com.coresolution.consultation.repository.ConsultationRecordAlertRepository;
 import com.coresolution.consultation.service.RiskDetectionService;
+import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.service.ai.AIModelProvider;
 import com.coresolution.core.service.ai.AIModelProvider.AIResponse;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -77,9 +78,10 @@ public class RiskDetectionServiceImpl implements RiskDetectionService {
             // 3. 위험도가 있으면 알림 생성
             if (aiAnalysis.hasRisk() && aiAnalysis.getRiskScore() >= 0.3) {
                 // 음성 파일에서 상담 기록 ID 조회
-                Long consultationRecordId =
-                        audioFileRepository.findById(transcription.getAudioFileId())
-                                .map(af -> af.getConsultationRecordId()).orElse(null);
+                String tenantId = TenantContextHolder.getRequiredTenantId();
+                Long consultationRecordId = audioFileRepository
+                        .findByTenantIdAndId(tenantId, transcription.getAudioFileId())
+                        .map(af -> af.getConsultationRecordId()).orElse(null);
 
                 if (consultationRecordId == null) {
                     log.warn("상담 기록 ID를 찾을 수 없습니다. 알림 생성을 건너뜁니다.");

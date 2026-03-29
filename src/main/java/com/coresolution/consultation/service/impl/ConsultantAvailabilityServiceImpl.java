@@ -160,7 +160,8 @@ public class ConsultantAvailabilityServiceImpl implements ConsultantAvailability
     public ConsultantAvailabilityDto updateAvailability(Long id, ConsultantAvailabilityDto dto) {
         log.info("상담 가능 시간 수정: id={}", id);
         
-        ConsultantAvailability availability = availabilityRepository.findById(id)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        ConsultantAvailability availability = availabilityRepository.findByTenantIdAndId(tenantId, id)
                 .orElseThrow(() -> new IllegalArgumentException("상담 가능 시간을 찾을 수 없습니다: " + id));
         
         availability.setDayOfWeek(dto.getDayOfWeek());
@@ -324,7 +325,9 @@ public class ConsultantAvailabilityServiceImpl implements ConsultantAvailability
                 // 상담사 이름 조회
                 String consultantName = "알 수 없음";
                 try {
-                    User consultant = userRepository.findById(vacation.getConsultantId()).orElse(null);
+                    String tenantId = TenantContextHolder.getRequiredTenantId();
+                    User consultant = userRepository.findByTenantIdAndId(tenantId, vacation.getConsultantId())
+                            .orElse(null);
                     if (consultant != null) {
                         consultantName = consultant.getName();
                     }

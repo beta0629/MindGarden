@@ -5,6 +5,7 @@ import com.coresolution.consultation.entity.ConsultationAudioFile;
 import com.coresolution.consultation.repository.AudioTranscriptionRepository;
 import com.coresolution.consultation.repository.ConsultationAudioFileRepository;
 import com.coresolution.consultation.service.SpeechToTextService;
+import com.coresolution.core.context.TenantContextHolder;
 import com.google.cloud.speech.v1.*;
 import com.google.protobuf.ByteString;
 import lombok.RequiredArgsConstructor;
@@ -145,7 +146,9 @@ public class SpeechToTextServiceImpl implements SpeechToTextService {
         log.info("🔄 비동기 음성 전사 시작: audioFileId={}", audioFileId);
 
         try {
-            ConsultationAudioFile audioFile = audioFileRepository.findById(audioFileId)
+            String tenantId = TenantContextHolder.getRequiredTenantId();
+            ConsultationAudioFile audioFile = audioFileRepository
+                .findByTenantIdAndId(tenantId, audioFileId)
                 .orElseThrow(() -> new IllegalArgumentException("음성 파일을 찾을 수 없습니다: " + audioFileId));
 
             audioFile.startTranscription();
@@ -161,7 +164,8 @@ public class SpeechToTextServiceImpl implements SpeechToTextService {
 
     @Override
     public String getTranscriptionStatus(Long audioFileId) {
-        return audioFileRepository.findById(audioFileId)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return audioFileRepository.findByTenantIdAndId(tenantId, audioFileId)
             .map(ConsultationAudioFile::getTranscriptionStatus)
             .orElse("NOT_FOUND");
     }

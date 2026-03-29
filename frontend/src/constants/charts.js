@@ -45,6 +45,18 @@ export const B0KLA_CHART_BAR_FALLBACK = {
 };
 
 /**
+ * ERP 운영 현황 수입·지출 막대 차트 — Chart.js Canvas 전용 hex.
+ * CSS 변수(var(--mg-success-500) 등)는 Canvas에서 미해석 → 검정 막대 방지.
+ * 값: unified-design-tokens.css --cs-success-400/600, --cs-error-500/600.
+ */
+export const ERP_INCOME_EXPENSE_CHART_HEX = {
+  INCOME_FILL: '#34d399',
+  INCOME_BORDER: '#059669',
+  EXPENSE_FILL: '#ef4444',
+  EXPENSE_BORDER: '#dc2626'
+};
+
+/**
  * B0KlA 단계별 도넛 차트용 hex 색상 (5단계).
  * unified-design-tokens: teal-600, orange-400, purple-700, primary-600, slate-500.
  */

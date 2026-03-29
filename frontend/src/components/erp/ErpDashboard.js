@@ -15,6 +15,7 @@ import {
 import { Package, Clock, ShoppingCart, TrendingUp, TrendingDown, BarChart3, DollarSign, LayoutDashboard, RefreshCw, Settings2, HelpCircle } from 'lucide-react';
 import Button from '../ui/Button/Button';
 import MGChart from '../common/MGChart';
+import { ERP_INCOME_EXPENSE_CHART_HEX } from '../../constants/charts';
 import '../../styles/main.css';
 import '../../styles/unified-design-tokens.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
@@ -363,8 +364,14 @@ const ErpDashboard = ({ user: propUser }) => {
         {
           label: '금액',
           data: [income, expense],
-          backgroundColor: ['var(--mg-success-500)', 'var(--mg-error-500)'],
-          borderColor: ['var(--mg-success-600)', 'var(--mg-error-600)'],
+          backgroundColor: [
+            ERP_INCOME_EXPENSE_CHART_HEX.INCOME_FILL,
+            ERP_INCOME_EXPENSE_CHART_HEX.EXPENSE_FILL
+          ],
+          borderColor: [
+            ERP_INCOME_EXPENSE_CHART_HEX.INCOME_BORDER,
+            ERP_INCOME_EXPENSE_CHART_HEX.EXPENSE_BORDER
+          ],
           borderWidth: 1
         }
       ]
